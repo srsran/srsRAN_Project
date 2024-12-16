@@ -13,8 +13,8 @@
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/io/unique_fd.h"
+#include <atomic>
 #include <future>
-#include <mutex>
 #include <utility>
 
 namespace srsran {
@@ -45,55 +45,43 @@ public:
 
     subscriber(subscriber&& other) noexcept
     {
-      std::lock_guard<std::mutex> lock(other.mutex);
+      fd     = other.fd.exchange(-1);
       broker = other.broker;
-      fd     = std::exchange(other.fd, -1);
     }
 
     subscriber& operator=(subscriber&& other) noexcept
     {
-      std::scoped_lock lock(mutex, other.mutex);
-
-      reset_nolock();
+      reset_impl();
+      fd     = other.fd.exchange(-1);
       broker = other.broker;
-      fd     = std::exchange(other.fd, -1);
       return *this;
     }
 
     ~subscriber() { reset(); }
 
     /// Checks whether the FD is connected to the broker.
-    bool registered() const
-    {
-      std::lock_guard<std::mutex> lock(mutex);
-      return fd >= 0;
-    }
+    bool registered() const { return fd >= 0; }
 
     /// Resets the handle, deregistering the FD from the broker.
     /// \note: This function will block until the FD has been removed from the broker.
     bool reset()
     {
-      std::lock_guard<std::mutex> lock(mutex);
-      std::promise<bool>          p;
-      std::future<bool>           fut = p.get_future();
+      std::promise<bool> p;
+      std::future<bool>  fut = p.get_future();
 
-      bool ret = reset_nolock(&p);
+      bool ret = reset_impl(&p);
       fut.get();
 
       return ret;
     }
 
     /// Returns the file descriptor value held by this subscriber.
-    int value() const
-    {
-      std::lock_guard<std::mutex> lock(mutex);
-      return fd;
-    }
+    int value() const { return fd; }
 
   private:
-    bool reset_nolock(std::promise<bool>* complete_notifier = nullptr)
+    bool reset_impl(std::promise<bool>* complete_notifier = nullptr)
     {
-      int fd_tmp = std::exchange(fd, -1);
+      int fd_tmp = fd.exchange(-1);
       if (fd_tmp >= 0) {
         return broker->unregister_fd(fd_tmp, complete_notifier);
       }
@@ -103,10 +91,8 @@ public:
       return false;
     }
 
-    // Mutex unique to the subscriber object.
-    mutable std::mutex mutex;
-    io_broker*         broker = nullptr;
-    int                fd     = -1;
+    io_broker*       broker = nullptr;
+    std::atomic<int> fd{-1};
   };
 
   /// Callback called when registered fd has data

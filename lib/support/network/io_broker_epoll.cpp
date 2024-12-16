@@ -167,6 +167,15 @@ void io_broker_epoll::thread_loop()
         continue;
       }
 
+      // Avoid enqueuing the callback if this FD is enqueued for deletion. It will be removed in the next loop
+      // iteration.
+      if (auto pending_it = std::find_if(pending_fds_to_remove.begin(),
+                                         pending_fds_to_remove.end(),
+                                         [fd](const auto& elem) { return fd == elem.first; });
+          pending_it != pending_fds_to_remove.end()) {
+        continue;
+      }
+
       it->second.is_executing_recv_callback.store(true, std::memory_order_release);
       if (not it->second.executor->defer([this,
                                           fd,
