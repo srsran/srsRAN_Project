@@ -211,7 +211,7 @@ public:
 
   void on_new_pdu(nru_dl_message sdu) final { inner.on_new_pdu(std::move(sdu)); }
 
-  expected<std::string> get_bind_address() const override { return {}; }
+  expected<std::string> get_bind_address() const override { return "127.0.0.2"; }
 
 private:
   bool                                stopped = false;

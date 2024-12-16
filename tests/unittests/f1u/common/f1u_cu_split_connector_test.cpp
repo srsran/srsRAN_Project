@@ -223,15 +223,6 @@ protected:
   srslog::basic_logger& udp_logger_cu  = srslog::fetch_basic_logger("UDP-GW", false);
 };
 
-class f1u_cu_split_connector_external_address_test : public f1u_cu_split_connector_test,
-                                                     public ::testing::WithParamInterface<std::string>
-{
-  std::string get_external_bind_address() override { return external_address; }
-
-protected:
-  std::string external_address = GetParam();
-};
-
 } // namespace
 
 /// Test the instantiation of a new entity
@@ -465,11 +456,7 @@ TEST_F(f1u_cu_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
 }
 
 // TODO external address should be checked on F1-U bearer itself.
-
-INSTANTIATE_TEST_SUITE_P(f1u_cu_split_connector_test_external_address,
-                         f1u_cu_split_connector_external_address_test,
-                         ::testing::Values("auto", "", "8.8.8.8"));
-
+//
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
