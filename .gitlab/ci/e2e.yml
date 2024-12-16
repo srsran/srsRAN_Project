@@ -573,7 +573,7 @@ retina setup:
     name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
     entrypoint: ["/bin/sh", "-c"]
   tags:
-    - "${RETINA_TAG}"
+    - retina-e2e-amd64
   script:
     - |
       retina-garbage-collector --mode demolition
