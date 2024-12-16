@@ -119,10 +119,7 @@ private:
 sctp_network_client_impl::sctp_network_client_impl(const sctp_network_gateway_config& sctp_cfg,
                                                    io_broker&                         broker_,
                                                    task_executor&                     io_rx_executor_) :
-  sctp_network_gateway_common_impl(sctp_cfg),
-  broker(broker_),
-  io_rx_executor(io_rx_executor_),
-  temp_recv_buffer(network_gateway_sctp_max_len)
+  sctp_network_gateway_common_impl(sctp_cfg), broker(broker_), io_rx_executor(io_rx_executor_)
 {
 }
 
@@ -176,6 +173,13 @@ sctp_network_client_impl::connect_to(const std::string&                         
                    node_cfg.if_name,
                    dest_addr,
                    dest_port);
+      return nullptr;
+    }
+  }
+
+  // If a bind address is provided, create a socket here and bind it.
+  if (not node_cfg.bind_address.empty()) {
+    if (not create_and_bind_common()) {
       return nullptr;
     }
   }
@@ -247,8 +251,9 @@ sctp_network_client_impl::connect_to(const std::string&                         
   }
 
   // Register the socket in the IO broker.
+  socket.release();
   io_sub = broker.register_fd(
-      unique_fd(socket.fd().value(), false),
+      unique_fd(socket.fd().value()),
       io_rx_executor,
       [this]() { receive(); },
       [this](io_broker::error_code code) {
@@ -276,8 +281,10 @@ sctp_network_client_impl::connect_to(const std::string&                         
 
 void sctp_network_client_impl::receive()
 {
-  struct sctp_sndrcvinfo sri       = {};
-  int                    msg_flags = 0;
+  struct sctp_sndrcvinfo                            sri       = {};
+  int                                               msg_flags = 0;
+  std::array<uint8_t, network_gateway_sctp_max_len> temp_recv_buffer;
+
   // fromlen is an in/out variable in sctp_recvmsg.
   sockaddr_storage msg_src_addr;
   socklen_t        msg_src_addrlen = sizeof(msg_src_addr);
@@ -332,11 +339,6 @@ void sctp_network_client_impl::handle_sctp_shutdown_comp()
 
   // Unsubscribe from listening to new IO events.
   io_sub.reset();
-
-  // Make sure to close any socket created and implicitly bound for any previous connection.
-  if (node_cfg.bind_address.empty()) {
-    socket.close();
-  }
 
   // Erase server_addr and notify dtor that connection is closed.
   std::unique_lock<std::mutex> lock(connection_mutex);
@@ -406,13 +408,5 @@ std::unique_ptr<sctp_network_client> sctp_network_client_impl::create(const sctp
 
   // Create a SCTP client instance.
   std::unique_ptr<sctp_network_client_impl> client{new sctp_network_client_impl(sctp_cfg, broker_, io_rx_executor)};
-
-  // If a bind address is provided, create a socket here and bind it.
-  if (not sctp_cfg.bind_address.empty()) {
-    if (not client->create_and_bind_common()) {
-      return nullptr;
-    }
-  }
-
   return client;
 }

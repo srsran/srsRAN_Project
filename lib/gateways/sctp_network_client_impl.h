@@ -61,9 +61,6 @@ private:
   io_broker&     broker;
   task_executor& io_rx_executor;
 
-  // Temporary buffer where read data is saved.
-  std::vector<uint8_t> temp_recv_buffer;
-
   // Handler of IO events. It is only accessed by the backend (io_broker), once the connection is set up.
   std::unique_ptr<sctp_association_sdu_notifier> recv_handler;
 

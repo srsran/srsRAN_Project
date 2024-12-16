@@ -65,6 +65,9 @@ public:
   /// Returns the raw file descriptor value or -1 if the file descriptor is not open.
   [[nodiscard]] int value() const { return fd; }
 
+  /// Releases the ownership of the managed file descriptor.
+  [[nodiscard]] int release() { return std::exchange(fd, -1); }
+
 private:
   /// Prints a close error message with the corresponding cause.
   void print_close_error_msg()

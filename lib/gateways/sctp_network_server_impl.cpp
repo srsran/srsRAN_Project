@@ -134,8 +134,7 @@ sctp_network_server_impl::sctp_network_server_impl(const srsran::sctp_network_ga
   sctp_network_gateway_common_impl(sctp_cfg_),
   broker(broker_),
   io_rx_executor(io_rx_executor_),
-  assoc_factory(assoc_factory_),
-  temp_recv_buffer(network_gateway_sctp_max_len)
+  assoc_factory(assoc_factory_)
 {
 }
 
@@ -155,8 +154,10 @@ bool sctp_network_server_impl::create_and_bind()
 
 void sctp_network_server_impl::receive()
 {
-  struct sctp_sndrcvinfo sri       = {};
-  int                    msg_flags = 0;
+  struct sctp_sndrcvinfo                            sri       = {};
+  int                                               msg_flags = 0;
+  std::array<uint8_t, network_gateway_sctp_max_len> temp_recv_buffer;
+
   // fromlen is an in/out variable in sctp_recvmsg.
   sockaddr_storage msg_src_addr;
   socklen_t        msg_src_addrlen = sizeof(msg_src_addr);
@@ -361,8 +362,9 @@ std::optional<uint16_t> sctp_network_server_impl::get_listen_port()
 
 bool sctp_network_server_impl::subscribe_to_broker()
 {
+  socket.release();
   io_sub = broker.register_fd(
-      unique_fd(socket.fd().value(), false),
+      unique_fd(socket.fd().value()),
       io_rx_executor,
       [this]() { receive(); },
       [this](io_broker::error_code code) {

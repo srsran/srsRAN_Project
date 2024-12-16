@@ -87,9 +87,6 @@ private:
   sctp_network_association_factory& assoc_factory;
 
   association_map associations;
-
-  // Temporary buffer where read data is saved.
-  std::vector<uint8_t> temp_recv_buffer;
 };
 
 } // namespace srsran

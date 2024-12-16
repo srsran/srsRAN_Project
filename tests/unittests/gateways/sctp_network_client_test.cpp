@@ -150,13 +150,14 @@ TEST_F(sctp_network_client_test, when_bind_address_not_provided_then_client_is_c
   ASSERT_NE(client, nullptr);
 }
 
-TEST_F(sctp_network_client_test, when_bind_interface_is_invalid_then_server_is_not_created)
+TEST_F(sctp_network_client_test, when_bind_interface_is_invalid_then_client_connection_fails)
 {
   client_cfg.sctp.bind_interface = "invalid";
   client_cfg.sctp.bind_address   = "127.0.0.1";
   client_cfg.sctp.bind_port      = server.bind_port;
   client                         = create_sctp_network_client(client_cfg);
-  ASSERT_EQ(client, nullptr);
+  ASSERT_NE(client, nullptr);
+  ASSERT_FALSE(connect_to_server(client_cfg.sctp.bind_address, client_cfg.sctp.bind_port));
 }
 
 TEST_F(sctp_network_client_test, when_server_does_not_exist_then_connection_fails)

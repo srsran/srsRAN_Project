@@ -33,17 +33,6 @@ udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config   
   io_rx_executor(io_rx_executor_)
 {
   logger.info("UDP GW configured. rx_max_mmsg={} pool_thres={}", config.rx_max_mmsg, config.pool_occupancy_threshold);
-
-  // Allocate RX buffers
-  rx_mem.resize(config.rx_max_mmsg);
-  for (uint32_t i = 0; i < config.rx_max_mmsg; ++i) {
-    rx_mem[i].resize(network_gateway_udp_max_len);
-  }
-
-  // Allocate context for recv_mmsg
-  rx_srcaddr.resize(config.rx_max_mmsg);
-  rx_msghdr.resize(config.rx_max_mmsg);
-  rx_iovecs.resize(config.rx_max_mmsg);
 }
 
 bool udp_network_gateway_impl::subscribe_to(io_broker& broker)
@@ -205,26 +194,54 @@ bool udp_network_gateway_impl::create_and_bind()
   return true;
 }
 
-void udp_network_gateway_impl::receive()
+namespace {
+
+/// Receive context used by the recvmmsg syscall.
+struct receive_context {
+  explicit receive_context(unsigned rx_max_mmsg);
+
+  std::vector<std::vector<uint8_t>> rx_mem;
+  std::vector<::sockaddr_storage>   rx_srcaddr;
+  std::vector<::mmsghdr>            rx_msghdr;
+  std::vector<::iovec>              rx_iovecs;
+};
+
+} // namespace
+
+receive_context::receive_context(unsigned rx_max_mmsg)
 {
-  if (!sock_fd.is_open()) {
-    logger.error("Cannot receive on UDP gateway: Socket is not initialized.");
+  // Allocate RX buffers.
+  rx_mem.resize(rx_max_mmsg);
+  for (unsigned i = 0; i != rx_max_mmsg; ++i) {
+    rx_mem[i].resize(network_gateway_udp_max_len);
   }
 
-  socklen_t src_addr_len = sizeof(struct sockaddr_storage);
+  // Allocate context for recv_mmsg.
+  rx_srcaddr.resize(rx_max_mmsg);
+  rx_msghdr.resize(rx_max_mmsg);
+  rx_iovecs.resize(rx_max_mmsg);
 
-  for (unsigned i = 0; i < config.rx_max_mmsg; ++i) {
+  for (unsigned i = 0; i != rx_max_mmsg; ++i) {
     rx_msghdr[i].msg_hdr             = {};
     rx_msghdr[i].msg_hdr.msg_name    = &rx_srcaddr[i];
-    rx_msghdr[i].msg_hdr.msg_namelen = src_addr_len;
+    rx_msghdr[i].msg_hdr.msg_namelen = sizeof(::sockaddr_storage);
 
     rx_iovecs[i].iov_base           = rx_mem[i].data();
     rx_iovecs[i].iov_len            = network_gateway_udp_max_len;
     rx_msghdr[i].msg_hdr.msg_iov    = &rx_iovecs[i];
     rx_msghdr[i].msg_hdr.msg_iovlen = 1;
   }
+}
 
-  int rx_msgs = recvmmsg(sock_fd.value(), rx_msghdr.data(), config.rx_max_mmsg, MSG_WAITFORONE, nullptr);
+void udp_network_gateway_impl::receive()
+{
+  if (!sock_fd.is_open()) {
+    logger.error("Cannot receive on UDP gateway: Socket is not initialized.");
+  }
+
+  thread_local receive_context rx_context(config.rx_max_mmsg);
+
+  int rx_msgs = recvmmsg(sock_fd.value(), rx_context.rx_msghdr.data(), config.rx_max_mmsg, MSG_WAITFORONE, nullptr);
   srslog::fetch_basic_logger("IO-EPOLL").info("UDP rx {} packets, max is {}", rx_msgs, config.rx_max_mmsg);
   if (rx_msgs == -1 && errno != EAGAIN) {
     logger.error("Error reading from UDP socket: {}", strerror(errno));
@@ -249,15 +266,16 @@ void udp_network_gateway_impl::receive()
       logger.info("Buffer pool at {:.1f}% occupancy. Dropping {} packets", pool_occupancy * 100, rx_msgs - i);
       return;
     }
-    span<uint8_t> payload(rx_mem[i].data(), rx_msghdr[i].msg_len);
+    span<uint8_t> payload(rx_context.rx_mem[i].data(), rx_context.rx_msghdr[i].msg_len);
 
     byte_buffer pdu = {};
     if (pdu.append(payload)) {
-      logger.debug(
-          "Received {} bytes on UDP socket. Pool occupancy {:.2f}%", rx_msghdr[i].msg_len, pool_occupancy * 100);
-      data_notifier.on_new_pdu(std::move(pdu), *(sockaddr_storage*)rx_msghdr[i].msg_hdr.msg_name);
+      logger.debug("Received {} bytes on UDP socket. Pool occupancy {:.2f}%",
+                   rx_context.rx_msghdr[i].msg_len,
+                   pool_occupancy * 100);
+      data_notifier.on_new_pdu(std::move(pdu), *(sockaddr_storage*)rx_context.rx_msghdr[i].msg_hdr.msg_name);
     } else {
-      logger.error("Could not allocate byte buffer. Received {} bytes on UDP socket", rx_msghdr[i].msg_len);
+      logger.error("Could not allocate byte buffer. Received {} bytes on UDP socket", rx_context.rx_msghdr[i].msg_len);
     }
   }
 }

@@ -296,13 +296,13 @@ int main(int argc, char** argv)
   std::unique_ptr<e1_local_connector> e1_gw =
       create_e1_local_connector(e1_local_connector_config{*cu_up_dlt_pcaps.e1ap});
 
-  // Create manager of timers for CU-CP and CU-UP, which will be
-  // driven by the system timer slot ticks.
+  // Create manager of timers for CU-CP and CU-UP, which will be driven by the system timer slot ticks.
   timer_manager  app_timers{256};
   timer_manager* cu_timers = &app_timers;
 
-  // Create time source that ticks the timers
-  io_timer_source time_source{app_timers, *epoll_broker, *workers.non_rt_hi_prio_exec, std::chrono::milliseconds{1}};
+  // Create time source that ticks the timers.
+  std::optional<io_timer_source> time_source(
+      std::in_place_t{}, app_timers, *epoll_broker, *workers.non_rt_hi_prio_exec, std::chrono::milliseconds{1});
 
   // Instantiate E2AP client gateway.
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(
@@ -391,6 +391,9 @@ int main(int argc, char** argv)
 
   // Stop O-CU-CP activity.
   o_cucp_obj.get_cu_cp().stop();
+
+  // Stop the timer source before stopping the workers.
+  time_source.reset();
 
   // Close PCAPs
   cu_logger.info("Closing PCAP files...");

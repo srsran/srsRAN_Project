@@ -69,9 +69,7 @@ bool sctp_network_gateway_common_impl::close_socket()
 {
   // Stop listening to new IO Rx events.
   io_sub.reset();
-
-  // Close SCTP socket.
-  return socket.close();
+  return true;
 }
 
 expected<sctp_socket> sctp_network_gateway_common_impl::create_socket(int ai_family, int ai_socktype) const

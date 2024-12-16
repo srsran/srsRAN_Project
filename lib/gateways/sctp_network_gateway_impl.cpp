@@ -75,7 +75,8 @@ bool sctp_network_gateway_impl::create_and_connect()
 
     if (not socket.connect(*result->ai_addr, result->ai_addrlen)) {
       // connection failed, try next address
-      close_socket();
+      io_sub.reset();
+      socket.close();
       continue;
     }
 
@@ -115,11 +116,10 @@ void sctp_network_gateway_impl::receive()
   struct sctp_sndrcvinfo sri       = {};
   int                    msg_flags = 0;
 
-  // Fixme: consider class member on heap when sequential access is guaranteed
-  std::array<uint8_t, network_gateway_sctp_max_len> tmp_mem; // no init
+  std::array<uint8_t, network_gateway_sctp_max_len> temp_recv_buffer;
 
   int rx_bytes = ::sctp_recvmsg(socket.fd().value(),
-                                tmp_mem.data(),
+                                temp_recv_buffer.data(),
                                 network_gateway_sctp_max_len,
                                 (struct sockaddr*)&msg_src_addr,
                                 &msg_src_addrlen,
@@ -134,7 +134,7 @@ void sctp_network_gateway_impl::receive()
     }
   } else {
     logger.debug("Received {} bytes on SCTP socket", rx_bytes);
-    span<socket_buffer_type> payload(tmp_mem.data(), rx_bytes);
+    span<socket_buffer_type> payload(temp_recv_buffer.data(), rx_bytes);
     if (msg_flags & MSG_NOTIFICATION) {
       // Received notification
       handle_notification(payload);

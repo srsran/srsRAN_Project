@@ -44,13 +44,17 @@ public:
 
   sctp_socket();
   sctp_socket(sctp_socket&& other) noexcept = default;
-  ~sctp_socket();
   sctp_socket& operator=(sctp_socket&& other) noexcept;
 
   bool close();
 
   [[nodiscard]] bool is_open() const { return sock_fd.is_open(); }
   const unique_fd&   fd() const { return sock_fd; }
+  void               release()
+  {
+    int fd  = sock_fd.release();
+    sock_fd = unique_fd(fd, false);
+  }
 
   [[nodiscard]] bool bind(struct sockaddr& ai_addr, const socklen_t& ai_addrlen, const std::string& bind_interface);
   [[nodiscard]] bool connect(struct sockaddr& ai_addr, const socklen_t& ai_addrlen);

@@ -72,6 +72,8 @@ io_broker_epoll::~io_broker_epoll()
     thread.join();
   }
 
+  stop_impl();
+
   // Close epoll socket.
   if (not epoll_fd.close()) {
     logger.error("Failed to close io epoll broker file descriptor: {}", strerror(errno));
@@ -244,8 +246,8 @@ void io_broker_epoll::handle_enqueued_events()
         ev.completed->set_value(false);
         break;
       case control_event::event_type::close_io_broker:
-        // Close io broker.
-        stop_impl();
+        // Set flag to stop thread loop.
+        running.store(false, std::memory_order_release);
         return;
       default:
         report_fatal_error("Unknown event type {}", (int)ev.type);
@@ -354,7 +356,7 @@ io_broker::subscriber io_broker_epoll::register_fd(unique_fd        fd,
     return subscriber{};
   }
 
-  if (not running.load(std::memory_order_relaxed)) {
+  if (not running.load(std::memory_order_acquire)) {
     logger.warning("fd={}: Registration failed. Cause: io_broker is not running", fd.value());
     return subscriber{};
   }
@@ -393,7 +395,7 @@ bool io_broker_epoll::unregister_fd(int fd, std::promise<bool>* complete_notifie
     }
     return false;
   }
-  if (not running.load(std::memory_order_relaxed)) {
+  if (not running.load(std::memory_order_acquire)) {
     logger.warning("fd={}: Deregistration failed. Cause: io_broker is not running", fd);
     if (complete_notifier) {
       complete_notifier->set_value(false);
@@ -425,9 +427,6 @@ bool io_broker_epoll::unregister_fd(int fd, std::promise<bool>* complete_notifie
 
 void io_broker_epoll::stop_impl()
 {
-  // Set flag to stop thread loop.
-  running = false;
-
   // Process any pending file descriptor removals.
   for (auto it = pending_fds_to_remove.begin(); it != pending_fds_to_remove.end();) {
     if (auto event_it = event_handler.find(it->first); event_it != event_handler.end()) {
