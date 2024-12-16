@@ -423,6 +423,11 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     } else {
       fmt::format_to(buffer, " last_phr=n/a");
     }
+    if (ue.mean_ce_delay_msec.has_value()) {
+      fmt::format_to(buffer, " ul_ce_delay={:.2}ms", ue.mean_ce_delay_msec.value());
+    } else {
+      fmt::format_to(buffer, " ul_ce_delay=n/a");
+    }
 
     logger.info("{}", to_c_str(buffer));
     buffer.clear();

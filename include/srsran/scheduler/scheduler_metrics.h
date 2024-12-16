@@ -47,6 +47,7 @@ struct scheduler_ue_metrics {
   std::optional<float> last_dl_olla;
   std::optional<float> last_ul_olla;
   std::optional<int>   last_phr;
+  std::optional<float> mean_ce_delay_msec;
   /// Time advance statistics in seconds.
   sample_statistics<float> ta_stats;
   sample_statistics<float> pusch_ta_stats;

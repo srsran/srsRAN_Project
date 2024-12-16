@@ -204,8 +204,10 @@ void cell_metrics_handler::handle_ul_phr_indication(const ul_phr_indication_mess
     // Store last PHR.
     if (not phr_ind.phr.get_phr().empty()) {
       // Log the floor of the average of the PH interval.
-      interval<int> rg = phr_ind.phr.get_phr().front().ph;
-      u.last_phr       = (rg.start() + rg.stop()) / 2;
+      interval<int> rg             = phr_ind.phr.get_phr().front().ph;
+      u.last_phr                   = (rg.start() + rg.stop()) / 2;
+      u.data.sum_ul_ce_delay_slots = last_slot_tx - phr_ind.slot_rx;
+      u.data.nof_ul_ces++;
     }
   }
 }
@@ -229,7 +231,7 @@ void cell_metrics_handler::report_metrics()
 {
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report.
-    scheduler_ue_metrics sched_ue_metrics = ue.compute_report(report_period);
+    scheduler_ue_metrics sched_ue_metrics = ue.compute_report(report_period, nof_slots_per_sf);
     sched_ue_metrics.mean_dl_prbs_used =
         nof_dl_slots > 0 ? static_cast<double>(1.0 * sched_ue_metrics.tot_dl_prbs_used / nof_dl_slots) : 0;
     sched_ue_metrics.mean_ul_prbs_used =
@@ -330,6 +332,7 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
 {
   if (report_period_slots == 0) {
     // The SCS common is now known.
+    nof_slots_per_sf    = get_nof_slots_per_subframe(to_subcarrier_spacing(sl_tx.numerology()));
     usecs slot_dur      = usecs{1000U >> sl_tx.numerology()};
     report_period_slots = usecs{report_period} / slot_dur;
   }
@@ -346,7 +349,8 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
 }
 
 scheduler_ue_metrics
-cell_metrics_handler::ue_metric_context::compute_report(std::chrono::milliseconds metric_report_period)
+cell_metrics_handler::ue_metric_context::compute_report(std::chrono::milliseconds metric_report_period,
+                                                        unsigned                  nof_slots_per_sf)
 {
   scheduler_ue_metrics ret{};
   ret.pci              = pci;
@@ -383,6 +387,8 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pucch_ta_stats = data.pucch_ta;
   ret.srs_ta_stats   = data.srs_ta;
   ret.last_phr       = last_phr;
+  ret.mean_ce_delay_msec =
+      data.nof_ul_ces > 0 ? (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * nof_slots_per_sf)) : 0;
 
   // Reset UE stats metrics on every report.
   reset();

@@ -52,6 +52,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       unsigned nof_pusch_rsrp_reports = 0;
       unsigned tot_dl_prbs_used       = 0;
       unsigned tot_ul_prbs_used       = 0;
+      unsigned sum_ul_ce_delay_slots  = 0;
+      unsigned nof_ul_ces             = 0;
       /// TA statistics over the metrics report interval, in seconds.
       sample_statistics<float> ta;
       /// PUSCH TA statistics over the metrics report interval, in seconds.
@@ -80,14 +82,16 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     std::optional<float>                   last_ul_olla;
     non_persistent_data                    data;
 
-    scheduler_ue_metrics compute_report(std::chrono::milliseconds metric_report_period);
+    scheduler_ue_metrics compute_report(std::chrono::milliseconds metric_report_period, unsigned nof_slots_per_sf);
     void                 reset();
   };
 
   scheduler_metrics_notifier&     notifier;
   const std::chrono::milliseconds report_period;
   const cell_configuration&       cell_cfg;
-  /// Derived value.
+
+  // Derived values.
+  unsigned nof_slots_per_sf    = 0;
   unsigned report_period_slots = 0;
 
   slot_point last_slot_tx;
