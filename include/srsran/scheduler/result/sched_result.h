@@ -24,25 +24,18 @@ namespace srsran {
 struct dl_sched_result {
   /// Number of DL symbols active for this slot.
   unsigned nof_dl_symbols;
-
   /// Allocated DL PDCCHs. Includes both SIB, RAR and Data PDCCHs.
   pdcch_dl_info_list dl_pdcchs;
-
   /// Allocated UL PDCCHs.
   pdcch_ul_info_list ul_pdcchs;
-
   /// Allocation of SSB and SIBs.
   dl_broadcast_allocation bc;
-
   /// Allocation of dedicated RARs.
   static_vector<rar_information, MAX_RAR_PDUS_PER_SLOT> rar_grants;
-
   /// Allocation of Paging messages.
   static_vector<dl_paging_allocation, MAX_PAGING_PDUS_PER_SLOT> paging_grants;
-
   /// Allocation of dedicated UE messages.
   static_vector<dl_msg_alloc, MAX_UE_PDUS_PER_SLOT> ue_grants;
-
   /// Allocation of CSI-RS messages.
   static_vector<csi_rs_info, MAX_CSI_RS_PDUS_PER_SLOT> csi_rs;
 };
@@ -63,8 +56,11 @@ struct ul_sched_result {
 
 /// Scheduler decision made for DL and UL in a given slot.
 struct sched_result {
+  /// Whether the scheduling for the given slot was successful.
   bool            success;
+  /// DL allocations for the given slot.
   dl_sched_result dl;
+  /// UL allocations for the given slot.
   ul_sched_result ul;
 };
 
