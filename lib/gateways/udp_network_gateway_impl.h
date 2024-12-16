@@ -56,6 +56,7 @@ private:
   bool set_non_blocking();
   bool set_receive_timeout(unsigned rx_timeout_sec);
   bool set_reuse_addr();
+  bool set_dscp();
   bool close_socket();
 
   udp_network_gateway_config                   config; // configuration

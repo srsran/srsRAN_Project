@@ -20,8 +20,9 @@ struct sockaddr_storage;
 namespace srsran {
 
 struct udp_network_gateway_config : common_network_gateway_config {
-  unsigned rx_max_mmsg              = 256;
-  float    pool_occupancy_threshold = 0.9;
+  unsigned               rx_max_mmsg              = 256;
+  float                  pool_occupancy_threshold = 0.9;
+  std::optional<uint8_t> dscp;
 };
 
 /// Interface to inject PDUs into gateway entity.

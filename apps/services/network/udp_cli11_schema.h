@@ -11,6 +11,7 @@
 #pragma once
 
 #include "CLI/CLI11.hpp"
+#include <optional>
 
 namespace srsran {
 
@@ -20,6 +21,8 @@ struct udp_appconfig {
   unsigned rx_max_msgs = 256;
   /// Pool accupancy threshold after which packets are dropped.
   float pool_threshold = 0.9;
+  /// Differentiated Services Code Point value.
+  std::optional<unsigned> dscp;
 };
 
 /// \brief Configures the given CLI11 application with the UDP application configuration schema.

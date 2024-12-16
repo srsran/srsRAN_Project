@@ -129,11 +129,6 @@ bool udp_network_gateway_impl::create_and_bind()
       continue;
     }
 
-    if (not set_sockopts()) {
-      close_socket();
-      continue;
-    }
-
     char ip_addr[NI_MAXHOST];
     char port_nr[NI_MAXSERV];
     getnameinfo(
@@ -188,6 +183,13 @@ bool udp_network_gateway_impl::create_and_bind()
                  config.bind_address,
                  config.bind_port,
                  strerror(ret));
+    return false;
+  }
+
+  // Set socket options. This is done after binding,
+  // so that we can set IPv4/IPv6 options accordingly.
+  if (not set_sockopts()) {
+    close_socket();
     return false;
   }
 
@@ -375,6 +377,13 @@ bool udp_network_gateway_impl::set_sockopts()
     }
   }
 
+  if (config.dscp.has_value()) {
+    if (not set_dscp()) {
+      logger.error("Couldn't set DSCP for socket");
+      return false;
+    }
+  }
+  logger.debug("Successfully set socket options");
   return true;
 }
 
@@ -417,6 +426,32 @@ bool udp_network_gateway_impl::set_reuse_addr()
     return false;
   }
   return true;
+}
+
+bool udp_network_gateway_impl::set_dscp()
+{
+  if (not config.dscp.has_value()) {
+    return true; // No DSCP code to set.
+  }
+  uint8_t option = config.dscp.value() << 2; // DSCP is the only the 6 most significant bits.
+  if (local_addr.ss_family == AF_INET) {
+    if (::setsockopt(sock_fd.value(), IPPROTO_IP, IP_TOS, &option, sizeof(option))) {
+      logger.error("Couldn't set DSCP for socket: {}", strerror(errno));
+      return false;
+    }
+    logger.debug("Set DSCP for socket. dscp={}", config.dscp.value());
+    return true;
+  }
+  if (local_addr.ss_family == AF_INET6) {
+    if (setsockopt(sock_fd.value(), IPPROTO_IPV6, IPV6_TCLASS, &option, sizeof(option))) {
+      logger.error("Couldn't set DSCP for socket: {}", strerror(errno));
+      return false;
+    }
+    logger.debug("Set DSCP for socket. dscp={}", config.dscp.value());
+    return true;
+  }
+  logger.error("Unknown socket familly when setting DSCP");
+  return false;
 }
 
 bool udp_network_gateway_impl::close_socket()
