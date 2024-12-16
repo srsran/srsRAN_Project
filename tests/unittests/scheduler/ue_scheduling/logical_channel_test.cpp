@@ -218,9 +218,9 @@ TEST(dl_logical_channel_test, mac_sdu_is_scheduled_if_tb_has_space)
       // RLC overhead.
       const unsigned RLC_SEGMENTATION_OVERHEAD = 4;
       unsigned       req_bytes                 = get_mac_sdu_required_bytes(rem_sdu_size);
-      if (req_bytes == 256) {
+      if (req_bytes == 258) {
         // Note: account for ambiguity in transition between MAC subheader sizes.
-        req_bytes++;
+        req_bytes = 259;
       }
       ASSERT_EQ(req_bytes, lch_mng.total_pending_bytes() - RLC_SEGMENTATION_OVERHEAD)
           << "incorrect calculation of remaining pending tx bytes";
