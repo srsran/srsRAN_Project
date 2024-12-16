@@ -163,6 +163,8 @@ variables:
             --exclude=${CI_PROJECT_DIR}/lib/asn1/ngap/.* \
             --exclude=${CI_PROJECT_DIR}/lib/asn1/nrppa/.* \
             --exclude=${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.* \
+            --exclude=${CI_PROJECT_DIR}/plugins/.*/include/srsran/asn1/nrppa/.* \
+            --exclude=${CI_PROJECT_DIR}/plugins/.*/lib/asn1/nrppa/.* \
             --exclude-lines-by-pattern \".*srsran_assert.*|.*srsran_sanity_check.*\" \
             --root=${CI_PROJECT_DIR}"
 
