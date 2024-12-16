@@ -24,7 +24,7 @@ public:
   explicit ue_fallback_scheduler(const scheduler_ue_expert_config& expert_cfg_,
                                  const cell_configuration&         cell_cfg_,
                                  pdcch_resource_allocator&         pdcch_sch_,
-                                 // TODO: Remove and depend only on pucch_alloc
+                                 // TODO: Remove pucch_alloc and depend only on uci_alloc
                                  pucch_allocator& pucch_alloc_,
                                  uci_allocator&   uci_alloc_,
                                  ue_repository&   ues_);
