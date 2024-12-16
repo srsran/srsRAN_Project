@@ -287,6 +287,12 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
   log_chan(ctx);
 }
 
+template <typename ResultType>
+static ResultType to_percentage(unsigned numerator, unsigned denominator)
+{
+  return static_cast<ResultType>(100.0 * static_cast<double>(numerator) / static_cast<double>(denominator));
+}
+
 void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
 {
   const scheduler_cell_metrics& metrics = static_cast<const scheduler_cell_metrics_impl&>(metric).get_metrics();
@@ -353,13 +359,14 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     fmt::format_to(buffer, " dl_nof_ok={}", ue.dl_nof_ok);
     fmt::format_to(buffer, " dl_nof_nok={}", ue.dl_nof_nok);
     unsigned dl_total = ue.dl_nof_ok + ue.dl_nof_nok;
-    if (dl_total > 0) {
-      fmt::format_to(buffer, " dl_error_rate={}%", int((float)100 * ue.dl_nof_nok / dl_total));
-    } else {
-      fmt::format_to(buffer, " dl_error_rate={}%", 0);
-    }
+    fmt::format_to(buffer, " dl_error_rate={}%", dl_total > 0 ? to_percentage<int>(ue.dl_nof_nok, dl_total) : 0);
     fmt::format_to(buffer, " dl_bs={}", scaled_fmt_integer(ue.dl_bs, false));
-    fmt::format_to(buffer, " dl_nof_prbs={}", ue.tot_dl_prbs_used);
+    fmt::format_to(buffer,
+                   " dl_nof_prbs={} dl_prb_ratio={:.2}%",
+                   ue.tot_dl_prbs_used,
+                   metrics.nof_dl_slots > 0
+                       ? to_percentage<double>(ue.tot_dl_prbs_used, metrics.nof_dl_slots * metrics.nof_prbs)
+                       : 0);
     if (ue.last_dl_olla.has_value()) {
       fmt::format_to(buffer, " dl_olla={}", ue.last_dl_olla);
     }
@@ -397,7 +404,12 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
       fmt::format_to(buffer, " ul_error_rate={}%", 0);
       fmt::format_to(buffer, " crc_delay_ms=n/a");
     }
-    fmt::format_to(buffer, " ul_nof_prbs={}", ue.tot_ul_prbs_used);
+    fmt::format_to(buffer,
+                   " ul_nof_prbs={} ul_prb_ratio={:.2}%",
+                   ue.tot_ul_prbs_used,
+                   metrics.nof_ul_slots > 0
+                       ? to_percentage<double>(ue.tot_ul_prbs_used, metrics.nof_ul_slots * metrics.nof_prbs)
+                       : 0);
     fmt::format_to(buffer, " bsr={}", scaled_fmt_integer(ue.bsr, false));
     fmt::format_to(buffer, " sr_count={}", ue.sr_count);
     if (ue.last_ul_olla.has_value()) {

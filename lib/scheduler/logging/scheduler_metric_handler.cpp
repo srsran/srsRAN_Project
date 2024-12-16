@@ -264,10 +264,6 @@ void cell_metrics_handler::report_metrics()
 void cell_metrics_handler::handle_slot_result(const sched_result&       slot_result,
                                               std::chrono::microseconds slot_decision_latency)
 {
-  // Count only full DL/UL slots.
-  bool full_dl_slot = (slot_result.dl.nof_dl_symbols == 14);
-  bool full_ul_slot = (slot_result.ul.nof_ul_symbols == 14);
-
   for (const dl_msg_alloc& dl_grant : slot_result.dl.ue_grants) {
     auto it = rnti_to_ue_index_lookup.find(dl_grant.pdsch_cfg.rnti);
     if (it == rnti_to_ue_index_lookup.end()) {
@@ -280,13 +276,12 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
       u.data.nof_dl_cws++;
     }
     if (dl_grant.pdsch_cfg.rbs.is_type0()) {
-      u.data.tot_dl_prbs_used += full_dl_slot ? convert_rbgs_to_prbs(dl_grant.pdsch_cfg.rbs.type0(),
-                                                                     {0, cell_cfg.nof_dl_prbs},
-                                                                     get_nominal_rbg_size(cell_cfg.nof_dl_prbs, true))
-                                                    .count()
-                                              : 0;
+      u.data.tot_dl_prbs_used += convert_rbgs_to_prbs(dl_grant.pdsch_cfg.rbs.type0(),
+                                                      {0, cell_cfg.nof_dl_prbs},
+                                                      get_nominal_rbg_size(cell_cfg.nof_dl_prbs, true))
+                                     .count();
     } else if (dl_grant.pdsch_cfg.rbs.is_type1()) {
-      u.data.tot_dl_prbs_used += full_dl_slot ? (dl_grant.pdsch_cfg.rbs.type1().length()) : 0;
+      u.data.tot_dl_prbs_used += (dl_grant.pdsch_cfg.rbs.type1().length());
     }
     u.last_dl_olla = dl_grant.context.olla_offset;
   }
@@ -298,14 +293,12 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
       continue;
     }
     if (ul_grant.pusch_cfg.rbs.is_type0()) {
-      ues[it->second].data.tot_ul_prbs_used +=
-          full_ul_slot ? convert_rbgs_to_prbs(ul_grant.pusch_cfg.rbs.type0(),
-                                              {0, cell_cfg.nof_dl_prbs},
-                                              get_nominal_rbg_size(cell_cfg.nof_dl_prbs, true))
-                             .count()
-                       : 0;
+      ues[it->second].data.tot_ul_prbs_used += convert_rbgs_to_prbs(ul_grant.pusch_cfg.rbs.type0(),
+                                                                    {0, cell_cfg.nof_dl_prbs},
+                                                                    get_nominal_rbg_size(cell_cfg.nof_dl_prbs, true))
+                                                   .count();
     } else if (ul_grant.pusch_cfg.rbs.is_type1()) {
-      ues[it->second].data.tot_ul_prbs_used += full_ul_slot ? (ul_grant.pusch_cfg.rbs.type1().length()) : 0;
+      ues[it->second].data.tot_ul_prbs_used += (ul_grant.pusch_cfg.rbs.type1().length());
     }
     ue_metric_context& u = ues[it->second];
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();
@@ -313,8 +306,9 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     u.data.nof_puschs++;
   }
 
-  nof_dl_slots += full_dl_slot;
-  nof_ul_slots += full_ul_slot;
+  // Count only full DL/UL slots.
+  nof_dl_slots += (slot_result.dl.nof_dl_symbols > 0);
+  nof_ul_slots += (slot_result.ul.nof_ul_symbols == 14); // Note: PUSCH in special slot not supported.;
 
   // Process latency.
   decision_latency_sum += slot_decision_latency;
