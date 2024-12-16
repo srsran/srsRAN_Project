@@ -57,7 +57,7 @@ struct ul_sched_result {
 /// Scheduler decision made for DL and UL in a given slot.
 struct sched_result {
   /// Whether the scheduling for the given slot was successful.
-  bool            success;
+  bool success;
   /// DL allocations for the given slot.
   dl_sched_result dl;
   /// UL allocations for the given slot.
