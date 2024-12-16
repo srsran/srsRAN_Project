@@ -27,7 +27,6 @@ struct scheduler_ue_metrics {
   rnti_t               rnti;
   sch_mcs_index        dl_mcs;
   unsigned             tot_dl_prbs_used;
-  double               mean_dl_prbs_used;
   double               dl_brate_kbps;
   unsigned             dl_nof_ok;
   unsigned             dl_nof_nok;
@@ -36,7 +35,6 @@ struct scheduler_ue_metrics {
   float                pucch_snr_db;
   sch_mcs_index        ul_mcs;
   unsigned             tot_ul_prbs_used;
-  double               mean_ul_prbs_used;
   double               ul_brate_kbps;
   double               ul_delay_ms;
   unsigned             ul_nof_ok;

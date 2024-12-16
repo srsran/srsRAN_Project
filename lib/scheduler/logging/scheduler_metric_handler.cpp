@@ -231,12 +231,7 @@ void cell_metrics_handler::report_metrics()
 {
   for (ue_metric_context& ue : ues) {
     // Compute statistics of the UE metrics and push the result to the report.
-    scheduler_ue_metrics sched_ue_metrics = ue.compute_report(report_period, nof_slots_per_sf);
-    sched_ue_metrics.mean_dl_prbs_used =
-        nof_dl_slots > 0 ? static_cast<double>(1.0 * sched_ue_metrics.tot_dl_prbs_used / nof_dl_slots) : 0;
-    sched_ue_metrics.mean_ul_prbs_used =
-        nof_ul_slots > 0 ? static_cast<double>(1.0 * sched_ue_metrics.tot_ul_prbs_used / nof_ul_slots) : 0;
-    next_report.ue_metrics.push_back(sched_ue_metrics);
+    next_report.ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
   }
 
   next_report.nof_error_indications    = error_indication_counter;
