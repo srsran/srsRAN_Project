@@ -46,7 +46,7 @@ struct metrics_appconfig {
 struct du_appconfig {
   /// Default constructor to update the log filename.
   du_appconfig() { log_cfg.filename = "/tmp/du.log"; }
-  /// DU multicell flag.
+  /// DU multicell flag. This flag set to false is a deprecated feature.
   bool du_multicell_enabled = true;
   /// Loggers configuration.
   logger_appconfig log_cfg;
