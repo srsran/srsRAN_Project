@@ -26,11 +26,13 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
                                              const cell_configuration&         cell_cfg_,
                                              pdcch_resource_allocator&         pdcch_sch_,
                                              pucch_allocator&                  pucch_alloc_,
+                                             uci_allocator&                    uci_alloc_,
                                              ue_repository&                    ues_) :
   expert_cfg(expert_cfg_),
   cell_cfg(cell_cfg_),
   pdcch_sch(pdcch_sch_),
   pucch_alloc(pucch_alloc_),
+  uci_alloc(uci_alloc_),
   ues(ues_),
   initial_active_dl_bwp(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params),
   ss_cfg(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common
@@ -413,6 +415,7 @@ static std::pair<std::optional<unsigned>, std::optional<uint8_t>>
 allocate_ue_fallback_pucch(ue&                         u,
                            cell_resource_allocator&    res_alloc,
                            pucch_allocator&            pucch_alloc,
+                           uci_allocator&              uci_alloc,
                            const pdcch_dl_information& pdcch_info,
                            span<const uint8_t>         k1_values,
                            slot_point                  pdsch_slot,
@@ -420,7 +423,18 @@ allocate_ue_fallback_pucch(ue&                         u,
                            bool                        common_alloc,
                            bool                        ded_alloc)
 {
+  srsran_assert(ded_alloc or common_alloc, "Invalid params passed to this function");
   const unsigned pdsch_delay = pdsch_slot - res_alloc.slot_tx();
+
+  if (not common_alloc and ded_alloc) {
+    // UE dedicated-only PUCCH allocation.
+    std::optional<uci_allocation> uci =
+        uci_alloc.alloc_uci_harq_ue(res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_values);
+    if (uci.has_value()) {
+      return std::make_pair(uci.value().pucch_res_indicator, uci.value().k1);
+    }
+    return std::make_pair(std::nullopt, std::nullopt);
+  }
 
   std::optional<uint8_t> last_valid_k1;
   for (uint8_t k1_candidate : k1_values) {
@@ -439,13 +453,9 @@ allocate_ue_fallback_pucch(ue&                         u,
     if (common_alloc and ded_alloc) {
       pucch_res_indicator = pucch_alloc.alloc_common_and_ded_harq_res(
           res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_candidate, pdcch_info);
-    } else if (common_alloc) {
+    } else {
       pucch_res_indicator =
           pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_delay, k1_candidate, pdcch_info);
-    } else {
-      srsran_assert(ded_alloc, "Invalid params passed to this function");
-      pucch_res_indicator =
-          pucch_alloc.alloc_ded_pucch_harq_ack_ue(res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_candidate);
     }
     if (pucch_res_indicator.has_value()) {
       return std::make_pair(*pucch_res_indicator, k1_candidate);
@@ -598,6 +608,7 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   auto [pucch_res_indicator, chosen_k1] = allocate_ue_fallback_pucch(u,
                                                                      res_alloc,
                                                                      pucch_alloc,
+                                                                     uci_alloc,
                                                                      *pdcch,
                                                                      dci_1_0_k1_values,
                                                                      pdsch_alloc.slot,

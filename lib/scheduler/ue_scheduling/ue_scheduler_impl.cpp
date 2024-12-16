@@ -250,7 +250,12 @@ ue_scheduler_impl::cell::cell(const scheduler_ue_expert_config& expert_cfg,
              cell_harq_manager::DEFAULT_ACK_TIMEOUT_SLOTS,
              params.cell_res_alloc->cfg.ntn_cs_koffset),
   uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, ues),
-  fallback_sched(expert_cfg, params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_alloc, ues),
+  fallback_sched(expert_cfg,
+                 params.cell_res_alloc->cfg,
+                 *params.pdcch_sched,
+                 *params.pucch_alloc,
+                 *params.uci_alloc,
+                 ues),
   slice_sched(params.cell_res_alloc->cfg, ues),
   srs_sched(params.cell_res_alloc->cfg, ues)
 {

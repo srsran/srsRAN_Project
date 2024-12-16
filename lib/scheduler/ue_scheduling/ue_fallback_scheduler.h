@@ -24,8 +24,10 @@ public:
   explicit ue_fallback_scheduler(const scheduler_ue_expert_config& expert_cfg_,
                                  const cell_configuration&         cell_cfg_,
                                  pdcch_resource_allocator&         pdcch_sch_,
-                                 pucch_allocator&                  pucch_alloc_,
-                                 ue_repository&                    ues_);
+                                 // TODO: Remove and depend only on pucch_alloc
+                                 pucch_allocator& pucch_alloc_,
+                                 uci_allocator&   uci_alloc_,
+                                 ue_repository&   ues_);
 
   /// Handles DL buffer state reported by upper layers.
   /// \param[in] ue_index UE's DU Index for which SRB0 message needs to be scheduled.
@@ -195,6 +197,7 @@ private:
   unsigned                  sched_attempts_cnt = 0;
   pdcch_resource_allocator& pdcch_sch;
   pucch_allocator&          pucch_alloc;
+  uci_allocator&            uci_alloc;
   ue_repository&            ues;
 
   bwp_configuration initial_active_dl_bwp;

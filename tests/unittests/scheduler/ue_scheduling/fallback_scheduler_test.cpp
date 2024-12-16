@@ -97,7 +97,7 @@ struct test_bench {
     builder_params{builder_params_},
     cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req); }()},
     ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED", true)),
-    fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, ue_db),
+    fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, uci_alloc, ue_db),
     csi_rs_sched(cell_cfg)
   {
     srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
