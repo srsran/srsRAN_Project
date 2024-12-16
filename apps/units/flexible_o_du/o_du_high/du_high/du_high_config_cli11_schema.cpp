@@ -250,8 +250,12 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
       app,
       "--mcs_table",
       [&pdsch_params](const std::string& value) {
-        if (value == "qam256") {
+        if (value == "qam64") {
+          pdsch_params.mcs_table = pdsch_mcs_table::qam64;
+        } else if (value == "qam256") {
           pdsch_params.mcs_table = pdsch_mcs_table::qam256;
+        } else {
+          report_fatal_error("PDSCH mcs_table={} not in {{qam64,qam256}}.", value);
         }
       },
       "MCS table to use PDSCH")
@@ -653,8 +657,12 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
       app,
       "--mcs_table",
       [&pusch_params](const std::string& value) {
-        if (value == "qam256") {
+        if (value == "qam64") {
+          pusch_params.mcs_table = pusch_mcs_table::qam64;
+        } else if (value == "qam256") {
           pusch_params.mcs_table = pusch_mcs_table::qam256;
+        } else {
+          report_fatal_error("PUSCH mcs_table={} not in {{qam64,qam256}}.", value);
         }
       },
       "MCS table to use PUSCH")
