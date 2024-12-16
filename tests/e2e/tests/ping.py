@@ -193,17 +193,17 @@ def test_android_hp(
 @mark.parametrize(
     "band, common_scs, bandwidth",
     (
-        param(7, 15, 20, id="band:%s-scs:%s-bandwidth:%s"),
-        param(78, 30, 90, id="band:%s-scs:%s-bandwidth:%s"),
+        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
     ),
 )
-@mark.android_hp_drx
+@mark.android_drx
 @mark.flaky(
     reruns=2,
     only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments
-def test_android_hp_drx(
+def test_android_drx(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
     ue: UEStub,  # pylint: disable=invalid-name

@@ -477,8 +477,8 @@ android x300 drx:
   allow_failure: true
   variables:
     GROUP: "rf"
-    TESTBED: "android_x300"
-    MARKERS: "android_hp_drx"
+    TESTBED: "android_b200"
+    MARKERS: "android_drx"
     E2E_LOG_LEVEL: "info"
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
