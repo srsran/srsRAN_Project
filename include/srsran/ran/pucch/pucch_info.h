@@ -132,20 +132,8 @@ unsigned get_pucch_format2_max_nof_prbs(unsigned nof_payload_bits, unsigned nof_
 ///                              \c PUCCH-FormatConfig, TS 38.331.
 /// \return The number of PRBs for the PUCCH format 2 resource. Note that the returned number of PRBs might not be
 /// enough to allocate the payload size; it's the caller's responsibility to perform this check.
-inline unsigned
-get_pucch_format2_nof_prbs(unsigned nof_payload_bits, unsigned max_nof_prbs, unsigned nof_symbols, float max_code_rate)
-{
-  if (nof_payload_bits == 0 or nof_symbols == 0) {
-    return 0;
-  }
-  if (max_nof_prbs == 1) {
-    return 1;
-  }
-
-  const unsigned estimated_nof_prbs = get_pucch_format2_max_nof_prbs(nof_payload_bits, nof_symbols, max_code_rate);
-
-  return std::min(estimated_nof_prbs, max_nof_prbs);
-}
+unsigned
+get_pucch_format2_nof_prbs(unsigned nof_payload_bits, unsigned max_nof_prbs, unsigned nof_symbols, float max_code_rate);
 
 /// \brief Calculates the maximum payload for a PUCCH Format 2 transmission.
 /// \param[in] max_nof_prbs  Transmission bandwidth in PRBs.
@@ -210,26 +198,13 @@ unsigned get_pucch_format3_max_nof_prbs(unsigned                         nof_pay
 /// \param[in] pi2_bpsk               Flag indicating if pi/2-BPSK modulation is used.
 /// \return The number of PRBs for the PUCCH format 3 resource. Note that the returned number of PRBs might not be
 /// enough to allocate the payload size; it's the caller's responsibility to perform this check.
-inline unsigned get_pucch_format3_nof_prbs(unsigned nof_payload_bits,
-                                           unsigned max_nof_prbs,
-                                           unsigned nof_symbols,
-                                           float    max_code_rate,
-                                           bool     intraslot_freq_hopping,
-                                           bool     additional_dmrs,
-                                           bool     pi2_bpsk)
-{
-  if (nof_payload_bits == 0 or nof_symbols == 0) {
-    return 0;
-  }
-  if (max_nof_prbs == 1) {
-    return 1;
-  }
-
-  const unsigned estimated_nof_prbs = get_pucch_format3_max_nof_prbs(
-      nof_payload_bits, nof_symbols, max_code_rate, intraslot_freq_hopping, additional_dmrs, pi2_bpsk);
-
-  return std::min(estimated_nof_prbs, max_nof_prbs);
-}
+unsigned get_pucch_format3_nof_prbs(unsigned nof_payload_bits,
+                                    unsigned max_nof_prbs,
+                                    unsigned nof_symbols,
+                                    float    max_code_rate,
+                                    bool     intraslot_freq_hopping,
+                                    bool     additional_dmrs,
+                                    bool     pi2_bpsk);
 
 /// \brief Calculates the maximum payload for a PUCCH Format 3 transmission.
 /// \param[in] max_nof_prbs           Transmission bandwidth in PRBs.

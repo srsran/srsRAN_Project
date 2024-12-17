@@ -36,6 +36,23 @@ unsigned srsran::get_pucch_format2_max_nof_prbs(unsigned nof_payload_bits, unsig
       (static_cast<float>(pucch_constants::FORMAT2_NOF_DATA_SC * nof_symbols * nof_bits_qpsk_symbol) * max_code_rate)));
 }
 
+unsigned srsran::get_pucch_format2_nof_prbs(unsigned nof_payload_bits,
+                                            unsigned max_nof_prbs,
+                                            unsigned nof_symbols,
+                                            float    max_code_rate)
+{
+  if (nof_payload_bits == 0 or nof_symbols == 0) {
+    return 0;
+  }
+  if (max_nof_prbs == 1) {
+    return 1;
+  }
+
+  const unsigned estimated_nof_prbs = get_pucch_format2_max_nof_prbs(nof_payload_bits, nof_symbols, max_code_rate);
+
+  return std::min(estimated_nof_prbs, max_nof_prbs);
+}
+
 unsigned srsran::get_pucch_format2_max_payload(unsigned max_nof_prbs, unsigned nof_symbols, float max_code_rate)
 {
   constexpr unsigned nof_bits_qpsk_symbol = 2;
@@ -138,6 +155,27 @@ unsigned srsran::get_pucch_format3_max_nof_prbs(unsigned                        
     payload_plus_crc_bits = nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, e_uci);
   }
   return nof_prbs;
+}
+
+unsigned srsran::get_pucch_format3_nof_prbs(unsigned nof_payload_bits,
+                                            unsigned max_nof_prbs,
+                                            unsigned nof_symbols,
+                                            float    max_code_rate,
+                                            bool     intraslot_freq_hopping,
+                                            bool     additional_dmrs,
+                                            bool     pi2_bpsk)
+{
+  if (nof_payload_bits == 0 or nof_symbols == 0) {
+    return 0;
+  }
+  if (max_nof_prbs == 1) {
+    return 1;
+  }
+
+  const unsigned estimated_nof_prbs = get_pucch_format3_max_nof_prbs(
+      nof_payload_bits, nof_symbols, max_code_rate, intraslot_freq_hopping, additional_dmrs, pi2_bpsk);
+
+  return std::min(estimated_nof_prbs, max_nof_prbs);
 }
 
 unsigned srsran::get_pucch_format3_max_payload(unsigned max_nof_prbs,
