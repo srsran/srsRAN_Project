@@ -345,7 +345,7 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
 
 scheduler_ue_metrics
 cell_metrics_handler::ue_metric_context::compute_report(std::chrono::milliseconds metric_report_period,
-                                                        unsigned                  nof_slots_per_sf)
+                                                        unsigned                  slots_per_sf)
 {
   scheduler_ue_metrics ret{};
   ret.pci              = pci;
@@ -383,7 +383,7 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.srs_ta_stats   = data.srs_ta;
   ret.last_phr       = last_phr;
   ret.mean_ce_delay_msec =
-      data.nof_ul_ces > 0 ? (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * nof_slots_per_sf)) : 0;
+      data.nof_ul_ces > 0 ? (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * slots_per_sf)) : 0;
 
   // Reset UE stats metrics on every report.
   reset();
