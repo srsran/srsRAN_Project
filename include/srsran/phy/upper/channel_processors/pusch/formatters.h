@@ -16,6 +16,7 @@
 #include "srsran/phy/upper/channel_state_information_formatters.h"
 #include "srsran/ran/pusch/pusch_context_formatter.h"
 #include "srsran/ran/uci/uci_formatters.h"
+#include <fmt/std.h>
 
 namespace srsran {
 namespace detail {

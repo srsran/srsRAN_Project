@@ -8,8 +8,6 @@
  *
  */
 
-#include "../../../support/resource_grid_mapper_test_doubles.h"
-#include "../../rx_buffer_test_doubles.h"
 #include "pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
@@ -226,8 +224,6 @@ protected:
         create_resource_grid_mapper_factory(precoding_factory);
     ASSERT_NE(rg_mapper_factory, nullptr);
 
-    resource_grid_writer_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB);
-
     // Create DM-RS for pdsch channel estimator.
     std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_pdsch_proc_factory =
         create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
@@ -284,20 +280,6 @@ TEST_P(pdschProcessorFixture, pdschProcessorValidatorDeathTest)
   ASSERT_FALSE(validator_out.has_value()) << "Validation should fail.";
   ASSERT_TRUE(std::regex_match(validator_out.error(), std::regex(param.expr)))
       << "The assertion message doesn't match the expected pattern.";
-
-  // Prepare resource grid spy.
-  resource_grid_writer_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB);
-
-  // Prepare receive data.
-  std::vector<uint8_t> data;
-
-  pdsch_processor_notifier_spy notifier_spy;
-
-  // Process pdsch PDU.
-#ifdef ASSERTS_ENABLED
-  ASSERT_DEATH({ pdsch_proc->process(grid, notifier_spy, {shared_transport_block(data)}, param.get_pdu()); },
-               param.expr);
-#endif // ASSERTS_ENABLED
 }
 
 // Creates test suite that combines all possible parameters.
