@@ -185,7 +185,7 @@ struct du_high_unit_pusch_config {
   /// Maximum rank. Limits the number of layers for PUSCH transmissions.
   unsigned max_rank = 4;
   /// MCS table to use for PUSCH
-  pusch_mcs_table mcs_table = pusch_mcs_table::qam64;
+  pusch_mcs_table mcs_table = pusch_mcs_table::qam256;
   /// \c msg3-DeltaPreamble, TS 38.331. Values: {-1,...,6}.
   int msg3_delta_preamble = 6;
   /// \c p0-NominalWithGrant, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.

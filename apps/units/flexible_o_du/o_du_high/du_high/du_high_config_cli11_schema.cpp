@@ -666,7 +666,7 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
         }
       },
       "MCS table to use PUSCH")
-      ->default_str("qam64")
+      ->default_str("qam256")
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
   add_option(app,
              "--max_rank",
