@@ -329,6 +329,7 @@ TEST_F(rb_ratio_slice_scheduler_test,
   run_slot();
 
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
+  ASSERT_TRUE(next_dl_slice.has_value());
   // Default SRB slice has very high priority. We ignore it as candidate for this test.
   if (next_dl_slice->id() == default_srb_slice_id) {
     next_dl_slice = slice_sched.get_next_dl_candidate();
@@ -340,9 +341,6 @@ TEST_F(rb_ratio_slice_scheduler_test,
 
   // No more slices to schedule.
   next_dl_slice = slice_sched.get_next_dl_candidate();
-  if (next_dl_slice->id() == default_srb_slice_id) {
-    next_dl_slice = slice_sched.get_next_dl_candidate();
-  }
   ASSERT_FALSE(next_dl_slice.has_value());
 }
 
