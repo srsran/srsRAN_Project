@@ -411,17 +411,16 @@ static dci_dl_rnti_config_type get_dci_type(const ue& u, const std::optional<dl_
 }
 
 // Helper to allocate common (and optionally dedicated) PUCCH.
-static std::pair<std::optional<unsigned>, std::optional<uint8_t>>
-allocate_ue_fallback_pucch(ue&                         u,
-                           cell_resource_allocator&    res_alloc,
-                           pucch_allocator&            pucch_alloc,
-                           uci_allocator&              uci_alloc,
-                           const pdcch_dl_information& pdcch_info,
-                           span<const uint8_t>         k1_values,
-                           slot_point                  pdsch_slot,
-                           slot_point                  min_ack_slot,
-                           bool                        common_alloc,
-                           bool                        ded_alloc)
+static std::optional<uci_allocation> allocate_ue_fallback_pucch(ue&                         u,
+                                                                cell_resource_allocator&    res_alloc,
+                                                                pucch_allocator&            pucch_alloc,
+                                                                uci_allocator&              uci_alloc,
+                                                                const pdcch_dl_information& pdcch_info,
+                                                                span<const uint8_t>         k1_values,
+                                                                slot_point                  pdsch_slot,
+                                                                slot_point                  min_ack_slot,
+                                                                bool                        common_alloc,
+                                                                bool                        ded_alloc)
 {
   srsran_assert(ded_alloc or common_alloc, "Invalid params passed to this function");
   const unsigned pdsch_delay = pdsch_slot - res_alloc.slot_tx();
@@ -430,10 +429,7 @@ allocate_ue_fallback_pucch(ue&                         u,
     // UE dedicated-only PUCCH allocation.
     std::optional<uci_allocation> uci =
         uci_alloc.alloc_uci_harq_ue(res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_values);
-    if (uci.has_value()) {
-      return std::make_pair(uci.value().pucch_res_indicator, uci.value().k1);
-    }
-    return std::make_pair(std::nullopt, std::nullopt);
+    return uci;
   }
 
   std::optional<uint8_t> last_valid_k1;
@@ -450,7 +446,7 @@ allocate_ue_fallback_pucch(ue&                         u,
     last_valid_k1 = k1_candidate;
 
     std::optional<unsigned> pucch_res_indicator;
-    if (common_alloc and ded_alloc) {
+    if (ded_alloc) {
       pucch_res_indicator = pucch_alloc.alloc_common_and_ded_harq_res(
           res_alloc, u.crnti, u.get_pcell().cfg(), pdsch_delay, k1_candidate, pdcch_info);
     } else {
@@ -458,10 +454,13 @@ allocate_ue_fallback_pucch(ue&                         u,
           pucch_alloc.alloc_common_pucch_harq_ack_ue(res_alloc, u.crnti, pdsch_delay, k1_candidate, pdcch_info);
     }
     if (pucch_res_indicator.has_value()) {
-      return std::make_pair(*pucch_res_indicator, k1_candidate);
+      return uci_allocation{k1_candidate, 0, pucch_res_indicator};
     }
   }
-  return std::make_pair(std::nullopt, last_valid_k1);
+  if (last_valid_k1.has_value()) {
+    return uci_allocation{last_valid_k1.value(), 0, std::nullopt};
+  }
+  return std::nullopt;
 }
 
 std::optional<dl_harq_process_handle>
@@ -605,18 +604,18 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   // don't use the PUCCH ded. resources.
   const bool use_common    = not u.is_reconfig_ongoing();
   const bool use_dedicated = u.is_reconfig_ongoing() or (u.ue_cfg_dedicated()->is_ue_cfg_complete() and is_retx);
-  auto [pucch_res_indicator, chosen_k1] = allocate_ue_fallback_pucch(u,
-                                                                     res_alloc,
-                                                                     pucch_alloc,
-                                                                     uci_alloc,
-                                                                     *pdcch,
-                                                                     dci_1_0_k1_values,
-                                                                     pdsch_alloc.slot,
-                                                                     most_recent_ack_slot,
-                                                                     use_common,
-                                                                     use_dedicated);
-  if (not pucch_res_indicator.has_value()) {
-    if (chosen_k1.has_value()) {
+  std::optional<uci_allocation> uci = allocate_ue_fallback_pucch(u,
+                                                                 res_alloc,
+                                                                 pucch_alloc,
+                                                                 uci_alloc,
+                                                                 *pdcch,
+                                                                 dci_1_0_k1_values,
+                                                                 pdsch_alloc.slot,
+                                                                 most_recent_ack_slot,
+                                                                 use_common,
+                                                                 use_dedicated);
+  if (not uci.has_value() or not uci.value().pucch_res_indicator.has_value()) {
+    if (uci.has_value() and not uci.value().pucch_res_indicator.has_value()) {
       // Note: Only log if there was at least one valid k1 candidate for this PDSCH slot.
       logger.debug("rnti={}: Failed to allocate fallback PDSCH for slot={}. Cause: No space in PUCCH",
                    u.crnti,
@@ -639,9 +638,8 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
                            *pdcch,
                            dci_type,
                            pdsch_alloc.result.dl.ue_grants.emplace_back(),
-                           pucch_res_indicator.value(),
+                           uci.value(),
                            pdsch_time_res,
-                           chosen_k1.value(),
                            mcs_idx,
                            ue_grant_crbs,
                            pdsch_cfg,
@@ -747,23 +745,20 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
                                                                 pdcch_dl_information&                 pdcch,
                                                                 dci_dl_rnti_config_type               dci_type,
                                                                 dl_msg_alloc&                         msg,
-                                                                unsigned                   pucch_res_indicator,
-                                                                unsigned                   pdsch_time_res,
-                                                                unsigned                   k1,
-                                                                sch_mcs_index              mcs_idx,
-                                                                const crb_interval&        ue_grant_crbs,
-                                                                const pdsch_config_params& pdsch_params,
-                                                                unsigned                   tbs_bytes,
-                                                                bool                       is_retx)
+                                                                const uci_allocation&                 uci,
+                                                                unsigned                              pdsch_time_res,
+                                                                sch_mcs_index                         mcs_idx,
+                                                                const crb_interval&                   ue_grant_crbs,
+                                                                const pdsch_config_params&            pdsch_params,
+                                                                unsigned                              tbs_bytes,
+                                                                bool                                  is_retx)
 {
   // Allocate DL HARQ.
   // NOTE: We do not multiplex the SRB1 PUCCH with existing PUCCH HARQs, thus both DAI and HARQ-ACK bit index are 0.
-  static constexpr uint8_t srb_dai = 0;
   if (not is_retx) {
-    h_dl = u.get_pcell().harqs.alloc_dl_harq(pdsch_slot, k1, expert_cfg.max_nof_harq_retxs, srb_dai);
+    h_dl = u.get_pcell().harqs.alloc_dl_harq(pdsch_slot, uci.k1, expert_cfg.max_nof_harq_retxs, uci.harq_bit_idx);
   } else {
-    const unsigned harq_bit_idx = 0U;
-    bool           result       = h_dl->new_retx(pdsch_slot, k1, harq_bit_idx);
+    bool result = h_dl->new_retx(pdsch_slot, uci.k1, uci.harq_bit_idx);
     srsran_sanity_check(result, "Unable to allocate HARQ retx");
   }
 
@@ -775,22 +770,23 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
                              cell_cfg.dl_cfg_common.init_dl_bwp,
                              ue_grant_crbs,
                              pdsch_time_res,
-                             k1,
-                             pucch_res_indicator,
+                             uci.k1,
+                             uci.pucch_res_indicator.value(),
                              mcs_idx,
                              msg4_rv,
                              *h_dl);
       break;
     }
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
+      const unsigned DAI_MOD = 4U;
       build_dci_f1_0_c_rnti(pdcch.dci,
                             u.get_pcell().cfg().search_space(pdcch.ctx.context.ss_id),
                             cell_cfg.dl_cfg_common.init_dl_bwp,
                             ue_grant_crbs,
                             pdsch_time_res,
-                            k1,
-                            pucch_res_indicator,
-                            srb_dai,
+                            uci.k1,
+                            uci.pucch_res_indicator.value(),
+                            uci.harq_bit_idx % DAI_MOD,
                             mcs_idx,
                             msg4_rv,
                             *h_dl);
@@ -803,7 +799,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
 
   // Fill PDSCH PDU.
   msg.context.ue_index    = u.ue_index;
-  msg.context.k1          = k1;
+  msg.context.k1          = uci.k1;
   msg.context.ss_id       = pdcch.ctx.context.ss_id;
   msg.context.nof_retxs   = h_dl->nof_retxs();
   msg.context.olla_offset = 0;
