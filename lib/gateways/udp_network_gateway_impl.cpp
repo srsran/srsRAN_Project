@@ -32,7 +32,10 @@ udp_network_gateway_impl::udp_network_gateway_impl(udp_network_gateway_config   
   io_tx_executor(io_tx_executor_),
   io_rx_executor(io_rx_executor_)
 {
-  logger.info("UDP GW configured. rx_max_mmsg={} pool_thres={}", config.rx_max_mmsg, config.pool_occupancy_threshold);
+  logger.info("UDP GW configured. rx_max_mmsg={} pool_thres={} ext_bind_addr={}",
+              config.rx_max_mmsg,
+              config.pool_occupancy_threshold,
+              config.ext_bind_addr);
 }
 
 bool udp_network_gateway_impl::subscribe_to(io_broker& broker)
@@ -329,6 +332,11 @@ bool udp_network_gateway_impl::get_bind_address(std::string& ip_address) const
     return false;
   }
 
+  if (config.ext_bind_addr != "" and config.ext_bind_addr != "auto") {
+    ip_address = config.ext_bind_addr;
+    return true;
+  }
+
   sockaddr_storage gw_addr_storage = {};
   sockaddr*        gw_addr         = (sockaddr*)&gw_addr_storage;
   socklen_t        gw_addr_len     = sizeof(gw_addr_storage);
@@ -354,8 +362,8 @@ bool udp_network_gateway_impl::get_bind_address(std::string& ip_address) const
     logger.error("Unhandled address family in UDP network gateway with sock_fd={}", sock_fd.value());
     return false;
   }
-
   ip_address = addr_str;
+
   logger.debug("Read bind address of UDP network gateway: {}", ip_address);
   return true;
 }

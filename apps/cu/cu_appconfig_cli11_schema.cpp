@@ -30,8 +30,6 @@ static void configure_cli11_f1u_socket_args(CLI::App& app, srs_cu::cu_f1u_socket
              f1u_cfg.bind_addr,
              "Default local IP address interfaces bind to, unless a specific bind address is specified")
       ->check(CLI::ValidIPV4);
-  app.add_option(
-      "--ext_addr", f1u_cfg.ext_addr, "External IP address that is advertised to receive F1-U packets from the DU");
 
   configure_cli11_with_udp_config_schema(app, f1u_cfg.udp_config);
 }
@@ -53,7 +51,7 @@ static void configure_cli11_f1u_args(CLI::App& app, srs_cu::cu_f1u_appconfig& f1
       subapp.parse_from_stream(ss);
     }
   };
-  add_option_cell(app, "--socket", sock_lambda, "Configures UDP/IP socket parameters of the N3 interface");
+  add_option_cell(app, "--socket", sock_lambda, "Configures UDP/IP socket parameters of the F1-U interface");
 }
 
 void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_cfg)

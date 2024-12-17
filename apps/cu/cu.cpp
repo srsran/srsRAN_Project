@@ -289,6 +289,7 @@ int main(int argc, char** argv)
   for (const srs_cu::cu_f1u_socket_appconfig& sock_cfg : cu_cfg.f1u_cfg.f1u_socket_cfg) {
     udp_network_gateway_config cu_f1u_gw_config = {};
     cu_f1u_gw_config.bind_address               = sock_cfg.bind_addr;
+    cu_f1u_gw_config.ext_bind_addr              = sock_cfg.udp_config.ext_addr;
     cu_f1u_gw_config.bind_port                  = GTPU_PORT;
     cu_f1u_gw_config.reuse_addr                 = false;
     cu_f1u_gw_config.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;

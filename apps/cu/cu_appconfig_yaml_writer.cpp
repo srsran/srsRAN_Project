@@ -31,7 +31,7 @@ static void fill_cu_appconfig_f1ap_section(YAML::Node node, const srs_cu::cu_f1a
 static void fill_cu_up_f1u_socket_entry(YAML::Node& node, const srsran::srs_cu::cu_f1u_socket_appconfig& config)
 {
   node["bind_addr"] = config.bind_addr;
-  node["ext_addr"]  = config.ext_addr;
+  node["ext_addr"]  = config.udp_config.ext_addr;
   fill_udp_config_in_yaml_schema(node["udp"], config.udp_config);
 }
 

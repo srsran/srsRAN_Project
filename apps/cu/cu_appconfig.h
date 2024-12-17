@@ -22,7 +22,6 @@ namespace srs_cu {
 /// F1-U sockets configuration
 struct cu_f1u_socket_appconfig {
   std::string   bind_addr = "127.0.10.1"; // Bind address used by the F1-U interface
-  std::string   ext_addr  = "auto";       // External address advertised by the F1-U interface
   udp_appconfig udp_config;
 };
 
@@ -47,7 +46,7 @@ struct cu_appconfig {
   logger_appconfig log_cfg;
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
-  /// NR-U
+  /// F1-U
   srs_cu::cu_f1u_appconfig f1u_cfg;
   /// F1AP
   srs_cu::cu_f1ap_appconfig f1ap_cfg;
