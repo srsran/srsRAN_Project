@@ -47,7 +47,7 @@ public:
 
   void push_pdu(const mac_nr_context_info& context, byte_buffer pdu) override;
 
-  void handle_signal(int signal) override { close(); }
+  void handle_signal(int signal) override { flush(); }
 
 private:
   srslog::basic_logger& logger;

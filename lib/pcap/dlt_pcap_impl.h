@@ -42,7 +42,7 @@ public:
 
   void push_pdu(const_span<uint8_t> pdu) override;
 
-  void handle_signal(int signal) override { close(); }
+  void handle_signal(int signal) override { flush(); }
 
 private:
   srslog::basic_logger& logger;

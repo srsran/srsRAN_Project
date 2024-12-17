@@ -38,7 +38,7 @@ public:
 
   void push_pdu(const pcap_rlc_pdu_context& context, const byte_buffer_slice& pdu) override;
 
-  void handle_signal(int signal) override { close(); }
+  void handle_signal(int signal) override { flush(); }
 
 private:
   srslog::basic_logger& logger;
