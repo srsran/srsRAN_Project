@@ -15,7 +15,6 @@
 #include "srsran/du/o_du.h"
 #include "srsran/ru/ru_adapters.h"
 #include <memory>
-#include <vector>
 
 namespace srsran {
 
@@ -23,7 +22,7 @@ class radio_unit;
 
 /// \brief Flexible O-RAN DU implementation.
 ///
-/// The O-RAN DU manages only one cell. To achieve multicell, one O-RAN DU is created per cell.
+/// One O-RAN DU can handle more than one cell.
 class flexible_o_du_impl : public srs_du::du, public du_power_controller
 {
 public:
@@ -38,11 +37,11 @@ public:
   // See interface for documentation.
   void stop() override;
 
-  /// Adds the given RU to this dynamic DU.
+  /// Adds the given RU to this flexible O-RAN DU.
   void add_ru(std::unique_ptr<radio_unit> active_ru);
 
-  /// Adds the given DUs to this dynamic DU.
-  void add_o_dus(std::vector<std::unique_ptr<srs_du::o_du>> active_o_du);
+  /// Adds the given DU to this flexible O-RAN DU.
+  void add_du(std::unique_ptr<srs_du::o_du> active_du);
 
   /// Getters to the adaptors.
   upper_phy_ru_ul_adapter&         get_upper_ru_ul_adapter() { return ru_ul_adapt; }
@@ -52,13 +51,13 @@ public:
   upper_phy_ru_ul_request_adapter& get_upper_ru_ul_request_adapter() { return ru_ul_request_adapt; }
 
 private:
-  upper_phy_ru_ul_adapter                    ru_ul_adapt;
-  upper_phy_ru_timing_adapter                ru_timing_adapt;
-  upper_phy_ru_error_adapter                 ru_error_adapt;
-  std::vector<std::unique_ptr<srs_du::o_du>> du_list;
-  std::unique_ptr<radio_unit>                ru;
-  upper_phy_ru_dl_rg_adapter                 ru_dl_rg_adapt;
-  upper_phy_ru_ul_request_adapter            ru_ul_request_adapt;
+  upper_phy_ru_ul_adapter         ru_ul_adapt;
+  upper_phy_ru_timing_adapter     ru_timing_adapt;
+  upper_phy_ru_error_adapter      ru_error_adapt;
+  std::unique_ptr<srs_du::o_du>   du;
+  std::unique_ptr<radio_unit>     ru;
+  upper_phy_ru_dl_rg_adapter      ru_dl_rg_adapt;
+  upper_phy_ru_ul_request_adapter ru_ul_request_adapt;
 };
 
 } // namespace srsran

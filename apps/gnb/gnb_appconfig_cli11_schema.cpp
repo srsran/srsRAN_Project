@@ -43,13 +43,6 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
       ->check(CLI::Range(22, 32));
   add_option(app, "--ran_node_name", gnb_cfg.ran_node_name, "RAN node name")->capture_default_str();
 
-  add_option(app,
-             "--du_multicell_enabled",
-             gnb_parsed_cfg.du_multicell_enabled,
-             "DU multicell enabled flag. The support for the value 'false' is deprecated and will be removed in future "
-             "releases")
-      ->capture_default_str();
-
   // Loggers section.
   configure_cli11_with_logger_appconfig_schema(app, gnb_cfg.log_cfg);
 

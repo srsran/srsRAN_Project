@@ -9,14 +9,12 @@
  */
 
 #include "dynamic_o_du_application_unit_impl.h"
-#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "dynamic_o_du_factory.h"
 #include "dynamic_o_du_translators.h"
 #include "dynamic_o_du_unit_cli11_schema.h"
 #include "dynamic_o_du_unit_config_validator.h"
 #include "dynamic_o_du_unit_config_yaml_writer.h"
 #include "dynamic_o_du_unit_logger_registrator.h"
-#include "multicell_dynamic_o_du_factory.h"
 
 using namespace srsran;
 
@@ -50,11 +48,9 @@ void dynamic_o_du_application_unit_impl::on_parsing_configuration_registration(C
   configure_cli11_with_dynamic_o_du_unit_config_schema(app, unit_cfg);
 }
 
-o_du_unit dynamic_o_du_application_unit_impl::create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies,
-                                                                        bool                          use_multicell)
+o_du_unit dynamic_o_du_application_unit_impl::create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies)
 {
-  return use_multicell ? multicell_dynamic_o_du_factory(unit_cfg).create_flexible_o_du(dependencies)
-                       : dynamic_o_du_factory(unit_cfg).create_flexible_o_du(dependencies);
+  return dynamic_o_du_factory(unit_cfg).create_flexible_o_du(dependencies);
 }
 
 std::unique_ptr<flexible_o_du_application_unit> srsran::create_flexible_o_du_application_unit(std::string_view app_name)

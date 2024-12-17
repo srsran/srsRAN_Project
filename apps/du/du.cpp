@@ -300,7 +300,7 @@ int main(int argc, char** argv)
   du_dependencies.json_sink          = &json_sink;
   du_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
-  auto du_inst_and_cmds = o_du_app_unit->create_flexible_o_du_unit(du_dependencies, du_cfg.du_multicell_enabled);
+  auto du_inst_and_cmds = o_du_app_unit->create_flexible_o_du_unit(du_dependencies);
 
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(

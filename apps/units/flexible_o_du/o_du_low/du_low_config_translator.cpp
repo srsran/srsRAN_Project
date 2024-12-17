@@ -21,8 +21,7 @@ using namespace srsran;
 static void generate_du_low_config(srs_du::du_low_config&             out_config,
                                    const du_low_unit_config&          du_low,
                                    span<const srs_du::du_cell_config> du_cells,
-                                   span<const unsigned>               max_puschs_per_slot,
-                                   unsigned                           du_id)
+                                   span<const unsigned>               max_puschs_per_slot)
 {
   out_config.cells.reserve(du_cells.size());
 
@@ -117,7 +116,7 @@ static void generate_du_low_config(srs_du::du_low_config&             out_config
     upper_phy_cell.rx_symbol_printer_port     = du_low.loggers.phy_rx_symbols_port;
     upper_phy_cell.rx_symbol_printer_prach    = du_low.loggers.phy_rx_symbols_prach;
     upper_phy_cell.logger_max_hex_size        = du_low.loggers.hex_max_size;
-    upper_phy_cell.sector_id                  = du_id + i;
+    upper_phy_cell.sector_id                  = i;
     upper_phy_cell.nof_tx_ports               = cell.dl_carrier.nof_ant;
     upper_phy_cell.nof_rx_ports               = cell.ul_carrier.nof_ant;
     upper_phy_cell.ldpc_decoder_iterations    = du_low.expert_phy_cfg.pusch_decoder_max_iterations;
@@ -160,10 +159,9 @@ static void generate_du_low_config(srs_du::du_low_config&             out_config
 void srsran::generate_o_du_low_config(srs_du::o_du_low_config&           out_config,
                                       const du_low_unit_config&          du_low_unit_cfg,
                                       span<const srs_du::du_cell_config> du_cells,
-                                      span<const unsigned>               max_puschs_per_slot,
-                                      unsigned                           du_id)
+                                      span<const unsigned>               max_puschs_per_slot)
 {
-  generate_du_low_config(out_config.du_low_cfg, du_low_unit_cfg, du_cells, max_puschs_per_slot, du_id);
+  generate_du_low_config(out_config.du_low_cfg, du_low_unit_cfg, du_cells, max_puschs_per_slot);
 }
 
 void srsran::fill_du_low_worker_manager_config(worker_manager_config&    config,

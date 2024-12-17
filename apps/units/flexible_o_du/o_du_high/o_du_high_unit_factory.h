@@ -56,12 +56,6 @@ struct o_du_high_unit {
   std::vector<app_services::metrics_config>                       metrics;
 };
 
-/// O-RAN DU high unit parameters.
-struct o_du_high_unit_params {
-  const o_du_high_unit_config& o_du_hi_cfg;
-  unsigned                     du_index;
-};
-
 /// O-RAN DU high unit dependencies.
 struct o_du_high_unit_dependencies {
   srs_du::du_high_executor_mapper& execution_mapper;
@@ -78,7 +72,7 @@ struct o_du_high_unit_dependencies {
 };
 
 /// Creates the O-RAN DU high unit with the given configuration.
-o_du_high_unit make_o_du_high_unit(const o_du_high_unit_params&  o_du_high_unit_cfg,
+o_du_high_unit make_o_du_high_unit(const o_du_high_unit_config&  o_du_high_unit_cfg,
                                    o_du_high_unit_dependencies&& dependencies);
 
 } // namespace srsran

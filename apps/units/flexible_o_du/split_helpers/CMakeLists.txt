@@ -8,10 +8,7 @@
 
 set(SOURCES
         flexible_o_du_factory.cpp
-        flexible_o_du_impl.cpp
-        multicell_flexible_o_du_factory.cpp
-        multicell_flexible_o_du_impl.cpp
-        o_du_high_factory.cpp)
+        flexible_o_du_impl.cpp)
 
 add_library(srsran_flexible_du_helpers STATIC ${SOURCES})
 target_include_directories(srsran_flexible_du_helpers PRIVATE ${CMAKE_SOURCE_DIR})

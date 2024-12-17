@@ -55,8 +55,7 @@ void split6_o_du_application_unit_impl::on_parsing_configuration_registration(CL
   plugin->on_parsing_configuration_registration(app);
 }
 
-o_du_unit split6_o_du_application_unit_impl::create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies,
-                                                                       bool                          use_multicell)
+o_du_unit split6_o_du_application_unit_impl::create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies)
 {
   auto fapi_ctrl = plugin->create_fapi_adaptor(dependencies);
   report_error_if_not(!fapi_ctrl.empty(), "Could not create FAPI adaptor");

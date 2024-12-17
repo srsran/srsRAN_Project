@@ -71,8 +71,7 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
   srs_du::o_du_low_config o_du_low_cfg;
   o_du_low_cfg.du_low_cfg.logger = &srslog::fetch_basic_logger("DU");
 
-  generate_o_du_low_config(
-      o_du_low_cfg, params.du_low_unit_cfg, params.du_cells, params.max_puschs_per_slot, params.du_id);
+  generate_o_du_low_config(o_du_low_cfg, params.du_low_unit_cfg, params.du_cells, params.max_puschs_per_slot);
 
   // Fill the PRACH ports.
   o_du_low_cfg.prach_ports = params.prach_ports;
@@ -83,21 +82,21 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
 
     generate_dl_processor_config(cell.dl_proc_cfg,
                                  params.du_low_unit_cfg,
-                                 *dependencies.workers.upper_pdsch_exec[i + params.du_id],
+                                 *dependencies.workers.upper_pdsch_exec[i],
                                  hal_dependencies.hw_encoder_factory);
 
     upper_phy_config& upper          = cell.upper_phy_cfg;
     upper.rg_gateway                 = &dependencies.rg_gateway;
     upper.rx_symbol_request_notifier = &dependencies.rx_symbol_request_notifier;
-    upper.pucch_executor             = dependencies.workers.upper_pucch_exec[i + params.du_id];
-    upper.pusch_executor             = dependencies.workers.upper_pusch_exec[i + params.du_id];
-    upper.pusch_decoder_executor     = dependencies.workers.upper_pusch_decoder_exec[i + params.du_id];
-    upper.prach_executor             = dependencies.workers.upper_prach_exec[i + params.du_id];
-    upper.srs_executor               = dependencies.workers.upper_srs_exec[i + params.du_id];
+    upper.pucch_executor             = dependencies.workers.upper_pucch_exec[i];
+    upper.pusch_executor             = dependencies.workers.upper_pusch_exec[i];
+    upper.pusch_decoder_executor     = dependencies.workers.upper_pusch_decoder_exec[i];
+    upper.prach_executor             = dependencies.workers.upper_prach_exec[i];
+    upper.srs_executor               = dependencies.workers.upper_srs_exec[i];
     if (hal_dependencies.hw_decoder_factory) {
       upper.hw_decoder_factory = hal_dependencies.hw_decoder_factory;
     }
-    dependencies.workers.get_du_low_dl_executors(upper.dl_executors, i + params.du_id);
+    dependencies.workers.get_du_low_dl_executors(upper.dl_executors, i);
   }
 
   o_du_low_unit unit;

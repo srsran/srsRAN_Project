@@ -188,26 +188,23 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   return out;
 }
 
-o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_params&  o_du_high_unit_cfg,
+o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_high_unit_cfg,
                                            o_du_high_unit_dependencies&& dependencies)
 {
   srs_du::o_du_high_config       o_du_high_cfg;
   srs_du::du_high_configuration& du_hi_cfg        = o_du_high_cfg.du_hi;
-  const o_du_high_unit_config&   odu_unit_cfg     = o_du_high_unit_cfg.o_du_hi_cfg;
-  const du_high_unit_config&     du_high_unit_cfg = odu_unit_cfg.du_high_cfg.config;
+  const du_high_unit_config&     du_high_unit_cfg = o_du_high_unit_cfg.du_high_cfg.config;
 
   // DU-high configuration.
-  du_hi_cfg.ran.gnb_du_id =
-      static_cast<gnb_du_id_t>((static_cast<unsigned>(du_high_unit_cfg.gnb_du_id) + o_du_high_unit_cfg.du_index));
+  du_hi_cfg.ran.gnb_du_id   = du_high_unit_cfg.gnb_du_id;
   du_hi_cfg.ran.gnb_du_name = fmt::format("srsdu{}", du_hi_cfg.ran.gnb_du_id);
   du_hi_cfg.ran.cells       = generate_du_cell_config(du_high_unit_cfg);
   // Validates the derived parameters.
   validates_derived_du_params(du_hi_cfg.ran.cells);
-  du_hi_cfg.ran.srbs    = generate_du_srb_config(du_high_unit_cfg);
-  du_hi_cfg.ran.qos     = generate_du_qos_config(du_high_unit_cfg);
-  du_hi_cfg.ran.mac_cfg = generate_mac_expert_config(du_high_unit_cfg);
-  // Assign different initial C-RNTIs to different DUs.
-  du_hi_cfg.ran.mac_cfg.initial_crnti = to_rnti(0x4601 + (0x1000 * o_du_high_unit_cfg.du_index));
+  du_hi_cfg.ran.srbs                  = generate_du_srb_config(du_high_unit_cfg);
+  du_hi_cfg.ran.qos                   = generate_du_qos_config(du_high_unit_cfg);
+  du_hi_cfg.ran.mac_cfg               = generate_mac_expert_config(du_high_unit_cfg);
+  du_hi_cfg.ran.mac_cfg.initial_crnti = to_rnti(0x4601);
   du_hi_cfg.ran.sched_cfg             = generate_scheduler_expert_config(du_high_unit_cfg);
 
   srs_du::du_high_dependencies& du_hi_deps = dependencies.o_du_hi_dependencies.du_hi;
@@ -219,15 +216,15 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_params&  o_du_hi
   du_hi_deps.mac_p                         = &dependencies.mac_p;
   du_hi_deps.rlc_p                         = &dependencies.rlc_p;
 
-  if (odu_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
+  if (o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
     // Connect E2 agent to RLC metric source.
     dependencies.o_du_hi_dependencies.e2_client = &dependencies.e2_client_handler;
-    o_du_high_cfg.e2ap_config                   = generate_e2_config(odu_unit_cfg.e2_cfg,
+    o_du_high_cfg.e2ap_config                   = generate_e2_config(o_du_high_unit_cfg.e2_cfg,
                                                    du_high_unit_cfg.gnb_id,
                                                    du_high_unit_cfg.cells_cfg.front().cell.plmn,
                                                    du_hi_cfg.ran.gnb_du_id);
     dependencies.o_du_hi_dependencies.e2_du_metric_iface =
-        &(dependencies.e2_metric_connectors.get_e2_metrics_interface(o_du_high_unit_cfg.du_index));
+        &(dependencies.e2_metric_connectors.get_e2_metrics_interface(0));
   }
 
   // DU high metrics.
@@ -237,16 +234,15 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_params&  o_du_hi
       build_scheduler_du_metrics(odu_unit.metrics,
                                  odu_unit.commands,
                                  dependencies.metrics_notifier,
-                                 odu_unit_cfg,
+                                 o_du_high_unit_cfg,
                                  dependencies.json_sink,
-                                 dependencies.e2_metric_connectors.get_e2_metric_notifier(o_du_high_unit_cfg.du_index));
+                                 dependencies.e2_metric_connectors.get_e2_metric_notifier(0));
 
-  du_hi_deps.rlc_metrics_notif =
-      build_rlc_du_metrics(odu_unit.metrics,
-                           dependencies.metrics_notifier,
-                           odu_unit_cfg,
-                           dependencies.json_sink,
-                           dependencies.e2_metric_connectors.get_e2_metric_notifier(o_du_high_unit_cfg.du_index));
+  du_hi_deps.rlc_metrics_notif = build_rlc_du_metrics(odu_unit.metrics,
+                                                      dependencies.metrics_notifier,
+                                                      o_du_high_unit_cfg,
+                                                      dependencies.json_sink,
+                                                      dependencies.e2_metric_connectors.get_e2_metric_notifier(0));
 
   // Configure test mode
   if (du_high_unit_cfg.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {
@@ -265,7 +261,7 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_params&  o_du_hi
   }
 
   // FAPI configuration.
-  const fapi_unit_config& fapi_cfg      = o_du_high_unit_cfg.o_du_hi_cfg.fapi_cfg;
+  const fapi_unit_config& fapi_cfg      = o_du_high_unit_cfg.fapi_cfg;
   o_du_high_cfg.fapi.log_level          = fapi_cfg.fapi_level;
   o_du_high_cfg.fapi.l2_nof_slots_ahead = fapi_cfg.l2_nof_slots_ahead;
 

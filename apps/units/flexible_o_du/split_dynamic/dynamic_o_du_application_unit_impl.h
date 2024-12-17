@@ -36,7 +36,7 @@ public:
   void on_loggers_registration() override;
 
   // See interface for documentation.
-  o_du_unit create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies, bool use_multicell = false) override;
+  o_du_unit create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies) override;
 
   // See interface for documentation.
   o_du_high_unit_config&       get_o_du_high_unit_config() override { return unit_cfg.odu_high_cfg; }

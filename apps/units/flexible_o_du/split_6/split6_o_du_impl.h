@@ -26,7 +26,7 @@ class split6_o_du_impl : public srs_du::du, public du_power_controller
 {
 public:
   explicit split6_o_du_impl(std::vector<std::unique_ptr<fapi::fapi_adaptor>> adaptors_,
-                            std::vector<std::unique_ptr<srs_du::o_du_high>>  du_list_);
+                            std::unique_ptr<srs_du::o_du_high>               odu_hi_);
 
   // See interface for documentation.
   du_power_controller& get_power_controller() override { return *this; }
@@ -38,7 +38,7 @@ public:
   void stop() override;
 
 private:
-  std::vector<std::unique_ptr<srs_du::o_du_high>>  du_list;
+  std::unique_ptr<srs_du::o_du_high>               odu_hi;
   std::vector<std::unique_ptr<fapi::fapi_adaptor>> adaptors;
 };
 
