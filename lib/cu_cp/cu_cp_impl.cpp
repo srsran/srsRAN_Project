@@ -155,11 +155,15 @@ bool cu_cp_impl::amfs_are_connected()
   return true;
 };
 
-SRSRAN_WEAK_SYMB std::unique_ptr<srsran::srs_cu_cp::nrppa_interface>
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+std::unique_ptr<srsran::srs_cu_cp::nrppa_interface>
 cu_cp_impl::create_nrppa_entity(const cu_cp_configuration& cu_cp_cfg, nrppa_cu_cp_notifier& cu_cp_notif)
 {
   return create_nrppa(cu_cp_cfg, cu_cp_notif);
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE
 
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
@@ -601,11 +605,14 @@ ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_i
   return ue_mng.add_ue(du_index, cgi.plmn_id);
 }
 
-SRSRAN_WEAK_SYMB void cu_cp_impl::handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t         ue_index,
-                                                                              const byte_buffer& nrppa_pdu)
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+void cu_cp_impl::handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu)
 {
   logger.info("DL UE associated NRPPa messages are not supported");
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE
 
 void cu_cp_impl::handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu)
 {
@@ -617,15 +624,19 @@ void cu_cp_impl::handle_n2_disconnection()
   // TODO
 }
 
-SRSRAN_WEAK_SYMB nrppa_cu_cp_ue_notifier* cu_cp_impl::handle_new_nrppa_ue(ue_index_t ue_index)
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+nrppa_cu_cp_ue_notifier* cu_cp_impl::handle_new_nrppa_ue(ue_index_t ue_index)
 {
   return nullptr;
 }
 
-SRSRAN_WEAK_SYMB void cu_cp_impl::handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index)
+void cu_cp_impl::handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index)
 {
   logger.info("UL NRPPa messages are not supported");
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE
 
 std::optional<rrc_meas_cfg>
 cu_cp_impl::handle_measurement_config_request(ue_index_t                  ue_index,

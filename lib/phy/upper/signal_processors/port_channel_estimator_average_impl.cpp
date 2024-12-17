@@ -25,6 +25,8 @@
 
 using namespace srsran;
 
+#ifndef SRSRAN_HAS_ENTERPRISE
+
 /// \brief Extracts channel observations corresponding to DM-RS pilots from the resource grid for one layer, one hop
 /// and for the selected port.
 /// \param[out] rx_symbols  Symbol buffer destination.
@@ -68,7 +70,6 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
                             unsigned                                  last_hop_symbol,
                             unsigned                                  hop_offset);
 
-SRSRAN_WEAK_SYMB
 void port_channel_estimator_average_impl::do_compute(channel_estimate&           estimate,
                                                      const resource_grid_reader& grid,
                                                      unsigned                    port,
@@ -147,7 +148,6 @@ void port_channel_estimator_average_impl::do_compute(channel_estimate&          
   estimate.set_snr((noise_var != 0) ? datarp / noise_var : 1000, port, layer0);
 }
 
-SRSRAN_WEAK_SYMB
 void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate&           estimate,
                                                       const srsran::resource_grid_reader& grid,
                                                       unsigned                            port,
@@ -284,20 +284,6 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
                               hop_offset);
 }
 
-void port_channel_estimator_average_impl::initialize_symbol_start_epochs(cyclic_prefix cp, subcarrier_spacing scs)
-{
-  unsigned nof_symbols_slot = get_nsymb_per_slot(cp);
-  symbol_start_epochs       = span<float>(aux_symbol_start_epochs).first(nof_symbols_slot);
-
-  // Compute cumulative duration of CPs.
-  symbol_start_epochs[0] = cp.get_length(0, scs).to_seconds() * scs_to_khz(scs) * 1000;
-  for (unsigned i_cp = 1; i_cp != nof_symbols_slot; ++i_cp) {
-    symbol_start_epochs[i_cp] =
-        symbol_start_epochs[i_cp - 1] + cp.get_length(i_cp, scs).to_seconds() * scs_to_khz(scs) * 1000 + 1.0F;
-  }
-}
-
-SRSRAN_WEAK_SYMB
 std::optional<float>
 port_channel_estimator_average_impl::preprocess_pilots_and_cfo(const dmrs_symbol_list&                   pilots,
                                                                const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
@@ -471,4 +457,19 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
   dmrs_mask.for_each(first_hop_symbol, last_hop_symbol, estimate_noise_symbol);
 
   return noise_energy;
+}
+
+#endif // SRSRAN_HAS_ENTERPRISE
+
+void port_channel_estimator_average_impl::initialize_symbol_start_epochs(cyclic_prefix cp, subcarrier_spacing scs)
+{
+  unsigned nof_symbols_slot = get_nsymb_per_slot(cp);
+  symbol_start_epochs       = span<float>(aux_symbol_start_epochs).first(nof_symbols_slot);
+
+  // Compute cumulative duration of CPs.
+  symbol_start_epochs[0] = cp.get_length(0, scs).to_seconds() * scs_to_khz(scs) * 1000;
+  for (unsigned i_cp = 1; i_cp != nof_symbols_slot; ++i_cp) {
+    symbol_start_epochs[i_cp] =
+        symbol_start_epochs[i_cp - 1] + cp.get_length(i_cp, scs).to_seconds() * scs_to_khz(scs) * 1000 + 1.0F;
+  }
 }

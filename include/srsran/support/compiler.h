@@ -28,6 +28,3 @@
 
 /// Ensures a function is always inlinable.
 #define SRSRAN_FORCE_INLINE __attribute__((always_inline)) inline
-
-/// Marks a symbol as weak.
-#define SRSRAN_WEAK_SYMB __attribute__((weak))

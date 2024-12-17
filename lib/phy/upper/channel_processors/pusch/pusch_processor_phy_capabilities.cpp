@@ -13,7 +13,11 @@
 
 using namespace srsran;
 
-SRSRAN_WEAK_SYMB pusch_processor_phy_capabilities srsran::get_pusch_processor_phy_capabilities()
+#ifndef PUSCH_PROCESSOR_MAX_NOF_LAYERS
+#define PUSCH_PROCESSOR_MAX_NOF_LAYERS 1
+#endif // PUSCH_PROCESSOR_MAX_NOF_LAYERS
+
+pusch_processor_phy_capabilities srsran::get_pusch_processor_phy_capabilities()
 {
-  return {.max_nof_layers = 1};
+  return {.max_nof_layers = PUSCH_PROCESSOR_MAX_NOF_LAYERS};
 }

@@ -50,11 +50,15 @@ srsran::srs_du::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
   return ue_caps;
 }
 
-SRSRAN_WEAK_SYMB void srsran::srs_du::decode_advanced_ue_nr_caps(ue_capability_summary&           ue_capability,
-                                                                 const asn1::rrc_nr::ue_nr_cap_s& ue_caps)
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+void srsran::srs_du::decode_advanced_ue_nr_caps(ue_capability_summary&           ue_capability,
+                                                const asn1::rrc_nr::ue_nr_cap_s& ue_caps)
 {
   // Advanced UE capabilities is not implemented.
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE
 
 // Configure dedicated UE configuration to set MCS ant CQI tables.
 static void set_pdsch_mcs_table(serving_cell_config& cell_cfg, pdsch_mcs_table mcs_table)

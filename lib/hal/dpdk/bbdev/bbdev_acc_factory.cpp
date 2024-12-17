@@ -13,10 +13,14 @@
 using namespace srsran;
 using namespace dpdk;
 
-SRSRAN_WEAK_SYMB std::shared_ptr<bbdev_acc> srsran::dpdk::create_bbdev_acc(const bbdev_acc_configuration& cfg,
-                                                                           srslog::basic_logger&          logger)
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+std::shared_ptr<bbdev_acc> srsran::dpdk::create_bbdev_acc(const bbdev_acc_configuration& cfg,
+                                                          srslog::basic_logger&          logger)
 {
   logger.error("[bbdev] bbdev accelerator creation failed. Cause: hardware-acceleration is not supported.");
 
   return nullptr;
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE

@@ -13,8 +13,12 @@
 using namespace srsran;
 using namespace hal;
 
-SRSRAN_WEAK_SYMB std::shared_ptr<hw_accelerator_pdsch_enc_factory>
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+std::shared_ptr<hw_accelerator_pdsch_enc_factory>
 srsran::hal::create_bbdev_pdsch_enc_acc_factory(const bbdev_hwacc_pdsch_enc_factory_configuration& accelerator_config)
 {
   return nullptr;
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE

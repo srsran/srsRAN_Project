@@ -16,13 +16,17 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-SRSRAN_WEAK_SYMB async_task<bool>
-                 srsran::srs_cu_cp::start_amf_connection_setup(ngap_repository&                                    ngap_db,
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+async_task<bool>
+srsran::srs_cu_cp::start_amf_connection_setup(ngap_repository&                                    ngap_db,
                                               std::unordered_map<amf_index_t, std::atomic<bool>>& amfs_connected)
 {
   amfs_connected.emplace(ngap_db.get_ngaps().begin()->first, false);
   return launch_async<amf_connection_setup_routine>(ngap_db, amfs_connected.begin()->second);
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE
 
 amf_connection_setup_routine::amf_connection_setup_routine(ngap_repository&   ngap_db_,
                                                            std::atomic<bool>& amf_connected_) :
