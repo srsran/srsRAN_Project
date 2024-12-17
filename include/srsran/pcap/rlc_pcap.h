@@ -28,6 +28,7 @@ class rlc_pcap : public signal_observer
 public:
   virtual ~rlc_pcap() = default;
 
+  virtual void flush()                                                                     = 0;
   virtual void close()                                                                     = 0;
   virtual bool is_write_enabled() const                                                    = 0;
   virtual void push_pdu(const pcap_rlc_pdu_context& context, const span<uint8_t> pdu)      = 0;
@@ -95,6 +96,7 @@ class null_rlc_pcap : public rlc_pcap
 public:
   ~null_rlc_pcap() override = default;
 
+  void flush() override {}
   void close() override {}
   bool is_write_enabled() const override { return false; }
   void push_pdu(const pcap_rlc_pdu_context& context, const span<uint8_t> pdu) override {}

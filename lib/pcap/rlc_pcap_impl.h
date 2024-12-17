@@ -28,6 +28,8 @@ public:
   rlc_pcap_impl(rlc_pcap_impl&& other)                 = delete;
   rlc_pcap_impl& operator=(rlc_pcap_impl&& other)      = delete;
 
+  void flush() override;
+
   void close() override;
 
   bool is_write_enabled() const override { return writer.is_write_enabled(); }

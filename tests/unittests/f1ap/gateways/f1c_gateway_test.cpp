@@ -30,6 +30,7 @@ public:
   bool                        closed  = false;
   blocking_queue<byte_buffer> last_sdus{16};
 
+  void flush() override {}
   void close() override { closed = true; }
   bool is_write_enabled() const override { return enabled; }
   void push_pdu(const_span<uint8_t> pdu) override { last_sdus.push_blocking(byte_buffer::create(pdu).value()); }

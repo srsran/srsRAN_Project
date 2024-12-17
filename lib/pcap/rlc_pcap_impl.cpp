@@ -44,6 +44,11 @@ rlc_pcap_impl::~rlc_pcap_impl()
   close();
 }
 
+void rlc_pcap_impl::flush()
+{
+  writer.flush();
+}
+
 void rlc_pcap_impl::close()
 {
   writer.close();

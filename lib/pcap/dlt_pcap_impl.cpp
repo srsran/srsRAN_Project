@@ -34,6 +34,11 @@ dlt_pcap_impl::~dlt_pcap_impl()
   close();
 }
 
+void dlt_pcap_impl::flush()
+{
+  writer.flush();
+}
+
 void dlt_pcap_impl::close()
 {
   writer.close();

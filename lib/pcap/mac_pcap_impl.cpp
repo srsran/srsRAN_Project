@@ -30,6 +30,11 @@ mac_pcap_impl::~mac_pcap_impl()
   close();
 }
 
+void mac_pcap_impl::flush()
+{
+  writer.flush();
+}
+
 void mac_pcap_impl::close()
 {
   writer.close();

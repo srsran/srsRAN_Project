@@ -64,6 +64,7 @@ class mac_pcap : public signal_observer
 public:
   virtual ~mac_pcap() = default;
 
+  virtual void flush()                                                               = 0;
   virtual void close()                                                               = 0;
   virtual bool is_write_enabled() const                                              = 0;
   virtual void push_pdu(const mac_nr_context_info& context, const_span<uint8_t> pdu) = 0;
@@ -79,6 +80,7 @@ std::unique_ptr<mac_pcap> create_null_mac_pcap();
 class null_mac_pcap : public mac_pcap
 {
 public:
+  void flush() override {}
   void close() override {}
   bool is_write_enabled() const override { return false; }
   void push_pdu(const mac_nr_context_info& context, const_span<uint8_t> pdu) override {}
