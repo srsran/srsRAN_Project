@@ -217,6 +217,7 @@ amari 8UE:
   variables:
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  timeout: 4h
   parallel:
     matrix:
       - KEYWORDS:
