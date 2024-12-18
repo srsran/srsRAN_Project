@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/support/signal_observer.h"
-#include <list>
+#include <vector>
 namespace srsran {
 
 class signal_subject_impl : public signal_subject
@@ -27,7 +27,13 @@ public:
 
   void detach(signal_observer* observer) override
   {
-    observers.remove(observer);
+    for (auto it = observers.begin(); it != observers.end();) {
+      if (*it == observer) {
+        it = observers.erase(it);
+        continue;
+      }
+      ++it;
+    }
     observer->set_current_subject(nullptr);
   }
 
@@ -39,7 +45,7 @@ public:
   }
 
 private:
-  std::list<signal_observer*> observers;
+  std::vector<signal_observer*> observers;
 };
 
 } // namespace srsran
