@@ -43,6 +43,8 @@ cell_cfg:
     prach_config_index: 1
   pdsch:
     mcs_table: qam64
+  pusch:
+    mcs_table: qam64
 
 log:
   filename: /tmp/gnb.log
