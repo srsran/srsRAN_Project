@@ -43,7 +43,7 @@
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/io/io_timer_source.h"
 #include "srsran/support/signal_handling.h"
-#include "srsran/support/signal_observer_impl.h"
+#include "srsran/support/signal_observer.h"
 #include "srsran/support/sysinfo.h"
 #include "srsran/support/timers.h"
 #include "srsran/support/tracing/event_tracing.h"
@@ -84,7 +84,7 @@ static void interrupt_signal_handler(int signal)
   is_app_running = false;
 }
 
-static signal_subject_impl cleanup_signal_observable;
+static signal_subject cleanup_signal_observable;
 
 /// Function to call when the application is going to be forcefully shutdown.
 static void cleanup_signal_handler(int signal)

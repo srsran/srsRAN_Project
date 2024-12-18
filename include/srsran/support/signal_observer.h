@@ -11,6 +11,8 @@
 #pragma once
 
 #include <functional>
+#include <vector>
+
 namespace srsran {
 
 class signal_observer;
@@ -18,10 +20,12 @@ class signal_observer;
 class signal_subject
 {
 public:
-  virtual ~signal_subject() {};
-  virtual void attach(signal_observer* observer) = 0;
-  virtual void detach(signal_observer* observer) = 0;
-  virtual void notify_signal(int signal)         = 0;
+  void attach(signal_observer* observer);
+  void detach(signal_observer* observer);
+  void notify_signal(int signal);
+
+private:
+  std::vector<signal_observer*> observers;
 };
 
 using signal_callback = std::function<void()>;
@@ -52,5 +56,30 @@ private:
   signal_callback callback;
   signal_subject* current_subject = nullptr;
 };
+
+void signal_subject::attach(signal_observer* observer)
+{
+  observers.push_back(observer);
+  observer->set_current_subject(this);
+}
+
+void signal_subject::detach(signal_observer* observer)
+{
+  for (auto it = observers.begin(); it != observers.end();) {
+    if (*it == observer) {
+      it = observers.erase(it);
+      continue;
+    }
+    ++it;
+  }
+  observer->set_current_subject(nullptr);
+}
+
+void signal_subject::notify_signal(int signal)
+{
+  for (auto observer : observers) {
+    observer->handle_signal(signal);
+  }
+}
 
 } // namespace srsran
