@@ -452,8 +452,6 @@ TEST_F(f1u_cu_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   ASSERT_FALSE(rx_sdu2.has_value());
 }
 
-// TODO external address should be checked on F1-U bearer itself.
-//
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);

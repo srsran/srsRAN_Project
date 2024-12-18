@@ -22,14 +22,13 @@ f1u_local_connector::create_cu_bearer(uint32_t                              ue_i
                                       f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
                                       task_executor&                        ul_exec)
 {
-  up_transport_layer_info ul_up_tnl_info{transport_layer_address::create_from_string("127.0.0.2"), ul_teid};
-  logger_cu.info("Creating CU gateway local bearer with UL GTP Tunnel={}", ul_up_tnl_info);
+  logger_cu.info("Created CU gateway local bearer with. ul_teid={}", ul_teid);
   std::unique_lock<std::mutex> lock(map_mutex);
   srsran_assert(cu_map.find(ul_teid) == cu_map.end(),
-                "Cannot create CU gateway local bearer with already existing UL GTP Tunnel={}",
-                ul_up_tnl_info);
+                "Cannot create CU gateway local bearer, UL TEID already exists. ul_teid={}",
+                ul_teid);
   std::unique_ptr<f1u_gateway_cu_bearer> cu_bearer =
-      std::make_unique<f1u_gateway_cu_bearer>(ue_index, drb_id, ul_up_tnl_info, rx_notifier, ul_exec, *this);
+      std::make_unique<f1u_gateway_cu_bearer>(ue_index, drb_id, ul_teid, rx_notifier, ul_exec, *this);
   cu_map.insert({ul_teid, cu_bearer.get()});
   return cu_bearer;
 }

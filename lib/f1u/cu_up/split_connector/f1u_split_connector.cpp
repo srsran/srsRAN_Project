@@ -116,14 +116,9 @@ void f1u_split_gateway_cu_bearer::stop()
 expected<std::string> f1u_split_gateway_cu_bearer::get_bind_address() const
 {
   std::string ip_address;
-
-  //  if (f1u_ext_addr == "auto" || f1u_ext_addr == "") {
   if (not udp_session.get_bind_address(ip_address)) {
     return make_unexpected(default_error_t{});
   }
-  // } else {
-  //   ip_address = f1u_ext_addr;
-  // }
   return ip_address;
 }
 
