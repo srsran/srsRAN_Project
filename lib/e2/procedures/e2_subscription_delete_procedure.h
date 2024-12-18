@@ -40,12 +40,12 @@ private:
   void send_e2_subscription_delete_response(const e2_subscribe_delete_response_message& response);
   void send_e2_subscription_delete_failure(const e2_subscribe_delete_response_message& failure);
 
-  const asn1::e2ap::ric_sub_delete_request_s& request;
-  e2_event_manager&                           event_manager;
-  srslog::basic_logger&                       logger;
-  e2_message_notifier&                        ric_notif;
-  e2_subscription_proc&                       subscription_mngr;
-  timer_factory                               timers;
+  const asn1::e2ap::ric_sub_delete_request_s request;
+  e2_event_manager&                          event_manager;
+  srslog::basic_logger&                      logger;
+  e2_message_notifier&                       ric_notif;
+  e2_subscription_proc&                      subscription_mngr;
+  timer_factory                              timers;
 };
 
 } // namespace srsran
