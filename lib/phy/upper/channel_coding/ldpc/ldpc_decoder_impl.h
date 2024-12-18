@@ -48,8 +48,11 @@ private:
   /// Initializes implementation-specific inner variables.
   virtual void specific_init() = 0;
 
-  /// Loads the input log-likelihood ratios into the soft-bit buffers.
-  void load_soft_bits(span<const log_likelihood_ratio> llrs);
+  /// \brief Loads the input log-likelihood ratios into the soft-bit buffers.
+  ///
+  /// \param[in] llrs     Full LLR input buffer.
+  /// \param[in] nof_llrs Number of significant LLRs.
+  void load_soft_bits(span<const log_likelihood_ratio> llrs, unsigned nof_llrs);
 
   /// \brief Updates the messages going from variable nodes to check nodes.
   /// \param[in] check_node The check node (in the base graph) the messages are directed to.
@@ -150,12 +153,6 @@ private:
                                  span<const log_likelihood_ratio> this_var_to_check,
                                  span<const log_likelihood_ratio> this_check_to_var) = 0;
 
-  /// \brief Converts soft bits into hard bits and returns the decoded message.
-  ///
-  /// \param[out] out Destination bit buffer.
-  /// \return True if none of the soft bits is zero. Otherwise, false.
-  virtual bool get_hard_bits(bit_buffer& out) = 0;
-
   /// \brief Helper function for \ref update_variable_to_check_messages().
   ///
   /// Computes the updated value of the messages between a lifted variable node and a lifted check node (therefore, the
@@ -167,6 +164,12 @@ private:
   virtual void compute_var_to_check_msgs(span<log_likelihood_ratio>       this_var_to_check,
                                          span<const log_likelihood_ratio> this_soft_bits,
                                          span<const log_likelihood_ratio> this_check_to_var) = 0;
+
+  /// \brief Converts soft bits into hard bits and returns the decoded message.
+  ///
+  /// \param[out] out Destination bit buffer.
+  /// \return True if none of the soft bits is zero. Otherwise, false.
+  bool get_hard_bits(bit_buffer& out) const;
 
 protected:
   /// Number of base graph variable nodes corresponding to information bits.

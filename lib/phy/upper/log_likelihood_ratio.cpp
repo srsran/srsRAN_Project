@@ -88,7 +88,7 @@ log_likelihood_ratio log_likelihood_ratio::quantize(float value, float range_lim
 
 #ifdef __AVX2__
 // Hard decision function with bit packing.
-static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, unsigned len)
+static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, unsigned len, unsigned offset)
 {
   // Number of bits processed on each loop cycle.
   static constexpr unsigned AVX2_B_SIZE = 32;
@@ -98,7 +98,25 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
   // Destination buffer.
   span<uint8_t> packed_buffer = hard_bits.get_buffer();
 
-  for (unsigned max_bit = (len / AVX2_B_SIZE) * AVX2_B_SIZE; i_bit != max_bit; i_bit += AVX2_B_SIZE) {
+  // Calculate number of unaligned bits.
+  unsigned nof_unaligned_bits = std::min(8 - offset % 8, len);
+  if (nof_unaligned_bits == 8) {
+    nof_unaligned_bits = 0;
+  }
+
+  // Process unaligned bits.
+  for (; i_bit != nof_unaligned_bits; ++i_bit) {
+    uint8_t hard_bit = (soft_bits[i_bit] <= 0) ? 1 : 0;
+
+    hard_bits.insert(hard_bit, i_bit + offset, 1);
+  }
+
+  // Advance packed buffer to the next aligned bit.
+  packed_buffer = packed_buffer.last(packed_buffer.size() - divide_ceil(offset, 8));
+
+  for (unsigned max_bit = nof_unaligned_bits + ((len - nof_unaligned_bits) / AVX2_B_SIZE) * AVX2_B_SIZE;
+       i_bit != max_bit;
+       i_bit += AVX2_B_SIZE) {
     // Load AVX2_B_SIZE LLRs.
     __m256i soft_epi8 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(soft_bits + i_bit));
 
@@ -157,13 +175,13 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
   for (; i_bit != len; ++i_bit) {
     uint8_t hard_bit = (soft_bits[i_bit] <= 0) ? 1 : 0;
 
-    hard_bits.insert(hard_bit, i_bit, 1);
+    hard_bits.insert(hard_bit, i_bit + offset, 1);
   }
 }
 #endif // __AVX2__
 
 #ifdef __ARM_NEON
-static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, unsigned len)
+static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, unsigned len, unsigned offset)
 {
   const uint8x16_t mask_msb_u8    = vdupq_n_u8(0x80);
   const int8_t     shift_mask[16] = {-7, -6, -5, -4, -3, -2, -1, 0, -7, -6, -5, -4, -3, -2, -1, 0};
@@ -178,7 +196,25 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
   // Destination buffer.
   span<uint8_t> packed_buffer = hard_bits.get_buffer();
 
-  for (; i_bit != (len / NEON_B_SIZE) * NEON_B_SIZE; i_bit += NEON_B_SIZE) {
+  // Calculate number of unaligned bits.
+  unsigned nof_unaligned_bits = std::min(8 - offset % 8, len);
+  if (nof_unaligned_bits == 8) {
+    nof_unaligned_bits = 0;
+  }
+
+  // Process unaligned bits.
+  for (; i_bit != nof_unaligned_bits; ++i_bit) {
+    uint8_t hard_bit = (soft_bits[i_bit] <= 0) ? 1 : 0;
+
+    hard_bits.insert(hard_bit, i_bit + offset, 1);
+  }
+
+  // Advance packed buffer to the next aligned bit.
+  packed_buffer = packed_buffer.last(packed_buffer.size() - divide_ceil(offset, 8));
+
+  for (unsigned max_bit = nof_unaligned_bits + ((len - nof_unaligned_bits) / NEON_B_SIZE) * NEON_B_SIZE;
+       i_bit != max_bit;
+       i_bit += NEON_B_SIZE) {
     // Read soft bits.
     uint8x16_t soft_bits_u8 = vld1q_u8(reinterpret_cast<const uint8_t*>(&soft_bits[i_bit]));
 
@@ -208,7 +244,7 @@ static void hard_decision_simd(bit_buffer& hard_bits, const int8_t* soft_bits, u
   for (; i_bit != len; ++i_bit) {
     uint8_t hard_bit = (soft_bits[i_bit] <= 0) ? 1 : 0;
 
-    hard_bits.insert(hard_bit, i_bit, 1);
+    hard_bits.insert(hard_bit, i_bit + offset, 1);
   }
 }
 #endif // __ARM_NEON
@@ -299,7 +335,7 @@ void srsran::clamp(span<log_likelihood_ratio>       out,
 #endif // defined(__AVX512F__) && defined(__AVX512BW__)
 }
 
-bool srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits)
+bool srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits, unsigned offset)
 {
   // Make sure that there is enough space in the output to accommodate the hard bits.
   srsran_assert(soft_bits.size() <= hard_bits.size(),
@@ -311,7 +347,7 @@ bool srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
 
 #if defined(__AVX2__) || defined(__ARM_NEON)
 
-  hard_decision_simd(hard_bits, reinterpret_cast<const int8_t*>(soft_bits.data()), nof_bits);
+  hard_decision_simd(hard_bits, reinterpret_cast<const int8_t*>(soft_bits.data()), nof_bits, offset);
 
 #else
   for (unsigned i_bit = 0; i_bit != nof_bits; ++i_bit) {

@@ -316,9 +316,10 @@ inline int log_likelihood_ratio::norm_squared(const T& x)
 /// srsran::bit_buffer.
 ///
 /// \param[out] hard_bits Buffer of hard bits.
-/// \param[in] soft_bits  Buffer of soft bits.
+/// \param[in]  soft_bits Buffer of soft bits.
+/// \param[in]  offset    Optional initial position in the output buffer.
 /// \return \c true if none of the soft bits are zero. Otherwise, \c false.
-bool hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits);
+bool hard_decision(bit_buffer& hard_bits, span<const log_likelihood_ratio> soft_bits, unsigned offset = 0);
 
 } // namespace srsran
 

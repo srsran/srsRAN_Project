@@ -86,7 +86,7 @@ std::optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                   
 
   unsigned input_size = static_cast<unsigned>(last - input.begin());
 
-  load_soft_bits(input);
+  load_soft_bits(input, input_size);
 
   // The minimum codeblock length is message_length + four times the lifting size
   // (that is, the length of the high-rate region).
@@ -134,7 +134,7 @@ std::optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                   
   return {};
 }
 
-void ldpc_decoder_impl::load_soft_bits(span<const log_likelihood_ratio> llrs)
+void ldpc_decoder_impl::load_soft_bits(span<const log_likelihood_ratio> llrs, unsigned nof_llr)
 {
   // Compute the number of data nodes fully occupied by the llrs (the + 2 is due to the shortened nodes at the beginning
   // of the codeblock).
@@ -149,10 +149,16 @@ void ldpc_decoder_impl::load_soft_bits(span<const log_likelihood_ratio> llrs)
   for (unsigned i_node = 2 * node_size_byte, max_node = nof_full_nodes * node_size_byte; i_node != max_node;
        i_node += node_size_byte) {
     // Copy input LLR in the soft bits.
-    clamp(soft_bits_view.first(lifting_size), llr_view.first(lifting_size), soft_bits_clamp_low, soft_bits_clamp_high);
+    if (nof_llr != 0) {
+      clamp(
+          soft_bits_view.first(lifting_size), llr_view.first(lifting_size), soft_bits_clamp_low, soft_bits_clamp_high);
+    } else {
+      srsvec::zero(soft_bits_view.first(lifting_size));
+    }
 
     // Advance input LLR.
     llr_view = llr_view.last(llr_view.size() - lifting_size);
+    nof_llr  = (nof_llr >= lifting_size) ? (nof_llr - lifting_size) : 0;
 
     // Zero node tail soft bits.
     srsvec::zero(soft_bits_view.subspan(lifting_size, node_size_byte - lifting_size));
@@ -307,4 +313,25 @@ void ldpc_decoder_impl::update_check_to_variable_messages(unsigned check_node)
                               var_node);
   }
   is_check_to_var_initialized[check_node] = true;
+}
+
+bool ldpc_decoder_impl::get_hard_bits(bit_buffer& out) const
+{
+  if (lifting_size == node_size_byte) {
+    span<const log_likelihood_ratio> llrs = span<const log_likelihood_ratio>(soft_bits).first(out.size());
+    return hard_decision(out, llrs);
+  }
+
+  // Perform hard-decision of the LLRs from the soft_bits array directly into the output without any padding.
+  bool valid = true;
+  for (unsigned i_node = 0; i_node != bg_K; ++i_node) {
+    // View over the LLR.
+    span<const log_likelihood_ratio> current_soft =
+        span<const log_likelihood_ratio>(soft_bits).subspan(node_size_byte * i_node, lifting_size);
+
+    // Perform hard decision of the node.
+    valid &= hard_decision(out, current_soft, lifting_size * i_node);
+  }
+
+  return valid;
 }
