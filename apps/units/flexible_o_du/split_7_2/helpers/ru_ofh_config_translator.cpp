@@ -37,7 +37,7 @@ rx_timing_window_params_us_to_symbols(std::chrono::microseconds                T
                                       std::chrono::duration<double, std::nano> symbol_duration)
 {
   ofh::rx_window_timing_parameters rx_window_timing_params;
-  rx_window_timing_params.sym_start = std::ceil(Ta4_min / symbol_duration);
+  rx_window_timing_params.sym_start = std::floor(Ta4_min / symbol_duration);
   rx_window_timing_params.sym_end   = std::ceil(Ta4_max / symbol_duration);
 
   return rx_window_timing_params;
