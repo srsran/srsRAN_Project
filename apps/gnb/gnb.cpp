@@ -86,7 +86,7 @@ static void interrupt_signal_handler(int signal)
   is_app_running = false;
 }
 
-static signal_observable_impl cleanup_signal_observable;
+static signal_subject_impl cleanup_signal_observable;
 
 /// Function to call when the application is going to be forcefully shutdown.
 static void cleanup_signal_handler(int signal)

@@ -11,7 +11,6 @@
 #pragma once
 
 #include "backend_pcap_writer.h"
-#include "pcap_file_writer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/pcap/dlt_pcap.h"
 
@@ -41,8 +40,6 @@ public:
   void push_pdu(byte_buffer pdu) override;
 
   void push_pdu(const_span<uint8_t> pdu) override;
-
-  void handle_signal(int signal) override { flush(); }
 
 private:
   srslog::basic_logger& logger;

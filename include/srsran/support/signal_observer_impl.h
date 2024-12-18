@@ -14,21 +14,21 @@
 #include <list>
 namespace srsran {
 
-class signal_observable_impl : public signal_observable
+class signal_subject_impl : public signal_subject
 {
 public:
-  virtual ~signal_observable_impl() {}
+  virtual ~signal_subject_impl() {}
 
   void attach(signal_observer* observer) override
   {
     observers.push_back(observer);
-    observer->set_current_observable(this);
+    observer->set_current_subject(this);
   }
 
   void detach(signal_observer* observer) override
   {
     observers.remove(observer);
-    observer->set_current_observable(nullptr);
+    observer->set_current_subject(nullptr);
   }
 
   void notify_signal(int signal) override

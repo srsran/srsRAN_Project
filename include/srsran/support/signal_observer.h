@@ -10,33 +10,47 @@
 
 #pragma once
 
+#include <functional>
 namespace srsran {
 
 class signal_observer;
 
-class signal_observable
+class signal_subject
 {
 public:
-  virtual ~signal_observable(){};
+  virtual ~signal_subject() {};
   virtual void attach(signal_observer* observer) = 0;
   virtual void detach(signal_observer* observer) = 0;
   virtual void notify_signal(int signal)         = 0;
 };
 
+using signal_callback = std::function<void()>;
+
 class signal_observer
 {
 public:
+  signal_observer(signal_callback callback_) : callback(callback_) {}
+
   virtual ~signal_observer()
   {
-    if (current_observable) {
-      current_observable->detach(this);
+    if (current_subject) {
+      current_subject->detach(this);
     }
   }
-  void         set_current_observable(signal_observable* observable) { current_observable = observable; }
-  virtual void handle_signal(int signal) = 0;
+
+  void set_current_subject(signal_subject* subject)
+  {
+    if (current_subject) {
+      current_subject->detach(this);
+    }
+    current_subject = subject;
+  }
+
+  void handle_signal(int signal) { callback(); };
 
 private:
-  signal_observable* current_observable = nullptr;
+  signal_callback callback;
+  signal_subject* current_subject = nullptr;
 };
 
 } // namespace srsran

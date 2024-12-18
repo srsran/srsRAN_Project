@@ -105,7 +105,6 @@ public:
   bool is_write_enabled() const override { return false; }
   void push_pdu(const_span<uint8_t> pdu) override {}
   void push_pdu(byte_buffer pdu) override {}
-  void handle_signal(int signal) override {}
 };
 
 inline e2_message generate_e2_setup_request(std::string oid)
