@@ -50,6 +50,7 @@ UE_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 GNB_STARTUP_TIMEOUT: int = 2  # GNB delay (we wait x seconds and check it's still alive). UE later and has a big timeout
 FIVEGC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 ATTACH_TIMEOUT: int = 90
+RELEASE_TIMEOUT: int = 90
 INTER_UE_START_PERIOD: int = 0
 
 
@@ -221,6 +222,27 @@ def ue_start_and_attach(
     return ue_attach_info_dict
 
 
+def ue_await_release(
+    ue: UEStub,
+    release_timeout: int = RELEASE_TIMEOUT,
+) -> bool:
+    """
+    Wait until an UEs is released from already running gnb and 5gc
+    """
+
+    # Await release
+    ue_release_result: bool = False
+    with suppress(grpc.RpcError):
+        ue_release_result = ue.WaitUntilReleased(UInt32Value(value=release_timeout)) == Empty()
+
+    if ue_release_result:
+        logging.info("UE [%s] released", id(ue))
+    else:
+        pytest.fail("Release timeout reached")
+
+    return ue_release_result
+
+
 def start_kpm_mon_xapp(ric: NearRtRicStub, report_service_style: int = 1, metrics: str = "DRB.UEThpDl") -> None:
     """
     Start KPM Monitor xAPP in RIC
@@ -357,6 +379,37 @@ def _print_ping_result(msg: str, task: grpc.Future):
         log_fn("Ping %s:\n%s", msg, MessageToString(result, indent=2))
     except (grpc.RpcError, grpc.FutureCancelledError, grpc.FutureTimeoutError) as err:
         logging.error(ErrorReportedByAgent(err))
+
+
+def ping_from_5gc(
+    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: int = 0
+):
+    """
+    Ping command from a 5GC to a UE
+    """
+    ping_task_array = ping_start_from_5gc(ue_attach_info_dict, fivegc, ping_count, time_step)
+    ping_wait_until_finish(ping_task_array)
+
+
+def ping_start_from_5gc(
+    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: float = 0
+) -> List[grpc.Future]:
+    """
+    Ping command between a 5GC and an UE
+    """
+
+    # Launch ping (5gc -> ue) for each attached ue in parallel
+
+    ping_task_array: List[grpc.Future] = []
+    for ue_attached_info in ue_attach_info_dict.values():
+        fivegc_to_ue: grpc.Future = fivegc.Ping.future(PingRequest(address=ue_attached_info.ipv4, count=ping_count))
+        fivegc_to_ue.add_done_callback(
+            lambda _task, _msg=f"[{ue_attached_info.ipv4}] 5GC -> UE": _print_ping_result(_msg, _task)
+        )
+        ping_task_array.append(fivegc_to_ue)
+        sleep(time_step)
+
+    return ping_task_array
 
 
 def iperf_parallel(
