@@ -18,6 +18,7 @@ class prach_processor_request_handler;
 class puxch_processor_request_handler;
 class prach_processor_notifier;
 class puxch_processor_notifier;
+class lower_phy_cfo_controller;
 
 /// \brief Uplink processor main interface.
 ///
@@ -42,6 +43,9 @@ public:
 
   /// Gets the PUxCH request handler.
   virtual puxch_processor_request_handler& get_puxch_request_handler() = 0;
+
+  /// \brief Gets the carrier frequency offset processor interface.
+  virtual lower_phy_cfo_controller& get_cfo_handler() = 0;
 
   /// \brief Gets the uplink processor baseband interface.
   /// \return A reference to the internal uplink processor baseband interface.

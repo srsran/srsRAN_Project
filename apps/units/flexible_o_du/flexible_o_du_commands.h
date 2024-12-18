@@ -188,4 +188,50 @@ public:
   }
 };
 
+/// Application command to set the carrier frequency offset.
+class cfo_app_command : public app_services::application_command
+{
+  ru_controller& controller;
+
+public:
+  explicit cfo_app_command(ru_controller& controller_) : controller(controller_) {}
+
+  // See interface for documentation.
+  std::string_view get_name() const override { return "cfo"; }
+
+  // See interface for documentation.
+  std::string_view get_description() const override { return " <sector_id> <cfo>:           set CFO"; }
+
+  // See interface for documentation.
+  void execute(span<const std::string> args) override
+  {
+    if (args.size() != 2) {
+      fmt::print("Invalid CFO command structure. Usage: cfo <sector_id> <cfo_Hz>\n");
+      return;
+    }
+
+    expected<unsigned, std::string> sector_id = app_services::parse_int<unsigned>(args.front());
+    if (not sector_id.has_value()) {
+      fmt::print("Invalid sector identifier.\n");
+      return;
+    }
+    expected<double, std::string> cfo = app_services::parse_double(args.back());
+    if (not cfo.has_value()) {
+      fmt::print("Invalid CFO value.\n");
+      return;
+    }
+
+    if (!controller.set_tx_cfo(sector_id.value(), cfo.value())) {
+      fmt::print("Setting TX CFO was not successful. The radio may not support this feature.\n");
+      return;
+    }
+
+    if (!controller.set_rx_cfo(sector_id.value(), cfo.value())) {
+      fmt::print("Setting RX CFO was not successful. The radio may not support this feature.\n");
+      return;
+    }
+
+    fmt::print("CFO set to {}Hz for sector {}.\n", cfo.value(), sector_id.value());
+  }
+};
 } // namespace srsran

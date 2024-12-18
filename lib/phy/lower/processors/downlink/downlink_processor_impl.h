@@ -39,6 +39,9 @@ public:
   void connect(downlink_processor_notifier& notifier, pdxch_processor_notifier& pdxch_notifier) override;
 
   // See interface for documentation.
+  baseband_cfo_processor& get_cfo_handler() override;
+
+  // See interface for documentation.
   pdxch_processor_request_handler& get_downlink_request_handler() override;
 
   // See interface for documentation.

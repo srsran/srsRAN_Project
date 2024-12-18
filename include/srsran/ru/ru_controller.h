@@ -44,6 +44,18 @@ public:
   /// \return \c true if the operation is successful, \c false otherwise.
   virtual bool set_rx_gain(unsigned port_id, double gain_dB) = 0;
 
+  /// \brief Sets the downlink carrier frequency offset for the specified sector.
+  /// \param[in] sector_id Sector identifier.
+  /// \param[in] cfo_hz    Transmission CFO in Hz.
+  /// \return \c true if the operation is successful, \c false otherwise.
+  virtual bool set_tx_cfo(unsigned sector_id, float cfo_offset) = 0;
+
+  /// \brief Sets the uplink carrier frequency offset for the specified sector.
+  /// \param[in] sector_id Sector identifier.
+  /// \param[in] cfo_hz    Transmission CFO in Hz.
+  /// \return \c true if the operation is successful, \c false otherwise.
+  virtual bool set_rx_cfo(unsigned sector_id, float cfo_offset) = 0;
+
   /// Prints RU specific metrics once.
   virtual void print_metrics() = 0;
 };

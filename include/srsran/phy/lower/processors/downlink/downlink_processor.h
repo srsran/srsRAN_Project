@@ -12,11 +12,12 @@
 
 namespace srsran {
 
-class downlink_processor_notifier;
 class downlink_processor_baseband;
-class pdxch_processor_request_handler;
 class downlink_processor_notifier;
+class downlink_processor_notifier;
+class lower_phy_cfo_controller;
 class pdxch_processor_notifier;
+class pdxch_processor_request_handler;
 
 /// \brief Downlink processor main interface.
 ///
@@ -33,6 +34,9 @@ public:
 
   /// Connects the downlink processor with notifiers.
   virtual void connect(downlink_processor_notifier& notifier, pdxch_processor_notifier& pdxch_notifier) = 0;
+
+  /// Gets the carrier frequency offset processor interface.
+  virtual lower_phy_cfo_controller& get_cfo_handler() = 0;
 
   /// Gets the downlink processor request handler.
   virtual pdxch_processor_request_handler& get_downlink_request_handler() = 0;

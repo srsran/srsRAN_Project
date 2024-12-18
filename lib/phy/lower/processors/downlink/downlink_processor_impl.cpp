@@ -41,3 +41,8 @@ downlink_processor_baseband& downlink_processor_impl::get_baseband()
 {
   return downlink_proc_baseband;
 }
+
+baseband_cfo_processor& downlink_processor_impl::get_cfo_handler()
+{
+  return downlink_proc_baseband.get_cfo_control();
+}

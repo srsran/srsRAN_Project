@@ -57,6 +57,12 @@ public:
   // See radio_unit interface for documentation.
   ru_uplink_plane_handler& get_uplink_plane_handler() override { return *this; }
 
+  // See ru_controller interface for documentation.
+  bool set_tx_cfo(unsigned port_id, float cfo_Hz) override { return false; }
+
+  // See ru_controller interface for documentation.
+  bool set_rx_cfo(unsigned port_id, float cfo_Hz) override { return false; }
+
 private:
   /// Possible internal states.
   enum class state : uint8_t { idle = 0, running, wait_stop, stopped };

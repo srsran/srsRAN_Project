@@ -67,6 +67,12 @@ public:
   // See interface for documentation.
   lower_phy_rg_handler& get_rg_handler() override { return handler_adaptor.get_rg_handler(); }
 
+  // See interface for documentation.
+  lower_phy_cfo_controller& get_tx_cfo_control() override;
+
+  // See interface for documentation.
+  lower_phy_cfo_controller& get_rx_cfo_control() override;
+
   /// Downlink processor.
   std::unique_ptr<lower_phy_downlink_processor> downlink_proc;
   /// Uplink processor.

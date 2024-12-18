@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../baseband_cfo_processor.h"
 #include "srsran/adt/tensor.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/processors/uplink/prach/prach_processor.h"
@@ -74,6 +75,11 @@ private:
   };
 
   // See interface for documentation.
+public:
+  baseband_cfo_processor& get_cfo_handler() override;
+
+private:
+  // See interface for documentation.
   void process(const baseband_gateway_buffer_reader& samples, baseband_gateway_timestamp timestamp) override;
 
   /// \brief Processes samples in alignment state.
@@ -130,6 +136,8 @@ private:
   std::unique_ptr<puxch_processor> puxch_proc;
   /// Uplink processor notifier.
   uplink_processor_notifier* notifier = nullptr;
+  /// Carrier Frequency Offset processor.
+  baseband_cfo_processor cfo_processor;
 };
 
 } // namespace srsran
