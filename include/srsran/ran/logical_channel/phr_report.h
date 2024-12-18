@@ -54,8 +54,6 @@ struct cell_ph_report {
   /// UE configured maximum output power used in computation of Power Headroom level. This field maps to P_CMAX,f,c in
   /// table 6.1.3.8-2 of TS 38.321. This field is optional only in case of Multiple Entry PHR.
   std::optional<p_cmax_dbm_range> p_cmax;
-  /// Indicates the slot at which the PHR was received.
-  slot_point slot_rx;
 };
 
 /// UL Power Headroom Report (PHR).

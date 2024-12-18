@@ -22,7 +22,8 @@
 
 #include "cell_harq_manager.h"
 #include "srsran/scheduler/resource_grid_util.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/result/pdsch_info.h"
+#include "srsran/scheduler/result/pusch_info.h"
 
 using namespace srsran;
 using namespace harq_utils;
@@ -47,7 +48,7 @@ public:
     harq_pool(parent_), ntn_cs_koffset(ntn_cs_koffset_)
   {
     srsran_assert(ntn_cs_koffset > 0 and ntn_cs_koffset <= NTN_CELL_SPECIFIC_KOFFSET_MAX, "Invalid NTN koffset");
-    unsigned ring_size = get_allocator_ring_size_gt_min(ntn_cs_koffset);
+    unsigned ring_size = get_allocator_ring_size_gt_min(NTN_CELL_SPECIFIC_KOFFSET_MAX * 2);
     history.resize(ring_size);
   }
 
@@ -60,7 +61,7 @@ public:
     }
 
     // Clear old entries.
-    unsigned idx = get_current_index(sl_tx - 1);
+    unsigned idx = get_current_index(sl_tx - SCHEDULER_MAX_K1);
     history[idx].clear();
   }
 
@@ -111,10 +112,11 @@ public:
 
   std::optional<dl_harq_process_handle> find_dl_harq(du_ue_index_t ue_idx, slot_point uci_slot, unsigned harq_bit_idx)
   {
-    unsigned idx = get_offset_index(uci_slot);
+    auto     adjusted_slot = uci_slot - ntn_cs_koffset;
+    unsigned idx           = get_offset_index(adjusted_slot);
     for (dl_harq_process_impl& h_impl : history[idx]) {
-      if (h_impl.ue_idx == ue_idx and h_impl.status == harq_state_t::waiting_ack and h_impl.slot_ack == uci_slot and
-          h_impl.harq_bit_idx == harq_bit_idx) {
+      if (h_impl.ue_idx == ue_idx and h_impl.status == harq_state_t::waiting_ack and
+          h_impl.slot_ack == adjusted_slot and h_impl.harq_bit_idx == harq_bit_idx) {
         return dl_harq_process_handle{harq_pool, h_impl};
       }
     }
@@ -223,7 +225,7 @@ void cell_harq_repository<IsDl>::slot_indication(slot_point sl_tx)
         "rnti={} h_id={}: Discarding {} HARQ. Cause: Too much time has passed since the last HARQ "
         "transmission. The scheduler policy is likely not prioritizing retransmissions of old HARQ processes.",
         h.rnti,
-        h.h_id,
+        fmt::underlying(h.h_id),
         IsDl ? "DL" : "UL");
     dealloc_harq(h);
 
@@ -245,7 +247,7 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
       logger.debug("rnti={} h_id={}: Setting {} HARQ to \"ACKed\" state. Cause: HARQ-ACK wait timeout ({} slots) was "
                    "reached with still missing PUCCH HARQ-ACKs. However, one positive ACK was received.",
                    h.rnti,
-                   h.h_id,
+                   fmt::underlying(h.h_id),
                    IsDl ? "DL" : "UL",
                    h.slot_ack_timeout - h.slot_ack);
     } else {
@@ -254,7 +256,7 @@ void cell_harq_repository<IsDl>::handle_harq_ack_timeout(harq_type& h, slot_poin
                      "there are still "
                      "missing HARQ-ACKs and none of the received ones are positive.",
                      h.rnti,
-                     h.h_id,
+                     fmt::underlying(h.h_id),
                      IsDl ? "DL" : "UL",
                      h.slot_ack_timeout - h.slot_ack);
     }
@@ -297,6 +299,12 @@ typename cell_harq_repository<IsDl>::harq_type* cell_harq_repository<IsDl>::allo
   h.ack_on_timeout     = false;
   h.retxs_cancelled    = false;
 
+  // Set UE HARQ entity common params.
+  ue_harq_entity.last_slot_tx =
+      ue_harq_entity.last_slot_tx.valid() ? std::max(ue_harq_entity.last_slot_tx, sl_tx) : sl_tx;
+  ue_harq_entity.last_slot_ack =
+      ue_harq_entity.last_slot_ack.valid() ? std::max(ue_harq_entity.last_slot_ack, sl_ack) : sl_ack;
+
   // Add HARQ to the timeout list.
   h.slot_ack_timeout = sl_ack + max_ack_wait_in_slots;
   harq_timeout_wheel[h.slot_ack_timeout.to_uint() % harq_timeout_wheel.size()].push_front(&h);
@@ -322,8 +330,19 @@ void cell_harq_repository<IsDl>::dealloc_harq(harq_type& h)
   }
   h.status = harq_state_t::empty;
 
-  // Mark HARQ as available again.
+  // Check if common HARQ entity params need to be updated.
   ue_harq_entity_impl& ue_harq_entity = ues[h.ue_idx];
+  if (ue_harq_entity.last_slot_tx.valid() and h.slot_tx >= ue_harq_entity.last_slot_tx) {
+    // If the HARQ being reset corresponds to the last recorded Tx, we also reset "last_slot_tx". This avoids
+    // encountering ambiguities with the slot wrap-around, when the UE stays for very long without being scheduled.
+    ue_harq_entity.last_slot_tx = {};
+  }
+  if (ue_harq_entity.last_slot_ack.valid() and h.slot_ack >= ue_harq_entity.last_slot_ack) {
+    // We do the same with last_slot_ack as we did with last_slot_tx.
+    ue_harq_entity.last_slot_ack = {};
+  }
+
+  // Mark HARQ as available again.
   ue_harq_entity.free_harq_ids.push_back(h.h_id);
 }
 
@@ -335,14 +354,14 @@ void cell_harq_repository<IsDl>::handle_ack(harq_type& h, bool ack)
       logger.debug("rnti={} h_id={}: Discarding {} HARQ process TB with tbs={}. Cause: Retxs for this HARQ process "
                    "were cancelled",
                    h.rnti,
-                   h.h_id,
+                   fmt::underlying(h.h_id),
                    IsDl ? "DL" : "UL",
                    h.prev_tx_params.tbs_bytes);
     } else {
       logger.info(
           "rnti={} h_id={}: Discarding {} HARQ process TB with tbs={}. Cause: Maximum number of reTxs {} exceeded",
           h.rnti,
-          h.h_id,
+          fmt::underlying(h.h_id),
           IsDl ? "DL" : "UL",
           h.prev_tx_params.tbs_bytes,
           h.max_nof_harq_retxs);
@@ -387,18 +406,27 @@ template <bool IsDl>
 bool cell_harq_repository<IsDl>::handle_new_retx(harq_type& h, slot_point sl_tx, slot_point sl_ack)
 {
   if (h.status != harq_state_t::pending_retx) {
-    logger.warning("rnti={} h_id={}: Attempt of retx in a HARQ process that has no pending retx", h.rnti, h.h_id);
+    logger.warning(
+        "rnti={} h_id={}: Attempt of retx in a HARQ process that has no pending retx", h.rnti, fmt::underlying(h.h_id));
     return false;
   }
 
   // Remove HARQ from pending Retx list.
   harq_pending_retx_list.pop(&h);
 
+  // Update HARQ common parameters.
   h.status         = harq_state_t::waiting_ack;
   h.slot_tx        = sl_tx;
   h.slot_ack       = sl_ack;
   h.ack_on_timeout = false;
   h.nof_retxs++;
+
+  // Set UE HARQ entity common params.
+  ue_harq_entity_impl& ue_harq_entity = ues[h.ue_idx];
+  ue_harq_entity.last_slot_tx =
+      ue_harq_entity.last_slot_tx.valid() ? std::max(ue_harq_entity.last_slot_tx, sl_tx) : sl_tx;
+  ue_harq_entity.last_slot_ack =
+      ue_harq_entity.last_slot_ack.valid() ? std::max(ue_harq_entity.last_slot_ack, sl_ack) : sl_ack;
 
   // Add HARQ to the timeout list.
   h.slot_ack_timeout = sl_ack + max_ack_wait_in_slots;
@@ -509,8 +537,8 @@ cell_harq_manager::cell_harq_manager(unsigned                               max_
   timeout_notifier(notifier != nullptr and ntn_cs_koffset == 0 ? std::move(notifier)
                                                                : std::make_unique<noop_harq_timeout_notifier>()),
   logger(srslog::fetch_basic_logger("SCHED")),
-  dl(max_ues, max_ack_wait_timeout, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger),
-  ul(max_ues, max_ack_wait_timeout, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger)
+  dl(max_ues, max_ack_wait_timeout + ntn_cs_koffset, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger),
+  ul(max_ues, max_ack_wait_timeout + ntn_cs_koffset, max_harqs_per_ue, ntn_cs_koffset, *timeout_notifier, logger)
 {
 }
 
@@ -607,7 +635,8 @@ dl_harq_process_handle::status_update dl_harq_process_handle::dl_ack_info(mac_ha
 {
   if (impl->status != harq_state_t::waiting_ack) {
     // If the HARQ process is not expecting an HARQ-ACK, it means that it has already been ACKed/NACKed.
-    harq_repo->logger.warning("rnti={} h_id={}: ACK arrived for inactive DL HARQ", impl->rnti, impl->h_id);
+    harq_repo->logger.warning(
+        "rnti={} h_id={}: ACK arrived for inactive DL HARQ", impl->rnti, fmt::underlying(impl->h_id));
     return status_update::error;
   }
 
@@ -653,16 +682,19 @@ void dl_harq_process_handle::increment_pucch_counter()
   ++impl->pucch_ack_to_receive;
 }
 
-void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx, const pdsch_information& pdsch)
+void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx, const dl_msg_alloc& ue_pdsch)
 {
+  constexpr static size_t CW_INDEX = 0;
+
+  const pdsch_information& pdsch = ue_pdsch.pdsch_cfg;
   srsran_assert(pdsch.codewords.size() == 1, "Only one codeword supported");
   srsran_sanity_check(pdsch.rnti == impl->rnti, "RNTI mismatch");
   srsran_sanity_check(pdsch.harq_id == impl->h_id, "HARQ-id mismatch");
   srsran_assert(impl->status == harq_utils::harq_state_t::waiting_ack,
                 "Setting allocation parameters for DL HARQ process id={} in invalid state",
-                id());
+                fmt::underlying(id()));
 
-  const pdsch_codeword&               cw          = pdsch.codewords[0];
+  const pdsch_codeword&               cw          = pdsch.codewords[CW_INDEX];
   dl_harq_process_impl::alloc_params& prev_params = impl->prev_tx_params;
 
   if (impl->nof_retxs == 0) {
@@ -673,6 +705,10 @@ void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx,
     prev_params.slice_id     = ctx.slice_id;
     prev_params.cqi          = ctx.cqi.has_value() ? ctx.cqi.value() : cqi_value{1};
     prev_params.is_fallback  = ctx.is_fallback;
+    prev_params.lc_sched_info.clear();
+    for (const dl_msg_lc_info& lc : ue_pdsch.tb_list[CW_INDEX].lc_chs_to_sched) {
+      prev_params.lc_sched_info.push_back({lc.lcid, units::bytes{lc.sched_bytes}});
+    }
   } else {
     srsran_assert(ctx.dci_cfg_type == prev_params.dci_cfg_type,
                   "DCI format and RNTI type cannot change during DL HARQ retxs");
@@ -707,8 +743,9 @@ int ul_harq_process_handle::ul_crc_info(bool ack)
 {
   if (impl->status != harq_state_t::waiting_ack) {
     // HARQ is not expecting CRC info.
-    harq_repo->logger.warning(
-        "rnti={} h_id={}: Discarding CRC. Cause: UL HARQ process is not expecting any CRC", impl->rnti, impl->h_id);
+    harq_repo->logger.warning("rnti={} h_id={}: Discarding CRC. Cause: UL HARQ process is not expecting any CRC",
+                              impl->rnti,
+                              fmt::underlying(impl->h_id));
     return -1;
   }
 
@@ -723,7 +760,7 @@ void ul_harq_process_handle::save_grant_params(const ul_harq_alloc_context& ctx,
   srsran_sanity_check(pusch.harq_id == impl->h_id, "HARQ-id mismatch");
   srsran_assert(impl->status == harq_utils::harq_state_t::waiting_ack,
                 "Setting allocation parameters for DL HARQ process id={} in invalid state",
-                id());
+                fmt::underlying(id()));
 
   ul_harq_process_impl::alloc_params& prev_tx_params = impl->prev_tx_params;
 

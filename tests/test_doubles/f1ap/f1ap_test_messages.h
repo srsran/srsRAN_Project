@@ -29,10 +29,13 @@
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/gnb_du_id.h"
+#include "srsran/ran/nr_band.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/ran/tac.h"
 
 namespace srsran {
 
@@ -41,9 +44,17 @@ struct f1ap_message;
 namespace test_helpers {
 
 struct served_cell_item_info {
-  nr_cell_identity nci = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value();
-  pci_t            pci = 0;
-  unsigned         tac = 7;
+  struct meas_timing_config {
+    uint32_t           carrier_freq = 535930;
+    subcarrier_spacing scs          = subcarrier_spacing::kHz30;
+  };
+
+  nr_cell_identity   nci      = nr_cell_identity::create(gnb_id_t{411, 22}, 0U).value();
+  pci_t              pci      = 0;
+  tac_t              tac      = 7;
+  nr_band            band     = nr_band::n78;
+  uint32_t           nr_arfcn = 626748;
+  meas_timing_config meas_timing_cfg;
 };
 
 /// \brief Generate a dummy F1AP Served Cell Item.

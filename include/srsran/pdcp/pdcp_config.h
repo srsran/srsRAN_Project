@@ -25,7 +25,7 @@
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/pdcp/pdcp_t_reordering.h"
 #include "srsran/support/timers.h"
-#include "fmt/format.h"
+#include "fmt/std.h"
 #include <cstdint>
 
 namespace srsran {
@@ -38,35 +38,35 @@ enum class pdcp_rb_type { srb, drb };
 /// PDCP NR RLC mode information.
 enum class pdcp_rlc_mode { um, am };
 
-/// \brief Returns the value range of the sequence numbers
-/// \param sn_size Length of the sequence number field in bits
-/// \return cardinality of sn_size
+/// \brief Returns the value range of the sequence numbers.
+/// \param sn_size Length of the sequence number field in bits.
+/// \return cardinality of sn_size.
 constexpr uint32_t pcdp_sn_cardinality(uint16_t sn_size)
 {
   srsran_assert(sn_size < 32, "Cardinality of sn_size={} exceeds return type 'uint32_t'", sn_size);
   return (1 << sn_size);
 }
 
-/// \brief Returns the PDCP window size
-/// \param sn_size Length of the sequence number field in bits
-/// \return size of the window
+/// \brief Returns the PDCP window size.
+/// \param sn_size Length of the sequence number field in bits.
+/// \return size of the window.
 constexpr uint32_t pdcp_window_size(uint16_t sn_size)
 {
   return pcdp_sn_cardinality(sn_size - 1);
 }
 
-/// \brief Returns the PDCP header size
-/// \param sn_size Length of the sequence number field in bits
-/// \return size of the data PDU header
+/// \brief Returns the PDCP header size.
+/// \param sn_size Length of the sequence number field in bits.
+/// \return size of the data PDU header.
 constexpr uint32_t pdcp_data_header_size(pdcp_sn_size sn_size)
 {
   return sn_size == pdcp_sn_size::size12bits ? 2 : 3;
 }
 
-/// \brief Returns the PDCP trailer size
-/// \param rb_type whether this is a SRB or DRB.
-/// \param integrity_enabled wether integrity is enabled or not.
-/// \return size of the
+/// \brief Returns the PDCP trailer size.
+/// \param rb_type           whether this is a SRB or DRB.
+/// \param integrity_enabled whether integrity is enabled or not.
+/// \return size of the data trailer.
 constexpr uint32_t pdcp_data_trailer_size(pdcp_rb_type rb_type, bool integrity_enabled)
 {
   constexpr uint32_t mac_i_size = 4;
@@ -82,12 +82,12 @@ constexpr uint32_t pdcp_data_trailer_size(pdcp_rb_type rb_type, bool integrity_e
 /// Maximum supported PDCP SDU size, see TS 38.323, section 4.3.1.
 constexpr uint16_t pdcp_max_sdu_size = 9000;
 
-/// PDCP security direction
+/// PDCP security direction.
 enum class pdcp_security_direction { uplink, downlink };
 
 /// PDCP NR discard timer values.
-/// This timer is configured only for DRBs. In the transmitter,
-/// a new timer is started upon reception of an SDU from upper layer.
+/// This timer is configured only for DRBs. In the transmitter, a new timer is started upon reception of an SDU from
+/// upper layer.
 /// See TS 38.322 for timer description and TS 38.331 for valid timer durations.
 enum class pdcp_discard_timer {
   ms10     = 10,
@@ -107,7 +107,8 @@ enum class pdcp_discard_timer {
   ms1500   = 1500,
   infinity = -1
 };
-inline bool pdcp_discard_timer_from_int(pdcp_discard_timer& discard_timer, int num)
+
+constexpr bool pdcp_discard_timer_from_int(pdcp_discard_timer& discard_timer, int num)
 {
   switch (num) {
     case 10:
@@ -133,20 +134,19 @@ inline bool pdcp_discard_timer_from_int(pdcp_discard_timer& discard_timer, int n
   }
 }
 
-/// \brief Convert PDCP NR discard timer from enum to integer.
+/// Convert PDCP NR discard timer from enum to integer.
 constexpr int16_t pdcp_discard_timer_to_int(pdcp_discard_timer discard_timer)
 {
   return static_cast<int16_t>(discard_timer);
 }
 
 /// The PDCP cannot re-use COUNTs, see TS 38.331, section 5.3.1.2.
-/// To avoid this, we define two thresholds, one where we accept messages
-/// but notify the RRC and another where we no longer accept messages.
-/// Here, we define some default values for this, both for TX and RX.
-const uint32_t pdcp_tx_default_max_count_notify = 0xc0000000;
-const uint32_t pdcp_tx_default_max_count_hard   = UINT32_MAX - 1;
-const uint32_t pdcp_rx_default_max_count_notify = 0xc0000000;
-const uint32_t pdcp_rx_default_max_count_hard   = 0xd0000000;
+/// To avoid this, we define two thresholds, one where we accept messages but notify the RRC and another where we no
+/// longer accept messages. Here, we define some default values for this, both for TX and RX.
+constexpr uint32_t pdcp_tx_default_max_count_notify = 0xc0000000;
+constexpr uint32_t pdcp_tx_default_max_count_hard   = UINT32_MAX - 1;
+constexpr uint32_t pdcp_rx_default_max_count_notify = 0xc0000000;
+constexpr uint32_t pdcp_rx_default_max_count_hard   = 0xd0000000;
 struct pdcp_max_count {
   uint32_t notify;
   uint32_t hard;
@@ -165,13 +165,11 @@ struct pdcp_custom_config_rx : public pdcp_custom_config_base {
   // Empty
 };
 
-/// \brief Non-standard configurable parameters for PDCP
+/// \brief Non-standard configurable parameters for PDCP.
 ///
-/// Configurable parameters for the PDCP entity
-/// that are not explicitly specified in the RRC specifications.
-/// This separation is necessary, as the CU-CP cannot transmit
-/// these parameters to the CU-UP, so it's necessary for the
-/// CU-UP to store these configurations itself.
+/// Configurable parameters for the PDCP entity that are not explicitly specified in the RRC specifications. This
+/// separation is necessary, as the CU-CP cannot transmit these parameters to the CU-UP, so it's necessary for the CU-UP
+/// to store these configurations itself.
 struct pdcp_custom_config {
   timer_duration         metrics_period;
   pdcp_metrics_notifier* metrics_notifier = nullptr;
@@ -179,10 +177,8 @@ struct pdcp_custom_config {
   pdcp_custom_config_rx  rx               = {};
 };
 
-/// \brief Configurable parameters for PDCP that are common
-/// for both TX and RX.
-///
-/// Ref: 3GPP TS 38.331 version 15.2.1
+/// \brief Configurable parameters for PDCP that are common for both TX and RX.
+/// Ref: 3GPP TS 38.331 version 15.2.1.
 struct pdcp_config_common {
   pdcp_rb_type            rb_type;
   pdcp_rlc_mode           rlc_mode;
@@ -202,12 +198,10 @@ struct pdcp_rx_config : pdcp_config_common {
   pdcp_custom_config_rx custom;
 };
 
-/// \brief Configurable parameters for PDCP
+/// \brief Configurable parameters for PDCP.
 ///
-/// Parameters and valid values for them are taken from
-/// the RRC-NR PDCP-Config Information Element.
-///
-/// Ref: 3GPP TS 38.331 version 15.2.1
+/// Parameters and valid values for them are taken from the RRC-NR PDCP-Config Information Element.
+/// Ref: 3GPP TS 38.331 version 15.2.1.
 struct pdcp_config {
   pdcp_rb_type  rb_type;
   pdcp_rlc_mode rlc_mode;
@@ -253,33 +247,34 @@ struct pdcp_config {
   }
 };
 
-/// \brief Make default SRB parameters for PDCP
-/// Ref: 3GPP TS 38.331, section 9.2.1
+/// \brief Make default SRB parameters for PDCP.
+/// Ref: 3GPP TS 38.331, section 9.2.1.
 inline pdcp_config pdcp_make_default_srb_config()
 {
   pdcp_config config = {};
-  // common TX/RX parameters
+  // Common TX/RX parameters.
   config.rb_type                       = pdcp_rb_type::srb;
   config.rlc_mode                      = pdcp_rlc_mode::am;
   config.integrity_protection_required = true;
   config.ciphering_required            = true;
 
-  // Tx config
+  // Tx config.
   config.tx.sn_size                = pdcp_sn_size::size12bits;
   config.tx.direction              = pdcp_security_direction::downlink;
   config.tx.status_report_required = false;
 
-  // Rx config
+  // Rx config.
   config.rx.sn_size               = pdcp_sn_size::size12bits;
   config.rx.direction             = pdcp_security_direction::uplink;
   config.rx.out_of_order_delivery = false;
   config.rx.t_reordering          = pdcp_t_reordering::infinity;
 
-  // Custom config
+  // Custom config.
   config.custom = {};
 
   return config;
 }
+
 } // namespace srsran
 
 //
@@ -287,7 +282,6 @@ inline pdcp_config pdcp_make_default_srb_config()
 //
 namespace fmt {
 
-// RB type
 template <>
 struct formatter<srsran::pdcp_rb_type> {
   template <typename ParseContext>
@@ -297,14 +291,13 @@ struct formatter<srsran::pdcp_rb_type> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_rb_type type, FormatContext& ctx)
+  auto format(srsran::pdcp_rb_type type, FormatContext& ctx) const
   {
     static constexpr const char* options[] = {"SRB", "DRB"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(type)]);
   }
 };
 
-// RLC mode
 template <>
 struct formatter<srsran::pdcp_rlc_mode> {
   template <typename ParseContext>
@@ -314,14 +307,13 @@ struct formatter<srsran::pdcp_rlc_mode> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_rlc_mode mode, FormatContext& ctx)
+  auto format(srsran::pdcp_rlc_mode mode, FormatContext& ctx) const
   {
     static constexpr const char* options[] = {"UM", "AM"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(mode)]);
   }
 };
 
-// Reordering timer
 template <>
 struct formatter<srsran::pdcp_t_reordering> {
   template <typename ParseContext>
@@ -331,7 +323,7 @@ struct formatter<srsran::pdcp_t_reordering> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_t_reordering t_reordering, FormatContext& ctx)
+  auto format(srsran::pdcp_t_reordering t_reordering, FormatContext& ctx) const
   {
     if (t_reordering == srsran::pdcp_t_reordering::infinity) {
       return format_to(ctx.out(), "infinity");
@@ -340,7 +332,6 @@ struct formatter<srsran::pdcp_t_reordering> {
   }
 };
 
-// Discard timer
 template <>
 struct formatter<srsran::pdcp_discard_timer> {
   template <typename ParseContext>
@@ -350,7 +341,7 @@ struct formatter<srsran::pdcp_discard_timer> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_discard_timer discard_timer, FormatContext& ctx)
+  auto format(srsran::pdcp_discard_timer discard_timer, FormatContext& ctx) const
   {
     if (discard_timer == srsran::pdcp_discard_timer::infinity) {
       return format_to(ctx.out(), "infinity");
@@ -359,7 +350,6 @@ struct formatter<srsran::pdcp_discard_timer> {
   }
 };
 
-// Custom TX config
 template <>
 struct formatter<srsran::pdcp_custom_config_tx> {
   template <typename ParseContext>
@@ -369,7 +359,7 @@ struct formatter<srsran::pdcp_custom_config_tx> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_custom_config_tx cfg, FormatContext& ctx)
+  auto format(srsran::pdcp_custom_config_tx cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "count_notify={} count_max={} warn_on_drop={} test_mode={}",
@@ -380,7 +370,6 @@ struct formatter<srsran::pdcp_custom_config_tx> {
   }
 };
 
-// Custom RX config
 template <>
 struct formatter<srsran::pdcp_custom_config_rx> {
   template <typename ParseContext>
@@ -390,13 +379,12 @@ struct formatter<srsran::pdcp_custom_config_rx> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_custom_config_rx cfg, FormatContext& ctx)
+  auto format(srsran::pdcp_custom_config_rx cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "count_notify={} count_max={}", cfg.max_count.notify, cfg.max_count.hard);
   }
 };
 
-// TX config
 template <>
 struct formatter<srsran::pdcp_tx_config> {
   template <typename ParseContext>
@@ -406,7 +394,7 @@ struct formatter<srsran::pdcp_tx_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_tx_config cfg, FormatContext& ctx)
+  auto format(const srsran::pdcp_tx_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "rb_type={} rlc_mode={} sn_size={} discard_timer={} {}",
@@ -418,7 +406,6 @@ struct formatter<srsran::pdcp_tx_config> {
   }
 };
 
-// RX config
 template <>
 struct formatter<srsran::pdcp_rx_config> {
   template <typename ParseContext>
@@ -428,7 +415,7 @@ struct formatter<srsran::pdcp_rx_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_rx_config cfg, FormatContext& ctx)
+  auto format(const srsran::pdcp_rx_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "rb_type={} rlc_mode={} sn_size={} t_reordering={} {}",
@@ -440,7 +427,6 @@ struct formatter<srsran::pdcp_rx_config> {
   }
 };
 
-// PDCP config
 template <>
 struct formatter<srsran::pdcp_config> {
   template <typename ParseContext>
@@ -450,7 +436,7 @@ struct formatter<srsran::pdcp_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdcp_config& cfg, FormatContext& ctx)
+  auto format(const srsran::pdcp_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "rb_type={} rlc_mode={} int_req={} cip_req={} TX=[sn_size={} discard_timer={}] "
@@ -468,4 +454,5 @@ struct formatter<srsran::pdcp_config> {
                      cfg.custom.rx);
   }
 };
+
 } // namespace fmt

@@ -30,6 +30,7 @@
 
 #include "prach_detector_generic_thresholds.h"
 #include "srsran/phy/upper/channel_processors/prach_detector_phy_validator.h"
+#include "fmt/format.h"
 
 using namespace srsran;
 

@@ -80,7 +80,7 @@ static modulation_scheme get_min_modulation_scheme_per_aggr_lvl(aggregation_leve
       }
     }
   }
-  report_fatal_error("Invalid MCS table={}", mcs_table);
+  report_fatal_error("Invalid MCS table={}", fmt::underlying(mcs_table));
 }
 
 // Returns Modulation and Coding scheme corresponding to effective CQI.
@@ -123,7 +123,7 @@ static pdsch_mcs_table fetch_mcs_table(cqi_table_t cqi_table)
     case cqi_table_t::table3:
       return pdsch_mcs_table::qam64LowSe;
     default:
-      report_fatal_error("Unsupported CQI table={}", cqi_table);
+      report_fatal_error("Unsupported CQI table={}", fmt::underlying(cqi_table));
   }
 }
 

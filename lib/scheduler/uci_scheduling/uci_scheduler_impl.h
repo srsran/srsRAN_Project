@@ -24,7 +24,6 @@
 
 #include "../ue_scheduling/ue_repository.h"
 #include "uci_scheduler.h"
-#include "srsran/scheduler/resource_grid_util.h"
 
 namespace srsran {
 
@@ -60,6 +59,8 @@ private:
   void schedule_slot_ucis(cell_slot_resource_allocator& slot_alloc);
   // Helper that schedules the SR and CSI for UEs that were recently updated.
   void schedule_updated_ues_ucis(cell_resource_allocator& res_alloc);
+
+  void add_ue_to_grid(const ue_cell_configuration& ue_cfg, bool is_reconf);
 
   void add_resource(rnti_t crnti, unsigned offset, unsigned period, bool is_sr);
   void rem_resource(rnti_t crnti, unsigned offset, unsigned period, bool is_sr);

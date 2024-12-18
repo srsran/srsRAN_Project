@@ -39,6 +39,22 @@ enum class pusch_mcs_table {
   qam64LowSe = 2,
 };
 
+/// Convert PUSCH MCS table to string.
+constexpr const char* pusch_mcs_table_to_string(pusch_mcs_table table)
+{
+  switch (table) {
+    case pusch_mcs_table::qam64:
+      return "qam64";
+    case pusch_mcs_table::qam256:
+      return "qam256";
+    case pusch_mcs_table::qam64LowSe:
+      return "qam64LowSe";
+    default:
+      break;
+  }
+  return "invalid";
+}
+
 /// \brief Gets the Modulation and Coding Scheme configuration for PUSCH.
 ///
 /// Reserved target code rates and spectral efficiencies are indicated with zero.

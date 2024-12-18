@@ -21,7 +21,6 @@
  */
 
 #include "ngap_test_helpers.h"
-#include "srsran/support/format/fmt_optional.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

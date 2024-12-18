@@ -24,7 +24,7 @@
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/pucch/pucch_info.h"
-#include "srsran/scheduler/scheduler_pucch_format.h"
+#include "srsran/scheduler/result/pucch_format.h"
 #include <numeric>
 
 using namespace srsran;
@@ -52,7 +52,17 @@ static pucch_config build_default_pucch_cfg(const pucch_config& pucch_cfg, const
   if (not std::holds_alternative<pucch_f1_params>(user_params.f0_or_f1_params)) {
     target_pucch_cfg.format_1_common_param.reset();
   }
-  target_pucch_cfg.format_2_common_param.value().max_c_rate = user_params.f2_params.max_code_rate;
+
+  if (std::holds_alternative<pucch_f2_params>(user_params.f2_or_f3_or_f4_params)) {
+    const auto& f2_params = std::get<pucch_f2_params>(user_params.f2_or_f3_or_f4_params);
+    target_pucch_cfg.format_2_common_param.value().max_c_rate = f2_params.max_code_rate;
+  } else if (std::holds_alternative<pucch_f3_params>(user_params.f2_or_f3_or_f4_params)) {
+    const auto& f3_params = std::get<pucch_f3_params>(user_params.f2_or_f3_or_f4_params);
+    target_pucch_cfg.format_3_common_param.value().max_c_rate = f3_params.max_code_rate;
+  } else {
+    const auto& f4_params = std::get<pucch_f4_params>(user_params.f2_or_f3_or_f4_params);
+    target_pucch_cfg.format_4_common_param.value().max_c_rate = f4_params.max_code_rate;
+  }
 
   return target_pucch_cfg;
 }
@@ -64,11 +74,11 @@ du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> 
       srs_du::generate_cell_pucch_res_list(cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
                                                    cell_cfg_list_[0].pucch_cfg.nof_cell_harq_pucch_res_sets +
                                                cell_cfg_list_[0].pucch_cfg.nof_sr_resources,
-                                           cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
+                                           cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() *
                                                    cell_cfg_list_[0].pucch_cfg.nof_cell_harq_pucch_res_sets +
                                                cell_cfg_list_[0].pucch_cfg.nof_csi_resources,
                                            cell_cfg_list_[0].pucch_cfg.f0_or_f1_params,
-                                           cell_cfg_list_[0].pucch_cfg.f2_params,
+                                           cell_cfg_list_[0].pucch_cfg.f2_or_f3_or_f4_params,
                                            cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
                                            cell_cfg_list_[0].pucch_cfg.max_nof_symbols)),
   default_pucch_cfg(
@@ -172,18 +182,20 @@ du_pucch_resource_manager::find_optimal_csi_report_slot_offset(
         (csi_rs_period + csi_res_offset_candidate.second - csi_rs_offset - MINIMUM_CSI_RS_REPORT_DISTANCE) %
         csi_rs_period;
 
-    if (sr_res_cfg.format == pucch_format::FORMAT_0) {
-      const pucch_resource& candidate_csi_res_cfg =
-          default_pucch_res_list[csi_du_res_idx_to_pucch_res_idx(csi_res_offset_candidate.first)];
+    const pucch_resource& candidate_csi_res_cfg =
+        default_pucch_res_list[csi_du_res_idx_to_pucch_res_idx(csi_res_offset_candidate.first)];
+    if (sr_res_cfg.format == pucch_format::FORMAT_0 and candidate_csi_res_cfg.format == pucch_format::FORMAT_2) {
       srsran_assert(std::holds_alternative<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params),
-                    "PUCCH resource for CSI must be of format 2 or 3");
-      const ofdm_symbol_range csi_symbols = {
-          std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params).starting_sym_idx,
-          std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params).starting_sym_idx +
-              std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params).nof_symbols};
-      const ofdm_symbol_range sr_symbols = {std::get<pucch_format_0_cfg>(sr_res_cfg.format_params).starting_sym_idx,
-                                            std::get<pucch_format_0_cfg>(sr_res_cfg.format_params).starting_sym_idx +
-                                                std::get<pucch_format_0_cfg>(sr_res_cfg.format_params).nof_symbols};
+                    "PUCCH resource for CSI must be of format 2");
+
+      const auto&             csi_params  = std::get<pucch_format_2_3_cfg>(candidate_csi_res_cfg.format_params);
+      const ofdm_symbol_range csi_symbols = {csi_params.starting_sym_idx,
+                                             csi_params.starting_sym_idx + csi_params.nof_symbols};
+
+      const auto&             sr_params  = std::get<pucch_format_0_cfg>(sr_res_cfg.format_params);
+      const ofdm_symbol_range sr_symbols = {sr_params.starting_sym_idx,
+                                            sr_params.starting_sym_idx + sr_params.nof_symbols};
+
       if (not csi_symbols.overlaps(sr_symbols)) {
         weight += 2 * csi_rs_period;
         return weight;
@@ -303,7 +315,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
                                   sr_res_offset.value().first,
                                   csi_res_offset.has_value() ? csi_res_offset.value().first : 0,
                                   user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq,
-                                  user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq,
+                                  user_defined_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq,
                                   user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets,
                                   user_defined_pucch_cfg.nof_sr_resources,
                                   user_defined_pucch_cfg.nof_csi_resources);
@@ -323,11 +335,38 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
   static constexpr unsigned pucch_f1_max_harq_payload = 2U;
   cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value().format_max_payload[pucch_format_to_uint(
       pucch_format::FORMAT_1)]                        = pucch_f1_max_harq_payload;
-  cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value().format_max_payload[pucch_format_to_uint(
-      pucch_format::FORMAT_2)] =
-      get_pucch_format2_max_payload(user_defined_pucch_cfg.f2_params.max_nof_rbs,
-                                    user_defined_pucch_cfg.f2_params.nof_symbols.to_uint(),
-                                    to_max_code_rate_float(default_pucch_cfg.format_2_common_param.value().max_c_rate));
+
+  if (std::holds_alternative<pucch_f2_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params)) {
+    const auto& f2_params = std::get<pucch_f2_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params);
+    cell_grp_cfg.cells[0]
+        .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value()
+        .format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] = get_pucch_format2_max_payload(
+        f2_params.max_nof_rbs,
+        f2_params.nof_symbols.to_uint(),
+        to_max_code_rate_float(default_pucch_cfg.format_2_common_param.value().max_c_rate));
+  } else if (std::holds_alternative<pucch_f3_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params)) {
+    const auto& f3_params = std::get<pucch_f3_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params);
+    cell_grp_cfg.cells[0]
+        .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value()
+        .format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_3)] = get_pucch_format3_max_payload(
+        f3_params.max_nof_rbs,
+        f3_params.nof_symbols.to_uint(),
+        to_max_code_rate_float(default_pucch_cfg.format_3_common_param.value().max_c_rate),
+        f3_params.intraslot_freq_hopping,
+        f3_params.additional_dmrs,
+        f3_params.pi2_bpsk);
+  } else {
+    const auto& f4_params = std::get<pucch_f4_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params);
+    cell_grp_cfg.cells[0]
+        .serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value()
+        .format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_4)] = get_pucch_format4_max_payload(
+        f4_params.nof_symbols.to_uint(),
+        to_max_code_rate_float(default_pucch_cfg.format_4_common_param.value().max_c_rate),
+        f4_params.intraslot_freq_hopping,
+        f4_params.additional_dmrs,
+        f4_params.pi2_bpsk,
+        f4_params.occ_length);
+  }
 
   ++cells[0].ue_idx;
   return true;
@@ -387,14 +426,37 @@ du_pucch_resource_manager::get_csi_resource_offset(const csi_meas_config& csi_me
     const sr_nof_bits sr_bits_to_report  = sr_csi_on_the_same_slot ? sr_nof_bits::one : sr_nof_bits::no_sr;
     const unsigned    candidate_uci_bits = sr_nof_bits_to_uint(sr_bits_to_report) + csi_report_size.value();
 
-    const float max_pucch_code_rate =
-        to_max_code_rate_float(default_pucch_cfg.format_2_common_param.value().max_c_rate);
-    const unsigned max_payload = get_pucch_format2_max_payload(user_defined_pucch_cfg.f2_params.max_nof_rbs,
-                                                               user_defined_pucch_cfg.f2_params.nof_symbols.to_uint(),
-                                                               max_pucch_code_rate);
+    unsigned max_payload;
+    if (std::holds_alternative<pucch_f2_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params)) {
+      const auto& f2_params = std::get<pucch_f2_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params);
+      const float max_pucch_code_rate =
+          to_max_code_rate_float(default_pucch_cfg.format_2_common_param.value().max_c_rate);
+      max_payload =
+          get_pucch_format2_max_payload(f2_params.max_nof_rbs, f2_params.nof_symbols.to_uint(), max_pucch_code_rate);
+    } else if (std::holds_alternative<pucch_f3_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params)) {
+      const auto& f3_params = std::get<pucch_f3_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params);
+      const float max_pucch_code_rate =
+          to_max_code_rate_float(default_pucch_cfg.format_3_common_param.value().max_c_rate);
+      max_payload = get_pucch_format3_max_payload(f3_params.max_nof_rbs,
+                                                  f3_params.nof_symbols.to_uint(),
+                                                  max_pucch_code_rate,
+                                                  f3_params.intraslot_freq_hopping,
+                                                  f3_params.additional_dmrs,
+                                                  f3_params.pi2_bpsk);
+    } else {
+      const auto& f4_params = std::get<pucch_f4_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params);
+      const float max_pucch_code_rate =
+          to_max_code_rate_float(default_pucch_cfg.format_4_common_param.value().max_c_rate);
+      max_payload = get_pucch_format4_max_payload(f4_params.nof_symbols.to_uint(),
+                                                  max_pucch_code_rate,
+                                                  f4_params.intraslot_freq_hopping,
+                                                  f4_params.additional_dmrs,
+                                                  f4_params.pi2_bpsk,
+                                                  f4_params.occ_length);
+    }
 
-    // This is the case of suitable CSI offset found, but the CSI offset would result in exceeding the PUCCH F2 max
-    // payload.
+    // This is the case of suitable CSI offset found, but the CSI offset would result in exceeding the PUCCH F2/F3/F4
+    // max payload.
     if (candidate_uci_bits > max_payload) {
       // Allocation failed, exit without allocating the UE resources.
       optimal_res_it = free_csi_list.end();
@@ -456,7 +518,7 @@ unsigned du_pucch_resource_manager::csi_du_res_idx_to_pucch_res_idx(unsigned csi
   return user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
              user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
          user_defined_pucch_cfg.nof_sr_resources +
-         user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
+         user_defined_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() *
              user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
          csi_du_res_idx;
 }
@@ -468,7 +530,7 @@ unsigned du_pucch_resource_manager::pucch_res_idx_to_csi_du_res_idx(unsigned puc
   return pucch_res_idx - (user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
                               user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets +
                           user_defined_pucch_cfg.nof_sr_resources +
-                          user_defined_pucch_cfg.nof_ue_pucch_f2_res_harq.to_uint() *
+                          user_defined_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() *
                               user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets);
 }
 

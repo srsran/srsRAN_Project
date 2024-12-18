@@ -44,7 +44,7 @@ public:
   void set_prefix(Prefix prefix, const char* prefix_separator = "")
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "{}{}", prefix, prefix_separator);
+    fmt::format_to(std::back_inserter(buffer), "{}{}", prefix, prefix_separator);
     log_label = std::make_shared<const std::string>(fmt::to_string(buffer));
   }
 

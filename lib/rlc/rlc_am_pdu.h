@@ -307,7 +307,7 @@ struct formatter<srsran::rlc_am_pdu_header> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_am_pdu_header& hdr, FormatContext& ctx)
+  auto format(const srsran::rlc_am_pdu_header& hdr, FormatContext& ctx) const
   {
     if (hdr.si == srsran::rlc_si_field::full_sdu || hdr.si == srsran::rlc_si_field::first_segment) {
       // Header of full SDU or first SDU segment has no SO.
@@ -326,8 +326,7 @@ struct formatter<srsran::rlc_am_status_nack> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_am_status_nack& nack, FormatContext& ctx)
-
+  auto format(const srsran::rlc_am_status_nack& nack, FormatContext& ctx) const
   {
     if (nack.has_nack_range) {
       if (nack.has_so) {
@@ -351,15 +350,14 @@ struct formatter<srsran::rlc_am_status_pdu> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_am_status_pdu& status, FormatContext& ctx)
-
+  auto format(const srsran::rlc_am_status_pdu& status, FormatContext& ctx) const
   {
     memory_buffer buffer;
-    format_to(buffer, "ack_sn={} n_nack={}", status.ack_sn, status.get_nacks().size());
+    format_to(std::back_inserter(buffer), "ack_sn={} n_nack={}", status.ack_sn, status.get_nacks().size());
     if (!status.get_nacks().empty()) {
-      format_to(buffer, " nack=");
+      format_to(std::back_inserter(buffer), " nack=");
       for (auto nack : status.get_nacks()) {
-        format_to(buffer, "{}", nack);
+        format_to(std::back_inserter(buffer), "{}", nack);
       }
     }
 

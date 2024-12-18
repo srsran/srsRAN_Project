@@ -96,7 +96,7 @@ static asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(cons
       out.cdm_type = csi_rs_res_map_s::cdm_type_opts::cdm8_fd2_td4;
       break;
     default:
-      srsran_assertion_failure("Invalid CDM={}", cfg.cdm);
+      srsran_assertion_failure("Invalid CDM={}", fmt::underlying(cfg.cdm));
   }
 
   switch (cfg.freq_density) {
@@ -117,7 +117,7 @@ static asn1::rrc_nr::csi_rs_res_map_s make_asn1_nzp_csi_rs_resource_mapping(cons
       out.density.set_three();
       break;
     default:
-      srsran_assertion_failure("Invalid freq. density={}", cfg.freq_density);
+      srsran_assertion_failure("Invalid freq. density={}", fmt::underlying(cfg.freq_density));
   }
 
   out.freq_band.start_rb = cfg.freq_band_rbs.start();
@@ -197,7 +197,7 @@ static void make_asn1_csi_resource_periodicity_and_offset(csi_res_periodicity_an
       break;
     }
     default:
-      srsran_assertion_failure("Invalid CSI-RS periodicity={}", periodicity);
+      srsran_assertion_failure("Invalid CSI-RS periodicity={}", fmt::underlying(periodicity));
   }
 }
 
@@ -355,7 +355,7 @@ asn1::rrc_nr::csi_im_res_s make_asn1_csi_im_resource(const csi_im_resource& cfg)
       }
       default:
         srsran_assertion_failure("Invalid CSI IM resource element pattern={}",
-                                 cfg.csi_im_res_element_pattern.value().pattern_type);
+                                 fmt::underlying(cfg.csi_im_res_element_pattern.value().pattern_type));
     }
   }
 
@@ -428,7 +428,7 @@ static asn1::rrc_nr::csi_res_cfg_s make_asn1_csi_resource_config(const csi_resou
       out.res_type = csi_res_cfg_s::res_type_opts::periodic;
       break;
     default:
-      srsran_assertion_failure("Invalid CSI resource type={}", cfg.res_type);
+      srsran_assertion_failure("Invalid CSI resource type={}", fmt::underlying(cfg.res_type));
   }
 
   return out;
@@ -490,7 +490,7 @@ static void make_asn1_csi_report_periodicity_and_offset(csi_report_periodicity_a
       break;
     }
     default:
-      srsran_assertion_failure("Invalid CSI report periodicity={}", periodicity);
+      srsran_assertion_failure("Invalid CSI report periodicity={}", fmt::underlying(periodicity));
   }
 }
 
@@ -583,7 +583,8 @@ static void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config
             break;
           }
           default:
-            srsran_assertion_failure("Invalid n1-n2 type={}", ant_restriction2->n1_n2_restriction_type);
+            srsran_assertion_failure("Invalid n1-n2 type={}",
+                                     fmt::underlying(ant_restriction2->n1_n2_restriction_type));
         }
         if (!ant_restriction2->typei_single_panel_codebook_subset_restriction_i2.empty()) {
           out_ant_restriction.type_i_single_panel_codebook_subset_restrict_i2_present = true;
@@ -636,7 +637,7 @@ static void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config
           break;
         }
         default:
-          srsran_assertion_failure("Invalid ng-n1-n2 type={}", mp_cfg_val->ng_n1_n2_restriction_type);
+          srsran_assertion_failure("Invalid ng-n1-n2 type={}", fmt::underlying(mp_cfg_val->ng_n1_n2_restriction_type));
       }
       out_mp_cfg.ri_restrict.from_number(mp_cfg_val->ri_restriction.to_uint64());
     }
@@ -713,7 +714,7 @@ static void make_asn1_codebook_config(codebook_cfg_s& out, const codebook_config
         }
         default:
           srsran_assertion_failure("Invalid n1-n2 codebook subset restriction type={}",
-                                   typeii->n1_n2_codebook_subset_restriction_type);
+                                   fmt::underlying(typeii->n1_n2_codebook_subset_restriction_type));
       }
       out_typeii.type_ii_ri_restrict.from_number(typeii->typeii_ri_restriction.to_uint64());
     } else if (const auto* typeii_ps =
@@ -860,7 +861,7 @@ make_asn1_port_index_for_8_ranks(const csi_report_config::port_index_for_8_ranks
       break;
     }
     default:
-      srsran_assertion_failure("Invalid port index type={}", cfg.port_index_type);
+      srsran_assertion_failure("Invalid port index type={}", fmt::underlying(cfg.port_index_type));
   }
   return out;
 }
@@ -937,7 +938,7 @@ static asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_repo
             csi_report_cfg_s::report_cfg_type_c_::semi_persistent_on_pusch_s_::report_slot_cfg_opts::sl320;
         break;
       default:
-        srsran_assertion_failure("Invalid CSI report periodicity={}", rep_cfg_val2->slot_cfg);
+        srsran_assertion_failure("Invalid CSI report periodicity={}", fmt::underlying(rep_cfg_val2->slot_cfg));
     }
     for (unsigned offset : rep_cfg_val2->report_slot_offset_list) {
       rep_cfg.report_slot_offset_list.push_back(offset);
@@ -983,7 +984,7 @@ static asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_repo
       out.report_quant.set_cri_ri_li_pmi_cqi();
       break;
     default:
-      srsran_assertion_failure("Invalid CSI report quantity={}", cfg.report_qty_type);
+      srsran_assertion_failure("Invalid CSI report quantity={}", fmt::underlying(cfg.report_qty_type));
   }
 
   if (cfg.report_freq_cfg.has_value()) {
@@ -1153,7 +1154,7 @@ static asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_repo
         out.cqi_table = csi_report_cfg_s::cqi_table_opts::table4_r17;
         break;
       default:
-        srsran_assertion_failure("Invalid CQI table={}", cfg.cqi_table.value());
+        srsran_assertion_failure("Invalid CQI table={}", fmt::underlying(cfg.cqi_table.value()));
     }
   }
 
@@ -1165,7 +1166,7 @@ static asn1::rrc_nr::csi_report_cfg_s make_asn1_csi_report_config(const csi_repo
       out.subband_size = csi_report_cfg_s::subband_size_opts::value2;
       break;
     default:
-      srsran_assertion_failure("Invalid subband size={}", cfg.subband_size);
+      srsran_assertion_failure("Invalid subband size={}", fmt::underlying(cfg.subband_size));
   }
 
   for (const auto& port_idx : cfg.non_pmi_port_indication) {

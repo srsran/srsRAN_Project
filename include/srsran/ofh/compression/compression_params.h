@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/support/srsran_assert.h"
+#include <algorithm>
 #include <string>
 
 namespace srsran {

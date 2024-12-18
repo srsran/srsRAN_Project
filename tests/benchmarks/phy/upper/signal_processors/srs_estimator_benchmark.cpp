@@ -183,7 +183,7 @@ int main(int argc, char** argv)
   std::iota(srs_config.ports.begin(), srs_config.ports.end(), 0);
 
   fmt::memory_buffer str_buffer;
-  fmt::format_to(str_buffer, "{}", srs_resource);
+  fmt::format_to(std::back_inserter(str_buffer), "{}", srs_resource);
 
   std::string meas_descr = to_string(str_buffer);
 

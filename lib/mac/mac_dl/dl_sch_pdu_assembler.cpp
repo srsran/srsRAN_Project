@@ -22,8 +22,9 @@
 
 #include "dl_sch_pdu_assembler.h"
 #include "cell_dl_harq_buffer_pool.h"
-#include "srsran/adt/byte_buffer_chain.h"
+#include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/scheduler/result/pdsch_info.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 
@@ -233,8 +234,12 @@ public:
     }
     if (lcid != current_sdu_lcid) {
       if (current_sdu_lcid != lcid_t::INVALID_LCID) {
-        fmt::format_to(
-            fmtbuf, "{}SDU: lcid={} nof_sdus={} total_size={}", separator(), current_sdu_lcid, nof_sdus, sum_bytes);
+        fmt::format_to(std::back_inserter(fmtbuf),
+                       "{}SDU: lcid={} nof_sdus={} total_size={}",
+                       separator(),
+                       fmt::underlying(current_sdu_lcid),
+                       nof_sdus,
+                       sum_bytes);
       }
       current_sdu_lcid = lcid;
       nof_sdus         = 1;
@@ -250,7 +255,7 @@ public:
     if (not enabled) {
       return;
     }
-    fmt::format_to(fmtbuf, "{}CON_RES: id={:x}", separator(), fmt::join(conres, ""));
+    fmt::format_to(std::back_inserter(fmtbuf), "{}CON_RES: id={:x}", separator(), fmt::join(conres, ""));
   }
 
   void add_ta_cmd(const ta_cmd_ce_payload& ce_payload)
@@ -258,7 +263,11 @@ public:
     if (not enabled) {
       return;
     }
-    fmt::format_to(fmtbuf, "{}TA_CMD: tag_id={}, ta_cmd={}", separator(), ce_payload.tag_id, ce_payload.ta_cmd);
+    fmt::format_to(std::back_inserter(fmtbuf),
+                   "{}TA_CMD: tag_id={}, ta_cmd={}",
+                   separator(),
+                   ce_payload.tag_id,
+                   ce_payload.ta_cmd);
   }
 
   void log()
@@ -269,11 +278,15 @@ public:
 
     // Log pending LCID SDUs.
     if (current_sdu_lcid != lcid_t::INVALID_LCID) {
-      fmt::format_to(
-          fmtbuf, "{}SDU: lcid={} nof_sdus={} total_size={}", separator(), current_sdu_lcid, nof_sdus, sum_bytes);
+      fmt::format_to(std::back_inserter(fmtbuf),
+                     "{}SDU: lcid={} nof_sdus={} total_size={}",
+                     separator(),
+                     fmt::underlying(current_sdu_lcid),
+                     nof_sdus,
+                     sum_bytes);
     }
 
-    logger.info("DL PDU: ue={} rnti={} size={}: {}", ue_index, rnti, tbs, to_c_str(fmtbuf));
+    logger.info("DL PDU: ue={} rnti={} size={}: {}", fmt::underlying(ue_index), rnti, tbs, to_c_str(fmtbuf));
   }
 
 private:
@@ -317,14 +330,18 @@ shared_transport_block dl_sch_pdu_assembler::assemble_newtx_pdu(rnti_t          
 {
   du_ue_index_t ue_idx = ue_mng.get_ue_index(rnti);
   if (ue_idx == INVALID_DU_UE_INDEX) {
-    logger.error("DL rnti={} h_id={}: Failed to assemble MAC PDU. Cause: C-RNTI has no associated UE id.", rnti, h_id);
+    logger.error("DL rnti={} h_id={}: Failed to assemble MAC PDU. Cause: C-RNTI has no associated UE id.",
+                 rnti,
+                 fmt::underlying(h_id));
     return make_shared_zero_buffer(tb_size_bytes);
   }
 
   auto shared_buffer = harq_buffers.allocate_dl_harq_buffer(ue_idx, h_id);
   if (not shared_buffer or shared_buffer->get_buffer().size() < tb_size_bytes) {
-    logger.warning(
-        "DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available", ue_idx, rnti, h_id);
+    logger.warning("DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
+                   fmt::underlying(ue_idx),
+                   rnti,
+                   fmt::underlying(h_id));
     return make_shared_zero_buffer(tb_size_bytes);
   }
   dl_sch_pdu ue_pdu(shared_buffer->get_buffer().first(tb_size_bytes));
@@ -376,9 +393,9 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     dl_sch_pdu::mac_sdu_encoder sdu_enc = ue_pdu.get_sdu_encoder(lcid, mac_opportunity_size);
     if (not sdu_enc.valid()) {
       logger.info("ue={} rnti={} lcid={}: Insufficient MAC opportunity size={}. Remaining space in PDU={}",
-                  ue_mng.get_ue_index(rnti),
+                  fmt::underlying(ue_mng.get_ue_index(rnti)),
                   rnti,
-                  lcid,
+                  fmt::underlying(lcid),
                   mac_opportunity_size,
                   rem_bytes);
       break;
@@ -389,9 +406,9 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     if (sdu_actual_len == 0) {
       // The RLC Tx window is full or the RLC buffer is empty.
       logger.debug("ue={} rnti={} lcid={}: Unable to encode MAC SDU in MAC opportunity of size={}.",
-                   ue_mng.get_ue_index(rnti),
+                   fmt::underlying(ue_mng.get_ue_index(rnti)),
                    rnti,
-                   lcid,
+                   fmt::underlying(lcid),
                    mac_opportunity_size);
       break;
     }
@@ -400,9 +417,9 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     size_t subh_and_sdu_size = sdu_enc.encode_sdu(sdu_actual_len);
     if (subh_and_sdu_size == 0) {
       logger.error("ue={} rnti={} lcid={}: Scheduled SDU with size={} cannot fit in scheduled DL grant",
-                   ue_mng.get_ue_index(rnti),
+                   fmt::underlying(ue_mng.get_ue_index(rnti)),
                    rnti,
-                   lc_grant_info.lcid.to_lcid(),
+                   fmt::underlying(lc_grant_info.lcid.to_lcid()),
                    lc_grant_info.sched_bytes);
       break;
     }
@@ -421,17 +438,17 @@ void dl_sch_pdu_assembler::assemble_sdus(dl_sch_pdu&           ue_pdu,
     if (rem_bytes < min_mac_sdu_size) {
       logger.warning("ue={} rnti={} lcid={}: Skipping MAC SDU encoding into PDU of {} bytes ({} available). Cause: "
                      "Allocated SDU size={} is too small.",
-                     ue_mng.get_ue_index(rnti),
+                     fmt::underlying(ue_mng.get_ue_index(rnti)),
                      rnti,
-                     lc_grant_info.lcid.to_lcid(),
+                     fmt::underlying(lc_grant_info.lcid.to_lcid()),
                      ue_pdu.capacity(),
                      ue_pdu.nof_empty_bytes(),
                      lc_grant_info.sched_bytes);
     } else {
       logger.info("ue={} rnti={} lcid={}: Skipping MAC SDU encoding. Cause: RLC could not encode any SDU",
-                  ue_mng.get_ue_index(rnti),
+                  fmt::underlying(ue_mng.get_ue_index(rnti)),
                   rnti,
-                  lc_grant_info.lcid.to_lcid());
+                  fmt::underlying(lc_grant_info.lcid.to_lcid()));
     }
   }
 }
@@ -466,16 +483,18 @@ dl_sch_pdu_assembler::assemble_retx_pdu(rnti_t rnti, harq_id_t h_id, unsigned tb
 {
   du_ue_index_t ue_idx = ue_mng.get_ue_index(rnti);
   if (ue_idx == INVALID_DU_UE_INDEX) {
-    logger.error("DL rnti={} h_id={}: Failed to assemble MAC PDU. Cause: C-RNTI has no associated UE id.", rnti, h_id);
+    logger.error("DL rnti={} h_id={}: Failed to assemble MAC PDU. Cause: C-RNTI has no associated UE id.",
+                 rnti,
+                 fmt::underlying(h_id));
     return make_shared_zero_buffer(tbs_bytes);
   }
 
   auto shared_buffer = harq_buffers.allocate_dl_harq_buffer(ue_idx, h_id);
   if (not shared_buffer or shared_buffer->get_buffer().size() < tbs_bytes) {
     logger.warning("DL ue={} rnti={} h_id={}: Failed to assemble MAC PDU. Cause: No HARQ buffers available",
-                   ue_mng.get_ue_index(rnti),
+                   fmt::underlying(ue_mng.get_ue_index(rnti)),
                    rnti,
-                   h_id);
+                   fmt::underlying(h_id));
     return make_shared_zero_buffer(tbs_bytes);
   }
 

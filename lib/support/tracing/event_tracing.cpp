@@ -175,7 +175,7 @@ struct trace_format_parser {
 template <>
 struct formatter<trace_event_extended> : public trace_format_parser {
   template <typename FormatContext>
-  auto format(const trace_event_extended& event, FormatContext& ctx)
+  auto format(const trace_event_extended& event, FormatContext& ctx) const
   {
     auto ts = duration_cast<microseconds>(event.start_tp - run_epoch).count();
 
@@ -205,8 +205,7 @@ struct formatter<trace_event_extended> : public trace_format_parser {
 template <>
 struct formatter<instant_trace_event_extended> : public trace_format_parser {
   template <typename FormatContext>
-  auto format(const instant_trace_event_extended& event, FormatContext& ctx)
-
+  auto format(const instant_trace_event_extended& event, FormatContext& ctx) const
   {
     static const char* scope_str[] = {"g", "p", "t"};
 
@@ -238,8 +237,7 @@ struct formatter<instant_trace_event_extended> : public trace_format_parser {
 template <>
 struct formatter<rusage_trace_event_extended> : public trace_format_parser {
   template <typename FormatContext>
-  auto format(const rusage_trace_event_extended& event, FormatContext& ctx)
-
+  auto format(const rusage_trace_event_extended& event, FormatContext& ctx) const
   {
     auto ts = duration_cast<microseconds>(event.start_tp - run_epoch).count();
 

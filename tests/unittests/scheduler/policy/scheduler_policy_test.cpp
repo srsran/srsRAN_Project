@@ -762,7 +762,10 @@ TEST_P(scheduler_pf_qos_test, pf_upholds_qos_in_dl_gbr_flows)
   (*cfg_req.lc_config_list)[2]          = config_helpers::create_default_logical_channel_config(non_gbr_bearer_lcid);
   (*cfg_req.lc_config_list)[2].lc_group = lcg_id;
   (*cfg_req.lc_config_list)[3]          = config_helpers::create_default_logical_channel_config(gbr_bearer_lcid);
-  (*cfg_req.lc_config_list)[3].lc_group = lcg_id;
+  // Increase priority for GBR bearer.
+  (*cfg_req.lc_config_list)[3].priority -= 1;
+  // Put GBR bearer in a different LCG than non-GBR bearer.
+  (*cfg_req.lc_config_list)[3].lc_group = uint_to_lcg_id(lcg_id - 1);
   cfg_req.drb_info_list.resize(2);
   cfg_req.drb_info_list[0] = sched_drb_info{.lcid     = non_gbr_bearer_lcid,
                                             .qos_info = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(9))};

@@ -64,7 +64,7 @@ struct formatter<srsran::pdcp_sn_size> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::pdcp_sn_size sn_size, FormatContext& ctx)
+  auto format(srsran::pdcp_sn_size sn_size, FormatContext& ctx) const
   {
     switch (sn_size) {
       case srsran::pdcp_sn_size::invalid:

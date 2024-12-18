@@ -87,7 +87,7 @@ static constexpr unsigned MAX_CONFIG_FILES = 10;
 static void populate_cli11_generic_args(CLI::App& app)
 {
   fmt::memory_buffer buffer;
-  format_to(buffer, "srsRAN 5G gNB version {} ({})", get_version(), get_build_hash());
+  format_to(std::back_inserter(buffer), "srsRAN 5G gNB version {} ({})", get_version(), get_build_hash());
   app.set_version_flag("-v,--version", srsran::to_c_str(buffer));
   app.set_config("-c,", config_file, "Read config from file", false)->expected(1, MAX_CONFIG_FILES);
 }
@@ -180,10 +180,11 @@ static void autoderive_slicing_args(du_high_unit_config& du_hi_cfg, cu_cp_unit_c
 static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_cfg, const cu_cp_unit_config& cu_cp_cfg)
 {
   // If no UPF is configured, we set the UPF configuration from the CU-CP AMF configuration.
-  if (cu_up_cfg.upf_cfg.bind_addr == "auto") {
-    cu_up_cfg.upf_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
+  if (cu_up_cfg.ngu_cfg.ngu_socket_cfg.empty()) {
+    cu_up_unit_ngu_socket_config sock_cfg;
+    sock_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
+    cu_up_cfg.ngu_cfg.ngu_socket_cfg.push_back(sock_cfg);
   }
-  cu_up_cfg.upf_cfg.no_core = cu_cp_cfg.amf_config.no_core;
 }
 
 int main(int argc, char** argv)
@@ -236,6 +237,7 @@ int main(int argc, char** argv)
     }
 
     o_cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
+    o_cu_up_app_unit->on_configuration_parameters_autoderivation(app);
     autoderive_cu_up_parameters_after_parsing(o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg,
                                               o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
   });
@@ -368,28 +370,35 @@ int main(int argc, char** argv)
   std::vector<app_services::metrics_config> metrics_configs;
 
   // Instantiate E2AP client gateways.
-  std::unique_ptr<e2_connection_client> e2_gw_du    = create_e2_gateway_client(generate_e2_client_gateway_config(
-      o_du_app_unit->get_o_du_high_unit_config().e2_cfg.base_cfg, *epoll_broker, *du_pcaps.e2ap, E2_DU_PPID));
+  std::unique_ptr<e2_connection_client> e2_gw_du = create_e2_gateway_client(
+      generate_e2_client_gateway_config(o_du_app_unit->get_o_du_high_unit_config().e2_cfg.base_cfg,
+                                        *epoll_broker,
+                                        *workers.non_rt_hi_prio_exec,
+                                        *du_pcaps.e2ap,
+                                        E2_DU_PPID));
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_cp_app_unit->get_o_cu_cp_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
+                                        *workers.non_rt_hi_prio_exec,
                                         *cu_cp_dlt_pcaps.e2ap,
                                         E2_CP_PPID));
   std::unique_ptr<e2_connection_client> e2_gw_cu_up = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_up_app_unit->get_o_cu_up_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
+                                        *workers.non_rt_hi_prio_exec,
                                         *cu_up_dlt_pcaps.e2ap,
                                         E2_UP_PPID));
 
   // Create O-CU-CP dependencies.
   o_cu_cp_unit_dependencies o_cucp_deps;
-  o_cucp_deps.cu_cp_executor   = workers.cu_cp_exec;
-  o_cucp_deps.cu_cp_e2_exec    = workers.cu_e2_exec;
-  o_cucp_deps.timers           = cu_timers;
-  o_cucp_deps.ngap_pcap        = cu_cp_dlt_pcaps.ngap.get();
-  o_cucp_deps.broker           = epoll_broker.get();
-  o_cucp_deps.metrics_notifier = &metrics_notifier_forwarder;
-  o_cucp_deps.e2_gw            = e2_gw_cu_cp.get();
+  o_cucp_deps.cu_cp_executor       = workers.cu_cp_exec;
+  o_cucp_deps.cu_cp_n2_rx_executor = workers.non_rt_hi_prio_exec;
+  o_cucp_deps.cu_cp_e2_exec        = workers.cu_e2_exec;
+  o_cucp_deps.timers               = cu_timers;
+  o_cucp_deps.ngap_pcap            = cu_cp_dlt_pcaps.ngap.get();
+  o_cucp_deps.broker               = epoll_broker.get();
+  o_cucp_deps.metrics_notifier     = &metrics_notifier_forwarder;
+  o_cucp_deps.e2_gw                = e2_gw_cu_cp.get();
 
   // create O-CU-CP.
   auto                o_cucp_unit = o_cu_cp_app_unit->create_o_cu_cp(o_cucp_deps);
@@ -424,7 +433,7 @@ int main(int argc, char** argv)
   odu_dependencies.json_sink          = &json_sink;
   odu_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
-  auto du_inst_and_cmds = o_du_app_unit->create_flexible_o_du_unit(odu_dependencies, gnb_cfg.du_multicell_enabled);
+  auto du_inst_and_cmds = o_du_app_unit->create_flexible_o_du_unit(odu_dependencies);
 
   srs_du::du& du_inst = *du_inst_and_cmds.unit;
 
@@ -445,7 +454,7 @@ int main(int argc, char** argv)
     commands.push_back(std::move(cmd));
   }
 
-  app_services::stdin_command_dispatcher command_parser(*epoll_broker, commands);
+  app_services::stdin_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_low_prio_exec, commands);
 
   // Connect E1AP to O-CU-CP.
   e1_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_e1_handler());

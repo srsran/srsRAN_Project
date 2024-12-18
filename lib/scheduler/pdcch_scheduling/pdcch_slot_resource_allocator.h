@@ -24,8 +24,7 @@
 
 #include "../support/pdcch/pdcch_mapping.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
-#include "srsran/scheduler/scheduler_dci.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/result/pdcch_info.h"
 
 namespace srsran {
 

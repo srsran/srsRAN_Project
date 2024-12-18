@@ -44,8 +44,7 @@ struct formatter<srsran::channel_state_information> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::channel_state_information& csi, FormatContext& ctx)
-
+  auto format(const srsran::channel_state_information& csi, FormatContext& ctx) const
   {
     // Verbose representation prints all available SINR parameters. It appends [sel] to the label of the selected
     // measurement point.

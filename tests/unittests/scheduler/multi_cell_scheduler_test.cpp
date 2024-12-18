@@ -382,7 +382,7 @@ TEST_P(multi_cell_scheduler_tester, test_ul_scheduling_for_ues_in_different_cell
                                   to_du_ue_index(ue_idx),
                                   get_ue_crnti(ue_idx),
                                   bsr_format::SHORT_BSR,
-                                  {ul_bsr_lcg_report{uint_to_lcg_id(1), 100}}};
+                                  {ul_bsr_lcg_report{uint_to_lcg_id(2), 100}}};
     push_bsr(bsr);
   }
 

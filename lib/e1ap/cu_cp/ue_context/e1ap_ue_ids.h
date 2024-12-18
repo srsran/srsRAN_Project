@@ -47,7 +47,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::srs_cu_cp::e1ap_ue_ids> : public basic_parser {
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_cp::e1ap_ue_ids& p, FormatContext& ctx)
+  auto format(const srsran::srs_cu_cp::e1ap_ue_ids& p, FormatContext& ctx) const
   {
     using namespace srsran;
     using namespace srsran::srs_cu_cp;
@@ -58,11 +58,11 @@ struct formatter<srsran::srs_cu_cp::e1ap_ue_ids> : public basic_parser {
       sep = " ";
     }
     if (p.cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid) {
-      fmt::format_to(ctx.out(), "{}cu_cp_ue={}", sep, p.cu_cp_ue_e1ap_id);
+      fmt::format_to(ctx.out(), "{}cu_cp_ue={}", sep, fmt::underlying(p.cu_cp_ue_e1ap_id));
       sep = " ";
     }
     if (p.cu_up_ue_e1ap_id != gnb_cu_up_ue_e1ap_id_t::invalid) {
-      fmt::format_to(ctx.out(), "{}cu_up_ue={}", sep, p.cu_up_ue_e1ap_id);
+      fmt::format_to(ctx.out(), "{}cu_up_ue={}", sep, fmt::underlying(p.cu_up_ue_e1ap_id));
     }
     return ctx.out();
   }

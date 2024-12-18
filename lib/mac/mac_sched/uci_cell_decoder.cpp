@@ -22,6 +22,8 @@
 
 #include "uci_cell_decoder.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
+#include "srsran/scheduler/result/pucch_info.h"
+#include "srsran/scheduler/result/pusch_info.h"
 
 using namespace srsran;
 
@@ -165,8 +167,8 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
           }
           if (not pdu.csi.has_value()) {
             logger.warning("cell={} ue={} rnti={}: Discarding CSI report. Cause: Unable to find CSI report config.",
-                           cell_index,
-                           uci_pdu.ue_index,
+                           fmt::underlying(cell_index),
+                           fmt::underlying(uci_pdu.ue_index),
                            uci_pdu.crnti);
           }
         }
@@ -211,8 +213,8 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
           }
           if (not pdu.csi.has_value()) {
             logger.warning("cell={} ue={} rnti={}: Discarding CSI report. Cause: Unable to find CSI report config.",
-                           cell_index,
-                           uci_pdu.ue_index,
+                           fmt::underlying(cell_index),
+                           fmt::underlying(uci_pdu.ue_index),
                            uci_pdu.crnti);
           }
         }

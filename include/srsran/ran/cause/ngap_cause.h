@@ -111,7 +111,6 @@ using ngap_cause_t =
 
 namespace fmt {
 
-// ngap_cause_t formatter
 template <>
 struct formatter<srsran::ngap_cause_t> {
   template <typename ParseContext>
@@ -121,21 +120,21 @@ struct formatter<srsran::ngap_cause_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::ngap_cause_t o, FormatContext& ctx)
+  auto format(srsran::ngap_cause_t o, FormatContext& ctx) const
   {
     if (const auto* result = std::get_if<srsran::ngap_cause_radio_network_t>(&o)) {
-      return format_to(ctx.out(), "radio_network-id{}", *result);
+      return format_to(ctx.out(), "radio_network-id{}", fmt::underlying(*result));
     }
     if (const auto* result = std::get_if<srsran::ngap_cause_transport_t>(&o)) {
-      return format_to(ctx.out(), "transport-id{}", *result);
+      return format_to(ctx.out(), "transport-id{}", fmt::underlying(*result));
     }
     if (const auto* result = std::get_if<srsran::cause_nas_t>(&o)) {
-      return format_to(ctx.out(), "nas-id{}", *result);
+      return format_to(ctx.out(), "nas-id{}", fmt::underlying(*result));
     }
     if (const auto* result = std::get_if<srsran::cause_protocol_t>(&o)) {
-      return format_to(ctx.out(), "protocol-id{}", *result);
+      return format_to(ctx.out(), "protocol-id{}", fmt::underlying(*result));
     }
-    return format_to(ctx.out(), "misc-id{}", std::get<srsran::ngap_cause_misc_t>(o));
+    return format_to(ctx.out(), "misc-id{}", fmt::underlying(std::get<srsran::ngap_cause_misc_t>(o)));
   }
 };
 

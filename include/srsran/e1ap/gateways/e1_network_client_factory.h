@@ -29,6 +29,7 @@ namespace srsran {
 
 class dlt_pcap;
 class io_broker;
+class task_executor;
 
 /// Configuration of an SCTP-based E1 Gateway in the CU-UP.
 struct e1_cu_up_sctp_gateway_config {
@@ -36,6 +37,8 @@ struct e1_cu_up_sctp_gateway_config {
   sctp_network_connector_config sctp;
   /// IO broker responsible for handling SCTP Rx data and notifications.
   io_broker& broker;
+  /// Execution context used to process received SCTP packets.
+  task_executor& io_rx_executor;
   /// PCAP writer for the E1AP messages.
   dlt_pcap& pcap;
 };

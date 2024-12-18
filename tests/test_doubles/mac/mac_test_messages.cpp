@@ -21,7 +21,8 @@
  */
 
 #include "mac_test_messages.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/result/pucch_info.h"
+#include "srsran/scheduler/result/pusch_info.h"
 
 using namespace srsran;
 

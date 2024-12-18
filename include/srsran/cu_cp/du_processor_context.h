@@ -26,6 +26,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/tac.h"
 #include <string>
 
 namespace srsran {
@@ -43,7 +44,7 @@ struct du_cell_configuration {
   /// Global cell ID.
   nr_cell_global_id_t cgi;
   /// Tracking Area Code
-  uint32_t tac;
+  tac_t tac;
   /// Physical cell ID
   pci_t pci;
   /// NR bands provided/supported by the cell.

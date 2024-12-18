@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "apps/services/network/udp_cli11_schema.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_pcap_config.h"
 #include "cu_up_unit_logger_config.h"
 #include "srsran/ran/qos/five_qi.h"
@@ -37,13 +38,16 @@ struct cu_up_unit_metrics_config {
   } pdcp;
 };
 
-struct cu_up_unit_upf_config {
-  std::string bind_addr       = "auto";
-  std::string bind_interface  = "auto";
-  std::string ext_addr        = "auto";
-  int         udp_rx_max_msgs = 256;
-  float       pool_threshold  = 0.9;
-  bool        no_core         = false;
+struct cu_up_unit_ngu_socket_config {
+  std::string   bind_addr      = "auto";
+  std::string   bind_interface = "auto";
+  std::string   ext_addr       = "auto";
+  udp_appconfig udp_config     = {};
+};
+
+struct cu_up_unit_ngu_config {
+  bool                                      no_core = false;
+  std::vector<cu_up_unit_ngu_socket_config> ngu_socket_cfg;
 };
 
 /// F1-U configuration at CU_UP side
@@ -72,7 +76,7 @@ struct cu_up_unit_config {
   unsigned gtpu_reordering_timer_ms = 0;
   bool     warn_on_drop             = false;
   /// UPF configuration.
-  cu_up_unit_upf_config upf_cfg;
+  cu_up_unit_ngu_config ngu_cfg;
   /// Metrics.
   cu_up_unit_metrics_config metrics;
   /// Loggers.

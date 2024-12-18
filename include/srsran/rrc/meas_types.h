@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/subcarrier_spacing.h"
@@ -479,42 +480,16 @@ struct rrc_quant_cfg {
   std::vector<rrc_quant_cfg_nr> quant_cfg_nr_list;
 };
 
-struct rrc_gap_cfg {
-  uint8_t gap_offset;
-  uint8_t mgl;
-  uint8_t mgrp;
-  float   mgta;
-};
-
-struct rrc_gap_cfg_setup_release {
-  bool                       is_release;
-  std::optional<rrc_gap_cfg> setup;
-};
-
-struct rrc_measg_gap_cfg {
-  std::optional<rrc_gap_cfg_setup_release> gap_fr2;
-};
-
-struct rrc_meas_gap_sharing_scheme_setup_release {
-  bool                       is_release;
-  std::optional<std::string> setup;
-};
-
-struct rrc_meas_gap_sharing_cfg {
-  std::optional<rrc_meas_gap_sharing_scheme_setup_release> gap_sharing_fr2;
-};
-
 struct rrc_meas_cfg {
-  std::vector<meas_obj_id_t>              meas_obj_to_rem_list;
-  std::vector<rrc_meas_obj_to_add_mod>    meas_obj_to_add_mod_list;
-  std::vector<report_cfg_id_t>            report_cfg_to_rem_list;
-  std::vector<rrc_report_cfg_to_add_mod>  report_cfg_to_add_mod_list;
-  std::vector<meas_id_t>                  meas_id_to_rem_list;
-  std::vector<rrc_meas_id_to_add_mod>     meas_id_to_add_mod_list;
-  std::optional<rrc_s_measure_cfg>        s_measure_cfg;
-  std::optional<rrc_quant_cfg>            quant_cfg;
-  std::optional<rrc_measg_gap_cfg>        meas_gap_cfg;
-  std::optional<rrc_meas_gap_sharing_cfg> meas_gap_sharing_cfg;
+  std::vector<meas_obj_id_t>             meas_obj_to_rem_list;
+  std::vector<rrc_meas_obj_to_add_mod>   meas_obj_to_add_mod_list;
+  std::vector<report_cfg_id_t>           report_cfg_to_rem_list;
+  std::vector<rrc_report_cfg_to_add_mod> report_cfg_to_add_mod_list;
+  std::vector<meas_id_t>                 meas_id_to_rem_list;
+  std::vector<rrc_meas_id_to_add_mod>    meas_id_to_add_mod_list;
+  std::optional<rrc_s_measure_cfg>       s_measure_cfg;
+  std::optional<rrc_quant_cfg>           quant_cfg;
+  // The meas gap config is excluded from the common type and stored in the RRC UE context.
 };
 
 struct rrc_meas_quant_results {
@@ -580,15 +555,14 @@ struct formatter<srsran::srs_cu_cp::rrc_meas_obj_nr> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_cp::rrc_meas_obj_nr meas_object, FormatContext& ctx)
-
+  auto format(srsran::srs_cu_cp::rrc_meas_obj_nr meas_object, FormatContext& ctx) const
   {
     std::string smtc1_str;
     std::string smtc2_str;
 
     if (meas_object.smtc1.has_value()) {
       smtc1_str = fmt::format(" smtc1: periodicity={} offset={} dur={}",
-                              meas_object.smtc1.value().periodicity_and_offset.periodicity,
+                              fmt::underlying(meas_object.smtc1.value().periodicity_and_offset.periodicity),
                               meas_object.smtc1.value().periodicity_and_offset.offset,
                               meas_object.smtc1.value().dur);
     }

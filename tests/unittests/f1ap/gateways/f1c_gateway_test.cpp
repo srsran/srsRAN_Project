@@ -27,9 +27,11 @@
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/gateways/f1c_local_connector_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <future>
 #include <gtest/gtest.h>
+#include <utility>
 
 using namespace srsran;
 
@@ -40,10 +42,10 @@ public:
   bool                        closed  = false;
   blocking_queue<byte_buffer> last_sdus{16};
 
-  void         close() override { closed = true; }
-  bool         is_write_enabled() const override { return enabled; }
-  void         push_pdu(const_span<uint8_t> pdu) override { last_sdus.push_blocking(byte_buffer::create(pdu).value()); }
-  virtual void push_pdu(byte_buffer pdu) override { last_sdus.push_blocking(std::move(pdu)); }
+  void close() override { closed = true; }
+  bool is_write_enabled() const override { return enabled; }
+  void push_pdu(const_span<uint8_t> pdu) override { last_sdus.push_blocking(byte_buffer::create(pdu).value()); }
+  void push_pdu(byte_buffer pdu) override { last_sdus.push_blocking(std::move(pdu)); }
 };
 
 class f1c_link : public srs_cu_cp::cu_cp_f1c_handler
@@ -52,13 +54,12 @@ public:
   class rx_pdu_notifier : public f1ap_message_notifier
   {
   public:
-    rx_pdu_notifier(const std::string&            name_,
-                    blocking_queue<f1ap_message>& rx_pdus_,
-                    std::promise<void>            eof_received_) :
-      name(name_), rx_pdus(rx_pdus_), eof_received(std::move(eof_received_))
+    rx_pdu_notifier(std::string name_, blocking_queue<f1ap_message>& rx_pdus_, std::promise<void> eof_received_) :
+      name(std::move(name_)), rx_pdus(rx_pdus_), eof_received(std::move(eof_received_))
     {
     }
-    ~rx_pdu_notifier()
+
+    ~rx_pdu_notifier() override
     {
       eof_received.set_value();
       logger.info("{}: RX PDU notifier destroyed", name);
@@ -78,7 +79,7 @@ public:
 
     if (use_sctp) {
       broker    = create_io_broker(io_broker_type::epoll);
-      connector = create_f1c_local_connector(f1c_local_sctp_connector_config{pcap, *broker});
+      connector = create_f1c_local_connector(f1c_local_sctp_connector_config{pcap, *broker, inline_executor});
     } else {
       connector = create_f1c_local_connector(f1c_local_connector_config{pcap});
     }
@@ -103,6 +104,7 @@ public:
     return std::make_unique<rx_pdu_notifier>("CU-CP", cu_rx_pdus, std::move(eof_signal));
   }
 
+  inline_task_executor                 inline_executor;
   std::unique_ptr<io_broker>           broker;
   dummy_dlt_pcap                       pcap;
   std::unique_ptr<f1c_local_connector> connector;

@@ -69,6 +69,13 @@ std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 
 } // namespace srsran
 
+template <>
+struct fmt::formatter<srsran::test_label> : ostream_formatter {
+};
+template <>
+struct fmt::formatter<srsran::dmrs_pusch_estimator::configuration> : ostream_formatter {
+};
+
 namespace {
 
 class DmrsPuschEstimatorFixture : public ::testing::TestWithParam<test_case_t>

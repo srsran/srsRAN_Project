@@ -39,11 +39,13 @@ namespace app_services {
 class stdin_command_dispatcher
 {
 public:
-  stdin_command_dispatcher(io_broker& io_broker, span<std::unique_ptr<application_command>> commands_);
+  stdin_command_dispatcher(io_broker&                                 io_broker,
+                           task_executor&                             executor,
+                           span<std::unique_ptr<application_command>> commands_);
 
 private:
-  /// Parses STDIN with the given file decriptor.
-  void parse_stdin(int file_descriptor);
+  /// Parses any contents in the STDIN file descriptor.
+  void parse_stdin();
 
   /// Handles the given command;
   void handle_command(const std::string& command);

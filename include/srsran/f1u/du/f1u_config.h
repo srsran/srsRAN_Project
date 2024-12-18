@@ -54,7 +54,7 @@ struct formatter<srsran::srs_du::f1u_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_du::f1u_config cfg, FormatContext& ctx)
+  auto format(srsran::srs_du::f1u_config cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "t_notify={} rlc_queue_bytes_limit={} warn_on_drop={}",

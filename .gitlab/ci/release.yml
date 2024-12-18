@@ -148,6 +148,7 @@ update private branch:
     - git config --global filter.lfs.process "git-lfs filter-process --skip"
     - git config --global user.name "${CODEBOT_USERNAME}"
     - git config --global user.email "${CODEBOT_LONG_USERNAME}@noreply.gitlab.com"
+    - git config --global url."https://${PUBLIC_PUSH_TOKEN}@github.com/".insteadOf "git@github.com:"
   script:
     - git clone https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git ${CI_PROJECT_DIR}
     - cd ${CI_PROJECT_DIR}
@@ -283,19 +284,21 @@ publish main:
       optional: false
       artifacts: false
 
-publish maltab:
+publish matlab:
   stage: public
   interruptible: false
-  variables:
-    ON_SCHEDULE: "true"
-    CI_DESCRIPTION: Release
-    NOTIFY_SLACK: "false"
-    SRSRAN_REPO_URL: https://${PUBLIC_PUSH_TOKEN}@github.com/${PUBLIC_REPO}.git
-    SRSRAN_COMMIT: $PUBLIC_BRANCH
-    DOCKER_BUILDER_VERSION: $DOCKER_BUILDER_VERSION
   rules:
     - if: *on_public_push
+      variables: &matlab_release_var
+        ON_SCHEDULE: "true"
+        CI_DESCRIPTION: Release
+        NOTIFY_SLACK: "false"
+        SRSRAN_REPO_URL: https://${PUBLIC_PUSH_TOKEN}@github.com/${PUBLIC_REPO}.git
+        SRSRAN_COMMIT: main
+        DOCKER_BUILDER_VERSION: $DOCKER_BUILDER_VERSION
     - if: *on_public_release
+      variables:
+        <<: *matlab_release_var
   needs:
     - job: publish main
     - job: builder version

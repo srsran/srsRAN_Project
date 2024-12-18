@@ -43,6 +43,7 @@
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/ran/tac.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/srslog/srslog.h"
 #include <map>
@@ -81,7 +82,7 @@ struct du_high_unit_ta_sched_expert_config {
   /// \remark T_A is defined in TS 38.213, clause 4.2.
   int ta_cmd_offset_threshold = 1;
   /// Timing Advance target in units of TA.
-  int ta_target = 0;
+  float ta_target = 1.0F;
   /// UL SINR threshold (in dB) above which reported N_TA update measurement is considered valid.
   float ta_update_measurement_ul_sinr_threshold = 0.0F;
 };
@@ -146,7 +147,7 @@ struct du_high_unit_pdsch_config {
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
   std::vector<unsigned> rv_sequence = {0, 2, 3, 1};
   /// MCS table to use for PDSCH
-  pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
+  pdsch_mcs_table mcs_table = pdsch_mcs_table::qam256;
   /// Minimum number of RBs for resource allocation of UE PDSCHs.
   unsigned min_rb_size = 1;
   /// Maximum number of RBs for resource allocation of UE PDSCHs.
@@ -196,7 +197,7 @@ struct du_high_unit_pusch_config {
   /// Maximum rank. Limits the number of layers for PUSCH transmissions.
   unsigned max_rank = 4;
   /// MCS table to use for PUSCH
-  pusch_mcs_table mcs_table = pusch_mcs_table::qam64;
+  pusch_mcs_table mcs_table = pusch_mcs_table::qam256;
   /// \c msg3-DeltaPreamble, TS 38.331. Values: {-1,...,6}.
   int msg3_delta_preamble = 6;
   /// \c p0-NominalWithGrant, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
@@ -248,11 +249,15 @@ struct du_high_unit_pusch_config {
   /// End RB for resource allocation of UE PUSCHs.
   unsigned end_rb = MAX_NOF_PRBS;
 
-  /// Target PUSCH SINR to be achieved with close-loop power control, in dB.
+  /// Enable closed-loop PUSCH power control.
+  bool enable_closed_loop_pw_control = false;
+  /// Target PUSCH SINR to be achieved with close-loop power control, in dB. Only relevant if \c
+  /// enable_closed_loop_pw_control is set to true.
   float target_pusch_sinr{10.0f};
   /// Path-loss at which the Target PUSCH SINR is expected to be achieved, in dB.
   /// This is used to compute the path loss compensation for PUSCH fractional power control. The value must be positive.
-  /// Only relevant if \c path_loss_compensation_factor is set to a value different from 1.0.
+  /// Only relevant if \c enable_closed_loop_pw_control is set to true and \c path_loss_compensation_factor is set to a
+  /// value different from 1.0.
   float path_loss_for_target_pusch_sinr{70.0f};
   /// Factor "alpha" for fractional path-loss compensation in PUSCH power control.
   /// Values: {0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0}.
@@ -272,6 +277,8 @@ struct du_high_unit_pucch_config {
   /// \c PUCCH-Config parameters.
   /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
   bool use_format_0 = false;
+  /// Select the format for the PUCCH resources belonging to PUCCH resource set 1. Values: {2, 3, 4}.
+  unsigned set1_format = 2;
   /// Number of PUCCH resources per UE (per PUCCH resource set) for HARQ-ACK reporting.
   /// Values {3,...,8} if \c use_format_0 is set. Else, Values {1,...,8}.
   /// \remark We assume the number of PUCCH F0/F1 resources for HARQ-ACK is equal to the equivalent number of Format 2
@@ -296,6 +303,7 @@ struct du_high_unit_pucch_config {
   /// Set true for PUCCH Format 0 intra-slot frequency hopping.
   bool f0_intraslot_freq_hopping = false;
 
+  /// PUCCH F1 resource parameters.
   /// \defgroup pucch_f1_params
   /// \brief PUCCH F1 resource parameters.
   /// @{
@@ -303,20 +311,60 @@ struct du_high_unit_pucch_config {
   bool f1_enable_occ = false;
   /// \brief Number of different Initial Cyclic Shifts that can be used for PUCCH Format 1.
   /// Values: {1, 2, 3, 4, 6, 12}; 0 corresponds to "no cyclic shift".
-  unsigned nof_cyclic_shift = 2;
+  unsigned f1_nof_cyclic_shifts = 2;
   /// Set true for PUCCH Format 1 intra-slot frequency hopping.
   bool f1_intraslot_freq_hopping = false;
   /// @}
 
+  /// PUCCH F2 resource parameters.
+  /// \defgroup pucch_f2_params
+  /// \brief PUCCH F2 resource parameters.
+  /// @{
   /// Max number of PRBs for PUCCH Format 2. Values {1,...,16}.
   unsigned f2_max_nof_rbs = 1;
-  /// \brief Maximum payload in bits that can be carried by PUCCH Format 2. Values {-1,...,11}.
-  /// Value -1 to unset. If this is set, \ref f2_max_nof_rbs is ignored.
-  std::optional<unsigned> max_payload_bits;
+  /// \brief Maximum payload in bits that can be carried by PUCCH Format 2. Values {1,...,11}.
+  /// If this is set, \ref f2_max_nof_rbs is ignored.
+  std::optional<unsigned> f2_max_payload_bits;
+  /// Max code rate for PUCCH Format 2.
+  max_pucch_code_rate f2_max_code_rate = max_pucch_code_rate::dot_35;
   /// Set true for PUCCH Format 2 intra-slot frequency hopping. This field is ignored if f2_nof_symbols == 1.
   bool f2_intraslot_freq_hopping = false;
-  /// Max code rate.
-  max_pucch_code_rate max_code_rate = max_pucch_code_rate::dot_35;
+  /// @}
+
+  /// PUCCH F3 resource parameters.
+  /// \defgroup pucch_f3_params
+  /// \brief PUCCH F3 resource parameters.
+  /// @{
+  /// Max number of PRBs for PUCCH Format 3. Values {1,...,16}.
+  unsigned f3_max_nof_rbs = 1;
+  /// \brief Maximum payload in bits that can be carried by PUCCH Format 3. Values {1,...,11}.
+  /// If this is set, \ref f2_max_nof_rbs is ignored.
+  std::optional<unsigned> f3_max_payload_bits;
+  /// Max code rate for PUCCH Format 3.
+  max_pucch_code_rate f3_max_code_rate = max_pucch_code_rate::dot_35;
+  /// Set true for PUCCH Format 3 intra-slot frequency hopping.
+  bool f3_intraslot_freq_hopping = false;
+  /// Set true for PUCCH Format 3 additional DM-RS.
+  bool f3_additional_dmrs = false;
+  /// Set true to use pi/2-BPSK as the modulation for PUCCH Format 3.
+  bool f3_pi2_bpsk = false;
+  /// @}
+
+  /// PUCCH F4 resource parameters.
+  /// \defgroup pucch_f4_params
+  /// \brief PUCCH F4 resource parameters.
+  /// @{
+  /// Max code rate for PUCCH Format 4.
+  max_pucch_code_rate f4_max_code_rate = max_pucch_code_rate::dot_35;
+  /// Set true for PUCCH Format 4 intra-slot frequency hopping.
+  bool f4_intraslot_freq_hopping = false;
+  /// Set true for PUCCH Format 4 additional DM-RS.
+  bool f4_additional_dmrs = false;
+  /// Set true to use pi/2-BPSK as the modulation for PUCCH Format 4.
+  bool     f4_pi2_bpsk   = false;
+  unsigned f4_occ_length = 2;
+  /// @}
+
   /// Minimum k1 value (distance in slots between PDSCH and HARQ-ACK) that the gNB can use. Values: {1, ..., 7}.
   /// [Implementation-defined] As min_k1 is used for both common and dedicated PUCCH configuration, and in the UE
   /// fallback scheduler only allow max k1 = 7, we restrict min_k1 to 7.
@@ -626,7 +674,7 @@ struct du_high_unit_base_cell_config {
   /// Human readable full PLMN (without possible filler digit).
   std::string plmn = "00101";
   /// TAC.
-  unsigned tac = 7;
+  tac_t tac = 7;
   /// \c q-RxLevMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dBm.
   int q_rx_lev_min = -70;
   /// \c q-QualMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dB.

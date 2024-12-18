@@ -24,6 +24,8 @@
 
 python
 
+import struct
+
 ###### static_vector<T, N> ########
 
 class StaticVectorPrinter(object):
@@ -224,6 +226,45 @@ def make_slotted_vector(val):
         return SlotVectorPrinter(val)
 
 gdb.pretty_printers.append(make_slotted_vector)
+
+###### Brain Floating Point 16 (bf16_t) ######
+
+class BFloat16(object):
+    def __init__(self, val):
+        self.__val = val
+
+    def to_string(self):
+        value_uint16 = self.__val['val']
+        value_uint32 = value_uint16.cast(gdb.lookup_type('uint32_t')) << 16
+        value_float = struct.unpack('!f', struct.pack('!I', value_uint32))[0]
+        return value_float
+
+    def display_hint(self):
+        return None
+
+def make_bf16_t(val):
+    s = str(val.type.strip_typedefs())
+    if 'srsran::strong_bf16_tag' in s:
+        return BFloat16(val)
+
+gdb.pretty_printers.append(make_bf16_t)
+
+class BFloat16Complex(object):
+    def __init__(self, val):
+        self.__val = val
+
+    def to_string(self):
+        return f'{self.__val["real"]} + {self.__val["imag"]}i'
+
+    def display_hint(self):
+        return None
+
+def make_cbf16_t(val):
+    s = str(val.type.strip_typedefs())
+    if s == 'srsran::cbf16_t':
+        return BFloat16Complex(val)
+
+gdb.pretty_printers.append(make_cbf16_t)
 
 end
 

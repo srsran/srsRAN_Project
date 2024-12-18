@@ -419,25 +419,39 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
 {
   YAML::Node node;
 
-  node["p0_nominal"]                    = config.p0_nominal;
-  node["pucch_resource_common"]         = config.pucch_resource_common;
-  node["use_format_0"]                  = config.use_format_0;
-  node["sr_period_ms"]                  = config.sr_period_msec;
-  node["nof_ue_pucch_res_harq_per_set"] = config.nof_ue_pucch_res_harq_per_set;
-  node["f0_or_f1_nof_cell_res_sr"]      = config.nof_cell_sr_resources;
-  node["f0_intraslot_freq_hop"]         = config.f0_intraslot_freq_hopping;
-  node["f1_enable_occ"]                 = config.f1_enable_occ;
-  node["f1_nof_cyclic_shifts"]          = config.nof_cyclic_shift;
-  node["f1_intraslot_freq_hop"]         = config.f1_intraslot_freq_hopping;
-  node["nof_cell_harq_pucch_res_sets"]  = config.nof_cell_harq_pucch_sets;
-  node["f2_nof_cell_res_csi"]           = config.nof_cell_csi_resources;
-  node["f2_max_nof_rbs"]                = config.f2_max_nof_rbs;
-  node["f2_max_code_rate"]              = to_string(config.max_code_rate);
-  node["f2_intraslot_freq_hop"]         = config.f2_intraslot_freq_hopping;
-  node["min_k1"]                        = config.min_k1;
-  node["max_consecutive_kos"]           = config.max_consecutive_kos;
-  if (config.max_payload_bits.has_value()) {
-    node["f2_max_payload"] = config.max_payload_bits.value();
+  node["p0_nominal"]                      = config.p0_nominal;
+  node["pucch_resource_common"]           = config.pucch_resource_common;
+  node["use_format_0"]                    = config.use_format_0;
+  node["pucch_set1_format"]               = config.set1_format;
+  node["sr_period_ms"]                    = config.sr_period_msec;
+  node["nof_ue_pucch_res_harq_per_set"]   = config.nof_ue_pucch_res_harq_per_set;
+  node["f0_or_f1_nof_cell_res_sr"]        = config.nof_cell_sr_resources;
+  node["f0_intraslot_freq_hop"]           = config.f0_intraslot_freq_hopping;
+  node["f1_enable_occ"]                   = config.f1_enable_occ;
+  node["f1_nof_cyclic_shifts"]            = config.f1_nof_cyclic_shifts;
+  node["f1_intraslot_freq_hop"]           = config.f1_intraslot_freq_hopping;
+  node["nof_cell_harq_pucch_res_sets"]    = config.nof_cell_harq_pucch_sets;
+  node["f2_or_f3_or_f4_nof_cell_res_csi"] = config.nof_cell_csi_resources;
+  node["f2_max_nof_rbs"]                  = config.f2_max_nof_rbs;
+  node["f2_max_code_rate"]                = to_string(config.f2_max_code_rate);
+  node["f2_intraslot_freq_hop"]           = config.f2_intraslot_freq_hopping;
+  node["f3_max_nof_rbs"]                  = config.f3_max_nof_rbs;
+  node["f3_max_code_rate"]                = to_string(config.f3_max_code_rate);
+  node["f3_intraslot_freq_hop"]           = config.f3_intraslot_freq_hopping;
+  node["f3_additional_dmrs"]              = config.f3_additional_dmrs;
+  node["f3_pi2_bpsk"]                     = config.f3_pi2_bpsk;
+  node["f4_intraslot_freq_hop"]           = config.f4_intraslot_freq_hopping;
+  node["f4_max_code_rate"]                = to_string(config.f4_max_code_rate);
+  node["f4_additional_dmrs"]              = config.f4_additional_dmrs;
+  node["f4_pi2_bpsk"]                     = config.f4_pi2_bpsk;
+  node["f4_occ_length"]                   = config.f4_occ_length;
+  node["min_k1"]                          = config.min_k1;
+  node["max_consecutive_kos"]             = config.max_consecutive_kos;
+  if (config.f2_max_payload_bits.has_value()) {
+    node["f2_max_payload"] = config.f2_max_payload_bits.value();
+  }
+  if (config.f3_max_payload_bits.has_value()) {
+    node["f3_max_payload"] = config.f3_max_payload_bits.value();
   }
 
   return node;

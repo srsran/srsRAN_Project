@@ -133,7 +133,7 @@ unsigned srsran::tbs_calculator_calculate(const tbs_calculator_configuration& co
 
   srsran_assert(config.mcs_descr.modulation > modulation_scheme::BPSK,
                 "Modulation scheme should be QPSK or higher, provided {}.",
-                config.mcs_descr.modulation);
+                fmt::underlying(config.mcs_descr.modulation));
 
   // Step 2. Intermediate number of information bits.
   return tbs_calculator_step2(scaling,

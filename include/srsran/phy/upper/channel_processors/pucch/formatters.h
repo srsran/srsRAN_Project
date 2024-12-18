@@ -51,7 +51,7 @@ struct formatter<srsran::pucch_processor::format0_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pucch_processor::format0_configuration& config, FormatContext& ctx)
+  auto format(const srsran::pucch_processor::format0_configuration& config, FormatContext& ctx) const
   {
     if (config.context.has_value()) {
       helper.format_always(ctx, config.context.value());
@@ -89,7 +89,7 @@ struct formatter<srsran::pucch_processor::format1_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pucch_processor::format1_configuration& config, FormatContext& ctx)
+  auto format(const srsran::pucch_processor::format1_configuration& config, FormatContext& ctx) const
   {
     if (config.context.has_value()) {
       helper.format_always(ctx, config.context.value());
@@ -128,7 +128,7 @@ struct formatter<srsran::pucch_processor::format2_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pucch_processor::format2_configuration& config, FormatContext& ctx)
+  auto format(const srsran::pucch_processor::format2_configuration& config, FormatContext& ctx) const
   {
     if (config.context.has_value()) {
       helper.format_always(ctx, config.context.value());
@@ -169,7 +169,7 @@ struct formatter<srsran::pucch_processor::format3_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pucch_processor::format3_configuration& config, FormatContext& ctx)
+  auto format(const srsran::pucch_processor::format3_configuration& config, FormatContext& ctx) const
   {
     if (config.context.has_value()) {
       helper.format_always(ctx, config.context.value());
@@ -212,7 +212,7 @@ struct formatter<srsran::pucch_processor::format4_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pucch_processor::format4_configuration& config, FormatContext& ctx)
+  auto format(const srsran::pucch_processor::format4_configuration& config, FormatContext& ctx) const
   {
     if (config.context.has_value()) {
       helper.format_always(ctx, config.context.value());
@@ -257,7 +257,7 @@ struct formatter<srsran::pucch_processor_result> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pucch_processor_result& result, FormatContext& ctx)
+  auto format(const srsran::pucch_processor_result& result, FormatContext& ctx) const
   {
     unsigned nof_sr        = result.message.get_expected_nof_sr_bits();
     unsigned nof_harq_ack  = result.message.get_expected_nof_harq_ack_bits();

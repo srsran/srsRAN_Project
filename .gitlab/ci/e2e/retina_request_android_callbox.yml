@@ -38,7 +38,7 @@
     ephemeral-storage:
       requests: "6G"
       limits: "6G"
-  labels: 
+  labels:
     - kubernetes.io/hostname=sdr6
   resources:
     - type: sdr

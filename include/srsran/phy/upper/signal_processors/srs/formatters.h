@@ -47,8 +47,7 @@ struct formatter<srsran::srs_estimator_configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_estimator_configuration& config, FormatContext& ctx)
-
+  auto format(const srsran::srs_estimator_configuration& config, FormatContext& ctx) const
   {
     helper.format_if_verbose(ctx, "slot={}", config.slot);
     helper.format_always(ctx, "{}", config.resource);
@@ -74,8 +73,7 @@ struct formatter<srsran::srs_estimator_result> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_estimator_result& config, FormatContext& ctx)
-
+  auto format(const srsran::srs_estimator_result& config, FormatContext& ctx) const
   {
     helper.format_always(ctx, "t_align={:.1}us", config.time_alignment.time_alignment * 1e6);
     helper.format_always(ctx, "epre={:.3e}dB", config.epre_dB.value_or(std::numeric_limits<float>::quiet_NaN()));

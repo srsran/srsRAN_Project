@@ -23,15 +23,16 @@
 #pragma once
 
 #include "mac_dl_ue_repository.h"
-#include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/logical_channel/lcid_dl_sch.h"
 #include "srsran/scheduler/harq_id.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 
 class byte_buffer_chain;
 class cell_dl_harq_buffer_pool;
+struct ta_cmd_ce_payload;
+struct dl_msg_tb_info;
+struct dl_msg_lc_info;
 
 /// \brief This class represents and encodes a MAC DL-SCH PDU that may contain multiple subPDUs.
 ///

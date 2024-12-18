@@ -9,7 +9,7 @@
 - name: srs-gnb
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
-  labels: 
+  labels:
     - ${ZMQ_HOSTLABEL_0}
   requirements:
     arch: amd64
@@ -42,5 +42,5 @@
       requests: "6G"
       limits: "6G"
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
-  labels: 
+  labels:
     - ${ZMQ_HOSTLABEL_0}

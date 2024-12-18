@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/hal/phy/upper/channel_processors/pusch/ext_harq_buffer_context_repository.h"
+#include <memory>
 
 namespace srsran {
 namespace hal {

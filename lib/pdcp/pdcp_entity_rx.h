@@ -207,7 +207,7 @@ struct formatter<srsran::pdcp_rx_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdcp_rx_state& st, FormatContext& ctx)
+  auto format(const srsran::pdcp_rx_state& st, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "rx_next={} rx_deliv={} rx_reord={}", st.rx_next, st.rx_deliv, st.rx_reord);
   }

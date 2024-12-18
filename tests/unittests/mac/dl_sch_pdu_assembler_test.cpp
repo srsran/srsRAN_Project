@@ -23,7 +23,7 @@
 #include "lib/mac/mac_dl/cell_dl_harq_buffer_pool.h"
 #include "lib/mac/mac_dl/dl_sch_pdu_assembler.h"
 #include "mac_test_helpers.h"
-#include "srsran/mac/config/mac_config_helpers.h"
+#include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/manual_task_worker.h"

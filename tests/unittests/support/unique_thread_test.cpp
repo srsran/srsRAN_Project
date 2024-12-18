@@ -22,7 +22,7 @@
 
 #include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/test_utils.h"
-#include "fmt/ostream.h"
+#include "fmt/std.h"
 #include <mutex>
 #include <unistd.h>
 

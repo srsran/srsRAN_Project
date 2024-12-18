@@ -23,6 +23,7 @@
 #pragma once
 
 #include "adapters/gtpu_adapters.h"
+#include "ngu_session_manager.h"
 #include "ue_manager.h"
 #include "srsran/cu_up/cu_up_config.h"
 #include "srsran/cu_up/cu_up_manager.h"
@@ -35,22 +36,21 @@ namespace srsran::srs_cu_up {
 /// CU-UP manager implementation configuration.
 struct cu_up_manager_impl_config {
   std::map<five_qi_t, cu_up_qos_config> qos;
-  network_interface_config              net_cfg;
   n3_interface_config                   n3_cfg;
   cu_up_test_mode_config                test_mode_cfg;
 };
 
 /// CU-UP manager implementation dependencies.
 struct cu_up_manager_impl_dependencies {
-  e1ap_interface&               e1ap;
-  gtpu_network_gateway_adapter& gtpu_gw_adapter;
-  gtpu_demux&                   ngu_demux;
-  gtpu_teid_pool&               n3_teid_allocator;
-  gtpu_teid_pool&               f1u_teid_allocator;
-  cu_up_executor_mapper&        exec_mapper;
-  f1u_cu_up_gateway&            f1u_gateway;
-  timer_manager&                timers;
-  dlt_pcap&                     gtpu_pcap;
+  e1ap_interface&        e1ap;
+  gtpu_demux&            ngu_demux;
+  ngu_session_manager&   ngu_session_mngr;
+  gtpu_teid_pool&        n3_teid_allocator;
+  gtpu_teid_pool&        f1u_teid_allocator;
+  cu_up_executor_mapper& exec_mapper;
+  f1u_cu_up_gateway&     f1u_gateway;
+  timer_manager&         timers;
+  dlt_pcap&              gtpu_pcap;
 };
 
 class cu_up_manager_impl final : public cu_up_manager

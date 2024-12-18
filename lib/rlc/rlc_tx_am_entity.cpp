@@ -75,8 +75,8 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
   srsran_assert(config.pdcp_sn_len == pdcp_sn_size::size12bits || config.pdcp_sn_len == pdcp_sn_size::size18bits,
                 "Cannot create RLC TX AM, unsupported pdcp_sn_len={}. du={} ue={} {}",
                 config.pdcp_sn_len,
-                gnb_du_id,
-                ue_index,
+                fmt::underlying(gnb_du_id),
+                fmt::underlying(ue_index),
                 rb_id_);
 
   // check timer t_poll_retransmission timer

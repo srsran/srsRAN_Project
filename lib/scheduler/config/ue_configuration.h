@@ -140,7 +140,7 @@ public:
   const bwp_info& bwp(bwp_id_t bwp_id) const
   {
     const bwp_info* bwp = find_bwp(bwp_id);
-    srsran_assert(bwp != nullptr, "Invalid BWP-Id={} access", bwp_id);
+    srsran_assert(bwp != nullptr, "Invalid BWP-Id={} access", fmt::underlying(bwp_id));
     return *bwp;
   }
 
@@ -149,7 +149,7 @@ public:
   const coreset_configuration& coreset(coreset_id cs_id) const
   {
     const coreset_configuration* ret = find_coreset(cs_id);
-    srsran_assert(ret != nullptr, "Inexistent CORESET-Id={}", cs_id);
+    srsran_assert(ret != nullptr, "Inexistent CORESET-Id={}", fmt::underlying(cs_id));
     return *ret;
   }
 
@@ -275,7 +275,7 @@ public:
   /// Get the configuration of a cell that is common to all UEs.
   const cell_configuration& common_cell_cfg(du_cell_index_t cell_index) const
   {
-    srsran_assert(du_cells.contains(cell_index), "Invalid cell_index={}", cell_index);
+    srsran_assert(du_cells.contains(cell_index), "Invalid cell_index={}", fmt::underlying(cell_index));
     return du_cells[cell_index]->cell_cfg_common;
   }
   const cell_configuration& pcell_common_cfg() const
@@ -286,12 +286,13 @@ public:
   /// Get the configuration of a cell that is dedicated to the UE.
   const ue_cell_configuration& ue_cell_cfg(du_cell_index_t cell_index) const
   {
-    srsran_assert(du_cells.contains(cell_index), "Invalid cell_index={}", cell_index);
+    srsran_assert(du_cells.contains(cell_index), "Invalid cell_index={}", fmt::underlying(cell_index));
     return *du_cells[cell_index];
   }
   const ue_cell_configuration& ue_cell_cfg(ue_cell_index_t ue_cell_index) const
   {
-    srsran_assert(ue_cell_index < ue_cell_to_du_cell_index.size(), "Invalid cell_index={}", ue_cell_index);
+    srsran_assert(
+        ue_cell_index < ue_cell_to_du_cell_index.size(), "Invalid cell_index={}", fmt::underlying(ue_cell_index));
     return ue_cell_cfg(ue_cell_to_du_cell_index[ue_cell_index]);
   }
   const ue_cell_configuration& pcell_cfg() const { return ue_cell_cfg(to_ue_cell_index(0)); }

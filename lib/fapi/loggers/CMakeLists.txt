@@ -19,12 +19,13 @@
 #
 
 set(SOURCES
-        message_loggers.cpp
-        logging_decorator_factories.cpp
+        logging_decorator_impl.cpp
         logging_slot_data_notifier_decorator.cpp
         logging_slot_error_notifier_decorator.cpp
         logging_slot_gateway_decorator.cpp
-        logging_slot_time_notifier_decorator.cpp)
+        logging_slot_time_notifier_decorator.cpp
+        message_loggers.cpp)
 
 add_library(srsran_fapi_loggers STATIC ${SOURCES})
-target_link_libraries(srsran_fapi_loggers srslog)
+target_include_directories(srsran_fapi_loggers PRIVATE ${CMAKE_SOURCE_DIR}/lib/fapi)
+target_link_libraries(srsran_fapi_loggers srslog srsran_fapi_decorator_helpers)

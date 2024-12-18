@@ -40,13 +40,13 @@ public:
   mac_fapi_adaptor_impl(const mac_fapi_adaptor_config& config, mac_fapi_adaptor_dependencies&& dependencies);
 
   // See interface for documentation.
-  fapi::slot_time_message_notifier& get_slot_time_notifier() override;
+  fapi::slot_time_message_notifier& get_slot_time_message_notifier() override;
 
   // See interface for documentation.
-  fapi::slot_error_message_notifier& get_slot_error_notifier() override;
+  fapi::slot_error_message_notifier& get_slot_error_message_notifier() override;
 
   // See interface for documentation.
-  fapi::slot_data_message_notifier& get_slot_data_notifier() override;
+  fapi::slot_data_message_notifier& get_slot_data_message_notifier() override;
 
   // See interface for documentation.
   mac_cell_result_notifier& get_cell_result_notifier() override;

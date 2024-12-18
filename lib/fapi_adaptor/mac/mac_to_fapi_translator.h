@@ -26,6 +26,7 @@
 #include "srsran/fapi_adaptor/precoding_matrix_mapper.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/scheduler/result/pdcch_info.h"
 
 namespace srsran {
 

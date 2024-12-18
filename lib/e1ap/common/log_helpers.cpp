@@ -24,7 +24,6 @@
 #include "../common/e1ap_asn1_utils.h"
 #include "srsran/support/format/custom_formattable.h"
 #include "srsran/support/format/fmt_basic_parser.h"
-#include "srsran/support/format/fmt_optional.h"
 
 using namespace srsran;
 
@@ -33,7 +32,7 @@ namespace fmt {
 template <>
 struct formatter<asn1::e1ap::e1ap_pdu_c> : public basic_parser {
   template <typename FormatContext>
-  auto format(const asn1::e1ap::e1ap_pdu_c& p, FormatContext& ctx)
+  auto format(const asn1::e1ap::e1ap_pdu_c& p, FormatContext& ctx) const
   {
     asn1::json_writer js;
     p.to_json(js);

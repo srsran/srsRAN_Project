@@ -42,8 +42,7 @@ struct formatter<srsran::pusch_tpmi_select_info> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pusch_tpmi_select_info& info, FormatContext& ctx)
-
+  auto format(const srsran::pusch_tpmi_select_info& info, FormatContext& ctx) const
   {
     unsigned max_nof_layers = info.get_max_nof_layers();
 
@@ -124,11 +123,6 @@ TEST_P(PuschTpmiSelectFixture, VectorTest)
   unsigned nof_tx_ports   = test_case.channel_matrix.get_nof_tx_ports();
   unsigned nof_rx_ports   = test_case.channel_matrix.get_nof_rx_ports();
   unsigned max_nof_layers = std::min(nof_tx_ports, nof_rx_ports);
-
-  // Only one layer is currently supported.
-  if (max_nof_layers > 2) {
-    GTEST_SKIP();
-  }
 
   // Get UL-SCH information parameters.
   pusch_tpmi_select_info info = get_tpmi_select_info(

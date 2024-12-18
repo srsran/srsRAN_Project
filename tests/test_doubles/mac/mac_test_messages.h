@@ -25,11 +25,12 @@
 #include "srsran/mac/mac_cell_control_information_handler.h"
 #include "srsran/mac/mac_pdu_handler.h"
 #include "srsran/scheduler/harq_id.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 
 struct pucch_info;
+struct uci_info;
+struct ul_sched_info;
 
 namespace test_helpers {
 

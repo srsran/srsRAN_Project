@@ -443,7 +443,7 @@ TEST_P(pdcp_tx_test, count_wraparound)
 std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer,
+  fmt::format_to(std::back_inserter(buffer),
                  "{}bit_nia{}_nea{}",
                  pdcp_sn_size_to_uint(std::get<pdcp_sn_size>(info.param)),
                  std::get<unsigned>(info.param),

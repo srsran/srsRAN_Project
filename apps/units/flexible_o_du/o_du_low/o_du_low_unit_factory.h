@@ -47,8 +47,6 @@ struct o_du_low_unit_config {
   std::vector<srs_du::cell_prach_ports_entry> prach_ports;
   span<const srs_du::du_cell_config>          du_cells;
   span<const unsigned>                        max_puschs_per_slot;
-  unsigned                                    du_id;
-  unsigned                                    nof_cells;
 };
 
 /// O-RAN DU low unit dependencies.

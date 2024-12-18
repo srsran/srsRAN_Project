@@ -252,7 +252,7 @@ struct formatter<srsran::mobile_country_code> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::mobile_country_code& val, FormatContext& ctx)
+  auto format(const srsran::mobile_country_code& val, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", val.to_string());
   }
@@ -267,7 +267,7 @@ struct formatter<srsran::mobile_network_code> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::mobile_network_code& val, FormatContext& ctx)
+  auto format(const srsran::mobile_network_code& val, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", val.to_string());
   }
@@ -282,7 +282,7 @@ struct formatter<srsran::plmn_identity> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::plmn_identity& val, FormatContext& ctx)
+  auto format(const srsran::plmn_identity& val, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", val.to_string());
   }

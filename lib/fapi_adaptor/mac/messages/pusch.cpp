@@ -22,9 +22,9 @@
 
 #include "srsran/fapi_adaptor/mac/messages/pusch.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_mapper.h"
-#include "srsran/mac/mac_cell_result.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/ran/sch/sch_constants.h"
+#include "srsran/scheduler/result/pusch_info.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

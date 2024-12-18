@@ -26,13 +26,35 @@
 
 using namespace srsran;
 
-static void fill_cu_up_upf_section(YAML::Node node, const cu_up_unit_upf_config& config)
+static void fill_cu_up_udp_section(YAML::Node node, const udp_appconfig& config)
 {
-  node["bind_addr"]       = config.bind_addr;
-  node["bind_interface"]  = config.bind_interface;
-  node["ext_addr"]        = config.ext_addr;
-  node["udp_max_rx_msgs"] = config.udp_rx_max_msgs;
-  node["no_core"]         = config.no_core;
+  node["max_rx_msgs"]    = config.rx_max_msgs;
+  node["pool_threshold"] = config.pool_threshold;
+}
+
+static void fill_cu_up_ngu_socket_entry(YAML::Node& node, const cu_up_unit_ngu_socket_config& config)
+{
+  node["bind_addr"]      = config.bind_addr;
+  node["bind_interface"] = config.bind_interface;
+  node["ext_addr"]       = config.ext_addr;
+  fill_cu_up_udp_section(node["udp"], config.udp_config);
+}
+
+static void fill_cu_up_ngu_socket_section(YAML::Node node, const std::vector<cu_up_unit_ngu_socket_config>& sock_cfg)
+{
+  auto sock_node = node["socket"];
+  for (const auto& cfg : sock_cfg) {
+    YAML::Node node_sock;
+    fill_cu_up_ngu_socket_entry(node_sock, cfg);
+    sock_node.push_back(node_sock);
+  }
+}
+
+static void fill_cu_up_ngu_section(YAML::Node node, const cu_up_unit_ngu_config& config)
+{
+  node["no_core"] = config.no_core;
+
+  fill_cu_up_ngu_socket_section(node, config.ngu_socket_cfg);
 }
 
 static void fill_cu_up_metrics_section(YAML::Node node, const cu_up_unit_metrics_config& config)
@@ -114,7 +136,7 @@ void srsran::fill_cu_up_config_in_yaml_schema(YAML::Node& node, const cu_up_unit
   fill_cu_up_log_section(node["log"], config.loggers);
   fill_cu_up_pcap_section(node["pcap"], config.pcap_cfg);
   fill_cu_up_metrics_section(node["metrics"], config.metrics);
-  fill_cu_up_upf_section(node["upf"], config.upf_cfg);
+  fill_cu_up_ngu_section(node["ngu"], config.ngu_cfg);
 
   fill_cu_up_qos_section(node, config.qos_cfg);
 }

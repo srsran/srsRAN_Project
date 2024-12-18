@@ -30,6 +30,7 @@
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
+#include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/srslog/srslog.h"
 #include <deque>
 
@@ -37,6 +38,7 @@ namespace srsran {
 
 class scheduler_event_logger;
 class cell_metrics_handler;
+struct ul_crc_indication;
 
 /// Get MSG3 Delay.
 /// \param[in] pusch_td_res_alloc PUSCH-TimeDomainResourceAllocation.

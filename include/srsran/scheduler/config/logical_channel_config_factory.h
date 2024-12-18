@@ -28,7 +28,22 @@ namespace srsran {
 namespace config_helpers {
 
 /// \brief Creates a default logical channel configuration to be used by the scheduler.
-logical_channel_config create_default_logical_channel_config(lcid_t lcid);
+constexpr logical_channel_config create_default_logical_channel_config(lcid_t lcid)
+{
+  logical_channel_config lc_ch{};
+  lc_ch.lcid = lcid;
+  // See TS 38.331, 9.2.1 Default SRB configurations.
+  if (is_srb(lcid)) {
+    lc_ch.priority = lcid == LCID_SRB2 ? 3 : 1;
+    lc_ch.lc_group = uint_to_lcg_id(0);
+  } else {
+    lc_ch.priority = 5;
+    lc_ch.lc_group = uint_to_lcg_id(2);
+  }
+  lc_ch.lc_sr_mask                = false;
+  lc_ch.lc_sr_delay_timer_applied = false;
+  return lc_ch;
+}
 
 } // namespace config_helpers
 } // namespace srsran

@@ -111,16 +111,16 @@ TEST(right_closed_integer_interval_test, formatter)
 
 TEST(right_open_real_interval_test, formatter)
 {
-  interval<float> interv{5, 10};
+  interval<float> interv{5.1, 10.1};
   std::string     s = fmt::format("{}", interv);
 
-  ASSERT_EQ(s, "[5.0, 10.0)");
+  ASSERT_EQ(s, "[5.1, 10.1)");
 }
 
 TEST(right_closed_real_interval_test, formatter)
 {
-  interval<float, true> interv{5, 10};
+  interval<float, true> interv{5.1, 10.1};
   std::string           s = fmt::format("{}", interv);
 
-  ASSERT_EQ(s, "[5.0, 10.0]");
+  ASSERT_EQ(s, "[5.1, 10.1]");
 }

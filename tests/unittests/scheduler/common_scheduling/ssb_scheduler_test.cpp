@@ -212,7 +212,7 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
   // in_burst_bitmap).
   if (cell_cfg.dl_carrier.arfcn_f_ref <= freq_cutoff) {
     TESTASSERT((cell_cfg.ssb_cfg.ssb_bitmap & 0b00001111) == 0,
-               TEST_HARQ_ASSERT_MSG(slot_tx.to_uint(), ssb_cfg.ssb_period, cell_cfg.ssb_case));
+               TEST_HARQ_ASSERT_MSG(slot_tx.to_uint(), fmt::underlying(ssb_cfg.ssb_period), cell_cfg.ssb_case));
   }
 
   uint32_t sl_point_mod =
@@ -232,8 +232,9 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
 
   const ssb_information_list& ssb_list = slot_alloc.result.dl.bc.ssb_info;
   // Check the SSB list size.
-  TESTASSERT_EQ(
-      ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
+  TESTASSERT_EQ(ssb_list_size,
+                ssb_list.size(),
+                TEST_HARQ_ASSERT_MSG(sl_point_mod, fmt::underlying(ssb_cfg.ssb_period), cell_cfg.ssb_case));
 
   unsigned expected_ssb_per_slot;
   if (sl_point_mod == 0 or sl_point_mod == 1 or sl_point_mod == 2 or sl_point_mod == 3) {
@@ -294,7 +295,7 @@ void test_ssb_case_B(const slot_point&             slot_tx,
   // in_burst_bitmap).
   if (cell_cfg.dl_carrier.arfcn_f_ref <= CUTOFF_FREQ_ARFCN_CASE_A_B_C) {
     TESTASSERT((in_burst_bitmap & 0b00001111) == 0,
-               TEST_HARQ_ASSERT_MSG(slot_tx.to_uint(), ssb_cfg.ssb_period, cell_cfg.ssb_case));
+               TEST_HARQ_ASSERT_MSG(slot_tx.to_uint(), fmt::underlying(ssb_cfg.ssb_period), cell_cfg.ssb_case));
   }
 
   uint32_t sl_point_mod =
@@ -314,8 +315,9 @@ void test_ssb_case_B(const slot_point&             slot_tx,
 
   const ssb_information_list& ssb_list = slot_alloc.result.dl.bc.ssb_info;
   // Check the SSB list size
-  TESTASSERT_EQ(
-      ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
+  TESTASSERT_EQ(ssb_list_size,
+                ssb_list.size(),
+                TEST_HARQ_ASSERT_MSG(sl_point_mod, fmt::underlying(ssb_cfg.ssb_period), cell_cfg.ssb_case));
 
   unsigned expected_ssb_per_slot;
   // This block targets SSB occasions at ssb_burst_ofdm_symbols = {4, 8, 32, 36}.

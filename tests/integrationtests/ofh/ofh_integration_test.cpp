@@ -40,6 +40,7 @@
 #include "srsran/ru/ru_uplink_plane.h"
 #include "srsran/support/executors/task_execution_manager.h"
 #include "srsran/support/executors/task_executor.h"
+#include "fmt/std.h"
 #include <arpa/inet.h>
 #include <getopt.h>
 #include <linux/if_packet.h>
@@ -123,7 +124,7 @@ static test_parameters test_params;
 static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-s silent]\n", prog);
-  fmt::print("\t-w Channel bandwidth [Default {}]\n", test_params.bw);
+  fmt::print("\t-w Channel bandwidth [Default {}]\n", fmt::underlying(test_params.bw));
   fmt::print("\t-c Subcarrier spacing. [Default {}]\n", to_string(test_params.scs));
   fmt::print("\t-d Array of downlink eAxCs [default is {}]\n", port_ids_to_str(test_params.dl_port_id));
   fmt::print("\t-u Array of uplink eAxCs [default is {}]\n", port_ids_to_str(test_params.ul_port_id));
@@ -148,7 +149,7 @@ static void usage(const char* prog)
              test_params.use_loopback_receiver);
   fmt::print("\t-N Number of slots processed in the test [Default {}]]\n", nof_test_slots);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", test_params.silent);
-  fmt::print("\t-v Logging level. [Default {}]\n", test_params.log_level);
+  fmt::print("\t-v Logging level. [Default {}]\n", fmt::underlying(test_params.log_level));
   fmt::print("\t-f Log file name. [Default {}]\n", test_params.log_filename);
   fmt::print("\t-h Show this message\n");
 }
@@ -297,13 +298,23 @@ public:
     notifier = std::ref(notifier_);
     logger.debug("Test Ethernet receiver started");
   }
-  void stop() override {}
+
+  void stop() override
+  {
+    stop_requested.store(true, std::memory_order_relaxed);
+
+    while (is_running.load(std::memory_order_relaxed)) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+  }
 
   virtual void push_new_data(span<const uint8_t> frame) = 0;
 
 protected:
   srslog::basic_logger&                         logger;
   std::reference_wrapper<ether::frame_notifier> notifier;
+  std::atomic<bool>                             is_running{false};
+  std::atomic<bool>                             stop_requested{false};
 };
 
 /// Dummy Ethernet receiver that receives data from RU emulator and pushes them to the OFH receiver without using real
@@ -318,9 +329,15 @@ public:
 
   void push_new_data(span<const uint8_t> frame) override
   {
+    if (stop_requested.load(std::memory_order_relaxed)) {
+      return;
+    }
+    is_running.store(true, std::memory_order::memory_order_relaxed);
+
     auto exp_buffer = buffer_pool.reserve();
     if (!exp_buffer.has_value()) {
       logger.warning("Dummy Ethernet receiver: no buffer is available for receiving a packet");
+      is_running.store(false, std::memory_order::memory_order_relaxed);
       return;
     }
     ether::ethernet_rx_buffer_impl buffer = std::move(exp_buffer.value());
@@ -328,6 +345,7 @@ public:
     buffer.resize(frame.size());
 
     notifier.get().on_new_frame(ether::unique_rx_buffer(std::move(buffer)));
+    is_running.store(false, std::memory_order::memory_order_relaxed);
   }
 
 private:
@@ -1134,13 +1152,13 @@ int main(int argc, char** argv)
   auto dl_rg_pool = create_dl_resource_grid_pool(rg_factory, nof_prb);
   auto ul_rg_pool = create_ul_resource_grid_pool(rg_factory, nof_prb);
 
+  ether::ethernet_rx_buffer_pool buffer_pool(BUFFER_SIZE);
   worker_manager                 workers;
   dummy_rx_symbol_notifier       rx_symbol_notifier;
   dummy_timing_notifier          timing_notifier;
   test_gateway*                  tx_gateway;
   test_ether_receiver*           eth_receiver;
   dummy_ru_error_notifier        error_notifier;
-  ether::ethernet_rx_buffer_pool buffer_pool(BUFFER_SIZE);
 
   ru_ofh_configuration ru_cfg  = generate_ru_config();
   ru_ofh_dependencies  ru_deps = generate_ru_dependencies(

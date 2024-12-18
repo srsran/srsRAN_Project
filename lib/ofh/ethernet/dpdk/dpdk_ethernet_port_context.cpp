@@ -181,8 +181,8 @@ std::shared_ptr<dpdk_port_context> dpdk_port_context::create(const dpdk_port_con
 {
   // Create the mbuf pool only once as it is common for all ports.
   static ::rte_mempool* mem_pool = []() {
-    ::rte_mempool* pool =
-        ::rte_pktmbuf_pool_create("OFH_MBUF_POOL", NUM_MBUFS, MBUF_CACHE_SIZE, 0, MAX_BUFFER_SIZE, ::rte_socket_id());
+    ::rte_mempool* pool = ::rte_pktmbuf_pool_create(
+        "OFH_MBUF_POOL", NUM_MBUFS, MBUF_CACHE_SIZE, 0, (MAX_BUFFER_SIZE + RTE_PKTMBUF_HEADROOM), ::rte_socket_id());
     if (pool == nullptr) {
       ::rte_exit(EXIT_FAILURE, "DPDK - Unable to create the DPDK mbuf pool\n");
     }

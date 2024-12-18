@@ -106,6 +106,9 @@ public:
                : MAX_SLOTS_SINCE_LAST_PXSCH;
   }
 
+  float average_pdsch_rbs_per_slot() const { return avg_pdsch_rbs_per_slot; }
+  float average_pusch_rbs_per_slot() const { return avg_pusch_rbs_per_slot; }
+
   ran_slice_id_t            id;
   const cell_configuration* cell_cfg;
   slice_rrm_policy_config   cfg;
@@ -127,6 +130,10 @@ private:
 
   // Last slot that the PUSCH was allocated.
   slot_point last_pusch_alloc_slot;
+
+  // Track average number of RBs scheduler per slice.
+  float avg_pdsch_rbs_per_slot = 0;
+  float avg_pusch_rbs_per_slot = 0;
 
   slice_ue_repository slice_ues;
 };

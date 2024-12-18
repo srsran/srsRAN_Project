@@ -31,9 +31,9 @@
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
+#include "srsran/scheduler/result/dci_info.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/scheduler/scheduler_configurator.h"
-#include "srsran/scheduler/scheduler_dci.h"
 
 namespace srsran {
 

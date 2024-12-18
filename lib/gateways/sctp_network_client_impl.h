@@ -37,13 +37,16 @@ namespace srsran {
 /// This implementation assumes single-threaded access to its public interface.
 class sctp_network_client_impl : public sctp_network_client, public sctp_network_gateway_common_impl
 {
-  explicit sctp_network_client_impl(const sctp_network_gateway_config& sctp_cfg, io_broker& broker);
+  explicit sctp_network_client_impl(const sctp_network_gateway_config& sctp_cfg,
+                                    io_broker&                         broker,
+                                    task_executor&                     io_rx_executor_);
 
 public:
   ~sctp_network_client_impl() override;
 
   /// Create an SCTP client.
-  static std::unique_ptr<sctp_network_client> create(const sctp_network_gateway_config& sctp_cfg, io_broker& broker);
+  static std::unique_ptr<sctp_network_client>
+  create(const sctp_network_gateway_config& sctp_cfg, io_broker& broker, task_executor& io_rx_executor);
 
   /// Connect to an SCTP server with the provided address.
   std::unique_ptr<sctp_association_sdu_notifier>
@@ -67,10 +70,8 @@ private:
   void handle_connection_close(const char* cause);
   void handle_sctp_shutdown_comp();
 
-  io_broker& broker;
-
-  // Temporary buffer where read data is saved.
-  std::vector<uint8_t> temp_recv_buffer;
+  io_broker&     broker;
+  task_executor& io_rx_executor;
 
   // Handler of IO events. It is only accessed by the backend (io_broker), once the connection is set up.
   std::unique_ptr<sctp_association_sdu_notifier> recv_handler;

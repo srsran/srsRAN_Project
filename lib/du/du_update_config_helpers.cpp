@@ -40,14 +40,6 @@ static prb_interval find_pucch_inner_prbs(const pucch_resource& res, unsigned bw
   // NOTE: for odd bwp_size and the for central PRB, both is_on_bwp_right_side() and is_on_bwp_left_side() are false.
   auto is_on_bwp_right_side = [bwp_size](unsigned prb) { return prb >= bwp_size - bwp_size / 2; };
 
-  srsran_assert((res.format == srsran::pucch_format::FORMAT_0 and
-                 std::holds_alternative<pucch_format_0_cfg>(res.format_params)) or
-                    (res.format == srsran::pucch_format::FORMAT_1 and
-                     std::holds_alternative<pucch_format_1_cfg>(res.format_params)) or
-                    (res.format == srsran::pucch_format::FORMAT_2 or
-                     std::holds_alternative<pucch_format_2_3_cfg>(res.format_params)),
-                "Only PUCCH Format 0, 1 and 2 currently supported.");
-
   constexpr unsigned nof_prbs_f0_f1 = 1U;
   const unsigned nof_prbs = res.format == srsran::pucch_format::FORMAT_0 or res.format == srsran::pucch_format::FORMAT_1
                                 ? nof_prbs_f0_f1
@@ -80,10 +72,10 @@ srsran::config_helpers::find_largest_prb_interval_without_pucch(const srs_du::pu
   const std::vector<pucch_resource>& res_list = srs_du::generate_cell_pucch_res_list(
       user_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
           user_params.nof_sr_resources,
-      user_params.nof_ue_pucch_f2_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
+      user_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
           user_params.nof_csi_resources,
       user_params.f0_or_f1_params,
-      user_params.f2_params,
+      user_params.f2_or_f3_or_f4_params,
       bwp_size,
       user_params.max_nof_symbols);
   srsran_assert(not res_list.empty(), "The PUCCH resource list cannot be empty");

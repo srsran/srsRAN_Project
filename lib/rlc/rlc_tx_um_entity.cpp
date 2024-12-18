@@ -64,8 +64,8 @@ rlc_tx_um_entity::rlc_tx_um_entity(gnb_du_id_t                          du_id,
   srsran_assert(config.pdcp_sn_len == pdcp_sn_size::size12bits || config.pdcp_sn_len == pdcp_sn_size::size18bits,
                 "Cannot create RLC TX AM, unsupported pdcp_sn_len={}. du={} ue={} {}",
                 config.pdcp_sn_len,
-                du_id,
-                ue_index,
+                fmt::underlying(du_id),
+                fmt::underlying(ue_index),
                 rb_id);
 
   logger.log_info("RLC UM configured. {}", cfg);

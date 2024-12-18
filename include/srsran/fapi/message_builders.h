@@ -1377,7 +1377,7 @@ public:
         pdu.pucch_format = uci_pucch_pdu_format_0_1::format_type::format_1;
         break;
       default:
-        srsran_assert(0, "PUCCH format={} is not supported by this PDU", type);
+        srsran_assert(0, "PUCCH format={} is not supported by this PDU", fmt::underlying(type));
         break;
     }
 
@@ -1497,7 +1497,7 @@ public:
         pdu.pucch_format = uci_pucch_pdu_format_2_3_4::format_type::format_4;
         break;
       default:
-        srsran_assert(0, "PUCCH format={} is not supported by this PDU", type);
+        srsran_assert(0, "PUCCH format={} is not supported by this PDU", fmt::underlying(type));
         break;
     }
 

@@ -37,5 +37,8 @@ bool is_valid_dl_msg_alloc(const dl_msg_alloc& grant);
 /// \brief Determine if the PUSCH grant for a given UE has valid content.
 bool is_valid_ul_sched_info(const ul_sched_info& grant);
 
+/// \brief Determine if the UE PDSCH grants for a given slot are valid.
+bool is_valid_dl_msg_alloc_list(span<const dl_msg_alloc> grants);
+
 } // namespace test_helper
 } // namespace srsran

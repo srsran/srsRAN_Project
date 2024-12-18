@@ -32,11 +32,11 @@
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/ngap/ngap_nas.h"
-#include "srsran/ngap/ngap_nrppa.h"
 #include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cu_types.h"
+#include "srsran/ran/tac.h"
 #include "srsran/security/security.h"
 #include <string>
 #include <vector>
@@ -1121,53 +1121,12 @@ fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_fail_s&          
 /// \param[in] cgi The nr_cell_global_id common type struct of the UE.
 /// \param[in] tac The tac of the UE.
 inline void
-fill_asn1_handover_notify(asn1::ngap::ho_notify_s& asn1_msg, const nr_cell_global_id_t& cgi, const unsigned tac)
+fill_asn1_handover_notify(asn1::ngap::ho_notify_s& asn1_msg, const nr_cell_global_id_t& cgi, const tac_t tac)
 {
   auto& user_loc_info_nr       = asn1_msg->user_location_info.set_user_location_info_nr();
   user_loc_info_nr.nr_cgi      = nr_cgi_to_ngap_asn1(cgi);
   user_loc_info_nr.tai.plmn_id = cgi.plmn_id.to_bytes();
   user_loc_info_nr.tai.tac.from_number(tac);
-}
-
-/// \brief Convert DL UE Associated NRPPa Transport ASN1 struct to common type.
-/// \param[out] msg The ngap_ue_associated_nrppa_transport struct to fill.
-/// \param[in] asn1_msg The DL UE Associated NRPPa Transport ASN1 struct.
-inline void fill_dl_ue_associated_nrppa_transport(ngap_ue_associated_nrppa_transport&                   msg,
-                                                  const asn1::ngap::dl_ue_associated_nrppa_transport_s& asn1_msg)
-{
-  msg.routing_id = asn1_msg->routing_id.copy();
-  msg.nrppa_pdu  = asn1_msg->nrppa_pdu.copy();
-}
-
-/// \brief Convert common type UL UE Associated NRPPa Transport struct to ASN.1.
-/// \param[out] asn1_msg The DL UE Associated NRPPa Transport ASN1 struct to fill.
-/// \param[in] msg The common type ngap_ue_associated_nrppa_transport struct.
-inline void fill_ul_ue_associated_nrppa_transport(asn1::ngap::ul_ue_associated_nrppa_transport_s& asn1_msg,
-                                                  const ngap_ue_associated_nrppa_transport&       msg)
-{
-  asn1_msg->routing_id = msg.routing_id.copy();
-  asn1_msg->nrppa_pdu  = msg.nrppa_pdu.copy();
-}
-
-/// \brief Convert DL Non UE Associated NRPPa Transport ASN1 struct to common type.
-/// \param[out] msg The ngap_ue_associated_nrppa_transport struct to fill.
-/// \param[in] asn1_msg The DL Non UE Associated NRPPa Transport ASN1 struct.
-inline void
-fill_dl_non_ue_associated_nrppa_transport(ngap_non_ue_associated_nrppa_transport&                   msg,
-                                          const asn1::ngap::dl_non_ue_associated_nrppa_transport_s& asn1_msg)
-{
-  msg.routing_id = asn1_msg->routing_id.copy();
-  msg.nrppa_pdu  = asn1_msg->nrppa_pdu.copy();
-}
-
-/// \brief Convert common type UL Non UE Associated NRPPa Transport struct to ASN.1.
-/// \param[out] asn1_msg The DL Non UE Associated NRPPa Transport ASN1 struct to fill.
-/// \param[in] msg The common type ngap_ue_associated_nrppa_transport struct.
-inline void fill_ul_non_ue_associated_nrppa_transport(asn1::ngap::ul_non_ue_associated_nrppa_transport_s& asn1_msg,
-                                                      const ngap_non_ue_associated_nrppa_transport&       msg)
-{
-  asn1_msg->routing_id = msg.routing_id.copy();
-  asn1_msg->nrppa_pdu  = msg.nrppa_pdu.copy();
 }
 
 } // namespace srs_cu_cp

@@ -21,7 +21,7 @@ variables:
 ######
 # CI #
 ######
-is using latest:
+.is using latest:
   image: ubuntu:24.04
   stage: ci
   rules:
@@ -38,6 +38,9 @@ is using latest:
         echo "Please update to latest srsRAN commit: $SRSRAN_LATEST_COMMIT"
         exit 1
       fi
+
+is using latest:
+  extends: .is using latest
   allow_failure: true
 
 download srsran:

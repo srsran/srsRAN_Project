@@ -25,7 +25,6 @@
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/execution_context_description.h"
-#include "srsran/support/format/fmt_optional.h"
 
 using namespace srsran;
 

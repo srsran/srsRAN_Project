@@ -105,7 +105,11 @@ int main(int argc, char** argv)
         srsran::codeblock_metadata::tb_common_metadata cfg_enc = {bg, ls};
 
         fmt::memory_buffer descr_buffer;
-        fmt::format_to(descr_buffer, "BG={} LS={:<3} cb_len={}", bg, ls, cb_length);
+        fmt::format_to(std::back_inserter(descr_buffer),
+                       "BG={} LS={:<3} cb_len={}",
+                       fmt::underlying(bg),
+                       fmt::underlying(ls),
+                       cb_length);
 
         perf_meas_generic.new_measure(to_string(descr_buffer), data.size(), [&]() {
           const ldpc_encoder_buffer& rm_buffer = encoder->encode(data, cfg_enc);

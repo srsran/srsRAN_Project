@@ -23,6 +23,7 @@
 #pragma once
 
 #include "cu_up_ue_logger.h"
+#include "ngu_session_manager.h"
 #include "pdu_session.h"
 #include "pdu_session_manager.h"
 #include "srsran/cu_up/cu_up_config.h"
@@ -45,7 +46,6 @@ public:
   pdu_session_manager_impl(ue_index_t                                       ue_index_,
                            std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos_cfg_,
                            const security::sec_as_config&                   security_info_,
-                           const network_interface_config&                  net_config_,
                            const n3_interface_config&                       n3_config_,
                            const cu_up_test_mode_config&                    test_mode_config_,
                            cu_up_ue_logger&                                 logger_,
@@ -54,9 +54,9 @@ public:
                            timer_factory                                    ue_ul_timer_factory_,
                            timer_factory                                    ue_ctrl_timer_factory_,
                            f1u_cu_up_gateway&                               f1u_gw_,
+                           ngu_session_manager&                             ngu_session_mngr_,
                            gtpu_teid_pool&                                  n3_teid_allocator_,
                            gtpu_teid_pool&                                  f1u_teid_allocator_,
-                           gtpu_tunnel_common_tx_upper_layer_notifier&      gtpu_tx_notifier_,
                            gtpu_demux_ctrl&                                 gtpu_rx_demux_,
                            task_executor&                                   ue_dl_exec_,
                            task_executor&                                   ue_ul_exec_,
@@ -88,7 +88,6 @@ private:
   ue_index_t                                               ue_index;
   const std::map<five_qi_t, srs_cu_up::cu_up_qos_config>   qos_cfg;
   const security::sec_as_config&                           security_info;
-  const network_interface_config&                          net_config;
   const n3_interface_config&                               n3_config;
   cu_up_test_mode_config                                   test_mode_config;
   cu_up_ue_logger&                                         logger;
@@ -96,7 +95,6 @@ private:
   timer_factory                                            ue_dl_timer_factory;
   timer_factory                                            ue_ul_timer_factory;
   timer_factory                                            ue_ctrl_timer_factory;
-  gtpu_tunnel_common_tx_upper_layer_notifier&              gtpu_tx_notifier;
   gtpu_teid_pool&                                          n3_teid_allocator;
   gtpu_teid_pool&                                          f1u_teid_allocator;
   gtpu_demux_ctrl&                                         gtpu_rx_demux;
@@ -106,6 +104,7 @@ private:
   task_executor&                                           crypto_exec;
   dlt_pcap&                                                gtpu_pcap;
   f1u_cu_up_gateway&                                       f1u_gw;
+  ngu_session_manager&                                     ngu_session_mngr;
   std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id
 };
 

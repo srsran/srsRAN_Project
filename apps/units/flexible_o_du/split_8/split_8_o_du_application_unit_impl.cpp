@@ -62,11 +62,9 @@ void split_8_o_du_application_unit_impl::on_parsing_configuration_registration(C
   configure_cli11_with_split_8_o_du_unit_config_schema(app, unit_cfg);
 }
 
-o_du_unit split_8_o_du_application_unit_impl::create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies,
-                                                                        bool                          use_multicell)
+o_du_unit split_8_o_du_application_unit_impl::create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies)
 {
-  return use_multicell ? multicell_split8_du_factory(unit_cfg).create_flexible_o_du(dependencies)
-                       : split8_du_factory(unit_cfg).create_flexible_o_du(dependencies);
+  return split8_du_factory(unit_cfg).create_flexible_o_du(dependencies);
 }
 
 std::unique_ptr<flexible_o_du_application_unit> srsran::create_flexible_o_du_application_unit(std::string_view app_name)

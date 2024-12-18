@@ -30,6 +30,6 @@ namespace srsran {
 enum class io_broker_type { epoll, io_uring };
 
 /// Creates an instance of an IO broker
-std::unique_ptr<io_broker> create_io_broker(io_broker_type type, io_broker_config config = {});
+std::unique_ptr<io_broker> create_io_broker(io_broker_type type, const io_broker_config& config = io_broker_config());
 
 } // namespace srsran

@@ -31,31 +31,31 @@ using namespace asn1::rrc_nr;
 
 void rrc_ue_impl::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
 {
-  // pack DL CCCH msg
+  // Pack DL CCCH msg.
   byte_buffer pdu = pack_into_pdu(dl_ccch_msg, "DL-CCCH-Message");
 
   // Log Tx message
-  log_rrc_message(logger, Tx, pdu, dl_ccch_msg, "CCCH DL");
+  log_rrc_message(logger, Tx, pdu, dl_ccch_msg, srb_id_t::srb0, "CCCH DL");
 
-  // send down the stack
-  logger.log_debug(pdu.begin(), pdu.end(), "TX {} PDU", srb_id_t::srb0);
+  // Send down the stack.
+  logger.log_debug(pdu.begin(), pdu.end(), "Tx {} PDU", srb_id_t::srb0);
   f1ap_pdu_notifier.on_new_rrc_pdu(srb_id_t::srb0, std::move(pdu));
 }
 
 void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg)
 {
   if (context.srbs.find(srb_id) == context.srbs.end()) {
-    logger.log_error("Dropping DlDcchMessage. TX {} is not set up", srb_id);
+    logger.log_error("Dropping DlDcchMessage. Tx {} is not set up", srb_id);
     return;
   }
 
-  // pack DL CCCH msg
+  // Pack DL CCCH msg.
   byte_buffer pdu = pack_into_pdu(dl_dcch_msg, "DL-DCCH-Message");
 
-  // Log Tx message
-  log_rrc_message(logger, Tx, pdu, dl_dcch_msg, "DCCH DL");
+  // Log Tx message.
+  log_rrc_message(logger, Tx, pdu, dl_dcch_msg, srb_id, "DCCH DL");
 
-  // pack PDCP PDU and send down the stack
+  // Pack PDCP PDU and send down the stack.
   auto pdcp_packing_result = context.srbs.at(srb_id).pack_rrc_pdu(std::move(pdu));
   if (!pdcp_packing_result.is_successful()) {
     logger.log_info("Requesting UE release. Cause: PDCP packing failed with {}",
@@ -65,6 +65,6 @@ void rrc_ue_impl::send_dl_dcch(srb_id_t srb_id, const dl_dcch_msg_s& dl_dcch_msg
   }
 
   byte_buffer pdcp_pdu = pdcp_packing_result.pop_pdu();
-  logger.log_debug(pdcp_pdu.begin(), pdcp_pdu.end(), "TX {} PDU", context.ue_index, context.c_rnti, srb_id);
+  logger.log_debug(pdcp_pdu.begin(), pdcp_pdu.end(), "Tx {} PDU", context.ue_index, context.c_rnti, srb_id);
   f1ap_pdu_notifier.on_new_rrc_pdu(srb_id, std::move(pdcp_pdu));
 }

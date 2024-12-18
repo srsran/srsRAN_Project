@@ -22,7 +22,6 @@
 
 #include "srsran/f1u/local_connector/f1u_local_connector.h"
 #include "srsran/ran/rb_id.h"
-#include "srsran/support/format/fmt_optional.h"
 
 using namespace srsran;
 

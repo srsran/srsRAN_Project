@@ -57,7 +57,7 @@ struct o_du_high_config {
 struct o_du_high_sector_dependencies {
   fapi::slot_message_gateway*       gateway           = nullptr;
   fapi::slot_last_message_notifier* last_msg_notifier = nullptr;
-  /// FAPI buffered executor.
+  /// FAPI message bufferer executor.
   std::optional<task_executor*> fapi_executor;
 };
 

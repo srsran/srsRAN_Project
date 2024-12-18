@@ -67,7 +67,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& tct)
              "RM length {}, RV {}, Mod. {}, LBRM length {}, LBRM {}, Filler bits {}",
              tct.rm_length,
              tct.rv,
-             tct.mod_scheme,
+             fmt::underlying(tct.mod_scheme),
              tct.n_ref,
              tct.is_lbrm,
              tct.nof_filler);

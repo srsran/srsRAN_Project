@@ -30,14 +30,11 @@
 namespace srsran {
 namespace srs_cu_up {
 
-const network_interface_config net_config_default = {};
-
 /// Fixture base class for PDU session manager tests
 class pdu_session_manager_test_base
 {
 protected:
-  virtual ~pdu_session_manager_test_base()          = default;
-  virtual network_interface_config get_net_config() = 0;
+  ~pdu_session_manager_test_base() = default;
 
   void init()
   {
@@ -51,6 +48,7 @@ protected:
     f1u_gw           = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     n3_allocator     = std::make_unique<dummy_gtpu_teid_pool>();
     f1u_allocator    = std::make_unique<dummy_gtpu_teid_pool>();
+    ngu_session_mngr = std::make_unique<dummy_ngu_session_manager>();
 
     // create DUT object
     ue_inactivity_timer = timers_factory.create_timer();
@@ -60,11 +58,9 @@ protected:
 
     manual_task_worker teid_worker{128};
 
-    net_config      = get_net_config();
     pdu_session_mng = std::make_unique<pdu_session_manager_impl>(MIN_UE_INDEX,
                                                                  qos,
                                                                  security_info,
-                                                                 net_config,
                                                                  n3_config,
                                                                  cu_up_test_mode_config{},
                                                                  logger,
@@ -73,9 +69,9 @@ protected:
                                                                  timers_factory,
                                                                  timers_factory,
                                                                  *f1u_gw,
+                                                                 *ngu_session_mngr,
                                                                  *n3_allocator,
                                                                  *f1u_allocator,
-                                                                 *gtpu_tx_notifier,
                                                                  *gtpu_rx_demux,
                                                                  teid_worker,
                                                                  teid_worker,
@@ -98,12 +94,12 @@ protected:
   std::unique_ptr<gtpu_tunnel_common_tx_upper_layer_notifier> gtpu_tx_notifier;
   dummy_inner_f1u_bearer                                      f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>                          f1u_gw;
+  std::unique_ptr<ngu_session_manager>                        ngu_session_mngr;
   std::unique_ptr<dummy_gtpu_teid_pool>                       n3_allocator;
   std::unique_ptr<dummy_gtpu_teid_pool>                       f1u_allocator;
   std::unique_ptr<pdu_session_manager_ctrl>                   pdu_session_mng;
   null_dlt_pcap                                               gtpu_pcap;
   security::sec_as_config                                     security_info;
-  network_interface_config                                    net_config;
   n3_interface_config                                         n3_config = {};
   cu_up_ue_logger                                             logger{"CU-UP", {MIN_UE_INDEX}};
 };
@@ -112,22 +108,6 @@ protected:
 class pdu_session_manager_test : public pdu_session_manager_test_base, public ::testing::Test
 {
 protected:
-  network_interface_config get_net_config() override { return net_config_default; }
-  void                     SetUp() override { init(); }
-  void                     TearDown() override { finish(); }
-};
-
-/// Fixture class for PDU session manager tests with configurable N3 ext addr
-class pdu_session_manager_test_set_n3_ext_addr : public pdu_session_manager_test_base,
-                                                 public ::testing::TestWithParam<const char*>
-{
-protected:
-  network_interface_config get_net_config() override
-  {
-    network_interface_config cfg = net_config_default;
-    cfg.n3_ext_addr              = GetParam();
-    return cfg;
-  }
   void SetUp() override { init(); }
   void TearDown() override { finish(); }
 };

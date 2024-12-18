@@ -145,7 +145,7 @@ struct formatter<srsran::task_priority> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::task_priority& prio, FormatContext& ctx)
+  auto format(const srsran::task_priority& prio, FormatContext& ctx) const
   {
     fmt::format_to(ctx.out(), "max");
     if (prio != srsran::task_priority::max) {

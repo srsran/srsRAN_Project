@@ -135,6 +135,15 @@ protected:
     return ues[ue_creation_req.ue_index];
   }
 
+  void push_dl_bs(du_ue_index_t ue_index, lcid_t lcid, unsigned bytes)
+  {
+    dl_buffer_state_indication_message ind{};
+    ind.ue_index = ue_index;
+    ind.lcid     = lcid;
+    ind.bs       = bytes;
+    ues[ue_index].handle_dl_buffer_state_indication(ind);
+  }
+
   scheduler_expert_config                 sched_cfg;
   scheduler_ue_expert_config              expert_cfg{sched_cfg.ue};
   sched_cfg_dummy_notifier                mac_notif;
@@ -494,6 +503,70 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pdsch_even_with_large_ga
   ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant2, dummy_slice_id); },
                         [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; },
                         nof_slot_until_pdsch_is_allocated_threshold));
+}
+
+TEST_P(ue_grid_allocator_tester, successfully_allocates_pdsch_with_gbr_lc_priortized_over_non_gbr_lc)
+{
+  const lcg_id_t lcg_id              = uint_to_lcg_id(2);
+  const lcid_t   gbr_bearer_lcid     = uint_to_lcid(6);
+  const lcid_t   non_gbr_bearer_lcid = uint_to_lcid(5);
+
+  // Add UE.
+  sched_ue_creation_request_message ue_creation_req =
+      sched_config_helper::create_default_sched_ue_creation_request(this->cfg_builder_params);
+  ue_creation_req.ue_index = to_du_ue_index(0);
+  ue_creation_req.crnti    = to_rnti(0x4601);
+  ue& u1                   = add_ue(ue_creation_req);
+
+  // Reconfigure UE to include non-GBR bearer and GBR bearer.
+  sched_ue_reconfiguration_message reconf_msg{
+      .ue_index = ue_creation_req.ue_index, .crnti = ue_creation_req.crnti, .cfg = ue_creation_req.cfg};
+  sched_ue_config_request& cfg_req = reconf_msg.cfg;
+  cfg_req.lc_config_list.emplace();
+  cfg_req.lc_config_list->resize(4);
+  (*cfg_req.lc_config_list)[0]          = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0);
+  (*cfg_req.lc_config_list)[1]          = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1);
+  (*cfg_req.lc_config_list)[2]          = config_helpers::create_default_logical_channel_config(non_gbr_bearer_lcid);
+  (*cfg_req.lc_config_list)[2].lc_group = lcg_id;
+  (*cfg_req.lc_config_list)[3]          = config_helpers::create_default_logical_channel_config(gbr_bearer_lcid);
+  // Increase priority for GBR bearer.
+  (*cfg_req.lc_config_list)[3].priority -= 1;
+  // Put GBR bearer in a different LCG than non-GBR bearer.
+  (*cfg_req.lc_config_list)[3].lc_group = uint_to_lcg_id(lcg_id - 1);
+  cfg_req.drb_info_list.resize(2);
+  cfg_req.drb_info_list[0]  = sched_drb_info{.lcid     = non_gbr_bearer_lcid,
+                                             .qos_info = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(9))};
+  cfg_req.drb_info_list[1]  = sched_drb_info{.lcid         = gbr_bearer_lcid,
+                                             .qos_info     = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(1)),
+                                             .gbr_qos_info = gbr_qos_flow_information{128000, 128000, 128000, 128000}};
+  ue_config_update_event ev = cfg_mng.update_ue(reconf_msg);
+  u1.handle_reconfiguration_request({ev.next_config()});
+  u1.handle_config_applied();
+
+  // Add LCID to the bearers of the UE belonging to this slice.
+  for (const auto& lc_cfg : *cfg_req.lc_config_list) {
+    slice_ues[u1.ue_index].add_logical_channel(lc_cfg.lcid, lc_cfg.lc_group);
+  }
+
+  // Push buffer state update to both bearers.
+  push_dl_bs(u1.ue_index, gbr_bearer_lcid, 200);
+  push_dl_bs(u1.ue_index, non_gbr_bearer_lcid, 1500);
+
+  static const unsigned sched_bytes = 2000U;
+
+  const ue_pdsch_grant grant1{.user                  = &slice_ues[u1.ue_index],
+                              .cell_index            = to_du_cell_index(0),
+                              .h_id                  = INVALID_HARQ_ID,
+                              .recommended_nof_bytes = sched_bytes};
+
+  ASSERT_TRUE(run_until([&]() { alloc.allocate_dl_grant(grant1, dummy_slice_id); },
+                        [&]() { return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
+
+  const auto* ue_pdsch = find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants);
+  ASSERT_TRUE(not ue_pdsch->tb_list.empty());
+  ASSERT_TRUE(not ue_pdsch->tb_list.back().lc_chs_to_sched.empty());
+  // TB info contains GBR LC channel first and then non-GBR LC channel.
+  ASSERT_EQ(ue_pdsch->tb_list.back().lc_chs_to_sched.front().lcid, gbr_bearer_lcid);
 }
 
 TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_gap_to_last_pusch_slot_allocated)

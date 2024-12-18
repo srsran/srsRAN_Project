@@ -50,9 +50,6 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 
 void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t cell_index)
 {
-  // Update all UEs state.
-  ue_db.slot_indication(slot_tx);
-
   if (not ue_res_grid_view.get_cell_cfg_common(cell_index).is_dl_enabled(slot_tx)) {
     // This slot is inactive for PDCCH in this cell. We therefore, can skip the scheduling strategy.
     // Note: we are currently assuming that all cells have the same TDD pattern and that the scheduling strategy
@@ -134,7 +131,7 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
         if (not h_dl.has_value() or not h_dl->is_waiting_ack()) {
           logger.warning(
               "ue={} rnti={}: No DL HARQ process with state waiting-for-ack found at slot={} for harq-bit-index={}",
-              user->ue_index,
+              fmt::underlying(user->ue_index),
               user->crnti,
               slot_alloc.slot,
               harq_bit_idx);
@@ -207,6 +204,9 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx)
     // Process any pending events that are directed at UEs.
     event_mng.run(slot_tx, cell_index);
 
+    // Update all UEs state.
+    ue_db.slot_indication(slot_tx);
+
     // Mark the start of a new slot in the UE grid allocator.
     ue_alloc.slot_indication(slot_tx);
 
@@ -256,9 +256,18 @@ ue_scheduler_impl::cell::cell(const scheduler_ue_expert_config& expert_cfg,
                               ue_repository&                    ues,
                               cell_metrics_handler&             metrics_handler) :
   cell_res_alloc(params.cell_res_alloc),
-  cell_harqs(MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<harq_manager_timeout_notifier>(metrics_handler)),
+  cell_harqs(MAX_NOF_DU_UES,
+             MAX_NOF_HARQS,
+             std::make_unique<harq_manager_timeout_notifier>(metrics_handler),
+             cell_harq_manager::DEFAULT_ACK_TIMEOUT_SLOTS,
+             params.cell_res_alloc->cfg.ntn_cs_koffset),
   uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, ues),
-  fallback_sched(expert_cfg, params.cell_res_alloc->cfg, *params.pdcch_sched, *params.pucch_alloc, ues),
+  fallback_sched(expert_cfg,
+                 params.cell_res_alloc->cfg,
+                 *params.pdcch_sched,
+                 *params.pucch_alloc,
+                 *params.uci_alloc,
+                 ues),
   slice_sched(params.cell_res_alloc->cfg, ues),
   srs_sched(params.cell_res_alloc->cfg, ues)
 {

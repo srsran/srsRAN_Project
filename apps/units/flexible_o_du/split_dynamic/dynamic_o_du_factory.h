@@ -22,8 +22,8 @@
 
 #pragma once
 
+#include "apps/units/flexible_o_du/split_dynamic/dynamic_o_du_unit_config.h"
 #include "apps/units/flexible_o_du/split_helpers/flexible_o_du_factory.h"
-#include "dynamic_o_du_unit_config.h"
 
 namespace srsran {
 

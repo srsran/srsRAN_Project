@@ -29,7 +29,6 @@
 #include "srsran/ran/pucch/pucch_info.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/rlc/rlc_config.h"
-#include "srsran/support/format/fmt_optional.h"
 #include <algorithm>
 
 using namespace srsran;
@@ -223,7 +222,7 @@ static bool validate_pdcch_unit_config(const du_high_unit_base_cell_config& base
                  "cell bandwidth={}Mhz\n",
                  cs0_idx,
                  ss0_idx,
-                 base_cell.channel_bw_mhz);
+                 fmt::underlying(base_cell.channel_bw_mhz));
       return false;
     }
     // NOTE: The CORESET duration of 3 symbols is only permitted if the dmrs-typeA-Position information element has
@@ -406,18 +405,25 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
 /// Validates the given PUCCH cell application configuration. Returns true on success, otherwise false.
 static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config& config,
                                             subcarrier_spacing                   scs_common,
-                                            unsigned                             nof_crbs)
+                                            unsigned                             nof_crbs,
+                                            bool                                 ntn)
 {
   const du_high_unit_pucch_config& pucch_cfg = config.pucch_cfg;
   if (not config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources > 0) {
     fmt::print(
-        "Number of PUCCH Format 2 cell resources for CSI must be zero when CSI-RS and CSI report are disabled.\n");
+        "Number of PUCCH Format 2/3/4 cell resources for CSI must be zero when CSI-RS and CSI report are disabled.\n");
     return false;
   }
 
   if (config.csi_cfg.csi_rs_enabled and pucch_cfg.nof_cell_csi_resources == 0) {
-    fmt::print("Number of PUCCH Format 2 cell resources for CSI must be greater than 0 when CSI-RS and CSI report are "
-               "enabled.\n");
+    fmt::print(
+        "Number of PUCCH Format 2/3/4 cell resources for CSI must be greater than 0 when CSI-RS and CSI report are "
+        "enabled.\n");
+    return false;
+  }
+
+  if (pucch_cfg.use_format_0 and pucch_cfg.set1_format != 2) {
+    fmt::print("Using PUCCH Formats 3 and 4 is not supported when Format 0 is used.\n");
     return false;
   }
 
@@ -438,18 +444,20 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
                get_nof_slots_per_subframe(scs_common));
     return false;
   }
-  span<const unsigned> valid_sr_period_slots = mu_to_valid_sr_period_slots_lookup.at(to_numerology_value(scs_common));
-  if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
-      valid_sr_period_slots.end()) {
-    fmt::print("SR period of {}ms (i.e. {} slots) is not valid for {}kHz SCS.\n",
-               pucch_cfg.sr_period_msec,
-               sr_period_slots,
-               scs_to_khz(scs_common));
-    return false;
+  if (!ntn) {
+    span<const unsigned> valid_sr_period_slots = mu_to_valid_sr_period_slots_lookup.at(to_numerology_value(scs_common));
+    if (std::find(valid_sr_period_slots.begin(), valid_sr_period_slots.end(), sr_period_slots) ==
+        valid_sr_period_slots.end()) {
+      fmt::print("SR period of {}ms (i.e. {} slots) is not valid for {}kHz SCS.\n",
+                 pucch_cfg.sr_period_msec,
+                 sr_period_slots,
+                 scs_to_khz(scs_common));
+      return false;
+    }
   }
 
   // We need to count pucch_cfg.nof_ue_pucch_res_harq_per_set twice, as we have 2 sets of PUCCH resources for HARQ-ACK
-  // (PUCCH Resource Set Id 0 with Format 0/1 and PUCCH Resource Set Id 1 with Format 2).
+  // (PUCCH Resource Set Id 0 with Format 0/1 and PUCCH Resource Set Id 1 with Format 2/3/4).
   if (pucch_cfg.nof_ue_pucch_res_harq_per_set * 2U * pucch_cfg.nof_cell_harq_pucch_sets +
           pucch_cfg.nof_cell_sr_resources + pucch_cfg.nof_cell_csi_resources >
       pucch_constants::MAX_NOF_CELL_PUCCH_RESOURCES) {
@@ -475,7 +483,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
                                      pucch_cfg.nof_cell_sr_resources) /
                   static_cast<float>(nof_f0_per_block)));
     // With intraslot_freq_hopping, the nof of RBs is an even number.
-    if (config.pucch_cfg.f0_intraslot_freq_hopping) {
+    if (pucch_cfg.f0_intraslot_freq_hopping) {
       nof_f0_f1_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f0_f1_rbs) / 2.0F)) * 2;
     }
   } else {
@@ -483,47 +491,90 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     // symbols available for PUCCH within a slot.
     const unsigned pucch_f1_nof_symbols = max_nof_pucch_symbols;
     const unsigned nof_occ_codes =
-        config.pucch_cfg.f1_enable_occ ? format1_symb_to_spreading_factor(pucch_f1_nof_symbols) : 1U;
+        pucch_cfg.f1_enable_occ ? format1_symb_to_spreading_factor(pucch_f1_nof_symbols) : 1U;
 
     // We define a block as a set of Resources (either F0/F1 or F2) aligned over the same starting PRB.
-    const unsigned nof_f1_per_block = nof_occ_codes * config.pucch_cfg.nof_cyclic_shift;
+    const unsigned nof_f1_per_block = nof_occ_codes * pucch_cfg.f1_nof_cyclic_shifts;
     // Each PUCCH resource F0/F1 occupies 1 RB (per block).
-    nof_f0_f1_rbs = static_cast<unsigned>(std::ceil(
-        static_cast<float>(config.pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
-                           pucch_cfg.nof_cell_sr_resources) /
-        static_cast<float>(nof_f1_per_block)));
+    nof_f0_f1_rbs = static_cast<unsigned>(
+        std::ceil(static_cast<float>(pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
+                                     pucch_cfg.nof_cell_sr_resources) /
+                  static_cast<float>(nof_f1_per_block)));
     // With intraslot_freq_hopping, the nof of RBs is an even number.
-    if (config.pucch_cfg.f1_intraslot_freq_hopping) {
+    if (pucch_cfg.f1_intraslot_freq_hopping) {
       nof_f0_f1_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f0_f1_rbs) / 2.0F)) * 2;
     }
   }
 
-  // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
-  constexpr unsigned pucch_f2_nof_symbols = 2U;
-  const unsigned     f2_max_rbs =
-      config.pucch_cfg.max_payload_bits.has_value()
-              ? get_pucch_format2_max_nof_prbs(config.pucch_cfg.max_payload_bits.value(),
-                                           pucch_f2_nof_symbols,
-                                           to_max_code_rate_float(config.pucch_cfg.max_code_rate))
-              : config.pucch_cfg.f2_max_nof_rbs;
+  unsigned       nof_f2_f3_f4_rbs;
+  const unsigned nof_res_f2_f3_f4 =
+      pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets + pucch_cfg.nof_cell_csi_resources;
+  switch (pucch_cfg.set1_format) {
+    case 2: {
+      // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
+      constexpr unsigned pucch_f2_nof_symbols = 2U;
+      const unsigned     f2_max_rbs =
+          pucch_cfg.f2_max_payload_bits.has_value()
+                  ? get_pucch_format2_max_nof_prbs(pucch_cfg.f2_max_payload_bits.value(),
+                                               pucch_f2_nof_symbols,
+                                               to_max_code_rate_float(pucch_cfg.f2_max_code_rate))
+                  : pucch_cfg.f2_max_nof_rbs;
 
-  const unsigned nof_f2_blocks = max_nof_pucch_symbols / pucch_f2_nof_symbols;
-  unsigned       nof_f2_rbs =
-      static_cast<unsigned>(std::ceil(
-          static_cast<float>(config.pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets +
-                             pucch_cfg.nof_cell_csi_resources) /
-          static_cast<float>(nof_f2_blocks))) *
-      f2_max_rbs;
-  // With intraslot_freq_hopping, the nof of RBs is an even number of the PUCCH resource size in RB.
-  if (config.pucch_cfg.f2_intraslot_freq_hopping) {
-    nof_f2_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_rbs) / 2.0F)) * 2;
+      const unsigned nof_f2_blocks = max_nof_pucch_symbols / pucch_f2_nof_symbols;
+      nof_f2_f3_f4_rbs =
+          static_cast<unsigned>(std::ceil(static_cast<float>(nof_res_f2_f3_f4) / static_cast<float>(nof_f2_blocks))) *
+          f2_max_rbs;
+      // With intraslot_freq_hopping, the nof of RBs is an even number of the PUCCH resource size in RB.
+      if (pucch_cfg.f2_intraslot_freq_hopping) {
+        nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
+      }
+    } break;
+    case 3: {
+      // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F3, we use all
+      // symbols available for PUCCH within a slot.
+      const unsigned pucch_f3_nof_symbols = max_nof_pucch_symbols;
+      const unsigned f3_max_rbs =
+          pucch_cfg.f3_max_payload_bits.has_value()
+              ? get_pucch_format3_max_nof_prbs(pucch_cfg.f3_max_payload_bits.value(),
+                                               pucch_f3_nof_symbols,
+                                               to_max_code_rate_float(pucch_cfg.f3_max_code_rate),
+                                               // Since we are forcing 14 symbols intraslot_freq_hopping doesn't matter.
+                                               false,
+                                               pucch_cfg.f3_additional_dmrs,
+                                               pucch_cfg.f3_pi2_bpsk)
+              : pucch_cfg.f3_max_nof_rbs;
+
+      const unsigned nof_f3_blocks = max_nof_pucch_symbols / pucch_f3_nof_symbols;
+      nof_f2_f3_f4_rbs =
+          static_cast<unsigned>(std::ceil(static_cast<float>(nof_res_f2_f3_f4) / static_cast<float>(nof_f3_blocks))) *
+          f3_max_rbs;
+      // With intraslot_freq_hopping, the nof of RBs is an even number of the PUCCH resource size in RB.
+      if (pucch_cfg.f3_intraslot_freq_hopping) {
+        nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
+      }
+    } break;
+    case 4: {
+      // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F4, we use all
+      // symbols available for PUCCH within a slot.
+      const unsigned pucch_f4_nof_symbols = max_nof_pucch_symbols;
+      const unsigned nof_f4_blocks        = max_nof_pucch_symbols / pucch_f4_nof_symbols;
+      nof_f2_f3_f4_rbs =
+          static_cast<unsigned>(std::ceil(static_cast<float>(nof_res_f2_f3_f4) / static_cast<float>(nof_f4_blocks)));
+      // With intraslot_freq_hopping, the nof of RBs is an even number of the PUCCH resource size in RB.
+      if (pucch_cfg.f4_intraslot_freq_hopping) {
+        nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
+      }
+    } break;
+    default:
+      fmt::print("Invalid PUCCH format for Set Id 1.\n");
+      return false;
   }
 
   // Verify the number of RBs for the PUCCH resources does not exceed the BWP size.
   // [Implementation-defined] We do not allow the PUCCH resources to occupy more than 50% of the BWP. This is an extreme
   // case, and ideally the PUCCH configuration should result in a much lower PRBs usage.
   constexpr float max_allowed_prbs_usage = 0.5F;
-  if (static_cast<float>(nof_f0_f1_rbs + nof_f2_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
+  if (static_cast<float>(nof_f0_f1_rbs + nof_f2_f3_f4_rbs) / static_cast<float>(nof_crbs) >= max_allowed_prbs_usage) {
     fmt::print("With the given parameters, the number of PRBs for PUCCH exceeds the 50% of the BWP PRBs.\n");
     return false;
   }
@@ -794,14 +845,16 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
   // Obtain the minimum bandwidth for the subcarrier and band combination.
   min_channel_bandwidth min_chan_bw = band_helper::get_min_channel_bw(band, config.common_scs);
   if (min_chan_bw == min_channel_bandwidth::invalid) {
-    fmt::print("Invalid combination for band n{} and subcarrier spacing {}.\n", band, to_string(config.common_scs));
+    fmt::print("Invalid combination for band n{} and subcarrier spacing {}.\n",
+               fmt::underlying(band),
+               to_string(config.common_scs));
     return false;
   }
 
   // Check that the configured bandwidth is greater than or equal to the minimum bandwidth
   if (bs_channel_bandwidth_to_MHz(config.channel_bw_mhz) < min_channel_bandwidth_to_MHz(min_chan_bw)) {
     fmt::print("Minimum supported bandwidth for n{} with SCS {} is {}MHz.\n",
-               band,
+               fmt::underlying(band),
                to_string(config.common_scs),
                min_channel_bandwidth_to_MHz(min_chan_bw));
     return false;
@@ -812,7 +865,8 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
     error_type<std::string> ret = band_helper::is_dl_arfcn_valid_given_band(
         *config.band, config.dl_f_ref_arfcn, config.common_scs, config.channel_bw_mhz);
     if (not ret.has_value()) {
-      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, band, ret.error());
+      fmt::print(
+          "Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, fmt::underlying(band), ret.error());
       return false;
     }
     // Check if also the corresponding UL ARFCN is valid.
@@ -820,7 +874,8 @@ static bool validate_dl_ul_arfcn_and_band(const du_high_unit_base_cell_config& c
     ret                     = band_helper::is_ul_arfcn_valid_given_band(*config.band, ul_arfcn, config.channel_bw_mhz);
     if (not ret.has_value()) {
       // NOTE: The message must say that it's the DL ARFCN that is invalid, as that is the parameters set by the user.
-      fmt::print("Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, band, ret.error());
+      fmt::print(
+          "Invalid DL ARFCN={} for band {}. Cause: {}.\n", config.dl_f_ref_arfcn, fmt::underlying(band), ret.error());
       return false;
     }
   } else {
@@ -890,7 +945,7 @@ static bool validate_cell_sib_config(const du_high_unit_base_cell_config& cell_c
 }
 
 /// Validates the given cell application configuration. Returns true on success, otherwise false.
-static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& config)
+static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& config, bool ntn)
 {
   if (config.pci >= INVALID_PCI) {
     fmt::print("Invalid PCI (i.e. {}). PCI ranges from 0 to {}.\n", config.pci, MAX_PCI);
@@ -953,7 +1008,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_pucch_cell_unit_config(config, config.common_scs, nof_crbs)) {
+  if (!validate_pucch_cell_unit_config(config, config.common_scs, nof_crbs, ntn)) {
     return false;
   }
 
@@ -988,17 +1043,17 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
   return true;
 }
 
-static bool validate_cell_unit_config(const du_high_unit_cell_config& config)
+static bool validate_cell_unit_config(const du_high_unit_cell_config& config, bool ntn)
 {
-  return validate_base_cell_unit_config(config.cell);
+  return validate_base_cell_unit_config(config.cell, ntn);
 }
 
 /// Validates the given list of cell application configuration. Returns true on success, otherwise false.
-static bool validate_cells_unit_config(span<const du_high_unit_cell_config> config, const gnb_id_t& gnb_id)
+static bool validate_cells_unit_config(span<const du_high_unit_cell_config> config, const gnb_id_t& gnb_id, bool ntn)
 {
-  unsigned tac = config[0].cell.tac;
+  tac_t tac = config[0].cell.tac;
   for (const auto& cell : config) {
-    if (!validate_cell_unit_config(cell)) {
+    if (!validate_cell_unit_config(cell, ntn)) {
       return false;
     }
     if (cell.cell.tac != tac) {
@@ -1317,7 +1372,13 @@ static bool validate_qos_config(span<const du_high_unit_qos_config> config)
 
 bool srsran::validate_du_high_config(const du_high_unit_config& config, const os_sched_affinity_bitmask& available_cpus)
 {
-  if (!validate_cells_unit_config(config.cells_cfg, config.gnb_id)) {
+  bool ntn = false;
+  if (config.ntn_cfg.has_value()) {
+    if (config.ntn_cfg.has_value()) {
+      ntn = true;
+    }
+  }
+  if (!validate_cells_unit_config(config.cells_cfg, config.gnb_id, ntn)) {
     return false;
   }
 

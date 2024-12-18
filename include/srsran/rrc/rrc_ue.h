@@ -198,7 +198,7 @@ public:
   /// \brief Notify about the reception of an inter CU handove related RRC Reconfiguration Complete.
   virtual void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
                                                           const nr_cell_global_id_t& cgi,
-                                                          const unsigned             tac) = 0;
+                                                          const tac_t                tac) = 0;
 };
 
 struct rrc_reconfiguration_response_message {
@@ -277,9 +277,13 @@ public:
   virtual rrc_ue_transfer_context get_transfer_context() = 0;
 
   /// \brief Get the RRC measurement config for the current serving cell of the UE.
-  /// \params[in] current_meas_config The current meas config of the UE (if applicable).
+  /// \param[in] current_meas_config The current meas config of the UE (if applicable).
   /// \return The measurement config, if present.
-  virtual std::optional<rrc_meas_cfg> generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+  virtual std::optional<rrc_meas_cfg>
+  generate_meas_config(std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) = 0;
+
+  /// \brief Get the packed RRC measurement config for the current serving cell of the UE.
+  virtual byte_buffer get_packed_meas_config() = 0;
 
   /// \brief Handle the handover command RRC PDU.
   /// \param[in] cmd The handover command RRC PDU.
@@ -418,7 +422,8 @@ public:
   /// \param[in] nci The cell id of the serving cell to update.
   /// \param[in] current_meas_config The current meas config of the UE (if applicable).
   virtual std::optional<rrc_meas_cfg>
-  on_measurement_config_request(nr_cell_identity nci, std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+  on_measurement_config_request(nr_cell_identity            nci,
+                                std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) = 0;
 
   /// \brief Submit measurement report for given UE to cell manager.
   virtual void on_measurement_report(const rrc_meas_results& meas_results) = 0;

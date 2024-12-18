@@ -141,8 +141,8 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                sector_cfg.is_downlink_broadcast_enabled,
                (sector_cfg.ru_operating_bw && sector_cfg.bw != *sector_cfg.ru_operating_bw)
                    ? fmt::format(".\nOperating a {}MHz cell over a RU with instantaneous bandwidth of {}MHz",
-                                 sector_cfg.bw,
-                                 *sector_cfg.ru_operating_bw)
+                                 fmt::underlying(sector_cfg.bw),
+                                 fmt::underlying(*sector_cfg.ru_operating_bw))
                    : fmt::format(""));
   }
 

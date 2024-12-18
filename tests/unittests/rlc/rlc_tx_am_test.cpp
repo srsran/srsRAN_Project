@@ -2080,7 +2080,7 @@ TEST_P(rlc_tx_am_test, retx_count_trigger_max_retx_without_segmentation)
 std::string test_param_info_to_string(const ::testing::TestParamInfo<rlc_am_sn_size>& info)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}bit", to_number(info.param));
+  fmt::format_to(std::back_inserter(buffer), "{}bit", to_number(info.param));
   return fmt::to_string(buffer);
 }
 

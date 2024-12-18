@@ -24,7 +24,6 @@
 #include "du_processor/du_processor_repository.h"
 #include "metrics_handler/metrics_handler_impl.h"
 #include "mobility_manager/mobility_manager_factory.h"
-#include "routines/dl_non_ue_associated_nrppa_transport_routine.h"
 #include "routines/initial_context_setup_routine.h"
 #include "routines/mobility/inter_cu_handover_target_routine.h"
 #include "routines/mobility/intra_cu_handover_routine.h"
@@ -38,7 +37,10 @@
 #include "routines/ue_transaction_info_release_routine.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
+#include "srsran/nrppa/nrppa.h"
+#include "srsran/nrppa/nrppa_factory.h"
 #include "srsran/rrc/rrc_du.h"
+#include "srsran/support/compiler.h"
 #include <chrono>
 #include <dlfcn.h>
 #include <future>
@@ -63,7 +65,7 @@ static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cfg(config_),
   ue_mng(cfg),
-  cell_meas_mng(cfg.mobility.meas_manager_config, cell_meas_ev_notifier, ue_mng),
+  cell_meas_mng(cfg.mobility.meas_manager_config, cell_meas_mobility_notifier, ue_mng),
   du_db(du_repository_config{cfg,
                              *this,
                              get_cu_cp_ue_removal_handler(),
@@ -80,8 +82,11 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 {
   assert_cu_cp_configuration_valid(cfg);
 
+  nrppa_entity = create_nrppa_entity(cfg, nrppa_cu_cp_ev_notifier);
+
   // connect event notifiers to layers
-  ngap_cu_cp_ev_notifier.connect_cu_cp(*this, paging_handler);
+  ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_handler(), paging_handler);
+  nrppa_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_nrppa_handler());
   mobility_manager_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
@@ -95,7 +100,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 
   mobility_mng = create_mobility_manager(
       cfg.mobility.mobility_manager_config, mobility_manager_ev_notifier, *ngap_db, du_db, ue_mng);
-  cell_meas_ev_notifier.connect_mobility_manager(*mobility_mng);
+  cell_meas_mobility_notifier.connect_mobility_manager(*mobility_mng);
 
   // Start statistics report timer
   statistics_report_timer = cfg.services.timers->create_unique_timer(*cfg.services.cu_cp_executor);
@@ -161,6 +166,12 @@ bool cu_cp_impl::amfs_are_connected()
 
   return true;
 };
+
+SRSRAN_WEAK_SYMB std::unique_ptr<srsran::srs_cu_cp::nrppa_interface>
+cu_cp_impl::create_nrppa_entity(const cu_cp_configuration& cu_cp_cfg, nrppa_cu_cp_notifier& cu_cp_notif)
+{
+  return create_nrppa(cu_cp_cfg, cu_cp_notif);
+}
 
 void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg)
 {
@@ -602,14 +613,30 @@ ue_index_t cu_cp_impl::handle_ue_index_allocation_request(const nr_cell_global_i
   return ue_mng.add_ue(du_index, cgi.plmn_id);
 }
 
-void cu_cp_impl::handle_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg)
+SRSRAN_WEAK_SYMB void cu_cp_impl::handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t         ue_index,
+                                                                              const byte_buffer& nrppa_pdu)
 {
-  common_task_sched.schedule_async_task(start_ngap_dl_non_ue_associated_nrppa_transport(msg, logger));
+  logger.info("DL UE associated NRPPa messages are not supported");
+}
+
+void cu_cp_impl::handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu)
+{
+  logger.info("DL non UE associated NRPPa messages are not supported");
 }
 
 void cu_cp_impl::handle_n2_disconnection()
 {
   // TODO
+}
+
+SRSRAN_WEAK_SYMB nrppa_cu_cp_ue_notifier* cu_cp_impl::handle_new_nrppa_ue(ue_index_t ue_index)
+{
+  return nullptr;
+}
+
+SRSRAN_WEAK_SYMB void cu_cp_impl::handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index)
+{
+  logger.info("UL NRPPa messages are not supported");
 }
 
 std::optional<rrc_meas_cfg>
@@ -681,11 +708,15 @@ async_task<void> cu_cp_impl::handle_ue_removal_request(ue_index_t ue_index)
     });
   }
 
+  nrppa_ue_context_removal_handler* nrppa_removal_handler = nullptr;
+  nrppa_removal_handler                                   = &nrppa_entity->get_nrppa_ue_context_removal_handler();
+
   return launch_async<ue_removal_routine>(ue_index,
                                           du_db.get_du_processor(du_index).get_rrc_du_handler(),
                                           e1ap_removal_handler,
                                           du_db.get_du_processor(du_index).get_f1ap_handler(),
                                           ngap->get_ngap_ue_context_removal_handler(),
+                                          nrppa_removal_handler,
                                           ue_mng,
                                           logger);
 }

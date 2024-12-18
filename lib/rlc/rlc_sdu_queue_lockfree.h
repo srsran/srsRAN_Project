@@ -25,7 +25,7 @@
 #include "rlc_bearer_logger.h"
 #include "srsran/adt/spsc_queue.h"
 #include "srsran/rlc/rlc_tx.h"
-#include "srsran/support/format/fmt_optional.h"
+#include "fmt/std.h"
 
 namespace srsran {
 
@@ -331,7 +331,7 @@ struct formatter<srsran::rlc_sdu_queue_lockfree::state_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_sdu_queue_lockfree::state_t& state, FormatContext& ctx)
+  auto format(const srsran::rlc_sdu_queue_lockfree::state_t& state, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "queued_sdus={} queued_bytes={}", state.n_sdus, state.n_bytes);
   }

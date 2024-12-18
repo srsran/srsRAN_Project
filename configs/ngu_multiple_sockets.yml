@@ -1,0 +1,17 @@
+
+cu_up:
+  ngu:
+    socket:
+      - 
+        bind_addr: 127.0.3.1  # Address that the NG-U socket will bind to.
+        udp:
+          max_rx_msgs: 256    # Maximum packets read from the socket in a single syscall.
+          pool_threshold: 0.9 # Pool occupancy threshold, after which packets are dropped.
+          #dscp: 3             # Differentiated Services Code Point.
+
+      - 
+        bind_addr: 127.0.3.2  # Address that the NG-U socket will bind to.
+        udp:
+          max_rx_msgs: 256    # maximum packets read from the socket in a single syscall.
+          pool_threshold: 0.9 # Pool occupancy threshold, after which packets are dropped.
+          #dscp: 4             # Differentiated Services Code Point.

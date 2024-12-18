@@ -101,6 +101,8 @@ void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cel
       h_ul->cancel_retxs();
     }
   }
+
+  get_ul_power_controller().reconfigure(ue_cell_cfg);
 }
 
 void ue_cell::set_fallback_state(bool set_fallback)
@@ -124,7 +126,8 @@ void ue_cell::set_fallback_state(bool set_fallback)
     }
   }
 
-  logger.debug("ue={} rnti={}: {} fallback mode", ue_index, rnti(), in_fallback_mode ? "Entering" : "Leaving");
+  logger.debug(
+      "ue={} rnti={}: {} fallback mode", fmt::underlying(ue_index), rnti(), in_fallback_mode ? "Entering" : "Leaving");
 }
 
 bool ue_cell::is_pdcch_enabled(slot_point dl_slot) const
@@ -258,7 +261,7 @@ grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_alloca
   sch_mcs_description mcs_config =
       pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, false);
 
-  const unsigned nof_symbols = static_cast<unsigned>(pusch_td_cfg.symbols.length());
+  const auto nof_symbols = static_cast<unsigned>(pusch_td_cfg.symbols.length());
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   nof_symbols,
@@ -285,7 +288,7 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
   if (not h_ul.has_value() or h_ul->id() != crc_pdu.harq_id) {
     logger.warning("rnti={} h_id={}: Discarding CRC. Cause: UL HARQ process is not expecting CRC for PUSCH slot {}",
                    rnti(),
-                   crc_pdu.harq_id,
+                   fmt::underlying(crc_pdu.harq_id),
                    pusch_slot);
     return -1;
   }
@@ -301,9 +304,6 @@ int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& 
                                          h_ul->get_grant_params().mcs,
                                          h_ul->get_grant_params().mcs_table,
                                          h_ul->get_grant_params().olla_mcs);
-
-    // Update PUSCH KO count metrics.
-    ue_metrics.consecutive_pusch_kos = (crc_pdu.tb_crc_success) ? 0 : ue_metrics.consecutive_pusch_kos + 1;
 
     // Update PUSCH SNR reported from PHY.
     if (crc_pdu.ul_sinr_dB.has_value()) {
@@ -323,7 +323,7 @@ void ue_cell::handle_csi_report(const csi_report_data& csi_report)
 {
   apply_link_adaptation_procedures(csi_report);
   if (not channel_state.handle_csi_report(csi_report)) {
-    logger.warning("ue={} rnti={}: Invalid CSI report received", ue_index, rnti());
+    logger.warning("ue={} rnti={}: Invalid CSI report received", fmt::underlying(ue_index), rnti());
   }
 }
 

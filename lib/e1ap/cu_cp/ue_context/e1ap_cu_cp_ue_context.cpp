@@ -28,8 +28,10 @@ using namespace srsran::srs_cu_cp;
 
 e1ap_ue_context* e1ap_ue_context_list::add_ue(ue_index_t ue_index, gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
 {
-  srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
-  srsran_assert(cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid, "Invalid cu_cp_ue_e1ap_id={}", cu_cp_ue_e1ap_id);
+  srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", fmt::underlying(ue_index));
+  srsran_assert(cu_cp_ue_e1ap_id != gnb_cu_cp_ue_e1ap_id_t::invalid,
+                "Invalid cu_cp_ue_e1ap_id={}",
+                fmt::underlying(cu_cp_ue_e1ap_id));
 
   if (ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end()) {
     logger.error("ue={}: UE already exists", ue_index);
@@ -127,7 +129,8 @@ void e1ap_ue_context_list::update_ue_index(ue_index_t new_ue_index, ue_index_t o
   gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id = id_it->second;
 
   auto ue_it = ues.find(cu_cp_ue_e1ap_id);
-  srsran_sanity_check(ue_it != ues.end(), "cu_cp_ue_e1ap_id={}: UE context not found", cu_cp_ue_e1ap_id);
+  srsran_sanity_check(
+      ue_it != ues.end(), "cu_cp_ue_e1ap_id={}: UE context not found", fmt::underlying(cu_cp_ue_e1ap_id));
   e1ap_ue_context& ue = ue_it->second;
 
   // Update UE context

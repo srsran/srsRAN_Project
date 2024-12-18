@@ -21,6 +21,7 @@
  */
 
 #include "srsran_scheduler_adapter.h"
+#include "srsran/scheduler/result/sched_result.h"
 #include "srsran/scheduler/scheduler_factory.h"
 
 using namespace srsran;
@@ -237,24 +238,25 @@ void srsran_scheduler_adapter::handle_error_indication(slot_point               
 void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete(du_ue_index_t ue_index,
                                                                                  bool          ue_creation_result)
 {
-  srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
+  srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
 
   // Remove continuation of task in ctrl executor.
   if (not parent.ctrl_exec.defer([this, ue_index, ue_creation_result]() {
         parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(ue_creation_result);
       })) {
-    parent.logger.error("ue={}: Unable to finish UE configuration. Cause: DU task queue is full.", ue_index);
+    parent.logger.error("ue={}: Unable to finish UE configuration. Cause: DU task queue is full.",
+                        fmt::underlying(ue_index));
   }
 }
 
 void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_delete_response(du_ue_index_t ue_index)
 {
-  srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", ue_index);
+  srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
 
   // Continuation of ue remove task dispatched to the ctrl executor.
   if (not parent.ctrl_exec.defer(
           [this, ue_index]() { parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true); })) {
-    parent.logger.error("ue={}: Unable to remove UE. Cause: DU task queue is full.", ue_index);
+    parent.logger.error("ue={}: Unable to remove UE. Cause: DU task queue is full.", fmt::underlying(ue_index));
   }
 }
 
@@ -285,8 +287,9 @@ void srsran_scheduler_adapter::cell_handler::handle_rach_indication(const mac_ra
     for (const auto& preamble : occasion.preambles) {
       rnti_t alloc_tc_rnti = parent->rnti_mng.allocate();
       if (alloc_tc_rnti == rnti_t::INVALID_RNTI) {
-        parent->logger.warning(
-            "cell={} preamble id={}: Ignoring PRACH. Cause: Failed to allocate TC-RNTI.", cell_idx, preamble.index);
+        parent->logger.warning("cell={} preamble id={}: Ignoring PRACH. Cause: Failed to allocate TC-RNTI.",
+                               fmt::underlying(cell_idx),
+                               preamble.index);
         continue;
       }
       auto& sched_preamble        = sched_occasion.preambles.emplace_back();

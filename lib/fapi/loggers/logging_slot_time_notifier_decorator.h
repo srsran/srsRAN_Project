@@ -32,18 +32,18 @@ namespace fapi {
 class logging_slot_time_notifier_decorator : public slot_time_message_notifier
 {
 public:
-  logging_slot_time_notifier_decorator(srslog::basic_logger& logger_, slot_time_message_notifier& notifier_) :
-    logger(logger_), notifier(notifier_)
-  {
-  }
+  explicit logging_slot_time_notifier_decorator(srslog::basic_logger& logger_);
 
   // See interface for documentation.
   void on_slot_indication(const slot_indication_message& msg) override;
 
+  /// Sets the slot time message notifier to the given one.
+  void set_slot_time_message_notifier(slot_time_message_notifier& time_notifier);
+
 private:
   /// FAPI logger.
   srslog::basic_logger&       logger;
-  slot_time_message_notifier& notifier;
+  slot_time_message_notifier* notifier;
 };
 
 } // namespace fapi

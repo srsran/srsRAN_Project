@@ -39,11 +39,10 @@ void process_successful_pdu_resource_setup_mod_outcome(
                                     pdu_session_resource_setup_list,
     const pdu_session_setup_result& result);
 
-static ue_manager_config generate_ue_manager_config(const network_interface_config& net_config,
-                                                    const n3_interface_config&      n3_config,
-                                                    const cu_up_test_mode_config&   test_mode_config)
+static ue_manager_config generate_ue_manager_config(const n3_interface_config&    n3_config,
+                                                    const cu_up_test_mode_config& test_mode_config)
 {
-  return {net_config, n3_config, test_mode_config};
+  return {n3_config, test_mode_config};
 }
 
 static ue_manager_dependencies generate_ue_manager_dependencies(const cu_up_manager_impl_dependencies& dependencies,
@@ -52,7 +51,7 @@ static ue_manager_dependencies generate_ue_manager_dependencies(const cu_up_mana
   return {dependencies.e1ap,
           dependencies.timers,
           dependencies.f1u_gateway,
-          dependencies.gtpu_gw_adapter,
+          dependencies.ngu_session_mngr,
           dependencies.ngu_demux,
           dependencies.n3_teid_allocator,
           dependencies.f1u_teid_allocator,
@@ -64,14 +63,13 @@ static ue_manager_dependencies generate_ue_manager_dependencies(const cu_up_mana
 cu_up_manager_impl::cu_up_manager_impl(const cu_up_manager_impl_config&       config,
                                        const cu_up_manager_impl_dependencies& dependencies) :
   qos(config.qos),
-  net_cfg(config.net_cfg),
   n3_cfg(config.n3_cfg),
   test_mode_cfg(config.test_mode_cfg),
   exec_mapper(dependencies.exec_mapper),
   timers(dependencies.timers)
 {
   /// > Create UE manager
-  ue_mng = std::make_unique<ue_manager>(generate_ue_manager_config(net_cfg, n3_cfg, test_mode_cfg),
+  ue_mng = std::make_unique<ue_manager>(generate_ue_manager_config(n3_cfg, test_mode_cfg),
                                         generate_ue_manager_dependencies(dependencies, logger));
 }
 
@@ -202,7 +200,8 @@ cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_cont
 {
   ue_context* ue_ctxt = ue_mng->find_ue(msg.ue_index);
   if (ue_ctxt == nullptr) {
-    logger.error("ue={}: Discarding E1 Bearer Context Release Command. UE context not found", msg.ue_index);
+    logger.error("ue={}: Discarding E1 Bearer Context Release Command. UE context not found",
+                 fmt::underlying(msg.ue_index));
     return launch_async([](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN();

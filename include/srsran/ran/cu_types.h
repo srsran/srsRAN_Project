@@ -176,7 +176,7 @@ struct formatter<srsran::pdu_session_id_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdu_session_id_t& sid, FormatContext& ctx)
+  auto format(const srsran::pdu_session_id_t& sid, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "psi={:#}", pdu_session_id_to_uint(sid));
   }
@@ -191,8 +191,7 @@ struct formatter<srsran::integrity_protection_indication_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::integrity_protection_indication_t& ind, FormatContext& ctx)
-
+  auto format(const srsran::integrity_protection_indication_t& ind, FormatContext& ctx) const
   {
     switch (ind) {
       case srsran::integrity_protection_indication_t::not_needed:
@@ -215,8 +214,7 @@ struct formatter<srsran::confidentiality_protection_indication_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::confidentiality_protection_indication_t& ind, FormatContext& ctx)
-
+  auto format(const srsran::confidentiality_protection_indication_t& ind, FormatContext& ctx) const
   {
     switch (ind) {
       case srsran::confidentiality_protection_indication_t::not_needed:
@@ -239,8 +237,7 @@ struct formatter<srsran::security_indication_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::security_indication_t& security_ind, FormatContext& ctx)
-
+  auto format(const srsran::security_indication_t& security_ind, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "integrity_ind={} confidentiality_ind={}",

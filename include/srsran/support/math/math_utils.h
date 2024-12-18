@@ -27,6 +27,7 @@
 
 #include "srsran/adt/complex.h"
 #include "srsran/support/srsran_assert.h"
+#include <array>
 #include <numeric>
 
 namespace srsran {

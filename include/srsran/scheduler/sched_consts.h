@@ -22,13 +22,7 @@
 
 #pragma once
 
-#include "srsran/ran/resource_block.h"
-#include <cstddef>
-
 namespace srsran {
-
-/// Maximum number of layers (implementation-defined)
-const size_t MAX_NOF_LAYERS = 2;
 
 /// SSB constants.
 /// FR1 = [ 410 MHz – 7125 MHz] (TS 38.101, Section 5.1) and ARFCN corresponding to 7.125GHz is 875000.

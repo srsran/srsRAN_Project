@@ -39,8 +39,9 @@ class udp_network_gateway_impl final : public udp_network_gateway
 public:
   explicit udp_network_gateway_impl(udp_network_gateway_config                   config_,
                                     network_gateway_data_notifier_with_src_addr& data_notifier_,
-                                    task_executor&                               io_tx_executor_);
-  ~udp_network_gateway_impl() override { close_socket(); }
+                                    task_executor&                               io_tx_executor_,
+                                    task_executor&                               io_rx_executor_);
+  ~udp_network_gateway_impl() override { io_subcriber.reset(); }
 
   bool subscribe_to(io_broker& broker) override;
 
@@ -67,12 +68,14 @@ private:
   bool set_non_blocking();
   bool set_receive_timeout(unsigned rx_timeout_sec);
   bool set_reuse_addr();
+  bool set_dscp();
   bool close_socket();
 
   udp_network_gateway_config                   config; // configuration
   network_gateway_data_notifier_with_src_addr& data_notifier;
   srslog::basic_logger&                        logger;
   task_executor&                               io_tx_executor;
+  task_executor&                               io_rx_executor;
 
   unique_fd             sock_fd;
   io_broker::subscriber io_subcriber;
@@ -82,12 +85,6 @@ private:
   int              local_ai_family   = 0;
   int              local_ai_socktype = 0;
   int              local_ai_protocol = 0;
-
-  /// Temporary RX buffers for reception.
-  std::vector<std::vector<uint8_t>> rx_mem;
-  std::vector<::sockaddr_storage>   rx_srcaddr;
-  std::vector<::mmsghdr>            rx_msghdr;
-  std::vector<::iovec>              rx_iovecs;
 
   // Temporary Tx buffer for transmission.
   std::array<uint8_t, network_gateway_udp_max_len> tx_mem;

@@ -78,7 +78,7 @@ mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_r
 
 void mac_controller::handle_ue_config_applied(du_ue_index_t ue_index)
 {
-  srsran_assert(ue_db.contains(ue_index), "Invalid ue_index={}", ue_index);
+  srsran_assert(ue_db.contains(ue_index), "Invalid ue_index={}", fmt::underlying(ue_index));
 
   ul_unit.handle_ue_config_applied(ue_index);
 
@@ -87,7 +87,7 @@ void mac_controller::handle_ue_config_applied(du_ue_index_t ue_index)
 
 rnti_t mac_controller::add_ue(du_ue_index_t ue_index, du_cell_index_t cell_index, rnti_t tc_rnti)
 {
-  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue_index={}", ue_index);
+  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue_index={}", fmt::underlying(ue_index));
 
   if (ue_db.contains(ue_index)) {
     // UE already existed with same ue_index.
@@ -110,7 +110,8 @@ rnti_t mac_controller::add_ue(du_ue_index_t ue_index, du_cell_index_t cell_index
 
   // Update RNTI -> UE index map.
   if (not rnti_table.add_ue(u.rnti, ue_index)) {
-    logger.error("ue={} rnti={}: The update of the RNTI table overwrote a previous entry", ue_index, u.rnti);
+    logger.error(
+        "ue={} rnti={}: The update of the RNTI table overwrote a previous entry", fmt::underlying(ue_index), u.rnti);
     rnti_table.rem_ue(u.rnti);
     return rnti_t::INVALID_RNTI;
   }
@@ -120,7 +121,7 @@ rnti_t mac_controller::add_ue(du_ue_index_t ue_index, du_cell_index_t cell_index
 void mac_controller::remove_ue(du_ue_index_t ue_index)
 {
   if (not ue_db.contains(ue_index)) {
-    logger.warning("Failed to find ue_index={:#x}", ue_index);
+    logger.warning("Failed to find ue_index={:#x}", fmt::underlying(ue_index));
     return;
   }
 

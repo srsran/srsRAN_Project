@@ -205,11 +205,6 @@ sctp_socket& sctp_socket::operator=(sctp_socket&& other) noexcept
   return *this;
 }
 
-sctp_socket::~sctp_socket()
-{
-  close();
-}
-
 bool sctp_socket::close()
 {
   if (not sock_fd.is_open()) {

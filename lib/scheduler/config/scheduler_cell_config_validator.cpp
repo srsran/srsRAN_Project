@@ -58,8 +58,8 @@ static error_type<std::string> validate_pdcch_cfg_common(const sched_cell_config
         msg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value() ? ss.get_coreset_id() == 0 : false;
     VERIFY(cset_id_exits_in_common or cset_id_exits_in_cset0,
            "Coreset Id. {} indexed by SearchSpace Id. {} not found within the configured Common Coresets",
-           ss.get_coreset_id(),
-           ss.get_id());
+           fmt::underlying(ss.get_coreset_id()),
+           fmt::underlying(ss.get_id()));
   }
 
   return {};
@@ -228,7 +228,7 @@ error_type<std::string> srsran::config_validators::validate_sched_cell_configura
     const sched_cell_configuration_request_message& msg,
     const scheduler_expert_config&                  expert_cfg)
 {
-  VERIFY(msg.cell_index < MAX_NOF_DU_CELLS, "cell index={} is not valid", msg.cell_index);
+  VERIFY(msg.cell_index < MAX_NOF_DU_CELLS, "cell index={} is not valid", fmt::underlying(msg.cell_index));
 
   const auto& dl_lst = msg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list;
   for (const auto& pdsch : dl_lst) {

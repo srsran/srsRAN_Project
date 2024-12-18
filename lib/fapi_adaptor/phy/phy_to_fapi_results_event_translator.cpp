@@ -546,7 +546,7 @@ void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_r
       add_format_2_pucch_pdu(builder, result);
       break;
     default:
-      srsran_assert(0, "Unexpected PUCCH format {}", context.format);
+      srsran_assert(0, "Unexpected PUCCH format {}", fmt::underlying(context.format));
   }
 
   error_type<fapi::validator_report> validation_result = validate_uci_indication(msg);

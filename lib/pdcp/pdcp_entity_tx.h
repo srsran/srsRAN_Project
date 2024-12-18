@@ -36,7 +36,6 @@
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
 #include "srsran/security/security_engine.h"
-#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 
@@ -233,7 +232,7 @@ struct formatter<srsran::pdcp_tx_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdcp_tx_state& st, FormatContext& ctx)
+  auto format(const srsran::pdcp_tx_state& st, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "tx_next_ack={} tx_trans={} tx_next={}", st.tx_next_ack, st.tx_trans, st.tx_next);
   }

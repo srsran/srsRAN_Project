@@ -74,21 +74,37 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
   auto address = dependencies.f1u_gateway->get_cu_bind_address();
   srsran_assert(address.has_value(), "Invalid F1-U bind address");
 
-  config.cu_up_cfg.net_cfg.f1u_bind_addr = address.value();
-  // Create NG-U gateway.
-  std::unique_ptr<srs_cu_up::ngu_gateway> ngu_gw;
-  if (not unit_cfg.cu_up_cfg.upf_cfg.no_core) {
-    udp_network_gateway_config ngu_gw_config = {};
-    ngu_gw_config.bind_address               = config.cu_up_cfg.net_cfg.n3_bind_addr;
-    ngu_gw_config.bind_port                  = config.cu_up_cfg.net_cfg.n3_bind_port;
-    ngu_gw_config.bind_interface             = config.cu_up_cfg.net_cfg.n3_bind_interface;
-    ngu_gw_config.rx_max_mmsg                = config.cu_up_cfg.net_cfg.n3_rx_max_mmsg;
-    ngu_gw                                   = srs_cu_up::create_udp_ngu_gateway(
-        ngu_gw_config, *dependencies.io_brk, dependencies.workers->cu_up_exec_mapper->io_ul_executor());
+  // Create NG-U gateway(s).
+  std::vector<std::unique_ptr<gtpu_gateway>> ngu_gws;
+  if (not unit_cfg.cu_up_cfg.ngu_cfg.no_core) {
+    for (const cu_up_unit_ngu_socket_config& sock_cfg : unit_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg) {
+      udp_network_gateway_config n3_udp_cfg = {};
+      n3_udp_cfg.bind_address               = sock_cfg.bind_addr;
+      n3_udp_cfg.bind_interface             = sock_cfg.bind_interface;
+      n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
+      n3_udp_cfg.bind_port                  = GTPU_PORT;
+      n3_udp_cfg.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
+      n3_udp_cfg.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
+      n3_udp_cfg.reuse_addr                 = false; // TODO allow reuse_addr for multiple sockets
+      n3_udp_cfg.dscp                       = sock_cfg.udp_config.dscp;
+
+      std::unique_ptr<gtpu_gateway> ngu_gw =
+          create_udp_gtpu_gateway(n3_udp_cfg,
+                                  *dependencies.io_brk,
+                                  dependencies.workers->cu_up_exec_mapper->io_ul_executor(),
+                                  *dependencies.workers->non_rt_low_prio_exec);
+      ngu_gws.push_back(std::move(ngu_gw));
+    }
   } else {
-    ngu_gw = srs_cu_up::create_no_core_ngu_gateway();
+    std::unique_ptr<gtpu_gateway> ngu_gw = create_no_core_gtpu_gateway();
+    ngu_gws.push_back(std::move(ngu_gw));
   }
-  ocu_up_dependencies.cu_dependencies.ngu_gw = ngu_gw.get();
+
+  // Pass NG-U gateways to CU-UP
+  ocu_up_dependencies.cu_dependencies.ngu_gws.resize(ngu_gws.size());
+  for (size_t i = 0; i < ngu_gws.size(); i++) {
+    ocu_up_dependencies.cu_dependencies.ngu_gws[i] = ngu_gws[i].get();
+  }
 
   auto e2_metric_connectors = std::make_unique<e2_cu_metrics_connector_manager>();
 
@@ -110,7 +126,7 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
   }
 
   ocu_unit.unit =
-      std::make_unique<o_cu_up_unit_impl>(std::move(ngu_gw),
+      std::make_unique<o_cu_up_unit_impl>(std::move(ngu_gws),
                                           std::move(e2_metric_connectors),
                                           srs_cu_up::create_o_cu_up(config, std::move(ocu_up_dependencies)));
 

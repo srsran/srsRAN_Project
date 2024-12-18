@@ -74,6 +74,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   // Initialize logging
   test_logger.set_level(srslog::basic_levels::debug);
   cu_cp_logger.set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("NRPPA").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("PDCP").set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("NGAP").set_hex_dump_max_size(32);
   srslog::fetch_basic_logger("RRC").set_hex_dump_max_size(32);
@@ -106,7 +107,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   cu_cp_cfg.f1ap.json_log_enabled = true;
 
   // > Mobility config
-  cu_cp_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements = true;
+  cu_cp_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements = params.trigger_ho_from_measurements;
   {
     // > Meas manager config
     cell_meas_manager_cfg meas_mng_cfg;
@@ -400,7 +401,7 @@ bool cu_cp_test_environment::connect_new_ue(unsigned du_idx, gnb_du_ue_f1ap_id_t
 
   // Inject Initial UL RRC message
   f1ap_message init_ul_rrc_msg = generate_init_ul_rrc_message_transfer(du_ue_id, crnti);
-  test_logger.info("c-rnti={} du_ue={}: Injecting Initial UL RRC message", crnti, du_ue_id);
+  test_logger.info("c-rnti={} du_ue={}: Injecting Initial UL RRC message", crnti, fmt::underlying(du_ue_id));
   get_du(du_idx).push_ul_pdu(init_ul_rrc_msg);
 
   // Wait for DL RRC message transfer (containing RRC Setup)

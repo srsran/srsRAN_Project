@@ -24,6 +24,7 @@
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
+#include "srsran/scheduler/result/sched_result.h"
 #include "srsran/support/async/execute_on_blocking.h"
 #include "srsran/support/rtsan.h"
 
@@ -75,8 +76,10 @@ static void initialize_cell_tracer(du_cell_index_t cell_idx, subcarrier_spacing 
 
   std::chrono::microseconds slot_dur{1000 / get_nof_slots_per_subframe(scs)};
 
-  l2_late_tracer[cell_idx] = create_rusage_trace_recorder(
-      fmt::format("cell_{}_slot_run", cell_idx), file_event_tracer<L2_LATE_TRACE_ENABLED>{}, slot_dur, MAX_EVENTS);
+  l2_late_tracer[cell_idx] = create_rusage_trace_recorder(fmt::format("cell_{}_slot_run", fmt::underlying(cell_idx)),
+                                                          file_event_tracer<L2_LATE_TRACE_ENABLED>{},
+                                                          slot_dur,
+                                                          MAX_EVENTS);
 }
 
 async_task<void> mac_cell_processor::start()
@@ -93,7 +96,8 @@ async_task<void> mac_cell_processor::start()
         state = cell_state::active;
       },
       [this, cell_index = cell_cfg.cell_index]() {
-        logger.warning("cell={}: Postponed cell start operation. Cause: Task queue is full", cell_index);
+        logger.warning("cell={}: Postponed cell start operation. Cause: Task queue is full",
+                       fmt::underlying(cell_index));
       });
 }
 
@@ -111,10 +115,11 @@ async_task<void> mac_cell_processor::stop()
         // Set cell state as inactive to stop answering to slot indications.
         state = cell_state::inactive;
 
-        logger.info("cell={}: Cell was stopped.", cell_cfg.cell_index);
+        logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
       },
       [this, cell_index = cell_cfg.cell_index]() {
-        logger.warning("cell={}: Postponed cell stop operation. Cause: Task queue is full", cell_index);
+        logger.warning("cell={}: Postponed cell stop operation. Cause: Task queue is full",
+                       fmt::underlying(cell_index));
       });
 }
 
@@ -157,14 +162,14 @@ async_task<bool> mac_cell_processor::add_ue(const mac_ue_create_request& request
         return state == cell_state::active and ue_mng.add_ue(std::move(ue_inst));
       },
       [this, ue_index = request.ue_index]() {
-        logger.warning("ue={}: Postponed UE creation. Cause: Task queue is full", ue_index);
+        logger.warning("ue={}: Postponed UE creation. Cause: Task queue is full", fmt::underlying(ue_index));
       });
 }
 
 async_task<void> mac_cell_processor::remove_ue(const mac_ue_delete_request& request)
 {
   auto log_dispatch_failure = [this, ue_index = request.ue_index]() {
-    logger.warning("ue={}: Postponed UE removal. Cause: task queue is full", ue_index);
+    logger.warning("ue={}: Postponed UE removal. Cause: task queue is full", fmt::underlying(ue_index));
   };
 
   return launch_async([this, request, log_dispatch_failure](coro_context<async_task<void>>& ctx) mutable {
@@ -200,7 +205,8 @@ async_task<bool> mac_cell_processor::addmod_bearers(du_ue_index_t               
         return state == cell_state::active and ue_mng.addmod_bearers(ue_index, logical_channels);
       },
       [this, ue_index]() {
-        logger.warning("ue={}: Postponed UE bearer add/mod operation. Cause: Task queue is full", ue_index);
+        logger.warning("ue={}: Postponed UE bearer add/mod operation. Cause: Task queue is full",
+                       fmt::underlying(ue_index));
       });
 }
 
@@ -217,7 +223,7 @@ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span
         return ue_mng.remove_bearers(ue_index, lcids);
       },
       [this, ue_index]() {
-        logger.warning("ue={}: Postponed UE bearer removal. Cause: Task queue is full", ue_index);
+        logger.warning("ue={}: Postponed UE bearer removal. Cause: Task queue is full", fmt::underlying(ue_index));
       });
 }
 
@@ -241,7 +247,8 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx) SRSRAN_RT
   // Generate DL scheduling result for provided slot and cell.
   const sched_result& sl_res = sched.slot_indication(sl_tx, cell_cfg.cell_index);
   if (not sl_res.success) {
-    logger.warning("Unable to compute scheduling result for slot={}, cell={}", sl_tx, cell_cfg.cell_index);
+    logger.warning(
+        "Unable to compute scheduling result for slot={}, cell={}", sl_tx, fmt::underlying(cell_cfg.cell_index));
     if (sl_res.dl.nof_dl_symbols > 0) {
       mac_dl_sched_result mac_dl_res{};
       mac_dl_res.slot = sl_tx;

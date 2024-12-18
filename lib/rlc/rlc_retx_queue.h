@@ -256,7 +256,7 @@ struct formatter<srsran::rlc_tx_amd_retx> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_tx_amd_retx retx, FormatContext& ctx)
+  auto format(const srsran::rlc_tx_amd_retx retx, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "sn={} so={} len={}", retx.sn, retx.so, retx.length);
   }

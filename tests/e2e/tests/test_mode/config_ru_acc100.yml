@@ -1,0 +1,107 @@
+#
+# Copyright 2021-2024 Software Radio Systems Limited
+#
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
+#
+
+cu_up:
+  warn_on_drop: False
+
+buffer_pool:
+  nof_segments: 1048576
+
+cell_cfg:
+  dl_arfcn: 381500
+  band: 39
+  channel_bandwidth_MHz: 100
+  common_scs: 30
+  plmn: "00101"
+  tac: 7
+  pci: 1
+  nof_antennas_dl: {{nof_antennas_dl}}
+  nof_antennas_ul: {{nof_antennas_ul}}
+  pdsch:
+    mcs_table: qam256
+  pusch:
+    min_ue_mcs: 27
+    mcs_table: qam256
+    rv_sequence: 0
+  tdd_ul_dl_cfg:
+    dl_ul_tx_period: 10
+    nof_dl_slots: 7
+    nof_ul_slots: 2
+  csi:
+    csi_rs_period: 40
+  ul_common:
+    max_ul_grants_per_slot: 64
+    max_pucchs_per_slot: 63
+
+cells:
+  - pci: 1
+  - pci: 2
+    
+ru_dummy:
+
+test_mode:
+  test_ue:
+    rnti: 0x1234
+    pdsch_active: true
+    pusch_active: true
+    ri: 4
+    cqi: 15
+    nof_ues: 1
+
+expert_execution:
+  affinities:
+    low_priority_cpus: {{low_priority_cpus}}
+    {% if ru_timing_cpu %}
+    ru_timing_cpu: {{ ru_timing_cpu }}
+    {% endif %}
+  cell_affinities:
+    - l1_dl_cpus: {{l1_dl_cpus}}
+      l1_dl_pinning: mask
+      l1_ul_cpus: {{l1_ul_cpus}}
+      l1_ul_pinning: mask
+      l2_cell_cpus: {{l2_cell_cpus}}
+      l2_cell_pinning: mask
+      ru_cpus: {{ru_cpus}}
+      ru_pinning: mask
+    - l1_dl_cpus: {{l1_dl_cpus}}
+      l1_dl_pinning: mask
+      l1_ul_cpus: {{l1_ul_cpus}}
+      l1_ul_pinning: mask
+      l2_cell_cpus: {{l2_cell_cpus}}
+      l2_cell_pinning: mask
+      ru_cpus: {{ru_cpus}}
+      ru_pinning: mask
+      
+hal:
+  bbdev_hwacc:
+    hwacc_type: {{ accelerator_model }}
+    id: {{ accelerator_id }}
+    pdsch_enc:
+      nof_hwacc: {{ accelerator_pdsch_enc_nof_hwacc }}
+      cb_mode: {{ accelerator_cb_mode }}
+    pusch_dec:
+      nof_hwacc: {{ accelerator_pusch_dec_nof_hwacc }}
+      ext_softbuffer: {{ accelerator_ext_softbuffer }}
+      harq_context_size: {{ accelerator_harq_context_size }}
+  eal_args: "--lcores {{ lcores_eal_args }} {{ accelerator_extra_eal_args }}"
+
+expert_phy:
+  max_proc_delay: 4
+  pusch_dec_max_iterations: 2

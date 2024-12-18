@@ -152,6 +152,26 @@ def test_ue(
     )
 
 
+@mark.test_mode_acc100
+@mark.flaky(
+    reruns=2,
+    only_rerun=[_POD_ERROR],
+)
+def test_ru_acc100(
+    # Retina
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    # Clients
+    gnb: GNBStub,
+):
+    """
+    Run gnb in test mode ru dummy.
+    """
+    _test_ru(
+        retina_manager, retina_data, gnb, ru_config="config_ru_acc100.yml", extra_cli_config="log --hal_level=debug"
+    )
+
+
 @mark.test_mode
 @mark.flaky(
     reruns=2,
@@ -167,7 +187,7 @@ def test_ru(
     """
     Run gnb in test mode ru dummy.
     """
-    _test_ru(retina_manager, retina_data, gnb)
+    _test_ru(retina_manager, retina_data, gnb, ru_config="config_ru.yml")
 
 
 @mark.test_mode_not_crash
@@ -186,7 +206,15 @@ def test_ru_not_crash(
     Run gnb with sanitizers in test mode ru dummy.
     It ignores warnings and KOs, so it will fail if the gnb+sanitizer fails
     """
-    _test_ru(retina_manager, retina_data, gnb, gnb_stop_timeout=150, warning_as_errors=False, fail_if_kos=False)
+    _test_ru(
+        retina_manager,
+        retina_data,
+        gnb,
+        ru_config="config_ru.yml",
+        gnb_stop_timeout=150,
+        warning_as_errors=False,
+        fail_if_kos=False,
+    )
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -197,6 +225,7 @@ def _test_ru(
     # Clients
     gnb: GNBStub,
     # Test
+    ru_config,
     nof_ant: int = 4,
     duration: int = 5 * 60,
     # Test extra params
@@ -206,6 +235,7 @@ def _test_ru(
     log_search: bool = True,
     warning_as_errors: bool = True,
     fail_if_kos: bool = True,
+    extra_cli_config: str = "",
 ):  # pylint: disable=too-many-locals
     # Configuration
     with tempfile.NamedTemporaryFile(mode="w+") as tmp_file:
@@ -221,7 +251,7 @@ def _test_ru(
                     "nof_antennas_ul": nof_ant,
                 },
                 "templates": {
-                    "cu": str(Path(__file__).joinpath("../test_mode/config_ru.yml").resolve()),
+                    "cu": str(Path(__file__).joinpath(f"../test_mode/{ru_config}").resolve()),
                     "du": tmp_file.name,
                     "ru": tmp_file.name,
                 },
@@ -245,7 +275,7 @@ def _test_ru(
                 fivegc_definition=FiveGCDefinition(amf_ip=gnb_def.zmq_ip, amf_port=38412),
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
-                    post_commands=("cu_cp amf --no_core 1",),
+                    post_commands=(f"cu_cp amf --no_core 1 {extra_cli_config}",),
                 ),
             )
         )

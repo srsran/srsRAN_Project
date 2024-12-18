@@ -229,7 +229,8 @@ static void fill_csi_resources(serving_cell_config& out_cell, const du_high_unit
       out_cell.csi_meas_cfg->csi_report_cfg_list[0].cqi_table = cqi_table_t::table3;
       break;
     default:
-      report_error("Invalid MCS table={} for cell with pci={}\n", cell_cfg.pdsch_cfg.mcs_table, cell_cfg.pci);
+      report_error(
+          "Invalid MCS table={} for cell with pci={}\n", fmt::underlying(cell_cfg.pdsch_cfg.mcs_table), cell_cfg.pci);
   }
 
   // Generate zp-CSI-RS resources.
@@ -547,25 +548,52 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     du_pucch_cfg.nof_cell_harq_pucch_res_sets       = user_pucch_cfg.nof_cell_harq_pucch_sets;
     du_pucch_cfg.nof_sr_resources                   = user_pucch_cfg.nof_cell_sr_resources;
     du_pucch_cfg.nof_csi_resources                  = param.csi_rs_enabled ? user_pucch_cfg.nof_cell_csi_resources : 0U;
+
     if (user_pucch_cfg.use_format_0) {
       auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<srs_du::pucch_f0_params>();
       // Subtract 2 PUCCH resources from value: with Format 0, 2 extra resources will be added by the DU resource
       // allocator when the DU create the UE configuration.
-      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - 2U;
-      du_pucch_cfg.nof_ue_pucch_f2_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - 2U;
-      f0_params.intraslot_freq_hopping            = user_pucch_cfg.f0_intraslot_freq_hopping;
+      const unsigned extra_res_harq                     = user_pucch_cfg.set1_format == 2U ? 2U : 0U;
+      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - extra_res_harq;
+      du_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - extra_res_harq;
+      f0_params.intraslot_freq_hopping                  = user_pucch_cfg.f0_intraslot_freq_hopping;
     } else {
       auto& f1_params                             = du_pucch_cfg.f0_or_f1_params.emplace<srs_du::pucch_f1_params>();
       du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
-      du_pucch_cfg.nof_ue_pucch_f2_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
-      f1_params.occ_supported                     = user_pucch_cfg.f1_enable_occ;
-      f1_params.nof_cyc_shifts         = static_cast<srs_du::nof_cyclic_shifts>(user_pucch_cfg.nof_cyclic_shift);
+      du_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set;
+      f1_params.occ_supported                           = user_pucch_cfg.f1_enable_occ;
+      f1_params.nof_cyc_shifts         = static_cast<srs_du::nof_cyclic_shifts>(user_pucch_cfg.f1_nof_cyclic_shifts);
       f1_params.intraslot_freq_hopping = user_pucch_cfg.f1_intraslot_freq_hopping;
     }
-    du_pucch_cfg.f2_params.max_code_rate          = user_pucch_cfg.max_code_rate;
-    du_pucch_cfg.f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;
-    du_pucch_cfg.f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
-    du_pucch_cfg.f2_params.max_payload_bits       = user_pucch_cfg.max_payload_bits;
+
+    switch (user_pucch_cfg.set1_format) {
+      case 2: {
+        auto& f2_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<srs_du::pucch_f2_params>();
+        f2_params.max_code_rate          = user_pucch_cfg.f2_max_code_rate;
+        f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;
+        f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
+        f2_params.max_payload_bits       = user_pucch_cfg.f2_max_payload_bits;
+      } break;
+      case 3: {
+        auto& f3_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<srs_du::pucch_f3_params>();
+        f3_params.max_code_rate          = user_pucch_cfg.f3_max_code_rate;
+        f3_params.max_nof_rbs            = user_pucch_cfg.f3_max_nof_rbs;
+        f3_params.intraslot_freq_hopping = user_pucch_cfg.f3_intraslot_freq_hopping;
+        f3_params.max_payload_bits       = user_pucch_cfg.f3_max_payload_bits;
+        f3_params.additional_dmrs        = user_pucch_cfg.f3_additional_dmrs;
+        f3_params.pi2_bpsk               = user_pucch_cfg.f3_pi2_bpsk;
+      } break;
+      case 4: {
+        auto& f4_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<srs_du::pucch_f4_params>();
+        f4_params.max_code_rate          = user_pucch_cfg.f4_max_code_rate;
+        f4_params.intraslot_freq_hopping = user_pucch_cfg.f4_intraslot_freq_hopping;
+        f4_params.additional_dmrs        = user_pucch_cfg.f4_additional_dmrs;
+        f4_params.pi2_bpsk               = user_pucch_cfg.f4_pi2_bpsk;
+        f4_params.occ_length             = static_cast<pucch_f4_occ_len>(user_pucch_cfg.f4_occ_length);
+      } break;
+      default:
+        break;
+    }
 
     // Parameters for SRS-Config.
     srs_du::srs_builder_params&    du_srs_cfg   = out_cell.srs_cfg;
@@ -675,10 +703,18 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // the configuration; therefore, the maximum number of symbols for PUCCH resources is computed only for periodic
     // SRS.
     du_pucch_cfg.max_nof_symbols = config_helpers::compute_max_nof_pucch_symbols(du_srs_cfg);
-    if (user_srs_cfg.srs_period_ms.has_value() and
-        std::holds_alternative<srs_du::pucch_f1_params>(du_pucch_cfg.f0_or_f1_params)) {
-      auto& f1_params       = std::get<srs_du::pucch_f1_params>(du_pucch_cfg.f0_or_f1_params);
-      f1_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f1_params.nof_symbols.to_uint());
+    if (user_srs_cfg.srs_period_ms.has_value()) {
+      if (std::holds_alternative<srs_du::pucch_f1_params>(du_pucch_cfg.f0_or_f1_params)) {
+        auto& f1_params       = std::get<srs_du::pucch_f1_params>(du_pucch_cfg.f0_or_f1_params);
+        f1_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f1_params.nof_symbols.to_uint());
+      }
+      if (std::holds_alternative<srs_du::pucch_f3_params>(du_pucch_cfg.f2_or_f3_or_f4_params)) {
+        auto& f3_params       = std::get<srs_du::pucch_f3_params>(du_pucch_cfg.f2_or_f3_or_f4_params);
+        f3_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f3_params.nof_symbols.to_uint());
+      } else if (std::holds_alternative<srs_du::pucch_f4_params>(du_pucch_cfg.f2_or_f3_or_f4_params)) {
+        auto& f4_params       = std::get<srs_du::pucch_f3_params>(du_pucch_cfg.f2_or_f3_or_f4_params);
+        f4_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f4_params.nof_symbols.to_uint());
+      }
     }
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
@@ -891,11 +927,12 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   if (std::holds_alternative<time_pf_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
     out_cfg.ue.strategy_cfg = app_sched_expert_cfg.policy_sched_expert_cfg;
   }
-  out_cfg.ue.target_pusch_sinr               = pusch.target_pusch_sinr;
-  out_cfg.ue.path_loss_for_target_pusch_sinr = pusch.path_loss_for_target_pusch_sinr;
-  out_cfg.ue.ta_cmd_offset_threshold         = app_sched_expert_cfg.ta_sched_cfg.ta_cmd_offset_threshold;
-  out_cfg.ue.ta_target                       = app_sched_expert_cfg.ta_sched_cfg.ta_target;
-  out_cfg.ue.ta_measurement_slot_period      = app_sched_expert_cfg.ta_sched_cfg.ta_measurement_slot_period;
+  out_cfg.ue.ul_power_ctrl.enable_pusch_cl_pw_control      = pusch.enable_closed_loop_pw_control;
+  out_cfg.ue.ul_power_ctrl.target_pusch_sinr               = pusch.target_pusch_sinr;
+  out_cfg.ue.ul_power_ctrl.path_loss_for_target_pusch_sinr = pusch.path_loss_for_target_pusch_sinr;
+  out_cfg.ue.ta_cmd_offset_threshold                       = app_sched_expert_cfg.ta_sched_cfg.ta_cmd_offset_threshold;
+  out_cfg.ue.ta_target                                     = app_sched_expert_cfg.ta_sched_cfg.ta_target;
+  out_cfg.ue.ta_measurement_slot_period = app_sched_expert_cfg.ta_sched_cfg.ta_measurement_slot_period;
   out_cfg.ue.ta_update_measurement_ul_sinr_threshold =
       app_sched_expert_cfg.ta_sched_cfg.ta_update_measurement_ul_sinr_threshold;
 

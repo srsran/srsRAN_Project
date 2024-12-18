@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran_assert.h"
+#include "fmt/format.h"
 
 namespace srsran {
 
@@ -35,12 +36,13 @@ assert_eq_format_helper(T expected_val, U actual_val, bool eq_cmp, const std::st
 {
   fmt::memory_buffer fmtbuf;
   if (eq_cmp) {
-    fmt::format_to(fmtbuf, "Actual value '{}' differs from expected '{}'", actual_val, expected_val);
+    fmt::format_to(
+        std::back_inserter(fmtbuf), "Actual value '{}' differs from expected '{}'", actual_val, expected_val);
   } else {
-    fmt::format_to(fmtbuf, "Value '{}' should not be equal to '{}'", actual_val, expected_val);
+    fmt::format_to(std::back_inserter(fmtbuf), "Value '{}' should not be equal to '{}'", actual_val, expected_val);
   }
   if (not msg.empty()) {
-    fmt::format_to(fmtbuf, ". {}", msg);
+    fmt::format_to(std::back_inserter(fmtbuf), ". {}", msg);
   }
   return fmt::to_string(fmtbuf);
 }

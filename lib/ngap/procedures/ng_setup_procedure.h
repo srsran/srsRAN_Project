@@ -53,6 +53,8 @@ private:
   /// Creates procedure result to send back to procedure caller.
   ngap_ng_setup_result create_ng_setup_result();
 
+  static bool is_failure_misconfiguration(const asn1::ngap::cause_c& cause);
+
   ngap_context_t&           context;
   const ngap_message        request;
   const unsigned            max_setup_retries;

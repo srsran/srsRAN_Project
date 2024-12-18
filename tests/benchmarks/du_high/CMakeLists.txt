@@ -28,6 +28,7 @@ target_link_libraries(du_high_benchmark
   f1ap_du_test_helpers
   pdcp_test_doubles
   sched_test_doubles
+  mac_test_doubles
   du_test_doubles
   srsran_pcap
   gtest

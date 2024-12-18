@@ -28,9 +28,11 @@
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
+
+struct ul_sched_info;
+struct pucch_info;
 
 using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_UE_INDEX>;
 

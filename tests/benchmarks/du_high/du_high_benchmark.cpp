@@ -43,6 +43,7 @@
 #include "lib/mac/mac_ul/ul_bsr.h"
 #include "tests/test_doubles/du/test_du_high_worker_manager.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
@@ -80,7 +81,7 @@ struct bench_params {
   /// Setting this value to 0 will disable DL Tx.
   /// If the air interface cannot keep up with the DL F1-U PDU rate, the F1-U will be throttled, to avoid depleting
   /// the buffer pool.
-  unsigned dl_bytes_per_slot = 1500;
+  unsigned dl_bytes_per_slot = 9000;
   /// \brief Set size of the UL Buffer status report to push for UL Tx. Setting this value to 0 will disable UL Tx.
   unsigned ul_bsr_bytes = 0;
   /// \brief Maximum number of RBs per UE DL grant per slot.
@@ -263,17 +264,17 @@ public:
     }
     scheduler_cell_metrics metrics;
     while (pending_metrics.try_pop(metrics)) {
-      fmt::format_to(fmtbuf, "Latency=[{}]", fmt::join(metrics.latency_histogram, ", "));
+      fmt::format_to(std::back_inserter(fmtbuf), "Latency=[{}]", fmt::join(metrics.latency_histogram, ", "));
       if (not metrics.events.empty()) {
-        fmt::format_to(fmtbuf, " Events: [");
+        fmt::format_to(std::back_inserter(fmtbuf), " Events: [");
         for (const auto& ev : metrics.events) {
-          fmt::format_to(fmtbuf,
+          fmt::format_to(std::back_inserter(fmtbuf),
                          "{}rnti={} type={}",
                          &ev == &metrics.events.front() ? "" : ", ",
                          ev.rnti,
                          sched_event_to_string(ev.type));
         }
-        fmt::format_to(fmtbuf, "]");
+        fmt::format_to(std::back_inserter(fmtbuf), "]");
       }
       logger.info("cell metrics: {}", to_c_str(fmtbuf));
       fmtbuf.clear();
@@ -298,12 +299,7 @@ public:
 class cu_cp_simulator : public srs_du::f1c_connection_client
 {
 public:
-  cu_cp_simulator() : du_rx_pdu_notifier(nullptr)
-  {
-    for (auto& flag : ue_created_flag_list) {
-      flag.store(false, std::memory_order_relaxed);
-    }
-  }
+  cu_cp_simulator() : rx_f1ap_pdus(MAX_NOF_DU_UES) {}
 
 private:
   class f1ap_du_tx_pdu_notifier : public f1ap_message_notifier
@@ -319,8 +315,11 @@ private:
   };
 
 public:
-  std::unique_ptr<f1ap_message_notifier>        du_rx_pdu_notifier;
-  std::array<std::atomic<bool>, MAX_NOF_DU_UES> ue_created_flag_list;
+  using rx_f1ap_pdu_queue = concurrent_queue<std::unique_ptr<f1ap_message>,
+                                             concurrent_queue_policy::lockfree_mpmc,
+                                             concurrent_queue_wait_policy::non_blocking>;
+
+  rx_f1ap_pdu_queue rx_f1ap_pdus;
 
   std::unique_ptr<f1ap_message_notifier>
   handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier_) override
@@ -328,6 +327,8 @@ public:
     du_rx_pdu_notifier = std::move(du_rx_pdu_notifier_);
     return std::make_unique<f1ap_du_tx_pdu_notifier>(*this);
   }
+
+  void send_message(const f1ap_message& msg) { du_rx_pdu_notifier->on_new_message(msg); }
 
 private:
   void handle_message(const f1ap_message& msg)
@@ -337,10 +338,10 @@ private:
         handle_init_msg(msg);
         break;
       case asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome:
-        handle_success_outcome(msg.pdu.successful_outcome());
+        handle_success_outcome(msg);
         break;
       default:
-        report_fatal_error("Received invalid PDU type {} in this benchmark", msg.pdu.type().value);
+        report_fatal_error("Received invalid PDU type {} in this benchmark", fmt::underlying(msg.pdu.type().value));
     }
   }
 
@@ -367,40 +368,27 @@ private:
         du_rx_pdu_notifier->on_new_message(dl_msg);
       } break;
       case init_opts::ul_rrc_msg_transfer: {
-        // Send UE Context Setup to create DRB1.
-        gnb_du_ue_f1ap_id_t du_ue_id =
-            int_to_gnb_du_ue_f1ap_id(init_msg.value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
-        gnb_cu_ue_f1ap_id_t cu_ue_id =
-            int_to_gnb_cu_ue_f1ap_id(init_msg.value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
-        f1ap_message uectxt_msg = test_helpers::create_ue_context_setup_request(
-            cu_ue_id, du_ue_id, 0, {drb_id_t::drb1}, config_helpers::make_default_du_cell_config().nr_cgi);
-        auto& ue_ctxt_setup = *uectxt_msg.pdu.init_msg().value.ue_context_setup_request();
-        // Do not send RRC container, otherwise we have to send an RLC ACK.
-        ue_ctxt_setup.rrc_container_present = false;
-        // Note: Use UM because AM requires status PDUs.
-        auto& drb1          = ue_ctxt_setup.drbs_to_be_setup_list[0]->drbs_to_be_setup_item();
-        drb1.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
-        drb1.qos_info.choice_ext()->drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi =
-            7; // UM in default configs
-        du_rx_pdu_notifier->on_new_message(uectxt_msg);
+        report_fatal_error_if_not(rx_f1ap_pdus.try_push(std::make_unique<f1ap_message>(msg)), "Failed to push Rx PDU");
       } break;
       default:
         report_fatal_error("Unhandled PDU type {} in this benchmark", init_msg.value.type().to_string());
     }
   }
 
-  void handle_success_outcome(const asn1::f1ap::successful_outcome_s& succ_outcome)
+  void handle_success_outcome(const f1ap_message& msg)
   {
     using namespace asn1::f1ap;
+    auto& succ_outcome = msg.pdu.successful_outcome();
     switch (succ_outcome.value.type().value) {
       case f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp: {
-        ue_created_flag_list[succ_outcome.value.ue_context_setup_resp()->gnb_du_ue_f1ap_id].store(
-            true, std::memory_order_relaxed);
+        report_fatal_error_if_not(rx_f1ap_pdus.try_push(std::make_unique<f1ap_message>(msg)), "Failed to push Rx PDU");
       } break;
       default:
         report_fatal_error("Unreachable code in this benchmark");
     }
   }
+
+  std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier;
 };
 
 /// \brief Dummy F1-U bearer for the purpose of benchmark.
@@ -484,6 +472,10 @@ public:
 
   void new_slot()
   {
+    slot_dl_data_result.rar_pdus.clear();
+    slot_dl_data_result.si_pdus.clear();
+    slot_dl_data_result.paging_pdus.clear();
+    slot_dl_data_result.ue_pdus.clear();
     slot_dl_result.dl_res = nullptr;
     slot_ul_result.ul_res = nullptr;
   }
@@ -562,7 +554,7 @@ class du_high_bench
   static constexpr unsigned PDCP_MAX_HDR_LEN    = 3;
 
 public:
-  du_high_bench(unsigned                              dl_buffer_state_bytes_,
+  du_high_bench(unsigned                              dl_bytes_per_slot_,
                 unsigned                              ul_bsr_bytes_,
                 unsigned                              max_nof_rbs_per_dl_grant,
                 units::bytes                          f1u_pdu_size_,
@@ -571,7 +563,7 @@ public:
                 bool                                  sched_tracing_enabled,
                 const cell_config_builder_params&     builder_params = {}) :
     params(builder_params),
-    f1u_dl_pdu_bytes_per_slot(dl_buffer_state_bytes_),
+    f1u_dl_pdu_bytes_per_slot(dl_bytes_per_slot_),
     f1u_pdu_size(f1u_pdu_size_),
     workers(test_helpers::create_multi_threaded_du_high_executor_mapper({1, true, du_cell_cores})),
     ul_bsr_bytes(ul_bsr_bytes_)
@@ -591,7 +583,7 @@ public:
 
     // Instantiate a DU-high object.
     cfg.ran.gnb_du_id   = (gnb_du_id_t)1;
-    cfg.ran.gnb_du_name = fmt::format("srsgnb{}", cfg.ran.gnb_du_id);
+    cfg.ran.gnb_du_name = fmt::format("srsgnb{}", fmt::underlying(cfg.ran.gnb_du_id));
 
     cfg.ran.cells                                  = {config_helpers::make_default_du_cell_config(params)};
     cfg.ran.sched_cfg                              = config_helpers::make_default_scheduler_expert_config();
@@ -611,11 +603,11 @@ public:
     dependencies.sched_ue_metrics_notifier = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
-    cfg.ran.cells[0].pucch_cfg.nof_sr_resources               = 30;
-    cfg.ran.cells[0].pucch_cfg.nof_csi_resources              = 30;
-    cfg.ran.cells[0].pucch_cfg.nof_ue_pucch_f2_res_harq       = 8;
-    cfg.ran.cells[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = 8;
-    cfg.ran.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets   = 4;
+    cfg.ran.cells[0].pucch_cfg.nof_sr_resources                     = 30;
+    cfg.ran.cells[0].pucch_cfg.nof_csi_resources                    = 30;
+    cfg.ran.cells[0].pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8;
+    cfg.ran.cells[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq       = 8;
+    cfg.ran.cells[0].pucch_cfg.nof_cell_harq_pucch_res_sets         = 4;
     auto& f1_params                             = cfg.ran.cells[0].pucch_cfg.f0_or_f1_params.emplace<pucch_f1_params>();
     f1_params.nof_cyc_shifts                    = nof_cyclic_shifts::six;
     f1_params.occ_supported                     = true;
@@ -766,8 +758,7 @@ public:
     report_fatal_error_if_not(run_slot_until(dl_pdu_sched), "Msg4 with RRC Setup was not scheduled");
     test_logger.info("rnti={}: DU-high scheduled Msg4 (containing RRC Setup)", rnti);
 
-    // Push MAC UL SDU that will trigger UE Context Setup.
-    // Note: MAC UL SDU will make the UE go out of fallback mode.
+    // Push MAC UL SDU that corresponds to the RRC Setup Complete.
     rx_ind             = {};
     rx_ind.sl_rx       = next_sl_tx - tx_rx_delay;
     rx_ind.cell_index  = to_du_cell_index(0);
@@ -775,13 +766,69 @@ public:
     rx_ind.pdus.push_back(mac_rx_pdu{du_ue_index_to_rnti(ue_idx), 0, 0, ul_pdu.copy()});
     du_hi->get_pdu_handler().handle_rx_data_indication(rx_ind);
 
-    // Wait for UE Context Modification Response to arrive to CU.
-    while (not sim_cu_cp.ue_created_flag_list[ue_idx]) {
-      // Need to run one slot for scheduler to handle pending events.
-      run_slot();
-      process_results();
-      std::this_thread::sleep_for(std::chrono::milliseconds{1});
+    // Wait for RRC Setup Complete.
+    std::unique_ptr<f1ap_message> pdu;
+    auto                          ul_rrc_msg_rx = [this, &pdu]() {
+      return sim_cu_cp.rx_f1ap_pdus.try_pop(pdu) and
+             pdu->pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg and
+             pdu->pdu.init_msg().value.type().value ==
+                 asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::ul_rrc_msg_transfer;
+    };
+    report_fatal_error_if_not(run_slot_until(ul_rrc_msg_rx), "F1AP UL RRC Message missing");
+
+    // Start UE Context Setup.
+    {
+      gnb_du_ue_f1ap_id_t du_ue_id =
+          int_to_gnb_du_ue_f1ap_id(pdu->pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+      gnb_cu_ue_f1ap_id_t cu_ue_id =
+          int_to_gnb_cu_ue_f1ap_id(pdu->pdu.init_msg().value.ul_rrc_msg_transfer()->gnb_du_ue_f1ap_id);
+      f1ap_message uectxt_msg = test_helpers::create_ue_context_setup_request(
+          cu_ue_id, du_ue_id, 0, {drb_id_t::drb1}, config_helpers::make_default_du_cell_config().nr_cgi);
+      auto& ue_ctxt_setup = *uectxt_msg.pdu.init_msg().value.ue_context_setup_request();
+      // Do not send RRC container, otherwise we have to send an RLC ACK.
+      ue_ctxt_setup.rrc_container_present = false;
+      // Note: Use UM because AM requires status PDUs.
+      auto& drb1          = ue_ctxt_setup.drbs_to_be_setup_list[0]->drbs_to_be_setup_item();
+      drb1.rlc_mode.value = asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
+      drb1.qos_info.choice_ext()->drb_info().drb_qos.qos_characteristics.non_dyn_5qi().five_qi =
+          7; // UM in default configs
+      sim_cu_cp.send_message(uectxt_msg);
     }
+
+    // Wait for UE Context Setup Response.
+    auto ue_setup_resp_rx = [this, &pdu]() {
+      return sim_cu_cp.rx_f1ap_pdus.try_pop(pdu) and
+             pdu->pdu.type().value == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome and
+             pdu->pdu.successful_outcome().value.type().value ==
+                 asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp;
+    };
+    report_fatal_error_if_not(run_slot_until(ue_setup_resp_rx), "F1AP UL RRC Message missing");
+
+    // Push MAC UL SDU that will serve as RRC Reconf Complete and make the UE go out of fallback mode.
+    rx_ind = test_helpers::create_pdu_with_sdu(next_sl_tx - tx_rx_delay, rnti, LCID_SRB1, 1);
+    du_hi->get_pdu_handler().handle_rx_data_indication(rx_ind);
+
+    // Wait for RRC Reconf Complete to arrive to F1AP and that the RLC sends status report.
+    auto dl_pdu_sched_srb1 = [this, rnti]() {
+      if (sim_phy.slot_dl_result.dl_res != nullptr) {
+        return find_ue_pdsch_with_lcid(rnti, LCID_SRB1, sim_phy.slot_dl_result.dl_res->ue_grants) != nullptr;
+      }
+      return false;
+    };
+    bool rlc_status_rx      = false;
+    bool rrc_reconf_comp_rx = false;
+    report_fatal_error_if_not(run_slot_until([&]() {
+                                rlc_status_rx |= dl_pdu_sched_srb1();
+                                rrc_reconf_comp_rx |= ul_rrc_msg_rx();
+                                return rlc_status_rx & rrc_reconf_comp_rx;
+                              }),
+                              rrc_reconf_comp_rx ? "RLC Status Report was not scheduled"
+                                                 : "F1AP UL RRC Message missing");
+
+    // Mark the UE as fully setup.
+    ue_created_flag_list[ue_idx] = true;
+
+    test_logger.info("ue={}: Creation completed successfully", fmt::underlying(ue_idx));
   }
 
   // \brief Push a DL PDUs to DU-high via F1-U interface.
@@ -807,7 +854,7 @@ public:
       static std::array<uint32_t, MAX_NOF_DU_UES> pdcp_sn_list{0};
       const unsigned nof_dl_pdus_per_slot = divide_ceil(f1u_dl_pdu_bytes_per_slot, this->f1u_pdu_size.value());
       const unsigned last_dl_pdu_size =
-          std::max(PDCP_MAX_HDR_LEN, f1u_dl_pdu_bytes_per_slot % this->f1u_pdu_size.value());
+          std::max(PDCP_MAX_HDR_LEN, ((f1u_dl_pdu_bytes_per_slot - 1) % this->f1u_pdu_size.value()) + 1);
 
       // Forward DL buffer occupancy updates to all bearers in a Round-robin fashion.
       for (unsigned i = 0; i != nof_dl_pdus_per_slot; ++i) {
@@ -837,6 +884,7 @@ public:
           }
         }
         f1u_dl_total_bytes.fetch_add(pdcp_pdu.length(), std::memory_order_relaxed);
+        test_logger.debug("Pushing PDCP PDU of size={}", pdcp_pdu.length());
         du_notif->on_new_pdu(nru_dl_message{.t_pdu = std::move(pdcp_pdu)});
       }
     })) {
@@ -949,8 +997,8 @@ public:
         return;
       }
 
-      // Encode MAC SDU for LCID 4 only if UE Context Modification Response has arrived to CU and LCID 4 is configured.
-      if (sim_cu_cp.ue_created_flag_list[rnti_to_du_ue_index(pusch.pusch_cfg.rnti)]) {
+      // Encode MAC SDU for LCID 4 only if UE Configuration is completed and LCID 4 is configured.
+      if (ue_created_flag_list[rnti_to_du_ue_index(pusch.pusch_cfg.rnti)]) {
         // Prepare MAC SDU for LCID 4.
         static const lcid_t drb_lcid = uint_to_lcid(4);
         mac_rx_pdu          rx_pdu{pusch.pusch_cfg.rnti, 0, pusch.pusch_cfg.harq_id, {}};
@@ -1073,6 +1121,9 @@ public:
   phy_simulator                                         sim_phy;
   slot_point                                            next_sl_tx{0, 0};
 
+  /// Determines whether a UE setup has completed.
+  std::array<bool, MAX_NOF_DU_UES> ue_created_flag_list{false};
+
   /// Queue of MAC UCI indication message to be sent in their expected receive slot.
   std::deque<mac_uci_indication_message> pending_ucis;
   /// Queue of MAC Rx data indication message to be sent in their expected receive slot.
@@ -1148,21 +1199,22 @@ static cell_config_builder_params generate_custom_cell_config_builder_params(dup
 void benchmark_dl_ul_only_rlc_um(benchmarker&                          bm,
                                  unsigned                              nof_ues,
                                  duplex_mode                           dplx_mode,
-                                 unsigned                              dl_buffer_state_bytes,
+                                 unsigned                              dl_bytes_per_slot,
                                  unsigned                              ul_bsr_bytes,
                                  unsigned                              max_nof_rbs_per_dl_grant,
                                  units::bytes                          dl_pdu_size,
                                  span<unsigned>                        du_cell_cores,
                                  bool                                  sched_tracing_enabled,
-                                 const policy_scheduler_expert_config& strategy_cfg)
+                                 const policy_scheduler_expert_config& strategy_cfg,
+                                 unsigned                              nof_repetitions)
 {
   auto                benchname = fmt::format("{}{}{}, {} UEs, RLC UM",
-                               dl_buffer_state_bytes > 0 ? "DL" : "",
-                               std::min(dl_buffer_state_bytes, ul_bsr_bytes) > 0 ? "+" : "",
+                               dl_bytes_per_slot > 0 ? "DL" : "",
+                               std::min(dl_bytes_per_slot, ul_bsr_bytes) > 0 ? "+" : "",
                                ul_bsr_bytes > 0 ? "UL" : "",
                                nof_ues);
   test_delimit_logger test_delim(benchname.c_str());
-  du_high_bench       bench{dl_buffer_state_bytes,
+  du_high_bench       bench{dl_bytes_per_slot,
                       ul_bsr_bytes,
                       max_nof_rbs_per_dl_grant,
                       dl_pdu_size,
@@ -1211,15 +1263,28 @@ void benchmark_dl_ul_only_rlc_um(benchmarker&                          bm,
              bench.sim_phy.metrics.ul_mbps(scs));
 
   // Some sanity checks to avoid regressions.
-  if (dl_buffer_state_bytes > 0) {
-    report_fatal_error_if_not(pdschs_per_slot > 0.5, "The scheduler is not scheduling enough DL grants");
+  if (dl_bytes_per_slot > 0) {
+    if (nof_repetitions > 1000) {
+      // Only do these checks if a non-negligible number of slots was simulated.
+      const unsigned actual_dl_bytes_per_dl_slot =
+          bench.sim_phy.metrics.nof_dl_bytes / (double)bench.sim_phy.metrics.slot_dl_count;
+      if (actual_dl_bytes_per_dl_slot < dl_bytes_per_slot) {
+        // DL saturation scenario.
+        report_fatal_error_if_not(pdschs_per_slot > 0.99, "The scheduler is not scheduling enough DL grants");
+      } else {
+        report_fatal_error_if_not(pdschs_per_slot > 0.05, "The scheduler is not scheduling enough DL grants");
+      }
+    }
   } else {
-    report_fatal_error_if_not(pdschs_per_slot < 0.1, "The scheduler is not scheduling enough DL grants");
+    report_fatal_error_if_not(pdschs_per_slot < 0.01, "The scheduler is not scheduling enough DL grants");
   }
   if (ul_bsr_bytes > 0) {
-    report_fatal_error_if_not(puschs_per_slot > 0.1, "The scheduler is not scheduling enough UL grants");
+    if (nof_repetitions > 1000) {
+      // Only do these checks if a non-negligible number of slots was simulated.
+      report_fatal_error_if_not(puschs_per_slot > 0.05, "The scheduler is not scheduling enough UL grants");
+    }
   } else {
-    report_fatal_error_if_not(puschs_per_slot < 0.1, "The scheduler is scheduling too many UL grants");
+    report_fatal_error_if_not(puschs_per_slot < 0.01, "The scheduler is scheduling too many UL grants");
   }
 }
 
@@ -1312,7 +1377,8 @@ int main(int argc, char** argv)
                                 params.pdu_size,
                                 params.du_cell_cores,
                                 params.sched_trace_enabled,
-                                params.strategy_cfg);
+                                params.strategy_cfg,
+                                params.nof_repetitions);
   }
 
   if (not tracing_filename.empty()) {

@@ -30,7 +30,6 @@
 #include "srsran/ran/pdcch/pdcch_constants.h"
 #include "srsran/ran/physical_cell_group.h"
 #include "srsran/ran/pusch/tx_scheme_configuration.h"
-#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/units.h"
 #include <variant>
 

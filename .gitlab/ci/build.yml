@@ -69,15 +69,19 @@ variables:
       echo "MAKE_ARGS=${MAKE_ARGS}"
       echo "UHD_VERSION=${UHD_VERSION}"
       echo "DPDK_VERSION=${DPDK_VERSION}"
+      echo "SRS_TARGET=${SRS_TARGET}"
+      echo "PLUGIN_BRANCH=${PLUGIN_BRANCH}"
 
       build_srsgnb() {
+        target="$1"
+
         start_time=$(date +%s)
         if [ -e "/usr/local/bin/ram_reporter.py" ]; then
           /usr/local/builder_tools/bin/python3 /usr/local/bin/ram_reporter.py ${CI_PROJECT_DIR}/ram_usage.txt &
           ram_reporter_pid=$!
         fi
 
-        build_srsran "" ${CMAKE_FLAGS_CMD}
+        build_srsran "${target}" ${CMAKE_FLAGS_CMD}
         if [[ -n "$OUTPUT_FINGERPRINT" ]]; then
           echo "Storing fingerprints of all executables to $OUTPUT_FINGERPRINT"
           cd build
@@ -159,6 +163,8 @@ variables:
             --exclude=${CI_PROJECT_DIR}/lib/asn1/ngap/.* \
             --exclude=${CI_PROJECT_DIR}/lib/asn1/nrppa/.* \
             --exclude=${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.* \
+            --exclude=${CI_PROJECT_DIR}/plugins/.*/include/srsran/asn1/nrppa/.* \
+            --exclude=${CI_PROJECT_DIR}/plugins/.*/lib/asn1/nrppa/.* \
             --exclude-lines-by-pattern \".*srsran_assert.*|.*srsran_sanity_check.*\" \
             --root=${CI_PROJECT_DIR}"
 
@@ -185,7 +191,11 @@ variables:
 
         exit $ret
       }
-    - build_srsgnb
+      if [[ $CI_MERGE_REQUEST_LABELS != *"ci-no-plugin"* && -n $PLUGIN_BRANCH ]]; then
+        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH} >/dev/null 2>&1
+        git submodule set-branch --branch ${PLUGIN_BRANCH} ${PLUGIN_PATH} >/dev/null 2>&1
+      fi
+    - build_srsgnb "${SRS_TARGET}"
     - launch_tests
   timeout: 6h
 
@@ -193,9 +203,9 @@ variables:
   after_script: &build_after_script
     - mv ${CI_PROJECT_DIR}/build/coverage.xml      ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml            || true
     - |
-      mv ${CI_PROJECT_DIR}/build/apps/gnb/gnb /tmp/gnb
-      mv ${CI_PROJECT_DIR}/build/apps/cu/srscu /tmp/srscu
-      mv ${CI_PROJECT_DIR}/build/apps/du/srsdu /tmp/srsdu
+      find ${CI_PROJECT_DIR}/build -name "gnb" -type f -executable -exec mv {} /tmp/gnb \;
+      find ${CI_PROJECT_DIR}/build -name "srscu" -type f -executable -exec mv {} /tmp/srscu \;
+      find ${CI_PROJECT_DIR}/build -name "srsdu" -type f -executable -exec mv {} /tmp/srsdu \;
       cd build
       make clean
       mv /tmp/gnb ${CI_PROJECT_DIR}/build/apps/gnb/gnb
@@ -229,17 +239,17 @@ variables:
 
 .smoke relwithdeb:
   extends: .build_and_unit
-  script: &smoke_script
-    - |
-      if [[ $CI_MERGE_REQUEST_LABELS != *"ci-no-plugin"* ]]; then
-        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
-      fi
+  script:
     - *srs_functions
     - build_srsgnb
+    - |
+      rm ${CI_PROJECT_DIR}/build/apps/gnb_split_7_2/gnb
+      rm ${CI_PROJECT_DIR}/build/apps/gnb_split_8/gnb
     - launch_tests
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
-    COMPILER: gcc
+    COMPILER: clang
     CMAKE_BUILD_TYPE: RelWithDebInfo
     ASSERT_LEVEL: PARANOID
     TEST_MODE: default
@@ -248,10 +258,9 @@ variables:
 
 .smoke tsan:
   extends: .build_and_unit
-  script:
-    - *smoke_script
   variables:
-    OS: ubuntu-24.04
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
+    OS: ubuntu-24.10
     COMPILER: clang
     CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
@@ -274,6 +283,7 @@ variables:
 .smoke archlinux:
   extends: .build_and_unit
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: archlinux-latest
     ENABLE_WERROR: "False"
     COMPILER: gcc
@@ -285,11 +295,10 @@ variables:
 
 .smoke dpdk:
   extends: .build_and_unit
-  script:
-    - *smoke_script
   variables:
-    OS: ubuntu-24.04
-    COMPILER: clang
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
+    OS: ubuntu-22.04
+    COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
     ENABLE_UHD: "False"
     ENABLE_ZEROMQ: "False"
@@ -302,6 +311,7 @@ variables:
 .smoke valgrind:
   extends: .build_and_unit
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Debug
@@ -312,9 +322,8 @@ variables:
 
 .smoke avx512:
   extends: .build_and_unit
-  script:
-    - *smoke_script
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -325,9 +334,8 @@ variables:
 
 .smoke arm:
   extends: .build_and_unit
-  script:
-    - *smoke_script
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -338,9 +346,8 @@ variables:
 
 .smoke arm neon:
   extends: .build_and_unit
-  script:
-    - *smoke_script
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -626,7 +633,7 @@ check builders ubuntu versions:
   extends: .check image exists for all supported ubuntu versions
   stage: static
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 15 minutes
   variables:
@@ -639,7 +646,7 @@ check builders ubuntu versions:
 smoke release update cache:
   extends: .smoke release
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 45 minutes
   retry: 2
@@ -655,7 +662,7 @@ smoke release update cache:
 smoke relwithdeb update cache:
   extends: .smoke relwithdeb
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 45 minutes
   retry: 2
@@ -666,7 +673,7 @@ smoke relwithdeb update cache:
 smoke tsan update cache:
   extends: .smoke tsan
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 45 minutes
   interruptible: false
@@ -677,7 +684,7 @@ smoke tsan update cache:
 smoke rhel update cache:
   extends: .smoke rhel
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 45 minutes
   retry: 2
@@ -688,7 +695,7 @@ smoke rhel update cache:
 smoke archlinux update cache:
   extends: .smoke archlinux
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 45 minutes
   retry: 2
@@ -699,7 +706,7 @@ smoke archlinux update cache:
 smoke dpdk update cache:
   extends: .smoke dpdk
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 45 minutes
   retry: 2
@@ -710,7 +717,7 @@ smoke dpdk update cache:
 smoke valgrind update cache:
   extends: .smoke valgrind
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 45 minutes
   interruptible: false
@@ -726,7 +733,7 @@ smoke valgrind update cache:
 smoke avx512 update cache:
   extends: .smoke avx512
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 45 minutes
   interruptible: false
@@ -737,7 +744,7 @@ smoke avx512 update cache:
 smoke arm update cache:
   extends: .smoke arm
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 45 minutes
   retry: 2
@@ -748,7 +755,7 @@ smoke arm update cache:
 smoke arm neon update cache:
   extends: .smoke arm neon
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 45 minutes
   retry: 2
@@ -780,7 +787,7 @@ package:
   extends: .deb-package
   stage: build and unit tests
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests OpenSource/
       when: delayed
       start_in: 45 minutes
   variables: &package_variables
@@ -805,7 +812,7 @@ install-package:
   extends: .deb-install
   stage: build and unit tests
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests OpenSource/
   variables:
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
@@ -824,7 +831,7 @@ check package ubuntu versions:
   extends: .check packaging ubuntu images
   stage: static
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
       start_in: 15 minutes
 
@@ -888,13 +895,16 @@ ubuntu-24.04 amd64 avx2:
   parallel:
     matrix:
       - <<: *basic_combinations
+      - <<: *basic_combinations
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
 
 ubuntu-24.04 amd64 avx512:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 135 minutes
+      start_in: 165 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
@@ -903,13 +913,16 @@ ubuntu-24.04 amd64 avx512:
   parallel:
     matrix:
       - <<: *basic_combinations
+      - <<: *basic_combinations
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
 
 ubuntu-22.04 amd64 avx2:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 165 minutes
+      start_in: 195 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -924,7 +937,7 @@ rhel-8 amd64 avx2:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 195 minutes
+      start_in: 225 minutes
   interruptible: false
   variables:
     OS: rhel-8
@@ -950,6 +963,9 @@ ubuntu-24.04 arm neon:
   parallel:
     matrix:
       - <<: *basic_combinations
+      - <<: *basic_combinations
+        ENABLE_FFTW: "False"
+        ENABLE_ARMPL: "True"
 
 # Basic DPDK
 
@@ -958,7 +974,7 @@ ubuntu dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
-      start_in: 225 minutes
+      start_in: 260 minutes
   interruptible: false
   variables:
     ENABLE_UHD: "False"
@@ -1294,6 +1310,9 @@ ubuntu-24.04 amd64 native:
   parallel:
     matrix:
       - <<: *basic_combinations
+      - <<: *basic_combinations
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
 
 ubuntu-24.04 arm native:
   extends: .build_and_unit
@@ -1308,13 +1327,16 @@ ubuntu-24.04 arm native:
   parallel:
     matrix:
       - <<: *basic_combinations
+      - <<: *basic_combinations
+        ENABLE_FFTW: "False"
+        ENABLE_ARMPL: "True"
 
 ubuntu-22.04 amd64 native:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 90 minutes
+      start_in: 120 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -1328,7 +1350,7 @@ ubuntu-22.04 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 90 minutes
+      start_in: 120 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -1343,7 +1365,7 @@ ubuntu-22.04 arm native:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 90 minutes
+      start_in: 120 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -1357,7 +1379,7 @@ ubuntu-22.04 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 90 minutes
+      start_in: 120 minutes
   interruptible: false
   variables:
     OS: ubuntu-22.04
@@ -1372,7 +1394,7 @@ rhel-8 amd64 native:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 120 minutes
+      start_in: 150 minutes
   interruptible: false
   variables:
     OS: rhel-8
@@ -1386,7 +1408,7 @@ rhel-8 amd64 avx512:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 120 minutes
+      start_in: 150 minutes
   interruptible: false
   variables:
     OS: rhel-8
@@ -1401,7 +1423,7 @@ rhel-8 arm native:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 120 minutes
+      start_in: 150 minutes
   interruptible: false
   variables:
     OS: rhel-8
@@ -1415,7 +1437,7 @@ rhel-8 arm neon:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 120 minutes
+      start_in: 150 minutes
   interruptible: false
   variables:
     OS: rhel-8
@@ -1481,13 +1503,17 @@ ubuntu-24.04 amd64 avx2 dpdk:
     matrix:
       - <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11.1_avx2"
+      - <<: *basic_combinations
+        DPDK_VERSION: "23.11.1_avx2"
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
 
 ubuntu-24.04 amd64 avx512 dpdk:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 270 minutes
+      start_in: 320 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.04
@@ -1497,13 +1523,17 @@ ubuntu-24.04 amd64 avx512 dpdk:
     matrix:
       - <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11.1_avx512"
+      - <<: *basic_combinations
+        DPDK_VERSION: "23.11.1_avx512"
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
 
 ubuntu-24.10 amd64 avx2 dpdk:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 300 minutes
+      start_in: 360 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.10
@@ -1519,7 +1549,7 @@ ubuntu-24.10 amd64 avx512 dpdk:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
       when: delayed
-      start_in: 300 minutes
+      start_in: 360 minutes
   interruptible: false
   variables:
     OS: ubuntu-24.10
@@ -1530,69 +1560,14 @@ ubuntu-24.10 amd64 avx512 dpdk:
       - <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11.1_avx512"
 
-#############
-# Run check #
-#############
-
-check-affinity-manager-nocpu:
-  image: ${CR_REGISTRY_URI}/srsgnb/builder-ubuntu-24.04:${DOCKER_BUILDER_VERSION}
-  stage: build and unit tests
-  needs:
-    - job: "smoke release update cache"
-      artifacts: true
-    - job: builder version
-      optional: false
-      artifacts: true
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-  timeout: 15 minutes
-  tags: [amd64]
-  script:
-    - cd build/apps/gnb
-    - |
-      error_found=false
-      for (( i=3; i<=10; i++ ))
-      do
-          echo "Checking for number of CPU = $((i-2))"
-          output=$(taskset -c 2-$i bash -c "./gnb log --filename=stdout" 2>&1 || true)
-          echo "$output"
-
-          if [[ "$output" == *"nof_cores_for_non_prio_threads"* ]]; then
-              error_found=true
-              echo "**********************************************************************************"
-              echo $output
-              echo "**********************************************************************************"
-              echo "Error for number of CPU = $((i-2))"
-              echo -e "\n\n\n\n\n"
-          fi
-      done
-
-      if [ "$error_found" = true ]; then
-          exit 1
-      fi
-
 ###############
 # E2E Nightly #
 ###############
-basic relwithdeb:
-  extends: .smoke relwithdeb
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-  retry: 2
-  interruptible: false
-  variables:
-    TEST_MODE: none
-  after_script:
-    - *build_after_script
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 3 day
-
 basic package:
   extends: .deb-package
   stage: build and unit tests
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
   retry: 2
   interruptible: false
   variables:
@@ -1601,59 +1576,101 @@ basic package:
     INFRASTRUCTURE_TAG: amd64-avx2
   needs: []
 
-basic tsan:
-  extends: .smoke tsan
+basic relwithdeb:
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   retry: 2
   interruptible: false
   variables:
-    TEST_MODE: none
-  after_script:
-    - *build_after_script
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 3 day
-
-basic asan:
-  extends: smoke asan
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-  retry: 2
-  interruptible: false
-  variables:
+    SRS_TARGET: srscu srsdu gnb
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: RelWithDebInfo
+    ASSERT_LEVEL: PARANOID
     TEST_MODE: none
     MARCH: x86-64-v3
-    BUILD_ARGS: -DEXIT_TIMEOUT=60
     INFRASTRUCTURE_TAG: amd64-avx2
   after_script:
     - *build_after_script
   artifacts:
     <<: *build_artifacts
-    expire_in: 3 day
+    expire_in: 3 days
 
-basic memcheck:
-  extends: .smoke valgrind
+basic tsan:
+  extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   retry: 2
   interruptible: false
   variables:
+    SRS_TARGET: gnb
+    OS: ubuntu-24.04
+    COMPILER: clang
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_TSAN: "True"
     TEST_MODE: none
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
   after_script:
     - *build_after_script
   artifacts:
     <<: *build_artifacts
-    expire_in: 3 day
+    expire_in: 3 days
 
-basic avx512 dpdk:
+basic asan:
   extends: .build_and_unit
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
-    - if: $CI_DESCRIPTION =~ /Weekly/
   retry: 2
   interruptible: false
   variables:
+    SRS_TARGET: gnb
+    OS: ubuntu-24.04
+    COMPILER: clang
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_ASAN: "True"
+    TEST_MODE: none
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
+    BUILD_ARGS: -DEXIT_TIMEOUT=60
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 days
+
+basic memcheck:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    SRS_TARGET: gnb
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    TEST_MODE: none
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 days
+
+basic ru dummy:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    SRS_TARGET: gnb
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -1670,7 +1687,34 @@ basic avx512 dpdk:
     - *build_after_script
   artifacts:
     <<: *build_artifacts
-    expire_in: 3 day
+    expire_in: 3 days
+
+basic avx512 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  retry: 2
+  interruptible: false
+  variables:
+    SRS_TARGET: gnb_split_7_2
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: Release
+    TEST_MODE: none
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    DPDK_VERSION: "23.11.1_avx512"
+    MARCH: x86-64-v4
+    FORCE_DEBUG_INFO: "True"
+    ASSERT_LEVEL: AUTO
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 days
 
 basic avx512 dpdk withassert:
   extends: basic avx512 dpdk

@@ -30,6 +30,7 @@ namespace srsran {
 
 struct cell_resource_allocator;
 struct cell_slot_resource_allocator;
+struct srs_info;
 
 class srs_scheduler_impl : public srs_scheduler
 {
@@ -63,6 +64,8 @@ private:
   bool allocate_srs_opportunity(cell_slot_resource_allocator& slot_alloc, const periodic_srs_info& srs_opportunity);
   // Helper that fills the SRS PDU fields.
   void fill_srs_pdu(srs_info& pdu, const srs_config::srs_resource& srs_res_cfg, const ue_cell_configuration& ue_cfg);
+
+  void add_ue_to_grid(const ue_cell_configuration& ue_cfg, bool is_reconf);
 
   void add_resource(rnti_t crnti, srs_periodicity period, unsigned offset, srs_config::srs_res_id res_id);
   void rem_resource(rnti_t crnti, srs_periodicity period, unsigned offset, srs_config::srs_res_id res_id);

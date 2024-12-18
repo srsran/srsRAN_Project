@@ -191,3 +191,23 @@ TEST_F(ngap_test, when_retry_limit_reached_then_amf_not_connected)
   ASSERT_TRUE(t.ready());
   ASSERT_TRUE(std::holds_alternative<ngap_ng_setup_failure>(t.get()));
 }
+
+/// Test the ng setup procedure
+TEST_F(ngap_test, when_failure_is_misconfiguration_no_retries_are_done)
+{
+  // Action 1: Launch NG setup procedure
+  test_logger.info("Launch ng setup request procedure...");
+  unsigned                                 max_setup_retries = 10;
+  async_task<ngap_ng_setup_result>         t                 = ngap->handle_ng_setup_request(max_setup_retries);
+  lazy_task_launcher<ngap_ng_setup_result> t_launcher(t);
+
+  // Status: AMF received NG Setup Request.
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.type().value, asn1::ngap::ngap_pdu_c::types_opts::init_msg);
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.type().value,
+            asn1::ngap::ngap_elem_procs_o::init_msg_c::types_opts::ng_setup_request);
+
+  // Action 2: NG setup failure received.
+  ngap_message ng_setup_response_msg = generate_ng_setup_failure_with_bad_plmn(asn1::ngap::time_to_wait_opts::v10s);
+  ngap->handle_message(ng_setup_response_msg);
+  ASSERT_TRUE(t.ready());
+}

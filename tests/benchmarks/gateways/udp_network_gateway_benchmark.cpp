@@ -23,6 +23,7 @@
 #include "udp_network_gateway_benchmark_helpers.h"
 #include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <arpa/inet.h>
@@ -112,10 +113,11 @@ int main(int argc, char** argv)
   std::unique_ptr<udp_network_gateway>              gw1;
   std::unique_ptr<udp_network_gateway>              gw2;
 
-  manual_task_worker io_tx_executor{128};
+  inline_task_executor io_rx_executor;
+  manual_task_worker   io_tx_executor{128};
 
-  gw1 = create_udp_network_gateway({gw1_cfg, gw1_dn, io_tx_executor});
-  gw2 = create_udp_network_gateway({gw2_cfg, gw2_dn, io_tx_executor});
+  gw1 = create_udp_network_gateway({gw1_cfg, gw1_dn, io_tx_executor, io_rx_executor});
+  gw2 = create_udp_network_gateway({gw2_cfg, gw2_dn, io_tx_executor, io_rx_executor});
 
   gw1->create_and_bind();
   gw2->create_and_bind();

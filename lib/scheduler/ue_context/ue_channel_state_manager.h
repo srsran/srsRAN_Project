@@ -31,7 +31,7 @@
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/resource_grid_util.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/result/pdsch_info.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/math/accumulators.h"
 

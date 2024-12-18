@@ -35,6 +35,12 @@ using namespace asn1::f1ap;
 // Time waiting for RRC container delivery.
 constexpr std::chrono::milliseconds rrc_container_delivery_timeout{120};
 
+static bool requires_ue_ran_config_update(const ue_context_setup_request_s& msg)
+{
+  return msg->srbs_to_be_setup_list_present or msg->drbs_to_be_setup_list_present or
+         msg->scell_to_be_setup_list_present;
+}
+
 f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
     const asn1::f1ap::ue_context_setup_request_s& msg_,
     f1ap_du_ue_manager&                           ue_mng_,
@@ -67,6 +73,12 @@ void f1ap_du_ue_context_setup_procedure::operator()(coro_context<async_task<void
       send_ue_context_setup_failure();
       CORO_EARLY_RETURN();
     }
+
+    if (requires_ue_ran_config_update(msg)) {
+      // Set that the UE has a pending configuration.
+      ue->context.rrc_state = f1ap_ue_context::ue_rrc_state::config_pending;
+    }
+
   } else {
     // [TS38.473, 8.3.1.2] If no UE-associated logical F1-connection exists, the UE-associated logical F1-connection
     // shall be established as part of the procedure.

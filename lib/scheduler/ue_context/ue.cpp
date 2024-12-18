@@ -44,7 +44,7 @@ ue::ue(const ue_creation_command& cmd) :
       logger)
 {
   // Apply configuration.
-  handle_reconfiguration_request(ue_reconf_command{cmd.cfg});
+  set_config(cmd.cfg);
 
   for (auto& cell : ue_du_cells) {
     if (cell != nullptr) {
@@ -55,24 +55,7 @@ ue::ue(const ue_creation_command& cmd) :
 
 void ue::slot_indication(slot_point sl_tx)
 {
-  for (ue_cell* ue_cc : ue_cells) {
-    // [Implementation-defined]
-    // Clear last PxSCH allocated slot if gap to current \c sl_tx is too large. This is done in order to circumvent
-    // the ambiguity caused by the slot_point wrap around while scheduling next PxSCHs. e.g. last PxSCH allocated
-    // slot=289.0 and next PxSCH to be allocated slot=(289.0 - SCHEDULER_MAX_K0/SCHEDULER_MAX_K2) after wrap around.
-    if (ue_cc->last_pdsch_allocated_slot.valid()) {
-      srsran_sanity_check(sl_tx >= ue_cc->last_pdsch_allocated_slot, "Invalid last PDSCH alloc slot");
-      if (static_cast<unsigned>(sl_tx - ue_cc->last_pdsch_allocated_slot) > SCHEDULER_MAX_K0) {
-        ue_cc->last_pdsch_allocated_slot.clear();
-      }
-    }
-    if (ue_cc->last_pusch_allocated_slot.valid()) {
-      if (sl_tx - ue_cc->last_pusch_allocated_slot > static_cast<int>(SCHEDULER_MAX_K2)) {
-        ue_cc->last_pusch_allocated_slot.clear();
-      }
-    }
-  }
-
+  last_sl_tx = sl_tx;
   ta_mgr.slot_indication(sl_tx);
   drx.slot_indication(sl_tx);
 }
@@ -106,16 +89,32 @@ void ue::release_resources()
 
 void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
 {
-  srsran_assert(cmd.cfg.nof_cells() > 0, "Creation of a UE requires at least PCell configuration.");
-  ue_ded_cfg = &cmd.cfg;
+  // UE enters fallback mode when a Reconfiguration takes place.
+  reconf_ongoing = true;
+  get_pcell().set_fallback_state(true);
+
+  // Update UE config.
+  set_config(cmd.cfg);
+}
+
+void ue::handle_config_applied()
+{
+  get_pcell().set_fallback_state(false);
+  reconf_ongoing = false;
+}
+
+void ue::set_config(const ue_configuration& new_cfg)
+{
+  srsran_assert(new_cfg.nof_cells() > 0, "Creation of a UE requires at least PCell configuration.");
+  ue_ded_cfg = &new_cfg;
 
   // Configure Logical Channels.
   dl_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
   ul_lc_ch_mgr.configure(ue_ded_cfg->logical_channels());
 
   // DRX config.
-  if (cmd.cfg.drx_cfg().has_value()) {
-    drx.reconfigure(cmd.cfg.drx_cfg());
+  if (ue_ded_cfg->drx_cfg().has_value()) {
+    drx.reconfigure(ue_ded_cfg->drx_cfg());
   }
 
   // Cell configuration.
@@ -152,22 +151,53 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
   }
 }
 
+void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg)
+{
+  unsigned pending_bytes = msg.bs;
+
+  // Subtract bytes pending for this LCID in scheduled DL HARQ allocations (but not yet sent to the lower layers)
+  // before forwarding to DL logical channel manager.
+  // Note: The RLC buffer occupancy updates never account for bytes associated with future HARQ transmissions.
+  // Note: The TB in the HARQ should also include RLC header segmentation overhead which is not accounted yet in the
+  // reported RLC DL buffer occupancy report (reminder: we haven't built the RLC PDU yet!). If we account for this
+  // overhead in the computation of pending bytes, the final value will be too low, which will lead to one extra
+  // tiny grant. To avoid this, we make the pessimization that every HARQ contains one RLC header due to segmentation.
+  constexpr static unsigned RLC_AM_HEADER_SIZE_ESTIM = 4;
+  for (unsigned c = 0, ce = nof_cells(); c != ce; ++c) {
+    auto& ue_cc = *ue_cells[c];
+
+    if (last_sl_tx.valid() and ue_cc.harqs.last_pdsch_slot().valid() and ue_cc.harqs.last_pdsch_slot() > last_sl_tx) {
+      unsigned rem_harqs = ue_cc.harqs.nof_dl_harqs() - ue_cc.harqs.nof_empty_dl_harqs();
+      for (unsigned i = 0, e = ue_cc.harqs.nof_dl_harqs(); i != e and rem_harqs > 0; ++i) {
+        auto h_dl = ue_cc.harqs.dl_harq(to_harq_id(i));
+        if (h_dl.has_value()) {
+          rem_harqs--;
+          if (h_dl->pdsch_slot() > last_sl_tx and h_dl->nof_retxs() == 0 and h_dl->is_waiting_ack()) {
+            for (const auto& lc : h_dl->get_grant_params().lc_sched_info) {
+              if (lc.lcid.is_sdu() and lc.lcid.to_lcid() == msg.lcid) {
+                unsigned bytes_sched =
+                    lc.sched_bytes.value() - std::min(lc.sched_bytes.value(), RLC_AM_HEADER_SIZE_ESTIM);
+                pending_bytes -= std::min(pending_bytes, bytes_sched);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, pending_bytes);
+}
+
+bool ue::has_pending_dl_newtx_bytes() const
+{
+  return dl_lc_ch_mgr.has_pending_bytes(get_pcell().is_in_fallback_mode());
+}
+
 unsigned ue::pending_dl_newtx_bytes(lcid_t lcid) const
 {
-  return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid) : dl_lc_ch_mgr.pending_bytes();
-}
-
-unsigned ue::pending_dl_srb_newtx_bytes() const
-{
-  return dl_lc_ch_mgr.pending_bytes(LCID_SRB1) + dl_lc_ch_mgr.pending_bytes(LCID_SRB2);
-}
-
-unsigned ue::pending_ul_srb_newtx_bytes() const
-{
-  // LCG ID 0 is used by default for SRBs as per TS 38.331, clause 9.2.1.
-  // NOTE: Ensure SRB LCG ID matches the one sent to UE.
-  const lcg_id_t srb_lcg_id = uint_to_lcg_id(0);
-  return ul_lc_ch_mgr.pending_bytes(srb_lcg_id);
+  return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid)
+                              : dl_lc_ch_mgr.pending_bytes(get_pcell().is_in_fallback_mode());
 }
 
 unsigned ue::pending_ul_newtx_bytes() const
@@ -206,8 +236,8 @@ unsigned ue::build_dl_transport_block_info(dl_msg_tb_info&                      
 {
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_mac_ces(tb_info, dl_lc_ch_mgr, tb_size_bytes);
-  for (unsigned lcid = 0, e = lcids.size(); lcid != e; ++lcid) {
-    if (lcids.test(lcid)) {
+  for (const auto lcid : dl_lc_ch_mgr.get_prioritized_logical_channels()) {
+    if (lcid < lcids.size() and lcids.test(lcid)) {
       total_subpdu_bytes +=
           allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, uint_to_lcid(lcid));
     }

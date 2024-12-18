@@ -29,12 +29,15 @@ namespace srsran {
 
 class dlt_pcap;
 class io_broker;
+class task_executor;
 
 struct e2_sctp_gateway_config {
   /// SCTP configuration.
   sctp_network_connector_config sctp;
   /// IO broker responsible for handling SCTP Rx data and notifications.
   io_broker& broker;
+  /// Execution context used to process received SCTP packets.
+  task_executor& io_rx_executor;
   /// PCAP writer for the E2AP messages.
   dlt_pcap& pcap;
 };

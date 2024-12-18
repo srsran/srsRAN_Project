@@ -230,13 +230,13 @@ std::optional<std::string> srsran::check_cgroups()
   fmt::memory_buffer buffer;
   struct ::stat      info;
   if (::stat(housekeeping_cgroup_path, &info) == 0) {
-    fmt::format_to(buffer, "{}", housekeeping_cgroup_path);
+    fmt::format_to(std::back_inserter(buffer), "{}", housekeeping_cgroup_path);
   }
   if (::stat(isolated_cgroup_path, &info) == 0) {
     if (buffer.size() != 0) {
-      fmt::format_to(buffer, ", ");
+      fmt::format_to(std::back_inserter(buffer), ", ");
     }
-    fmt::format_to(buffer, "{}", isolated_cgroup_path);
+    fmt::format_to(std::back_inserter(buffer), "{}", isolated_cgroup_path);
   }
 
   return (buffer.size() != 0) ? to_string(buffer) : std::optional<std::string>{};

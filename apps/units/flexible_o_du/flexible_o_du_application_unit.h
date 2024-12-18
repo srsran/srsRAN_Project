@@ -37,8 +37,7 @@ public:
   virtual ~flexible_o_du_application_unit() = default;
 
   /// Creates a flexible O-RAN DU using the given dependencies.
-  virtual o_du_unit create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies,
-                                              bool                          use_multicell = false) = 0;
+  virtual o_du_unit create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies) = 0;
 
   /// Returns the O-RAN DU high unit configuration of this flexible DU.
   virtual o_du_high_unit_config&       get_o_du_high_unit_config()       = 0;

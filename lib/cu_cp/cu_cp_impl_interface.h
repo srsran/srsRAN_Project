@@ -27,6 +27,7 @@
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/ngap/ngap.h"
+#include "srsran/nrppa/nrppa.h"
 #include "srsran/rrc/rrc_du.h"
 #include "srsran/rrc/rrc_ue.h"
 #include <string>
@@ -70,7 +71,7 @@ public:
   /// \returns Pointer to the NGAP UE notifier.
   virtual ngap_cu_cp_ue_notifier* handle_new_ngap_ue(ue_index_t ue_index) = 0;
 
-  /// \brief Initialize security context by selecting security algorithms and generating K_rrc_enc and K_rrc_int
+  /// \brief Initialize security context by selecting security algorithms and generating K_rrc_enc and K_rrc_int.
   /// \param[in] ue_index Index of the UE.
   /// \param[in] sec_ctxt The received security context.
   /// \return True if the security context was successfully initialized, false otherwise.
@@ -111,14 +112,34 @@ public:
   /// \returns True if the Handover Command was successfully handled, false otherwise.
   virtual async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 
-  /// \brief Handles UE index allocation request for N2 handover at target gNB
+  /// \brief Handles UE index allocation request for N2 handover at target gNB.
   virtual ue_index_t handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) = 0;
 
+  /// \brief Handles a DL UE associated NRPPa transport.
+  virtual void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) = 0;
+
   /// \brief Handles a DL non UE associated NRPPa transport.
-  virtual void handle_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg) = 0;
+  virtual void handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) = 0;
 
   /// \brief Handle N2 AMF connection drop.
   virtual void handle_n2_disconnection() = 0;
+};
+
+/// Interface for the NRPPa notifier to communicate with the CU-CP.
+class cu_cp_nrppa_handler
+{
+public:
+  virtual ~cu_cp_nrppa_handler() = default;
+
+  /// \brief Handle the creation of a new NRPPA UE. This will add the NRPPA adapters to the UE manager.
+  /// \param[in] ue_index The index of the new NRPPA UE.
+  /// \returns Pointer to the NRPPA UE notifier.
+  virtual nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(ue_index_t ue_index) = 0;
+
+  /// \brief Handle a UL NRPPa PDU.
+  /// \param[in] msg The NRPPa PDU.
+  /// \param[in] ue_index For UE associated messages the index of the UE.
+  virtual void handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) = 0;
 };
 
 /// Handler of E1AP-CU-CP events.
@@ -132,7 +153,7 @@ public:
   virtual void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) = 0;
 };
 
-/// Interface used to handle DU specific procedures
+/// Interface used to handle DU specific procedures.
 class cu_cp_du_event_handler
 {
 public:
@@ -216,7 +237,7 @@ public:
   virtual void handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) = 0;
 };
 
-/// Methods used by CU-CP to transfer the RRC UE context e.g. for RRC Reestablishments
+/// Methods used by CU-CP to transfer the RRC UE context e.g. for RRC Reestablishments.
 class cu_cp_rrc_ue_context_transfer_notifier
 {
 public:
@@ -226,7 +247,7 @@ public:
   virtual rrc_ue_reestablishment_context_response on_rrc_ue_context_transfer() = 0;
 };
 
-/// Interface to handle measurement requests
+/// Interface to handle measurement requests.
 class cu_cp_measurement_handler
 {
 public:
@@ -239,13 +260,13 @@ public:
   virtual std::optional<rrc_meas_cfg>
   handle_measurement_config_request(ue_index_t                  ue_index,
                                     nr_cell_identity            nci,
-                                    std::optional<rrc_meas_cfg> current_meas_config = {}) = 0;
+                                    std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) = 0;
 
   /// \brief Handle a measurement report for given UE.
   virtual void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) = 0;
 };
 
-/// Interface to handle measurement config update requests
+/// Interface to handle measurement config update requests.
 class cu_cp_measurement_config_handler
 {
 public:
@@ -271,7 +292,7 @@ public:
                                    du_index_t&                            target_du_index) = 0;
 };
 
-/// Interface to handle ue removals
+/// Interface to handle ue removals.
 class cu_cp_ue_removal_handler
 {
 public:
@@ -291,6 +312,7 @@ class cu_cp_impl_interface : public cu_cp_e1ap_event_handler,
                              public cu_cp_measurement_handler,
                              public cu_cp_measurement_config_handler,
                              public cu_cp_ngap_handler,
+                             public cu_cp_nrppa_handler,
                              public cu_cp_ue_context_manipulation_handler,
                              public cu_cp_mobility_manager_handler,
                              public cu_cp_ue_removal_handler
@@ -300,6 +322,7 @@ public:
 
   virtual cu_cp_e1ap_event_handler&              get_cu_cp_e1ap_handler()               = 0;
   virtual cu_cp_ngap_handler&                    get_cu_cp_ngap_handler()               = 0;
+  virtual cu_cp_nrppa_handler&                   get_cu_cp_nrppa_handler()              = 0;
   virtual cu_cp_rrc_ue_interface&                get_cu_cp_rrc_ue_interface()           = 0;
   virtual cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler()         = 0;
   virtual cu_cp_measurement_handler&             get_cu_cp_measurement_handler()        = 0;

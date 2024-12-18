@@ -92,7 +92,8 @@ void e1ap_cu_up_impl::handle_bearer_context_inactivity_notification(
     const e1ap_bearer_context_inactivity_notification& msg)
 {
   if (!ue_ctxt_list.contains(msg.ue_index)) {
-    logger.error("ue={}: Dropping BearerContextInactivityNotification. UE does not exist", msg.ue_index);
+    logger.error("ue={}: Dropping BearerContextInactivityNotification. UE does not exist",
+                 fmt::underlying(msg.ue_index));
     return;
   }
 

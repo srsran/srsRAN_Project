@@ -111,7 +111,7 @@ protected:
 
     for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
       fmt::memory_buffer buffer;
-      fmt::format_to(buffer, "inproc://{}#{}", getpid(), i_port);
+      fmt::format_to(std::back_inserter(buffer), "inproc://{}#{}", getpid(), i_port);
       result.emplace_back(to_string(buffer));
     }
 

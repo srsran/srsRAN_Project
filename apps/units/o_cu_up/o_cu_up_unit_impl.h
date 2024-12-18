@@ -26,7 +26,7 @@
 #include "srsran/cu_up/cu_up_power_controller.h"
 #include "srsran/cu_up/o_cu_up.h"
 #include "srsran/e2/e2_cu_metrics_connector.h"
-#include "srsran/gtpu/ngu_gateway.h"
+#include "srsran/gtpu/gtpu_gateway.h"
 
 namespace srsran {
 
@@ -39,7 +39,7 @@ using e2_cu_metrics_connector_manager =
 class o_cu_up_unit_impl : public srs_cu_up::o_cu_up
 {
 public:
-  o_cu_up_unit_impl(std::unique_ptr<srs_cu_up::ngu_gateway>          gateway_,
+  o_cu_up_unit_impl(std::vector<std::unique_ptr<gtpu_gateway>>       gateways_,
                     std::unique_ptr<e2_cu_metrics_connector_manager> e2_metric_connector_,
                     std::unique_ptr<srs_cu_up::o_cu_up>              cu_up_);
 
@@ -50,7 +50,7 @@ public:
   srs_cu_up::cu_up_power_controller& get_power_controller() override;
 
 private:
-  std::unique_ptr<srs_cu_up::ngu_gateway>          gateway;
+  std::vector<std::unique_ptr<gtpu_gateway>>       gateways;
   std::unique_ptr<e2_cu_metrics_connector_manager> e2_metric_connector;
   std::unique_ptr<srs_cu_up::o_cu_up>              cu_up;
 };

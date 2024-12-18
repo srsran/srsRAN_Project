@@ -27,6 +27,7 @@
 #include "srsran/e1ap/common/e1ap_message.h"
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/pcap/dlt_pcap.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <future>
 #include <gtest/gtest.h>
@@ -78,7 +79,7 @@ public:
 
     if (use_sctp) {
       broker    = create_io_broker(io_broker_type::epoll);
-      connector = create_e1_local_connector(e1_local_sctp_connector_config{pcap, *broker});
+      connector = create_e1_local_connector(e1_local_sctp_connector_config{pcap, *broker, rx_executor});
     } else {
       connector = create_e1_local_connector(e1_local_connector_config{pcap});
     }
@@ -103,6 +104,7 @@ public:
     return std::make_unique<rx_pdu_notifier>("CU-CP", cu_rx_pdus, std::move(eof_signal));
   }
 
+  inline_task_executor                rx_executor;
   std::unique_ptr<io_broker>          broker;
   dummy_dlt_pcap                      pcap;
   std::unique_ptr<e1_local_connector> connector;

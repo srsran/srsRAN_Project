@@ -420,7 +420,7 @@ public:
 
   void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
                                              const nr_cell_global_id_t& cgi,
-                                             const unsigned             tac) override
+                                             const tac_t                tac) override
   {
     logger.info("Received a RRC Reconfiguration Complete for Inter-CU Handover");
   }

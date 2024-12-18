@@ -67,7 +67,7 @@ struct formatter<srsran::srs_cu_cp::f1ap_ue_log_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_cp::f1ap_ue_log_prefix& prefix, FormatContext& ctx)
+  auto format(const srsran::srs_cu_cp::f1ap_ue_log_prefix& prefix, FormatContext& ctx) const
   {
     bool needs_sep = prefix.ue_index != srsran::srs_cu_cp::ue_index_t::invalid;
     if (prefix.ue_index != srsran::srs_cu_cp::ue_index_t::invalid) {

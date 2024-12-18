@@ -21,7 +21,7 @@
  */
 
 #include "scheduler_prb.h"
-#include "srsran/scheduler/resource_block_group.h"
+#include "srsran/scheduler/result/resource_block_group.h"
 
 using namespace srsran;
 

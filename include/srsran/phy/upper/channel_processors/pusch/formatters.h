@@ -28,7 +28,6 @@
 #include "srsran/phy/upper/channel_state_information_formatters.h"
 #include "srsran/ran/pusch/pusch_context_formatter.h"
 #include "srsran/ran/uci/uci_formatters.h"
-#include "srsran/support/format/fmt_optional.h"
 
 namespace srsran {
 namespace detail {
@@ -65,11 +64,10 @@ struct formatter<srsran::pusch_processor::codeword_description> {
   }
 
   template <typename FormatContext>
-  auto format(const std::optional<srsran::pusch_processor::codeword_description>& codeword, FormatContext& ctx)
-
+  auto format(const std::optional<srsran::pusch_processor::codeword_description>& codeword, FormatContext& ctx) const
   {
     helper.format_always(ctx, "rv={}", codeword.value().rv);
-    helper.format_if_verbose(ctx, "bg={}", codeword.value().ldpc_base_graph);
+    helper.format_if_verbose(ctx, "bg={}", fmt::underlying(codeword.value().ldpc_base_graph));
     helper.format_if_verbose(ctx, "new_data={}", codeword.value().new_data);
 
     return ctx.out();
@@ -92,8 +90,7 @@ struct formatter<srsran::pusch_processor::uci_description> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pusch_processor::uci_description& uci_desc, FormatContext& ctx)
-
+  auto format(const srsran::pusch_processor::uci_description& uci_desc, FormatContext& ctx) const
   {
     // Number of ACK, CSI Part 1 and CSI Part 2 bits.
     helper.format_if_verbose(ctx, "oack={}", uci_desc.nof_harq_ack);
@@ -129,8 +126,7 @@ struct formatter<srsran::pusch_processor::pdu_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pusch_processor::pdu_t& pdu, FormatContext& ctx)
-
+  auto format(const srsran::pusch_processor::pdu_t& pdu, FormatContext& ctx) const
   {
     if (pdu.context.has_value()) {
       helper.format_always(ctx, pdu.context.value());
@@ -193,8 +189,7 @@ struct formatter<srsran::pusch_decoder_result> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pusch_decoder_result& result, FormatContext& ctx)
-
+  auto format(const srsran::pusch_decoder_result& result, FormatContext& ctx) const
   {
     helper.format_always(ctx, "crc={}", result.tb_crc_ok ? "OK" : "KO");
     helper.format_always(ctx, "iter={:.1f}", result.ldpc_decoder_stats.get_mean());
@@ -223,8 +218,7 @@ struct formatter<srsran::pusch_processor_result_data> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pusch_processor_result_data& result, FormatContext& ctx)
-
+  auto format(const srsran::pusch_processor_result_data& result, FormatContext& ctx) const
   {
     helper.format_always(ctx, result.data);
     return ctx.out();
@@ -247,8 +241,7 @@ struct formatter<srsran::pusch_processor_result_control> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pusch_processor_result_control& result, FormatContext& ctx)
-
+  auto format(const srsran::pusch_processor_result_control& result, FormatContext& ctx) const
   {
     if ((!result.harq_ack.payload.empty())) {
       if (result.harq_ack.status == srsran::uci_status::valid) {

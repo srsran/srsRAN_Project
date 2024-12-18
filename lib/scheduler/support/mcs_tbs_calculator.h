@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/ran/sch/sch_mcs.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include <optional>
 
 namespace srsran {
 

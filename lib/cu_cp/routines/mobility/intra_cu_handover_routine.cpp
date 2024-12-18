@@ -113,6 +113,7 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
       logger.warning("ue={}: \"{}\" failed to generate UeContextSetupRequest", request.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
+    target_ue_context_setup_request.cu_to_du_rrc_info.meas_cfg = source_ue->get_rrc_ue()->get_packed_meas_config();
 
     CORO_AWAIT_VALUE(target_ue_context_setup_response,
                      target_du_f1ap_ue_ctxt_mng.handle_ue_context_setup_request(target_ue_context_setup_request,

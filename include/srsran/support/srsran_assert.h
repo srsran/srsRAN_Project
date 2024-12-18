@@ -24,47 +24,44 @@
 
 #include "srsran/support/compiler.h"
 #include "srsran/support/error_handling.h"
-#include "fmt/format.h"
 
 namespace srsran {
 namespace detail {
 
-/// \brief Helper function to format and print assertion messages.
+/// \brief Helper function to format and print assertion messages, first stage.
 ///
 /// \param filename file name where assertion failed.
 /// \param line line in which assertion was placed.
 /// \param funcname function name where assertion failed.
 /// \param condstr assertion condition that failed.
-/// \param msg additional assertion message.
-[[gnu::noinline, noreturn]] inline void print_and_abort(const char*             filename,
-                                                        int                     line,
-                                                        const char*             funcname,
-                                                        const char*             condstr = nullptr,
-                                                        const std::string_view& msg     = "") noexcept
+[[gnu::noinline]] inline void
+print_and_abort_1(const char* filename, int line, const char* funcname, const char* condstr) noexcept
 {
-  fmt::memory_buffer fmtbuf;
-
-  fmt::format_to(fmtbuf, "{}:{}: {}: \n", filename, line, funcname);
-  if (condstr == nullptr) {
-    fmt::format_to(fmtbuf, "Assertion failed");
-  } else {
-    fmt::format_to(fmtbuf, "Assertion `{}' failed", condstr);
-  }
-  if (!msg.empty()) {
-    fmt::format_to(fmtbuf, " - {}", msg);
-  }
-  if (msg.back() != '.') {
-    fmt::format_to(fmtbuf, ".");
-  }
-  fmt::format_to(fmtbuf, "\n");
-  // Make it a C-string.
-  fmtbuf.push_back('\0');
-
   if (auto handler = error_report_handler.exchange(nullptr)) {
     handler();
   }
 
-  fmt::print(stderr, "{}", fmtbuf.data());
+  ::fflush(stdout);
+  fmt::print(stderr, "{}:{}: {}: \n", filename, line, funcname);
+  if (condstr == nullptr) {
+    fmt::print(stderr, "Assertion failed");
+  } else {
+    fmt::print(stderr, "Assertion `{}' failed", condstr);
+  }
+}
+
+/// \brief Helper function to format and print assertion messages, second stage.
+///
+/// \param msg additional assertion message.
+template <typename... Args>
+[[gnu::noinline, noreturn]] inline void print_and_abort_2(fmt::string_view fmt, Args&&... args) noexcept
+{
+  if (fmt.size()) {
+    fmt::print(stderr, " - ");
+    fmt::print(stderr, fmt, std::forward<Args>(args)...);
+  }
+  fmt::print(stderr, "\n");
+
   std::abort();
 }
 
@@ -75,8 +72,8 @@ namespace detail {
 
 /// Helper macro to log assertion message and terminate program.
 #define SRSRAN_ASSERT_FAILURE__(condmessage, fmtstr, ...)                                                              \
-  srsran::detail::print_and_abort(                                                                                     \
-      __FILE__, __LINE__, __PRETTY_FUNCTION__, condmessage, fmt::format(FMT_STRING(fmtstr), ##__VA_ARGS__))
+  (srsran::detail::print_and_abort_1(__FILE__, __LINE__, __PRETTY_FUNCTION__, condmessage),                            \
+   srsran::detail::print_and_abort_2(fmtstr, ##__VA_ARGS__))
 
 /// \brief Helper macro that asserts condition is true. If false, it logs the remaining macro args, flushes the log,
 /// prints the backtrace (if it was activated) and closes the application.

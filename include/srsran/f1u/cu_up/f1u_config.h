@@ -47,7 +47,7 @@ struct formatter<srsran::srs_cu_up::f1u_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_up::f1u_config cfg, FormatContext& ctx)
+  auto format(srsran::srs_cu_up::f1u_config cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "warn_on_drop={}", cfg.warn_on_drop);
   }

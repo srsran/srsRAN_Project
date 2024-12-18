@@ -49,7 +49,7 @@ struct formatter<srsran::pdcch_processor::coreset_description> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdcch_processor::coreset_description& coreset, FormatContext& ctx)
+  auto format(const srsran::pdcch_processor::coreset_description& coreset, FormatContext& ctx) const
   {
     helper.format_always(ctx, "bwp=[{}, {})", coreset.bwp_start_rb, coreset.bwp_start_rb + coreset.bwp_size_rb);
     helper.format_always(
@@ -92,7 +92,7 @@ struct formatter<srsran::pdcch_processor::pdu_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pdcch_processor::pdu_t& pdu, FormatContext& ctx)
+  auto format(const srsran::pdcch_processor::pdu_t& pdu, FormatContext& ctx) const
   {
     helper.format_always(ctx, "rnti=0x{:04x}", pdu.dci.rnti);
     if (pdu.context.has_value()) {
@@ -130,7 +130,7 @@ struct formatter<srsran::prach_detector::configuration> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::prach_detector::configuration& config, FormatContext& ctx)
+  auto format(const srsran::prach_detector::configuration& config, FormatContext& ctx) const
   {
     helper.format_always(ctx, "rsi={}", config.root_sequence_index);
     helper.format_if_verbose(ctx,
@@ -157,7 +157,7 @@ struct formatter<srsran::prach_detection_result::preamble_indication> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::prach_detection_result::preamble_indication& preamble, FormatContext& ctx)
+  auto format(const srsran::prach_detection_result::preamble_indication& preamble, FormatContext& ctx) const
   {
     format_to(ctx.out(),
               "{{idx={} ta={:.2f}us detection_metric={:.1f}}}",
@@ -184,7 +184,7 @@ struct formatter<srsran::prach_detection_result> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::prach_detection_result& result, FormatContext& ctx)
+  auto format(const srsran::prach_detection_result& result, FormatContext& ctx) const
   {
     helper.format_always(ctx, "rssi={:+.1f}dB", result.rssi_dB);
     helper.format_if_verbose(ctx, "res={:.1f}us", result.time_resolution.to_seconds() * 1e6);
@@ -213,7 +213,7 @@ struct formatter<srsran::ssb_processor::pdu_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::ssb_processor::pdu_t& pdu, FormatContext& ctx)
+  auto format(const srsran::ssb_processor::pdu_t& pdu, FormatContext& ctx) const
   {
     helper.format_always(ctx, "pci={}", pdu.phys_cell_id);
     helper.format_always(ctx, "ssb_idx={}", pdu.ssb_idx);

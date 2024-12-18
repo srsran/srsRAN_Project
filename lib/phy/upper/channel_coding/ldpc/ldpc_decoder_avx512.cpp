@@ -265,34 +265,3 @@ void ldpc_decoder_avx512::compute_soft_bits(span<log_likelihood_ratio>       thi
     this_soft_bits_avx512.set_at(i_block, soft_epi8);
   }
 };
-
-bool ldpc_decoder_avx512::get_hard_bits(bit_buffer& out)
-{
-  // Buffer to hold the soft bits.
-  std::array<log_likelihood_ratio, MAX_LIFTING_SIZE * MAX_BG_K> temp_llr;
-  span<log_likelihood_ratio>                                    llr_write_buffer(temp_llr);
-
-  unsigned                 max_node_lifted = bg_K * node_size_avx512;
-  mm512::avx512_const_span soft_bits_avx512(soft_bits, max_node_lifted);
-
-  // Copy the LLRs from the soft_bits AVX array into temp_llr without any padding. Recall that temp_llr is aligned to
-  // the size of the AVX registers. This makes it possible to call the hard decision function only once, improving
-  // efficiency.
-  for (unsigned i_node_lifted = 0; i_node_lifted != max_node_lifted; i_node_lifted += node_size_avx512) {
-    // View over the LLR.
-    span<const log_likelihood_ratio> current_soft(
-        reinterpret_cast<const log_likelihood_ratio*>(soft_bits_avx512.data_at(i_node_lifted, 0)), lifting_size);
-
-    // Append LLRs to the buffer.
-    srsvec::copy(llr_write_buffer.first(lifting_size), current_soft);
-
-    // Advance buffer.
-    llr_write_buffer = llr_write_buffer.last(llr_write_buffer.size() - lifting_size);
-  }
-
-  // View over the appended LLR.
-  span<const log_likelihood_ratio> llr_read_buffer(temp_llr.begin(), llr_write_buffer.begin());
-
-  // Convert to hard bits.
-  return hard_decision(out, llr_read_buffer);
-}

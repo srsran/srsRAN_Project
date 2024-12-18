@@ -223,7 +223,8 @@ struct search_space_configuration {
         return n;
       }
     }
-    srsran_assertion_failure("Monitoring symbols within slot for SS id {} doesn't have any symbols set to 1", id);
+    srsran_assertion_failure("Monitoring symbols within slot for SS id {} doesn't have any symbols set to 1",
+                             fmt::underlying(id));
     return symbols_within_slot.size();
   }
 

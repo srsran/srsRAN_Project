@@ -24,6 +24,7 @@
 
 #include "../support/rb_helper.h"
 #include "srsran/adt/expected.h"
+#include "srsran/adt/slotted_array.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 

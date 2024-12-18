@@ -25,6 +25,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/pusch/pusch_constants.h"
 #include "srsran/ran/slot_point.h"
+#include <vector>
 
 namespace srsran {
 

@@ -141,11 +141,12 @@ sctp_network_server_impl::sctp_associaton_context::sctp_associaton_context(int a
 
 sctp_network_server_impl::sctp_network_server_impl(const srsran::sctp_network_gateway_config& sctp_cfg_,
                                                    io_broker&                                 broker_,
+                                                   task_executor&                             io_rx_executor_,
                                                    sctp_network_association_factory&          assoc_factory_) :
   sctp_network_gateway_common_impl(sctp_cfg_),
   broker(broker_),
-  assoc_factory(assoc_factory_),
-  temp_recv_buffer(network_gateway_sctp_max_len)
+  io_rx_executor(io_rx_executor_),
+  assoc_factory(assoc_factory_)
 {
 }
 
@@ -165,8 +166,10 @@ bool sctp_network_server_impl::create_and_bind()
 
 void sctp_network_server_impl::receive()
 {
-  struct sctp_sndrcvinfo sri       = {};
-  int                    msg_flags = 0;
+  struct sctp_sndrcvinfo                            sri       = {};
+  int                                               msg_flags = 0;
+  std::array<uint8_t, network_gateway_sctp_max_len> temp_recv_buffer;
+
   // fromlen is an in/out variable in sctp_recvmsg.
   sockaddr_storage msg_src_addr;
   socklen_t        msg_src_addrlen = sizeof(msg_src_addr);
@@ -317,11 +320,11 @@ void sctp_network_server_impl::handle_association_shutdown(int assoc_id, const c
     return;
   }
 
-  // The client wishes to close the association.
-  // Signal that the upper layer sender should stop sending new SCTP data (including the EOF, which would fail anyway).
+  // The business domain or the peer side wishes to close the association.
+  // Signal that the business domain should stop sending new SCTP data (including the EOF, which would fail anyway).
   bool prev = assoc_it->second.association_shutdown_received->exchange(true);
   if (not prev and cause != nullptr) {
-    // The association sender didn't yet close the connection and the association was closed by the client
+    // The association sender didn't yet close the connection and the association was closed by the peer side.
     logger.info("{} assoc={}: SCTP association was shut down (client_addr={}). Cause: {}",
                 node_cfg.if_name,
                 assoc_it->first,
@@ -371,8 +374,10 @@ std::optional<uint16_t> sctp_network_server_impl::get_listen_port()
 
 bool sctp_network_server_impl::subscribe_to_broker()
 {
+  socket.release();
   io_sub = broker.register_fd(
-      socket.fd().value(),
+      unique_fd(socket.fd().value()),
+      io_rx_executor,
       [this]() { receive(); },
       [this](io_broker::error_code code) {
         logger.info("Connection loss due to IO error code={}.", (int)code);
@@ -383,7 +388,8 @@ bool sctp_network_server_impl::subscribe_to_broker()
 
 std::unique_ptr<sctp_network_server> sctp_network_server_impl::create(const sctp_network_gateway_config& sctp_cfg,
                                                                       io_broker&                         broker_,
-                                                                      sctp_network_association_factory&  assoc_factory_)
+                                                                      task_executor&                    io_rx_executor_,
+                                                                      sctp_network_association_factory& assoc_factory_)
 {
   // Validate arguments
   if (sctp_cfg.if_name.empty()) {
@@ -396,7 +402,8 @@ std::unique_ptr<sctp_network_server> sctp_network_server_impl::create(const sctp
   }
 
   // Create a SCTP server instance.
-  std::unique_ptr<sctp_network_server_impl> server{new sctp_network_server_impl(sctp_cfg, broker_, assoc_factory_)};
+  std::unique_ptr<sctp_network_server_impl> server{
+      new sctp_network_server_impl(sctp_cfg, broker_, io_rx_executor_, assoc_factory_)};
 
   // Create a socket and bind it to the provided address.
   if (not server->create_and_bind()) {

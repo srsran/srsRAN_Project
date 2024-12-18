@@ -180,7 +180,7 @@ struct formatter<srsran::rlc_rx_um_sdu_info> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_um_sdu_info& info, FormatContext& ctx)
+  auto format(const srsran::rlc_rx_um_sdu_info& info, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "has_gap={} fully_received={} nof_segments={}",
@@ -199,7 +199,7 @@ struct formatter<srsran::rlc_rx_um_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_rx_um_state& st, FormatContext& ctx)
+  auto format(const srsran::rlc_rx_um_state& st, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "rx_next_reassembly={} rx_timer_trigger={} rx_next_highest={}",

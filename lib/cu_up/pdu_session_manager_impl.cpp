@@ -27,6 +27,7 @@
 #include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/sdap/sdap_factory.h"
+#include "srsran/support/srsran_assert.h"
 #include <utility>
 
 using namespace srsran;
@@ -35,28 +36,26 @@ using namespace srs_cu_up;
 pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                                       ue_index_,
                                                    std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos_cfg_,
                                                    const security::sec_as_config&                   security_info_,
-                                                   const network_interface_config&                  net_config_,
                                                    const n3_interface_config&                       n3_config_,
                                                    const cu_up_test_mode_config&                    test_mode_config_,
                                                    cu_up_ue_logger&                                 logger_,
-                                                   unique_timer&                               ue_inactivity_timer_,
-                                                   timer_factory                               ue_dl_timer_factory_,
-                                                   timer_factory                               ue_ul_timer_factory_,
-                                                   timer_factory                               ue_ctrl_timer_factory_,
-                                                   f1u_cu_up_gateway&                          f1u_gw_,
-                                                   gtpu_teid_pool&                             n3_teid_allocator_,
-                                                   gtpu_teid_pool&                             f1u_teid_allocator_,
-                                                   gtpu_tunnel_common_tx_upper_layer_notifier& gtpu_tx_notifier_,
-                                                   gtpu_demux_ctrl&                            gtpu_rx_demux_,
-                                                   task_executor&                              ue_dl_exec_,
-                                                   task_executor&                              ue_ul_exec_,
-                                                   task_executor&                              ue_ctrl_exec_,
-                                                   task_executor&                              crypto_exec_,
-                                                   dlt_pcap&                                   gtpu_pcap_) :
+                                                   unique_timer&        ue_inactivity_timer_,
+                                                   timer_factory        ue_dl_timer_factory_,
+                                                   timer_factory        ue_ul_timer_factory_,
+                                                   timer_factory        ue_ctrl_timer_factory_,
+                                                   f1u_cu_up_gateway&   f1u_gw_,
+                                                   ngu_session_manager& ngu_session_mngr_,
+                                                   gtpu_teid_pool&      n3_teid_allocator_,
+                                                   gtpu_teid_pool&      f1u_teid_allocator_,
+                                                   gtpu_demux_ctrl&     gtpu_rx_demux_,
+                                                   task_executor&       ue_dl_exec_,
+                                                   task_executor&       ue_ul_exec_,
+                                                   task_executor&       ue_ctrl_exec_,
+                                                   task_executor&       crypto_exec_,
+                                                   dlt_pcap&            gtpu_pcap_) :
   ue_index(ue_index_),
   qos_cfg(std::move(qos_cfg_)),
   security_info(security_info_),
-  net_config(net_config_),
   n3_config(n3_config_),
   test_mode_config(test_mode_config_),
   logger(logger_),
@@ -64,7 +63,6 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_dl_timer_factory(ue_dl_timer_factory_),
   ue_ul_timer_factory(ue_ul_timer_factory_),
   ue_ctrl_timer_factory(ue_ctrl_timer_factory_),
-  gtpu_tx_notifier(gtpu_tx_notifier_),
   n3_teid_allocator(n3_teid_allocator_),
   f1u_teid_allocator(f1u_teid_allocator_),
   gtpu_rx_demux(gtpu_rx_demux_),
@@ -73,7 +71,8 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ue_ctrl_exec(ue_ctrl_exec_),
   crypto_exec(crypto_exec_),
   gtpu_pcap(gtpu_pcap_),
-  f1u_gw(f1u_gw_)
+  f1u_gw(f1u_gw_),
+  ngu_session_mngr(ngu_session_mngr_)
 {
 }
 
@@ -115,9 +114,12 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
                    ul_tunnel_info.tp_address);
 
   // Advertise either local or external IP address of N3 interface
-  const std::string& n3_addr = net_config.n3_ext_addr.empty() || net_config.n3_ext_addr == "auto"
-                                   ? net_config.n3_bind_addr
-                                   : net_config.n3_ext_addr;
+  // TODO select correct GW based on slice or UE info.
+  std::string           n3_addr;
+  gtpu_tnl_pdu_session& n3_gw = ngu_session_mngr.get_next_ngu_gateway();
+  if (not n3_gw.get_bind_address(n3_addr)) {
+    report_error("Could not get NG-U bind address to report to core.");
+  }
   pdu_session_result.gtp_tunnel =
       up_transport_layer_info(transport_layer_address::create_from_string(n3_addr), new_session->local_teid);
 
@@ -130,13 +132,13 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.ue_index                         = ue_index;
   msg.cfg.tx.peer_teid                 = int_to_gtpu_teid(ul_tunnel_info.gtp_teid.value());
   msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
-  msg.cfg.tx.peer_port                 = net_config.upf_port;
+  msg.cfg.tx.peer_port                 = n3_config.upf_port;
   msg.cfg.rx.local_teid                = new_session->local_teid;
   msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
   msg.cfg.rx.warn_expired_t_reordering = n3_config.warn_on_drop;
   msg.cfg.rx.test_mode                 = test_mode_config.enabled;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
-  msg.tx_upper                         = &gtpu_tx_notifier;
+  msg.tx_upper                         = &new_session->gtpu_to_udp_adapter;
   msg.gtpu_pcap                        = &gtpu_pcap;
   msg.ue_dl_timer_factory              = ue_dl_timer_factory;
   new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
@@ -144,6 +146,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   // Connect adapters
   new_session->sdap_to_gtpu_adapter.connect_gtpu(*new_session->gtpu->get_tx_lower_layer_interface());
   new_session->gtpu_to_sdap_adapter.connect_sdap(new_session->sdap->get_sdap_tx_sdu_handler());
+  new_session->gtpu_to_udp_adapter.connect_network_gateway(n3_gw);
 
   // Register tunnel at demux
   if (!gtpu_rx_demux.add_tunnel(
@@ -475,10 +478,15 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       logger.log_info("Attaching dl_teid={} to F1-U tunnel with ul_teid={}",
                       drb_to_mod.dl_up_params[0].up_tnl_info,
                       drb_iter->second->f1u_ul_teid);
-      f1u_gw.attach_dl_teid(
-          up_transport_layer_info(transport_layer_address::create_from_string(net_config.f1u_bind_addr),
-                                  drb_iter->second->f1u_ul_teid),
-          drb_to_mod.dl_up_params[0].up_tnl_info);
+
+      expected<std::string> bind_addr = f1u_gw.get_cu_bind_address();
+      if (not bind_addr.has_value()) {
+        logger.log_error("Could not get bind address for F1-U tunnel");
+        continue;
+      }
+      f1u_gw.attach_dl_teid(up_transport_layer_info(transport_layer_address::create_from_string(bind_addr.value()),
+                                                    drb_iter->second->f1u_ul_teid),
+                            drb_to_mod.dl_up_params[0].up_tnl_info);
 
       drb_iter->second->pdcp_to_f1u_adapter.connect_f1u(drb_iter->second->f1u->get_tx_sdu_handler());
     }

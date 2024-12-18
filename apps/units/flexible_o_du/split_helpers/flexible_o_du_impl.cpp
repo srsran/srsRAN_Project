@@ -37,20 +37,14 @@ flexible_o_du_impl::flexible_o_du_impl(unsigned nof_cells) :
 
 void flexible_o_du_impl::start()
 {
-  for (auto& du_obj : du_list) {
-    du_obj->get_power_controller().start();
-  }
-
+  du->get_power_controller().start();
   ru->get_controller().start();
 }
 
 void flexible_o_du_impl::stop()
 {
   ru->get_controller().stop();
-
-  for (auto& du_obj : du_list) {
-    du_obj->get_power_controller().stop();
-  }
+  du->get_power_controller().stop();
 }
 
 void flexible_o_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
@@ -58,22 +52,22 @@ void flexible_o_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
   ru = std::move(active_ru);
   srsran_assert(ru, "Invalid Radio Unit");
 
+  // Connect the RU adaptor to the RU.
   ru_dl_rg_adapt.connect(ru->get_downlink_plane_handler());
   ru_ul_request_adapt.connect(ru->get_uplink_plane_handler());
 }
 
-void flexible_o_du_impl::add_o_dus(std::vector<std::unique_ptr<srs_du::o_du>> active_o_du)
+void flexible_o_du_impl::add_du(std::unique_ptr<srs_du::o_du> active_du)
 {
-  du_list = std::move(active_o_du);
-  srsran_assert(!du_list.empty(), "Cannot set an empty DU list");
+  du = std::move(active_du);
+  srsran_assert(du, "Cannot set an invalid DU");
 
-  for (auto& du_obj : du_list) {
-    span<upper_phy*> upper_ptrs = du_obj->get_o_du_low().get_du_low().get_all_upper_phys();
-    for (auto* upper : upper_ptrs) {
-      // Make connections between DU and RU.
-      ru_ul_adapt.map_handler(upper->get_sector_id(), upper->get_rx_symbol_handler());
-      ru_timing_adapt.map_handler(upper->get_sector_id(), upper->get_timing_handler());
-      ru_error_adapt.map_handler(upper->get_sector_id(), upper->get_error_handler());
-    }
+  // Connect all the sectors of the DU low to the RU adaptors.
+  span<upper_phy*> upper_ptrs = du->get_o_du_low().get_du_low().get_all_upper_phys();
+  for (auto* upper : upper_ptrs) {
+    // Make connections between DU and RU.
+    ru_ul_adapt.map_handler(upper->get_sector_id(), upper->get_rx_symbol_handler());
+    ru_timing_adapt.map_handler(upper->get_sector_id(), upper->get_timing_handler());
+    ru_error_adapt.map_handler(upper->get_sector_id(), upper->get_error_handler());
   }
 }

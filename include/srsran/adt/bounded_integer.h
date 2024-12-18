@@ -171,8 +171,7 @@ namespace fmt {
 template <typename Integer, Integer MIN_VALUE, Integer MAX_VALUE>
 struct formatter<srsran::bounded_integer<Integer, MIN_VALUE, MAX_VALUE>> : public formatter<Integer> {
   template <typename FormatContext>
-  auto format(const srsran::bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& s, FormatContext& ctx)
-
+  auto format(const srsran::bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& s, FormatContext& ctx) const
   {
     if (s.valid()) {
       return fmt::format_to(ctx.out(), "{}", static_cast<Integer>(s));

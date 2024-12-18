@@ -39,11 +39,11 @@ public:
     }
   }
 
-  void connect(srs_cu_up::ngu_tnl_pdu_session& handler_) { handler = &handler_; }
+  void connect(gtpu_tnl_pdu_session& handler_) { handler = &handler_; }
 
   void disconnect() { handler = nullptr; }
 
-  srs_cu_up::ngu_tnl_pdu_session* handler = nullptr;
+  gtpu_tnl_pdu_session* handler = nullptr;
 };
 
 class srs_cu_up::gtpu_rx_f1u_adapter : public srsran::gtpu_tunnel_nru_rx_lower_layer_notifier
@@ -92,7 +92,7 @@ f1u_split_gateway_cu_bearer::f1u_split_gateway_cu_bearer(uint32_t               
                                                          drb_id_t                              drb_id,
                                                          const up_transport_layer_info&        ul_tnl_info_,
                                                          f1u_cu_up_gateway_bearer_rx_notifier& cu_rx_,
-                                                         ngu_tnl_pdu_session&                  udp_session,
+                                                         gtpu_tnl_pdu_session&                 udp_session,
                                                          task_executor&                        ul_exec_,
                                                          srs_cu_up::f1u_bearer_disconnector&   disconnector_) :
   ul_exec(ul_exec_),
@@ -121,11 +121,11 @@ void f1u_split_gateway_cu_bearer::stop()
   stopped = true;
 }
 
-f1u_split_connector::f1u_split_connector(ngu_gateway& udp_gw_,
-                                         gtpu_demux&  demux_,
-                                         dlt_pcap&    gtpu_pcap_,
-                                         uint16_t     peer_port_,
-                                         std::string  ext_addr_) :
+f1u_split_connector::f1u_split_connector(gtpu_gateway& udp_gw_,
+                                         gtpu_demux&   demux_,
+                                         dlt_pcap&     gtpu_pcap_,
+                                         uint16_t      peer_port_,
+                                         std::string   ext_addr_) :
   logger_cu(srslog::fetch_basic_logger("CU-F1-U")),
   peer_port(peer_port_),
   ext_addr(std::move(ext_addr_)),

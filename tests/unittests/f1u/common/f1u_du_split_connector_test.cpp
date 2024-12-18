@@ -25,6 +25,7 @@
 #include "srsran/gateways/udp_network_gateway_factory.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include <gtest/gtest.h>
@@ -107,7 +108,7 @@ protected:
     tester_config.bind_address      = "127.0.0.1";
     tester_config.bind_port         = 0;
     tester_config.non_blocking_mode = true;
-    udp_tester                      = create_udp_network_gateway({tester_config, server_data_notifier, io_tx_executor});
+    udp_tester = create_udp_network_gateway({tester_config, server_data_notifier, io_tx_executor, rx_executor});
     ASSERT_TRUE(udp_tester->create_and_bind());
     std::optional<uint16_t> tester_bind_port = udp_tester->get_bind_port();
     ASSERT_TRUE(tester_bind_port.has_value());
@@ -123,7 +124,7 @@ protected:
     nru_gw_config.bind_address               = du_gw_bind_address;
     nru_gw_config.bind_port                  = 0;
     nru_gw_config.reuse_addr                 = true;
-    udp_gw = srs_cu_up::create_udp_ngu_gateway(nru_gw_config, *epoll_broker, io_tx_executor);
+    udp_gw = create_udp_gtpu_gateway(nru_gw_config, *epoll_broker, io_tx_executor, rx_executor);
 
     f1u_du_split_gateway_creation_msg cu_create_msg{
         udp_gw.get(), demux.get(), dummy_pcap, tester_bind_port.value(), get_external_bind_address()};
@@ -193,16 +194,17 @@ protected:
 
   virtual std::string get_external_bind_address() { return "auto"; }
 
-  timer_manager                           timer_mng;
-  manual_task_worker                      ue_worker{128};
-  timer_factory                           timers;
-  unique_timer                            ue_inactivity_timer;
-  std::unique_ptr<io_broker>              epoll_broker;
-  manual_task_worker                      io_tx_executor{128};
-  std::unique_ptr<gtpu_demux>             demux;
-  std::unique_ptr<srs_cu_up::ngu_gateway> udp_gw;
-  null_dlt_pcap                           dummy_pcap         = {};
-  std::string                             du_gw_bind_address = "127.0.0.2";
+  timer_manager                 timer_mng;
+  inline_task_executor          rx_executor;
+  manual_task_worker            ue_worker{128};
+  timer_factory                 timers;
+  unique_timer                  ue_inactivity_timer;
+  std::unique_ptr<io_broker>    epoll_broker;
+  manual_task_worker            io_tx_executor{128};
+  std::unique_ptr<gtpu_demux>   demux;
+  std::unique_ptr<gtpu_gateway> udp_gw;
+  null_dlt_pcap                 dummy_pcap         = {};
+  std::string                   du_gw_bind_address = "127.0.0.2";
 
   // Tester UDP gw to TX/RX PDUs to F1-U CU GW
   std::unique_ptr<udp_network_gateway>              udp_tester;

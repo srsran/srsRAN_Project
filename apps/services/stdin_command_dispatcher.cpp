@@ -61,7 +61,8 @@ public:
 
   // See interface for documentation.
   void execute(span<const std::string> args) override
-  { // Verify that the number of arguments is valid.
+  {
+    // Verify that the number of arguments is valid.
     if (args.size() != 1) {
       fmt::print("Invalid sleep command syntax. Usage: sleep <seconds>\n");
       return;
@@ -89,6 +90,7 @@ public:
 } // namespace
 
 stdin_command_dispatcher::stdin_command_dispatcher(io_broker&                                 io_broker,
+                                                   task_executor&                             executor,
                                                    span<std::unique_ptr<application_command>> commands_) :
   logger(srslog::fetch_basic_logger("APP"))
 {
@@ -111,13 +113,13 @@ stdin_command_dispatcher::stdin_command_dispatcher(io_broker&                   
     cmd       = std::move(app_cmd);
   }
 
-  // Set STDIN file descripter into non-blocking mode
+  // Set STDIN file descriptor into non-blocking mode.
   int flags = ::fcntl(STDIN_FILENO, F_GETFL, 0);
   if (::fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK) == -1) {
     logger.error("Couldn't configure fd to non-blocking");
   }
 
-  stdin_handle = io_broker.register_fd(STDIN_FILENO, [this]() { parse_stdin(STDIN_FILENO); });
+  stdin_handle = io_broker.register_fd(unique_fd(STDIN_FILENO, false), executor, [this]() { parse_stdin(); });
   if (!stdin_handle.registered()) {
     logger.error("Couldn't register stdin handler");
   }
@@ -128,7 +130,7 @@ static void string_parse_list(const std::string& input, char delimiter, std::vec
 {
   std::stringstream ss(input);
 
-  // Removes all possible elements of the list
+  // Removes all possible elements of the list.
   commands.clear();
 
   while (ss.good()) {
@@ -141,18 +143,17 @@ static void string_parse_list(const std::string& input, char delimiter, std::vec
   }
 }
 
-void stdin_command_dispatcher::parse_stdin(int file_descriptor)
+void stdin_command_dispatcher::parse_stdin()
 {
-  static constexpr unsigned           read_chunk = 256;
+  static constexpr size_t             read_chunk       = 256;
+  unsigned                            total_bytes_read = 0;
   std::array<uint8_t, 4 * read_chunk> buffer;
-  int                                 bytes_read       = 0;
-  int                                 total_bytes_read = 0;
 
   logger.debug("Stdin has data to read");
 
   do {
-    // Read from stdin until EWOULDBLOCK is set
-    bytes_read = ::read(file_descriptor, &buffer[total_bytes_read], read_chunk);
+    // Read from stdin until EWOULDBLOCK is set.
+    int bytes_read = ::read(STDIN_FILENO, &buffer[total_bytes_read], read_chunk);
     if (bytes_read < 0) {
       if (errno == EWOULDBLOCK || errno == EAGAIN || errno == EINTR) {
         break;
@@ -171,7 +172,7 @@ void stdin_command_dispatcher::parse_stdin(int file_descriptor)
 
   logger.debug("read {} B from stdin", total_bytes_read);
 
-  // Convert buffer to string
+  // Convert buffer to string.
   std::string input_line(buffer.begin(), buffer.begin() + total_bytes_read);
 
   std::vector<std::string> cmd_list;
@@ -196,7 +197,7 @@ void stdin_command_dispatcher::handle_command(const std::string& command)
 
   srsran_assert(!arg_list.empty(), "Parsing empty command argument list");
 
-  if (const auto& cmd = commands.find(arg_list.front()); cmd != commands.end()) {
+  if (auto cmd = commands.find(arg_list.front()); cmd != commands.end()) {
     cmd->second->execute(span<const std::string>(arg_list).last(arg_list.size() - 1));
   } else {
     print_help();

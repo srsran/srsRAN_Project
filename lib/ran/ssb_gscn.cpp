@@ -178,9 +178,11 @@ validate_irregular_gscn_rasters(unsigned gscn, nr_band band, subcarrier_spacing 
     is_gscn_valid = std::find(gscn_band_n102.begin(), gscn_band_n102.end(), gscn) != gscn_band_n102.end();
   }
 
-  return is_gscn_valid
-             ? error_type<std::string>{}
-             : make_unexpected(fmt::format("GSCN {} is not valid for band {} with SSB SCS {}", gscn, band, ssb_scs));
+  return is_gscn_valid ? error_type<std::string>{}
+                       : make_unexpected(fmt::format("GSCN {} is not valid for band {} with SSB SCS {}",
+                                                     gscn,
+                                                     fmt::underlying(band),
+                                                     fmt::underlying(ssb_scs)));
 }
 
 error_type<std::string> srsran::band_helper::is_gscn_valid_given_band(unsigned             gscn,
@@ -213,8 +215,10 @@ span<const unsigned> srsran::band_helper::get_gscn_special_raster_iterator(nr_ba
                                ssb_scs == subcarrier_spacing::kHz15) or
                               band == nr_band::n46 or band == nr_band::n96 or band == nr_band::n102;
 
-  srsran_assert(
-      are_input_args_valid, "This function cannot be used for band {} with SCS {}", band, scs_to_khz(ssb_scs));
+  srsran_assert(are_input_args_valid,
+                "This function cannot be used for band {} with SCS {}",
+                fmt::underlying(band),
+                scs_to_khz(ssb_scs));
 
   switch (band) {
     case nr_band::n34:

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../adapters/ngap_adapters.h"
+#include "../adapters/nrppa_adapters.h"
 #include "../adapters/rrc_ue_adapters.h"
 #include "../cell_meas_manager/measurement_context.h"
 #include "../ue_security_manager/ue_security_manager_impl.h"
@@ -120,6 +121,9 @@ public:
   /// \brief Get the NGAP CU-CP UE notifier of the UE.
   ngap_cu_cp_ue_notifier& get_ngap_cu_cp_ue_notifier() { return ngap_cu_cp_ue_ev_notifier; }
 
+  /// \brief Get the NRPPA CU-CP UE notifier of the UE.
+  nrppa_cu_cp_ue_notifier& get_nrppa_cu_cp_ue_notifier() { return nrppa_cu_cp_ue_ev_notifier; }
+
   /// \brief Get the RRC UE CU-CP UE notifier of the UE.
   rrc_ue_cu_cp_ue_notifier& get_rrc_ue_cu_cp_ue_notifier() { return rrc_ue_cu_cp_ue_ev_notifier; }
 
@@ -139,6 +143,12 @@ public:
 
   /// \brief Get the RRC UE of the UE.
   rrc_ue_interface* get_rrc_ue() const { return rrc_ue; }
+
+  /// \brief Get the measurement results of the UE.
+  std::optional<cell_measurement_positioning_info>& get_measurement_results() override
+  {
+    return meas_context.meas_results;
+  }
 
 private:
   // common context
@@ -161,6 +171,9 @@ private:
   // ngap ue context
   ngap_cu_cp_ue_adapter ngap_cu_cp_ue_ev_notifier;
   ngap_rrc_ue_adapter   ngap_rrc_ue_ev_notifier;
+
+  // nrppa ue context
+  nrppa_cu_cp_ue_adapter nrppa_cu_cp_ue_ev_notifier;
 
   // cu-cp ue context
   rrc_ue_cu_cp_adapter         rrc_ue_cu_cp_ev_notifier;

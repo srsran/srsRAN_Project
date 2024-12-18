@@ -35,7 +35,6 @@ class flexible_o_du_factory
 
 public:
   explicit flexible_o_du_factory(const flexible_o_du_unit_config& config_) : config(config_) {}
-
   virtual ~flexible_o_du_factory() = default;
 
   /// Creates a flexible O-RAN DU using the given dependencies and configuration.

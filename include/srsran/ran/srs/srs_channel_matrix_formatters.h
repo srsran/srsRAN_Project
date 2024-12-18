@@ -39,8 +39,7 @@ struct formatter<srsran::srs_channel_matrix> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_channel_matrix& matrix, FormatContext& ctx)
-
+  auto format(const srsran::srs_channel_matrix& matrix, FormatContext& ctx) const
   {
     unsigned nof_rx_ports = matrix.get_nof_rx_ports();
     unsigned nof_tx_ports = matrix.get_nof_tx_ports();

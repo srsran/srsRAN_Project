@@ -49,12 +49,6 @@ struct grant_prbs_mcs {
 class ue_cell
 {
 public:
-  struct metrics {
-    unsigned consecutive_pusch_kos = 0;
-  };
-
-  bool is_in_fallback_mode() const { return in_fallback_mode; }
-
   ue_cell(du_ue_index_t                ue_index_,
           rnti_t                       crnti_val,
           const ue_cell_configuration& ue_cell_cfg_,
@@ -66,17 +60,15 @@ public:
 
   unique_ue_harq_entity harqs;
 
-  // Slot at which PDSCH was allocated in the past for this UE in this cell.
-  slot_point last_pdsch_allocated_slot;
-  // Slot at which PUSCH was allocated in the past for this UE in this cell.
-  slot_point last_pusch_allocated_slot;
-
   rnti_t rnti() const { return crnti_; }
 
   bwp_id_t active_bwp_id() const { return to_bwp_id(0); }
 
   /// \brief Determines whether the UE cell is currently active.
   bool is_active() const { return active; }
+
+  /// Whether the UE is in fallback mode.
+  bool is_in_fallback_mode() const { return in_fallback_mode; }
 
   const ue_cell_configuration& cfg() const { return *ue_cfg; }
 
@@ -128,10 +120,6 @@ public:
   /// Update UE with the latest CSI report for a given cell.
   void handle_csi_report(const csi_report_data& csi_report);
 
-  /// \brief Get the current UE cell metrics.
-  const metrics& get_metrics() const { return ue_metrics; }
-  metrics&       get_metrics() { return ue_metrics; }
-
   sch_mcs_index get_ul_mcs(pusch_mcs_table mcs_table) const { return ue_mcs_calculator.calculate_ul_mcs(mcs_table); }
 
   /// \brief Get recommended aggregation level for PDCCH at a given CQI.
@@ -146,12 +134,6 @@ public:
   static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
   get_active_ul_search_spaces(slot_point                             pdcch_slot,
                               std::optional<dci_ul_rnti_config_type> required_dci_rnti_type = {}) const;
-
-  /// \brief Defines the fallback state of the ue_cell.
-  /// Transitions can be fallback => sr_csi_received => normal => fallback. The fallback => sr_csi_received transition
-  /// is triggered by the reception of SR or CSI, the sr_csi_received => normal is triggered by the reception of 2
-  /// CRC=OK after the first SR or CSI is received.
-  enum class fallback_state { fallback, sr_csi_received, normal };
 
   /// \brief Get UE channel state handler.
   ue_channel_state_manager&       channel_state_manager() { return channel_state; }
@@ -183,8 +165,6 @@ private:
   /// Fallback state of the UE. When in "fallback" mode, only the search spaces and the configuration of
   /// cellConfigCommon are used.
   bool in_fallback_mode = true;
-
-  metrics ue_metrics;
 
   ue_channel_state_manager channel_state;
 

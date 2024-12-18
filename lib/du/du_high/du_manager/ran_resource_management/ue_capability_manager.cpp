@@ -84,7 +84,7 @@ static void set_pdsch_mcs_table(serving_cell_config& cell_cfg, pdsch_mcs_table m
       cqi_table = cqi_table_t::table3;
       break;
     default:
-      report_error("Invalid MCS table={}\n", mcs_table);
+      report_error("Invalid MCS table={}\n", fmt::underlying(mcs_table));
   }
 
   // Set MCS index table for PDSCH. See TS 38.214, Table 5.1.3.1-[1-3].
@@ -224,12 +224,11 @@ pdsch_mcs_table ue_capability_manager::select_pdsch_mcs_table(du_cell_index_t ce
 {
   const auto& init_dl_bwp = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.init_dl_bwp;
 
-  if (not init_dl_bwp.pdsch_cfg.has_value()) {
+  if (not init_dl_bwp.pdsch_cfg.has_value() or not ue_caps.has_value() or not ue_caps->pdsch_qam256_supported) {
     // No base cell PDSCH config. Default to QAM64.
     return pdsch_mcs_table::qam64;
   }
-  // TODO: Support dynamic change of the DL MCS table based on the UE capabilities. This requires changes in the
-  //  scheduler.
+
   return init_dl_bwp.pdsch_cfg->mcs_table;
 }
 

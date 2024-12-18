@@ -51,7 +51,8 @@ public:
   on_bearer_context_modification_request_received(const e1ap_bearer_context_modification_request& msg) override
   {
     if (cu_up_handler == nullptr) {
-      logger.warning("Could not handle context modification command, no CU-UP handler present. ue={}", msg.ue_index);
+      logger.warning("Could not handle context modification command, no CU-UP handler present. ue={}",
+                     fmt::underlying(msg.ue_index));
       return {}; // return failure to modify bearer context
     }
     return cu_up_handler->handle_bearer_context_modification_request(msg);
@@ -60,7 +61,8 @@ public:
   async_task<void> on_bearer_context_release_command_received(const e1ap_bearer_context_release_command& msg) override
   {
     if (cu_up_handler == nullptr) {
-      logger.warning("Could not handle context release command, no CU-UP handler present. ue={}", msg.ue_index);
+      logger.warning("Could not handle context release command, no CU-UP handler present. ue={}",
+                     fmt::underlying(msg.ue_index));
       return launch_async([](coro_context<async_task<void>>& ctx) {
         CORO_BEGIN(ctx);
         CORO_RETURN();
@@ -72,7 +74,7 @@ public:
   void on_schedule_ue_async_task(srs_cu_up::ue_index_t ue_index, async_task<void> task) override
   {
     if (cu_up_handler == nullptr) {
-      logger.error("Could not schedule UE task, no CU-UP handler present. ue={}", ue_index);
+      logger.error("Could not schedule UE task, no CU-UP handler present. ue={}", fmt::underlying(ue_index));
       return;
     }
     cu_up_handler->schedule_ue_async_task(ue_index, std::move(task));

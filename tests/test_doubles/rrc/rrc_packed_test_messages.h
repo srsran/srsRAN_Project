@@ -27,10 +27,14 @@
 /// the RRC ASN.1 headers.
 
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/ran/subcarrier_spacing.h"
 
 namespace srsran {
 
 /// Generates a dummy RRC handoverPrepInformation as per TS 38.331.
 byte_buffer create_ho_prep_info();
+
+/// \brief Generates a dummy Measurement Timing Configuration.
+byte_buffer create_meas_timing_cfg(uint32_t carrier_freq, subcarrier_spacing scs);
 
 } // namespace srsran

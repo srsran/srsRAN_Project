@@ -234,10 +234,10 @@ static dci_size_config get_dci_size_config(const ue_cell_configuration& ue_cell_
     if (opt_pusch_sc_cfg.has_value() and opt_pusch_sc_cfg.value().cbg_tx.has_value()) {
       dci_sz_cfg.max_cbg_tb_pusch = static_cast<unsigned>(opt_pusch_sc_cfg.value().cbg_tx.value().max_cgb_per_tb);
     }
-    if (opt_pusch_cfg->tx_cfg.has_value() &&
-        std::holds_alternative<tx_scheme_non_codebook>(opt_pusch_cfg->tx_cfg.value())) {
-      // TODO: Set value based on maxMIMO-Layers config in PUSCH-ServingCellConfig or UE capability.
-      dci_sz_cfg.pusch_max_layers = 1;
+    dci_sz_cfg.pusch_max_layers = 1;
+    if (opt_pusch_cfg->tx_cfg.has_value() and
+        std::holds_alternative<tx_scheme_codebook>(opt_ul_cfg->init_ul_bwp.pusch_cfg.value().tx_cfg.value())) {
+      dci_sz_cfg.pusch_max_layers = std::get<tx_scheme_codebook>(opt_pusch_cfg->tx_cfg.value()).max_rank.value();
     }
   }
   if (dci_sz_cfg.pdsch_harq_ack_cb == pdsch_harq_ack_codebook::dynamic) {
@@ -574,7 +574,10 @@ static void assert_dci_size_config(search_space_id ss_id, const dci_size_config&
     }
     return is_success;
   };
-  srsran_assert(validate_dci_sz_cfg(), "Invalid DCI size configuration for SearchSpace={}: {}", ss_id, error_msg);
+  srsran_assert(validate_dci_sz_cfg(),
+                "Invalid DCI size configuration for SearchSpace={}: {}",
+                fmt::underlying(ss_id),
+                error_msg);
 }
 
 ue_cell_configuration::ue_cell_configuration(rnti_t                                crnti_,

@@ -15,8 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
-        compiler: [gcc, clang]
+        os: [ubuntu-24.04]
+        compiler: [gcc]
     steps:
     - uses: actions/checkout@v3
     - name: Install Dependencies

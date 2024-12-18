@@ -83,18 +83,18 @@ struct formatter<srsran::e1ap_cause_t> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::e1ap_cause_t o, FormatContext& ctx)
+  auto format(srsran::e1ap_cause_t o, FormatContext& ctx) const
   {
     if (const auto* result = std::get_if<srsran::e1ap_cause_radio_network_t>(&o)) {
-      return format_to(ctx.out(), "radio_network-id{}", *result);
+      return format_to(ctx.out(), "radio_network-id{}", fmt::underlying(*result));
     }
     if (const auto* result = std::get_if<srsran::e1ap_cause_transport_t>(&o)) {
-      return format_to(ctx.out(), "transport-id{}", *result);
+      return format_to(ctx.out(), "transport-id{}", fmt::underlying(*result));
     }
     if (const auto* result = std::get_if<srsran::cause_protocol_t>(&o)) {
-      return format_to(ctx.out(), "protocol-id{}", *result);
+      return format_to(ctx.out(), "protocol-id{}", fmt::underlying(*result));
     }
-    return format_to(ctx.out(), "misc-id{}", std::get<srsran::cause_misc_t>(o));
+    return format_to(ctx.out(), "misc-id{}", fmt::underlying(std::get<srsran::cause_misc_t>(o)));
   }
 };
 

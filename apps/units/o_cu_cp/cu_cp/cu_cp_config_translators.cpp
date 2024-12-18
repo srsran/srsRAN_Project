@@ -466,13 +466,14 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
 srs_cu_cp::n2_connection_client_config srsran::generate_n2_client_config(bool                              no_core,
                                                                          const cu_cp_unit_amf_config_item& amf_cfg,
                                                                          dlt_pcap&                         pcap_writer,
-                                                                         io_broker&                        broker)
+                                                                         io_broker&                        broker,
+                                                                         task_executor& io_rx_executor)
 {
   using no_core_mode_t = srs_cu_cp::n2_connection_client_config::no_core;
   using network_mode_t = srs_cu_cp::n2_connection_client_config::network;
   using ngap_mode_t    = std::variant<no_core_mode_t, network_mode_t>;
 
-  ngap_mode_t mode = no_core ? ngap_mode_t{no_core_mode_t{}} : ngap_mode_t{network_mode_t{broker}};
+  ngap_mode_t mode = no_core ? ngap_mode_t{no_core_mode_t{}} : ngap_mode_t{network_mode_t{broker, io_rx_executor}};
   if (not no_core) {
     network_mode_t& nw_mode = std::get<network_mode_t>(mode);
     nw_mode.amf_address     = amf_cfg.ip_addr;

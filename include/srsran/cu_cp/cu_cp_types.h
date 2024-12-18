@@ -35,6 +35,7 @@
 #include "srsran/ran/rb_id.h"
 #include "srsran/ran/s_nssai.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/ran/tac.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include <cstdint>
 #include <map>
@@ -142,7 +143,7 @@ struct cu_cp_qos_config {
 
 struct cu_cp_tai {
   plmn_identity plmn_id = plmn_identity::test_value();
-  uint32_t      tac;
+  tac_t         tac;
 };
 
 struct cu_cp_user_location_info_nr {
@@ -259,8 +260,8 @@ struct cu_cp_nr_mode_info {
 struct cu_cp_served_cell_info {
   nr_cell_global_id_t        nr_cgi;
   pci_t                      nr_pci;
-  std::optional<uint32_t>    five_gs_tac;
-  std::optional<uint32_t>    cfg_eps_tac;
+  std::optional<tac_t>       five_gs_tac;
+  std::optional<tac_t>       cfg_eps_tac;
   std::vector<plmn_identity> served_plmns;
   cu_cp_nr_mode_info         nr_mode_info;
   byte_buffer                meas_timing_cfg;
@@ -618,7 +619,7 @@ struct formatter<srsran::srs_cu_cp::ue_index_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_cp::ue_index_t& idx, FormatContext& ctx)
+  auto format(const srsran::srs_cu_cp::ue_index_t& idx, FormatContext& ctx) const
   {
     if (idx == srsran::srs_cu_cp::ue_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -637,7 +638,7 @@ struct formatter<srsran::srs_cu_cp::du_index_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_cp::du_index_t& idx, FormatContext& ctx)
+  auto format(const srsran::srs_cu_cp::du_index_t& idx, FormatContext& ctx) const
   {
     if (idx == srsran::srs_cu_cp::du_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -656,7 +657,7 @@ struct formatter<srsran::srs_cu_cp::cu_up_index_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_cp::cu_up_index_t& idx, FormatContext& ctx)
+  auto format(const srsran::srs_cu_cp::cu_up_index_t& idx, FormatContext& ctx) const
   {
     if (idx == srsran::srs_cu_cp::cu_up_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
@@ -675,7 +676,7 @@ struct formatter<srsran::srs_cu_cp::du_cell_index_t> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::srs_cu_cp::du_cell_index_t& idx, FormatContext& ctx)
+  auto format(const srsran::srs_cu_cp::du_cell_index_t& idx, FormatContext& ctx) const
   {
     if (idx == srsran::srs_cu_cp::du_cell_index_t::invalid) {
       return format_to(ctx.out(), "invalid");

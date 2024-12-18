@@ -21,7 +21,7 @@
  */
 
 #include "indication_generators.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/result/pucch_info.h"
 
 using namespace srsran;
 

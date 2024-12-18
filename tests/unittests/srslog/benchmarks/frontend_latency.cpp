@@ -21,6 +21,7 @@
  */
 
 #include "srsran/srslog/srslog.h"
+#include "fmt/std.h"
 #include <atomic>
 #include <sys/resource.h>
 #include <thread>

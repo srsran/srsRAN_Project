@@ -23,6 +23,8 @@
 #pragma once
 
 #include "srsran/ru/ru_uplink_plane.h"
+#include <algorithm>
+#include <vector>
 
 namespace srsran {
 

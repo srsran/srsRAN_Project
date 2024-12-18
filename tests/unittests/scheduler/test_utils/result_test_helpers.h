@@ -24,7 +24,6 @@
 
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
 
@@ -86,7 +85,7 @@ inline uci_indication::uci_pdu create_uci_pdu_with_harq_ack(du_ue_index_t ue_ind
       pdu.pdu = f2_pdu;
     } break;
     default:
-      srsran_terminate("Format {} not supported", pucch_pdu.format);
+      srsran_terminate("Format {} not supported", fmt::underlying(pucch_pdu.format));
       break;
   }
   return pdu;

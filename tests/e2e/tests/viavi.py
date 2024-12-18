@@ -371,6 +371,7 @@ def _test_viavi(
                 "nof_antennas_dl": 4,
                 "nof_antennas_ul": 1,
                 "rlc_metrics": True,
+                "enable_high_latency_diagnostics": True,
                 "warning_extra_regex": (
                     (r"(?!.*" + r")(?!.*".join(test_declaration.warning_allowlist) + r")")
                     if test_declaration.warning_allowlist

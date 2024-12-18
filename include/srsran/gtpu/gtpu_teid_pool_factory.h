@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/gtpu/gtpu_teid_pool.h"
+#include <memory>
 
 namespace srsran {
 

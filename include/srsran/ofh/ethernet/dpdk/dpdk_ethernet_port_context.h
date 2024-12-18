@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/support/units.h"
+#include <memory>
 
 struct rte_mempool;
 

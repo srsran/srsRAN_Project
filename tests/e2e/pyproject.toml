@@ -34,6 +34,7 @@ markers = [
   "rf",
   "android",
   "android_hp",
+  "android_drx",
   "udp",
   "tcp",
   "downlink",
@@ -45,15 +46,18 @@ markers = [
   "rf_n300",
   "rf_not_crash",
   "reattach",
-  "test",
   "zmq_2x2_mimo",
   "zmq_4x4_mimo",
   "zmq_srsue",
+  "zmq_ric",
   "test_mode",
+  "test_mode_acc100",
   "test_mode_not_crash",
   "viavi",
   "viavi_manual",
   "viavi_debug",
+  "example",
+  "example_srsue",
 ]
 minversion = "6.0"
 python_files = [

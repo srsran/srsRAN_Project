@@ -167,7 +167,7 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
       ->capture_default_str();
   add_option(app, "--iq_scaling", config.iq_scaling, "IQ scaling factor")
       ->capture_default_str()
-      ->check(CLI::Range(0.0, 20.0));
+      ->check(CLI::Range(0.0, 100.0));
 
   // Callback function for validating that both compression method and bitwidth parameters were specified.
   auto validate_compression_input = [](CLI::App& cli_app, const std::string& direction) {
@@ -227,7 +227,16 @@ static void configure_cli11_ru_ofh_args(CLI::App& app, ru_ofh_unit_parsed_config
   add_option(app, "--gps_beta", ofh_cfg.gps_Beta, "GPS Beta")->capture_default_str()->check(CLI::Range(-32768, 32767));
 
   // Common cell parameters.
-  configure_cli11_ru_ofh_base_cell_args(app, config.base_cell_cfg);
+  auto base_cell_group = app.add_option_group("base_cell");
+  configure_cli11_ru_ofh_base_cell_args(*base_cell_group, config.base_cell_cfg);
+  base_cell_group->parse_complete_callback([&config, &app]() {
+    for (auto& cell : config.config.cells) {
+      cell.cell = config.base_cell_cfg;
+    };
+    if (app.get_option("--cells")->get_callback_run()) {
+      app.get_option("--cells")->run_callback();
+    }
+  });
 
   // Cell parameters.
   add_option_cell(

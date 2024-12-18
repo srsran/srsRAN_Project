@@ -21,8 +21,30 @@
  */
 
 #include "dl_logical_channel_manager.h"
+#include "srsran/scheduler/config/logical_channel_config_factory.h"
 
 using namespace srsran;
+
+static const logical_channel_config& get_default_logical_channel_config(lcid_t lcid)
+{
+  // Default logical channel configs.
+  constexpr static logical_channel_config lcid0_cfg = config_helpers::create_default_logical_channel_config(LCID_SRB0);
+  constexpr static logical_channel_config lcid1_cfg = config_helpers::create_default_logical_channel_config(LCID_SRB1);
+  constexpr static logical_channel_config lcid2_cfg = config_helpers::create_default_logical_channel_config(LCID_SRB2);
+  constexpr static logical_channel_config default_drb_cfg =
+      config_helpers::create_default_logical_channel_config(LCID_MIN_DRB);
+  switch (lcid) {
+    case LCID_SRB0:
+      return lcid0_cfg;
+    case LCID_SRB1:
+      return lcid1_cfg;
+    case LCID_SRB2:
+      return lcid2_cfg;
+    default:
+      break;
+  }
+  return default_drb_cfg;
+}
 
 static unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
 {
@@ -35,6 +57,9 @@ static unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
 
 dl_logical_channel_manager::dl_logical_channel_manager()
 {
+  // Reserve entries to avoid allocating in hot path.
+  sorted_channels.reserve(LCID_MIN_DRB);
+
   // SRB0 is always activated.
   set_status(LCID_SRB0, true);
 }
@@ -45,16 +70,104 @@ void dl_logical_channel_manager::deactivate()
     set_status((lcid_t)lcid, false);
   }
   pending_ces.clear();
+  sorted_channels.clear();
+}
+
+void dl_logical_channel_manager::set_status(lcid_t lcid, bool active)
+{
+  srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
+
+  if (channels[lcid].active == active and channels[lcid].cfg != nullptr) {
+    // No state change.
+    return;
+  }
+
+  // Update channel config.
+  const bool new_lc = channels[lcid].cfg == nullptr;
+  auto       it =
+      std::find_if(channel_configs.begin(), channel_configs.end(), [lcid](const auto& c) { return c.lcid == lcid; });
+  if (it != channel_configs.end()) {
+    // In case the channel config was specified.
+    channels[lcid].cfg = it;
+  } else {
+    // in case it was not specified, fallback to default config.
+    channels[lcid].cfg = &get_default_logical_channel_config(lcid);
+  }
+
+  // set new state.
+  channels[lcid].active = active;
+
+  // Refresh sorted_channels list.
+  if (new_lc) {
+    sorted_channels.push_back(lcid);
+  }
+  std::sort(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lhs, lcid_t rhs) {
+    return channels[lhs].cfg->priority < channels[rhs].cfg->priority;
+  });
 }
 
 void dl_logical_channel_manager::configure(span<const logical_channel_config> log_channels_configs)
 {
-  for (unsigned i = 1; i != channels.size(); ++i) {
-    channels[i].active = false;
+  const bool cfg_changed = channel_configs != log_channels_configs;
+  channel_configs        = log_channels_configs;
+
+  if (not cfg_changed) {
+    // No change in the config. However, we may need to update channel config pointers.
+    for (const logical_channel_config& ch_cfg : channel_configs) {
+      channels[ch_cfg.lcid].cfg = &ch_cfg;
+    }
+    return;
   }
-  for (const logical_channel_config& lc_ch : log_channels_configs) {
-    set_status(lc_ch.lcid, true);
+
+  // If a previously custom configured LC is not in the list of new configs, we delete it.
+  // Note: LCID will be removed from sorted_channels later.
+  for (lcid_t lcid : sorted_channels) {
+    if (channels[lcid].cfg != nullptr) {
+      auto it = std::find_if(
+          channel_configs.begin(), channel_configs.end(), [lcid](const auto& c) { return c.lcid == lcid; });
+      if (it == channel_configs.end() and channels[lcid].cfg != &get_default_logical_channel_config(lcid)) {
+        channels[lcid] = {};
+      }
+    }
   }
+
+  // Set new LC configurations.
+  for (const logical_channel_config& ch_cfg : channel_configs) {
+    channels[ch_cfg.lcid].cfg    = &ch_cfg;
+    channels[ch_cfg.lcid].active = true;
+    // buffer state stays the same when configuration is updated.
+  }
+
+  // Refresh sorted channels list.
+  sorted_channels.clear();
+  sorted_channels.reserve(channels.size());
+  for (unsigned lcid = 0, e = channels.size(); lcid != e; ++lcid) {
+    if (channels[lcid].cfg != nullptr) {
+      sorted_channels.push_back(channels[lcid].cfg->lcid);
+    }
+  }
+  std::sort(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lhs, lcid_t rhs) {
+    return channels[lhs].cfg->priority < channels[rhs].cfg->priority;
+  });
+}
+
+void dl_logical_channel_manager::handle_mac_ce_indication(const mac_ce_info& ce)
+{
+  if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
+    // CON RES is a special case, as it needs to be always scheduled first.
+    pending_con_res_id = true;
+    return;
+  }
+  if (ce.ce_lcid == lcid_dl_sch_t::TA_CMD) {
+    auto ce_it = std::find_if(pending_ces.begin(), pending_ces.end(), [](const mac_ce_info& c) {
+      return c.ce_lcid == lcid_dl_sch_t::TA_CMD;
+    });
+    if (ce_it != pending_ces.end()) {
+      ce_it->ce_payload = ce.ce_payload;
+      return;
+    }
+  }
+  pending_ces.push_back(ce);
 }
 
 unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, unsigned rem_bytes, lcid_t lcid)
@@ -62,8 +175,8 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, un
   subpdu.lcid        = lcid_dl_sch_t::MIN_RESERVED;
   subpdu.sched_bytes = 0;
 
-  lcid_t lcid_with_prio = lcid == lcid_t::INVALID_LCID ? get_max_prio_lcid() : lcid;
-  if (lcid_with_prio == lcid_t::INVALID_LCID) {
+  lcid_t lcid_with_prio = lcid == INVALID_LCID ? get_max_prio_lcid() : lcid;
+  if (lcid_with_prio == INVALID_LCID) {
     return 0;
   }
 
@@ -73,10 +186,9 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, un
 
 lcid_t dl_logical_channel_manager::get_max_prio_lcid() const
 {
-  // Prioritize by LCID.
-  for (unsigned idx = 0; idx != channels.size(); ++idx) {
-    if (channels[idx].active and channels[idx].buf_st > 0) {
-      return (lcid_t)idx;
+  for (const auto lcid : sorted_channels) {
+    if (has_pending_bytes(lcid)) {
+      return lcid;
     }
   }
   return INVALID_LCID;
@@ -98,7 +210,7 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, lc
   //  - If it is last PDU of the TBS.
   //  - [Implementation-defined] If \c leftover_bytes is < 5 bytes, as it results in small SDU size.
   unsigned leftover_bytes = rem_bytes - alloc_bytes;
-  if (leftover_bytes > 0 and ((leftover_bytes <= MAX_MAC_SDU_SUBHEADER_SIZE + 1) or pending_bytes() == 0)) {
+  if (leftover_bytes > 0 and ((leftover_bytes <= MAX_MAC_SDU_SUBHEADER_SIZE + 1) or total_pending_bytes() == 0)) {
     alloc_bytes += leftover_bytes;
   }
   if (alloc_bytes == MAC_SDU_SUBHEADER_LENGTH_THRES + MIN_MAC_SDU_SUBHEADER_SIZE) {
@@ -109,6 +221,15 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, lc
 
   // Update DL Buffer Status to avoid reallocating the same LCID bytes.
   channels[lcid].buf_st -= std::min(sdu_size, channels[lcid].buf_st);
+
+  if (lcid != LCID_SRB0 and channels[lcid].buf_st > 0) {
+    constexpr static unsigned RLC_SEGMENTATION_OVERHEAD = 4;
+    // Allocation was not enough to empty the logical channel. In this specific case, we add some bytes to account
+    // for the RLC segmentation overhead.
+    // Note: This update is only relevant for PDSCH allocations for slots > slot_tx. For the case of PDSCH
+    // slot==slot_tx, there will be an RLC Buffer Occupancy update right away, which will set a new buffer value.
+    channels[lcid].buf_st += RLC_SEGMENTATION_OVERHEAD;
+  }
 
   subpdu.lcid        = (lcid_dl_sch_t::options)lcid;
   subpdu.sched_bytes = sdu_size;
@@ -183,7 +304,7 @@ unsigned srsran::allocate_mac_ces(dl_msg_tb_info& tb_info, dl_logical_channel_ma
 {
   unsigned rem_tbs = total_tbs;
 
-  while ((lch_mng.is_con_res_id_pending() or lch_mng.has_pending_ces()) and not tb_info.lc_chs_to_sched.full()) {
+  while (lch_mng.has_pending_ces() and not tb_info.lc_chs_to_sched.full()) {
     dl_msg_lc_info subpdu;
     unsigned       alloc_bytes = lch_mng.allocate_mac_ce(subpdu, rem_tbs);
     if (alloc_bytes == 0) {

@@ -40,17 +40,17 @@ mac_fapi_adaptor_impl::mac_fapi_adaptor_impl(const mac_fapi_adaptor_config&  con
 {
 }
 
-fapi::slot_time_message_notifier& mac_fapi_adaptor_impl::get_slot_time_notifier()
+fapi::slot_time_message_notifier& mac_fapi_adaptor_impl::get_slot_time_message_notifier()
 {
   return fapi_time_translator;
 }
 
-fapi::slot_error_message_notifier& mac_fapi_adaptor_impl::get_slot_error_notifier()
+fapi::slot_error_message_notifier& mac_fapi_adaptor_impl::get_slot_error_message_notifier()
 {
   return fapi_error_translator;
 }
 
-fapi::slot_data_message_notifier& mac_fapi_adaptor_impl::get_slot_data_notifier()
+fapi::slot_data_message_notifier& mac_fapi_adaptor_impl::get_slot_data_message_notifier()
 {
   return fapi_data_translator;
 }

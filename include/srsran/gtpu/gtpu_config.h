@@ -81,8 +81,7 @@ struct formatter<srsran::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config& cfg, FormatContext& ctx)
-
+  auto format(const srsran::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "local_teid={} t_reordering={}", cfg.local_teid, cfg.t_reordering);
   }
@@ -98,8 +97,7 @@ struct formatter<srsran::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config& cfg, FormatContext& ctx)
-
+  auto format(const srsran::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_tx_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "peer_teid={} peer_addr={} peer_port={}", cfg.peer_teid, cfg.peer_addr, cfg.peer_port);
   }
@@ -115,8 +113,7 @@ struct formatter<srsran::gtpu_tunnel_ngu_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_tunnel_ngu_config& cfg, FormatContext& ctx)
-
+  auto format(const srsran::gtpu_tunnel_ngu_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{} {}", cfg.rx, cfg.tx);
   }
@@ -132,7 +129,7 @@ struct formatter<srsran::nru_node> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::nru_node& node, FormatContext& ctx)
+  auto format(const srsran::nru_node& node, FormatContext& ctx) const
   {
     switch (node) {
       case srsran::nru_node::du:
@@ -155,8 +152,7 @@ struct formatter<srsran::gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config& cfg, FormatContext& ctx)
-
+  auto format(const srsran::gtpu_tunnel_nru_config::gtpu_tunnel_nru_rx_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "node={} local_teid={}", cfg.node, cfg.local_teid);
   }
@@ -172,8 +168,7 @@ struct formatter<srsran::gtpu_tunnel_nru_config::gtpu_tunnel_nru_tx_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_tunnel_nru_config::gtpu_tunnel_nru_tx_config& cfg, FormatContext& ctx)
-
+  auto format(const srsran::gtpu_tunnel_nru_config::gtpu_tunnel_nru_tx_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "peer_teid={} peer_addr={} peer_port={}", cfg.peer_teid, cfg.peer_addr, cfg.peer_port);
   }
@@ -189,8 +184,7 @@ struct formatter<srsran::gtpu_tunnel_nru_config> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::gtpu_tunnel_nru_config& cfg, FormatContext& ctx)
-
+  auto format(const srsran::gtpu_tunnel_nru_config& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{} {}", cfg.rx, cfg.tx);
   }

@@ -27,5 +27,5 @@ using namespace srsran;
 
 std::unique_ptr<sctp_network_client> srsran::create_sctp_network_client(const sctp_network_client_config& config)
 {
-  return sctp_network_client_impl::create(config.sctp, config.broker);
+  return sctp_network_client_impl::create(config.sctp, config.broker, config.io_rx_executor);
 }

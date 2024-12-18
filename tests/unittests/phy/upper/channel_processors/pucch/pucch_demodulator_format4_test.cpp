@@ -30,7 +30,6 @@
 #include "srsran/phy/upper/pucch_formats3_4_helpers.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/srsvec/conversion.h"
-#include "srsran/support/format/fmt_optional.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 

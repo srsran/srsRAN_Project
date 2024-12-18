@@ -26,10 +26,10 @@
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include "srsran/gtpu/gtpu_tunnel_nru.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_rx.h"
-#include "srsran/gtpu/ngu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/srslog/srslog.h"
 #include <cstdint>
@@ -54,7 +54,7 @@ public:
                               drb_id_t                              drb_id,
                               const up_transport_layer_info&        ul_tnl_info_,
                               f1u_cu_up_gateway_bearer_rx_notifier& cu_rx_,
-                              ngu_tnl_pdu_session&                  udp_session,
+                              gtpu_tnl_pdu_session&                 udp_session,
                               task_executor&                        ul_exec_,
                               srs_cu_up::f1u_bearer_disconnector&   disconnector_);
 
@@ -114,11 +114,11 @@ public:
 class f1u_split_connector final : public f1u_cu_up_udp_gateway
 {
 public:
-  f1u_split_connector(ngu_gateway& udp_gw_,
-                      gtpu_demux&  demux_,
-                      dlt_pcap&    gtpu_pcap_,
-                      uint16_t     peer_port_ = GTPU_PORT,
-                      std::string  ext_addr_  = "auto");
+  f1u_split_connector(gtpu_gateway& udp_gw_,
+                      gtpu_demux&   demux_,
+                      dlt_pcap&     gtpu_pcap_,
+                      uint16_t      peer_port_ = GTPU_PORT,
+                      std::string   ext_addr_  = "auto");
   ~f1u_split_connector() override;
 
   f1u_cu_up_gateway* get_f1u_cu_up_gateway() { return this; }
@@ -147,8 +147,8 @@ private:
 
   uint16_t                                                 peer_port;
   std::string                                              ext_addr;
-  ngu_gateway&                                             udp_gw;
-  std::unique_ptr<ngu_tnl_pdu_session>                     udp_session;
+  gtpu_gateway&                                            udp_gw;
+  std::unique_ptr<gtpu_tnl_pdu_session>                    udp_session;
   gtpu_demux&                                              demux;
   std::unique_ptr<network_gateway_data_gtpu_demux_adapter> gw_data_gtpu_demux_adapter;
   dlt_pcap&                                                gtpu_pcap;

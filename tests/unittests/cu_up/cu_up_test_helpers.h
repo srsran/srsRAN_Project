@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "lib/cu_up/ngu_session_manager.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/e1ap/common/e1ap_common.h"
@@ -29,6 +30,7 @@
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
+#include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/gtpu/gtpu_tunnel_common_tx.h"
 #include <chrono>
@@ -264,6 +266,36 @@ public:
   std::list<gtpu_teid_t> created_ul_teid_list  = {};
   std::list<gtpu_teid_t> attached_ul_teid_list = {};
   std::list<gtpu_teid_t> removed_ul_teid_list  = {};
+};
+
+class dummy_ngu_gateway final : public gtpu_tnl_pdu_session
+{
+public:
+  void set_bind_address(const std::string& ip_address) { ip_addr = ip_address; }
+
+private:
+  bool get_bind_address(std::string& ip_address) const override
+  {
+    ip_address = ip_addr;
+    return true;
+  }
+
+  std::optional<uint16_t> get_bind_port() const override { return 2152; }
+
+  void handle_pdu(byte_buffer pdu, const sockaddr_storage& dest_addr) override {}
+
+  void on_new_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override {}
+
+  std::string ip_addr = "127.0.0.2";
+};
+
+class dummy_ngu_session_manager final : public srs_cu_up::ngu_session_manager
+{
+public:
+  gtpu_tnl_pdu_session& get_next_ngu_gateway() override { return ngu_gw; };
+
+private:
+  dummy_ngu_gateway ngu_gw;
 };
 
 class dummy_e1ap final : public srs_cu_up::e1ap_control_message_handler

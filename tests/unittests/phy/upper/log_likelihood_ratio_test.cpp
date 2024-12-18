@@ -82,26 +82,22 @@ int main()
              "norm_sqr_llr does not propagate type with const values.");
 
   TESTASSERT_EQ(16, log_likelihood_ratio::norm_squared(llr_sequence), "norm_sqr_llr not working.");
-  std::array<int, 4> rhs = {1, 1, 1, 1};
-  TESTASSERT(typeid(float) == typeid(log_likelihood_ratio::dot_prod(llr_sequence, rhs, 1.1F)),
-             "dot_prod_llr does not propagate type.");
-  TESTASSERT(std::abs(1.1F - log_likelihood_ratio::dot_prod(llr_sequence, rhs, 1.1F)) < .00001,
-             "dot_prod_llr not working.");
+  std::array<int8_t, 4> rhs = {-1, -1, 1, 1};
+  TESTASSERT_EQ(0, log_likelihood_ratio::dot_prod_sign(llr_sequence, rhs), "dot_prod_llr not working.");
 
   fmt::memory_buffer buf;
-  fmt::format_to(buf, "{}", log_likelihood_ratio(1));
+  fmt::format_to(std::back_inserter(buf), "{}", log_likelihood_ratio(1));
   TESTASSERT_EQ(to_string(buf), "1");
 
   log_likelihood_ratio                   low  = -32;
   log_likelihood_ratio                   high = 32;
   std::mt19937                           rgen;
-  std::uniform_int_distribution<int8_t>  llr_clamp_dist(log_likelihood_ratio::min().to_int(),
-                                                       log_likelihood_ratio::max().to_int());
+  std::uniform_int_distribution<int8_t>  llr_dist(log_likelihood_ratio::min().to_int(),
+                                                 log_likelihood_ratio::max().to_int());
   std::array<log_likelihood_ratio, 1234> clamp_in_data;
   std::array<log_likelihood_ratio, 1234> clamp_expected_data;
   std::array<log_likelihood_ratio, 1234> clamp_out_data;
-  std::generate(
-      clamp_in_data.begin(), clamp_in_data.end(), [&llr_clamp_dist, &rgen]() { return llr_clamp_dist(rgen); });
+  std::generate(clamp_in_data.begin(), clamp_in_data.end(), [&llr_dist, &rgen]() { return llr_dist(rgen); });
   std::transform(clamp_in_data.begin(),
                  clamp_in_data.end(),
                  clamp_expected_data.begin(),
@@ -109,6 +105,20 @@ int main()
   clamp(clamp_out_data, clamp_in_data, low, high);
   TESTASSERT_EQ(span<const log_likelihood_ratio>(clamp_expected_data),
                 span<const log_likelihood_ratio>(clamp_out_data));
+
+  std::array<log_likelihood_ratio, 1234> sum_x;
+  std::array<log_likelihood_ratio, 1234> sum_y;
+  std::array<log_likelihood_ratio, 1234> sum_out;
+  std::generate(sum_x.begin(), sum_x.end(), [&llr_dist, &rgen]() { return llr_dist(rgen); });
+  std::generate(sum_y.begin(), sum_y.end(), [&llr_dist, &rgen]() { return llr_dist(rgen); });
+  std::array<log_likelihood_ratio, 1234> sum_expected;
+  std::transform(sum_x.begin(),
+                 sum_x.end(),
+                 sum_y.begin(),
+                 sum_expected.begin(),
+                 [](log_likelihood_ratio x, log_likelihood_ratio y) { return x + y; });
+  log_likelihood_ratio::sum(sum_out, sum_x, sum_y);
+  TESTASSERT_EQ(span<const log_likelihood_ratio>(sum_expected), span<const log_likelihood_ratio>(sum_out));
 
   return 0;
 }

@@ -80,17 +80,17 @@ public:
 
   f1ap_ue_context& operator[](gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
-    srsran_assert(ues.find(cu_ue_id) != ues.end(), "cu_ue={}: F1AP UE context not found", cu_ue_id);
+    srsran_assert(ues.find(cu_ue_id) != ues.end(), "cu_ue={}: F1AP UE context not found", fmt::underlying(cu_ue_id));
     return ues.at(cu_ue_id);
   }
   f1ap_ue_context& operator[](ue_index_t ue_index)
   {
     srsran_assert(ue_index_to_ue_f1ap_id.find(ue_index) != ue_index_to_ue_f1ap_id.end(),
                   "ue={} gNB-CU-UE-F1AP-ID not found",
-                  ue_index);
+                  fmt::underlying(ue_index));
     srsran_assert(ues.find(ue_index_to_ue_f1ap_id.at(ue_index)) != ues.end(),
                   "cu_ue={}: F1AP UE context not found",
-                  ue_index_to_ue_f1ap_id.at(ue_index));
+                  fmt::underlying(ue_index_to_ue_f1ap_id.at(ue_index)));
     return ues.at(ue_index_to_ue_f1ap_id.at(ue_index));
   }
 
@@ -127,10 +127,10 @@ public:
 
   f1ap_ue_context& add_ue(ue_index_t ue_index, gnb_cu_ue_f1ap_id_t cu_ue_id)
   {
-    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
-    srsran_assert(cu_ue_id != gnb_cu_ue_f1ap_id_t::invalid, "Invalid cu_ue={}", cu_ue_id);
+    srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", fmt::underlying(ue_index));
+    srsran_assert(cu_ue_id != gnb_cu_ue_f1ap_id_t::invalid, "Invalid cu_ue={}", fmt::underlying(cu_ue_id));
 
-    logger.debug("ue={} cu_ue={}: Adding F1AP UE context", ue_index, cu_ue_id);
+    logger.debug("ue={} cu_ue={}: Adding F1AP UE context", fmt::underlying(ue_index), fmt::underlying(cu_ue_id));
     ues.emplace(
         std::piecewise_construct, std::forward_as_tuple(cu_ue_id), std::forward_as_tuple(ue_index, cu_ue_id, timers));
     ue_index_to_ue_f1ap_id.emplace(ue_index, cu_ue_id);
@@ -139,12 +139,12 @@ public:
 
   void add_du_ue_f1ap_id(gnb_cu_ue_f1ap_id_t cu_ue_id, gnb_du_ue_f1ap_id_t du_ue_id)
   {
-    srsran_assert(cu_ue_id != gnb_cu_ue_f1ap_id_t::invalid, "Invalid cu_ue={}", cu_ue_id);
-    srsran_assert(du_ue_id != gnb_du_ue_f1ap_id_t::invalid, "Invalid du_ue={}", du_ue_id);
-    srsran_assert(ues.find(cu_ue_id) != ues.end(), "cu_ue={}: F1AP UE context not found", cu_ue_id);
+    srsran_assert(cu_ue_id != gnb_cu_ue_f1ap_id_t::invalid, "Invalid cu_ue={}", fmt::underlying(cu_ue_id));
+    srsran_assert(du_ue_id != gnb_du_ue_f1ap_id_t::invalid, "Invalid du_ue={}", fmt::underlying(du_ue_id));
+    srsran_assert(ues.find(cu_ue_id) != ues.end(), "cu_ue={}: F1AP UE context not found", fmt::underlying(cu_ue_id));
 
     auto& ue = ues.at(cu_ue_id);
-    ue.logger.log_debug("Adding du_ue={}", du_ue_id);
+    ue.logger.log_debug("Adding du_ue={}", fmt::underlying(du_ue_id));
     ue.ue_ids.du_ue_f1ap_id = du_ue_id;
 
     ue.logger.set_prefix({ue.ue_ids.ue_index, ue.ue_ids.cu_ue_f1ap_id, ue.ue_ids.du_ue_f1ap_id}, ": ");
@@ -155,7 +155,7 @@ public:
     srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
 
     if (ue_index_to_ue_f1ap_id.find(ue_index) == ue_index_to_ue_f1ap_id.end()) {
-      logger.warning("ue={}: gNB-CU-UE-F1AP-ID not found", ue_index);
+      logger.warning("ue={}: gNB-CU-UE-F1AP-ID not found", fmt::underlying(ue_index));
       return;
     }
 
@@ -164,11 +164,11 @@ public:
     ue_index_to_ue_f1ap_id.erase(ue_index);
 
     if (ues.find(cu_ue_id) == ues.end()) {
-      logger.warning("cu_ue={}: F1AP UE context not found", cu_ue_id);
+      logger.warning("cu_ue={}: F1AP UE context not found", fmt::underlying(cu_ue_id));
       return;
     }
 
-    logger.debug("ue={} cu_ue={}: Removing F1AP UE context", ue_index, cu_ue_id);
+    logger.debug("ue={} cu_ue={}: Removing F1AP UE context", fmt::underlying(ue_index), fmt::underlying(cu_ue_id));
     ues.erase(cu_ue_id);
   }
 
@@ -177,10 +177,10 @@ public:
     srsran_assert(ue_index != ue_index_t::invalid, "Invalid ue_index={}", ue_index);
     srsran_assert(ue_index_to_ue_f1ap_id.find(ue_index) != ue_index_to_ue_f1ap_id.end(),
                   "ue={}: gNB-CU-UE-F1AP-ID not found",
-                  ue_index);
+                  fmt::underlying(ue_index));
     srsran_assert(ues.find(ue_index_to_ue_f1ap_id.at(ue_index)) != ues.end(),
                   "cu_ue={}: F1AP UE context not found",
-                  ue_index_to_ue_f1ap_id.at(ue_index));
+                  fmt::underlying(ue_index_to_ue_f1ap_id.at(ue_index)));
     srsran_assert(srb0_notifier, "Invalid SRB0 notifier");
 
     ues.at(ue_index_to_ue_f1ap_id.at(ue_index)).get_ul_bearer_manager().activate_srb0(*srb0_notifier);
@@ -194,7 +194,7 @@ public:
                   ue_index);
     srsran_assert(ues.find(ue_index_to_ue_f1ap_id.at(ue_index)) != ues.end(),
                   "cu_ue={}: F1AP UE context not found",
-                  ue_index_to_ue_f1ap_id.at(ue_index));
+                  fmt::underlying(ue_index_to_ue_f1ap_id.at(ue_index)));
     srsran_assert(srb1_notifier, "Invalid SRB1 notifier");
 
     ues.at(ue_index_to_ue_f1ap_id.at(ue_index)).get_ul_bearer_manager().activate_srb1(*srb1_notifier);
@@ -208,7 +208,7 @@ public:
                   ue_index);
     srsran_assert(ues.find(ue_index_to_ue_f1ap_id.at(ue_index)) != ues.end(),
                   "cu_ue={}: F1AP UE context not found",
-                  ue_index_to_ue_f1ap_id.at(ue_index));
+                  fmt::underlying(ue_index_to_ue_f1ap_id.at(ue_index)));
     srsran_assert(srb2_notifier, "Invalid SRB2 notifier");
 
     ues.at(ue_index_to_ue_f1ap_id.at(ue_index)).get_ul_bearer_manager().activate_srb2(*srb2_notifier);

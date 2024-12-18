@@ -45,7 +45,7 @@
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
-#include "srsran/gtpu/ngu_gateway.h"
+#include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
@@ -83,7 +83,7 @@ static constexpr unsigned MAX_CONFIG_FILES = 10;
 static void populate_cli11_generic_args(CLI::App& app)
 {
   fmt::memory_buffer buffer;
-  format_to(buffer, "srsRAN 5G CU version {} ({})", get_version(), get_build_hash());
+  format_to(std::back_inserter(buffer), "srsRAN 5G CU version {} ({})", get_version(), get_build_hash());
   app.set_version_flag("-v,--version", srsran::to_c_str(buffer));
   app.set_config("-c,", config_file, "Read config from file", false)->expected(1, MAX_CONFIG_FILES);
 }
@@ -157,11 +157,11 @@ static void autoderive_cu_up_parameters_after_parsing(o_cu_up_unit_config&     o
                                                       const cu_cp_unit_config& cu_cp_cfg)
 {
   // If no UPF is configured, we set the UPF configuration from the CU-CP AMF configuration.
-  if (o_cu_up_cfg.cu_up_cfg.upf_cfg.bind_addr == "auto") {
-    o_cu_up_cfg.cu_up_cfg.upf_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
+  if (o_cu_up_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg.empty()) {
+    cu_up_unit_ngu_socket_config sock_cfg;
+    sock_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
+    o_cu_up_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg.push_back(sock_cfg);
   }
-  o_cu_up_cfg.cu_up_cfg.upf_cfg.no_core = cu_cp_cfg.amf_config.no_core;
-  o_cu_up_cfg.e2_cfg.pcaps.enabled = o_cu_up_cfg.e2_cfg.base_config.enable_unit_e2 && o_cu_up_cfg.e2_cfg.pcaps.enabled;
 }
 
 int main(int argc, char** argv)
@@ -199,6 +199,7 @@ int main(int argc, char** argv)
   // Set the callback for the app calling all the autoderivation functions.
   app.callback([&app, &o_cu_cp_app_unit, &o_cu_up_app_unit]() {
     o_cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
+    o_cu_up_app_unit->on_configuration_parameters_autoderivation(app);
 
     autoderive_cu_up_parameters_after_parsing(o_cu_up_app_unit->get_o_cu_up_unit_config(),
                                               o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
@@ -284,7 +285,8 @@ int main(int argc, char** argv)
   f1c_sctp_cfg.bind_address                = cu_cfg.f1ap_cfg.bind_addr;
   f1c_sctp_cfg.bind_port                   = F1AP_PORT;
   f1c_sctp_cfg.ppid                        = F1AP_PPID;
-  f1c_cu_sctp_gateway_config f1c_server_cfg({f1c_sctp_cfg, *epoll_broker, *cu_cp_dlt_pcaps.f1ap});
+  f1c_cu_sctp_gateway_config f1c_server_cfg(
+      {f1c_sctp_cfg, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_cp_dlt_pcaps.f1ap});
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
   // Create F1-U GW (TODO factory and cleanup).
@@ -297,8 +299,8 @@ int main(int argc, char** argv)
   cu_f1u_gw_config.bind_port                    = GTPU_PORT;
   cu_f1u_gw_config.reuse_addr                   = false;
   cu_f1u_gw_config.pool_occupancy_threshold     = cu_cfg.nru_cfg.pool_occupancy_threshold;
-  std::unique_ptr<srs_cu_up::ngu_gateway> cu_f1u_gw =
-      srs_cu_up::create_udp_ngu_gateway(cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor());
+  std::unique_ptr<gtpu_gateway> cu_f1u_gw       = create_udp_gtpu_gateway(
+      cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor(), *workers.non_rt_low_prio_exec);
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn = srs_cu_up::create_split_f1u_gw(
       {*cu_f1u_gw, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT, cu_cfg.nru_cfg.ext_addr});
 
@@ -306,23 +308,25 @@ int main(int argc, char** argv)
   std::unique_ptr<e1_local_connector> e1_gw =
       create_e1_local_connector(e1_local_connector_config{*cu_up_dlt_pcaps.e1ap});
 
-  // Create manager of timers for CU-CP and CU-UP, which will be
-  // driven by the system timer slot ticks.
+  // Create manager of timers for CU-CP and CU-UP, which will be driven by the system timer slot ticks.
   timer_manager  app_timers{256};
   timer_manager* cu_timers = &app_timers;
 
-  // Create time source that ticks the timers
-  io_timer_source time_source{app_timers, *epoll_broker, std::chrono::milliseconds{1}};
+  // Create time source that ticks the timers.
+  std::optional<io_timer_source> time_source(
+      std::in_place_t{}, app_timers, *epoll_broker, *workers.non_rt_hi_prio_exec, std::chrono::milliseconds{1});
 
   // Instantiate E2AP client gateway.
   std::unique_ptr<e2_connection_client> e2_gw_cu_cp = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_cp_app_unit->get_o_cu_cp_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
+                                        *workers.non_rt_hi_prio_exec,
                                         *cu_cp_dlt_pcaps.e2ap,
                                         E2_CP_PPID));
   std::unique_ptr<e2_connection_client> e2_gw_cu_up = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_cu_up_app_unit->get_o_cu_up_unit_config().e2_cfg.base_config,
                                         *epoll_broker,
+                                        *workers.non_rt_hi_prio_exec,
                                         *cu_up_dlt_pcaps.e2ap,
                                         E2_UP_PPID));
 
@@ -330,20 +334,22 @@ int main(int argc, char** argv)
 
   // Create O-CU-CP dependencies.
   o_cu_cp_unit_dependencies o_cucp_deps;
-  o_cucp_deps.cu_cp_executor   = workers.cu_cp_exec;
-  o_cucp_deps.cu_cp_e2_exec    = workers.cu_e2_exec;
-  o_cucp_deps.timers           = cu_timers;
-  o_cucp_deps.ngap_pcap        = cu_cp_dlt_pcaps.ngap.get();
-  o_cucp_deps.broker           = epoll_broker.get();
-  o_cucp_deps.e2_gw            = e2_gw_cu_cp.get();
-  o_cucp_deps.metrics_notifier = &metrics_notifier_forwarder;
+  o_cucp_deps.cu_cp_executor       = workers.cu_cp_exec;
+  o_cucp_deps.cu_cp_n2_rx_executor = workers.non_rt_hi_prio_exec;
+  o_cucp_deps.cu_cp_e2_exec        = workers.cu_e2_exec;
+  o_cucp_deps.timers               = cu_timers;
+  o_cucp_deps.ngap_pcap            = cu_cp_dlt_pcaps.ngap.get();
+  o_cucp_deps.broker               = epoll_broker.get();
+  o_cucp_deps.e2_gw                = e2_gw_cu_cp.get();
+  o_cucp_deps.metrics_notifier     = &metrics_notifier_forwarder;
 
   // Create O-CU-CP.
   auto                o_cucp_unit = o_cu_cp_app_unit->create_o_cu_cp(o_cucp_deps);
   srs_cu_cp::o_cu_cp& o_cucp_obj  = *o_cucp_unit.unit;
 
   // Create console helper object for commands and metrics printing.
-  app_services::stdin_command_dispatcher    command_parser(*epoll_broker, o_cucp_unit.commands);
+  app_services::stdin_command_dispatcher command_parser(
+      *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands);
   std::vector<app_services::metrics_config> metrics_configs = std::move(o_cucp_unit.metrics);
 
   // Connect E1AP to O-CU-CP.
@@ -397,6 +403,9 @@ int main(int argc, char** argv)
 
   // Stop O-CU-CP activity.
   o_cucp_obj.get_cu_cp().stop();
+
+  // Stop the timer source before stopping the workers.
+  time_source.reset();
 
   // Close PCAPs
   cu_logger.info("Closing PCAP files...");

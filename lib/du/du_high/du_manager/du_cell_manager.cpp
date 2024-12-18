@@ -55,11 +55,11 @@ async_task<void> du_cell_manager::start(du_cell_index_t cell_index)
   return launch_async([this, cell_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
     if (!has_cell(cell_index)) {
-      logger.warning("cell={}: Start called for a cell that does not exist.", cell_index);
+      logger.warning("cell={}: Start called for a cell that does not exist.", fmt::underlying(cell_index));
       CORO_EARLY_RETURN();
     }
     if (cells[cell_index]->active) {
-      logger.warning("cell={}: Start called for an already active cell.", cell_index);
+      logger.warning("cell={}: Start called for an already active cell.", fmt::underlying(cell_index));
       CORO_EARLY_RETURN();
     }
 
@@ -78,7 +78,7 @@ async_task<void> du_cell_manager::stop(du_cell_index_t cell_index)
     CORO_BEGIN(ctx);
 
     if (!has_cell(cell_index)) {
-      logger.warning("cell={}: Stop called for a cell that does not exist.", cell_index);
+      logger.warning("cell={}: Stop called for a cell that does not exist.", fmt::underlying(cell_index));
       CORO_EARLY_RETURN();
     }
     if (not cells[cell_index]->active) {

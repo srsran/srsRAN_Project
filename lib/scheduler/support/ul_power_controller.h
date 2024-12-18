@@ -33,8 +33,11 @@ class ul_power_controller
 public:
   ul_power_controller(const ue_cell_configuration& ue_cell_cfg_, const ue_channel_state_manager& ch_state_manager);
 
+  /// Save the PUSCH power control configuration.
+  void reconfigure(const ue_cell_configuration& ue_cell_cfg);
+
   /// Update UE with the latest PHR for a given cell.
-  void handle_phr(const cell_ph_report& phr);
+  void handle_phr(const cell_ph_report& phr, slot_point slot_rx);
 
   /// Save the PUSCH power control parameters after each PUSCH transmission.
   void update_pusch_pw_ctrl_state(slot_point slot, unsigned nof_prbs);
@@ -52,15 +55,22 @@ private:
   /// maximum expected delay (in slots) between the for which slot the PUSCH is scheduled and the slot at which the PHR
   /// is received; this delay depends on the PHY processing capabilities. For simplicity, we take round the number to a
   /// multiple of 10.
-  static constexpr size_t MAX_PHR_IND_DELAY_SLOTS = 40;
+  static constexpr size_t MAX_PHR_IND_DELAY_SLOTS = 80;
   /// This variable defines a time window after a PUSCH transmission, in slots, in which TPC adjustments are forbidden.
   /// This is to prevent the PUSCH TPC to be adjusted too quickly, leading to oscillations in the SINR.
   //  [Implementation-defined] This value should be enough to guarantee that the CRC indication (reporting the PUSCH
   //  SINR) for the PUSCH with the latest power adjustment is received, before a new power adjustment is computed.
   static constexpr unsigned tpc_adjust_prohibit_time_ms = 40U;
+  /// Minimum value for the closed-loop power control adjustment value. This is to avoid the power control going too
+  /// low.
+  static constexpr int min_f_cl_pw_control = -30;
 
-  const ue_cell_configuration&    ue_cell_cfg;
-  const ue_channel_state_manager& channel_state_manager;
+  const rnti_t rnti;
+  const bool   cl_pw_control_enabled;
+  const int    p0_nominal_pusch;
+  // Configuration for the PUSCH power control.
+  std::optional<pusch_config::pusch_power_control> pusch_pwr_ctrl;
+  const ue_channel_state_manager&                  channel_state_manager;
 
   /// \brief Latest PHR received from the UE.
   struct ue_phr_report {

@@ -25,7 +25,7 @@
 
 using namespace srsran;
 
-std::unique_ptr<io_broker> srsran::create_io_broker(io_broker_type type, io_broker_config config)
+std::unique_ptr<io_broker> srsran::create_io_broker(io_broker_type type, const io_broker_config& config)
 {
   switch (type) {
     case io_broker_type::epoll:

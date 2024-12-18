@@ -28,7 +28,7 @@ using namespace srsran;
 using namespace srs_cu_up;
 
 /// PDU session handling tests (creation/deletion)
-TEST_P(pdu_session_manager_test_set_n3_ext_addr, when_valid_pdu_session_setup_item_session_can_be_added)
+TEST_F(pdu_session_manager_test, when_valid_pdu_session_setup_item_session_can_be_added)
 {
   // no sessions added yet
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 0);
@@ -47,9 +47,8 @@ TEST_P(pdu_session_manager_test_set_n3_ext_addr, when_valid_pdu_session_setup_it
   // check successful outcome
   ASSERT_TRUE(setup_result.success);
   ASSERT_EQ(setup_result.gtp_tunnel.gtp_teid.value(), 1);
-  const std::string tp_address_expect = net_config.n3_ext_addr.empty() || net_config.n3_ext_addr == "auto"
-                                            ? net_config.n3_bind_addr
-                                            : net_config.n3_ext_addr;
+
+  const std::string tp_address_expect = "127.0.0.2"; // address of dummy gateway
   ASSERT_EQ(setup_result.gtp_tunnel.tp_address.to_string(), tp_address_expect);
   ASSERT_EQ(setup_result.drb_setup_results[0].gtp_tunnel.gtp_teid.value(), 1);
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
@@ -402,10 +401,6 @@ TEST_F(pdu_session_manager_test, when_new_ul_info_is_requested_f1u_is_disconnect
 
   ASSERT_EQ(pdu_session_mng->get_nof_pdu_sessions(), 1);
 }
-
-INSTANTIATE_TEST_SUITE_P(pdu_session_manager_test_n3_ext_addr,
-                         pdu_session_manager_test_set_n3_ext_addr,
-                         ::testing::Values("", "auto", "1.2.3.4"));
 
 int main(int argc, char** argv)
 {

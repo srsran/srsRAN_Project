@@ -31,6 +31,7 @@
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
+#include "srsran/scheduler/result/sched_result.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
 

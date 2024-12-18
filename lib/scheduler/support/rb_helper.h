@@ -22,11 +22,11 @@
 
 #pragma once
 
+#include "srsran/ran/pdcch/dci_format.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
-#include "srsran/scheduler/scheduler_dci.h"
-#include "srsran/scheduler/vrb_alloc.h"
+#include "srsran/scheduler/result/vrb_alloc.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {

@@ -79,7 +79,7 @@ void uci_scheduler_impl::rem_resource(rnti_t crnti, unsigned res_offset, unsigne
 {
   auto log_error = [&]() {
     logger.error("cell={} c-rnti={}: Unable to remove {} PUCCH resource for period={} offset={}",
-                 cell_cfg.cell_index,
+                 fmt::underlying(cell_cfg.cell_index),
                  crnti,
                  is_sr ? "SR" : "CSI",
                  res_period,
@@ -121,6 +121,11 @@ void uci_scheduler_impl::rem_resource(rnti_t crnti, unsigned res_offset, unsigne
 
 void uci_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
 {
+  add_ue_to_grid(ue_cfg, false);
+}
+
+void uci_scheduler_impl::add_ue_to_grid(const ue_cell_configuration& ue_cfg, bool is_reconf)
+{
   if (not ue_cfg.cfg_dedicated().ul_config.has_value() or
       not ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
     return;
@@ -148,7 +153,12 @@ void uci_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
   }
 
   // Register the UE in the list of recently configured UEs.
-  updated_ues.push_back(ue_cfg.crnti);
+  // Note: We skip this step during RRC Reconfiguration because it would involve cancelling already scheduled UCIs
+  // in the grid. While we don't fully support this feature, we leave the old SR/CSI UCIs in the grid. The worst that
+  // can happen is some missed SRs or CSI in a short period of time.
+  if (not is_reconf) {
+    updated_ues.push_back(ue_cfg.crnti);
+  }
 }
 
 void uci_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg)
@@ -169,7 +179,7 @@ void uci_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, cons
   }
 
   rem_ue(old_ue_cfg);
-  add_ue(new_ue_cfg);
+  add_ue_to_grid(new_ue_cfg, true);
 }
 
 void uci_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
@@ -221,7 +231,7 @@ void uci_scheduler_impl::schedule_slot_ucis(cell_slot_resource_allocator& slot_a
 
     if (ue_cfg == nullptr) {
       logger.error("cell={} c-rnti={}: UE for which {} is being scheduled was not found (slot={})",
-                   cell_cfg.cell_index,
+                   fmt::underlying(cell_cfg.cell_index),
                    uci_info.rnti,
                    it->sr_counter > 0 ? "SR" : (it->csi_counter > 0 ? "CSI" : "invalid UCI"),
                    slot_alloc.slot);
@@ -252,7 +262,9 @@ void uci_scheduler_impl::schedule_updated_ues_ucis(cell_resource_allocator& cell
   for (rnti_t rnti : updated_ues) {
     const ue_cell_configuration* ue_cfg = get_ue_cfg(rnti);
     if (ue_cfg == nullptr) {
-      logger.error("cell={} c-rnti={}: UE for which UCI is being scheduled was not found.", cell_cfg.cell_index, rnti);
+      logger.error("cell={} c-rnti={}: UE for which UCI is being scheduled was not found.",
+                   fmt::underlying(cell_cfg.cell_index),
+                   rnti);
       continue;
     }
 
@@ -267,7 +279,7 @@ void uci_scheduler_impl::schedule_updated_ues_ucis(cell_resource_allocator& cell
           for (const periodic_uci_info& uci_info : slot_ucis) {
             if (uci_info.rnti == rnti) {
               logger.debug("cell={} c-rnti={}: Skipped UCI scheduling for slot={}. Cause: Max PUCCHs has been reached",
-                           cell_cfg.cell_index,
+                           fmt::underlying(cell_cfg.cell_index),
                            rnti,
                            cell_alloc[n].slot);
             }

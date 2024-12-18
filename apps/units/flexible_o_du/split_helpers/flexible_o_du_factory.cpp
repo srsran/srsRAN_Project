@@ -27,9 +27,7 @@
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_factory.h"
 #include "apps/units/flexible_o_du/o_du_low/o_du_low_unit_factory.h"
-#include "apps/units/flexible_o_du/split_helpers/flexible_o_du_impl.h"
-#include "o_du_high_factory.h"
-#include "srsran/du/o_du.h"
+#include "flexible_o_du_impl.h"
 #include "srsran/du/o_du_factory.h"
 #include "srsran/e2/e2_du_metrics_connector.h"
 
@@ -37,9 +35,9 @@ using namespace srsran;
 
 o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependencies& dependencies)
 {
-  o_du_unit      odu_unit;
-  const unsigned nof_cells      = config.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
-  odu_unit.e2_metric_connectors = std::make_unique<
+  o_du_unit      o_du;
+  const unsigned nof_cells  = config.odu_high_cfg.du_high_cfg.config.cells_cfg.size();
+  o_du.e2_metric_connectors = std::make_unique<
       e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>(nof_cells);
 
   const du_high_unit_config& du_hi = config.odu_high_cfg.du_high_cfg.config;
@@ -47,8 +45,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
 
   auto du_cells = generate_du_cell_config(du_hi);
 
-  std::vector<std::unique_ptr<srs_du::o_du>> du_insts;
-  auto                                       du_impl = std::make_unique<flexible_o_du_impl>(nof_cells);
+  auto du_impl = std::make_unique<flexible_o_du_impl>(nof_cells);
 
   std::vector<srs_du::cell_prach_ports_entry> prach_ports;
   std::vector<unsigned>                       max_pusch_per_slot;
@@ -57,56 +54,41 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
     max_pusch_per_slot.push_back(high.cell.pusch_cfg.max_puschs_per_slot);
   }
 
-  // O-DU low factory is common for all the cells.
+  o_du_low_unit_config       odu_low_cfg          = {du_lo, prach_ports, du_cells, max_pusch_per_slot};
+  o_du_low_unit_dependencies odu_low_dependencies = {
+      du_impl->get_upper_ru_dl_rg_adapter(), du_impl->get_upper_ru_ul_request_adapter(), *dependencies.workers};
   o_du_low_unit_factory odu_low_factory(du_lo.hal_config, nof_cells);
+  auto                  odu_lo_unit = odu_low_factory.create(odu_low_cfg, odu_low_dependencies);
 
-  // Create O-DU low.
-  std::vector<o_du_low_unit> du_low_units;
+  o_du_high_unit_dependencies odu_hi_unit_dependencies = {dependencies.workers->get_du_high_executor_mapper(0),
+                                                          *dependencies.f1c_client_handler,
+                                                          *dependencies.f1u_gw,
+                                                          *dependencies.timer_mng,
+                                                          *dependencies.mac_p,
+                                                          *dependencies.rlc_p,
+                                                          *dependencies.e2_client_handler,
+                                                          *(o_du.e2_metric_connectors),
+                                                          *dependencies.json_sink,
+                                                          *dependencies.metrics_notifier,
+                                                          {}};
+
+  // Adjust the dependencies.
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
-    o_du_low_unit_config odu_low_cfg = {du_lo,
-                                        {prach_ports[i]},
-                                        span<const srs_du::du_cell_config>(&du_cells[i], 1),
-                                        span<const unsigned>(&max_pusch_per_slot[i], 1),
-                                        i,
-                                        nof_cells};
-
-    o_du_low_unit_dependencies odu_low_dependencies = {
-        du_impl->get_upper_ru_dl_rg_adapter(), du_impl->get_upper_ru_ul_request_adapter(), *dependencies.workers};
-    du_low_units.push_back(odu_low_factory.create(odu_low_cfg, odu_low_dependencies));
+    auto& sector_dependencies             = odu_hi_unit_dependencies.o_du_hi_dependencies.sectors.emplace_back();
+    sector_dependencies.gateway           = &odu_lo_unit.o_du_lo->get_slot_message_gateway(i);
+    sector_dependencies.last_msg_notifier = &odu_lo_unit.o_du_lo->get_slot_last_message_notifier(i);
+    sector_dependencies.fapi_executor     = config.odu_high_cfg.fapi_cfg.l2_nof_slots_ahead != 0
+                                                ? std::optional(dependencies.workers->fapi_exec[i])
+                                                : std::make_optional<task_executor*>();
   }
 
-  // Create O-DU high.
-  o_du_high_unit_factory_dependencies odu_hi_unit_dependencies = {*dependencies.workers,
-                                                                  *dependencies.f1c_client_handler,
-                                                                  *dependencies.f1u_gw,
-                                                                  *dependencies.timer_mng,
-                                                                  *dependencies.mac_p,
-                                                                  *dependencies.rlc_p,
-                                                                  *dependencies.e2_client_handler,
-                                                                  *(odu_unit.e2_metric_connectors),
-                                                                  *dependencies.json_sink,
-                                                                  *dependencies.metrics_notifier,
-                                                                  {}};
+  o_du_high_unit odu_hi_unit = make_o_du_high_unit(config.odu_high_cfg, std::move(odu_hi_unit_dependencies));
 
-  for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
-    auto& sector_deps             = odu_hi_unit_dependencies.o_du_hi_dependencies.sectors.emplace_back();
-    sector_deps.gateway           = &du_low_units[i].o_du_lo->get_slot_message_gateway(0);
-    sector_deps.last_msg_notifier = &du_low_units[i].o_du_lo->get_slot_last_message_notifier(0);
-    sector_deps.fapi_executor     = config.odu_high_cfg.fapi_cfg.l2_nof_slots_ahead != 0
-                                        ? std::optional(dependencies.workers->fapi_exec[i])
-                                        : std::make_optional<task_executor*>();
-  }
-  std::vector<o_du_high_unit> du_high_units =
-      make_multicell_with_multi_du(config.odu_high_cfg, std::move(odu_hi_unit_dependencies));
+  o_du.metrics  = std::move(odu_hi_unit.metrics);
+  o_du.commands = std::move(odu_hi_unit.commands);
 
-  // Create the O-DU.
-  for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
-    du_insts.push_back(srs_du::make_o_du(std::move(du_high_units[i].o_du_hi), std::move(du_low_units[i].o_du_lo)));
-  }
-
-  // Move commands and metrics.
-  odu_unit.metrics  = std::move(du_high_units.front().metrics);
-  odu_unit.commands = std::move(du_high_units.front().commands);
+  auto odu_instance = make_o_du(std::move(odu_hi_unit.o_du_hi), std::move(odu_lo_unit.o_du_lo));
+  report_error_if_not(odu_instance, "Invalid Distributed Unit");
 
   flexible_o_du_ru_config       ru_config{{du_cells},
                                     du_lo.expert_phy_cfg.max_processing_delay_slots,
@@ -117,17 +99,22 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
                                                 du_impl->get_upper_ru_error_adapter()};
 
   std::unique_ptr<radio_unit> ru = create_radio_unit(ru_config, ru_dependencies);
+
   srsran_assert(ru, "Invalid Radio Unit");
 
   // Add RU commands.
-  odu_unit.commands.push_back(std::make_unique<change_log_level_app_command>());
-  odu_unit.commands.push_back(std::make_unique<ru_metrics_app_command>(ru->get_controller()));
-  odu_unit.commands.push_back(std::make_unique<tx_gain_app_command>(ru->get_controller()));
-  odu_unit.commands.push_back(std::make_unique<rx_gain_app_command>(ru->get_controller()));
+  o_du.commands.push_back(std::make_unique<change_log_level_app_command>());
+  o_du.commands.push_back(std::make_unique<ru_metrics_app_command>(ru->get_controller()));
+  o_du.commands.push_back(std::make_unique<tx_gain_app_command>(ru->get_controller()));
+  o_du.commands.push_back(std::make_unique<rx_gain_app_command>(ru->get_controller()));
 
+  // Configure the RU and DU in the dynamic DU.
   du_impl->add_ru(std::move(ru));
-  du_impl->add_o_dus(std::move(du_insts));
-  odu_unit.unit = std::move(du_impl);
+  du_impl->add_du(std::move(odu_instance));
 
-  return odu_unit;
+  o_du.unit = std::move(du_impl);
+
+  announce_du_high_cells(du_hi);
+
+  return o_du;
 }

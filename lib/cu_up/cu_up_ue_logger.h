@@ -35,7 +35,7 @@ public:
   cu_up_log_prefix(ue_index_t ue_index)
   {
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "ue={}: ", ue_index);
+    fmt::format_to(std::back_inserter(buffer), "ue={}: ", fmt::underlying(ue_index));
     prefix = srsran::to_c_str(buffer);
   }
   const char* to_c_str() const { return prefix.c_str(); }
@@ -51,7 +51,6 @@ using cu_up_ue_logger = prefixed_logger<cu_up_log_prefix>;
 
 namespace fmt {
 
-// associated formatter
 template <>
 struct formatter<srsran::srs_cu_up::cu_up_log_prefix> {
   template <typename ParseContext>
@@ -61,10 +60,10 @@ struct formatter<srsran::srs_cu_up::cu_up_log_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_up::cu_up_log_prefix o, FormatContext& ctx)
-
+  auto format(const srsran::srs_cu_up::cu_up_log_prefix& o, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }
 };
+
 } // namespace fmt

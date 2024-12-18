@@ -24,6 +24,7 @@
 #include "cell_meas_manager_helpers.h"
 #include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/rrc/meas_types.h"
+#include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"
 #include <utility>
 
@@ -95,8 +96,6 @@ std::optional<rrc_meas_cfg> cell_meas_manager::get_measurement_config(ue_index_t
     for (const auto& nci : ssb_freq_to_ncis.at(ssb_freq)) {
       ue_meas_context.nci_to_meas_obj_id.emplace(nci, meas_obj_to_add.meas_obj_id);
     }
-    // add ncis for meas obj id to helper lookup
-    ue_meas_context.meas_obj_id_to_ncis.emplace(meas_obj_to_add.meas_obj_id, ssb_freq_to_ncis.at(ssb_freq));
 
     if (cell_config.serving_cell_cfg.ssb_arfcn.value() == ssb_freq && cell_config.periodic_report_cfg_id.has_value()) {
       logger.debug("ue={}: Adding periodic report config for nci={:#x}", ue_index, serving_nci);
@@ -199,16 +198,20 @@ std::optional<uint8_t> get_ssb_rsrp(const rrc_meas_result_nr& meas_result)
 
 void cell_meas_manager::report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results)
 {
-  logger.debug("ue={}: Received measurement result with meas_id={}", ue_index, meas_results.meas_id);
+  logger.debug("ue={}: Received measurement result with meas_id={}", ue_index, fmt::underlying(meas_results.meas_id));
 
   auto& ue_meas_context = ue_mng.get_measurement_context(ue_index);
 
   // Verify meas_id is valid.
   if (ue_meas_context.meas_id_to_meas_context.find(meas_results.meas_id) ==
       ue_meas_context.meas_id_to_meas_context.end()) {
-    logger.debug("ue={}: Measurement result for unknown meas_id={} received", ue_index, meas_results.meas_id);
+    logger.debug(
+        "ue={}: Measurement result for unknown meas_id={} received", ue_index, fmt::underlying(meas_results.meas_id));
     return;
   }
+
+  // Store measurement results.
+  store_measurement_results(ue_index, meas_results);
 
   auto& meas_ctxt = ue_meas_context.meas_id_to_meas_context.at(meas_results.meas_id);
 
@@ -294,6 +297,7 @@ void cell_meas_manager::update_measurement_object(nr_cell_identity              
   } else {
     ssb_freq_to_ncis.emplace(ssb_freq, std::vector<nr_cell_identity>{nci});
   }
+  nci_to_serving_cell_meas_config.emplace(serving_cell_cfg.nci, serving_cell_cfg);
 
   if (ssb_freq_to_meas_object.find(ssb_freq) != ssb_freq_to_meas_object.end()) {
     // If the measurement object is already present, we ignore the duplicate.
@@ -301,4 +305,9 @@ void cell_meas_manager::update_measurement_object(nr_cell_identity              
     return;
   }
   ssb_freq_to_meas_object.emplace(ssb_freq, generate_measurement_object(serving_cell_cfg));
+}
+
+SRSRAN_WEAK_SYMB void cell_meas_manager::store_measurement_results(ue_index_t              ue_index,
+                                                                   const rrc_meas_results& meas_results)
+{
 }

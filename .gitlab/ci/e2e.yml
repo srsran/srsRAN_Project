@@ -79,6 +79,7 @@ custom e2e:
     - *retina-needs
     - custom build
     - build trx driver
+  interruptible: false # Web jobs are standalone
 
 ################################################################################
 # ZMQ
@@ -163,6 +164,8 @@ amari 1UE 4x4 mimo:
 
 amari 4UE deb:
   extends: .zmq
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
   variables:
     TESTBED: "zmq_deb"
     MARKERS: "smoke"
@@ -214,6 +217,7 @@ amari 8UE:
   variables:
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  timeout: 4h
   parallel:
     matrix:
       - KEYWORDS:
@@ -293,6 +297,12 @@ cudu amari 64UE:
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
     KEYWORDS: "ping and 64"
 
+ric:
+  extends: .zmq
+  variables:
+    TESTBED: "zmq_ric"
+    MARKERS: "zmq_ric"
+
 ################################################################################
 # TEST MODE
 ################################################################################
@@ -335,7 +345,7 @@ test mode ru:
     E2E_LOG_LEVEL: "warning"
     RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
   needs:
-    - job: "basic avx512 dpdk"
+    - job: "basic ru dummy"
       artifacts: true
     - *txrx-lib
     - *retina-needs
@@ -369,6 +379,16 @@ test mode ru memcheck:
       artifacts: true
     - *txrx-lib
     - *retina-needs
+
+test mode ru acc100:
+  extends: test mode ru
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+  variables:
+    TESTBED: "test_mode_acc100"
+    MARKERS: "test_mode_acc100"
+    KEYWORDS: ""
+  allow_failure: true
 
 ################################################################################
 # RF
@@ -453,6 +473,22 @@ android x300:
       artifacts: true
     - *retina-needs
 
+android x300 drx:
+  stage: rf
+  extends: .e2e-run
+  allow_failure: true
+  variables:
+    GROUP: "rf"
+    TESTBED: "android_b200"
+    MARKERS: "android_drx"
+    E2E_LOG_LEVEL: "info"
+    KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
+    KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *retina-needs
+
 ################################################################################
 # VIAVI
 ###############################################################################
@@ -503,6 +539,7 @@ viavi-extended:
 
 viavi-extended-24h:
   extends: .viavi
+  timeout: 28 hours
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
@@ -538,7 +575,7 @@ retina setup:
     name: ${RETINA_REGISTRY_PREFIX}/launcher:${RETINA_VERSION}
     entrypoint: ["/bin/sh", "-c"]
   tags:
-    - "${RETINA_TAG}"
+    - retina-e2e-amd64
   script:
     - |
       retina-garbage-collector --mode demolition

@@ -24,7 +24,6 @@
 
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/gtpu/gtpu_teid.h"
-#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/format/prefixed_logger.h"
 #include "fmt/format.h"
@@ -38,9 +37,9 @@ public:
   {
     fmt::memory_buffer buffer;
     if (ue_index.has_value()) {
-      fmt::format_to(buffer, "ue={} {} teid={}: ", ue_index, dir, teid);
+      fmt::format_to(std::back_inserter(buffer), "ue={} {} teid={}: ", fmt::underlying(*ue_index), dir, teid);
     } else {
-      fmt::format_to(buffer, "{} teid={}: ", dir, teid);
+      fmt::format_to(std::back_inserter(buffer), "{} teid={}: ", dir, teid);
     }
     prefix = srsran::to_c_str(buffer);
   }
@@ -66,7 +65,7 @@ struct formatter<srsran::gtpu_tunnel_log_prefix> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::gtpu_tunnel_log_prefix o, FormatContext& ctx)
+  auto format(srsran::gtpu_tunnel_log_prefix o, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", o.to_c_str());
   }

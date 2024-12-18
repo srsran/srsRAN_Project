@@ -94,13 +94,13 @@ std::uniform_real_distribution<float> ChannelStateInformationFixture::real_dist(
 TEST_P(ChannelStateInformationFixture, FormatterDefault)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{}", generate_random_csi());
+  fmt::format_to(std::back_inserter(buffer), "{}", generate_random_csi());
 }
 
 TEST_P(ChannelStateInformationFixture, FormatterShort)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "{:s}", generate_random_csi());
+  fmt::format_to(std::back_inserter(buffer), "{:s}", generate_random_csi());
 }
 
 INSTANTIATE_TEST_SUITE_P(PucchProcessorFormat1,

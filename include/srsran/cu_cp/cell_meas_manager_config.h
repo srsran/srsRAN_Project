@@ -25,6 +25,7 @@
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/plmn_identity.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/rrc/meas_types.h"
 #include <map>
@@ -39,8 +40,9 @@ namespace srs_cu_cp {
 /// Note that some optional values need to be provided by the DU upon F1Setup.
 
 struct serving_cell_meas_config {
-  nr_cell_identity nci;               ///< The NR cell identifier.
-  unsigned         gnb_id_bit_length; ///< gNodeB identifier bit length.
+  nr_cell_identity nci;                                ///< The NR cell identifier.
+  unsigned         gnb_id_bit_length;                  ///< gNodeB identifier bit length.
+  plmn_identity    plmn = plmn_identity::test_value(); ///< PLMN identity.
   /// If not set in config must be provided by config update after DU attach.
   std::optional<pci_t>              pci;       ///< Physical cell identifier.
   std::optional<nr_band>            band;      ///< NR band.
@@ -96,7 +98,7 @@ struct formatter<srsran::srs_cu_cp::cell_meas_config> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::srs_cu_cp::cell_meas_config cfg, FormatContext& ctx)
+  auto format(srsran::srs_cu_cp::cell_meas_config cfg, FormatContext& ctx) const
   {
     std::string ncell_str = "[ ";
     for (const auto& ncell : cfg.ncells) {

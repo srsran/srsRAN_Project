@@ -59,11 +59,11 @@ static std::function<std::string()> get_vector_default_function(span<const Integ
     }
 
     fmt::memory_buffer buffer;
-    fmt::format_to(buffer, "[");
+    fmt::format_to(std::back_inserter(buffer), "[");
     for (unsigned i = 0, e = value.size() - 1; i != e; ++i) {
-      fmt::format_to(buffer, "{},", value[i]);
+      fmt::format_to(std::back_inserter(buffer), "{},", value[i]);
     }
-    fmt::format_to(buffer, "{}]", value.back());
+    fmt::format_to(std::back_inserter(buffer), "{}]", value.back());
 
     return to_c_str(buffer);
   };
@@ -262,12 +262,16 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
       app,
       "--mcs_table",
       [&pdsch_params](const std::string& value) {
-        if (value == "qam256") {
+        if (value == "qam64") {
+          pdsch_params.mcs_table = pdsch_mcs_table::qam64;
+        } else if (value == "qam256") {
           pdsch_params.mcs_table = pdsch_mcs_table::qam256;
+        } else {
+          report_fatal_error("PDSCH mcs_table={} not in {{qam64,qam256}}.", value);
         }
       },
       "MCS table to use PDSCH")
-      ->default_str("qam64")
+      ->default_str("qam256")
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
   add_option(app, "--min_rb_size", pdsch_params.min_rb_size, "Minimum RB size for UE PDSCH resource allocation")
       ->capture_default_str()
@@ -584,7 +588,7 @@ static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit
       ->check(CLI::Range(-1, 31));
   add_option(app, "--ta_target", ta_params.ta_target, "Timing Advance target in units of TA")
       ->capture_default_str()
-      ->check(CLI::Range(-30, 30));
+      ->check(CLI::Range(-30.0, 30.0));
   add_option(app,
              "--ta_update_measurement_ul_sinr_threshold",
              ta_params.ta_update_measurement_ul_sinr_threshold,
@@ -665,12 +669,16 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
       app,
       "--mcs_table",
       [&pusch_params](const std::string& value) {
-        if (value == "qam256") {
+        if (value == "qam64") {
+          pusch_params.mcs_table = pusch_mcs_table::qam64;
+        } else if (value == "qam256") {
           pusch_params.mcs_table = pusch_mcs_table::qam256;
+        } else {
+          report_fatal_error("PUSCH mcs_table={} not in {{qam64,qam256}}.", value);
         }
       },
       "MCS table to use PUSCH")
-      ->default_str("qam64")
+      ->default_str(pusch_mcs_table_to_string(pusch_params.mcs_table))
       ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
   add_option(app,
              "--max_rank",
@@ -836,6 +844,27 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
 
 static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config& pucch_params)
 {
+  // Lambda function to map the argument values to max_pucch_code_rate values.
+  auto map_max_code_rate = [](max_pucch_code_rate& max_code_rate) {
+    return [&max_code_rate](const std::string& value) {
+      if (value == "dot08") {
+        max_code_rate = max_pucch_code_rate::dot_08;
+      } else if (value == "dot15") {
+        max_code_rate = max_pucch_code_rate::dot_15;
+      } else if (value == "dot25") {
+        max_code_rate = max_pucch_code_rate::dot_25;
+      } else if (value == "dot35") {
+        max_code_rate = max_pucch_code_rate::dot_35;
+      } else if (value == "dot45") {
+        max_code_rate = max_pucch_code_rate::dot_45;
+      } else if (value == "dot60") {
+        max_code_rate = max_pucch_code_rate::dot_60;
+      } else if (value == "dot80") {
+        max_code_rate = max_pucch_code_rate::dot_80;
+      }
+    };
+  };
+
   add_option(app,
              "--p0_nominal",
              pucch_params.p0_nominal,
@@ -865,6 +894,12 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--use_format_0", pucch_params.use_format_0, "Use Format 0 for PUCCH resources from resource set 0")
       ->capture_default_str();
   add_option(app,
+             "--pucch_set1_format",
+             pucch_params.set1_format,
+             "Format to use for the resources from resource set 1. Values: {2, 3, 4}. Default: 2")
+      ->capture_default_str()
+      ->check(CLI::Range(2, 4));
+  add_option(app,
              "--nof_ue_res_harq_per_set",
              pucch_params.nof_ue_pucch_res_harq_per_set,
              "Number of PUCCH resources available per UE for HARQ for each PUCCH resource set")
@@ -873,7 +908,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app,
              "--f0_or_f1_nof_cell_res_sr",
              pucch_params.nof_cell_sr_resources,
-             "Number of PUCCH F1 resources available per cell for SR")
+             "Number of PUCCH F0/F1 resources available per cell for SR")
       ->capture_default_str()
       ->check(CLI::Range(1, 100));
   add_option(app,
@@ -884,7 +919,7 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--f1_enable_occ", pucch_params.f1_enable_occ, "Enable OCC for PUCCH F1")->capture_default_str();
   add_option(app,
              "--f1_nof_cyclic_shifts",
-             pucch_params.nof_cyclic_shift,
+             pucch_params.f1_nof_cyclic_shifts,
              "Number of possible cyclic shifts available for PUCCH F1 resources")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2, 3, 4, 6, 12}));
@@ -901,36 +936,21 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       ->capture_default_str()
       ->check(CLI::Range(1, 10));
   add_option(app,
-             "--f2_nof_cell_res_csi",
+             "--f2_or_f3_or_f4_nof_cell_res_csi",
              pucch_params.nof_cell_csi_resources,
-             "Number of PUCCH F2 resources available per cell for CSI")
+             "Number of PUCCH F2/F3/F4 resources available per cell for CSI")
       ->capture_default_str()
       ->check(CLI::Range(0, 100));
   add_option(app, "--f2_max_nof_rbs", pucch_params.f2_max_nof_rbs, "Max number of RBs for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
-  add_option(app, "--f2_max_payload", pucch_params.max_payload_bits, "Max number payload bits for PUCCH F2 resources")
+  add_option(
+      app, "--f2_max_payload", pucch_params.f2_max_payload_bits, "Max number payload bits for PUCCH F2 resources")
       ->check(CLI::Range(1, 11));
   add_option_function<std::string>(
       app,
       "--f2_max_code_rate",
-      [&pucch_params](const std::string& value) {
-        if (value == "dot08") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_08;
-        } else if (value == "dot15") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_15;
-        } else if (value == "dot25") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_25;
-        } else if (value == "dot35") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_35;
-        } else if (value == "dot45") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_45;
-        } else if (value == "dot60") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_60;
-        } else if (value == "dot80") {
-          pucch_params.max_code_rate = max_pucch_code_rate::dot_80;
-        }
-      },
+      map_max_code_rate(pucch_params.f2_max_code_rate),
       "PUCCH F2 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot35")
       ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
   add_option(app,
@@ -938,6 +958,45 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              pucch_params.f2_intraslot_freq_hopping,
              "Enable intra-slot frequency hopping for PUCCH F2")
       ->capture_default_str();
+  add_option(app, "--f3_max_nof_rbs", pucch_params.f3_max_nof_rbs, "Max number of RBs for PUCCH F3 resources")
+      ->capture_default_str()
+      ->check(CLI::IsMember({1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 16}));
+  add_option(
+      app, "--f3_max_payload", pucch_params.f3_max_payload_bits, "Max number payload bits for PUCCH F3 resources")
+      ->check(CLI::Range(1, 11));
+  add_option_function<std::string>(
+      app,
+      "--f3_max_code_rate",
+      map_max_code_rate(pucch_params.f3_max_code_rate),
+      "PUCCH F3 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot35")
+      ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
+  add_option(app,
+             "--f3_intraslot_freq_hop",
+             pucch_params.f3_intraslot_freq_hopping,
+             "Enable intra-slot frequency hopping for PUCCH F3")
+      ->capture_default_str();
+  add_option(app, "--f3_additional_dmrs", pucch_params.f3_additional_dmrs, "Enable additional DM-RS for PUCCH F3")
+      ->capture_default_str();
+  add_option(app, "--f3_pi2_bpsk", pucch_params.f3_pi2_bpsk, "Enable pi/2-BPSK modulation for PUCCH F3")
+      ->capture_default_str();
+  add_option_function<std::string>(
+      app,
+      "--f4_max_code_rate",
+      map_max_code_rate(pucch_params.f4_max_code_rate),
+      "PUCCH F4 max code rate {dot08, dot15, dot25, dot35, dot45, dot60, dot80}. Default: dot35")
+      ->check(CLI::IsMember({"dot08", "dot15", "dot25", "dot35", "dot45", "dot60", "dot80"}, CLI::ignore_case));
+  add_option(app,
+             "--f4_intraslot_freq_hop",
+             pucch_params.f4_intraslot_freq_hopping,
+             "Enable intra-slot frequency hopping for PUCCH F4")
+      ->capture_default_str();
+  add_option(app, "--f4_additional_dmrs", pucch_params.f4_additional_dmrs, "Enable additional DM-RS for PUCCH F4")
+      ->capture_default_str();
+  add_option(app, "--f4_pi2_bpsk", pucch_params.f4_pi2_bpsk, "Enable pi/2-BPSK modulation for PUCCH F4")
+      ->capture_default_str();
+  add_option(app, "--f4_occ_length", pucch_params.f4_occ_length, "OCC length for PUCCH F4")
+      ->capture_default_str()
+      ->check(CLI::IsMember({2, 4}));
   add_option(app,
              "--min_k1",
              pucch_params.min_k1,
@@ -1341,8 +1400,8 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
   configure_cli11_prach_args(*prach_subcmd, cell_params.prach_cfg);
 
   // TDD UL DL configuration.
-  // NOTE: As the cell TDD pattern can be configured in the common cell and not in the cell, use a different variable to
-  // parse the cell TDD property. If the TDD pattern is present for the cell, update the cell TDD pattern value,
+  // NOTE: As the cell TDD pattern can be configured in the common cell and not in the cell, use a different variable
+  // to parse the cell TDD property. If the TDD pattern is present for the cell, update the cell TDD pattern value,
   // otherwise do nothing (this will cause that the cell TDD pattern value equals than the common cell TDD pattern).
   // CLI11 needs that the life of the variable last longer than the call of callback function. Therefore, the
   // cell_tdd_pattern variable needs to be static.

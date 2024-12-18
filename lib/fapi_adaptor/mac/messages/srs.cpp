@@ -21,7 +21,7 @@
  */
 
 #include "srsran/fapi_adaptor/mac/messages/srs.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/result/srs_info.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;

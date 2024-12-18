@@ -130,7 +130,7 @@ struct formatter<srsran::cyclic_prefix> {
     return ctx.begin();
   }
   template <typename FormatContext>
-  auto format(srsran::cyclic_prefix cp, FormatContext& ctx)
+  auto format(srsran::cyclic_prefix cp, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", cp.to_string());
   }

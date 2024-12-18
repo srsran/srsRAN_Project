@@ -26,7 +26,6 @@
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
 #include "srsran/asn1/rrc_nr/dl_ccch_msg.h"
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/support/format/fmt_optional.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -80,6 +79,7 @@ bool rrc_du_impl::handle_served_cell_list(const std::vector<cu_cp_du_served_cell
     serving_cell_meas_config meas_cfg;
     meas_cfg.nci               = served_cell.served_cell_info.nr_cgi.nci;
     meas_cfg.gnb_id_bit_length = cfg.gnb_id.bit_length;
+    meas_cfg.plmn              = served_cell.served_cell_info.nr_cgi.plmn_id;
     meas_cfg.pci               = served_cell.served_cell_info.nr_pci;
     meas_cfg.band              = cell_info.band;
     // TODO: which meas timing to use here?

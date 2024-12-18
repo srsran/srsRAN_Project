@@ -115,7 +115,7 @@ public:
   expected<dl_harq_buffer_handle> allocate_dl_harq_buffer(du_ue_index_t ue_index, harq_id_t h_id)
   {
     srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid UE index");
-    srsran_assert(cell_buffers[ue_index].size() > h_id, "Invalid HARQ ID={}", h_id);
+    srsran_assert(cell_buffers[ue_index].size() > h_id, "Invalid HARQ ID={}", fmt::underlying(h_id));
 
     auto* harq_buffer = cell_buffers[ue_index][h_id];
     if (harq_buffer->ref_cnt.load(std::memory_order_acquire) != 0) {

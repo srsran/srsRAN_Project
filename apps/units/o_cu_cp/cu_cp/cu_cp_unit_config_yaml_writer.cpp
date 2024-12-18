@@ -267,6 +267,7 @@ static void fill_cu_cp_log_section(YAML::Node node, const cu_cp_unit_logger_conf
   node["pdcp_level"]        = srslog::basic_level_to_string(config.pdcp_level);
   node["rrc_level"]         = srslog::basic_level_to_string(config.rrc_level);
   node["ngap_level"]        = srslog::basic_level_to_string(config.ngap_level);
+  node["nrppa_level"]       = srslog::basic_level_to_string(config.nrppa_level);
   node["f1ap_level"]        = srslog::basic_level_to_string(config.f1ap_level);
   node["cu_level"]          = srslog::basic_level_to_string(config.cu_level);
   node["sec_level"]         = srslog::basic_level_to_string(config.sec_level);

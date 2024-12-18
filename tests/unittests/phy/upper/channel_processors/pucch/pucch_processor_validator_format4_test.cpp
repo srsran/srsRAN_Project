@@ -218,7 +218,7 @@ static const auto pucch_processor_validator_test_data = to_array<test_case_t>(
            entry.config              = base_format_4_config;
            entry.config.nof_harq_ack = uci_constants::MAX_NOF_HARQ_BITS;
            entry.assert_message =
-               R"(The effective code rate \(i\.e\., [0-9]*\.[0-9]*\) exceeds the maximum allowed 0\.8\.)";
+               R"(The effective code rate \(i\.e\., [0-9]+\.*[0-9]*\) exceeds the maximum allowed 0\.8\.)";
            return entry;
          },
      },
@@ -242,6 +242,7 @@ TEST_P(PucchProcessorFormat4Fixture, PucchProcessorValidatortest)
   // Make sure the configuration is invalid.
   error_type<std::string> validator_out = validator->is_valid(param.get_test_params().config);
   ASSERT_FALSE(validator_out.has_value()) << "Validation should fail.";
+  auto str = param.get_test_params().assert_message;
   ASSERT_TRUE(std::regex_match(validator_out.error(), std::regex(param.get_test_params().assert_message)))
       << "The assertion message doesn't match the expected pattern.";
 

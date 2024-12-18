@@ -26,6 +26,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/srslog/log_channel.h"
 #include "fmt/format.h"
+#include "fmt/ranges.h"
 #include <algorithm>
 #include <array>
 #include <iterator>
@@ -244,6 +245,10 @@ using const_span = span<const T>;
 
 namespace fmt {
 
+template <typename T>
+struct is_range<srsran::span<T>, char> : std::false_type {
+};
+
 /// \brief Custom formatter for \c span<T>.
 ///
 /// By default, the elements within the span are separated by a space character. A comma delimiter is available and can
@@ -305,12 +310,16 @@ struct formatter<srsran::span<T>> {
   }
 
   template <typename FormatContext>
-  auto format(srsran::span<T> buf, FormatContext& ctx)
+  auto format(srsran::span<T> buf, FormatContext& ctx) const
   {
     string_view format_str    = string_view(format_buffer.data(), format_buffer.size());
     string_view delimiter_str = string_view(delimiter_buffer.data(), delimiter_buffer.size());
     return format_to(ctx.out(), format_str, fmt::join(buf.begin(), buf.end(), delimiter_str));
   }
+};
+
+template <typename T>
+struct is_range<std::vector<T>, char> : std::false_type {
 };
 
 /// Custom formatter used by the \c copy_loggable_type defined below.
@@ -320,12 +329,16 @@ struct formatter<std::vector<T>> : public formatter<srsran::span<T>> {
   using formatter<srsran::span<T>>::format_buffer;
 
   template <typename FormatContext>
-  auto format(const std::vector<T>& buf, FormatContext& ctx)
+  auto format(const std::vector<T>& buf, FormatContext& ctx) const
   {
     string_view format_str    = string_view(format_buffer.data(), format_buffer.size());
     string_view delimiter_str = string_view(delimiter_buffer.data(), delimiter_buffer.size());
     return format_to(ctx.out(), format_str, fmt::join(buf.begin(), buf.end(), delimiter_str));
   }
+};
+
+template <typename T, size_t N>
+struct is_range<srsran::static_vector<T, N>, char> : std::false_type {
 };
 
 /// Custom formatter used by the \c copy_loggable_type defined below.
@@ -335,7 +348,7 @@ struct formatter<srsran::static_vector<T, N>> : public formatter<srsran::span<T>
   using formatter<srsran::span<T>>::format_buffer;
 
   template <typename FormatContext>
-  auto format(const srsran::static_vector<T, N>& buf, FormatContext& ctx)
+  auto format(const srsran::static_vector<T, N>& buf, FormatContext& ctx) const
   {
     string_view format_str    = string_view(format_buffer.data(), format_buffer.size());
     string_view delimiter_str = string_view(delimiter_buffer.data(), delimiter_buffer.size());

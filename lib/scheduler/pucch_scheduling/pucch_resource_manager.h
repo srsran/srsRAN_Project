@@ -40,17 +40,19 @@ enum class pucch_resource_usage { NOT_USED = 0, HARQ_SET_0, HARQ_SET_1, SR, CSI 
 
 /// \brief Class that manages the cell allocation of PUCCH resources across UEs.
 /// The correct functioning of pucch_resource_manager is based on the following assumptions:
-/// (i)   Each UE has max 8 PUCCH F0/F1 and max 8 PUCCH F2 dedicated to HARQ-ACK reporting.
-/// (ii)  Each UE has max 1 SR-dedicated PUCCH F0/F1 resource and max 1 CSI-dedicated PUCCH F2 resource.
+/// (i)   Each UE has max 8 PUCCH F0/F1 and max 8 PUCCH F2/F3/F4 dedicated to HARQ-ACK reporting.
+/// (ii)  Each UE has max 1 SR-dedicated PUCCH F0/F1 resource and max 1 CSI-dedicated PUCCH F2/F3/F4 resource.
 /// (iii) The cell PUCCH resource list can have max \c MAX_NOF_CELL_PUCCH_RESOURCES PUCCH resource, including all
-///       formats; at cell level, there is no constraint on how many resource must be F0/F1, F2, or for SR or for CSI.
+///       formats; at cell level, there is no constraint on how many resource must be F0/F1, F2/F3/F4, or for SR or for
+///       CSI.
 /// (vi)  UEs can have different PUCCH resource lists; however the PUCCH resource ID is unique with the cell. This
 ///       implies that if two UEs have the same PUCCH resource within their lists, their PUCCH resource ID must be the
 ///       same.
-/// (v)   Indexing of the PUCCH F0/F1 and PUCCH F2 resources for HARQ-ACK reporting must be contiguous within the F0/F1
-///       group and with F2 group. However, the last PUCCH F0/F1 group resource's and the first PUCCH F2 group
-///       resource's indices need not be contiguous. E.g., PUCCH F0/F1 indices (for HARQ-ACK reporting) = {0, ..., 7},
-///       and PUCCH F2 indices (for HARQ-ACK reporting) = {10, ..., 17}.
+/// (v)   Indexing of the PUCCH F0/F1 and PUCCH F2/F3/F4 resources for HARQ-ACK reporting must be contiguous within the
+/// F0/F1
+///       group and with F2/F3/F4 group. However, the last PUCCH F0/F1 group resource's and the first PUCCH F2/F3/F4
+///       group resource's indices need not be contiguous. E.g., PUCCH F0/F1 indices (for HARQ-ACK reporting) = {0, ...,
+///       7}, and PUCCH F2/F3/F4 indices (for HARQ-ACK reporting) = {10, ..., 17}.
 class pucch_resource_manager
 {
 public:
@@ -73,8 +75,7 @@ public:
   pucch_harq_resource_alloc_record
   reserve_next_set_0_harq_res_available(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// \brief Returns the next PUCCH format 2 resource available to be used for HARQ-ACK.
-  /// \remark Format 2 is the only format currently supported for PUCCH resource set 1.
+  /// \brief Returns the next PUCCH resource available to be used for HARQ-ACK (format 2, 3 or 4).
   /// \remark If SR and CSI multiplexing is enabled, this resource can be used for HARQ-ACK + SR and/or CSI.
   /// \return If any PUCCH resource available, it returns (i) the pointer to the configuration and (ii) the PUCCH
   /// resource indicator corresponding to the PUCCH resource that will be used by the UE. If there are no PUCCH
@@ -91,8 +92,8 @@ public:
                                                            unsigned            res_indicator,
                                                            const pucch_config& pucch_cfg);
 
-  /// \brief Returns a specific PUCCH format 2 resource (identified by the res. indicator) to be used for HARQ-ACK.
-  /// \remark Format 2 is the only format currently supported for PUCCH resource set 1.
+  /// \brief Returns a specific PUCCH format 2, 3 or 4 resource (identified by the res. indicator) to be used for
+  /// HARQ-ACK.
   /// \remark If SR and CSI multiplexing is enabled, this resource can be used for HARQ-ACK + SR and/or CSI.
   /// \return If the specific PUCCH resource is available, it returns the pointer to the configuration. Else, it returns
   /// \c nullptr.
@@ -101,7 +102,7 @@ public:
                                                            unsigned            res_indicator,
                                                            const pucch_config& pucch_cfg);
 
-  /// \brief Returns the specific PUCCH format 2 resource config to be used for CSI, if available.
+  /// \brief Returns the specific PUCCH resource config to be used for CSI, if available.
   /// \remark If SR multiplexing is enabled, this resource can be used for CSI + SR.
   /// \return If the specific PUCCH resource is available, it returns (i) the pointer to the configuration and (ii) the
   /// PUCCH resource indicator corresponding to the PUCCH resource that will be used by the UE. Else, the pointer passed
@@ -123,8 +124,7 @@ public:
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
   bool release_harq_set_0_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// \brief Release PUCCH (format 2) resource from being allocated to a given UE.
-  /// \remark Format 2 is the only format currently supported for PUCCH resource set 1.
+  /// \brief Release PUCCH (format 2, 3 or 4) resource from being allocated to a given UE.
   /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
   /// \param[in] crnti UE from which the resource needs to be released.
   /// \param[in] pucch_cfg UE's PUCCH config.
@@ -132,18 +132,18 @@ public:
   bool release_harq_set_1_resource(slot_point slot_harq, rnti_t crnti, const pucch_config& pucch_cfg);
 
   /// \brief Release PUCCH (format 0 or 1) resource used for SR from being allocated to a given UE.
-  /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
+  /// \param[in] slot_sr slot for which the PUCCH resource was scheduled.
   /// \param[in] crnti UE from which the resource needs to be released.
   /// \param[in] pucch_cfg UE's PUCCH config.
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
   bool release_sr_resource(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg);
 
-  /// \brief Release PUCCH (format 2) resource used for CSI from being allocated to a given UE.
-  /// \param[in] slot_harq slot for which the PUCCH resource was scheduled.
+  /// \brief Release PUCCH (format 2, 3 or 4) resource used for CSI from being allocated to a given UE.
+  /// \param[in] slot_csi slot for which the PUCCH resource was scheduled.
   /// \param[in] crnti UE from which the resource needs to be released.
-  /// \param[in] pucch_cfg UE's PUCCH config.
+  /// \param[in] ue_cell_cfg UE's dedicated cell configuration.
   /// \return True if the resource for the UE was found in the allocation records for the given slot.
-  bool release_csi_resource(slot_point slot_sr, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
+  bool release_csi_resource(slot_point slot_csi, rnti_t crnti, const ue_cell_configuration& ue_cell_cfg);
 
   /// \brief Reset the record of the PUCCH resources reserved to UE at the current slot.
   /// \remark This function doesn't release the resources, it only resets the record of which resources have been

@@ -77,36 +77,6 @@ public:
   f1ap_message f1ap_pdu;
   e1ap_message e1ap_pdu;
 
-  [[nodiscard]] bool send_dl_ue_associated_nrppa_transport()
-  {
-    report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
-                              "there are still NGAP messages to pop from AMF");
-    report_fatal_error_if_not(not this->get_du(du_idx).try_pop_dl_pdu(f1ap_pdu),
-                              "there are still F1AP DL messages to pop from DU");
-    report_fatal_error_if_not(not this->get_cu_up(cu_up_idx).try_pop_rx_pdu(e1ap_pdu),
-                              "there are still E1AP messages to pop from CU-UP");
-
-    // Generate DL UE associated NRPPA transport message.
-    ngap_message ngap_msg;
-    ngap_msg.pdu.set_init_msg();
-    ngap_msg.pdu.init_msg().load_info_obj(ASN1_NGAP_ID_DL_UE_ASSOCIATED_NRPPA_TRANSPORT);
-    auto& non_ue_nrppa           = ngap_msg.pdu.init_msg().value.dl_ue_associated_nrppa_transport();
-    non_ue_nrppa->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ctx->amf_ue_id.value());
-    non_ue_nrppa->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ctx->ran_ue_id.value());
-    non_ue_nrppa->routing_id     = make_byte_buffer("30").value();
-    non_ue_nrppa->nrppa_pdu =
-        make_byte_buffer(
-            "00060000006c000001000900654c000a000100000a000101000a000102000a000103000a000104000a000105000a000"
-            "106000a000107000a000108000a000109000a00010a000a00010b000a00010c000a00010d000a00010e000a00010f00"
-            "0a000110000a000111000a000112000a000113")
-            .value();
-
-    // Inject DL UE associated NRPPA transport message.
-    get_amf().push_tx_pdu(ngap_msg);
-
-    return true;
-  }
-
   [[nodiscard]] bool send_dl_non_ue_associated_nrppa_transport()
   {
     report_fatal_error_if_not(not this->get_amf().try_pop_rx_pdu(ngap_pdu),
@@ -135,15 +105,6 @@ public:
     return true;
   }
 };
-
-TEST_F(cu_cp_nrppa_test, when_dl_ue_nrppa_message_received_then_logging_it)
-{
-  // Inject DL UE associated NRPPA transport message.
-  ASSERT_TRUE(send_dl_ue_associated_nrppa_transport());
-
-  // Make sure that no UL UE associated NRPPA transport message is sent to the AMF.
-  ASSERT_FALSE(this->wait_for_ngap_tx_pdu(ngap_pdu));
-}
 
 TEST_F(cu_cp_nrppa_test, when_dl_non_ue_nrppa_message_received_then_logging_it)
 {

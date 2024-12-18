@@ -97,7 +97,7 @@ inline modulation_scheme modulation_scheme_from_string(const std::string& mod_sc
 /// \brief Bits per symbol for a given modulation scheme.
 /// \param[in] mod Modulation scheme.
 /// \returns The number of bits per modulated symbol (sometimes referred to as modulation order).
-inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
+constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
 {
   if (mod == modulation_scheme::PI_2_BPSK) {
     return 1;

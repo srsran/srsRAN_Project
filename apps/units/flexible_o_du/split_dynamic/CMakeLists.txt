@@ -24,8 +24,7 @@ set(SOURCES
         dynamic_o_du_translators.cpp
         dynamic_o_du_unit_cli11_schema.cpp
         dynamic_o_du_unit_config_validator.cpp
-        dynamic_o_du_unit_config_yaml_writer.cpp
-        multicell_dynamic_o_du_factory.cpp)
+        dynamic_o_du_unit_config_yaml_writer.cpp)
 
 add_library(srsran_flexible_o_du_split_dynamic STATIC ${SOURCES})
 target_include_directories(srsran_flexible_o_du_split_dynamic PRIVATE ${CMAKE_SOURCE_DIR})

@@ -56,7 +56,7 @@ public:
 
   std::optional<rrc_meas_cfg>     get_measurement_config(ue_index_t                  ue_index,
                                                          nr_cell_identity            nci,
-                                                         std::optional<rrc_meas_cfg> current_meas_config = {});
+                                                         std::optional<rrc_meas_cfg> current_meas_config = std::nullopt);
   std::optional<cell_meas_config> get_cell_config(nr_cell_identity nci);
   bool update_cell_config(nr_cell_identity nci, const serving_cell_meas_config& serv_cell_cfg);
   void report_measurement(ue_index_t ue_index, const rrc_meas_results& meas_results);
@@ -67,6 +67,8 @@ private:
 
   void update_measurement_object(nr_cell_identity nci, const serving_cell_meas_config& serving_cell_cfg);
 
+  void store_measurement_results(ue_index_t ue_index, const rrc_meas_results& meas_results);
+
   cell_meas_manager_cfg                cfg;
   cell_meas_mobility_manager_notifier& mobility_mng_notifier;
   ue_manager&                          ue_mng;
@@ -74,6 +76,7 @@ private:
   std::unordered_map<ssb_frequency_t, rrc_meas_obj_nr>
       ssb_freq_to_meas_object; // unique measurement objects, indexed by SSB frequency.
   std::unordered_map<ssb_frequency_t, std::vector<nr_cell_identity>> ssb_freq_to_ncis;
+  std::map<nr_cell_identity, serving_cell_meas_config>               nci_to_serving_cell_meas_config;
 
   srslog::basic_logger& logger;
 };

@@ -22,8 +22,6 @@
 
 #pragma once
 
-#include <algorithm>
-
 namespace srsran {
 
 /// Labels for the frequency ranges described in TS38.104 Table 5.1-1.
@@ -34,10 +32,16 @@ enum class frequency_range {
   FR2
 };
 
-inline const char* to_string(frequency_range freq_range)
+constexpr const char* to_string(frequency_range freq_range)
 {
-  static constexpr const char* names[] = {"FR1", "FR2", "invalid"};
-  return names[std::min(static_cast<unsigned>(freq_range), static_cast<unsigned>(frequency_range::FR2) + 1U)];
+  switch (freq_range) {
+    case frequency_range::FR1:
+      return "FR1";
+    case frequency_range::FR2:
+      return "FR2";
+    default:
+      return "invalid";
+  }
 }
 
 } // namespace srsran

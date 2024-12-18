@@ -26,7 +26,6 @@
 #include "srsran/ngap/ngap_context.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
-#include "srsran/ngap/ngap_nrppa.h"
 #include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
@@ -108,7 +107,7 @@ public:
   virtual ~ngap_rrc_ue_notifier() = default;
 
   /// \brief Notify about the a new nas pdu.
-  /// \param [in] nas_pdu The nas pdu.
+  /// \param[in] nas_pdu The nas pdu.
   virtual void on_new_pdu(byte_buffer nas_pdu) = 0;
 
   /// \brief Get packed packed UE radio access capability info for UE radio capability info indication.
@@ -214,8 +213,11 @@ public:
   virtual async_task<ngap_handover_resource_allocation_response>
   on_ngap_handover_request(const ngap_handover_request& request) = 0;
 
+  /// \brief Notifies the CU-CP about a DL UE associated NRPPa transport.
+  virtual void on_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) = 0;
+
   /// \brief Notifies the CU-CP about a DL non UE associated NRPPa transport.
-  virtual void on_dl_non_ue_associated_nrppa_transport(const ngap_non_ue_associated_nrppa_transport& msg) = 0;
+  virtual void on_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) = 0;
 };
 
 /// Handle NGAP NAS Message procedures as defined in TS 38.413 section 8.6.
@@ -261,12 +263,14 @@ public:
   handle_handover_preparation_request(const ngap_handover_preparation_request& msg) = 0;
 
   /// \brief Handle the reception of an inter CU handove related RRC Reconfiguration Complete.
-  virtual void handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
-                                                     const nr_cell_global_id_t& cgi,
-                                                     const unsigned             tac) = 0;
+  virtual void
+  handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t ue_index, const nr_cell_global_id_t& cgi, const tac_t tac) = 0;
 
   /// \brief Get the supported PLMNs.
   virtual const ngap_context_t& get_ngap_context() const = 0;
+
+  /// \brief Handle the reception of a UL NRPPa message.
+  virtual void handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, const byte_buffer& nrppa_pdu) = 0;
 };
 
 /// Interface to control the NGAP.

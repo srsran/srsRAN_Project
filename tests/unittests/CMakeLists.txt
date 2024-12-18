@@ -40,7 +40,6 @@ macro(ADD_TEST_VECTOR TARGET VECTOR_FILE TEST_ARGS)
                     POST_BUILD
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test_data
                     COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/${VECTOR_FILE}
-                    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${VECTOR_FILE}
                     VERBATIM)
         else (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${VECTOR_FILE})
             message(FATAL_ERROR "Vector file ${CMAKE_CURRENT_SOURCE_DIR}/${VECTOR_FILE} does not exist.")

@@ -372,7 +372,7 @@ struct formatter<srsran::rlc_tx_am_state> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::rlc_tx_am_state& st, FormatContext& ctx)
+  auto format(const srsran::rlc_tx_am_state& st, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "tx_next_ack={} tx_next={} poll_sn={} pdu_without_poll={} byte_without_poll={}",

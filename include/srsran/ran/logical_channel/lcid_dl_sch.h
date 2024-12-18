@@ -83,7 +83,7 @@ public:
 
   lcid_t to_lcid() const
   {
-    srsran_assert(is_sdu(), "Invalid to_lcid() access");
+    srsran_assert(is_sdu(), "Invalid to_lcid() access to lcid={}", lcid_val);
     return (lcid_t)lcid_val;
   }
 
@@ -130,7 +130,7 @@ namespace fmt {
 template <>
 struct formatter<srsran::lcid_dl_sch_t> : public formatter<uint16_t> {
   template <typename FormatContext>
-  auto format(srsran::lcid_dl_sch_t lcid, FormatContext& ctx)
+  auto format(srsran::lcid_dl_sch_t lcid, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", (uint16_t)lcid);
   }

@@ -29,29 +29,65 @@
 
 using namespace srsran;
 
-static void configure_cli11_upf_args(CLI::App& app, cu_up_unit_upf_config& upf_params)
+static void configure_cli11_ngu_socket_args(CLI::App& app, cu_up_unit_ngu_socket_config& ngu_sock_params)
 {
-  add_option(app, "--bind_addr", upf_params.bind_addr, "Local IP address to bind for N3 interface")
+  add_option(app, "--bind_addr", ngu_sock_params.bind_addr, "Local IP address to bind for N3 interface")
       ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
-  add_option(app, "--bind_interface", upf_params.bind_interface, "Network device to bind for N3 interface")
+  add_option(app, "--bind_interface", ngu_sock_params.bind_interface, "Network device to bind for N3 interface")
       ->capture_default_str();
   add_option(app,
              "--ext_addr",
-             upf_params.ext_addr,
+             ngu_sock_params.ext_addr,
              "External IP address that is advertised to receive GTP-U packets from UPF via N3 interface")
       ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
-  add_option(app, "--udp_max_rx_msgs", upf_params.udp_rx_max_msgs, "Maximum amount of messages RX in a single syscall");
-  add_option(
-      app, "--pool_threshold", upf_params.pool_threshold, "Pool accupancy threshold after which packets are dropped")
-      ->check(CLI::Range(0.0, 1.0));
-  add_option(app, "--no_core", upf_params.no_core, "Allow gNB to run without a core");
+
+  configure_cli11_with_udp_config_schema(app, ngu_sock_params.udp_config);
+}
+
+static void configure_cli11_ngu_args(CLI::App& app, cu_up_unit_ngu_config& ngu_params)
+{
+  add_option(app, "--no_core", ngu_params.no_core, "Allow gNB to run without a core");
+
+  // Add option for multiple sockets, for usage with different slices, 5QIs or parallization.
+  auto sock_lambda = [&ngu_params](const std::vector<std::string>& values) {
+    // Prepare the radio bearers
+    ngu_params.ngu_socket_cfg.resize(values.size());
+
+    // Format every QoS setting.
+    for (unsigned i = 0, e = values.size(); i != e; ++i) {
+      CLI::App subapp("NG-U socket parameters", "NG-U socket config, item #" + std::to_string(i));
+      subapp.config_formatter(create_yaml_config_parser());
+      subapp.allow_config_extras(CLI::config_extras_mode::capture);
+      configure_cli11_ngu_socket_args(subapp, ngu_params.ngu_socket_cfg[i]);
+      std::istringstream ss(values[i]);
+      subapp.parse_from_stream(ss);
+    }
+  };
+  add_option_cell(app, "--socket", sock_lambda, "Configures UDP/IP socket parameters of the N3 interface");
+}
+
+static void configure_cli11_test_mode_args(CLI::App& app, cu_up_unit_test_mode_config& test_mode_params)
+{
+  add_option(app, "--enable", test_mode_params.enabled, "Enable or disable CU-UP test mode");
+  add_option(app, "--integrity_enable", test_mode_params.integrity_enabled, "Enable or disable PDCP integrity testing");
+  add_option(app, "--ciphering_enable", test_mode_params.ciphering_enabled, "Enable or disable PDCP ciphering testing");
+  add_option(app, "--nea_algo", test_mode_params.nea_algo, "NEA algo to use for testing. Valid values {0, 1, 2, 3}.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 3));
+  add_option(app, "--nia_algo", test_mode_params.nea_algo, "NIA algo to use for testing. Valid values {1, 2, 3}.")
+      ->capture_default_str()
+      ->check(CLI::Range(1, 3));
 }
 
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_params)
 {
   // UPF section.
-  CLI::App* upf_subcmd = add_subcommand(app, "upf", "UPF parameters")->configurable();
-  configure_cli11_upf_args(*upf_subcmd, cu_up_params.upf_cfg);
+  CLI::App* ngu_subcmd = add_subcommand(app, "ngu", "NG-U parameters")->configurable();
+  configure_cli11_ngu_args(*ngu_subcmd, cu_up_params.ngu_cfg);
+
+  // Test mode section.
+  CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "CU-UP test mode parameters")->configurable();
+  configure_cli11_test_mode_args(*test_mode_subcmd, cu_up_params.test_mode_cfg);
 
   add_option(app, "--gtpu_queue_size", cu_up_params.gtpu_queue_size, "GTP-U queue size, in PDUs")
       ->capture_default_str();
@@ -118,19 +154,6 @@ static void configure_cli11_qos_args(CLI::App& app, cu_up_unit_qos_config& qos_p
   configure_cli11_f1u_cu_up_args(*f1u_cu_up_subcmd, qos_params.f1u_cu_up);
 }
 
-static void configure_cli11_test_mode_args(CLI::App& app, cu_up_unit_test_mode_config& test_mode_params)
-{
-  add_option(app, "--enable", test_mode_params.enabled, "Enable or disable CU-UP test mode");
-  add_option(app, "--integrity_enable", test_mode_params.integrity_enabled, "Enable or disable PDCP integrity testing");
-  add_option(app, "--ciphering_enable", test_mode_params.ciphering_enabled, "Enable or disable PDCP ciphering testing");
-  add_option(app, "--nea_algo", test_mode_params.nea_algo, "NEA algo to use for testing. Valid values {0, 1, 2, 3}.")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 3));
-  add_option(app, "--nia_algo", test_mode_params.nea_algo, "NIA algo to use for testing. Valid values {1, 2, 3}.")
-      ->capture_default_str()
-      ->check(CLI::Range(1, 3));
-}
-
 void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_unit_config& unit_cfg)
 {
   // CU-UP section.
@@ -165,8 +188,4 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
     }
   };
   add_option_cell(app, "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
-
-  // Test mode section.
-  CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "CU-UP test mode parameters")->configurable();
-  configure_cli11_test_mode_args(*test_mode_subcmd, unit_cfg.test_mode_cfg);
 }

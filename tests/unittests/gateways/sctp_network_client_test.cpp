@@ -22,6 +22,7 @@
 
 #include "sctp_test_helpers.h"
 #include "srsran/gateways/sctp_network_client_factory.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/io/sctp_socket.h"
 #include <gtest/gtest.h>
@@ -40,7 +41,7 @@ public:
   {
   public:
     dummy_sctp_recv_notifier(sctp_recv_notifier_factory& parent_) : parent(parent_) {}
-    ~dummy_sctp_recv_notifier() { parent.destroyed = true; }
+    ~dummy_sctp_recv_notifier() override { parent.destroyed = true; }
 
     bool on_new_sdu(byte_buffer sdu) override
     {
@@ -90,7 +91,7 @@ public:
 
     client_cfg.sctp.ppid = NGAP_PPID;
   }
-  ~sctp_network_client_test()
+  ~sctp_network_client_test() override
   {
     close_client();
     srslog::flush();
@@ -134,8 +135,9 @@ public:
   }
 
 protected:
+  inline_task_executor       io_rx_executor;
   dummy_io_broker            broker;
-  sctp_network_client_config client_cfg{{.if_name = "client"}, broker};
+  sctp_network_client_config client_cfg{{.if_name = "client"}, broker, io_rx_executor};
 
   sctp_recv_notifier_factory recv_notifier_factory;
 
@@ -160,13 +162,14 @@ TEST_F(sctp_network_client_test, when_bind_address_not_provided_then_client_is_c
   ASSERT_NE(client, nullptr);
 }
 
-TEST_F(sctp_network_client_test, when_bind_interface_is_invalid_then_server_is_not_created)
+TEST_F(sctp_network_client_test, when_bind_interface_is_invalid_then_client_connection_fails)
 {
   client_cfg.sctp.bind_interface = "invalid";
   client_cfg.sctp.bind_address   = "127.0.0.1";
   client_cfg.sctp.bind_port      = server.bind_port;
   client                         = create_sctp_network_client(client_cfg);
-  ASSERT_EQ(client, nullptr);
+  ASSERT_NE(client, nullptr);
+  ASSERT_FALSE(connect_to_server(client_cfg.sctp.bind_address, client_cfg.sctp.bind_port));
 }
 
 TEST_F(sctp_network_client_test, when_server_does_not_exist_then_connection_fails)
@@ -174,7 +177,7 @@ TEST_F(sctp_network_client_test, when_server_does_not_exist_then_connection_fail
   client = create_sctp_network_client(client_cfg);
 
   ASSERT_FALSE(connect_to_server("127.0.0.2", server.bind_port));
-  ASSERT_EQ(broker.last_registered_fd, -1);
+  ASSERT_EQ(broker.last_registered_fd.value(), -1);
   ASSERT_EQ(client_sender, nullptr);
   ASSERT_EQ(broker.last_unregistered_fd, -1);
 }
@@ -185,7 +188,7 @@ TEST_F(sctp_network_client_test, when_broker_rejects_subscriber_then_connect_fai
   client                = create_sctp_network_client(client_cfg);
 
   ASSERT_FALSE(connect_to_server(server.address, server.bind_port));
-  ASSERT_GE(broker.last_registered_fd, 0);
+  ASSERT_GE(broker.last_registered_fd.value(), 0);
   ASSERT_EQ(broker.last_unregistered_fd, -1) << "If the subscription fails, no deregister should be called";
 }
 
@@ -194,7 +197,7 @@ TEST_F(sctp_network_client_test, when_server_exists_then_connection_succeeds)
   client = create_sctp_network_client(client_cfg);
 
   ASSERT_TRUE(connect_to_server(server.address, server.bind_port));
-  ASSERT_EQ(broker.last_registered_fd, client->get_socket_fd());
+  ASSERT_EQ(broker.last_registered_fd.value(), client->get_socket_fd());
   ASSERT_NE(client_sender, nullptr);
   ASSERT_EQ(broker.last_unregistered_fd, -1);
 

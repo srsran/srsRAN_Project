@@ -34,11 +34,22 @@ from retina.launcher.utils import configure_artifacts, param
 from retina.protocol.base_pb2 import PLMN
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
+from retina.protocol.ric_pb2_grpc import NearRtRicStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth, is_tdd
-from .steps.stub import INTER_UE_START_PERIOD, iperf_parallel, start_and_attach, stop
+from .steps.stub import (
+    INTER_UE_START_PERIOD,
+    iperf_parallel,
+    ric_validate_e2_interface,
+    start_and_attach,
+    start_kpm_mon_xapp,
+    start_rc_xapp,
+    stop,
+    stop_kpm_mon_xapp,
+    stop_rc_xapp,
+)
 
 TINY_DURATION = 10
 SHORT_DURATION = 20
@@ -214,6 +225,64 @@ def test_srsue(
         always_download_artifacts=True,
         common_search_space_enable=True,
         prach_config_index=1,
+        pdsch_mcs_table="qam64",
+        pusch_mcs_table="qam64",
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.zmq_ric
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_ric(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,  # pylint: disable=invalid-name
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    ric: NearRtRicStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=11520000,
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
+        bitrate=MEDIUM_BITRATE,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration=0,
+        always_download_artifacts=True,
+        common_search_space_enable=True,
+        prach_config_index=1,
+        pdsch_mcs_table="qam64",
+        pusch_mcs_table="qam64",
+        ric=ric,
     )
 
 
@@ -465,20 +534,12 @@ def test_zmq_4x4_mimo(
 
 
 @mark.parametrize(
-    "direction",
+    "direction, nof_antennas",
     (
-        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
-        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
-        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
+        param(IPerfDir.DOWNLINK, 1, id="downlink", marks=mark.downlink),
+        param(IPerfDir.UPLINK, 1, id="uplink", marks=mark.uplink),
+        param(IPerfDir.BIDIRECTIONAL, 4, id="bidirectional 4x4 mimo", marks=mark.bidirectional),
     ),
-)
-@mark.parametrize(
-    "protocol",
-    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
-)
-@mark.parametrize(
-    "band, common_scs, bandwidth, bitrate",
-    (param(41, 30, 20, LOW_BITRATE, id=ZMQ_ID),),
 )
 @mark.zmq
 @mark.smoke
@@ -489,12 +550,8 @@ def test_smoke(
     ue_4: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-    bitrate: int,
-    protocol: IPerfProto,
     direction: IPerfDir,
+    nof_antennas: int,
 ):
     """
     ZMQ IPerfs
@@ -506,14 +563,16 @@ def test_smoke(
         ue_array=ue_4,
         gnb=gnb,
         fivegc=fivegc,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
+        band=41,
+        common_scs=30,
+        bandwidth=20,
         sample_rate=None,  # default from testbed
         iperf_duration=TINY_DURATION,
-        bitrate=bitrate,
-        protocol=protocol,
+        bitrate=LOW_BITRATE,
+        protocol=IPerfProto.UDP,
         direction=direction,
+        nof_antennas_dl=nof_antennas,
+        nof_antennas_ul=nof_antennas,
         global_timing_advance=0,
         time_alignment_calibration=0,
         always_download_artifacts=False,
@@ -693,7 +752,10 @@ def _iperf(
     enable_dddsu: bool = False,
     nof_antennas_dl: int = 1,
     nof_antennas_ul: int = 1,
+    pdsch_mcs_table: str = "qam256",
+    pusch_mcs_table: str = "qam256",
     inter_ue_start_period=INTER_UE_START_PERIOD,
+    ric: Optional[NearRtRicStub] = None,
 ):
     wait_before_power_off = 5
 
@@ -714,6 +776,8 @@ def _iperf(
         enable_dddsu=enable_dddsu,
         nof_antennas_dl=nof_antennas_dl,
         nof_antennas_ul=nof_antennas_ul,
+        pdsch_mcs_table=pdsch_mcs_table,
+        pusch_mcs_table=pusch_mcs_table,
     )
     configure_artifacts(
         retina_data=retina_data,
@@ -721,8 +785,18 @@ def _iperf(
     )
 
     ue_attach_info_dict = start_and_attach(
-        ue_array, gnb, fivegc, gnb_post_cmd=gnb_post_cmd, plmn=plmn, inter_ue_start_period=inter_ue_start_period
+        ue_array,
+        gnb,
+        fivegc,
+        gnb_post_cmd=gnb_post_cmd,
+        plmn=plmn,
+        inter_ue_start_period=inter_ue_start_period,
+        ric=ric,
     )
+
+    if ric:
+        start_rc_xapp(ric, control_service_style=2, action_id=6)
+        start_kpm_mon_xapp(ric, report_service_style=1, metrics="DRB.UEThpDl,DRB.UEThpUl")
 
     iperf_parallel(
         ue_attach_info_dict,
@@ -734,5 +808,19 @@ def _iperf(
         bitrate_threshold,
     )
 
+    if ric:
+        stop_rc_xapp(ric)
+        stop_kpm_mon_xapp(ric)
+
     sleep(wait_before_power_off)
-    stop(ue_array, gnb, fivegc, retina_data, ue_stop_timeout=ue_stop_timeout, warning_as_errors=warning_as_errors)
+    if ric:
+        ric_validate_e2_interface(ric, kpm_expected=True, rc_expected=True)
+    stop(
+        ue_array,
+        gnb,
+        fivegc,
+        retina_data,
+        ue_stop_timeout=ue_stop_timeout,
+        warning_as_errors=warning_as_errors,
+        ric=ric,
+    )

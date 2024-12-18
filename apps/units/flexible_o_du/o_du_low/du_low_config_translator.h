@@ -38,8 +38,7 @@ struct worker_manager_config;
 void generate_o_du_low_config(srs_du::o_du_low_config&           out_config,
                               const du_low_unit_config&          du_low_unit_cfg,
                               span<const srs_du::du_cell_config> du_cells,
-                              span<const unsigned>               max_puschs_per_slot,
-                              unsigned                           du_id);
+                              span<const unsigned>               max_puschs_per_slot);
 
 /// Fills the DU low worker manager parameters of the given worker manager configuration.
 void fill_du_low_worker_manager_config(worker_manager_config&    config,

@@ -75,7 +75,7 @@ static constexpr unsigned MAX_CONFIG_FILES = 10;
 static void populate_cli11_generic_args(CLI::App& app)
 {
   fmt::memory_buffer buffer;
-  format_to(buffer, "srsRAN 5G DU version {} ({})", get_version(), get_build_hash());
+  format_to(std::back_inserter(buffer), "srsRAN 5G DU version {} ({})", get_version(), get_build_hash());
   app.set_version_flag("-v,--version", srsran::to_c_str(buffer));
   app.set_config("-c,", config_file, "Read config from file", false)->expected(1, MAX_CONFIG_FILES);
 }
@@ -260,27 +260,31 @@ int main(int argc, char** argv)
   flexible_o_du_pcaps du_pcaps = create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers);
 
   // Instantiate F1-C client gateway.
-  std::unique_ptr<srs_du::f1c_connection_client> f1c_gw = create_f1c_client_gateway(
-      du_cfg.f1ap_cfg.cu_cp_address, du_cfg.f1ap_cfg.bind_address, *epoll_broker, *du_pcaps.f1ap);
+  std::unique_ptr<srs_du::f1c_connection_client> f1c_gw = create_f1c_client_gateway(du_cfg.f1ap_cfg.cu_cp_address,
+                                                                                    du_cfg.f1ap_cfg.bind_address,
+                                                                                    *epoll_broker,
+                                                                                    *workers.non_rt_hi_prio_exec,
+                                                                                    *du_pcaps.f1ap);
 
   // Create manager of timers for DU, which will be driven by the PHY slot ticks.
   timer_manager app_timers{256};
 
-  // Create F1-U connector
+  // Create F1-U connector.
   // TODO: Simplify this and use factory.
-  gtpu_demux_creation_request du_f1u_gtpu_msg       = {};
-  du_f1u_gtpu_msg.cfg.warn_on_drop                  = true;
-  du_f1u_gtpu_msg.gtpu_pcap                         = du_pcaps.f1u.get();
-  std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux     = create_gtpu_demux(du_f1u_gtpu_msg);
-  udp_network_gateway_config  du_f1u_gw_config      = {};
-  du_f1u_gw_config.bind_address                     = du_cfg.nru_cfg.bind_address;
-  du_f1u_gw_config.bind_port                        = GTPU_PORT;
-  du_f1u_gw_config.reuse_addr                       = false;
-  du_f1u_gw_config.pool_occupancy_threshold         = du_cfg.nru_cfg.pool_threshold;
-  std::unique_ptr<srs_cu_up::ngu_gateway> du_f1u_gw = srs_cu_up::create_udp_ngu_gateway(
-      du_f1u_gw_config,
-      *epoll_broker,
-      workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)));
+  gtpu_demux_creation_request du_f1u_gtpu_msg   = {};
+  du_f1u_gtpu_msg.cfg.warn_on_drop              = true;
+  du_f1u_gtpu_msg.gtpu_pcap                     = du_pcaps.f1u.get();
+  std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux = create_gtpu_demux(du_f1u_gtpu_msg);
+  udp_network_gateway_config  du_f1u_gw_config  = {};
+  du_f1u_gw_config.bind_address                 = du_cfg.nru_cfg.bind_address;
+  du_f1u_gw_config.bind_port                    = GTPU_PORT;
+  du_f1u_gw_config.reuse_addr                   = false;
+  du_f1u_gw_config.pool_occupancy_threshold     = du_cfg.nru_cfg.pool_threshold;
+  std::unique_ptr<gtpu_gateway> du_f1u_gw =
+      create_udp_gtpu_gateway(du_f1u_gw_config,
+                              *epoll_broker,
+                              workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
+                              *workers.non_rt_low_prio_exec);
   std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn = srs_du::create_split_f1u_gw(
       {du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_pcaps.f1u, GTPU_PORT, du_cfg.nru_cfg.ext_addr});
 
@@ -289,8 +293,12 @@ int main(int argc, char** argv)
       srslog::fetch_udp_sink(du_cfg.metrics_cfg.addr, du_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
   // Instantiate E2AP client gateway.
-  std::unique_ptr<e2_connection_client> e2_gw = create_e2_gateway_client(generate_e2_client_gateway_config(
-      o_du_app_unit->get_o_du_high_unit_config().e2_cfg.base_cfg, *epoll_broker, *du_pcaps.e2ap, E2_DU_PPID));
+  std::unique_ptr<e2_connection_client> e2_gw = create_e2_gateway_client(
+      generate_e2_client_gateway_config(o_du_app_unit->get_o_du_high_unit_config().e2_cfg.base_cfg,
+                                        *epoll_broker,
+                                        *workers.non_rt_hi_prio_exec,
+                                        *du_pcaps.e2ap,
+                                        E2_DU_PPID));
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
   o_du_unit_dependencies                    du_dependencies;
@@ -304,7 +312,7 @@ int main(int argc, char** argv)
   du_dependencies.json_sink          = &json_sink;
   du_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
-  auto du_inst_and_cmds = o_du_app_unit->create_flexible_o_du_unit(du_dependencies, du_cfg.du_multicell_enabled);
+  auto du_inst_and_cmds = o_du_app_unit->create_flexible_o_du_unit(du_dependencies);
 
   // Only DU has metrics now.
   app_services::metrics_manager metrics_mngr(
@@ -315,7 +323,8 @@ int main(int argc, char** argv)
   srs_du::du& du_inst = *du_inst_and_cmds.unit;
 
   // Register the commands.
-  app_services::stdin_command_dispatcher command_parser(*epoll_broker, du_inst_and_cmds.commands);
+  app_services::stdin_command_dispatcher command_parser(
+      *epoll_broker, *workers.non_rt_low_prio_exec, du_inst_and_cmds.commands);
 
   // Start processing.
   du_inst.get_power_controller().start();

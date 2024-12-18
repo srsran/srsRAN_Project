@@ -23,6 +23,7 @@
 #pragma once
 
 #include "cu_up_ue_logger.h"
+#include "ngu_session_manager.h"
 #include "pdu_session_manager.h"
 #include "pdu_session_manager_impl.h"
 #include "srsran/cu_up/cu_up_types.h"
@@ -49,23 +50,22 @@ struct ue_context_cfg {
 class ue_context : public pdu_session_manager_ctrl
 {
 public:
-  ue_context(ue_index_t                                  index_,
-             ue_context_cfg                              cfg_,
-             e1ap_control_message_handler&               e1ap_,
-             const network_interface_config&             net_config_,
-             const n3_interface_config&                  n3_config_,
-             const cu_up_test_mode_config&               test_mode_config_,
-             std::unique_ptr<ue_executor_mapper>         ue_exec_mapper_,
-             fifo_async_task_scheduler&                  task_sched_,
-             timer_factory                               ue_dl_timer_factory_,
-             timer_factory                               ue_ul_timer_factory_,
-             timer_factory                               ue_ctrl_timer_factory_,
-             f1u_cu_up_gateway&                          f1u_gw_,
-             gtpu_teid_pool&                             n3_teid_allocator_,
-             gtpu_teid_pool&                             f1u_teid_allocator_,
-             gtpu_tunnel_common_tx_upper_layer_notifier& gtpu_tx_notifier_,
-             gtpu_demux_ctrl&                            gtpu_rx_demux_,
-             dlt_pcap&                                   gtpu_pcap) :
+  ue_context(ue_index_t                          index_,
+             ue_context_cfg                      cfg_,
+             e1ap_control_message_handler&       e1ap_,
+             const n3_interface_config&          n3_config_,
+             const cu_up_test_mode_config&       test_mode_config_,
+             std::unique_ptr<ue_executor_mapper> ue_exec_mapper_,
+             fifo_async_task_scheduler&          task_sched_,
+             timer_factory                       ue_dl_timer_factory_,
+             timer_factory                       ue_ul_timer_factory_,
+             timer_factory                       ue_ctrl_timer_factory_,
+             f1u_cu_up_gateway&                  f1u_gw_,
+             ngu_session_manager&                ngu_session_mngr_,
+             gtpu_teid_pool&                     n3_teid_allocator_,
+             gtpu_teid_pool&                     f1u_teid_allocator_,
+             gtpu_demux_ctrl&                    gtpu_rx_demux_,
+             dlt_pcap&                           gtpu_pcap) :
     task_sched(task_sched_),
     ue_exec_mapper(std::move(ue_exec_mapper_)),
     index(index_),
@@ -75,7 +75,6 @@ public:
     pdu_session_manager(index,
                         cfg.qos,
                         cfg.security_info,
-                        net_config_,
                         n3_config_,
                         test_mode_config_,
                         logger,
@@ -84,9 +83,9 @@ public:
                         ue_ul_timer_factory_,
                         ue_ctrl_timer_factory_,
                         f1u_gw_,
+                        ngu_session_mngr_,
                         n3_teid_allocator_,
                         f1u_teid_allocator_,
-                        gtpu_tx_notifier_,
                         gtpu_rx_demux_,
                         ue_exec_mapper->dl_pdu_executor(),
                         ue_exec_mapper->ul_pdu_executor(),
@@ -169,7 +168,8 @@ private:
     };
 
     if (!ue_exec_mapper->ctrl_executor().execute(std::move(fn))) {
-      logger.log_warning("Could not handle expired UE inactivity handler, queue is full. ue={}", index);
+      logger.log_warning("Could not handle expired UE inactivity handler, queue is full. ue={}",
+                         fmt::underlying(index));
     }
   }
 };

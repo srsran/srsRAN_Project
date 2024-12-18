@@ -50,16 +50,16 @@ TEST_F(ue_configuration_test, configuration_valid_on_creation)
   TESTASSERT(ue_cfg.find_bwp(to_bwp_id(0)) != nullptr);
   TESTASSERT(ue_cfg.bwp(to_bwp_id(0)).dl_common->generic_params == cell_cfg.dl_cfg_common.init_dl_bwp.generic_params);
   TESTASSERT(ue_cfg.coreset(to_coreset_id(0)).id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->id);
-  TESTASSERT_EQ(0, ue_cfg.search_space(to_search_space_id(0)).cfg->get_id());
+  TESTASSERT_EQ(0, fmt::underlying(ue_cfg.search_space(to_search_space_id(0)).cfg->get_id()));
   TESTASSERT(*ue_cfg.search_space(to_search_space_id(0)).cfg ==
              cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0]);
-  TESTASSERT_EQ(1, ue_cfg.search_space(to_search_space_id(1)).cfg->get_id());
+  TESTASSERT_EQ(1, fmt::underlying(ue_cfg.search_space(to_search_space_id(1)).cfg->get_id()));
   TESTASSERT(*ue_cfg.search_space(to_search_space_id(1)).cfg ==
              cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1]);
 
   // Test Dedicated Config.
   TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) == nullptr);
-  TESTASSERT_EQ(2, ue_cfg.search_space(to_search_space_id(2)).cfg->get_id());
+  TESTASSERT_EQ(2, fmt::underlying(ue_cfg.search_space(to_search_space_id(2)).cfg->get_id()));
   TESTASSERT(*ue_cfg.search_space(to_search_space_id(2)).cfg ==
              (*ue_create_msg.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces[0]);
   TESTASSERT(ue_cfg.find_search_space(to_search_space_id(3)) == nullptr);
@@ -79,7 +79,7 @@ TEST_F(ue_configuration_test, configuration_valid_on_reconfiguration)
   ue_cfg.reconfigure(ue_cell_reconf.serv_cell_cfg);
 
   TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) != nullptr);
-  TESTASSERT_EQ(2, ue_cfg.coreset(to_coreset_id(2)).id);
+  TESTASSERT_EQ(2, fmt::underlying(ue_cfg.coreset(to_coreset_id(2)).id));
   TESTASSERT(ue_cfg.coreset(to_coreset_id(2)) == ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.back());
 }
 
@@ -101,6 +101,28 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   u.handle_reconfiguration_request(ue_reconf_command{ue_ded_cfg2});
   dl_buffer_state_indication_message ind{recfg.ue_index, uint_to_lcid(4), 0};
 
+  // Confirm that the UE is in fallback.
+  ASSERT_TRUE(u.get_pcell().is_in_fallback_mode());
+  ASSERT_TRUE(u.is_reconfig_ongoing());
+
+  // While in fallback, DL buffer status that are not for SRB0/SRB1, do not get represented in pending bytes.
+  ASSERT_FALSE(u.has_pending_dl_newtx_bytes());
+  for (const auto& lc : *recfg.cfg.lc_config_list) {
+    ind.lcid = lc.lcid;
+    ind.bs   = 10;
+    u.handle_dl_buffer_state_indication(ind);
+    if (lc.lcid <= LCID_SRB1) {
+      ASSERT_TRUE(u.has_pending_dl_newtx_bytes());
+    } else {
+      ASSERT_FALSE(u.has_pending_dl_newtx_bytes());
+    }
+    ind.bs = 0;
+    u.handle_dl_buffer_state_indication(ind);
+  }
+
+  // Confirm that UE config applied config.
+  u.handle_config_applied();
+
   // Verify that DL buffer state indications affect newly active logical channels.
   for (const auto& lc : *recfg.cfg.lc_config_list) {
     if (lc.lcid == uint_to_lcid(0)) {
@@ -110,10 +132,10 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
     ind.lcid = lc.lcid;
     ind.bs   = 10;
     u.handle_dl_buffer_state_indication(ind);
-    ASSERT_TRUE(u.pending_dl_newtx_bytes());
+    ASSERT_TRUE(u.has_pending_dl_newtx_bytes());
     ind.bs = 0;
     u.handle_dl_buffer_state_indication(ind);
-    ASSERT_FALSE(u.pending_dl_newtx_bytes());
+    ASSERT_FALSE(u.has_pending_dl_newtx_bytes());
   }
 
   // Verify that inactive logical channels do not affect pending bytes.

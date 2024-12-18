@@ -27,6 +27,7 @@
 #include "srsran/adt/expected.h"
 #include "srsran/adt/to_array.h"
 #include "srsran/ru/ru_controller.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 

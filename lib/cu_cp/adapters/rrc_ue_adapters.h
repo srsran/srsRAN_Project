@@ -80,7 +80,7 @@ public:
 
   void on_inter_cu_ho_rrc_recfg_complete_received(const ue_index_t           ue_index,
                                                   const nr_cell_global_id_t& cgi,
-                                                  const unsigned             tac) override
+                                                  const tac_t                tac) override
   {
     srsran_assert(ngap != nullptr, "ue={}: NGAP for not found", ue_index);
     ngap->get_ngap_control_message_handler().handle_inter_cu_ho_rrc_recfg_complete(ue_index, cgi, tac);
@@ -251,7 +251,8 @@ public:
   }
 
   std::optional<rrc_meas_cfg>
-  on_measurement_config_request(nr_cell_identity nci, std::optional<rrc_meas_cfg> current_meas_config = {}) override
+  on_measurement_config_request(nr_cell_identity            nci,
+                                std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) override
   {
     srsran_assert(meas_handler != nullptr, "Measurement handler must not be nullptr");
     return meas_handler->handle_measurement_config_request(ue_index, nci, current_meas_config);

@@ -26,6 +26,7 @@
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/ran/sch/sch_constants.h"
 #include "srsran/ran/sch/tbs_calculator.h"
+#include "srsran/scheduler/result/pdsch_info.h"
 #include <numeric>
 
 using namespace srsran;

@@ -29,10 +29,8 @@
 #include "srsran/support/io/io_broker_factory.h"
 #include <arpa/inet.h>
 #include <chrono>
-#include <fcntl.h>
 #include <gtest/gtest.h>
 #include <sys/socket.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 using namespace srsran;
@@ -104,7 +102,7 @@ protected:
     srslog::fetch_basic_logger("GTPU").set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("E1AP").set_level(srslog::basic_levels::debug);
 
-    // create worker thread and executer
+    // create worker thread and executor
     worker   = std::make_unique<task_worker>("thread", 128, os_thread_realtime_priority::no_realtime());
     executor = make_task_executor_ptr(*worker);
 
@@ -113,6 +111,10 @@ protected:
     f1u_gw       = std::make_unique<dummy_f1u_gateway>(f1u_bearer);
     broker       = create_io_broker(io_broker_type::epoll);
     upf_addr_str = "127.0.0.1";
+
+    // Set default UDP configs
+    cu_up_udp_cfg.bind_port    = 0;           // Random free port selected by the OS.
+    cu_up_udp_cfg.bind_address = "127.0.0.2"; // NG-U bind address
   }
 
   cu_up_config get_default_cu_up_config()
@@ -120,8 +122,8 @@ protected:
     // create config
     cu_up_config cfg;
 
-    cfg.qos[uint_to_five_qi(9)]      = {};
-    cfg.net_cfg.n3_bind_port         = 0; // Random free port selected by the OS.
+    cfg.qos[uint_to_five_qi(9)] = {};
+
     cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds(0);
     cfg.n3_cfg.warn_on_drop          = false;
     cfg.statistics_report_period     = std::chrono::seconds(1);
@@ -129,28 +131,22 @@ protected:
     return cfg;
   }
 
-  cu_up_dependencies get_defatul_cu_up_dependencies()
+  cu_up_dependencies get_default_cu_up_dependencies()
   {
     cu_up_dependencies deps;
     deps.gtpu_pcap      = &dummy_pcap;
     deps.exec_mapper    = exec_pool.get();
     deps.e1_conn_client = &e1ap_client;
     deps.f1u_gateway    = f1u_gw.get();
-    deps.ngu_gw         = ngu_gw.get();
-    deps.timers         = app_timers.get();
+    ngu_gw              = create_udp_gtpu_gateway(cu_up_udp_cfg, *broker, *executor, *executor);
+    deps.ngu_gws.push_back(ngu_gw.get());
+    deps.timers = app_timers.get();
     return deps;
   }
 
   void init(const cu_up_config& cfg, cu_up_dependencies&& deps)
   {
-    udp_network_gateway_config udp_cfg{};
-    udp_cfg.bind_interface = cfg.net_cfg.n3_bind_interface;
-    udp_cfg.bind_address   = cfg.net_cfg.n3_bind_addr;
-    udp_cfg.bind_port      = cfg.net_cfg.n3_bind_port;
-    ngu_gw                 = create_udp_ngu_gateway(udp_cfg, *broker, *executor);
-
     auto cfg_copy = cfg;
-    deps.ngu_gw   = ngu_gw.get();
     cu_up         = std::make_unique<srs_cu_up::cu_up>(cfg_copy, std::move(deps));
   }
 
@@ -166,10 +162,12 @@ protected:
   dummy_inner_f1u_bearer                       f1u_bearer;
   std::unique_ptr<dummy_f1u_gateway>           f1u_gw;
   std::unique_ptr<io_broker>                   broker;
-  std::unique_ptr<ngu_gateway>                 ngu_gw;
+  std::unique_ptr<gtpu_gateway>                ngu_gw;
   std::unique_ptr<dummy_cu_up_executor_mapper> exec_pool;
   std::unique_ptr<srs_cu_up::cu_up>            cu_up;
   srslog::basic_logger&                        test_logger = srslog::fetch_basic_logger("TEST");
+
+  udp_network_gateway_config cu_up_udp_cfg{};
 
   std::unique_ptr<task_worker>   worker;
   std::unique_ptr<task_executor> executor;
@@ -240,7 +238,7 @@ protected:
 
 TEST_F(cu_up_test, when_e1ap_connection_established_then_e1ap_connected)
 {
-  init(get_default_cu_up_config(), get_defatul_cu_up_dependencies());
+  init(get_default_cu_up_config(), get_default_cu_up_dependencies());
 
   // Connect E1AP
   cu_up->get_cu_up_manager()->on_e1ap_connection_establish();
@@ -255,14 +253,13 @@ TEST_F(cu_up_test, when_e1ap_connection_established_then_e1ap_connected)
 TEST_F(cu_up_test, dl_data_flow)
 {
   cu_up_config cfg = get_default_cu_up_config();
-  test_logger.debug("Using network_interface_config: {}", cfg.net_cfg);
 
   // Initialize UPF simulator on a random port.
-  upf_info_t upf_info  = init_upf();
-  cfg.net_cfg.upf_port = ntohs(upf_info.upf_addr.sin_port);
+  upf_info_t upf_info = init_upf();
   ASSERT_GE(upf_info.sock_fd, 0);
+  cfg.n3_cfg.upf_port = ntohs(upf_info.upf_addr.sin_port);
 
-  cu_up_dependencies dependencies = get_defatul_cu_up_dependencies();
+  cu_up_dependencies dependencies = get_default_cu_up_dependencies();
 
   // Initialize CU-UP
   init(cfg, std::move(dependencies));
@@ -288,17 +285,21 @@ TEST_F(cu_up_test, dl_data_flow)
 
   f1u_bearer.handle_pdu(std::move(nru_msg1));
 
+  test_logger.info("Waiting UL PDU. This is required to update DDDS");
+
   // We wait here for the UL PDU to arrive, to make sure the DDDS has been processed.
   // receive message 1
   std::array<uint8_t, 128> rx_buf;
   int                      ret;
   ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
 
+  test_logger.info("Processed UL PDU. DDDS is updated");
+
   // Now that the disered buffer size is updated, we push DL PDUs
   sockaddr_in cu_up_addr;
   cu_up_addr.sin_family      = AF_INET;
   cu_up_addr.sin_port        = htons(cu_up->get_n3_bind_port().value());
-  cu_up_addr.sin_addr.s_addr = inet_addr(cfg.net_cfg.n3_bind_addr.c_str());
+  cu_up_addr.sin_addr.s_addr = inet_addr(cu_up_udp_cfg.bind_address.c_str());
 
   // DL PDU teid=2, qfi=1
   const uint8_t gtpu_ping_vec[] = {
@@ -311,14 +312,15 @@ TEST_F(cu_up_test, dl_data_flow)
 
   // send message 1
   ret = sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
-  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `" << cfg.net_cfg.n3_bind_addr
-                    << ":" << cu_up->get_n3_bind_port().value() << "` - " << strerror(errno);
+  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
+                    << cu_up_udp_cfg.bind_address << ":" << cu_up->get_n3_bind_port().value() << "` - "
+                    << strerror(errno);
 
   // send message 2
   ret = sendto(upf_info.sock_fd, gtpu_ping_vec, sizeof(gtpu_ping_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
-  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `" << cfg.net_cfg.n3_bind_addr
-                    << ":" << cu_up->get_n3_bind_port().value() << "` - " << strerror(errno);
-
+  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
+                    << cu_up_udp_cfg.bind_address << ":" << cu_up->get_n3_bind_port().value() << "` - "
+                    << strerror(errno);
   close(upf_info.sock_fd);
 
   // check reception of message 1
@@ -346,12 +348,10 @@ TEST_F(cu_up_test, ul_data_flow)
 
   //> Test preamble: listen on a free port
   upf_info_t upf_info = init_upf();
+  cfg.n3_cfg.upf_port = ntohs(upf_info.upf_addr.sin_port);
 
   //> Test main part: create CU-UP and transmit data
-  cfg.net_cfg.upf_port = ntohs(upf_info.upf_addr.sin_port);
-  test_logger.debug("Using network_interface_config: {}", cfg.net_cfg);
-
-  cu_up_dependencies dependencies = get_defatul_cu_up_dependencies();
+  cu_up_dependencies dependencies = get_default_cu_up_dependencies();
   init(cfg, std::move(dependencies));
 
   create_drb();

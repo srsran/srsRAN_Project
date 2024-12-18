@@ -97,7 +97,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
 void benchmark_status_pdu_handling(rlc_am_status_pdu status, const bench_params& params)
 {
   fmt::memory_buffer buffer;
-  fmt::format_to(buffer, "Benchmark status report handling. {}", status);
+  fmt::format_to(std::back_inserter(buffer), "Benchmark status report handling. {}", status);
   std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
   // Set Tx config

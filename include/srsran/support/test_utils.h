@@ -350,8 +350,7 @@ struct formatter<srsran::moveonly_test_object> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::moveonly_test_object& obj, FormatContext& ctx)
-
+  auto format(const srsran::moveonly_test_object& obj, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "{}", obj.value());
   }

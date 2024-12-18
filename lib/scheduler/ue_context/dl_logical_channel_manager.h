@@ -25,8 +25,9 @@
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/logical_channel/lcid_dl_sch.h"
 #include "srsran/scheduler/config/logical_channel_config.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/result/pdsch_info.h"
 #include <queue>
+#include <variant>
 
 namespace srsran {
 
@@ -47,50 +48,62 @@ public:
   void deactivate();
 
   /// \brief Activate/Deactivate Bearer.
-  void set_status(lcid_t lcid, bool active)
-  {
-    srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
-    channels[lcid].active = active;
-  }
+  void set_status(lcid_t lcid, bool active);
 
   /// \brief Update the configurations of the provided lists of bearers.
   void configure(span<const logical_channel_config> log_channels_configs);
 
   /// \brief Verifies if logical channel is activated for DL.
-  bool is_active(lcid_t lcid) const
-  {
-    if (lcid > LCID_MAX_DRB) {
-      return false;
-    }
-    return channels[lcid].active;
-  }
+  bool is_active(lcid_t lcid) const { return lcid <= LCID_MAX_DRB and channels[lcid].active; }
 
-  /// \brief Checks whether the UE has pending data.
-  /// \remark Excludes data for SRB0.
+  /// \brief Checks whether the UE has pending data, regardless of the state it is in.
   bool has_pending_bytes() const
   {
-    return has_pending_ces() or std::any_of(channels.begin() + 1, channels.end(), [](const auto& ch) {
-             return ch.active and ch.buf_st > 0;
+    return has_pending_ces() or std::any_of(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lcid) {
+             return channels[lcid].active and channels[lcid].buf_st > 0;
+           });
+  }
+
+  /// \brief Check whether the UE has pending data, given its current state.
+  bool has_pending_bytes(bool fallback_enabled) const
+  {
+    if (fallback_enabled) {
+      return is_con_res_id_pending() or has_pending_bytes(LCID_SRB0) or has_pending_bytes(LCID_SRB1);
+    }
+    return has_pending_ces() or std::any_of(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lcid) {
+             return lcid != LCID_SRB0 and channels[lcid].active and channels[lcid].buf_st > 0;
            });
   }
 
   /// \brief Checks whether a logical channel has pending data.
-  bool has_pending_bytes(lcid_t lcid) const { return pending_bytes(lcid) > 0; }
+  bool has_pending_bytes(lcid_t lcid) const { return channels[lcid].active and channels[lcid].buf_st > 0; }
 
   /// \brief Checks whether a ConRes CE is pending for transmission.
   bool is_con_res_id_pending() const { return pending_con_res_id; }
 
   /// \brief Checks whether UE has pending CEs to be scheduled (ConRes excluded).
-  bool has_pending_ces() const { return not pending_ces.empty(); }
+  bool has_pending_ces() const { return pending_con_res_id or not pending_ces.empty(); }
 
-  /// \brief Calculates total number of DL bytes, including MAC header overhead.
-  /// \remark Excludes data for SRB0 and UE Contention Resolution Identity CE.
-  unsigned pending_bytes() const
+  /// \brief Calculates total number of DL bytes, including MAC header overhead, and without taking into account
+  /// the UE state.
+  unsigned total_pending_bytes() const
   {
     unsigned bytes = pending_ce_bytes();
-    // Skip index 0 ==> SRB0.
-    for (unsigned i = 1; i <= MAX_LCID; ++i) {
-      bytes += pending_bytes((lcid_t)i);
+    for (lcid_t lcid : sorted_channels) {
+      bytes += pending_bytes(lcid);
+    }
+    return bytes;
+  }
+
+  /// \brief Calculates number of DL pending bytes, including MAC header overhead, and taking UE state into account.
+  unsigned pending_bytes(bool fallback_enabled) const
+  {
+    if (fallback_enabled) {
+      return pending_con_res_ce_bytes() + pending_bytes(LCID_SRB0) + pending_bytes(LCID_SRB1);
+    }
+    unsigned bytes = pending_ce_bytes();
+    for (lcid_t lcid : sorted_channels) {
+      bytes += lcid != LCID_SRB0 ? pending_bytes(lcid) : 0;
     }
     return bytes;
   }
@@ -98,7 +111,7 @@ public:
   /// \brief Returns the UE pending CEs' bytes to be scheduled, if any.
   unsigned pending_ce_bytes() const
   {
-    unsigned bytes = pending_ue_con_res_id_ce_bytes();
+    unsigned bytes = pending_con_res_ce_bytes();
     for (const auto& ce : pending_ces) {
       bytes += ce.ce_lcid.is_var_len_ce() ? get_mac_sdu_required_bytes(ce.ce_lcid.sizeof_ce())
                                           : FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce.ce_lcid.sizeof_ce();
@@ -107,7 +120,7 @@ public:
   }
 
   /// \brief Checks whether UE has pending UE Contention Resolution Identity CE to be scheduled.
-  unsigned pending_ue_con_res_id_ce_bytes() const
+  unsigned pending_con_res_ce_bytes() const
   {
     static const auto ce_size = lcid_dl_sch_t{lcid_dl_sch_t::UE_CON_RES_ID}.sizeof_ce();
     return is_con_res_id_pending() ? FIXED_SIZED_MAC_CE_SUBHEADER_SIZE + ce_size : 0;
@@ -127,23 +140,7 @@ public:
   }
 
   /// \brief Enqueue new MAC CE to be scheduled.
-  void handle_mac_ce_indication(const mac_ce_info& ce)
-  {
-    if (ce.ce_lcid == lcid_dl_sch_t::UE_CON_RES_ID) {
-      pending_con_res_id = true;
-      return;
-    }
-    if (ce.ce_lcid == lcid_dl_sch_t::TA_CMD) {
-      auto ce_it = std::find_if(pending_ces.begin(), pending_ces.end(), [](const mac_ce_info& c) {
-        return c.ce_lcid == lcid_dl_sch_t::TA_CMD;
-      });
-      if (ce_it != pending_ces.end()) {
-        ce_it->ce_payload = ce.ce_payload;
-        return;
-      }
-    }
-    pending_ces.push_back(ce);
-  }
+  void handle_mac_ce_indication(const mac_ce_info& ce);
 
   /// \brief Allocates highest priority MAC SDU within space of \c rem_bytes bytes. Updates \c lch_info with allocated
   /// bytes for the MAC SDU (no MAC subheader).
@@ -161,10 +158,20 @@ public:
   /// \return Allocated bytes for UE Contention Resolution Identity MAC CE (with subheader).
   unsigned allocate_ue_con_res_id_mac_ce(dl_msg_lc_info& lch_info, unsigned rem_bytes);
 
+  /// \brief Returns a list of LCIDs sorted based on decreasing order of priority.
+  span<const lcid_t> get_prioritized_logical_channels() const { return sorted_channels; }
+
 private:
   struct channel_context {
     bool active = false;
+    /// Configuration of the logical channel.
+    const logical_channel_config* cfg = nullptr;
     /// DL Buffer status of this logical channel.
+    unsigned buf_st = 0;
+  };
+
+  struct active_channel {
+    /// Pending bytes for this logical channel.
     unsigned buf_st = 0;
   };
 
@@ -174,11 +181,18 @@ private:
   /// \brief Updates DL Buffer State for a given LCID based on available space.
   unsigned allocate_mac_sdu(dl_msg_lc_info& subpdu, lcid_t lcid, unsigned rem_bytes);
 
+  // List of UE-dedicated logical channel configurations.
+  span<const logical_channel_config> channel_configs;
+
+  // State of configured channels.
   std::array<channel_context, MAX_NOF_RB_LCIDS> channels;
+
+  // List of logical channel IDs sorted in decreasing order of priority. i.e. first element has the highest priority.
+  std::vector<lcid_t> sorted_channels;
 
   bool pending_con_res_id{false};
 
-  /// \brief List of pending CEs except UE Contention Resolution Identity.
+  // List of pending CEs except UE Contention Resolution Identity.
   std::deque<mac_ce_info> pending_ces;
 };
 

@@ -22,6 +22,7 @@
 
 #include "f1ap_test_messages.h"
 #include "../pdcp/pdcp_pdu_generator.h"
+#include "../rrc/rrc_packed_test_messages.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
@@ -57,13 +58,14 @@ gnb_du_served_cells_item_s srsran::test_helpers::generate_served_cells_item(cons
   served_cells_item.served_cell_info.served_plmns.push_back(served_plmn);
 
   served_cells_item.served_cell_info.nr_mode_info.set_tdd();
-  served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.nr_arfcn = 626748;
+  served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.nr_arfcn = info.nr_arfcn;
   freq_band_nr_item_s freq_band_nr_item;
-  freq_band_nr_item.freq_band_ind_nr = 78;
+  freq_band_nr_item.freq_band_ind_nr = static_cast<uint16_t>(info.band);
   served_cells_item.served_cell_info.nr_mode_info.tdd().nr_freq_info.freq_band_list_nr.push_back(freq_band_nr_item);
   served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_scs.value = nr_scs_opts::scs30;
   served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nr_nrb.value = nr_nrb_opts::nrb51;
-  served_cells_item.served_cell_info.meas_timing_cfg.from_string("101105af4084");
+  served_cells_item.served_cell_info.meas_timing_cfg =
+      create_meas_timing_cfg(info.meas_timing_cfg.carrier_freq, info.meas_timing_cfg.scs);
 
   served_cells_item.gnb_du_sys_info_present = true;
   served_cells_item.gnb_du_sys_info.mib_msg.from_string("01c586");

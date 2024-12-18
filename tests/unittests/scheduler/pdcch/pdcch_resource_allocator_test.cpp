@@ -27,6 +27,7 @@
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 #include "srsran/support/test_utils.h"
+#include "fmt/std.h"
 #include <gtest/gtest.h>
 #include <random>
 #include <unordered_map>
@@ -224,21 +225,24 @@ protected:
   void print_cfg()
   {
     fmt::memory_buffer fmtbuf;
-    fmt::format_to(fmtbuf, "\nTest config:");
-    fmt::format_to(fmtbuf, "\n- initial BWP: RBs={}", cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs);
-    const auto& cs0_cfg = default_ue_cfg.coreset(to_coreset_id(0));
-    fmt::format_to(fmtbuf, "\n- CORESET#0: RBs={}, duration={}", cs0_cfg.coreset0_crbs(), cs0_cfg.duration);
-    const auto& cs1_cfg = default_ue_cfg.coreset(to_coreset_id(1));
-    fmt::format_to(fmtbuf, "\n- CORESET#1: RBs={}, duration={}", get_coreset_crbs(cs1_cfg), cs1_cfg.duration);
+    fmt::format_to(std::back_inserter(fmtbuf), "\nTest config:");
     fmt::format_to(
-        fmtbuf,
+        std::back_inserter(fmtbuf), "\n- initial BWP: RBs={}", cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs);
+    const auto& cs0_cfg = default_ue_cfg.coreset(to_coreset_id(0));
+    fmt::format_to(
+        std::back_inserter(fmtbuf), "\n- CORESET#0: RBs={}, duration={}", cs0_cfg.coreset0_crbs(), cs0_cfg.duration);
+    const auto& cs1_cfg = default_ue_cfg.coreset(to_coreset_id(1));
+    fmt::format_to(
+        std::back_inserter(fmtbuf), "\n- CORESET#1: RBs={}, duration={}", get_coreset_crbs(cs1_cfg), cs1_cfg.duration);
+    fmt::format_to(
+        std::back_inserter(fmtbuf),
         "\n- SearchSpace#0: nof_candidates={}",
         fmt::join(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0].get_nof_candidates(), ", "));
     fmt::format_to(
-        fmtbuf,
+        std::back_inserter(fmtbuf),
         "\n- SearchSpace#1: nof_candidates={}",
         fmt::join(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].get_nof_candidates(), ", "));
-    fmt::format_to(fmtbuf,
+    fmt::format_to(std::back_inserter(fmtbuf),
                    "\n- SearchSpace#2: nof_candidates={}",
                    fmt::join(default_ue_cfg.search_space(to_search_space_id(2)).cfg->get_nof_candidates(), ", "));
     test_logger.info("{}", to_string(fmtbuf));
@@ -514,7 +518,7 @@ struct fmt::formatter<multi_alloc_test_params> {
     return ctx.begin();
   }
   template <typename FormatContext>
-  auto format(const multi_alloc_test_params& params, FormatContext& ctx)
+  auto format(const multi_alloc_test_params& params, FormatContext& ctx) const
   {
     fmt::format_to(ctx.out(), "bw={}MHz allocs=[", bs_channel_bandwidth_to_MHz(params.cell_bw));
     for (const auto& a : params.allocs) {
@@ -524,7 +528,7 @@ struct fmt::formatter<multi_alloc_test_params> {
                      to_string(a.type),
                      a.rnti,
                      to_nof_cces(a.aggr_lvl),
-                     a.ss_id,
+                     fmt::underlying(a.ss_id),
                      a.expected_ncce);
     }
     return format_to(ctx.out(), "]");

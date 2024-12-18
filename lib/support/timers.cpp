@@ -262,7 +262,7 @@ void timer_manager::handle_timer_commands()
       logger.warning(
           "Discarding cmd_id={} for timer={}. Cause: cmd_id is below the last processed cmd_id={} by the timer",
           cmd.cmd_id,
-          cmd.id,
+          fmt::underlying(cmd.id),
           timer.backend.cmd_id);
       continue;
     }
@@ -273,7 +273,7 @@ void timer_manager::handle_timer_commands()
       logger.debug("The processing of cmd_id={} for timer={} was postponed. Cause: There are commands in between "
                    "[{},{}) not yet processed",
                    cmd.cmd_id,
-                   cmd.id,
+                   fmt::underlying(cmd.id),
                    timer.backend.cmd_id + 1,
                    cmd.cmd_id);
       continue;
@@ -402,7 +402,7 @@ bool timer_manager::try_stop_timer_backend(timer_handle& timer, bool expiry_reas
     // When it was not possible to dispatch timeout callback to executor, postpone the dispatch.
     if (not success) {
       logger.warning("Failed to dispatch timeout handling for timer={}. Re-scheduling the handling to the next slot",
-                     timer.frontend->id);
+                     fmt::underlying(timer.frontend->id));
       failed_to_trigger_timers.emplace_back(timer.frontend->id, timer.backend.cmd_id);
     }
   }

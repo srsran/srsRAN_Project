@@ -22,6 +22,7 @@
 
 #include "sctp_test_helpers.h"
 #include "srsran/gateways/sctp_network_server_factory.h"
+#include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/io/sctp_socket.h"
 #include <arpa/inet.h>
 #include <gtest/gtest.h>
@@ -42,7 +43,8 @@ public:
       parent(parent_), send_notifier(send_notifier_)
     {
     }
-    ~dummy_sctp_recv_notifier()
+
+    ~dummy_sctp_recv_notifier() override
     {
       for (auto& sender : parent.association_senders) {
         if (sender.get() == send_notifier) {
@@ -178,8 +180,9 @@ protected:
 
   void trigger_broker() { broker.handle_receive(); }
 
-  sctp_network_server_config server_cfg{{}, broker, assoc_factory};
+  sctp_network_server_config server_cfg{{}, broker, io_rx_executor, assoc_factory};
 
+  inline_task_executor                 io_rx_executor;
   std::unique_ptr<sctp_network_server> server;
   dummy_sctp_client                    client;
 };
@@ -211,7 +214,7 @@ TEST_F(sctp_network_server_test, when_broker_rejects_subscriber_then_listen_fail
   server = create_sctp_network_server(server_cfg);
 
   ASSERT_FALSE(server->listen());
-  ASSERT_EQ(broker.last_registered_fd, server->get_socket_fd());
+  ASSERT_EQ(broker.last_registered_fd.value(), server->get_socket_fd());
   ASSERT_EQ(broker.last_unregistered_fd, -1) << "If the subscription fails, no deregister should be called";
 }
 
@@ -220,7 +223,7 @@ TEST_F(sctp_network_server_test, when_broker_accepts_subscriber_then_listen_succ
   server = create_sctp_network_server(server_cfg);
   ASSERT_TRUE(server->listen());
 
-  ASSERT_EQ(broker.last_registered_fd, server->get_socket_fd());
+  ASSERT_EQ(broker.last_registered_fd.value(), server->get_socket_fd());
 }
 
 TEST_F(sctp_network_server_test, when_server_is_shutdown_then_fd_is_deregistered_from_broker)
@@ -231,7 +234,7 @@ TEST_F(sctp_network_server_test, when_server_is_shutdown_then_fd_is_deregistered
   int fd = server->get_socket_fd();
   ASSERT_EQ(broker.last_unregistered_fd, -1);
   server.reset();
-  ASSERT_EQ(broker.last_registered_fd, fd);
+  ASSERT_EQ(broker.last_registered_fd.value(), fd);
 }
 
 TEST_F(sctp_network_server_test, when_client_connects_then_server_request_new_sctp_association_handler_creation)

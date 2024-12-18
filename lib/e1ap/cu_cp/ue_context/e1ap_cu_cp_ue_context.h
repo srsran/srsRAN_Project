@@ -50,7 +50,8 @@ public:
 
   void update_cu_up_ue_e1ap_id(gnb_cu_up_ue_e1ap_id_t up_ue_id)
   {
-    srsran_assert(up_ue_id != gnb_cu_up_ue_e1ap_id_t::invalid, "Invalid cu_up_ue_e1ap_id={}", up_ue_id);
+    srsran_assert(
+        up_ue_id != gnb_cu_up_ue_e1ap_id_t::invalid, "Invalid cu_up_ue_e1ap_id={}", fmt::underlying(up_ue_id));
     ue_ids.cu_up_ue_e1ap_id = up_ue_id;
 
     // Update prefix logger.
@@ -80,7 +81,8 @@ public:
       return false;
     }
     if (ues.find(ue_index_to_ue_e1ap_id.at(ue_index)) == ues.end()) {
-      logger.warning("No UE context found for cu_cp_ue_e1ap_id={}", ue_index_to_ue_e1ap_id.at(ue_index));
+      logger.warning("No UE context found for cu_cp_ue_e1ap_id={}",
+                     fmt::underlying(ue_index_to_ue_e1ap_id.at(ue_index)));
       return false;
     }
     return true;
@@ -106,18 +108,19 @@ public:
 
   e1ap_ue_context& operator[](gnb_cu_cp_ue_e1ap_id_t cu_cp_ue_e1ap_id)
   {
-    srsran_assert(
-        ues.find(cu_cp_ue_e1ap_id) != ues.end(), "cu_cp_ue_e1ap_id={}: E1AP UE context not found", cu_cp_ue_e1ap_id);
+    srsran_assert(ues.find(cu_cp_ue_e1ap_id) != ues.end(),
+                  "cu_cp_ue_e1ap_id={}: E1AP UE context not found",
+                  fmt::underlying(cu_cp_ue_e1ap_id));
     return ues.at(cu_cp_ue_e1ap_id);
   }
   e1ap_ue_context& operator[](ue_index_t ue_index)
   {
     srsran_assert(ue_index_to_ue_e1ap_id.find(ue_index) != ue_index_to_ue_e1ap_id.end(),
                   "ue={} gNB-CU-CP-UE-E1AP-ID not found",
-                  ue_index);
+                  fmt::underlying(ue_index));
     srsran_assert(ues.find(ue_index_to_ue_e1ap_id.at(ue_index)) != ues.end(),
                   "cu_cp_ue_e1ap_id={}: E1AP UE context not found",
-                  ue_index_to_ue_e1ap_id.at(ue_index));
+                  fmt::underlying(ue_index_to_ue_e1ap_id.at(ue_index)));
     return ues.at(ue_index_to_ue_e1ap_id.at(ue_index));
   }
 

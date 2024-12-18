@@ -24,8 +24,8 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/srslog/logger.h"
-#include "srsran/support/format/fmt_optional.h"
 #include "srsran/support/io/unique_fd.h"
+#include "fmt/std.h"
 #include <chrono>
 #include <cstdint>
 #include <sys/socket.h>
@@ -56,13 +56,17 @@ public:
 
   sctp_socket();
   sctp_socket(sctp_socket&& other) noexcept = default;
-  ~sctp_socket();
   sctp_socket& operator=(sctp_socket&& other) noexcept;
 
   bool close();
 
   [[nodiscard]] bool is_open() const { return sock_fd.is_open(); }
   const unique_fd&   fd() const { return sock_fd; }
+  void               release()
+  {
+    int fd  = sock_fd.release();
+    sock_fd = unique_fd(fd, false);
+  }
 
   [[nodiscard]] bool bind(struct sockaddr& ai_addr, const socklen_t& ai_addrlen, const std::string& bind_interface);
   [[nodiscard]] bool connect(struct sockaddr& ai_addr, const socklen_t& ai_addrlen);
@@ -98,7 +102,7 @@ struct formatter<srsran::sctp_socket_params> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::sctp_socket_params& cfg, FormatContext& ctx)
+  auto format(const srsran::sctp_socket_params& cfg, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "if_name={} ai_family={} ai_socktype={} reuse_addr={} non_blockin_mode={} rx_timeout={} "

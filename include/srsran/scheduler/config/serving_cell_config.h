@@ -33,6 +33,7 @@
 #include "srsran/ran/pucch/srs_tpc.h"
 #include "srsran/ran/pusch/pusch_configuration.h"
 #include "srsran/ran/pusch/pusch_tpc.h"
+#include "srsran/ran/serv_cell_index.h"
 #include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/tci.h"

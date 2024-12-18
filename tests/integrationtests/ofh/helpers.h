@@ -33,9 +33,9 @@ namespace srsran {
 inline std::string port_ids_to_str(span<unsigned> ports)
 {
   fmt::memory_buffer str_buffer;
-  fmt::format_to(str_buffer, "{");
+  fmt::format_to(std::back_inserter(str_buffer), "{");
   for (unsigned i = 0, e = ports.size(); i != e; ++i) {
-    fmt::format_to(str_buffer, "{}{}", ports[i], (i == (e - 1)) ? "}" : ", ");
+    fmt::format_to(std::back_inserter(str_buffer), "{}{}", ports[i], (i == (e - 1)) ? "}" : ", ");
   }
   return to_string(str_buffer);
 }

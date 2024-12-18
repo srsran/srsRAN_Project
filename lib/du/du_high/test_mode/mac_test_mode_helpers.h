@@ -27,9 +27,12 @@
 #include "srsran/mac/mac_pdu_handler.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/scheduler_configurator.h"
-#include "srsran/scheduler/scheduler_slot_handler.h"
 
 namespace srsran {
+
+struct pucch_info;
+struct ul_sched_info;
+
 namespace srs_du {
 
 /// Create dummy PDU with BSR.

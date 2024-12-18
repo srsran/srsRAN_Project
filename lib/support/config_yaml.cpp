@@ -135,9 +135,15 @@ std::vector<CLI::ConfigItem> yaml_config_parser::from_config_impl(const YAML::No
   }
 
   for (const auto& node : config) {
-    const auto& key      = node.first;
-    const auto& value    = node.second;
-    const auto& key_name = key.as<std::string>();
+    const auto& key   = node.first;
+    const auto& value = node.second;
+
+    std::string key_name;
+    try {
+      key_name = key.as<std::string>();
+    } catch (const YAML::Exception& ex) {
+      throw CLI::FileError(std::string("Error parsing YAML configuration file: ") + ex.what());
+    }
 
     if (value.IsScalar()) {
       results.emplace_back();

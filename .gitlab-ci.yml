@@ -67,6 +67,7 @@ variables:
   SLACK_CHANNEL_FAIL: "#ci_gnb"
   SLACK_CHANNEL_INFO_MSG: "#ci_gnb_verbose"
   AUTOREBASER_PRS_IN_QUEUE: 1
+  MR_PLUGIN_REF: main
 
 ################################################################################
 ## CI
@@ -75,14 +76,14 @@ job cleaner:
   extends: .job cleaner
   timeout: 4h
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
 
 pr reminder:
   extends: .pr reminder
   rules:
     - if: $NOTIFY_SLACK != "true"
       when: never
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
 
 trigger builder:
   stage: ci
@@ -111,7 +112,7 @@ trigger docker:
           - docker/**/*.{yml,env,json,toml,py,sh,csv,py,toml}
           - docker/**/Dockerfile
           - .gdbinit
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       variables:
         CI_DESCRIPTION: $CI_DESCRIPTION
     - if: $CI_DESCRIPTION =~ /Weekly/
@@ -126,7 +127,7 @@ trigger docker:
 matlab nightly:
   stage: ci
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       variables:
         ON_SCHEDULE: "true"
         CI_DESCRIPTION: Nightly
@@ -137,21 +138,6 @@ matlab nightly:
   trigger:
     project: softwareradiosystems/srsgnb_matlab
     branch: master
-
-plugin nightly:
-  stage: ci
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      variables:
-        ON_SCHEDULE: "true"
-        CI_DESCRIPTION: Nightly
-        SRSRAN_COMMIT: $CI_COMMIT_SHA
-        NOTIFY_SLACK: "true"
-  inherit:
-    variables: false
-  trigger:
-    project: ${PLUGIN_REPO}
-    branch: main
 
 matlab weekly:
   stage: ci
@@ -201,7 +187,7 @@ full-code-format:
     - if: $ON_MR
       changes:
         - .clang-format
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
 
 .codechecker:
   image: ${CR_REGISTRY_URI}/srsgnb/codechecker:${DOCKER_BUILDER_VERSION}
@@ -237,6 +223,11 @@ full-code-format:
       -*lib/asn1
       -*lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs
       -*lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs" >/tmp/codechecker_skip
+    - |
+      if [[ $CI_MERGE_REQUEST_LABELS != *"ci-no-plugin"* && -n $PLUGIN_BRANCH ]]; then
+        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
+        git submodule set-branch --branch ${PLUGIN_BRANCH} ${PLUGIN_PATH}
+      fi
     - |
       export CC=/usr/bin/clang
       export CXX=/usr/bin/clang++
@@ -279,6 +270,7 @@ clang-tidy:
       when: manual
       allow_failure: false
   variables:
+    PLUGIN_BRANCH: $MR_PLUGIN_REF
     ANALYZER: clang-tidy
     ANALYZER_ARGS: --analyzer-config clang-tidy:take-config-from-directory=true --tidy-config .clang-tidy
     ARTIFACT_EXTRA_PATH: "/index.html"
@@ -447,7 +439,7 @@ unit coverage:
 unit coverage dev:
   extends: unit coverage
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       variables:
         coverage_report: full
       when: always # Even if previous stages/required jobs fail
@@ -458,7 +450,7 @@ unit coverage dev:
 pages:
   stage: documentation
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: always # Even if previous stages/required jobs fail
       allow_failure: true
   image: ${GITLAB_REGISTRY_URI}/${CI_TOOLS_REPO}/doxygen:1.9.8-1.2023.7
@@ -511,7 +503,7 @@ update agpl main dryrun:
   extends: update private branch
   stage: .post
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: always
   variables:
     PRIVATE_BRANCH: agpl_main
@@ -523,7 +515,7 @@ create-tags:
   extends: .create-tag
   stage: .post
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
       start_in: 3 hours
   script:

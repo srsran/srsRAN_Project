@@ -41,7 +41,7 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
              "message_length={} codeblock_length={} mod={}",
              test_case.message_length,
              test_case.codeblock_length,
-             test_case.mod);
+             fmt::underlying(test_case.mod));
   return os;
 }
 

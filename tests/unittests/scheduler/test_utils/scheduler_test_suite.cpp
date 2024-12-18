@@ -269,9 +269,7 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
 
 void srsran::test_pdsch_ue_consistency(const cell_configuration& cell_cfg, span<const dl_msg_alloc> grants)
 {
-  for (const dl_msg_alloc& grant : grants) {
-    ASSERT_TRUE(test_helper::is_valid_dl_msg_alloc(grant));
-  }
+  ASSERT_TRUE(test_helper::is_valid_dl_msg_alloc_list(grants));
 }
 
 void srsran::test_pusch_ue_consistency(const cell_configuration& cell_cfg, span<const ul_sched_info> grants)
@@ -475,7 +473,7 @@ void assert_dl_resource_grid_filled(const cell_configuration& cell_cfg, const ce
       TESTASSERT(cell_res_grid[0].dl_res_grid.all_set(test_grant.grant),
                  "The allocation with rnti={}, type={}, crbs={} was not registered in the cell resource grid",
                  test_grant.rnti,
-                 test_grant.type,
+                 fmt::underlying(test_grant.type),
                  test_grant.grant.crbs);
     }
   }
