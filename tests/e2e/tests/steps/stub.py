@@ -254,9 +254,9 @@ def start_rc_xapp(ric: NearRtRicStub, control_service_style: int = 2, action_id:
     xapp_request.parameters[10].name = "SD"
     xapp_request.parameters[10].value = 1
     xapp_request.parameters[11].name = "Min PRB Policy Ratio"
-    xapp_request.parameters[11].value = 20
+    xapp_request.parameters[11].value = 10
     xapp_request.parameters[12].name = "Max PRB Policy Ratio"
-    xapp_request.parameters[12].value = 60
+    xapp_request.parameters[12].value = 90
     xapp_request.parameters[13].name = "Dedicated PRB Policy Ratio"
     xapp_request.parameters[13].value = 80
     ric.StartRcXapp(xapp_request)
