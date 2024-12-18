@@ -9,7 +9,7 @@
 - name: amarisoft-ue
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
-  labels: ["kubernetes.io/hostname=hp-oran"]
+  labels: ["kubernetes.io/hostname=ci-buildmaster"]
   nof_ports: 4
   requirements:
     arch: amd64
@@ -17,8 +17,8 @@
       requests: 12
       limits: 12
     memory:
-      requests: "48G"
-      limits: "48G"
+      requests: "20G"
+      limits: "20G"
     ephemeral-storage:
       requests: "6G"
       limits: "6G"
