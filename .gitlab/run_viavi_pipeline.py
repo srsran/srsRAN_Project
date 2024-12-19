@@ -134,6 +134,8 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
         {"key": "TEST_MODE", "value": TESTMODE},
         {"key": "BUILD_ARGS", "value": BUILD_ARGS},
         {"key": "MAKE_ARGS", "value": MAKE_ARGS},
+        {"key": "SRS_TARGET", "value": "gnb_split_7_2"},
+        {"key": "PLUGIN_BRANCH", "value": "main"},
         {"key": "UHD_VERSION", "value": ""},
         {"key": "DPDK_VERSION", "value": DPDK_VERSION},
         {"key": "TESTBED", "value": TESTBED},
