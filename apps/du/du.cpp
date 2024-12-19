@@ -75,12 +75,12 @@ static void interrupt_signal_handler(int signal)
   is_app_running = false;
 }
 
-static signal_subject cleanup_signal_observable;
+static signal_subject cleanup_signal_dispatcher;
 
 /// Function to call when the application is going to be forcefully shutdown.
 static void cleanup_signal_handler(int signal)
 {
-  cleanup_signal_observable.notify_signal(signal);
+  cleanup_signal_dispatcher.notify_signal(signal);
   srslog::flush();
 }
 
@@ -250,7 +250,7 @@ int main(int argc, char** argv)
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
   flexible_o_du_pcaps du_pcaps =
-      create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_observable);
+      create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_dispatcher);
 
   // Instantiate F1-C client gateway.
   std::unique_ptr<srs_du::f1c_connection_client> f1c_gw = create_f1c_client_gateway(du_cfg.f1ap_cfg.cu_cp_address,

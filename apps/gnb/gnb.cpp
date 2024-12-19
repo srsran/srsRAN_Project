@@ -86,12 +86,12 @@ static void interrupt_signal_handler(int signal)
   is_app_running = false;
 }
 
-static signal_subject cleanup_signal_observable;
+static signal_subject cleanup_signal_dispatcher;
 
 /// Function to call when the application is going to be forcefully shutdown.
 static void cleanup_signal_handler(int signal)
 {
-  cleanup_signal_observable.notify_signal(signal);
+  cleanup_signal_dispatcher.notify_signal(signal);
   srslog::flush();
 }
 
@@ -330,11 +330,11 @@ int main(int argc, char** argv)
   o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg.pcap_cfg.disable_e1_pcaps();
   o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.pcaps.disable_f1_pcaps();
   o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_o_cu_cp_dlt_pcap(
-      o_cu_cp_app_unit->get_o_cu_cp_unit_config(), *workers.get_executor_getter(), cleanup_signal_observable);
+      o_cu_cp_app_unit->get_o_cu_cp_unit_config(), *workers.get_executor_getter(), cleanup_signal_dispatcher);
   o_cu_up_dlt_pcaps cu_up_dlt_pcaps = create_o_cu_up_dlt_pcaps(
-      o_cu_up_app_unit->get_o_cu_up_unit_config(), *workers.get_executor_getter(), cleanup_signal_observable);
+      o_cu_up_app_unit->get_o_cu_up_unit_config(), *workers.get_executor_getter(), cleanup_signal_dispatcher);
   flexible_o_du_pcaps du_pcaps =
-      create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_observable);
+      create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_dispatcher);
 
   std::unique_ptr<f1c_local_connector> f1c_gw =
       create_f1c_local_connector(f1c_local_connector_config{*cu_cp_dlt_pcaps.f1ap});
