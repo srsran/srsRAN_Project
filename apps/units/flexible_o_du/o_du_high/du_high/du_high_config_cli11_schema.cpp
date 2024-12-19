@@ -1641,6 +1641,19 @@ static void configure_cli11_epoch_time(CLI::App& app, epoch_time_t& epoch_time)
       ->check(CLI::Range(0, 9));
 }
 
+static void configure_cli11_ta_info(CLI::App& app, ta_info_t& ta_info)
+{
+  add_option(app, "--ta_common", ta_info.ta_common, "TA common offset")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 66485757));
+  add_option(app, "--ta_common_drift", ta_info.ta_common_drift, "Drift rate of the common TA")
+      ->capture_default_str()
+      ->check(CLI::Range(-257303, 257303));
+  add_option(app, "--ta_common_drift_variant", ta_info.ta_common_drift_variant, "Drift rate variation of the common TA")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 28949));
+}
+
 static void configure_cli11_ephemeris_info_ecef(CLI::App& app, ecef_coordinates_t& ephemeris_info)
 {
   add_option(app, "--pos_x", ephemeris_info.position_x, "X Position of the satellite")
@@ -1681,6 +1694,7 @@ static void configure_cli11_ephemeris_info_orbital(CLI::App& app, orbital_coordi
 static void configure_cli11_ntn_args(CLI::App&                  app,
                                      std::optional<ntn_config>& ntn,
                                      epoch_time_t&              epoch_time,
+                                     ta_info_t&                 ta_info,
                                      orbital_coordinates_t&     orbital_coordinates,
                                      ecef_coordinates_t&        ecef_coordinates)
 {
@@ -1694,12 +1708,13 @@ static void configure_cli11_ntn_args(CLI::App&                  app,
       ->capture_default_str()
       ->check(CLI::IsMember({5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 120, 180, 240, 900}));
 
-  ta_common_t& ta = config.ta_info.emplace();
-  add_option(app, "--ta_common", ta.ta_common, "TA common offset");
-
   // epoch time.
   CLI::App* epoch_time_subcmd = add_subcommand(app, "epoch_time", "Epoch time for the NTN assistance information");
   configure_cli11_epoch_time(*epoch_time_subcmd, epoch_time);
+
+  // TA-info
+  CLI::App* ta_info_subcmd = add_subcommand(app, "ta_info", "TA Info for the NTN assistance information");
+  configure_cli11_ta_info(*ta_info_subcmd, ta_info);
 
   // ephemeris configuration.
   CLI::App* ephem_subcmd_ecef =
@@ -1712,6 +1727,7 @@ static void configure_cli11_ntn_args(CLI::App&                  app,
 }
 
 static epoch_time_t          epoch_time;
+static ta_info_t             ta_info;
 static ecef_coordinates_t    ecef_coordinates;
 static orbital_coordinates_t orbital_coordinates;
 
@@ -1813,7 +1829,8 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
 
   // NTN section.
   CLI::App* ntn_subcmd = add_subcommand(app, "ntn", "NTN parameters")->configurable();
-  configure_cli11_ntn_args(*ntn_subcmd, parsed_cfg.config.ntn_cfg, epoch_time, orbital_coordinates, ecef_coordinates);
+  configure_cli11_ntn_args(
+      *ntn_subcmd, parsed_cfg.config.ntn_cfg, epoch_time, ta_info, orbital_coordinates, ecef_coordinates);
 
   // Cell section.
   add_option_cell(
@@ -1883,11 +1900,16 @@ static void manage_ntn_optional(CLI::App& app, du_high_unit_config& gnb_cfg)
 {
   auto     ntn_app             = app.get_subcommand_ptr("ntn");
   unsigned nof_epoch_entries   = ntn_app->get_subcommand("epoch_time")->count_all();
+  unsigned nof_ta_info_entries = ntn_app->get_subcommand("ta_info")->count_all();
   unsigned nof_ecef_entries    = ntn_app->get_subcommand("ephemeris_info_ecef")->count_all();
   unsigned nof_orbital_entries = ntn_app->get_subcommand("ephemeris_orbital")->count_all();
 
   if (nof_epoch_entries) {
     gnb_cfg.ntn_cfg.value().epoch_time = epoch_time;
+  }
+
+  if (nof_ta_info_entries) {
+    gnb_cfg.ntn_cfg.value().ta_info = ta_info;
   }
 
   if (nof_ecef_entries) {

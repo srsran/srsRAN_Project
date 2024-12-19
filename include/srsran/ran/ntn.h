@@ -34,7 +34,7 @@ struct orbital_coordinates_t {
   double   inclination;
 };
 
-struct ta_common_t {
+struct ta_info_t {
   unsigned ta_common;
   int      ta_common_drift;
   unsigned ta_common_drift_variant;
@@ -68,6 +68,6 @@ struct ntn_config {
   std::variant<ecef_coordinates_t, orbital_coordinates_t> ephemeris_info;
   /// Network-controlled common timing advanced value and it may include any timing offset considered necessary by the
   /// network.
-  std::optional<ta_common_t> ta_info;
+  std::optional<ta_info_t> ta_info;
 };
 } // namespace srsran

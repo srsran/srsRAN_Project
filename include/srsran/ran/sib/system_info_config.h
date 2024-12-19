@@ -178,7 +178,7 @@ struct sib19_info {
   std::optional<std::variant<ecef_coordinates_t, orbital_coordinates_t>> ephemeris_info;
   std::optional<epoch_time_t>                                            epoch_time;
   std::optional<uint16_t>                                                k_mac;
-  std::optional<ta_common_t>                                             ta_info;
+  std::optional<ta_info_t>                                               ta_info;
   std::optional<uint16_t>                                                ntn_ul_sync_validity_dur;
 };
 

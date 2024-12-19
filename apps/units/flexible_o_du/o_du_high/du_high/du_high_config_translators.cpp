@@ -146,6 +146,9 @@ static sib19_info create_sib19_info(const du_high_unit_config& config)
   }
   if (config.ntn_cfg.value().ta_info.has_value()) {
     sib19.ta_info = config.ntn_cfg.value().ta_info.value();
+    sib19.ta_info.value().ta_common /= 0.004072;
+    sib19.ta_info.value().ta_common_drift /= 0.0002;
+    sib19.ta_info.value().ta_common_drift_variant /= 0.00002;
   }
   if (config.ntn_cfg.value().reference_location.has_value()) {
     sib19.ref_location = config.ntn_cfg.value().reference_location.value();
