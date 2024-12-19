@@ -673,6 +673,8 @@ FMT_CONSTEXPR void for_each_codepoint(string_view s, F f) {
     }
   }
   if (auto num_chars_left = s.data() + s.size() - p) {
+    // Suppress bogus -Wstringop-overflow.
+    if (FMT_GCC_VERSION) num_chars_left &= 3;
     char buf[2 * block_size - 1] = {};
     copy<char>(p, p + num_chars_left, buf);
     const char* buf_ptr = buf;
