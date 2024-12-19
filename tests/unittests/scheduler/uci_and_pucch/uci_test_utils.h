@@ -26,6 +26,8 @@
 namespace srsran {
 
 namespace test_helpers {
+
+/// Creates a test uplink configuration using Formats 1 and 2, given the extended parameters.
 inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_config_builder_params_extended& params)
 {
   // > UL Config.
@@ -155,7 +157,7 @@ inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_confi
   }
 
   // > PUSCH config.
-  ul_config.init_ul_bwp.pusch_cfg.emplace(config_helpers::make_default_pusch_config(params));
+  ul_config.init_ul_bwp.pusch_cfg.emplace(make_default_pusch_config(params));
   if (band_helper::get_duplex_mode(band) == duplex_mode::TDD) {
     ul_config.init_ul_bwp.pusch_cfg->pusch_td_alloc_list =
         config_helpers::generate_k2_candidates(cyclic_prefix::NORMAL, params.tdd_ul_dl_cfg_common.value());
@@ -168,7 +170,7 @@ inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_confi
       res_f2.nof_prbs, res_f2.nof_symbols, to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
 
   // > SRS config.
-  ul_config.init_ul_bwp.srs_cfg.emplace(config_helpers::make_default_srs_config(params));
+  ul_config.init_ul_bwp.srs_cfg.emplace(make_default_srs_config(params));
 
   return ul_config;
 }
@@ -241,16 +243,17 @@ inline sched_cell_configuration_request_message make_custom_sched_cell_configura
 /////////        TEST BENCH for PUCCH scheduler        /////////
 
 struct test_bench_params {
-  unsigned               pucch_res_common   = 11;
-  unsigned               n_cces             = 0;
-  sr_periodicity         period             = sr_periodicity::sl_40;
-  unsigned               offset             = 0;
-  csi_report_periodicity csi_period         = csi_report_periodicity::slots320;
-  unsigned               csi_offset         = 9;
-  bool                   is_tdd             = false;
-  bool                   pucch_f2_more_prbs = false;
-  bool                   cfg_for_mimo_4x4   = false;
-  bool                   use_format_0       = false;
+  unsigned               pucch_res_common      = 11;
+  unsigned               n_cces                = 0;
+  sr_periodicity         period                = sr_periodicity::sl_40;
+  unsigned               offset                = 0;
+  csi_report_periodicity csi_period            = csi_report_periodicity::slots320;
+  unsigned               csi_offset            = 9;
+  bool                   is_tdd                = false;
+  bool                   pucch_f2_f3_more_prbs = false;
+  bool                   cfg_for_mimo_4x4      = false;
+  bool                   use_format_0          = false;
+  pucch_format           set1_format           = pucch_format::FORMAT_2;
 };
 
 // Test bench with all that is needed for the PUCCH.
@@ -285,10 +288,11 @@ public:
   const unsigned          k1{4};
   const unsigned          max_pucchs_per_slot;
   const unsigned          max_ul_grants_per_slot;
-  du_ue_index_t           main_ue_idx{du_ue_index_t::MIN_DU_UE_INDEX};
+  du_ue_index_t           main_ue_idx{MIN_DU_UE_INDEX};
   ue_repository           ues;
-  bool                    pucch_f2_more_prbs;
+  bool                    pucch_f2_f3_more_prbs;
   const bool              use_format_0;
+  const pucch_format      set1_format;
 
   // last_allocated_rnti keeps track of the last RNTI allocated.
   rnti_t                        last_allocated_rnti;

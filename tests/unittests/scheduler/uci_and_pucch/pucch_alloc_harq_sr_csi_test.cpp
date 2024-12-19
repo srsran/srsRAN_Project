@@ -18,7 +18,7 @@ using namespace srsran;
 class test_pucch_f2_alloc_several_prbs : public ::testing::Test, public pucch_allocator_base_tester
 {
 public:
-  test_pucch_f2_alloc_several_prbs() : pucch_allocator_base_tester(test_bench_params{.pucch_f2_more_prbs = true})
+  test_pucch_f2_alloc_several_prbs() : pucch_allocator_base_tester(test_bench_params{.pucch_f2_f3_more_prbs = true})
   {
     // This PUCCH grant will be for 5 HARQ bits, which fit in 1 PRB.
     pucch_expected_harq_only.format                    = srsran::pucch_format::FORMAT_2;
