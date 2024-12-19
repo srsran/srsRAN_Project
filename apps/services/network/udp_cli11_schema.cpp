@@ -27,7 +27,8 @@ static void configure_cli11_udp_args(CLI::App& app, udp_appconfig& udp_params)
 
 void srsran::configure_cli11_with_udp_config_schema(CLI::App& app, udp_appconfig& config)
 {
-  app.add_option("--ext_addr", config.ext_addr, "External IP address that is advertised by the UDP GW");
+  add_option(app, "--ext_addr", config.ext_addr, "External IP address that is advertised for receiving UDP packets.")
+      ->check(CLI::ValidIPV4 | CLI::IsMember({"auto"}));
 
   CLI::App* udp_subcmd = add_subcommand(app, "udp", "UDP parameters")->configurable();
   configure_cli11_udp_args(*udp_subcmd, config);
