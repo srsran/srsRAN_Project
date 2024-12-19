@@ -473,7 +473,7 @@ android x300:
       artifacts: true
     - *retina-needs
 
-android x300 drx:
+android drx:
   stage: rf
   extends: .e2e-run
   allow_failure: true
