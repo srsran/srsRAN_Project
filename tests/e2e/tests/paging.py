@@ -21,7 +21,7 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
-from .steps.stub import ping, ping_from_5gc, start_network, ue_await_release, ue_start_and_attach
+from .steps.stub import ping, ping_from_5gc, start_network, stop, ue_await_release, ue_start_and_attach
 
 
 @mark.parametrize(
@@ -65,6 +65,13 @@ def test_zmq_paging(
     ping(ue_attach_info_dict, fivegc, 10)
     if ue_await_release(ue):
         ping_from_5gc(ue_attach_info_dict, fivegc, 10)
+    stop(
+        [ue],
+        gnb,
+        fivegc,
+        retina_data,
+        warning_as_errors=True,
+    )
 
 
 @mark.parametrize(
@@ -112,3 +119,10 @@ def test_cots_paging(
     ping(ue_attach_info_dict, fivegc, 10)
     sleep(5)
     ping_from_5gc(ue_attach_info_dict, fivegc, 10)
+    stop(
+        [ue],
+        gnb,
+        fivegc,
+        retina_data,
+        warning_as_errors=False,
+    )
