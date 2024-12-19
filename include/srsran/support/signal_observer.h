@@ -42,13 +42,7 @@ public:
     }
   }
 
-  void set_current_subject(signal_subject* subject)
-  {
-    if (current_subject) {
-      current_subject->detach(this);
-    }
-    current_subject = subject;
-  }
+  void set_current_subject(signal_subject* subject) { current_subject = subject; }
 
   void handle_signal(int signal) { callback(); };
 
