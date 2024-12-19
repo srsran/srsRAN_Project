@@ -55,9 +55,12 @@ private:
 
 size_t get_ring_size(const mac_cell_creation_request& cell_cfg)
 {
+  // Estimation of the time it takes the UL lower-layers to process and forward CRC/UCI indications.
+  constexpr static unsigned MAX_UL_PHY_DELAY = 40;
   // Note: The history ring size has to be a multiple of the TDD frame size in slots.
   // Number of slots managed by this container.
-  return get_allocator_ring_size_gt_min(get_max_slot_ul_alloc_delay(cell_cfg.sched_req.ntn_cs_koffset));
+  return get_allocator_ring_size_gt_min(get_max_slot_ul_alloc_delay(cell_cfg.sched_req.ntn_cs_koffset) +
+                                        MAX_UL_PHY_DELAY);
 }
 
 } // namespace
