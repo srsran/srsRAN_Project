@@ -55,7 +55,7 @@ private:
   rlf_detector&         rlf_handler;
   srslog::basic_logger& logger;
 
-  std::array<static_vector<uci_context, MAX_PUCCH_PDUS_PER_SLOT>, MAX_GRID_SIZE> expected_uci_report_grid;
+  std::vector<static_vector<uci_context, MAX_PUCCH_PDUS_PER_SLOT>> expected_uci_report_grid;
 };
 
 } // namespace srsran

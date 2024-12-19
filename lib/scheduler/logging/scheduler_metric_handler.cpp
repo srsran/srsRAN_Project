@@ -410,7 +410,7 @@ cell_metrics_handler* scheduler_metrics_handler::add_cell(const cell_configurati
     return nullptr;
   }
 
-  cells.emplace(cell_cfg.cell_index, report_period, notifier, cell_cfg);
+  cells.emplace(cell_cfg.cell_index, std::make_unique<cell_metrics_handler>(report_period, notifier, cell_cfg));
 
-  return &cells[cell_cfg.cell_index];
+  return cells[cell_cfg.cell_index].get();
 }

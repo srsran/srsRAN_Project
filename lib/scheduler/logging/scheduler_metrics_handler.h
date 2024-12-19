@@ -192,13 +192,13 @@ public:
 
   cell_metrics_handler* add_cell(const cell_configuration& cell_cfg);
 
-  cell_metrics_handler& at(du_cell_index_t cell_idx) { return cells[cell_idx]; }
+  cell_metrics_handler& at(du_cell_index_t cell_idx) { return *cells[cell_idx]; }
 
 private:
   scheduler_metrics_notifier&     notifier;
   const std::chrono::milliseconds report_period;
 
-  slotted_array<cell_metrics_handler, MAX_NOF_DU_CELLS> cells;
+  slotted_array<std::unique_ptr<cell_metrics_handler>, MAX_NOF_DU_CELLS> cells;
 };
 
 } // namespace srsran
