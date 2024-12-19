@@ -34,13 +34,8 @@ void test(unsigned nof_slots)
   // Iterate all parameters and assert grid reference
   std::vector<shared_resource_grid> reserved_grids;
   for (unsigned slot = 0; slot != nof_slots; ++slot) {
-    // Create context
-    resource_grid_context context = {};
-    context.slot                  = {0, slot};
-    context.sector                = 0;
-
     // Get grid.
-    shared_resource_grid grid = pool->allocate_resource_grid(context);
+    shared_resource_grid grid = pool->allocate_resource_grid({0, slot});
     TESTASSERT(grid.is_valid());
 
     // Verify grid reference match

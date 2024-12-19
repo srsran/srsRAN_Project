@@ -30,9 +30,9 @@ public:
   /// the allocation might fail. When allocation fails, the reason for the failure is logged to the \e PHY logger
   /// channel.
   ///
-  /// \param [in] context The context for resource grid allocation.
+  /// \param [in] slot The slot for resource grid allocation.
   /// \return A valid shared resource grid if the allocation is successful; otherwise, an invalid shared resource grid.
-  virtual shared_resource_grid allocate_resource_grid(const resource_grid_context& context) = 0;
+  virtual shared_resource_grid allocate_resource_grid(slot_point slot) = 0;
 };
 
 } // namespace srsran

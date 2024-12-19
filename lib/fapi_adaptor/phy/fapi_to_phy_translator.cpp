@@ -118,10 +118,7 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
 {
   resource_grid_context context = {slot_, sector_id};
   // Grab the resource grid.
-  // FIXME: 0 is hardcoded as the sector as in this implementation there is one DU per sector, so each DU have its own
-  // resource grid pool and downlink processor pool. It is also in the previous get processor call of the downlink
-  // processor pool
-  shared_resource_grid grid = rg_pool.allocate_resource_grid({slot_, 0});
+  shared_resource_grid grid = rg_pool.allocate_resource_grid(slot_);
 
   // If the resource grid is not valid, all DL transmissions for this slot shall be discarded.
   if (!grid) {
@@ -532,10 +529,7 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   rg_context.slot   = slot;
   rg_context.sector = sector_id;
 
-  // Get ul_resource_grid.
-  resource_grid_context pool_context = rg_context;
-  pool_context.sector                = 0;
-  shared_resource_grid ul_rg         = ul_rg_pool.allocate_resource_grid(pool_context);
+  shared_resource_grid ul_rg = ul_rg_pool.allocate_resource_grid(slot);
 
   // Abort UL processing for this slot if the resource grid is not available.
   if (!ul_rg) {

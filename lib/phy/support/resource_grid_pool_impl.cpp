@@ -46,7 +46,7 @@ resource_grid_pool_impl::~resource_grid_pool_impl()
                             "Not all the resource grids have returned to the pool.");
 }
 
-shared_resource_grid resource_grid_pool_impl::allocate_resource_grid(const resource_grid_context& context)
+shared_resource_grid resource_grid_pool_impl::allocate_resource_grid(slot_point slot)
 {
   // Trace point for grid reservation.
   trace_point tp = l1_tracer.now();
@@ -66,10 +66,7 @@ shared_resource_grid resource_grid_pool_impl::allocate_resource_grid(const resou
 
   // Return an invalid grid if not available.
   if (!available) {
-    logger.warning(context.slot.sfn(),
-                   context.slot.slot_index(),
-                   "Resource grid with identifier {} is not available.",
-                   identifier);
+    logger.warning(slot.sfn(), slot.slot_index(), "Resource grid with identifier {} is not available.", identifier);
     return {};
   }
 

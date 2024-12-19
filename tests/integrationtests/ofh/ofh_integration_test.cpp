@@ -689,7 +689,7 @@ private:
         resource_grid_context context{slot, 0};
         shared_resource_grid  dl_grid;
         while (!dl_grid && alloc_attempts--) {
-          dl_grid = dl_rg_pool.allocate_resource_grid(context);
+          dl_grid = dl_rg_pool.allocate_resource_grid(slot);
           if (!dl_grid) {
             std::this_thread::sleep_for(std::chrono::microseconds(10));
           }
@@ -709,7 +709,7 @@ private:
         resource_grid_context context{slot, 0};
         shared_resource_grid  ul_grid;
         while (!ul_grid && alloc_attempts--) {
-          ul_grid = ul_rg_pool.allocate_resource_grid(context);
+          ul_grid = ul_rg_pool.allocate_resource_grid(slot);
           if (!ul_grid) {
             std::this_thread::sleep_for(std::chrono::microseconds(10));
           }
