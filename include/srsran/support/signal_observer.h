@@ -33,7 +33,7 @@ using signal_callback = std::function<void()>;
 class signal_observer
 {
 public:
-  signal_observer(signal_callback callback_) : callback(callback_) {}
+  explicit signal_observer(signal_callback callback_) : callback(std::move(callback_)) {}
 
   virtual ~signal_observer()
   {
