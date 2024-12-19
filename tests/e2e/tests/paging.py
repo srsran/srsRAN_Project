@@ -65,3 +65,50 @@ def test_zmq_paging(
     ping(ue_attach_info_dict, fivegc, 10)
     if ue_await_release(ue):
         ping_from_5gc(ue_attach_info_dict, fivegc, 10)
+
+
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (
+        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
+        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
+    ),
+)
+@mark.android
+@mark.flaky(
+    reruns=2,
+    only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
+)
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_cots_paging(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+):
+    """
+    COTS Paging test
+    """
+
+    configure_test_parameters(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=get_minimum_sample_rate_for_bandwidth(bandwidth),
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        cu_cp_inactivity_timer=1,
+    )
+
+    logging.info("Paging Test")
+    start_network([ue], gnb, fivegc)
+    ue_attach_info_dict = ue_start_and_attach([ue], gnb, fivegc)
+    ping(ue_attach_info_dict, fivegc, 10)
+    sleep(5)
+    ping_from_5gc(ue_attach_info_dict, fivegc, 10)
