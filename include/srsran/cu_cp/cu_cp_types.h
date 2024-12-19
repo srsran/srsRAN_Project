@@ -17,6 +17,7 @@
 #include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/ran/crit_diagnostics.h"
 #include "srsran/ran/cu_types.h"
+#include "srsran/ran/gnb_constants.h"
 #include "srsran/ran/gnb_id.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
@@ -26,7 +27,6 @@
 #include "srsran/ran/tac.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include <cstdint>
-#include <map>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -37,7 +37,7 @@ namespace srs_cu_cp {
 /// Maximum number of DUs supported by CU-CP (implementation-defined).
 const uint16_t MAX_NOF_DUS = 65535;
 /// Maximum number of cells per DU supported by CU-CP (implementation-defined).
-const uint16_t MAX_NOF_DU_CELLS = 16;
+const uint16_t MAX_NOF_DU_CELLS = MAX_CELLS_PER_DU;
 /// Maximum number of CU-UPs supported by CU-CP (implementation-defined).
 const uint16_t MAX_NOF_CU_UPS = 65535;
 /// Maximum number of UEs supported by CU-CP (implementation-defined).

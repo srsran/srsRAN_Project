@@ -14,6 +14,7 @@
 #include "cu_up_processor_impl_interface.h"
 #include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
+#include <map>
 #include <unordered_map>
 
 namespace srsran {

@@ -15,6 +15,7 @@
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
+#include <map>
 
 namespace srsran {
 namespace srs_cu_cp {

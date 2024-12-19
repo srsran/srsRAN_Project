@@ -14,6 +14,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/executors/task_executor.h"
 #include <condition_variable>
+#include <map>
 
 namespace srsran {
 namespace srs_cu_cp {
