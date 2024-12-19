@@ -142,7 +142,8 @@ static void fill_cu_worker_manager_config(worker_manager_config& config, const c
   config.low_prio_sched_config    = unit_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg;
 }
 
-static void autoderive_cu_up_parameters_after_parsing(o_cu_up_unit_config&     o_cu_up_cfg,
+static void autoderive_cu_up_parameters_after_parsing(cu_appconfig&            cu_config,
+                                                      o_cu_up_unit_config&     o_cu_up_cfg,
                                                       const cu_cp_unit_config& cu_cp_cfg)
 {
   // If no UPF is configured, we set the UPF configuration from the CU-CP AMF configuration.
@@ -150,6 +151,11 @@ static void autoderive_cu_up_parameters_after_parsing(o_cu_up_unit_config&     o
     cu_up_unit_ngu_socket_config sock_cfg;
     sock_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
     o_cu_up_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg.push_back(sock_cfg);
+  }
+  // If no F1-U socket configuration is derived, we set a default configuration.
+  if (cu_config.f1u_cfg.f1u_socket_cfg.empty()) {
+    srs_cu::cu_f1u_socket_appconfig sock_cfg;
+    cu_config.f1u_cfg.f1u_socket_cfg.push_back(sock_cfg);
   }
 }
 
@@ -186,12 +192,12 @@ int main(int argc, char** argv)
   o_cu_up_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.
-  app.callback([&app, &o_cu_cp_app_unit, &o_cu_up_app_unit]() {
+  app.callback([&app, &cu_cfg, &o_cu_cp_app_unit, &o_cu_up_app_unit]() {
     o_cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
     o_cu_up_app_unit->on_configuration_parameters_autoderivation(app);
 
-    autoderive_cu_up_parameters_after_parsing(o_cu_up_app_unit->get_o_cu_up_unit_config(),
-                                              o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
+    autoderive_cu_up_parameters_after_parsing(
+        cu_cfg, o_cu_up_app_unit->get_o_cu_up_unit_config(), o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
   });
 
   // Parse arguments.
