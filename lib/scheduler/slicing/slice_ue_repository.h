@@ -46,8 +46,23 @@ public:
   /// Fetches the bitmap of bearers belonging to this slice.
   const bounded_bitset<MAX_NOF_RB_LCIDS>& get_bearers() const { return bearers; }
 
+  /// Fetches the bitmap of active logical channel groups belonging to this slice.
+  const bounded_bitset<MAX_NOF_LCGS>& get_lcgs() const { return lcg_ids; }
+
+  /// Fetches the logical channel group associated with a given LCID.
+  lcg_id_t get_lcg_id(lcid_t lcid) const
+  {
+    const auto& lchs = u.ue_cfg_dedicated()->logical_channels();
+    auto        it =
+        std::find_if(lchs.begin(), lchs.end(), [lcid](const logical_channel_config& lc) { return lc.lcid == lcid; });
+    return it != lchs.end() ? it->lc_group : MAX_NOF_LCGS;
+  }
+
   /// Determines if bearer with LCID is part of this slice.
   bool contains(lcid_t lcid) const { return bearers.size() > lcid and bearers.test(lcid); }
+
+  /// Determines if LCG is part of this slice.
+  bool contains(lcg_id_t lcg_id) const { return lcg_ids.size() > lcg_id and lcg_ids.test(lcg_id); }
 
   /// Fetch DU cell index of UE's PCell.
   const ue_cell& get_pcell() const { return u.get_pcell(); }

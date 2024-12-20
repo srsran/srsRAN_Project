@@ -74,17 +74,21 @@ private:
 
   private:
     void compute_dl_avg_rate(const slice_ue& u);
-    void compute_ul_avg_rate();
+    void compute_ul_avg_rate(const slice_ue& u);
 
     // Sum of DL bytes allocated for a given slot, before it is taken into account in the average rate computation.
     static_vector<unsigned, MAX_NOF_RB_LCIDS> dl_alloc_bytes_per_lc;
     unsigned                                  dl_sum_alloc_bytes = 0;
-    // Sum of UL bytes allocated for a given slot, before it is taken into account in the average rate computation.
-    unsigned ul_sum_alloc_bytes = 0;
     // Average DL rate expressed in bytes per slot experienced by UE in each of its logical channel.
-    static_vector<double, lcid_t::MAX_NOF_RB_LCIDS> dl_avg_rate_per_lc;
+    static_vector<double, MAX_NOF_RB_LCIDS> dl_avg_rate_per_lc;
     // Average DL rate expressed in bytes per slot experienced by UE.
     double total_dl_avg_rate_ = 0;
+    // Sum of UL bytes allocated for a given slot, before it is taken into account in the average rate computation.
+    static_vector<unsigned, MAX_NOF_LCGS> ul_alloc_bytes_per_lcg;
+    // Average UL rate expressed in bytes per slot experienced by UE in each of its logical channel.
+    static_vector<double, MAX_NOF_LCGS> ul_avg_rate_per_lcg;
+    // Sum of UL bytes allocated for a given slot, before it is taken into account in the average rate computation.
+    unsigned ul_sum_alloc_bytes = 0;
     // Average UL rate expressed in bytes per slot experienced by UE.
     double total_ul_avg_rate_ = 0;
     // Nof. DL samples over which average DL bitrate is computed.

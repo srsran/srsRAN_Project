@@ -286,30 +286,28 @@ static double compute_dl_rate_weight(const slice_ue& u, span<double> dl_avg_rate
 }
 
 /// \brief Computes UL rate weight used in computation of UL priority value for a UE in a slot.
-static double compute_ul_rate_weight(const slice_ue& u, double current_ue_ul_avg_rate, subcarrier_spacing bwp_scs)
+static double compute_ul_rate_weight(const slice_ue& u, span<double> ul_avg_rate_per_lcg, subcarrier_spacing bwp_scs)
 {
   span<const sched_drb_info> drbs_qos_info = u.get_drbs_qos_info();
   // [Implementation-defined] Rate weight to assign if the UE has only non-GBR bearers or average UL rate of UE is 0.
   const double initial_rate_weight = 1;
 
-  double qos_gbr_rate_sum = 0;
+  double rate_weight = 0;
   // Compute sum of GBR rates of all LCs belonging to this slice.
   for (const sched_drb_info& drb_qos_info : drbs_qos_info) {
     // LC is not part of the slice or a non-GBR flow.
     if (not u.contains(drb_qos_info.lcid) and not drb_qos_info.gbr_qos_info.has_value()) {
       continue;
     }
-    qos_gbr_rate_sum += to_bytes_per_slot(drb_qos_info.gbr_qos_info->gbr_ul, bwp_scs);
+
+    // GBR flow.
+    lcg_id_t lcg_id = u.get_lcg_id(drb_qos_info.lcid);
+    if (ul_avg_rate_per_lcg[lcg_id] != 0) {
+      rate_weight += (to_bytes_per_slot(drb_qos_info.gbr_qos_info->gbr_ul, bwp_scs) / ul_avg_rate_per_lcg[lcg_id]);
+    }
   }
 
-  if (qos_gbr_rate_sum == 0 or current_ue_ul_avg_rate == 0) {
-    return initial_rate_weight;
-  }
-
-  // [Implementation-defined] Since scheduler does not have the information related to nof. bytes sent by UE for each
-  // LCG, the computation of rate weight is simplified by dividing the sum of GBR rates in all LC with average UL rate
-  // experienced by the UE.
-  return qos_gbr_rate_sum / current_ue_ul_avg_rate;
+  return rate_weight == 0 ? initial_rate_weight : rate_weight;
 }
 
 void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
@@ -400,7 +398,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
   ul_prio = forbid_prio;
 
   // Process bytes allocated in previous slot and compute average.
-  compute_ul_avg_rate();
+  compute_ul_avg_rate(u);
 
   const ue_cell* ue_cc = u.find_cell(cell_index);
   if (ue_cc == nullptr) {
@@ -481,7 +479,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
     pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
   }
   const double rate_weight = compute_ul_rate_weight(
-      u, current_avg_rate, ue_cc->cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs);
+      u, ul_avg_rate_per_lcg, ue_cc->cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs);
   ul_prio         = rate_weight * pf_weight;
   sr_ind_received = u.has_pending_sr();
 }
@@ -530,21 +528,48 @@ void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u)
   dl_nof_samples++;
 }
 
-void scheduler_time_pf::ue_ctxt::compute_ul_avg_rate()
+void scheduler_time_pf::ue_ctxt::compute_ul_avg_rate(const slice_ue& u)
 {
+  // Redimension LCID arrays to the UE configured bearers.
+  ul_alloc_bytes_per_lcg.resize(u.get_lcgs().size(), 0);
+  ul_avg_rate_per_lcg.resize(ul_alloc_bytes_per_lcg.size(), 0);
+
+  // Compute UL average rate on a per-logical channel group basis.
+  for (unsigned i = 0; i != ul_alloc_bytes_per_lcg.size(); ++i) {
+    if (not u.contains(uint_to_lcg_id(i))) {
+      // Skip LCIDs that are not configured.
+      ul_alloc_bytes_per_lcg[i] = 0;
+      ul_avg_rate_per_lcg[i]    = 0;
+    }
+
+    unsigned sched_bytes = ul_alloc_bytes_per_lcg[i];
+
+    if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
+      // Fast start before transitioning to exponential average.
+      ul_avg_rate_per_lcg[i] += (sched_bytes - ul_avg_rate_per_lcg[i]) / (ul_nof_samples + 1);
+    } else {
+      ul_avg_rate_per_lcg[i] =
+          (1 - parent->exp_avg_alpha) * ul_avg_rate_per_lcg[i] + (parent->exp_avg_alpha) * sched_bytes;
+    }
+
+    // Flush allocated bytes for the current slot.
+    ul_alloc_bytes_per_lcg[i] = 0;
+  }
+
+  // Compute UL average rate of the UE.
   if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
     // Fast start before transitioning to exponential average.
-    total_ul_avg_rate_ = total_ul_avg_rate_ + (ul_sum_alloc_bytes - total_ul_avg_rate_) / (ul_nof_samples + 1);
+    total_ul_avg_rate_ += (ul_sum_alloc_bytes - total_ul_avg_rate_) / (ul_nof_samples + 1);
   } else {
     total_ul_avg_rate_ =
         (1 - parent->exp_avg_alpha) * total_ul_avg_rate_ + (parent->exp_avg_alpha) * ul_sum_alloc_bytes;
   }
 
-  // Increment number of samples.
-  ul_nof_samples++;
-
   // Flush allocated bytes for the current slot.
   ul_sum_alloc_bytes = 0;
+
+  // Increment number of samples.
+  ul_nof_samples++;
 }
 
 void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info)
