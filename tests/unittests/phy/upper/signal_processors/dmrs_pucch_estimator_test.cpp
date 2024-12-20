@@ -163,7 +163,7 @@ TEST_P(DmrsPucchEstimatorFixture, DmrsPucchEstimatorTest)
   const std::vector<resource_grid_reader_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();
 
   // Create resource grid
-  resource_grid_reader_spy grid;
+  resource_grid_reader_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
   grid.write(testvector_symbols);
 
   std::visit(

@@ -47,7 +47,7 @@ TEST_P(PucchProcessorF2Fixture, PucchProcessorF2VectorTest)
   const pucch_processor::format2_configuration& config    = context.config;
 
   // Prepare resource grid.
-  resource_grid_reader_spy grid;
+  resource_grid_reader_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
   grid.write(test_case.grid.read());
 
   // Read expected UCI payload fields.

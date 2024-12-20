@@ -167,7 +167,7 @@ TEST_P(ChannelEstFixture, test)
     pilot_read = pilot_read.last(pilot_read.size() - nof_dmrs_pilots);
   }
 
-  resource_grid_reader_spy grid;
+  resource_grid_reader_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
   grid.write(grid_entries);
   ch_estimator->compute(estimates, grid, 0, pilots_arranged, cfg);
 

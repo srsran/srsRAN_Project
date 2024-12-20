@@ -72,6 +72,11 @@ protected:
   std::unique_ptr<dmrs_pusch_estimator> estimator;
   resource_grid_reader_spy              grid;
 
+  // Default constructor - initializes the resource grid with the maximum size possible.
+  DmrsPuschEstimatorFixture() : ::testing::TestWithParam<ParamType>(), grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS)
+  {
+  }
+
   void SetUp() override
   {
     test_case_t test_case = GetParam();

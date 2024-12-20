@@ -66,7 +66,7 @@ namespace {
 TEST_P(PucchProcessorFormat1Fixture, FromVector)
 {
   // Prepare resource grid.
-  resource_grid_reader_spy grid;
+  resource_grid_reader_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
   grid.write(GetParam().grid.read());
 
   const PucchProcessorFormat1Param& param = GetParam();
@@ -107,7 +107,7 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
 TEST_P(PucchProcessorFormat1Fixture, FromVectorFalseCs)
 {
   // Prepare resource grid.
-  resource_grid_reader_spy grid;
+  resource_grid_reader_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
   grid.write(GetParam().grid.read());
 
   // Get original parameters and change the initial cyclic shift.
@@ -160,7 +160,7 @@ TEST_P(PucchProcessorFormat1Fixture, FalseAlarm)
   float acceptable_pfa = 0.1;
 
   // Prepare resource grid.
-  resource_grid_reader_spy grid;
+  resource_grid_reader_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
   unsigned                 counter = 0;
   for (unsigned i = 0; i != nof_trials; ++i) {
     grid.reset();

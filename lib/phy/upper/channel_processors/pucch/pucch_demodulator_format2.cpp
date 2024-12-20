@@ -14,14 +14,68 @@
 #include "pucch_demodulator_format2.h"
 #include "srsran/phy/support/mask_types.h"
 #include "srsran/phy/support/resource_grid_reader.h"
+#include "srsran/srsvec/copy.h"
+
+#if defined(__AVX2__)
+#include <immintrin.h>
+#elif defined(__ARM_NEON)
+#include <arm_neon.h>
+#endif
 
 using namespace srsran;
 
-/// \brief Control data RE allocation pattern for PUCCH Format 2.
-///
-/// Indicates the Resource Elements containing control data symbols within a PRB, as per TS38.211 Section 6.4.1.3.2.2.
-static const re_prb_mask format2_prb_re_mask =
-    {true, false, true, true, false, true, true, false, true, true, false, true};
+/// \brief Extracts REs containing PUCCH Format 2 data from a block of contiguous PRBs.
+/// \param[out] out Output buffer.
+/// \param[in]  in  Input buffer containing data and DM-RS.
+static inline void extract_re(span<cbf16_t> out, span<const cbf16_t> in)
+{
+  srsran_assert(in.size() % NRE == 0, "Invalid output size.");
+  unsigned nof_prb = in.size() / NRE;
+  srsran_assert(out.size() == nof_prb * pucch_constants::FORMAT2_NOF_DATA_SC,
+                "Invalid output size (i.e., {}), expected {}.",
+                out.size(),
+                nof_prb * pucch_constants::FORMAT2_NOF_DATA_SC);
+
+#if defined(__AVX2__)
+  const int* in_ptr   = reinterpret_cast<const int*>(in.data());
+  __m256i*   out_ptr  = reinterpret_cast<__m256i*>(out.data());
+  __m256i    data_idx = _mm256_setr_epi32(0, 2, 3, 5, 6, 8, 9, 11);
+
+  for (unsigned i_prb = 0; i_prb != nof_prb; ++i_prb) {
+    // Gather data RE as 32-bit unsigned integers.
+    __m256i avx2_data = _mm256_i32gather_epi32(in_ptr, data_idx, 4);
+    in_ptr += NRE;
+
+    // Store data REs.
+    _mm256_storeu_si256(out_ptr++, avx2_data);
+  }
+#elif defined(__ARM_NEON)
+  const int* in_ptr  = reinterpret_cast<const int*>(in.data());
+  int*       out_ptr = reinterpret_cast<int*>(out.data());
+
+  for (unsigned i_prb = 0; i_prb != nof_prb; ++i_prb) {
+    // Load and deinterleave 12 REs as 32-bit unsigned integers.
+    int32x4x3_t data_prb_s32 = vld3q_s32(in_ptr);
+    in_ptr += NRE;
+
+    // Discard second RE.
+    int32x4x2_t data_s32 = {data_prb_s32.val[0], data_prb_s32.val[2]};
+
+    // Interleave and store.
+    vst2q_s32(out_ptr, data_s32);
+    out_ptr += pucch_constants::FORMAT2_NOF_DATA_SC;
+  }
+#else
+  for (unsigned k = 0, k_end = nof_prb * NRE, count = 0; k != k_end; ++k) {
+    // Skip DM-RS.
+    if (k % 3 == 1) {
+      continue;
+    }
+
+    out[count++] = in[k];
+  }
+#endif
+}
 
 void pucch_demodulator_format2::demodulate(span<log_likelihood_ratio>                      llr,
                                            const resource_grid_reader&                     grid,
@@ -97,14 +151,6 @@ void pucch_demodulator_format2::get_data_re_ests(const resource_grid_reader&    
                                                  const channel_estimate&                         channel_ests,
                                                  const pucch_demodulator::format2_configuration& config)
 {
-  // Prepare RB mask. RB allocation is contiguous for PUCCH Format 2.
-  bounded_bitset<MAX_RB> prb_mask;
-  prb_mask.resize(config.nof_prb);
-  prb_mask.fill(0, config.nof_prb, true);
-
-  // Prepare RE mask.
-  bounded_bitset<MAX_RB* NRE> re_mask = prb_mask.kronecker_product<NRE>(format2_prb_re_mask);
-
   for (unsigned i_port = 0, i_port_end = config.rx_ports.size(); i_port != i_port_end; ++i_port) {
     // Get a view of the data RE destination buffer for a single Rx port.
     span<cbf16_t> re_port_buffer = ch_re.get_slice(i_port);
@@ -122,17 +168,23 @@ void pucch_demodulator_format2::get_data_re_ests(const resource_grid_reader&    
         first_subc = config.second_hop_prb.value() * NRE;
       }
 
-      // Extract data RE from the resource grid.
-      re_port_buffer = resource_grid.get(re_port_buffer, i_port, i_symbol, first_subc, re_mask);
+      // Extract data RE view from the resource grid.
+      span<const cbf16_t> grid_view =
+          resource_grid.get_view(i_port, i_symbol).subspan(first_subc, config.nof_prb * NRE);
 
       // View over the channel estimation coefficients for a single OFDM symbol.
-      span<const cbf16_t> ests_symbol = channel_ests.get_symbol_ch_estimate(i_symbol, i_port);
+      span<const cbf16_t> ests_symbol =
+          channel_ests.get_symbol_ch_estimate(i_symbol, i_port).subspan(first_subc, config.nof_prb * NRE);
 
-      // Copy channel estimation coefficients of the data RE into the destination buffer.
-      re_mask.for_each(0, re_mask.size(), [&ests_port_buffer, &ests_symbol, &first_subc](unsigned bitpos) {
-        ests_port_buffer.front() = ests_symbol[first_subc + bitpos];
-        ests_port_buffer         = ests_port_buffer.last(ests_port_buffer.size() - 1);
-      });
+      // Extract data resource elements.
+      extract_re(re_port_buffer.first(config.nof_prb * pucch_constants::FORMAT2_NOF_DATA_SC), grid_view);
+      extract_re(ests_port_buffer.first(config.nof_prb * pucch_constants::FORMAT2_NOF_DATA_SC), ests_symbol);
+
+      // Advance buffers.
+      re_port_buffer =
+          re_port_buffer.last(re_port_buffer.size() - config.nof_prb * pucch_constants::FORMAT2_NOF_DATA_SC);
+      ests_port_buffer =
+          ests_port_buffer.last(ests_port_buffer.size() - config.nof_prb * pucch_constants::FORMAT2_NOF_DATA_SC);
     }
 
     // Assert that all port data RE buffer elements have been filled.

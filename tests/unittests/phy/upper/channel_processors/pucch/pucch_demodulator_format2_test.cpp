@@ -65,6 +65,11 @@ protected:
   // PUCCH Demodulator.
   static std::unique_ptr<pucch_demodulator> demodulator;
 
+  // Default constructor - initializes the resource grid with the maximum size possible.
+  PucchDemodulatorFixture() : ::testing::TestWithParam<ParamType>(), rg_spy(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS)
+  {
+  }
+
   static void SetUpTestSuite()
   {
     if (!demodulator) {
