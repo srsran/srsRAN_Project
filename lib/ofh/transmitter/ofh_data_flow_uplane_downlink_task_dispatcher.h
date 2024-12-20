@@ -23,8 +23,9 @@ class data_flow_uplane_downlink_task_dispatcher : public data_flow_uplane_downli
 {
 public:
   data_flow_uplane_downlink_task_dispatcher(std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane_,
-                                            task_executor&                                  executor_) :
-    data_flow_uplane(std::move(data_flow_uplane_)), executor(executor_)
+                                            task_executor&                                  executor_,
+                                            unsigned                                        sector_id_) :
+    data_flow_uplane(std::move(data_flow_uplane_)), executor(executor_), sector_id(sector_id_)
   {
     srsran_assert(data_flow_uplane, "Invalid data flow");
   }
@@ -36,13 +37,16 @@ public:
     if (!executor.execute(
             [this, context, rg = grid.copy()]() { data_flow_uplane->enqueue_section_type_1_message(context, rg); })) {
       srslog::fetch_basic_logger("OFH").warning(
-          "Failed to dispatch message in the downlink data flow User-Plane for slot '{}'", context.slot);
+          "Sector#{}: failed to dispatch message in the downlink data flow User-Plane for slot '{}'",
+          sector_id,
+          context.slot);
     }
   }
 
 private:
   std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane;
   task_executor&                                  executor;
+  const unsigned                                  sector_id;
 };
 
 } // namespace ofh

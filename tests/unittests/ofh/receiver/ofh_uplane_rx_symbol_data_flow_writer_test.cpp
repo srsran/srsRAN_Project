@@ -41,7 +41,7 @@ public:
     rg_reader(nof_ports, symbol_range.stop(), nof_prb),
     grid(rg_reader, rg_writer),
     shared_grid(grid),
-    writer(eaxc, srslog::fetch_basic_logger("TEST"), repo)
+    writer(eaxc, 0, srslog::fetch_basic_logger("TEST"), repo)
   {
     results.params.slot      = slot;
     results.params.symbol_id = symbol_id;

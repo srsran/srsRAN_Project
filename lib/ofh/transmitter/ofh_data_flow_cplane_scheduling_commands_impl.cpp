@@ -133,6 +133,7 @@ data_flow_cplane_scheduling_commands_impl::data_flow_cplane_scheduling_commands_
   logger(*dependencies.logger),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
   ru_nof_prbs(config.ru_nof_prbs),
+  sector_id(config.sector),
   dl_compr_params(config.dl_compr_params),
   ul_compr_params(config.ul_compr_params),
   prach_compr_params(config.prach_compr_params),
@@ -155,7 +156,8 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
   data_direction    direction = context.direction;
   slot_point        slot      = context.slot;
   slot_symbol_point symbol_point(slot, 0, nof_symbols_per_slot);
-  logger.debug("Packing a {} type 1 Control-Plane message for slot '{}' and eAxC '{}'",
+  logger.debug("Sector#{}: packing a {} type 1 Control-Plane message for slot '{}' and eAxC '{}'",
+               sector_id,
                (direction == data_direction::downlink) ? "downlink" : "uplink",
                slot,
                context.eaxc);
@@ -163,11 +165,12 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
   // Get an ethernet frame buffer.
   scoped_frame_buffer scoped_buffer(*frame_pool, symbol_point, message_type::control_plane, direction);
   if (scoped_buffer.empty()) {
-    logger.warning(
-        "Not enough space in the buffer pool to create a {} type 1 Control-Plane message for slot '{}' and eAxC '{}'",
-        (direction == data_direction::downlink) ? "downlink" : "uplink",
-        slot,
-        context.eaxc);
+    logger.warning("Sector#{}: not enough space in the buffer pool to create a {} type 1 Control-Plane message for "
+                   "slot '{}' and eAxC '{}'",
+                   sector_id,
+                   (direction == data_direction::downlink) ? "downlink" : "uplink",
+                   slot,
+                   context.eaxc);
     return;
   }
   ether::frame_buffer& frame_buffer = scoped_buffer.get_next_frame();
@@ -215,13 +218,17 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
 {
   slot_point        slot = context.slot;
   slot_symbol_point symbol_point(slot, context.start_symbol, nof_symbols_per_slot);
-  logger.debug("Packing a type 3 PRACH Control-Plane message for slot '{}' and eAxC '{}'", slot, context.eaxc);
+  logger.debug("Sector#{}: packing a type 3 PRACH Control-Plane message for slot '{}' and eAxC '{}'",
+               sector_id,
+               slot,
+               context.eaxc);
 
   // Get an ethernet frame buffer.
   scoped_frame_buffer scoped_buffer(*frame_pool, symbol_point, message_type::control_plane, data_direction::uplink);
   if (scoped_buffer.empty()) {
-    logger.warning("Not enough space in the buffer pool to create a type 3 PRACH Control-Plane message for slot '{}' "
-                   "and eAxC '{}'",
+    logger.warning("Sector#{}: not enough space in the buffer pool to create a type 3 PRACH Control-Plane message for "
+                   "slot '{}' and eAxC '{}'",
+                   sector_id,
                    slot,
                    context.eaxc);
     return;
@@ -236,8 +243,9 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
   span<uint8_t> ofh_buffer      = buffer.last(buffer.size() - offset.value());
   const auto&   ofh_ctrl_params = generate_prach_control_parameters(context, prach_compr_params, ru_nof_prbs);
 
-  logger.debug("Generated a PRACH request for slot '{}': numSymbols={}, startSym={}, start_re={}, scs={}, "
+  logger.debug("Sector#{}: generated a PRACH request for slot '{}': numSymbols={}, startSym={}, start_re={}, scs={}, "
                "prach_scs={}, nof_rb={}, timeOffset={}, freqOffset={}",
+               sector_id,
                slot,
                context.nof_repetitions,
                context.start_symbol,

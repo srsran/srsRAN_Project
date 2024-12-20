@@ -55,18 +55,18 @@ void dpdk_receiver_impl::start(frame_notifier& notifier_)
         p.set_value();
         receive_loop();
       })) {
-    report_error("Unable to start the DPDK ethernet frame receiver");
+    report_error("Unable to start the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
   }
 
   // Block waiting for timing executor to start.
   fut.wait();
 
-  logger.info("Started the DPDK ethernet frame receiver");
+  logger.info("Started the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
 }
 
 void dpdk_receiver_impl::stop()
 {
-  logger.info("Requesting stop of the DPDK ethernet frame receiver");
+  logger.info("Requesting stop of the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
   rx_status.store(receiver_status::stop_requested, std::memory_order_relaxed);
 
   // Wait for the receiver thread to stop.
@@ -74,7 +74,7 @@ void dpdk_receiver_impl::stop()
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 
-  logger.info("Stopped the DPDK ethernet frame receiver");
+  logger.info("Stopped the DPDK ethernet frame receiver on port '{}'", port_ctx->get_port_id());
 }
 
 void dpdk_receiver_impl::receive_loop()
@@ -97,7 +97,7 @@ void dpdk_receiver_impl::receive()
   std::array<::rte_mbuf*, MAX_BURST_SIZE> mbufs;
 
   trace_point dpdk_rx_tp = ofh_tracer.now();
-  unsigned    num_frames = ::rte_eth_rx_burst(port_ctx->get_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
+  unsigned    num_frames = ::rte_eth_rx_burst(port_ctx->get_dpdk_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
   if (num_frames == 0) {
     ofh_tracer << instant_trace_event("ofh_receiver_wait_data", instant_trace_event::cpu_scope::thread);
     std::this_thread::sleep_for(std::chrono::microseconds(5));

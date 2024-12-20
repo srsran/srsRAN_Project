@@ -20,13 +20,16 @@ namespace ether {
 class vlan_frame_decoder_impl : public vlan_frame_decoder
 {
 public:
-  explicit vlan_frame_decoder_impl(srslog::basic_logger& logger_) : logger(logger_) {}
+  vlan_frame_decoder_impl(srslog::basic_logger& logger_, unsigned sector_id_) : logger(logger_), sector_id(sector_id_)
+  {
+  }
 
   // See interface for documentation.
   span<const uint8_t> decode(span<const uint8_t> frame, vlan_frame_params& eth_params) override;
 
 private:
   srslog::basic_logger& logger;
+  const unsigned        sector_id;
 };
 
 } // namespace ether

@@ -31,6 +31,8 @@ namespace ofh {
 
 /// Open Fronthaul User-Plane downlink data flow implementation configuration.
 struct data_flow_uplane_downlink_data_impl_config {
+  /// Radio sector identifier.
+  unsigned sector;
   /// Cyclic prefix.
   cyclic_prefix cp;
   /// RU bandwidth in PRBs.
@@ -110,6 +112,7 @@ private:
   srslog::basic_logger&                     logger;
   const unsigned                            nof_symbols_per_slot;
   const unsigned                            ru_nof_prbs;
+  const unsigned                            sector_id;
   const ru_compression_params               compr_params;
   sequence_identifier_generator             up_seq_gen;
   std::shared_ptr<ether::eth_frame_pool>    frame_pool;

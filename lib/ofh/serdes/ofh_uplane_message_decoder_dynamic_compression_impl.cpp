@@ -20,8 +20,9 @@ uplane_message_decoder_dynamic_compression_impl::decode_compression_header(
     network_order_binary_deserializer& deserializer)
 {
   if (deserializer.remaining_bytes() < 2 * sizeof(uint8_t)) {
-    logger.info("Received an Open Fronthaul packet with size of '{}' bytes that is smaller than the user data "
-                "compression header length",
+    logger.info("Sector#{}: received an Open Fronthaul packet with size of '{}' bytes that is smaller than the user "
+                "data compression header length",
+                sector_id,
                 deserializer.remaining_bytes());
 
     return uplane_message_decoder_impl::decoded_section_status::incomplete;
@@ -32,7 +33,8 @@ uplane_message_decoder_dynamic_compression_impl::decode_compression_header(
 
   // Consider a reserved value as malformed message.
   if (results.ud_comp_hdr.type == compression_type::reserved) {
-    logger.info("Detected malformed Open Fronthaul message as the decoded compression type '{}' is invalid",
+    logger.info("Sector#{}: detected malformed Open Fronthaul message as the decoded compression type '{}' is invalid",
+                sector_id,
                 value & 0x0f);
 
     return uplane_message_decoder_impl::decoded_section_status::malformed;

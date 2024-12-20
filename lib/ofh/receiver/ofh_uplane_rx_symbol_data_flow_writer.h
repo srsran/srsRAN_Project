@@ -25,9 +25,13 @@ class uplane_rx_symbol_data_flow_writer
 {
 public:
   uplane_rx_symbol_data_flow_writer(span<const unsigned>                       ul_eaxc_,
+                                    unsigned                                   sector_id_,
                                     srslog::basic_logger&                      logger_,
                                     std::shared_ptr<uplink_context_repository> ul_context_repo_) :
-    ul_eaxc(ul_eaxc_.begin(), ul_eaxc_.end()), logger(logger_), ul_context_repo(std::move(ul_context_repo_))
+    ul_eaxc(ul_eaxc_.begin(), ul_eaxc_.end()),
+    sector_id(sector_id_),
+    logger(logger_),
+    ul_context_repo(std::move(ul_context_repo_))
   {
     srsran_assert(!ul_eaxc.empty(), "Invalid number of uplink eAxCs");
     srsran_assert(ul_context_repo, "Invalid uplink context repository");
@@ -38,6 +42,7 @@ public:
 
 private:
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  const unsigned                                        sector_id;
   srslog::basic_logger&                                 logger;
   std::shared_ptr<uplink_context_repository>            ul_context_repo;
 };

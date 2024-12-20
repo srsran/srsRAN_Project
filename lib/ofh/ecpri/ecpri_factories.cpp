@@ -21,13 +21,13 @@ std::unique_ptr<packet_builder> srsran::ecpri::create_ecpri_packet_builder()
 }
 
 std::unique_ptr<packet_decoder>
-srsran::ecpri::create_ecpri_packet_decoder_using_payload_size(srslog::basic_logger& logger)
+srsran::ecpri::create_ecpri_packet_decoder_using_payload_size(srslog::basic_logger& logger, unsigned sector)
 {
-  return std::make_unique<packet_decoder_use_header_payload_size>(logger);
+  return std::make_unique<packet_decoder_use_header_payload_size>(logger, sector);
 }
 
 std::unique_ptr<packet_decoder>
-srsran::ecpri::create_ecpri_packet_decoder_ignoring_payload_size(srslog::basic_logger& logger)
+srsran::ecpri::create_ecpri_packet_decoder_ignoring_payload_size(srslog::basic_logger& logger, unsigned sector)
 {
-  return std::make_unique<packet_decoder_ignore_header_payload_size>(logger);
+  return std::make_unique<packet_decoder_ignore_header_payload_size>(logger, sector);
 }

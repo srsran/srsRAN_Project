@@ -65,6 +65,7 @@ data_flow_uplane_downlink_data_impl::data_flow_uplane_downlink_data_impl(
   logger(*dependencies.logger),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
   ru_nof_prbs(config.ru_nof_prbs),
+  sector_id(config.sector),
   compr_params(config.compr_params),
   frame_pool(std::move(dependencies.frame_pool)),
   compressor_sel(std::move(dependencies.compressor_sel)),
@@ -115,8 +116,9 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
     slot_symbol_point   symbol_point(context.slot, symbol_id, nof_symbols_per_slot);
     scoped_frame_buffer scoped_buffer(*frame_pool, symbol_point, message_type::user_plane, data_direction::downlink);
     if (scoped_buffer.empty()) {
-      logger.warning("Not enough space in the buffer pool to create a downlink User-Plane message for slot '{}' and "
-                     "eAxC '{}', symbol_id '{}'",
+      logger.warning("Sector#{}: not enough space in the buffer pool to create a downlink User-Plane message for slot "
+                     "'{}' and eAxC '{}', symbol_id '{}'",
+                     sector_id,
                      context.slot,
                      context.eaxc,
                      symbol_id);
@@ -147,9 +149,10 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
 
       // Skip frame buffers so small that cannot carry one PRB.
       if (fragment_nof_prbs == 0) {
-        logger.warning(
-            "Skipped frame buffer as it cannot store data for a single PRB, required buffer size is '{}' bytes",
-            data.size());
+        logger.warning("Sector#{}: skipped frame buffer as it cannot store data for a single PRB, required buffer size "
+                       "is '{}' bytes",
+                       sector_id,
+                       data.size());
 
         continue;
       }
@@ -193,8 +196,9 @@ unsigned data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_sym
   span<uint8_t> eth_buffer = span<uint8_t>(buffer).first(ether_header_size.value() + bytes_written);
   eth_builder->build_frame(eth_buffer);
 
-  logger.debug("Packing a downlink User-Plane message for slot '{}' and eAxC '{}', symbol_id '{}', PRB range '{}:{}', "
-               "size '{}' bytes",
+  logger.debug("Sector#{}: packing a downlink User-Plane message for slot '{}' and eAxC '{}', symbol_id '{}', PRB "
+               "range '{}:{}', size '{}' bytes",
+               sector_id,
                params.slot,
                eaxc,
                params.symbol_id,

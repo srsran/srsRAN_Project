@@ -24,6 +24,8 @@ namespace ofh {
 
 /// Open Fronthaul User-Plane uplink data flow implementation configuration.
 struct data_flow_uplane_uplink_data_impl_config {
+  /// Radio sector identifier.
+  unsigned sector;
   /// Uplink eAxCs.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
 };
@@ -63,6 +65,7 @@ private:
   std::unique_ptr<uplane_message_decoder>           uplane_decoder;
   uplane_rx_symbol_data_flow_writer                 rx_symbol_writer;
   uplane_rx_symbol_data_flow_notifier               notification_sender;
+  const unsigned                                    sector_id;
 };
 
 } // namespace ofh

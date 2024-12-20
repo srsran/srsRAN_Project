@@ -22,7 +22,8 @@ closed_rx_window_handler::closed_rx_window_handler(const closed_rx_window_handle
   executor(*dependencies.executor),
   prach_repo(std::move(dependencies.prach_repo)),
   uplink_repo(std::move(dependencies.uplink_repo)),
-  notifier(std::move(dependencies.notifier))
+  notifier(std::move(dependencies.notifier)),
+  sector_id(config.sector)
 {
   srsran_assert(prach_repo, "Invalid PRACH context repository");
   srsran_assert(uplink_repo, "Invalid uplink context repository");
@@ -35,9 +36,11 @@ void closed_rx_window_handler::on_new_symbol(slot_symbol_point symbol_point)
         handle_uplink_context(internal_slot);
         handle_prach_context(internal_slot);
       })) {
-    logger.warning("Failed to dispatch task for checking for lost messages in reception for slot '{}' and symbol '{}'",
-                   symbol_point.get_slot(),
-                   symbol_point.get_symbol_index());
+    logger.warning(
+        "Sector#{}: failed to dispatch task for checking for lost messages in reception for slot '{}' and symbol '{}'",
+        sector_id,
+        symbol_point.get_slot(),
+        symbol_point.get_symbol_index());
   }
 }
 
@@ -56,13 +59,15 @@ void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_po
   notifier->on_new_uplink_symbol(notification_context, std::move(ctx_value.grid));
 
   if (log_unreceived_messages) {
-    logger.warning("Missed incoming User-Plane uplink messages for slot '{}', symbol '{}' and sector#{}",
+    logger.warning("Sector#{}: missed incoming User-Plane uplink messages for slot '{}', symbol '{}' and sector#{}",
+                   sector_id,
                    ctx_value.context.slot,
                    symbol_point.get_symbol_index(),
                    ctx_value.context.sector);
   }
 
-  logger.debug("Notifying incomplete UL symbol in slot '{}', symbol '{}' for sector#{}",
+  logger.debug("Sector#{}: notifying incomplete UL symbol in slot '{}', symbol '{}' for sector#{}",
+               sector_id,
                notification_context.slot,
                notification_context.symbol,
                notification_context.sector);
@@ -88,11 +93,14 @@ void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_poi
   notifier->on_new_prach_window_data(ctx_value.context, *ctx_value.buffer);
 
   if (log_unreceived_messages) {
-    logger.warning("Missed incoming User-Plane PRACH messages for slot '{}' and sector#{}",
+    logger.warning("Sector#{}: missed incoming User-Plane PRACH messages for slot '{}' and sector#{}",
+                   sector_id,
                    ctx_value.context.slot,
                    ctx_value.context.sector);
   }
 
-  logger.debug(
-      "Notifying incomplete PRACH in slot '{}' for sector#{}", ctx_value.context.slot, ctx_value.context.sector);
+  logger.debug("Sector#{}: notifying incomplete PRACH in slot '{}' for sector#{}",
+               sector_id,
+               ctx_value.context.slot,
+               ctx_value.context.sector);
 }

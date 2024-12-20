@@ -21,8 +21,8 @@ namespace ofh {
 class ofh_message_receiver_task_dispatcher : public message_receiver
 {
 public:
-  ofh_message_receiver_task_dispatcher(message_receiver& msg_receiver_, task_executor& executor_) :
-    msg_receiver(msg_receiver_), executor(executor_)
+  ofh_message_receiver_task_dispatcher(message_receiver& msg_receiver_, task_executor& executor_, unsigned sector_) :
+    msg_receiver(msg_receiver_), executor(executor_), sector(sector_)
   {
   }
 
@@ -30,7 +30,7 @@ public:
   void on_new_frame(ether::unique_rx_buffer buffer) override
   {
     if (!executor.execute([this, buff = std::move(buffer)]() mutable { msg_receiver.on_new_frame(std::move(buff)); })) {
-      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch receiver task");
+      srslog::fetch_basic_logger("OFH").warning("Failed to dispatch receiver task for sector#{}", sector);
     }
   }
 
@@ -40,6 +40,7 @@ public:
 private:
   message_receiver& msg_receiver;
   task_executor&    executor;
+  const unsigned    sector;
 };
 
 } // namespace ofh

@@ -42,7 +42,7 @@ std::unique_ptr<frame_builder> create_vlan_frame_builder(const vlan_frame_params
 std::unique_ptr<frame_builder> create_frame_builder(const vlan_frame_params& eth_params);
 
 /// Creates an Ethernet VLAN frame decoder.
-std::unique_ptr<vlan_frame_decoder> create_vlan_frame_decoder(srslog::basic_logger& logger);
+std::unique_ptr<vlan_frame_decoder> create_vlan_frame_decoder(srslog::basic_logger& logger, unsigned sector_id);
 
 } // namespace ether
 } // namespace srsran

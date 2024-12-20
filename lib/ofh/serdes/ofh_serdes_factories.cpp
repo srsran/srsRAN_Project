@@ -48,11 +48,12 @@ srsran::ofh::create_static_compr_method_ofh_user_plane_packet_decoder(srslog::ba
                                                                       subcarrier_spacing               scs,
                                                                       cyclic_prefix                    cp,
                                                                       unsigned                         ru_nof_prbs,
+                                                                      unsigned                         sector_id_,
                                                                       std::unique_ptr<iq_decompressor> decompressor,
                                                                       const ru_compression_params&     compr_params)
 {
   return std::make_unique<uplane_message_decoder_static_compression_impl>(
-      logger, scs, get_nsymb_per_slot(cp), ru_nof_prbs, std::move(decompressor), compr_params);
+      logger, scs, get_nsymb_per_slot(cp), ru_nof_prbs, sector_id_, std::move(decompressor), compr_params);
 }
 
 std::unique_ptr<uplane_message_decoder>
@@ -60,8 +61,9 @@ srsran::ofh::create_dynamic_compr_method_ofh_user_plane_packet_decoder(srslog::b
                                                                        subcarrier_spacing               scs,
                                                                        cyclic_prefix                    cp,
                                                                        unsigned                         ru_nof_prbs,
+                                                                       unsigned                         sector_id_,
                                                                        std::unique_ptr<iq_decompressor> decompressor)
 {
   return std::make_unique<uplane_message_decoder_dynamic_compression_impl>(
-      logger, scs, get_nsymb_per_slot(cp), ru_nof_prbs, std::move(decompressor));
+      logger, scs, get_nsymb_per_slot(cp), ru_nof_prbs, sector_id_, std::move(decompressor));
 }
