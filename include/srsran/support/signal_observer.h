@@ -85,7 +85,7 @@ void signal_dispatcher::detach(signal_observer& observer)
   for (auto it = observers.begin(); it != observers.end();) {
     if (*it == &observer) {
       it = observers.erase(it);
-      continue;
+      return; // Finish here because observers are unique and attach only once upon their construction
     }
     ++it;
   }
