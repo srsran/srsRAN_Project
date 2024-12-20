@@ -67,24 +67,20 @@ inline o_cu_up_dlt_pcaps create_o_cu_up_dlt_pcaps(const o_cu_up_unit_config&    
   const auto& cu_pcaps = unit_cfg.cu_up_cfg.pcap_cfg;
   pcaps.n3 = cu_pcaps.n3.enabled ? create_gtpu_pcap(cu_pcaps.n3.filename, exec_getter.get_executor("n3_pcap_exec"))
                                  : create_null_dlt_pcap();
-  pcaps.n3_sig_handler = std::make_unique<signal_observer>([&pcaps]() { pcaps.n3->flush(); });
-  signal_source.attach(pcaps.n3_sig_handler.get());
+  pcaps.n3_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.n3->flush(); });
 
   pcaps.f1u = cu_pcaps.f1u.enabled ? create_gtpu_pcap(cu_pcaps.f1u.filename, exec_getter.get_executor("f1u_pcap_exec"))
                                    : create_null_dlt_pcap();
-  pcaps.f1u_sig_handler = std::make_unique<signal_observer>([&pcaps]() { pcaps.f1u->flush(); });
-  signal_source.attach(pcaps.f1u_sig_handler.get());
+  pcaps.f1u_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.f1u->flush(); });
 
   pcaps.e1ap = cu_pcaps.e1ap.enabled ? create_e1ap_pcap(cu_pcaps.e1ap.filename, exec_getter.get_executor("pcap_exec"))
                                      : create_null_dlt_pcap();
-  pcaps.e1ap_sig_handler = std::make_unique<signal_observer>([&pcaps]() { pcaps.e1ap->flush(); });
-  signal_source.attach(pcaps.e1ap_sig_handler.get());
+  pcaps.e1ap_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.e1ap->flush(); });
 
   pcaps.e2ap             = unit_cfg.e2_cfg.pcaps.enabled
                                ? create_e2ap_pcap(unit_cfg.e2_cfg.pcaps.filename, exec_getter.get_executor("pcap_exec"))
                                : create_null_dlt_pcap();
-  pcaps.e2ap_sig_handler = std::make_unique<signal_observer>([&pcaps]() { pcaps.e2ap->flush(); });
-  signal_source.attach(pcaps.e2ap_sig_handler.get());
+  pcaps.e2ap_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.e2ap->flush(); });
 
   return pcaps;
 }

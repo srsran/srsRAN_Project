@@ -69,24 +69,20 @@ inline o_cu_cp_dlt_pcaps create_o_cu_cp_dlt_pcap(const o_cu_cp_unit_config&     
   const cu_cp_unit_pcap_config& pcap_cfg = config.cucp_cfg.pcap_cfg;
   pcaps.ngap = pcap_cfg.ngap.enabled ? create_ngap_pcap(pcap_cfg.ngap.filename, exec_getter.get_executor("pcap_exec"))
                                      : create_null_dlt_pcap();
-  pcaps.ngap_sig_handler = std::make_unique<signal_observer>([&pcaps]() { pcaps.ngap->flush(); });
-  signal_source.attach(pcaps.ngap_sig_handler.get());
+  pcaps.ngap_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.ngap->flush(); });
 
   pcaps.f1ap = pcap_cfg.f1ap.enabled ? create_f1ap_pcap(pcap_cfg.f1ap.filename, exec_getter.get_executor("pcap_exec"))
                                      : create_null_dlt_pcap();
-  pcaps.f1ap_sig_handler = std::make_unique<signal_observer>([&pcaps]() { pcaps.f1ap->flush(); });
-  signal_source.attach(pcaps.f1ap_sig_handler.get());
+  pcaps.f1ap_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.f1ap->flush(); });
 
   pcaps.e1ap = pcap_cfg.e1ap.enabled ? create_e1ap_pcap(pcap_cfg.e1ap.filename, exec_getter.get_executor("pcap_exec"))
                                      : create_null_dlt_pcap();
-  pcaps.e1ap_sig_handler = std::make_unique<signal_observer>([&pcaps]() { pcaps.e1ap->flush(); });
-  signal_source.attach(pcaps.e1ap_sig_handler.get());
+  pcaps.e1ap_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.e1ap->flush(); });
 
   pcaps.e2ap             = config.e2_cfg.pcaps.enabled
                                ? create_e2ap_pcap(config.e2_cfg.pcaps.filename, exec_getter.get_executor("pcap_exec"))
                                : create_null_dlt_pcap();
-  pcaps.e2ap_sig_handler = std::make_unique<signal_observer>([&pcaps]() { pcaps.e2ap->flush(); });
-  signal_source.attach(pcaps.e2ap_sig_handler.get());
+  pcaps.e2ap_sig_handler = std::make_unique<signal_observer>(signal_source, [&pcaps]() { pcaps.e2ap->flush(); });
 
   return pcaps;
 }
