@@ -23,6 +23,9 @@
 #include "o_du_impl.h"
 #include "srsran/du/du_high/o_du_high.h"
 #include "srsran/du/du_low/du_low.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_sector_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_sector_adaptor.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -33,13 +36,6 @@ o_du_impl::o_du_impl(o_du_impl_dependencies&& dependencies) :
 {
   srsran_assert(du_lo, "Invalid DU low");
   srsran_assert(du_hi, "Invalid DU high");
-
-  // Connect O-DU low with O-DU high.
-  for (unsigned i = 0, e = du_lo->get_du_low().get_all_upper_phys().size(); i != e; ++i) {
-    du_lo->set_slot_time_message_notifier(i, du_hi->get_slot_time_message_notifier(i));
-    du_lo->set_slot_error_message_notifier(i, du_hi->get_slot_error_message_notifier(i));
-    du_lo->set_slot_data_message_notifier(i, du_hi->get_slot_data_message_notifier(i));
-  }
 }
 
 void o_du_impl::start()

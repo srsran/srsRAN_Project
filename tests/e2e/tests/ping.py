@@ -204,10 +204,7 @@ def test_android_hp(
 )
 @mark.parametrize(
     "band, common_scs, bandwidth",
-    (
-        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
-        param(78, 30, 20, id="band:%s-scs:%s-bandwidth:%s"),
-    ),
+    (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
 )
 @mark.android_drx
 @mark.flaky(

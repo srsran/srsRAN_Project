@@ -25,6 +25,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/rrc/meas_types.h"
 #include "srsran/support/async/async_task.h"
+#include <map>
 
 namespace srsran {
 namespace srs_cu_cp {

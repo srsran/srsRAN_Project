@@ -25,8 +25,10 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-SRSRAN_WEAK_SYMB async_task<ngap_handover_resource_allocation_response>
-                 srsran::srs_cu_cp::start_inter_cu_handover_target_routine(const ngap_handover_request& request,
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+async_task<ngap_handover_resource_allocation_response>
+srsran::srs_cu_cp::start_inter_cu_handover_target_routine(const ngap_handover_request& request,
                                                           e1ap_bearer_context_manager& e1ap_bearer_ctxt_mng,
                                                           f1ap_ue_context_manager&     f1ap_ue_ctxt_mng,
                                                           cu_cp_ue_removal_handler&    ue_removal_handler,
@@ -47,3 +49,5 @@ SRSRAN_WEAK_SYMB async_task<ngap_handover_resource_allocation_response>
   };
   return launch_async(std::move(err_function));
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE

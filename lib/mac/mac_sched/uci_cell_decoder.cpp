@@ -33,7 +33,8 @@ uci_cell_decoder::uci_cell_decoder(const sched_cell_configuration_request_messag
   rnti_table(rnti_table_),
   cell_index(cell_cfg.cell_index),
   rlf_handler(rlf_hdlr_),
-  logger(srslog::fetch_basic_logger("MAC"))
+  logger(srslog::fetch_basic_logger("MAC")),
+  expected_uci_report_grid(MAX_GRID_SIZE)
 {
 }
 

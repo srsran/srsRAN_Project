@@ -273,7 +273,7 @@ def test_ric(
         sample_rate=11520000,
         iperf_duration=SHORT_DURATION,
         protocol=protocol,
-        bitrate=MEDIUM_BITRATE,
+        bitrate=LOW_BITRATE,
         direction=direction,
         global_timing_advance=-1,
         time_alignment_calibration=0,

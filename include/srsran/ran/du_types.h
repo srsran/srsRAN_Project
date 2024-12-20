@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/ran/gnb_constants.h"
 #include <cstdint>
 #include <type_traits>
 
@@ -38,8 +39,8 @@ enum du_ue_index_t : uint16_t {
 /// Maximum number of cells supported by DU (implementation-defined).
 enum du_cell_index_t : uint16_t {
   MIN_DU_CELL_INDEX     = 0,
-  MAX_DU_CELL_INDEX     = 15,
-  MAX_NOF_DU_CELLS      = 16,
+  MAX_DU_CELL_INDEX     = MAX_CELLS_PER_DU - 1,
+  MAX_NOF_DU_CELLS      = MAX_CELLS_PER_DU,
   INVALID_DU_CELL_INDEX = MAX_NOF_DU_CELLS
 };
 

@@ -27,6 +27,7 @@
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/rb_id.h"
+#include <map>
 
 namespace srsran {
 namespace srs_cu_cp {

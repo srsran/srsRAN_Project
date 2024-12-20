@@ -53,7 +53,6 @@
 #include "srsran/support/backtrace.h"
 #include "srsran/support/config_parsers.h"
 #include "srsran/support/cpu_features.h"
-#include "srsran/support/dynlink_manager.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handling.h"
 #include "srsran/support/tracing/event_tracing.h"

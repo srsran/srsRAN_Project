@@ -89,12 +89,16 @@ void ue_channel_state_manager::update_srs_channel_matrix(const srs_channel_matri
       get_tpmi_select_info(channel_matrix, noise_var, codebook_cfg.max_rank.value(), codebook_cfg.codebook_subset);
 }
 
-SRSRAN_WEAK_SYMB unsigned ue_channel_state_manager::get_nof_ul_layers() const
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+unsigned ue_channel_state_manager::get_nof_ul_layers() const
 {
   return 1;
 }
 
-SRSRAN_WEAK_SYMB unsigned ue_channel_state_manager::get_recommended_pusch_tpmi(unsigned nof_layers) const
+#endif // SRSRAN_HAS_ENTERPRISE
+
+unsigned ue_channel_state_manager::get_recommended_pusch_tpmi(unsigned nof_layers) const
 {
   if (last_pusch_tpmi_select_info.has_value() &&
       (nof_layers <= last_pusch_tpmi_select_info.value().get_max_nof_layers())) {

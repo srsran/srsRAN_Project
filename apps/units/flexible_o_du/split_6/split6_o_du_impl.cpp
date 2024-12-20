@@ -21,6 +21,8 @@
  */
 
 #include "split6_o_du_impl.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_sector_adaptor.h"
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
@@ -32,15 +34,15 @@ split6_o_du_impl::split6_o_du_impl(std::vector<std::unique_ptr<fapi::fapi_adapto
   srsran_assert(odu_hi, "Invalid O-DU high");
   srsran_assert(adaptors.size(), "Invalid FAPI adaptor");
 
-  // Hardcoded 0 is because at this moment there is one DU instance with one cell per cell, so we can always access the
-  // cell id 0 of the DU.
   for (unsigned i = 0, e = adaptors.size(); i != e; ++i) {
+    fapi_adaptor::mac_fapi_sector_adaptor& fapi_sector = odu_hi->get_mac_fapi_adaptor().get_sector_adaptor(i);
+
     adaptors[i]->get_message_interface_collection().set_slot_data_message_notifier(
-        odu_hi->get_slot_data_message_notifier(i));
+        fapi_sector.get_slot_data_message_notifier());
     adaptors[i]->get_message_interface_collection().set_slot_error_message_notifier(
-        odu_hi->get_slot_error_message_notifier(i));
+        fapi_sector.get_slot_error_message_notifier());
     adaptors[i]->get_message_interface_collection().set_slot_time_message_notifier(
-        odu_hi->get_slot_time_message_notifier(i));
+        fapi_sector.get_slot_time_message_notifier());
   }
 }
 

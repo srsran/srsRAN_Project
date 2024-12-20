@@ -55,9 +55,9 @@ struct fapi_to_phy_translator_config {
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.
   subcarrier_spacing scs_common;
   /// FAPI PRACH configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
-  const fapi::prach_config* prach_cfg;
+  fapi::prach_config prach_cfg;
   /// FAPI carrier configuration TLV as per SCF-222 v4.0 section 3.3.2.4.
-  const fapi::carrier_config* carrier_cfg;
+  fapi::carrier_config carrier_cfg;
   /// PRACH port list.
   std::vector<uint8_t> prach_ports;
 };

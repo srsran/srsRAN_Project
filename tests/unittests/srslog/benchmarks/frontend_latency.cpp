@@ -79,7 +79,7 @@ static void run_thread(log_channel& c, std::vector<uint64_t>& results, std::atom
     auto begin = std::chrono::steady_clock::now();
     for (unsigned entry_num = 0; entry_num != num_entries_per_iter; ++entry_num) {
       double d = entry_num;
-      c("SRSLOG latency benchmark: int: {}, double: {}, string: {}", iter, d, "test");
+      c("SRSLOG latency benchmark: int: {}, double: {}", iter, d);
     }
     auto end = std::chrono::steady_clock::now();
 

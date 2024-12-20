@@ -22,8 +22,7 @@
 
 #pragma once
 
-#include "srsran/adt/mpmc_queue.h"
-#include "srsran/adt/unique_function.h"
+#include "mac_test_mode_ue_repository.h"
 #include "srsran/du/du_high/du_test_mode_config.h"
 #include "srsran/mac/mac.h"
 #include "srsran/mac/mac_cell_result.h"
@@ -31,82 +30,9 @@
 #include "srsran/scheduler/result/pusch_info.h"
 #include "srsran/srslog/srslog.h"
 #include <mutex>
-#include <unordered_map>
 
 namespace srsran {
 namespace srs_du {
-
-/// \brief Handles information related to the test UE(s).
-class test_ue_info_manager
-{
-public:
-  test_ue_info_manager(rnti_t rnti_start_, uint16_t nof_ues_, uint16_t nof_cells_);
-
-  du_ue_index_t rnti_to_du_ue_idx(rnti_t rnti) const
-  {
-    if (rnti_to_ue_info_lookup.count(rnti) == 0) {
-      return INVALID_DU_UE_INDEX;
-    }
-    return rnti_to_ue_info_lookup.at(rnti).ue_idx;
-  }
-
-  bool is_test_ue(du_ue_index_t ue_idx) const { return ue_idx < nof_ues; }
-
-  bool is_test_ue(rnti_t rnti) const
-  {
-    return (rnti >= rnti_start) and (rnti < to_rnti(to_value(rnti_start) + nof_ues * nof_cells));
-  }
-
-  void add_ue(rnti_t rnti, du_ue_index_t ue_idx_, const sched_ue_config_request& sched_ue_cfg_req_);
-
-  void remove_ue(rnti_t rnti);
-
-  const sched_ue_config_request& get_sched_ue_cfg_request(rnti_t rnti) const
-  {
-    return rnti_to_ue_info_lookup.at(rnti).sched_ue_cfg_req;
-  }
-
-  const sched_ue_config_request* find_sched_ue_cfg_request(rnti_t rnti) const
-  {
-    auto it = rnti_to_ue_info_lookup.find(rnti);
-    return it != rnti_to_ue_info_lookup.end() ? &it->second.sched_ue_cfg_req : nullptr;
-  }
-
-  bool is_msg4_rxed(rnti_t rnti) const
-  {
-    if (rnti_to_ue_info_lookup.count(rnti) > 0) {
-      return rnti_to_ue_info_lookup.at(rnti).msg4_rx_flag;
-    }
-    return false;
-  }
-
-  void msg4_rxed(rnti_t rnti, bool msg4_rx_flag_)
-  {
-    if (rnti_to_ue_info_lookup.count(rnti) > 0) {
-      rnti_to_ue_info_lookup.at(rnti).msg4_rx_flag = msg4_rx_flag_;
-    }
-  }
-
-  void process_pending_tasks();
-
-private:
-  struct test_ue_info {
-    du_ue_index_t           ue_idx;
-    sched_ue_config_request sched_ue_cfg_req;
-    bool                    msg4_rx_flag;
-  };
-
-  // Parameters received from configuration.
-  rnti_t   rnti_start;
-  uint16_t nof_ues;
-  uint16_t nof_cells;
-
-  // Mapping between UE RNTI and test UE information.
-  std::unordered_map<rnti_t, test_ue_info> rnti_to_ue_info_lookup;
-
-  concurrent_queue<unique_task, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
-      pending_tasks;
-};
 
 class phy_test_mode_adapter : public mac_result_notifier
 {
@@ -149,7 +75,7 @@ public:
                              mac_cell_slot_handler&                                  slot_handler_,
                              mac_cell_result_notifier&                               result_notifier_,
                              std::function<void(rnti_t)>                             dl_bs_notifier_,
-                             test_ue_info_manager&                                   ue_info_mgr_);
+                             mac_test_mode_ue_repository&                            ue_info_mgr_);
 
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override;
 
@@ -188,6 +114,7 @@ private:
 
   size_t get_ring_idx(slot_point sl) const { return sl.to_uint() % sched_decision_history.size(); }
 
+  const du_cell_index_t                                   cell_index;
   const srs_du::du_test_mode_config::test_mode_ue_config& test_ue_cfg;
   mac_cell_control_information_handler&                   adapted;
   mac_pdu_handler&                                        pdu_handler;
@@ -198,7 +125,7 @@ private:
 
   std::vector<slot_decision_history> sched_decision_history;
 
-  test_ue_info_manager& ue_info_mgr;
+  mac_test_mode_ue_repository& ue_info_mgr;
 
   slot_point last_slot_ind;
 };
@@ -265,7 +192,7 @@ private:
   srs_du::du_test_mode_config::test_mode_ue_config test_ue;
   std::unique_ptr<mac_interface>                   mac_adapted;
 
-  test_ue_info_manager ue_info_mgr;
+  mac_test_mode_ue_repository ue_info_mgr;
 
   std::unique_ptr<phy_test_mode_adapter> phy_notifier;
 

@@ -22,26 +22,12 @@
 
 #pragma once
 
-#include "srsran/adt/expected.h"
-#include "srsran/srslog/logger.h"
+#include <cstdint>
 
 namespace srsran {
-class dynlink_manager
-{
-public:
-  static std::optional<dynlink_manager> create(const std::string& dl_name, srslog::basic_logger& logger_);
-  expected<void*>                       load_symbol(const std::string& symbol_name);
 
-  ~dynlink_manager();
-
-private:
-  explicit dynlink_manager(const std::string& dl_name_, srslog::basic_logger& logger_);
-  [[nodiscard]] bool open();
-  bool               close();
-
-  void*                 dl_handle = nullptr;
-  std::string           dl_name;
-  srslog::basic_logger& logger;
-};
+/// \brief Defines the maximum number of cells that can be instantiated per srsDU (implementation-defined).
+/// \remark TS 38.473 defines an upper limit of maxCellingNBDU=512 for this value.
+static constexpr uint16_t MAX_CELLS_PER_DU = 32;
 
 } // namespace srsran

@@ -26,6 +26,7 @@
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/security/security.h"
 #include "srsran/support/async/async_task.h"
+#include <map>
 
 namespace srsran {
 namespace srs_cu_cp {

@@ -70,14 +70,6 @@ void ul_power_controller::reconfigure(const ue_cell_configuration& ue_cell_cfg)
   }
 }
 
-SRSRAN_WEAK_SYMB void ul_power_controller::handle_phr(const cell_ph_report& phr, slot_point slot_rx)
-{
-  if (not pusch_pwr_ctrl.has_value()) {
-    return;
-  }
-  latest_phr.emplace(ue_phr_report{phr, std::nullopt});
-}
-
 void ul_power_controller::update_pusch_pw_ctrl_state(slot_point slot_rx, unsigned nof_prbs)
 {
   const int latest_f_cl_pw_control =
@@ -86,15 +78,27 @@ void ul_power_controller::update_pusch_pw_ctrl_state(slot_point slot_rx, unsigne
   pusch_pw_ctrl_grid[grid_idx] = {slot_rx, nof_prbs, latest_f_cl_pw_control};
 }
 
-SRSRAN_WEAK_SYMB unsigned ul_power_controller::adapt_pusch_prbs_to_phr(unsigned nof_prbs) const
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+void ul_power_controller::handle_phr(const cell_ph_report& phr, slot_point slot_rx)
+{
+  if (not pusch_pwr_ctrl.has_value()) {
+    return;
+  }
+  latest_phr.emplace(ue_phr_report{phr, std::nullopt});
+}
+
+unsigned ul_power_controller::adapt_pusch_prbs_to_phr(unsigned nof_prbs) const
 {
   // Dummy function. This feature is only available in the SRSRAN 5G Enterprise version.
   return nof_prbs;
 }
 
-SRSRAN_WEAK_SYMB uint8_t ul_power_controller::compute_tpc_command(slot_point pusch_slot)
+uint8_t ul_power_controller::compute_tpc_command(slot_point pusch_slot)
 {
   // Dummy function. This feature is only available in the SRSRAN 5G Enterprise version.
   static constexpr uint8_t default_tpc = 1;
   return default_tpc;
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE

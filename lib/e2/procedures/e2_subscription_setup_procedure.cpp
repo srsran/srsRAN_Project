@@ -84,7 +84,9 @@ void e2_subscription_setup_procedure::send_e2_subscription_setup_failure(const e
   auto& sub_fail                            = msg.pdu.unsuccessful_outcome().value.ric_sub_fail();
   sub_fail->ric_request_id.ric_instance_id  = failure.request_id.ric_instance_id;
   sub_fail->ric_request_id.ric_requestor_id = failure.request_id.ric_requestor_id;
-  sub_fail->cause                           = failure.cause;
+  sub_fail->ran_function_id                 = failure.ran_function_id;
+  sub_fail->crit_diagnostics_present        = false;
+  sub_fail->cause.set_misc();
   ric_notif.on_new_message(msg);
   logger.info("E2AP: Sending subscription failure");
 }

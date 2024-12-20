@@ -785,17 +785,20 @@ void ngap_impl::handle_handover_request(const asn1::ngap::ho_request_s& msg)
   }
 }
 
-SRSRAN_WEAK_SYMB void
-ngap_impl::handle_dl_ue_associated_nrppa_transport(const asn1::ngap::dl_ue_associated_nrppa_transport_s& msg)
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+void ngap_impl::handle_dl_ue_associated_nrppa_transport(const asn1::ngap::dl_ue_associated_nrppa_transport_s& msg)
 {
   logger.info("DL UE associated NRPPa messages are not supported");
 }
 
-SRSRAN_WEAK_SYMB void
-ngap_impl::handle_dl_non_ue_associated_nrppa_transport(const asn1::ngap::dl_non_ue_associated_nrppa_transport_s& msg)
+void ngap_impl::handle_dl_non_ue_associated_nrppa_transport(
+    const asn1::ngap::dl_non_ue_associated_nrppa_transport_s& msg)
 {
   logger.info("DL non UE associated NRPPa messages are not supported");
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE
 
 void ngap_impl::handle_error_indication(const asn1::ngap::error_ind_s& msg)
 {
@@ -1004,11 +1007,14 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t          
   tx_pdu_notifier->on_new_message(ngap_msg);
 }
 
-SRSRAN_WEAK_SYMB void ngap_impl::handle_ul_ue_associated_nrppa_transport(ue_index_t         ue_index,
-                                                                         const byte_buffer& nrppa_pdu)
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+void ngap_impl::handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, const byte_buffer& nrppa_pdu)
 {
   logger.info("UL UE associated NRPPa messages are not supported");
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE
 
 void ngap_impl::remove_ue_context(ue_index_t ue_index)
 {

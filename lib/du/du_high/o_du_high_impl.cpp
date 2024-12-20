@@ -21,6 +21,8 @@
  */
 
 #include "o_du_high_impl.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_sector_adaptor.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -42,19 +44,20 @@ public:
 
 } // namespace
 
-o_du_high_impl::o_du_high_impl(o_du_high_impl_dependencies&& du_dependencies) :
+o_du_high_impl::o_du_high_impl(unsigned nof_cells_, o_du_high_impl_dependencies&& du_dependencies) :
+  nof_cells(nof_cells_),
   logger(*du_dependencies.logger),
   du_high_adaptor(std::move(du_dependencies.du_high_adaptor)),
-  du_high_result_notifier([](span<std::unique_ptr<fapi_adaptor::mac_fapi_adaptor>> fapi_adaptors) {
+  du_high_result_notifier([](fapi_adaptor::mac_fapi_adaptor& fapi_adaptor, unsigned num_cells) {
     std::vector<std::reference_wrapper<mac_cell_result_notifier>> cells;
-    for (unsigned i = 0, e = fapi_adaptors.size(); i != e; ++i) {
-      cells.push_back(std::ref(fapi_adaptors[i]->get_cell_result_notifier()));
+    for (unsigned i = 0; i != num_cells; ++i) {
+      cells.push_back(std::ref(fapi_adaptor.get_sector_adaptor(i).get_cell_result_notifier()));
     }
 
     return std::make_unique<phy_dummy>(std::move(cells));
-  }(du_high_adaptor))
+  }(*du_high_adaptor, nof_cells))
 {
-  srsran_assert(!du_high_adaptor.empty(), "Invalid FAPI MAC adaptor");
+  srsran_assert(du_high_adaptor, "Invalid FAPI MAC adaptor");
 }
 
 void o_du_high_impl::start()
@@ -69,12 +72,13 @@ void o_du_high_impl::start()
   }
 
   // Configure the FAPI -> DU interface.
-  for (unsigned i = 0, e = du_high_adaptor.size(); i != e; ++i) {
-    du_cell_index_t cell_id = to_du_cell_index(i);
-    du_high_adaptor[i]->set_cell_slot_handler(du_hi->get_slot_handler(cell_id));
-    du_high_adaptor[i]->set_cell_rach_handler(du_hi->get_rach_handler(cell_id));
-    du_high_adaptor[i]->set_cell_pdu_handler(du_hi->get_pdu_handler());
-    du_high_adaptor[i]->set_cell_crc_handler(du_hi->get_control_info_handler(cell_id));
+  for (unsigned i = 0; i != nof_cells; ++i) {
+    du_cell_index_t                        cell_id        = to_du_cell_index(i);
+    fapi_adaptor::mac_fapi_sector_adaptor& sector_adaptor = du_high_adaptor->get_sector_adaptor(i);
+    sector_adaptor.set_cell_slot_handler(du_hi->get_slot_handler(cell_id));
+    sector_adaptor.set_cell_rach_handler(du_hi->get_rach_handler(cell_id));
+    sector_adaptor.set_cell_pdu_handler(du_hi->get_pdu_handler());
+    sector_adaptor.set_cell_crc_handler(du_hi->get_control_info_handler(cell_id));
   }
 
   logger.info("DU started successfully");
@@ -93,6 +97,11 @@ void o_du_high_impl::stop()
   logger.info("DU stopped successfully");
 }
 
+fapi_adaptor::mac_fapi_adaptor& o_du_high_impl::get_mac_fapi_adaptor()
+{
+  return *du_high_adaptor;
+}
+
 du_high& o_du_high_impl::get_du_high()
 {
   return *du_hi;
@@ -108,34 +117,4 @@ void o_du_high_impl::set_e2_agent(std::unique_ptr<e2_agent> agent)
 {
   e2agent = std::move(agent);
   srsran_assert(e2agent, "Invalid E2 agent");
-}
-
-fapi::slot_data_message_notifier& o_du_high_impl::get_slot_data_message_notifier(unsigned cell_id)
-{
-  srsran_assert(cell_id < du_high_adaptor.size(),
-                "Invalid cell index '{}'. Valid cell indexes [0-{})",
-                cell_id,
-                du_high_adaptor.size());
-
-  return du_high_adaptor[cell_id]->get_slot_data_message_notifier();
-}
-
-fapi::slot_error_message_notifier& o_du_high_impl::get_slot_error_message_notifier(unsigned cell_id)
-{
-  srsran_assert(cell_id < du_high_adaptor.size(),
-                "Invalid cell index '{}'. Valid cell indexes [0-{})",
-                cell_id,
-                du_high_adaptor.size());
-
-  return du_high_adaptor[cell_id]->get_slot_error_message_notifier();
-}
-
-fapi::slot_time_message_notifier& o_du_high_impl::get_slot_time_message_notifier(unsigned cell_id)
-{
-  srsran_assert(cell_id < du_high_adaptor.size(),
-                "Invalid cell index '{}'. Valid cell indexes [0-{})",
-                cell_id,
-                du_high_adaptor.size());
-
-  return du_high_adaptor[cell_id]->get_slot_time_message_notifier();
 }

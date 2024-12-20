@@ -37,8 +37,8 @@ namespace srsran {
 /// the numerology mu=0 (SCS=15kHz), it will be also satisfied for the same RING_ALLOCATOR_SIZE and larger numerologies.
 /// This means that in contexts where mu is not known (e.g. compile time), mu=0 can be used for generality sake,
 /// at the expense of more memory overhead.
-constexpr inline unsigned get_allocator_ring_size_gt_min(unsigned           minimum_value,
-                                                         subcarrier_spacing scs = subcarrier_spacing::kHz15)
+constexpr unsigned get_allocator_ring_size_gt_min(unsigned           minimum_value,
+                                                  subcarrier_spacing scs = subcarrier_spacing::kHz15)
 {
   auto power2_ceil = [](unsigned x) {
     if (x <= 1)
@@ -56,7 +56,7 @@ constexpr inline unsigned get_allocator_ring_size_gt_min(unsigned           mini
 }
 
 /// \brief Retrieves how far in advance the scheduler can allocate resources in the UL resource grid.
-constexpr inline unsigned get_max_slot_ul_alloc_delay(unsigned ntn_cs_koffset)
+constexpr unsigned get_max_slot_ul_alloc_delay(unsigned ntn_cs_koffset)
 {
   return SCHEDULER_MAX_K0 + std::max(SCHEDULER_MAX_K1, SCHEDULER_MAX_K2 + MAX_MSG3_DELTA) + ntn_cs_koffset;
 }

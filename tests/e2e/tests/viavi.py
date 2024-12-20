@@ -359,6 +359,7 @@ def _test_viavi(
                 "band": 78,
                 "bandwidth": 100,
                 "common_scs": 30,
+                "inactivity_timer": 7200,
                 "tac": 7,
                 "pci": 1,
                 "prach_config_index": 159,

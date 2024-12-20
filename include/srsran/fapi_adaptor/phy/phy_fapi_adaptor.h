@@ -23,55 +23,18 @@
 #pragma once
 
 namespace srsran {
-
-namespace fapi {
-class slot_data_message_notifier;
-class slot_error_message_notifier;
-class slot_last_message_notifier;
-class slot_message_gateway;
-class slot_time_message_notifier;
-} // namespace fapi
-
-class upper_phy_error_notifier;
-class upper_phy_timing_notifier;
-class upper_phy_rx_results_notifier;
-
 namespace fapi_adaptor {
 
-/// \brief PHY&ndash;FAPI bidirectional adaptor interface.
-///
-/// This adaptor is a collection of interfaces to translate FAPI messages into their PHY layer counterpart and vice
-/// versa.
-///
-/// \note All implementations of this public interface must hold the ownership of all its internal components.
+class phy_fapi_sector_adaptor;
+
+/// PHY&ndash;FAPI bidirectional adaptor interface.
 class phy_fapi_adaptor
 {
 public:
   virtual ~phy_fapi_adaptor() = default;
 
-  /// Returns a reference to the error notifier used by the adaptor.
-  virtual upper_phy_error_notifier& get_error_notifier() = 0;
-
-  /// Returns a reference to the timing notifier used by the adaptor.
-  virtual upper_phy_timing_notifier& get_timing_notifier() = 0;
-
-  /// Returns a reference to the results notifier used by the adaptor.
-  virtual upper_phy_rx_results_notifier& get_rx_results_notifier() = 0;
-
-  /// Returns a reference to the slot-based message gateway used by the adaptor.
-  virtual fapi::slot_message_gateway& get_slot_message_gateway() = 0;
-
-  /// Returns a reference to the slot-based last message notifier used by the adaptor.
-  virtual fapi::slot_last_message_notifier& get_slot_last_message_notifier() = 0;
-
-  /// Configures the slot-based, time-specific message notifier to the given one.
-  virtual void set_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_notifier) = 0;
-
-  /// Configures the slot-based, error-specific message notifier to the given one.
-  virtual void set_slot_error_message_notifier(fapi::slot_error_message_notifier& fapi_error_notifier) = 0;
-
-  /// Configures the slot-based, data-specific message notifier to the given one.
-  virtual void set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier) = 0;
+  /// Returns the PHY-FAPI sector adaptor for the given cell id.
+  virtual phy_fapi_sector_adaptor& get_sector_adaptor(unsigned cell_id) = 0;
 };
 
 } // namespace fapi_adaptor

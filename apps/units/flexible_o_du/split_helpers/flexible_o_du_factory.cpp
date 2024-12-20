@@ -30,6 +30,10 @@
 #include "flexible_o_du_impl.h"
 #include "srsran/du/o_du_factory.h"
 #include "srsran/e2/e2_du_metrics_connector.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/mac/mac_fapi_sector_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
+#include "srsran/fapi_adaptor/phy/phy_fapi_sector_adaptor.h"
 
 using namespace srsran;
 
@@ -74,15 +78,28 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
 
   // Adjust the dependencies.
   for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
-    auto& sector_dependencies             = odu_hi_unit_dependencies.o_du_hi_dependencies.sectors.emplace_back();
-    sector_dependencies.gateway           = &odu_lo_unit.o_du_lo->get_slot_message_gateway(i);
-    sector_dependencies.last_msg_notifier = &odu_lo_unit.o_du_lo->get_slot_last_message_notifier(i);
-    sector_dependencies.fapi_executor     = config.odu_high_cfg.fapi_cfg.l2_nof_slots_ahead != 0
-                                                ? std::optional(dependencies.workers->fapi_exec[i])
-                                                : std::make_optional<task_executor*>();
+    auto& sector_dependencies = odu_hi_unit_dependencies.o_du_hi_dependencies.sectors.emplace_back();
+    sector_dependencies.gateway =
+        &odu_lo_unit.o_du_lo->get_phy_fapi_adaptor().get_sector_adaptor(i).get_slot_message_gateway();
+    sector_dependencies.last_msg_notifier =
+        &odu_lo_unit.o_du_lo->get_phy_fapi_adaptor().get_sector_adaptor(i).get_slot_last_message_notifier();
+    sector_dependencies.fapi_executor = config.odu_high_cfg.fapi_cfg.l2_nof_slots_ahead != 0
+                                            ? std::optional(dependencies.workers->fapi_exec[i])
+                                            : std::make_optional<task_executor*>();
   }
 
   o_du_high_unit odu_hi_unit = make_o_du_high_unit(config.odu_high_cfg, std::move(odu_hi_unit_dependencies));
+
+  // Connect the adaptors.
+  for (unsigned i = 0, e = du_cells.size(); i != e; ++i) {
+    fapi_adaptor::phy_fapi_sector_adaptor& odu_lo = odu_lo_unit.o_du_lo->get_phy_fapi_adaptor().get_sector_adaptor(i);
+    fapi_adaptor::mac_fapi_sector_adaptor& odu_hi = odu_hi_unit.o_du_hi->get_mac_fapi_adaptor().get_sector_adaptor(i);
+
+    // Connect O-DU low with O-DU high.
+    odu_lo.set_slot_time_message_notifier(odu_hi.get_slot_time_message_notifier());
+    odu_lo.set_slot_error_message_notifier(odu_hi.get_slot_error_message_notifier());
+    odu_lo.set_slot_data_message_notifier(odu_hi.get_slot_data_message_notifier());
+  }
 
   o_du.metrics  = std::move(odu_hi_unit.metrics);
   o_du.commands = std::move(odu_hi_unit.commands);
