@@ -28,7 +28,7 @@ class cancellable_task_executor final : public task_executor
 {
 public:
   cancellable_task_executor(task_executor& exec_, const std::atomic<bool>& cancelled_flag, timer_manager& timers_) :
-    exec(&exec_), cancelled(cancelled_flag), timers(&timers_)
+    exec(&exec_), cancelled(cancelled_flag)
   {
   }
 
@@ -60,7 +60,6 @@ public:
 private:
   task_executor*           exec;
   const std::atomic<bool>& cancelled;
-  timer_manager*           timers;
 };
 
 /// Implementation of the UE executor mapper.
@@ -71,14 +70,12 @@ public:
                           task_executor& ul_exec_,
                           task_executor& dl_exec_,
                           task_executor& crypto_exec_,
-                          task_executor& main_exec_,
                           timer_manager& timers_) :
     timers(timers_),
     ctrl_exec(ctrl_exec_, cancelled_flag, timers),
     ul_exec(ul_exec_, cancelled_flag, timers),
     dl_exec(dl_exec_, cancelled_flag, timers),
-    crypto_exec(crypto_exec_),
-    main_exec(main_exec_)
+    crypto_exec(crypto_exec_)
   {
   }
 
@@ -115,7 +112,6 @@ private:
   cancellable_task_executor ul_exec;
   cancellable_task_executor dl_exec;
   task_executor&            crypto_exec;
-  task_executor&            main_exec;
 };
 
 struct base_cu_up_executor_pool_config {
@@ -157,7 +153,7 @@ public:
   {
     auto& ctxt = execs[round_robin_index.fetch_add(1, std::memory_order_relaxed) % execs.size()];
     return std::make_unique<ue_executor_mapper_impl>(
-        ctxt.ctrl_exec, ctxt.ul_exec, ctxt.dl_exec, ctxt.crypto_exec, main_exec, timers);
+        ctxt.ctrl_exec, ctxt.ul_exec, ctxt.dl_exec, ctxt.crypto_exec, timers);
   }
 
 private:

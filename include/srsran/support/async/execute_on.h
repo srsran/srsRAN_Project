@@ -88,14 +88,6 @@ auto try_defer_to(TaskExecutor& exec)
   return detail::try_execute_on_awaiter<TaskExecutor, false>{exec};
 }
 
-/// \brief Returns an awaitable that resumes the suspended coroutine in a different execution context. If the call
-/// to defer fails, the awaitable will retry it until it succeeds.
-template <typename TaskExecutor>
-auto defer_to_blocking(TaskExecutor& exec)
-{
-  return detail::blocking_execute_on_awaiter<TaskExecutor, false>(exec);
-}
-
 /// Returns an awaitable that performs a task in a "dispatch_exec" executor, and resumes in "resume_exec" executor.
 /// Note: This is a specialization for tasks with non-void return values.
 /// \param dispatch_exec task executor where given task is going to run.
