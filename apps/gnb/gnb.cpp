@@ -308,12 +308,16 @@ int main(int argc, char** argv)
   check_cpu_governor(gnb_logger);
   check_drm_kms_polling(gnb_logger);
 
+  // Setup application timers.
+  timer_manager app_timers{1024};
+
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
   o_cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
   fill_gnb_worker_manager_config(worker_manager_cfg, gnb_cfg);
+  worker_manager_cfg.app_timers = &app_timers;
 
   worker_manager workers{worker_manager_cfg};
 
@@ -342,7 +346,6 @@ int main(int argc, char** argv)
       create_e1_local_connector(e1_local_connector_config{*cu_cp_dlt_pcaps.e1ap});
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
-  timer_manager                  app_timers{256};
   timer_manager*                 cu_timers = &app_timers;
   std::unique_ptr<timer_manager> dummy_timers;
   if (o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.is_testmode_enabled()) {

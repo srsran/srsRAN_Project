@@ -235,10 +235,14 @@ int main(int argc, char** argv)
   check_cpu_governor(du_logger);
   check_drm_kms_polling(du_logger);
 
+  // Create manager of timers for DU, which will be driven by the PHY slot ticks.
+  timer_manager app_timers{256};
+
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
   fill_du_worker_manager_config(worker_manager_cfg, du_cfg);
+  worker_manager_cfg.app_timers = &app_timers;
 
   worker_manager workers{worker_manager_cfg};
 
@@ -258,9 +262,6 @@ int main(int argc, char** argv)
                                                                                     *epoll_broker,
                                                                                     *workers.non_rt_hi_prio_exec,
                                                                                     *du_pcaps.f1ap);
-
-  // Create manager of timers for DU, which will be driven by the PHY slot ticks.
-  timer_manager app_timers{256};
 
   // Create F1-U connector.
   // TODO: Simplify this and use factory.

@@ -14,6 +14,8 @@
 
 namespace srsran {
 
+class timer_manager;
+
 /// Worker manager configuration.
 struct worker_manager_config {
   /// RU OFH worker configuration.
@@ -101,6 +103,8 @@ struct worker_manager_config {
   os_sched_affinity_config low_prio_sched_config;
   /// PCAP configuration.
   pcap_config pcap_cfg;
+  /// Timer config.
+  timer_manager* app_timers = nullptr;
   /// Vector of affinities mask indexed by cell.
   std::vector<std::vector<os_sched_affinity_config>> config_affinities;
   /// CU-UP configuration.

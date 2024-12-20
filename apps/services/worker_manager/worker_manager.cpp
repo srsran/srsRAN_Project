@@ -42,7 +42,7 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   associate_low_prio_executors(worker_cfg);
 
   if (worker_cfg.cu_up_cfg) {
-    create_cu_up_executors(worker_cfg.cu_up_cfg.value());
+    create_cu_up_executors(worker_cfg.cu_up_cfg.value(), *worker_cfg.app_timers);
   }
 
   if (worker_cfg.du_hi_cfg) {
@@ -187,7 +187,7 @@ worker_manager::create_du_hi_slot_workers(unsigned nof_cells, bool rt_mode)
   return workers;
 }
 
-void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_config& config)
+void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_config& config, timer_manager& timers)
 {
   using namespace execution_config_helper;
   const auto& exec_map = exec_mng.executors();
@@ -197,7 +197,8 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     task_worker_queue_size,
                                                                                     config.gtpu_queue_size,
                                                                                     *exec_map.at("low_prio_exec"),
-                                                                                    config.dedicated_io_ul_strand});
+                                                                                    config.dedicated_io_ul_strand,
+                                                                                    &timers});
 }
 
 void worker_manager::create_du_executors(const worker_manager_config::du_high_config&        du_hi,

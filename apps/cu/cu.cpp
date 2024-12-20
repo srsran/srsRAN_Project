@@ -260,11 +260,16 @@ int main(int argc, char** argv)
   check_cpu_governor(cu_logger);
   check_drm_kms_polling(cu_logger);
 
+  // Create manager of timers for CU-CP and CU-UP, which will be driven by the system timer slot ticks.
+  timer_manager  app_timers{256};
+  timer_manager* cu_timers = &app_timers;
+
   // Create worker manager.
   worker_manager_config worker_manager_cfg;
   fill_cu_worker_manager_config(worker_manager_cfg, cu_cfg);
   o_cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
+  worker_manager_cfg.app_timers = &app_timers;
   worker_manager workers{worker_manager_cfg};
 
   // Create layer specific PCAPs.
@@ -314,10 +319,6 @@ int main(int argc, char** argv)
   // Create E1AP local connector
   std::unique_ptr<e1_local_connector> e1_gw =
       create_e1_local_connector(e1_local_connector_config{*cu_up_dlt_pcaps.e1ap});
-
-  // Create manager of timers for CU-CP and CU-UP, which will be driven by the system timer slot ticks.
-  timer_manager  app_timers{256};
-  timer_manager* cu_timers = &app_timers;
 
   // Create time source that ticks the timers.
   std::optional<io_timer_source> time_source(
