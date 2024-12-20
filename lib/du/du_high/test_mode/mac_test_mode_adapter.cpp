@@ -13,7 +13,6 @@
 #include "mac_test_mode_helpers.h"
 #include "srsran/adt/ring_buffer.h"
 #include "srsran/mac/mac_factory.h"
-#include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/resource_grid_util.h"
 #include "srsran/scheduler/result/sched_result.h"

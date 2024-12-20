@@ -26,10 +26,6 @@ using du_rnti_table = rnti_value_table<du_ue_index_t, du_ue_index_t::INVALID_DU_
 
 class uci_cell_decoder
 {
-  /// \brief Size, in number of slots, of the ring buffer used to store the pending UCIs to be decoded. This size
-  /// should account for potential latencies in the PHY in forwarding the decoded UCI to the MAC.
-  static constexpr size_t MAX_GRID_SIZE = 80;
-
 public:
   uci_cell_decoder(const sched_cell_configuration_request_message& cell_cfg,
                    const du_rnti_table&                            rnti_table,
@@ -48,7 +44,7 @@ private:
     csi_report_configuration csi_rep_cfg;
   };
 
-  static size_t to_grid_index(slot_point slot) { return slot.to_uint() % MAX_GRID_SIZE; }
+  size_t to_grid_index(slot_point slot) const { return slot.to_uint() % expected_uci_report_grid.size(); }
 
   const du_rnti_table&  rnti_table;
   du_cell_index_t       cell_index;
