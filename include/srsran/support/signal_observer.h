@@ -17,7 +17,7 @@ namespace srsran {
 
 class signal_observer;
 
-class signal_subject
+class signal_dispatcher
 {
 public:
   void attach(signal_observer* observer);
@@ -42,22 +42,22 @@ public:
     }
   }
 
-  void set_current_subject(signal_subject* subject) { current_subject = subject; }
+  void set_current_subject(signal_dispatcher* subject) { current_subject = subject; }
 
   void handle_signal(int signal) { callback(); };
 
 private:
-  signal_callback callback;
-  signal_subject* current_subject = nullptr;
+  signal_callback    callback;
+  signal_dispatcher* current_subject = nullptr;
 };
 
-void signal_subject::attach(signal_observer* observer)
+void signal_dispatcher::attach(signal_observer* observer)
 {
   observers.push_back(observer);
   observer->set_current_subject(this);
 }
 
-void signal_subject::detach(signal_observer* observer)
+void signal_dispatcher::detach(signal_observer* observer)
 {
   for (auto it = observers.begin(); it != observers.end();) {
     if (*it == observer) {
@@ -69,7 +69,7 @@ void signal_subject::detach(signal_observer* observer)
   observer->set_current_subject(nullptr);
 }
 
-void signal_subject::notify_signal(int signal)
+void signal_dispatcher::notify_signal(int signal)
 {
   for (auto observer : observers) {
     observer->handle_signal(signal);

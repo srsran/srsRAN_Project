@@ -63,7 +63,7 @@ struct o_cu_cp_dlt_pcaps {
 /// Creates the DLT PCAPs of the O-RAN CU-CP.
 inline o_cu_cp_dlt_pcaps create_o_cu_cp_dlt_pcap(const o_cu_cp_unit_config&      config,
                                                  worker_manager_executor_getter& exec_getter,
-                                                 signal_subject&                 signal_source)
+                                                 signal_dispatcher&              signal_source)
 {
   o_cu_cp_dlt_pcaps             pcaps;
   const cu_cp_unit_pcap_config& pcap_cfg = config.cucp_cfg.pcap_cfg;

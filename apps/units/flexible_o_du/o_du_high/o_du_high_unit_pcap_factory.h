@@ -75,7 +75,7 @@ struct flexible_o_du_pcaps {
 
 /// Creates the PCAPs of the O-RAN DU.
 inline flexible_o_du_pcaps
-create_o_du_pcaps(const o_du_high_unit_config& config, worker_manager& workers, signal_subject& signal_source)
+create_o_du_pcaps(const o_du_high_unit_config& config, worker_manager& workers, signal_dispatcher& signal_source)
 {
   flexible_o_du_pcaps pcaps;
 
