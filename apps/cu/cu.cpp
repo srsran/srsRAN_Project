@@ -300,7 +300,7 @@ int main(int argc, char** argv)
   cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_dlt_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
   // > Create UDP gateway(s).
-  std::vector<std::unique_ptr<gtpu_gateway>> cu_f1u_gws;
+  srs_cu_up::gtpu_gateway_maps f1u_gw_maps;
   for (const srs_cu::cu_f1u_socket_appconfig& sock_cfg : cu_cfg.f1u_cfg.f1u_socket_cfg) {
     udp_network_gateway_config cu_f1u_gw_config = {};
     cu_f1u_gw_config.bind_address               = sock_cfg.bind_addr;
@@ -311,10 +311,14 @@ int main(int argc, char** argv)
     cu_f1u_gw_config.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
     std::unique_ptr<gtpu_gateway> cu_f1u_gw     = create_udp_gtpu_gateway(
         cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor(), *workers.non_rt_low_prio_exec);
-    cu_f1u_gws.push_back(std::move(cu_f1u_gw));
+    if (sock_cfg.five_qi.has_value()) {
+      f1u_gw_maps.default_gws.push_back(std::move(cu_f1u_gw));
+    } else {
+      f1u_gw_maps.five_qi_gws[sock_cfg.five_qi.value()].push_back(std::move(cu_f1u_gw));
+    }
   }
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn =
-      srs_cu_up::create_split_f1u_gw({cu_f1u_gws, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT});
+      srs_cu_up::create_split_f1u_gw({f1u_gw_maps, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT});
 
   // Create E1AP local connector
   std::unique_ptr<e1_local_connector> e1_gw =

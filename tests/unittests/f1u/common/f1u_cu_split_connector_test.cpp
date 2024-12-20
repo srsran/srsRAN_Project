@@ -136,7 +136,8 @@ protected:
 
     std::vector<std::unique_ptr<gtpu_gateway>> cu_f1u_gws;
     cu_f1u_gws.push_back(std::move(udp_gw));
-    f1u_cu_up_split_gateway_creation_msg cu_create_msg{cu_f1u_gws, *demux, dummy_pcap, tester_bind_port.value()};
+    // TODO convert to new struct
+    f1u_cu_up_split_gateway_creation_msg cu_create_msg{{}, *demux, dummy_pcap, tester_bind_port.value()};
     cu_gw           = create_split_f1u_gw(cu_create_msg);
     cu_gw_bind_port = cu_gw->get_bind_port();
     ASSERT_TRUE(cu_gw_bind_port.has_value());

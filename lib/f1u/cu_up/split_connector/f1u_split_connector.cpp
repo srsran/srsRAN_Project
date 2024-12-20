@@ -122,24 +122,35 @@ expected<std::string> f1u_split_gateway_cu_bearer::get_bind_address() const
   return ip_address;
 }
 
-f1u_split_connector::f1u_split_connector(const std::vector<std::unique_ptr<gtpu_gateway>>& udp_gws,
-                                         gtpu_demux&                                       demux_,
-                                         dlt_pcap&                                         gtpu_pcap_,
-                                         uint16_t                                          peer_port_,
-                                         std::string                                       ext_addr_) :
+f1u_split_connector::f1u_split_connector(const gtpu_gateway_maps& udp_gw_maps,
+                                         gtpu_demux&              demux_,
+                                         dlt_pcap&                gtpu_pcap_,
+                                         uint16_t                 peer_port_,
+                                         std::string              ext_addr_) :
   logger_cu(srslog::fetch_basic_logger("CU-F1-U")),
   peer_port(peer_port_),
   ext_addr(std::move(ext_addr_)),
   demux(demux_),
   gtpu_pcap(gtpu_pcap_)
 {
-  srsran_assert(not udp_gws.empty(), "Cannot create CU F1-U split connector");
+  srsran_assert(not udp_gw_maps.default_gws.empty(), "Cannot create CU F1-U split connector, no default GW present");
   gw_data_gtpu_demux_adapter = std::make_unique<srs_cu_up::network_gateway_data_gtpu_demux_adapter>();
-  for (const std::unique_ptr<gtpu_gateway>& udp_gw : udp_gws) {
-    udp_sessions.push_back(udp_gw->create(*gw_data_gtpu_demux_adapter));
-    gw_data_gtpu_demux_adapter->connect_gtpu_demux(demux);
+  // Create default session(s)
+  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>> default_gw_sessions;
+  default_gw_sessions.reserve(udp_gw_maps.default_gws.size());
+  for (const std::unique_ptr<gtpu_gateway>& udp_gw : udp_gw_maps.default_gws) {
+    default_gw_sessions.push_back(udp_gw->create(*gw_data_gtpu_demux_adapter));
   }
-  f1u_session_mngr = create_f1u_cu_up_session_manager(udp_sessions);
+  std::map<five_qi_t, std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>> five_qi_gw_sessions;
+  for (auto const& [five_qi, five_qi_gws] : udp_gw_maps.five_qi_gws) {
+    for (auto const& five_qi_gw : five_qi_gws) {
+      five_qi_gw_sessions[five_qi].push_back(five_qi_gw->create(*gw_data_gtpu_demux_adapter));
+    }
+  }
+  gw_data_gtpu_demux_adapter->connect_gtpu_demux(demux);
+
+  // Create 5QI specific session(s)
+  f1u_session_mngr = create_f1u_cu_up_session_manager(default_gw_sessions);
 }
 
 f1u_split_connector::~f1u_split_connector() = default;
