@@ -27,10 +27,10 @@ class signal_dispatcher
 public:
   /// \brief Attach a new observer to this signal dispatcher.
   /// \param observer The observer that subscribes for receiving signals.
-  void attach(signal_observer* observer);
+  void attach(signal_observer& observer);
   /// \brief Detach an observer, i.e. end its subscription for receiving signals.
   /// \param observer The observer that unsubscribers from receiving signals.
-  void detach(signal_observer* observer);
+  void detach(signal_observer& observer);
   /// \brief Notifies all its attached observers (i.e. subscribers) of the given signal. This function is to be called
   /// from the actual signal source.
   /// \param signal The signal that occured.
@@ -58,11 +58,11 @@ public:
   explicit signal_observer(signal_dispatcher& dispatcher_, signal_callback callback_) :
     dispatcher(dispatcher_), callback(std::move(callback_))
   {
-    dispatcher.attach(this);
+    dispatcher.attach(*this);
   }
 
   /// \brief Automatically unsubscribe from the current_subject (i.e. the signal dispatcher).
-  virtual ~signal_observer() { dispatcher.detach(this); }
+  virtual ~signal_observer() { dispatcher.detach(*this); }
 
   /// \brief Handles a signal that was dispatched by the signal_dispatcher.
   /// \param signal The signal that occured.
@@ -75,15 +75,15 @@ private:
   signal_callback callback;
 };
 
-void signal_dispatcher::attach(signal_observer* observer)
+void signal_dispatcher::attach(signal_observer& observer)
 {
-  observers.push_back(observer);
+  observers.push_back(&observer);
 }
 
-void signal_dispatcher::detach(signal_observer* observer)
+void signal_dispatcher::detach(signal_observer& observer)
 {
   for (auto it = observers.begin(); it != observers.end();) {
-    if (*it == observer) {
+    if (*it == &observer) {
       it = observers.erase(it);
       continue;
     }
