@@ -136,8 +136,6 @@ f1u_split_connector::f1u_split_connector(const gtpu_gateway_maps& udp_gw_maps,
   srsran_assert(not udp_gw_maps.default_gws.empty(), "Cannot create CU F1-U split connector, no default GW present");
   gw_data_gtpu_demux_adapter = std::make_unique<srs_cu_up::network_gateway_data_gtpu_demux_adapter>();
   // Create default session(s)
-  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>> default_gw_sessions;
-  default_gw_sessions.reserve(udp_gw_maps.default_gws.size());
   for (const std::unique_ptr<gtpu_gateway>& udp_gw : udp_gw_maps.default_gws) {
     f1u_sessions.default_gw_sessions.push_back(udp_gw->create(*gw_data_gtpu_demux_adapter));
   }

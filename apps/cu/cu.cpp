@@ -311,7 +311,7 @@ int main(int argc, char** argv)
     cu_f1u_gw_config.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
     std::unique_ptr<gtpu_gateway> cu_f1u_gw     = create_udp_gtpu_gateway(
         cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor(), *workers.non_rt_low_prio_exec);
-    if (sock_cfg.five_qi.has_value()) {
+    if (not sock_cfg.five_qi.has_value()) {
       f1u_gw_maps.default_gws.push_back(std::move(cu_f1u_gw));
     } else {
       f1u_gw_maps.five_qi_gws[sock_cfg.five_qi.value()].push_back(std::move(cu_f1u_gw));

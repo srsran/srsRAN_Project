@@ -134,10 +134,8 @@ protected:
     nru_gw_config.reuse_addr                 = true;
     udp_gw = create_udp_gtpu_gateway(nru_gw_config, *epoll_broker, io_tx_executor, rx_executor);
 
-    std::vector<std::unique_ptr<gtpu_gateway>> cu_f1u_gws;
-    cu_f1u_gws.push_back(std::move(udp_gw));
-    // TODO convert to new struct
-    f1u_cu_up_split_gateway_creation_msg cu_create_msg{{}, *demux, dummy_pcap, tester_bind_port.value()};
+    f1u_gw_maps.default_gws.push_back(std::move(udp_gw));
+    f1u_cu_up_split_gateway_creation_msg cu_create_msg{f1u_gw_maps, *demux, dummy_pcap, tester_bind_port.value()};
     cu_gw           = create_split_f1u_gw(cu_create_msg);
     cu_gw_bind_port = cu_gw->get_bind_port();
     ASSERT_TRUE(cu_gw_bind_port.has_value());
@@ -158,6 +156,7 @@ protected:
     cu_gw.reset();
     udp_gw.reset();
     udp_tester.reset();
+    f1u_gw_maps.default_gws.clear();
   }
 
   // spawn a thread to receive data
@@ -202,7 +201,8 @@ protected:
   manual_task_worker            io_tx_executor{128};
   std::unique_ptr<gtpu_demux>   demux;
   std::unique_ptr<gtpu_gateway> udp_gw;
-  null_dlt_pcap                 dummy_pcap = {};
+  null_dlt_pcap                 dummy_pcap  = {};
+  srs_cu_up::gtpu_gateway_maps  f1u_gw_maps = {};
 
   // Tester UDP gw to TX/RX PDUs to F1-U CU GW
   std::unique_ptr<udp_network_gateway>              udp_tester;

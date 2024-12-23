@@ -27,7 +27,7 @@ gtpu_tnl_pdu_session& f1u_session_manager_impl::get_next_f1u_gateway(five_qi_t f
 {
   // Try to select 5QI specific session.
   auto it = f1u_sessions.five_qi_gw_sessions.find(five_qi);
-  if (it == f1u_sessions.five_qi_gw_sessions.end()) {
+  if (it != f1u_sessions.five_qi_gw_sessions.end()) {
     uint32_t index = five_qi_next_gw_map[five_qi] % it->second.size();
     five_qi_next_gw_map[five_qi]++;
     return *it->second[index];
