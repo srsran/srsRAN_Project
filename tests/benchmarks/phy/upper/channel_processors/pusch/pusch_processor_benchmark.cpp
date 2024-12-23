@@ -13,6 +13,7 @@
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/benchmark_utils.h"
@@ -179,7 +180,7 @@ static const std::vector<test_profile> profile_set = {
      {{modulation_scheme::QAM256, 948.0F}},
      {0},
      4,
-     {1, 2}},
+     {1, 2, 3, 4}},
 
     {"scs30_100MHz_256qam_rvall_1port_1layer",
      "Decodes PUSCH with 30 kHz SCS, 100 MHz of bandwidth, 256-QAM modulation, maximum code rate, RV 0-3, 1 port, "
@@ -350,10 +351,15 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
 {
   std::vector<test_case_type> test_case_set;
 
+  unsigned max_nof_layers = get_pusch_processor_phy_capabilities().max_nof_layers;
+
   for (sch_mcs_description mcs : profile.mcs_set) {
     for (unsigned nof_prb : profile.nof_prb_set) {
       for (unsigned rv : profile.rv_set) {
         for (unsigned nof_layers : profile.nof_layers_set) {
+          if (nof_layers > max_nof_layers) {
+            continue;
+          }
           // Determine the Transport Block Size.
           tbs_calculator_configuration tbs_config = {};
           tbs_config.mcs_descr                    = mcs;
