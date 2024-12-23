@@ -24,8 +24,8 @@ struct f1u_session_maps {
 class f1u_session_manager
 {
 public:
-  virtual ~f1u_session_manager()                       = default;
-  virtual gtpu_tnl_pdu_session& get_next_f1u_gateway() = 0;
+  virtual ~f1u_session_manager()                                        = default;
+  virtual gtpu_tnl_pdu_session& get_next_f1u_gateway(five_qi_t five_qi) = 0;
 };
 
 } // namespace srsran::srs_cu_up

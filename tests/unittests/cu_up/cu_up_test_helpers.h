@@ -232,6 +232,7 @@ public:
 
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,
+                                                             five_qi_t                             five_qi,
                                                              const srs_cu_up::f1u_config&          config,
                                                              const gtpu_teid_t&                    ul_teid,
                                                              f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
