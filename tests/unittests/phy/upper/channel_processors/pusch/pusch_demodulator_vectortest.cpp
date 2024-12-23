@@ -147,7 +147,7 @@ TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
   for (unsigned i_rx_port = 0; i_rx_port != ce_dims.nof_rx_ports; ++i_rx_port) {
     for (unsigned i_layer = 0; i_layer != ce_dims.nof_tx_layers; ++i_layer) {
       // Set noise variance.
-      chan_estimates.set_noise_variance(test_case.context.noise_var, config.rx_ports[i_rx_port], i_layer);
+      chan_estimates.set_noise_variance(test_case.context.noise_var, config.rx_ports[i_rx_port]);
 
       // Copy port channel estimates.
       srsvec::convert(chan_estimates.get_path_ch_estimate(config.rx_ports[i_rx_port], i_layer),

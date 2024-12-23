@@ -175,18 +175,21 @@ TEST_P(ChannelEstFixture, test)
   // Calculate the tolerance for the measured TA. It assumes a DFT size of 4096 and a maximum error of ±1 sample.
   double tolerance_ta_us = 1e6 * phy_time_unit::from_timing_advance(1, test_params.cfg.scs).to_seconds();
   ASSERT_TRUE(are_estimates_ok(expected_estimates, estimates));
-  ASSERT_NEAR(estimates.get_rsrp(0, 0), test_params.rsrp, 5e-4);
-  ASSERT_NEAR(estimates.get_epre(0, 0), test_params.epre, 5e-4);
-  ASSERT_NEAR(estimates.get_noise_variance(0, 0), test_params.noise_var_est, 5e-4);
-  ASSERT_NEAR(estimates.get_snr_dB(0, 0), test_params.snr_est, 0.002 * std::abs(test_params.snr_est));
-  ASSERT_NEAR(estimates.get_time_alignment(0, 0).to_seconds() * 1e6, test_params.ta_us, tolerance_ta_us);
-  if (test_params.cfo_est_Hz.has_value()) {
-    ASSERT_TRUE(estimates.get_cfo_Hz(0, 0).has_value()) << "CFO estimation was expected, none obtained.";
-    ASSERT_NEAR(estimates.get_cfo_Hz(0, 0).value(),
-                test_params.cfo_est_Hz.value(),
-                0.001 * std::abs(test_params.cfo_est_Hz.value()));
-  } else {
-    ASSERT_FALSE(estimates.get_cfo_Hz(0, 0).has_value()) << "No CFO estimation was expected.";
+  ASSERT_NEAR(estimates.get_epre(0), test_params.epre, 5e-4);
+  ASSERT_NEAR(estimates.get_noise_variance(0), test_params.noise_var_est, 5e-4);
+  ASSERT_NEAR(estimates.get_snr_dB(0), test_params.snr_est, 0.002 * std::abs(test_params.snr_est));
+
+  for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+    ASSERT_NEAR(estimates.get_rsrp(0, i_layer), test_params.rsrp, 5e-4);
+    ASSERT_NEAR(estimates.get_time_alignment(0, i_layer).to_seconds() * 1e6, test_params.ta_us, tolerance_ta_us);
+    if (test_params.cfo_est_Hz.has_value()) {
+      ASSERT_TRUE(estimates.get_cfo_Hz(0, i_layer).has_value()) << "CFO estimation was expected, none obtained.";
+      ASSERT_NEAR(estimates.get_cfo_Hz(0, i_layer).value(),
+                  test_params.cfo_est_Hz.value(),
+                  0.001 * std::abs(test_params.cfo_est_Hz.value()));
+    } else {
+      ASSERT_FALSE(estimates.get_cfo_Hz(0, i_layer).has_value()) << "No CFO estimation was expected.";
+    }
   }
 }
 

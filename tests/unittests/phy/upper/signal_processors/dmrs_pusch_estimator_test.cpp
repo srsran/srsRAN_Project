@@ -257,16 +257,26 @@ TEST_P(DmrsPuschEstimatorFixture, Average)
   // Estimate.
   estimator->estimate(ch_est, grid, config);
 
+  unsigned nof_rx_ports = config.rx_ports.size();
+
   // First, assert the channel estimate gets the proper dimensions.
   channel_estimate::channel_estimate_dimensions ch_estimate_dims = ch_est.size();
   ASSERT_EQ(ch_estimate_dims.nof_prb, config.rb_mask.size()) << "Wrong number of PRBs.";
   ASSERT_EQ(ch_estimate_dims.nof_symbols, config.nof_symbols + config.first_symbol) << "Wrong number of symbols.";
-  ASSERT_EQ(ch_estimate_dims.nof_rx_ports, config.rx_ports.size()) << "Wrong number of Rx ports.";
+  ASSERT_EQ(ch_estimate_dims.nof_rx_ports, nof_rx_ports) << "Wrong number of Rx ports.";
   ASSERT_EQ(ch_estimate_dims.nof_tx_layers, config.get_nof_tx_layers()) << "Wrong number of Tx layers.";
 
   // Assert that the channel estimates are correct.
   ASSERT_TRUE(are_estimates_ok(expected_estimates, ch_est));
-  ASSERT_NEAR(ch_est.get_rsrp(0, 0), GetParam().est_rsrp, tolerance);
+
+  // Assert port-dependent estimates.
+  for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
+    ASSERT_NEAR(ch_est.get_noise_variance(i_port), GetParam().est_noise_var, tolerance)
+        << "Wrong noise variance estimation.";
+    for (unsigned i_layer = 0; i_layer != nof_layers; ++i_layer) {
+      ASSERT_NEAR(ch_est.get_rsrp(i_port, i_layer), GetParam().est_rsrp, tolerance) << "Wrong RSRP estimation.";
+    }
+  }
 }
 
 // Creates test suite with all the test cases.

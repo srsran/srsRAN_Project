@@ -125,7 +125,7 @@ void pucch_demodulator_format2::demodulate(span<log_likelihood_ratio>           
 
   // Extract the Rx port noise variances from the channel estimation.
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-    noise_var_estimates[i_port] = estimates.get_noise_variance(i_port, 0);
+    noise_var_estimates[i_port] = estimates.get_noise_variance(i_port);
   }
 
   // Equalize the data RE.

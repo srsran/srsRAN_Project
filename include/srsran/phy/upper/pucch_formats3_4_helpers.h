@@ -169,7 +169,7 @@ inline void pucch_3_4_extract_and_equalize(span<cf_t>                  eq_re,
   // Extract the Rx port noise variances from the channel estimation.
   std::array<float, MAX_PORTS> noise_var_estimates;
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-    noise_var_estimates[i_port] = estimates.get_noise_variance(i_port, 0);
+    noise_var_estimates[i_port] = estimates.get_noise_variance(i_port);
   }
 
   for (unsigned i_symbol = start_symbol_index, i_symbol_end = start_symbol_index + nof_symbols;

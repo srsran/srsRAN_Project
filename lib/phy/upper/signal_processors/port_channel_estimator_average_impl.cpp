@@ -134,7 +134,7 @@ void port_channel_estimator_average_impl::do_compute(channel_estimate&          
   }
 
   estimate.set_rsrp(rsrp, port, layer0);
-  estimate.set_epre(epre, port, layer0);
+  estimate.set_epre(epre, port);
   estimate.set_time_alignment(phy_time_unit::from_seconds(time_alignment_s), port, layer0);
   estimate.set_cfo_Hz(cfo_normalized.has_value()
                           ? std::optional<float>(cfo_normalized.value() * scs_to_khz(cfg.scs) * 1000)
@@ -143,9 +143,9 @@ void port_channel_estimator_average_impl::do_compute(channel_estimate&          
                       layer0);
 
   // Write the noise variance in the channel estimate result.
-  estimate.set_noise_variance(noise_var, port, layer0);
+  estimate.set_noise_variance(noise_var, port);
 
-  estimate.set_snr((noise_var != 0) ? datarp / noise_var : 1000, port, layer0);
+  estimate.set_snr((noise_var != 0) ? datarp / noise_var : 1000, port);
 }
 
 void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate&           estimate,
