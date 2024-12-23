@@ -11,8 +11,15 @@
 #pragma once
 
 #include "srsran/gtpu/gtpu_gateway.h"
+#include "srsran/ran/qos/five_qi.h"
+#include <map>
 
 namespace srsran::srs_cu_up {
+
+struct f1u_session_maps {
+  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>                      default_gw_sessions;
+  std::map<five_qi_t, std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>> five_qi_gw_sessions;
+};
 
 class f1u_session_manager
 {

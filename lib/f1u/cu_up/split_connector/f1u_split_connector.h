@@ -119,8 +119,11 @@ public:
 
   f1u_cu_up_udp_gateway* get_f1u_cu_up_gateway() { return this; }
 
-  /// TODO this should get a ue_index and drb id to be able to find the right port/ip
-  std::optional<uint16_t> get_bind_port() const override { return udp_sessions[0]->get_bind_port(); }
+  /// TODO this interface should be removed.
+  std::optional<uint16_t> get_bind_port() const override
+  {
+    return f1u_sessions.default_gw_sessions[0]->get_bind_port();
+  }
 
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,
@@ -143,7 +146,7 @@ private:
   std::unique_ptr<f1u_session_manager>                     f1u_session_mngr;
   uint16_t                                                 peer_port;
   std::string                                              ext_addr;
-  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>       udp_sessions;
+  f1u_session_maps                                         f1u_sessions;
   gtpu_demux&                                              demux;
   std::unique_ptr<network_gateway_data_gtpu_demux_adapter> gw_data_gtpu_demux_adapter;
   dlt_pcap&                                                gtpu_pcap;

@@ -18,13 +18,13 @@ class f1u_session_manager_impl : public f1u_session_manager
 {
 public:
   ~f1u_session_manager_impl() override = default;
-  explicit f1u_session_manager_impl(const std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>& f1u_gws_);
+  explicit f1u_session_manager_impl(const f1u_session_maps& f1u_sessions_);
 
   gtpu_tnl_pdu_session& get_next_f1u_gateway() override;
 
 private:
-  const std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>& f1u_gws;
-  uint32_t                                                  next_gw = 0;
+  const f1u_session_maps& f1u_sessions;
+  uint32_t                next_gw = 0;
 };
 
 } // namespace srsran::srs_cu_up
