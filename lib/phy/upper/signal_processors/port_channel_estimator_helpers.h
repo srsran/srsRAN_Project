@@ -14,11 +14,29 @@
 #include "srsran/adt/span.h"
 #include "srsran/phy/support/interpolator.h"
 #include "srsran/phy/support/re_buffer.h"
+#include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator.h"
 #include "srsran/phy/upper/signal_processors/port_channel_estimator_parameters.h"
 
 namespace srsran {
+
+/// \brief Extracts channel observations corresponding to DM-RS pilots from the resource grid for one layer, one hop
+/// and for the selected port.
+/// \param[out] rx_symbols  Symbol buffer destination.
+/// \param[in]  grid        Resource grid.
+/// \param[in]  port        Port index.
+/// \param[in]  cfg         Configuration parameters of the current context.
+/// \param[in]  hop         Intra-slot frequency hopping index: 0 for first position (before hopping), 1 for second
+///                         position (after hopping).
+/// \param[in] i_layer      Layer index.
+/// \return The number of OFDM symbols containing DM-RS for the given layer and hop.
+unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                            rx_symbols,
+                                     const resource_grid_reader&                  grid,
+                                     unsigned                                     port,
+                                     const port_channel_estimator::configuration& cfg,
+                                     unsigned                                     hop,
+                                     unsigned                                     i_layer = 0);
 
 /// \brief Applies frequency domain smoothing strategy.
 /// \param[out] enlarged_filtered_pilots_out   Smoothed pilots estimates.
