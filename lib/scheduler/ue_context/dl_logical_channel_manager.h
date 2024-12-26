@@ -35,6 +35,9 @@ public:
   /// \brief Deactivate all bearers.
   void deactivate();
 
+  /// Set UE fallback state.
+  void set_fallback_state(bool enter_fallback);
+
   /// \brief Activate/Deactivate Bearer.
   void set_status(lcid_t lcid, bool active);
 
@@ -44,24 +47,19 @@ public:
   /// \brief Verifies if logical channel is activated for DL.
   bool is_active(lcid_t lcid) const { return lcid <= LCID_MAX_DRB and channels[lcid].active; }
 
-  /// \brief Checks whether the UE has pending data, regardless of the state it is in.
+  /// \brief Check whether the UE has pending data, given its current state.
   bool has_pending_bytes() const
   {
-    return has_pending_ces() or std::any_of(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lcid) {
-             return channels[lcid].active and channels[lcid].buf_st > 0;
-           });
-  }
-
-  /// \brief Check whether the UE has pending data, given its current state.
-  bool has_pending_bytes(bool fallback_enabled) const
-  {
-    if (fallback_enabled) {
+    if (fallback_state) {
       return is_con_res_id_pending() or has_pending_bytes(LCID_SRB0) or has_pending_bytes(LCID_SRB1);
     }
     return has_pending_ces() or std::any_of(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lcid) {
              return lcid != LCID_SRB0 and channels[lcid].active and channels[lcid].buf_st > 0;
            });
   }
+
+  /// \brief Check whether the UE has pending data in the provided bearers, given its current state.
+  bool has_pending_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& bearers) const;
 
   /// \brief Checks whether a logical channel has pending data.
   bool has_pending_bytes(lcid_t lcid) const { return channels[lcid].active and channels[lcid].buf_st > 0; }
@@ -74,27 +72,13 @@ public:
 
   /// \brief Calculates total number of DL bytes, including MAC header overhead, and without taking into account
   /// the UE state.
-  unsigned total_pending_bytes() const
-  {
-    unsigned bytes = pending_ce_bytes();
-    for (lcid_t lcid : sorted_channels) {
-      bytes += pending_bytes(lcid);
-    }
-    return bytes;
-  }
+  unsigned total_pending_bytes() const;
 
   /// \brief Calculates number of DL pending bytes, including MAC header overhead, and taking UE state into account.
-  unsigned pending_bytes(bool fallback_enabled) const
-  {
-    if (fallback_enabled) {
-      return pending_con_res_ce_bytes() + pending_bytes(LCID_SRB0) + pending_bytes(LCID_SRB1);
-    }
-    unsigned bytes = pending_ce_bytes();
-    for (lcid_t lcid : sorted_channels) {
-      bytes += lcid != LCID_SRB0 ? pending_bytes(lcid) : 0;
-    }
-    return bytes;
-  }
+  unsigned pending_bytes() const;
+
+  /// Calculates the number of DL pending bytes, including MAC header overhead, for a subset of LCIDs.
+  unsigned pending_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids) const;
 
   /// \brief Returns the UE pending CEs' bytes to be scheduled, if any.
   unsigned pending_ce_bytes() const
@@ -178,6 +162,10 @@ private:
   // List of logical channel IDs sorted in decreasing order of priority. i.e. first element has the highest priority.
   std::vector<lcid_t> sorted_channels;
 
+  // Whether the UE is in fallback (no DRB tx).
+  bool fallback_state = false;
+
+  // Whether a CON RES CE needs to be sent.
   bool pending_con_res_id{false};
 
   // List of pending CEs except UE Contention Resolution Identity.

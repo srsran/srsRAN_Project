@@ -124,7 +124,11 @@ public:
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
-  bool has_pending_dl_newtx_bytes() const;
+  bool has_pending_dl_newtx_bytes() const { return dl_lc_ch_mgr.has_pending_bytes(); }
+  bool has_pending_dl_newtx_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& bearers) const
+  {
+    return dl_lc_ch_mgr.has_pending_bytes(bearers);
+  }
 
   /// \brief Checks if there are DL pending bytes for a specific LCID that are yet to be allocated in a DL HARQ.
   bool has_pending_dl_newtx_bytes(lcid_t lcid) const { return dl_lc_ch_mgr.has_pending_bytes(lcid); }
@@ -141,12 +145,18 @@ public:
   /// \brief Returns whether the UE has pending CEs' bytes to be scheduled, if any.
   bool has_pending_ce_bytes() const { return dl_lc_ch_mgr.has_pending_ces(); }
 
-  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ. The value is used
-  /// to derive the required transport block size for an DL grant.
-  /// param[in] lcid If the LCID is provided, the method will return the number of pending bytes for that LCID.
-  ///           Otherwise it will return the sum of all LCIDs pending bytes, excluding SRB0.
+  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ.
+  /// \param[in] lcid If the LCID is provided, the method will return the number of pending bytes for that LCID.
+  ///           Otherwise it will return the sum of all LCIDs pending bytes, considering the UE current state.
   /// \return The number of DL pending bytes that are not already allocated in a DL HARQ.
-  unsigned pending_dl_newtx_bytes(lcid_t lcid = lcid_t::INVALID_LCID) const;
+  unsigned pending_dl_newtx_bytes(lcid_t lcid = lcid_t::INVALID_LCID) const
+  {
+    return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid) : dl_lc_ch_mgr.pending_bytes();
+  }
+  unsigned pending_dl_newtx_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& bearers) const
+  {
+    return dl_lc_ch_mgr.pending_bytes(bearers);
+  }
 
   /// \brief Computes the number of UL pending bytes that are not already allocated in a UL HARQ. The value is used
   /// to derive the required transport block size for an UL grant.

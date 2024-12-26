@@ -52,48 +52,12 @@ void slice_ue::rem_logical_channel(lcid_t lcid)
 
 bool slice_ue::has_pending_dl_newtx_bytes() const
 {
-  // If at least one slice bearer has pending data, return true.
-  for (unsigned lcid = 0, e = bearers.size(); lcid != e; ++lcid) {
-    if (bearers.test(lcid) and u.has_pending_dl_newtx_bytes(uint_to_lcid(lcid))) {
-      return true;
-    }
-  }
-
-  // In case of SRB slice and there are pending CE bytes and no pending newtx data
-  // Note: We only report pending newtx bytes when there are pending CEs in the case of SRB slice and if there are no
-  // pending data in other slices. Otherwise, we let other slices allocate the CEs.
-  if (bearers.size() > 1 and bearers.test(LCID_SRB1) and u.has_pending_ce_bytes()) {
-    // Check if there aren't pending bytes in other slices.
-    return not u.has_pending_dl_newtx_bytes();
-  }
-
-  return false;
+  return u.has_pending_dl_newtx_bytes(bearers);
 }
 
 unsigned slice_ue::pending_dl_newtx_bytes() const
 {
-  // Compute pending bytes in LC CHs.
-  unsigned pending_bytes = 0;
-  for (unsigned lcid = 0, e = bearers.size(); lcid != e; ++lcid) {
-    if (bearers.test(lcid)) {
-      pending_bytes += u.pending_dl_newtx_bytes(uint_to_lcid(lcid));
-    }
-  }
-
-  unsigned pending_ce_bytes = u.pending_ce_bytes();
-  if (pending_ce_bytes > 0) {
-    // In case the slice UE has pending bytes, we also include the CE bytes.
-    if (pending_bytes > 0) {
-      pending_bytes += pending_ce_bytes;
-    } else if (bearers.size() > 1 and bearers.test(LCID_SRB1)) {
-      // In case of SRB slice, we also include the CE bytes if the UE has no pending data in other slices.
-      if (not u.has_pending_dl_newtx_bytes()) {
-        pending_bytes += pending_ce_bytes;
-      }
-    }
-  }
-
-  return pending_bytes;
+  return u.pending_dl_newtx_bytes(bearers);
 }
 
 unsigned slice_ue::pending_ul_newtx_bytes() const
