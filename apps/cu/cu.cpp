@@ -159,7 +159,7 @@ static void autoderive_cu_up_parameters_after_parsing(cu_appconfig&            c
   }
   // If no F1-U socket configuration is derived, we set a default configuration.
   if (cu_config.f1u_cfg.f1u_socket_cfg.empty()) {
-    srs_cu::cu_f1u_socket_appconfig sock_cfg;
+    cu_f1u_socket_appconfig sock_cfg;
     cu_config.f1u_cfg.f1u_socket_cfg.push_back(sock_cfg);
   }
 }
@@ -302,7 +302,7 @@ int main(int argc, char** argv)
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
   // > Create UDP gateway(s).
   srs_cu_up::gtpu_gateway_maps f1u_gw_maps;
-  for (const srs_cu::cu_f1u_socket_appconfig& sock_cfg : cu_cfg.f1u_cfg.f1u_socket_cfg) {
+  for (const cu_f1u_socket_appconfig& sock_cfg : cu_cfg.f1u_cfg.f1u_socket_cfg) {
     udp_network_gateway_config cu_f1u_gw_config = {};
     cu_f1u_gw_config.bind_address               = sock_cfg.bind_addr;
     cu_f1u_gw_config.ext_bind_addr              = sock_cfg.udp_config.ext_addr;

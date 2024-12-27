@@ -28,15 +28,14 @@ static void fill_cu_appconfig_f1ap_section(YAML::Node node, const srs_cu::cu_f1a
   f1ap_node["bind_address"] = config.bind_addr;
 }
 
-static void fill_cu_up_f1u_socket_entry(YAML::Node& node, const srsran::srs_cu::cu_f1u_socket_appconfig& config)
+static void fill_cu_up_f1u_socket_entry(YAML::Node& node, const srsran::cu_f1u_socket_appconfig& config)
 {
   node["bind_addr"] = config.bind_addr;
   node["ext_addr"]  = config.udp_config.ext_addr;
   fill_udp_config_in_yaml_schema(node["udp"], config.udp_config);
 }
 
-static void fill_cu_up_f1u_socket_section(YAML::Node                                                  node,
-                                          const std::vector<srsran::srs_cu::cu_f1u_socket_appconfig>& sock_cfg)
+static void fill_cu_up_f1u_socket_section(YAML::Node node, const std::vector<srsran::cu_f1u_socket_appconfig>& sock_cfg)
 {
   auto sock_node = node["socket"];
   for (const auto& cfg : sock_cfg) {
@@ -46,7 +45,8 @@ static void fill_cu_up_f1u_socket_section(YAML::Node                            
   }
 }
 
-static void fill_cu_appconfig_f1u_section(YAML::Node node, const srs_cu::cu_f1u_appconfig& config)
+// TODO rm from here.
+static void fill_cu_appconfig_f1u_section(YAML::Node node, const cu_f1u_appconfig& config)
 {
   YAML::Node cu_up_node = node["cu_up"];
   YAML::Node f1u_node   = cu_up_node["f1u"];

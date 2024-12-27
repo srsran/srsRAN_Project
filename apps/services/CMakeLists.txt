@@ -11,6 +11,7 @@ set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 add_subdirectory(buffer_pool)
 add_subdirectory(e2)
+add_subdirectory(f1u)
 add_subdirectory(hal)
 add_subdirectory(logger)
 add_subdirectory(network)
@@ -24,6 +25,7 @@ target_include_directories(srsran_app_services PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(srsran_app_services
         srsran_buffer_pool_app_service
         srsran_e2_app_service
+        srsran_f1u_app_service
         srsran_network_app_service
         srsran_hal_app_service
         srsran_logger_app_service
