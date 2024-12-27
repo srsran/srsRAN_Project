@@ -23,6 +23,7 @@ public:
   gtpu_tnl_pdu_session& get_next_f1u_gateway(five_qi_t five_qi) override;
 
 private:
+  srslog::basic_logger&         logger;
   const f1u_session_maps&       f1u_sessions;
   uint32_t                      next_gw = 0;
   std::map<five_qi_t, uint32_t> five_qi_next_gw_map;
