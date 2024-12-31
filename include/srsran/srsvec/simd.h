@@ -1373,6 +1373,13 @@ inline simd_cf_t& operator*=(simd_cf_t& left, float right)
   return left;
 }
 
+/// Multiplies a complex and a real SIMD registers.
+inline simd_cf_t& operator*=(simd_cf_t& left, simd_f_t right)
+{
+  left = srsran_simd_cf_mul(left, right);
+  return left;
+}
+
 /// Subtract two complex SIMD registers.
 inline simd_cf_t& operator-=(simd_cf_t& left, const simd_cf_t& right)
 {
