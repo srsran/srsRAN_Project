@@ -231,6 +231,56 @@ def test_android_drx(
         always_download_artifacts=True,
         reattach_count=reattach_count,
         enable_drx=True,
+        ping_interval=0.1,
+    )
+
+
+@mark.parametrize(
+    "reattach_count",
+    (param(0, id="reattach:%s"),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.android_drx
+@mark.flaky(
+    reruns=2,
+    only_rerun=["failed to start", "Exception calling application", "Attach timeout reached", "Some packages got lost"],
+)
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_android_no_drx(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,  # pylint: disable=invalid-name
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    reattach_count: int,
+):
+    """
+    Android high performance Pings
+    """
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=(ue,),
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,
+        global_timing_advance=-1,
+        time_alignment_calibration="auto",
+        warning_as_errors=False,
+        always_download_artifacts=True,
+        reattach_count=reattach_count,
+        enable_drx=False,
+        ping_interval=0.1,
     )
 
 
@@ -578,6 +628,7 @@ def _ping(
     prach_config_index=-1,
     pdsch_mcs_table: str = "qam256",
     pusch_mcs_table: str = "qam256",
+    ping_interval: float = 1.0,
 ):
     logging.info("Ping Test")
 
@@ -609,13 +660,13 @@ def _ping(
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
     try:
-        ping(ue_attach_info_dict, fivegc, ping_count)
+        ping(ue_attach_info_dict, fivegc, ping_count, ping_interval=ping_interval)
 
         # reattach and repeat if requested
         for _ in range(reattach_count):
             ue_stop(ue_array, retina_data)
             ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
-            ping(ue_attach_info_dict, fivegc, ping_count)
+            ping(ue_attach_info_dict, fivegc, ping_count, ping_interval=ping_interval)
     except Failed as err:
         if not ims_mode or ims_mode == "enabled":
             raise err from None

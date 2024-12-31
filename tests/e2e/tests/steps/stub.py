@@ -319,16 +319,26 @@ def _log_attached_ue(future: grpc.Future, ue_stub: UEStub):
         )
 
 
-def ping(ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: int = 0):
+def ping(
+    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo],
+    fivegc: FiveGCStub,
+    ping_count,
+    time_step: int = 0,
+    ping_interval: float = 1.0,
+):
     """
     Ping command between an UE and a 5GC
     """
-    ping_task_array = ping_start(ue_attach_info_dict, fivegc, ping_count, time_step)
+    ping_task_array = ping_start(ue_attach_info_dict, fivegc, ping_count, time_step, ping_interval)
     ping_wait_until_finish(ping_task_array)
 
 
 def ping_start(
-    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo], fivegc: FiveGCStub, ping_count, time_step: float = 0
+    ue_attach_info_dict: Dict[UEStub, UEAttachedInfo],
+    fivegc: FiveGCStub,
+    ping_count,
+    time_step: float = 0,
+    ping_interval: float = 1.0,
 ) -> List[grpc.Future]:
     """
     Ping command between an UE and a 5GC
@@ -339,7 +349,7 @@ def ping_start(
     ping_task_array: List[grpc.Future] = []
     for ue_stub, ue_attached_info in ue_attach_info_dict.items():
         ue_to_fivegc: grpc.Future = ue_stub.Ping.future(
-            PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count)
+            PingRequest(address=ue_attached_info.ipv4_gateway, count=ping_count, interval=ping_interval)
         )
         ue_to_fivegc.add_done_callback(
             lambda _task, _msg=f"[{ue_attached_info.ipv4}] UE -> 5GC": _print_ping_result(_msg, _task)
