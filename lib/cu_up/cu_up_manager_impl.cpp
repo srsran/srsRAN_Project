@@ -61,6 +61,11 @@ cu_up_manager_impl::cu_up_manager_impl(const cu_up_manager_impl_config&       co
                                         generate_ue_manager_dependencies(dependencies, logger));
 }
 
+async_task<void> cu_up_manager_impl::stop()
+{
+  return ue_mng->stop();
+}
+
 void cu_up_manager_impl::schedule_ue_async_task(ue_index_t ue_index, async_task<void> task)
 {
   ue_mng->schedule_ue_async_task(ue_index, std::move(task));

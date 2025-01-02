@@ -35,6 +35,22 @@ ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_depende
   }
 }
 
+async_task<void> ue_manager::stop()
+{
+  // Routine to stop all UEs
+  auto ue_it = ue_db.begin();
+  return launch_async([this, ue_it](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    // Remove all UEs.
+    while (ue_it != ue_db.end()) {
+      CORO_AWAIT(remove_ue((ue_it++)->first));
+    }
+
+    CORO_RETURN();
+  });
+}
+
 ue_context* ue_manager::find_ue(ue_index_t ue_index)
 {
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index={}", fmt::underlying(ue_index));

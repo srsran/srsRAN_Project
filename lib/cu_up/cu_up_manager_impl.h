@@ -46,6 +46,7 @@ class cu_up_manager_impl final : public cu_up_manager
 public:
   cu_up_manager_impl(const cu_up_manager_impl_config& config, const cu_up_manager_impl_dependencies& dependencies);
 
+  async_task<void> stop() override;
   e1ap_bearer_context_setup_response
   handle_bearer_context_setup_request(const e1ap_bearer_context_setup_request& msg) override;
 
