@@ -405,15 +405,15 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
                    " ul_error_rate={}%",
                    ul_total > 0 ? to_percentage<int>(ue.ul_nof_nok, ul_total) : 0);
     if (ul_total > 0) {
-      fmt::format_to(std::back_inserter(buffer), " crc_delay_ms={:.3}", ue.ul_delay_ms);
+      fmt::format_to(std::back_inserter(buffer), " crc_delay={:.3}ms", ue.ul_delay_ms);
     } else {
-      fmt::format_to(std::back_inserter(buffer), " crc_delay_ms=n/a");
+      fmt::format_to(std::back_inserter(buffer), " crc_delay=n/a");
     }
     fmt::format_to(std::back_inserter(buffer), " ul_nof_prbs={}", ue.tot_ul_prbs_used);
     fmt::format_to(std::back_inserter(buffer), " bsr={}", scaled_fmt_integer(ue.bsr, false));
     fmt::format_to(std::back_inserter(buffer), " sr_count={}", ue.sr_count);
     if (ue.last_ul_olla.has_value()) {
-      fmt::format_to(std::back_inserter(buffer), " ul_olla={}", ue.last_ul_olla);
+      fmt::format_to(std::back_inserter(buffer), " ul_olla={}", ue.last_ul_olla.value());
     }
     if (ue.ta_stats.get_nof_observations() > 0) {
       fmt::format_to(std::back_inserter(buffer), " ta={}s", float_to_eng_string(ue.ta_stats.get_mean(), 0, false));

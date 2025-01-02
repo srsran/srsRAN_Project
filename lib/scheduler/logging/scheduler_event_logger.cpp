@@ -222,7 +222,7 @@ void scheduler_event_logger::enqueue_impl(const crc_event& crc_ev)
   if (mode == debug) {
     if (crc_ev.ul_sinr_db.has_value()) {
       fmt::format_to(std::back_inserter(fmtbuf),
-                     "\n- CRC: ue={} rnti={} pci={} rx_slot={} h_id={} crc={} sinr={}dB",
+                     "\n- CRC: ue={} rnti={} pci={} rx_slot={} h_id={} crc={} sinr={:.2}dB",
                      fmt::underlying(crc_ev.ue_index),
                      crc_ev.rnti,
                      pci,

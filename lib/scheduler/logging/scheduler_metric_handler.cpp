@@ -204,9 +204,9 @@ void cell_metrics_handler::handle_ul_phr_indication(const ul_phr_indication_mess
     // Store last PHR.
     if (not phr_ind.phr.get_phr().empty()) {
       // Log the floor of the average of the PH interval.
-      interval<int> rg             = phr_ind.phr.get_phr().front().ph;
-      u.last_phr                   = (rg.start() + rg.stop()) / 2;
-      u.data.sum_ul_ce_delay_slots = last_slot_tx - phr_ind.slot_rx;
+      interval<int> rg = phr_ind.phr.get_phr().front().ph;
+      u.last_phr       = (rg.start() + rg.stop()) / 2;
+      u.data.sum_ul_ce_delay_slots += last_slot_tx - phr_ind.slot_rx;
       u.data.nof_ul_ces++;
     }
   }
@@ -382,8 +382,9 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pucch_ta_stats = data.pucch_ta;
   ret.srs_ta_stats   = data.srs_ta;
   ret.last_phr       = last_phr;
-  ret.mean_ce_delay_msec =
-      data.nof_ul_ces > 0 ? (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * slots_per_sf)) : 0;
+  if (data.nof_ul_ces > 0) {
+    ret.mean_ce_delay_msec = (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * slots_per_sf));
+  }
 
   // Reset UE stats metrics on every report.
   reset();
