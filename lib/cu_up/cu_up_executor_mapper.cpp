@@ -10,7 +10,6 @@
 
 #include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/adt/mpmc_queue.h"
-#include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/execute_on.h"
 #include "srsran/support/async/execute_on_blocking.h"
@@ -27,7 +26,7 @@ namespace {
 class cancellable_task_executor final : public task_executor
 {
 public:
-  cancellable_task_executor(task_executor& exec_, const std::atomic<bool>& cancelled_flag, timer_manager& timers_) :
+  cancellable_task_executor(task_executor& exec_, const std::atomic<bool>& cancelled_flag) :
     exec(&exec_), cancelled(cancelled_flag)
   {
   }
@@ -72,14 +71,18 @@ public:
                           task_executor& crypto_exec_,
                           timer_manager& timers_) :
     timers(timers_),
-    ctrl_exec(ctrl_exec_, cancelled_flag, timers),
-    ul_exec(ul_exec_, cancelled_flag, timers),
-    dl_exec(dl_exec_, cancelled_flag, timers),
+    ctrl_exec(ctrl_exec_, cancelled_flag),
+    ul_exec(ul_exec_, cancelled_flag),
+    dl_exec(dl_exec_, cancelled_flag),
     crypto_exec(crypto_exec_)
   {
   }
 
-  ~ue_executor_mapper_impl() override = default;
+  ~ue_executor_mapper_impl() override
+  {
+    srsran_assert(cancelled_flag.load(std::memory_order_relaxed),
+                  "cancellable_task_executor destroyed before tasks being cancelled");
+  }
 
   async_task<void> stop() override
   {
@@ -126,8 +129,7 @@ struct base_cu_up_executor_pool_config {
 class round_robin_cu_up_exec_pool
 {
 public:
-  round_robin_cu_up_exec_pool(base_cu_up_executor_pool_config config) :
-    main_exec(config.main_exec), timers(config.timers)
+  round_robin_cu_up_exec_pool(base_cu_up_executor_pool_config config) : timers(config.timers)
   {
     srsran_assert(config.ctrl_executors.size() > 0, "At least one DL executor must be specified");
     if (config.dl_executors.empty()) {
@@ -173,7 +175,6 @@ private:
   };
 
   // Main executor of the CU-UP.
-  task_executor& main_exec;
   timer_manager& timers;
 
   // List of UE executor mapper contexts created.
