@@ -301,7 +301,7 @@ int main(int argc, char** argv)
   cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_dlt_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
   // > Create UDP gateway(s).
-  srs_cu_up::gtpu_gateway_maps f1u_gw_maps;
+  gtpu_gateway_maps f1u_gw_maps;
   for (const f1u_socket_appconfig& sock_cfg : cu_cfg.f1u_cfg.f1u_socket_cfg) {
     udp_network_gateway_config cu_f1u_gw_config = {};
     cu_f1u_gw_config.bind_address               = sock_cfg.bind_addr;

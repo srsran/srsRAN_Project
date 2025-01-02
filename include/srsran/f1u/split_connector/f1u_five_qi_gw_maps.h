@@ -15,11 +15,11 @@
 #include "srsran/ran/qos/five_qi.h"
 #include <map>
 
-namespace srsran::srs_cu_up {
+namespace srsran {
 
 struct gtpu_gateway_maps {
   std::vector<std::unique_ptr<gtpu_gateway>>                      default_gws;
   std::map<five_qi_t, std::vector<std::unique_ptr<gtpu_gateway>>> five_qi_gws;
 };
 
-} // namespace srsran::srs_cu_up
+} // namespace srsran

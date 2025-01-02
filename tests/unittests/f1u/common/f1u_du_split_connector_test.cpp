@@ -114,9 +114,9 @@ protected:
     nru_gw_config.reuse_addr                 = true;
     udp_gw = create_udp_gtpu_gateway(nru_gw_config, *epoll_broker, io_tx_executor, rx_executor);
 
-    f1u_du_split_gateway_creation_msg cu_create_msg{
-        udp_gw.get(), demux.get(), dummy_pcap, tester_bind_port.value(), get_external_bind_address()};
-    du_gw = create_split_f1u_gw(cu_create_msg);
+    f1u_gw_maps.default_gws.push_back(std::move(udp_gw));
+    f1u_du_split_gateway_creation_msg du_create_msg{f1u_gw_maps, demux.get(), dummy_pcap, tester_bind_port.value()};
+    du_gw = create_split_f1u_gw(du_create_msg);
 
     du_gw_bind_port = du_gw->get_bind_port();
     ASSERT_TRUE(du_gw_bind_port.has_value());
@@ -142,6 +142,7 @@ protected:
     du_gw.reset();
     udp_gw.reset();
     udp_tester.reset();
+    f1u_gw_maps.default_gws.clear();
   }
 
   void send_to_server(byte_buffer pdu, const std::string& dest_addr, uint16_t port)
@@ -191,6 +192,7 @@ protected:
   manual_task_worker            io_tx_executor{128};
   std::unique_ptr<gtpu_demux>   demux;
   std::unique_ptr<gtpu_gateway> udp_gw;
+  gtpu_gateway_maps             f1u_gw_maps        = {};
   null_dlt_pcap                 dummy_pcap         = {};
   std::string                   du_gw_bind_address = "127.0.0.2";
 
