@@ -27,7 +27,7 @@ struct f1ap_appconfig {
   std::string bind_address = "127.0.10.2";
 };
 
-struct nru_appconfig {
+struct f1u_appconfig {
   unsigned    pdu_queue_size = 2048;
   std::string bind_address   = "127.0.10.2";
   std::string ext_addr       = "auto"; // External address advertised by the F1-U interface
@@ -53,7 +53,7 @@ struct du_appconfig {
   /// F1-C configuration.
   srs_du::f1ap_appconfig f1ap_cfg;
   /// F1-U configuration.
-  srs_du::nru_appconfig nru_cfg;
+  srs_du::f1u_appconfig f1u_cfg;
   /// Buffer pool configuration.
   buffer_pool_appconfig buffer_pool_config;
   /// Expert configuration.

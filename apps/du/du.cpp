@@ -270,17 +270,17 @@ int main(int argc, char** argv)
   du_f1u_gtpu_msg.gtpu_pcap                     = du_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux = create_gtpu_demux(du_f1u_gtpu_msg);
   udp_network_gateway_config  du_f1u_gw_config  = {};
-  du_f1u_gw_config.bind_address                 = du_cfg.nru_cfg.bind_address;
+  du_f1u_gw_config.bind_address                 = du_cfg.f1u_cfg.bind_address;
   du_f1u_gw_config.bind_port                    = GTPU_PORT;
   du_f1u_gw_config.reuse_addr                   = false;
-  du_f1u_gw_config.pool_occupancy_threshold     = du_cfg.nru_cfg.pool_threshold;
+  du_f1u_gw_config.pool_occupancy_threshold     = du_cfg.f1u_cfg.pool_threshold;
   std::unique_ptr<gtpu_gateway> du_f1u_gw =
       create_udp_gtpu_gateway(du_f1u_gw_config,
                               *epoll_broker,
                               workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
                               *workers.non_rt_low_prio_exec);
   std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn = srs_du::create_split_f1u_gw(
-      {du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_pcaps.f1u, GTPU_PORT, du_cfg.nru_cfg.ext_addr});
+      {du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_pcaps.f1u, GTPU_PORT, du_cfg.f1u_cfg.ext_addr});
 
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =
