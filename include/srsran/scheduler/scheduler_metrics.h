@@ -36,7 +36,7 @@ struct scheduler_ue_metrics {
   sch_mcs_index        ul_mcs;
   unsigned             tot_ul_prbs_used;
   double               ul_brate_kbps;
-  double               ul_delay_ms;
+  double               crc_delay_ms;
   unsigned             ul_nof_ok;
   unsigned             ul_nof_nok;
   unsigned             bsr;

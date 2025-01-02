@@ -60,7 +60,9 @@ void cell_metrics_handler::handle_rach_indication(const rach_indication_message&
   }
 }
 
-void cell_metrics_handler::handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs)
+void cell_metrics_handler::handle_crc_indication(slot_point                   sl_rx,
+                                                 const ul_crc_pdu_indication& crc_pdu,
+                                                 units::bytes                 tbs)
 {
   if (ues.contains(crc_pdu.ue_index)) {
     auto& u = ues[crc_pdu.ue_index];
@@ -81,6 +83,7 @@ void cell_metrics_handler::handle_crc_indication(const ul_crc_pdu_indication& cr
       u.data.ta.update(crc_pdu.time_advance_offset.value().to_seconds());
       u.data.pusch_ta.update(crc_pdu.time_advance_offset.value().to_seconds());
     }
+    u.data.sum_crc_delay_slots += last_slot_tx - sl_rx;
   }
 }
 
@@ -314,13 +317,6 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
   decision_latency_hist[bin_idx]++;
 }
 
-void cell_metrics_handler::handle_ul_delay(du_ue_index_t ue_index, double delay_ms)
-{
-  if (ues.contains(ue_index)) {
-    ues[ue_index].data.sum_ul_delay_ms += delay_ms;
-  }
-}
-
 void cell_metrics_handler::push_result(slot_point                sl_tx,
                                        const sched_result&       slot_result,
                                        std::chrono::microseconds slot_decision_latency)
@@ -370,10 +366,10 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pucch_snr_db     = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
   ret.last_dl_olla     = last_dl_olla;
   ret.last_ul_olla     = last_ul_olla;
-  ret.ul_delay_ms      = data.count_crc_pdus > 0 ? data.sum_ul_delay_ms / data.count_crc_pdus : 0;
-  ret.bsr              = last_bsr;
-  ret.sr_count         = data.count_sr;
-  ret.dl_bs            = 0;
+  ret.crc_delay_ms = (data.count_crc_pdus > 0) ? data.sum_crc_delay_slots / (data.count_crc_pdus * slots_per_sf) : 0;
+  ret.bsr          = last_bsr;
+  ret.sr_count     = data.count_sr;
+  ret.dl_bs        = 0;
   for (const unsigned value : last_dl_bs) {
     ret.dl_bs += value;
   }

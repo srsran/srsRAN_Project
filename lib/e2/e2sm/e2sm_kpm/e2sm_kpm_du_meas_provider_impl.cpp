@@ -601,7 +601,7 @@ bool e2sm_kpm_du_meas_provider_impl::get_delay_ul(const asn1::e2sm::label_info_l
         std::accumulate(last_ue_metrics.begin(),
                         last_ue_metrics.end(),
                         0,
-                        [](size_t sum, const scheduler_ue_metrics& metric) { return sum + metric.ul_delay_ms; }) /
+                        [](size_t sum, const scheduler_ue_metrics& metric) { return sum + metric.crc_delay_ms; }) /
         last_ue_metrics.size();
     meas_record_item_c meas_record_item;
     if (mean_ul_delay_ms) {
@@ -617,8 +617,8 @@ bool e2sm_kpm_du_meas_provider_impl::get_delay_ul(const asn1::e2sm::label_info_l
     gnb_cu_ue_f1ap_id_t gnb_cu_ue_f1ap_id = int_to_gnb_cu_ue_f1ap_id(ue.gnb_du_ue_id().gnb_cu_ue_f1ap_id);
     uint32_t            ue_idx            = f1ap_ue_id_provider.get_ue_index(gnb_cu_ue_f1ap_id);
     meas_record_item_c  meas_record_item;
-    if (last_ue_metrics[ue_idx].ul_delay_ms) {
-      meas_record_item.set_real().value = static_cast<float>(last_ue_metrics[ue_idx].ul_delay_ms);
+    if (last_ue_metrics[ue_idx].crc_delay_ms) {
+      meas_record_item.set_real().value = static_cast<float>(last_ue_metrics[ue_idx].crc_delay_ms);
     } else {
       meas_record_item.set_no_value();
     }

@@ -405,7 +405,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
                    " ul_error_rate={}%",
                    ul_total > 0 ? to_percentage<int>(ue.ul_nof_nok, ul_total) : 0);
     if (ul_total > 0) {
-      fmt::format_to(std::back_inserter(buffer), " crc_delay={:.3}ms", ue.ul_delay_ms);
+      fmt::format_to(std::back_inserter(buffer), " crc_delay={:.3}ms", ue.crc_delay_ms);
     } else {
       fmt::format_to(std::back_inserter(buffer), " crc_delay=n/a");
     }
