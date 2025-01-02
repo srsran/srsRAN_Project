@@ -185,7 +185,7 @@ void cu_up::start()
 void cu_up::stop()
 {
   std::unique_lock<std::mutex> lock(mutex);
-  if (not std::exchange(running, false)) {
+  if (not running) {
     return;
   }
 
@@ -195,7 +195,7 @@ void cu_up::stop()
 
   auto stop_cu_up_main_loop = [this, &cvar]() mutable {
     // Dispatch coroutine to stop CU-UP.
-    launch_async([this, &cvar](coro_context<async_task<void>>& ctx) mutable {
+    main_ctrl_loop.schedule(launch_async([this, &cvar](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
       // CU-UP stops listening to new GTPU Rx PDUs and stops pushing UL PDUs.
@@ -212,7 +212,7 @@ void cu_up::stop()
       });
 
       CORO_RETURN();
-    });
+    }));
   };
 
   // Dispatch task to stop CU-UP main loop.

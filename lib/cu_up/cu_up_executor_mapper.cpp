@@ -26,8 +26,8 @@ namespace {
 class cancellable_task_executor final : public task_executor
 {
 public:
-  cancellable_task_executor(task_executor& exec_, const std::atomic<bool>& cancelled_flag) :
-    exec(&exec_), cancelled(cancelled_flag)
+  cancellable_task_executor(task_executor& exec_, const std::atomic<bool>& cancelled_flag, timer_manager& timers_) :
+    exec(&exec_), cancelled(cancelled_flag), timers(timers_)
   {
   }
 
@@ -56,9 +56,16 @@ public:
     });
   }
 
+  auto defer_on()
+  {
+    // We use the underlying executor to ignore cancelled flag.
+    return defer_on_blocking(*exec, timers);
+  }
+
 private:
   task_executor*           exec;
   const std::atomic<bool>& cancelled;
+  timer_manager&           timers;
 };
 
 /// Implementation of the UE executor mapper.
@@ -71,9 +78,9 @@ public:
                           task_executor& crypto_exec_,
                           timer_manager& timers_) :
     timers(timers_),
-    ctrl_exec(ctrl_exec_, cancelled_flag),
-    ul_exec(ul_exec_, cancelled_flag),
-    dl_exec(dl_exec_, cancelled_flag),
+    ctrl_exec(ctrl_exec_, cancelled_flag, timers),
+    ul_exec(ul_exec_, cancelled_flag, timers),
+    dl_exec(dl_exec_, cancelled_flag, timers),
     crypto_exec(crypto_exec_)
   {
   }
@@ -92,9 +99,10 @@ public:
       if (cancel_tasks()) {
         // Await for tasks for the given UE to be completely flushed, before proceeding.
         // TODO: Use when_all.
-        CORO_AWAIT(defer_on_blocking(dl_exec, timers));
-        CORO_AWAIT(defer_on_blocking(ul_exec, timers));
-        CORO_AWAIT(defer_on_blocking(ctrl_exec, timers));
+        CORO_AWAIT(dl_exec.defer_on());
+        CORO_AWAIT(ul_exec.defer_on());
+        // Revert back to ctrl exec.
+        CORO_AWAIT(ctrl_exec.defer_on());
       }
 
       CORO_RETURN();
