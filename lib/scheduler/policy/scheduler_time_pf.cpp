@@ -111,7 +111,6 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   while (not dl_queue.empty() and rem_rbs > 0 and alloc_result.status != alloc_status::skip_slot) {
     ue_ctxt& ue  = *dl_queue.top();
     alloc_result = try_dl_alloc(ue, ues, pdsch_alloc, rem_rbs);
-    ue.save_dl_alloc(alloc_result.alloc_bytes, alloc_result.tb_info);
     dl_queue.pop();
     rem_rbs = slice_candidate.remaining_rbs();
   }
@@ -203,7 +202,6 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
   while (not ul_queue.empty() and rem_rbs > 0 and alloc_result.status != alloc_status::skip_slot) {
     ue_ctxt& ue  = *ul_queue.top();
     alloc_result = try_ul_alloc(ue, ues, pusch_alloc, rem_rbs);
-    ue.save_ul_alloc(alloc_result.alloc_bytes);
     ul_queue.pop();
     rem_rbs = slice_candidate.remaining_rbs();
   }
@@ -224,6 +222,7 @@ dl_alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
   if (alloc_result.status == alloc_status::success) {
     ctxt.dl_prio = forbid_prio;
   }
+  ctxt.save_dl_alloc(alloc_result.alloc_bytes, alloc_result.tb_info);
   return alloc_result;
 }
 
@@ -242,6 +241,7 @@ ul_alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
   if (alloc_result.status == alloc_status::success) {
     ctxt.ul_prio = forbid_prio;
   }
+  ctxt.save_ul_alloc(ues[ctxt.ue_index], alloc_result.alloc_bytes);
   return alloc_result;
 }
 
@@ -589,8 +589,18 @@ void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t total_alloc_bytes, const
   dl_sum_alloc_bytes += total_alloc_bytes;
 }
 
-void scheduler_time_pf::ue_ctxt::save_ul_alloc(uint32_t alloc_bytes)
+void scheduler_time_pf::ue_ctxt::save_ul_alloc(const slice_ue& u, unsigned alloc_bytes)
 {
+  if (alloc_bytes == 0) {
+    return;
+  }
+  // We do not know which LCGs will be allocated by the UE, but we can make an estimation based on BSRs.
+  auto lcg_info = u.estimate_ul_alloc_bytes_per_lcg(alloc_bytes);
+  for (auto [lcgid, lcg_bytes] : lcg_info) {
+    if (lcgid < ul_alloc_bytes_per_lcg.size()) {
+      ul_alloc_bytes_per_lcg[lcgid] = lcg_bytes;
+    }
+  }
   ul_sum_alloc_bytes += alloc_bytes;
 }
 

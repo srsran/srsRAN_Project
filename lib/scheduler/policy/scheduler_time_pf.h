@@ -58,7 +58,7 @@ private:
     void compute_ul_prio(const slice_ue& u, ran_slice_id_t slice_id, slot_point pdcch_slot, slot_point pusch_slot);
 
     void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info);
-    void save_ul_alloc(uint32_t alloc_bytes);
+    void save_ul_alloc(const slice_ue& u, unsigned alloc_bytes);
 
     const du_ue_index_t      ue_index;
     const du_cell_index_t    cell_index;

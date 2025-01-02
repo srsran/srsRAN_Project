@@ -92,6 +92,11 @@ public:
   /// Get QoS information of DRBs configured for the UE.
   span<const sched_drb_info> get_drbs_qos_info() const { return u.ue_cfg_dedicated()->drbs_qos_info(); };
 
+  /// Get an estimation of how many UL bytes were allocated per LCG for a given grant.
+  ///
+  /// Note: This function is called after the allocation has been made.
+  static_vector<std::pair<lcg_id_t, unsigned>, MAX_NOF_LCGS> estimate_ul_alloc_bytes_per_lcg(unsigned grant_size) const;
+
 private:
   /// Helper function to get LCG ID of a bearer.
   lcg_id_t get_lcg_id_for_bearer(lcid_t lcid) const;
