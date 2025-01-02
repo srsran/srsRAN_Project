@@ -38,15 +38,7 @@ static void configure_cli11_f1ap_args(CLI::App& app, srs_du::f1ap_appconfig& f1c
 static void configure_cli11_f1u_args(CLI::App& app, srs_du::f1u_appconfig& f1u_params)
 {
   app.add_option("--queue_size", f1u_params.pdu_queue_size, "F1-U PDU queue size")->capture_default_str();
-  app.add_option(
-         "--bind_addr", f1u_params.bind_address, "DU F1-U bind address. If left empty, implicit bind is performed")
-      ->capture_default_str();
-  app.add_option("--ext_addr",
-                 f1u_params.ext_addr,
-                 "External IP address that is advertised to receive F1-U packets from the CU-UP");
-  app.add_option(
-         "--pool_threshold", f1u_params.pool_threshold, "Pool occupancy threshold after which packets are dropped")
-      ->capture_default_str();
+  configure_cli11_f1u_sockets_args(app, f1u_params.f1u_sockets);
 }
 
 void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfig& du_cfg)

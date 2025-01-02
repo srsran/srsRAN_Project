@@ -18,18 +18,18 @@
 namespace srsran {
 
 /// F1-U sockets configuration
-struct cu_f1u_socket_appconfig {
+struct f1u_socket_appconfig {
   std::string              bind_addr = "127.0.10.1"; // Bind address used by the F1-U interface
   std::optional<five_qi_t> five_qi;
   udp_appconfig            udp_config;
 };
 
 /// F1-U configuration
-struct cu_f1u_appconfig {
-  std::vector<cu_f1u_socket_appconfig> f1u_socket_cfg;
+struct f1u_sockets_appconfig {
+  std::vector<f1u_socket_appconfig> f1u_socket_cfg;
 };
 
 /// \brief TODO write docs.
-void configure_cli11_f1u_args(CLI::App& app, cu_f1u_appconfig& f1u_params);
+void configure_cli11_f1u_sockets_args(CLI::App& app, f1u_sockets_appconfig& f1u_params);
 
 } // namespace srsran

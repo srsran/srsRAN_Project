@@ -63,8 +63,9 @@ static void fill_du_appconfig_buffer_pool_section(YAML::Node node, const buffer_
 static void fill_du_appconfig_f1u_section(YAML::Node node, const srs_du::f1u_appconfig& config)
 {
   node["queue_size"] = config.pdu_queue_size;
-  node["bind_addr"]  = config.bind_address;
-  node["ext_addr"]   = config.ext_addr;
+  // TODO fix writing yaml writer section
+  // node["bind_addr"]  = config.bind_address;
+  // node["ext_addr"]   = config.ext_addr;
 }
 
 static void fill_du_appconfig_f1ap_section(YAML::Node node, const srs_du::f1ap_appconfig& config)

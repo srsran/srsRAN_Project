@@ -11,6 +11,7 @@
 #pragma once
 
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
+#include "apps/services/f1u/f1u_cli11_schema.h"
 #include "apps/services/hal/hal_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
@@ -28,10 +29,8 @@ struct f1ap_appconfig {
 };
 
 struct f1u_appconfig {
-  unsigned    pdu_queue_size = 2048;
-  std::string bind_address   = "127.0.10.2";
-  std::string ext_addr       = "auto"; // External address advertised by the F1-U interface
-  float       pool_threshold = 0.9;
+  unsigned              pdu_queue_size = 2048;
+  f1u_sockets_appconfig f1u_sockets;
 };
 
 /// Metrics report configuration.

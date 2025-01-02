@@ -14,7 +14,7 @@
 
 using namespace srsran;
 
-static void configure_cli11_f1u_socket_args(CLI::App& app, cu_f1u_socket_appconfig& f1u_cfg)
+static void configure_cli11_f1u_socket_args(CLI::App& app, f1u_socket_appconfig& f1u_cfg)
 {
   add_option(app,
              "--bind_addr",
@@ -26,7 +26,7 @@ static void configure_cli11_f1u_socket_args(CLI::App& app, cu_f1u_socket_appconf
   configure_cli11_with_udp_config_schema(app, f1u_cfg.udp_config);
 }
 
-void srsran::configure_cli11_f1u_args(CLI::App& app, cu_f1u_appconfig& f1u_params)
+void srsran::configure_cli11_f1u_sockets_args(CLI::App& app, f1u_sockets_appconfig& f1u_params)
 {
   // Add option for multiple sockets, for usage with different slices, 5QIs or parallization.
   auto sock_lambda = [&f1u_params](const std::vector<std::string>& values) {
