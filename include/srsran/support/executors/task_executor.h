@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/adt/unique_function.h"
-#include "srsran/support/compiler.h"
 
 namespace srsran {
 

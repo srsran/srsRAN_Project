@@ -44,7 +44,7 @@ public:
   cu_up_manager* get_cu_up_manager() { return cu_up_mng.get(); }
 
 private:
-  void disconnect();
+  async_task<void> handle_stop_command();
 
   void on_statistics_report_timer_expired();
 
@@ -54,6 +54,7 @@ private:
 
   cu_up_config   cfg;
   task_executor& ctrl_executor;
+  timer_manager& timers;
 
   // logger
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
