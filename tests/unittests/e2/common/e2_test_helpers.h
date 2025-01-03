@@ -15,12 +15,15 @@
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
+#include "lib/e2/e2sm/e2sm_rc/e2sm_rc_control_action_cu_executor.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_control_action_du_executor.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_control_service_impl.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_impl.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2sm/e2sm_rc_ies.h"
+#include "srsran/cu_cp/cu_configurator.h"
 #include "srsran/e2/e2.h"
+#include "srsran/e2/e2_cu.h"
 #include "srsran/e2/e2_du_factory.h"
 #include "srsran/e2/e2_factory.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
@@ -779,6 +782,21 @@ private:
   std::unique_ptr<e2_message_notifier> e2_rx_pdu_notifier;
 };
 
+class dummy_e2_mobility_notifier : public e2_mobility_notifier
+{
+public:
+  virtual async_task<srs_cu_cp::cu_cp_intra_cu_handover_response>
+  on_intra_cu_handover_required(const srs_cu_cp::cu_cp_intra_cu_handover_request& request,
+                                srs_cu_cp::du_index_t                             source_du_index,
+                                srs_cu_cp::du_index_t                             target_du_index) override
+  {
+    return launch_async([](coro_context<async_task<srs_cu_cp::cu_cp_intra_cu_handover_response>>& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(srs_cu_cp::cu_cp_intra_cu_handover_response{true});
+    });
+  }
+};
+
 class dummy_du_configurator : public srs_du::du_configurator
 {
 public:
@@ -814,10 +832,14 @@ protected:
   std::unique_ptr<e2sm_interface>                     e2sm_kpm_iface;
   std::unique_ptr<e2sm_interface>                     e2sm_rc_iface;
   std::unique_ptr<e2sm_control_service>               e2sm_rc_control_service_style2;
+  std::unique_ptr<e2sm_control_service>               e2sm_rc_control_service_style3;
   std::unique_ptr<e2sm_control_action_executor>       rc_control_action_2_6_executor;
+  std::unique_ptr<e2sm_control_action_executor>       rc_control_action_3_1_executor;
+  std::unique_ptr<e2_mobility_notifier>               mobility_notifier;
   std::unique_ptr<e2sm_handler>                       e2sm_kpm_packer;
   std::unique_ptr<e2sm_rc_asn1_packer>                e2sm_rc_packer;
-  std::unique_ptr<srs_du::du_configurator>            rc_param_configurator;
+  std::unique_ptr<srs_du::du_configurator>            du_rc_param_configurator;
+  std::unique_ptr<cu_configurator>                    cu_rc_param_configurator;
   std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
   std::unique_ptr<e2_du_metrics_interface>            du_metrics;
   std::unique_ptr<srs_du::f1ap_ue_id_translator>      f1ap_ue_id_mapper;
@@ -874,13 +896,13 @@ class e2_entity_test : public e2_test_base
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    e2_client             = std::make_unique<dummy_e2_connection_client>();
-    du_metrics            = std::make_unique<dummy_e2_du_metrics>();
-    f1ap_ue_id_mapper     = std::make_unique<dummy_f1ap_ue_id_translator>();
-    factory               = timer_factory{timers, task_worker};
-    rc_param_configurator = std::make_unique<dummy_du_configurator>();
-    e2agent               = create_e2_du_agent(
-        cfg, *e2_client, &(*du_metrics), &(*f1ap_ue_id_mapper), &(*rc_param_configurator), factory, task_worker);
+    e2_client                = std::make_unique<dummy_e2_connection_client>();
+    du_metrics               = std::make_unique<dummy_e2_du_metrics>();
+    f1ap_ue_id_mapper        = std::make_unique<dummy_f1ap_ue_id_translator>();
+    factory                  = timer_factory{timers, task_worker};
+    du_rc_param_configurator = std::make_unique<dummy_du_configurator>();
+    e2agent                  = create_e2_du_agent(
+        cfg, *e2_client, &(*du_metrics), &(*f1ap_ue_id_mapper), &(*du_rc_param_configurator), factory, task_worker);
     // Packer allows to inject packed message into E2 interface.
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
@@ -946,13 +968,22 @@ class e2_test_setup : public e2_test_base
     e2sm_kpm_packer                = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
     e2sm_kpm_iface                 = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
     e2sm_rc_packer                 = std::make_unique<e2sm_rc_asn1_packer>();
-    rc_param_configurator          = std::make_unique<dummy_du_configurator>();
+    mobility_notifier              = std::make_unique<dummy_e2_mobility_notifier>();
+    du_rc_param_configurator       = std::make_unique<dummy_du_configurator>();
+    cu_rc_param_configurator       = std::make_unique<cu_configurator>(*mobility_notifier);
     e2sm_rc_iface                  = std::make_unique<e2sm_rc_impl>(test_logger, *e2sm_rc_packer);
     e2sm_rc_control_service_style2 = std::make_unique<e2sm_rc_control_service>(2);
-    rc_control_action_2_6_executor = std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*rc_param_configurator);
+    e2sm_rc_control_service_style3 = std::make_unique<e2sm_rc_control_service>(3);
+    rc_control_action_2_6_executor =
+        std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*du_rc_param_configurator);
+    rc_control_action_3_1_executor =
+        std::make_unique<e2sm_rc_control_action_3_1_cu_executor>(*cu_rc_param_configurator);
     e2sm_rc_control_service_style2->add_e2sm_rc_control_action_executor(std::move(rc_control_action_2_6_executor));
+    e2sm_rc_control_service_style3->add_e2sm_rc_control_action_executor(std::move(rc_control_action_3_1_executor));
     e2sm_rc_packer->add_e2sm_control_service(e2sm_rc_control_service_style2.get());
+    e2sm_rc_packer->add_e2sm_control_service(e2sm_rc_control_service_style3.get());
     e2sm_rc_iface->add_e2sm_control_service(std::move(e2sm_rc_control_service_style2));
+    e2sm_rc_iface->add_e2sm_control_service(std::move(e2sm_rc_control_service_style3));
     e2sm_mngr = std::make_unique<e2sm_manager>(test_logger);
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.2.2.2", std::move(e2sm_kpm_iface));
     e2sm_mngr->add_e2sm_service("1.3.6.1.4.1.53148.1.1.2.3", std::move(e2sm_rc_iface));
