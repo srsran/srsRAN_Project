@@ -307,12 +307,12 @@ TEST(dl_logical_channel_test, assign_leftover_bytes_to_sdu_if_leftover_bytes_is_
 TEST(dl_logical_channel_test, ta_cmd_mac_ce_gets_updated_if_already_in_pending_ces_queue)
 {
   dl_logical_channel_manager lch_mng;
-  const auto                 first_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = 0, .ta_cmd = 29};
+  const auto first_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = time_alignment_group::id_t{0}, .ta_cmd = 29};
   lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = first_ta_cmd_ce_payload});
   ASSERT_TRUE(lch_mng.has_pending_bytes());
   ASSERT_TRUE(lch_mng.has_pending_ces());
 
-  const auto second_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = 0, .ta_cmd = 33};
+  const auto second_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = time_alignment_group::id_t{0}, .ta_cmd = 33};
   lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = second_ta_cmd_ce_payload});
   ASSERT_TRUE(lch_mng.has_pending_bytes());
   ASSERT_TRUE(lch_mng.has_pending_ces());

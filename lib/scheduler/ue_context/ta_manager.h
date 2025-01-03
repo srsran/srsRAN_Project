@@ -11,11 +11,10 @@
 #pragma once
 
 #include "dl_logical_channel_manager.h"
-#include "srsran/adt/static_vector.h"
-#include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/time_alignment_config.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
+#include "srsran/srslog/srslog.h"
 #include <cstdint>
 
 namespace srsran {
@@ -26,7 +25,10 @@ class ta_manager
 public:
   explicit ta_manager(const scheduler_ue_expert_config& expert_cfg_,
                       subcarrier_spacing                ul_scs_,
+                      time_alignment_group::id_t        pcell_tag_id,
                       dl_logical_channel_manager*       dl_lc_ch_mgr_);
+
+  void update_tags(span<const time_alignment_group::id_t> tag_ids);
 
   /// \brief Handles Timing Advance adaptation related tasks at slot indication.
   void slot_indication(slot_point current_sl);
@@ -48,15 +50,20 @@ private:
     disabled,
   };
 
+  struct tag_measurement {
+    time_alignment_group::id_t tag_id;
+    std::vector<int64_t>       samples;
+  };
+
   /// \brief Computes the average of N_TA update measurements.
-  int64_t compute_avg_n_ta_difference(uint8_t tag_id);
+  int64_t compute_avg_n_ta_difference(unsigned tag_idx);
 
   /// \brief Computes new Timing Advance Command value (T_A) as per TS 38.213, clause 4.2.
   /// \return Timing Advance Command value. Values [0,...,63].
   unsigned compute_new_t_a(int64_t n_ta_diff);
 
   /// \brief Resets stored N_TA update measurements.
-  void reset_measurements(uint8_t tag_id);
+  void reset_measurements(unsigned tag_idx);
 
   /// Subcarrier spacing of UL BWP for which Timing Advance Command is applicable.
   const subcarrier_spacing ul_scs;
@@ -64,13 +71,14 @@ private:
   dl_logical_channel_manager* dl_lc_ch_mgr = nullptr;
   /// Expert config parameters used for UE scheduler.
   const scheduler_ue_expert_config& expert_cfg;
+  srslog::basic_logger&             logger;
 
   /// Starting point of the measurement interval.
   slot_point meas_start_time;
   /// List of N_TA update (N_TA_new - N_TA_old value in T_C units) measurements maintained per Timing Advance Group.
   /// The array index corresponds to TAG ID. And, the corresponding array value (i.e. vector) holds N_TA update
   /// measurements for that TAG ID.
-  std::array<std::vector<int64_t>, MAX_NOF_TIME_ALIGNMENT_GROUPS> tag_n_ta_diff_measurements;
+  std::vector<tag_measurement> n_ta_reports;
   /// State of the Timing Advance manager.
   state_t state;
 };

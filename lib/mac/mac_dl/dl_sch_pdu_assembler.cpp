@@ -164,7 +164,7 @@ void dl_sch_pdu::add_tag_cmd(const ta_cmd_ce_payload& ce_payload)
   encode_subheader(false, lcid_dl_sch_t::TA_CMD, header_len, payload_len);
 
   // Encode Timing Advance Command.
-  pdu[byte_offset++] = (ce_payload.tag_id & 0xc0U) | (ce_payload.ta_cmd & 0x3fU);
+  pdu[byte_offset++] = (ce_payload.tag_id.value() & 0xc0U) | (ce_payload.ta_cmd & 0x3fU);
 }
 
 void dl_sch_pdu::add_padding(unsigned len)
@@ -254,7 +254,7 @@ public:
     fmt::format_to(std::back_inserter(fmtbuf),
                    "{}TA_CMD: tag_id={}, ta_cmd={}",
                    separator(),
-                   ce_payload.tag_id,
+                   ce_payload.tag_id.value(),
                    ce_payload.ta_cmd);
   }
 

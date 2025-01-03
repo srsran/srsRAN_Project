@@ -15,12 +15,20 @@ using namespace srsran;
 
 ta_manager::ta_manager(const scheduler_ue_expert_config& expert_cfg_,
                        subcarrier_spacing                ul_scs_,
+                       time_alignment_group::id_t        pcell_tag_id,
                        dl_logical_channel_manager*       dl_lc_ch_mgr_) :
-  ul_scs(ul_scs_), dl_lc_ch_mgr(dl_lc_ch_mgr_), expert_cfg(expert_cfg_), state(state_t::idle)
+  ul_scs(ul_scs_),
+  dl_lc_ch_mgr(dl_lc_ch_mgr_),
+  expert_cfg(expert_cfg_),
+  logger(srslog::fetch_basic_logger("SCHED")),
+  state(state_t::idle)
 {
   if (expert_cfg.ta_cmd_offset_threshold < 0) {
     state = state_t::disabled;
+    return;
   }
+
+  update_tags(std::array<time_alignment_group::id_t, 1>{pcell_tag_id});
 }
 
 void ta_manager::handle_ul_n_ta_update_indication(time_alignment_group::id_t tag_id, int64_t n_ta_diff_, float ul_sinr)
@@ -30,7 +38,24 @@ void ta_manager::handle_ul_n_ta_update_indication(time_alignment_group::id_t tag
   // NOTE: From the testing with COTS UE its observed that N_TA update measurements with UL SINR less than 10 dB were
   // majorly outliers.
   if (state == state_t::measure and ul_sinr > expert_cfg.ta_update_measurement_ul_sinr_threshold) {
-    tag_n_ta_diff_measurements[tag_id.value()].emplace_back(n_ta_diff_);
+    // Note: Linear search is faster than binary for very small arrays.
+    auto it = std::find_if(
+        n_ta_reports.begin(), n_ta_reports.end(), [tag_id](const auto& meas) { return meas.tag_id == tag_id; });
+    if (it != n_ta_reports.end() and it->tag_id == tag_id) {
+      n_ta_reports[tag_id.value()].samples.emplace_back(n_ta_diff_);
+    } else {
+      logger.warning("Discarding TA report. Cause: TAG Id {} is not configured", tag_id.value());
+    }
+  }
+}
+
+void ta_manager::update_tags(span<const time_alignment_group::id_t> tag_ids)
+{
+  n_ta_reports.resize(tag_ids.size());
+  for (unsigned i = 0, e = n_ta_reports.size(); i != e; ++i) {
+    n_ta_reports[i].tag_id = tag_ids[i];
+    n_ta_reports[i].samples.clear();
+    n_ta_reports[i].samples.reserve(expert_cfg.ta_measurement_slot_period);
   }
 }
 
@@ -46,6 +71,7 @@ void ta_manager::slot_indication(slot_point current_sl)
   if (state == state_t::idle) {
     meas_start_time = current_sl;
     state           = state_t::measure;
+    return;
   }
 
   // Early return if measurement interval is short.
@@ -53,15 +79,16 @@ void ta_manager::slot_indication(slot_point current_sl)
     return;
   }
 
-  for (uint8_t tag_id = 0; tag_id < tag_n_ta_diff_measurements.size(); ++tag_id) {
-    if (tag_n_ta_diff_measurements[tag_id].empty()) {
+  for (uint8_t tag_idx = 0; tag_idx < n_ta_reports.size(); ++tag_idx) {
+    if (n_ta_reports[tag_idx].samples.empty()) {
       continue;
     }
+    const time_alignment_group::id_t tag_id = n_ta_reports[tag_idx].tag_id;
 
     // Send Timing Advance command only if the offset is equal to or greater than the threshold.
     // The new Timing Advance Command is a value ranging from [0,...,63] as per TS 38.213, clause 4.2. Hence, we
     // need to subtract a value of 31 (as per equation in the same clause) to get the change in Timing Advance Command.
-    const unsigned new_t_a = compute_new_t_a(compute_avg_n_ta_difference(tag_id));
+    const unsigned new_t_a = compute_new_t_a(compute_avg_n_ta_difference(tag_idx));
     if (abs((int)new_t_a - ta_cmd_offset_zero) >= expert_cfg.ta_cmd_offset_threshold) {
       // Send Timing Advance Command to UE.
       dl_lc_ch_mgr->handle_mac_ce_indication(
@@ -69,36 +96,44 @@ void ta_manager::slot_indication(slot_point current_sl)
     }
 
     // Reset stored measurements.
-    reset_measurements(tag_id);
+    reset_measurements(tag_idx);
   }
 
   // Set TA manager state to idle.
   state = state_t::idle;
 }
 
-int64_t ta_manager::compute_avg_n_ta_difference(uint8_t tag_id)
+int64_t ta_manager::compute_avg_n_ta_difference(unsigned tag_idx)
 {
   // Adjust this threshold as needed.
-  static const double num_std_deviations = 1.95;
+  static const double num_std_deviations = 1.75;
 
-  const span<int64_t> n_ta_diff_meas = tag_n_ta_diff_measurements[tag_id];
+  span<const int64_t> samples = n_ta_reports[tag_idx].samples;
+  if (samples.size() == 1) {
+    return samples.front();
+  }
+  if (samples.size() == 2) {
+    return (samples[0] + samples[1]) / 2;
+  }
 
   // Compute mean.
-  const double sum  = std::accumulate(n_ta_diff_meas.begin(), n_ta_diff_meas.end(), 0.0);
-  const double mean = sum / static_cast<double>(n_ta_diff_meas.size());
+  const double sum  = std::accumulate(samples.begin(), samples.end(), 0.0);
+  const double mean = sum / static_cast<double>(samples.size());
 
   // Compute standard deviation.
-  std::vector<double> diff(n_ta_diff_meas.size());
-  std::transform(
-      n_ta_diff_meas.begin(), n_ta_diff_meas.end(), diff.begin(), [mean](double value) { return value - mean; });
-  const double sq_sum  = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
-  const double std_dev = std::sqrt(sq_sum / static_cast<double>(n_ta_diff_meas.size()));
+  const double sample_variance =
+      std::accumulate(samples.begin(),
+                      samples.end(),
+                      0.0,
+                      [mean](double acc, int64_t samp) { return acc + std::pow(samp - mean, 2); }) /
+      (samples.size() - 1);
+  const double sample_std_dev = std::sqrt(sample_variance);
 
   int64_t  sum_n_ta_difference = 0;
   unsigned count               = 0;
-  for (const int64_t meas : n_ta_diff_meas) {
+  for (const int64_t meas : samples) {
     // Filter out outliers.
-    if (std::abs((double)meas - mean) <= num_std_deviations * std_dev) {
+    if (std::abs((double)meas - mean) <= num_std_deviations * sample_std_dev) {
       sum_n_ta_difference += meas;
       ++count;
     }
@@ -114,7 +149,7 @@ unsigned ta_manager::compute_new_t_a(int64_t n_ta_diff)
                  static_cast<float>(ta_cmd_offset_zero) - expert_cfg.ta_target));
 }
 
-void ta_manager::reset_measurements(uint8_t tag_id)
+void ta_manager::reset_measurements(unsigned tag_idx)
 {
-  tag_n_ta_diff_measurements[tag_id].clear();
+  n_ta_reports[tag_idx].samples.clear();
 }
