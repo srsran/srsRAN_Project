@@ -63,13 +63,13 @@ e2_entity::e2_entity(const e2ap_configuration                                 cf
     std::unique_ptr<e2sm_control_service> rc_control_service_style =
         std::make_unique<e2sm_rc_control_service>(control_service_style_id);
 
-    std::unique_ptr<e2sm_control_action_executor> rc_control_action_executor;
+    std::unique_ptr<e2sm_control_action_executor> rc_control_action_executor = nullptr;
     std::visit(
         [&rc_control_action_executor](auto&& arg) {
           using T = std::decay_t<decltype(arg)>;
-          if constexpr (std::is_same_v<T, srs_du::du_configurator>) {
+          if constexpr (std::is_same_v<T, srs_du::du_configurator*>) {
             rc_control_action_executor = std::make_unique<e2sm_rc_control_action_2_6_du_executor>(*arg);
-          } else if constexpr (std::is_same_v<T, cu_configurator>) {
+          } else if constexpr (std::is_same_v<T, cu_configurator*>) {
             rc_control_action_executor = std::make_unique<e2sm_rc_control_action_3_1_cu_executor>(*arg);
           }
         },

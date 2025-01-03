@@ -66,10 +66,14 @@ async_task<e2sm_ric_control_response>
 e2sm_rc_control_action_3_1_cu_executor::execute_ric_control_action(const e2sm_ric_control_request& req)
 {
   return launch_async([this, req](coro_context<async_task<e2sm_ric_control_response>>& ctx) {
+    srs_cu_cp::cu_cp_intra_cu_handover_response cu_cp_response;
+    srs_cu_cp::cu_cp_intra_cu_handover_request  handover_req;
     CORO_BEGIN(ctx);
+    CORO_AWAIT_VALUE(cu_cp_response,
+                     cu_param_configurator.get_e2_mobility_notifier().on_intra_cu_handover_required(
+                         handover_req, srs_cu_cp::du_index_t(0), srs_cu_cp::du_index_t(1)));
     e2sm_ric_control_response e2sm_response;
-    // cu_param_configurator.get_e2_mobility_notifier().on_inter_du_handover_required();
-    e2sm_response.success = true;
+    e2sm_response.success = cu_cp_response.success;
     CORO_RETURN(e2sm_response);
   });
 }
