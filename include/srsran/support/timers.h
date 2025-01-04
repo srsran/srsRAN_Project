@@ -54,6 +54,67 @@ class timer_manager
   /// Possible states for a timer.
   enum class state_t { stopped, running, expired };
 
+  class timer_frontend;
+
+  /// Command sent by the unique_timer (front-end) to the timer manager (back-end).
+  struct cmd_t {
+    /// action type used when timer is started.
+    struct start {
+      /// Duration for the new run.
+      timer_duration duration;
+    };
+    /// action type used when timer is stopped.
+    struct stop {};
+    /// action type used when timer is created.
+    struct create {};
+    /// action type used when timer is destroyed.
+    struct destroy {};
+
+    /// Unique identity of the timer.
+    timer_id_t id;
+    /// Identifier associated with this particular command.
+    cmd_id_t cmd_id;
+    /// Action Request type sent by the unique_timer.
+    std::variant<start, stop, create, destroy> action;
+  };
+
+  class timer_command_buffer
+  {
+  public:
+    timer_command_buffer()
+    {
+      for (auto& cmd : buffers) {
+        cmd.id = timer_id_t::invalid;
+      }
+    }
+
+    bool push(const cmd_t& cmd)
+    {
+      srsran_sanity_check(cmd.id != timer_id_t::invalid, "Invalid timer id");
+      *back_buffer = cmd;
+      back_buffer  = middle_buffer.exchange(back_buffer, std::memory_order_acq_rel);
+      return back_buffer->id == timer_id_t::invalid;
+    }
+
+    bool pop(cmd_t& elem)
+    {
+      front_buffer = middle_buffer.exchange(front_buffer, std::memory_order_acq_rel);
+      if (front_buffer->id != timer_id_t::invalid) {
+        elem             = *front_buffer;
+        front_buffer->id = timer_id_t::invalid;
+        return true;
+      }
+      return false;
+    }
+
+  private:
+    std::array<cmd_t, 3> buffers;
+
+    std::atomic<cmd_t*> middle_buffer{&buffers[1]};
+    cmd_t*              front_buffer{&buffers[0]};
+    cmd_t*              back_buffer{&buffers[2]};
+  };
+
   /// Data relative to a timer state that is safe to access from the front-end side (the unique_timer).
   struct timer_frontend {
     /// Reference to timer manager class.
@@ -73,6 +134,8 @@ class timer_manager
     timer_duration duration = INVALID_DURATION;
     /// Callback triggered when timer expires. Callback updates are protected by backend lock.
     unique_function<void(timer_id_t)> timeout_callback;
+    /// Pending commands to be handled by the backend.
+    timer_command_buffer command_buffer;
 
     timer_frontend(timer_manager& parent_, timer_id_t id_) : parent(parent_), id(id_) {}
 
@@ -85,30 +148,6 @@ class timer_manager
     void run();
 
     void stop();
-  };
-
-  /// Command sent by the unique_timer (front-end) to the timer manager (back-end).
-  struct cmd_t {
-    /// action type used when timer is started.
-    struct start {
-      /// Duration for the new run.
-      timer_duration duration;
-    };
-    /// action type used when timer is stopped.
-    struct stop {};
-    /// action type used when timer is created.
-    struct create {
-      std::unique_ptr<timer_frontend> frontend;
-    };
-    /// action type used when timer is destroyed.
-    struct destroy {};
-
-    /// Unique identity of the timer.
-    timer_id_t id;
-    /// Identifier associated with this particular command.
-    cmd_id_t cmd_id;
-    /// Action Request type sent by the unique_timer.
-    std::variant<start, stop, create, destroy> action;
   };
 
   /// Timer context used solely by the back-end side of the timer manager.
@@ -153,22 +192,25 @@ private:
 
   class unique_timer_pool;
   class command_queue;
+  class timer_update_queue;
 
   /// \brief Create a new front-end context to be used by a newly created unique_timer.
   timer_frontend& create_frontend_timer(task_executor& exec);
 
-  /// Push a new timer command (start, stop, destroy) from the front-end execution context to the backend.
-  void push_timer_command(cmd_t cmd);
+  /// Signal a timer state update (start, stop, destroy) from the front-end execution context to the backend.
+  void push_timer_command(timer_id_t tid);
 
   /// Handle in the timer manager backend side the command sent by the timer frontends
   void handle_timer_commands();
 
+  void handle_timer_creations();
+
   /// Create a new timer_handle object in the timer manager back-end side and associate it with the provided frontend
   /// timer.
-  void create_timer_handle(cmd_id_t cmd_id, std::unique_ptr<timer_frontend> timer);
+  void create_timer_handle(std::unique_ptr<timer_frontend> timer);
 
   /// Handle in the timer manager backend side, a single command sent by the respective timer frontend.
-  void handle_timer_command(timer_handle& timer, const cmd_t& cmd);
+  void handle_timer_updates(timer_handle& timer);
 
   /// Start the ticking of a timer with a given duration.
   void start_timer_backend(timer_handle& timer, timer_duration duration);
@@ -222,10 +264,7 @@ private:
   std::deque<std::pair<timer_id_t, cmd_id_t>> failed_to_trigger_timers;
 
   /// Commands sent by the timer front-end to the backend.
-  std::unique_ptr<command_queue> pending_cmds;
-
-  /// List of commands that were not yet processed due to cmd_id reordering.
-  std::deque<std::pair<unsigned, cmd_t>> tmp_skipped_cmds;
+  std::unique_ptr<timer_update_queue> pending_events;
 };
 
 /// \brief This class represents a timer which invokes a user-provided callback upon timer expiration. To setup a
@@ -241,22 +280,11 @@ public:
   unique_timer& operator=(const unique_timer&) = delete;
 
   unique_timer(unique_timer&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
-  unique_timer& operator=(unique_timer&& other) noexcept
-  {
-    reset();
-    handle = std::exchange(other.handle, nullptr);
-    return *this;
-  }
-  ~unique_timer() { reset(); }
+  unique_timer& operator=(unique_timer&& other) noexcept;
+  ~unique_timer();
 
   /// Destroy current unique_timer context, cancelling any pending event.
-  void reset()
-  {
-    if (is_valid()) {
-      handle->destroy();
-      handle = nullptr;
-    }
-  }
+  void reset();
 
   /// Returns true if the timer is valid, otherwise returns false if already released.
   bool is_valid() const { return handle != nullptr; }
@@ -277,33 +305,16 @@ public:
   timer_duration duration() const { return is_valid() ? handle->duration : timer_manager::INVALID_DURATION; }
 
   /// Configures the duration of the timer calling the provided callback upon timer expiration.
-  void set(timer_duration duration, unique_function<void(timer_id_t)> callback)
-  {
-    srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
-    handle->set(duration, std::move(callback));
-  }
+  void set(timer_duration duration, unique_function<void(timer_id_t)> callback);
 
   /// Configures the duration of the timer.
-  void set(timer_duration duration)
-  {
-    srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
-    handle->set(duration);
-  }
+  void set(timer_duration duration);
 
   /// Activates the timer to start ticking.
-  void run()
-  {
-    srsran_assert(is_valid(), "Starting invalid timer");
-    handle->run();
-  }
+  void run();
 
   /// Stops the timer from ticking.
-  void stop()
-  {
-    if (is_running()) {
-      handle->stop();
-    }
-  }
+  void stop();
 
 private:
   friend class timer_manager;

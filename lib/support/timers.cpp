@@ -27,7 +27,9 @@ void timer_manager::timer_frontend::destroy()
 {
   cmd_id_t new_cmd_id = cmd_id.fetch_add(1, std::memory_order::memory_order_relaxed) + 1;
   state               = state_t::stopped;
-  parent.push_timer_command(cmd_t{id, new_cmd_id, cmd_t::destroy{}});
+  if (command_buffer.push(cmd_t{id, new_cmd_id, cmd_t::destroy{}})) {
+    parent.push_timer_command(id);
+  }
 }
 
 void timer_manager::timer_frontend::set(timer_duration dur)
@@ -38,7 +40,9 @@ void timer_manager::timer_frontend::set(timer_duration dur)
   if (state == state_t::running) {
     cmd_id_t new_cmd_id = cmd_id.fetch_add(1, std::memory_order::memory_order_relaxed) + 1;
     // If we are setting the timer when it is already running, force run restart.
-    parent.push_timer_command(cmd_t{id, new_cmd_id, cmd_t::start{duration}});
+    if (command_buffer.push(cmd_t{id, new_cmd_id, cmd_t::start{duration}})) {
+      parent.push_timer_command(id);
+    }
   }
 }
 
@@ -55,14 +59,18 @@ void timer_manager::timer_frontend::run()
   srsran_assert(duration != INVALID_DURATION, "Calling timer::run with invalid duration");
   cmd_id_t new_cmd_id = cmd_id.fetch_add(1, std::memory_order::memory_order_relaxed) + 1;
   state               = state_t::running;
-  parent.push_timer_command(cmd_t{id, new_cmd_id, cmd_t::start{duration}});
+  if (command_buffer.push(cmd_t{id, new_cmd_id, cmd_t::start{duration}})) {
+    parent.push_timer_command(id);
+  }
 }
 
 void timer_manager::timer_frontend::stop()
 {
   cmd_id_t new_cmd_id = cmd_id.fetch_add(1, std::memory_order::memory_order_relaxed) + 1;
   state               = state_t::stopped;
-  parent.push_timer_command(cmd_t{id, new_cmd_id, cmd_t::stop{}});
+  if (command_buffer.push(cmd_t{id, new_cmd_id, cmd_t::stop{}})) {
+    parent.push_timer_command(id);
+  }
 }
 
 //
@@ -91,6 +99,80 @@ private:
 };
 
 //
+
+class timer_manager::timer_update_queue
+{
+  constexpr static size_t initial_batch_size            = 128;
+  constexpr static size_t warn_on_nof_dequeues_per_tick = 4096U;
+  constexpr static size_t default_queue_capacity        = 16384;
+
+public:
+  explicit timer_update_queue(srslog::basic_logger& logger_, size_t initial_capacity = default_queue_capacity) :
+    logger(logger_),
+    timers_to_create(initial_capacity),
+    timer_creation_dequeuer(timers_to_create),
+    commands(initial_capacity),
+    cmd_dequeuer(commands),
+    temp_cmd_buffer(initial_batch_size)
+  {
+  }
+
+  void push_new_timer(std::unique_ptr<timer_frontend> timer) { timers_to_create.enqueue(std::move(timer)); }
+
+  void push_timer_update(timer_id_t tid) { commands.enqueue(tid); }
+
+  std::unique_ptr<timer_frontend> pop_timer_to_create()
+  {
+    std::unique_ptr<timer_frontend> popped;
+    timers_to_create.try_dequeue(popped);
+    return popped;
+  }
+
+  span<timer_id_t> pop_updated_timers()
+  {
+    size_t           nof_popped = dequeue_events(commands, cmd_dequeuer, temp_cmd_buffer);
+    span<timer_id_t> list{temp_cmd_buffer.data(), nof_popped};
+    return list;
+  }
+
+private:
+  size_t dequeue_events(moodycamel::ConcurrentQueue<timer_id_t>&                            q,
+                        typename moodycamel::ConcurrentQueue<timer_id_t>::consumer_token_t& t,
+                        std::vector<timer_id_t>&                                            buffer)
+  {
+    size_t nread = 0;
+    for (size_t pos = 0; true;) {
+      // pop whatever space we have left in temporary buffer.
+      size_t max_n = buffer.size() - pos;
+      size_t n     = q.try_dequeue_bulk(t, buffer.begin() + pos, max_n);
+      nread += n;
+
+      if (n < max_n) {
+        // We drained the queue.
+        break;
+      }
+
+      // Need to grow temp timer buffer and dequeue more objects.
+      pos = buffer.size();
+      buffer.resize(buffer.size() + initial_batch_size);
+    }
+    if (nread == warn_on_nof_dequeues_per_tick) {
+      logger.warning("Number of timer events within one tick exceeded {}", warn_on_nof_dequeues_per_tick);
+    }
+
+    return nread;
+  }
+
+  srslog::basic_logger& logger;
+
+  moodycamel::ConcurrentQueue<std::unique_ptr<timer_frontend>>  timers_to_create;
+  moodycamel::ConcurrentQueue<timer_frontend>::consumer_token_t timer_creation_dequeuer;
+
+  // Queue of timers with pending events.
+  moodycamel::ConcurrentQueue<timer_id_t>                   commands;
+  moodycamel::ConcurrentQueue<timer_id_t>::consumer_token_t cmd_dequeuer;
+  std::vector<timer_id_t>                                   temp_cmd_buffer;
+};
 
 class timer_manager::command_queue
 {
@@ -162,7 +244,7 @@ timer_manager::timer_manager(size_t capacity) :
   logger(srslog::fetch_basic_logger("ALL")),
   timer_pool(std::make_unique<unique_timer_pool>(*this, capacity)),
   time_wheel(WHEEL_SIZE),
-  pending_cmds(std::make_unique<command_queue>(logger))
+  pending_events(std::make_unique<timer_update_queue>(logger))
 {
   // Pre-reserve timers.
   while (timers.size() < capacity) {
@@ -209,7 +291,7 @@ void timer_manager::tick()
   }
 }
 
-void timer_manager::create_timer_handle(cmd_id_t cmd_id, std::unique_ptr<timer_frontend> timer)
+void timer_manager::create_timer_handle(std::unique_ptr<timer_frontend> timer)
 {
   auto timer_idx = static_cast<unsigned>(timer->id);
   srsran_assert(timer_idx >= timers.size() or timers[timer_idx].frontend == nullptr, "Duplicate timer id detection");
@@ -217,113 +299,60 @@ void timer_manager::create_timer_handle(cmd_id_t cmd_id, std::unique_ptr<timer_f
     timers.resize(timer_idx + 1);
   }
   timers[timer_idx].frontend = std::move(timer);
-  srsran_sanity_check(timers[timer_idx].backend.cmd_id + 1 == cmd_id, "Expected cmd_id to not change");
-  timers[timer_idx].backend.cmd_id = cmd_id;
+}
+
+void timer_manager::handle_timer_creations()
+{
+  for (auto new_frontend = pending_events->pop_timer_to_create(); new_frontend != nullptr;
+       new_frontend      = pending_events->pop_timer_to_create()) {
+    // Create new timer.
+    create_timer_handle(std::move(new_frontend));
+  }
 }
 
 void timer_manager::handle_timer_commands()
 {
-  // Dequeue new commands from the timer front-ends to be processed in this tick.
-  span<cmd_t> new_cmds = pending_cmds->pop_commands();
-  for (cmd_t& cmd : new_cmds) {
-    if (std::holds_alternative<cmd_t::create>(cmd.action)) {
-      // Create new timer.
-      create_timer_handle(cmd.cmd_id, std::move(std::get<cmd_t::create>(cmd.action).frontend));
-      continue;
-    }
-    const auto t_idx = static_cast<size_t>(cmd.id);
+  // Dequeue timers with new updates to be processed in this tick.
+  span<timer_id_t> updated_timers = pending_events->pop_updated_timers();
+  for (timer_id_t tid : updated_timers) {
+    const auto t_idx = static_cast<size_t>(tid);
 
-    if (t_idx >= timers.size()) {
-      // Second command ended up being processed before timer creation due to reordering.
-      // Grow timers list to avoid bad accesses. The cmd will be added to tmp_skipped_cmds below in this iteration.
-      if (t_idx > timers.size() + 1024) {
-        logger.error("Detected corrupted timer_id={}. Current timer list size is {}", t_idx, timers.size());
+    if (t_idx >= timers.size() or timers[t_idx].frontend == nullptr) {
+      // Timer has not been created yet.
+      handle_timer_creations();
+
+      if (t_idx >= timers.size() or timers[t_idx].frontend == nullptr) {
+        // Unexpected - timer creation event is nowhere to be found.
+        logger.warning("Discarding update for timer={}. Cause: Timer hasn't been created", fmt::underlying(tid));
+        continue;
       }
-      timers.resize(t_idx + 1);
     }
-
-    // The timer already exists.
     timer_handle& timer = timers[t_idx];
+    srsran_assert(timer.frontend != nullptr, "Invalid timer frontend");
 
-    if (cmd.cmd_id - timer.backend.cmd_id >= std::numeric_limits<cmd_id_t>::max() / 2) {
-      // Note: This should not happen. It means that there was some corruption of the cmd_id.
-      logger.warning(
-          "Discarding cmd_id={} for timer={}. Cause: cmd_id is below the last processed cmd_id={} by the timer",
-          cmd.cmd_id,
-          fmt::underlying(cmd.id),
-          timer.backend.cmd_id);
-      continue;
-    }
-    if (cmd.cmd_id - timer.backend.cmd_id > 1) {
-      // We detected a discontinuity in the cmd_id. It could be due to dequeue reordering.
-      // Cache the command for later processing.
-      tmp_skipped_cmds.emplace_back(cur_time, std::move(cmd));
-      logger.debug("The processing of cmd_id={} for timer={} was postponed. Cause: There are commands in between "
-                   "[{},{}) not yet processed",
-                   cmd.cmd_id,
-                   fmt::underlying(cmd.id),
-                   timer.backend.cmd_id + 1,
-                   cmd.cmd_id);
-      continue;
-    }
-
-    // Handle timer command.
-    handle_timer_command(timer, cmd);
-  }
-
-  constexpr static unsigned max_skip_slot_thres = 16;
-  // Sort skipped cmds by cmd_id.
-  std::sort(tmp_skipped_cmds.begin(), tmp_skipped_cmds.end(), [](const auto& lhs, const auto& rhs) {
-    return lhs.second.cmd_id < rhs.second.cmd_id;
-  });
-  for (auto& p : tmp_skipped_cmds) {
-    cmd_t& cmd = p.second;
-    if (cmd.id == timer_id_t::invalid) {
-      // already processed.
-      continue;
-    }
-    const auto t_idx = static_cast<size_t>(cmd.id);
-
-    timer_handle& timer = timers[t_idx];
-
-    if (cmd.cmd_id == timer.backend.cmd_id + 1) {
-      // Now the command can be processed in order.
-      handle_timer_command(timer, cmd);
-      cmd.id = timer_id_t::invalid;
-    } else if (cmd.cmd_id - timer.backend.cmd_id >= std::numeric_limits<cmd_id_t>::max() / 2) {
-      // invalid cmd_id.
-      logger.warning(
-          "Discarding cmd_id={} for timer={}. Cause: cmd_id is below the last processed cmd_id={} by the timer",
-          cmd.cmd_id,
-          t_idx,
-          timer.backend.cmd_id);
-      cmd.id = timer_id_t::invalid;
-    } else if (cur_time - p.first > max_skip_slot_thres) {
-      logger.warning("Discarding cmd_ids=[{},{}) for timer={}. Cause: The cmd_ids went missing",
-                     timer.backend.cmd_id + 1,
-                     cmd.cmd_id - 1,
-                     t_idx);
-      if (timer.frontend != nullptr) {
-        handle_timer_command(timer, cmd);
-      }
-      cmd.id = timer_id_t::invalid;
-    }
-  }
-  // Remove commands that were initially skipped and have been processed since then.
-  while (not tmp_skipped_cmds.empty() and tmp_skipped_cmds.front().second.id == timer_id_t::invalid) {
-    tmp_skipped_cmds.pop_front();
+    handle_timer_updates(timer);
   }
 }
 
-void timer_manager::handle_timer_command(timer_handle& timer, const cmd_t& cmd)
+void timer_manager::handle_timer_updates(timer_handle& timer)
 {
-  srsran_sanity_check(not std::holds_alternative<cmd_t::create>(cmd.action), "Invalid action type");
   srsran_assert(timer.frontend != nullptr, "Invalid timer frontend");
+
+  cmd_t cmd;
+  if (not timer.frontend->command_buffer.pop(cmd)) {
+    // this is unexpected.
+    logger.warning("New timer update signal for tid={} but no pending commands", fmt::underlying(timer.frontend->id));
+    return;
+  }
 
   // Update the timer backend cmd_id to match frontend.
   timer.backend.cmd_id = cmd.cmd_id;
 
-  // Stop timer if it is currently running, no matter which action.
+  if (std::holds_alternative<cmd_t::create>(cmd.action)) {
+    return;
+  }
+
+  // Stop timer if it is currently running, no matter which action to apply.
   try_stop_timer_backend(timer, false);
 
   if (std::holds_alternative<cmd_t::start>(cmd.action)) {
@@ -455,16 +484,18 @@ timer_manager::timer_frontend& timer_manager::create_frontend_timer(task_executo
   cached_timer          = new_handle.get();
 
   // Forward created timer handle to the backend.
+  cmd_id_t new_cmd_id = new_handle->cmd_id.fetch_add(1, std::memory_order::memory_order_relaxed) + 1;
+  new_handle->command_buffer.push(cmd_t{new_handle->id, new_cmd_id, cmd_t::create{}});
   // Note: This cannot fail, otherwise the created timer "id" cannot be reused.
-  auto next_cmd_id = cached_timer->cmd_id.fetch_add(1, std::memory_order_relaxed) + 1;
-  pending_cmds->push_command(cmd_t{cached_timer->id, next_cmd_id, cmd_t::create{std::move(new_handle)}});
+  pending_events->push_new_timer(std::move(new_handle));
+  push_timer_command(id);
 
   return *cached_timer;
 }
 
-void timer_manager::push_timer_command(cmd_t cmd)
+void timer_manager::push_timer_command(timer_id_t tid)
 {
-  pending_cmds->push_command(std::move(cmd));
+  pending_events->push_timer_update(tid);
 }
 
 unique_timer timer_manager::create_unique_timer(task_executor& exec)
@@ -475,4 +506,51 @@ unique_timer timer_manager::create_unique_timer(task_executor& exec)
 size_t timer_manager::nof_timers() const
 {
   return timers.size() - std::min(timers.size(), timer_pool->size_approx());
+}
+
+// unique_timer methods
+
+unique_timer& unique_timer::operator=(unique_timer&& other) noexcept
+{
+  reset();
+  handle = std::exchange(other.handle, nullptr);
+  return *this;
+}
+
+unique_timer::~unique_timer()
+{
+  reset();
+}
+
+void unique_timer::reset()
+{
+  if (is_valid()) {
+    handle->destroy();
+    handle = nullptr;
+  }
+}
+
+void unique_timer::set(timer_duration duration, unique_function<void(timer_id_t)> callback)
+{
+  srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
+  handle->set(duration, std::move(callback));
+}
+
+void unique_timer::set(timer_duration duration)
+{
+  srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
+  handle->set(duration);
+}
+
+void unique_timer::run()
+{
+  srsran_assert(is_valid(), "Starting invalid timer");
+  handle->run();
+}
+
+void unique_timer::stop()
+{
+  if (is_running()) {
+    handle->stop();
+  }
 }
