@@ -14,6 +14,7 @@
 #include "srsran/f1u/du/f1u_config.h"
 #include "srsran/f1u/du/f1u_tx_pdu_notifier.h"
 #include "srsran/ran/gnb_du_id.h"
+#include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/rb_id.h"
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/support/timers.h"
@@ -51,6 +52,7 @@ public:
 
   virtual std::unique_ptr<f1u_du_gateway_bearer> create_du_bearer(uint32_t                       ue_index,
                                                                   drb_id_t                       drb_id,
+                                                                  five_qi_t                      five_qi,
                                                                   srs_du::f1u_config             config,
                                                                   const up_transport_layer_info& dl_up_tnl_info,
                                                                   const up_transport_layer_info& ul_up_tnl_info,

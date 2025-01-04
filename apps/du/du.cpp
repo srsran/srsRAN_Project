@@ -283,7 +283,10 @@ int main(int argc, char** argv)
     f1u_gw_config.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
     f1u_gw_config.dscp                       = sock_cfg.udp_config.dscp;
     std::unique_ptr<gtpu_gateway> f1u_gw     = create_udp_gtpu_gateway(
-        f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor(), *workers.non_rt_low_prio_exec);
+        f1u_gw_config,
+        *epoll_broker,
+        workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
+        *workers.non_rt_low_prio_exec);
     if (not sock_cfg.five_qi.has_value()) {
       f1u_gw_maps.default_gws.push_back(std::move(f1u_gw));
     } else {

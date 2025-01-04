@@ -228,7 +228,7 @@ TEST_F(f1u_connector_test, ul_dl_flow)
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
   std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer =
-      du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+      du_gw->create_du_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
@@ -260,7 +260,7 @@ TEST_F(f1u_connector_test, destroy_bearer_cu_up)
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
   std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer =
-      du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+      du_gw->create_du_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
@@ -299,7 +299,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_cu_up)
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
   std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer =
-      du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+      du_gw->create_du_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
@@ -341,7 +341,7 @@ TEST_F(f1u_connector_test, destroy_bearer_du)
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
   std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer =
-      du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+      du_gw->create_du_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
@@ -379,7 +379,7 @@ TEST_F(f1u_connector_test, disconnect_bearer_du)
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx;
   std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer =
-      du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+      du_gw->create_du_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_du_config, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
@@ -421,8 +421,8 @@ TEST_F(f1u_connector_test, update_du_f1u)
 
   // Create DU TX notifier adapter and RX handler
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx1;
-  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer1 =
-      du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl1, ul_tnl, du_rx1, timers, ue_worker);
+  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer1 = du_gw->create_du_bearer(
+      0, drb_id_t::drb1, five_qi_t{9}, f1u_du_config, dl_tnl1, ul_tnl, du_rx1, timers, ue_worker);
 
   // Create CU RX handler and attach it to the DU TX
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl1);
@@ -439,8 +439,8 @@ TEST_F(f1u_connector_test, update_du_f1u)
 
   // Attach new DU bearer
   dummy_f1u_du_gateway_bearer_rx_notifier      du_rx2;
-  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer2 =
-      du_gw->create_du_bearer(0, drb_id_t::drb1, f1u_du_config, dl_tnl2, ul_tnl, du_rx2, timers, ue_worker);
+  std::unique_ptr<srs_du::f1u_tx_pdu_notifier> du_bearer2 = du_gw->create_du_bearer(
+      0, drb_id_t::drb1, five_qi_t{9}, f1u_du_config, dl_tnl2, ul_tnl, du_rx2, timers, ue_worker);
 
   // Attach new DL TEID
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl2);

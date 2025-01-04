@@ -49,6 +49,7 @@ f1u_split_connector::f1u_split_connector(const gtpu_gateway_maps& udp_gw_maps,
 std::unique_ptr<f1u_du_gateway_bearer>
 f1u_split_connector::create_du_bearer(uint32_t                                   ue_index,
                                       drb_id_t                                   drb_id,
+                                      five_qi_t                                  five_qi,
                                       srs_du::f1u_config                         config,
                                       const up_transport_layer_info&             dl_up_tnl_info,
                                       const up_transport_layer_info&             ul_up_tnl_info,
@@ -56,9 +57,11 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
                                       timer_factory                              timers,
                                       task_executor&                             ue_executor)
 {
-  logger_du.info(
-      "Creating DU gateway local bearer with UL GTP Tunnel={} DL GTP Tunnel={}", ul_up_tnl_info, dl_up_tnl_info);
-  auto&                                        udp_session = f1u_session_mngr->get_next_f1u_gateway(five_qi_t{9});
+  logger_du.info("Creating DU gateway local bearer with UL GTP Tunnel={} DL GTP Tunnel={} {}",
+                 ul_up_tnl_info,
+                 dl_up_tnl_info,
+                 five_qi);
+  auto&                                        udp_session = f1u_session_mngr->get_next_f1u_gateway(five_qi);
   std::unique_ptr<f1u_split_gateway_du_bearer> du_bearer   = std::make_unique<f1u_split_gateway_du_bearer>(
       ue_index, drb_id, dl_up_tnl_info, du_rx, ul_up_tnl_info, *this, gtpu_pcap, peer_port);
   {

@@ -140,14 +140,16 @@ std::unique_ptr<du_ue_drb> srsran::srs_du::create_drb(const drb_creation_info& d
   std::unique_ptr<du_ue_drb> drb = std::make_unique<du_ue_drb>();
 
   // > Setup DRB config
-  drb->drb_id = drb_info.drb_id;
-  drb->lcid   = drb_info.lcid;
+  drb->drb_id  = drb_info.drb_id;
+  drb->lcid    = drb_info.lcid;
+  drb->five_qi = drb_info.five_qi;
   drb->uluptnl_info_list.assign(drb_info.uluptnl_info_list.begin(), drb_info.uluptnl_info_list.end());
   drb->dluptnl_info_list.assign(dluptnl_info_list.begin(), dluptnl_info_list.end());
 
   drb->f1u_gw_bearer = drb_info.du_params.f1u.f1u_gw.create_du_bearer(
       ue_index,
       drb->drb_id,
+      drb->five_qi,
       drb_info.f1u_cfg,
       drb->dluptnl_info_list[0],
       drb->uluptnl_info_list[0],

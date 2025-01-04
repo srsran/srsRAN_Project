@@ -67,6 +67,7 @@ protected:
                                         to_du_cell_index(0),
                                         drb_id,
                                         lcid,
+                                        five_qi_t{9},
                                         rlc_config{},
                                         f1u_config{},
                                         ul_tnls,
