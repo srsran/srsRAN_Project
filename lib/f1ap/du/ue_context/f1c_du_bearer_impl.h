@@ -18,6 +18,7 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/protocol_transaction_manager.h"
 #include "srsran/support/memory_pool/unsync_fixed_size_memory_block_pool.h"
+#include <deque>
 
 namespace srsran {
 namespace srs_du {

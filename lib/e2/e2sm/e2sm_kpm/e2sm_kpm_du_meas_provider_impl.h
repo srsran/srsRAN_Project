@@ -18,6 +18,7 @@
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_kpm.h"
 #include "srsran/f1ap/du/f1ap_du.h"
+#include <deque>
 #include <map>
 #include <numeric>
 

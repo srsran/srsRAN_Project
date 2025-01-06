@@ -15,6 +15,7 @@
 #include "apps/services/metrics/metrics_set.h"
 #include "srsran/adt/span.h"
 #include "srsran/rlc/rlc_metrics.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

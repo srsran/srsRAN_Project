@@ -16,6 +16,7 @@
 #include "srsran/cu_cp/cu_cp_metrics_handler.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
+#include <deque>
 #include <mutex>
 
 namespace srsran {

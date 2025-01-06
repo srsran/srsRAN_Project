@@ -16,6 +16,7 @@
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/test_utils.h"
+#include <deque>
 #include <gtest/gtest.h>
 
 using namespace srsran;

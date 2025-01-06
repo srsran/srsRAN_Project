@@ -18,6 +18,7 @@
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_kpm.h"
 #include "srsran/pdcp/pdcp_entity.h"
+#include <deque>
 #include <map>
 #include <numeric>
 
