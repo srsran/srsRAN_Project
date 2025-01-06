@@ -90,7 +90,7 @@ public:
   bool has_pending_sr() const;
 
   /// Get QoS information of DRBs configured for the UE.
-  span<const sched_drb_info> get_drbs_qos_info() const { return u.ue_cfg_dedicated()->drbs_qos_info(); };
+  span<const logical_channel_config> logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); };
 
   /// Get an estimation of how many UL bytes were allocated per LCG for a given grant.
   ///

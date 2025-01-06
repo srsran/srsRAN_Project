@@ -262,23 +262,20 @@ static double to_bytes_per_slot(uint64_t bitrate_bps, subcarrier_spacing bwp_scs
 /// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
 static double compute_dl_rate_weight(const slice_ue& u, span<double> dl_avg_rate_per_lc, subcarrier_spacing bwp_scs)
 {
-  span<const sched_drb_info> drbs_qos_info = u.get_drbs_qos_info();
   // [Implementation-defined] Rate weight to assign when average rate in all GBR bearers is zero or if the UE has only
   // non-GBR bearers.
   const double initial_rate_weight = 1;
 
   double rate_weight = 0;
-  for (const sched_drb_info& drb_qos_info : drbs_qos_info) {
-    lcid_t lcid = drb_qos_info.lcid;
-
+  for (const logical_channel_config& lc : u.logical_channels()) {
     // LC not part of the slice or non-GBR flow.
-    if (not u.contains(drb_qos_info.lcid) or not drb_qos_info.gbr_qos_info.has_value()) {
+    if (not u.contains(lc.lcid) or not lc.qos.has_value() or not lc.qos->gbr_qos_info.has_value()) {
       continue;
     }
 
     // GBR flow.
-    if (dl_avg_rate_per_lc[lcid] != 0) {
-      rate_weight += (to_bytes_per_slot(drb_qos_info.gbr_qos_info->gbr_dl, bwp_scs) / dl_avg_rate_per_lc[lcid]);
+    if (dl_avg_rate_per_lc[lc.lcid] != 0) {
+      rate_weight += (to_bytes_per_slot(lc.qos->gbr_qos_info->gbr_dl, bwp_scs) / dl_avg_rate_per_lc[lc.lcid]);
     }
   }
 
@@ -288,22 +285,21 @@ static double compute_dl_rate_weight(const slice_ue& u, span<double> dl_avg_rate
 /// \brief Computes UL rate weight used in computation of UL priority value for a UE in a slot.
 static double compute_ul_rate_weight(const slice_ue& u, span<double> ul_avg_rate_per_lcg, subcarrier_spacing bwp_scs)
 {
-  span<const sched_drb_info> drbs_qos_info = u.get_drbs_qos_info();
   // [Implementation-defined] Rate weight to assign if the UE has only non-GBR bearers or average UL rate of UE is 0.
   const double initial_rate_weight = 1;
 
   double rate_weight = 0;
   // Compute sum of GBR rates of all LCs belonging to this slice.
-  for (const sched_drb_info& drb_qos_info : drbs_qos_info) {
+  for (const logical_channel_config& lc : u.logical_channels()) {
     // LC is not part of the slice or a non-GBR flow.
-    if (not u.contains(drb_qos_info.lcid) and not drb_qos_info.gbr_qos_info.has_value()) {
+    if (not u.contains(lc.lcid) or not lc.qos.has_value() or not lc.qos->gbr_qos_info.has_value()) {
       continue;
     }
 
     // GBR flow.
-    lcg_id_t lcg_id = u.get_lcg_id(drb_qos_info.lcid);
+    lcg_id_t lcg_id = u.get_lcg_id(lc.lcid);
     if (ul_avg_rate_per_lcg[lcg_id] != 0) {
-      rate_weight += (to_bytes_per_slot(drb_qos_info.gbr_qos_info->gbr_ul, bwp_scs) / ul_avg_rate_per_lcg[lcg_id]);
+      rate_weight += (to_bytes_per_slot(lc.qos->gbr_qos_info->gbr_ul, bwp_scs) / ul_avg_rate_per_lcg[lcg_id]);
     }
   }
 

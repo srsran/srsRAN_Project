@@ -71,6 +71,17 @@ void dl_logical_channel_manager::set_fallback_state(bool enter_fallback)
   fallback_state = enter_fallback;
 }
 
+static uint8_t get_lc_prio(const logical_channel_config& cfg)
+{
+  uint8_t prio = 0;
+  if (is_srb(cfg.lcid)) {
+    prio = cfg.lcid <= LCID_SRB1 ? 0 : 1;
+  } else {
+    prio = cfg.qos.has_value() ? cfg.qos->qos.qos_priority_level : MAX_QOS_PRIORITY_LEVEL;
+  }
+  return prio;
+}
+
 void dl_logical_channel_manager::set_status(lcid_t lcid, bool active)
 {
   srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
@@ -100,7 +111,7 @@ void dl_logical_channel_manager::set_status(lcid_t lcid, bool active)
     sorted_channels.push_back(lcid);
   }
   std::sort(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lhs, lcid_t rhs) {
-    return channels[lhs].cfg->priority < channels[rhs].cfg->priority;
+    return get_lc_prio(*channels[lhs].cfg) < get_lc_prio(*channels[rhs].cfg);
   });
 }
 
@@ -145,7 +156,7 @@ void dl_logical_channel_manager::configure(span<const logical_channel_config> lo
     }
   }
   std::sort(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lhs, lcid_t rhs) {
-    return channels[lhs].cfg->priority < channels[rhs].cfg->priority;
+    return get_lc_prio(*channels[lhs].cfg) < get_lc_prio(*channels[rhs].cfg);
   });
 }
 

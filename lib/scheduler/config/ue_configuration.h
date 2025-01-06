@@ -295,18 +295,12 @@ public:
   /// \remark UE can be scheduled in fallback scheduler even if UE does not have a complete configuration.
   bool is_ue_cfg_complete() const;
 
-  /// Get QoS information of DRBs configured for the UE.
-  span<const sched_drb_info> drbs_qos_info() const { return drb_qos_list; }
-
   /// Get DRX configuration for the UE cell group.
   const std::optional<drx_config>& drx_cfg() const { return ue_drx_cfg; }
 
 private:
   // List of configured logical channels
   std::vector<logical_channel_config> lc_list;
-
-  // List of QoS and slice information for DRBs.
-  std::vector<sched_drb_info> drb_qos_list;
 
   // List of cells configured for a UE.
   slotted_id_vector<du_cell_index_t, std::unique_ptr<ue_cell_configuration>> du_cells;

@@ -815,10 +815,6 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
   if (cfg_req.lc_config_list.has_value()) {
     lc_list = cfg_req.lc_config_list.value();
   }
-  // Update QoS and slice information of DRBs.
-  if (not cfg_req.drb_info_list.empty()) {
-    drb_qos_list = cfg_req.drb_info_list;
-  }
 
   // Update DRX config
   ue_drx_cfg = cfg_req.drx_cfg;

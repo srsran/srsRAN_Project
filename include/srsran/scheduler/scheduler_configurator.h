@@ -119,18 +119,6 @@ struct sched_ue_resource_alloc_config {
   rrm_policy_ratio_group rrm_policy_group;
 };
 
-/// QoS and slicing information associated with a DRB provided to the scheduler.
-struct sched_drb_info {
-  /// Logical Channel ID.
-  lcid_t lcid;
-  /// Single Network Slice Selection Assistance Information (S-NSSAI).
-  s_nssai_t s_nssai;
-  /// QoS characteristics associated with the logical channel.
-  standardized_qos_characteristics qos_info;
-  /// QoS information present only for GBR QoS flows.
-  std::optional<gbr_qos_flow_information> gbr_qos_info;
-};
-
 /// Request for a new UE configuration provided to the scheduler during UE creation or reconfiguration.
 struct sched_ue_config_request {
   /// List of configured Logical Channels. See \c mac-LogicalChannelConfig, TS38.331.
@@ -141,8 +129,6 @@ struct sched_ue_config_request {
   std::optional<std::vector<cell_config_dedicated>> cells;
   /// Resource allocation configuration for the given UE.
   std::optional<sched_ue_resource_alloc_config> res_alloc_cfg;
-  /// List of QoS and slicing information for DRBs.
-  std::vector<sched_drb_info> drb_info_list;
   /// DRX-Config.
   std::optional<drx_config> drx_cfg;
   /// measGapConfig.

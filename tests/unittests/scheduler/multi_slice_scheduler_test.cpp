@@ -49,8 +49,6 @@ protected:
     std::vector<lcid_t> lcid_list(only_lcid.begin(), only_lcid.end());
     auto ue_cfg = sched_config_helper::create_default_sched_ue_creation_request(builder_params, lcid_list);
     for (unsigned int i = 0; i < lcid_list.size(); i++) {
-      ue_cfg.cfg.drb_info_list[i].s_nssai = lcid_to_cfg[i].second;
-
       auto it                = std::find_if(ue_cfg.cfg.lc_config_list->begin(),
                              ue_cfg.cfg.lc_config_list->end(),
                              [lcid = lcid_to_cfg[i].first](const auto& l) { return l.lcid == lcid; });

@@ -102,11 +102,6 @@ sched_config_helper::create_default_sched_ue_creation_request(const cell_config_
     if (lcid >= lcid_t::LCID_SRB2) {
       msg.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
-    if (not is_srb(lcid)) {
-      sched_drb_info drb;
-      drb.lcid = lcid;
-      msg.cfg.drb_info_list.push_back(drb);
-    }
   }
 
   return msg;

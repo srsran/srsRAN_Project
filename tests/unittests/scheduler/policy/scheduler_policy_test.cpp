@@ -749,17 +749,14 @@ TEST_P(scheduler_pf_qos_test, pf_upholds_qos_in_dl_gbr_flows)
   (*cfg_req.lc_config_list)[1]          = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1);
   (*cfg_req.lc_config_list)[2]          = config_helpers::create_default_logical_channel_config(non_gbr_bearer_lcid);
   (*cfg_req.lc_config_list)[2].lc_group = lcg_id;
+  (*cfg_req.lc_config_list)[2].qos.emplace();
+  (*cfg_req.lc_config_list)[2].qos->qos = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(9));
   (*cfg_req.lc_config_list)[3]          = config_helpers::create_default_logical_channel_config(gbr_bearer_lcid);
-  // Increase priority for GBR bearer.
-  (*cfg_req.lc_config_list)[3].priority -= 1;
   // Put GBR bearer in a different LCG than non-GBR bearer.
   (*cfg_req.lc_config_list)[3].lc_group = uint_to_lcg_id(lcg_id - 1);
-  cfg_req.drb_info_list.resize(2);
-  cfg_req.drb_info_list[0] = sched_drb_info{.lcid     = non_gbr_bearer_lcid,
-                                            .qos_info = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(9))};
-  cfg_req.drb_info_list[1] = sched_drb_info{.lcid         = gbr_bearer_lcid,
-                                            .qos_info     = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(1)),
-                                            .gbr_qos_info = gbr_qos_flow_information{brate, brate, brate, brate}};
+  (*cfg_req.lc_config_list)[3].qos.emplace();
+  (*cfg_req.lc_config_list)[3].qos->qos          = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(1));
+  (*cfg_req.lc_config_list)[3].qos->gbr_qos_info = gbr_qos_flow_information{brate, brate, brate, brate};
   ue_ded_cell_cfg_list[0]->update(cell_cfg_list, cfg_req);
   // Add UE with no GBR bearer.
   ue& ue_with_no_gbr = add_ue(make_ue_create_req(to_du_ue_index(1), to_rnti(0x4602), {non_gbr_bearer_lcid}, lcg_id));
