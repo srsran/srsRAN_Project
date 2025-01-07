@@ -79,6 +79,8 @@ protected:
 
     on_each_slot();
 
+    alloc.post_process_results();
+
     // Log scheduler results.
     res_logger.on_scheduler_result(res_grid[0].result);
   }

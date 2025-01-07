@@ -1048,3 +1048,8 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
   // No candidates for PUSCH allocation.
   return {alloc_status::invalid_params};
 }
+
+void ue_cell_grid_allocator::post_process_results()
+{
+  // TODO
+}

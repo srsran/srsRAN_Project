@@ -13,7 +13,6 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../policy/ue_allocator.h"
 #include "../slicing/ran_slice_candidate.h"
-#include "../uci_scheduling/uci_scheduler.h"
 #include "ue_repository.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 
@@ -41,6 +40,11 @@ public:
   dl_alloc_result allocate_dl_grant(const ue_pdsch_grant& grant, ran_slice_id_t slice_id);
 
   ul_alloc_result allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id, slot_point pusch_slot);
+
+  /// \brief Called at the end of a slot to process the allocations that took place and make some final adjustments.
+  ///
+  /// In particular, this function can redimension the existing grants to fill the remaining RBs if it deems necessary.
+  void post_process_results();
 
 private:
   struct cell_t {
