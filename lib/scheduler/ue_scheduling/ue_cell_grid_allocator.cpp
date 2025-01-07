@@ -232,6 +232,14 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
       if (grant.max_nof_rbs.has_value()) {
         mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, grant.max_nof_rbs.value());
       }
+      // [Implementation-defined]
+      // Sometimes just a few 1-4 RBs are left in the grid, and the scheduler policy will try to fit a tiny PUSCH in it.
+      // We want to avoid this, by ensuring this grant fills the remaining RBs.
+      unsigned nof_rbs_left = (~used_crbs).count();
+      nof_rbs_left -= std::min(nof_rbs_left, mcs_prbs.n_prbs);
+      if (nof_rbs_left > 0 and nof_rbs_left < 5) {
+        mcs_prbs.n_prbs += nof_rbs_left;
+      }
       // Re-apply nof. PDSCH RBs to allocate limits.
       mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pdsch_nof_rbs.start());
       mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, expert_cfg.pdsch_nof_rbs.stop());
