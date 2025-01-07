@@ -811,6 +811,10 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   app.add_option("--end_rb", pusch_params.end_rb, "End RB for resource allocation of UE PUSCHs")
       ->capture_default_str()
       ->check(CLI::Range(0U, (unsigned)MAX_NOF_PRBS));
+  app.add_option("--enable_cl_loop_pw_control",
+                 pusch_params.enable_closed_loop_pw_control,
+                 "Enable closed-loop power control for PUSCH")
+      ->capture_default_str();
   app.add_option("--target_sinr", pusch_params.target_pusch_sinr, "Target PUSCH SINR in dB")
       ->capture_default_str()
       ->check(CLI::Range(-5.0, 30.0));
