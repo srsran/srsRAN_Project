@@ -79,7 +79,7 @@ void ta_manager::slot_indication(slot_point current_sl)
     return;
   }
 
-  for (uint8_t tag_idx = 0; tag_idx < n_ta_reports.size(); ++tag_idx) {
+  for (unsigned tag_idx = 0; tag_idx != n_ta_reports.size(); ++tag_idx) {
     if (n_ta_reports[tag_idx].samples.empty()) {
       continue;
     }
@@ -133,7 +133,7 @@ int64_t ta_manager::compute_avg_n_ta_difference(unsigned tag_idx)
   unsigned count               = 0;
   for (const int64_t meas : samples) {
     // Filter out outliers.
-    if (std::abs((double)meas - mean) <= num_std_deviations * sample_std_dev) {
+    if (std::abs(static_cast<double>(meas) - mean) <= num_std_deviations * sample_std_dev) {
       sum_n_ta_difference += meas;
       ++count;
     }
