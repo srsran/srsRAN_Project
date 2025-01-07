@@ -594,7 +594,8 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   }
 
   // Allocate PUCCH resources.
-  // Note: In case of RRC Reconfiguration, common PUCCH is not required, as the UE already has a dedicated config.
+  // Note: In case of RRC Reconfiguration that is not after the RRC Reestablishment, common PUCCH is not required, as
+  // the UE already has a dedicated config.
   // Note: In case the UE has no full config (RRC Reject), dedicated PUCCH is not required.
   // Note: If the actual UE has received the RRCSetup (with config) but the gNB doesn't receive an ACK=1, the UE can use
   // the PUCCH dedicated resource to ACK the RRCSetup Retx (as per ts 38.213, section 9.2.1, "if a ue has dedicated
