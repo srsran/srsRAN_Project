@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ran/pdcch/pdcch_context.h"
+#include "srsran/support/format/delimited_formatter.h"
 
 namespace fmt {
 

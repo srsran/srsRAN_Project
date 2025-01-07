@@ -20,6 +20,7 @@
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pdcch/factories.h"
 #include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"

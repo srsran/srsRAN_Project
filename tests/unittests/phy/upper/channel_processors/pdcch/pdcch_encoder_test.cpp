@@ -9,7 +9,7 @@
  */
 
 #include "pdcch_encoder_test_data.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pdcch/factories.h"
 #include "srsran/support/srsran_test.h"
 
 using namespace srsran;

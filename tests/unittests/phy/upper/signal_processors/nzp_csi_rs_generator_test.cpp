@@ -8,7 +8,6 @@
  *
  */
 
-#include "../../support/resource_grid_mapper_test_doubles.h"
 #include "nzp_csi_rs_generator_test_data.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"

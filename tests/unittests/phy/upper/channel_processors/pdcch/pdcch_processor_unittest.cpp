@@ -8,13 +8,13 @@
  *
  */
 
-#include "../../support/resource_grid_test_doubles.h"
-#include "../signal_processors/dmrs_pdcch_processor_test_doubles.h"
+#include "dmrs_pdcch_processor_test_doubles.h"
 #include "pdcch_encoder_test_doubles.h"
 #include "pdcch_modulator_test_doubles.h"
+#include "resource_grid_test_doubles.h"
 #include "srsran/phy/support/precoding_formatters.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
-#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdcch/pdcch_processor.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include <random>
 

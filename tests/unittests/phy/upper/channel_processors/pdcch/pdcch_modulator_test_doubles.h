@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/phy/upper/channel_processors/pdcch_modulator.h"
+#include "srsran/phy/upper/channel_processors/pdcch/pdcch_modulator.h"
 #include <vector>
 
 namespace srsran {

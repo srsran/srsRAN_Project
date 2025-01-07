@@ -15,9 +15,6 @@
 #include "srsran/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsran/phy/upper/channel_processors/pbch_encoder.h"
 #include "srsran/phy/upper/channel_processors/pbch_modulator.h"
-#include "srsran/phy/upper/channel_processors/pdcch_encoder.h"
-#include "srsran/phy/upper/channel_processors/pdcch_modulator.h"
-#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
 #include "srsran/phy/upper/channel_processors/prach_generator.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
@@ -51,47 +48,6 @@ public:
 std::shared_ptr<pbch_modulator_factory>
     create_pbch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>,
                                      std::shared_ptr<pseudo_random_generator_factory>);
-
-class pdcch_modulator_factory
-{
-public:
-  virtual ~pdcch_modulator_factory()                = default;
-  virtual std::unique_ptr<pdcch_modulator> create() = 0;
-};
-
-std::shared_ptr<pdcch_modulator_factory>
-    create_pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>,
-                                      std::shared_ptr<pseudo_random_generator_factory>,
-                                      std::shared_ptr<resource_grid_mapper_factory>);
-
-class pdcch_encoder_factory
-{
-public:
-  virtual ~pdcch_encoder_factory()                = default;
-  virtual std::unique_ptr<pdcch_encoder> create() = 0;
-};
-
-std::shared_ptr<pdcch_encoder_factory>
-create_pdcch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory,
-                                std::shared_ptr<polar_factory>          encoder_factory);
-
-class pdcch_processor_factory
-{
-public:
-  virtual ~pdcch_processor_factory()                              = default;
-  virtual std::unique_ptr<pdcch_processor>     create()           = 0;
-  virtual std::unique_ptr<pdcch_pdu_validator> create_validator() = 0;
-  virtual std::unique_ptr<pdcch_processor>     create(srslog::basic_logger& logger, bool enable_logging_broadcast);
-};
-
-std::shared_ptr<pdcch_processor_factory>
-create_pdcch_processor_factory_sw(std::shared_ptr<pdcch_encoder_factory>        encoder_factory,
-                                  std::shared_ptr<pdcch_modulator_factory>      modulator_factory,
-                                  std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_factory);
-
-std::shared_ptr<pdcch_processor_factory>
-create_pdcch_processor_pool_factory(std::shared_ptr<pdcch_processor_factory> processor_factory,
-                                    unsigned                                 nof_concurrent_threads);
 
 class prach_detector_factory
 {

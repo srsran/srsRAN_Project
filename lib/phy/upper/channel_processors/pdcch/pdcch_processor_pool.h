@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdcch/pdcch_processor.h"
 #include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
 
 namespace srsran {

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdcch/pdcch_processor.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"

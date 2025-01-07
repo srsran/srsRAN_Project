@@ -8,7 +8,6 @@
  *
  */
 
-#include "../../../support/resource_grid_mapper_test_doubles.h"
 #include "pdsch_processor_test_data.h"
 #include "pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"

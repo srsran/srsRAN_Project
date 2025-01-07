@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../../phy/support/resource_grid_mapper_test_doubles.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/ran/resource_block.h"

@@ -8,7 +8,6 @@
  *
  */
 
-#include "../../../tests/unittests/phy/support/resource_grid_mapper_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
@@ -22,10 +21,9 @@ using namespace srsran;
 // Random generator.
 static std::mt19937 rgen(0);
 
-static unsigned nof_repetitions  = 1000;
-static unsigned nof_rb           = 106;
-static bool     silent           = false;
-static bool     use_dummy_mapper = false;
+static unsigned nof_repetitions = 1000;
+static unsigned nof_rb          = 106;
+static bool     silent          = false;
 
 struct channel_topology {
   unsigned nof_ports;
@@ -38,7 +36,6 @@ static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-P precoder type] [-n number of RB] [-R repetitions] [-s silent]\n", prog);
   fmt::print("\t-n Number of resource blocks [Default {}]\n", nof_rb);
-  fmt::print("\t-D Use dummy resource grid mapper\n");
   fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
   fmt::print("\t-s Toggle silent operation [Default {}]\n", silent);
   fmt::print("\t-h Show this message\n");
@@ -51,9 +48,6 @@ static void parse_args(int argc, char** argv)
     switch (opt) {
       case 'n':
         nof_rb = std::strtol(optarg, nullptr, 10);
-        break;
-      case 'D':
-        use_dummy_mapper = true;
         break;
       case 'R':
         nof_repetitions = std::strtol(optarg, nullptr, 10);
@@ -104,8 +98,6 @@ int main(int argc, char** argv)
 
   // Precoding weight distribution.
   std::uniform_real_distribution<float> weight_dist(-1.0F, 1.0F);
-
-  resource_grid_mapper_dummy dummy_mapper;
 
   benchmarker perf_meas("DM-RS PDSCH processor", nof_repetitions);
 

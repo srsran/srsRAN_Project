@@ -10,10 +10,10 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 14-09-2023 (seed 0):
+// This file was generated using the following MATLAB class on 18-12-2024 (seed 0):
 //   + "srsPDCCHEncoderUnittest.m"
 
-#include "srsran/phy/upper/channel_processors/pdcch_encoder.h"
+#include "srsran/phy/upper/channel_processors/pdcch/pdcch_encoder.h"
 #include "srsran/support/file_vector.h"
 
 namespace srsran {

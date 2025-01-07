@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/fapi/messages.h"
-#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
+#include "srsran/phy/upper/channel_processors/pdcch/pdcch_processor.h"
 
 namespace srsran {
 namespace fapi_adaptor {

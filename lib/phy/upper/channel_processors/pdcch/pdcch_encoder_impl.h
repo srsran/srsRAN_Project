@@ -16,7 +16,7 @@
 #include "srsran/phy/upper/channel_coding/polar/polar_encoder.h"
 #include "srsran/phy/upper/channel_coding/polar/polar_interleaver.h"
 #include "srsran/phy/upper/channel_coding/polar/polar_rate_matcher.h"
-#include "srsran/phy/upper/channel_processors/pdcch_encoder.h"
+#include "srsran/phy/upper/channel_processors/pdcch/pdcch_encoder.h"
 #include "srsran/ran/pdcch/pdcch_constants.h"
 #include "srsran/support/error_handling.h"
 

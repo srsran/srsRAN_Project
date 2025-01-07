@@ -10,11 +10,11 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 05-03-2024 (seed 0):
+// This file was generated using the following MATLAB class on 18-12-2024 (seed 0):
 //   + "srsPDCCHModulatorUnittest.m"
 
-#include "../../support/resource_grid_test_doubles.h"
-#include "srsran/phy/upper/channel_processors/pdcch_modulator.h"
+#include "../../../support/resource_grid_test_doubles.h"
+#include "srsran/phy/upper/channel_processors/pdcch/pdcch_modulator.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/file_vector.h"
 

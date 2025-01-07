@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "../../phy_test_utils.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "../../../phy_test_utils.h"
+#include "srsran/phy/upper/channel_processors/pdcch/factories.h"
 
 namespace srsran {
 
