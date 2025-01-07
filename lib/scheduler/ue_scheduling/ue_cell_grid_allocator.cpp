@@ -1155,7 +1155,7 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
     return;
   }
 
-  crb_interval empty_crbs = rb_helper::find_empty_interval_of_length(used_crbs, max_crbs - crbs.stop(), crbs.stop());
+  crb_interval empty_crbs = rb_helper::find_empty_interval_of_length(used_crbs, max_crbs - crbs.length(), crbs.stop());
   if (empty_crbs.empty() or empty_crbs.start() != crbs.stop()) {
     // Could not extend existing PUSCH.
     return;
