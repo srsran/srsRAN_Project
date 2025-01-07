@@ -806,17 +806,17 @@ struct ul_dci_pdu {
 
 /// Uplink DCI request message.
 struct ul_dci_request_message : public base_message {
-  /// DCI index in the array number PDUs of each type.
+  /// [Implementation-defined] DCI index in the array number PDUs of each type.
   static constexpr unsigned DCI_INDEX = 1;
-  /// Maximum number of supported UL PDU types in this release.
+  /// [Implementation-defined] Maximum number of supported UL PDU types in this release.
   static constexpr unsigned MAX_NUM_DL_TYPES = 2;
-  /// Maximum number of supported UCI PDUs in this message.
-  static constexpr unsigned MAX_NUM_UCI_PDUS = 128;
+  /// [Implementation-defined] Maximum number of supported UCI PDUs in this message.
+  static constexpr unsigned MAX_NUM_UL_DCI_PDUS = 128;
 
-  uint16_t                                    sfn;
-  uint16_t                                    slot;
-  std::array<uint16_t, MAX_NUM_DL_TYPES>      num_pdus_of_each_type;
-  static_vector<ul_dci_pdu, MAX_NUM_UCI_PDUS> pdus;
+  uint16_t                                       sfn;
+  uint16_t                                       slot;
+  std::array<uint16_t, MAX_NUM_DL_TYPES>         num_pdus_of_each_type;
+  static_vector<ul_dci_pdu, MAX_NUM_UL_DCI_PDUS> pdus;
   // Vendor specific parameters.
   bool is_last_message_in_slot;
 };

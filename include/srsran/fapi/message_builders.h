@@ -1724,12 +1724,20 @@ public:
   /// Adds a PUSCH PDU to the \e UCI.indication message and returns a PUSCH PDU builder.
   uci_pusch_pdu_builder add_pusch_pdu(uint32_t handle, rnti_t rnti)
   {
+    uci_pusch_pdu_builder builder = add_pusch_pdu();
+    builder.set_basic_parameters(handle, rnti);
+
+    return builder;
+  }
+
+  /// Adds a PUSCH PDU to the \e UCI.indication message and returns a PUSCH PDU builder.
+  uci_pusch_pdu_builder add_pusch_pdu()
+  {
     auto& pdu = msg.pdus.emplace_back();
 
     pdu.pdu_type = uci_pdu_type::PUSCH;
 
     uci_pusch_pdu_builder builder(pdu.pusch_pdu);
-    builder.set_basic_parameters(handle, rnti);
 
     return builder;
   }
@@ -1738,12 +1746,21 @@ public:
   /// PDU builder.
   uci_pucch_pdu_format_0_1_builder add_format_0_1_pucch_pdu(uint32_t handle, rnti_t rnti, pucch_format type)
   {
+    uci_pucch_pdu_format_0_1_builder builder = add_format_0_1_pucch_pdu();
+    builder.set_basic_parameters(handle, rnti, type);
+
+    return builder;
+  }
+
+  /// Adds a PUCCH Format 0 and Format 1 PDU to the \e UCI.indication message and returns a PUCCH Format 0 and Format 1
+  /// PDU builder.
+  uci_pucch_pdu_format_0_1_builder add_format_0_1_pucch_pdu()
+  {
     auto& pdu = msg.pdus.emplace_back();
 
     pdu.pdu_type = uci_pdu_type::PUCCH_format_0_1;
 
     uci_pucch_pdu_format_0_1_builder builder(pdu.pucch_pdu_f01);
-    builder.set_basic_parameters(handle, rnti, type);
 
     return builder;
   }
@@ -1752,12 +1769,21 @@ public:
   /// Format 3 and Format 4 PDU builder.
   uci_pucch_pdu_format_2_3_4_builder add_format_2_3_4_pucch_pdu(uint32_t handle, rnti_t rnti, pucch_format type)
   {
+    uci_pucch_pdu_format_2_3_4_builder builder = add_format_2_3_4_pucch_pdu();
+    builder.set_basic_parameters(handle, rnti, type);
+
+    return builder;
+  }
+
+  /// Adds a PUCCH Format 2, Format 3 and Format 4  PDU to the \e UCI.indication message and returns a PUCCH Format 2,
+  /// Format 3 and Format 4 PDU builder.
+  uci_pucch_pdu_format_2_3_4_builder add_format_2_3_4_pucch_pdu()
+  {
     auto& pdu = msg.pdus.emplace_back();
 
     pdu.pdu_type = uci_pdu_type::PUCCH_format_2_3_4;
 
     uci_pucch_pdu_format_2_3_4_builder builder(pdu.pucch_pdu_f234);
-    builder.set_basic_parameters(handle, rnti, type);
 
     return builder;
   }
