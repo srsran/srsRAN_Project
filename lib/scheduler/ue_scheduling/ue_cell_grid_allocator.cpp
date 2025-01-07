@@ -673,28 +673,6 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       return {alloc_status::skip_slot};
     }
 
-    // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE will
-    // be removed when multiplexing the UCI on PUSCH.
-    unsigned pusch_pdu_rem_space = get_space_left_for_pusch_pdus(pusch_alloc.result, u.crnti, expert_cfg);
-    if (pusch_pdu_rem_space == 0) {
-      if (pusch_alloc.result.ul.puschs.size() >= expert_cfg.max_puschs_per_slot) {
-        logger.info(
-            "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Max number of PUSCHs per slot {} was reached.",
-            fmt::underlying(u.ue_index),
-            u.crnti,
-            pusch_alloc.slot,
-            expert_cfg.max_puschs_per_slot);
-      } else {
-        logger.info("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Max number of UL grants per slot {} "
-                    "was reached.",
-                    fmt::underlying(u.ue_index),
-                    u.crnti,
-                    pusch_alloc.slot,
-                    expert_cfg.max_puschs_per_slot);
-      }
-      return {alloc_status::skip_slot};
-    }
-
     // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common
     // PUCCH resources.
     if (get_uci_alloc(grant.cell_index).has_uci_harq_on_common_pucch_res(u.crnti, pusch_alloc.slot)) {
@@ -744,11 +722,6 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       // Compute MCS and PRBs based on grant parameters.
       mcs_prbs = ue_cc->required_ul_prbs(pusch_td_cfg, grant.recommended_nof_bytes.value(), dci_type);
 
-      // [Implementation-defined] Check whether max. UL grants per slot is reached if PUSCH for current UE succeeds. If
-      // so, allocate remaining RBs to the current UE only if it's a new Tx.
-      if (pusch_pdu_rem_space == 1 and not u.has_pending_sr()) {
-        mcs_prbs.n_prbs = rb_helper::find_empty_interval_of_length(used_crbs, used_crbs.size(), 0).length();
-      }
       // Due to the pre-allocated UCI bits, MCS 0 and PRB 1 would not leave any space for the payload on the TBS, as
       // all the space would be taken by the UCI bits. As a result of this, the effective code rate would be 0 and the
       // allocation would fail and be postponed to the next slot.
@@ -761,15 +734,6 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
         ++mcs_prbs.n_prbs;
       }
 
-      // [Implementation-defined]
-      // Check whether to allocate all remaining RBs or not. This is done to ensure we allocate only X nof. UEs per slot
-      // and not X+1 nof. UEs. One way is by checking if the emtpy interval is less than 2 times the required RBs. If
-      // so, allocate all remaining RBs. NOTE: This approach won't hold good in case of low traffic scenario.
-      const unsigned twice_grant_crbs_length =
-          rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs * 2, 0).length();
-      if (twice_grant_crbs_length < (mcs_prbs.n_prbs * 2)) {
-        mcs_prbs.n_prbs = twice_grant_crbs_length;
-      }
       // Limit nof. RBs to allocate to maximum RBs provided in grant.
       if (grant.max_nof_rbs.has_value()) {
         mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, grant.max_nof_rbs.value());
@@ -1147,7 +1111,7 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
     return;
   }
 
-  const vrb_interval& vrbs = last_pusch->pusch_cfg.rbs.type1();
+  vrb_interval vrbs = last_pusch->pusch_cfg.rbs.type1();
   if (vrbs.length() >= expert_cfg.pusch_nof_rbs.length()) {
     // The last UE reached max grant size.
     return;
@@ -1185,7 +1149,8 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
   const bwp_configuration& active_bwp = *last_pusch->pusch_cfg.bwp_cfg;
   crb_interval             crbs       = rb_helper::vrb_to_crb_ul_non_interleaved(vrbs, active_bwp.crbs.start());
   // Account for limits in number of RBs that can be allocated.
-  const unsigned max_crbs = adjust_ue_max_ul_nof_rbs(expert_cfg, ue_cc, dci_type, active_bwp.crbs.stop());
+  const unsigned max_crbs =
+      adjust_ue_max_ul_nof_rbs(expert_cfg, ue_cc, dci_type, crbs.length() + (active_bwp.crbs.stop() - crbs.stop()));
   if (max_crbs <= crbs.length()) {
     return;
   }
@@ -1215,10 +1180,8 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
   }
   pdcch_ul_information& pdcch = *it;
 
-  vrb_interval new_vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_bwp.crbs.start());
-
-  // Mark resources as occupied in the ResourceGrid.
-  pusch_alloc.ul_res_grid.fill(grant_info{scs, last_pusch->pusch_cfg.symbols, empty_crbs});
+  // Derive new VRBs
+  vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_bwp.crbs.start());
 
   // Recompute MCS and TBS.
   const search_space_info& ss           = ue_cc.cfg().search_space(pdcch.ctx.context.ss_id);
@@ -1238,12 +1201,15 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
     return;
   }
 
+  // Mark resources as occupied in the ResourceGrid.
+  pusch_alloc.ul_res_grid.fill(grant_info{scs, last_pusch->pusch_cfg.symbols, empty_crbs});
+
   // Update DCI.
   pdcch.dci.c_rnti_f0_1.frequency_resource = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{active_bwp.crbs.length(), vrbs.start(), vrbs.length()});
 
   // Update PUSCH.
-  last_pusch->pusch_cfg.rbs           = new_vrbs;
+  last_pusch->pusch_cfg.rbs           = vrbs;
   last_pusch->pusch_cfg.tb_size_bytes = mcs_tbs_info->tbs;
 
   // Update the number of PRBs used in the PUSCH allocation.
@@ -1255,4 +1221,10 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
   pusch_sched_ctx.olla_mcs     = h_ul->get_grant_params().olla_mcs;
   pusch_sched_ctx.slice_id     = h_ul->get_grant_params().slice_id;
   h_ul->save_grant_params(pusch_sched_ctx, last_pusch->pusch_cfg);
+
+  logger.debug("rnti={} h_id={}: Extended PUSCH grant from {} to {} CRBs",
+               ue_ref.crnti,
+               fmt::underlying(h_ul->id()),
+               old_crbs,
+               crbs);
 }
