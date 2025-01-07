@@ -510,6 +510,41 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
   return {alloc_status::invalid_params};
 }
 
+static crb_interval get_ul_rb_limits(const scheduler_ue_expert_config& expert_cfg, const search_space_info& ss_info)
+{
+  const unsigned start_rb = std::max(expert_cfg.pusch_crb_limits.start(), ss_info.ul_crb_lims.start());
+  const unsigned end_rb   = std::min(expert_cfg.pusch_crb_limits.stop(), ss_info.ul_crb_lims.stop());
+  return {start_rb, std::max(start_rb, end_rb)};
+}
+
+static unsigned
+adjust_nof_rbs_to_transform_precoding(unsigned rbs, const ue_cell& ue_cc, dci_ul_rnti_config_type dci_type)
+{
+  // Ensure the number of PRB is valid if the transform precoder is used. The condition the PUSCH bandwidth with
+  // transform precoder is defined in TS 38.211 Section 6.1.3. The number of PRB must be lower than or equal to
+  // current number of PRB.
+  bool use_transform_precoding = dci_type == dci_ul_rnti_config_type::c_rnti_f0_1
+                                     ? ue_cc.cfg().use_pusch_transform_precoding_dci_0_1()
+                                     : ue_cc.cfg().cell_cfg_common.use_msg3_transform_precoder();
+  if (use_transform_precoding) {
+    rbs = get_transform_precoding_nearest_lower_nof_prb_valid(rbs).value_or(rbs);
+  }
+  return rbs;
+}
+
+static unsigned adjust_ue_max_ul_nof_rbs(const scheduler_ue_expert_config& expert_cfg,
+                                         const ue_cell&                    ue_cc,
+                                         dci_ul_rnti_config_type           dci_type,
+                                         unsigned                          max_rbs)
+{
+  max_rbs = std::min(expert_cfg.pusch_nof_rbs.stop(), max_rbs);
+  max_rbs = std::min(max_rbs, ue_cc.cfg().rrm_cfg().pusch_grant_size_limits.stop());
+  max_rbs = ue_cc.get_ul_power_controller().adapt_pusch_prbs_to_phr(max_rbs);
+  max_rbs = adjust_nof_rbs_to_transform_precoding(max_rbs, ue_cc, dci_type);
+
+  return max_rbs;
+}
+
 ul_alloc_result
 ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id, slot_point pusch_slot)
 {
@@ -677,31 +712,30 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     }
 
     // Apply RB allocation limits.
-    const unsigned start_rb = std::max(expert_cfg.pusch_crb_limits.start(), ss_info.ul_crb_lims.start());
-    const unsigned end_rb   = std::min(expert_cfg.pusch_crb_limits.stop(), ss_info.ul_crb_lims.stop());
-    if (start_rb >= end_rb) {
-      logger.debug("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Invalid RB allocation range [{}, {})",
+    crb_interval ul_crb_lims = get_ul_rb_limits(expert_cfg, ss_info);
+    if (ul_crb_lims.empty()) {
+      logger.debug("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Invalid RB allocation range {}",
                    fmt::underlying(u.ue_index),
                    u.crnti,
                    pusch_alloc.slot,
-                   start_rb,
-                   end_rb);
+                   ul_crb_lims);
       return {alloc_status::skip_slot};
     }
 
-    const crb_interval ul_crb_lims = {start_rb, end_rb};
-    const prb_bitmap   used_crbs   = pusch_alloc.ul_res_grid.used_crbs(scs, ul_crb_lims, pusch_td_cfg.symbols);
+    const prb_bitmap used_crbs = pusch_alloc.ul_res_grid.used_crbs(scs, ul_crb_lims, pusch_td_cfg.symbols);
     if (used_crbs.all()) {
       slots_with_no_pusch_space.push_back(pusch_alloc.slot);
       return {alloc_status::skip_slot};
     }
 
     // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
-    grant_prbs_mcs mcs_prbs =
-        is_retx ? grant_prbs_mcs{h_ul->get_grant_params().mcs, h_ul->get_grant_params().rbs.type1().length()}
-                : ue_cc->required_ul_prbs(pusch_td_cfg, grant.recommended_nof_bytes.value(), dci_type);
-    // Try to limit the grant PRBs.
-    if (not is_retx) {
+    grant_prbs_mcs mcs_prbs;
+    if (is_retx) {
+      mcs_prbs = grant_prbs_mcs{h_ul->get_grant_params().mcs, h_ul->get_grant_params().rbs.type1().length()};
+    } else {
+      // Compute MCS and PRBs based on grant parameters.
+      mcs_prbs = ue_cc->required_ul_prbs(pusch_td_cfg, grant.recommended_nof_bytes.value(), dci_type);
+
       // [Implementation-defined] Check whether max. UL grants per slot is reached if PUSCH for current UE succeeds. If
       // so, allocate remaining RBs to the current UE only if it's a new Tx.
       if (pusch_pdu_rem_space == 1 and not u.has_pending_sr()) {
@@ -718,6 +752,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       if (mcs_prbs.mcs < min_mcs_for_1_prb and mcs_prbs.n_prbs <= min_allocable_prbs) {
         ++mcs_prbs.n_prbs;
       }
+
       // [Implementation-defined]
       // Check whether to allocate all remaining RBs or not. This is done to ensure we allocate only X nof. UEs per slot
       // and not X+1 nof. UEs. One way is by checking if the emtpy interval is less than 2 times the required RBs. If
@@ -731,20 +766,11 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       if (grant.max_nof_rbs.has_value()) {
         mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, grant.max_nof_rbs.value());
       }
-      // Re-apply nof. PUSCH RBs to allocate limits.
+
+      // Apply nof. PUSCH RBs to allocate limits.
       mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.start());
-      mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.stop());
       mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.start());
-      mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.stop());
-      // Ensure the number of PRB is valid if the transform precoder is used. The condition the PUSCH bandwidth with
-      // transform precoder is defined in TS 38.211 Section 6.1.3. The number of PRB must be lower than or equal to
-      // current number of PRB.
-      if ((dci_type == dci_ul_rnti_config_type::c_rnti_f0_1)
-              ? ue_cell_cfg.use_pusch_transform_precoding_dci_0_1()
-              : ue_cell_cfg.cell_cfg_common.use_msg3_transform_precoder()) {
-        mcs_prbs.n_prbs =
-            get_transform_precoding_nearest_lower_nof_prb_valid(mcs_prbs.n_prbs).value_or(mcs_prbs.n_prbs);
-      }
+      mcs_prbs.n_prbs = adjust_ue_max_ul_nof_rbs(expert_cfg, *ue_cc, dci_type, mcs_prbs.n_prbs);
     }
 
     // NOTE: This should never happen, but it's safe not to proceed if we get n_prbs == 0.
