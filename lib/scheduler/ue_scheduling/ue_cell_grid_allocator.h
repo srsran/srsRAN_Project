@@ -66,6 +66,8 @@ private:
     return *cells[cell_index].cell_alloc;
   }
 
+  void post_process_ul_results(du_cell_index_t cell_idx, slot_point pusch_slot);
+
   const scheduler_ue_expert_config& expert_cfg;
 
   ue_repository&        ues;

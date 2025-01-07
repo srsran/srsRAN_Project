@@ -1085,5 +1085,174 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
 
 void ue_cell_grid_allocator::post_process_results()
 {
-  // TODO
+  for (const cell_t& cell : cells) {
+    auto& pdcch_alloc = get_res_alloc(cell.cell_index)[0];
+
+    // In case PUSCHs allocations have been made, we try to ensure that RBs are not left empty.
+    auto& ul_pdcchs = pdcch_alloc.result.dl.ul_pdcchs;
+    if (ul_pdcchs.empty()) {
+      continue;
+    }
+
+    bounded_bitset<SCHEDULER_MAX_K2> traversed_k2s(SCHEDULER_MAX_K2);
+    for (auto& pdcch : ul_pdcchs) {
+      if (pdcch.dci.type != dci_ul_rnti_config_type::c_rnti_f0_1) {
+        continue;
+      }
+      const auto&              u            = *ues.find_by_rnti(pdcch.ctx.rnti);
+      const ue_cell&           ue_cell      = *u.find_cell(cell.cell_index);
+      const uint8_t            pusch_td_idx = pdcch.dci.c_rnti_f0_1.time_resource;
+      const search_space_info& ss           = ue_cell.cfg().search_space(pdcch.ctx.context.ss_id);
+      const uint8_t            k2           = ss.pusch_time_domain_list[pusch_td_idx].k2;
+      if (not traversed_k2s.test(k2 - 1)) {
+        post_process_ul_results(cell.cell_index, pdcch_alloc.slot + k2);
+        traversed_k2s.set(k2 - 1);
+      }
+    }
+  }
+}
+
+void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, slot_point pusch_slot)
+{
+  // Note: For now, we just expand the last allocation to fill empty RBs.
+  // TODO: Fairer algorithm to fill remaining RBs that accounts for the UE buffer states as well.
+
+  const cell_t&            cell        = cells[cell_idx];
+  cell_resource_allocator& cell_alloc  = get_res_alloc(cell.cell_index);
+  auto&                    pusch_alloc = cell_alloc[pusch_slot];
+  if (pusch_alloc.result.ul.puschs.empty()) {
+    // There are no UL allocations for this slot. Move on to next cell.
+    return;
+  }
+  const cell_configuration& cell_cfg = cell_alloc.cfg;
+  const subcarrier_spacing  scs      = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
+
+  // Use last PUSCH to get reference UE config for this candidate.
+  ul_sched_info* last_pusch = nullptr;
+  for (auto& pusch : pusch_alloc.result.ul.puschs) {
+    if (not pusch.pusch_cfg.new_data or not pusch.pusch_cfg.rbs.is_type1()) {
+      // Type 0 not supported yet.
+      continue;
+    }
+    if (last_pusch == nullptr or last_pusch->pusch_cfg.rbs.type1().stop() < pusch.pusch_cfg.rbs.type1().stop()) {
+      last_pusch = &pusch;
+    }
+  }
+  if (last_pusch == nullptr) {
+    // There were no candidates for extension.
+    return;
+  }
+  if (not last_pusch->pusch_cfg.new_data) {
+    // It is a retx. We cannot resize it.
+    return;
+  }
+
+  const vrb_interval& vrbs = last_pusch->pusch_cfg.rbs.type1();
+  if (vrbs.length() >= expert_cfg.pusch_nof_rbs.length()) {
+    // The last UE reached max grant size.
+    return;
+  }
+
+  ue&      ue_ref = ues[last_pusch->context.ue_index];
+  ue_cell& ue_cc  = *ue_ref.find_cell(cell_cfg.cell_index);
+
+  if (ue_ref.pending_ul_newtx_bytes() == 0) {
+    // No point in expanding UE grant if it has no more bytes to transmit.
+    return;
+  }
+
+  const search_space_info& ss_info     = ue_cc.cfg().search_space(last_pusch->context.ss_id);
+  const crb_interval       ul_crb_lims = get_ul_rb_limits(expert_cfg, ss_info);
+
+  const prb_bitmap used_crbs = pusch_alloc.ul_res_grid.used_crbs(scs, ul_crb_lims, last_pusch->pusch_cfg.symbols);
+  if (used_crbs.all()) {
+    // All CRBs were filled.
+    return;
+  }
+
+  std::optional<ul_harq_process_handle> h_ul = ue_cc.harqs.ul_harq(to_harq_id(last_pusch->pusch_cfg.harq_id));
+  if (not h_ul.has_value()) {
+    logger.error("Could not find HARQ id for existing PUSCH");
+    return;
+  }
+  const dci_ul_rnti_config_type dci_type = h_ul->get_grant_params().dci_cfg_type;
+  if (dci_type != dci_ul_rnti_config_type::c_rnti_f0_1) {
+    // Only expansion for C-RNTI f0_1 supported.
+    return;
+  }
+
+  // Check if there is a gap at the right of the last UE.
+  const bwp_configuration& active_bwp = *last_pusch->pusch_cfg.bwp_cfg;
+  crb_interval             crbs       = rb_helper::vrb_to_crb_ul_non_interleaved(vrbs, active_bwp.crbs.start());
+  // Account for limits in number of RBs that can be allocated.
+  const unsigned max_crbs = adjust_ue_max_ul_nof_rbs(expert_cfg, ue_cc, dci_type, active_bwp.crbs.stop());
+  if (max_crbs <= crbs.length()) {
+    return;
+  }
+
+  crb_interval empty_crbs = rb_helper::find_empty_interval_of_length(used_crbs, max_crbs - crbs.stop(), crbs.stop());
+  if (empty_crbs.empty() or empty_crbs.start() != crbs.stop()) {
+    // Could not extend existing PUSCH.
+    return;
+  }
+  // There are RBs empty to the left of the last allocation. Let's expand the allocation.
+
+  crb_interval old_crbs = crbs;
+  crbs                  = {old_crbs.start(), empty_crbs.stop()};
+  crbs.resize(adjust_nof_rbs_to_transform_precoding(crbs.length(), ue_cc, dci_type));
+
+  // Find respective PDCCH.
+  auto& pdcch_alloc = cell_alloc[pusch_slot - last_pusch->context.k2];
+  auto  it =
+      std::find_if(pdcch_alloc.result.dl.ul_pdcchs.begin(),
+                   pdcch_alloc.result.dl.ul_pdcchs.end(),
+                   [&](const pdcch_ul_information& pdcch) { return pdcch.ctx.rnti == last_pusch->pusch_cfg.rnti; });
+  if (it == pdcch_alloc.result.dl.ul_pdcchs.end()) {
+    logger.error("rnti={}: Cannot find PDCCH associated with the given PUSCH at slot={}",
+                 last_pusch->pusch_cfg.rnti,
+                 pusch_slot);
+    return;
+  }
+  pdcch_ul_information& pdcch = *it;
+
+  vrb_interval new_vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_bwp.crbs.start());
+
+  // Mark resources as occupied in the ResourceGrid.
+  pusch_alloc.ul_res_grid.fill(grant_info{scs, last_pusch->pusch_cfg.symbols, empty_crbs});
+
+  // Recompute MCS and TBS.
+  const search_space_info& ss           = ue_cc.cfg().search_space(pdcch.ctx.context.ss_id);
+  const auto&              pusch_td_cfg = ss.pusch_time_domain_list[pdcch.dci.c_rnti_f0_1.time_resource];
+  const unsigned           nof_harq_bits =
+      last_pusch->uci.has_value() and last_pusch->uci->harq.has_value() ? last_pusch->uci->harq->harq_ack_nof_bits : 0;
+  const unsigned is_csi_rep = last_pusch->uci.has_value() and last_pusch->uci->csi.has_value()
+                                  ? last_pusch->uci->csi.value().csi_part1_nof_bits > 0
+                                  : 0;
+  auto           pusch_cfg  = get_pusch_config_f0_1_c_rnti(
+      ue_cc.cfg(), pusch_td_cfg, last_pusch->pusch_cfg.nof_layers, nof_harq_bits, is_csi_rep);
+  bool contains_dc =
+      dc_offset_helper::is_contained(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, crbs);
+  std::optional<sch_mcs_tbs> mcs_tbs_info =
+      compute_ul_mcs_tbs(pusch_cfg, &ue_cc.cfg(), last_pusch->pusch_cfg.mcs_index, crbs.length(), contains_dc);
+  if (not mcs_tbs_info.has_value()) {
+    return;
+  }
+
+  // Update DCI.
+  pdcch.dci.c_rnti_f0_1.frequency_resource = ra_frequency_type1_get_riv(
+      ra_frequency_type1_configuration{active_bwp.crbs.length(), vrbs.start(), vrbs.length()});
+
+  // Update PUSCH.
+  last_pusch->pusch_cfg.rbs           = new_vrbs;
+  last_pusch->pusch_cfg.tb_size_bytes = mcs_tbs_info->tbs;
+
+  // Update the number of PRBs used in the PUSCH allocation.
+  ue_cc.get_ul_power_controller().update_pusch_pw_ctrl_state(pusch_alloc.slot, crbs.length());
+
+  // Update HARQ.
+  ul_harq_alloc_context pusch_sched_ctx;
+  pusch_sched_ctx.dci_cfg_type = dci_type;
+  pusch_sched_ctx.olla_mcs     = h_ul->get_grant_params().olla_mcs;
+  pusch_sched_ctx.slice_id     = h_ul->get_grant_params().slice_id;
+  h_ul->save_grant_params(pusch_sched_ctx, last_pusch->pusch_cfg);
 }
