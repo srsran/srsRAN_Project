@@ -17,6 +17,9 @@
 #ifdef __x86_64__
 #include "modulation_mapper_avx512_impl.h"
 #endif // __x86_64__
+#ifdef __aarch64__
+#include "modulation_mapper_neon_impl.h"
+#endif // __aarch64__
 
 using namespace srsran;
 
@@ -33,6 +36,11 @@ public:
       return std::make_unique<modulation_mapper_avx512_impl>();
     }
 #endif // __x86_64__
+#ifdef __ARM_NEON
+    if (cpu_supports_feature(cpu_feature::neon)) {
+      return std::make_unique<modulation_mapper_neon_impl>();
+    }
+#endif // __ARM_NEON
 
     return std::make_unique<modulation_mapper_lut_impl>();
   }
