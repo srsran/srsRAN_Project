@@ -357,6 +357,9 @@ struct dl_csi_rs_pdu {
   tx_precoding_and_beamforming_pdu  precoding_and_beamforming;
   dl_csi_rs_maintenance_v3          csi_rs_maintenance_v3;
   //: TODO: csi params v4
+  // Vendor specific parameters.
+  uint16_t bwp_size;
+  uint16_t bwp_start;
 };
 
 enum class dmrs_typeA_pos : uint8_t { pos2 = 0, pos3 };

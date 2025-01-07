@@ -279,6 +279,8 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
   pdu.power_control_offset_ss_profile_nr     = power_control_offset_ss::dB0;
   pdu.csi_rs_maintenance_v3.csi_rs_pdu_index = 0;
   pdu.precoding_and_beamforming              = build_valid_tx_precoding_and_beamforming_pdu();
+  pdu.bwp_size                               = 56U;
+  pdu.bwp_start                              = 60U;
 
   return pdu;
 }

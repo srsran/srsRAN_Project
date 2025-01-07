@@ -742,6 +742,16 @@ public:
     return *this;
   }
 
+  /// Sets the vendor specific CSI-RS PDU BWP parameters and returns a reference to the builder.
+  /// \note These parameters are vendor specific.
+  dl_csi_rs_pdu_builder& set_vendor_specific_bwp_parameters(unsigned bwp_size, unsigned bwp_start)
+  {
+    pdu.bwp_size  = bwp_size;
+    pdu.bwp_start = bwp_start;
+
+    return *this;
+  }
+
   /// Sets the CSI-RS PDU tx power info parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
   dl_csi_rs_pdu_builder& set_tx_power_info_parameters(int                     power_control_offset,
