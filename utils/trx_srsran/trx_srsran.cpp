@@ -383,9 +383,13 @@ static int trx_srsran_start(TRXState* s1, const TRXDriverParams* p)
   // Check that all sampling rates for all channels are the same.
   span<const TRXFraction> sampling_rates_frac =
       span<const TRXFraction>(p->sample_rate, context.rf_port_count).last(context.rf_port_count - 1);
-  std::all_of(sampling_rates_frac.begin(), sampling_rates_frac.end(), [&](const TRXFraction& x) {
-    return x.num == p->sample_rate[0].num && x.den == p->sample_rate[0].den;
-  });
+  srsran_assert(std::all_of(sampling_rates_frac.begin(),
+                            sampling_rates_frac.end(),
+                            [&](const TRXFraction& x) {
+                              return x.num == sampling_rates_frac.front().num &&
+                                     x.den == sampling_rates_frac.front().den;
+                            }),
+                "Not all sampling rates are equal.");
 
   // Prepare configuration.
   radio_configuration::radio configuration = {};
