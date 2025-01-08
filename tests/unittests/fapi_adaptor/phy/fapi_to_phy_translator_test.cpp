@@ -139,7 +139,7 @@ public:
     dl_processor.emplace_back(1);
   }
 
-  downlink_processor_controller& get_processor_controller(slot_point slot, unsigned sector_id) override
+  downlink_processor_controller& get_processor_controller(slot_point slot) override
   {
     return dl_processor[slot.slot_index()];
   }

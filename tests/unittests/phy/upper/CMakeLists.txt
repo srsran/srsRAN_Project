@@ -23,7 +23,7 @@ target_link_libraries(channel_state_information_test srslog fmt gtest gtest_main
 add_test(channel_state_information_test channel_state_information_test)
 
 add_executable(downlink_processor_pool_test downlink_processor_pool_test.cpp)
-target_link_libraries(downlink_processor_pool_test srsran_upper_phy srslog)
+target_link_libraries(downlink_processor_pool_test srsran_upper_phy srslog gtest gtest_main)
 add_test(downlink_processor_pool_test downlink_processor_pool_test)
 
 add_executable(downlink_processor_test downlink_processor_test.cpp)

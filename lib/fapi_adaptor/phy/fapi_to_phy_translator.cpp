@@ -117,8 +117,8 @@ fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_co
     return;
   }
 
-  // Obtain a downlink processor controller associated with the given slot and sector.
-  downlink_processor_controller& dl_proc_controller = dl_processor_pool.get_processor_controller(slot, sector_id);
+  // Obtain the downlink processor controller associated with the given slot.
+  downlink_processor_controller& dl_proc_controller = dl_processor_pool.get_processor_controller(slot);
 
   // Configure the downlink processor.
   dl_processor = dl_proc_controller.configure_resource_grid(context, std::move(grid));

@@ -183,8 +183,6 @@ create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config&
 struct downlink_processor_pool_config {
   /// Downlink processors for a given sector and numerology.
   struct sector_dl_processor {
-    /// Base station sector identifier.
-    unsigned sector;
     /// Subcarrier spacing.
     subcarrier_spacing scs;
     /// Pointers to the actual downlink processors.
@@ -193,8 +191,6 @@ struct downlink_processor_pool_config {
 
   /// Collection of all downlink processors, organized by radio sector and numerology.
   std::vector<sector_dl_processor> dl_processors;
-  /// Number of base station sector.
-  unsigned num_sectors;
 };
 
 /// \brief Creates and returns a downlink processor pool.

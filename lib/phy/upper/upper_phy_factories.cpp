@@ -261,7 +261,6 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
   dl_phy_logger.set_hex_dump_max_size(config.logger_max_hex_size);
 
   downlink_processor_pool_config config_pool;
-  config_pool.num_sectors = 1;
 
   for (unsigned numerology = 0, numerology_end = to_numerology_value(subcarrier_spacing::invalid);
        numerology != numerology_end;
@@ -271,7 +270,7 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
       continue;
     }
 
-    downlink_processor_pool_config::sector_dl_processor info = {0, to_subcarrier_spacing(numerology), {}};
+    downlink_processor_pool_config::sector_dl_processor info = {to_subcarrier_spacing(numerology), {}};
 
     for (unsigned i_proc = 0, nof_procs = config.nof_dl_processors; i_proc != nof_procs; ++i_proc) {
       downlink_processor_config processor_config;
@@ -883,10 +882,9 @@ std::unique_ptr<downlink_processor_pool> srsran::create_dl_processor_pool(downli
 {
   // Convert from pool config to pool_impl config.
   downlink_processor_pool_impl_config dl_processors;
-  dl_processors.num_sectors = config.num_sectors;
 
   for (auto& proc : config.dl_processors) {
-    dl_processors.procs.push_back({proc.sector, proc.scs, std::move(proc.procs)});
+    dl_processors.procs.push_back({proc.scs, std::move(proc.procs)});
   }
 
   return std::make_unique<downlink_processor_pool_impl>(std::move(dl_processors));

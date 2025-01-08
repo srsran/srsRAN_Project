@@ -199,12 +199,8 @@ class downlink_processor_pool
 public:
   virtual ~downlink_processor_pool() = default;
 
-  /// \brief Returns a downlink processor controller with the given slot and sector.
-  ///
-  /// \param slot Slot point.
-  /// \param sector_id Sector ID.
-  /// \return A downlink processor.
-  virtual downlink_processor_controller& get_processor_controller(slot_point slot, unsigned sector_id) = 0;
+  /// Gets the downlink processor controller associated with the given slot.
+  virtual downlink_processor_controller& get_processor_controller(slot_point slot) = 0;
 };
 
 } // namespace srsran
