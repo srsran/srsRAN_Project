@@ -232,14 +232,6 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
       if (grant.max_nof_rbs.has_value()) {
         mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, grant.max_nof_rbs.value());
       }
-      // [Implementation-defined]
-      // Sometimes just a few 1-4 RBs are left in the grid, and the scheduler policy will try to fit a tiny PUSCH in it.
-      // We want to avoid this, by ensuring this grant fills the remaining RBs.
-      unsigned nof_rbs_left = (~used_crbs).count();
-      nof_rbs_left -= std::min(nof_rbs_left, mcs_prbs.n_prbs);
-      if (nof_rbs_left > 0 and nof_rbs_left < 5) {
-        mcs_prbs.n_prbs += nof_rbs_left;
-      }
       // Re-apply nof. PDSCH RBs to allocate limits.
       mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pdsch_nof_rbs.start());
       mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, expert_cfg.pdsch_nof_rbs.stop());
@@ -734,6 +726,16 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
         ++mcs_prbs.n_prbs;
       }
 
+      // [Implementation-defined]
+      // Sometimes just a few 1-4 RBs are left in the grid, and the scheduler policy will try to fit a tiny PUSCH in it.
+      // This will lead to a waste of PDCCHs that could be used for another k2 value.
+      // We want to avoid this, by ensuring this grant fills the remaining RBs.
+      unsigned nof_rbs_left = (~used_crbs).count();
+      nof_rbs_left -= std::min(nof_rbs_left, mcs_prbs.n_prbs);
+      if (nof_rbs_left > 0 and nof_rbs_left < 5) {
+        mcs_prbs.n_prbs += nof_rbs_left;
+      }
+
       // Limit nof. RBs to allocate to maximum RBs provided in grant.
       if (grant.max_nof_rbs.has_value()) {
         mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, grant.max_nof_rbs.value());
@@ -1058,6 +1060,8 @@ void ue_cell_grid_allocator::post_process_results()
       continue;
     }
 
+    // For the same slot, PDCCHs with different k2 values could have been scheduled. We will go through allocated
+    // PUSCH slots and see if there are any RBs remaining to be scheduled.
     bounded_bitset<SCHEDULER_MAX_K2> traversed_k2s(SCHEDULER_MAX_K2);
     for (auto& pdcch : ul_pdcchs) {
       if (pdcch.dci.type != dci_ul_rnti_config_type::c_rnti_f0_1) {
