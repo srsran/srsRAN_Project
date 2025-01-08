@@ -1098,7 +1098,7 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
   // Use last PUSCH to get reference UE config for this candidate.
   ul_sched_info* last_pusch = nullptr;
   for (auto& pusch : pusch_alloc.result.ul.puschs) {
-    if (not pusch.pusch_cfg.new_data or not pusch.pusch_cfg.rbs.is_type1()) {
+    if (not pusch.pusch_cfg.rbs.is_type1()) {
       // Type 0 not supported yet.
       continue;
     }
@@ -1120,7 +1120,10 @@ void ue_cell_grid_allocator::post_process_ul_results(du_cell_index_t cell_idx, s
     // The last UE reached max grant size.
     return;
   }
-
+  if (not ues.contains(last_pusch->context.ue_index)) {
+    // In case of TC-RNTI, the UE index might not yet exist.
+    return;
+  }
   ue&      ue_ref = ues[last_pusch->context.ue_index];
   ue_cell& ue_cc  = *ue_ref.find_cell(cell_cfg.cell_index);
 
