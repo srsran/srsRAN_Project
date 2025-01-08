@@ -369,9 +369,13 @@ void ue_event_manager::handle_ue_config_applied(du_ue_index_t ue_idx)
 
 void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
 {
-  srsran_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
-
   auto handle_ul_bsr_ind_impl = [this, bsr_ind = ind_pdu_pool->create_bsr(bsr_ind)]() {
+    if (not cell_exists(bsr_ind->cell_index)) {
+      logger.warning("ue={}: Detected invalide cell index={} in BSR",
+                     fmt::underlying(bsr_ind->ue_index),
+                     fmt::underlying(bsr_ind->cell_index));
+    }
+
     if (not ue_db.contains(bsr_ind->ue_index)) {
       log_invalid_ue_index(bsr_ind->ue_index, "BSR");
       return;
