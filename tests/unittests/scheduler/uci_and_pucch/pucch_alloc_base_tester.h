@@ -14,6 +14,8 @@
 
 using namespace srsran;
 
+constexpr unsigned NOF_RBS = 52;
+
 class pucch_allocator_base_tester
 {
 public:

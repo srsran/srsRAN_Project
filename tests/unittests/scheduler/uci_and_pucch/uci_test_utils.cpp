@@ -252,6 +252,7 @@ test_bench::test_bench(const test_bench_params& params,
     beta_offsets.beta_offset_csi_p2_idx_1.value() = 6;
   }
 
+  ue_req_main = ue_req;
   ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
   ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs, {}}));
   uci_sched.add_ue(ues[ue_req.ue_index].get_pcell().cfg());
@@ -273,15 +274,10 @@ const ue& test_bench::get_ue(du_ue_index_t ue_idx) const
 
 void test_bench::add_ue()
 {
-  cell_config_builder_params cfg_params{};
-  cfg_params.csi_rs_enabled                = true;
-  sched_ue_creation_request_message ue_req = sched_config_helper::create_default_sched_ue_creation_request(cfg_params);
+  sched_ue_creation_request_message ue_req = ue_req_main;
   last_allocated_ue_idx =
       to_du_ue_index(static_cast<std::underlying_type<du_ue_index_t>::type>(last_allocated_ue_idx) + 1);
   ue_req.ue_index = last_allocated_ue_idx;
-
-  ue_req.cfg.cells->begin()->serv_cell_cfg.ul_config.reset();
-  ue_req.cfg.cells->begin()->serv_cell_cfg.ul_config.emplace(test_helpers::make_test_ue_uplink_config(cfg_params));
 
   ue_req.crnti = to_rnti(static_cast<std::underlying_type<rnti_t>::type>(last_allocated_rnti) + 1);
 

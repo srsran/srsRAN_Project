@@ -139,6 +139,8 @@ inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_confi
   pucch_cfg.format_1_common_param.emplace();
   pucch_cfg.format_2_common_param.emplace(
       pucch_common_all_formats{.max_c_rate = max_pucch_code_rate::dot_25, .simultaneous_harq_ack_csi = true});
+  pucch_cfg.format_3_common_param.emplace(
+      pucch_common_all_formats{.max_c_rate = max_pucch_code_rate::dot_25, .simultaneous_harq_ack_csi = true});
 
   // >>> dl-DataToUl-Ack
   // TS38.213, 9.1.2.1 - "If a UE is provided dl-DataToUL-ACK, the UE does not expect to be indicated by DCI format 1_0
@@ -304,6 +306,9 @@ public:
   pucch_res_builder_test_helper pucch_builder;
   srslog::basic_logger&         mac_logger  = srslog::fetch_basic_logger("SCHED", true);
   srslog::basic_logger&         test_logger = srslog::fetch_basic_logger("TEST");
+
+  // Scheduler creation request message used to create the main UE.
+  sched_ue_creation_request_message ue_req_main;
 };
 
 } // namespace srsran
