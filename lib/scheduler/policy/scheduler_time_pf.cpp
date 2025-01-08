@@ -99,10 +99,13 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
 
   // Update DL priority queue.
   dl_queue.clear();
+  slot_point pdsch_slot        = slice_candidate.get_slot_tx();
+  unsigned   nof_slots_elapsed = last_pdsch_slot.valid() ? pdsch_slot - last_pdsch_slot : 1;
+  last_pdsch_slot              = pdsch_slot;
   for (const auto& u : ues) {
     ue_ctxt& ctxt = ue_history_db[u.ue_index()];
     ctxt.compute_dl_prio(
-        u, slice_candidate.id(), res_grid.get_pdcch_slot(u.get_pcell().cell_index), slice_candidate.get_slot_tx());
+        u, slice_candidate.id(), res_grid.get_pdcch_slot(u.get_pcell().cell_index), pdsch_slot, nof_slots_elapsed);
     dl_queue.push(&ctxt);
   }
 
@@ -309,12 +312,13 @@ static double compute_ul_rate_weight(const slice_ue& u, span<double> ul_avg_rate
 void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
                                                  ran_slice_id_t  slice_id,
                                                  slot_point      pdcch_slot,
-                                                 slot_point      pdsch_slot)
+                                                 slot_point      pdsch_slot,
+                                                 unsigned        nof_slots_elapsed)
 {
   dl_prio = forbid_prio;
 
   // Process previous slot allocated bytes and compute average.
-  compute_dl_avg_rate(u);
+  compute_dl_avg_rate(u, nof_slots_elapsed);
 
   const ue_cell* ue_cc = u.find_cell(cell_index);
   if (ue_cc == nullptr) {
@@ -480,11 +484,36 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
   sr_ind_received = u.has_pending_sr();
 }
 
-void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u)
+void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
 {
   // Redimension LCID arrays to the UE configured bearers.
   dl_alloc_bytes_per_lc.resize(u.get_bearers().size(), 0);
   dl_avg_rate_per_lc.resize(dl_alloc_bytes_per_lc.size(), 0);
+
+  // In case more than one slot elapsed.
+  for (unsigned s = 0; s != nof_slots_elapsed - 1; ++s) {
+    for (unsigned i = 0; i != dl_alloc_bytes_per_lc.size(); ++i) {
+      if (not u.contains(uint_to_lcid(i))) {
+        // Skip LCIDs that are not configured.
+        dl_alloc_bytes_per_lc[i] = 0;
+        dl_avg_rate_per_lc[i]    = 0;
+        continue;
+      }
+      if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
+        // Fast start before transitioning to exponential average.
+        dl_avg_rate_per_lc[i] -= dl_avg_rate_per_lc[i] / (dl_nof_samples + 1);
+      } else {
+        dl_avg_rate_per_lc[i] -= parent->exp_avg_alpha * dl_avg_rate_per_lc[i];
+      }
+    }
+    if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
+      // Fast start before transitioning to exponential average.
+      total_dl_avg_rate_ -= total_dl_avg_rate_ / (dl_nof_samples + 1);
+    } else {
+      total_dl_avg_rate_ -= parent->exp_avg_alpha * total_dl_avg_rate_;
+    }
+    dl_nof_samples++;
+  }
 
   // Compute DL average rate on a per-logical channel basis.
   for (unsigned i = 0; i != dl_alloc_bytes_per_lc.size(); ++i) {
@@ -492,10 +521,10 @@ void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u)
       // Skip LCIDs that are not configured.
       dl_alloc_bytes_per_lc[i] = 0;
       dl_avg_rate_per_lc[i]    = 0;
+      continue;
     }
 
     unsigned sched_bytes = dl_alloc_bytes_per_lc[i];
-
     if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
       // Fast start before transitioning to exponential average.
       dl_avg_rate_per_lc[i] += (sched_bytes - dl_avg_rate_per_lc[i]) / (dl_nof_samples + 1);
@@ -509,12 +538,12 @@ void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u)
   }
 
   // Compute DL average rate of the UE.
+  unsigned sched_bytes = dl_sum_alloc_bytes;
   if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
     // Fast start before transitioning to exponential average.
-    total_dl_avg_rate_ = total_dl_avg_rate_ + (dl_sum_alloc_bytes - total_dl_avg_rate_) / (dl_nof_samples + 1);
+    total_dl_avg_rate_ = total_dl_avg_rate_ + (sched_bytes - total_dl_avg_rate_) / (dl_nof_samples + 1);
   } else {
-    total_dl_avg_rate_ =
-        (1 - parent->exp_avg_alpha) * total_dl_avg_rate_ + (parent->exp_avg_alpha) * dl_sum_alloc_bytes;
+    total_dl_avg_rate_ = (1 - parent->exp_avg_alpha) * total_dl_avg_rate_ + (parent->exp_avg_alpha) * sched_bytes;
   }
 
   // Flush allocated bytes for the current slot.

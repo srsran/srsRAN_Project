@@ -62,11 +62,11 @@ srsran::test_helper::create_uci_indication(slot_point uci_sl, du_ue_index_t ue_i
       uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2{};
       f2.harqs.resize(pucch_pdu.format_2.harq_ack_nof_bits);
       std::fill(f2.harqs.begin(), f2.harqs.end(), mac_harq_ack_report_status::ack);
-      uci_ind.ucis[0].pdu = f2;
       if (pucch_pdu.format_2.csi_part1_bits > 0) {
         f2.csi.emplace();
         f2.csi->first_tb_wideband_cqi = 15;
       }
+      uci_ind.ucis[0].pdu = f2;
     } break;
     default:
       report_fatal_error("Unsupported PUCCH format");
