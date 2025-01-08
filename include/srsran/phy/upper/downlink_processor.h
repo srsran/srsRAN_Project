@@ -181,8 +181,8 @@ public:
   virtual bool is_valid(const ssb_processor::pdu_t& pdu) const = 0;
 
   /// \brief Validates PDCCH processor configuration parameters.
-  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
-  virtual bool is_valid(const pdcch_processor::pdu_t& pdu) const = 0;
+  /// \return A success if the parameters contained in \c pdu are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const pdcch_processor::pdu_t& pdu) const = 0;
 
   /// \brief Validates PDSCH processor configuration parameters.
   /// \return A success if the parameters contained in \c pdu are supported, an error message otherwise.

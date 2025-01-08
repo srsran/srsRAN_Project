@@ -242,11 +242,13 @@ static expected<downlink_pdus> translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_
         for (unsigned i_dci = 0, i_dci_end = pdu.pdcch_pdu.dl_dci.size(); i_dci != i_dci_end; ++i_dci) {
           pdcch_processor::pdu_t& pdcch_pdu = pdus.pdcch.emplace_back();
           convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdcch_pdu, msg.sfn, msg.slot, i_dci, pm_repo);
-          if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
-            logger.warning(
-                "Sector#{}: Skipping DL_TTI.request: DL DCI PDU with index '{}' flagged as invalid by the Upper PHY",
-                sector_id,
-                i_dci);
+          error_type<std::string> phy_pdsch_validator = dl_pdu_validator.is_valid(pdcch_pdu);
+          if (!phy_pdsch_validator.has_value()) {
+            logger.warning("Sector#{}: Skipping DL_TTI.request: DL DCI PDU with index '{}' flagged as invalid by the "
+                           "Upper PHY with the following error\n    {}",
+                           sector_id,
+                           i_dci,
+                           phy_pdsch_validator.error());
 
             return make_unexpected(default_error_t{});
           }

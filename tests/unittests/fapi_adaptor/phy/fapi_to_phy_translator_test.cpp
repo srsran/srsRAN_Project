@@ -50,7 +50,7 @@ class downlink_pdu_validator_dummy : public downlink_pdu_validator
 {
 public:
   bool                    is_valid(const ssb_processor::pdu_t& pdu) const override { return true; }
-  bool                    is_valid(const pdcch_processor::pdu_t& pdu) const override { return true; }
+  error_type<std::string> is_valid(const pdcch_processor::pdu_t& pdu) const override { return default_success_t(); }
   error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu) const override { return default_success_t(); }
   bool                    is_valid(const nzp_csi_rs_generator::config_t& config) const override { return true; }
 };
