@@ -9,6 +9,8 @@
  */
 
 #include "o_cu_up_e2_config_translators.h"
+#include "apps/services/worker_manager/worker_manager_config.h"
+#include "o_cu_up_e2_config.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
 
 using namespace srsran;
@@ -21,4 +23,12 @@ e2ap_configuration srsran::generate_e2_config(const e2_config& config)
   out_cfg.e2sm_rc_enabled    = config.e2sm_rc_enabled;
 
   return out_cfg;
+}
+
+void srsran::fill_o_cu_up_e2_worker_manager_config(worker_manager_config& config, const o_cu_up_e2_config& unit_cfg)
+{
+  auto& pcap_cfg = config.pcap_cfg;
+  if (unit_cfg.pcaps.enabled) {
+    pcap_cfg.is_e2ap_enabled = true;
+  }
 }
