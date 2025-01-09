@@ -160,6 +160,7 @@ private:
   }
 
   srslog::basic_logger&         logger = srslog::fetch_basic_logger("CU-UEMNG");
+  const cu_cp_configuration     cu_cp_config;
   const ue_configuration        ue_config;
   const up_resource_manager_cfg up_config;
   const security_manager_config sec_config;

@@ -15,6 +15,8 @@ using namespace srs_cu_cp;
 
 cu_cp_ue::cu_cp_ue(ue_index_t                     ue_index_,
                    du_index_t                     du_index_,
+                   timer_manager&                 timers_,
+                   task_executor&                 task_exec_,
                    const up_resource_manager_cfg& up_cfg,
                    const security_manager_config& sec_cfg,
                    ue_task_scheduler_impl         task_sched_,
@@ -51,6 +53,8 @@ cu_cp_ue::cu_cp_ue(ue_index_t                     ue_index_,
   rrc_ue_cu_cp_ue_ev_notifier.connect_ue(*this);
   ngap_cu_cp_ue_ev_notifier.connect_ue(*this);
   nrppa_cu_cp_ue_ev_notifier.connect_ue(*this);
+
+  ue_release_timer = timers_.create_unique_timer(task_exec_);
 }
 
 /// \brief Update a UE with PCI and/or C-RNTI.

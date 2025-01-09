@@ -43,6 +43,8 @@ class cu_cp_ue : public cu_cp_ue_impl_interface
 public:
   cu_cp_ue(ue_index_t                     ue_index_,
            du_index_t                     du_index_,
+           timer_manager&                 timers_,
+           task_executor&                 task_exec_,
            const up_resource_manager_cfg& up_cfg,
            const security_manager_config& sec_cfg,
            ue_task_scheduler_impl         task_sched_,
@@ -138,34 +140,37 @@ public:
     return meas_context.meas_results;
   }
 
+  unique_timer& get_ue_release_timer() { return ue_release_timer; }
+
 private:
-  // common context
+  // Common context.
   ue_index_t             ue_index = ue_index_t::invalid;
   ue_task_scheduler_impl task_sched;
   up_resource_manager    up_mng;
   ue_security_manager    sec_mng;
 
-  // du ue context
+  // DU UE context.
   cu_cp_ue_context ue_ctxt;
   du_cell_index_t  pcell_index = du_cell_index_t::invalid;
   pci_t            pci         = INVALID_PCI;
 
   rrc_ue_cu_cp_ue_adapter rrc_ue_cu_cp_ue_ev_notifier;
 
-  // rrc ue
+  // RRC UE context.
   rrc_ue_interface*   rrc_ue = nullptr;
   rrc_ue_ngap_adapter rrc_ue_ngap_ev_notifier;
 
-  // ngap ue context
+  // NGAP UE context.
   ngap_cu_cp_ue_adapter ngap_cu_cp_ue_ev_notifier;
   ngap_rrc_ue_adapter   ngap_rrc_ue_ev_notifier;
 
-  // nrppa ue context
+  // NRPPA UE context.
   nrppa_cu_cp_ue_adapter nrppa_cu_cp_ue_ev_notifier;
 
-  // cu-cp ue context
+  // CU-CP UE context.
   rrc_ue_cu_cp_adapter         rrc_ue_cu_cp_ev_notifier;
   cell_meas_manager_ue_context meas_context;
+  unique_timer                 ue_release_timer = {};
 };
 
 } // namespace srs_cu_cp
