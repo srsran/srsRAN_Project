@@ -849,5 +849,26 @@ inline cu_cp_five_g_s_tmsi ngap_asn1_to_ue_paging_id(const asn1::ngap::ue_paging
                              asn1_ue_id.five_g_s_tmsi().five_g_tmsi.to_number()};
 }
 
+/// \brief Convert NGAP ASN.1 to \c gbr_qos_flow_information.
+/// \param[in] asn1_gbr_qos_info The ASN.1 type gbr qos info.
+/// \return The common type gbr qos flow information.
+inline gbr_qos_flow_information
+ngap_asn1_to_gbr_qos_flow_information(const asn1::ngap::gbr_qos_info_s& asn1_gbr_qos_info)
+{
+  gbr_qos_flow_information gbr_qos_info;
+  gbr_qos_info.max_br_dl = asn1_gbr_qos_info.max_flow_bit_rate_dl;
+  gbr_qos_info.max_br_ul = asn1_gbr_qos_info.max_flow_bit_rate_ul;
+  gbr_qos_info.gbr_dl    = asn1_gbr_qos_info.guaranteed_flow_bit_rate_dl;
+  gbr_qos_info.gbr_ul    = asn1_gbr_qos_info.guaranteed_flow_bit_rate_ul;
+  if (asn1_gbr_qos_info.max_packet_loss_rate_dl_present) {
+    gbr_qos_info.max_packet_loss_rate_dl = asn1_gbr_qos_info.max_packet_loss_rate_dl;
+  }
+  if (asn1_gbr_qos_info.max_packet_loss_rate_ul_present) {
+    gbr_qos_info.max_packet_loss_rate_ul = asn1_gbr_qos_info.max_packet_loss_rate_ul;
+  }
+
+  return gbr_qos_info;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsran

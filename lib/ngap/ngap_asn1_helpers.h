@@ -335,7 +335,8 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
     }
 
     if (asn1_flow_item.qos_flow_level_qos_params.gbr_qos_info_present) {
-      // TODO: Add to common type.
+      qos_flow_setup_req_item.qos_flow_level_qos_params.gbr_qos_info =
+          ngap_asn1_to_gbr_qos_flow_information(asn1_flow_item.qos_flow_level_qos_params.gbr_qos_info);
     }
 
     if (asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
