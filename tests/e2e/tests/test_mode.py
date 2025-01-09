@@ -239,7 +239,15 @@ def test_ru_16cell_50ue_not_crash(
     Run gnb with sanitizers in test mode ru dummy.
     It ignores warnings and KOs, so it will fail if the gnb+sanitizer fails
     """
-    _test_ru(retina_manager, retina_data, gnb, ru_config="config_ru_16cell_50ue.yml")
+    _test_ru(
+        retina_manager,
+        retina_data,
+        gnb,
+        ru_config="config_ru_16cell_50ue.yml",
+        gnb_stop_timeout=150,
+        warning_as_errors=False,
+        fail_if_kos=False,
+    )
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
