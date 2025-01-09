@@ -636,7 +636,7 @@ void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
   pusch.pusch_dmrs_id = cell_cfg.pci;
   pusch.rv_index      = dci_cfg.redundancy_version;
   // TS 38.321, 5.4.2.1 - "For UL transmission with UL grant in RA Response, HARQ process identifier 0 is used".
-  pusch.harq_id  = 0;
+  pusch.harq_id  = to_harq_id(0);
   pusch.new_data = is_new_data;
 
   pusch.tb_size_bytes = tbs_bytes;
@@ -691,7 +691,7 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
 
   // HARQ.
   pusch.rv_index = dci_cfg.redundancy_version;
-  pusch.harq_id  = dci_cfg.harq_process_number;
+  pusch.harq_id  = to_harq_id(dci_cfg.harq_process_number);
   pusch.new_data = is_new_data;
 }
 
@@ -765,6 +765,6 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
 
   // HARQ.
   pusch.rv_index = dci_cfg.redundancy_version;
-  pusch.harq_id  = dci_cfg.harq_process_number;
+  pusch.harq_id  = to_harq_id(dci_cfg.harq_process_number);
   pusch.new_data = is_new_data;
 }

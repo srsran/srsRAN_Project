@@ -42,21 +42,17 @@ srsran::test_helper::create_rach_indication(slot_point                          
   return rach_ind;
 }
 
-uci_indication
-srsran::test_helper::create_uci_indication(slot_point uci_sl, du_ue_index_t ue_idx, const pucch_info& pucch_pdu)
+uci_indication::uci_pdu test_helper::create_uci_indication_pdu(du_ue_index_t ue_idx, const pucch_info& pucch_pdu)
 {
-  uci_indication uci_ind{};
-  uci_ind.cell_index = to_du_cell_index(0);
-  uci_ind.slot_rx    = uci_sl;
-  uci_ind.ucis.resize(1);
-  uci_ind.ucis[0].crnti    = pucch_pdu.crnti;
-  uci_ind.ucis[0].ue_index = ue_idx;
+  uci_indication::uci_pdu pdu;
+  pdu.crnti    = pucch_pdu.crnti;
+  pdu.ue_index = ue_idx;
   switch (pucch_pdu.format) {
     case pucch_format::FORMAT_1: {
       uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f1{};
       f1.harqs.resize(pucch_pdu.format_1.harq_ack_nof_bits);
       std::fill(f1.harqs.begin(), f1.harqs.end(), mac_harq_ack_report_status::ack);
-      uci_ind.ucis[0].pdu = f1;
+      pdu.pdu = f1;
     } break;
     case pucch_format::FORMAT_2: {
       uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2{};
@@ -66,10 +62,52 @@ srsran::test_helper::create_uci_indication(slot_point uci_sl, du_ue_index_t ue_i
         f2.csi.emplace();
         f2.csi->first_tb_wideband_cqi = 15;
       }
-      uci_ind.ucis[0].pdu = f2;
+      pdu.pdu = f2;
     } break;
     default:
       report_fatal_error("Unsupported PUCCH format");
   }
+  return pdu;
+}
+
+uci_indication
+srsran::test_helper::create_uci_indication(slot_point uci_sl, du_ue_index_t ue_idx, const pucch_info& pucch_pdu)
+{
+  uci_indication uci_ind{};
+  uci_ind.cell_index = to_du_cell_index(0);
+  uci_ind.slot_rx    = uci_sl;
+  uci_ind.ucis.emplace_back(create_uci_indication_pdu(ue_idx, pucch_pdu));
   return uci_ind;
+}
+
+uci_indication::uci_pdu
+srsran::test_helper::create_uci_indication_pdu(rnti_t rnti, du_ue_index_t ue_idx, const uci_info& uci)
+{
+  uci_indication::uci_pdu pdu;
+  pdu.crnti      = rnti;
+  pdu.ue_index   = ue_idx;
+  auto& puschpdu = pdu.pdu.emplace<uci_indication::uci_pdu::uci_pusch_pdu>();
+  if (uci.csi.has_value()) {
+    puschpdu.csi.emplace();
+    if (uci.csi.value().csi_part1_nof_bits > 0) {
+      puschpdu.csi.value().first_tb_wideband_cqi = 15;
+    }
+  }
+  if (uci.harq.has_value()) {
+    puschpdu.harqs.resize(uci.harq.value().harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+  }
+  return pdu;
+}
+
+ul_crc_pdu_indication srsran::test_helper::create_crc_pdu_indication(const ul_sched_info& ul_grant)
+{
+  ul_crc_pdu_indication pdu{};
+
+  pdu.rnti           = ul_grant.pusch_cfg.rnti;
+  pdu.ue_index       = ul_grant.context.ue_index;
+  pdu.harq_id        = ul_grant.pusch_cfg.harq_id;
+  pdu.tb_crc_success = true;
+  pdu.ul_sinr_dB     = 100;
+
+  return pdu;
 }

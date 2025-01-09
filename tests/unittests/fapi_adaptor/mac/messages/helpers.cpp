@@ -566,7 +566,7 @@ ul_sched_info_test_helper unittests::build_valid_pusch_pdu()
   pusch.pusch_dmrs_id              = 18;
   pusch.dmrs_hopping_mode          = pusch_information::dmrs_hopping_mode::no_hopping;
   pusch.rv_index                   = 1;
-  pusch.harq_id                    = 2;
+  pusch.harq_id                    = to_harq_id(2);
   pusch.new_data                   = true;
   pusch.tb_size_bytes              = 11;
   pusch.num_cb                     = 0;

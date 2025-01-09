@@ -22,6 +22,7 @@ class scheduler_qos_test : public scheduler_test_simulator, public ::testing::Te
 {
   struct ue_stats {
     uint64_t dl_bytes_sum = 0;
+    uint64_t ul_bytes_sum = 0;
   };
 
 public:
@@ -57,7 +58,7 @@ public:
     ue_cfg.cfg.lc_config_list.value()[2].qos.emplace();
     ue_cfg.cfg.lc_config_list.value()[2].qos.value().gbr_qos_info.emplace();
     ue_cfg.cfg.lc_config_list.value()[2].qos.value().gbr_qos_info.value().gbr_dl = 10e6;
-    ue_cfg.cfg.lc_config_list.value()[2].qos.value().gbr_qos_info.value().gbr_ul = 10e6;
+    ue_cfg.cfg.lc_config_list.value()[2].qos.value().gbr_qos_info.value().gbr_ul = 5e6;
     report_fatal_error_if_not(pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_cfg.cfg.cells.value()[0].serv_cell_cfg),
                               "Failed to allocate PUCCH resources");
     this->add_ue(ue_cfg);
@@ -78,6 +79,16 @@ public:
       dl_buffer_state_indication_message dl_buf_st{to_du_ue_index(i), LCID_MIN_DRB, 10000000};
       this->push_dl_buffer_state(dl_buf_st);
     }
+
+    // Enqueue BSR.
+    for (unsigned i = 0; i != TEST_NOF_UES; ++i) {
+      ul_bsr_indication_message bsr{to_du_cell_index(0),
+                                    to_du_ue_index(i),
+                                    to_rnti(0x4601 + i),
+                                    bsr_format::LONG_BSR,
+                                    ul_bsr_lcg_report_list{{uint_to_lcg_id(2), 100000}}};
+      this->push_bsr(bsr);
+    }
   }
 
   cell_config_builder_params params;
@@ -94,34 +105,65 @@ TEST_F(scheduler_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
   for (unsigned i = 0; i != MAX_NOF_SLOT_RUNS; ++i) {
     this->run_slot();
 
+    uci_indication uci_ind;
+    uci_ind.cell_index = to_du_cell_index(0);
+    uci_ind.slot_rx    = this->last_result_slot();
+    ul_crc_indication crc_ind;
+    crc_ind.cell_index = to_du_cell_index(0);
+    crc_ind.sl_rx      = last_result_slot();
+
+    // Handle DL result.
     span<const dl_msg_alloc> ue_grants = this->last_sched_res_list[0]->dl.ue_grants;
     for (const dl_msg_alloc& grant : ue_grants) {
       ue_stats_map[grant.context.ue_index].dl_bytes_sum += grant.pdsch_cfg.codewords[0].tb_size_bytes;
     }
 
+    // Handle PUCCHs.
     for (const pucch_info& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
       if (pucch.format == pucch_format::FORMAT_1 and pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
         // Skip SRs for this test.
         continue;
       }
 
-      du_ue_index_t  ue_idx  = to_du_ue_index((unsigned)pucch.crnti - 0x4601);
-      uci_indication uci_ind = test_helper::create_uci_indication(this->last_result_slot(), ue_idx, pucch);
+      du_ue_index_t ue_idx = to_du_ue_index((unsigned)pucch.crnti - 0x4601);
+      uci_ind.ucis.push_back(test_helper::create_uci_indication_pdu(ue_idx, pucch));
+    }
+
+    // Handle UL result.
+    span<const ul_sched_info> ul_grants = this->last_sched_res_list[0]->ul.puschs;
+    for (const ul_sched_info& grant : ul_grants) {
+      ue_stats_map[grant.context.ue_index].ul_bytes_sum += grant.pusch_cfg.tb_size_bytes;
+      crc_ind.crcs.emplace_back(test_helper::create_crc_pdu_indication(grant));
+      if (grant.uci.has_value()) {
+        uci_ind.ucis.push_back(
+            test_helper::create_uci_indication_pdu(grant.pusch_cfg.rnti, grant.context.ue_index, grant.uci.value()));
+      }
+    }
+
+    if (not uci_ind.ucis.empty()) {
       this->sched->handle_uci_indication(uci_ind);
+    }
+    if (not crc_ind.crcs.empty()) {
+      this->sched->handle_crc_indication(crc_ind);
     }
   }
 
   double nof_sec_elapsed = (MAX_NOF_SLOT_RUNS / (double)get_nof_slots_per_subframe(params.scs_common)) / 1000;
   std::vector<double> ue_dl_rate_mbps(ue_stats_map.size(), 0);
+  std::vector<double> ue_ul_rate_mbps(ue_stats_map.size(), 0);
   for (unsigned i = 0; i != ue_stats_map.size(); ++i) {
     ue_dl_rate_mbps[i] = ue_stats_map[i].dl_bytes_sum * 8U * 1e-6 / nof_sec_elapsed;
+    ue_ul_rate_mbps[i] = ue_stats_map[i].ul_bytes_sum * 8U * 1e-6 / nof_sec_elapsed;
   }
 
-  fmt::memory_buffer fmtbuf;
+  fmt::memory_buffer dl_fmtbuf;
+  fmt::memory_buffer ul_fmtbuf;
   for (unsigned i = 0; i != ue_dl_rate_mbps.size(); ++i) {
-    fmt::format_to(std::back_inserter(fmtbuf), " {:.3}", ue_dl_rate_mbps[i]);
+    fmt::format_to(std::back_inserter(dl_fmtbuf), " {:.3}", ue_dl_rate_mbps[i]);
+    fmt::format_to(std::back_inserter(ul_fmtbuf), " {:.3}", ue_ul_rate_mbps[i]);
   }
-  test_logger.info("DL bit rates [Mbps]: [{}]", fmt::to_string(fmtbuf));
+  test_logger.info("DL bit rates [Mbps]: [{}]", fmt::to_string(dl_fmtbuf));
+  test_logger.info("UL bit rates [Mbps]: [{}]", fmt::to_string(ul_fmtbuf));
 
   const unsigned GBR_UE_INDEX = 0;
   for (unsigned i = 1; i != ue_stats_map.size(); ++i) {
