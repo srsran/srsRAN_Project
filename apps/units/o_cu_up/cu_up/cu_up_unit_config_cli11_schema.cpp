@@ -144,6 +144,16 @@ static void configure_cli11_qos_args(CLI::App& app, cu_up_unit_qos_config& qos_p
 
 void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_unit_config& unit_cfg)
 {
+  add_option(app, "--gnb_id", unit_cfg.gnb_id.id, "gNodeB identifier")->capture_default_str();
+  // Adding a default function to display correctly the uint8_t type.
+  add_option(app, "--gnb_id_bit_length", unit_cfg.gnb_id.bit_length, "gNodeB identifier length in bits")
+      ->default_function([&value = unit_cfg.gnb_id.bit_length]() { return std::to_string(value); })
+      ->capture_default_str()
+      ->check(CLI::Range(22, 32));
+  add_option(app, "--gnb_cu_up_id", unit_cfg.gnb_cu_up_id, "gNB-CU-UP Id")
+      ->capture_default_str()
+      ->check(CLI::Range(static_cast<uint64_t>(0U), static_cast<uint64_t>(pow(2, 36) - 1)));
+
   // CU-UP section.
   CLI::App* cu_up_subcmd = add_subcommand(app, "cu_up", "CU-UP parameters")->configurable();
   configure_cli11_cu_up_args(*cu_up_subcmd, unit_cfg);

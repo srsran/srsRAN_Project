@@ -115,6 +115,10 @@ static void fill_cu_up_qos_section(YAML::Node node, span<const cu_up_unit_qos_co
 
 void srsran::fill_cu_up_config_in_yaml_schema(YAML::Node& node, const cu_up_unit_config& config)
 {
+  node["gnb_id"]            = config.gnb_id.id;
+  node["gnb_id_bit_length"] = static_cast<unsigned>(config.gnb_id.bit_length);
+  node["gnb_cu_up_id"]      = static_cast<uint64_t>(config.gnb_cu_up_id);
+
   node["cu_up"] = build_cu_up_section(config);
   fill_cu_up_log_section(node["log"], config.loggers);
   fill_cu_up_pcap_section(node["pcap"], config.pcap_cfg);

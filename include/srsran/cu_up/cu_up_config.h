@@ -57,6 +57,8 @@ struct cu_up_config {
   n3_interface_config n3_cfg;
   /// Test mode configuration.
   cu_up_test_mode_config test_mode_cfg;
+  /// gNodeB identifier.
+  gnb_id_t gnb_id = {411, 22};
   /// CU-UP identifier.
   gnb_cu_up_id_t cu_up_id = gnb_cu_up_id_t::min;
   /// CU-UP name.
