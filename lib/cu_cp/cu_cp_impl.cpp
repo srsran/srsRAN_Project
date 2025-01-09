@@ -174,6 +174,11 @@ void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inact
     cu_cp_ue* ue = ue_mng.find_du_ue(msg.ue_index);
     srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
 
+    if (ue->get_ue_release_timer().is_running()) {
+      logger.debug("ue={}: Ignoring UE inactivity. Cause: Ongoing handover for this UE", msg.ue_index);
+      return;
+    }
+
     cu_cp_ue_context_release_request req;
     req.ue_index = msg.ue_index;
     req.cause    = ngap_cause_radio_network_t::user_inactivity;
