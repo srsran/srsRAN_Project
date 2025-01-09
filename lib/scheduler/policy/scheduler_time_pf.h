@@ -59,7 +59,11 @@ private:
                          slot_point      pdsch_slot,
                          unsigned        nof_slots_elapsed);
     /// Computes the priority of the UE to be scheduled in UL based on the proportional fair metric.
-    void compute_ul_prio(const slice_ue& u, ran_slice_id_t slice_id, slot_point pdcch_slot, slot_point pusch_slot);
+    void compute_ul_prio(const slice_ue& u,
+                         ran_slice_id_t  slice_id,
+                         slot_point      pdcch_slot,
+                         slot_point      pusch_slot,
+                         unsigned        nof_slots_elapsed);
 
     void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info);
     void save_ul_alloc(const slice_ue& u, unsigned alloc_bytes);
@@ -78,7 +82,7 @@ private:
 
   private:
     void compute_dl_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed);
-    void compute_ul_avg_rate(const slice_ue& u);
+    void compute_ul_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed);
 
     // Sum of DL bytes allocated for a given slot, before it is taken into account in the average rate computation.
     static_vector<unsigned, MAX_NOF_RB_LCIDS> dl_alloc_bytes_per_lc;

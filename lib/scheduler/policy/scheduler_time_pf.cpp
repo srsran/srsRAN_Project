@@ -193,10 +193,16 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
 
   // Clear the existing contents of the queue.
   ul_queue.clear();
+  slot_point pusch_slot        = slice_candidate.get_slot_tx();
+  unsigned   nof_slots_elapsed = last_pusch_slot.valid() ? pusch_slot - last_pusch_slot : 1;
+  last_pusch_slot              = pusch_slot;
   for (const auto& u : ues) {
     ue_ctxt& ctxt = ue_history_db[u.ue_index()];
-    ctxt.compute_ul_prio(
-        u, slice_candidate.id(), res_grid.get_pdcch_slot(u.get_pcell().cell_index), slice_candidate.get_slot_tx());
+    ctxt.compute_ul_prio(u,
+                         slice_candidate.id(),
+                         res_grid.get_pdcch_slot(u.get_pcell().cell_index),
+                         slice_candidate.get_slot_tx(),
+                         nof_slots_elapsed);
     ul_queue.push(&ctxt);
   }
 
@@ -393,12 +399,13 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
 void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
                                                  ran_slice_id_t  slice_id,
                                                  slot_point      pdcch_slot,
-                                                 slot_point      pusch_slot)
+                                                 slot_point      pusch_slot,
+                                                 unsigned        nof_slots_elapsed)
 {
   ul_prio = forbid_prio;
 
   // Process bytes allocated in previous slot and compute average.
-  compute_ul_avg_rate(u);
+  compute_ul_avg_rate(u, nof_slots_elapsed);
 
   const ue_cell* ue_cc = u.find_cell(cell_index);
   if (ue_cc == nullptr) {
@@ -553,11 +560,36 @@ void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned
   dl_nof_samples++;
 }
 
-void scheduler_time_pf::ue_ctxt::compute_ul_avg_rate(const slice_ue& u)
+void scheduler_time_pf::ue_ctxt::compute_ul_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
 {
   // Redimension LCID arrays to the UE configured bearers.
   ul_alloc_bytes_per_lcg.resize(u.get_lcgs().size(), 0);
   ul_avg_rate_per_lcg.resize(ul_alloc_bytes_per_lcg.size(), 0);
+
+  // In case more than one slot elapsed.
+  for (unsigned s = 0; s != nof_slots_elapsed - 1; ++s) {
+    for (unsigned i = 0; i != ul_alloc_bytes_per_lcg.size(); ++i) {
+      if (not u.contains(uint_to_lcid(i))) {
+        // Skip LCIDs that are not configured.
+        ul_alloc_bytes_per_lcg[i] = 0;
+        ul_avg_rate_per_lcg[i]    = 0;
+        continue;
+      }
+      if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
+        // Fast start before transitioning to exponential average.
+        ul_avg_rate_per_lcg[i] -= ul_avg_rate_per_lcg[i] / (ul_nof_samples + 1);
+      } else {
+        ul_avg_rate_per_lcg[i] -= parent->exp_avg_alpha * ul_avg_rate_per_lcg[i];
+      }
+    }
+    if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
+      // Fast start before transitioning to exponential average.
+      total_ul_avg_rate_ -= total_ul_avg_rate_ / (ul_nof_samples + 1);
+    } else {
+      total_ul_avg_rate_ -= parent->exp_avg_alpha * total_ul_avg_rate_;
+    }
+    ul_nof_samples++;
+  }
 
   // Compute UL average rate on a per-logical channel group basis.
   for (unsigned i = 0; i != ul_alloc_bytes_per_lcg.size(); ++i) {

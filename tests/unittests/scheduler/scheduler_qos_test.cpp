@@ -167,6 +167,7 @@ TEST_F(scheduler_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
 
   const unsigned GBR_UE_INDEX = 0;
   for (unsigned i = 1; i != ue_stats_map.size(); ++i) {
-    ASSERT_GT(ue_dl_rate_mbps[GBR_UE_INDEX], ue_dl_rate_mbps[i]) << "UE GBR rate < UE non-GBR rate";
+    ASSERT_GT(ue_dl_rate_mbps[GBR_UE_INDEX], ue_dl_rate_mbps[i]) << "UE DL GBR rate < UE DL non-GBR rate";
+    ASSERT_GT(ue_ul_rate_mbps[GBR_UE_INDEX], ue_ul_rate_mbps[i]) << "UE UL GBR rate < UE UL non-GBR rate";
   }
 }
