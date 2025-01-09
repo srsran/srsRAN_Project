@@ -28,7 +28,7 @@ rach_indication_message create_rach_indication(slot_point                       
                                                const std::vector<rach_indication_message::preamble>& preambles);
 
 /// Create dummy UCI indication based on a PUCCH PDU.
-uci_indication create_uci_indication(slot_point uci_sl, du_ue_index_t ue_idx, const pucch_info& pucch_pdu);
+uci_indication          create_uci_indication(slot_point uci_sl, du_ue_index_t ue_idx, const pucch_info& pucch_pdu);
 uci_indication::uci_pdu create_uci_indication_pdu(du_ue_index_t ue_idx, const pucch_info& pucch_pdu);
 
 /// Create dummy UCI PDU based on a PUSCH UCI PDU.
