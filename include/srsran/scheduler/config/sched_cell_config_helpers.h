@@ -20,5 +20,7 @@ namespace config_helpers {
 std::vector<sched_grid_resource> build_pucch_guardbands_list(const srs_du::pucch_builder_params& ul_cfg,
                                                              unsigned                            bwp_size);
 
+unsigned compute_tot_nof_monitored_pdcch_candidates_per_slot(const serving_cell_config& ue_cell_cfg,
+                                                             const dl_config_common&    dl_cfg_common);
 } // namespace config_helpers
 } // namespace srsran
