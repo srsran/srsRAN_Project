@@ -248,6 +248,13 @@ bool reestablishment_context_modification_routine::generate_bearer_context_modif
     return false;
   }
 
+  // Fail procedure if (single) DRB couldn't be modified.
+  if (!ue_context_modification_resp.drbs_failed_to_be_modified_list.empty()) {
+    logger.warning("Couldn't modify {} DRBs at DU",
+                   ue_context_modification_resp.drbs_failed_to_be_modified_list.size());
+    return false;
+  }
+
   // Fill security info
   bearer_ctxt_mod_req.security_info.emplace();
   bearer_ctxt_mod_req.security_info->security_algorithm.ciphering_algo                 = security_cfg.cipher_algo;
