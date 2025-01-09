@@ -10,6 +10,7 @@
 
 #include "split6_o_du_application_unit_impl.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
+#include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_config_translators.h"
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_config_yaml_writer.h"
 #include "split6_o_du_factory.h"
@@ -57,7 +58,11 @@ void split6_o_du_application_unit_impl::on_parsing_configuration_registration(CL
 
 o_du_unit split6_o_du_application_unit_impl::create_flexible_o_du_unit(const o_du_unit_dependencies& dependencies)
 {
-  auto fapi_ctrl = plugin->create_fapi_adaptor(dependencies);
+  // Get the cells config.
+  std::vector<srs_du::du_cell_config> du_cells_cfg = generate_du_cell_config(unit_cfg.odu_high_cfg.du_high_cfg.config);
+
+  // Create the adaptors.
+  auto fapi_ctrl = plugin->create_fapi_adaptor(du_cells_cfg, dependencies);
   report_error_if_not(!fapi_ctrl.empty(), "Could not create FAPI adaptor");
   auto du_impl = create_o_du_split6(unit_cfg, dependencies, std::move(fapi_ctrl));
   report_error_if_not(du_impl.unit, "Could not create split 6 DU");

@@ -19,6 +19,10 @@ class App;
 
 namespace srsran {
 
+namespace srs_du {
+struct du_cell_config;
+}
+
 /// \brief Split 6 plugin interface.
 ///
 /// The plugin interface allows different implementations of the split 6.
@@ -38,7 +42,7 @@ public:
 
   /// Creates and returns a vector of fapi adaptors, each of them representing a cell.
   virtual std::vector<std::unique_ptr<fapi::fapi_adaptor>>
-  create_fapi_adaptor(const o_du_unit_dependencies& dependencies) = 0;
+  create_fapi_adaptor(span<const srs_du::du_cell_config> du_cell_cfg, const o_du_unit_dependencies& dependencies) = 0;
 };
 
 } // namespace srsran
