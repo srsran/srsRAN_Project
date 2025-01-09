@@ -734,6 +734,30 @@ void cu_cp_impl::handle_pending_ue_task_cancellation(ue_index_t ue_index)
   }
 }
 
+void cu_cp_impl::initialize_ue_release_timer(ue_index_t                              ue_index,
+                                             std::chrono::milliseconds               ue_release_timeout,
+                                             const cu_cp_ue_context_release_request& ue_context_release_request)
+{
+  if (ue_mng.find_du_ue(ue_index) == nullptr) {
+    logger.warning("ue={}: Could not find UE", ue_index);
+    return;
+  }
+
+  cu_cp_ue* ue = ue_mng.find_ue(ue_index);
+
+  if (ue->get_ue_release_timer().is_running()) {
+    logger.warning("ue={}: UE release timer already running", ue_index);
+    return;
+  }
+
+  // Start timer.
+  logger.debug("ue={}: Setting release timer to {}ms", ue_index, ue_release_timeout.count());
+  ue->get_ue_release_timer().set(ue_release_timeout, [this, ue, ue_context_release_request](timer_id_t /*tid*/) {
+    ue->get_task_sched().schedule_async_task(handle_ue_context_release(ue_context_release_request));
+  });
+  ue->get_ue_release_timer().run();
+}
+
 // private
 
 void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue)

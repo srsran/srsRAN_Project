@@ -226,6 +226,14 @@ public:
   /// \param[in] source_ue_index The index of the UE that is the source of the handover.
   /// \param[in] target_ue_index The index of the UE that is the target of the handover.
   virtual void handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) = 0;
+
+  /// \brief Initialize a UE release timer. When the timeout is reached, a release request is sent to the AMF.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] ue_release_timeout The timeout for the release.
+  /// \param[in] ue_context_release_request The release request.
+  virtual void initialize_ue_release_timer(ue_index_t                              ue_index,
+                                           std::chrono::milliseconds               ue_release_timeout,
+                                           const cu_cp_ue_context_release_request& ue_context_release_request) = 0;
 };
 
 /// Methods used by CU-CP to transfer the RRC UE context e.g. for RRC Reestablishments.

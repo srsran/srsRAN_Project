@@ -89,6 +89,9 @@ public:
   // cu_cp_ue_context_manipulation_handler.
   async_task<bool> handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id) override;
   void             handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;
+  void             initialize_ue_release_timer(ue_index_t                              ue_index,
+                                               std::chrono::milliseconds               ue_release_timeout,
+                                               const cu_cp_ue_context_release_request& ue_context_release_request) override;
 
   // cu_cp_ngap_handler.
   bool handle_handover_request(ue_index_t ue_index, security::security_context sec_ctxt) override;
