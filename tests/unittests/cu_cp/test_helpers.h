@@ -130,7 +130,9 @@ public:
     });
   }
 
-  async_task<bool> handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id_) override
+  async_task<bool> handle_handover_reconfiguration_sent(ue_index_t                target_ue_index,
+                                                        uint8_t                   transaction_id_,
+                                                        std::chrono::milliseconds timeout_ms) override
   {
     logger.info("ue={}: Awaiting a RRC Reconfiguration Complete (transaction_id={})", target_ue_index, transaction_id_);
     last_transaction_id = transaction_id_;

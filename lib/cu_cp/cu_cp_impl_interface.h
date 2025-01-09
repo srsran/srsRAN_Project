@@ -218,9 +218,13 @@ public:
 
   /// \brief Handle the trasmission of the handover reconfiguration by notifying the target RRC UE to await a RRC
   /// Reconfiguration Complete.
+  /// \param[in] target_ue_index The index of the target UE.
   /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
+  /// \param[in] timeout_ms The timeout for the RRC Reconfiguration Complete.
   /// \returns True if the RRC Reconfiguration Complete was received, false otherwise.
-  virtual async_task<bool> handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id) = 0;
+  virtual async_task<bool> handle_handover_reconfiguration_sent(ue_index_t                target_ue_index,
+                                                                uint8_t                   transaction_id,
+                                                                std::chrono::milliseconds timeout_ms) = 0;
 
   /// \brief Handle a UE context push during handover.
   /// \param[in] source_ue_index The index of the UE that is the source of the handover.

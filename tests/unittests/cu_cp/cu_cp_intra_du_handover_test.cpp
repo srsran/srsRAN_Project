@@ -161,9 +161,7 @@ public:
   {
     // Fail RRC Reconfiguration (UE doesn't respond) and wait for F1AP UE Context Release Command.
     if (tick_until(
-            std::chrono::milliseconds(this->get_cu_cp_cfg().rrc.rrc_procedure_timeout_ms),
-            [&]() { return false; },
-            false)) {
+            std::chrono::milliseconds(6000), [&]() { return false; }, false)) {
       return false;
     }
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
@@ -259,7 +257,7 @@ TEST_F(cu_cp_intra_du_handover_test, when_rrc_reconfiguration_fails_then_ho_fail
   // Let the RRC Reconfiguration timeout and await F1AP UE Context Release Command for target UE.
   ASSERT_TRUE(timeout_rrc_reconfiguration_and_await_f1ap_ue_context_release_command());
 
-  // // Inject F1AP UE Context Release Complete for target UE.
+  // Inject F1AP UE Context Release Complete for target UE.
   ASSERT_TRUE(send_f1ap_ue_context_release_complete(target_cu_ue_id, target_du_ue_id));
 
   // STATUS: Target UE should be removed from DU.

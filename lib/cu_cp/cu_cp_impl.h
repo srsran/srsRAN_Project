@@ -87,7 +87,9 @@ public:
   async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override;
 
   // cu_cp_ue_context_manipulation_handler.
-  async_task<bool> handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id) override;
+  async_task<bool> handle_handover_reconfiguration_sent(ue_index_t                target_ue_index,
+                                                        uint8_t                   transaction_id,
+                                                        std::chrono::milliseconds timeout_ms) override;
   void             handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;
   void             initialize_ue_release_timer(ue_index_t                              ue_index,
                                                std::chrono::milliseconds               ue_release_timeout,

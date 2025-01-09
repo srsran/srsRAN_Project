@@ -60,7 +60,8 @@ public:
   async_task<bool> handle_rrc_reconfiguration_request(const rrc_reconfiguration_procedure_request& msg) override;
   rrc_ue_handover_reconfiguration_context
   get_rrc_ue_handover_reconfiguration_context(const rrc_reconfiguration_procedure_request& request) override;
-  async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id) override;
+  async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t                   transaction_id,
+                                                                     std::chrono::milliseconds timeout_ms) override;
   bool             store_ue_capabilities(byte_buffer ue_capabilities) override;
   async_task<bool> handle_rrc_ue_capability_transfer_request(const rrc_ue_capability_transfer_request& msg) override;
   rrc_ue_release_context                get_rrc_ue_release_context(bool requires_rrc_message) override;

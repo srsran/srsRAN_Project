@@ -362,11 +362,13 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
   return launch_async<transfer_context_task>(*this, old_ue_index, handle_ue_context_transfer_impl);
 }
 
-async_task<bool> cu_cp_impl::handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id)
+async_task<bool> cu_cp_impl::handle_handover_reconfiguration_sent(ue_index_t                target_ue_index,
+                                                                  uint8_t                   transaction_id,
+                                                                  std::chrono::milliseconds timeout_ms)
 {
   // Note that this is running a task for the target UE on the source UE task scheduler. This should be fine, as the
   // source UE controls the target UE in this handover scenario.
-  return launch_async([this, target_ue_index, transaction_id](coro_context<async_task<bool>>& ctx) mutable {
+  return launch_async([this, target_ue_index, transaction_id, timeout_ms](coro_context<async_task<bool>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     if (ue_mng.find_du_ue(target_ue_index) == nullptr) {
@@ -377,7 +379,7 @@ async_task<bool> cu_cp_impl::handle_handover_reconfiguration_sent(ue_index_t tar
     CORO_AWAIT_VALUE(bool result,
                      ue_mng.find_du_ue(target_ue_index)
                          ->get_rrc_ue()
-                         ->handle_handover_reconfiguration_complete_expected(transaction_id));
+                         ->handle_handover_reconfiguration_complete_expected(transaction_id, timeout_ms));
 
     CORO_RETURN(result);
   });

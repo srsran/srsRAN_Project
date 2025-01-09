@@ -54,9 +54,9 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
     // Initialize UE release timer.
     initialize_ue_release_timer();
 
-    CORO_AWAIT_VALUE(
-        procedure_result,
-        cu_cp_handler.handle_handover_reconfiguration_sent(target_ue_index, ho_reconf_ctxt.transaction_id));
+    CORO_AWAIT_VALUE(procedure_result,
+                     cu_cp_handler.handle_handover_reconfiguration_sent(
+                         target_ue_index, ho_reconf_ctxt.transaction_id, ue_release_timeout_ms));
   } else {
     logger.debug(
         "source_ue={} target_ue={}: UE context modification failed", source_ue.get_ue_index(), target_ue_index);

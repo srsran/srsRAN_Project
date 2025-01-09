@@ -13,6 +13,7 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/async/coroutine.h"
+#include <chrono>
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -75,7 +76,8 @@ public:
     return {test_transaction_id, byte_buffer{}};
   }
 
-  async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id_) override
+  async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t                   transaction_id_,
+                                                                     std::chrono::milliseconds timeout_ms) override
   {
     logger.info("Awaiting a RRC Reconfiguration Complete (transaction_id={})", transaction_id_);
     last_transaction_id = transaction_id_;
