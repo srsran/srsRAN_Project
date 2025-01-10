@@ -35,6 +35,8 @@ void srsran::srs_cu_cp::fill_e1ap_qos_flow_param_item(e1ap_qos_flow_qos_param_it
 
   e1ap_qos_item.qos_flow_level_qos_params.ng_ran_alloc_retention =
       request_item.qos_flow_level_qos_params.alloc_retention_prio;
+
+  e1ap_qos_item.qos_flow_level_qos_params.gbr_qos_flow_info = request_item.qos_flow_level_qos_params.gbr_qos_info;
 }
 
 bool srsran::srs_cu_cp::verify_and_log_cell_group_config(const byte_buffer&          packed_cell_group_cfg,

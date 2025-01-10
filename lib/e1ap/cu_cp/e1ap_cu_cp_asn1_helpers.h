@@ -92,13 +92,13 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
   if (qos_flow_level_params.gbr_qos_flow_info.has_value()) {
     asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info_present = true;
     asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_dl =
-        qos_flow_level_params.gbr_qos_flow_info.value().max_flow_bit_rate_dl;
+        qos_flow_level_params.gbr_qos_flow_info.value().max_br_dl;
     asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_ul =
-        qos_flow_level_params.gbr_qos_flow_info.value().max_flow_bit_rate_ul;
+        qos_flow_level_params.gbr_qos_flow_info.value().max_br_ul;
     asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl =
-        qos_flow_level_params.gbr_qos_flow_info.value().guaranteed_flow_bit_rate_dl;
+        qos_flow_level_params.gbr_qos_flow_info.value().gbr_dl;
     asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul =
-        qos_flow_level_params.gbr_qos_flow_info.value().guaranteed_flow_bit_rate_ul;
+        qos_flow_level_params.gbr_qos_flow_info.value().gbr_ul;
     if (qos_flow_level_params.gbr_qos_flow_info.value().max_packet_loss_rate_dl.has_value()) {
       asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_dl_present = true;
       asn1_qos_flow_info_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_dl =

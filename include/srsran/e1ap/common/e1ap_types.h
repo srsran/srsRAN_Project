@@ -63,23 +63,14 @@ struct e1ap_cell_group_info_item {
   std::optional<std::string> rat_type;
 };
 
-struct e1ap_gbr_qos_flow_info {
-  uint64_t                max_flow_bit_rate_dl;
-  uint64_t                max_flow_bit_rate_ul;
-  uint64_t                guaranteed_flow_bit_rate_dl;
-  uint64_t                guaranteed_flow_bit_rate_ul;
-  std::optional<uint16_t> max_packet_loss_rate_dl;
-  std::optional<uint16_t> max_packet_loss_rate_ul;
-};
-
 struct e1ap_qos_flow_level_qos_params {
-  qos_characteristics                   qos_desc;
-  alloc_and_retention_priority          ng_ran_alloc_retention;
-  std::optional<e1ap_gbr_qos_flow_info> gbr_qos_flow_info;
-  std::optional<bool>                   reflective_qos_attribute;
-  std::optional<bool>                   add_qos_info;
-  std::optional<uint8_t>                paging_policy_ind;
-  std::optional<bool>                   reflective_qos_ind;
+  qos_characteristics                     qos_desc;
+  alloc_and_retention_priority            ng_ran_alloc_retention;
+  std::optional<gbr_qos_flow_information> gbr_qos_flow_info;
+  std::optional<bool>                     reflective_qos_attribute;
+  std::optional<bool>                     add_qos_info;
+  std::optional<uint8_t>                  paging_policy_ind;
+  std::optional<bool>                     reflective_qos_ind;
 };
 
 struct e1ap_qos_flow_qos_param_item {

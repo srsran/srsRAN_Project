@@ -1152,14 +1152,12 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
 
     // Add gbr qos flow info.
     if (asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info_present) {
-      e1ap_gbr_qos_flow_info gbr_qos_flow_info;
-      gbr_qos_flow_info.max_flow_bit_rate_dl =
-          asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_dl;
-      gbr_qos_flow_info.max_flow_bit_rate_ul =
-          asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_ul;
-      gbr_qos_flow_info.guaranteed_flow_bit_rate_dl =
+      gbr_qos_flow_information gbr_qos_flow_info;
+      gbr_qos_flow_info.max_br_dl = asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_dl;
+      gbr_qos_flow_info.max_br_ul = asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_flow_bit_rate_ul;
+      gbr_qos_flow_info.gbr_dl =
           asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_dl;
-      gbr_qos_flow_info.guaranteed_flow_bit_rate_ul =
+      gbr_qos_flow_info.gbr_ul =
           asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.guaranteed_flow_bit_rate_ul;
       if (asn1_flow_map_item.qos_flow_level_qos_params.gbr_qos_flow_info.max_packet_loss_rate_dl_present) {
         gbr_qos_flow_info.max_packet_loss_rate_dl =
