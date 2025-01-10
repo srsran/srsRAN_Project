@@ -1196,8 +1196,8 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                               
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.
   h_ul->save_grant_params(ul_harq_alloc_context{pdcch.dci.type}, msg.pusch_cfg);
 
-  // In case there is a SR pending, reset it.
-  u.reset_sr_indication();
+  // Notify UL TB scheduling.
+  u.handle_ul_transport_block_info(msg.pusch_cfg.tb_size_bytes);
 }
 
 const pdsch_time_domain_resource_allocation& ue_fallback_scheduler::get_pdsch_td_cfg(unsigned pdsch_time_res_idx) const

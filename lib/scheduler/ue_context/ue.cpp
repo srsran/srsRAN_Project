@@ -207,11 +207,6 @@ unsigned ue::pending_ul_newtx_bytes() const
   return pending_bytes > 0 ? pending_bytes : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
 }
 
-unsigned ue::pending_ul_newtx_bytes(lcg_id_t lcg_id) const
-{
-  return ul_lc_ch_mgr.pending_bytes(lcg_id);
-}
-
 bool ue::has_pending_sr() const
 {
   return ul_lc_ch_mgr.has_pending_sr();
@@ -244,9 +239,4 @@ unsigned ue::build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, uns
   }
   total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, LCID_SRB1);
   return total_subpdu_bytes;
-}
-
-void ue::handle_ul_transport_block_info(unsigned tb_size_bytes)
-{
-  ul_lc_ch_mgr.handle_ul_grant(tb_size_bytes);
 }

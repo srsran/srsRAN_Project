@@ -91,9 +91,6 @@ public:
   /// \brief Handle received SR indication.
   void handle_sr_indication() { ul_lc_ch_mgr.handle_sr_indication(); }
 
-  /// \brief Once an UL grant is given, the SR status of the UE must be reset.
-  void reset_sr_indication() { ul_lc_ch_mgr.reset_sr_indication(); }
-
   /// \brief Handles received BSR indication by updating UE UL logical channel states.
   void handle_bsr_indication(const ul_bsr_indication_message& msg) { ul_lc_ch_mgr.handle_bsr_indication(msg); }
 
@@ -163,7 +160,7 @@ public:
   unsigned pending_ul_newtx_bytes() const;
 
   /// \brief Computes the number of UL pending bytes for a LCG ID.
-  unsigned pending_ul_newtx_bytes(lcg_id_t lcg_id) const;
+  unsigned pending_ul_newtx_bytes(lcg_id_t lcg_id) const { return ul_lc_ch_mgr.pending_bytes(lcg_id); }
 
   /// \brief Returns whether a SR indication handling is pending.
   bool has_pending_sr() const;
@@ -190,8 +187,8 @@ public:
   /// \brief UE UL logical channels.
   const ul_logical_channel_manager& ul_logical_channels() const { return ul_lc_ch_mgr; }
 
-  /// \brief UE UL logical channels.
-  void handle_ul_transport_block_info(unsigned tb_size_bytes);
+  /// \brief Handle UL TB scheduling.
+  void handle_ul_transport_block_info(unsigned tb_size_bytes) { ul_lc_ch_mgr.handle_ul_grant(tb_size_bytes); }
 
 private:
   /// Update UE configuration.

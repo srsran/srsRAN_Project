@@ -59,6 +59,10 @@ void ul_logical_channel_manager::deactivate()
 
 void ul_logical_channel_manager::handle_ul_grant(unsigned grant_size)
 {
+  // Reset any pending SR indication.
+  reset_sr_indication();
+
+  // Update estimates of logical channel bit rates.
   for (unsigned i = 0, e = groups.size(); i != e and grant_size > 0; ++i) {
     if (groups[i].active and groups[i].buf_st > groups[i].sched_bytes_accum) {
       unsigned bytes_sched = std::min(groups[i].buf_st - groups[i].sched_bytes_accum, grant_size);
