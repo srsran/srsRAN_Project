@@ -212,7 +212,7 @@ test_bench::test_bench(const test_bench_params& params,
     }
     pucch_builder.setup(
         cell_cfg.ul_cfg_common.init_ul_bwp, params.is_tdd ? cell_cfg.tdd_cfg_common : std::nullopt, pucch_params);
-    // This function is called so that the PUCCH resource list is generated with the .
+    // This function is called so that the PUCCH resource list is generated again with the new parameters.
     bool new_ue_added = pucch_builder.add_build_new_ue_pucch_cfg(ue_req.cfg.cells.value().back().serv_cell_cfg);
     if (not new_ue_added) {
       srsran_terminate("UE PUCCH configuration couldn't be built");

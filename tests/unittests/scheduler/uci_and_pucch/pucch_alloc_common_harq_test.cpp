@@ -87,7 +87,7 @@ public:
     t_bench(test_bench_params{.pucch_res_common = params.pucch_input_params.pucch_res_common,
                               .n_cces           = params.pucch_input_params.n_cces}),
     pucch_expected(build_pucch_info(&t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params,
-                                    t_bench.cell_cfg.pci,
+                                    static_cast<unsigned>(t_bench.cell_cfg.pci),
                                     params.output_params.format,
                                     params.output_params.prbs,
                                     params.output_params.second_hop_prbs,
