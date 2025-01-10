@@ -12,6 +12,7 @@ add_executable(uci_pucch_sched_test
         pucch_alloc_ded_resources_test.cpp
         pucch_alloc_format_0_test.cpp
         pucch_alloc_format_3_test.cpp
+        pucch_alloc_format_4_test.cpp
         pucch_alloc_harq_sr_csi_test.cpp
         pucch_guardbands_sched_test.cpp
         pucch_res_manager_test.cpp
