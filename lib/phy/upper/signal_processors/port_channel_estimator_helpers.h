@@ -67,4 +67,15 @@ float estimate_time_alignment(const re_buffer_reader<cf_t>&                     
 
 // Returns the interpolator configuration for the given RE pattern.
 interpolator::configuration configure_interpolator(const bounded_bitset<NRE>& re_mask);
+
+/// \brief Extract resource elements from an OFDM symbol view.
+/// \param[out] dmrs_symbols     Extracted resource elements.
+/// \param[in]  ofdm_symbol_view Resource grid OFDM symbol view.
+/// \param[in]  hop_rb_mask      Resource block selector mask.
+/// \param[in]  re_pattern       Resource element pattern within resource blocks.
+void extract_dmrs_grid(span<cf_t>                    dmrs_symbols,
+                       span<const cbf16_t>           ofdm_symbol_view,
+                       const bounded_bitset<MAX_RB>& hop_rb_mask,
+                       const bounded_bitset<NRE>&    re_pattern);
+
 } // namespace srsran

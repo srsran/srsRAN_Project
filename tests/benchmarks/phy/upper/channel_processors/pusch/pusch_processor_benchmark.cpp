@@ -54,7 +54,7 @@ public:
   void wait_for_completion()
   {
     while (!completed.load()) {
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
+      std::this_thread::sleep_for(std::chrono::nanoseconds(100));
     }
   }
 
@@ -670,7 +670,7 @@ static void thread_process(pusch_processor&              proc,
       // Wait for pending to non-negative.
       while (pending_count.load() <= 0) {
         // Sleep.
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
+        std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 
         // Quit if signaled.
         if (thread_quit) {
@@ -823,7 +823,7 @@ int main(int argc, char** argv)
 
     // Wait for finish thread init.
     while (pending_count.load() != -static_cast<int>(nof_threads)) {
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
+      std::this_thread::sleep_for(std::chrono::nanoseconds(100));
     }
 
     // Calculate the peak throughput, considering that the number of bits is for a slot.
@@ -849,7 +849,7 @@ int main(int argc, char** argv)
 
       // Wait for finish.
       while (finish_count.load() != (nof_threads * batch_size_per_thread)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::nanoseconds(100));
       }
     });
 
