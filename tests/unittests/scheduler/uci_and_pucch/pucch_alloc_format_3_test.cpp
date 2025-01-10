@@ -71,9 +71,13 @@ public:
     pucch_expected_f3.resources.symbols         = ofdm_symbol_range{0, 4};
 
     pucch_expected_f3.format_3.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_f3.format_3.group_hopping     = pucch_group_hopping::NEITHER;
+    pucch_expected_f3.format_3.slot_repetition   = pucch_repetition_tx_slot::no_multi_slot;
     pucch_expected_f3.format_3.n_id_hopping      = t_bench.cell_cfg.pci;
     pucch_expected_f3.format_3.n_id_scrambling   = t_bench.cell_cfg.pci;
     pucch_expected_f3.format_3.n_id_0_scrambling = t_bench.cell_cfg.pci;
+    pucch_expected_f3.format_3.pi_2_bpsk         = false;
+    pucch_expected_f3.format_3.additional_dmrs   = false;
 
     // The expected resource for CSI corresponds to the last resource in the resource list.
     pucch_expected_csi.format                    = pucch_format::FORMAT_3;
@@ -84,9 +88,13 @@ public:
     pucch_expected_csi.resources.symbols         = ofdm_symbol_range{0, 4};
 
     pucch_expected_csi.format_3.max_code_rate     = max_pucch_code_rate::dot_25;
+    pucch_expected_csi.format_3.group_hopping     = pucch_group_hopping::NEITHER;
+    pucch_expected_csi.format_3.slot_repetition   = pucch_repetition_tx_slot::no_multi_slot;
     pucch_expected_csi.format_3.n_id_hopping      = t_bench.cell_cfg.pci;
     pucch_expected_csi.format_3.n_id_scrambling   = t_bench.cell_cfg.pci;
     pucch_expected_csi.format_3.n_id_0_scrambling = t_bench.cell_cfg.pci;
+    pucch_expected_csi.format_3.pi_2_bpsk         = false;
+    pucch_expected_csi.format_3.additional_dmrs   = false;
   };
 
 protected:
