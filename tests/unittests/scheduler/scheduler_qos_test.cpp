@@ -26,6 +26,9 @@ class scheduler_qos_test : public scheduler_test_simulator, public ::testing::Te
   };
 
 public:
+  static constexpr unsigned GBR_DL = 10e6;
+  static constexpr unsigned GBR_UL = 5e6;
+
   scheduler_qos_test() : scheduler_test_simulator(4, subcarrier_spacing::kHz30)
   {
     const unsigned TEST_NOF_UES = 8;
@@ -37,7 +40,8 @@ public:
     auto cell_cfg_req = sched_config_helper::make_default_sched_cell_configuration_request(params);
     cell_cfg_req.rrm_policy_members.resize(1);
     cell_cfg_req.rrm_policy_members[0].rrc_member.s_nssai.sst = slice_service_type{1};
-    cell_cfg_req.rrm_policy_members[0].policy_sched_cfg       = time_pf_scheduler_expert_config{};
+    cell_cfg_req.rrm_policy_members[0].policy_sched_cfg =
+        time_pf_scheduler_expert_config{2.0, time_pf_scheduler_expert_config::weight_function::gbr_prioritized};
     this->add_cell(cell_cfg_req);
 
     srs_du::pucch_builder_params pucch_basic_params{.nof_ue_pucch_f0_or_f1_res_harq       = 8,
@@ -58,8 +62,8 @@ public:
     auto& qos_info                                              = ue_cfg.cfg.lc_config_list.value()[2].qos.emplace();
     qos_info.qos.average_window_ms                              = 100;
     qos_info.gbr_qos_info.emplace();
-    qos_info.gbr_qos_info.value().gbr_dl = 10e6;
-    qos_info.gbr_qos_info.value().gbr_ul = 5e6;
+    qos_info.gbr_qos_info.value().gbr_dl = GBR_DL;
+    qos_info.gbr_qos_info.value().gbr_ul = GBR_UL;
     report_fatal_error_if_not(pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_cfg.cfg.cells.value()[0].serv_cell_cfg),
                               "Failed to allocate PUCCH resources");
     this->add_ue(ue_cfg);
@@ -177,4 +181,8 @@ TEST_F(scheduler_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
     ASSERT_GT(ue_dl_rate_mbps[GBR_UE_INDEX], ue_dl_rate_mbps[i]) << "UE DL GBR rate < UE DL non-GBR rate";
     ASSERT_GT(ue_ul_rate_mbps[GBR_UE_INDEX], ue_ul_rate_mbps[i]) << "UE UL GBR rate < UE UL non-GBR rate";
   }
+  ASSERT_GT(ue_dl_rate_mbps[GBR_UE_INDEX], static_cast<double>(GBR_DL) * 1e-6 * 0.95)
+      << "UE DL GBR rate < expected DL GBR";
+  ASSERT_GT(ue_ul_rate_mbps[GBR_UE_INDEX], static_cast<double>(GBR_UL) * 1e-6 * 0.95)
+      << "UE UL GBR rate < expected UL GBR";
 }

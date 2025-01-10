@@ -29,8 +29,19 @@ namespace srsran {
 
 /// \brief Proportional fair policy scheduler expert parameters.
 struct time_pf_scheduler_expert_config {
+  /// \brief Types of scheduler weight functions to use. Supported:
+  /// - gbr_prioritized - logical channels with GBR get always prioritized if their BR < GBR.
+  /// - multivariate - different weight functions (e.g. GBR, PF) for a given logical channel are "averaged" to obtain
+  /// the final weight function. This weight function was taken from B. Bojovic, N. Baldo, “A new Channel and QoS Aware
+  /// Scheduler to enhance the capacity of Voice over LTE systems”, in Proceedings of 11th International
+  /// Multi-Conference on Systems, Signals & Devices (SSD’14), Castelldefels, 11-14 February 2014,
+  /// Castelldefels (Spain).
+  enum class weight_function { gbr_prioritized, multivariate };
+
   /// Fairness Coefficient to use in Proportional Fair policy scheduler.
-  double pf_sched_fairness_coeff = 2.0F;
+  double pf_sched_fairness_coeff = 2.0;
+  /// \brief Determines the scheduler policy weight function to use.
+  weight_function weight_func = weight_function::gbr_prioritized;
 };
 
 /// \brief Round-Robin policy scheduler expert parameters.

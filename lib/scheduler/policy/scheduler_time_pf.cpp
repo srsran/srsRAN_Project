@@ -17,7 +17,8 @@ using namespace srsran;
 constexpr unsigned MAX_PF_COEFF = 10;
 
 scheduler_time_pf::scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_) :
-  fairness_coeff(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).pf_sched_fairness_coeff)
+  fairness_coeff(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).pf_sched_fairness_coeff),
+  weight_func(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).weight_func)
 {
 }
 
@@ -281,7 +282,7 @@ static double compute_dl_rate_weight(const slice_ue& u)
 }
 
 /// \brief Computes UL rate weight used in computation of UL priority value for a UE in a slot.
-static double compute_ul_rate_weight(const slice_ue& u, subcarrier_spacing bwp_scs)
+static double compute_ul_rate_weight(const slice_ue& u)
 {
   // [Implementation-defined] Rate weight to assign if the UE has only non-GBR bearers or average UL rate of UE is 0.
   const double initial_rate_weight = 1;
@@ -381,8 +382,17 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
     // Give the highest priority to new UE.
     pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
   }
-  const double rate_weight = compute_dl_rate_weight(u);
-  dl_prio                  = rate_weight * pf_weight;
+
+  // Compute GBR weight function.
+  // Skip this step when there is no scheduled data yet for the UE.
+  const double gbr_rate_weight = current_total_avg_rate == 0 ? 1.0 : compute_dl_rate_weight(u);
+
+  if (parent->weight_func == time_pf_scheduler_expert_config::weight_function::gbr_prioritized and
+      gbr_rate_weight > 1) {
+    // GBR target has not been met and we prioritize GBR over PF.
+    pf_weight = std::max(1.0, pf_weight);
+  }
+  dl_prio = gbr_rate_weight * pf_weight;
 }
 
 void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
@@ -474,9 +484,18 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
   } else {
     pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
   }
-  const double rate_weight =
-      compute_ul_rate_weight(u, ue_cc->cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs);
-  ul_prio         = rate_weight * pf_weight;
+
+  // Compute GBR weight function.
+  // Skip this step when there is no scheduled data yet for the UE.
+  const double gbr_rate_weight = current_avg_rate == 0 ? 1.0 : compute_ul_rate_weight(u);
+
+  if (parent->weight_func == time_pf_scheduler_expert_config::weight_function::gbr_prioritized and
+      gbr_rate_weight > 1) {
+    // GBR target has not been met and we prioritize GBR over PF.
+    pf_weight = std::max(1.0, pf_weight);
+  }
+
+  ul_prio         = gbr_rate_weight * pf_weight;
   sr_ind_received = u.has_pending_sr();
 }
 
