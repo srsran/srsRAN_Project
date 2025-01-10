@@ -14,6 +14,7 @@
 
 using namespace srsran;
 
+// Number of RBs configured for the test cases.
 constexpr unsigned NOF_RBS = 52;
 
 class pucch_allocator_base_tester
