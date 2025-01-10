@@ -41,7 +41,7 @@ struct time_pf_scheduler_expert_config {
   /// Fairness Coefficient to use in Proportional Fair policy scheduler.
   double pf_sched_fairness_coeff = 2.0;
   /// \brief Determines the scheduler policy weight function to use.
-  weight_function weight_func = weight_function::gbr_prioritized;
+  weight_function qos_weight_func = weight_function::gbr_prioritized;
 };
 
 /// \brief Round-Robin policy scheduler expert parameters.

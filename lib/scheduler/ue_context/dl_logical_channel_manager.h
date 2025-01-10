@@ -111,7 +111,7 @@ public:
   /// \brief Average bit rate, in bps, for a given LCID.
   double average_bit_rate(lcid_t lcid) const
   {
-    return is_active(lcid) and channels[lcid].avg_bytes_per_slot.size() > 0
+    return not is_srb(lcid) and is_active(lcid) and channels[lcid].avg_bytes_per_slot.size() > 0
                ? channels[lcid].avg_bytes_per_slot.average() * 8 * slots_per_sec
                : 0.0;
   }

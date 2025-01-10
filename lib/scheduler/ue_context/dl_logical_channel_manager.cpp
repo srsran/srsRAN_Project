@@ -57,7 +57,7 @@ void dl_logical_channel_manager::slot_indication()
 {
   // Update the bit rates of the UE logical channels with tracked bit rates.
   for (lcid_t lcid : sorted_channels) {
-    if (channels[lcid].avg_bytes_per_slot.size() > 0) {
+    if (not is_srb(lcid) and channels[lcid].avg_bytes_per_slot.size() > 0) {
       channels[lcid].avg_bytes_per_slot.push(channels[lcid].last_sched_bytes);
       channels[lcid].last_sched_bytes = 0;
     }
@@ -114,7 +114,8 @@ void dl_logical_channel_manager::set_status(lcid_t lcid, bool active)
     // in case it was not specified, fallback to default config.
     channels[lcid].cfg = &get_default_logical_channel_config(lcid);
   }
-  if (channels[lcid].cfg->qos.has_value() and channels[lcid].cfg->qos.value().gbr_qos_info.has_value()) {
+  if (not is_srb(lcid) and channels[lcid].cfg->qos.has_value() and
+      channels[lcid].cfg->qos.value().gbr_qos_info.has_value()) {
     // Track average rate for GBR logical channels.
     unsigned win_size_msec = channels[lcid].cfg->qos.value().qos.average_window_ms.value_or(2000);
     channels[lcid].avg_bytes_per_slot.resize(win_size_msec * slots_per_sec / 1000);
@@ -161,7 +162,7 @@ void dl_logical_channel_manager::configure(span<const logical_channel_config> lo
   for (const logical_channel_config& ch_cfg : channel_configs) {
     channels[ch_cfg.lcid].cfg    = &ch_cfg;
     channels[ch_cfg.lcid].active = true;
-    if (ch_cfg.qos.has_value() and ch_cfg.qos.value().gbr_qos_info.has_value()) {
+    if (not is_srb(ch_cfg.lcid) and ch_cfg.qos.has_value() and ch_cfg.qos.value().gbr_qos_info.has_value()) {
       // Track average rate for GBR logical channels.
       unsigned win_size_msec = ch_cfg.qos.value().qos.average_window_ms.value_or(2000);
       channels[ch_cfg.lcid].avg_bytes_per_slot.resize(win_size_msec * slots_per_sec / 1000);

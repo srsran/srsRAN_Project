@@ -18,7 +18,7 @@ constexpr unsigned MAX_PF_COEFF = 10;
 
 scheduler_time_pf::scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_) :
   fairness_coeff(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).pf_sched_fairness_coeff),
-  weight_func(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).weight_func)
+  weight_func(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).qos_weight_func)
 {
 }
 

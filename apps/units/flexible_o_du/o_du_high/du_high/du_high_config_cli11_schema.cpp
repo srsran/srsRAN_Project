@@ -543,6 +543,21 @@ static void configure_cli11_pf_scheduler_expert_args(CLI::App& app, time_pf_sche
              expert_params.pf_sched_fairness_coeff,
              "Fairness Coefficient to use in Proportional Fair policy scheduler")
       ->capture_default_str();
+  add_option_function<std::string>(
+      app,
+      "--qos_weight_function",
+      [&expert_params](const std::string& value) {
+        if (value == "gbr_prioritized") {
+          expert_params.qos_weight_func = time_pf_scheduler_expert_config::weight_function::gbr_prioritized;
+        } else if (value == "multivariate") {
+          expert_params.qos_weight_func = time_pf_scheduler_expert_config::weight_function::multivariate;
+        } else {
+          report_fatal_error("Invalid qos weight function {}", value);
+        }
+      },
+      "QoS-aware scheduler policy UE weight function")
+      ->default_str("gbr_prioritized")
+      ->check(CLI::IsMember({"gbr_prioritized", "multivariate"}, CLI::ignore_case));
 }
 
 static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_scheduler_expert_config& expert_params)
