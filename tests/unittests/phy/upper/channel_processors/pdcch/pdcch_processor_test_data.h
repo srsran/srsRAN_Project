@@ -28,7 +28,7 @@ struct test_case_t {
 };
 
 static const std::vector<test_case_t> pdcch_processor_test_data = {
-// clang-format off
+    // clang-format off
   {{std::nullopt, {0, 999}, cyclic_prefix::NORMAL, {25, 0, 12, 1, {1, 1, 1, 1}, pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED, 0, 0, 0}, {8320, 821, 821, 8320, 0, 1, 0, 0, {1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1}, default_precoding}}, {"test_data/pdcch_processor_test_output0.dat"}},
   {{std::nullopt, {0, 3481}, cyclic_prefix::NORMAL, {25, 0, 7, 1, {1, 1, 1, 1}, pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED, 0, 0, 0}, {7796, 660, 660, 7796, 0, 2, 0, 0, {1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1}, default_precoding}}, {"test_data/pdcch_processor_test_output1.dat"}},
   {{std::nullopt, {0, 777}, cyclic_prefix::NORMAL, {25, 0, 5, 1, {1, 1, 1, 1}, pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED, 0, 0, 0}, {49384, 288, 288, 49384, 0, 4, 0, 0, {1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0}, default_precoding}}, {"test_data/pdcch_processor_test_output2.dat"}},
@@ -143,7 +143,7 @@ static const std::vector<test_case_t> pdcch_processor_test_data = {
   {{std::nullopt, {0, 2981}, cyclic_prefix::NORMAL, {270, 0, 8, 3, {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED, 0, 0, 0}, {4021, 199, 199, 4021, 60, 4, 0, 0, {0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0}, default_precoding}}, {"test_data/pdcch_processor_test_output111.dat"}},
   {{std::nullopt, {0, 7000}, cyclic_prefix::NORMAL, {270, 0, 10, 3, {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED, 0, 0, 0}, {20902, 909, 909, 20902, 48, 8, 0, 0, {1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0}, default_precoding}}, {"test_data/pdcch_processor_test_output112.dat"}},
   {{std::nullopt, {0, 5322}, cyclic_prefix::NORMAL, {270, 0, 11, 3, {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED, 0, 0, 0}, {20174, 480, 480, 20174, 32, 16, 0, 0, {1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0}, default_precoding}}, {"test_data/pdcch_processor_test_output113.dat"}},
-// clang-format on
+    // clang-format on
 };
 
 } // namespace srsran
