@@ -1051,5 +1051,17 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
 
 void ue_cell_grid_allocator::post_process_results()
 {
-  // TODO
+  for (const cell_t& cell : cells) {
+    auto& pdcch_alloc = get_res_alloc(cell.cell_index)[0];
+
+    // In case PUSCHs allocations have been made, we try to ensure that RBs are not left empty.
+    auto& ul_pdcchs = pdcch_alloc.result.dl.ul_pdcchs;
+
+    for (auto& pdcch : ul_pdcchs) {
+      auto&          u       = *ues.find_by_rnti(pdcch.ctx.rnti);
+      const ue_cell& ue_cell = *u.find_cell(cell.cell_index);
+      auto           h_ul    = ue_cell.harqs.ul_harq(to_harq_id(pdcch.dci.c_rnti_f0_1.harq_process_number));
+      u.handle_ul_transport_block_info(h_ul->get_grant_params().tbs_bytes);
+    }
+  }
 }

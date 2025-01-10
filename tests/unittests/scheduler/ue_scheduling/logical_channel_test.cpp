@@ -264,8 +264,8 @@ TEST(ul_logical_channel_test, when_logical_channel_groups_are_inactive_then_no_u
 {
   lcg_id_t lcg_id = (lcg_id_t)test_rgen::uniform_int<unsigned>(0, MAX_LCG_ID);
 
-  ul_logical_channel_manager ul_lch_mng;
-  ul_logical_channel_manager ul_lch_mng2;
+  ul_logical_channel_manager ul_lch_mng{subcarrier_spacing::kHz15};
+  ul_logical_channel_manager ul_lch_mng2{subcarrier_spacing::kHz15};
 
   ul_lch_mng.set_status(lcg_id, false);
   ul_lch_mng2.set_status(lcg_id, true);

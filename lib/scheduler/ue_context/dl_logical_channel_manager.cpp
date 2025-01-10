@@ -114,6 +114,11 @@ void dl_logical_channel_manager::set_status(lcid_t lcid, bool active)
     // in case it was not specified, fallback to default config.
     channels[lcid].cfg = &get_default_logical_channel_config(lcid);
   }
+  if (channels[lcid].cfg->qos.has_value() and channels[lcid].cfg->qos.value().gbr_qos_info.has_value()) {
+    // Track average rate for GBR logical channels.
+    unsigned win_size_msec = channels[lcid].cfg->qos.value().qos.average_window_ms.value_or(2000);
+    channels[lcid].avg_bytes_per_slot.resize(win_size_msec * slots_per_sec / 1000);
+  }
 
   // set new state.
   channels[lcid].active = active;

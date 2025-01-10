@@ -187,6 +187,12 @@ public:
   /// \brief UE DL logical channels.
   const dl_logical_channel_manager& dl_logical_channels() const { return dl_lc_ch_mgr; }
 
+  /// \brief UE UL logical channels.
+  const ul_logical_channel_manager& ul_logical_channels() const { return ul_lc_ch_mgr; }
+
+  /// \brief UE UL logical channels.
+  void handle_ul_transport_block_info(unsigned tb_size_bytes);
+
 private:
   /// Update UE configuration.
   void set_config(const ue_configuration& new_cfg);

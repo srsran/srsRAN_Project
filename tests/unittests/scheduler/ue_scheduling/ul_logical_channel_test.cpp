@@ -53,7 +53,7 @@ unsigned add_header_bytes(lcg_id_t lcgid, unsigned payload_bytes)
 
 TEST(ul_logical_channel_test, when_bsr_is_zero_no_tx_data_is_pending)
 {
-  ul_logical_channel_manager lch_mng;
+  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   lcg_id_t                   lcgid = (lcg_id_t)get_random_uint(0, MAX_LCG_ID);
   lch_mng.set_status(lcgid, true);
 
@@ -68,7 +68,7 @@ TEST(ul_logical_channel_test, when_bsr_is_zero_no_tx_data_is_pending)
 
 TEST(ul_logical_channel_test, bsr_has_no_effect_in_inactive_bearer)
 {
-  ul_logical_channel_manager lch_mng;
+  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   lcg_id_t                   lcgid = (lcg_id_t)get_random_uint(1, MAX_LCG_ID);
 
   lch_mng.handle_bsr_indication(make_sbsr(lcgid, get_random_uint(1, 1000)));
@@ -80,7 +80,7 @@ TEST(ul_logical_channel_test, bsr_has_no_effect_in_inactive_bearer)
 
 TEST(ul_logical_channel_test, bsr_updates_tx_pending_bytes)
 {
-  ul_logical_channel_manager lch_mng;
+  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   lcg_id_t                   lcgid = (lcg_id_t)get_random_uint(0, MAX_LCG_ID);
   lch_mng.set_status(lcgid, true);
   unsigned bsr = get_random_uint(0, 100);
@@ -93,7 +93,7 @@ TEST(ul_logical_channel_test, bsr_updates_tx_pending_bytes)
 
 TEST(ul_logical_channel_test, total_pending_bytes_equal_sum_of_logical_channel_pending_bytes)
 {
-  ul_logical_channel_manager lch_mng;
+  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   std::vector<unsigned>      bsrs;
   for (unsigned i = 0; i != MAX_NOF_LCGS; ++i) {
     lcg_id_t lcgid = uint_to_lcg_id(i);

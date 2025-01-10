@@ -167,7 +167,7 @@ private:
   /// \brief Updates DL Buffer State for a given LCID based on available space.
   unsigned allocate_mac_sdu(dl_msg_lc_info& subpdu, lcid_t lcid, unsigned rem_bytes);
 
-  // config param used to compute bit rates.
+  // Number of slots per second given the used SCS. Parameter used to compute bit rates.
   const unsigned slots_per_sec;
 
   // List of UE-dedicated logical channel configurations.

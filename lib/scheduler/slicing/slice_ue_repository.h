@@ -92,15 +92,16 @@ public:
   /// Get QoS information of DRBs configured for the UE.
   span<const logical_channel_config> logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); };
 
-  /// Get an estimation of how many UL bytes were allocated per LCG for a given grant.
-  ///
-  /// Note: This function is called after the allocation has been made.
-  static_vector<std::pair<lcg_id_t, unsigned>, MAX_NOF_LCGS> estimate_ul_alloc_bytes_per_lcg(unsigned grant_size) const;
-
   /// Average DL bit rate, in bps, for a given UE logical channel.
   double dl_avg_bit_rate(lcid_t lcid) const
   {
     return contains(lcid) ? u.dl_logical_channels().average_bit_rate(lcid) : 0;
+  }
+
+  /// Average UL bit rate, in bps, for a given UE logical channel group.
+  double ul_avg_bit_rate(lcg_id_t lcg_id) const
+  {
+    return contains(lcg_id) ? u.ul_logical_channels().average_bit_rate(lcg_id) : 0;
   }
 
 private:

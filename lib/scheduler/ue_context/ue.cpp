@@ -24,6 +24,7 @@ ue::ue(const ue_creation_command& cmd) :
   pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
   dl_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs),
+  ul_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs),
   ta_mgr(expert_cfg,
          cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
          ue_ded_cfg->pcell_cfg().cfg_dedicated().tag_id,
@@ -50,6 +51,7 @@ void ue::slot_indication(slot_point sl_tx)
 {
   last_sl_tx = sl_tx;
   dl_lc_ch_mgr.slot_indication();
+  ul_lc_ch_mgr.slot_indication();
   ta_mgr.slot_indication(sl_tx);
   drx.slot_indication(sl_tx);
 }
@@ -242,4 +244,9 @@ unsigned ue::build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, uns
   }
   total_subpdu_bytes += allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, LCID_SRB1);
   return total_subpdu_bytes;
+}
+
+void ue::handle_ul_transport_block_info(unsigned tb_size_bytes)
+{
+  ul_lc_ch_mgr.handle_ul_grant(tb_size_bytes);
 }
