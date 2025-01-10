@@ -269,7 +269,7 @@ static double to_bytes_per_slot(uint64_t bitrate_bps, subcarrier_spacing bwp_scs
 }
 
 /// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
-static double compute_dl_rate_weight(const slice_ue& u, span<double> dl_avg_rate_per_lc, subcarrier_spacing bwp_scs)
+static double compute_dl_rate_weight(const slice_ue& u)
 {
   // [Implementation-defined] Rate weight to assign when average rate in all GBR bearers is zero or if the UE has only
   // non-GBR bearers.
@@ -283,8 +283,9 @@ static double compute_dl_rate_weight(const slice_ue& u, span<double> dl_avg_rate
     }
 
     // GBR flow.
-    if (dl_avg_rate_per_lc[lc.lcid] != 0) {
-      rate_weight += (to_bytes_per_slot(lc.qos->gbr_qos_info->gbr_dl, bwp_scs) / dl_avg_rate_per_lc[lc.lcid]);
+    double dl_avg_rate = u.dl_avg_bit_rate(lc.lcid);
+    if (dl_avg_rate != 0) {
+      rate_weight += lc.qos->gbr_qos_info->gbr_dl / dl_avg_rate;
     }
   }
 
@@ -391,9 +392,8 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
     // Give the highest priority to new UE.
     pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
   }
-  const double rate_weight = compute_dl_rate_weight(
-      u, dl_avg_rate_per_lc, ue_cc->cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs);
-  dl_prio = rate_weight * pf_weight;
+  const double rate_weight = compute_dl_rate_weight(u);
+  dl_prio                  = rate_weight * pf_weight;
 }
 
 void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
@@ -493,26 +493,8 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
 
 void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
 {
-  // Redimension LCID arrays to the UE configured bearers.
-  dl_alloc_bytes_per_lc.resize(u.get_bearers().size(), 0);
-  dl_avg_rate_per_lc.resize(dl_alloc_bytes_per_lc.size(), 0);
-
   // In case more than one slot elapsed.
   for (unsigned s = 0; s != nof_slots_elapsed - 1; ++s) {
-    for (unsigned i = 0; i != dl_alloc_bytes_per_lc.size(); ++i) {
-      if (not u.contains(uint_to_lcid(i))) {
-        // Skip LCIDs that are not configured.
-        dl_alloc_bytes_per_lc[i] = 0;
-        dl_avg_rate_per_lc[i]    = 0;
-        continue;
-      }
-      if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
-        // Fast start before transitioning to exponential average.
-        dl_avg_rate_per_lc[i] -= dl_avg_rate_per_lc[i] / (dl_nof_samples + 1);
-      } else {
-        dl_avg_rate_per_lc[i] -= parent->exp_avg_alpha * dl_avg_rate_per_lc[i];
-      }
-    }
     if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
       // Fast start before transitioning to exponential average.
       total_dl_avg_rate_ -= total_dl_avg_rate_ / (dl_nof_samples + 1);
@@ -520,28 +502,6 @@ void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned
       total_dl_avg_rate_ -= parent->exp_avg_alpha * total_dl_avg_rate_;
     }
     dl_nof_samples++;
-  }
-
-  // Compute DL average rate on a per-logical channel basis.
-  for (unsigned i = 0; i != dl_alloc_bytes_per_lc.size(); ++i) {
-    if (not u.contains(uint_to_lcid(i))) {
-      // Skip LCIDs that are not configured.
-      dl_alloc_bytes_per_lc[i] = 0;
-      dl_avg_rate_per_lc[i]    = 0;
-      continue;
-    }
-
-    unsigned sched_bytes = dl_alloc_bytes_per_lc[i];
-    if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
-      // Fast start before transitioning to exponential average.
-      dl_avg_rate_per_lc[i] += (sched_bytes - dl_avg_rate_per_lc[i]) / (dl_nof_samples + 1);
-    } else {
-      dl_avg_rate_per_lc[i] =
-          (1 - parent->exp_avg_alpha) * dl_avg_rate_per_lc[i] + (parent->exp_avg_alpha) * sched_bytes;
-    }
-
-    // Flush allocated bytes for the current slot.
-    dl_alloc_bytes_per_lc[i] = 0;
   }
 
   // Compute DL average rate of the UE.
@@ -631,18 +591,6 @@ void scheduler_time_pf::ue_ctxt::compute_ul_avg_rate(const slice_ue& u, unsigned
 
 void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info)
 {
-  for (const auto& tb : tb_info.lc_chs_to_sched) {
-    if (not tb.lcid.is_sdu()) {
-      // Ignore CEs.
-      continue;
-    }
-    const lcid_t lcid = tb.lcid.to_lcid();
-    if (lcid >= dl_alloc_bytes_per_lc.size()) {
-      // It can happen that an LCID of another slice can be added to a given grant.
-      continue;
-    }
-    dl_alloc_bytes_per_lc[lcid] += tb.sched_bytes;
-  }
   dl_sum_alloc_bytes += total_alloc_bytes;
 }
 

@@ -42,9 +42,8 @@ private:
   /// Holds the information needed to compute priority of a UE in a priority queue.
   struct ue_ctxt {
     ue_ctxt(du_ue_index_t ue_index_, du_cell_index_t cell_index_, const scheduler_time_pf* parent_) :
-      ue_index(ue_index_), cell_index(cell_index_), parent(parent_), dl_avg_rate_per_lc(lcid_t::MAX_NOF_RB_LCIDS)
+      ue_index(ue_index_), cell_index(cell_index_), parent(parent_)
     {
-      std::fill(dl_avg_rate_per_lc.begin(), dl_avg_rate_per_lc.end(), 0);
     }
 
     /// Returns average DL rate expressed in bytes per slot of the UE.
@@ -85,10 +84,7 @@ private:
     void compute_ul_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed);
 
     // Sum of DL bytes allocated for a given slot, before it is taken into account in the average rate computation.
-    static_vector<unsigned, MAX_NOF_RB_LCIDS> dl_alloc_bytes_per_lc;
-    unsigned                                  dl_sum_alloc_bytes = 0;
-    // Average DL rate expressed in bytes per slot experienced by UE in each of its logical channel.
-    static_vector<double, MAX_NOF_RB_LCIDS> dl_avg_rate_per_lc;
+    unsigned dl_sum_alloc_bytes = 0;
     // Average DL rate expressed in bytes per slot experienced by UE.
     double total_dl_avg_rate_ = 0;
     // Sum of UL bytes allocated for a given slot, before it is taken into account in the average rate computation.

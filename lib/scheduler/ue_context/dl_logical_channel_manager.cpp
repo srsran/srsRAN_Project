@@ -43,13 +43,25 @@ static unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
   return sdu_size < MAC_SDU_SUBHEADER_LENGTH_THRES ? sdu_size : sdu_size - 1;
 }
 
-dl_logical_channel_manager::dl_logical_channel_manager()
+dl_logical_channel_manager::dl_logical_channel_manager(subcarrier_spacing scs_common_) :
+  slots_per_sec(get_nof_slots_per_subframe(scs_common_) * 1000)
 {
   // Reserve entries to avoid allocating in hot path.
   sorted_channels.reserve(LCID_MIN_DRB);
 
   // SRB0 is always activated.
   set_status(LCID_SRB0, true);
+}
+
+void dl_logical_channel_manager::slot_indication()
+{
+  // Update the bit rates of the UE logical channels with tracked bit rates.
+  for (lcid_t lcid : sorted_channels) {
+    if (channels[lcid].avg_bytes_per_slot.size() > 0) {
+      channels[lcid].avg_bytes_per_slot.push(channels[lcid].last_sched_bytes);
+      channels[lcid].last_sched_bytes = 0;
+    }
+  }
 }
 
 void dl_logical_channel_manager::deactivate()
@@ -135,7 +147,7 @@ void dl_logical_channel_manager::configure(span<const logical_channel_config> lo
       auto it = std::find_if(
           channel_configs.begin(), channel_configs.end(), [lcid](const auto& c) { return c.lcid == lcid; });
       if (it == channel_configs.end() and channels[lcid].cfg != &get_default_logical_channel_config(lcid)) {
-        channels[lcid] = {};
+        channels[lcid].reset();
       }
     }
   }
@@ -144,6 +156,11 @@ void dl_logical_channel_manager::configure(span<const logical_channel_config> lo
   for (const logical_channel_config& ch_cfg : channel_configs) {
     channels[ch_cfg.lcid].cfg    = &ch_cfg;
     channels[ch_cfg.lcid].active = true;
+    if (ch_cfg.qos.has_value() and ch_cfg.qos.value().gbr_qos_info.has_value()) {
+      // Track average rate for GBR logical channels.
+      unsigned win_size_msec = ch_cfg.qos.value().qos.average_window_ms.value_or(2000);
+      channels[ch_cfg.lcid].avg_bytes_per_slot.resize(win_size_msec * slots_per_sec / 1000);
+    }
     // buffer state stays the same when configuration is updated.
   }
 
@@ -327,7 +344,8 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, lc
   unsigned sdu_size = get_mac_sdu_size(alloc_bytes);
 
   // Update DL Buffer Status to avoid reallocating the same LCID bytes.
-  channels[lcid].buf_st -= std::min(sdu_size, channels[lcid].buf_st);
+  channels[lcid].last_sched_bytes = std::min(sdu_size, channels[lcid].buf_st);
+  channels[lcid].buf_st -= channels[lcid].last_sched_bytes;
 
   if (lcid != LCID_SRB0 and channels[lcid].buf_st > 0) {
     constexpr static unsigned RLC_SEGMENTATION_OVERHEAD = 4;
@@ -380,6 +398,15 @@ unsigned dl_logical_channel_manager::allocate_mac_ce(dl_msg_lc_info& subpdu, uns
   pending_ces.pop_front();
 
   return alloc_bytes;
+}
+
+void dl_logical_channel_manager::channel_context::reset()
+{
+  active           = false;
+  cfg              = nullptr;
+  buf_st           = 0;
+  last_sched_bytes = 0;
+  avg_bytes_per_slot.resize(0);
 }
 
 unsigned

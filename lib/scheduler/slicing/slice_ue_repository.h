@@ -97,6 +97,12 @@ public:
   /// Note: This function is called after the allocation has been made.
   static_vector<std::pair<lcg_id_t, unsigned>, MAX_NOF_LCGS> estimate_ul_alloc_bytes_per_lcg(unsigned grant_size) const;
 
+  /// Average DL bit rate, in bps, for a given UE logical channel.
+  double dl_avg_bit_rate(lcid_t lcid) const
+  {
+    return contains(lcid) ? u.dl_logical_channels().average_bit_rate(lcid) : 0;
+  }
+
 private:
   /// Helper function to get LCG ID of a bearer.
   lcg_id_t get_lcg_id_for_bearer(lcid_t lcid) const;

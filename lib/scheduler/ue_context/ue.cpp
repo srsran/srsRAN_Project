@@ -23,6 +23,7 @@ ue::ue(const ue_creation_command& cmd) :
   ue_ded_cfg(&cmd.cfg),
   pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
+  dl_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs),
   ta_mgr(expert_cfg,
          cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
          ue_ded_cfg->pcell_cfg().cfg_dedicated().tag_id,
@@ -48,6 +49,7 @@ ue::ue(const ue_creation_command& cmd) :
 void ue::slot_indication(slot_point sl_tx)
 {
   last_sl_tx = sl_tx;
+  dl_lc_ch_mgr.slot_indication();
   ta_mgr.slot_indication(sl_tx);
   drx.slot_indication(sl_tx);
 }

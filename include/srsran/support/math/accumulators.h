@@ -14,8 +14,8 @@
 #pragma once
 
 #include "srsran/support/srsran_assert.h"
-#include <numeric>
 
+namespace srsran {
 /// \brief Implements an exponential moving average accumulator, with simple moving average for faster initial
 /// convergence. This accumulator is useful for tracking the average of a series of values, with a bias towards the most
 /// recent values. The accumulator uses a simple moving average until a certain number of samples have been accumulated,
@@ -52,3 +52,5 @@ private:
   unsigned count = 0;
   unsigned start_count_size;
 };
+
+} // namespace srsran

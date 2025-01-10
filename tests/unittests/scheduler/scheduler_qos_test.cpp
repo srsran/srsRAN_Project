@@ -55,10 +55,11 @@ public:
     ue_cfg.ue_index      = ue_idx;
     ue_cfg.crnti         = to_rnti(0x4601 + (unsigned)ue_idx);
     ue_cfg.cfg.lc_config_list.value()[2].rrm_policy.s_nssai.sst = slice_service_type{1};
-    ue_cfg.cfg.lc_config_list.value()[2].qos.emplace();
-    ue_cfg.cfg.lc_config_list.value()[2].qos.value().gbr_qos_info.emplace();
-    ue_cfg.cfg.lc_config_list.value()[2].qos.value().gbr_qos_info.value().gbr_dl = 10e6;
-    ue_cfg.cfg.lc_config_list.value()[2].qos.value().gbr_qos_info.value().gbr_ul = 5e6;
+    auto& qos_info                                              = ue_cfg.cfg.lc_config_list.value()[2].qos.emplace();
+    qos_info.qos.average_window_ms                              = 100;
+    qos_info.gbr_qos_info.emplace();
+    qos_info.gbr_qos_info.value().gbr_dl = 10e6;
+    qos_info.gbr_qos_info.value().gbr_ul = 5e6;
     report_fatal_error_if_not(pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_cfg.cfg.cells.value()[0].serv_cell_cfg),
                               "Failed to allocate PUCCH resources");
     this->add_ue(ue_cfg);
@@ -76,7 +77,7 @@ public:
 
     // Enqueue enough bytes for continuous DL tx.
     for (unsigned i = 0; i != TEST_NOF_UES; ++i) {
-      dl_buffer_state_indication_message dl_buf_st{to_du_ue_index(i), LCID_MIN_DRB, 10000000};
+      dl_buffer_state_indication_message dl_buf_st{to_du_ue_index(i), LCID_MIN_DRB, 100000000};
       this->push_dl_buffer_state(dl_buf_st);
     }
 
@@ -100,9 +101,11 @@ public:
 
 TEST_F(scheduler_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
 {
-  const unsigned MAX_NOF_SLOT_RUNS = 1000;
+  // number of slots discarded that were used to fill average window.
+  const unsigned PREAMBLE_SLOT_RUNS = 200;
+  const unsigned MAX_NOF_SLOT_RUNS  = 1000;
 
-  for (unsigned i = 0; i != MAX_NOF_SLOT_RUNS; ++i) {
+  for (unsigned r = 0; r != MAX_NOF_SLOT_RUNS + PREAMBLE_SLOT_RUNS; ++r) {
     this->run_slot();
 
     uci_indication uci_ind;
@@ -112,10 +115,17 @@ TEST_F(scheduler_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
     crc_ind.cell_index = to_du_cell_index(0);
     crc_ind.sl_rx      = last_result_slot();
 
-    // Handle DL result.
-    span<const dl_msg_alloc> ue_grants = this->last_sched_res_list[0]->dl.ue_grants;
-    for (const dl_msg_alloc& grant : ue_grants) {
-      ue_stats_map[grant.context.ue_index].dl_bytes_sum += grant.pdsch_cfg.codewords[0].tb_size_bytes;
+    span<const dl_msg_alloc>  ue_grants = this->last_sched_res_list[0]->dl.ue_grants;
+    span<const ul_sched_info> ul_grants = this->last_sched_res_list[0]->ul.puschs;
+    if (r >= PREAMBLE_SLOT_RUNS) {
+      // Register DL sched bytes.
+      for (const dl_msg_alloc& grant : ue_grants) {
+        ue_stats_map[grant.context.ue_index].dl_bytes_sum += grant.pdsch_cfg.codewords[0].tb_size_bytes;
+      }
+      // Register UL sched bytes.
+      for (const ul_sched_info& grant : ul_grants) {
+        ue_stats_map[grant.context.ue_index].ul_bytes_sum += grant.pusch_cfg.tb_size_bytes;
+      }
     }
 
     // Handle PUCCHs.
@@ -124,15 +134,12 @@ TEST_F(scheduler_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
         // Skip SRs for this test.
         continue;
       }
-
       du_ue_index_t ue_idx = to_du_ue_index((unsigned)pucch.crnti - 0x4601);
       uci_ind.ucis.push_back(test_helper::create_uci_indication_pdu(ue_idx, pucch));
     }
 
-    // Handle UL result.
-    span<const ul_sched_info> ul_grants = this->last_sched_res_list[0]->ul.puschs;
+    // Handle CRCs and PUSCH UCIs.
     for (const ul_sched_info& grant : ul_grants) {
-      ue_stats_map[grant.context.ue_index].ul_bytes_sum += grant.pusch_cfg.tb_size_bytes;
       crc_ind.crcs.emplace_back(test_helper::create_crc_pdu_indication(grant));
       if (grant.uci.has_value()) {
         uci_ind.ucis.push_back(

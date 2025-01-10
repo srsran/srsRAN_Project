@@ -184,6 +184,9 @@ public:
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
   unsigned build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
 
+  /// \brief UE DL logical channels.
+  const dl_logical_channel_manager& dl_logical_channels() const { return dl_lc_ch_mgr; }
+
 private:
   /// Update UE configuration.
   void set_config(const ue_configuration& new_cfg);
