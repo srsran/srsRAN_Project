@@ -101,7 +101,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
   }
 
   for (const auto& pdu_session_to_add_mod : pdu_sessions) {
-    // Add radio bearer config
+    // Fill radio bearer config.
     for (const auto& drb_to_add : pdu_session_to_add_mod.second.drb_to_add) {
       rrc_drb_to_add_mod drb_to_add_mod;
       drb_to_add_mod.drb_id = drb_to_add.first;
@@ -110,7 +110,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
       } else {
         drb_to_add_mod.pdcp_cfg = drb_to_add.second.pdcp_cfg;
 
-        // Add CN association and SDAP config.
+        // Fill CN association and SDAP config.
         rrc_cn_assoc cn_assoc;
         cn_assoc.sdap_cfg       = drb_to_add.second.sdap_cfg;
         drb_to_add_mod.cn_assoc = cn_assoc;
@@ -127,7 +127,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
       } else {
         drb_to_add_mod.pdcp_cfg = drb_to_modify.second.pdcp_cfg;
 
-        // Add CN association and SDAP config.
+        // Fill CN association and SDAP config.
         rrc_cn_assoc cn_assoc;
         cn_assoc.sdap_cfg       = drb_to_modify.second.sdap_cfg;
         drb_to_add_mod.cn_assoc = cn_assoc;
@@ -168,7 +168,7 @@ bool srsran::srs_cu_cp::fill_rrc_reconfig_args(
   rrc_reconfig_args.non_crit_ext = rrc_recfg_v1530_ies;
 
   if (radio_bearer_config.contains_values()) {
-    // Add radio bearer config.
+    // Fill radio bearer config.
     rrc_reconfig_args.radio_bearer_cfg = radio_bearer_config;
   }
 
@@ -212,24 +212,24 @@ bool srsran::srs_cu_cp::fill_f1ap_drb_setup_mod_item(
   // Start filling the DU request.
   drb_setup_mod_item.drb_id = drb_id;
 
-  // QoS config.
+  // Fill QoS config.
   drb_setup_mod_item.qos_info.drb_qos.qos_desc             = next_drb_config.qos_params.qos_desc;
   drb_setup_mod_item.qos_info.drb_qos.alloc_retention_prio = next_drb_config.qos_params.alloc_retention_prio;
 
-  // S-NSSAI.
+  // Fill S-NSSAI.
   drb_setup_mod_item.qos_info.s_nssai = next_drb_config.s_nssai;
 
   drb_setup_mod_item.mode        = next_drb_config.rlc_mod;
   drb_setup_mod_item.pdcp_sn_len = next_drb_config.pdcp_cfg.tx.sn_size;
 
-  // Add UP TNL info.
+  // Fill UP TNL info.
   for (const auto& ul_up_transport_param : e1ap_drb_item.ul_up_transport_params) {
     drb_setup_mod_item.uluptnl_info_list.push_back(ul_up_transport_param.up_tnl_info);
     // Store UL tunnel information in DRB context (required for mobility).
     next_drb_config.ul_up_tnl_info_to_be_setup_list.push_back(ul_up_transport_param.up_tnl_info);
   }
 
-  // QoS flows.
+  // Fill QoS flows.
   for (const auto& e1ap_flow : e1ap_drb_item.flow_setup_list) {
     // Verify the QoS flow ID is present in original setup message.
     if (!ngap_qos_flow_setup_items.contains(e1ap_flow.qos_flow_id)) {
@@ -244,7 +244,7 @@ bool srsran::srs_cu_cp::fill_f1ap_drb_setup_mod_item(
     }
 
     if (response_flow_list) {
-      // Add flow to NGAP response.
+      // Fill flow to NGAP response.
       cu_cp_associated_qos_flow qos_flow;
       qos_flow.qos_flow_id = e1ap_flow.qos_flow_id;
       response_flow_list->emplace(e1ap_flow.qos_flow_id, qos_flow);
@@ -253,7 +253,7 @@ bool srsran::srs_cu_cp::fill_f1ap_drb_setup_mod_item(
     // Retrieve QoS properties from NGAP request.
     const auto& ngap_qos_flow = ngap_qos_flow_setup_items[e1ap_flow.qos_flow_id];
 
-    // Add flow to F1AP DRB item.
+    // Fill flow to F1AP DRB item.
     flow_mapped_to_drb flow_map_item;
     flow_map_item.qos_flow_id               = e1ap_flow.qos_flow_id;
     flow_map_item.qos_flow_level_qos_params = ngap_qos_flow.qos_flow_level_qos_params;
