@@ -16,10 +16,10 @@ namespace srsran {
 
 class ue_cell_configuration;
 
-class ul_power_controller
+class pusch_power_controller
 {
 public:
-  ul_power_controller(const ue_cell_configuration& ue_cell_cfg_, const ue_channel_state_manager& ch_state_manager);
+  pusch_power_controller(const ue_cell_configuration& ue_cell_cfg_, const ue_channel_state_manager& ch_state_manager);
 
   /// Save the PUSCH power control configuration.
   void reconfigure(const ue_cell_configuration& ue_cell_cfg);

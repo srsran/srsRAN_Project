@@ -85,9 +85,9 @@ void pucch_power_controller::update_pucch_pw_ctrl_state(slot_point      slot,
                                                         unsigned        nof_prbs,
                                                         unsigned        nof_symb,
                                                         pucch_uci_bits& uci_bits,
+                                                        bool            intraslot_freq_hopping,
                                                         bool            pi_2_bpsk,
-                                                        bool            additional_dmrs,
-                                                        bool            intraslot_freq_hopping)
+                                                        bool            additional_dmrs)
 {
   // Dummy function. This feature is only available in the SRSRAN 5G Enterprise version.
 }

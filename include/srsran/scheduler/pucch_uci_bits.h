@@ -45,12 +45,12 @@ struct formatter<srsran::pucch_uci_bits> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::pucch_uci_bits& uci_bits, FormatContext& ctx)
+  auto format(const srsran::pucch_uci_bits& uci_bits, FormatContext& ctx) const
   {
     return format_to(ctx.out(),
                      "csi_bits=[H={} S={} C={}]",
                      uci_bits.harq_ack_nof_bits,
-                     uci_bits.sr_bits,
+                     fmt::underlying(uci_bits.sr_bits),
                      uci_bits.csi_part1_nof_bits);
   }
 };

@@ -421,7 +421,7 @@ void ue_event_manager::handle_ul_phr_indication(const ul_phr_indication_message&
                           fmt::underlying(cell_phr.serv_cell_id));
       auto& ue_cc = u.get_cell(cell_phr.serv_cell_id);
 
-      ue_cc.get_ul_power_controller().handle_phr(cell_phr, phr_ind->slot_rx);
+      ue_cc.get_pusch_power_controller().handle_phr(cell_phr, phr_ind->slot_rx);
 
       // Log event.
       scheduler_event_logger::phr_event event{};

@@ -8,14 +8,14 @@
  *
  */
 
-#include "ul_power_controller.h"
+#include "pusch_power_controller.h"
 #include "../config/ue_configuration.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 
-ul_power_controller::ul_power_controller(const ue_cell_configuration&    ue_cell_cfg,
-                                         const ue_channel_state_manager& ch_state_manager) :
+pusch_power_controller::pusch_power_controller(const ue_cell_configuration&    ue_cell_cfg,
+                                               const ue_channel_state_manager& ch_state_manager) :
   rnti(ue_cell_cfg.crnti),
   cl_pw_control_enabled(ue_cell_cfg.cell_cfg_common.expert_cfg.ue.ul_power_ctrl.enable_pusch_cl_pw_control),
   p0_nominal_pusch(
@@ -48,7 +48,7 @@ ul_power_controller::ul_power_controller(const ue_cell_configuration&    ue_cell
   static_cast<void>(pusch_sinr_target_dB);
 }
 
-void ul_power_controller::reconfigure(const ue_cell_configuration& ue_cell_cfg)
+void pusch_power_controller::reconfigure(const ue_cell_configuration& ue_cell_cfg)
 {
   if (ue_cell_cfg.cfg_dedicated().ul_config.has_value() and
       ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pusch_cfg.has_value() and
@@ -58,7 +58,7 @@ void ul_power_controller::reconfigure(const ue_cell_configuration& ue_cell_cfg)
   }
 }
 
-void ul_power_controller::update_pusch_pw_ctrl_state(slot_point slot_rx, unsigned nof_prbs)
+void pusch_power_controller::update_pusch_pw_ctrl_state(slot_point slot_rx, unsigned nof_prbs)
 {
   const int latest_f_cl_pw_control =
       latest_pusch_pw_control.has_value() ? latest_pusch_pw_control.value().f_cl_pw_control : 0;
@@ -68,7 +68,7 @@ void ul_power_controller::update_pusch_pw_ctrl_state(slot_point slot_rx, unsigne
 
 #ifndef SRSRAN_HAS_ENTERPRISE
 
-void ul_power_controller::handle_phr(const cell_ph_report& phr, slot_point slot_rx)
+void pusch_power_controller::handle_phr(const cell_ph_report& phr, slot_point slot_rx)
 {
   if (not pusch_pwr_ctrl.has_value()) {
     return;
@@ -76,13 +76,13 @@ void ul_power_controller::handle_phr(const cell_ph_report& phr, slot_point slot_
   latest_phr.emplace(ue_phr_report{phr, std::nullopt});
 }
 
-unsigned ul_power_controller::adapt_pusch_prbs_to_phr(unsigned nof_prbs) const
+unsigned pusch_power_controller::adapt_pusch_prbs_to_phr(unsigned nof_prbs) const
 {
   // Dummy function. This feature is only available in the SRSRAN 5G Enterprise version.
   return nof_prbs;
 }
 
-uint8_t ul_power_controller::compute_tpc_command(slot_point pusch_slot)
+uint8_t pusch_power_controller::compute_tpc_command(slot_point pusch_slot)
 {
   // Dummy function. This feature is only available in the SRSRAN 5G Enterprise version.
   static constexpr uint8_t default_tpc = 1;

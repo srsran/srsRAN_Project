@@ -1120,7 +1120,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
       grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, pusch_td.symbols, ue_grant_crbs});
 
   // Update the number of PRBs used in the PUSCH allocation.
-  u.get_pcell().get_ul_power_controller().update_pusch_pw_ctrl_state(pusch_alloc.slot, ue_grant_crbs.length());
+  u.get_pcell().get_pusch_power_controller().update_pusch_pw_ctrl_state(pusch_alloc.slot, ue_grant_crbs.length());
 
   // Update DRX controller state.
   u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);

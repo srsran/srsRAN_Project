@@ -133,74 +133,6 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
   }
 }
 
-void ue_scheduler_impl::update_pucch_power_controller(srsran::cell_resource_allocator& cell_alloc)
-{
-  static constexpr unsigned HARQ_SLOT_DELAY = 0;
-  const auto&               slot_alloc      = cell_alloc[HARQ_SLOT_DELAY];
-
-  // Spans through the PUCCH grant list and update the HARQ-ACK PUCCH grant counter for the corresponding RNTI and HARQ
-  // process id.
-  for (const auto& pucch : slot_alloc.result.ul.pucchs) {
-    ue* user = ue_db.find_by_rnti(pucch.crnti);
-    // This is to handle the case of a UE that gets removed after the PUCCH gets allocated and before this PUCCH is
-    // expected to be sent.
-    if (user == nullptr) {
-      logger.warning(
-          "rnti={}: No user with such RNTI found in the ue scheduler database. Skipping PUCCH power control update",
-          pucch.crnti,
-          slot_alloc.slot);
-      continue;
-    }
-
-    pucch_uci_bits pucch_uci_bits;
-    // pi_2_bpsk, additional_dmrs and intraslot_freq_hopping are only used for PUCCH format 3 and 4.
-    bool pi_2_bpsk              = false;
-    bool additional_dmrs        = false;
-    bool intraslot_freq_hopping = false;
-    // For format 0 or 1, the number of PRBs is always 1.
-    switch (pucch.format) {
-      case pucch_format::FORMAT_0:
-        pucch_uci_bits.harq_ack_nof_bits = pucch.format_0.harq_ack_nof_bits;
-        break;
-      case pucch_format::FORMAT_1:
-        pucch_uci_bits.harq_ack_nof_bits = pucch.format_1.harq_ack_nof_bits;
-        break;
-      case pucch_format::FORMAT_2:
-        pucch_uci_bits.harq_ack_nof_bits  = pucch.format_2.harq_ack_nof_bits;
-        pucch_uci_bits.sr_bits            = pucch.format_2.sr_bits;
-        pucch_uci_bits.csi_part1_nof_bits = pucch.format_2.csi_part1_bits;
-        break;
-      case pucch_format::FORMAT_3:
-        pucch_uci_bits.harq_ack_nof_bits  = pucch.format_3.harq_ack_nof_bits;
-        pucch_uci_bits.sr_bits            = pucch.format_3.sr_bits;
-        pucch_uci_bits.csi_part1_nof_bits = pucch.format_3.csi_part1_bits;
-        pi_2_bpsk                         = pucch.format_3.pi_2_bpsk;
-        additional_dmrs                   = pucch.format_3.additional_dmrs;
-        intraslot_freq_hopping            = not pucch.resources.second_hop_prbs.empty();
-        break;
-      case pucch_format::FORMAT_4:
-        pucch_uci_bits.harq_ack_nof_bits  = pucch.format_4.harq_ack_nof_bits;
-        pucch_uci_bits.sr_bits            = pucch.format_4.sr_bits;
-        pucch_uci_bits.csi_part1_nof_bits = pucch.format_4.csi_part1_bits;
-        pi_2_bpsk                         = pucch.format_4.pi_2_bpsk;
-        additional_dmrs                   = pucch.format_4.additional_dmrs;
-        intraslot_freq_hopping            = not pucch.resources.second_hop_prbs.empty();
-        break;
-      default:
-        srsran_assertion_failure("rnti={}: Only PUCCH format 0, 1, 2, 3 and 4 are supported", pucch.crnti);
-    }
-
-    user->get_pcell().get_pucch_power_controller().update_pucch_pw_ctrl_state(slot_alloc.slot,
-                                                                              pucch.format,
-                                                                              pucch.resources.prbs.length(),
-                                                                              pucch.resources.symbols.length(),
-                                                                              pucch_uci_bits,
-                                                                              intraslot_freq_hopping,
-                                                                              pi_2_bpsk,
-                                                                              additional_dmrs);
-  }
-}
-
 [[maybe_unused]] static bool puxch_grant_sanitizer(cell_resource_allocator& cell_alloc, srslog::basic_logger& logger)
 {
   const unsigned HARQ_SLOT_DELAY = 0;
@@ -282,8 +214,6 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx)
 
     // Run slice scheduler policies.
     run_sched_strategy(slot_tx, cell_index);
-
-    update_pucch_power_controller(*group_cell.cell_res_alloc);
 
     // Update the PUCCH counter after the UE DL and UL scheduler.
     update_harq_pucch_counter(*group_cell.cell_res_alloc);

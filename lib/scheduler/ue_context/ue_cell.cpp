@@ -48,7 +48,7 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   logger(srslog::fetch_basic_logger("SCHED")),
   channel_state(cell_cfg.expert_cfg.ue, ue_cfg->get_nof_dl_ports()),
   ue_mcs_calculator(ue_cell_cfg_.cell_cfg_common, channel_state),
-  ul_pwr_controller(ue_cell_cfg_, channel_state),
+  pusch_pwr_controller(ue_cell_cfg_, channel_state),
   pucch_pwr_controller(ue_cell_cfg_)
 {
 }
@@ -91,7 +91,7 @@ void ue_cell::handle_reconfiguration_request(const ue_cell_configuration& ue_cel
     }
   }
 
-  get_ul_power_controller().reconfigure(ue_cell_cfg);
+  get_pusch_power_controller().reconfigure(ue_cell_cfg);
 }
 
 void ue_cell::set_fallback_state(bool set_fallback)
