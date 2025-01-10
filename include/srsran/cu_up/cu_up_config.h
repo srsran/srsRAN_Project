@@ -17,6 +17,7 @@
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
+#include "srsran/ran/gnb_cu_up_id.h"
 #include "srsran/support/timers.h"
 #include <map>
 
@@ -57,7 +58,7 @@ struct cu_up_config {
   /// Test mode configuration.
   cu_up_test_mode_config test_mode_cfg;
   /// CU-UP identifier.
-  unsigned cu_up_id = 0;
+  gnb_cu_up_id_t cu_up_id = gnb_cu_up_id_t::min;
   /// CU-UP name.
   std::string cu_up_name = "srs_cu_up_01";
   /// Full PLMN as string (without possible filler digit) e.g. "00101".
