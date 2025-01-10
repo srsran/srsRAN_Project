@@ -532,7 +532,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                       std::get_if<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(&uci_pdu->pdu)) {
                 // Save SINR.
                 if (pucch_f0f1->ul_sinr_dB.has_value()) {
-                  ue_cc.handle_pucch_sinr_f0_f1(uci_sl, pucch_f0f1->ul_sinr_dB.value());
+                  ue_cc.get_pucch_power_controller().update_pucch_sinr_f0_f1(uci_sl, pucch_f0f1->ul_sinr_dB.value());
                 }
 
                 // Process DL HARQ ACKs.
@@ -578,10 +578,10 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                              std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&uci_pdu->pdu)) {
                 // Save SINR.
                 if (pucch_f2f3f4->ul_sinr_dB.has_value()) {
-                  ue_cc.handle_pucch_sinr_f2_f3_f4(uci_sl,
-                                                   pucch_f2f3f4->ul_sinr_dB.value(),
-                                                   not pucch_f2f3f4->harqs.empty(),
-                                                   pucch_f2f3f4->csi.has_value());
+                  ue_cc.get_pucch_power_controller().update_pucch_sinr_f2_f3_f4(uci_sl,
+                                                                                pucch_f2f3f4->ul_sinr_dB.value(),
+                                                                                not pucch_f2f3f4->harqs.empty(),
+                                                                                pucch_f2f3f4->csi.has_value());
                 }
 
                 // Process DL HARQ ACKs.

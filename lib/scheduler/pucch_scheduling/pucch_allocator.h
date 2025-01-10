@@ -13,7 +13,7 @@
 #include "../cell/resource_grid.h"
 #include "../config/ue_configuration.h"
 #include "../ue_context/ue.h"
-#include "srsran/scheduler/pucch_uci_bits.h"
+#include "pucch_uci_bits.h"
 
 namespace srsran {
 

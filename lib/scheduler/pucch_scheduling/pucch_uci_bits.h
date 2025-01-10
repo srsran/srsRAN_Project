@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "result/pucch_format.h"
+#include "srsran/scheduler/result/pucch_format.h"
 #include "fmt/format.h"
 
 namespace srsran {
 
-/// Contains the number of UCI HARQ-ACK and CSI information bits of a removed PUCCH grant.
+/// Contains the number of UCI bits (HARQ-ACK, SR and CSI) of a PUCCH grant.
 struct pucch_uci_bits {
   /// Number of HARQ-ACK info bits that should have been reported in the removed PUCCH grant.
   unsigned harq_ack_nof_bits{0};

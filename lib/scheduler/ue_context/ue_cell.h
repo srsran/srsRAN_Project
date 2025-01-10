@@ -109,10 +109,6 @@ public:
   /// Update UE with the latest CSI report for a given cell.
   void handle_csi_report(const csi_report_data& csi_report);
 
-  /// \brief Handle PUCCH SINR for PUCCH Format 0/1 and 2/3/4.
-  void handle_pucch_sinr_f0_f1(slot_point slor_rx, float sinr_db);
-  void handle_pucch_sinr_f2_f3_f4(slot_point slor_rx, float sinr_db, bool has_harq_bits, bool has_csi_bits);
-
   sch_mcs_index get_ul_mcs(pusch_mcs_table mcs_table) const { return ue_mcs_calculator.calculate_ul_mcs(mcs_table); }
 
   /// \brief Get recommended aggregation level for PDCCH at a given CQI.

@@ -316,16 +316,6 @@ void ue_cell::handle_csi_report(const csi_report_data& csi_report)
   }
 }
 
-void ue_cell::handle_pucch_sinr_f0_f1(slot_point slor_rx, float sinr_db)
-{
-  pucch_pwr_controller.update_pucch_sinr_f0_f1(slor_rx, sinr_db);
-}
-
-void ue_cell::handle_pucch_sinr_f2_f3_f4(slot_point slor_rx, float sinr_db, bool has_harq_bits, bool has_csi_bits)
-{
-  pucch_pwr_controller.update_pucch_sinr_f2_f3_f4(slor_rx, sinr_db, has_harq_bits, has_csi_bits);
-}
-
 template <typename FilterSearchSpace>
 static static_vector<const search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP>
 get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter, bool is_dl)
