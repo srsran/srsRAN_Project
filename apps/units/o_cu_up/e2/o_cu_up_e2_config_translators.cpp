@@ -15,10 +15,16 @@
 
 using namespace srsran;
 
-e2ap_configuration srsran::generate_e2_config(const e2_config& config)
+e2ap_configuration srsran::generate_e2_config(const e2_config&              config,
+                                              gnb_id_t                      gnb_id,
+                                              const std::string&            plmn,
+                                              std::optional<gnb_cu_up_id_t> gnb_cu_up_id)
 {
   e2ap_configuration out_cfg = srsran::config_helpers::make_default_e2ap_config();
   out_cfg.e2_type            = e2_type_t::CU_UP;
+  out_cfg.gnb_id             = gnb_id;
+  out_cfg.plmn               = plmn;
+  out_cfg.gnb_cu_up_id       = gnb_cu_up_id;
   out_cfg.e2sm_kpm_enabled   = config.e2sm_kpm_enabled;
   out_cfg.e2sm_rc_enabled    = config.e2sm_rc_enabled;
 

@@ -94,7 +94,8 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
   auto e2_metric_connectors = std::make_unique<e2_cu_metrics_connector_manager>();
 
   if (unit_cfg.e2_cfg.base_config.enable_unit_e2) {
-    config.e2ap_cfg                        = generate_e2_config(unit_cfg.e2_cfg.base_config);
+    config.e2ap_cfg = generate_e2_config(
+        unit_cfg.e2_cfg.base_config, unit_cfg.cu_up_cfg.gnb_id, config.cu_up_cfg.plmn, config.cu_up_cfg.cu_up_id);
     ocu_up_dependencies.e2_client          = dependencies.e2_gw;
     ocu_up_dependencies.e2_cu_metric_iface = &(*e2_metric_connectors).get_e2_metrics_interface(0);
   }

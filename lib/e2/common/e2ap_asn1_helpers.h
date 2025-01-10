@@ -74,6 +74,11 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
     gnb_id.gnb_du_id         = gnb_du_id_to_int(e2ap_config.gnb_du_id.value());
   }
 
+  if (e2ap_config.gnb_cu_up_id.has_value()) {
+    gnb_id.gnb_cu_up_id_present = true;
+    gnb_id.gnb_cu_up_id         = gnb_cu_up_id_to_uint(e2ap_config.gnb_cu_up_id.value());
+  }
+
   // RAN functions added
   if (e2ap_config.e2sm_kpm_enabled) {
     std::string ran_oid = e2sm_kpm_asn1_packer::oid;
