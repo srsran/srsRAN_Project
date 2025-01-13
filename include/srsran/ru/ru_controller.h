@@ -92,7 +92,8 @@ public:
   /// Returns the gain controller of this Radio Unit or nullptr if the Radio Unit does not support it.
   virtual ru_gain_controller* get_gain_controller() = 0;
 
-  /// Returns the carrier frequency offset of this Radio Unit or nullptr if the Radio Unit does not support it.
+  /// Returns the carrier frequency offset controller of this Radio Unit or nullptr if the Radio Unit does not support
+  /// it.
   virtual ru_cfo_controller* get_cfo_controller() = 0;
 
   /// Prints RU specific metrics once.

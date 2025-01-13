@@ -998,7 +998,7 @@ static void configure_ofh_sector(ru_ofh_sector_configuration& sector_cfg)
   sector_cfg.is_prach_control_plane_enabled  = test_params.is_prach_control_plane_enabled;
   sector_cfg.ignore_ecpri_payload_size_field = test_params.ignore_ecpri_payload_size_field;
   sector_cfg.tx_window_timing_params         = {
-      T1a_max_cp_dl, T1a_min_cp_dl, T1a_max_cp_ul, T1a_min_cp_ul, T1a_max_up, T1a_min_up};
+              T1a_max_cp_dl, T1a_min_cp_dl, T1a_max_cp_ul, T1a_min_cp_ul, T1a_max_up, T1a_min_up};
   sector_cfg.rx_window_timing_params       = {Ta4_min, Ta4_max};
   sector_cfg.is_downlink_broadcast_enabled = test_params.is_downlink_broadcast_enabled;
 
