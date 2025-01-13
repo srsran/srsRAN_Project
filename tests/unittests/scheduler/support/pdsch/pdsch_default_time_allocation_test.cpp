@@ -42,104 +42,111 @@ using namespace srsran;
 // Combined parameters.
 using pdsch_default_time_allocation_params = std::tuple<unsigned, dmrs_typeA_position>;
 
+ofdm_symbol_range s_and_len(unsigned start, unsigned dur)
+{
+  return ofdm_symbol_range(start, start + dur);
+}
+
 // Expected values from TS38.214 Table 5.1.2.1.1-2.
-static const std::map<pdsch_default_time_allocation_params, pdsch_default_time_allocation_config>
+static const std::map<pdsch_default_time_allocation_params, pdsch_time_domain_resource_allocation>
     pdsch_default_time_allocation_A_normal = {
-        {{0, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 12}},
-        {{0, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 3, 11}},
-        {{1, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 10}},
-        {{1, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 3, 9}},
-        {{2, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 9}},
-        {{2, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 3, 8}},
-        {{3, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 7}},
-        {{3, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 3, 6}},
-        {{4, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 5}},
-        {{4, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 3, 4}},
-        {{5, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 9, 4}},
-        {{5, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 10, 4}},
-        {{6, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 4, 4}},
-        {{6, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 6, 4}},
-        {{7, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 5, 7}},
-        {{7, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 5, 7}},
-        {{8, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 5, 2}},
-        {{8, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 5, 2}},
-        {{9, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 9, 2}},
-        {{9, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 9, 2}},
-        {{10, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 12, 2}},
-        {{10, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 12, 2}},
-        {{11, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 1, 13}},
-        {{11, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 1, 13}},
-        {{12, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 1, 6}},
-        {{12, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 1, 6}},
-        {{13, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 4}},
-        {{13, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 2, 4}},
-        {{14, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 4, 7}},
-        {{14, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 4, 7}},
-        {{15, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 8, 4}},
-        {{15, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 8, 4}},
+        {{0, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 12)}},
+        {{0, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(3, 11)}},
+        {{1, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 10)}},
+        {{1, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(3, 9)}},
+        {{2, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 9)}},
+        {{2, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(3, 8)}},
+        {{3, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 7)}},
+        {{3, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(3, 6)}},
+        {{4, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 5)}},
+        {{4, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(3, 4)}},
+        {{5, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(9, 4)}},
+        {{5, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(10, 4)}},
+        {{6, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(4, 4)}},
+        {{6, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(6, 4)}},
+        {{7, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(5, 7)}},
+        {{7, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(5, 7)}},
+        {{8, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(5, 2)}},
+        {{8, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(5, 2)}},
+        {{9, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(9, 2)}},
+        {{9, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(9, 2)}},
+        {{10, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(12, 2)}},
+        {{10, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(12, 2)}},
+        {{11, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(1, 13)}},
+        {{11, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(1, 13)}},
+        {{12, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(1, 6)}},
+        {{12, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(1, 6)}},
+        {{13, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 4)}},
+        {{13, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(2, 4)}},
+        {{14, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(4, 7)}},
+        {{14, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(4, 7)}},
+        {{15, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(8, 4)}},
+        {{15, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(8, 4)}},
 };
 
 // Expected values from TS38.214 Table 5.1.2.1.1-3.
-static const std::map<pdsch_default_time_allocation_params, pdsch_default_time_allocation_config>
+static const std::map<pdsch_default_time_allocation_params, pdsch_time_domain_resource_allocation>
     pdsch_default_time_allocation_A_extended = {
-        {{0, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 6}},
-        {{0, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 3, 5}},
-        {{1, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 10}},
-        {{1, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 3, 9}},
-        {{2, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 9}},
-        {{2, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 3, 8}},
-        {{3, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 7}},
-        {{3, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 3, 6}},
-        {{4, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 5}},
-        {{4, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 3, 4}},
-        {{5, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 6, 4}},
-        {{5, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 8, 2}},
-        {{6, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 4, 4}},
-        {{6, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 6, 4}},
-        {{7, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 5, 6}},
-        {{7, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 5, 6}},
-        {{8, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 5, 2}},
-        {{8, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 5, 2}},
-        {{9, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 9, 2}},
-        {{9, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 9, 2}},
-        {{10, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 10, 2}},
-        {{10, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 10, 2}},
-        {{11, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 1, 11}},
-        {{11, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 1, 11}},
-        {{12, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 1, 6}},
-        {{12, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 1, 6}},
-        {{13, dmrs_typeA_position::pos2}, {sch_mapping_type::typeA, 0, 2, 4}},
-        {{13, dmrs_typeA_position::pos3}, {sch_mapping_type::typeA, 0, 2, 4}},
-        {{14, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 4, 6}},
-        {{14, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 4, 6}},
-        {{15, dmrs_typeA_position::pos2}, {sch_mapping_type::typeB, 0, 8, 4}},
-        {{15, dmrs_typeA_position::pos3}, {sch_mapping_type::typeB, 0, 8, 4}},
+        {{0, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 6)}},
+        {{0, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(3, 5)}},
+        {{1, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 10)}},
+        {{1, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(3, 9)}},
+        {{2, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 9)}},
+        {{2, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(3, 8)}},
+        {{3, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 7)}},
+        {{3, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(3, 6)}},
+        {{4, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 5)}},
+        {{4, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(3, 4)}},
+        {{5, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(6, 4)}},
+        {{5, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(8, 2)}},
+        {{6, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(4, 4)}},
+        {{6, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(6, 4)}},
+        {{7, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(5, 6)}},
+        {{7, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(5, 6)}},
+        {{8, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(5, 2)}},
+        {{8, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(5, 2)}},
+        {{9, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(9, 2)}},
+        {{9, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(9, 2)}},
+        {{10, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(10, 2)}},
+        {{10, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(10, 2)}},
+        {{11, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(1, 11)}},
+        {{11, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(1, 11)}},
+        {{12, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(1, 6)}},
+        {{12, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(1, 6)}},
+        {{13, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeA, s_and_len(2, 4)}},
+        {{13, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeA, s_and_len(2, 4)}},
+        {{14, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(4, 6)}},
+        {{14, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(4, 6)}},
+        {{15, dmrs_typeA_position::pos2}, {0, sch_mapping_type::typeB, s_and_len(8, 4)}},
+        {{15, dmrs_typeA_position::pos3}, {0, sch_mapping_type::typeB, s_and_len(8, 4)}},
 };
+
+static pdsch_time_domain_resource_allocation INVALID_PDSCH_TIME_RESOURCE_ALLOCATION = {};
 
 class pdsch_default_time_allocation_test : public ::testing::TestWithParam<pdsch_default_time_allocation_params>
 {
 protected:
-  static pdsch_default_time_allocation_config get_expected_A_normal()
+  static pdsch_time_domain_resource_allocation get_expected_A_normal()
   {
     // Get parameter.
     pdsch_default_time_allocation_params param = GetParam();
 
     // If there is no entry, it is reserved.
     if (pdsch_default_time_allocation_A_normal.count(param) == 0) {
-      return PDSCH_DEFAULT_TIME_ALLOCATION_RESERVED;
+      return INVALID_PDSCH_TIME_RESOURCE_ALLOCATION;
     }
 
     // Return the expected value.
     return pdsch_default_time_allocation_A_normal.at(param);
   }
-  static pdsch_default_time_allocation_config get_expected_A_extended()
+  static pdsch_time_domain_resource_allocation get_expected_A_extended()
   {
     // Get parameter.
     pdsch_default_time_allocation_params param = GetParam();
 
     // If there is no entry, it is reserved.
     if (pdsch_default_time_allocation_A_extended.count(param) == 0) {
-      return PDSCH_DEFAULT_TIME_ALLOCATION_RESERVED;
+      return INVALID_PDSCH_TIME_RESOURCE_ALLOCATION;
     }
 
     // Return the expected value.
@@ -157,17 +164,14 @@ TEST_P(pdsch_default_time_allocation_test, A_normal)
   dmrs_typeA_position dmrs_pos  = std::get<1>(params);
 
   // Get result.
-  pdsch_default_time_allocation_config result =
+  pdsch_time_domain_resource_allocation result =
       pdsch_default_time_allocation_default_A_get(cyclic_prefix::NORMAL, row_index, dmrs_pos);
 
   // Get expected.
-  pdsch_default_time_allocation_config expected = get_expected_A_normal();
+  pdsch_time_domain_resource_allocation expected = get_expected_A_normal();
 
   // Compare with expected.
-  ASSERT_EQ(expected.mapping_type, result.mapping_type);
-  ASSERT_EQ(expected.pdcch_to_pdsch_delay, result.pdcch_to_pdsch_delay);
-  ASSERT_EQ(expected.start_symbol, result.start_symbol);
-  ASSERT_EQ(expected.duration, result.duration);
+  ASSERT_EQ(expected, result);
 }
 
 TEST_P(pdsch_default_time_allocation_test, A_extended)
@@ -180,17 +184,14 @@ TEST_P(pdsch_default_time_allocation_test, A_extended)
   dmrs_typeA_position dmrs_pos  = std::get<1>(params);
 
   // Get result.
-  pdsch_default_time_allocation_config result =
+  pdsch_time_domain_resource_allocation result =
       pdsch_default_time_allocation_default_A_get(cyclic_prefix::EXTENDED, row_index, dmrs_pos);
 
   // Get expected.
-  pdsch_default_time_allocation_config expected = get_expected_A_extended();
+  pdsch_time_domain_resource_allocation expected = get_expected_A_extended();
 
   // Compare with expected.
-  ASSERT_EQ(expected.mapping_type, result.mapping_type);
-  ASSERT_EQ(expected.pdcch_to_pdsch_delay, result.pdcch_to_pdsch_delay);
-  ASSERT_EQ(expected.start_symbol, result.start_symbol);
-  ASSERT_EQ(expected.duration, result.duration);
+  ASSERT_EQ(expected, result);
 }
 
 // Creates test suite that combines all possible parameters. Denote zero_correlation_zone exceeds the maximum by one.

@@ -9,6 +9,7 @@
  */
 
 #include "pdcch_type0_helpers.h"
+#include "srsran/ran/band_helper.h"
 
 using namespace srsran;
 

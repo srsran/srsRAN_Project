@@ -19,6 +19,12 @@ namespace srsran {
 /// Range [start,stop) of OFDM symbols.
 struct ofdm_symbol_range : public interval<uint8_t> {
   using interval<uint8_t>::interval;
+
+  template <typename U, typename V>
+  static constexpr ofdm_symbol_range start_and_len(U start_point, V dur)
+  {
+    return ofdm_symbol_range(start_point, start_point + dur);
+  }
 };
 
 /// \brief Converts SLIV to OFDM symbol start S and length L.

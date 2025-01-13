@@ -22,7 +22,7 @@ namespace srsran {
 template <typename T, bool RightClosed = false>
 class interval
 {
-  static_assert(std::is_trivially_copyable<T>::value, "Expected to be trivially copyable");
+  static_assert(std::is_trivially_copyable_v<T>, "Expected to be trivially copyable");
 
 public:
   /// Whether the interval is of real numbers.
@@ -36,9 +36,15 @@ public:
   template <typename U, typename V>
   constexpr interval(U start_point, V stop_point) : start_(start_point), stop_(stop_point)
   {
-    static_assert(std::is_convertible<U, T>::value, "Invalid interval start point type");
-    static_assert(std::is_convertible<V, T>::value, "Invalid interval stop point type");
+    static_assert(std::is_convertible_v<U, T>, "Invalid interval start point type");
+    static_assert(std::is_convertible_v<V, T>, "Invalid interval stop point type");
     srsran_assert(start_ <= stop_, "Invalid interval [{}, {})", start_, stop_);
+  }
+
+  template <typename U, typename V>
+  static interval<T> start_and_len(U start_point, V dur)
+  {
+    return interval(start_point, start_point + dur);
   }
 
   constexpr T start() const { return start_; }
@@ -75,10 +81,10 @@ public:
   void resize(length_type new_length) { stop_ = start_ + new_length; }
 
   /// Move interval by an offset.
-  void displace_by(int offset)
+  constexpr void displace_by(int offset)
   {
     srsran_assert(
-        std::is_signed<T>::value or static_cast<int64_t>(start_) >= -offset,
+        std::is_signed_v<T> or static_cast<int64_t>(start_) >= -offset,
         "Cannot have negative starting_points in case interval<T> underlying type is unsigned. Start={} < offset={}",
         start_,
         -offset);
