@@ -18,7 +18,7 @@
 
 using namespace srsran;
 
-class scheduler_qos_test : public scheduler_test_simulator, public ::testing::Test
+class scheduler_qos_test : public scheduler_test_simulator
 {
   struct ue_stats {
     uint64_t dl_bytes_sum = 0;
@@ -26,12 +26,15 @@ class scheduler_qos_test : public scheduler_test_simulator, public ::testing::Te
   };
 
 public:
-  static constexpr unsigned GBR_DL = 10e6;
-  static constexpr unsigned GBR_UL = 5e6;
-
-  scheduler_qos_test() : scheduler_test_simulator(4, subcarrier_spacing::kHz30)
+  scheduler_qos_test(unsigned nof_gbr_ues          = 1,
+                     unsigned nof_non_gbr_ues      = 7,
+                     unsigned gbr_dl_bitrate_mbps_ = 10e6,
+                     unsigned gbr_ul_bitrate_mbps_ = 5e6) :
+    scheduler_test_simulator(4, subcarrier_spacing::kHz30),
+    gbr_dl_bitrate_mbps(gbr_dl_bitrate_mbps_),
+    gbr_ul_bitrate_mbps(gbr_ul_bitrate_mbps_)
   {
-    const unsigned TEST_NOF_UES = 8;
+    const unsigned TEST_NOF_UES = nof_gbr_ues + nof_non_gbr_ues;
     ue_stats_map.resize(TEST_NOF_UES);
 
     params = cell_config_builder_profiles::tdd(subcarrier_spacing::kHz30);
@@ -53,25 +56,28 @@ public:
     f1_params.occ_supported                = true;
     pucch_cfg_builder.setup(cell_cfg_list[0], pucch_basic_params);
 
-    // Add UE0 with GBR
-    du_ue_index_t ue_idx = to_du_ue_index(0);
+    du_ue_index_t ue_idx;
     auto          ue_cfg = sched_config_helper::create_default_sched_ue_creation_request(params, {LCID_MIN_DRB});
-    ue_cfg.ue_index      = ue_idx;
-    ue_cfg.crnti         = to_rnti(0x4601 + (unsigned)ue_idx);
-    ue_cfg.cfg.lc_config_list.value()[2].rrm_policy.s_nssai.sst = slice_service_type{1};
-    auto& qos_info                                              = ue_cfg.cfg.lc_config_list.value()[2].qos.emplace();
-    qos_info.qos.average_window_ms                              = 100;
-    qos_info.gbr_qos_info.emplace();
-    qos_info.gbr_qos_info.value().gbr_dl = GBR_DL;
-    qos_info.gbr_qos_info.value().gbr_ul = GBR_UL;
-    report_fatal_error_if_not(pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_cfg.cfg.cells.value()[0].serv_cell_cfg),
-                              "Failed to allocate PUCCH resources");
-    this->add_ue(ue_cfg);
+    // Add UEs with GBR
+    for (unsigned i = 0; i != nof_gbr_ues; ++i) {
+      ue_idx                                                      = to_du_ue_index(i);
+      ue_cfg.ue_index                                             = ue_idx;
+      ue_cfg.crnti                                                = to_rnti(0x4601 + (unsigned)ue_idx);
+      ue_cfg.cfg.lc_config_list.value()[2].rrm_policy.s_nssai.sst = slice_service_type{1};
+      auto& qos_info                                              = ue_cfg.cfg.lc_config_list.value()[2].qos.emplace();
+      qos_info.qos.average_window_ms                              = 100;
+      qos_info.gbr_qos_info.emplace();
+      qos_info.gbr_qos_info.value().gbr_dl = gbr_dl_bitrate_mbps;
+      qos_info.gbr_qos_info.value().gbr_ul = 5e6;
+      report_fatal_error_if_not(pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_cfg.cfg.cells.value()[0].serv_cell_cfg),
+                                "Failed to allocate PUCCH resources");
+      this->add_ue(ue_cfg);
+    }
 
     // Add UEs without GBR.
     ue_cfg.cfg.lc_config_list.value()[2].qos.reset();
-    for (unsigned i = 1; i != TEST_NOF_UES; ++i) {
-      ue_idx          = to_du_ue_index(i);
+    for (unsigned i = 0; i != nof_non_gbr_ues; ++i) {
+      ue_idx          = to_du_ue_index(i + nof_gbr_ues);
       ue_cfg.ue_index = ue_idx;
       ue_cfg.crnti    = to_rnti(0x4601 + (unsigned)ue_idx);
       report_fatal_error_if_not(pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_cfg.cfg.cells.value()[0].serv_cell_cfg),
@@ -96,6 +102,9 @@ public:
     }
   }
 
+  const unsigned gbr_dl_bitrate_mbps;
+  const unsigned gbr_ul_bitrate_mbps;
+
   cell_config_builder_params params;
 
   pucch_res_builder_test_helper pucch_cfg_builder;
@@ -103,7 +112,14 @@ public:
   std::vector<ue_stats> ue_stats_map;
 };
 
-TEST_F(scheduler_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
+/// Test case when 1 UE has a GBR bearer and the remaining UEs do not.
+class scheduler_1_gbr_ue_qos_test : public scheduler_qos_test, public ::testing::Test
+{
+public:
+  scheduler_1_gbr_ue_qos_test() : scheduler_qos_test(1) {}
+};
+
+TEST_F(scheduler_1_gbr_ue_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
 {
   // number of slots discarded that were used to fill average window.
   const unsigned PREAMBLE_SLOT_RUNS = 200;
@@ -181,8 +197,13 @@ TEST_F(scheduler_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
     ASSERT_GT(ue_dl_rate_mbps[GBR_UE_INDEX], ue_dl_rate_mbps[i]) << "UE DL GBR rate < UE DL non-GBR rate";
     ASSERT_GT(ue_ul_rate_mbps[GBR_UE_INDEX], ue_ul_rate_mbps[i]) << "UE UL GBR rate < UE UL non-GBR rate";
   }
-  ASSERT_GT(ue_dl_rate_mbps[GBR_UE_INDEX], static_cast<double>(GBR_DL) * 1e-6 * 0.95)
+  ASSERT_GT(ue_dl_rate_mbps[GBR_UE_INDEX], static_cast<double>(gbr_dl_bitrate_mbps) * 1e-6 * 0.95)
       << "UE DL GBR rate < expected DL GBR";
-  ASSERT_GT(ue_ul_rate_mbps[GBR_UE_INDEX], static_cast<double>(GBR_UL) * 1e-6 * 0.95)
+  ASSERT_GT(ue_ul_rate_mbps[GBR_UE_INDEX], static_cast<double>(gbr_ul_bitrate_mbps) * 1e-6 * 0.95)
       << "UE UL GBR rate < expected UL GBR";
 }
+
+class scheduler_saturated_gbr_ue_qos_test : public scheduler_qos_test
+{
+public:
+};
