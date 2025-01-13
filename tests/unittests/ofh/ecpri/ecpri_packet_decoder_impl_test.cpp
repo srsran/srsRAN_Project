@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -36,7 +36,7 @@ TEST(ecpri_packet_decoder_impl_test, decode_valid_control_packet_should_pass)
 
   packet_parameters params;
 
-  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"));
+  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"), 0);
 
   span<const uint8_t> payload = decoder.decode(packet, params);
 
@@ -56,7 +56,7 @@ TEST(ecpri_packet_decoder_impl_test, decode_valid_data_packet_should_pass)
 
   packet_parameters params;
 
-  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"));
+  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"), 0);
 
   span<const uint8_t> payload = decoder.decode(packet, params);
 
@@ -75,7 +75,7 @@ TEST(ecpri_packet_decoder_impl_test, decode_invalid_packet_size_should_fail)
 
   packet_parameters params;
 
-  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"));
+  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"), 0);
 
   span<const uint8_t> payload = decoder.decode(packet, params);
 
@@ -91,7 +91,7 @@ TEST(ecpri_packet_decoder_impl_test, decode_invalid_payload_size_should_fail)
 
   packet_parameters params;
 
-  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"));
+  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"), 0);
 
   span<const uint8_t> payload = decoder.decode(packet, params);
 
@@ -107,7 +107,7 @@ TEST(ecpri_packet_decoder_impl_test, decode_invalid_ecpri_protocol_revision_shou
 
   packet_parameters params;
 
-  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"));
+  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"), 0);
 
   span<const uint8_t> payload = decoder.decode(packet, params);
 
@@ -123,7 +123,7 @@ TEST(ecpri_packet_decoder_impl_test, decode_invalid_ecpri_last_packet_should_fai
 
   packet_parameters params;
 
-  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"));
+  packet_decoder_use_header_payload_size decoder(srslog::fetch_basic_logger("TEST"), 0);
 
   span<const uint8_t> payload = decoder.decode(packet, params);
 

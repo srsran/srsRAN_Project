@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -49,7 +49,8 @@ lower_phy_uplink_processor_impl::lower_phy_uplink_processor_impl(std::unique_ptr
   current_symbol_index(0),
   temp_buffer(config.nof_rx_ports, 2 * config.rate.get_dft_size(config.scs)),
   prach_proc(std::move(prach_proc_)),
-  puxch_proc(std::move(puxch_proc_))
+  puxch_proc(std::move(puxch_proc_)),
+  cfo_processor(config.rate)
 {
   srsran_assert(prach_proc, "Invalid PRACH processor.");
   srsran_assert(puxch_proc, "Invalid PUxCH processor.");
@@ -237,12 +238,17 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
     uint64_t total_processed_samples = 0;
     uint64_t nof_clipped_samples     = 0;
 
+    // Process received signal before demodulation.
     for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-      span<const cf_t> channel_buffer = temp_buffer.get_reader().get_channel_buffer(i_channel);
+      // Perform signal measurements.
+      span<cf_t> channel_buffer = temp_buffer.get_writer().get_channel_buffer(i_channel);
       avg_power.update(srsvec::average_power(channel_buffer));
       peak_power.update(srsvec::max_abs_element(channel_buffer).second);
       nof_clipped_samples += srsvec::count_if_part_abs_greater_than(channel_buffer, 0.95);
       total_processed_samples += channel_buffer.size();
+
+      // Perform carrier frequency offset.
+      cfo_processor.process(channel_buffer);
     }
 
     metrics.avg_power  = avg_power.get_mean();
@@ -271,4 +277,9 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
   // Process next symbol with the remainder samples.
   baseband_gateway_buffer_reader_view samples2(samples, nof_samples, nof_input_samples - nof_samples);
   process_symbol_boundary(samples2, timestamp + nof_samples);
+}
+
+baseband_cfo_processor& lower_phy_uplink_processor_impl::get_cfo_handler()
+{
+  return cfo_processor;
 }

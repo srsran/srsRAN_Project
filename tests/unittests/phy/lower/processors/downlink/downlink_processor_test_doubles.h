@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -28,6 +28,7 @@
 #include "srsran/phy/lower/processors/downlink/downlink_processor_factories.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_notifier.h"
 #include "srsran/phy/lower/processors/downlink/pdxch/pdxch_processor_request_handler.h"
+#include "srsran/phy/lower/processors/lower_phy_cfo_controller.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/srsvec/copy.h"
 #include <random>
@@ -95,6 +96,12 @@ private:
   std::vector<entry_t>                  entries;
 };
 
+class baseband_cfo_processor_spy : public lower_phy_cfo_controller
+{
+public:
+  bool schedule_cfo_command(time_point time, float cfo_Hz) override { return false; }
+};
+
 class lower_phy_downlink_processor_spy : public lower_phy_downlink_processor
 {
 public:
@@ -116,6 +123,8 @@ public:
 
   pdxch_processor_notifier* get_pdxch_notifier() { return pdxch_notifier; }
 
+  baseband_cfo_processor_spy& get_cfo_handler() override { return cfo_processor_spy; }
+
   const pdxch_processor_request_handler_spy& get_pdxch_proc_request_handler_spy() const
   {
     return pdxch_proc_request_handler_spy;
@@ -135,6 +144,7 @@ private:
   downlink_processor_configuration    config;
   downlink_processor_notifier*        notifier;
   pdxch_processor_notifier*           pdxch_notifier;
+  baseband_cfo_processor_spy          cfo_processor_spy;
   pdxch_processor_request_handler_spy pdxch_proc_request_handler_spy;
   downlink_processor_baseband_spy     downlink_proc_baseband_spy;
 };

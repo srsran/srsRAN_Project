@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -29,18 +29,18 @@ std::unique_ptr<f1u_cu_up_gateway_bearer>
 f1u_local_connector::create_cu_bearer(uint32_t                              ue_index,
                                       drb_id_t                              drb_id,
                                       const srs_cu_up::f1u_config&          config,
-                                      const up_transport_layer_info&        ul_up_tnl_info,
+                                      const gtpu_teid_t&                    ul_teid,
                                       f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
                                       task_executor&                        ul_exec)
 {
-  logger_cu.info("Creating CU gateway local bearer with UL GTP Tunnel={}", ul_up_tnl_info);
+  logger_cu.info("Created CU gateway local bearer with. ul_teid={}", ul_teid);
   std::unique_lock<std::mutex> lock(map_mutex);
-  srsran_assert(cu_map.find(ul_up_tnl_info) == cu_map.end(),
-                "Cannot create CU gateway local bearer with already existing UL GTP Tunnel={}",
-                ul_up_tnl_info);
+  srsran_assert(cu_map.find(ul_teid) == cu_map.end(),
+                "Cannot create CU gateway local bearer, UL TEID already exists. ul_teid={}",
+                ul_teid);
   std::unique_ptr<f1u_gateway_cu_bearer> cu_bearer =
-      std::make_unique<f1u_gateway_cu_bearer>(ue_index, drb_id, ul_up_tnl_info, rx_notifier, ul_exec, *this);
-  cu_map.insert({ul_up_tnl_info, cu_bearer.get()});
+      std::make_unique<f1u_gateway_cu_bearer>(ue_index, drb_id, ul_teid, rx_notifier, ul_exec, *this);
+  cu_map.insert({ul_teid, cu_bearer.get()});
   return cu_bearer;
 }
 
@@ -48,7 +48,7 @@ void f1u_local_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
                                          const up_transport_layer_info& dl_up_tnl_info)
 {
   std::unique_lock<std::mutex> lock(map_mutex);
-  if (cu_map.find(ul_up_tnl_info) == cu_map.end()) {
+  if (cu_map.find(ul_up_tnl_info.gtp_teid) == cu_map.end()) {
     logger_cu.warning("Could not find UL GTP Tunnel at CU-CP to connect. UL GTP Tunnel={}, DL GTP Tunnel={}",
                       ul_up_tnl_info,
                       dl_up_tnl_info);
@@ -64,7 +64,7 @@ void f1u_local_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
   }
   logger_cu.debug("Connecting DU F1-U bearer. UL GTP Tunnel={}, DL GTP Tunnel={}", ul_up_tnl_info, dl_up_tnl_info);
   f1u_gateway_du_bearer* du_tun = du_map.at(dl_up_tnl_info);
-  f1u_gateway_cu_bearer* cu_tun = cu_map.at(ul_up_tnl_info);
+  f1u_gateway_cu_bearer* cu_tun = cu_map.at(ul_up_tnl_info.gtp_teid);
   cu_tun->dl_tnl_info           = dl_up_tnl_info;
   cu_tun->attach_du_notifier(*du_tun->f1u_rx, dl_up_tnl_info);
 }
@@ -74,7 +74,7 @@ void f1u_local_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
   std::unique_lock<std::mutex> lock(map_mutex);
 
   // Find bearer from ul_teid
-  auto bearer_it = cu_map.find(ul_up_tnl_info);
+  auto bearer_it = cu_map.find(ul_up_tnl_info.gtp_teid);
   if (bearer_it == cu_map.end()) {
     logger_cu.warning("Could not find UL GTP Tunnel={} at CU to remove.", ul_up_tnl_info);
     return;
@@ -117,13 +117,13 @@ f1u_local_connector::create_du_bearer(uint32_t                                  
                                       task_executor&                             ue_executor)
 {
   std::unique_lock<std::mutex> lock(map_mutex);
-  if (cu_map.find(ul_up_tnl_info) == cu_map.end()) {
+  if (cu_map.find(ul_up_tnl_info.gtp_teid) == cu_map.end()) {
     logger_du.warning("Could not find CU F1-U bearer, when creating DU F1-U bearer. DL GTP Tunnel={}, UL GTP Tunnel={}",
                       dl_up_tnl_info,
                       ul_up_tnl_info);
     return nullptr;
   }
-  srsran::f1u_gateway_cu_bearer* cu_tun = cu_map.at(ul_up_tnl_info);
+  srsran::f1u_gateway_cu_bearer* cu_tun = cu_map.at(ul_up_tnl_info.gtp_teid);
 
   logger_du.debug("Creating DU F1-U bearer. DL GTP Tunnel={}, UL GTP Tunnel={}", dl_up_tnl_info, ul_up_tnl_info);
   std::unique_ptr<f1u_gateway_du_bearer> du_bearer =
@@ -146,7 +146,7 @@ void f1u_local_connector::remove_du_bearer(const up_transport_layer_info& dl_up_
   }
   logger_du.debug("Removing DU F1-U bearer. DL GTP Tunnel={}", dl_up_tnl_info);
 
-  auto cu_bearer_it = cu_map.find(du_bearer_it->second->ul_up_tnl_info);
+  auto cu_bearer_it = cu_map.find(du_bearer_it->second->ul_up_tnl_info.gtp_teid);
   if (cu_bearer_it != cu_map.end()) {
     logger_du.debug("Detaching DU notifier to CU. UL GTP Tunnel={}", du_bearer_it->second->ul_up_tnl_info);
     cu_bearer_it->second->detach_du_notifier(dl_up_tnl_info);

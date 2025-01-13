@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -55,6 +55,7 @@
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handling.h"
+#include "srsran/support/signal_observer.h"
 #include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
@@ -92,14 +93,17 @@ static void populate_cli11_generic_args(CLI::App& app)
 }
 
 /// Function to call when the application is interrupted.
-static void interrupt_signal_handler()
+static void interrupt_signal_handler(int signal)
 {
   is_app_running = false;
 }
 
+static signal_dispatcher cleanup_signal_dispatcher;
+
 /// Function to call when the application is going to be forcefully shutdown.
-static void cleanup_signal_handler()
+static void cleanup_signal_handler(int signal)
 {
+  cleanup_signal_dispatcher.notify_signal(signal);
   srslog::flush();
 }
 
@@ -316,12 +320,16 @@ int main(int argc, char** argv)
   check_cpu_governor(gnb_logger);
   check_drm_kms_polling(gnb_logger);
 
+  // Setup application timers.
+  timer_manager app_timers{1024};
+
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
   o_cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
   fill_gnb_worker_manager_config(worker_manager_cfg, gnb_cfg);
+  worker_manager_cfg.app_timers = &app_timers;
 
   worker_manager workers{worker_manager_cfg};
 
@@ -337,11 +345,12 @@ int main(int argc, char** argv)
   // We disable one accordingly.
   o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg.pcap_cfg.disable_e1_pcaps();
   o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.pcaps.disable_f1_pcaps();
-  o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
-      create_o_cu_cp_dlt_pcap(o_cu_cp_app_unit->get_o_cu_cp_unit_config(), *workers.get_executor_getter());
-  o_cu_up_dlt_pcaps cu_up_dlt_pcaps =
-      create_o_cu_up_dlt_pcaps(o_cu_up_app_unit->get_o_cu_up_unit_config(), *workers.get_executor_getter());
-  flexible_o_du_pcaps du_pcaps = create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers);
+  o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_o_cu_cp_dlt_pcap(
+      o_cu_cp_app_unit->get_o_cu_cp_unit_config(), *workers.get_executor_getter(), cleanup_signal_dispatcher);
+  o_cu_up_dlt_pcaps cu_up_dlt_pcaps = create_o_cu_up_dlt_pcaps(
+      o_cu_up_app_unit->get_o_cu_up_unit_config(), *workers.get_executor_getter(), cleanup_signal_dispatcher);
+  flexible_o_du_pcaps du_pcaps =
+      create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_dispatcher);
 
   std::unique_ptr<f1c_local_connector> f1c_gw =
       create_f1c_local_connector(f1c_local_connector_config{*cu_cp_dlt_pcaps.f1ap});
@@ -349,7 +358,6 @@ int main(int argc, char** argv)
       create_e1_local_connector(e1_local_connector_config{*cu_cp_dlt_pcaps.e1ap});
 
   // Create manager of timers for DU, CU-CP and CU-UP, which will be driven by the PHY slot ticks.
-  timer_manager                  app_timers{256};
   timer_manager*                 cu_timers = &app_timers;
   std::unique_ptr<timer_manager> dummy_timers;
   if (o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.is_testmode_enabled()) {
@@ -493,9 +501,9 @@ int main(int argc, char** argv)
   o_cucp_obj.get_cu_cp().stop();
 
   gnb_logger.info("Closing PCAP files...");
-  cu_cp_dlt_pcaps.close();
-  cu_up_dlt_pcaps.close();
-  du_pcaps.close();
+  cu_cp_dlt_pcaps.reset();
+  cu_up_dlt_pcaps.reset();
+  du_pcaps.reset();
   gnb_logger.info("PCAP files successfully closed.");
 
   gnb_logger.info("Stopping executors...");

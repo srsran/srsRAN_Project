@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,17 +22,22 @@
 
 #include "ru_controller_generic_impl.h"
 #include "srsran/phy/lower/lower_phy_controller.h"
+#include "srsran/phy/lower/processors/lower_phy_cfo_controller.h"
 #include "srsran/radio/radio_session.h"
 #include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 
-ru_controller_generic_impl::ru_controller_generic_impl(std::vector<lower_phy_controller*> low_phy_crtl_,
-                                                       std::vector<phy_metrics_adapter*>  low_phy_metrics_,
-                                                       radio_session&                     radio_,
-                                                       double                             srate_MHz_) :
+ru_controller_generic_impl::ru_controller_generic_impl(std::vector<lower_phy_controller*>     low_phy_crtl_,
+                                                       std::vector<phy_metrics_adapter*>      low_phy_metrics_,
+                                                       std::vector<lower_phy_cfo_controller*> tx_cfo_control_,
+                                                       std::vector<lower_phy_cfo_controller*> rx_cfo_control_,
+                                                       radio_session&                         radio_,
+                                                       double                                 srate_MHz_) :
   low_phy_crtl(std::move(low_phy_crtl_)),
   low_phy_metrics(std::move(low_phy_metrics_)),
+  tx_cfo_control(std::move(tx_cfo_control_)),
+  rx_cfo_control(std::move(rx_cfo_control_)),
   radio(radio_),
   srate_MHz(srate_MHz_)
 {
@@ -73,6 +78,22 @@ bool ru_controller_generic_impl::set_tx_gain(unsigned port_id, double gain_dB)
 bool ru_controller_generic_impl::set_rx_gain(unsigned port_id, double gain_dB)
 {
   return radio.get_management_plane().set_rx_gain(port_id, gain_dB);
+}
+
+bool ru_controller_generic_impl::set_tx_cfo(unsigned sector_id, float cfo_hz)
+{
+  if (sector_id < tx_cfo_control.size()) {
+    return tx_cfo_control[sector_id]->schedule_cfo_command(std::chrono::system_clock::now(), cfo_hz);
+  }
+  return false;
+}
+
+bool ru_controller_generic_impl::set_rx_cfo(unsigned sector_id, float cfo_hz)
+{
+  if (sector_id < rx_cfo_control.size()) {
+    return rx_cfo_control[sector_id]->schedule_cfo_command(std::chrono::system_clock::now(), cfo_hz);
+  }
+  return false;
 }
 
 void ru_controller_generic_impl::print_metrics()

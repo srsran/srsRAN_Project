@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -32,7 +32,7 @@ namespace ecpri {
 class packet_decoder_impl : public packet_decoder
 {
 public:
-  explicit packet_decoder_impl(srslog::basic_logger& logger_) : logger(logger_) {}
+  packet_decoder_impl(srslog::basic_logger& logger_, unsigned sector_) : logger(logger_), sector(sector_) {}
 
   // See interface for documentation.
   span<const uint8_t> decode(span<const uint8_t> packet, packet_parameters& params) override;
@@ -53,13 +53,17 @@ private:
 
 protected:
   srslog::basic_logger& logger;
+  const unsigned        sector;
 };
 
 /// \brief eCPRI packet decoder implementation utilizing payload size encoded in a eCPRI header.
 class packet_decoder_use_header_payload_size : public packet_decoder_impl
 {
 public:
-  explicit packet_decoder_use_header_payload_size(srslog::basic_logger& logger_) : packet_decoder_impl(logger_) {}
+  packet_decoder_use_header_payload_size(srslog::basic_logger& logger_, unsigned sector_) :
+    packet_decoder_impl(logger_, sector_)
+  {
+  }
 
 private:
   // See interface for documentation.
@@ -71,7 +75,10 @@ private:
 class packet_decoder_ignore_header_payload_size : public packet_decoder_impl
 {
 public:
-  explicit packet_decoder_ignore_header_payload_size(srslog::basic_logger& logger_) : packet_decoder_impl(logger_) {}
+  packet_decoder_ignore_header_payload_size(srslog::basic_logger& logger_, unsigned sector_) :
+    packet_decoder_impl(logger_, sector_)
+  {
+  }
 
 private:
   // See interface for documentation.

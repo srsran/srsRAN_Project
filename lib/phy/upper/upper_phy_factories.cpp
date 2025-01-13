@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -32,6 +32,7 @@
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsran/phy/upper/channel_processors/pdcch/factories.h"
 #include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
@@ -188,7 +189,7 @@ public:
   }
 
   // See interface for documentation.
-  std::unique_ptr<downlink_processor> create(const downlink_processor_config& config) override
+  std::unique_ptr<downlink_processor_controller> create(const downlink_processor_config& config) override
   {
     std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create();
     report_fatal_error_if_not(pdcch, "Invalid PDCCH processor.");
@@ -212,7 +213,7 @@ public:
   }
 
   // See interface for documentation.
-  std::unique_ptr<downlink_processor>
+  std::unique_ptr<downlink_processor_controller>
   create(const downlink_processor_config& config, srslog::basic_logger& logger, bool enable_broadcast) override
   {
     std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create(logger, enable_broadcast);
@@ -237,7 +238,7 @@ public:
     }
     report_fatal_error_if_not(nzp_csi, "Invalid NZP-CSI-RS generator.");
 
-    std::unique_ptr<downlink_processor> downlink_proc =
+    std::unique_ptr<downlink_processor_controller> downlink_proc =
         std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
                                                                   std::move(pdcch),
                                                                   std::move(pdsch),
@@ -272,7 +273,6 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
   dl_phy_logger.set_hex_dump_max_size(config.logger_max_hex_size);
 
   downlink_processor_pool_config config_pool;
-  config_pool.num_sectors = 1;
 
   for (unsigned numerology = 0, numerology_end = to_numerology_value(subcarrier_spacing::invalid);
        numerology != numerology_end;
@@ -282,7 +282,7 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
       continue;
     }
 
-    downlink_processor_pool_config::sector_dl_processor info = {0, to_subcarrier_spacing(numerology), {}};
+    downlink_processor_pool_config::sector_dl_processor info = {to_subcarrier_spacing(numerology), {}};
 
     for (unsigned i_proc = 0, nof_procs = config.nof_dl_processors; i_proc != nof_procs; ++i_proc) {
       downlink_processor_config processor_config;
@@ -292,7 +292,7 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
       // Assign an executor to each DL processor from the list in round-robin fashion.
       processor_config.executor = config.dl_executors[i_proc % config.dl_executors.size()];
 
-      std::unique_ptr<downlink_processor> dl_proc;
+      std::unique_ptr<downlink_processor_controller> dl_proc;
       if (config.log_level == srslog::basic_levels::none) {
         dl_proc = factory->create(processor_config);
       } else {
@@ -894,10 +894,9 @@ std::unique_ptr<downlink_processor_pool> srsran::create_dl_processor_pool(downli
 {
   // Convert from pool config to pool_impl config.
   downlink_processor_pool_impl_config dl_processors;
-  dl_processors.num_sectors = config.num_sectors;
 
   for (auto& proc : config.dl_processors) {
-    dl_processors.procs.push_back({proc.sector, proc.scs, std::move(proc.procs)});
+    dl_processors.procs.push_back({proc.scs, std::move(proc.procs)});
   }
 
   return std::make_unique<downlink_processor_pool_impl>(std::move(dl_processors));

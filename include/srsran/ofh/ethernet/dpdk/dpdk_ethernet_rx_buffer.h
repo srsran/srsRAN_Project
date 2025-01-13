@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -48,7 +48,7 @@ public:
     other.mbuf = nullptr;
   };
 
-  /// Move assigment operator.
+  /// Move assignment operator.
   dpdk_rx_buffer_impl& operator=(dpdk_rx_buffer_impl&& other) noexcept
   {
     // Free stored mbuf.

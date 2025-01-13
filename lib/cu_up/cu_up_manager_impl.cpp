@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -71,6 +71,11 @@ cu_up_manager_impl::cu_up_manager_impl(const cu_up_manager_impl_config&       co
   /// > Create UE manager
   ue_mng = std::make_unique<ue_manager>(generate_ue_manager_config(n3_cfg, test_mode_cfg),
                                         generate_ue_manager_dependencies(dependencies, logger));
+}
+
+async_task<void> cu_up_manager_impl::stop()
+{
+  return ue_mng->stop();
 }
 
 void cu_up_manager_impl::schedule_ue_async_task(ue_index_t ue_index, async_task<void> task)

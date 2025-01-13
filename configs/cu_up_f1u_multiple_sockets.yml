@@ -1,0 +1,18 @@
+cu_up:
+  f1u:
+    socket:
+      - 
+        bind_addr: 127.0.3.1  # Address that the F1-U socket will bind to.
+        #ext_addr: 8.8.8.8    # Address that is reported as the F1-U bind address.
+                              # If empty, the real bind address is used.
+        udp:
+          max_rx_msgs: 256    # maximum packets read from the socket in a single syscall.
+          pool_threshold: 0.9 # Pool occupancy threshold, after which packets are dropped.
+
+      - 
+        bind_addr: 127.0.3.2  # Address that the F1-U socket will bind to.
+        #ext_addr: 8.8.8.8    # Address that is reported as the F1-U bind address.
+                              # If empty, the real bind address is used.
+        udp:
+          max_rx_msgs: 256    # maximum packets read from the socket in a single syscall.
+          pool_threshold: 0.9 # Pool occupancy threshold, after which packets are dropped.

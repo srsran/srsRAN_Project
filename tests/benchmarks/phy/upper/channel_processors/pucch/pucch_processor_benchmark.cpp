@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -99,7 +99,7 @@ static std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>> 
 static std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor    = nullptr;
 
 // Thread shared variables.
-static constexpr auto        thread_sync_sleep_duration = std::chrono::nanoseconds(100U);
+static constexpr auto        thread_sync_sleep_duration = std::chrono::nanoseconds(10U);
 static std::atomic<bool>     thread_quit                = {};
 static std::atomic<int>      pending_count              = {0};
 static std::atomic<unsigned> finish_count               = {0};

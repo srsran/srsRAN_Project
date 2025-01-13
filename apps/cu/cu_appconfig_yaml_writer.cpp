@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,6 +22,7 @@
 
 #include "cu_appconfig_yaml_writer.h"
 #include "apps/services/logger/logger_appconfig_yaml_writer.h"
+#include "apps/services/network/udp_config_yaml_writer.h"
 #include "cu_appconfig.h"
 
 using namespace srsran;
@@ -39,13 +40,29 @@ static void fill_cu_appconfig_f1ap_section(YAML::Node node, const srs_cu::cu_f1a
   f1ap_node["bind_address"] = config.bind_addr;
 }
 
-static void fill_cu_appconfig_nru_section(YAML::Node node, const srs_cu::cu_nru_appconfig& config)
+static void fill_cu_up_f1u_socket_entry(YAML::Node& node, const srsran::srs_cu::cu_f1u_socket_appconfig& config)
 {
-  YAML::Node cu_up_node       = node["cu_up"];
-  YAML::Node nru_node         = cu_up_node["nru"];
-  nru_node["udp_max_rx_msgs"] = config.udp_rx_max_msgs;
-  nru_node["bind_addr"]       = config.bind_addr;
-  nru_node["ext_addr"]        = config.ext_addr;
+  node["bind_addr"] = config.bind_addr;
+  node["ext_addr"]  = config.udp_config.ext_addr;
+  fill_udp_config_in_yaml_schema(node["udp"], config.udp_config);
+}
+
+static void fill_cu_up_f1u_socket_section(YAML::Node                                                  node,
+                                          const std::vector<srsran::srs_cu::cu_f1u_socket_appconfig>& sock_cfg)
+{
+  auto sock_node = node["socket"];
+  for (const auto& cfg : sock_cfg) {
+    YAML::Node node_sock;
+    fill_cu_up_f1u_socket_entry(node_sock, cfg);
+    sock_node.push_back(node_sock);
+  }
+}
+
+static void fill_cu_appconfig_f1u_section(YAML::Node node, const srs_cu::cu_f1u_appconfig& config)
+{
+  YAML::Node cu_up_node = node["cu_up"];
+  YAML::Node f1u_node   = cu_up_node["f1u"];
+  fill_cu_up_f1u_socket_section(node, config.f1u_socket_cfg);
 }
 
 void srsran::fill_cu_appconfig_in_yaml_schema(YAML::Node& node, const cu_appconfig& config)
@@ -53,5 +70,5 @@ void srsran::fill_cu_appconfig_in_yaml_schema(YAML::Node& node, const cu_appconf
   fill_logger_appconfig_in_yaml_schema(node, config.log_cfg);
   fill_cu_appconfig_buffer_pool_section(node["buffer_pool"], config.buffer_pool_config);
   fill_cu_appconfig_f1ap_section(node, config.f1ap_cfg);
-  fill_cu_appconfig_nru_section(node, config.nru_cfg);
+  fill_cu_appconfig_f1u_section(node, config.f1u_cfg);
 }

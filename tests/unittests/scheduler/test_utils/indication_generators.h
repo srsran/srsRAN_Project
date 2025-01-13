@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/scheduler/result/pusch_info.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 
@@ -39,7 +40,14 @@ rach_indication_message create_rach_indication(slot_point                       
                                                const std::vector<rach_indication_message::preamble>& preambles);
 
 /// Create dummy UCI indication based on a PUCCH PDU.
-uci_indication create_uci_indication(slot_point uci_sl, du_ue_index_t ue_idx, const pucch_info& pucch_pdu);
+uci_indication          create_uci_indication(slot_point uci_sl, du_ue_index_t ue_idx, const pucch_info& pucch_pdu);
+uci_indication::uci_pdu create_uci_indication_pdu(du_ue_index_t ue_idx, const pucch_info& pucch_pdu);
+
+/// Create dummy UCI PDU based on a PUSCH UCI PDU.
+uci_indication::uci_pdu create_uci_indication_pdu(rnti_t rnti, du_ue_index_t ue_idx, const uci_info& uci);
+
+/// Create dummy CRC PDU indication based on a PUSCH PDU.
+ul_crc_pdu_indication create_crc_pdu_indication(const ul_sched_info& ul_grant);
 
 } // namespace test_helper
 

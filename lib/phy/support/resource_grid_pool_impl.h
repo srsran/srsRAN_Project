@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -58,7 +58,7 @@ public:
   ~resource_grid_pool_impl() override;
 
   // See resource_grid_pool interface for documentation.
-  shared_resource_grid allocate_resource_grid(const resource_grid_context& context) override;
+  shared_resource_grid allocate_resource_grid(slot_point slot) override;
 
 private:
   /// Reference counter value to indicate the availability of a resource grid.

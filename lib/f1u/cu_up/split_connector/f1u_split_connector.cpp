@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -21,6 +21,8 @@
  */
 
 #include "f1u_split_connector.h"
+#include "srsran/f1u/cu_up/f1u_session_manager.h"
+#include "srsran/f1u/cu_up/f1u_session_manager_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
 #include "srsran/ran/rb_id.h"
 
@@ -92,7 +94,7 @@ f1u_split_gateway_cu_bearer::f1u_split_gateway_cu_bearer(uint32_t               
                                                          drb_id_t                              drb_id,
                                                          const up_transport_layer_info&        ul_tnl_info_,
                                                          f1u_cu_up_gateway_bearer_rx_notifier& cu_rx_,
-                                                         gtpu_tnl_pdu_session&                 udp_session,
+                                                         gtpu_tnl_pdu_session&                 udp_session_,
                                                          task_executor&                        ul_exec_,
                                                          srs_cu_up::f1u_bearer_disconnector&   disconnector_) :
   ul_exec(ul_exec_),
@@ -100,6 +102,7 @@ f1u_split_gateway_cu_bearer::f1u_split_gateway_cu_bearer(uint32_t               
   logger("CU-F1-U", {ue_index_, drb_id, ul_tnl_info_}),
   disconnector(disconnector_),
   ul_tnl_info(ul_tnl_info_),
+  udp_session(udp_session_),
   cu_rx(cu_rx_)
 {
   gtpu_to_network_adapter = std::make_unique<gtpu_tx_udp_gw_adapter>();
@@ -121,21 +124,33 @@ void f1u_split_gateway_cu_bearer::stop()
   stopped = true;
 }
 
-f1u_split_connector::f1u_split_connector(gtpu_gateway& udp_gw_,
-                                         gtpu_demux&   demux_,
-                                         dlt_pcap&     gtpu_pcap_,
-                                         uint16_t      peer_port_,
-                                         std::string   ext_addr_) :
+expected<std::string> f1u_split_gateway_cu_bearer::get_bind_address() const
+{
+  std::string ip_address;
+  if (not udp_session.get_bind_address(ip_address)) {
+    return make_unexpected(default_error_t{});
+  }
+  return ip_address;
+}
+
+f1u_split_connector::f1u_split_connector(const std::vector<std::unique_ptr<gtpu_gateway>>& udp_gws,
+                                         gtpu_demux&                                       demux_,
+                                         dlt_pcap&                                         gtpu_pcap_,
+                                         uint16_t                                          peer_port_,
+                                         std::string                                       ext_addr_) :
   logger_cu(srslog::fetch_basic_logger("CU-F1-U")),
   peer_port(peer_port_),
   ext_addr(std::move(ext_addr_)),
-  udp_gw(udp_gw_),
   demux(demux_),
   gtpu_pcap(gtpu_pcap_)
 {
+  srsran_assert(not udp_gws.empty(), "Cannot create CU F1-U split connector");
   gw_data_gtpu_demux_adapter = std::make_unique<srs_cu_up::network_gateway_data_gtpu_demux_adapter>();
-  udp_session                = udp_gw.create(*gw_data_gtpu_demux_adapter);
-  gw_data_gtpu_demux_adapter->connect_gtpu_demux(demux);
+  for (const std::unique_ptr<gtpu_gateway>& udp_gw : udp_gws) {
+    udp_sessions.push_back(udp_gw->create(*gw_data_gtpu_demux_adapter));
+    gw_data_gtpu_demux_adapter->connect_gtpu_demux(demux);
+  }
+  f1u_session_mngr = create_f1u_cu_up_session_manager(udp_sessions);
 }
 
 f1u_split_connector::~f1u_split_connector() = default;
@@ -144,18 +159,26 @@ std::unique_ptr<f1u_cu_up_gateway_bearer>
 f1u_split_connector::create_cu_bearer(uint32_t                              ue_index,
                                       drb_id_t                              drb_id,
                                       const srs_cu_up::f1u_config&          config,
-                                      const up_transport_layer_info&        ul_up_tnl_info,
+                                      const gtpu_teid_t&                    ul_teid,
                                       f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
                                       task_executor&                        ul_exec)
 {
-  logger_cu.info("Creating CU gateway local bearer with UL GTP Tunnel={}", ul_up_tnl_info);
-  auto cu_bearer = std::make_unique<f1u_split_gateway_cu_bearer>(
-      ue_index, drb_id, ul_up_tnl_info, rx_notifier, *udp_session, ul_exec, *this);
+  logger_cu.info("Creating CU gateway local bearer with UL GTP Tunnel={}", ul_teid);
+  auto& udp_session = f1u_session_mngr->get_next_f1u_gateway();
+  // Create UL UP TNL address.
+  std::string bind_addr;
+  if (not udp_session.get_bind_address(bind_addr)) {
+    logger_cu.error("Could not get bind address for F1-U tunnel. ue={} drb={}", ue_index, drb_id);
+    return nullptr;
+  }
+  up_transport_layer_info ul_up_tnl_info{transport_layer_address::create_from_string(bind_addr), ul_teid};
+  auto                    cu_bearer = std::make_unique<f1u_split_gateway_cu_bearer>(
+      ue_index, drb_id, ul_up_tnl_info, rx_notifier, udp_session, ul_exec, *this);
   std::unique_lock<std::mutex> lock(map_mutex);
-  srsran_assert(cu_map.find(ul_up_tnl_info) == cu_map.end(),
+  srsran_assert(cu_map.find(ul_up_tnl_info.gtp_teid) == cu_map.end(),
                 "Cannot create CU gateway local bearer with already existing UL GTP Tunnel={}",
                 ul_up_tnl_info);
-  cu_map.insert({ul_up_tnl_info, cu_bearer.get()});
+  cu_map.insert({ul_up_tnl_info.gtp_teid, cu_bearer.get()});
 
   // create GTP-U tunnel rx
   gtpu_tunnel_nru_rx_creation_message msg{};
@@ -185,13 +208,13 @@ void f1u_split_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
   f1u_split_gateway_cu_bearer* cu_bearer = nullptr;
   {
     std::unique_lock<std::mutex> lock(map_mutex);
-    if (cu_map.find(ul_up_tnl_info) == cu_map.end()) {
+    if (cu_map.find(ul_up_tnl_info.gtp_teid) == cu_map.end()) {
       logger_cu.warning("Could not find UL GTP Tunnel at CU-CP to connect. UL GTP Tunnel={}, DL GTP Tunnel={}",
                         ul_up_tnl_info,
                         dl_up_tnl_info);
       return;
     }
-    cu_bearer = cu_map.at(ul_up_tnl_info);
+    cu_bearer = cu_map.at(ul_up_tnl_info.gtp_teid);
   }
 
   // create GTP-U tunnel tx
@@ -217,11 +240,11 @@ void f1u_split_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
   f1u_split_gateway_cu_bearer* cu_bearer = nullptr;
   {
     std::unique_lock<std::mutex> lock(map_mutex);
-    if (cu_map.find(ul_up_tnl_info) == cu_map.end()) {
+    if (cu_map.find(ul_up_tnl_info.gtp_teid) == cu_map.end()) {
       logger_cu.warning("Could not disconnect CU F1-U bearer with unknown UL GTP Tunnel={}", ul_up_tnl_info);
       return;
     }
-    cu_bearer = cu_map.at(ul_up_tnl_info);
+    cu_bearer = cu_map.at(ul_up_tnl_info.gtp_teid);
   }
 
   // disconnect adapters
@@ -234,21 +257,7 @@ void f1u_split_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
   // Remove DL path
   {
     std::unique_lock<std::mutex> lock(map_mutex);
-    cu_map.erase(ul_up_tnl_info);
+    cu_map.erase(ul_up_tnl_info.gtp_teid);
   }
   logger_cu.debug("Removed CU F1-U bearer with UL GTP Tunnel={}.", ul_up_tnl_info);
-}
-
-expected<std::string> f1u_split_connector::get_cu_bind_address() const
-{
-  std::string ip_address;
-
-  if (ext_addr == "auto" || ext_addr == "") {
-    if (not udp_session->get_bind_address(ip_address)) {
-      return make_unexpected(default_error_t{});
-    }
-  } else {
-    ip_address = ext_addr;
-  }
-  return ip_address;
 }

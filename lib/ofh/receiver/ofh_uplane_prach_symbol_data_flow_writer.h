@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -37,9 +37,11 @@ class uplane_prach_symbol_data_flow_writer
 {
 public:
   uplane_prach_symbol_data_flow_writer(span<const unsigned>                      prach_eaxc_,
+                                       unsigned                                  sector_id_,
                                        srslog::basic_logger&                     logger_,
                                        std::shared_ptr<prach_context_repository> prach_context_repo_) :
     prach_eaxc(prach_eaxc_.begin(), prach_eaxc_.end()),
+    sector_id(sector_id_),
     logger(logger_),
     prach_context_repo(std::move(prach_context_repo_))
   {
@@ -51,6 +53,7 @@ public:
 
 private:
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
+  const unsigned                                        sector_id;
   srslog::basic_logger&                                 logger;
   std::shared_ptr<prach_context_repository>             prach_context_repo;
 };

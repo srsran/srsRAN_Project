@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -21,23 +21,18 @@
  */
 
 #include "cu_up_unit_config_yaml_writer.h"
+#include "apps/services/network/udp_config_yaml_writer.h"
 #include "cu_up_unit_config.h"
 #include "srsran/adt/span.h"
 
 using namespace srsran;
-
-static void fill_cu_up_udp_section(YAML::Node node, const udp_appconfig& config)
-{
-  node["max_rx_msgs"]    = config.rx_max_msgs;
-  node["pool_threshold"] = config.pool_threshold;
-}
 
 static void fill_cu_up_ngu_socket_entry(YAML::Node& node, const cu_up_unit_ngu_socket_config& config)
 {
   node["bind_addr"]      = config.bind_addr;
   node["bind_interface"] = config.bind_interface;
   node["ext_addr"]       = config.ext_addr;
-  fill_cu_up_udp_section(node["udp"], config.udp_config);
+  fill_udp_config_in_yaml_schema(node["udp"], config.udp_config);
 }
 
 static void fill_cu_up_ngu_socket_section(YAML::Node node, const std::vector<cu_up_unit_ngu_socket_config>& sock_cfg)

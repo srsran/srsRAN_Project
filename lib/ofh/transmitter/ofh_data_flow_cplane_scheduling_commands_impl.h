@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -35,6 +35,8 @@ namespace ofh {
 
 /// Open Fronthaul Control-Plane scheduling and beamforming commands data flow implementation configuration.
 struct data_flow_cplane_scheduling_commands_impl_config {
+  /// Radio sector identifier.
+  unsigned sector;
   /// RU bandwidth in PRBs.
   unsigned ru_nof_prbs;
   /// Cyclic prefix.
@@ -81,6 +83,7 @@ private:
   srslog::basic_logger&                             logger;
   const unsigned                                    nof_symbols_per_slot;
   const unsigned                                    ru_nof_prbs;
+  const unsigned                                    sector_id;
   const ru_compression_params                       dl_compr_params;
   const ru_compression_params                       ul_compr_params;
   const ru_compression_params                       prach_compr_params;

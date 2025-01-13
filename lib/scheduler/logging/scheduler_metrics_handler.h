@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -58,7 +58,7 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       double   sum_pusch_snrs         = 0;
       double   sum_pucch_snrs         = 0;
       double   sum_pusch_rsrp         = 0;
-      double   sum_ul_delay_ms        = 0;
+      unsigned sum_crc_delay_slots    = 0;
       unsigned nof_pucch_snr_reports  = 0;
       unsigned nof_pusch_snr_reports  = 0;
       unsigned nof_pusch_rsrp_reports = 0;
@@ -149,7 +149,7 @@ public:
   void handle_rach_indication(const rach_indication_message& msg);
 
   /// \brief Register CRC indication.
-  void handle_crc_indication(const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
+  void handle_crc_indication(slot_point sl_rx, const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
 
   /// \brief Handle SRS indication.
   void handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu);
@@ -177,8 +177,6 @@ public:
 
   /// \brief Handle Error Indication reported to the scheduler for a given cell.
   void handle_error_indication();
-
-  void handle_ul_delay(du_ue_index_t ue_index, double delay_ms);
 
   /// \brief Handle results stored in the scheduler result and push new entry.
   void push_result(slot_point sl_tx, const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);

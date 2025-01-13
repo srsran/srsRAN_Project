@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -25,6 +25,7 @@
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_result_notifier.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/benchmark_utils.h"
@@ -65,7 +66,7 @@ public:
   void wait_for_completion()
   {
     while (!completed.load()) {
-      std::this_thread::sleep_for(std::chrono::microseconds(10));
+      std::this_thread::sleep_for(std::chrono::microseconds(1));
     }
   }
 
@@ -126,7 +127,7 @@ static dmrs_type                          dmrs                        = dmrs_typ
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
-static unsigned                                                                          nof_pusch_decoder_threads = 8;
+static unsigned                                                                          nof_pusch_decoder_threads = 0;
 static std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool = nullptr;
 static std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor    = nullptr;
 
@@ -191,7 +192,7 @@ static const std::vector<test_profile> profile_set = {
      {{modulation_scheme::QAM256, 948.0F}},
      {0},
      4,
-     {1, 2}},
+     {1, 2, 3, 4}},
 
     {"scs30_100MHz_256qam_rvall_1port_1layer",
      "Decodes PUSCH with 30 kHz SCS, 100 MHz of bandwidth, 256-QAM modulation, maximum code rate, RV 0-3, 1 port, "
@@ -362,10 +363,15 @@ static std::vector<test_case_type> generate_test_cases(const test_profile& profi
 {
   std::vector<test_case_type> test_case_set;
 
+  unsigned max_nof_layers = get_pusch_processor_phy_capabilities().max_nof_layers;
+
   for (sch_mcs_description mcs : profile.mcs_set) {
     for (unsigned nof_prb : profile.nof_prb_set) {
       for (unsigned rv : profile.rv_set) {
         for (unsigned nof_layers : profile.nof_layers_set) {
+          if (nof_layers > max_nof_layers) {
+            continue;
+          }
           // Determine the Transport Block Size.
           tbs_calculator_configuration tbs_config = {};
           tbs_config.mcs_descr                    = mcs;
@@ -676,7 +682,7 @@ static void thread_process(pusch_processor&              proc,
       // Wait for pending to non-negative.
       while (pending_count.load() <= 0) {
         // Sleep.
-        std::this_thread::sleep_for(std::chrono::microseconds(10));
+        std::this_thread::sleep_for(std::chrono::microseconds(1));
 
         // Quit if signaled.
         if (thread_quit) {
@@ -829,7 +835,7 @@ int main(int argc, char** argv)
 
     // Wait for finish thread init.
     while (pending_count.load() != -static_cast<int>(nof_threads)) {
-      std::this_thread::sleep_for(std::chrono::microseconds(10));
+      std::this_thread::sleep_for(std::chrono::microseconds(1));
     }
 
     // Calculate the peak throughput, considering that the number of bits is for a slot.

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,8 +22,8 @@
 
 #pragma once
 
+#include "rigtorp/MPMCQueue.h"
 #include "srsran/srslog/detail/support/backend_capacity.h"
-#include "fmt/core.h"
 
 namespace srslog {
 
@@ -35,29 +35,27 @@ namespace detail {
 class dyn_arg_store_pool
 {
 public:
-  dyn_arg_store_pool()
+  dyn_arg_store_pool() : free_list(SRSLOG_QUEUE_CAPACITY)
   {
     pool.resize(SRSLOG_QUEUE_CAPACITY);
     for (auto& elem : pool) {
       // Reserve for 10 normal and 2 named arguments.
       elem.reserve(10, 2);
     }
-    free_list.reserve(SRSLOG_QUEUE_CAPACITY);
     for (auto& elem : pool) {
-      free_list.push_back(&elem);
+      free_list.push(&elem);
     }
   }
 
   /// Returns a pointer to a free dyn arg store object, otherwise returns nullptr.
   fmt::dynamic_format_arg_store<fmt::format_context>* alloc()
   {
-    scoped_lock lock(m);
     if (free_list.empty()) {
       return nullptr;
     }
 
-    auto* p = free_list.back();
-    free_list.pop_back();
+    fmt::dynamic_format_arg_store<fmt::format_context>* p = nullptr;
+    free_list.try_pop(p);
 
     return p;
   }
@@ -70,14 +68,12 @@ public:
     }
 
     p->clear();
-    scoped_lock lock(m);
-    free_list.push_back(p);
+    free_list.push(p);
   }
 
 private:
-  std::vector<fmt::dynamic_format_arg_store<fmt::format_context>>  pool;
-  std::vector<fmt::dynamic_format_arg_store<fmt::format_context>*> free_list;
-  mutable mutex                                                    m;
+  std::vector<fmt::dynamic_format_arg_store<fmt::format_context>>         pool;
+  rigtorp::MPMCQueue<fmt::dynamic_format_arg_store<fmt::format_context>*> free_list;
 };
 
 } // namespace detail

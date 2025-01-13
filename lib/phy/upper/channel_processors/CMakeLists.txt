@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2024 Software Radio Systems Limited
+# Copyright 2021-2025 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -18,6 +18,7 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+add_subdirectory(pdcch)
 add_subdirectory(pdsch)
 add_subdirectory(pusch)
 add_subdirectory(pucch)
@@ -28,15 +29,6 @@ target_link_libraries(srsran_pbch_encoder srsran_channel_coding srsran_sequence_
 
 add_library(srsran_pbch_modulator STATIC pbch_modulator_impl.cpp)
 target_link_libraries(srsran_pbch_modulator srsran_channel_modulation srsran_sequence_generators srsvec)
-
-add_library(srsran_pdcch_encoder STATIC pdcch_encoder_impl.cpp)
-target_link_libraries(srsran_pdcch_encoder srsran_channel_coding srsvec)
-
-add_library(srsran_pdcch_modulator STATIC pdcch_modulator_impl.cpp)
-target_link_libraries(srsran_pdcch_modulator srsvec)
-
-add_library(srsran_pdcch_processor STATIC pdcch_processor_impl.cpp)
-target_link_libraries(srsran_pdcch_processor srsran_ran)
 
 add_library(srsran_prach_detector STATIC
         prach_detector_generic_impl.cpp
@@ -52,8 +44,6 @@ add_library(srsran_channel_processors STATIC channel_processor_factories.cpp)
 target_link_libraries(srsran_channel_processors
         srsran_pbch_encoder
         srsran_pbch_modulator
-        srsran_pdcch_encoder
-        srsran_pdcch_modulator
         srsran_pdcch_processor
         srsran_pdsch_processor
         srsran_prach_detector
@@ -67,8 +57,6 @@ target_link_libraries(srsran_channel_processors
 add_to_exported_libs(srsran_channel_processors
         srsran_pbch_encoder
         srsran_pbch_modulator
-        srsran_pdcch_encoder
-        srsran_pdcch_modulator
         srsran_pdcch_processor
         srsran_pdsch_processor
         srsran_prach_detector

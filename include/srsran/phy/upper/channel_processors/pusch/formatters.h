@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -28,6 +28,7 @@
 #include "srsran/phy/upper/channel_state_information_formatters.h"
 #include "srsran/ran/pusch/pusch_context_formatter.h"
 #include "srsran/ran/uci/uci_formatters.h"
+#include <fmt/std.h>
 
 namespace srsran {
 namespace detail {

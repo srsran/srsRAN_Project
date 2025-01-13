@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -118,6 +118,54 @@ static void compute_v_pilots(span<cf_t> out, span<const float> in_abs, span<cons
 
 /// Adds virtual pilots at both ends of \c old_pilots (\c old_pilots is assumed a centered subspan of new_pilots).
 static void add_v_pilots(span<cf_t> new_pilots, span<const cf_t> old_pilots);
+
+unsigned srsran::extract_layer_hop_rx_pilots(dmrs_symbol_list&                            rx_symbols,
+                                             const resource_grid_reader&                  grid,
+                                             unsigned                                     port,
+                                             const port_channel_estimator::configuration& cfg,
+                                             unsigned                                     hop,
+                                             unsigned                                     i_layer)
+{
+  // CDM group the layer belongs to. Note that layers of the same CDM group (i.e., {0, 1} and {2, 3}) share DM-RS
+  // resources.
+  unsigned i_cdm = i_layer / 2;
+
+  // Select DM-RS pattern.
+  const port_channel_estimator::layer_dmrs_pattern& pattern = cfg.dmrs_pattern[i_layer];
+
+  const bounded_bitset<MAX_RB>& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
+
+  // Prepare RE mask, common for all symbols carrying DM-RS.
+  bounded_bitset<MAX_RB* NRE> re_mask = hop_rb_mask.kronecker_product<NRE>(pattern.re_pattern);
+
+  unsigned symbol_index      = ((hop == 1) && pattern.hopping_symbol_index.has_value())
+                                   ? pattern.hopping_symbol_index.value()
+                                   : cfg.first_symbol;
+  unsigned symbol_index_end  = ((hop == 0) && pattern.hopping_symbol_index.has_value())
+                                   ? pattern.hopping_symbol_index.value()
+                                   : cfg.first_symbol + cfg.nof_symbols;
+  unsigned dmrs_symbol_index = 0;
+  // For each OFDM symbol in the transmission...
+  for (; symbol_index != symbol_index_end; ++symbol_index) {
+    // Skip if the symbol does not carry DM-RS.
+    if (!pattern.symbols.test(symbol_index)) {
+      continue;
+    }
+
+    // Select symbol buffer for the selected layer and symbol.
+    span<cf_t> layer_dmrs_symbols = rx_symbols.get_symbol(dmrs_symbol_index++, i_cdm);
+
+    // Get DM-RS symbols from the resource grid.
+    layer_dmrs_symbols = grid.get(layer_dmrs_symbols, cfg.rx_ports[port], symbol_index, 0, re_mask);
+
+    // The DM-RS symbol buffer must be complete.
+    srsran_assert(layer_dmrs_symbols.empty(),
+                  "The DM-RS buffer is not completed. {} samples have not been read.",
+                  layer_dmrs_symbols.size());
+  }
+
+  return dmrs_symbol_index;
+}
 
 void srsran::apply_fd_smoothing(span<cf_t>                                   enlarged_filtered_pilots_out,
                                 span<cf_t>                                   enlarged_pilots_in,

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -34,10 +34,12 @@ class tx_window_checker : public ota_symbol_boundary_notifier
 {
 public:
   tx_window_checker(srslog::basic_logger& logger_,
+                    unsigned              sector_id_,
                     uint32_t              advance_time_in_symbols_,
                     uint32_t              nof_symbols_,
                     uint32_t              numerology_) :
     logger(logger_),
+    sector_id(sector_id_),
     advance_time_in_symbols(advance_time_in_symbols_),
     nof_symbols(nof_symbols_),
     numerology(numerology_)
@@ -65,8 +67,9 @@ public:
       return false;
     }
 
-    logger.debug("A late upper-PHY downlink request arrived to OFH in slot '{}_{}' with current ota_slot='{}_{}', "
-                 "OFH processing time requires a minimum of '{}' symbols",
+    logger.debug("Sector#{}: a late upper-PHY downlink request arrived to OFH in slot '{}_{}' with current "
+                 "ota_slot='{}_{}', OFH processing time requires a minimum of '{}' symbols",
+                 sector_id,
                  slot,
                  0,
                  ota_symbol_point.get_slot(),
@@ -78,6 +81,7 @@ public:
 
 private:
   srslog::basic_logger& logger;
+  const unsigned        sector_id;
   const uint32_t        advance_time_in_symbols;
   const uint32_t        nof_symbols;
   const uint32_t        numerology;

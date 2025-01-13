@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -23,7 +23,6 @@
 #pragma once
 
 #include "backend_pcap_writer.h"
-#include "pcap_file_writer.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/pcap/dlt_pcap.h"
 
@@ -43,6 +42,8 @@ public:
   dlt_pcap_impl& operator=(const dlt_pcap_impl& other) = delete;
   dlt_pcap_impl(dlt_pcap_impl&& other)                 = delete;
   dlt_pcap_impl& operator=(dlt_pcap_impl&& other)      = delete;
+
+  void flush() override;
 
   void close() override;
 

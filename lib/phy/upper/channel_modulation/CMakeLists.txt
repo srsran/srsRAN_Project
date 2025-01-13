@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2024 Software Radio Systems Limited
+# Copyright 2021-2025 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -33,6 +33,9 @@ if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
     set_source_files_properties(modulation_mapper_avx512_impl.cpp PROPERTIES
             COMPILE_OPTIONS "-mavx512f;-mavx512bw;-mavx512vbmi;")
 endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+    list(APPEND SOURCES modulation_mapper_neon_impl.cpp)
+endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
 
 add_library(srsran_channel_modulation STATIC ${SOURCES})
 target_link_libraries(srsran_channel_modulation srsran_support log_likelihood_ratio)

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -609,56 +609,39 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     if (not out_cell.ue_ded_serv_cell_cfg.ul_config.has_value()) {
       out_cell.ue_ded_serv_cell_cfg.ul_config.emplace();
     }
-    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.has_value()) {
-      out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.emplace();
+    auto& ul_cfg = out_cell.ue_ded_serv_cell_cfg.ul_config.value();
+    if (not ul_cfg.init_ul_bwp.pusch_cfg.has_value()) {
+      ul_cfg.init_ul_bwp.pusch_cfg.emplace();
     }
+    auto& pusch_cfg = ul_cfg.init_ul_bwp.pusch_cfg.value();
 
     // Set DMRS additional position.
-    out_cell.ue_ded_serv_cell_cfg.ul_config.value()
-        .init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs->additional_positions =
+    pusch_cfg.pusch_mapping_type_a_dmrs->additional_positions =
         uint_to_dmrs_additional_positions(base_cell.pusch_cfg.dmrs_add_pos);
 
     // Set UL MCS table.
-    out_cell.ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table = base_cell.pusch_cfg.mcs_table;
+    pusch_cfg.mcs_table = base_cell.pusch_cfg.mcs_table;
 
     // Configure PUSCH transform precoding.
     if (base_cell.pusch_cfg.enable_transform_precoding) {
-      pusch_config& pusch_cfg  = out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value();
       pusch_cfg.trans_precoder = pusch_config::transform_precoder::enabled;
       pusch_cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_enabled.emplace(
           dmrs_uplink_config::transform_precoder_enabled{std::nullopt, false, false});
     }
 
-    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.has_value()) {
-      out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().uci_cfg.emplace();
+    if (not pusch_cfg.uci_cfg.has_value()) {
+      pusch_cfg.uci_cfg.emplace();
     }
-    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value()
-                .init_ul_bwp.pusch_cfg.value()
-                .uci_cfg.value()
-                .beta_offsets_cfg.has_value()) {
-      out_cell.ue_ded_serv_cell_cfg.ul_config.value()
-          .init_ul_bwp.pusch_cfg.value()
-          .uci_cfg.value()
-          .beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
+    auto& uci_cfg = pusch_cfg.uci_cfg.value();
+    if (not uci_cfg.beta_offsets_cfg.has_value()) {
+      uci_cfg.beta_offsets_cfg.emplace();
+      uci_cfg.beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
     }
-    if (not std::holds_alternative<uci_on_pusch::beta_offsets_semi_static>(
-            out_cell.ue_ded_serv_cell_cfg.ul_config.value()
-                .init_ul_bwp.pusch_cfg.value()
-                .uci_cfg.value()
-                .beta_offsets_cfg.value())) {
-      out_cell.ue_ded_serv_cell_cfg.ul_config.value()
-          .init_ul_bwp.pusch_cfg.value()
-          .uci_cfg.value()
-          .beta_offsets_cfg.reset();
-      out_cell.ue_ded_serv_cell_cfg.ul_config.value()
-          .init_ul_bwp.pusch_cfg.value()
-          .uci_cfg.value()
-          .beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
+    if (not std::holds_alternative<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value())) {
+      uci_cfg.beta_offsets_cfg.reset();
+      uci_cfg.beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
     }
-    auto& b_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(out_cell.ue_ded_serv_cell_cfg.ul_config.value()
-                                                                           .init_ul_bwp.pusch_cfg.value()
-                                                                           .uci_cfg.value()
-                                                                           .beta_offsets_cfg.value());
+    auto& b_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
     b_offsets.beta_offset_ack_idx_1    = base_cell.pusch_cfg.beta_offset_ack_idx_1;
     b_offsets.beta_offset_ack_idx_2    = base_cell.pusch_cfg.beta_offset_ack_idx_2;
     b_offsets.beta_offset_ack_idx_3    = base_cell.pusch_cfg.beta_offset_ack_idx_3;
@@ -668,12 +651,10 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     b_offsets.beta_offset_csi_p2_idx_2 = base_cell.pusch_cfg.beta_offset_csi_p2_idx_2;
 
     // Set PUSCH power control parameters.
-    if (not out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().pusch_pwr_ctrl.has_value()) {
-      out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().pusch_pwr_ctrl.emplace(
-          pusch_config::pusch_power_control{});
+    if (not pusch_cfg.pusch_pwr_ctrl.has_value()) {
+      pusch_cfg.pusch_pwr_ctrl.emplace(pusch_config::pusch_power_control{});
     }
-    auto& pusch_pwr_ctrl =
-        out_cell.ue_ded_serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().pusch_pwr_ctrl.value();
+    auto& pusch_pwr_ctrl = pusch_cfg.pusch_pwr_ctrl.value();
     if (pusch_pwr_ctrl.p0_alphasets.empty()) {
       pusch_pwr_ctrl.p0_alphasets.emplace_back();
     }

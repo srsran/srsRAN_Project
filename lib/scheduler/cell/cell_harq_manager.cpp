@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -959,7 +959,7 @@ unsigned unique_ue_harq_entity::total_ul_bytes_waiting_ack() const
   }
 
   unsigned harq_bytes = 0;
-  for (unsigned i = 0; i != nof_ul_harqs(); ++i) {
+  for (unsigned i = 0, e = nof_ul_harqs(); i != e; ++i) {
     if (get_ul_ue().harqs[i].status != harq_utils::harq_state_t::empty) {
       harq_bytes += get_ul_ue().harqs[i].prev_tx_params.tbs_bytes;
     }

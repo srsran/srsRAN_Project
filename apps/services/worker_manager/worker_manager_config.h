@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -25,6 +25,8 @@
 #include "os_sched_affinity_manager.h"
 
 namespace srsran {
+
+class timer_manager;
 
 /// Worker manager configuration.
 struct worker_manager_config {
@@ -113,6 +115,8 @@ struct worker_manager_config {
   os_sched_affinity_config low_prio_sched_config;
   /// PCAP configuration.
   pcap_config pcap_cfg;
+  /// Timer config.
+  timer_manager* app_timers = nullptr;
   /// Vector of affinities mask indexed by cell.
   std::vector<std::vector<os_sched_affinity_config>> config_affinities;
   /// CU-UP configuration.

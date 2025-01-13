@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -45,6 +45,22 @@ ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_depende
   for (size_t i = 0; i < MAX_NOF_UES; ++i) {
     ue_task_schedulers.emplace(i, UE_TASK_QUEUE_SIZE);
   }
+}
+
+async_task<void> ue_manager::stop()
+{
+  // Routine to stop all UEs
+  auto ue_it = ue_db.begin();
+  return launch_async([this, ue_it](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    // Remove all UEs.
+    while (ue_it != ue_db.end()) {
+      CORO_AWAIT(remove_ue((ue_it++)->first));
+    }
+
+    CORO_RETURN();
+  });
 }
 
 ue_context* ue_manager::find_ue(ue_index_t ue_index)

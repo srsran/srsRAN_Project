@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -66,12 +66,14 @@ public:
                               subcarrier_spacing               scs_,
                               unsigned                         nof_symbols_,
                               unsigned                         ru_nof_prbs_,
+                              unsigned                         sector_id_,
                               std::unique_ptr<iq_decompressor> decompressor_) :
     logger(logger_),
     decompressor(std::move(decompressor_)),
     scs(scs_),
     nof_symbols(nof_symbols_),
-    ru_nof_prbs(ru_nof_prbs_)
+    ru_nof_prbs(ru_nof_prbs_),
+    sector_id(sector_id_)
   {
     srsran_assert(decompressor, "Invalid IQ decompressor");
   }
@@ -114,6 +116,7 @@ protected:
   const subcarrier_spacing         scs;
   const unsigned                   nof_symbols;
   const unsigned                   ru_nof_prbs;
+  const unsigned                   sector_id;
 };
 
 } // namespace ofh

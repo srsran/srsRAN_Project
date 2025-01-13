@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -25,7 +25,6 @@
 #include "mac_test_mode_helpers.h"
 #include "srsran/adt/ring_buffer.h"
 #include "srsran/mac/mac_factory.h"
-#include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/resource_grid_util.h"
 #include "srsran/scheduler/result/sched_result.h"
@@ -259,7 +258,7 @@ void mac_test_mode_cell_adapter::forward_crc_ind_to_mac(const mac_crc_indication
       continue;
     }
 
-    auto rx_pdu = create_test_pdu_with_bsr(crc_msg.sl_rx, pdu.rnti, to_harq_id(pdu.harq_id));
+    auto rx_pdu = create_test_pdu_with_bsr(cell_index, crc_msg.sl_rx, pdu.rnti, to_harq_id(pdu.harq_id));
     if (not rx_pdu.has_value()) {
       logger.warning("TEST_MODE c-rnti={}: Unable to create test PDU with BSR", pdu.rnti);
       continue;
@@ -392,7 +391,7 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
         }
 
         if (test_ue_cfg.pusch_active) {
-          auto rx_pdu = create_test_pdu_with_bsr(ul_res.slot, pucch.crnti, to_harq_id(0));
+          auto rx_pdu = create_test_pdu_with_bsr(cell_index, ul_res.slot, pucch.crnti, to_harq_id(0));
           if (not rx_pdu.has_value()) {
             logger.warning("TEST_MODE c-rnti={}: Unable to create test PDU with BSR", pucch.crnti);
             continue;

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -67,6 +67,7 @@ public:
   bool is_write_enabled() const { return pcap_fstream.is_open(); }
 
   bool open(uint32_t dlt, const std::string& filename);
+  void flush();
   void close();
   void write_pdu_header(uint32_t length);
   void write_pdu(srsran::const_span<uint8_t> pdu);

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -42,6 +42,8 @@ class rx_window_checker;
 
 /// Message receiver configuration.
 struct message_receiver_config {
+  /// Radio sector identifier.
+  unsigned sector;
   /// Number of symbols
   unsigned nof_symbols;
   /// Subcarrier spacing.
@@ -112,6 +114,7 @@ private:
 
 private:
   srslog::basic_logger&                                 logger;
+  const unsigned                                        sector_id;
   const unsigned                                        nof_symbols;
   const subcarrier_spacing                              scs;
   const ether::vlan_frame_params                        vlan_params;

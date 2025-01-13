@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "../../phy/support/resource_grid_mapper_test_doubles.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/ran/resource_block.h"

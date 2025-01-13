@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -50,34 +50,34 @@ namespace srs_cu_cp {
 /// \param[in] ngap_ctxt The NGAP context.
 inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_request, const ngap_context_t& ngap_ctxt)
 {
-  // fill global ran node id
+  // Fill global RAN node id.
   auto& global_gnb = asn1_request->global_ran_node_id.set_global_gnb_id();
   global_gnb.gnb_id.set_gnb_id();
   global_gnb.gnb_id.gnb_id().from_number(ngap_ctxt.gnb_id.id, ngap_ctxt.gnb_id.bit_length);
   // TODO: Which PLMN do we need to use here?
   global_gnb.plmn_id = ngap_ctxt.supported_tas.front().plmn_list.front().plmn_id.to_bytes();
 
-  // fill ran node name
+  // Fill RAN node name.
   asn1_request->ran_node_name_present = true;
   asn1_request->ran_node_name.from_string(ngap_ctxt.ran_node_name);
 
-  // fill supported ta list
+  // Fill supported TA list.
   for (const auto& supported_ta_item : ngap_ctxt.supported_tas) {
     asn1::ngap::supported_ta_item_s asn1_supported_ta_item = {};
 
-    // fill tac
+    // Fill TAC.
     asn1_supported_ta_item.tac.from_number(supported_ta_item.tac);
 
-    // fill broadcast plmn list
+    // Fill broadcast PLMN list.
     for (const auto& plmn_item : supported_ta_item.plmn_list) {
       asn1::ngap::broadcast_plmn_item_s asn1_broadcast_plmn_item = {};
 
-      // fill plmn id
+      // Fill PLMN id.
       asn1_broadcast_plmn_item.plmn_id = plmn_item.plmn_id.to_bytes();
 
-      // fill tai slice support list
+      // Fill TAI slice support list.
       for (const auto& slice_support_item : plmn_item.slice_support_list) {
-        // fill s_nssai
+        // Fill s_nssai.
         asn1::ngap::slice_support_item_s asn1_slice_support_item = {};
         asn1_slice_support_item.s_nssai                          = s_nssai_to_asn1(slice_support_item);
 
@@ -89,7 +89,7 @@ inline void fill_asn1_ng_setup_request(asn1::ngap::ng_setup_request_s& asn1_requ
     asn1_request->supported_ta_list.push_back(asn1_supported_ta_item);
   }
 
-  // fill paging drx
+  // Fill paging DRX.
   asn1::number_to_enum(asn1_request->default_paging_drx, ngap_ctxt.default_paging_drx);
 }
 
@@ -100,10 +100,10 @@ inline void fill_ngap_ng_setup_result(ngap_ng_setup_result& result, const asn1::
 {
   ngap_ng_setup_response response;
 
-  // fill amf name
+  // Fill AMF name
   response.amf_name = asn1_response->amf_name.to_string();
 
-  // fill served guami list
+  // Fill served GUAMI list.
   for (const auto& asn1_served_guami_item : asn1_response->served_guami_list) {
     ngap_served_guami_item served_guami_item = {};
     served_guami_item.guami                  = asn1_to_guami(asn1_served_guami_item.guami);
@@ -113,10 +113,10 @@ inline void fill_ngap_ng_setup_result(ngap_ng_setup_result& result, const asn1::
     response.served_guami_list.push_back(served_guami_item);
   }
 
-  // fill relative amf capacity
+  // Fill relative AMF capacity.
   response.relative_amf_capacity = asn1_response->relative_amf_capacity;
 
-  // fill plmn support list
+  // Fill PLMN support list.
   for (const auto& asn1_plmn_support_item : asn1_response->plmn_support_list) {
     ngap_plmn_support_item plmn_support_item = {};
     plmn_support_item.plmn_id                = asn1_plmn_support_item.plmn_id.to_string();
@@ -133,9 +133,9 @@ inline void fill_ngap_ng_setup_result(ngap_ng_setup_result& result, const asn1::
     response.plmn_support_list.push_back(plmn_support_item);
   }
 
-  // TODO: Fill crit diagnostics
+  // TODO: Fill crit diagnostics.
 
-  // TODO: Add missing optional values
+  // TODO: Add missing optional values.
 
   result = response;
 }
@@ -149,7 +149,7 @@ inline void fill_ngap_ng_setup_result(ngap_ng_setup_result& result, const asn1::
   fail.cause = asn1_to_cause(asn1_fail->cause);
 
   if (asn1_fail->crit_diagnostics_present) {
-    // TODO: Add crit diagnostics
+    // TODO: Add crit diagnostics.
   }
 
   result = fail;
@@ -225,7 +225,7 @@ inline void fill_asn1_initial_ue_message(asn1::ngap::init_ue_msg_s&      asn1_ms
     asn1_msg->amf_set_id.from_number(msg.amf_set_id.value());
   }
 
-  // TODO: Add missing optional values
+  // TODO: Add missing optional values.
 }
 
 /// \brief Convert common type UL NAS Transport message to NGAP UL NAS Transport message.
@@ -250,18 +250,18 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
                                                             const template_asn1_item&         asn1_session_item,
                                                             byte_buffer                       asn1_request_transfer)
 {
-  // pDUSessionID
+  // Fill PDU session id.
   setup_item.pdu_session_id = uint_to_pdu_session_id(asn1_session_item.pdu_session_id);
 
-  // pDUSessionNAS-PDU / NAS-PDU will be added in a separate function
+  // pDUSessionNAS-PDU / NAS-PDU will be added in a separate function.
 
-  // s-NSSAI
+  // Fill s-NSSAI.
   if (asn1_session_item.s_nssai.sd_present) {
     setup_item.s_nssai.sd = slice_differentiator::create(asn1_session_item.s_nssai.sd.to_number()).value();
   }
   setup_item.s_nssai.sst = slice_service_type{(uint8_t)asn1_session_item.s_nssai.sst.to_number()};
 
-  // pDUSessionResourceSetupRequestTransfer
+  // Fill PDU session resource setup request transfer.
   asn1::ngap::pdu_session_res_setup_request_transfer_s asn1_setup_req_transfer;
   asn1::cbit_ref bref({asn1_request_transfer.begin(), asn1_request_transfer.end()});
 
@@ -271,34 +271,42 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
   }
 
   if (asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate_present) {
-    // id-PDUSessionAggregateMaximumBitRate
+    // Fill PDU session aggregate maximum bit rate.
     setup_item.pdu_session_aggregate_maximum_bit_rate_dl =
         asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.pdu_session_aggr_max_bit_rate_dl;
     setup_item.pdu_session_aggregate_maximum_bit_rate_ul =
         asn1_setup_req_transfer->pdu_session_aggr_max_bit_rate.pdu_session_aggr_max_bit_rate_ul;
   }
 
-  // id-UL-NGU-UP-TNLInformation
+  // id-UL-NGU-UP-TNLInformation.
+  if (asn1_setup_req_transfer->ul_ngu_up_tnl_info.type() ==
+          asn1::ngap::up_transport_layer_info_c::types_opts::gtp_tunnel &&
+      asn1_setup_req_transfer->ul_ngu_up_tnl_info.gtp_tunnel().transport_layer_address.length() == 160) {
+    srslog::fetch_basic_logger("NGAP").error("Invalid PDU Session Resource Setup Request Transfer PDU. Cause: Combined "
+                                             "IPv4 and IPv6 addresses are currently not supported");
+    return false;
+  }
+
   setup_item.ul_ngu_up_tnl_info = asn1_to_up_transport_layer_info(asn1_setup_req_transfer->ul_ngu_up_tnl_info);
 
-  // id-PDUSessionType
+  // Fill PDU session type.
   setup_item.pdu_session_type = asn1_setup_req_transfer->pdu_session_type.to_string();
 
-  // id-SecurityIndication
+  // Fill security indication.
   if (asn1_setup_req_transfer->security_ind_present) {
     security_indication_t ind = {};
     asn1_to_security_indication(ind, asn1_setup_req_transfer->security_ind);
     setup_item.security_ind = ind;
   }
 
-  // id-QosFlowSetupRequestList
+  // Fill Qos flow setup request list.
   for (const auto& asn1_flow_item : asn1_setup_req_transfer->qos_flow_setup_request_list) {
     qos_flow_setup_request_item qos_flow_setup_req_item;
 
-    // qosFlowIdentifier
+    // Fill QoS flow identifier.
     qos_flow_setup_req_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
 
-    // qosFlowLevelQosParameters
+    // Fill QoS flow level QoS parameters.
     if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
         asn1::ngap::qos_characteristics_c::types::dyn5qi) {
       dyn_5qi_descriptor dyn_5qi = {};
@@ -306,11 +314,11 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
         dyn_5qi.five_qi =
             uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi);
       }
-      // TODO: Add optional values
+      // TODO: Add optional values.
 
       qos_flow_setup_req_item.qos_flow_level_qos_params.qos_desc = dyn_5qi;
 
-      // TODO: Add optional values
+      // TODO: Add optional values.
 
     } else if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
                asn1::ngap::qos_characteristics_c::types::non_dyn5qi) {
@@ -319,10 +327,10 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
           uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi);
       qos_flow_setup_req_item.qos_flow_level_qos_params.qos_desc = non_dyn_5qi;
 
-      // TODO: Add optional values
+      // TODO: Add optional values.
     }
 
-    // allocationAndRetentionPriority
+    // Fill allocation and retention priority.
     qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp =
         asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
     qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_retention_prio.may_trigger_preemption =
@@ -332,14 +340,15 @@ inline bool fill_cu_cp_pdu_session_resource_setup_item_base(cu_cp_pdu_session_re
         asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability ==
         asn1::ngap::pre_emption_vulnerability_opts::pre_emptable;
 
-    // Optional Parameters
+    // Optional parameters.
     if (asn1_flow_item.qos_flow_level_qos_params.add_qos_flow_info_present) {
       qos_flow_setup_req_item.qos_flow_level_qos_params.add_qos_flow_info =
           asn1_flow_item.qos_flow_level_qos_params.add_qos_flow_info.to_string();
     }
 
     if (asn1_flow_item.qos_flow_level_qos_params.gbr_qos_info_present) {
-      // TODO: Add to common type
+      qos_flow_setup_req_item.qos_flow_level_qos_params.gbr_qos_info =
+          ngap_asn1_to_gbr_qos_flow_information(asn1_flow_item.qos_flow_level_qos_params.gbr_qos_info);
     }
 
     if (asn1_flow_item.qos_flow_level_qos_params.reflective_qos_attribute_present) {
@@ -376,7 +385,7 @@ inline bool fill_cu_cp_pdu_session_resource_setup_request(
       return false;
     }
 
-    // pDUSessionNAS-PDU
+    // Fill PDU session NAS-PDU.
     if (!asn1_session_item.pdu_session_nas_pdu.empty()) {
       if (!setup_item.pdu_session_nas_pdu.resize(asn1_session_item.pdu_session_nas_pdu.size())) {
         return false;
@@ -410,7 +419,7 @@ inline bool fill_cu_cp_pdu_session_resource_setup_request(
       return false;
     }
 
-    // NAS-PDU
+    // Fill NAS-PDU.
     if (!asn1_session_item.nas_pdu.empty()) {
       if (!setup_item.pdu_session_nas_pdu.resize(asn1_session_item.nas_pdu.size())) {
         return false;
@@ -431,12 +440,12 @@ inline bool fill_cu_cp_pdu_session_resource_setup_request(
 inline bool fill_ngap_initial_context_setup_request(ngap_init_context_setup_request&                request,
                                                     const asn1::ngap::init_context_setup_request_s& asn1_request)
 {
-  // old_amf
+  // Fill old_amf.
   if (asn1_request->old_amf_present) {
     request.old_amf = asn1_request->old_amf.to_string();
   }
 
-  // ue_aggr_max_bit_rate
+  // Fill UE aggregated max bit rate.
   if (asn1_request->ue_aggr_max_bit_rate_present) {
     request.ue_aggr_max_bit_rate.emplace();
     request.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_dl =
@@ -445,10 +454,10 @@ inline bool fill_ngap_initial_context_setup_request(ngap_init_context_setup_requ
         asn1_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul;
   }
 
-  // guami
+  // Fill GUAMI.
   request.guami = asn1_to_guami(asn1_request->guami);
 
-  // pdu_session_res_setup_list_cxt_req
+  // Fill PDU session resource setup list context request.
   if (asn1_request->pdu_session_res_setup_list_cxt_req_present) {
     request.pdu_session_res_setup_list_cxt_req.emplace();
     if (!fill_cu_cp_pdu_session_resource_setup_request(request.pdu_session_res_setup_list_cxt_req.value(),
@@ -457,39 +466,39 @@ inline bool fill_ngap_initial_context_setup_request(ngap_init_context_setup_requ
     }
   }
 
-  // allowed_nssai
+  // Fill allowed S-NSSAI.
   for (const auto& asn1_s_nssai : asn1_request->allowed_nssai) {
     request.allowed_nssai.push_back(ngap_asn1_to_s_nssai(asn1_s_nssai.s_nssai));
   }
 
-  // security_context
+  // Fill security context.
   copy_asn1_key(request.security_context.k, asn1_request->security_key);
   fill_supported_algorithms(request.security_context.supported_int_algos,
                             asn1_request->ue_security_cap.nr_integrity_protection_algorithms);
   fill_supported_algorithms(request.security_context.supported_enc_algos,
                             asn1_request->ue_security_cap.nr_encryption_algorithms);
 
-  // ue_radio_cap
+  // Fill UE radio capabilities.
   if (asn1_request->ue_radio_cap_present) {
     request.ue_radio_cap = asn1_request->ue_radio_cap.copy();
   }
 
-  // idx_to_rfsp
+  // Fill idx to RFSP.
   if (asn1_request->idx_to_rfsp_present) {
     request.idx_to_rfsp = asn1_request->idx_to_rfsp;
   }
 
-  // masked_imeisv
+  // Fill masked IMEISV.
   if (asn1_request->masked_imeisv_present) {
     request.masked_imeisv = asn1_request->masked_imeisv.to_number();
   }
 
-  // nas_pdu
+  // Fill NAS-PDU.
   if (asn1_request->nas_pdu_present) {
     request.nas_pdu = asn1_request->nas_pdu.copy();
   }
 
-  // ue_radio_cap_for_paging
+  // Fill UE radio capabilities for paging.
   if (asn1_request->ue_radio_cap_for_paging_present) {
     cu_cp_ue_radio_cap_for_paging ue_radio_cap_for_paging;
     ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr =
@@ -498,7 +507,7 @@ inline bool fill_ngap_initial_context_setup_request(ngap_init_context_setup_requ
     request.ue_radio_cap_for_paging = ue_radio_cap_for_paging;
   }
 
-  // TODO: Add missing optional values
+  // TODO: Add missing optional values.
 
   return true;
 }
@@ -525,7 +534,7 @@ inline bool fill_asn1_initial_context_setup_response(asn1::ngap::init_context_se
     }
   }
 
-  // Fill PDU Session Resource Failed to Setup List
+  // Fill PDU session resource failed to setup list.
   if (!resp.pdu_session_res_failed_to_setup_items.empty()) {
     asn1_resp->pdu_session_res_failed_to_setup_list_cxt_res_present = true;
     for (const auto& setup_failed_item : resp.pdu_session_res_failed_to_setup_items) {
@@ -539,9 +548,9 @@ inline bool fill_asn1_initial_context_setup_response(asn1::ngap::init_context_se
     }
   }
 
-  // Fill Criticality Diagnostics
+  // Fill criticality diagnostics.
   if (resp.crit_diagnostics.has_value()) {
-    // TODO: Add crit diagnostics
+    // TODO: Add crit diagnostics.
   }
 
   return true;
@@ -554,10 +563,10 @@ inline bool fill_asn1_initial_context_setup_response(asn1::ngap::init_context_se
 inline void fill_asn1_initial_context_setup_failure(asn1::ngap::init_context_setup_fail_s& asn1_fail,
                                                     const ngap_init_context_setup_failure& fail)
 {
-  // Fill cause
+  // Fill cause.
   asn1_fail->cause = cause_to_asn1(fail.cause);
 
-  // Fill PDU Session Resource Failed to Setup List
+  // Fill PDU session resource failed to setup list.
   if (!fail.pdu_session_res_failed_to_setup_items.empty()) {
     asn1_fail->pdu_session_res_failed_to_setup_list_cxt_fail_present = true;
     for (const auto& setup_failed_item : fail.pdu_session_res_failed_to_setup_items) {
@@ -569,9 +578,9 @@ inline void fill_asn1_initial_context_setup_failure(asn1::ngap::init_context_set
     }
   }
 
-  // Fill Criticality Diagnostics
+  // Fill criticality diagnostics.
   if (fail.crit_diagnostics.has_value()) {
-    // TODO: Add crit diagnostics
+    // TODO: Add crit diagnostics.
   }
 }
 
@@ -596,10 +605,10 @@ inline bool fill_cu_cp_pdu_session_resource_modify_item_base(
     for (const auto& asn1_flow_item : asn1_modify_req_transfer->qos_flow_add_or_modify_request_list) {
       cu_cp_qos_flow_add_or_mod_item qos_flow_add_item;
 
-      // qosFlowIdentifier
+      // Fill QoS flow identifier.
       qos_flow_add_item.qos_flow_id = uint_to_qos_flow_id(asn1_flow_item.qos_flow_id);
 
-      // qosFlowLevelQosParameters
+      // Fill QoS flow level QoS parameters.
       if (asn1_flow_item.qos_flow_level_qos_params_present) {
         if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
             asn1::ngap::qos_characteristics_c::types::dyn5qi) {
@@ -608,11 +617,11 @@ inline bool fill_cu_cp_pdu_session_resource_modify_item_base(
             dyn_5qi.five_qi =
                 uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.dyn5qi().five_qi);
           }
-          // TODO: Add optional values
+          // TODO: Add optional values.
 
           qos_flow_add_item.qos_flow_level_qos_params.qos_desc = dyn_5qi;
 
-          // TODO: Add optional values
+          // TODO: Add optional values.
 
         } else if (asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.type() ==
                    asn1::ngap::qos_characteristics_c::types::non_dyn5qi) {
@@ -621,10 +630,10 @@ inline bool fill_cu_cp_pdu_session_resource_modify_item_base(
               uint_to_five_qi(asn1_flow_item.qos_flow_level_qos_params.qos_characteristics.non_dyn5qi().five_qi);
           qos_flow_add_item.qos_flow_level_qos_params.qos_desc = non_dyn_5qi;
 
-          // TODO: Add optional values
+          // TODO: Add optional values.
         }
 
-        // allocationAndRetentionPriority
+        // Fill allocation and retention priority.
         qos_flow_add_item.qos_flow_level_qos_params.alloc_retention_prio.prio_level_arp =
             asn1_flow_item.qos_flow_level_qos_params.alloc_and_retention_prio.prio_level_arp;
         qos_flow_add_item.qos_flow_level_qos_params.alloc_retention_prio.may_trigger_preemption =
@@ -687,7 +696,7 @@ inline bool fill_cu_cp_pdu_session_resource_modify_request(
 inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res_setup_resp_s&        resp,
                                                      const cu_cp_pdu_session_resource_setup_response& cu_cp_resp)
 {
-  // Fill PDU Session Resource Setup Response List
+  // Fill PDU session resource setup response list.
   if (!cu_cp_resp.pdu_session_res_setup_response_items.empty()) {
     resp->pdu_session_res_setup_list_su_res_present = true;
 
@@ -700,7 +709,7 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
     }
   }
 
-  // Fill PDU Session Resource Failed to Setup List
+  // Fill PDU session resource failed to setup list.
   if (!cu_cp_resp.pdu_session_res_failed_to_setup_items.empty()) {
     resp->pdu_session_res_failed_to_setup_list_su_res_present = true;
     for (const auto& cu_cp_setup_failed_item : cu_cp_resp.pdu_session_res_failed_to_setup_items) {
@@ -721,7 +730,7 @@ inline void fill_asn1_pdu_session_res_setup_response(asn1::ngap::pdu_session_res
 inline void fill_asn1_ue_context_release_request(asn1::ngap::ue_context_release_request_s& asn1_msg,
                                                  const cu_cp_ue_context_release_request&   msg)
 {
-  // Add PDU Session IDs
+  // Fill PDU session ids.
   if (!msg.pdu_session_res_list_cxt_rel_req.empty()) {
     asn1_msg->pdu_session_res_list_cxt_rel_req_present = true;
     for (const auto& session_id : msg.pdu_session_res_list_cxt_rel_req) {
@@ -788,14 +797,14 @@ fill_cu_cp_ue_context_release_command(cu_cp_ue_context_release_command&         
 inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release_complete_s& asn1_resp,
                                                   const cu_cp_ue_context_release_complete&   cu_cp_resp)
 {
-  // add user location info
+  // Fill user location info.
   if (cu_cp_resp.user_location_info.has_value()) {
     asn1_resp->user_location_info_present = true;
     asn1_resp->user_location_info.set_user_location_info_nr() =
         cu_cp_user_location_info_to_asn1(cu_cp_resp.user_location_info.value());
   }
 
-  // add info on recommended cells and ran nodes for paging
+  // Fill info on recommended cells and RAN nodes for paging.
   if (cu_cp_resp.info_on_recommended_cells_and_ran_nodes_for_paging.has_value()) {
     asn1_resp->info_on_recommended_cells_and_ran_nodes_for_paging_present = true;
 
@@ -803,13 +812,13 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
                                                 .recommended_cells_for_paging.recommended_cell_list) {
       asn1::ngap::recommended_cell_item_s asn1_recommended_cell_item;
 
-      // add ngran cgi
+      // Fill NG RAN CGI.
       asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().nr_cell_id.from_number(
           cu_cp_recommended_cell_item.ngran_cgi.nci.value());
       asn1_recommended_cell_item.ngran_cgi.set_nr_cgi().plmn_id =
           cu_cp_recommended_cell_item.ngran_cgi.plmn_id.to_bytes();
 
-      // add time stayed in cell
+      // Fill time stayed in cell.
       if (cu_cp_recommended_cell_item.time_stayed_in_cell.has_value()) {
         asn1_recommended_cell_item.time_stayed_in_cell_present = true;
         asn1_recommended_cell_item.time_stayed_in_cell = cu_cp_recommended_cell_item.time_stayed_in_cell.value();
@@ -823,9 +832,9 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
                                                     .recommended_ran_nodes_for_paging.recommended_ran_node_list) {
       asn1::ngap::recommended_ran_node_item_s asn1_recommended_ran_node_item;
 
-      // add amf paging target
+      // Fill AMF paging target.
       if (cu_cp_recommended_ran_node_item.amf_paging_target.is_global_ran_node_id) {
-        // add global gnb id
+        // Fill global GNB id.
         auto& asn1_global_ran_node_id = asn1_recommended_ran_node_item.amf_paging_target.set_global_ran_node_id();
         auto& global_gnb              = asn1_global_ran_node_id.set_global_gnb_id();
         global_gnb.plmn_id =
@@ -834,7 +843,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
             cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().gnb_id.id,
             cu_cp_recommended_ran_node_item.amf_paging_target.global_ran_node_id.value().gnb_id.bit_length);
       } else if (cu_cp_recommended_ran_node_item.amf_paging_target.is_tai) {
-        // add tai
+        // Fill TAI.
         auto& asn1_tai   = asn1_recommended_ran_node_item.amf_paging_target.set_tai();
         asn1_tai.plmn_id = cu_cp_recommended_ran_node_item.amf_paging_target.tai.value().plmn_id.to_bytes();
         asn1_tai.tac.from_number(cu_cp_recommended_ran_node_item.amf_paging_target.tai.value().tac);
@@ -847,7 +856,7 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
     }
   }
 
-  // add pdu session res list context release complete
+  // Fill PDU session res list context release complete.
   if (!cu_cp_resp.pdu_session_res_list_cxt_rel_cpl.empty()) {
     asn1_resp->pdu_session_res_list_cxt_rel_cpl_present = true;
 
@@ -858,9 +867,9 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
     }
   }
 
-  // add crit diagnostics
+  // Fill crit diagnostics.
   if (cu_cp_resp.crit_diagnostics.has_value()) {
-    // TODO: Add crit diagnostics
+    // TODO: Add crit diagnostics.
   }
 }
 
@@ -869,15 +878,15 @@ inline void fill_asn1_ue_context_release_complete(asn1::ngap::ue_context_release
 /// \param[in] asn1_paging The Paging ASN1 struct.
 inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::ngap::paging_s& asn1_paging)
 {
-  // add ue paging id
+  // Fill UE paging id.
   paging.ue_paging_id = ngap_asn1_to_ue_paging_id(asn1_paging->ue_paging_id);
 
-  // add paging drx
+  // Fill paging DRX.
   if (asn1_paging->paging_drx_present) {
     paging.paging_drx = asn1_paging->paging_drx.to_number();
   }
 
-  // add tai list for paging
+  // Fill TAI list for paging.
   for (const auto& asn1_tai_item : asn1_paging->tai_list_for_paging) {
     cu_cp_tai_list_for_paging_item tai_item;
     tai_item.tai.plmn_id = plmn_identity::from_bytes(asn1_tai_item.tai.plmn_id.to_bytes()).value();
@@ -886,12 +895,12 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
     paging.tai_list_for_paging.push_back(tai_item);
   }
 
-  // add paging prio
+  // Fill paging prio.
   if (asn1_paging->paging_prio_present) {
     paging.paging_prio = asn1_paging->paging_prio.to_number();
   }
 
-  // add ue radio cap for paging
+  // Fill UE radio capabilities for paging.
   if (asn1_paging->ue_radio_cap_for_paging_present) {
     cu_cp_ue_radio_cap_for_paging ue_radio_cap_for_paging;
     ue_radio_cap_for_paging.ue_radio_cap_for_paging_of_nr =
@@ -900,16 +909,16 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
     paging.ue_radio_cap_for_paging = ue_radio_cap_for_paging;
   }
 
-  // add paging origin
+  // Fill paging origin.
   if (asn1_paging->paging_origin_present) {
     paging.paging_origin = asn1_paging->paging_origin.to_string();
   }
 
-  // add assist data for paging
+  // Fill assist data for paging.
   if (asn1_paging->assist_data_for_paging_present) {
     cu_cp_assist_data_for_paging assist_data_for_paging;
 
-    // add assist data for recommended cells
+    // Fill assist data for recommended cells.
     if (asn1_paging->assist_data_for_paging.assist_data_for_recommended_cells_present) {
       cu_cp_assist_data_for_recommended_cells assist_data_for_recommended_cells;
 
@@ -917,13 +926,13 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
                                                    .recommended_cells_for_paging.recommended_cell_list) {
         cu_cp_recommended_cell_item recommended_cell_item;
 
-        // add ngran cgi
+        // Fill NG RAN CGI.
         recommended_cell_item.ngran_cgi.nci =
             nr_cell_identity::create(asn1_recommended_cell.ngran_cgi.nr_cgi().nr_cell_id.to_number()).value();
         recommended_cell_item.ngran_cgi.plmn_id =
             plmn_identity::from_bytes(asn1_recommended_cell.ngran_cgi.nr_cgi().plmn_id.to_bytes()).value();
 
-        // add time stayed in cell
+        // Fill time stayed in cell.
         if (asn1_recommended_cell.time_stayed_in_cell_present) {
           recommended_cell_item.time_stayed_in_cell = asn1_recommended_cell.time_stayed_in_cell;
         }
@@ -935,7 +944,7 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
       assist_data_for_paging.assist_data_for_recommended_cells = assist_data_for_recommended_cells;
     }
 
-    // add paging attempt info
+    // Fill paging attempt info.
     if (asn1_paging->assist_data_for_paging.paging_attempt_info_present) {
       cu_cp_paging_attempt_info paging_attempt_info;
 
@@ -962,33 +971,32 @@ inline void fill_cu_cp_paging_message(cu_cp_paging_message& paging, const asn1::
 /// \returns True if the conversion was successful, false otherwise.
 inline bool fill_ngap_handover_request(ngap_handover_request& request, const asn1::ngap::ho_request_s& asn1_request)
 {
-  // handov type
+  // Fill handover type.
   asn1_to_handov_type(request.handov_type, asn1_request->handov_type);
 
-  // cause
+  // Fill cause.
   request.cause = asn1_to_cause(asn1_request->cause);
 
-  // ue aggr max bit rate
+  // Fill UE aggregated max bit rate.
   request.ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl = asn1_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl;
   request.ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul = asn1_request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul;
 
-  // core network assist info for inactive
-  // TODO
+  // TODO: Add core network assist info for inactive.
 
-  // ue security cap & security context
+  // Fill UE security cap & security context.
   asn1_to_security_context(request.security_context, asn1_request->ue_security_cap, asn1_request->security_context);
 
-  // new security context ind
+  // Fill new security context indication.
   if (asn1_request->new_security_context_ind_present) {
     request.new_security_context_ind = asn1::enum_to_bool(asn1_request->new_security_context_ind);
   }
 
-  // nasc
+  // Fill NASC.
   if (asn1_request->nasc_present) {
     request.nasc = asn1_request->nasc.copy();
   }
 
-  // pdu session res setup list ho req
+  // Fill PDU session resource setup list HO request.
   for (const auto& asn1_pdu_session_res_setup_item : asn1_request->pdu_session_res_setup_list_ho_req) {
     cu_cp_pdu_session_res_setup_item pdu_session_res_setup_item;
     if (!fill_cu_cp_pdu_session_resource_setup_item_base(pdu_session_res_setup_item,
@@ -1002,20 +1010,19 @@ inline bool fill_ngap_handover_request(ngap_handover_request& request, const asn
                                                       pdu_session_res_setup_item);
   }
 
-  // allowed nssai
+  // Fill allowed S-NSSAI.
   for (const auto& asn1_s_nssai : asn1_request->allowed_nssai) {
     request.allowed_nssai.push_back(ngap_asn1_to_s_nssai(asn1_s_nssai.s_nssai));
   }
 
-  // trace activation
-  // TODO
+  // TODO: Add trace activation.
 
-  // masked imeisv
+  // Fill masked IMEISV.
   if (asn1_request->masked_imeisv_present) {
     request.masked_imeisv = asn1_request->masked_imeisv.to_number();
   }
 
-  // source to target transparent container
+  // Fill source to target transparent container.
   asn1::cbit_ref bref(asn1_request->source_to_target_transparent_container);
   asn1::ngap::source_ngran_node_to_target_ngran_node_transparent_container_s asn1_transparent_container;
   if (asn1_transparent_container.unpack(bref) != asn1::SRSASN_SUCCESS) {
@@ -1025,23 +1032,18 @@ inline bool fill_ngap_handover_request(ngap_handover_request& request, const asn
   asn1_to_source_to_target_transport_container(request.source_to_target_transparent_container,
                                                asn1_transparent_container);
 
-  // mob restrict list
-  // TODO
+  // TODO: Add Mob restrict list.
 
-  // location report request type
-  // TODO
+  // TODO: Add Location report request type.
 
-  // rrc inactive transition report request
-  // TODO
+  // TODO: Add RRC inactive transition report request.
 
-  // guami
+  // Fill GUAMI.
   request.guami = asn1_to_guami(asn1_request->guami);
 
-  // redirection voice fallback
-  // TODO
+  // TODO: Add redirection voice fallback.
 
-  // cn assisted ran tuning
-  // TODO
+  // TODO: Add CN assisted RAN tuning.
 
   return true;
 }
@@ -1055,7 +1057,7 @@ fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_request_ack_s&   
                                                 const ngap_handover_resource_allocation_response& ho_response)
 {
   if (ho_response.success) {
-    // pdu session res admitted list
+    // Fill PDU session resource admitted list.
     for (const auto& admitted_item : ho_response.pdu_session_res_admitted_list) {
       asn1::ngap::pdu_session_res_admitted_item_s asn1_admitted_item;
       if (!pdu_session_res_admitted_item_to_asn1(asn1_admitted_item, admitted_item)) {
@@ -1064,7 +1066,7 @@ fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_request_ack_s&   
       asn1_ho_request_ack->pdu_session_res_admitted_list.push_back(asn1_admitted_item);
     }
 
-    // pdu session res failed to setup list ho ack
+    // Fill PDU session resource failed to setup list HO ACK.
     if (!ho_response.pdu_session_res_failed_to_setup_list_ho_ack.empty()) {
       asn1_ho_request_ack->pdu_session_res_failed_to_setup_list_ho_ack_present = true;
       for (const auto& failed_item : ho_response.pdu_session_res_failed_to_setup_list_ho_ack) {
@@ -1076,15 +1078,15 @@ fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_request_ack_s&   
       }
     }
 
-    // target to source transparent container
+    // Fill target to source transparent container.
     if (!target_to_source_transport_container_to_asn1(asn1_ho_request_ack->target_to_source_transparent_container,
                                                       ho_response.target_to_source_transparent_container)) {
       return false;
     }
 
-    // crit diagnostics
+    // Fill criticality diagnostics.
     if (ho_response.crit_diagnostics.has_value()) {
-      // TODO: Add crit diagnostics
+      // TODO: Add crit diagnostics.
     }
   } else {
     return false;
@@ -1102,12 +1104,12 @@ fill_asn1_handover_resource_allocation_response(asn1::ngap::ho_fail_s&          
                                                 const ngap_handover_resource_allocation_response& ho_response)
 {
   if (!ho_response.success) {
-    // cause
+    // Fill cause.
     asn1_ho_failure->cause = cause_to_asn1(ho_response.cause);
 
-    // crit diagnostics
+    // Fill criticality diagnostics.
     if (ho_response.crit_diagnostics.has_value()) {
-      // TODO: Add crit diagnostics
+      // TODO: Add crit diagnostics.
     }
   } else {
     return false;

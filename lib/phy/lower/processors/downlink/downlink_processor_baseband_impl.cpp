@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -43,7 +43,8 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   nof_samples_per_subframe(config.rate.to_kHz()),
   nof_slots_per_subframe(get_nof_slots_per_subframe(config.scs)),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
-  temp_buffer(config.nof_tx_ports, 2 * config.rate.get_dft_size(config.scs))
+  temp_buffer(config.nof_tx_ports, 2 * config.rate.get_dft_size(config.scs)),
+  cfo_processor(config.rate)
 {
   unsigned symbol_size_no_cp        = config.rate.get_dft_size(config.scs);
   unsigned nof_symbols_per_subframe = nof_symbols_per_slot * nof_slots_per_subframe;
@@ -233,39 +234,49 @@ bool downlink_processor_baseband_impl::process_new_symbol(baseband_gateway_buffe
 
   bool processed = pdxch_proc_baseband.process_symbol(buffer, pdxch_context);
 
+  // Skip any post-processing if no signal is generated.
   if (!processed) {
     return false;
   }
 
-  // Process amplitude control.
+  // Reset CFO processor initial phase at the first OFDM symbol.
+  if (i_symbol == 0) {
+    cfo_processor.next_cfo_command();
+  }
+
+  // Init signal measurements.
+  sample_statistics<float>   avg_power;
+  sample_statistics<float>   peak_power;
+  lower_phy_baseband_metrics metrics;
+  uint64_t                   total_processed_samples = 0;
+  uint64_t                   nof_clipped_samples     = 0;
+
+  // Post process modulated signal.
   for (unsigned i_port = 0, i_port_end = buffer.get_nof_channels(); i_port != i_port_end; ++i_port) {
-    amplitude_control.process(buffer[i_port], buffer[i_port]);
+    // Select channel buffer for the transmit port.
+    span<cf_t> channel_buffer = buffer.get_channel_buffer(i_port);
+
+    // Perform carrier frequency offset in place.
+    cfo_processor.process(channel_buffer);
+
+    // Process amplitude control.
+    amplitude_control.process(channel_buffer, channel_buffer);
+
+    // Perform signal measurements.
+    avg_power.update(srsvec::average_power(channel_buffer));
+    peak_power.update(srsvec::max_abs_element(channel_buffer).second);
+    nof_clipped_samples += srsvec::count_if_part_abs_greater_than(channel_buffer, 0.95);
+    total_processed_samples += channel_buffer.size();
   }
 
-  // Perform signal measurements.
-  {
-    sample_statistics<float>   avg_power;
-    sample_statistics<float>   peak_power;
-    lower_phy_baseband_metrics metrics;
-    unsigned                   nof_channels = buffer.get_nof_channels();
+  // Notify signal metrics.
+  notifier->on_new_metrics(lower_phy_baseband_metrics{
+      .avg_power  = avg_power.get_mean(),
+      .peak_power = peak_power.get_mean(),
+      .clipping   = std::pair<uint64_t, uint64_t>{nof_clipped_samples, total_processed_samples}});
 
-    uint64_t total_processed_samples = 0;
-    uint64_t nof_clipped_samples     = 0;
-
-    for (unsigned i_channel = 0; i_channel != nof_channels; ++i_channel) {
-      span<const cf_t> channel_buffer = buffer.get_channel_buffer(i_channel);
-      avg_power.update(srsvec::average_power(channel_buffer));
-      peak_power.update(srsvec::max_abs_element(channel_buffer).second);
-      nof_clipped_samples += srsvec::count_if_part_abs_greater_than(channel_buffer, 0.95);
-      total_processed_samples += channel_buffer.size();
-    }
-
-    metrics.avg_power  = avg_power.get_mean();
-    metrics.peak_power = peak_power.get_max();
-    metrics.clipping   = std::pair<uint64_t, uint64_t>{nof_clipped_samples, total_processed_samples};
-
-    notifier->on_new_metrics(metrics);
-  }
+  // Advance CFO processor number of samples.
+  cfo_processor.advance(buffer.get_nof_samples());
 
   return true;
 }

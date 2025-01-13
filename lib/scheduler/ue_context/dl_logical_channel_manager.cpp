@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -73,6 +73,27 @@ void dl_logical_channel_manager::deactivate()
   sorted_channels.clear();
 }
 
+void dl_logical_channel_manager::set_fallback_state(bool enter_fallback)
+{
+  if (fallback_state == enter_fallback) {
+    // no-op.
+    return;
+  }
+
+  fallback_state = enter_fallback;
+}
+
+static uint8_t get_lc_prio(const logical_channel_config& cfg)
+{
+  uint8_t prio = 0;
+  if (is_srb(cfg.lcid)) {
+    prio = cfg.lcid <= LCID_SRB1 ? 0 : 1;
+  } else {
+    prio = cfg.qos.has_value() ? cfg.qos->qos.qos_priority_level : MAX_QOS_PRIORITY_LEVEL;
+  }
+  return prio;
+}
+
 void dl_logical_channel_manager::set_status(lcid_t lcid, bool active)
 {
   srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
@@ -102,7 +123,7 @@ void dl_logical_channel_manager::set_status(lcid_t lcid, bool active)
     sorted_channels.push_back(lcid);
   }
   std::sort(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lhs, lcid_t rhs) {
-    return channels[lhs].cfg->priority < channels[rhs].cfg->priority;
+    return get_lc_prio(*channels[lhs].cfg) < get_lc_prio(*channels[rhs].cfg);
   });
 }
 
@@ -147,8 +168,106 @@ void dl_logical_channel_manager::configure(span<const logical_channel_config> lo
     }
   }
   std::sort(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lhs, lcid_t rhs) {
-    return channels[lhs].cfg->priority < channels[rhs].cfg->priority;
+    return get_lc_prio(*channels[lhs].cfg) < get_lc_prio(*channels[rhs].cfg);
   });
+}
+
+bool dl_logical_channel_manager::has_pending_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& bearers) const
+{
+  if (fallback_state) {
+    bool srb0_chosen = bearers.size() > 0 and bearers.test(LCID_SRB0);
+    bool srb1_chosen = bearers.size() > 1 and bearers.test(LCID_SRB1);
+    if (not srb0_chosen and not srb1_chosen) {
+      return false;
+    }
+    return is_con_res_id_pending() or (srb0_chosen and has_pending_bytes(LCID_SRB0)) or
+           (srb1_chosen and has_pending_bytes(LCID_SRB1));
+  }
+
+  // If at least one slice bearer has pending data, return true.
+  for (lcid_t lcid : sorted_channels) {
+    if (lcid < bearers.size() and bearers.test(lcid) and has_pending_bytes(lcid)) {
+      return true;
+    }
+  }
+
+  // In case SRB1 was selected (but with no data) and there are pending CE bytes.
+  if (bearers.size() > 1 and bearers.test(LCID_SRB1) and has_pending_ces()) {
+    // Check if any other bearer has pending data. If they do, CE is not considered.
+    // Note: This extra check is to avoid multiple slices report pending data.
+    for (lcid_t lcid : sorted_channels) {
+      if (lcid > LCID_SRB1 and has_pending_bytes(lcid)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  return false;
+}
+
+unsigned dl_logical_channel_manager::total_pending_bytes() const
+{
+  unsigned bytes = pending_ce_bytes();
+  for (lcid_t lcid : sorted_channels) {
+    bytes += pending_bytes(lcid);
+  }
+  return bytes;
+}
+
+unsigned dl_logical_channel_manager::pending_bytes() const
+{
+  if (fallback_state) {
+    return pending_con_res_ce_bytes() + pending_bytes(LCID_SRB0) + pending_bytes(LCID_SRB1);
+  }
+  unsigned bytes = pending_ce_bytes();
+  for (lcid_t lcid : sorted_channels) {
+    bytes += lcid != LCID_SRB0 ? pending_bytes(lcid) : 0;
+  }
+  return bytes;
+}
+
+unsigned dl_logical_channel_manager::pending_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& bearers) const
+{
+  if (fallback_state) {
+    bool srb0_chosen = bearers.size() > 0 and bearers.test(LCID_SRB0);
+    bool srb1_chosen = bearers.size() > 1 and bearers.test(LCID_SRB1);
+    if (not srb0_chosen and not srb1_chosen) {
+      return 0;
+    }
+    return pending_con_res_ce_bytes() + (srb0_chosen ? pending_bytes(LCID_SRB0) : 0) +
+           (srb1_chosen ? pending_bytes(LCID_SRB1) : 0);
+  }
+
+  // Compute pending bytes for the given bearers.
+  unsigned total_bytes = 0;
+  for (lcid_t lcid : sorted_channels) {
+    if (lcid < bearers.size() and bearers.test(lcid)) {
+      total_bytes += pending_bytes(lcid);
+    }
+  }
+
+  unsigned ce_bytes = pending_ce_bytes();
+  if (ce_bytes > 0) {
+    // There are also pending CE bytes.
+    if (total_bytes > 0) {
+      // In case the UE has pending bearer bytes, we also include the CE bytes.
+      total_bytes += ce_bytes;
+    } else if (bearers.size() > 1 and bearers.test(LCID_SRB1)) {
+      // In case SRB1 was selected, and there are no pending bytes in the selected bearers, we return the pending CE
+      // bytes iff the UE has no pending data on the remaining, non-selected bearers.
+      // This is to avoid the situation where a UE, for instance, has DRB data to transmit, but the CE is allocated in
+      // the SRB slice instead.
+      for (lcid_t lcid : sorted_channels) {
+        if (lcid > LCID_SRB1 and pending_bytes(lcid) > 0) {
+          return 0;
+        }
+      }
+      return ce_bytes;
+    }
+  }
+
+  return total_bytes;
 }
 
 void dl_logical_channel_manager::handle_mac_ce_indication(const mac_ce_info& ce)

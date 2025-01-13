@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -25,6 +25,9 @@
 #include "uci_test_utils.h"
 
 using namespace srsran;
+
+// Number of RBs configured for the test cases.
+constexpr unsigned NOF_RBS = 52;
 
 class pucch_allocator_base_tester
 {

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -88,6 +88,8 @@ public:
   backend_pcap_writer(backend_pcap_writer&& other)                 = delete;
   backend_pcap_writer& operator=(backend_pcap_writer&& other)      = delete;
 
+  void flush();
+
   void close();
 
   bool is_write_enabled() const { return is_open.load(std::memory_order_relaxed); }
@@ -97,6 +99,8 @@ public:
   void write_pdu(pcap_pdu_data pdu);
 
 private:
+  void flush_impl();
+
   void write_pdu_impl(const byte_buffer& pdu);
 
   void write_context_pdu_impl(const pcap_pdu_data& pdu);

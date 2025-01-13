@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -30,6 +30,7 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/support/async/protocol_transaction_manager.h"
 #include "srsran/support/memory_pool/unsync_fixed_size_memory_block_pool.h"
+#include <deque>
 
 namespace srsran {
 namespace srs_du {

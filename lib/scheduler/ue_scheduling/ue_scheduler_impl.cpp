@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -84,6 +84,8 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t c
         slice_pusch_alloc, ue_res_grid_view, *ul_slice_candidate, cells[cell_index].cell_harqs.pending_ul_retxs());
     ul_slice_candidate = cells[cell_index].slice_sched.get_next_ul_candidate();
   }
+
+  ue_alloc.post_process_results();
 }
 
 void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_alloc)

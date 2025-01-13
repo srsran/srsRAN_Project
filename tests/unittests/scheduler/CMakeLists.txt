@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2024 Software Radio Systems Limited
+# Copyright 2021-2025 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -56,6 +56,7 @@ add_executable(scheduler_test
         scheduler_ta_cmd_test.cpp
         multi_cell_scheduler_test.cpp
         multi_slice_scheduler_test.cpp
+        scheduler_qos_test.cpp
 )
 target_link_libraries(scheduler_test
         srsran_sched

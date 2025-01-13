@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -52,4 +52,14 @@ lower_phy_impl::lower_phy_impl(configuration& config) :
   uplink_proc->connect(notification_adaptor.get_uplink_notifier(),
                        notification_adaptor.get_prach_notifier(),
                        notification_adaptor.get_puxch_notifier());
+}
+
+lower_phy_cfo_controller& lower_phy_impl::get_tx_cfo_control()
+{
+  return downlink_proc->get_cfo_handler();
+}
+
+lower_phy_cfo_controller& lower_phy_impl::get_rx_cfo_control()
+{
+  return uplink_proc->get_cfo_handler();
 }

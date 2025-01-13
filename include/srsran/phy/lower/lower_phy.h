@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -30,6 +30,7 @@ class lower_phy_request_handler;
 class lower_phy_rg_handler;
 class lower_phy_rx_symbol_notifier;
 class lower_phy_timing_notifier;
+class lower_phy_cfo_controller;
 
 /// \brief Lower PHY main interface.
 ///
@@ -48,6 +49,12 @@ public:
 
   /// \brief Returns a reference to the lower PHY controller.
   virtual lower_phy_controller& get_controller() = 0;
+
+  /// \brief Gets the transmit carrier frequency offset control.
+  virtual lower_phy_cfo_controller& get_tx_cfo_control() = 0;
+
+  /// \brief Gets the receive carrier frequency offset control.
+  virtual lower_phy_cfo_controller& get_rx_cfo_control() = 0;
 };
 
 } // namespace srsran

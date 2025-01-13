@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2024 Software Radio Systems Limited
+# Copyright 2021-2025 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -23,6 +23,7 @@ add_executable(uci_pucch_sched_test
         pucch_alloc_common_harq_test.cpp
         pucch_alloc_ded_resources_test.cpp
         pucch_alloc_format_0_test.cpp
+        pucch_alloc_format_3_test.cpp
         pucch_alloc_harq_sr_csi_test.cpp
         pucch_guardbands_sched_test.cpp
         pucch_res_manager_test.cpp

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -35,6 +35,8 @@ struct udp_appconfig {
   float pool_threshold = 0.9;
   /// Differentiated Services Code Point value.
   std::optional<unsigned> dscp;
+  // External address advertised by the UDP-GW.
+  std::string ext_addr = "auto";
 };
 
 /// \brief Configures the given CLI11 application with the UDP application configuration schema.

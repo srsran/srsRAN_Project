@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -41,10 +41,10 @@ public:
   /// Forbid move constructor.
   radio_base(const radio_base&& other) = delete;
 
-  /// Forbid copy assigment operator.
+  /// Forbid copy assignment operator.
   radio_base& operator=(const radio_base&) = delete;
 
-  /// Forbid move assigment operator.
+  /// Forbid move assignment operator.
   radio_base& operator=(radio_base&&) = delete;
 };
 } // namespace srsran

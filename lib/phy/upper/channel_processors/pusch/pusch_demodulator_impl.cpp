@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -187,7 +187,7 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
 
     // Extract the Rx port noise variances from the channel estimation.
     for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-      noise_var_estimates[i_port] = estimates.get_noise_variance(i_port, 0);
+      noise_var_estimates[i_port] = estimates.get_noise_variance(i_port);
     }
 
     // Equalize channels and, for each Tx layer, combine contribution from all Rx antenna ports.

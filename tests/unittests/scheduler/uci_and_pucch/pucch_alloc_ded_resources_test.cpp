@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -26,8 +26,6 @@
 #include <gtest/gtest.h>
 
 using namespace srsran;
-
-constexpr unsigned NOF_RBS = 52;
 
 ///////   Test allocation of dedicated PUCCH resources    ///////
 
@@ -544,22 +542,25 @@ TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_3bits_over_csi)
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
-  // Expect 1 HARQ and 1 SR.
+
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator.value());
-  ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
+  ASSERT_TRUE(slot_grid.result.ul.pucchs.size() == 1 or slot_grid.result.ul.pucchs.size() == 2);
 
   const auto& pucch_pdus = slot_grid.result.ul.pucchs;
   ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const auto& pdu) { return pdu.csi_rep_cfg.has_value(); }));
-
-  ASSERT_TRUE(
-      find_pucch_pdu(pucch_pdus,
-                     [&expected = pucch_expected_f2](const auto& pdu) { return pucch_info_match(expected, pdu); }) or
-      find_pucch_pdu(pucch_pdus,
-                     [&expected = pucch_expected_csi](const auto& pdu) { return pucch_info_match(expected, pdu); }) or
-      find_pucch_pdu(pucch_pdus, [&expected = pucch_f2_harq_csi_mplexed](const auto& pdu) {
-        return pucch_info_match(expected, pdu);
-      }));
+  if (slot_grid.result.ul.pucchs.size() == 2) {
+    // Separate resources.
+    ASSERT_TRUE(find_pucch_pdu(
+        pucch_pdus, [&expected = pucch_expected_f2](const auto& pdu) { return pucch_info_match(expected, pdu); }));
+    ASSERT_TRUE(find_pucch_pdu(
+        pucch_pdus, [&expected = pucch_expected_csi](const auto& pdu) { return pucch_info_match(expected, pdu); }));
+  } else {
+    // Multiplexed.
+    ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [&expected = pucch_f2_harq_csi_mplexed](const auto& pdu) {
+      return pucch_info_match(expected, pdu);
+    }));
+  }
 }
 
 TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_3bits_over_sr_and_csi)

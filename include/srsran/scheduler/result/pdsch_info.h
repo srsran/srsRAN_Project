@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -29,6 +29,7 @@
 #include "srsran/ran/precoding/precoding_constants.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
+#include "srsran/ran/time_alignment_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/result/dmrs_info.h"
@@ -106,8 +107,8 @@ using dummy_ce_payload = unsigned;
 
 /// Timing Advance Command CE payload.
 struct ta_cmd_ce_payload {
-  uint8_t  tag_id;
-  unsigned ta_cmd;
+  time_alignment_group::id_t tag_id;
+  unsigned                   ta_cmd;
 };
 
 struct dl_msg_lc_info {

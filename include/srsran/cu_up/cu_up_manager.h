@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -73,6 +73,7 @@ class cu_up_manager : public cu_up_manager_e1ap_connection_notifier, public cu_u
 public:
   ~cu_up_manager() override = default;
 
+  virtual async_task<void>                                      stop()             = 0;
   virtual async_task<e1ap_bearer_context_modification_response> enable_test_mode() = 0;
   virtual size_t                                                get_nof_ues()      = 0;
 };

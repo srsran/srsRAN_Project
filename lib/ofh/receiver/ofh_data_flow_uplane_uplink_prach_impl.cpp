@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -33,8 +33,9 @@ data_flow_uplane_uplink_prach_impl::data_flow_uplane_uplink_prach_impl(
   is_prach_cplane_enabled(config_.is_prach_cplane_enabled),
   ul_cplane_context_repo(std::move(dependencies.ul_cplane_context_repo)),
   uplane_decoder(std::move(dependencies.uplane_decoder)),
-  prach_iq_writter(config_.prach_eaxcs, *dependencies.logger, dependencies.prach_context_repo),
-  notification_sender(*dependencies.logger, dependencies.prach_context_repo, dependencies.notifier)
+  prach_iq_writter(config_.prach_eaxcs, config_.sector, *dependencies.logger, dependencies.prach_context_repo),
+  notification_sender(*dependencies.logger, dependencies.prach_context_repo, dependencies.notifier),
+  sector_id(config_.sector)
 {
   srsran_assert(ul_cplane_context_repo, "Invalid Control-Plane context repository");
   srsran_assert(uplane_decoder, "Invalid User-Plane decoder");
@@ -45,8 +46,9 @@ bool data_flow_uplane_uplink_prach_impl::should_uplane_packet_be_filtered(
     const uplane_message_decoder_results& results) const
 {
   if (!is_a_prach_message(results.params.filter_index)) {
-    logger.info("Dropped received Open Fronthaul User-Plane packet for slot '{}' and symbol '{}' as decoded filter "
-                "index value '{}' is not valid",
+    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet for slot '{}' and symbol '{}' as decoded "
+                "filter index value '{}' is not valid",
+                sector_id,
                 results.params.slot,
                 results.params.symbol_id,
                 to_value(results.params.filter_index));
@@ -64,12 +66,12 @@ bool data_flow_uplane_uplink_prach_impl::should_uplane_packet_be_filtered(
       ul_cplane_context_repo->get(params.slot, params.symbol_id, params.filter_index, eaxc);
 
   if (!ex_cp_context) {
-    logger.info(
-        "Dropped received Open Fronthaul User-Plane PRACH packet as no data was expected for slot '{}', symbol '{}' "
-        "and eAxC '{}'",
-        params.slot,
-        params.symbol_id,
-        eaxc);
+    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane PRACH packet as no data was expected for slot "
+                "'{}', symbol '{}' and eAxC '{}'",
+                sector_id,
+                params.slot,
+                params.symbol_id,
+                eaxc);
 
     return true;
   }
@@ -79,29 +81,35 @@ bool data_flow_uplane_uplink_prach_impl::should_uplane_packet_be_filtered(
   return std::any_of(
       results.sections.begin(), results.sections.end(), [&cp_context, this](const uplane_section_params& up_section) {
         if (up_section.start_prb > MAX_NOF_PRBS - 1) {
-          logger.info("Dropped received Open Fronthaul User-Plane packet as the first PRB index '{}' is not valid",
-                      up_section.start_prb);
+          logger.info(
+              "Sector#{}: dropped received Open Fronthaul User-Plane packet as the first PRB index '{}' is not valid",
+              sector_id,
+              up_section.start_prb);
 
           return true;
         }
 
         if (up_section.start_prb + up_section.nof_prbs > MAX_NOF_PRBS) {
-          logger.info("Dropped received Open Fronthaul User-Plane packet as the last PRB index '{}' is not valid",
-                      up_section.start_prb + up_section.nof_prbs);
+          logger.info(
+              "Sector#{}: dropped received Open Fronthaul User-Plane packet as the last PRB index '{}' is not valid",
+              sector_id,
+              up_section.start_prb + up_section.nof_prbs);
 
           return true;
         }
 
         if (!up_section.is_every_rb_used) {
-          logger.info("Dropped received Open Fronthaul User-Plane packet as 'every other resource block is used' mode "
-                      "is not supported");
+          logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as 'every other resource block is "
+                      "used' mode is not supported",
+                      sector_id);
 
           return true;
         }
 
         if (!up_section.use_current_symbol_number) {
-          logger.info("Dropped received Open Fronthaul User-Plane packet as 'increment the current symbol number and "
-                      "use that' mode is not supported");
+          logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as 'increment the current symbol "
+                      "number and use that' mode is not supported",
+                      sector_id);
 
           return true;
         }
@@ -111,8 +119,9 @@ bool data_flow_uplane_uplink_prach_impl::should_uplane_packet_be_filtered(
             (up_section.start_prb + up_section.nof_prbs) > (cp_context.prb_start + cp_context.nof_prb);
 
         if (is_up_section_not_found_in_cp_section) {
-          logger.info("Dropped received Open Fronthaul User-Plane packet as PRB index range '{}:{}' does not match the "
-                      "expected range '{}:{}'",
+          logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as PRB index range '{}:{}' does "
+                      "not match the expected range '{}:{}'",
+                      sector_id,
                       up_section.start_prb,
                       up_section.nof_prbs,
                       cp_context.prb_start,

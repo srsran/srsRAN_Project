@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -81,7 +81,7 @@ public:
     other.ptr = nullptr;
   };
 
-  /// Move assigment operator.
+  /// Move assignment operator.
   unique_rx_buffer& operator=(unique_rx_buffer&& other) noexcept
   {
     // Unlock current soft buffer if it is actually not unlocked.

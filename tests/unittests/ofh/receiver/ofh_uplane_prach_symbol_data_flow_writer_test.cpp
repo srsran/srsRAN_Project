@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -50,7 +50,7 @@ public:
     buffer(get_preamble_duration(format), is_long_preamble(format)),
     preamble_length(is_long_preamble(format) ? 839 : 139),
     nof_symbols(get_preamble_duration(format) == 0 ? 1U : get_preamble_duration(format)),
-    writer(prach_eaxc, srslog::fetch_basic_logger("TEST"), repo)
+    writer(prach_eaxc, 0, srslog::fetch_basic_logger("TEST"), repo)
   {
     buffer_context.slot             = slot;
     buffer_context.format           = format;

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -35,7 +35,10 @@ ue::ue(const ue_creation_command& cmd) :
   ue_ded_cfg(&cmd.cfg),
   pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
-  ta_mgr(expert_cfg, cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs, &dl_lc_ch_mgr),
+  ta_mgr(expert_cfg,
+         cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
+         ue_ded_cfg->pcell_cfg().cfg_dedicated().tag_id,
+         &dl_lc_ch_mgr),
   drx(cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
       cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer,
       cmd.cfg.drx_cfg(),
@@ -51,6 +54,7 @@ ue::ue(const ue_creation_command& cmd) :
       cell->set_fallback_state(cmd.starts_in_fallback);
     }
   }
+  dl_lc_ch_mgr.set_fallback_state(cmd.starts_in_fallback);
 }
 
 void ue::slot_indication(slot_point sl_tx)
@@ -92,6 +96,7 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
   // UE enters fallback mode when a Reconfiguration takes place.
   reconf_ongoing = true;
   get_pcell().set_fallback_state(true);
+  dl_lc_ch_mgr.set_fallback_state(true);
 
   // Update UE config.
   set_config(cmd.cfg);
@@ -100,6 +105,7 @@ void ue::handle_reconfiguration_request(const ue_reconf_command& cmd)
 void ue::handle_config_applied()
 {
   get_pcell().set_fallback_state(false);
+  dl_lc_ch_mgr.set_fallback_state(false);
   reconf_ongoing = false;
 }
 
@@ -187,17 +193,6 @@ void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_mess
   }
 
   dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, pending_bytes);
-}
-
-bool ue::has_pending_dl_newtx_bytes() const
-{
-  return dl_lc_ch_mgr.has_pending_bytes(get_pcell().is_in_fallback_mode());
-}
-
-unsigned ue::pending_dl_newtx_bytes(lcid_t lcid) const
-{
-  return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid)
-                              : dl_lc_ch_mgr.pending_bytes(get_pcell().is_in_fallback_mode());
 }
 
 unsigned ue::pending_ul_newtx_bytes() const

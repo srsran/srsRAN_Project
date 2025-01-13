@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -61,6 +61,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, valid_packet_should_decode_correctl
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -99,6 +100,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, missing_one_iq_sample_must_fail)
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -122,6 +124,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, missing_one_prb_must_fail)
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -145,6 +148,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, dynamic_compression_with_no_compres
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -166,6 +170,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, decoding_one_section_and_failing_to
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -183,6 +188,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, missing_section_header_must_fail)
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -199,6 +205,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, missing_header_must_fail)
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -215,6 +222,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, missing_compression_header_must_fai
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -235,6 +243,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, downlink_packet_should_fail)
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -255,6 +264,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, reserved_filter_index_should_fail)
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -275,6 +285,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, symbol_index_out_of_range_should_fa
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -295,6 +306,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, invalid_subframe_should_fail)
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   for (unsigned i = 0, e = 10; i != e; ++i) {
@@ -329,6 +341,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, invalid_slot_should_fail)
                                                           scs,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   unsigned nof_slots = slot_point(scs, 0).nof_slots_per_subframe();
@@ -364,6 +377,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, invalid_compression_type_should_fai
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   for (uint8_t i = 0, e = static_cast<unsigned>(compression_type::reserved); i != e; ++i) {
@@ -395,6 +409,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, none_compression_with_15_bits_shoul
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -418,6 +433,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, bfp_with_9_bits_should_pass)
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -440,6 +456,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, bfp_with_15_bits_without_ud_comp_pa
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           273,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -462,6 +479,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, if_message_num_prbs_equals_zero_dec
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           ru_nof_prbs,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -485,6 +503,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, if_message_contains_one_valid_secti
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           ru_nof_prbs,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;
@@ -517,6 +536,7 @@ TEST(ofh_uplane_packet_decoder_dynamic_impl, message_containing_more_than_one_se
                                                           subcarrier_spacing::kHz30,
                                                           get_nsymb_per_slot(cyclic_prefix::NORMAL),
                                                           ru_nof_prbs,
+                                                          0,
                                                           std::make_unique<iq_decompressor_dummy>());
 
   uplane_message_decoder_results results;

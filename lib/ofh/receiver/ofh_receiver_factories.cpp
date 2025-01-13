@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -54,6 +54,7 @@ static std::unique_ptr<uplane_message_decoder> create_uplane_decoder(const recei
                    receiver_cfg.scs,
                    receiver_cfg.cp,
                    nof_prbs_ru,
+                   receiver_cfg.sector,
                    create_iq_decompressor_selector(std::move(decompr)),
                    compr_params)
              : ofh::create_dynamic_compr_method_ofh_user_plane_packet_decoder(
@@ -61,6 +62,7 @@ static std::unique_ptr<uplane_message_decoder> create_uplane_decoder(const recei
                    receiver_cfg.scs,
                    receiver_cfg.cp,
                    nof_prbs_ru,
+                   receiver_cfg.sector,
                    create_iq_decompressor_selector(std::move(decompr)));
 }
 
@@ -130,11 +132,13 @@ resolve_receiver_dependencies(const receiver_config&                            
   msg_rx_dependencies.logger = &logger;
 
   if (receiver_cfg.ignore_ecpri_payload_size_field) {
-    msg_rx_dependencies.ecpri_decoder = ecpri::create_ecpri_packet_decoder_ignoring_payload_size(logger);
+    msg_rx_dependencies.ecpri_decoder =
+        ecpri::create_ecpri_packet_decoder_ignoring_payload_size(logger, receiver_cfg.sector);
   } else {
-    msg_rx_dependencies.ecpri_decoder = ecpri::create_ecpri_packet_decoder_using_payload_size(logger);
+    msg_rx_dependencies.ecpri_decoder =
+        ecpri::create_ecpri_packet_decoder_using_payload_size(logger, receiver_cfg.sector);
   }
-  msg_rx_dependencies.eth_frame_decoder = ether::create_vlan_frame_decoder(logger);
+  msg_rx_dependencies.eth_frame_decoder = ether::create_vlan_frame_decoder(logger, receiver_cfg.sector);
 
   msg_rx_dependencies.data_flow_uplink =
       create_uplink_data_flow(receiver_cfg, logger, notifier, std::move(ul_slot_context_repo), ul_cp_context_repo);

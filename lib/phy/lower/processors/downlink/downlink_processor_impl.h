@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -49,6 +49,9 @@ public:
 
   // See interface for documentation.
   void connect(downlink_processor_notifier& notifier, pdxch_processor_notifier& pdxch_notifier) override;
+
+  // See interface for documentation.
+  baseband_cfo_processor& get_cfo_handler() override;
 
   // See interface for documentation.
   pdxch_processor_request_handler& get_downlink_request_handler() override;

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -44,13 +44,13 @@ class f1u_gateway_cu_bearer : public f1u_cu_up_gateway_bearer
 public:
   f1u_gateway_cu_bearer(uint32_t                              ue_index,
                         drb_id_t                              drb_id,
-                        const up_transport_layer_info&        ul_tnl_info_,
+                        const gtpu_teid_t&                    ul_teid_,
                         f1u_cu_up_gateway_bearer_rx_notifier& cu_rx_,
                         task_executor&                        ul_exec_,
                         srs_cu_up::f1u_bearer_disconnector&   disconnector_) :
-    logger("CU-F1-U", {ue_index, drb_id, ul_tnl_info_}),
+    ul_tnl_info(transport_layer_address::create_from_string(ul_ip_addr), ul_teid_),
+    logger("CU-F1-U", {ue_index, drb_id, ul_tnl_info}),
     disconnector(disconnector_),
-    ul_tnl_info(ul_tnl_info_),
     cu_rx(cu_rx_),
     ul_exec(ul_exec_)
   {
@@ -65,6 +65,8 @@ public:
     }
     stopped = true;
   }
+
+  expected<std::string> get_bind_address() const override { return ul_ip_addr; }
 
   void attach_du_notifier(srs_du::f1u_du_gateway_bearer_rx_notifier& notifier_,
                           const up_transport_layer_info&             dl_tnl_info_)
@@ -94,11 +96,16 @@ public:
   }
 
 private:
-  bool                                       stopped = false;
+  bool stopped = false;
+
+  // On local connector, the local IP address does not exist.
+  // We can then hard-code the address to any valid IP.
+  const std::string       ul_ip_addr = "127.0.10.1";
+  up_transport_layer_info ul_tnl_info;
+
   srs_cu_up::f1u_bearer_logger               logger;
   srs_du::f1u_du_gateway_bearer_rx_notifier* notifier = nullptr;
   srs_cu_up::f1u_bearer_disconnector&        disconnector;
-  up_transport_layer_info                    ul_tnl_info;
 
 public:
   /// Holds notifier that will point to NR-U bearer on the UL path
@@ -190,7 +197,7 @@ public:
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,
                                                              const srs_cu_up::f1u_config&          config,
-                                                             const up_transport_layer_info&        ul_up_tnl_info,
+                                                             const gtpu_teid_t&                    ul_teid,
                                                              f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
                                                              task_executor&                        ul_exec) override;
 
@@ -215,13 +222,11 @@ public:
     return fmt::format("127.0.0.{}", 1 + static_cast<uint32_t>(gnb_du_id));
   }
 
-  expected<std::string> get_cu_bind_address() const override { return {"127.0.2.1"}; }
-
 private:
   srslog::basic_logger& logger_cu;
   srslog::basic_logger& logger_du;
   // Key is the UL UP TNL Info (CU-CP address and UL TEID reserved by CU-CP)
-  std::unordered_map<up_transport_layer_info, f1u_gateway_cu_bearer*> cu_map;
+  std::unordered_map<gtpu_teid_t, f1u_gateway_cu_bearer*, gtpu_teid_hasher_t> cu_map;
   // Key is the DL UP TNL Info (DU address and DL TEID reserved by DU)
   std::unordered_map<up_transport_layer_info, f1u_gateway_du_bearer*> du_map;
 

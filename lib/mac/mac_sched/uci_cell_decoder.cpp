@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,10 +22,22 @@
 
 #include "uci_cell_decoder.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
+#include "srsran/scheduler/resource_grid_util.h"
 #include "srsran/scheduler/result/pucch_info.h"
 #include "srsran/scheduler/result/pusch_info.h"
 
 using namespace srsran;
+
+/// \brief Size, in number of slots, of the ring buffer used to store the pending UCIs to be decoded. This size
+/// should account for potential latencies in the PHY in forwarding the decoded UCI to the MAC.
+static size_t get_ring_size(const sched_cell_configuration_request_message& cell_cfg)
+{
+  // Estimation of the time it takes the UL lower-layers to process and forward CRC/UCI indications.
+  constexpr static unsigned MAX_UL_PHY_DELAY = 40;
+  // Note: The history ring size has to be a multiple of the TDD frame size in slots.
+  // Number of slots managed by this container.
+  return get_allocator_ring_size_gt_min(get_max_slot_ul_alloc_delay(cell_cfg.ntn_cs_koffset) + MAX_UL_PHY_DELAY);
+}
 
 uci_cell_decoder::uci_cell_decoder(const sched_cell_configuration_request_message& cell_cfg,
                                    const du_rnti_table&                            rnti_table_,
@@ -34,7 +46,7 @@ uci_cell_decoder::uci_cell_decoder(const sched_cell_configuration_request_messag
   cell_index(cell_cfg.cell_index),
   rlf_handler(rlf_hdlr_),
   logger(srslog::fetch_basic_logger("MAC")),
-  expected_uci_report_grid(MAX_GRID_SIZE)
+  expected_uci_report_grid(get_ring_size(cell_cfg))
 {
 }
 

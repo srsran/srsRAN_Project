@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -49,6 +49,7 @@
 #include "srsran/support/cpu_features.h"
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/signal_handling.h"
+#include "srsran/support/signal_observer.h"
 #include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
@@ -81,14 +82,17 @@ static void populate_cli11_generic_args(CLI::App& app)
 }
 
 /// Function to call when the application is interrupted.
-static void interrupt_signal_handler()
+static void interrupt_signal_handler(int signal)
 {
   is_app_running = false;
 }
 
+static signal_dispatcher cleanup_signal_dispatcher;
+
 /// Function to call when the application is going to be forcefully shutdown.
-static void cleanup_signal_handler()
+static void cleanup_signal_handler(int signal)
 {
+  cleanup_signal_dispatcher.notify_signal(signal);
   srslog::flush();
 }
 
@@ -243,10 +247,14 @@ int main(int argc, char** argv)
   check_cpu_governor(du_logger);
   check_drm_kms_polling(du_logger);
 
+  // Create manager of timers for DU, which will be driven by the PHY slot ticks.
+  timer_manager app_timers{256};
+
   // Instantiate worker manager.
   worker_manager_config worker_manager_cfg;
   o_du_app_unit->fill_worker_manager_config(worker_manager_cfg);
   fill_du_worker_manager_config(worker_manager_cfg, du_cfg);
+  worker_manager_cfg.app_timers = &app_timers;
 
   worker_manager workers{worker_manager_cfg};
 
@@ -257,7 +265,8 @@ int main(int argc, char** argv)
   io_broker_config           io_broker_cfg(low_prio_cpu_mask);
   std::unique_ptr<io_broker> epoll_broker = create_io_broker(io_broker_type::epoll, io_broker_cfg);
 
-  flexible_o_du_pcaps du_pcaps = create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers);
+  flexible_o_du_pcaps du_pcaps =
+      create_o_du_pcaps(o_du_app_unit->get_o_du_high_unit_config(), workers, cleanup_signal_dispatcher);
 
   // Instantiate F1-C client gateway.
   std::unique_ptr<srs_du::f1c_connection_client> f1c_gw = create_f1c_client_gateway(du_cfg.f1ap_cfg.cu_cp_address,
@@ -265,9 +274,6 @@ int main(int argc, char** argv)
                                                                                     *epoll_broker,
                                                                                     *workers.non_rt_hi_prio_exec,
                                                                                     *du_pcaps.f1ap);
-
-  // Create manager of timers for DU, which will be driven by the PHY slot ticks.
-  timer_manager app_timers{256};
 
   // Create F1-U connector.
   // TODO: Simplify this and use factory.
@@ -340,7 +346,7 @@ int main(int argc, char** argv)
   du_inst.get_power_controller().stop();
 
   du_logger.info("Closing PCAP files...");
-  du_pcaps.close();
+  du_pcaps.reset();
   du_logger.info("PCAP files successfully closed.");
 
   du_logger.info("Stopping executors...");

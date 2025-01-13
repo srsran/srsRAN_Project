@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -65,7 +65,9 @@ public:
 /// the gateway as soon as every enqueued PDU before finish_processing_pdus() is processed . This is controlled counting
 /// the PDUs that are processed and finished processing.
 ///  \note Thread safe class.
-class downlink_processor_single_executor_impl : public downlink_processor, private detail::downlink_processor_callback
+class downlink_processor_single_executor_impl : public downlink_processor_controller,
+                                                private unique_downlink_processor::downlink_processor_callback,
+                                                private detail::downlink_processor_callback
 {
 public:
   /// \brief Builds a downlink processor single executor impl object with the given parameters.
@@ -86,6 +88,11 @@ public:
                                           srslog::basic_logger&                 logger_);
 
   // See interface for documentation.
+  unique_downlink_processor configure_resource_grid(const resource_grid_context& context,
+                                                    shared_resource_grid         grid) override;
+
+private:
+  // See interface for documentation.
   void process_pdcch(const pdcch_processor::pdu_t& pdu) override;
 
   // See interface for documentation.
@@ -99,12 +106,8 @@ public:
   void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override;
 
   // See interface for documentation.
-  bool configure_resource_grid(const resource_grid_context& context, shared_resource_grid grid) override;
-
-  // See interface for documentation.
   void finish_processing_pdus() override;
 
-private:
   class pdsch_processor_notifier_wrapper : public pdsch_processor_notifier
   {
   public:

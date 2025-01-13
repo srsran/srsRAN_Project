@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -112,10 +112,10 @@ public:
   virtual ~downlink_processor_factory() = default;
 
   /// \brief Creates a downlink processor.
-  virtual std::unique_ptr<downlink_processor> create(const downlink_processor_config& config) = 0;
+  virtual std::unique_ptr<downlink_processor_controller> create(const downlink_processor_config& config) = 0;
 
   /// \brief Creates a downlink processor with logging capabilities.
-  virtual std::unique_ptr<downlink_processor>
+  virtual std::unique_ptr<downlink_processor_controller>
   create(const downlink_processor_config& config, srslog::basic_logger& logger, bool enable_broadcast) = 0;
 
   /// \brief Creates a downlink PDU validator.
@@ -195,18 +195,14 @@ create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config&
 struct downlink_processor_pool_config {
   /// Downlink processors for a given sector and numerology.
   struct sector_dl_processor {
-    /// Base station sector identifier.
-    unsigned sector;
     /// Subcarrier spacing.
     subcarrier_spacing scs;
     /// Pointers to the actual downlink processors.
-    std::vector<std::unique_ptr<downlink_processor>> procs;
+    std::vector<std::unique_ptr<downlink_processor_controller>> procs;
   };
 
   /// Collection of all downlink processors, organized by radio sector and numerology.
   std::vector<sector_dl_processor> dl_processors;
-  /// Number of base station sector.
-  unsigned num_sectors;
 };
 
 /// \brief Creates and returns a downlink processor pool.

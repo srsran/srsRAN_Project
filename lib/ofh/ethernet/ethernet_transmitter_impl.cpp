@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -53,14 +53,16 @@ transmitter_impl::transmitter_impl(const gw_config& config, srslog::basic_logger
     // Get the MTU size of the NIC.
     int current_mtu = -1;
     if (::ioctl(socket_fd, SIOCGIFMTU, &if_idx) < 0) {
-      logger.warning("Could not check MTU of the NIC interface in the Ethernet transmitter");
+      logger.warning("Could not check MTU of the NIC interface '{}' in the Ethernet transmitter", config.interface);
     } else {
       current_mtu = if_idx.ifr_mtu;
     }
-    report_error("Unable to set MTU size to '{}' bytes for NIC interface in the Ethernet transmitter, current MTU size "
-                 "set to '{}' bytes",
-                 config.mtu_size,
-                 current_mtu);
+    report_error(
+        "Unable to set MTU size to '{}' bytes for NIC interface '{}' in the Ethernet transmitter, current MTU size "
+        "set to '{}' bytes",
+        config.mtu_size,
+        config.interface,
+        current_mtu);
   }
 
   // Get the index of the NIC.
@@ -74,7 +76,9 @@ transmitter_impl::transmitter_impl(const gw_config& config, srslog::basic_logger
   socket_address.sll_halen   = ETH_ALEN;
   std::copy(std::begin(config.mac_dst_address), std::end(config.mac_dst_address), std::begin(socket_address.sll_addr));
 
-  logger.info("Opened successfully the NIC interface '{}' used by the Ethernet transmitter", config.interface);
+  logger.info("Opened successfully the NIC interface '{}' (fd = '{}') used by the Ethernet transmitter",
+              config.interface,
+              socket_fd);
 }
 
 transmitter_impl::~transmitter_impl()
@@ -91,8 +95,9 @@ void transmitter_impl::send(span<span<const uint8_t>> frames)
                  0,
                  reinterpret_cast<::sockaddr*>(&socket_address),
                  sizeof(socket_address)) < 0) {
-      logger.warning("Ethernet transmitter call to sendto failed as it could not transmit '{}' bytes, consider tuning "
+      logger.warning("Ethernet transmitter with fd = '{}' could not transmit '{}' bytes, consider tuning "
                      "the NIC system settings to obtain higher performance or use DPDK",
+                     socket_fd,
                      frame.size());
     }
   }

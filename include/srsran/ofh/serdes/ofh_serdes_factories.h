@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -54,6 +54,7 @@ create_static_compr_method_ofh_user_plane_packet_decoder(srslog::basic_logger&  
                                                          subcarrier_spacing               scs,
                                                          cyclic_prefix                    cp,
                                                          unsigned                         ru_nof_prbs,
+                                                         unsigned                         sector_id_,
                                                          std::unique_ptr<iq_decompressor> decompressor,
                                                          const ru_compression_params&     compr_params);
 
@@ -63,6 +64,7 @@ create_dynamic_compr_method_ofh_user_plane_packet_decoder(srslog::basic_logger& 
                                                           subcarrier_spacing               scs,
                                                           cyclic_prefix                    cp,
                                                           unsigned                         ru_nof_prbs,
+                                                          unsigned                         sector_id_,
                                                           std::unique_ptr<iq_decompressor> decompressor);
 
 } // namespace ofh

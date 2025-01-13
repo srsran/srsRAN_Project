@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -80,7 +80,7 @@ static std::atomic<bool>              stop  = {true};
 static std::unique_ptr<radio_session> radio = nullptr;
 
 /// Function to call when the application is interrupted.
-static void interrupt_signal_handler()
+static void interrupt_signal_handler(int signal)
 {
   if (radio != nullptr) {
     radio->stop();
@@ -89,7 +89,7 @@ static void interrupt_signal_handler()
 }
 
 /// Function to call when the application is going to be forcefully shutdown.
-static void cleanup_signal_handler()
+static void cleanup_signal_handler(int signal)
 {
   srslog::flush();
 }

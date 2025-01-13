@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -146,8 +146,9 @@ protected:
     nru_gw_config.reuse_addr                 = true;
     udp_gw = create_udp_gtpu_gateway(nru_gw_config, *epoll_broker, io_tx_executor, rx_executor);
 
-    f1u_cu_up_split_gateway_creation_msg cu_create_msg{
-        *udp_gw, *demux, dummy_pcap, tester_bind_port.value(), get_external_bind_address()};
+    std::vector<std::unique_ptr<gtpu_gateway>> cu_f1u_gws;
+    cu_f1u_gws.push_back(std::move(udp_gw));
+    f1u_cu_up_split_gateway_creation_msg cu_create_msg{cu_f1u_gws, *demux, dummy_pcap, tester_bind_port.value()};
     cu_gw           = create_split_f1u_gw(cu_create_msg);
     cu_gw_bind_port = cu_gw->get_bind_port();
     ASSERT_TRUE(cu_gw_bind_port.has_value());
@@ -206,8 +207,6 @@ protected:
     udp_tester->handle_pdu(std::move(pdu), addr_storage);
   }
 
-  virtual std::string get_external_bind_address() { return "auto"; }
-
   inline_task_executor          rx_executor;
   manual_task_worker            ue_worker{128};
   std::unique_ptr<io_broker>    epoll_broker;
@@ -233,15 +232,6 @@ protected:
   srslog::basic_logger& udp_logger_cu  = srslog::fetch_basic_logger("UDP-GW", false);
 };
 
-class f1u_cu_split_connector_external_address_test : public f1u_cu_split_connector_test,
-                                                     public ::testing::WithParamInterface<std::string>
-{
-  std::string get_external_bind_address() override { return external_address; }
-
-protected:
-  std::string external_address = GetParam();
-};
-
 } // namespace
 
 /// Test the instantiation of a new entity
@@ -259,7 +249,7 @@ TEST_F(f1u_cu_split_connector_test, send_sdu_with_dl_teid_attached)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   ASSERT_NE(udp_tester, nullptr);
@@ -292,7 +282,7 @@ TEST_F(f1u_cu_split_connector_test, send_sdu_without_dl_teid_attached)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   // Not attaching DL TEID
 
   ASSERT_NE(udp_tester, nullptr);
@@ -323,7 +313,7 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu_with_dl_teid_attached)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Send SDU
@@ -353,7 +343,7 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu_without_dl_teid_attached)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   // Not attaching DL TEID
 
   // Send SDU
@@ -381,7 +371,7 @@ TEST_F(f1u_cu_split_connector_test, disconnect_stops_tx)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   ASSERT_NE(udp_tester, nullptr);
@@ -439,7 +429,7 @@ TEST_F(f1u_cu_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Disconnect incorrect tunnel (no effect expected)
@@ -473,21 +463,6 @@ TEST_F(f1u_cu_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   expected<nru_ul_message> rx_sdu2 = cu_rx.get_rx_pdu_blocking(ue_worker, std::chrono::milliseconds(200));
   ASSERT_FALSE(rx_sdu2.has_value());
 }
-
-TEST_P(f1u_cu_split_connector_external_address_test, external_address)
-{
-  expected<std::string> addr = cu_gw->get_cu_bind_address();
-  ASSERT_TRUE(addr.has_value());
-  if (external_address == "" || external_address == "auto") {
-    ASSERT_EQ(addr.value(), cu_gw_bind_address);
-  } else {
-    ASSERT_EQ(addr.value(), external_address);
-  }
-}
-
-INSTANTIATE_TEST_SUITE_P(f1u_cu_split_connector_test_external_address,
-                         f1u_cu_split_connector_external_address_test,
-                         ::testing::Values("auto", "", "8.8.8.8"));
 
 int main(int argc, char** argv)
 {

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -48,6 +48,22 @@ ru_generic_impl::ru_generic_impl(ru_generic_impl_config&& config) :
         }
         return out;
       }(phy_metric_printer),
+      [](span<std::unique_ptr<lower_phy>> sectors) {
+        std::vector<lower_phy_cfo_controller*> out;
+        for (auto& sector : sectors) {
+          out.push_back(&sector->get_tx_cfo_control());
+          srsran_assert(out.back(), "Invalid lower PHY controller");
+        }
+        return out;
+      }(low_phy),
+      [](span<std::unique_ptr<lower_phy>> sectors) {
+        std::vector<lower_phy_cfo_controller*> out;
+        for (auto& sector : sectors) {
+          out.push_back(&sector->get_rx_cfo_control());
+          srsran_assert(out.back(), "Invalid lower PHY controller");
+        }
+        return out;
+      }(low_phy),
       *radio,
       config.srate_MHz),
   ru_downlink_hdlr([](span<std::unique_ptr<lower_phy>> sectors) {

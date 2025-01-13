@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -606,17 +606,21 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   }
 
   // Allocate PUCCH resources.
-  // NOTEs:
-  // - The dedicated resources are needed as, at this point, the UE object in the scheduler (not the actual terminal)
-  // could have a complete configuration; if so, (i) the UCI scheduler can start allocating SRs and CSIs in advance, as
-  // the scheduler doesn't know exactly when the UE will start transmitting SRs and CSIs; (ii) if the actual UE has
-  // received the RRCSetup (with configuration) but the GNB doesn't receive an ACK = 1, the UE can use the PUCCH
-  // dedicated resource to ack the RRCSetup retx (as per TS 38.213, Section 9.2.1, "If a UE has dedicated PUCCH resource
-  // configuration, the UE is provided by higher layers with one or more PUCCH resources [...]").
-  // - If the UE object in the scheduler doesn't have a complete configuration (i.e., when SRB0 is for RRC Reject),
-  // don't use the PUCCH ded. resources.
+  // Note: In case of RRC Reconfiguration that is not after the RRC Reestablishment, common PUCCH is not required, as
+  // the UE already has a dedicated config.
+  // Note: In case the UE has no full config (RRC Reject), dedicated PUCCH is not required.
+  // Note: If the actual UE has received the RRCSetup (with config) but the gNB doesn't receive an ACK=1, the UE can use
+  // the PUCCH dedicated resource to ACK the RRCSetup Retx (as per ts 38.213, section 9.2.1, "if a ue has dedicated
+  // PUCCH resource configuration, the UE is provided by higher layers with one or more PUCCH resources [...]")
+  // Note: The confirmation of UE fallback exit coming from higher layers may be late. In such case, we err on the side
+  // of caution and allocate a dedicated PUCCH as well. We do not need to do this for the CON RES CE or SRB0
+  // allocations.
   const bool use_common    = not u.is_reconfig_ongoing();
-  const bool use_dedicated = u.is_reconfig_ongoing() or (u.ue_cfg_dedicated()->is_ue_cfg_complete() and is_retx);
+  bool       use_dedicated = not use_common;
+  if (u.ue_cfg_dedicated()->is_ue_cfg_complete()) {
+    use_dedicated |=
+        is_retx or (dci_type == dci_dl_rnti_config_type::c_rnti_f1_0 and u.has_pending_dl_newtx_bytes(LCID_SRB1));
+  }
   std::optional<uci_allocation> uci = allocate_ue_fallback_pucch(u,
                                                                  res_alloc,
                                                                  pucch_alloc,

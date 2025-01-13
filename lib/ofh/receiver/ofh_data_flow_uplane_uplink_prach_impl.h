@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -35,6 +35,8 @@ namespace ofh {
 
 /// Open Fronthaul User-Plane uplink PRACH data flow implementation configuration.
 struct data_flow_uplane_uplink_prach_impl_config {
+  /// Radio sector identifier.
+  unsigned sector;
   /// PRACH Control-Plane enabled flag.
   bool is_prach_cplane_enabled;
   /// Uplink PRACH eAxCs.
@@ -77,6 +79,7 @@ private:
   std::unique_ptr<uplane_message_decoder>           uplane_decoder;
   uplane_prach_symbol_data_flow_writer              prach_iq_writter;
   uplane_prach_data_flow_notifier                   notification_sender;
+  const unsigned                                    sector_id;
 };
 
 } // namespace ofh

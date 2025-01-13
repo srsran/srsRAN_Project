@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -38,21 +38,6 @@
 using namespace srsran;
 
 #ifndef SRSRAN_HAS_ENTERPRISE
-
-/// \brief Extracts channel observations corresponding to DM-RS pilots from the resource grid for one layer, one hop
-/// and for the selected port.
-/// \param[out] rx_symbols  Symbol buffer destination.
-/// \param[in]  grid        Resource grid.
-/// \param[in]  port        Port index.
-/// \param[in]  cfg         Configuration parameters of the current context.
-/// \param[in]  hop         Intra-slot frequency hopping index: 0 for first position (before hopping), 1 for second
-///                         position (after hopping).
-/// \return The number of OFDM symbols containing DM-RS for the given layer and hop.
-static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                            rx_symbols,
-                                            const resource_grid_reader&                  grid,
-                                            unsigned                                     port,
-                                            const port_channel_estimator::configuration& cfg,
-                                            unsigned                                     hop);
 
 /// \brief Estimates the noise energy of one hop.
 ///
@@ -146,7 +131,7 @@ void port_channel_estimator_average_impl::do_compute(channel_estimate&          
   }
 
   estimate.set_rsrp(rsrp, port, layer0);
-  estimate.set_epre(epre, port, layer0);
+  estimate.set_epre(epre, port);
   estimate.set_time_alignment(phy_time_unit::from_seconds(time_alignment_s), port, layer0);
   estimate.set_cfo_Hz(cfo_normalized.has_value()
                           ? std::optional<float>(cfo_normalized.value() * scs_to_khz(cfg.scs) * 1000)
@@ -155,9 +140,9 @@ void port_channel_estimator_average_impl::do_compute(channel_estimate&          
                       layer0);
 
   // Write the noise variance in the channel estimate result.
-  estimate.set_noise_variance(noise_var, port, layer0);
+  estimate.set_noise_variance(noise_var, port);
 
-  estimate.set_snr((noise_var != 0) ? datarp / noise_var : 1000, port, layer0);
+  estimate.set_snr((noise_var != 0) ? datarp / noise_var : 1000, port);
 }
 
 void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate&           estimate,
@@ -224,8 +209,8 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
 
   //  Preprocess the pilots and compute the hop contribution to the CFO. Recall that this method updates
   //  pilot_products and pilots_lse.
-  std::optional<float> cfo_hop = preprocess_pilots_and_cfo(
-      pilots, pattern.symbols, cfg.scs, first_symbol, last_symbol, hop_offset, layer0, layer0 + 1);
+  std::optional<float> cfo_hop = preprocess_pilots_and_estimate_cfo(
+      pilots, pattern.symbols, first_symbol, last_symbol, hop_offset, layer0, layer0 + 1);
   if (cfo_hop.has_value()) {
     cfo_normalized = evaluate_or(
         cfo_normalized, cfo_hop.value(), [](float a, float b) { return (a + b) / 2.0F; }, cfo_hop.value());
@@ -296,15 +281,14 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
                               hop_offset);
 }
 
-std::optional<float>
-port_channel_estimator_average_impl::preprocess_pilots_and_cfo(const dmrs_symbol_list&                   pilots,
-                                                               const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
-                                                               const subcarrier_spacing&                 scs,
-                                                               unsigned first_hop_symbol,
-                                                               unsigned last_hop_symbol,
-                                                               unsigned hop_offset,
-                                                               unsigned /* unused */,
-                                                               unsigned /* unused */)
+std::optional<float> port_channel_estimator_average_impl::preprocess_pilots_and_estimate_cfo(
+    const dmrs_symbol_list&                   pilots,
+    const bounded_bitset<MAX_NSYMB_PER_SLOT>& dmrs_mask,
+    unsigned                                  first_hop_symbol,
+    unsigned                                  last_hop_symbol,
+    unsigned                                  hop_offset,
+    unsigned /* unused */,
+    unsigned /* unused */)
 {
   constexpr unsigned layer0 = 0;
 
@@ -367,48 +351,16 @@ port_channel_estimator_average_impl::preprocess_pilots_and_cfo(const dmrs_symbol
   return cfo;
 }
 
-static unsigned extract_layer_hop_rx_pilots(dmrs_symbol_list&                            rx_symbols,
-                                            const resource_grid_reader&                  grid,
-                                            unsigned                                     port,
-                                            const port_channel_estimator::configuration& cfg,
-                                            unsigned                                     hop)
+// In this version of the code, the preprocess_pilots_and_estimate_cfo method takes care of compensating the CFO.
+void port_channel_estimator_average_impl::
+    compensate_cfo_and_accumulate( // NOLINT(readability-convert-member-functions-to-static)
+        const dmrs_symbol_list& /* unused */,
+        const bounded_bitset<MAX_NSYMB_PER_SLOT>& /* unused */,
+        unsigned /* unused */,
+        unsigned /* unused */,
+        std::optional<float> /* unused */)
 {
-  constexpr unsigned layer0 = 0;
-  // Select DM-RS pattern.
-  const port_channel_estimator::layer_dmrs_pattern& pattern = cfg.dmrs_pattern[layer0];
-
-  const bounded_bitset<MAX_RB>& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
-
-  // Prepare RE mask, common for all symbols carrying DM-RS.
-  bounded_bitset<MAX_RB* NRE> re_mask = hop_rb_mask.kronecker_product<NRE>(pattern.re_pattern);
-
-  unsigned symbol_index      = ((hop == 1) && pattern.hopping_symbol_index.has_value())
-                                   ? pattern.hopping_symbol_index.value()
-                                   : cfg.first_symbol;
-  unsigned symbol_index_end  = ((hop == 0) && pattern.hopping_symbol_index.has_value())
-                                   ? pattern.hopping_symbol_index.value()
-                                   : cfg.first_symbol + cfg.nof_symbols;
-  unsigned dmrs_symbol_index = 0;
-  // For each OFDM symbol in the transmission...
-  for (; symbol_index != symbol_index_end; ++symbol_index) {
-    // Skip if the symbol does not carry DM-RS.
-    if (!pattern.symbols.test(symbol_index)) {
-      continue;
-    }
-
-    // Select symbol buffer for the selected layer and symbol.
-    span<cf_t> layer_dmrs_symbols = rx_symbols.get_symbol(dmrs_symbol_index++, layer0);
-
-    // Get DM-RS symbols from the resource grid.
-    layer_dmrs_symbols = grid.get(layer_dmrs_symbols, cfg.rx_ports[port], symbol_index, 0, re_mask);
-
-    // The DM-RS symbol buffer must be complete.
-    srsran_assert(layer_dmrs_symbols.empty(),
-                  "The DM-RS buffer is not completed. {} samples have not been read.",
-                  layer_dmrs_symbols.size());
-  }
-
-  return dmrs_symbol_index;
+  srsran_assertion_failure("Function not implemented.");
 }
 
 static float estimate_noise(const dmrs_symbol_list&                   pilots,

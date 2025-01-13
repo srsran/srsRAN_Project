@@ -1,5 +1,5 @@
 #
-# Copyright 2021-2024 Software Radio Systems Limited
+# Copyright 2021-2025 Software Radio Systems Limited
 #
 # This file is part of srsRAN
 #
@@ -190,6 +190,24 @@ def test_ru(
     _test_ru(retina_manager, retina_data, gnb, ru_config="config_ru.yml")
 
 
+@mark.test_mode
+@mark.flaky(
+    reruns=2,
+    only_rerun=[_POD_ERROR],
+)
+def test_ru_16cell_50ue(
+    # Retina
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    # Clients
+    gnb: GNBStub,
+):
+    """
+    Run gnb in test mode ru dummy.
+    """
+    _test_ru(retina_manager, retina_data, gnb, ru_config="config_ru_16cell_50ue.yml", warning_as_errors=False)
+
+
 @mark.test_mode_not_crash
 @mark.flaky(
     reruns=2,
@@ -211,6 +229,33 @@ def test_ru_not_crash(
         retina_data,
         gnb,
         ru_config="config_ru.yml",
+        gnb_stop_timeout=150,
+        warning_as_errors=False,
+        fail_if_kos=False,
+    )
+
+
+@mark.test_mode_not_crash
+@mark.flaky(
+    reruns=2,
+    only_rerun=[_POD_ERROR],
+)
+def test_ru_16cell_50ue_not_crash(
+    # Retina
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    # Clients
+    gnb: GNBStub,
+):
+    """
+    Run gnb with sanitizers in test mode ru dummy.
+    It ignores warnings and KOs, so it will fail if the gnb+sanitizer fails
+    """
+    _test_ru(
+        retina_manager,
+        retina_data,
+        gnb,
+        ru_config="config_ru_16cell_50ue.yml",
         gnb_stop_timeout=150,
         warning_as_errors=False,
         fail_if_kos=False,

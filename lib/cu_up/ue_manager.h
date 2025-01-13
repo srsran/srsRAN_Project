@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -63,6 +63,7 @@ public:
   using ue_task_schedulers_t = slotted_array<fifo_async_task_scheduler, MAX_NOF_UES>;
   const ue_db_t& get_ues() const { return ue_db; }
 
+  async_task<void> stop() override;
   ue_context*      add_ue(const ue_context_cfg& cfg) override;
   async_task<void> remove_ue(ue_index_t ue_index) override;
   ue_context*      find_ue(ue_index_t ue_index) override;

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -32,6 +32,9 @@ namespace srsran {
 /// non-GBR. See TS 23.501, clause 5.7.3.2 Resource Type.
 enum class qos_flow_resource_type { gbr, non_gbr, delay_critical_gbr };
 
+/// Maximum QoS Priority Level as per TS 38.471.
+constexpr static uint8_t MAX_QOS_PRIORITY_LEVEL = 127;
+
 /// \brief Represents 5G QoS characteristics associated with a standardized 5QI, as per TS 23.501 5.7.4-1.
 struct standardized_qos_characteristics {
   qos_flow_resource_type res_type;
@@ -51,6 +54,13 @@ struct standardized_qos_characteristics {
   /// MDBV denotes the largest amount of data that the 5G-AN is required to serve within a period of 5G-AN PDB (i.e.
   /// 5G-AN part of the PDB). See TS 23.501, clause 5.7.3.7.
   std::optional<uint16_t> max_data_burst_volume;
+
+  bool operator==(const standardized_qos_characteristics& rhs) const
+  {
+    return res_type == rhs.res_type && qos_priority_level == rhs.qos_priority_level &&
+           packet_delay_budget_ms == rhs.packet_delay_budget_ms && per == rhs.per &&
+           average_window_ms == rhs.average_window_ms && max_data_burst_volume == rhs.max_data_burst_volume;
+  }
 };
 
 /// \brief Returns the standardized 5QI to QoS characteristics mapping from TS 23.501, table 5.7.4-1 based on given 5QI.

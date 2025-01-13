@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -52,4 +52,9 @@ pdxch_processor_request_handler& downlink_processor_impl::get_downlink_request_h
 downlink_processor_baseband& downlink_processor_impl::get_baseband()
 {
   return downlink_proc_baseband;
+}
+
+baseband_cfo_processor& downlink_processor_impl::get_cfo_handler()
+{
+  return downlink_proc_baseband.get_cfo_control();
 }

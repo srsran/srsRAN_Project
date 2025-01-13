@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -76,6 +76,11 @@ protected:
 
   // PUCCH Demodulator.
   static std::unique_ptr<pucch_demodulator> demodulator;
+
+  // Default constructor - initializes the resource grid with the maximum size possible.
+  PucchDemodulatorFixture() : ::testing::TestWithParam<ParamType>(), rg_spy(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS)
+  {
+  }
 
   static void SetUpTestSuite()
   {

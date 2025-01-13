@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -34,17 +34,19 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
 
   prach_context prach_context = prach_context_repo->get(slot);
   if (prach_context.empty()) {
-    logger.info(
-        "Dropped received Open Fronthaul message as no uplink PRACH context was found for slot '{}' and eAxC '{}'",
-        slot,
-        eaxc);
+    logger.info("Sector#{}: dropped received Open Fronthaul message as no uplink PRACH context was found for slot '{}' "
+                "and eAxC '{}'",
+                sector_id,
+                slot,
+                eaxc);
     return;
   }
 
   // Find resource grid port with eAxC.
   unsigned port = std::distance(prach_eaxc.begin(), std::find(prach_eaxc.begin(), prach_eaxc.end(), eaxc));
   if (port >= prach_context.get_max_nof_ports()) {
-    logger.info("Skipping eAxC value '{}' as the stored PRACH buffer only supports up to '{}' ports",
+    logger.info("Sector#{}: skipping eAxC value '{}' as the stored PRACH buffer only supports up to '{}' ports",
+                sector_id,
                 eaxc,
                 prach_context.get_max_nof_ports());
 
@@ -107,6 +109,10 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
     // Copy the data in the buffer.
     prach_context_repo->write_iq(slot, port, results.params.symbol_id, start_re, prach_in_data);
 
-    logger.debug("Handling PRACH in slot '{}', symbol '{}' and port '{}'", slot, results.params.symbol_id, port);
+    logger.debug("Sector#{}: handling PRACH in slot '{}', symbol '{}' and port '{}'",
+                 sector_id,
+                 slot,
+                 results.params.symbol_id,
+                 port);
   }
 }

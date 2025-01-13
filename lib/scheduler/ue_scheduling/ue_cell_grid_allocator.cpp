@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -289,7 +289,16 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
     if (pdcch == nullptr) {
       logger.info(
           "ue={} rnti={}: Failed to allocate PDSCH. Cause: No space in PDCCH.", fmt::underlying(u.ue_index), u.crnti);
-      return {alloc_status::skip_ue};
+      // Note: (Implementation-defined) Assuming all UEs share the same CORESET, if there are no more CCEs left in the
+      // CORESET, stop attempting to allocate new PDCCHs in the slot.
+      unsigned nof_cces_left = ss_info.coreset->get_nof_cces();
+      for (const auto& dl_pdcch : pdcch_alloc.result.dl.dl_pdcchs) {
+        nof_cces_left -= std::min(nof_cces_left, to_nof_cces(dl_pdcch.ctx.cces.aggr_lvl));
+      }
+      for (const auto& ul_pdcch : pdcch_alloc.result.dl.ul_pdcchs) {
+        nof_cces_left -= std::min(nof_cces_left, to_nof_cces(ul_pdcch.ctx.cces.aggr_lvl));
+      }
+      return {nof_cces_left == 0 ? alloc_status::skip_slot : alloc_status::skip_ue};
     }
 
     // Allocate UCI. UCI destination (i.e., PUCCH or PUSCH) depends on whether there exist a PUSCH grant for the UE.
@@ -819,7 +828,16 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     if (pdcch == nullptr) {
       logger.info(
           "ue={} rnti={}: Failed to allocate PUSCH. Cause: No space in PDCCH.", fmt::underlying(u.ue_index), u.crnti);
-      return {alloc_status::skip_ue};
+      // Note: (Implementation-defined) Assuming all UEs share the same CORESET, if there are no more CCEs left in the
+      // CORESET, stop attempting to allocate new PDCCHs in the slot.
+      unsigned nof_cces_left = ss_info.coreset->get_nof_cces();
+      for (const auto& dl_pdcch : pdcch_alloc.result.dl.dl_pdcchs) {
+        nof_cces_left -= std::min(nof_cces_left, to_nof_cces(dl_pdcch.ctx.cces.aggr_lvl));
+      }
+      for (const auto& ul_pdcch : pdcch_alloc.result.dl.ul_pdcchs) {
+        nof_cces_left -= std::min(nof_cces_left, to_nof_cces(ul_pdcch.ctx.cces.aggr_lvl));
+      }
+      return {nof_cces_left == 0 ? alloc_status::skip_slot : alloc_status::skip_ue};
     }
 
     const unsigned nof_harq_ack_bits =
@@ -1042,4 +1060,9 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
 
   // No candidates for PUSCH allocation.
   return {alloc_status::invalid_params};
+}
+
+void ue_cell_grid_allocator::post_process_results()
+{
+  // TODO
 }

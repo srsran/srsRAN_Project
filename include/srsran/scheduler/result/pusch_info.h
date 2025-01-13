@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -24,7 +24,9 @@
 
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
+#include "srsran/ran/rnti.h"
 #include "srsran/ran/uci/uci_configuration.h"
+#include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/result/dmrs_info.h"
 #include "srsran/scheduler/result/vrb_alloc.h"
 
@@ -73,7 +75,7 @@ struct pusch_information {
   /// Redundancy version index (see TS38.214 Table 6.1.4). Values: {0,...,3}.
   uint8_t rv_index;
   /// HARQ process number as per TS38.212 Section 6.3.1.1. Values: {0,...,15}.
-  uint8_t harq_id;
+  harq_id_t harq_id;
   /// \brief Signals whether the PUSCH PDU corresponds to an initial transmission or a retransmission of a MAC PDU for
   /// this HARQ process ID for this TB. Note: Unlike NDI, new_data does not toggle to indicate new transmission,
   /// but is set to 1.

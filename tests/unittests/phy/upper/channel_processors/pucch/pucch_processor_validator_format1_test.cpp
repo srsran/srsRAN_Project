@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -20,7 +20,6 @@
  *
  */
 
-#include "../../../support/resource_grid_test_doubles.h"
 #include "pucch_processor_test_fixture.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
@@ -202,14 +201,6 @@ TEST_P(PucchProcessorFormat1Fixture, PucchProcessorValidatortest)
   ASSERT_FALSE(validator_out.has_value()) << "Validation should fail.";
   ASSERT_TRUE(std::regex_match(validator_out.error(), std::regex(param.get_test_params().assert_message)))
       << "The assertion message doesn't match the expected pattern.";
-
-  // Prepare resource grid.
-  resource_grid_reader_spy grid;
-
-  // Process PUCCH PDU.
-#ifdef ASSERTS_ENABLED
-  ASSERT_DEATH({ processor->process(grid, param.get_test_params().config); }, param.get_test_params().assert_message);
-#endif // ASSERTS_ENABLED
 }
 
 // Creates test suite that combines all possible parameters.

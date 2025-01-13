@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -31,6 +31,7 @@ static message_receiver_config get_message_receiver_configuration(const receiver
 {
   message_receiver_config config;
 
+  config.sector                      = rx_config.sector;
   config.nof_symbols                 = get_nsymb_per_slot(rx_config.cp);
   config.scs                         = rx_config.scs;
   config.vlan_params.mac_src_address = rx_config.mac_src_address;
@@ -70,6 +71,7 @@ get_message_receiver_dependencies(receiver_impl_dependencies::message_rx_depende
 static closed_rx_window_handler_config get_closed_rx_window_handler_config(const receiver_config& config)
 {
   closed_rx_window_handler_config out_config;
+  out_config.sector                    = config.sector;
   out_config.warn_unreceived_ru_frames = config.warn_unreceived_ru_frames;
   out_config.rx_timing_params          = config.rx_timing_params;
   // As it runs in the same executor, do not delay the reception window close.
@@ -104,7 +106,7 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
   }(closed_window_handler, window_checker)),
   msg_receiver(get_message_receiver_configuration(config),
                get_message_receiver_dependencies(std::move(dependencies.msg_rx_dependencies), window_checker)),
-  rcv_task_dispatcher(msg_receiver, *dependencies.executor),
+  rcv_task_dispatcher(msg_receiver, *dependencies.executor, config.sector),
   ctrl(rcv_task_dispatcher)
 {
 }

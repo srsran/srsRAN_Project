@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,9 +22,8 @@
 
 #pragma once
 
-#include "srsran/adt/ring_buffer.h"
+#include "rigtorp/MPMCQueue.h"
 #include "srsran/srslog/detail/support/backend_capacity.h"
-#include "srsran/srslog/detail/support/thread_utils.h"
 
 namespace srslog {
 
@@ -36,8 +35,7 @@ namespace detail {
 template <typename T, size_t capacity = SRSLOG_QUEUE_CAPACITY>
 class work_queue
 {
-  srsran::ring_buffer<T>  queue;
-  mutable mutex           m;
+  rigtorp::MPMCQueue<T>   queue;
   static constexpr size_t threshold = capacity * 0.98;
 
 public:
@@ -48,54 +46,21 @@ public:
 
   /// Inserts a new element into the back of the queue. Returns false when the
   /// queue is full, otherwise true.
-  bool push(const T& value)
-  {
-    m.lock();
-    // Discard the new element if we reach the maximum capacity.
-    if (queue.full()) {
-      m.unlock();
-      return false;
-    }
-    queue.push(value);
-    m.unlock();
-
-    return true;
-  }
+  bool push(const T& value) { return queue.try_push(value); }
 
   /// Inserts a new element into the back of the queue. Returns false when the
   /// queue is full, otherwise true.
-  bool push(T&& value)
-  {
-    m.lock();
-    // Discard the new element if we reach the maximum capacity.
-    if (queue.full()) {
-      m.unlock();
-      return false;
-    }
-    queue.push(std::move(value));
-    m.unlock();
-
-    return true;
-  }
+  bool push(T&& value) { return queue.try_push(std::move(value)); }
 
   /// Extracts the top most element from the queue if it exists.
   /// Returns a pair with a bool indicating if the pop has been successful.
   std::pair<bool, T> try_pop()
   {
-    m.lock();
-
-    if (queue.empty()) {
-      m.unlock();
+    T item;
+    if (!queue.try_pop(item)) {
       return {false, T()};
     }
-
-    // Here we have been woken up normally.
-    T Item = std::move(queue.top());
-    queue.pop();
-
-    m.unlock();
-
-    return {true, std::move(Item)};
+    return {true, std::move(item)};
   }
 
   /// Capacity of the queue.
@@ -104,9 +69,12 @@ public:
   /// Returns true when the queue is almost full, otherwise returns false.
   bool is_almost_full() const
   {
-    scoped_lock lock(m);
-
-    return queue.size() > threshold;
+    auto s = queue.size();
+    // size() may return a negative value for an empty queue.
+    if (s < 0) {
+      return false;
+    }
+    return static_cast<size_t>(s) > threshold;
   }
 };
 

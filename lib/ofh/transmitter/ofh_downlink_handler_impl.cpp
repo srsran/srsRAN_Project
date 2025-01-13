@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -54,6 +54,7 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
   dl_eaxc(config.dl_eaxc),
   window_checker(
       *dependencies.logger,
+      config.sector,
       calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params),
       get_nsymb_per_slot(config.cp),
       to_numerology_value(config.scs)),
@@ -83,10 +84,11 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   if (window_checker.is_late(context.slot)) {
     err_notifier.get().on_late_downlink_message({context.slot, sector_id});
 
-    logger.warning(
-        "Dropped late downlink resource grid in slot '{}' and sector#{}. No OFH data will be transmitted for this slot",
-        context.slot,
-        context.sector);
+    logger.warning("Sector#{}: dropped late downlink resource grid in slot '{}' and sector#{}. No OFH data will be "
+                   "transmitted for this slot",
+                   sector_id,
+                   context.slot,
+                   context.sector);
     l1_tracer << instant_trace_event{"handle_dl_data_late", instant_trace_event::cpu_scope::thread};
     ofh_tracer << trace_event("ofh_handle_dl_late", tp);
     return;

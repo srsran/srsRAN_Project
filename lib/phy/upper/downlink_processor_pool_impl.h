@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -31,18 +31,14 @@ namespace srsran {
 struct downlink_processor_pool_impl_config {
   /// Downlink processors for a given sector and numerology.
   struct sector_dl_processor {
-    /// Radio sector identifier.
-    unsigned sector;
     /// Subcarrier spacing.
     subcarrier_spacing scs;
     /// Pointers to the actual downlink processors.
-    std::vector<std::unique_ptr<downlink_processor>> procs;
+    std::vector<std::unique_ptr<downlink_processor_controller>> procs;
   };
 
   /// Collection of all downlink processors, organized by radio sector and numerology.
   std::vector<sector_dl_processor> procs;
-  /// Number of radio sectors.
-  unsigned num_sectors;
 };
 
 /// Implementation of a downlink processor pool.
@@ -55,11 +51,11 @@ public:
   explicit downlink_processor_pool_impl(downlink_processor_pool_impl_config dl_processors);
 
   // See interface for documentation.
-  downlink_processor& get_processor(slot_point slot, unsigned sector_id) override;
+  downlink_processor_controller& get_processor_controller(slot_point slot) override;
 
 private:
   /// Container for downlink processors. Each entry belongs to a different sector.
-  std::vector<processor_pool_repository<downlink_processor>> processors;
+  processor_pool_repository<downlink_processor_controller> processors;
 };
 
 } // namespace srsran

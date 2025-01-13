@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -41,10 +41,10 @@ public:
   /// Forbid move constructor.
   baseband_gateway_base(const baseband_gateway_base&& other) = delete;
 
-  /// Forbid copy assigment operator.
+  /// Forbid copy assignment operator.
   baseband_gateway_base& operator=(const baseband_gateway_base&) = delete;
 
-  /// Forbid move assigment operator.
+  /// Forbid move assignment operator.
   baseband_gateway_base& operator=(baseband_gateway_base&&) = delete;
 };
 

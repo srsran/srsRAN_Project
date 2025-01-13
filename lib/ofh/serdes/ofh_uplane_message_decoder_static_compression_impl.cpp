@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -42,9 +42,10 @@ uplane_message_decoder_static_compression_impl::uplane_message_decoder_static_co
     subcarrier_spacing               scs_,
     unsigned                         nof_symbols_,
     unsigned                         ru_nof_prbs_,
+    unsigned                         sector_id_,
     std::unique_ptr<iq_decompressor> decompressor_,
     const ru_compression_params&     compression_params_) :
-  uplane_message_decoder_impl(logger_, scs_, nof_symbols_, ru_nof_prbs_, std::move(decompressor_)),
+  uplane_message_decoder_impl(logger_, scs_, nof_symbols_, ru_nof_prbs_, sector_id_, std::move(decompressor_)),
   compression_params(compression_params_)
 {
 }

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -37,8 +37,10 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
 
     static_vector<::rte_mbuf*, MAX_BURST_SIZE> mbufs(frame_burst.size());
     if (::rte_pktmbuf_alloc_bulk(port_ctx->get_mempool(), mbufs.data(), frame_burst.size()) < 0) {
-      logger.warning("Not enough entries in the mempool to send '{}' frames in the DPDK Ethernet transmitter",
-                     frame_burst.size());
+      logger.warning("Not enough entries in the mempool to send '{}' frames to the NIC port '{}' in the DPDK Ethernet "
+                     "transmitter ",
+                     frame_burst.size(),
+                     port_ctx->get_port_id());
       return;
     }
 
@@ -48,8 +50,10 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
 
       if (::rte_pktmbuf_append(mbuf, frame.size()) == nullptr) {
         ::rte_pktmbuf_free(mbuf);
-        logger.warning("Unable to append '{}' bytes to the allocated mbuf in the DPDK Ethernet transmitter",
-                       frame.size());
+        logger.warning("Unable to append '{}' bytes to the allocated mbuf associated with the NIC port '{}' in the "
+                       "DPDK Ethernet transmitter",
+                       frame.size(),
+                       port_ctx->get_port_id());
         ::rte_pktmbuf_free_bulk(mbufs.data(), mbufs.size());
         return;
       }
@@ -60,12 +64,14 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
       std::memcpy(data, frame.data(), frame.size());
     }
 
-    unsigned nof_sent_packets = ::rte_eth_tx_burst(port_ctx->get_port_id(), 0, mbufs.data(), mbufs.size());
+    unsigned nof_sent_packets = ::rte_eth_tx_burst(port_ctx->get_dpdk_port_id(), 0, mbufs.data(), mbufs.size());
 
     if (SRSRAN_UNLIKELY(nof_sent_packets < mbufs.size())) {
-      logger.warning("DPDK dropped '{}' packets out of a total of '{}' in the tx burst",
-                     mbufs.size() - nof_sent_packets,
-                     mbufs.size());
+      logger.warning(
+          "DPDK dropped '{}' packets out of a total of '{}' in the tx burst while sending data to the NIC port '{}'",
+          mbufs.size() - nof_sent_packets,
+          mbufs.size(),
+          port_ctx->get_port_id());
       for (unsigned buf_idx = nof_sent_packets, last_idx = mbufs.size(); buf_idx != last_idx; ++buf_idx) {
         ::rte_pktmbuf_free(mbufs[buf_idx]);
       }

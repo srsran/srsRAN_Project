@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -41,6 +41,7 @@
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
+#include "srsran/f1u/cu_up/f1u_session_manager_factory.h"
 #include "srsran/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
@@ -54,6 +55,7 @@
 #include "srsran/support/io/io_broker_factory.h"
 #include "srsran/support/io/io_timer_source.h"
 #include "srsran/support/signal_handling.h"
+#include "srsran/support/signal_observer.h"
 #include "srsran/support/sysinfo.h"
 #include "srsran/support/timers.h"
 #include "srsran/support/tracing/event_tracing.h"
@@ -89,14 +91,17 @@ static void populate_cli11_generic_args(CLI::App& app)
 }
 
 /// Function to call when the application is interrupted.
-static void interrupt_signal_handler()
+static void interrupt_signal_handler(int signal)
 {
   is_app_running = false;
 }
 
+static signal_dispatcher cleanup_signal_dispatcher;
+
 /// Function to call when the application is going to be forcefully shutdown.
-static void cleanup_signal_handler()
+static void cleanup_signal_handler(int signal)
 {
+  cleanup_signal_dispatcher.notify_signal(signal);
   srslog::flush();
 }
 
@@ -153,7 +158,8 @@ static void fill_cu_worker_manager_config(worker_manager_config& config, const c
   config.low_prio_sched_config    = unit_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg;
 }
 
-static void autoderive_cu_up_parameters_after_parsing(o_cu_up_unit_config&     o_cu_up_cfg,
+static void autoderive_cu_up_parameters_after_parsing(cu_appconfig&            cu_config,
+                                                      o_cu_up_unit_config&     o_cu_up_cfg,
                                                       const cu_cp_unit_config& cu_cp_cfg)
 {
   // If no UPF is configured, we set the UPF configuration from the CU-CP AMF configuration.
@@ -161,6 +167,11 @@ static void autoderive_cu_up_parameters_after_parsing(o_cu_up_unit_config&     o
     cu_up_unit_ngu_socket_config sock_cfg;
     sock_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
     o_cu_up_cfg.cu_up_cfg.ngu_cfg.ngu_socket_cfg.push_back(sock_cfg);
+  }
+  // If no F1-U socket configuration is derived, we set a default configuration.
+  if (cu_config.f1u_cfg.f1u_socket_cfg.empty()) {
+    srs_cu::cu_f1u_socket_appconfig sock_cfg;
+    cu_config.f1u_cfg.f1u_socket_cfg.push_back(sock_cfg);
   }
 }
 
@@ -197,12 +208,12 @@ int main(int argc, char** argv)
   o_cu_up_app_unit->on_parsing_configuration_registration(app);
 
   // Set the callback for the app calling all the autoderivation functions.
-  app.callback([&app, &o_cu_cp_app_unit, &o_cu_up_app_unit]() {
+  app.callback([&app, &cu_cfg, &o_cu_cp_app_unit, &o_cu_up_app_unit]() {
     o_cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
     o_cu_up_app_unit->on_configuration_parameters_autoderivation(app);
 
-    autoderive_cu_up_parameters_after_parsing(o_cu_up_app_unit->get_o_cu_up_unit_config(),
-                                              o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
+    autoderive_cu_up_parameters_after_parsing(
+        cu_cfg, o_cu_up_app_unit->get_o_cu_up_unit_config(), o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
   });
 
   // Parse arguments.
@@ -261,18 +272,23 @@ int main(int argc, char** argv)
   check_cpu_governor(cu_logger);
   check_drm_kms_polling(cu_logger);
 
+  // Create manager of timers for CU-CP and CU-UP, which will be driven by the system timer slot ticks.
+  timer_manager  app_timers{256};
+  timer_manager* cu_timers = &app_timers;
+
   // Create worker manager.
   worker_manager_config worker_manager_cfg;
   fill_cu_worker_manager_config(worker_manager_cfg, cu_cfg);
   o_cu_cp_app_unit->fill_worker_manager_config(worker_manager_cfg);
   o_cu_up_app_unit->fill_worker_manager_config(worker_manager_cfg);
+  worker_manager_cfg.app_timers = &app_timers;
   worker_manager workers{worker_manager_cfg};
 
   // Create layer specific PCAPs.
-  o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps =
-      create_o_cu_cp_dlt_pcap(o_cu_cp_app_unit->get_o_cu_cp_unit_config(), *workers.get_executor_getter());
-  o_cu_up_dlt_pcaps cu_up_dlt_pcaps =
-      create_o_cu_up_dlt_pcaps(o_cu_up_app_unit->get_o_cu_up_unit_config(), *workers.get_executor_getter());
+  o_cu_cp_dlt_pcaps cu_cp_dlt_pcaps = create_o_cu_cp_dlt_pcap(
+      o_cu_cp_app_unit->get_o_cu_cp_unit_config(), *workers.get_executor_getter(), cleanup_signal_dispatcher);
+  o_cu_up_dlt_pcaps cu_up_dlt_pcaps = create_o_cu_up_dlt_pcaps(
+      o_cu_up_app_unit->get_o_cu_up_unit_config(), *workers.get_executor_getter(), cleanup_signal_dispatcher);
 
   // Create IO broker.
   const auto&                low_prio_cpu_mask = cu_cfg.expert_execution_cfg.affinities.low_priority_cpu_cfg.mask;
@@ -289,28 +305,32 @@ int main(int argc, char** argv)
       {f1c_sctp_cfg, *epoll_broker, *workers.non_rt_hi_prio_exec, *cu_cp_dlt_pcaps.f1ap});
   std::unique_ptr<srs_cu_cp::f1c_connection_server> cu_f1c_gw = srsran::create_f1c_gateway_server(f1c_server_cfg);
 
-  // Create F1-U GW (TODO factory and cleanup).
+  // Create F1-U GW.
+  // > Create GTP-U Demux.
   gtpu_demux_creation_request cu_f1u_gtpu_msg   = {};
   cu_f1u_gtpu_msg.cfg.warn_on_drop              = true;
   cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_dlt_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
-  udp_network_gateway_config  cu_f1u_gw_config  = {};
-  cu_f1u_gw_config.bind_address                 = cu_cfg.nru_cfg.bind_addr;
-  cu_f1u_gw_config.bind_port                    = GTPU_PORT;
-  cu_f1u_gw_config.reuse_addr                   = false;
-  cu_f1u_gw_config.pool_occupancy_threshold     = cu_cfg.nru_cfg.pool_occupancy_threshold;
-  std::unique_ptr<gtpu_gateway> cu_f1u_gw       = create_udp_gtpu_gateway(
-      cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor(), *workers.non_rt_low_prio_exec);
-  std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn = srs_cu_up::create_split_f1u_gw(
-      {*cu_f1u_gw, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT, cu_cfg.nru_cfg.ext_addr});
+  // > Create UDP gateway(s).
+  std::vector<std::unique_ptr<gtpu_gateway>> cu_f1u_gws;
+  for (const srs_cu::cu_f1u_socket_appconfig& sock_cfg : cu_cfg.f1u_cfg.f1u_socket_cfg) {
+    udp_network_gateway_config cu_f1u_gw_config = {};
+    cu_f1u_gw_config.bind_address               = sock_cfg.bind_addr;
+    cu_f1u_gw_config.ext_bind_addr              = sock_cfg.udp_config.ext_addr;
+    cu_f1u_gw_config.bind_port                  = GTPU_PORT;
+    cu_f1u_gw_config.reuse_addr                 = false;
+    cu_f1u_gw_config.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
+    cu_f1u_gw_config.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
+    std::unique_ptr<gtpu_gateway> cu_f1u_gw     = create_udp_gtpu_gateway(
+        cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor(), *workers.non_rt_low_prio_exec);
+    cu_f1u_gws.push_back(std::move(cu_f1u_gw));
+  }
+  std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn =
+      srs_cu_up::create_split_f1u_gw({cu_f1u_gws, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT});
 
   // Create E1AP local connector
   std::unique_ptr<e1_local_connector> e1_gw =
       create_e1_local_connector(e1_local_connector_config{*cu_up_dlt_pcaps.e1ap});
-
-  // Create manager of timers for CU-CP and CU-UP, which will be driven by the system timer slot ticks.
-  timer_manager  app_timers{256};
-  timer_manager* cu_timers = &app_timers;
 
   // Create time source that ticks the timers.
   std::optional<io_timer_source> time_source(
@@ -409,8 +429,8 @@ int main(int argc, char** argv)
 
   // Close PCAPs
   cu_logger.info("Closing PCAP files...");
-  cu_cp_dlt_pcaps.close();
-  cu_up_dlt_pcaps.close();
+  cu_cp_dlt_pcaps.reset();
+  cu_up_dlt_pcaps.reset();
   cu_logger.info("PCAP files successfully closed.");
 
   // Stop workers

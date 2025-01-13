@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "../baseband_cfo_processor.h"
 #include "srsran/adt/blocking_queue.h"
 #include "srsran/gateways/baseband/buffer/baseband_gateway_buffer_dynamic.h"
 #include "srsran/phy/lower/amplitude_controller/amplitude_controller.h"
@@ -191,8 +192,11 @@ public:
                                    amplitude_controller&                            amplitude_control_,
                                    const downlink_processor_baseband_configuration& config);
 
-  // See interface for documentation.
+  /// Connect the processor to a notifier.
   void connect(downlink_processor_notifier& notifier_) { notifier = &notifier_; }
+
+  /// Gets the CFO processor control interface.
+  baseband_cfo_processor& get_cfo_control() { return cfo_processor; }
 
   // See interface for documentation.
   baseband_gateway_transmitter_metadata process(baseband_gateway_buffer_writer& buffer,
@@ -233,6 +237,8 @@ private:
   detail::baseband_symbol_buffer temp_buffer;
   /// Last notified slot boundary.
   std::optional<slot_point> last_notified_slot;
+  /// Carrier Frequency Offset processor.
+  baseband_cfo_processor cfo_processor;
 };
 
 } // namespace srsran

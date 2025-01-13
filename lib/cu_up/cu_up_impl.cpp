@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -28,6 +28,7 @@
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/gtpu/gtpu_echo_factory.h"
 #include "srsran/gtpu/gtpu_teid_pool_factory.h"
+#include "srsran/support/executors/execute_until_success.h"
 #include <future>
 
 using namespace srsran;
@@ -69,7 +70,10 @@ static cu_up_manager_impl_dependencies generate_cu_up_manager_impl_dependencies(
 }
 
 cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies) :
-  cfg(config_), ctrl_executor(dependencies.exec_mapper->ctrl_executor()), main_ctrl_loop(128)
+  cfg(config_),
+  ctrl_executor(dependencies.exec_mapper->ctrl_executor()),
+  timers(*dependencies.timers),
+  main_ctrl_loop(128)
 {
   assert_cu_up_dependencies_valid(dependencies);
 
@@ -193,43 +197,41 @@ void cu_up::start()
 void cu_up::stop()
 {
   std::unique_lock<std::mutex> lock(mutex);
-  if (not std::exchange(running, false)) {
+  if (not running) {
     return;
   }
 
   logger.debug("CU-UP stopping...");
 
-  eager_async_task<void> main_loop;
-  std::atomic<bool>      main_loop_stopped{false};
+  std::condition_variable cvar;
 
-  auto stop_cu_up_main_loop = [this, &main_loop, &main_loop_stopped]() mutable {
-    if (main_loop.empty()) {
-      // First call. Initiate shutdown operations.
-
-      // Stop statistics report timer.
-      statistics_report_timer.stop();
+  auto stop_cu_up_main_loop = [this, &cvar]() mutable {
+    // Dispatch coroutine to stop CU-UP.
+    main_ctrl_loop.schedule(launch_async([this, &cvar](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
 
       // CU-UP stops listening to new GTPU Rx PDUs and stops pushing UL PDUs.
-      disconnect();
+      CORO_AWAIT(handle_stop_command());
 
-      // Stop main control loop and communicate back with the caller thread.
-      main_loop = main_ctrl_loop.request_stop();
-    }
+      // We defer main ctrl loop stop to let the current coroutine complete successfully.
+      defer_until_success(ctrl_executor, timers, [this, &cvar]() {
+        // Stop main control loop and communicate back with the caller thread.
+        auto main_loop = main_ctrl_loop.request_stop();
 
-    if (main_loop.ready()) {
-      // If the main loop finished, return back to the caller.
-      main_loop_stopped = true;
-    }
+        std::lock_guard<std::mutex> lock2(mutex);
+        running = false;
+        cvar.notify_all();
+      });
+
+      CORO_RETURN();
+    }));
   };
 
+  // Dispatch task to stop CU-UP main loop.
+  defer_until_success(ctrl_executor, timers, stop_cu_up_main_loop);
+
   // Wait until the all tasks of the main loop are completed and main loop has stopped.
-  while (not main_loop_stopped) {
-    if (not ctrl_executor.execute(stop_cu_up_main_loop)) {
-      logger.error("Unable to stop CU-UP");
-      return;
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
-  }
+  cvar.wait(lock, [this]() { return not running; });
 
   // CU-UP stops listening to new GTPU Rx PDUs.
   ngu_sessions.clear();
@@ -237,11 +239,27 @@ void cu_up::stop()
   logger.info("CU-UP stopped successfully");
 }
 
-void cu_up::disconnect()
+async_task<void> cu_up::handle_stop_command()
 {
+  // Stop statistics report timer.
+  statistics_report_timer.stop();
+
   gw_data_gtpu_demux_adapter.disconnect();
   gtpu_gw_adapter.disconnect();
   e1ap_cu_up_mng_adapter.disconnect();
+
+  return launch_async([this](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    // Stop dedicated executor for control TEID.
+    CORO_AWAIT(ctrl_exec_mapper->stop());
+    ctrl_exec_mapper = nullptr;
+
+    // Stop CU-UP manager and remove all UEs.
+    CORO_AWAIT(cu_up_mng->stop());
+
+    CORO_RETURN();
+  });
 }
 
 void cu_up::on_statistics_report_timer_expired()

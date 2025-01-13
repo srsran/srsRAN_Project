@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -51,7 +51,10 @@ struct dpdk_port_config {
 /// Encapsulates and manages the lifetime of the internal DPDK resources of an Ethernet port.
 class dpdk_port_context
 {
-  dpdk_port_context(unsigned port_id_, ::rte_mempool* mem_pool_) : port_id(port_id_), mem_pool(mem_pool_) {}
+  dpdk_port_context(const std::string& port_id_, unsigned dpdk_port_id_, ::rte_mempool* mem_pool_) :
+    port_id(port_id_), dpdk_port_id(dpdk_port_id_), mem_pool(mem_pool_)
+  {
+  }
 
 public:
   /// Creates and initializes a new DPDK port context with the given configuration.
@@ -59,8 +62,11 @@ public:
 
   ~dpdk_port_context();
 
-  /// Returns the port identifier of this context.
-  unsigned get_port_id() const { return port_id; }
+  /// Returns the DPDK port identifier of this context .
+  unsigned get_dpdk_port_id() const { return dpdk_port_id; }
+
+  /// Returns the string port identifier of this context.
+  const std::string& get_port_id() const { return port_id; }
 
   /// Returns the mbuf memory pool of this context.
   ::rte_mempool* get_mempool() { return mem_pool; }
@@ -69,7 +75,8 @@ public:
   const ::rte_mempool* get_mempool() const { return mem_pool; }
 
 private:
-  const unsigned       port_id;
+  const std::string    port_id;
+  const unsigned       dpdk_port_id;
   ::rte_mempool* const mem_pool;
 };
 

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -106,7 +106,7 @@ class resource_grid_pool_dummy : public resource_grid_pool, private shared_resou
 public:
   explicit resource_grid_pool_dummy() {}
 
-  shared_resource_grid allocate_resource_grid(const resource_grid_context& context) override
+  shared_resource_grid allocate_resource_grid(slot_point slot) override
   {
     unsigned expected_available_ref_count = 0;
     bool     available                    = ref_count.compare_exchange_strong(expected_available_ref_count, 1);
@@ -151,7 +151,7 @@ public:
     dl_processor.emplace_back(1);
   }
 
-  downlink_processor& get_processor(slot_point slot, unsigned sector_id) override
+  downlink_processor_controller& get_processor_controller(slot_point slot) override
   {
     return dl_processor[slot.slot_index()];
   }

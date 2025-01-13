@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -120,7 +120,7 @@ public:
                  other.data.get_view<static_cast<unsigned>(dims::all)>({}));
   }
 
-  /// \brief Overload assigment operator.
+  /// \brief Overload assignment operator.
   /// \param[in] other Precoding weight matrix to copy.
   precoding_weight_matrix& operator=(const precoding_weight_matrix& other)
   {

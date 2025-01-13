@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -54,6 +54,11 @@ rlc_pcap_impl::rlc_pcap_impl(const std::string& filename_,
 rlc_pcap_impl::~rlc_pcap_impl()
 {
   close();
+}
+
+void rlc_pcap_impl::flush()
+{
+  writer.flush();
 }
 
 void rlc_pcap_impl::close()

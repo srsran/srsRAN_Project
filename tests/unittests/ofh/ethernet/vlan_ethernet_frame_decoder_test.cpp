@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -35,7 +35,7 @@ TEST(vlan_ethernet_frame_decoder_impl_test, decode_valid_vlan_ethernet_frame_sho
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-  std::unique_ptr<vlan_frame_decoder> decoder = create_vlan_frame_decoder(srslog::fetch_basic_logger("TEST"));
+  std::unique_ptr<vlan_frame_decoder> decoder = create_vlan_frame_decoder(srslog::fetch_basic_logger("TEST"), 0);
 
   vlan_frame_params params;
   auto              payload = decoder->decode(packet, params);
@@ -54,7 +54,7 @@ TEST(vlan_ethernet_frame_decoder_impl_test, decode_small_vlan_ethernet_frame_sho
                                  0xdf, 0xaa, 0xaa, 0xbb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-  std::unique_ptr<vlan_frame_decoder> decoder = create_vlan_frame_decoder(srslog::fetch_basic_logger("TEST"));
+  std::unique_ptr<vlan_frame_decoder> decoder = create_vlan_frame_decoder(srslog::fetch_basic_logger("TEST"), 0);
 
   vlan_frame_params params;
   auto              payload = decoder->decode(packet, params);

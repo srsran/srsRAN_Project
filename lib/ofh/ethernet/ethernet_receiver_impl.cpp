@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -72,20 +72,21 @@ receiver_impl::receiver_impl(const std::string&    interface,
     ::ifreq if_opts;
     ::strncpy(if_opts.ifr_name, interface.c_str(), IFNAMSIZ - 1);
     if (::ioctl(socket_fd, SIOCGIFFLAGS, &if_opts) < 0) {
-      report_error("Unable to get flags for NIC interface in the Ethernet receiver");
+      report_error("Unable to get flags for NIC interface '{}' in the Ethernet receiver", interface);
     }
     if_opts.ifr_flags |= IFF_PROMISC;
     if (::ioctl(socket_fd, SIOCSIFFLAGS, &if_opts) < 0) {
-      report_error("Unable to set flags for NIC interface in the Ethernet receiver");
+      report_error("Unable to set flags for NIC interface '{}' in the Ethernet receiver", interface);
     }
   }
 
   // Bind to device.
   if (::setsockopt(socket_fd, SOL_SOCKET, SO_BINDTODEVICE, interface.c_str(), interface.size()) == -1) {
-    report_error("Unable to bind socket in Ethernet receiver");
+    report_error("Unable to bind socket to the NIC interface '{}' in Ethernet receiver", interface);
   }
 
-  logger.info("Opened successfully the NIC interface '{}' used by the Ethernet receiver", interface);
+  logger.info(
+      "Opened successfully the NIC interface '{}' (fd = '{}') used by the Ethernet receiver", interface, socket_fd);
 }
 
 receiver_impl::~receiver_impl()
@@ -108,18 +109,18 @@ void receiver_impl::start(frame_notifier& notifier_)
         p.set_value();
         receive_loop();
       })) {
-    report_error("Unable to start the ethernet frame receiver");
+    report_error("Unable to start the ethernet frame receiver, fd = '{}'", socket_fd);
   }
 
   // Block waiting for timing executor to start.
   fut.wait();
 
-  logger.info("Started the ethernet frame receiver");
+  logger.info("Started the ethernet frame receiver with fd = '{}'", socket_fd);
 }
 
 void receiver_impl::stop()
 {
-  logger.info("Requesting stop of the ethernet frame receiver");
+  logger.info("Requesting stop of the ethernet frame receiver with fd = '{}'", socket_fd);
   rx_status.store(receiver_status::stop_requested, std::memory_order_relaxed);
 
   // Wait for the receiver thread to stop.
@@ -127,7 +128,7 @@ void receiver_impl::stop()
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
-  logger.info("Stopped the ethernet frame receiver");
+  logger.info("Stopped the ethernet frame receiver with fd = '{}'", socket_fd);
 }
 
 void receiver_impl::receive_loop()
@@ -166,7 +167,7 @@ void receiver_impl::receive()
 
   auto exp_buffer = buffer_pool.reserve();
   if (!exp_buffer.has_value()) {
-    logger.warning("No buffer is available for receiving an Ethernet packet");
+    logger.warning("No buffer is available for receiving an Ethernet packet on the port bound to fd = '{}'", socket_fd);
     return;
   }
   ethernet_rx_buffer_impl buffer    = std::move(exp_buffer.value());
@@ -174,7 +175,7 @@ void receiver_impl::receive()
   auto                    nof_bytes = ::recvfrom(socket_fd, data_span.data(), BUFFER_SIZE, 0, nullptr, nullptr);
 
   if (nof_bytes < 0) {
-    logger.warning("Ethernet receiver call to recvfrom failed");
+    logger.warning("Ethernet receiver call to recvfrom failed, fd = '{}'", socket_fd);
     return;
   }
   buffer.resize(nof_bytes);

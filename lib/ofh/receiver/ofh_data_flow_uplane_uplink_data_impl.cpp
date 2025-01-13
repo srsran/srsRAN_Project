@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -33,8 +33,9 @@ data_flow_uplane_uplink_data_impl::data_flow_uplane_uplink_data_impl(
   logger(*dependencies.logger),
   ul_cplane_context_repo(std::move(dependencies.ul_cplane_context_repo)),
   uplane_decoder(std::move(dependencies.uplane_decoder)),
-  rx_symbol_writer(config.ul_eaxc, *dependencies.logger, dependencies.ul_context_repo),
-  notification_sender(*dependencies.logger, dependencies.ul_context_repo, dependencies.notifier)
+  rx_symbol_writer(config.ul_eaxc, config.sector, *dependencies.logger, dependencies.ul_context_repo),
+  notification_sender(*dependencies.logger, dependencies.ul_context_repo, dependencies.notifier),
+  sector_id(config.sector)
 {
   srsran_assert(ul_cplane_context_repo, "Invalid control plane repository");
   srsran_assert(uplane_decoder, "Invalid User-Plane decoder");
@@ -63,8 +64,9 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
     const uplane_message_decoder_results& results) const
 {
   if (results.params.filter_index == filter_index_type::reserved || is_a_prach_message(results.params.filter_index)) {
-    logger.info("Dropped received Open Fronthaul User-Plane packet for slot '{}' and symbol '{}' as decoded filter "
-                "index value '{}' is not valid",
+    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet for slot '{}' and symbol '{}' as decoded "
+                "filter  index value '{}' is not valid",
+                sector_id,
                 results.params.slot,
                 results.params.symbol_id,
                 to_value(results.params.filter_index));
@@ -77,8 +79,9 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
       ul_cplane_context_repo->get(params.slot, params.symbol_id, params.filter_index, eaxc);
 
   if (!ex_cp_context) {
-    logger.info("Dropped received Open Fronthaul User-Plane packet as no data was expected for slot '{}', symbol '{}' "
-                "and eAxC '{}'",
+    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as no data was expected for slot '{}', "
+                "symbol '{}' and eAxC '{}'",
+                sector_id,
                 params.slot,
                 params.symbol_id,
                 eaxc);
@@ -92,15 +95,17 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
   return std::any_of(
       results.sections.begin(), results.sections.end(), [&cp_context, this](const uplane_section_params& up_section) {
         if (!up_section.is_every_rb_used) {
-          logger.info("Dropped received Open Fronthaul User-Plane packet as 'every other resource block is used' mode "
-                      "is not supported");
+          logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as 'every other resource block is "
+                      "used' mode is not supported",
+                      sector_id);
 
           return true;
         }
 
         if (!up_section.use_current_symbol_number) {
-          logger.info("Dropped received Open Fronthaul User-Plane packet as 'increment the current symbol number and "
-                      "use that' mode is not supported");
+          logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as 'increment the current symbol "
+                      "number and use that' mode is not supported",
+                      sector_id);
 
           return true;
         }
@@ -110,8 +115,9 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
              (up_section.start_prb + up_section.nof_prbs) > (cp_context.prb_start + cp_context.nof_prb));
 
         if (is_up_section_not_found_in_cp_section) {
-          logger.info("Dropped received Open Fronthaul User-Plane packet as PRB index range '{}:{}' does not match the "
-                      "expected range '{}:{}'",
+          logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as PRB index range '{}:{}' does "
+                      "not match the expected range '{}:{}'",
+                      sector_id,
                       up_section.start_prb,
                       up_section.nof_prbs,
                       cp_context.prb_start,

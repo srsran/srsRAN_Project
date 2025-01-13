@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -24,7 +24,7 @@
 
 namespace srsran {
 
-using srsran_signal_handler = void (*)();
+using srsran_signal_handler = void (*)(int signal);
 
 /// \brief Registers the specified function to be called when the user interrupts the program execution (eg: via
 /// Ctrl+C).

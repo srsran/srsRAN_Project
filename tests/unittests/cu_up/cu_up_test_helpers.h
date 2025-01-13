@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -37,6 +37,7 @@
 #include <condition_variable>
 #include <list>
 #include <mutex>
+#include <utility>
 
 constexpr auto default_wait_timeout = std::chrono::seconds(3);
 
@@ -222,6 +223,8 @@ public:
 
   void on_new_pdu(nru_dl_message sdu) final { inner.on_new_pdu(std::move(sdu)); }
 
+  expected<std::string> get_bind_address() const override { return "127.0.0.2"; }
+
 private:
   bool                                stopped = false;
   dummy_inner_f1u_bearer&             inner;
@@ -233,6 +236,7 @@ class dummy_f1u_gateway final : public f1u_cu_up_gateway
 {
 private:
   dummy_inner_f1u_bearer& bearer;
+  std::string             bind_ip_addr = "127.0.0.1";
 
 public:
   explicit dummy_f1u_gateway(dummy_inner_f1u_bearer& bearer_) : bearer(bearer_) {}
@@ -241,12 +245,13 @@ public:
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,
                                                              const srs_cu_up::f1u_config&          config,
-                                                             const up_transport_layer_info&        ul_up_tnl_info,
+                                                             const gtpu_teid_t&                    ul_teid,
                                                              f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
                                                              task_executor&                        ul_exec) override
   {
-    created_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
+    created_ul_teid_list.push_back(ul_teid);
     bearer.connect_f1u_rx_sdu_notifier(rx_notifier);
+    up_transport_layer_info ul_up_tnl_info{transport_layer_address::create_from_string("127.0.0.2"), ul_teid};
     return std::make_unique<dummy_f1u_gateway_bearer>(bearer, *this, ul_up_tnl_info);
   }
 
@@ -261,14 +266,12 @@ public:
     removed_ul_teid_list.push_back(ul_up_tnl_info.gtp_teid);
   }
 
-  expected<std::string> get_cu_bind_address() const override { return "127.0.0.1"; }
-
   std::list<gtpu_teid_t> created_ul_teid_list  = {};
   std::list<gtpu_teid_t> attached_ul_teid_list = {};
   std::list<gtpu_teid_t> removed_ul_teid_list  = {};
 };
 
-class dummy_ngu_gateway final : public gtpu_tnl_pdu_session
+class dummy_gtpu_gateway final : public gtpu_tnl_pdu_session
 {
 public:
   void set_bind_address(const std::string& ip_address) { ip_addr = ip_address; }
@@ -295,7 +298,7 @@ public:
   gtpu_tnl_pdu_session& get_next_ngu_gateway() override { return ngu_gw; };
 
 private:
-  dummy_ngu_gateway ngu_gw;
+  dummy_gtpu_gateway ngu_gw;
 };
 
 class dummy_e1ap final : public srs_cu_up::e1ap_control_message_handler

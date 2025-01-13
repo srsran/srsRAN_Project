@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -24,11 +24,9 @@
 
 #include "srsran/phy/support/precoding_formatters.h"
 #include "srsran/phy/support/re_pattern_formatters.h"
-#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
 #include "srsran/phy/upper/channel_state_information_formatters.h"
-#include "srsran/ran/pdcch/pdcch_context_formatter.h"
 #include "srsran/ran/pucch/pucch_context_formatter.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/support/format/delimited_formatter.h"

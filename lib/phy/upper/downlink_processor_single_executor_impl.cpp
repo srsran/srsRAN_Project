@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -23,8 +23,11 @@
 #include "downlink_processor_single_executor_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
+#include "srsran/phy/upper/channel_processors/pdcch/formatters.h"
+#include "srsran/phy/upper/channel_processors/pdsch/formatters.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/srsran_assert.h"
 
@@ -235,14 +238,15 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
   }
 }
 
-bool downlink_processor_single_executor_impl::configure_resource_grid(const resource_grid_context& context,
-                                                                      shared_resource_grid         grid)
+unique_downlink_processor
+downlink_processor_single_executor_impl::configure_resource_grid(const resource_grid_context& context,
+                                                                 shared_resource_grid         grid)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
   // Don't configure the grid if the DL processor is not available.
   if (!state.is_idle()) {
-    return false;
+    return unique_downlink_processor();
   }
 
   report_fatal_error_if_not(!current_grid, "A previously configured resource grid is still in use.");
@@ -261,7 +265,7 @@ bool downlink_processor_single_executor_impl::configure_resource_grid(const reso
 
   l1_tracer << instant_trace_event("configure_rg", instant_trace_event::cpu_scope::global);
 
-  return true;
+  return unique_downlink_processor(*this);
 }
 
 void srsran::downlink_processor_single_executor_impl::finish_processing_pdus()

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -48,6 +48,8 @@ public:
   mac_pcap_impl& operator=(const mac_pcap_impl& other) = delete;
   mac_pcap_impl(mac_pcap_impl&& other)                 = delete;
   mac_pcap_impl& operator=(mac_pcap_impl&& other)      = delete;
+
+  void flush() override;
 
   void close() override;
 

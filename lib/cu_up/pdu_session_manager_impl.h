@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -30,6 +30,7 @@
 #include "srsran/cu_up/cu_up_types.h"
 #include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
+#include "srsran/f1u/cu_up/f1u_session_manager.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/gtpu/gtpu_tunnel_common_tx.h"
@@ -85,25 +86,26 @@ private:
   drb_setup_result handle_drb_to_setup_item(pdu_session&                         new_session,
                                             const e1ap_drb_to_setup_item_ng_ran& drb_to_setup);
 
-  ue_index_t                                               ue_index;
-  const std::map<five_qi_t, srs_cu_up::cu_up_qos_config>   qos_cfg;
-  const security::sec_as_config&                           security_info;
-  const n3_interface_config&                               n3_config;
-  cu_up_test_mode_config                                   test_mode_config;
-  cu_up_ue_logger&                                         logger;
-  unique_timer&                                            ue_inactivity_timer;
-  timer_factory                                            ue_dl_timer_factory;
-  timer_factory                                            ue_ul_timer_factory;
-  timer_factory                                            ue_ctrl_timer_factory;
-  gtpu_teid_pool&                                          n3_teid_allocator;
-  gtpu_teid_pool&                                          f1u_teid_allocator;
-  gtpu_demux_ctrl&                                         gtpu_rx_demux;
-  task_executor&                                           ue_dl_exec;
-  task_executor&                                           ue_ul_exec;
-  task_executor&                                           ue_ctrl_exec;
-  task_executor&                                           crypto_exec;
-  dlt_pcap&                                                gtpu_pcap;
-  f1u_cu_up_gateway&                                       f1u_gw;
+  ue_index_t                                             ue_index;
+  const std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos_cfg;
+  const security::sec_as_config&                         security_info;
+  const n3_interface_config&                             n3_config;
+  cu_up_test_mode_config                                 test_mode_config;
+  cu_up_ue_logger&                                       logger;
+  unique_timer&                                          ue_inactivity_timer;
+  timer_factory                                          ue_dl_timer_factory;
+  timer_factory                                          ue_ul_timer_factory;
+  timer_factory                                          ue_ctrl_timer_factory;
+  gtpu_teid_pool&                                        n3_teid_allocator;
+  gtpu_teid_pool&                                        f1u_teid_allocator;
+  gtpu_demux_ctrl&                                       gtpu_rx_demux;
+  task_executor&                                         ue_dl_exec;
+  task_executor&                                         ue_ul_exec;
+  task_executor&                                         ue_ctrl_exec;
+  task_executor&                                         crypto_exec;
+  dlt_pcap&                                              gtpu_pcap;
+  f1u_cu_up_gateway&                                     f1u_gw;
+  // f1u_session_manager&                                     f1u_session_mngr;
   ngu_session_manager&                                     ngu_session_mngr;
   std::map<pdu_session_id_t, std::unique_ptr<pdu_session>> pdu_sessions; // key is pdu_session_id
 };

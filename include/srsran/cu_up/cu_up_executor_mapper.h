@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "srsran/adt/span.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 namespace srs_cu_up {
@@ -95,6 +95,8 @@ struct strand_based_executor_config {
   task_executor& worker_pool_executor;
   /// \brief Whether to instantiate a dedicated strand for sending UL PDUs to the IO.
   bool dedicated_io_strand;
+  /// \brief Timers used by the application.
+  timer_manager* timers;
 };
 
 /// \brief Creates an executor mapper for the CU-UP that is based on strands of a worker pool.

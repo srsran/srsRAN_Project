@@ -23,8 +23,8 @@
       requests: 2Gi
       limits: 2Gi
     ephemeral-storage:
-      requests: "50G"
-      limits: "50G"
+      requests: "150G"
+      limits: "150G"
   resources:
     - type: emulator
       model: viavi

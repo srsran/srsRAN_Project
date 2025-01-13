@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -138,7 +138,7 @@ public:
       rx_symb_context.slot   = context.slot;
 
       // Try to allocate a resource grid.
-      shared_resource_grid rg = ul_rg_pool->allocate_resource_grid(rx_symb_context);
+      shared_resource_grid rg = ul_rg_pool->allocate_resource_grid(context.slot);
 
       // If the resource grid allocation fails, it aborts the slot request.
       if (rg) {
@@ -167,13 +167,8 @@ public:
       rx_symb_req_notifier->on_prach_capture_request(prach_context, *prach_buf);
     }
 
-    // Prepare resource grid context.
-    resource_grid_context rg_context;
-    rg_context.sector = 0;
-    rg_context.slot   = context.slot;
-
     // Get a resource grid from the pool.
-    shared_resource_grid rg = dl_rg_pool->allocate_resource_grid(rg_context);
+    shared_resource_grid rg = dl_rg_pool->allocate_resource_grid(context.slot);
 
     // Abort slot processing if the grid is not valid.
     if (!rg) {
@@ -249,6 +244,9 @@ public:
       mapper->map(rg.get_writer(), data_symbols, grid_allocation, precoding_config);
     }
 
+    resource_grid_context rg_context;
+    rg_context.sector = 0;
+    rg_context.slot   = context.slot;
     gateway->send(rg_context, std::move(rg));
 
     // Raise TTI boundary and notify.

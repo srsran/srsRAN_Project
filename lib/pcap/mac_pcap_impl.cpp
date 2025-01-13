@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -40,6 +40,11 @@ mac_pcap_impl::mac_pcap_impl(const std::string& filename_, mac_pcap_type type_, 
 mac_pcap_impl::~mac_pcap_impl()
 {
   close();
+}
+
+void mac_pcap_impl::flush()
+{
+  writer.flush();
 }
 
 void mac_pcap_impl::close()

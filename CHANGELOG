@@ -1,6 +1,9 @@
 Change Log for Releases
 =======================
 
+## 24.10.1
+- Fix PUSCH benchmark
+
 ## 24.10
 - CU/DU split
 - RAN slicing

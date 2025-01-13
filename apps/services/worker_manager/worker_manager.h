@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -135,7 +135,7 @@ private:
                                                                                              bool     rt_mode);
 
   /// Helper method that creates the CU-UP executors.
-  void create_cu_up_executors(const worker_manager_config::cu_up_config& config);
+  void create_cu_up_executors(const worker_manager_config::cu_up_config& config, timer_manager& timers);
 
   /// Helper method that creates the Distributed Unit executors.
   void create_du_executors(const worker_manager_config::du_high_config&        du_hi,

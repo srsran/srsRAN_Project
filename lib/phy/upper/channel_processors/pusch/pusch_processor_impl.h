@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -43,7 +43,7 @@ class pusch_processor_impl : public pusch_processor
 {
 public:
   /// The current maximum supported number of layers.
-  static constexpr unsigned max_nof_layers = 2;
+  static constexpr unsigned max_nof_layers = 4;
 
   /// Groups the PUSCH processor dependencies that can be reused locally by the same processing thread.
   class concurrent_dependencies

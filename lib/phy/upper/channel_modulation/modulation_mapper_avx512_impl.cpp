@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -37,18 +37,18 @@ using namespace srsran;
 template <unsigned QM>
 void generic_modulator(ci8_t* output, __m512i input)
 {
-  // Permute indexes for interleaving the first 64 resultant values.
+  // Permute indices for interleaving the first 64 resultant values.
   static constexpr int8_t idx_[64] = {0,  64, 1,  65, 2,  66, 3,  67, 4,  68, 5,  69, 6,  70, 7,  71,
                                       8,  72, 9,  73, 10, 74, 11, 75, 12, 76, 13, 77, 14, 78, 15, 79,
                                       16, 80, 17, 81, 18, 82, 19, 83, 20, 84, 21, 85, 22, 86, 23, 87,
                                       24, 88, 25, 89, 26, 90, 27, 91, 28, 92, 29, 93, 30, 94, 31, 95};
-  // Permute indexes for interleaving the last 64 resultant values.
+  // Permute indices for interleaving the last 64 resultant values.
   static constexpr int8_t idx2_[64] = {32, 96,  33, 97,  34, 98,  35, 99,  36, 100, 37, 101, 38, 102, 39, 103,
                                        40, 104, 41, 105, 42, 106, 43, 107, 44, 108, 45, 109, 46, 110, 47, 111,
                                        48, 112, 49, 113, 50, 114, 51, 115, 52, 116, 53, 117, 54, 118, 55, 119,
                                        56, 120, 57, 121, 58, 122, 59, 123, 60, 124, 61, 125, 62, 126, 63, 127};
 
-  // Load permute indexes into AVX512 registers.
+  // Load permute indices into AVX512 registers.
   __m512i idx  = _mm512_loadu_si512(idx_);
   __m512i idx2 = _mm512_loadu_si512(idx2_);
 
@@ -80,7 +80,7 @@ void generic_modulator(ci8_t* output, __m512i input)
 
 float modulation_mapper_avx512_impl::modulate_qam64(span<ci8_t> symbols, const bit_buffer& input)
 {
-  // Permute indexes for the different permutations.
+  // Permute indices for the different permutations.
   static constexpr int8_t shuffle_idx0[64] = {
       0,  65,  66,  66, 3,  69,  70,  69,  6,  73,  74,  72,  9,  77,  78,  75,  12,  81,  82,  78,  15,  85,
       86, 81,  18,  89, 90, 84,  21,  93,  94, 87,  24,  97,  98, 90,  27,  101, 102, 93,  30,  105, 106, 96,
@@ -102,7 +102,7 @@ float modulation_mapper_avx512_impl::modulate_qam64(span<ci8_t> symbols, const b
                                              50, 49, 53, 52, 56, 55, 59, 58, 62, 61, 65, 64, 68, 67, 71, 70,
                                              74, 73, 77, 76, 80, 79, 83, 82, 86, 85, 89, 88, 92, 91, 95, 94};
 
-  // Load permute indexes into AVX512 registers.
+  // Load permute indices into AVX512 registers.
   __m512i idx0       = _mm512_loadu_si512(shuffle_idx0);
   __m512i idx1       = _mm512_loadu_si512(shuffle_idx1);
   __m512i idx2       = _mm512_loadu_si512(shuffle_idx2);

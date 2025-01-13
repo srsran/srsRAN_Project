@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -30,6 +30,7 @@ using namespace ofh;
 message_receiver_impl::message_receiver_impl(const message_receiver_config&  config,
                                              message_receiver_dependencies&& dependencies) :
   logger(*dependencies.logger),
+  sector_id(config.sector),
   nof_symbols(config.nof_symbols),
   scs(config.scs),
   vlan_params(config.vlan_params),
@@ -78,18 +79,20 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   int nof_skipped_seq_id = seq_id_checker->update_and_compare_seq_id(eaxc, (ecpri_iq_params.seq_id >> 8));
   // Drop the message when it is from the past.
   if (nof_skipped_seq_id < 0) {
-    logger.info("Dropped received Open Fronthaul User-Plane packet for eAxC value '{}' as sequence identifier field is "
+    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet for eAxC value '{}' as sequence "
+                "identifier field is "
                 "from the past",
+                sector_id,
                 eaxc);
     return;
   }
   if (nof_skipped_seq_id > 0) {
-    logger.warning("Potentially lost '{}' messages sent by the RU", nof_skipped_seq_id);
+    logger.warning("Sector#{}: potentially lost '{}' messages sent by the RU", sector_id, nof_skipped_seq_id);
   }
 
   slot_symbol_point slot_point = uplane_peeker::peek_slot_symbol_point(ofh_pdu, nof_symbols, scs);
   if (!slot_point.get_slot().valid()) {
-    logger.info("Dropped received Open Fronthaul User-Plane packet as the slot field is invalid");
+    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as the slot field is invalid", sector_id);
 
     return;
   }
@@ -100,8 +103,10 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   // Peek the filter index and check that it is valid.
   filter_index_type filter_type = uplane_peeker::peek_filter_index(ofh_pdu);
   if (filter_type == filter_index_type::reserved) {
-    logger.info("Dropped received Open Fronthaul User-Plane message as the filter index field '{}' is invalid",
-                to_value(filter_type));
+    logger.info(
+        "Sector#{}: dropped received Open Fronthaul User-Plane message as the filter index field '{}' is invalid",
+        sector_id,
+        to_value(filter_type));
 
     return;
   }
@@ -120,7 +125,9 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
 bool message_receiver_impl::should_ecpri_packet_be_filtered(const ecpri::packet_parameters& ecpri_params) const
 {
   if (ecpri_params.header.msg_type != ecpri::message_type::iq_data) {
-    logger.info("Dropped received Open Fronthaul User-Plane packet as decoded eCPRI message type is not for IQ data");
+    logger.info(
+        "Sector#{}: dropped received Open Fronthaul User-Plane packet as decoded eCPRI message type is not for IQ data",
+        sector_id);
 
     return true;
   }
@@ -128,9 +135,10 @@ bool message_receiver_impl::should_ecpri_packet_be_filtered(const ecpri::packet_
   const ecpri::iq_data_parameters& ecpri_iq_params = std::get<ecpri::iq_data_parameters>(ecpri_params.type_params);
   if ((std::find(ul_eaxc.begin(), ul_eaxc.end(), ecpri_iq_params.pc_id) == ul_eaxc.end()) &&
       (std::find(ul_prach_eaxc.begin(), ul_prach_eaxc.end(), ecpri_iq_params.pc_id) == ul_prach_eaxc.end())) {
-    logger.info(
-        "Dropped received Open Fronthaul User-Plane packet as decoded eAxC value '{}' is not configured in reception",
-        ecpri_iq_params.pc_id);
+    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as decoded eAxC value '{}' is not "
+                "configured in reception",
+                sector_id,
+                ecpri_iq_params.pc_id);
 
     return true;
   }
@@ -141,25 +149,29 @@ bool message_receiver_impl::should_ecpri_packet_be_filtered(const ecpri::packet_
 bool message_receiver_impl::should_ethernet_frame_be_filtered(const ether::vlan_frame_params& eth_params) const
 {
   if (eth_params.mac_src_address != vlan_params.mac_src_address) {
-    logger.debug(
-        "Dropped received Ethernet frame as source MAC addresses do not match (detected={:02X}, expected={:02X})",
-        span<const uint8_t>(eth_params.mac_src_address),
-        span<const uint8_t>(vlan_params.mac_src_address));
+    logger.debug("Sector#{}: dropped received Ethernet frame as source MAC addresses do not match (detected={:02X}, "
+                 "expected={:02X})",
+                 sector_id,
+                 span<const uint8_t>(eth_params.mac_src_address),
+                 span<const uint8_t>(vlan_params.mac_src_address));
 
     return true;
   }
 
   if (eth_params.mac_dst_address != vlan_params.mac_dst_address) {
-    logger.debug("Dropped received Ethernet frame as destination MAC addresses do not match match (detected={:02X}, "
-                 "expected={:02X})",
-                 span<const uint8_t>(eth_params.mac_dst_address),
-                 span<const uint8_t>(vlan_params.mac_dst_address));
+    logger.debug(
+        "Sector#{}: dropped received Ethernet frame as destination MAC addresses do not match match (detected={:02X}, "
+        "expected={:02X})",
+        sector_id,
+        span<const uint8_t>(eth_params.mac_dst_address),
+        span<const uint8_t>(vlan_params.mac_dst_address));
 
     return true;
   }
 
   if (eth_params.eth_type != vlan_params.eth_type) {
-    logger.info("Dropped received Ethernet frame as decoded Ethernet type is '{}' but expected '{}'",
+    logger.info("Sector#{}: dropped received Ethernet frame as decoded Ethernet type is '{}' but expected '{}'",
+                sector_id,
                 eth_params.eth_type,
                 vlan_params.eth_type);
 

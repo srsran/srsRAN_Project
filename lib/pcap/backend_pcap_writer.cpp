@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -70,6 +70,27 @@ backend_pcap_writer::~backend_pcap_writer()
   close();
 }
 
+void backend_pcap_writer::flush()
+{
+  if (not is_write_enabled()) {
+    logger.warning("Cannot flush {} PCAP. Cause: The PCAP file is closed", layer_name);
+    return;
+  }
+  if (not backend_exec.defer([this]() { flush_impl(); })) {
+    logger.warning("Cannot flush {} PCAP. Cause: Task executor queue is full", layer_name);
+  }
+}
+
+void backend_pcap_writer::flush_impl()
+{
+  if (not is_write_enabled()) {
+    logger.warning("Cannot flush {} PCAP. Cause: The PCAP file is closed", layer_name);
+    return;
+  }
+
+  writer.flush();
+}
+
 void backend_pcap_writer::close()
 {
   bool prev_value = is_open.exchange(false, std::memory_order_relaxed);
@@ -78,7 +99,7 @@ void backend_pcap_writer::close()
     return;
   }
 
-  logger.debug("Scheduling the closing of the \"{}\" pcap writer", layer_name);
+  logger.debug("Scheduling the closing of the \"{}\" PCAP writer", layer_name);
 
   // The pcap writing is still enabled. Dispatch closing of the pcap writer to backend executor.
   // Note: We block waiting until the pcap finishes closing.
@@ -96,7 +117,7 @@ void backend_pcap_writer::write_pdu(byte_buffer pdu)
     return;
   }
   if (not is_write_enabled()) {
-    logger.warning("Dropped {} PCAP PDU. Cause: The pcap file is closed", layer_name);
+    logger.warning("Dropped {} PCAP PDU. Cause: The PCAP file is closed", layer_name);
     return;
   }
   if (not backend_exec.defer([this, pdu = std::move(pdu)]() { write_pdu_impl(pdu); })) {
@@ -110,7 +131,7 @@ void backend_pcap_writer::write_pdu(pcap_pdu_data pdu)
     return;
   }
   if (not is_write_enabled()) {
-    logger.warning("Dropped {} PCAP PDU. Cause: The pcap file is closed", layer_name);
+    logger.warning("Dropped {} PCAP PDU. Cause: The PCAP file is closed", layer_name);
     return;
   }
   if (not backend_exec.defer([this, pdu = std::move(pdu)]() { write_context_pdu_impl(pdu); })) {
@@ -121,7 +142,7 @@ void backend_pcap_writer::write_pdu(pcap_pdu_data pdu)
 void backend_pcap_writer::write_pdu_impl(const byte_buffer& pdu)
 {
   if (not is_write_enabled()) {
-    logger.warning("Dropped {} PCAP PDU. Cause: The pcap file is closed", layer_name);
+    logger.warning("Dropped {} PCAP PDU. Cause: The PCAP file is closed", layer_name);
     return;
   }
 
@@ -136,7 +157,7 @@ void backend_pcap_writer::write_pdu_impl(const byte_buffer& pdu)
 void backend_pcap_writer::write_context_pdu_impl(const pcap_pdu_data& pdu)
 {
   if (not is_write_enabled()) {
-    logger.warning("Dropped {} PCAP PDU. Cause: The pcap file is closed", layer_name);
+    logger.warning("Dropped {} PCAP PDU. Cause: The PCAP file is closed", layer_name);
     return;
   }
 

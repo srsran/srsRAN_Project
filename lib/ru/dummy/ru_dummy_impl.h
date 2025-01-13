@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -68,6 +68,12 @@ public:
 
   // See radio_unit interface for documentation.
   ru_uplink_plane_handler& get_uplink_plane_handler() override { return *this; }
+
+  // See ru_controller interface for documentation.
+  bool set_tx_cfo(unsigned port_id, float cfo_Hz) override { return false; }
+
+  // See ru_controller interface for documentation.
+  bool set_rx_cfo(unsigned port_id, float cfo_Hz) override { return false; }
 
 private:
   /// Possible internal states.

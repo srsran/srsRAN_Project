@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -180,28 +180,29 @@ static unsigned dpdk_port_configure(const dpdk_port_config& config, ::rte_mempoo
 std::shared_ptr<dpdk_port_context> dpdk_port_context::create(const dpdk_port_config& config)
 {
   // Create the mbuf pool only once as it is common for all ports.
-  static ::rte_mempool* mem_pool = []() {
+  static ::rte_mempool* mem_pool = [&config]() {
     ::rte_mempool* pool = ::rte_pktmbuf_pool_create(
         "OFH_MBUF_POOL", NUM_MBUFS, MBUF_CACHE_SIZE, 0, (MAX_BUFFER_SIZE + RTE_PKTMBUF_HEADROOM), ::rte_socket_id());
     if (pool == nullptr) {
-      ::rte_exit(EXIT_FAILURE, "DPDK - Unable to create the DPDK mbuf pool\n");
+      ::rte_exit(EXIT_FAILURE, "DPDK - Unable to create the DPDK mbuf pool for port '%s'\n", config.id.c_str());
     }
     return pool;
   }();
 
-  return std::shared_ptr<dpdk_port_context>(new dpdk_port_context(dpdk_port_configure(config, mem_pool), mem_pool));
+  return std::shared_ptr<dpdk_port_context>(
+      new dpdk_port_context(config.id, dpdk_port_configure(config, mem_pool), mem_pool));
 }
 
 dpdk_port_context::~dpdk_port_context()
 {
-  fmt::print("DPDK - Closing port_id '{}' ... ", port_id);
-  int ret = ::rte_eth_dev_stop(port_id);
+  fmt::print("DPDK - Closing port '{}', id = '{}' ... ", port_id, dpdk_port_id);
+  int ret = ::rte_eth_dev_stop(dpdk_port_id);
   if (ret != 0) {
-    fmt::print("rte_eth_dev_stop: err '{}', port_id '{}'\n", ret, port_id);
+    fmt::print("rte_eth_dev_stop: err '{}', port_id '{}'\n", ret, dpdk_port_id);
   }
-  ret = ::rte_eth_dev_close(port_id);
+  ret = ::rte_eth_dev_close(dpdk_port_id);
   if (ret != 0) {
-    fmt::print("rte_eth_dev_close: err '{}', port_id '{}'\n", rte_errno, port_id);
+    fmt::print("rte_eth_dev_close: err '{}', port_id '{}'\n", rte_errno, dpdk_port_id);
   }
   ::rte_mempool_free(mem_pool);
 

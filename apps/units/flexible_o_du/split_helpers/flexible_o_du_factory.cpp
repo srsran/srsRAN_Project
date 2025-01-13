@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -124,6 +124,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   o_du.commands.push_back(std::make_unique<ru_metrics_app_command>(ru->get_controller()));
   o_du.commands.push_back(std::make_unique<tx_gain_app_command>(ru->get_controller()));
   o_du.commands.push_back(std::make_unique<rx_gain_app_command>(ru->get_controller()));
+  o_du.commands.push_back(std::make_unique<cfo_app_command>(ru->get_controller()));
 
   // Configure the RU and DU in the dynamic DU.
   du_impl->add_ru(std::move(ru));

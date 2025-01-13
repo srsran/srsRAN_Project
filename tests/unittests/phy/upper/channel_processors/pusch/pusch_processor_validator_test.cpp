@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -20,9 +20,6 @@
  *
  */
 
-#include "../../../support/resource_grid_test_doubles.h"
-#include "../../rx_buffer_test_doubles.h"
-#include "pusch_processor_result_test_doubles.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
@@ -354,23 +351,6 @@ TEST_P(PuschProcessorFixture, PuschProcessorValidatortest)
   ASSERT_FALSE(validator_out.has_value()) << "Validation should fail.";
   ASSERT_TRUE(std::regex_match(validator_out.error(), std::regex(param.expr)))
       << "The assertion message doesn't match the expected pattern.";
-
-  // Prepare resource grid.
-  resource_grid_reader_spy grid;
-
-  // Prepare receive data.
-  std::vector<uint8_t> data;
-
-  // Prepare buffer.
-  rx_buffer_spy    rm_buffer_spy(ldpc::MAX_CODEBLOCK_SIZE, 0);
-  unique_rx_buffer rm_buffer(rm_buffer_spy);
-
-  // Process PUSCH PDU.
-#ifdef ASSERTS_ENABLED
-  pusch_processor_result_notifier_spy result_notifier_spy;
-  ASSERT_DEATH({ pusch_proc->process(data, std::move(rm_buffer), result_notifier_spy, grid, param.get_pdu()); },
-               param.expr);
-#endif // ASSERTS_ENABLED
 }
 
 // Creates test suite that combines all possible parameters.

@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -38,6 +38,8 @@ namespace ofh {
 
 /// Closed reception window handler configuration.
 struct closed_rx_window_handler_config {
+  /// Radio sector identifier.
+  unsigned sector;
   /// Time in number of symbols that the decoder needs to process an Open Fronthaul message. It delays closing the
   /// reception window.
   unsigned nof_symbols_to_process_uplink = 0;
@@ -91,6 +93,7 @@ private:
   std::shared_ptr<prach_context_repository>  prach_repo;
   std::shared_ptr<uplink_context_repository> uplink_repo;
   std::shared_ptr<uplane_rx_symbol_notifier> notifier;
+  const unsigned                             sector_id;
 };
 
 } // namespace ofh

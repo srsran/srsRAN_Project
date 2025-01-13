@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -22,7 +22,22 @@
 
 #pragma once
 
-#include "srsran/phy/upper/channel_processors/pdcch_processor.h"
+/// \file
+/// \brief Downlink processor classes.
+///
+/// The downlink processor handles all the given downlink PDUs and sends the configured resource grid through a gateway
+/// when every PDU for the given slot has finished processing.
+///
+/// The slot context processing starts with the downlink processor controller interface. The downlink processor slot
+/// context is configured once using \ref downlink_processor_controller::configure_resource_grid() which returns a
+/// unique downlink processor.
+///
+/// The unique downlink processor will accept downlink transmissions as the object is available in a scope. When the
+/// unique downlink processor is released or deleted, the downlink processor controller will not accept configuring a
+/// new slot context until all the transmissions are completed and the resource grid is sent over the gateway.
+///
+
+#include "srsran/phy/upper/channel_processors/pdcch/pdcch_processor.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/channel_processors/ssb_processor.h"
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
@@ -32,17 +47,7 @@ namespace srsran {
 struct resource_grid_context;
 class shared_resource_grid;
 
-/// \brief Downlink processor class that groups and process all the downlink channels within a slot.
-///
-/// The downlink processor process all the given downlink PDUs and sends the configured resource grid through a gateway
-/// when every PDU has finished processing and the finish_processing_pdus() has been called. Prior to start processing
-/// PDUs, configure_resource_grid() must be called in order to configure the resource grid and the context for the
-/// downlink processor.
-///
-/// \note
-/// Undefined behavior can be caused by:
-/// - Calling any process method prior to configure_resource_grid().
-/// - Calling finish_processing_pdus() without calling configure_resource_grid() in a slot context.
+/// Downlink processor interface that groups and processes all the downlink channels within a slot.
 class downlink_processor
 {
 public:
@@ -62,33 +67,118 @@ public:
 
   /// \brief Process the given SSB PDU.
   ///
-  /// \param[in] pdu SSB PDU to pr
+  /// \param[in] pdu SS/PBCH block PDU to process.
   virtual void process_ssb(const ssb_processor::pdu_t& pdu) = 0;
 
   /// \brief Process the given NZP-CSI-RS configuration.
   ///
   /// \param[in] config NZP-CSI-RS configuration to process.
   virtual void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) = 0;
+};
 
-  /// \brief Configures the resource grid of the downlink_processor.
-  ///
-  /// \param[in] context Resource grid context that contains the information of the processing slot.
-  /// \param[in] grid    Resource grid that will contain the data of the processed downlink channels.
-  /// \return \c true if the resource grid is successfully configured, \c false otherwise.
-  ///
-  /// \note
-  /// - Calling this method is mandatory before processing any PDU.
-  /// - The resource grid number of ports and bandwidth must be sufficient to accommodate all the PDUs.
-  // :TODO: move this method to other interface to avoid controlling the order of the methods execution.
-  virtual bool configure_resource_grid(const resource_grid_context& context, shared_resource_grid grid) = 0;
+/// \brief Unique downlink processor.
+///
+/// Keeps the downlink processor interface available for processing downlink transmissions as long as it is available in
+/// a scope.
+///
+/// The downlink processor closes the window for accepting new transmissions when either the unique downlink processor
+/// is destroyed or released.
+class unique_downlink_processor
+{
+public:
+  /// Downlink processor underlying interface.
+  class downlink_processor_callback : public downlink_processor
+  {
+  public:
+    /// Default destructor.
+    virtual ~downlink_processor_callback() = default;
 
-  /// \brief Stops accepting PDUs.
+    /// \brief Stops accepting PDUs.
+    ///
+    /// When this method is called, the interface will not expect to process more PDUs, so once it finishes to process
+    /// all the enqueued PDUs, the resource grid will be sent to the lower bound gateway using the \c context from
+    /// configure_resource_grid() to provide the processing context of the resource grid in the lower physical layer.
+    virtual void finish_processing_pdus() = 0;
+  };
+
+  /// Default constructor - creates an invalid downlink processor.
+  unique_downlink_processor() = default;
+
+  /// Builds a unique downlink processor from an underlying instance.
+  explicit unique_downlink_processor(downlink_processor_callback& processor_) : processor(&processor_) {}
+
+  /// Disabled copy constructor.
+  unique_downlink_processor(const unique_downlink_processor&) = delete;
+
+  /// Disabled copy assignment operator.
+  unique_downlink_processor& operator=(const unique_downlink_processor& other) = delete;
+
+  /// Move constructor.
+  unique_downlink_processor(unique_downlink_processor&& other) noexcept
+  {
+    release();
+    processor       = other.processor;
+    other.processor = nullptr;
+  }
+
+  /// Move assignment operator.
+  unique_downlink_processor& operator=(unique_downlink_processor&& other) noexcept
+  {
+    release();
+    processor       = other.processor;
+    other.processor = nullptr;
+    return *this;
+  }
+
+  /// Returns True if the unique processor is valid, false otherwise.
+  bool is_valid() const { return processor != nullptr; }
+
+  /// Default destructor - notifies the end of processing PDUs.
+  ~unique_downlink_processor() { release(); }
+
+  /// Releases the unique processor.
+  void release()
+  {
+    if (is_valid()) {
+      processor->finish_processing_pdus();
+    }
+    processor = nullptr;
+  }
+
+  /// Gets the underlying downlink processor.
+  downlink_processor& get()
+  {
+    report_fatal_error_if_not(is_valid(), "Invalid processor.");
+    return *processor;
+  }
+
+  /// Gets the underlying downlink processor.
+  downlink_processor* operator->()
+  {
+    report_fatal_error_if_not(is_valid(), "Invalid processor.");
+    return processor;
+  }
+
+private:
+  /// Reference to the underlying downlink processor. Set to \c nullptr for an invalid processor.
+  downlink_processor_callback* processor = nullptr;
+};
+
+/// Downlink processor controller.
+class downlink_processor_controller
+{
+public:
+  /// Default destructor.
+  virtual ~downlink_processor_controller() = default;
+
+  /// \brief Configures the downlink processor with a slot context and resource grid.
   ///
-  /// When this method is called, the interface will not expect to process more PDUs, so once it finishes to process all
-  /// the enqueued PDUs, the resource grid will be sent to the lower bound gateway using the \c context from
-  /// configure_resource_grid() to provide the processing context of the resource grid in the lower physical layer.
-  // :TODO: move this method to other interface to avoid controlling the order of the methods execution.
-  virtual void finish_processing_pdus() = 0;
+  /// \param[in] context Slot processing context information.
+  /// \param[in] grid    Resource grid associated to the slot.
+  /// \return A valid unique downlink processor if the downlink processor controller. Otherwise, an invalid unique
+  /// downlink processor.
+  virtual unique_downlink_processor configure_resource_grid(const resource_grid_context& context,
+                                                            shared_resource_grid         grid) = 0;
 };
 
 /// Downlink processor validation interface.
@@ -98,7 +188,7 @@ public:
   /// Default destructor.
   virtual ~downlink_pdu_validator() = default;
 
-  /// \brief Validates SSB processor configuration parameters.
+  /// \brief Validates the SS/PBCH block processor configuration parameters.
   /// \return True if the parameters contained in \c pdu are supported, false otherwise.
   virtual bool is_valid(const ssb_processor::pdu_t& pdu) const = 0;
 
@@ -121,12 +211,8 @@ class downlink_processor_pool
 public:
   virtual ~downlink_processor_pool() = default;
 
-  /// \brief Returns a downlink processor with the given slot and sector.
-  ///
-  /// \param slot Slot point.
-  /// \param sector_id Sector ID.
-  /// \return A downlink processor.
-  virtual downlink_processor& get_processor(slot_point slot, unsigned sector_id) = 0;
+  /// Gets the downlink processor controller associated with the given slot.
+  virtual downlink_processor_controller& get_processor_controller(slot_point slot) = 0;
 };
 
 } // namespace srsran

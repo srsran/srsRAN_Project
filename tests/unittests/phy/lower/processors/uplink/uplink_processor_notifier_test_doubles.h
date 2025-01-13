@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -26,6 +26,7 @@
 #include "prach/prach_processor_test_doubles.h"
 #include "puxch/puxch_processor_test_doubles.h"
 #include "srsran/phy/lower/lower_phy_timing_context.h"
+#include "srsran/phy/lower/processors/lower_phy_cfo_controller.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_factories.h"
@@ -81,6 +82,12 @@ private:
   std::vector<entry_t> entries;
 };
 
+class lower_phy_cfo_controller_spy : public lower_phy_cfo_controller
+{
+public:
+  bool schedule_cfo_command(time_point time, float cfo_Hz) override { return false; }
+};
+
 class lower_phy_uplink_processor_spy : public lower_phy_uplink_processor
 {
 public:
@@ -94,6 +101,8 @@ public:
     prach_notifier = &prach_notifier_;
     puxch_notifier = &puxch_notifier_;
   }
+
+  lower_phy_cfo_controller& get_cfo_handler() override { return cfo_processor_spy; }
 
   const uplink_processor_configuration& get_config() const { return config; }
 
@@ -129,6 +138,7 @@ private:
   uplink_processor_notifier*          notifier       = nullptr;
   prach_processor_notifier*           prach_notifier = nullptr;
   puxch_processor_notifier*           puxch_notifier = nullptr;
+  lower_phy_cfo_controller_spy        cfo_processor_spy;
   prach_processor_request_handler_spy prach_req_handler_spy;
   puxch_processor_request_handler_spy puxch_req_handler_spy;
   uplink_processor_baseband_spy       uplink_proc_baseband_spy;

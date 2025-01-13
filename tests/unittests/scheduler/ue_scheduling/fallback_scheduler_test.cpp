@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -299,11 +299,12 @@ protected:
   bool add_ue(rnti_t tc_rnti, du_ue_index_t ue_index, bool remove_ded_cfg = false)
   {
     // Add cell to UE cell grid allocator.
-    auto ue_create_req     = remove_ded_cfg
-                                 ? sched_config_helper::create_empty_spcell_cfg_sched_ue_creation_request()
-                                 : sched_config_helper::create_default_sched_ue_creation_request(bench->builder_params);
-    ue_create_req.crnti    = tc_rnti;
-    ue_create_req.ue_index = ue_index;
+    auto ue_create_req               = remove_ded_cfg
+                                           ? sched_config_helper::create_empty_spcell_cfg_sched_ue_creation_request()
+                                           : sched_config_helper::create_default_sched_ue_creation_request(bench->builder_params);
+    ue_create_req.crnti              = tc_rnti;
+    ue_create_req.ue_index           = ue_index;
+    ue_create_req.starts_in_fallback = true;
     return bench->add_ue(ue_create_req);
   }
 

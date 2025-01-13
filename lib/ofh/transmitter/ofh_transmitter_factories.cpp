@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -47,6 +47,7 @@ create_data_flow_cplane_sched(const transmitter_config&                         
 
   config.ru_nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
+  config.sector             = tx_config.sector;
   config.dl_compr_params    = tx_config.dl_compr_params;
   config.ul_compr_params    = tx_config.ul_compr_params;
   config.prach_compr_params = tx_config.prach_compr_params;
@@ -80,6 +81,7 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
   data_flow_uplane_downlink_data_impl_config config;
   config.ru_nof_prbs =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(tx_config.ru_working_bw), tx_config.scs, srsran::frequency_range::FR1);
+  config.sector       = tx_config.sector;
   config.dl_eaxc      = tx_config.dl_eaxc;
   config.compr_params = tx_config.dl_compr_params;
   config.cp           = tx_config.cp;
@@ -126,9 +128,10 @@ create_downlink_manager(const transmitter_config&                         tx_con
   auto data_flow_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
       create_data_flow_cplane_sched(
           tx_config, tx_config.is_downlink_static_compr_hdr_enabled, logger, frame_pool, std::move(ul_cp_context_repo)),
-      executor);
+      executor,
+      tx_config.sector);
   auto data_flow_uplane = std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
-      create_data_flow_uplane_data(tx_config, logger, frame_pool), executor);
+      create_data_flow_uplane_data(tx_config, logger, frame_pool), executor, tx_config.sector);
 
   if (tx_config.downlink_broadcast) {
     downlink_handler_broadcast_impl_config dl_config;
@@ -252,7 +255,8 @@ resolve_transmitter_dependencies(const transmitter_config&                      
                                     std::move(prach_context_repo),
                                     std::move(ul_slot_context_repo),
                                     std::move(ul_cp_context_repo)),
-      downlink_executor);
+      downlink_executor,
+      tx_config.sector);
 
   dependencies.eth_gateway = std::move(eth_gateway);
 

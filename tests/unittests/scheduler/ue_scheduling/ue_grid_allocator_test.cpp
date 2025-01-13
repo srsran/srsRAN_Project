@@ -1,6 +1,6 @@
 /*
  *
- * Copyright 2021-2024 Software Radio Systems Limited
+ * Copyright 2021-2025 Software Radio Systems Limited
  *
  * This file is part of srsRAN.
  *
@@ -90,6 +90,8 @@ protected:
     ues.slot_indication(current_slot);
 
     on_each_slot();
+
+    alloc.post_process_results();
 
     // Log scheduler results.
     res_logger.on_scheduler_result(res_grid[0].result);
@@ -528,18 +530,15 @@ TEST_P(ue_grid_allocator_tester, successfully_allocates_pdsch_with_gbr_lc_priort
   (*cfg_req.lc_config_list)[1]          = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB1);
   (*cfg_req.lc_config_list)[2]          = config_helpers::create_default_logical_channel_config(non_gbr_bearer_lcid);
   (*cfg_req.lc_config_list)[2].lc_group = lcg_id;
+  (*cfg_req.lc_config_list)[2].qos.emplace();
+  (*cfg_req.lc_config_list)[2].qos->qos = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(9));
   (*cfg_req.lc_config_list)[3]          = config_helpers::create_default_logical_channel_config(gbr_bearer_lcid);
-  // Increase priority for GBR bearer.
-  (*cfg_req.lc_config_list)[3].priority -= 1;
   // Put GBR bearer in a different LCG than non-GBR bearer.
   (*cfg_req.lc_config_list)[3].lc_group = uint_to_lcg_id(lcg_id - 1);
-  cfg_req.drb_info_list.resize(2);
-  cfg_req.drb_info_list[0]  = sched_drb_info{.lcid     = non_gbr_bearer_lcid,
-                                             .qos_info = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(9))};
-  cfg_req.drb_info_list[1]  = sched_drb_info{.lcid         = gbr_bearer_lcid,
-                                             .qos_info     = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(1)),
-                                             .gbr_qos_info = gbr_qos_flow_information{128000, 128000, 128000, 128000}};
-  ue_config_update_event ev = cfg_mng.update_ue(reconf_msg);
+  (*cfg_req.lc_config_list)[3].qos.emplace();
+  (*cfg_req.lc_config_list)[3].qos->qos          = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(1));
+  (*cfg_req.lc_config_list)[3].qos->gbr_qos_info = gbr_qos_flow_information{128000, 128000, 128000, 128000};
+  ue_config_update_event ev                      = cfg_mng.update_ue(reconf_msg);
   u1.handle_reconfiguration_request({ev.next_config()});
   u1.handle_config_applied();
 
