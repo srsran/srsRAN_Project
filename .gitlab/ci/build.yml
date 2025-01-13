@@ -727,6 +727,7 @@ smoke valgrind update cache:
   artifacts:
     <<: *build_artifacts
     when: on_failure
+    expire_in: 1 day
   cache:
     - *cache_build_set
 
