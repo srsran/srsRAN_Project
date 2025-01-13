@@ -111,8 +111,14 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
         case pucch_format::FORMAT_2:
           nof_harqs_per_rnti_per_slot = pucch.format_2.harq_ack_nof_bits;
           break;
+        case pucch_format::FORMAT_3:
+          nof_harqs_per_rnti_per_slot = pucch.format_3.harq_ack_nof_bits;
+          break;
+        case pucch_format::FORMAT_4:
+          nof_harqs_per_rnti_per_slot = pucch.format_4.harq_ack_nof_bits;
+          break;
         default:
-          srsran_assertion_failure("rnti={}: Only PUCCH format 0, 1 and 2 are supported", pucch.crnti);
+          srsran_assertion_failure("rnti={}: Invalid PUCCH format", pucch.crnti);
       }
       // Each PUCCH grants can potentially carry ACKs for different HARQ processes (as many as the harq_ack_nof_bits)
       // expecting to be acknowledged on the same slot.
@@ -161,6 +167,14 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
         harq_bits = pucch.format_2.harq_ack_nof_bits;
         csi_bits  = pucch.format_2.csi_part1_bits;
         sr_bits   = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
+      } else if (pucch.format == pucch_format::FORMAT_3) {
+        harq_bits = pucch.format_3.harq_ack_nof_bits;
+        csi_bits  = pucch.format_3.csi_part1_bits;
+        sr_bits   = sr_nof_bits_to_uint(pucch.format_3.sr_bits);
+      } else if (pucch.format == pucch_format::FORMAT_4) {
+        harq_bits = pucch.format_4.harq_ack_nof_bits;
+        csi_bits  = pucch.format_4.csi_part1_bits;
+        sr_bits   = sr_nof_bits_to_uint(pucch.format_4.sr_bits);
       }
       logger.error("rnti={}: has both PUCCH and PUSCH grants scheduled at slot {}, PUCCH  format={} with nof "
                    "harq-bits={} csi-1-bits={} sr-bits={}",
