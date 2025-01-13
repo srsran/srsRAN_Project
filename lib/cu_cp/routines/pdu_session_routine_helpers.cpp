@@ -212,9 +212,8 @@ bool srsran::srs_cu_cp::fill_f1ap_drb_setup_mod_item(
   // Start filling the DU request.
   drb_setup_mod_item.drb_id = drb_id;
 
-  // Fill QoS config.
-  drb_setup_mod_item.qos_info.drb_qos.qos_desc             = next_drb_config.qos_params.qos_desc;
-  drb_setup_mod_item.qos_info.drb_qos.alloc_retention_prio = next_drb_config.qos_params.alloc_retention_prio;
+  // Fill DRB QoS.
+  drb_setup_mod_item.qos_info.drb_qos = next_drb_config.qos_params;
 
   // Fill S-NSSAI.
   drb_setup_mod_item.qos_info.s_nssai = next_drb_config.s_nssai;
