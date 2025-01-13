@@ -88,18 +88,20 @@ public:
     }
 
     // Enqueue enough bytes for continuous DL tx.
+    const unsigned DL_BS_VALUE = std::numeric_limits<unsigned>::max() / 2;
     for (unsigned i = 0; i != TEST_NOF_UES; ++i) {
-      dl_buffer_state_indication_message dl_buf_st{to_du_ue_index(i), LCID_MIN_DRB, 100000000};
+      dl_buffer_state_indication_message dl_buf_st{to_du_ue_index(i), LCID_MIN_DRB, DL_BS_VALUE};
       this->push_dl_buffer_state(dl_buf_st);
     }
 
     // Enqueue BSR.
+    const unsigned BSR_VALUE = std::numeric_limits<u_int32_t>::max() / 2;
     for (unsigned i = 0; i != TEST_NOF_UES; ++i) {
       ul_bsr_indication_message bsr{to_du_cell_index(0),
                                     to_du_ue_index(i),
                                     to_rnti(0x4601 + i),
                                     bsr_format::LONG_BSR,
-                                    ul_bsr_lcg_report_list{{uint_to_lcg_id(2), 100000}}};
+                                    ul_bsr_lcg_report_list{{uint_to_lcg_id(2), BSR_VALUE}}};
       this->push_bsr(bsr);
     }
   }

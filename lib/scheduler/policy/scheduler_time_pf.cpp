@@ -257,6 +257,9 @@ ul_alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// [Implementation-defined] Helper value to avoid double overflows.
+constexpr static double max_weight_rate = std::sqrt(std::numeric_limits<double>::max()) / 8;
+
 /// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
 static double compute_dl_rate_weight(const slice_ue& u)
 {
@@ -274,7 +277,9 @@ static double compute_dl_rate_weight(const slice_ue& u)
     // GBR flow.
     double dl_avg_rate = u.dl_avg_bit_rate(lc.lcid);
     if (dl_avg_rate != 0) {
-      rate_weight += lc.qos->gbr_qos_info->gbr_dl / dl_avg_rate;
+      rate_weight += std::min(lc.qos->gbr_qos_info->gbr_dl / dl_avg_rate, max_weight_rate);
+    } else {
+      rate_weight += max_weight_rate;
     }
   }
 
@@ -299,7 +304,9 @@ static double compute_ul_rate_weight(const slice_ue& u)
     lcg_id_t lcg_id  = u.get_lcg_id(lc.lcid);
     double   ul_rate = u.ul_avg_bit_rate(lcg_id);
     if (ul_rate != 0) {
-      rate_weight += lc.qos->gbr_qos_info->gbr_ul / ul_rate;
+      rate_weight += std::min(lc.qos->gbr_qos_info->gbr_ul / ul_rate, max_weight_rate);
+    } else {
+      rate_weight = max_weight_rate;
     }
   }
 
@@ -380,7 +387,7 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
     }
   } else {
     // Give the highest priority to new UE.
-    pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
+    pf_weight = estimated_rate == 0 ? 0 : max_weight_rate;
   }
 
   // Compute GBR weight function.
@@ -482,7 +489,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
       pf_weight = estimated_rate / pow(current_avg_rate, parent->fairness_coeff);
     }
   } else {
-    pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
+    pf_weight = estimated_rate == 0 ? 0 : max_weight_rate;
   }
 
   // Compute GBR weight function.
@@ -490,7 +497,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
   const double gbr_rate_weight = current_avg_rate == 0 ? 1.0 : compute_ul_rate_weight(u);
 
   if (parent->weight_func == time_pf_scheduler_expert_config::weight_function::gbr_prioritized and
-      gbr_rate_weight > 1) {
+      gbr_rate_weight > 1.0) {
     // GBR target has not been met and we prioritize GBR over PF.
     pf_weight = std::max(1.0, pf_weight);
   }
