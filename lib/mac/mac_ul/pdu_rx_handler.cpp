@@ -215,7 +215,9 @@ bool pdu_rx_handler::handle_mac_ce(const decoded_mac_rx_pdu& ctx, const mac_ul_s
           logger.warning("{}: Discarding PDU. Cause: Rx PDU is filled with zeros, meaning that it was likely corrupted",
                          create_prefix(ctx, subpdu));
         } else {
-          logger.warning("{}: Discarding PDU. Cause: UL-CCCH should be only for Msg3", create_prefix(ctx, subpdu));
+          // This should not happen, but there is a tiny chance that there is a false alarm of an SR during UE creation
+          // and double toggle of the NDI, which will make the UE interpret a new UL grant as a Msg3 reTx.
+          logger.info("{}: Discarding PDU. Cause: UL-CCCH should be only for Msg3", create_prefix(ctx, subpdu));
         }
         return false;
       }

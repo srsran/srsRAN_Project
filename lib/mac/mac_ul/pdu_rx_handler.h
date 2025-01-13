@@ -10,12 +10,9 @@
 
 #pragma once
 
-#include "../rnti_value_table.h"
 #include "mac_scheduler_ce_info_handler.h"
 #include "mac_ul_sch_pdu.h"
 #include "mac_ul_ue_manager.h"
-#include "ul_bsr.h"
-#include "srsran/adt/slotted_array.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/mac/mac.h"
 #include "srsran/pcap/mac_pcap.h"
