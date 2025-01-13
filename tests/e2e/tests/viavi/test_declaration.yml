@@ -45,8 +45,8 @@ tests:
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP bidirectional"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
@@ -105,8 +105,8 @@ tests:
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal TCP downlink"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 1.0e+9
@@ -135,8 +135,8 @@ tests:
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE fading UDP attach-detach with traffic"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
@@ -151,8 +151,8 @@ tests:
     test_timeout: 93600
     gnb_extra_commands: *gnb_extra_commands_no_warn
     id: "32UE ideal UDP attach-detach with traffic 24h extended"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
@@ -165,8 +165,8 @@ tests:
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP attach-detach with traffic"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
@@ -179,8 +179,8 @@ tests:
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP attach-detach with traffic tdd DDDSU"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
@@ -194,8 +194,8 @@ tests:
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP attach-detach with traffic tdd UL Heavy 7u2d"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
@@ -209,8 +209,8 @@ tests:
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP attach-detach with traffic tdd UL Heavy 6u3d"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
@@ -238,8 +238,8 @@ tests:
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal ping"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
@@ -252,8 +252,8 @@ tests:
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal ping with traffic"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 14.0e+3
@@ -266,8 +266,8 @@ tests:
     test_timeout: 21600 # 6 hours
     gnb_extra_commands: *gnb_extra_commands
     id: "experimental 32UE ideal UDP bidirectional Long"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
@@ -280,8 +280,8 @@ tests:
     test_timeout: 21600 # 6 hours
     gnb_extra_commands: *gnb_extra_commands
     id: "experimental 32UE ideal UDP bidirectional Long extended"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
