@@ -14,14 +14,28 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
+mac_to_fapi_translator_config generate_translator_config(const mac_fapi_sector_adaptor_config& config)
+{
+  mac_to_fapi_translator_config out_config;
+  out_config.cell_nof_prbs = config.cell_nof_prbs;
+  out_config.sector_id     = config.sector_id;
+
+  return out_config;
+}
+
+mac_to_fapi_translator_dependencies
+generate_translator_dependencies(mac_fapi_sector_adaptor_dependencies&& dependencies)
+{
+  return {srslog::fetch_basic_logger("FAPI"),
+          *dependencies.gateway,
+          *dependencies.last_msg_notifier,
+          std::move(dependencies.pm_mapper),
+          std::move(dependencies.part2_mapper)};
+}
+
 mac_fapi_sector_adaptor_impl::mac_fapi_sector_adaptor_impl(const mac_fapi_sector_adaptor_config&  config,
                                                            mac_fapi_sector_adaptor_dependencies&& dependencies) :
-  mac_translator(srslog::fetch_basic_logger("FAPI"),
-                 *dependencies.gateway,
-                 *dependencies.last_msg_notifier,
-                 std::move(dependencies.pm_mapper),
-                 std::move(dependencies.part2_mapper),
-                 config.cell_nof_prbs),
+  mac_translator(generate_translator_config(config), generate_translator_dependencies(std::move(dependencies))),
   fapi_data_translator(config.scs, config.sector_id),
   fapi_time_translator(config.scs),
   fapi_error_translator(config.scs)

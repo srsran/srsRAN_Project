@@ -95,12 +95,14 @@ TEST(mac_to_fapi_translator, valid_dl_sched_results_generate_correct_dl_tti_requ
   unsigned                       nof_prbs        = 51U;
   auto                           pm_tools        = generate_precoding_matrix_tables(1);
   auto                           uci_part2_tools = generate_uci_part2_correspondence(1);
-  mac_to_fapi_translator         translator(srslog::fetch_basic_logger("FAPI"),
-                                    gateway_spy,
-                                    notifier_spy,
-                                    std::move(std::get<0>(pm_tools)),
-                                    std::move(std::get<0>(uci_part2_tools)),
-                                    nof_prbs);
+  mac_to_fapi_translator         translator({0, nof_prbs},
+                                    {
+                                                srslog::fetch_basic_logger("FAPI"),
+                                                gateway_spy,
+                                                notifier_spy,
+                                                std::move(std::get<0>(pm_tools)),
+                                                std::move(std::get<0>(uci_part2_tools)),
+                                    });
 
   ASSERT_FALSE(gateway_spy.has_dl_tti_request_method_called());
 
@@ -127,12 +129,12 @@ TEST(mac_to_fapi_translator, valid_ul_sched_results_generate_correct_ul_tti_requ
   unsigned                       nof_prbs        = 51U;
   auto                           pm_tools        = generate_precoding_matrix_tables(1);
   auto                           uci_part2_tools = generate_uci_part2_correspondence(1);
-  mac_to_fapi_translator         translator(srslog::fetch_basic_logger("FAPI"),
-                                    gateway_spy,
-                                    notifier_spy,
-                                    std::move(std::get<0>(pm_tools)),
-                                    std::move(std::get<0>(uci_part2_tools)),
-                                    nof_prbs);
+  mac_to_fapi_translator         translator({0, nof_prbs},
+                                    {srslog::fetch_basic_logger("FAPI"),
+                                             gateway_spy,
+                                             notifier_spy,
+                                             std::move(std::get<0>(pm_tools)),
+                                             std::move(std::get<0>(uci_part2_tools))});
 
   ASSERT_FALSE(gateway_spy.has_ul_tti_request_method_called());
 
@@ -156,20 +158,20 @@ TEST(mac_to_fapi_translator, valid_dl_data_results_generate_correct_tx_data_requ
   unsigned                       nof_prbs        = 51U;
   auto                           pm_tools        = generate_precoding_matrix_tables(1);
   auto                           uci_part2_tools = generate_uci_part2_correspondence(1);
-  mac_to_fapi_translator         translator(srslog::fetch_basic_logger("FAPI"),
-                                    gateway_spy,
-                                    notifier_spy,
-                                    std::move(std::get<0>(pm_tools)),
-                                    std::move(std::get<0>(uci_part2_tools)),
-                                    nof_prbs);
+  mac_to_fapi_translator         translator({0, nof_prbs},
+                                    {srslog::fetch_basic_logger("FAPI"),
+                                             gateway_spy,
+                                             notifier_spy,
+                                             std::move(std::get<0>(pm_tools)),
+                                             std::move(std::get<0>(uci_part2_tools))});
 
   ASSERT_FALSE(gateway_spy.has_tx_data_request_method_called());
 
   const unittests::mac_dl_sched_result_test_helper& result_test = srsran::unittests::build_valid_mac_dl_sched_result();
   const mac_dl_sched_result&                        result      = result_test.result;
   translator.on_new_downlink_scheduler_results(result);
-  const mac_dl_data_result& data_result = srsran::unittests::build_valid_mac_data_result();
-  translator.on_new_downlink_data(data_result);
+  const unittests::mac_dl_data_result_test_helper& data_result = srsran::unittests::build_valid_mac_data_result();
+  translator.on_new_downlink_data(data_result.result);
 
   ASSERT_TRUE(gateway_spy.has_tx_data_request_method_called());
   const fapi::tx_data_request_message& msg = gateway_spy.tx_data_request_msg();
@@ -183,12 +185,12 @@ TEST(mac_to_fapi_translator, valid_dl_data_results_generate_correct_ul_dci_reque
   unsigned                       nof_prbs        = 51U;
   auto                           pm_tools        = generate_precoding_matrix_tables(1);
   auto                           uci_part2_tools = generate_uci_part2_correspondence(1);
-  mac_to_fapi_translator         translator(srslog::fetch_basic_logger("FAPI"),
-                                    gateway_spy,
-                                    notifier_spy,
-                                    std::move(std::get<0>(pm_tools)),
-                                    std::move(std::get<0>(uci_part2_tools)),
-                                    nof_prbs);
+  mac_to_fapi_translator         translator({0, nof_prbs},
+                                    {srslog::fetch_basic_logger("FAPI"),
+                                             gateway_spy,
+                                             notifier_spy,
+                                             std::move(std::get<0>(pm_tools)),
+                                             std::move(std::get<0>(uci_part2_tools))});
 
   ASSERT_FALSE(gateway_spy.has_ul_dci_request_method_called());
 
@@ -209,12 +211,12 @@ TEST(mac_to_fapi_translator, last_message_is_notified)
   auto                           pm_tools        = generate_precoding_matrix_tables(1);
   auto                           uci_part2_tools = generate_uci_part2_correspondence(1);
   slot_point                     slot(1, 1, 1);
-  mac_to_fapi_translator         translator(srslog::fetch_basic_logger("FAPI"),
-                                    gateway_spy,
-                                    notifier_spy,
-                                    std::move(std::get<0>(pm_tools)),
-                                    std::move(std::get<0>(uci_part2_tools)),
-                                    nof_prbs);
+  mac_to_fapi_translator         translator({0, nof_prbs},
+                                    {srslog::fetch_basic_logger("FAPI"),
+                                             gateway_spy,
+                                             notifier_spy,
+                                             std::move(std::get<0>(pm_tools)),
+                                             std::move(std::get<0>(uci_part2_tools))});
 
   ASSERT_FALSE(notifier_spy.has_on_last_message_method_called());
   translator.on_cell_results_completion(slot);
@@ -229,12 +231,12 @@ TEST(mac_to_fapi_translator, dl_tti_message_with_all_pdus_passes)
   unsigned                       nof_prbs        = 51U;
   auto                           pm_tools        = generate_precoding_matrix_tables(1);
   auto                           uci_part2_tools = generate_uci_part2_correspondence(1);
-  mac_to_fapi_translator         translator(srslog::fetch_basic_logger("FAPI"),
-                                    gateway_spy,
-                                    notifier_spy,
-                                    std::move(std::get<0>(pm_tools)),
-                                    std::move(std::get<0>(uci_part2_tools)),
-                                    nof_prbs);
+  mac_to_fapi_translator         translator({0, nof_prbs},
+                                    {srslog::fetch_basic_logger("FAPI"),
+                                             gateway_spy,
+                                             notifier_spy,
+                                             std::move(std::get<0>(pm_tools)),
+                                             std::move(std::get<0>(uci_part2_tools))});
 
   const unittests::mac_dl_sched_result_test_helper& result_test =
       srsran::unittests::build_valid_mac_dl_sched_result_with_all_supported_pdus();
@@ -255,20 +257,21 @@ TEST(mac_to_fapi_translator, tx_data_message_with_all_pdus_passes)
   unsigned                       nof_prbs        = 51U;
   auto                           pm_tools        = generate_precoding_matrix_tables(1);
   auto                           uci_part2_tools = generate_uci_part2_correspondence(1);
-  mac_to_fapi_translator         translator(srslog::fetch_basic_logger("FAPI"),
-                                    gateway_spy,
-                                    notifier_spy,
-                                    std::move(std::get<0>(pm_tools)),
-                                    std::move(std::get<0>(uci_part2_tools)),
-                                    nof_prbs);
+  mac_to_fapi_translator         translator({0, nof_prbs},
+                                    {srslog::fetch_basic_logger("FAPI"),
+                                             gateway_spy,
+                                             notifier_spy,
+                                             std::move(std::get<0>(pm_tools)),
+                                             std::move(std::get<0>(uci_part2_tools))});
 
   const unittests::mac_dl_sched_result_test_helper& result_test =
       srsran::unittests::build_valid_mac_dl_sched_result_with_all_supported_pdus();
   const mac_dl_sched_result& result = result_test.result;
   translator.on_new_downlink_scheduler_results(result);
 
-  const mac_dl_data_result& data_result = srsran::unittests::build_valid_mac_data_result_with_all_supported_pdu();
-  translator.on_new_downlink_data(data_result);
+  const unittests::mac_dl_data_result_test_helper& data_result =
+      srsran::unittests::build_valid_mac_data_result_with_all_supported_pdu();
+  translator.on_new_downlink_data(data_result.result);
 
   const fapi::tx_data_request_message& tx_data_msg = gateway_spy.tx_data_request_msg();
   ASSERT_EQ(tx_data_msg.pdus.size(),
@@ -288,12 +291,12 @@ TEST(mac_to_fapi_translator, ul_tti_message_with_all_pdus_passes)
   unsigned                       nof_prbs        = 51U;
   auto                           pm_tools        = generate_precoding_matrix_tables(1);
   auto                           uci_part2_tools = generate_uci_part2_correspondence(1);
-  mac_to_fapi_translator         translator(srslog::fetch_basic_logger("FAPI"),
-                                    gateway_spy,
-                                    notifier_spy,
-                                    std::move(std::get<0>(pm_tools)),
-                                    std::move(std::get<0>(uci_part2_tools)),
-                                    nof_prbs);
+  mac_to_fapi_translator         translator({0, nof_prbs},
+                                    {srslog::fetch_basic_logger("FAPI"),
+                                             gateway_spy,
+                                             notifier_spy,
+                                             std::move(std::get<0>(pm_tools)),
+                                             std::move(std::get<0>(uci_part2_tools))});
 
   srslog::fetch_basic_logger("FAPI").set_level(srslog::basic_levels::debug);
 

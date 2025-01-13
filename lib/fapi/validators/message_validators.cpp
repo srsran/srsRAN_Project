@@ -919,11 +919,14 @@ static void log_basic_report(fmt::memory_buffer& buffer, const validator_report:
   fmt::format_to(std::back_inserter(buffer), "\t- Property={}, value={}\n", report.property_name, report.value);
 }
 
-void srsran::fapi::log_validator_report(const validator_report& report, srslog::basic_logger& logger)
+void srsran::fapi::log_validator_report(const validator_report& report,
+                                        srslog::basic_logger&   logger,
+                                        unsigned                sector_id)
 {
   fmt::memory_buffer str_buffer;
   fmt::format_to(std::back_inserter(str_buffer),
-                 "Detected {} error(s) in message type '{}' in slot={}.{}:\n",
+                 "Sector#{}: Detected {} error(s) in message type '{}' in slot={}.{}:\n",
+                 sector_id,
                  report.reports.size(),
                  get_message_type_string(report.reports.front().message_type),
                  report.sfn,

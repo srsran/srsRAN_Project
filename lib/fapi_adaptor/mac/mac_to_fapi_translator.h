@@ -25,6 +25,28 @@ class slot_message_gateway;
 
 namespace fapi_adaptor {
 
+/// MAC-to-FAPI translator configuration.
+struct mac_to_fapi_translator_config {
+  /// Cell number of PRBs.
+  unsigned cell_nof_prbs;
+  /// Radio sector identifier.
+  unsigned sector_id;
+};
+
+/// MAC-to-FAPI translator dependencies.
+struct mac_to_fapi_translator_dependencies {
+  /// Logger.
+  srslog::basic_logger& logger;
+  /// FAPI slot message gateway.
+  fapi::slot_message_gateway& msg_gw;
+  /// FAPI slot last message gateway.
+  fapi::slot_last_message_notifier& last_msg_notifier;
+  /// Precoding matrix mapper.
+  std::unique_ptr<precoding_matrix_mapper> pm_mapper;
+  /// UCI Part 2 correspondence mapper.
+  std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper;
+};
+
 /// \brief MAC-to-FAPI translator.
 ///
 /// This class listens to cell-specific MAC events carrying scheduling results and translates them into FAPI messages
@@ -32,18 +54,15 @@ namespace fapi_adaptor {
 class mac_to_fapi_translator : public mac_cell_result_notifier
 {
 public:
-  mac_to_fapi_translator(srslog::basic_logger&                            logger_,
-                         fapi::slot_message_gateway&                      msg_gw_,
-                         fapi::slot_last_message_notifier&                last_msg_notifier_,
-                         std::unique_ptr<precoding_matrix_mapper>         pm_mapper_,
-                         std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper_,
-                         unsigned                                         cell_nof_prbs_) :
-    logger(logger_),
-    msg_gw(msg_gw_),
-    last_msg_notifier(last_msg_notifier_),
-    pm_mapper(std::move(pm_mapper_)),
-    part2_mapper(std::move(part2_mapper_)),
-    cell_nof_prbs(cell_nof_prbs_)
+  mac_to_fapi_translator(const mac_to_fapi_translator_config&  config,
+                         mac_to_fapi_translator_dependencies&& dependencies) :
+    sector_id(config.sector_id),
+    cell_nof_prbs(config.cell_nof_prbs),
+    logger(dependencies.logger),
+    msg_gw(dependencies.msg_gw),
+    last_msg_notifier(dependencies.last_msg_notifier),
+    pm_mapper(std::move(dependencies.pm_mapper)),
+    part2_mapper(std::move(dependencies.part2_mapper))
   {
     srsran_assert(pm_mapper, "Invalid precoding matrix mapper");
     srsran_assert(part2_mapper, "Invalid Part2 mapper");
@@ -69,6 +88,10 @@ private:
                              bool                             is_last_message_in_slot);
 
 private:
+  /// Radio sector identifier.
+  const unsigned sector_id;
+  /// Cell number of resource blocks.
+  const unsigned cell_nof_prbs;
   /// FAPI logger.
   srslog::basic_logger& logger;
   /// FAPI message gateway to the outside world.
@@ -79,8 +102,6 @@ private:
   std::unique_ptr<precoding_matrix_mapper> pm_mapper;
   /// UCI Part2 correspondence mapper.
   std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper;
-  /// Cell number of resource blocks.
-  const unsigned cell_nof_prbs;
 };
 
 } // namespace fapi_adaptor
