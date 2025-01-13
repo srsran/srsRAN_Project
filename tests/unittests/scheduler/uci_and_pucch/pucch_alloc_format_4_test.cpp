@@ -428,7 +428,7 @@ TEST_F(test_pucch_allocator_format_4, test_harq_alloc_21bits_over_sr_and_csi_fai
   constexpr unsigned nof_harq_bits = 21;
   add_sr_grant();
   add_csi_grant();
-  for (int i = 0; i != nof_harq_bits - 1; i++) {
+  for (int i = 0; i != nof_harq_bits - 1; ++i) {
     add_harq_grant();
   }
 
