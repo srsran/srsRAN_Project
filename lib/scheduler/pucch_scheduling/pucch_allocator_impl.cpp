@@ -672,9 +672,7 @@ existing_pucch_pdus_handler::existing_pucch_pdus_handler(rnti_t                c
         } else {
           srsran_assertion_failure("Invalid HARQ/SR bits for PUCCH Format 0");
         }
-      }
-
-      else if (pucch.format == pucch_format::FORMAT_1) {
+      } else if (pucch.format == pucch_format::FORMAT_1) {
         if (pucch.format_1.sr_bits == sr_nof_bits::one and pucch_res_cfg != nullptr and
             sr_id_match(*pucch_res_cfg, pucch)) {
           sr_pdu = &pucch;
@@ -682,27 +680,21 @@ existing_pucch_pdus_handler::existing_pucch_pdus_handler(rnti_t                c
           harq_pdu = &pucch;
         }
         ++pdus_cnt;
-      }
-
-      else if (pucch.format == pucch_format::FORMAT_2) {
+      } else if (pucch.format == pucch_format::FORMAT_2) {
         if (pucch.format_2.csi_part1_bits != 0U and pucch.format_2.harq_ack_nof_bits == 0U) {
           csi_pdu = &pucch;
         } else {
           harq_pdu = &pucch;
         }
         ++pdus_cnt;
-      }
-
-      else if (pucch.format == pucch_format::FORMAT_3) {
+      } else if (pucch.format == pucch_format::FORMAT_3) {
         if (pucch.format_3.csi_part1_bits != 0U and pucch.format_3.harq_ack_nof_bits == 0U) {
           csi_pdu = &pucch;
         } else {
           harq_pdu = &pucch;
         }
         ++pdus_cnt;
-      }
-
-      else if (pucch.format == pucch_format::FORMAT_4) {
+      } else if (pucch.format == pucch_format::FORMAT_4) {
         if (pucch.format_4.csi_part1_bits != 0U and pucch.format_4.harq_ack_nof_bits == 0U) {
           csi_pdu = &pucch;
         } else {
@@ -1959,8 +1951,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
     logger.debug("rnti={}: PUCCH PDU on F4 HARQ resource updated: slot={} p_ind={} format={} prbs={} sym={} occ_idx={} "
-                 "occ_len={} h_bits={} "
-                 "sr_bits={} csi1_bits={}",
+                 "occ_len={} h_bits={} sr_bits={} csi1_bits={}",
                  current_grants.rnti,
                  pucch_slot_alloc.slot,
                  current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
@@ -2617,8 +2608,7 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
                                  harq_res.bits.sr_bits,
                                  harq_res.bits.csi_part1_nof_bits);
         logger.debug("rnti={}: PUCCH PDU allocated on F4 HARQ resource: slot={} p_ind={} format={} prbs={} sym={} "
-                     "occ_idx={} occ_len={} h_bits={} "
-                     "sr_bits={} csi1_bits={}",
+                     "occ_idx={} occ_len={} h_bits={} sr_bits={} csi1_bits={}",
                      crnti,
                      pucch_slot_alloc.slot,
                      harq_res.harq_id.pucch_res_ind,
