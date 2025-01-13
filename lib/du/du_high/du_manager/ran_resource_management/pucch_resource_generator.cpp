@@ -90,7 +90,7 @@ static std::vector<pucch_grant> compute_f0_res(unsigned                         
 
         // Allocate resources for second hop.
         res_list.emplace_back(pucch_grant{
-            .format = pucch_format::FORMAT_2, .symbols = symbols, .prbs = freq_hop_prbs, .freq_hop_grant = prbs});
+            .format = pucch_format::FORMAT_0, .symbols = symbols, .prbs = freq_hop_prbs, .freq_hop_grant = prbs});
         if (res_list.size() == nof_res_f0) {
           break;
         }
