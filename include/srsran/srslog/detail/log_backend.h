@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/srslog/shared_types.h"
+#include "fmt/args.h"
 #include "fmt/core.h"
 
 namespace srslog {
