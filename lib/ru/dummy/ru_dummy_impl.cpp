@@ -10,7 +10,7 @@
 
 #include "ru_dummy_impl.h"
 #include "srsran/ran/subcarrier_spacing.h"
-#include "srsran/ru/ru_dummy_configuration.h"
+#include "srsran/ru/dummy/ru_dummy_configuration.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_assert.h"

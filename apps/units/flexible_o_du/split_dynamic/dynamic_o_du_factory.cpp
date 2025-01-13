@@ -13,7 +13,7 @@
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_factories.h"
 #include "apps/units/flexible_o_du/split_8/helpers/ru_sdr_factories.h"
 #include "dynamic_o_du_translators.h"
-#include "srsran/ru/ru_dummy_factory.h"
+#include "srsran/ru/dummy/ru_dummy_factory.h"
 
 using namespace srsran;
 

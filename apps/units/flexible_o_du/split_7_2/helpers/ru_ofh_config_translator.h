@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/ru/ru_ofh_configuration.h"
+#include "srsran/ru/ofh/ru_ofh_configuration.h"
 
 namespace srsran {
 

@@ -26,12 +26,12 @@ flexible_o_du_impl::flexible_o_du_impl(unsigned nof_cells_) :
 void flexible_o_du_impl::start()
 {
   du->get_power_controller().start();
-  ru->get_controller().start();
+  ru->get_controller().get_operation_controller().start();
 }
 
 void flexible_o_du_impl::stop()
 {
-  ru->get_controller().stop();
+  ru->get_controller().get_operation_controller().stop();
   du->get_power_controller().stop();
 }
 

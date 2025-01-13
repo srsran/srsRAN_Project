@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/ru/ru_ofh_factory.h"
+#include "srsran/ru/ofh/ru_ofh_factory.h"
 #include "ru_ofh_impl.h"
 #include "ru_ofh_rx_symbol_handler_impl.h"
 #include "srsran/ofh/ofh_factories.h"
