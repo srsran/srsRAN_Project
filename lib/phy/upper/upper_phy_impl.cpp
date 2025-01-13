@@ -29,7 +29,6 @@ static upper_phy_timing_notifier_dummy notifier_dummy;
 
 upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   logger(srslog::fetch_basic_logger("PHY", true)),
-  sector_id(config.sector_id),
   rx_buf_pool(std::move(config.rx_buf_pool)),
   dl_rg_pool(std::move(config.dl_rg_pool)),
   ul_rg_pool(std::move(config.ul_rg_pool)),
@@ -71,9 +70,6 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
                                                                         ul_ports,
                                                                         config.rx_symbol_printer_prach);
   }
-
-  // :TODO: Add a logger here.
-  (void)sector_id;
 }
 
 upper_phy_error_handler& upper_phy_impl::get_error_handler()

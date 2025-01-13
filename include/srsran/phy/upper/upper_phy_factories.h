@@ -29,10 +29,7 @@ class upper_phy_rg_gateway;
 class upper_phy_rx_symbol_request_notifier;
 
 /// Configuration parameters for uplink processors.
-struct uplink_processor_config {
-  /// Base station sector identifier.
-  unsigned sector_id;
-};
+struct uplink_processor_config {};
 
 /// Uplink processor factory.
 class uplink_processor_factory
@@ -64,20 +61,16 @@ public:
 
 /// Describes all uplink processors in a pool.
 struct uplink_processor_pool_config {
-  /// Uplink processors for a given sector and numerology.
-  struct sector_ul_processors {
-    /// Base station sector identifier.
-    unsigned sector;
+  /// Set of uplink processors for a given numerology.
+  struct uplink_processor_set {
     /// Subcarrier spacing.
     subcarrier_spacing scs;
     /// Pointers to the actual uplink processors.
     std::vector<std::unique_ptr<uplink_processor>> procs;
   };
 
-  /// Collection of all uplink processors, organized by radio sector and numerology.
-  std::vector<sector_ul_processors> ul_processors;
-  /// Number of radio sectors.
-  unsigned num_sectors;
+  /// Collection of all uplink processors, organized by numerology.
+  std::vector<uplink_processor_set> ul_processors;
 };
 
 /// \brief Creates and returns an uplink processor pool.
@@ -181,16 +174,16 @@ create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config&
 
 /// Describes all downlink processors in a pool.
 struct downlink_processor_pool_config {
-  /// Downlink processors for a given sector and numerology.
-  struct sector_dl_processor {
+  /// Set of downlink processors for a given numerology.
+  struct downlink_processor_set {
     /// Subcarrier spacing.
     subcarrier_spacing scs;
     /// Pointers to the actual downlink processors.
     std::vector<std::unique_ptr<downlink_processor_controller>> procs;
   };
 
-  /// Collection of all downlink processors, organized by radio sector and numerology.
-  std::vector<sector_dl_processor> dl_processors;
+  /// Collection of all downlink processors, organized by numerology.
+  std::vector<downlink_processor_set> dl_processors;
 };
 
 /// \brief Creates and returns a downlink processor pool.
@@ -243,8 +236,6 @@ struct upper_phy_config {
   unsigned ldpc_decoder_iterations;
   /// Set to true to enable the LDPC decoder early stop.
   bool ldpc_decoder_early_stop;
-  /// Radio sector identifier.
-  unsigned sector_id;
   /// Number of transmit antenna ports.
   unsigned nof_tx_ports;
   /// Number of receive antenna ports.

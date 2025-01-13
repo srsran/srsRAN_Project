@@ -20,7 +20,7 @@ TEST(DownlingProcessorPool, ProcessorOk)
   subcarrier_spacing             scs = subcarrier_spacing::kHz30;
   unsigned                       id  = 0;
 
-  downlink_processor_pool_config::sector_dl_processor info{scs, {}};
+  downlink_processor_pool_config::downlink_processor_set info{scs, {}};
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(id));
   dl_procs.dl_processors.push_back(std::move(info));
 
@@ -38,7 +38,7 @@ TEST(DownlingProcessorPool, SameSlotSameProcessor)
   subcarrier_spacing             scs = subcarrier_spacing::kHz30;
   unsigned                       id  = 0;
 
-  downlink_processor_pool_config::sector_dl_processor info{scs, {}};
+  downlink_processor_pool_config::downlink_processor_set info{scs, {}};
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(id));
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(id + 1));
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(id + 2));
@@ -57,11 +57,11 @@ TEST(DownlingProcessorPool, SameSlotSameProcessor)
 
 TEST(DownlingProcessorPool, ConsecutiveProcessorOk)
 {
-  downlink_processor_pool_config                      dl_procs;
-  subcarrier_spacing                                  scs = subcarrier_spacing::kHz30;
-  unsigned                                            id0 = 0;
-  unsigned                                            id1 = 1;
-  downlink_processor_pool_config::sector_dl_processor info{scs, {}};
+  downlink_processor_pool_config                         dl_procs;
+  subcarrier_spacing                                     scs = subcarrier_spacing::kHz30;
+  unsigned                                               id0 = 0;
+  unsigned                                               id1 = 1;
+  downlink_processor_pool_config::downlink_processor_set info{scs, {}};
 
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(id0));
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(id1));
@@ -80,9 +80,9 @@ TEST(DownlingProcessorPool, ConsecutiveProcessorOk)
 
 TEST(DownlingProcessorPool, CircularBufferOk)
 {
-  downlink_processor_pool_config                      dl_procs;
-  subcarrier_spacing                                  scs = subcarrier_spacing::kHz30;
-  downlink_processor_pool_config::sector_dl_processor info{scs, {}};
+  downlink_processor_pool_config                         dl_procs;
+  subcarrier_spacing                                     scs = subcarrier_spacing::kHz30;
+  downlink_processor_pool_config::downlink_processor_set info{scs, {}};
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(0));
   info.procs.emplace_back(std::make_unique<downlink_processor_spy>(1));
   dl_procs.dl_processors.push_back(std::move(info));
@@ -105,7 +105,7 @@ TEST(DownlingProcessorPool, TwoNumerologiesTwoProcessors)
 {
   downlink_processor_pool_config dl_procs;
   for (auto scs : {subcarrier_spacing::kHz30, subcarrier_spacing::kHz120}) {
-    downlink_processor_pool_config::sector_dl_processor info{scs, {}};
+    downlink_processor_pool_config::downlink_processor_set info{scs, {}};
     info.procs.emplace_back(std::make_unique<downlink_processor_spy>(to_numerology_value(scs) * 10 + 0));
     info.procs.emplace_back(std::make_unique<downlink_processor_spy>(to_numerology_value(scs) * 10 + 1));
     dl_procs.dl_processors.push_back(std::move(info));

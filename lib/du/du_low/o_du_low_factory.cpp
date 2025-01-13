@@ -30,7 +30,7 @@ static fapi_adaptor::phy_fapi_adaptor_config generate_fapi_adaptor_config(const 
     const upper_phy_config& upper_cfg = odu_low_cfg.du_low_cfg.cells[i].upper_phy_cfg;
     const du_cell_config&   cell_cfg  = du_cell[i];
     out_config.sectors.push_back(
-        {upper_cfg.sector_id,
+        {i,
          upper_cfg.nof_slots_request_headroom,
          cell_cfg,
          std::vector<uint8_t>(odu_low_cfg.prach_ports[i].begin(), odu_low_cfg.prach_ports[i].end())});
