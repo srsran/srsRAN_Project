@@ -81,10 +81,18 @@ public:
   /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ.
   /// \return The number of DL pending bytes that are not already allocated in a DL HARQ.
   unsigned pending_dl_newtx_bytes() const;
+  unsigned pending_dl_newtx_bytes(lcid_t lcid) const { return contains(lcid) ? u.pending_dl_newtx_bytes(lcid) : 0; }
 
   /// \brief Computes the number of UL pending bytes in bearers belonging to this slice that are not already allocated
   /// in a UL HARQ.
   unsigned pending_ul_newtx_bytes() const;
+
+  /// \brief Computes the number of UL bytes that are yet to be received by the scheduler. This includes the UL bytes
+  /// of grants not yet scheduled and the UL bytes of already scheduled grants whose CRC has not reached the scheduled.
+  unsigned pending_ul_unacked_bytes(lcg_id_t lcg_id) const
+  {
+    return contains(lcg_id) ? u.ul_logical_channels().pending_bytes(lcg_id) : 0;
+  }
 
   /// \brief Returns whether a SR indication handling is pending.
   bool has_pending_sr() const;

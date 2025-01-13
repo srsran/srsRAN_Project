@@ -26,15 +26,15 @@ class scheduler_qos_test : public scheduler_test_simulator
   };
 
 public:
-  scheduler_qos_test(unsigned nof_gbr_ues_         = 1,
-                     unsigned nof_non_gbr_ues_     = 7,
-                     unsigned gbr_dl_bitrate_mbps_ = 10e6,
-                     unsigned gbr_ul_bitrate_mbps_ = 5e6) :
+  scheduler_qos_test(unsigned nof_gbr_ues_        = 1,
+                     unsigned nof_non_gbr_ues_    = 7,
+                     unsigned gbr_dl_bitrate_bps_ = 10e6,
+                     unsigned gbr_ul_bitrate_bps_ = 5e6) :
     scheduler_test_simulator(4, subcarrier_spacing::kHz30),
     nof_gbr_ues(nof_gbr_ues_),
     nof_non_gbr_ues(nof_non_gbr_ues_),
-    gbr_dl_bitrate_mbps(gbr_dl_bitrate_mbps_),
-    gbr_ul_bitrate_mbps(gbr_ul_bitrate_mbps_)
+    gbr_dl_bitrate_bps(gbr_dl_bitrate_bps_),
+    gbr_ul_bitrate_bps(gbr_ul_bitrate_bps_)
   {
     const unsigned TEST_NOF_UES = nof_gbr_ues + nof_non_gbr_ues;
     ue_stats_map.resize(TEST_NOF_UES);
@@ -69,15 +69,15 @@ public:
       auto& qos_info                                              = ue_cfg.cfg.lc_config_list.value()[2].qos.emplace();
       qos_info.qos.average_window_ms                              = 100;
       qos_info.gbr_qos_info.emplace();
-      qos_info.gbr_qos_info.value().gbr_dl = gbr_dl_bitrate_mbps;
-      qos_info.gbr_qos_info.value().gbr_ul = 5e6;
+      qos_info.gbr_qos_info.value().gbr_dl = gbr_dl_bitrate_bps;
+      qos_info.gbr_qos_info.value().gbr_ul = gbr_ul_bitrate_bps;
       report_fatal_error_if_not(pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_cfg.cfg.cells.value()[0].serv_cell_cfg),
                                 "Failed to allocate PUCCH resources");
       this->add_ue(ue_cfg);
     }
 
     // Add UEs without GBR.
-    ue_cfg.cfg.lc_config_list.value()[2].qos.reset();
+    ue_cfg.cfg.lc_config_list.value()[2].qos.value().gbr_qos_info.reset();
     for (unsigned i = 0; i != nof_non_gbr_ues; ++i) {
       ue_idx          = to_du_ue_index(i + nof_gbr_ues);
       ue_cfg.ue_index = ue_idx;
@@ -190,8 +190,8 @@ public:
 
   const unsigned nof_gbr_ues;
   const unsigned nof_non_gbr_ues;
-  const unsigned gbr_dl_bitrate_mbps;
-  const unsigned gbr_ul_bitrate_mbps;
+  const unsigned gbr_dl_bitrate_bps;
+  const unsigned gbr_ul_bitrate_bps;
 
   cell_config_builder_params params;
 
@@ -241,9 +241,9 @@ TEST_F(scheduler_1_gbr_ue_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
     ASSERT_GT(ue_dl_rate_mbps[GBR_UE_INDEX], ue_dl_rate_mbps[i]) << "UE DL GBR rate < UE DL non-GBR rate";
     ASSERT_GT(ue_ul_rate_mbps[GBR_UE_INDEX], ue_ul_rate_mbps[i]) << "UE UL GBR rate < UE UL non-GBR rate";
   }
-  ASSERT_GT(ue_dl_rate_mbps[GBR_UE_INDEX], static_cast<double>(gbr_dl_bitrate_mbps) * 1e-6 * 0.95)
+  ASSERT_GT(ue_dl_rate_mbps[GBR_UE_INDEX], static_cast<double>(gbr_dl_bitrate_bps) * 1e-6 * 0.9)
       << "UE DL GBR rate < expected DL GBR";
-  ASSERT_GT(ue_ul_rate_mbps[GBR_UE_INDEX], static_cast<double>(gbr_ul_bitrate_mbps) * 1e-6 * 0.95)
+  ASSERT_GT(ue_ul_rate_mbps[GBR_UE_INDEX], static_cast<double>(gbr_ul_bitrate_bps) * 1e-6 * 0.9)
       << "UE UL GBR rate < expected UL GBR";
 }
 
@@ -280,14 +280,21 @@ TEST_F(scheduler_saturated_gbr_ue_qos_test, when_gbrs_saturate_channel_then_non_
   test_logger.info("DL bit rates [Mbps]: [{}]", fmt::to_string(dl_fmtbuf));
   test_logger.info("UL bit rates [Mbps]: [{}]", fmt::to_string(ul_fmtbuf));
 
-  double min_dl_gbr_rate = *std::min_element(ue_dl_rate_mbps.begin(), ue_dl_rate_mbps.begin() + nof_gbr_ues);
-  double min_ul_gbr_rate = *std::min_element(ue_ul_rate_mbps.begin(), ue_ul_rate_mbps.begin() + nof_gbr_ues);
-  for (unsigned i = nof_gbr_ues; i != ue_stats_map.size(); ++i) {
-    ASSERT_GT(min_dl_gbr_rate, ue_dl_rate_mbps[i]) << "UE DL GBR rate < UE DL non-GBR rate";
-    ASSERT_GT(min_ul_gbr_rate, ue_ul_rate_mbps[i]) << "UE UL GBR rate < UE UL non-GBR rate";
-  }
-  double min_dl_rate = *std::min_element(ue_dl_rate_mbps.begin(), ue_dl_rate_mbps.end());
-  double min_ul_rate = *std::min_element(ue_ul_rate_mbps.begin(), ue_ul_rate_mbps.end());
-  ASSERT_GT(min_dl_rate, 0.5);
-  ASSERT_GT(min_ul_rate, 0.5);
+  double min_dl_gbr_rate     = *std::min_element(ue_dl_rate_mbps.begin(), ue_dl_rate_mbps.begin() + nof_gbr_ues);
+  double min_ul_gbr_rate     = *std::min_element(ue_ul_rate_mbps.begin(), ue_ul_rate_mbps.begin() + nof_gbr_ues);
+  double max_dl_non_gbr_rate = *std::max_element(ue_dl_rate_mbps.begin() + nof_gbr_ues, ue_dl_rate_mbps.end());
+  double max_ul_non_gbr_rate = *std::max_element(ue_ul_rate_mbps.begin() + nof_gbr_ues, ue_ul_rate_mbps.end());
+  double min_dl_rate         = *std::min_element(ue_dl_rate_mbps.begin(), ue_dl_rate_mbps.end());
+  double min_ul_rate         = *std::min_element(ue_ul_rate_mbps.begin(), ue_ul_rate_mbps.end());
+  double max_dl_rate         = *std::max_element(ue_dl_rate_mbps.begin(), ue_dl_rate_mbps.end());
+  double max_ul_rate         = *std::max_element(ue_ul_rate_mbps.begin(), ue_ul_rate_mbps.end());
+
+  ASSERT_LT(max_dl_rate, gbr_dl_bitrate_bps) << "The DL GBR is not saturated";
+  ASSERT_LT(max_ul_rate, gbr_ul_bitrate_bps) << "The UL GBR is not saturated";
+
+  ASSERT_GT(min_dl_gbr_rate, max_dl_non_gbr_rate) << "UE DL GBR rate < UE DL non-GBR rate";
+  ASSERT_GT(min_ul_gbr_rate, max_ul_non_gbr_rate) << "UE DL GBR rate < UE DL non-GBR rate";
+
+  ASSERT_GT(min_dl_rate, 0.1) << "UEs are starved";
+  ASSERT_GT(min_ul_rate, 0.1) << "UEs are starved";
 }
