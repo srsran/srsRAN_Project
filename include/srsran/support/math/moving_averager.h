@@ -112,7 +112,9 @@ public:
     sum_samples += sample - sliding_window[write_pos];
     push_sample(sample);
     if (write_pos == 0) {
-      // Refresh moving average after samples.size() pushes.
+      // Double operations suffer from loss of precision. So, the precision error can accummulate in \c sum_samples.
+      // To avoid this, we recompute the average inside the sliding window every N number of samples, where the N is
+      // the size of the sliding window.
       sum_samples = 0;
       for (double samp : sliding_window) {
         sum_samples += samp;
