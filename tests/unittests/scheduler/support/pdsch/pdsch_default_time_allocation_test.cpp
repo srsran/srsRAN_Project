@@ -42,7 +42,7 @@ using namespace srsran;
 // Combined parameters.
 using pdsch_default_time_allocation_params = std::tuple<unsigned, dmrs_typeA_position>;
 
-ofdm_symbol_range s_and_len(unsigned start, unsigned dur)
+static ofdm_symbol_range s_and_len(unsigned start, unsigned dur)
 {
   return ofdm_symbol_range(start, start + dur);
 }

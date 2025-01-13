@@ -9,6 +9,7 @@
  */
 
 #include "pdsch_default_time_allocation.h"
+#include "srsran/scheduler/config/serving_cell_config.h"
 
 using namespace srsran;
 

@@ -18,7 +18,7 @@
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/scheduler/config/dmrs.h"
-#include "srsran/scheduler/config/pdsch_time_domain_resource.h"
+#include "srsran/scheduler/config/pxsch_time_domain_resource.h"
 #include "srsran/scheduler/result/vrb_alloc.h"
 #include <optional>
 
@@ -79,20 +79,6 @@ struct bwp_downlink_common {
   bwp_configuration   generic_params;
   pdcch_config_common pdcch_common;
   pdsch_config_common pdsch_common;
-};
-
-struct pusch_time_domain_resource_allocation {
-  /// Values: (0..32).
-  unsigned         k2;
-  sch_mapping_type map_type;
-  /// OFDM symbol boundaries for PUSCH. Network configures the fields so it does not cross the slot boundary.
-  ofdm_symbol_range symbols;
-
-  bool operator==(const pusch_time_domain_resource_allocation& rhs) const
-  {
-    return k2 == rhs.k2 && map_type == rhs.map_type && symbols == rhs.symbols;
-  }
-  bool operator!=(const pusch_time_domain_resource_allocation& rhs) const { return !(rhs == *this); }
 };
 
 /// \remark See TS 38.331, "PUSCH-ConfigCommon".

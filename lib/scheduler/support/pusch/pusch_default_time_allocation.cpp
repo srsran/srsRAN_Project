@@ -9,10 +9,21 @@
  */
 
 #include "pusch_default_time_allocation.h"
+#include "srsran/scheduler/config/serving_cell_config.h"
 
 using namespace srsran;
 
+/// Reserved default PUSCH time-domain allocation. It indicates the configuration is invalid.
+static constexpr pusch_time_domain_resource_allocation PUSCH_DEFAULT_TIME_ALLOCATION_RESERVED = {};
+
 namespace {
+
+// Helper to construct ofdm symbol range
+constexpr ofdm_symbol_range s_and_len(unsigned s, unsigned l)
+{
+  return ofdm_symbol_range::start_and_len(s, l);
+}
+
 unsigned pusch_default_time_allocation_default_A_get_j(subcarrier_spacing scs)
 {
   // TS38.214 Table 6.1.2.1.1-4. Definition of value j.
@@ -23,33 +34,34 @@ unsigned pusch_default_time_allocation_default_A_get_j(subcarrier_spacing scs)
   return values[numerology];
 }
 
-pusch_default_time_allocation_config pusch_default_time_allocation_default_A_get_normal(unsigned           row_index,
-                                                                                        subcarrier_spacing scs)
+pusch_time_domain_resource_allocation pusch_default_time_allocation_default_A_get_normal(unsigned           row_index,
+                                                                                         subcarrier_spacing scs)
 {
   // TS38.214 Table 6.1.2.1.1-2. Default PUSCH time domain resource allocation A for normal CP.
-  static const std::array<pusch_default_time_allocation_config, 16> TABLE = {{{sch_mapping_type::typeA, 0, 0, 14},
-                                                                              {sch_mapping_type::typeA, 0, 0, 12},
-                                                                              {sch_mapping_type::typeA, 0, 0, 10},
-                                                                              {sch_mapping_type::typeB, 0, 2, 10},
-                                                                              {sch_mapping_type::typeB, 0, 4, 10},
-                                                                              {sch_mapping_type::typeB, 0, 4, 8},
-                                                                              {sch_mapping_type::typeB, 0, 4, 6},
-                                                                              {sch_mapping_type::typeA, 1, 0, 14},
-                                                                              {sch_mapping_type::typeA, 1, 0, 12},
-                                                                              {sch_mapping_type::typeA, 1, 0, 10},
-                                                                              {sch_mapping_type::typeA, 2, 0, 14},
-                                                                              {sch_mapping_type::typeA, 2, 0, 12},
-                                                                              {sch_mapping_type::typeA, 2, 0, 10},
-                                                                              {sch_mapping_type::typeB, 0, 8, 6},
-                                                                              {sch_mapping_type::typeA, 3, 0, 14},
-                                                                              {sch_mapping_type::typeA, 3, 0, 10}}};
+  static const std::array<pusch_time_domain_resource_allocation, 16> TABLE = {
+      {{0, sch_mapping_type::typeA, s_and_len(0, 14)},
+       {0, sch_mapping_type::typeA, s_and_len(0, 12)},
+       {0, sch_mapping_type::typeA, s_and_len(0, 10)},
+       {0, sch_mapping_type::typeB, s_and_len(2, 10)},
+       {0, sch_mapping_type::typeB, s_and_len(4, 10)},
+       {0, sch_mapping_type::typeB, s_and_len(4, 8)},
+       {0, sch_mapping_type::typeB, s_and_len(4, 6)},
+       {1, sch_mapping_type::typeA, s_and_len(0, 14)},
+       {1, sch_mapping_type::typeA, s_and_len(0, 12)},
+       {1, sch_mapping_type::typeA, s_and_len(0, 10)},
+       {2, sch_mapping_type::typeA, s_and_len(0, 14)},
+       {2, sch_mapping_type::typeA, s_and_len(0, 12)},
+       {2, sch_mapping_type::typeA, s_and_len(0, 10)},
+       {0, sch_mapping_type::typeB, s_and_len(8, 6)},
+       {3, sch_mapping_type::typeA, s_and_len(0, 14)},
+       {3, sch_mapping_type::typeA, s_and_len(0, 10)}}};
 
   if (row_index >= TABLE.size()) {
     return PUSCH_DEFAULT_TIME_ALLOCATION_RESERVED;
   }
 
   // Select row.
-  pusch_default_time_allocation_config result = TABLE[row_index];
+  pusch_time_domain_resource_allocation result = TABLE[row_index];
 
   // Add parameter j.
   result.k2 += pusch_default_time_allocation_default_A_get_j(scs);
@@ -57,33 +69,34 @@ pusch_default_time_allocation_config pusch_default_time_allocation_default_A_get
   return result;
 }
 
-pusch_default_time_allocation_config pusch_default_time_allocation_default_A_get_extended(unsigned           row_index,
-                                                                                          subcarrier_spacing scs)
+pusch_time_domain_resource_allocation pusch_default_time_allocation_default_A_get_extended(unsigned           row_index,
+                                                                                           subcarrier_spacing scs)
 {
   // TS38.214 Table 6.1.2.1.1-3. Default PUSCH time domain resource allocation A for extended CP.
-  static const std::array<pusch_default_time_allocation_config, 16> TABLE = {{{sch_mapping_type::typeA, 0, 0, 8},
-                                                                              {sch_mapping_type::typeA, 0, 0, 12},
-                                                                              {sch_mapping_type::typeA, 0, 0, 10},
-                                                                              {sch_mapping_type::typeB, 0, 2, 10},
-                                                                              {sch_mapping_type::typeB, 0, 4, 4},
-                                                                              {sch_mapping_type::typeB, 0, 4, 8},
-                                                                              {sch_mapping_type::typeB, 0, 4, 6},
-                                                                              {sch_mapping_type::typeA, 1, 0, 8},
-                                                                              {sch_mapping_type::typeA, 1, 0, 12},
-                                                                              {sch_mapping_type::typeA, 1, 0, 10},
-                                                                              {sch_mapping_type::typeA, 2, 0, 6},
-                                                                              {sch_mapping_type::typeA, 2, 0, 12},
-                                                                              {sch_mapping_type::typeA, 2, 0, 10},
-                                                                              {sch_mapping_type::typeB, 0, 8, 4},
-                                                                              {sch_mapping_type::typeA, 3, 0, 8},
-                                                                              {sch_mapping_type::typeA, 3, 0, 10}}};
+  static const std::array<pusch_time_domain_resource_allocation, 16> TABLE = {
+      {{0, sch_mapping_type::typeA, s_and_len(0, 8)},
+       {0, sch_mapping_type::typeA, s_and_len(0, 12)},
+       {0, sch_mapping_type::typeA, s_and_len(0, 10)},
+       {0, sch_mapping_type::typeB, s_and_len(2, 10)},
+       {0, sch_mapping_type::typeB, s_and_len(4, 4)},
+       {0, sch_mapping_type::typeB, s_and_len(4, 8)},
+       {0, sch_mapping_type::typeB, s_and_len(4, 6)},
+       {1, sch_mapping_type::typeA, s_and_len(0, 8)},
+       {1, sch_mapping_type::typeA, s_and_len(0, 12)},
+       {1, sch_mapping_type::typeA, s_and_len(0, 10)},
+       {2, sch_mapping_type::typeA, s_and_len(0, 6)},
+       {2, sch_mapping_type::typeA, s_and_len(0, 12)},
+       {2, sch_mapping_type::typeA, s_and_len(0, 10)},
+       {0, sch_mapping_type::typeB, s_and_len(8, 4)},
+       {3, sch_mapping_type::typeA, s_and_len(0, 8)},
+       {3, sch_mapping_type::typeA, s_and_len(0, 10)}}};
 
   if (row_index >= TABLE.size()) {
     return PUSCH_DEFAULT_TIME_ALLOCATION_RESERVED;
   }
 
   // Select row.
-  pusch_default_time_allocation_config result = TABLE[row_index];
+  pusch_time_domain_resource_allocation result = TABLE[row_index];
 
   // Add parameter j.
   result.k2 += pusch_default_time_allocation_default_A_get_j(scs);
@@ -93,7 +106,7 @@ pusch_default_time_allocation_config pusch_default_time_allocation_default_A_get
 
 } // namespace
 
-pusch_default_time_allocation_config
+pusch_time_domain_resource_allocation
 srsran::pusch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index, subcarrier_spacing scs)
 {
   switch (cp) {
@@ -115,10 +128,7 @@ srsran::pusch_default_time_allocations_default_A_table(cyclic_prefix cp, subcarr
   auto table_builder = [](cyclic_prefix cp_, subcarrier_spacing scs_) {
     std::array<pusch_time_domain_resource_allocation, PUSCH_TD_RES_ALLOC_TABLE_SIZE> table;
     for (unsigned i = 0; i < PUSCH_TD_RES_ALLOC_TABLE_SIZE; ++i) {
-      pusch_default_time_allocation_config cfg = pusch_default_time_allocation_default_A_get(cp_, i, scs_);
-      table[i].k2                              = cfg.k2;
-      table[i].map_type                        = cfg.mapping_type;
-      table[i].symbols                         = {cfg.start_symbol, cfg.start_symbol + cfg.duration};
+      table[i] = pusch_default_time_allocation_default_A_get(cp_, i, scs_);
     }
     return table;
   };

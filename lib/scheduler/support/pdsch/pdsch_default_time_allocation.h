@@ -10,11 +10,17 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
 #include "srsran/ran/cyclic_prefix.h"
-#include "srsran/scheduler/config/pdsch_time_domain_resource.h"
-#include "srsran/scheduler/config/serving_cell_config.h"
+#include "srsran/ran/dmrs.h"
+#include "srsran/scheduler/config/pxsch_time_domain_resource.h"
 
 namespace srsran {
+
+struct search_space_configuration;
+struct pdsch_config_common;
+struct bwp_downlink_common;
+struct bwp_downlink_dedicated;
 
 /// \brief Determines the default PDSCH time-domain resource allocation A.
 ///
