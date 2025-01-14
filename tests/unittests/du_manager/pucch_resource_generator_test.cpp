@@ -78,8 +78,7 @@ std::ostream& operator<<(std::ostream& os, const pucch_gen_params& params)
         params.f2_intraslot_freq_hopping);
   } else if (params.nof_res_f3 != 0) {
     f2_f3_f4_str = fmt::format(
-        "F3: nof_res={} nof_symbols={} max_nof_rbs={} {} max_code_rate={} "
-        "freq_hop={} add_dmrs={} pi2_bpsk={}",
+        "F3: nof_res={} nof_symbols={} max_nof_rbs={} {} max_code_rate={} freq_hop={} add_dmrs={} pi2_bpsk={}",
         params.nof_res_f3,
         params.f3_nof_symbols,
         params.max_nof_rbs,
@@ -661,23 +660,30 @@ TEST_P(test_pucch_res_generator_params, test_pucch_res_given_number)
 
   std::variant<pucch_f1_params, pucch_f0_params> f0_f1_params;
   unsigned                                       nof_res_f0_f1;
+  pucch_format                                   set0_format;
   if (nof_res_f0 != 0) {
+    set0_format = pucch_format::FORMAT_0;
     f0_f1_params.emplace<pucch_f0_params>(params_f0);
     nof_res_f0_f1 = nof_res_f0;
   } else {
+    set0_format = pucch_format::FORMAT_1;
     f0_f1_params.emplace<pucch_f1_params>(params_f1);
     nof_res_f0_f1 = nof_res_f1;
   }
 
   std::variant<pucch_f2_params, pucch_f3_params, pucch_f4_params> f2_f3_f4_params;
   unsigned                                                        nof_res_f2_f3_f4;
+  pucch_format                                                    set1_format;
   if (nof_res_f2 != 0) {
+    set1_format = pucch_format::FORMAT_2;
     f2_f3_f4_params.emplace<pucch_f2_params>(params_f2);
     nof_res_f2_f3_f4 = nof_res_f2;
   } else if (nof_res_f3 != 0) {
+    set1_format = pucch_format::FORMAT_3;
     f2_f3_f4_params.emplace<pucch_f3_params>(params_f3);
     nof_res_f2_f3_f4 = nof_res_f3;
   } else {
+    set1_format = pucch_format::FORMAT_4;
     f2_f3_f4_params.emplace<pucch_f4_params>(params_f4);
     nof_res_f2_f3_f4 = nof_res_f4;
   }
@@ -685,8 +691,16 @@ TEST_P(test_pucch_res_generator_params, test_pucch_res_given_number)
   std::vector<pucch_resource> res_list = generate_cell_pucch_res_list(
       nof_res_f0_f1, nof_res_f2_f3_f4, f0_f1_params, f2_f3_f4_params, bwp_size, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
 
-  ASSERT_TRUE(res_list.size() > 0);
+  ASSERT_FALSE(res_list.empty());
   ASSERT_EQ(nof_res_f0_f1 + nof_res_f2_f3_f4, res_list.size());
+
+  // Check that the formats of each resource are the expected ones.
+  for (unsigned i = 0; i != nof_res_f0_f1; ++i) {
+    ASSERT_EQ(set0_format, res_list[i].format);
+  }
+  for (unsigned i = nof_res_f0_f1, i_end = res_list.size(); i != i_end; ++i) {
+    ASSERT_EQ(set1_format, res_list[i].format);
+  }
 
   for (const auto& pucch_res : res_list) {
     ASSERT_FALSE(grid.verify_collision(pucch_res));
