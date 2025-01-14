@@ -18,8 +18,8 @@
       requests: "60G"
       limits: "60G"
     ephemeral-storage:
-      requests: "6G"
-      limits: "6G"
+      requests: "50G"
+      limits: "50G"
     hugepages-1Gi:
       requests: 8Gi
       limits: 8Gi
