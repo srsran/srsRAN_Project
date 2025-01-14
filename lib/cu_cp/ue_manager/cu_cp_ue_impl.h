@@ -38,6 +38,11 @@ struct cu_cp_ue_context {
   bool reconfiguration_disabled = false;
 };
 
+struct cu_cp_ue_handover_context {
+  ue_index_t target_ue_index = ue_index_t::invalid;
+  uint8_t    rrc_reconfig_transaction_id;
+};
+
 class cu_cp_ue : public cu_cp_ue_impl_interface
 {
 public:
@@ -142,6 +147,8 @@ public:
 
   unique_timer& get_ue_release_timer() { return ue_release_timer; }
 
+  std::optional<cu_cp_ue_handover_context>& get_ho_context() { return ho_context; }
+
 private:
   // Common context.
   ue_index_t             ue_index = ue_index_t::invalid;
@@ -168,9 +175,10 @@ private:
   nrppa_cu_cp_ue_adapter nrppa_cu_cp_ue_ev_notifier;
 
   // CU-CP UE context.
-  rrc_ue_cu_cp_adapter         rrc_ue_cu_cp_ev_notifier;
-  cell_meas_manager_ue_context meas_context;
-  unique_timer                 ue_release_timer = {};
+  rrc_ue_cu_cp_adapter                     rrc_ue_cu_cp_ev_notifier;
+  cell_meas_manager_ue_context             meas_context;
+  unique_timer                             ue_release_timer = {};
+  std::optional<cu_cp_ue_handover_context> ho_context;
 };
 
 } // namespace srs_cu_cp

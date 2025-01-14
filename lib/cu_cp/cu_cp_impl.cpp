@@ -218,7 +218,26 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
     return reest_context;
   }
 
-  // check if a DRB and SRB2 were setup
+  // Stop the UE release timer if it is running.
+  if (old_ue->get_ue_release_timer().is_running()) {
+    logger.debug("ue={}: Stopping UE release timer", old_ue_index);
+    old_ue->get_ue_release_timer().stop();
+  }
+
+  // Cancel any ongoing handover transaction for the UE.
+  if (old_ue->get_ho_context().has_value()) {
+    logger.debug("ue={}: Cancelling handover transaction", old_ue_index);
+
+    auto* const target_ue = ue_mng.find_du_ue(old_ue->get_ho_context()->target_ue_index);
+    if (target_ue == nullptr) {
+      logger.debug("ue={}: Could not find UE", old_ue->get_ho_context()->target_ue_index);
+    } else {
+      target_ue->get_rrc_ue()->cancel_handover_reconfiguration_transaction(
+          old_ue->get_ho_context().value().rrc_reconfig_transaction_id);
+    }
+  }
+
+  // Check if a DRB and SRB2 were setup.
   if (old_ue->get_up_resource_manager().get_drbs().empty()) {
     logger.debug("ue={}: No DRB setup for this UE - rejecting RRC reestablishment", old_ue_index);
     reest_context.ue_index = old_ue_index;

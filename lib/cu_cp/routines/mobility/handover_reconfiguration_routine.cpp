@@ -66,6 +66,13 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
                                                       (uint8_t)ho_reconf_ctxt.transaction_id,
                                                       target_ue_release_timeout_ms});
 
+  // Store handover context in case of for possible re-establishment.
+  logger.debug("ue={}: Storing handover context", source_ue.get_ue_index());
+  cu_cp_ue_handover_context ue_ho_ctxt;
+  ue_ho_ctxt.target_ue_index             = target_ue_index;
+  ue_ho_ctxt.rrc_reconfig_transaction_id = (uint8_t)ho_reconf_ctxt.transaction_id;
+  source_ue.get_ho_context()             = ue_ho_ctxt;
+
   logger.debug("source_ue={} target_ue={}: \"{}\" finalized", source_ue.get_ue_index(), target_ue_index, name());
 
   CORO_RETURN(true);
