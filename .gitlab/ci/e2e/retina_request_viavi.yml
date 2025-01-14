@@ -38,21 +38,21 @@
       remote_path: /usr/local/bin/gnb
       is_executable: true
 
-# - name: metrics-server
-#   type: generic
-#   requirements:
-#     arch: amd64
-#     cpu:
-#       requests: 1
-#     memory:
-#       requests: "500Mi"
-#     ephemeral-storage:
-#       requests: "1G"
-#   labels: ["kubernetes.io/hostname=k8s-worker-uhd1"]
-#   environment:
-#     - URL: ${RETINA_METRICS_SERVER_URL}
-#     - ORG: ${RETINA_METRICS_SERVER_ORG}
-#     - BUCKET: ${RETINA_METRICS_SERVER_BUCKET}
-#     - TESTBED: ${RETINA_METRICS_SERVER_TESTBED}
-#     - TOKEN: ${RETINA_METRICS_SERVER_TOKEN}
-#   image: ${SRSGNB_REGISTRY_URI}/metrics_server:${METRICS_SERVER_VERSION}
+- name: metrics-server
+  type: generic
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 1
+    memory:
+      requests: "500Mi"
+    ephemeral-storage:
+      requests: "1G"
+  labels: ["kubernetes.io/hostname=k8s-worker-uhd1"]
+  environment:
+    - URL: ${RETINA_METRICS_SERVER_URL}
+    - ORG: ${RETINA_METRICS_SERVER_ORG}
+    - BUCKET: ${RETINA_METRICS_SERVER_BUCKET}
+    - TESTBED: ${RETINA_METRICS_SERVER_TESTBED}
+    - TOKEN: ${RETINA_METRICS_SERVER_TOKEN}
+  image: ${SRSGNB_REGISTRY_URI}/metrics_server:${METRICS_SERVER_VERSION}

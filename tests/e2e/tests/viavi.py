@@ -223,6 +223,7 @@ def test_viavi(
     # Clients
     gnb: GNBStub,
     viavi: Viavi,
+    metrics_server: MetricServerInfo,
     # Test info
     metrics_summary: MetricsSummary,
     test_declaration: _ViaviConfiguration,
@@ -244,7 +245,7 @@ def test_viavi(
         # Clients
         gnb=gnb,
         viavi=viavi,
-        metrics_server=None,
+        metrics_server=metrics_server,
         # Test info
         metrics_summary=metrics_summary,
         test_declaration=test_declaration,
@@ -278,6 +279,7 @@ def test_viavi_debug(
     # Clients
     gnb: GNBStub,
     viavi: Viavi,
+    metrics_server: MetricServerInfo,
     # Test info
     metrics_summary: MetricsSummary,
     test_declaration: _ViaviConfiguration,
@@ -299,7 +301,7 @@ def test_viavi_debug(
         # Clients
         gnb=gnb,
         viavi=viavi,
-        metrics_server=None,
+        metrics_server=metrics_server,
         # Test info
         metrics_summary=metrics_summary,
         test_declaration=test_declaration,
