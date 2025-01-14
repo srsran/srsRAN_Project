@@ -50,25 +50,23 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
   CORO_AWAIT_VALUE(ue_context_mod_response,
                    source_f1ap_ue_ctxt_mng.handle_ue_context_modification_request(ue_context_mod_request));
 
-  if (ue_context_mod_response.success) {
-    // Initialize UE release timer.
-    initialize_ue_release_timer();
-
-    CORO_AWAIT_VALUE(procedure_result,
-                     cu_cp_handler.handle_handover_reconfiguration_sent(
-                         target_ue_index, ho_reconf_ctxt.transaction_id, ue_release_timeout_ms));
-  } else {
+  if (!ue_context_mod_response.success) {
     logger.debug(
         "source_ue={} target_ue={}: UE context modification failed", source_ue.get_ue_index(), target_ue_index);
-  }
-
-  if (procedure_result) {
-    logger.debug("source_ue={} target_ue={}: \"{}\" finalized", source_ue.get_ue_index(), target_ue_index, name());
-  } else {
     logger.debug("source_ue={} target_ue={}: \"{}\" failed", source_ue.get_ue_index(), target_ue_index, name());
+    CORO_EARLY_RETURN(false);
   }
 
-  CORO_RETURN(procedure_result);
+  // Initialize UE release timer for source UE.
+  initialize_ue_release_timer(source_ue.get_ue_index());
+
+  // Notify CU-CP that RRC reconfiguration was sent.
+  cu_cp_handler.handle_handover_reconfiguration_sent(
+      target_ue_index, (uint8_t)ho_reconf_ctxt.transaction_id, target_ue_release_timeout_ms);
+
+  logger.debug("source_ue={} target_ue={}: \"{}\" finalized", source_ue.get_ue_index(), target_ue_index, name());
+
+  CORO_RETURN(true);
 }
 
 void handover_reconfiguration_routine::generate_ue_context_modification_request()
@@ -81,7 +79,7 @@ void handover_reconfiguration_routine::generate_ue_context_modification_request(
   ue_context_mod_request.tx_action_ind = f1ap_tx_action_ind::stop;
 }
 
-void handover_reconfiguration_routine::initialize_ue_release_timer()
+void handover_reconfiguration_routine::initialize_ue_release_timer(ue_index_t ue_index)
 {
   // Unpack MasterCellGroup to extract T304.
   asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
@@ -90,6 +88,8 @@ void handover_reconfiguration_routine::initialize_ue_release_timer()
     report_fatal_error("Failed to unpack MasterCellGroupCfg");
   }
   unsigned t304_ms = cell_group_cfg.sp_cell_cfg.recfg_with_sync.t304.to_number();
+  target_ue_release_timeout_ms =
+      std::chrono::milliseconds{t304_ms + /*We add 1s of extra time for the UE to reestablish*/ 1000};
 
   // Unpack SIB1 to extract T311.
   asn1::rrc_nr::sib1_s sib1_msg;
@@ -97,15 +97,14 @@ void handover_reconfiguration_routine::initialize_ue_release_timer()
   if (sib1_msg.unpack(bref2) != asn1::SRSASN_SUCCESS) {
     report_fatal_error("Failed to unpack SIB1");
   }
+  unsigned t301_ms = sib1_msg.ue_timers_and_consts.t301.to_number();
   unsigned t311_ms = sib1_msg.ue_timers_and_consts.t311.to_number();
 
-  ue_release_timeout_ms =
-      std::chrono::milliseconds{t304_ms + t311_ms + /*We add 1s of extra time for the UE to reestablish*/ 1000};
-
   cu_cp_handler.initialize_ue_release_timer(
-      source_ue.get_ue_index(),
-      ue_release_timeout_ms,
-      cu_cp_ue_context_release_request{source_ue.get_ue_index(),
+      ue_index,
+      std::chrono::milliseconds{t301_ms + t304_ms + t311_ms +
+                                /*We add 1s of extra time for the UE to reestablish*/ 1000},
+      cu_cp_ue_context_release_request{ue_index,
                                        source_ue.get_up_resource_manager().get_pdu_sessions(),
                                        ngap_cause_radio_network_t::ho_fail_in_target_5_gc_ngran_node_or_target_sys});
 }

@@ -35,7 +35,7 @@ public:
 
 private:
   void generate_ue_context_modification_request();
-  void initialize_ue_release_timer();
+  void initialize_ue_release_timer(ue_index_t ue_index);
 
   // (sub-)routine requests
   const rrc_reconfiguration_procedure_request request;
@@ -49,7 +49,7 @@ private:
   srslog::basic_logger& logger;
 
   // (sub-)routine results
-  std::chrono::milliseconds               ue_release_timeout_ms;
+  std::chrono::milliseconds               target_ue_release_timeout_ms;
   rrc_ue_handover_reconfiguration_context ho_reconf_ctxt;
   f1ap_ue_context_modification_response   ue_context_mod_response;
   bool                                    procedure_result = false;
