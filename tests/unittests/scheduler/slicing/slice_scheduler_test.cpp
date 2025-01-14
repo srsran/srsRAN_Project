@@ -183,15 +183,9 @@ TEST_F(default_slice_scheduler_test, returns_only_dl_pending_bytes_of_bearers_be
 
   ASSERT_NE(this->add_ue(ue_idx), nullptr);
   // Push buffer state indication for DRB.
-  dl_buffer_state_indication_message ind{};
-  ind.ue_index = ue_idx;
-  ind.lcid     = LCID_MIN_DRB;
-  ind.bs       = drb_pending_bytes;
-  this->ues[ue_idx].handle_dl_buffer_state_indication(ind);
+  this->ues[ue_idx].handle_dl_buffer_state_indication(LCID_MIN_DRB, drb_pending_bytes);
   // Push buffer state indication for SRB.
-  ind.lcid = LCID_SRB1;
-  ind.bs   = srb_pending_bytes;
-  this->ues[ue_idx].handle_dl_buffer_state_indication(ind);
+  this->ues[ue_idx].handle_dl_buffer_state_indication(LCID_SRB1, srb_pending_bytes);
 
   run_slot();
 

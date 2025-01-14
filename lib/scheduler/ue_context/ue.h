@@ -117,7 +117,7 @@ public:
   bool is_reconfig_ongoing() const { return reconf_ongoing; }
 
   /// \brief Handles DL Buffer State indication.
-  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg);
+  void handle_dl_buffer_state_indication(lcid_t lcid, unsigned bs, slot_point hol_toa = {});
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.

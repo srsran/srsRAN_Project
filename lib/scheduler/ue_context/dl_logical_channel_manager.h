@@ -117,10 +117,11 @@ public:
   }
 
   /// \brief Update DL buffer status for a given LCID.
-  void handle_dl_buffer_status_indication(lcid_t lcid, unsigned buffer_status)
+  void handle_dl_buffer_status_indication(lcid_t lcid, unsigned buffer_status, slot_point hol_toa = {})
   {
     srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
-    channels[lcid].buf_st = buffer_status;
+    channels[lcid].buf_st  = buffer_status;
+    channels[lcid].hol_toa = hol_toa;
   }
 
   /// \brief Enqueue new MAC CE to be scheduled.
@@ -157,6 +158,8 @@ private:
     moving_averager<unsigned> avg_bytes_per_slot;
     /// Current slot sched bytes.
     unsigned last_sched_bytes = 0;
+    /// Head-of-line (HOL) time-of-arrival
+    slot_point hol_toa;
 
     void reset();
   };

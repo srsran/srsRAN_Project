@@ -19,7 +19,11 @@ namespace srsran {
 struct mac_dl_buffer_state_indication_message {
   du_ue_index_t ue_index;
   lcid_t        lcid;
-  unsigned      bs;
+  /// Buffer Occupancy value in bytes.
+  unsigned bs;
+  /// \brief Time-of-arival of the oldest PDU in the RLC entity Tx buffer. This metric is relevant for delay
+  /// prioritization in the scheduler.
+  std::optional<std::chrono::system_clock::time_point> hol_toa;
 };
 
 class mac_ue_control_information_handler

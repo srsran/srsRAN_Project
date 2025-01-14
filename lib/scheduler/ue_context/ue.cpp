@@ -149,9 +149,9 @@ void ue::set_config(const ue_configuration& new_cfg)
   }
 }
 
-void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg)
+void ue::handle_dl_buffer_state_indication(lcid_t lcid, unsigned bs, slot_point hol_toa)
 {
-  unsigned pending_bytes = msg.bs;
+  unsigned pending_bytes = bs;
 
   // Subtract bytes pending for this LCID in scheduled DL HARQ allocations (but not yet sent to the lower layers)
   // before forwarding to DL logical channel manager.
@@ -172,7 +172,7 @@ void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_mess
           rem_harqs--;
           if (h_dl->pdsch_slot() > last_sl_tx and h_dl->nof_retxs() == 0 and h_dl->is_waiting_ack()) {
             for (const auto& lc : h_dl->get_grant_params().lc_sched_info) {
-              if (lc.lcid.is_sdu() and lc.lcid.to_lcid() == msg.lcid) {
+              if (lc.lcid.is_sdu() and lc.lcid.to_lcid() == lcid) {
                 unsigned bytes_sched =
                     lc.sched_bytes.value() - std::min(lc.sched_bytes.value(), RLC_AM_HEADER_SIZE_ESTIM);
                 pending_bytes -= std::min(pending_bytes, bytes_sched);
@@ -184,7 +184,7 @@ void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_mess
     }
   }
 
-  dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, pending_bytes);
+  dl_lc_ch_mgr.handle_dl_buffer_status_indication(lcid, pending_bytes, hol_toa);
 }
 
 unsigned ue::pending_ul_newtx_bytes() const

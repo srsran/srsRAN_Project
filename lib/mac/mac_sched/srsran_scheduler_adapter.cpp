@@ -175,11 +175,25 @@ void srsran_scheduler_adapter::handle_dl_mac_ce_indication(const mac_ce_scheduli
 void srsran_scheduler_adapter::handle_dl_buffer_state_update(
     const mac_dl_buffer_state_indication_message& mac_dl_bs_ind)
 {
+  using namespace std::chrono;
+
   // Forward DL buffer state indication to the scheduler.
   dl_buffer_state_indication_message bs{};
   bs.ue_index = mac_dl_bs_ind.ue_index;
   bs.lcid     = mac_dl_bs_ind.lcid;
   bs.bs       = mac_dl_bs_ind.bs;
+  if (mac_dl_bs_ind.hol_toa.has_value()) {
+    // convert HOL TOA from chrono to slots.
+    int count = last_slot_count.load(std::memory_order_relaxed);
+    if (count >= 0) {
+      auto       tdiff = duration_cast<microseconds>(last_slot_tp - mac_dl_bs_ind.hol_toa.value());
+      slot_point last_sl_ind;
+      last_sl_ind.count_val = count;
+      bs.hol_toa            = last_sl_ind - static_cast<int>(tdiff.count());
+    }
+  }
+
+  // Forward DL buffer status.
   sched_impl->handle_dl_buffer_state_indication(bs);
 }
 
@@ -202,6 +216,11 @@ void srsran_scheduler_adapter::handle_crnti_ce_indication(du_ue_index_t old_ue_i
 
 const sched_result& srsran_scheduler_adapter::slot_indication(slot_point slot_tx, du_cell_index_t cell_idx)
 {
+  // Mark start of the slot in time (estimate).
+  if (last_slot_count.exchange(slot_tx.count_val, std::memory_order_relaxed) != slot_tx.count_val) {
+    last_slot_tp = std::chrono::high_resolution_clock::now();
+  }
+
   const sched_result& res = sched_impl->slot_indication(slot_tx, cell_idx);
 
   if (res.success) {

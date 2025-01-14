@@ -87,7 +87,6 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   ue_configuration ue_ded_cfg2{ue_ded_cfg};
   ue_ded_cfg2.update(cell_cfg_db, recfg.cfg);
   u.handle_reconfiguration_request(ue_reconf_command{ue_ded_cfg2});
-  dl_buffer_state_indication_message ind{recfg.ue_index, uint_to_lcid(4), 0};
 
   // Confirm that the UE is in fallback.
   ASSERT_TRUE(u.get_pcell().is_in_fallback_mode());
@@ -96,16 +95,13 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   // While in fallback, DL buffer status that are not for SRB0/SRB1, do not get represented in pending bytes.
   ASSERT_FALSE(u.has_pending_dl_newtx_bytes());
   for (const auto& lc : *recfg.cfg.lc_config_list) {
-    ind.lcid = lc.lcid;
-    ind.bs   = 10;
-    u.handle_dl_buffer_state_indication(ind);
+    u.handle_dl_buffer_state_indication(lc.lcid, 10);
     if (lc.lcid <= LCID_SRB1) {
       ASSERT_TRUE(u.has_pending_dl_newtx_bytes());
     } else {
       ASSERT_FALSE(u.has_pending_dl_newtx_bytes());
     }
-    ind.bs = 0;
-    u.handle_dl_buffer_state_indication(ind);
+    u.handle_dl_buffer_state_indication(lc.lcid, 0);
   }
 
   // Confirm that UE config applied config.
@@ -117,19 +113,14 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
       // LCID0 is a special case.
       continue;
     }
-    ind.lcid = lc.lcid;
-    ind.bs   = 10;
-    u.handle_dl_buffer_state_indication(ind);
+    u.handle_dl_buffer_state_indication(lc.lcid, 10);
     ASSERT_TRUE(u.has_pending_dl_newtx_bytes());
-    ind.bs = 0;
-    u.handle_dl_buffer_state_indication(ind);
+    u.handle_dl_buffer_state_indication(lc.lcid, 0);
     ASSERT_FALSE(u.has_pending_dl_newtx_bytes());
   }
 
   // Verify that inactive logical channels do not affect pending bytes.
-  ind.lcid = uint_to_lcid(6);
-  ind.bs   = 10;
-  u.handle_dl_buffer_state_indication(ind);
+  u.handle_dl_buffer_state_indication(uint_to_lcid(6), 10);
   ASSERT_FALSE(u.pending_dl_newtx_bytes());
 }
 
