@@ -259,9 +259,9 @@ ul_alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
 
 namespace {
 
-// [Implementation-defined] Helper value to set a maximum weight rate that is low enough to avoid overflows during
-// the PF final weight computation.
-constexpr double max_weight_rate = std::sqrt(std::numeric_limits<double>::max()) / 16;
+// [Implementation-defined] Helper value to set a maximum metric weight that is low enough to avoid overflows during
+// the final QoS weight computation.
+constexpr double max_metric_weight = 1.0e12;
 
 struct qos_weight_metrics {
   /// Metric taking into account the weight attributed GBR logical channels.
@@ -285,7 +285,7 @@ double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coe
       }
     } else {
       // In case the avg rate is zero, the division would be inf. Instead, we give the highest priority to the UE.
-      pf_weight = max_weight_rate;
+      pf_weight = max_metric_weight;
     }
   }
   return pf_weight;
@@ -313,9 +313,9 @@ qos_weight_metrics compute_dl_qos_weights(const slice_ue& u)
     // GBR flow.
     double dl_avg_rate = u.dl_avg_bit_rate(lc.lcid);
     if (dl_avg_rate != 0) {
-      gbr_weight += std::min(lc.qos->gbr_qos_info->gbr_dl / dl_avg_rate, max_weight_rate);
+      gbr_weight += std::min(lc.qos->gbr_qos_info->gbr_dl / dl_avg_rate, max_metric_weight);
     } else {
-      gbr_weight += max_weight_rate;
+      gbr_weight += max_metric_weight;
     }
   }
 
@@ -354,9 +354,9 @@ qos_weight_metrics compute_ul_qos_weights(const slice_ue& u)
     lcg_id_t lcg_id  = u.get_lcg_id(lc.lcid);
     double   ul_rate = u.ul_avg_bit_rate(lcg_id);
     if (ul_rate != 0) {
-      gbr_weight += std::min(lc.qos->gbr_qos_info->gbr_ul / ul_rate, max_weight_rate);
+      gbr_weight += std::min(lc.qos->gbr_qos_info->gbr_ul / ul_rate, max_metric_weight);
     } else {
-      gbr_weight = max_weight_rate;
+      gbr_weight = max_metric_weight;
     }
   }
 
