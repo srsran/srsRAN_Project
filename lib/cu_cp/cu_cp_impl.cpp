@@ -190,10 +190,10 @@ void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inact
 
     logger.debug("ue={}: Requesting UE context release with cause={}", req.ue_index, req.cause);
 
-    // Schedule on UE task scheduler
+    // Schedule on UE task scheduler.
     ue->get_task_sched().schedule_async_task(launch_async([this, req](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
-      // Notify NGAP to request a release from the AMF
+      // Notify NGAP to request a release from the AMF.
       CORO_AWAIT(handle_ue_context_release(req));
       CORO_RETURN();
     }));
@@ -258,7 +258,7 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
     return reest_context;
   }
 
-  // Get RRC Reestablishment UE Context from old UE
+  // Get RRC Reestablishment UE Context from old UE.
   reest_context                       = rrc_ue->get_context();
   reest_context.old_ue_fully_attached = true;
   reest_context.ue_index              = old_ue_index;
@@ -387,7 +387,7 @@ void cu_cp_impl::handle_handover_reconfiguration_sent(const cu_cp_intra_cu_hando
   if (ue_mng.find_du_ue(request.target_ue_index) == nullptr) {
     logger.warning("UE index={} got removed", request.target_ue_index);
     return;
-    }
+  }
 
   cu_cp_ue* ue = ue_mng.find_du_ue(request.target_ue_index);
 
@@ -410,11 +410,11 @@ void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_
     return;
   }
 
-  // Transfer NGAP UE Context to new UE and remove the old context
+  // Transfer NGAP UE Context to new UE and remove the old context.
   if (!ngap->update_ue_index(target_ue_index, source_ue_index, ue->get_ngap_cu_cp_ue_notifier())) {
     return;
   }
-  // Transfer E1AP UE Context to new UE and remove old context
+  // Transfer E1AP UE Context to new UE and remove old context.
   cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->update_ue_index(target_ue_index, source_ue_index);
 }
 
@@ -595,7 +595,7 @@ async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, by
       CORO_EARLY_RETURN(false);
     }
 
-    // Unpack Handover Command PDU at RRC, to get RRC Reconfig PDU
+    // Unpack Handover Command PDU at RRC, to get RRC Reconfig PDU.
     ho_reconfig_pdu = ue_mng.find_du_ue(ue_index)->get_rrc_ue()->handle_rrc_handover_command(std::move(command));
     if (ho_reconfig_pdu.empty()) {
       logger.warning("ue={}: Could not unpack Handover Command PDU", ue_index);
@@ -779,17 +779,17 @@ void cu_cp_impl::initialize_ue_release_timer(ue_index_t                         
 
 void cu_cp_impl::handle_rrc_ue_creation(ue_index_t ue_index, rrc_ue_interface& rrc_ue)
 {
-  // Store the RRC UE in the UE manager
+  // Store the RRC UE in the UE manager.
   auto* ue = ue_mng.find_ue(ue_index);
   ue->set_rrc_ue(rrc_ue);
 
-  // Connect RRC UE to NGAP to RRC UE adapter
+  // Connect RRC UE to NGAP to RRC UE adapter.
   ue_mng.get_ngap_rrc_ue_adapter(ue_index).connect_rrc_ue(rrc_ue.get_rrc_ngap_message_handler());
 
-  // Connect NGAP to RRC UE to NGAP adapter
+  // Connect NGAP to RRC UE to NGAP adapter.
   ue_mng.get_rrc_ue_ngap_adapter(ue_index).connect_ngap(ngap_db->find_ngap(ue->get_ue_context().plmn));
 
-  // Connect cu-cp to rrc ue adapters
+  // Connect cu-cp to rrc ue adapters.
   ue_mng.get_rrc_ue_cu_cp_adapter(ue_index).connect_cu_cp(get_cu_cp_rrc_ue_interface(),
                                                           get_cu_cp_ue_removal_handler(),
                                                           *controller,
@@ -828,22 +828,22 @@ bool cu_cp_impl::schedule_ue_task(ue_index_t ue_index, async_task<void> task)
 
 void cu_cp_impl::on_statistics_report_timer_expired()
 {
-  // Get number of F1AP UEs
+  // Get number of F1AP UEs.
   unsigned nof_f1ap_ues = du_db.get_nof_f1ap_ues();
 
-  // Get number of RRC UEs
+  // Get number of RRC UEs.
   unsigned nof_rrc_ues = du_db.get_nof_rrc_ues();
 
-  // Get number of NGAP UEs
+  // Get number of NGAP UEs.
   unsigned nof_ngap_ues = ngap_db->get_nof_ngap_ues();
 
-  // Get number of E1AP UEs
+  // Get number of E1AP UEs.
   unsigned nof_e1ap_ues = cu_up_db.get_nof_e1ap_ues();
 
-  // Get number of CU-CP UEs
+  // Get number of CU-CP UEs.
   unsigned nof_cu_cp_ues = ue_mng.get_nof_ues();
 
-  // Log statistics
+  // Log statistics.
   logger.debug("num_f1ap_ues={} num_rrc_ues={} num_ngap_ues={} num_e1ap_ues={} num_cu_cp_ues={}",
                nof_f1ap_ues,
                nof_rrc_ues,
@@ -851,7 +851,7 @@ void cu_cp_impl::on_statistics_report_timer_expired()
                nof_e1ap_ues,
                nof_cu_cp_ues);
 
-  // Restart timer
+  // Restart timer.
   statistics_report_timer.set(cfg.metrics.statistics_report_period,
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
