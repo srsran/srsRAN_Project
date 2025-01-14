@@ -78,9 +78,10 @@ protected:
         t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
     t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
         t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
-    auto& pdu                      = t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.front();
-    pdu.format_2.harq_ack_nof_bits = nof_harq_ack_bits;
-    pdu.format_2.sr_bits           = sr_bits;
+    auto& pdu                  = t_bench.res_grid[t_bench.k0 + t_bench.k1].result.ul.pucchs.front();
+    auto& format_2             = std::get<pucch_format_2>(pdu.format_params);
+    format_2.harq_ack_nof_bits = nof_harq_ack_bits;
+    format_2.sr_bits           = sr_bits;
   }
 
   void add_csi_grant(unsigned csi_part1_bits = 4)
@@ -108,8 +109,8 @@ TEST_F(test_uci_allocator, alloc_sr_only)
       slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
 
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
-  ASSERT_EQ(sr_nof_bits::one, slot_grid.result.ul.pucchs.back().format_1.sr_bits);
-  ASSERT_EQ(0, slot_grid.result.ul.pucchs.back().format_1.harq_ack_nof_bits);
+  ASSERT_EQ(sr_nof_bits::one, slot_grid.result.ul.pucchs.back().get_sr_bits());
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.back().get_harq_ack_nof_bits());
 }
 
 TEST_F(test_uci_allocator, alloc_sr_over_existing_pusch)
@@ -133,9 +134,9 @@ TEST_F(test_uci_allocator, alloc_csi_only)
       slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
 
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
-  ASSERT_EQ(4, slot_grid.result.ul.pucchs.back().format_2.csi_part1_bits);
-  ASSERT_EQ(0, slot_grid.result.ul.pucchs.back().format_2.harq_ack_nof_bits);
-  ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.back().format_2.sr_bits);
+  ASSERT_EQ(4, slot_grid.result.ul.pucchs.back().get_csi_part1_bits());
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.back().get_harq_ack_nof_bits());
+  ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.back().get_sr_bits());
 }
 
 TEST_F(test_uci_allocator, alloc_csi_over_sr)
@@ -148,9 +149,9 @@ TEST_F(test_uci_allocator, alloc_csi_over_sr)
       slot_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg());
 
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
-  ASSERT_EQ(4, slot_grid.result.ul.pucchs.back().format_2.csi_part1_bits);
-  ASSERT_EQ(0, slot_grid.result.ul.pucchs.back().format_2.harq_ack_nof_bits);
-  ASSERT_EQ(sr_nof_bits::one, slot_grid.result.ul.pucchs.back().format_2.sr_bits);
+  ASSERT_EQ(4, slot_grid.result.ul.pucchs.back().get_csi_part1_bits());
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.back().get_harq_ack_nof_bits());
+  ASSERT_EQ(sr_nof_bits::one, slot_grid.result.ul.pucchs.back().get_sr_bits());
 }
 
 TEST_F(test_uci_allocator, csi_over_existing_pusch)
@@ -187,8 +188,8 @@ TEST_F(test_uci_allocator, uci_harq_alloc_with_no_pusch_grants)
   ASSERT_EQ(0, slot_grid.result.ul.puschs.size());
   // 1 PUCCH grant expected.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
-  ASSERT_EQ(1, slot_grid.result.ul.pucchs.back().format_1.harq_ack_nof_bits);
-  ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.back().format_1.sr_bits);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.back().get_harq_ack_nof_bits());
+  ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.back().get_sr_bits());
   // Note: no need to check other PUCCH grant values, as this is part of pucch_allocator test.
 }
 
@@ -208,8 +209,8 @@ TEST_F(test_uci_allocator, uci_harq_alloc_over_existing_pucch_harq)
   ASSERT_EQ(0, slot_grid.result.ul.puschs.size());
   // 1 PUCCH grant expected.
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
-  ASSERT_EQ(2, slot_grid.result.ul.pucchs.back().format_1.harq_ack_nof_bits);
-  ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.back().format_1.sr_bits);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.back().get_harq_ack_nof_bits());
+  ASSERT_EQ(sr_nof_bits::no_sr, slot_grid.result.ul.pucchs.back().get_sr_bits());
   // Note: no need to check other PUCCH grant values, as this is part of pucch_allocator test.
 }
 
@@ -229,13 +230,13 @@ TEST_F(test_uci_allocator, uci_harq_alloc_over_existing_sr)
   ASSERT_EQ(0, slot_grid.result.ul.puschs.size());
   // 2 PUCCH grants expected.
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
-  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [](const auto& pdu) {
-    return pdu.format == pucch_format::FORMAT_1 and pdu.format_1.harq_ack_nof_bits == 1U and
-           pdu.format_1.sr_bits == sr_nof_bits::one;
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [](const pucch_info& pdu) {
+    return pdu.get_format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 1U and
+           pdu.get_sr_bits() == sr_nof_bits::one;
   }));
-  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [](const auto& pdu) {
-    return pdu.format == pucch_format::FORMAT_1 and pdu.format_1.harq_ack_nof_bits == 1U and
-           pdu.format_1.sr_bits == sr_nof_bits::no_sr;
+  ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [](const pucch_info& pdu) {
+    return pdu.get_format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 1U and
+           pdu.get_sr_bits() == sr_nof_bits::no_sr;
   }));
   // Note: no need to check other PUCCH grant values, as this is part of pucch_allocator test.
 }
@@ -257,13 +258,13 @@ TEST_F(test_uci_allocator, uci_harq_alloc_on_existing_pucch_harq_plus_sr)
   ASSERT_EQ(0, pusch_pdus.size());
   // 2 PUCCH grants expected, both with HARQ and SR bits.
   ASSERT_EQ(2, pucch_pdus.size());
-  ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const auto& pdu) {
-    return pdu.format == pucch_format::FORMAT_1 and pdu.format_1.harq_ack_nof_bits == 2U and
-           pdu.format_1.sr_bits == sr_nof_bits::one;
+  ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const pucch_info& pdu) {
+    return pdu.get_format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 2U and
+           pdu.get_sr_bits() == sr_nof_bits::one;
   }));
-  ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const auto& pdu) {
-    return pdu.format == pucch_format::FORMAT_1 and pdu.format_1.harq_ack_nof_bits == 2U and
-           pdu.format_1.sr_bits == sr_nof_bits::no_sr;
+  ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const pucch_info& pdu) {
+    return pdu.get_format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 2U and
+           pdu.get_sr_bits() == sr_nof_bits::no_sr;
   }));
   // Note: no need to check other PUCCH grant values, as this is part of pucch_allocator test.
 }
@@ -283,9 +284,9 @@ TEST_F(test_uci_allocator, uci_harq_alloc_on_existing_harq_2_bits)
   ASSERT_EQ(0, pusch_pdus.size());
   // 1 PUCCH grant expected.
   ASSERT_EQ(1, pucch_pdus.size());
-  ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const auto& pdu) {
-    return pdu.format == pucch_format::FORMAT_2 and pdu.format_2.harq_ack_nof_bits == 3U and
-           pdu.format_2.sr_bits == sr_nof_bits::no_sr;
+  ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const pucch_info& pdu) {
+    return pdu.get_format() == pucch_format::FORMAT_2 and pdu.get_harq_ack_nof_bits() == 3U and
+           pdu.get_sr_bits() == sr_nof_bits::no_sr;
   }));
 }
 

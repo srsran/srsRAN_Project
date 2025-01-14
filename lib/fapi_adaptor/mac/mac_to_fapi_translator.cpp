@@ -345,7 +345,7 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   }
 
   for (const auto& pdu : ul_res.ul_res->pucchs) {
-    fapi::ul_pucch_pdu_builder pdu_builder = builder.add_pucch_pdu(pdu.format);
+    fapi::ul_pucch_pdu_builder pdu_builder = builder.add_pucch_pdu(pdu.get_format());
     convert_pucch_mac_to_fapi(pdu_builder, pdu);
   }
 

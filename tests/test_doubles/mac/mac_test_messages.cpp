@@ -76,10 +76,10 @@ mac_uci_pdu srsran::test_helpers::create_uci_pdu(const pucch_info& pucch)
 
   pdu.rnti = pucch.crnti;
 
-  switch (pucch.format) {
+  switch (pucch.get_format()) {
     case pucch_format::FORMAT_1: {
       auto&       uci_f1   = pdu.pdu.emplace<mac_uci_pdu::pucch_f0_or_f1_type>();
-      const auto& pucch_f1 = pucch.format_1;
+      const auto& pucch_f1 = std::get<pucch_format_1>(pucch.format_params);
 
       if (pucch_f1.harq_ack_nof_bits > 0) {
         uci_f1.harq_info.emplace();
@@ -93,7 +93,7 @@ mac_uci_pdu srsran::test_helpers::create_uci_pdu(const pucch_info& pucch)
     } break;
     case pucch_format::FORMAT_2: {
       auto&       uci_f2   = pdu.pdu.emplace<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>();
-      const auto& pucch_f2 = pucch.format_2;
+      const auto& pucch_f2 = std::get<pucch_format_2>(pucch.format_params);
 
       if (pucch_f2.harq_ack_nof_bits > 0) {
         uci_f2.harq_info.emplace();

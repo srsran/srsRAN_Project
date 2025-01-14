@@ -118,22 +118,18 @@ protected:
     uci_indication::uci_pdu pdu{};
     pdu.crnti    = get_ue_crnti(ue_idx);
     pdu.ue_index = to_du_ue_index(ue_idx);
-    switch (pucch_res.format) {
-      case srsran::pucch_format::FORMAT_1: {
+
+    switch (pucch_res.get_format()) {
+      case pucch_format::FORMAT_1: {
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
         pucch_pdu.sr_detected = true;
         pdu.pdu               = pucch_pdu;
-        break;
-      }
-      case srsran::pucch_format::FORMAT_2: {
+      } break;
+      case pucch_format::FORMAT_2: {
         uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pucch_pdu{};
-        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch_res.format_2.sr_bits));
-        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch_res.format_2.sr_bits), true);
-        break;
-      }
-      case srsran::pucch_format::FORMAT_0:
-      case srsran::pucch_format::FORMAT_3:
-      case srsran::pucch_format::FORMAT_4:
+        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch_res.get_sr_bits()));
+        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch_res.get_sr_bits()), true);
+      } break;
       default:
         report_fatal_error("Not handling SR grant over PUCCH format 0, 3 and 4");
     }
@@ -151,27 +147,14 @@ protected:
     if (last_sched_res_list[cell_idx] == nullptr) {
       return {};
     }
-    const auto* pucch_res =
-        std::find_if(last_sched_res_list[cell_idx]->ul.pucchs.begin(),
-                     last_sched_res_list[cell_idx]->ul.pucchs.end(),
-                     [ue_idx](const pucch_info& pucch) { return pucch.crnti == get_ue_crnti(ue_idx); });
+    auto* pucch_res = std::find_if(last_sched_res_list[cell_idx]->ul.pucchs.begin(),
+                                   last_sched_res_list[cell_idx]->ul.pucchs.end(),
+                                   [ue_idx](const pucch_info& pucch) { return pucch.crnti == get_ue_crnti(ue_idx); });
     if (pucch_res == last_sched_res_list[cell_idx]->ul.pucchs.end()) {
       return {};
     }
-    switch (pucch_res->format) {
-      case srsran::pucch_format::FORMAT_0:
-        return pucch_res->format_0.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : std::optional<pucch_info>{};
-      case srsran::pucch_format::FORMAT_1:
-        return pucch_res->format_1.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : std::optional<pucch_info>{};
-      case srsran::pucch_format::FORMAT_2:
-        return pucch_res->format_2.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : std::optional<pucch_info>{};
-      case srsran::pucch_format::FORMAT_3:
-        return pucch_res->format_3.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : std::optional<pucch_info>{};
-      case srsran::pucch_format::FORMAT_4:
-        return pucch_res->format_4.sr_bits != srsran::sr_nof_bits::no_sr ? *pucch_res : std::optional<pucch_info>{};
-      default:
-        return {};
-    }
+
+    return pucch_res->get_sr_bits() != sr_nof_bits::no_sr ? std::optional(*pucch_res) : std::nullopt;
   }
 
   std::vector<config_helpers::cell_config_builder_params_extended> cell_cfg_builder_params_list;

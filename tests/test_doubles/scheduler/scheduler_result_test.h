@@ -61,13 +61,8 @@ inline const pucch_info* find_ue_pucch(rnti_t rnti, span<const pucch_info> pucch
 inline const pucch_info* find_ue_pucch_with_harq_ack(rnti_t rnti, span<const pucch_info> pucchs)
 {
   const pucch_info* pucch = find_ue_pucch(rnti, pucchs);
-  if (pucch != nullptr) {
-    if (pucch->format == pucch_format::FORMAT_1 and pucch->format_1.harq_ack_nof_bits > 0) {
-      return pucch;
-    }
-    if (pucch->format == pucch_format::FORMAT_2 and pucch->format_2.harq_ack_nof_bits > 0) {
-      return pucch;
-    }
+  if (pucch != nullptr and pucch->get_harq_ack_nof_bits() > 0) {
+    return pucch;
   }
   return nullptr;
 }
@@ -75,13 +70,8 @@ inline const pucch_info* find_ue_pucch_with_harq_ack(rnti_t rnti, span<const puc
 inline const pucch_info* find_ue_pucch_with_sr(rnti_t rnti, span<const pucch_info> pucchs)
 {
   const pucch_info* pucch = find_ue_pucch(rnti, pucchs);
-  if (pucch != nullptr) {
-    if (pucch->format == pucch_format::FORMAT_1 and pucch->format_1.sr_bits != sr_nof_bits::no_sr) {
-      return pucch;
-    }
-    if (pucch->format == pucch_format::FORMAT_2 and pucch->format_2.sr_bits != sr_nof_bits::no_sr) {
-      return pucch;
-    }
+  if (pucch != nullptr and pucch->get_sr_bits() != sr_nof_bits::no_sr) {
+    return pucch;
   }
   return nullptr;
 }
@@ -89,10 +79,8 @@ inline const pucch_info* find_ue_pucch_with_sr(rnti_t rnti, span<const pucch_inf
 inline const pucch_info* find_ue_pucch_with_csi(rnti_t rnti, span<const pucch_info> pucchs)
 {
   const pucch_info* pucch = find_ue_pucch(rnti, pucchs);
-  if (pucch != nullptr) {
-    if (pucch->format == pucch_format::FORMAT_2 and pucch->format_2.csi_part1_bits > 0) {
-      return pucch;
-    }
+  if (pucch != nullptr and pucch->get_csi_part1_bits() > 0) {
+    return pucch;
   }
   return nullptr;
 }

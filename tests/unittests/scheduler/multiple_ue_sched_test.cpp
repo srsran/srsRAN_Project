@@ -449,29 +449,25 @@ protected:
     pdu.crnti    = pucch.crnti;
     pdu.ue_index = bench->rnti_to_du_ue_index(pdu.crnti);
 
-    switch (pucch.format) {
+    switch (pucch.get_format()) {
       case pucch_format::FORMAT_0:
       case pucch_format::FORMAT_1: {
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
-        if (pucch.format == pucch_format::FORMAT_0) {
-          pucch_pdu.sr_detected = sr_nof_bits_to_uint(pucch.format_0.sr_bits) > 0;
-          // Auto ACK harqs.
-          pucch_pdu.harqs.resize(pucch.format_0.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
-        } else {
-          pucch_pdu.sr_detected = sr_nof_bits_to_uint(pucch.format_1.sr_bits) > 0;
-          // Auto ACK harqs.
-          pucch_pdu.harqs.resize(pucch.format_1.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
-        }
+        const sr_nof_bits                               sr_bits           = pucch.get_sr_bits();
+        const unsigned                                  harq_ack_nof_bits = pucch.get_harq_ack_nof_bits();
+        pucch_pdu.sr_detected                                             = sr_nof_bits_to_uint(sr_bits) > 0;
+        // Auto ACK harqs.
+        pucch_pdu.harqs.resize(harq_ack_nof_bits, mac_harq_ack_report_status::ack);
         pucch_pdu.ul_sinr_dB = 55;
         pdu.pdu              = pucch_pdu;
         break;
       }
       case pucch_format::FORMAT_2: {
         uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pucch_pdu{};
-        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
-        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
+        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch.get_sr_bits()));
+        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch.get_sr_bits()), true);
         // Auto ACK harqs.
-        pucch_pdu.harqs.resize(pucch.format_2.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+        pucch_pdu.harqs.resize(pucch.get_harq_ack_nof_bits(), mac_harq_ack_report_status::ack);
         if (pucch.csi_rep_cfg.has_value()) {
           pucch_pdu.csi.emplace();
           // Fill with dummy values.
@@ -800,7 +796,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
 
     for (const auto& pucch : bench->sched_res->ul.pucchs) {
       uci_ind.ucis.push_back(build_pucch_uci_pdu(pucch));
-      if (pucch.format == srsran::pucch_format::FORMAT_2 and pucch.csi_rep_cfg.has_value()) {
+      if (pucch.get_format() == pucch_format::FORMAT_2 and pucch.csi_rep_cfg.has_value()) {
         // For now CSI report is only sent in PUCCH format 2.
         ++nof_cqi_reported;
       }

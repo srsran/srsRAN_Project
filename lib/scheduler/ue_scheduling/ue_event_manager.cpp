@@ -809,20 +809,9 @@ static void handle_discarded_pucch(const cell_slot_resource_allocator& prev_slot
       // UE has been removed.
       continue;
     }
-    bool has_harq_ack = false;
-    switch (pucch.format) {
-      case pucch_format::FORMAT_1:
-        has_harq_ack = pucch.format_1.harq_ack_nof_bits > 0;
-        break;
-      case pucch_format::FORMAT_2:
-        has_harq_ack = pucch.format_2.harq_ack_nof_bits > 0;
-        break;
-      default:
-        break;
-    }
 
     // - The lower layers will not attempt to decode the PUCCH and will not send any UCI indication.
-    if (has_harq_ack) {
+    if (pucch.get_harq_ack_nof_bits() > 0) {
       // Note: To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK
       // in the DL HARQ processes with UCI falling in this slot.
       // Note: We don't use this cancellation to update the DL OLLA, as we shouldn't take lates into account in link

@@ -87,9 +87,8 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
   // Spans through the PUCCH grant list and update the HARQ-ACK PUCCH grant counter for the corresponding RNTI and HARQ
   // process id.
   for (const auto& pucch : slot_alloc.result.ul.pucchs) {
-    if ((pucch.format == pucch_format::FORMAT_0 and pucch.format_0.harq_ack_nof_bits > 0) or
-        (pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) or
-        (pucch.format == pucch_format::FORMAT_2 and pucch.format_2.harq_ack_nof_bits > 0)) {
+    if (pucch.get_format() == pucch_format::FORMAT_0 or pucch.get_format() == pucch_format::FORMAT_1 or
+        pucch.get_format() == pucch_format::FORMAT_2) {
       ue* user = ue_db.find_by_rnti(pucch.crnti);
       // This is to handle the case of a UE that gets removed after the PUCCH gets allocated and before this PUCCH is
       // expected to be sent.
@@ -100,26 +99,7 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
             slot_alloc.slot);
         continue;
       }
-      unsigned nof_harqs_per_rnti_per_slot = 0;
-      switch (pucch.format) {
-        case pucch_format::FORMAT_0:
-          nof_harqs_per_rnti_per_slot = pucch.format_0.harq_ack_nof_bits;
-          break;
-        case pucch_format::FORMAT_1:
-          nof_harqs_per_rnti_per_slot = pucch.format_1.harq_ack_nof_bits;
-          break;
-        case pucch_format::FORMAT_2:
-          nof_harqs_per_rnti_per_slot = pucch.format_2.harq_ack_nof_bits;
-          break;
-        case pucch_format::FORMAT_3:
-          nof_harqs_per_rnti_per_slot = pucch.format_3.harq_ack_nof_bits;
-          break;
-        case pucch_format::FORMAT_4:
-          nof_harqs_per_rnti_per_slot = pucch.format_4.harq_ack_nof_bits;
-          break;
-        default:
-          srsran_assertion_failure("rnti={}: Invalid PUCCH format", pucch.crnti);
-      }
+      const unsigned nof_harqs_per_rnti_per_slot = pucch.get_harq_ack_nof_bits();
       // Each PUCCH grants can potentially carry ACKs for different HARQ processes (as many as the harq_ack_nof_bits)
       // expecting to be acknowledged on the same slot.
       for (unsigned harq_bit_idx = 0; harq_bit_idx != nof_harqs_per_rnti_per_slot; ++harq_bit_idx) {
@@ -157,30 +137,14 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
                      [&pucch](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == pucch.crnti; });
 
     if (pusch_grant != slot_alloc.result.ul.puschs.end()) {
-      unsigned harq_bits = 0;
-      unsigned csi_bits  = 0;
-      unsigned sr_bits   = 0;
-      if (pucch.format == pucch_format::FORMAT_1) {
-        harq_bits = pucch.format_1.harq_ack_nof_bits;
-        sr_bits   = sr_nof_bits_to_uint(pucch.format_1.sr_bits);
-      } else if (pucch.format == pucch_format::FORMAT_2) {
-        harq_bits = pucch.format_2.harq_ack_nof_bits;
-        csi_bits  = pucch.format_2.csi_part1_bits;
-        sr_bits   = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
-      } else if (pucch.format == pucch_format::FORMAT_3) {
-        harq_bits = pucch.format_3.harq_ack_nof_bits;
-        csi_bits  = pucch.format_3.csi_part1_bits;
-        sr_bits   = sr_nof_bits_to_uint(pucch.format_3.sr_bits);
-      } else if (pucch.format == pucch_format::FORMAT_4) {
-        harq_bits = pucch.format_4.harq_ack_nof_bits;
-        csi_bits  = pucch.format_4.csi_part1_bits;
-        sr_bits   = sr_nof_bits_to_uint(pucch.format_4.sr_bits);
-      }
+      const unsigned harq_bits = pucch.get_harq_ack_nof_bits();
+      const unsigned sr_bits   = sr_nof_bits_to_uint(pucch.get_sr_bits());
+      const unsigned csi_bits  = pucch.get_csi_part1_bits();
       logger.error("rnti={}: has both PUCCH and PUSCH grants scheduled at slot {}, PUCCH  format={} with nof "
                    "harq-bits={} csi-1-bits={} sr-bits={}",
                    pucch.crnti,
                    slot_alloc.slot,
-                   static_cast<unsigned>(pucch.format),
+                   static_cast<unsigned>(pucch.get_format()),
                    harq_bits,
                    csi_bits,
                    sr_bits);

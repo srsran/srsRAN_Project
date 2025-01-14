@@ -30,27 +30,27 @@ pucch_info srsran::build_pucch_info(const bwp_configuration* bwp_cfg,
     pucch_test.resources.second_hop_prbs = second_hop_prbs;
     pucch_test.resources.symbols         = symbols;
 
-    pucch_test.format_0.initial_cyclic_shift = initial_cyclic_shift;
-    pucch_test.format_0.sr_bits              = sr_bits;
-    pucch_test.format_0.harq_ack_nof_bits    = harq_ack_nof_bits;
+    auto& format_0                = pucch_test.format_params.emplace<pucch_format_0>();
+    format_0.initial_cyclic_shift = initial_cyclic_shift;
+    format_0.sr_bits              = sr_bits;
+    format_0.harq_ack_nof_bits    = harq_ack_nof_bits;
 
-    pucch_test.format_0.group_hopping = pucch_group_hopping::NEITHER;
-    pucch_test.format                 = pucch_format::FORMAT_0;
-    pucch_test.format_0.n_id_hopping  = pci;
+    format_0.group_hopping = pucch_group_hopping::NEITHER;
+    format_0.n_id_hopping  = pci;
   } else if (format == pucch_format::FORMAT_1) {
     pucch_test.resources.prbs            = prbs;
     pucch_test.resources.second_hop_prbs = second_hop_prbs;
     pucch_test.resources.symbols         = symbols;
 
-    pucch_test.format_1.initial_cyclic_shift = initial_cyclic_shift;
-    pucch_test.format_1.sr_bits              = sr_bits;
-    pucch_test.format_1.harq_ack_nof_bits    = harq_ack_nof_bits;
-    pucch_test.format_1.time_domain_occ      = time_domain_occ;
+    auto& format_1                = pucch_test.format_params.emplace<pucch_format_1>();
+    format_1.initial_cyclic_shift = initial_cyclic_shift;
+    format_1.sr_bits              = sr_bits;
+    format_1.harq_ack_nof_bits    = harq_ack_nof_bits;
+    format_1.time_domain_occ      = time_domain_occ;
 
-    pucch_test.format_1.group_hopping   = pucch_group_hopping::NEITHER;
-    pucch_test.format                   = pucch_format::FORMAT_1;
-    pucch_test.format_1.n_id_hopping    = pci;
-    pucch_test.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+    format_1.group_hopping   = pucch_group_hopping::NEITHER;
+    format_1.n_id_hopping    = pci;
+    format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
   } else {
     return pucch_info{};
   }
@@ -60,23 +60,24 @@ pucch_info srsran::build_pucch_info(const bwp_configuration* bwp_cfg,
 
 bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test)
 {
-  bool is_equal = expected.crnti == test.crnti && *expected.bwp_cfg == *test.bwp_cfg && expected.format == test.format;
-  is_equal      = is_equal && expected.resources.prbs == test.resources.prbs &&
+  bool is_equal =
+      expected.crnti == test.crnti && *expected.bwp_cfg == *test.bwp_cfg && expected.get_format() == test.get_format();
+  is_equal = is_equal && expected.resources.prbs == test.resources.prbs &&
              expected.resources.symbols == test.resources.symbols &&
              expected.resources.second_hop_prbs == test.resources.second_hop_prbs;
 
-  switch (expected.format) {
+  switch (expected.get_format()) {
     case pucch_format::FORMAT_0: {
-      const pucch_format_0& expected_f = expected.format_0;
-      const pucch_format_0& test_f     = test.format_0;
+      const pucch_format_0& expected_f = std::get<pucch_format_0>(expected.format_params);
+      const pucch_format_0& test_f     = std::get<pucch_format_0>(test.format_params);
       is_equal                         = is_equal && expected_f.group_hopping == test_f.group_hopping &&
                  expected_f.n_id_hopping == test_f.n_id_hopping &&
                  expected_f.initial_cyclic_shift == test_f.initial_cyclic_shift &&
                  expected_f.sr_bits == test_f.sr_bits && expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits;
     } break;
     case pucch_format::FORMAT_1: {
-      const pucch_format_1& expected_f = expected.format_1;
-      const pucch_format_1& test_f     = test.format_1;
+      const pucch_format_1& expected_f = std::get<pucch_format_1>(expected.format_params);
+      const pucch_format_1& test_f     = std::get<pucch_format_1>(test.format_params);
       is_equal                         = is_equal && expected_f.group_hopping == test_f.group_hopping &&
                  expected_f.n_id_hopping == test_f.n_id_hopping &&
                  expected_f.initial_cyclic_shift == test_f.initial_cyclic_shift &&
@@ -85,8 +86,8 @@ bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test
                  expected_f.time_domain_occ == test_f.time_domain_occ;
     } break;
     case pucch_format::FORMAT_2: {
-      const pucch_format_2& expected_f = expected.format_2;
-      const pucch_format_2& test_f     = test.format_2;
+      const pucch_format_2& expected_f = std::get<pucch_format_2>(expected.format_params);
+      const pucch_format_2& test_f     = std::get<pucch_format_2>(test.format_params);
       is_equal                         = is_equal && expected_f.max_code_rate == test_f.max_code_rate &&
                  expected_f.n_id_scambling == test_f.n_id_scambling &&
                  expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling && expected_f.sr_bits == test_f.sr_bits &&
@@ -94,8 +95,8 @@ bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test
                  expected_f.csi_part1_bits == test_f.csi_part1_bits;
     } break;
     case pucch_format::FORMAT_3: {
-      const pucch_format_3& expected_f = expected.format_3;
-      const pucch_format_3& test_f     = test.format_3;
+      const pucch_format_3& expected_f = std::get<pucch_format_3>(expected.format_params);
+      const pucch_format_3& test_f     = std::get<pucch_format_3>(test.format_params);
       is_equal =
           is_equal && expected_f.group_hopping == test_f.group_hopping &&
           expected_f.n_id_hopping == test_f.n_id_hopping && expected_f.sr_bits == test_f.sr_bits &&
@@ -106,8 +107,8 @@ bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test
           expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling;
     } break;
     case pucch_format::FORMAT_4: {
-      const pucch_format_4& expected_f = expected.format_4;
-      const pucch_format_4& test_f     = test.format_4;
+      const pucch_format_4& expected_f = std::get<pucch_format_4>(expected.format_params);
+      const pucch_format_4& test_f     = std::get<pucch_format_4>(test.format_params);
       is_equal =
           is_equal && expected_f.group_hopping == test_f.group_hopping &&
           expected_f.n_id_hopping == test_f.n_id_hopping && expected_f.sr_bits == test_f.sr_bits &&

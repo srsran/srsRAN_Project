@@ -15,6 +15,7 @@
 #include "../ue_context/ue_drx_controller.h"
 #include "ue_pdsch_alloc_param_candidate_searcher.h"
 #include "ue_pusch_alloc_param_candidate_searcher.h"
+
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/scheduler/result/dci_info.h"
 #include "srsran/support/error_handling.h"
@@ -1110,43 +1111,45 @@ void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(du_cell_index_t 
     bool pi_2_bpsk              = false;
     bool additional_dmrs        = false;
     bool intraslot_freq_hopping = false;
-    // For format 0 or 1, the number of PRBs is always 1.
-    switch (pucch.format) {
+
+    switch (pucch.get_format()) {
       case pucch_format::FORMAT_0:
-        pucch_uci_bits.harq_ack_nof_bits = pucch.format_0.harq_ack_nof_bits;
-        pucch_uci_bits.sr_bits           = pucch.format_0.sr_bits;
+        pucch_uci_bits.harq_ack_nof_bits = pucch.get_harq_ack_nof_bits();
+        pucch_uci_bits.sr_bits           = pucch.get_sr_bits();
         break;
       case pucch_format::FORMAT_1:
-        pucch_uci_bits.harq_ack_nof_bits = pucch.format_1.harq_ack_nof_bits;
-        pucch_uci_bits.sr_bits           = pucch.format_1.sr_bits;
+        pucch_uci_bits.harq_ack_nof_bits = pucch.get_harq_ack_nof_bits();
+        pucch_uci_bits.sr_bits           = pucch.get_sr_bits();
         break;
       case pucch_format::FORMAT_2:
-        pucch_uci_bits.harq_ack_nof_bits  = pucch.format_2.harq_ack_nof_bits;
-        pucch_uci_bits.sr_bits            = pucch.format_2.sr_bits;
-        pucch_uci_bits.csi_part1_nof_bits = pucch.format_2.csi_part1_bits;
+        pucch_uci_bits.harq_ack_nof_bits  = pucch.get_harq_ack_nof_bits();
+        pucch_uci_bits.sr_bits            = pucch.get_sr_bits();
+        pucch_uci_bits.csi_part1_nof_bits = pucch.get_csi_part1_bits();
         break;
-      case pucch_format::FORMAT_3:
-        pucch_uci_bits.harq_ack_nof_bits  = pucch.format_3.harq_ack_nof_bits;
-        pucch_uci_bits.sr_bits            = pucch.format_3.sr_bits;
-        pucch_uci_bits.csi_part1_nof_bits = pucch.format_3.csi_part1_bits;
-        pi_2_bpsk                         = pucch.format_3.pi_2_bpsk;
-        additional_dmrs                   = pucch.format_3.additional_dmrs;
+      case pucch_format::FORMAT_3: {
+        const auto& format_3              = std::get<pucch_format_3>(pucch.format_params);
+        pucch_uci_bits.harq_ack_nof_bits  = format_3.harq_ack_nof_bits;
+        pucch_uci_bits.sr_bits            = format_3.sr_bits;
+        pucch_uci_bits.csi_part1_nof_bits = format_3.csi_part1_bits;
+        pi_2_bpsk                         = format_3.pi_2_bpsk;
+        additional_dmrs                   = format_3.additional_dmrs;
         intraslot_freq_hopping            = not pucch.resources.second_hop_prbs.empty();
-        break;
-      case pucch_format::FORMAT_4:
-        pucch_uci_bits.harq_ack_nof_bits  = pucch.format_4.harq_ack_nof_bits;
-        pucch_uci_bits.sr_bits            = pucch.format_4.sr_bits;
-        pucch_uci_bits.csi_part1_nof_bits = pucch.format_4.csi_part1_bits;
-        pi_2_bpsk                         = pucch.format_4.pi_2_bpsk;
-        additional_dmrs                   = pucch.format_4.additional_dmrs;
+      } break;
+      case pucch_format::FORMAT_4: {
+        const auto& format_4              = std::get<pucch_format_4>(pucch.format_params);
+        pucch_uci_bits.harq_ack_nof_bits  = format_4.harq_ack_nof_bits;
+        pucch_uci_bits.sr_bits            = format_4.sr_bits;
+        pucch_uci_bits.csi_part1_nof_bits = format_4.csi_part1_bits;
+        pi_2_bpsk                         = format_4.pi_2_bpsk;
+        additional_dmrs                   = format_4.additional_dmrs;
         intraslot_freq_hopping            = not pucch.resources.second_hop_prbs.empty();
-        break;
+      } break;
       default:
         srsran_assertion_failure("rnti={}: Only PUCCH format 0, 1, 2, 3 and 4 are supported", pucch.crnti);
     }
 
     user->get_pcell().get_pucch_power_controller().update_pucch_pw_ctrl_state(slot_alloc.slot,
-                                                                              pucch.format,
+                                                                              pucch.get_format(),
                                                                               pucch.resources.prbs.length(),
                                                                               pucch.resources.symbols.length(),
                                                                               pucch_uci_bits,

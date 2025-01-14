@@ -627,19 +627,19 @@ pucch_info_test_helper unittests::build_valid_pucch_format_1_pdu()
 
   helper.bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {2, 10}};
 
-  pucch.crnti                         = to_rnti(0x4444);
-  pucch.bwp_cfg                       = &helper.bwp_cfg;
-  pucch.format                        = pucch_format::FORMAT_1;
-  pucch.resources.prbs                = {1, 4};
-  pucch.resources.symbols             = {0, 14};
-  pucch.resources.second_hop_prbs     = {2, 12};
-  pucch.format_1.harq_ack_nof_bits    = 2;
-  pucch.format_1.sr_bits              = sr_nof_bits::no_sr;
-  pucch.format_1.time_domain_occ      = 3;
-  pucch.format_1.initial_cyclic_shift = 9;
-  pucch.format_1.n_id_hopping         = 2;
-  pucch.format_1.group_hopping        = srsran::pucch_group_hopping::NEITHER;
-  pucch.format_1.slot_repetition      = srsran::pucch_repetition_tx_slot::no_multi_slot;
+  pucch.crnti                     = to_rnti(0x4444);
+  pucch.bwp_cfg                   = &helper.bwp_cfg;
+  auto& format_1                  = pucch.format_params.emplace<pucch_format_1>();
+  pucch.resources.prbs            = {1, 4};
+  pucch.resources.symbols         = {0, 14};
+  pucch.resources.second_hop_prbs = {2, 12};
+  format_1.harq_ack_nof_bits      = 2;
+  format_1.sr_bits                = sr_nof_bits::no_sr;
+  format_1.time_domain_occ        = 3;
+  format_1.initial_cyclic_shift   = 9;
+  format_1.n_id_hopping           = 2;
+  format_1.group_hopping          = srsran::pucch_group_hopping::NEITHER;
+  format_1.slot_repetition        = srsran::pucch_repetition_tx_slot::no_multi_slot;
 
   return helper;
 }
@@ -651,18 +651,18 @@ pucch_info_test_helper srsran::unittests::build_valid_pucch_format_2_pdu()
 
   helper.bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {2, 10}};
 
-  pucch.crnti                      = to_rnti(0x4444);
-  pucch.bwp_cfg                    = &helper.bwp_cfg;
-  pucch.format                     = pucch_format::FORMAT_2;
-  pucch.resources.prbs             = {1, 4};
-  pucch.resources.symbols          = {0, 1};
-  pucch.resources.second_hop_prbs  = {1, 11};
-  pucch.format_2.max_code_rate     = max_pucch_code_rate::dot_08;
-  pucch.format_2.csi_part1_bits    = 102;
-  pucch.format_2.harq_ack_nof_bits = 100;
-  pucch.format_2.sr_bits           = sr_nof_bits::one;
-  pucch.format_2.n_id_0_scrambling = 256;
-  pucch.format_2.n_id_scambling    = 382;
+  pucch.crnti                     = to_rnti(0x4444);
+  pucch.bwp_cfg                   = &helper.bwp_cfg;
+  auto& format_2                  = pucch.format_params.emplace<pucch_format_2>();
+  pucch.resources.prbs            = {1, 4};
+  pucch.resources.symbols         = {0, 1};
+  pucch.resources.second_hop_prbs = {1, 11};
+  format_2.max_code_rate          = max_pucch_code_rate::dot_08;
+  format_2.csi_part1_bits         = 102;
+  format_2.harq_ack_nof_bits      = 100;
+  format_2.sr_bits                = sr_nof_bits::one;
+  format_2.n_id_0_scrambling      = 256;
+  format_2.n_id_scambling         = 382;
 
   return helper;
 }
@@ -674,21 +674,21 @@ pucch_info_test_helper srsran::unittests::build_valid_pucch_format_3_pdu()
 
   helper.bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {2, 10}};
 
-  pucch.crnti                      = to_rnti(0x4444);
-  pucch.bwp_cfg                    = &helper.bwp_cfg;
-  pucch.format                     = pucch_format::FORMAT_3;
-  pucch.resources.prbs             = {1, 4};
-  pucch.resources.symbols          = {0, 3};
-  pucch.resources.second_hop_prbs  = {1, 11};
-  pucch.format_3.max_code_rate     = max_pucch_code_rate::dot_08;
-  pucch.format_3.csi_part1_bits    = 102;
-  pucch.format_3.harq_ack_nof_bits = 100;
-  pucch.format_3.sr_bits           = sr_nof_bits::one;
-  pucch.format_3.n_id_0_scrambling = 256;
-  pucch.format_3.n_id_scrambling   = 382;
-  pucch.format_3.n_id_hopping      = 180;
-  pucch.format_3.additional_dmrs   = false;
-  pucch.format_3.pi_2_bpsk         = true;
+  pucch.crnti                     = to_rnti(0x4444);
+  pucch.bwp_cfg                   = &helper.bwp_cfg;
+  auto& format_3                  = pucch.format_params.emplace<pucch_format_3>();
+  pucch.resources.prbs            = {1, 4};
+  pucch.resources.symbols         = {0, 3};
+  pucch.resources.second_hop_prbs = {1, 11};
+  format_3.max_code_rate          = max_pucch_code_rate::dot_08;
+  format_3.csi_part1_bits         = 102;
+  format_3.harq_ack_nof_bits      = 100;
+  format_3.sr_bits                = sr_nof_bits::one;
+  format_3.n_id_0_scrambling      = 256;
+  format_3.n_id_scrambling        = 382;
+  format_3.n_id_hopping           = 180;
+  format_3.additional_dmrs        = false;
+  format_3.pi_2_bpsk              = true;
 
   return helper;
 }
@@ -700,23 +700,23 @@ pucch_info_test_helper srsran::unittests::build_valid_pucch_format_4_pdu()
 
   helper.bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {2, 10}};
 
-  pucch.crnti                      = to_rnti(0x4444);
-  pucch.bwp_cfg                    = &helper.bwp_cfg;
-  pucch.format                     = pucch_format::FORMAT_4;
-  pucch.resources.prbs             = {1, 2};
-  pucch.resources.symbols          = {0, 3};
-  pucch.resources.second_hop_prbs  = {10, 11};
-  pucch.format_4.max_code_rate     = max_pucch_code_rate::dot_08;
-  pucch.format_4.csi_part1_bits    = 102;
-  pucch.format_4.harq_ack_nof_bits = 100;
-  pucch.format_4.sr_bits           = sr_nof_bits::one;
-  pucch.format_4.n_id_0_scrambling = 256;
-  pucch.format_4.n_id_scrambling   = 382;
-  pucch.format_4.n_id_hopping      = 180;
-  pucch.format_4.additional_dmrs   = false;
-  pucch.format_4.pi_2_bpsk         = true;
-  pucch.format_4.n_sf_pucch_f4     = pucch_format_4_sf::sf2;
-  pucch.format_4.orthog_seq_idx    = 1;
+  pucch.crnti                     = to_rnti(0x4444);
+  pucch.bwp_cfg                   = &helper.bwp_cfg;
+  auto& format_4                  = pucch.format_params.emplace<pucch_format_4>();
+  pucch.resources.prbs            = {1, 2};
+  pucch.resources.symbols         = {0, 3};
+  pucch.resources.second_hop_prbs = {10, 11};
+  format_4.max_code_rate          = max_pucch_code_rate::dot_08;
+  format_4.csi_part1_bits         = 102;
+  format_4.harq_ack_nof_bits      = 100;
+  format_4.sr_bits                = sr_nof_bits::one;
+  format_4.n_id_0_scrambling      = 256;
+  format_4.n_id_scrambling        = 382;
+  format_4.n_id_hopping           = 180;
+  format_4.additional_dmrs        = false;
+  format_4.pi_2_bpsk              = true;
+  format_4.n_sf_pucch_f4          = pucch_format_4_sf::sf2;
+  format_4.orthog_seq_idx         = 1;
 
   return helper;
 }

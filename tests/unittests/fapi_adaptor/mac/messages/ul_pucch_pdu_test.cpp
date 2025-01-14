@@ -30,7 +30,7 @@ TEST(mac_fapi_ul_pucch_format1_pdu_conversor_test, ul_pucch_format1_pdu_valid_sh
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);
 
-  ASSERT_EQ(mac_pdu.format, fapi_pdu.format_type);
+  ASSERT_EQ(mac_pdu.get_format(), fapi_pdu.format_type);
   ASSERT_EQ(mac_pdu.crnti, fapi_pdu.rnti);
 
   // Resources.
@@ -43,7 +43,7 @@ TEST(mac_fapi_ul_pucch_format1_pdu_conversor_test, ul_pucch_format1_pdu_valid_sh
   ASSERT_EQ(!resources.second_hop_prbs.empty(), fapi_pdu.intra_slot_frequency_hopping);
 
   // Format 1.
-  const pucch_format_1& f1 = mac_pdu.format_1;
+  const pucch_format_1& f1 = std::get<pucch_format_1>(mac_pdu.format_params);
   ASSERT_EQ(f1.slot_repetition, fapi_pdu.multi_slot_tx_indicator);
   ASSERT_EQ(f1.group_hopping, fapi_pdu.pucch_grp_hopping);
   ASSERT_EQ(f1.n_id_hopping, fapi_pdu.nid_pucch_hopping);
@@ -67,7 +67,7 @@ TEST(mac_fapi_ul_pucch_format2_pdu_conversor_test, ul_pucch_format2_pdu_valid_sh
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);
 
-  ASSERT_EQ(mac_pdu.format, fapi_pdu.format_type);
+  ASSERT_EQ(mac_pdu.get_format(), fapi_pdu.format_type);
   ASSERT_EQ(mac_pdu.crnti, fapi_pdu.rnti);
 
   // Resources.
@@ -80,7 +80,7 @@ TEST(mac_fapi_ul_pucch_format2_pdu_conversor_test, ul_pucch_format2_pdu_valid_sh
   ASSERT_EQ(!resources.second_hop_prbs.empty(), fapi_pdu.intra_slot_frequency_hopping);
 
   // Format 2.
-  const pucch_format_2& f2 = mac_pdu.format_2;
+  const pucch_format_2& f2 = std::get<pucch_format_2>(mac_pdu.format_params);
   ASSERT_EQ(static_cast<unsigned>(f2.max_code_rate), fapi_pdu.pucch_maintenance_v3.max_code_rate);
   ASSERT_EQ(f2.n_id_0_scrambling, fapi_pdu.nid0_pucch_dmrs_scrambling);
   ASSERT_EQ(f2.n_id_scambling, fapi_pdu.nid_pucch_scrambling);
@@ -103,7 +103,7 @@ TEST(mac_fapi_ul_pucch_format3_pdu_conversor_test, ul_pucch_format3_pdu_valid_sh
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);
 
-  ASSERT_EQ(mac_pdu.format, fapi_pdu.format_type);
+  ASSERT_EQ(mac_pdu.get_format(), fapi_pdu.format_type);
   ASSERT_EQ(mac_pdu.crnti, fapi_pdu.rnti);
 
   // Resources.
@@ -116,7 +116,7 @@ TEST(mac_fapi_ul_pucch_format3_pdu_conversor_test, ul_pucch_format3_pdu_valid_sh
   ASSERT_EQ(!resources.second_hop_prbs.empty(), fapi_pdu.intra_slot_frequency_hopping);
 
   // Format 3.
-  const pucch_format_3& f3 = mac_pdu.format_3;
+  const pucch_format_3& f3 = std::get<pucch_format_3>(mac_pdu.format_params);
   ASSERT_EQ(static_cast<unsigned>(f3.max_code_rate), fapi_pdu.pucch_maintenance_v3.max_code_rate);
   ASSERT_EQ(f3.n_id_0_scrambling, fapi_pdu.nid0_pucch_dmrs_scrambling);
   ASSERT_EQ(f3.n_id_scrambling, fapi_pdu.nid_pucch_scrambling);
@@ -142,7 +142,7 @@ TEST(mac_fapi_ul_pucch_format4_pdu_conversor_test, ul_pucch_format4_pdu_valid_sh
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);
 
-  ASSERT_EQ(mac_pdu.format, fapi_pdu.format_type);
+  ASSERT_EQ(mac_pdu.get_format(), fapi_pdu.format_type);
   ASSERT_EQ(mac_pdu.crnti, fapi_pdu.rnti);
 
   // Resources.
@@ -155,7 +155,7 @@ TEST(mac_fapi_ul_pucch_format4_pdu_conversor_test, ul_pucch_format4_pdu_valid_sh
   ASSERT_EQ(!resources.second_hop_prbs.empty(), fapi_pdu.intra_slot_frequency_hopping);
 
   // Format 4.
-  const pucch_format_4& f4 = mac_pdu.format_4;
+  const pucch_format_4& f4 = std::get<pucch_format_4>(mac_pdu.format_params);
   ASSERT_EQ(static_cast<unsigned>(f4.max_code_rate), fapi_pdu.pucch_maintenance_v3.max_code_rate);
   ASSERT_EQ(f4.n_id_0_scrambling, fapi_pdu.nid0_pucch_dmrs_scrambling);
   ASSERT_EQ(f4.n_id_scrambling, fapi_pdu.nid_pucch_scrambling);

@@ -21,32 +21,36 @@ public:
   test_pucch_f2_alloc_several_prbs() : pucch_allocator_base_tester(test_bench_params{.pucch_f2_f3_more_prbs = true})
   {
     // This PUCCH grant will be for 5 HARQ bits, which fit in 1 PRB.
-    pucch_expected_harq_only.format                    = srsran::pucch_format::FORMAT_2;
-    pucch_expected_harq_only.crnti                     = to_rnti(0x4601);
-    pucch_expected_harq_only.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_expected_harq_only.resources.prbs            = prb_interval{2, 3};
-    pucch_expected_harq_only.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_harq_only.resources.symbols         = ofdm_symbol_range{0, 2};
+    {
+      auto& format_2                          = pucch_expected_harq_only.format_params.emplace<pucch_format_2>();
+      pucch_expected_harq_only.crnti          = to_rnti(0x4601);
+      pucch_expected_harq_only.bwp_cfg        = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+      pucch_expected_harq_only.resources.prbs = prb_interval{2, 3};
+      pucch_expected_harq_only.resources.second_hop_prbs = prb_interval{0, 0};
+      pucch_expected_harq_only.resources.symbols         = ofdm_symbol_range{0, 2};
 
-    pucch_expected_harq_only.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
-    pucch_expected_harq_only.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
-    pucch_expected_harq_only.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+      format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+      format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+      format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+    }
 
     // This PUCCH grant will be for 5 HARQ bits + 4 CSI bits, which fit in 2 PRBs.
     pucch_expected_harq_csi                = pucch_expected_harq_only;
     pucch_expected_harq_csi.resources.prbs = prb_interval{2, 4};
 
     // This PUCCH grant will be for 4 CSI bits only, which are endoced in the maximum number of PRBs.
-    pucch_expected_csi_only.format                    = srsran::pucch_format::FORMAT_2;
-    pucch_expected_csi_only.crnti                     = to_rnti(0x4601);
-    pucch_expected_csi_only.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_expected_csi_only.resources.prbs            = prb_interval{2, 5};
-    pucch_expected_csi_only.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_csi_only.resources.symbols         = ofdm_symbol_range{12, 14};
+    {
+      auto& format_2                         = pucch_expected_csi_only.format_params.emplace<pucch_format_2>();
+      pucch_expected_csi_only.crnti          = to_rnti(0x4601);
+      pucch_expected_csi_only.bwp_cfg        = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+      pucch_expected_csi_only.resources.prbs = prb_interval{2, 5};
+      pucch_expected_csi_only.resources.second_hop_prbs = prb_interval{0, 0};
+      pucch_expected_csi_only.resources.symbols         = ofdm_symbol_range{12, 14};
 
-    pucch_expected_csi_only.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
-    pucch_expected_csi_only.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
-    pucch_expected_csi_only.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+      format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+      format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+      format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+    }
   };
 
 protected:
@@ -60,9 +64,10 @@ protected:
 
 TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_csi_only)
 {
-  pucch_expected_csi_only.format_2.harq_ack_nof_bits = 0;
-  pucch_expected_csi_only.format_2.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi_only.format_2.csi_part1_bits    = 4;
+  auto& format_2             = std::get<pucch_format_2>(pucch_expected_csi_only.format_params);
+  format_2.harq_ack_nof_bits = 0;
+  format_2.sr_bits           = sr_nof_bits::no_sr;
+  format_2.csi_part1_bits    = 4;
 
   add_csi_grant();
 
@@ -77,9 +82,10 @@ TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_csi_only)
 
 TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_csi_sr)
 {
-  pucch_expected_csi_only.format_2.harq_ack_nof_bits = 0;
-  pucch_expected_csi_only.format_2.sr_bits           = sr_nof_bits::one;
-  pucch_expected_csi_only.format_2.csi_part1_bits    = 4;
+  auto& format_2             = std::get<pucch_format_2>(pucch_expected_csi_only.format_params);
+  format_2.harq_ack_nof_bits = 0;
+  format_2.sr_bits           = sr_nof_bits::one;
+  format_2.csi_part1_bits    = 4;
 
   add_sr_grant();
   add_csi_grant();
@@ -95,9 +101,10 @@ TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_csi_sr)
 
 TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_harq_only)
 {
-  pucch_expected_harq_only.format_2.harq_ack_nof_bits = 5;
-  pucch_expected_harq_only.format_2.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_harq_only.format_2.csi_part1_bits    = 0;
+  auto& format_2             = std::get<pucch_format_2>(pucch_expected_harq_only.format_params);
+  format_2.harq_ack_nof_bits = 5;
+  format_2.sr_bits           = sr_nof_bits::no_sr;
+  format_2.csi_part1_bits    = 0;
 
   add_harq_grant();
   add_harq_grant();
@@ -117,17 +124,20 @@ TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_harq_csi_only)
 {
   // We don't know a-priori whether CSI and HARQ will be multilplexed within the same resource; we need to consider both
   // possibilities, (i) 2 separate PUCCH resources HARQ + CSI, and (ii) 1 PUCCH resource with both HARQ and CSI.
-  pucch_expected_harq_only.format_2.harq_ack_nof_bits = 5;
-  pucch_expected_harq_only.format_2.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_harq_only.format_2.csi_part1_bits    = 0;
+  auto& harq_only_format_2             = std::get<pucch_format_2>(pucch_expected_harq_only.format_params);
+  harq_only_format_2.harq_ack_nof_bits = 5;
+  harq_only_format_2.sr_bits           = sr_nof_bits::no_sr;
+  harq_only_format_2.csi_part1_bits    = 0;
 
-  pucch_expected_csi_only.format_2.harq_ack_nof_bits = 0;
-  pucch_expected_csi_only.format_2.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi_only.format_2.csi_part1_bits    = 4;
+  auto& csi_only_format_2             = std::get<pucch_format_2>(pucch_expected_csi_only.format_params);
+  csi_only_format_2.harq_ack_nof_bits = 0;
+  csi_only_format_2.sr_bits           = sr_nof_bits::no_sr;
+  csi_only_format_2.csi_part1_bits    = 4;
 
-  pucch_expected_harq_csi.format_2.harq_ack_nof_bits = 5;
-  pucch_expected_harq_csi.format_2.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_harq_csi.format_2.csi_part1_bits    = 4;
+  auto& harq_csi_format_2             = std::get<pucch_format_2>(pucch_expected_harq_csi.format_params);
+  harq_csi_format_2.harq_ack_nof_bits = 5;
+  harq_csi_format_2.sr_bits           = sr_nof_bits::no_sr;
+  harq_csi_format_2.csi_part1_bits    = 4;
 
   add_csi_grant();
   add_harq_grant();
