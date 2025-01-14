@@ -381,6 +381,12 @@ TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_dl_retx_first_than_ue
     case pucch_format::FORMAT_2:
       nof_ack_bits = pucch.format_2.harq_ack_nof_bits;
       break;
+    case pucch_format::FORMAT_3:
+      nof_ack_bits = pucch.format_3.harq_ack_nof_bits;
+      break;
+    case pucch_format::FORMAT_4:
+      nof_ack_bits = pucch.format_4.harq_ack_nof_bits;
+      break;
     default:
       break;
   }
@@ -636,6 +642,12 @@ TEST_F(scheduler_pf_test, pf_ensures_fairness_in_dl_when_ues_have_different_chan
         case pucch_format::FORMAT_2:
           nof_ack_bits = pucch.format_2.harq_ack_nof_bits;
           break;
+        case pucch_format::FORMAT_3:
+          nof_ack_bits = pucch.format_3.harq_ack_nof_bits;
+          break;
+        case pucch_format::FORMAT_4:
+          nof_ack_bits = pucch.format_4.harq_ack_nof_bits;
+          break;
         default:
           break;
       }
@@ -802,6 +814,12 @@ TEST_P(scheduler_pf_qos_test, pf_upholds_qos_in_dl_gbr_flows)
           break;
         case pucch_format::FORMAT_2:
           nof_ack_bits = pucch.format_2.harq_ack_nof_bits;
+          break;
+        case pucch_format::FORMAT_3:
+          nof_ack_bits = pucch.format_3.harq_ack_nof_bits;
+          break;
+        case pucch_format::FORMAT_4:
+          nof_ack_bits = pucch.format_4.harq_ack_nof_bits;
           break;
         default:
           break;
