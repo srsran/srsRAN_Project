@@ -1950,8 +1950,8 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     const pucch_resource* pucch_res_cfg = resource_manager.reserve_set_1_res_by_res_indicator(
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
-    logger.debug("rnti={}: PUCCH PDU on F4 HARQ resource updated: slot={} p_ind={} format={} prbs={} sym={} occ_idx={} "
-                 "occ_len={} h_bits={} sr_bits={} csi1_bits={}",
+    logger.debug("rnti={}: PUCCH PDU on F4 HARQ resource updated: slot={} p_ind={} format={} prbs={} sym={} occ={}/{} "
+                 "h_bits={} sr_bits={} csi1_bits={}",
                  current_grants.rnti,
                  pucch_slot_alloc.slot,
                  current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
@@ -2438,8 +2438,8 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
                                  0U,
                                  csi_res.bits.sr_bits,
                                  csi_res.bits.csi_part1_nof_bits);
-        logger.debug("rnti={}: PUCCH PDU allocated on CSI F4 resource: slot={} prbs={} sym={} occ_idx={} occ_len={} "
-                     "h_bits={} sr_bits={} csi1_bits={}",
+        logger.debug("rnti={}: PUCCH PDU allocated on CSI F4 resource: slot={} prbs={} sym={} occ={}/{} h_bits={} "
+                     "sr_bits={} csi1_bits={}",
                      crnti,
                      pucch_slot_alloc.slot,
                      grant->resources.prbs,
@@ -2608,7 +2608,7 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
                                  harq_res.bits.sr_bits,
                                  harq_res.bits.csi_part1_nof_bits);
         logger.debug("rnti={}: PUCCH PDU allocated on F4 HARQ resource: slot={} p_ind={} format={} prbs={} sym={} "
-                     "occ_idx={} occ_len={} h_bits={} sr_bits={} csi1_bits={}",
+                     "occ={}/{} h_bits={} sr_bits={} csi1_bits={}",
                      crnti,
                      pucch_slot_alloc.slot,
                      harq_res.harq_id.pucch_res_ind,

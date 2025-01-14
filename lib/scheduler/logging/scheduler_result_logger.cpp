@@ -330,7 +330,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
         fmt::format_to(std::back_inserter(fmtbuf), " second_prbs={}", pucch.resources.second_hop_prbs);
       }
       fmt::format_to(std::back_inserter(fmtbuf),
-                     " symb={} occ_idx={} occ_len={} uci: harq_bits={} sr={} csi-1_bits={}",
+                     " symb={} occ={}/{} uci: harq_bits={} sr={} csi-1_bits={}",
                      pucch.resources.symbols,
                      pucch.format_4.orthog_seq_idx,
                      fmt::underlying(pucch.format_4.n_sf_pucch_f4),
