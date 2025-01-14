@@ -75,6 +75,7 @@ public:
   void                                  create_srb(const srb_creation_message& msg) override;
   static_vector<srb_id_t, MAX_NOF_SRBS> get_srbs() override;
   rrc_state                             get_rrc_state() const override;
+  void                                  cancel_handover_reconfiguration_transaction(uint8_t transaction_id) override;
 
   // rrc_ue_context_handler
   rrc_ue_reestablishment_context_response get_context() override;

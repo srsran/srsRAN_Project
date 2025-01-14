@@ -159,6 +159,11 @@ public:
 
   rrc_state get_rrc_state() const override { return rrc_state::connected; };
 
+  void cancel_handover_reconfiguration_transaction(uint8_t transaction_id) override
+  {
+    logger.info("Received a new request to cancel RRC UE handover reconfiguration transaction");
+  }
+
   // RRC UE Setup proc notifier
   void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override{};
   void on_ue_release_required(const ngap_cause_t& cause) override{};
