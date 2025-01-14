@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/adt/filter_view.h"
+#include "srsran/adt/ranges/filter_view.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;
