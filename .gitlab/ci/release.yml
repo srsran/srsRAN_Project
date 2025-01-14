@@ -303,7 +303,9 @@ publish matlab:
     - job: publish main
     - job: builder version
   inherit:
-    variables: false
+    variables:
+      - PUBLIC_PUSH_TOKEN
+      - PUBLIC_REPO
   trigger:
     project: softwareradiosystems/srsgnb_matlab
     branch: master
