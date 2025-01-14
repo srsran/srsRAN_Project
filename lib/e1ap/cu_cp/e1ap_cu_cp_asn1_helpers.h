@@ -33,7 +33,7 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
     asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.set_dyn_5qi();
     auto& asn1_dynamic_5qi = asn1_qos_flow_info_item.qos_flow_level_qos_params.qos_characteristics.dyn_5qi();
 
-    asn1_dynamic_5qi.qos_prio_level                 = qos_prio_level_to_uint(dynamic_5qi.qos_prio_level);
+    asn1_dynamic_5qi.qos_prio_level                 = dynamic_5qi.qos_prio_level.value();
     asn1_dynamic_5qi.packet_delay_budget            = dynamic_5qi.packet_delay_budget;
     asn1_dynamic_5qi.packet_error_rate.per_scalar   = dynamic_5qi.per.scalar;
     asn1_dynamic_5qi.packet_error_rate.per_exponent = dynamic_5qi.per.exponent;
@@ -64,7 +64,7 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
 
     if (non_dynamic_5qi.qos_prio_level.has_value()) {
       asn1_non_dynamic_5qi.qos_prio_level_present = true;
-      asn1_non_dynamic_5qi.qos_prio_level         = qos_prio_level_to_uint(non_dynamic_5qi.qos_prio_level.value());
+      asn1_non_dynamic_5qi.qos_prio_level         = non_dynamic_5qi.qos_prio_level.value().value();
     }
     if (non_dynamic_5qi.averaging_win.has_value()) {
       asn1_non_dynamic_5qi.averaging_win_present = true;

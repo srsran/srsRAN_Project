@@ -294,7 +294,7 @@ double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coe
 /// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
 qos_weight_metrics compute_dl_qos_weights(const slice_ue& u)
 {
-  uint8_t min_prio_level = MAX_QOS_PRIO_LEVEL;
+  uint8_t min_prio_level = qos_prio_level_t::max();
   double  gbr_weight     = 0;
   for (const logical_channel_config& lc : u.logical_channels()) {
     if (not u.contains(lc.lcid) or not lc.qos.has_value() or u.pending_dl_newtx_bytes(lc.lcid) == 0) {
@@ -303,7 +303,7 @@ qos_weight_metrics compute_dl_qos_weights(const slice_ue& u)
     }
 
     // Track the LC with the lowest priority.
-    min_prio_level = std::min(lc.qos->qos.qos_priority_level, min_prio_level);
+    min_prio_level = std::min(lc.qos->qos.priority.value(), min_prio_level);
 
     if (not lc.qos->gbr_qos_info.has_value()) {
       // LC is a non-GBR flow.
@@ -323,7 +323,8 @@ qos_weight_metrics compute_dl_qos_weights(const slice_ue& u)
   gbr_weight = gbr_weight == 0 ? 1.0 : gbr_weight;
 
   // Assign a weight to the UE based on its LC QoS priorities.
-  double prio_weight = (MAX_QOS_PRIO_LEVEL + 1 - min_prio_level) / static_cast<double>(MAX_QOS_PRIO_LEVEL + 1);
+  double prio_weight =
+      (qos_prio_level_t::max() + 1 - min_prio_level) / static_cast<double>(qos_prio_level_t::max() + 1);
 
   // The return is a combination of priority weight and GBR weight function.
   return {gbr_weight, prio_weight};
@@ -332,7 +333,7 @@ qos_weight_metrics compute_dl_qos_weights(const slice_ue& u)
 /// \brief Computes UL weights used in computation of UL priority value for a UE in a slot.
 qos_weight_metrics compute_ul_qos_weights(const slice_ue& u)
 {
-  uint8_t min_prio_level = MAX_QOS_PRIO_LEVEL;
+  uint8_t min_prio_level = qos_prio_level_t::max();
   double  gbr_weight     = 0;
   for (const logical_channel_config& lc : u.logical_channels()) {
     if (not u.contains(lc.lcid) or not lc.qos.has_value() or u.pending_ul_unacked_bytes(lc.lc_group) == 0) {
@@ -342,7 +343,7 @@ qos_weight_metrics compute_ul_qos_weights(const slice_ue& u)
     }
 
     // Track the LC with the lowest priority.
-    min_prio_level = std::min(lc.qos->qos.qos_priority_level, min_prio_level);
+    min_prio_level = std::min(lc.qos->qos.priority.value(), min_prio_level);
 
     if (not lc.qos->gbr_qos_info.has_value()) {
       // LC is a non-GBR flow.
@@ -363,7 +364,8 @@ qos_weight_metrics compute_ul_qos_weights(const slice_ue& u)
   gbr_weight = gbr_weight == 0 ? 1.0 : gbr_weight;
 
   // Assign a weight to the UE based on its LC QoS priorities.
-  double prio_weight = (MAX_QOS_PRIO_LEVEL + 1 - min_prio_level) / static_cast<double>(MAX_QOS_PRIO_LEVEL + 1);
+  double prio_weight =
+      (qos_prio_level_t::max() + 1 - min_prio_level) / static_cast<double>(qos_prio_level_t::max() + 1);
 
   return {gbr_weight, prio_weight};
 }

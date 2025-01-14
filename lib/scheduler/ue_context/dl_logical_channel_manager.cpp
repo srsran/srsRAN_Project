@@ -89,7 +89,7 @@ static uint8_t get_lc_prio(const logical_channel_config& cfg)
   if (is_srb(cfg.lcid)) {
     prio = cfg.lcid <= LCID_SRB1 ? 0 : 1;
   } else {
-    prio = cfg.qos.has_value() ? cfg.qos->qos.qos_priority_level : MAX_QOS_PRIORITY_LEVEL;
+    prio = cfg.qos.has_value() ? cfg.qos->qos.priority.value() : qos_prio_level_t::max();
   }
   return prio;
 }

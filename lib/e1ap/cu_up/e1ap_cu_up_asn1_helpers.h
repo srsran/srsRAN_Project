@@ -79,7 +79,7 @@ inline asn1::e1ap::gnb_cu_up_e1_setup_request_s cu_up_e1_setup_request_to_asn1(c
         if (ran_item.non_dyn_5qi_desc.qos_prio_level.has_value()) {
           asn1_ran_item.non_dyn_5qi_descriptor.qos_prio_level_present = true;
           asn1_ran_item.non_dyn_5qi_descriptor.qos_prio_level =
-              qos_prio_level_to_uint(ran_item.non_dyn_5qi_desc.qos_prio_level.value());
+              ran_item.non_dyn_5qi_desc.qos_prio_level.value().value();
         }
 
         // averaging win
