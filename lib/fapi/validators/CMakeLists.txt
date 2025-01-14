@@ -10,6 +10,7 @@ set(SOURCES
         dl_csi_pdu.cpp
         dl_pdcch_pdu.cpp
         dl_pdsch_pdu.cpp
+        dl_prs_pdu.cpp
         dl_ssb_pdu.cpp
         message_validators.cpp
         tx_precoding_and_beamforming_pdu.cpp

@@ -408,8 +408,24 @@ struct dl_ssb_pdu {
   //: TODO: params v4 - MU-MIMO
 };
 
+/// Downlink PRS PDU information.
+struct dl_prs_pdu {
+  subcarrier_spacing   scs;
+  cyclic_prefix        cp;
+  uint16_t             nid_prs;
+  uint16_t             pdu_index;
+  uint8_t              comb_size;
+  uint8_t              comb_offset;
+  uint8_t              num_symbols;
+  uint8_t              first_symbol;
+  uint16_t             num_rbs;
+  uint16_t             start_rb;
+  std::optional<float> prs_power_offset;
+  // :TODO: Puncturing, spatial stream, precoding and backward compatible extension.
+};
+
 /// Downlink PDU type ID.
-enum class dl_pdu_type : uint16_t { PDCCH, PDSCH, CSI_RS, SSB };
+enum class dl_pdu_type : uint16_t { PDCCH, PDSCH, CSI_RS, SSB, PRS };
 
 inline unsigned to_value(dl_pdu_type value)
 {
@@ -426,6 +442,7 @@ struct dl_tti_request_pdu {
   dl_pdsch_pdu  pdsch_pdu;
   dl_csi_rs_pdu csi_rs_pdu;
   dl_ssb_pdu    ssb_pdu;
+  dl_prs_pdu    prs_pdu;
 };
 
 /// Downlink TTI request message.
@@ -433,7 +450,7 @@ struct dl_tti_request_message : public base_message {
   /// Array index for the number of DL DCIs.
   static constexpr unsigned DL_DCI_INDEX = 4;
   /// Maximum supported number of DL PDU types in this release.
-  static constexpr unsigned MAX_NUM_DL_TYPES = 5;
+  static constexpr unsigned MAX_NUM_DL_TYPES = 6;
 
   uint16_t                                                sfn;
   uint16_t                                                slot;

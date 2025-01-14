@@ -24,6 +24,10 @@ add_executable(dl_pdsch_builder_test dl_pdsch_pdu_test.cpp)
 target_link_libraries(dl_pdsch_builder_test srsran_support srslog gtest gtest_main)
 gtest_discover_tests(dl_pdsch_builder_test)
 
+add_executable(dl_prs_pdu_test dl_prs_pdu_test.cpp)
+target_link_libraries(dl_prs_pdu_test srsran_support srslog gtest gtest_main)
+gtest_discover_tests(dl_prs_pdu_test)
+
 add_executable(dl_ssb_builder_test dl_ssb_pdu_test.cpp)
 target_link_libraries(dl_ssb_builder_test srsran_support srslog gtest gtest_main)
 gtest_discover_tests(dl_ssb_builder_test)

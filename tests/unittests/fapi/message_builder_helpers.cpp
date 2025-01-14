@@ -258,6 +258,24 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
 
   return pdu;
 }
+srsran::fapi::dl_prs_pdu unittest::build_valid_dl_prs_pdu()
+{
+  dl_prs_pdu pdu;
+
+  pdu.scs              = subcarrier_spacing::kHz30;
+  pdu.cp               = cyclic_prefix::NORMAL;
+  pdu.nid_prs          = 1;
+  pdu.pdu_index        = 0;
+  pdu.comb_size        = 2;
+  pdu.comb_offset      = 0;
+  pdu.num_symbols      = 4;
+  pdu.first_symbol     = 8;
+  pdu.num_rbs          = 28;
+  pdu.start_rb         = 24;
+  pdu.prs_power_offset = -13.3;
+
+  return pdu;
+}
 
 dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
 {

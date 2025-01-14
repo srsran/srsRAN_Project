@@ -12,6 +12,7 @@
 #include "dl_csi_pdu.h"
 #include "dl_pdcch_pdu.h"
 #include "dl_pdsch_pdu.h"
+#include "dl_prs_pdu.h"
 #include "dl_ssb_pdu.h"
 #include "field_checkers.h"
 #include "uci_pdus.h"
@@ -76,6 +77,9 @@ error_type<validator_report> srsran::fapi::validate_dl_tti_request(const dl_tti_
         break;
       case dl_pdu_type::CSI_RS:
         success &= validate_dl_csi_pdu(pdu.csi_rs_pdu, report);
+        break;
+      case dl_pdu_type::PRS:
+        success &= validate_dl_prs_pdu(pdu.prs_pdu, report);
         break;
       default:
         srsran_assert(0, "Invalid pdu_type");

@@ -130,6 +130,19 @@ static void log_csi_rs_pdu(const dl_csi_rs_pdu& pdu, fmt::memory_buffer& buffer)
   }
 }
 
+static void log_prs_pdu(const dl_prs_pdu& pdu, fmt::memory_buffer& buffer)
+{
+  fmt::format_to(std::back_inserter(buffer),
+                 "\n\t- PRS comb_size={} comb_offset={} symb={}:{} RBs={}:{} n_id={}",
+                 pdu.comb_size,
+                 pdu.comb_offset,
+                 pdu.first_symbol,
+                 pdu.num_symbols,
+                 pdu.start_rb,
+                 pdu.num_rbs,
+                 pdu.nid_prs);
+}
+
 void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog::basic_logger& logger)
 {
   fmt::memory_buffer buffer;
@@ -152,6 +165,9 @@ void srsran::fapi::log_dl_tti_request(const dl_tti_request_message& msg, srslog:
         break;
       case fapi::dl_pdu_type::SSB:
         log_ssb_pdu(pdu.ssb_pdu, buffer);
+        break;
+      case fapi::dl_pdu_type::PRS:
+        log_prs_pdu(pdu.prs_pdu, buffer);
         break;
     }
   }

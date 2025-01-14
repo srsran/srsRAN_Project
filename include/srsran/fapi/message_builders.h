@@ -772,6 +772,67 @@ public:
   }
 };
 
+/// PRS PDU builder that helps to fill in the parameters specified in SCF-222 v8.0 section 3.4.2.4a.
+class dl_prs_pdu_builder
+{
+  dl_prs_pdu& pdu;
+
+public:
+  explicit dl_prs_pdu_builder(dl_prs_pdu& pdu_) : pdu(pdu_) {}
+
+  /// Sets the PRS PDU basic parameters and returns a reference to the builder.
+  dl_prs_pdu_builder& set_basic_parameters(subcarrier_spacing scs, cyclic_prefix cp)
+  {
+    pdu.scs = scs;
+    pdu.cp  = cp;
+
+    return *this;
+  }
+
+  /// Sets the PRS PDU N_ID parameter and returns a reference to the builder.
+  dl_prs_pdu_builder& set_n_id(unsigned n_id)
+  {
+    pdu.nid_prs = n_id;
+
+    return *this;
+  }
+
+  /// Sets the PRS PDU symbol parameters and returns a reference to the builder.
+  dl_prs_pdu_builder& set_symbol_parameters(unsigned nof_symbols, unsigned first_symbol)
+  {
+    pdu.num_symbols  = nof_symbols;
+    pdu.first_symbol = first_symbol;
+
+    return *this;
+  }
+
+  /// Sets the PRS PDU RB parameters and returns a reference to the builder.
+  dl_prs_pdu_builder& set_rb_parameters(unsigned nof_rb, unsigned start_rb)
+  {
+    pdu.num_rbs  = nof_rb;
+    pdu.start_rb = start_rb;
+
+    return *this;
+  }
+
+  /// Sets the PRS PDU power offset parameter and returns a reference to the builder.
+  dl_prs_pdu_builder& set_power_offset(std::optional<float> power_offset)
+  {
+    pdu.prs_power_offset = power_offset;
+
+    return *this;
+  }
+
+  /// Sets the PRS PDU transmission comb parameters and returns a reference to the builder.
+  dl_prs_pdu_builder& set_comb_parameters(unsigned comb_size, unsigned comb_offset)
+  {
+    pdu.comb_size   = comb_size;
+    pdu.comb_offset = comb_offset;
+
+    return *this;
+  }
+};
+
 /// DL_TTI.request message builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.2.
 class dl_tti_request_message_builder
 {
@@ -802,7 +863,7 @@ public:
     // Add a new pdu.
     dl_tti_request_pdu& pdu = msg.pdus.emplace_back();
 
-    // Fill the PDCCH PDU index value. The index value will be the index of the pdu in the array of PDCCH pdus.
+    // Fill the PDCCH PDU index value. The index value will be the index of the pdu in the array of PDCCH PDUs.
     dl_pdcch_pdu_maintenance_v3& info          = pdu.pdcch_pdu.maintenance_v3;
     auto&                        num_pdcch_pdu = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::PDCCH)];
     info.pdcch_pdu_index                       = num_pdcch_pdu;
@@ -903,7 +964,7 @@ public:
     // Add a new PDU.
     dl_tti_request_pdu& pdu = msg.pdus.emplace_back();
 
-    // Fill the SSB PDU index value. The index value will be the index of the PDU in the array of SSB pdus.
+    // Fill the SSB PDU index value. The index value will be the index of the PDU in the array of SSB PDUs.
     dl_ssb_maintenance_v3& info        = pdu.ssb_pdu.ssb_maintenance_v3;
     auto&                  num_ssb_pdu = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::SSB)];
     info.ssb_pdu_index                 = num_ssb_pdu;
@@ -914,6 +975,27 @@ public:
     pdu.pdu_type = dl_pdu_type::SSB;
 
     dl_ssb_pdu_builder builder(pdu.ssb_pdu);
+
+    return builder;
+  }
+
+  /// Adds a PRS PDU to the message and returns a PRS PDU builder.
+  dl_prs_pdu_builder add_prs_pdu()
+  {
+    // Add a new PDU.
+    dl_tti_request_pdu& pdu = msg.pdus.emplace_back();
+
+    // Fill the PRS PDU index value. The index value will be the index of the PDU in the array of PRS PDUs.
+    dl_prs_pdu& info        = pdu.prs_pdu;
+    auto&       num_prs_pdu = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::PRS)];
+    info.pdu_index          = num_prs_pdu;
+
+    // Increase the number of SSB PDUs in the request.
+    ++num_prs_pdu;
+
+    pdu.pdu_type = dl_pdu_type::PRS;
+
+    dl_prs_pdu_builder builder(info);
 
     return builder;
   }
