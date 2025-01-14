@@ -483,8 +483,8 @@ static void fill_format_2_3_4_csi_part1(fapi::uci_pucch_pdu_format_2_3_4_builder
                                        message.get_csi_part1_bits().begin(), message.get_csi_part1_bits().end()));
 }
 
-/// Adds a PUCCH Format 2 PDU to the given builder using the data provided by result.
-static void add_format_2_pucch_pdu(fapi::uci_indication_message_builder& builder, const ul_pucch_results& result)
+/// Adds a PUCCH Format 2, Format 3 or Format 4 PDU to the given builder using the data provided by result.
+static void add_format_2_3_4_pucch_pdu(fapi::uci_indication_message_builder& builder, const ul_pucch_results& result)
 {
   // Do not use the handle for now.
   static const unsigned                    handle = 0;
@@ -536,7 +536,9 @@ void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_r
       add_format_0_1_pucch_pdu(builder, result);
       break;
     case pucch_format::FORMAT_2:
-      add_format_2_pucch_pdu(builder, result);
+    case pucch_format::FORMAT_3:
+    case pucch_format::FORMAT_4:
+      add_format_2_3_4_pucch_pdu(builder, result);
       break;
     default:
       srsran_assert(0, "Unexpected PUCCH format {}", fmt::underlying(context.format));

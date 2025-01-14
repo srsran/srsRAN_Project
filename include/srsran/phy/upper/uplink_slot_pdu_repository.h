@@ -62,6 +62,10 @@ public:
           return _pdu.format1.start_symbol_index + _pdu.format1.nof_symbols - 1;
         case pucch_format::FORMAT_2:
           return _pdu.format2.start_symbol_index + _pdu.format2.nof_symbols - 1;
+        case pucch_format::FORMAT_3:
+          return _pdu.format3.start_symbol_index + _pdu.format3.nof_symbols - 1;
+        case pucch_format::FORMAT_4:
+          return _pdu.format4.start_symbol_index + _pdu.format4.nof_symbols - 1;
         default:
           srsran_assert(false, "Unsupported PUCCH format");
           return 0U;

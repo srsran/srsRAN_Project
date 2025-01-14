@@ -99,17 +99,22 @@ public:
       // Select the number of HARQ-ACK feedback number of bits.
       unsigned nof_harq_ack = 0;
       switch (pdu.context.format) {
+        case pucch_format::FORMAT_0:
+          nof_harq_ack = pdu.format0.nof_harq_ack;
+          break;
         case pucch_format::FORMAT_1:
           nof_harq_ack = pdu.format1.nof_harq_ack;
           break;
         case pucch_format::FORMAT_2:
           nof_harq_ack = pdu.format2.nof_harq_ack;
           break;
-        case pucch_format::FORMAT_0:
         case pucch_format::FORMAT_3:
+          nof_harq_ack = pdu.format3.nof_harq_ack;
+          break;
         case pucch_format::FORMAT_4:
+          nof_harq_ack = pdu.format4.nof_harq_ack;
+          break;
         case pucch_format::NOF_FORMATS:
-          // These cases are not currently supported.
           break;
       }
 
