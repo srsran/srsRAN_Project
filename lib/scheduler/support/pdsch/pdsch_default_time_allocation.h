@@ -31,7 +31,7 @@ struct bwp_downlink_dedicated;
 /// \param[in] row_index Row index.
 /// \param[in] dmrs_pos  DM-RS for mapping Type A position.
 /// \return A valid PDSCH time-domain allocation configuration is the provided parameters are valid. Otherwise,
-/// invallid config.
+/// invalid config.
 pdsch_time_domain_resource_allocation
 pdsch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index, dmrs_typeA_position dmrs_pos);
 
