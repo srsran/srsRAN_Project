@@ -41,6 +41,7 @@ set(SOURCES
       routines/ue_amf_context_release_request_routine.cpp
       routines/mobility/mobility_helpers.cpp
       routines/mobility/intra_cu_handover_routine.cpp
+      routines/mobility/intra_cu_handover_target_routine.cpp
       routines/mobility/inter_cu_handover_target_routine.cpp
       routines/mobility/handover_reconfiguration_routine.cpp
       task_schedulers/cu_up_task_scheduler.cpp

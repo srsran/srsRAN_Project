@@ -61,8 +61,10 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
   initialize_ue_release_timer(source_ue.get_ue_index());
 
   // Notify CU-CP that RRC reconfiguration was sent.
-  cu_cp_handler.handle_handover_reconfiguration_sent(
-      target_ue_index, (uint8_t)ho_reconf_ctxt.transaction_id, target_ue_release_timeout_ms);
+  cu_cp_handler.handle_handover_reconfiguration_sent({target_ue_index,
+                                                      source_ue.get_ue_index(),
+                                                      (uint8_t)ho_reconf_ctxt.transaction_id,
+                                                      target_ue_release_timeout_ms});
 
   logger.debug("source_ue={} target_ue={}: \"{}\" finalized", source_ue.get_ue_index(), target_ue_index, name());
 

@@ -15,6 +15,7 @@
 #include "routines/initial_context_setup_routine.h"
 #include "routines/mobility/inter_cu_handover_target_routine.h"
 #include "routines/mobility/intra_cu_handover_routine.h"
+#include "routines/mobility/intra_cu_handover_target_routine.h"
 #include "routines/pdu_session_resource_modification_routine.h"
 #include "routines/pdu_session_resource_release_routine.h"
 #include "routines/pdu_session_resource_setup_routine.h"
@@ -362,27 +363,17 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
   return launch_async<transfer_context_task>(*this, old_ue_index, handle_ue_context_transfer_impl);
 }
 
-async_task<bool> cu_cp_impl::handle_handover_reconfiguration_sent(ue_index_t                target_ue_index,
-                                                                  uint8_t                   transaction_id,
-                                                                  std::chrono::milliseconds timeout_ms)
+void cu_cp_impl::handle_handover_reconfiguration_sent(const cu_cp_intra_cu_handover_target_request& request)
 {
-  // Note that this is running a task for the target UE on the source UE task scheduler. This should be fine, as the
-  // source UE controls the target UE in this handover scenario.
-  return launch_async([this, target_ue_index, transaction_id, timeout_ms](coro_context<async_task<bool>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-
-    if (ue_mng.find_du_ue(target_ue_index) == nullptr) {
-      logger.warning("Target UE={} got removed", target_ue_index);
-      CORO_EARLY_RETURN(false);
+  if (ue_mng.find_du_ue(request.target_ue_index) == nullptr) {
+    logger.warning("UE index={} got removed", request.target_ue_index);
+    return;
     }
-    // Notify RRC UE to await ReconfigurationComplete.
-    CORO_AWAIT_VALUE(bool result,
-                     ue_mng.find_du_ue(target_ue_index)
-                         ->get_rrc_ue()
-                         ->handle_handover_reconfiguration_complete_expected(transaction_id, timeout_ms));
 
-    CORO_RETURN(result);
-  });
+  cu_cp_ue* ue = ue_mng.find_du_ue(request.target_ue_index);
+
+  ue->get_task_sched().schedule_async_task(
+      launch_async<intra_cu_handover_target_routine>(request, *this, get_cu_cp_ue_context_handler(), ue_mng, logger));
 }
 
 void cu_cp_impl::handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index)
