@@ -592,11 +592,12 @@ struct cu_cp_intra_cu_handover_response {
   bool success = false;
 };
 
+// Request sent to the target DU to prepare for the handover RRC reconfiguration.
 struct cu_cp_intra_cu_handover_target_request {
   ue_index_t                target_ue_index = ue_index_t::invalid;
   ue_index_t                source_ue_index = ue_index_t::invalid;
   uint8_t                   transaction_id;
-  std::chrono::milliseconds timeout_ms;
+  std::chrono::milliseconds timeout;
 };
 
 } // namespace srs_cu_cp

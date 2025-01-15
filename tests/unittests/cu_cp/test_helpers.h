@@ -141,9 +141,9 @@ public:
     logger.info("source_ue={} target_ue={}: Received handover ue context push", source_ue_index, target_ue_index);
   }
 
-  void initialize_ue_release_timer(ue_index_t                              ue_index,
-                                   std::chrono::milliseconds               ue_release_timeout,
-                                   const cu_cp_ue_context_release_request& ue_context_release_request) override
+  void initialize_handover_ue_release_timer(ue_index_t                              ue_index,
+                                            std::chrono::milliseconds               handover_ue_release_timeout,
+                                            const cu_cp_ue_context_release_request& ue_context_release_request) override
   {
     logger.info("ue={}: Initializing UE release timer", ue_index);
   }

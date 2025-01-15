@@ -58,13 +58,11 @@ void handover_reconfiguration_routine::operator()(coro_context<async_task<bool>>
   }
 
   // Initialize UE release timer for source UE.
-  initialize_ue_release_timer(source_ue.get_ue_index());
+  initialize_handover_ue_release_timer(source_ue.get_ue_index());
 
   // Notify CU-CP that RRC reconfiguration was sent.
-  cu_cp_handler.handle_handover_reconfiguration_sent({target_ue_index,
-                                                      source_ue.get_ue_index(),
-                                                      (uint8_t)ho_reconf_ctxt.transaction_id,
-                                                      target_ue_release_timeout_ms});
+  cu_cp_handler.handle_handover_reconfiguration_sent(
+      {target_ue_index, source_ue.get_ue_index(), (uint8_t)ho_reconf_ctxt.transaction_id, target_ue_release_timeout});
 
   // Store handover context in case of for possible re-establishment.
   logger.debug("ue={}: Storing handover context", source_ue.get_ue_index());
@@ -88,7 +86,7 @@ void handover_reconfiguration_routine::generate_ue_context_modification_request(
   ue_context_mod_request.tx_action_ind = f1ap_tx_action_ind::stop;
 }
 
-void handover_reconfiguration_routine::initialize_ue_release_timer(ue_index_t ue_index)
+void handover_reconfiguration_routine::initialize_handover_ue_release_timer(ue_index_t ue_index)
 {
   // Unpack MasterCellGroup to extract T304.
   asn1::rrc_nr::cell_group_cfg_s cell_group_cfg;
@@ -97,7 +95,7 @@ void handover_reconfiguration_routine::initialize_ue_release_timer(ue_index_t ue
     report_fatal_error("Failed to unpack MasterCellGroupCfg");
   }
   unsigned t304_ms = cell_group_cfg.sp_cell_cfg.recfg_with_sync.t304.to_number();
-  target_ue_release_timeout_ms =
+  target_ue_release_timeout =
       std::chrono::milliseconds{t304_ms + /*We add 1s of extra time for the UE to reestablish*/ 1000};
 
   // Unpack SIB1 to extract T311.
@@ -109,7 +107,7 @@ void handover_reconfiguration_routine::initialize_ue_release_timer(ue_index_t ue
   unsigned t301_ms = sib1_msg.ue_timers_and_consts.t301.to_number();
   unsigned t311_ms = sib1_msg.ue_timers_and_consts.t311.to_number();
 
-  cu_cp_handler.initialize_ue_release_timer(
+  cu_cp_handler.initialize_handover_ue_release_timer(
       ue_index,
       std::chrono::milliseconds{t301_ms + t304_ms + t311_ms +
                                 /*We add 1s of extra time for the UE to reestablish*/ 1000},

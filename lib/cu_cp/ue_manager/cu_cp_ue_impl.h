@@ -145,7 +145,7 @@ public:
     return meas_context.meas_results;
   }
 
-  unique_timer& get_ue_release_timer() { return ue_release_timer; }
+  unique_timer& get_handover_ue_release_timer() { return handover_ue_release_timer; }
 
   std::optional<cu_cp_ue_handover_context>& get_ho_context() { return ho_context; }
 
@@ -177,7 +177,7 @@ private:
   // CU-CP UE context.
   rrc_ue_cu_cp_adapter                     rrc_ue_cu_cp_ev_notifier;
   cell_meas_manager_ue_context             meas_context;
-  unique_timer                             ue_release_timer = {};
+  unique_timer                             handover_ue_release_timer = {};
   std::optional<cu_cp_ue_handover_context> ho_context;
 };
 

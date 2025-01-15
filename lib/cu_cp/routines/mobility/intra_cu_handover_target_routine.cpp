@@ -44,7 +44,7 @@ void intra_cu_handover_target_routine::operator()(coro_context<async_task<void>>
   // Notify RRC UE to await ReconfigurationComplete.
   CORO_AWAIT_VALUE(reconf_result,
                    target_ue->get_rrc_ue()->handle_handover_reconfiguration_complete_expected(request.transaction_id,
-                                                                                              request.timeout_ms));
+                                                                                              request.timeout));
 
   if (!reconf_result) {
     logger.warning("ue={}: \"{}\" failed", request.target_ue_index, name());

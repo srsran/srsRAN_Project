@@ -175,7 +175,7 @@ void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inact
     cu_cp_ue* ue = ue_mng.find_du_ue(msg.ue_index);
     srsran_assert(ue != nullptr, "ue={}: Could not find DU UE", msg.ue_index);
 
-    if (ue->get_ue_release_timer().is_running()) {
+    if (ue->get_handover_ue_release_timer().is_running()) {
       logger.debug("ue={}: Ignoring UE inactivity. Cause: Ongoing handover for this UE", msg.ue_index);
       return;
     }
@@ -219,9 +219,9 @@ cu_cp_impl::handle_rrc_reestablishment_request(pci_t old_pci, rnti_t old_c_rnti,
   }
 
   // Stop the UE release timer if it is running.
-  if (old_ue->get_ue_release_timer().is_running()) {
-    logger.debug("ue={}: Stopping UE release timer", old_ue_index);
-    old_ue->get_ue_release_timer().stop();
+  if (old_ue->get_handover_ue_release_timer().is_running()) {
+    logger.debug("ue={}: Stopping handover UE release timer", old_ue_index);
+    old_ue->get_handover_ue_release_timer().stop();
   }
 
   // Cancel any ongoing handover transaction for the UE.
@@ -751,9 +751,10 @@ void cu_cp_impl::handle_pending_ue_task_cancellation(ue_index_t ue_index)
   }
 }
 
-void cu_cp_impl::initialize_ue_release_timer(ue_index_t                              ue_index,
-                                             std::chrono::milliseconds               ue_release_timeout,
-                                             const cu_cp_ue_context_release_request& ue_context_release_request)
+void cu_cp_impl::initialize_handover_ue_release_timer(
+    ue_index_t                              ue_index,
+    std::chrono::milliseconds               handover_ue_release_timeout,
+    const cu_cp_ue_context_release_request& ue_context_release_request)
 {
   if (ue_mng.find_du_ue(ue_index) == nullptr) {
     logger.warning("ue={}: Could not find UE", ue_index);
@@ -762,17 +763,18 @@ void cu_cp_impl::initialize_ue_release_timer(ue_index_t                         
 
   cu_cp_ue* ue = ue_mng.find_ue(ue_index);
 
-  if (ue->get_ue_release_timer().is_running()) {
-    logger.warning("ue={}: UE release timer already running", ue_index);
+  if (ue->get_handover_ue_release_timer().is_running()) {
+    logger.warning("ue={}: handover UE release timer already running", ue_index);
     return;
   }
 
   // Start timer.
-  logger.debug("ue={}: Setting release timer to {}ms", ue_index, ue_release_timeout.count());
-  ue->get_ue_release_timer().set(ue_release_timeout, [this, ue, ue_context_release_request](timer_id_t /*tid*/) {
-    ue->get_task_sched().schedule_async_task(handle_ue_context_release(ue_context_release_request));
-  });
-  ue->get_ue_release_timer().run();
+  logger.debug("ue={}: Setting release timer to {}ms", ue_index, handover_ue_release_timeout.count());
+  ue->get_handover_ue_release_timer().set(
+      handover_ue_release_timeout, [this, ue, ue_context_release_request](timer_id_t /*tid*/) {
+        ue->get_task_sched().schedule_async_task(handle_ue_context_release(ue_context_release_request));
+      });
+  ue->get_handover_ue_release_timer().run();
 }
 
 // private

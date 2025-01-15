@@ -189,7 +189,7 @@ public:
     return true;
   }
 
-  [[nodiscard]] bool timeout_ue_release_timer_and_await_ngap_ue_context_release_request()
+  [[nodiscard]] bool timeout_handover_ue_release_timer_and_await_ngap_ue_context_release_request()
   {
     // Fail RRC Reconfiguration (UE doesn't respond) and wait for NGAP UE Context Release Request.
     if (tick_until(
@@ -465,7 +465,7 @@ TEST_F(cu_cp_intra_du_handover_test, when_ho_fails_and_ue_is_gone_then_source_an
   ASSERT_TRUE(send_f1ap_ue_context_release_complete(target_cu_ue_id, target_du_ue_id));
 
   // Let the UE release timer timeout and await NGAP UE Context Release Request for source UE.
-  ASSERT_TRUE(timeout_ue_release_timer_and_await_ngap_ue_context_release_request());
+  ASSERT_TRUE(timeout_handover_ue_release_timer_and_await_ngap_ue_context_release_request());
 
   // Inject NGAP UE Context Release Command and await E1AP Bearer Context Release Command
   ASSERT_TRUE(send_ngap_ue_context_release_command_and_await_bearer_context_release_command());
