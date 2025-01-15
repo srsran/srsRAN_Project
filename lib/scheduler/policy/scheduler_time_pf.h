@@ -78,9 +78,6 @@ private:
     /// UL priority value of the UE.
     double ul_prio = forbid_prio;
 
-    /// Flag indicating whether SR indication from the UE is received or not.
-    bool sr_ind_received = false;
-
   private:
     void compute_dl_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed);
     void compute_ul_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed);
