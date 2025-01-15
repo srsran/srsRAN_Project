@@ -12,7 +12,7 @@
 
 #include "srsran/du/du_high/o_du_high.h"
 #include "srsran/du/du_low/o_du_low.h"
-#include "srsran/du/du_power_controller.h"
+#include "srsran/du/du_operation_controller.h"
 #include "srsran/du/o_du.h"
 #include <memory>
 
@@ -26,13 +26,13 @@ struct o_du_impl_dependencies {
 };
 
 /// O-RAN DU implementation.
-class o_du_impl final : public o_du, public du_power_controller
+class o_du_impl final : public o_du, public du_operation_controller
 {
 public:
   explicit o_du_impl(o_du_impl_dependencies&& du_cfg);
 
   // See interface for documentation.
-  du_power_controller& get_power_controller() override { return *this; }
+  du_operation_controller& get_operation_controller() override { return *this; }
 
   // See interface for documentation.
   void start() override;

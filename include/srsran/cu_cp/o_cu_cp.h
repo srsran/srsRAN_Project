@@ -14,7 +14,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 class cu_cp;
-class cu_cp_power_controller;
+class cu_cp_operation_controller;
 
 /// O-RAN CU-CP interface.
 class o_cu_cp
@@ -25,8 +25,8 @@ public:
   /// Returns the CU-CP of this O-RAN CU-CP.
   virtual cu_cp& get_cu_cp() = 0;
 
-  /// Returns the power controller of this O-RAN CU-CP.
-  virtual cu_cp_power_controller& get_power_controller() = 0;
+  /// Returns the operation controller of this O-RAN CU-CP.
+  virtual cu_cp_operation_controller& get_operation_controller() = 0;
 };
 
 } // namespace srs_cu_cp

@@ -43,3 +43,13 @@ fapi_adaptor::phy_fapi_adaptor& o_du_low_impl::get_phy_fapi_adaptor()
 {
   return *fapi_adaptor;
 }
+
+void o_du_low_impl::start()
+{
+  // Nothing to do as the FAPI adaptor and DU low are stateless.
+}
+
+void o_du_low_impl::stop()
+{
+  du_lo->get_operation_controller().stop();
+}

@@ -13,11 +13,11 @@
 namespace srsran {
 namespace srs_cu_up {
 
-/// CU-UP power controller interface that allows to start/stop the CU-UP.
-class cu_up_power_controller
+/// CU-UP operation controller interface that allows to start/stop the CU-UP.
+class cu_up_operation_controller
 {
 public:
-  virtual ~cu_up_power_controller() = default;
+  virtual ~cu_up_operation_controller() = default;
 
   /// Starts the CU-UP.
   virtual void start() = 0;

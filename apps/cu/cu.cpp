@@ -26,6 +26,7 @@
 #include "cu_appconfig.h"
 #include "cu_appconfig_validator.h"
 #include "cu_appconfig_yaml_writer.h"
+#include "srsran/cu_cp/cu_cp_operation_controller.h"
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
@@ -370,7 +371,7 @@ int main(int argc, char** argv)
 
   // start O-CU-CP
   cu_logger.info("Starting CU-CP...");
-  o_cucp_obj.get_cu_cp().start();
+  o_cucp_obj.get_operation_controller().start();
   cu_logger.info("CU-CP started successfully");
 
   // Check connection to AMF
@@ -402,7 +403,7 @@ int main(int argc, char** argv)
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
-  o_cuup_unit.unit->get_power_controller().start();
+  o_cuup_unit.unit->get_operation_controller().start();
   {
     app_services::application_message_banners app_banner(app_name);
 
@@ -412,10 +413,10 @@ int main(int argc, char** argv)
   }
 
   // Stop O-CU-UP activity.
-  o_cuup_unit.unit->get_power_controller().stop();
+  o_cuup_unit.unit->get_operation_controller().stop();
 
   // Stop O-CU-CP activity.
-  o_cucp_obj.get_cu_cp().stop();
+  o_cucp_obj.get_operation_controller().stop();
 
   // Stop the timer source before stopping the workers.
   time_source.reset();

@@ -11,18 +11,20 @@
 #pragma once
 
 namespace srsran {
+namespace srs_cu_cp {
 
-/// DU power controller interface that allows to start/stop a DU.
-class du_power_controller
+/// CU-CP operation controller interface that allows to start/stop a CU-CP.
+class cu_cp_operation_controller
 {
 public:
-  virtual ~du_power_controller() = default;
+  virtual ~cu_cp_operation_controller() = default;
 
-  /// Starts the DU.
+  /// Starts the CU-CP.
   virtual void start() = 0;
 
-  /// Stops the DU.
+  /// Stops the CU-CP.
   virtual void stop() = 0;
 };
 
+} // namespace srs_cu_cp
 } // namespace srsran

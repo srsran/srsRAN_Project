@@ -34,7 +34,7 @@ public:
   srs_cu_cp::cu_cp& get_cu_cp() override;
 
   // See interface for documentation.
-  srs_cu_cp::cu_cp_power_controller& get_power_controller() override;
+  srs_cu_cp::cu_cp_operation_controller& get_operation_controller() override;
 
 private:
   std::vector<std::unique_ptr<srs_cu_cp::n2_connection_client>> n2_clients;
