@@ -126,8 +126,8 @@ private:
   /// srsGNB scheduler.
   std::unique_ptr<mac_scheduler> sched_impl;
 
-  std::atomic<int>                               last_slot_count{-1};
-  std::chrono::high_resolution_clock::time_point last_slot_tp;
+  std::atomic<slot_point>                                     last_slot_point;
+  std::atomic<std::chrono::high_resolution_clock::time_point> last_slot_tp;
 
   /// List of event flags used by scheduler to notify that the configuration is complete.
   struct ue_notification_context {

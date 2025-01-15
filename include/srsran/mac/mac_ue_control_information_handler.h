@@ -21,7 +21,7 @@ struct mac_dl_buffer_state_indication_message {
   lcid_t        lcid;
   /// Buffer Occupancy value in bytes.
   unsigned bs;
-  /// \brief Time-of-arival of the oldest PDU in the RLC entity Tx buffer. This metric is relevant for delay
+  /// \brief Time-of-arrival of the oldest PDU in the RLC entity Tx buffer. This metric is relevant for delay
   /// prioritization in the scheduler.
   std::optional<std::chrono::system_clock::time_point> hol_toa;
 };

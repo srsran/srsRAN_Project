@@ -345,7 +345,7 @@ double compute_dl_qos_weights(const slice_ue&                                  u
     }
   }
 
-  // If no Qos flows are configured, the weight is set to 1.0.
+  // If no QoS flows are configured, the weight is set to 1.0.
   gbr_weight   = gbr_weight == 0 ? 1.0 : gbr_weight;
   delay_weight = delay_weight == 0 ? 1.0 : delay_weight;
 

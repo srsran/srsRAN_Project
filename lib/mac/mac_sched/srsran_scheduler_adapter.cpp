@@ -46,6 +46,8 @@ srsran_scheduler_adapter::srsran_scheduler_adapter(const mac_config& params, rnt
   notifier(*this),
   sched_impl(create_scheduler(scheduler_config{params.sched_cfg, notifier, params.metric_notifier}))
 {
+  srsran_assert(last_slot_point.is_lock_free(), "slot point is not lock free");
+  srsran_assert(last_slot_tp.is_lock_free(), "slot time_point is not lock free");
 }
 
 void srsran_scheduler_adapter::add_cell(const mac_cell_creation_request& msg)
@@ -172,6 +174,24 @@ void srsran_scheduler_adapter::handle_dl_mac_ce_indication(const mac_ce_scheduli
   sched_impl->handle_dl_mac_ce_indication(dl_mac_ce_indication{mac_ce.ue_index, mac_ce.ce_lcid});
 }
 
+static slot_point chrono_to_slot_point(std::chrono::high_resolution_clock::time_point hol_toa,
+                                       std::chrono::high_resolution_clock::time_point last_slot_tp,
+                                       slot_point                                     last_slot_p)
+{
+  using namespace std::chrono;
+  static constexpr microseconds system_frame_dur = milliseconds{10240};
+
+  // Get delay between last slot indication time point and HOL ToA.
+  microseconds hol_delay = duration_cast<microseconds>(last_slot_tp - hol_toa);
+
+  // Bound delay to avoid negative values and slot wrap around ambiguity.
+  hol_delay = std::min(std::max(hol_delay, microseconds{0}), system_frame_dur / 2);
+
+  // Subtract the delay to the current slot.
+  int hol_delay_slots = hol_delay.count() * last_slot_p.nof_slots_per_subframe();
+  return last_slot_p - hol_delay_slots;
+}
+
 void srsran_scheduler_adapter::handle_dl_buffer_state_update(
     const mac_dl_buffer_state_indication_message& mac_dl_bs_ind)
 {
@@ -183,13 +203,12 @@ void srsran_scheduler_adapter::handle_dl_buffer_state_update(
   bs.lcid     = mac_dl_bs_ind.lcid;
   bs.bs       = mac_dl_bs_ind.bs;
   if (mac_dl_bs_ind.hol_toa.has_value()) {
-    // convert HOL TOA from chrono to slots.
-    int count = last_slot_count.load(std::memory_order_relaxed);
-    if (count >= 0) {
-      auto       tdiff = duration_cast<microseconds>(last_slot_tp - mac_dl_bs_ind.hol_toa.value());
-      slot_point last_sl_ind;
-      last_sl_ind.count_val = count;
-      bs.hol_toa            = last_sl_ind - static_cast<int>(tdiff.count());
+    // Check if at least one slot indication has been processed.
+    const high_resolution_clock::time_point sl_tp = last_slot_tp.load(std::memory_order_relaxed);
+    if (sl_tp != high_resolution_clock::time_point{}) {
+      // Convert HOL TOA from chrono time point to slots.
+      bs.hol_toa =
+          chrono_to_slot_point(mac_dl_bs_ind.hol_toa.value(), sl_tp, last_slot_point.load(std::memory_order_relaxed));
     }
   }
 
@@ -216,9 +235,12 @@ void srsran_scheduler_adapter::handle_crnti_ce_indication(du_ue_index_t old_ue_i
 
 const sched_result& srsran_scheduler_adapter::slot_indication(slot_point slot_tx, du_cell_index_t cell_idx)
 {
+  using namespace std::chrono;
+
   // Mark start of the slot in time (estimate).
-  if (last_slot_count.exchange(slot_tx.count_val, std::memory_order_relaxed) != slot_tx.count_val) {
-    last_slot_tp = std::chrono::high_resolution_clock::now();
+  if (last_slot_point.exchange(slot_tx, std::memory_order_relaxed) != slot_tx) {
+    auto slot_tp = high_resolution_clock::now();
+    last_slot_tp.store(slot_tp, std::memory_order_relaxed);
   }
 
   const sched_result& res = sched_impl->slot_indication(slot_tx, cell_idx);
