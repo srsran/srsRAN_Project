@@ -95,7 +95,7 @@ public:
 
     // Enqueue enough bytes for continuous DL tx.
     const unsigned                     DL_BS_VALUE = std::numeric_limits<unsigned>::max() / 2;
-    dl_buffer_state_indication_message dl_buf_st{next_ue_idx, LCID_MIN_DRB, DL_BS_VALUE};
+    dl_buffer_state_indication_message dl_buf_st{next_ue_idx, LCID_MIN_DRB, DL_BS_VALUE, this->next_slot_rx()};
     this->push_dl_buffer_state(dl_buf_st);
 
     // Enqueue BSR.
@@ -366,4 +366,48 @@ TEST_F(scheduler_priority_qos_test, when_channel_is_saturated_then_lc_with_highe
 
   ASSERT_GT(min_dl_rate, 0.1) << "UEs are starved";
   ASSERT_GT(min_ul_rate, 0.1) << "UEs are starved";
+}
+
+class scheduler_pdb_qos_test : public scheduler_qos_test
+{
+public:
+  scheduler_pdb_qos_test()
+  {
+    auto low_pdb_qos  = make_qos(qos_prio_level_t::max(), low_pdb);
+    auto high_pdb_qos = make_qos(qos_prio_level_t::max(), hi_pdb);
+
+    for (unsigned i = 0; i != nof_low_pdb_ues; ++i) {
+      add_ue_with_drb_qos(low_pdb_qos);
+    }
+
+    for (unsigned i = 0; i != nof_hi_pdb_ues; ++i) {
+      add_ue_with_drb_qos(high_pdb_qos);
+    }
+  }
+
+  const unsigned            nof_low_pdb_ues = 2;
+  const unsigned            nof_hi_pdb_ues  = 6;
+  std::chrono::milliseconds low_pdb         = std::chrono::milliseconds(100);
+  std::chrono::milliseconds hi_pdb          = std::chrono::milliseconds(2000);
+};
+
+TEST_F(scheduler_pdb_qos_test, low_qos_pdb_logical_channels_get_higher_priority)
+{
+  const unsigned MAX_NOF_SLOT_RUNS = 1000;
+
+  for (unsigned r = 0; r != MAX_NOF_SLOT_RUNS; ++r) {
+    this->run_slot();
+  }
+
+  std::vector<double> ue_dl_rate_mbps = this->get_ue_dl_bitrate_mbps();
+
+  test_logger.info("DL bit rates [Mbps]: [{}]", format_bitrates(ue_dl_rate_mbps));
+
+  double min_dl_rate          = *std::min_element(ue_dl_rate_mbps.begin(), ue_dl_rate_mbps.end());
+  double min_dl_prio_rate     = *std::min_element(ue_dl_rate_mbps.begin(), ue_dl_rate_mbps.begin() + nof_low_pdb_ues);
+  double max_dl_non_prio_rate = *std::max_element(ue_dl_rate_mbps.begin() + nof_low_pdb_ues, ue_dl_rate_mbps.end());
+
+  ASSERT_GT(min_dl_prio_rate, max_dl_non_prio_rate) << "Priorities are not respected in DL";
+
+  ASSERT_GT(min_dl_rate, 0.1) << "UEs are starved";
 }
