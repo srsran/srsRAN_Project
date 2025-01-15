@@ -263,13 +263,6 @@ namespace {
 // the final QoS weight computation.
 constexpr double max_metric_weight = 1.0e12;
 
-struct qos_weight_metrics {
-  /// Metric taking into account the weight attributed GBR logical channels.
-  double gbr;
-  /// Metric taking into account the weight attributed to the QoS priority of logical channels.
-  double prio;
-};
-
 double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coeff)
 {
   double pf_weight = 0.0;
@@ -292,8 +285,18 @@ double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coe
 }
 
 /// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
-qos_weight_metrics compute_dl_qos_weights(const slice_ue& u)
+double compute_dl_qos_weights(const slice_ue&                                  u,
+                              double                                           estim_dl_rate,
+                              double                                           avg_dl_rate,
+                              time_pf_scheduler_expert_config::weight_function weight_func,
+                              double                                           fairness_coeff)
 {
+  double pf_weight = compute_pf_metric(estim_dl_rate, avg_dl_rate, fairness_coeff);
+  if (avg_dl_rate == 0) {
+    // The UE doesn't have yet any transmissions.
+    return pf_weight;
+  }
+
   uint8_t min_prio_level = qos_prio_level_t::max();
   double  gbr_weight     = 0;
   for (const logical_channel_config& lc : u.logical_channels()) {
@@ -326,13 +329,28 @@ qos_weight_metrics compute_dl_qos_weights(const slice_ue& u)
   double prio_weight =
       (qos_prio_level_t::max() + 1 - min_prio_level) / static_cast<double>(qos_prio_level_t::max() + 1);
 
-  // The return is a combination of priority weight and GBR weight function.
-  return {gbr_weight, prio_weight};
+  if (weight_func == time_pf_scheduler_expert_config::weight_function::gbr_prioritized and gbr_weight > 1.0) {
+    // GBR target has not been met and we prioritize GBR over PF.
+    pf_weight = std::max(1.0, pf_weight);
+  }
+
+  // The return is a combination of QoS priority, GBR and PF weight functions.
+  return gbr_weight * pf_weight * prio_weight;
 }
 
 /// \brief Computes UL weights used in computation of UL priority value for a UE in a slot.
-qos_weight_metrics compute_ul_qos_weights(const slice_ue& u)
+double compute_ul_qos_weights(const slice_ue&                                  u,
+                              double                                           estim_ul_rate,
+                              double                                           avg_ul_rate,
+                              time_pf_scheduler_expert_config::weight_function weight_func,
+                              double                                           fairness_coeff)
 {
+  double pf_weight = compute_pf_metric(estim_ul_rate, avg_ul_rate, fairness_coeff);
+  if (avg_ul_rate == 0) {
+    // The UE doesn't have yet any transmissions.
+    return pf_weight;
+  }
+
   uint8_t min_prio_level = qos_prio_level_t::max();
   double  gbr_weight     = 0;
   for (const logical_channel_config& lc : u.logical_channels()) {
@@ -367,7 +385,12 @@ qos_weight_metrics compute_ul_qos_weights(const slice_ue& u)
   double prio_weight =
       (qos_prio_level_t::max() + 1 - min_prio_level) / static_cast<double>(qos_prio_level_t::max() + 1);
 
-  return {gbr_weight, prio_weight};
+  if (weight_func == time_pf_scheduler_expert_config::weight_function::gbr_prioritized and gbr_weight > 1.0) {
+    // GBR target has not been met and we configured the prioritization of GBR over PF always.
+    pf_weight = std::max(1.0, pf_weight);
+  }
+
+  return gbr_weight * pf_weight * prio_weight;
 }
 
 } // namespace
@@ -434,18 +457,8 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
   // NOTE: Estimated instantaneous DL rate is calculated assuming entire BWP CRBs are allocated to UE.
   const double estimated_rate = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
   const double current_total_avg_rate = total_dl_avg_rate();
-  double       pf_weight = compute_pf_metric(estimated_rate, current_total_avg_rate, parent->fairness_coeff);
-
-  // Compute GBR weight function.
-  // Skip this step when there is no scheduled data yet for the UE.
-  const qos_weight_metrics metrics =
-      current_total_avg_rate == 0 ? qos_weight_metrics{1.0, 1.0} : compute_dl_qos_weights(u);
-
-  if (parent->weight_func == time_pf_scheduler_expert_config::weight_function::gbr_prioritized and metrics.gbr > 1.0) {
-    // GBR target has not been met and we prioritize GBR over PF.
-    pf_weight = std::max(1.0, pf_weight);
-  }
-  dl_prio = metrics.gbr * pf_weight * metrics.prio;
+  dl_prio =
+      compute_dl_qos_weights(u, estimated_rate, current_total_avg_rate, parent->weight_func, parent->fairness_coeff);
 }
 
 void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
@@ -524,18 +537,9 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
   // NOTE: Estimated instantaneous UL rate is calculated assuming entire BWP CRBs are allocated to UE.
   const double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info->ul_crb_lims.length());
   const double current_avg_rate = total_ul_avg_rate();
-  double       pf_weight        = compute_pf_metric(estimated_rate, current_avg_rate, parent->fairness_coeff);
 
   // Compute LC weight function.
-  // Note: Skip this step if there is data yet scheduled for this UE.
-  const qos_weight_metrics metrics = current_avg_rate == 0 ? qos_weight_metrics{1, 1} : compute_ul_qos_weights(u);
-
-  if (parent->weight_func == time_pf_scheduler_expert_config::weight_function::gbr_prioritized and metrics.gbr > 1.0) {
-    // GBR target has not been met and we configured the prioritization of GBR over PF always.
-    pf_weight = std::max(1.0, pf_weight);
-  }
-
-  ul_prio         = metrics.gbr * pf_weight * metrics.prio;
+  ul_prio = compute_ul_qos_weights(u, estimated_rate, current_avg_rate, parent->weight_func, parent->fairness_coeff);
   sr_ind_received = u.has_pending_sr();
 }
 

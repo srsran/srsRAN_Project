@@ -18,7 +18,7 @@
 
 using namespace srsran;
 
-class scheduler_qos_test : public scheduler_test_simulator
+class scheduler_qos_test : public scheduler_test_simulator, public ::testing::Test
 {
   struct ue_stats {
     uint64_t dl_bytes_sum = 0;
@@ -203,7 +203,7 @@ public:
 };
 
 /// Test case when 1 UE has a GBR bearer and the remaining UEs do not.
-class scheduler_1_gbr_ue_qos_test : public scheduler_qos_test, public ::testing::Test
+class scheduler_1_gbr_ue_qos_test : public scheduler_qos_test
 {
 public:
   scheduler_1_gbr_ue_qos_test() : scheduler_qos_test(1) {}
@@ -247,7 +247,7 @@ TEST_F(scheduler_1_gbr_ue_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
       << "UE UL GBR rate < expected UL GBR";
 }
 
-class scheduler_saturated_gbr_ue_qos_test : public scheduler_qos_test, public ::testing::Test
+class scheduler_saturated_gbr_ue_qos_test : public scheduler_qos_test
 {
 public:
   scheduler_saturated_gbr_ue_qos_test() : scheduler_qos_test(2, 6, 25e6, 10e6) {}
