@@ -172,7 +172,13 @@ public:
     return mac_sdu_buf.size();
   }
 
-  unsigned on_buffer_state_update() override { return next_bs; }
+  rlc_buffer_state on_buffer_state_update() override
+  {
+    rlc_buffer_state bs = {};
+    bs.pending_bytes    = next_bs;
+    // TODO: set bs.hol_toa
+    return bs;
+  }
 };
 
 struct mac_test_ue_bearer {

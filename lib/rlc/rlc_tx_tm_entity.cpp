@@ -146,12 +146,15 @@ void rlc_tx_tm_entity::handle_changed_buffer_state()
 void rlc_tx_tm_entity::update_mac_buffer_state()
 {
   pending_buffer_state.clear(std::memory_order_seq_cst);
-  unsigned bs = get_buffer_state();
+  rlc_buffer_state bs = get_buffer_state();
   logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
   lower_dn.on_buffer_state_update(bs);
 }
 
-uint32_t rlc_tx_tm_entity::get_buffer_state()
+rlc_buffer_state rlc_tx_tm_entity::get_buffer_state()
 {
-  return sdu_queue.get_state().n_bytes + sdu.buf.length();
+  rlc_buffer_state bs = {};
+  bs.pending_bytes    = sdu_queue.get_state().n_bytes + sdu.buf.length();
+  // TODO: set bs.hol_toa
+  return bs;
 }

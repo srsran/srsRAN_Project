@@ -45,7 +45,7 @@ public:
   void on_max_retx() override {}
 
   // rlc_tx_buffer_state_update_notifier interface
-  void on_buffer_state_update(unsigned bsr_) override {}
+  void on_buffer_state_update(rlc_buffer_state bs) override {}
 
   // rlc_rx_am_status_provider interface
   rlc_am_status_pdu& get_status_pdu() override { return status; }
@@ -179,7 +179,7 @@ std::vector<byte_buffer> generate_pdus(bench_params params, rx_order order)
   for (int i = 0; i < num_sdus; i++) {
     byte_buffer sdu = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, i, num_bytes, i);
     rlc_tx->handle_sdu(std::move(sdu), false);
-    while (rlc_tx->get_buffer_state() > 0) {
+    while (rlc_tx->get_buffer_state().pending_bytes > 0) {
       std::vector<uint8_t> pdu_buf;
       pdu_buf.resize(pdu_size);
       size_t pdu_len = rlc_tx->pull_pdu(pdu_buf);

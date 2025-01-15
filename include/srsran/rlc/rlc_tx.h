@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
+#include "fmt/format.h"
+#include <optional>
 
 /*
  * This file will hold the interfaces and notifiers for the RLC entity.
@@ -131,6 +133,17 @@ public:
 /***************************************
  * Interfaces/notifiers for lower layers
  ***************************************/
+/// Structure used to represent RLC buffer state.
+/// The buffer state is transmitted towards lower layers (i.e. the MAC and the scheduler).
+/// It includes the amount of data pending for transmission (queued SDUs, headers, and for RLC AM, ReTx and status PDUs)
+/// and the time of arrival of the oldest PDU among those queues.
+struct rlc_buffer_state {
+  /// Amount of bytes pending for transmission.
+  unsigned pending_bytes = 0;
+  /// Head of line (HOL) time of arrival (TOA) holds the TOA of the oldest SDU or ReTx that is queued for transmission.
+  std::optional<std::chrono::system_clock::time_point> hol_toa;
+};
+
 /// This interface represents the data exit point of the transmitting side of a RLC entity.
 /// The lower layers will use this interface to pull a PDU from the RLC, or to
 /// query the current buffer state of the RLC bearer.
@@ -154,8 +167,10 @@ public:
   /// \brief Get the buffer status information
   /// This function provides the current buffer state of the RLC TX entity.
   /// This is the gross total size required to fully flush the TX entity (potentially by multiple calls to pull_pdu).
+  /// It also includes the head of line (HOL) time of arrival (TOA) of the oldest SDU or ReTx that is queued for
+  /// transmission.
   /// \return Provides the current buffer state
-  virtual uint32_t get_buffer_state() = 0;
+  virtual rlc_buffer_state get_buffer_state() = 0;
 };
 
 class rlc_tx_lower_layer_notifier
@@ -170,6 +185,25 @@ public:
 
   /// \brief Method called by RLC bearer whenever its buffer state is updated and the respective result
   /// needs to be forwarded to lower layers.
-  virtual void on_buffer_state_update(unsigned bsr) = 0;
+  virtual void on_buffer_state_update(rlc_buffer_state bsr) = 0;
 };
 } // namespace srsran
+
+namespace fmt {
+
+// associated formatter
+template <>
+struct formatter<srsran::rlc_buffer_state> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::rlc_buffer_state& bs, FormatContext& ctx) const
+  {
+    return format_to(ctx.out(), "pending_bytes={} hol_toa={}", bs.pending_bytes, bs.hol_toa);
+  }
+};
+} // namespace fmt

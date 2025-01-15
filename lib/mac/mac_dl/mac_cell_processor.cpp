@@ -464,8 +464,9 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
         srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
         // Update DL buffer state for the allocated logical channel.
+        rlc_buffer_state                       rlc_bs = bearer->on_buffer_state_update();
         mac_dl_buffer_state_indication_message bs{
-            ue_mng.get_ue_index(grant.pdsch_cfg.rnti), lc_info.lcid.to_lcid(), bearer->on_buffer_state_update()};
+            ue_mng.get_ue_index(grant.pdsch_cfg.rnti), lc_info.lcid.to_lcid(), rlc_bs.pending_bytes};
         sched.handle_dl_buffer_state_update(bs);
       }
     }
