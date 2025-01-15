@@ -52,7 +52,6 @@ private:
   std::chrono::milliseconds               target_ue_release_timeout;
   rrc_ue_handover_reconfiguration_context ho_reconf_ctxt;
   f1ap_ue_context_modification_response   ue_context_mod_response;
-  bool                                    procedure_result = false;
 };
 
 } // namespace srs_cu_cp
