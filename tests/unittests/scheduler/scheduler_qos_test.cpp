@@ -37,6 +37,15 @@ static logical_channel_config::qos_info make_qos(qos_prio_level_t          prio 
   return qos;
 }
 
+static std::string format_bitrates(span<const double> rates)
+{
+  fmt::memory_buffer fmtbuf;
+  for (unsigned i = 0; i != rates.size(); ++i) {
+    fmt::format_to(std::back_inserter(fmtbuf), " {:.3}", rates[i]);
+  }
+  return fmt::to_string(fmtbuf);
+}
+
 class scheduler_qos_test : public scheduler_test_simulator, public ::testing::Test
 {
   struct ue_stats {
@@ -230,14 +239,8 @@ TEST_F(scheduler_1_gbr_ue_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)
   std::vector<double> ue_dl_rate_mbps = this->get_ue_dl_bitrate_mbps();
   std::vector<double> ue_ul_rate_mbps = this->get_ue_ul_bitrate_mbps();
 
-  fmt::memory_buffer dl_fmtbuf;
-  fmt::memory_buffer ul_fmtbuf;
-  for (unsigned i = 0; i != ue_dl_rate_mbps.size(); ++i) {
-    fmt::format_to(std::back_inserter(dl_fmtbuf), " {:.3}", ue_dl_rate_mbps[i]);
-    fmt::format_to(std::back_inserter(ul_fmtbuf), " {:.3}", ue_ul_rate_mbps[i]);
-  }
-  test_logger.info("DL bit rates [Mbps]: [{}]", fmt::to_string(dl_fmtbuf));
-  test_logger.info("UL bit rates [Mbps]: [{}]", fmt::to_string(ul_fmtbuf));
+  test_logger.info("DL bit rates [Mbps]: [{}]", format_bitrates(ue_dl_rate_mbps));
+  test_logger.info("UL bit rates [Mbps]: [{}]", format_bitrates(ue_ul_rate_mbps));
 
   const unsigned GBR_UE_INDEX = 0;
   for (unsigned i = 1; i != ue_stats_map.size(); ++i) {
@@ -292,14 +295,8 @@ TEST_F(scheduler_saturated_gbr_ue_qos_test, when_gbrs_saturate_channel_then_non_
   std::vector<double> ue_dl_rate_mbps = this->get_ue_dl_bitrate_mbps();
   std::vector<double> ue_ul_rate_mbps = this->get_ue_ul_bitrate_mbps();
 
-  fmt::memory_buffer dl_fmtbuf;
-  fmt::memory_buffer ul_fmtbuf;
-  for (unsigned i = 0; i != ue_dl_rate_mbps.size(); ++i) {
-    fmt::format_to(std::back_inserter(dl_fmtbuf), " {:.3}", ue_dl_rate_mbps[i]);
-    fmt::format_to(std::back_inserter(ul_fmtbuf), " {:.3}", ue_ul_rate_mbps[i]);
-  }
-  test_logger.info("DL bit rates [Mbps]: [{}]", fmt::to_string(dl_fmtbuf));
-  test_logger.info("UL bit rates [Mbps]: [{}]", fmt::to_string(ul_fmtbuf));
+  test_logger.info("DL bit rates [Mbps]: [{}]", format_bitrates(ue_dl_rate_mbps));
+  test_logger.info("UL bit rates [Mbps]: [{}]", format_bitrates(ue_ul_rate_mbps));
 
   double min_dl_gbr_rate     = *std::min_element(ue_dl_rate_mbps.begin(), ue_dl_rate_mbps.begin() + nof_gbr_ues);
   double min_ul_gbr_rate     = *std::min_element(ue_ul_rate_mbps.begin(), ue_ul_rate_mbps.begin() + nof_gbr_ues);
@@ -315,6 +312,57 @@ TEST_F(scheduler_saturated_gbr_ue_qos_test, when_gbrs_saturate_channel_then_non_
 
   ASSERT_GT(min_dl_gbr_rate, max_dl_non_gbr_rate) << "UE DL GBR rate < UE DL non-GBR rate";
   ASSERT_GT(min_ul_gbr_rate, max_ul_non_gbr_rate) << "UE DL GBR rate < UE DL non-GBR rate";
+
+  ASSERT_GT(min_dl_rate, 0.1) << "UEs are starved";
+  ASSERT_GT(min_ul_rate, 0.1) << "UEs are starved";
+}
+
+class scheduler_priority_qos_test : public scheduler_qos_test
+{
+public:
+  scheduler_priority_qos_test()
+  {
+    auto prio_qos     = make_qos(high_prio);
+    auto non_prio_qos = make_qos(low_prio);
+
+    for (unsigned i = 0; i != nof_prio_ues; ++i) {
+      add_ue_with_drb_qos(prio_qos);
+    }
+
+    for (unsigned i = 0; i != nof_non_prio_ues; ++i) {
+      add_ue_with_drb_qos(non_prio_qos);
+    }
+  }
+
+  const unsigned         nof_prio_ues     = 2;
+  const unsigned         nof_non_prio_ues = 6;
+  const qos_prio_level_t high_prio        = qos_prio_level_t{0};
+  const qos_prio_level_t low_prio         = qos_prio_level_t::max();
+};
+
+TEST_F(scheduler_priority_qos_test, when_channel_is_saturated_then_lc_with_higher_prio_get_higher_traffic)
+{
+  const unsigned MAX_NOF_SLOT_RUNS = 1000;
+
+  for (unsigned r = 0; r != MAX_NOF_SLOT_RUNS; ++r) {
+    this->run_slot();
+  }
+
+  std::vector<double> ue_dl_rate_mbps = this->get_ue_dl_bitrate_mbps();
+  std::vector<double> ue_ul_rate_mbps = this->get_ue_ul_bitrate_mbps();
+
+  test_logger.info("DL bit rates [Mbps]: [{}]", format_bitrates(ue_dl_rate_mbps));
+  test_logger.info("UL bit rates [Mbps]: [{}]", format_bitrates(ue_ul_rate_mbps));
+
+  double min_dl_rate          = *std::min_element(ue_dl_rate_mbps.begin(), ue_dl_rate_mbps.end());
+  double min_ul_rate          = *std::min_element(ue_ul_rate_mbps.begin(), ue_ul_rate_mbps.end());
+  double min_dl_prio_rate     = *std::min_element(ue_dl_rate_mbps.begin(), ue_dl_rate_mbps.begin() + nof_prio_ues);
+  double min_ul_prio_rate     = *std::min_element(ue_ul_rate_mbps.begin(), ue_ul_rate_mbps.begin() + nof_prio_ues);
+  double max_dl_non_prio_rate = *std::max_element(ue_dl_rate_mbps.begin() + nof_prio_ues, ue_dl_rate_mbps.end());
+  double max_ul_non_prio_rate = *std::max_element(ue_ul_rate_mbps.begin() + nof_prio_ues, ue_ul_rate_mbps.end());
+
+  ASSERT_GT(min_dl_prio_rate, max_dl_non_prio_rate) << "Priorities are not respected in DL";
+  ASSERT_GT(min_ul_prio_rate, max_ul_non_prio_rate) << "Priorities are not respected in DL";
 
   ASSERT_GT(min_dl_rate, 0.1) << "UEs are starved";
   ASSERT_GT(min_ul_rate, 0.1) << "UEs are starved";
