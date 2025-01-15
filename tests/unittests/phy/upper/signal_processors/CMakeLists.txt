@@ -19,7 +19,15 @@ add_executable(sss_processor_test sss_processor_test.cpp)
 target_link_libraries(sss_processor_test srsran_signal_processors srsvec srslog)
 add_test(sss_processor_test sss_processor_test)
 
+add_executable(prs_generator_validator_test prs/prs_generator_validator_test.cpp)
+target_link_libraries(prs_generator_validator_test srsran_signal_processors srsvec srsran_sequence_generators srsran_channel_precoder srslog gtest gtest_main)
+add_test(prs_generator_validator_test prs_generator_validator_test)
+
 if (USE_PHY_TESTVECTORS)
+    add_executable(prs_generator_vectortest prs/prs_generator_vectortest.cpp)
+    target_link_libraries(prs_generator_vectortest srsran_signal_processors srsvec srsran_sequence_generators srsran_channel_precoder srslog gtest gtest_main)
+    add_test_vector(prs_generator_vectortest prs/prs_generator_test_data.tar.gz "")
+
     add_executable(ptrs_pdsch_generator_vectortest ptrs/ptrs_pdsch_generator_vectortest.cpp)
     target_link_libraries(ptrs_pdsch_generator_vectortest srsran_signal_processors srsvec srsran_sequence_generators srsran_channel_precoder srslog gtest gtest_main)
     add_test_vector(ptrs_pdsch_generator_vectortest ptrs/ptrs_pdsch_generator_test_data.tar.gz "")

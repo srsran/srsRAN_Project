@@ -123,7 +123,7 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
   // Number of receive antenna ports.
   unsigned nof_rx_ports = static_cast<unsigned>(config.rx_ports.size());
 
-  // Initialise sequence.
+  // Initialize sequence.
   unsigned c_init = config.rnti * pow2(15) + config.n_id;
   descrambler->init(c_init);
 
