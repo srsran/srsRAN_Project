@@ -537,11 +537,6 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
             [this, uci_sl = ind.slot_rx, uci_pdu = std::move(uci_ptr)](ue_cell& ue_cc) {
               if (const auto* pucch_f0f1 =
                       std::get_if<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(&uci_pdu->pdu)) {
-                // Save SINR.
-                if (pucch_f0f1->ul_sinr_dB.has_value()) {
-                  ue_cc.get_pucch_power_controller().update_pucch_sinr_f0_f1(uci_sl, pucch_f0f1->ul_sinr_dB.value());
-                }
-
                 // Process DL HARQ ACKs.
                 if (not pucch_f0f1->harqs.empty()) {
                   handle_harq_ind(ue_cc, uci_sl, pucch_f0f1->harqs, pucch_f0f1->ul_sinr_dB);
@@ -565,11 +560,14 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                 }
 
                 const bool is_uci_valid = not pucch_f0f1->harqs.empty() or pucch_f0f1->sr_detected;
-                // Process Timing Advance Offset.
-                if (is_uci_valid and pucch_f0f1->time_advance_offset.has_value() and
-                    pucch_f0f1->ul_sinr_dB.has_value()) {
-                  ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                      ue_cc.cell_index, pucch_f0f1->ul_sinr_dB.value(), pucch_f0f1->time_advance_offset.value());
+                // Process SINR and Timing Advance Offset.
+                if (is_uci_valid and pucch_f0f1->ul_sinr_dB.has_value()) {
+                  ue_cc.get_pucch_power_controller().update_pucch_sinr_f0_f1(uci_sl, pucch_f0f1->ul_sinr_dB.value());
+
+                  if (pucch_f0f1->time_advance_offset.has_value()) {
+                    ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                        ue_cc.cell_index, pucch_f0f1->ul_sinr_dB.value(), pucch_f0f1->time_advance_offset.value());
+                  }
                 }
               } else if (const auto* pusch_pdu = std::get_if<uci_indication::uci_pdu::uci_pusch_pdu>(&uci_pdu->pdu)) {
                 // Process DL HARQ ACKs.
@@ -583,14 +581,6 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                 }
               } else if (const auto* pucch_f2f3f4 =
                              std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&uci_pdu->pdu)) {
-                // Save SINR.
-                if (pucch_f2f3f4->ul_sinr_dB.has_value()) {
-                  ue_cc.get_pucch_power_controller().update_pucch_sinr_f2_f3_f4(uci_sl,
-                                                                                pucch_f2f3f4->ul_sinr_dB.value(),
-                                                                                not pucch_f2f3f4->harqs.empty(),
-                                                                                pucch_f2f3f4->csi.has_value());
-                }
-
                 // Process DL HARQ ACKs.
                 if (not pucch_f2f3f4->harqs.empty()) {
                   handle_harq_ind(ue_cc, uci_sl, pucch_f2f3f4->harqs, pucch_f2f3f4->ul_sinr_dB);
@@ -619,11 +609,17 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
                     not pucch_f2f3f4->harqs.empty() or
                     (not pucch_f2f3f4->sr_info.empty() and pucch_f2f3f4->sr_info.test(sr_bit_position_with_1_sr_bit)) or
                     pucch_f2f3f4->csi.has_value();
-                // Process Timing Advance Offset.
-                if (is_uci_valid and pucch_f2f3f4->time_advance_offset.has_value() and
-                    pucch_f2f3f4->ul_sinr_dB.has_value()) {
-                  ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                      ue_cc.cell_index, pucch_f2f3f4->ul_sinr_dB.value(), pucch_f2f3f4->time_advance_offset.value());
+                // Process SINR and Timing Advance Offset.
+                if (is_uci_valid and pucch_f2f3f4->ul_sinr_dB.has_value()) {
+                  ue_cc.get_pucch_power_controller().update_pucch_sinr_f2_f3_f4(uci_sl,
+                                                                                pucch_f2f3f4->ul_sinr_dB.value(),
+                                                                                not pucch_f2f3f4->harqs.empty(),
+                                                                                pucch_f2f3f4->csi.has_value());
+
+                  if (pucch_f2f3f4->time_advance_offset.has_value()) {
+                    ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                        ue_cc.cell_index, pucch_f2f3f4->ul_sinr_dB.value(), pucch_f2f3f4->time_advance_offset.value());
+                  }
                 }
               }
 

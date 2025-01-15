@@ -1032,6 +1032,10 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              pucch_params.max_consecutive_kos,
              "Maximum number of consecutive undecoded PUCCH F2 for CSI before an Radio Link Failure is reported")
       ->capture_default_str();
+  app.add_option("--enable_cl_loop_pw_control",
+                 pucch_params.enable_closed_loop_pw_control,
+                 "Enable closed-loop power control for PUCCH")
+      ->capture_default_str();
 }
 
 static void configure_cli11_srs_args(CLI::App& app, du_high_unit_srs_config& srs_params)
