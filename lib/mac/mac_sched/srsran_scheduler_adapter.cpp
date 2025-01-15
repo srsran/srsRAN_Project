@@ -187,8 +187,10 @@ static slot_point chrono_to_slot_point(std::chrono::high_resolution_clock::time_
   // Bound delay to avoid negative values and slot wrap around ambiguity.
   hol_delay = std::min(std::max(hol_delay, microseconds{0}), system_frame_dur / 2);
 
+  // Convert usec to slots
+  int hol_delay_slots = hol_delay.count() * last_slot_p.nof_slots_per_subframe() / 1000;
+
   // Subtract the delay to the current slot.
-  int hol_delay_slots = hol_delay.count() * last_slot_p.nof_slots_per_subframe();
   return last_slot_p - hol_delay_slots;
 }
 
