@@ -112,6 +112,12 @@ public:
     return contains(lcg_id) ? u.ul_logical_channels().average_bit_rate(lcg_id) : 0;
   }
 
+  /// Retrieve the Head-of-Line (HOL) Time-of-arrival (TOA) for a given logical channel.
+  slot_point dl_hol_toa(lcid_t lcid) const
+  {
+    return contains(lcid) ? u.dl_logical_channels().hol_toa(lcid) : slot_point{};
+  }
+
 private:
   /// Helper function to get LCG ID of a bearer.
   lcg_id_t get_lcg_id_for_bearer(lcid_t lcid) const;

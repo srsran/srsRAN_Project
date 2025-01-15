@@ -116,6 +116,8 @@ public:
                : 0.0;
   }
 
+  slot_point hol_toa(lcid_t lcid) const { return is_active(lcid) ? channels[lcid].hol_toa : slot_point{}; }
+
   /// \brief Update DL buffer status for a given LCID.
   void handle_dl_buffer_status_indication(lcid_t lcid, unsigned buffer_status, slot_point hol_toa = {})
   {

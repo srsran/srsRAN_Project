@@ -287,6 +287,7 @@ double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coe
 double combine_qos_metrics(double                                           pf_weight,
                            double                                           gbr_weight,
                            double                                           prio_weight,
+                           double                                           delay_weight,
                            time_pf_scheduler_expert_config::weight_function weight_func)
 {
   if (weight_func == time_pf_scheduler_expert_config::weight_function::gbr_prioritized and gbr_weight > 1.0) {
@@ -295,7 +296,7 @@ double combine_qos_metrics(double                                           pf_w
   }
 
   // The return is a combination of QoS priority, GBR and PF weight functions.
-  return gbr_weight * pf_weight * prio_weight;
+  return gbr_weight * pf_weight * prio_weight * delay_weight;
 }
 
 /// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
@@ -303,7 +304,8 @@ double compute_dl_qos_weights(const slice_ue&                                  u
                               double                                           estim_dl_rate,
                               double                                           avg_dl_rate,
                               time_pf_scheduler_expert_config::weight_function weight_func,
-                              double                                           fairness_coeff)
+                              double                                           fairness_coeff,
+                              slot_point                                       slot_tx)
 {
   if (avg_dl_rate == 0) {
     // Highest priority to UEs that have not yet received any allocation.
@@ -312,6 +314,7 @@ double compute_dl_qos_weights(const slice_ue&                                  u
 
   uint8_t min_prio_level = qos_prio_level_t::max();
   double  gbr_weight     = 0;
+  double  delay_weight   = 0;
   for (const logical_channel_config& lc : u.logical_channels()) {
     if (not u.contains(lc.lcid) or not lc.qos.has_value() or u.pending_dl_newtx_bytes(lc.lcid) == 0) {
       // LC is not part of the slice, No QoS config was provided for this LC or there is no pending data for this LC
@@ -320,6 +323,13 @@ double compute_dl_qos_weights(const slice_ue&                                  u
 
     // Track the LC with the lowest priority.
     min_prio_level = std::min(lc.qos->qos.priority.value(), min_prio_level);
+
+    slot_point hol_toa = u.dl_hol_toa(lc.lcid);
+    if (hol_toa.valid() and slot_tx >= hol_toa) {
+      const unsigned hol_delay_ms = (slot_tx - hol_toa) / slot_tx.nof_slots_per_subframe();
+      const unsigned pdb          = lc.qos->qos.packet_delay_budget_ms;
+      delay_weight += hol_delay_ms / static_cast<double>(pdb);
+    }
 
     if (not lc.qos->gbr_qos_info.has_value()) {
       // LC is a non-GBR flow.
@@ -335,15 +345,16 @@ double compute_dl_qos_weights(const slice_ue&                                  u
     }
   }
 
-  // If no GBR flows are configured, the gbr rate is set to 1.0.
-  gbr_weight = gbr_weight == 0 ? 1.0 : gbr_weight;
+  // If no Qos flows are configured, the weight is set to 1.0.
+  gbr_weight   = gbr_weight == 0 ? 1.0 : gbr_weight;
+  delay_weight = delay_weight == 0 ? 1.0 : delay_weight;
 
   double pf_weight = compute_pf_metric(estim_dl_rate, avg_dl_rate, fairness_coeff);
   double prio_weight =
       (qos_prio_level_t::max() + 1 - min_prio_level) / static_cast<double>(qos_prio_level_t::max() + 1);
 
   // The return is a combination of QoS priority, GBR and PF weight functions.
-  return combine_qos_metrics(pf_weight, gbr_weight, prio_weight, weight_func);
+  return combine_qos_metrics(pf_weight, gbr_weight, prio_weight, delay_weight, weight_func);
 }
 
 /// \brief Computes UL weights used in computation of UL priority value for a UE in a slot.
@@ -392,7 +403,7 @@ double compute_ul_qos_weights(const slice_ue&                                  u
   double prio_weight =
       (qos_prio_level_t::max() + 1 - min_prio_level) / static_cast<double>(qos_prio_level_t::max() + 1);
 
-  return combine_qos_metrics(pf_weight, gbr_weight, prio_weight, weight_func);
+  return combine_qos_metrics(pf_weight, gbr_weight, prio_weight, 1.0, weight_func);
 }
 
 } // namespace
@@ -459,8 +470,8 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
   // NOTE: Estimated instantaneous DL rate is calculated assuming entire BWP CRBs are allocated to UE.
   const double estimated_rate = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
   const double current_total_avg_rate = total_dl_avg_rate();
-  dl_prio =
-      compute_dl_qos_weights(u, estimated_rate, current_total_avg_rate, parent->weight_func, parent->fairness_coeff);
+  dl_prio                             = compute_dl_qos_weights(
+      u, estimated_rate, current_total_avg_rate, parent->weight_func, parent->fairness_coeff, pdcch_slot);
 }
 
 void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
