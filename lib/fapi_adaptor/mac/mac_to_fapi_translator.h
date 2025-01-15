@@ -14,6 +14,7 @@
 #include "srsran/fapi_adaptor/precoding_matrix_mapper.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_mapper.h"
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/mac/mac_cell_slot_handler.h"
 #include "srsran/scheduler/result/pdcch_info.h"
 
 namespace srsran {
@@ -55,18 +56,7 @@ class mac_to_fapi_translator : public mac_cell_result_notifier
 {
 public:
   mac_to_fapi_translator(const mac_to_fapi_translator_config&  config,
-                         mac_to_fapi_translator_dependencies&& dependencies) :
-    sector_id(config.sector_id),
-    cell_nof_prbs(config.cell_nof_prbs),
-    logger(dependencies.logger),
-    msg_gw(dependencies.msg_gw),
-    last_msg_notifier(dependencies.last_msg_notifier),
-    pm_mapper(std::move(dependencies.pm_mapper)),
-    part2_mapper(std::move(dependencies.part2_mapper))
-  {
-    srsran_assert(pm_mapper, "Invalid precoding matrix mapper");
-    srsran_assert(part2_mapper, "Invalid Part2 mapper");
-  }
+                         mac_to_fapi_translator_dependencies&& dependencies);
 
   // See interface for documentation.
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override;
@@ -79,6 +69,9 @@ public:
 
   // See interface for documentation.
   void on_cell_results_completion(slot_point slot) override;
+
+  /// Configures the MAC slot cell handler to the given one.
+  void set_cell_slot_handler(mac_cell_slot_handler& handler) { mac_slot_handler = &handler; }
 
 private:
   /// Handles the UL_DCI.request message.
@@ -102,6 +95,8 @@ private:
   std::unique_ptr<precoding_matrix_mapper> pm_mapper;
   /// UCI Part2 correspondence mapper.
   std::unique_ptr<uci_part2_correspondence_mapper> part2_mapper;
+  /// MAC cell slot handler.
+  mac_cell_slot_handler* mac_slot_handler;
 };
 
 } // namespace fapi_adaptor
