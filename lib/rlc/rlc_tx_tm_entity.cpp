@@ -154,7 +154,12 @@ void rlc_tx_tm_entity::update_mac_buffer_state()
 rlc_buffer_state rlc_tx_tm_entity::get_buffer_state()
 {
   rlc_buffer_state bs = {};
-  bs.pending_bytes    = sdu_queue.get_state().n_bytes + sdu.buf.length();
-  // TODO: set bs.hol_toa
+
+  rlc_sdu* next_sdu = sdu_queue.front();
+  if (next_sdu != nullptr) {
+    bs.hol_toa = next_sdu->time_of_arrival;
+  }
+
+  bs.pending_bytes = sdu_queue.get_state().n_bytes + sdu.buf.length();
   return bs;
 }

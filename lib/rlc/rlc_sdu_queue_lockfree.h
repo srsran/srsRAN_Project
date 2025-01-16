@@ -191,6 +191,12 @@ public:
     return true;
   }
 
+  rlc_sdu* front()
+  {
+    // TODO: Add a check if the PDU is valid and pop SDUs until a valid SDU is reached
+    return queue->front();
+  }
+
   /// \brief Container for return value of \c get_state function.
   struct state_t {
     uint32_t n_sdus;  ///< Number of buffered SDUs that are not marked as discarded.

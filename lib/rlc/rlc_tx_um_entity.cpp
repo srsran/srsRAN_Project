@@ -314,10 +314,14 @@ rlc_buffer_state rlc_tx_um_entity::get_buffer_state()
   uint32_t segment_bytes = 0;
   if (not sdu.buf.empty()) {
     segment_bytes = (sdu.buf.length() - next_so) + head_len_not_first;
+    bs.hol_toa    = sdu.time_of_arrival;
+  } else {
+    rlc_sdu* next_sdu = sdu_queue.front();
+    if (next_sdu != nullptr) {
+      bs.hol_toa = next_sdu->time_of_arrival;
+    }
   }
 
   bs.pending_bytes = queue_bytes + segment_bytes;
-  // TODO: set bs.hol_toa
-
   return bs;
 }

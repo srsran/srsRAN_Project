@@ -1004,8 +1004,14 @@ rlc_buffer_state rlc_tx_am_entity::get_buffer_state()
     if (tx_window.has_sn(sn_under_segmentation)) {
       rlc_tx_am_sdu_info& sdu_info = tx_window[sn_under_segmentation];
       segment_bytes                = sdu_info.sdu.length() - sdu_info.next_so + head_max_size;
+      bs.hol_toa                   = sdu_info.time_of_arrival;
     } else {
       logger.log_info("Buffer state ignores SDU under segmentation. sn={} not in tx_window.", sn_under_segmentation);
+    }
+  } else {
+    rlc_sdu* next_sdu = sdu_queue.front();
+    if (next_sdu != nullptr) {
+      bs.hol_toa = next_sdu->time_of_arrival;
     }
   }
 
@@ -1014,6 +1020,15 @@ rlc_buffer_state rlc_tx_am_entity::get_buffer_state()
   uint32_t             retx_bytes = retx_state.get_retx_bytes() + retx_state.get_n_retx_so_zero() * head_min_size +
                         retx_state.get_n_retx_so_nonzero() * head_max_size;
 
+  // Drop any retx SNs not present in tx_window
+  while (!retx_queue.empty() && !tx_window.has_sn(retx_queue.front().sn)) {
+    logger.log_info("Could not find sn={} in tx window, dropping RETX.", retx_queue.front().sn);
+    retx_queue.pop();
+  }
+  if (!retx_queue.empty()) {
+    bs.hol_toa = tx_window[retx_queue.front().sn].time_of_arrival;
+  }
+
   // status report size
   uint32_t status_bytes = 0;
   if (status_provider->status_report_required()) {
@@ -1021,7 +1036,6 @@ rlc_buffer_state rlc_tx_am_entity::get_buffer_state()
   }
 
   bs.pending_bytes = queue_bytes + segment_bytes + retx_bytes + status_bytes;
-  // TODO: set bs.hol_toa
   return bs;
 }
 
