@@ -338,32 +338,11 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
                csi_pucch_res->format == pucch_format::FORMAT_4,
            "PUCCH resource used for CSI is expected to be Format 2, Format 3 or Format 4");
 
-    // Verify the CSI/SR bits do not exceed the PUCCH F2 payload.
-    unsigned pucch_f2_f3_f4_max_payload{0};
-    switch (csi_pucch_res->format) {
-      case pucch_format::FORMAT_2: {
-        const auto& csi_pucch_res_params = std::get<pucch_format_2_3_cfg>(csi_pucch_res->format_params);
-        pucch_f2_f3_f4_max_payload =
-            get_pucch_format2_max_payload(csi_pucch_res_params.nof_prbs,
-                                          csi_pucch_res_params.nof_symbols,
-                                          to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
-      } break;
-      case pucch_format::FORMAT_3:
-        // TODO: check if it is ok to use this value. Will it be already set at this point? We lack information
-        // TODO: about intraslot_freq_hopping, additional_dmrs or pi2_bpsk to compute the max payload from here.
-        pucch_f2_f3_f4_max_payload = pucch_cfg.get_max_payload(pucch_format::FORMAT_3);
-        break;
-      case pucch_format::FORMAT_4:
-        // TODO: check if it is ok to use this value. Will it be already set at this point? We lack information
-        // TODO: about intraslot_freq_hopping, additional_dmrs or pi2_bpsk to compute the max payload from here.
-        pucch_f2_f3_f4_max_payload = pucch_cfg.get_max_payload(pucch_format::FORMAT_4);
-        break;
-      default:
-        srsran_assertion_failure("Invalid format for CSI resource.");
-    }
-    const auto     csi_report_cfg  = create_csi_report_configuration(ue_cell_cfg.csi_meas_cfg.value());
-    const unsigned csi_report_size = get_csi_report_pucch_size(csi_report_cfg).value();
-    unsigned       sr_offset       = pucch_cfg.sr_res_list.front().offset;
+    // Verify the CSI/SR bits do not exceed the PUCCH F2/F3/F4 payload.
+    unsigned       pucch_f2_f3_f4_max_payload = pucch_cfg.get_max_payload(csi_pucch_res->format);
+    const auto     csi_report_cfg             = create_csi_report_configuration(ue_cell_cfg.csi_meas_cfg.value());
+    const unsigned csi_report_size            = get_csi_report_pucch_size(csi_report_cfg).value();
+    unsigned       sr_offset                  = pucch_cfg.sr_res_list.front().offset;
     const bool     csi_sr_collision =
         csi_offset_colliding_with_sr(sr_offset,
                                      csi.report_slot_offset,
@@ -387,27 +366,13 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
            uci_bits_pucch_resource,
            pucch_f2_f3_f4_max_payload);
 
-    // Although all PUCCH Format 2 resource have the same parameters, we check the max payload for all Format 2
-    // resources for HARQ-ACK.
     // For 1 or 2 antennas tx, 2 HARQ bits can be multiplexed with CSI within the same PUCCH resource.
-    // TODO: also do this check for Formats 3 and 4.
-    if (has_format_2) {
-      unsigned       harq_bits_mplexed_with_csi = nof_dl_antennas > 2 ? 0U : 2U;
-      const unsigned uci_bits_harq_resource   = csi_report_size + harq_bits_mplexed_with_csi + sr_bits_mplexed_with_csi;
-      const unsigned pucch_res_set_idx_for_f2 = 1;
-      for (pucch_res_id_t res_idx : pucch_cfg.pucch_res_set[pucch_res_set_idx_for_f2].pucch_res_id_list) {
-        const auto*    res_f2                   = get_pucch_resource_with_ue_id(res_idx.ue_res_id);
-        const auto&    harq_f2_pucch_res_params = std::get<pucch_format_2_3_cfg>(res_f2->format_params);
-        const unsigned pucch_harq_f2_max_payload =
-            get_pucch_format2_max_payload(harq_f2_pucch_res_params.nof_prbs,
-                                          harq_f2_pucch_res_params.nof_symbols,
-                                          to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
-        VERIFY(pucch_harq_f2_max_payload >= uci_bits_harq_resource,
-               "UCI num. of bits ({}) exceeds the maximum HARQ-ACK's PUCCH Format 2 payload ({})",
-               uci_bits_harq_resource,
-               pucch_harq_f2_max_payload);
-      }
-    }
+    unsigned       harq_bits_mplexed_with_csi = nof_dl_antennas > 2 ? 0U : 2U;
+    const unsigned uci_bits_harq_resource     = csi_report_size + harq_bits_mplexed_with_csi + sr_bits_mplexed_with_csi;
+    VERIFY(pucch_f2_f3_f4_max_payload >= uci_bits_harq_resource,
+           "UCI num. of bits ({}) exceeds the maximum HARQ-ACK's PUCCH Format 2/3/4 payload ({})",
+           uci_bits_harq_resource,
+           pucch_f2_f3_f4_max_payload);
 
     // TODO: handle the cases of F0+F3 and F0+F4.
     if (has_format_0 and has_format_2) {
