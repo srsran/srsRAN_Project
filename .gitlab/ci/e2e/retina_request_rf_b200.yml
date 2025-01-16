@@ -49,7 +49,7 @@
   environment:
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
   shared_files:
-    - local_path: ${GNB_BINARY_PATH}
+    - local_path: ${GNB_BUILD_PATH}/apps/gnb/gnb
       remote_path: /usr/local/bin/gnb
       is_executable: true
 
