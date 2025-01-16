@@ -400,9 +400,9 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
     const units::bytes  tbs(sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
     span<const uint8_t> payload;
     if (sib_info.si_indicator == sib_information::sib1) {
-      payload = sib_assembler.encode_sib1_pdu(tbs);
+      payload = sib_assembler.encode_sib1_pdu(0, tbs);
     } else {
-      payload = sib_assembler.encode_si_message_pdu(sib_info.si_msg_index.value(), tbs);
+      payload = sib_assembler.encode_si_message_pdu(sib_info.si_msg_index.value(), 0, tbs);
     }
     data_res.si_pdus.emplace_back(0, shared_transport_block(payload));
   }

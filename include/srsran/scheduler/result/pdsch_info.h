@@ -175,6 +175,7 @@ struct ssb_information {
 struct sib_information {
   enum si_indicator_type { sib1, other_si } si_indicator;
   std::optional<uint8_t> si_msg_index;
+  unsigned               version;
   unsigned               nof_txs;
   pdsch_information      pdsch_cfg;
 };

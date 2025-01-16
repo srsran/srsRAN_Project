@@ -217,6 +217,8 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   // Add SIB1 to list of SIB1 information to pass to lower layers.
   sib_information& sib1 = res_grid.result.dl.bc.sibs.emplace_back();
   sib1.si_indicator     = sib_information::si_indicator_type::sib1;
+  sib1.version          = 0;
+  sib1.nof_txs          = 0;
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = sib1.pdsch_cfg;

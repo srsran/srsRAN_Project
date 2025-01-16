@@ -18,46 +18,33 @@ namespace srsran {
 class sib_pdu_assembler
 {
 public:
-  explicit sib_pdu_assembler(const std::vector<byte_buffer>& bcch_dl_sch_payloads)
-  {
-    // Number of padding bytes to pre-reserve. This value is implementation-defined.
-    static constexpr unsigned MAX_PADDING_BYTES_LEN = 64;
+  explicit sib_pdu_assembler(const std::vector<byte_buffer>& bcch_dl_sch_payloads);
 
-    bcch_min_payload_sizes.resize(bcch_dl_sch_payloads.size());
-    bcch_payloads.resize(bcch_dl_sch_payloads.size());
-    for (unsigned i = 0; i != bcch_payloads.size(); ++i) {
-      bcch_min_payload_sizes[i] = units::bytes(bcch_dl_sch_payloads[i].length());
+  void handle_new_sib1_payload(byte_buffer sib1_pdu);
 
-      // Note: Resizing the bcch_payload after the ctor is forbidden, to avoid vector memory relocations and
-      // invalidation of pointers passed to the lower layers. For this reason, we pre-reserve any potential padding
-      // bytes.
-      bcch_payloads[i].resize(bcch_dl_sch_payloads[i].length() + MAX_PADDING_BYTES_LEN, 0);
-      std::copy(bcch_dl_sch_payloads[i].begin(), bcch_dl_sch_payloads[i].end(), bcch_payloads[i].begin());
-    }
-  }
+  span<const uint8_t> encode_sib1_pdu(unsigned si_version, units::bytes tbs_bytes);
 
-  span<const uint8_t> encode_sib1_pdu(units::bytes tbs_bytes) const { return encode_si_pdu(0, tbs_bytes); }
-
-  span<const uint8_t> encode_si_message_pdu(unsigned si_msg_idx, units::bytes tbs_bytes) const
-  {
-    return encode_si_pdu(si_msg_idx + 1, tbs_bytes);
-  }
+  span<const uint8_t> encode_si_message_pdu(unsigned si_msg_idx, unsigned si_version, units::bytes tbs_bytes);
 
 private:
-  span<const uint8_t> encode_si_pdu(unsigned idx, units::bytes tbs_bytes) const
-  {
-    srsran_assert(tbs_bytes >= bcch_min_payload_sizes[idx],
-                  "The allocated PDSCH TBS cannot be smaller than the respective SI{} payload",
-                  idx == 0 ? fmt::format("B1") : fmt::format("-message {}", idx + 1));
-    srsran_assert(tbs_bytes <= units::bytes(bcch_payloads[idx].size()),
-                  "Memory rellocations of the SIB1 payload not allowed. Consider reserving more bytes for PADDING");
-    return span<const uint8_t>(bcch_payloads[idx].data(), tbs_bytes.value());
-  }
+  struct bcch_info {
+    unsigned version = 0;
+    unsigned nof_tx  = 0;
+    /// Length of the original BCCH-DL-SCH message, without padding, defined in the MAC cell configuration.
+    units::bytes         payload_size;
+    std::vector<uint8_t> payload_and_padding;
+  };
+  struct bcch_context {
+    /// Holds the most recent BCCH-DL-SCH message version.
+    bcch_info info;
+    /// Holds old version of the BCCH-DL-SCH message that may still being used by lower layers.
+    std::optional<bcch_info> old;
+  };
 
-  /// Holds the original BCCH-DL-SCH messages, defined in the MAC cell configuration, plus extra padding bytes.
-  std::vector<std::vector<uint8_t>> bcch_payloads;
-  /// Length of the original BCCH-DL-SCH message, without padding, defined in the MAC cell configuration.
-  std::vector<units::bytes> bcch_min_payload_sizes;
+  span<const uint8_t> encode_si_pdu(unsigned idx, unsigned si_version, units::bytes tbs_bytes);
+
+  // Holds the original BCCH-DL-SCH messages, defined in the MAC cell configuration.
+  std::vector<bcch_context> bcch_payloads;
 };
 
 } // namespace srsran
