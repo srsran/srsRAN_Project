@@ -37,17 +37,19 @@ struct du_mac_sched_control_config_response {
   bool max_prb_alloc_result;
 };
 
-/// Cell whose parameters need to be configured at runtime.
+/// Parameters of a cell that need to be configured during the DU cell operation.
 struct du_cell_param_config_request {
   nr_cell_global_id_t nr_cgi;
   std::optional<int>  ssb_pwr_mod;
 };
 
+/// Parameters of the DU that need to be configured during operation.
 struct du_param_config_request {
   /// Cells for which parameters need to be altered.
   std::vector<du_cell_param_config_request> cells;
 };
 
+/// Result of a DU dynamic parameter configuration procedure.
 struct du_param_config_response {
   bool success;
 };

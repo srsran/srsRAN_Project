@@ -17,6 +17,7 @@
 namespace srsran {
 namespace srs_du {
 
+/// DU procedure to dynamically change the parameters of the DU during its operation.
 class du_param_config_procedure
 {
 public:
@@ -27,14 +28,19 @@ public:
   void operator()(coro_context<async_task<du_param_config_response>>& ctx);
 
 private:
-  void                                     handle_cell_config_updates();
-  async_task<gnbdu_config_update_response> handle_f1_gnbdu_config_update();
-  async_task<bool>                         handle_mac_cell_update(unsigned cell_idx);
+  // helper to configure the DU cell parameters.
+  void handle_cell_config_updates();
 
-  const du_param_config_request    request;
-  const du_manager_params&         du_params;
-  du_cell_manager&                 du_cells;
-  srslog::basic_logger&            logger;
+  // helper to run F1AP gNB-DU config update procedure.
+  async_task<gnbdu_config_update_response> handle_f1_gnbdu_config_update();
+
+  // helper to update MAC of the new cell parameters.
+  async_task<bool> handle_mac_cell_update(unsigned cell_idx);
+
+  const du_param_config_request request;
+  const du_manager_params&      du_params;
+  du_cell_manager&              du_cells;
+  srslog::basic_logger&         logger;
 
   unsigned next_cell_idx = 0;
 

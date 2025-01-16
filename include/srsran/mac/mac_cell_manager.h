@@ -19,6 +19,7 @@ struct mac_slice_configuration {
   // TODO: Fill remaining fields
 };
 
+/// Reconfiguration of a MAC cell during its operation.
 struct mac_cell_reconfig_request {
   /// If not empty, passes a new SIB1 payload to broadcast.
   byte_buffer new_sib1_buffer;

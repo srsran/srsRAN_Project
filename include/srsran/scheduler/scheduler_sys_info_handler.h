@@ -14,6 +14,7 @@
 
 namespace srsran {
 
+/// Notification that the SIB1 PDU content was updated.
 struct sib1_pdu_update_request {
   du_cell_index_t cell_index;
   unsigned        pdu_version;
@@ -26,6 +27,7 @@ class scheduler_sys_info_handler
 public:
   virtual ~scheduler_sys_info_handler() = default;
 
+  /// Handle SIB1 PDU content update.
   virtual void handle_sib1_update_request(const sib1_pdu_update_request& req) = 0;
 };
 
