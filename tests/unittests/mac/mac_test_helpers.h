@@ -120,6 +120,12 @@ public:
                                mac_cell_slot_handler::error_event event) override
   {
   }
+
+  void handle_sib1_update_indication(du_cell_index_t cell_index,
+                                     unsigned        sib_version,
+                                     units::bytes    new_payload_size) override
+  {
+  }
 };
 
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier

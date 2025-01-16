@@ -181,7 +181,7 @@ static error_type<std::string> validate_sib1_cfg(const sched_cell_configuration_
   // See TS 38.214, 5.1.3.1, Modulation order and target code rate determination.
   VERIFY((unsigned)mcs_descr.modulation < (unsigned)modulation_scheme::QAM64,
          "Modulation order for PDSCH scheduled with SI-RNTI cannot be > 2");
-  const sch_prbs_tbs sib1_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{msg.sib1_payload_size,
+  const sch_prbs_tbs sib1_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{msg.sib1_payload_size.value(),
                                                                              (unsigned)sib1_symbols.length(),
                                                                              calculate_nof_dmrs_per_rb(dmrs_info),
                                                                              nof_oh_prb,

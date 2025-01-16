@@ -65,6 +65,10 @@ public:
                                du_cell_index_t                    cell_idx,
                                mac_cell_slot_handler::error_event event) override;
 
+  void handle_sib1_update_indication(du_cell_index_t cell_index,
+                                     unsigned        sib_version,
+                                     units::bytes    new_payload_size) override;
+
   mac_cell_rach_handler& get_cell_rach_handler(du_cell_index_t cell_index) override
   {
     return cell_handlers[cell_index];

@@ -23,6 +23,8 @@
 
 using namespace srsran;
 
+static constexpr uint64_t no_update_flag = std::numeric_limits<uint64_t>::max();
+
 //  ------   Public methods   ------ .
 
 sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               expert_cfg_,
@@ -34,7 +36,8 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
   pdcch_sched{pdcch_sch},
   coreset0{msg.coreset0},
   searchspace0{msg.searchspace0},
-  sib1_payload_size{msg.sib1_payload_size}
+  sib1_payload_size{msg.sib1_payload_size},
+  pending_update(no_update_flag)
 {
   // Compute derived SIB1 parameters.
   sib1_period = std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period),
@@ -69,6 +72,32 @@ void sib1_scheduler::run_slot(cell_resource_allocator& res_alloc, const slot_poi
   }
 }
 
+static uint64_t sib1_update_to_uint64(unsigned version, units::bytes new_sib1_payload_size)
+{
+  // return will be composed by two uint32_t concatenated and stored in a uint64_t.
+  uint64_t new_info = version & std::numeric_limits<uint32_t>::max();
+  new_info <<= 32U;
+  new_info += new_sib1_payload_size.value() & std::numeric_limits<uint32_t>::max();
+  return new_info;
+}
+
+static std::pair<unsigned, units::bytes> uint64_to_sib1_update(uint64_t val)
+{
+  std::pair<unsigned, units::bytes> result;
+  // Retrieve version.
+  result.first = val >> 32U;
+  // Retrieve size.
+  result.second = units::bytes(val & std::numeric_limits<uint32_t>::max());
+  return result;
+}
+
+void sib1_scheduler::handle_sib1_update_indication(unsigned version, units::bytes new_sib1_payload_size)
+{
+  srsran_assert(version > current_version, "Invalid SIB1 version set");
+  // Enqueue new SIB1 version and size.
+  pending_update.store(sib1_update_to_uint64(version, new_sib1_payload_size), std::memory_order_release);
+}
+
 void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid)
 {
   // NOTE:
@@ -82,7 +111,10 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid)
   // The sib1_period_slots is expressed in unit of slots.
   // NOTE: As sib1_period_slots is expressed in milliseconds or subframes, we need to this these into slots.
   slot_point     sl_point          = res_grid.slot;
-  const unsigned sib1_period_slots = sib1_period * static_cast<unsigned>(sl_point.nof_slots_per_subframe());
+  const unsigned sib1_period_slots = sib1_period * sl_point.nof_slots_per_subframe();
+
+  // Apply new SIB1 PDU version if it exists.
+  handle_pending_sib1_update();
 
   // For each beam, check if the SIB1 needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
@@ -149,7 +181,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
 
   const sch_mcs_description mcs_descr     = pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.sib1_mcs_index);
   const sch_prbs_tbs        sib1_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{
-      sib1_payload_size, nof_symb_sh, calculate_nof_dmrs_per_rb(dmrs_info), nof_oh_prb, mcs_descr, nof_layers});
+      sib1_payload_size.value(), nof_symb_sh, calculate_nof_dmrs_per_rb(dmrs_info), nof_oh_prb, mcs_descr, nof_layers});
 
   // 1. Find available RBs in PDSCH for SIB1 grant.
   crb_interval sib1_crbs;
@@ -229,4 +261,19 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
                            sib1_crbs_grant,
                            pdsch_td_res_alloc_list[sib1_pdcch.dci.si_f1_0.time_resource].symbols,
                            dmrs_info);
+}
+
+void sib1_scheduler::handle_pending_sib1_update()
+{
+  // TODO: Use actual SIB1 newtx/retx procedure to determine when the new config can be applied.
+
+  uint64_t upd_val = pending_update.exchange(no_update_flag, std::memory_order_acquire);
+  if (upd_val == no_update_flag) {
+    // No update detected.
+    return;
+  }
+
+  auto [version, new_payload_size] = uint64_to_sib1_update(upd_val);
+  current_version                  = version;
+  sib1_payload_size                = new_payload_size;
 }

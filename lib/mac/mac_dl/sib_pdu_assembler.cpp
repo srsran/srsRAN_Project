@@ -31,11 +31,13 @@ sib_pdu_assembler::sib_pdu_assembler(const std::vector<byte_buffer>& bcch_dl_sch
   }
 }
 
-void sib_pdu_assembler::handle_new_sib1_payload(byte_buffer sib1_pdu)
+unsigned sib_pdu_assembler::handle_new_sib1_payload(byte_buffer sib1_pdu)
 {
+  unsigned version_id = bcch_payloads[0].info.version + 1;
+
   // Create new BCCH entry with a larger version.
   bcch_info new_bcch;
-  new_bcch.version      = bcch_payloads[0].info.version + 1;
+  new_bcch.version      = version_id;
   new_bcch.payload_size = units::bytes(sib1_pdu.length());
   new_bcch.payload_and_padding.resize(sib1_pdu.length() + MAX_PADDING_BYTES_LEN, 0);
   std::copy(sib1_pdu.begin(), sib1_pdu.end(), new_bcch.payload_and_padding.begin());
@@ -43,6 +45,8 @@ void sib_pdu_assembler::handle_new_sib1_payload(byte_buffer sib1_pdu)
   // Mark old BCCH-DL-SCH message for deferred destruction and insert new BCCH-DL-SCH message in its place.
   bcch_payloads[0].old  = std::move(bcch_payloads[0].info);
   bcch_payloads[0].info = std::move(new_bcch);
+
+  return version_id;
 }
 
 span<const uint8_t> sib_pdu_assembler::encode_sib1_pdu(unsigned si_version, units::bytes tbs_bytes)

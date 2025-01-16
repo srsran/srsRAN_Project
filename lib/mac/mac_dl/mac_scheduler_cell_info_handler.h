@@ -37,6 +37,13 @@ public:
   /// \param event Effect that the errors in the lower layers had on the result provided by the scheduler.
   virtual void
   handle_error_indication(slot_point slot_tx, du_cell_index_t cell_idx, mac_cell_slot_handler::error_event event) = 0;
+
+  /// \brief Update SIB1 PDU size in the scheduler.
+  /// \param[in] cell_index Index of the cell being updated.
+  /// \param[in] sib_version SIB1 PDU version. The version should always increase for each new SIB1 PDU provided.
+  /// \param[in] new_payload_size Size of the SIB1 PDU payload.
+  virtual void
+  handle_sib1_update_indication(du_cell_index_t cell_index, unsigned sib_version, units::bytes new_payload_size) = 0;
 };
 
 } // namespace srsran

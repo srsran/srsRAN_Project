@@ -15,6 +15,7 @@
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_paging_handler.h"
 #include "srsran/scheduler/scheduler_slot_handler.h"
+#include "srsran/scheduler/scheduler_sys_info_handler.h"
 
 namespace srsran {
 
@@ -23,7 +24,8 @@ class mac_scheduler : public scheduler_configurator,
                       public scheduler_feedback_handler,
                       public scheduler_slot_handler,
                       public scheduler_dl_buffer_state_indication_handler,
-                      public scheduler_paging_handler
+                      public scheduler_paging_handler,
+                      public scheduler_sys_info_handler
 {
 public:
   virtual ~mac_scheduler() = default;

@@ -20,7 +20,9 @@ class sib_pdu_assembler
 public:
   explicit sib_pdu_assembler(const std::vector<byte_buffer>& bcch_dl_sch_payloads);
 
-  void handle_new_sib1_payload(byte_buffer sib1_pdu);
+  /// Stores a new SIB1 PDU to be broadcast.
+  /// \return Returns the version ID of the new PDU.
+  unsigned handle_new_sib1_payload(byte_buffer sib1_pdu);
 
   span<const uint8_t> encode_sib1_pdu(unsigned si_version, units::bytes tbs_bytes);
 

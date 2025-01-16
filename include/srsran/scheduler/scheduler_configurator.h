@@ -78,7 +78,7 @@ struct sched_cell_configuration_request_message {
   uint8_t searchspace0;
 
   /// Payload size is in bytes.
-  unsigned sib1_payload_size;
+  units::bytes sib1_payload_size;
 
   /// Scheduling of SI messages.
   std::optional<si_scheduling_config> si_scheduling;

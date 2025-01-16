@@ -11,7 +11,6 @@
 #pragma once
 
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
-#include "srsran/adt/static_vector.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/sched_consts.h"
@@ -22,7 +21,7 @@ namespace srsran {
 struct cell_slot_resource_allocator;
 enum class ssb_pattern_case;
 
-/// This class schedules the SIB1 and fills the grant to be passed to passed to lower layers.
+/// This class schedules the SIB1 and fills the grant to be passed to lower layers.
 class sib1_scheduler
 {
 public:
@@ -40,6 +39,9 @@ public:
   /// \param[out] res_alloc  Cell resource grid.
   /// \param[in]  sl_point   Slot point carrying information about current slot.
   void run_slot(cell_resource_allocator& res_alloc, const slot_point& sl_point);
+
+  /// \brief Update the SIB1 PDU version.
+  void handle_sib1_update_indication(unsigned version, units::bytes sib1_payload_size);
 
 private:
   /// \brief Performs beams' SIB1s (if any) scheduling for the current slot.
@@ -69,6 +71,8 @@ private:
                        const dmrs_information&       dmrs_info,
                        unsigned                      tbs);
 
+  void handle_pending_sib1_update();
+
   /// SIB1 Logger.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("SCHED");
 
@@ -81,16 +85,21 @@ private:
   /// Parameters for SIB1 scheduling.
   uint8_t coreset0;
   uint8_t searchspace0;
-  /// The SIB1 payload is in bytes.
-  unsigned sib1_payload_size;
   /// This is a derived parameters, that depends on the SSB periodicity, SIB1 periodicity and SIB1 re-tx periodicity.
   unsigned sib1_period;
+  /// The SIB1 payload is in bytes.
+  units::bytes sib1_payload_size;
+  /// Current SIB version.
+  unsigned current_version = 0;
 
   /// This is a dummy BWP configuration dimensioned based on CORESET#0 RB limits. It's used for CRB-to-PRB conversion.
   bwp_configuration coreset0_bwp_cfg;
 
   /// Array of Type0-PDCCH CSS slots  (1 per beam) that will be used for SIB1 scheduling [TS 38.213, Section 13].
   std::array<slot_point, MAX_NUM_BEAMS> sib1_type0_pdcch_css_slots;
+
+  /// Pending new SIB1 PDU to be applied.
+  std::atomic<uint64_t> pending_update;
 };
 
 } // end of namespace srsran

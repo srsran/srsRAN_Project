@@ -42,7 +42,7 @@ sched_cell_configuration_request_message srsran::sched_config_helper::make_defau
   // SIB1 parameters.
   sched_req.coreset0          = *params.coreset0_index;
   sched_req.searchspace0      = params.search_space0_index;
-  sched_req.sib1_payload_size = 101; // Random size.
+  sched_req.sib1_payload_size = units::bytes{101}; // Random size.
 
   srs_du::pucch_builder_params default_pucch_builder_params         = srs_du::du_cell_config{}.pucch_cfg;
   default_pucch_builder_params.nof_ue_pucch_f0_or_f1_res_harq       = 3;

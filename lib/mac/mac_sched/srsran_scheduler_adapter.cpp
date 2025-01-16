@@ -266,6 +266,13 @@ void srsran_scheduler_adapter::handle_error_indication(slot_point               
   sched_impl->handle_error_indication(slot_tx, cell_idx, sched_err);
 }
 
+void srsran_scheduler_adapter::handle_sib1_update_indication(du_cell_index_t cell_index,
+                                                             unsigned        sib_version,
+                                                             units::bytes    new_payload_size)
+{
+  sched_impl->handle_sib1_update_request(sib1_pdu_update_request{cell_index, sib_version, new_payload_size});
+}
+
 void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete(du_ue_index_t ue_index,
                                                                                  bool          ue_creation_result)
 {

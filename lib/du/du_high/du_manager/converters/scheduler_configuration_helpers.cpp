@@ -47,7 +47,7 @@ srsran::srs_du::make_sched_cell_config_req(du_cell_index_t               cell_in
   sched_req.searchspace0 = du_cfg.searchspace0_idx;
 
   // Convert SIB1 and SI message info scheduling config.
-  sched_req.sib1_payload_size = si_payload_sizes[0].value();
+  sched_req.sib1_payload_size = si_payload_sizes[0];
   if (du_cfg.si_config.has_value()) {
     sched_req.si_scheduling.emplace();
     sched_req.si_scheduling->si_window_len_slots = du_cfg.si_config->si_window_len_slots;

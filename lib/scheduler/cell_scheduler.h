@@ -48,6 +48,11 @@ public:
 
   const sched_result& last_result() const { return res_grid[0].result; }
 
+  void handle_sib1_update_indication(const sib1_pdu_update_request& msg)
+  {
+    sib1_sch.handle_sib1_update_indication(msg.pdu_version, msg.payload_size);
+  }
+
   void handle_rach_indication(const rach_indication_message& msg) { ra_sch.handle_rach_indication(msg); }
 
   void handle_crc_indication(const ul_crc_indication& crc_ind);
