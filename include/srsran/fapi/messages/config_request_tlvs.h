@@ -187,11 +187,11 @@ struct ssb_config {
   uint16_t                ssb_offset_point_a;
   uint8_t                 beta_pss_profile_nr;
   int16_t                 beta_pss_profile_sss;
-  uint8_t                 ssb_period;
+  ssb_periodicity         ssb_period;
   uint8_t                 ssb_subcarrier_offset;
   ssb_pattern_case        case_kind;
   subcarrier_spacing      scs;
-  uint8_t                 sub_carrier_spacing_common;
+  subcarrier_spacing      sub_carrier_spacing_common;
   uint8_t                 mask_size;
   std::array<uint32_t, 2> ssb_mask;
   std::array<uint8_t, 64> beam_id;

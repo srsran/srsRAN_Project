@@ -59,6 +59,7 @@ struct worker_manager : public worker_manager_executor_getter {
   task_executor*              metrics_hub_exec     = nullptr;
   task_executor*              non_rt_low_prio_exec = nullptr;
   task_executor*              non_rt_hi_prio_exec  = nullptr;
+  task_executor*              split6_exec          = nullptr;
 
   std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;
 
@@ -145,6 +146,9 @@ private:
 
   /// Helper method that creates the Open Fronthaul executors.
   void create_ofh_executors(const worker_manager_config::ru_ofh_config& config);
+
+  /// Helper method that creates the split 6 executors.
+  void create_split6_executors();
 };
 
 } // namespace srsran

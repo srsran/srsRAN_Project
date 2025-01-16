@@ -41,6 +41,10 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   create_low_prio_executors(worker_cfg);
   associate_low_prio_executors(worker_cfg);
 
+  if (worker_cfg.is_split6_enabled) {
+    create_split6_executors();
+  }
+
   if (worker_cfg.cu_up_cfg) {
     create_cu_up_executors(worker_cfg.cu_up_cfg.value(), *worker_cfg.app_timers);
   }
@@ -528,6 +532,27 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
       ru_txrx_exec.push_back(exec_mng.executors().at(exec_name));
     }
   }
+}
+
+void worker_manager::create_split6_executors()
+{
+  using namespace execution_config_helper;
+
+  const std::string name      = "split6";
+  const std::string exec_name = "split6_exec";
+
+  const single_worker split6_worker{
+      name,
+      {concurrent_queue_policy::lockfree_spsc, task_worker_queue_size},
+      {{exec_name}},
+      std::chrono::microseconds{50},
+      os_thread_realtime_priority::max() - 6,
+      low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority)};
+  if (!exec_mng.add_execution_context(create_execution_context(split6_worker))) {
+    report_fatal_error("Failed to instantiate {} execution context", split6_worker.name);
+  }
+
+  split6_exec = exec_mng.executors().at(exec_name);
 }
 
 void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_sdr_config& config)

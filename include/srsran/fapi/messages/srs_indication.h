@@ -15,6 +15,7 @@
 #include "srsran/fapi/messages/srs_pdu_report_type.h"
 #include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/rnti.h"
+#include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/srs/srs_channel_matrix.h"
 #include "srsran/ran/srs/srs_configuration.h"
 #include <optional>

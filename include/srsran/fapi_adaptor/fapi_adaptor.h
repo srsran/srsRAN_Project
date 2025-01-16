@@ -66,10 +66,10 @@ public:
   virtual ~fapi_adaptor() = default;
 
   /// Returns the power operation controller of this FAPI adaptor.
-  virtual fapi_power_operation_controller& get_power_operation_controller();
+  virtual fapi_power_operation_controller& get_power_operation_controller() = 0;
 
   /// Returns the message interface collection of this FAPI adaptor.
-  virtual fapi_message_interface_collection& get_message_interface_collection();
+  virtual fapi_message_interface_collection& get_message_interface_collection() = 0;
 };
 
 } // namespace fapi

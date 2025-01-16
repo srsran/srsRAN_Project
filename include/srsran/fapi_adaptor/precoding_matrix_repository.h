@@ -26,10 +26,17 @@ public:
     srsran_assert(!repo.empty(), "Empty container");
   }
 
+  /// Iterators.
+  std::vector<precoding_weight_matrix>::const_iterator begin() const { return repo.begin(); }
+  std::vector<precoding_weight_matrix>::const_iterator end() const { return repo.end(); }
+
   /// \brief Returns the precoding matrix associated to the given index.
   ///
   /// Index value must be valid, i.e. a precoding configuration must exist in the repository for that index.
   const precoding_weight_matrix& get_precoding_matrix(unsigned index) const;
+
+  /// Returns the number of precoding matrix stored in the repository.
+  unsigned size() const { return repo.size(); }
 
 private:
   std::vector<precoding_weight_matrix> repo;
