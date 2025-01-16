@@ -9,7 +9,7 @@
 set(SOURCES
         du_stop_procedure.cpp
         du_ue_ric_configuration_procedure.cpp
-        du_operator_config_procedure.cpp
+        du_param_config_procedure.cpp
         initial_du_setup_procedure.cpp
         ue_configuration_procedure.cpp
         ue_creation_procedure.cpp

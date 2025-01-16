@@ -17,29 +17,30 @@
 namespace srsran {
 namespace srs_du {
 
-class du_operator_config_procedure
+class du_param_config_procedure
 {
 public:
-  du_operator_config_procedure(const du_operator_config_request& request_,
-                               const du_manager_params&          du_params_,
-                               du_cell_manager&                  du_cells_);
+  du_param_config_procedure(const du_param_config_request& request_,
+                            const du_manager_params&       init_du_params_,
+                            du_cell_manager&               du_cells_);
 
-  void operator()(coro_context<async_task<du_operator_config_response>>& ctx);
+  void operator()(coro_context<async_task<du_param_config_response>>& ctx);
 
 private:
-  void generate_new_configs();
-
+  void                                     handle_cell_config_updates();
   async_task<gnbdu_config_update_response> handle_f1_gnbdu_config_update();
+  async_task<bool>                         handle_mac_cell_update(unsigned cell_idx);
 
-  async_task<bool> handle_mac_cell_update(unsigned cell_idx);
-
-  const du_operator_config_request request;
+  const du_param_config_request    request;
   const du_manager_params&         du_params;
   du_cell_manager&                 du_cells;
+  srslog::basic_logger&            logger;
 
   unsigned next_cell_idx = 0;
 
-  du_operator_config_response resp;
+  static_vector<du_cell_index_t, MAX_NOF_DU_CELLS> changed_cells;
+
+  du_param_config_response resp;
 };
 
 } // namespace srs_du

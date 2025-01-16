@@ -116,8 +116,6 @@ async_task<void> mac_cell_processor::stop()
 async_task<bool> mac_cell_processor::reconfigure(const mac_cell_reconfig_request& request)
 {
   return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this, request]() {
-    // TODO
-
     if (not request.new_sib1_buffer.empty()) {
       // SIB1 has been updated.
 
@@ -125,7 +123,7 @@ async_task<bool> mac_cell_processor::reconfigure(const mac_cell_reconfig_request
       units::bytes payload_size{(unsigned)request.new_sib1_buffer.length()};
       unsigned     version_id = sib_assembler.handle_new_sib1_payload(request.new_sib1_buffer.copy());
 
-      // Notify scheduler.
+      // Notify scheduler of SIB1 update.
       sched.handle_sib1_update_indication(cell_cfg.cell_index, version_id, payload_size);
     }
 

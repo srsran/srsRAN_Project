@@ -31,6 +31,8 @@ public:
     return cells[cell_index]->active;
   }
 
+  du_cell_index_t get_cell_index(nr_cell_global_id_t nr_cgi) const;
+
   void set_cell_state(du_cell_index_t cell_index, bool active)
   {
     assert_cell_exists(cell_index);

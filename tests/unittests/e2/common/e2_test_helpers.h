@@ -812,10 +812,9 @@ public:
       CORO_RETURN(srs_du::du_mac_sched_control_config_response{true, true, true});
     });
   }
-  srs_du::du_operator_config_response
-  handle_operator_config_request(const srs_du::du_operator_config_request& req) override
+  srs_du::du_param_config_response handle_operator_config_request(const srs_du::du_param_config_request& req) override
   {
-    return srs_du::du_operator_config_response{};
+    return srs_du::du_param_config_response{};
   }
 };
 

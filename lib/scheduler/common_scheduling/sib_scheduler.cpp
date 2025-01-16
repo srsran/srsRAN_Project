@@ -93,7 +93,6 @@ static std::pair<unsigned, units::bytes> uint64_to_sib1_update(uint64_t val)
 
 void sib1_scheduler::handle_sib1_update_indication(unsigned version, units::bytes new_sib1_payload_size)
 {
-  srsran_assert(version > current_version, "Invalid SIB1 version set");
   // Enqueue new SIB1 version and size.
   pending_update.store(sib1_update_to_uint64(version, new_sib1_payload_size), std::memory_order_release);
 }
@@ -249,7 +248,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   // Add SIB1 to list of SIB1 information to pass to lower layers.
   sib_information& sib1 = res_grid.result.dl.bc.sibs.emplace_back();
   sib1.si_indicator     = sib_information::si_indicator_type::sib1;
-  sib1.version          = 0;
+  sib1.version          = current_version;
   sib1.nof_txs          = 0;
 
   // Fill PDSCH configuration.
@@ -274,6 +273,8 @@ void sib1_scheduler::handle_pending_sib1_update()
   }
 
   auto [version, new_payload_size] = uint64_to_sib1_update(upd_val);
-  current_version                  = version;
-  sib1_payload_size                = new_payload_size;
+  srsran_assert(version > current_version or (version == current_version and sib1_payload_size == new_payload_size),
+                "Invalid SIB1 version set");
+  current_version   = version;
+  sib1_payload_size = new_payload_size;
 }
