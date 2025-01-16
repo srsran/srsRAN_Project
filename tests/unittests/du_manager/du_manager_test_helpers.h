@@ -125,6 +125,12 @@ public:
 
   async_task<void> handle_f1_removal_request() override { return wait_f1_removal.launch(); }
 
+  async_task<gnbdu_config_update_response>
+  handle_gnbdu_config_update_request(const gnbdu_config_update_request& request) override
+  {
+    return launch_no_op_task(gnbdu_config_update_response{});
+  }
+
   /// Initiates creation of UE context in F1.
   f1ap_ue_creation_response handle_ue_creation_request(const f1ap_ue_creation_request& msg) override
   {
@@ -239,6 +245,7 @@ public:
 
     async_task<void> start() override { return wait_start.launch(); }
     async_task<void> stop() override { return wait_stop.launch(); }
+    async_task<bool> reconfigure(const mac_cell_reconfig_request& request) override { return launch_no_op_task(true); }
   };
 
   mac_cell_dummy mac_cell;

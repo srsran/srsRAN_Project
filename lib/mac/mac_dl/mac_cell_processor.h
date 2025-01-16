@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "../mac_ctrl/mac_config.h"
 #include "cell_dl_harq_buffer_pool.h"
 #include "dl_sch_pdu_assembler.h"
 #include "mac_dl_ue_repository.h"
@@ -20,7 +19,6 @@
 #include "sib_pdu_assembler.h"
 #include "ssb_assembler.h"
 #include "srsran/mac/mac.h"
-#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/support/memory_pool/ring_buffer_pool.h"
 
@@ -46,6 +44,8 @@ public:
 
   /// Stops configured cell.
   async_task<void> stop() override;
+
+  async_task<bool> reconfigure(const mac_cell_reconfig_request& request) override;
 
   void handle_slot_indication(slot_point sl_tx) override;
   void handle_error_indication(slot_point sl_tx, error_event event) override;

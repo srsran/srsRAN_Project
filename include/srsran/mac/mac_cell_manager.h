@@ -19,6 +19,11 @@ struct mac_slice_configuration {
   // TODO: Fill remaining fields
 };
 
+struct mac_cell_reconfig_request {
+  /// If not empty, passes a new SIB1 payload to broadcast.
+  byte_buffer new_sib1_buffer;
+};
+
 /// Interface used to handle a MAC cell activation/deactivation.
 class mac_cell_controller
 {
@@ -30,6 +35,9 @@ public:
 
   /// Stop the cell.
   virtual async_task<void> stop() = 0;
+
+  /// Reconfigure operation cell.
+  virtual async_task<bool> reconfigure(const mac_cell_reconfig_request& request) = 0;
 };
 
 /// Class used to setup the MAC cells and slices.

@@ -107,6 +107,7 @@ public:
   void             handle_paging_information(const paging_information& msg) override {}
   async_task<void> start() override { return launch_no_op_task(); }
   async_task<void> stop() override { return launch_no_op_task(); }
+  async_task<bool> reconfigure(const mac_cell_reconfig_request& request) override { return launch_no_op_task(true); }
 };
 
 struct test_params {

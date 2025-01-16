@@ -57,6 +57,10 @@ struct f1_setup_response_message {
   std::string f1_setup_failure_cause;
 };
 
+struct gnbdu_config_update_request {};
+
+struct gnbdu_config_update_response {};
+
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
 class f1ap_connection_manager
 {
@@ -75,6 +79,10 @@ public:
 
   /// \brief Launches the F1 Removal procedure as per TS 38.473, Section 8.2.8.
   virtual async_task<void> handle_f1_removal_request() = 0;
+
+  /// \brief Initiates a gNB-DU config update procedure as per TS 38.473, Section 8.2.4.
+  virtual async_task<gnbdu_config_update_response>
+  handle_gnbdu_config_update_request(const gnbdu_config_update_request& request) = 0;
 };
 
 } // namespace srs_du

@@ -42,6 +42,11 @@ public:
     assert_cell_exists(cell_index);
     return cells[cell_index]->cfg;
   }
+  du_cell_config& get_cell_cfg(du_cell_index_t cell_index)
+  {
+    assert_cell_exists(cell_index);
+    return cells[cell_index]->cfg;
+  }
 
   async_task<void> start(du_cell_index_t cell_index);
 

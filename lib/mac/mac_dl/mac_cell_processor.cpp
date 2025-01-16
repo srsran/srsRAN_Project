@@ -11,6 +11,7 @@
 #include "mac_cell_processor.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/scheduler/result/sched_result.h"
@@ -110,6 +111,16 @@ async_task<void> mac_cell_processor::stop()
         logger.warning("cell={}: Postponed cell stop operation. Cause: Task queue is full",
                        fmt::underlying(cell_index));
       });
+}
+
+async_task<bool> mac_cell_processor::reconfigure(const mac_cell_reconfig_request& request)
+{
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this, request]() {
+    // TODO
+    (void)request;
+
+    return true;
+  });
 }
 
 void mac_cell_processor::handle_slot_indication(slot_point sl_tx)

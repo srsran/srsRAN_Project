@@ -13,6 +13,7 @@
 #include "asn1_helpers.h"
 #include "f1ap_du_connection_handler.h"
 #include "log_helpers.h"
+#include "procedures/f1ap_du_gnbdu_config_update_procedure.h"
 #include "procedures/f1ap_du_removal_procedure.h"
 #include "procedures/f1ap_du_reset_procedure.h"
 #include "procedures/f1ap_du_setup_procedure.h"
@@ -114,6 +115,12 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_request(cons
 async_task<void> f1ap_du_impl::handle_f1_removal_request()
 {
   return launch_async<f1ap_du_removal_procedure>(connection_handler, *tx_pdu_notifier, *events);
+}
+
+async_task<gnbdu_config_update_response>
+f1ap_du_impl::handle_gnbdu_config_update_request(const gnbdu_config_update_request& request)
+{
+  return launch_async<f1ap_du_gnbdu_config_update_procedure>(request, *tx_pdu_notifier);
 }
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)

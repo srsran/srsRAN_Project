@@ -24,7 +24,7 @@ class du_manager_impl final : public du_manager_interface
 {
 public:
   explicit du_manager_impl(const du_manager_params& params_);
-  ~du_manager_impl();
+  ~du_manager_impl() override;
 
   // Controller interface.
   void start() override;
@@ -64,6 +64,8 @@ public:
 
   async_task<du_mac_sched_control_config_response>
   configure_ue_mac_scheduler(du_mac_sched_control_config reconf) override;
+
+  du_operator_config_response handle_operator_config_request(const du_operator_config_request& req) override;
 
 private:
   // DU manager configuration that will be visible to all running procedures

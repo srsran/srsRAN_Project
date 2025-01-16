@@ -14,6 +14,7 @@ set(SOURCES
         f1ap_du_ue_context_modification_procedure.cpp
         f1ap_du_ue_context_release_procedure.cpp
         f1ap_du_reset_procedure.cpp
+        f1ap_du_gnbdu_config_update_procedure.cpp
 )
 
 add_library(srsran_f1ap_du_procedures STATIC ${SOURCES})
