@@ -112,14 +112,14 @@ class f1u_gateway_du_bearer : public srs_du::f1u_du_gateway_bearer
 public:
   f1u_gateway_du_bearer(uint32_t                                   ue_index,
                         drb_id_t                                   drb_id,
-                        const up_transport_layer_info&             dl_tnl_info_,
+                        const gtpu_teid_t&                         dl_teid_,
                         srs_du::f1u_du_gateway_bearer_rx_notifier* f1u_rx_,
                         const up_transport_layer_info&             ul_up_tnl_info_,
                         srs_du::f1u_bearer_disconnector&           disconnector_) :
     f1u_rx(f1u_rx_),
     ul_up_tnl_info(ul_up_tnl_info_),
-    dl_tnl_info(dl_tnl_info_),
-    logger("DU-F1-U", {ue_index, drb_id, dl_tnl_info_}),
+    dl_tnl_info(transport_layer_address::create_from_string(dl_ip_addr), dl_teid_),
+    logger("DU-F1-U", {ue_index, drb_id, dl_tnl_info}),
     disconnector(disconnector_)
   {
   }
@@ -133,6 +133,8 @@ public:
     }
     stopped = true;
   }
+
+  expected<std::string> get_bind_address() const override { return dl_tnl_info.tp_address.to_string(); }
 
   void attach_cu_notifier(f1u_cu_up_gateway_bearer_rx_notifier& handler_)
   {
@@ -157,8 +159,12 @@ public:
   };
   bool                                       stopped = false;
   srs_du::f1u_du_gateway_bearer_rx_notifier* f1u_rx  = nullptr;
-  up_transport_layer_info                    ul_up_tnl_info;
-  up_transport_layer_info                    dl_tnl_info;
+
+  // On local connector, the local IP address does not exist.
+  // We can then hard-code the address to any valid IP.
+  const std::string       dl_ip_addr = "127.0.10.2";
+  up_transport_layer_info ul_up_tnl_info;
+  up_transport_layer_info dl_tnl_info;
 
   srs_du::f1u_bearer_logger logger;
 
@@ -200,7 +206,7 @@ public:
                                                                   drb_id_t                       drb_id,
                                                                   five_qi_t                      five_qi,
                                                                   srs_du::f1u_config             config,
-                                                                  const up_transport_layer_info& dl_up_tnl_info,
+                                                                  const gtpu_teid_t&             dl_up_tnl_info,
                                                                   const up_transport_layer_info& ul_up_tnl_info,
                                                                   srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                                   timer_factory                              timers,
@@ -219,7 +225,7 @@ private:
   // Key is the UL UP TNL Info (CU-CP address and UL TEID reserved by CU-CP)
   std::unordered_map<gtpu_teid_t, f1u_gateway_cu_bearer*, gtpu_teid_hasher_t> cu_map;
   // Key is the DL UP TNL Info (DU address and DL TEID reserved by DU)
-  std::unordered_map<up_transport_layer_info, f1u_gateway_du_bearer*> du_map;
+  std::unordered_map<gtpu_teid_t, f1u_gateway_du_bearer*, gtpu_teid_hasher_t> du_map;
 
   std::mutex map_mutex; // shared mutex for access to cu_map and du_map
 };

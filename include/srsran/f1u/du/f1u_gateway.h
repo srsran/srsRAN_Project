@@ -36,6 +36,9 @@ public:
 class f1u_du_gateway_bearer : public srs_du::f1u_tx_pdu_notifier
 {
   virtual void stop() = 0;
+
+public:
+  virtual expected<std::string> get_bind_address() const = 0;
 };
 
 /// This class will be used to provide the interfaces to
@@ -54,7 +57,7 @@ public:
                                                                   drb_id_t                       drb_id,
                                                                   five_qi_t                      five_qi,
                                                                   srs_du::f1u_config             config,
-                                                                  const up_transport_layer_info& dl_up_tnl_info,
+                                                                  const gtpu_teid_t&             dl_up_tnl_info,
                                                                   const up_transport_layer_info& ul_up_tnl_info,
                                                                   srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                                   timer_factory                              timers,

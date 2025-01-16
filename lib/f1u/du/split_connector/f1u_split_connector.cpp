@@ -17,6 +17,15 @@
 using namespace srsran;
 using namespace srs_du;
 
+expected<std::string> f1u_split_gateway_du_bearer::get_bind_address() const
+{
+  std::string ip_address;
+  if (not udp_session.get_bind_address(ip_address)) {
+    return make_unexpected(default_error_t{});
+  }
+  return ip_address;
+}
+
 f1u_split_connector::f1u_split_connector(const gtpu_gateway_maps& udp_gw_maps,
                                          gtpu_demux*              demux_,
                                          dlt_pcap&                gtpu_pcap_,
@@ -51,19 +60,26 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
                                       drb_id_t                                   drb_id,
                                       five_qi_t                                  five_qi,
                                       srs_du::f1u_config                         config,
-                                      const up_transport_layer_info&             dl_up_tnl_info,
+                                      const gtpu_teid_t&                         dl_teid,
                                       const up_transport_layer_info&             ul_up_tnl_info,
                                       srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                       timer_factory                              timers,
                                       task_executor&                             ue_executor)
 {
-  logger_du.info("Creating DU gateway local bearer with UL GTP Tunnel={} DL GTP Tunnel={} {}",
-                 ul_up_tnl_info,
-                 dl_up_tnl_info,
-                 five_qi);
-  auto&                                        udp_session = f1u_session_mngr->get_next_f1u_gateway(five_qi);
-  std::unique_ptr<f1u_split_gateway_du_bearer> du_bearer   = std::make_unique<f1u_split_gateway_du_bearer>(
-      ue_index, drb_id, dl_up_tnl_info, du_rx, ul_up_tnl_info, *this, gtpu_pcap, peer_port);
+  logger_du.info(
+      "Creating DU gateway local bearer with UL GTP Tunnel={} DL TEID={} {}", ul_up_tnl_info, dl_teid, five_qi);
+
+  // Get DL UP TNL address.
+  auto&       udp_session = f1u_session_mngr->get_next_f1u_gateway(five_qi);
+  std::string bind_addr;
+  if (not udp_session.get_bind_address(bind_addr)) {
+    logger_du.error("Could not get bind address for F1-U tunnel. ue={} drb={}", ue_index, drb_id);
+    return nullptr;
+  }
+  up_transport_layer_info dl_up_tnl_info{transport_layer_address::create_from_string(bind_addr), dl_teid};
+
+  std::unique_ptr<f1u_split_gateway_du_bearer> du_bearer = std::make_unique<f1u_split_gateway_du_bearer>(
+      ue_index, drb_id, dl_up_tnl_info, du_rx, ul_up_tnl_info, udp_session, *this, gtpu_pcap, peer_port);
   {
     std::unique_lock<std::mutex> lock(map_mutex);
     srsran_assert(du_map.find(ul_up_tnl_info) == du_map.end(),

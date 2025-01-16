@@ -178,6 +178,8 @@ public:
 
   void stop() override {}
 
+  expected<std::string> get_bind_address() const override { return "127.0.0.1"; }
+
   void on_new_pdu(nru_ul_message msg) override { last_sdu = std::move(msg); }
 
   // helper function to push DL PDUs to the RX path.
@@ -193,16 +195,16 @@ public:
                                                           drb_id_t                                   drb_id,
                                                           five_qi_t                                  five_qi,
                                                           srs_du::f1u_config                         config,
-                                                          const up_transport_layer_info&             dl_up_tnl_info,
+                                                          const gtpu_teid_t&                         dl_teid,
                                                           const up_transport_layer_info&             ul_up_tnl_info,
                                                           srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                           timer_factory                              timers,
                                                           task_executor& ue_executor) override
   {
-    if (next_bearer_is_created and f1u_bearers.count(dl_up_tnl_info) == 0) {
+    if (next_bearer_is_created and f1u_bearers.count(dl_teid) == 0) {
       auto f1u_bearer = std::make_unique<f1u_gw_bearer_dummy>(du_rx);
-      f1u_bearers.insert(std::make_pair(dl_up_tnl_info, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>{}));
-      f1u_bearers[dl_up_tnl_info].emplace(ul_up_tnl_info, f1u_bearer.get());
+      f1u_bearers.insert(std::make_pair(dl_teid, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>{}));
+      f1u_bearers[dl_teid].emplace(ul_up_tnl_info, f1u_bearer.get());
       return f1u_bearer;
     }
     return nullptr;
@@ -210,7 +212,7 @@ public:
 
   void remove_du_bearer(const up_transport_layer_info& dl_tnl_info) override
   {
-    auto bearer_it = f1u_bearers.find(dl_tnl_info);
+    auto bearer_it = f1u_bearers.find(dl_tnl_info.gtp_teid);
     if (bearer_it == f1u_bearers.end()) {
       srslog::fetch_basic_logger("TEST").warning("Could not find DL-TEID at DU to remove. DL-TEID={}",
                                                  dl_tnl_info.gtp_teid);
@@ -227,7 +229,7 @@ public:
     return f1u_ext_addr;
   }
 
-  std::map<up_transport_layer_info, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>> f1u_bearers;
+  std::map<gtpu_teid_t, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>> f1u_bearers;
 
   void set_f1u_ext_addr(const std::string& addr) { f1u_ext_addr = addr; }
 

@@ -112,7 +112,7 @@ class f1u_test_local_gateway : public srs_du::f1u_du_gateway
                                                                   drb_id_t                       drb_id,
                                                                   five_qi_t                      five_qi,
                                                                   srs_du::f1u_config             config,
-                                                                  const up_transport_layer_info& dl_up_tnl_info,
+                                                                  const gtpu_teid_t&             dl_teid,
                                                                   const up_transport_layer_info& ul_up_tnl_info,
                                                                   srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                                   timer_factory                              timers,

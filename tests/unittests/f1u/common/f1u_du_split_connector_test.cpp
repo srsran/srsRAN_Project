@@ -237,8 +237,8 @@ TEST_F(f1u_du_split_connector_test, send_sdu)
 
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
-  auto du_bearer =
-      du_gw->create_du_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+  auto du_bearer = du_gw->create_du_bearer(
+      0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
   ASSERT_NE(udp_tester, nullptr);
   start_receive_thread();
 
@@ -272,8 +272,8 @@ TEST_F(f1u_du_split_connector_test, recv_sdu)
   up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
-  auto du_bearer =
-      du_gw->create_du_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+  auto du_bearer = du_gw->create_du_bearer(
+      0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
 
   // Send SDU
   expected<byte_buffer> du_buf = make_byte_buffer("34ff000e00000002000000840200000000000000abcd");
@@ -298,8 +298,8 @@ TEST_F(f1u_du_split_connector_test, disconnect_stops_tx)
 
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
-  auto du_bearer =
-      du_gw->create_du_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+  auto du_bearer = du_gw->create_du_bearer(
+      0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
   ASSERT_NE(udp_tester, nullptr);
   start_receive_thread();
 
@@ -358,8 +358,8 @@ TEST_F(f1u_du_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   up_transport_layer_info dl_tnl{transport_layer_address::create_from_string("127.0.0.2"), gtpu_teid_t{2}};
   dummy_f1u_du_gateway_bearer_rx_notifier du_rx;
 
-  auto du_bearer =
-      du_gw->create_du_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl, ul_tnl, du_rx, timers, ue_worker);
+  auto du_bearer = du_gw->create_du_bearer(
+      0, drb_id_t::drb1, five_qi_t{9}, f1u_du_cfg, dl_tnl.gtp_teid, ul_tnl, du_rx, timers, ue_worker);
 
   // Disconnect incorrect tunnel (no effect expected)
   du_gw->remove_du_bearer(
@@ -391,21 +391,6 @@ TEST_F(f1u_du_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   expected<nru_dl_message> rx_sdu = du_rx.get_rx_pdu_blocking(ue_worker, std::chrono::milliseconds(200));
   ASSERT_FALSE(rx_sdu.has_value());
 }
-
-TEST_P(f1u_du_split_connector_external_address_test, external_address)
-{
-  expected<std::string> addr = du_gw->get_du_bind_address(gnb_du_id_t{});
-  ASSERT_TRUE(addr.has_value());
-  if (external_address == "" || external_address == "auto") {
-    ASSERT_EQ(addr.value(), du_gw_bind_address);
-  } else {
-    ASSERT_EQ(addr.value(), external_address);
-  }
-}
-
-INSTANTIATE_TEST_SUITE_P(f1u_du_split_connector_test_external_address,
-                         f1u_du_split_connector_external_address_test,
-                         ::testing::Values("auto", "", "8.8.8.8"));
 
 int main(int argc, char** argv)
 {

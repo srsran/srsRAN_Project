@@ -102,6 +102,7 @@ public:
                               const up_transport_layer_info&             dl_tnl_info_,
                               srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx_,
                               const up_transport_layer_info&             ul_up_tnl_info_,
+                              gtpu_tnl_pdu_session&                      udp_session_,
                               srs_du::f1u_bearer_disconnector&           disconnector_,
                               dlt_pcap&                                  gtpu_pcap,
                               uint16_t                                   peer_port) :
@@ -109,6 +110,7 @@ public:
     disconnector(disconnector_),
     dl_tnl_info(dl_tnl_info_),
     ul_tnl_info(ul_up_tnl_info_),
+    udp_session(udp_session_),
     du_rx(du_rx_)
   {
     gtpu_to_f1u_adapter.connect(du_rx);
@@ -130,6 +132,8 @@ public:
   ~f1u_split_gateway_du_bearer() override { stop(); }
 
   void stop() override { disconnector.remove_du_bearer(dl_tnl_info); }
+
+  expected<std::string> get_bind_address() const override;
 
   void on_new_pdu(nru_ul_message msg) override
   {
@@ -157,6 +161,7 @@ private:
   up_transport_layer_info          dl_tnl_info;
   up_transport_layer_info          ul_tnl_info;
   std::unique_ptr<gtpu_tunnel_nru> tunnel;
+  gtpu_tnl_pdu_session&            udp_session;
 
 public:
   /// Holds notifier that will point to NR-U bearer on the DL path
@@ -188,7 +193,7 @@ public:
                                                           drb_id_t                                   drb_id,
                                                           five_qi_t                                  five_qi,
                                                           srs_du::f1u_config                         config,
-                                                          const up_transport_layer_info&             dl_up_tnl_info,
+                                                          const gtpu_teid_t&                         dl_up_tnl_info,
                                                           const up_transport_layer_info&             ul_up_tnl_info,
                                                           srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                           timer_factory                              timers,

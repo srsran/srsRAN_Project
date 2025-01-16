@@ -13,8 +13,7 @@
 #include "srsran/f1u/du/f1u_gateway.h"
 #include <map>
 
-namespace srsran {
-namespace srs_du {
+namespace srsran::srs_du {
 
 class dummy_f1u_du_gateway_bearer_rx_notifier : public f1u_du_gateway_bearer_rx_notifier
 {
@@ -28,8 +27,9 @@ public:
 class f1u_gw_dummy_bearer : public f1u_du_gateway_bearer
 {
 public:
-  void on_new_pdu(nru_ul_message msg) override {}
-  void stop() override {}
+  void                  on_new_pdu(nru_ul_message msg) override {}
+  void                  stop() override {}
+  expected<std::string> get_bind_address() const override { return "127.0.0.1"; }
 };
 
 /// \brief Simulator of the CU-UP from the perspective of the DU.
@@ -38,7 +38,7 @@ class cu_up_simulator : public f1u_du_gateway
 public:
   struct bearer_context_t {
     srs_du::f1u_du_gateway_bearer_rx_notifier* rx_notifier;
-    up_transport_layer_info                    dl_tnl_info;
+    gtpu_teid_t                                dl_teid;
   };
   std::map<std::pair<uint32_t, drb_id_t>, bearer_context_t> bearers;
 
@@ -49,13 +49,13 @@ public:
                                                           drb_id_t                                   drb_id,
                                                           five_qi_t                                  five_qi,
                                                           srs_du::f1u_config                         config,
-                                                          const up_transport_layer_info&             dl_up_tnl_info,
+                                                          const gtpu_teid_t&                         dl_teid,
                                                           const up_transport_layer_info&             ul_up_tnl_info,
                                                           srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                           timer_factory                              timers,
                                                           task_executor& ue_executor) override
   {
-    bearers.insert(std::make_pair(std::make_pair(ue_index, drb_id), bearer_context_t{&du_rx, dl_up_tnl_info}));
+    bearers.insert(std::make_pair(std::make_pair(ue_index, drb_id), bearer_context_t{&du_rx, dl_teid}));
     last_ue_idx = ue_index;
     last_drb_id = drb_id;
     auto bearer = std::make_unique<f1u_gw_dummy_bearer>();
@@ -65,7 +65,7 @@ public:
   void remove_du_bearer(const up_transport_layer_info& dl_tnl) override
   {
     for (const auto& [key, value] : bearers) {
-      if (value.dl_tnl_info == dl_tnl) {
+      if (value.dl_teid == dl_tnl.gtp_teid) {
         bearers.erase(key);
         break;
       }
@@ -75,5 +75,4 @@ public:
   expected<std::string> get_du_bind_address(gnb_du_id_t du_index) const override { return std::string("127.0.0.1"); }
 };
 
-} // namespace srs_du
-} // namespace srsran
+} // namespace srsran::srs_du
