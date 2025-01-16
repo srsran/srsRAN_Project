@@ -25,8 +25,14 @@
 namespace srsran {
 namespace srs_du {
 
-/// \brief Served cell configuration that will be passed to CU-CP.
-struct f1_cell_setup_params {
+/// System Information Update from the gNB-DU.
+struct gnb_du_sys_info {
+  byte_buffer packed_mib;
+  byte_buffer packed_sib1;
+};
+
+/// Information of served cell being added/modified.
+struct du_served_cell_info {
   nr_cell_global_id_t                  nr_cgi;
   pci_t                                pci;
   tac_t                                tac;
@@ -35,9 +41,13 @@ struct f1_cell_setup_params {
   carrier_configuration                dl_carrier;
   std::optional<carrier_configuration> ul_carrier;
   byte_buffer                          packed_meas_time_cfg;
-  byte_buffer                          packed_mib;
-  byte_buffer                          packed_sib1;
-  std::vector<s_nssai_t>               slices;
+};
+
+/// \brief Served cell configuration that will be passed to CU-CP.
+struct f1_cell_setup_params {
+  du_served_cell_info    cell_info;
+  gnb_du_sys_info        du_sys_info;
+  std::vector<s_nssai_t> slices;
 };
 
 /// \brief Message that initiates a F1 Setup procedure.
@@ -57,9 +67,22 @@ struct f1_setup_response_message {
   std::string f1_setup_failure_cause;
 };
 
-struct gnbdu_config_update_request {};
+/// Cell whose parameters need to be modified in the DU.
+struct f1ap_cell_to_be_modified {
+  nr_cell_global_id_t old_nr_cgi;
+  du_served_cell_info cell_info;
+  /// New System Information.
+  std::optional<gnb_du_sys_info> du_sys_info;
+};
 
-struct gnbdu_config_update_response {};
+/// gNB-DU initiated Config Update as per TS 38.473, Section 8.2.4.
+struct gnbdu_config_update_request {
+  std::vector<f1ap_cell_to_be_modified> cells_to_mod;
+};
+
+struct gnbdu_config_update_response {
+  bool result;
+};
 
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
 class f1ap_connection_manager

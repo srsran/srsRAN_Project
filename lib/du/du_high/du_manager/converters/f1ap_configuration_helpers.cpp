@@ -622,6 +622,34 @@ byte_buffer srsran::srs_du::make_asn1_meas_time_cfg_buffer(const du_cell_config&
   return buf;
 }
 
+du_served_cell_info srsran::srs_du::make_f1ap_du_cell_info(const du_cell_config& du_cfg)
+{
+  du_served_cell_info serv_cell;
+
+  serv_cell.nr_cgi     = du_cfg.nr_cgi;
+  serv_cell.pci        = du_cfg.pci;
+  serv_cell.tac        = du_cfg.tac;
+  serv_cell.duplx_mode = du_cfg.tdd_ul_dl_cfg_common.has_value() ? duplex_mode::TDD : duplex_mode::FDD;
+  serv_cell.scs_common = du_cfg.scs_common;
+  serv_cell.dl_carrier = du_cfg.dl_carrier;
+  if (serv_cell.duplx_mode == duplex_mode::FDD) {
+    serv_cell.ul_carrier = du_cfg.ul_carrier;
+  }
+  serv_cell.packed_meas_time_cfg = make_asn1_meas_time_cfg_buffer(du_cfg);
+
+  return serv_cell;
+}
+
+gnb_du_sys_info srsran::srs_du::make_f1ap_du_sys_info(const du_cell_config& du_cfg, std::string* js_str)
+{
+  gnb_du_sys_info sys_info;
+
+  sys_info.packed_mib  = make_asn1_rrc_cell_mib_buffer(du_cfg);
+  sys_info.packed_sib1 = make_asn1_rrc_cell_sib1_buffer(du_cfg, js_str);
+
+  return sys_info;
+}
+
 void srsran::srs_du::fill_f1_setup_request(f1_setup_request_message&            req,
                                            const du_manager_params::ran_params& ran_params,
                                            std::vector<std::string>*            sib1_jsons)
@@ -637,25 +665,14 @@ void srsran::srs_du::fill_f1_setup_request(f1_setup_request_message&            
     f1_cell_setup_params& serv_cell = req.served_cells[i];
 
     // Fill serving cell info.
-    serv_cell.nr_cgi     = cell_cfg.nr_cgi;
-    serv_cell.pci        = cell_cfg.pci;
-    serv_cell.tac        = cell_cfg.tac;
-    serv_cell.duplx_mode = cell_cfg.tdd_ul_dl_cfg_common.has_value() ? duplex_mode::TDD : duplex_mode::FDD;
-    serv_cell.scs_common = cell_cfg.scs_common;
-    serv_cell.dl_carrier = cell_cfg.dl_carrier;
+    serv_cell.cell_info = make_f1ap_du_cell_info(cell_cfg);
     for (const auto& slice : cell_cfg.rrm_policy_members) {
       serv_cell.slices.push_back(slice.rrc_member.s_nssai);
     }
-    if (serv_cell.duplx_mode == duplex_mode::FDD) {
-      serv_cell.ul_carrier = cell_cfg.ul_carrier;
-    }
-
-    serv_cell.packed_meas_time_cfg = make_asn1_meas_time_cfg_buffer(cell_cfg);
 
     // Pack RRC ASN.1 Serving Cell system info.
-    serv_cell.packed_mib = make_asn1_rrc_cell_mib_buffer(cell_cfg);
     std::string js_str;
-    serv_cell.packed_sib1 = make_asn1_rrc_cell_sib1_buffer(cell_cfg, sib1_jsons != nullptr ? &js_str : nullptr);
+    serv_cell.du_sys_info = make_f1ap_du_sys_info(cell_cfg, sib1_jsons != nullptr ? &js_str : nullptr);
 
     if (sib1_jsons != nullptr) {
       sib1_jsons->push_back(js_str);

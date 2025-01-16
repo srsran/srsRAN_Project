@@ -22,17 +22,25 @@ namespace srs_du {
 class f1ap_du_gnbdu_config_update_procedure
 {
 public:
-  f1ap_du_gnbdu_config_update_procedure(const gnbdu_config_update_request& request_, f1ap_message_notifier& cu_notif_);
+  f1ap_du_gnbdu_config_update_procedure(const gnbdu_config_update_request& request_,
+                                        f1ap_message_notifier&             cu_notif_,
+                                        f1ap_event_manager&                ev_mng_);
 
   void operator()(coro_context<async_task<gnbdu_config_update_response>>& ctx);
 
 private:
   const char* name() const { return "gNB-DU Configuration Update"; }
 
+  void send_gnbdu_cu_update_request();
+
+  gnbdu_config_update_response generate_du_response() const;
+
   const gnbdu_config_update_request& request;
   f1ap_message_notifier&             cu_notif;
+  f1ap_event_manager&                ev_mng;
+  srslog::basic_logger&              logger;
 
-  gnbdu_config_update_response resp;
+  f1ap_transaction transaction;
 };
 
 } // namespace srs_du

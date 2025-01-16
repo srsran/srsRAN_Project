@@ -120,7 +120,7 @@ async_task<void> f1ap_du_impl::handle_f1_removal_request()
 async_task<gnbdu_config_update_response>
 f1ap_du_impl::handle_gnbdu_config_update_request(const gnbdu_config_update_request& request)
 {
-  return launch_async<f1ap_du_gnbdu_config_update_procedure>(request, *tx_pdu_notifier);
+  return launch_async<f1ap_du_gnbdu_config_update_procedure>(request, *tx_pdu_notifier, *events);
 }
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)

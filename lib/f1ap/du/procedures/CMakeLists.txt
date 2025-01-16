@@ -18,4 +18,4 @@ set(SOURCES
 )
 
 add_library(srsran_f1ap_du_procedures STATIC ${SOURCES})
-target_link_libraries(srsran_f1ap_du_procedures srsran_f1ap_common f1ap_asn1)
+target_link_libraries(srsran_f1ap_du_procedures srsran_f1ap_common srsran_f1ap_du_helpers f1ap_asn1)
