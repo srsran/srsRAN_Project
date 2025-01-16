@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/mac/mac_cell_manager.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 
@@ -44,6 +45,10 @@ private:
   };
 
   span<const uint8_t> encode_si_pdu(unsigned idx, unsigned si_version, units::bytes tbs_bytes);
+
+  span<const uint8_t> encode_bcch_pdu(unsigned msg_idx, const bcch_info& bcch, units::bytes tbs) const;
+
+  srslog::basic_logger& logger;
 
   // Holds the original BCCH-DL-SCH messages, defined in the MAC cell configuration.
   std::vector<bcch_context> bcch_payloads;
