@@ -46,6 +46,8 @@ public:
     return false;
   }
 
+  T* front() { return queue.front(); }
+
   size_t size() const { return queue.size(); }
 
   bool empty() const { return queue.empty(); }

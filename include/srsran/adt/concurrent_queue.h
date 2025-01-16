@@ -123,6 +123,16 @@ public:
     return ret;
   }
 
+  /// \brief Provides a pointer to the front element in a non-blocking fashion.
+  ///
+  /// If the queue is empty, the call returns a nullptr.
+  template <concurrent_queue_policy queue_policy                                          = Policy,
+            std::enable_if_t<queue_policy == concurrent_queue_policy::lockfree_spsc, int> = 0>
+  T* front()
+  {
+    return queue.front();
+  }
+
   /// \brief Maximum capacity of the queue.
   size_t capacity() const { return queue.capacity(); }
 
