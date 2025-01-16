@@ -179,16 +179,16 @@ static slot_point chrono_to_slot_point(std::chrono::high_resolution_clock::time_
                                        slot_point                                     last_slot_p)
 {
   using namespace std::chrono;
-  static constexpr microseconds system_frame_dur = milliseconds{10240};
+  static constexpr microseconds half_system_frame_dur = milliseconds{10240 / 2};
 
   // Get delay between last slot indication time point and HOL ToA.
   microseconds hol_delay = duration_cast<microseconds>(last_slot_tp - hol_toa);
 
   // Bound delay to avoid negative values and slot wrap around ambiguity.
-  hol_delay = std::min(std::max(hol_delay, microseconds{0}), system_frame_dur / 2);
+  hol_delay = std::min(std::max(hol_delay, microseconds{0}), half_system_frame_dur);
 
   // Convert usec to slots
-  int hol_delay_slots = hol_delay.count() * last_slot_p.nof_slots_per_subframe() / 1000;
+  const int hol_delay_slots = hol_delay.count() * last_slot_p.nof_slots_per_subframe() / 1000;
 
   // Subtract the delay to the current slot.
   return last_slot_p - hol_delay_slots;
