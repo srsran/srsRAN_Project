@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
@@ -21,7 +20,14 @@ namespace srsran {
 struct f1ap_message;
 class byte_buffer;
 
+namespace srs_du {
+struct gnbdu_config_update_request;
+}
+
 namespace test_helpers {
+
+bool is_gnb_du_config_update_valid(const f1ap_message& msg);
+bool is_gnb_du_config_update_valid(const f1ap_message& msg, const srs_du::gnbdu_config_update_request& req);
 
 /// \brief Check if an F1AP message is a valid Initial UL RRC Message Transfer message.
 bool is_init_ul_rrc_msg_transfer_valid(const f1ap_message&                       msg,

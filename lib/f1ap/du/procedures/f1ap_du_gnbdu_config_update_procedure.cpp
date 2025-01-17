@@ -53,6 +53,7 @@ void f1ap_du_gnbdu_config_update_procedure::send_gnbdu_cu_update_request()
   upd->transaction_id = transaction.id();
 
   // servedCellsToModify
+  upd->served_cells_to_modify_list_present = not request.cells_to_mod.empty();
   upd->served_cells_to_modify_list.resize(request.cells_to_mod.size());
   for (unsigned i = 0, e = request.cells_to_mod.size(); i != e; ++i) {
     const auto& celltomod = request.cells_to_mod[i];

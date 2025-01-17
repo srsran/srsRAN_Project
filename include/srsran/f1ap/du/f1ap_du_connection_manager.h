@@ -103,9 +103,9 @@ public:
   /// \brief Launches the F1 Removal procedure as per TS 38.473, Section 8.2.8.
   virtual async_task<void> handle_f1_removal_request() = 0;
 
-  /// \brief Initiates a gNB-DU config update procedure as per TS 38.473, Section 8.2.4.
+  /// \brief Initiates F1AP gNB-DU config update procedure as per TS 38.473, Section 8.2.4.
   virtual async_task<gnbdu_config_update_response>
-  handle_gnbdu_config_update_request(const gnbdu_config_update_request& request) = 0;
+  handle_du_config_update(const gnbdu_config_update_request& request) = 0;
 };
 
 } // namespace srs_du

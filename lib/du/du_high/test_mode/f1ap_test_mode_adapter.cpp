@@ -43,10 +43,9 @@ public:
     return adapted->handle_f1_setup_request(request);
   }
   async_task<void> handle_f1_removal_request() override { return adapted->handle_f1_removal_request(); }
-  async_task<gnbdu_config_update_response>
-  handle_gnbdu_config_update_request(const gnbdu_config_update_request& request) override
+  async_task<gnbdu_config_update_response> handle_du_config_update(const gnbdu_config_update_request& request) override
   {
-    return adapted->handle_gnbdu_config_update_request(request);
+    return adapted->handle_du_config_update(request);
   }
   f1ap_ue_creation_response handle_ue_creation_request(const f1ap_ue_creation_request& msg) override
   {

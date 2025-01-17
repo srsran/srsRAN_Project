@@ -15,6 +15,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/asn1/f1ap/f1ap_ies.h"
+#include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/nr_band.h"
@@ -60,6 +61,14 @@ f1ap_message generate_f1_removal_request(unsigned transaction_id);
 
 /// \brief Generates dummy F1 REMOVAL RESPONSE message based on the request.
 f1ap_message generate_f1_removal_response(const f1ap_message& f1_removal_request);
+
+/// \brief Generates dummy GNB-DU CONFIGURATION UPDATE ACKNOWLEDGE message based on the request, as per
+/// TS 38.473, 8.2.4.2.
+f1ap_message create_gnb_du_configuration_update_acknowledge(const f1ap_message& gnb_du_config_request);
+
+/// \brief Generates dummy GNB-DU CONFIGURATION UPDATE FAILURE message based on the request, as per
+/// TS 38.473, 8.2.4.3.
+f1ap_message create_gnb_du_configuration_update_failure(const f1ap_message& gnb_du_config_request);
 
 /// \brief Generates dummy F1 RESET message.
 f1ap_message create_f1ap_reset_message(

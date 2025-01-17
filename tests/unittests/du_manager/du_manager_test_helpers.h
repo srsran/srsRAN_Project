@@ -125,8 +125,7 @@ public:
 
   async_task<void> handle_f1_removal_request() override { return wait_f1_removal.launch(); }
 
-  async_task<gnbdu_config_update_response>
-  handle_gnbdu_config_update_request(const gnbdu_config_update_request& request) override
+  async_task<gnbdu_config_update_response> handle_du_config_update(const gnbdu_config_update_request& request) override
   {
     return launch_no_op_task(gnbdu_config_update_response{});
   }

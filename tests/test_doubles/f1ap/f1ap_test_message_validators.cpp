@@ -9,10 +9,11 @@
  */
 
 #include "f1ap_test_message_validators.h"
-#include "../../../lib/f1ap/asn1_helpers.h"
+#include "../lib/f1ap/asn1_helpers.h"
 #include "../tests/test_doubles/rrc/rrc_test_message_validators.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
+#include "srsran/f1ap/du/f1ap_du_connection_manager.h"
 #include "srsran/f1ap/f1ap_message.h"
 
 using namespace srsran;
@@ -27,6 +28,34 @@ static bool is_packable(const f1ap_message& msg)
   byte_buffer   temp_pdu;
   asn1::bit_ref bref{temp_pdu};
   return msg.pdu.pack(bref) == asn1::SRSASN_SUCCESS;
+}
+
+bool srsran::test_helpers::is_gnb_du_config_update_valid(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_GNB_DU_CFG_UPD);
+  TRUE_OR_RETURN(is_packable(msg));
+
+  return true;
+}
+
+bool srsran::test_helpers::is_gnb_du_config_update_valid(const f1ap_message&                        msg,
+                                                         const srs_du::gnbdu_config_update_request& req)
+{
+  TRUE_OR_RETURN(is_gnb_du_config_update_valid(msg));
+  const auto& upd_req = msg.pdu.init_msg().value.gnb_du_cfg_upd();
+  TRUE_OR_RETURN(upd_req->served_cells_to_modify_list_present == not req.cells_to_mod.empty());
+  TRUE_OR_RETURN(upd_req->served_cells_to_modify_list.size() == req.cells_to_mod.size());
+  for (unsigned i = 0, e = req.cells_to_mod.size(); i != e; ++i) {
+    auto& asn1cell = upd_req->served_cells_to_modify_list[i]->served_cells_to_modify_item();
+    if (req.cells_to_mod[i].du_sys_info.has_value()) {
+      TRUE_OR_RETURN(asn1cell.gnb_du_sys_info_present);
+      TRUE_OR_RETURN(asn1cell.gnb_du_sys_info.mib_msg == req.cells_to_mod[i].du_sys_info->packed_mib);
+      TRUE_OR_RETURN(asn1cell.gnb_du_sys_info.sib1_msg == req.cells_to_mod[i].du_sys_info->packed_sib1);
+    }
+  }
+
+  return true;
 }
 
 bool srsran::test_helpers::is_init_ul_rrc_msg_transfer_valid(const f1ap_message&                       msg,

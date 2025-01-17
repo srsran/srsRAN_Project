@@ -77,7 +77,7 @@ async_task<gnbdu_config_update_response> du_param_config_procedure::handle_f1_gn
     f1_req.cells_to_mod[i].du_sys_info = make_f1ap_du_sys_info(cell_cfg);
   }
 
-  return du_params.f1ap.conn_mng.handle_gnbdu_config_update_request(f1_req);
+  return du_params.f1ap.conn_mng.handle_du_config_update(f1_req);
 }
 
 async_task<bool> du_param_config_procedure::handle_mac_cell_update(unsigned changed_cell_idx)
