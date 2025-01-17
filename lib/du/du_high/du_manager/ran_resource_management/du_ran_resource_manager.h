@@ -38,10 +38,16 @@ public:
   struct resource_updater {
     virtual ~resource_updater() = default;
 
+    /// Called when a new UE configuration is requested.
     virtual du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
                                                   const f1ap_ue_context_update_request& upd_req,
                                                   const du_ue_resource_config*          reestablished_context) = 0;
-    virtual const du_ue_resource_config&   get()                                                      = 0;
+
+    /// Called when the UE confirms the configuration is applied.
+    virtual void config_applied() = 0;
+
+    /// Called to fetch the UE resources.
+    virtual const du_ue_resource_config& get() = 0;
   };
 
   explicit ue_ran_resource_configurator(std::unique_ptr<resource_updater> ue_res_, std::string error = {}) :
@@ -65,6 +71,9 @@ public:
 
   /// \brief Checks whether the allocation of resources to the UE failed, due to lack of resources.
   bool resource_alloc_failed() const { return not configurator_error.empty(); }
+
+  /// \brief Handle the confirmation from that UE that the last RAN resource configuration is complete.
+  void handle_ue_config_applied() { ue_res_impl->config_applied(); }
 
   /// \brief Returns the configurator error, which non-empty string only if the procedure failed.
   std::string get_error() const { return configurator_error; }

@@ -41,6 +41,8 @@ public:
                                         const f1ap_ue_context_update_request& upd_req,
                                         const du_ue_resource_config*          reestablished_context) override;
 
+  void config_applied() override;
+
   const du_ue_resource_config& get() override { return *cell_grp; }
 
 private:
@@ -84,6 +86,9 @@ public:
   ///
   /// \param ue_index Id of the UE whose context is being deallocated.
   void deallocate_context(du_ue_index_t ue_index);
+
+  /// The UE has confirmed that correct application of the new configuration.
+  void ue_config_applied(du_ue_index_t ue_index);
 
 private:
   error_type<std::string>

@@ -135,6 +135,9 @@ void du_ue_manager::handle_ue_config_applied(du_ue_index_t ue_index)
 {
   srsran_assert(ue_db.contains(ue_index), "Invalid UE index={}", fmt::underlying(ue_index));
 
+  // Notify UE resource configurator of config completion.
+  ue_db[ue_index].resources.handle_ue_config_applied();
+
   // Forward configuration to MAC.
   cfg.mac.ue_cfg.handle_ue_config_applied(ue_index);
 }

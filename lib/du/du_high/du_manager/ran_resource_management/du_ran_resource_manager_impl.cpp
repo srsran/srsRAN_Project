@@ -36,6 +36,11 @@ du_ue_ran_resource_updater_impl::update(du_cell_index_t                       pc
   return parent->update_context(ue_index, pcell_index, upd_req, reestablished_context);
 }
 
+void du_ue_ran_resource_updater_impl::config_applied()
+{
+  parent->ue_config_applied(ue_index);
+}
+
 ///////////////////////////
 
 // Helper that resets the PUCCH and SRS configurations in the serving cell configuration.
@@ -178,6 +183,16 @@ void du_ran_resource_manager_impl::deallocate_context(du_ue_index_t ue_index)
   ra_res_alloc.deallocate_cfra_resources(ue_mcg);
 
   ue_res_pool.erase(ue_index);
+}
+
+void du_ran_resource_manager_impl::ue_config_applied(du_ue_index_t ue_index)
+{
+  srsran_assert(ue_res_pool.contains(ue_index), "This function should only be called for an already allocated UE");
+  ue_resource_context&   ue_res = ue_res_pool[ue_index];
+  du_ue_resource_config& ue_mcg = ue_res.cg_cfg;
+
+  // We can remove previously used CFRA resources.
+  ra_res_alloc.deallocate_cfra_resources(ue_mcg);
 }
 
 error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_index,

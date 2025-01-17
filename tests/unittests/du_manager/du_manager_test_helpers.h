@@ -314,6 +314,7 @@ public:
     du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
                                           const f1ap_ue_context_update_request& upd_req,
                                           const du_ue_resource_config*          reestablished_context) override;
+    void                           config_applied() override {}
     const du_ue_resource_config&   get() override;
 
     du_ue_index_t                           ue_index;
