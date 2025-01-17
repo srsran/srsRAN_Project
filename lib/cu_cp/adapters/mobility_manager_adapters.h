@@ -12,13 +12,12 @@
 
 #include "../cu_cp_impl_interface.h"
 #include "../mobility_manager/mobility_manager_impl.h"
-#include "srsran/e2/e2_cu.h"
 
 namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between mobility manager and CU-CP to trigger handover.
-class mobility_manager_adapter : public mobility_manager_cu_cp_notifier, public e2_mobility_notifier
+class mobility_manager_adapter : public mobility_manager_cu_cp_notifier
 {
 public:
   mobility_manager_adapter() = default;

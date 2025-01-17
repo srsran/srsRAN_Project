@@ -231,8 +231,6 @@ private:
   std::atomic<bool> stopped{false};
 
   cu_configurator cu_cp_cfgtr;
-  // E2 interface
-  std::unique_ptr<e2_interface> e2ap_entity;
 };
 
 } // namespace srs_cu_cp

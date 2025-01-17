@@ -10,12 +10,13 @@
 
 #pragma once
 
-#include "srsran/e2/e2_cu.h"
+#include "srsran/cu_cp/mobility_manager_config.h"
 #include "srsran/ran/cu_types.h"
 #include "srsran/ran/logical_channel/lcid.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/qos/qos_flow_id.h"
 #include "srsran/support/async/async_task.h"
+#include <map>
 
 namespace srsran {
 
@@ -29,10 +30,12 @@ struct cu_handover_control_config {
 class cu_configurator
 {
 public:
-  cu_configurator(e2_mobility_notifier& mobility_notif_) : mobility_notif(mobility_notif_) {}
+  cu_configurator(srs_cu_cp::mobility_manager_cu_cp_notifier& mobility_notif_) : mobility_notif(mobility_notif_) {}
   virtual ~cu_configurator() = default;
-  e2_mobility_notifier& get_e2_mobility_notifier() { return mobility_notif; }
-  e2_mobility_notifier& mobility_notif;
+  srs_cu_cp::mobility_manager_cu_cp_notifier& get_mobility_notifier() { return mobility_notif; }
+
+private:
+  srs_cu_cp::mobility_manager_cu_cp_notifier& mobility_notif;
 };
 
 } // namespace srsran

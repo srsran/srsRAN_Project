@@ -22,6 +22,7 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/asn1/e2sm/e2sm_rc_ies.h"
 #include "srsran/cu_cp/cu_configurator.h"
+#include "srsran/cu_cp/mobility_manager_config.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_cu.h"
 #include "srsran/e2/e2_du_factory.h"
@@ -782,7 +783,7 @@ private:
   std::unique_ptr<e2_message_notifier> e2_rx_pdu_notifier;
 };
 
-class dummy_e2_mobility_notifier : public e2_mobility_notifier
+class dummy_e2_mobility_notifier : public srs_cu_cp::mobility_manager_cu_cp_notifier
 {
 public:
   virtual async_task<srs_cu_cp::cu_cp_intra_cu_handover_response>
@@ -822,35 +823,35 @@ protected:
     timers.tick();
     task_worker.run_pending_tasks();
   }
-  e2ap_configuration                                  cfg = {};
-  timer_factory                                       factory;
-  timer_manager                                       timers;
-  std::unique_ptr<e2ap_e2agent_notifier>              agent_notifier;
-  std::unique_ptr<dummy_network_gateway_data_handler> gw;
-  std::unique_ptr<dummy_e2ap_pcap>                    pcap;
-  std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
-  std::unique_ptr<e2sm_interface>                     e2sm_kpm_iface;
-  std::unique_ptr<e2sm_interface>                     e2sm_rc_iface;
-  std::unique_ptr<e2sm_control_service>               e2sm_rc_control_service_style2;
-  std::unique_ptr<e2sm_control_service>               e2sm_rc_control_service_style3;
-  std::unique_ptr<e2sm_control_action_executor>       rc_control_action_2_6_executor;
-  std::unique_ptr<e2sm_control_action_executor>       rc_control_action_3_1_executor;
-  std::unique_ptr<e2_mobility_notifier>               mobility_notifier;
-  std::unique_ptr<e2sm_handler>                       e2sm_kpm_packer;
-  std::unique_ptr<e2sm_rc_asn1_packer>                e2sm_rc_packer;
-  std::unique_ptr<srs_du::du_configurator>            du_rc_param_configurator;
-  std::unique_ptr<cu_configurator>                    cu_rc_param_configurator;
-  std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
-  std::unique_ptr<e2_du_metrics_interface>            du_metrics;
-  std::unique_ptr<srs_du::f1ap_ue_id_translator>      f1ap_ue_id_mapper;
-  std::unique_ptr<dummy_e2sm_kpm_du_meas_provider>    du_meas_provider;
-  manual_task_worker                                  task_worker{64};
-  std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
-  std::unique_ptr<dummy_e2_connection_client>         e2_client;
-  std::unique_ptr<e2sm_manager>                       e2sm_mngr;
-  std::unique_ptr<e2_interface>                       e2;
-  std::unique_ptr<e2_agent>                           e2agent;
-  srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
+  e2ap_configuration                                          cfg = {};
+  timer_factory                                               factory;
+  timer_manager                                               timers;
+  std::unique_ptr<e2ap_e2agent_notifier>                      agent_notifier;
+  std::unique_ptr<dummy_network_gateway_data_handler>         gw;
+  std::unique_ptr<dummy_e2ap_pcap>                            pcap;
+  std::unique_ptr<srsran::e2ap_asn1_packer>                   packer;
+  std::unique_ptr<e2sm_interface>                             e2sm_kpm_iface;
+  std::unique_ptr<e2sm_interface>                             e2sm_rc_iface;
+  std::unique_ptr<e2sm_control_service>                       e2sm_rc_control_service_style2;
+  std::unique_ptr<e2sm_control_service>                       e2sm_rc_control_service_style3;
+  std::unique_ptr<e2sm_control_action_executor>               rc_control_action_2_6_executor;
+  std::unique_ptr<e2sm_control_action_executor>               rc_control_action_3_1_executor;
+  std::unique_ptr<srs_cu_cp::mobility_manager_cu_cp_notifier> mobility_notifier;
+  std::unique_ptr<e2sm_handler>                               e2sm_kpm_packer;
+  std::unique_ptr<e2sm_rc_asn1_packer>                        e2sm_rc_packer;
+  std::unique_ptr<srs_du::du_configurator>                    du_rc_param_configurator;
+  std::unique_ptr<cu_configurator>                            cu_rc_param_configurator;
+  std::unique_ptr<e2_subscription_manager>                    e2_subscription_mngr;
+  std::unique_ptr<e2_du_metrics_interface>                    du_metrics;
+  std::unique_ptr<srs_du::f1ap_ue_id_translator>              f1ap_ue_id_mapper;
+  std::unique_ptr<dummy_e2sm_kpm_du_meas_provider>            du_meas_provider;
+  manual_task_worker                                          task_worker{64};
+  std::unique_ptr<dummy_e2_pdu_notifier>                      msg_notifier;
+  std::unique_ptr<dummy_e2_connection_client>                 e2_client;
+  std::unique_ptr<e2sm_manager>                               e2sm_mngr;
+  std::unique_ptr<e2_interface>                               e2;
+  std::unique_ptr<e2_agent>                                   e2agent;
+  srslog::basic_logger&                                       test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 class e2_test_base : public e2_base, public ::testing::Test
