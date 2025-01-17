@@ -17,6 +17,7 @@ namespace srsran {
 /// Configuration of logging functionalities.
 struct cu_cp_unit_logger_config {
   srslog::basic_levels cu_level    = srslog::basic_levels::warning;
+  srslog::basic_levels e1ap_level  = srslog::basic_levels::warning;
   srslog::basic_levels f1ap_level  = srslog::basic_levels::warning;
   srslog::basic_levels pdcp_level  = srslog::basic_levels::warning;
   srslog::basic_levels rrc_level   = srslog::basic_levels::warning;

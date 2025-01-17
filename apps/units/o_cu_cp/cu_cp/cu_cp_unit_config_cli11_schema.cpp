@@ -23,6 +23,7 @@ static void configure_cli11_log_args(CLI::App& app, cu_cp_unit_logger_config& lo
   app_services::add_log_option(app, log_params.rrc_level, "--rrc_level", "RRC log level");
   app_services::add_log_option(app, log_params.ngap_level, "--ngap_level", "NGAP log level");
   app_services::add_log_option(app, log_params.nrppa_level, "--nrppa_level", "NRPPA log level")->group("");
+  app_services::add_log_option(app, log_params.e1ap_level, "--e1ap_level", "E1AP log level");
   app_services::add_log_option(app, log_params.f1ap_level, "--f1ap_level", "F1AP log level");
   app_services::add_log_option(app, log_params.cu_level, "--cu_level", "Log level for the CU");
   app_services::add_log_option(app, log_params.sec_level, "--sec_level", "Security functions log level");
