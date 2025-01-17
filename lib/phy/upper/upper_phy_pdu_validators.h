@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/signal_processors/prs/prs_generator_validator.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_configuration_validator.h"
 #include "srsran/phy/upper/uplink_processor.h"
 
@@ -82,13 +83,15 @@ public:
   downlink_processor_validator_impl(std::unique_ptr<ssb_pdu_validator>                  ssb_,
                                     std::unique_ptr<pdcch_pdu_validator>                pdcch_,
                                     std::unique_ptr<pdsch_pdu_validator>                pdsch_,
-                                    std::unique_ptr<nzp_csi_rs_configuration_validator> csi_) :
+                                    std::unique_ptr<nzp_csi_rs_configuration_validator> csi_,
+                                    std::unique_ptr<prs_generator_validator>            prs_) :
     ssb(std::move(ssb_)), pdcch(std::move(pdcch_)), pdsch(std::move(pdsch_)), csi(std::move(csi_))
   {
     srsran_assert(ssb, "Invalid SSB processor validator.");
     srsran_assert(pdcch, "Invalid PDCCH processor validator.");
     srsran_assert(pdsch, "Invalid PDSCH processor validator.");
     srsran_assert(csi, "Invalid NZP-CSI-RS processor validator.");
+    srsran_assert(prs, "Invalid PRS generator validator.");
   }
 
   // See interface for documentation.
@@ -96,12 +99,17 @@ public:
   error_type<std::string> is_valid(const pdcch_processor::pdu_t& pdu) const override { return pdcch->is_valid(pdu); }
   error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu) const override { return pdsch->is_valid(pdu); }
   bool is_valid(const nzp_csi_rs_generator::config_t& config) const override { return csi->is_valid(config); }
+  error_type<std::string> is_valid(const prs_generator_configuration& config) const override
+  {
+    return prs->is_valid(config);
+  }
 
 private:
   std::unique_ptr<ssb_pdu_validator>                  ssb;
   std::unique_ptr<pdcch_pdu_validator>                pdcch;
   std::unique_ptr<pdsch_pdu_validator>                pdsch;
   std::unique_ptr<nzp_csi_rs_configuration_validator> csi;
+  std::unique_ptr<prs_generator_validator>            prs;
 };
 
 } // namespace srsran

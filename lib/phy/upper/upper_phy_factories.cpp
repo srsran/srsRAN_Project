@@ -25,6 +25,7 @@
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
+#include "srsran/phy/upper/signal_processors/prs/factories.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_factory.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/support/error_handling.h"
@@ -168,12 +169,19 @@ public:
   downlink_processor_single_executor_factory(std::shared_ptr<pdcch_processor_factory>      pdcch_proc_factory_,
                                              std::shared_ptr<pdsch_processor_factory>      pdsch_proc_factory_,
                                              std::shared_ptr<ssb_processor_factory>        ssb_proc_factory_,
-                                             std::shared_ptr<nzp_csi_rs_generator_factory> nzp_csi_rs_factory_) :
-    pdcch_proc_factory(pdcch_proc_factory_),
-    pdsch_proc_factory(pdsch_proc_factory_),
-    ssb_proc_factory(ssb_proc_factory_),
-    nzp_csi_rs_factory(nzp_csi_rs_factory_)
+                                             std::shared_ptr<nzp_csi_rs_generator_factory> nzp_csi_rs_factory_,
+                                             std::shared_ptr<prs_generator_factory>        prs_gen_factory_) :
+    pdcch_proc_factory(std::move(pdcch_proc_factory_)),
+    pdsch_proc_factory(std::move(pdsch_proc_factory_)),
+    ssb_proc_factory(std::move(ssb_proc_factory_)),
+    nzp_csi_rs_factory(std::move(nzp_csi_rs_factory_)),
+    prs_gen_factory(std::move(prs_gen_factory_))
   {
+    srsran_assert(pdcch_proc_factory, "Invalid PDCCH processor factory.");
+    srsran_assert(pdsch_proc_factory, "Invalid PDSCH processor factory.");
+    srsran_assert(ssb_proc_factory, "Invalid SSB processor factory.");
+    srsran_assert(nzp_csi_rs_factory, "Invalid NZP-CSI-RS generator factory.");
+    srsran_assert(prs_gen_factory, "Invalid PRS generator factory.");
   }
 
   // See interface for documentation.
@@ -191,11 +199,15 @@ public:
     std::unique_ptr<nzp_csi_rs_generator> nzp_csi = nzp_csi_rs_factory->create();
     report_fatal_error_if_not(nzp_csi, "Invalid NZP-CSI-RS generator.");
 
+    std::unique_ptr<prs_generator> prs_gen = prs_gen_factory->create();
+    report_fatal_error_if_not(prs_gen, "Invalid PRS generator.");
+
     return std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
                                                                      std::move(pdcch),
                                                                      std::move(pdsch),
                                                                      std::move(ssb),
                                                                      std::move(nzp_csi),
+                                                                     std::move(prs_gen),
                                                                      *config.executor,
                                                                      srslog::fetch_basic_logger("PHY"));
   }
@@ -226,12 +238,21 @@ public:
     }
     report_fatal_error_if_not(nzp_csi, "Invalid NZP-CSI-RS generator.");
 
+    std::unique_ptr<prs_generator> prs_gen;
+    if (enable_broadcast) {
+      prs_gen = prs_gen_factory->create(logger);
+    } else {
+      prs_gen = prs_gen_factory->create();
+    }
+    report_fatal_error_if_not(prs_gen, "Invalid PRS generator.");
+
     std::unique_ptr<downlink_processor_controller> downlink_proc =
         std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
                                                                   std::move(pdcch),
                                                                   std::move(pdsch),
                                                                   std::move(ssb),
                                                                   std::move(nzp_csi),
+                                                                  std::move(prs_gen),
                                                                   *config.executor,
                                                                   srslog::fetch_basic_logger("PHY"));
 
@@ -243,7 +264,8 @@ public:
     return std::make_unique<downlink_processor_validator_impl>(ssb_proc_factory->create_validator(),
                                                                pdcch_proc_factory->create_validator(),
                                                                pdsch_proc_factory->create_validator(),
-                                                               nzp_csi_rs_factory->create_validator());
+                                                               nzp_csi_rs_factory->create_validator(),
+                                                               prs_gen_factory->create_validator());
   }
 
 private:
@@ -251,6 +273,7 @@ private:
   std::shared_ptr<pdsch_processor_factory>      pdsch_proc_factory;
   std::shared_ptr<ssb_processor_factory>        ssb_proc_factory;
   std::shared_ptr<nzp_csi_rs_generator_factory> nzp_csi_rs_factory;
+  std::shared_ptr<prs_generator_factory>        prs_gen_factory;
 };
 
 static std::unique_ptr<downlink_processor_pool>
@@ -675,9 +698,17 @@ private:
 } // namespace
 
 std::shared_ptr<downlink_processor_factory>
-srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config&   config,
-                                             std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory)
+srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config)
 {
+  // Create channel precoder factory.
+  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
+  report_fatal_error_if_not(precoding_factory, "Invalid channel precoder factory.");
+
+  // Create resource grid mapper factory.
+  std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
+      create_resource_grid_mapper_factory(precoding_factory);
+  report_fatal_error_if_not(precoding_factory, "Invalid resource grid mapper factory.");
+
   // Create channel coding factories - CRC
   std::shared_ptr<crc_calculator_factory> crc_calc_factory =
       create_crc_calculator_factory_sw(config.crc_calculator_type);
@@ -837,6 +868,11 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
       create_nzp_csi_rs_generator_factory_sw(prg_factory, rg_mapper_factory);
   report_fatal_error_if_not(nzp_csi_rs_factory, "Invalid NZP-CSI-RS generator factory.");
 
+  // Create signal generators - PRS
+  std::shared_ptr<prs_generator_factory> prs_gen_factory =
+      create_prs_generator_generic_factory(prg_factory, precoding_factory);
+  report_fatal_error_if_not(prs_gen_factory, "Invalid PRS generator factory.");
+
   // Wrap the downlink processor dependencies with pools to allow concurrent execution.
   if (config.nof_concurrent_threads > 1) {
     pdcch_proc_factory =
@@ -856,10 +892,13 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
     nzp_csi_rs_factory =
         create_nzp_csi_rs_generator_pool_factory(std::move(nzp_csi_rs_factory), config.nof_concurrent_threads);
     report_fatal_error_if_not(nzp_csi_rs_factory, "Invalid NZP-CSI-RS generator pool factory.");
+
+    prs_gen_factory = create_prs_generator_pool_factory(std::move(prs_gen_factory), config.nof_concurrent_threads);
+    report_fatal_error_if_not(prs_gen_factory, "Invalid PRS generator pool factory.");
   }
 
   return std::make_shared<downlink_processor_single_executor_factory>(
-      pdcch_proc_factory, pdsch_proc_factory, ssb_proc_factory, nzp_csi_rs_factory);
+      pdcch_proc_factory, pdsch_proc_factory, ssb_proc_factory, nzp_csi_rs_factory, prs_gen_factory);
 }
 
 std::unique_ptr<uplink_processor_pool> srsran::create_uplink_processor_pool(uplink_processor_pool_config config)

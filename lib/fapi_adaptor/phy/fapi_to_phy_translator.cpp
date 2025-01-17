@@ -53,6 +53,10 @@ public:
   {
     srslog::fetch_basic_logger("FAPI").warning("Could not enqueue NZP-CSI-RS PDU in the downlink processor");
   }
+  void process_prs(const prs_generator_configuration& config) override
+  {
+    srslog::fetch_basic_logger("FAPI").warning("Could not enqueue PRS PDU in the downlink processor");
+  }
   void finish_processing_pdus() override {}
 };
 

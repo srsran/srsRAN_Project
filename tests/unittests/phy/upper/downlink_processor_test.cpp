@@ -15,6 +15,7 @@
 #include "channel_processors/pdsch/pdsch_processor_test_doubles.h"
 #include "channel_processors/ssb_processor_test_doubles.h"
 #include "signal_processors/nzp_csi_rs_generator_test_doubles.h"
+#include "signal_processors/prs/prs_generator_test_doubles.h"
 #include "upper_phy_rg_gateway_test_doubles.h"
 #include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -42,11 +43,13 @@ TEST(downlinkProcessorTest, worksInOrder)
   auto pdsch_processor  = std::make_unique<pdsch_processor_spy>();
   auto ssb_processor    = std::make_unique<ssb_processor_spy>();
   auto csi_rs_processor = std::make_unique<csi_rs_processor_spy>();
+  auto prs_generator    = std::make_unique<prs_processor_spy>();
 
-  pdcch_processor_spy&  pdcch_ref  = *pdcch_processor;
-  pdsch_processor_spy&  pdsch_ref  = *pdsch_processor;
-  ssb_processor_spy&    ssb_ref    = *ssb_processor;
-  csi_rs_processor_spy& csi_rs_ref = *csi_rs_processor;
+  pdcch_processor_spy&  pdcch_ref   = *pdcch_processor;
+  pdsch_processor_spy&  pdsch_ref   = *pdsch_processor;
+  ssb_processor_spy&    ssb_ref     = *ssb_processor;
+  csi_rs_processor_spy& csi_rs_ref  = *csi_rs_processor;
+  prs_processor_spy&    prs_gen_ref = *prs_generator;
 
   std::unique_ptr<downlink_processor_controller> dl_proc_control =
       std::make_unique<downlink_processor_single_executor_impl>(gw,
@@ -54,6 +57,7 @@ TEST(downlinkProcessorTest, worksInOrder)
                                                                 std::move(pdsch_processor),
                                                                 std::move(ssb_processor),
                                                                 std::move(csi_rs_processor),
+                                                                std::move(prs_generator),
                                                                 executor,
                                                                 logger);
   slot_point slot(1, 2, 1);
@@ -66,6 +70,7 @@ TEST(downlinkProcessorTest, worksInOrder)
   ASSERT_FALSE(pdsch_ref.is_process_called());
   ASSERT_FALSE(ssb_ref.is_process_called());
   ASSERT_FALSE(csi_rs_ref.is_map_called());
+  ASSERT_FALSE(prs_gen_ref.is_generate_called());
   ASSERT_FALSE(gw.sent);
 
   dl_processor->process_ssb({});
@@ -99,11 +104,13 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
   auto pdsch_processor  = std::make_unique<pdsch_processor_spy>();
   auto ssb_processor    = std::make_unique<ssb_processor_spy>();
   auto csi_rs_processor = std::make_unique<csi_rs_processor_spy>();
+  auto prs_generator    = std::make_unique<prs_processor_spy>();
 
-  pdcch_processor_spy&  pdcch_ref  = *pdcch_processor;
-  pdsch_processor_spy&  pdsch_ref  = *pdsch_processor;
-  ssb_processor_spy&    ssb_ref    = *ssb_processor;
-  csi_rs_processor_spy& csi_rs_ref = *csi_rs_processor;
+  pdcch_processor_spy&  pdcch_ref   = *pdcch_processor;
+  pdsch_processor_spy&  pdsch_ref   = *pdsch_processor;
+  ssb_processor_spy&    ssb_ref     = *ssb_processor;
+  csi_rs_processor_spy& csi_rs_ref  = *csi_rs_processor;
+  prs_processor_spy&    prs_gen_ref = *prs_generator;
 
   std::unique_ptr<downlink_processor_controller> dl_proc_control =
       std::make_unique<downlink_processor_single_executor_impl>(gw,
@@ -111,6 +118,7 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
                                                                 std::move(pdsch_processor),
                                                                 std::move(ssb_processor),
                                                                 std::move(csi_rs_processor),
+                                                                std::move(prs_generator),
                                                                 executor,
                                                                 logger);
 
@@ -127,11 +135,13 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
   std::vector<uint8_t> data = {1, 2, 3, 4};
   dl_processor->process_pdsch({shared_transport_block(data)}, {});
   dl_processor->process_nzp_csi_rs({});
+  dl_processor->process_prs({});
 
   ASSERT_FALSE(pdcch_ref.is_process_called());
   ASSERT_FALSE(pdsch_ref.is_process_called());
   ASSERT_FALSE(ssb_ref.is_process_called());
   ASSERT_FALSE(csi_rs_ref.is_map_called());
+  ASSERT_FALSE(prs_gen_ref.is_generate_called());
   ASSERT_FALSE(gw.sent);
 
   dl_processor.release();
@@ -144,6 +154,7 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
   ASSERT_TRUE(pdsch_ref.is_process_called());
   ASSERT_TRUE(ssb_ref.is_process_called());
   ASSERT_TRUE(csi_rs_ref.is_map_called());
+  ASSERT_TRUE(prs_gen_ref.is_generate_called());
 
   ASSERT_TRUE(gw.sent);
 }
@@ -159,6 +170,7 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
                                                                 std::make_unique<pdsch_processor_spy>(),
                                                                 std::make_unique<ssb_processor_spy>(),
                                                                 std::make_unique<csi_rs_processor_spy>(),
+                                                                std::make_unique<prs_processor_spy>(),
                                                                 executor,
                                                                 logger);
 
@@ -208,6 +220,7 @@ TEST(downlinkProcessorTest, finishWithoutProcessingPdusSendsTheGrid)
                                                                 std::make_unique<pdsch_processor_spy>(),
                                                                 std::make_unique<ssb_processor_spy>(),
                                                                 std::make_unique<csi_rs_processor_spy>(),
+                                                                std::make_unique<prs_processor_spy>(),
                                                                 executor,
                                                                 logger);
   slot_point slot(1, 2, 1);

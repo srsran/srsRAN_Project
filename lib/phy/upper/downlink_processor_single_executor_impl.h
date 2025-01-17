@@ -16,6 +16,7 @@
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/signal_processors/prs/prs_generator.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
@@ -64,7 +65,8 @@ public:
   /// \param pdcch_proc_  PDSCH processor used to process PDSCH PDUs.
   /// \param pdsch_proc_  PDCCH processor used to process PDCCH PDUs.
   /// \param ssb_proc_    SSB processor used to process SSB PDUs.
-  /// \param csi_rs_proc_ CSI-RS processor used to process CSI-RS configurations.
+  /// \param csi_rs_proc_ CSI-RS processor used to process CSI-RS transmissions.
+  /// \param prs_gen_     PRS generator used to process PRS transmissions.
   /// \param executor_    Task executor that will be used to process every PDU.
   /// \param logger_      Logger instance.
   downlink_processor_single_executor_impl(upper_phy_rg_gateway&                 gateway_,
@@ -72,6 +74,7 @@ public:
                                           std::unique_ptr<pdsch_processor>      pdsch_proc_,
                                           std::unique_ptr<ssb_processor>        ssb_proc_,
                                           std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc_,
+                                          std::unique_ptr<prs_generator>        prs_gen_,
                                           task_executor&                        executor_,
                                           srslog::basic_logger&                 logger_);
 
@@ -92,6 +95,9 @@ private:
 
   // See interface for documentation.
   void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override;
+
+  // See interface for documentation.
+  void process_prs(const prs_generator_configuration& config) override;
 
   // See interface for documentation.
   void finish_processing_pdus() override;
@@ -165,6 +171,7 @@ private:
   static_vector<pdsch_proc_args, MAX_PDSCH_PDUS_PER_SLOT>                                        pdsch_list;
   static_vector<ssb_processor::pdu_t, MAX_SSB_PER_SLOT>                                          ssb_list;
   static_vector<nzp_csi_rs_generator::config_t, MAX_SSB_PER_SLOT>                                nzp_csi_rs_list;
+  static_vector<prs_generator_configuration, MAX_PRS_PDUS_PER_SLOT>                              prs_list;
   /// @}
   /// \defgroup phy_chan_processors
   /// \brief Physical channel processors.
@@ -173,6 +180,7 @@ private:
   std::unique_ptr<pdsch_processor>      pdsch_proc;
   std::unique_ptr<ssb_processor>        ssb_proc;
   std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc;
+  std::unique_ptr<prs_generator>        prs_gen;
   /// @}
   /// Asynchronous task executor.
   downlink_task_executor executor;

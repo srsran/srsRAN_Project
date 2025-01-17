@@ -19,18 +19,8 @@ using namespace srs_du;
 static std::unique_ptr<upper_phy> create_upper_phy(const upper_phy_config&                     upper_config,
                                                    const downlink_processor_factory_sw_config& dl_fact_config)
 {
-  // Create channel precoder factory.
-  std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
-  report_fatal_error_if_not(precoding_factory, "Invalid channel precoder factory.");
-
-  // Create resource grid mapper factory.
-  std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
-      create_resource_grid_mapper_factory(precoding_factory);
-  report_fatal_error_if_not(precoding_factory, "Invalid resource grid mapper factory.");
-
   // Create downlink processor factory.
-  std::shared_ptr<downlink_processor_factory> dl_proc_factory =
-      create_downlink_processor_factory_sw(dl_fact_config, rg_mapper_factory);
+  std::shared_ptr<downlink_processor_factory> dl_proc_factory = create_downlink_processor_factory_sw(dl_fact_config);
   report_fatal_error_if_not(dl_proc_factory, "Invalid DL processor factory.");
 
   // Create resource grid factory.
