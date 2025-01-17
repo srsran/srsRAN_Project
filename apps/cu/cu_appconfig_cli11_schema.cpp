@@ -42,6 +42,7 @@ static void configure_cli11_f1u_socket_args(CLI::App& app, srs_cu::cu_f1u_socket
              f1u_cfg.bind_addr,
              "Default local IP address interfaces bind to, unless a specific bind address is specified")
       ->check(CLI::ValidIPV4);
+  add_option(app, "--five_qi", f1u_cfg.five_qi, "Assign this socket to a specific 5QI")->check(CLI::Range(0, 255));
 
   configure_cli11_with_udp_config_schema(app, f1u_cfg.udp_config);
 }

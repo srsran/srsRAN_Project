@@ -24,6 +24,7 @@
 #include "dl_csi_pdu.h"
 #include "dl_pdcch_pdu.h"
 #include "dl_pdsch_pdu.h"
+#include "dl_prs_pdu.h"
 #include "dl_ssb_pdu.h"
 #include "field_checkers.h"
 #include "uci_pdus.h"
@@ -88,6 +89,9 @@ error_type<validator_report> srsran::fapi::validate_dl_tti_request(const dl_tti_
         break;
       case dl_pdu_type::CSI_RS:
         success &= validate_dl_csi_pdu(pdu.csi_rs_pdu, report);
+        break;
+      case dl_pdu_type::PRS:
+        success &= validate_dl_prs_pdu(pdu.prs_pdu, report);
         break;
       default:
         srsran_assert(0, "Invalid pdu_type");
@@ -927,11 +931,14 @@ static void log_basic_report(fmt::memory_buffer& buffer, const validator_report:
   fmt::format_to(std::back_inserter(buffer), "\t- Property={}, value={}\n", report.property_name, report.value);
 }
 
-void srsran::fapi::log_validator_report(const validator_report& report, srslog::basic_logger& logger)
+void srsran::fapi::log_validator_report(const validator_report& report,
+                                        srslog::basic_logger&   logger,
+                                        unsigned                sector_id)
 {
   fmt::memory_buffer str_buffer;
   fmt::format_to(std::back_inserter(str_buffer),
-                 "Detected {} error(s) in message type '{}' in slot={}.{}:\n",
+                 "Sector#{}: Detected {} error(s) in message type '{}' in slot={}.{}:\n",
+                 sector_id,
                  report.reports.size(),
                  get_message_type_string(report.reports.front().message_type),
                  report.sfn,

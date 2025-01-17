@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/ru/ru_generic_configuration.h"
+#include "srsran/ru/generic/ru_generic_configuration.h"
 
 namespace srsran {
 

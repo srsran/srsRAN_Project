@@ -84,11 +84,17 @@ struct mac_dl_sched_result_test_helper {
   mac_dl_sched_result                                       result;
 };
 
-/// Builds and returns a valid MAC data result.
-mac_dl_data_result build_valid_mac_data_result();
+/// Helper struct to manage the pointer life cycle of a MAC DL scheduling result.
+struct mac_dl_data_result_test_helper {
+  std::array<uint8_t, 1> data;
+  mac_dl_data_result     result;
+};
 
 /// Builds and returns a valid MAC data result.
-mac_dl_data_result build_valid_mac_data_result_with_all_supported_pdu();
+mac_dl_data_result_test_helper build_valid_mac_data_result();
+
+/// Builds and returns a valid MAC data result.
+mac_dl_data_result_test_helper build_valid_mac_data_result_with_all_supported_pdu();
 
 /// Builds and returns a valid PRACH occassion.
 prach_occasion_info build_valid_prach_occassion();

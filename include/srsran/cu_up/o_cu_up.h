@@ -26,7 +26,7 @@ namespace srsran {
 namespace srs_cu_up {
 
 class cu_up_interface;
-class cu_up_power_controller;
+class cu_up_operation_controller;
 
 /// O-RAN CU-UP interface.
 class o_cu_up
@@ -37,8 +37,8 @@ public:
   /// Returns the CU-UP of this O-RAN CU-UP.
   virtual cu_up_interface& get_cu_up() = 0;
 
-  /// Returns the power controller of this O-RAN CU-UP.
-  virtual cu_up_power_controller& get_power_controller() = 0;
+  /// Returns the operation controller of this O-RAN CU-UP.
+  virtual cu_up_operation_controller& get_operation_controller() = 0;
 };
 
 } // namespace srs_cu_up

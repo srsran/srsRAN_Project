@@ -61,6 +61,9 @@ static std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> generate_cu_cp_qos_confi
       report_error("Invalid RLC mode: {}, mode={}\n", qos.five_qi, qos.rlc.mode);
     }
 
+    out_pdcp.integrity_protection_required = false;
+    out_pdcp.ciphering_required            = true;
+
     // > Tx
     // >> SN size
     if (!pdcp_sn_size_from_uint(out_pdcp.tx.sn_size, qos.pdcp.tx.sn_field_length)) {

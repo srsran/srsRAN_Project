@@ -26,7 +26,7 @@
 #include "ru_radio_notifier_handler.h"
 #include "srsran/phy/adapters/phy_error_adapter.h"
 #include "srsran/radio/radio_factory.h"
-#include "srsran/ru/ru_generic_factory.h"
+#include "srsran/ru/generic/ru_generic_factory.h"
 
 using namespace srsran;
 

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/du/du.h"
-#include "srsran/du/du_power_controller.h"
+#include "srsran/du/du_operation_controller.h"
 #include "srsran/du/o_du.h"
 #include "srsran/ru/ru_adapters.h"
 #include <memory>
@@ -35,13 +35,13 @@ class radio_unit;
 /// \brief Flexible O-RAN DU implementation.
 ///
 /// One O-RAN DU can handle more than one cell.
-class flexible_o_du_impl : public srs_du::du, public du_power_controller
+class flexible_o_du_impl : public srs_du::du, public du_operation_controller
 {
 public:
   explicit flexible_o_du_impl(unsigned nof_cells_);
 
   // See interface for documentation.
-  du_power_controller& get_power_controller() override { return *this; }
+  du_operation_controller& get_operation_controller() override { return *this; }
 
   // See interface for documentation.
   void start() override;

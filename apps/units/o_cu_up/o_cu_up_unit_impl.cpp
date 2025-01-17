@@ -38,7 +38,7 @@ srs_cu_up::cu_up_interface& o_cu_up_unit_impl::get_cu_up()
   return cu_up->get_cu_up();
 }
 
-srs_cu_up::cu_up_power_controller& o_cu_up_unit_impl::get_power_controller()
+srs_cu_up::cu_up_operation_controller& o_cu_up_unit_impl::get_operation_controller()
 {
-  return cu_up->get_power_controller();
+  return cu_up->get_operation_controller();
 }

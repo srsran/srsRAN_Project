@@ -36,6 +36,11 @@ add_executable(dl_pdsch_pdu_validator_test dl_pdsch_pdu_test.cpp)
 target_link_libraries(dl_pdsch_pdu_validator_test srsran_support srsran_fapi_message_builder_test_helpers srslog srsran_fapi gtest gtest_main)
 gtest_discover_tests(dl_pdsch_pdu_validator_test)
 
+add_executable(dl_prs_pdu_validator_test dl_prs_pdu_test.cpp)
+target_link_libraries(dl_prs_pdu_validator_test srsran_support  srsran_fapi_message_builder_test_helpers srslog srsran_fapi gtest gtest_main)
+target_include_directories(dl_prs_pdu_validator_test PRIVATE ${CMAKE_SOURCE_DIR}/lib/fapi/validators/ ${CMAKE_CURRENT_SOURCE_DIR}/..)
+gtest_discover_tests(dl_prs_pdu_validator_test)
+
 add_executable(dl_ssb_pdu_validator_test dl_ssb_pdu_test.cpp)
 target_link_libraries(dl_ssb_pdu_validator_test srsran_support srsran_fapi_message_builder_test_helpers srslog srsran_fapi gtest gtest_main)
 gtest_discover_tests(dl_ssb_pdu_validator_test)

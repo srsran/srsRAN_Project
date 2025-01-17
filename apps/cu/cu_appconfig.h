@@ -26,6 +26,7 @@
 #include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/network/udp_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
+#include "srsran/ran/qos/five_qi.h"
 #include <string>
 
 namespace srsran {
@@ -33,8 +34,9 @@ namespace srs_cu {
 
 /// F1-U sockets configuration
 struct cu_f1u_socket_appconfig {
-  std::string   bind_addr = "127.0.10.1"; // Bind address used by the F1-U interface
-  udp_appconfig udp_config;
+  std::string              bind_addr = "127.0.10.1"; // Bind address used by the F1-U interface
+  std::optional<five_qi_t> five_qi;
+  udp_appconfig            udp_config;
 };
 
 /// F1-U configuration

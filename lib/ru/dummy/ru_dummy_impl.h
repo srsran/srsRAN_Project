@@ -29,10 +29,10 @@
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/ru/dummy/ru_dummy_configuration.h"
 #include "srsran/ru/ru.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/ru/ru_downlink_plane.h"
-#include "srsran/ru/ru_dummy_configuration.h"
 #include "srsran/ru/ru_timing_notifier.h"
 #include "srsran/ru/ru_uplink_plane.h"
 #include "srsran/srslog/logger.h"
@@ -53,6 +53,7 @@ namespace srsran {
 /// It determines the timing from the system time.
 class ru_dummy_impl : public radio_unit,
                       private ru_controller,
+                      private ru_operation_controller,
                       private ru_downlink_plane_handler,
                       private ru_uplink_plane_handler
 {
@@ -69,12 +70,6 @@ public:
   // See radio_unit interface for documentation.
   ru_uplink_plane_handler& get_uplink_plane_handler() override { return *this; }
 
-  // See ru_controller interface for documentation.
-  bool set_tx_cfo(unsigned port_id, float cfo_Hz) override { return false; }
-
-  // See ru_controller interface for documentation.
-  bool set_rx_cfo(unsigned port_id, float cfo_Hz) override { return false; }
-
 private:
   /// Possible internal states.
   enum class state : uint8_t { idle = 0, running, wait_stop, stopped };
@@ -87,11 +82,14 @@ private:
   // See ru_controller for documentation.
   void stop() override;
 
-  // See ru_controller interface for documentation.
-  bool set_tx_gain(unsigned port_id, double gain_dB) override { return false; }
+  // See interface for documentation.
+  ru_operation_controller& get_operation_controller() override { return *this; }
 
-  // See ru_controller interface for documentation.
-  bool set_rx_gain(unsigned port_id, double gain_dB) override { return false; }
+  // See interface for documentation.
+  ru_gain_controller* get_gain_controller() override { return nullptr; }
+
+  // See interface for documentation.
+  ru_cfo_controller* get_cfo_controller() override { return nullptr; }
 
   // See ru_controller interface for documentation.
   void print_metrics() override;

@@ -122,6 +122,7 @@ static void add_csi_rs_pdus_to_dl_request(fapi::dl_tti_request_message_builder& 
                                                                      pdu.scrambling_id);
 
     csi_builder.set_bwp_parameters(pdu.bwp_cfg->scs, pdu.bwp_cfg->cp);
+    csi_builder.set_vendor_specific_bwp_parameters(pdu.bwp_cfg->crbs.length(), pdu.bwp_cfg->crbs.start());
 
     csi_builder.set_tx_power_info_parameters(pdu.power_ctrl_offset,
                                              fapi::to_power_control_offset_ss(pdu.power_ctrl_offset_ss));
@@ -208,7 +209,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   error_type<fapi::validator_report> result = validate_dl_tti_request(msg);
 
   if (!result) {
-    log_validator_report(result.error(), logger);
+    log_validator_report(result.error(), logger, sector_id);
 
     clear_dl_tti_pdus(msg);
   }
@@ -267,6 +268,16 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
     }
   }
 
+  // Validate the Tx_Data.request message.
+  error_type<fapi::validator_report> result = fapi::validate_tx_data_request(msg);
+
+  if (!result) {
+    log_validator_report(result.error(), logger, sector_id);
+
+    // Clear the PDUs on validation failure.
+    msg.pdus.clear();
+  }
+
   // Send the message.
   msg_gw.tx_data_request(msg);
 }
@@ -312,7 +323,7 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   error_type<fapi::validator_report> result = validate_ul_tti_request(msg);
 
   if (!result) {
-    log_validator_report(result.error(), logger);
+    log_validator_report(result.error(), logger, sector_id);
 
     clear_ul_tti_pdus(msg);
   }
@@ -344,7 +355,7 @@ void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_informati
   // Validate the UL_DCI.request message.
   error_type<fapi::validator_report> result = validate_ul_dci_request(msg);
   if (!result) {
-    log_validator_report(result.error(), logger);
+    log_validator_report(result.error(), logger, sector_id);
 
     return;
   }

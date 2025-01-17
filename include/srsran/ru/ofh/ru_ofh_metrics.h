@@ -22,21 +22,22 @@
 
 #pragma once
 
+#include <chrono>
+
 namespace srsran {
-namespace srs_cu_up {
 
-/// CU-UP power controller interface that allows to start/stop the CU-UP.
-class cu_up_power_controller
-{
-public:
-  virtual ~cu_up_power_controller() = default;
-
-  /// Starts the CU-UP.
-  virtual void start() = 0;
-
-  /// Stops the CU-UP.
-  virtual void stop() = 0;
+/// Open Fronthaul Radio Unit metrics.
+struct ru_ofh_metrics {
+  /// Timestamp of the OFH RU metrics.
+  std::chrono::time_point<std::chrono::system_clock> timestamp;
+  /// Radio sector identifier.
+  unsigned sector_id;
+  /// Number of OFH messages received on time.
+  unsigned nof_on_time_messages;
+  /// Number of OFH messages received early.
+  unsigned nof_early_messages;
+  /// Number of OFH messages received late.
+  unsigned nof_late_messages;
 };
 
-} // namespace srs_cu_up
 } // namespace srsran

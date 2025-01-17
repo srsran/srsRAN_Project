@@ -103,9 +103,6 @@ public:
   /// \brief Handle received SR indication.
   void handle_sr_indication() { ul_lc_ch_mgr.handle_sr_indication(); }
 
-  /// \brief Once an UL grant is given, the SR status of the UE must be reset.
-  void reset_sr_indication() { ul_lc_ch_mgr.reset_sr_indication(); }
-
   /// \brief Handles received BSR indication by updating UE UL logical channel states.
   void handle_bsr_indication(const ul_bsr_indication_message& msg) { ul_lc_ch_mgr.handle_bsr_indication(msg); }
 
@@ -132,7 +129,7 @@ public:
   bool is_reconfig_ongoing() const { return reconf_ongoing; }
 
   /// \brief Handles DL Buffer State indication.
-  void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg);
+  void handle_dl_buffer_state_indication(lcid_t lcid, unsigned bs, slot_point hol_toa = {});
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
@@ -175,7 +172,7 @@ public:
   unsigned pending_ul_newtx_bytes() const;
 
   /// \brief Computes the number of UL pending bytes for a LCG ID.
-  unsigned pending_ul_newtx_bytes(lcg_id_t lcg_id) const;
+  unsigned pending_ul_newtx_bytes(lcg_id_t lcg_id) const { return ul_lc_ch_mgr.pending_bytes(lcg_id); }
 
   /// \brief Returns whether a SR indication handling is pending.
   bool has_pending_sr() const;
@@ -195,6 +192,15 @@ public:
   /// It includes the UE Contention Resolution Identity CE if it is pending.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
   unsigned build_dl_fallback_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes);
+
+  /// \brief UE DL logical channels.
+  const dl_logical_channel_manager& dl_logical_channels() const { return dl_lc_ch_mgr; }
+
+  /// \brief UE UL logical channels.
+  const ul_logical_channel_manager& ul_logical_channels() const { return ul_lc_ch_mgr; }
+
+  /// \brief Handle UL TB scheduling.
+  void handle_ul_transport_block_info(unsigned tb_size_bytes) { ul_lc_ch_mgr.handle_ul_grant(tb_size_bytes); }
 
 private:
   /// Update UE configuration.

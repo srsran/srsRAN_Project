@@ -30,7 +30,8 @@ using namespace srsran;
 constexpr unsigned MAX_PF_COEFF = 10;
 
 scheduler_time_pf::scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_) :
-  fairness_coeff(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).pf_sched_fairness_coeff)
+  fairness_coeff(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).pf_sched_fairness_coeff),
+  weight_func(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).qos_weight_func)
 {
 }
 
@@ -263,70 +264,162 @@ ul_alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
   if (alloc_result.status == alloc_status::success) {
     ctxt.ul_prio = forbid_prio;
   }
-  ctxt.save_ul_alloc(ues[ctxt.ue_index], alloc_result.alloc_bytes);
+  ctxt.save_ul_alloc(alloc_result.alloc_bytes);
   return alloc_result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/// \brief Returns rate expressed in bytes per slot for a given rate in bit per second.
-static double to_bytes_per_slot(uint64_t bitrate_bps, subcarrier_spacing bwp_scs)
-{
-  // Deduce the number of slots per subframe.
-  const unsigned nof_slots_per_subframe   = get_nof_slots_per_subframe(bwp_scs);
-  const unsigned nof_subframes_per_second = 1000;
-  // Deduce the number of slots per second.
-  const unsigned nof_slots_per_second = nof_slots_per_subframe * nof_subframes_per_second;
+namespace {
 
-  return (static_cast<double>(bitrate_bps) / static_cast<double>(nof_slots_per_second * 8U));
+// [Implementation-defined] Helper value to set a maximum metric weight that is low enough to avoid overflows during
+// the final QoS weight computation.
+constexpr double max_metric_weight = 1.0e12;
+
+double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coeff)
+{
+  double pf_weight = 0.0;
+  if (estim_rate > 0) {
+    if (avg_rate != 0) {
+      if (fairness_coeff >= MAX_PF_COEFF) {
+        // For very high coefficients, the pow(.) will be very high, leading to pf_weight of 0 due to lack of precision.
+        // In such scenarios, we change the way to compute the PF weight. Instead, we completely disregard the estimated
+        // rate, as its impact is minimal.
+        pf_weight = 1 / avg_rate;
+      } else {
+        pf_weight = estim_rate / pow(avg_rate, fairness_coeff);
+      }
+    } else {
+      // In case the avg rate is zero, the division would be inf. Instead, we give the highest priority to the UE.
+      pf_weight = max_metric_weight;
+    }
+  }
+  return pf_weight;
+}
+
+double combine_qos_metrics(double                                           pf_weight,
+                           double                                           gbr_weight,
+                           double                                           prio_weight,
+                           double                                           delay_weight,
+                           time_pf_scheduler_expert_config::weight_function weight_func)
+{
+  if (weight_func == time_pf_scheduler_expert_config::weight_function::gbr_prioritized and gbr_weight > 1.0) {
+    // GBR target has not been met and we prioritize GBR over PF.
+    pf_weight = std::max(1.0, pf_weight);
+  }
+
+  // The return is a combination of QoS priority, GBR and PF weight functions.
+  return gbr_weight * pf_weight * prio_weight * delay_weight;
 }
 
 /// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
-static double compute_dl_rate_weight(const slice_ue& u, span<double> dl_avg_rate_per_lc, subcarrier_spacing bwp_scs)
+double compute_dl_qos_weights(const slice_ue&                                  u,
+                              double                                           estim_dl_rate,
+                              double                                           avg_dl_rate,
+                              time_pf_scheduler_expert_config::weight_function weight_func,
+                              double                                           fairness_coeff,
+                              slot_point                                       slot_tx)
 {
-  // [Implementation-defined] Rate weight to assign when average rate in all GBR bearers is zero or if the UE has only
-  // non-GBR bearers.
-  const double initial_rate_weight = 1;
+  if (avg_dl_rate == 0) {
+    // Highest priority to UEs that have not yet received any allocation.
+    return std::numeric_limits<double>::max();
+  }
 
-  double rate_weight = 0;
+  uint8_t min_prio_level = qos_prio_level_t::max();
+  double  gbr_weight     = 0;
+  double  delay_weight   = 0;
   for (const logical_channel_config& lc : u.logical_channels()) {
-    // LC not part of the slice or non-GBR flow.
-    if (not u.contains(lc.lcid) or not lc.qos.has_value() or not lc.qos->gbr_qos_info.has_value()) {
+    if (not u.contains(lc.lcid) or not lc.qos.has_value() or u.pending_dl_newtx_bytes(lc.lcid) == 0) {
+      // LC is not part of the slice, No QoS config was provided for this LC or there is no pending data for this LC
+      continue;
+    }
+
+    // Track the LC with the lowest priority.
+    min_prio_level = std::min(lc.qos->qos.priority.value(), min_prio_level);
+
+    slot_point hol_toa = u.dl_hol_toa(lc.lcid);
+    if (hol_toa.valid() and slot_tx >= hol_toa) {
+      const unsigned hol_delay_ms = (slot_tx - hol_toa) / slot_tx.nof_slots_per_subframe();
+      const unsigned pdb          = lc.qos->qos.packet_delay_budget_ms;
+      delay_weight += hol_delay_ms / static_cast<double>(pdb);
+    }
+
+    if (not lc.qos->gbr_qos_info.has_value()) {
+      // LC is a non-GBR flow.
       continue;
     }
 
     // GBR flow.
-    if (dl_avg_rate_per_lc[lc.lcid] != 0) {
-      rate_weight += (to_bytes_per_slot(lc.qos->gbr_qos_info->gbr_dl, bwp_scs) / dl_avg_rate_per_lc[lc.lcid]);
+    double dl_avg_rate = u.dl_avg_bit_rate(lc.lcid);
+    if (dl_avg_rate != 0) {
+      gbr_weight += std::min(lc.qos->gbr_qos_info->gbr_dl / dl_avg_rate, max_metric_weight);
+    } else {
+      gbr_weight += max_metric_weight;
     }
   }
 
-  return rate_weight == 0 ? initial_rate_weight : rate_weight;
+  // If no QoS flows are configured, the weight is set to 1.0.
+  gbr_weight   = gbr_weight == 0 ? 1.0 : gbr_weight;
+  delay_weight = delay_weight == 0 ? 1.0 : delay_weight;
+
+  double pf_weight = compute_pf_metric(estim_dl_rate, avg_dl_rate, fairness_coeff);
+  double prio_weight =
+      (qos_prio_level_t::max() + 1 - min_prio_level) / static_cast<double>(qos_prio_level_t::max() + 1);
+
+  // The return is a combination of QoS priority, GBR and PF weight functions.
+  return combine_qos_metrics(pf_weight, gbr_weight, prio_weight, delay_weight, weight_func);
 }
 
-/// \brief Computes UL rate weight used in computation of UL priority value for a UE in a slot.
-static double compute_ul_rate_weight(const slice_ue& u, span<double> ul_avg_rate_per_lcg, subcarrier_spacing bwp_scs)
+/// \brief Computes UL weights used in computation of UL priority value for a UE in a slot.
+double compute_ul_qos_weights(const slice_ue&                                  u,
+                              double                                           estim_ul_rate,
+                              double                                           avg_ul_rate,
+                              time_pf_scheduler_expert_config::weight_function weight_func,
+                              double                                           fairness_coeff)
 {
-  // [Implementation-defined] Rate weight to assign if the UE has only non-GBR bearers or average UL rate of UE is 0.
-  const double initial_rate_weight = 1;
+  if (u.has_pending_sr() or avg_ul_rate == 0) {
+    // Highest priority to SRs and UEs that have not yet received any allocation.
+    return std::numeric_limits<double>::max();
+  }
 
-  double rate_weight = 0;
-  // Compute sum of GBR rates of all LCs belonging to this slice.
+  uint8_t min_prio_level = qos_prio_level_t::max();
+  double  gbr_weight     = 0;
   for (const logical_channel_config& lc : u.logical_channels()) {
-    // LC is not part of the slice or a non-GBR flow.
-    if (not u.contains(lc.lcid) or not lc.qos.has_value() or not lc.qos->gbr_qos_info.has_value()) {
+    if (not u.contains(lc.lcid) or not lc.qos.has_value() or u.pending_ul_unacked_bytes(lc.lc_group) == 0) {
+      // LC is not part of the slice or no QoS config was provided for this LC or there are no pending bytes for this
+      // group.
+      continue;
+    }
+
+    // Track the LC with the lowest priority.
+    min_prio_level = std::min(lc.qos->qos.priority.value(), min_prio_level);
+
+    if (not lc.qos->gbr_qos_info.has_value()) {
+      // LC is a non-GBR flow.
       continue;
     }
 
     // GBR flow.
-    lcg_id_t lcg_id = u.get_lcg_id(lc.lcid);
-    if (ul_avg_rate_per_lcg[lcg_id] != 0) {
-      rate_weight += (to_bytes_per_slot(lc.qos->gbr_qos_info->gbr_ul, bwp_scs) / ul_avg_rate_per_lcg[lcg_id]);
+    lcg_id_t lcg_id  = u.get_lcg_id(lc.lcid);
+    double   ul_rate = u.ul_avg_bit_rate(lcg_id);
+    if (ul_rate != 0) {
+      gbr_weight += std::min(lc.qos->gbr_qos_info->gbr_ul / ul_rate, max_metric_weight);
+    } else {
+      gbr_weight = max_metric_weight;
     }
   }
 
-  return rate_weight == 0 ? initial_rate_weight : rate_weight;
+  // If no GBR flows are configured, the gbr rate is set to 1.0.
+  gbr_weight = gbr_weight == 0 ? 1.0 : gbr_weight;
+
+  double pf_weight = compute_pf_metric(estim_ul_rate, avg_ul_rate, fairness_coeff);
+  double prio_weight =
+      (qos_prio_level_t::max() + 1 - min_prio_level) / static_cast<double>(qos_prio_level_t::max() + 1);
+
+  return combine_qos_metrics(pf_weight, gbr_weight, prio_weight, 1.0, weight_func);
 }
+
+} // namespace
 
 void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
                                                  ran_slice_id_t  slice_id,
@@ -390,23 +483,8 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
   // NOTE: Estimated instantaneous DL rate is calculated assuming entire BWP CRBs are allocated to UE.
   const double estimated_rate = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
   const double current_total_avg_rate = total_dl_avg_rate();
-  double       pf_weight              = 0;
-  if (current_total_avg_rate != 0) {
-    if (parent->fairness_coeff >= MAX_PF_COEFF) {
-      // For very high coefficients, the pow(.) will be very high, leading to pf_weight of 0 due to lack of precision.
-      // In such scenarios, we change the way to compute the PF weight. Instead, we completely disregard the estimated
-      // rate, as its impact is minimal.
-      pf_weight = 1 / current_total_avg_rate;
-    } else {
-      pf_weight = estimated_rate / pow(current_total_avg_rate, parent->fairness_coeff);
-    }
-  } else {
-    // Give the highest priority to new UE.
-    pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
-  }
-  const double rate_weight = compute_dl_rate_weight(
-      u, dl_avg_rate_per_lc, ue_cc->cfg().cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs);
-  dl_prio = rate_weight * pf_weight;
+  dl_prio                             = compute_dl_qos_weights(
+      u, estimated_rate, current_total_avg_rate, parent->weight_func, parent->fairness_coeff, pdcch_slot);
 }
 
 void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
@@ -485,47 +563,15 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
   // NOTE: Estimated instantaneous UL rate is calculated assuming entire BWP CRBs are allocated to UE.
   const double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info->ul_crb_lims.length());
   const double current_avg_rate = total_ul_avg_rate();
-  double       pf_weight        = 0;
-  if (current_avg_rate != 0) {
-    if (parent->fairness_coeff >= MAX_PF_COEFF) {
-      // For very high coefficients, the pow(.) will be very high, leading to pf_weight of 0 due to lack of precision.
-      // In such scenarios, we change the way to compute the PF weight. Instead, we completely disregard the estimated
-      // rate, as its impact is minimal.
-      pf_weight = 1 / current_avg_rate;
-    } else {
-      pf_weight = estimated_rate / pow(current_avg_rate, parent->fairness_coeff);
-    }
-  } else {
-    pf_weight = estimated_rate == 0 ? 0 : std::numeric_limits<double>::max();
-  }
-  const double rate_weight = compute_ul_rate_weight(
-      u, ul_avg_rate_per_lcg, ue_cc->cfg().cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs);
-  ul_prio         = rate_weight * pf_weight;
-  sr_ind_received = u.has_pending_sr();
+
+  // Compute LC weight function.
+  ul_prio = compute_ul_qos_weights(u, estimated_rate, current_avg_rate, parent->weight_func, parent->fairness_coeff);
 }
 
 void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
 {
-  // Redimension LCID arrays to the UE configured bearers.
-  dl_alloc_bytes_per_lc.resize(u.get_bearers().size(), 0);
-  dl_avg_rate_per_lc.resize(dl_alloc_bytes_per_lc.size(), 0);
-
   // In case more than one slot elapsed.
   for (unsigned s = 0; s != nof_slots_elapsed - 1; ++s) {
-    for (unsigned i = 0; i != dl_alloc_bytes_per_lc.size(); ++i) {
-      if (not u.contains(uint_to_lcid(i))) {
-        // Skip LCIDs that are not configured.
-        dl_alloc_bytes_per_lc[i] = 0;
-        dl_avg_rate_per_lc[i]    = 0;
-        continue;
-      }
-      if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
-        // Fast start before transitioning to exponential average.
-        dl_avg_rate_per_lc[i] -= dl_avg_rate_per_lc[i] / (dl_nof_samples + 1);
-      } else {
-        dl_avg_rate_per_lc[i] -= parent->exp_avg_alpha * dl_avg_rate_per_lc[i];
-      }
-    }
     if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
       // Fast start before transitioning to exponential average.
       total_dl_avg_rate_ -= total_dl_avg_rate_ / (dl_nof_samples + 1);
@@ -533,28 +579,6 @@ void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned
       total_dl_avg_rate_ -= parent->exp_avg_alpha * total_dl_avg_rate_;
     }
     dl_nof_samples++;
-  }
-
-  // Compute DL average rate on a per-logical channel basis.
-  for (unsigned i = 0; i != dl_alloc_bytes_per_lc.size(); ++i) {
-    if (not u.contains(uint_to_lcid(i))) {
-      // Skip LCIDs that are not configured.
-      dl_alloc_bytes_per_lc[i] = 0;
-      dl_avg_rate_per_lc[i]    = 0;
-      continue;
-    }
-
-    unsigned sched_bytes = dl_alloc_bytes_per_lc[i];
-    if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
-      // Fast start before transitioning to exponential average.
-      dl_avg_rate_per_lc[i] += (sched_bytes - dl_avg_rate_per_lc[i]) / (dl_nof_samples + 1);
-    } else {
-      dl_avg_rate_per_lc[i] =
-          (1 - parent->exp_avg_alpha) * dl_avg_rate_per_lc[i] + (parent->exp_avg_alpha) * sched_bytes;
-    }
-
-    // Flush allocated bytes for the current slot.
-    dl_alloc_bytes_per_lc[i] = 0;
   }
 
   // Compute DL average rate of the UE.
@@ -575,26 +599,8 @@ void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned
 
 void scheduler_time_pf::ue_ctxt::compute_ul_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
 {
-  // Redimension LCID arrays to the UE configured bearers.
-  ul_alloc_bytes_per_lcg.resize(u.get_lcgs().size(), 0);
-  ul_avg_rate_per_lcg.resize(ul_alloc_bytes_per_lcg.size(), 0);
-
   // In case more than one slot elapsed.
   for (unsigned s = 0; s != nof_slots_elapsed - 1; ++s) {
-    for (unsigned i = 0; i != ul_alloc_bytes_per_lcg.size(); ++i) {
-      if (not u.contains(uint_to_lcid(i))) {
-        // Skip LCIDs that are not configured.
-        ul_alloc_bytes_per_lcg[i] = 0;
-        ul_avg_rate_per_lcg[i]    = 0;
-        continue;
-      }
-      if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
-        // Fast start before transitioning to exponential average.
-        ul_avg_rate_per_lcg[i] -= ul_avg_rate_per_lcg[i] / (ul_nof_samples + 1);
-      } else {
-        ul_avg_rate_per_lcg[i] -= parent->exp_avg_alpha * ul_avg_rate_per_lcg[i];
-      }
-    }
     if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
       // Fast start before transitioning to exponential average.
       total_ul_avg_rate_ -= total_ul_avg_rate_ / (ul_nof_samples + 1);
@@ -602,28 +608,6 @@ void scheduler_time_pf::ue_ctxt::compute_ul_avg_rate(const slice_ue& u, unsigned
       total_ul_avg_rate_ -= parent->exp_avg_alpha * total_ul_avg_rate_;
     }
     ul_nof_samples++;
-  }
-
-  // Compute UL average rate on a per-logical channel group basis.
-  for (unsigned i = 0; i != ul_alloc_bytes_per_lcg.size(); ++i) {
-    if (not u.contains(uint_to_lcg_id(i))) {
-      // Skip LCIDs that are not configured.
-      ul_alloc_bytes_per_lcg[i] = 0;
-      ul_avg_rate_per_lcg[i]    = 0;
-    }
-
-    unsigned sched_bytes = ul_alloc_bytes_per_lcg[i];
-
-    if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
-      // Fast start before transitioning to exponential average.
-      ul_avg_rate_per_lcg[i] += (sched_bytes - ul_avg_rate_per_lcg[i]) / (ul_nof_samples + 1);
-    } else {
-      ul_avg_rate_per_lcg[i] =
-          (1 - parent->exp_avg_alpha) * ul_avg_rate_per_lcg[i] + (parent->exp_avg_alpha) * sched_bytes;
-    }
-
-    // Flush allocated bytes for the current slot.
-    ul_alloc_bytes_per_lcg[i] = 0;
   }
 
   // Compute UL average rate of the UE.
@@ -644,32 +628,13 @@ void scheduler_time_pf::ue_ctxt::compute_ul_avg_rate(const slice_ue& u, unsigned
 
 void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info)
 {
-  for (const auto& tb : tb_info.lc_chs_to_sched) {
-    if (not tb.lcid.is_sdu()) {
-      // Ignore CEs.
-      continue;
-    }
-    const lcid_t lcid = tb.lcid.to_lcid();
-    if (lcid >= dl_alloc_bytes_per_lc.size()) {
-      // It can happen that an LCID of another slice can be added to a given grant.
-      continue;
-    }
-    dl_alloc_bytes_per_lc[lcid] += tb.sched_bytes;
-  }
   dl_sum_alloc_bytes += total_alloc_bytes;
 }
 
-void scheduler_time_pf::ue_ctxt::save_ul_alloc(const slice_ue& u, unsigned alloc_bytes)
+void scheduler_time_pf::ue_ctxt::save_ul_alloc(unsigned alloc_bytes)
 {
   if (alloc_bytes == 0) {
     return;
-  }
-  // We do not know which LCGs will be allocated by the UE, but we can make an estimation based on BSRs.
-  auto lcg_info = u.estimate_ul_alloc_bytes_per_lcg(alloc_bytes);
-  for (auto [lcgid, lcg_bytes] : lcg_info) {
-    if (lcgid < ul_alloc_bytes_per_lcg.size()) {
-      ul_alloc_bytes_per_lcg[lcgid] = lcg_bytes;
-    }
   }
   ul_sum_alloc_bytes += alloc_bytes;
 }
@@ -683,15 +648,6 @@ bool scheduler_time_pf::ue_dl_prio_compare::operator()(const scheduler_time_pf::
 bool scheduler_time_pf::ue_ul_prio_compare::operator()(const scheduler_time_pf::ue_ctxt* lhs,
                                                        const scheduler_time_pf::ue_ctxt* rhs) const
 {
-  // First, prioritize UEs with pending SR.
-  // SR indication in one UE and not in other UE.
-  if (lhs->sr_ind_received != rhs->sr_ind_received) {
-    return rhs->sr_ind_received;
-  }
-  // SR indication for both UEs.
-  if (lhs->sr_ind_received) {
-    return lhs->ul_prio < rhs->ul_prio;
-  }
   // All other cases compare priorities.
   return lhs->ul_prio < rhs->ul_prio;
 }

@@ -256,7 +256,16 @@ private:
                                 sr_nof_bits                  sr_bits,
                                 unsigned                     csi_part1_bits) const;
 
-  /// ////////////  Private helpers   //////////////
+  // Fills the PUCCH Format 4 PDU.
+  void fill_pucch_format4_grant(pucch_info&                  pucch_grant,
+                                rnti_t                       crnti,
+                                const pucch_resource&        pucch_ded_res_cfg,
+                                const ue_cell_configuration& ue_cell_cfg,
+                                unsigned                     harq_ack_bits,
+                                sr_nof_bits                  sr_bits,
+                                unsigned                     csi_part1_bits) const;
+
+  ///////////////  Private helpers   ///////////////
 
   void remove_unused_pucch_res(slot_point                   sl_tx,
                                const pucch_grant_list&      grants_to_tx,
@@ -268,7 +277,7 @@ private:
   // \brief Ring of PUCCH allocations indexed by slot.
   circular_array<slot_pucch_grants, cell_resource_allocator::RING_ALLOCATOR_SIZE> pucch_grants_alloc_grid;
 
-  static constexpr unsigned PUCCH_FORMAT_0_1_NOF_PRBS{1};
+  static constexpr unsigned PUCCH_FORMAT_0_1_4_NOF_PRBS{1};
   const cell_configuration& cell_cfg;
   const unsigned            max_pucch_grants_per_slot;
   const unsigned            max_ul_grants_per_slot;

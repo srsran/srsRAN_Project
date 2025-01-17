@@ -47,7 +47,9 @@ const char* __tsan_default_options()
 const char* __tsan_default_suppressions()
 {
   return
-      // External uninstrumented libraries
+      // Suppress a race in fmt::print that is guarded by flockfile.
+      "race:fmt::*\n"
+      // External uninstrumented libraries.
       "called_from_lib:libzmq.so\n"
       "called_from_lib:libpgm-5.2.so\n"
       "called_from_lib:libusb*\n"
@@ -55,7 +57,7 @@ const char* __tsan_default_suppressions()
       "called_from_lib:librte_eal*\n"
       "called_from_lib:librte_net_iavf*\n"
       // Races detected inside uninstrumented libraries. This may hide legit races if any of the libraries appear in the
-      // backtrace
+      // backtrace.
       "race:libusb*\n"
       "race:libuhd*\n";
 }

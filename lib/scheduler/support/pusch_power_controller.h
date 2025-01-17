@@ -28,10 +28,10 @@ namespace srsran {
 
 class ue_cell_configuration;
 
-class ul_power_controller
+class pusch_power_controller
 {
 public:
-  ul_power_controller(const ue_cell_configuration& ue_cell_cfg_, const ue_channel_state_manager& ch_state_manager);
+  pusch_power_controller(const ue_cell_configuration& ue_cell_cfg_, const ue_channel_state_manager& ch_state_manager);
 
   /// Save the PUSCH power control configuration.
   void reconfigure(const ue_cell_configuration& ue_cell_cfg);
@@ -49,8 +49,6 @@ public:
   uint8_t compute_tpc_command(slot_point pusch_slot);
 
 private:
-  /// \brief Number of indexes -> nof_layers for precoding (Options: 1, 2, 3, 4 layers).
-  static constexpr size_t NOF_LAYER_CHOICES = 4;
   /// This variable defines how many PUSCH PRB allocations needs to be stored in the internal ring-buffer; it is the
   /// maximum expected delay (in slots) between the for which slot the PUSCH is scheduled and the slot at which the PHR
   /// is received; this delay depends on the PHY processing capabilities. For simplicity, we take round the number to a

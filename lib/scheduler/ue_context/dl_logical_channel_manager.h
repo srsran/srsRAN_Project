@@ -26,6 +26,7 @@
 #include "srsran/ran/logical_channel/lcid_dl_sch.h"
 #include "srsran/scheduler/config/logical_channel_config.h"
 #include "srsran/scheduler/result/pdsch_info.h"
+#include "srsran/support/math/moving_averager.h"
 #include <queue>
 #include <variant>
 
@@ -42,7 +43,10 @@ public:
     std::variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload;
   };
 
-  dl_logical_channel_manager();
+  dl_logical_channel_manager(subcarrier_spacing scs_common);
+
+  /// Signal the start of a new slot.
+  void slot_indication();
 
   /// \brief Deactivate all bearers.
   void deactivate();
@@ -116,11 +120,22 @@ public:
     return is_active(lcid) ? get_mac_sdu_required_bytes(channels[lcid].buf_st) : 0;
   }
 
+  /// \brief Average bit rate, in bps, for a given LCID.
+  double average_bit_rate(lcid_t lcid) const
+  {
+    return not is_srb(lcid) and is_active(lcid) and channels[lcid].avg_bytes_per_slot.size() > 0
+               ? channels[lcid].avg_bytes_per_slot.average() * 8 * slots_per_sec
+               : 0.0;
+  }
+
+  slot_point hol_toa(lcid_t lcid) const { return is_active(lcid) ? channels[lcid].hol_toa : slot_point{}; }
+
   /// \brief Update DL buffer status for a given LCID.
-  void handle_dl_buffer_status_indication(lcid_t lcid, unsigned buffer_status)
+  void handle_dl_buffer_status_indication(lcid_t lcid, unsigned buffer_status, slot_point hol_toa = {})
   {
     srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
-    channels[lcid].buf_st = buffer_status;
+    channels[lcid].buf_st  = buffer_status;
+    channels[lcid].hol_toa = hol_toa;
   }
 
   /// \brief Enqueue new MAC CE to be scheduled.
@@ -147,16 +162,20 @@ public:
 
 private:
   struct channel_context {
+    /// Whether the configured logical channel is currently active.
     bool active = false;
     /// Configuration of the logical channel.
     const logical_channel_config* cfg = nullptr;
     /// DL Buffer status of this logical channel.
     unsigned buf_st = 0;
-  };
+    /// Bytes-per-slot average for this logical channel.
+    moving_averager<unsigned> avg_bytes_per_slot;
+    /// Current slot sched bytes.
+    unsigned last_sched_bytes = 0;
+    /// Head-of-line (HOL) time-of-arrival
+    slot_point hol_toa;
 
-  struct active_channel {
-    /// Pending bytes for this logical channel.
-    unsigned buf_st = 0;
+    void reset();
   };
 
   /// \brief Returns the next highest priority LCID. The prioritization policy is implementation-defined.
@@ -164,6 +183,9 @@ private:
 
   /// \brief Updates DL Buffer State for a given LCID based on available space.
   unsigned allocate_mac_sdu(dl_msg_lc_info& subpdu, lcid_t lcid, unsigned rem_bytes);
+
+  // Number of slots per second given the used SCS. Parameter used to compute bit rates.
+  const unsigned slots_per_sec;
 
   // List of UE-dedicated logical channel configurations.
   span<const logical_channel_config> channel_configs;

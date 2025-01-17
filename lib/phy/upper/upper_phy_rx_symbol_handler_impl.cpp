@@ -61,7 +61,7 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
   }
 
   // Get the uplink processor.
-  uplink_processor& ul_processor = ul_processor_pool.get_processor(context.slot, context.sector);
+  uplink_processor& ul_processor = ul_processor_pool.get_processor(context.slot);
 
   // Process all the PDUs taken from the repository.
   for (const auto& pdu : pdus) {
@@ -79,7 +79,7 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_prach_window(const prach_buffer
                                                               const prach_buffer&         buffer)
 {
   // Get uplink processor.
-  uplink_processor& ul_processor = ul_processor_pool.get_processor(context.slot, context.sector);
+  uplink_processor& ul_processor = ul_processor_pool.get_processor(context.slot);
 
   // Process PRACH.
   ul_processor.process_prach(rx_results_notifier, buffer, context);

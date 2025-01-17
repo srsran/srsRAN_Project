@@ -70,6 +70,20 @@ TEST(dl_csi_pdu_builder, valid_bwp_parameters_passes)
   ASSERT_EQ(cyclic_p, pdu.cp);
 }
 
+TEST(dl_csi_pdu_builder, valid_vendor_specific_bwp_parameters_passes)
+{
+  dl_csi_rs_pdu         pdu;
+  dl_csi_rs_pdu_builder builder(pdu);
+
+  unsigned bwp_start = 56U;
+  unsigned bwp_size  = 60U;
+
+  builder.set_vendor_specific_bwp_parameters(bwp_size, bwp_start);
+
+  ASSERT_EQ(bwp_size, pdu.bwp_size);
+  ASSERT_EQ(bwp_start, pdu.bwp_start);
+}
+
 TEST(dl_csi_pdu_builder, valid_tx_power_info_parameters_passes)
 {
   for (auto power : {0, -8}) {

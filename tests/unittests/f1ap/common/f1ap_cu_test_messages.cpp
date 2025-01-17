@@ -245,7 +245,7 @@ f1ap_ue_context_modification_request srsran::srs_cu_cp::generate_ue_context_modi
   // qos characteristics
   non_dyn_5qi_descriptor non_dyn_5qi;
   non_dyn_5qi.five_qi                                 = uint_to_five_qi(8);
-  non_dyn_5qi.qos_prio_level                          = uint_to_qos_prio_level(1);
+  non_dyn_5qi.qos_prio_level                          = qos_prio_level_t{1};
   non_dyn_5qi.averaging_win                           = 3;
   non_dyn_5qi.max_data_burst_volume                   = 1000;
   drbs_to_be_setup_mod_item.qos_info.drb_qos.qos_desc = non_dyn_5qi;

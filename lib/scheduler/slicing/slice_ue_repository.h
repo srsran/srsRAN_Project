@@ -93,10 +93,18 @@ public:
   /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ.
   /// \return The number of DL pending bytes that are not already allocated in a DL HARQ.
   unsigned pending_dl_newtx_bytes() const;
+  unsigned pending_dl_newtx_bytes(lcid_t lcid) const { return contains(lcid) ? u.pending_dl_newtx_bytes(lcid) : 0; }
 
   /// \brief Computes the number of UL pending bytes in bearers belonging to this slice that are not already allocated
   /// in a UL HARQ.
   unsigned pending_ul_newtx_bytes() const;
+
+  /// \brief Computes the number of UL bytes that are yet to be received by the scheduler. This includes the UL bytes
+  /// of grants not yet scheduled and the UL bytes of already scheduled grants whose CRC has not reached the scheduled.
+  unsigned pending_ul_unacked_bytes(lcg_id_t lcg_id) const
+  {
+    return contains(lcg_id) ? u.ul_logical_channels().pending_bytes(lcg_id) : 0;
+  }
 
   /// \brief Returns whether a SR indication handling is pending.
   bool has_pending_sr() const;
@@ -104,10 +112,23 @@ public:
   /// Get QoS information of DRBs configured for the UE.
   span<const logical_channel_config> logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); };
 
-  /// Get an estimation of how many UL bytes were allocated per LCG for a given grant.
-  ///
-  /// Note: This function is called after the allocation has been made.
-  static_vector<std::pair<lcg_id_t, unsigned>, MAX_NOF_LCGS> estimate_ul_alloc_bytes_per_lcg(unsigned grant_size) const;
+  /// Average DL bit rate, in bps, for a given UE logical channel.
+  double dl_avg_bit_rate(lcid_t lcid) const
+  {
+    return contains(lcid) ? u.dl_logical_channels().average_bit_rate(lcid) : 0;
+  }
+
+  /// Average UL bit rate, in bps, for a given UE logical channel group.
+  double ul_avg_bit_rate(lcg_id_t lcg_id) const
+  {
+    return contains(lcg_id) ? u.ul_logical_channels().average_bit_rate(lcg_id) : 0;
+  }
+
+  /// Retrieve the Head-of-Line (HOL) Time-of-arrival (TOA) for a given logical channel.
+  slot_point dl_hol_toa(lcid_t lcid) const
+  {
+    return contains(lcid) ? u.dl_logical_channels().hol_toa(lcid) : slot_point{};
+  }
 
 private:
   /// Helper function to get LCG ID of a bearer.

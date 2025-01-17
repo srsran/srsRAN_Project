@@ -92,8 +92,8 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
 {
   // We need to update the PUCCH counter after the SR/CSI scheduler because the allocation of CSI/SR can add/remove
   // PUCCH grants.
-  const unsigned HARQ_SLOT_DELAY = 0;
-  const auto&    slot_alloc      = cell_alloc[HARQ_SLOT_DELAY];
+  static constexpr unsigned HARQ_SLOT_DELAY = 0;
+  const auto&               slot_alloc      = cell_alloc[HARQ_SLOT_DELAY];
 
   // Spans through the PUCCH grant list and update the HARQ-ACK PUCCH grant counter for the corresponding RNTI and HARQ
   // process id.

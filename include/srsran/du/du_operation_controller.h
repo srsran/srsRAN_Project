@@ -22,12 +22,19 @@
 
 #pragma once
 
-#include "srsran/ru/ru.h"
-#include "srsran/ru/ru_ofh_configuration.h"
-
 namespace srsran {
 
-/// Returns an Open FrontHaul Radio Unit using the given configuration and dependencies.
-std::unique_ptr<radio_unit> create_ofh_ru(const ru_ofh_configuration& config, ru_ofh_dependencies&& dependencies);
+/// DU operation controller interface that allows to start/stop a DU.
+class du_operation_controller
+{
+public:
+  virtual ~du_operation_controller() = default;
+
+  /// Starts the DU.
+  virtual void start() = 0;
+
+  /// Stops the DU.
+  virtual void stop() = 0;
+};
 
 } // namespace srsran

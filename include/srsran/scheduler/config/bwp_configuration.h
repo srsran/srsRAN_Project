@@ -22,18 +22,15 @@
 
 #pragma once
 
-#include "srsran/ran/band_helper.h"
 #include "srsran/ran/cyclic_prefix.h"
-#include "srsran/ran/frame_types.h"
 #include "srsran/ran/pcch/pcch_configuration.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/prach/rach_config_common.h"
-#include "srsran/ran/prach/restricted_set_config.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
-#include "srsran/ran/resource_block.h"
 #include "srsran/scheduler/config/dmrs.h"
+#include "srsran/scheduler/config/pxsch_time_domain_resource.h"
 #include "srsran/scheduler/result/vrb_alloc.h"
 #include <optional>
 
@@ -83,28 +80,6 @@ struct bwp_configuration {
   }
 };
 
-/// \brief Physical shared channels Mapping Type.
-/// \remark see TS38.214 Section 5.3 for PDSCH and TS38.214 Section 6.4 for PUSCH.
-enum class sch_mapping_type {
-  /// TypeA time allocation, it can start only at symbol 2 or 3 within a slot.
-  typeA,
-  /// TypeB time allocation.
-  typeB
-};
-
-struct pdsch_time_domain_resource_allocation {
-  /// Values: (0..32).
-  uint8_t           k0;
-  sch_mapping_type  map_type;
-  ofdm_symbol_range symbols;
-
-  bool operator==(const pdsch_time_domain_resource_allocation& rhs) const
-  {
-    return k0 == rhs.k0 && map_type == rhs.map_type && symbols == rhs.symbols;
-  }
-  bool operator!=(const pdsch_time_domain_resource_allocation& rhs) const { return !(rhs == *this); }
-};
-
 struct pdsch_config_common {
   /// PDSCH time domain resource allocations. Size: (0..maxNrofDL-Allocations=16).
   std::vector<pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
@@ -116,20 +91,6 @@ struct bwp_downlink_common {
   bwp_configuration   generic_params;
   pdcch_config_common pdcch_common;
   pdsch_config_common pdsch_common;
-};
-
-struct pusch_time_domain_resource_allocation {
-  /// Values: (0..32).
-  unsigned         k2;
-  sch_mapping_type map_type;
-  /// OFDM symbol boundaries for PUSCH. Network configures the fields so it does not cross the slot boundary.
-  ofdm_symbol_range symbols;
-
-  bool operator==(const pusch_time_domain_resource_allocation& rhs) const
-  {
-    return k2 == rhs.k2 && map_type == rhs.map_type && symbols == rhs.symbols;
-  }
-  bool operator!=(const pusch_time_domain_resource_allocation& rhs) const { return !(rhs == *this); }
 };
 
 /// \remark See TS 38.331, "PUSCH-ConfigCommon".

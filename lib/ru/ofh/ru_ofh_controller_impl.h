@@ -33,7 +33,7 @@ namespace srsran {
 /// \brief RU controller implementation for the Open Fronthaul interface.
 ///
 /// Manages the timing controller that is common to all sectors and the individual controller of each sector.
-class ru_ofh_controller_impl : public ru_controller
+class ru_ofh_controller_impl : public ru_controller, public ru_operation_controller
 {
 public:
   ru_ofh_controller_impl(srslog::basic_logger& logger_, std::vector<ofh::controller*> sector_controllers_);
@@ -45,16 +45,13 @@ public:
   void stop() override;
 
   // See interface for documentation.
-  bool set_tx_gain(unsigned port_id, double gain_dB) override { return false; }
+  ru_operation_controller& get_operation_controller() override { return *this; }
 
   // See interface for documentation.
-  bool set_rx_gain(unsigned port_id, double gain_dB) override { return false; }
+  ru_gain_controller* get_gain_controller() override { return nullptr; }
 
   // See interface for documentation.
-  bool set_tx_cfo(unsigned port_id, float cfo_Hz) override { return false; }
-
-  // See interface for documentation.
-  bool set_rx_cfo(unsigned port_id, float cfo_Hz) override { return false; }
+  ru_cfo_controller* get_cfo_controller() override { return nullptr; }
 
   // See interface for documentation.
   void print_metrics() override;

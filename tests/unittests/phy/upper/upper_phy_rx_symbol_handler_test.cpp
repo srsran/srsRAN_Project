@@ -131,10 +131,8 @@ protected:
   std::unique_ptr<uplink_processor_pool> create_ul_processor_pool()
   {
     uplink_processor_pool_config config_pool;
-    config_pool.num_sectors = 1;
     config_pool.ul_processors.emplace_back();
-    uplink_processor_pool_config::sector_ul_processors& info = config_pool.ul_processors.back();
-    info.sector                                              = 0;
+    uplink_processor_pool_config::uplink_processor_set& info = config_pool.ul_processors.back();
     info.scs                                                 = subcarrier_spacing::kHz15;
     auto ul_proc                                             = std::make_unique<uplink_processor_spy>();
     ul_proc_spy                                              = &(*ul_proc);

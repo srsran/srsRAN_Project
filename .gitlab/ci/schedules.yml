@@ -43,7 +43,7 @@ Nightly Build Unit Tests Plugin:
       raw: false
 
 Nightly E2E Tests Plugin:
-  cron: "30 22 * * 1-5"
+  cron: "00 22 * * 1-5"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
@@ -127,7 +127,7 @@ Nightly Build Unit Tests OpenSource:
       raw: false
 
 Nightly E2E Tests OpenSource:
-  cron: "30 22 * * 0"
+  cron: "00 22 * * 0"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:

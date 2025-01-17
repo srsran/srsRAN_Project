@@ -32,10 +32,10 @@
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/support/support_factories.h"
+#include "srsran/ru/ofh/ru_ofh_factory.h"
 #include "srsran/ru/ru_controller.h"
 #include "srsran/ru/ru_downlink_plane.h"
 #include "srsran/ru/ru_error_notifier.h"
-#include "srsran/ru/ru_ofh_factory.h"
 #include "srsran/ru/ru_timing_notifier.h"
 #include "srsran/ru/ru_uplink_plane.h"
 #include "srsran/support/executors/task_execution_manager.h"
@@ -1189,7 +1189,7 @@ int main(int argc, char** argv)
 
   // Start the RU.
   fmt::print("Starting RU...\n");
-  ru_object->get_controller().start();
+  ru_object->get_controller().get_operation_controller().start();
 
   // Wait until TTI callback is called and slot point gets initialized.
   while (!slot_synchronized) {
@@ -1206,7 +1206,7 @@ int main(int argc, char** argv)
   fmt::print("DU emulator stopped\n");
 
   fmt::print("Stopping the RU...\n");
-  ru_object->get_controller().stop();
+  ru_object->get_controller().get_operation_controller().stop();
   fmt::print("RU stopped successfully.\n");
 
   workers.stop();

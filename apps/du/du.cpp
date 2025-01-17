@@ -37,7 +37,7 @@
 #include "du_appconfig_translators.h"
 #include "du_appconfig_validators.h"
 #include "du_appconfig_yaml_writer.h"
-#include "srsran/du/du_power_controller.h"
+#include "srsran/du/du_operation_controller.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/e2/gateways/e2_connection_client.h"
 #include "srsran/e2/gateways/e2_network_client_factory.h"
@@ -333,7 +333,7 @@ int main(int argc, char** argv)
       *epoll_broker, *workers.non_rt_low_prio_exec, du_inst_and_cmds.commands);
 
   // Start processing.
-  du_inst.get_power_controller().start();
+  du_inst.get_operation_controller().start();
   {
     app_services::application_message_banners app_banner(app_name);
 
@@ -343,7 +343,7 @@ int main(int argc, char** argv)
   }
 
   // Stop DU activity.
-  du_inst.get_power_controller().stop();
+  du_inst.get_operation_controller().stop();
 
   du_logger.info("Closing PCAP files...");
   du_pcaps.reset();

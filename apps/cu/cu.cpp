@@ -38,6 +38,7 @@
 #include "cu_appconfig.h"
 #include "cu_appconfig_validator.h"
 #include "cu_appconfig_yaml_writer.h"
+#include "srsran/cu_cp/cu_cp_operation_controller.h"
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
@@ -312,7 +313,7 @@ int main(int argc, char** argv)
   cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_dlt_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
   // > Create UDP gateway(s).
-  std::vector<std::unique_ptr<gtpu_gateway>> cu_f1u_gws;
+  srs_cu_up::gtpu_gateway_maps f1u_gw_maps;
   for (const srs_cu::cu_f1u_socket_appconfig& sock_cfg : cu_cfg.f1u_cfg.f1u_socket_cfg) {
     udp_network_gateway_config cu_f1u_gw_config = {};
     cu_f1u_gw_config.bind_address               = sock_cfg.bind_addr;
@@ -321,12 +322,17 @@ int main(int argc, char** argv)
     cu_f1u_gw_config.reuse_addr                 = false;
     cu_f1u_gw_config.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
     cu_f1u_gw_config.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
+    cu_f1u_gw_config.dscp                       = sock_cfg.udp_config.dscp;
     std::unique_ptr<gtpu_gateway> cu_f1u_gw     = create_udp_gtpu_gateway(
         cu_f1u_gw_config, *epoll_broker, workers.cu_up_exec_mapper->io_ul_executor(), *workers.non_rt_low_prio_exec);
-    cu_f1u_gws.push_back(std::move(cu_f1u_gw));
+    if (not sock_cfg.five_qi.has_value()) {
+      f1u_gw_maps.default_gws.push_back(std::move(cu_f1u_gw));
+    } else {
+      f1u_gw_maps.five_qi_gws[sock_cfg.five_qi.value()].push_back(std::move(cu_f1u_gw));
+    }
   }
   std::unique_ptr<f1u_cu_up_udp_gateway> cu_f1u_conn =
-      srs_cu_up::create_split_f1u_gw({cu_f1u_gws, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT});
+      srs_cu_up::create_split_f1u_gw({f1u_gw_maps, *cu_f1u_gtpu_demux, *cu_up_dlt_pcaps.f1u, GTPU_PORT});
 
   // Create E1AP local connector
   std::unique_ptr<e1_local_connector> e1_gw =
@@ -377,7 +383,7 @@ int main(int argc, char** argv)
 
   // start O-CU-CP
   cu_logger.info("Starting CU-CP...");
-  o_cucp_obj.get_cu_cp().start();
+  o_cucp_obj.get_operation_controller().start();
   cu_logger.info("CU-CP started successfully");
 
   // Check connection to AMF
@@ -409,7 +415,7 @@ int main(int argc, char** argv)
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
-  o_cuup_unit.unit->get_power_controller().start();
+  o_cuup_unit.unit->get_operation_controller().start();
   {
     app_services::application_message_banners app_banner(app_name);
 
@@ -419,10 +425,10 @@ int main(int argc, char** argv)
   }
 
   // Stop O-CU-UP activity.
-  o_cuup_unit.unit->get_power_controller().stop();
+  o_cuup_unit.unit->get_operation_controller().stop();
 
   // Stop O-CU-CP activity.
-  o_cucp_obj.get_cu_cp().stop();
+  o_cucp_obj.get_operation_controller().stop();
 
   // Stop the timer source before stopping the workers.
   time_source.reset();

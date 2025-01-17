@@ -146,9 +146,8 @@ protected:
     nru_gw_config.reuse_addr                 = true;
     udp_gw = create_udp_gtpu_gateway(nru_gw_config, *epoll_broker, io_tx_executor, rx_executor);
 
-    std::vector<std::unique_ptr<gtpu_gateway>> cu_f1u_gws;
-    cu_f1u_gws.push_back(std::move(udp_gw));
-    f1u_cu_up_split_gateway_creation_msg cu_create_msg{cu_f1u_gws, *demux, dummy_pcap, tester_bind_port.value()};
+    f1u_gw_maps.default_gws.push_back(std::move(udp_gw));
+    f1u_cu_up_split_gateway_creation_msg cu_create_msg{f1u_gw_maps, *demux, dummy_pcap, tester_bind_port.value()};
     cu_gw           = create_split_f1u_gw(cu_create_msg);
     cu_gw_bind_port = cu_gw->get_bind_port();
     ASSERT_TRUE(cu_gw_bind_port.has_value());
@@ -169,6 +168,7 @@ protected:
     cu_gw.reset();
     udp_gw.reset();
     udp_tester.reset();
+    f1u_gw_maps.default_gws.clear();
   }
 
   // spawn a thread to receive data
@@ -213,7 +213,8 @@ protected:
   manual_task_worker            io_tx_executor{128};
   std::unique_ptr<gtpu_demux>   demux;
   std::unique_ptr<gtpu_gateway> udp_gw;
-  null_dlt_pcap                 dummy_pcap = {};
+  null_dlt_pcap                 dummy_pcap  = {};
+  srs_cu_up::gtpu_gateway_maps  f1u_gw_maps = {};
 
   // Tester UDP gw to TX/RX PDUs to F1-U CU GW
   std::unique_ptr<udp_network_gateway>              udp_tester;
@@ -249,7 +250,7 @@ TEST_F(f1u_cu_split_connector_test, send_sdu_with_dl_teid_attached)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   ASSERT_NE(udp_tester, nullptr);
@@ -282,7 +283,7 @@ TEST_F(f1u_cu_split_connector_test, send_sdu_without_dl_teid_attached)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   // Not attaching DL TEID
 
   ASSERT_NE(udp_tester, nullptr);
@@ -313,7 +314,7 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu_with_dl_teid_attached)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Send SDU
@@ -343,7 +344,7 @@ TEST_F(f1u_cu_split_connector_test, recv_sdu_without_dl_teid_attached)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   // Not attaching DL TEID
 
   // Send SDU
@@ -371,7 +372,7 @@ TEST_F(f1u_cu_split_connector_test, disconnect_stops_tx)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   ASSERT_NE(udp_tester, nullptr);
@@ -429,7 +430,7 @@ TEST_F(f1u_cu_split_connector_test, destroy_bearer_disconnects_and_stops_rx)
   dummy_f1u_cu_up_rx_notifier cu_rx;
 
   std::unique_ptr<srs_cu_up::f1u_tx_pdu_notifier> cu_bearer =
-      cu_gw->create_cu_bearer(0, drb_id_t::drb1, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
+      cu_gw->create_cu_bearer(0, drb_id_t::drb1, five_qi_t{9}, f1u_cu_up_cfg, ul_tnl.gtp_teid, cu_rx, ue_worker);
   cu_gw->attach_dl_teid(ul_tnl, dl_tnl);
 
   // Disconnect incorrect tunnel (no effect expected)

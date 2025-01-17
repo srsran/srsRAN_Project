@@ -30,13 +30,15 @@ class f1u_session_manager_impl : public f1u_session_manager
 {
 public:
   ~f1u_session_manager_impl() override = default;
-  explicit f1u_session_manager_impl(const std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>& f1u_gws_);
+  explicit f1u_session_manager_impl(const f1u_session_maps& f1u_sessions_);
 
-  gtpu_tnl_pdu_session& get_next_f1u_gateway() override;
+  gtpu_tnl_pdu_session& get_next_f1u_gateway(five_qi_t five_qi) override;
 
 private:
-  const std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>& f1u_gws;
-  uint32_t                                                  next_gw = 0;
+  srslog::basic_logger&         logger;
+  const f1u_session_maps&       f1u_sessions;
+  uint32_t                      next_gw = 0;
+  std::map<five_qi_t, uint32_t> five_qi_next_gw_map;
 };
 
 } // namespace srsran::srs_cu_up

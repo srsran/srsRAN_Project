@@ -37,14 +37,14 @@ flexible_o_du_impl::flexible_o_du_impl(unsigned nof_cells_) :
 
 void flexible_o_du_impl::start()
 {
-  du->get_power_controller().start();
-  ru->get_controller().start();
+  du->get_operation_controller().start();
+  ru->get_controller().get_operation_controller().start();
 }
 
 void flexible_o_du_impl::stop()
 {
-  ru->get_controller().stop();
-  du->get_power_controller().stop();
+  ru->get_controller().get_operation_controller().stop();
+  du->get_operation_controller().stop();
 }
 
 void flexible_o_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)

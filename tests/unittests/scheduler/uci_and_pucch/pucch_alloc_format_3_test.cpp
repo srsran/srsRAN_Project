@@ -405,6 +405,7 @@ TEST_F(test_pucch_allocator_format_3, test_harq_alloc_3bits_over_sr_and_csi)
 
 TEST_F(test_pucch_allocator_format_3, test_harq_alloc_7bits_over_sr_and_csi)
 {
+  // 1 SR + 4 CSI + 7 HARQ = 12 UCI bits (= PUCCH F3 capacity).
   constexpr unsigned nof_harq_bits = 7;
   // With SR and with PUCCH Format 1 it is guaranteed that the resources will be multiplexed, as PUCCH Format 1 for SR
   // spans over the 14 symbols.
@@ -433,7 +434,7 @@ TEST_F(test_pucch_allocator_format_3, test_harq_alloc_7bits_over_sr_and_csi)
 
 TEST_F(test_pucch_allocator_format_3, test_harq_alloc_8bits_over_sr_and_csi_fails)
 {
-  // 1 SR + 4 CSI + 8 HARQ = 13 UCI bits (> PUCCH capacity).
+  // 1 SR + 4 CSI + 8 HARQ = 13 UCI bits (> PUCCH F3 capacity).
   constexpr unsigned nof_harq_bits = 8;
   add_sr_grant();
   add_csi_grant();

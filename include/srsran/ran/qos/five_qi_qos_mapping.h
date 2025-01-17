@@ -24,6 +24,7 @@
 
 #include "srsran/ran/qos/five_qi.h"
 #include "srsran/ran/qos/packet_error_rate.h"
+#include "srsran/ran/qos/qos_prio_level.h"
 #include <optional>
 
 namespace srsran {
@@ -40,7 +41,7 @@ struct standardized_qos_characteristics {
   qos_flow_resource_type res_type;
   /// The Priority Level associated with 5G QoS characteristics indicates a priority in scheduling resources among QoS
   /// Flows. The lowest Priority Level value corresponds to the highest priority. See TS 23.501, clause 5.7.3.3.
-  uint8_t qos_priority_level;
+  qos_prio_level_t priority;
   /// The Packet Delay Budget (PDB) defines an upper bound for the time that a packet may be delayed between the UE and
   /// the UPF that terminates the N6 interface. For a certain 5QI the value of the PDB is the same in UL and DL. See
   /// TS 23.501, clause 5.7.3.4.
@@ -57,7 +58,7 @@ struct standardized_qos_characteristics {
 
   bool operator==(const standardized_qos_characteristics& rhs) const
   {
-    return res_type == rhs.res_type && qos_priority_level == rhs.qos_priority_level &&
+    return res_type == rhs.res_type && priority == rhs.priority &&
            packet_delay_budget_ms == rhs.packet_delay_budget_ms && per == rhs.per &&
            average_window_ms == rhs.average_window_ms && max_data_burst_volume == rhs.max_data_burst_volume;
   }

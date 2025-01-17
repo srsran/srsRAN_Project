@@ -25,6 +25,7 @@
 #include "srsran/f1u/cu_up/f1u_bearer_logger.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/f1u/cu_up/f1u_session_manager.h"
+#include "srsran/f1u/split_connector/f1u_five_qi_gw_maps.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_gateway.h"
@@ -32,8 +33,10 @@
 #include "srsran/gtpu/gtpu_tunnel_nru.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_rx.h"
 #include "srsran/pcap/dlt_pcap.h"
+#include "srsran/ran/qos/five_qi.h"
 #include "srsran/srslog/srslog.h"
 #include <cstdint>
+#include <map>
 #include <mutex>
 #include <unordered_map>
 
@@ -118,20 +121,24 @@ public:
 class f1u_split_connector final : public f1u_cu_up_udp_gateway
 {
 public:
-  f1u_split_connector(const std::vector<std::unique_ptr<gtpu_gateway>>& udp_gws,
-                      gtpu_demux&                                       demux_,
-                      dlt_pcap&                                         gtpu_pcap_,
-                      uint16_t                                          peer_port_ = GTPU_PORT,
-                      std::string                                       ext_addr_  = "auto");
+  f1u_split_connector(const gtpu_gateway_maps& udp_gw_maps,
+                      gtpu_demux&              demux_,
+                      dlt_pcap&                gtpu_pcap_,
+                      uint16_t                 peer_port_ = GTPU_PORT,
+                      std::string              ext_addr_  = "auto");
   ~f1u_split_connector() override;
 
   f1u_cu_up_udp_gateway* get_f1u_cu_up_gateway() { return this; }
 
-  /// TODO this should get a ue_index and drb id to be able to find the right port/ip
-  std::optional<uint16_t> get_bind_port() const override { return udp_sessions[0]->get_bind_port(); }
+  /// TODO this interface should be removed.
+  std::optional<uint16_t> get_bind_port() const override
+  {
+    return f1u_sessions.default_gw_sessions[0]->get_bind_port();
+  }
 
   std::unique_ptr<f1u_cu_up_gateway_bearer> create_cu_bearer(uint32_t                              ue_index,
                                                              drb_id_t                              drb_id,
+                                                             five_qi_t                             five_qi,
                                                              const srs_cu_up::f1u_config&          config,
                                                              const gtpu_teid_t&                    ul_teid,
                                                              f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
@@ -151,7 +158,7 @@ private:
   std::unique_ptr<f1u_session_manager>                     f1u_session_mngr;
   uint16_t                                                 peer_port;
   std::string                                              ext_addr;
-  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>       udp_sessions;
+  f1u_session_maps                                         f1u_sessions;
   gtpu_demux&                                              demux;
   std::unique_ptr<network_gateway_data_gtpu_demux_adapter> gw_data_gtpu_demux_adapter;
   dlt_pcap&                                                gtpu_pcap;

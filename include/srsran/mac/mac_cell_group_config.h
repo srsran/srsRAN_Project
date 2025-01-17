@@ -44,7 +44,7 @@ struct mac_cell_group_config {
   /// \c phr-Config.
   std::optional<phr_config> phr_cfg;
   /// \c skipUplinkTxDynamic.
-  bool skip_uplink_tx_dynamic;
+  bool skip_uplink_tx_dynamic = false;
   // TODO: add remaining fields.
 };
 

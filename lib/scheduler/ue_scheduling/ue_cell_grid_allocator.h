@@ -79,6 +79,9 @@ private:
     return *cells[cell_index].cell_alloc;
   }
 
+  // Save the PUCCH power control results for the given slot.
+  void post_process_pucch_pw_ctrl_results(du_cell_index_t cell_idx, slot_point slot);
+
   const scheduler_ue_expert_config& expert_cfg;
 
   ue_repository&        ues;

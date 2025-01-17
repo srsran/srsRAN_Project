@@ -192,9 +192,8 @@ public:
   /// \brief Returns an uplink processor for the given slot and sector.
   ///
   /// \param slot[in]      Slot point.
-  /// \param sector_id[in] Sector identifier.
   /// \return An uplink processor.
-  virtual uplink_processor& get_processor(slot_point slot, unsigned sector_id) = 0;
+  virtual uplink_processor& get_processor(slot_point slot) = 0;
 };
 
 } // namespace srsran

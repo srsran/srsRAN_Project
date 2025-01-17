@@ -25,11 +25,11 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// CU-CP power controller interface that allows to start/stop a CU-CP.
-class cu_cp_power_controller
+/// CU-CP operation controller interface that allows to start/stop a CU-CP.
+class cu_cp_operation_controller
 {
 public:
-  virtual ~cu_cp_power_controller() = default;
+  virtual ~cu_cp_operation_controller() = default;
 
   /// Starts the CU-CP.
   virtual void start() = 0;

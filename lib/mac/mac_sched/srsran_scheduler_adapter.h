@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "../mac_ctrl/mac_config.h"
 #include "../mac_ctrl/mac_scheduler_configurator.h"
 #include "../rnti_manager.h"
 #include "mac_scheduler_adapter.h"
@@ -138,6 +137,9 @@ private:
 
   /// srsGNB scheduler.
   std::unique_ptr<mac_scheduler> sched_impl;
+
+  std::atomic<slot_point>                                     last_slot_point;
+  std::atomic<std::chrono::high_resolution_clock::time_point> last_slot_tp;
 
   /// List of event flags used by scheduler to notify that the configuration is complete.
   struct ue_notification_context {

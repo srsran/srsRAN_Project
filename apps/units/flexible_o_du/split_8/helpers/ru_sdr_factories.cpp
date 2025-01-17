@@ -24,7 +24,7 @@
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/split_helpers/flexible_o_du_configs.h"
 #include "ru_sdr_config_translator.h"
-#include "srsran/ru/ru_generic_factory.h"
+#include "srsran/ru/generic/ru_generic_factory.h"
 
 using namespace srsran;
 

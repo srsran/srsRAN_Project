@@ -41,6 +41,10 @@ srsran::fapi::dl_pdcch_pdu build_valid_dl_pdcch_pdu();
 /// Section 3.4.2.2.
 srsran::fapi::dl_pdsch_pdu build_valid_dl_pdsch_pdu();
 
+/// Builds and returns a valid DL PRS pdu. Every parameter is within the range defined in SCF-222 v8.0
+/// Section 3.4.2.4a.
+srsran::fapi::dl_prs_pdu build_valid_dl_prs_pdu();
+
 /// Builds and returns a valid DL SSB pdu. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.2.4.
 srsran::fapi::dl_ssb_pdu build_valid_dl_ssb_pdu();

@@ -33,7 +33,7 @@ using msec = std::chrono::milliseconds;
 class base_ue_drx_controller_test
 {
 protected:
-  base_ue_drx_controller_test(const std::optional<drx_config>& drx_cfg_) : drx_cfg(drx_cfg_) {}
+  base_ue_drx_controller_test(const std::optional<drx_config>& drx_cfg_) : drx_cfg(drx_cfg_), ul_lc_ch_mng(scs) {}
 
   void tick()
   {

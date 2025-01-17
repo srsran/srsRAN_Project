@@ -727,6 +727,7 @@ smoke valgrind update cache:
   artifacts:
     <<: *build_artifacts
     when: on_failure
+    expire_in: 1 day
   cache:
     - *cache_build_set
 
@@ -1710,6 +1711,7 @@ basic avx512 dpdk:
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: AUTO
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
+    BUILD_ARGS: -DEXIT_TIMEOUT=15
   after_script:
     - *build_after_script
   artifacts:

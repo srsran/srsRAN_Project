@@ -37,7 +37,7 @@
 namespace srsran {
 
 /// \brief GNB-CU-CP-UE-E1AP-ID used to identify the UE in the CU-CP E1AP.
-/// \remark See TS 38.463 Section 9.3.1.4: GNB-CU-UE-E1AP-ID valid values: (0..2^32-1)
+/// \remark See TS 38.463 Section 9.3.1.4: GNB-CU-UE-E1AP-ID valid values: (0..2^32-1).
 static constexpr uint64_t MAX_NOF_CU_CP_E1AP_UES = ((uint64_t)1 << 32);
 enum class gnb_cu_cp_ue_e1ap_id_t : uint64_t { min = 0, max = MAX_NOF_CU_CP_E1AP_UES - 1, invalid = 0x1ffffffff };
 
@@ -53,7 +53,7 @@ constexpr gnb_cu_cp_ue_e1ap_id_t int_to_gnb_cu_cp_ue_e1ap_id(uint64_t idx)
 }
 
 /// \brief GNB-CU-UP-UE-E1AP-ID used to identify the UE in the CU-UP E1AP.
-/// \remark See TS 38.473 Section 9.3.1.5: GNB-CU-UP-UE-E1AP-ID valid values: (0..2^32-1)
+/// \remark See TS 38.473 Section 9.3.1.5: GNB-CU-UP-UE-E1AP-ID valid values: (0..2^32-1).
 static constexpr uint64_t MAX_NOF_CU_UP_E1AP_UES = ((uint64_t)1 << 32);
 enum class gnb_cu_up_ue_e1ap_id_t : uint64_t { min = 0, max = MAX_NOF_CU_CP_E1AP_UES - 1, invalid = 0x1ffffffff };
 
@@ -75,23 +75,14 @@ struct e1ap_cell_group_info_item {
   std::optional<std::string> rat_type;
 };
 
-struct e1ap_gbr_qos_flow_info {
-  uint64_t                max_flow_bit_rate_dl;
-  uint64_t                max_flow_bit_rate_ul;
-  uint64_t                guaranteed_flow_bit_rate_dl;
-  uint64_t                guaranteed_flow_bit_rate_ul;
-  std::optional<uint16_t> max_packet_loss_rate_dl;
-  std::optional<uint16_t> max_packet_loss_rate_ul;
-};
-
 struct e1ap_qos_flow_level_qos_params {
-  qos_characteristics                   qos_desc;
-  alloc_and_retention_priority          ng_ran_alloc_retention;
-  std::optional<e1ap_gbr_qos_flow_info> gbr_qos_flow_info;
-  std::optional<bool>                   reflective_qos_attribute;
-  std::optional<bool>                   add_qos_info;
-  std::optional<uint8_t>                paging_policy_ind;
-  std::optional<bool>                   reflective_qos_ind;
+  qos_characteristics                     qos_desc;
+  alloc_and_retention_priority            ng_ran_alloc_retention;
+  std::optional<gbr_qos_flow_information> gbr_qos_flow_info;
+  std::optional<bool>                     reflective_qos_attribute;
+  std::optional<bool>                     add_qos_info;
+  std::optional<uint8_t>                  paging_policy_ind;
+  std::optional<bool>                     reflective_qos_ind;
 };
 
 struct e1ap_qos_flow_qos_param_item {
@@ -178,8 +169,9 @@ struct e1ap_pdu_session_res_to_setup_item {
 };
 
 struct e1ap_security_algorithm {
-  srsran::security::ciphering_algorithm                ciphering_algo;
-  std::optional<srsran::security::integrity_algorithm> integrity_protection_algorithm; // Optional, TS 38.463 Sec. 9.4.5
+  srsran::security::ciphering_algorithm ciphering_algo;
+  // Optional, TS 38.463 Sec. 9.4.5.
+  std::optional<srsran::security::integrity_algorithm> integrity_protection_algorithm;
 };
 
 struct e1ap_up_security_key {
@@ -190,7 +182,8 @@ struct e1ap_up_security_key {
     return *this;
   }
   byte_buffer encryption_key;
-  byte_buffer integrity_protection_key; // Optional, TS 38.463 Sec. 9.4.5
+  // Optional, TS 38.463 Sec. 9.4.5
+  byte_buffer integrity_protection_key;
 };
 
 struct e1ap_security_info {

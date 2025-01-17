@@ -35,6 +35,8 @@ ue::ue(const ue_creation_command& cmd) :
   ue_ded_cfg(&cmd.cfg),
   pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
+  dl_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs),
+  ul_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs),
   ta_mgr(expert_cfg,
          cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
          ue_ded_cfg->pcell_cfg().cfg_dedicated().tag_id,
@@ -60,6 +62,8 @@ ue::ue(const ue_creation_command& cmd) :
 void ue::slot_indication(slot_point sl_tx)
 {
   last_sl_tx = sl_tx;
+  dl_lc_ch_mgr.slot_indication();
+  ul_lc_ch_mgr.slot_indication();
   ta_mgr.slot_indication(sl_tx);
   drx.slot_indication(sl_tx);
 }
@@ -157,9 +161,9 @@ void ue::set_config(const ue_configuration& new_cfg)
   }
 }
 
-void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& msg)
+void ue::handle_dl_buffer_state_indication(lcid_t lcid, unsigned bs, slot_point hol_toa)
 {
-  unsigned pending_bytes = msg.bs;
+  unsigned pending_bytes = bs;
 
   // Subtract bytes pending for this LCID in scheduled DL HARQ allocations (but not yet sent to the lower layers)
   // before forwarding to DL logical channel manager.
@@ -180,7 +184,7 @@ void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_mess
           rem_harqs--;
           if (h_dl->pdsch_slot() > last_sl_tx and h_dl->nof_retxs() == 0 and h_dl->is_waiting_ack()) {
             for (const auto& lc : h_dl->get_grant_params().lc_sched_info) {
-              if (lc.lcid.is_sdu() and lc.lcid.to_lcid() == msg.lcid) {
+              if (lc.lcid.is_sdu() and lc.lcid.to_lcid() == lcid) {
                 unsigned bytes_sched =
                     lc.sched_bytes.value() - std::min(lc.sched_bytes.value(), RLC_AM_HEADER_SIZE_ESTIM);
                 pending_bytes -= std::min(pending_bytes, bytes_sched);
@@ -192,7 +196,7 @@ void ue::handle_dl_buffer_state_indication(const dl_buffer_state_indication_mess
     }
   }
 
-  dl_lc_ch_mgr.handle_dl_buffer_status_indication(msg.lcid, pending_bytes);
+  dl_lc_ch_mgr.handle_dl_buffer_status_indication(lcid, pending_bytes, hol_toa);
 }
 
 unsigned ue::pending_ul_newtx_bytes() const
@@ -213,11 +217,6 @@ unsigned ue::pending_ul_newtx_bytes() const
 
   // If there are no pending bytes, check if a SR is pending.
   return pending_bytes > 0 ? pending_bytes : (ul_lc_ch_mgr.has_pending_sr() ? SR_GRANT_BYTES : 0);
-}
-
-unsigned ue::pending_ul_newtx_bytes(lcg_id_t lcg_id) const
-{
-  return ul_lc_ch_mgr.pending_bytes(lcg_id);
 }
 
 bool ue::has_pending_sr() const

@@ -21,127 +21,104 @@
  */
 
 #include "pdsch_default_time_allocation.h"
+#include "srsran/scheduler/config/serving_cell_config.h"
 
 using namespace srsran;
 
-static pdsch_default_time_allocation_config
-pdsch_default_time_allocation_default_A_get_normal(unsigned row_index, dmrs_typeA_position dmrs_pos)
+// Helper to construct ofdm symbol range
+static constexpr ofdm_symbol_range s_and_len(unsigned s, unsigned l)
 {
-  // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for normal CP.
-  static const std::array<pdsch_default_time_allocation_config, 16> TABLE = {{{sch_mapping_type::typeA, 0, 2, 12},
-                                                                              {sch_mapping_type::typeA, 0, 2, 10},
-                                                                              {sch_mapping_type::typeA, 0, 2, 9},
-                                                                              {sch_mapping_type::typeA, 0, 2, 7},
-                                                                              {sch_mapping_type::typeA, 0, 2, 5},
-                                                                              {sch_mapping_type::typeB, 0, 9, 4},
-                                                                              {sch_mapping_type::typeB, 0, 4, 4},
-                                                                              {sch_mapping_type::typeB, 0, 5, 7},
-                                                                              {sch_mapping_type::typeB, 0, 5, 2},
-                                                                              {sch_mapping_type::typeB, 0, 9, 2},
-                                                                              {sch_mapping_type::typeB, 0, 12, 2},
-                                                                              {sch_mapping_type::typeA, 0, 1, 13},
-                                                                              {sch_mapping_type::typeA, 0, 1, 6},
-                                                                              {sch_mapping_type::typeA, 0, 2, 4},
-                                                                              {sch_mapping_type::typeB, 0, 4, 7},
-                                                                              {sch_mapping_type::typeB, 0, 8, 4}}};
-
-  if (row_index >= TABLE.size()) {
-    return PDSCH_DEFAULT_TIME_ALLOCATION_RESERVED;
-  }
-
-  pdsch_default_time_allocation_config result = TABLE[row_index];
-  if (dmrs_pos == dmrs_typeA_position::pos3) {
-    if (row_index < 5) {
-      ++result.start_symbol;
-      --result.duration;
-    } else if (row_index == 5) {
-      ++result.start_symbol;
-    } else if (row_index == 6) {
-      result.start_symbol += 2;
-    }
-  }
-
-  return result;
+  return ofdm_symbol_range::start_and_len(s, l);
 }
 
-static pdsch_default_time_allocation_config
-pdsch_default_time_allocation_default_A_get_extended(unsigned row_index, dmrs_typeA_position dmrs_pos)
-{
-  // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for normal CP.
-  static const std::array<pdsch_default_time_allocation_config, 16> TABLE = {{{sch_mapping_type::typeA, 0, 2, 6},
-                                                                              {sch_mapping_type::typeA, 0, 2, 10},
-                                                                              {sch_mapping_type::typeA, 0, 2, 9},
-                                                                              {sch_mapping_type::typeA, 0, 2, 7},
-                                                                              {sch_mapping_type::typeA, 0, 2, 5},
-                                                                              {sch_mapping_type::typeB, 0, 6, 4},
-                                                                              {sch_mapping_type::typeB, 0, 4, 4},
-                                                                              {sch_mapping_type::typeB, 0, 5, 6},
-                                                                              {sch_mapping_type::typeB, 0, 5, 2},
-                                                                              {sch_mapping_type::typeB, 0, 9, 2},
-                                                                              {sch_mapping_type::typeB, 0, 10, 2},
-                                                                              {sch_mapping_type::typeA, 0, 1, 11},
-                                                                              {sch_mapping_type::typeA, 0, 1, 6},
-                                                                              {sch_mapping_type::typeA, 0, 2, 4},
-                                                                              {sch_mapping_type::typeB, 0, 4, 6},
-                                                                              {sch_mapping_type::typeB, 0, 8, 4}}};
-
-  if (row_index >= TABLE.size()) {
-    return PDSCH_DEFAULT_TIME_ALLOCATION_RESERVED;
-  }
-
-  pdsch_default_time_allocation_config result = TABLE[row_index];
-  if (dmrs_pos == dmrs_typeA_position::pos3) {
-    if (row_index < 5) {
-      ++result.start_symbol;
-      --result.duration;
-    } else if (row_index == 5) {
-      result.start_symbol += 2;
-      result.duration -= 2;
-    } else if (row_index == 6) {
-      result.start_symbol += 2;
-    }
-  }
-
-  return result;
-}
-
-pdsch_default_time_allocation_config
-srsran::pdsch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index, dmrs_typeA_position dmrs_pos)
-{
-  switch (cp) {
-    case cyclic_prefix::NORMAL:
-      return pdsch_default_time_allocation_default_A_get_normal(row_index, dmrs_pos);
-    case cyclic_prefix::EXTENDED:
-    default:
-      return pdsch_default_time_allocation_default_A_get_extended(row_index, dmrs_pos);
-  }
-}
+/// Reserved default PDSCH time-domain allocation. It indicates the configuration is invalid.
+static constexpr pdsch_time_domain_resource_allocation PDSCH_DEFAULT_TIME_ALLOCATION_RESERVED = {};
 
 span<const pdsch_time_domain_resource_allocation>
 srsran::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typeA_position dmrs_pos)
 {
-  // TS38.214 Table 5.1.2.1.1-2.
-  static constexpr size_t PDSCH_TD_RES_ALLOC_TABLE_SIZE = 16;
+  // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for normal CP and DMRS pos2.
+  static constexpr std::array<pdsch_time_domain_resource_allocation, 16> table_normal_cp_dmrs2 = {
+      {{0, sch_mapping_type::typeA, s_and_len(2, 12)},
+       {0, sch_mapping_type::typeA, s_and_len(2, 10)},
+       {0, sch_mapping_type::typeA, s_and_len(2, 9)},
+       {0, sch_mapping_type::typeA, s_and_len(2, 7)},
+       {0, sch_mapping_type::typeA, s_and_len(2, 5)},
+       {0, sch_mapping_type::typeB, s_and_len(9, 4)},
+       {0, sch_mapping_type::typeB, s_and_len(4, 4)},
+       {0, sch_mapping_type::typeB, s_and_len(5, 7)},
+       {0, sch_mapping_type::typeB, s_and_len(5, 2)},
+       {0, sch_mapping_type::typeB, s_and_len(9, 2)},
+       {0, sch_mapping_type::typeB, s_and_len(12, 2)},
+       {0, sch_mapping_type::typeA, s_and_len(1, 13)},
+       {0, sch_mapping_type::typeA, s_and_len(1, 6)},
+       {0, sch_mapping_type::typeA, s_and_len(2, 4)},
+       {0, sch_mapping_type::typeB, s_and_len(4, 7)},
+       {0, sch_mapping_type::typeB, s_and_len(8, 4)}}};
 
-  // Build PDSCH-TimeDomain tables statically.
-  auto table_builder = [](cyclic_prefix cp_, dmrs_typeA_position dmrs_pos_) {
-    std::array<pdsch_time_domain_resource_allocation, PDSCH_TD_RES_ALLOC_TABLE_SIZE> table;
-    for (unsigned i = 0; i < PDSCH_TD_RES_ALLOC_TABLE_SIZE; ++i) {
-      pdsch_default_time_allocation_config cfg = pdsch_default_time_allocation_default_A_get(cp_, i, dmrs_pos_);
-      table[i].k0                              = cfg.pdcch_to_pdsch_delay;
-      table[i].map_type                        = cfg.mapping_type;
-      table[i].symbols                         = {cfg.start_symbol, cfg.start_symbol + cfg.duration};
+  // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for normal CP and DMRS pos3.
+  static constexpr std::array<pdsch_time_domain_resource_allocation, 16> table_normal_cp_dmrs3 = []() {
+    std::array<pdsch_time_domain_resource_allocation, 16> table = table_normal_cp_dmrs2;
+    for (unsigned row_index = 0; row_index <= 6; ++row_index) {
+      if (row_index < 5) {
+        table[row_index].symbols = {table[row_index].symbols.start() + 1, table[row_index].symbols.stop()};
+      } else if (row_index == 5) {
+        table[row_index].symbols.displace_by(1);
+      } else {
+        // row_index == 6.
+        table[row_index].symbols.displace_by(2);
+      }
     }
     return table;
-  };
-  static const std::array<std::array<pdsch_time_domain_resource_allocation, PDSCH_TD_RES_ALLOC_TABLE_SIZE>, 4> tables =
-      {table_builder(cyclic_prefix::NORMAL, dmrs_typeA_position::pos2),
-       table_builder(cyclic_prefix::NORMAL, dmrs_typeA_position::pos3),
-       table_builder(cyclic_prefix::EXTENDED, dmrs_typeA_position::pos2),
-       table_builder(cyclic_prefix::EXTENDED, dmrs_typeA_position::pos3)};
+  }();
 
-  // Retrieve respective table.
-  return tables[static_cast<unsigned>(cp.value) * 2 + (static_cast<unsigned>(dmrs_pos) - 2)];
+  // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for extended CP and DMRS pos2.
+  static constexpr std::array<pdsch_time_domain_resource_allocation, 16> table_extended_cp_dmrs2 = {
+      {{0, sch_mapping_type::typeA, s_and_len(2, 6)},
+       {0, sch_mapping_type::typeA, s_and_len(2, 10)},
+       {0, sch_mapping_type::typeA, s_and_len(2, 9)},
+       {0, sch_mapping_type::typeA, s_and_len(2, 7)},
+       {0, sch_mapping_type::typeA, s_and_len(2, 5)},
+       {0, sch_mapping_type::typeB, s_and_len(6, 4)},
+       {0, sch_mapping_type::typeB, s_and_len(4, 4)},
+       {0, sch_mapping_type::typeB, s_and_len(5, 6)},
+       {0, sch_mapping_type::typeB, s_and_len(5, 2)},
+       {0, sch_mapping_type::typeB, s_and_len(9, 2)},
+       {0, sch_mapping_type::typeB, s_and_len(10, 2)},
+       {0, sch_mapping_type::typeA, s_and_len(1, 11)},
+       {0, sch_mapping_type::typeA, s_and_len(1, 6)},
+       {0, sch_mapping_type::typeA, s_and_len(2, 4)},
+       {0, sch_mapping_type::typeB, s_and_len(4, 6)},
+       {0, sch_mapping_type::typeB, s_and_len(8, 4)}}};
+
+  // TS38.214 Table 5.1.2.1.1-2. Default PDSCH time domain resource allocation A for extended CP and DMRS pos3.
+  static constexpr std::array<pdsch_time_domain_resource_allocation, 16> table_extended_cp_dmrs3 = []() {
+    std::array<pdsch_time_domain_resource_allocation, 16> table = table_extended_cp_dmrs2;
+    for (unsigned row_index = 0; row_index <= 6; ++row_index) {
+      if (row_index < 5) {
+        table[row_index].symbols = {table[row_index].symbols.start() + 1, table[row_index].symbols.stop()};
+      } else if (row_index == 5) {
+        table[row_index].symbols = {table[row_index].symbols.start() + 2, table[row_index].symbols.stop()};
+      } else {
+        // row_index == 6.
+        table[row_index].symbols.displace_by(2);
+      }
+    }
+    return table;
+  }();
+
+  if (cp == cyclic_prefix::NORMAL) {
+    return dmrs_pos == dmrs_typeA_position::pos2 ? table_normal_cp_dmrs2 : table_normal_cp_dmrs3;
+  }
+  return dmrs_pos == dmrs_typeA_position::pos2 ? table_extended_cp_dmrs2 : table_extended_cp_dmrs3;
+}
+
+pdsch_time_domain_resource_allocation
+srsran::pdsch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index, dmrs_typeA_position dmrs_pos)
+{
+  span<const pdsch_time_domain_resource_allocation> table =
+      pdsch_default_time_allocations_default_A_table(cp, dmrs_pos);
+  return row_index >= table.size() ? PDSCH_DEFAULT_TIME_ALLOCATION_RESERVED : table[row_index];
 }
 
 span<const pdsch_time_domain_resource_allocation>
@@ -150,11 +127,11 @@ srsran::get_c_rnti_pdsch_time_domain_list(const search_space_configuration& ss_c
                                           const bwp_downlink_dedicated*     active_bwp_dl_ded,
                                           dmrs_typeA_position               dmrs_typeA_pos)
 {
-  const bool is_fallback = ss_cfg.is_common_search_space() and ss_cfg.get_coreset_id() == to_coreset_id(0);
-  srsran_assert(is_fallback or active_bwp_dl_ded != nullptr, "Invalid BWP DL dedicated configuration");
+  const bool is_fallback_ss = ss_cfg.is_common_search_space() and ss_cfg.get_coreset_id() == to_coreset_id(0);
+  srsran_assert(is_fallback_ss or active_bwp_dl_ded != nullptr, "Invalid BWP DL dedicated configuration");
 
   // See TS 38.214, Table 5.1.2.1.1-1: Applicable PDSCH time domain resource allocation for DCI formats 1_0 and 1_1.
-  if (not is_fallback) {
+  if (not is_fallback_ss) {
     if (not active_bwp_dl_ded->pdsch_cfg->pdsch_td_alloc_list.empty()) {
       // UE dedicated pdsch-TimeDomain list.
       return active_bwp_dl_ded->pdsch_cfg->pdsch_td_alloc_list;

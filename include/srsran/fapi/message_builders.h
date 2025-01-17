@@ -754,6 +754,16 @@ public:
     return *this;
   }
 
+  /// Sets the vendor specific CSI-RS PDU BWP parameters and returns a reference to the builder.
+  /// \note These parameters are vendor specific.
+  dl_csi_rs_pdu_builder& set_vendor_specific_bwp_parameters(unsigned bwp_size, unsigned bwp_start)
+  {
+    pdu.bwp_size  = bwp_size;
+    pdu.bwp_start = bwp_start;
+
+    return *this;
+  }
+
   /// Sets the CSI-RS PDU tx power info parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
   dl_csi_rs_pdu_builder& set_tx_power_info_parameters(int                     power_control_offset,
@@ -771,6 +781,67 @@ public:
     tx_precoding_and_beamforming_pdu_builder builder(pdu.precoding_and_beamforming);
 
     return builder;
+  }
+};
+
+/// PRS PDU builder that helps to fill in the parameters specified in SCF-222 v8.0 section 3.4.2.4a.
+class dl_prs_pdu_builder
+{
+  dl_prs_pdu& pdu;
+
+public:
+  explicit dl_prs_pdu_builder(dl_prs_pdu& pdu_) : pdu(pdu_) {}
+
+  /// Sets the PRS PDU basic parameters and returns a reference to the builder.
+  dl_prs_pdu_builder& set_basic_parameters(subcarrier_spacing scs, cyclic_prefix cp)
+  {
+    pdu.scs = scs;
+    pdu.cp  = cp;
+
+    return *this;
+  }
+
+  /// Sets the PRS PDU N_ID parameter and returns a reference to the builder.
+  dl_prs_pdu_builder& set_n_id(unsigned n_id)
+  {
+    pdu.nid_prs = n_id;
+
+    return *this;
+  }
+
+  /// Sets the PRS PDU symbol parameters and returns a reference to the builder.
+  dl_prs_pdu_builder& set_symbol_parameters(unsigned nof_symbols, unsigned first_symbol)
+  {
+    pdu.num_symbols  = nof_symbols;
+    pdu.first_symbol = first_symbol;
+
+    return *this;
+  }
+
+  /// Sets the PRS PDU RB parameters and returns a reference to the builder.
+  dl_prs_pdu_builder& set_rb_parameters(unsigned nof_rb, unsigned start_rb)
+  {
+    pdu.num_rbs  = nof_rb;
+    pdu.start_rb = start_rb;
+
+    return *this;
+  }
+
+  /// Sets the PRS PDU power offset parameter and returns a reference to the builder.
+  dl_prs_pdu_builder& set_power_offset(std::optional<float> power_offset)
+  {
+    pdu.prs_power_offset = power_offset;
+
+    return *this;
+  }
+
+  /// Sets the PRS PDU transmission comb parameters and returns a reference to the builder.
+  dl_prs_pdu_builder& set_comb_parameters(unsigned comb_size, unsigned comb_offset)
+  {
+    pdu.comb_size   = comb_size;
+    pdu.comb_offset = comb_offset;
+
+    return *this;
   }
 };
 
@@ -804,7 +875,7 @@ public:
     // Add a new pdu.
     dl_tti_request_pdu& pdu = msg.pdus.emplace_back();
 
-    // Fill the PDCCH PDU index value. The index value will be the index of the pdu in the array of PDCCH pdus.
+    // Fill the PDCCH PDU index value. The index value will be the index of the pdu in the array of PDCCH PDUs.
     dl_pdcch_pdu_maintenance_v3& info          = pdu.pdcch_pdu.maintenance_v3;
     auto&                        num_pdcch_pdu = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::PDCCH)];
     info.pdcch_pdu_index                       = num_pdcch_pdu;
@@ -905,7 +976,7 @@ public:
     // Add a new PDU.
     dl_tti_request_pdu& pdu = msg.pdus.emplace_back();
 
-    // Fill the SSB PDU index value. The index value will be the index of the PDU in the array of SSB pdus.
+    // Fill the SSB PDU index value. The index value will be the index of the PDU in the array of SSB PDUs.
     dl_ssb_maintenance_v3& info        = pdu.ssb_pdu.ssb_maintenance_v3;
     auto&                  num_ssb_pdu = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::SSB)];
     info.ssb_pdu_index                 = num_ssb_pdu;
@@ -916,6 +987,27 @@ public:
     pdu.pdu_type = dl_pdu_type::SSB;
 
     dl_ssb_pdu_builder builder(pdu.ssb_pdu);
+
+    return builder;
+  }
+
+  /// Adds a PRS PDU to the message and returns a PRS PDU builder.
+  dl_prs_pdu_builder add_prs_pdu()
+  {
+    // Add a new PDU.
+    dl_tti_request_pdu& pdu = msg.pdus.emplace_back();
+
+    // Fill the PRS PDU index value. The index value will be the index of the PDU in the array of PRS PDUs.
+    dl_prs_pdu& info        = pdu.prs_pdu;
+    auto&       num_prs_pdu = msg.num_pdus_of_each_type[static_cast<size_t>(dl_pdu_type::PRS)];
+    info.pdu_index          = num_prs_pdu;
+
+    // Increase the number of SSB PDUs in the request.
+    ++num_prs_pdu;
+
+    pdu.pdu_type = dl_pdu_type::PRS;
+
+    dl_prs_pdu_builder builder(info);
 
     return builder;
   }
@@ -1726,12 +1818,20 @@ public:
   /// Adds a PUSCH PDU to the \e UCI.indication message and returns a PUSCH PDU builder.
   uci_pusch_pdu_builder add_pusch_pdu(uint32_t handle, rnti_t rnti)
   {
+    uci_pusch_pdu_builder builder = add_pusch_pdu();
+    builder.set_basic_parameters(handle, rnti);
+
+    return builder;
+  }
+
+  /// Adds a PUSCH PDU to the \e UCI.indication message and returns a PUSCH PDU builder.
+  uci_pusch_pdu_builder add_pusch_pdu()
+  {
     auto& pdu = msg.pdus.emplace_back();
 
     pdu.pdu_type = uci_pdu_type::PUSCH;
 
     uci_pusch_pdu_builder builder(pdu.pusch_pdu);
-    builder.set_basic_parameters(handle, rnti);
 
     return builder;
   }
@@ -1740,12 +1840,21 @@ public:
   /// PDU builder.
   uci_pucch_pdu_format_0_1_builder add_format_0_1_pucch_pdu(uint32_t handle, rnti_t rnti, pucch_format type)
   {
+    uci_pucch_pdu_format_0_1_builder builder = add_format_0_1_pucch_pdu();
+    builder.set_basic_parameters(handle, rnti, type);
+
+    return builder;
+  }
+
+  /// Adds a PUCCH Format 0 and Format 1 PDU to the \e UCI.indication message and returns a PUCCH Format 0 and Format 1
+  /// PDU builder.
+  uci_pucch_pdu_format_0_1_builder add_format_0_1_pucch_pdu()
+  {
     auto& pdu = msg.pdus.emplace_back();
 
     pdu.pdu_type = uci_pdu_type::PUCCH_format_0_1;
 
     uci_pucch_pdu_format_0_1_builder builder(pdu.pucch_pdu_f01);
-    builder.set_basic_parameters(handle, rnti, type);
 
     return builder;
   }
@@ -1754,12 +1863,21 @@ public:
   /// Format 3 and Format 4 PDU builder.
   uci_pucch_pdu_format_2_3_4_builder add_format_2_3_4_pucch_pdu(uint32_t handle, rnti_t rnti, pucch_format type)
   {
+    uci_pucch_pdu_format_2_3_4_builder builder = add_format_2_3_4_pucch_pdu();
+    builder.set_basic_parameters(handle, rnti, type);
+
+    return builder;
+  }
+
+  /// Adds a PUCCH Format 2, Format 3 and Format 4  PDU to the \e UCI.indication message and returns a PUCCH Format 2,
+  /// Format 3 and Format 4 PDU builder.
+  uci_pucch_pdu_format_2_3_4_builder add_format_2_3_4_pucch_pdu()
+  {
     auto& pdu = msg.pdus.emplace_back();
 
     pdu.pdu_type = uci_pdu_type::PUCCH_format_2_3_4;
 
     uci_pucch_pdu_format_2_3_4_builder builder(pdu.pucch_pdu_f234);
-    builder.set_basic_parameters(handle, rnti, type);
 
     return builder;
   }

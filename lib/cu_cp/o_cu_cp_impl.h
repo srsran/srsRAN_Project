@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp.h"
-#include "srsran/cu_cp/cu_cp_power_controller.h"
+#include "srsran/cu_cp/cu_cp_operation_controller.h"
 #include "srsran/cu_cp/o_cu_cp.h"
 #include "srsran/e2/e2.h"
 
@@ -33,7 +33,7 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// O-RAN CU-CP implementation.
-class o_cu_cp_impl : public o_cu_cp, public cu_cp_power_controller
+class o_cu_cp_impl : public o_cu_cp, public cu_cp_operation_controller
 {
 public:
   explicit o_cu_cp_impl(std::unique_ptr<cu_cp> cu_cp_);
@@ -42,7 +42,7 @@ public:
   cu_cp& get_cu_cp() override { return *cu_impl; }
 
   // See interface for documentation.
-  cu_cp_power_controller& get_power_controller() override { return *this; }
+  cu_cp_operation_controller& get_operation_controller() override { return *this; }
 
   // See interface for documentation.
   void start() override;

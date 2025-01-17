@@ -43,8 +43,6 @@ namespace srsran {
 
 /// Upper PHY implementation configuration.
 struct upper_phy_impl_config {
-  /// Base station sector identifier.
-  unsigned sector_id;
   /// Uplink bandwidth in resource blocks.
   unsigned ul_bw_rb;
   /// Number of receive antenna ports.
@@ -113,9 +111,6 @@ public:
   explicit upper_phy_impl(upper_phy_impl_config&& config);
 
   // See interface for documentation.
-  unsigned get_sector_id() const override { return sector_id; }
-
-  // See interface for documentation.
   upper_phy_error_handler& get_error_handler() override;
 
   // See interface for documentation.
@@ -159,8 +154,6 @@ public:
 private:
   /// Upper PHY logger.
   srslog::basic_logger& logger;
-  /// Base station sector identifier.
-  const unsigned sector_id;
   /// Receive buffer pool.
   std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
   /// Downlink resource grid pool.

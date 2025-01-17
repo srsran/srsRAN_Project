@@ -24,6 +24,7 @@
 #include "apps/services/worker_manager/worker_manager_config.h"
 #include "ru_sdr_config.h"
 #include "srsran/du/du_cell_config.h"
+#include "srsran/ran/band_helper.h"
 
 using namespace srsran;
 

@@ -282,7 +282,7 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
       continue;
     }
 
-    downlink_processor_pool_config::sector_dl_processor info = {to_subcarrier_spacing(numerology), {}};
+    downlink_processor_pool_config::downlink_processor_set info = {to_subcarrier_spacing(numerology), {}};
 
     for (unsigned i_proc = 0, nof_procs = config.nof_dl_processors; i_proc != nof_procs; ++i_proc) {
       downlink_processor_config processor_config;
@@ -575,7 +575,6 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(uplink_pr
                                                                        const upper_phy_config&   config)
 {
   uplink_processor_pool_config config_pool;
-  config_pool.num_sectors = 1;
 
   // Fetch and configure logger.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("PHY", true);
@@ -588,9 +587,8 @@ static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(uplink_pr
       continue;
     }
 
-    uplink_processor_pool_config::sector_ul_processors info;
-    info.sector = 0;
-    info.scs    = to_subcarrier_spacing(scs);
+    uplink_processor_pool_config::uplink_processor_set info;
+    info.scs = to_subcarrier_spacing(scs);
 
     // Create an uplink processor.
     std::unique_ptr<uplink_processor> ul_proc;
@@ -645,7 +643,6 @@ public:
   std::unique_ptr<upper_phy> create(const upper_phy_config& config) override
   {
     upper_phy_impl_config phy_config;
-    phy_config.sector_id                   = config.sector_id;
     phy_config.ul_bw_rb                    = config.ul_bw_rb;
     phy_config.nof_rx_ports                = config.nof_rx_ports;
     phy_config.log_level                   = config.log_level;
@@ -881,10 +878,9 @@ std::unique_ptr<uplink_processor_pool> srsran::create_uplink_processor_pool(upli
 {
   // Convert from pool config to pool_impl config.
   uplink_processor_pool_impl_config ul_processors;
-  ul_processors.num_sectors = config.num_sectors;
 
   for (auto& proc : config.ul_processors) {
-    ul_processors.procs.push_back({proc.sector, proc.scs, std::move(proc.procs)});
+    ul_processors.procs.push_back({proc.scs, std::move(proc.procs)});
   }
 
   return std::make_unique<uplink_processor_pool_impl>(std::move(ul_processors));

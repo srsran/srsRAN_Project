@@ -29,7 +29,7 @@ namespace srsran {
 
 /// Describes all downlink processors in a pool.
 struct downlink_processor_pool_impl_config {
-  /// Downlink processors for a given sector and numerology.
+  /// Downlink processors for a given numerology.
   struct sector_dl_processor {
     /// Subcarrier spacing.
     subcarrier_spacing scs;
@@ -37,7 +37,7 @@ struct downlink_processor_pool_impl_config {
     std::vector<std::unique_ptr<downlink_processor_controller>> procs;
   };
 
-  /// Collection of all downlink processors, organized by radio sector and numerology.
+  /// Collection of all downlink processors, organized by numerology.
   std::vector<sector_dl_processor> procs;
 };
 

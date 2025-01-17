@@ -315,8 +315,7 @@ protected:
                                   bool          tx_conres = true)
   {
     // Notification from upper layers of DL buffer state.
-    const dl_buffer_state_indication_message msg{ue_idx, is_srb0 ? LCID_SRB0 : LCID_SRB1, buffer_size};
-    bench->ue_db[ue_idx].handle_dl_buffer_state_indication(msg);
+    bench->ue_db[ue_idx].handle_dl_buffer_state_indication(is_srb0 ? LCID_SRB0 : LCID_SRB1, buffer_size);
     if (tx_conres) {
       bench->ue_db[ue_idx].handle_dl_mac_ce_indication(dl_mac_ce_indication{ue_idx, lcid_dl_sch_t::UE_CON_RES_ID});
       bench->fallback_sched.handle_conres_indication(ue_idx);

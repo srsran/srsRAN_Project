@@ -23,6 +23,7 @@
 #include "mac_cell_processor.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/support/async/execute_on_blocking.h"

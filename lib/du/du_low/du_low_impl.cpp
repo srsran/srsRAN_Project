@@ -40,6 +40,11 @@ upper_phy& du_low_impl::get_upper_phy(unsigned cell_id)
   return *upper[cell_id];
 }
 
+void du_low_impl::start()
+{
+  // Nothing to do as the Upper PHY is stateless.
+}
+
 void du_low_impl::stop()
 {
   for (auto& cell : upper) {

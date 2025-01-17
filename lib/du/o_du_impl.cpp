@@ -40,13 +40,14 @@ o_du_impl::o_du_impl(o_du_impl_dependencies&& dependencies) :
 
 void o_du_impl::start()
 {
-  du_hi->get_power_controller().start();
+  du_hi->get_operation_controller().start();
+  du_lo->get_operation_controller().start();
 }
 
 void o_du_impl::stop()
 {
-  du_lo->get_du_low().get_power_controller().stop();
-  du_hi->get_power_controller().stop();
+  du_lo->get_operation_controller().stop();
+  du_hi->get_operation_controller().stop();
 }
 
 o_du_high& o_du_impl::get_o_du_high()

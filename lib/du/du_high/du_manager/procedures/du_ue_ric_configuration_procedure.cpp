@@ -21,6 +21,7 @@
  */
 
 #include "du_ue_ric_configuration_procedure.h"
+#include "srsran/ran/band_helper.h"
 #include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;

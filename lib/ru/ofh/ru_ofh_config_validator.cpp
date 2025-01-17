@@ -21,7 +21,7 @@
  */
 
 #include "srsran/ofh/ofh_constants.h"
-#include "srsran/ru/ru_ofh_configuration.h"
+#include "srsran/ru/ofh/ru_ofh_configuration.h"
 
 using namespace srsran;
 

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/ru/ru_dummy_configuration.h"
+#include "srsran/ru/dummy/ru_dummy_configuration.h"
 
 namespace srsran {
 

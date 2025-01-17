@@ -240,13 +240,8 @@ drb_id_t allocate_qos_flow(up_pdu_session_context_update&     new_session_contex
   drb_ctx.default_drb    = full_context.drb_map.empty(); // make first DRB the default
 
   // Fill QoS (TODO: derive QoS params correctly).
-  auto& qos_params                                       = drb_ctx.qos_params;
-  qos_params.qos_desc                                    = non_dyn_5qi_descriptor{};
-  auto& non_dyn_5qi                                      = qos_params.qos_desc.get_nondyn_5qi();
-  non_dyn_5qi.five_qi                                    = five_qi;
-  qos_params.alloc_retention_prio.prio_level_arp         = 8;
-  qos_params.alloc_retention_prio.may_trigger_preemption = false;
-  qos_params.alloc_retention_prio.is_preemptable         = false;
+  // As we currently map QoS flows to DRBs in a 1:1 manner, we can use the same values for both.
+  drb_ctx.qos_params = qos_flow.qos_flow_level_qos_params;
 
   // Add flow.
   up_qos_flow_context flow_ctx;
@@ -314,7 +309,7 @@ up_config_update srsran::srs_cu_cp::calculate_update(
 
   config.initial_context_creation = context.pdu_sessions.empty();
 
-  // look for existing DRB using the same FiveQI (does it need to be the same PDU session?)
+  // Look for existing DRB using the same FiveQI (does it need to be the same PDU session?).
   for (const auto& pdu_session : setup_items) {
     srsran_assert(context.pdu_sessions.find(pdu_session.pdu_session_id) == context.pdu_sessions.end(),
                   "PDU session already exists");

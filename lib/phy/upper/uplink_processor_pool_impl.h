@@ -29,20 +29,16 @@ namespace srsran {
 
 /// Defines the structure to configure the uplink processor pool.
 struct uplink_processor_pool_impl_config {
-  /// Helper structure that defines a set of uplink processors for a sector and numerology.
-  struct sector_ul_processor {
-    /// Sector identifier.
-    unsigned sector;
+  /// Set of uplink processors for a numerology.
+  struct uplink_processor_set {
     /// Subcarrier spacing.
     subcarrier_spacing scs;
-    /// Vector of uplink processors for this sector and numerology.
+    /// Vector of uplink processors for this numerology.
     std::vector<std::unique_ptr<uplink_processor>> procs;
   };
 
-  /// Vector of \c info objects, which contains the uplink processors for a given sector and numerology.
-  std::vector<sector_ul_processor> procs;
-  /// Number of sector that will support this configuration.
-  unsigned num_sectors;
+  /// Vector of \c info objects, which contains the uplink processors for a given numerology.
+  std::vector<uplink_processor_set> procs;
 };
 
 /// Uplink processor pool implementation.
@@ -53,11 +49,10 @@ public:
   explicit uplink_processor_pool_impl(uplink_processor_pool_impl_config dl_processors);
 
   // See interface for documentation.
-  uplink_processor& get_processor(slot_point slot, unsigned sector_id) override;
+  uplink_processor& get_processor(slot_point slot) override;
 
 private:
-  /// Container for uplink processors. Each entry belongs to a different sector.
-  std::vector<processor_pool_repository<uplink_processor>> processors;
+  processor_pool_repository<uplink_processor> processors;
 };
 
 } // namespace srsran

@@ -453,6 +453,13 @@ ngap_message srsran::srs_cu_cp::generate_valid_pdu_session_resource_setup_reques
         qos_flow_setup_req_item.qos_flow_level_qos_params.alloc_and_retention_prio.pre_emption_vulnerability =
             pre_emption_vulnerability_opts::not_pre_emptable;
 
+        // Fill gbr QoS info.
+        qos_flow_setup_req_item.qos_flow_level_qos_params.gbr_qos_info_present                     = true;
+        qos_flow_setup_req_item.qos_flow_level_qos_params.gbr_qos_info.max_flow_bit_rate_dl        = 1000000000U;
+        qos_flow_setup_req_item.qos_flow_level_qos_params.gbr_qos_info.max_flow_bit_rate_ul        = 1000000000U;
+        qos_flow_setup_req_item.qos_flow_level_qos_params.gbr_qos_info.guaranteed_flow_bit_rate_dl = 1000000000U;
+        qos_flow_setup_req_item.qos_flow_level_qos_params.gbr_qos_info.guaranteed_flow_bit_rate_ul = 1000000000U;
+
         asn1_setup_req_transfer->qos_flow_setup_request_list.push_back(qos_flow_setup_req_item);
       }
     }

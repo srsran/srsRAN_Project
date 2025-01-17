@@ -200,25 +200,30 @@ public:
   constexpr bool operator<=(phy_time_unit other) const { return value <= other.value; }
 
   /// Creates a physical layer time from units of \f$\kappa\f$.
-  static constexpr inline phy_time_unit from_units_of_kappa(unsigned units_of_kappa)
+  static constexpr phy_time_unit from_units_of_kappa(unsigned units_of_kappa)
   {
     return phy_time_unit(static_cast<value_type>(units_of_kappa) * KAPPA);
   }
 
   /// Creates a physical layer time from units of \f$T_c\f$.
-  static constexpr inline phy_time_unit from_units_of_Tc(unsigned units_of_Tc)
+  template <typename Integer>
+  static constexpr phy_time_unit from_units_of_Tc(Integer units_of_Tc)
   {
+    static_assert(std::is_integral<Integer>::value);
     return phy_time_unit(static_cast<value_type>(units_of_Tc));
   }
 
   /// Creates a physical layer time from a timing advance command \f$T_A\f$, as per TS38.213 Section 4.2.
-  static constexpr inline phy_time_unit from_timing_advance(unsigned units_of_Ta, subcarrier_spacing scs)
+  template <typename Integer>
+  static constexpr phy_time_unit from_timing_advance(Integer units_of_Ta, subcarrier_spacing scs)
   {
-    return from_units_of_Tc(units_of_Ta * 16U * KAPPA / pow2(to_numerology_value(scs)));
+    static_assert(std::is_integral<Integer>::value);
+    return from_units_of_Tc(static_cast<Integer>(units_of_Ta * 16U * KAPPA) /
+                            static_cast<Integer>(pow2(to_numerology_value(scs))));
   }
 
   /// Creates a physical layer time from seconds.
-  static constexpr inline phy_time_unit from_seconds(double seconds)
+  static constexpr phy_time_unit from_seconds(double seconds)
   {
     // Convert to units of Tc.
     double tc_units_dbl = seconds / T_C;

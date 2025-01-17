@@ -23,7 +23,7 @@
 #pragma once
 
 #include "apps/services/e2/e2_metric_connector_manager.h"
-#include "srsran/cu_up/cu_up_power_controller.h"
+#include "srsran/cu_up/cu_up_operation_controller.h"
 #include "srsran/cu_up/o_cu_up.h"
 #include "srsran/e2/e2_cu_metrics_connector.h"
 #include "srsran/gtpu/gtpu_gateway.h"
@@ -47,7 +47,7 @@ public:
   srs_cu_up::cu_up_interface& get_cu_up() override;
 
   // See interface for documentation.
-  srs_cu_up::cu_up_power_controller& get_power_controller() override;
+  srs_cu_up::cu_up_operation_controller& get_operation_controller() override;
 
 private:
   std::vector<std::unique_ptr<gtpu_gateway>>       gateways;

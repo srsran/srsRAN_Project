@@ -23,14 +23,21 @@
 #pragma once
 
 #include "srsran/gtpu/gtpu_gateway.h"
+#include "srsran/ran/qos/five_qi.h"
+#include <map>
 
 namespace srsran::srs_cu_up {
+
+struct f1u_session_maps {
+  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>                      default_gw_sessions;
+  std::map<five_qi_t, std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>> five_qi_gw_sessions;
+};
 
 class f1u_session_manager
 {
 public:
-  virtual ~f1u_session_manager()                       = default;
-  virtual gtpu_tnl_pdu_session& get_next_f1u_gateway() = 0;
+  virtual ~f1u_session_manager()                                        = default;
+  virtual gtpu_tnl_pdu_session& get_next_f1u_gateway(five_qi_t five_qi) = 0;
 };
 
 } // namespace srsran::srs_cu_up

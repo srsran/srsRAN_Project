@@ -34,10 +34,10 @@ namespace srsran {
 /// Application command to change the transmission gain.
 class tx_gain_app_command : public app_services::application_command
 {
-  ru_controller& controller;
+  ru_gain_controller& controller;
 
 public:
-  explicit tx_gain_app_command(ru_controller& controller_) : controller(controller_) {}
+  explicit tx_gain_app_command(ru_gain_controller& controller_) : controller(controller_) {}
 
   // See interface for documentation.
   std::string_view get_name() const override { return "tx_gain"; }
@@ -76,10 +76,10 @@ public:
 /// Application command to change the reception gain.
 class rx_gain_app_command : public app_services::application_command
 {
-  ru_controller& controller;
+  ru_gain_controller& controller;
 
 public:
-  explicit rx_gain_app_command(ru_controller& controller_) : controller(controller_) {}
+  explicit rx_gain_app_command(ru_gain_controller& controller_) : controller(controller_) {}
 
   // See interface for documentation.
   std::string_view get_name() const override { return "rx_gain"; }
@@ -203,10 +203,10 @@ public:
 /// Application command to set the carrier frequency offset.
 class cfo_app_command : public app_services::application_command
 {
-  ru_controller& controller;
+  ru_cfo_controller& controller;
 
 public:
-  explicit cfo_app_command(ru_controller& controller_) : controller(controller_) {}
+  explicit cfo_app_command(ru_cfo_controller& controller_) : controller(controller_) {}
 
   // See interface for documentation.
   std::string_view get_name() const override { return "cfo"; }

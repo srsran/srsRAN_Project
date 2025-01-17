@@ -48,8 +48,9 @@ ADD . /src
 ARG LIB
 RUN /src/docker/scripts/install_dependencies.sh build && \
     /src/docker/scripts/install_${LIB}_dependencies.sh build && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends git clang
 
+ARG COMPILER=gcc
 ARG LIB_VERSION
 ARG MARCH
 ARG NUM_JOBS
@@ -64,7 +65,7 @@ RUN if [ -z "$NUM_JOBS" ]; then NUM_JOBS=$(nproc); fi && \
     export ${LIB_UPPER}_DIR="/opt/${LIB}/${LIB_VERSION}" && \
     if [ "$LIB_UPPER" = "UHD" ]; then TARGETS="srsdu_split_8 gnb_split_8"; else TARGETS="srsdu_split_7_2 gnb_split_7_2"; fi \
     && \
-    /src/docker/scripts/builder.sh -m "-j${NUM_JOBS} srscu $TARGETS ru_emulator" \
+    /src/docker/scripts/builder.sh -c ${COMPILER} -m "-j${NUM_JOBS} srscu $TARGETS ru_emulator" \
     -DBUILD_TESTS=False -DENABLE_${LIB_UPPER}=On -DMARCH=${MARCH} -DCMAKE_INSTALL_PREFIX=/opt/srs \
     ${EXTRA_CMAKE_ARGS} /src \
     && \

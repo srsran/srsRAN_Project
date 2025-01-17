@@ -45,6 +45,7 @@ set(SOURCES mac_factory.cpp
 
 add_library(srsran_mac STATIC ${SOURCES})
 target_link_libraries(srsran_mac
+        atomic
         srsran_sched
         mac_configuration_helpers
         srsran_ran

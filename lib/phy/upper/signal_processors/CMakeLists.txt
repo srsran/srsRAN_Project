@@ -19,6 +19,8 @@
 #
 
 set(SOURCES
+        prs/factories.cpp
+        prs/prs_generator_impl.cpp
         ptrs/ptrs_pdsch_generator_impl.cpp
         ptrs/ptrs_pdsch_generator_factory.cpp
         pucch/dmrs_pucch_estimator_format1.cpp

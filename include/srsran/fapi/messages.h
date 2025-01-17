@@ -369,6 +369,9 @@ struct dl_csi_rs_pdu {
   tx_precoding_and_beamforming_pdu  precoding_and_beamforming;
   dl_csi_rs_maintenance_v3          csi_rs_maintenance_v3;
   //: TODO: csi params v4
+  // Vendor specific parameters.
+  uint16_t bwp_size;
+  uint16_t bwp_start;
 };
 
 enum class dmrs_typeA_pos : uint8_t { pos2 = 0, pos3 };
@@ -417,8 +420,24 @@ struct dl_ssb_pdu {
   //: TODO: params v4 - MU-MIMO
 };
 
+/// Downlink PRS PDU information.
+struct dl_prs_pdu {
+  subcarrier_spacing   scs;
+  cyclic_prefix        cp;
+  uint16_t             nid_prs;
+  uint16_t             pdu_index;
+  uint8_t              comb_size;
+  uint8_t              comb_offset;
+  uint8_t              num_symbols;
+  uint8_t              first_symbol;
+  uint16_t             num_rbs;
+  uint16_t             start_rb;
+  std::optional<float> prs_power_offset;
+  // :TODO: Puncturing, spatial stream, precoding and backward compatible extension.
+};
+
 /// Downlink PDU type ID.
-enum class dl_pdu_type : uint16_t { PDCCH, PDSCH, CSI_RS, SSB };
+enum class dl_pdu_type : uint16_t { PDCCH, PDSCH, CSI_RS, SSB, PRS };
 
 inline unsigned to_value(dl_pdu_type value)
 {
@@ -435,6 +454,7 @@ struct dl_tti_request_pdu {
   dl_pdsch_pdu  pdsch_pdu;
   dl_csi_rs_pdu csi_rs_pdu;
   dl_ssb_pdu    ssb_pdu;
+  dl_prs_pdu    prs_pdu;
 };
 
 /// Downlink TTI request message.
@@ -442,7 +462,7 @@ struct dl_tti_request_message : public base_message {
   /// Array index for the number of DL DCIs.
   static constexpr unsigned DL_DCI_INDEX = 4;
   /// Maximum supported number of DL PDU types in this release.
-  static constexpr unsigned MAX_NUM_DL_TYPES = 5;
+  static constexpr unsigned MAX_NUM_DL_TYPES = 6;
 
   uint16_t                                                sfn;
   uint16_t                                                slot;
@@ -815,17 +835,17 @@ struct ul_dci_pdu {
 
 /// Uplink DCI request message.
 struct ul_dci_request_message : public base_message {
-  /// DCI index in the array number PDUs of each type.
+  /// [Implementation-defined] DCI index in the array number PDUs of each type.
   static constexpr unsigned DCI_INDEX = 1;
-  /// Maximum number of supported UL PDU types in this release.
+  /// [Implementation-defined] Maximum number of supported UL PDU types in this release.
   static constexpr unsigned MAX_NUM_DL_TYPES = 2;
-  /// Maximum number of supported UCI PDUs in this message.
-  static constexpr unsigned MAX_NUM_UCI_PDUS = 128;
+  /// [Implementation-defined] Maximum number of supported UCI PDUs in this message.
+  static constexpr unsigned MAX_NUM_UL_DCI_PDUS = 128;
 
-  uint16_t                                    sfn;
-  uint16_t                                    slot;
-  std::array<uint16_t, MAX_NUM_DL_TYPES>      num_pdus_of_each_type;
-  static_vector<ul_dci_pdu, MAX_NUM_UCI_PDUS> pdus;
+  uint16_t                                       sfn;
+  uint16_t                                       slot;
+  std::array<uint16_t, MAX_NUM_DL_TYPES>         num_pdus_of_each_type;
+  static_vector<ul_dci_pdu, MAX_NUM_UL_DCI_PDUS> pdus;
   // Vendor specific parameters.
   bool is_last_message_in_slot;
 };

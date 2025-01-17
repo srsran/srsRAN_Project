@@ -231,7 +231,8 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
                                    sch_mcs_index                 tb1_mcs_index,
                                    uint8_t                       rv,
                                    const dl_harq_process_handle& h_dl,
-                                   unsigned                      nof_layers)
+                                   unsigned                      nof_layers,
+                                   uint8_t                       tpc)
 {
   const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
   srsran_assert(not ss_info.cfg->is_common_search_space(), "SearchSpace must be of type UE-Specific SearchSpace");
@@ -248,7 +249,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   dci.c_rnti_f1_1             = {};
   dci_1_1_configuration& f1_1 = dci.c_rnti_f1_1;
 
-  f1_1.tpc_command             = 1;
+  f1_1.tpc_command             = static_cast<unsigned>(tpc);
   f1_1.srs_request             = 0;
   f1_1.dmrs_seq_initialization = 0;
   srsran_assert(ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value(),

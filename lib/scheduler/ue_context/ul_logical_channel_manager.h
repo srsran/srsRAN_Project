@@ -25,13 +25,14 @@
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/scheduler/config/logical_channel_config.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
+#include "srsran/support/math/moving_averager.h"
 
 namespace srsran {
 
 class ul_logical_channel_manager
 {
 public:
-  ul_logical_channel_manager();
+  ul_logical_channel_manager(subcarrier_spacing scs);
 
   /// Set the status of a logical channel group.
   void set_status(lcg_id_t lcg_id, bool active) { groups[lcg_id].active = active; }
@@ -41,6 +42,9 @@ public:
 
   /// Deactivate all logical channel groups, handling of SRs to prepare for UE removal.
   void deactivate();
+
+  /// Signal the start of a new slot.
+  void slot_indication();
 
   /// \brief Verifies if logical channel group is activated for UL.
   bool is_active(lcg_id_t lcg_id) const { return groups[lcg_id].active; }
@@ -83,7 +87,8 @@ public:
   void handle_bsr_indication(const ul_bsr_indication_message& msg)
   {
     for (const auto& lcg_report : msg.reported_lcgs) {
-      groups[lcg_report.lcg_id].buf_st = lcg_report.nof_bytes;
+      groups[lcg_report.lcg_id].buf_st            = lcg_report.nof_bytes;
+      groups[lcg_report.lcg_id].sched_bytes_accum = 0;
     }
   }
 
@@ -100,11 +105,30 @@ public:
 
   void reset_sr_indication() { sr_pending.store(false, std::memory_order::memory_order_relaxed); }
 
+  /// \brief Average bit rate, in bps, for a given LCG-Id.
+  double average_bit_rate(lcg_id_t lcg_id) const
+  {
+    return is_active(lcg_id) and groups[lcg_id].avg_bytes_per_slot.size() > 0
+               ? groups[lcg_id].avg_bytes_per_slot.average() * 8 * slots_per_sec
+               : 0.0;
+  }
+
+  /// \brief Register the scheduling of an UL grant for this UE.
+  ///
+  /// This event will be used to update estimated bit rates.
+  void handle_ul_grant(unsigned grant_size);
+
 private:
   struct channel_group_context {
     bool active = false;
     /// DL Buffer status of this logical channel.
     unsigned buf_st = 0;
+    /// Bytes-per-slot average for this logical channel.
+    moving_averager<unsigned> avg_bytes_per_slot;
+    /// Last slot sched bytes.
+    unsigned last_sched_bytes = 0;
+    /// Sched bytes since last BSR.
+    unsigned sched_bytes_accum = 0;
   };
 
   /// \brief Adds an estimate of the upper layer required header bytes.
@@ -119,6 +143,9 @@ private:
     }
     return payload_bytes + RLC_HEADER_SIZE_ESTIMATE;
   }
+
+  // Number of slots per second given the used SCS. Parameter used to compute bit rates.
+  const unsigned slots_per_sec;
 
   // This state variable tells whether there is a pending SR. Note: It is an atomic variable because SR indications
   // can be received from different cells (in different threads).

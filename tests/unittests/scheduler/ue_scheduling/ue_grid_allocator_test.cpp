@@ -139,11 +139,7 @@ protected:
 
   void push_dl_bs(du_ue_index_t ue_index, lcid_t lcid, unsigned bytes)
   {
-    dl_buffer_state_indication_message ind{};
-    ind.ue_index = ue_index;
-    ind.lcid     = lcid;
-    ind.bs       = bytes;
-    ues[ue_index].handle_dl_buffer_state_indication(ind);
+    ues[ue_index].handle_dl_buffer_state_indication(lcid, bytes);
   }
 
   scheduler_expert_config                 sched_cfg;

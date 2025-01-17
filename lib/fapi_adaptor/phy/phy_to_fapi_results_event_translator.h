@@ -37,7 +37,7 @@ namespace fapi_adaptor {
 class phy_to_fapi_results_event_translator : public upper_phy_rx_results_notifier
 {
 public:
-  explicit phy_to_fapi_results_event_translator(srslog::basic_logger& logger_);
+  phy_to_fapi_results_event_translator(unsigned sector_id_, srslog::basic_logger& logger_);
 
   // See interface for documentation.
   void on_new_prach_results(const ul_prach_results& result) override;
@@ -71,6 +71,8 @@ private:
   void notify_pusch_uci_indication(const ul_pusch_results_control& result);
 
 private:
+  /// Radio sector identifier.
+  const unsigned sector_id;
   /// FAPI logger.
   srslog::basic_logger& logger;
   /// FAPI slot-based, data-specific message notifier.

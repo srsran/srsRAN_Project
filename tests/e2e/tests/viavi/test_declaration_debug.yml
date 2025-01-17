@@ -41,8 +41,8 @@ tests:
     test_timeout: *test_timeout
     gnb_extra_commands: *gnb_extra_commands
     id: "32UE ideal UDP bidirectional - Debug"
-    max_pdschs_per_slot: 1
-    max_puschs_per_slot: 4
+    max_pdschs_per_slot: 8
+    max_puschs_per_slot: 8
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9

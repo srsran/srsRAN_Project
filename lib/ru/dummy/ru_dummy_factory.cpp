@@ -20,7 +20,7 @@
  *
  */
 
-#include "srsran/ru/ru_dummy_factory.h"
+#include "srsran/ru/dummy/ru_dummy_factory.h"
 #include "ru_dummy_impl.h"
 #include "srsran/ru/ru.h"
 #include <memory>

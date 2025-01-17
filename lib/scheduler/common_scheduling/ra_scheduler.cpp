@@ -30,6 +30,7 @@
 #include "../support/pdsch/pdsch_default_time_allocation.h"
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/sch_pdu_builder.h"
+#include "srsran/ran/band_helper.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/support/compiler.h"

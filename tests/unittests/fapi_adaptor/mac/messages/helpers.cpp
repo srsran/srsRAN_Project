@@ -791,33 +791,33 @@ mac_ul_sched_result_test_helper unittests::build_valid_mac_ul_sched_result_with_
   return helper;
 }
 
-mac_dl_data_result srsran::unittests::build_valid_mac_data_result()
+mac_dl_data_result_test_helper srsran::unittests::build_valid_mac_data_result()
 {
-  mac_dl_data_result result;
+  mac_dl_data_result_test_helper result;
 
-  result.si_pdus.push_back({1, {}});
+  result.result.si_pdus.push_back({1, shared_transport_block(result.data)});
 
   return result;
 }
 
-mac_dl_data_result unittests::build_valid_mac_data_result_with_all_supported_pdu()
+mac_dl_data_result_test_helper unittests::build_valid_mac_data_result_with_all_supported_pdu()
 {
-  mac_dl_data_result result;
+  mac_dl_data_result_test_helper result;
 
   for (unsigned i = 0; i != MAX_SI_PDUS_PER_SLOT; ++i) {
-    result.si_pdus.push_back({1, {}});
+    result.result.si_pdus.push_back({1, shared_transport_block(result.data)});
   }
 
   for (unsigned i = 0; i != MAX_RAR_PDUS_PER_SLOT; ++i) {
-    result.rar_pdus.push_back({1, {}});
+    result.result.rar_pdus.push_back({1, shared_transport_block(result.data)});
   }
 
   for (unsigned i = 0; i != MAX_UE_PDUS_PER_SLOT; ++i) {
-    result.ue_pdus.push_back({1, {}});
+    result.result.ue_pdus.push_back({1, shared_transport_block(result.data)});
   }
 
   for (unsigned i = 0; i != MAX_PAGING_PDUS_PER_SLOT; ++i) {
-    result.paging_pdus.push_back({1, {}});
+    result.result.paging_pdus.push_back({1, shared_transport_block(result.data)});
   }
 
   return result;

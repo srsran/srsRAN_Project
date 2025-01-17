@@ -270,6 +270,24 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
 
   return pdu;
 }
+srsran::fapi::dl_prs_pdu unittest::build_valid_dl_prs_pdu()
+{
+  dl_prs_pdu pdu;
+
+  pdu.scs              = subcarrier_spacing::kHz30;
+  pdu.cp               = cyclic_prefix::NORMAL;
+  pdu.nid_prs          = 1;
+  pdu.pdu_index        = 0;
+  pdu.comb_size        = 2;
+  pdu.comb_offset      = 0;
+  pdu.num_symbols      = 4;
+  pdu.first_symbol     = 8;
+  pdu.num_rbs          = 28;
+  pdu.start_rb         = 24;
+  pdu.prs_power_offset = -13.3;
+
+  return pdu;
+}
 
 dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
 {
@@ -291,6 +309,8 @@ dl_csi_rs_pdu unittest::build_valid_dl_csi_pdu()
   pdu.power_control_offset_ss_profile_nr     = power_control_offset_ss::dB0;
   pdu.csi_rs_maintenance_v3.csi_rs_pdu_index = 0;
   pdu.precoding_and_beamforming              = build_valid_tx_precoding_and_beamforming_pdu();
+  pdu.bwp_size                               = 56U;
+  pdu.bwp_start                              = 60U;
 
   return pdu;
 }

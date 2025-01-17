@@ -24,7 +24,7 @@
 
 #include "srsran/du/du_high/du_high.h"
 #include "srsran/du/du_high/o_du_high.h"
-#include "srsran/du/du_power_controller.h"
+#include "srsran/du/du_operation_controller.h"
 #include "srsran/du/o_du_config.h"
 #include "srsran/e2/e2.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_sector_adaptor.h"
@@ -39,13 +39,13 @@ struct o_du_high_impl_dependencies {
 };
 
 /// O-RAN DU high implementation.
-class o_du_high_impl : public o_du_high, public du_power_controller
+class o_du_high_impl : public o_du_high, public du_operation_controller
 {
 public:
   o_du_high_impl(unsigned nof_cells_, o_du_high_impl_dependencies&& du_dependencies);
 
   // See interface for documentation.
-  du_power_controller& get_power_controller() override { return *this; }
+  du_operation_controller& get_operation_controller() override { return *this; }
 
   // See interface for documentation.
   void start() override;

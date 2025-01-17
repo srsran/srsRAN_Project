@@ -25,8 +25,9 @@
 #include "../cell/cell_harq_manager.h"
 #include "../config/ue_configuration.h"
 #include "../support/bwp_helpers.h"
+#include "../support/pucch_power_controller.h"
+#include "../support/pusch_power_controller.h"
 #include "../support/sch_pdu_builder.h"
-#include "../support/ul_power_controller.h"
 #include "ue_channel_state_manager.h"
 #include "ue_link_adaptation_controller.h"
 #include "srsran/ran/uci/uci_constants.h"
@@ -141,8 +142,11 @@ public:
 
   const ue_link_adaptation_controller& link_adaptation_controller() const { return ue_mcs_calculator; }
 
-  ul_power_controller&       get_ul_power_controller() { return ul_pwr_controller; }
-  const ul_power_controller& get_ul_power_controller() const { return ul_pwr_controller; }
+  pusch_power_controller&       get_pusch_power_controller() { return pusch_pwr_controller; }
+  const pusch_power_controller& get_pusch_power_controller() const { return pusch_pwr_controller; }
+
+  pucch_power_controller&       get_pucch_power_controller() { return pucch_pwr_controller; }
+  const pucch_power_controller& get_pucch_power_controller() const { return pucch_pwr_controller; }
 
   /// \brief Returns an estimated DL rate in bytes per slot based on the given input parameters.
   double get_estimated_dl_rate(const pdsch_config_params& pdsch_cfg, sch_mcs_index mcs, unsigned nof_prbs) const;
@@ -171,7 +175,8 @@ private:
 
   ue_link_adaptation_controller ue_mcs_calculator;
 
-  ul_power_controller ul_pwr_controller;
+  pusch_power_controller pusch_pwr_controller;
+  pucch_power_controller pucch_pwr_controller;
 };
 
 } // namespace srsran

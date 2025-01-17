@@ -326,8 +326,13 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   }
   gtpu_teid_t f1u_ul_teid = ret.value();
 
-  new_drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(
-      ue_index, drb_to_setup.drb_id, new_drb->f1u_cfg, f1u_ul_teid, new_drb->f1u_gateway_rx_to_nru_adapter, ue_ul_exec);
+  new_drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
+                                                   drb_to_setup.drb_id,
+                                                   five_qi,
+                                                   new_drb->f1u_cfg,
+                                                   f1u_ul_teid,
+                                                   new_drb->f1u_gateway_rx_to_nru_adapter,
+                                                   ue_ul_exec);
 
   // Create UL UP TNL address.
   expected<std::string> bind_addr = new_drb->f1u_gw_bearer->get_bind_address();
@@ -416,7 +421,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                   session.pdu_session_id,
                   drb_iter->second->drb_id);
 
-    auto& drb = drb_iter->second;
+    std::unique_ptr<drb_context>& drb = drb_iter->second;
     if (new_ul_tnl_info_required) {
       // Allocate new UL TEID for DRB
       expected<gtpu_teid_t> ret = f1u_teid_allocator.request_teid();
@@ -428,9 +433,20 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
       drb->f1u_ul_teid            = ret.value();
       logger.log_info("Replacing F1-U tunnel. old_ul_teid={} new_ul_teid={}", old_f1u_ul_teid, drb->f1u_ul_teid);
 
+      // TODO Right now, we get the 5QI for the first QoS flow.
+      five_qi_t five_qi = drb->qos_flows.begin()->second->five_qi;
+      if (qos_cfg.find(five_qi) == qos_cfg.end()) {
+        drb_result.cause = e1ap_cause_radio_network_t::not_supported_5qi_value;
+        continue;
+      }
       // create new F1-U and connect it. This will automatically disconnect the old F1-U.
-      drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(
-          ue_index, drb->drb_id, drb->f1u_cfg, drb->f1u_ul_teid, drb->f1u_gateway_rx_to_nru_adapter, ue_ul_exec);
+      drb->f1u_gw_bearer = f1u_gw.create_cu_bearer(ue_index,
+                                                   drb->drb_id,
+                                                   five_qi,
+                                                   drb->f1u_cfg,
+                                                   drb->f1u_ul_teid,
+                                                   drb->f1u_gateway_rx_to_nru_adapter,
+                                                   ue_ul_exec);
 
       // Create UL UP TNL address.
       expected<std::string> bind_addr = drb->f1u_gw_bearer->get_bind_address();

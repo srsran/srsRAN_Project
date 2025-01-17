@@ -60,7 +60,7 @@ ul_bsr_indication_message make_sbsr(lcg_id_t lcg_id, unsigned bytes)
 
 TEST(dl_logical_channel_test, when_buffer_state_is_zero_no_tx_data_is_pending)
 {
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   lcid_t                     lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_LCID);
   lch_mng.set_status(lcid, true);
   lch_mng.handle_dl_buffer_status_indication(lcid, 0);
@@ -73,7 +73,7 @@ TEST(dl_logical_channel_test, when_buffer_state_is_zero_no_tx_data_is_pending)
 
 TEST(dl_logical_channel_test, buffer_state_indication_has_no_effect_in_inactive_bearer)
 {
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   lcid_t                     lcid   = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_LCID);
   unsigned                   buf_st = test_rgen::uniform_int<unsigned>(0, 10000);
   lch_mng.handle_dl_buffer_status_indication(lcid, buf_st);
@@ -96,7 +96,7 @@ TEST(dl_logical_channel_test, buffer_state_indication_has_no_effect_in_inactive_
 
 TEST(dl_logical_channel_test, buffer_status_indication_updates_tx_pending_bytes)
 {
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   lcid_t                     lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_LCID);
   lch_mng.set_status(lcid, true);
 
@@ -117,7 +117,7 @@ TEST(dl_logical_channel_test, buffer_status_indication_updates_tx_pending_bytes)
 
 TEST(dl_logical_channel_test, total_pending_bytes_equal_sum_of_logical_channel_pending_bytes)
 {
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   std::vector<lcid_t>        lcids = shuffled_lcids();
   std::vector<unsigned>      buf_st_inds;
   for (lcid_t lcid : lcids) {
@@ -136,7 +136,7 @@ TEST(dl_logical_channel_test, total_pending_bytes_equal_sum_of_logical_channel_p
 
 TEST(dl_logical_channel_test, mac_ce_indication_updates_tx_pending_bytes)
 {
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   const unsigned             dummy_ce_payload = 0;
   lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = dummy_ce_payload});
 
@@ -159,7 +159,7 @@ TEST(dl_mac_ce_test, derivation_of_mac_ce_size)
 
 TEST(dl_logical_channel_test, no_mac_subpdus_scheduled_if_no_bytes_pending)
 {
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
 
   dl_msg_lc_info subpdu;
   unsigned       allocated_bytes = lch_mng.allocate_mac_ce(subpdu, 100000);
@@ -170,7 +170,7 @@ TEST(dl_logical_channel_test, no_mac_subpdus_scheduled_if_no_bytes_pending)
 
 TEST(dl_logical_channel_test, mac_ce_is_scheduled_if_tb_has_space)
 {
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
 
   lcid_dl_sch_t  ce_lcid          = get_random_dl_mac_ce();
   const unsigned dummy_ce_payload = 0;
@@ -199,7 +199,7 @@ TEST(dl_logical_channel_test, mac_ce_is_scheduled_if_tb_has_space)
 
 TEST(dl_logical_channel_test, mac_sdu_is_scheduled_if_tb_has_space)
 {
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   lcid_t                     lcid = LCID_SRB1;
   lch_mng.set_status(lcid, true);
 
@@ -245,7 +245,7 @@ TEST(dl_logical_channel_test, mac_sdu_is_scheduled_if_tb_has_space)
 
 TEST(dl_logical_channel_test, check_scheduling_of_ue_con_res_id_mac_ce)
 {
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
 
   lcid_dl_sch_t  ce_lcid          = lcid_dl_sch_t::UE_CON_RES_ID;
   const unsigned dummy_ce_payload = 0;
@@ -263,7 +263,7 @@ TEST(dl_logical_channel_test, check_scheduling_of_ue_con_res_id_mac_ce)
 
 TEST(dl_logical_channel_test, pending_ue_con_res_id_ce_bytes_does_not_include_other_mac_ce)
 {
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
 
   lcid_dl_sch_t  ce_lcid          = lcid_dl_sch_t::LONG_DRX_CMD;
   const unsigned dummy_ce_payload = 0;
@@ -276,8 +276,8 @@ TEST(ul_logical_channel_test, when_logical_channel_groups_are_inactive_then_no_u
 {
   lcg_id_t lcg_id = (lcg_id_t)test_rgen::uniform_int<unsigned>(0, MAX_LCG_ID);
 
-  ul_logical_channel_manager ul_lch_mng;
-  ul_logical_channel_manager ul_lch_mng2;
+  ul_logical_channel_manager ul_lch_mng{subcarrier_spacing::kHz15};
+  ul_logical_channel_manager ul_lch_mng2{subcarrier_spacing::kHz15};
 
   ul_lch_mng.set_status(lcg_id, false);
   ul_lch_mng2.set_status(lcg_id, true);
@@ -296,7 +296,7 @@ TEST(dl_logical_channel_test, assign_leftover_bytes_to_sdu_if_leftover_bytes_is_
 {
   const unsigned tb_size = 309;
 
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   lcid_dl_sch_t              ce_lcid          = lcid_dl_sch_t::UE_CON_RES_ID;
   const unsigned             dummy_ce_payload = 0;
   lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload});
@@ -318,7 +318,7 @@ TEST(dl_logical_channel_test, assign_leftover_bytes_to_sdu_if_leftover_bytes_is_
 
 TEST(dl_logical_channel_test, ta_cmd_mac_ce_gets_updated_if_already_in_pending_ces_queue)
 {
-  dl_logical_channel_manager lch_mng;
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   const auto first_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = time_alignment_group::id_t{0}, .ta_cmd = 29};
   lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = first_ta_cmd_ce_payload});
   ASSERT_TRUE(lch_mng.has_pending_bytes());

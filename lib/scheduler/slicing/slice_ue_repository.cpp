@@ -115,43 +115,6 @@ bool slice_ue::has_pending_sr() const
   return u.has_pending_sr();
 }
 
-static_vector<std::pair<lcg_id_t, unsigned>, MAX_NOF_LCGS>
-slice_ue::estimate_ul_alloc_bytes_per_lcg(unsigned grant_size) const
-{
-  srsran_assert(grant_size > 0, "Invalid call with empty grant");
-  static_vector<std::pair<lcg_id_t, unsigned>, MAX_NOF_LCGS> result;
-
-  // Compute the number of bytes that were already allocated in UL HARQs, before allocation.
-  unsigned bytes_in_harqs = 0;
-  for (unsigned c = 0, e = u.nof_cells(); c != e; ++c) {
-    const ue_cell& ue_cc = get_cell(to_ue_cell_index(c));
-    bytes_in_harqs += ue_cc.harqs.total_ul_bytes_waiting_ack();
-  }
-  bytes_in_harqs -= std::min(bytes_in_harqs, grant_size);
-
-  // TODO: Use sorted LCG list for iteration.
-  for (unsigned lcgid = 0, e = lcg_ids.size(); lcgid != e and grant_size > 0; ++lcgid) {
-    if (not lcg_ids.test(lcgid)) {
-      continue;
-    }
-    // Get BSR for a given LCG ID.
-    unsigned lcg_bytes = std::min(u.pending_ul_newtx_bytes(uint_to_lcg_id(lcgid)), grant_size);
-
-    // Only account for the BSR of a given LCG-ID after the bytes already allocated in HARQs are discounted.
-    if (bytes_in_harqs >= lcg_bytes) {
-      // We assum that this LCG-ID had already been allocated before in another HARQ.
-      bytes_in_harqs -= lcg_bytes;
-      continue;
-    }
-    lcg_bytes = lcg_bytes - bytes_in_harqs;
-    result.push_back(std::make_pair(uint_to_lcg_id(lcgid), lcg_bytes));
-    bytes_in_harqs = 0;
-    grant_size -= lcg_bytes;
-  }
-
-  return result;
-}
-
 lcg_id_t slice_ue::get_lcg_id_for_bearer(lcid_t lcid) const
 {
   const ue_configuration*            ue_ded_cfg = u.ue_cfg_dedicated();

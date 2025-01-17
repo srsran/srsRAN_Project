@@ -24,7 +24,9 @@
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/csi_rs/csi_rs_config_helpers.h"
+#include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/support/config/validator_helpers.h"
 #include "fmt/std.h"
@@ -80,6 +82,14 @@ validator_result srsran::config_validators::validate_pdcch_cfg(const serving_cel
              fmt::underlying(ss.get_coreset_id()),
              fmt::underlying(ss.get_id()));
     }
+
+    const unsigned total_nof_monitored_pdcch_candidates =
+        config_helpers::compute_tot_nof_monitored_pdcch_candidates_per_slot(ue_cell_cfg, dl_cfg_common);
+    const auto scs = dl_cfg_common.init_dl_bwp.generic_params.scs;
+    VERIFY(total_nof_monitored_pdcch_candidates <= max_nof_monitored_pdcch_candidates(scs),
+           "Nof. PDCCH candidates monitored per slot for a DL BWP={} exceeds maximum value={}\n",
+           total_nof_monitored_pdcch_candidates,
+           max_nof_monitored_pdcch_candidates(scs));
   }
 
   // TODO: Validate other parameters.

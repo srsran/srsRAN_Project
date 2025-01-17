@@ -43,7 +43,8 @@
 #include "gnb_appconfig_translators.h"
 #include "gnb_appconfig_validators.h"
 #include "gnb_appconfig_yaml_writer.h"
-#include "srsran/du/du_power_controller.h"
+#include "srsran/cu_cp/cu_cp_operation_controller.h"
+#include "srsran/du/du_operation_controller.h"
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/e2/gateways/e2_network_client_factory.h"
@@ -468,7 +469,7 @@ int main(int argc, char** argv)
 
   // Start O-CU-CP
   gnb_logger.info("Starting CU-CP...");
-  o_cucp_obj.get_cu_cp().start();
+  o_cucp_obj.get_operation_controller().start();
   gnb_logger.info("CU-CP started successfully");
 
   if (not o_cucp_obj.get_cu_cp().get_ng_handler().amfs_are_connected()) {
@@ -478,10 +479,10 @@ int main(int argc, char** argv)
   // Connect F1-C to O-CU-CP and start listening for new F1-C connection requests.
   f1c_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_f1c_handler());
 
-  o_cuup_obj.unit->get_power_controller().start();
+  o_cuup_obj.unit->get_operation_controller().start();
 
   // Start processing.
-  du_inst.get_power_controller().start();
+  du_inst.get_operation_controller().start();
 
   {
     app_services::application_message_banners app_banner(app_name);
@@ -492,13 +493,13 @@ int main(int argc, char** argv)
   }
 
   // Stop DU activity.
-  du_inst.get_power_controller().stop();
+  du_inst.get_operation_controller().stop();
 
   // Stop O-CU-UP activity.
-  o_cuup_obj.unit->get_power_controller().stop();
+  o_cuup_obj.unit->get_operation_controller().stop();
 
   // Stop O-CU-CP activity.
-  o_cucp_obj.get_cu_cp().stop();
+  o_cucp_obj.get_operation_controller().stop();
 
   gnb_logger.info("Closing PCAP files...");
   cu_cp_dlt_pcaps.reset();

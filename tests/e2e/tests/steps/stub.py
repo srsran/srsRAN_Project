@@ -25,7 +25,7 @@ import logging
 from concurrent.futures import as_completed, ThreadPoolExecutor
 from contextlib import contextmanager, suppress
 from time import sleep, time
-from typing import Dict, Generator, List, Optional, Sequence, Tuple
+from typing import Dict, Generator, List, Optional, Sequence, Tuple, Union
 
 import grpc
 import pytest
@@ -41,7 +41,7 @@ from retina.protocol.exit_codes import exit_code_to_message
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo, IPerfResponse
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
-from retina.protocol.gnb_pb2_grpc import GNBStub
+from retina.protocol.gnb_pb2_grpc import DUStub, GNBStub
 from retina.protocol.ric_pb2 import KpmMonXappRequest, NearRtRicStartInfo, RcXappRequest
 from retina.protocol.ric_pb2_grpc import NearRtRicStub
 from retina.protocol.ue_pb2 import (
@@ -194,7 +194,7 @@ def start_network(
 
 def ue_start_and_attach(
     ue_array: Sequence[UEStub],
-    gnb: GNBStub,
+    gnb: Union[GNBStub, DUStub],
     fivegc: FiveGCStub,
     ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
     attach_timeout: int = ATTACH_TIMEOUT,

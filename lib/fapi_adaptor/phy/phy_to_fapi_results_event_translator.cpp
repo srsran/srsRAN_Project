@@ -47,8 +47,9 @@ public:
 /// actual data-specific notifier, which will be later set up through the \ref set_slot_data_message_notifier() method.
 static slot_data_message_notifier_dummy dummy_data_notifier;
 
-phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator(srslog::basic_logger& logger_) :
-  logger(logger_), data_notifier(dummy_data_notifier)
+phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator(unsigned              sector_id_,
+                                                                           srslog::basic_logger& logger_) :
+  sector_id(sector_id_), logger(logger_), data_notifier(dummy_data_notifier)
 {
 }
 
@@ -71,9 +72,10 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
           result.result.preambles.begin(),
           result.result.preambles.end(),
           [](const prach_detection_result::preamble_indication& ind) { return ind.time_advance.to_seconds() < 0.0; })) {
-    logger.warning(
-        "All detected PRACH preambles have a negative TA value in slot={}, no PRACH.ind message will be generated",
-        slot);
+    logger.warning("Sector#{}: All detected PRACH preambles have a negative TA value in slot={}, no PRACH.ind message "
+                   "will be generated",
+                   sector_id,
+                   slot);
     return;
   }
 
@@ -109,7 +111,10 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
     double TA_ns = preamble.time_advance.to_seconds() * 1e9;
     // Ignore preambles with a negative TA value.
     if (TA_ns < 0.0) {
-      logger.warning("Detected PRACH preamble in slot={} has a negative TA value of {}ns, skipping it", slot, TA_ns);
+      logger.warning("Sector#{}: Detected PRACH preamble in slot={} has a negative TA value of {}ns, skipping it",
+                     sector_id,
+                     slot,
+                     TA_ns);
       continue;
     }
 
@@ -125,7 +130,7 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
 
   error_type<fapi::validator_report> validation_result = validate_rach_indication(msg);
   if (!validation_result) {
-    log_validator_report(validation_result.error(), logger);
+    log_validator_report(validation_result.error(), logger, sector_id);
     return;
   }
 
@@ -251,7 +256,7 @@ void phy_to_fapi_results_event_translator::notify_pusch_uci_indication(const ul_
 
   error_type<fapi::validator_report> validation_result = validate_uci_indication(msg);
   if (!validation_result) {
-    log_validator_report(validation_result.error(), logger);
+    log_validator_report(validation_result.error(), logger, sector_id);
     return;
   }
 
@@ -314,7 +319,7 @@ void phy_to_fapi_results_event_translator::notify_crc_indication(const ul_pusch_
 
   error_type<fapi::validator_report> validation_result = validate_crc_indication(msg);
   if (!validation_result) {
-    log_validator_report(validation_result.error(), logger);
+    log_validator_report(validation_result.error(), logger, sector_id);
     return;
   }
 
@@ -336,7 +341,7 @@ void phy_to_fapi_results_event_translator::notify_rx_data_indication(const ul_pu
 
   error_type<fapi::validator_report> validation_result = validate_rx_data_indication(msg);
   if (!validation_result) {
-    log_validator_report(validation_result.error(), logger);
+    log_validator_report(validation_result.error(), logger, sector_id);
     return;
   }
 
@@ -551,7 +556,7 @@ void phy_to_fapi_results_event_translator::on_new_pucch_results(const ul_pucch_r
 
   error_type<fapi::validator_report> validation_result = validate_uci_indication(msg);
   if (!validation_result) {
-    log_validator_report(validation_result.error(), logger);
+    log_validator_report(validation_result.error(), logger, sector_id);
     return;
   }
 
@@ -576,7 +581,7 @@ void phy_to_fapi_results_event_translator::on_new_srs_results(const ul_srs_resul
 
   error_type<fapi::validator_report> validation_result = validate_srs_indication(msg);
   if (!validation_result) {
-    log_validator_report(validation_result.error(), logger);
+    log_validator_report(validation_result.error(), logger, sector_id);
     return;
   }
 

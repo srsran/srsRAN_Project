@@ -29,10 +29,12 @@
 #include "srsran/du/du_update_config_helpers.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/ran/duplex_mode.h"
+#include "srsran/ran/pdcch/pdcch_candidates.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/rlc/rlc_srb_config_factory.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 #include "srsran/scheduler/config/csi_helper.h"
+#include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/scheduler/config/scheduler_expert_config_validator.h"
 
@@ -497,6 +499,34 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
                                           config_helpers::compute_max_nof_candidates(aggregation_level::n4, cset1_cfg),
                                           0,
                                           0});
+
+      // Reduce the number of PDCCH candidates if the total number of monitored PDCCH candidates per slot exceeds the
+      // maximum allowed value as per TS 38.213, Table 10.1-2.
+      auto reduce_nof_pdcch_candidates = [&ss2_cfg]() {
+        constexpr uint8_t min_nof_candidates = 1U;
+        // [Implementation-defined] We reduce the number of PDCCH candidates by alternating the aggregation levels
+        // n2 and n4.
+        if (ss2_cfg.get_nof_candidates()[1] >= ss2_cfg.get_nof_candidates()[2]) {
+          if (ss2_cfg.get_nof_candidates()[1] > min_nof_candidates) {
+            const uint8_t current_nof_candidates = ss2_cfg.get_nof_candidates()[1];
+            const uint8_t updated_nof_candidates = current_nof_candidates == 8 ? 6U : current_nof_candidates - 1U;
+            ss2_cfg.set_non_ss0_nof_candidates({0, updated_nof_candidates, ss2_cfg.get_nof_candidates()[2], 0, 0});
+          }
+        } else if (ss2_cfg.get_nof_candidates()[2] > min_nof_candidates) {
+          const uint8_t current_nof_candidates = ss2_cfg.get_nof_candidates()[2];
+          const uint8_t updated_nof_candidates = current_nof_candidates == 8 ? 6U : current_nof_candidates - 1U;
+          ss2_cfg.set_non_ss0_nof_candidates({0, ss2_cfg.get_nof_candidates()[1], updated_nof_candidates, 0, 0});
+        }
+      };
+
+      static constexpr uint8_t min_nof_pdcch_candidates = 1;
+      while (config_helpers::compute_tot_nof_monitored_pdcch_candidates_per_slot(out_cell.ue_ded_serv_cell_cfg,
+                                                                                 out_cell.dl_cfg_common) >
+                 max_nof_monitored_pdcch_candidates(param.scs_common) and
+             std::accumulate(ss2_cfg.get_nof_candidates().begin(), ss2_cfg.get_nof_candidates().end(), 0U) >
+                 min_nof_pdcch_candidates) {
+        reduce_nof_pdcch_candidates();
+      }
     }
 
     if (base_cell.pdcch_cfg.dedicated.ss2_type == search_space_configuration::type_t::common) {
@@ -918,9 +948,14 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
       app_sched_expert_cfg.ta_sched_cfg.ta_update_measurement_ul_sinr_threshold;
 
   // PUCCH and scheduler expert parameters.
-  out_cfg.ue.max_ul_grants_per_slot = cell.ul_common_cfg.max_ul_grants_per_slot;
-  out_cfg.ue.max_pucchs_per_slot    = cell.ul_common_cfg.max_pucchs_per_slot;
-  out_cfg.ue.min_k1                 = cell.pucch_cfg.min_k1;
+  out_cfg.ue.max_ul_grants_per_slot                   = cell.ul_common_cfg.max_ul_grants_per_slot;
+  out_cfg.ue.max_pucchs_per_slot                      = cell.ul_common_cfg.max_pucchs_per_slot;
+  out_cfg.ue.min_k1                                   = cell.pucch_cfg.min_k1;
+  const du_high_unit_pucch_config& pucch              = cell.pucch_cfg;
+  out_cfg.ue.ul_power_ctrl.enable_pucch_cl_pw_control = pucch.enable_closed_loop_pw_control;
+  out_cfg.ue.ul_power_ctrl.pucch_f0_sinr_target_dB    = pucch.pucch_f0_sinr_target_dB;
+  out_cfg.ue.ul_power_ctrl.pucch_f2_sinr_target_dB    = pucch.pucch_f2_sinr_target_dB;
+  out_cfg.ue.ul_power_ctrl.pucch_f3_sinr_target_dB    = pucch.pucch_f3_sinr_target_dB;
 
   // RA parameters.
   const du_high_unit_prach_config& prach = cell.prach_cfg;
