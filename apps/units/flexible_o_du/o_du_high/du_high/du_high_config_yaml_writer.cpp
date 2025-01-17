@@ -565,6 +565,8 @@ static void fill_du_high_sched_expert_section(YAML::Node& node, const du_high_un
     YAML::Node policy_pf_node;
     policy_pf_node["pf_fairness_coeff"] =
         std::get<time_qos_scheduler_expert_config>(config.policy_sched_expert_cfg).pf_fairness_coeff;
+    policy_pf_node["prio_enabled"] =
+        std::get<time_qos_scheduler_expert_config>(config.policy_sched_expert_cfg).priority_enabled;
 
     policy_node["qos_sched"]       = policy_pf_node;
     sched_node["policy_sched_cfg"] = policy_node;

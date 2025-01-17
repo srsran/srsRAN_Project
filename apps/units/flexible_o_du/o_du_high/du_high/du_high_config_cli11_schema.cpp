@@ -538,11 +538,6 @@ static void configure_cli11_csi_args(CLI::App& app, du_high_unit_csi_config& csi
 
 static void configure_cli11_qos_scheduler_expert_args(CLI::App& app, time_qos_scheduler_expert_config& expert_params)
 {
-  add_option(app,
-             "--pf_fairness_coeff",
-             expert_params.pf_fairness_coeff,
-             "Fairness Coefficient to use in Proportional Fair (PF) weight")
-      ->capture_default_str();
   add_option_function<std::string>(
       app,
       "--qos_weight_function",
@@ -558,6 +553,16 @@ static void configure_cli11_qos_scheduler_expert_args(CLI::App& app, time_qos_sc
       "QoS-aware scheduler policy weight function")
       ->default_str("gbr_prioritized")
       ->check(CLI::IsMember({"gbr_prioritized", "multivariate"}, CLI::ignore_case));
+  add_option(app,
+             "--pf_fairness_coeff",
+             expert_params.pf_fairness_coeff,
+             "Fairness Coefficient to use in Proportional Fair (PF) weight")
+      ->capture_default_str();
+  add_option(app,
+             "--prio_enabled",
+             expert_params.priority_enabled,
+             "Whether to take into account the QoS Flow priority in QoS-aware scheduling")
+      ->capture_default_str();
 }
 
 static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_scheduler_expert_config& expert_params)

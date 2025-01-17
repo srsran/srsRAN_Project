@@ -656,7 +656,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
       uci_cfg.beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
     }
     if (not std::holds_alternative<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value())) {
-      uci_cfg.beta_offsets_cfg.reset();
+      uci_cfg.beta_offsets_cfg.emplace();
       uci_cfg.beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
     }
     auto& b_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
