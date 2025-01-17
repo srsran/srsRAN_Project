@@ -71,7 +71,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 {
   assert_cu_cp_configuration_valid(cfg);
 
-  nrppa_entity = create_nrppa_entity(cfg, nrppa_cu_cp_ev_notifier);
+  nrppa_entity = create_nrppa_entity(cfg, nrppa_cu_cp_ev_notifier, common_task_sched);
 
   // connect event notifiers to layers
   ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_handler(), paging_handler);
@@ -159,9 +159,11 @@ bool cu_cp_impl::amfs_are_connected()
 #ifndef SRSRAN_HAS_ENTERPRISE
 
 std::unique_ptr<srsran::srs_cu_cp::nrppa_interface>
-cu_cp_impl::create_nrppa_entity(const cu_cp_configuration& cu_cp_cfg, nrppa_cu_cp_notifier& cu_cp_notif)
+cu_cp_impl::create_nrppa_entity(const cu_cp_configuration& cu_cp_cfg,
+                                nrppa_cu_cp_notifier&      cu_cp_notif,
+                                common_task_scheduler&     common_task_sched_)
 {
-  return create_nrppa(cu_cp_cfg, cu_cp_notif);
+  return create_nrppa(cu_cp_cfg, cu_cp_notif, common_task_sched_);
 }
 
 #endif // SRSRAN_HAS_ENTERPRISE

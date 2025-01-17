@@ -70,7 +70,8 @@ public:
 
   // NRPPA interface.
   std::unique_ptr<nrppa_interface> create_nrppa_entity(const cu_cp_configuration& cu_cp_cfg,
-                                                       nrppa_cu_cp_notifier&      cu_cp_notif);
+                                                       nrppa_cu_cp_notifier&      cu_cp_notif,
+                                                       common_task_scheduler&     common_task_sched_);
 
   // CU-UP handler.
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
