@@ -9,8 +9,8 @@
  */
 
 #include "du_processor_factory.h"
-#include "../cu_cp_controller/common_task_scheduler.h"
 #include "du_processor_impl.h"
+#include "srsran/cu_cp/common_task_scheduler.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.
 

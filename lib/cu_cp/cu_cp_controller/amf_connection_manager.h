@@ -11,7 +11,7 @@
 #pragma once
 
 #include "../ngap_repository.h"
-#include "common_task_scheduler.h"
+#include "srsran/cu_cp/common_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/ran/plmn_identity.h"
 #include <future>

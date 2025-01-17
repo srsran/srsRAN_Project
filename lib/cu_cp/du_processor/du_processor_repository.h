@@ -13,12 +13,12 @@
 #include "../adapters/du_processor_adapters.h"
 #include "../adapters/f1ap_adapters.h"
 #include "../adapters/ngap_adapters.h"
-#include "../cu_cp_controller/common_task_scheduler.h"
 #include "../cu_cp_impl_interface.h"
 #include "../task_schedulers/du_task_scheduler.h"
 #include "../ue_manager/ue_manager_impl.h"
 #include "du_configuration_manager.h"
 #include "du_metrics_handler.h"
+#include "srsran/cu_cp/common_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/support/async/async_task.h"
 #include <unordered_map>
