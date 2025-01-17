@@ -9,8 +9,8 @@
  */
 
 #include "cu_appconfig_yaml_writer.h"
+#include "apps/services/f1u/f1u_config_yaml_writer.h"
 #include "apps/services/logger/logger_appconfig_yaml_writer.h"
-#include "apps/services/network/udp_config_yaml_writer.h"
 #include "cu_appconfig.h"
 
 using namespace srsran;
@@ -28,29 +28,10 @@ static void fill_cu_appconfig_f1ap_section(YAML::Node node, const srs_cu::cu_f1a
   f1ap_node["bind_address"] = config.bind_addr;
 }
 
-static void fill_cu_up_f1u_socket_entry(YAML::Node& node, const srsran::f1u_socket_appconfig& config)
-{
-  node["bind_addr"] = config.bind_addr;
-  node["ext_addr"]  = config.udp_config.ext_addr;
-  fill_udp_config_in_yaml_schema(node["udp"], config.udp_config);
-}
-
-static void fill_cu_up_f1u_socket_section(YAML::Node node, const std::vector<srsran::f1u_socket_appconfig>& sock_cfg)
-{
-  auto sock_node = node["socket"];
-  for (const auto& cfg : sock_cfg) {
-    YAML::Node node_sock;
-    fill_cu_up_f1u_socket_entry(node_sock, cfg);
-    sock_node.push_back(node_sock);
-  }
-}
-
-// TODO rm from here.
-static void fill_cu_appconfig_f1u_section(YAML::Node node, const f1u_sockets_appconfig& config)
+static void fill_cu_appconfig_f1u_section(YAML::Node& node, const f1u_sockets_appconfig& config)
 {
   YAML::Node cu_up_node = node["cu_up"];
-  YAML::Node f1u_node   = cu_up_node["f1u"];
-  fill_cu_up_f1u_socket_section(node, config.f1u_socket_cfg);
+  fill_f1u_config_yaml_schema(cu_up_node, config);
 }
 
 void srsran::fill_cu_appconfig_in_yaml_schema(YAML::Node& node, const cu_appconfig& config)

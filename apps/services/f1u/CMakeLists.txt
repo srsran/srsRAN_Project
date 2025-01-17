@@ -7,7 +7,7 @@
 #
 
 set(SOURCES f1u_cli11_schema.cpp
-#	udp_config_yaml_writer.cpp
+            f1u_config_yaml_writer.cpp
 )
 
 add_library(srsran_f1u_app_service STATIC ${SOURCES})

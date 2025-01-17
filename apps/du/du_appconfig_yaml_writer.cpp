@@ -9,6 +9,7 @@
  */
 
 #include "du_appconfig_yaml_writer.h"
+#include "apps/services/f1u/f1u_config_yaml_writer.h"
 #include "apps/services/logger/logger_appconfig_yaml_writer.h"
 #include "du_appconfig.h"
 
@@ -63,9 +64,7 @@ static void fill_du_appconfig_buffer_pool_section(YAML::Node node, const buffer_
 static void fill_du_appconfig_f1u_section(YAML::Node node, const srs_du::f1u_appconfig& config)
 {
   node["queue_size"] = config.pdu_queue_size;
-  // TODO fix writing yaml writer section
-  // node["bind_addr"]  = config.bind_address;
-  // node["ext_addr"]   = config.ext_addr;
+  fill_f1u_config_yaml_schema(node, config.f1u_sockets);
 }
 
 static void fill_du_appconfig_f1ap_section(YAML::Node node, const srs_du::f1ap_appconfig& config)
