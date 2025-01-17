@@ -107,7 +107,9 @@ public:
   virtual void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) = 0;
 
   /// \brief Handles a DL non UE associated NRPPa transport.
-  virtual void handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) = 0;
+  /// \param[in] amf_index The index of the AMF that received the NRPPa transport.
+  /// \param[in] nrppa_pdu The NRPPa transport PDU.
+  virtual void handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) = 0;
 
   /// \brief Handle N2 AMF connection drop.
   virtual void handle_n2_disconnection() = 0;
@@ -126,8 +128,9 @@ public:
 
   /// \brief Handle a UL NRPPa PDU.
   /// \param[in] msg The NRPPa PDU.
-  /// \param[in] ue_index For UE associated messages the index of the UE.
-  virtual void handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) = 0;
+  /// \param[in] ue_or_amf_index The UE index for UE associated NRPPa messages or the AMF index for non UE associated
+  virtual void handle_ul_nrppa_pdu(const byte_buffer&                    nrppa_pdu,
+                                   std::variant<ue_index_t, amf_index_t> ue_or_amf_index) = 0;
 };
 
 /// Handler of E1AP-CU-CP events.

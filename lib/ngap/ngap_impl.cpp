@@ -1003,6 +1003,15 @@ void ngap_impl::handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, con
   logger.info("UL UE associated NRPPa messages are not supported");
 }
 
+async_task<void> ngap_impl::handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu)
+{
+  logger.info("UL non UE associated NRPPa messages are not supported");
+  return launch_async([](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_RETURN();
+  });
+}
+
 #endif // SRSRAN_HAS_ENTERPRISE
 
 void ngap_impl::remove_ue_context(ue_index_t ue_index)

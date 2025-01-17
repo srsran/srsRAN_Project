@@ -58,8 +58,8 @@ public:
 
   /// \brief Notifies about a NRPPa PDU.
   /// \param[in] nrppa_pdu The NRPPa PDU.
-  /// \param[in] ue_index For UE associated messages the index of the UE.
-  virtual void on_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) = 0;
+  /// \param[in] ue_or_amf_index The UE index for UE associated NRPPa messages or the AMF index for non UE associated
+  virtual void on_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::variant<ue_index_t, amf_index_t> ue_or_amf_index) = 0;
 };
 
 /// This interface is used to push NRPPA messages to the NRPPA interface.
@@ -69,7 +69,11 @@ public:
   virtual ~nrppa_message_handler() = default;
 
   /// Handle the incoming NRPPA message.
-  virtual void handle_new_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) = 0;
+  /// \param[in] nrppa_pdu The NRPPA message.
+  /// \param[in] ue_or_amf_index The UE index for UE associated NRPPa messages or the AMF index for non UE associated
+  /// NRPPa messages.
+  virtual void handle_new_nrppa_pdu(const byte_buffer&                    nrppa_pdu,
+                                    std::variant<ue_index_t, amf_index_t> ue_or_amf_index) = 0;
 };
 
 /// Handle ue context removal.

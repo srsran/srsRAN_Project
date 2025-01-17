@@ -66,7 +66,8 @@ public:
                                                               const nr_cell_global_id_t& cgi,
                                                               const unsigned             tac) override;
   const ngap_context_t& get_ngap_context() const override { return context; };
-  void handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
+  void             handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
+  async_task<void> handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu) override;
 
   // ngap_statistics_handler
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }

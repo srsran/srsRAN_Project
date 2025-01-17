@@ -106,12 +106,13 @@ public:
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
   ue_index_t       handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) override;
   void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
-  void handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) override;
+  void handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) override;
   void handle_n2_disconnection() override;
 
   // cu_cp_nrppa_handler.
   nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(ue_index_t ue_index) override;
-  void handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) override;
+  void                     handle_ul_nrppa_pdu(const byte_buffer&                    nrppa_pdu,
+                                               std::variant<ue_index_t, amf_index_t> ue_or_amf_index) override;
 
   // cu_cp_measurement_handler.
   std::optional<rrc_meas_cfg>

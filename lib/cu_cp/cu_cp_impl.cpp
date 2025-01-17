@@ -613,31 +613,28 @@ void cu_cp_impl::handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index
   logger.info("DL UE associated NRPPa messages are not supported");
 }
 
-#endif // SRSRAN_HAS_ENTERPRISE
-
-void cu_cp_impl::handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu)
+void cu_cp_impl::handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu)
 {
   logger.info("DL non UE associated NRPPa messages are not supported");
 }
-
-void cu_cp_impl::handle_n2_disconnection()
-{
-  // TODO
-}
-
-#ifndef SRSRAN_HAS_ENTERPRISE
 
 nrppa_cu_cp_ue_notifier* cu_cp_impl::handle_new_nrppa_ue(ue_index_t ue_index)
 {
   return nullptr;
 }
 
-void cu_cp_impl::handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index)
+void cu_cp_impl::handle_ul_nrppa_pdu(const byte_buffer&                    nrppa_pdu,
+                                     std::variant<ue_index_t, amf_index_t> ue_or_amf_index)
 {
   logger.info("UL NRPPa messages are not supported");
 }
 
 #endif // SRSRAN_HAS_ENTERPRISE
+
+void cu_cp_impl::handle_n2_disconnection()
+{
+  // TODO
+}
 
 std::optional<rrc_meas_cfg>
 cu_cp_impl::handle_measurement_config_request(ue_index_t                  ue_index,

@@ -53,7 +53,7 @@ public:
   virtual void on_new_message(const ngap_message& msg) = 0;
 };
 
-/// Handle NGAP interface management procedures as defined in TS 38.413 section 8.7
+/// Handle NGAP interface management procedures as defined in TS 38.413 section 8.7.
 class ngap_connection_manager
 {
 public:
@@ -77,7 +77,7 @@ public:
   virtual async_task<void> handle_ng_reset_message(const cu_cp_ng_reset& msg) = 0;
 };
 
-/// Handle ue context removal
+/// Handle ue context removal.
 class ngap_ue_context_removal_handler
 {
 public:
@@ -105,7 +105,7 @@ public:
   virtual byte_buffer on_handover_preparation_message_required() = 0;
 };
 
-/// NGAP notifier to the CU-CP UE
+/// NGAP notifier to the CU-CP UE.
 class ngap_cu_cp_ue_notifier
 {
 public:
@@ -205,7 +205,9 @@ public:
   virtual void on_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) = 0;
 
   /// \brief Notifies the CU-CP about a DL non UE associated NRPPa transport.
-  virtual void on_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) = 0;
+  /// \param[in] amf_index The index of the AMF that received the NRPPa transport.
+  /// \param[in] nrppa_pdu The NRPPa transport PDU.
+  virtual void on_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) = 0;
 };
 
 /// Handle NGAP NAS Message procedures as defined in TS 38.413 section 8.6.
@@ -257,8 +259,11 @@ public:
   /// \brief Get the supported PLMNs.
   virtual const ngap_context_t& get_ngap_context() const = 0;
 
-  /// \brief Handle the reception of a UL NRPPa message.
+  /// \brief Handle the reception of a UL UE associated NRPPa message.
   virtual void handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, const byte_buffer& nrppa_pdu) = 0;
+
+  /// \brief Handle the reception of a UL non UE associated NRPPa message.
+  virtual async_task<void> handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu) = 0;
 };
 
 /// Interface to control the NGAP.

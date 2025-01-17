@@ -9,6 +9,7 @@
  */
 
 #include "nrppa_dummy_impl.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -24,7 +25,8 @@ void nrppa_dummy_impl::remove_ue_context(ue_index_t ue_index)
   logger.info("NRPPa messages are not supported");
 }
 
-void nrppa_dummy_impl::handle_new_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index)
+void nrppa_dummy_impl::handle_new_nrppa_pdu(const byte_buffer&                    nrppa_pdu,
+                                            std::variant<ue_index_t, amf_index_t> ue_or_amf_index)
 {
   logger.info("NRPPa messages are not supported");
 }
