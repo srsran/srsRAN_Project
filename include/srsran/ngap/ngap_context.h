@@ -25,6 +25,7 @@ namespace srs_cu_cp {
 struct ngap_context_t {
   gnb_id_t                             gnb_id = {0, 22};
   std::string                          ran_node_name;
+  amf_index_t                          amf_index;
   std::vector<supported_tracking_area> supported_tas;
   std::vector<guami_t>                 served_guami_list;
   uint16_t                             default_paging_drx = 256;    // default paging drx

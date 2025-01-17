@@ -48,6 +48,7 @@ ngap_impl::ngap_impl(const ngap_configuration& ngap_cfg_,
 {
   context.gnb_id                      = ngap_cfg_.gnb_id;
   context.ran_node_name               = ngap_cfg_.ran_node_name;
+  context.amf_index                   = ngap_cfg_.amf_index;
   context.supported_tas               = ngap_cfg_.supported_tas;
   context.request_pdu_session_timeout = ngap_cfg_.request_pdu_session_timeout;
 }
