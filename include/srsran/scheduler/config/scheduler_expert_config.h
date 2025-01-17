@@ -182,9 +182,14 @@ struct scheduler_si_expert_config {
 
 /// \brief Random Access scheduling statically configurable expert parameters.
 struct scheduler_ra_expert_config {
-  sch_mcs_index rar_mcs_index;
-  sch_mcs_index msg3_mcs_index;
-  unsigned      max_nof_msg3_harq_retxs;
+  /// MCS to use for RAR PDSCH.
+  sch_mcs_index rar_mcs_index = 0;
+  /// MCS to use for Msg3 PUSCH.
+  sch_mcs_index msg3_mcs_index = 0;
+  /// Maximum number of Msg3 PUSCH retransmissions.
+  unsigned max_nof_msg3_harq_retxs = 4;
+  /// Whether contention-free RA is enabled.
+  bool cfra_enabled = false;
 };
 
 /// \brief Paging scheduling statically configurable expert parameters.

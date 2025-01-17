@@ -679,6 +679,14 @@ validate_prach_cell_unit_config(const du_high_unit_prach_config& config, nr_band
     return false;
   }
 
+  if (config.cfra_enabled and config.total_nof_ra_preambles == MAX_NOF_RA_PREAMBLES_PER_OCCASION) {
+    fmt::print("Total nof. RA preambles per occasion ({}) used for Contention-based Random Access should be lower than "
+               "{}, if Contention-free Random Access is enabled.\n",
+               config.total_nof_ra_preambles,
+               MAX_NOF_RA_PREAMBLES_PER_OCCASION);
+    return false;
+  }
+
   // See TS 38.331, ssb-perRACH-OccasionAndCB-PreamblesPerSSB and totalNumberOfRA-Preambles.
   // totalNumberOfRA-Preambles should be a multiple of the number of SSBs per RACH occasion.
   bool is_total_nof_ra_preambles_valid = true;

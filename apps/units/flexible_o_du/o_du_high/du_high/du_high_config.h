@@ -607,8 +607,11 @@ struct du_high_unit_prach_config {
   /// \c preambleReceivedTargetPower, target power at the network rx side, in dBm. Only values multiple of 2 are
   /// valid.
   int preamble_rx_target_pw = -100;
-  /// Total number of PRACH preambles used for contention based and contention free 4-step or 2-step random access.
+  /// Total number of PRACH preambles used for contention based random access (CBRA).
   unsigned total_nof_ra_preambles = 64;
+  /// \brief Whether to enable contention-free random access (CFRA) or not. If enabled, the number of RA preambles
+  /// used for CBRA must be less than 64.
+  bool cfra_enabled = false;
   /// Offset of lowest PRACH transmission occasion in frequency domain respective to PRB 0. To minimize interference
   /// with the PUCCH, the user should leave some guardband between the PUCCH CRBs and the PRACH PRBs.
   /// Possible values: {0,...,MAX_NOF_PRB - 1}.

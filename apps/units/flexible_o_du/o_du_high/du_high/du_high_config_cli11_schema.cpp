@@ -1128,9 +1128,19 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
       app, "--max_msg3_harq_retx", prach_params.max_msg3_harq_retx, "Maximum number of message 3 HARQ retransmissions")
       ->capture_default_str()
       ->check(CLI::Range(0, 4));
-  add_option(
-      app, "--total_nof_ra_preambles", prach_params.total_nof_ra_preambles, "Number of different PRACH preambles")
+  add_option(app,
+             "--total_nof_ra_preambles",
+             prach_params.total_nof_ra_preambles,
+             "Number of different contention-based PRACH preambles per occasion. If less than 64 preambles are used, "
+             "the remaining preambles can be used for contention-free PRACHs")
+      ->capture_default_str()
       ->check(CLI::Range(1, 64));
+  add_option(app,
+             "--cfra_enabled",
+             prach_params.cfra_enabled,
+             "Whether to enable Contention-free Random Access (CFRA). If enabled, the total_nof_ra_preambles must be "
+             "lower than 64")
+      ->capture_default_str();
   add_option(app,
              "--prach_frequency_start",
              prach_params.prach_frequency_start,
