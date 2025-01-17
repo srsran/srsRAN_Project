@@ -289,7 +289,7 @@ void rlc_tx_um_entity::update_mac_buffer_state()
 {
   pending_buffer_state.clear(std::memory_order_seq_cst);
   rlc_buffer_state bs = get_buffer_state();
-  if (not(bs.pending_bytes > MAX_DL_PDU_LENGTH && prev_buffer_state.pending_bytes > MAX_DL_PDU_LENGTH)) {
+  if (bs.pending_bytes <= MAX_DL_PDU_LENGTH || prev_buffer_state.pending_bytes <= MAX_DL_PDU_LENGTH) {
     logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
     lower_dn.on_buffer_state_update(bs);
   } else {
