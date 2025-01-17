@@ -24,7 +24,6 @@ static gnbdu_config_update_request create_du_config_update(const f1_setup_reques
 
   // Copy F1 Setup info to gNB-DU config.
   req.cells_to_mod.resize(1);
-  req.cells_to_mod[0].old_nr_cgi  = f1setup.served_cells[0].cell_info.nr_cgi;
   req.cells_to_mod[0].cell_info   = du_served_cell_info{f1setup.served_cells[0].cell_info};
   req.cells_to_mod[0].du_sys_info = f1setup.served_cells[0].du_sys_info;
 

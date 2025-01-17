@@ -72,7 +72,6 @@ async_task<gnbdu_config_update_response> du_param_config_procedure::handle_f1_gn
   for (unsigned i = 0, e = changed_cells.size(); i != e; ++i) {
     const du_cell_config& cell_cfg = du_cells.get_cell_cfg(changed_cells[i]);
 
-    f1_req.cells_to_mod[i].old_nr_cgi  = cell_cfg.nr_cgi;
     f1_req.cells_to_mod[i].cell_info   = make_f1ap_du_cell_info(cell_cfg);
     f1_req.cells_to_mod[i].du_sys_info = make_f1ap_du_sys_info(cell_cfg);
   }

@@ -30,8 +30,9 @@ sib_pdu_assembler::sib_pdu_assembler(const std::vector<byte_buffer>& bcch_dl_sch
     bcch_payloads[i].info.version      = 0;
     bcch_payloads[i].info.payload_size = units::bytes(bcch_dl_sch_payloads[i].length());
 
-    // Note: Resizing the bcch_payload is forbidden, to avoid vector memory relocations and invalidation of pointers
-    // passed to the lower layers. For this reason, we pre-reserve any potential padding bytes.
+    // Note: Resizing the bcch_payload after this point onwards is forbidden to avoid vector memory relocations and
+    // invalidation of pointers passed to the lower layers. For this reason, we pre-reserve space for any potential
+    // padding bytes.
     bcch_payloads[i].info.payload_and_padding.resize(bcch_dl_sch_payloads[i].length() + MAX_PADDING_BYTES_LEN, 0);
     std::copy(bcch_dl_sch_payloads[i].begin(),
               bcch_dl_sch_payloads[i].end(),
@@ -39,7 +40,7 @@ sib_pdu_assembler::sib_pdu_assembler(const std::vector<byte_buffer>& bcch_dl_sch
   }
 }
 
-unsigned sib_pdu_assembler::handle_new_sib1_payload(byte_buffer sib1_pdu)
+unsigned sib_pdu_assembler::handle_new_sib1_payload(const byte_buffer& sib1_pdu)
 {
   unsigned version_id = bcch_payloads[0].info.version + 1;
 
@@ -47,6 +48,9 @@ unsigned sib_pdu_assembler::handle_new_sib1_payload(byte_buffer sib1_pdu)
   bcch_info new_bcch;
   new_bcch.version      = version_id;
   new_bcch.payload_size = units::bytes(sib1_pdu.length());
+  // Note: Resizing the bcch_payload after this point onwards is forbidden to avoid vector memory relocations and
+  // invalidation of pointers passed to the lower layers. For this reason, we pre-reserve space for any potential
+  // padding bytes.
   new_bcch.payload_and_padding.resize(sib1_pdu.length() + MAX_PADDING_BYTES_LEN, 0);
   std::copy(sib1_pdu.begin(), sib1_pdu.end(), new_bcch.payload_and_padding.begin());
 

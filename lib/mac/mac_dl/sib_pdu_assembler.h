@@ -23,7 +23,7 @@ public:
 
   /// Stores a new SIB1 PDU to be broadcast.
   /// \return Returns the version ID of the new PDU.
-  unsigned handle_new_sib1_payload(byte_buffer sib1_pdu);
+  unsigned handle_new_sib1_payload(const byte_buffer& sib1_pdu);
 
   span<const uint8_t> encode_sib1_pdu(unsigned si_version, units::bytes tbs_bytes);
 
@@ -31,8 +31,10 @@ public:
 
 private:
   struct bcch_info {
+    /// Current version of the BCCH-DL-SCH message.
     unsigned version = 0;
-    unsigned nof_tx  = 0;
+    /// Number of times this BCCH-DL-SCH message was sent to lower layers.
+    unsigned nof_tx = 0;
     /// Length of the original BCCH-DL-SCH message, without padding, defined in the MAC cell configuration.
     units::bytes         payload_size;
     std::vector<uint8_t> payload_and_padding;
@@ -50,7 +52,7 @@ private:
 
   srslog::basic_logger& logger;
 
-  // Holds the original BCCH-DL-SCH messages, defined in the MAC cell configuration.
+  // Holds the currently configured BCCH-DL-SCH messages.
   std::vector<bcch_context> bcch_payloads;
 };
 

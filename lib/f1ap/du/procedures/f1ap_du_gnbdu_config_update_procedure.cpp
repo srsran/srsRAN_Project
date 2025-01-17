@@ -61,8 +61,9 @@ void f1ap_du_gnbdu_config_update_procedure::send_gnbdu_cu_update_request()
     served_cells_to_modify_item_s& asn1cell = upd->served_cells_to_modify_list[i].value().served_cells_to_modify_item();
 
     // set old NR-CGI.
-    asn1cell.old_nr_cgi.plmn_id = celltomod.old_nr_cgi.plmn_id.to_bytes();
-    asn1cell.old_nr_cgi.nr_cell_id.from_number(celltomod.old_nr_cgi.nci.value());
+    // Note: We do not yet support old NR CGI != NR CGI.
+    asn1cell.old_nr_cgi.plmn_id = celltomod.cell_info.nr_cgi.plmn_id.to_bytes();
+    asn1cell.old_nr_cgi.nr_cell_id.from_number(celltomod.cell_info.nr_cgi.nci.value());
 
     // set servedCellInfo.
     asn1cell.served_cell_info = make_asn1_served_cell_info(celltomod.cell_info, {});

@@ -69,7 +69,7 @@ struct f1_setup_response_message {
 
 /// Cell whose parameters need to be modified in the DU.
 struct f1ap_cell_to_be_modified {
-  nr_cell_global_id_t old_nr_cgi;
+  /// New served Cell Information.
   du_served_cell_info cell_info;
   /// New System Information.
   std::optional<gnb_du_sys_info> du_sys_info;
