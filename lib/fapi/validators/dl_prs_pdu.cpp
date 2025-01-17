@@ -127,9 +127,9 @@ bool srsran::fapi::validate_dl_prs_pdu(const dl_prs_pdu& pdu, validator_report& 
   result &= validate_scs(static_cast<unsigned>(pdu.scs), report);
   result &= validate_cp(static_cast<unsigned>(pdu.cp), report);
   result &= validate_n_id(pdu.nid_prs, report);
-  result &= validate_comb_size(pdu.comb_size, report);
-  result &= validate_comb_offset(pdu.comb_offset, pdu.comb_size, report);
-  result &= validate_nof_symbols(pdu.num_symbols, report);
+  result &= validate_comb_size(static_cast<unsigned>(pdu.comb_size), report);
+  result &= validate_comb_offset(pdu.comb_offset, static_cast<unsigned>(pdu.comb_size), report);
+  result &= validate_nof_symbols(static_cast<unsigned>(pdu.num_symbols), report);
   result &= validate_symbol_offset(pdu.first_symbol, report);
   result &= validate_nof_rbs(pdu.num_rbs, report);
   result &= validate_start_rb(pdu.start_rb, report);

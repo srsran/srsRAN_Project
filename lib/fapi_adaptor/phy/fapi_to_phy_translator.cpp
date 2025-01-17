@@ -15,6 +15,7 @@
 #include "srsran/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsran/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsran/fapi_adaptor/phy/messages/prach.h"
+#include "srsran/fapi_adaptor/phy/messages/prs.h"
 #include "srsran/fapi_adaptor/phy/messages/pucch.h"
 #include "srsran/fapi_adaptor/phy/messages/pusch.h"
 #include "srsran/fapi_adaptor/phy/messages/srs.h"
@@ -156,6 +157,7 @@ struct downlink_pdus {
   static_vector<pdsch_processor::pdu_t, MAX_PDSCH_PDUS_PER_SLOT>          pdsch;
   static_vector<ssb_processor::pdu_t, MAX_SSB_PER_SLOT>                   ssb;
   static_vector<nzp_csi_rs_generator::config_t, MAX_CSI_RS_PDUS_PER_SLOT> csi_rs;
+  static_vector<prs_generator_configuration, MAX_PRS_PDUS_PER_SLOT>       prs;
 };
 
 /// Helper struct to store the uplink channel PHY PDUs.
@@ -282,6 +284,20 @@ static expected<downlink_pdus> translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_
         }
         break;
       }
+      case fapi::dl_pdu_type::PRS: {
+        prs_generator_configuration& prs_pdu = pdus.prs.emplace_back();
+        convert_prs_fapi_to_phy(prs_pdu, pdu.prs_pdu, msg.sfn, msg.slot, pm_repo);
+        error_type<std::string> phy_prs_validator = dl_pdu_validator.is_valid(prs_pdu);
+        if (!phy_prs_validator.has_value()) {
+          logger.warning("Sector#{}: Skipping DL_TTI.request: PRS PDU flagged as invalid by the Upper PHY with the "
+                         "following error\n    {}",
+                         sector_id,
+                         phy_prs_validator.error());
+
+          return make_unexpected(default_error_t{});
+        }
+        break;
+      }
       default:
         srsran_assert(0,
                       "Sector#{}: DL_TTI.request PDU type value '{}' not recognized.",
@@ -357,6 +373,9 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
   }
   for (const auto& csi : pdus.value().csi_rs) {
     controller->process_nzp_csi_rs(csi);
+  }
+  for (const auto& prs : pdus.value().prs) {
+    controller->process_prs(prs);
   }
   for (const auto& pdsch : pdus.value().pdsch) {
     pdsch_repository.pdus.push_back(pdsch);

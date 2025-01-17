@@ -22,6 +22,7 @@
 #include "srsran/ran/prach/prach_format_type.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
 #include "srsran/ran/prach/restricted_set_config.h"
+#include "srsran/ran/prs/prs.h"
 #include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/pusch/pusch_context.h"
 #include "srsran/ran/pusch/pusch_mcs.h"
@@ -44,7 +45,6 @@
 #include <utility>
 
 namespace srsran {
-
 namespace fapi {
 
 /// Message type IDs.
@@ -410,18 +410,19 @@ struct dl_ssb_pdu {
 
 /// Downlink PRS PDU information.
 struct dl_prs_pdu {
-  subcarrier_spacing   scs;
-  cyclic_prefix        cp;
-  uint16_t             nid_prs;
-  uint16_t             pdu_index;
-  uint8_t              comb_size;
-  uint8_t              comb_offset;
-  uint8_t              num_symbols;
-  uint8_t              first_symbol;
-  uint16_t             num_rbs;
-  uint16_t             start_rb;
-  std::optional<float> prs_power_offset;
-  // :TODO: Puncturing, spatial stream, precoding and backward compatible extension.
+  subcarrier_spacing               scs;
+  cyclic_prefix                    cp;
+  uint16_t                         nid_prs;
+  uint16_t                         pdu_index;
+  prs_comb_size                    comb_size;
+  uint8_t                          comb_offset;
+  prs_num_symbols                  num_symbols;
+  uint8_t                          first_symbol;
+  uint16_t                         num_rbs;
+  uint16_t                         start_rb;
+  std::optional<float>             prs_power_offset;
+  tx_precoding_and_beamforming_pdu precoding_and_beamforming;
+  // :TODO: Puncturing, spatial stream and backward compatible extension.
 };
 
 /// Downlink PDU type ID.

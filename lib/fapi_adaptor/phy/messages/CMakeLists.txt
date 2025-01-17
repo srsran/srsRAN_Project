@@ -11,6 +11,7 @@ set(SOURCES
         pdcch.cpp
         pdsch.cpp
         prach.cpp
+        prs.cpp
         pucch.cpp
         pusch.cpp
         srs.cpp
