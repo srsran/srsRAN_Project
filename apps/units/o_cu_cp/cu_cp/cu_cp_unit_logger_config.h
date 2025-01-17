@@ -27,6 +27,8 @@ struct cu_cp_unit_logger_config {
   int hex_max_size = 0;
   /// Enable JSON generation for the F1AP Tx and Rx PDUs.
   bool f1ap_json_enabled = false;
+  /// Enable JSON generation for the E1AP Tx and Rx PDUs.
+  bool e1ap_json_enabled = false;
 };
 
 } // namespace srsran

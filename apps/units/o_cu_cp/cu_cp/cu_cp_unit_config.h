@@ -148,6 +148,12 @@ struct cu_cp_unit_f1ap_config {
   unsigned procedure_timeout = 1000;
 };
 
+/// E1AP-CU-CP configuration parameters.
+struct cu_cp_unit_e1ap_config {
+  /// Timeout for the E1AP procedures in milliseconds.
+  unsigned procedure_timeout = 1000;
+};
+
 /// RLC UM TX configuration
 struct cu_cp_unit_rlc_tx_um_config {
   /// Number of bits used for sequence number.
@@ -286,8 +292,10 @@ struct cu_cp_unit_config {
   cu_cp_unit_rrc_config rrc_config;
   /// Security configuration.
   cu_cp_unit_security_config security_config;
-  /// F1-AP configuration.
+  /// F1AP configuration.
   cu_cp_unit_f1ap_config f1ap_config;
+  /// E1AP configuration.
+  cu_cp_unit_e1ap_config e1ap_config;
   /// QoS configuration.
   std::vector<cu_cp_unit_qos_config> qos_cfg;
   /// Network slice configuration.

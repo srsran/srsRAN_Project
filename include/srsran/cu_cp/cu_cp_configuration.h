@@ -13,6 +13,7 @@
 #include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/cu_cp/mobility_manager_config.h"
 #include "srsran/cu_cp/ue_configuration.h"
+#include "srsran/e1ap/cu_cp/e1ap_configuration.h"
 #include "srsran/e2/e2_cu.h"
 #include "srsran/e2/e2ap_configuration.h"
 #include "srsran/e2/gateways/e2_connection_client.h"
@@ -114,6 +115,8 @@ struct cu_cp_configuration {
   rrc_params rrc;
   /// F1AP layer-specific parameters.
   f1ap_configuration f1ap;
+  /// E1AP layer-specific parameters.
+  e1ap_configuration e1ap;
   /// UE Security-specific parameters.
   security_params security;
   /// SRB and DRB configuration of created UEs.

@@ -93,6 +93,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
                                            security::ciphering_algorithm::nea3};
 
   cu_cp_cfg.f1ap.json_log_enabled = true;
+  cu_cp_cfg.e1ap.json_log_enabled = true;
 
   // > Mobility config
   cu_cp_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements = params.trigger_ho_from_measurements;
@@ -200,6 +201,9 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
 
   // > F1AP config
   cu_cp_cfg.f1ap.proc_timeout = std::chrono::milliseconds(10000); // procedure timeouts should only occur intentionally
+
+  // > E1AP config
+  cu_cp_cfg.e1ap.proc_timeout = std::chrono::milliseconds(10000); // procedure timeouts should only occur intentionally
 
   // > UE config
   cu_cp_cfg.ue.request_pdu_session_timeout =

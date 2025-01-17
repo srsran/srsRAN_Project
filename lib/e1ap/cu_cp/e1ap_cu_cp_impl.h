@@ -13,6 +13,7 @@
 #include "procedures/e1ap_transaction_manager.h"
 #include "ue_context/e1ap_cu_cp_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/e1ap/cu_cp/e1ap_configuration.h"
 #include "srsran/e1ap/cu_cp/e1ap_cu_cp.h"
 #include "srsran/support/executors/task_executor.h"
 #include <memory>
@@ -25,7 +26,8 @@ class e1ap_event_manager;
 class e1ap_cu_cp_impl final : public e1ap_interface
 {
 public:
-  e1ap_cu_cp_impl(e1ap_message_notifier&         e1ap_pdu_notifier_,
+  e1ap_cu_cp_impl(const e1ap_configuration&      e1ap_cfg_,
+                  e1ap_message_notifier&         e1ap_pdu_notifier_,
                   e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                   e1ap_cu_cp_notifier&           cu_cp_notifier_,
                   timer_manager&                 timers_,
@@ -90,7 +92,8 @@ private:
   /// \brief Log an E1AP Tx/Rx PDU.
   void log_pdu(bool is_rx, const e1ap_message& e1ap_pdu);
 
-  srslog::basic_logger& logger;
+  const e1ap_configuration e1ap_cfg;
+  srslog::basic_logger&    logger;
 
   // nofifiers and handles
   e1ap_message_notifier_with_logging pdu_notifier;

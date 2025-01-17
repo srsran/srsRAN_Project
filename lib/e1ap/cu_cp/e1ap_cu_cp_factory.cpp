@@ -17,14 +17,20 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 std::unique_ptr<e1ap_interface>
-srsran::srs_cu_cp::create_e1ap(e1ap_message_notifier&         e1ap_pdu_notifier_,
+srsran::srs_cu_cp::create_e1ap(const e1ap_configuration&      e1ap_cfg_,
+                               e1ap_message_notifier&         e1ap_pdu_notifier_,
                                e1ap_cu_up_processor_notifier& e1ap_cu_up_processor_notifier_,
                                e1ap_cu_cp_notifier&           cu_cp_notifier_,
                                timer_manager&                 timers_,
                                task_executor&                 ctrl_exec_,
                                unsigned                       max_nof_supported_ues_)
 {
-  auto e1ap_cu_cp = std::make_unique<e1ap_cu_cp_impl>(
-      e1ap_pdu_notifier_, e1ap_cu_up_processor_notifier_, cu_cp_notifier_, timers_, ctrl_exec_, max_nof_supported_ues_);
+  auto e1ap_cu_cp = std::make_unique<e1ap_cu_cp_impl>(e1ap_cfg_,
+                                                      e1ap_pdu_notifier_,
+                                                      e1ap_cu_up_processor_notifier_,
+                                                      cu_cp_notifier_,
+                                                      timers_,
+                                                      ctrl_exec_,
+                                                      max_nof_supported_ues_);
   return e1ap_cu_cp;
 }

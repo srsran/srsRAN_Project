@@ -32,6 +32,8 @@ static void configure_cli11_log_args(CLI::App& app, cu_cp_unit_logger_config& lo
       ->capture_default_str()
       ->check(CLI::Range(0, 1024));
 
+  add_option(app, "--e1ap_json_enabled", log_params.e1ap_json_enabled, "Enable JSON logging of E1AP PDUs")
+      ->always_capture_default();
   add_option(app, "--f1ap_json_enabled", log_params.f1ap_json_enabled, "Enable JSON logging of F1AP PDUs")
       ->always_capture_default();
 }
@@ -353,6 +355,15 @@ static void configure_cli11_f1ap_args(CLI::App& app, cu_cp_unit_f1ap_config& f1a
       ->capture_default_str();
 }
 
+static void configure_cli11_e1ap_args(CLI::App& app, cu_cp_unit_e1ap_config& e1ap_params)
+{
+  add_option(app,
+             "--procedure_timeout",
+             e1ap_params.procedure_timeout,
+             "Time that the E1AP waits for a CU-UP response in milliseconds")
+      ->capture_default_str();
+}
+
 static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_params)
 {
   add_option(
@@ -412,6 +423,9 @@ static void configure_cli11_cu_cp_args(CLI::App& app, cu_cp_unit_config& cu_cp_p
 
   CLI::App* f1ap_subcmd = add_subcommand(app, "f1ap", "F1AP configuration parameters");
   configure_cli11_f1ap_args(*f1ap_subcmd, cu_cp_params.f1ap_config);
+
+  CLI::App* e1ap_subcmd = add_subcommand(app, "e1ap", "E1AP configuration parameters");
+  configure_cli11_e1ap_args(*e1ap_subcmd, cu_cp_params.e1ap_config);
 }
 
 static void configure_cli11_rlc_um_args(CLI::App& app, cu_cp_unit_rlc_um_config& rlc_um_params)

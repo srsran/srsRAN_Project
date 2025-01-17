@@ -23,7 +23,8 @@ namespace srs_cu_cp {
 class bearer_context_modification_procedure
 {
 public:
-  bearer_context_modification_procedure(const e1ap_message&              request_,
+  bearer_context_modification_procedure(const e1ap_configuration&        e1ap_cfg_,
+                                        const e1ap_message&              request_,
                                         e1ap_bearer_transaction_manager& ev_mng_,
                                         e1ap_message_notifier&           e1ap_notif_,
                                         e1ap_ue_logger&                  logger_);
@@ -39,6 +40,7 @@ private:
   /// Creates procedure result to send back to procedure caller.
   e1ap_bearer_context_modification_response create_bearer_context_modification_result();
 
+  const e1ap_configuration         e1ap_cfg;
   const e1ap_message               request;
   e1ap_bearer_transaction_manager& ev_mng;
   e1ap_message_notifier&           e1ap_notifier;

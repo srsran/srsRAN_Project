@@ -16,11 +16,12 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::e1ap;
 
-bearer_context_modification_procedure::bearer_context_modification_procedure(const e1ap_message&              request_,
+bearer_context_modification_procedure::bearer_context_modification_procedure(const e1ap_configuration&        e1ap_cfg_,
+                                                                             const e1ap_message&              request_,
                                                                              e1ap_bearer_transaction_manager& ev_mng_,
                                                                              e1ap_message_notifier& e1ap_notif_,
                                                                              e1ap_ue_logger&        logger_) :
-  request(request_), ev_mng(ev_mng_), e1ap_notifier(e1ap_notif_), logger(logger_)
+  e1ap_cfg(e1ap_cfg_), request(request_), ev_mng(ev_mng_), e1ap_notifier(e1ap_notif_), logger(logger_)
 {
 }
 
@@ -32,7 +33,7 @@ void bearer_context_modification_procedure::operator()(
   logger.log_debug("\"{}\" initialized", name());
 
   // Subscribe to respective publisher to receive BEARER CONTEXT MODIFICATION RESPONSE/FAILURE message.
-  transaction_sink.subscribe_to(ev_mng.context_modification_outcome, std::chrono::milliseconds{1000});
+  transaction_sink.subscribe_to(ev_mng.context_modification_outcome, e1ap_cfg.proc_timeout);
 
   // Send command to CU-UP.
   send_bearer_context_modification_request();
@@ -40,13 +41,13 @@ void bearer_context_modification_procedure::operator()(
   // Await response.
   CORO_AWAIT(transaction_sink);
 
-  // Handle response from CU-UP and return UE index
+  // Handle response from CU-UP and return UE index.
   CORO_RETURN(create_bearer_context_modification_result());
 }
 
 void bearer_context_modification_procedure::send_bearer_context_modification_request()
 {
-  // send UE context modification request message
+  // Send UE context modification request message.
   e1ap_notifier.on_new_message(request);
 }
 

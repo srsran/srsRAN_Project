@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/srslog/srslog.h"
 #include <string>
@@ -18,10 +19,10 @@ namespace srsran {
 namespace srs_cu_cp {
 
 struct cu_up_processor_config_t {
-  std::string           name                  = "srs_cu_cp";
-  cu_up_index_t         cu_up_index           = cu_up_index_t::invalid;
-  unsigned              max_nof_supported_ues = MAX_NOF_CU_UES;
-  srslog::basic_logger& logger                = srslog::fetch_basic_logger("CU-CP");
+  std::string                name        = "srs_cu_cp";
+  cu_up_index_t              cu_up_index = cu_up_index_t::invalid;
+  const cu_cp_configuration& cu_cp_cfg;
+  srslog::basic_logger&      logger = srslog::fetch_basic_logger("CU-CP");
 };
 
 } // namespace srs_cu_cp

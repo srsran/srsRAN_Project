@@ -18,13 +18,12 @@ using namespace srsran;
 using namespace srsran::srs_cu_cp;
 using namespace asn1::e1ap;
 
-constexpr std::chrono::milliseconds bearer_context_release_response_timeout{5000};
-
-bearer_context_release_procedure::bearer_context_release_procedure(const e1ap_message&    command_,
-                                                                   ue_index_t             ue_index_,
-                                                                   e1ap_ue_context_list&  ue_ctxt_list_,
-                                                                   e1ap_message_notifier& e1ap_notif_) :
-  command(command_), ue_index(ue_index_), ue_ctxt_list(ue_ctxt_list_), e1ap_notifier(e1ap_notif_)
+bearer_context_release_procedure::bearer_context_release_procedure(const e1ap_configuration& e1ap_cfg_,
+                                                                   const e1ap_message&       command_,
+                                                                   ue_index_t                ue_index_,
+                                                                   e1ap_ue_context_list&     ue_ctxt_list_,
+                                                                   e1ap_message_notifier&    e1ap_notif_) :
+  e1ap_cfg(e1ap_cfg_), command(command_), ue_index(ue_index_), ue_ctxt_list(ue_ctxt_list_), e1ap_notifier(e1ap_notif_)
 {
   srsran_assert(ue_ctxt_list.contains(ue_index), "Bearer context does not exist in UE context list.");
 }
@@ -36,8 +35,7 @@ void bearer_context_release_procedure::operator()(coro_context<async_task<void>>
   ue_ctxt_list[ue_index].logger.log_debug("\"{}\" initialized", name());
 
   // Subscribe to respective publisher to receive BEARER CONTEXT RELEASE COMPLETE message.
-  transaction_sink.subscribe_to(ue_ctxt_list[ue_index].bearer_ev_mng.context_release_complete,
-                                bearer_context_release_response_timeout);
+  transaction_sink.subscribe_to(ue_ctxt_list[ue_index].bearer_ev_mng.context_release_complete, e1ap_cfg.proc_timeout);
 
   // Send command to CU-UP.
   send_bearer_context_release_command();
@@ -69,6 +67,6 @@ void bearer_context_release_procedure::handle_bearer_context_release_complete()
     ue_ctxt_list[ue_index].logger.log_error("\"{}\" failed", name());
   }
 
-  // Remove UE context
+  // Remove UE context.
   ue_ctxt_list.remove_ue(ue_index);
 }

@@ -23,7 +23,8 @@ namespace srs_cu_cp {
 class bearer_context_setup_procedure
 {
 public:
-  bearer_context_setup_procedure(const e1ap_message&              request_,
+  bearer_context_setup_procedure(const e1ap_configuration&        e1ap_cfg_,
+                                 const e1ap_message&              request_,
                                  e1ap_bearer_transaction_manager& ev_mng_,
                                  e1ap_ue_context_list&            ue_ctxt_list_,
                                  e1ap_message_notifier&           e1ap_notif_,
@@ -40,6 +41,7 @@ private:
   /// Handles the E1AP procedure response and forwards the result to the procedure caller.
   e1ap_bearer_context_setup_response handle_bearer_context_setup_response();
 
+  const e1ap_configuration         e1ap_cfg;
   const e1ap_message               request;
   e1ap_bearer_transaction_manager& ev_mng;
   e1ap_ue_context_list&            ue_ctxt_list;

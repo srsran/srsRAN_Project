@@ -47,11 +47,8 @@ cu_up_index_t cu_up_processor_repository::add_cu_up(std::unique_ptr<e1ap_message
   cu_up_ctxt.e1ap_tx_pdu_notifier = std::move(e1ap_tx_pdu_notifier);
 
   // TODO: use real config
-  cu_up_processor_config_t cu_up_cfg = {};
-  cu_up_cfg.cu_up_index              = cu_up_index;
-  cu_up_cfg.max_nof_supported_ues    = cfg.cu_cp.admission.max_nof_ues;
-
-  std::unique_ptr<cu_up_processor_impl_interface> cu_up = create_cu_up_processor(std::move(cu_up_cfg),
+  cu_up_processor_config_t                        cu_up_cfg = {"srs_cu_cp", cu_up_index, cfg.cu_cp, logger};
+  std::unique_ptr<cu_up_processor_impl_interface> cu_up     = create_cu_up_processor(std::move(cu_up_cfg),
                                                                                  *cu_up_ctxt.e1ap_tx_pdu_notifier,
                                                                                  cfg.e1ap_ev_notifier,
                                                                                  cu_up_task_sched,
