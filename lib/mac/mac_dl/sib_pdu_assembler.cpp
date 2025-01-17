@@ -83,6 +83,9 @@ span<const uint8_t> sib_pdu_assembler::encode_si_pdu(unsigned idx, unsigned si_v
     // In case there is no pending reconfig of the SI.
 
     // In case the old version is pending for removal.
+    // Note: Given that the lower layers could use a previously sent SI message payload for a bounded but undetermined
+    // number of slots, we postpone the removal of the old BCCH-DL-SCH payload version by a fixed number of
+    // transmissions of the new version.
     bcch.info.nof_tx++;
     if (bcch.info.nof_tx == TX_COUNT_BEFORE_OLD_VERSION_REMOVAL and bcch.old.has_value()) {
       // It is safe to remove old version at this point.
