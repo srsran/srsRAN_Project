@@ -17,8 +17,8 @@
       requests: 20
       limits: 20
     memory:
-      requests: "20G"
-      limits: "20G"
+      requests: "40G"
+      limits: "40G"
     hugepages-1Gi:
       requests: 2Gi
       limits: 2Gi
