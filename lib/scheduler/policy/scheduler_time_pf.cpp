@@ -17,8 +17,8 @@ using namespace srsran;
 constexpr unsigned MAX_PF_COEFF = 10;
 
 scheduler_time_pf::scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_) :
-  fairness_coeff(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).pf_sched_fairness_coeff),
-  weight_func(std::get<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg).qos_weight_func)
+  fairness_coeff(std::get<time_qos_scheduler_expert_config>(expert_cfg_.strategy_cfg).pf_fairness_coeff),
+  weight_func(std::get<time_qos_scheduler_expert_config>(expert_cfg_.strategy_cfg).qos_weight_func)
 {
 }
 
@@ -284,13 +284,13 @@ double compute_pf_metric(double estim_rate, double avg_rate, double fairness_coe
   return pf_weight;
 }
 
-double combine_qos_metrics(double                                           pf_weight,
-                           double                                           gbr_weight,
-                           double                                           prio_weight,
-                           double                                           delay_weight,
-                           time_pf_scheduler_expert_config::weight_function weight_func)
+double combine_qos_metrics(double                                            pf_weight,
+                           double                                            gbr_weight,
+                           double                                            prio_weight,
+                           double                                            delay_weight,
+                           time_qos_scheduler_expert_config::weight_function weight_func)
 {
-  if (weight_func == time_pf_scheduler_expert_config::weight_function::gbr_prioritized and gbr_weight > 1.0) {
+  if (weight_func == time_qos_scheduler_expert_config::weight_function::gbr_prioritized and gbr_weight > 1.0) {
     // GBR target has not been met and we prioritize GBR over PF.
     pf_weight = std::max(1.0, pf_weight);
   }
@@ -300,12 +300,12 @@ double combine_qos_metrics(double                                           pf_w
 }
 
 /// \brief Computes DL rate weight used in computation of DL priority value for a UE in a slot.
-double compute_dl_qos_weights(const slice_ue&                                  u,
-                              double                                           estim_dl_rate,
-                              double                                           avg_dl_rate,
-                              time_pf_scheduler_expert_config::weight_function weight_func,
-                              double                                           fairness_coeff,
-                              slot_point                                       slot_tx)
+double compute_dl_qos_weights(const slice_ue&                                   u,
+                              double                                            estim_dl_rate,
+                              double                                            avg_dl_rate,
+                              time_qos_scheduler_expert_config::weight_function weight_func,
+                              double                                            fairness_coeff,
+                              slot_point                                        slot_tx)
 {
   if (avg_dl_rate == 0) {
     // Highest priority to UEs that have not yet received any allocation.
@@ -358,11 +358,11 @@ double compute_dl_qos_weights(const slice_ue&                                  u
 }
 
 /// \brief Computes UL weights used in computation of UL priority value for a UE in a slot.
-double compute_ul_qos_weights(const slice_ue&                                  u,
-                              double                                           estim_ul_rate,
-                              double                                           avg_ul_rate,
-                              time_pf_scheduler_expert_config::weight_function weight_func,
-                              double                                           fairness_coeff)
+double compute_ul_qos_weights(const slice_ue&                                   u,
+                              double                                            estim_ul_rate,
+                              double                                            avg_ul_rate,
+                              time_qos_scheduler_expert_config::weight_function weight_func,
+                              double                                            fairness_coeff)
 {
   if (u.has_pending_sr() or avg_ul_rate == 0) {
     // Highest priority to SRs and UEs that have not yet received any allocation.

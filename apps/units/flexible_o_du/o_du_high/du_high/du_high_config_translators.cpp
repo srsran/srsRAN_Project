@@ -923,7 +923,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ue.olla_max_ul_snr_offset = pusch.olla_max_snr_offset;
   out_cfg.ue.pdsch_crb_limits       = {pdsch.start_rb, pdsch.end_rb};
   out_cfg.ue.pusch_crb_limits       = {pusch.start_rb, pusch.end_rb};
-  if (std::holds_alternative<time_pf_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
+  if (std::holds_alternative<time_qos_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
     out_cfg.ue.strategy_cfg = app_sched_expert_cfg.policy_sched_expert_cfg;
   }
   out_cfg.ue.ul_power_ctrl.enable_pusch_cl_pw_control      = pusch.enable_closed_loop_pw_control;

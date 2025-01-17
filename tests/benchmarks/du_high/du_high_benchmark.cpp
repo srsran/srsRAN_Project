@@ -169,8 +169,8 @@ static void parse_args(int argc, char** argv, bench_params& params)
         params.pdu_size = units::bytes{(unsigned)std::strtol(optarg, nullptr, 10)};
         break;
       case 'P': {
-        if (std::string(optarg) == "time_pf") {
-          params.strategy_cfg = time_pf_scheduler_expert_config{};
+        if (std::string(optarg) == "time_qos") {
+          params.strategy_cfg = time_qos_scheduler_expert_config{};
         } else if (std::string(optarg) == "time_rr") {
           params.strategy_cfg = time_rr_scheduler_expert_config{};
         } else {
@@ -215,7 +215,7 @@ static void print_args(const bench_params& params)
   fmt::print("- F1-U DL PDU size [bytes]: {}\n", params.pdu_size);
   fmt::print("- BSR size [bytes]: {}\n", params.ul_bsr_bytes);
   fmt::print("- Max DL RB grant size [RBs]: {}\n", params.max_dl_rb_grant);
-  if (std::holds_alternative<time_pf_scheduler_expert_config>(params.strategy_cfg)) {
+  if (std::holds_alternative<time_qos_scheduler_expert_config>(params.strategy_cfg)) {
     fmt::print("- Policys scheduler: time_pf\n");
   } else {
     fmt::print("- Policys scheduler: time_rr\n");

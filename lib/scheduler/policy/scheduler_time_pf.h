@@ -37,7 +37,7 @@ private:
   // Coefficient used to tweak decision in favor of fairness or throughput.
   const double fairness_coeff;
   // Coefficient used to tweak decision in favor of GBR over PF.
-  const time_pf_scheduler_expert_config::weight_function weight_func;
+  const time_qos_scheduler_expert_config::weight_function weight_func;
   /// Coefficient used to compute exponential moving average.
   const double exp_avg_alpha = 0.01;
 

@@ -45,7 +45,7 @@ protected:
     res_logger(false, msg.pci),
     sched_cfg([&sched_cfg_, policy]() {
       if (policy == policy_scheduler_type::time_pf) {
-        sched_cfg_.ue.strategy_cfg = time_pf_scheduler_expert_config{};
+        sched_cfg_.ue.strategy_cfg = time_qos_scheduler_expert_config{};
       }
       return sched_cfg_;
     }()),

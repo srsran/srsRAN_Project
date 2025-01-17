@@ -559,14 +559,14 @@ static YAML::Node build_du_high_csi_section(const du_high_unit_csi_config& confi
 
 static void fill_du_high_sched_expert_section(YAML::Node& node, const du_high_unit_scheduler_expert_config& config)
 {
-  if (std::holds_alternative<time_pf_scheduler_expert_config>(config.policy_sched_expert_cfg)) {
+  if (std::holds_alternative<time_qos_scheduler_expert_config>(config.policy_sched_expert_cfg)) {
     YAML::Node sched_node;
     YAML::Node policy_node;
     YAML::Node policy_pf_node;
-    policy_pf_node["pf_sched_fairness_coeff"] =
-        std::get<time_pf_scheduler_expert_config>(config.policy_sched_expert_cfg).pf_sched_fairness_coeff;
+    policy_pf_node["pf_fairness_coeff"] =
+        std::get<time_qos_scheduler_expert_config>(config.policy_sched_expert_cfg).pf_fairness_coeff;
 
-    policy_node["pf_sched"]        = policy_pf_node;
+    policy_node["qos_sched"]       = policy_pf_node;
     sched_node["policy_sched_cfg"] = policy_node;
     node["sched_expert_cfg"]       = sched_node;
   }

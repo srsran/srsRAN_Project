@@ -536,43 +536,43 @@ static void configure_cli11_csi_args(CLI::App& app, du_high_unit_csi_config& csi
       ->check(CLI::Range(-8, 15));
 }
 
-static void configure_cli11_pf_scheduler_expert_args(CLI::App& app, time_pf_scheduler_expert_config& expert_params)
+static void configure_cli11_qos_scheduler_expert_args(CLI::App& app, time_qos_scheduler_expert_config& expert_params)
 {
   add_option(app,
-             "--pf_sched_fairness_coeff",
-             expert_params.pf_sched_fairness_coeff,
-             "Fairness Coefficient to use in Proportional Fair policy scheduler")
+             "--pf_fairness_coeff",
+             expert_params.pf_fairness_coeff,
+             "Fairness Coefficient to use in Proportional Fair (PF) weight")
       ->capture_default_str();
   add_option_function<std::string>(
       app,
       "--qos_weight_function",
       [&expert_params](const std::string& value) {
         if (value == "gbr_prioritized") {
-          expert_params.qos_weight_func = time_pf_scheduler_expert_config::weight_function::gbr_prioritized;
+          expert_params.qos_weight_func = time_qos_scheduler_expert_config::weight_function::gbr_prioritized;
         } else if (value == "multivariate") {
-          expert_params.qos_weight_func = time_pf_scheduler_expert_config::weight_function::multivariate;
+          expert_params.qos_weight_func = time_qos_scheduler_expert_config::weight_function::multivariate;
         } else {
           report_fatal_error("Invalid qos weight function {}", value);
         }
       },
-      "QoS-aware scheduler policy UE weight function")
+      "QoS-aware scheduler policy weight function")
       ->default_str("gbr_prioritized")
       ->check(CLI::IsMember({"gbr_prioritized", "multivariate"}, CLI::ignore_case));
 }
 
 static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_scheduler_expert_config& expert_params)
 {
-  static time_pf_scheduler_expert_config pf_sched_expert_cfg;
-  CLI::App*                              pf_sched_cfg_subcmd =
-      add_subcommand(app, "pf_sched", "Proportional Fair policy scheduler expert configuration")->configurable();
-  configure_cli11_pf_scheduler_expert_args(*pf_sched_cfg_subcmd, pf_sched_expert_cfg);
-  auto pf_sched_verify_callback = [&]() {
-    CLI::App* pf_sched_sub_cmd = app.get_subcommand("pf_sched");
-    if (pf_sched_sub_cmd->count() != 0) {
-      expert_params = pf_sched_expert_cfg;
+  static time_qos_scheduler_expert_config qos_sched_expert_cfg;
+  CLI::App*                               qos_sched_cfg_subcmd =
+      add_subcommand(app, "qos_sched", "QoS-aware policy scheduler expert configuration")->configurable();
+  configure_cli11_qos_scheduler_expert_args(*qos_sched_cfg_subcmd, qos_sched_expert_cfg);
+  auto qos_sched_verify_callback = [&]() {
+    CLI::App* qos_sched_sub_cmd = app.get_subcommand("qos_sched");
+    if (qos_sched_sub_cmd->count() != 0) {
+      expert_params = qos_sched_expert_cfg;
     }
   };
-  pf_sched_cfg_subcmd->parse_complete_callback(pf_sched_verify_callback);
+  qos_sched_cfg_subcmd->parse_complete_callback(qos_sched_verify_callback);
 }
 
 static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit_ta_sched_expert_config& ta_params)

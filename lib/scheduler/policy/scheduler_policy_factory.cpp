@@ -19,7 +19,7 @@ std::unique_ptr<scheduler_policy> srsran::create_scheduler_strategy(const schedu
   if (std::holds_alternative<time_rr_scheduler_expert_config>(expert_cfg_.strategy_cfg)) {
     return std::make_unique<scheduler_time_rr>(expert_cfg_);
   }
-  if (std::holds_alternative<time_pf_scheduler_expert_config>(expert_cfg_.strategy_cfg)) {
+  if (std::holds_alternative<time_qos_scheduler_expert_config>(expert_cfg_.strategy_cfg)) {
     return std::make_unique<scheduler_time_pf>(expert_cfg_);
   }
   return nullptr;
