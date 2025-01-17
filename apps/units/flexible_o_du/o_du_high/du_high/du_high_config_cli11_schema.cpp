@@ -563,6 +563,16 @@ static void configure_cli11_qos_scheduler_expert_args(CLI::App& app, time_qos_sc
              expert_params.priority_enabled,
              "Whether to take into account the QoS Flow priority in QoS-aware scheduling")
       ->capture_default_str();
+  add_option(app,
+             "--pdb_enabled",
+             expert_params.pdb_enabled,
+             "Whether to take into account the QoS Flow Packet Delay Budget (PDB) in QoS-aware scheduling")
+      ->capture_default_str();
+  add_option(app,
+             "--gbr_enabled",
+             expert_params.gbr_enabled,
+             "Whether to take into account the QoS Flow Guaranteed Bit Rate (GBR) in QoS-aware scheduling")
+      ->capture_default_str();
 }
 
 static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_scheduler_expert_config& expert_params)

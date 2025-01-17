@@ -44,6 +44,10 @@ struct time_qos_scheduler_expert_config {
   double pf_fairness_coeff = 2.0;
   /// Whether to take into account or ignore the QoS Flow priority in the QoS-aware scheduling.
   bool priority_enabled = true;
+  /// Whether to take into account or ignore the QoS Flow Packet Delay Budget (PDB) in the QoS-aware scheduling.
+  bool pdb_enabled = true;
+  /// Whether to take into account or ignore the QoS Flow Guaranteed Bit Rate (GBR) in the QoS-aware scheduling.
+  bool gbr_enabled = true;
 };
 
 /// \brief Round-Robin policy scheduler expert parameters.

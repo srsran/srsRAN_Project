@@ -314,39 +314,41 @@ double compute_dl_qos_weights(const slice_ue&                         u,
   uint8_t min_prio_level = qos_prio_level_t::max();
   double  gbr_weight     = 0;
   double  delay_weight   = 0;
-  for (const logical_channel_config& lc : u.logical_channels()) {
-    if (not u.contains(lc.lcid) or not lc.qos.has_value() or u.pending_dl_newtx_bytes(lc.lcid) == 0) {
-      // LC is not part of the slice, No QoS config was provided for this LC or there is no pending data for this LC
-      continue;
-    }
+  if (policy_params.gbr_enabled or policy_params.priority_enabled or policy_params.pdb_enabled) {
+    for (const logical_channel_config& lc : u.logical_channels()) {
+      if (not u.contains(lc.lcid) or not lc.qos.has_value() or u.pending_dl_newtx_bytes(lc.lcid) == 0) {
+        // LC is not part of the slice, No QoS config was provided for this LC or there is no pending data for this LC
+        continue;
+      }
 
-    // Track the LC with the lowest priority.
-    min_prio_level = std::min(lc.qos->qos.priority.value(), min_prio_level);
+      // Track the LC with the lowest priority.
+      min_prio_level = std::min(lc.qos->qos.priority.value(), min_prio_level);
 
-    slot_point hol_toa = u.dl_hol_toa(lc.lcid);
-    if (hol_toa.valid() and slot_tx >= hol_toa) {
-      const unsigned hol_delay_ms = (slot_tx - hol_toa) / slot_tx.nof_slots_per_subframe();
-      const unsigned pdb          = lc.qos->qos.packet_delay_budget_ms;
-      delay_weight += hol_delay_ms / static_cast<double>(pdb);
-    }
+      slot_point hol_toa = u.dl_hol_toa(lc.lcid);
+      if (hol_toa.valid() and slot_tx >= hol_toa) {
+        const unsigned hol_delay_ms = (slot_tx - hol_toa) / slot_tx.nof_slots_per_subframe();
+        const unsigned pdb          = lc.qos->qos.packet_delay_budget_ms;
+        delay_weight += hol_delay_ms / static_cast<double>(pdb);
+      }
 
-    if (not lc.qos->gbr_qos_info.has_value()) {
-      // LC is a non-GBR flow.
-      continue;
-    }
+      if (not lc.qos->gbr_qos_info.has_value()) {
+        // LC is a non-GBR flow.
+        continue;
+      }
 
-    // GBR flow.
-    double dl_avg_rate = u.dl_avg_bit_rate(lc.lcid);
-    if (dl_avg_rate != 0) {
-      gbr_weight += std::min(lc.qos->gbr_qos_info->gbr_dl / dl_avg_rate, max_metric_weight);
-    } else {
-      gbr_weight += max_metric_weight;
+      // GBR flow.
+      double dl_avg_rate = u.dl_avg_bit_rate(lc.lcid);
+      if (dl_avg_rate != 0) {
+        gbr_weight += std::min(lc.qos->gbr_qos_info->gbr_dl / dl_avg_rate, max_metric_weight);
+      } else {
+        gbr_weight += max_metric_weight;
+      }
     }
   }
 
   // If no QoS flows are configured, the weight is set to 1.0.
-  gbr_weight   = gbr_weight == 0 ? 1.0 : gbr_weight;
-  delay_weight = delay_weight == 0 ? 1.0 : delay_weight;
+  gbr_weight   = policy_params.gbr_enabled and gbr_weight != 0 ? gbr_weight : 1.0;
+  delay_weight = policy_params.pdb_enabled and delay_weight != 0 ? delay_weight : 1.0;
 
   double pf_weight   = compute_pf_metric(estim_dl_rate, avg_dl_rate, policy_params.pf_fairness_coeff);
   double prio_weight = policy_params.priority_enabled ? (qos_prio_level_t::max() + 1 - min_prio_level) /
@@ -370,33 +372,35 @@ double compute_ul_qos_weights(const slice_ue&                         u,
 
   uint8_t min_prio_level = qos_prio_level_t::max();
   double  gbr_weight     = 0;
-  for (const logical_channel_config& lc : u.logical_channels()) {
-    if (not u.contains(lc.lcid) or not lc.qos.has_value() or u.pending_ul_unacked_bytes(lc.lc_group) == 0) {
-      // LC is not part of the slice or no QoS config was provided for this LC or there are no pending bytes for this
-      // group.
-      continue;
-    }
+  if (policy_params.gbr_enabled or policy_params.priority_enabled) {
+    for (const logical_channel_config& lc : u.logical_channels()) {
+      if (not u.contains(lc.lcid) or not lc.qos.has_value() or u.pending_ul_unacked_bytes(lc.lc_group) == 0) {
+        // LC is not part of the slice or no QoS config was provided for this LC or there are no pending bytes for this
+        // group.
+        continue;
+      }
 
-    // Track the LC with the lowest priority.
-    min_prio_level = std::min(lc.qos->qos.priority.value(), min_prio_level);
+      // Track the LC with the lowest priority.
+      min_prio_level = std::min(lc.qos->qos.priority.value(), min_prio_level);
 
-    if (not lc.qos->gbr_qos_info.has_value()) {
-      // LC is a non-GBR flow.
-      continue;
-    }
+      if (not lc.qos->gbr_qos_info.has_value()) {
+        // LC is a non-GBR flow.
+        continue;
+      }
 
-    // GBR flow.
-    lcg_id_t lcg_id  = u.get_lcg_id(lc.lcid);
-    double   ul_rate = u.ul_avg_bit_rate(lcg_id);
-    if (ul_rate != 0) {
-      gbr_weight += std::min(lc.qos->gbr_qos_info->gbr_ul / ul_rate, max_metric_weight);
-    } else {
-      gbr_weight = max_metric_weight;
+      // GBR flow.
+      lcg_id_t lcg_id  = u.get_lcg_id(lc.lcid);
+      double   ul_rate = u.ul_avg_bit_rate(lcg_id);
+      if (ul_rate != 0) {
+        gbr_weight += std::min(lc.qos->gbr_qos_info->gbr_ul / ul_rate, max_metric_weight);
+      } else {
+        gbr_weight = max_metric_weight;
+      }
     }
   }
 
   // If no GBR flows are configured, the gbr rate is set to 1.0.
-  gbr_weight = gbr_weight == 0 ? 1.0 : gbr_weight;
+  gbr_weight = policy_params.gbr_enabled and gbr_weight != 0 ? gbr_weight : 1.0;
 
   double pf_weight   = compute_pf_metric(estim_ul_rate, avg_ul_rate, policy_params.pf_fairness_coeff);
   double prio_weight = policy_params.priority_enabled ? (qos_prio_level_t::max() + 1 - min_prio_level) /
