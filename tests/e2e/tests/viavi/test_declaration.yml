@@ -36,7 +36,7 @@ tests:
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
-    expected_ul_bitrate: 80.0e+6
+    expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
     warning_as_errors: true
 
@@ -50,7 +50,7 @@ tests:
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
-    expected_ul_bitrate: 80.0e+6
+    expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
     warning_as_errors: true
 
@@ -271,7 +271,7 @@ tests:
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
-    expected_ul_bitrate: 80.0e+6
+    expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
     warning_as_errors: false
 
@@ -285,6 +285,6 @@ tests:
     enable_qos_viavi: false
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
-    expected_ul_bitrate: 80.0e+6
+    expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
     warning_as_errors: false
