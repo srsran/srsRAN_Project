@@ -809,15 +809,16 @@ asn1::rrc_nr::bwp_ul_common_s srsran::srs_du::make_asn1_rrc_initial_up_bwp(const
 
   bool success = asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window);
   srsran_assert(success, "Invalid ra-WindowSize");
-  if (rach_cfg.total_nof_ra_preambles.has_value()) {
+  // Default value defined in TS 38.331.
+  constexpr unsigned nof_ra_preambles_default = 64;
+  if (rach_cfg.total_nof_ra_preambles != nof_ra_preambles_default) {
     rach.total_nof_ra_preambs_present = true;
-    rach.total_nof_ra_preambs         = rach_cfg.total_nof_ra_preambles.value();
-    rach.total_nof_ra_preambs -= 1; // Account for zero-indexed ASN field.
+    rach.total_nof_ra_preambs         = rach_cfg.total_nof_ra_preambles;
   }
   ssb_per_rach_occasion_and_cb_preambles_per_ssb_to_asn1(
       rach_cfg.nof_ssb_per_ro, rach_cfg.nof_cb_preambles_per_ssb, rach);
-  rach.ra_contention_resolution_timer.value =
-      asn1::rrc_nr::rach_cfg_common_s::ra_contention_resolution_timer_opts::sf64;
+  success = asn1::number_to_enum(rach.ra_contention_resolution_timer, rach_cfg.ra_con_res_timer.count());
+  srsran_assert(success, "Invalid ra-ContentionResolutionTimer");
   if (rach_cfg.msg3_transform_precoder) {
     rach.msg3_transform_precoder_present = true;
   }

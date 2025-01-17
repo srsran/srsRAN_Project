@@ -452,9 +452,7 @@ static YAML::Node build_du_high_prach_section(const du_high_unit_prach_config& c
   if (config.prach_config_index.has_value()) {
     node["prach_config_index"] = config.prach_config_index.value();
   }
-  if (config.total_nof_ra_preambles.has_value()) {
-    node["total_nof_ra_preambles"] = config.total_nof_ra_preambles.value();
-  }
+  node["total_nof_ra_preambles"] = config.total_nof_ra_preambles;
   if (config.prach_frequency_start.has_value()) {
     node["prach_frequency_start"] = config.prach_frequency_start.value();
   }

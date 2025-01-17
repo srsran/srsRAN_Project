@@ -414,9 +414,7 @@ void srsran::test_prach_opportunity_validity(const cell_configuration& cell_cfg,
     if (prach.start_preamble_index != 255) {
       ASSERT_EQ(0, prach.start_preamble_index);
     }
-    if (rach_cfg_common.total_nof_ra_preambles.has_value()) {
-      ASSERT_EQ(rach_cfg_common.total_nof_ra_preambles.value(), prach.nof_preamble_indexes);
-    }
+    ASSERT_EQ(rach_cfg_common.total_nof_ra_preambles, prach.nof_preamble_indexes);
     ASSERT_EQ(prach_cfg.nof_occasions_within_slot, prach.nof_prach_occasions);
     ASSERT_EQ(prach_cfg.starting_symbol, prach.start_symbol);
   }

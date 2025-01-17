@@ -44,8 +44,8 @@ struct rach_config_generic {
 /// Used to specify the cell-specific random-access parameters as per TS 38.331, "RACH-ConfigCommon".
 struct rach_config_common {
   rach_config_generic rach_cfg_generic;
-  /// Total number of prambles used for contention based and contention free RA. Values: (1..64).
-  std::optional<unsigned> total_nof_ra_preambles;
+  /// Total number of preambles used for contention based and contention free RA. Values: (1..64).
+  unsigned total_nof_ra_preambles = 64;
   /// Maximum time for the Contention Resolution. Values: {8, 16, 24, 32, 40, 48, 56, 64}.
   std::chrono::milliseconds ra_con_res_timer{64};
   /// PRACH Root Sequence Index can be of 2 types, as per \c prach-RootSequenceIndex, \c RACH-ConfigCommon, TS 38.331.
