@@ -104,7 +104,7 @@ static void usage(const char* prog, const bench_params& params)
   fmt::print("\t-r Max RBs per UE DL grant per slot [Default 275]\n");
   fmt::print("\t-a \"du_cell\" cores that the benchmark should use [Default \"no CPU affinity\"]\n");
   fmt::print("\t-p F1-U PDU size used [Default {}]\n", params.pdu_size);
-  fmt::print("\t-P Policy scheduler the bechmark should use (\"time_rr\", \"time_pf\") [Default \"time_rr\"]\n");
+  fmt::print("\t-P Policy scheduler the bechmark should use (\"time_rr\", \"time_qos\") [Default \"time_rr\"]\n");
   fmt::print("\t-h Show this message\n");
 }
 
@@ -216,7 +216,7 @@ static void print_args(const bench_params& params)
   fmt::print("- BSR size [bytes]: {}\n", params.ul_bsr_bytes);
   fmt::print("- Max DL RB grant size [RBs]: {}\n", params.max_dl_rb_grant);
   if (std::holds_alternative<time_qos_scheduler_expert_config>(params.strategy_cfg)) {
-    fmt::print("- Policys scheduler: time_pf\n");
+    fmt::print("- Policys scheduler: time_qos\n");
   } else {
     fmt::print("- Policys scheduler: time_rr\n");
   }

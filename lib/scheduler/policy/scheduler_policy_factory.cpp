@@ -9,7 +9,7 @@
  */
 
 #include "scheduler_policy_factory.h"
-#include "scheduler_time_pf.h"
+#include "scheduler_time_qos.h"
 #include "scheduler_time_rr.h"
 
 using namespace srsran;
@@ -20,7 +20,7 @@ std::unique_ptr<scheduler_policy> srsran::create_scheduler_strategy(const schedu
     return std::make_unique<scheduler_time_rr>(expert_cfg_);
   }
   if (std::holds_alternative<time_qos_scheduler_expert_config>(expert_cfg_.strategy_cfg)) {
-    return std::make_unique<scheduler_time_pf>(expert_cfg_);
+    return std::make_unique<scheduler_time_qos>(expert_cfg_);
   }
   return nullptr;
 }

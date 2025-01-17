@@ -14,10 +14,11 @@
 
 namespace srsran {
 
-class scheduler_time_pf : public scheduler_policy
+/// Time-domain QoS-aware scheduler policy.
+class scheduler_time_qos : public scheduler_policy
 {
 public:
-  scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_);
+  scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_);
 
   void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                 const ue_resource_grid_view& res_grid,
@@ -40,7 +41,7 @@ private:
 
   /// Holds the information needed to compute priority of a UE in a priority queue.
   struct ue_ctxt {
-    ue_ctxt(du_ue_index_t ue_index_, du_cell_index_t cell_index_, const scheduler_time_pf* parent_) :
+    ue_ctxt(du_ue_index_t ue_index_, du_cell_index_t cell_index_, const scheduler_time_qos* parent_) :
       ue_index(ue_index_), cell_index(cell_index_), parent(parent_)
     {
     }
@@ -66,9 +67,9 @@ private:
     void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info);
     void save_ul_alloc(unsigned alloc_bytes);
 
-    const du_ue_index_t      ue_index;
-    const du_cell_index_t    cell_index;
-    const scheduler_time_pf* parent;
+    const du_ue_index_t       ue_index;
+    const du_cell_index_t     cell_index;
+    const scheduler_time_qos* parent;
 
     /// DL priority value of the UE.
     double dl_prio = forbid_prio;

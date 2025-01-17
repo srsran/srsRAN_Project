@@ -30,8 +30,8 @@ using namespace srsran;
 ///
 /// The current types are:
 /// - time_rr - Time based Round-Robin scheduler.
-/// - time_pf - Time based Proportional Fair scheduler.
-enum class policy_scheduler_type { time_rr, time_pf };
+/// - time_qos - Time based QoS-aware scheduler.
+enum class policy_scheduler_type { time_rr, time_qos };
 
 class base_scheduler_policy_test
 {
@@ -44,7 +44,7 @@ protected:
     logger(srslog::fetch_basic_logger("SCHED", true)),
     res_logger(false, msg.pci),
     sched_cfg([&sched_cfg_, policy]() {
-      if (policy == policy_scheduler_type::time_pf) {
+      if (policy == policy_scheduler_type::time_qos) {
         sched_cfg_.ue.strategy_cfg = time_qos_scheduler_expert_config{};
       }
       return sched_cfg_;
@@ -557,7 +557,7 @@ TEST_F(scheduler_round_robin_test, round_robin_must_not_attempt_to_allocate_twic
 class scheduler_pf_test : public base_scheduler_policy_test, public ::testing::Test
 {
 protected:
-  scheduler_pf_test() : base_scheduler_policy_test(policy_scheduler_type::time_pf) {}
+  scheduler_pf_test() : base_scheduler_policy_test(policy_scheduler_type::time_qos) {}
 };
 
 TEST_F(scheduler_pf_test, pf_does_not_account_ues_with_empty_buffers)
@@ -713,7 +713,7 @@ using gbr_bitrate_bps = uint64_t;
 class scheduler_pf_qos_test : public base_scheduler_policy_test, public ::testing::TestWithParam<gbr_bitrate_bps>
 {
 protected:
-  scheduler_pf_qos_test() : base_scheduler_policy_test(policy_scheduler_type::time_pf) {}
+  scheduler_pf_qos_test() : base_scheduler_policy_test(policy_scheduler_type::time_qos) {}
 
   static double to_bytes_per_slot(uint64_t bitrate_bps, subcarrier_spacing bwp_scs)
   {
@@ -886,11 +886,11 @@ TEST_P(scheduler_policy_alloc_bounds_test, scheduler_allocates_pusch_within_conf
 
 INSTANTIATE_TEST_SUITE_P(scheduler_policy,
                          scheduler_policy_test,
-                         testing::Values(policy_scheduler_type::time_rr, policy_scheduler_type::time_pf));
+                         testing::Values(policy_scheduler_type::time_rr, policy_scheduler_type::time_qos));
 INSTANTIATE_TEST_SUITE_P(scheduler_policy,
                          scheduler_policy_partial_slot_tdd_test,
-                         testing::Values(policy_scheduler_type::time_rr, policy_scheduler_type::time_pf));
+                         testing::Values(policy_scheduler_type::time_rr, policy_scheduler_type::time_qos));
 INSTANTIATE_TEST_SUITE_P(scheduler_policy,
                          scheduler_policy_alloc_bounds_test,
-                         testing::Values(policy_scheduler_type::time_rr, policy_scheduler_type::time_pf));
+                         testing::Values(policy_scheduler_type::time_rr, policy_scheduler_type::time_qos));
 INSTANTIATE_TEST_SUITE_P(scheduler_policy, scheduler_pf_qos_test, testing::Values(128000, 256000));

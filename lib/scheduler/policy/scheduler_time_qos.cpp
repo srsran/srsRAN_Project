@@ -7,7 +7,7 @@
  *
  */
 
-#include "scheduler_time_pf.h"
+#include "scheduler_time_qos.h"
 #include "../support/csi_report_helpers.h"
 
 using namespace srsran;
@@ -16,15 +16,15 @@ using namespace srsran;
 // imprecision.
 constexpr unsigned MAX_PF_COEFF = 10;
 
-scheduler_time_pf::scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_) :
+scheduler_time_qos::scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_) :
   params(std::get<time_qos_scheduler_expert_config>(expert_cfg_.strategy_cfg))
 {
 }
 
-dl_alloc_result scheduler_time_pf::schedule_dl_retxs(ue_pdsch_allocator&          pdsch_alloc,
-                                                     const ue_resource_grid_view& res_grid,
-                                                     dl_ran_slice_candidate&      slice_candidate,
-                                                     dl_harq_pending_retx_list    harq_list)
+dl_alloc_result scheduler_time_qos::schedule_dl_retxs(ue_pdsch_allocator&          pdsch_alloc,
+                                                      const ue_resource_grid_view& res_grid,
+                                                      dl_ran_slice_candidate&      slice_candidate,
+                                                      dl_harq_pending_retx_list    harq_list)
 {
   const ran_slice_id_t slice_id = slice_candidate.id();
   auto&                ue_db    = slice_candidate.get_slice_ues();
@@ -69,10 +69,10 @@ dl_alloc_result scheduler_time_pf::schedule_dl_retxs(ue_pdsch_allocator&        
   return {alloc_status::success};
 }
 
-void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
-                                 const ue_resource_grid_view& res_grid,
-                                 dl_ran_slice_candidate&      slice_candidate,
-                                 dl_harq_pending_retx_list    harq_pending_retx_list)
+void scheduler_time_qos::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
+                                  const ue_resource_grid_view& res_grid,
+                                  dl_ran_slice_candidate&      slice_candidate,
+                                  dl_harq_pending_retx_list    harq_pending_retx_list)
 {
   const slice_ue_repository& ues = slice_candidate.get_slice_ues();
 
@@ -119,10 +119,10 @@ void scheduler_time_pf::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   }
 }
 
-ul_alloc_result scheduler_time_pf::schedule_ul_retxs(ue_pusch_allocator&          pusch_alloc,
-                                                     const ue_resource_grid_view& res_grid,
-                                                     ul_ran_slice_candidate&      slice_candidate,
-                                                     ul_harq_pending_retx_list    harq_list)
+ul_alloc_result scheduler_time_qos::schedule_ul_retxs(ue_pusch_allocator&          pusch_alloc,
+                                                      const ue_resource_grid_view& res_grid,
+                                                      ul_ran_slice_candidate&      slice_candidate,
+                                                      ul_harq_pending_retx_list    harq_list)
 {
   auto& ue_db = slice_candidate.get_slice_ues();
 
@@ -164,10 +164,10 @@ ul_alloc_result scheduler_time_pf::schedule_ul_retxs(ue_pusch_allocator&        
   return {alloc_status::success};
 }
 
-void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
-                                 const ue_resource_grid_view& res_grid,
-                                 ul_ran_slice_candidate&      slice_candidate,
-                                 ul_harq_pending_retx_list    harq_pending_retx_list)
+void scheduler_time_qos::ul_sched(ue_pusch_allocator&          pusch_alloc,
+                                  const ue_resource_grid_view& res_grid,
+                                  ul_ran_slice_candidate&      slice_candidate,
+                                  ul_harq_pending_retx_list    harq_pending_retx_list)
 {
   const slice_ue_repository& ues = slice_candidate.get_slice_ues();
   // Remove deleted users from history.
@@ -216,10 +216,10 @@ void scheduler_time_pf::ul_sched(ue_pusch_allocator&          pusch_alloc,
   }
 }
 
-dl_alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
-                                                const slice_ue_repository& ues,
-                                                ue_pdsch_allocator&        pdsch_alloc,
-                                                unsigned                   max_rbs)
+dl_alloc_result scheduler_time_qos::try_dl_alloc(ue_ctxt&                   ctxt,
+                                                 const slice_ue_repository& ues,
+                                                 ue_pdsch_allocator&        pdsch_alloc,
+                                                 unsigned                   max_rbs)
 {
   dl_alloc_result alloc_result = {alloc_status::invalid_params};
   ue_pdsch_grant  grant{&ues[ctxt.ue_index], ctxt.cell_index};
@@ -235,10 +235,10 @@ dl_alloc_result scheduler_time_pf::try_dl_alloc(ue_ctxt&                   ctxt,
   return alloc_result;
 }
 
-ul_alloc_result scheduler_time_pf::try_ul_alloc(ue_ctxt&                   ctxt,
-                                                const slice_ue_repository& ues,
-                                                ue_pusch_allocator&        pusch_alloc,
-                                                unsigned                   max_rbs)
+ul_alloc_result scheduler_time_qos::try_ul_alloc(ue_ctxt&                   ctxt,
+                                                 const slice_ue_repository& ues,
+                                                 ue_pusch_allocator&        pusch_alloc,
+                                                 unsigned                   max_rbs)
 {
   ul_alloc_result alloc_result = {alloc_status::invalid_params};
   ue_pusch_grant  grant{&ues[ctxt.ue_index], ctxt.cell_index};
@@ -351,7 +351,7 @@ double compute_dl_qos_weights(const slice_ue&                         u,
   double pf_weight   = compute_pf_metric(estim_dl_rate, avg_dl_rate, policy_params.pf_fairness_coeff);
   double prio_weight = policy_params.priority_enabled ? (qos_prio_level_t::max() + 1 - min_prio_level) /
                                                             static_cast<double>(qos_prio_level_t::max() + 1)
-                                                      : 0;
+                                                      : 1.0;
 
   // The return is a combination of QoS priority, GBR and PF weight functions.
   return combine_qos_metrics(pf_weight, gbr_weight, prio_weight, delay_weight, policy_params);
@@ -401,18 +401,18 @@ double compute_ul_qos_weights(const slice_ue&                         u,
   double pf_weight   = compute_pf_metric(estim_ul_rate, avg_ul_rate, policy_params.pf_fairness_coeff);
   double prio_weight = policy_params.priority_enabled ? (qos_prio_level_t::max() + 1 - min_prio_level) /
                                                             static_cast<double>(qos_prio_level_t::max() + 1)
-                                                      : 0;
+                                                      : 1.0;
 
   return combine_qos_metrics(pf_weight, gbr_weight, prio_weight, 1.0, policy_params);
 }
 
 } // namespace
 
-void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
-                                                 ran_slice_id_t  slice_id,
-                                                 slot_point      pdcch_slot,
-                                                 slot_point      pdsch_slot,
-                                                 unsigned        nof_slots_elapsed)
+void scheduler_time_qos::ue_ctxt::compute_dl_prio(const slice_ue& u,
+                                                  ran_slice_id_t  slice_id,
+                                                  slot_point      pdcch_slot,
+                                                  slot_point      pdsch_slot,
+                                                  unsigned        nof_slots_elapsed)
 {
   dl_prio = forbid_prio;
 
@@ -473,11 +473,11 @@ void scheduler_time_pf::ue_ctxt::compute_dl_prio(const slice_ue& u,
   dl_prio = compute_dl_qos_weights(u, estimated_rate, current_total_avg_rate, pdcch_slot, parent->params);
 }
 
-void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
-                                                 ran_slice_id_t  slice_id,
-                                                 slot_point      pdcch_slot,
-                                                 slot_point      pusch_slot,
-                                                 unsigned        nof_slots_elapsed)
+void scheduler_time_qos::ue_ctxt::compute_ul_prio(const slice_ue& u,
+                                                  ran_slice_id_t  slice_id,
+                                                  slot_point      pdcch_slot,
+                                                  slot_point      pusch_slot,
+                                                  unsigned        nof_slots_elapsed)
 {
   ul_prio = forbid_prio;
 
@@ -554,7 +554,7 @@ void scheduler_time_pf::ue_ctxt::compute_ul_prio(const slice_ue& u,
   ul_prio = compute_ul_qos_weights(u, estimated_rate, current_avg_rate, parent->params);
 }
 
-void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
+void scheduler_time_qos::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
 {
   // In case more than one slot elapsed.
   for (unsigned s = 0; s != nof_slots_elapsed - 1; ++s) {
@@ -583,7 +583,7 @@ void scheduler_time_pf::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned
   dl_nof_samples++;
 }
 
-void scheduler_time_pf::ue_ctxt::compute_ul_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
+void scheduler_time_qos::ue_ctxt::compute_ul_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
 {
   // In case more than one slot elapsed.
   for (unsigned s = 0; s != nof_slots_elapsed - 1; ++s) {
@@ -612,12 +612,12 @@ void scheduler_time_pf::ue_ctxt::compute_ul_avg_rate(const slice_ue& u, unsigned
   ul_nof_samples++;
 }
 
-void scheduler_time_pf::ue_ctxt::save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info)
+void scheduler_time_qos::ue_ctxt::save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info)
 {
   dl_sum_alloc_bytes += total_alloc_bytes;
 }
 
-void scheduler_time_pf::ue_ctxt::save_ul_alloc(unsigned alloc_bytes)
+void scheduler_time_qos::ue_ctxt::save_ul_alloc(unsigned alloc_bytes)
 {
   if (alloc_bytes == 0) {
     return;
@@ -625,14 +625,14 @@ void scheduler_time_pf::ue_ctxt::save_ul_alloc(unsigned alloc_bytes)
   ul_sum_alloc_bytes += alloc_bytes;
 }
 
-bool scheduler_time_pf::ue_dl_prio_compare::operator()(const scheduler_time_pf::ue_ctxt* lhs,
-                                                       const scheduler_time_pf::ue_ctxt* rhs) const
+bool scheduler_time_qos::ue_dl_prio_compare::operator()(const scheduler_time_qos::ue_ctxt* lhs,
+                                                        const scheduler_time_qos::ue_ctxt* rhs) const
 {
   return lhs->dl_prio < rhs->dl_prio;
 }
 
-bool scheduler_time_pf::ue_ul_prio_compare::operator()(const scheduler_time_pf::ue_ctxt* lhs,
-                                                       const scheduler_time_pf::ue_ctxt* rhs) const
+bool scheduler_time_qos::ue_ul_prio_compare::operator()(const scheduler_time_qos::ue_ctxt* lhs,
+                                                        const scheduler_time_qos::ue_ctxt* rhs) const
 {
   // All other cases compare priorities.
   return lhs->ul_prio < rhs->ul_prio;
