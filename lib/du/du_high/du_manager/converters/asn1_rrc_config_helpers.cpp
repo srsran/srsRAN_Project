@@ -3245,6 +3245,26 @@ bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_
 
   out.t304.value = recfg_with_sync_s::t304_opts::ms2000;
 
+  // In case of CFRA.
+  out.rach_cfg_ded_present = dest.cfra.has_value();
+  if (out.rach_cfg_ded_present) {
+    const auto&     rach_common = *du_cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common;
+    rach_cfg_ded_s& rach_ded    = out.rach_cfg_ded.set_ul();
+    rach_ded.cfra_present       = true;
+    // Use rachConfigCommon to get "occasions".
+    rach_ded.cfra.occasions_present = false;
+    // Note: All RA preambles not used for CBRA are used for CFRA.
+    rach_ded.cfra.ext                          = true;
+    rach_ded.cfra.total_nof_ra_preambs_present = true;
+    rach_ded.cfra.total_nof_ra_preambs         = MAX_NOF_RA_PREAMBLES_PER_OCCASION - rach_common.total_nof_ra_preambles;
+    // Make CFRA-SSB-Resource.
+    auto&          cfra_ssb = rach_ded.cfra.res.set_ssb();
+    cfra_ssb_res_s ssbres;
+    ssbres.ssb           = 0;
+    ssbres.ra_preamb_idx = dest.cfra.value().preamble_id;
+    cfra_ssb.ssb_res_list.push_back(ssbres);
+  }
+
   out.ext = true;
   out.smtc.set_present();
   *out.smtc = make_ssb_mtc(du_cell_cfg);
