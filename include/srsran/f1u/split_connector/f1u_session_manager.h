@@ -14,7 +14,7 @@
 #include "srsran/ran/qos/five_qi.h"
 #include <map>
 
-namespace srsran::srs_cu_up {
+namespace srsran {
 
 struct f1u_session_maps {
   std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>                      default_gw_sessions;
@@ -28,4 +28,4 @@ public:
   virtual gtpu_tnl_pdu_session& get_next_f1u_gateway(five_qi_t five_qi) = 0;
 };
 
-} // namespace srsran::srs_cu_up
+} // namespace srsran

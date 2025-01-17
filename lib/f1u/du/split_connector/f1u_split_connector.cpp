@@ -10,8 +10,7 @@
  */
 
 #include "f1u_split_connector.h"
-#include "srsran/f1u/cu_up/f1u_session_manager_factory.h" // TODO FIXME!!!!
-#include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
+#include "srsran/f1u/split_connector/f1u_session_manager_factory.h"
 #include "srsran/ran/rb_id.h"
 
 using namespace srsran;

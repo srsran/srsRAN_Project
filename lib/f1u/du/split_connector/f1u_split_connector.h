@@ -11,10 +11,10 @@
 
 #pragma once
 
-#include "srsran/f1u/cu_up/f1u_session_manager.h" // TODO FIXME!!!
 #include "srsran/f1u/du/f1u_bearer_logger.h"
 #include "srsran/f1u/du/f1u_gateway.h"
 #include "srsran/f1u/split_connector/f1u_five_qi_gw_maps.h"
+#include "srsran/f1u/split_connector/f1u_session_manager.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/gtpu/gtpu_tunnel_common_tx.h"
@@ -22,7 +22,6 @@
 #include "srsran/gtpu/gtpu_tunnel_nru_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_nru_rx.h"
 #include "srsran/pcap/dlt_pcap.h"
-#include "srsran/srslog/srslog.h"
 #include <cstdint>
 #include <unordered_map>
 
@@ -209,8 +208,8 @@ private:
   std::unordered_map<up_transport_layer_info, f1u_split_gateway_du_bearer*> du_map;
   std::mutex map_mutex; // shared mutex for access to cu_map
 
-  std::unique_ptr<srs_cu_up::f1u_session_manager>          f1u_session_mngr;
-  srs_cu_up::f1u_session_maps                              f1u_sessions;
+  std::unique_ptr<f1u_session_manager>                     f1u_session_mngr;
+  f1u_session_maps                                         f1u_sessions;
   gtpu_demux*                                              demux;
   std::unique_ptr<network_gateway_data_gtpu_demux_adapter> gw_data_gtpu_demux_adapter;
   dlt_pcap&                                                gtpu_pcap;

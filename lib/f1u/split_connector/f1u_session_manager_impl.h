@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsran/f1u/cu_up/f1u_session_manager.h"
+#include "srsran/f1u/split_connector/f1u_session_manager.h"
 
-namespace srsran::srs_cu_up {
+namespace srsran {
 
 class f1u_session_manager_impl : public f1u_session_manager
 {
@@ -29,4 +29,4 @@ private:
   std::map<five_qi_t, uint32_t> five_qi_next_gw_map;
 };
 
-} // namespace srsran::srs_cu_up
+} // namespace srsran
