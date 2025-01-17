@@ -1359,6 +1359,12 @@ inline simd_cf_t operator*(simd_cf_t left, simd_f_t right)
   return srsran_simd_cf_mul(left, right);
 }
 
+/// Multiplies a complex and a single precision value.
+inline simd_cf_t operator*(simd_cf_t left, float right)
+{
+  return srsran_simd_cf_mul(left, srsran_simd_f_set1(right));
+}
+
 /// Multiplies two complex SIMD registers.
 inline simd_cf_t& operator*=(simd_cf_t& left, const simd_cf_t& right)
 {

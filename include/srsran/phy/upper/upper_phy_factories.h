@@ -210,7 +210,7 @@ struct upper_phy_config {
   bool rx_symbol_printer_prach;
   /// \brief LDPC decoder type.
   ///
-  /// Use of there options:
+  /// Use one of these options:
   /// - \c auto: let the factory select the most efficient given the CPU architecture, or
   /// - \c generic: for using generic instructions, or
   /// - \c avx2: for using AVX2 instructions (x86_64 CPUs only), or
@@ -219,7 +219,7 @@ struct upper_phy_config {
   std::string ldpc_decoder_type;
   /// \brief LDPC rate dematcher type.
   ///
-  /// Use of there options:
+  /// Use one of these options:
   /// - \c auto: let the factory select the most efficient given the CPU architecture, or
   /// - \c generic: for using generic instructions, or
   /// - \c avx2: for using AVX2 instructions (x86_64 CPUs only), or
@@ -228,11 +228,26 @@ struct upper_phy_config {
   std::string ldpc_rate_dematcher_type;
   /// \brief CRC calculator type.
   ///
-  /// Use of there options:
+  /// Use one of these options:
   /// - \c auto: let the factory select the most efficient given the CPU architecture, or
   /// - \c lut: for using a look-up table CRC calculator, or
   /// - \c clmul: for using a look-up table CRC calculator (x86_64 CPUs only).
   std::string crc_calculator_type;
+  /// \brief PUSCH channel estimator time-domain interpolation strategy.
+  ///
+  /// Use one of these options:
+  /// - \c average: averages the DM-RS in time domain, or
+  /// - \c interpolate: performs linear interpolation between the OFDM symbols containing DM-RS.
+  ///
+  /// The \c average strategy is more robust against noise and interference while \c interpolate is more robust for
+  /// fast fading channels.
+  std::string pusch_channel_estimator_td_strategy;
+  /// \brief PUSCH channel equalizer algorithm.
+  ///
+  /// Use one of these options:
+  /// - \c zf: use zero-forcing algorithm, or
+  /// - \c mmse: use minimum mean square error algorithm.
+  std::string pusch_channel_equalizer_algorithm;
   /// Number of LDPC decoder iterations.
   unsigned ldpc_decoder_iterations;
   /// Set to true to enable the LDPC decoder early stop.

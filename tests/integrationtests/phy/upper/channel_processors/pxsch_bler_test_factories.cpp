@@ -177,11 +177,14 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
                                                       max_nof_threads);
 }
 
-std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_factory(task_executor& executor,
-                                                                                   unsigned       max_nof_threads,
-                                                                                   unsigned       nof_ldpc_iterations,
-                                                                                   bool           dec_enable_early_stop,
-                                                                                   const std::string& pxsch_type)
+std::shared_ptr<pusch_processor_factory>
+srsran::create_sw_pusch_processor_factory(task_executor&                                   executor,
+                                          unsigned                                         max_nof_threads,
+                                          unsigned                                         nof_ldpc_iterations,
+                                          bool                                             dec_enable_early_stop,
+                                          const std::string&                               pxsch_type,
+                                          port_channel_estimator_td_interpolation_strategy td_interpolation_strategy,
+                                          channel_equalizer_algorithm_type                 equalizer_algorithm_type)
 {
   pusch_processor_phy_capabilities pusch_processor_phy_cap = get_pusch_processor_phy_capabilities();
 
@@ -245,11 +248,11 @@ std::shared_ptr<pusch_processor_factory> srsran::create_sw_pusch_processor_facto
   report_fatal_error_if_not(chan_estimator_factory, "Failed to create factory.");
 
   std::shared_ptr<dmrs_pusch_estimator_factory> chan_est_factory = create_dmrs_pusch_estimator_factory_sw(
-      pseudo_random_gen_factory, low_papr_sequence_gen_factory, chan_estimator_factory);
+      pseudo_random_gen_factory, low_papr_sequence_gen_factory, chan_estimator_factory, td_interpolation_strategy);
   report_fatal_error_if_not(chan_est_factory, "Failed to create factory.");
 
   std::shared_ptr<channel_equalizer_factory> eq_factory =
-      create_channel_equalizer_generic_factory(channel_equalizer_algorithm_type::zf);
+      create_channel_equalizer_generic_factory(equalizer_algorithm_type);
   report_fatal_error_if_not(eq_factory, "Failed to create factory.");
 
   std::shared_ptr<channel_modulation_factory> chan_mod_factory = create_channel_modulation_sw_factory();

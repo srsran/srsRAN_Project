@@ -106,8 +106,11 @@ protected:
     ASSERT_TRUE(port_estimator_factory);
 
     // Create estimator factory.
-    std::shared_ptr<dmrs_pusch_estimator_factory> estimator_factory = create_dmrs_pusch_estimator_factory_sw(
-        prg_factory, low_papr_sequence_gen_factory_factory, port_estimator_factory);
+    std::shared_ptr<dmrs_pusch_estimator_factory> estimator_factory =
+        create_dmrs_pusch_estimator_factory_sw(prg_factory,
+                                               low_papr_sequence_gen_factory_factory,
+                                               port_estimator_factory,
+                                               port_channel_estimator_td_interpolation_strategy::average);
     ASSERT_TRUE(estimator_factory);
 
     // Create actual channel estimator.

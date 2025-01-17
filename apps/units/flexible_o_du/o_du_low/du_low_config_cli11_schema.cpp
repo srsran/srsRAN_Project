@@ -169,6 +169,18 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
     }
     return "Invalid PUSCH SINR calculation method. Accepted values [channel_estimator,post_equalization,evm]";
   };
+  auto pusch_channel_estimator_td_strategy_method_check = [](const std::string& value) -> std::string {
+    if ((value == "average") || (value == "interpolate")) {
+      return {};
+    }
+    return "Invalid PUSCH channel estimator time-domain strategy. Accepted values [average,interpolate]";
+  };
+  auto pusch_channel_equalizer_algorithm_method_check = [](const std::string& value) -> std::string {
+    if ((value == "zf") || (value == "mmse")) {
+      return {};
+    }
+    return "Invalid PUSCH channel equalizer algorithm. Accepted values [zf,mmse]";
+  };
 
   add_option(app,
              "--max_proc_delay",
@@ -193,6 +205,18 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
              "PUSCH SINR calculation method: channel_estimator, post_equalization and evm.")
       ->capture_default_str()
       ->check(pusch_sinr_method_check);
+  add_option(app,
+             "--pusch_channel_estimator_td_strategy",
+             expert_phy_params.pusch_channel_estimator_td_strategy,
+             "PUSCH channel estimator time-domain strategy: average and interpolate.")
+      ->capture_default_str()
+      ->check(pusch_channel_estimator_td_strategy_method_check);
+  add_option(app,
+             "--pusch_channel_equalizer_algorithm",
+             expert_phy_params.pusch_channel_equalizer_algorithm,
+             "PUSCH channel equalizer algorithm: zf and mmse.")
+      ->capture_default_str()
+      ->check(pusch_channel_equalizer_algorithm_method_check);
   add_option(app,
              "--max_request_headroom_slots",
              expert_phy_params.nof_slots_request_headroom,

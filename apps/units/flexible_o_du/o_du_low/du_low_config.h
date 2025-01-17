@@ -36,6 +36,21 @@ struct du_low_unit_expert_upper_phy_config {
   /// -\c post_equalization: SINR is calculated using the post-equalization noise variances of the equalized RE.
   /// -\c evm: SINR is obtained from the EVM of the PUSCH symbols.
   std::string pusch_sinr_calc_method = "post_equalization";
+  /// \brief PUSCH channel estimator time-domain interpolation strategy.
+  ///
+  /// Use one of these options:
+  /// - \c average: averages the DM-RS in time domain, or
+  /// - \c interpolate: performs linear interpolation between the OFDM symbols containing DM-RS.
+  ///
+  /// The \c average strategy is more robust against noise and interference while \c interpolate is more robust for
+  /// fast fading channels.
+  std::string pusch_channel_estimator_td_strategy = "average";
+  /// \brief PUSCH channel equalizer algorithm.
+  ///
+  /// Use one of these options:
+  /// - \c zf: use zero-forcing algorithm, or
+  /// - \c mmse: use minimum mean square error algorithm.
+  std::string pusch_channel_equalizer_algorithm = "zf";
   /// \brief Request headroom size in slots.
   ///
   /// The request headroom size is the number of delayed slots that the upper physical layer will accept, ie, if the

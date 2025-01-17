@@ -37,7 +37,7 @@ static constexpr subcarrier_spacing scs                              = subcarrie
 static constexpr uint16_t           rnti                             = 0x1234;
 static constexpr unsigned           bwp_start_rb                     = 0;
 static constexpr unsigned           nof_ofdm_symbols                 = 14;
-static const symbol_slot_mask       dmrs_symbol_mask                 = {0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0};
+static const symbol_slot_mask       dmrs_symbol_mask                 = {0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0};
 static constexpr unsigned           nof_ldpc_iterations              = 10;
 static constexpr dmrs_type          dmrs                             = dmrs_type::TYPE1;
 static constexpr unsigned           nof_cdm_groups_without_data      = 2;
@@ -231,8 +231,14 @@ private:
     report_fatal_error_if_not(pdsch_proc_factory, "Failted to create PDSCH processor factory.");
 
     // Create PUSCH processor factory.
-    std::shared_ptr<pusch_processor_factory> pusch_proc_factory = create_sw_pusch_processor_factory(
-        *executor, max_nof_threads + 1, nof_ldpc_iterations, use_early_stop, pxsch_type);
+    std::shared_ptr<pusch_processor_factory> pusch_proc_factory =
+        create_sw_pusch_processor_factory(*executor,
+                                          max_nof_threads + 1,
+                                          nof_ldpc_iterations,
+                                          use_early_stop,
+                                          pxsch_type,
+                                          port_channel_estimator_td_interpolation_strategy::average,
+                                          channel_equalizer_algorithm_type::zf);
     report_fatal_error_if_not(pusch_proc_factory, "Failted to create PUSCH processor factory.");
 
     // Create resource grid factory.

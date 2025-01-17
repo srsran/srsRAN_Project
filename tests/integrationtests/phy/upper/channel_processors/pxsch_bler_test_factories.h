@@ -27,16 +27,20 @@ std::shared_ptr<pdsch_processor_factory> create_sw_pdsch_processor_factory(task_
                                                                            const std::string& pxsch_type);
 
 /// \brief Creates a PUSCH processor factory.
-/// \param[in] executor               Asynchornous executor.
-/// \param[in] max_nof_threads        Maximum number of concurrent threads.
-/// \param[in] nof_ldpc_iterations    Maximum number of LDPC decoder iterations.
-/// \param[in] dec_enable_early_stop  Set to true to enable LDPC decoder early stop.
-/// \param[in] pxsch_type             Type of PxSCH implementation to be tested.
+/// \param[in] executor                  Asynchornous executor.
+/// \param[in] max_nof_threads           Maximum number of concurrent threads.
+/// \param[in] nof_ldpc_iterations       Maximum number of LDPC decoder iterations.
+/// \param[in] pxsch_type                Type of PxSCH implementation to be tested.
+/// \param[in] dec_enable_early_stop     Set to true to enable LDPC decoder early stop.
+/// \param[in] td_interpolation_strategy Channel estimator time-domain interpolation strategy.
 /// \return A PUSCH processor factory if it is successful.
-std::shared_ptr<pusch_processor_factory> create_sw_pusch_processor_factory(task_executor&     executor,
-                                                                           unsigned           max_nof_threads,
-                                                                           unsigned           nof_ldpc_iterations,
-                                                                           bool               dec_enable_early_stop,
-                                                                           const std::string& pxsch_type);
+std::shared_ptr<pusch_processor_factory>
+create_sw_pusch_processor_factory(task_executor&                                   executor,
+                                  unsigned                                         max_nof_threads,
+                                  unsigned                                         nof_ldpc_iterations,
+                                  bool                                             dec_enable_early_stop,
+                                  const std::string&                               pxsch_type,
+                                  port_channel_estimator_td_interpolation_strategy td_interpolation_strategy,
+                                  channel_equalizer_algorithm_type                 equalizer_algorithm_type);
 
 } // namespace srsran

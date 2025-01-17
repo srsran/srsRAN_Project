@@ -232,7 +232,7 @@ void srsran::apply_fd_smoothing(span<cf_t>                                   enl
   }
 }
 
-float srsran::estimate_time_alignment(const re_buffer_reader<cf_t>&                     pilots_lse,
+float srsran::estimate_time_alignment(const re_measurement<cf_t>&                       pilots_lse,
                                       const port_channel_estimator::layer_dmrs_pattern& pattern,
                                       unsigned                                          hop,
                                       subcarrier_spacing                                scs,
@@ -240,33 +240,46 @@ float srsran::estimate_time_alignment(const re_buffer_reader<cf_t>&             
 {
   const bounded_bitset<MAX_RB>& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
 
+  unsigned nof_symbols = pilots_lse.size().nof_symbols;
+  unsigned nof_slices  = pilots_lse.size().nof_slices;
+  unsigned nof_re      = pilots_lse.size().nof_subc;
+
+  // Convert RE measurement to a RE buffer.
+  modular_re_buffer_reader<cf_t, MAX_NSYMB_PER_SLOT * port_channel_estimator_average_impl::MAX_LAYERS>
+      pilots_lse_buffer(nof_slices * nof_symbols, nof_re);
+  for (unsigned i_symbol = 0, count = 0; i_symbol != nof_symbols; ++i_symbol) {
+    for (unsigned i_slice = 0; i_slice != nof_slices; ++i_slice) {
+      pilots_lse_buffer.set_slice(count++, pilots_lse.get_symbol(i_symbol, i_slice));
+    }
+  }
+
   // Handle contiguous RB mask cases.
   if (hop_rb_mask.is_contiguous()) {
     // RE pattern for PUCCH Format 1, 3 and 4.
     if (pattern.re_pattern.all()) {
-      return ta_estimator.estimate(pilots_lse, 1, scs).time_alignment;
+      return ta_estimator.estimate(pilots_lse_buffer, 1, scs).time_alignment;
     }
 
     // RE pattern for PUSCH.
     if ((pattern.re_pattern == re_pattern_pusch_0) || (pattern.re_pattern == re_pattern_pusch_1)) {
-      return ta_estimator.estimate(pilots_lse, 2, scs).time_alignment;
+      return ta_estimator.estimate(pilots_lse_buffer, 2, scs).time_alignment;
     }
 
     // RE pattern for PUCCH Format 2.
     if (pattern.re_pattern == re_pattern_pucch_f2) {
-      return ta_estimator.estimate(pilots_lse, 3, scs).time_alignment;
+      return ta_estimator.estimate(pilots_lse_buffer, 3, scs).time_alignment;
     }
   }
 
   // Prepare RE mask, common for all symbols carrying DM-RS.
   bounded_bitset<MAX_RB* NRE> re_mask = hop_rb_mask.kronecker_product<NRE>(pattern.re_pattern);
 
-  srsran_assert(pilots_lse.get_slice(0).size() == re_mask.count(),
+  srsran_assert(pilots_lse_buffer.get_slice(0).size() == re_mask.count(),
                 "Expected {} channel estimates, provided {}.",
                 re_mask.size(),
-                pilots_lse.get_slice(0).size());
+                pilots_lse_buffer.get_slice(0).size());
 
-  return ta_estimator.estimate(pilots_lse, re_mask, scs).time_alignment;
+  return ta_estimator.estimate(pilots_lse_buffer, re_mask, scs).time_alignment;
 }
 
 interpolator::configuration srsran::configure_interpolator(const bounded_bitset<NRE>& re_mask)

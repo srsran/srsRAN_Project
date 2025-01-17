@@ -65,19 +65,6 @@ public:
   /// Returns the RE measurements dimensions.
   virtual const re_measurement_dimensions& size() const = 0;
 
-  /// Returns a read-write view over the RE measurements corresponding to the given \ref slice0be287 "slice".
-  virtual span<measure_type> get_slice(unsigned i_slice) = 0;
-
-  /// Returns a read-only view over the RE measurements corresponding to the given \ref slice0be287 "slice".
-  virtual span<const measure_type> get_slice(unsigned i_slice) const = 0;
-
-  /// \brief Writes data on a \ref slice0be287 "slice".
-  ///
-  /// \param[in] data     Input data.
-  /// \param[in] i_slice  Index of the destination slice.
-  /// \remark The size of \c data should be equal to the number of REs in a slice.
-  virtual void set_slice(span<const measure_type> data, unsigned i_slice) = 0;
-
   /// Returns a read-write view over the RE measurements corresponding to the given symbol index and \ref slice0be287
   /// "slice".
   virtual span<measure_type> get_symbol(unsigned i_symbol, unsigned i_slice) = 0;
@@ -91,6 +78,121 @@ public:
   /// affects the amount of accessible REs and the \ref slice0be287 "slice" size.
   virtual void resize(const re_measurement_dimensions& dims) = 0;
 };
+
+/// \brief Modular resource element measurement.
+/// \tparam measure_type  Underlying data type.
+/// \tparam MaxNofSymbols Maximum number of symbols.
+/// \tparam MaxNofSlices  Maximum number of slices.
+template <typename measure_type, unsigned MaxNofSymbols, unsigned MaxNofSlices>
+class modular_re_measurement : public re_measurement<measure_type>
+{
+public:
+  /// Default constructor - creates an empty RE measurement object.
+  modular_re_measurement() = default;
+
+  /// Creates a modular RE measurement object with the given dimensions.
+  modular_re_measurement(const re_measurement_dimensions& dimensions_) { resize(dimensions_); }
+
+  /// Creates a modular RE measurement object from another RE measurement object.
+  modular_re_measurement(re_measurement<measure_type>& other) : modular_re_measurement(other, 0, other.size().nof_subc)
+  {
+  }
+
+  /// Creates a modular RE measurement object from another RE measurement object with an offset and number of
+  /// subcarriers.
+  modular_re_measurement(re_measurement<measure_type>& other, unsigned offset, unsigned nof_subc)
+  {
+    assign(other, offset, nof_subc);
+  }
+
+  // See interface for documentation.
+  const re_measurement_dimensions& size() const override { return dimensions; }
+
+  // See interface for documentation.
+  span<measure_type> get_symbol(unsigned i_symbol, unsigned i_slice) override
+  {
+    srsran_assert(i_slice < dimensions.nof_slices,
+                  "Slice index (i.e., {}) exceeds the number of slices (i.e., {}).",
+                  i_symbol,
+                  dimensions.nof_slices);
+    srsran_assert(i_symbol < dimensions.nof_symbols,
+                  "Symbol index (i.e., {}) exceeds the number of symbols (i.e., {}).",
+                  i_symbol,
+                  dimensions.nof_symbols);
+    return data[{i_slice, i_symbol}];
+  }
+
+  // See interface for documentation.
+  span<const measure_type> get_symbol(unsigned i_symbol, unsigned i_slice) const override
+  {
+    srsran_assert(i_slice < dimensions.nof_slices,
+                  "Slice index (i.e., {}) exceeds the number of slices (i.e., {}).",
+                  i_symbol,
+                  dimensions.nof_slices);
+    srsran_assert(i_symbol < dimensions.nof_symbols,
+                  "Symbol index (i.e., {}) exceeds the number of symbols (i.e., {}).",
+                  i_symbol,
+                  dimensions.nof_symbols);
+    return data[{i_slice, i_symbol}];
+  }
+
+  // See interface for documentation.
+  void resize(const re_measurement_dimensions& dims) override
+  {
+    srsran_assert(dims.nof_symbols <= MaxNofSymbols,
+                  "The number of symbols (i.e., {}) exceeds the maximum (i.e., {}).",
+                  dims.nof_symbols,
+                  MaxNofSymbols);
+    srsran_assert(dims.nof_slices <= MaxNofSlices,
+                  "The number of slices (i.e., {}) exceeds the maximum (i.e., {}).",
+                  dims.nof_slices,
+                  MaxNofSlices);
+    dimensions = dims;
+    data.resize({dims.nof_slices, dims.nof_symbols});
+    std::fill_n(data.get_data().begin(), dims.nof_slices * dims.nof_symbols, span<measure_type>());
+  }
+
+  /// Sets a symbol view.
+  void set_symbol(unsigned i_symbol, unsigned i_slice, span<measure_type> view)
+  {
+    srsran_assert(i_slice < dimensions.nof_slices,
+                  "Slice index (i.e., {}) exceeds the number of slices (i.e., {}).",
+                  i_symbol,
+                  dimensions.nof_slices);
+    srsran_assert(i_symbol < dimensions.nof_symbols,
+                  "Symbol index (i.e., {}) exceeds the number of symbols (i.e., {}).",
+                  i_symbol,
+                  dimensions.nof_symbols);
+    srsran_assert(view.size() == dimensions.nof_subc,
+                  "The number of subcarriers in the view (i.e., {}) does not match the configured one (i.e., {}).",
+                  view.size(),
+                  dimensions.nof_subc);
+    data[{i_slice, i_symbol}] = view;
+  }
+
+  /// Assigns the views of the resource element measurement to another measurement.
+  void assign(re_measurement<measure_type>& other) { assign(other, 0, other.size().nof_subc); }
+
+  /// Assigns the views of the resource element measurement to another measurement with a subcarrier offset.
+  void assign(re_measurement<measure_type>& other, unsigned offset, unsigned nof_subc)
+  {
+    const re_measurement_dimensions& base_dims = other.size();
+    srsran_assert(offset + nof_subc <= base_dims.nof_subc, "Invalid offset and number of subcarriers.");
+
+    resize({.nof_subc = nof_subc, .nof_symbols = base_dims.nof_symbols, .nof_slices = base_dims.nof_slices});
+
+    for (unsigned i_slice = 0; i_slice != dimensions.nof_slices; ++i_slice) {
+      for (unsigned i_symbol = 0; i_symbol != dimensions.nof_symbols; ++i_symbol) {
+        set_symbol(i_symbol, i_slice, other.get_symbol(i_symbol, i_slice).subspan(offset, nof_subc));
+      }
+    }
+  }
+
+private:
+  re_measurement_dimensions                                          dimensions;
+  static_tensor<2, span<measure_type>, MaxNofSymbols * MaxNofSlices> data;
+
+}; // namespace srsran
 
 namespace detail {
 
@@ -108,28 +210,12 @@ public:
   // See interface for documentation.
   const re_measurement_dimensions& size() const override { return dimensions; }
 
-  // See interface for documentation.
-  span<measure_type> get_slice(unsigned i_slice) override
-  {
-    srsran_assert(i_slice < dimensions.nof_slices,
-                  "Requested slice {}, but only {} slices are supported.",
-                  i_slice,
-                  dimensions.nof_slices);
-    return re_meas.template get_view<re_measurement_nof_dimensions::slice>({i_slice});
-  }
-
-  // See interface for documentation.
-  span<const measure_type> get_slice(unsigned i_slice) const override
-  {
-    srsran_assert(i_slice < dimensions.nof_slices,
-                  "Requested slice {}, but only {} slices are supported.",
-                  i_slice,
-                  dimensions.nof_slices);
-    return re_meas.template get_view<re_measurement_nof_dimensions::slice>({i_slice});
-  }
-
-  // See interface for documentation.
-  void set_slice(span<const measure_type> data, unsigned i_slice) override
+  /// \brief Writes data on a \ref slice0be287 "slice".
+  ///
+  /// \param[in] data     Input data.
+  /// \param[in] i_slice  Index of the destination slice.
+  /// \remark The size of \c data should be equal to the number of REs in a slice.
+  void set_slice(span<const measure_type> data, unsigned i_slice)
   {
     srsran_assert(i_slice < dimensions.nof_slices,
                   "Requested slice {}, but only {} slices are supported.",
@@ -199,9 +285,10 @@ protected:
   /// \brief RE measurements container.
   ///
   /// RE measurements should be thought as three-dimensional tensor with the first two dimensions representing, in
-  /// order, subcarriers and OFDM symbols. Typically, the third dimension is referred to as slice and represents either
-  /// receive ports (before channel equalization) or transmit layers (after channel equalization). The underlying data
-  /// structure is a single vector, indexed in the same order: i) subcarriers, ii) OFDM symbols, iii) slice.
+  /// order, subcarriers and OFDM symbols. Typically, the third dimension is referred to as slice and represents
+  /// either receive ports (before channel equalization) or transmit layers (after channel equalization). The
+  /// underlying data structure is a single vector, indexed in the same order: i) subcarriers, ii) OFDM symbols, iii)
+  /// slice.
   Tensor re_meas;
 
 private:
@@ -235,8 +322,9 @@ public:
   /// Constructor: checks template type.
   static_re_measurement()
   {
-    static_assert(std::is_same<measure_type, float>::value || std::is_same<measure_type, cf_t>::value,
-                  "At the moment, this template is only available for float and cf_t.");
+    static_assert(std::is_same<measure_type, float>::value || std::is_same<measure_type, cf_t>::value ||
+                      std::is_same<measure_type, cbf16_t>::value,
+                  "At the moment, this template is only available for float, cf_t and cbf16_t.");
     base::reserved_dims = {MAX_NOF_SUBC, MAX_NOF_SYMBOLS, MAX_NOF_SLICES};
   }
 

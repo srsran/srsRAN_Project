@@ -369,6 +369,17 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
                             pusch_capabilities.max_nof_layers,
                             config.pusch_max_nof_layers);
 
+  channel_equalizer_algorithm_type pusch_equalizer_algorithm_type = channel_equalizer_algorithm_type::zf;
+  if (config.pusch_channel_equalizer_algorithm == "mmse") {
+    pusch_equalizer_algorithm_type = channel_equalizer_algorithm_type::mmse;
+  }
+
+  port_channel_estimator_td_interpolation_strategy pusch_chan_estimator_td_strategy =
+      port_channel_estimator_td_interpolation_strategy::average;
+  if (config.pusch_channel_equalizer_algorithm == "interpolate") {
+    pusch_chan_estimator_td_strategy = port_channel_estimator_td_interpolation_strategy::interpolate;
+  }
+
   std::shared_ptr<low_papr_sequence_generator_factory> sequence_factory =
       create_low_papr_sequence_generator_sw_factory();
   report_fatal_error_if_not(sequence_factory, "Invalid sequence factory.");
@@ -415,8 +426,13 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
       create_low_papr_sequence_generator_sw_factory();
   report_error_if_not(low_papr_sequence_gen_factory, "Invalid low-PAPR sequence generator factory.");
 
-  std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_generic_factory();
-  report_error_if_not(equalizer_factory, "Invalid equalizer factory.");
+  std::shared_ptr<channel_equalizer_factory> pusch_equalizer_factory =
+      create_channel_equalizer_generic_factory(pusch_equalizer_algorithm_type);
+  report_error_if_not(pusch_equalizer_factory, "Invalid PUSCH equalizer factory.");
+
+  std::shared_ptr<channel_equalizer_factory> pucch_equalizer_factory =
+      create_channel_equalizer_generic_factory(channel_equalizer_algorithm_type::zf);
+  report_error_if_not(pucch_equalizer_factory, "Invalid PUCCH equalizer factory.");
 
   std::shared_ptr<transform_precoder_factory> precoding_factory =
       create_dft_transform_precoder_factory(dft_factory, config.ul_bw_rb);
@@ -486,9 +502,9 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
                         (config.log_level == srslog::basic_levels::debug);
 
   // Add the remaining PUSCH processor configuration values.
-  pusch_config.estimator_factory =
-      create_dmrs_pusch_estimator_factory_sw(prg_factory, low_papr_sequence_gen_factory, ch_estimator_factory);
-  pusch_config.demodulator_factory        = create_pusch_demodulator_factory_sw(equalizer_factory,
+  pusch_config.estimator_factory = create_dmrs_pusch_estimator_factory_sw(
+      prg_factory, low_papr_sequence_gen_factory, ch_estimator_factory, pusch_chan_estimator_td_strategy);
+  pusch_config.demodulator_factory        = create_pusch_demodulator_factory_sw(pusch_equalizer_factory,
                                                                          precoding_factory,
                                                                          demodulation_factory,
                                                                          prg_factory,
@@ -565,12 +581,12 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
 
   std::shared_ptr<pseudo_random_generator_factory> pseudorandom = create_pseudo_random_generator_sw_factory();
   std::shared_ptr<pucch_detector_factory>          pucch_detector_fact =
-      create_pucch_detector_factory_sw(lpc_factory, pseudorandom, equalizer_factory);
+      create_pucch_detector_factory_sw(lpc_factory, pseudorandom, pucch_equalizer_factory);
   report_fatal_error_if_not(pucch_detector_fact, "Invalid PUCCH detector factory.");
 
   // Create PUCCH demodulator factory.
-  std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory =
-      create_pucch_demodulator_factory_sw(equalizer_factory, demodulation_factory, prg_factory, precoding_factory);
+  std::shared_ptr<pucch_demodulator_factory> pucch_demod_factory = create_pucch_demodulator_factory_sw(
+      pucch_equalizer_factory, demodulation_factory, prg_factory, precoding_factory);
   report_fatal_error_if_not(pucch_demod_factory, "Invalid PUCCH demodulator factory.");
 
   channel_estimate::channel_estimate_dimensions channel_estimate_dimensions;
