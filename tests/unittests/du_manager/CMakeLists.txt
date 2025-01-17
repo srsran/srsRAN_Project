@@ -64,6 +64,13 @@ target_include_directories(du_ue_config_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_ue_config_test du_manager_test_helpers rrc_test_doubles pdcp_test_doubles gtest gtest_main)
 gtest_discover_tests(du_ue_config_test)
 
+add_executable(du_manager_procedure_test
+        procedures/du_param_config_procedure_test.cpp
+)
+target_include_directories(du_manager_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(du_manager_procedure_test du_manager_test_helpers gtest gtest_main)
+gtest_discover_tests(du_manager_procedure_test)
+
 add_executable(du_ran_resource_manager_test du_ran_resource_manager_test.cpp du_drx_resource_manager_test.cpp)
 target_include_directories(du_ran_resource_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_ran_resource_manager_test du_manager_test_helpers gtest gtest_main)

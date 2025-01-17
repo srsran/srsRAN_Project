@@ -115,6 +115,7 @@ public:
   std::optional<du_ue_index_t>                                   last_ue_deleted;
   std::optional<f1ap_ue_context_release_request>                 last_ue_release_req;
   wait_manual_event_tester<f1ap_ue_context_modification_confirm> wait_ue_mod;
+  std::optional<gnbdu_config_update_request>                     last_du_cfg_req;
 
   bool connect_to_cu_cp() override { return true; }
 
@@ -127,6 +128,7 @@ public:
 
   async_task<gnbdu_config_update_response> handle_du_config_update(const gnbdu_config_update_request& request) override
   {
+    last_du_cfg_req = gnbdu_config_update_request{request};
     return launch_no_op_task(gnbdu_config_update_response{});
   }
 
@@ -239,12 +241,18 @@ class mac_test_dummy : public mac_cell_manager,
 public:
   class mac_cell_dummy : public mac_cell_controller
   {
-    wait_manual_event_tester<void> wait_start;
-    wait_manual_event_tester<void> wait_stop;
+  public:
+    wait_manual_event_tester<void>           wait_start;
+    wait_manual_event_tester<void>           wait_stop;
+    std::optional<mac_cell_reconfig_request> last_cell_recfg_req;
 
     async_task<void> start() override { return wait_start.launch(); }
     async_task<void> stop() override { return wait_stop.launch(); }
-    async_task<bool> reconfigure(const mac_cell_reconfig_request& request) override { return launch_no_op_task(true); }
+    async_task<bool> reconfigure(const mac_cell_reconfig_request& request) override
+    {
+      last_cell_recfg_req = request;
+      return launch_no_op_task(true);
+    }
   };
 
   mac_cell_dummy mac_cell;
