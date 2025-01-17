@@ -76,7 +76,17 @@ static void manage_hal_optional(CLI::App& app, du_appconfig& du_cfg)
   }
 }
 
+static void configure_default_f1u(du_appconfig& du_cfg)
+{
+  if (du_cfg.f1u_cfg.f1u_sockets.f1u_socket_cfg.empty()) {
+    f1u_socket_appconfig default_f1u_cfg;
+    default_f1u_cfg.bind_addr = "127.0.10.2";
+    du_cfg.f1u_cfg.f1u_sockets.f1u_socket_cfg.push_back(default_f1u_cfg);
+  }
+}
+
 void srsran::autoderive_du_parameters_after_parsing(CLI::App& app, du_appconfig& du_cfg)
 {
   manage_hal_optional(app, du_cfg);
+  configure_default_f1u(du_cfg);
 }
