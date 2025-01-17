@@ -67,6 +67,35 @@ def test_smoke_sequentially(
     )
 
 
+@mark.s72
+def test_s72_sequentially(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_2: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+):
+    """
+    ZMQ Handover tests
+    """
+    _handover_sequentially(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_2,
+        fivegc=fivegc,
+        gnb=gnb,
+        metrics_summary=None,
+        band=41,
+        common_scs=30,
+        bandwidth=50,
+        noise_spd=0,
+        sleep_between_movement_steps=1,
+        always_download_artifacts=False,
+        nof_antennas_dl=4,
+        prach_config_index=159,
+    )
+
+
 @mark.parametrize(
     "band, common_scs, bandwidth, noise_spd",
     (
@@ -123,6 +152,8 @@ def _handover_sequentially(
     noise_spd: int,
     sleep_between_movement_steps,
     always_download_artifacts: bool = True,
+    nof_antennas_dl: int = 1,
+    prach_config_index: int = -1,
 ):
     with _handover_multi_ues(
         retina_manager=retina_manager,
@@ -141,6 +172,8 @@ def _handover_sequentially(
         noise_spd=noise_spd,
         sleep_between_movement_steps=sleep_between_movement_steps,
         warning_as_errors=True,
+        nof_antennas_dl=nof_antennas_dl,
+        prach_config_index=prach_config_index,
     ) as (ue_attach_info_dict, movements, traffic_seconds):
 
         for ue_stub, ue_attach_info in ue_attach_info_dict.items():
@@ -181,6 +214,8 @@ def test_zmq_handover_parallel(
     common_scs: int,
     bandwidth: int,
     noise_spd: int,
+    nof_antennas_dl: int = 1,
+    prach_config_index: int = -1,
 ):
     """
     ZMQ Handover tests
@@ -202,8 +237,9 @@ def test_zmq_handover_parallel(
         noise_spd=noise_spd,
         sleep_between_movement_steps=10,
         warning_as_errors=True,
+        nof_antennas_dl=nof_antennas_dl,
+        prach_config_index=prach_config_index,
     ) as (ue_attach_info_dict, movements, traffic_seconds):
-
         logging.info(
             "Zigzag HO for all UEs + Pings running in background for all UEs",
         )
@@ -233,6 +269,8 @@ def _handover_multi_ues(
     time_alignment_calibration: Union[int, str],
     always_download_artifacts: bool,
     noise_spd: int,
+    nof_antennas_dl: int = 1,
+    prach_config_index: int = -1,
     warning_as_errors: bool = True,
     movement_steps: int = 10,
     sleep_between_movement_steps: int = 2,
@@ -246,7 +284,7 @@ def _handover_multi_ues(
     None,
     None,
 ]:
-    logging.info("Hanover Test")
+    logging.info("Handover Test")
 
     original_position = (0, 0, 0)
 
@@ -263,6 +301,8 @@ def _handover_multi_ues(
         num_cells=2,
         cell_position_offset=cell_position_offset,
         log_ip_level="debug",
+        nof_antennas_dl=nof_antennas_dl,
+        prach_config_index=prach_config_index,
     )
 
     configure_artifacts(

@@ -240,6 +240,15 @@ amari 8UE:
         KEYWORDS: "sequentially"
       - E2E_FILE_OR_DIR: tests/attach_detach.py
 
+amari 2UE s72x:
+  extends: .zmq-uesim
+  variables:
+    TESTBED: "s72_uesim"
+    MARKERS: "s72"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  timeout: 4h
+  allow_failure: true
+
 amari 8UE beta:
   extends: amari 8UE
   parallel:
