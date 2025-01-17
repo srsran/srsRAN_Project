@@ -54,6 +54,11 @@ struct du_ue_drb_config {
   }
 };
 
+/// Contention-free random access (CFRA) configuration for a UE.
+struct cfra_config {
+  unsigned preamble_id;
+};
+
 /// Snapshot of the DU resources taken by a UE at a given instant.
 struct du_ue_resource_config {
   slotted_id_table<srb_id_t, du_ue_srb_config, MAX_NOF_SRBS> srbs;
@@ -63,6 +68,8 @@ struct du_ue_resource_config {
   cell_group_config cell_group;
   /// measGapConfig chosen for the UE.
   std::optional<meas_gap_config> meas_gap;
+  /// Resources allocated for contention-free random access (CFRA).
+  std::optional<cfra_config> cfra;
 };
 
 } // namespace srs_du

@@ -66,7 +66,8 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   bearer_res_mng(srb_config, qos_config, logger),
   srs_res_mng(std::make_unique<du_srs_policy_max_ul_rate>(cell_cfg_list)),
   meas_cfg_mng(cell_cfg_list),
-  drx_res_mng(cell_cfg_list)
+  drx_res_mng(cell_cfg_list),
+  ra_res_alloc(cell_cfg_list)
 {
 }
 
@@ -156,6 +157,9 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   resp.failed_drbs.insert(
       resp.failed_drbs.end(), bearer_resp.drbs_failed_to_mod.begin(), bearer_resp.drbs_failed_to_mod.end());
 
+  // > Allocate RA resources (e.g. for Handover).
+  ra_res_alloc.allocate_cfra_resources(ue_mcg, upd_req);
+
   return resp;
 }
 
@@ -166,9 +170,13 @@ void du_ran_resource_manager_impl::deallocate_context(du_ue_index_t ue_index)
   du_ue_resource_config& ue_mcg = ue_res.cg_cfg;
 
   ue_res.ue_cap_manager.release(ue_mcg);
+
   for (const auto& sc : ue_mcg.cell_group.cells) {
     deallocate_cell_resources(ue_index, sc.serv_cell_idx);
   }
+
+  ra_res_alloc.deallocate_cfra_resources(ue_mcg);
+
   ue_res_pool.erase(ue_index);
 }
 

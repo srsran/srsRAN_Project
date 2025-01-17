@@ -241,6 +241,9 @@ struct du_cell_config {
   /// PUSCH Maximum of transmission layers. Limits the PUSCH maximum rank the UE is configrued with.
   unsigned pusch_max_nof_layers = 1;
 
+  /// Whether contention-free random access is enabled for this cell.
+  bool cfra_enabled = false;
+
   /// List of RAN slices to support in the scheduler.
   std::vector<slice_rrm_policy_config> rrm_policy_members;
 };

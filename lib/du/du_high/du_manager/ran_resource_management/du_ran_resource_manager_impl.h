@@ -16,6 +16,7 @@
 #include "du_pucch_resource_manager.h"
 #include "du_ran_resource_manager.h"
 #include "du_srs_resource_manager.h"
+#include "ra_resource_manager.h"
 #include "ue_capability_manager.h"
 #include "srsran/ran/qos/five_qi.h"
 
@@ -118,6 +119,9 @@ private:
 
   // Allocator of DRX and measGap resources for the DU.
   du_drx_resource_manager drx_res_mng;
+
+  // Allocator of RA resources.
+  ra_resource_manager ra_res_alloc;
 };
 
 } // namespace srs_du
