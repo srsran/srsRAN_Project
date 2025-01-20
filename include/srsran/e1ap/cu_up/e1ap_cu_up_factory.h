@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/e1ap/cu_up/e1ap_configuration.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/e1ap/gateways/e1_connection_client.h"
 #include "srsran/support/executors/task_executor.h"
@@ -20,7 +21,8 @@ namespace srsran {
 namespace srs_cu_up {
 
 /// Creates an instance of an E1AP interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<e1ap_interface> create_e1ap(e1_connection_client&        e1_client_handler_,
+std::unique_ptr<e1ap_interface> create_e1ap(const e1ap_configuration&    e1ap_cfg_,
+                                            e1_connection_client&        e1_client_handler_,
                                             e1ap_cu_up_manager_notifier& cu_up_notifier_,
                                             timer_manager&               timers_,
                                             task_executor&               cu_up_exec_);

@@ -41,10 +41,12 @@ private:
 
 } // namespace
 
-e1ap_cu_up_impl::e1ap_cu_up_impl(e1_connection_client&        e1_client_handler_,
+e1ap_cu_up_impl::e1ap_cu_up_impl(const e1ap_configuration&    e1ap_cfg_,
+                                 e1_connection_client&        e1_client_handler_,
                                  e1ap_cu_up_manager_notifier& cu_up_notifier_,
                                  timer_manager&               timers_,
                                  task_executor&               cu_up_exec_) :
+  e1ap_cfg(e1ap_cfg_),
   logger(srslog::fetch_basic_logger("CU-UP-E1")),
   cu_up_notifier(cu_up_notifier_),
   timers(timers_),
@@ -327,7 +329,7 @@ void e1ap_cu_up_impl::log_pdu(bool is_rx, const e1ap_message& e1ap_pdu)
   }
 
   // Log PDU.
-  log_e1ap_pdu(logger, is_rx, ue_idx, e1ap_pdu, logger.debug.enabled());
+  log_e1ap_pdu(logger, is_rx, ue_idx, e1ap_pdu, e1ap_cfg.json_log_enabled);
 }
 
 // ---- e1ap_message_notifier_with_logging

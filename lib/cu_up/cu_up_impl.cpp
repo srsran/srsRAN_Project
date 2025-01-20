@@ -114,7 +114,8 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
   f1u_teid_allocator                            = create_gtpu_allocator(f1u_alloc_msg);
 
   /// > Create e1ap
-  e1ap = create_e1ap(*dependencies.e1_conn_client,
+  e1ap = create_e1ap(cfg.e1ap,
+                     *dependencies.e1_conn_client,
                      e1ap_cu_up_mng_adapter,
                      *dependencies.timers,
                      dependencies.exec_mapper->ctrl_executor());

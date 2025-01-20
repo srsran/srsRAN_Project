@@ -96,6 +96,7 @@ static void configure_cli11_log_args(CLI::App& app, cu_up_unit_logger_config& lo
   app_services::add_log_option(app, log_params.pdcp_level, "--pdcp_level", "PDCP log level");
   app_services::add_log_option(app, log_params.sdap_level, "--sdap_level", "SDAP log level");
   app_services::add_log_option(app, log_params.gtpu_level, "--gtpu_level", "GTPU log level");
+  app_services::add_log_option(app, log_params.e1ap_level, "--e1ap_level", "E1AP log level");
   app_services::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
   app_services::add_log_option(app, log_params.cu_level, "--cu_level", "Log level for the CU");
 
@@ -103,6 +104,8 @@ static void configure_cli11_log_args(CLI::App& app, cu_up_unit_logger_config& lo
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")
       ->capture_default_str()
       ->check(CLI::Range(0, 1024));
+  add_option(app, "--e1ap_json_enabled", log_params.e1ap_json_enabled, "Enable JSON logging of E1AP PDUs")
+      ->always_capture_default();
 }
 
 static void configure_cli11_pcap_args(CLI::App& app, cu_up_unit_pcap_config& pcap_params)

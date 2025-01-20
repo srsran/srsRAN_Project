@@ -27,6 +27,9 @@ srs_cu_up::cu_up_config srsran::generate_cu_up_config(const cu_up_unit_config& c
   out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.gtpu_reordering_timer_ms};
   out_cfg.n3_cfg.warn_on_drop          = config.warn_on_drop;
 
+  // E1AP-CU-UP config.
+  out_cfg.e1ap.json_log_enabled = config.loggers.e1ap_json_enabled;
+
   out_cfg.test_mode_cfg.enabled           = config.test_mode_cfg.enabled;
   out_cfg.test_mode_cfg.integrity_enabled = config.test_mode_cfg.integrity_enabled;
   return out_cfg;
