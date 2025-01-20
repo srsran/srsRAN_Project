@@ -34,7 +34,7 @@ public:
   rlc_am_sn_size      sn_size;
   rlc_am_status_pdu   status;
   bool                status_required = false;
-  uint32_t            bsr             = 0;
+  rlc_buffer_state    bsr             = {};
   uint32_t            bsr_count       = 0;
   uint32_t            max_retx_count  = 0;
   uint32_t            proto_err_count = 0;
@@ -78,7 +78,7 @@ public:
   // rlc_tx_buffer_state_update_notifier interface
   void on_buffer_state_update(rlc_buffer_state bs) override
   {
-    this->bsr = bs.pending_bytes;
+    this->bsr = bs;
     this->bsr_count++;
   }
 
@@ -160,13 +160,15 @@ protected:
     uint32_t n_bsr = tester->bsr_count;
 
     // Push "n_pdus" SDUs into RLC
-    auto sdu_bufs = std::vector<byte_buffer>(n_pdus);
+    auto                                  sdu_bufs = std::vector<byte_buffer>(n_pdus);
+    std::chrono::system_clock::time_point t_start  = std::chrono::high_resolution_clock::now();
     for (uint32_t i = 0; i < n_pdus; i++) {
       sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
       // write SDU into upper end
       rlc->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
     }
+    std::chrono::system_clock::time_point t_end = std::chrono::high_resolution_clock::now();
     pcell_worker.run_pending_tasks();
     EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
@@ -176,9 +178,16 @@ protected:
 
     // Read "n_pdus" PDUs from RLC
     for (uint32_t i = 0; i < n_pdus; i++) {
-      EXPECT_EQ(rlc->get_buffer_state().pending_bytes,
+      rlc_buffer_state bs = rlc->get_buffer_state();
+      EXPECT_EQ(bs.pending_bytes,
                 expect_buffer_state - i * data_pdu_size); // actual buffer state changes
-      EXPECT_EQ(tester->bsr, expect_buffer_state);        // pull_pdu does not push BSR to lower layer
+      EXPECT_TRUE(bs.hol_toa.has_value());
+      EXPECT_GT(bs.hol_toa.value(), t_start);
+      EXPECT_LT(bs.hol_toa.value(), t_end);
+      EXPECT_EQ(tester->bsr.pending_bytes, expect_buffer_state); // pull_pdu does not push BSR to lower layer
+      EXPECT_TRUE(tester->bsr.hol_toa.has_value());
+      EXPECT_GT(tester->bsr.hol_toa.value(), t_start);
+      EXPECT_LT(tester->bsr.hol_toa.value(), t_end);
       std::vector<uint8_t> pdu_buf;
       pdu_buf.resize(data_pdu_size);
       size_t pdu_len = rlc->pull_pdu(pdu_buf);
@@ -199,8 +208,13 @@ protected:
       si_expect = rlc_si_field::full_sdu;
       EXPECT_EQ(si, si_expect);
     }
-    EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-    EXPECT_EQ(tester->bsr, expect_buffer_state); // pull_pdu does not push BSR to lower layer
+    rlc_buffer_state bs = rlc->get_buffer_state();
+    EXPECT_EQ(bs.pending_bytes, 0);
+    EXPECT_FALSE(bs.hol_toa.has_value());
+    EXPECT_EQ(tester->bsr.pending_bytes, expect_buffer_state); // pull_pdu does not push BSR to lower layer
+    EXPECT_TRUE(tester->bsr.hol_toa.has_value());
+    EXPECT_GT(tester->bsr.hol_toa.value(), t_start);
+    EXPECT_LT(tester->bsr.hol_toa.value(), t_end);
     EXPECT_EQ(tester->bsr_count, n_bsr);
 
     return out_pdus;
@@ -229,13 +243,15 @@ protected:
     EXPECT_LT(pdu_size, sdu_size + header_min_size) << "PDU size fits whole SDU; PDUs won't be segmented";
 
     // Push "n_sdus" SDUs into RLC
-    auto sdu_bufs = std::vector<byte_buffer>(n_sdus);
+    auto                                  sdu_bufs = std::vector<byte_buffer>(n_sdus);
+    std::chrono::system_clock::time_point t_start  = std::chrono::high_resolution_clock::now();
     for (uint32_t i = 0; i < n_sdus; i++) {
       sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
       // write SDU into upper end
       rlc->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
     }
+    std::chrono::system_clock::time_point t_end = std::chrono::high_resolution_clock::now();
     pcell_worker.run_pending_tasks();
     EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
@@ -269,9 +285,21 @@ protected:
       uint32_t rem_sdus      = n_sdus - sdu_idx - 1;
       uint32_t rem_seg_bytes = sdu_bufs[sdu_idx].length() - sdu_so - out_pdus[i].size() + header_size;
       uint32_t rem_seg_hdr   = rem_seg_bytes > 0 ? header_min_size + header_so_size : 0;
-      EXPECT_EQ(rlc->get_buffer_state().pending_bytes,
+
+      rlc_buffer_state bs = rlc->get_buffer_state();
+      EXPECT_EQ(bs.pending_bytes,
                 rem_sdus * (sdu_size + header_min_size) + rem_seg_bytes + rem_seg_hdr); // actual buffer state changes
-      EXPECT_EQ(tester->bsr, expect_buffer_state); // pull_pdu does not push BSR to lower layer
+      if (bs.pending_bytes == 0) {
+        EXPECT_FALSE(bs.hol_toa.has_value());
+      } else {
+        EXPECT_TRUE(bs.hol_toa.has_value());
+        EXPECT_GT(bs.hol_toa.value(), t_start);
+        EXPECT_LT(bs.hol_toa.value(), t_end);
+      }
+      EXPECT_EQ(tester->bsr.pending_bytes, expect_buffer_state); // pull_pdu does not push BSR to lower layer
+      EXPECT_TRUE(tester->bsr.hol_toa.has_value());
+      EXPECT_GT(tester->bsr.hol_toa.value(), t_start);
+      EXPECT_LT(tester->bsr.hol_toa.value(), t_end);
       EXPECT_EQ(tester->bsr_count, n_bsr);
 
       // Check SI
@@ -302,8 +330,19 @@ protected:
         sdu_so += out_pdus[i].size() - header_size;
       }
     }
-    EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_remaining_bytes);
-    EXPECT_EQ(tester->bsr, expect_buffer_state); // pull_pdu does not push BSR to lower layer
+    rlc_buffer_state bs = rlc->get_buffer_state();
+    EXPECT_EQ(bs.pending_bytes, expect_remaining_bytes);
+    if (bs.pending_bytes == 0) {
+      EXPECT_FALSE(bs.hol_toa.has_value());
+    } else {
+      EXPECT_TRUE(bs.hol_toa.has_value());
+      EXPECT_GT(bs.hol_toa.value(), t_start);
+      EXPECT_LT(bs.hol_toa.value(), t_end);
+    }
+    EXPECT_EQ(tester->bsr.pending_bytes, expect_buffer_state); // pull_pdu does not push BSR to lower layer
+    EXPECT_TRUE(tester->bsr.hol_toa.has_value());
+    EXPECT_GT(tester->bsr.hol_toa.value(), t_start);
+    EXPECT_LT(tester->bsr.hol_toa.value(), t_end);
     EXPECT_EQ(tester->bsr_count, n_bsr);
 
     return out_pdus;
@@ -329,11 +368,14 @@ protected:
 
 TEST_P(rlc_tx_am_test, create_new_entity)
 {
-  EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
+  rlc_buffer_state bs = rlc->get_buffer_state();
+  EXPECT_EQ(bs.pending_bytes, 0);
+  EXPECT_FALSE(bs.hol_toa.has_value());
   EXPECT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), 0);
   EXPECT_EQ(tester->desired_buf_size_list.size(), 0);
   EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 0);
-  EXPECT_EQ(tester->bsr, 0);
+  EXPECT_EQ(tester->bsr.pending_bytes, 0);
+  EXPECT_FALSE(tester->bsr.hol_toa.has_value());
   EXPECT_EQ(tester->bsr_count, 0);
 }
 
@@ -372,7 +414,7 @@ TEST_P(rlc_tx_am_test, tx_insufficient_space_new_sdu)
   rlc->handle_sdu(test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, 0, sdu_size, 0), false);
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, sdu_size + header_min_size);
   pcell_worker.run_pending_tasks();
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, 1);
 
   std::vector<uint8_t> pdu_buf;
@@ -384,7 +426,7 @@ TEST_P(rlc_tx_am_test, tx_insufficient_space_new_sdu)
   EXPECT_EQ(pdu_len, 0);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, sdu_size + header_min_size);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, 1);
 
   // fitting read
@@ -393,7 +435,7 @@ TEST_P(rlc_tx_am_test, tx_insufficient_space_new_sdu)
   EXPECT_EQ(pdu_len, fit_size);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, 1);
 }
 
@@ -410,7 +452,7 @@ TEST_P(rlc_tx_am_test, tx_insufficient_space_continued_sdu)
   rlc->handle_sdu(test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, 0, sdu_size, 0), false);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, sdu_size + header_min_size);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, 1);
 
   std::vector<uint8_t> pdu_buf;
@@ -422,7 +464,7 @@ TEST_P(rlc_tx_am_test, tx_insufficient_space_continued_sdu)
   EXPECT_EQ(pdu_len, min_size_first);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, (sdu_size - 1) + header_min_size + header_so_size);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, 1);
 
   // short read - expect empty PDU
@@ -431,7 +473,7 @@ TEST_P(rlc_tx_am_test, tx_insufficient_space_continued_sdu)
   EXPECT_EQ(pdu_len, 0);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, (sdu_size - 1) + header_min_size + header_so_size);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, 1);
 
   // minimum-length read (middle segment)
@@ -440,7 +482,7 @@ TEST_P(rlc_tx_am_test, tx_insufficient_space_continued_sdu)
   EXPECT_EQ(pdu_len, min_size_seg);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, (sdu_size - 2) + header_min_size + header_so_size);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, 1);
 
   // remaining-length read (last segment)
@@ -450,7 +492,7 @@ TEST_P(rlc_tx_am_test, tx_insufficient_space_continued_sdu)
   EXPECT_EQ(pdu_len, remaining);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, 1);
 }
 
@@ -487,7 +529,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   uint32_t expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
 
   pcell_worker.run_pending_tasks();
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 0);
@@ -496,7 +538,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   rlc->discard_sdu(999);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 1);
@@ -505,7 +547,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   rlc->discard_sdu(0);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 2);
@@ -522,7 +564,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   expect_buffer_state = (n_pdus - 4) * data_pdu_size;
   expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 2);
@@ -531,7 +573,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   rlc->discard_sdu(1);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 3);
@@ -546,7 +588,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 3);
@@ -557,7 +599,7 @@ TEST_P(rlc_tx_am_test, sdu_discard)
   expect_mac_bsr      = 0;
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 4);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 3);
@@ -600,7 +642,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   uint32_t expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
 
   pcell_worker.run_pending_tasks();
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 0);
@@ -609,7 +651,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   rlc->discard_sdu((pdcp_sn_start + 999) % pdcp_sn_mod);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 1);
@@ -618,7 +660,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   rlc->discard_sdu((pdcp_sn_start + 0) % pdcp_sn_mod);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 2);
@@ -635,7 +677,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 2);
@@ -644,7 +686,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   rlc->discard_sdu((pdcp_sn_start + 1) % pdcp_sn_mod);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 3);
@@ -659,7 +701,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   expect_mac_bsr      = (n_pdus - 3) * data_pdu_size;
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 3);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 3);
@@ -670,7 +712,7 @@ TEST_P(rlc_tx_am_test, sdu_discard_with_pdcp_sn_wraparound)
   expect_mac_bsr      = 0;
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, expect_buffer_state);
-  EXPECT_EQ(tester->bsr, expect_mac_bsr);
+  EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discarded_sdus, 4);
   EXPECT_EQ(rlc->get_metrics().tx_high.num_discard_failures, 3);
@@ -716,7 +758,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
   rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, sdu_size + header_min_size);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Read ReTx as full PDU
@@ -730,7 +772,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
   EXPECT_EQ(pdu_buf, pdus[nack.nack_sn]);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, n_bsr);
 
   // Verify transmit notification for queued SDUs
@@ -769,7 +811,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, sdu_size + header_min_size);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Read ReTx in segments
@@ -803,7 +845,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
     EXPECT_EQ(si, si_expect);
   }
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
 
   // Verify transmit notification for queued SDUs
   ASSERT_EQ(tester->highest_transmitted_pdcp_sn_list.size(), 5);
@@ -842,7 +884,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, nack.so_end - nack.so_start + 1 + header_min_size);
-  EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, nack.so_end - nack.so_start + 1 + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Read ReTx without extra segmentation
@@ -859,7 +901,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
   EXPECT_EQ(static_cast<rlc_si_field>((*pdu_buf.begin() >> 4) & 0b11), rlc_si_field::first_segment);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-  EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, nack.so_end - nack.so_start + 1 + header_min_size);
   EXPECT_EQ(tester->bsr_count, n_bsr);
 
   // Verify transmit notification for queued SDUs
@@ -901,7 +943,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, nack.so_end - nack.so_start + 1 + header_max_size);
-  EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_max_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Read ReTx without extra segmentation
@@ -918,7 +960,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
   EXPECT_EQ(static_cast<rlc_si_field>((*pdu_buf.begin() >> 4) & 0b11), rlc_si_field::middle_segment);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-  EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_max_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr_count, n_bsr);
 
   // Verify transmit notification for queued SDUs
@@ -960,7 +1002,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, nack.so_end - nack.so_start + 1 + header_max_size);
-  EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_max_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Read ReTx without extra segmentation
@@ -977,7 +1019,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
   EXPECT_EQ(static_cast<rlc_si_field>((*pdu_buf.begin() >> 4) & 0b11), rlc_si_field::last_segment);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-  EXPECT_EQ(tester->bsr, nack.so_end - nack.so_start + 1 + header_max_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, nack.so_end - nack.so_start + 1 + header_max_size);
   EXPECT_EQ(tester->bsr_count, n_bsr);
 
   // Verify transmit notification for queued SDUs
@@ -1185,7 +1227,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, sdu_size + header_min_size);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Read ReTx without extra segmentation
@@ -1202,7 +1244,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
   EXPECT_EQ(static_cast<rlc_si_field>((*pdu_buf.begin() >> 4) & 0b11), rlc_si_field::full_sdu);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, n_bsr);
 
   // Verify transmit notification for queued SDUs
@@ -1242,7 +1284,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, nack.so_end + 1 + header_min_size);
-  EXPECT_EQ(tester->bsr, nack.so_end + 1 + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, nack.so_end + 1 + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Read ReTx without extra segmentation
@@ -1257,7 +1299,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
       std::equal(pdu_buf.begin() + header_min_size, pdu_buf.end(), pdus[nack.nack_sn].begin() + header_min_size));
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-  EXPECT_EQ(tester->bsr, nack.so_end + 1 + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, nack.so_end + 1 + header_min_size);
   EXPECT_EQ(tester->bsr_count, n_bsr);
 
   // Verify transmit notification for queued SDUs
@@ -1296,7 +1338,7 @@ TEST_P(rlc_tx_am_test, retx_many_pdus_and_notify_mac)
   rlc->on_status_pdu(std::move(status_pdu));
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, n_pdus * (sdu_size + header_min_size));
-  EXPECT_EQ(tester->bsr, n_pdus * (sdu_size + header_min_size));
+  EXPECT_EQ(tester->bsr.pending_bytes, n_pdus * (sdu_size + header_min_size));
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Verify transmit notification for queued SDUs
@@ -1311,6 +1353,78 @@ TEST_P(rlc_tx_am_test, retx_many_pdus_and_notify_mac)
 
   // Verify delivery notification for fully ACK'ed SDUs is zero
   ASSERT_EQ(tester->highest_delivered_pdcp_sn_list.size(), 0);
+}
+
+TEST_P(rlc_tx_am_test, retx_hol_toa_has_priority)
+{
+  const uint32_t sdu_size        = 4;
+  const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t pdu_size        = header_min_size + sdu_size;
+  const uint32_t n_pdus          = 5;
+
+  // Send first bunch of SDUs of which one will be ReTx'ed
+  std::chrono::system_clock::time_point t_retx_start = std::chrono::high_resolution_clock::now();
+  std::vector<std::vector<uint8_t>>     pdus         = tx_full_pdus(n_pdus, sdu_size);
+  std::chrono::system_clock::time_point t_retx_end   = std::chrono::high_resolution_clock::now();
+
+  // Put another SDU in SDU queue
+  std::chrono::system_clock::time_point t_tx_start = std::chrono::high_resolution_clock::now();
+  rlc->handle_sdu(test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, 0, sdu_size, 0), false);
+  std::chrono::system_clock::time_point t_tx_end = std::chrono::high_resolution_clock::now();
+  pcell_worker.run_pending_tasks();
+  rlc_buffer_state bs = rlc->get_buffer_state();
+  EXPECT_EQ(bs.pending_bytes, pdu_size);
+  EXPECT_TRUE(bs.hol_toa.has_value());
+  EXPECT_GT(bs.hol_toa.value(), t_tx_start);
+  EXPECT_LT(bs.hol_toa.value(), t_tx_end);
+  EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
+  EXPECT_EQ(tester->bsr_count, 2);
+
+  uint32_t n_bsr = tester->bsr_count;
+
+  // NACK SN=2
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = 2;
+  rlc_am_status_pdu status_pdu(sn_size);
+  status_pdu.ack_sn = n_pdus;
+  status_pdu.push_nack(nack);
+  rlc->on_status_pdu(std::move(status_pdu));
+  pcell_worker.run_pending_tasks();
+  bs = rlc->get_buffer_state();
+  EXPECT_EQ(bs.pending_bytes, 2 * pdu_size);
+  EXPECT_TRUE(bs.hol_toa.has_value());
+  // TOA must be within ReTx interval
+  EXPECT_GT(bs.hol_toa.value(), t_retx_start);
+  EXPECT_LT(bs.hol_toa.value(), t_retx_end);
+  // TOA must be smaller than Tx interval
+  EXPECT_LT(bs.hol_toa.value(), t_tx_start);
+  EXPECT_LT(bs.hol_toa.value(), t_tx_end);
+
+  EXPECT_EQ(tester->bsr.pending_bytes, 2 * pdu_size);
+  EXPECT_EQ(tester->bsr_count, ++n_bsr);
+
+  // Read ReTx as full PDU
+  std::vector<uint8_t> pdu_buf;
+  size_t               pdu_len;
+  pdu_buf.resize(sdu_size + header_min_size);
+  pdu_len = rlc->pull_pdu(pdu_buf);
+  pdu_buf.resize(pdu_len);
+  logger.debug(pdu_buf.begin(), pdu_buf.end(), "retx_pdu:");
+  logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
+  EXPECT_EQ(pdu_buf, pdus[nack.nack_sn]);
+  pcell_worker.run_pending_tasks();
+  bs = rlc->get_buffer_state();
+  EXPECT_EQ(bs.pending_bytes, pdu_size);
+  EXPECT_TRUE(bs.hol_toa.has_value());
+  // TOA must be greater than ReTx interval
+  EXPECT_GT(bs.hol_toa.value(), t_retx_start);
+  EXPECT_GT(bs.hol_toa.value(), t_retx_end);
+  // TOA must be within Tx interval
+  EXPECT_GT(bs.hol_toa.value(), t_tx_start);
+  EXPECT_LT(bs.hol_toa.value(), t_tx_end);
+
+  EXPECT_EQ(tester->bsr.pending_bytes, 2 * pdu_size);
+  EXPECT_EQ(tester->bsr_count, n_bsr);
 }
 
 TEST_P(rlc_tx_am_test, invalid_nack_nack_sn_outside_rx_window)
@@ -1461,7 +1575,7 @@ TEST_P(rlc_tx_am_test, retx_insufficient_space)
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, sdu_size + header_min_size);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // short read of ReTx
@@ -1472,7 +1586,7 @@ TEST_P(rlc_tx_am_test, retx_insufficient_space)
   EXPECT_EQ(pdu_len, 0);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, sdu_size + header_min_size);
-  EXPECT_EQ(tester->bsr, sdu_size + header_min_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, sdu_size + header_min_size);
   EXPECT_EQ(tester->bsr_count, n_bsr);
 
   // Verify transmit notification for queued SDUs
@@ -1522,7 +1636,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_without_segmentation)
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, range * (sdu_size + header_min_size));
-  EXPECT_EQ(tester->bsr, range * (sdu_size + header_min_size));
+  EXPECT_EQ(tester->bsr.pending_bytes, range * (sdu_size + header_min_size));
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Read ReTx as full PDU
@@ -1536,7 +1650,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_without_segmentation)
     logger.debug(pdus[i - sn_start].begin(), pdus[i - sn_start].end(), "pdus[{}]:", i - sn_start);
     EXPECT_TRUE(std::equal(pdu_buf.begin() + 1, pdu_buf.end(), pdus[i - sn_start].begin() + 1)); // skip header P bit
     EXPECT_EQ(rlc->get_buffer_state().pending_bytes, (nack_sn + range - 1 - i) * (sdu_size + header_min_size));
-    EXPECT_EQ(tester->bsr, range * (sdu_size + header_min_size));
+    EXPECT_EQ(tester->bsr.pending_bytes, range * (sdu_size + header_min_size));
     EXPECT_EQ(tester->bsr_count, n_bsr);
   }
 
@@ -1587,7 +1701,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_wraparound)
   pcell_worker.run_pending_tasks();
   ue_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, range * (sdu_size + header_min_size));
-  EXPECT_EQ(tester->bsr, range * (sdu_size + header_min_size));
+  EXPECT_EQ(tester->bsr.pending_bytes, range * (sdu_size + header_min_size));
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   // Read ReTx as full PDU
@@ -1604,7 +1718,7 @@ TEST_P(rlc_tx_am_test, retx_pdu_range_wraparound)
     EXPECT_EQ(*pdu_buf.begin() & 0x4, *pdus[i - sn_start].begin() & 0x4);                        // mask P bit
     EXPECT_TRUE(std::equal(pdu_buf.begin() + 1, pdu_buf.end(), pdus[i - sn_start].begin() + 1)); // check rest
     EXPECT_EQ(rlc->get_buffer_state().pending_bytes, (nack_sn + range - 1 - i) * (sdu_size + header_min_size));
-    EXPECT_EQ(tester->bsr, range * (sdu_size + header_min_size));
+    EXPECT_EQ(tester->bsr.pending_bytes, range * (sdu_size + header_min_size));
     EXPECT_EQ(tester->bsr_count, n_bsr);
   }
 
@@ -1632,28 +1746,28 @@ TEST_P(rlc_tx_am_test, buffer_state_considers_status_report)
   // First set the status_required flag without triggering the on_status_report_changed() event
   tester->status_required = true;
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, tester->status.get_packed_size());
-  EXPECT_EQ(tester->bsr, 0);       // unchanged
-  EXPECT_EQ(tester->bsr_count, 0); // unchanged
+  EXPECT_EQ(tester->bsr.pending_bytes, 0); // unchanged
+  EXPECT_EQ(tester->bsr_count, 0);         // unchanged
 
   rlc_am_status_nack nack = {};
   nack.has_nack_range     = true;
   nack.has_so             = true;
   tester->status.push_nack(nack);
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, tester->status.get_packed_size());
-  EXPECT_EQ(tester->bsr, 0);       // unchanged
-  EXPECT_EQ(tester->bsr_count, 0); // unchanged
+  EXPECT_EQ(tester->bsr.pending_bytes, 0); // unchanged
+  EXPECT_EQ(tester->bsr_count, 0);         // unchanged
 
   // Now trigger on_status_report_changed() as well and check for the expected outcomes
   rlc->on_status_report_changed();
   pcell_worker.run_pending_tasks();
-  EXPECT_EQ(tester->bsr, tester->status.get_packed_size()); // expecting the size of the status report
-  EXPECT_EQ(tester->bsr_count, 1);                          // a bsr should be sent to lower layers
+  EXPECT_EQ(tester->bsr.pending_bytes, tester->status.get_packed_size()); // expecting the size of the status report
+  EXPECT_EQ(tester->bsr_count, 1);                                        // a bsr should be sent to lower layers
 
   // Now unflag status_required (RX entity does so when a status report was picked); this shouldn't trigger anything
   tester->status_required = false;
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-  EXPECT_EQ(tester->bsr, tester->status.get_packed_size()); // unchanged
-  EXPECT_EQ(tester->bsr_count, 1);                          // unchanged
+  EXPECT_EQ(tester->bsr.pending_bytes, tester->status.get_packed_size()); // unchanged
+  EXPECT_EQ(tester->bsr_count, 1);                                        // unchanged
 }
 
 TEST_P(rlc_tx_am_test, status_report_priority)
@@ -1667,7 +1781,7 @@ TEST_P(rlc_tx_am_test, status_report_priority)
   rlc->handle_sdu(test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, 0, sdu_size, 0), false);
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, pdu_size);
-  EXPECT_EQ(tester->bsr, pdu_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
   EXPECT_EQ(tester->bsr_count, 1);
 
   // Set status report required
@@ -1675,7 +1789,7 @@ TEST_P(rlc_tx_am_test, status_report_priority)
   rlc->on_status_report_changed();
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, tester->status.get_packed_size() + pdu_size);
-  EXPECT_EQ(tester->bsr, tester->status.get_packed_size() + pdu_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, tester->status.get_packed_size() + pdu_size);
   EXPECT_EQ(tester->bsr_count, 2);
 
   tester->status.ack_sn   = 20;
@@ -1717,7 +1831,7 @@ TEST_P(rlc_tx_am_test, status_report_trim)
   rlc->on_status_report_changed();
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, tester->status.get_packed_size());
-  EXPECT_EQ(tester->bsr, tester->status.get_packed_size());
+  EXPECT_EQ(tester->bsr.pending_bytes, tester->status.get_packed_size());
   EXPECT_EQ(tester->bsr_count, 1);
 
   // Create a dummy status PDU with a few NACKs
@@ -1738,7 +1852,7 @@ TEST_P(rlc_tx_am_test, status_report_trim)
   rlc->on_status_report_changed();
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, tester->status.get_packed_size());
-  EXPECT_EQ(tester->bsr, tester->status.get_packed_size());
+  EXPECT_EQ(tester->bsr.pending_bytes, tester->status.get_packed_size());
   EXPECT_EQ(tester->bsr_count, 2);
 
   std::vector<uint8_t> pdu_buf;
@@ -1768,20 +1882,20 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
   const uint32_t pdu_size        = header_min_size + sdu_size;
 
   tx_full_pdus(n_pdus, sdu_size);
-  uint32_t expect_mac_bsr = tester->bsr;
-  uint32_t n_bsr          = tester->bsr_count;
+  rlc_buffer_state expect_mac_bsr = tester->bsr;
+  uint32_t         n_bsr          = tester->bsr_count;
 
   // advance timers to expire poll_retransmit_timer
   for (int i = 0; i < config.t_poll_retx; i++) {
     EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-    EXPECT_EQ(tester->bsr, expect_mac_bsr);
+    EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr.pending_bytes);
     EXPECT_EQ(tester->bsr_count, n_bsr);
     tick();
   }
 
   // expiry of poll_retransmit_timer should schedule an SDU for ReTx
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, pdu_size);
-  EXPECT_EQ(tester->bsr, pdu_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
   {
@@ -1796,7 +1910,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
     ASSERT_TRUE(
         rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
     EXPECT_TRUE(pdu_hdr.p);
-    EXPECT_EQ(tester->bsr, pdu_size);
+    EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
   }
 
@@ -1812,7 +1926,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
     ASSERT_TRUE(
         rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
     EXPECT_FALSE(pdu_hdr.p);
-    EXPECT_EQ(tester->bsr, pdu_size);
+    EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
   }
 
@@ -1828,7 +1942,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_triggers_retx)
     ASSERT_TRUE(
         rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
     EXPECT_TRUE(pdu_hdr.p);
-    EXPECT_EQ(tester->bsr, pdu_size);
+    EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
   }
 }
@@ -1849,7 +1963,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
   pcell_worker.run_pending_tasks();
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, pdu_size);
   EXPECT_EQ(tester->bsr_count, ++n_bsr);
-  EXPECT_EQ(tester->bsr, pdu_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
 
   {
     // pull one segment but leave 3 bytes for later.
@@ -1869,13 +1983,13 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_timer_sets_polling_bit)
   uint32_t old_bsr = rlc->get_buffer_state().pending_bytes;
   for (int i = 0; i < config.t_poll_retx; i++) {
     EXPECT_EQ(rlc->get_buffer_state().pending_bytes, old_bsr);
-    EXPECT_EQ(tester->bsr, pdu_size);
+    EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
     EXPECT_EQ(tester->bsr_count, n_bsr);
     tick();
   }
 
   // expiry of poll_retransmit_timer should not schedule any extra SDU for ReTx, since SDU queue is not empty
-  EXPECT_EQ(tester->bsr, pdu_size);
+  EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
   EXPECT_EQ(rlc->get_buffer_state().pending_bytes, old_bsr);
   EXPECT_EQ(tester->bsr_count, n_bsr);
 
@@ -1932,8 +2046,8 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_increments_retx_counter)
   tx_full_pdus(n_pdus, sdu_size);
 
   for (uint32_t n_retx = 0; n_retx <= config.max_retx_thresh; n_retx++) {
-    uint32_t expect_mac_bsr = tester->bsr;
-    uint32_t n_bsr          = tester->bsr_count;
+    rlc_buffer_state expect_mac_bsr = tester->bsr;
+    uint32_t         n_bsr          = tester->bsr_count;
 
     // no max_retx shall be reported yet
     EXPECT_EQ(tester->max_retx_count, 0);
@@ -1941,14 +2055,14 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_increments_retx_counter)
     // advance timers to expire poll_retransmit_timer
     for (int32_t i = 0; i < config.t_poll_retx; i++) {
       EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 0);
-      EXPECT_EQ(tester->bsr, expect_mac_bsr) << "n_retx=" << n_retx << " i=" << i << "\n";
+      EXPECT_EQ(tester->bsr.pending_bytes, expect_mac_bsr.pending_bytes) << "n_retx=" << n_retx << " i=" << i << "\n";
       EXPECT_EQ(tester->bsr_count, n_bsr);
       tick();
     }
 
     // expiry of poll_retransmit_timer should schedule an SDU for ReTx
     EXPECT_EQ(rlc->get_buffer_state().pending_bytes, pdu_size);
-    EXPECT_EQ(tester->bsr, pdu_size);
+    EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
     EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
     {
@@ -1963,7 +2077,7 @@ TEST_P(rlc_tx_am_test, expired_poll_retransmit_increments_retx_counter)
       ASSERT_TRUE(
           rlc_am_read_data_pdu_header(byte_buffer::create(pdu_buf.begin(), pdu_buf.end()).value(), sn_size, &pdu_hdr));
       EXPECT_TRUE(pdu_hdr.p);
-      EXPECT_EQ(tester->bsr, pdu_size);
+      EXPECT_EQ(tester->bsr.pending_bytes, pdu_size);
       EXPECT_EQ(tester->bsr_count, n_bsr);
     }
   }
@@ -1998,7 +2112,7 @@ TEST_P(rlc_tx_am_test, retx_count_ignores_pending_retx)
     pcell_worker.run_pending_tasks();
     ue_worker.run_pending_tasks();
     EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 2 * (sdu_size + header_min_size));
-    EXPECT_EQ(tester->bsr, 2 * (sdu_size + header_min_size));
+    EXPECT_EQ(tester->bsr.pending_bytes, 2 * (sdu_size + header_min_size));
     EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
     // Do not read both ReTx
@@ -2034,7 +2148,7 @@ TEST_P(rlc_tx_am_test, retx_count_trigger_max_retx_without_segmentation)
     pcell_worker.run_pending_tasks();
     ue_worker.run_pending_tasks();
     EXPECT_EQ(rlc->get_buffer_state().pending_bytes, 2 * (sdu_size + header_min_size));
-    EXPECT_EQ(tester->bsr, 2 * (sdu_size + header_min_size));
+    EXPECT_EQ(tester->bsr.pending_bytes, 2 * (sdu_size + header_min_size));
     EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
     // Read both ReTx as full PDUs
