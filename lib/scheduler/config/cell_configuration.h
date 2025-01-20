@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include "../support/rb_helper.h"
-#include "srsran/adt/expected.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_configurator.h"
@@ -61,6 +59,8 @@ public:
 
   /// List of RRM Policy members configured for this cell.
   std::vector<slice_rrm_policy_config> rrm_policy_members;
+
+  const bool cfra_enabled;
 
   // Derived Parameters.
   ssb_pattern_case ssb_case;

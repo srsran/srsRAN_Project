@@ -9,6 +9,7 @@
 
 #include "dci_builder.h"
 #include "../cell/cell_harq_manager.h"
+#include "rb_helper.h"
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/pdsch/pdsch_antenna_ports_mapping.h"

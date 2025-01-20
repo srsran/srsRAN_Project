@@ -99,6 +99,8 @@ struct sched_cell_configuration_request_message {
   std::vector<slice_rrm_policy_config> rrm_policy_members;
 
   unsigned ntn_cs_koffset = 0;
+
+  bool cfra_enabled = false;
 };
 
 /// Parameters provided to the scheduler to configure the resource allocation of a specific UE.

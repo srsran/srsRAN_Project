@@ -77,6 +77,8 @@ srsran::srs_du::make_sched_cell_config_req(du_cell_index_t               cell_in
 
   sched_req.rrm_policy_members = du_cfg.rrm_policy_members;
 
+  sched_req.cfra_enabled = du_cfg.cfra_enabled;
+
   return sched_req;
 }
 

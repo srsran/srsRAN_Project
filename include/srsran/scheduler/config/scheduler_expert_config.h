@@ -188,8 +188,6 @@ struct scheduler_ra_expert_config {
   sch_mcs_index msg3_mcs_index = 0;
   /// Maximum number of Msg3 PUSCH retransmissions.
   unsigned max_nof_msg3_harq_retxs = 4;
-  /// Whether contention-free RA is enabled.
-  bool cfra_enabled = false;
 };
 
 /// \brief Paging scheduling statically configurable expert parameters.

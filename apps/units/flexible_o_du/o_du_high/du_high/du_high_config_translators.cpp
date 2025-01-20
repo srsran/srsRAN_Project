@@ -400,6 +400,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     rach_cfg.total_nof_ra_preambles   = base_cell.prach_cfg.total_nof_ra_preambles;
     rach_cfg.nof_ssb_per_ro           = base_cell.prach_cfg.nof_ssb_per_ro;
     rach_cfg.nof_cb_preambles_per_ssb = base_cell.prach_cfg.nof_cb_preambles_per_ssb;
+    out_cell.cfra_enabled             = base_cell.prach_cfg.cfra_enabled;
 
     // PhysicalCellGroup Config parameters.
     if (base_cell.pcg_cfg.p_nr_fr1.has_value()) {
@@ -951,7 +952,6 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ra.rar_mcs_index           = pdsch.fixed_rar_mcs;
   out_cfg.ra.max_nof_msg3_harq_retxs = prach.max_msg3_harq_retx;
   out_cfg.ra.msg3_mcs_index          = prach.fixed_msg3_mcs;
-  out_cfg.ra.cfra_enabled            = prach.cfra_enabled;
 
   // SI parameters.
   out_cfg.si.sib1_mcs_index    = pdsch.fixed_sib1_mcs;
