@@ -25,6 +25,9 @@ using namespace srsran;
 
 static constexpr uint64_t no_update_flag = std::numeric_limits<uint64_t>::max();
 
+/// SIB1 new transmission period in milliseconds, as per TS 38.331, 5.2.1.
+static constexpr std::chrono::milliseconds sib1_newtx_period{160};
+
 //  ------   Public methods   ------ .
 
 sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               expert_cfg_,
@@ -40,8 +43,8 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
   pending_update(no_update_flag)
 {
   // Compute derived SIB1 parameters.
-  sib1_period = std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period),
-                         sib1_rtx_periodicity_to_value(expert_cfg.sib1_retx_period));
+  sib1_rtx_period = std::chrono::milliseconds{std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period),
+                                                       sib1_rtx_periodicity_to_value(expert_cfg.sib1_retx_period))};
 
   for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
     if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, i_ssb)) {
@@ -107,13 +110,10 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid)
   // - [Implementation defined] We assume the SIB1 is (re)transmitted every 20ms if the SSB periodicity <= 20ms.
   //   Else, we set the (re)transmission periodicity as the SSB's.
 
-  // The sib1_period_slots is expressed in unit of slots.
-  // NOTE: As sib1_period_slots is expressed in milliseconds or subframes, we need to this these into slots.
-  slot_point     sl_point          = res_grid.slot;
-  const unsigned sib1_period_slots = sib1_period * sl_point.nof_slots_per_subframe();
-
-  // Apply new SIB1 PDU version if it exists.
-  handle_pending_sib1_update();
+  // The sib1_rtx_period_slots is expressed in unit of slots.
+  slot_point     sl_point                = res_grid.slot;
+  const unsigned sib1_rtx_period_slots   = sib1_rtx_period.count() * sl_point.nof_slots_per_subframe();
+  const unsigned sib1_newtx_period_slots = sib1_newtx_period.count() * sl_point.nof_slots_per_subframe();
 
   // For each beam, check if the SIB1 needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
@@ -122,11 +122,16 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid)
       continue;
     }
 
-    if (sl_point.to_uint() % sib1_period_slots == sib1_type0_pdcch_css_slots[ssb_idx].to_uint()) {
+    if (sl_point.to_uint() % sib1_rtx_period_slots == sib1_type0_pdcch_css_slots[ssb_idx].to_uint()) {
       // Ensure slot for SIB1 has DL enabled.
       if (not cell_cfg.is_dl_enabled(sl_point)) {
         logger.error("Could not allocate SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
         return;
+      }
+
+      if ((sl_point.to_uint() % sib1_newtx_period_slots) == sib1_type0_pdcch_css_slots[ssb_idx].to_uint()) {
+        // If it is a new Tx, apply a new SIB1 PDU version, if it is pending.
+        handle_pending_sib1_update();
       }
 
       unsigned                          time_resource = 0;
@@ -264,8 +269,6 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
 
 void sib1_scheduler::handle_pending_sib1_update()
 {
-  // TODO: Use actual SIB1 newtx/retx procedure to determine when the new config can be applied.
-
   uint64_t upd_val = pending_update.exchange(no_update_flag, std::memory_order_acquire);
   if (upd_val == no_update_flag) {
     // No update detected.

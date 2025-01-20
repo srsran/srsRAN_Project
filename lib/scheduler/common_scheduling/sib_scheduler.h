@@ -86,7 +86,7 @@ private:
   uint8_t coreset0;
   uint8_t searchspace0;
   /// This is a derived parameters, that depends on the SSB periodicity, SIB1 periodicity and SIB1 re-tx periodicity.
-  unsigned sib1_period;
+  std::chrono::milliseconds sib1_rtx_period;
   /// The SIB1 payload is in bytes.
   units::bytes sib1_payload_size;
   /// Current SIB version.
