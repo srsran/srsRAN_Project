@@ -97,7 +97,7 @@ public:
   /// \brief Create a new UE resource allocation config object.
   /// \return UE Resource configuration if correctly created. Unexpected if no space in the manager was found.
   virtual expected<ue_ran_resource_configurator, std::string>
-  create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index) = 0;
+  create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index, bool has_tc_rnti) = 0;
 };
 
 } // namespace srs_du

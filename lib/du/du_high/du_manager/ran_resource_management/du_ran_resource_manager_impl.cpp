@@ -77,7 +77,9 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
 }
 
 expected<ue_ran_resource_configurator, std::string>
-du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index)
+du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t   ue_index,
+                                                              du_cell_index_t pcell_index,
+                                                              bool            has_tc_rnti)
 {
   if (ue_res_pool.contains(ue_index)) {
     return make_unexpected(std::string("Double allocation of same UE not supported"));
@@ -95,6 +97,11 @@ du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t ue_i
 
   // Initialize correct defaults for UE RAN resources dependent on UE capabilities.
   ue_res.ue_cap_manager.handle_ue_creation(ue_res.cg_cfg);
+
+  // Allocate CFRA resources when TC-RNTI was not yet assigned (e.g. during for Handover).
+  if (not has_tc_rnti) {
+    ra_res_alloc.allocate_cfra_resources(ue_res.cg_cfg);
+  }
 
   return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index),
                                       err.has_value() ? std::string{} : err.error()};
@@ -162,9 +169,6 @@ du_ran_resource_manager_impl::update_context(du_ue_index_t                      
   resp.failed_drbs.insert(
       resp.failed_drbs.end(), bearer_resp.drbs_failed_to_mod.begin(), bearer_resp.drbs_failed_to_mod.end());
 
-  // > Allocate RA resources (e.g. for Handover).
-  ra_res_alloc.allocate_cfra_resources(ue_mcg, upd_req);
-
   return resp;
 }
 
@@ -191,7 +195,7 @@ void du_ran_resource_manager_impl::ue_config_applied(du_ue_index_t ue_index)
   ue_resource_context&   ue_res = ue_res_pool[ue_index];
   du_ue_resource_config& ue_mcg = ue_res.cg_cfg;
 
-  // We can remove previously used CFRA resources.
+  // We can remove previously used CFRA resources, if any.
   ra_res_alloc.deallocate_cfra_resources(ue_mcg);
 }
 

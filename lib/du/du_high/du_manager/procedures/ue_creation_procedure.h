@@ -13,8 +13,6 @@
 #include "../du_ue/du_ue.h"
 #include "../du_ue/du_ue_manager_repository.h"
 #include "procedure_logger.h"
-#include "srsran/du/du_high/du_manager/du_manager_params.h"
-#include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/mac/mac.h"
 #include "srsran/support/async/async_task.h"
 

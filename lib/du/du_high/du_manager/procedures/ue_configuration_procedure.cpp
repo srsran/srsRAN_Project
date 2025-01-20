@@ -55,7 +55,7 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   update_ue_context();
 
   // > Update MAC bearers.
-  CORO_AWAIT_VALUE(mac_res, update_mac_mux_and_demux());
+  CORO_AWAIT_VALUE(mac_res, update_mac_and_sched());
 
   // > Destroy old DU UE bearers that are now detached from remaining layers.
   clear_old_ue_context();
@@ -211,7 +211,7 @@ void ue_configuration_procedure::clear_old_ue_context()
   }
 }
 
-async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_mac_mux_and_demux()
+async_task<mac_ue_reconfiguration_response> ue_configuration_procedure::update_mac_and_sched()
 {
   // Create Request to MAC to reconfigure existing UE.
   mac_ue_reconfiguration_request mac_ue_reconf_req;

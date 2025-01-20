@@ -22,7 +22,7 @@ public:
   ra_resource_manager(span<const du_cell_config> cell_cfg_list);
 
   /// Allocate RA resources to a given UE.
-  void allocate_cfra_resources(du_ue_resource_config& ue_res_cfg, const f1ap_ue_context_update_request& upd_req);
+  void allocate_cfra_resources(du_ue_resource_config& ue_res_cfg);
 
   /// Deallocate RA resources of a given UE.
   void deallocate_cfra_resources(du_ue_resource_config& ue_res_cfg);

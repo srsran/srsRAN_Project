@@ -59,7 +59,8 @@ const du_ue_resource_config& dummy_ue_resource_configurator_factory::dummy_resou
 
 expected<ue_ran_resource_configurator, std::string>
 dummy_ue_resource_configurator_factory::create_ue_resource_configurator(du_ue_index_t   ue_index,
-                                                                        du_cell_index_t pcell_index)
+                                                                        du_cell_index_t pcell_index,
+                                                                        bool            has_tc_rnti)
 {
   if (ue_resource_pool.count(ue_index) > 0) {
     return make_unexpected(std::string("Duplicate UE index"));

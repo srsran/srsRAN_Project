@@ -33,29 +33,17 @@ ra_resource_manager::ra_resource_manager(span<const du_cell_config> cell_cfg_lis
   }
 }
 
-void ra_resource_manager::allocate_cfra_resources(du_ue_resource_config&                ue_res_cfg,
-                                                  const f1ap_ue_context_update_request& upd_req)
+void ra_resource_manager::allocate_cfra_resources(du_ue_resource_config& ue_res_cfg)
 {
   if (ue_res_cfg.cfra.has_value()) {
     // UE has CFRA already configured.
     return;
   }
 
-  if (not upd_req.spcell_id.has_value() or upd_req.ho_prep_info.empty()) {
-    // Not handover.
-    return;
-  }
+  du_cell_index_t  pcell_index = ue_res_cfg.cell_group.cells[0].serv_cell_cfg.cell_index;
+  cell_ra_context& pcell_ra    = cells[pcell_index];
 
-  // Find new PCell.
-  auto pcell_cell_it = std::find_if(cells.begin(), cells.end(), [&upd_req](const auto& c) {
-    return c.cell_cfg->nr_cgi == upd_req.spcell_id.value();
-  });
-  srsran_assert(pcell_cell_it != cells.end(), "Invalid NR-CGI");
-  srsran_assert(std::distance(cells.begin(), pcell_cell_it) == ue_res_cfg.cell_group.cells[0].serv_cell_cfg.cell_index,
-                "Inconsistent PCell allocation");
-  cell_ra_context& pcell_ra = *pcell_cell_it;
-
-  if (not pcell_ra.free_preamble_idx_list.empty()) {
+  if (pcell_ra.free_preamble_idx_list.empty()) {
     // CFRA is either not enabled for this cell or there are no free RA preambles.
     return;
   }
@@ -75,5 +63,8 @@ void ra_resource_manager::deallocate_cfra_resources(du_ue_resource_config& ue_re
     // Return allocated CFRA preamble to the pool.
     cell_ra_context& cell = cells[ue_res_cfg.cell_group.cells[0].serv_cell_cfg.cell_index];
     cell.free_preamble_idx_list.push_back(ue_res_cfg.cfra.value().preamble_id);
+
+    // Reset CFRA resources.
+    ue_res_cfg.cfra.reset();
   }
 }
