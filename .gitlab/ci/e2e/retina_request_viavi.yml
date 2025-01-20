@@ -44,6 +44,7 @@
     arch: amd64
     cpu:
       requests: 1
+      limits: 1
     memory:
       requests: "500Mi"
     ephemeral-storage:
