@@ -17,6 +17,16 @@
 
 namespace srsran {
 
+/// Creates an LDPC encoder metric decorator factory.
+std::shared_ptr<crc_calculator_factory>
+create_crc_calculator_metric_decorator_factory(std::shared_ptr<crc_calculator_factory> base_factory,
+                                               crc_calculator_metric_notifier&         notifier);
+
+/// Creates an LDPC encoder metric decorator factory.
+std::shared_ptr<ldpc_encoder_factory>
+create_ldpc_encoder_metric_decorator_factory(std::shared_ptr<ldpc_encoder_factory> base_factory,
+                                             ldpc_encoder_metric_notifier&         notifier);
+
 /// Creates an LDPC decoder metric decorator factory.
 std::shared_ptr<ldpc_decoder_factory>
 create_ldpc_decoder_metric_decorator_factory(std::shared_ptr<ldpc_decoder_factory> base_factory,
@@ -31,5 +41,19 @@ create_pusch_channel_estimator_metric_decorator_factory(std::shared_ptr<dmrs_pus
 std::shared_ptr<pusch_processor_factory>
 create_pusch_processor_metric_decorator_factory(std::shared_ptr<pusch_processor_factory> base_factory,
                                                 pusch_processor_metric_notifier&         notifier);
+
+/// Creates pseudo-random generator metric decorator factory.
+std::shared_ptr<pseudo_random_generator_factory>
+create_pseudo_random_generator_metric_decorator_factory(std::shared_ptr<pseudo_random_generator_factory>  base_factory,
+                                                        pseudo_random_sequence_generator_metric_notifier& notifier);
+
+/// Creates channel precoder metric decorator factory.
+std::shared_ptr<channel_precoder_factory>
+create_channel_precoder_metric_decorator_factory(std::shared_ptr<channel_precoder_factory> base_factory,
+                                                 channel_precoder_metric_notifier&         notifier);
+/// Creates channel equalizer metric decorator factory.
+std::shared_ptr<channel_equalizer_factory>
+create_channel_equalizer_metric_decorator_factory(std::shared_ptr<channel_equalizer_factory> base_factory,
+                                                  channel_equalizer_metric_notifier&         notifier);
 
 } // namespace srsran

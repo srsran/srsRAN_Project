@@ -16,8 +16,8 @@
 namespace srsran {
 
 /// CRC cyclic generator polynomials identifiers.
-enum class crc_generator_poly {
-  CRC24A,
+enum class crc_generator_poly : uint8_t {
+  CRC24A = 0,
   CRC24B,
   CRC24C,
   CRC16,

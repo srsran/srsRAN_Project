@@ -16,18 +16,15 @@
 
 namespace srsran {
 
-/// LDPC decoder metric producer.
-class ldpc_decoder_metric_producer_impl : private ldpc_decoder_metric_notifier
+/// LDPC encoder metric producer.
+class ldpc_encoder_metric_producer_impl : private ldpc_encoder_metric_notifier
 {
 public:
-  /// Gets the LDPC decoder metric interface.
-  ldpc_decoder_metric_notifier& get_notifier() { return *this; }
+  /// Gets the LDPC encoder metric interface.
+  ldpc_encoder_metric_notifier& get_notifier() { return *this; }
 
   /// Gets the total number of processed codeblocks.
   uint64_t get_nof_processed_cb() const { return count; }
-
-  /// Gets the average codeblock number of iterations.
-  double get_avg_nof_iterations() const { return static_cast<double>(sum_nof_iterations) / static_cast<double>(count); }
 
   /// Gets the average codeblock size in bits.
   double get_avg_cb_size() const { return static_cast<double>(sum_cb_sz) / static_cast<double>(count); }
@@ -39,32 +36,26 @@ public:
   }
 
   /// Gets the processing rate.
-  double get_decode_rate_Mbps() const
+  double get_encode_rate_Mbps() const
   {
     return static_cast<double>(sum_cb_sz) / static_cast<double>(sum_elapsed_ns) * 1000;
   }
 
-  /// Gets the total amount of time the LDPC decoder spent decoding.
+  /// Gets the total amount of time the LDPC encoder spent decoding.
   std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_elapsed_ns); }
 
 private:
   // See interface for documentation.
-  void new_metric(const ldpc_decoder_metrics& metrics) override
+  void new_metric(const ldpc_encoder_metrics& metrics) override
   {
     sum_cb_sz += metrics.cb_sz.value();
-    sum_nof_iterations += metrics.nof_iterations;
     sum_elapsed_ns += metrics.elapsed.count();
-    if (metrics.crc_ok) {
-      ++sum_crc_ok;
-    }
     ++count;
   }
 
-  std::atomic<uint64_t> sum_cb_sz          = {};
-  std::atomic<uint64_t> sum_nof_iterations = {};
-  std::atomic<uint64_t> sum_crc_ok         = {};
-  std::atomic<uint64_t> sum_elapsed_ns     = {};
-  std::atomic<uint64_t> count              = {};
+  std::atomic<uint64_t> sum_cb_sz      = {};
+  std::atomic<uint64_t> sum_elapsed_ns = {};
+  std::atomic<uint64_t> count          = {};
 };
 
 } // namespace srsran

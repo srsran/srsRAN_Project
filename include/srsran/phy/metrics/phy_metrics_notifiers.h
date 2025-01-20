@@ -31,19 +31,31 @@ public:
 
 } // namespace detail
 
+using crc_calculator_metric_notifier          = detail::phy_metric_notifier<crc_calculator_metrics>;
+using ldpc_encoder_metric_notifier            = detail::phy_metric_notifier<ldpc_encoder_metrics>;
 using ldpc_decoder_metric_notifier            = detail::phy_metric_notifier<ldpc_decoder_metrics>;
 using pusch_processor_metric_notifier         = detail::phy_metric_notifier<pusch_processor_metrics>;
 using pusch_channel_estimator_metric_notifier = detail::phy_metric_notifier<pusch_channel_estimator_metrics>;
-using pusch_processor_metric_notifier         = detail::phy_metric_notifier<pusch_processor_metrics>;
+using pseudo_random_sequence_generator_metric_notifier =
+    detail::phy_metric_notifier<pseudo_random_sequence_generator_metrics>;
+using channel_precoder_metric_notifier  = detail::phy_metric_notifier<channel_precoder_metrics>;
+using channel_equalizer_metric_notifier = detail::phy_metric_notifier<channel_equalizer_metrics>;
 
 /// Groups upper physical layer metric notifiers.
 class upper_phy_metrics_notifiers
 {
 public:
-  virtual ~upper_phy_metrics_notifiers()                                                  = default;
-  virtual ldpc_decoder_metric_notifier&            get_ldpc_decoder_notifier()            = 0;
-  virtual pusch_channel_estimator_metric_notifier& get_pusch_channel_estimator_notifier() = 0;
-  virtual pusch_processor_metric_notifier&         get_pusch_processor_notifier()         = 0;
+  virtual ~upper_phy_metrics_notifiers()                                                           = default;
+  virtual crc_calculator_metric_notifier&                   get_pdsch_crc_calculator_notifier()    = 0;
+  virtual crc_calculator_metric_notifier&                   get_pusch_crc_calculator_notifier()    = 0;
+  virtual ldpc_encoder_metric_notifier&                     get_ldpc_encoder_notifier()            = 0;
+  virtual ldpc_decoder_metric_notifier&                     get_ldpc_decoder_notifier()            = 0;
+  virtual pusch_channel_estimator_metric_notifier&          get_pusch_channel_estimator_notifier() = 0;
+  virtual pusch_processor_metric_notifier&                  get_pusch_processor_notifier()         = 0;
+  virtual pseudo_random_sequence_generator_metric_notifier& get_pusch_scrambling_notifier()        = 0;
+  virtual pseudo_random_sequence_generator_metric_notifier& get_pdsch_scrambling_notifier()        = 0;
+  virtual channel_precoder_metric_notifier&                 get_pdsch_channel_precoder_notifier()  = 0;
+  virtual channel_equalizer_metric_notifier&                get_pusch_channel_equalizer_notifier() = 0;
 };
 
 } // namespace srsran
