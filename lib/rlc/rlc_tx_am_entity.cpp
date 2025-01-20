@@ -1010,7 +1010,7 @@ rlc_buffer_state rlc_tx_am_entity::get_buffer_state()
       logger.log_info("Buffer state ignores SDU under segmentation. sn={} not in tx_window.", sn_under_segmentation);
     }
   } else {
-    rlc_sdu* next_sdu = sdu_queue.front();
+    const rlc_sdu* next_sdu = sdu_queue.front();
     if (next_sdu != nullptr) {
       bs.hol_toa = next_sdu->time_of_arrival;
     }
