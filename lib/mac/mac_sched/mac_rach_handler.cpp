@@ -84,7 +84,9 @@ void mac_cell_rach_handler_impl::handle_rach_indication(const mac_rach_indicatio
   }
 
   // Forward RACH indication to scheduler.
-  parent.sched.handle_rach_indication(sched_rach);
+  if (not sched_rach.occasions.empty()) {
+    parent.sched.handle_rach_indication(sched_rach);
+  }
 }
 
 bool mac_cell_rach_handler_impl::handle_cfra_allocation(uint8_t preamble_id, du_ue_index_t ue_idx, rnti_t crnti)
@@ -111,7 +113,7 @@ void mac_cell_rach_handler_impl::handle_cfra_deallocation(du_ue_index_t ue_idx)
   if (preamble_id != MAX_NOF_RA_PREAMBLES_PER_OCCASION) {
     ue_entry.cell_idx    = INVALID_DU_CELL_INDEX;
     ue_entry.preamble_id = MAX_NOF_RA_PREAMBLES_PER_OCCASION;
-    preambles[get_cfra_index(ue_entry.preamble_id)].store(rnti_t::INVALID_RNTI, std::memory_order_release);
+    preambles[get_cfra_index(preamble_id)].store(rnti_t::INVALID_RNTI, std::memory_order_release);
   }
 }
 
