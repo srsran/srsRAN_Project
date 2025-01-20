@@ -67,7 +67,7 @@ public:
       dl_bo.lcid     = get_lcid(key);
       int hol_toa    = ue_dl_bo_table[key].second.load(std::memory_order_relaxed);
       if (hol_toa >= 0) {
-        dl_bo.hol_toa = std::min(sl, slot_point{sl.numerology(), (unsigned)dl_bo.hol_toa});
+        dl_bo.hol_toa = std::min(sl, slot_point{sl.numerology(), (unsigned)hol_toa});
       }
       // > Extract last DL BO value for the respective bearer and reset BO table position.
       dl_bo.bs = ue_dl_bo_table[key].first.exchange(-1, std::memory_order_release);
