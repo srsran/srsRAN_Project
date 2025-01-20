@@ -45,7 +45,7 @@ void f1ap_du_gnbdu_config_update_procedure::operator()(coro_context<async_task<g
 void f1ap_du_gnbdu_config_update_procedure::send_gnbdu_cu_update_request()
 {
   f1ap_message msg = {};
-  // set F1AP PDU contents
+  // Set F1AP PDU contents.
   msg.pdu.set_init_msg();
   msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_GNB_DU_CFG_UPD);
   gnb_du_cfg_upd_s& upd = msg.pdu.init_msg().value.gnb_du_cfg_upd();
@@ -76,8 +76,8 @@ void f1ap_du_gnbdu_config_update_procedure::send_gnbdu_cu_update_request()
     }
   }
 
-  // send request
-  logger.info("F1 Setup: Sending F1 Setup Request to CU-CP...");
+  // Send request to CU-CP.
+  logger.info("F1 Setup: Sending gNB-DU Configuration Update to CU-CP...");
   cu_notif.on_new_message(msg);
 }
 

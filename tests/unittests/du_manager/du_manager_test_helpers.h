@@ -129,7 +129,7 @@ public:
   async_task<gnbdu_config_update_response> handle_du_config_update(const gnbdu_config_update_request& request) override
   {
     last_du_cfg_req = gnbdu_config_update_request{request};
-    return launch_no_op_task(gnbdu_config_update_response{});
+    return launch_no_op_task(gnbdu_config_update_response{true});
   }
 
   /// Initiates creation of UE context in F1.

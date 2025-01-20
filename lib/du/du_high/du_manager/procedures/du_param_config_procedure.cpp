@@ -32,13 +32,17 @@ void du_param_config_procedure::operator()(coro_context<async_task<du_param_conf
 
   for (; next_cell_idx != request.cells.size(); ++next_cell_idx) {
     // Reconfigure cell in the MAC.
-    CORO_AWAIT(handle_mac_cell_update(next_cell_idx));
+    CORO_AWAIT_VALUE(bool macresp, handle_mac_cell_update(next_cell_idx));
+    if (not macresp) {
+      resp.success = macresp;
+      CORO_EARLY_RETURN(resp);
+    }
   }
 
   // Initiate F1AP gNB-DU Configuration Update
-  CORO_AWAIT(handle_f1_gnbdu_config_update());
+  CORO_AWAIT_VALUE(gnbdu_config_update_response f1resp, handle_f1_gnbdu_config_update());
 
-  resp.success = true;
+  resp.success = f1resp.result;
   CORO_RETURN(resp);
 }
 

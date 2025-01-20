@@ -75,7 +75,7 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
   du_ctxt.du_id = request.gnb_du_id;
 
   f1ap_message msg = {};
-  // set F1AP PDU contents
+  // Set F1AP PDU contents.
   msg.pdu.set_init_msg();
   msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
   f1_setup_request_s& setup_req = msg.pdu.init_msg().value.f1_setup_request();
