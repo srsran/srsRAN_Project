@@ -129,8 +129,7 @@ mac_rach_handler::mac_rach_handler(scheduler_configurator& sched_,
 
 mac_cell_rach_handler_impl& mac_rach_handler::add_cell(const sched_cell_configuration_request_message& sched_cfg)
 {
-  while (sched_cfg.cell_index >= cell_map.size()) {
-    cell_map.emplace_back(*this, sched_cfg);
-  }
-  return cell_map[sched_cfg.cell_index];
+  srsran_assert(not cell_map.contains(sched_cfg.cell_index), "Cell already exists");
+  cell_map.emplace(sched_cfg.cell_index, std::make_unique<mac_cell_rach_handler_impl>(*this, sched_cfg));
+  return *cell_map[sched_cfg.cell_index];
 }

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/slotted_array.h"
 #include "srsran/mac/mac_cell_rach_handler.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rnti.h"
@@ -71,8 +72,8 @@ private:
   rnti_manager&           rnti_mng;
   srslog::basic_logger&   logger;
 
-  std::vector<mac_cell_rach_handler_impl> cell_map;
-  std::vector<cfra_ue_context>            ue_map;
+  slotted_id_vector<du_cell_index_t, std::unique_ptr<mac_cell_rach_handler_impl>> cell_map;
+  std::vector<cfra_ue_context>                                                    ue_map;
 };
 
 } // namespace srsran
