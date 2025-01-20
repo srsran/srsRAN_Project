@@ -19,8 +19,8 @@ namespace srsran {
 
 /// F1-U sockets configuration
 struct f1u_socket_appconfig {
-  std::string              bind_addr = "127.0.10.1"; // Bind address used by the F1-U interface
-  std::optional<five_qi_t> five_qi;
+  std::string              bind_addr = "127.0.10.1"; /// Bind address used by the F1-U interface
+  std::optional<five_qi_t> five_qi;                  /// If the 5QI is not present, the socket will be used by default.
   udp_appconfig            udp_config;
 };
 

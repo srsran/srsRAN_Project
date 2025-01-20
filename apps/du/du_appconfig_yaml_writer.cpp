@@ -80,6 +80,6 @@ void srsran::fill_du_appconfig_in_yaml_schema(YAML::Node& node, const du_appconf
   fill_du_appconfig_hal_section(node, config.hal_config);
   fill_du_appconfig_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_du_appconfig_buffer_pool_section(node["buffer_pool"], config.buffer_pool_config);
-  fill_du_appconfig_f1u_section(node["nru"], config.f1u_cfg);
+  fill_du_appconfig_f1u_section(node["f1u"], config.f1u_cfg);
   fill_du_appconfig_f1ap_section(node["f1ap"], config.f1ap_cfg);
 }

@@ -57,7 +57,7 @@ void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfi
   configure_cli11_f1ap_args(*f1ap_subcmd, du_cfg.f1ap_cfg);
 
   // F1-U section.
-  CLI::App* f1u_subcmd = app.add_subcommand("f1u", "NR-U interface configuration")->configurable();
+  CLI::App* f1u_subcmd = app.add_subcommand("f1u", "F1-U interface configuration")->configurable();
   configure_cli11_f1u_args(*f1u_subcmd, du_cfg.f1u_cfg);
 
   // Metrics section.
