@@ -64,7 +64,7 @@ public:
 
 private:
   /// Creates a UE object in the DU UE manager.
-  expected<du_ue*, std::string> create_du_ue_context();
+  expected<du_ue*, std::string> create_du_ue_context() const;
 
   /// Remove UE from DU Manager UE repository.
   async_task<void> clear_ue();

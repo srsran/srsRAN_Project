@@ -44,7 +44,8 @@ srsran_scheduler_adapter::srsran_scheduler_adapter(const mac_config& params, rnt
   ctrl_exec(params.ctrl_exec),
   logger(srslog::fetch_basic_logger("MAC")),
   notifier(*this),
-  sched_impl(create_scheduler(scheduler_config{params.sched_cfg, notifier, params.metric_notifier}))
+  sched_impl(create_scheduler(scheduler_config{params.sched_cfg, notifier, params.metric_notifier})),
+  rach_handler(*sched_impl, rnti_mng, logger)
 {
   srsran_assert(last_slot_point.is_lock_free(), "slot point is not lock free");
   srsran_assert(last_slot_tp.is_lock_free(), "slot time_point is not lock free");
@@ -53,7 +54,7 @@ srsran_scheduler_adapter::srsran_scheduler_adapter(const mac_config& params, rnt
 void srsran_scheduler_adapter::add_cell(const mac_cell_creation_request& msg)
 {
   // Setup UCI decoder for new cell.
-  cell_handlers.emplace(msg.cell_index, msg.cell_index, *this, msg.sched_req);
+  cell_handlers.emplace(msg.cell_index, *this, msg.sched_req);
 
   // Forward cell configuration to scheduler.
   sched_impl->handle_cell_configuration_request(msg.sched_req);
@@ -66,6 +67,14 @@ async_task<bool> srsran_scheduler_adapter::handle_ue_creation_request(const mac_
 
     // Add UE to RLF handler.
     rlf_handler.add_ue(msg.ue_index, *msg.rlf_notifier);
+
+    // In case of CFRA, store the RA preamble.
+    if (msg.cfra_preamble_index.has_value()) {
+      if (not cell_handlers[msg.cell_index].get_rach_handler().handle_cfra_allocation(
+              msg.cfra_preamble_index.value(), msg.ue_index, msg.crnti)) {
+        CORO_EARLY_RETURN(false);
+      }
+    }
 
     // Create UE in the Scheduler.
     sched_impl->handle_ue_creation_request(make_scheduler_ue_creation_request(msg));
@@ -106,6 +115,9 @@ async_task<bool> srsran_scheduler_adapter::handle_ue_removal_request(const mac_u
     CORO_AWAIT(sched_cfg_notif_map[msg.ue_index].ue_config_ready);
     sched_cfg_notif_map[msg.ue_index].ue_config_ready.reset();
 
+    // In case the UE was created via CFRA, remove the RA preamble.
+    cell_handlers[msg.cell_index].get_rach_handler().handle_cfra_deallocation(msg.ue_index);
+
     // Remove UE from RLF handler.
     rlf_handler.rem_ue(msg.ue_index, msg.cell_index);
 
@@ -115,6 +127,7 @@ async_task<bool> srsran_scheduler_adapter::handle_ue_removal_request(const mac_u
 
 void srsran_scheduler_adapter::handle_ue_config_applied(du_ue_index_t ue_index)
 {
+  // Notify scheduler that the UE confirmed the configuration.
   sched_impl->handle_ue_config_applied(ue_index);
 }
 
@@ -312,37 +325,13 @@ void srsran_scheduler_adapter::handle_paging_information(const paging_informatio
   sched_impl->handle_paging_information(pg_info);
 }
 
-void srsran_scheduler_adapter::cell_handler::handle_rach_indication(const mac_rach_indication& rach_ind)
+srsran_scheduler_adapter::cell_handler::cell_handler(srsran_scheduler_adapter&                       parent_,
+                                                     const sched_cell_configuration_request_message& sched_cfg) :
+  uci_decoder(sched_cfg, parent_.rnti_mng, parent_.rlf_handler),
+  cell_idx(sched_cfg.cell_index),
+  parent(parent_),
+  rach_handler(parent.rach_handler.add_cell(sched_cfg))
 {
-  // Create Scheduler RACH indication message. Allocate TC-RNTIs in the process.
-  rach_indication_message sched_rach{};
-  sched_rach.cell_index = cell_idx;
-  sched_rach.slot_rx    = rach_ind.slot_rx;
-  for (const auto& occasion : rach_ind.occasions) {
-    auto& sched_occasion           = sched_rach.occasions.emplace_back();
-    sched_occasion.start_symbol    = occasion.start_symbol;
-    sched_occasion.frequency_index = occasion.frequency_index;
-    for (const auto& preamble : occasion.preambles) {
-      rnti_t alloc_tc_rnti = parent->rnti_mng.allocate();
-      if (alloc_tc_rnti == rnti_t::INVALID_RNTI) {
-        parent->logger.warning("cell={} preamble id={}: Ignoring PRACH. Cause: Failed to allocate TC-RNTI.",
-                               fmt::underlying(cell_idx),
-                               preamble.index);
-        continue;
-      }
-      auto& sched_preamble        = sched_occasion.preambles.emplace_back();
-      sched_preamble.preamble_id  = preamble.index;
-      sched_preamble.tc_rnti      = alloc_tc_rnti;
-      sched_preamble.time_advance = preamble.time_advance;
-    }
-    if (sched_occasion.preambles.empty()) {
-      // No preamble was added. Remove occasion.
-      sched_rach.occasions.pop_back();
-    }
-  }
-
-  // Forward RACH indication to scheduler.
-  parent->sched_impl->handle_rach_indication(sched_rach);
 }
 
 void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication_message& msg)
@@ -356,7 +345,7 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
     const mac_crc_pdu&     mac_pdu = msg.crcs[i];
     ul_crc_pdu_indication& pdu     = ind.crcs[i];
     pdu.rnti                       = mac_pdu.rnti;
-    pdu.ue_index                   = parent->rnti_mng[mac_pdu.rnti];
+    pdu.ue_index                   = parent.rnti_mng[mac_pdu.rnti];
     pdu.harq_id                    = to_harq_id(mac_pdu.harq_id);
     pdu.tb_crc_success             = mac_pdu.tb_crc_success;
     pdu.ul_sinr_dB                 = mac_pdu.ul_sinr_dB;
@@ -365,14 +354,14 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
   }
 
   // Forward CRC indication to the scheduler.
-  parent->sched_impl->handle_crc_indication(ind);
+  parent.sched_impl->handle_crc_indication(ind);
 
   // Report to RLF handler the CRC result.
   for (const auto& crc : ind.crcs) {
     // If Msg3, ignore the CRC result.
     // Note: UE index is invalid for Msg3 CRCs because no UE has been allocated yet.
     if (crc.ue_index != INVALID_DU_UE_INDEX) {
-      parent->rlf_handler.handle_crc(crc.ue_index, cell_idx, crc.tb_crc_success);
+      parent.rlf_handler.handle_crc(crc.ue_index, cell_idx, crc.tb_crc_success);
     }
   }
 }
@@ -380,7 +369,7 @@ void srsran_scheduler_adapter::cell_handler::handle_crc(const mac_crc_indication
 void srsran_scheduler_adapter::cell_handler::handle_uci(const mac_uci_indication_message& msg)
 {
   // Forward UCI indication to the scheduler.
-  parent->sched_impl->handle_uci_indication(uci_decoder.decode_uci(msg));
+  parent.sched_impl->handle_uci_indication(uci_decoder.decode_uci(msg));
 }
 
 void srsran_scheduler_adapter::cell_handler::handle_srs(const mac_srs_indication_message& msg)
@@ -390,8 +379,8 @@ void srsran_scheduler_adapter::cell_handler::handle_srs(const mac_srs_indication
   ind.slot_rx    = msg.sl_rx;
   for (const auto& mac_pdu : msg.srss) {
     ind.srss.emplace_back(
-        parent->rnti_mng[mac_pdu.rnti], mac_pdu.rnti, mac_pdu.time_advance_offset, mac_pdu.channel_matrix);
+        parent.rnti_mng[mac_pdu.rnti], mac_pdu.rnti, mac_pdu.time_advance_offset, mac_pdu.channel_matrix);
   }
   // Forward SRS indication to the scheduler.
-  parent->sched_impl->handle_srs_indication(ind);
+  parent.sched_impl->handle_srs_indication(ind);
 }

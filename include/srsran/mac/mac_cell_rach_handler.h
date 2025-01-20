@@ -12,9 +12,9 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/phy_time_unit.h"
-#include "srsran/ran/prach/prach_constants.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
+#include <optional>
 
 namespace srsran {
 

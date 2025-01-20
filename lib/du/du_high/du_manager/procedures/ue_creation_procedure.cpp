@@ -90,7 +90,7 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   CORO_RETURN();
 }
 
-expected<du_ue*, std::string> ue_creation_procedure::create_du_ue_context()
+expected<du_ue*, std::string> ue_creation_procedure::create_du_ue_context() const
 {
   // Create a DU UE resource manager, which will be responsible for managing bearer and PUCCH resources.
   auto alloc_result =
@@ -212,6 +212,9 @@ async_task<mac_ue_create_response> ue_creation_procedure::create_mac_ue()
   }
   mac_ue_create_msg.ul_ccch_msg     = not req.ul_ccch_msg.empty() ? &req.ul_ccch_msg : nullptr;
   mac_ue_create_msg.ul_ccch_slot_rx = req.slot_rx;
+  if (ue_ctx->resources->cfra.has_value()) {
+    mac_ue_create_msg.cfra_preamble_index = ue_ctx->resources->cfra->preamble_id;
+  }
 
   // Create Scheduler UE Config Request that will be embedded in the mac UE creation request.
   mac_ue_create_msg.sched_cfg = create_scheduler_ue_config_request(*ue_ctx, *ue_ctx->resources);

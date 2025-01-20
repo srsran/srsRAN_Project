@@ -168,7 +168,8 @@ struct rach_indication_message {
   slot_point      slot_rx;
 
   struct preamble {
-    unsigned      preamble_id;
+    unsigned preamble_id;
+    /// Allocated TC-RNTI, for Contention-based RACH, or C-RNTI, for Contention-free RACH.
     rnti_t        tc_rnti;
     phy_time_unit time_advance;
   };

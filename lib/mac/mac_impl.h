@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "mac_ctrl/mac_config.h"
 #include "mac_ctrl/mac_controller.h"
 #include "mac_dl/mac_dl_processor.h"
 #include "mac_sched/mac_scheduler_adapter.h"
