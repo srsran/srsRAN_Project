@@ -11,6 +11,7 @@
 #include "ofh_uplane_message_decoder_impl.h"
 #include "../serdes/ofh_cuplane_constants.h"
 #include "../support/network_order_binary_deserializer.h"
+#include "srsran/adt/expected.h"
 #include "srsran/ofh/compression/compression_properties.h"
 #include "srsran/ofh/compression/iq_decompressor.h"
 #include "srsran/support/units.h"
@@ -356,23 +357,24 @@ void uplane_message_decoder_impl::decode_iq_data(uplane_section_params&         
   decompressor->decompress(results.iq_samples, compressed_data, compression_params);
 }
 
-filter_index_type srsran::ofh::uplane_peeker::peek_filter_index(span<const uint8_t> message)
+expected<filter_index_type, const char*> srsran::ofh::uplane_peeker::peek_filter_index(span<const uint8_t> message)
 {
   if (message.empty()) {
-    return filter_index_type::reserved;
+    return make_unexpected("Message is empty");
   }
 
   // Filter index is codified in the first byte, the 4 LSB.
   return to_filter_index_type(message[0] & 0xf);
 }
 
-slot_symbol_point srsran::ofh::uplane_peeker::peek_slot_symbol_point(span<const uint8_t> message,
-                                                                     unsigned            nof_symbols,
-                                                                     subcarrier_spacing  scs)
+expected<slot_symbol_point, std::string> srsran::ofh::uplane_peeker::peek_slot_symbol_point(span<const uint8_t> message,
+                                                                                            unsigned nof_symbols,
+                                                                                            subcarrier_spacing scs)
 {
   // Slot is codified in the first 4 bytes of the Open Fronthaul message.
   if (message.size() < 4) {
-    return {slot_point{}, 0, nof_symbols};
+    return make_unexpected(
+        fmt::format("Message number of bytes '{}' is smaller than the required size '{}'", message.size(), 4));
   }
 
   uint8_t  frame             = message[1];
@@ -385,14 +387,30 @@ slot_symbol_point srsran::ofh::uplane_peeker::peek_slot_symbol_point(span<const 
   unsigned symbol_id       = slot_and_symbol & 0x3f;
   slot_id |= slot_and_symbol >> 6;
 
+  // Frame property is not checked because all the values of the variable are valid.
+
+  // Check the subframe property.
   if (subframe >= NOF_SUBFRAMES_PER_FRAME) {
-    return {slot_point{}, 0, nof_symbols};
+    return make_unexpected(
+        fmt::format("Decoded subframe id '{}' is bigger than the maximum number of subframes per frame '{}'",
+                    subframe,
+                    NOF_SUBFRAMES_PER_FRAME));
   }
 
   // Check the slot property.
-  if (slot_id >= slot_point(scs, 0).nof_slots_per_subframe()) {
-    return {slot_point{}, 0, nof_symbols};
+  if (unsigned nof_slots_per_subframe = slot_point(scs, 0).nof_slots_per_subframe();
+      slot_id >= nof_slots_per_subframe) {
+    return make_unexpected(
+        fmt::format("Decoded slot id '{}' is bigger than the maximum number of slots per subframe '{}'",
+                    slot_id,
+                    nof_slots_per_subframe));
   }
 
-  return {slot_point(to_numerology_value(scs), frame, subframe, slot_id), symbol_id, nof_symbols};
+  // Check the symbol property.
+  if (symbol_id >= nof_symbols) {
+    return make_unexpected(fmt::format(
+        "Decoded symbol id '{}' is bigger than the maximum number of symbols '{}'", symbol_id, nof_symbols));
+  }
+
+  return slot_symbol_point(slot_point(to_numerology_value(scs), frame, subframe, slot_id), symbol_id, nof_symbols);
 }
