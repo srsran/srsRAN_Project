@@ -14,8 +14,7 @@
 #include "../ue_context/f1ap_du_ue.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 
-namespace srsran {
-namespace srs_du {
+namespace srsran::srs_du {
 
 class f1ap_du_ue_manager;
 
@@ -47,8 +46,11 @@ private:
   /// Gets the cell index that matches the given NR-CGI from the F1AP DU context.
   expected<unsigned> get_cell_index_from_nr_cgi(nr_cell_global_id_t nr_cgi) const;
 
+  static std::optional<asn1::f1ap::cause_c>
+  validate_drb_to_be_setup_item(const asn1::f1ap::drbs_to_be_setup_item_s& drb_to_setup_item);
+
   /// Returns the name of this procedure.
-  const char* name() const { return "UE Context Setup"; }
+  static const char* name() { return "UE Context Setup"; }
 
   const asn1::f1ap::ue_context_setup_request_s msg;
   f1ap_du_ue_manager&                          ue_mng;
@@ -63,6 +65,6 @@ private:
 
   std::optional<f1ap_ue_context_creation_response> du_ue_create_response;
   f1ap_ue_context_update_response                  du_ue_cfg_response;
+  std::vector<f1ap_drb_failed_to_setupmod>         failed_drbs;
 };
-} // namespace srs_du
-} // namespace srsran
+} // namespace srsran::srs_du
