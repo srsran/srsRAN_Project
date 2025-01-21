@@ -49,12 +49,13 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       case dci_dl_rnti_config_type::c_rnti_f1_0: {
         const auto& dci = pdcch.dci.c_rnti_f1_0;
         fmt::format_to(std::back_inserter(fmtbuf),
-                       " dci: h_id={} ndi={} rv={} mcs={} res_ind={}",
+                       " dci: h_id={} ndi={} rv={} mcs={} res_ind={} tpc={}",
                        dci.harq_process_number,
                        dci.new_data_indicator,
                        dci.redundancy_version,
                        dci.modulation_coding_scheme,
-                       dci.pucch_resource_indicator);
+                       dci.pucch_resource_indicator,
+                       dci.tpc_command);
       } break;
       case dci_dl_rnti_config_type::tc_rnti_f1_0: {
         const auto& dci = pdcch.dci.tc_rnti_f1_0;
@@ -69,12 +70,13 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       case dci_dl_rnti_config_type::c_rnti_f1_1: {
         const auto& dci = pdcch.dci.c_rnti_f1_1;
         fmt::format_to(std::back_inserter(fmtbuf),
-                       " dci: h_id={} ndi={} rv={} mcs={} res_ind={}",
+                       " dci: h_id={} ndi={} rv={} mcs={} res_ind={} tpc={}",
                        dci.harq_process_number,
                        dci.tb1_new_data_indicator,
                        dci.tb1_redundancy_version,
                        dci.tb1_modulation_coding_scheme,
-                       dci.pucch_resource_indicator);
+                       dci.pucch_resource_indicator,
+                       dci.tpc_command);
         if (dci.downlink_assignment_index.has_value()) {
           fmt::format_to(std::back_inserter(fmtbuf), " dai={}", *dci.downlink_assignment_index);
         }
