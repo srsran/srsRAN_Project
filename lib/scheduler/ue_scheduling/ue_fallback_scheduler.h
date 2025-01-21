@@ -115,7 +115,8 @@ private:
                                        cell_resource_allocator&                     res_alloc,
                                        unsigned                                     pusch_time_res,
                                        const pusch_time_domain_resource_allocation& pusch_td,
-                                       std::optional<ul_harq_process_handle>        h_ul_retx);
+                                       std::optional<ul_harq_process_handle>        h_ul_retx,
+                                       bool                                         remove_pucch);
 
   /// \return A pair with the number of SRB bytes allocated and which DL HARQ process was used.
   dl_harq_process_handle fill_dl_srb_grant(ue&                                   u,

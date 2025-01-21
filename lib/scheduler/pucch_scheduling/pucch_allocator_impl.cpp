@@ -462,8 +462,21 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
   auto* grant_it = std::find_if(
       ue_pucchs.begin(), ue_pucchs.end(), [crnti](const ue_grants& grants) { return grants.rnti == crnti; });
 
+  auto& pucch_pdus = slot_alloc.result.ul.pucchs;
+
+  auto* pdu = std::find_if(
+      pucch_pdus.begin(), pucch_pdus.end(), [crnti](const pucch_info& info) { return info.crnti == crnti; });
+  if ((grant_it != ue_pucchs.end()) != (pdu != pucch_pdus.end())) {
+    logger.error("rnti={}: Inconsistent PUCCH state: PUCCH grant list and PUCCH PDUs list are not in sync", crnti);
+  }
+
   // Get the bits from the PUCCH grants and remove the item from the list.
   if (grant_it != ue_pucchs.end()) {
+    // This function can be called for UE with dedicated PUCCH grants only.
+    if (grant_it->has_common_pucch) {
+      logger.error("rnti={}: unexpected call of this function for UE with PUCCH common grant allocated", crnti);
+    }
+
     // Get the UCI bits.
     removed_uci_info = grant_it->pucch_grants.get_uci_bits();
 
@@ -482,15 +495,12 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
       resource_manager.release_csi_resource(slot_alloc.slot, crnti, ue_cell_cfg);
     }
 
-    // TODO: optimize this by swapping the it with the last of the list.
     ue_pucchs.erase(grant_it);
   }
 
-  auto& pucch_pdus = slot_alloc.result.ul.pucchs;
-
-  for (auto* pdu_it = pucch_pdus.begin(); pdu_it != pucch_pdus.end();) {
+  // Start from the (first) PUCCH PDU that was found above.
+  for (auto* pdu_it = pdu; pdu_it != pucch_pdus.end();) {
     if (pdu_it->crnti == crnti) {
-      // TODO: optimize this by swapping the it with the last of the list.
       pdu_it = pucch_pdus.erase(pdu_it);
     } else {
       ++pdu_it;
