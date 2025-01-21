@@ -317,15 +317,9 @@ f1ap_du_ue_context_setup_procedure::validate_drb_to_be_setup_item(const drbs_to_
   asn1::f1ap::cause_c cause;
   cause.set_protocol().value = asn1::f1ap::cause_protocol_opts::semantic_error;
 
-  // Check UL PDCP SN length information present.
+  // Check DL PDCP SN length information present.
   // DL PDCP SN information is mandatory in the IE extension field.
   if (not drb_to_be_setup_item.ie_exts_present) {
-    return cause;
-  }
-
-  // Check UL PDCP SN length information present.
-  // Unidir bearer setup is not supported.
-  if (not drb_to_be_setup_item.ie_exts.ul_pdcp_sn_len_present) {
     return cause;
   }
 
