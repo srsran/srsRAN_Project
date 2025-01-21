@@ -52,6 +52,10 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   o_du_low_unit_factory odu_low_factory(du_lo.hal_config, nof_cells);
   auto                  odu_lo_unit = odu_low_factory.create(odu_low_cfg, odu_low_dependencies);
 
+  std::for_each(odu_lo_unit.metrics.begin(), odu_lo_unit.metrics.end(), [&](auto& e) {
+    o_du.metrics.emplace_back(std::move(e));
+  });
+
   o_du_high_unit_dependencies odu_hi_unit_dependencies = {dependencies.workers->get_du_high_executor_mapper(0),
                                                           *dependencies.f1c_client_handler,
                                                           *dependencies.f1u_gw,
@@ -89,7 +93,9 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
     odu_lo.set_slot_data_message_notifier(odu_hi.get_slot_data_message_notifier());
   }
 
-  o_du.metrics  = std::move(odu_hi_unit.metrics);
+  std::for_each(odu_hi_unit.metrics.begin(), odu_hi_unit.metrics.end(), [&](auto& e) {
+    o_du.metrics.emplace_back(std::move(e));
+  });
   o_du.commands = std::move(odu_hi_unit.commands);
 
   auto odu_instance = make_o_du(std::move(odu_hi_unit.o_du_hi), std::move(odu_lo_unit.o_du_lo));

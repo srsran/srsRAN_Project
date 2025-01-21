@@ -17,9 +17,10 @@ namespace srsran {
 namespace srs_du {
 
 struct du_low_config;
+struct du_low_dependencies;
 
 /// Creates and returns the DU low.
-std::unique_ptr<du_low> make_du_low(const du_low_config& config);
+std::unique_ptr<du_low> make_du_low(const du_low_config& config, du_low_dependencies&& deps);
 
 } // namespace srs_du
 } // namespace srsran

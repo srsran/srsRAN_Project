@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
@@ -169,7 +170,8 @@ struct downlink_processor_factory_sw_config {
 
 /// Creates a full software based downlink processor factory.
 std::shared_ptr<downlink_processor_factory>
-create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config);
+create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config,
+                                     upper_phy_metrics_notifiers*                metric_notifier);
 
 /// Describes all downlink processors in a pool.
 struct downlink_processor_pool_config {
@@ -314,6 +316,7 @@ public:
 /// Creates and returns an upper PHY factory.
 std::unique_ptr<upper_phy_factory>
 create_upper_phy_factory(std::shared_ptr<downlink_processor_factory> downlink_proc_factory,
-                         std::shared_ptr<resource_grid_factory>      rg_factory);
+                         std::shared_ptr<resource_grid_factory>      rg_factory,
+                         upper_phy_metrics_notifiers*                notifiers);
 
 } // namespace srsran

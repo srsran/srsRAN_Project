@@ -280,6 +280,11 @@ static void configure_cli11_hal_args(CLI::App& app, std::optional<du_low_unit_ha
   configure_cli11_bbdev_hwacc_args(*bbdev_hwacc_subcmd, config->bbdev_hwacc);
 }
 
+static void configure_cli11_metrics_args(CLI::App& app, du_low_unit_metrics_config& config)
+{
+  app.add_option("--enable_upper_phy", config.enable, "Enables upper physical layer metrics.")->capture_default_str();
+}
+
 static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
 {
   // Clean the HAL optional.
@@ -313,6 +318,10 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
   // HAL section.
   CLI::App* hal_subcmd = add_subcommand(app, "hal", "HAL configuration")->configurable();
   configure_cli11_hal_args(*hal_subcmd, parsed_cfg.hal_config);
+
+  // Metrics section.
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
+  configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.metrics_config);
 }
 
 void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,

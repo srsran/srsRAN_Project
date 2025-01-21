@@ -16,6 +16,7 @@
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "upper_phy_rx_symbol_handler_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
+#include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/support/prach_buffer_pool.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"

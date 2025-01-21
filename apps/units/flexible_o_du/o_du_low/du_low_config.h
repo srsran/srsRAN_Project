@@ -181,10 +181,15 @@ struct bbdev_appconfig {
   std::optional<unsigned> nof_mbuf;
 };
 
-// HAL configuration of the DU low.
+/// HAL configuration of the DU low.
 struct du_low_unit_hal_config {
   /// BBDEV-based hardware-accelerator arguments.
   std::optional<bbdev_appconfig> bbdev_hwacc;
+};
+
+/// Metrics configuration of the DU low.
+struct du_low_unit_metrics_config {
+  bool enable = false;
 };
 
 /// DU low configuration.
@@ -197,6 +202,8 @@ struct du_low_unit_config {
   du_low_unit_expert_execution_config expert_execution_cfg;
   /// HAL configuration.
   std::optional<du_low_unit_hal_config> hal_config;
+  /// Metrics configuration. Set to \c true to enable the DU low metrics.
+  du_low_unit_metrics_config metrics_config;
 };
 
 } // namespace srsran

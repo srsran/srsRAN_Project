@@ -35,6 +35,7 @@ target_link_libraries(srsran_upper_phy
         srsran_downlink_processor
         srsran_generic_funcs
         srsran_instrumentation
+        srsran_phy_metrics
         srsran_phy_support
         srsran_transform_precoding
         srsran_uplink_processor

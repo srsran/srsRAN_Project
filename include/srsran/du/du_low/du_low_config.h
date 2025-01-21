@@ -31,5 +31,11 @@ struct du_low_config {
   std::vector<du_low_cell_config> cells;
 };
 
+/// Dependencies necessary to instantiate a DU-low
+struct du_low_dependencies {
+  /// Upper physical layer metric producer. Set to \c nullptr to disable PHY metrics.
+  upper_phy_metrics_notifiers* metric_notifier = nullptr;
+};
+
 } // namespace srs_du
 } // namespace srsran

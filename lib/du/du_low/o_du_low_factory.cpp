@@ -66,7 +66,8 @@ generate_fapi_adaptor_dependencies(du_low& du_low, span<const du_cell_config> du
 }
 
 std::unique_ptr<o_du_low> srsran::srs_du::make_o_du_low(const o_du_low_config&     config,
-                                                        span<const du_cell_config> du_cells)
+                                                        span<const du_cell_config> du_cells,
+                                                        o_du_low_dependencies&&    deps)
 {
   srsran_assert(config.du_low_cfg.cells.size() == du_cells.size(),
                 "Number of cells mismatch between upper PHY '{}' and DU high '{}'",
@@ -78,7 +79,7 @@ std::unique_ptr<o_du_low> srsran::srs_du::make_o_du_low(const o_du_low_config&  
                 config.prach_ports.size());
 
   auto& logger = srslog::fetch_basic_logger("DU");
-  auto  du_lo  = make_du_low(config.du_low_cfg);
+  auto  du_lo  = make_du_low(config.du_low_cfg, std::move(deps.du_low_deps));
 
   report_error_if_not(du_lo != nullptr, "Unable to create DU low.");
   logger.debug("DU low created successfully");

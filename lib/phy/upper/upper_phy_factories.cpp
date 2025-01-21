@@ -17,6 +17,7 @@
 #include "upper_phy_impl.h"
 #include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_symbol_handler_printer_decorator.h"
+#include "srsran/phy/metrics/phy_metrics_factories.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
@@ -357,7 +358,8 @@ create_ul_resource_grid_pool(const upper_phy_config& config, std::shared_ptr<res
   return create_generic_resource_grid_pool(std::move(grids));
 }
 
-static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(const upper_phy_config& config)
+static std::shared_ptr<uplink_processor_factory>
+create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_notifiers* metric_notifier)
 {
   // Verify the PUSCH processor capabilities.
   pusch_processor_phy_capabilities pusch_capabilities = get_pusch_processor_phy_capabilities();
@@ -445,7 +447,14 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
     decoder_config.executor                  = config.pusch_decoder_executor;
     decoder_config.nof_prb                   = config.ul_bw_rb;
     decoder_config.nof_layers                = config.pusch_max_nof_layers;
-    pusch_config.decoder_factory             = create_pusch_decoder_factory_sw(decoder_config);
+
+    if (metric_notifier) {
+      decoder_config.decoder_factory = create_ldpc_decoder_metric_decorator_factory(
+          std::move(decoder_config.decoder_factory), metric_notifier->get_ldpc_decoder_notifier());
+      report_fatal_error_if_not(decoder_config.decoder_factory, "Failed to create factory.");
+    }
+
+    pusch_config.decoder_factory = create_pusch_decoder_factory_sw(decoder_config);
   } else {
     pusch_decoder_factory_hw_configuration decoder_config;
     decoder_config.segmenter_factory = create_ldpc_segmenter_rx_factory_sw();
@@ -493,6 +502,12 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   pusch_config.csi_sinr_calc_method       = config.pusch_sinr_calc_method;
   pusch_config.max_nof_concurrent_threads = config.max_ul_thread_concurrency;
 
+  if (metric_notifier) {
+    pusch_config.estimator_factory = create_pusch_channel_estimator_metric_decorator_factory(
+        std::move(pusch_config.estimator_factory), metric_notifier->get_pusch_channel_estimator_notifier());
+    report_fatal_error_if_not(pusch_config.estimator_factory, "Failed to create factory.");
+  }
+
   // :TODO: check these values in the future. Extract them to more public config.
   pusch_config.ch_estimate_dimensions.nof_symbols        = MAX_NSYMB_PER_SLOT;
   pusch_config.ch_estimate_dimensions.nof_tx_layers      = config.pusch_max_nof_layers;
@@ -500,6 +515,12 @@ static std::shared_ptr<uplink_processor_factory> create_ul_processor_factory(con
   pusch_config.ch_estimate_dimensions.nof_rx_ports       = config.nof_rx_ports;
   std::shared_ptr<pusch_processor_factory> pusch_factory = create_pusch_processor_factory_sw(pusch_config);
   report_fatal_error_if_not(pusch_factory, "Invalid PUSCH processor factory.");
+
+  if (metric_notifier) {
+    pusch_factory = create_pusch_processor_metric_decorator_factory(std::move(pusch_factory),
+                                                                    metric_notifier->get_pusch_processor_notifier());
+    report_fatal_error_if_not(pusch_factory, "Failed to create factory.");
+  }
 
   // Create synchronous PUSCH processor for UCI only.
   pusch_config.decoder_factory =
@@ -644,8 +665,11 @@ class upper_phy_factory_impl : public upper_phy_factory
 {
 public:
   upper_phy_factory_impl(std::shared_ptr<downlink_processor_factory> downlink_proc_factory_,
-                         std::shared_ptr<resource_grid_factory>      rg_factory_) :
-    downlink_proc_factory(std::move(downlink_proc_factory_)), rg_factory(std::move(rg_factory_))
+                         std::shared_ptr<resource_grid_factory>      rg_factory_,
+                         upper_phy_metrics_notifiers*                metric_notifier_) :
+    downlink_proc_factory(std::move(downlink_proc_factory_)),
+    rg_factory(std::move(rg_factory_)),
+    metric_notifier(metric_notifier_)
   {
     srsran_assert(downlink_proc_factory, "Invalid downlink processor factory.");
     srsran_assert(rg_factory, "Invalid resource grid factory.");
@@ -666,7 +690,7 @@ public:
     phy_config.dl_rg_pool = create_dl_resource_grid_pool(config, rg_factory);
     report_fatal_error_if_not(phy_config.dl_rg_pool, "Invalid downlink resource grid pool.");
 
-    std::shared_ptr<uplink_processor_factory> ul_processor_fact = create_ul_processor_factory(config);
+    std::shared_ptr<uplink_processor_factory> ul_processor_fact = create_ul_processor_factory(config, metric_notifier);
 
     phy_config.ul_rg_pool = create_ul_resource_grid_pool(config, rg_factory);
     report_fatal_error_if_not(phy_config.ul_rg_pool, "Invalid uplink resource grid pool.");
@@ -693,12 +717,14 @@ public:
 private:
   std::shared_ptr<downlink_processor_factory> downlink_proc_factory;
   std::shared_ptr<resource_grid_factory>      rg_factory;
+  upper_phy_metrics_notifiers*                metric_notifier;
 };
 
 } // namespace
 
 std::shared_ptr<downlink_processor_factory>
-srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config)
+srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config,
+                                             upper_phy_metrics_notifiers*                metric_notifier)
 {
   // Create channel precoder factory.
   std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
@@ -927,7 +953,9 @@ std::unique_ptr<downlink_processor_pool> srsran::create_dl_processor_pool(downli
 
 std::unique_ptr<upper_phy_factory>
 srsran::create_upper_phy_factory(std::shared_ptr<downlink_processor_factory> downlink_proc_factory,
-                                 std::shared_ptr<resource_grid_factory>      rg_factory)
+                                 std::shared_ptr<resource_grid_factory>      rg_factory,
+                                 upper_phy_metrics_notifiers*                metric_notifier)
 {
-  return std::make_unique<upper_phy_factory_impl>(downlink_proc_factory, rg_factory);
+  return std::make_unique<upper_phy_factory_impl>(
+      std::move(downlink_proc_factory), std::move(rg_factory), metric_notifier);
 }
