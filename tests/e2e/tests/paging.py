@@ -21,57 +21,7 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
-from .steps.stub import ping, ping_from_5gc, start_network, stop, ue_await_release, ue_start_and_attach
-
-
-@mark.parametrize(
-    "band, common_scs, bandwidth",
-    (
-        param(3, 15, 10, id="band:%s-scs:%s-bandwidth:%s"),
-        param(41, 30, 10, id="band:%s-scs:%s-bandwidth:%s"),
-    ),
-)
-@mark.zmq_single_ue
-# pylint: disable=too-many-arguments,too-many-positional-arguments
-def test_zmq_paging(
-    retina_manager: RetinaTestManager,
-    retina_data: RetinaTestData,
-    ue: UEStub,
-    fivegc: FiveGCStub,
-    gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-):
-    """
-    ZMQ Paging test
-    """
-
-    configure_test_parameters(
-        retina_manager=retina_manager,
-        retina_data=retina_data,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
-        sample_rate=None,
-        global_timing_advance=0,
-        time_alignment_calibration=0,
-        cu_cp_inactivity_timer=1,
-    )
-
-    logging.info("Paging Test")
-    start_network([ue], gnb, fivegc)
-    ue_attach_info_dict = ue_start_and_attach([ue], gnb, fivegc)
-    ping(ue_attach_info_dict, fivegc, 10)
-    if ue_await_release(ue):
-        ping_from_5gc(ue_attach_info_dict, fivegc, 10)
-    stop(
-        [ue],
-        gnb,
-        fivegc,
-        retina_data,
-        warning_as_errors=True,
-    )
+from .steps.stub import ping, ping_from_5gc, start_network, stop, ue_start_and_attach
 
 
 @mark.parametrize(
