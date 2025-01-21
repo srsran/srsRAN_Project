@@ -23,11 +23,10 @@ ra_resource_manager::ra_resource_manager(span<const du_cell_config> cell_cfg_lis
       const auto& rach_common = cells[i].cell_cfg->ul_cfg_common.init_ul_bwp.rach_cfg_common.value();
 
       // Store the preambles used for CFRA.
-      // Note: We use the preambles not used for CBRA for CFRA.
-      const unsigned nof_cfra_preambles = MAX_NOF_RA_PREAMBLES_PER_OCCASION - rach_common.total_nof_ra_preambles;
-      cells[i].free_preamble_idx_list.reserve(nof_cfra_preambles);
-      for (unsigned j = 0; j != nof_cfra_preambles; ++j) {
-        cells[i].free_preamble_idx_list.push_back(rach_common.total_nof_ra_preambles + j);
+      const unsigned nof_cf_preambles = rach_common.total_nof_ra_preambles - rach_common.nof_cb_preambles_per_ssb;
+      cells[i].free_preamble_idx_list.reserve(nof_cf_preambles);
+      for (unsigned j = 0; j != nof_cf_preambles; ++j) {
+        cells[i].free_preamble_idx_list.push_back(rach_common.nof_cb_preambles_per_ssb + j);
       }
     }
   }

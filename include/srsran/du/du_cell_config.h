@@ -242,7 +242,7 @@ struct du_cell_config {
   unsigned pusch_max_nof_layers = 1;
 
   /// Whether contention-free random access is enabled for this cell.
-  bool cfra_enabled = false;
+  bool cfra_enabled = true;
 
   /// List of RAN slices to support in the scheduler.
   std::vector<slice_rrm_policy_config> rrm_policy_members;

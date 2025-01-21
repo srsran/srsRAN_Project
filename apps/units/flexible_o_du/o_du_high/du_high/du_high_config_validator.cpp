@@ -679,11 +679,11 @@ validate_prach_cell_unit_config(const du_high_unit_prach_config& config, nr_band
     return false;
   }
 
-  if (config.cfra_enabled and config.total_nof_ra_preambles == MAX_NOF_RA_PREAMBLES_PER_OCCASION) {
+  if (config.cfra_enabled and config.total_nof_ra_preambles == config.nof_cb_preambles_per_ssb) {
     fmt::print("Total nof. RA preambles per occasion ({}) used for Contention-based Random Access should be lower than "
                "{}, if Contention-free Random Access is enabled.\n",
-               config.total_nof_ra_preambles,
-               MAX_NOF_RA_PREAMBLES_PER_OCCASION);
+               config.nof_cb_preambles_per_ssb,
+               config.total_nof_ra_preambles);
     return false;
   }
 

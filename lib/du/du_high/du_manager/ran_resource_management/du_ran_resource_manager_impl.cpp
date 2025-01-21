@@ -178,13 +178,13 @@ void du_ran_resource_manager_impl::deallocate_context(du_ue_index_t ue_index)
   ue_resource_context&   ue_res = ue_res_pool[ue_index];
   du_ue_resource_config& ue_mcg = ue_res.cg_cfg;
 
+  ra_res_alloc.deallocate_cfra_resources(ue_mcg);
+
   ue_res.ue_cap_manager.release(ue_mcg);
 
   for (const auto& sc : ue_mcg.cell_group.cells) {
     deallocate_cell_resources(ue_index, sc.serv_cell_idx);
   }
-
-  ra_res_alloc.deallocate_cfra_resources(ue_mcg);
 
   ue_res_pool.erase(ue_index);
 }

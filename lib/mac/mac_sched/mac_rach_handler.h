@@ -21,7 +21,7 @@ namespace srsran {
 class scheduler_configurator;
 class rnti_manager;
 class mac_rach_handler;
-class sched_cell_configuration_request_message;
+struct sched_cell_configuration_request_message;
 
 /// Handler of RACH indications for a given cell in the MAC.
 class mac_cell_rach_handler_impl final : public mac_cell_rach_handler
@@ -47,6 +47,7 @@ private:
 
   mac_rach_handler&     parent;
   const du_cell_index_t cell_index;
+  const unsigned        nof_cb_preambles;
 
   std::vector<std::atomic<rnti_t>> preambles;
 };

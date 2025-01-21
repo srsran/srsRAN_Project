@@ -3256,7 +3256,7 @@ bool srsran::srs_du::calculate_reconfig_with_sync_diff(asn1::rrc_nr::recfg_with_
     // Note: All RA preambles not used for CBRA are used for CFRA.
     rach_ded.cfra.ext                          = true;
     rach_ded.cfra.total_nof_ra_preambs_present = true;
-    rach_ded.cfra.total_nof_ra_preambs         = MAX_NOF_RA_PREAMBLES_PER_OCCASION - rach_common.total_nof_ra_preambles;
+    rach_ded.cfra.total_nof_ra_preambs = rach_common.total_nof_ra_preambles - rach_common.nof_cb_preambles_per_ssb;
     // Make CFRA-SSB-Resource.
     auto&          cfra_ssb = rach_ded.cfra.res.set_ssb();
     cfra_ssb_res_s ssbres;
