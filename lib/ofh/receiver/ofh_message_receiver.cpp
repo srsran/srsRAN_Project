@@ -24,7 +24,10 @@ message_receiver_impl::message_receiver_impl(const message_receiver_config&  con
   vlan_params(config.vlan_params),
   ul_prach_eaxc(config.prach_eaxc),
   ul_eaxc(config.ul_eaxc),
+  warn_unreceived_frames_on_first_rx_message(config.warn_unreceived_frames ==
+                                             warn_unreceived_ru_frames::after_traffic_detection),
   window_checker(*dependencies.window_checker),
+  window_handler(*dependencies.window_handler),
   seq_id_checker(std::move(dependencies.seq_id_checker)),
   vlan_decoder(std::move(dependencies.eth_frame_decoder)),
   ecpri_decoder(std::move(dependencies.ecpri_decoder)),
@@ -59,6 +62,12 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   span<const uint8_t>      ofh_pdu = ecpri_decoder->decode(ecpri_pdu, ecpri_params);
   if (ofh_pdu.empty() || should_ecpri_packet_be_filtered(ecpri_params)) {
     return;
+  }
+
+  // Command the rx windown handler to start logging unreceived RU frames.
+  if (SRSRAN_UNLIKELY(warn_unreceived_frames_on_first_rx_message)) {
+    window_handler.start_logging_unreceived_messages();
+    warn_unreceived_frames_on_first_rx_message = false;
   }
 
   // Verify the sequence identifier.

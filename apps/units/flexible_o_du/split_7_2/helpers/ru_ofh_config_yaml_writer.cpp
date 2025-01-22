@@ -93,7 +93,7 @@ static YAML::Node build_ru_ofh_cell_section(const ru_ofh_unit_cell_config& confi
   node["is_dl_broadcast_enabled"]    = config.cell.is_downlink_broadcast_enabled;
   node["ignore_ecpri_seq_id"]        = config.cell.ignore_ecpri_seq_id_field;
   node["ignore_ecpri_payload_size"]  = config.cell.ignore_ecpri_payload_size_field;
-  node["warn_unreceived_ru_frames"]  = config.cell.warn_unreceived_ru_frames;
+  node["warn_unreceived_ru_frames"]  = to_string(config.cell.log_unreceived_ru_frames);
   node["compr_method_ul"]            = config.cell.compression_method_ul;
   node["compr_bitwidth_ul"]          = config.cell.compression_bitwidth_ul;
   node["compr_method_dl"]            = config.cell.compression_method_dl;

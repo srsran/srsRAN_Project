@@ -30,7 +30,7 @@ static bool check_compression_params(const ofh::ru_compression_params& params)
   return true;
 }
 
-static bool check_dl_eaxc_if_broadcast_is_enabled(const ru_ofh_sector_configuration& config)
+static bool check_dl_eaxc_if_broadcast_is_enabled(const ofh::sector_configuration& config)
 {
   // When broadcast flag is enabled, two downlink eAxCs are supported.
   if (config.is_downlink_broadcast_enabled && config.dl_eaxc.size() != 2) {
@@ -56,7 +56,7 @@ static bool check_eaxc_id(unsigned eaxc)
   return result;
 }
 
-static bool check_eaxcs_id(const ru_ofh_sector_configuration& config)
+static bool check_eaxcs_id(const ofh::sector_configuration& config)
 {
   // Check PRACH eAxC.
   for (auto eaxc : config.prach_eaxc) {

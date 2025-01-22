@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "ofh_closed_rx_window_handler.h"
 #include "ofh_data_flow_uplane_uplink_data.h"
 #include "ofh_data_flow_uplane_uplink_prach.h"
 #include "ofh_sequence_id_checker_impl.h"
@@ -42,6 +43,8 @@ struct message_receiver_config {
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// Uplink eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  /// Warn unreceived Open Fronthaul messages.
+  warn_unreceived_ru_frames warn_unreceived_frames = warn_unreceived_ru_frames::after_traffic_detection;
 };
 
 /// Message receiver dependencies.
@@ -52,6 +55,8 @@ struct message_receiver_dependencies {
   std::unique_ptr<ether::receiver> eth_receiver;
   /// Reception window checker.
   rx_window_checker* window_checker = nullptr;
+  /// Reception window handler.
+  closed_rx_window_handler* window_handler;
   /// eCPRI packet decoder.
   std::unique_ptr<ecpri::packet_decoder> ecpri_decoder;
   /// Ethernet frame decoder.
@@ -108,7 +113,9 @@ private:
   const ether::vlan_frame_params                        vlan_params;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_prach_eaxc;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  bool                                                  warn_unreceived_frames_on_first_rx_message;
   rx_window_checker&                                    window_checker;
+  closed_rx_window_handler&                             window_handler;
   std::unique_ptr<sequence_id_checker>                  seq_id_checker;
   std::unique_ptr<ether::vlan_frame_decoder>            vlan_decoder;
   std::unique_ptr<ecpri::packet_decoder>                ecpri_decoder;

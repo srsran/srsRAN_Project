@@ -44,6 +44,13 @@ struct receiver_impl_dependencies {
     /// Sequence id checker.
     std::unique_ptr<sequence_id_checker> seq_id_checker;
   };
+
+  struct close_rx_window_dependencies {
+    std::shared_ptr<prach_context_repository>  prach_repo;
+    std::shared_ptr<uplink_context_repository> uplink_repo;
+    std::shared_ptr<uplane_rx_symbol_notifier> notifier;
+  };
+
   /// Logger.
   srslog::basic_logger* logger = nullptr;
   /// Task executor.
@@ -51,7 +58,7 @@ struct receiver_impl_dependencies {
   /// Message receiver dependencies.
   message_rx_dependencies msg_rx_dependencies;
   /// Closed reception window handler dependencies.
-  closed_rx_window_handler_dependencies window_handler_dependencies;
+  close_rx_window_dependencies window_handler_dependencies;
 };
 
 /// OTA symbol boundary dispatcher for the receiver.

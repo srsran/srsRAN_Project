@@ -978,10 +978,17 @@ struct worker_manager {
 };
 } // namespace
 
-static void configure_ofh_sector(ru_ofh_sector_configuration& sector_cfg)
+static void configure_ofh_sector(ofh::sector_configuration& sector_cfg)
 {
   // Default IQ data scaling to be applied prior to downlink data compression.
   const float iq_scaling = 0.9f;
+  // Downlink processing time in microseconds.
+  const std::chrono::microseconds dl_processing_time = 400us;
+
+  sector_cfg.max_processing_delay_slots = processing_delay_slots;
+  sector_cfg.dl_processing_time         = dl_processing_time;
+  sector_cfg.uses_dpdk                  = false;
+  sector_cfg.sector_id                  = 0;
 
   std::chrono::duration<double, std::nano> symbol_duration(
       (1e6 / (get_nsymb_per_slot(cyclic_prefix::NORMAL) * get_nof_slots_per_subframe(test_params.scs))));
@@ -994,6 +1001,7 @@ static void configure_ofh_sector(ru_ofh_sector_configuration& sector_cfg)
   sector_cfg.tci_up                          = vlan_tag;
   sector_cfg.scs                             = test_params.scs;
   sector_cfg.bw                              = test_params.bw;
+  sector_cfg.ru_operating_bw                 = sector_cfg.bw;
   sector_cfg.cp                              = cyclic_prefix::NORMAL;
   sector_cfg.is_prach_control_plane_enabled  = test_params.is_prach_control_plane_enabled;
   sector_cfg.ignore_ecpri_payload_size_field = test_params.ignore_ecpri_payload_size_field;
@@ -1007,12 +1015,12 @@ static void configure_ofh_sector(ru_ofh_sector_configuration& sector_cfg)
                                                  test_params.data_bitwidth};
   ru_compression_params prach_compression_params{to_compression_type(test_params.prach_compr_method),
                                                  test_params.prach_bitwidth};
-  sector_cfg.dl_compression_params               = dl_ul_compression_params;
-  sector_cfg.ul_compression_params               = dl_ul_compression_params;
-  sector_cfg.prach_compression_params            = prach_compression_params;
-  sector_cfg.iq_scaling                          = iq_scaling;
-  sector_cfg.is_downlink_static_comp_hdr_enabled = test_params.is_downlink_static_comp_hdr_enabled;
-  sector_cfg.is_uplink_static_comp_hdr_enabled   = test_params.is_uplink_static_comp_hdr_enabled;
+  sector_cfg.dl_compression_params                = dl_ul_compression_params;
+  sector_cfg.ul_compression_params                = dl_ul_compression_params;
+  sector_cfg.prach_compression_params             = prach_compression_params;
+  sector_cfg.iq_scaling                           = iq_scaling;
+  sector_cfg.is_downlink_static_compr_hdr_enabled = test_params.is_downlink_static_comp_hdr_enabled;
+  sector_cfg.is_uplink_static_compr_hdr_enabled   = test_params.is_uplink_static_comp_hdr_enabled;
 
   // Configure eAxCs.
   sector_cfg.prach_eaxc.assign(test_params.prach_port_id.begin(), test_params.prach_port_id.end());
@@ -1023,18 +1031,12 @@ static void configure_ofh_sector(ru_ofh_sector_configuration& sector_cfg)
 
 static ru_ofh_configuration generate_ru_config()
 {
-  // Downlink processing time in microseconds.
-  const std::chrono::microseconds dl_processing_time = 400us;
-
   ru_ofh_configuration ru_cfg;
-  ru_cfg.max_processing_delay_slots = processing_delay_slots;
-  ru_cfg.gps_Alpha                  = 0;
-  ru_cfg.gps_Beta                   = 0;
-  ru_cfg.dl_processing_time         = dl_processing_time;
-  ru_cfg.uses_dpdk                  = false;
 
-  ru_cfg.sector_configs.emplace_back();
-  ru_ofh_sector_configuration& sector_cfg = ru_cfg.sector_configs.back();
+  ru_cfg.gps_Alpha = 0;
+  ru_cfg.gps_Beta  = 0;
+
+  ofh::sector_configuration& sector_cfg = ru_cfg.sector_configs.emplace_back();
   configure_ofh_sector(sector_cfg);
 
   return ru_cfg;

@@ -11,10 +11,10 @@
 #pragma once
 
 #include "srsran/ofh/compression/iq_decompressor.h"
-#include "srsran/ofh/ecpri/ecpri_packet_decoder.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/receiver/ofh_receiver_timing_parameters.h"
+#include "srsran/ofh/receiver/ofh_receiver_warn_unreceived_frames_parameters.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
@@ -58,8 +58,8 @@ struct receiver_config {
   bool ignore_ecpri_payload_size_field = false;
   /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
   bool ignore_ecpri_seq_id_field = false;
-  /// If set to true, warn of unreceived Radio Unit frames.
-  bool warn_unreceived_ru_frames = true;
+  /// Warn of unreceived Radio Unit frames status.
+  warn_unreceived_ru_frames log_unreceived_ru_frames = warn_unreceived_ru_frames::after_traffic_detection;
 };
 
 } // namespace ofh

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
+#include "srsran/ofh/receiver/ofh_receiver_configuration.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/support/units.h"
 #include <chrono>
@@ -51,8 +52,8 @@ struct ru_ofh_unit_base_cell_config {
   bool ignore_ecpri_payload_size_field = false;
   /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
   bool ignore_ecpri_seq_id_field = false;
-  /// If set to true, warn of unreceived Radio Unit frames.
-  bool warn_unreceived_ru_frames = true;
+  /// Warn of unreceived Radio Unit frames status.
+  ofh::warn_unreceived_ru_frames log_unreceived_ru_frames = ofh::warn_unreceived_ru_frames::after_traffic_detection;
   /// Uplink compression method.
   std::string compression_method_ul = "bfp";
   /// Uplink compression bitwidth.

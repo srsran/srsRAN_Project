@@ -178,6 +178,7 @@ public:
     message_receiver_dependencies dependencies;
     dependencies.logger         = &srslog::fetch_basic_logger("TEST");
     dependencies.window_checker = &window_checker;
+    dependencies.window_handler = &closed_window_handler;
 
     {
       auto temp                    = std::make_unique<data_flow_uplane_uplink_prach_spy>();
