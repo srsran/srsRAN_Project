@@ -20,6 +20,7 @@
 #include "procedures/f1ap_du_ue_context_release_procedure.h"
 #include "procedures/f1ap_du_ue_context_setup_procedure.h"
 #include "procedures/gnb_cu_configuration_update_procedure.h"
+#include "procedures/positioning_information_exchange_procedure.h"
 #include "ue_context/f1ap_du_ue_config_update.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap.h"
@@ -573,7 +574,20 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
   paging_notifier.on_paging_received(info);
 }
 
-void f1ap_du_impl::handle_positioning_information_request(const asn1::f1ap::positioning_info_request_s& msg) {}
+void f1ap_du_impl::handle_positioning_information_request(const asn1::f1ap::positioning_info_request_s& msg)
+{
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
+  f1ap_du_ue*         ue                = ues.find(gnb_du_ue_f1ap_id);
+
+  if (ue == nullptr) {
+    // UE not found. Respond with failure.
+    du_mng.schedule_async_task(start_positioning_exchange_procedure(msg, du_mng, nullptr));
+    return;
+  }
+
+  du_mng.get_ue_handler(ue->context.ue_index)
+      .schedule_async_task(start_positioning_exchange_procedure(msg, du_mng, ue));
+}
 
 gnb_cu_ue_f1ap_id_t f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index)
 {
