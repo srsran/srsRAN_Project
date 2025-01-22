@@ -351,19 +351,21 @@ f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modi
 
 void f1ap_du_impl::handle_message(const f1ap_message& msg)
 {
+  using pdu_types = f1ap_pdu_c::types_opts;
+
   // Run F1AP protocols in Control executor.
   if (not ctrl_exec.execute([this, msg]() {
         // Log message.
         log_pdu(true, msg);
 
         switch (msg.pdu.type().value) {
-          case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
+          case pdu_types::init_msg:
             handle_initiating_message(msg.pdu.init_msg());
             break;
-          case asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome:
+          case pdu_types::successful_outcome:
             handle_successful_outcome(msg.pdu.successful_outcome());
             break;
-          case asn1::f1ap::f1ap_pdu_c::types_opts::unsuccessful_outcome:
+          case pdu_types::unsuccessful_outcome:
             handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
             break;
           default:
@@ -377,29 +379,34 @@ void f1ap_du_impl::handle_message(const f1ap_message& msg)
   }
 }
 
-void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
+void f1ap_du_impl::handle_initiating_message(const init_msg_s& msg)
 {
+  using msg_types = f1ap_elem_procs_o::init_msg_c::types_opts;
+
   switch (msg.value.type().value) {
-    case f1ap_elem_procs_o::init_msg_c::types_opts::reset:
+    case msg_types::reset:
       handle_reset(msg.value.reset());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cfg_upd:
+    case msg_types::gnb_cu_cfg_upd:
       handle_gnb_cu_configuration_update(msg.value.gnb_cu_cfg_upd());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer:
+    case msg_types::dl_rrc_msg_transfer:
       handle_dl_rrc_message_transfer(msg.value.dl_rrc_msg_transfer());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request:
+    case msg_types::ue_context_setup_request:
       handle_ue_context_setup_request(msg.value.ue_context_setup_request());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request:
+    case msg_types::ue_context_mod_request:
       handle_ue_context_modification_request(msg.value.ue_context_mod_request());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
+    case msg_types::ue_context_release_cmd:
       handle_ue_context_release_command(msg.value.ue_context_release_cmd());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::paging:
+    case msg_types::paging:
       handle_paging_request(msg.value.paging());
+      break;
+    case msg_types::positioning_info_request:
+      handle_positioning_information_request(msg.value.positioning_info_request());
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -565,6 +572,8 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
   }
   paging_notifier.on_paging_received(info);
 }
+
+void f1ap_du_impl::handle_positioning_information_request(const asn1::f1ap::positioning_info_request_s& msg) {}
 
 gnb_cu_ue_f1ap_id_t f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index)
 {
