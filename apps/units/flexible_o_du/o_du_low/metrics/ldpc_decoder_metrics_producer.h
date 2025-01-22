@@ -16,6 +16,7 @@
 
 namespace srsran {
 
+/// LDPC decoder metric producer.
 class ldpc_decoder_metric_producer_impl : private ldpc_decoder_metric_notifier
 {
 public:
@@ -34,7 +35,7 @@ public:
     return static_cast<double>(sum_elapsed_ns) / static_cast<double>(count) * 1e-3;
   }
 
-  /// Gets the current effective rate.
+  /// Gets the processing rate.
   double get_decode_rate_Mbps() const
   {
     return static_cast<double>(sum_cb_sz) / static_cast<double>(sum_elapsed_ns) * 1000;
