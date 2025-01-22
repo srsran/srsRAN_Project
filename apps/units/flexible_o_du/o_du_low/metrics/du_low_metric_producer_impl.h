@@ -13,7 +13,7 @@
 #include "ldpc_decoder_metrics_producer.h"
 #include "pusch_channel_estimator_metrics_producer.h"
 #include "pusch_processor_metrics_producer.h"
-#include <fmt/format.h>
+#include "fmt/format.h"
 
 namespace srsran {
 

@@ -17,9 +17,11 @@
 
 namespace srsran {
 
+/// PUSCH processor metric decorator.
 class phy_metrics_pusch_processor_decorator : public pusch_processor, private pusch_processor_result_notifier
 {
 public:
+  /// Creates a PUSCH processor decorator from a base PUSCH processor instance and metric notifier.
   phy_metrics_pusch_processor_decorator(std::unique_ptr<pusch_processor> processor_,
                                         pusch_processor_metric_notifier& metric_notifier_) :
     processor(std::move(processor_)), metric_notifier(metric_notifier_)
@@ -27,6 +29,7 @@ public:
     srsran_assert(processor, "Invalid processor.");
   }
 
+  // See pusch_processor interface for documentation.
   void process(span<uint8_t>                    data_,
                unique_rx_buffer                 rm_buffer,
                pusch_processor_result_notifier& notifier_,
@@ -92,6 +95,7 @@ private:
     notifier_->on_sch(sch);
   }
 
+  /// Notifies the gathered metrics through the given notifier.
   void notify_metrics()
   {
     // Check if the processing function returned.
@@ -139,6 +143,8 @@ private:
   std::optional<srsran::pusch_processor_result_data>    sch_result;
 
   // Makes sure atomics are lock free.
+  static_assert(std::atomic<decltype(time_uci)>::is_always_lock_free);
+  static_assert(std::atomic<decltype(time_data)>::is_always_lock_free);
   static_assert(std::atomic<decltype(time_return)>::is_always_lock_free);
 };
 

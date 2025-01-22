@@ -21,6 +21,7 @@ namespace srsran {
 class phy_metrics_ldpc_decoder_decorator : public ldpc_decoder
 {
 public:
+  /// Creates an LDPC decoder decorator from a base LDPC decoder instance and metric notifier.
   phy_metrics_ldpc_decoder_decorator(std::unique_ptr<ldpc_decoder> base_decoder_,
                                      ldpc_decoder_metric_notifier& notifier_) :
     base_decoder(std::move(base_decoder_)), notifier(notifier_)
@@ -28,6 +29,7 @@ public:
     srsran_assert(base_decoder, "Invalid decoder.");
   }
 
+  // See interface for documentation.
   std::optional<unsigned> decode(bit_buffer&                      output,
                                  span<const log_likelihood_ratio> input,
                                  crc_calculator*                  crc,
