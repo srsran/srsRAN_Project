@@ -156,9 +156,14 @@ variables:
       }
       print_tree "${SRSRANDIR}/tests/e2e/log/" ""
     - echo -e "\e[0Ksection_end:`date +%s`:e2e_folder_section\r\e[0K"
-    #Artifact transfer
+    # Report link
     - |
-      set -x
+      subpath=$(echo "$SRSRANDIR" | sed "s|^$CI_PROJECT_DIR||")
+      echo "*******************************************************************************************************************************"
+      echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts${subpath}/tests/e2e/log/report.html"
+      echo "*******************************************************************************************************************************"
+    # Artifact transfer
+    - |
       # Verify if SSH connection is active
       if ! nc -z -v "$FTP_SERVER_IP" 22 >/dev/null 2>&1; then
           echo "Error: SSH server ${FTP_SERVER_IP}:22 is not active or is not reachable."
@@ -173,10 +178,4 @@ variables:
       zip -r "${compressed_artifact}" "${artifacts_dir}"
       # Send the artifacts to the server
       sshpass -p "${SSH_PASS}" scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -P 22 "${compressed_artifact}" "${SSH_USER}@${FTP_SERVER_IP}:${remote_path}"
-      echo "Artifacts sent to the server"
-      echo "artifacts found at ${remote_path}/${compressed_artifact}"
-    - |
-      subpath=$(echo "$SRSRANDIR" | sed "s|^$CI_PROJECT_DIR||")
-      echo "*******************************************************************************************************************************"
-      echo "Test report ---> https://softwareradiosystems.gitlab.io/-/$CI_PROJECT_NAME/-/jobs/$CI_JOB_ID/artifacts${subpath}/tests/e2e/log/report.html"
-      echo "*******************************************************************************************************************************"
+      echo "Artifacts saved at ${FTP_SERVER_IP}:${remote_path}/${compressed_artifact}"
