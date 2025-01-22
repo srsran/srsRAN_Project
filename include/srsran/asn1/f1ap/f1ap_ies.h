@@ -21689,6 +21689,18 @@ using sitype_list_l = dyn_array<sitype_item_s>;
 // SLDRXCycleList ::= SEQUENCE (SIZE (1..32)) OF SLDRXCycleItem
 using sldrx_cycle_list_l = dyn_array<sldrx_cycle_item_s>;
 
+// SRSConfiguration ::= SEQUENCE
+struct srs_configuration_s {
+  bool                      ie_exts_present = false;
+  srs_carrier_list_l        srs_carrier_list;
+  srs_cfg_ext_ies_container ie_exts;
+
+  // sequence methods
+  SRSASN_CODE pack(bit_ref& bref) const;
+  SRSASN_CODE unpack(cbit_ref& bref);
+  void        to_json(json_writer& j) const;
+};
+
 // SRSPosRRCInactiveQueryIndication ::= ENUMERATED
 struct srs_pos_rrc_inactive_query_ind_opts {
   enum options { true_value, /*...*/ nulltype } value;

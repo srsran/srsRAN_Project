@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
+#include "f1ap_pdu_contents_ue.h"
 
 namespace asn1 {
 namespace f1ap {
@@ -5152,7 +5152,7 @@ struct positioning_info_resp_ies_o {
       enum options {
         gnb_cu_ue_f1ap_id,
         gnb_du_ue_f1ap_id,
-        srs_cfg,
+        srs_configuration,
         sfn_initisation_time,
         crit_diagnostics,
         srs_pos_rrc_inactive_cfg,
@@ -5173,13 +5173,13 @@ struct positioning_info_resp_ies_o {
     // getters
     uint64_t&                               gnb_cu_ue_f1ap_id();
     uint64_t&                               gnb_du_ue_f1ap_id();
-    srs_cfg_s&                              srs_cfg();
+    srs_configuration_s&                    srs_configuration();
     fixed_bitstring<64, false, true>&       sfn_initisation_time();
     crit_diagnostics_s&                     crit_diagnostics();
     unbounded_octstring<true>&              srs_pos_rrc_inactive_cfg();
     const uint64_t&                         gnb_cu_ue_f1ap_id() const;
     const uint64_t&                         gnb_du_ue_f1ap_id() const;
-    const srs_cfg_s&                        srs_cfg() const;
+    const srs_configuration_s&              srs_configuration() const;
     const fixed_bitstring<64, false, true>& sfn_initisation_time() const;
     const crit_diagnostics_s&               crit_diagnostics() const;
     const unbounded_octstring<true>&        srs_pos_rrc_inactive_cfg() const;
@@ -5202,7 +5202,7 @@ struct positioning_info_upd_ies_o {
   // Value ::= OPEN TYPE
   struct value_c {
     struct types_opts {
-      enum options { gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, srs_cfg, sfn_initisation_time, nulltype } value;
+      enum options { gnb_cu_ue_f1ap_id, gnb_du_ue_f1ap_id, srs_configuration, sfn_initisation_time, nulltype } value;
 
       const char* to_string() const;
     };
@@ -5218,11 +5218,11 @@ struct positioning_info_upd_ies_o {
     // getters
     uint64_t&                               gnb_cu_ue_f1ap_id();
     uint64_t&                               gnb_du_ue_f1ap_id();
-    srs_cfg_s&                              srs_cfg();
+    srs_configuration_s&                    srs_configuration();
     fixed_bitstring<64, false, true>&       sfn_initisation_time();
     const uint64_t&                         gnb_cu_ue_f1ap_id() const;
     const uint64_t&                         gnb_du_ue_f1ap_id() const;
-    const srs_cfg_s&                        srs_cfg() const;
+    const srs_configuration_s&              srs_configuration() const;
     const fixed_bitstring<64, false, true>& sfn_initisation_time() const;
 
   private:
@@ -5416,7 +5416,7 @@ struct positioning_meas_request_ies_o {
         pos_meas_periodicity,
         pos_meas_quantities,
         sfn_initisation_time,
-        srs_cfg,
+        srs_configuration,
         meas_beam_info_request,
         sys_frame_num,
         slot_num,
@@ -5448,7 +5448,7 @@ struct positioning_meas_request_ies_o {
     meas_periodicity_e&                     pos_meas_periodicity();
     pos_meas_quantities_l&                  pos_meas_quantities();
     fixed_bitstring<64, false, true>&       sfn_initisation_time();
-    srs_cfg_s&                              srs_cfg();
+    srs_configuration_s&                    srs_configuration();
     meas_beam_info_request_e&               meas_beam_info_request();
     uint16_t&                               sys_frame_num();
     uint8_t&                                slot_num();
@@ -5465,7 +5465,7 @@ struct positioning_meas_request_ies_o {
     const meas_periodicity_e&               pos_meas_periodicity() const;
     const pos_meas_quantities_l&            pos_meas_quantities() const;
     const fixed_bitstring<64, false, true>& sfn_initisation_time() const;
-    const srs_cfg_s&                        srs_cfg() const;
+    const srs_configuration_s&              srs_configuration() const;
     const meas_beam_info_request_e&         meas_beam_info_request() const;
     const uint16_t&                         sys_frame_num() const;
     const uint8_t&                          slot_num() const;
@@ -5540,7 +5540,7 @@ struct positioning_meas_upd_ies_o {
         transaction_id,
         lmf_meas_id,
         ran_meas_id,
-        srs_cfg,
+        srs_configuration,
         trp_meas_upd_list,
         meas_characteristics_request_ind,
         meas_time_occasion,
@@ -5562,14 +5562,14 @@ struct positioning_meas_upd_ies_o {
     uint16_t&                               transaction_id();
     uint32_t&                               lmf_meas_id();
     uint32_t&                               ran_meas_id();
-    srs_cfg_s&                              srs_cfg();
+    srs_configuration_s&                    srs_configuration();
     trp_meas_upd_list_l&                    trp_meas_upd_list();
     fixed_bitstring<16, false, true>&       meas_characteristics_request_ind();
     meas_time_occasion_e&                   meas_time_occasion();
     const uint16_t&                         transaction_id() const;
     const uint32_t&                         lmf_meas_id() const;
     const uint32_t&                         ran_meas_id() const;
-    const srs_cfg_s&                        srs_cfg() const;
+    const srs_configuration_s&              srs_configuration() const;
     const trp_meas_upd_list_l&              trp_meas_upd_list() const;
     const fixed_bitstring<16, false, true>& meas_characteristics_request_ind() const;
     const meas_time_occasion_e&             meas_time_occasion() const;
@@ -7541,13 +7541,13 @@ struct positioning_info_request_ies_container {
 using positioning_info_request_s = elementary_procedure_option<positioning_info_request_ies_container>;
 
 struct positioning_info_resp_ies_container {
-  bool                             srs_cfg_present                  = false;
+  bool                             srs_configuration_present        = false;
   bool                             sfn_initisation_time_present     = false;
   bool                             crit_diagnostics_present         = false;
   bool                             srs_pos_rrc_inactive_cfg_present = false;
   uint64_t                         gnb_cu_ue_f1ap_id;
   uint64_t                         gnb_du_ue_f1ap_id;
-  srs_cfg_s                        srs_cfg;
+  srs_configuration_s              srs_configuration;
   fixed_bitstring<64, false, true> sfn_initisation_time;
   crit_diagnostics_s               crit_diagnostics;
   unbounded_octstring<true>        srs_pos_rrc_inactive_cfg;
@@ -7562,11 +7562,11 @@ struct positioning_info_resp_ies_container {
 using positioning_info_resp_s = elementary_procedure_option<positioning_info_resp_ies_container>;
 
 struct positioning_info_upd_ies_container {
-  bool                             srs_cfg_present              = false;
+  bool                             srs_configuration_present    = false;
   bool                             sfn_initisation_time_present = false;
   uint64_t                         gnb_cu_ue_f1ap_id;
   uint64_t                         gnb_du_ue_f1ap_id;
-  srs_cfg_s                        srs_cfg;
+  srs_configuration_s              srs_configuration;
   fixed_bitstring<64, false, true> sfn_initisation_time;
 
   // sequence methods
@@ -7642,7 +7642,7 @@ using positioning_meas_report_s = elementary_procedure_option<positioning_meas_r
 struct positioning_meas_request_ies_container {
   bool                             pos_meas_periodicity_present             = false;
   bool                             sfn_initisation_time_present             = false;
-  bool                             srs_cfg_present                          = false;
+  bool                             srs_configuration_present                = false;
   bool                             meas_beam_info_request_present           = false;
   bool                             sys_frame_num_present                    = false;
   bool                             slot_num_present                         = false;
@@ -7659,7 +7659,7 @@ struct positioning_meas_request_ies_container {
   meas_periodicity_e               pos_meas_periodicity;
   pos_meas_quantities_l            pos_meas_quantities;
   fixed_bitstring<64, false, true> sfn_initisation_time;
-  srs_cfg_s                        srs_cfg;
+  srs_configuration_s              srs_configuration;
   meas_beam_info_request_e         meas_beam_info_request;
   uint16_t                         sys_frame_num;
   uint8_t                          slot_num;
@@ -7697,14 +7697,14 @@ struct positioning_meas_resp_ies_container {
 using positioning_meas_resp_s = elementary_procedure_option<positioning_meas_resp_ies_container>;
 
 struct positioning_meas_upd_ies_container {
-  bool                             srs_cfg_present                          = false;
+  bool                             srs_configuration_present                = false;
   bool                             trp_meas_upd_list_present                = false;
   bool                             meas_characteristics_request_ind_present = false;
   bool                             meas_time_occasion_present               = false;
   uint16_t                         transaction_id;
   uint32_t                         lmf_meas_id;
   uint32_t                         ran_meas_id;
-  srs_cfg_s                        srs_cfg;
+  srs_configuration_s              srs_configuration;
   trp_meas_upd_list_l              trp_meas_upd_list;
   fixed_bitstring<16, false, true> meas_characteristics_request_ind;
   meas_time_occasion_e             meas_time_occasion;

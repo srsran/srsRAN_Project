@@ -25235,7 +25235,7 @@ positioning_info_resp_ies_o::value_c positioning_info_resp_ies_o::get_value(cons
       ret.set(value_c::types::gnb_du_ue_f1ap_id);
       break;
     case 407:
-      ret.set(value_c::types::srs_cfg);
+      ret.set(value_c::types::srs_configuration);
       break;
     case 419:
       ret.set(value_c::types::sfn_initisation_time);
@@ -25283,8 +25283,8 @@ void positioning_info_resp_ies_o::value_c::set(types::options e)
     case types::gnb_du_ue_f1ap_id:
       c = uint64_t{};
       break;
-    case types::srs_cfg:
-      c = srs_cfg_s{};
+    case types::srs_configuration:
+      c = srs_configuration_s{};
       break;
     case types::sfn_initisation_time:
       c = fixed_bitstring<64, false, true>{};
@@ -25311,10 +25311,10 @@ uint64_t& positioning_info_resp_ies_o::value_c::gnb_du_ue_f1ap_id()
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-srs_cfg_s& positioning_info_resp_ies_o::value_c::srs_cfg()
+srs_configuration_s& positioning_info_resp_ies_o::value_c::srs_configuration()
 {
-  assert_choice_type(types::srs_cfg, type_, "Value");
-  return c.get<srs_cfg_s>();
+  assert_choice_type(types::srs_configuration, type_, "Value");
+  return c.get<srs_configuration_s>();
 }
 fixed_bitstring<64, false, true>& positioning_info_resp_ies_o::value_c::sfn_initisation_time()
 {
@@ -25341,10 +25341,10 @@ const uint64_t& positioning_info_resp_ies_o::value_c::gnb_du_ue_f1ap_id() const
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-const srs_cfg_s& positioning_info_resp_ies_o::value_c::srs_cfg() const
+const srs_configuration_s& positioning_info_resp_ies_o::value_c::srs_configuration() const
 {
-  assert_choice_type(types::srs_cfg, type_, "Value");
-  return c.get<srs_cfg_s>();
+  assert_choice_type(types::srs_configuration, type_, "Value");
+  return c.get<srs_configuration_s>();
 }
 const fixed_bitstring<64, false, true>& positioning_info_resp_ies_o::value_c::sfn_initisation_time() const
 {
@@ -25371,9 +25371,9 @@ void positioning_info_resp_ies_o::value_c::to_json(json_writer& j) const
     case types::gnb_du_ue_f1ap_id:
       j.write_int("INTEGER (0..4294967295)", c.get<uint64_t>());
       break;
-    case types::srs_cfg:
-      j.write_fieldname("SRSConfig");
-      c.get<srs_cfg_s>().to_json(j);
+    case types::srs_configuration:
+      j.write_fieldname("SRSConfiguration");
+      c.get<srs_configuration_s>().to_json(j);
       break;
     case types::sfn_initisation_time:
       j.write_str("BIT STRING", c.get<fixed_bitstring<64, false, true>>().to_string());
@@ -25400,8 +25400,8 @@ SRSASN_CODE positioning_info_resp_ies_o::value_c::pack(bit_ref& bref) const
     case types::gnb_du_ue_f1ap_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::srs_cfg:
-      HANDLE_CODE(c.get<srs_cfg_s>().pack(bref));
+    case types::srs_configuration:
+      HANDLE_CODE(c.get<srs_configuration_s>().pack(bref));
       break;
     case types::sfn_initisation_time:
       HANDLE_CODE((c.get<fixed_bitstring<64, false, true>>().pack(bref)));
@@ -25428,8 +25428,8 @@ SRSASN_CODE positioning_info_resp_ies_o::value_c::unpack(cbit_ref& bref)
     case types::gnb_du_ue_f1ap_id:
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::srs_cfg:
-      HANDLE_CODE(c.get<srs_cfg_s>().unpack(bref));
+    case types::srs_configuration:
+      HANDLE_CODE(c.get<srs_configuration_s>().unpack(bref));
       break;
     case types::sfn_initisation_time:
       HANDLE_CODE((c.get<fixed_bitstring<64, false, true>>().unpack(bref)));
@@ -25451,7 +25451,7 @@ const char* positioning_info_resp_ies_o::value_c::types_opts::to_string() const
 {
   static const char* names[] = {"INTEGER (0..4294967295)",
                                 "INTEGER (0..4294967295)",
-                                "SRSConfig",
+                                "SRSConfiguration",
                                 "BIT STRING",
                                 "CriticalityDiagnostics",
                                 "OCTET STRING"};
@@ -25501,7 +25501,7 @@ positioning_info_upd_ies_o::value_c positioning_info_upd_ies_o::get_value(const 
       ret.set(value_c::types::gnb_du_ue_f1ap_id);
       break;
     case 407:
-      ret.set(value_c::types::srs_cfg);
+      ret.set(value_c::types::srs_configuration);
       break;
     case 419:
       ret.set(value_c::types::sfn_initisation_time);
@@ -25539,8 +25539,8 @@ void positioning_info_upd_ies_o::value_c::set(types::options e)
     case types::gnb_du_ue_f1ap_id:
       c = uint64_t{};
       break;
-    case types::srs_cfg:
-      c = srs_cfg_s{};
+    case types::srs_configuration:
+      c = srs_configuration_s{};
       break;
     case types::sfn_initisation_time:
       c = fixed_bitstring<64, false, true>{};
@@ -25561,10 +25561,10 @@ uint64_t& positioning_info_upd_ies_o::value_c::gnb_du_ue_f1ap_id()
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-srs_cfg_s& positioning_info_upd_ies_o::value_c::srs_cfg()
+srs_configuration_s& positioning_info_upd_ies_o::value_c::srs_configuration()
 {
-  assert_choice_type(types::srs_cfg, type_, "Value");
-  return c.get<srs_cfg_s>();
+  assert_choice_type(types::srs_configuration, type_, "Value");
+  return c.get<srs_configuration_s>();
 }
 fixed_bitstring<64, false, true>& positioning_info_upd_ies_o::value_c::sfn_initisation_time()
 {
@@ -25581,10 +25581,10 @@ const uint64_t& positioning_info_upd_ies_o::value_c::gnb_du_ue_f1ap_id() const
   assert_choice_type(types::gnb_du_ue_f1ap_id, type_, "Value");
   return c.get<uint64_t>();
 }
-const srs_cfg_s& positioning_info_upd_ies_o::value_c::srs_cfg() const
+const srs_configuration_s& positioning_info_upd_ies_o::value_c::srs_configuration() const
 {
-  assert_choice_type(types::srs_cfg, type_, "Value");
-  return c.get<srs_cfg_s>();
+  assert_choice_type(types::srs_configuration, type_, "Value");
+  return c.get<srs_configuration_s>();
 }
 const fixed_bitstring<64, false, true>& positioning_info_upd_ies_o::value_c::sfn_initisation_time() const
 {
@@ -25601,9 +25601,9 @@ void positioning_info_upd_ies_o::value_c::to_json(json_writer& j) const
     case types::gnb_du_ue_f1ap_id:
       j.write_int("INTEGER (0..4294967295)", c.get<uint64_t>());
       break;
-    case types::srs_cfg:
-      j.write_fieldname("SRSConfig");
-      c.get<srs_cfg_s>().to_json(j);
+    case types::srs_configuration:
+      j.write_fieldname("SRSConfiguration");
+      c.get<srs_configuration_s>().to_json(j);
       break;
     case types::sfn_initisation_time:
       j.write_str("BIT STRING", c.get<fixed_bitstring<64, false, true>>().to_string());
@@ -25623,8 +25623,8 @@ SRSASN_CODE positioning_info_upd_ies_o::value_c::pack(bit_ref& bref) const
     case types::gnb_du_ue_f1ap_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint64_t>(), (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::srs_cfg:
-      HANDLE_CODE(c.get<srs_cfg_s>().pack(bref));
+    case types::srs_configuration:
+      HANDLE_CODE(c.get<srs_configuration_s>().pack(bref));
       break;
     case types::sfn_initisation_time:
       HANDLE_CODE((c.get<fixed_bitstring<64, false, true>>().pack(bref)));
@@ -25645,8 +25645,8 @@ SRSASN_CODE positioning_info_upd_ies_o::value_c::unpack(cbit_ref& bref)
     case types::gnb_du_ue_f1ap_id:
       HANDLE_CODE(unpack_integer(c.get<uint64_t>(), bref, (uint64_t)0u, (uint64_t)4294967295u, false, true));
       break;
-    case types::srs_cfg:
-      HANDLE_CODE(c.get<srs_cfg_s>().unpack(bref));
+    case types::srs_configuration:
+      HANDLE_CODE(c.get<srs_configuration_s>().unpack(bref));
       break;
     case types::sfn_initisation_time:
       HANDLE_CODE((c.get<fixed_bitstring<64, false, true>>().unpack(bref)));
@@ -25660,7 +25660,7 @@ SRSASN_CODE positioning_info_upd_ies_o::value_c::unpack(cbit_ref& bref)
 
 const char* positioning_info_upd_ies_o::value_c::types_opts::to_string() const
 {
-  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "SRSConfig", "BIT STRING"};
+  static const char* names[] = {"INTEGER (0..4294967295)", "INTEGER (0..4294967295)", "SRSConfiguration", "BIT STRING"};
   return convert_enum_idx(names, 4, value, "positioning_info_upd_ies_o::value_c::types");
 }
 
@@ -26580,7 +26580,7 @@ positioning_meas_request_ies_o::value_c positioning_meas_request_ies_o::get_valu
       ret.set(value_c::types::sfn_initisation_time);
       break;
     case 407:
-      ret.set(value_c::types::srs_cfg);
+      ret.set(value_c::types::srs_configuration);
       break;
     case 423:
       ret.set(value_c::types::meas_beam_info_request);
@@ -26683,8 +26683,8 @@ void positioning_meas_request_ies_o::value_c::set(types::options e)
     case types::sfn_initisation_time:
       c = fixed_bitstring<64, false, true>{};
       break;
-    case types::srs_cfg:
-      c = srs_cfg_s{};
+    case types::srs_configuration:
+      c = srs_configuration_s{};
       break;
     case types::meas_beam_info_request:
       c = meas_beam_info_request_e{};
@@ -26756,10 +26756,10 @@ fixed_bitstring<64, false, true>& positioning_meas_request_ies_o::value_c::sfn_i
   assert_choice_type(types::sfn_initisation_time, type_, "Value");
   return c.get<fixed_bitstring<64, false, true>>();
 }
-srs_cfg_s& positioning_meas_request_ies_o::value_c::srs_cfg()
+srs_configuration_s& positioning_meas_request_ies_o::value_c::srs_configuration()
 {
-  assert_choice_type(types::srs_cfg, type_, "Value");
-  return c.get<srs_cfg_s>();
+  assert_choice_type(types::srs_configuration, type_, "Value");
+  return c.get<srs_configuration_s>();
 }
 meas_beam_info_request_e& positioning_meas_request_ies_o::value_c::meas_beam_info_request()
 {
@@ -26841,10 +26841,10 @@ const fixed_bitstring<64, false, true>& positioning_meas_request_ies_o::value_c:
   assert_choice_type(types::sfn_initisation_time, type_, "Value");
   return c.get<fixed_bitstring<64, false, true>>();
 }
-const srs_cfg_s& positioning_meas_request_ies_o::value_c::srs_cfg() const
+const srs_configuration_s& positioning_meas_request_ies_o::value_c::srs_configuration() const
 {
-  assert_choice_type(types::srs_cfg, type_, "Value");
-  return c.get<srs_cfg_s>();
+  assert_choice_type(types::srs_configuration, type_, "Value");
+  return c.get<srs_configuration_s>();
 }
 const meas_beam_info_request_e& positioning_meas_request_ies_o::value_c::meas_beam_info_request() const
 {
@@ -26923,9 +26923,9 @@ void positioning_meas_request_ies_o::value_c::to_json(json_writer& j) const
     case types::sfn_initisation_time:
       j.write_str("BIT STRING", c.get<fixed_bitstring<64, false, true>>().to_string());
       break;
-    case types::srs_cfg:
-      j.write_fieldname("SRSConfig");
-      c.get<srs_cfg_s>().to_json(j);
+    case types::srs_configuration:
+      j.write_fieldname("SRSConfiguration");
+      c.get<srs_configuration_s>().to_json(j);
       break;
     case types::meas_beam_info_request:
       j.write_str("MeasurementBeamInfoRequest", "true");
@@ -26985,8 +26985,8 @@ SRSASN_CODE positioning_meas_request_ies_o::value_c::pack(bit_ref& bref) const
     case types::sfn_initisation_time:
       HANDLE_CODE((c.get<fixed_bitstring<64, false, true>>().pack(bref)));
       break;
-    case types::srs_cfg:
-      HANDLE_CODE(c.get<srs_cfg_s>().pack(bref));
+    case types::srs_configuration:
+      HANDLE_CODE(c.get<srs_configuration_s>().pack(bref));
       break;
     case types::meas_beam_info_request:
       HANDLE_CODE(c.get<meas_beam_info_request_e>().pack(bref));
@@ -27046,8 +27046,8 @@ SRSASN_CODE positioning_meas_request_ies_o::value_c::unpack(cbit_ref& bref)
     case types::sfn_initisation_time:
       HANDLE_CODE((c.get<fixed_bitstring<64, false, true>>().unpack(bref)));
       break;
-    case types::srs_cfg:
-      HANDLE_CODE(c.get<srs_cfg_s>().unpack(bref));
+    case types::srs_configuration:
+      HANDLE_CODE(c.get<srs_configuration_s>().unpack(bref));
       break;
     case types::meas_beam_info_request:
       HANDLE_CODE(c.get<meas_beam_info_request_e>().unpack(bref));
@@ -27090,7 +27090,7 @@ const char* positioning_meas_request_ies_o::value_c::types_opts::to_string() con
                                 "MeasurementPeriodicity",
                                 "PosMeasurementQuantities",
                                 "BIT STRING",
-                                "SRSConfig",
+                                "SRSConfiguration",
                                 "MeasurementBeamInfoRequest",
                                 "INTEGER (0..1023)",
                                 "INTEGER (0..79)",
@@ -27397,7 +27397,7 @@ positioning_meas_upd_ies_o::value_c positioning_meas_upd_ies_o::get_value(const 
       ret.set(value_c::types::ran_meas_id);
       break;
     case 407:
-      ret.set(value_c::types::srs_cfg);
+      ret.set(value_c::types::srs_configuration);
       break;
     case 553:
       ret.set(value_c::types::trp_meas_upd_list);
@@ -27450,8 +27450,8 @@ void positioning_meas_upd_ies_o::value_c::set(types::options e)
     case types::ran_meas_id:
       c = uint32_t{};
       break;
-    case types::srs_cfg:
-      c = srs_cfg_s{};
+    case types::srs_configuration:
+      c = srs_configuration_s{};
       break;
     case types::trp_meas_upd_list:
       c = trp_meas_upd_list_l{};
@@ -27483,10 +27483,10 @@ uint32_t& positioning_meas_upd_ies_o::value_c::ran_meas_id()
   assert_choice_type(types::ran_meas_id, type_, "Value");
   return c.get<uint32_t>();
 }
-srs_cfg_s& positioning_meas_upd_ies_o::value_c::srs_cfg()
+srs_configuration_s& positioning_meas_upd_ies_o::value_c::srs_configuration()
 {
-  assert_choice_type(types::srs_cfg, type_, "Value");
-  return c.get<srs_cfg_s>();
+  assert_choice_type(types::srs_configuration, type_, "Value");
+  return c.get<srs_configuration_s>();
 }
 trp_meas_upd_list_l& positioning_meas_upd_ies_o::value_c::trp_meas_upd_list()
 {
@@ -27518,10 +27518,10 @@ const uint32_t& positioning_meas_upd_ies_o::value_c::ran_meas_id() const
   assert_choice_type(types::ran_meas_id, type_, "Value");
   return c.get<uint32_t>();
 }
-const srs_cfg_s& positioning_meas_upd_ies_o::value_c::srs_cfg() const
+const srs_configuration_s& positioning_meas_upd_ies_o::value_c::srs_configuration() const
 {
-  assert_choice_type(types::srs_cfg, type_, "Value");
-  return c.get<srs_cfg_s>();
+  assert_choice_type(types::srs_configuration, type_, "Value");
+  return c.get<srs_configuration_s>();
 }
 const trp_meas_upd_list_l& positioning_meas_upd_ies_o::value_c::trp_meas_upd_list() const
 {
@@ -27551,9 +27551,9 @@ void positioning_meas_upd_ies_o::value_c::to_json(json_writer& j) const
     case types::ran_meas_id:
       j.write_int("INTEGER (1..65536,...)", c.get<uint32_t>());
       break;
-    case types::srs_cfg:
-      j.write_fieldname("SRSConfig");
-      c.get<srs_cfg_s>().to_json(j);
+    case types::srs_configuration:
+      j.write_fieldname("SRSConfiguration");
+      c.get<srs_configuration_s>().to_json(j);
       break;
     case types::trp_meas_upd_list:
       j.start_array("TRP-MeasurementUpdateList");
@@ -27586,8 +27586,8 @@ SRSASN_CODE positioning_meas_upd_ies_o::value_c::pack(bit_ref& bref) const
     case types::ran_meas_id:
       HANDLE_CODE(pack_integer(bref, c.get<uint32_t>(), (uint32_t)1u, (uint32_t)65536u, true, true));
       break;
-    case types::srs_cfg:
-      HANDLE_CODE(c.get<srs_cfg_s>().pack(bref));
+    case types::srs_configuration:
+      HANDLE_CODE(c.get<srs_configuration_s>().pack(bref));
       break;
     case types::trp_meas_upd_list:
       HANDLE_CODE(pack_dyn_seq_of(bref, c.get<trp_meas_upd_list_l>(), 1, 64, true));
@@ -27617,8 +27617,8 @@ SRSASN_CODE positioning_meas_upd_ies_o::value_c::unpack(cbit_ref& bref)
     case types::ran_meas_id:
       HANDLE_CODE(unpack_integer(c.get<uint32_t>(), bref, (uint32_t)1u, (uint32_t)65536u, true, true));
       break;
-    case types::srs_cfg:
-      HANDLE_CODE(c.get<srs_cfg_s>().unpack(bref));
+    case types::srs_configuration:
+      HANDLE_CODE(c.get<srs_configuration_s>().unpack(bref));
       break;
     case types::trp_meas_upd_list:
       HANDLE_CODE(unpack_dyn_seq_of(c.get<trp_meas_upd_list_l>(), bref, 1, 64, true));
@@ -27641,7 +27641,7 @@ const char* positioning_meas_upd_ies_o::value_c::types_opts::to_string() const
   static const char* names[] = {"INTEGER (0..255,...)",
                                 "INTEGER (1..65536,...)",
                                 "INTEGER (1..65536,...)",
-                                "SRSConfig",
+                                "SRSConfiguration",
                                 "TRP-MeasurementUpdateList",
                                 "BIT STRING",
                                 "MeasurementTimeOccasion"};
@@ -39231,7 +39231,7 @@ template struct asn1::protocol_ie_field_s<positioning_info_resp_ies_o>;
 SRSASN_CODE positioning_info_resp_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
-  nof_ies += srs_cfg_present ? 1 : 0;
+  nof_ies += srs_configuration_present ? 1 : 0;
   nof_ies += sfn_initisation_time_present ? 1 : 0;
   nof_ies += crit_diagnostics_present ? 1 : 0;
   nof_ies += srs_pos_rrc_inactive_cfg_present ? 1 : 0;
@@ -39249,11 +39249,11 @@ SRSASN_CODE positioning_info_resp_ies_container::pack(bit_ref& bref) const
     varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(pack_integer(bref, gnb_du_ue_f1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
   }
-  if (srs_cfg_present) {
+  if (srs_configuration_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)407, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(srs_cfg.pack(bref));
+    HANDLE_CODE(srs_configuration.pack(bref));
   }
   if (sfn_initisation_time_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)419, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -39303,9 +39303,9 @@ SRSASN_CODE positioning_info_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 407: {
-        srs_cfg_present = true;
+        srs_configuration_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(srs_cfg.unpack(bref));
+        HANDLE_CODE(srs_configuration.unpack(bref));
         break;
       }
       case 419: {
@@ -39347,10 +39347,10 @@ void positioning_info_resp_ies_container::to_json(json_writer& j) const
   j.write_int("id", 41);
   j.write_str("criticality", "reject");
   j.write_int("Value", gnb_du_ue_f1ap_id);
-  if (srs_cfg_present) {
+  if (srs_configuration_present) {
     j.write_int("id", 407);
     j.write_str("criticality", "ignore");
-    srs_cfg.to_json(j);
+    srs_configuration.to_json(j);
   }
   if (sfn_initisation_time_present) {
     j.write_int("id", 419);
@@ -39375,7 +39375,7 @@ template struct asn1::protocol_ie_field_s<positioning_info_upd_ies_o>;
 SRSASN_CODE positioning_info_upd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 2;
-  nof_ies += srs_cfg_present ? 1 : 0;
+  nof_ies += srs_configuration_present ? 1 : 0;
   nof_ies += sfn_initisation_time_present ? 1 : 0;
   pack_length(bref, nof_ies, 0u, 65535u, true);
 
@@ -39391,11 +39391,11 @@ SRSASN_CODE positioning_info_upd_ies_container::pack(bit_ref& bref) const
     varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(pack_integer(bref, gnb_du_ue_f1ap_id, (uint64_t)0u, (uint64_t)4294967295u, false, true));
   }
-  if (srs_cfg_present) {
+  if (srs_configuration_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)407, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(srs_cfg.pack(bref));
+    HANDLE_CODE(srs_configuration.pack(bref));
   }
   if (sfn_initisation_time_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)419, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -39433,9 +39433,9 @@ SRSASN_CODE positioning_info_upd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 407: {
-        srs_cfg_present = true;
+        srs_configuration_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(srs_cfg.unpack(bref));
+        HANDLE_CODE(srs_configuration.unpack(bref));
         break;
       }
       case 419: {
@@ -39465,10 +39465,10 @@ void positioning_info_upd_ies_container::to_json(json_writer& j) const
   j.write_int("id", 41);
   j.write_str("criticality", "reject");
   j.write_int("Value", gnb_du_ue_f1ap_id);
-  if (srs_cfg_present) {
+  if (srs_configuration_present) {
     j.write_int("id", 407);
     j.write_str("criticality", "ignore");
-    srs_cfg.to_json(j);
+    srs_configuration.to_json(j);
   }
   if (sfn_initisation_time_present) {
     j.write_int("id", 419);
@@ -39900,7 +39900,7 @@ SRSASN_CODE positioning_meas_request_ies_container::pack(bit_ref& bref) const
   uint32_t nof_ies = 6;
   nof_ies += pos_meas_periodicity_present ? 1 : 0;
   nof_ies += sfn_initisation_time_present ? 1 : 0;
-  nof_ies += srs_cfg_present ? 1 : 0;
+  nof_ies += srs_configuration_present ? 1 : 0;
   nof_ies += meas_beam_info_request_present ? 1 : 0;
   nof_ies += sys_frame_num_present ? 1 : 0;
   nof_ies += slot_num_present ? 1 : 0;
@@ -39959,11 +39959,11 @@ SRSASN_CODE positioning_meas_request_ies_container::pack(bit_ref& bref) const
     varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(sfn_initisation_time.pack(bref));
   }
-  if (srs_cfg_present) {
+  if (srs_configuration_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)407, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(srs_cfg.pack(bref));
+    HANDLE_CODE(srs_configuration.pack(bref));
   }
   if (meas_beam_info_request_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)423, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -40079,9 +40079,9 @@ SRSASN_CODE positioning_meas_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 407: {
-        srs_cfg_present = true;
+        srs_configuration_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(srs_cfg.unpack(bref));
+        HANDLE_CODE(srs_configuration.unpack(bref));
         break;
       }
       case 423: {
@@ -40183,10 +40183,10 @@ void positioning_meas_request_ies_container::to_json(json_writer& j) const
     j.write_str("criticality", "ignore");
     j.write_str("Value", sfn_initisation_time.to_string());
   }
-  if (srs_cfg_present) {
+  if (srs_configuration_present) {
     j.write_int("id", 407);
     j.write_str("criticality", "ignore");
-    srs_cfg.to_json(j);
+    srs_configuration.to_json(j);
   }
   if (meas_beam_info_request_present) {
     j.write_int("id", 423);
@@ -40363,7 +40363,7 @@ template struct asn1::protocol_ie_field_s<positioning_meas_upd_ies_o>;
 SRSASN_CODE positioning_meas_upd_ies_container::pack(bit_ref& bref) const
 {
   uint32_t nof_ies = 3;
-  nof_ies += srs_cfg_present ? 1 : 0;
+  nof_ies += srs_configuration_present ? 1 : 0;
   nof_ies += trp_meas_upd_list_present ? 1 : 0;
   nof_ies += meas_characteristics_request_ind_present ? 1 : 0;
   nof_ies += meas_time_occasion_present ? 1 : 0;
@@ -40387,11 +40387,11 @@ SRSASN_CODE positioning_meas_upd_ies_container::pack(bit_ref& bref) const
     varlength_field_pack_guard varlen_scope(bref, true);
     HANDLE_CODE(pack_integer(bref, ran_meas_id, (uint32_t)1u, (uint32_t)65536u, true, true));
   }
-  if (srs_cfg_present) {
+  if (srs_configuration_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)407, (uint32_t)0u, (uint32_t)65535u, false, true));
     HANDLE_CODE(crit_e{crit_e::ignore}.pack(bref));
     varlength_field_pack_guard varlen_scope(bref, true);
-    HANDLE_CODE(srs_cfg.pack(bref));
+    HANDLE_CODE(srs_configuration.pack(bref));
   }
   if (trp_meas_upd_list_present) {
     HANDLE_CODE(pack_integer(bref, (uint32_t)553, (uint32_t)0u, (uint32_t)65535u, false, true));
@@ -40447,9 +40447,9 @@ SRSASN_CODE positioning_meas_upd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       case 407: {
-        srs_cfg_present = true;
+        srs_configuration_present = true;
         varlength_field_unpack_guard varlen_scope(bref, true);
-        HANDLE_CODE(srs_cfg.unpack(bref));
+        HANDLE_CODE(srs_configuration.unpack(bref));
         break;
       }
       case 553: {
@@ -40494,10 +40494,10 @@ void positioning_meas_upd_ies_container::to_json(json_writer& j) const
   j.write_int("id", 411);
   j.write_str("criticality", "reject");
   j.write_int("Value", ran_meas_id);
-  if (srs_cfg_present) {
+  if (srs_configuration_present) {
     j.write_int("id", 407);
     j.write_str("criticality", "ignore");
-    srs_cfg.to_json(j);
+    srs_configuration.to_json(j);
   }
   if (trp_meas_upd_list_present) {
     j.write_int("id", 553);
