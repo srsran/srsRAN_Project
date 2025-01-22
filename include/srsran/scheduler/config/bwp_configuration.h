@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/bwp/bwp_configuration.h"
 #include "srsran/ran/pcch/pcch_configuration.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/prach/rach_config_common.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
-#include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
+#include "srsran/ran/scs_specific_carrier.h"
 #include "srsran/scheduler/config/dmrs.h"
 #include "srsran/scheduler/config/pxsch_time_domain_resource.h"
 #include "srsran/scheduler/result/vrb_alloc.h"
@@ -48,25 +48,6 @@ constexpr inline bwp_id_t to_bwp_id(std::underlying_type_t<bwp_id_t> value)
 {
   return static_cast<bwp_id_t>(value);
 }
-
-/// Generic parameters of a bandwidth part as defined in TS 38.211, clause 4.5 and TS 38.213, clause 12.
-/// \remark See TS 38.331, Bandwidth-Part (BWP).
-struct bwp_configuration {
-  cyclic_prefix      cp;
-  subcarrier_spacing scs;
-  /// Common RBs where the BWP is located. CRB=0 overlaps with pointA.
-  crb_interval crbs;
-
-  bool operator==(const bwp_configuration& other) const
-  {
-    return std::tie(cp, scs, crbs) == std::tie(other.cp, other.scs, other.crbs);
-  }
-
-  bool operator<(const bwp_configuration& other) const
-  {
-    return std::tie(cp, scs, crbs) < std::tie(other.cp, other.scs, other.crbs);
-  }
-};
 
 struct pdsch_config_common {
   /// PDSCH time domain resource allocations. Size: (0..maxNrofDL-Allocations=16).
@@ -116,21 +97,6 @@ struct bwp_uplink_common {
   std::optional<rach_config_common>  rach_cfg_common;
   std::optional<pusch_config_common> pusch_cfg_common;
   std::optional<pucch_config_common> pucch_cfg_common;
-};
-
-/// \brief It provides parameters determining the location and width of the actual carrier.
-/// \remark See TS 38.331, "SCS-SpecificCarrier".
-struct scs_specific_carrier {
-  /// Offset between Point A (lowest subcarrier of common RB 0) and the lowest usable subcarrier in this carrier in
-  /// number of PRBs. Values: (0..2199).
-  unsigned           offset_to_carrier;
-  subcarrier_spacing scs;
-  /// Width of this carrier in number of PRBs. Values: (0..MAX_NOF_PRBS).
-  unsigned carrier_bandwidth;
-  /// Indicates the downlink Tx Direct Current location for the carrier. A value in the range 0..3299 indicates the
-  /// subcarrier index within the carrier. The values in the value range 3301..4095 are reserved and ignored by the UE.
-  /// If this field is absent, the UE assumes the default value of 3300 (i.e. "Outside the carrier").
-  std::optional<unsigned> tx_direct_current_location;
 };
 
 /// \brief Used to indicate a frequency band
