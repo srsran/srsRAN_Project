@@ -85,7 +85,7 @@ public:
                                     std::unique_ptr<pdsch_pdu_validator>                pdsch_,
                                     std::unique_ptr<nzp_csi_rs_configuration_validator> csi_,
                                     std::unique_ptr<prs_generator_validator>            prs_) :
-    ssb(std::move(ssb_)), pdcch(std::move(pdcch_)), pdsch(std::move(pdsch_)), csi(std::move(csi_))
+    ssb(std::move(ssb_)), pdcch(std::move(pdcch_)), pdsch(std::move(pdsch_)), csi(std::move(csi_)), prs(std::move(prs_))
   {
     srsran_assert(ssb, "Invalid SSB processor validator.");
     srsran_assert(pdcch, "Invalid PDCCH processor validator.");
