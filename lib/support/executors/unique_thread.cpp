@@ -34,7 +34,7 @@ static bool thread_set_param(pthread_t t, os_thread_realtime_priority prio)
 static bool thread_set_affinity(pthread_t t, const os_sched_affinity_bitmask& bitmap, const std::string& name)
 {
   auto invalid_ids = bitmap.subtract(os_sched_affinity_bitmask::available_cpus());
-  if (invalid_ids.size() > 0) {
+  if (!invalid_ids.empty()) {
     fmt::print("Warning: The CPU affinity of thread \"{}\" contains the following invalid CPU ids: {}\n",
                name,
                span<const size_t>(invalid_ids));
@@ -82,7 +82,8 @@ static void print_thread_priority(pthread_t t, const char* tname, std::thread::i
   struct sched_param param;
   int                policy;
   const char*        p;
-  int                s, j;
+  int                s;
+  int                j;
 
   s = pthread_getaffinity_np(t, sizeof(::cpu_set_t), &cpuset);
   if (s != 0) {
@@ -191,7 +192,7 @@ const char* srsran::this_thread_name()
 
 void srsran::print_this_thread_priority()
 {
-  return print_thread_priority(pthread_self(), this_thread_name(), std::this_thread::get_id());
+  print_thread_priority(pthread_self(), this_thread_name(), std::this_thread::get_id());
 }
 
 void unique_thread::print_priority()

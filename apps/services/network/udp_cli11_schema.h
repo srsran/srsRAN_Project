@@ -23,7 +23,7 @@ struct udp_appconfig {
   float pool_threshold = 0.9;
   /// Differentiated Services Code Point value.
   std::optional<unsigned> dscp;
-  // External address advertised by the UDP-GW.
+  /// External address advertised by the UDP-GW.
   std::string ext_addr = "auto";
 };
 

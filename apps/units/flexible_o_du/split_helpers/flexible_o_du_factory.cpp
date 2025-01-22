@@ -96,7 +96,8 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   std::for_each(odu_hi_unit.metrics.begin(), odu_hi_unit.metrics.end(), [&](auto& e) {
     o_du.metrics.emplace_back(std::move(e));
   });
-  o_du.commands = std::move(odu_hi_unit.commands);
+  o_du.commands        = std::move(odu_hi_unit.commands);
+  o_du.remote_commands = std::move(odu_hi_unit.remote_commands);
 
   auto odu_instance = make_o_du(std::move(odu_hi_unit.o_du_hi), std::move(odu_lo_unit.o_du_lo));
   report_error_if_not(odu_instance, "Invalid Distributed Unit");

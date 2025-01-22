@@ -12,6 +12,7 @@
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "du_high/du_high_commands.h"
 #include "du_high/du_high_config_translators.h"
+#include "du_high/du_high_remote_commands.h"
 #include "du_high/metrics/du_high_rlc_metrics.h"
 #include "du_high/metrics/du_high_rlc_metrics_consumers.h"
 #include "du_high/metrics/du_high_rlc_metrics_producer.h"
@@ -20,6 +21,7 @@
 #include "du_high/metrics/du_high_scheduler_cell_metrics_producer.h"
 #include "e2/o_du_high_e2_config_translators.h"
 #include "o_du_high_unit_config.h"
+#include "srsran/du/du_high/du_high.h"
 #include "srsran/du/du_high/du_high_configuration.h"
 #include "srsran/du/du_high/o_du_high_config.h"
 #include "srsran/du/du_high/o_du_high_factory.h"
@@ -119,7 +121,7 @@ build_scheduler_du_metrics(std::vector<app_services::metrics_config>&           
   sched_metrics_cfg.producers.push_back(std::move(sched_cell_metrics_gen));
 
   const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
-  // Create the consumer for STDOUT. Also create the command for toogle the metrics.
+  // Create the consumer for STDOUT. Also create the command for toggle the metrics.
   auto metrics_stdout =
       std::make_unique<scheduler_cell_metrics_consumer_stdout>(du_hi_cfg.metrics.autostart_stdout_metrics);
   unit_commands.push_back(std::make_unique<toggle_stdout_metrics_app_command>(*metrics_stdout));
@@ -268,6 +270,10 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
   // Create O-DU high.
   odu_unit.o_du_hi = srs_du::make_o_du_high(o_du_high_cfg, std::move(dependencies.o_du_hi_dependencies));
   report_error_if_not(odu_unit.o_du_hi, "Invalid O-DU high");
+
+  // Create remote commands.
+  odu_unit.remote_commands.push_back(
+      std::make_unique<ssb_modify_remote_command>(odu_unit.o_du_hi->get_du_high().get_du_configurator()));
 
   return odu_unit;
 }

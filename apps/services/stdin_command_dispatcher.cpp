@@ -31,7 +31,7 @@ public:
   std::string_view get_description() const override { return ":                                    quit application"; }
 
   // See interface for documentation.
-  void execute(span<const std::string> args) override { ::raise(SIGTERM); }
+  void execute(span<const std::string> args) override { std::raise(SIGTERM); }
 };
 
 /// Command that sleeps the application.

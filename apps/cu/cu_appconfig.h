@@ -13,15 +13,16 @@
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/f1u/f1u_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig.h"
+#include "apps/services/remote_control/remote_control_appconfig.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
 #include <string>
 
 namespace srsran {
 namespace srs_cu {
 
-/// F1AP configuration
+/// F1AP configuration.
 struct cu_f1ap_appconfig {
-  /// F1-C bind address
+  /// F1-C bind address.
   std::string bind_addr = "127.0.10.1";
 };
 
@@ -35,12 +36,14 @@ struct cu_appconfig {
   logger_appconfig log_cfg;
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
-  /// F1-U
+  /// F1-U configuration.
   f1u_sockets_appconfig f1u_cfg;
-  /// F1AP
+  /// F1AP configuration.
   srs_cu::cu_f1ap_appconfig f1ap_cfg;
   /// Buffer pool configuration.
   buffer_pool_appconfig buffer_pool_config;
+  /// Remote control configuration.
+  remote_control_appconfig remote_control_config;
 };
 
 } // namespace srsran

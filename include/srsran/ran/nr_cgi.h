@@ -15,7 +15,7 @@
 
 namespace srsran {
 
-/// \brief The NR Cell Global Identity (NR-CGI)
+/// \brief The NR Cell Global Identity (NR-CGI).
 struct nr_cell_global_id_t {
   nr_cell_global_id_t() = default;
   nr_cell_global_id_t(plmn_identity plmn_id_, nr_cell_identity nci_) : plmn_id(plmn_id_), nci(nci_) {}

@@ -15,6 +15,7 @@
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
+#include "apps/services/remote_control/remote_server.h"
 #include "apps/services/stdin_command_dispatcher.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
@@ -472,6 +473,9 @@ int main(int argc, char** argv)
   // Start processing.
   du_inst.get_operation_controller().start();
 
+  auto remote_control_server =
+      app_services::create_remote_server(gnb_cfg.remote_control_config.port, du_inst_and_cmds.remote_commands);
+
   {
     app_services::application_message_banners app_banner(app_name);
 
@@ -479,6 +483,8 @@ int main(int argc, char** argv)
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
   }
+
+  remote_control_server->stop();
 
   // Stop DU activity.
   du_inst.get_operation_controller().stop();

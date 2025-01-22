@@ -15,6 +15,7 @@ add_subdirectory(f1u)
 add_subdirectory(hal)
 add_subdirectory(logger)
 add_subdirectory(network)
+add_subdirectory(remote_control)
 add_subdirectory(worker_manager)
 
 set(SOURCES
@@ -29,4 +30,5 @@ target_link_libraries(srsran_app_services
         srsran_network_app_service
         srsran_hal_app_service
         srsran_logger_app_service
-        srsran_worker_manager_app_service)
+        srsran_worker_manager_app_service
+        srsran_remote_control_app_service)

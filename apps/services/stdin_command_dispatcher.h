@@ -35,7 +35,7 @@ private:
   /// Parses any contents in the STDIN file descriptor.
   void parse_stdin();
 
-  /// Handles the given command;
+  /// Handles the given command.
   void handle_command(const std::string& command);
 
   /// Prints the registered events registered in this console.

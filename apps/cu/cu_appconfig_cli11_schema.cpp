@@ -11,6 +11,7 @@
 #include "cu_appconfig_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_schema.h"
+#include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_cli11_schema.h"
 #include "cu_appconfig.h"
 #include "srsran/support/cli11_utils.h"
@@ -32,6 +33,9 @@ void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfi
 
   // Expert execution section.
   configure_cli11_with_worker_manager_appconfig_schema(app, cu_cfg.expert_execution_cfg);
+
+  // Remote control section.
+  configure_cli11_with_remote_control_appconfig_schema(app, cu_cfg.remote_control_config);
 
   // F1AP section.
   CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-UP parameters")->configurable();

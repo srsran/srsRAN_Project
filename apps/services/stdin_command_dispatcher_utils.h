@@ -22,7 +22,7 @@ namespace app_services {
 template <typename Integer>
 inline expected<Integer, std::string> parse_int(std::string_view value)
 {
-  static_assert(std::is_integral<Integer>::value, "Template type is not an integral");
+  static_assert(std::is_integral_v<Integer>, "Template type is not an integral");
 
   Integer out_value;
   auto [ptr, errorcode] = std::from_chars(value.begin(), value.end(), out_value);
@@ -38,7 +38,7 @@ inline expected<Integer, std::string> parse_int(std::string_view value)
 template <typename Integer>
 inline expected<Integer, std::string> parse_unsigned_hex(std::string_view value)
 {
-  static_assert(std::is_integral<Integer>::value, "Template type is not an integral");
+  static_assert(std::is_integral_v<Integer>, "Template type is not an integral");
 
   // Skip '0x' or '0X' as std::from_chars does not manage it.
   auto start_pos = value.find('x');

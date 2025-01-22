@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include <CLI/CLI11.hpp>
+#include "CLI/CLI11.hpp"
 
 namespace srsran {
 
 struct buffer_pool_appconfig;
 
-/// Configures the given CLI11 application with the logger application configuration schema.
+/// Configures the given CLI11 application with the buffer pool application configuration schema.
 void configure_cli11_with_buffer_pool_appconfig_schema(CLI::App& app, buffer_pool_appconfig& config);
 
 } // namespace srsran

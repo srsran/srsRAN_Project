@@ -234,4 +234,5 @@ public:
     fmt::print("CFO set to {}Hz for sector {}.\n", cfo.value(), sector_id.value());
   }
 };
+
 } // namespace srsran
