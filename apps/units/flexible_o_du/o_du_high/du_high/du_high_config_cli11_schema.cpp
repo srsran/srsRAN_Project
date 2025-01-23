@@ -254,13 +254,15 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
           pdsch_params.mcs_table = pdsch_mcs_table::qam64;
         } else if (value == "qam256") {
           pdsch_params.mcs_table = pdsch_mcs_table::qam256;
+        } else if (value == "qam64lowse") {
+          pdsch_params.mcs_table = pdsch_mcs_table::qam64LowSe;
         } else {
-          report_fatal_error("PDSCH mcs_table={} not in {{qam64,qam256}}.", value);
+          report_fatal_error("PDSCH mcs_table={} not in {{qam64,qam256,qam64lowse}}.", value);
         }
       },
       "MCS table to use PDSCH")
       ->default_str("qam256")
-      ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
+      ->check(CLI::IsMember({"qam64", "qam256", "qam64lowse"}, CLI::ignore_case));
   add_option(app, "--min_rb_size", pdsch_params.min_rb_size, "Minimum RB size for UE PDSCH resource allocation")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
@@ -691,13 +693,15 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
           pusch_params.mcs_table = pusch_mcs_table::qam64;
         } else if (value == "qam256") {
           pusch_params.mcs_table = pusch_mcs_table::qam256;
+        } else if (value == "qam64lowse") {
+          pusch_params.mcs_table = pusch_mcs_table::qam64LowSe;
         } else {
-          report_fatal_error("PUSCH mcs_table={} not in {{qam64,qam256}}.", value);
+          report_fatal_error("PUSCH mcs_table={} not in {{qam64,qam256,qam64lowse}}.", value);
         }
       },
       "MCS table to use PUSCH")
       ->default_str(pusch_mcs_table_to_string(pusch_params.mcs_table))
-      ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
+      ->check(CLI::IsMember({"qam64", "qam256", "qam64lowse"}, CLI::ignore_case));
   add_option(app,
              "--max_rank",
              pusch_params.max_rank,
