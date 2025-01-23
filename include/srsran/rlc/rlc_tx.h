@@ -185,7 +185,7 @@ public:
 
   /// \brief Method called by RLC bearer whenever its buffer state is updated and the respective result
   /// needs to be forwarded to lower layers.
-  virtual void on_buffer_state_update(rlc_buffer_state bsr) = 0;
+  virtual void on_buffer_state_update(const rlc_buffer_state& bsr) = 0;
 };
 } // namespace srsran
 

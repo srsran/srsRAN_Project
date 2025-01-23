@@ -76,7 +76,7 @@ public:
   void on_max_retx() override { max_retx_count++; }
 
   // rlc_tx_buffer_state_update_notifier interface
-  void on_buffer_state_update(rlc_buffer_state bs) override
+  void on_buffer_state_update(const rlc_buffer_state& bs) override
   {
     this->bsr = bs;
     this->bsr_count++;

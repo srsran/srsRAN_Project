@@ -235,7 +235,7 @@ public:
     }
   }
 
-  void on_buffer_state_update(rlc_buffer_state rlc_bs) override
+  void on_buffer_state_update(const rlc_buffer_state& rlc_bs) override
   {
     srsran_assert(mac != nullptr, "RLC Tx Buffer State notifier is disconnected");
     mac_dl_buffer_state_indication_message bs{};

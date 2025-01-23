@@ -42,7 +42,7 @@ public:
   void                           push_rx_pdus(std::vector<byte_buffer_chain> list_pdus);
 
   // rlc_tx_lower_layer_notifier interface
-  void on_buffer_state_update(rlc_buffer_state bs) final
+  void on_buffer_state_update(const rlc_buffer_state& bs) final
   {
     this->bsr.store(bs.pending_bytes, std::memory_order_relaxed);
   }

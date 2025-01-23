@@ -44,7 +44,7 @@ public:
   void on_max_retx() override {}
 
   // rlc_tx_buffer_state_update_notifier interface
-  void on_buffer_state_update(rlc_buffer_state bs) override {}
+  void on_buffer_state_update(const rlc_buffer_state& bs) override {}
 
   // rlc_rx_am_status_provider interface
   rlc_am_status_pdu& get_status_pdu() override { return status; }
