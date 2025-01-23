@@ -280,3 +280,12 @@ bool srsran::test_helpers::is_valid_f1_reset_ack(const f1ap_message& req, const 
 
   return true;
 }
+
+bool test_helpers::is_valid_positioning_information_response(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome);
+  TRUE_OR_RETURN(msg.pdu.successful_outcome().value.type().value ==
+                 f1ap_elem_procs_o::successful_outcome_c::types_opts::positioning_info_resp);
+  TRUE_OR_RETURN(is_packable(msg));
+  return true;
+}

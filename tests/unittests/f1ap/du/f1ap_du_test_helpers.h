@@ -55,6 +55,7 @@ public:
   f1ap_ue_configuration_request                          next_ue_cfg_req;
   std::optional<f1ap_ue_configuration_response>          last_ue_cfg_response;
   std::optional<std::pair<du_ue_index_t, du_ue_index_t>> last_reestablishment_ue_indexes;
+  du_positioning_info_response                           next_positioning_info_response;
 
   // F1AP procedures.
   std::optional<f1ap_ue_context_creation_request> last_ue_context_creation_req;
@@ -64,6 +65,7 @@ public:
   std::optional<f1ap_ue_delete_request>           last_ue_delete_req;
   std::optional<du_ue_index_t>                    last_ue_cfg_applied;
   std::optional<std::vector<du_ue_index_t>>       last_ues_to_reset;
+  std::optional<du_positioning_info_request>      last_positioning_info_request;
 
   explicit dummy_f1ap_du_configurator(timer_factory& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
@@ -127,7 +129,8 @@ public:
 
   async_task<du_positioning_info_response> request_positioning_info(const du_positioning_info_request& req) override
   {
-    return launch_no_op_task(du_positioning_info_response{});
+    last_positioning_info_request = req;
+    return launch_no_op_task(du_positioning_info_response{next_positioning_info_response});
   }
 
   /// \brief Retrieve task scheduler specific to a given UE.
