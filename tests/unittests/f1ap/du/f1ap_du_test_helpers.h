@@ -15,6 +15,7 @@
 #include "srsran/asn1/f1ap/f1ap_ies.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
+#include "srsran/f1ap/du/f1ap_du_positioning_handler.h"
 #include "srsran/f1ap/f1ap_message.h"
 #include "srsran/f1ap/gateways/f1c_connection_client.h"
 #include "srsran/f1u/du/f1u_rx_sdu_notifier.h"
@@ -29,7 +30,7 @@ namespace srsran::srs_du {
 /// \brief Generate a random gnb_du_ue_f1ap_id
 gnb_du_ue_f1ap_id_t generate_random_gnb_du_ue_f1ap_id();
 
-class dummy_f1ap_du_configurator : public f1ap_du_configurator
+class dummy_f1ap_du_configurator : public f1ap_du_configurator, public f1ap_du_positioning_handler
 {
 public:
   struct dummy_ue_task_sched : public f1ap_ue_task_scheduler {
@@ -120,6 +121,13 @@ public:
   void notify_reestablishment_of_old_ue(du_ue_index_t new_ue_index, du_ue_index_t old_ue_index) override
   {
     last_reestablishment_ue_indexes = std::make_pair(new_ue_index, old_ue_index);
+  }
+
+  f1ap_du_positioning_handler& get_positioning_handler() override { return *this; }
+
+  async_task<du_positioning_info_response> request_positioning_info(const du_positioning_info_request& req) override
+  {
+    return launch_no_op_task(du_positioning_info_response{});
   }
 
   /// \brief Retrieve task scheduler specific to a given UE.

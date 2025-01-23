@@ -10,22 +10,21 @@
 
 #pragma once
 
-#include "srsran/adt/expected.h"
 #include "srsran/f1ap/du/f1ap_du_connection_manager.h"
 #include "srsran/f1ap/du/f1ap_du_ue_config.h"
 #include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
 #include "srsran/f1ap/du/f1c_bearer.h"
 #include "srsran/f1ap/f1ap_message_handler.h"
-#include "srsran/f1u/du/f1u_bearer.h"
 #include "srsran/mac/mac_paging_information_handler.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/rb_id.h"
-#include "srsran/ran/rnti.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {
 namespace srs_du {
+
+class f1ap_du_positioning_handler;
 
 struct f1ap_rrc_delivery_report_msg {
   du_cell_index_t cell_index          = INVALID_DU_CELL_INDEX;
@@ -193,6 +192,9 @@ public:
 
   /// Confirm that the UE applied the pending configuration.
   virtual void on_ue_config_applied(du_ue_index_t ue_index) = 0;
+
+  /// Retrieve handling of positioning information.
+  virtual f1ap_du_positioning_handler& get_positioning_handler() = 0;
 
   /// \brief Retrieve task scheduler specific to a given UE.
   virtual f1ap_ue_task_scheduler& get_ue_handler(du_ue_index_t ue_index) = 0;

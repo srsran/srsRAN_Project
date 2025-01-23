@@ -14,7 +14,8 @@ add_subdirectory(ran_resource_management)
 set(SOURCES
         du_cell_manager.cpp
         du_manager_factory.cpp
-        du_manager_impl.cpp)
+        du_manager_impl.cpp
+        du_positioning_manager_impl.cpp)
 
 add_library(srsran_du_manager STATIC ${SOURCES})
 target_link_libraries(srsran_du_manager

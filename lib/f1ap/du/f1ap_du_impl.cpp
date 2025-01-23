@@ -580,13 +580,13 @@ void f1ap_du_impl::handle_positioning_information_request(const asn1::f1ap::posi
   f1ap_du_ue*         ue                = ues.find(gnb_du_ue_f1ap_id);
 
   if (ue == nullptr) {
-    // UE not found. Respond with failure.
-    du_mng.schedule_async_task(start_positioning_exchange_procedure(msg, du_mng, nullptr));
+    // UE not found.
+    // TODO: Handle
     return;
   }
 
   du_mng.get_ue_handler(ue->context.ue_index)
-      .schedule_async_task(start_positioning_exchange_procedure(msg, du_mng, ue));
+      .schedule_async_task(start_positioning_exchange_procedure(msg, du_mng, *ue));
 }
 
 gnb_cu_ue_f1ap_id_t f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index)

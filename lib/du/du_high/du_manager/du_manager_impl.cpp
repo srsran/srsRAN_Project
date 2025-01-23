@@ -27,6 +27,7 @@ du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   cell_mng(params),
   cell_res_alloc(params.ran.cells, params.mac.sched_cfg, params.ran.srbs, params.ran.qos, params.test_cfg),
   ue_mng(params, cell_res_alloc),
+  positioning_mng(cell_mng, ue_mng),
   main_ctrl_loop(128)
 {
 }

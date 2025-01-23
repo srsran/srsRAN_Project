@@ -18,7 +18,7 @@ using namespace srs_du;
 
 async_task<void> srs_du::start_positioning_exchange_procedure(const asn1::f1ap::positioning_info_request_s& msg,
                                                               f1ap_du_configurator&                         du_mng,
-                                                              f1ap_du_ue*                                   ue)
+                                                              f1ap_du_ue&                                   ue)
 {
   srslog::fetch_basic_logger("DU-F1").error(
       "Positioning Exchange Procedure Failed. Cause: Feature only supported in Enterprise version.");
