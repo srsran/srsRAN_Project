@@ -9,6 +9,9 @@
 .builder version:
   stage: ci
   image: ubuntu:22.04
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
+  retry: 2
   script:
     - |
       hash_multiple() {

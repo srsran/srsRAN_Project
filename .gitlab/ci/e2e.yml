@@ -567,6 +567,7 @@ retina setup:
   stage: ci
   extends:
     - .prepare_test
+  retry: 2
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
       when: always

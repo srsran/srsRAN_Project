@@ -40,6 +40,9 @@ variables:
 
 .load retina variables:
   stage: ci
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
+  retry: 2
   script:
     - cat ${SRSRANDIR}/.gitlab/ci/e2e/.env
   artifacts:
@@ -50,6 +53,7 @@ variables:
   variables: &setup_kube_variables
     KUBECONFIG_VAR_NAME: "RETINA_NAMESPACE_KUBECONFIG"
     KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
+    GIT_LFS_SKIP_SMUDGE: 1
   before_script: &setup_kube_config
     - |
       export FORCE_COLOR=1

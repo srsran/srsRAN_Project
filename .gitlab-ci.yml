@@ -148,6 +148,8 @@ matlab weekly:
 headers:
   image: ubuntu
   stage: static
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
   rules:
     - if: $ON_MR
       exists:
@@ -198,6 +200,7 @@ full-code-format:
     KUBERNETES_MEMORY_REQUEST: 12Gi
     KUBERNETES_MEMORY_LIMIT: 12Gi
     CHECK_PER_FILE_TIMEOUT: 600
+    GIT_LFS_SKIP_SMUDGE: 1
   before_script:
     - |
       echo "
@@ -360,6 +363,8 @@ unit coverage:
       variables:
         coverage_report: summary
       when: always # Even if previous stages/required jobs fail
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
   before_script:
     - PACKAGE_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/coverage/${CI_COMMIT_BRANCH}${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}/coverage_history.tar.gz
     # Download coverage history from the registry
