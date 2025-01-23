@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ostream>
 
 struct nia_test_set {
   const char* name;
@@ -22,3 +23,9 @@ struct nia_test_set {
   const char* message_cstr;
   const char* mact_cstr;
 };
+
+//// Dummy operator to avoid Valgrind warnings.
+inline std::ostream& operator<<(std::ostream& os, const nia_test_set& params)
+{
+  return os;
+}

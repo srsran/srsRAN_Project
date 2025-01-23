@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ostream>
 
 struct nea_test_set {
   const char* name;
@@ -22,3 +23,9 @@ struct nea_test_set {
   const char* plaintext_cstr;
   const char* ciphertext_cstr;
 };
+
+//// Dummy operator to avoid Valgrind warnings.
+inline std::ostream& operator<<(std::ostream& os, const nea_test_set& params)
+{
+  return os;
+}
