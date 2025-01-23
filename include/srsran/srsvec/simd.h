@@ -2381,7 +2381,6 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
 #ifdef __SSE4_1__
   const __m128i bias = _mm_set1_epi32(0x7fff);
   const __m128i one  = _mm_set1_epi32(0x1);
-  const __m128i mask = _mm_set1_epi32(0xffff0000);
 
   __m128i a_i32 = _mm_castps_si128(a);
   __m128i b_i32 = _mm_castps_si128(b);
