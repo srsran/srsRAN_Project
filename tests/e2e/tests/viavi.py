@@ -12,7 +12,7 @@ Launch tests in Viavi
 import logging
 import operator
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Callable, List, Optional
 
 import pytest
@@ -641,18 +641,26 @@ def get_viavi_configuration_from_testname(
     """
     Get Viavi configuration from dict
     """
-    test_declaration = None
     config = load_yaml_config("test_declaration.yml")
+
+    # Try to find the test in the test_declaration by campaing filename and ID!
     for test_config in config:
-        if test_config.test_name == test_name:
+        if (
+            PureWindowsPath(test_config.campaign_filename) == PureWindowsPath(campaign_filename)
+            and test_config.id == test_name
+        ):
             test_declaration = test_config
             break
+    else:
+        logging.warning(
+            "Test: %s - %s is not in test_declaration. No extra pass/fail criteria will be applied.",
+            campaign_filename,
+            test_name,
+        )
+        test_declaration = _ViaviConfiguration(campaign_filename=campaign_filename, test_name=test_name)
 
-    if test_declaration is None:
-        logging.warning("There is no config for the test: %s", test_name)
-        test_declaration = _ViaviConfiguration()
-
-    test_declaration.campaign_filename = campaign_filename
+    # Override the timeout and extra gnb arguments
     test_declaration.test_timeout = timeout
+
     test_declaration.gnb_extra_commands += " " + extra_gnb_arguments
     return test_declaration

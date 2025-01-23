@@ -121,7 +121,7 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
     TESTBED = "viavi"
     MARKERS = "viavi_manual"
 
-    PYARGS = f'--viavi-manual-campaign-filename "{test_definition.campaign_filename}" --viavi-manual-test-name "{test_definition.test_name}" --viavi-manual-test-timeout {timeout} --retina-pod-timeout 900'
+    PYARGS = f'--viavi-manual-campaign-filename "{test_definition.campaign_filename}" --viavi-manual-test-name "{test_definition.id}" --viavi-manual-test-timeout {timeout} --retina-pod-timeout 900'
     if args_definition.gnb_extra:
         PYARGS += f' --viavi-manual-extra-gnb-arguments "{args_definition.gnb_extra}"'
 
