@@ -380,12 +380,12 @@ endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
 
 add_cxx_compiler_flag_if_available("-march=${MARCH}" HAVE_MARCH)
 if (NOT HAVE_MARCH)
-    message(WARNING "The compiler does not support -march=${MARCH}, try setting a different value.")
+    message(SEND_ERROR "The compiler does not support -march=${MARCH}, try setting a different value.")
 endif (NOT HAVE_MARCH)
 
 add_cxx_compiler_flag_if_available("-mtune=${MTUNE}" HAVE_MTUNE)
 if (NOT HAVE_MTUNE)
-    message(WARNING "The compiler does not support -mtune=${MTUNE}, try setting a different value.")
+    message(SEND_ERROR "The compiler does not support -mtune=${MTUNE}, try setting a different value.")
 endif (NOT HAVE_MTUNE)
 
 message(STATUS "ARCH value is ${MARCH}")
