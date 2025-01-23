@@ -46,9 +46,6 @@ private:
   /// Gets the cell index that matches the given NR-CGI from the F1AP DU context.
   expected<unsigned> get_cell_index_from_nr_cgi(nr_cell_global_id_t nr_cgi) const;
 
-  static std::optional<asn1::f1ap::cause_c>
-  validate_drb_to_be_setup_item(const asn1::f1ap::drbs_to_be_setup_item_s& drb_to_setup_item);
-
   /// Returns the name of this procedure.
   static const char* name() { return "UE Context Setup"; }
 

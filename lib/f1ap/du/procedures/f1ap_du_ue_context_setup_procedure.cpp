@@ -29,6 +29,20 @@ static bool requires_ue_ran_config_update(const ue_context_setup_request_s& msg)
          msg->scell_to_be_setup_list_present;
 }
 
+static expected<default_success_t, asn1::f1ap::cause_c>
+validate_drb_to_be_setup_item(const asn1::f1ap::drbs_to_be_setup_item_s& drb_to_be_setup_item)
+{
+  asn1::f1ap::cause_c cause;
+  cause.set_protocol().value = asn1::f1ap::cause_protocol_opts::semantic_error;
+
+  // Check DL PDCP SN length information present.
+  // DL PDCP SN information is mandatory in the IE extension field.
+  if (not drb_to_be_setup_item.ie_exts_present) {
+    return make_unexpected(cause);
+  }
+  return default_success_t{};
+}
+
 f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
     const asn1::f1ap::ue_context_setup_request_s& msg_,
     f1ap_du_ue_manager&                           ue_mng_,
@@ -194,12 +208,13 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
 
   // > Pass DRBs to setup.
   for (const auto& drb : msg->drbs_to_be_setup_list) {
-    std::optional<asn1::f1ap::cause_c> err_cause = validate_drb_to_be_setup_item(drb->drbs_to_be_setup_item());
-    if (not err_cause.has_value()) {
+    expected<default_success_t, asn1::f1ap::cause_c> drb_valid =
+        validate_drb_to_be_setup_item(drb->drbs_to_be_setup_item());
+    if (drb_valid.has_value()) {
       du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_item()));
     } else {
       f1ap_drb_failed_to_setupmod failed_drb = {uint_to_drb_id(drb->drbs_to_be_setup_item().drb_id),
-                                                asn1_to_cause(err_cause.value())};
+                                                asn1_to_cause(drb_valid.error())};
       failed_drbs.push_back(failed_drb);
     }
   }
@@ -309,19 +324,4 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_failure()
   logger.debug("{}: Procedure finished with failure.",
                ue == nullptr ? f1ap_log_prefix{int_to_gnb_cu_ue_f1ap_id(resp->gnb_cu_ue_f1ap_id), name()}
                              : f1ap_log_prefix{ue->context, name()});
-}
-
-std::optional<cause_c>
-f1ap_du_ue_context_setup_procedure::validate_drb_to_be_setup_item(const drbs_to_be_setup_item_s& drb_to_be_setup_item)
-{
-  asn1::f1ap::cause_c cause;
-  cause.set_protocol().value = asn1::f1ap::cause_protocol_opts::semantic_error;
-
-  // Check DL PDCP SN length information present.
-  // DL PDCP SN information is mandatory in the IE extension field.
-  if (not drb_to_be_setup_item.ie_exts_present) {
-    return cause;
-  }
-
-  return std::nullopt;
 }
