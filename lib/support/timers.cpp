@@ -206,7 +206,8 @@ public:
   /// Pending commands to be handled by the backend.
   backend_channel backend_ch;
 
-  frontend_handle(timer_id_t id_, timer_update_signaller& ev_signaller) : frontend_state(id_), backend_ch(ev_signaller)
+  frontend_handle(timer_id_t id_, timer_update_signaller& ev_signaller, std::atomic<unsigned>& cur_time_) :
+    frontend_state(id_), backend_ch(ev_signaller), cur_time(cur_time_)
   {
   }
 
@@ -248,6 +249,11 @@ public:
     state = state_t::stopped;
     backend_ch.push(id, cmd_t::stop{});
   }
+
+  tick_point_t now() const { return cur_time.load(std::memory_order_relaxed); }
+
+private:
+  std::atomic<unsigned>& cur_time;
 };
 
 } // namespace
@@ -286,7 +292,9 @@ public:
     // Pre-reserve timers.
     for (unsigned i = 0; i != capacity; ++i) {
       timers.emplace_back().frontend = std::make_unique<frontend_handle>(
-          static_cast<timer_id_t>(next_timer_id.fetch_add(1, std::memory_order_relaxed)), timers_with_pending_events);
+          static_cast<timer_id_t>(next_timer_id.fetch_add(1, std::memory_order_relaxed)),
+          timers_with_pending_events,
+          cur_time);
     }
 
     // Push to free list in ascending id order.
@@ -341,7 +349,7 @@ public:
     srsran_assert(timer.backend.state != state_t::running, "Invalid timer state");
     srsran_assert(timer.frontend != nullptr, "Invalid timer state");
 
-    timer.backend.timeout = cur_time + std::max((unsigned)duration.count(), 1U);
+    timer.backend.timeout = cur_time.load(std::memory_order_relaxed) + std::max((unsigned)duration.count(), 1U);
     timer.backend.state   = state_t::running;
     time_wheel[timer.backend.timeout & WHEEL_MASK].push_front(&timer);
     ++nof_timers_running;
@@ -370,7 +378,7 @@ public:
   srslog::basic_logger& logger;
 
   /// Counter of the number of ticks elapsed. This counter gets incremented on every \c tick call.
-  unsigned cur_time = 0;
+  std::atomic<tick_point_t> cur_time = 0;
 
   /// Number of created timer_handle objects that are currently running.
   size_t nof_timers_running = 0;
@@ -545,7 +553,7 @@ frontend_handle& timer_manager::manager_impl::create_frontend_timer(task_executo
 
   // In case it fails to reuse a cached timer frontend object, we create a new one.
   const auto id         = (timer_id_t)next_timer_id.fetch_add(1, std::memory_order_relaxed);
-  auto       new_handle = std::make_unique<frontend_handle>(id, timers_with_pending_events);
+  auto       new_handle = std::make_unique<frontend_handle>(id, timers_with_pending_events, cur_time);
   new_handle->exec      = &exec;
   cached_timer          = new_handle.get();
 
@@ -571,7 +579,7 @@ void timer_manager::tick()
   impl->handle_postponed_timeouts();
 
   // Advance time.
-  ++impl->cur_time;
+  impl->cur_time.fetch_add(1, std::memory_order_relaxed);
 
   // Process the timer runs which expire in this tick.
   auto& wheel_list = impl->time_wheel[impl->cur_time & WHEEL_MASK];
@@ -653,4 +661,10 @@ void unique_timer::stop()
   if (is_running()) {
     static_cast<frontend_handle*>(handle)->stop();
   }
+}
+
+tick_point_t unique_timer::now() const
+{
+  srsran_assert(is_valid(), "Getting tick from invalid timer");
+  return static_cast<frontend_handle*>(handle)->now();
 }

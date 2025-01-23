@@ -23,6 +23,9 @@ enum class timer_id_t : unsigned { invalid = std::numeric_limits<unsigned>::max(
 /// Unit used to represent a time duration in terms of timer_manager ticks.
 using timer_duration = std::chrono::milliseconds;
 
+/// Type used to represend a particular time tick of the timers.
+using tick_point_t = unsigned;
+
 namespace timer_detail {
 
 /// Possible states for a timer.
@@ -135,6 +138,9 @@ public:
 
   /// Stops the timer from ticking.
   void stop();
+
+  /// Gets the current tick of the timer.
+  tick_point_t now() const;
 
 private:
   friend class timer_manager;
