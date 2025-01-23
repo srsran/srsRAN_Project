@@ -10,9 +10,6 @@
 
 #include "du_positioning_manager_impl.h"
 #include "procedures/du_ue_positioning_info_procedure.h"
-#ifndef SRSRAN_HAS_ENTERPRISE
-#include "srsran/support/async/async_no_op_task.h"
-#endif
 
 using namespace srsran;
 using namespace srs_du;
@@ -27,19 +24,3 @@ du_positioning_manager_impl::request_positioning_info(const du_positioning_info_
 {
   return start_du_ue_positioning_info_procedure(req, cell_mng, ue_mng);
 }
-
-// Dummy procedures for non-enterprise version.
-
-#ifndef SRSRAN_HAS_ENTERPRISE
-
-async_task<du_positioning_info_response>
-srs_du::start_du_ue_positioning_info_procedure(const du_positioning_info_request& msg,
-                                               du_cell_manager&                   du_cells_,
-                                               du_ue_manager&                     ue_mng_)
-{
-  srslog::fetch_basic_logger("DU-MNG").error(
-      "Positioning Exchange Procedure Failed. Cause: Feature only supported in Enterprise version.");
-  return launch_no_op_task(du_positioning_info_response{});
-}
-
-#endif
