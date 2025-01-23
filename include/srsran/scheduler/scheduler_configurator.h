@@ -13,16 +13,12 @@
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/drx_config.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/logical_channel/lcid.h"
+#include "srsran/ran/meas_gap_config.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/phy_time_unit.h"
-#include "srsran/ran/prach/prach_constants.h"
 #include "srsran/ran/qos/five_qi_qos_mapping.h"
-#include "srsran/ran/qos/qos_parameters.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/rrm.h"
-#include "srsran/ran/s_nssai.h"
-#include "srsran/ran/sib/sib_configuration.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/sr_configuration.h"
@@ -36,7 +32,6 @@
 #include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/config/si_scheduling_config.h"
 #include "srsran/scheduler/config/slice_rrm_policy_config.h"
-#include "srsran/scheduler/result/dci_info.h"
 
 namespace srsran {
 

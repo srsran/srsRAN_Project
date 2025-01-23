@@ -10,9 +10,7 @@
 
 #pragma once
 
-#include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/csi_rs/csi_meas_config.h"
-#include "srsran/ran/meas_gap_config.h"
 #include "srsran/ran/pdcch/downlink_preemption.h"
 #include "srsran/ran/pdsch/pdsch_mcs.h"
 #include "srsran/ran/pdsch/pdsch_prb_bundling.h"
@@ -23,10 +21,10 @@
 #include "srsran/ran/pusch/pusch_tpc.h"
 #include "srsran/ran/serv_cell_index.h"
 #include "srsran/ran/srs/srs_configuration.h"
-#include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/tci.h"
 #include "srsran/ran/time_alignment_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
+#include "srsran/scheduler/result/resource_block_group.h"
 
 namespace srsran {
 

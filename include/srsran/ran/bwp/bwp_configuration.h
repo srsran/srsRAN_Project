@@ -30,7 +30,8 @@ struct bwp_configuration {
 
   bool operator<(const bwp_configuration& other) const
   {
-    return std::tie(cp, scs, crbs) < std::tie(other.cp, other.scs, other.crbs);
+    return cp < other.cp or (cp == other.cp and scs < other.scs) or
+           (cp == other.cp and scs == other.scs and crbs < other.crbs);
   }
 };
 

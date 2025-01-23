@@ -17,9 +17,7 @@
 #include "srsran/ran/prach/rach_config_common.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/scs_specific_carrier.h"
-#include "srsran/scheduler/config/dmrs.h"
 #include "srsran/scheduler/config/pxsch_time_domain_resource.h"
-#include "srsran/scheduler/result/vrb_alloc.h"
 #include <optional>
 
 namespace srsran {
@@ -44,7 +42,7 @@ struct pdcch_config_common {
 enum bwp_id_t : uint8_t { MIN_BWP_ID = 0, MAX_BWP_ID = 3, MAX_NOF_BWPS = 4 };
 
 /// Converts integer value to BWP-Id".
-constexpr inline bwp_id_t to_bwp_id(std::underlying_type_t<bwp_id_t> value)
+constexpr bwp_id_t to_bwp_id(std::underlying_type_t<bwp_id_t> value)
 {
   return static_cast<bwp_id_t>(value);
 }

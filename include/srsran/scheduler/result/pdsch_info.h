@@ -21,6 +21,7 @@
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/result/dmrs_info.h"
+#include "srsran/scheduler/result/vrb_alloc.h"
 
 namespace srsran {
 

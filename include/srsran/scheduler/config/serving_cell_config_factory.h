@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/csi_rs/csi_meas_config.h"
 #include "srsran/ran/pdcch/aggregation_level.h"
 #include "srsran/ran/sib/system_info_config.h"

@@ -12,6 +12,7 @@
 
 #include "srsran/ran/alpha.h"
 #include "srsran/ran/csi_rs/csi_rs_id.h"
+#include "srsran/ran/du_types.h"
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include <variant>
