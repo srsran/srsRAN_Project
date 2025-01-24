@@ -37,9 +37,9 @@ TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_pdus_dropped)
     pdcp_tx->handle_sdu(std::move(sdu));
   }
 
-  FLUSH_AND_ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
+  FLUSH_AND_ASSERT_EQ(5, pdcp_tx->nof_pdus_in_window());
   pdcp_tx->reestablish({});
-  FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
+  FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
 
   // Check the state is reset
   FLUSH_AND_ASSERT_EQ(pdcp_tx->get_state(), pdcp_tx_state{});
@@ -61,9 +61,9 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_and_discard_t
     byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
   }
-  FLUSH_AND_ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
+  FLUSH_AND_ASSERT_EQ(5, pdcp_tx->nof_pdus_in_window());
   pdcp_tx->reestablish(sec_cfg);
-  FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
+  FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
 
   // Check the state is reset
   FLUSH_AND_ASSERT_EQ(pdcp_tx->get_state(), pdcp_tx_state{});
@@ -86,7 +86,7 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
     pdcp_tx->handle_sdu(std::move(sdu));
   }
   tick_all(5);
-  FLUSH_AND_ASSERT_EQ(5, pdcp_tx->nof_discard_timers());
+  FLUSH_AND_ASSERT_EQ(5, pdcp_tx->nof_pdus_in_window());
 
   // Confirm transmission of all PDUs (up to and including SN=4)
   pdcp_tx->handle_transmit_notification(4);
@@ -112,7 +112,7 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
   FLUSH_AND_ASSERT_EQ(3, test_frame.retx_queue.size()); // SN=2, 3 and 4 RETXed
 
   // Check if discard timer was not reset.
-  FLUSH_AND_ASSERT_EQ(3, pdcp_tx->nof_discard_timers());
+  FLUSH_AND_ASSERT_EQ(3, pdcp_tx->nof_pdus_in_window());
 
   {
     // Check the expected state: not reset, but tx_trans shall be rewinded to tx_next_ack
@@ -121,7 +121,7 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
   }
 
   tick_all(5);
-  FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
+  FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
 
   {
     // Check the expected state: everything advanced to 5

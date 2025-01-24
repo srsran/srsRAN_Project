@@ -9,10 +9,12 @@
  */
 
 #include "pdcp_entity_tx.h"
+
 #include "../security/security_engine_impl.h"
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/srsran_assert.h"
+#include <algorithm>
 
 using namespace srsran;
 
@@ -59,6 +61,8 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   }
 
   logger.log_info("PDCP configured. {}", cfg);
+
+  discard_timer = ue_dl_timer_factory.create_timer();
 
   // TODO: implement usage of crypto_executor
   (void)ue_dl_executor;
@@ -197,10 +201,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
   // Create a discard timer and put into tx_window. For AM, also store the SDU for a possible data recovery procedure.
   if (cfg.discard_timer.has_value()) {
-    unique_timer discard_timer = {};
-    // Only start for finite durations
-    if (cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
-      discard_timer = ue_dl_timer_factory.create_timer();
+    // Only start for finite durations and if not running already.
+    if (cfg.discard_timer.value() != pdcp_discard_timer::infinity && not discard_timer.is_running()) {
       discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
                         discard_callback{this, st.tx_next});
       discard_timer.run();
@@ -214,7 +216,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     }
 
     // Place SDU in TX window
-    tx_window.add_sdu(st.tx_next, std::move(sdu), std::move(discard_timer));
+    tx_window.add_sdu(st.tx_next, std::move(sdu), discard_timer.now());
 
     logger.log_debug("Added to tx window. count={} discard_timer={}", st.tx_next, cfg.discard_timer);
   }
@@ -416,8 +418,8 @@ void pdcp_entity_tx::configure_security(security::sec_128_as_config sec_cfg,
   // integrity protection algorithm is used, 'NULL' ciphering algorithm is also used.
   // Ref: TS 38.331 Sec. 5.3.1.2
   //
-  // From TS 38.501 Sec. 6.7.3.6: UEs that are in limited service mode (LSM) and that cannot be authenticated (...) may
-  // still be allowed to establish emergency session by sending the emergency registration request message. (...)
+  // From TS 38.501 Sec. 6.7.3.6: UEs that are in limited service mode (LSM) and that cannot be authenticated (...)
+  // may still be allowed to establish emergency session by sending the emergency registration request message. (...)
   if ((sec_cfg.integ_algo == security::integrity_algorithm::nia0) &&
       (is_drb() || (is_srb() && sec_cfg.cipher_algo != security::ciphering_algorithm::nea0))) {
     logger.log_error("Integrity algorithm NIA0 is only permitted for SRBs configured with NEA0. is_srb={} NIA{} NEA{}",
@@ -766,6 +768,7 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
   logger.log_debug("Stopping discard timers. highest_count={}", highest_count);
 
   // Stop discard timers and update TX_NEXT_ACK to oldest element in tx_window
+  discard_timer.stop();
   while (st.tx_next_ack <= highest_count) {
     if (tx_window.has_sn(st.tx_next_ack)) {
       tx_window.remove_sdu(st.tx_next_ack);
@@ -775,9 +778,9 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
   }
 
   // Update TX_TRANS if it falls out of the tx_window
-  if (st.tx_trans < st.tx_next_ack) {
-    st.tx_trans = st.tx_next_ack;
-  }
+  st.tx_trans = std::max(st.tx_trans, st.tx_next_ack);
+
+  // TODO restart discard timer if requrired.
 }
 
 void pdcp_entity_tx::discard_pdu(uint32_t count)
@@ -807,9 +810,7 @@ void pdcp_entity_tx::discard_pdu(uint32_t count)
   }
 
   // Update TX_TRANS if it falls out of the tx_window
-  if (st.tx_trans < st.tx_next_ack) {
-    st.tx_trans = st.tx_next_ack;
-  }
+  st.tx_trans = std::max(st.tx_trans, st.tx_next_ack);
 }
 
 // Discard Timer Callback (discardTimer)
@@ -820,7 +821,13 @@ void pdcp_entity_tx::discard_callback::operator()(timer_id_t timer_id)
   // Add discard to metrics
   parent->metrics.add_discard_timouts(1);
 
-  // Discard PDU
-  // NOTE: this will delete the callback. It *must* be the last instruction.
-  parent->discard_pdu(discard_count);
+  // Discard all PDUs that match the discard timer tick.
+  tick_point_t discard_time = parent->tx_window[discard_count].time_of_arrival;
+  for (uint32_t count = discard_count;
+       parent->tx_window.has_sn(count) && parent->tx_window[count].time_of_arrival == discard_time;
+       count++) {
+    parent->discard_pdu(count);
+  }
+
+  // TODO restart timeout for any pending SDUs
 }

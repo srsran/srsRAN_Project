@@ -23,7 +23,7 @@ namespace srsran {
 struct pdcp_tx_sdu_info {
   uint32_t     count;
   byte_buffer  sdu;
-  unique_timer discard_timer;
+  tick_point_t time_of_arrival;
   uint32_t     sdu_length;
 };
 
@@ -36,15 +36,13 @@ public:
 
   bool has_sn(uint32_t count) const;
 
-  /// \brief Remove SDU from TX window
-  /// This method removes an SDU from the TX window. It will keep track of the PDU bytes in the window
-  /// and
-  /// \return true if the SDU exists in the window and was removed, false otherwise.
-  void add_sdu(uint32_t count, byte_buffer sdu, unique_timer discard_timer);
+  /// \brief Add SDU to TX window
+  /// This method adds an SDU from the TX window. It will keep track of the PDU bytes in the window.
+  void add_sdu(uint32_t count, byte_buffer sdu, tick_point_t toa);
 
   /// \brief Remove SDU from TX window
-  /// This method removes an SDU from the TX window. It will keep track of the PDU bytes in the window
-  /// and
+  /// This method removes an SDU from the TX window. It will keep track of the PDU bytes in the window.
+  ///
   /// \return true if the SDU exists in the window and was removed, false otherwise.
   void remove_sdu(uint32_t count);
 

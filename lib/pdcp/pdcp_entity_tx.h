@@ -124,7 +124,7 @@ public:
 
   const pdcp_tx_state& get_state() const { return st; };
 
-  uint32_t nof_discard_timers() const { return st.tx_next - st.tx_next_ack; }
+  uint32_t nof_pdus_in_window() const { return st.tx_next - st.tx_next_ack; }
 
   /*
    * Security configuration
@@ -153,6 +153,7 @@ private:
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
   timer_factory                   ue_dl_timer_factory;
+  unique_timer                    discard_timer;
   unique_timer                    metrics_timer;
 
   task_executor& ue_dl_executor;

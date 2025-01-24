@@ -185,14 +185,14 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next, sn_size));
-      ASSERT_EQ(1, pdcp_tx->nof_discard_timers());
+      ASSERT_EQ(1, pdcp_tx->nof_pdus_in_window());
     }
     // Write second SDU
     {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, sn_size));
-      ASSERT_EQ(2, pdcp_tx->nof_discard_timers());
+      ASSERT_EQ(2, pdcp_tx->nof_pdus_in_window());
     }
     // Let timers expire
     for (int i = 0; i < 10; i++) {
@@ -201,7 +201,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
     }
 
     // Timers should have expired now.
-    ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
+    ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
   };
 
   if (config.sn_size == pdcp_sn_size::size12bits) {
@@ -234,25 +234,25 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next, sn_size));
-      ASSERT_EQ(i + 1, pdcp_tx->nof_discard_timers());
+      ASSERT_EQ(i + 1, pdcp_tx->nof_pdus_in_window());
     }
 
     // Notify delivery of first SDU
     pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next, sn_size));
-    ASSERT_EQ(nof_sdus - 1, pdcp_tx->nof_discard_timers());
+    ASSERT_EQ(nof_sdus - 1, pdcp_tx->nof_pdus_in_window());
 
     // Notify delivery up to third SDU
     pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + 2, sn_size));
-    ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_discard_timers());
+    ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_pdus_in_window());
 
     // Notify delivery of second SDU again
     // e.g. in case the UDP-based F1-U interface swaps the the order of transmit/delivery notifications
     pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + 1, sn_size));
-    ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_discard_timers());
+    ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_pdus_in_window());
 
     // Notify delivery of remaining SDUs
     pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + nof_sdus - 1, sn_size));
-    ASSERT_EQ(0, pdcp_tx->nof_discard_timers());
+    ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
   };
 
   pdcp_tx_state st = {};
@@ -299,7 +299,7 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
   init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am);
 
   auto test_pdu_gen = [this](uint32_t tx_next) {
-    srsran::test_delimit_logger delimiter("TX PDU stall. SN_SIZE={} COUNT={}", sn_size, tx_next);
+    srsran::test_delimit_logger delimiter("TX PDU stall with discard. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next, tx_next};
     pdcp_tx->set_state(st);

@@ -37,11 +37,11 @@ pdcp_tx_sdu_info& pdcp_tx_window::operator[](uint32_t count)
   return tx_window[count];
 }
 
-void pdcp_tx_window::add_sdu(uint32_t count, byte_buffer sdu, unique_timer discard_timer)
+void pdcp_tx_window::add_sdu(uint32_t count, byte_buffer sdu, tick_point_t toa)
 {
   pdcp_tx_sdu_info& sdu_info = tx_window.add_sn(count);
   sdu_info.count             = count;
-  sdu_info.discard_timer     = std::move(discard_timer);
+  sdu_info.time_of_arrival   = toa;
   sdu_info.sdu_length        = sdu.length();
 
   sdu_bytes += sdu_info.sdu_length;
