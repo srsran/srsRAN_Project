@@ -9,6 +9,7 @@
  */
 
 #include "du_manager_impl.h"
+#include "du_positioning_handler_factory.h"
 #include "procedures/du_param_config_procedure.h"
 #include "procedures/du_stop_procedure.h"
 #include "procedures/du_ue_ric_configuration_procedure.h"
@@ -27,7 +28,7 @@ du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   cell_mng(params),
   cell_res_alloc(params.ran.cells, params.mac.sched_cfg, params.ran.srbs, params.ran.qos, params.test_cfg),
   ue_mng(params, cell_res_alloc),
-  positioning_mng(cell_mng, ue_mng),
+  positioning_handler(create_du_positioning_handler(cell_mng, ue_mng, logger)),
   main_ctrl_loop(128)
 {
 }

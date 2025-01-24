@@ -11,7 +11,6 @@
 #pragma once
 
 #include "du_cell_manager.h"
-#include "du_positioning_manager_impl.h"
 #include "du_ue/du_ue_manager.h"
 #include "ran_resource_management/du_ran_resource_manager_impl.h"
 #include "srsran/du/du_high/du_manager/du_manager.h"
@@ -68,7 +67,7 @@ public:
 
   du_param_config_response handle_operator_config_request(const du_param_config_request& req) override;
 
-  f1ap_du_positioning_handler& get_positioning_handler() override { return positioning_mng; }
+  f1ap_du_positioning_handler& get_positioning_handler() override { return *positioning_handler; }
 
 private:
   // DU manager configuration that will be visible to all running procedures
@@ -76,10 +75,10 @@ private:
   srslog::basic_logger& logger;
 
   // Components
-  du_cell_manager              cell_mng;
-  du_ran_resource_manager_impl cell_res_alloc;
-  du_ue_manager                ue_mng;
-  du_positioning_manager_impl  positioning_mng;
+  du_cell_manager                              cell_mng;
+  du_ran_resource_manager_impl                 cell_res_alloc;
+  du_ue_manager                                ue_mng;
+  std::unique_ptr<f1ap_du_positioning_handler> positioning_handler;
 
   std::mutex              mutex;
   std::condition_variable cvar;
