@@ -115,8 +115,7 @@ std::vector<CLI::ConfigItem> yaml_config_parser::from_config_impl(const YAML::No
   // and finish CLI callbacks). It is done by surrounding the subcommand with an ConfigItem with name '++' before the
   // subcommand and another ConfigItem with name '--' when the subcommand finishes.
   {
-    results.emplace_back();
-    CLI::ConfigItem& res = results.back();
+    CLI::ConfigItem& res = results.emplace_back();
     res.name             = "++";
     res.parents          = prefix;
     res.inputs           = {};
@@ -134,8 +133,7 @@ std::vector<CLI::ConfigItem> yaml_config_parser::from_config_impl(const YAML::No
     }
 
     if (value.IsScalar()) {
-      results.emplace_back();
-      CLI::ConfigItem& res = results.back();
+      CLI::ConfigItem& res = results.emplace_back();
       res.name             = key_name;
       res.parents          = prefix;
       res.inputs           = {value.Scalar()};
@@ -152,20 +150,36 @@ std::vector<CLI::ConfigItem> yaml_config_parser::from_config_impl(const YAML::No
     }
     // Sequences are stored as a vector of strings.
     if (value.IsSequence()) {
-      results.emplace_back();
-      CLI::ConfigItem& res = results.back();
+      CLI::ConfigItem& res = results.emplace_back();
       res.name             = key_name;
       res.parents          = prefix;
       for (const auto& str : value) {
         res.inputs.push_back(YAML::Dump(str));
       }
     }
+
+    // If the item is not one of the previous, is defined but is null, just add an empty section, so CLI parses it.
+    if (value.IsDefined() && value.IsNull()) {
+      auto copy_prefix = prefix;
+      copy_prefix.push_back(key_name);
+      {
+        CLI::ConfigItem& res = results.emplace_back();
+        res.name             = "++";
+        res.parents          = copy_prefix;
+        res.inputs           = {};
+      }
+      {
+        CLI::ConfigItem& res = results.emplace_back();
+        res.name             = "--";
+        res.parents          = copy_prefix;
+        res.inputs           = {};
+      }
+    }
   }
 
   // Closing ConfigItem that enables subcommand callbacks.
   {
-    results.emplace_back();
-    CLI::ConfigItem& res = results.back();
+    CLI::ConfigItem& res = results.emplace_back();
     res.name             = "--";
     res.parents          = prefix;
     res.inputs           = {};
