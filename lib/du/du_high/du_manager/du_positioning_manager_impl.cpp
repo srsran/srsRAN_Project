@@ -19,6 +19,11 @@ du_positioning_manager_impl::du_positioning_manager_impl(du_cell_manager& cell_m
 {
 }
 
+du_trp_info_response du_positioning_manager_impl::request_trp_info()
+{
+  return prepare_trp_info();
+}
+
 async_task<du_positioning_info_response>
 du_positioning_manager_impl::request_positioning_info(const du_positioning_info_request& req)
 {

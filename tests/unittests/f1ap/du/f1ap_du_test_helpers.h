@@ -128,6 +128,8 @@ public:
 
   f1ap_du_positioning_handler& get_positioning_handler() override { return *this; }
 
+  du_trp_info_response request_trp_info() override { return du_trp_info_response{}; }
+
   async_task<du_positioning_info_response> request_positioning_info(const du_positioning_info_request& req) override
   {
     last_positioning_info_request = req;

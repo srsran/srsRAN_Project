@@ -16,6 +16,11 @@
 using namespace srsran;
 using namespace srs_du;
 
+du_trp_info_response srs_du::prepare_trp_info()
+{
+  return {};
+}
+
 async_task<du_positioning_meas_response>
 srs_du::start_positioning_measurement_procedure(const du_positioning_meas_request& req)
 {

@@ -17,6 +17,9 @@
 
 namespace srsran::srs_du {
 
+/// Fetch the TRP information supported by this DU.
+du_trp_info_response prepare_trp_info();
+
 /// Initiate a DU UE positioning information collection procedure.
 async_task<du_positioning_info_response> start_du_ue_positioning_info_procedure(const du_positioning_info_request& msg,
                                                                                 du_cell_manager& du_cells_,

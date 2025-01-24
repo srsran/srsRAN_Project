@@ -21,6 +21,8 @@ class du_positioning_manager_impl : public f1ap_du_positioning_handler
 public:
   du_positioning_manager_impl(du_cell_manager& cell_mng_, du_ue_manager& ue_mng_);
 
+  du_trp_info_response request_trp_info() override;
+
   async_task<du_positioning_info_response> request_positioning_info(const du_positioning_info_request& req) override;
 
   async_task<du_positioning_meas_response>

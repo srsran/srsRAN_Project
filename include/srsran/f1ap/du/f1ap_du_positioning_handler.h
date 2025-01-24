@@ -19,6 +19,8 @@
 
 namespace srsran::srs_du {
 
+struct du_trp_info_response {};
+
 struct du_positioning_info_request {
   du_ue_index_t ue_index;
 };
@@ -56,6 +58,9 @@ class f1ap_du_positioning_handler
 {
 public:
   virtual ~f1ap_du_positioning_handler() = default;
+
+  /// Request information regarding supported TRPs as per TS 38.473, Section 8.13.8.
+  virtual du_trp_info_response request_trp_info() = 0;
 
   /// Request UE positioning information as per TS 38.473, Section 8.13.9.
   virtual async_task<du_positioning_info_response> request_positioning_info(const du_positioning_info_request& req) = 0;

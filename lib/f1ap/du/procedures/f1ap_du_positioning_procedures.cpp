@@ -28,6 +28,18 @@ async_task<void> srs_du::start_positioning_measurement_procedure(const asn1::f1a
   });
 }
 
+async_task<void> srs_du::start_trp_information_exchange_procedure(const asn1::f1ap::trp_info_request_s& msg,
+                                                                  f1ap_du_configurator&                 du_mng,
+                                                                  f1ap_message_notifier&                cu_notifier)
+{
+  return launch_async([](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    srslog::fetch_basic_logger("DU-F1").error(
+        "TRP Information Exchange Procedure Failed. Cause: Feature only supported in Enterprise version.");
+    CORO_RETURN();
+  });
+}
+
 async_task<void> srs_du::start_positioning_exchange_procedure(const asn1::f1ap::positioning_info_request_s& msg,
                                                               f1ap_du_configurator&                         du_mng,
                                                               f1ap_du_ue&                                   ue)
