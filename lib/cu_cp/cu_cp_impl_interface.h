@@ -131,6 +131,12 @@ public:
   /// \param[in] ue_or_amf_index The UE index for UE associated NRPPa messages or the AMF index for non UE associated
   virtual void handle_ul_nrppa_pdu(const byte_buffer&                    nrppa_pdu,
                                    std::variant<ue_index_t, amf_index_t> ue_or_amf_index) = 0;
+
+  /// \brief Handle a TRP information request.
+  /// \param[in] request The TRP information request.
+  /// \returns The TRP information CU-CP response.
+  virtual async_task<trp_information_cu_cp_response_t>
+  handle_trp_information_request(const trp_information_request_t& request) = 0;
 };
 
 /// Handler of E1AP-CU-CP events.

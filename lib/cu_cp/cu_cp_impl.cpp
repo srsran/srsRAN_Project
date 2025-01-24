@@ -648,6 +648,16 @@ void cu_cp_impl::handle_ul_nrppa_pdu(const byte_buffer&                    nrppa
   logger.info("UL NRPPa messages are not supported");
 }
 
+async_task<trp_information_cu_cp_response_t>
+cu_cp_impl::handle_trp_information_request(const trp_information_request_t& request)
+{
+  logger.info("TRP information requests are not supported");
+  return launch_async([](coro_context<async_task<trp_information_cu_cp_response_t>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_RETURN(trp_information_cu_cp_response_t{});
+  });
+}
+
 #endif // SRSRAN_HAS_ENTERPRISE
 
 void cu_cp_impl::handle_n2_disconnection()

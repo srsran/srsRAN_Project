@@ -135,6 +135,17 @@ du_processor& du_processor_repository::get_du_processor(du_index_t du_index)
   return *du_db.at(du_index).processor;
 }
 
+std::vector<du_index_t> du_processor_repository::get_du_processor_indexes() const
+{
+  std::vector<du_index_t> du_indexes;
+  du_indexes.reserve(du_db.size());
+  for (const auto& du : du_db) {
+    du_indexes.push_back(du.first);
+  }
+
+  return du_indexes;
+}
+
 std::vector<metrics_report::du_info> du_processor_repository::handle_du_metrics_report_request() const
 {
   std::vector<metrics_report::du_info> du_reports;

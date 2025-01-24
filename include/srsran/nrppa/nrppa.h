@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
+#include "srsran/ran/positioning/measurement_information.h"
+#include "srsran/ran/positioning/trp_information_exchange.h"
 #include "srsran/rrc/meas_types.h"
 #include "srsran/support/async/async_task.h"
 #include <map>
@@ -45,6 +47,24 @@ public:
   virtual bool schedule_async_task(async_task<void> task) = 0;
 };
 
+/// Methods used by NRPPa to signal events to the F1AP.
+class nrppa_f1ap_notifier
+{
+public:
+  virtual ~nrppa_f1ap_notifier() = default;
+
+  /// \brief Notifies the F1AP about a measurement information request.
+  /// \returns The outcome of the procedure.
+  virtual async_task<expected<measurement_response_t, measurement_failure_t>>
+  on_measurement_information_request(const measurement_request_t& request) = 0;
+};
+
+// TRP information CU-CP response, containing information for all available TRPs at all DUs.
+struct trp_information_cu_cp_response_t {
+  std::map<du_index_t, trp_information_response_t> trp_info_responses;
+  std::map<du_index_t, nrppa_f1ap_notifier*>       f1ap_notifiers;
+};
+
 /// Methods used by NRPPa to signal events to the CU-CP.
 class nrppa_cu_cp_notifier
 {
@@ -60,6 +80,12 @@ public:
   /// \param[in] nrppa_pdu The NRPPa PDU.
   /// \param[in] ue_or_amf_index The UE index for UE associated NRPPa messages or the AMF index for non UE associated
   virtual void on_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::variant<ue_index_t, amf_index_t> ue_or_amf_index) = 0;
+
+  /// \brief Notifies the CU-CP about a TRP information request.
+  /// \param[in] request The TRP information request.
+  /// \returns The TRP information CU-CP response.
+  virtual async_task<trp_information_cu_cp_response_t>
+  on_trp_information_request(const trp_information_request_t& request) = 0;
 };
 
 /// This interface is used to push NRPPA messages to the NRPPA interface.

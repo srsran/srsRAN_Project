@@ -18,7 +18,7 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-/// Adapter between NRPPa and CU-CP
+/// Adapter between NRPPa and CU-CP.
 class nrppa_cu_cp_adapter : public nrppa_cu_cp_notifier
 {
 public:
@@ -38,11 +38,18 @@ public:
     cu_cp_handler->handle_ul_nrppa_pdu(nrppa_pdu, ue_or_amf_index);
   }
 
+  async_task<trp_information_cu_cp_response_t>
+  on_trp_information_request(const trp_information_request_t& request) override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NRPPA handler must not be nullptr");
+    return cu_cp_handler->handle_trp_information_request(request);
+  }
+
 private:
   cu_cp_nrppa_handler* cu_cp_handler = nullptr;
 };
 
-/// Adapter between NRPPA and CU-CP UE
+/// Adapter between NRPPA and CU-CP UE.
 class nrppa_cu_cp_ue_adapter : public nrppa_cu_cp_ue_notifier
 {
 public:
@@ -72,6 +79,25 @@ public:
 
 private:
   cu_cp_ue_impl_interface* ue = nullptr;
+};
+
+/// Adapter between NRPPa and F1AP.
+class nrppa_f1ap_adapter : public nrppa_f1ap_notifier
+{
+public:
+  nrppa_f1ap_adapter() = default;
+
+  void connect_f1ap(f1ap_nrppa_message_handler& f1ap_handler_) { f1ap_handler = &f1ap_handler_; }
+
+  async_task<expected<measurement_response_t, measurement_failure_t>>
+  on_measurement_information_request(const measurement_request_t& request) override
+  {
+    srsran_assert(f1ap_handler != nullptr, "F1AP NRPPA handler must not be nullptr");
+    return f1ap_handler->handle_measurement_information_request(request);
+  }
+
+private:
+  f1ap_nrppa_message_handler* f1ap_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

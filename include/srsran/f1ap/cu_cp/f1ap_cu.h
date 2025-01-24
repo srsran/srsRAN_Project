@@ -17,6 +17,7 @@
 #include "srsran/f1ap/cu_cp/du_setup_notifier.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu_ue_context_update.h"
 #include "srsran/f1ap/cu_cp/f1ap_du_context.h"
+#include "srsran/f1ap/cu_cp/f1ap_nrppa_msg_handling.h"
 #include "srsran/f1ap/cu_cp/f1ap_rrc_msg_transfer_handling.h"
 #include "srsran/f1ap/f1ap_message_handler.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
@@ -160,7 +161,8 @@ class f1ap_cu : public f1ap_message_handler,
                 public f1ap_ue_context_manager,
                 public f1ap_statistics_handler,
                 public f1ap_paging_manager,
-                public f1ap_ue_context_removal_handler
+                public f1ap_ue_context_removal_handler,
+                public f1ap_nrppa_message_handler
 {
 public:
   virtual ~f1ap_cu() = default;
@@ -175,6 +177,7 @@ public:
   virtual f1ap_statistics_handler&         get_f1ap_statistics_handler()         = 0;
   virtual f1ap_paging_manager&             get_f1ap_paging_manager()             = 0;
   virtual f1ap_ue_context_removal_handler& get_f1ap_ue_context_removal_handler() = 0;
+  virtual f1ap_nrppa_message_handler&      get_f1ap_nrppa_message_handler()      = 0;
 };
 
 } // namespace srs_cu_cp
