@@ -14,7 +14,7 @@
 
 namespace srsran {
 
-enum class report_characteristics_t { onDemand, periodic };
+enum class report_characteristics_t { on_demand, periodic };
 
 enum class meas_periodicity_t : uint32_t {
   ms120   = 120,

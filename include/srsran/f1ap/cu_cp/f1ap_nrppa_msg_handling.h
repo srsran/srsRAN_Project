@@ -10,11 +10,7 @@
 
 #pragma once
 
-#include "srsran/adt/byte_buffer.h"
-#include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/ran/positioning/measurement_information.h"
-#include "srsran/ran/positioning/trp_information_exchange.h"
-#include "srsran/ran/rb_id.h"
+#include "srsran/ran/positioning/cu_cp_messages.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {

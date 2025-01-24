@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../cyclic_prefix.h"
 #include "common.h"
 #include "positioning_ids.h"
 #include "srsran/ran/band_helper.h"
@@ -39,14 +40,6 @@ enum class trp_information_type_item_t {
   trp_tx_teg,
   beam_ant_info
 };
-
-struct trp_information_request_t {
-  // TRP list is optional.
-  std::vector<trp_id_t>                    trp_list;
-  std::vector<trp_information_type_item_t> trp_info_type_list_trp_req;
-};
-
-enum class cp_type_t { normal, extended };
 
 struct dl_prs_muting_pattern_t {
   uint8_t  length;
@@ -95,7 +88,7 @@ struct prs_resource_set_item_t {
   uint16_t                    start_prb;
   uint32_t                    point_a;
   uint8_t                     comb_size;
-  cp_type_t                   cp_type;
+  cyclic_prefix               cp_type;
   uint32_t                    res_set_periodicity;
   uint32_t                    res_set_slot_offset;
   uint8_t                     res_repeat_factor;
@@ -347,16 +340,6 @@ struct trp_info_t {
 
 struct trp_information_list_trp_response_item_t {
   trp_info_t trp_info;
-};
-
-struct trp_information_response_t {
-  std::vector<trp_information_list_trp_response_item_t> trp_info_list_trp_resp;
-  std::optional<crit_diagnostics_t>                     crit_diagnostics;
-};
-
-struct trp_information_failure_t {
-  std::variant<nrppa_cause_t, f1ap_cause_t> cause;
-  std::optional<crit_diagnostics_t>         crit_diagnostics;
 };
 
 } // namespace srsran

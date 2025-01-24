@@ -11,8 +11,7 @@
 #pragma once
 
 #include "srsran/cu_cp/cu_cp_types.h"
-#include "srsran/ran/positioning/measurement_information.h"
-#include "srsran/ran/positioning/trp_information_exchange.h"
+#include "srsran/ran/positioning/cu_cp_messages.h"
 #include "srsran/rrc/meas_types.h"
 #include "srsran/support/async/async_task.h"
 #include <map>

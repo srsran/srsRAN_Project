@@ -79,16 +79,6 @@ struct trp_meas_quantities_list_item_t {
   std::optional<uint8_t>     timing_report_granularity_factor;
 };
 
-struct measurement_request_t {
-  lmf_meas_id_t                                lmf_meas_id;
-  std::vector<trp_meas_request_item_t>         trp_meas_request_list;
-  report_characteristics_t                     report_characteristics;
-  std::optional<meas_periodicity_t>            meas_periodicity;
-  std::vector<trp_meas_quantities_list_item_t> trp_meas_quantities;
-
-  // TODO: Add missing optional values.
-};
-
 enum class trp_measured_results_value_t { ul_angle_of_arrival, ul_srs_rsrp, ul_rtoa, gnb_rx_tx_time_diff };
 
 struct time_stamp_slot_idx_t {
@@ -141,25 +131,6 @@ struct trp_measurement_response_item_t {
   std::optional<nr_cell_global_id_t>  cgi_nr;
 };
 
-struct measurement_response_t {
-  lmf_meas_id_t                                lmf_meas_id;
-  ran_meas_id_t                                ran_meas_id;
-  std::vector<trp_measurement_response_item_t> trp_meas_resp_list;
-  std::optional<crit_diagnostics_t>            crit_diagnostics;
-};
-
-struct measurement_failure_t {
-  lmf_meas_id_t                            lmf_meas_id;
-  std::variant<f1ap_cause_t, f1ap_cause_t> cause;
-  std::optional<crit_diagnostics_t>        crit_diagnostics;
-};
-
-struct measurement_report_t {
-  lmf_meas_id_t                                lmf_meas_id;
-  ran_meas_id_t                                ran_meas_id;
-  std::vector<trp_measurement_response_item_t> trp_meas_report_list;
-};
-
 struct trp_meas_upd_item_ext_ies_container_t {
   std::optional<uint8_t> nof_trp_rx_teg;
   std::optional<uint8_t> nof_trp_rx_tx_teg;
@@ -169,19 +140,6 @@ struct trp_measurement_update_item_t {
   trp_id_t                                             trp_id;
   std::optional<aoa_assist_info_t>                     ao_a_win_info;
   std::optional<trp_meas_upd_item_ext_ies_container_t> ie_exts;
-};
-
-struct measurement_update_t {
-  lmf_meas_id_t lmf_meas_id;
-  ran_meas_id_t ran_meas_id;
-  // Optional values:
-  std::vector<trp_measurement_update_item_t> trp_meas_upd_list;
-  // TODO: Add missing optional values.
-};
-
-struct measurement_abort_t {
-  lmf_meas_id_t lmf_meas_id;
-  ran_meas_id_t ran_meas_id;
 };
 
 } // namespace srsran
