@@ -12,6 +12,9 @@
 
 #include "measurement_information.h"
 #include "trp_information_exchange.h"
+#include "srsran/ran/cause/f1ap_cause.h"
+#include "srsran/ran/cause/nrppa_cause.h"
+#include "srsran/ran/crit_diagnostics.h"
 
 namespace srsran::srs_cu_cp {
 

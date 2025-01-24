@@ -12,8 +12,6 @@
 
 #include "common.h"
 #include "positioning_ids.h"
-#include "srsran/ran/cause/f1ap_cause.h"
-#include "srsran/ran/crit_diagnostics.h"
 #include "srsran/ran/nr_cgi.h"
 #include <optional>
 #include <variant>
