@@ -8,14 +8,13 @@
  *
  */
 
-#include "positioning_information_exchange_procedure.h"
-#include "srsran/f1ap/f1ap_message_notifier.h"
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+#include "f1ap_du_positioning_procedures.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace srs_du;
-
-#ifndef SRSRAN_HAS_ENTERPRISE
 
 async_task<void> srs_du::start_positioning_measurement_procedure(const asn1::f1ap::positioning_meas_request_s& msg,
                                                                  f1ap_du_configurator&                         du_mng,

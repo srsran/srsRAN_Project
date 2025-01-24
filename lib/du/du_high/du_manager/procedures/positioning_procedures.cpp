@@ -8,13 +8,13 @@
  *
  */
 
-#include "du_ue_positioning_info_procedure.h"
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+#include "positioning_procedures.h"
 #include "srsran/support/async/async_no_op_task.h"
 
 using namespace srsran;
 using namespace srs_du;
-
-#ifndef SRSRAN_HAS_ENTERPRISE
 
 async_task<du_positioning_meas_response>
 srs_du::start_positioning_measurement_procedure(const du_positioning_meas_request& req)

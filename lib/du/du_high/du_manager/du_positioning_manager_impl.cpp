@@ -9,7 +9,7 @@
  */
 
 #include "du_positioning_manager_impl.h"
-#include "procedures/du_ue_positioning_info_procedure.h"
+#include "procedures/positioning_procedures.h"
 
 using namespace srsran;
 using namespace srs_du;

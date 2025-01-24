@@ -15,7 +15,7 @@ set(SOURCES
         ue_creation_procedure.cpp
         ue_deletion_procedure.cpp
         du_ue_reset_procedure.cpp
-        du_ue_positioning_info_procedure.cpp
+        positioning_procedures.cpp
 )
 add_library(srsran_du_manager_procedures STATIC ${SOURCES})
 target_link_libraries(srsran_du_manager_procedures sched_config srsran_ran mac_configuration_helpers du_ue)
