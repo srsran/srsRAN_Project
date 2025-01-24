@@ -12,6 +12,7 @@
 
 #include "srsran/ran/bwp/bwp_configuration.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/scs_specific_carrier.h"
 #include "srsran/ran/srs/srs_configuration.h"
@@ -19,7 +20,18 @@
 
 namespace srsran::srs_du {
 
-struct du_trp_info_response {};
+using trp_id_t = uint32_t;
+
+struct du_trp_info {
+  trp_id_t                           trp_id;
+  std::optional<pci_t>               pci;
+  std::optional<nr_cell_global_id_t> cgi;
+  std::optional<uint32_t>            arfcn;
+};
+
+struct du_trp_info_response {
+  std::vector<du_trp_info> trps;
+};
 
 struct du_positioning_info_request {
   du_ue_index_t ue_index;

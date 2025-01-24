@@ -25,20 +25,20 @@ public:
 
   du_trp_info_response request_trp_info() override
   {
-    logger.error("TRP Information Exchange Procedure Failed. Cause: Feature only supported in Enterprise version.");
+    logger.error("TRP Information Exchange Procedure Failed. Cause: Feature only supported in Enterprise version");
     return {};
   }
 
   async_task<du_positioning_info_response> request_positioning_info(const du_positioning_info_request& req) override
   {
-    logger.error("Positioning Exchange Procedure Failed. Cause: Feature only supported in Enterprise version.");
+    logger.error("Positioning Exchange Procedure Failed. Cause: Feature only supported in Enterprise version");
     return launch_no_op_task(du_positioning_info_response{});
   }
 
   async_task<du_positioning_meas_response>
   request_positioning_measurement(const du_positioning_meas_request& req) override
   {
-    logger.error("Positioning Measurement Procedure Failed. Cause: Feature only supported in Enterprise version.");
+    logger.error("Positioning Measurement Procedure Failed. Cause: Feature only supported in Enterprise version");
     return launch_no_op_task(du_positioning_meas_response{});
   }
 
