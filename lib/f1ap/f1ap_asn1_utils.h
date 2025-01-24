@@ -119,6 +119,8 @@ inline std::optional<uint8_t> get_transaction_id(const asn1::f1ap::successful_ou
       return out.value.gnb_du_res_coordination_resp()->transaction_id;
     case success_types::f1_removal_resp:
       return out.value.f1_removal_resp()->transaction_id;
+    case success_types::trp_info_resp:
+      return out.value.trp_info_resp()->transaction_id;
       // TODO: Remaining cases.
     default:
       break;
@@ -139,6 +141,8 @@ inline std::optional<uint8_t> get_transaction_id(const asn1::f1ap::unsuccessful_
       return out.value.gnb_du_cfg_upd_fail()->transaction_id;
     case f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_removal_fail:
       return out.value.f1_removal_fail()->transaction_id;
+    case f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::trp_info_fail:
+      return out.value.trp_info_fail()->transaction_id;
       // TODO: Remaining cases.
     default:
       break;

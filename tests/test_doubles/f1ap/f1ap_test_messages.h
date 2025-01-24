@@ -21,6 +21,7 @@
 #include "srsran/ran/nr_band.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/positioning/positioning_ids.h"
 #include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/subcarrier_spacing.h"
@@ -139,6 +140,12 @@ byte_buffer create_dl_dcch_rrc_container(uint32_t pdcp_sn, const byte_buffer& dl
 
 /// \brief Remove PDCP header from DL-DCCH message.
 byte_buffer extract_dl_dcch_msg(const byte_buffer& rrc_container);
+
+/// \brief Generates dummy F1AP TRP INFORMATION RESPONSE message.
+f1ap_message generate_trp_information_response(const trp_id_t& trp_id);
+
+/// \brief Generates dummy F1AP TRP INFORMATION FAILURE message.
+f1ap_message generate_trp_information_failure(const trp_id_t& trp_id);
 
 } // namespace test_helpers
 } // namespace srsran
