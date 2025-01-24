@@ -66,6 +66,7 @@ public:
   std::optional<du_ue_index_t>                    last_ue_cfg_applied;
   std::optional<std::vector<du_ue_index_t>>       last_ues_to_reset;
   std::optional<du_positioning_info_request>      last_positioning_info_request;
+  std::optional<du_positioning_meas_request>      last_positioning_meas_request;
 
   explicit dummy_f1ap_du_configurator(timer_factory& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
 
@@ -131,6 +132,13 @@ public:
   {
     last_positioning_info_request = req;
     return launch_no_op_task(du_positioning_info_response{next_positioning_info_response});
+  }
+
+  async_task<du_positioning_meas_response>
+  request_positioning_measurement(const du_positioning_meas_request& req) override
+  {
+    last_positioning_meas_request = req;
+    return launch_no_op_task(du_positioning_meas_response{});
   }
 
   /// \brief Retrieve task scheduler specific to a given UE.

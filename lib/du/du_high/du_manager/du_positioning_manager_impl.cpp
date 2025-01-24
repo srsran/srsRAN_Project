@@ -24,3 +24,9 @@ du_positioning_manager_impl::request_positioning_info(const du_positioning_info_
 {
   return start_du_ue_positioning_info_procedure(req, cell_mng, ue_mng);
 }
+
+async_task<du_positioning_meas_response>
+du_positioning_manager_impl::request_positioning_measurement(const du_positioning_meas_request& req)
+{
+  return start_positioning_measurement_procedure(req);
+}

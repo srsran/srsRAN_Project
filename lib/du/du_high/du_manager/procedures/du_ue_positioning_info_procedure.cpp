@@ -16,6 +16,14 @@ using namespace srs_du;
 
 #ifndef SRSRAN_HAS_ENTERPRISE
 
+async_task<du_positioning_meas_response>
+srs_du::start_positioning_measurement_procedure(const du_positioning_meas_request& req)
+{
+  srslog::fetch_basic_logger("DU-MNG").error(
+      "Positioning Measurement Procedure Failed. Cause: Feature only supported in Enterprise version.");
+  return launch_no_op_task(du_positioning_meas_response{});
+}
+
 async_task<du_positioning_info_response>
 srs_du::start_du_ue_positioning_info_procedure(const du_positioning_info_request& msg,
                                                du_cell_manager&                   du_cells_,

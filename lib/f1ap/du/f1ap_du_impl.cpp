@@ -406,6 +406,9 @@ void f1ap_du_impl::handle_initiating_message(const init_msg_s& msg)
     case msg_types::paging:
       handle_paging_request(msg.value.paging());
       break;
+    case msg_types::positioning_meas_request:
+      handle_positioning_measurement_request(msg.value.positioning_meas_request());
+      break;
     case msg_types::positioning_info_request:
       handle_positioning_information_request(msg.value.positioning_info_request());
       break;
@@ -572,6 +575,11 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
     info.paging_cells.push_back(to_du_cell_index(std::distance(ctxt.served_cells.cbegin(), du_cell_it)));
   }
   paging_notifier.on_paging_received(info);
+}
+
+void f1ap_du_impl::handle_positioning_measurement_request(const asn1::f1ap::positioning_meas_request_s& msg)
+{
+  du_mng.schedule_async_task(start_positioning_measurement_procedure(msg, du_mng, *tx_pdu_notifier));
 }
 
 void f1ap_du_impl::handle_positioning_information_request(const asn1::f1ap::positioning_info_request_s& msg)

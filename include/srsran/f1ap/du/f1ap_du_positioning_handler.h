@@ -29,11 +29,26 @@ struct srs_carrier {
   std::vector<scs_specific_carrier> ul_ch_bw_per_scs_list;
   bwp_configuration                 ul_bwp_cfg;
   srs_config                        srs_cfg;
-  pci_t                             pci;
+  std::optional<pci_t>              pci;
 };
 
 struct du_positioning_info_response {
   std::vector<srs_carrier> srs_carriers;
+};
+
+struct du_positioning_meas_request {
+  std::vector<srs_carrier> srs_carriers;
+};
+
+struct pos_meas_result_item {};
+
+struct pos_meas_result {
+  uint32_t                          trp_id;
+  std::vector<pos_meas_result_item> result;
+};
+
+struct du_positioning_meas_response {
+  std::vector<pos_meas_result> pos_meas_list;
 };
 
 /// Interface used by F1AP-DU to request the DU for positioning services.
@@ -44,6 +59,10 @@ public:
 
   /// Request UE positioning information as per TS 38.473, Section 8.13.9.
   virtual async_task<du_positioning_info_response> request_positioning_info(const du_positioning_info_request& req) = 0;
+
+  /// Request UE positioning measurement as per TS 38.473, Section 8.13.2.
+  virtual async_task<du_positioning_meas_response>
+  request_positioning_measurement(const du_positioning_meas_request& req) = 0;
 };
 
 } // namespace srsran::srs_du

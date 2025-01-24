@@ -23,6 +23,9 @@ public:
 
   async_task<du_positioning_info_response> request_positioning_info(const du_positioning_info_request& req) override;
 
+  async_task<du_positioning_meas_response>
+  request_positioning_measurement(const du_positioning_meas_request& req) override;
+
 private:
   du_cell_manager& cell_mng;
   du_ue_manager&   ue_mng;

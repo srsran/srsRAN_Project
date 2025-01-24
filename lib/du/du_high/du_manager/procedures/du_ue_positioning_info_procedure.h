@@ -22,4 +22,8 @@ async_task<du_positioning_info_response> start_du_ue_positioning_info_procedure(
                                                                                 du_cell_manager& du_cells_,
                                                                                 du_ue_manager&   ue_mng_);
 
+/// Initiate a DU UE positioning measurement procedure.
+async_task<du_positioning_meas_response>
+start_positioning_measurement_procedure(const du_positioning_meas_request& req);
+
 } // namespace srsran::srs_du

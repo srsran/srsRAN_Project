@@ -110,6 +110,9 @@ private:
   /// \brief Handle Paging as per TS38.473, Section 8.7.
   void handle_paging_request(const asn1::f1ap::paging_s& msg);
 
+  /// \brief Handle POSITIONING MEASUREMENT REQUEST as per TS 38.473, Section 8.13.3.
+  void handle_positioning_measurement_request(const asn1::f1ap::positioning_meas_request_s& msg);
+
   /// \brief Handle POSITIONING INFORMATION REQUEST as per TS 38.473, Section 8.13.9.
   void handle_positioning_information_request(const asn1::f1ap::positioning_info_request_s& msg);
 
