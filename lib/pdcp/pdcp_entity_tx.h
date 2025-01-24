@@ -193,22 +193,13 @@ private:
   /// \brief Get estimated size of a PDU from an SDU
   uint32_t get_pdu_size(const byte_buffer& sdu);
 
+  /// TODO write docs
+  void discard_callback();
+
   pdcp_tx_metrics          metrics;
   pdcp_metrics_aggregator& metrics_agg;
-
-  class discard_callback;
 };
 
-class pdcp_entity_tx::discard_callback
-{
-public:
-  discard_callback(pdcp_entity_tx* parent_, uint32_t count_) : parent(parent_), discard_count(count_) {}
-  void operator()(timer_id_t timer_id);
-
-private:
-  pdcp_entity_tx* parent;
-  uint32_t        discard_count;
-};
 } // namespace srsran
 
 namespace fmt {

@@ -204,7 +204,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     // Only start for finite durations and if not running already.
     if (cfg.discard_timer.value() != pdcp_discard_timer::infinity && not discard_timer.is_running()) {
       discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
-                        discard_callback{this, st.tx_next});
+                        [this](timer_id_t timer_id) { discard_callback(); });
       discard_timer.run();
     }
 
@@ -814,20 +814,31 @@ void pdcp_entity_tx::discard_pdu(uint32_t count)
 }
 
 // Discard Timer Callback (discardTimer)
-void pdcp_entity_tx::discard_callback::operator()(timer_id_t timer_id)
+void pdcp_entity_tx::discard_callback()
 {
-  parent->logger.log_debug("Discard timer expired. count={}", discard_count);
+  logger.log_debug("Discard timer expired. st={}", st);
 
-  // Add discard to metrics
-  parent->metrics.add_discard_timouts(1);
+  // Add discard to metrics.
+  metrics.add_discard_timouts(1);
 
-  // Discard all PDUs that match the discard timer tick.
-  tick_point_t discard_time = parent->tx_window[discard_count].time_of_arrival;
-  for (uint32_t count = discard_count;
-       parent->tx_window.has_sn(count) && parent->tx_window[count].time_of_arrival == discard_time;
-       count++) {
-    parent->discard_pdu(count);
+  // Sanity check oldest PDU.
+  if (not tx_window.has_sn(st.tx_next_ack)) {
+    logger.log_error("Discard timer expired, but oldest PDU not in TX window. st={}", st);
+    return;
   }
 
-  // TODO restart timeout for any pending SDUs
+  // Discard all PDUs that match the discard timer tick.
+  tick_point_t oldest_timepoint = tx_window[st.tx_next_ack].time_of_arrival;
+  do {
+    discard_pdu(st.tx_next_ack); // this updates st.tx_next_ack to the oldest PDU still in the window.
+    if (not tx_window.has_sn(st.tx_next_ack)) {
+      logger.log_debug("Finished discard callback. There are no new PDUs. st={}", st);
+      break;
+    }
+    if (tx_window[st.tx_next_ack].time_of_arrival != oldest_timepoint) {
+      logger.log_debug("Finished discard callback. There are new PDUs with a new discard timer. st={}", st);
+      // TODO restart timeout for any pending SDUs
+      break;
+    }
+  } while (st.tx_next_ack != st.tx_next);
 }
