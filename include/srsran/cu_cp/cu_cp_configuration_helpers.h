@@ -12,11 +12,13 @@
 
 #include "srsran/cu_cp/cu_cp_configuration.h"
 
-namespace srsran {
-namespace config_helpers {
+namespace srsran::config_helpers {
 
 /// Generates default QoS configuration used by gNB CU-CP. The default configuration should be valid.
 /// Dependencies between timers should be considered:
+///   * discardTimer: How long the PDCP will wait for a transmist/acknoledgment notification,
+///                   before requesting a discard to the RLC. Should not exceed the packet
+///                   delay budget.
 ///   * t-Reordering: How long the PDCP will wait for an out-of-order PDU. When using RLC UM,
 ///                   this value should be larger than the RLC's t-Reassembly. When using AM,
 ///                   this value should be larger than a few RLC retransmissions, see the RLC
@@ -203,5 +205,5 @@ get_supported_plmns(const std::vector<srs_cu_cp::cu_cp_configuration::ngap_param
   return plmns;
 }
 
-} // namespace config_helpers
-} // namespace srsran
+} // namespace srsran::config_helpers
+

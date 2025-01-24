@@ -14,8 +14,7 @@
 #include "srsran/ran/qos/five_qi.h"
 #include <map>
 
-namespace srsran {
-namespace config_helpers {
+namespace srsran::config_helpers {
 
 /// Generates default QoS configuration used by gNB DU. The default configuration should be valid.
 /// Dependencies between RLC timers should be considered:
@@ -151,5 +150,5 @@ inline std::map<five_qi_t, srs_du::du_qos_config> make_default_du_qos_config_lis
   return qos_list;
 }
 
-} // namespace config_helpers
-} // namespace srsran
+} // namespace srsran::config_helpers
+

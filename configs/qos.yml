@@ -4,17 +4,25 @@
 # This is a supplementary configuration to modify the RLC and PDCP radio bearers on 
 # a per 5QI basis.
 
+# The default values are picked to try to acheive the QoS requirements defined in
+# TS 23.501 -- System architecture for the 5G System, table 5.7.4-1.
+
 qos:
+  #
+  # Guaranteed Bitrate 5QIs
+  #
   -
-    five_qi: 1 # E.g. Conversational Voice
+    # 5QI=1 e.g. Conversational Voice
+    # PDB=100ms PER=10^-2
+    five_qi: 1
     pdcp:
       tx:
-        sn: 12
-        discard_timer: -1
+        sn: 18
+        discard_timer: 100
         status_report_required: false
       rx:
-        sn: 12
-        t_reordering: 80
+        sn: 18
+        t_reordering: 0
         out_of_order_delivery: false
     f1u_cu_up:
       backoff_timer: 10
@@ -31,15 +39,17 @@ qos:
           sn: 12
           t-reassembly: 50
   -
-    five_qi: 2 # E.g. Conversational Video
+    # 5QI=2 e.g. conversational video
+    # PDB=150ms PER=10^-3
+    five_qi: 2
     pdcp:
       tx:
-        sn: 12
-        discard_timer: -1
+        sn: 18
+        discard_timer: 150
         status_report_required: false
       rx:
-        sn: 12
-        t_reordering: 80
+        sn: 18
+        t_reordering: 0
         out_of_order_delivery: false
     f1u_cu_up:
       backoff_timer: 10
@@ -56,12 +66,54 @@ qos:
           sn: 12
           t-reassembly: 50
   -
-    five_qi: 5 # E.g. IMS signaling
+    # 5QI=3 e.g. real time gaming
+    # PDB=50ms PER=10^-3
+    five_qi: 3 # E.g. Real Time Gaming
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 50
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 35
+  -
+    # 5QI = 4 e.g. non-conversational video 
+    # PDB = 300ms PER = 10^-6
+    five_qi: 4
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 300
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 150
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
     rlc:
       mode: am
       am:
         tx:
-          sn: 12
+          sn: 18
           t-poll-retransmit: 80
           max-retx-threshold: 4
           poll-pdu: 64
@@ -69,34 +121,167 @@ qos:
           queue-size: 16384
           queue-bytes: 6172672
         rx:
-          sn: 12
+          sn: 18
           t-reassembly: 80
           t-status-prohibit: 10
+  -
+    # 5QI = 65 e.g. Mission Critical user plane Push To Talk 
+    # PDB = 75ms PER = 10^-2
+    five_qi: 65
     pdcp:
-      integrity_required: false
       tx:
-        sn: 12
-        discard_timer: -1
+        sn: 18
+        discard_timer: 75
         status_report_required: false
       rx:
-        sn: 12
-        t_reordering: 80
+        sn: 18
+        t_reordering: 0
         out_of_order_delivery: false
-    f1u_du:
-      backoff_timer: 10
     f1u_cu_up:
       backoff_timer: 10
-  -
-    five_qi: 7 # E.g. Voice, Video (live streaming)
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 50
+    # 5QI = 66 e.g. Non-Mission-Critical user plane Push To Talk voice 
+    # PDB = 100ms PER = 10^-2
+    five_qi: 66
     pdcp:
-      integrity_required: false
+      tx:
+        sn: 18
+        discard_timer: 100
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 50
+    # 5QI = 67 e.g. Mission Critical Video user plane 
+    # PDB = 100ms PER = 10^-3
+    five_qi: 67
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 100
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 50
+  #
+  # Non-Guaranteed Bitrate 5QIs
+  #
+  -
+    # 5QI = 5 e.g IMS signaling 
+    # PDB = 100ms PER = 10^-6
+    five_qi: 5
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 100
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 500
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 18
+          t-poll-retransmit: 80
+          max-retx-threshold: 4
+          poll-pdu: 64
+          poll-byte: 125
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 18
+          t-reassembly: 80
+          t-status-prohibit: 10
+  -
+    # 5QI = 6 e.g Video (Buffered Streaming)
+    # PDB = 300ms PER = 10^-6
+    five_qi: 6 # E.g. IMS signaling
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 300
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 100
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 18
+          t-poll-retransmit: 80
+          max-retx-threshold: 4
+          poll-pdu: 64
+          poll-byte: 125
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 18
+          t-reassembly: 80
+          t-status-prohibit: 10
+  -
+    # 5QI = 7 e.g Voice,Video (Live Streaming)
+    # PDB = 100ms PER = 10^-3
+    five_qi: 7
+    pdcp:
       tx:
         sn: 12
         discard_timer: -1
         status_report_required: false
       rx:
         sn: 12
-        t_reordering: 80
+        t_reordering: 50
         out_of_order_delivery: false
     f1u_cu_up:
       backoff_timer: 10
@@ -113,7 +298,41 @@ qos:
           sn: 12
           t-reassembly: 100
   -
-    five_qi: 9 # E.g. Buffered video streaming, TCP-based traffic
+    # 5QI = 8 e.g Video (Buffered Streaming)
+    # PDB = 300ms PER = 10^-6
+    five_qi: 8 # E.g. IMS signaling
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: 300
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 100
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 12
+          t-poll-retransmit: 80
+          max-retx-threshold: 4
+          poll-pdu: 64
+          poll-byte: 125
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 80
+          t-status-prohibit: 10
+  -
+    # 5QI = 9 e.g Video (Buffered Streaming)
+    # PDB = 300ms PER = 10^-6
+    five_qi: 9
     pdcp:
       tx:
         sn: 18
@@ -122,6 +341,102 @@ qos:
       rx:
         sn: 18
         t_reordering: 220
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 18
+          t-poll-retransmit: 20
+          max-retx-threshold: 32
+          poll-pdu: 16
+          poll-byte: -1
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 18
+          t-reassembly: 20
+          t-status-prohibit: 10
+  -
+    # 5QI = 10 e.g Video (Buffered Streaming)
+    # PDB = 1100ms PER = 10^-6
+    five_qi: 10
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 1100
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 500
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 18
+          t-poll-retransmit: 20
+          max-retx-threshold: 32
+          poll-pdu: 16
+          poll-byte: -1
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 18
+          t-reassembly: 20
+          t-status-prohibit: 10
+  -
+    # 5QI = 69 e.g Mission Critical delay sensitive signalling
+    # PDB = 1100ms PER = 10^-6
+    five_qi: 69
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 1100
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 500
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: am
+      am:
+        tx:
+          sn: 18
+          t-poll-retransmit: 20
+          max-retx-threshold: 32
+          poll-pdu: 16
+          poll-byte: -1
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 18
+          t-reassembly: 20
+          t-status-prohibit: 10
+  -
+    # 5QI = 70 e.g Mission Critical Data
+    # PDB = 200ms PER = 10^-6
+    five_qi: 70
+    pdcp:
+      tx:
+        sn: 18
+        discard_timer: 200
+        status_report_required: false
+      rx:
+        sn: 18
+        t_reordering: 100
         out_of_order_delivery: false
     f1u_cu_up:
       backoff_timer: 10
