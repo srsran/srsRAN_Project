@@ -50,15 +50,25 @@ struct du_positioning_info_response {
   std::vector<srs_carrier> srs_carriers;
 };
 
-struct du_positioning_meas_request {
-  std::vector<srs_carrier> srs_carriers;
+struct positioning_meas_quantity {
+  /// Granularity factor. Values: (-6, ..., 5).
+  std::optional<int8_t> granularity_factor;
 };
 
-struct pos_meas_result_item {};
+struct du_positioning_meas_request {
+  std::vector<trp_id_t>                  trp_meas_req_list;
+  std::vector<positioning_meas_quantity> pos_meas_quants;
+  std::vector<srs_carrier>               srs_carriers;
+};
+
+struct pos_meas_result_item {
+  uint8_t       granularity;
+  phy_time_unit ul_rtoa;
+};
 
 struct pos_meas_result {
   uint32_t                          trp_id;
-  std::vector<pos_meas_result_item> result;
+  std::vector<pos_meas_result_item> results;
 };
 
 struct du_positioning_meas_response {
