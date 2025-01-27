@@ -98,6 +98,46 @@ make_default_cu_up_qos_config_list(bool warn_on_drop, timer_duration metrics_per
     // 5QI=70
     qos_list[uint_to_five_qi(70)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
   }
+  //
+  // Delay-critical Guaranteed Bitrate 5QIs
+  //
+  {
+    // 5QI=82
+    qos_list[uint_to_five_qi(82)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=83
+    qos_list[uint_to_five_qi(83)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=84
+    qos_list[uint_to_five_qi(84)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=85
+    qos_list[uint_to_five_qi(85)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=86
+    qos_list[uint_to_five_qi(86)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=87
+    qos_list[uint_to_five_qi(87)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=88
+    qos_list[uint_to_five_qi(88)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=89
+    qos_list[uint_to_five_qi(89)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+  {
+    // 5QI=90
+    qos_list[uint_to_five_qi(90)] = make_default_cu_up_custom_cfg_item(warn_on_drop, metrics_period, test_mode);
+  }
+
   return qos_list;
 }
 
