@@ -45,7 +45,7 @@ public:
   /// Stops configured cell.
   async_task<void> stop() override;
 
-  async_task<bool> reconfigure(const mac_cell_reconfig_request& request) override;
+  async_task<mac_cell_reconfig_response> reconfigure(const mac_cell_reconfig_request& request) override;
 
   void handle_slot_indication(slot_point sl_tx) override;
   void handle_error_indication(slot_point sl_tx, error_event event) override;

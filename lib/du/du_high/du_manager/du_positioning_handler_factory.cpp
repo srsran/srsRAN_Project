@@ -48,8 +48,10 @@ private:
 
 } // namespace
 
-std::unique_ptr<f1ap_du_positioning_handler>
-srs_du::create_du_positioning_handler(du_cell_manager& cell_mng, du_ue_manager& ue_mng, srslog::basic_logger& logger)
+std::unique_ptr<f1ap_du_positioning_handler> srs_du::create_du_positioning_handler(const du_manager_params& du_params,
+                                                                                   du_cell_manager&         cell_mng,
+                                                                                   du_ue_manager&           ue_mng,
+                                                                                   srslog::basic_logger&    logger)
 {
   return std::make_unique<dummy_du_positioning_handler>(logger);
 }

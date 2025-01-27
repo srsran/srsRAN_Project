@@ -35,7 +35,7 @@ private:
   async_task<gnbdu_config_update_response> handle_f1_gnbdu_config_update();
 
   // Helper to update MAC of the new cell parameters.
-  async_task<bool> handle_mac_cell_update(unsigned cell_idx);
+  async_task<mac_cell_reconfig_response> handle_mac_cell_update(unsigned cell_idx);
 
   const du_param_config_request request;
   const du_manager_params&      du_params;

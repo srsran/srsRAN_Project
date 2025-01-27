@@ -57,9 +57,12 @@ public:
 class mac_cell_dummy_controller final : public mac_cell_controller
 {
 public:
-  async_task<void> start() override;
-  async_task<void> stop() override { return start(); }
-  async_task<bool> reconfigure(const mac_cell_reconfig_request& request) override { return launch_no_op_task(true); }
+  async_task<void>                       start() override;
+  async_task<void>                       stop() override { return start(); }
+  async_task<mac_cell_reconfig_response> reconfigure(const mac_cell_reconfig_request& request) override
+  {
+    return launch_no_op_task(mac_cell_reconfig_response{true});
+  }
 };
 
 class mac_dl_dummy_configurer final : public mac_dl_configurator

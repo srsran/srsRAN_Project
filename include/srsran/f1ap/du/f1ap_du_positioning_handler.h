@@ -55,15 +55,20 @@ struct positioning_meas_quantity {
   std::optional<int8_t> granularity_factor;
 };
 
+struct du_trp_meas_request {
+  trp_id_t                           trp_id;
+  std::optional<nr_cell_global_id_t> cgi;
+};
+
 struct du_positioning_meas_request {
-  std::vector<trp_id_t>                  trp_meas_req_list;
+  std::vector<du_trp_meas_request>       trp_meas_req_list;
   std::vector<positioning_meas_quantity> pos_meas_quants;
   std::vector<srs_carrier>               srs_carriers;
 };
 
 struct pos_meas_result_item {
-  uint8_t       granularity;
-  phy_time_unit ul_rtoa;
+  uint8_t  granularity;
+  uint32_t ul_rtoa;
 };
 
 struct pos_meas_result {

@@ -103,11 +103,14 @@ public:
   bool handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override { return true; }
   void handle_ue_config_applied(du_ue_index_t ue_index) override {}
 
-  void             handle_rx_data_indication(mac_rx_data_indication pdu) override {}
-  void             handle_paging_information(const paging_information& msg) override {}
-  async_task<void> start() override { return launch_no_op_task(); }
-  async_task<void> stop() override { return launch_no_op_task(); }
-  async_task<bool> reconfigure(const mac_cell_reconfig_request& request) override { return launch_no_op_task(true); }
+  void                                   handle_rx_data_indication(mac_rx_data_indication pdu) override {}
+  void                                   handle_paging_information(const paging_information& msg) override {}
+  async_task<void>                       start() override { return launch_no_op_task(); }
+  async_task<void>                       stop() override { return launch_no_op_task(); }
+  async_task<mac_cell_reconfig_response> reconfigure(const mac_cell_reconfig_request& request) override
+  {
+    return launch_no_op_task(mac_cell_reconfig_response{true});
+  }
 };
 
 struct test_params {

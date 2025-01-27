@@ -112,3 +112,16 @@ du_cell_index_t du_cell_manager::get_cell_index(nr_cell_global_id_t nr_cgi) cons
   }
   return cell_index;
 }
+
+du_cell_index_t du_cell_manager::get_cell_index(pci_t pci) const
+{
+  du_cell_index_t cell_index = du_cell_index_t::INVALID_DU_CELL_INDEX;
+  for (unsigned i = 0, e = nof_cells(); i != e; ++i) {
+    const du_cell_config& cell_it = get_cell_cfg(to_du_cell_index(i));
+    if (cell_it.pci == pci) {
+      cell_index = to_du_cell_index(i);
+      break;
+    }
+  }
+  return cell_index;
+}

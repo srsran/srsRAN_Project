@@ -19,10 +19,29 @@ struct mac_slice_configuration {
   // TODO: Fill remaining fields
 };
 
+/// MAC cell positioning measurement request.
+struct mac_cell_positioning_measurement_request {
+  /// SRS resources to measure.
+  std::vector<srs_config> srs_resources;
+};
+
+/// MAC cell positioning measurement response.
+struct mac_cell_positioning_measurement_response {
+  std::vector<phy_time_unit> ul_rtoas;
+};
+
 /// Reconfiguration of a MAC cell during its operation.
 struct mac_cell_reconfig_request {
   /// If not empty, passes a new SIB1 payload to broadcast.
   byte_buffer new_sib1_buffer;
+  /// If not empty, the MAC is requested to collect a new positioning measurement.
+  const mac_cell_positioning_measurement_request* positioning = nullptr;
+};
+
+struct mac_cell_reconfig_response {
+  /// Whether a pending SIB1 reconfiguration was successful.
+  bool                                                     sib1_updated = false;
+  std::optional<mac_cell_positioning_measurement_response> positioning;
 };
 
 /// Interface used to handle a MAC cell activation/deactivation.
@@ -38,7 +57,7 @@ public:
   virtual async_task<void> stop() = 0;
 
   /// Reconfigure operation cell.
-  virtual async_task<bool> reconfigure(const mac_cell_reconfig_request& request) = 0;
+  virtual async_task<mac_cell_reconfig_response> reconfigure(const mac_cell_reconfig_request& request) = 0;
 };
 
 /// Class used to setup the MAC cells and slices.

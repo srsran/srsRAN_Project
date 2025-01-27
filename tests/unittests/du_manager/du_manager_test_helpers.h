@@ -249,12 +249,12 @@ public:
     wait_manual_event_tester<void>           wait_stop;
     std::optional<mac_cell_reconfig_request> last_cell_recfg_req;
 
-    async_task<void> start() override { return wait_start.launch(); }
-    async_task<void> stop() override { return wait_stop.launch(); }
-    async_task<bool> reconfigure(const mac_cell_reconfig_request& request) override
+    async_task<void>                       start() override { return wait_start.launch(); }
+    async_task<void>                       stop() override { return wait_stop.launch(); }
+    async_task<mac_cell_reconfig_response> reconfigure(const mac_cell_reconfig_request& request) override
     {
       last_cell_recfg_req = request;
-      return launch_no_op_task(true);
+      return launch_no_op_task(mac_cell_reconfig_response{true});
     }
   };
 

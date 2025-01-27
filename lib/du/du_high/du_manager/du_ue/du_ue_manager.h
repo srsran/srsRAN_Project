@@ -65,6 +65,8 @@ public:
   /// \brief Number of DU UEs currently active.
   size_t nof_ues() const { return ue_db.size(); }
 
+  const auto& get_du_ues() const { return ue_db; }
+
   /// \brief Schedule an asynchronous task to be executed in the UE control loop.
   void schedule_async_task(du_ue_index_t ue_index, async_task<void> task) override
   {

@@ -33,6 +33,8 @@ public:
 
   du_cell_index_t get_cell_index(nr_cell_global_id_t nr_cgi) const;
 
+  du_cell_index_t get_cell_index(pci_t pci) const;
+
   void set_cell_state(du_cell_index_t cell_index, bool active)
   {
     assert_cell_exists(cell_index);

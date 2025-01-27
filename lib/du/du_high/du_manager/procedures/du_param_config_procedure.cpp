@@ -32,9 +32,9 @@ void du_param_config_procedure::operator()(coro_context<async_task<du_param_conf
 
   for (; next_cell_idx != request.cells.size(); ++next_cell_idx) {
     // Reconfigure cell in the MAC.
-    CORO_AWAIT_VALUE(bool macresp, handle_mac_cell_update(next_cell_idx));
-    if (not macresp) {
-      resp.success = macresp;
+    CORO_AWAIT_VALUE(mac_cell_reconfig_response macresp, handle_mac_cell_update(next_cell_idx));
+    if (not macresp.sib1_updated) {
+      resp.success = false;
       CORO_EARLY_RETURN(resp);
     }
   }
@@ -83,7 +83,7 @@ async_task<gnbdu_config_update_response> du_param_config_procedure::handle_f1_gn
   return du_params.f1ap.conn_mng.handle_du_config_update(f1_req);
 }
 
-async_task<bool> du_param_config_procedure::handle_mac_cell_update(unsigned changed_cell_idx)
+async_task<mac_cell_reconfig_response> du_param_config_procedure::handle_mac_cell_update(unsigned changed_cell_idx)
 {
   du_cell_index_t       cell_index = changed_cells[changed_cell_idx];
   const du_cell_config& cell_cfg   = du_cells.get_cell_cfg(cell_index);
