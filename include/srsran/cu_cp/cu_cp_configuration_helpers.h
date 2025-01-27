@@ -19,7 +19,7 @@ namespace srsran::config_helpers {
 /// TS 23.501 -- System architecture for the 5G System, table 5.7.4-1.
 ///
 /// Dependencies between timers should be considered:
-///   * discardTimer: How long the PDCP will wait for a transmist/acknoledgment notification,
+///   * discardTimer: How long the PDCP will wait for a transmit/acknowledgement notification,
 ///                   before requesting a discard to the RLC. Should not exceed the packet
 ///                   delay budget, if the 5QI is delay sensitive.
 ///   * t-Reordering: How long the PDCP will wait for an out-of-order PDU. When using RLC UM,
@@ -153,7 +153,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     qos_list[uint_to_five_qi(65)] = cfg;
   }
   {
-    // 5QI = 66 e.g. Mission Critical user plane Push To Talk
+    // 5QI = 66 e.g. Non-Mission-Critical user plane Push To Talk voice
     // PDB = 100ms PER = 10^-2
     srs_cu_cp::cu_cp_qos_config cfg{};
     pdcp_config                 pdcp_cfg{};
@@ -177,7 +177,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     qos_list[uint_to_five_qi(66)] = cfg;
   }
   {
-    // 5QI = 67 e.g. Mission Critical user plane Push To Talk
+    // 5QI = 67 e.g. Mission Critical Video user plane
     // PDB = 100ms PER = 10^-3
     srs_cu_cp::cu_cp_qos_config cfg{};
     pdcp_config                 pdcp_cfg{};
@@ -270,7 +270,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     // > Rx
     pdcp_cfg.rx.sn_size               = pdcp_sn_size::size18bits;
     pdcp_cfg.rx.out_of_order_delivery = false;
-    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms220;
+    pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms50;
 
     cfg.pdcp                     = pdcp_cfg;
     qos_list[uint_to_five_qi(7)] = cfg;
@@ -336,7 +336,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
 
     // > Tx
     pdcp_cfg.tx.sn_size                = pdcp_sn_size::size18bits;
-    pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::ms300; // fix
+    pdcp_cfg.tx.discard_timer          = pdcp_discard_timer::ms1500;
     pdcp_cfg.tx.status_report_required = false;
 
     // > Rx

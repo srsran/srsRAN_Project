@@ -276,11 +276,11 @@ qos:
     five_qi: 7
     pdcp:
       tx:
-        sn: 12
+        sn: 18
         discard_timer: -1
         status_report_required: false
       rx:
-        sn: 12
+        sn: 18
         t_reordering: 50
         out_of_order_delivery: false
     f1u_cu_up:
@@ -368,7 +368,7 @@ qos:
     pdcp:
       tx:
         sn: 18
-        discard_timer: 1100
+        discard_timer: 1500
         status_report_required: false
       rx:
         sn: 18
