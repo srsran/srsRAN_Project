@@ -1315,6 +1315,43 @@ ubuntu-24.04 amd64 native:
         ENABLE_FFTW: "False"
         ENABLE_MKL: "True"
 
+ubuntu-24.04 amd64 avx:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 400 minutes
+  interruptible: false
+  variables:
+    OS: ubuntu-24.04
+    MARCH: x86-64-v2
+    INFRASTRUCTURE_TAG: amd64
+  parallel:
+    matrix:
+      - <<: *basic_combinations
+      - <<: *basic_combinations
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
+
+ubuntu-24.04 amd64 avx512 TRACE:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 400 minutes
+  interruptible: false
+  variables:
+    OS: ubuntu-24.04
+    MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-D SRSRAN_L2_TRACE -D SRSRAN_L1_TRACE -D SRSRAN_L2_LATE_TRACE -D SRSRAN_OFH_TRACE -D SRSRAN_UP_TRACE"
+  parallel:
+    matrix:
+      - <<: *basic_combinations
+      - <<: *basic_combinations
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
+
 ubuntu-24.04 arm native:
   extends: .build_and_unit
   rules:
