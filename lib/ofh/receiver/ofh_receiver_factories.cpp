@@ -84,6 +84,7 @@ create_uplink_data_flow(const receiver_config&                            receiv
 {
   data_flow_uplane_uplink_data_impl_config config;
   config.ul_eaxc = receiver_cfg.ul_eaxc;
+  config.sector  = receiver_cfg.sector;
 
   data_flow_uplane_uplink_data_impl_dependencies dependencies;
   dependencies.logger                 = &logger;
