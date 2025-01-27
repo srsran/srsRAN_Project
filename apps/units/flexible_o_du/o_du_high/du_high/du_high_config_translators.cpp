@@ -916,7 +916,12 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
     out_cfg.ue.auto_ack_harq = true;
   }
   out_cfg.ue.ul_mcs = {pusch.min_ue_mcs, pusch.max_ue_mcs};
+  out_cfg.ue.ul_mcs = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
+  if (pusch.mcs_table == pusch_mcs_table::qam256) {
+    // This setting is to avoid CSI not being decoded in UCI on PUSCH wih QAM 256.
+    out_cfg.ue.initial_ul_dc_offset = dc_offset_t::outside;
+  }
   out_cfg.ue.initial_ul_dc_offset   = pusch.dc_offset;
   out_cfg.ue.max_puschs_per_slot    = pusch.max_puschs_per_slot;
   out_cfg.ue.olla_ul_target_bler    = pusch.olla_target_bler;
