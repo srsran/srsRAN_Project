@@ -886,6 +886,7 @@ public:
 
   std::string              to_string() const;
   unbounded_octstring<Al>& from_string(const std::string& hexstr);
+  unbounded_octstring<Al>& from_bytes(srsran::span<const uint8_t> bytes);
 
   uint64_t                 to_number() const;
   unbounded_octstring<Al>& from_number(uint64_t val);

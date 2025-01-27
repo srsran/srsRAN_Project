@@ -11,6 +11,7 @@
 #include "du_high_config_translators.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
 #include "du_high_config.h"
+#include "srsran/cbs/cbs_encoder.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
@@ -107,6 +108,82 @@ static sib2_info create_sib2_info()
   sib2.cell_reselection_priority = 6;
   sib2.thresh_serving_low_p      = 0;
   return sib2;
+}
+
+static sib6_info create_sib6_info(const du_high_unit_sib_config::etws_params& etws_config)
+{
+  sib6_info sib6;
+
+  sib6.message_id    = etws_config.message_id;
+  sib6.serial_number = etws_config.serial_num;
+  sib6.warning_type  = etws_config.warning_type;
+
+  return sib6;
+}
+
+static std::vector<uint8_t> encode_warning_message(const std::string& warning_message, unsigned data_coding_scheme)
+{
+  // Number of bytes carried by each warning message segment. It must be set to a value below the SIB capacity.
+  static constexpr unsigned msg_segment_nof_bytes = 100;
+
+  std::vector<uint8_t>       encoded_warning_message;
+  cbs_encoder::encoding_type encoding = cbs_encoder::select_cbs_encoding(data_coding_scheme);
+  switch (encoding) {
+    case cbs_encoder::encoding_type::GSM7:
+      encoded_warning_message = cbs_encoder::fill_cb_data_gsm7(warning_message);
+      break;
+    case cbs_encoder::encoding_type::UCS2:
+      encoded_warning_message = cbs_encoder::fill_cb_data_ucs2(warning_message);
+      break;
+    case cbs_encoder::encoding_type::INVALID:
+    default:
+      report_error("Invalid or unsupported CBS encoding type.");
+  }
+
+  if (encoded_warning_message.size() > msg_segment_nof_bytes) {
+    report_error("Endoded warning message length (i.e., {}) exceeded message segment size (i.e., {}.",
+                 encoded_warning_message.size(),
+                 msg_segment_nof_bytes);
+  }
+
+  return encoded_warning_message;
+}
+
+static sib7_info create_sib7_info(const du_high_unit_sib_config::etws_params& etws_config)
+{
+  sib7_info sib7;
+
+  if (!etws_config.warning_message.has_value()) {
+    report_error("Scheduled SIB-7 but no ETWS warning message is configured.");
+  }
+
+  sib7.message_id    = etws_config.message_id;
+  sib7.serial_number = etws_config.serial_num;
+
+  sib7.warning_message_segment_number = 0;
+  sib7.warning_message_segment_type   = srsran::warning_msg_seg_order::last_segment;
+  sib7.data_coding_scheme             = etws_config.data_coding_scheme;
+
+  sib7.warning_message_segment =
+      encode_warning_message(etws_config.warning_message.value(), etws_config.data_coding_scheme);
+
+  return sib7;
+}
+
+static sib8_info create_sib8_info(const du_high_unit_sib_config::cmas_params& cmas_config)
+{
+  sib8_info sib8;
+
+  sib8.message_id         = cmas_config.message_id;
+  sib8.serial_number      = cmas_config.serial_num;
+  sib8.data_coding_scheme = cmas_config.data_coding_scheme;
+
+  sib8.warning_message_segment_number = 0;
+  sib8.warning_message_segment_type   = srsran::warning_msg_seg_order::last_segment;
+
+  sib8.warning_message_segment = encode_warning_message(cmas_config.warning_message, cmas_config.data_coding_scheme);
+
+  return sib8;
 }
 
 static sib19_info create_sib19_info(const du_high_unit_config& config)
@@ -338,6 +415,15 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
         switch (sib_id) {
           case 2: {
             item = create_sib2_info();
+          } break;
+          case 6: {
+            item = create_sib6_info(base_cell.sib_cfg.etws_config);
+          } break;
+          case 7: {
+            item = create_sib7_info(base_cell.sib_cfg.etws_config);
+          } break;
+          case 8: {
+            item = create_sib8_info(base_cell.sib_cfg.cmas_config);
           } break;
           case 19: {
             if (config.ntn_cfg.has_value()) {

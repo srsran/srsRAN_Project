@@ -10,6 +10,7 @@
 set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 add_subdirectory(asn1)
+add_subdirectory(cbs)
 add_subdirectory(cu_cp)
 add_subdirectory(cu_up)
 add_subdirectory(du)

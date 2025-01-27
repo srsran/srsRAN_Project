@@ -1105,6 +1105,20 @@ unbounded_octstring<Al>& unbounded_octstring<Al>::from_string(const std::string&
 }
 
 template <bool Al>
+unbounded_octstring<Al>& unbounded_octstring<Al>::from_bytes(span<const uint8_t> bytes)
+{
+  // clears previous buffer.
+  *this = byte_buffer{byte_buffer::fallback_allocation_tag{}};
+
+  // appends bytes to buffer.
+  if (not this->append(bytes)) {
+    log_error("Failed to append byte to buffer");
+  }
+
+  return *this;
+}
+
+template <bool Al>
 uint64_t unbounded_octstring<Al>::to_number() const
 {
   return octet_string_helper::to_uint(*this);

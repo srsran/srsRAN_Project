@@ -167,14 +167,12 @@ struct sib2_info {
   bool derive_ssb_index_from_cell;
 };
 
-/// Number of bytes carried by each warning message segment. It must be set to a value below the SIB capacity.
-static constexpr unsigned msg_segment_nof_bytes = 100;
 /// Alias for the ETWS/CMAS warning message type.
-using warning_msg_type = static_vector<uint8_t, msg_segment_nof_bytes>;
+using warning_msg_seg_type = std::vector<uint8_t>;
 /// Alias for the ETWS/CMAS segment number type.
-using warning_msg_segment_num_type = bounded_integer<uint8_t, 0, 63>;
+using warning_msg_seg_num_type = bounded_integer<unsigned, 0, 63>;
 /// ETWS/CMAS warning message segment type.
-enum class warning_msg_seg_type { not_last_segment, last_segment };
+enum class warning_msg_seg_order { not_last_segment, last_segment };
 
 /// ETWS primary notification SIB contents (see TS38.331 Section 6.3.2, Information Element \e SIB6).
 struct sib6_info {
@@ -187,14 +185,14 @@ struct sib6_info {
   /// It carries the NGAP Message Identifier IE (see TS38.413, Section 9.3.1.35), which is set according to the Message
   /// Identifier field of the Cell Broadcast Service (CBS) ETWS Primary Notification Message (see TS23.041,
   /// Section 9.4.3.3.4). It identifies the source and type of the warning message.
-  uint16_t message_id;
+  unsigned message_id;
   /// \brief Parameter "serialNumber".
   ///
   /// It carries the NGAP Serial Number IE (see TS38.413, Section 9.3.1.36), which is set according to the Serial
   /// Number field of the Cell Broadcast Service (CBS) ETWS Primary Notification Message (see TS23.041,
   /// Section 9.4.3.3.3). It identifies a specific warning message from other message of the same type. It must be
   /// incremented when a new warning message is broadcast.
-  uint16_t serial_number;
+  unsigned serial_number;
   /// \brief Parameter "warningType".
   ///
   /// It carries the NGAP Warning Type IE (see TS38.413, Section 9.3.1.39), which is set according to the Warning
@@ -202,7 +200,7 @@ struct sib6_info {
   /// Section 9.4.3.3.5). It identifies the type of ETWS warning between Earthquake, Tsunami, Earthquake and Tsunami and
   /// Test. It also carries the Emergency User Alert and Popup fields, which activate the audible warning and
   /// notification popup features on the UEs.
-  uint16_t warning_type;
+  unsigned warning_type;
 };
 
 /// ETWS secondary notification SIB contents (see TS38.331 Section 6.3.2, Information Element \e SIB7).
@@ -216,34 +214,34 @@ struct sib7_info {
   /// It carries the Message Identifier NGAP IE (see TS38.413, Section 9.3.1.35), which is set according to the Message
   /// Identifier field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.1). It identifies the
   /// source and type of the warning message.
-  uint16_t message_id;
+  unsigned message_id;
   /// \brief Parameter "serialNumber".
   ///
   /// It carries the Serial Number NGAP IE (see TS38.413, Section 9.3.1.36), which is set according to the Serial
   /// Number field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.2). It identifies a
   /// specific warning message from other message of the same type. It must be incremented when a new warning message is
   /// broadcast.
-  uint16_t serial_number;
+  unsigned serial_number;
   /// \brief Parameter "warningMessageSegmentType".
   ///
   /// Set to \c last_segment if the SIB carries the last warning message segment, set to \c not_last_segment otherwise.
-  warning_msg_seg_type warning_message_segment_type;
+  warning_msg_seg_order warning_message_segment_type;
   /// \brief Paramter "warningMessageSegmentNumber".
   ///
   /// Segment number of the \c warning_message_segment contained in the SIB (zero-indexed).
-  warning_msg_segment_num_type warning_message_segment_number;
+  warning_msg_seg_num_type warning_message_segment_number;
   /// \brief Parameter "warningMessageSegment".
   ///
   /// It carries a segment of the ETWS warning message contents NGAP IE defined in TS TS38.413, Section 9.3.1.41, which
   /// has the contents of a CBS message CB Data IE (See TS23.041 Section 9.4.3.2.4).
-  warning_msg_type warning_message_segment;
+  warning_msg_seg_type warning_message_segment;
   /// \brief Parameter "dataCodingScheme".
   ///
   /// It carries the Data Coding Scheme NGAP IE (see TS38.413, Section 9.3.1.41), which is set according to the Data
   /// Coding Scheme field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.3). It identifies
   /// the coding and the language of the warning message as per TS23.041 Section 9.4.2.2.4. It is required if the SIB
   /// carries the first warning message segment, otherwise leave unset.
-  std::optional<uint8_t> data_coding_scheme;
+  std::optional<unsigned> data_coding_scheme;
 };
 
 /// CMAS notification SIB contents (see TS38.331 Section 6.3.2, Information Element \e SIB8).
@@ -257,34 +255,34 @@ struct sib8_info {
   /// It carries the Message Identifier NGAP IE (see TS38.413, Section 9.3.1.35), which is set according to the Message
   /// Identifier field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.1). It identifies the
   /// source and type of the warning message.
-  uint16_t message_id;
+  unsigned message_id;
   /// \brief Parameter "serialNumber".
   ///
   /// It carries the Serial Number NGAP IE (see TS38.413, Section 9.3.1.36), which is set according to the Serial
   /// Number field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.2). It identifies a
   /// specific warning message from other message of the same type. It must be incremented when a new warning message is
   /// broadcast.
-  uint16_t serial_number;
+  unsigned serial_number;
   /// \brief Parameter "warningMessageSegmentType".
   ///
   /// Set to \c last_segment if the SIB carries the last warning message segment, set to \c not_last_segment otherwise.
-  warning_msg_seg_type warning_message_segment_type;
+  warning_msg_seg_order warning_message_segment_type;
   /// \brief Paramter "warningMessageSegmentNumber".
   ///
   /// Segment number of the \c warning_message_segment contained in the SIB (zero-indexed).
-  warning_msg_segment_num_type warning_message_segment_number;
+  warning_msg_seg_num_type warning_message_segment_number;
   /// \brief Parameter "warningMessageSegment".
   ///
   /// It carries a segment of the CMAS warning message contents NGAP IE defined in TS TS38.413, Section 9.3.1.41, which
   /// has the contents of a CBS message CB Data IE (See TS23.041 Section 9.4.3.2.4).
-  warning_msg_type warning_message_segment;
+  warning_msg_seg_type warning_message_segment;
   /// \brief Parameter "dataCodingScheme".
   ///
   /// It carries the Data Coding Scheme NGAP IE (see TS38.413, Section 9.3.1.41), which is set according to the Data
   /// Coding Scheme field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.3). It identifies
   /// the coding and the language of the warning message as per TS23.041 Section 9.4.2.2.4. It is required if the SIB
   /// carries the first warning message segment, otherwise leave unset.
-  std::optional<uint8_t> data_coding_scheme;
+  std::optional<unsigned> data_coding_scheme;
 };
 
 struct sib19_info {

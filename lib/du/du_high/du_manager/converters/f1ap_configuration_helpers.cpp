@@ -311,7 +311,8 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
 
   if (du_cfg.si_config.has_value()) {
     for (const auto& sib : du_cfg.si_config->sibs) {
-      if (std::holds_alternative<sib2_info>(sib)) {
+      if (std::holds_alternative<sib2_info>(sib) || std::holds_alternative<sib6_info>(sib) ||
+          std::holds_alternative<sib7_info>(sib) || std::holds_alternative<sib8_info>(sib)) {
         sib1.si_sched_info_present = true;
         bool ret = asn1::number_to_enum(sib1.si_sched_info.si_win_len, du_cfg.si_config.value().si_window_len_slots);
         srsran_assert(ret, "Invalid SI window length");
@@ -414,6 +415,72 @@ asn1::rrc_nr::sib2_s make_asn1_rrc_cell_sib2(const sib2_info& sib2_params)
   sib2.intra_freq_cell_resel_info.s_intra_search_p = sib2_params.s_intra_search_p;
   sib2.intra_freq_cell_resel_info.t_resel_nr       = sib2_params.t_reselection_nr;
   return sib2;
+}
+
+asn1::rrc_nr::sib6_s make_asn1_rrc_cell_sib6(const sib6_info& sib6_params)
+{
+  using namespace asn1::rrc_nr;
+  sib6_s sib6;
+  sib6.msg_id.from_number(sib6_params.message_id);
+  sib6.serial_num.from_number(sib6_params.serial_number);
+  sib6.warning_type.from_number(sib6_params.warning_type);
+  return sib6;
+}
+
+asn1::rrc_nr::sib7_s make_asn1_rrc_cell_sib7(const sib7_info& sib7_params)
+{
+  using namespace asn1::rrc_nr;
+  sib7_s sib7;
+
+  sib7.msg_id.from_number(sib7_params.message_id);
+  sib7.serial_num.from_number(sib7_params.serial_number);
+
+  span<const uint8_t> message_view(sib7_params.warning_message_segment);
+  sib7.warning_msg_segment.from_bytes(message_view);
+
+  sib7.warning_msg_segment_type.value =
+      (sib7_params.warning_message_segment_type == warning_msg_seg_order::last_segment)
+          ? sib7_s::warning_msg_segment_type_opts::last_segment
+          : sib7_s::warning_msg_segment_type_opts::not_last_segment;
+  sib7.warning_msg_segment_num = sib7_params.warning_message_segment_number.to_uint();
+
+  // Data and coding scheme is only present in the first message segment.
+  sib7.data_coding_scheme_present = sib7_params.warning_message_segment_number == 0;
+  if (sib7.data_coding_scheme_present) {
+    srsran_assert(sib7_params.data_coding_scheme.has_value(),
+                  "SIB-7 dataCodingScheme field must be present in the SIB carrying the first message segment.");
+    sib7.data_coding_scheme.from_number(sib7_params.data_coding_scheme.value());
+  }
+
+  return sib7;
+}
+
+asn1::rrc_nr::sib8_s make_asn1_rrc_cell_sib8(const sib8_info& sib8_params)
+{
+  using namespace asn1::rrc_nr;
+  sib8_s sib8;
+
+  sib8.msg_id.from_number(sib8_params.message_id);
+  sib8.serial_num.from_number(sib8_params.serial_number);
+
+  span<const uint8_t> message_view(sib8_params.warning_message_segment);
+  sib8.warning_msg_segment.from_bytes(message_view);
+
+  sib8.warning_msg_segment_type.value =
+      (sib8_params.warning_message_segment_type == warning_msg_seg_order::last_segment)
+          ? sib8_s::warning_msg_segment_type_opts::last_segment
+          : sib8_s::warning_msg_segment_type_opts::not_last_segment;
+  sib8.warning_msg_segment_num = sib8_params.warning_message_segment_number.to_uint();
+
+  // Data and coding scheme is only present in the first message segment.
+  sib8.data_coding_scheme_present = sib8_params.warning_message_segment_number == 0;
+  if (sib8.data_coding_scheme_present) {
+    srsran_assert(sib8_params.data_coding_scheme.has_value(),
+                  "SIB-8 dataCodingScheme field must be present in the SIB carrying the first message segment.");
+    sib8.data_coding_scheme.from_number(sib8_params.data_coding_scheme.value());
+  }
+
+  return sib8;
 }
 
 asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_params)
@@ -572,6 +639,24 @@ static asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_ make_asn1_rrc_sib
         out_sib.cell_resel_info_common.nrof_ss_blocks_to_average_present = true;
         out_sib.cell_resel_info_common.nrof_ss_blocks_to_average         = cfg.nof_ssbs_to_average.value();
       }
+      break;
+    }
+    case sib_type::sib6: {
+      const auto& cfg     = std::get<sib6_info>(sib);
+      sib6_s&     out_sib = ret.set_sib6();
+      out_sib             = make_asn1_rrc_cell_sib6(cfg);
+      break;
+    }
+    case sib_type::sib7: {
+      const auto& cfg     = std::get<sib7_info>(sib);
+      sib7_s&     out_sib = ret.set_sib7();
+      out_sib             = make_asn1_rrc_cell_sib7(cfg);
+      break;
+    }
+    case sib_type::sib8: {
+      const auto& cfg     = std::get<sib8_info>(sib);
+      sib8_s&     out_sib = ret.set_sib8();
+      out_sib             = make_asn1_rrc_cell_sib8(cfg);
       break;
     }
     case sib_type::sib19: {

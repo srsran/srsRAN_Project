@@ -500,6 +500,69 @@ struct du_high_unit_sib_config {
     std::optional<unsigned> si_window_position;
   };
 
+  /// \brief Earthquake and Tsunami Warning System (ETWS) message parameters.
+  ///
+  /// ETWS messages are broadcasted over SIB 6 and SIB 7. SIB 6 carries the ETWS primary notification, while SIB-7
+  /// carries the secondary notification.
+  struct etws_params {
+    /// \brief ETWS message ID (see \ref sib6_info::message_id). Values: {0, ..., 0xFFFF}
+    /// \remark See TS23.041 Section 9.4.1.2.2 for a list of meaningful values.
+    unsigned message_id;
+    /// \brief ETWS message serial number (see \ref sib6_info::serial_number). Values: {0, ..., 0xFFFF}
+    /// \remark See TS23.041 Section 9.4.1.2.1 for a list of meaningful values.
+    unsigned serial_num;
+    /// \brief ETWS warning type (see \ref sib6_info::warning_type). Values: {0, ..., 0xFFFF}
+    /// \remark See TS23.041 Section 9.3.24 for a list of meaningful values.
+    unsigned warning_type;
+    /// \brief CBS Coding scheme used for the warning message Values: {0, ..., 0xFF}.
+    ///
+    /// Supported coding schemes:
+    ///   - 0x00..0x0F: Languages using GSM-7 default alphabet.
+    ///   - 0x40..0x4F: General data coding indication (uncompressed text, no message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0x50..0x5F: General data coding indication (uncompressed text, message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0xF0..0xFF: Data coding / message handling.
+    ///     Bit 2 must be set to 0 (GSM-7 encoding).
+    ///
+    /// \remark See TS23.038 Section 5 for a list of meaningful values.
+    unsigned data_coding_scheme;
+    /// \brief ETWS warning message.
+    ///
+    /// Character support depends on the chosen coding scheme (see \ref data_coding_scheme).
+    ///
+    /// \remark Required if SIB-7 is scheduled in \ref si_sched_info, otherwise leave unset.
+    std::optional<std::string> warning_message;
+  };
+
+  /// \brief Commercial Mobile Alert Service (CMAS) message parameters.
+  ///
+  /// CMAS messages are broadcasted over SIB 8.
+  struct cmas_params {
+    /// \brief CMAS message ID (see \ref sib8_info::message_id). Values: {0, ..., 0xFFFF}
+    /// \remark See TS23.041 Section 9.4.1.2.2 for a list of meaningful values.
+    unsigned message_id;
+    /// \brief CMAS message serial number (see \ref sib8_info::serial_number). Values: {0, ..., 0xFFFF}
+    /// \remark See TS23.041 Section 9.4.1.2.1 for a list of meaningful values.
+    unsigned serial_num;
+    /// \brief CBS Coding scheme used for the warning message Values: {0, ..., 0xFF}.
+    ///
+    /// Supported coding schemes:
+    ///   - 0x00..0x0F: Languages using GSM-7 default alphabet.
+    ///   - 0x40..0x4F: General data coding indication (uncompressed text, no message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0x50..0x5F: General data coding indication (uncompressed text, message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0xF0..0xFF: Data coding / message handling.
+    ///     Bit 2 must be set to 0 (GSM-7 encoding).
+    ///
+    /// \remark See TS23.038 Section 5 for a list of meaningful values.
+    unsigned data_coding_scheme;
+    /// \brief CMAS warning message.
+    /// \remark Character support depends on the chosen coding scheme (see \ref data_coding_scheme).
+    std::string warning_message;
+  };
+
   struct sib_ue_timers_and_constants {
     /// t300
     /// Values (in ms): {100, 200, 300, 400, 600, 1000, 1500, 2000}
@@ -533,6 +596,10 @@ struct du_high_unit_sib_config {
   sib_ue_timers_and_constants ue_timers_and_constants;
   /// Parameters of the SIB19.
   sib19_info sib19;
+  /// ETWS configuration parameters.
+  etws_params etws_config;
+  /// CMAS configuration parameters.
+  cmas_params cmas_config;
 };
 
 struct du_high_unit_csi_config {

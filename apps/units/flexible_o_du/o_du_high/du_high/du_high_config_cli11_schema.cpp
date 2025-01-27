@@ -1121,7 +1121,7 @@ static void configure_cli11_si_sched_info(CLI::App& app, du_high_unit_sib_config
              "Mapping of SIB types to SI-messages. SIB numbers should not be repeated")
       ->default_function(get_vector_default_function(span<const uint8_t>(si_sched_info.sib_mapping_info)))
       ->capture_default_str()
-      ->check(CLI::IsMember({2, 19}));
+      ->check(CLI::IsMember({2, 6, 7, 8, 19}));
   add_option(
       app, "--si_window_position", si_sched_info.si_window_position, "SI window position of the associated SI-message")
       ->capture_default_str()
@@ -1213,6 +1213,52 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
       ->check(CLI::IsMember({1, 2, 4, 8, 10, 20, 40, 80}));
 }
 
+static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::etws_params& sib_params)
+{
+  add_option(app, "--message_id", sib_params.message_id, "ETWS message ID.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xFFFF));
+
+  add_option(app, "--serial_num", sib_params.serial_num, "ETWS message serial number.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xFFFF));
+
+  add_option(app, "--warning_type", sib_params.warning_type, "ETWS warning type.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xFFFF));
+
+  add_option(app, "--data_coding_scheme", sib_params.data_coding_scheme, "ETWS message CBS coding scheme.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xFF));
+
+  add_option(app,
+             "--warning_message",
+             sib_params.warning_message,
+             "ETWS warning message. Max. Length and character support depends on the chosen coding scheme.")
+      ->capture_default_str();
+}
+
+static void configure_cli11_cmas_args(CLI::App& app, du_high_unit_sib_config::cmas_params& sib_params)
+{
+  add_option(app, "--message_id", sib_params.message_id, "CMAS message ID.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xFFFF));
+
+  add_option(app, "--serial_num", sib_params.serial_num, "CMAS message serial number.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xFFFF));
+
+  add_option(app, "--data_coding_scheme", sib_params.data_coding_scheme, "CMAS message CBS coding scheme.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xFF));
+
+  add_option(app,
+             "--warning_message",
+             sib_params.warning_message,
+             "CMAS warning message. Max. Length and character support depends on the chosen coding scheme.")
+      ->capture_default_str();
+}
+
 static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib_params)
 {
   add_option(app,
@@ -1241,6 +1287,12 @@ static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib
         }
       },
       "Configures the scheduling for each of the SI-messages broadcast by the gNB");
+
+  CLI::App* etws_subcmd = add_subcommand(app, "etws", "ETWS configuration parameters");
+  configure_cli11_etws_args(*etws_subcmd, sib_params.etws_config);
+
+  CLI::App* cmas_subcmd = add_subcommand(app, "cmas", "CMAS configuration parameters");
+  configure_cli11_cmas_args(*cmas_subcmd, sib_params.cmas_config);
 
   add_option(app,
              "--t300",

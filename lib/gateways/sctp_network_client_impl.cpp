@@ -281,9 +281,9 @@ sctp_network_client_impl::connect_to(const std::string&                         
 
 void sctp_network_client_impl::receive()
 {
-  struct sctp_sndrcvinfo                            sri       = {};
-  int                                               msg_flags = 0;
-  std::array<uint8_t, network_gateway_sctp_max_len> temp_recv_buffer;
+  struct sctp_sndrcvinfo                            sri              = {};
+  int                                               msg_flags        = 0;
+  std::array<uint8_t, network_gateway_sctp_max_len> temp_recv_buffer = {};
 
   // fromlen is an in/out variable in sctp_recvmsg.
   sockaddr_storage msg_src_addr;
