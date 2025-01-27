@@ -269,13 +269,14 @@ variables:
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
 
-.smoke rhel:
+.smoke ubsan:
   extends: .build_and_unit
   variables:
-    OS: rhel-8
+    OS: ubuntu-24.10
     COMPILER: gcc
-    CMAKE_BUILD_TYPE: Release
+    CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
+    ENABLE_UBSAN: "True"
     TEST_MODE: default
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
@@ -397,8 +398,8 @@ smoke tsan cached:
   cache:
     - *cache_build_get
 
-smoke rhel cached:
-  extends: .smoke rhel
+smoke ubsan cached:
+  extends: .smoke ubsan
   stage: manual
   timeout: 1 hour
   rules:
@@ -514,8 +515,8 @@ smoke tsan clean:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
 
-smoke rhel clean:
-  extends: .smoke rhel
+smoke ubsan clean:
+  extends: .smoke ubsan
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
 
@@ -681,8 +682,8 @@ smoke tsan update cache:
   cache:
     - *cache_build_set
 
-smoke rhel update cache:
-  extends: .smoke rhel
+smoke ubsan update cache:
+  extends: .smoke ubsan
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
       when: delayed
@@ -1125,6 +1126,11 @@ debian 12 amd64 avx512:
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
+      - OS: [ubuntu-24.10, ubuntu-24.04]
+        SANITIZER: ubsan
+        COMPILER: [gcc, clang]
+        ENABLE_UBSAN: "True"
+        TEST_MODE: default
 
 sanitizers amd64 native:
   extends: .weekly sanitizers
@@ -1149,6 +1155,11 @@ sanitizers amd64 native:
         ENABLE_ASAN: "True"
         TEST_MODE: default
       # Valgrind doesn't support AVX512 instruction set
+      - OS: [ubuntu-24.10, ubuntu-24.04]
+        SANITIZER: ubsan
+        COMPILER: [gcc, clang]
+        ENABLE_UBSAN: "True"
+        TEST_MODE: default
 
 sanitizers amd64 avx2:
   extends: .weekly sanitizers
@@ -1177,6 +1188,11 @@ sanitizers amd64 avx2:
         SANITIZER: valgrind
         COMPILER: gcc
         TEST_MODE: valgrind
+      - OS: [ubuntu-24.10, ubuntu-24.04]
+        SANITIZER: ubsan
+        COMPILER: [gcc, clang]
+        ENABLE_UBSAN: "True"
+        TEST_MODE: default
 
 sanitizers amd64 avx512:
   extends: .weekly sanitizers
@@ -1202,6 +1218,11 @@ sanitizers amd64 avx512:
         ENABLE_ASAN: "True"
         TEST_MODE: default
       # Valgrind doesn't support AVX512 instruction set
+      - OS: [ubuntu-24.10, ubuntu-24.04]
+        SANITIZER: ubsan
+        COMPILER: [gcc, clang]
+        ENABLE_UBSAN: "True"
+        TEST_MODE: default
 
 sanitizers arm native:
   extends: .weekly sanitizers
