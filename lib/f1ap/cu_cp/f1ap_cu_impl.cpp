@@ -181,6 +181,18 @@ f1ap_cu_impl::handle_trp_information_request(const trp_information_request_t& re
       });
 }
 
+async_task<expected<positioning_information_response_t, positioning_information_failure_t>>
+f1ap_cu_impl::handle_positioning_information_request(const positioning_information_request_t& request)
+{
+  logger.info("Positioning information requests are not supported");
+  return launch_async(
+      [](coro_context<async_task<expected<positioning_information_response_t, positioning_information_failure_t>>>&
+             ctx) {
+        CORO_BEGIN(ctx);
+        CORO_RETURN(make_unexpected(positioning_information_failure_t{}));
+      });
+}
+
 async_task<expected<measurement_response_t, measurement_failure_t>>
 f1ap_cu_impl::handle_measurement_information_request(const measurement_request_t& request)
 {
@@ -419,6 +431,11 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
         logger.warning("Unexpected transaction id={}", transaction_id.value());
       }
       break;
+    case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::positioning_info_resp:
+      if (auto* ue_ctxt = get_ue_ctxt_in_ue_assoc_msg(outcome)) {
+        ue_ctxt->ev_mng.positioning_information_outcome.set(outcome.value.positioning_info_resp());
+      }
+      break;
     default:
       logger.warning("Successful outcome of type {} is not supported", outcome.value.type().to_string());
       break;
@@ -465,6 +482,11 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
       }
       if (not ev_mng.transactions.set_response(transaction_id.value(), make_unexpected(outcome))) {
         logger.warning("Unexpected transaction id={}", transaction_id.value());
+      }
+      break;
+    case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::positioning_info_fail:
+      if (auto* ue_ctxt = get_ue_ctxt_in_ue_assoc_msg(outcome)) {
+        ue_ctxt->ev_mng.positioning_information_outcome.set(outcome.value.positioning_info_fail());
       }
       break;
     default:

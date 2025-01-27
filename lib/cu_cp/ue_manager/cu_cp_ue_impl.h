@@ -18,6 +18,7 @@
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "cu_cp_ue_impl_interface.h"
 #include "ue_task_scheduler_impl.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/plmn_identity.h"
 #include <optional>
 #include <unordered_map>
@@ -64,6 +65,9 @@ public:
 
   /// \brief Get the UE index of the UE.
   ue_index_t get_ue_index() override { return ue_index; }
+
+  /// \brief Get the index of the DU where the UE is connected.
+  du_index_t get_du_index() override { return ue_ctxt.du_idx; }
 
   /// \brief Get the PCI of the UE.
   [[nodiscard]] pci_t get_pci() const { return pci; };

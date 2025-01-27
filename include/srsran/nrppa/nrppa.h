@@ -39,6 +39,9 @@ public:
   /// \brief Get the UE index of the UE.
   virtual ue_index_t get_ue_index() = 0;
 
+  /// \brief Get the index of the DU where the UE is connected.
+  virtual du_index_t get_du_index() = 0;
+
   /// \brief Get the measurement results of the UE.
   virtual std::optional<cell_measurement_positioning_info>& on_measurement_results_required() = 0;
 
@@ -51,6 +54,11 @@ class nrppa_f1ap_notifier
 {
 public:
   virtual ~nrppa_f1ap_notifier() = default;
+
+  /// \brief Notifies the F1AP about a positioning information request.
+  /// \returns The outcome of the procedure.
+  virtual async_task<expected<positioning_information_response_t, positioning_information_failure_t>>
+  on_positioning_information_request(const positioning_information_request_t& request) = 0;
 
   /// \brief Notifies the F1AP about a measurement information request.
   /// \returns The outcome of the procedure.
