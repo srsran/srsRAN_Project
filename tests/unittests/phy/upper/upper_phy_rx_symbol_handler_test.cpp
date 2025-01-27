@@ -89,15 +89,16 @@ protected:
   {
     const unsigned nof_symbols = 2;
 
-    uplink_processor::pucch_pdu pdu = {};
-    pdu.format0.start_symbol_index  = 2;
-    pdu.format0.nof_symbols         = nof_symbols;
-    pdu.format0.cp                  = cyclic_prefix::NORMAL;
+    uplink_processor::pucch_pdu pdu     = {};
+    auto&                       format0 = pdu.config.emplace<pucch_processor::format0_configuration>();
+    format0.start_symbol_index          = 2;
+    format0.nof_symbols                 = nof_symbols;
+    format0.cp                          = cyclic_prefix::NORMAL;
 
     pdu_repo.add_pucch_pdu(slot_point(0, 0, 0), pdu);
 
     // Uplink processor gets called on the last symbol allocated in this PDU.
-    for (unsigned i = 0, e = pdu.format0.start_symbol_index + nof_symbols; i != e; ++i) {
+    for (unsigned i = 0, e = format0.start_symbol_index + nof_symbols; i != e; ++i) {
       upper_phy_rx_symbol_context ctx = {};
       ctx.symbol                      = i;
       ctx.slot                        = slot_point(0, 0, 0);

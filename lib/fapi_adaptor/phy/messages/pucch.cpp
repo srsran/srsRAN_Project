@@ -209,21 +209,26 @@ void srsran::fapi_adaptor::convert_pucch_fapi_to_phy(uplink_processor::pucch_pdu
   }
 
   switch (context.format) {
-    case pucch_format::FORMAT_0:
-      fill_format0_parameters(pdu.format0, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
-      break;
-    case pucch_format::FORMAT_1:
-      fill_format1_parameters(pdu.format1, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
-      break;
-    case pucch_format::FORMAT_2:
-      fill_format2_parameters(pdu.format2, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
-      break;
-    case pucch_format::FORMAT_3:
-      fill_format3_parameters(pdu.format3, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
-      break;
-    case pucch_format::FORMAT_4:
-      fill_format4_parameters(pdu.format4, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
-      break;
+    case pucch_format::FORMAT_0: {
+      auto& format0 = pdu.config.emplace<pucch_processor::format0_configuration>();
+      fill_format0_parameters(format0, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
+    } break;
+    case pucch_format::FORMAT_1: {
+      auto& format1 = pdu.config.emplace<pucch_processor::format1_configuration>();
+      fill_format1_parameters(format1, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
+    } break;
+    case pucch_format::FORMAT_2: {
+      auto& format2 = pdu.config.emplace<pucch_processor::format2_configuration>();
+      fill_format2_parameters(format2, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
+    } break;
+    case pucch_format::FORMAT_3: {
+      auto& format3 = pdu.config.emplace<pucch_processor::format3_configuration>();
+      fill_format3_parameters(format3, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
+    } break;
+    case pucch_format::FORMAT_4: {
+      auto& format4 = pdu.config.emplace<pucch_processor::format4_configuration>();
+      fill_format4_parameters(format4, fapi_pdu, slot_point(fapi_pdu.scs, sfn, slot), num_rx_ant);
+    } break;
     default:
       srsran_assert(0, "Unsupported PUCCH format {}", fmt::underlying(context.format));
   }

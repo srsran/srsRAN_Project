@@ -397,22 +397,8 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
 static error_type<std::string> is_pucch_pdu_valid(const uplink_pdu_validator&        ul_pdu_validator,
                                                   const uplink_processor::pucch_pdu& ul_pdu)
 {
-  switch (ul_pdu.context.format) {
-    case pucch_format::FORMAT_0:
-      return ul_pdu_validator.is_valid(ul_pdu.format0);
-    case pucch_format::FORMAT_1:
-      return ul_pdu_validator.is_valid(ul_pdu.format1);
-    case pucch_format::FORMAT_2:
-      return ul_pdu_validator.is_valid(ul_pdu.format2);
-    case pucch_format::FORMAT_3:
-      return ul_pdu_validator.is_valid(ul_pdu.format3);
-    case pucch_format::FORMAT_4:
-      return ul_pdu_validator.is_valid(ul_pdu.format4);
-    default:
-      break;
-  }
-
-  return make_unexpected("Unknown PUCCH format.");
+  return std::visit([&ul_pdu_validator](const auto& config) { return ul_pdu_validator.is_valid(config); },
+                    ul_pdu.config);
 }
 
 /// Returns a PRACH detector slot configuration using the given PRACH buffer context.
