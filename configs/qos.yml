@@ -457,3 +457,249 @@ qos:
           sn: 18
           t-reassembly: 20
           t-status-prohibit: 10
+  #
+  # Delay-critical Guaranteed Bitrate 5QIs
+  #
+  -
+    # 5QI = 82 e.g Discrete Automation
+    # PDB = 10ms PER = 10^-4
+    five_qi: 82
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: 10
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 10
+  -
+    # 5QI = 83 e.g Discrete Automation
+    # PDB = 10ms PER = 10^-4
+    five_qi: 83
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: 10
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 10
+  -
+    # 5QI = 84 e.g Discrete Automation
+    # PDB = 30ms PER = 10^-5
+    five_qi: 84
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: 30
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 10
+  -
+    # 5QI = 85 e.g Discrete Automation
+    # PDB = 5ms PER = 10^-5
+    five_qi: 85
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: 5
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 10
+  -
+    # 5QI = 86 e.g Discrete Automation
+    # PDB = 5ms PER = 10^-4
+    five_qi: 86
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: 5
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 10
+  -
+    # 5QI = 87 e.g Discrete Automation
+    # PDB = 5ms PER = 10^-3
+    five_qi: 87
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: 5
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 10
+  -
+    # 5QI = 88 e.g Discrete Automation
+    # PDB = 10ms PER = 10^-3
+    five_qi: 88
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: 10
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 10
+  -
+    # 5QI = 89 e.g Discrete Automation
+    # PDB = 15ms PER = 10^-4
+    five_qi: 89
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: 10
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 10
+  -
+    # 5QI = 90 e.g Discrete Automation
+    # PDB = 20ms PER = 10^-4
+    five_qi: 90
+    pdcp:
+      tx:
+        sn: 12
+        discard_timer: 20
+        status_report_required: false
+      rx:
+        sn: 12
+        t_reordering: 0
+        out_of_order_delivery: false
+    f1u_cu_up:
+      backoff_timer: 10
+    f1u_du:
+      backoff_timer: 10
+    rlc:
+      mode: um-bidir
+      um-bidir:
+        tx:
+          sn: 12
+          queue-size: 16384
+          queue-bytes: 6172672
+        rx:
+          sn: 12
+          t-reassembly: 10
