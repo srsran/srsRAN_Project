@@ -21,19 +21,18 @@ ue_link_adaptation_controller::ue_link_adaptation_controller(const cell_configur
     dl_olla.emplace(cell_cfg.expert_cfg.ue.olla_dl_target_bler,
                     cell_cfg.expert_cfg.ue.olla_cqi_inc,
                     cell_cfg.expert_cfg.ue.olla_max_cqi_offset);
-
-    last_dl_mcs_table = pdsch_mcs_table::qam64LowSe; // Set a different value to force update.
-    update_dl_mcs_lims(pdsch_mcs_table::qam64);
   }
+  last_dl_mcs_table = pdsch_mcs_table::qam64LowSe; // Set a different value to force update.
+  update_dl_mcs_lims(pdsch_mcs_table::qam64);
+
   if (cell_cfg.expert_cfg.ue.olla_ul_snr_inc > 0) {
     ul_olla.emplace(cell_cfg.expert_cfg.ue.olla_ul_target_bler,
                     cell_cfg.expert_cfg.ue.olla_ul_snr_inc,
                     cell_cfg.expert_cfg.ue.olla_max_ul_snr_offset);
-
-    // Set a different value to force update.
-    last_ul_mcs_table = pusch_mcs_table::qam64LowSe;
-    update_ul_mcs_lims(pusch_mcs_table::qam64, cell_cfg.use_msg3_transform_precoder());
   }
+  // Set a different value to force update.
+  last_ul_mcs_table = pusch_mcs_table::qam64LowSe;
+  update_ul_mcs_lims(pusch_mcs_table::qam64, cell_cfg.use_msg3_transform_precoder());
 }
 
 void ue_link_adaptation_controller::handle_dl_ack_info(bool                         ack_value,
