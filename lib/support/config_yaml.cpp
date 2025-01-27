@@ -148,6 +148,7 @@ std::vector<CLI::ConfigItem> yaml_config_parser::from_config_impl(const YAML::No
       results.insert(results.end(), sub_results.begin(), sub_results.end());
       continue;
     }
+
     // Sequences are stored as a vector of strings.
     if (value.IsSequence()) {
       CLI::ConfigItem& res = results.emplace_back();
@@ -156,6 +157,7 @@ std::vector<CLI::ConfigItem> yaml_config_parser::from_config_impl(const YAML::No
       for (const auto& str : value) {
         res.inputs.push_back(YAML::Dump(str));
       }
+      continue;
     }
 
     // If the item is not one of the previous, is defined but is null, just add an empty section, so CLI parses it.
