@@ -421,14 +421,28 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
   return {};
 }
 
-validator_result config_validators::validate_pusch_cfg(const uplink_config& ul_config)
+validator_result config_validators::validate_pusch_cfg(const uplink_config& ul_config, bool has_csi)
 {
   VERIFY(ul_config.init_ul_bwp.pusch_cfg.has_value(), "Missing configuration for pusch-Config in spCellConfig");
 
   const auto& pusch_cfg = ul_config.init_ul_bwp.pusch_cfg.value();
 
-  VERIFY(pusch_cfg.pusch_pwr_ctrl.has_value(), "Missing configuration for pusch-PowerControl in uplinkConfig");
-
+  VERIFY(pusch_cfg.uci_cfg.has_value(), "Missing configuration for uci-OnPUSCH in pusch-Config");
+  VERIFY(pusch_cfg.uci_cfg.value().beta_offsets_cfg.has_value() and
+             std::holds_alternative<uci_on_pusch::beta_offsets_semi_static>(
+                 pusch_cfg.uci_cfg.value().beta_offsets_cfg.value()),
+         "Missing configuration or wrong configuration for beta-Offsets in uci-OnPUSCH");
+  const auto& beta_offsets =
+      std::get<uci_on_pusch::beta_offsets_semi_static>(pusch_cfg.uci_cfg.value().beta_offsets_cfg.value());
+  VERIFY(beta_offsets.beta_offset_ack_idx_1.has_value() and beta_offsets.beta_offset_ack_idx_2.has_value() and
+             beta_offsets.beta_offset_ack_idx_3.has_value(),
+         "betaOffsetACK-Index1, betaOffsetACK-Index2 and betaOffsetACK-Index3 in uci-OnPUSCH must be configured");
+  if (has_csi) {
+    VERIFY(beta_offsets.beta_offset_csi_p1_idx_1.has_value() and beta_offsets.beta_offset_csi_p1_idx_2.has_value(),
+           "When CSI is enabled, betaOffsetCSI-Part1-Index1 and betaOffsetCSI-Part1-Index2 in uci-OnPUSCH must be "
+           "configured");
+  }
+  VERIFY(pusch_cfg.pusch_pwr_ctrl.has_value(), "Missing configuration for pusch-PowerControl in pusch-Config");
   VERIFY(not pusch_cfg.pusch_pwr_ctrl.value().is_tpc_accumulation_disabled,
          "TPC accumulation for PUSCH power control is expected to be enabled");
 

@@ -35,7 +35,8 @@ srsran::config_validators::validate_sched_ue_creation_request_message(const sche
         HANDLE_ERROR(validate_srs_cfg(cell.serv_cell_cfg));
       }
 
-      HANDLE_ERROR(validate_pusch_cfg(cell.serv_cell_cfg.ul_config.value()));
+      HANDLE_ERROR(
+          validate_pusch_cfg(cell.serv_cell_cfg.ul_config.value(), cell.serv_cell_cfg.csi_meas_cfg.has_value()));
     }
 
     HANDLE_ERROR(validate_csi_meas_cfg(cell.serv_cell_cfg, cell_cfg.tdd_cfg_common));
