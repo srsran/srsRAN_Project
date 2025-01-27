@@ -68,7 +68,7 @@ qos:
   -
     # 5QI=3 e.g. real time gaming
     # PDB=50ms PER=10^-3
-    five_qi: 3 # E.g. Real Time Gaming
+    five_qi: 3 
     pdcp:
       tx:
         sn: 18
@@ -103,7 +103,7 @@ qos:
         status_report_required: false
       rx:
         sn: 18
-        t_reordering: 150
+        t_reordering: 140
         out_of_order_delivery: false
     f1u_cu_up:
       backoff_timer: 10
@@ -241,7 +241,7 @@ qos:
   -
     # 5QI = 6 e.g Video (Buffered Streaming)
     # PDB = 300ms PER = 10^-6
-    five_qi: 6 # E.g. IMS signaling
+    five_qi: 6
     pdcp:
       tx:
         sn: 18
@@ -300,14 +300,14 @@ qos:
   -
     # 5QI = 8 e.g Video (Buffered Streaming)
     # PDB = 300ms PER = 10^-6
-    five_qi: 8 # E.g. IMS signaling
+    five_qi: 8
     pdcp:
       tx:
-        sn: 12
+        sn: 18
         discard_timer: 300
         status_report_required: false
       rx:
-        sn: 12
+        sn: 18
         t_reordering: 100
         out_of_order_delivery: false
     f1u_cu_up:
@@ -318,7 +318,7 @@ qos:
       mode: am
       am:
         tx:
-          sn: 12
+          sn: 18
           t-poll-retransmit: 80
           max-retx-threshold: 4
           poll-pdu: 64
@@ -326,7 +326,7 @@ qos:
           queue-size: 16384
           queue-bytes: 6172672
         rx:
-          sn: 12
+          sn: 18
           t-reassembly: 80
           t-status-prohibit: 10
   -
@@ -395,16 +395,16 @@ qos:
           t-status-prohibit: 10
   -
     # 5QI = 69 e.g Mission Critical delay sensitive signalling
-    # PDB = 1100ms PER = 10^-6
+    # PDB = 60ms PER = 10^-6
     five_qi: 69
     pdcp:
       tx:
         sn: 18
-        discard_timer: 1100
+        discard_timer: 60
         status_report_required: false
       rx:
         sn: 18
-        t_reordering: 500
+        t_reordering: 0
         out_of_order_delivery: false
     f1u_cu_up:
       backoff_timer: 10

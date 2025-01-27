@@ -17,6 +17,9 @@
 namespace srsran::config_helpers {
 
 /// Generates default QoS configuration used by gNB DU. The default configuration should be valid.
+/// The default values are picked to try to acheive the QoS requirements defined in
+/// TS 23.501 -- System architecture for the 5G System, table 5.7.4-1.
+///
 /// Dependencies between RLC timers should be considered:
 ///   * t-Reassembly: How long it takes for the RLC to detect a lost PDU. If larger than the MAC SR, we may drop a
 ///                   PDU prematurely in the case UM, or we may send NACKs prematurely for the case of AM.
