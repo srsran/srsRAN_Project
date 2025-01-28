@@ -10,6 +10,7 @@
 set_directory_properties(PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 add_subdirectory(buffer_pool)
+add_subdirectory(cmdline)
 add_subdirectory(e2)
 add_subdirectory(f1u)
 add_subdirectory(hal)
@@ -18,17 +19,14 @@ add_subdirectory(network)
 add_subdirectory(remote_control)
 add_subdirectory(worker_manager)
 
-set(SOURCES
-        stdin_command_dispatcher.cpp)
-
-add_library(srsran_app_services STATIC ${SOURCES})
-target_include_directories(srsran_app_services PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_app_services
+add_library(srsran_app_services INTERFACE)
+target_link_libraries(srsran_app_services INTERFACE
         srsran_buffer_pool_app_service
+        srsran_cmdline_app_service
         srsran_e2_app_service
         srsran_f1u_app_service
-        srsran_network_app_service
         srsran_hal_app_service
         srsran_logger_app_service
-        srsran_worker_manager_app_service
-        srsran_remote_control_app_service)
+        srsran_network_app_service
+        srsran_remote_control_app_service
+        srsran_worker_manager_app_service)

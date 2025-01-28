@@ -10,7 +10,7 @@
 
 #include "o_cu_cp_builder.h"
 #include "apps/services/metrics/metrics_config.h"
-#include "cu_cp/cu_cp_commands.h"
+#include "cu_cp/cu_cp_cmdline_commands.h"
 #include "cu_cp/cu_cp_config_translators.h"
 #include "e2/o_cu_cp_e2_config_translators.h"
 #include "o_cu_cp_unit_config.h"
@@ -74,7 +74,8 @@ o_cu_cp_unit srsran::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, o_cu_cp_
       std::move(n2_clients), std::move(e2_metric_connectors), srs_cu_cp::create_o_cu_cp(o_cu_cp_cfg, ocu_dependencies));
 
   // Add the commands;
-  ocucp.commands.push_back(std::make_unique<handover_app_command>(ocucp.unit->get_cu_cp().get_command_handler()));
+  ocucp.commands.cmdline.push_back(
+      std::make_unique<handover_app_command>(ocucp.unit->get_cu_cp().get_command_handler()));
 
   return ocucp;
 }

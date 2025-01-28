@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "apps/services/application_command.h"
-#include "apps/services/stdin_command_dispatcher_utils.h"
+#include "apps/services/cmdline/cmdline_command.h"
+#include "apps/services/cmdline/cmdline_command_dispatcher_utils.h"
 #include "srsran/adt/expected.h"
 #include "srsran/cu_cp/cu_cp_command_handler.h"
 #include "srsran/ran/pci.h"
@@ -20,7 +20,7 @@
 namespace srsran {
 
 /// Application command to trigger a handover.
-class handover_app_command : public app_services::application_command
+class handover_app_command : public app_services::cmdline_command
 {
   srs_cu_cp::cu_cp_command_handler& cu_cp;
 

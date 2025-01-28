@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include "apps/services/application_command.h"
-#include "metrics/du_high_scheduler_cell_metrics_consumers.h"
+#include "apps/services/cmdline/cmdline_command.h"
+#include "apps/units/flexible_o_du/o_du_high/du_high/metrics/du_high_scheduler_cell_metrics_consumers.h"
 
 namespace srsran {
 
 /// Application command to display/hide the DU high metrics in STDOUT.
-class toggle_stdout_metrics_app_command : public app_services::application_command
+class toggle_stdout_metrics_app_command : public app_services::cmdline_command
 {
   scheduler_cell_metrics_consumer_stdout& printer;
 

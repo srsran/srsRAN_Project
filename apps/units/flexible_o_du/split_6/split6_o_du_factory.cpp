@@ -56,9 +56,8 @@ o_du_unit srsran::create_o_du_split6(const split6_o_du_unit_config&             
 
   o_du_high_unit odu_hi_unit = make_o_du_high_unit(du_unit_cfg.odu_high_cfg, std::move(odu_hi_unit_dependencies));
 
-  odu_unit.commands        = std::move(odu_hi_unit.commands);
-  odu_unit.remote_commands = std::move(odu_hi_unit.remote_commands);
-  odu_unit.metrics         = std::move(odu_hi_unit.metrics);
+  odu_unit.commands = std::move(odu_hi_unit.commands);
+  odu_unit.metrics  = std::move(odu_hi_unit.metrics);
 
   // Create the DU.
   odu_unit.unit = std::make_unique<split6_o_du_impl>(std::move(fapi_adaptors), std::move(odu_hi_unit.o_du_hi));

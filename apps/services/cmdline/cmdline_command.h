@@ -16,14 +16,14 @@
 namespace srsran {
 namespace app_services {
 
-/// \brief Application command interface.
+/// \brief Command-line command interface.
 ///
-/// This interface allows to define commands that change the behavior of the application.
-class application_command
+/// This interface allows to define commands for the command line that change the behavior of the application.
+class cmdline_command
 {
 public:
   /// Default destructor.
-  virtual ~application_command() = default;
+  virtual ~cmdline_command() = default;
 
   /// Returns the name of this command.
   virtual std::string_view get_name() const = 0;

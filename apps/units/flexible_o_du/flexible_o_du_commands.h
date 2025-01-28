@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "apps/services/application_command.h"
-#include "apps/services/stdin_command_dispatcher_utils.h"
+#include "apps/services/cmdline/cmdline_command.h"
+#include "apps/services/cmdline/cmdline_command_dispatcher_utils.h"
 #include "srsran/adt/expected.h"
 #include "srsran/adt/to_array.h"
 #include "srsran/ru/ru_controller.h"
@@ -20,7 +20,7 @@
 namespace srsran {
 
 /// Application command to change the transmission gain.
-class tx_gain_app_command : public app_services::application_command
+class tx_gain_app_command : public app_services::cmdline_command
 {
   ru_gain_controller& controller;
 
@@ -62,7 +62,7 @@ public:
 };
 
 /// Application command to change the reception gain.
-class rx_gain_app_command : public app_services::application_command
+class rx_gain_app_command : public app_services::cmdline_command
 {
   ru_gain_controller& controller;
 
@@ -104,7 +104,7 @@ public:
 };
 
 /// Application command to change display the Radio Unit metrics.
-class ru_metrics_app_command : public app_services::application_command
+class ru_metrics_app_command : public app_services::cmdline_command
 {
   ru_controller& controller;
 
@@ -122,7 +122,7 @@ public:
 };
 
 /// Application command to change the DU log level.
-class change_log_level_app_command : public app_services::application_command
+class change_log_level_app_command : public app_services::cmdline_command
 {
   /// List of possible log channels that can be dynamically changed.
   static constexpr auto dynamic_log_channels = to_array<std::string_view>({"PHY"});
@@ -189,7 +189,7 @@ public:
 };
 
 /// Application command to set the carrier frequency offset.
-class cfo_app_command : public app_services::application_command
+class cfo_app_command : public app_services::cmdline_command
 {
   ru_cfo_controller& controller;
 

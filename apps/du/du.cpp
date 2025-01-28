@@ -12,11 +12,11 @@
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
+#include "apps/services/cmdline/cmdline_command_dispatcher.h"
 #include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
-#include "apps/services/stdin_command_dispatcher.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
@@ -334,14 +334,14 @@ int main(int argc, char** argv)
   srs_du::du& du_inst = *du_inst_and_cmds.unit;
 
   // Register the commands.
-  app_services::stdin_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_low_prio_exec, du_inst_and_cmds.commands);
+  app_services::cmdline_command_dispatcher command_parser(
+      *epoll_broker, *workers.non_rt_low_prio_exec, du_inst_and_cmds.commands.cmdline);
 
   // Start processing.
   du_inst.get_operation_controller().start();
 
   auto remote_control_server =
-      app_services::create_remote_server(du_cfg.remote_control_config.port, du_inst_and_cmds.remote_commands);
+      app_services::create_remote_server(du_cfg.remote_control_config.port, du_inst_and_cmds.commands.remote);
 
   {
     app_services::application_message_banners app_banner(app_name);

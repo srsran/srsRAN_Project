@@ -8,8 +8,8 @@
  *
  */
 
-#include "stdin_command_dispatcher.h"
-#include "stdin_command_dispatcher_utils.h"
+#include "cmdline_command_dispatcher.h"
+#include "cmdline_command_dispatcher_utils.h"
 #include "srsran/srslog/srslog.h"
 #include <csignal>
 #include <fcntl.h>
@@ -21,7 +21,7 @@ using namespace app_services;
 namespace {
 
 /// Command that manages closing the application.
-class close_app_command : public application_command
+class close_app_command : public cmdline_command
 {
 public:
   // See interface for documentation.
@@ -35,7 +35,7 @@ public:
 };
 
 /// Command that sleeps the application.
-class sleep_app_command : public application_command
+class sleep_app_command : public cmdline_command
 {
 public:
   // See interface for documentation.
@@ -77,9 +77,9 @@ public:
 
 } // namespace
 
-stdin_command_dispatcher::stdin_command_dispatcher(io_broker&                                 io_broker,
-                                                   task_executor&                             executor,
-                                                   span<std::unique_ptr<application_command>> commands_) :
+cmdline_command_dispatcher::cmdline_command_dispatcher(io_broker&                             io_broker,
+                                                       task_executor&                         executor,
+                                                       span<std::unique_ptr<cmdline_command>> commands_) :
   logger(srslog::fetch_basic_logger("APP"))
 {
   // Add the sleep command.
@@ -131,7 +131,7 @@ static void string_parse_list(const std::string& input, char delimiter, std::vec
   }
 }
 
-void stdin_command_dispatcher::parse_stdin()
+void cmdline_command_dispatcher::parse_stdin()
 {
   static constexpr size_t             read_chunk       = 256;
   unsigned                            total_bytes_read = 0;
@@ -171,7 +171,7 @@ void stdin_command_dispatcher::parse_stdin()
   }
 }
 
-void stdin_command_dispatcher::handle_command(const std::string& command)
+void cmdline_command_dispatcher::handle_command(const std::string& command)
 {
   // Print help message if the command is empty.
   if (command.empty()) {
@@ -192,7 +192,7 @@ void stdin_command_dispatcher::handle_command(const std::string& command)
   }
 }
 
-void stdin_command_dispatcher::print_help()
+void cmdline_command_dispatcher::print_help()
 {
   fmt::print("Available commands:\n");
   for (const auto& command : commands) {

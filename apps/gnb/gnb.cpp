@@ -11,12 +11,12 @@
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
+#include "apps/services/cmdline/cmdline_command_dispatcher.h"
 #include "apps/services/core_isolation_manager.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/remote_control/remote_server.h"
-#include "apps/services/stdin_command_dispatcher.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
@@ -443,15 +443,15 @@ int main(int argc, char** argv)
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
-  std::vector<std::unique_ptr<app_services::application_command>> commands;
-  for (auto& cmd : o_cucp_unit.commands) {
+  std::vector<std::unique_ptr<app_services::cmdline_command>> commands;
+  for (auto& cmd : o_cucp_unit.commands.cmdline) {
     commands.push_back(std::move(cmd));
   }
-  for (auto& cmd : du_inst_and_cmds.commands) {
+  for (auto& cmd : du_inst_and_cmds.commands.cmdline) {
     commands.push_back(std::move(cmd));
   }
 
-  app_services::stdin_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_low_prio_exec, commands);
+  app_services::cmdline_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_low_prio_exec, commands);
 
   // Connect E1AP to O-CU-CP.
   e1_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_e1_handler());
@@ -474,7 +474,7 @@ int main(int argc, char** argv)
   du_inst.get_operation_controller().start();
 
   auto remote_control_server =
-      app_services::create_remote_server(gnb_cfg.remote_control_config.port, du_inst_and_cmds.remote_commands);
+      app_services::create_remote_server(gnb_cfg.remote_control_config.port, du_inst_and_cmds.commands.remote);
 
   {
     app_services::application_message_banners app_banner(app_name);
