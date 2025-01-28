@@ -767,6 +767,14 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
   }
   logger.log_debug("Stopping discard timers. highest_count={}", highest_count);
 
+  // Get oldest PDU time of arrival.
+  if (not tx_window.has_sn(st.tx_next_ack)) {
+    logger.log_error(
+        "Trying to stop discard timers, but TX_NEXT_ACK in TX window. highest_count={} st={}", highest_count, st);
+    return;
+  }
+  tick_point_t old_toa = tx_window[st.tx_next_ack].time_of_arrival;
+
   // Stop discard timers and update TX_NEXT_ACK to oldest element in tx_window
   discard_timer.stop();
   while (st.tx_next_ack <= highest_count) {
@@ -780,7 +788,13 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
   // Update TX_TRANS if it falls out of the tx_window
   st.tx_trans = std::max(st.tx_trans, st.tx_next_ack);
 
-  // TODO restart discard timer if requrired.
+  // Restart discard timer if requrired.
+  if (st.tx_next_ack != st.tx_next) {
+    // There are still old PDUs.
+    unsigned new_timeout = (tx_window[st.tx_next_ack].time_of_arrival - old_toa);
+    discard_timer.set(std::chrono::milliseconds(new_timeout), [this](timer_id_t timer_id) { discard_callback(); });
+    discard_timer.run();
+  }
 }
 
 void pdcp_entity_tx::discard_pdu(uint32_t count)
