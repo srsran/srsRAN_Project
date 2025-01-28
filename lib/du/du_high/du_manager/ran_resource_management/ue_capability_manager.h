@@ -57,6 +57,10 @@ struct ue_capability_summary {
 
   /// Set to true if QAM-256 MCS table are supported for PDSCH transmissions.
   bool pdsch_qam256_supported = false;
+  /// Set to true if QAM-64 LowSe MCS table are supported for PDSCH transmissions.
+  bool pdsch_qam64lowse_supported = false;
+  /// Set to true if QAM-64 LowSe MCS table are supported for PUSCH transmissions.
+  bool pusch_qam64lowse_supported = false;
   /// Contains specific bands capabilities.
   std::unordered_map<nr_band, supported_band> bands;
   /// Set to true if Long DRX cycle is supported.
