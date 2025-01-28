@@ -57,10 +57,10 @@ tox python in builder:
     uhd_version: ""
     target_arch: ""
     GIT_STRATEGY: none
-    KUBERNETES_CPU_REQUEST: 4
-    KUBERNETES_CPU_LIMIT: 4
-    KUBERNETES_MEMORY_REQUEST: 7Gi
-    KUBERNETES_MEMORY_LIMIT: 7Gi
+    KUBERNETES_CPU_REQUEST: ${SRS_CPU_LIMIT}
+    KUBERNETES_CPU_LIMIT: ${SRS_CPU_LIMIT}
+    KUBERNETES_MEMORY_REQUEST: ${SRS_MEMORY_LIMIT}
+    KUBERNETES_MEMORY_LIMIT: ${SRS_MEMORY_LIMIT}
   before_script:
     - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -148,10 +148,10 @@ ubuntu-uhd-builder arm64:
     extra_arch_name: ""
     target_arch: ""
     GIT_STRATEGY: none
-    KUBERNETES_CPU_REQUEST: 6
-    KUBERNETES_CPU_LIMIT: 6
-    KUBERNETES_MEMORY_REQUEST: 12Gi
-    KUBERNETES_MEMORY_LIMIT: 12Gi
+    KUBERNETES_CPU_REQUEST: ${SRS_CPU_LIMIT}
+    KUBERNETES_CPU_LIMIT: ${SRS_CPU_LIMIT}
+    KUBERNETES_MEMORY_REQUEST: ${SRS_MEMORY_LIMIT}
+    KUBERNETES_MEMORY_LIMIT: ${SRS_MEMORY_LIMIT}
   before_script:
     - TZ=Europe/Madrid && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
