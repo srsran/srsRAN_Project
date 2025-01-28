@@ -37,3 +37,5 @@ tests:
     expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
     warning_as_errors: false
+    warning_allowlist:
+      - missed incoming User-Plane PRACH messages
