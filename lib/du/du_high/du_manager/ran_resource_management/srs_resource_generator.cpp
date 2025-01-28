@@ -36,9 +36,11 @@ std::vector<du_srs_resource> srsran::srs_du::generate_cell_srs_list(const du_cel
   // Section 6.4.1.4.2, which is 30.
   constexpr unsigned max_seq_id_values = 30U;
   const unsigned seq_id_step = max_seq_id_values / static_cast<unsigned>(du_cell_cfg.srs_cfg.sequence_id_reuse_factor);
+  // Different PCIs will be assigned different sequence IDs as long as their PCI % seq_id_step is different.
+  const unsigned        cell_seq_id_offset = static_cast<unsigned>(du_cell_cfg.pci) % seq_id_step;
   std::vector<unsigned> seq_id_values;
   for (unsigned seq_id = 0; seq_id < max_seq_id_values; seq_id += seq_id_step) {
-    seq_id_values.push_back(static_cast<unsigned>(du_cell_cfg.pci) + seq_id);
+    seq_id_values.push_back(cell_seq_id_offset + seq_id);
   }
 
   // At this point, the SRS resource is not assigned to a given slot, and we need to consider all possible UL symbols
