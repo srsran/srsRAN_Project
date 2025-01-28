@@ -21,8 +21,10 @@ struct mac_slice_configuration {
 
 /// MAC cell positioning measurement request.
 struct mac_cell_positioning_measurement_request {
+  /// UE identifier in case the SRSConfig belongs to a connected UE.
+  du_ue_index_t ue_index = INVALID_DU_UE_INDEX;
   /// SRS resources to measure.
-  std::vector<srs_config> srs_resources;
+  srs_config srs_to_meas;
 };
 
 /// MAC cell positioning measurement response.
@@ -35,7 +37,7 @@ struct mac_cell_reconfig_request {
   /// If not empty, passes a new SIB1 payload to broadcast.
   byte_buffer new_sib1_buffer;
   /// If not empty, the MAC is requested to collect a new positioning measurement.
-  const mac_cell_positioning_measurement_request* positioning = nullptr;
+  std::optional<mac_cell_positioning_measurement_request> positioning;
 };
 
 struct mac_cell_reconfig_response {
