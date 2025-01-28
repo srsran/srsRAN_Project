@@ -199,7 +199,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
     {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, sn_size));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 2, sn_size));
       ASSERT_EQ(3, pdcp_tx->nof_pdus_in_window());
     }
 
@@ -215,7 +215,8 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
 
     // Tick one more time. All timers should have expired now.
     timers.tick();
-    ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
+    worker.run_pending_tasks();
+    FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
   };
 
   if (config.sn_size == pdcp_sn_size::size12bits) {

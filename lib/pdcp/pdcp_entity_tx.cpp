@@ -836,8 +836,13 @@ void pdcp_entity_tx::discard_callback()
       break;
     }
     if (tx_window[st.tx_next_ack].time_of_arrival != oldest_timepoint) {
-      logger.log_debug("Finished discard callback. There are new PDUs with a new discard timer. st={}", st);
-      // TODO restart timeout for any pending SDUs
+      // Restart timeout for any pending SDUs.
+      unsigned new_timeout = (tx_window[st.tx_next_ack].time_of_arrival - oldest_timepoint);
+      logger.log_debug("Finished discard callback. There are new PDUs with a new discard timer. new_timeout={}, st={}",
+                       new_timeout,
+                       st);
+      discard_timer.set(std::chrono::milliseconds(new_timeout), [this](timer_id_t timer_id) { discard_callback(); });
+      discard_timer.run();
       break;
     }
   } while (st.tx_next_ack != st.tx_next);
