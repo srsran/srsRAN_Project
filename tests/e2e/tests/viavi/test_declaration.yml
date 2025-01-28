@@ -6,317 +6,309 @@
 # the distribution.
 #
 
+# id: name of test in Pytest
 # campaign_filename: path to Viavi campaign file
 # test_name: name of test in Viavi campaign file
 # test_timeout: timeout for test in seconds
-# gnb_extra_commands: extra GNB configuration
-# id: name of test in Pytest
-# max_pdschs_per_slot: maximum number of PDSCHs per slot
-# max_puschs_per_slot: maximum number of PUSCHs per slot
-# enable_qos_viavi: enable QoS in GNB configuration for Viavi
+# gnb_extra_config: extra GNB configuration
 # expected_dl_bitrate: pass/fail criteria, expected downlink bitrate in bps
 # expected_ul_bitrate: pass/fail criteria, expected uplink bitrate in bps
 # expected_nof_kos: expected_nof_kos
 # warning_as_errors: treat warnings as errors
 
 campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
-gnb_extra_commands: &gnb_extra_commands "log --metrics_level=info metrics --rlc_report_period=1000"
-gnb_extra_commands_no_warn: &gnb_extra_commands_no_warn "log --all_level=error metrics --sched_report_period=5000 --rlc_report_period=5000"
-
 test_timeout: &test_timeout 2400
 
 tests:
-  - campaign_filename: *campaign_filename
+  - id: "1UE ideal UDP bidirectional"
+    campaign_filename: *campaign_filename
     test_name: "1UE ideal UDP bidirectional"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "1UE ideal UDP bidirectional"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: &base_config
+      log:
+        metrics_level: info
+      metrics:
+        rlc_report_period: 1000
+      cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 8
+        pusch:
+          max_puschs_per_slot: 8
+    # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
     warning_as_errors: true
-    warning_allowlist:
+    warning_allowlist: &base_warning_allowlist
       - missed incoming User-Plane PRACH messages
 
-  - campaign_filename: *campaign_filename
+  - id: "32UE ideal UDP bidirectional"
+    campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP bidirectional"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE ideal UDP bidirectional"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
     warning_as_errors: true
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
+    warning_allowlist: *base_warning_allowlist
 
-  - campaign_filename: *campaign_filename
+  - id: "1UE fading UDP uplink"
+    campaign_filename: *campaign_filename
     test_name: "1UE fading UDP uplink"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "1UE fading UDP uplink"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
     warning_as_errors: false
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
-      - is not associated with any existing UE
 
-  - campaign_filename: *campaign_filename
+  - id: "1UE fading noise UDP uplink"
+    campaign_filename: *campaign_filename
     test_name: "1UE fading noise UDP uplink"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "1UE fading noise UDP uplink"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
     warning_as_errors: false
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
-      - is not associated with any existing UE
 
-  - campaign_filename: *campaign_filename
+  - id: "1UE ideal TCP downlink"
+    campaign_filename: *campaign_filename
     test_name: "1UE ideal TCP downlink"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "1UE ideal TCP downlink"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 10
     warning_as_errors: true
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
+    warning_allowlist: *base_warning_allowlist
 
-  - campaign_filename: *campaign_filename
+  - id: "32UE ideal TCP downlink"
+    campaign_filename: *campaign_filename
     test_name: "32UE ideal TCP downlink"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE ideal TCP downlink"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 10
     warning_as_errors: true
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
+    warning_allowlist: *base_warning_allowlist
 
-  - campaign_filename: *campaign_filename
+  - id: "1UE fading TCP downlink"
+    campaign_filename: *campaign_filename
     test_name: "1UE fading TCP downlink"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "1UE fading TCP downlink"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
     warning_as_errors: false
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
-      - is not associated with any existing UE
 
-  - campaign_filename: *campaign_filename
+  - id: "32UE fading UDP attach-detach with traffic"
+    campaign_filename: *campaign_filename
     test_name: "32UE fading UDP attach-detach with traffic"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE fading UDP attach-detach with traffic"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
     warning_as_errors: false
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
-      - is not associated with any existing UE
 
-  - campaign_filename: *campaign_filename
+  - id: "32UE ideal UDP attach-detach with traffic 24h extended"
+    campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic 24h"
     test_timeout: 93600
-    gnb_extra_commands: *gnb_extra_commands_no_warn
-    id: "32UE ideal UDP attach-detach with traffic 24h extended"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config:
+      log:
+        all_level: error
+      metrics:
+        sched_report_period: 5000
+        rlc_report_period: 5000
+      cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 8
+        pusch:
+          max_puschs_per_slot: 8
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
     warning_as_errors: false
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
 
-  - campaign_filename: *campaign_filename
+  - id: "32UE ideal UDP attach-detach with traffic"
+    campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE ideal UDP attach-detach with traffic"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 10
     warning_as_errors: true
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
+    warning_allowlist: *base_warning_allowlist
 
-  - campaign_filename: *campaign_filename
+  - id: "32UE ideal UDP attach-detach with traffic tdd DDDSU"
+    campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic High brate"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE ideal UDP attach-detach with traffic tdd DDDSU"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config:
+      <<: *base_config
+      cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 8
+        pusch:
+          max_puschs_per_slot: 8
+        pucch:
+          sr_period_ms: 20
+          f2_or_f3_or_f4_nof_cell_res_csi: 21
+          f0_or_f1_nof_cell_res_sr: 42
+        tdd_ul_dl_cfg:
+          dl_ul_tx_period: 5
+          nof_dl_symbols: 6
+          nof_dl_slots: 3
+          nof_ul_slots: 1
+          nof_ul_symbols: 4
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 10
     warning_as_errors: true
-    enable_dddsu: true
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
+    warning_allowlist: *base_warning_allowlist
 
-  - campaign_filename: *campaign_filename
+  - id: "32UE ideal UDP attach-detach with traffic tdd UL Heavy 7u2d"
+    campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic High brate"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE ideal UDP attach-detach with traffic tdd UL Heavy 7u2d"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config:
+      <<: *base_config
+      cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 8
+        pusch:
+          max_puschs_per_slot: 8
+        pucch:
+          sr_period_ms: 40
+          f0_or_f1_nof_cell_res_sr: 30
+        tdd_ul_dl_cfg:
+          dl_ul_tx_period: 10
+          nof_dl_slots: 2
+          nof_dl_symbols: 10
+          nof_ul_slots: 7
+          nof_ul_symbols: 0
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 10
     warning_as_errors: true
-    ul_heavy_7u2d: true
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
+    warning_allowlist: *base_warning_allowlist
 
-  - campaign_filename: *campaign_filename
+  - id: "32UE ideal UDP attach-detach with traffic tdd UL Heavy 6u3d"
+    campaign_filename: *campaign_filename
     test_name: "32UE ideal UDP attach-detach with traffic High brate"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE ideal UDP attach-detach with traffic tdd UL Heavy 6u3d"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config:
+      <<: *base_config
+      cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 8
+        pusch:
+          max_puschs_per_slot: 8
+        pucch:
+          sr_period_ms: 40
+          f0_or_f1_nof_cell_res_sr: 30
+        tdd_ul_dl_cfg:
+          dl_ul_tx_period: 10
+          nof_dl_slots: 3
+          nof_dl_symbols: 10
+          nof_ul_slots: 6
+          nof_ul_symbols: 0
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 10
     warning_as_errors: true
-    ul_heavy_6u3d: true
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
+    warning_allowlist: *base_warning_allowlist
 
-  - campaign_filename: *campaign_filename
+  - id: "1UE birth-death UDP bidirectional"
+    campaign_filename: *campaign_filename
     test_name: "1UE birth-death UDP bidirectional"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "1UE birth-death UDP bidirectional"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
     warning_as_errors: true
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
+    warning_allowlist: *base_warning_allowlist
 
-  - campaign_filename: *campaign_filename
+  - id: "32UE ideal ping"
+    campaign_filename: *campaign_filename
     test_name: "32UE ideal ping"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE ideal ping"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 10
     warning_as_errors: true
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
+    warning_allowlist: *base_warning_allowlist
 
-  - campaign_filename: *campaign_filename
+  - id: "32UE ideal ping with traffic"
+    campaign_filename: *campaign_filename
     test_name: "32UE ideal ping with traffic"
     test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE ideal ping with traffic"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: 10
     warning_as_errors: true
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
+    warning_allowlist: *base_warning_allowlist
 
-  - campaign_filename: *campaign_filename
+  - id: "experimental 32UE ideal UDP bidirectional Long"
+    campaign_filename: *campaign_filename
     test_name: "experimental 32UE ideal UDP bidirectional Long"
     test_timeout: 21600 # 6 hours
-    gnb_extra_commands: *gnb_extra_commands
-    id: "experimental 32UE ideal UDP bidirectional Long"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
     warning_as_errors: false
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages
 
-  - campaign_filename: *campaign_filename
+  - id: "experimental 32UE ideal UDP bidirectional Long extended"
+    campaign_filename: *campaign_filename
     test_name: "experimental 32UE ideal UDP bidirectional Long extended"
     test_timeout: 21600 # 6 hours
-    gnb_extra_commands: *gnb_extra_commands
-    id: "experimental 32UE ideal UDP bidirectional Long extended"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
-    # test/fail criteria
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
     warning_as_errors: false
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages

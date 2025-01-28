@@ -45,22 +45,16 @@ class _ViaviConfiguration:
     Viavi configuration
     """
 
+    id: str = ""
     campaign_filename: str = ""
     test_name: str = ""
     test_timeout: int = 0
     gnb_extra_commands: str = ""
-    id: str = ""
-    max_pdschs_per_slot: int = 1
-    max_puschs_per_slot: int = 1
-    enable_qos_viavi: bool = False
     # test/fail criteria
     expected_ul_bitrate: float = 0
     expected_dl_bitrate: float = 0
     expected_nof_kos: float = 0  # Infinity value is represented in a float
     warning_as_errors: bool = True
-    enable_dddsu: bool = False
-    ul_heavy_7u2d: bool = False
-    ul_heavy_6u3d: bool = False
     warning_allowlist: List[str] = field(default_factory=list)
 
 
@@ -89,25 +83,32 @@ def load_yaml_config(config_filename: str) -> List[_ViaviConfiguration]:
     for test_declaration in test_declaration_list_raw:
         test_declaration_list.append(
             _ViaviConfiguration(
+                id=test_declaration["id"],
                 campaign_filename=test_declaration["campaign_filename"],
                 test_name=test_declaration["test_name"],
                 test_timeout=test_declaration["test_timeout"],
-                gnb_extra_commands=test_declaration["gnb_extra_commands"],
-                id=test_declaration["id"],
-                max_pdschs_per_slot=test_declaration["max_pdschs_per_slot"],
-                max_puschs_per_slot=test_declaration["max_puschs_per_slot"],
-                enable_qos_viavi=test_declaration["enable_qos_viavi"],
+                gnb_extra_commands=_convert_extra_config_into_command(test_declaration["gnb_extra_config"]),
                 expected_dl_bitrate=test_declaration["expected_dl_bitrate"],
                 expected_ul_bitrate=test_declaration["expected_ul_bitrate"],
                 expected_nof_kos=test_declaration["expected_nof_kos"],
                 warning_as_errors=test_declaration["warning_as_errors"],
-                enable_dddsu=test_declaration.get("enable_dddsu", False),
-                ul_heavy_7u2d=test_declaration.get("ul_heavy_7u2d", False),
-                ul_heavy_6u3d=test_declaration.get("ul_heavy_6u3d", False),
                 warning_allowlist=test_declaration.get("warning_allowlist", []),
             )
         )
     return test_declaration_list
+
+
+def _convert_extra_config_into_command(extra_config: dict) -> str:
+    """
+    Convert extra config into command
+    """
+    cmd_args = ""
+    for key, value in sorted(extra_config.items(), key=lambda item: isinstance(item[1], dict)):
+        if isinstance(value, dict):
+            cmd_args += f"{key} " + _convert_extra_config_into_command(value)
+        else:
+            cmd_args += f"--{key}={value} "
+    return cmd_args
 
 
 ################################################################################
@@ -351,12 +352,6 @@ def _test_viavi(
                 "tac": 7,
                 "pci": 1,
                 "prach_config_index": 159,
-                "max_puschs_per_slot": test_declaration.max_puschs_per_slot,
-                "max_pdschs_per_slot": test_declaration.max_pdschs_per_slot,
-                "enable_dddsu": test_declaration.enable_dddsu,
-                "ul_heavy_7u2d": test_declaration.ul_heavy_7u2d,
-                "ul_heavy_6u3d": test_declaration.ul_heavy_6u3d,
-                "enable_qos_viavi": test_declaration.enable_qos_viavi,
                 "nof_antennas_dl": 4,
                 "nof_antennas_ul": 1,
                 "rlc_metrics": True,
@@ -386,6 +381,7 @@ def _test_viavi(
     amf_ip, amf_port = viavi.get_core_definition()
     with handle_start_error(name=f"GNB [{id(gnb)}]"):
         # GNB Start
+        logging.info("GNB extra commands: %s", test_declaration.gnb_extra_commands)
         gnb.Start(
             GNBStartInfo(
                 plmn=PLMN(mcc="001", mnc="01"),
