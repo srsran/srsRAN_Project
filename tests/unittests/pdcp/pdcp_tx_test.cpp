@@ -248,25 +248,39 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
     for (uint32_t i = 0; i < nof_sdus; i++) {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
-      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next, sn_size));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + i, sn_size));
       ASSERT_EQ(i + 1, pdcp_tx->nof_pdus_in_window());
     }
+    // Write one SDU with one more tick, to make sure the discard timer is restarted
+    // If there are still PDUs after the delivery notifications.
+    timers.tick();
+    byte_buffer sdu = byte_buffer::create(sdu1).value();
+    pdcp_tx->handle_sdu(std::move(sdu));
+    pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + nof_sdus, sn_size));
+    ASSERT_EQ(nof_sdus + 1, pdcp_tx->nof_pdus_in_window());
 
     // Notify delivery of first SDU
     pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next, sn_size));
-    ASSERT_EQ(nof_sdus - 1, pdcp_tx->nof_pdus_in_window());
+    ASSERT_EQ(nof_sdus, pdcp_tx->nof_pdus_in_window());
 
     // Notify delivery up to third SDU
     pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + 2, sn_size));
-    ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_pdus_in_window());
+    ASSERT_EQ(nof_sdus - 2, pdcp_tx->nof_pdus_in_window());
 
     // Notify delivery of second SDU again
     // e.g. in case the UDP-based F1-U interface swaps the the order of transmit/delivery notifications
     pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + 1, sn_size));
-    ASSERT_EQ(nof_sdus - 3, pdcp_tx->nof_pdus_in_window());
+    ASSERT_EQ(nof_sdus - 2, pdcp_tx->nof_pdus_in_window());
 
     // Notify delivery of remaining SDUs
     pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next + nof_sdus - 1, sn_size));
+    ASSERT_EQ(1, pdcp_tx->nof_pdus_in_window());
+
+    // Make sure that discard timer was correctly restarted.
+    for (int i = 0; i < 10; i++) {
+      timers.tick();
+      worker.run_pending_tasks();
+    }
     ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
   };
 
