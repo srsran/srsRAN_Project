@@ -50,7 +50,7 @@ struct aoa_assist_info_t {
   std::optional<lcs_to_gcs_translation_t> lcs_to_gcs_translation;
 };
 
-struct trp_meas_request_item_ext_ies_t {
+struct trp_meas_request_item_ext_t {
   std::optional<nr_cell_global_id_t> cgi_nr;
   std::optional<aoa_assist_info_t>   aoa_search_win;
   std::optional<uint8_t>             nof_trp_rx_teg;
@@ -58,9 +58,9 @@ struct trp_meas_request_item_ext_ies_t {
 };
 
 struct trp_meas_request_item_t {
-  trp_id_t                                       trp_id;
-  std::optional<search_win_info_t>               search_win_info;
-  std::optional<trp_meas_request_item_ext_ies_t> ie_exts;
+  trp_id_t                                   trp_id;
+  std::optional<search_win_info_t>           search_win_info;
+  std::optional<trp_meas_request_item_ext_t> ie_exts;
 };
 
 enum class trp_meas_quantities_item_t {
