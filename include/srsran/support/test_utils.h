@@ -324,6 +324,13 @@ private:
     return dummy;                                                                                                      \
   }();
 
+/// \brief Helper macro to make sure that logs are flushed when asserts fail.
+#define FLUSH_AND_ASSERT_EQ(val1, val2)                                                                                \
+  if (not((val1) == (val2))) {                                                                                         \
+    srslog::flush();                                                                                                   \
+  }                                                                                                                    \
+  ASSERT_EQ((val1), (val2));
+
 } // namespace srsran
 
 namespace fmt {
