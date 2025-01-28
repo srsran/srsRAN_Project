@@ -194,13 +194,27 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, sn_size));
       ASSERT_EQ(2, pdcp_tx->nof_pdus_in_window());
     }
+    timers.tick(); // add one tick
+    // Write third SDU after a tick.
+    {
+      byte_buffer sdu = byte_buffer::create(sdu1).value();
+      pdcp_tx->handle_sdu(std::move(sdu));
+      pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, sn_size));
+      ASSERT_EQ(3, pdcp_tx->nof_pdus_in_window());
+    }
+
     // Let timers expire
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 9; i++) {
       timers.tick();
       worker.run_pending_tasks();
     }
 
-    // Timers should have expired now.
+    // Timers should have expired now for the first two SDUs.
+    // Third should still be in the window.
+    ASSERT_EQ(1, pdcp_tx->nof_pdus_in_window());
+
+    // Tick one more time. All timers should have expired now.
+    timers.tick();
     ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
   };
 
