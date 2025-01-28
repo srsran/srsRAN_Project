@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "measurement_information.h"
-#include "trp_information_exchange.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/cause/nrppa_cause.h"
 #include "srsran/ran/crit_diagnostics.h"
+#include "srsran/ran/positioning/measurement_information.h"
+#include "srsran/ran/positioning/trp_information_exchange.h"
 
 namespace srsran::srs_cu_cp {
 

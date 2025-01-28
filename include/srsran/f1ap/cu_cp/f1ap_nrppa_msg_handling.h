@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/ran/positioning/cu_cp_messages.h"
+#include "srsran/cu_cp/positioning_messages.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
