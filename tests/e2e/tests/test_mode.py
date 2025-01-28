@@ -300,12 +300,11 @@ def _test_ru(
 
     # GNB Start
     with handle_start_error(name=f"GNB [{id(gnb)}]"):
-        gnb_def: GNBDefinition = gnb.GetDefinition(Empty())
         gnb.Start(
             GNBStartInfo(
                 plmn=PLMN(mcc="001", mnc="01"),
-                ue_definition=UEDefinition(zmq_ip=gnb_def.zmq_ip, zmq_port_array=gnb_def.zmq_port_array[:nof_ant]),
-                fivegc_definition=FiveGCDefinition(amf_ip=gnb_def.zmq_ip, amf_port=38412),
+                ue_definition=UEDefinition(),
+                fivegc_definition=FiveGCDefinition(amf_ip="127.0.0.1", amf_port=38412),
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
                     post_commands=(f"cu_cp amf --no_core 1 {extra_cli_config}",),
