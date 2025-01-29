@@ -139,11 +139,11 @@ def viavi_manual_test_timeout(request):
 
 
 @pytest.fixture
-def viavi_manual_extra_gnb_arguments(request):
+def viavi_manual_gnb_arguments(request):
     """
     Extra GNB arguments
     """
-    return request.config.getoption("viavi_manual_extra_gnb_arguments")
+    return request.config.getoption("viavi_manual_gnb_arguments")
 
 
 @mark.viavi_manual
@@ -161,7 +161,7 @@ def test_viavi_manual(
     viavi_manual_campaign_filename: str,  # pylint: disable=redefined-outer-name
     viavi_manual_test_name: str,  # pylint: disable=redefined-outer-name
     viavi_manual_test_timeout: int,  # pylint: disable=redefined-outer-name
-    viavi_manual_extra_gnb_arguments: str,  # pylint: disable=redefined-outer-name
+    viavi_manual_gnb_arguments: str,  # pylint: disable=redefined-outer-name
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
@@ -175,7 +175,7 @@ def test_viavi_manual(
         viavi_manual_campaign_filename,
         viavi_manual_test_name,
         viavi_manual_test_timeout,
-        viavi_manual_extra_gnb_arguments,
+        viavi_manual_gnb_arguments,
     )
 
     _test_viavi(
@@ -632,7 +632,7 @@ def get_str_number_criteria(number_criteria: float) -> str:
 
 
 def get_viavi_configuration_from_testname(
-    campaign_filename: str, test_name: str, timeout: int, extra_gnb_arguments=""
+    campaign_filename: str, test_name: str, timeout: int, gnb_arguments=""
 ) -> _ViaviConfiguration:
     """
     Get Viavi configuration from dict
@@ -657,6 +657,7 @@ def get_viavi_configuration_from_testname(
 
     # Override the timeout and extra gnb arguments
     test_declaration.test_timeout = timeout
+    if gnb_arguments:
+        test_declaration.gnb_extra_commands = gnb_arguments
 
-    test_declaration.gnb_extra_commands += " " + extra_gnb_arguments
     return test_declaration
