@@ -10,7 +10,8 @@
 
 #include "lib/pdcp/pdcp_entity_tx.h"
 #include "srsran/support/benchmark_utils.h"
-#include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/task_worker.h"
+#include "srsran/support/executors/task_worker_pool.h"
 #include <getopt.h>
 
 using namespace srsran;
@@ -39,10 +40,12 @@ public:
 };
 
 struct bench_params {
-  unsigned nof_repetitions   = 10;
-  bool     print_timing_info = false;
-  unsigned nof_sdus          = 1024;
-  unsigned sdu_len           = 1500;
+  unsigned nof_repetitions    = 10;
+  unsigned nof_crypto_threads = 8;
+  unsigned crypto_queue_size  = 4096;
+  bool     print_timing_info  = false;
+  unsigned nof_sdus           = 1024;
+  unsigned sdu_len            = 1500;
 };
 
 struct app_params {
@@ -57,6 +60,7 @@ static void usage(const char* prog, const bench_params& params, const app_params
   fmt::print("\t-a Security algorithm to use [Default {}, valid {{-1,0,1,2,3}}]\n", app.algo);
   fmt::print("\t-t Print timing information [Default {}]\n", params.print_timing_info);
   fmt::print("\t-R Repetitions [Default {}]\n", params.nof_repetitions);
+  fmt::print("\t-w Number of crypto workers [Default {}]\n", params.nof_crypto_threads);
   fmt::print("\t-p Number of SDUs per repetition [Default {}]\n", params.nof_sdus);
   fmt::print("\t-s SDU length [Default {}]\n", params.sdu_len);
   fmt::print("\t-l Log level to use [Default {}, valid {{error, warning, info, debug}}]\n",
@@ -68,10 +72,13 @@ static void usage(const char* prog, const bench_params& params, const app_params
 static void parse_args(int argc, char** argv, bench_params& params, app_params& app)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "a:R:p:s:l:f:th")) != -1) {
+  while ((opt = getopt(argc, argv, "a:R:w:p:s:q:l:f:th")) != -1) {
     switch (opt) {
       case 'R':
         params.nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'w':
+        params.nof_crypto_threads = std::strtol(optarg, nullptr, 10);
         break;
       case 'p':
         params.nof_sdus = std::strtol(optarg, nullptr, 10);
@@ -81,6 +88,9 @@ static void parse_args(int argc, char** argv, bench_params& params, app_params& 
         break;
       case 'a':
         app.algo = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'q':
+        params.crypto_queue_size = std::strtol(optarg, nullptr, 10);
         break;
       case 't':
         params.print_timing_info = true;
@@ -101,11 +111,11 @@ static void parse_args(int argc, char** argv, bench_params& params, app_params& 
   }
 }
 
-void benchmark_pdcp_tx(bench_params                  params,
-                       security::integrity_enabled   int_enabled,
-                       security::ciphering_enabled   ciph_enabled,
-                       security::integrity_algorithm int_algo,
-                       security::ciphering_algorithm ciph_algo)
+static void benchmark_pdcp_tx(bench_params                  params,
+                              security::integrity_enabled   int_enabled,
+                              security::ciphering_enabled   ciph_enabled,
+                              security::integrity_algorithm int_algo,
+                              security::ciphering_algorithm ciph_algo)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer),
@@ -119,8 +129,14 @@ void benchmark_pdcp_tx(bench_params                  params,
 
   std::unique_ptr<benchmarker> bm = std::make_unique<benchmarker>(to_c_str(buffer), params.nof_repetitions);
 
-  timer_manager      timers;
-  manual_task_worker worker{64};
+  timer_manager        timers;
+  task_worker          dl_worker{"dl_worker", 4096};
+  task_worker_executor dl_exec{dl_worker};
+
+  task_worker_pool<concurrent_queue_policy::lockfree_mpmc> crypto_worker_pool{
+      "crypto", params.nof_crypto_threads, params.crypto_queue_size};
+  task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc> crypto_exec =
+      task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(crypto_worker_pool);
 
   int nof_sdus = params.nof_sdus;
   int sdu_len  = params.sdu_len;
@@ -179,16 +195,16 @@ void benchmark_pdcp_tx(bench_params                  params,
       sdu_list.push_back(std::move(sdu_buf));
     }
     frame       = std::make_unique<pdcp_tx_gen_frame>();
-    metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, worker);
+    metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, dl_exec);
     pdcp_tx     = std::make_unique<pdcp_entity_tx>(0,
                                                drb_id_t::drb1,
                                                config,
                                                *frame,
                                                *frame,
-                                               timer_factory{timers, worker},
-                                               worker,
-                                               worker,
-                                               1, // FIXME
+                                               timer_factory{timers, dl_exec},
+                                               dl_exec,
+                                               crypto_exec,
+                                               params.nof_crypto_threads,
                                                *metrics_agg);
     pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
@@ -197,10 +213,20 @@ void benchmark_pdcp_tx(bench_params                  params,
   };
 
   // Run benchmark.
-  auto measure = [&pdcp_tx, &sdu_list]() mutable {
+  auto measure = [&pdcp_tx, &sdu_list, &dl_worker, &crypto_worker_pool, &dl_exec]() mutable {
     for (auto& sdu : sdu_list) {
-      pdcp_tx->handle_sdu(std::move(sdu));
+      if (!dl_exec.execute([&pdcp_tx, s = std::move(sdu)]() mutable { pdcp_tx->handle_sdu(std::move(s)); })) {
+        srslog::fetch_basic_logger("PDCP").error("Failed execute handle_sdu in DL executor");
+      }
     }
+    // Wait for all handle_sdu tasks to be processed
+    dl_worker.wait_pending_tasks();
+
+    // Wait for crypto
+    crypto_worker_pool.wait_pending_tasks();
+
+    // Wait for reordering
+    dl_worker.wait_pending_tasks();
   };
 
   prepare();
@@ -215,7 +241,7 @@ void benchmark_pdcp_tx(bench_params                  params,
   bm->print_percentiles_throughput(" bps");
 }
 
-int run_benchmark(bench_params params, int algo)
+static int run_benchmark(bench_params params, int algo)
 {
   if (algo != 0 && algo != 1 && algo != 2 && algo != 3) {
     fmt::print("Unsupported algortithm. Use NIA/NEA 0, 1, 2 or 3.\n");
