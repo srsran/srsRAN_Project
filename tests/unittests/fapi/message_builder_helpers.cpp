@@ -1291,12 +1291,14 @@ srs_indication_message unittest::build_valid_srs_indication()
   msg.control_length = 0;
 
   msg.pdus.emplace_back();
-  auto& pdu                    = msg.pdus.back();
-  pdu.handle                   = generate_handle();
-  pdu.rnti                     = generate_rnti();
-  pdu.timing_advance_offset    = generate_timing_advance_offset();
-  pdu.timing_advance_offset_ns = generate_timing_advance_offset_in_ns();
-  pdu.usage                    = srs_usage::codebook;
+  auto& pdu                             = msg.pdus.back();
+  pdu.handle                            = generate_handle();
+  pdu.rnti                              = generate_rnti();
+  pdu.timing_advance_offset             = generate_timing_advance_offset();
+  pdu.timing_advance_offset_ns          = generate_timing_advance_offset_in_ns();
+  pdu.usage                             = srs_usage::codebook;
+  pdu.report_type                       = srs_report_type::normalized_channel_iq_matrix;
+  pdu.positioning.coordinate_system_aoa = srs_coordinate_system_ul_aoa::local;
 
   return msg;
 }

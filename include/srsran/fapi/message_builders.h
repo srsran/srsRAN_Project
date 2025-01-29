@@ -1747,8 +1747,26 @@ public:
   srs_indication_pdu_builder& set_codebook_report_matrix(const srs_channel_matrix& matrix)
   {
     pdu.usage       = srs_usage::codebook;
-    pdu.report_type = 1;
+    pdu.report_type = srs_report_type::normalized_channel_iq_matrix;
     pdu.matrix      = matrix;
+
+    return *this;
+  }
+
+  /// \brief Sets the SRS indication PDU positioning report and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v8.0 Section 3.4.10 Table 3-209.
+  srs_indication_pdu_builder& set_positioning_report_parameters(std::optional<phy_time_unit> ul_relative_toa,
+                                                                std::optional<uint32_t>      gnb_rx_tx_difference,
+                                                                srs_coordinate_system_ul_aoa coordinate_system_aoa,
+                                                                std::optional<uint16_t>      ul_aoa,
+                                                                std::optional<float>         rsrp)
+  {
+    pdu.report_type                       = srs_report_type::positioning;
+    pdu.positioning.ul_relative_toa       = ul_relative_toa;
+    pdu.positioning.gnb_rx_tx_difference  = gnb_rx_tx_difference;
+    pdu.positioning.coordinate_system_aoa = coordinate_system_aoa;
+    pdu.positioning.ul_aoa                = ul_aoa;
+    pdu.positioning.rsrp                  = rsrp;
 
     return *this;
   }

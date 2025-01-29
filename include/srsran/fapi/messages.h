@@ -1130,6 +1130,32 @@ struct srs_channel_svd_representation {
   std::array<srs_svd_prg, NUM_MAX_PRG> svd_prg;
 };
 
+/// Describes the coordinate system for uplink Angle Of Arrival.
+enum class srs_coordinate_system_ul_aoa : uint8_t { local = 0, global = 1 };
+
+/// Describes the SRS report type.
+enum class srs_report_type : uint8_t {
+  per_prg_and_symbol_snr = 0,
+  normalized_channel_iq_matrix,
+  channel_svd,
+  positioning,
+  su_mimo_codebook,
+  channel_2d_dft,
+  su_mimo_codebook_v2,
+  per_prg_ni_and_rsrp,
+  no_report = 255
+};
+
+/// Encodes SRS positioning report.
+struct srs_positioning_report {
+  /// TUL-RTOA as recorded in TS 38.215 on section 5.1.
+  std::optional<phy_time_unit> ul_relative_toa;
+  std::optional<uint32_t>      gnb_rx_tx_difference;
+  srs_coordinate_system_ul_aoa coordinate_system_aoa;
+  std::optional<float>         ul_aoa;
+  std::optional<float>         rsrp;
+};
+
 /// SRS indication pdu.
 struct srs_indication_pdu {
   uint32_t handle;
@@ -1138,10 +1164,11 @@ struct srs_indication_pdu {
   int16_t  timing_advance_offset_ns;
   /// \remark The enum doesn't contain the \c reserved value defined in the FAPI spec. This is because the value is
   /// currently not used anywhere.
-  srs_usage          usage;
-  uint8_t            report_type;
-  tlv_info           report;
-  srs_channel_matrix matrix;
+  srs_usage              usage;
+  srs_report_type        report_type;
+  tlv_info               report;
+  srs_channel_matrix     matrix;
+  srs_positioning_report positioning;
 };
 
 /// SRS indication message.
