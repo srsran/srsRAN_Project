@@ -335,3 +335,37 @@ tests:
     expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
     warning_as_errors: false
+
+  - id: "1UE ideal UDP bidirectional MIMO"
+    campaign_filename: *campaign_filename
+    test_name: "1UE ideal UDP bidirectional"
+    test_timeout: *test_timeout
+    # Configuration
+    gnb_extra_config: &1ue_mimo_config
+      <<: *base_config
+      cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 8
+        pusch:
+          max_puschs_per_slot: 8
+        nof_antennas_ul: 2
+        srs:
+          srs_period_ms: 10
+    # Pass / Fail Criteria
+    expected_dl_bitrate: 1.2e+9
+    expected_ul_bitrate: 75.0e+6
+    expected_nof_kos: 10
+    warning_as_errors: true
+    warning_allowlist: *base_warning_allowlist
+
+  - id: "1UE fading noise UDP uplink MIMO"
+    campaign_filename: *campaign_filename
+    test_name: "1UE fading noise UDP uplink"
+    test_timeout: *test_timeout
+    # Configuration
+    gnb_extra_config: *1ue_mimo_config
+    # Pass / Fail Criteria
+    expected_dl_bitrate: 14.0e+3
+    expected_ul_bitrate: 1.0e+3
+    expected_nof_kos: .inf
+    warning_as_errors: false
