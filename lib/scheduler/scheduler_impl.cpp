@@ -203,3 +203,13 @@ void scheduler_impl::handle_paging_information(const sched_paging_information& p
     cells[cell_id]->handle_paging_information(pi);
   }
 }
+
+void scheduler_impl::handle_positioning_measurement_request(const positioning_measurement_request& req)
+{
+  // TODO
+}
+
+void scheduler_impl::handle_positioning_measurement_stop(pos_meas_id_t pos_id)
+{
+  // TODO
+}

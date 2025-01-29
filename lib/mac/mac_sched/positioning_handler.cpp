@@ -33,7 +33,9 @@ public:
 
 } // namespace
 
-std::unique_ptr<positioning_handler> srsran::create_positioning_handler()
+std::unique_ptr<positioning_handler> srsran::create_positioning_handler(scheduler_positioning_handler& sched,
+                                                                        task_executor&                 ctrl_exec,
+                                                                        srslog::basic_logger&          logger)
 {
   return std::make_unique<disabled_positioning_handler>();
 }

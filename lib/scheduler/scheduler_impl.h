@@ -56,6 +56,10 @@ public:
   void handle_uci_indication(const uci_indication& uci) override;
   void handle_srs_indication(const srs_indication& srs) override;
 
+  // Positioning events.
+  void handle_positioning_measurement_request(const positioning_measurement_request& req) override;
+  void handle_positioning_measurement_stop(pos_meas_id_t pos_id) override;
+
 private:
   const scheduler_expert_config expert_params;
 

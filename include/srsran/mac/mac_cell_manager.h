@@ -21,8 +21,8 @@ struct mac_slice_configuration {
 
 /// MAC cell positioning measurement request.
 struct mac_cell_positioning_measurement_request {
-  /// UE identifier in case the SRSConfig belongs to a UE connected to this DU.
-  du_ue_index_t ue_index = INVALID_DU_UE_INDEX;
+  /// UE identifier in case the SRSConfig belongs to a UE connected to this DU. Otherwise, it is empty.
+  std::optional<du_ue_index_t> ue_index;
   /// SRS resources to measure.
   srs_config srs_to_meas;
 };

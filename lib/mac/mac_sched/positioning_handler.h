@@ -12,8 +12,12 @@
 
 #include "srsran/mac/mac_cell_control_information_handler.h"
 #include "srsran/mac/mac_cell_manager.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
+
+class scheduler_positioning_handler;
+class task_executor;
 
 class positioning_handler
 {
@@ -24,10 +28,12 @@ public:
   virtual async_task<mac_cell_positioning_measurement_response>
   handle_positioning_measurement_request(const mac_cell_positioning_measurement_request& req) = 0;
 
-  /// Handle SRS indication.
+  /// Handle SRS indication from lower layers.
   virtual void handle_srs(const mac_srs_indication_message& msg) = 0;
 };
 
-std::unique_ptr<positioning_handler> create_positioning_handler();
+std::unique_ptr<positioning_handler> create_positioning_handler(scheduler_positioning_handler& sched,
+                                                                task_executor&                 ctrl_exec,
+                                                                srslog::basic_logger&          logger);
 
 } // namespace srsran

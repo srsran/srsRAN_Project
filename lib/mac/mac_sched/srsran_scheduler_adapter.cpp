@@ -335,7 +335,7 @@ void srsran_scheduler_adapter::handle_paging_information(const paging_informatio
 srsran_scheduler_adapter::cell_handler::cell_handler(srsran_scheduler_adapter&                       parent_,
                                                      const sched_cell_configuration_request_message& sched_cfg) :
   uci_decoder(sched_cfg, parent_.rnti_mng, parent_.rlf_handler),
-  pos_handler(create_positioning_handler()),
+  pos_handler(create_positioning_handler(*parent_.sched_impl, parent_.ctrl_exec, parent_.logger)),
   cell_idx(sched_cfg.cell_index),
   parent(parent_),
   rach_handler(parent.rach_handler.add_cell(sched_cfg))
