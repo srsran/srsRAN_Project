@@ -19,7 +19,6 @@
 #include "pdcp_tx_window.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/byte_buffer_chain.h"
-#include "srsran/adt/expected.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
@@ -34,6 +33,10 @@ struct pdcp_tx_state {
   /// This state variable indicates the COUNT value of the next PDCP SDU to be transmitted. The initial value is 0,
   /// except for SRBs configured with state variables continuation.
   uint32_t tx_next = 0;
+  /// This state variable indicates the next COUNT value for which transmission is
+  /// still pending. This is used for TX reordering when using parallel ciphering and integrity protection.
+  /// NOTE: This is a custom state variable, not specified by the standard.
+  uint32_t tx_trans_pending = 0;
   /// This state variable indicates the next COUNT value for which we will
   /// receive a transmission notification from the F1/RLC. If TX_TRANS == TX_NEXT,
   /// it means we are not currently waiting for any TX notification.
@@ -53,8 +56,22 @@ struct pdcp_tx_state {
 
   bool operator==(const pdcp_tx_state& other) const
   {
-    return tx_next == other.tx_next && tx_trans == other.tx_trans && tx_next_ack == other.tx_next_ack;
+    return tx_next == other.tx_next && tx_trans == other.tx_trans && tx_trans_pending == other.tx_trans_pending &&
+           tx_next_ack == other.tx_next_ack;
   }
+};
+
+/// Helper struct to pass buffer to security functions.
+struct pdcp_tx_buffer_info {
+  byte_buffer buf;   /// In/Out parameter for SDU+Header/PDU.
+  uint32_t    count; /// COUNT associated with this SDU/PDU.
+};
+
+/// Helper struct to pass PDUs+metadata to the lower layers.
+struct pdcp_tx_pdu_info {
+  byte_buffer                           pdu;     /// Buffer for PDU.
+  uint32_t                              count;   /// COUNT associated with this SDU/PDU.
+  std::chrono::system_clock::time_point sdu_toa; /// Time of arrival of SDU.
 };
 
 /// Base class used for transmitting PDCP bearers.
@@ -179,14 +196,16 @@ private:
   early_drop_reason check_early_drop(const byte_buffer& buf);
   uint32_t          warn_on_drop_count = 0;
 
-  void apply_reordering(pdcp_tx_buf_info pdu_info);
+  /// Apply ciphering and integrity protection to SDU+header buffer.
+  /// It will pass this buffer to the crypto engine for parallization.
+  void apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx);
 
-  void write_data_pdu_to_lower_layers(pdcp_tx_buf_info&& buf_info, bool is_retx);
+  void write_data_pdu_to_lower_layers(pdcp_tx_pdu_info&& pdu, bool is_retx);
 
   void write_control_pdu_to_lower_layers(byte_buffer buf);
 
   /// TODO add docs
-  void apply_security(pdcp_tx_buf_info pdu_info);
+  void apply_security(pdcp_tx_buffer_info buf_info, bool is_retx);
 
   /// Apply ciphering and integrity protection to the payload
   security::security_result apply_ciphering_and_integrity_protection(byte_buffer buf, uint32_t count);
@@ -244,7 +263,12 @@ struct formatter<srsran::pdcp_tx_state> {
   template <typename FormatContext>
   auto format(const srsran::pdcp_tx_state& st, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "tx_next_ack={} tx_trans={} tx_next={}", st.tx_next_ack, st.tx_trans, st.tx_next);
+    return format_to(ctx.out(),
+                     "tx_next_ack={} tx_trans_pending={} tx_trans={} tx_next={}",
+                     st.tx_next_ack,
+                     st.tx_trans_pending,
+                     st.tx_trans,
+                     st.tx_next);
   }
 };
 
