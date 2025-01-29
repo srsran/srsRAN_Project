@@ -20,6 +20,7 @@
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/scheduler/result/sched_result.h"
+#include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
 
@@ -131,6 +132,13 @@ public:
                                      unsigned        sib_version,
                                      units::bytes    new_payload_size) override
   {
+  }
+
+  async_task<mac_cell_positioning_measurement_response>
+  handle_positioning_measurement_request(du_cell_index_t                                 cell_index,
+                                         const mac_cell_positioning_measurement_request& req) override
+  {
+    return launch_no_op_task(mac_cell_positioning_measurement_response{});
   }
 };
 

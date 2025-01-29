@@ -14,6 +14,7 @@
 #include "../rnti_manager.h"
 #include "mac_rach_handler.h"
 #include "mac_scheduler_adapter.h"
+#include "positioning_handler.h"
 #include "rlf_detector.h"
 #include "uci_cell_decoder.h"
 #include "srsran/scheduler/mac_scheduler.h"
@@ -70,6 +71,10 @@ public:
                                      unsigned        sib_version,
                                      units::bytes    new_payload_size) override;
 
+  async_task<mac_cell_positioning_measurement_response>
+  handle_positioning_measurement_request(du_cell_index_t                                 cell_index,
+                                         const mac_cell_positioning_measurement_request& req) override;
+
   mac_cell_rach_handler& get_cell_rach_handler(du_cell_index_t cell_index) override
   {
     return cell_handlers[cell_index].get_rach_handler();
@@ -95,6 +100,8 @@ private:
     mac_cell_rach_handler_impl& get_rach_handler() { return rach_handler; }
 
     uci_cell_decoder uci_decoder;
+
+    std::unique_ptr<positioning_handler> pos_handler;
 
   private:
     const du_cell_index_t     cell_idx = INVALID_DU_CELL_INDEX;

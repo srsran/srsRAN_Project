@@ -115,22 +115,37 @@ async_task<void> mac_cell_processor::stop()
 
 async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac_cell_reconfig_request& request)
 {
-  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this, request]() {
-    mac_cell_reconfig_response resp;
+  return launch_async([this, request, resp = mac_cell_reconfig_response{}](
+                          coro_context<async_task<mac_cell_reconfig_response>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
     if (not request.new_sib1_buffer.empty()) {
-      // SIB1 has been updated.
+      // Change to respective DL cell executor context.
+      CORO_AWAIT(execute_on_blocking(cell_exec, timers));
 
-      // Forward new SIB1 PDU to SIB assembler.
-      units::bytes payload_size{(unsigned)request.new_sib1_buffer.length()};
-      unsigned     version_id = sib_assembler.handle_new_sib1_payload(request.new_sib1_buffer.copy());
+      {
+        // SIB1 has been updated.
 
-      // Notify scheduler of SIB1 update.
-      sched.handle_sib1_update_indication(cell_cfg.cell_index, version_id, payload_size);
+        // Forward new SIB1 PDU to SIB assembler.
+        units::bytes payload_size{(unsigned)request.new_sib1_buffer.length()};
+        unsigned     version_id = sib_assembler.handle_new_sib1_payload(request.new_sib1_buffer.copy());
 
-      resp.sib1_updated = true;
+        // Notify scheduler of SIB1 update.
+        sched.handle_sib1_update_indication(cell_cfg.cell_index, version_id, payload_size);
+
+        resp.sib1_updated = true;
+      }
+
+      // Change back to CTRL executor context.
+      CORO_AWAIT(execute_on_blocking(ctrl_exec, timers));
     }
 
-    return resp;
+    if (request.positioning.has_value()) {
+      // Positioning measurement request has been received.
+      CORO_AWAIT(sched.handle_positioning_measurement_request(cell_cfg.cell_index, request.positioning.value()));
+    }
+
+    CORO_RETURN(resp);
   });
 }
 

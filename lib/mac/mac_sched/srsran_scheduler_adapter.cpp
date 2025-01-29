@@ -286,6 +286,13 @@ void srsran_scheduler_adapter::handle_sib1_update_indication(du_cell_index_t cel
   sched_impl->handle_sib1_update_request(sib1_pdu_update_request{cell_index, sib_version, new_payload_size});
 }
 
+async_task<mac_cell_positioning_measurement_response>
+srsran_scheduler_adapter::handle_positioning_measurement_request(du_cell_index_t cell_index,
+                                                                 const mac_cell_positioning_measurement_request& req)
+{
+  return cell_handlers[cell_index].pos_handler->handle_positioning_measurement_request(req);
+}
+
 void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete(du_ue_index_t ue_index,
                                                                                  bool          ue_creation_result)
 {
@@ -328,6 +335,7 @@ void srsran_scheduler_adapter::handle_paging_information(const paging_informatio
 srsran_scheduler_adapter::cell_handler::cell_handler(srsran_scheduler_adapter&                       parent_,
                                                      const sched_cell_configuration_request_message& sched_cfg) :
   uci_decoder(sched_cfg, parent_.rnti_mng, parent_.rlf_handler),
+  pos_handler(create_positioning_handler()),
   cell_idx(sched_cfg.cell_index),
   parent(parent_),
   rach_handler(parent.rach_handler.add_cell(sched_cfg))
@@ -383,4 +391,7 @@ void srsran_scheduler_adapter::cell_handler::handle_srs(const mac_srs_indication
   }
   // Forward SRS indication to the scheduler.
   parent.sched_impl->handle_srs_indication(ind);
+
+  // Forward SRS into positioning handler.
+  pos_handler->handle_srs(msg);
 }
