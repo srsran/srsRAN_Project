@@ -116,6 +116,10 @@ private:
   /// \param[in] msg The UE Context Release Request message.
   void handle_ue_context_release_request(const asn1::f1ap::ue_context_release_request_s& msg);
 
+  /// \brief Handle the reception of a gNB-DU Configuration Update.
+  /// \param[in] msg The gNB-DU Configuration Update message.
+  void handle_du_cfg_update(const asn1::f1ap::gnb_du_cfg_upd_s& request);
+
   /// \brief Log F1AP PDU.
   void log_pdu(bool is_rx, const f1ap_message& pdu);
 

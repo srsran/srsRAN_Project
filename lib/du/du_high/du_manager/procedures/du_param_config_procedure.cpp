@@ -30,7 +30,7 @@ void du_param_config_procedure::operator()(coro_context<async_task<du_param_conf
   // Update DU cell configs.
   handle_cell_config_updates();
 
-  for (; next_cell_idx != request.cells.size(); ++next_cell_idx) {
+  for (; next_cell_idx != changed_cells.size(); ++next_cell_idx) {
     // Reconfigure cell in the MAC.
     CORO_AWAIT_VALUE(mac_cell_reconfig_response macresp, handle_mac_cell_update(next_cell_idx));
     if (not macresp.sib1_updated) {
