@@ -128,6 +128,12 @@ std::unique_ptr<mac_fapi_adaptor> mac_fapi_adaptor_factory_impl::create(const ma
     }
     auto decorators = fapi::create_decorators(decorator_cfg);
 
+    // Update the gateway and last message notifier to the decorators if they are present.
+    if (decorators) {
+      sector_dependencies.gateway           = &decorators->get_slot_message_gateway();
+      sector_dependencies.last_msg_notifier = &decorators->get_slot_last_message_notifier();
+    }
+
     auto sector_adaptor = std::make_unique<mac_fapi_sector_adaptor_impl>(sector_cfg, std::move(sector_dependencies));
 
     sectors.push_back(std::make_unique<mac_fapi_adaptor_wrapper>(std::move(sector_adaptor), std::move(decorators)));

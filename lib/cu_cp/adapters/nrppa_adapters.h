@@ -44,10 +44,10 @@ public:
     return cu_cp_handler->handle_new_nrppa_ue(ue_index);
   }
 
-  void on_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) override
+  void on_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::variant<ue_index_t, amf_index_t> ue_or_amf_index) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NRPPA handler must not be nullptr");
-    cu_cp_handler->handle_ul_nrppa_pdu(nrppa_pdu, ue_index);
+    cu_cp_handler->handle_ul_nrppa_pdu(nrppa_pdu, ue_or_amf_index);
   }
 
 private:

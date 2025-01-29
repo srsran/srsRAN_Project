@@ -52,6 +52,9 @@ struct o_cu_up_dlt_pcaps {
     if (e1ap) {
       e1ap->close();
     }
+    if (e2ap) {
+      e2ap->close();
+    }
   }
 
   /// \brief Destroy (close and flush) the PCAPs.

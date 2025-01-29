@@ -42,6 +42,7 @@ std::unique_ptr<o_cu_up> srs_cu_up::create_o_cu_up(const o_cu_up_config& config,
       config.e2ap_cfg,
       *dependencies.e2_client,
       dependencies.e2_cu_metric_iface,
+      nullptr,
       timer_factory{*dependencies.cu_dependencies.timers, dependencies.cu_dependencies.exec_mapper->ctrl_executor()},
       dependencies.cu_dependencies.exec_mapper->e2_executor());
 

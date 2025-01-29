@@ -47,6 +47,7 @@ ngap_interface* ngap_repository::add_ngap(amf_index_t amf_index, const cu_cp_con
 
   ngap_configuration              ngap_cfg    = {cfg.cu_cp.node.gnb_id,
                                                  cfg.cu_cp.node.ran_node_name,
+                                                 amf_index,
                                                  config.supported_tas,
                                                  cfg.cu_cp.ue.request_pdu_session_timeout};
   std::unique_ptr<ngap_interface> ngap_entity = create_ngap(ngap_cfg,
@@ -86,6 +87,15 @@ ngap_interface* ngap_repository::find_ngap(const plmn_identity& plmn)
   }
 
   return ngap_db.at(plmn_to_amf_index.at(plmn)).ngap.get();
+}
+
+ngap_interface* ngap_repository::find_ngap(const amf_index_t& amf_index)
+{
+  if (ngap_db.find(amf_index) == ngap_db.end()) {
+    return nullptr;
+  }
+
+  return ngap_db.at(amf_index).ngap.get();
 }
 
 std::map<amf_index_t, ngap_interface*> ngap_repository::get_ngaps()

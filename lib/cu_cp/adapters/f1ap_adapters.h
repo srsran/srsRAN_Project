@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "../cu_cp_controller/common_task_scheduler.h"
 #include "../du_processor/du_processor.h"
+#include "srsran/cu_cp/common_task_scheduler.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 
 namespace srsran {

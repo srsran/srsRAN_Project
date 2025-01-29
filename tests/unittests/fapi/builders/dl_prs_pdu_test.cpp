@@ -55,8 +55,8 @@ TEST(dl_prs_pdu_builder, valid_symbol_parameters_passes)
   dl_prs_pdu         pdu;
   dl_prs_pdu_builder builder(pdu);
 
-  unsigned nof_symbols  = 10;
-  unsigned first_symbol = 2;
+  prs_num_symbols nof_symbols  = prs_num_symbols::six;
+  unsigned        first_symbol = 2;
   builder.set_symbol_parameters(nof_symbols, first_symbol);
 
   ASSERT_EQ(nof_symbols, pdu.num_symbols);
@@ -92,8 +92,8 @@ TEST(dl_prs_pdu_builder, valid_comb_parameters_passes)
   dl_prs_pdu         pdu;
   dl_prs_pdu_builder builder(pdu);
 
-  unsigned comb_size   = 10;
-  unsigned comb_offset = 2;
+  prs_comb_size comb_size   = prs_comb_size::twelve;
+  unsigned      comb_offset = 2;
   builder.set_comb_parameters(comb_size, comb_offset);
 
   ASSERT_EQ(comb_size, pdu.comb_size);

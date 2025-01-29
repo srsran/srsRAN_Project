@@ -25,7 +25,6 @@
 #include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
-using namespace srs_cu_up;
 
 f1u_session_manager_impl::f1u_session_manager_impl(const f1u_session_maps& f1u_sessions_) :
   logger(srslog::fetch_basic_logger("CU-F1-U")), f1u_sessions(f1u_sessions_)

@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include "srsran/asn1/f1ap/f1ap_ies.h"
+#include "f1ap_ies.h"
 
 namespace asn1 {
 namespace f1ap {

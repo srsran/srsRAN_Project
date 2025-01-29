@@ -19,6 +19,7 @@
 #
 
 add_subdirectory(generic_functions)
+add_subdirectory(lower)
+add_subdirectory(metrics)
 add_subdirectory(support)
 add_subdirectory(upper)
-add_subdirectory(lower)

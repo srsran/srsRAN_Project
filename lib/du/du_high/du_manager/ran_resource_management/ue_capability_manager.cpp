@@ -107,7 +107,7 @@ static void set_pdsch_mcs_table(serving_cell_config& cell_cfg, pdsch_mcs_table m
 // Configure dedicated UE configuration to set PUSCH MCS.
 static void set_pusch_mcs_table(serving_cell_config& cell_cfg, pusch_mcs_table mcs_table)
 {
-  // Set MCS index table for PDSCH. See TS 38.214, Table 5.1.3.1-[1-3].
+  // Set MCS index table for PUSCH. See TS 38.214, Table 5.1.3.1-[1-3].
   if (cell_cfg.ul_config.has_value() and cell_cfg.ul_config->init_ul_bwp.pusch_cfg.has_value()) {
     cell_cfg.ul_config->init_ul_bwp.pusch_cfg->mcs_table = mcs_table;
   }

@@ -54807,6 +54807,44 @@ const char* sdt_info_s::sdt_assistant_info_opts::to_string() const
   return convert_enum_idx(names, 2, value, "sdt_info_s::sdt_assistant_info_e_");
 }
 
+// SRSConfiguration ::= SEQUENCE
+SRSASN_CODE srs_configuration_s::pack(bit_ref& bref) const
+{
+  HANDLE_CODE(bref.pack(ie_exts_present, 1));
+
+  HANDLE_CODE(pack_dyn_seq_of(bref, srs_carrier_list, 1, 32, true));
+  if (ie_exts_present) {
+    HANDLE_CODE(ie_exts.pack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+SRSASN_CODE srs_configuration_s::unpack(cbit_ref& bref)
+{
+  HANDLE_CODE(bref.unpack(ie_exts_present, 1));
+
+  HANDLE_CODE(unpack_dyn_seq_of(srs_carrier_list, bref, 1, 32, true));
+  if (ie_exts_present) {
+    HANDLE_CODE(ie_exts.unpack(bref));
+  }
+
+  return SRSASN_SUCCESS;
+}
+void srs_configuration_s::to_json(json_writer& j) const
+{
+  j.start_obj();
+  j.start_array("sRSCarrier-List");
+  for (const auto& e1 : srs_carrier_list) {
+    e1.to_json(j);
+  }
+  j.end_array();
+  if (ie_exts_present) {
+    j.write_fieldname("iE-Extensions");
+    ie_exts.to_json(j);
+  }
+  j.end_obj();
+}
+
 // SRSPosRRCInactiveQueryIndication ::= ENUMERATED
 const char* srs_pos_rrc_inactive_query_ind_opts::to_string() const
 {

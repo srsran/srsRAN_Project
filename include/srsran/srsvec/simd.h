@@ -1371,6 +1371,12 @@ inline simd_cf_t operator*(simd_cf_t left, simd_f_t right)
   return srsran_simd_cf_mul(left, right);
 }
 
+/// Multiplies a complex and a single precision value.
+inline simd_cf_t operator*(simd_cf_t left, float right)
+{
+  return srsran_simd_cf_mul(left, srsran_simd_f_set1(right));
+}
+
 /// Multiplies two complex SIMD registers.
 inline simd_cf_t& operator*=(simd_cf_t& left, const simd_cf_t& right)
 {
@@ -2374,7 +2380,6 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
 #ifdef __AVX2__
   const __m256i bias = _mm256_set1_epi32(0x7fff);
   const __m256i one  = _mm256_set1_epi32(0x1);
-  const __m256i mask = _mm256_set1_epi32(0xffff0000);
 
   __m256i a_i32 = _mm256_castps_si256(a);
   __m256i b_i32 = _mm256_castps_si256(b);
@@ -2384,31 +2389,16 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
   b_i32 = _mm256_add_epi32(b_i32, _mm256_add_epi32(bias, _mm256_and_si256(_mm256_srli_epi32(b_i32, 16), one)));
 
   // Remove the 16 least significant bits of the fractional part.
-  __m256i tmp_a_lsb    = _mm256_srli_epi32(a_i32, 16);
-  __m256i tmp_a_masked = _mm256_and_si256(a_i32, mask);
-
-  __m256i tmp_a_msb =
-      _mm256_permutevar8x32_epi32(tmp_a_masked, _mm256_setr_epi32(0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x0));
-  __m256i a_packed = _mm256_or_si256(tmp_a_lsb, tmp_a_msb);
-  a_packed         = _mm256_permutevar8x32_epi32(a_packed, _mm256_setr_epi32(0x0, 0x2, 0x4, 0x6, 0x1, 0x3, 0x5, 0x7));
-
-  // Remove the 16 least significant bits of the fractional part.
-  __m256i tmp_b_lsb    = _mm256_srli_epi32(b_i32, 16);
-  __m256i tmp_b_masked = _mm256_and_si256(b_i32, mask);
-
-  __m256i tmp_b_msb =
-      _mm256_permutevar8x32_epi32(tmp_b_masked, _mm256_setr_epi32(0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x0));
-  __m256i b_packed = _mm256_or_si256(tmp_b_lsb, tmp_b_msb);
-  b_packed         = _mm256_permutevar8x32_epi32(b_packed, _mm256_setr_epi32(0x1, 0x3, 0x5, 0x7, 0x0, 0x2, 0x4, 0x6));
+  a_i32 = _mm256_srai_epi32(a_i32, 16);
+  b_i32 = _mm256_srai_epi32(b_i32, 16);
 
   // Pack results into an output vector.
-  ret                = _mm256_blend_epi32(a_packed, b_packed, 0b11110000);
-
+  ret                = _mm256_packs_epi32(a_i32, b_i32);
+  ret                = _mm256_permutevar8x32_epi32(ret, _mm256_setr_epi32(0x0, 0x1, 0x4, 0x5, 0x2, 0x3, 0x6, 0x7));
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
   const __m128i bias = _mm_set1_epi32(0x7fff);
   const __m128i one  = _mm_set1_epi32(0x1);
-  const __m128i mask = _mm_set1_epi32(0xffff0000);
 
   __m128i a_i32 = _mm_castps_si128(a);
   __m128i b_i32 = _mm_castps_si128(b);
@@ -2418,21 +2408,11 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
   b_i32 = _mm_add_epi32(b_i32, _mm_add_epi32(bias, _mm_and_si128(_mm_srli_epi32(b_i32, 16), one)));
 
   // Remove the 16 least significant bits of the fractional part.
-  __m128i tmp_a_lsb    = _mm_srli_epi32(a_i32, 16);
-  __m128i tmp_a_masked = _mm_and_si128(a_i32, mask);
-  __m128i tmp_a_msb    = _mm_shuffle_epi32(tmp_a_masked, 0b00111001);
-  __m128i a_packed     = _mm_or_si128(tmp_a_lsb, tmp_a_msb);
-  a_packed             = _mm_shuffle_epi32(a_packed, 0b11001000);
-
-  // Remove the 16 least significant bits of the fractional part.
-  __m128i tmp_b_lsb    = _mm_srli_epi32(b_i32, 16);
-  __m128i tmp_b_masked = _mm_and_si128(b_i32, mask);
-  __m128i tmp_b_msb    = _mm_shuffle_epi32(tmp_b_masked, 0b00111001);
-  __m128i b_packed     = _mm_or_si128(tmp_b_lsb, tmp_b_msb);
-  b_packed             = _mm_shuffle_epi32(b_packed, 0b10001100);
+  a_i32 = _mm_srai_epi32(a_i32, 16);
+  b_i32 = _mm_srai_epi32(b_i32, 16);
 
   // Pack results into an output vector.
-  ret                = _mm_blend_epi16(a_packed, b_packed, 0xf0);
+  ret                = _mm_packs_epi32(a_i32, b_i32);
 #else /* __ARM_NEON */
 #ifdef __ARM_NEON
 #ifdef __ARM_FEATURE_BF16_VECTOR_ARITHMETIC

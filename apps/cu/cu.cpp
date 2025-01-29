@@ -42,8 +42,9 @@
 #include "srsran/e1ap/gateways/e1_local_connector_factory.h"
 #include "srsran/e2/e2ap_config_translators.h"
 #include "srsran/f1ap/gateways/f1c_network_server_factory.h"
-#include "srsran/f1u/cu_up/f1u_session_manager_factory.h"
+#include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/f1u/cu_up/split_connector/f1u_split_connector_factory.h"
+#include "srsran/f1u/split_connector/f1u_five_qi_gw_maps.h"
 #include "srsran/gateways/udp_network_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
@@ -171,7 +172,7 @@ static void autoderive_cu_up_parameters_after_parsing(cu_appconfig&            c
   }
   // If no F1-U socket configuration is derived, we set a default configuration.
   if (cu_config.f1u_cfg.f1u_socket_cfg.empty()) {
-    srs_cu::cu_f1u_socket_appconfig sock_cfg;
+    f1u_socket_appconfig sock_cfg;
     cu_config.f1u_cfg.f1u_socket_cfg.push_back(sock_cfg);
   }
 }
@@ -313,8 +314,8 @@ int main(int argc, char** argv)
   cu_f1u_gtpu_msg.gtpu_pcap                     = cu_up_dlt_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> cu_f1u_gtpu_demux = create_gtpu_demux(cu_f1u_gtpu_msg);
   // > Create UDP gateway(s).
-  srs_cu_up::gtpu_gateway_maps f1u_gw_maps;
-  for (const srs_cu::cu_f1u_socket_appconfig& sock_cfg : cu_cfg.f1u_cfg.f1u_socket_cfg) {
+  gtpu_gateway_maps f1u_gw_maps;
+  for (const f1u_socket_appconfig& sock_cfg : cu_cfg.f1u_cfg.f1u_socket_cfg) {
     udp_network_gateway_config cu_f1u_gw_config = {};
     cu_f1u_gw_config.bind_address               = sock_cfg.bind_addr;
     cu_f1u_gw_config.ext_bind_addr              = sock_cfg.udp_config.ext_addr;

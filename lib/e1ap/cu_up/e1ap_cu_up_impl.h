@@ -25,6 +25,7 @@
 #include "e1ap_cu_up_connection_handler.h"
 #include "ue_context/e1ap_cu_up_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/e1ap/cu_up/e1ap_configuration.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/timers.h"
@@ -37,7 +38,8 @@ class e1ap_event_manager;
 class e1ap_cu_up_impl final : public e1ap_interface
 {
 public:
-  e1ap_cu_up_impl(e1_connection_client&        e1_client_handler_,
+  e1ap_cu_up_impl(const e1ap_configuration&    e1ap_cfg_,
+                  e1_connection_client&        e1_client_handler_,
                   e1ap_cu_up_manager_notifier& cu_up_notifier_,
                   timer_manager&               timers_,
                   task_executor&               cu_up_exec_);
@@ -104,7 +106,8 @@ private:
   /// \param[in] msg The received unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::e1ap::unsuccessful_outcome_s& outcome);
 
-  srslog::basic_logger& logger;
+  const e1ap_configuration e1ap_cfg;
+  srslog::basic_logger&    logger;
 
   // nofifiers and handles
   e1ap_cu_up_manager_notifier& cu_up_notifier;

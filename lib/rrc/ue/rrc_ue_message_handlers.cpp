@@ -452,12 +452,11 @@ rrc_ue_impl::get_rrc_ue_handover_reconfiguration_context(const rrc_reconfigurati
   return ho_reconf_ctxt;
 }
 
-async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t transaction_id)
+async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(uint8_t transaction_id,
+                                                                                std::chrono::milliseconds timeout_ms)
 {
-  return launch_async([this,
-                       timeout_ms = context.cfg.rrc_procedure_timeout_ms,
-                       transaction_id,
-                       transaction = rrc_transaction{}](coro_context<async_task<bool>>& ctx) mutable {
+  return launch_async([this, timeout_ms, transaction_id, transaction = rrc_transaction{}](
+                          coro_context<async_task<bool>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     logger.log_debug("Awaiting RRC Reconfiguration Complete (timeout={}ms)", timeout_ms.count());
@@ -475,7 +474,7 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
       context.state = rrc_state::connected;
 
     } else {
-      logger.log_debug("Did not receive RRC Reconfiguration Complete after HO. Cause: {}. Requesting UE release",
+      logger.log_debug("Did not receive RRC Reconfiguration Complete after HO. Cause: {}. Requesting target UE release",
                        transaction.failure_cause() == protocol_transaction_failure::timeout ? "timeout" : "canceled");
       on_ue_release_required(ngap_cause_radio_network_t::ho_fail_in_target_5_gc_ngran_node_or_target_sys);
     }

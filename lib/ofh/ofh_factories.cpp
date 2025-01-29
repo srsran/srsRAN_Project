@@ -62,7 +62,7 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.is_prach_control_plane_enabled     = config.is_prach_control_plane_enabled;
   rx_config.ignore_ecpri_payload_size_field    = config.ignore_ecpri_payload_size_field;
   rx_config.ignore_ecpri_seq_id_field          = config.ignore_ecpri_seq_id_field;
-  rx_config.warn_unreceived_ru_frames          = config.warn_unreceived_ru_frames;
+  rx_config.log_unreceived_ru_frames           = config.log_unreceived_ru_frames;
 
   // For the rx eAxCs, configure only those that will be used, so the other eAxCs can be discarded as soon as possible.
   rx_config.prach_eaxc.assign(config.prach_eaxc.begin(), config.prach_eaxc.begin() + config.nof_antennas_ul);

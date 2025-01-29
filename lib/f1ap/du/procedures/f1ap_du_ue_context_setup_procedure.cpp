@@ -41,6 +41,20 @@ static bool requires_ue_ran_config_update(const ue_context_setup_request_s& msg)
          msg->scell_to_be_setup_list_present;
 }
 
+static expected<default_success_t, asn1::f1ap::cause_c>
+validate_drb_to_be_setup_item(const asn1::f1ap::drbs_to_be_setup_item_s& drb_to_be_setup_item)
+{
+  asn1::f1ap::cause_c cause;
+  cause.set_protocol().value = asn1::f1ap::cause_protocol_opts::semantic_error;
+
+  // Check DL PDCP SN length information present.
+  // DL PDCP SN information is mandatory in the IE extension field.
+  if (not drb_to_be_setup_item.ie_exts_present) {
+    return make_unexpected(cause);
+  }
+  return default_success_t{};
+}
+
 f1ap_du_ue_context_setup_procedure::f1ap_du_ue_context_setup_procedure(
     const asn1::f1ap::ue_context_setup_request_s& msg_,
     f1ap_du_ue_manager&                           ue_mng_,
@@ -206,7 +220,15 @@ async_task<f1ap_ue_context_update_response> f1ap_du_ue_context_setup_procedure::
 
   // > Pass DRBs to setup.
   for (const auto& drb : msg->drbs_to_be_setup_list) {
-    du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_item()));
+    expected<default_success_t, asn1::f1ap::cause_c> drb_valid =
+        validate_drb_to_be_setup_item(drb->drbs_to_be_setup_item());
+    if (drb_valid.has_value()) {
+      du_request.drbs_to_setup.push_back(make_drb_to_setup(drb.value().drbs_to_be_setup_item()));
+    } else {
+      f1ap_drb_failed_to_setupmod failed_drb = {uint_to_drb_id(drb->drbs_to_be_setup_item().drb_id),
+                                                asn1_to_cause(drb_valid.error())};
+      failed_drbs.push_back(failed_drb);
+    }
   }
 
   // > measConfig IE.
@@ -280,7 +302,9 @@ void f1ap_du_ue_context_setup_procedure::send_ue_context_setup_response()
   resp->drbs_setup_list         = make_drbs_setup_list(du_ue_cfg_response.drbs_setup);
   resp->drbs_setup_list_present = resp->drbs_setup_list.size() > 0;
   // > DRBs-FailedToBeSetup-List.
-  resp->drbs_failed_to_be_setup_list         = make_drbs_failed_to_be_setup_list(du_ue_cfg_response.failed_drbs_setups);
+  failed_drbs.insert(
+      failed_drbs.end(), du_ue_cfg_response.failed_drbs_setups.begin(), du_ue_cfg_response.failed_drbs_setups.end());
+  resp->drbs_failed_to_be_setup_list         = make_drbs_failed_to_be_setup_list(failed_drbs);
   resp->drbs_failed_to_be_setup_list_present = resp->drbs_failed_to_be_setup_list.size() > 0;
 
   // Send Response to CU-CP.

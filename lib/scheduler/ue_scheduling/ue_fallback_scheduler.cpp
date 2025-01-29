@@ -946,36 +946,40 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
       auto* existing_pucch = std::find_if(pusch_alloc.result.ul.pucchs.begin(),
                                           pusch_alloc.result.ul.pucchs.end(),
                                           [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
-      auto  existing_pucch_count =
-          std::count_if(pusch_alloc.result.ul.pucchs.begin(),
-                        pusch_alloc.result.ul.pucchs.end(),
-                        [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
 
-      // [Implementation-defined]
-      // Given that we don't support multiplexing of UCI on PUSCH at this point, removal of an existing PUCCH grant
-      // requires careful consideration since we can have multiple PUCCH grants. Following are the possible options:
-      //
-      // - PUCCH common only (very unlikely, but a possibility)
-      // - PUCCH common (1 HARQ bit) + 1 PUCCH F1 dedicated (1 HARQ bit)
-      // - PUCCH common (1 HARQ bit) + 2 PUCCH F1 dedicated (1 HARQ bit, 1 HARQ bit + SR bit)
-      // - PUCCH common (1 HARQ bit) + 1 PUCCH F2 dedicated (with CSI + HARQ bit)
-      // - PUCCH F1 dedicated only (SR bit)
-      // - PUCCH F2 dedicated only (CSI)
-      //
-      // We remove PUCCH grant only if there exists only ONE PUCCH grant, and it's a PUCCH F1 dedicated with only SR
-      // bit.
-      if (existing_pucch_count > 0) {
-        if (existing_pucch_count == 1 and existing_pucch->format == pucch_format::FORMAT_1 and
-            existing_pucch->format_1.sr_bits != sr_nof_bits::no_sr and
-            existing_pucch->format_1.harq_ack_nof_bits == 0) {
-          pusch_alloc.result.ul.pucchs.erase(existing_pucch);
-        } else {
-          // No PUSCH in slots with PUCCH.
-          continue;
+      bool remove_pucch = false;
+      if (existing_pucch != pusch_alloc.result.ul.pucchs.end()) {
+        auto existing_pucch_count =
+            std::count_if(pusch_alloc.result.ul.pucchs.begin(),
+                          pusch_alloc.result.ul.pucchs.end(),
+                          [rnti = u.crnti](const pucch_info& pucch) { return pucch.crnti == rnti; });
+
+        // [Implementation-defined]
+        // Given that we don't support multiplexing of UCI on PUSCH at this point, removal of an existing PUCCH grant
+        // requires careful consideration since we can have multiple PUCCH grants. Following are the possible options:
+        //
+        // - PUCCH common only (very unlikely, but a possibility)
+        // - PUCCH common (1 HARQ bit) + 1 PUCCH F1 dedicated (1 HARQ bit)
+        // - PUCCH common (1 HARQ bit) + 2 PUCCH F1 dedicated (1 HARQ bit, 1 HARQ bit + SR bit)
+        // - PUCCH common (1 HARQ bit) + 1 PUCCH F2 dedicated (with CSI + HARQ bit)
+        // - PUCCH F1 dedicated only (SR bit)
+        // - PUCCH F2 dedicated only (CSI)
+        //
+        // We remove PUCCH grant only if there exists only ONE PUCCH grant, and it's a PUCCH F1 dedicated with only SR
+        // bit.
+        if (existing_pucch_count > 0) {
+          if (existing_pucch_count == 1 and existing_pucch->format == pucch_format::FORMAT_1 and
+              existing_pucch->format_1.sr_bits != sr_nof_bits::no_sr and
+              existing_pucch->format_1.harq_ack_nof_bits == 0) {
+            // No PUSCH in slots with PUCCH. We cannot remove the PUCCH here, as we need to make sure the PUSCH will be
+            // allocated. If not, we risk removing a PUCCH with SR opportunity.
+            remove_pucch = true;
+          } else {
+            continue;
+          }
         }
       }
-
-      ul_srb_sched_outcome outcome = schedule_ul_srb(u, res_alloc, pusch_td_res_idx, pusch_td, h_ul_retx);
+      ul_srb_sched_outcome outcome = schedule_ul_srb(u, res_alloc, pusch_td_res_idx, pusch_td, h_ul_retx, remove_pucch);
       if (outcome != ul_srb_sched_outcome::next_slot) {
         return outcome;
       }
@@ -989,7 +993,8 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
                                        cell_resource_allocator&                     res_alloc,
                                        unsigned                                     pusch_time_res,
                                        const pusch_time_domain_resource_allocation& pusch_td,
-                                       std::optional<ul_harq_process_handle>        h_ul_retx)
+                                       std::optional<ul_harq_process_handle>        h_ul_retx,
+                                       bool                                         remove_pucch)
 {
   ue_cell&                      ue_pcell    = u.get_pcell();
   cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
@@ -1125,6 +1130,13 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     logger.info(
         "ue={} rnti={}: Failed to allocate PUSCH. Cause: No space in PDCCH.", fmt::underlying(u.ue_index), u.crnti);
     return ul_srb_sched_outcome::stop_ul_scheduling;
+  }
+
+  if (remove_pucch) {
+    // If the PUCCH needs to be removed, it implies the UE has the dedicated config. This is because the only
+    // case in which we remove the PUCCH is when the UCI bits only have SR (see explanation in the calling function).
+    srsran_assert(u.ue_cfg_dedicated() != nullptr, "UE has no dedicated configuration");
+    pucch_alloc.remove_ue_uci_from_pucch(pusch_alloc, u.crnti, u.get_pcell().cfg());
   }
 
   // Mark resources as occupied in the ResourceGrid.

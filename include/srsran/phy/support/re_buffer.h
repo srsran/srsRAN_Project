@@ -375,6 +375,29 @@ public:
   /// Constructs a modular resource element buffer for a given number of slices and resource elements.
   modular_re_buffer(unsigned nof_slices_, unsigned nof_re_) { resize(nof_slices_, nof_re_); }
 
+  /// Build a modular RE buffer from an existing read-write buffer.
+  modular_re_buffer(re_buffer_writer<T>& buffer)
+  {
+    resize(buffer.get_nof_slices(), buffer.get_nof_re());
+    for (unsigned i_slice = 0; i_slice != nof_slices; ++i_slice) {
+      set_slice(i_slice, buffer.get_slice(i_slice));
+    }
+  }
+
+  /// Build a modular RE buffer from a buffer.
+  modular_re_buffer(re_buffer_writer<T>& buffer, unsigned offset, unsigned nof_re_)
+  {
+    srsran_assert(offset + nof_re_ <= buffer.get_nof_re(),
+                  "The given offset (i.e., {}) and number of RE (i.e., {}) exceed the buffer number of RE (i.e., {}).",
+                  offset,
+                  nof_re_,
+                  buffer.get_nof_re());
+    resize(buffer.get_nof_slices(), nof_re_);
+    for (unsigned i_slice = 0; i_slice != nof_slices; ++i_slice) {
+      set_slice(i_slice, buffer.get_slice(i_slice).subspan(offset, nof_re));
+    }
+  }
+
   /// \brief Resizes the buffer view to a desired number of RE and slices.
   /// \param[in] nof_slices Number of slices.
   /// \param[in] nof_re     Number of resource elements.

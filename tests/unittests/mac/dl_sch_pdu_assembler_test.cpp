@@ -149,7 +149,7 @@ public:
     return nof_bytes;
   }
 
-  unsigned on_buffer_state_update() override { return 0; }
+  rlc_buffer_state on_buffer_state_update() override { return rlc_buffer_state{}; }
 };
 
 class mac_dl_sch_assembler_tester : public testing::Test

@@ -58,7 +58,13 @@ public:
     return 0;
   }
 
-  unsigned on_buffer_state_update() override { return TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE; }
+  rlc_buffer_state on_buffer_state_update() override
+  {
+    rlc_buffer_state bs = {};
+    bs.pending_bytes    = TEST_UE_DL_BUFFER_STATE_UPDATE_SIZE;
+    // TODO: set bs.hol_toa
+    return bs;
+  }
 
 private:
   byte_buffer tx_sdu;

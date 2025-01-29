@@ -49,12 +49,20 @@ public:
   /// Maximum number of virtual pilots used for estimation at the edges.
   static constexpr unsigned MAX_V_PILOTS = 12;
 
+  /// Maximum number of pilots per OFDM symbol.
+  static constexpr unsigned MAX_NOF_PILOTS_SYMBOL = MAX_RB * NRE + 2 * MAX_V_PILOTS;
+
+  /// Maximum number of OFDM symbols that contain DM-RS in a transmission.
+  static constexpr unsigned MAX_NOF_DMRS_SYMBOLS = pusch_constants::MAX_NOF_DMRS_SYMBOLS;
+
   /// Constructor - Sets the internal interpolator and inverse DFT processor of size \c DFT_SIZE.
-  port_channel_estimator_average_impl(std::unique_ptr<interpolator>                interp,
-                                      std::unique_ptr<time_alignment_estimator>    ta_estimator_,
-                                      port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy_,
-                                      bool                                         compensate_cfo_ = true) :
+  port_channel_estimator_average_impl(std::unique_ptr<interpolator>                    interp,
+                                      std::unique_ptr<time_alignment_estimator>        ta_estimator_,
+                                      port_channel_estimator_fd_smoothing_strategy     fd_smoothing_strategy_,
+                                      port_channel_estimator_td_interpolation_strategy td_interpolation_strategy_,
+                                      bool                                             compensate_cfo_ = true) :
     fd_smoothing_strategy(fd_smoothing_strategy_),
+    td_interpolation_strategy(td_interpolation_strategy_),
     compensate_cfo(compensate_cfo_),
     freq_interpolator(std::move(interp)),
     ta_estimator(std::move(ta_estimator_))
@@ -135,8 +143,26 @@ private:
   /// The symbol starting time is computed from the start of the slot and is expressed in units of OFDM symbol duration.
   void initialize_symbol_start_epochs(cyclic_prefix cp, subcarrier_spacing scs);
 
+  /// \brief Applies the time domain interpolation strategy for a given OFDM symbol within the hop transmission.
+  /// \param[out] destination      Estimated resource grid OFDM symbol for a single channel.
+  /// \param[in]  dmrs_mask        Time-domain DM-RS mask.
+  /// \param[in]  freq_response    Frequency-domain channel estimates for the given channel for each of the OFDM symbols
+  ///                              containing DM-RS.
+  /// \param[in]  hop_first_symbol Start symbol index for the hop within the slot.
+  /// \param[in]  hop_last_symbol  Last symbol index for the hop within the slot.
+  /// \param[in]  i_symbol         OFDM symbol index within the slot to calculate.
+  void apply_td_domain_strategy(span<cbf16_t>                 destination,
+                                const symbol_slot_mask&       dmrs_mask,
+                                const re_buffer_reader<cf_t>& freq_response,
+                                unsigned                      hop_first_symbol,
+                                unsigned                      hop_last_symbol,
+                                unsigned                      i_symbol) const;
+
   /// Frequency domain smoothing strategy.
   port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy;
+
+  /// Time domain smoothing strategy.
+  port_channel_estimator_td_interpolation_strategy td_interpolation_strategy;
 
   /// Boolean flag for activating CFO compensation (active when true).
   bool compensate_cfo;
@@ -157,13 +183,11 @@ private:
   static_re_buffer<MAX_LAYERS, MAX_RB * NRE> pilot_products;
 
   /// Second auxiliary buffer for processing the pilots.
-  static_re_buffer<MAX_LAYERS, MAX_RB * NRE + 2 * MAX_V_PILOTS> enlarged_pilots_lse;
-  modular_re_buffer<cf_t, MAX_LAYERS>                           pilots_lse;
+  static_re_measurement<cf_t, MAX_NOF_PILOTS_SYMBOL, MAX_NOF_DMRS_SYMBOLS, MAX_LAYERS> enlarged_pilots_lse;
+  modular_re_measurement<cf_t, MAX_NOF_DMRS_SYMBOLS, MAX_LAYERS>                       pilots_lse;
 
   /// Buffer of frequency response coefficients.
-  std::array<cf_t, MAX_RB * NRE> freq_response;
-  /// Buffer of frequency response coefficients in \c bfloat16.
-  std::array<cbf16_t, MAX_RB * NRE> freq_response_cbf16;
+  static_re_buffer<MAX_NOF_DMRS_SYMBOLS, MAX_RB * NRE, cf_t> freq_response;
 
   /// Buffer for the OFDM symbols starting epochs within the current slot.
   std::array<float, MAX_NSYMB_PER_SLOT> aux_symbol_start_epochs;

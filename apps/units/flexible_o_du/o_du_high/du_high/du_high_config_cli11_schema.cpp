@@ -266,13 +266,15 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
           pdsch_params.mcs_table = pdsch_mcs_table::qam64;
         } else if (value == "qam256") {
           pdsch_params.mcs_table = pdsch_mcs_table::qam256;
+        } else if (value == "qam64lowse") {
+          pdsch_params.mcs_table = pdsch_mcs_table::qam64LowSe;
         } else {
-          report_fatal_error("PDSCH mcs_table={} not in {{qam64,qam256}}.", value);
+          report_fatal_error("PDSCH mcs_table={} not in {{qam64,qam256,qam64lowse}}.", value);
         }
       },
       "MCS table to use PDSCH")
       ->default_str("qam256")
-      ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
+      ->check(CLI::IsMember({"qam64", "qam256", "qam64lowse"}, CLI::ignore_case));
   add_option(app, "--min_rb_size", pdsch_params.min_rb_size, "Minimum RB size for UE PDSCH resource allocation")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_NOF_PRBS));
@@ -548,43 +550,58 @@ static void configure_cli11_csi_args(CLI::App& app, du_high_unit_csi_config& csi
       ->check(CLI::Range(-8, 15));
 }
 
-static void configure_cli11_pf_scheduler_expert_args(CLI::App& app, time_pf_scheduler_expert_config& expert_params)
+static void configure_cli11_qos_scheduler_expert_args(CLI::App& app, time_qos_scheduler_expert_config& expert_params)
 {
-  add_option(app,
-             "--pf_sched_fairness_coeff",
-             expert_params.pf_sched_fairness_coeff,
-             "Fairness Coefficient to use in Proportional Fair policy scheduler")
-      ->capture_default_str();
   add_option_function<std::string>(
       app,
       "--qos_weight_function",
       [&expert_params](const std::string& value) {
         if (value == "gbr_prioritized") {
-          expert_params.qos_weight_func = time_pf_scheduler_expert_config::weight_function::gbr_prioritized;
+          expert_params.qos_weight_func = time_qos_scheduler_expert_config::weight_function::gbr_prioritized;
         } else if (value == "multivariate") {
-          expert_params.qos_weight_func = time_pf_scheduler_expert_config::weight_function::multivariate;
+          expert_params.qos_weight_func = time_qos_scheduler_expert_config::weight_function::multivariate;
         } else {
           report_fatal_error("Invalid qos weight function {}", value);
         }
       },
-      "QoS-aware scheduler policy UE weight function")
+      "QoS-aware scheduler policy weight function")
       ->default_str("gbr_prioritized")
       ->check(CLI::IsMember({"gbr_prioritized", "multivariate"}, CLI::ignore_case));
+  add_option(app,
+             "--pf_fairness_coeff",
+             expert_params.pf_fairness_coeff,
+             "Fairness Coefficient to use in Proportional Fair (PF) weight")
+      ->capture_default_str();
+  add_option(app,
+             "--prio_enabled",
+             expert_params.priority_enabled,
+             "Whether to take into account the QoS Flow priority in QoS-aware scheduling")
+      ->capture_default_str();
+  add_option(app,
+             "--pdb_enabled",
+             expert_params.pdb_enabled,
+             "Whether to take into account the QoS Flow Packet Delay Budget (PDB) in QoS-aware scheduling")
+      ->capture_default_str();
+  add_option(app,
+             "--gbr_enabled",
+             expert_params.gbr_enabled,
+             "Whether to take into account the QoS Flow Guaranteed Bit Rate (GBR) in QoS-aware scheduling")
+      ->capture_default_str();
 }
 
 static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_scheduler_expert_config& expert_params)
 {
-  static time_pf_scheduler_expert_config pf_sched_expert_cfg;
-  CLI::App*                              pf_sched_cfg_subcmd =
-      add_subcommand(app, "pf_sched", "Proportional Fair policy scheduler expert configuration")->configurable();
-  configure_cli11_pf_scheduler_expert_args(*pf_sched_cfg_subcmd, pf_sched_expert_cfg);
-  auto pf_sched_verify_callback = [&]() {
-    CLI::App* pf_sched_sub_cmd = app.get_subcommand("pf_sched");
-    if (pf_sched_sub_cmd->count() != 0) {
-      expert_params = pf_sched_expert_cfg;
+  static time_qos_scheduler_expert_config qos_sched_expert_cfg;
+  CLI::App*                               qos_sched_cfg_subcmd =
+      add_subcommand(app, "qos_sched", "QoS-aware policy scheduler expert configuration")->configurable();
+  configure_cli11_qos_scheduler_expert_args(*qos_sched_cfg_subcmd, qos_sched_expert_cfg);
+  auto qos_sched_verify_callback = [&]() {
+    CLI::App* qos_sched_sub_cmd = app.get_subcommand("qos_sched");
+    if (qos_sched_sub_cmd->count() != 0) {
+      expert_params = qos_sched_expert_cfg;
     }
   };
-  pf_sched_cfg_subcmd->parse_complete_callback(pf_sched_verify_callback);
+  qos_sched_cfg_subcmd->parse_complete_callback(qos_sched_verify_callback);
 }
 
 static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit_ta_sched_expert_config& ta_params)
@@ -688,13 +705,15 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
           pusch_params.mcs_table = pusch_mcs_table::qam64;
         } else if (value == "qam256") {
           pusch_params.mcs_table = pusch_mcs_table::qam256;
+        } else if (value == "qam64lowse") {
+          pusch_params.mcs_table = pusch_mcs_table::qam64LowSe;
         } else {
-          report_fatal_error("PUSCH mcs_table={} not in {{qam64,qam256}}.", value);
+          report_fatal_error("PUSCH mcs_table={} not in {{qam64,qam256,qam64lowse}}.", value);
         }
       },
       "MCS table to use PUSCH")
       ->default_str(pusch_mcs_table_to_string(pusch_params.mcs_table))
-      ->check(CLI::IsMember({"qam64", "qam256"}, CLI::ignore_case));
+      ->check(CLI::IsMember({"qam64", "qam256", "qam64lowse"}, CLI::ignore_case));
   add_option(app,
              "--max_rank",
              pusch_params.max_rank,
@@ -1029,6 +1048,10 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
              pucch_params.max_consecutive_kos,
              "Maximum number of consecutive undecoded PUCCH F2 for CSI before an Radio Link Failure is reported")
       ->capture_default_str();
+  app.add_option("--enable_cl_loop_pw_control",
+                 pucch_params.enable_closed_loop_pw_control,
+                 "Enable closed-loop power control for PUCCH")
+      ->capture_default_str();
 }
 
 static void configure_cli11_srs_args(CLI::App& app, du_high_unit_srs_config& srs_params)
@@ -1121,9 +1144,19 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
       app, "--max_msg3_harq_retx", prach_params.max_msg3_harq_retx, "Maximum number of message 3 HARQ retransmissions")
       ->capture_default_str()
       ->check(CLI::Range(0, 4));
-  add_option(
-      app, "--total_nof_ra_preambles", prach_params.total_nof_ra_preambles, "Number of different PRACH preambles")
+  add_option(app,
+             "--total_nof_ra_preambles",
+             prach_params.total_nof_ra_preambles,
+             "Number of different contention-based PRACH preambles per occasion. If less than 64 preambles are used, "
+             "the remaining preambles can be used for contention-free PRACHs")
+      ->capture_default_str()
       ->check(CLI::Range(1, 64));
+  add_option(app,
+             "--cfra_enabled",
+             prach_params.cfra_enabled,
+             "Whether to enable Contention-free Random Access (CFRA). If enabled, the total_nof_ra_preambles must be "
+             "lower than 64")
+      ->capture_default_str();
   add_option(app,
              "--prach_frequency_start",
              prach_params.prach_frequency_start,

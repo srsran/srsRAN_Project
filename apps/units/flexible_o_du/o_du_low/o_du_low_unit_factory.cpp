@@ -22,6 +22,7 @@
 
 #include "o_du_low_unit_factory.h"
 #include "apps/services/worker_manager/worker_manager.h"
+#include "apps/units/flexible_o_du/o_du_low/metrics/du_low_metric_producer_impl.h"
 #include "du_low_config.h"
 #include "du_low_config_translator.h"
 #include "du_low_hal_factory.h"
@@ -111,8 +112,18 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
     dependencies.workers.get_du_low_dl_executors(upper.dl_executors, i);
   }
 
-  o_du_low_unit unit;
-  unit.o_du_lo = srs_du::make_o_du_low(o_du_low_cfg, params.du_cells);
+  o_du_low_unit                         unit;
+  srsran::srs_du::o_du_low_dependencies o_du_low_deps;
+
+  if (params.du_low_unit_cfg.metrics_config.enable) {
+    auto du_low_metrics                       = std::make_unique<du_low_metric_producer_impl>();
+    o_du_low_deps.du_low_deps.metric_notifier = &du_low_metrics->get_notifiers();
+    app_services::metrics_config& metrics     = unit.metrics.emplace_back();
+    metrics.metric_name                       = "upper_phy";
+    metrics.producers.emplace_back(std::move(du_low_metrics));
+  }
+
+  unit.o_du_lo = srs_du::make_o_du_low(o_du_low_cfg, params.du_cells, std::move(o_du_low_deps));
   report_error_if_not(unit.o_du_lo, "Invalid O-DU low");
 
   return unit;

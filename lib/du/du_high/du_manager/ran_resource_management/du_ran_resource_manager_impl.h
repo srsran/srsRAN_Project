@@ -28,6 +28,7 @@
 #include "du_pucch_resource_manager.h"
 #include "du_ran_resource_manager.h"
 #include "du_srs_resource_manager.h"
+#include "ra_resource_manager.h"
 #include "ue_capability_manager.h"
 #include "srsran/ran/qos/five_qi.h"
 
@@ -52,6 +53,8 @@ public:
                                         const f1ap_ue_context_update_request& upd_req,
                                         const du_ue_resource_config*          reestablished_context) override;
 
+  void config_applied() override;
+
   const du_ue_resource_config& get() override { return *cell_grp; }
 
 private:
@@ -74,7 +77,7 @@ public:
   du_ran_resource_manager_impl& operator=(const du_ran_resource_manager_impl&) = delete;
 
   expected<ue_ran_resource_configurator, std::string>
-  create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index) override;
+  create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index, bool has_tc_rnti) override;
 
   /// \brief Updates a UE's cell configuration context based on the F1 UE Context Update request.
   ///
@@ -95,6 +98,9 @@ public:
   ///
   /// \param ue_index Id of the UE whose context is being deallocated.
   void deallocate_context(du_ue_index_t ue_index);
+
+  /// The UE has confirmed that correct application of the new configuration.
+  void ue_config_applied(du_ue_index_t ue_index);
 
 private:
   error_type<std::string>
@@ -130,6 +136,9 @@ private:
 
   // Allocator of DRX and measGap resources for the DU.
   du_drx_resource_manager drx_res_mng;
+
+  // Allocator of RA resources.
+  ra_resource_manager ra_res_alloc;
 };
 
 } // namespace srs_du

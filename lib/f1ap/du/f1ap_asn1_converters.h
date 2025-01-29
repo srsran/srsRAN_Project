@@ -20,14 +20,23 @@
  *
  */
 
-#include "srsran/f1u/cu_up/f1u_session_manager_factory.h"
-#include "f1u_session_manager_impl.h"
+#pragma once
 
-using namespace srsran;
-using namespace srs_cu_up;
+#include "srsran/f1ap/du/f1ap_du_connection_manager.h"
 
-std::unique_ptr<f1u_session_manager>
-srsran::srs_cu_up::create_f1u_cu_up_session_manager(const f1u_session_maps& f1u_sessions)
-{
-  return std::make_unique<f1u_session_manager_impl>(f1u_sessions);
+namespace asn1 {
+namespace f1ap {
+
+struct served_cell_info_s;
+
 }
+} // namespace asn1
+
+namespace srsran {
+namespace srs_du {
+
+asn1::f1ap::served_cell_info_s make_asn1_served_cell_info(const du_served_cell_info& served_cell,
+                                                          span<const s_nssai_t>      slices);
+
+}
+} // namespace srsran

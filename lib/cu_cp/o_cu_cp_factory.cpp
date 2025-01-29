@@ -42,6 +42,7 @@ std::unique_ptr<o_cu_cp> srs_cu_cp::create_o_cu_cp(const o_cu_cp_config&       c
       config.e2ap_config,
       *dependencies.e2_client,
       dependencies.e2_cu_metric_iface,
+      &cu.get()->get_cu_configurator(),
       timer_factory{*config.cu_cp_config.services.timers, *config.cu_cp_config.services.cu_cp_executor},
       *config.cu_cp_config.services.cu_cp_executor);
 

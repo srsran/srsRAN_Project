@@ -55,6 +55,12 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
   return true;
 }
 
+void scheduler_impl::handle_sib1_update_request(const sib1_pdu_update_request& req)
+{
+  srsran_assert(cells.contains(req.cell_index), "cell={} does not exist", fmt::underlying(req.cell_index));
+  cells[req.cell_index]->handle_sib1_update_indication(req);
+}
+
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)
 {
   // Validate the UE creation request and create a configuration of the UE that is internal to the scheduler.

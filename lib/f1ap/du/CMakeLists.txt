@@ -18,6 +18,10 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+add_library(srsran_f1ap_du_helpers f1ap_asn1_converters.cpp)
+target_include_directories(srsran_f1ap_du_helpers PRIVATE ..)
+target_link_libraries(srsran_f1ap_du_helpers f1ap_asn1)
+
 add_subdirectory(procedures)
 add_library(srsran_f1ap_du
         f1ap_du_impl.cpp

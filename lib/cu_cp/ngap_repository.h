@@ -59,6 +59,11 @@ public:
   /// \return The interface of the NGAP for the given PLMN if it is found, nullptr if no NGAP for the PLMN is found.
   ngap_interface* find_ngap(const plmn_identity& plmn);
 
+  /// \brief Checks whether a AMF with the specified AMF index is in the connected NGAPs.
+  /// \param[in] amf_index The AMF index to identify the NGAP.
+  /// \return The interface of the NGAP for the given AMF index if it is found, nullptr not.
+  ngap_interface* find_ngap(const amf_index_t& amf_index);
+
   /// \brief Get the all NGAP interfaces.
   std::map<amf_index_t, ngap_interface*> get_ngaps();
 

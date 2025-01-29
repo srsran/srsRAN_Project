@@ -97,22 +97,28 @@ inline mac_ue_create_request make_default_ue_creation_request(const cell_config_
 class dummy_mac_scheduler : public mac_scheduler
 {
 public:
-  sched_result next_sched_result = {};
+  sched_result                           next_sched_result = {};
+  std::optional<rach_indication_message> last_rach_ind;
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
-  void handle_rach_indication(const rach_indication_message& msg) override {}
+  void handle_rach_indication(const rach_indication_message& msg) override { last_rach_ind = msg; }
   void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override {}
   void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override {}
   void handle_ue_removal_request(du_ue_index_t ue_index) override {}
+  void handle_ue_config_applied(du_ue_index_t ue_index) override {}
+  void handle_sib1_update_request(const sib1_pdu_update_request& req) override {}
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
   void handle_crc_indication(const ul_crc_indication& crc) override {}
   void handle_uci_indication(const uci_indication& uci) override {}
+  void handle_srs_indication(const srs_indication& srs) override {}
+  void handle_ul_phr_indication(const ul_phr_indication_message& phr_ind) override {}
   void handle_dl_mac_ce_indication(const dl_mac_ce_indication& mac_ce) override {}
   void handle_paging_information(const sched_paging_information& pi) override {}
   const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override
   {
     return next_sched_result;
   }
+  void handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event) override {}
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
 };
 
@@ -130,6 +136,12 @@ public:
   void handle_error_indication(slot_point                         slot_tx,
                                du_cell_index_t                    cell_idx,
                                mac_cell_slot_handler::error_event event) override
+  {
+  }
+
+  void handle_sib1_update_indication(du_cell_index_t cell_index,
+                                     unsigned        sib_version,
+                                     units::bytes    new_payload_size) override
   {
   }
 };
@@ -172,7 +184,13 @@ public:
     return mac_sdu_buf.size();
   }
 
-  unsigned on_buffer_state_update() override { return next_bs; }
+  rlc_buffer_state on_buffer_state_update() override
+  {
+    rlc_buffer_state bs = {};
+    bs.pending_bytes    = next_bs;
+    // TODO: set bs.hol_toa
+    return bs;
+  }
 };
 
 struct mac_test_ue_bearer {

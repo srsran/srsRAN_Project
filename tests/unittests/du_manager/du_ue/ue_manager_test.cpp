@@ -278,7 +278,11 @@ TEST_F(du_ue_manager_tester, when_ue_is_being_removed_then_ue_notifiers_get_disc
   // Test: Buffer State updates are forwarded to MAC.
   auto* test_ue = ue_mng.find_ue(get_last_ue_index());
   auto& srb1    = test_ue->bearers.srbs()[srb_id_t::srb1].connector.rlc_tx_buffer_state_notif;
-  srb1.on_buffer_state_update(10);
+  {
+    rlc_buffer_state rlc_bs = {};
+    rlc_bs.pending_bytes    = 10;
+    srb1.on_buffer_state_update(rlc_bs);
+  }
   ASSERT_TRUE(mac_dummy.last_dl_bs.has_value());
   ASSERT_EQ(mac_dummy.last_dl_bs->ue_index, test_ue->ue_index);
   ASSERT_EQ(mac_dummy.last_dl_bs->lcid, lcid_t::LCID_SRB1);
@@ -289,7 +293,11 @@ TEST_F(du_ue_manager_tester, when_ue_is_being_removed_then_ue_notifiers_get_disc
 
   // TEST: UE notifiers are disconnected.
   mac_dummy.last_dl_bs.reset();
-  srb1.on_buffer_state_update(10);
+  {
+    rlc_buffer_state rlc_bs = {};
+    rlc_bs.pending_bytes    = 10;
+    srb1.on_buffer_state_update(rlc_bs);
+  }
   worker.run_pending_tasks();
   ASSERT_TRUE(not mac_dummy.last_dl_bs.has_value() or mac_dummy.last_dl_bs.value().bs == 0);
 }

@@ -29,13 +29,14 @@ using namespace ofh;
 closed_rx_window_handler::closed_rx_window_handler(const closed_rx_window_handler_config&  config,
                                                    closed_rx_window_handler_dependencies&& dependencies) :
   notification_delay_in_symbols(config.nof_symbols_to_process_uplink + config.rx_timing_params.sym_end + 1),
-  log_unreceived_messages(config.warn_unreceived_ru_frames),
+  sector_id(config.sector),
+  warn_unreceived_frames(config.warn_unreceived_frames),
+  log_unreceived_messages(config.warn_unreceived_frames == warn_unreceived_ru_frames::always),
   logger(*dependencies.logger),
   executor(*dependencies.executor),
   prach_repo(std::move(dependencies.prach_repo)),
   uplink_repo(std::move(dependencies.uplink_repo)),
-  notifier(std::move(dependencies.notifier)),
-  sector_id(config.sector)
+  notifier(std::move(dependencies.notifier))
 {
   srsran_assert(prach_repo, "Invalid PRACH context repository");
   srsran_assert(uplink_repo, "Invalid uplink context repository");

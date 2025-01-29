@@ -90,7 +90,7 @@ private:
   e1ap_bearer_context_modification_response
       bearer_context_modification_response; // to inform CU-UP about the new TEID for UL F1u traffic
   f1ap_ue_context_modification_response source_ue_context_modification_response;
-  bool                                  reconf_result = false;
+  bool                                  rrc_reconfig_sent = false;
 };
 
 } // namespace srs_cu_cp

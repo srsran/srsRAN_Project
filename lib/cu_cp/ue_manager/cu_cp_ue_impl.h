@@ -50,11 +50,18 @@ struct cu_cp_ue_context {
   bool reconfiguration_disabled = false;
 };
 
+struct cu_cp_ue_handover_context {
+  ue_index_t target_ue_index = ue_index_t::invalid;
+  uint8_t    rrc_reconfig_transaction_id;
+};
+
 class cu_cp_ue : public cu_cp_ue_impl_interface
 {
 public:
   cu_cp_ue(ue_index_t                     ue_index_,
            du_index_t                     du_index_,
+           timer_manager&                 timers_,
+           task_executor&                 task_exec_,
            const up_resource_manager_cfg& up_cfg,
            const security_manager_config& sec_cfg,
            ue_task_scheduler_impl         task_sched_,
@@ -150,34 +157,40 @@ public:
     return meas_context.meas_results;
   }
 
+  unique_timer& get_handover_ue_release_timer() { return handover_ue_release_timer; }
+
+  std::optional<cu_cp_ue_handover_context>& get_ho_context() { return ho_context; }
+
 private:
-  // common context
+  // Common context.
   ue_index_t             ue_index = ue_index_t::invalid;
   ue_task_scheduler_impl task_sched;
   up_resource_manager    up_mng;
   ue_security_manager    sec_mng;
 
-  // du ue context
+  // DU UE context.
   cu_cp_ue_context ue_ctxt;
   du_cell_index_t  pcell_index = du_cell_index_t::invalid;
   pci_t            pci         = INVALID_PCI;
 
   rrc_ue_cu_cp_ue_adapter rrc_ue_cu_cp_ue_ev_notifier;
 
-  // rrc ue
+  // RRC UE context.
   rrc_ue_interface*   rrc_ue = nullptr;
   rrc_ue_ngap_adapter rrc_ue_ngap_ev_notifier;
 
-  // ngap ue context
+  // NGAP UE context.
   ngap_cu_cp_ue_adapter ngap_cu_cp_ue_ev_notifier;
   ngap_rrc_ue_adapter   ngap_rrc_ue_ev_notifier;
 
-  // nrppa ue context
+  // NRPPA UE context.
   nrppa_cu_cp_ue_adapter nrppa_cu_cp_ue_ev_notifier;
 
-  // cu-cp ue context
-  rrc_ue_cu_cp_adapter         rrc_ue_cu_cp_ev_notifier;
-  cell_meas_manager_ue_context meas_context;
+  // CU-CP UE context.
+  rrc_ue_cu_cp_adapter                     rrc_ue_cu_cp_ev_notifier;
+  cell_meas_manager_ue_context             meas_context;
+  unique_timer                             handover_ue_release_timer = {};
+  std::optional<cu_cp_ue_handover_context> ho_context;
 };
 
 } // namespace srs_cu_cp

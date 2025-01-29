@@ -278,13 +278,19 @@ srsran::fapi::dl_prs_pdu unittest::build_valid_dl_prs_pdu()
   pdu.cp               = cyclic_prefix::NORMAL;
   pdu.nid_prs          = 1;
   pdu.pdu_index        = 0;
-  pdu.comb_size        = 2;
+  pdu.comb_size        = prs_comb_size::two;
   pdu.comb_offset      = 0;
-  pdu.num_symbols      = 4;
+  pdu.num_symbols      = prs_num_symbols::four;
   pdu.first_symbol     = 8;
   pdu.num_rbs          = 28;
   pdu.start_rb         = 24;
   pdu.prs_power_offset = -13.3;
+
+  // Precoding.
+  pdu.precoding_and_beamforming.prg_size = 276;
+  auto& prg                              = pdu.precoding_and_beamforming.prgs.emplace_back();
+  // Use identity matrix
+  prg.pm_index = 0;
 
   return pdu;
 }

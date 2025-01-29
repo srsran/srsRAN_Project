@@ -3,6 +3,7 @@
 
 #include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/f1ap/du/f1ap_du_positioning_handler.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/support/async/async_task.h"
 
@@ -62,6 +63,9 @@ public:
 
   /// Handle the confirmation that the UE has applied the last received RRC config.
   virtual void handle_ue_config_applied(du_ue_index_t ue_index) = 0;
+
+  /// Retrieve handler of UE positioning.
+  virtual f1ap_du_positioning_handler& get_positioning_handler() = 0;
 };
 
 class du_manager_interface_query

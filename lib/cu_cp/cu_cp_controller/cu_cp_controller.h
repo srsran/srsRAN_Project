@@ -28,6 +28,7 @@
 #include "cu_up_connection_manager.h"
 #include "du_connection_manager.h"
 #include "node_connection_notifier.h"
+#include "srsran/cu_cp/common_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 
 namespace srsran {

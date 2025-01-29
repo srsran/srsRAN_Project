@@ -36,5 +36,11 @@ struct o_du_low_config {
   std::vector<cell_prach_ports_entry> prach_ports;
 };
 
+/// O-RAN DU low dependencies.
+struct o_du_low_dependencies {
+  /// DU low dependencies.
+  du_low_dependencies du_low_deps;
+};
+
 } // namespace srs_du
 } // namespace srsran

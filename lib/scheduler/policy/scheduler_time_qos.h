@@ -27,10 +27,11 @@
 
 namespace srsran {
 
-class scheduler_time_pf : public scheduler_policy
+/// Time-domain QoS-aware scheduler policy.
+class scheduler_time_qos : public scheduler_policy
 {
 public:
-  scheduler_time_pf(const scheduler_ue_expert_config& expert_cfg_);
+  scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_);
 
   void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
                 const ue_resource_grid_view& res_grid,
@@ -46,17 +47,14 @@ private:
   // Value used to flag that the UE cannot be allocated in a given slot.
   static constexpr double forbid_prio = std::numeric_limits<double>::lowest();
 
-  // Fairness parameters.
-  // Coefficient used to tweak decision in favor of fairness or throughput.
-  const double fairness_coeff;
-  // Coefficient used to tweak decision in favor of GBR over PF.
-  const time_pf_scheduler_expert_config::weight_function weight_func;
+  // Policy parameters.
+  const time_qos_scheduler_expert_config params;
   /// Coefficient used to compute exponential moving average.
   const double exp_avg_alpha = 0.01;
 
   /// Holds the information needed to compute priority of a UE in a priority queue.
   struct ue_ctxt {
-    ue_ctxt(du_ue_index_t ue_index_, du_cell_index_t cell_index_, const scheduler_time_pf* parent_) :
+    ue_ctxt(du_ue_index_t ue_index_, du_cell_index_t cell_index_, const scheduler_time_qos* parent_) :
       ue_index(ue_index_), cell_index(cell_index_), parent(parent_)
     {
     }
@@ -82,9 +80,9 @@ private:
     void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info);
     void save_ul_alloc(unsigned alloc_bytes);
 
-    const du_ue_index_t      ue_index;
-    const du_cell_index_t    cell_index;
-    const scheduler_time_pf* parent;
+    const du_ue_index_t       ue_index;
+    const du_cell_index_t     cell_index;
+    const scheduler_time_qos* parent;
 
     /// DL priority value of the UE.
     double dl_prio = forbid_prio;

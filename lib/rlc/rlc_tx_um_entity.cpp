@@ -300,8 +300,8 @@ void rlc_tx_um_entity::handle_changed_buffer_state()
 void rlc_tx_um_entity::update_mac_buffer_state()
 {
   pending_buffer_state.clear(std::memory_order_seq_cst);
-  unsigned bs = get_buffer_state();
-  if (not(bs > MAX_DL_PDU_LENGTH && prev_buffer_state > MAX_DL_PDU_LENGTH)) {
+  rlc_buffer_state bs = get_buffer_state();
+  if (bs.pending_bytes <= MAX_DL_PDU_LENGTH || prev_buffer_state.pending_bytes <= MAX_DL_PDU_LENGTH) {
     logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
     lower_dn.on_buffer_state_update(bs);
   } else {
@@ -314,8 +314,10 @@ void rlc_tx_um_entity::update_mac_buffer_state()
 }
 
 // TS 38.322 v16.2.0 Sec 5.5
-uint32_t rlc_tx_um_entity::get_buffer_state()
+rlc_buffer_state rlc_tx_um_entity::get_buffer_state()
 {
+  rlc_buffer_state bs = {};
+
   // minimum bytes needed to tx all queued SDUs + each header
   rlc_sdu_queue_lockfree::state_t queue_state = sdu_queue.get_state();
   uint32_t                        queue_bytes = queue_state.n_bytes + queue_state.n_sdus * head_len_full;
@@ -324,7 +326,14 @@ uint32_t rlc_tx_um_entity::get_buffer_state()
   uint32_t segment_bytes = 0;
   if (not sdu.buf.empty()) {
     segment_bytes = (sdu.buf.length() - next_so) + head_len_not_first;
+    bs.hol_toa    = sdu.time_of_arrival;
+  } else {
+    const rlc_sdu* next_sdu = sdu_queue.front();
+    if (next_sdu != nullptr) {
+      bs.hol_toa = next_sdu->time_of_arrival;
+    }
   }
 
-  return queue_bytes + segment_bytes;
+  bs.pending_bytes = queue_bytes + segment_bytes;
+  return bs;
 }

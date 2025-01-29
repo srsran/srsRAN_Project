@@ -27,6 +27,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/prach/rach_config_common.h"
+#include <optional>
 
 namespace srsran {
 

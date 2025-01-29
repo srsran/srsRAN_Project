@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2024 Software Radio Systems Limited
+# Copyright 2013-2025 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -50,11 +50,13 @@
       limits: "15G"
   resources:
     - type: zmq
+  environment:
+    - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/cu:/builds/softwareradiosystems/srsgnb/build/apps/du
   shared_files:
-    - local_path: ../../build/apps/cu/srscu
+    - local_path: ${GNB_BUILD_PATH}/apps/cu/srscu
       remote_path: /usr/local/bin/srscu
       is_executable: true
-    - local_path: ../../build/apps/du/srsdu
+    - local_path: ${GNB_BUILD_PATH}/apps/du/srsdu
       remote_path: /usr/local/bin/srsdu
       is_executable: true
 

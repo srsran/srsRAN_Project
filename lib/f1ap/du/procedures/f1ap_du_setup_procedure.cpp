@@ -22,6 +22,7 @@
 
 #include "f1ap_du_setup_procedure.h"
 #include "../../f1ap_asn1_utils.h"
+#include "../f1ap_asn1_converters.h"
 #include "../f1ap_du_context.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/f1ap_message.h"
@@ -86,7 +87,7 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
   du_ctxt.du_id = request.gnb_du_id;
 
   f1ap_message msg = {};
-  // set F1AP PDU contents
+  // Set F1AP PDU contents.
   msg.pdu.set_init_msg();
   msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
   f1_setup_request_s& setup_req = msg.pdu.init_msg().value.f1_setup_request();
@@ -108,72 +109,13 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
     setup_req->gnb_du_served_cells_list[i].load_info_obj(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_LIST);
     gnb_du_served_cells_item_s& f1ap_cell = setup_req->gnb_du_served_cells_list[i]->gnb_du_served_cells_item();
 
-    // Fill Served PLMNs
-    f1ap_cell.served_cell_info.served_plmns.resize(1);
-    auto plmn_bytes                                    = cell_cfg.nr_cgi.plmn_id.to_bytes();
-    f1ap_cell.served_cell_info.served_plmns[0].plmn_id = plmn_bytes;
-
-    // Fill slicing information.
-    f1ap_cell.served_cell_info.served_plmns[0].ie_exts_present                        = not cell_cfg.slices.empty();
-    f1ap_cell.served_cell_info.served_plmns[0].ie_exts.tai_slice_support_list_present = not cell_cfg.slices.empty();
-    for (const s_nssai_t& s_nssai : cell_cfg.slices) {
-      slice_support_item_s slice{};
-      slice.snssai.sst.from_number(s_nssai.sst.value());
-      slice.snssai.sd_present = s_nssai.sd.is_set();
-      if (slice.snssai.sd_present) {
-        slice.snssai.sd.from_number(s_nssai.sd.value());
-      }
-      f1ap_cell.served_cell_info.served_plmns[0].ie_exts.tai_slice_support_list.push_back(slice);
-    }
-
-    // Fill Served Cell Information.
-    f1ap_cell.served_cell_info.nr_pci         = cell_cfg.pci;
-    f1ap_cell.served_cell_info.nr_cgi.plmn_id = plmn_bytes;
-    f1ap_cell.served_cell_info.nr_cgi.nr_cell_id.from_number(cell_cfg.nr_cgi.nci.value());
-    f1ap_cell.served_cell_info.five_gs_tac_present = true;
-    f1ap_cell.served_cell_info.five_gs_tac.from_number(cell_cfg.tac);
-    const unsigned nof_crbs = band_helper::get_n_rbs_from_bw(
-        MHz_to_bs_channel_bandwidth(cell_cfg.dl_carrier.carrier_bw_mhz), cell_cfg.scs_common, frequency_range::FR1);
-    const double absolute_freq_point_a = band_helper::get_abs_freq_point_a_from_f_ref(
-        band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn_f_ref), nof_crbs, cell_cfg.scs_common);
-    if (cell_cfg.duplx_mode == duplex_mode::TDD) {
-      tdd_info_s& tdd           = f1ap_cell.served_cell_info.nr_mode_info.set_tdd();
-      tdd.nr_freq_info.nr_arfcn = band_helper::freq_to_nr_arfcn(absolute_freq_point_a);
-      tdd.nr_freq_info.freq_band_list_nr.resize(1);
-      tdd.nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.dl_carrier.band);
-
-      tdd.tx_bw.nr_scs.value = (nr_scs_opts::options)to_numerology_value(cell_cfg.scs_common);
-
-      bool res = asn1::number_to_enum(tdd.tx_bw.nr_nrb, nof_crbs);
-      srsran_assert(res, "Invalid number of CRBs for DL carrier BW");
-    } else {
-      fdd_info_s& fdd              = f1ap_cell.served_cell_info.nr_mode_info.set_fdd();
-      fdd.dl_nr_freq_info.nr_arfcn = band_helper::freq_to_nr_arfcn(absolute_freq_point_a);
-      fdd.dl_nr_freq_info.freq_band_list_nr.resize(1);
-      fdd.dl_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.dl_carrier.band);
-      const double ul_absolute_freq_point_a                     = band_helper::get_abs_freq_point_a_from_f_ref(
-          band_helper::nr_arfcn_to_freq(cell_cfg.ul_carrier->arfcn_f_ref), nof_crbs, cell_cfg.scs_common);
-      fdd.ul_nr_freq_info.nr_arfcn = band_helper::freq_to_nr_arfcn(ul_absolute_freq_point_a);
-      fdd.ul_nr_freq_info.freq_band_list_nr.resize(1);
-      fdd.ul_nr_freq_info.freq_band_list_nr[0].freq_band_ind_nr = nr_band_to_uint(cell_cfg.ul_carrier->band);
-
-      fdd.dl_tx_bw.nr_scs.value = (nr_scs_opts::options)to_numerology_value(cell_cfg.scs_common);
-      unsigned nof_dl_crbs      = band_helper::get_n_rbs_from_bw(
-          MHz_to_bs_channel_bandwidth(cell_cfg.dl_carrier.carrier_bw_mhz), cell_cfg.scs_common, frequency_range::FR1);
-      bool res = asn1::number_to_enum(fdd.dl_tx_bw.nr_nrb, nof_dl_crbs);
-      srsran_assert(res, "Invalid number of CRBs for DL carrier BW");
-      fdd.ul_tx_bw.nr_scs.value = (nr_scs_opts::options)to_numerology_value(cell_cfg.scs_common);
-      unsigned nof_ul_crbs      = band_helper::get_n_rbs_from_bw(
-          MHz_to_bs_channel_bandwidth(cell_cfg.ul_carrier->carrier_bw_mhz), cell_cfg.scs_common, frequency_range::FR1);
-      res = asn1::number_to_enum(fdd.ul_tx_bw.nr_nrb, nof_ul_crbs);
-      srsran_assert(res, "Invalid number of CRBs for DL carrier BW");
-    }
-    f1ap_cell.served_cell_info.meas_timing_cfg = cell_cfg.packed_meas_time_cfg.copy();
+    // Set base servedCellInfo
+    f1ap_cell.served_cell_info = make_asn1_served_cell_info(cell_cfg.cell_info, cell_cfg.slices);
 
     // Add System Information related to the cell.
     f1ap_cell.gnb_du_sys_info_present  = true;
-    f1ap_cell.gnb_du_sys_info.mib_msg  = cell_cfg.packed_mib.copy();
-    f1ap_cell.gnb_du_sys_info.sib1_msg = cell_cfg.packed_sib1.copy();
+    f1ap_cell.gnb_du_sys_info.mib_msg  = cell_cfg.du_sys_info.packed_mib.copy();
+    f1ap_cell.gnb_du_sys_info.sib1_msg = cell_cfg.du_sys_info.packed_sib1.copy();
   }
 
   // send request
@@ -244,7 +186,7 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
     du_ctxt.gnb_du_name = request.gnb_du_name;
     du_ctxt.served_cells.resize(request.served_cells.size());
     for (unsigned i = 0; i != du_ctxt.served_cells.size(); ++i) {
-      du_ctxt.served_cells[i].nr_cgi = request.served_cells[i].nr_cgi;
+      du_ctxt.served_cells[i].nr_cgi = request.served_cells[i].cell_info.nr_cgi;
     }
 
     logger.info("{}: Procedure completed successfully.", name());

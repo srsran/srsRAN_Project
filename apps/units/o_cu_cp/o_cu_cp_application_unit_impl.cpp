@@ -27,6 +27,7 @@
 #include "cu_cp/cu_cp_unit_config_validator.h"
 #include "cu_cp/cu_cp_unit_config_yaml_writer.h"
 #include "e2/o_cu_cp_e2_config_cli11_schema.h"
+#include "e2/o_cu_cp_e2_config_translators.h"
 #include "e2/o_cu_cp_e2_config_yaml_writer.h"
 
 using namespace srsran;
@@ -75,6 +76,7 @@ void o_cu_cp_application_unit_impl::dump_config(YAML::Node& node) const
 void o_cu_cp_application_unit_impl::fill_worker_manager_config(worker_manager_config& config)
 {
   fill_cu_cp_worker_manager_config(config, unit_cfg.cucp_cfg);
+  fill_o_cu_cp_e2_worker_manager_config(config, unit_cfg.e2_cfg);
 }
 
 std::unique_ptr<o_cu_cp_application_unit> srsran::create_o_cu_cp_application_unit(std::string_view app_name)

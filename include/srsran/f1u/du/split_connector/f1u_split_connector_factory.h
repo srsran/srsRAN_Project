@@ -23,19 +23,18 @@
 #pragma once
 
 #include "srsran/f1u/du/f1u_gateway.h"
+#include "srsran/f1u/split_connector/f1u_five_qi_gw_maps.h"
 #include "srsran/gtpu/gtpu_demux.h"
-#include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include <cstdint>
 
 namespace srsran::srs_du {
 
 struct f1u_du_split_gateway_creation_msg {
-  gtpu_gateway* udp_gw;
-  gtpu_demux*   demux;
-  dlt_pcap&     gtpu_pcap;
-  uint16_t      peer_port;
-  std::string   f1u_ext_addr = "auto";
+  const gtpu_gateway_maps& udp_gw_maps;
+  gtpu_demux*              demux;
+  dlt_pcap&                gtpu_pcap;
+  uint16_t                 peer_port;
 };
 
 std::unique_ptr<f1u_du_udp_gateway> create_split_f1u_gw(f1u_du_split_gateway_creation_msg msg);

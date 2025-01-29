@@ -71,7 +71,7 @@ void apply_fd_smoothing(span<cf_t>                                   enlarged_fi
 /// \param[in] scs          Subcarrier spacing.
 /// \param[in] ta_estimator Time alignment estimator.
 /// \return The estimated time alignment as a number of samples (the sampling frequency is given by the DFT processor).
-float estimate_time_alignment(const re_buffer_reader<cf_t>&                     pilots_lse,
+float estimate_time_alignment(const re_measurement<cf_t>&                       pilots_lse,
                               const port_channel_estimator::layer_dmrs_pattern& pattern,
                               unsigned                                          hop,
                               subcarrier_spacing                                scs,
@@ -79,4 +79,15 @@ float estimate_time_alignment(const re_buffer_reader<cf_t>&                     
 
 // Returns the interpolator configuration for the given RE pattern.
 interpolator::configuration configure_interpolator(const bounded_bitset<NRE>& re_mask);
+
+/// \brief Extract resource elements from an OFDM symbol view.
+/// \param[out] dmrs_symbols     Extracted resource elements.
+/// \param[in]  ofdm_symbol_view Resource grid OFDM symbol view.
+/// \param[in]  hop_rb_mask      Resource block selector mask.
+/// \param[in]  re_pattern       Resource element pattern within resource blocks.
+void extract_dmrs_grid(span<cf_t>                    dmrs_symbols,
+                       span<const cbf16_t>           ofdm_symbol_view,
+                       const bounded_bitset<MAX_RB>& hop_rb_mask,
+                       const bounded_bitset<NRE>&    re_pattern);
+
 } // namespace srsran

@@ -160,6 +160,13 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
 
 bool rrc_reestablishment_procedure::is_reestablishment_accepted()
 {
+  // Notify the CU-CP about the reestablishment. This will return the old RRC UE context if it exists.
+  // Note that this needs to be run before any other sanity check, as it will also cancel an possibly ongoing handover
+  // transaction for the old UE.
+  old_ue_reest_context =
+      cu_cp_notifier.on_rrc_reestablishment_request(reestablishment_request.rrc_reest_request.ue_id.pci,
+                                                    to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti));
+
   if (context.cfg.force_reestablishment_fallback) {
     log_rejected_reestablishment("RRC Reestablishments were disabled by the app configuration");
     return false;
@@ -169,11 +176,6 @@ bool rrc_reestablishment_procedure::is_reestablishment_accepted()
     log_rejected_reestablishment("Cannot recover from failed RRC Reconfiguration for old UE");
     return false;
   }
-
-  // Request from the CU-CP the old RRC UE context.
-  old_ue_reest_context =
-      cu_cp_notifier.on_rrc_reestablishment_request(reestablishment_request.rrc_reest_request.ue_id.pci,
-                                                    to_rnti(reestablishment_request.rrc_reest_request.ue_id.c_rnti));
 
   // check if an old UE context with matching C-RNTI, PCI exists.
   if (old_ue_reest_context.ue_index == ue_index_t::invalid) {

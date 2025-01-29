@@ -810,7 +810,7 @@ public:
   }
 
   /// Sets the PRS PDU symbol parameters and returns a reference to the builder.
-  dl_prs_pdu_builder& set_symbol_parameters(unsigned nof_symbols, unsigned first_symbol)
+  dl_prs_pdu_builder& set_symbol_parameters(prs_num_symbols nof_symbols, unsigned first_symbol)
   {
     pdu.num_symbols  = nof_symbols;
     pdu.first_symbol = first_symbol;
@@ -836,7 +836,7 @@ public:
   }
 
   /// Sets the PRS PDU transmission comb parameters and returns a reference to the builder.
-  dl_prs_pdu_builder& set_comb_parameters(unsigned comb_size, unsigned comb_offset)
+  dl_prs_pdu_builder& set_comb_parameters(prs_comb_size comb_size, unsigned comb_offset)
   {
     pdu.comb_size   = comb_size;
     pdu.comb_offset = comb_offset;

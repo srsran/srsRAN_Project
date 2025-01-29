@@ -68,7 +68,7 @@ private:
   /// entries; it is the maximum expected delay (in slots) between the for which slot the PUCCH is scheduled and the UCI
   /// indication; this delay depends on the PHY processing capabilities. For simplicity, we take round the number to a
   /// multiple of 10.
-  static constexpr size_t MAX_UCI_IND_DELAY_SLOTS = 40;
+  static constexpr size_t MAX_UCI_IND_DELAY_SLOTS = 80;
   /// This variable defines a time window after a PUCCH transmission, in slots, in which TPC adjustments are forbidden.
   /// This is to prevent the PUCCH TPC to be adjusted too quickly, leading to oscillations in the SINR.
   //  [Implementation-defined] This value should be enough to guarantee that the UCI indication (reporting the PUSCH

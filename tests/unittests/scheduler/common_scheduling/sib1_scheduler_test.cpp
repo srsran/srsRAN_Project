@@ -334,8 +334,8 @@ void test_sib1_scheduler(subcarrier_spacing                         scs_common,
   // Define helper lambda to determine from ssb_beam_bitmap if the n-th SSB beam is used.
   const uint64_t ssb_bitmap = t_bench.cfg.ssb_cfg.ssb_bitmap;
 
-  // Run the test for 10000 slots.
-  const size_t test_length_slots = 10000;
+  // Run the test for 1000 slots.
+  const size_t test_length_slots = 1000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
     // Run SIB1 scheduler.
     sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);

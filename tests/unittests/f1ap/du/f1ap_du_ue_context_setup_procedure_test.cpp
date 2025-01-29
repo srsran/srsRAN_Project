@@ -22,6 +22,7 @@
 
 #include "f1ap_du_test_helpers.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -80,14 +81,19 @@ protected:
     du_to_f1_resp.result         = true;
     du_to_f1_resp.cell_group_cfg = byte_buffer::create({0x1, 0x2, 0x3}).value();
     if (ue_ctx_setup.drbs_to_be_setup_list_present) {
-      du_to_f1_resp.drbs_setup.resize(ue_ctx_setup.drbs_to_be_setup_list.size());
-      for (size_t i = 0; i < ue_ctx_setup.drbs_to_be_setup_list.size(); ++i) {
-        uint8_t drb_id                     = ue_ctx_setup.drbs_to_be_setup_list[i]->drbs_to_be_setup_item().drb_id;
-        du_to_f1_resp.drbs_setup[i].drb_id = uint_to_drb_id(drb_id);
-        du_to_f1_resp.drbs_setup[i].lcid   = uint_to_lcid((uint8_t)LCID_MIN_DRB + drb_id);
-        du_to_f1_resp.drbs_setup[i].dluptnl_info_list.resize(1);
-        du_to_f1_resp.drbs_setup[i].dluptnl_info_list[0] =
-            up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"), int_to_gtpu_teid(1)};
+      for (const auto& drb : ue_ctx_setup.drbs_to_be_setup_list) {
+        const drbs_to_be_setup_item_s& drb_item = drb->drbs_to_be_setup_item();
+        // do not add DRB configuration, if DRB item is invalid.
+        if (drb_item.ie_exts_present) {
+          f1ap_drb_setupmod drb_setupmod;
+          uint8_t           drb_id = drb->drbs_to_be_setup_item().drb_id;
+          drb_setupmod.drb_id      = uint_to_drb_id(drb_id);
+          drb_setupmod.lcid        = uint_to_lcid((uint8_t)LCID_MIN_DRB + drb_id);
+          drb_setupmod.dluptnl_info_list.resize(1);
+          drb_setupmod.dluptnl_info_list[0] =
+              up_transport_layer_info{transport_layer_address::create_from_string("127.0.0.1"), int_to_gtpu_teid(1)};
+          du_to_f1_resp.drbs_setup.push_back(drb_setupmod);
+        }
       }
     }
 
@@ -267,6 +273,30 @@ TEST_F(
             this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list.size());
   ASSERT_EQ(drb_setup.dl_up_tnl_info_to_be_setup_list[0].dl_up_tnl_info.gtp_tunnel().gtp_teid.to_number(),
             this->f1ap_du_cfg_handler.next_ue_context_update_response.drbs_setup[0].dluptnl_info_list[0].gtp_teid);
+}
+
+TEST_F(f1ap_du_ue_context_setup_test, when_f1ap_receives_request_without_pdcp_sn_length_drb_setup_fails)
+{
+  f1ap_message msg = test_helpers::create_ue_context_setup_request(
+      gnb_cu_ue_f1ap_id_t{0}, std::nullopt, 1, {drb_id_t::drb1}, config_helpers::make_default_du_cell_config().nr_cgi);
+
+  // Disable PDCP SN length information from DRB to setup.
+  asn1::f1ap::ue_context_setup_request_ies_container& req      = *msg.pdu.init_msg().value.ue_context_setup_request();
+  drbs_to_be_setup_item_s&                            drb_item = req.drbs_to_be_setup_list[0]->drbs_to_be_setup_item();
+  drb_item.ie_exts_present                                     = false;
+
+  start_procedure(msg);
+  on_rrc_container_transmitted(1);
+
+  // F1AP sends UE CONTEXT SETUP RESPONSE to CU-CP.
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.type().value, f1ap_pdu_c::types_opts::successful_outcome);
+  ASSERT_EQ(this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.type().value,
+            f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp);
+  const ue_context_setup_resp_s& resp =
+      this->f1c_gw.last_tx_pdu().pdu.successful_outcome().value.ue_context_setup_resp();
+  ASSERT_EQ(resp->gnb_cu_ue_f1ap_id, msg.pdu.init_msg().value.ue_context_setup_request()->gnb_cu_ue_f1ap_id);
+  ASSERT_FALSE(resp->drbs_setup_list_present);
+  ASSERT_EQ(resp->drbs_setup_list.size(), 0);
 }
 
 TEST_F(f1ap_du_test, f1ap_handles_precanned_ue_context_setup_request_correctly)

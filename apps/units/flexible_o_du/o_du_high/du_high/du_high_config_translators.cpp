@@ -412,6 +412,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     rach_cfg.total_nof_ra_preambles   = base_cell.prach_cfg.total_nof_ra_preambles;
     rach_cfg.nof_ssb_per_ro           = base_cell.prach_cfg.nof_ssb_per_ro;
     rach_cfg.nof_cb_preambles_per_ssb = base_cell.prach_cfg.nof_cb_preambles_per_ssb;
+    out_cell.cfra_enabled             = base_cell.prach_cfg.cfra_enabled;
 
     // PhysicalCellGroup Config parameters.
     if (base_cell.pcg_cfg.p_nr_fr1.has_value()) {
@@ -668,7 +669,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
       uci_cfg.beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
     }
     if (not std::holds_alternative<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value())) {
-      uci_cfg.beta_offsets_cfg.reset();
+      uci_cfg.beta_offsets_cfg.emplace();
       uci_cfg.beta_offsets_cfg->emplace<uci_on_pusch::beta_offsets_semi_static>();
     }
     auto& b_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
@@ -935,7 +936,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ue.olla_max_ul_snr_offset = pusch.olla_max_snr_offset;
   out_cfg.ue.pdsch_crb_limits       = {pdsch.start_rb, pdsch.end_rb};
   out_cfg.ue.pusch_crb_limits       = {pusch.start_rb, pusch.end_rb};
-  if (std::holds_alternative<time_pf_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
+  if (std::holds_alternative<time_qos_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
     out_cfg.ue.strategy_cfg = app_sched_expert_cfg.policy_sched_expert_cfg;
   }
   out_cfg.ue.ul_power_ctrl.enable_pusch_cl_pw_control      = pusch.enable_closed_loop_pw_control;

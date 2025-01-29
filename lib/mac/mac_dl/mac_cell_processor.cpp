@@ -23,6 +23,7 @@
 #include "mac_cell_processor.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/pcap/dlt_pcap.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/scheduler/result/sched_result.h"
@@ -122,6 +123,27 @@ async_task<void> mac_cell_processor::stop()
         logger.warning("cell={}: Postponed cell stop operation. Cause: Task queue is full",
                        fmt::underlying(cell_index));
       });
+}
+
+async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac_cell_reconfig_request& request)
+{
+  return execute_and_continue_on_blocking(cell_exec, ctrl_exec, timers, [this, request]() {
+    mac_cell_reconfig_response resp;
+    if (not request.new_sib1_buffer.empty()) {
+      // SIB1 has been updated.
+
+      // Forward new SIB1 PDU to SIB assembler.
+      units::bytes payload_size{(unsigned)request.new_sib1_buffer.length()};
+      unsigned     version_id = sib_assembler.handle_new_sib1_payload(request.new_sib1_buffer.copy());
+
+      // Notify scheduler of SIB1 update.
+      sched.handle_sib1_update_indication(cell_cfg.cell_index, version_id, payload_size);
+
+      resp.sib1_updated = true;
+    }
+
+    return resp;
+  });
 }
 
 void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
@@ -401,9 +423,9 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
     const units::bytes  tbs(sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
     span<const uint8_t> payload;
     if (sib_info.si_indicator == sib_information::sib1) {
-      payload = sib_assembler.encode_sib1_pdu(tbs);
+      payload = sib_assembler.encode_sib1_pdu(0, tbs);
     } else {
-      payload = sib_assembler.encode_si_message_pdu(sib_info.si_msg_index.value(), tbs);
+      payload = sib_assembler.encode_si_message_pdu(sib_info.si_msg_index.value(), 0, tbs);
     }
     data_res.si_pdus.emplace_back(0, shared_transport_block(payload));
   }
@@ -457,8 +479,9 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
         srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
         // Update DL buffer state for the allocated logical channel.
+        rlc_buffer_state                       rlc_bs = bearer->on_buffer_state_update();
         mac_dl_buffer_state_indication_message bs{
-            ue_mng.get_ue_index(grant.pdsch_cfg.rnti), lc_info.lcid.to_lcid(), bearer->on_buffer_state_update()};
+            ue_mng.get_ue_index(grant.pdsch_cfg.rnti), lc_info.lcid.to_lcid(), rlc_bs.pending_bytes};
         sched.handle_dl_buffer_state_update(bs);
       }
     }

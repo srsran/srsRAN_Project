@@ -61,12 +61,13 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       case dci_dl_rnti_config_type::c_rnti_f1_0: {
         const auto& dci = pdcch.dci.c_rnti_f1_0;
         fmt::format_to(std::back_inserter(fmtbuf),
-                       " dci: h_id={} ndi={} rv={} mcs={} res_ind={}",
+                       " dci: h_id={} ndi={} rv={} mcs={} res_ind={} tpc={}",
                        dci.harq_process_number,
                        dci.new_data_indicator,
                        dci.redundancy_version,
                        dci.modulation_coding_scheme,
-                       dci.pucch_resource_indicator);
+                       dci.pucch_resource_indicator,
+                       dci.tpc_command);
       } break;
       case dci_dl_rnti_config_type::tc_rnti_f1_0: {
         const auto& dci = pdcch.dci.tc_rnti_f1_0;
@@ -81,12 +82,13 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       case dci_dl_rnti_config_type::c_rnti_f1_1: {
         const auto& dci = pdcch.dci.c_rnti_f1_1;
         fmt::format_to(std::back_inserter(fmtbuf),
-                       " dci: h_id={} ndi={} rv={} mcs={} res_ind={}",
+                       " dci: h_id={} ndi={} rv={} mcs={} res_ind={} tpc={}",
                        dci.harq_process_number,
                        dci.tb1_new_data_indicator,
                        dci.tb1_redundancy_version,
                        dci.tb1_modulation_coding_scheme,
-                       dci.pucch_resource_indicator);
+                       dci.pucch_resource_indicator,
+                       dci.tpc_command);
         if (dci.downlink_assignment_index.has_value()) {
           fmt::format_to(std::back_inserter(fmtbuf), " dai={}", *dci.downlink_assignment_index);
         }
@@ -306,17 +308,46 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       const unsigned nof_harq_bits      = pucch.format_2.harq_ack_nof_bits;
       const unsigned nof_sr_bits        = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
       unsigned       nof_csi_part1_bits = pucch.format_2.csi_part1_bits;
-      fmt::format_to(std::back_inserter(fmtbuf),
-                     "\n- PUCCH: c-rnti={} format={} prb={}",
-                     pucch.crnti,
-                     fmt::underlying(pucch.format),
-                     pucch.resources.prbs);
+      fmt::format_to(
+          std::back_inserter(fmtbuf), "\n- PUCCH: c-rnti={} format=2 prb={}", pucch.crnti, pucch.resources.prbs);
       if (not pucch.resources.second_hop_prbs.empty()) {
         fmt::format_to(std::back_inserter(fmtbuf), " second_prbs={}", pucch.resources.second_hop_prbs);
       }
       fmt::format_to(std::back_inserter(fmtbuf),
                      " symb={} uci: harq_bits={} sr={} csi-1_bits={}",
                      pucch.resources.symbols,
+                     nof_harq_bits,
+                     nof_sr_bits,
+                     nof_csi_part1_bits);
+    } else if (pucch.format == pucch_format::FORMAT_3) {
+      const unsigned nof_harq_bits      = pucch.format_3.harq_ack_nof_bits;
+      const unsigned nof_sr_bits        = sr_nof_bits_to_uint(pucch.format_3.sr_bits);
+      unsigned       nof_csi_part1_bits = pucch.format_3.csi_part1_bits;
+      fmt::format_to(
+          std::back_inserter(fmtbuf), "\n- PUCCH: c-rnti={} format=3 prb={}", pucch.crnti, pucch.resources.prbs);
+      if (not pucch.resources.second_hop_prbs.empty()) {
+        fmt::format_to(std::back_inserter(fmtbuf), " second_prbs={}", pucch.resources.second_hop_prbs);
+      }
+      fmt::format_to(std::back_inserter(fmtbuf),
+                     " symb={} uci: harq_bits={} sr={} csi-1_bits={}",
+                     pucch.resources.symbols,
+                     nof_harq_bits,
+                     nof_sr_bits,
+                     nof_csi_part1_bits);
+    } else if (pucch.format == pucch_format::FORMAT_4) {
+      const unsigned nof_harq_bits      = pucch.format_4.harq_ack_nof_bits;
+      const unsigned nof_sr_bits        = sr_nof_bits_to_uint(pucch.format_4.sr_bits);
+      unsigned       nof_csi_part1_bits = pucch.format_4.csi_part1_bits;
+      fmt::format_to(
+          std::back_inserter(fmtbuf), "\n- PUCCH: c-rnti={} format=4 prb={}", pucch.crnti, pucch.resources.prbs);
+      if (not pucch.resources.second_hop_prbs.empty()) {
+        fmt::format_to(std::back_inserter(fmtbuf), " second_prbs={}", pucch.resources.second_hop_prbs);
+      }
+      fmt::format_to(std::back_inserter(fmtbuf),
+                     " symb={} occ={}/{} uci: harq_bits={} sr={} csi-1_bits={}",
+                     pucch.resources.symbols,
+                     pucch.format_4.orthog_seq_idx,
+                     fmt::underlying(pucch.format_4.n_sf_pucch_f4),
                      nof_harq_bits,
                      nof_sr_bits,
                      nof_csi_part1_bits);

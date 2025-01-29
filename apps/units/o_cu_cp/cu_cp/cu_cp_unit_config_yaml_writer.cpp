@@ -239,6 +239,15 @@ static YAML::Node build_cu_cp_f1ap_section(const cu_cp_unit_f1ap_config& config)
   return node;
 }
 
+static YAML::Node build_cu_cp_e1ap_section(const cu_cp_unit_e1ap_config& config)
+{
+  YAML::Node node;
+
+  node["procedure_timeout"] = config.procedure_timeout;
+
+  return node;
+}
+
 static YAML::Node build_cu_cp_section(const cu_cp_unit_config& config)
 {
   YAML::Node node;
@@ -258,6 +267,7 @@ static YAML::Node build_cu_cp_section(const cu_cp_unit_config& config)
   node["rrc"]      = build_cu_cp_rrc_section(config.rrc_config);
   node["security"] = build_cu_cp_security_section(config.security_config);
   node["f1ap"]     = build_cu_cp_f1ap_section(config.f1ap_config);
+  node["e1ap"]     = build_cu_cp_e1ap_section(config.e1ap_config);
 
   return node;
 }
@@ -268,10 +278,12 @@ static void fill_cu_cp_log_section(YAML::Node node, const cu_cp_unit_logger_conf
   node["rrc_level"]         = srslog::basic_level_to_string(config.rrc_level);
   node["ngap_level"]        = srslog::basic_level_to_string(config.ngap_level);
   node["nrppa_level"]       = srslog::basic_level_to_string(config.nrppa_level);
+  node["e1ap_level"]        = srslog::basic_level_to_string(config.e1ap_level);
   node["f1ap_level"]        = srslog::basic_level_to_string(config.f1ap_level);
   node["cu_level"]          = srslog::basic_level_to_string(config.cu_level);
   node["sec_level"]         = srslog::basic_level_to_string(config.sec_level);
   node["hex_max_size"]      = config.hex_max_size;
+  node["e1ap_json_enabled"] = config.e1ap_json_enabled;
   node["f1ap_json_enabled"] = config.f1ap_json_enabled;
 }
 

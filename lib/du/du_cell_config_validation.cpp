@@ -248,6 +248,12 @@ static check_outcome check_dl_config_dedicated(const du_cell_config& cell_cfg)
         }
       }
 
+      if (bwp.pdsch_cfg.has_value() and bwp.pdsch_cfg->mcs_table == pdsch_mcs_table::qam64LowSe) {
+        // As per Section 5.1.3.1, TS 38.213 and assuming MCS-C-RNTI is not supported.
+        CHECK_TRUE(not ss.is_common_search_space(),
+                   "64QAM Low Se MCS table cannot be used for PDSCH with DCI in Common SearchSpace");
+      }
+
       if (bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value() and
           bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs->additional_positions == dmrs_additional_positions::pos3) {
         CHECK_TRUE(
@@ -390,6 +396,11 @@ static check_outcome check_ul_config_dedicated(const du_cell_config& cell_cfg)
     if (fallback_dci_format_in_ss2) {
       CHECK_TRUE(bwp.pusch_cfg->mcs_table != pusch_mcs_table::qam256,
                  "256QAM MCS table cannot be used for PUSCH with fallback DCI format in SearchSpace#2");
+    }
+    if (bwp.pusch_cfg.value().mcs_table == pusch_mcs_table::qam64LowSe) {
+      // As per Section 5.1.3.1, TS 38.213 and assuming MCS-C-RNTI is not supported.
+      CHECK_TRUE(not ss2.is_common_search_space(),
+                 "64QAM Low Se MCS table cannot be used for PDSCH with DCI in Common SearchSpace");
     }
     if (bwp.pusch_cfg->pusch_mapping_type_a_dmrs.has_value() and
         bwp.pusch_cfg->pusch_mapping_type_a_dmrs->additional_positions == dmrs_additional_positions::pos3) {

@@ -122,26 +122,31 @@ void uplink_processor_impl::process_pucch(upper_phy_rx_results_notifier&     not
   pucch_processor_result proc_result;
   // Process the PUCCH.
   switch (pdu.context.format) {
-    case pucch_format::FORMAT_0:
-      proc_result = pucch_proc->process(grid.get_reader(), pdu.format0);
+    case pucch_format::FORMAT_0: {
+      const auto& format0 = std::get<pucch_processor::format0_configuration>(pdu.config);
+      proc_result         = pucch_proc->process(grid.get_reader(), format0);
       l1_tracer << trace_event("pucch0", tp);
-      break;
-    case pucch_format::FORMAT_1:
-      proc_result = pucch_proc->process(grid.get_reader(), pdu.format1);
+    } break;
+    case pucch_format::FORMAT_1: {
+      const auto& format1 = std::get<pucch_processor::format1_configuration>(pdu.config);
+      proc_result         = pucch_proc->process(grid.get_reader(), format1);
       l1_tracer << trace_event("pucch1", tp);
-      break;
-    case pucch_format::FORMAT_2:
-      proc_result = pucch_proc->process(grid.get_reader(), pdu.format2);
+    } break;
+    case pucch_format::FORMAT_2: {
+      const auto& format2 = std::get<pucch_processor::format2_configuration>(pdu.config);
+      proc_result         = pucch_proc->process(grid.get_reader(), format2);
       l1_tracer << trace_event("pucch2", tp);
-      break;
-    case pucch_format::FORMAT_3:
-      proc_result = pucch_proc->process(grid.get_reader(), pdu.format3);
+    } break;
+    case pucch_format::FORMAT_3: {
+      const auto& format3 = std::get<pucch_processor::format3_configuration>(pdu.config);
+      proc_result         = pucch_proc->process(grid.get_reader(), format3);
       l1_tracer << trace_event("pucch3", tp);
-      break;
-    case pucch_format::FORMAT_4:
-      proc_result = pucch_proc->process(grid.get_reader(), pdu.format4);
+    } break;
+    case pucch_format::FORMAT_4: {
+      const auto& format4 = std::get<pucch_processor::format4_configuration>(pdu.config);
+      proc_result         = pucch_proc->process(grid.get_reader(), format4);
       l1_tracer << trace_event("pucch4", tp);
-      break;
+    } break;
     default:
       srsran_assert(0, "Invalid PUCCH format={}", fmt::underlying(pdu.context.format));
   }

@@ -116,7 +116,7 @@ static void usage(const char* prog, const bench_params& params)
   fmt::print("\t-r Max RBs per UE DL grant per slot [Default 275]\n");
   fmt::print("\t-a \"du_cell\" cores that the benchmark should use [Default \"no CPU affinity\"]\n");
   fmt::print("\t-p F1-U PDU size used [Default {}]\n", params.pdu_size);
-  fmt::print("\t-P Policy scheduler the bechmark should use (\"time_rr\", \"time_pf\") [Default \"time_rr\"]\n");
+  fmt::print("\t-P Policy scheduler the bechmark should use (\"time_rr\", \"time_qos\") [Default \"time_rr\"]\n");
   fmt::print("\t-h Show this message\n");
 }
 
@@ -181,8 +181,8 @@ static void parse_args(int argc, char** argv, bench_params& params)
         params.pdu_size = units::bytes{(unsigned)std::strtol(optarg, nullptr, 10)};
         break;
       case 'P': {
-        if (std::string(optarg) == "time_pf") {
-          params.strategy_cfg = time_pf_scheduler_expert_config{};
+        if (std::string(optarg) == "time_qos") {
+          params.strategy_cfg = time_qos_scheduler_expert_config{};
         } else if (std::string(optarg) == "time_rr") {
           params.strategy_cfg = time_rr_scheduler_expert_config{};
         } else {
@@ -227,8 +227,8 @@ static void print_args(const bench_params& params)
   fmt::print("- F1-U DL PDU size [bytes]: {}\n", params.pdu_size);
   fmt::print("- BSR size [bytes]: {}\n", params.ul_bsr_bytes);
   fmt::print("- Max DL RB grant size [RBs]: {}\n", params.max_dl_rb_grant);
-  if (std::holds_alternative<time_pf_scheduler_expert_config>(params.strategy_cfg)) {
-    fmt::print("- Policys scheduler: time_pf\n");
+  if (std::holds_alternative<time_qos_scheduler_expert_config>(params.strategy_cfg)) {
+    fmt::print("- Policys scheduler: time_qos\n");
   } else {
     fmt::print("- Policys scheduler: time_rr\n");
   }
@@ -395,8 +395,9 @@ private:
 class f1u_gw_dummy_bearer : public f1u_du_gateway_bearer
 {
 public:
-  void on_new_pdu(nru_ul_message msg) override {}
-  void stop() override {}
+  void                  on_new_pdu(nru_ul_message msg) override {}
+  void                  stop() override {}
+  expected<std::string> get_bind_address() const override { return "127.0.0.1"; }
 };
 
 /// \brief Simulator of the CU-UP from the perspective of the DU.
@@ -408,8 +409,9 @@ public:
 
   std::unique_ptr<f1u_du_gateway_bearer> create_du_bearer(uint32_t                                   ue_index,
                                                           drb_id_t                                   drb_id,
+                                                          five_qi_t                                  five_qi,
                                                           srs_du::f1u_config                         config,
-                                                          const up_transport_layer_info&             dl_up_tnl_info,
+                                                          const gtpu_teid_t&                         dl_teid,
                                                           const up_transport_layer_info&             ul_up_tnl_info,
                                                           srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                           timer_factory                              timers,

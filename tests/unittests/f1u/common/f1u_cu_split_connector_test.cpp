@@ -214,7 +214,7 @@ protected:
   std::unique_ptr<gtpu_demux>   demux;
   std::unique_ptr<gtpu_gateway> udp_gw;
   null_dlt_pcap                 dummy_pcap  = {};
-  srs_cu_up::gtpu_gateway_maps  f1u_gw_maps = {};
+  gtpu_gateway_maps             f1u_gw_maps = {};
 
   // Tester UDP gw to TX/RX PDUs to F1-U CU GW
   std::unique_ptr<udp_network_gateway>              udp_tester;

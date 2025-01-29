@@ -67,17 +67,8 @@ public:
     assert_slot(slot);
 
     auto fetch_end_symbol_index = [](const uplink_processor::pucch_pdu& _pdu) {
-      switch (_pdu.context.format) {
-        case pucch_format::FORMAT_0:
-          return _pdu.format0.start_symbol_index + _pdu.format0.nof_symbols - 1;
-        case pucch_format::FORMAT_1:
-          return _pdu.format1.start_symbol_index + _pdu.format1.nof_symbols - 1;
-        case pucch_format::FORMAT_2:
-          return _pdu.format2.start_symbol_index + _pdu.format2.nof_symbols - 1;
-        default:
-          srsran_assert(false, "Unsupported PUCCH format");
-          return 0U;
-      }
+      return std::visit([](const auto& config) { return config.start_symbol_index + config.nof_symbols - 1; },
+                        _pdu.config);
     };
 
     unsigned end_symbol_index = fetch_end_symbol_index(pdu);

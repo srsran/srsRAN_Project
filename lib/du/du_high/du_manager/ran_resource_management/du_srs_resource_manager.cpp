@@ -126,7 +126,9 @@ static srs_config build_default_srs_cfg(const du_cell_config& default_cell_cfg)
 }
 
 du_srs_policy_max_ul_rate::cell_context::cell_context(const du_cell_config& cfg) :
-  cell_cfg(cfg), default_srs_cfg(build_default_srs_cfg(cfg)){};
+  cell_cfg(cfg), default_srs_cfg(build_default_srs_cfg(cfg))
+{
+}
 
 du_srs_policy_max_ul_rate::du_srs_policy_max_ul_rate(span<const du_cell_config> cell_cfg_list_) :
   cells(cell_cfg_list_.begin(), cell_cfg_list_.end())

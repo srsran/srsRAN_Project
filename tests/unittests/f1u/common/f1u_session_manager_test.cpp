@@ -20,7 +20,7 @@
  *
  */
 
-#include "f1u_cu_up_session_manager_test.h"
+#include "f1u_session_manager_test.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

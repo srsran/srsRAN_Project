@@ -821,6 +821,10 @@ public:
   {
     assert_range_bounds_(startpos, endpos);
 
+    if (startpos == endpos) {
+      return -1;
+    }
+
     if (LowestInfoBitIsMSB) {
       int ret = find_first_(size() - endpos, size() - startpos, value);
       if (ret == -1) {

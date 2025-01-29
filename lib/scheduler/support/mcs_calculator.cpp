@@ -95,6 +95,18 @@ static const std::array<double, 28> ul_snr_256qam_mcs_table = {
     // clang-format on
 };
 
+// For 64QAM PUSCH MCS table.
+static const std::array<double, 29> ul_snr_qam64_lowse_mcs_table = {
+    // clang-format off
+    /* MCS 0      1        2        3        4       5        6         7        8        9  */
+     -5.7998, -3.5500,  -2.925, -2.5625, -1.0500,  0.98266,  1.6250,  2.5425,  3.4175,  4.3548,
+    /* MCS 10    11       12       13       14      15       16        17       18       19  */
+      5.3695,  5.8250,  6.6375,  7.6375,  9.5875,  10.4000, 11.1540, 12.1070, 12.5250, 13.0625,
+    /* MCS 20    21       22       23       24      25       26        27       28 */
+     13.5250, 13.9375, 14.1160, 14.5525, 14.9725,  15.3450, 15.9175, 16.0425, 16.591
+    // clang-format on
+};
+
 std::optional<sch_mcs_index> srsran::map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_table)
 {
   std::optional<sch_mcs_index> mcs;
@@ -127,6 +139,8 @@ sch_mcs_index srsran::map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table)
   span<const double> selected_mcs_table = ul_snr_mcs_table;
   if (mcs_table == pusch_mcs_table::qam256) {
     selected_mcs_table = ul_snr_256qam_mcs_table;
+  } else if (mcs_table == pusch_mcs_table::qam64LowSe) {
+    selected_mcs_table = ul_snr_qam64_lowse_mcs_table;
   }
   const unsigned MIN_MCS = 0;
 

@@ -127,10 +127,10 @@ public:
     cu_cp_handler->handle_dl_ue_associated_nrppa_transport_pdu(ue_index, nrppa_pdu);
   }
 
-  void on_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) override
+  void on_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
-    cu_cp_handler->handle_dl_non_ue_associated_nrppa_transport_pdu(nrppa_pdu);
+    cu_cp_handler->handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index, nrppa_pdu);
   }
 
   void on_n2_disconnection() override

@@ -96,6 +96,7 @@ create_uplink_data_flow(const receiver_config&                            receiv
 {
   data_flow_uplane_uplink_data_impl_config config;
   config.ul_eaxc = receiver_cfg.ul_eaxc;
+  config.sector  = receiver_cfg.sector;
 
   data_flow_uplane_uplink_data_impl_dependencies dependencies;
   dependencies.logger                 = &logger;
@@ -122,8 +123,6 @@ resolve_receiver_dependencies(const receiver_config&                            
   dependencies.executor = &uplink_executor;
 
   auto& rx_window_handler_dependencies       = dependencies.window_handler_dependencies;
-  rx_window_handler_dependencies.logger      = &logger;
-  rx_window_handler_dependencies.executor    = &uplink_executor;
   rx_window_handler_dependencies.prach_repo  = prach_context_repo;
   rx_window_handler_dependencies.uplink_repo = ul_slot_context_repo;
   rx_window_handler_dependencies.notifier    = notifier;

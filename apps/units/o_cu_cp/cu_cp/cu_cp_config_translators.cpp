@@ -405,6 +405,10 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   out_cfg.f1ap.proc_timeout     = std::chrono::milliseconds{cu_cfg.f1ap_config.procedure_timeout};
   out_cfg.f1ap.json_log_enabled = cu_cfg.loggers.f1ap_json_enabled;
 
+  // E1AP-CU-CP config.
+  out_cfg.e1ap.proc_timeout     = std::chrono::milliseconds{cu_cfg.e1ap_config.procedure_timeout};
+  out_cfg.e1ap.json_log_enabled = cu_cfg.loggers.e1ap_json_enabled;
+
   // Convert appconfig's cell list into cell manager type.
   for (const auto& app_cfg_item : cu_cfg.mobility_config.cells) {
     nr_cell_identity            nci = nr_cell_identity::create(app_cfg_item.nr_cell_id).value();

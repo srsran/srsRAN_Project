@@ -33,6 +33,7 @@
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/result/dmrs_info.h"
+#include "srsran/scheduler/result/vrb_alloc.h"
 
 namespace srsran {
 
@@ -187,8 +188,11 @@ struct ssb_information {
 struct sib_information {
   enum si_indicator_type { sib1, other_si } si_indicator;
   std::optional<uint8_t> si_msg_index;
-  unsigned               nof_txs;
-  pdsch_information      pdsch_cfg;
+  /// \brief Version of the SIB1/SI message payload. This counter should be incremented every time the content of the
+  /// respective SIB1/SI message changes.
+  unsigned          version;
+  unsigned          nof_txs;
+  pdsch_information pdsch_cfg;
 };
 
 /// See ORAN WG8, 9.2.3.3.12 - Downlink Broadcast Allocation.

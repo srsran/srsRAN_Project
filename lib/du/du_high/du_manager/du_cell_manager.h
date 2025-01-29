@@ -43,6 +43,10 @@ public:
     return cells[cell_index]->active;
   }
 
+  du_cell_index_t get_cell_index(nr_cell_global_id_t nr_cgi) const;
+
+  du_cell_index_t get_cell_index(pci_t pci) const;
+
   void set_cell_state(du_cell_index_t cell_index, bool active)
   {
     assert_cell_exists(cell_index);
@@ -50,6 +54,11 @@ public:
   }
 
   const du_cell_config& get_cell_cfg(du_cell_index_t cell_index) const
+  {
+    assert_cell_exists(cell_index);
+    return cells[cell_index]->cfg;
+  }
+  du_cell_config& get_cell_cfg(du_cell_index_t cell_index)
   {
     assert_cell_exists(cell_index);
     return cells[cell_index]->cfg;

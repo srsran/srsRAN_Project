@@ -48,6 +48,21 @@ struct du_low_unit_expert_upper_phy_config {
   /// -\c post_equalization: SINR is calculated using the post-equalization noise variances of the equalized RE.
   /// -\c evm: SINR is obtained from the EVM of the PUSCH symbols.
   std::string pusch_sinr_calc_method = "post_equalization";
+  /// \brief PUSCH channel estimator time-domain interpolation strategy.
+  ///
+  /// Use one of these options:
+  /// - \c average: averages the DM-RS in time domain, or
+  /// - \c interpolate: performs linear interpolation between the OFDM symbols containing DM-RS.
+  ///
+  /// The \c average strategy is more robust against noise and interference while \c interpolate is more robust for
+  /// fast fading channels.
+  std::string pusch_channel_estimator_td_strategy = "average";
+  /// \brief PUSCH channel equalizer algorithm.
+  ///
+  /// Use one of these options:
+  /// - \c zf: use zero-forcing algorithm, or
+  /// - \c mmse: use minimum mean square error algorithm.
+  std::string pusch_channel_equalizer_algorithm = "zf";
   /// \brief Request headroom size in slots.
   ///
   /// The request headroom size is the number of delayed slots that the upper physical layer will accept, ie, if the
@@ -193,10 +208,15 @@ struct bbdev_appconfig {
   std::optional<unsigned> nof_mbuf;
 };
 
-// HAL configuration of the DU low.
+/// HAL configuration of the DU low.
 struct du_low_unit_hal_config {
   /// BBDEV-based hardware-accelerator arguments.
   std::optional<bbdev_appconfig> bbdev_hwacc;
+};
+
+/// Metrics configuration of the DU low.
+struct du_low_unit_metrics_config {
+  bool enable = false;
 };
 
 /// DU low configuration.
@@ -209,6 +229,8 @@ struct du_low_unit_config {
   du_low_unit_expert_execution_config expert_execution_cfg;
   /// HAL configuration.
   std::optional<du_low_unit_hal_config> hal_config;
+  /// Metrics configuration. Set to \c true to enable the DU low metrics.
+  du_low_unit_metrics_config metrics_config;
 };
 
 } // namespace srsran

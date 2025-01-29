@@ -24,6 +24,7 @@
 
 #include "../../ue_manager/ue_manager_impl.h"
 #include "srsran/support/async/async_task.h"
+#include <chrono>
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -46,6 +47,7 @@ public:
 
 private:
   void generate_ue_context_modification_request();
+  void initialize_handover_ue_release_timer(ue_index_t ue_index);
 
   // (sub-)routine requests
   const rrc_reconfiguration_procedure_request request;
@@ -59,9 +61,9 @@ private:
   srslog::basic_logger& logger;
 
   // (sub-)routine results
+  std::chrono::milliseconds               target_ue_release_timeout;
   rrc_ue_handover_reconfiguration_context ho_reconf_ctxt;
   f1ap_ue_context_modification_response   ue_context_mod_response;
-  bool                                    procedure_result = false;
 };
 
 } // namespace srs_cu_cp

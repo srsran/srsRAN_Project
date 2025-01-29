@@ -77,9 +77,12 @@ INSTANTIATE_TEST_SUITE_P(n_id,
 
 INSTANTIATE_TEST_SUITE_P(comb_size,
                          validate_prs_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<dl_prs_pdu>{
-                                              "Comb size",
-                                              [](dl_prs_pdu& pdu, int value) { pdu.comb_size = value; }}),
+                         testing::Combine(testing::Values(pdu_field_data<dl_prs_pdu>{"Comb size",
+                                                                                     [](dl_prs_pdu& pdu, int value) {
+                                                                                       pdu.comb_size =
+                                                                                           static_cast<prs_comb_size>(
+                                                                                               value);
+                                                                                     }}),
                                           testing::Values(test_case_data{0, false},
                                                           test_case_data{1, false},
                                                           test_case_data{2, true},
@@ -98,7 +101,7 @@ INSTANTIATE_TEST_SUITE_P(
     validate_prs_pdu_field,
     testing::Combine(testing::Values(pdu_field_data<dl_prs_pdu>{"Comb offset",
                                                                 [](dl_prs_pdu& pdu, int value) {
-                                                                  pdu.comb_size   = 2;
+                                                                  pdu.comb_size   = prs_comb_size::two;
                                                                   pdu.comb_offset = value;
                                                                 }}),
                      testing::Values(test_case_data{0, true}, test_case_data{1, true}, test_case_data{2, false})));
@@ -107,7 +110,8 @@ INSTANTIATE_TEST_SUITE_P(comb_offset_size_4,
                          validate_prs_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_prs_pdu>{"Comb offset",
                                                                                      [](dl_prs_pdu& pdu, int value) {
-                                                                                       pdu.comb_size   = 4;
+                                                                                       pdu.comb_size =
+                                                                                           prs_comb_size::four;
                                                                                        pdu.comb_offset = value;
                                                                                      }}),
                                           testing::Values(test_case_data{0, true},
@@ -119,7 +123,8 @@ INSTANTIATE_TEST_SUITE_P(comb_offset_size_6,
                          validate_prs_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_prs_pdu>{"Comb offset",
                                                                                      [](dl_prs_pdu& pdu, int value) {
-                                                                                       pdu.comb_size   = 6;
+                                                                                       pdu.comb_size =
+                                                                                           prs_comb_size::six;
                                                                                        pdu.comb_offset = value;
                                                                                      }}),
                                           testing::Values(test_case_data{0, true},
@@ -131,7 +136,8 @@ INSTANTIATE_TEST_SUITE_P(comb_offset_size_12,
                          validate_prs_pdu_field,
                          testing::Combine(testing::Values(pdu_field_data<dl_prs_pdu>{"Comb offset",
                                                                                      [](dl_prs_pdu& pdu, int value) {
-                                                                                       pdu.comb_size   = 12;
+                                                                                       pdu.comb_size =
+                                                                                           prs_comb_size::twelve;
                                                                                        pdu.comb_offset = value;
                                                                                      }}),
                                           testing::Values(test_case_data{0, true},
@@ -141,9 +147,12 @@ INSTANTIATE_TEST_SUITE_P(comb_offset_size_12,
 
 INSTANTIATE_TEST_SUITE_P(num_symbols,
                          validate_prs_pdu_field,
-                         testing::Combine(testing::Values(pdu_field_data<dl_prs_pdu>{
-                                              "Number of symbols",
-                                              [](dl_prs_pdu& pdu, int value) { pdu.num_symbols = value; }}),
+                         testing::Combine(testing::Values(pdu_field_data<dl_prs_pdu>{"Number of symbols",
+                                                                                     [](dl_prs_pdu& pdu, int value) {
+                                                                                       pdu.num_symbols =
+                                                                                           static_cast<prs_num_symbols>(
+                                                                                               value);
+                                                                                     }}),
                                           testing::Values(test_case_data{0, false},
                                                           test_case_data{1, false},
                                                           test_case_data{2, true},
@@ -208,8 +217,8 @@ TEST(validate_prs_pdu, invalid_pdu_fails)
   dl_prs_pdu pdu = build_valid_dl_prs_pdu();
 
   // Force 3 errors.
-  pdu.comb_size   = 3;
-  pdu.num_symbols = 7;
+  pdu.comb_size   = static_cast<prs_comb_size>(3);
+  pdu.num_symbols = static_cast<prs_num_symbols>(7);
   pdu.num_rbs     = 5;
 
   validator_report report(0, 0);

@@ -57,7 +57,39 @@ struct pdcch_group {
   }
 };
 
+/// Dummy MAC cell slot handler.
+class mac_cell_slot_handler_dummy : public mac_cell_slot_handler
+{
+public:
+  void handle_slot_indication(slot_point sl_tx) override
+  {
+    report_error("Dummy MAC cell slot handler cannot handle slot indication");
+  }
+
+  void handle_error_indication(slot_point sl_tx, error_event event) override
+  {
+    report_error("Dummy MAC cell slot handler cannot handle error indication");
+  }
+};
+
 } // namespace
+
+static mac_cell_slot_handler_dummy dummy_cell_handler;
+
+mac_to_fapi_translator::mac_to_fapi_translator(const mac_to_fapi_translator_config&  config,
+                                               mac_to_fapi_translator_dependencies&& dependencies) :
+  sector_id(config.sector_id),
+  cell_nof_prbs(config.cell_nof_prbs),
+  logger(dependencies.logger),
+  msg_gw(dependencies.msg_gw),
+  last_msg_notifier(dependencies.last_msg_notifier),
+  pm_mapper(std::move(dependencies.pm_mapper)),
+  part2_mapper(std::move(dependencies.part2_mapper)),
+  mac_slot_handler(&dummy_cell_handler)
+{
+  srsran_assert(pm_mapper, "Invalid precoding matrix mapper");
+  srsran_assert(part2_mapper, "Invalid Part2 mapper");
+}
 
 template <typename builder_type, typename pdu_type>
 static void add_pdcch_pdus_to_builder(builder_type&                  builder,
@@ -212,6 +244,13 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
     log_validator_report(result.error(), logger, sector_id);
 
     clear_dl_tti_pdus(msg);
+
+    mac_cell_slot_handler::error_event error;
+    error.pdcch_discarded           = true;
+    error.pdsch_discarded           = true;
+    error.pusch_and_pucch_discarded = false;
+
+    mac_slot_handler->handle_error_indication(dl_res.slot, error);
   }
 
   // Send the message.
@@ -276,6 +315,13 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
 
     // Clear the PDUs on validation failure.
     msg.pdus.clear();
+
+    mac_cell_slot_handler::error_event error;
+    error.pdcch_discarded           = false;
+    error.pdsch_discarded           = true;
+    error.pusch_and_pucch_discarded = false;
+
+    mac_slot_handler->handle_error_indication(dl_data.slot, error);
   }
 
   // Send the message.
@@ -326,6 +372,13 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
     log_validator_report(result.error(), logger, sector_id);
 
     clear_ul_tti_pdus(msg);
+
+    mac_cell_slot_handler::error_event error;
+    error.pdcch_discarded           = false;
+    error.pdsch_discarded           = false;
+    error.pusch_and_pucch_discarded = true;
+
+    mac_slot_handler->handle_error_indication(ul_res.slot, error);
   }
 
   // Send the message.
@@ -356,6 +409,13 @@ void mac_to_fapi_translator::handle_ul_dci_request(span<const pdcch_ul_informati
   error_type<fapi::validator_report> result = validate_ul_dci_request(msg);
   if (!result) {
     log_validator_report(result.error(), logger, sector_id);
+
+    mac_cell_slot_handler::error_event error;
+    error.pdcch_discarded           = true;
+    error.pdsch_discarded           = false;
+    error.pusch_and_pucch_discarded = false;
+
+    mac_slot_handler->handle_error_indication(slot, error);
 
     return;
   }

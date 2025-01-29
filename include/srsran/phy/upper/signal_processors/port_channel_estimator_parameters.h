@@ -34,4 +34,12 @@ enum class port_channel_estimator_fd_smoothing_strategy {
   filter,
 };
 
+/// Port channel estimator time domain interpolation strategy.
+enum class port_channel_estimator_td_interpolation_strategy {
+  /// Performs linear interpolation between the symbols containing DM-RS.
+  interpolate = 0,
+  /// Averages all time domain estimates.
+  average
+};
+
 } // namespace srsran

@@ -22,22 +22,26 @@
 
 #pragma once
 
-#include "srsran/gtpu/gtpu_gateway.h"
+#include "apps/services/network/udp_cli11_schema.h"
 #include "srsran/ran/qos/five_qi.h"
-#include <map>
+#include "CLI/CLI11.hpp"
+#include <optional>
 
-namespace srsran::srs_cu_up {
+namespace srsran {
 
-struct f1u_session_maps {
-  std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>                      default_gw_sessions;
-  std::map<five_qi_t, std::vector<std::unique_ptr<gtpu_tnl_pdu_session>>> five_qi_gw_sessions;
+/// F1-U sockets configuration
+struct f1u_socket_appconfig {
+  std::string              bind_addr = "127.0.10.1"; /// Bind address used by the F1-U interface
+  std::optional<five_qi_t> five_qi;                  /// If the 5QI is not present, the socket will be used by default.
+  udp_appconfig            udp_config;
 };
 
-class f1u_session_manager
-{
-public:
-  virtual ~f1u_session_manager()                                        = default;
-  virtual gtpu_tnl_pdu_session& get_next_f1u_gateway(five_qi_t five_qi) = 0;
+/// F1-U configuration
+struct f1u_sockets_appconfig {
+  std::vector<f1u_socket_appconfig> f1u_socket_cfg;
 };
 
-} // namespace srsran::srs_cu_up
+/// \brief TODO write docs.
+void configure_cli11_f1u_sockets_args(CLI::App& app, f1u_sockets_appconfig& f1u_params);
+
+} // namespace srsran

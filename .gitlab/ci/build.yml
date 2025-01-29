@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2024 Software Radio Systems Limited
+# Copyright 2013-2025 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -794,10 +794,10 @@ package:
   variables: &package_variables
     PROJECT_NAME: srsran-project
     RELEASE_VERSION: "99.9"
-    KUBERNETES_CPU_REQUEST: 6
-    KUBERNETES_CPU_LIMIT: 6
-    KUBERNETES_MEMORY_REQUEST: 12Gi
-    KUBERNETES_MEMORY_LIMIT: 12Gi
+    KUBERNETES_CPU_REQUEST: ${SRS_CPU_LIMIT}
+    KUBERNETES_CPU_LIMIT: ${SRS_CPU_LIMIT}
+    KUBERNETES_MEMORY_REQUEST: ${SRS_MEMORY_LIMIT}
+    KUBERNETES_MEMORY_LIMIT: ${SRS_MEMORY_LIMIT}
     DEB_BUILD_OPTIONS: parallel=${KUBERNETES_CPU_LIMIT}
     MAKEFLAGS: -j${KUBERNETES_CPU_LIMIT}
     extraopts: -DMARCH=x86-64-v3
@@ -1315,6 +1315,43 @@ ubuntu-24.04 amd64 native:
         ENABLE_FFTW: "False"
         ENABLE_MKL: "True"
 
+ubuntu-24.04 amd64 avx:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 400 minutes
+  interruptible: false
+  variables:
+    OS: ubuntu-24.04
+    MARCH: x86-64-v2
+    INFRASTRUCTURE_TAG: amd64
+  parallel:
+    matrix:
+      - <<: *basic_combinations
+      - <<: *basic_combinations
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
+
+ubuntu-24.04 amd64 avx512 TRACE:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 400 minutes
+  interruptible: false
+  variables:
+    OS: ubuntu-24.04
+    MARCH: x86-64-v4
+    INFRASTRUCTURE_TAG: amd64-avx2-avx512
+    BUILD_ARGS: -DCMAKE_CXX_FLAGS="-D SRSRAN_L2_TRACE -D SRSRAN_L1_TRACE -D SRSRAN_L2_LATE_TRACE -D SRSRAN_OFH_TRACE -D SRSRAN_UP_TRACE"
+  parallel:
+    matrix:
+      - <<: *basic_combinations
+      - <<: *basic_combinations
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
+
 ubuntu-24.04 arm native:
   extends: .build_and_unit
   rules:
@@ -1614,6 +1651,7 @@ basic tsan:
     TEST_MODE: none
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
+    BUILD_ARGS: -DEXIT_TIMEOUT=15
   after_script:
     - *build_after_script
   artifacts:

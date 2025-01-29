@@ -37,8 +37,14 @@
 namespace srsran {
 namespace srs_du {
 
-/// \brief Served cell configuration that will be passed to CU-CP.
-struct f1_cell_setup_params {
+/// System Information Update from the gNB-DU.
+struct gnb_du_sys_info {
+  byte_buffer packed_mib;
+  byte_buffer packed_sib1;
+};
+
+/// Information of served cell being added/modified.
+struct du_served_cell_info {
   nr_cell_global_id_t                  nr_cgi;
   pci_t                                pci;
   tac_t                                tac;
@@ -47,9 +53,13 @@ struct f1_cell_setup_params {
   carrier_configuration                dl_carrier;
   std::optional<carrier_configuration> ul_carrier;
   byte_buffer                          packed_meas_time_cfg;
-  byte_buffer                          packed_mib;
-  byte_buffer                          packed_sib1;
-  std::vector<s_nssai_t>               slices;
+};
+
+/// \brief Served cell configuration that will be passed to CU-CP.
+struct f1_cell_setup_params {
+  du_served_cell_info    cell_info;
+  gnb_du_sys_info        du_sys_info;
+  std::vector<s_nssai_t> slices;
 };
 
 /// \brief Message that initiates a F1 Setup procedure.
@@ -67,6 +77,23 @@ struct f1_setup_response_message {
   result_code result;
   /// Cause provided by CU-CP in case of F1 Setup Failure.
   std::string f1_setup_failure_cause;
+};
+
+/// Cell whose parameters need to be modified in the DU.
+struct f1ap_cell_to_be_modified {
+  /// New served Cell Information.
+  du_served_cell_info cell_info;
+  /// New System Information.
+  std::optional<gnb_du_sys_info> du_sys_info;
+};
+
+/// gNB-DU initiated Config Update as per TS 38.473, Section 8.2.4.
+struct gnbdu_config_update_request {
+  std::vector<f1ap_cell_to_be_modified> cells_to_mod;
+};
+
+struct gnbdu_config_update_response {
+  bool result;
 };
 
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
@@ -87,6 +114,10 @@ public:
 
   /// \brief Launches the F1 Removal procedure as per TS 38.473, Section 8.2.8.
   virtual async_task<void> handle_f1_removal_request() = 0;
+
+  /// \brief Initiates F1AP gNB-DU config update procedure as per TS 38.473, Section 8.2.4.
+  virtual async_task<gnbdu_config_update_response>
+  handle_du_config_update(const gnbdu_config_update_request& request) = 0;
 };
 
 } // namespace srs_du

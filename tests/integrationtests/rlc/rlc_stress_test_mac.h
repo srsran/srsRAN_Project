@@ -54,7 +54,10 @@ public:
   void                           push_rx_pdus(std::vector<byte_buffer_chain> list_pdus);
 
   // rlc_tx_lower_layer_notifier interface
-  void on_buffer_state_update(unsigned bsr_) final { this->bsr.store(bsr_, std::memory_order_relaxed); }
+  void on_buffer_state_update(const rlc_buffer_state& bs) final
+  {
+    this->bsr.store(bs.pending_bytes, std::memory_order_relaxed);
+  }
 
   void set_rlc_tx_lower(rlc_tx_lower_layer_interface* rlc_tx_lower_) { this->rlc_tx_lower = rlc_tx_lower_; }
   void set_rlc_rx_lower(rlc_rx_lower_layer_interface* rlc_rx_lower_) { this->rlc_rx_lower = rlc_rx_lower_; }

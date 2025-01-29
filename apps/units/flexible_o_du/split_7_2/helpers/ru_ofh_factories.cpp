@@ -49,8 +49,8 @@ std::unique_ptr<radio_unit> srsran::create_ofh_radio_unit(const ru_ofh_unit_conf
 
   // Configure sector.
   for (unsigned i = 0; i != nof_sectors; ++i) {
-    dependencies.sector_dependencies.emplace_back();
-    ru_ofh_sector_dependencies& sector_deps = dependencies.sector_dependencies.back();
+    ofh::sector_dependencies& sector_deps = dependencies.sector_dependencies.emplace_back();
+
     // Note, one executor for transmitter and receiver tasks is shared per two sectors.
     sector_deps.txrx_executor     = ru_dependencies.workers.ru_txrx_exec[i / nof_sectors_per_txrx_thread];
     sector_deps.uplink_executor   = ru_dependencies.workers.ru_rx_exec[i];

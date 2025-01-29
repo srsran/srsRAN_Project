@@ -988,8 +988,9 @@ void rlc_tx_am_entity::handle_changed_buffer_state()
 void rlc_tx_am_entity::update_mac_buffer_state(bool force_notify)
 {
   pending_buffer_state.clear(std::memory_order_seq_cst);
-  unsigned bs = get_buffer_state();
-  if (force_notify || bs <= MAX_DL_PDU_LENGTH || prev_buffer_state <= MAX_DL_PDU_LENGTH) {
+  rlc_buffer_state bs = get_buffer_state();
+  if (force_notify || bs.pending_bytes <= MAX_DL_PDU_LENGTH || prev_buffer_state.pending_bytes <= MAX_DL_PDU_LENGTH ||
+      bs.hol_toa < prev_buffer_state.hol_toa) {
     logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
     lower_dn.on_buffer_state_update(bs);
   } else {
@@ -1002,8 +1003,10 @@ void rlc_tx_am_entity::update_mac_buffer_state(bool force_notify)
 }
 
 // TS 38.322 v16.2.0 Sec 5.5
-uint32_t rlc_tx_am_entity::get_buffer_state()
+rlc_buffer_state rlc_tx_am_entity::get_buffer_state()
 {
+  rlc_buffer_state bs = {};
+
   // minimum bytes needed to tx all queued SDUs + each header
   rlc_sdu_queue_lockfree::state_t queue_state = sdu_queue.get_state();
   uint32_t                        queue_bytes = queue_state.n_bytes + queue_state.n_sdus * head_min_size;
@@ -1014,8 +1017,14 @@ uint32_t rlc_tx_am_entity::get_buffer_state()
     if (tx_window.has_sn(sn_under_segmentation)) {
       rlc_tx_am_sdu_info& sdu_info = tx_window[sn_under_segmentation];
       segment_bytes                = sdu_info.sdu.length() - sdu_info.next_so + head_max_size;
+      bs.hol_toa                   = sdu_info.time_of_arrival;
     } else {
       logger.log_info("Buffer state ignores SDU under segmentation. sn={} not in tx_window.", sn_under_segmentation);
+    }
+  } else {
+    const rlc_sdu* next_sdu = sdu_queue.front();
+    if (next_sdu != nullptr) {
+      bs.hol_toa = next_sdu->time_of_arrival;
     }
   }
 
@@ -1024,13 +1033,23 @@ uint32_t rlc_tx_am_entity::get_buffer_state()
   uint32_t             retx_bytes = retx_state.get_retx_bytes() + retx_state.get_n_retx_so_zero() * head_min_size +
                         retx_state.get_n_retx_so_nonzero() * head_max_size;
 
+  // Drop any retx SNs not present in tx_window
+  while (!retx_queue.empty() && !tx_window.has_sn(retx_queue.front().sn)) {
+    logger.log_info("Could not find sn={} in tx window, dropping RETX.", retx_queue.front().sn);
+    retx_queue.pop();
+  }
+  if (!retx_queue.empty()) {
+    bs.hol_toa = tx_window[retx_queue.front().sn].time_of_arrival;
+  }
+
   // status report size
   uint32_t status_bytes = 0;
   if (status_provider->status_report_required()) {
     status_bytes = status_provider->get_status_pdu_length();
   }
 
-  return queue_bytes + segment_bytes + retx_bytes + status_bytes;
+  bs.pending_bytes = queue_bytes + segment_bytes + retx_bytes + status_bytes;
+  return bs;
 }
 
 uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t payload_size)

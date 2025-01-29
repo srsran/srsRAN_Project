@@ -51,6 +51,7 @@ cell_configuration::cell_configuration(const scheduler_expert_config&           
   nzp_csi_rs_list(msg.nzp_csi_rs_res_list),
   dl_data_to_ul_ack(msg.dl_data_to_ul_ack),
   rrm_policy_members(msg.rrm_policy_members),
+  cfra_enabled(msg.cfra_enabled),
   // SSB derived params.
   ssb_case(band_helper::get_ssb_pattern(msg.dl_carrier.band, msg.ssb_config.scs)),
   paired_spectrum(band_helper::is_paired_spectrum(msg.dl_carrier.band)),

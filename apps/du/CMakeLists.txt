@@ -36,8 +36,7 @@ target_link_libraries(srsdu_base PRIVATE
         srsran_pcap
         srsran_support
         srsran_versioning
-        srsran_f1c_gateway
-        srsran_cu_up) # TODO: Delete
+        srsran_f1c_gateway)
 
 if (DPDK_FOUND)
     add_definitions(-DDPDK_FOUND)

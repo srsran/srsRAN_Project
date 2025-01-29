@@ -78,14 +78,10 @@ static void fill_cu_up_log_section(YAML::Node node, const cu_up_unit_logger_conf
   node["hex_max_size"] = config.hex_max_size;
 }
 
-static YAML::Node build_cu_up_section(const cu_up_unit_config& config)
+static void fill_cu_up_section(YAML::Node node, const cu_up_unit_config& config)
 {
-  YAML::Node node;
-
   node["gtpu_queue_size"] = config.gtpu_queue_size;
   node["warn_on_drop"]    = config.warn_on_drop;
-
-  return node;
 }
 
 static void fill_cu_up_f1_qos_section(YAML::Node node, const cu_cp_unit_f1u_config& config)
@@ -127,11 +123,16 @@ static void fill_cu_up_qos_section(YAML::Node node, span<const cu_up_unit_qos_co
 
 void srsran::fill_cu_up_config_in_yaml_schema(YAML::Node& node, const cu_up_unit_config& config)
 {
-  node["cu_up"] = build_cu_up_section(config);
-  fill_cu_up_log_section(node["log"], config.loggers);
-  fill_cu_up_pcap_section(node["pcap"], config.pcap_cfg);
-  fill_cu_up_metrics_section(node["metrics"], config.metrics);
-  fill_cu_up_ngu_section(node["ngu"], config.ngu_cfg);
+  node["gnb_id"]            = config.gnb_id.id;
+  node["gnb_id_bit_length"] = static_cast<unsigned>(config.gnb_id.bit_length);
+  node["gnb_cu_up_id"]      = static_cast<uint64_t>(config.gnb_cu_up_id);
 
-  fill_cu_up_qos_section(node, config.qos_cfg);
+  YAML::Node cu_up_node = node["cu_up"];
+  fill_cu_up_section(cu_up_node, config);
+  fill_cu_up_log_section(cu_up_node["log"], config.loggers);
+  fill_cu_up_pcap_section(cu_up_node["pcap"], config.pcap_cfg);
+  fill_cu_up_metrics_section(cu_up_node["metrics"], config.metrics);
+  fill_cu_up_ngu_section(cu_up_node["ngu"], config.ngu_cfg);
+
+  fill_cu_up_qos_section(cu_up_node, config.qos_cfg);
 }

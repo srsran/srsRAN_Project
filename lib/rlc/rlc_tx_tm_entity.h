@@ -76,8 +76,8 @@ public:
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers
-  size_t   pull_pdu(span<uint8_t> rlc_pdu_buf) override;
-  uint32_t get_buffer_state() override;
+  size_t           pull_pdu(span<uint8_t> rlc_pdu_buf) override;
+  rlc_buffer_state get_buffer_state() override;
 
 private:
   /// Called whenever the buffer state has been changed by upper layers (new SDUs or SDU discard) so that lower layers

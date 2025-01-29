@@ -127,6 +127,7 @@ public:
   std::optional<du_ue_index_t>                                   last_ue_deleted;
   std::optional<f1ap_ue_context_release_request>                 last_ue_release_req;
   wait_manual_event_tester<f1ap_ue_context_modification_confirm> wait_ue_mod;
+  std::optional<gnbdu_config_update_request>                     last_du_cfg_req;
 
   bool connect_to_cu_cp() override { return true; }
 
@@ -136,6 +137,12 @@ public:
   }
 
   async_task<void> handle_f1_removal_request() override { return wait_f1_removal.launch(); }
+
+  async_task<gnbdu_config_update_response> handle_du_config_update(const gnbdu_config_update_request& request) override
+  {
+    last_du_cfg_req = gnbdu_config_update_request{request};
+    return launch_no_op_task(gnbdu_config_update_response{true});
+  }
 
   /// Initiates creation of UE context in F1.
   f1ap_ue_creation_response handle_ue_creation_request(const f1ap_ue_creation_request& msg) override
@@ -183,6 +190,8 @@ public:
 
   void stop() override {}
 
+  expected<std::string> get_bind_address() const override { return "127.0.0.1"; }
+
   void on_new_pdu(nru_ul_message msg) override { last_sdu = std::move(msg); }
 
   // helper function to push DL PDUs to the RX path.
@@ -196,17 +205,18 @@ public:
 
   std::unique_ptr<f1u_du_gateway_bearer> create_du_bearer(uint32_t                                   ue_index,
                                                           drb_id_t                                   drb_id,
+                                                          five_qi_t                                  five_qi,
                                                           srs_du::f1u_config                         config,
-                                                          const up_transport_layer_info&             dl_up_tnl_info,
+                                                          const gtpu_teid_t&                         dl_teid,
                                                           const up_transport_layer_info&             ul_up_tnl_info,
                                                           srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                                           timer_factory                              timers,
                                                           task_executor& ue_executor) override
   {
-    if (next_bearer_is_created and f1u_bearers.count(dl_up_tnl_info) == 0) {
+    if (next_bearer_is_created and f1u_bearers.count(dl_teid) == 0) {
       auto f1u_bearer = std::make_unique<f1u_gw_bearer_dummy>(du_rx);
-      f1u_bearers.insert(std::make_pair(dl_up_tnl_info, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>{}));
-      f1u_bearers[dl_up_tnl_info].emplace(ul_up_tnl_info, f1u_bearer.get());
+      f1u_bearers.insert(std::make_pair(dl_teid, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>{}));
+      f1u_bearers[dl_teid].emplace(ul_up_tnl_info, f1u_bearer.get());
       return f1u_bearer;
     }
     return nullptr;
@@ -214,7 +224,7 @@ public:
 
   void remove_du_bearer(const up_transport_layer_info& dl_tnl_info) override
   {
-    auto bearer_it = f1u_bearers.find(dl_tnl_info);
+    auto bearer_it = f1u_bearers.find(dl_tnl_info.gtp_teid);
     if (bearer_it == f1u_bearers.end()) {
       srslog::fetch_basic_logger("TEST").warning("Could not find DL-TEID at DU to remove. DL-TEID={}",
                                                  dl_tnl_info.gtp_teid);
@@ -231,7 +241,7 @@ public:
     return f1u_ext_addr;
   }
 
-  std::map<up_transport_layer_info, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>> f1u_bearers;
+  std::map<gtpu_teid_t, std::map<up_transport_layer_info, f1u_gw_bearer_dummy*>> f1u_bearers;
 
   void set_f1u_ext_addr(const std::string& addr) { f1u_ext_addr = addr; }
 
@@ -246,11 +256,18 @@ class mac_test_dummy : public mac_cell_manager,
 public:
   class mac_cell_dummy : public mac_cell_controller
   {
-    wait_manual_event_tester<void> wait_start;
-    wait_manual_event_tester<void> wait_stop;
+  public:
+    wait_manual_event_tester<void>           wait_start;
+    wait_manual_event_tester<void>           wait_stop;
+    std::optional<mac_cell_reconfig_request> last_cell_recfg_req;
 
-    async_task<void> start() override { return wait_start.launch(); }
-    async_task<void> stop() override { return wait_stop.launch(); }
+    async_task<void>                       start() override { return wait_start.launch(); }
+    async_task<void>                       stop() override { return wait_stop.launch(); }
+    async_task<mac_cell_reconfig_response> reconfigure(const mac_cell_reconfig_request& request) override
+    {
+      last_cell_recfg_req = request;
+      return launch_no_op_task(mac_cell_reconfig_response{true});
+    }
   };
 
   mac_cell_dummy mac_cell;
@@ -312,6 +329,7 @@ public:
     du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
                                           const f1ap_ue_context_update_request& upd_req,
                                           const du_ue_resource_config*          reestablished_context) override;
+    void                           config_applied() override {}
     const du_ue_resource_config&   get() override;
 
     du_ue_index_t                           ue_index;
@@ -328,7 +346,7 @@ public:
   dummy_ue_resource_configurator_factory();
 
   expected<ue_ran_resource_configurator, std::string>
-  create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index) override;
+  create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index, bool has_tc_rnti) override;
 };
 
 f1ap_ue_context_update_request create_f1ap_ue_context_update_request(du_ue_index_t                   ue_idx,

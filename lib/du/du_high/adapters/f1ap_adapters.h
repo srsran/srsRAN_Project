@@ -115,6 +115,8 @@ public:
 
   void on_ue_config_applied(du_ue_index_t ue_index) override { du_mng->handle_ue_config_applied(ue_index); }
 
+  f1ap_du_positioning_handler& get_positioning_handler() override { return du_mng->get_positioning_handler(); }
+
 private:
   timer_factory                                                 timers;
   du_manager_configurator*                                      du_mng = nullptr;

@@ -181,6 +181,18 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
     }
     return "Invalid PUSCH SINR calculation method. Accepted values [channel_estimator,post_equalization,evm]";
   };
+  auto pusch_channel_estimator_td_strategy_method_check = [](const std::string& value) -> std::string {
+    if ((value == "average") || (value == "interpolate")) {
+      return {};
+    }
+    return "Invalid PUSCH channel estimator time-domain strategy. Accepted values [average,interpolate]";
+  };
+  auto pusch_channel_equalizer_algorithm_method_check = [](const std::string& value) -> std::string {
+    if ((value == "zf") || (value == "mmse")) {
+      return {};
+    }
+    return "Invalid PUSCH channel equalizer algorithm. Accepted values [zf,mmse]";
+  };
 
   add_option(app,
              "--max_proc_delay",
@@ -205,6 +217,18 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
              "PUSCH SINR calculation method: channel_estimator, post_equalization and evm.")
       ->capture_default_str()
       ->check(pusch_sinr_method_check);
+  add_option(app,
+             "--pusch_channel_estimator_td_strategy",
+             expert_phy_params.pusch_channel_estimator_td_strategy,
+             "PUSCH channel estimator time-domain strategy: average and interpolate.")
+      ->capture_default_str()
+      ->check(pusch_channel_estimator_td_strategy_method_check);
+  add_option(app,
+             "--pusch_channel_equalizer_algorithm",
+             expert_phy_params.pusch_channel_equalizer_algorithm,
+             "PUSCH channel equalizer algorithm: zf and mmse.")
+      ->capture_default_str()
+      ->check(pusch_channel_equalizer_algorithm_method_check);
   add_option(app,
              "--max_request_headroom_slots",
              expert_phy_params.nof_slots_request_headroom,
@@ -292,6 +316,11 @@ static void configure_cli11_hal_args(CLI::App& app, std::optional<du_low_unit_ha
   configure_cli11_bbdev_hwacc_args(*bbdev_hwacc_subcmd, config->bbdev_hwacc);
 }
 
+static void configure_cli11_metrics_args(CLI::App& app, du_low_unit_metrics_config& config)
+{
+  app.add_option("--enable_upper_phy", config.enable, "Enables upper physical layer metrics.")->capture_default_str();
+}
+
 static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
 {
   // Clean the HAL optional.
@@ -325,6 +354,10 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
   // HAL section.
   CLI::App* hal_subcmd = add_subcommand(app, "hal", "HAL configuration")->configurable();
   configure_cli11_hal_args(*hal_subcmd, parsed_cfg.hal_config);
+
+  // Metrics section.
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
+  configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.metrics_config);
 }
 
 void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,

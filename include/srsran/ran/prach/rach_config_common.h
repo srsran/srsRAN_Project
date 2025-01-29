@@ -26,9 +26,11 @@
 #include "srsran/ran/prach/restricted_set_config.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <chrono>
-#include <optional>
 
 namespace srsran {
+
+/// Maximum number of RA preambles used per occasion as per TS 38.331.
+constexpr static unsigned MAX_NOF_RA_PREAMBLES_PER_OCCASION = 64;
 
 /// \remark See TS 38.331, RACH-ConfigGeneric.
 struct rach_config_generic {
@@ -56,8 +58,8 @@ struct rach_config_generic {
 /// Used to specify the cell-specific random-access parameters as per TS 38.331, "RACH-ConfigCommon".
 struct rach_config_common {
   rach_config_generic rach_cfg_generic;
-  /// Total number of prambles used for contention based and contention free RA. Values: (1..64).
-  std::optional<unsigned> total_nof_ra_preambles;
+  /// Total number of preambles used for contention based and contention free RA. Values: (1..64).
+  unsigned total_nof_ra_preambles = MAX_NOF_RA_PREAMBLES_PER_OCCASION;
   /// Maximum time for the Contention Resolution. Values: {8, 16, 24, 32, 40, 48, 56, 64}.
   std::chrono::milliseconds ra_con_res_timer{64};
   /// PRACH Root Sequence Index can be of 2 types, as per \c prach-RootSequenceIndex, \c RACH-ConfigCommon, TS 38.331.

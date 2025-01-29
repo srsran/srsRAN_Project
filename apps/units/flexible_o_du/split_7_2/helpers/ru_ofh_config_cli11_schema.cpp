@@ -123,9 +123,25 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
              config.ignore_ecpri_payload_size_field,
              "Ignore eCPRI payload size field value")
       ->capture_default_str();
-  add_option(
-      app, "--warn_unreceived_ru_frames", config.warn_unreceived_ru_frames, "Warn of unreceived Radio Unit frames")
-      ->capture_default_str();
+
+  add_option_function<std::string>(
+      app,
+      "--warn_unreceived_ru_frames",
+      [&config](const std::string& value) {
+        config.log_unreceived_ru_frames = ofh::to_warn_unreceived_ru_frames(value).value();
+      },
+      "Warn of unreceived Radio Unit frames")
+      ->default_function([&config]() { return to_string(config.log_unreceived_ru_frames); })
+      ->capture_default_str()
+      ->check([](const std::string& value) -> std::string {
+        auto warn = ofh::to_warn_unreceived_ru_frames(value);
+        if (warn.has_value()) {
+          return {};
+        }
+
+        return "Warn of unreceived Radio Unit frames type not supported. Accepted values [never, always, "
+               "after_traffic_detection]";
+      });
 
   auto compression_method_check = [](const std::string& value) -> std::string {
     if (value == "none" || value == "bfp" || value == "bfp selective" || value == "block scaling" ||

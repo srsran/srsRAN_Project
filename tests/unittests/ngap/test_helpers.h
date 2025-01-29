@@ -371,7 +371,7 @@ public:
     logger.error("DL UE associated NRPPa transport failed. Cause: NRPPa transport PDUs not supported.");
   }
 
-  void on_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) override
+  void on_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) override
   {
     logger.error("DL non UE associated NRPPa transport failed. Cause: NRPPa transport PDUs not supported.");
   }

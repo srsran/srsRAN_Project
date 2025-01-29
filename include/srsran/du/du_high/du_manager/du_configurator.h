@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rrm.h"
 #include "srsran/support/async/async_task.h"
 
@@ -48,6 +49,24 @@ struct du_mac_sched_control_config_response {
   bool max_prb_alloc_result;
 };
 
+/// Parameters of a cell that need to be configured during the DU cell operation.
+struct du_cell_param_config_request {
+  nr_cell_global_id_t nr_cgi;
+  std::optional<int>  ssb_pwr_mod;
+};
+
+/// Parameters of the DU that need to be configured during operation.
+struct du_param_config_request {
+  /// Cells for which parameters need to be altered.
+  std::vector<du_cell_param_config_request> cells;
+};
+
+/// Result of a DU dynamic parameter configuration procedure.
+struct du_param_config_response {
+  bool success;
+};
+
+/// Interface to configure parameters of an already operational DU.
 class du_configurator
 {
 public:
@@ -55,6 +74,9 @@ public:
 
   virtual async_task<du_mac_sched_control_config_response>
   configure_ue_mac_scheduler(du_mac_sched_control_config reconf) = 0;
+
+  /// Apply new config updates requested from outside the DU.
+  virtual du_param_config_response handle_operator_config_request(const du_param_config_request& req) = 0;
 };
 
 } // namespace srs_du

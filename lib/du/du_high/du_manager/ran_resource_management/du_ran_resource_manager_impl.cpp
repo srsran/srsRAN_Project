@@ -48,6 +48,11 @@ du_ue_ran_resource_updater_impl::update(du_cell_index_t                       pc
   return parent->update_context(ue_index, pcell_index, upd_req, reestablished_context);
 }
 
+void du_ue_ran_resource_updater_impl::config_applied()
+{
+  parent->ue_config_applied(ue_index);
+}
+
 ///////////////////////////
 
 // Helper that resets the PUCCH and SRS configurations in the serving cell configuration.
@@ -78,12 +83,15 @@ du_ran_resource_manager_impl::du_ran_resource_manager_impl(span<const du_cell_co
   bearer_res_mng(srb_config, qos_config, logger),
   srs_res_mng(std::make_unique<du_srs_policy_max_ul_rate>(cell_cfg_list)),
   meas_cfg_mng(cell_cfg_list),
-  drx_res_mng(cell_cfg_list)
+  drx_res_mng(cell_cfg_list),
+  ra_res_alloc(cell_cfg_list)
 {
 }
 
 expected<ue_ran_resource_configurator, std::string>
-du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t ue_index, du_cell_index_t pcell_index)
+du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t   ue_index,
+                                                              du_cell_index_t pcell_index,
+                                                              bool            has_tc_rnti)
 {
   if (ue_res_pool.contains(ue_index)) {
     return make_unexpected(std::string("Double allocation of same UE not supported"));
@@ -101,6 +109,11 @@ du_ran_resource_manager_impl::create_ue_resource_configurator(du_ue_index_t ue_i
 
   // Initialize correct defaults for UE RAN resources dependent on UE capabilities.
   ue_res.ue_cap_manager.handle_ue_creation(ue_res.cg_cfg);
+
+  // Allocate CFRA resources when TC-RNTI was not yet assigned (e.g. during for Handover).
+  if (not has_tc_rnti) {
+    ra_res_alloc.allocate_cfra_resources(ue_res.cg_cfg);
+  }
 
   return ue_ran_resource_configurator{std::make_unique<du_ue_ran_resource_updater_impl>(&mcg, *this, ue_index),
                                       err.has_value() ? std::string{} : err.error()};
@@ -177,11 +190,25 @@ void du_ran_resource_manager_impl::deallocate_context(du_ue_index_t ue_index)
   ue_resource_context&   ue_res = ue_res_pool[ue_index];
   du_ue_resource_config& ue_mcg = ue_res.cg_cfg;
 
+  ra_res_alloc.deallocate_cfra_resources(ue_mcg);
+
   ue_res.ue_cap_manager.release(ue_mcg);
+
   for (const auto& sc : ue_mcg.cell_group.cells) {
     deallocate_cell_resources(ue_index, sc.serv_cell_idx);
   }
+
   ue_res_pool.erase(ue_index);
+}
+
+void du_ran_resource_manager_impl::ue_config_applied(du_ue_index_t ue_index)
+{
+  srsran_assert(ue_res_pool.contains(ue_index), "This function should only be called for an already allocated UE");
+  ue_resource_context&   ue_res = ue_res_pool[ue_index];
+  du_ue_resource_config& ue_mcg = ue_res.cg_cfg;
+
+  // We can remove previously used CFRA resources, if any.
+  ra_res_alloc.deallocate_cfra_resources(ue_mcg);
 }
 
 error_type<std::string> du_ran_resource_manager_impl::allocate_cell_resources(du_ue_index_t     ue_index,

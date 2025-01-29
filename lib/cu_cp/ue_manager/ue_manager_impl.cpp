@@ -21,6 +21,7 @@
  */
 
 #include "ue_manager_impl.h"
+#include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/security_manager_config.h"
 
 using namespace srsran;
@@ -32,6 +33,7 @@ void cu_cp_ue::stop()
 }
 
 ue_manager::ue_manager(const cu_cp_configuration& cu_cp_cfg) :
+  cu_cp_config(cu_cp_cfg),
   ue_config(cu_cp_cfg.ue),
   up_config(up_resource_manager_cfg{cu_cp_cfg.bearers.drb_config, cu_cp_cfg.admission.max_nof_drbs_per_ue}),
   sec_config(security_manager_config{cu_cp_cfg.security.int_algo_pref_list, cu_cp_cfg.security.enc_algo_pref_list}),
@@ -98,11 +100,20 @@ ue_index_t ue_manager::add_ue(du_index_t                     du_index,
   ue_task_scheduler_impl ue_sched = ue_task_scheds.create_ue_task_sched(new_ue_index);
 
   // Create UE object
-  ues.emplace(
-      std::piecewise_construct,
-      std::forward_as_tuple(new_ue_index),
-      std::forward_as_tuple(
-          new_ue_index, du_index, up_config, sec_config, std::move(ue_sched), plmn, du_id, pci, rnti, pcell_index));
+  ues.emplace(std::piecewise_construct,
+              std::forward_as_tuple(new_ue_index),
+              std::forward_as_tuple(new_ue_index,
+                                    du_index,
+                                    *cu_cp_config.services.timers,
+                                    *cu_cp_config.services.cu_cp_executor,
+                                    up_config,
+                                    sec_config,
+                                    std::move(ue_sched),
+                                    plmn,
+                                    du_id,
+                                    pci,
+                                    rnti,
+                                    pcell_index));
 
   // Add PCI and RNTI to lookup.
   if (pci.has_value() && rnti.has_value()) {

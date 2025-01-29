@@ -1110,9 +1110,11 @@ void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(du_cell_index_t 
     switch (pucch.format) {
       case pucch_format::FORMAT_0:
         pucch_uci_bits.harq_ack_nof_bits = pucch.format_0.harq_ack_nof_bits;
+        pucch_uci_bits.sr_bits           = pucch.format_0.sr_bits;
         break;
       case pucch_format::FORMAT_1:
         pucch_uci_bits.harq_ack_nof_bits = pucch.format_1.harq_ack_nof_bits;
+        pucch_uci_bits.sr_bits           = pucch.format_1.sr_bits;
         break;
       case pucch_format::FORMAT_2:
         pucch_uci_bits.harq_ack_nof_bits  = pucch.format_2.harq_ack_nof_bits;

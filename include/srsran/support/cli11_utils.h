@@ -39,11 +39,8 @@ using cli11_cell = std::vector<std::string>;
 /// \return A pointer to the subcommand added to the application.
 inline CLI::App* add_subcommand(CLI::App& app, const std::string& name, const std::string& desc)
 {
-  try {
-    if (CLI::App* subcommand = app.get_subcommand(name)) {
-      return subcommand;
-    }
-  } catch (CLI::OptionNotFound& e) {
+  if (CLI::App* subcommand = app.get_subcommand_no_throw(name)) {
+    return subcommand;
   }
 
   return app.add_subcommand(name, desc)->configurable();

@@ -122,13 +122,8 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
     // We assume all the preambles from 0 to 64 are assigned to the same PRACH occasion.
     // TODO: adapt scheduler to difference preamble indices intervals.
     cached_prach.occasion.start_preamble_index = 0;
-    if (cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles.has_value()) {
-      cached_prach.occasion.nof_preamble_indexes =
-          cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles.value();
-    } else {
-      // If the field is absent, all possible preambles are available for RA.
-      cached_prach.occasion.nof_preamble_indexes = MAX_NOF_PRACH_PREAMBLES;
-    }
+    cached_prach.occasion.nof_preamble_indexes =
+        cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles;
   }
 }
 

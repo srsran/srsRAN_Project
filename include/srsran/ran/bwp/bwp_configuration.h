@@ -22,11 +22,29 @@
 
 #pragma once
 
-#include "srsran/f1u/cu_up/f1u_session_manager.h"
+#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/resource_allocation/rb_interval.h"
 
-namespace srsran::srs_cu_up {
+namespace srsran {
 
-/// \brief Creates an F1-U bearer for the CU-UP.
-std::unique_ptr<f1u_session_manager> create_f1u_cu_up_session_manager(const f1u_session_maps& f1u_sessions);
+/// Generic parameters of a bandwidth part as defined in TS 38.211, clause 4.5 and TS 38.213, clause 12.
+/// \remark See TS 38.331, Bandwidth-Part (BWP).
+struct bwp_configuration {
+  cyclic_prefix      cp;
+  subcarrier_spacing scs;
+  /// Common RBs where the BWP is located. CRB=0 overlaps with pointA.
+  crb_interval crbs;
 
-} // namespace srsran::srs_cu_up
+  bool operator==(const bwp_configuration& other) const
+  {
+    return cp == other.cp and scs == other.scs and crbs == other.crbs;
+  }
+
+  bool operator<(const bwp_configuration& other) const
+  {
+    return cp < other.cp or (cp == other.cp and scs < other.scs) or
+           (cp == other.cp and scs == other.scs and crbs < other.crbs);
+  }
+};
+
+} // namespace srsran

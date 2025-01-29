@@ -399,33 +399,17 @@ TEST(ofh_uplane_packet_decoder_static_impl, peek_filter_index)
       0x9a, 0x01, 0xa4, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90, 0x01, 0x90, 0x01, 0x9a, 0x01, 0x9a, 0x01, 0xa4, 0x01, 0x01,
       0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-  const unsigned ru_nof_prbs = 2;
-
-  uplane_message_decoder_static_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
-                                                         subcarrier_spacing::kHz30,
-                                                         get_nsymb_per_slot(cyclic_prefix::NORMAL),
-                                                         ru_nof_prbs,
-                                                         0,
-                                                         std::make_unique<iq_decompressor_dummy>(),
-                                                         {compression_type::BFP, 9});
-
   ASSERT_EQ(filter_index_type::standard_channel_filter, uplane_peeker::peek_filter_index(packet));
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, peek_filter_index_returns_reserved_on_peek_failure)
 {
   std::vector<uint8_t> packet;
-  const unsigned       ru_nof_prbs = 2;
 
-  uplane_message_decoder_static_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
-                                                         subcarrier_spacing::kHz30,
-                                                         get_nsymb_per_slot(cyclic_prefix::NORMAL),
-                                                         ru_nof_prbs,
-                                                         0,
-                                                         std::make_unique<iq_decompressor_dummy>(),
-                                                         {compression_type::BFP, 9});
+  auto value = uplane_peeker::peek_filter_index(packet);
 
-  ASSERT_EQ(filter_index_type::reserved, uplane_peeker::peek_filter_index(packet));
+  ASSERT_FALSE(value.has_value());
+  ASSERT_STREQ("Message is empty", value.error());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, peek_prach_filter_index)
@@ -436,17 +420,10 @@ TEST(ofh_uplane_packet_decoder_static_impl, peek_prach_filter_index)
       0x9a, 0x01, 0xa4, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90, 0x01, 0x90, 0x01, 0x9a, 0x01, 0x9a, 0x01, 0xa4, 0x01, 0x01,
       0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-  const unsigned ru_nof_prbs = 2;
+  auto value = uplane_peeker::peek_filter_index(packet);
 
-  uplane_message_decoder_static_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
-                                                         subcarrier_spacing::kHz30,
-                                                         get_nsymb_per_slot(cyclic_prefix::NORMAL),
-                                                         ru_nof_prbs,
-                                                         0,
-                                                         std::make_unique<iq_decompressor_dummy>(),
-                                                         {compression_type::BFP, 9});
-
-  ASSERT_EQ(filter_index_type::ul_prach_preamble_1p25khz, uplane_peeker::peek_filter_index(packet));
+  ASSERT_TRUE(value.has_value());
+  ASSERT_EQ(filter_index_type::ul_prach_preamble_1p25khz, value.value<>());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, peek_slot_symbol_point)
@@ -459,40 +436,99 @@ TEST(ofh_uplane_packet_decoder_static_impl, peek_slot_symbol_point)
       0x9a, 0x01, 0xa4, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90, 0x01, 0x90, 0x01, 0x9a, 0x01, 0x9a, 0x01, 0xa4, 0x01, 0x01,
       0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-  const unsigned           ru_nof_prbs = 2;
   const unsigned           nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   const subcarrier_spacing scs         = subcarrier_spacing::kHz30;
 
-  uplane_message_decoder_static_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
-                                                         scs,
-                                                         nof_symbols,
-                                                         ru_nof_prbs,
-                                                         0,
-                                                         std::make_unique<iq_decompressor_dummy>(),
-                                                         {compression_type::BFP, 9});
+  auto value = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
 
-  ASSERT_EQ(slot_point, uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs));
+  ASSERT_TRUE(value.has_value());
+  ASSERT_EQ(slot_point, value.value());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_packet_size_smaller_than_required)
 {
-  std::vector<uint8_t> packet = {0x10, 0x30, 0x40};
+  std::vector<uint8_t> packet = {0x11, 0x02, 0x40};
 
-  const unsigned           ru_nof_prbs = 2;
   const unsigned           nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   const subcarrier_spacing scs         = subcarrier_spacing::kHz30;
 
-  uplane_message_decoder_static_compression_impl decoder(srslog::fetch_basic_logger("TEST"),
-                                                         scs,
-                                                         nof_symbols,
-                                                         ru_nof_prbs,
-                                                         0,
-                                                         std::make_unique<iq_decompressor_dummy>(),
-                                                         {compression_type::BFP, 9});
+  auto               slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
+  const std::string& err  = slot.error();
 
-  slot_symbol_point slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
+  ASSERT_FALSE(slot.has_value());
+  ASSERT_STREQ("Message number of bytes '3' is smaller than the required size '4'", err.c_str());
+}
 
-  ASSERT_FALSE(slot.get_slot().valid());
+TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid_subframe)
+{
+  std::vector<uint8_t> packet = {
+      0x11, 0x02, 0xa0, 0x42, 0x00, 0x70, 0x24, 0x00, 0x00, 0x01, 0x7c, 0x01, 0x7c, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90,
+      0x01, 0x90, 0x01, 0x9a, 0x01, 0x9a, 0x01, 0xa4, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90, 0x01, 0x90, 0x01, 0x9a, 0x01,
+      0x9a, 0x01, 0xa4, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90, 0x01, 0x90, 0x01, 0x9a, 0x01, 0x9a, 0x01, 0xa4, 0x01, 0x01,
+      0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+  const unsigned           nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
+  const subcarrier_spacing scs         = subcarrier_spacing::kHz30;
+
+  auto               slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
+  const std::string& err  = slot.error();
+
+  ASSERT_FALSE(slot.has_value());
+  ASSERT_STREQ("Decoded subframe id '10' is bigger than the maximum number of subframes per frame '10'", err.c_str());
+}
+
+TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid_slot)
+{
+  std::vector<uint8_t> packet = {
+      0x11, 0x02, 0x40, 0xc2, 0x00, 0x70, 0x24, 0x00, 0x00, 0x01, 0x7c, 0x01, 0x7c, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90,
+      0x01, 0x90, 0x01, 0x9a, 0x01, 0x9a, 0x01, 0xa4, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90, 0x01, 0x90, 0x01, 0x9a, 0x01,
+      0x9a, 0x01, 0xa4, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90, 0x01, 0x90, 0x01, 0x9a, 0x01, 0x9a, 0x01, 0xa4, 0x01, 0x01,
+      0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+  const unsigned           nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
+  const subcarrier_spacing scs         = subcarrier_spacing::kHz30;
+
+  auto               slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
+  const std::string& err  = slot.error();
+
+  ASSERT_FALSE(slot.has_value());
+  ASSERT_STREQ("Decoded slot id '3' is bigger than the maximum number of slots per subframe '2'", err.c_str());
+}
+
+TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid_symbol_high_byte)
+{
+  std::vector<uint8_t> packet = {
+      0x11, 0x02, 0x41, 0x42, 0x00, 0x70, 0x24, 0x00, 0x00, 0x01, 0x7c, 0x01, 0x7c, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90,
+      0x01, 0x90, 0x01, 0x9a, 0x01, 0x9a, 0x01, 0xa4, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90, 0x01, 0x90, 0x01, 0x9a, 0x01,
+      0x9a, 0x01, 0xa4, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90, 0x01, 0x90, 0x01, 0x9a, 0x01, 0x9a, 0x01, 0xa4, 0x01, 0x01,
+      0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+  const unsigned           nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
+  const subcarrier_spacing scs         = subcarrier_spacing::kHz30;
+
+  auto               slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
+  const std::string& err  = slot.error();
+
+  ASSERT_FALSE(slot.has_value());
+  ASSERT_STREQ("Decoded slot id '5' is bigger than the maximum number of slots per subframe '2'", err.c_str());
+}
+
+TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid_symbol)
+{
+  std::vector<uint8_t> packet = {
+      0x11, 0x02, 0x40, 0x4f, 0x00, 0x70, 0x24, 0x00, 0x00, 0x01, 0x7c, 0x01, 0x7c, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90,
+      0x01, 0x90, 0x01, 0x9a, 0x01, 0x9a, 0x01, 0xa4, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90, 0x01, 0x90, 0x01, 0x9a, 0x01,
+      0x9a, 0x01, 0xa4, 0x01, 0x86, 0x01, 0x86, 0x01, 0x90, 0x01, 0x90, 0x01, 0x9a, 0x01, 0x9a, 0x01, 0xa4, 0x01, 0x01,
+      0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+  const unsigned           nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
+  const subcarrier_spacing scs         = subcarrier_spacing::kHz30;
+
+  auto               slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
+  const std::string& err  = slot.error();
+
+  ASSERT_FALSE(slot.has_value());
+  ASSERT_STREQ("Decoded symbol id '15' is bigger than the maximum number of symbols '14'", err.c_str());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, message_containing_more_than_one_section_should_fail_to_decode)

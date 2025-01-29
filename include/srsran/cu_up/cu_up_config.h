@@ -23,12 +23,14 @@
 #pragma once
 
 #include "srsran/cu_up/cu_up_executor_mapper.h"
+#include "srsran/e1ap/cu_up/e1ap_configuration.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/e1ap/gateways/e1_connection_client.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
+#include "srsran/ran/gnb_cu_up_id.h"
 #include "srsran/support/timers.h"
 #include <map>
 
@@ -68,10 +70,14 @@ struct cu_up_config {
   n3_interface_config n3_cfg;
   /// Test mode configuration.
   cu_up_test_mode_config test_mode_cfg;
+  /// gNodeB identifier.
+  gnb_id_t gnb_id = {411, 22};
   /// CU-UP identifier.
-  unsigned cu_up_id = 0;
+  gnb_cu_up_id_t cu_up_id = gnb_cu_up_id_t::min;
   /// CU-UP name.
   std::string cu_up_name = "srs_cu_up_01";
+  /// E1AP configuration.
+  e1ap_configuration e1ap;
   /// Full PLMN as string (without possible filler digit) e.g. "00101".
   std::string plmn = "00101";
   /// CU-UP statistics report period in seconds.

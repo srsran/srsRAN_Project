@@ -85,7 +85,8 @@ protected:
 
     port_channel_estimator_fd_smoothing_strategy smoothing      = GetParam().smoothing;
     bool                                         compensate_cfo = GetParam().compensate_cfo;
-    ch_estimator                                                = ch_est_factory->create(smoothing, compensate_cfo);
+    ch_estimator =
+        ch_est_factory->create(smoothing, port_channel_estimator_td_interpolation_strategy::average, compensate_cfo);
     ASSERT_NE(ch_estimator, nullptr);
   }
 

@@ -36,6 +36,7 @@
 #include "du_processor/du_processor_repository.h"
 #include "ngap_repository.h"
 #include "ue_manager/ue_manager_impl.h"
+#include "srsran/cu_cp/cu_configurator.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e2/e2_cu.h"
@@ -81,7 +82,8 @@ public:
 
   // NRPPA interface.
   std::unique_ptr<nrppa_interface> create_nrppa_entity(const cu_cp_configuration& cu_cp_cfg,
-                                                       nrppa_cu_cp_notifier&      cu_cp_notif);
+                                                       nrppa_cu_cp_notifier&      cu_cp_notif,
+                                                       common_task_scheduler&     common_task_sched_);
 
   // CU-UP handler.
   void handle_bearer_context_inactivity_notification(const cu_cp_inactivity_notification& msg) override;
@@ -97,8 +99,12 @@ public:
   async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override;
 
   // cu_cp_ue_context_manipulation_handler.
-  async_task<bool> handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id) override;
-  void             handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;
+  void handle_handover_reconfiguration_sent(const cu_cp_intra_cu_handover_target_request& request) override;
+  void handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override;
+  void
+  initialize_handover_ue_release_timer(ue_index_t                              ue_index,
+                                       std::chrono::milliseconds               handover_ue_release_timeout,
+                                       const cu_cp_ue_context_release_request& ue_context_release_request) override;
 
   // cu_cp_ngap_handler.
   bool handle_handover_request(ue_index_t ue_index, security::security_context sec_ctxt) override;
@@ -117,12 +123,13 @@ public:
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
   ue_index_t       handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) override;
   void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
-  void handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) override;
+  void handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) override;
   void handle_n2_disconnection() override;
 
   // cu_cp_nrppa_handler.
   nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(ue_index_t ue_index) override;
-  void handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) override;
+  void                     handle_ul_nrppa_pdu(const byte_buffer&                    nrppa_pdu,
+                                               std::variant<ue_index_t, amf_index_t> ue_or_amf_index) override;
 
   // cu_cp_measurement_handler.
   std::optional<rrc_meas_cfg>
@@ -161,6 +168,7 @@ public:
   cu_cp_mobility_manager_handler&        get_cu_cp_mobility_manager_handler() override { return *this; }
   cu_cp_ue_removal_handler&              get_cu_cp_ue_removal_handler() override { return *this; }
   cu_cp_ue_context_manipulation_handler& get_cu_cp_ue_context_handler() override { return *this; }
+  cu_configurator&                       get_cu_configurator() override { return cu_cp_cfgtr; }
 
 private:
   // Handling of DU events.
@@ -239,6 +247,8 @@ private:
   unique_timer statistics_report_timer;
 
   std::atomic<bool> stopped{false};
+
+  cu_configurator cu_cp_cfgtr;
 };
 
 } // namespace srs_cu_cp

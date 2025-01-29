@@ -57,14 +57,14 @@ void f1u_local_connector::attach_dl_teid(const up_transport_layer_info& ul_up_tn
   }
   logger_cu.debug("Connecting CU F1-U bearer. UL GTP Tunnel={}, DL GTP Tunnel={}", ul_up_tnl_info, dl_up_tnl_info);
 
-  if (du_map.find(dl_up_tnl_info) == du_map.end()) {
+  if (du_map.find(dl_up_tnl_info.gtp_teid) == du_map.end()) {
     logger_cu.warning("Could not find DL GTP Tunnel at DU to connect. UL GTP Tunnel={}, DL GTP Tunnel={}",
                       ul_up_tnl_info,
                       dl_up_tnl_info);
     return;
   }
   logger_cu.debug("Connecting DU F1-U bearer. UL GTP Tunnel={}, DL GTP Tunnel={}", ul_up_tnl_info, dl_up_tnl_info);
-  f1u_gateway_du_bearer* du_tun = du_map.at(dl_up_tnl_info);
+  f1u_gateway_du_bearer* du_tun = du_map.at(dl_up_tnl_info.gtp_teid);
   f1u_gateway_cu_bearer* cu_tun = cu_map.at(ul_up_tnl_info.gtp_teid);
   cu_tun->dl_tnl_info           = dl_up_tnl_info;
   cu_tun->attach_du_notifier(*du_tun->f1u_rx, dl_up_tnl_info);
@@ -84,7 +84,7 @@ void f1u_local_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
 
   // Disconnect UL path of DU first if we have a dl_teid for lookup
   if (cu_tun->dl_tnl_info.has_value()) {
-    auto du_bearer_it = du_map.find(cu_tun->dl_tnl_info.value());
+    auto du_bearer_it = du_map.find(cu_tun->dl_tnl_info.value().gtp_teid);
     if (du_bearer_it != du_map.end()) {
       logger_cu.debug(
           "Disconnecting DU F1-U bearer with DL GTP Tunnel={}. UL GTP Tunnel={}", cu_tun->dl_tnl_info, ul_up_tnl_info);
@@ -110,8 +110,9 @@ void f1u_local_connector::disconnect_cu_bearer(const up_transport_layer_info& ul
 std::unique_ptr<srs_du::f1u_du_gateway_bearer>
 f1u_local_connector::create_du_bearer(uint32_t                                   ue_index,
                                       drb_id_t                                   drb_id,
+                                      five_qi_t                                  five_qi,
                                       srs_du::f1u_config                         config,
-                                      const up_transport_layer_info&             dl_up_tnl_info,
+                                      const gtpu_teid_t&                         dl_teid,
                                       const up_transport_layer_info&             ul_up_tnl_info,
                                       srs_du::f1u_du_gateway_bearer_rx_notifier& du_rx,
                                       timer_factory                              timers,
@@ -119,20 +120,20 @@ f1u_local_connector::create_du_bearer(uint32_t                                  
 {
   std::unique_lock<std::mutex> lock(map_mutex);
   if (cu_map.find(ul_up_tnl_info.gtp_teid) == cu_map.end()) {
-    logger_du.warning("Could not find CU F1-U bearer, when creating DU F1-U bearer. DL GTP Tunnel={}, UL GTP Tunnel={}",
-                      dl_up_tnl_info,
+    logger_du.warning("Could not find CU F1-U bearer, when creating DU F1-U bearer. DL TEID={}, UL GTP Tunnel={}",
+                      dl_teid,
                       ul_up_tnl_info);
     return nullptr;
   }
   srsran::f1u_gateway_cu_bearer* cu_tun = cu_map.at(ul_up_tnl_info.gtp_teid);
 
-  logger_du.debug("Creating DU F1-U bearer. DL GTP Tunnel={}, UL GTP Tunnel={}", dl_up_tnl_info, ul_up_tnl_info);
+  logger_du.debug("Creating DU F1-U bearer. DL GTP Tunnel={}, UL GTP Tunnel={}", dl_teid, ul_up_tnl_info);
   std::unique_ptr<f1u_gateway_du_bearer> du_bearer =
-      std::make_unique<f1u_gateway_du_bearer>(ue_index, drb_id, dl_up_tnl_info, &du_rx, ul_up_tnl_info, *this);
+      std::make_unique<f1u_gateway_du_bearer>(ue_index, drb_id, dl_teid, &du_rx, ul_up_tnl_info, *this);
 
   du_bearer->attach_cu_notifier(cu_tun->cu_rx);
 
-  du_map.insert({dl_up_tnl_info, du_bearer.get()});
+  du_map.insert({dl_teid, du_bearer.get()});
   return du_bearer;
 }
 
@@ -140,7 +141,7 @@ void f1u_local_connector::remove_du_bearer(const up_transport_layer_info& dl_up_
 {
   std::unique_lock<std::mutex> lock(map_mutex);
 
-  auto du_bearer_it = du_map.find(dl_up_tnl_info);
+  auto du_bearer_it = du_map.find(dl_up_tnl_info.gtp_teid);
   if (du_bearer_it == du_map.end()) {
     logger_du.warning("Could not find DL-TEID at DU to remove. DL GTP Tunnel={}", dl_up_tnl_info);
     return;

@@ -84,8 +84,8 @@ async_task<f1_setup_response_message> initial_du_setup_procedure::start_f1_setup
 
   // Log RRC ASN.1 SIB1 json.
   for (unsigned i = 0; i != sib1_jsons.size(); ++i) {
-    logger.info(request_msg.served_cells[i].packed_sib1.begin(),
-                request_msg.served_cells[i].packed_sib1.end(),
+    logger.info(request_msg.served_cells[i].du_sys_info.packed_sib1.begin(),
+                request_msg.served_cells[i].du_sys_info.packed_sib1.end(),
                 "SIB1 cell={}: {}",
                 fmt::underlying(to_du_cell_index(i)),
                 sib1_jsons[i]);

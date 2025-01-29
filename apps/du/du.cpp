@@ -42,6 +42,7 @@
 #include "srsran/e2/gateways/e2_connection_client.h"
 #include "srsran/e2/gateways/e2_network_client_factory.h"
 #include "srsran/f1u/du/split_connector/f1u_split_connector_factory.h"
+#include "srsran/f1u/split_connector/f1u_five_qi_gw_maps.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux_factory.h"
 #include "srsran/support/backtrace.h"
@@ -275,24 +276,39 @@ int main(int argc, char** argv)
                                                                                     *workers.non_rt_hi_prio_exec,
                                                                                     *du_pcaps.f1ap);
 
-  // Create F1-U connector.
-  // TODO: Simplify this and use factory.
+  // Create F1-U GW.
+  // > Create GTP-U Demux.
   gtpu_demux_creation_request du_f1u_gtpu_msg   = {};
   du_f1u_gtpu_msg.cfg.warn_on_drop              = true;
   du_f1u_gtpu_msg.gtpu_pcap                     = du_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux = create_gtpu_demux(du_f1u_gtpu_msg);
-  udp_network_gateway_config  du_f1u_gw_config  = {};
-  du_f1u_gw_config.bind_address                 = du_cfg.nru_cfg.bind_address;
-  du_f1u_gw_config.bind_port                    = GTPU_PORT;
-  du_f1u_gw_config.reuse_addr                   = false;
-  du_f1u_gw_config.pool_occupancy_threshold     = du_cfg.nru_cfg.pool_threshold;
-  std::unique_ptr<gtpu_gateway> du_f1u_gw =
-      create_udp_gtpu_gateway(du_f1u_gw_config,
-                              *epoll_broker,
-                              workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
-                              *workers.non_rt_low_prio_exec);
-  std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn = srs_du::create_split_f1u_gw(
-      {du_f1u_gw.get(), du_f1u_gtpu_demux.get(), *du_pcaps.f1u, GTPU_PORT, du_cfg.nru_cfg.ext_addr});
+
+  // > Create UDP gateway(s).
+  gtpu_gateway_maps f1u_gw_maps;
+  for (const f1u_socket_appconfig& sock_cfg : du_cfg.f1u_cfg.f1u_sockets.f1u_socket_cfg) {
+    udp_network_gateway_config f1u_gw_config = {};
+    f1u_gw_config.bind_address               = sock_cfg.bind_addr;
+    f1u_gw_config.ext_bind_addr              = sock_cfg.udp_config.ext_addr;
+    f1u_gw_config.bind_port                  = GTPU_PORT;
+    f1u_gw_config.reuse_addr                 = false;
+    f1u_gw_config.pool_occupancy_threshold   = sock_cfg.udp_config.pool_threshold;
+    f1u_gw_config.rx_max_mmsg                = sock_cfg.udp_config.rx_max_msgs;
+    f1u_gw_config.dscp                       = sock_cfg.udp_config.dscp;
+    std::unique_ptr<gtpu_gateway> f1u_gw     = create_udp_gtpu_gateway(
+        f1u_gw_config,
+        *epoll_broker,
+        workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
+        *workers.non_rt_low_prio_exec);
+    if (not sock_cfg.five_qi.has_value()) {
+      f1u_gw_maps.default_gws.push_back(std::move(f1u_gw));
+    } else {
+      f1u_gw_maps.five_qi_gws[sock_cfg.five_qi.value()].push_back(std::move(f1u_gw));
+    }
+  }
+
+  // > Create F1-U split connector.
+  std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn =
+      srs_du::create_split_f1u_gw({f1u_gw_maps, du_f1u_gtpu_demux.get(), *du_pcaps.f1u, GTPU_PORT});
 
   // Set up the JSON log channel used by metrics.
   srslog::sink& json_sink =

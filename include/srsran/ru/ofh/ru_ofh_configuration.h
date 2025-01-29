@@ -32,112 +32,14 @@ class ru_timing_notifier;
 class ru_uplink_plane_rx_symbol_notifier;
 class task_executor;
 
-/// Radio Unit sector configuration for the Open Fronthaul implementation.
-struct ru_ofh_sector_configuration {
-  /// Cyclic prefix.
-  cyclic_prefix cp;
-  /// Highest subcarrier spacing.
-  subcarrier_spacing scs;
-  /// Cell channel bandwidth.
-  bs_channel_bandwidth bw;
-  /// \brief RU operating bandwidth.
-  ///
-  /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
-  std::optional<bs_channel_bandwidth> ru_operating_bw;
-
-  /// DU transmission window timing parameters.
-  ofh::tx_window_timing_parameters tx_window_timing_params;
-  /// Reception window timing parameters.
-  ofh::rx_window_timing_parameters rx_window_timing_params;
-
-  /// Enables the Control-Plane PRACH message signalling.
-  bool is_prach_control_plane_enabled = false;
-  /// \brief Downlink broadcast flag.
-  ///
-  /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAxCs.
-  bool is_downlink_broadcast_enabled = false;
-  /// If set to true, the payload size encoded in a eCPRI header is ignored.
-  bool ignore_ecpri_payload_size_field = false;
-  /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
-  bool ignore_ecpri_seq_id_field = false;
-  /// If set to true, warn of unreceived Radio Unit frames.
-  bool warn_unreceived_ru_frames = true;
-  /// Uplink compression parameters.
-  ofh::ru_compression_params ul_compression_params;
-  /// Downlink compression parameters.
-  ofh::ru_compression_params dl_compression_params;
-  /// PRACH compression parameters.
-  ofh::ru_compression_params prach_compression_params;
-  /// Downlink static compression header flag.
-  bool is_downlink_static_comp_hdr_enabled = true;
-  /// Uplink static compression header flag.
-  bool is_uplink_static_comp_hdr_enabled = true;
-  /// IQ data scaling to be applied prior to Downlink data compression.
-  float iq_scaling;
-
-  /// Ethernet interface name or identifier.
-  std::string interface;
-  /// Promiscuous mode flag.
-  bool is_promiscuous_mode_enabled;
-  /// Ethernet link status checking flag.
-  bool is_link_status_check_enabled;
-  /// MTU size.
-  units::bytes mtu_size;
-  /// Destination MAC address, corresponds to Radio Unit MAC address.
-  ether::mac_address mac_dst_address;
-  /// Source MAC address, corresponds to Distributed Unit MAC address.
-  ether::mac_address mac_src_address;
-  /// Tag control information field for C-Plane.
-  std::optional<uint16_t> tci_cp;
-  /// Tag control information field for U-Plane.
-  std::optional<uint16_t> tci_up;
-
-  /// PRACH eAxC.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
-  /// Downlink eAxCs.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
-  /// Uplink eAxCs.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
-  /// Number of reception antennas.
-  unsigned nof_antennas_ul;
-  /// Optional TDD configuration.
-  std::optional<tdd_ul_dl_config_common> tdd_config;
-};
-
 /// Radio Unit configuration for the Open Fronthaul implementation.
 struct ru_ofh_configuration {
   /// Individual Open Fronthaul sector configurations.
-  std::vector<ru_ofh_sector_configuration> sector_configs;
-
-  /// \brief Number of slots the timing handler is notified in advance of the transmission time.
-  ///
-  /// Sets the maximum allowed processing delay in slots.
-  unsigned max_processing_delay_slots;
+  std::vector<ofh::sector_configuration> sector_configs;
   /// GPS Alpha - Valid value range: [0, 1.2288e7].
   unsigned gps_Alpha;
   /// GPS Beta - Valid value range: [-32768, 32767].
   int gps_Beta;
-  /// Downlink processing time in microseconds.
-  std::chrono::microseconds dl_processing_time;
-
-  /// Indicates if DPDK should be used by the underlying implementation.
-  bool uses_dpdk;
-};
-
-/// Radio Unit sector dependencies for the Open Fronthaul implementation.
-struct ru_ofh_sector_dependencies {
-  /// Logger.
-  srslog::basic_logger* logger = nullptr;
-  /// Downlink task executor.
-  task_executor* downlink_executor;
-  /// Uplink task executor.
-  task_executor* uplink_executor = nullptr;
-  /// Message transmitter and receiver task executor.
-  task_executor* txrx_executor = nullptr;
-  /// Optional Ethernet gateway.
-  std::optional<std::unique_ptr<ether::gateway>> eth_gateway;
-  /// Optional Ethernet receiver.
-  std::optional<std::unique_ptr<ether::receiver>> eth_receiver;
 };
 
 /// Radio Unit dependencies for the Open Fronthaul implementation.
@@ -154,7 +56,7 @@ struct ru_ofh_dependencies {
   task_executor* rt_timing_executor = nullptr;
 
   /// Individual Open Fronthaul sector dependencies.
-  std::vector<ru_ofh_sector_dependencies> sector_dependencies;
+  std::vector<ofh::sector_dependencies> sector_dependencies;
 };
 
 /// Returns true if the given Open Fronthaul configuration is valid, otherwise false.

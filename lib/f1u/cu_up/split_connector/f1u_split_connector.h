@@ -24,19 +24,15 @@
 
 #include "srsran/f1u/cu_up/f1u_bearer_logger.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
-#include "srsran/f1u/cu_up/f1u_session_manager.h"
 #include "srsran/f1u/split_connector/f1u_five_qi_gw_maps.h"
+#include "srsran/f1u/split_connector/f1u_session_manager.h"
 #include "srsran/gtpu/gtpu_config.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_gateway.h"
-#include "srsran/gtpu/gtpu_tunnel_common_tx.h"
-#include "srsran/gtpu/gtpu_tunnel_nru.h"
-#include "srsran/gtpu/gtpu_tunnel_nru_rx.h"
+#include "srsran/gtpu/gtpu_tunnel_nru_tx.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/ran/qos/five_qi.h"
-#include "srsran/srslog/srslog.h"
 #include <cstdint>
-#include <map>
 #include <mutex>
 #include <unordered_map>
 

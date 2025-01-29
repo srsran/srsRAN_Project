@@ -23,6 +23,7 @@ add_subdirectory(du_low)
 
 set(SOURCES du_cell_config_validation.cpp du_update_config_helpers.cpp)
 add_library(srsran_du_config_validators STATIC ${SOURCES})
+target_link_libraries(srsran_du_config_validators sched_config)
 
 add_library(srsran_o_du STATIC
         o_du_impl.cpp

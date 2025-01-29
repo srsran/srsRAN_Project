@@ -29,6 +29,7 @@ namespace srsran {
 /// Configuration of logging functionalities.
 struct cu_cp_unit_logger_config {
   srslog::basic_levels cu_level    = srslog::basic_levels::warning;
+  srslog::basic_levels e1ap_level  = srslog::basic_levels::warning;
   srslog::basic_levels f1ap_level  = srslog::basic_levels::warning;
   srslog::basic_levels pdcp_level  = srslog::basic_levels::warning;
   srslog::basic_levels rrc_level   = srslog::basic_levels::warning;
@@ -39,6 +40,8 @@ struct cu_cp_unit_logger_config {
   int hex_max_size = 0;
   /// Enable JSON generation for the F1AP Tx and Rx PDUs.
   bool f1ap_json_enabled = false;
+  /// Enable JSON generation for the E1AP Tx and Rx PDUs.
+  bool e1ap_json_enabled = false;
 };
 
 } // namespace srsran

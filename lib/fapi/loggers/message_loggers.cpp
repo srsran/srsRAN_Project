@@ -146,10 +146,10 @@ static void log_prs_pdu(const dl_prs_pdu& pdu, fmt::memory_buffer& buffer)
 {
   fmt::format_to(std::back_inserter(buffer),
                  "\n\t- PRS comb_size={} comb_offset={} symb={}:{} RBs={}:{} n_id={}",
-                 pdu.comb_size,
+                 static_cast<unsigned>(pdu.comb_size),
                  pdu.comb_offset,
                  pdu.first_symbol,
-                 pdu.num_symbols,
+                 static_cast<unsigned>(pdu.num_symbols),
                  pdu.start_rb,
                  pdu.num_rbs,
                  pdu.nid_prs);

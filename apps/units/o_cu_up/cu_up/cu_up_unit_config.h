@@ -25,6 +25,8 @@
 #include "apps/services/network/udp_cli11_schema.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_pcap_config.h"
 #include "cu_up_unit_logger_config.h"
+#include "srsran/ran/gnb_cu_up_id.h"
+#include "srsran/ran/gnb_id.h"
 #include "srsran/ran/qos/five_qi.h"
 
 namespace srsran {
@@ -72,6 +74,11 @@ struct cu_up_unit_test_mode_config {
 
 /// CU-UP application unit configuration.
 struct cu_up_unit_config {
+  /// gNB identifier.
+  gnb_id_t gnb_id = {411, 22};
+  /// CU-UP identifier.
+  gnb_cu_up_id_t gnb_cu_up_id = gnb_cu_up_id_t::min;
+  /// GPTU parameters.
   unsigned gtpu_queue_size          = 2048;
   unsigned gtpu_reordering_timer_ms = 0;
   bool     warn_on_drop             = false;

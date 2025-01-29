@@ -26,6 +26,7 @@
 #include "pdcch_modulator_impl.h"
 #include "pdcch_processor_impl.h"
 #include "pdcch_processor_pool.h"
+#include "pdcch_processor_validator_impl.h"
 
 using namespace srsran;
 

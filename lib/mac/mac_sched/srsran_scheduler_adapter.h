@@ -24,6 +24,7 @@
 
 #include "../mac_ctrl/mac_scheduler_configurator.h"
 #include "../rnti_manager.h"
+#include "mac_rach_handler.h"
 #include "mac_scheduler_adapter.h"
 #include "rlf_detector.h"
 #include "uci_cell_decoder.h"
@@ -77,9 +78,13 @@ public:
                                du_cell_index_t                    cell_idx,
                                mac_cell_slot_handler::error_event event) override;
 
+  void handle_sib1_update_indication(du_cell_index_t cell_index,
+                                     unsigned        sib_version,
+                                     units::bytes    new_payload_size) override;
+
   mac_cell_rach_handler& get_cell_rach_handler(du_cell_index_t cell_index) override
   {
-    return cell_handlers[cell_index];
+    return cell_handlers[cell_index].get_rach_handler();
   }
 
   mac_cell_control_information_handler& get_cell_control_info_handler(du_cell_index_t cell_index) override
@@ -88,17 +93,10 @@ public:
   }
 
 private:
-  class cell_handler final : public mac_cell_rach_handler, public mac_cell_control_information_handler
+  class cell_handler final : public mac_cell_control_information_handler
   {
   public:
-    cell_handler(du_cell_index_t                                 cell_idx_,
-                 srsran_scheduler_adapter&                       parent_,
-                 const sched_cell_configuration_request_message& sched_cfg) :
-      uci_decoder(sched_cfg, parent_.rnti_mng, parent_.rlf_handler), cell_idx(cell_idx_), parent(&parent_)
-    {
-    }
-
-    void handle_rach_indication(const mac_rach_indication& rach_ind) override;
+    cell_handler(srsran_scheduler_adapter& parent_, const sched_cell_configuration_request_message& sched_cfg);
 
     void handle_crc(const mac_crc_indication_message& msg) override;
 
@@ -106,11 +104,16 @@ private:
 
     void handle_srs(const mac_srs_indication_message& msg) override;
 
+    mac_cell_rach_handler_impl& get_rach_handler() { return rach_handler; }
+
     uci_cell_decoder uci_decoder;
 
   private:
-    du_cell_index_t           cell_idx = INVALID_DU_CELL_INDEX;
-    srsran_scheduler_adapter* parent   = nullptr;
+    const du_cell_index_t     cell_idx = INVALID_DU_CELL_INDEX;
+    srsran_scheduler_adapter& parent;
+
+    // Handler of RACH indications for this cell.
+    mac_cell_rach_handler_impl& rach_handler;
   };
 
   class sched_config_notif_adapter final : public sched_configuration_notifier
@@ -137,6 +140,9 @@ private:
 
   /// srsGNB scheduler.
   std::unique_ptr<mac_scheduler> sched_impl;
+
+  /// Handler of RACH indications.
+  mac_rach_handler rach_handler;
 
   std::atomic<slot_point>                                     last_slot_point;
   std::atomic<std::chrono::high_resolution_clock::time_point> last_slot_tp;

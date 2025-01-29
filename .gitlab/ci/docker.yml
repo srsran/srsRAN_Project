@@ -1,5 +1,5 @@
 #
-# Copyright 2013-2024 Software Radio Systems Limited
+# Copyright 2013-2025 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of
@@ -51,6 +51,8 @@ variables:
 no docker changes:
   stage: static
   image: alpine:3.16.0
+  variables:
+    GIT_STRATEGY: none
   rules:
     - if: $ON_MR
       changes:
@@ -69,6 +71,8 @@ no docker changes:
 metrics tox:
   extends: .tox
   stage: static
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
   rules:
     - if: $ON_MR
       changes:
@@ -76,6 +80,8 @@ metrics tox:
 
 grafana version changed:
   extends: .version_changed_pyproject
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
   stage: static
   rules:
     - if: $ON_MR
@@ -98,6 +104,8 @@ grafana version changed:
 metrics version changed:
   extends: .version_changed_pyproject
   stage: static
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
   rules:
     - if: $ON_MR
       changes:
@@ -124,6 +132,8 @@ metrics version check in retina:
   tags:
     - amd64-avx2
   timeout: 2h
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
   before_script: &docker_setup
     - dockerd-entrypoint.sh &
     - |
@@ -135,10 +145,10 @@ metrics version check in retina:
 .gnb docker compose:
   extends: .docker compose
   variables: &build_in_compose_variables
-    KUBERNETES_CPU_REQUEST: 6
-    KUBERNETES_CPU_LIMIT: 6
-    KUBERNETES_MEMORY_REQUEST: 12Gi
-    KUBERNETES_MEMORY_LIMIT: 12Gi
+    KUBERNETES_CPU_REQUEST: ${SRS_CPU_LIMIT}
+    KUBERNETES_CPU_LIMIT: ${SRS_CPU_LIMIT}
+    KUBERNETES_MEMORY_REQUEST: ${SRS_MEMORY_LIMIT}
+    KUBERNETES_MEMORY_LIMIT: ${SRS_MEMORY_LIMIT}
   rules:
     - if: $ON_MR
       changes:
@@ -239,6 +249,7 @@ metrics server image:
         paths:
           - docker/metrics_server/**/*
   variables:
+    GIT_LFS_SKIP_SMUDGE: 1
     REGISTRY_URI: $GITLAB_REGISTRY_URI
     NAME: metrics_server
     CONTEXT: ${CI_PROJECT_DIR}/docker/metrics_server
@@ -264,6 +275,7 @@ grafana server image:
         paths:
           - docker/grafana/**/*
   variables:
+    GIT_LFS_SKIP_SMUDGE: 1
     REGISTRY_URI: $GITLAB_REGISTRY_URI
     NAME: grafana
     CONTEXT: ${CI_PROJECT_DIR}/docker/grafana
@@ -287,10 +299,11 @@ grafana server image latest:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       interruptible: false
   variables:
-    KUBERNETES_CPU_REQUEST: 6
-    KUBERNETES_CPU_LIMIT: 6
-    KUBERNETES_MEMORY_REQUEST: 12Gi
-    KUBERNETES_MEMORY_LIMIT: 12Gi
+    GIT_LFS_SKIP_SMUDGE: 1
+    KUBERNETES_CPU_REQUEST: ${SRS_CPU_LIMIT}
+    KUBERNETES_CPU_LIMIT: ${SRS_CPU_LIMIT}
+    KUBERNETES_MEMORY_REQUEST: ${SRS_MEMORY_LIMIT}
+    KUBERNETES_MEMORY_LIMIT: ${SRS_MEMORY_LIMIT}
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
     KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
     REGISTRY_URI: $GITLAB_REGISTRY_URI

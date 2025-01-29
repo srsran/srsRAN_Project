@@ -27,6 +27,7 @@
 #include "srsran/asn1/e2sm/e2sm_rc_ies.h"
 #include "srsran/e2/e2_messages.h"
 #include "srsran/support/async/async_task.h"
+#include <map>
 #include <variant>
 
 namespace srsran {
@@ -45,7 +46,7 @@ struct e2sm_action_definition {
 };
 
 struct e2sm_ric_control_request {
-  e2sm_service_model_t                         service_model;
+  e2sm_service_model_t                         service_model                = e2sm_service_model_t::RC;
   bool                                         ric_call_process_id_present  = false;
   bool                                         ric_ctrl_ack_request_present = false;
   uint64_t                                     ric_call_process_id;
@@ -55,7 +56,7 @@ struct e2sm_ric_control_request {
 };
 
 struct e2sm_ric_control_response {
-  e2sm_service_model_t                             service_model;
+  e2sm_service_model_t                             service_model = e2sm_service_model_t::RC;
   bool                                             success;
   bool                                             ric_call_process_id_present = false;
   bool                                             ric_ctrl_outcome_present    = false;
@@ -80,6 +81,38 @@ public:
   /// \param[in] req is a RIC control action request (with control header and message).
   /// \return Returns RIC control response.
   virtual async_task<e2sm_ric_control_response> execute_ric_control_action(const e2sm_ric_control_request& req) = 0;
+
+  template <typename T, typename Func>
+  void parse_ran_parameter_value(const asn1::e2sm::ran_param_value_type_c& ran_param,
+                                 uint64_t                                  ran_param_id,
+                                 uint64_t                                  ue_id,
+                                 T&                                        ctrl_cfg,
+                                 Func                                      parse_action_ran_parameter_value)
+  {
+    if (ran_param.type() == asn1::e2sm::ran_param_value_type_c::types_opts::ran_p_choice_list) {
+      for (auto& ran_p_list : ran_param.ran_p_choice_list().ran_param_list.list_of_ran_param) {
+        for (auto& ran_p : ran_p_list.seq_of_ran_params) {
+          if (action_params.find(ran_p.ran_param_id) != action_params.end()) {
+            parse_ran_parameter_value(
+                ran_p.ran_param_value_type, ran_p.ran_param_id, ue_id, ctrl_cfg, parse_action_ran_parameter_value);
+          }
+        }
+      }
+    } else if (ran_param.type() == asn1::e2sm::ran_param_value_type_c::types_opts::ran_p_choice_structure) {
+      for (auto& ran_seq : ran_param.ran_p_choice_structure().ran_param_structure.seq_of_ran_params) {
+        if (action_params.find(ran_seq.ran_param_id) != action_params.end()) {
+          parse_ran_parameter_value(
+              ran_seq.ran_param_value_type, ran_seq.ran_param_id, ue_id, ctrl_cfg, parse_action_ran_parameter_value);
+        }
+      }
+    } else if (ran_param.type() == asn1::e2sm::ran_param_value_type_c::types_opts::ran_p_choice_elem_false) {
+      parse_action_ran_parameter_value(ran_param, ran_param_id, ue_id, ctrl_cfg);
+    }
+  }
+
+protected:
+  std::string                     action_name;
+  std::map<uint32_t, std::string> action_params;
 };
 
 class e2sm_report_service

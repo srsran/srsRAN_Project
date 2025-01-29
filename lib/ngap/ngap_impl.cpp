@@ -60,6 +60,7 @@ ngap_impl::ngap_impl(const ngap_configuration& ngap_cfg_,
 {
   context.gnb_id                      = ngap_cfg_.gnb_id;
   context.ran_node_name               = ngap_cfg_.ran_node_name;
+  context.amf_index                   = ngap_cfg_.amf_index;
   context.supported_tas               = ngap_cfg_.supported_tas;
   context.request_pdu_session_timeout = ngap_cfg_.request_pdu_session_timeout;
 }
@@ -1012,6 +1013,15 @@ void ngap_impl::handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t          
 void ngap_impl::handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, const byte_buffer& nrppa_pdu)
 {
   logger.info("UL UE associated NRPPa messages are not supported");
+}
+
+async_task<void> ngap_impl::handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu)
+{
+  logger.info("UL non UE associated NRPPa messages are not supported");
+  return launch_async([](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_RETURN();
+  });
 }
 
 #endif // SRSRAN_HAS_ENTERPRISE

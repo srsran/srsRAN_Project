@@ -27,6 +27,7 @@
 #include "srsran/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsran/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsran/fapi_adaptor/phy/messages/prach.h"
+#include "srsran/fapi_adaptor/phy/messages/prs.h"
 #include "srsran/fapi_adaptor/phy/messages/pucch.h"
 #include "srsran/fapi_adaptor/phy/messages/pusch.h"
 #include "srsran/fapi_adaptor/phy/messages/srs.h"
@@ -64,6 +65,10 @@ public:
   void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override
   {
     srslog::fetch_basic_logger("FAPI").warning("Could not enqueue NZP-CSI-RS PDU in the downlink processor");
+  }
+  void process_prs(const prs_generator_configuration& config) override
+  {
+    srslog::fetch_basic_logger("FAPI").warning("Could not enqueue PRS PDU in the downlink processor");
   }
   void finish_processing_pdus() override {}
 };
@@ -164,6 +169,7 @@ struct downlink_pdus {
   static_vector<pdsch_processor::pdu_t, MAX_PDSCH_PDUS_PER_SLOT>          pdsch;
   static_vector<ssb_processor::pdu_t, MAX_SSB_PER_SLOT>                   ssb;
   static_vector<nzp_csi_rs_generator::config_t, MAX_CSI_RS_PDUS_PER_SLOT> csi_rs;
+  static_vector<prs_generator_configuration, MAX_PRS_PDUS_PER_SLOT>       prs;
 };
 
 /// Helper struct to store the uplink channel PHY PDUs.
@@ -254,11 +260,13 @@ static expected<downlink_pdus> translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_
         for (unsigned i_dci = 0, i_dci_end = pdu.pdcch_pdu.dl_dci.size(); i_dci != i_dci_end; ++i_dci) {
           pdcch_processor::pdu_t& pdcch_pdu = pdus.pdcch.emplace_back();
           convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdcch_pdu, msg.sfn, msg.slot, i_dci, pm_repo);
-          if (!dl_pdu_validator.is_valid(pdcch_pdu)) {
-            logger.warning(
-                "Sector#{}: Skipping DL_TTI.request: DL DCI PDU with index '{}' flagged as invalid by the Upper PHY",
-                sector_id,
-                i_dci);
+          error_type<std::string> phy_pdsch_validator = dl_pdu_validator.is_valid(pdcch_pdu);
+          if (!phy_pdsch_validator.has_value()) {
+            logger.warning("Sector#{}: Skipping DL_TTI.request: DL DCI PDU with index '{}' flagged as invalid by the "
+                           "Upper PHY with the following error\n    {}",
+                           sector_id,
+                           i_dci,
+                           phy_pdsch_validator.error());
 
             return make_unexpected(default_error_t{});
           }
@@ -283,6 +291,20 @@ static expected<downlink_pdus> translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_
         convert_ssb_fapi_to_phy(ssb_pdu, pdu.ssb_pdu, msg.sfn, msg.slot, scs_common);
         if (!dl_pdu_validator.is_valid(ssb_pdu)) {
           logger.warning("Sector#{}: Skipping DL_TTI.request: SSB PDU flagged as invalid by the Upper PHY", sector_id);
+
+          return make_unexpected(default_error_t{});
+        }
+        break;
+      }
+      case fapi::dl_pdu_type::PRS: {
+        prs_generator_configuration& prs_pdu = pdus.prs.emplace_back();
+        convert_prs_fapi_to_phy(prs_pdu, pdu.prs_pdu, msg.sfn, msg.slot, pm_repo);
+        error_type<std::string> phy_prs_validator = dl_pdu_validator.is_valid(prs_pdu);
+        if (!phy_prs_validator.has_value()) {
+          logger.warning("Sector#{}: Skipping DL_TTI.request: PRS PDU flagged as invalid by the Upper PHY with the "
+                         "following error\n    {}",
+                         sector_id,
+                         phy_prs_validator.error());
 
           return make_unexpected(default_error_t{});
         }
@@ -364,6 +386,9 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
   for (const auto& csi : pdus.value().csi_rs) {
     controller->process_nzp_csi_rs(csi);
   }
+  for (const auto& prs : pdus.value().prs) {
+    controller->process_prs(prs);
+  }
   for (const auto& pdsch : pdus.value().pdsch) {
     pdsch_repository.pdus.push_back(pdsch);
   }
@@ -384,22 +409,8 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
 static error_type<std::string> is_pucch_pdu_valid(const uplink_pdu_validator&        ul_pdu_validator,
                                                   const uplink_processor::pucch_pdu& ul_pdu)
 {
-  switch (ul_pdu.context.format) {
-    case pucch_format::FORMAT_0:
-      return ul_pdu_validator.is_valid(ul_pdu.format0);
-    case pucch_format::FORMAT_1:
-      return ul_pdu_validator.is_valid(ul_pdu.format1);
-    case pucch_format::FORMAT_2:
-      return ul_pdu_validator.is_valid(ul_pdu.format2);
-    case pucch_format::FORMAT_3:
-      return ul_pdu_validator.is_valid(ul_pdu.format3);
-    case pucch_format::FORMAT_4:
-      return ul_pdu_validator.is_valid(ul_pdu.format4);
-    default:
-      break;
-  }
-
-  return make_unexpected("Unknown PUCCH format.");
+  return std::visit([&ul_pdu_validator](const auto& config) { return ul_pdu_validator.is_valid(config); },
+                    ul_pdu.config);
 }
 
 /// Returns a PRACH detector slot configuration using the given PRACH buffer context.

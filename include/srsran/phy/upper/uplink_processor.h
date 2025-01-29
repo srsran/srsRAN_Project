@@ -65,17 +65,13 @@ public:
   struct pucch_pdu {
     /// PUCCH context.
     ul_pucch_context context;
-    // :TODO: the formats will use a variant when available.
-    /// PUCCH format 0.
-    pucch_processor::format0_configuration format0;
-    /// PUCCH format 1.
-    pucch_processor::format1_configuration format1;
-    /// PUCCH format 2.
-    pucch_processor::format2_configuration format2;
-    /// PUCCH format 3.
-    pucch_processor::format3_configuration format3;
-    /// PUCCH format 4.
-    pucch_processor::format4_configuration format4;
+    /// PUCCH configuration.
+    std::variant<pucch_processor::format0_configuration,
+                 pucch_processor::format1_configuration,
+                 pucch_processor::format2_configuration,
+                 pucch_processor::format3_configuration,
+                 pucch_processor::format4_configuration>
+        config;
   };
 
   /// Sounding Reference Signals PDU configuration.

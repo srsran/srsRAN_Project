@@ -149,6 +149,14 @@ TEST_F(unique_timer_manual_tester, single_run)
   ASSERT_TRUE(expiry_callback_triggered);
 }
 
+TEST_F(unique_timer_manual_tester, now)
+{
+  unique_timer t   = this->create_timer();
+  unsigned     now = t.now();
+  tick();
+  ASSERT_EQ(t.now(), now + 1);
+}
+
 TEST_F(unique_timer_manual_tester, single_run_and_move)
 {
   unique_timer t = this->create_timer();

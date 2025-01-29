@@ -38,6 +38,9 @@ public:
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override;
 
+  // Sys Info handling.
+  void handle_sib1_update_request(const sib1_pdu_update_request& req) override;
+
   // scheduler_slot_handler interface methods.
   const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
   void handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event) override;

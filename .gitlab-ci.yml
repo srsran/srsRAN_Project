@@ -160,6 +160,8 @@ matlab weekly:
 headers:
   image: ubuntu
   stage: static
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
   rules:
     - if: $ON_MR
       exists:
@@ -205,11 +207,12 @@ full-code-format:
     ANALYZER: ""
     ANALYZER_ARGS: ""
     ARTIFACT_EXTRA_PATH: ""
-    KUBERNETES_CPU_REQUEST: 6
-    KUBERNETES_CPU_LIMIT: 6
-    KUBERNETES_MEMORY_REQUEST: 12Gi
-    KUBERNETES_MEMORY_LIMIT: 12Gi
+    KUBERNETES_CPU_REQUEST: ${SRS_CPU_LIMIT}
+    KUBERNETES_CPU_LIMIT: ${SRS_CPU_LIMIT}
+    KUBERNETES_MEMORY_REQUEST: ${SRS_MEMORY_LIMIT}
+    KUBERNETES_MEMORY_LIMIT: ${SRS_MEMORY_LIMIT}
     CHECK_PER_FILE_TIMEOUT: 600
+    GIT_LFS_SKIP_SMUDGE: 1
   before_script:
     - |
       echo "
@@ -308,10 +311,10 @@ clangsa:
 #   stage: static
 #   needs: []
 #   variables:
-#     KUBERNETES_CPU_REQUEST: 6
-#     KUBERNETES_CPU_LIMIT: 6
-#     KUBERNETES_MEMORY_REQUEST: 12Gi
-#     KUBERNETES_MEMORY_LIMIT: 12Gi
+#     KUBERNETES_CPU_REQUEST: ${SRS_CPU_LIMIT}
+#     KUBERNETES_CPU_LIMIT: ${SRS_CPU_LIMIT}
+#     KUBERNETES_MEMORY_REQUEST: ${SRS_MEMORY_LIMIT}
+#     KUBERNETES_MEMORY_LIMIT: ${SRS_MEMORY_LIMIT}
 #   tags:
 #     - amd64
 #   interruptible: false
@@ -372,6 +375,8 @@ unit coverage:
       variables:
         coverage_report: summary
       when: always # Even if previous stages/required jobs fail
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
   before_script:
     - PACKAGE_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/coverage/${CI_COMMIT_BRANCH}${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}/coverage_history.tar.gz
     # Download coverage history from the registry

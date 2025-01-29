@@ -65,6 +65,8 @@ bool is_valid_handover_cancel(const srs_cu_cp::ngap_message& msg);
 
 bool is_valid_ul_ue_associated_nrppa_transport(const srs_cu_cp::ngap_message& msg);
 
+bool is_valid_ul_non_ue_associated_nrppa_transport(const srs_cu_cp::ngap_message& msg);
+
 // Check if the NGAP PDU contains the expected PDU session setup response.
 bool is_expected_pdu_session_resource_setup_response(
     const srs_cu_cp::ngap_message&       ngap_pdu,

@@ -474,8 +474,21 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
   auto* grant_it = std::find_if(
       ue_pucchs.begin(), ue_pucchs.end(), [crnti](const ue_grants& grants) { return grants.rnti == crnti; });
 
+  auto& pucch_pdus = slot_alloc.result.ul.pucchs;
+
+  auto* pdu = std::find_if(
+      pucch_pdus.begin(), pucch_pdus.end(), [crnti](const pucch_info& info) { return info.crnti == crnti; });
+  if ((grant_it != ue_pucchs.end()) != (pdu != pucch_pdus.end())) {
+    logger.error("rnti={}: Inconsistent PUCCH state: PUCCH grant list and PUCCH PDUs list are not in sync", crnti);
+  }
+
   // Get the bits from the PUCCH grants and remove the item from the list.
   if (grant_it != ue_pucchs.end()) {
+    // This function can be called for UE with dedicated PUCCH grants only.
+    if (grant_it->has_common_pucch) {
+      logger.error("rnti={}: unexpected call of this function for UE with PUCCH common grant allocated", crnti);
+    }
+
     // Get the UCI bits.
     removed_uci_info = grant_it->pucch_grants.get_uci_bits();
 
@@ -494,15 +507,12 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
       resource_manager.release_csi_resource(slot_alloc.slot, crnti, ue_cell_cfg);
     }
 
-    // TODO: optimize this by swapping the it with the last of the list.
     ue_pucchs.erase(grant_it);
   }
 
-  auto& pucch_pdus = slot_alloc.result.ul.pucchs;
-
-  for (auto* pdu_it = pucch_pdus.begin(); pdu_it != pucch_pdus.end();) {
+  // Start from the (first) PUCCH PDU that was found above.
+  for (auto* pdu_it = pdu; pdu_it != pucch_pdus.end();) {
     if (pdu_it->crnti == crnti) {
-      // TODO: optimize this by swapping the it with the last of the list.
       pdu_it = pucch_pdus.erase(pdu_it);
     } else {
       ++pdu_it;
@@ -1962,8 +1972,8 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     const pucch_resource* pucch_res_cfg = resource_manager.reserve_set_1_res_by_res_indicator(
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
-    logger.debug("rnti={}: PUCCH PDU on F4 HARQ resource updated: slot={} p_ind={} format={} prbs={} sym={} occ_idx={} "
-                 "occ_len={} h_bits={} sr_bits={} csi1_bits={}",
+    logger.debug("rnti={}: PUCCH PDU on F4 HARQ resource updated: slot={} p_ind={} format={} prbs={} sym={} occ={}/{} "
+                 "h_bits={} sr_bits={} csi1_bits={}",
                  current_grants.rnti,
                  pucch_slot_alloc.slot,
                  current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
@@ -2450,8 +2460,8 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
                                  0U,
                                  csi_res.bits.sr_bits,
                                  csi_res.bits.csi_part1_nof_bits);
-        logger.debug("rnti={}: PUCCH PDU allocated on CSI F4 resource: slot={} prbs={} sym={} occ_idx={} occ_len={} "
-                     "h_bits={} sr_bits={} csi1_bits={}",
+        logger.debug("rnti={}: PUCCH PDU allocated on CSI F4 resource: slot={} prbs={} sym={} occ={}/{} h_bits={} "
+                     "sr_bits={} csi1_bits={}",
                      crnti,
                      pucch_slot_alloc.slot,
                      grant->resources.prbs,
@@ -2620,7 +2630,7 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
                                  harq_res.bits.sr_bits,
                                  harq_res.bits.csi_part1_nof_bits);
         logger.debug("rnti={}: PUCCH PDU allocated on F4 HARQ resource: slot={} p_ind={} format={} prbs={} sym={} "
-                     "occ_idx={} occ_len={} h_bits={} sr_bits={} csi1_bits={}",
+                     "occ={}/{} h_bits={} sr_bits={} csi1_bits={}",
                      crnti,
                      pucch_slot_alloc.slot,
                      harq_res.harq_id.pucch_res_ind,

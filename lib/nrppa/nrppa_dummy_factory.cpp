@@ -32,7 +32,8 @@ using namespace srsran;
 using namespace srs_cu_cp;
 
 std::unique_ptr<nrppa_interface> srsran::srs_cu_cp::create_nrppa(const cu_cp_configuration& cfg,
-                                                                 nrppa_cu_cp_notifier&      cu_cp_notifier)
+                                                                 nrppa_cu_cp_notifier&      cu_cp_notifier,
+                                                                 common_task_scheduler&     common_task_sched)
 {
   (void)&cfg;
   (void)&cu_cp_notifier;

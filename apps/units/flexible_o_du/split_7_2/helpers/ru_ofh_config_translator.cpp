@@ -81,21 +81,19 @@ static void generate_config(ru_ofh_configuration&              out_cfg,
                             span<const srs_du::du_cell_config> du_cells,
                             unsigned                           max_processing_delay_slots)
 {
-  // Individual Open Fronthaul sector configurations.
-  std::vector<ru_ofh_sector_configuration> sector_configs;
-
-  out_cfg.gps_Alpha                  = ru_cfg.gps_Alpha;
-  out_cfg.gps_Beta                   = ru_cfg.gps_Beta;
-  out_cfg.max_processing_delay_slots = max_processing_delay_slots;
-  out_cfg.dl_processing_time         = std::chrono::microseconds(ru_cfg.dl_processing_time);
-  out_cfg.uses_dpdk                  = ru_cfg.hal_config.has_value();
+  out_cfg.gps_Alpha = ru_cfg.gps_Alpha;
+  out_cfg.gps_Beta  = ru_cfg.gps_Beta;
 
   // Add one cell.
   for (unsigned i = 0, e = ru_cfg.cells.size(); i != e; ++i) {
     const ru_ofh_unit_cell_config& cell_cfg    = ru_cfg.cells[i];
     const srs_du::du_cell_config&  du_cell_cfg = du_cells[i];
-    out_cfg.sector_configs.emplace_back();
-    ru_ofh_sector_configuration& sector_cfg = out_cfg.sector_configs.back();
+    ofh::sector_configuration&     sector_cfg  = out_cfg.sector_configs.emplace_back();
+
+    sector_cfg.sector_id                  = i;
+    sector_cfg.max_processing_delay_slots = max_processing_delay_slots;
+    sector_cfg.dl_processing_time         = std::chrono::microseconds(ru_cfg.dl_processing_time);
+    sector_cfg.uses_dpdk                  = ru_cfg.hal_config.has_value();
 
     sector_cfg.interface                    = cell_cfg.network_interface;
     sector_cfg.is_promiscuous_mode_enabled  = cell_cfg.enable_promiscuous_mode;
@@ -112,14 +110,14 @@ static void generate_config(ru_ofh_configuration&              out_cfg,
     std::chrono::duration<double, std::nano> symbol_duration(
         (1e6 / (get_nsymb_per_slot(cyclic_prefix::NORMAL) * get_nof_slots_per_subframe(du_cell_cfg.scs_common))));
 
-    sector_cfg.cp                                  = cyclic_prefix::NORMAL;
-    sector_cfg.scs                                 = du_cell_cfg.scs_common;
-    sector_cfg.bw                                  = MHz_to_bs_channel_bandwidth(du_cell_cfg.dl_carrier.carrier_bw_mhz);
-    sector_cfg.nof_antennas_ul                     = du_cell_cfg.ul_carrier.nof_ant;
-    sector_cfg.ru_operating_bw                     = cell_cfg.cell.ru_operating_bw;
-    sector_cfg.is_uplink_static_comp_hdr_enabled   = cell_cfg.cell.is_uplink_static_comp_hdr_enabled;
-    sector_cfg.is_downlink_static_comp_hdr_enabled = cell_cfg.cell.is_downlink_static_comp_hdr_enabled;
-    sector_cfg.tx_window_timing_params             = tx_timing_window_params_us_to_symbols(cell_cfg.cell.T1a_max_cp_dl,
+    sector_cfg.cp              = cyclic_prefix::NORMAL;
+    sector_cfg.scs             = du_cell_cfg.scs_common;
+    sector_cfg.bw              = MHz_to_bs_channel_bandwidth(du_cell_cfg.dl_carrier.carrier_bw_mhz);
+    sector_cfg.nof_antennas_ul = du_cell_cfg.ul_carrier.nof_ant;
+    sector_cfg.ru_operating_bw = cell_cfg.cell.ru_operating_bw ? cell_cfg.cell.ru_operating_bw.value() : sector_cfg.bw;
+    sector_cfg.is_uplink_static_compr_hdr_enabled   = cell_cfg.cell.is_uplink_static_comp_hdr_enabled;
+    sector_cfg.is_downlink_static_compr_hdr_enabled = cell_cfg.cell.is_downlink_static_comp_hdr_enabled;
+    sector_cfg.tx_window_timing_params              = tx_timing_window_params_us_to_symbols(cell_cfg.cell.T1a_max_cp_dl,
                                                                                cell_cfg.cell.T1a_min_cp_dl,
                                                                                cell_cfg.cell.T1a_max_cp_ul,
                                                                                cell_cfg.cell.T1a_min_cp_ul,
@@ -132,7 +130,7 @@ static void generate_config(ru_ofh_configuration&              out_cfg,
     sector_cfg.is_downlink_broadcast_enabled   = cell_cfg.cell.is_downlink_broadcast_enabled;
     sector_cfg.ignore_ecpri_payload_size_field = cell_cfg.cell.ignore_ecpri_payload_size_field;
     sector_cfg.ignore_ecpri_seq_id_field       = cell_cfg.cell.ignore_ecpri_seq_id_field;
-    sector_cfg.warn_unreceived_ru_frames       = cell_cfg.cell.warn_unreceived_ru_frames;
+    sector_cfg.log_unreceived_ru_frames        = cell_cfg.cell.log_unreceived_ru_frames;
     sector_cfg.ul_compression_params           = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
                                                   cell_cfg.cell.compression_bitwidth_ul};
     sector_cfg.dl_compression_params           = {ofh::to_compression_type(cell_cfg.cell.compression_method_dl),

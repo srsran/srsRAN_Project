@@ -22,9 +22,9 @@
 
 #include "du_processor_test_helpers.h"
 #include "../du_processor_test_messages.h"
-#include "lib/cu_cp/cu_cp_controller/common_task_scheduler.h"
 #include "tests/unittests/cu_cp/test_helpers.h"
 #include "tests/unittests/f1ap/cu_cp/f1ap_cu_test_helpers.h"
+#include "srsran/cu_cp/common_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_configuration_helpers.h"
 #include "srsran/ran/plmn_identity.h"
 #include <memory>

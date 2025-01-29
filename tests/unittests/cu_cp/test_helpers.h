@@ -120,8 +120,6 @@ private:
 
 struct dummy_cu_cp_ue_context_manipulation_handler : public cu_cp_ue_context_manipulation_handler {
 public:
-  void set_rrc_reconfiguration_outcome(bool outcome) { rrc_reconfiguration_outcome = outcome; }
-
   async_task<void> handle_ue_context_release(const cu_cp_ue_context_release_request& request) override
   {
     logger.info("ue={}: Received UE release request", request.ue_index);
@@ -142,14 +140,12 @@ public:
     });
   }
 
-  async_task<bool> handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id_) override
+  void handle_handover_reconfiguration_sent(const cu_cp_intra_cu_handover_target_request& request) override
   {
-    logger.info("ue={}: Awaiting a RRC Reconfiguration Complete (transaction_id={})", target_ue_index, transaction_id_);
-    last_transaction_id = transaction_id_;
-    return launch_async([this](coro_context<async_task<bool>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-      CORO_RETURN(rrc_reconfiguration_outcome);
-    });
+    logger.info("ue={}: Awaiting a RRC Reconfiguration Complete (transaction_id={})",
+                request.target_ue_index,
+                request.transaction_id);
+    last_transaction_id = request.transaction_id;
   }
 
   void handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) override
@@ -157,12 +153,18 @@ public:
     logger.info("source_ue={} target_ue={}: Received handover ue context push", source_ue_index, target_ue_index);
   }
 
+  void initialize_handover_ue_release_timer(ue_index_t                              ue_index,
+                                            std::chrono::milliseconds               handover_ue_release_timeout,
+                                            const cu_cp_ue_context_release_request& ue_context_release_request) override
+  {
+    logger.info("ue={}: Initializing UE release timer", ue_index);
+  }
+
   unsigned last_transaction_id = 99999;
 
 private:
-  srslog::basic_logger& logger                      = srslog::fetch_basic_logger("TEST");
-  bool                  ue_transfer_outcome         = true;
-  bool                  rrc_reconfiguration_outcome = true;
+  srslog::basic_logger& logger              = srslog::fetch_basic_logger("TEST");
+  bool                  ue_transfer_outcome = true;
 };
 
 class dummy_cu_cp_ue_removal_handler : public cu_cp_ue_removal_handler
@@ -437,6 +439,7 @@ struct ue_context_outcome_t {
   std::list<unsigned> drb_success_list; // List of DRB IDs that were successful to setup.
   std::list<unsigned> drb_failed_list;  // List of DRB IDs that failed to be setup.
   std::list<unsigned> drb_removed_list; // List of DRB IDs that were removed.
+  byte_buffer         cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008").value();
 };
 
 struct dummy_f1ap_ue_context_manager : public f1ap_ue_context_manager {
@@ -445,7 +448,10 @@ public:
 
   void set_ue_context_setup_outcome(bool outcome) { ue_context_setup_outcome = outcome; }
 
-  void set_ue_context_modification_outcome(ue_context_outcome_t outcome) { ue_context_modification_outcome = outcome; }
+  void set_ue_context_modification_outcome(ue_context_outcome_t outcome)
+  {
+    ue_context_modification_outcome = std::move(outcome);
+  }
 
   async_task<f1ap_ue_context_setup_response>
   handle_ue_context_setup_request(const f1ap_ue_context_setup_request&   request,
@@ -483,7 +489,7 @@ public:
         drb_item.drb_id = uint_to_drb_id(drb_id); // set ID
         res.drbs_setup_list.push_back(drb_item);
       }
-      res.du_to_cu_rrc_info.cell_group_cfg = make_byte_buffer("5800b24223c853a0120c7c080408c008").value();
+      res.du_to_cu_rrc_info.cell_group_cfg = ue_context_modification_outcome.cell_group_cfg.copy();
       // TODO: add failed list and other fields here ..
 
       CORO_RETURN(res);

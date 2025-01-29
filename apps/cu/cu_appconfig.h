@@ -23,26 +23,13 @@
 #pragma once
 
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
+#include "apps/services/f1u/f1u_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig.h"
-#include "apps/services/network/udp_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
-#include "srsran/ran/qos/five_qi.h"
 #include <string>
 
 namespace srsran {
 namespace srs_cu {
-
-/// F1-U sockets configuration
-struct cu_f1u_socket_appconfig {
-  std::string              bind_addr = "127.0.10.1"; // Bind address used by the F1-U interface
-  std::optional<five_qi_t> five_qi;
-  udp_appconfig            udp_config;
-};
-
-/// F1-U configuration
-struct cu_f1u_appconfig {
-  std::vector<cu_f1u_socket_appconfig> f1u_socket_cfg;
-};
 
 /// F1AP configuration
 struct cu_f1ap_appconfig {
@@ -61,7 +48,7 @@ struct cu_appconfig {
   /// Expert configuration.
   expert_execution_appconfig expert_execution_cfg;
   /// F1-U
-  srs_cu::cu_f1u_appconfig f1u_cfg;
+  f1u_sockets_appconfig f1u_cfg;
   /// F1AP
   srs_cu::cu_f1ap_appconfig f1ap_cfg;
   /// Buffer pool configuration.

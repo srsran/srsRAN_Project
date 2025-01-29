@@ -69,7 +69,7 @@ private:
   pcap_rlc_pdu_context pcap_context;
 
   // Storage for previous buffer state
-  unsigned prev_buffer_state = 0;
+  rlc_buffer_state prev_buffer_state = {};
 
   /// This atomic_flag indicates whether a buffer state update task has been queued but not yet run by pcell_executor.
   /// It helps to avoid queuing of redundant notification tasks in case of frequent changes of the buffer status.
@@ -106,8 +106,8 @@ public:
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers
-  size_t   pull_pdu(span<uint8_t> mac_sdu_buf) override;
-  uint32_t get_buffer_state() override;
+  size_t           pull_pdu(span<uint8_t> mac_sdu_buf) override;
+  rlc_buffer_state get_buffer_state() override;
 
 private:
   bool get_si_and_expected_header_size(uint32_t      so,

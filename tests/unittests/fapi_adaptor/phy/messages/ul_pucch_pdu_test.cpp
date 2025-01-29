@@ -58,7 +58,7 @@ TEST(FAPIPPHYULPUCCHAdaptorTest, ValidFormat1PDUPass)
   convert_pucch_fapi_to_phy(pdu, fapi_pdu, sfn, slot, nof_rx_antennas);
 
   // Format 1 custom parameters.
-  const pucch_processor::format1_configuration& phy_pdu = pdu.format1;
+  const auto& phy_pdu = std::get<pucch_processor::format1_configuration>(pdu.config);
   ASSERT_EQ(fapi_pdu.start_symbol_index, phy_pdu.start_symbol_index);
   ASSERT_EQ(fapi_pdu.nr_of_symbols, phy_pdu.nof_symbols);
   ASSERT_EQ(fapi_pdu.time_domain_occ_index, phy_pdu.time_domain_occ);

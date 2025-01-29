@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "apps/services/metrics/metrics_config.h"
 #include "du_low_hal_factory.h"
 #include "srsran/adt/span.h"
 #include "srsran/du/du_low/o_du_low.h"
@@ -38,7 +39,8 @@ struct worker_manager;
 
 /// O-RAN DU low unit.
 struct o_du_low_unit {
-  std::unique_ptr<srs_du::o_du_low> o_du_lo;
+  std::unique_ptr<srs_du::o_du_low>         o_du_lo;
+  std::vector<app_services::metrics_config> metrics;
 };
 
 /// O-RAN DU low unit configuration.

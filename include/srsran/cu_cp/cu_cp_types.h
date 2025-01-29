@@ -604,12 +604,20 @@ struct cu_cp_intra_cu_handover_response {
   bool success = false;
 };
 
+// Request sent to the target DU to prepare for the handover RRC reconfiguration.
+struct cu_cp_intra_cu_handover_target_request {
+  ue_index_t                target_ue_index = ue_index_t::invalid;
+  ue_index_t                source_ue_index = ue_index_t::invalid;
+  uint8_t                   transaction_id;
+  std::chrono::milliseconds timeout;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran
 
 namespace fmt {
 
-// ue index formatter
+// UE index formatter.
 template <>
 struct formatter<srsran::srs_cu_cp::ue_index_t> {
   template <typename ParseContext>
@@ -628,7 +636,7 @@ struct formatter<srsran::srs_cu_cp::ue_index_t> {
   }
 };
 
-// du index formatter
+// DU index formatter.
 template <>
 struct formatter<srsran::srs_cu_cp::du_index_t> {
   template <typename ParseContext>
@@ -647,7 +655,7 @@ struct formatter<srsran::srs_cu_cp::du_index_t> {
   }
 };
 
-// cu_up index formatter
+// CU-UP index formatter.
 template <>
 struct formatter<srsran::srs_cu_cp::cu_up_index_t> {
   template <typename ParseContext>
@@ -666,7 +674,7 @@ struct formatter<srsran::srs_cu_cp::cu_up_index_t> {
   }
 };
 
-// du cell index formatter
+// DU cell index formatter.
 template <>
 struct formatter<srsran::srs_cu_cp::du_cell_index_t> {
   template <typename ParseContext>
@@ -679,6 +687,25 @@ struct formatter<srsran::srs_cu_cp::du_cell_index_t> {
   auto format(const srsran::srs_cu_cp::du_cell_index_t& idx, FormatContext& ctx) const
   {
     if (idx == srsran::srs_cu_cp::du_cell_index_t::invalid) {
+      return format_to(ctx.out(), "invalid");
+    }
+    return format_to(ctx.out(), "{}", (unsigned)idx);
+  }
+};
+
+// AMF index formatter.
+template <>
+struct formatter<srsran::srs_cu_cp::amf_index_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::srs_cu_cp::amf_index_t& idx, FormatContext& ctx) const
+  {
+    if (idx == srsran::srs_cu_cp::amf_index_t::invalid) {
       return format_to(ctx.out(), "invalid");
     }
     return format_to(ctx.out(), "{}", (unsigned)idx);

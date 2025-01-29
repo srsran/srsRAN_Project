@@ -89,6 +89,10 @@ void ue_task_scheduler_manager::clear_pending_tasks(ue_index_t ue_index)
 // UE task scheduler
 void ue_task_scheduler_manager::handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task)
 {
+  if (ue_ctrl_loop.find(ue_index) == ue_ctrl_loop.end()) {
+    logger.debug("ue={}: UE task scheduler not found. UE was already removed", ue_index);
+    return;
+  }
   logger.debug("ue={}: Scheduling async task", ue_index);
   ue_ctrl_loop.at(ue_index)->schedule(std::move(task));
 }

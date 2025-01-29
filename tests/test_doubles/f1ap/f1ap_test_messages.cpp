@@ -153,6 +153,33 @@ f1ap_message srsran::test_helpers::generate_f1_removal_response(const f1ap_messa
   return resp;
 }
 
+f1ap_message
+srsran::test_helpers::create_gnb_du_configuration_update_acknowledge(const f1ap_message& gnb_du_config_update)
+{
+  const gnb_du_cfg_upd_s& req = gnb_du_config_update.pdu.init_msg().value.gnb_du_cfg_upd();
+
+  f1ap_message msg;
+  msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_GNB_DU_CFG_UPD);
+
+  asn1::f1ap::gnb_du_cfg_upd_ack_s& ack = msg.pdu.successful_outcome().value.gnb_du_cfg_upd_ack();
+  ack->transaction_id                   = req->transaction_id;
+
+  return msg;
+}
+
+f1ap_message srsran::test_helpers::create_gnb_du_configuration_update_failure(const f1ap_message& gnb_du_config_update)
+{
+  const gnb_du_cfg_upd_s& req = gnb_du_config_update.pdu.init_msg().value.gnb_du_cfg_upd();
+
+  f1ap_message msg;
+  msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_GNB_DU_CFG_UPD);
+  asn1::f1ap::gnb_du_cfg_upd_fail_s& fail = msg.pdu.unsuccessful_outcome().value.gnb_du_cfg_upd_fail();
+  fail->transaction_id                    = req->transaction_id;
+  fail->cause.set_misc().value            = cause_misc_opts::unspecified;
+
+  return msg;
+}
+
 f1ap_message srsran::test_helpers::create_f1ap_reset_message(
     const std::vector<std::pair<std::optional<gnb_du_ue_f1ap_id_t>, std::optional<gnb_cu_ue_f1ap_id_t>>>& ues_to_reset)
 {

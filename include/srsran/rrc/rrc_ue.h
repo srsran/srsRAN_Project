@@ -255,8 +255,10 @@ public:
 
   /// \brief Await a RRC Reconfiguration Complete for a handover.
   /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
+  /// \param[in] timeout_ms The timeout for the RRC Reconfiguration Complete.
   /// \returns True if the RRC Reconfiguration Complete was received, false otherwise.
-  virtual async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t transaction_id) = 0;
+  virtual async_task<bool> handle_handover_reconfiguration_complete_expected(uint8_t                   transaction_id,
+                                                                             std::chrono::milliseconds timeout_ms) = 0;
 
   /// \brief Store UE capabilities received from the NGAP.
   /// \param[in] ue_capabilities The UE capabilities.
@@ -314,6 +316,10 @@ public:
 
   /// \brief Get the RRC connection state of the UE.
   virtual rrc_state get_rrc_state() const = 0;
+
+  /// \brief Cancel an ongoing handover reconfiguration transaction.
+  /// \param[in] transaction_id The transaction ID of the handover reconfiguration transaction.
+  virtual void cancel_handover_reconfiguration_transaction(uint8_t transaction_id) = 0;
 };
 
 class rrc_ue_cu_cp_ue_notifier

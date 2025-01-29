@@ -66,7 +66,7 @@ public:
   void wait_for_completion()
   {
     while (!completed.load()) {
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
+      std::this_thread::sleep_for(std::chrono::nanoseconds(100));
     }
   }
 
@@ -126,7 +126,10 @@ static unsigned                           nof_csi_part2               = 0;
 static dmrs_type                          dmrs                        = dmrs_type::TYPE1;
 static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
-    {false, false, true, false, false, false, false, false, false, false, false, false, false, false};
+    {false, false, true, false, false, false, false, false, false, false, false, true, false, false};
+static constexpr channel_equalizer_algorithm_type equalizer_algorithm_type = channel_equalizer_algorithm_type::zf;
+static constexpr port_channel_estimator_td_interpolation_strategy td_interpolation_strategy =
+    port_channel_estimator_td_interpolation_strategy::interpolate;
 static unsigned                                                                          nof_pusch_decoder_threads = 0;
 static std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool = nullptr;
 static std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor    = nullptr;
@@ -555,11 +558,13 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
 
   // Create DM-RS for PUSCH channel estimator.
   std::shared_ptr<dmrs_pusch_estimator_factory> dmrs_pusch_chan_estimator_factory =
-      create_dmrs_pusch_estimator_factory_sw(prg_factory, low_papr_sequence_gen_factory, port_chan_estimator_factory);
+      create_dmrs_pusch_estimator_factory_sw(
+          prg_factory, low_papr_sequence_gen_factory, port_chan_estimator_factory, td_interpolation_strategy);
   TESTASSERT(dmrs_pusch_chan_estimator_factory);
 
   // Create channel equalizer factory.
-  std::shared_ptr<channel_equalizer_factory> eq_factory = create_channel_equalizer_generic_factory();
+  std::shared_ptr<channel_equalizer_factory> eq_factory =
+      create_channel_equalizer_generic_factory(equalizer_algorithm_type);
   TESTASSERT(eq_factory);
 
   std::shared_ptr<transform_precoder_factory> precoding_factory =
@@ -682,7 +687,7 @@ static void thread_process(pusch_processor&              proc,
       // Wait for pending to non-negative.
       while (pending_count.load() <= 0) {
         // Sleep.
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
+        std::this_thread::sleep_for(std::chrono::nanoseconds(100));
 
         // Quit if signaled.
         if (thread_quit) {
@@ -835,7 +840,7 @@ int main(int argc, char** argv)
 
     // Wait for finish thread init.
     while (pending_count.load() != -static_cast<int>(nof_threads)) {
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
+      std::this_thread::sleep_for(std::chrono::nanoseconds(100));
     }
 
     // Calculate the peak throughput, considering that the number of bits is for a slot.
@@ -861,7 +866,7 @@ int main(int argc, char** argv)
 
       // Wait for finish.
       while (finish_count.load() != (nof_threads * batch_size_per_thread)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::nanoseconds(100));
       }
     });
 

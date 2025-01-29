@@ -21,9 +21,12 @@
  */
 
 #include "du_manager_impl.h"
+#include "du_positioning_handler_factory.h"
+#include "procedures/du_param_config_procedure.h"
 #include "procedures/du_stop_procedure.h"
 #include "procedures/du_ue_ric_configuration_procedure.h"
 #include "procedures/initial_du_setup_procedure.h"
+#include "srsran/support/executors/execute_until_success.h"
 #include <condition_variable>
 #include <future>
 #include <thread>
@@ -37,6 +40,7 @@ du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   cell_mng(params),
   cell_res_alloc(params.ran.cells, params.mac.sched_cfg, params.ran.srbs, params.ran.qos, params.test_cfg),
   ue_mng(params, cell_res_alloc),
+  positioning_handler(create_du_positioning_handler(params, cell_mng, ue_mng, logger)),
   main_ctrl_loop(128)
 {
 }
@@ -212,5 +216,29 @@ size_t du_manager_impl::nof_ues()
 async_task<du_mac_sched_control_config_response>
 du_manager_impl::configure_ue_mac_scheduler(du_mac_sched_control_config reconf)
 {
-  return launch_async<srs_du::du_ue_ric_configuration_procedure>(reconf, ue_mng, params);
+  return launch_async<du_ue_ric_configuration_procedure>(reconf, ue_mng, params);
+}
+
+du_param_config_response du_manager_impl::handle_operator_config_request(const du_param_config_request& req)
+{
+  std::promise<du_param_config_response> p;
+  std::future<du_param_config_response>  fut = p.get_future();
+
+  // Switch to DU manager execution context.
+  execute_until_success(params.services.du_mng_exec, params.services.timers, [this, req, &p]() {
+    // Dispatch common task.
+    schedule_async_task(launch_async([&](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+
+      // Launch config procedure.
+      CORO_AWAIT_VALUE(auto resp, launch_async<du_param_config_procedure>(req, params, cell_mng));
+
+      // signal back to caller.
+      p.set_value(resp);
+
+      CORO_RETURN();
+    }));
+  });
+
+  return fut.get();
 }

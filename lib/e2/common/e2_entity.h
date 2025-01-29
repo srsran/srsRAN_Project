@@ -27,6 +27,7 @@
 #include "procedures/e2_setup_procedure.h"
 #include "procedures/e2_subscription_setup_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
+#include "srsran/cu_cp/cu_configurator.h"
 #include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/e2/e2_cu.h"
 #include "srsran/e2/e2_du.h"
@@ -50,7 +51,7 @@ public:
             e2_connection_client&                                            e2_client_,
             std::variant<e2_du_metrics_interface*, e2_cu_metrics_interface*> e2_metrics_,
             srs_du::f1ap_ue_id_translator*                                   f1ap_ue_id_translator_,
-            srs_du::du_configurator*                                         du_configurator_,
+            std::variant<srs_du::du_configurator*, cu_configurator*>         configurator_,
             timer_factory                                                    timers_,
             task_executor&                                                   task_exec_);
 

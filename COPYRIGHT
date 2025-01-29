@@ -1,5 +1,5 @@
 Files: *
-Copyright: 2021-2024, Software Radio Systems Limited.
+Copyright: 2021-2025, Software Radio Systems Limited.
 License:   See LICENSE file
 
 
@@ -33,12 +33,12 @@ Files:     external/fmt/args.h
            external/fmt/xchar.h
            external/fmt/format.cc
            external/fmt/os.cc
-Copyright: 2012-2024 Victor Zverovich
+Copyright: 2012-present Victor Zverovich and {fmt} contributors
 License:   MIT
 
 
 Files:     external/CLI/CLI11.hpp
-Copyright: 2017-2023 University of Cincinnati, developed by Henry Schreiner
+Copyright: 2017-2024 University of Cincinnati, developed by Henry Schreiner
 License:   BSD-3-clause
 
 
@@ -55,6 +55,7 @@ License:   MIT
 Files:     external/cameron314/concurrentqueue.hpp
 Copyright: 2013-2020, Cameron Desrochers
 License:   Simplified BSD
+
 
 Files:     external/TartanLlama/expected.hpp
 Copyright: 2017 Sy Brand

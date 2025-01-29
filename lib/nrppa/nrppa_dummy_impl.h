@@ -35,7 +35,8 @@ public:
   ~nrppa_dummy_impl();
 
   // See nrppa_message_handler for documentation.
-  void handle_new_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) override;
+  void handle_new_nrppa_pdu(const byte_buffer&                    nrppa_pdu,
+                            std::variant<ue_index_t, amf_index_t> ue_or_amf_index) override;
 
   // See nrppa_ue_context_removal_handle for documentation.
   void remove_ue_context(ue_index_t ue_index) override;

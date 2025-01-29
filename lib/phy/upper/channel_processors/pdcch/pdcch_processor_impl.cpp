@@ -21,11 +21,24 @@
  */
 
 #include "pdcch_processor_impl.h"
+#include "pdcch_processor_validator_impl.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
 using namespace pdcch_constants;
+
+/// \brief Looks at the output of the validator and, if unsuccessful, fills msg with the error message.
+///
+/// This is used to call the validator inside the process methods only if asserts are active.
+[[maybe_unused]] static bool handle_validation(std::string& msg, const error_type<std::string>& err)
+{
+  bool is_success = err.has_value();
+  if (!is_success) {
+    msg = err.error();
+  }
+  return is_success;
+}
 
 bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_description& coreset,
                                                              const dci_description&     dci)
@@ -68,10 +81,9 @@ void pdcch_processor_impl::process(resource_grid_writer& grid, const pdcch_proce
   const coreset_description& coreset = pdu.coreset;
   const dci_description&     dci     = pdu.dci;
 
-  // Verify CORESET.
-  srsran_assert(coreset.duration > 0 && coreset.duration <= MAX_CORESET_DURATION,
-                "Invalid CORESET duration ({})",
-                coreset.duration);
+  // Assert PDU.
+  [[maybe_unused]] std::string msg;
+  srsran_assert(handle_validation(msg, pdcch_processor_validator_impl().is_valid(pdu)), "{}", msg);
 
   // Generate RB mask.
   bounded_bitset<MAX_RB> rb_mask = compute_rb_mask(coreset, dci);

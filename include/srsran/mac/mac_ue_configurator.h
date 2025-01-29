@@ -79,6 +79,8 @@ struct mac_ue_create_request {
   bool                                    initial_fallback = true;
   const byte_buffer*                      ul_ccch_msg      = nullptr;
   std::optional<slot_point>               ul_ccch_slot_rx;
+  /// RA preamble to be used within a Contention-free RA procedure context.
+  std::optional<unsigned> cfra_preamble_index;
 
   // Scheduler-only params.
   sched_ue_config_request sched_cfg;

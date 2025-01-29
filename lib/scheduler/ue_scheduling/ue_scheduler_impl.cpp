@@ -50,41 +50,42 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 
 void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t cell_index)
 {
-  if (not ue_res_grid_view.get_cell_cfg_common(cell_index).is_dl_enabled(slot_tx)) {
+  if (ue_res_grid_view.get_cell_cfg_common(cell_index).is_dl_enabled(slot_tx)) {
     // This slot is inactive for PDCCH in this cell. We therefore, can skip the scheduling strategy.
     // Note: we are currently assuming that all cells have the same TDD pattern and that the scheduling strategy
     // only allocates PDCCHs for the current slot_tx.
-    return;
-  }
 
-  // Update slice context and compute slice priorities.
-  cells[cell_index].slice_sched.slot_indication(slot_tx, ue_res_grid_view.get_grid(cell_index));
+    // Update slice context and compute slice priorities.
+    cells[cell_index].slice_sched.slot_indication(slot_tx, ue_res_grid_view.get_grid(cell_index));
 
-  // Perform round-robin prioritization of UL and DL scheduling. This gives unfair preference to DL over UL. This is
-  // done to avoid the issue of sending wrong DAI value in DCI format 0_1 to UE while the PDSCH is allocated
-  // right after allocating PUSCH in the same slot, resulting in gNB expecting 1 HARQ ACK bit to be multiplexed in
-  // UCI in PUSCH and UE sending 4 HARQ ACK bits (DAI = 3).
-  // Example: K1==K2=4 and PUSCH is allocated before PDSCH.
-  if (expert_cfg.enable_csi_rs_pdsch_multiplexing or (*cells[cell_index].cell_res_alloc)[0].result.dl.csi_rs.empty()) {
-    auto dl_slice_candidate = cells[cell_index].slice_sched.get_next_dl_candidate();
-    while (dl_slice_candidate.has_value()) {
-      auto&                           policy = cells[cell_index].slice_sched.get_policy(dl_slice_candidate->id());
-      dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{ue_alloc, *dl_slice_candidate};
-      policy.dl_sched(
-          slice_pdsch_alloc, ue_res_grid_view, *dl_slice_candidate, cells[cell_index].cell_harqs.pending_dl_retxs());
-      dl_slice_candidate = cells[cell_index].slice_sched.get_next_dl_candidate();
+    // Perform round-robin prioritization of UL and DL scheduling. This gives unfair preference to DL over UL. This is
+    // done to avoid the issue of sending wrong DAI value in DCI format 0_1 to UE while the PDSCH is allocated
+    // right after allocating PUSCH in the same slot, resulting in gNB expecting 1 HARQ ACK bit to be multiplexed in
+    // UCI in PUSCH and UE sending 4 HARQ ACK bits (DAI = 3).
+    // Example: K1==K2=4 and PUSCH is allocated before PDSCH.
+    if (expert_cfg.enable_csi_rs_pdsch_multiplexing or
+        (*cells[cell_index].cell_res_alloc)[0].result.dl.csi_rs.empty()) {
+      auto dl_slice_candidate = cells[cell_index].slice_sched.get_next_dl_candidate();
+      while (dl_slice_candidate.has_value()) {
+        auto&                           policy = cells[cell_index].slice_sched.get_policy(dl_slice_candidate->id());
+        dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{ue_alloc, *dl_slice_candidate};
+        policy.dl_sched(
+            slice_pdsch_alloc, ue_res_grid_view, *dl_slice_candidate, cells[cell_index].cell_harqs.pending_dl_retxs());
+        dl_slice_candidate = cells[cell_index].slice_sched.get_next_dl_candidate();
+      }
+    }
+
+    auto ul_slice_candidate = cells[cell_index].slice_sched.get_next_ul_candidate();
+    while (ul_slice_candidate.has_value()) {
+      auto&                           policy = cells[cell_index].slice_sched.get_policy(ul_slice_candidate->id());
+      ul_slice_ue_cell_grid_allocator slice_pusch_alloc{ue_alloc, *ul_slice_candidate};
+      policy.ul_sched(
+          slice_pusch_alloc, ue_res_grid_view, *ul_slice_candidate, cells[cell_index].cell_harqs.pending_ul_retxs());
+      ul_slice_candidate = cells[cell_index].slice_sched.get_next_ul_candidate();
     }
   }
 
-  auto ul_slice_candidate = cells[cell_index].slice_sched.get_next_ul_candidate();
-  while (ul_slice_candidate.has_value()) {
-    auto&                           policy = cells[cell_index].slice_sched.get_policy(ul_slice_candidate->id());
-    ul_slice_ue_cell_grid_allocator slice_pusch_alloc{ue_alloc, *ul_slice_candidate};
-    policy.ul_sched(
-        slice_pusch_alloc, ue_res_grid_view, *ul_slice_candidate, cells[cell_index].cell_harqs.pending_ul_retxs());
-    ul_slice_candidate = cells[cell_index].slice_sched.get_next_ul_candidate();
-  }
-
+  // The post processing is done for either DL and UL slots.
   ue_alloc.post_process_results();
 }
 
@@ -122,8 +123,14 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
         case pucch_format::FORMAT_2:
           nof_harqs_per_rnti_per_slot = pucch.format_2.harq_ack_nof_bits;
           break;
+        case pucch_format::FORMAT_3:
+          nof_harqs_per_rnti_per_slot = pucch.format_3.harq_ack_nof_bits;
+          break;
+        case pucch_format::FORMAT_4:
+          nof_harqs_per_rnti_per_slot = pucch.format_4.harq_ack_nof_bits;
+          break;
         default:
-          srsran_assertion_failure("rnti={}: Only PUCCH format 0, 1 and 2 are supported", pucch.crnti);
+          srsran_assertion_failure("rnti={}: Invalid PUCCH format", pucch.crnti);
       }
       // Each PUCCH grants can potentially carry ACKs for different HARQ processes (as many as the harq_ack_nof_bits)
       // expecting to be acknowledged on the same slot.
@@ -172,6 +179,14 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
         harq_bits = pucch.format_2.harq_ack_nof_bits;
         csi_bits  = pucch.format_2.csi_part1_bits;
         sr_bits   = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
+      } else if (pucch.format == pucch_format::FORMAT_3) {
+        harq_bits = pucch.format_3.harq_ack_nof_bits;
+        csi_bits  = pucch.format_3.csi_part1_bits;
+        sr_bits   = sr_nof_bits_to_uint(pucch.format_3.sr_bits);
+      } else if (pucch.format == pucch_format::FORMAT_4) {
+        harq_bits = pucch.format_4.harq_ack_nof_bits;
+        csi_bits  = pucch.format_4.csi_part1_bits;
+        sr_bits   = sr_nof_bits_to_uint(pucch.format_4.sr_bits);
       }
       logger.error("rnti={}: has both PUCCH and PUSCH grants scheduled at slot {}, PUCCH  format={} with nof "
                    "harq-bits={} csi-1-bits={} sr-bits={}",

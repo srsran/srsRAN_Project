@@ -22,12 +22,14 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/pdcch/pdcch_context.h"
 #include "srsran/ran/slot_point.h"
+#include <string>
 
 namespace srsran {
 
@@ -108,22 +110,23 @@ public:
     freq_resource_bitmap frequency_resources;
     /// CCE-to-REG mapping.
     cce_to_reg_mapping_type cce_to_reg_mapping;
-    /// \brief The number of REGs in a bundle. Corresponds to parameter \f$L\f$ in TS38.211 7.3.2.2.
+    /// \brief Number of REGs in a bundle. This corresponds to the parameter \f$L\f$ in TS38.211, Section 7.3.2.2.
     ///
-    /// Ignored for \c cce_to_reg_mapping_type set to \c INTERLEAVED or \c CORESET0. It must be:
-    /// - {2,6} for duration of 1 or 2 symbols, and
-    /// - {3,6} for duration of 3 symbols.
+    /// This parameter is ignored if \c cce_to_reg_mapping_type is not set to \c INTERLEAVED.
+    /// If \c cce_to_reg_mapping_type is \c INTERLEAVED, the value of this parameter must be:
+    /// - {2, 6} for a duration of 1 or 2 symbols, and
+    /// - {3, 6} for a duration of 3 symbols.
     unsigned reg_bundle_size;
     /// \brief The CCE-to-REG interleaver size. Corresponds to parameter \f$R\f$ in TS38.211 7.3.2.2.
     ///
     /// Ignored for \c cce_to_reg_mapping_type set to \c INTERLEAVED or \c CORESET0. It must be {2,3,6}.
     unsigned interleaver_size;
-    /// \brief Shift index \f$n_{shift}\f$ in TS38.211 Section 7.3.2.2.
+    /// \brief Interleaver shift index \f$n_{shift}\f$ as defined in TS38.211, Section 7.3.2.2.
     ///
-    /// The value is:
-    /// - set to the physical cell identifier for a transmission in CORESET0,
-    /// - ignored for non-interleaved mapping, and
-    /// - set to {0,275} for non-interleaved CCE-to-REG mapping.
+    /// The value of this parameter is:
+    /// - Set to the physical cell identifier for transmissions in CORESET0,
+    /// - Ignored for non-interleaved mapping, and
+    /// - Set to a value in the range {0, ..., 275} for interleaved CCE-to-REG mapping.
     unsigned shift_index;
   };
 
@@ -159,8 +162,8 @@ public:
   virtual ~pdcch_pdu_validator() = default;
 
   /// \brief Validates PDCCH processor configuration parameters.
-  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
-  virtual bool is_valid(const pdcch_processor::pdu_t& pdu) const = 0;
+  /// \return A success if the parameters contained in \c pdu are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const pdcch_processor::pdu_t& pdu) const = 0;
 };
 
 } // namespace srsran

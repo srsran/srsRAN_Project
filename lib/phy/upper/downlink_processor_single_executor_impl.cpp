@@ -25,6 +25,7 @@
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pdcch/formatters.h"
 #include "srsran/phy/upper/channel_processors/pdsch/formatters.h"
+#include "srsran/phy/upper/signal_processors/prs/formatters.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/srslog/srslog.h"
@@ -39,6 +40,7 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
     std::unique_ptr<pdsch_processor>      pdsch_proc_,
     std::unique_ptr<ssb_processor>        ssb_proc_,
     std::unique_ptr<nzp_csi_rs_generator> csi_rs_proc_,
+    std::unique_ptr<prs_generator>        prs_gen_,
     task_executor&                        executor_,
     srslog::basic_logger&                 logger_) :
   gateway(gateway_),
@@ -46,6 +48,7 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
   pdsch_proc(std::move(pdsch_proc_)),
   ssb_proc(std::move(ssb_proc_)),
   csi_rs_proc(std::move(csi_rs_proc_)),
+  prs_gen(std::move(prs_gen_)),
   executor(executor_),
   logger(logger_),
   pdsch_notifier(*this)
@@ -54,6 +57,7 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
   srsran_assert(pdsch_proc, "Invalid PDSCH processor received.");
   srsran_assert(ssb_proc, "Invalid SSB processor received.");
   srsran_assert(csi_rs_proc, "Invalid CSI-RS processor received.");
+  srsran_assert(prs_gen, "Invalid PRS generator received.");
 }
 
 void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processor::pdu_t& pdu)
@@ -235,6 +239,49 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
     on_task_completion();
 
     logger.warning(config.slot.sfn(), config.slot.slot_index(), "Failed to process NZP-CSI-RS: {:s}", config);
+  }
+}
+
+void downlink_processor_single_executor_impl::process_prs(const prs_generator_configuration& config)
+{
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+
+    // Do not enqueue the task if the DL processor is not accepting PDUs.
+    if (!state.is_processing()) {
+      logger.warning(
+          config.slot.sfn(), config.slot.slot_index(), "Invalid downlink processor state. Ignoring PRS: {:s}", config);
+      return;
+    }
+
+    // Increase the pending task counter.
+    state.on_task_creation();
+  }
+
+  // Copy the configuration and get the reference for the asynchronous processing.
+  prs_generator_configuration& config_ref = prs_list.emplace_back(config);
+
+  // Try to enqueue the PDU processing task.
+  bool enqueued = executor.execute([this, &config_ref]() {
+    trace_point process_prs_tp = l1_tracer.now();
+
+    // Do not execute if the grid is not available.
+    if (current_grid) {
+      prs_gen->generate(current_grid->get_writer(), config_ref);
+    }
+
+    l1_tracer << trace_event("process_prs", process_prs_tp);
+
+    // Report task completion to FSM.
+    on_task_completion();
+  });
+
+  // If que task could not be enqueued.
+  if (!enqueued) {
+    // Report task drop to FSM.
+    on_task_completion();
+
+    logger.warning(config.slot.sfn(), config.slot.slot_index(), "Failed to process PRS: {:s}", config);
   }
 }
 

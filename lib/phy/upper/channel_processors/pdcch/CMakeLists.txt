@@ -19,7 +19,9 @@
 #
 
 add_library(srsran_pdcch_processor STATIC
+        factories.cpp
         pdcch_encoder_impl.cpp
         pdcch_modulator_impl.cpp
-        pdcch_processor_impl.cpp factories.cpp)
+        pdcch_processor_impl.cpp
+        pdcch_processor_validator_impl.cpp)
 target_link_libraries(srsran_pdcch_processor srsran_ran srsvec)

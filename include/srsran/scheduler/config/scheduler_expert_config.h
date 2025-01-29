@@ -39,8 +39,8 @@
 
 namespace srsran {
 
-/// \brief Proportional fair policy scheduler expert parameters.
-struct time_pf_scheduler_expert_config {
+/// \brief QoS-aware policy scheduler expert parameters.
+struct time_qos_scheduler_expert_config {
   /// \brief Types of scheduler weight functions to use. Supported:
   /// - gbr_prioritized - logical channels with GBR get always prioritized if their BR < GBR.
   /// - multivariate - different weight functions (e.g. GBR, PF) for a given logical channel are "averaged" to obtain
@@ -50,17 +50,23 @@ struct time_pf_scheduler_expert_config {
   /// Castelldefels (Spain).
   enum class weight_function { gbr_prioritized, multivariate };
 
-  /// Fairness Coefficient to use in Proportional Fair policy scheduler.
-  double pf_sched_fairness_coeff = 2.0;
   /// \brief Determines the scheduler policy weight function to use.
   weight_function qos_weight_func = weight_function::gbr_prioritized;
+  /// Fairness Coefficient to use in Proportional Fair weight of the QoS-aware policy.
+  double pf_fairness_coeff = 2.0;
+  /// Whether to take into account or ignore the QoS Flow priority in the QoS-aware scheduling.
+  bool priority_enabled = true;
+  /// Whether to take into account or ignore the QoS Flow Packet Delay Budget (PDB) in the QoS-aware scheduling.
+  bool pdb_enabled = true;
+  /// Whether to take into account or ignore the QoS Flow Guaranteed Bit Rate (GBR) in the QoS-aware scheduling.
+  bool gbr_enabled = true;
 };
 
 /// \brief Round-Robin policy scheduler expert parameters.
 struct time_rr_scheduler_expert_config {};
 
 /// \brief Policy scheduler expert parameters.
-using policy_scheduler_expert_config = std::variant<time_rr_scheduler_expert_config, time_pf_scheduler_expert_config>;
+using policy_scheduler_expert_config = std::variant<time_rr_scheduler_expert_config, time_qos_scheduler_expert_config>;
 
 struct ul_power_control {
   /// Enable closed-loop PUSCH power control.
@@ -188,9 +194,12 @@ struct scheduler_si_expert_config {
 
 /// \brief Random Access scheduling statically configurable expert parameters.
 struct scheduler_ra_expert_config {
-  sch_mcs_index rar_mcs_index;
-  sch_mcs_index msg3_mcs_index;
-  unsigned      max_nof_msg3_harq_retxs;
+  /// MCS to use for RAR PDSCH.
+  sch_mcs_index rar_mcs_index = 0;
+  /// MCS to use for Msg3 PUSCH.
+  sch_mcs_index msg3_mcs_index = 0;
+  /// Maximum number of Msg3 PUSCH retransmissions.
+  unsigned max_nof_msg3_harq_retxs = 4;
 };
 
 /// \brief Paging scheduling statically configurable expert parameters.

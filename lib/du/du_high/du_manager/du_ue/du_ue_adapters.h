@@ -247,13 +247,14 @@ public:
     }
   }
 
-  void on_buffer_state_update(unsigned bsr) override
+  void on_buffer_state_update(const rlc_buffer_state& rlc_bs) override
   {
     srsran_assert(mac != nullptr, "RLC Tx Buffer State notifier is disconnected");
     mac_dl_buffer_state_indication_message bs{};
     bs.ue_index = ue_index;
     bs.lcid     = lcid;
-    bs.bs       = bsr;
+    bs.bs       = rlc_bs.pending_bytes;
+    // TODO: set hol_toa
     if (SRSRAN_UNLIKELY(not connected.load(std::memory_order_relaxed))) {
       // Discard.
       bs.bs = 0;
@@ -300,10 +301,11 @@ public:
     return SRSRAN_LIKELY(connected.load(std::memory_order_relaxed)) ? rlc_handler->pull_pdu(mac_sdu_buf) : 0;
   }
 
-  unsigned on_buffer_state_update() override
+  rlc_buffer_state on_buffer_state_update() override
   {
     srsran_assert(rlc_handler != nullptr, "MAC Rx SDU notifier is disconnected");
-    return SRSRAN_LIKELY(connected.load(std::memory_order_relaxed)) ? rlc_handler->get_buffer_state() : 0;
+    return SRSRAN_LIKELY(connected.load(std::memory_order_relaxed)) ? rlc_handler->get_buffer_state()
+                                                                    : rlc_buffer_state{};
   }
 
 private:

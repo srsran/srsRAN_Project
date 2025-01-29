@@ -119,7 +119,9 @@ public:
   virtual void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) = 0;
 
   /// \brief Handles a DL non UE associated NRPPa transport.
-  virtual void handle_dl_non_ue_associated_nrppa_transport_pdu(const byte_buffer& nrppa_pdu) = 0;
+  /// \param[in] amf_index The index of the AMF that received the NRPPa transport.
+  /// \param[in] nrppa_pdu The NRPPa transport PDU.
+  virtual void handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) = 0;
 
   /// \brief Handle N2 AMF connection drop.
   virtual void handle_n2_disconnection() = 0;
@@ -138,8 +140,9 @@ public:
 
   /// \brief Handle a UL NRPPa PDU.
   /// \param[in] msg The NRPPa PDU.
-  /// \param[in] ue_index For UE associated messages the index of the UE.
-  virtual void handle_ul_nrppa_pdu(const byte_buffer& nrppa_pdu, std::optional<ue_index_t> ue_index) = 0;
+  /// \param[in] ue_or_amf_index The UE index for UE associated NRPPa messages or the AMF index for non UE associated
+  virtual void handle_ul_nrppa_pdu(const byte_buffer&                    nrppa_pdu,
+                                   std::variant<ue_index_t, amf_index_t> ue_or_amf_index) = 0;
 };
 
 /// Handler of E1AP-CU-CP events.
@@ -227,14 +230,22 @@ public:
 
   /// \brief Handle the trasmission of the handover reconfiguration by notifying the target RRC UE to await a RRC
   /// Reconfiguration Complete.
-  /// \param[in] transaction_id The transaction ID of the RRC Reconfiguration Complete.
-  /// \returns True if the RRC Reconfiguration Complete was received, false otherwise.
-  virtual async_task<bool> handle_handover_reconfiguration_sent(ue_index_t target_ue_index, uint8_t transaction_id) = 0;
+  /// \param[in] request The intra CU handover target request.
+  virtual void handle_handover_reconfiguration_sent(const cu_cp_intra_cu_handover_target_request& request) = 0;
 
   /// \brief Handle a UE context push during handover.
   /// \param[in] source_ue_index The index of the UE that is the source of the handover.
   /// \param[in] target_ue_index The index of the UE that is the target of the handover.
   virtual void handle_handover_ue_context_push(ue_index_t source_ue_index, ue_index_t target_ue_index) = 0;
+
+  /// \brief Initialize a handover UE release timer. When the timeout is reached, a release request is sent to the AMF.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] handover_ue_release_timeout The timeout for the release.
+  /// \param[in] ue_context_release_request The release request.
+  virtual void
+  initialize_handover_ue_release_timer(ue_index_t                              ue_index,
+                                       std::chrono::milliseconds               handover_ue_release_timeout,
+                                       const cu_cp_ue_context_release_request& ue_context_release_request) = 0;
 };
 
 /// Methods used by CU-CP to transfer the RRC UE context e.g. for RRC Reestablishments.

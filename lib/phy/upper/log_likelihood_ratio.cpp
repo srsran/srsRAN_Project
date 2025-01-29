@@ -367,7 +367,7 @@ bool srsran::hard_decision(bit_buffer& hard_bits, span<const log_likelihood_rati
     uint8_t hard_bit = soft_bits[i_bit].to_hard_bit();
 
     // Insert into the bit buffer.
-    hard_bits.insert(hard_bit, i_bit, 1);
+    hard_bits.insert(hard_bit, offset + i_bit, 1);
   }
 #endif // __AVX2__ or __ARM_NEON
 

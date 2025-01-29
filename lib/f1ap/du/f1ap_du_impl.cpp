@@ -25,6 +25,8 @@
 #include "asn1_helpers.h"
 #include "f1ap_du_connection_handler.h"
 #include "log_helpers.h"
+#include "procedures/f1ap_du_gnbdu_config_update_procedure.h"
+#include "procedures/f1ap_du_positioning_procedures.h"
 #include "procedures/f1ap_du_removal_procedure.h"
 #include "procedures/f1ap_du_reset_procedure.h"
 #include "procedures/f1ap_du_setup_procedure.h"
@@ -126,6 +128,12 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_request(cons
 async_task<void> f1ap_du_impl::handle_f1_removal_request()
 {
   return launch_async<f1ap_du_removal_procedure>(connection_handler, *tx_pdu_notifier, *events);
+}
+
+async_task<gnbdu_config_update_response>
+f1ap_du_impl::handle_du_config_update(const gnbdu_config_update_request& request)
+{
+  return launch_async<f1ap_du_gnbdu_config_update_procedure>(request, *tx_pdu_notifier, *events);
 }
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)
@@ -356,19 +364,21 @@ f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modi
 
 void f1ap_du_impl::handle_message(const f1ap_message& msg)
 {
+  using pdu_types = f1ap_pdu_c::types_opts;
+
   // Run F1AP protocols in Control executor.
   if (not ctrl_exec.execute([this, msg]() {
         // Log message.
         log_pdu(true, msg);
 
         switch (msg.pdu.type().value) {
-          case asn1::f1ap::f1ap_pdu_c::types_opts::init_msg:
+          case pdu_types::init_msg:
             handle_initiating_message(msg.pdu.init_msg());
             break;
-          case asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome:
+          case pdu_types::successful_outcome:
             handle_successful_outcome(msg.pdu.successful_outcome());
             break;
-          case asn1::f1ap::f1ap_pdu_c::types_opts::unsuccessful_outcome:
+          case pdu_types::unsuccessful_outcome:
             handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
             break;
           default:
@@ -382,29 +392,40 @@ void f1ap_du_impl::handle_message(const f1ap_message& msg)
   }
 }
 
-void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
+void f1ap_du_impl::handle_initiating_message(const init_msg_s& msg)
 {
+  using msg_types = f1ap_elem_procs_o::init_msg_c::types_opts;
+
   switch (msg.value.type().value) {
-    case f1ap_elem_procs_o::init_msg_c::types_opts::reset:
+    case msg_types::reset:
       handle_reset(msg.value.reset());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::gnb_cu_cfg_upd:
+    case msg_types::gnb_cu_cfg_upd:
       handle_gnb_cu_configuration_update(msg.value.gnb_cu_cfg_upd());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer:
+    case msg_types::dl_rrc_msg_transfer:
       handle_dl_rrc_message_transfer(msg.value.dl_rrc_msg_transfer());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_setup_request:
+    case msg_types::ue_context_setup_request:
       handle_ue_context_setup_request(msg.value.ue_context_setup_request());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_mod_request:
+    case msg_types::ue_context_mod_request:
       handle_ue_context_modification_request(msg.value.ue_context_mod_request());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::ue_context_release_cmd:
+    case msg_types::ue_context_release_cmd:
       handle_ue_context_release_command(msg.value.ue_context_release_cmd());
       break;
-    case f1ap_elem_procs_o::init_msg_c::types_opts::paging:
+    case msg_types::paging:
       handle_paging_request(msg.value.paging());
+      break;
+    case msg_types::positioning_meas_request:
+      handle_positioning_measurement_request(msg.value.positioning_meas_request());
+      break;
+    case msg_types::trp_info_request:
+      handle_trp_information_request(msg.value.trp_info_request());
+      break;
+    case msg_types::positioning_info_request:
+      handle_positioning_information_request(msg.value.positioning_info_request());
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -569,6 +590,31 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
     info.paging_cells.push_back(to_du_cell_index(std::distance(ctxt.served_cells.cbegin(), du_cell_it)));
   }
   paging_notifier.on_paging_received(info);
+}
+
+void f1ap_du_impl::handle_positioning_measurement_request(const positioning_meas_request_s& msg)
+{
+  du_mng.schedule_async_task(start_positioning_measurement_procedure(msg, du_mng, *tx_pdu_notifier));
+}
+
+void f1ap_du_impl::handle_trp_information_request(const trp_info_request_s& msg)
+{
+  du_mng.schedule_async_task(start_trp_information_exchange_procedure(msg, du_mng, *tx_pdu_notifier));
+}
+
+void f1ap_du_impl::handle_positioning_information_request(const asn1::f1ap::positioning_info_request_s& msg)
+{
+  gnb_du_ue_f1ap_id_t gnb_du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1ap_id);
+  f1ap_du_ue*         ue                = ues.find(gnb_du_ue_f1ap_id);
+
+  if (ue == nullptr) {
+    // UE not found.
+    // TODO: Handle
+    return;
+  }
+
+  du_mng.get_ue_handler(ue->context.ue_index)
+      .schedule_async_task(start_positioning_exchange_procedure(msg, du_mng, *ue));
 }
 
 gnb_cu_ue_f1ap_id_t f1ap_du_impl::get_gnb_cu_ue_f1ap_id(const du_ue_index_t& ue_index)

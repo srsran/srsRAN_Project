@@ -26,6 +26,7 @@
 #include "srsran/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsran/phy/upper/signal_processors/prs/prs_generator.h"
 #include "srsran/phy/upper/signal_processors/prs/prs_generator_validator.h"
+#include "srsran/srslog/logger.h"
 #include <memory>
 
 namespace srsran {
@@ -42,6 +43,9 @@ public:
 
   /// Creates a PRS generator configuration validator.
   virtual std::unique_ptr<prs_generator_validator> create_validator() = 0;
+
+  /// Creates a PRS generator with a logging decorator.
+  virtual std::unique_ptr<prs_generator> create(srslog::basic_logger& logger);
 };
 
 /// \brief Creates a generic PRS generator factory.
@@ -51,5 +55,13 @@ public:
 std::shared_ptr<prs_generator_factory>
 create_prs_generator_generic_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                      std::shared_ptr<channel_precoder_factory>        precoder_factory);
+
+/// \brief Creates a PRS generator pool.
+/// \param[in] generator_factory      Base PRS generator factory.
+/// \param[in] nof_concurrent_threads Maximum number of threads that might use the pool.
+/// \return A PRS generator that can generate PRS transmission concurrently.
+std::shared_ptr<prs_generator_factory>
+create_prs_generator_pool_factory(std::shared_ptr<prs_generator_factory> generator_factory,
+                                  unsigned                               nof_concurrent_threads);
 
 } // namespace srsran

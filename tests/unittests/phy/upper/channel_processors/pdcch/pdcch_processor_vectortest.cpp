@@ -106,7 +106,9 @@ TEST_P(PdcchProcessorFixture, FromVector)
   unsigned max_symb  = test_case.config.coreset.start_symbol_index + test_case.config.coreset.duration;
   unsigned max_ports = test_case.config.dci.precoding.get_nof_ports();
 
-  ASSERT_TRUE(validator->is_valid(test_case.config));
+  // Verify the PDCCH parameters are valid.
+  error_type<std::string> validator_out = validator->is_valid(test_case.config);
+  ASSERT_TRUE(validator_out.has_value()) << validator_out.error();
 
   // Prepare resource grid and resource grid mapper spies.
   resource_grid_writer_spy grid(max_ports, max_symb, max_prb);

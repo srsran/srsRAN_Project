@@ -48,6 +48,8 @@ private:
 
   void process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config) override {}
 
+  void process_prs(const prs_generator_configuration& config) override {}
+
   void finish_processing_pdus() override { finish_processing_pdus_method_called = true; }
 
 public:

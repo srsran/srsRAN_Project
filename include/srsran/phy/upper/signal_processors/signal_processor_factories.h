@@ -74,7 +74,8 @@ public:
 std::shared_ptr<dmrs_pusch_estimator_factory> create_dmrs_pusch_estimator_factory_sw(
     std::shared_ptr<pseudo_random_generator_factory>     prg_factory,
     std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory,
-    std::shared_ptr<port_channel_estimator_factory>      ch_estimator_factory);
+    std::shared_ptr<port_channel_estimator_factory>      ch_estimator_factory,
+    port_channel_estimator_td_interpolation_strategy     td_interpolation_strategy);
 
 class nzp_csi_rs_generator_factory
 {
@@ -98,9 +99,9 @@ class port_channel_estimator_factory
 public:
   virtual ~port_channel_estimator_factory() = default;
   virtual std::unique_ptr<port_channel_estimator>
-  create(port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy =
-             port_channel_estimator_fd_smoothing_strategy::filter,
-         bool complensate_cfo = true) = 0;
+  create(port_channel_estimator_fd_smoothing_strategy     fd_smoothing_strategy,
+         port_channel_estimator_td_interpolation_strategy td_interpolation_strategy,
+         bool                                             complensate_cfo) = 0;
 };
 
 std::shared_ptr<port_channel_estimator_factory>

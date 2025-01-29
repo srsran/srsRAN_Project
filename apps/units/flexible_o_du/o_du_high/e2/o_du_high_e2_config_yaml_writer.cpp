@@ -29,7 +29,7 @@ using namespace srsran;
 static void fill_o_du_high_e2_pcap_section(YAML::Node node, const o_du_high_e2_pcap_config& config)
 {
   node["e2ap_du_filename"] = config.filename;
-  node["e2ap_enable"]      = config.enabled;
+  node["e2ap_du_enable"]   = config.enabled;
 }
 
 void srsran::fill_o_du_high_e2_config_in_yaml_schema(YAML::Node& node, const o_du_high_e2_config& config)

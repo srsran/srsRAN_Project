@@ -41,13 +41,17 @@ target_link_libraries(srsran_uplink_processor srsran_channel_processors)
 add_library(srsran_upper_phy upper_phy_factories.cpp upper_phy_impl.cpp upper_phy_factories.cpp
                              upper_phy_rx_symbol_handler_impl.cpp upper_phy_rx_results_notifier_wrapper.cpp
                              upper_phy_error_handler_impl.cpp)
-target_link_libraries(srsran_upper_phy srsran_instrumentation
+target_link_libraries(srsran_upper_phy
+        srsran_channel_equalizer
+        srsran_channel_precoder
         srsran_downlink_processor
-        srsran_uplink_processor
-        srsran_phy_support
         srsran_generic_funcs
+        srsran_instrumentation
+        srsran_phy_metrics
+        srsran_phy_support
         srsran_transform_precoding
-        srsran_channel_equalizer)
+        srsran_uplink_processor
+        )
 
 add_library(log_likelihood_ratio log_likelihood_ratio.cpp)
 target_link_libraries(log_likelihood_ratio srsvec)

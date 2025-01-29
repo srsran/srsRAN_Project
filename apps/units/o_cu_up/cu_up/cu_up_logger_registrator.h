@@ -30,7 +30,7 @@ namespace srsran {
 /// Registers the CU-UP loggers in the logger service.
 inline void register_cu_up_loggers(const cu_up_unit_logger_config& log_cfg)
 {
-  for (const auto& id : {"CU-UP", "CU-UP-E1"}) {
+  for (const auto& id : {"CU-UP"}) {
     auto& cu_up_logger = srslog::fetch_basic_logger(id, false);
     cu_up_logger.set_level(log_cfg.cu_level);
     cu_up_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
@@ -39,6 +39,10 @@ inline void register_cu_up_loggers(const cu_up_unit_logger_config& log_cfg)
   auto& pdcp_logger = srslog::fetch_basic_logger("PDCP", false);
   pdcp_logger.set_level(log_cfg.pdcp_level);
   pdcp_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
+  auto& e1ap_logger = srslog::fetch_basic_logger("CU-UP-E1", false);
+  e1ap_logger.set_level(log_cfg.e1ap_level);
+  e1ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   auto& f1u_logger = srslog::fetch_basic_logger("CU-F1-U", false);
   f1u_logger.set_level(log_cfg.f1u_level);

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# Copyright 2013-2024 Software Radio Systems Limited
+# Copyright 2013-2025 Software Radio Systems Limited
 #
 # By using this file, you agree to the terms and conditions set
 # forth in the LICENSE file which can be found at the top level of

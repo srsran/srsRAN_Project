@@ -56,7 +56,7 @@ protected:
 
   ue_ran_resource_configurator* create_ue(du_ue_index_t ue_index)
   {
-    auto result = res_mng->create_ue_resource_configurator(ue_index, to_du_cell_index(0));
+    auto result = res_mng->create_ue_resource_configurator(ue_index, to_du_cell_index(0), true);
     if (not result.has_value()) {
       return nullptr;
     }

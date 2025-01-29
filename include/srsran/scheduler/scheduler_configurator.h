@@ -25,16 +25,12 @@
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/drx_config.h"
 #include "srsran/ran/du_types.h"
-#include "srsran/ran/logical_channel/lcid.h"
+#include "srsran/ran/meas_gap_config.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/phy_time_unit.h"
-#include "srsran/ran/prach/prach_constants.h"
 #include "srsran/ran/qos/five_qi_qos_mapping.h"
-#include "srsran/ran/qos/qos_parameters.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/rrm.h"
-#include "srsran/ran/s_nssai.h"
-#include "srsran/ran/sib/sib_configuration.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/sr_configuration.h"
@@ -48,7 +44,6 @@
 #include "srsran/scheduler/config/serving_cell_config.h"
 #include "srsran/scheduler/config/si_scheduling_config.h"
 #include "srsran/scheduler/config/slice_rrm_policy_config.h"
-#include "srsran/scheduler/result/dci_info.h"
 
 namespace srsran {
 
@@ -90,7 +85,7 @@ struct sched_cell_configuration_request_message {
   uint8_t searchspace0;
 
   /// Payload size is in bytes.
-  unsigned sib1_payload_size;
+  units::bytes sib1_payload_size;
 
   /// Scheduling of SI messages.
   std::optional<si_scheduling_config> si_scheduling;
@@ -111,6 +106,8 @@ struct sched_cell_configuration_request_message {
   std::vector<slice_rrm_policy_config> rrm_policy_members;
 
   unsigned ntn_cs_koffset = 0;
+
+  bool cfra_enabled = false;
 };
 
 /// Parameters provided to the scheduler to configure the resource allocation of a specific UE.
@@ -180,7 +177,8 @@ struct rach_indication_message {
   slot_point      slot_rx;
 
   struct preamble {
-    unsigned      preamble_id;
+    unsigned preamble_id;
+    /// Allocated TC-RNTI, for Contention-based RACH, or C-RNTI, for Contention-free RACH.
     rnti_t        tc_rnti;
     phy_time_unit time_advance;
   };

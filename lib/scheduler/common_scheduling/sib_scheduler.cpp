@@ -35,6 +35,11 @@
 
 using namespace srsran;
 
+static constexpr uint64_t no_update_flag = std::numeric_limits<uint64_t>::max();
+
+/// SIB1 new transmission period in milliseconds, as per TS 38.331, 5.2.1.
+static constexpr std::chrono::milliseconds sib1_newtx_period{160};
+
 //  ------   Public methods   ------ .
 
 sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               expert_cfg_,
@@ -46,11 +51,12 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
   pdcch_sched{pdcch_sch},
   coreset0{msg.coreset0},
   searchspace0{msg.searchspace0},
-  sib1_payload_size{msg.sib1_payload_size}
+  sib1_payload_size{msg.sib1_payload_size},
+  pending_update(no_update_flag)
 {
   // Compute derived SIB1 parameters.
-  sib1_period = std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period),
-                         sib1_rtx_periodicity_to_value(expert_cfg.sib1_retx_period));
+  sib1_rtx_period = std::chrono::milliseconds{std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period),
+                                                       sib1_rtx_periodicity_to_value(expert_cfg.sib1_retx_period))};
 
   for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
     if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, i_ssb)) {
@@ -81,6 +87,31 @@ void sib1_scheduler::run_slot(cell_resource_allocator& res_alloc, const slot_poi
   }
 }
 
+static uint64_t sib1_update_to_uint64(unsigned version, units::bytes new_sib1_payload_size)
+{
+  // return will be composed by two uint32_t concatenated and stored in a uint64_t.
+  uint64_t new_info = version & std::numeric_limits<uint32_t>::max();
+  new_info <<= 32U;
+  new_info += new_sib1_payload_size.value() & std::numeric_limits<uint32_t>::max();
+  return new_info;
+}
+
+static std::pair<unsigned, units::bytes> uint64_to_sib1_update(uint64_t val)
+{
+  std::pair<unsigned, units::bytes> result;
+  // Retrieve version.
+  result.first = val >> 32U;
+  // Retrieve size.
+  result.second = units::bytes(val & std::numeric_limits<uint32_t>::max());
+  return result;
+}
+
+void sib1_scheduler::handle_sib1_update_indication(unsigned version, units::bytes new_sib1_payload_size)
+{
+  // Enqueue new SIB1 version and size.
+  pending_update.store(sib1_update_to_uint64(version, new_sib1_payload_size), std::memory_order_release);
+}
+
 void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid)
 {
   // NOTE:
@@ -91,10 +122,10 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid)
   // - [Implementation defined] We assume the SIB1 is (re)transmitted every 20ms if the SSB periodicity <= 20ms.
   //   Else, we set the (re)transmission periodicity as the SSB's.
 
-  // The sib1_period_slots is expressed in unit of slots.
-  // NOTE: As sib1_period_slots is expressed in milliseconds or subframes, we need to this these into slots.
-  slot_point     sl_point          = res_grid.slot;
-  const unsigned sib1_period_slots = sib1_period * static_cast<unsigned>(sl_point.nof_slots_per_subframe());
+  // The sib1_rtx_period_slots is expressed in unit of slots.
+  slot_point     sl_point                = res_grid.slot;
+  const unsigned sib1_rtx_period_slots   = sib1_rtx_period.count() * sl_point.nof_slots_per_subframe();
+  const unsigned sib1_newtx_period_slots = sib1_newtx_period.count() * sl_point.nof_slots_per_subframe();
 
   // For each beam, check if the SIB1 needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
@@ -103,11 +134,16 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid)
       continue;
     }
 
-    if (sl_point.to_uint() % sib1_period_slots == sib1_type0_pdcch_css_slots[ssb_idx].to_uint()) {
+    if (sl_point.to_uint() % sib1_rtx_period_slots == sib1_type0_pdcch_css_slots[ssb_idx].to_uint()) {
       // Ensure slot for SIB1 has DL enabled.
       if (not cell_cfg.is_dl_enabled(sl_point)) {
         logger.error("Could not allocate SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
         return;
+      }
+
+      if ((sl_point.to_uint() % sib1_newtx_period_slots) == sib1_type0_pdcch_css_slots[ssb_idx].to_uint()) {
+        // If it is a new Tx, apply a new SIB1 PDU version, if it is pending.
+        handle_pending_sib1_update();
       }
 
       unsigned                          time_resource = 0;
@@ -161,7 +197,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
 
   const sch_mcs_description mcs_descr     = pdsch_mcs_get_config(pdsch_mcs_table::qam64, expert_cfg.sib1_mcs_index);
   const sch_prbs_tbs        sib1_prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{
-      sib1_payload_size, nof_symb_sh, calculate_nof_dmrs_per_rb(dmrs_info), nof_oh_prb, mcs_descr, nof_layers});
+      sib1_payload_size.value(), nof_symb_sh, calculate_nof_dmrs_per_rb(dmrs_info), nof_oh_prb, mcs_descr, nof_layers});
 
   // 1. Find available RBs in PDSCH for SIB1 grant.
   crb_interval sib1_crbs;
@@ -229,6 +265,8 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   // Add SIB1 to list of SIB1 information to pass to lower layers.
   sib_information& sib1 = res_grid.result.dl.bc.sibs.emplace_back();
   sib1.si_indicator     = sib_information::si_indicator_type::sib1;
+  sib1.version          = current_version;
+  sib1.nof_txs          = 0;
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = sib1.pdsch_cfg;
@@ -239,4 +277,19 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
                            sib1_crbs_grant,
                            pdsch_td_res_alloc_list[sib1_pdcch.dci.si_f1_0.time_resource].symbols,
                            dmrs_info);
+}
+
+void sib1_scheduler::handle_pending_sib1_update()
+{
+  uint64_t upd_val = pending_update.exchange(no_update_flag, std::memory_order_acquire);
+  if (upd_val == no_update_flag) {
+    // No update detected.
+    return;
+  }
+
+  auto [version, new_payload_size] = uint64_to_sib1_update(upd_val);
+  srsran_assert(version > current_version or (version == current_version and sib1_payload_size == new_payload_size),
+                "Invalid SIB1 version set");
+  current_version   = version;
+  sib1_payload_size = new_payload_size;
 }

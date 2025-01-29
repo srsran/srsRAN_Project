@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "lib/f1u/cu_up/f1u_session_manager_impl.h"
+#include "lib/f1u/split_connector/f1u_session_manager_impl.h"
 #include "tests/unittests/cu_up/cu_up_test_helpers.h"
 #include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
