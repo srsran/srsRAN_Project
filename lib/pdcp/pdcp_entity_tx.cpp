@@ -224,6 +224,11 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   /// Prepare buffer info struct to pass to crypto executor.
   pdcp_tx_buffer_info buf_info{.buf = std::move(buf), .count = st.tx_next};
 
+  // Increment TX_NEXT. We do this before passing the SDU+Header
+  // to the crypto executor, so that the reordering function has the updated state.
+  st.tx_next++;
+
+  // Apply security in crypto executor
   auto fn = [this, buf_info = std::move(buf_info)]() mutable {
     auto pre = std::chrono::high_resolution_clock::now();
     apply_security(std::move(buf_info), false);
@@ -235,9 +240,6 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     logger.log_warning("Dropped PDU, crypto executor queue is full. st={}", st);
     metrics.add_lost_sdus(1);
   }
-
-  // Increment TX_NEXT
-  st.tx_next++;
 
   up_tracer << trace_event{"pdcp_tx_pdu", tx_tp};
 }
@@ -619,7 +621,7 @@ void pdcp_entity_tx::data_recovery()
 
 void pdcp_entity_tx::reset()
 {
-  st = {0, 0, 0};
+  st = {0, 0, 0, 0};
   tx_window.clear();
   logger.log_debug("Entity was reset. {}", st);
 }
@@ -706,6 +708,13 @@ void pdcp_entity_tx::handle_transmit_notification_impl(uint32_t notif_sn, bool i
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
+  if (notif_count >= st.tx_trans_pending) {
+    logger.log_error("Invalid notification SN, notif_count is larger then pending TX'es. notif_sn={} notif_count={} {}",
+                     notif_sn,
+                     notif_count,
+                     st);
+    return;
+  }
   if (notif_count < st.tx_trans) {
     logger.log_info("Invalid notification SN, notif_count is too low. notif_sn={} notif_count={} is_retx={} {}",
                     notif_sn,
