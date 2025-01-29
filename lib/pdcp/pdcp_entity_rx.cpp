@@ -519,7 +519,6 @@ byte_buffer pdcp_entity_rx::compile_status_report()
 security::security_result pdcp_entity_rx::apply_deciphering_and_integrity_check(byte_buffer buf, uint32_t count)
 {
   // obtain the thread-specific ID of the worker
-
   uint32_t worker_idx = execution_context::get_current_worker_index();
 
   if (worker_idx >= max_nof_crypto_workers) {

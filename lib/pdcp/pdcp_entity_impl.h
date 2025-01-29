@@ -51,6 +51,7 @@ public:
                                           ue_ctrl_timer_factory,
                                           ue_dl_executor,
                                           crypto_executor,
+                                          max_nof_crypto_workers,
                                           metrics_agg);
     rx = std::make_unique<pdcp_entity_rx>(ue_index,
                                           rb_id,

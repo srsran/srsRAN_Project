@@ -180,8 +180,16 @@ void benchmark_pdcp_tx(bench_params                  params,
     }
     frame       = std::make_unique<pdcp_tx_gen_frame>();
     metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, drb_id_t::drb1, timer_duration{1000}, nullptr, worker);
-    pdcp_tx     = std::make_unique<pdcp_entity_tx>(
-        0, drb_id_t::drb1, config, *frame, *frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
+    pdcp_tx     = std::make_unique<pdcp_entity_tx>(0,
+                                               drb_id_t::drb1,
+                                               config,
+                                               *frame,
+                                               *frame,
+                                               timer_factory{timers, worker},
+                                               worker,
+                                               worker,
+                                               1, // FIXME
+                                               *metrics_agg);
     pdcp_tx->configure_security(sec_cfg, int_enabled, ciph_enabled);
 
     const uint32_t max_pdu_size = sdu_len + 9;

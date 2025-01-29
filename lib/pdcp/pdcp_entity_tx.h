@@ -74,6 +74,7 @@ public:
                  timer_factory                   ue_ctrl_timer_factory_,
                  task_executor&                  ue_dl_executor_,
                  task_executor&                  crypto_executor_,
+                 uint32_t                        max_nof_crypto_workers_,
                  pdcp_metrics_aggregator&        metrics_agg_);
 
   ~pdcp_entity_tx() override;
@@ -167,8 +168,10 @@ private:
 
   pdcp_tx_state st                  = {0, 0, 0};
   uint32_t      desired_buffer_size = 0;
+  uint32_t      max_nof_crypto_workers;
 
-  std::unique_ptr<security::security_engine_tx> sec_engine;
+  using sec_engine_vec = std::vector<std::unique_ptr<security::security_engine_tx>>;
+  sec_engine_vec sec_engine_pool;
 
   security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
   security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;
@@ -176,11 +179,17 @@ private:
   early_drop_reason check_early_drop(const byte_buffer& buf);
   uint32_t          warn_on_drop_count = 0;
 
+  void apply_reordering(pdcp_tx_buf_info pdu_info);
+
   void write_data_pdu_to_lower_layers(pdcp_tx_buf_info&& buf_info, bool is_retx);
+
   void write_control_pdu_to_lower_layers(byte_buffer buf);
 
+  /// TODO add docs
+  void apply_security(pdcp_tx_buf_info pdu_info);
+
   /// Apply ciphering and integrity protection to the payload
-  expected<byte_buffer> apply_ciphering_and_integrity_protection(byte_buffer buf, uint32_t count);
+  security::security_result apply_ciphering_and_integrity_protection(byte_buffer buf, uint32_t count);
 
   uint32_t notification_count_estimation(uint32_t notification_sn) const;
 

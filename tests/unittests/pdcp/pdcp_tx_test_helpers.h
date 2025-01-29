@@ -16,6 +16,7 @@
 #include "srsran/pdcp/pdcp_entity.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/executors/task_worker_pool.h"
 #include <gtest/gtest.h>
 #include <queue>
 
@@ -143,8 +144,16 @@ protected:
     metrics_agg =
         std::make_unique<pdcp_metrics_aggregator>(0, rb_id, timer_duration{100}, &metrics_notif, worker, false);
     // Create PDCP entity
-    pdcp_tx = std::make_unique<pdcp_entity_tx>(
-        0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
+    pdcp_tx = std::make_unique<pdcp_entity_tx>(0,
+                                               rb_id,
+                                               config,
+                                               test_frame,
+                                               test_frame,
+                                               timer_factory{timers, worker},
+                                               worker,
+                                               worker,
+                                               nof_crypto_threads,
+                                               *metrics_agg);
     pdcp_tx->set_status_provider(&test_frame);
     pdcp_tx->handle_desired_buffer_size_notification(20 * (1 << 20)); // 20 MBi in RLC buffer
   }
@@ -187,5 +196,15 @@ protected:
   mock_pdcp_metrics_notifier metrics_notif;
   std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
   std::unique_ptr<pdcp_entity_tx>          pdcp_tx;
+
+  // Crypto worker pool
+  const uint32_t nof_crypto_threads = 2;
+  unsigned       crypto_queue_size  = 128;
+
+  task_worker_pool<concurrent_queue_policy::lockfree_mpmc>          crypto_worker_pool{"crypto",
+                                                                              nof_crypto_threads,
+                                                                              crypto_queue_size};
+  task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc> crypto_exec =
+      task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(crypto_worker_pool);
 };
 } // namespace srsran
