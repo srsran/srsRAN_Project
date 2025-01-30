@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "common.h"
-#include "positioning_ids.h"
 #include "srsran/ran/nr_cgi.h"
+#include "srsran/ran/positioning/common.h"
+#include "srsran/ran/positioning/positioning_ids.h"
 #include <optional>
 #include <variant>
 #include <vector>

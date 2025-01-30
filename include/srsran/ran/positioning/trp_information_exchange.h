@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include "../cyclic_prefix.h"
-#include "common.h"
-#include "positioning_ids.h"
 #include "srsran/ran/band_helper.h"
+#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/positioning/common.h"
+#include "srsran/ran/positioning/positioning_ids.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <variant>
 #include <vector>
