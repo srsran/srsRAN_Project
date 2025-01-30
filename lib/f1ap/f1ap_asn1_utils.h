@@ -298,6 +298,8 @@ inline std::optional<gnb_cu_ue_f1ap_id_t> get_gnb_cu_ue_f1ap_id(const asn1::f1ap
       return (gnb_cu_ue_f1ap_id_t)success_outcome.value.ue_context_mod_confirm()->gnb_cu_ue_f1ap_id;
     case success_types::positioning_info_resp:
       return (gnb_cu_ue_f1ap_id_t)success_outcome.value.positioning_info_resp()->gnb_cu_ue_f1ap_id;
+    case success_types::positioning_activation_resp:
+      return (gnb_cu_ue_f1ap_id_t)success_outcome.value.positioning_activation_resp()->gnb_cu_ue_f1ap_id;
     default:
       break;
   }
@@ -319,6 +321,8 @@ get_gnb_cu_ue_f1ap_id(const asn1::f1ap::unsuccessful_outcome_s& unsuccess_outcom
       return (gnb_cu_ue_f1ap_id_t)unsuccess_outcome.value.ue_context_mod_refuse()->gnb_cu_ue_f1ap_id;
     case unsuccess_types::positioning_info_fail:
       return (gnb_cu_ue_f1ap_id_t)unsuccess_outcome.value.positioning_info_fail()->gnb_cu_ue_f1ap_id;
+    case unsuccess_types::positioning_activation_fail:
+      return (gnb_cu_ue_f1ap_id_t)unsuccess_outcome.value.positioning_activation_fail()->gnb_cu_ue_f1ap_id;
     default:
       break;
   }

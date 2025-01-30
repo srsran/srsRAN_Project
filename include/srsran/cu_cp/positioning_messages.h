@@ -14,6 +14,7 @@
 #include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/cause/nrppa_cause.h"
 #include "srsran/ran/positioning/measurement_information.h"
+#include "srsran/ran/positioning/positioning_activation.h"
 #include "srsran/ran/positioning/positioning_information_exchange.h"
 #include "srsran/ran/positioning/trp_information_exchange.h"
 #include <optional>
@@ -84,13 +85,29 @@ struct positioning_information_request_t {
 };
 
 struct positioning_information_response_t {
-  std::optional<srs_configuration_t>       srs_cfg;
-  std::optional<sfn_initialization_time_t> sfn_initialization_time;
+  std::optional<srs_configuration_t>  srs_cfg;
+  std::optional<relative_time_1900_t> sfn_initialization_time;
   // Optional list.
   std::vector<ue_tx_teg_assoc_item_t> ue_tx_teg_assoc_list;
 };
 
 struct positioning_information_failure_t {
+  nrppa_cause_t cause;
+};
+
+struct positioning_activation_request_t {
+  ue_index_t ue_index;
+
+  srs_type_t                          srs_type;
+  std::optional<relative_time_1900_t> activation_time;
+};
+
+struct positioning_activation_response_t {
+  std::optional<uint16_t> sys_frame_num;
+  std::optional<uint8_t>  slot_num;
+};
+
+struct positioning_activation_failure_t {
   nrppa_cause_t cause;
 };
 
