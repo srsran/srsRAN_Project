@@ -250,6 +250,7 @@ inline pdcp_config pdcp_make_default_srb_config()
   config.tx.sn_size                = pdcp_sn_size::size12bits;
   config.tx.direction              = pdcp_security_direction::downlink;
   config.tx.status_report_required = false;
+  config.tx.discard_timer          = pdcp_discard_timer::infinity;
 
   // Rx config.
   config.rx.sn_size               = pdcp_sn_size::size12bits;

@@ -59,7 +59,7 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   if (is_srb() && is_um()) {
     report_error("PDCP SRB cannot be used with RLC UM. {}", cfg);
   }
-  if (is_srb() && cfg.discard_timer.has_value()) {
+  if (is_srb() && cfg.discard_timer != pdcp_discard_timer::infinity) {
     logger.log_error("Invalid SRB config with discard_timer={}", cfg.discard_timer);
   }
   if (is_drb() && !cfg.discard_timer.has_value()) {
@@ -446,19 +446,19 @@ void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info, bool is_retx)
     auto handle_failure = [this, sec_err = result.buf.error(), count = result.count]() {
       switch (sec_err) {
         case srsran::security::security_error::integrity_failure:
-          logger.log_warning("Integrity failed, dropping PDU. count={}", count);
+          logger.log_warning("Applying integrity failed, dropping PDU. count={}", count);
           upper_cn.on_protocol_failure();
           break;
         case srsran::security::security_error::ciphering_failure:
-          logger.log_warning("Deciphering failed, dropping PDU. count={}", count);
+          logger.log_warning("Applying ciphering failed, dropping PDU. count={}", count);
           upper_cn.on_protocol_failure();
           break;
         case srsran::security::security_error::buffer_failure:
-          logger.log_error("Buffer error when decrypting and verifying integrity, dropping PDU. count={}", count);
+          logger.log_error("Buffer error when ciphering and applying integrity, dropping PDU. count={}", count);
           upper_cn.on_protocol_failure();
           break;
         case srsran::security::security_error::engine_failure:
-          logger.log_error("Engine error when decrypting and verifying integrity, dropping PDU. count={}", count);
+          logger.log_error("Engine error when ciphering and applying integrity, dropping PDU. count={}", count);
           upper_cn.on_protocol_failure();
           break;
       }
@@ -502,14 +502,16 @@ security::security_result pdcp_entity_tx::apply_ciphering_and_integrity_protecti
 
   security::security_engine_tx* sec_engine = sec_engine_pool[worker_idx].get();
   if (sec_engine == nullptr) {
-    // Security is not configured. Pass through for DRBs; append zero MAC-I for SRBs. (TODO is this OK??)
+    // Security is not configured. Append zero MAC-I for SRBs, error for DRBs.
     if (is_srb()) {
       security::sec_mac mac = {};
       if (not buf.append(mac)) {
         logger.log_warning("Failed to append MAC-I to PDU. count={}", count);
         return {.buf = make_unexpected(srsran::security::security_error::buffer_failure), .count = count};
       }
+      return {.buf = std::move(buf), .count = count};
     }
+    logger.log_error("Empty engine for DRB bearer. count={}", count);
     return {.buf = make_unexpected(srsran::security::security_error::engine_failure), .count = count};
   }
 
