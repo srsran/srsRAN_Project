@@ -2475,7 +2475,7 @@ using srs_cfg_ext_ies_o = protocol_ext_empty_o;
 using srs_res_list_l = dyn_array<srs_res_s>;
 
 // SRSResourceSet-List ::= SEQUENCE (SIZE (1..16)) OF SRSResourceSet
-using srs_res_set_list_l = dyn_array<srs_res_set_s>;
+using srs_res_set_list2_l = dyn_array<srs_res_set_s>;
 
 // ActiveULBWP-ExtIEs ::= OBJECT SET OF F1AP-PROTOCOL-EXTENSION
 using active_ul_bwp_ext_ies_o = protocol_ext_empty_o;
@@ -2487,7 +2487,7 @@ struct srs_cfg_s {
   bool                      ie_exts_present = false;
   srs_res_list_l            srs_res_list;
   pos_srs_res_list_l        pos_srs_res_list;
-  srs_res_set_list_l        srs_res_set_list;
+  srs_res_set_list2_l       srs_res_set_list;
   pos_srs_res_set_list_l    pos_srs_res_set_list;
   srs_cfg_ext_ies_container ie_exts;
 
@@ -20206,6 +20206,9 @@ struct sldrx_cycle_item_s {
 
 // SRSCarrier-List ::= SEQUENCE (SIZE (1..32)) OF SRSCarrier-List-Item
 using srs_carrier_list_l = dyn_array<srs_carrier_list_item_s>;
+
+// SRSResourceSetList ::= SEQUENCE (SIZE (1..16)) OF SRSResourceSetItem
+using srs_res_set_list_l = dyn_array<srs_res_set_item_s>;
 
 using serving_cells_list_item_ext_ies_container = protocol_ext_container_empty_l;
 
