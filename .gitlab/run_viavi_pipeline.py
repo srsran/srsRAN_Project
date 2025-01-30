@@ -3,6 +3,7 @@
 import argparse
 from dataclasses import dataclass, field
 import pathlib
+import sys
 from typing import Dict, List
 
 try:
@@ -138,9 +139,17 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
     PYARGS = f'--viavi-manual-campaign-filename "{test_definition.campaign_filename}" --viavi-manual-test-name "{test_definition.id}" --viavi-manual-test-timeout {timeout} --retina-pod-timeout 900'
     if args_definition.gnb_cli:
         PYARGS += f' --viavi-manual-gnb-arguments "{args_definition.gnb_cli}"'
-        print("⚠️  Using srsgnb-cli overwrites the configuration defined in the test_declaration.yml for the test. Please review your new config carefully!!")
+        print("")
+        print(
+            "⚠️  Using srsgnb-cli overwrites the configuration defined in the test_declaration.yml for the test. Please review your new config carefully!!"
+        )
         print("⚠️  OLD configuration: ", _convert_extra_config_into_command(test_definition.gnb_extra_config))
         print("⚠️  NEW configuration: ", args_definition.gnb_cli)
+        print("")
+        if input("Do you want to continue with the new configuration? (yes/no): ").strip().lower() not in ("y", "yes"):
+            print("Exiting as per user request.")
+            sys.exit(0)
+        print("")
 
     RETINA_ARGS = "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
 
