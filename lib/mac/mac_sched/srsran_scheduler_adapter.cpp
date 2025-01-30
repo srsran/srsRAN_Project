@@ -393,5 +393,5 @@ void srsran_scheduler_adapter::cell_handler::handle_srs(const mac_srs_indication
   parent.sched_impl->handle_srs_indication(ind);
 
   // Forward SRS into positioning handler.
-  pos_handler->handle_srs(msg);
+  pos_handler->handle_srs_indication(msg);
 }

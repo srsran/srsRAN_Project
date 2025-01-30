@@ -63,6 +63,10 @@ struct srs_info {
   /// Values { 0,...,t_srs_period - 1}.
   /// \remark Only applies if resource_type == periodic or resource_type == semi_persistent.
   unsigned t_offset;
+  /// Whether the SRS should be used to obtain a normalized channel I/Q matrix.
+  bool normalized_channel_iq_matrix_requested;
+  /// Whether the SRS should be used to generate a positioning report.
+  bool positioning_report_requested;
 };
 
 } // namespace srsran

@@ -28,7 +28,7 @@ public:
     return launch_no_op_task(mac_cell_positioning_measurement_response{});
   }
 
-  void handle_srs(const mac_srs_indication_message& msg) override {}
+  void handle_srs_indication(const mac_srs_indication_message& msg) override {}
 };
 
 } // namespace

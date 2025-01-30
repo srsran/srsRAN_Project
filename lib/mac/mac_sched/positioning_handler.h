@@ -29,7 +29,7 @@ public:
   handle_positioning_measurement_request(const mac_cell_positioning_measurement_request& req) = 0;
 
   /// Handle SRS indication from lower layers.
-  virtual void handle_srs(const mac_srs_indication_message& msg) = 0;
+  virtual void handle_srs_indication(const mac_srs_indication_message& msg) = 0;
 };
 
 std::unique_ptr<positioning_handler> create_positioning_handler(scheduler_positioning_handler& sched,
