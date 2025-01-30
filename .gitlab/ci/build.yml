@@ -274,12 +274,13 @@ variables:
   variables:
     OS: ubuntu-24.10
     COMPILER: gcc
-    CMAKE_BUILD_TYPE: Debug
+    CMAKE_BUILD_TYPE: RelWithDebInfo
     ASSERT_LEVEL: PARANOID
     ENABLE_UBSAN: "True"
     TEST_MODE: default
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
+  timeout: 2 hours
 
 .smoke archlinux:
   extends: .build_and_unit
@@ -401,7 +402,6 @@ smoke tsan cached:
 smoke ubsan cached:
   extends: .smoke ubsan
   stage: manual
-  timeout: 1 hour
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
@@ -1104,33 +1104,6 @@ debian 12 amd64 avx512:
   variables:
     ASSERT_LEVEL: PARANOID
     CMAKE_BUILD_TYPE: Debug
-  parallel:
-    matrix:
-      # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
-      - OS: [ubuntu-24.10, ubuntu-24.04]
-        SANITIZER: tsan
-        COMPILER: [gcc, clang]
-        ENABLE_TSAN: "True"
-        TEST_MODE: default
-      - OS: [ubuntu-22.04]
-        SANITIZER: asan
-        COMPILER: [gcc, clang]
-        ENABLE_ASAN: "True"
-        TEST_MODE: default
-      - OS: [ubuntu-24.10, ubuntu-24.04]
-        SANITIZER: asan
-        COMPILER: clang
-        ENABLE_ASAN: "True"
-        TEST_MODE: default
-      - OS: [ubuntu-24.10, ubuntu-24.04]
-        SANITIZER: valgrind
-        COMPILER: gcc
-        TEST_MODE: valgrind
-      - OS: [ubuntu-24.10, ubuntu-24.04]
-        SANITIZER: ubsan
-        COMPILER: [gcc, clang]
-        ENABLE_UBSAN: "True"
-        TEST_MODE: default
 
 sanitizers amd64 native:
   extends: .weekly sanitizers
@@ -1160,6 +1133,9 @@ sanitizers amd64 native:
         COMPILER: [gcc, clang]
         ENABLE_UBSAN: "True"
         TEST_MODE: default
+        INFRASTRUCTURE_TAG: amd64-docker
+        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
 
 sanitizers amd64 avx2:
   extends: .weekly sanitizers
@@ -1193,6 +1169,9 @@ sanitizers amd64 avx2:
         COMPILER: [gcc, clang]
         ENABLE_UBSAN: "True"
         TEST_MODE: default
+        INFRASTRUCTURE_TAG: amd64-avx2-docker
+        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
 
 sanitizers amd64 avx512:
   extends: .weekly sanitizers
@@ -1223,17 +1202,49 @@ sanitizers amd64 avx512:
         COMPILER: [gcc, clang]
         ENABLE_UBSAN: "True"
         TEST_MODE: default
+        INFRASTRUCTURE_TAG: amd64-avx2-avx512-docker
+        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
 
 sanitizers arm native:
   extends: .weekly sanitizers
   variables:
     INFRASTRUCTURE_TAG: arm64
+  parallel:
+    matrix:
+      # ubuntu-22.04 disabled due to https://github.com/google/sanitizers/issues/1259#issuecomment-642312392
+      - OS: [ubuntu-24.10, ubuntu-24.04]
+        SANITIZER: tsan
+        COMPILER: [gcc, clang]
+        ENABLE_TSAN: "True"
+        TEST_MODE: default
+      - OS: [ubuntu-22.04]
+        SANITIZER: asan
+        COMPILER: [gcc, clang]
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+      - OS: [ubuntu-24.10, ubuntu-24.04]
+        SANITIZER: asan
+        COMPILER: clang
+        ENABLE_ASAN: "True"
+        TEST_MODE: default
+      - OS: [ubuntu-24.10, ubuntu-24.04]
+        SANITIZER: valgrind
+        COMPILER: gcc
+        TEST_MODE: valgrind
+      - OS: [ubuntu-24.10, ubuntu-24.04]
+        SANITIZER: ubsan
+        COMPILER: [gcc, clang]
+        ENABLE_UBSAN: "True"
+        TEST_MODE: default
+        INFRASTRUCTURE_TAG: arm64-docker
+        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
 
 sanitizers arm neon:
-  extends: .weekly sanitizers
+  extends: sanitizers arm native
   variables:
     MARCH: armv8.2-a+crypto+fp16+dotprod
-    INFRASTRUCTURE_TAG: arm64
 
 # UHD Alternatives
 
