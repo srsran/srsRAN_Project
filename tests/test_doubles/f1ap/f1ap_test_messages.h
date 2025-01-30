@@ -147,5 +147,11 @@ f1ap_message generate_trp_information_response(const trp_id_t& trp_id);
 /// \brief Generates dummy F1AP TRP INFORMATION FAILURE message.
 f1ap_message generate_trp_information_failure(const trp_id_t& trp_id);
 
+/// \brief Generates dummy F1AP Positioning INFORMATION RESPONSE message.
+f1ap_message generate_positioning_information_response(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
+/// \brief Generates dummy F1AP Positioning INFORMATION FAILURE message.
+f1ap_message generate_positioning_information_failure(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
 } // namespace test_helpers
 } // namespace srsran

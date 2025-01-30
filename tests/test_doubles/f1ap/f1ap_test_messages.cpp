@@ -646,3 +646,34 @@ f1ap_message srsran::test_helpers::generate_trp_information_failure(const trp_id
 
   return pdu;
 }
+
+f1ap_message srsran::test_helpers::generate_positioning_information_response(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                             gnb_cu_ue_f1ap_id_t cu_ue_id)
+{
+  f1ap_message pdu = {};
+
+  pdu.pdu.set_successful_outcome();
+  pdu.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_POSITIONING_INFO_EXCHANGE);
+
+  auto& pos_info_resp              = pdu.pdu.successful_outcome().value.positioning_info_resp();
+  pos_info_resp->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(cu_ue_id);
+  pos_info_resp->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(du_ue_id);
+
+  return pdu;
+}
+
+f1ap_message srsran::test_helpers::generate_positioning_information_failure(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                            gnb_cu_ue_f1ap_id_t cu_ue_id)
+{
+  f1ap_message pdu = {};
+
+  pdu.pdu.set_unsuccessful_outcome();
+  pdu.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_POSITIONING_INFO_EXCHANGE);
+
+  auto& pos_info_fail                      = pdu.pdu.unsuccessful_outcome().value.positioning_info_fail();
+  pos_info_fail->gnb_cu_ue_f1ap_id         = gnb_cu_ue_f1ap_id_to_uint(cu_ue_id);
+  pos_info_fail->gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(du_ue_id);
+  pos_info_fail->cause.set_radio_network() = cause_radio_network_e::unspecified;
+
+  return pdu;
+}

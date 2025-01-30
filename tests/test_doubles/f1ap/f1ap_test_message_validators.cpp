@@ -297,3 +297,12 @@ bool test_helpers::is_valid_f1ap_trp_information_request(const f1ap_message& msg
   TRUE_OR_RETURN(is_packable(msg));
   return true;
 }
+
+bool test_helpers::is_valid_f1ap_positioning_information_request(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type().value == f1ap_pdu_c::types_opts::init_msg);
+  TRUE_OR_RETURN(msg.pdu.init_msg().value.type().value ==
+                 f1ap_elem_procs_o::init_msg_c::types_opts::positioning_info_request);
+  TRUE_OR_RETURN(is_packable(msg));
+  return true;
+}
