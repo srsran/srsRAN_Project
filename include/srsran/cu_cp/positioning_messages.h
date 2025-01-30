@@ -15,7 +15,9 @@
 #include "srsran/ran/cause/nrppa_cause.h"
 #include "srsran/ran/crit_diagnostics.h"
 #include "srsran/ran/positioning/measurement_information.h"
+#include "srsran/ran/positioning/positioning_information_exchange.h"
 #include "srsran/ran/positioning/trp_information_exchange.h"
+#include <optional>
 
 namespace srsran::srs_cu_cp {
 
@@ -79,12 +81,24 @@ struct measurement_abort_t {
 
 struct positioning_information_request_t {
   ue_index_t ue_index;
+
+  std::optional<requested_srs_tx_characteristics_t> requested_srs_tx_characteristics;
+  std::optional<ue_report_info_t>                   ue_report_info;
+  std::optional<ue_teg_info_request_t>              ue_teg_info_request;
+  std::optional<uint32_t>                           ue_teg_report_periodicity;
 };
 
-struct positioning_information_response_t {};
+struct positioning_information_response_t {
+  std::optional<srs_configuration_t> srs_cfg;
+  std::optional<uint64_t>            sfn_initialization_time;
+  std::optional<crit_diagnostics_t>  crit_diagnostics;
+  // Optional list.
+  std::vector<ue_tx_teg_assoc_item_t> ue_tx_teg_assoc_list;
+};
 
 struct positioning_information_failure_t {
-  nrppa_cause_t cause;
+  nrppa_cause_t                     cause;
+  std::optional<crit_diagnostics_t> crit_diagnostics;
 };
 
 } // namespace srsran::srs_cu_cp
