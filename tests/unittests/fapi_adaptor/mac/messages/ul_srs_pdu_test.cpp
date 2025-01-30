@@ -48,4 +48,8 @@ TEST(mac_to_fapi_srs_pdu_test, valid_srs_pdu_should_pass)
   ASSERT_EQ(mac_pdu.resource_type, fapi_pdu.resource_type);
   ASSERT_EQ(mac_pdu.t_srs_period, fapi_pdu.t_srs);
   ASSERT_EQ(mac_pdu.t_offset, fapi_pdu.t_offset);
+  ASSERT_EQ(mac_pdu.normalized_channel_iq_matrix_requested,
+            fapi_pdu.srs_params_v4.report_type.test(to_value(fapi::srs_report_type::normalized_channel_iq_matrix)));
+  ASSERT_EQ(mac_pdu.positioning_report_requested,
+            fapi_pdu.srs_params_v4.report_type.test(to_value(fapi::srs_report_type::positioning)));
 }

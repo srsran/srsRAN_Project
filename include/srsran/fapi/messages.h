@@ -730,6 +730,26 @@ struct ul_msg_a_pusch_pdu {
   uint32_t                tb_size;
 };
 
+/// Describes the SRS report type.
+enum class srs_report_type : uint8_t {
+  per_prg_and_symbol_snr = 0,
+  normalized_channel_iq_matrix,
+  channel_svd,
+  positioning,
+  su_mimo_codebook,
+  channel_2d_dft,
+  su_mimo_codebook_v2,
+  per_prg_ni_and_rsrp,
+  last,
+  no_report = 255
+};
+
+/// Converts a SRS report type to unsigned.
+constexpr unsigned to_value(srs_report_type value)
+{
+  return static_cast<unsigned>(value);
+}
+
 /// SRS parameters in FAPIv4.
 struct ul_srs_params_v4 {
   /// Maximum number of UL spatial stream ports.
@@ -744,7 +764,7 @@ struct ul_srs_params_v4 {
   uint16_t                                             srs_bandwidth_size;
   std::array<symbol_info, 4>                           sym_info;
   uint32_t                                             usage;
-  std::array<uint8_t, 32>                              report_type;
+  std::bitset<to_value(srs_report_type::last)>         report_type;
   uint8_t                                              singular_value_representation;
   uint8_t                                              iq_representation;
   uint16_t                                             prg_size;
@@ -1133,19 +1153,6 @@ struct srs_channel_svd_representation {
 /// Describes the coordinate system for uplink Angle Of Arrival.
 enum class srs_coordinate_system_ul_aoa : uint8_t { local = 0, global = 1 };
 
-/// Describes the SRS report type.
-enum class srs_report_type : uint8_t {
-  per_prg_and_symbol_snr = 0,
-  normalized_channel_iq_matrix,
-  channel_svd,
-  positioning,
-  su_mimo_codebook,
-  channel_2d_dft,
-  su_mimo_codebook_v2,
-  per_prg_ni_and_rsrp,
-  no_report = 255
-};
-
 /// Encodes SRS positioning report.
 struct srs_positioning_report {
   /// TUL-RTOA as recorded in TS 38.215 on section 5.1.
@@ -1155,6 +1162,32 @@ struct srs_positioning_report {
   std::optional<float>         ul_aoa;
   std::optional<float>         rsrp;
 };
+
+/// Converts the given SRS report type to a string.
+constexpr const char* to_string(srs_report_type value)
+{
+  switch (value) {
+    case srs_report_type::normalized_channel_iq_matrix:
+      return "normalized_channel_iq_matrix";
+    case srs_report_type::channel_2d_dft:
+      return "channel_2d_dft";
+    case srs_report_type::channel_svd:
+      return "channel_svd";
+    case srs_report_type::per_prg_and_symbol_snr:
+      return "per_prg_and_symbol_snr";
+    case srs_report_type::per_prg_ni_and_rsrp:
+      return "per_prg_ni_and_rsrp";
+    case srs_report_type::positioning:
+      return "positioning";
+    case srs_report_type::su_mimo_codebook:
+      return "su_mimo_codebook";
+    case srs_report_type::su_mimo_codebook_v2:
+      return "su_mimo_codebook_v2";
+    default:
+      break;
+  }
+  return "no_report";
+}
 
 /// SRS indication pdu.
 struct srs_indication_pdu {

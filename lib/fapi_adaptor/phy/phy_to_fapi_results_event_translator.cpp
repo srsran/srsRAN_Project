@@ -561,13 +561,22 @@ void phy_to_fapi_results_event_translator::on_new_srs_results(const ul_srs_resul
   const ul_srs_context& context = result.context;
   builder.set_basic_parameters(context.slot.sfn(), context.slot.slot_index());
 
-  // Do not use the handle for now.
-  static const unsigned            handle          = 0;
-  fapi::srs_indication_pdu_builder srs_pdu_builder = builder.add_srs_pdu(handle, context.rnti);
+  if (context.is_normalized_channel_iq_matrix_report_requested) {
+    // Do not use the handle for now.
+    static const unsigned            handle          = 0;
+    fapi::srs_indication_pdu_builder srs_pdu_builder = builder.add_srs_pdu(handle, context.rnti);
+    srs_pdu_builder.set_metrics_parameters({}, result.processor_result.time_alignment.time_alignment * 1e9);
+    srs_pdu_builder.set_codebook_report_matrix(result.processor_result.channel_matrix);
+  }
 
-  srs_pdu_builder.set_metrics_parameters({}, result.processor_result.time_alignment.time_alignment * 1e9);
-
-  srs_pdu_builder.set_codebook_report_matrix(result.processor_result.channel_matrix);
+  if (context.is_positioning_report_requested) {
+    // Do not use the handle for now.
+    static const unsigned            handle          = 0;
+    fapi::srs_indication_pdu_builder srs_pdu_builder = builder.add_srs_pdu(handle, context.rnti);
+    srs_pdu_builder.set_metrics_parameters({}, result.processor_result.time_alignment.time_alignment * 1e9);
+    srs_pdu_builder.set_positioning_report_parameters(
+        {phy_time_unit::from_seconds(result.processor_result.time_alignment.time_alignment)}, {}, {}, {});
+  }
 
   error_type<fapi::validator_report> validation_result = validate_srs_indication(msg);
   if (!validation_result) {

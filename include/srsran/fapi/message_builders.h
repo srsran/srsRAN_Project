@@ -1757,16 +1757,18 @@ public:
   /// \note These parameters are specified in SCF-222 v8.0 Section 3.4.10 Table 3-209.
   srs_indication_pdu_builder& set_positioning_report_parameters(std::optional<phy_time_unit> ul_relative_toa,
                                                                 std::optional<uint32_t>      gnb_rx_tx_difference,
-                                                                srs_coordinate_system_ul_aoa coordinate_system_aoa,
                                                                 std::optional<uint16_t>      ul_aoa,
                                                                 std::optional<float>         rsrp)
   {
-    pdu.report_type                       = srs_report_type::positioning;
-    pdu.positioning.ul_relative_toa       = ul_relative_toa;
-    pdu.positioning.gnb_rx_tx_difference  = gnb_rx_tx_difference;
-    pdu.positioning.coordinate_system_aoa = coordinate_system_aoa;
-    pdu.positioning.ul_aoa                = ul_aoa;
-    pdu.positioning.rsrp                  = rsrp;
+    pdu.report_type                      = srs_report_type::positioning;
+    pdu.positioning.ul_relative_toa      = ul_relative_toa;
+    pdu.positioning.gnb_rx_tx_difference = gnb_rx_tx_difference;
+    pdu.positioning.ul_aoa               = ul_aoa;
+    pdu.positioning.rsrp                 = rsrp;
+    // [Implementation defined] Set this one to local as it is not used.
+    pdu.positioning.coordinate_system_aoa = srs_coordinate_system_ul_aoa::local;
+    // [Implementation defined] Set the usage to a enum value.
+    pdu.usage = srs_usage::codebook;
 
     return *this;
   }
@@ -2657,7 +2659,7 @@ class ul_srs_pdu_builder
   ul_srs_pdu& pdu;
 
 public:
-  explicit ul_srs_pdu_builder(ul_srs_pdu& pdu_) : pdu(pdu_) {}
+  explicit ul_srs_pdu_builder(ul_srs_pdu& pdu_) : pdu(pdu_) { pdu.srs_params_v4.report_type = 0; }
 
   /// Sets the SRS PDU basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table SRS PDU.
@@ -2699,6 +2701,21 @@ public:
   {
     pdu.comb_size   = comb_size;
     pdu.comb_offset = comb_offset;
+
+    return *this;
+  }
+
+  /// Sets the SRS report types and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v8.0 section 3.4.3.4 in table SRS PDU.
+  ul_srs_pdu_builder& set_report_params(bool enable_normalized_iq_matrix_report, bool enable_positioning_report)
+  {
+    if (enable_normalized_iq_matrix_report) {
+      pdu.srs_params_v4.report_type.set(to_value(srs_report_type::normalized_channel_iq_matrix));
+    }
+
+    if (enable_positioning_report) {
+      pdu.srs_params_v4.report_type.set(to_value(srs_report_type::positioning));
+    }
 
     return *this;
   }

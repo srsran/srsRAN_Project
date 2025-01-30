@@ -372,6 +372,25 @@ void srsran::fapi::log_uci_indication(const uci_indication_message& msg, srslog:
   logger.debug("{}", to_c_str(buffer));
 }
 
+void srsran::fapi::log_srs_indication(const srs_indication_message& msg, srslog::basic_logger& logger)
+{
+  fmt::memory_buffer buffer;
+  fmt::format_to(std::back_inserter(buffer), "SRS.indication slot={}.{}", msg.sfn, msg.slot);
+
+  for (const auto& pdu : msg.pdus) {
+    fmt::format_to(std::back_inserter(buffer), "\n\t-  rnti={}", pdu.rnti);
+    if (pdu.timing_advance_offset_ns != std::numeric_limits<decltype(pdu.timing_advance_offset_ns)>::min()) {
+      fmt::format_to(std::back_inserter(buffer), " ta_ns={}", pdu.timing_advance_offset_ns);
+    }
+    fmt::format_to(std::back_inserter(buffer), " report_type={}", to_string(pdu.report_type));
+    if (pdu.report_type == srs_report_type::positioning && pdu.positioning.ul_relative_toa) {
+      fmt::format_to(std::back_inserter(buffer), " RTOA_s={}", pdu.positioning.ul_relative_toa.value().to_seconds());
+    }
+  }
+
+  logger.debug("{}", to_c_str(buffer));
+}
+
 static void log_prach_pdu(const ul_prach_pdu& pdu, fmt::memory_buffer& buffer)
 {
   fmt::format_to(std::back_inserter(buffer),
@@ -444,7 +463,7 @@ static void log_srs_pdu(const ul_srs_pdu& pdu, fmt::memory_buffer& buffer)
   fmt::format_to(
       std::back_inserter(buffer),
       "\n\t- SRS rnti={} bwp={}:{} nof_ports={} symb={}:{} config_idx={} comb=(size={} offset={} cyclic_shift={}) "
-      "freq_shift={} type={}",
+      "freq_shift={} type={} normalized_channel_iq_matrix_req={} positioning_report_req={}",
       pdu.rnti,
       pdu.bwp_start,
       pdu.bwp_size,
@@ -456,7 +475,9 @@ static void log_srs_pdu(const ul_srs_pdu& pdu, fmt::memory_buffer& buffer)
       pdu.comb_offset,
       pdu.cyclic_shift,
       pdu.frequency_shift,
-      to_string(pdu.resource_type));
+      to_string(pdu.resource_type),
+      pdu.srs_params_v4.report_type.test(to_value(srs_report_type::normalized_channel_iq_matrix)),
+      pdu.srs_params_v4.report_type.test(to_value(srs_report_type::positioning)));
 }
 
 void srsran::fapi::log_ul_tti_request(const ul_tti_request_message& msg, srslog::basic_logger& logger)

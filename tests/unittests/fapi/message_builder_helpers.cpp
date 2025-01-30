@@ -1131,6 +1131,7 @@ ul_srs_pdu unittest::build_valid_ul_srs_pdu()
   pdu.resource_type             = srs_resource_type::periodic;
   pdu.t_srs                     = srs_periodicity::sl4;
   pdu.t_offset                  = 2;
+  pdu.srs_params_v4.report_type = 0;
 
   return pdu;
 }

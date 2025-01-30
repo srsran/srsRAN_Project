@@ -596,24 +596,26 @@ srs_info_helper unittests::build_valid_srs_pdu()
   srs_info& pdu  = helper.pdu;
   helper.bwp_cfg = {cyclic_prefix::NORMAL, subcarrier_spacing::kHz15, {10, 20}};
 
-  pdu.crnti                = to_rnti(23);
-  pdu.bwp_cfg              = &helper.bwp_cfg;
-  pdu.nof_antenna_ports    = 4;
-  pdu.symbols              = {0, 1};
-  pdu.nof_repetitions      = n1;
-  pdu.config_index         = 4;
-  pdu.sequence_id          = 4;
-  pdu.bw_index             = 2;
-  pdu.tx_comb              = tx_comb_size::n2;
-  pdu.comb_offset          = 1;
-  pdu.cyclic_shift         = 2;
-  pdu.freq_position        = 32;
-  pdu.freq_shift           = 21;
-  pdu.freq_hopping         = 3;
-  pdu.group_or_seq_hopping = srs_group_or_sequence_hopping::neither;
-  pdu.resource_type        = srs_resource_type::aperiodic;
-  pdu.t_srs_period         = srs_periodicity::sl8;
-  pdu.t_offset             = 65;
+  pdu.crnti                                  = to_rnti(23);
+  pdu.bwp_cfg                                = &helper.bwp_cfg;
+  pdu.nof_antenna_ports                      = 4;
+  pdu.symbols                                = {0, 1};
+  pdu.nof_repetitions                        = n1;
+  pdu.config_index                           = 4;
+  pdu.sequence_id                            = 4;
+  pdu.bw_index                               = 2;
+  pdu.tx_comb                                = tx_comb_size::n2;
+  pdu.comb_offset                            = 1;
+  pdu.cyclic_shift                           = 2;
+  pdu.freq_position                          = 32;
+  pdu.freq_shift                             = 21;
+  pdu.freq_hopping                           = 3;
+  pdu.group_or_seq_hopping                   = srs_group_or_sequence_hopping::neither;
+  pdu.resource_type                          = srs_resource_type::aperiodic;
+  pdu.t_srs_period                           = srs_periodicity::sl8;
+  pdu.t_offset                               = 65;
+  pdu.normalized_channel_iq_matrix_requested = true;
+  pdu.positioning_report_requested           = true;
 
   return helper;
 }

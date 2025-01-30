@@ -45,6 +45,8 @@ void logging_slot_data_notifier_decorator::on_uci_indication(const uci_indicatio
 
 void logging_slot_data_notifier_decorator::on_srs_indication(const srs_indication_message& msg)
 {
+  log_srs_indication(msg, logger);
+
   notifier->on_srs_indication(msg);
 }
 
