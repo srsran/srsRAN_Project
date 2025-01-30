@@ -658,4 +658,16 @@ f1ap_message srsran::test_helpers::generate_positioning_information_failure(gnb_
   return {};
 }
 
+f1ap_message srsran::test_helpers::generate_positioning_activation_response(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                            gnb_cu_ue_f1ap_id_t cu_ue_id)
+{
+  return {};
+}
+
+f1ap_message srsran::test_helpers::generate_positioning_activation_failure(gnb_du_ue_f1ap_id_t du_ue_id,
+                                                                           gnb_cu_ue_f1ap_id_t cu_ue_id)
+{
+  return {};
+}
+
 #endif // SRSRAN_HAS_ENTERPRISE

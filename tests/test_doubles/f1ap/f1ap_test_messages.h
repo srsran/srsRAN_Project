@@ -156,5 +156,11 @@ f1ap_message generate_positioning_information_response(gnb_du_ue_f1ap_id_t du_ue
 /// \brief Generates dummy F1AP Positioning INFORMATION FAILURE message.
 f1ap_message generate_positioning_information_failure(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
 
+/// \brief Generates dummy F1AP Positioning ACTIVATION RESPONSE message.
+f1ap_message generate_positioning_activation_response(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
+/// \brief Generates dummy F1AP Positioning ACTIVATION FAILURE message.
+f1ap_message generate_positioning_activation_failure(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
 } // namespace test_helpers
 } // namespace srsran

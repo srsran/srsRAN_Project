@@ -298,4 +298,9 @@ bool test_helpers::is_valid_f1ap_positioning_information_request(const f1ap_mess
   return true;
 }
 
+bool test_helpers::is_valid_f1ap_positioning_activation_request(const f1ap_message& msg)
+{
+  return true;
+}
+
 #endif // SRSRAN_HAS_ENTERPRISE
