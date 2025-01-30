@@ -259,6 +259,10 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
     pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + nof_sdus, sn_size));
     ASSERT_EQ(nof_sdus + 1, pdcp_tx->nof_pdus_in_window());
 
+    // Tick one more time before receiving the delivery notifications.
+    // This will make sure that the discard timers are restarted with the correct timeout.
+    timers.tick();
+
     // Notify delivery of first SDU
     pdcp_tx->handle_delivery_notification(pdcp_compute_sn(st.tx_next, sn_size));
     ASSERT_EQ(nof_sdus, pdcp_tx->nof_pdus_in_window());
@@ -277,7 +281,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
     ASSERT_EQ(1, pdcp_tx->nof_pdus_in_window());
 
     // Make sure that discard timer was correctly restarted.
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 9; i++) {
       timers.tick();
       worker.run_pending_tasks();
     }
