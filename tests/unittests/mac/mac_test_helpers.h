@@ -110,7 +110,7 @@ public:
   void handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event) override {}
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
   void handle_positioning_measurement_request(const positioning_measurement_request& req) override {}
-  void handle_positioning_measurement_stop(pos_meas_id_t pos_id) override {}
+  void handle_positioning_measurement_stop(rnti_t pos_rnti) override {}
 };
 
 class dummy_mac_scheduler_adapter : public mac_scheduler_cell_info_handler

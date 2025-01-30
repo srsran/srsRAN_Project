@@ -209,7 +209,7 @@ void scheduler_impl::handle_positioning_measurement_request(const positioning_me
   // TODO
 }
 
-void scheduler_impl::handle_positioning_measurement_stop(pos_meas_id_t pos_id)
+void scheduler_impl::handle_positioning_measurement_stop(rnti_t pos_rnti)
 {
   // TODO
 }

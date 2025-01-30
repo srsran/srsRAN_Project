@@ -58,7 +58,7 @@ public:
 
   // Positioning events.
   void handle_positioning_measurement_request(const positioning_measurement_request& req) override;
-  void handle_positioning_measurement_stop(pos_meas_id_t pos_id) override;
+  void handle_positioning_measurement_stop(rnti_t pos_rnti) override;
 
 private:
   const scheduler_expert_config expert_params;

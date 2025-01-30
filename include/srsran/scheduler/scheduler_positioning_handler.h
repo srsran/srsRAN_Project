@@ -15,12 +15,14 @@
 
 namespace srsran {
 
-using pos_meas_id_t = uint8_t;
-
 struct positioning_measurement_request {
-  pos_meas_id_t                pos_id;
-  std::optional<du_ue_index_t> ue_to_measure;
-  srs_config                   srs_to_measure;
+  /// \brief This RNTI can correspond to either a real connected UE C-RNTI or an RNTI assigned just for positioning
+  /// measurement.
+  rnti_t pos_rnti;
+  /// In case the positioning measurement is for a currently connected UE, we also define the UE index.
+  std::optional<du_ue_index_t> ue_index;
+  /// SRS resources to measure.
+  srs_config srs_to_measure;
 };
 
 /// Interfaces used to start and stop new positioning measurements in the scheduler
@@ -33,7 +35,7 @@ public:
   virtual void handle_positioning_measurement_request(const positioning_measurement_request& req) = 0;
 
   /// Shuts down an on-going positioning measurement
-  virtual void handle_positioning_measurement_stop(pos_meas_id_t pos_id) = 0;
+  virtual void handle_positioning_measurement_stop(rnti_t pos_rnti) = 0;
 };
 
 } // namespace srsran

@@ -242,9 +242,6 @@ struct mac_uci_indication_message {
 };
 
 struct mac_srs_pdu {
-  /// Identifier of positioning measurement taking place.
-  using pos_meas_id_t = uint8_t;
-
   mac_srs_pdu() = default;
   mac_srs_pdu(rnti_t rnti_, std::optional<phy_time_unit> ta, srs_channel_matrix& matrix) :
     rnti(rnti_), time_advance_offset(ta), channel_matrix(matrix)
@@ -255,8 +252,6 @@ struct mac_srs_pdu {
   rnti_t rnti;
   /// Timing Advance Offset measured for the UE.
   std::optional<phy_time_unit> time_advance_offset;
-  /// Identifier for SRSs used during positioning
-  std::optional<pos_meas_id_t> pos_id;
   /// Channel matrix reported in the SRS codebook-based report.
   /// \remark This Channel matrix assumes that the SRS usage is codebook-based, which is the only usage currently
   /// supported.
