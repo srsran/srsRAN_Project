@@ -12,8 +12,11 @@
 #include "phy_metrics_channel_equalizer_decorator.h"
 #include "phy_metrics_channel_precoder_decorator.h"
 #include "phy_metrics_crc_calculator_decorator.h"
+#include "phy_metrics_demodulation_mapper_decorator.h"
+#include "phy_metrics_evm_calculator_decorator.h"
 #include "phy_metrics_ldpc_decoder_decorator.h"
 #include "phy_metrics_ldpc_encoder_decorator.h"
+#include "phy_metrics_modulation_mapper_decorator.h"
 #include "phy_metrics_pseudo_random_generator_decorator.h"
 #include "phy_metrics_pusch_channel_estimator_decorator.h"
 #include "phy_metrics_pusch_processor_decorator.h"
@@ -159,7 +162,7 @@ std::shared_ptr<pseudo_random_generator_factory> srsran::create_pseudo_random_ge
 
 std::shared_ptr<channel_precoder_factory>
 srsran::create_channel_precoder_metric_decorator_factory(std::shared_ptr<channel_precoder_factory> base_factory,
-                                                         srsran::channel_precoder_metric_notifier& notifier)
+                                                         channel_precoder_metric_notifier&         notifier)
 {
   return std::make_shared<metric_decorator_factory<channel_precoder,
                                                    channel_precoder_factory,
@@ -170,11 +173,44 @@ srsran::create_channel_precoder_metric_decorator_factory(std::shared_ptr<channel
 
 std::shared_ptr<channel_equalizer_factory>
 srsran::create_channel_equalizer_metric_decorator_factory(std::shared_ptr<channel_equalizer_factory> base_factory,
-                                                          srsran::channel_equalizer_metric_notifier& notifier)
+                                                          channel_equalizer_metric_notifier&         notifier)
 {
   return std::make_shared<metric_decorator_factory<channel_equalizer,
                                                    channel_equalizer_factory,
                                                    channel_equalizer_metric_notifier,
                                                    phy_metrics_channel_equalizer_decorator>>(std::move(base_factory),
                                                                                              notifier);
+}
+
+std::shared_ptr<modulation_mapper_factory>
+srsran::create_modulation_mapper_metric_decorator_factory(std::shared_ptr<modulation_mapper_factory> base_factory,
+                                                          channel_modulation_metric_notifier&        notifier)
+{
+  return std::make_shared<metric_decorator_factory<modulation_mapper,
+                                                   modulation_mapper_factory,
+                                                   channel_modulation_metric_notifier,
+                                                   phy_metrics_modulation_mapper_decorator>>(std::move(base_factory),
+                                                                                             notifier);
+}
+
+std::shared_ptr<demodulation_mapper_factory>
+srsran::create_demodulation_mapper_metric_decorator_factory(std::shared_ptr<demodulation_mapper_factory> base_factory,
+                                                            channel_modulation_metric_notifier&          notifier)
+{
+  return std::make_shared<metric_decorator_factory<demodulation_mapper,
+                                                   demodulation_mapper_factory,
+                                                   channel_modulation_metric_notifier,
+                                                   phy_metrics_demodulation_mapper_decorator>>(std::move(base_factory),
+                                                                                               notifier);
+}
+
+std::shared_ptr<evm_calculator_factory>
+srsran::create_evm_calculator_metric_decorator_factory(std::shared_ptr<evm_calculator_factory> base_factory,
+                                                       channel_modulation_metric_notifier&     notifier)
+{
+  return std::make_shared<metric_decorator_factory<evm_calculator,
+                                                   evm_calculator_factory,
+                                                   channel_modulation_metric_notifier,
+                                                   phy_metrics_evm_calculator_decorator>>(std::move(base_factory),
+                                                                                          notifier);
 }

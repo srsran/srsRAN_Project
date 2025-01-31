@@ -63,11 +63,11 @@ private:
 class pbch_modulator_factory_sw : public pbch_modulator_factory
 {
 private:
-  std::shared_ptr<channel_modulation_factory>      modulator_factory;
+  std::shared_ptr<modulation_mapper_factory>       modulator_factory;
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
 
 public:
-  pbch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory_,
+  pbch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory_,
                             std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     modulator_factory(std::move(modulator_factory_)), prg_factory(std::move(prg_factory_))
   {
@@ -77,7 +77,7 @@ public:
 
   std::unique_ptr<pbch_modulator> create() override
   {
-    return std::make_unique<pbch_modulator_impl>(modulator_factory->create_modulation_mapper(), prg_factory->create());
+    return std::make_unique<pbch_modulator_impl>(modulator_factory->create(), prg_factory->create());
   }
 };
 
@@ -271,7 +271,7 @@ srsran::create_pbch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory>  
 }
 
 std::shared_ptr<pbch_modulator_factory>
-srsran::create_pbch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
+srsran::create_pbch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory,
                                          std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<pbch_modulator_factory_sw>(std::move(modulator_factory), std::move(prg_factory));

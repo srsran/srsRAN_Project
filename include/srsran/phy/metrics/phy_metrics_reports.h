@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_coding/crc_calculator.h"
+#include "srsran/ran/sch/modulation_scheme.h"
 #include "srsran/support/units.h"
 #include <chrono>
 #include <optional>
@@ -114,6 +115,16 @@ struct channel_equalizer_metrics {
   unsigned nof_layers;
   /// Number of transmit ports.
   unsigned nof_ports;
+  /// Elapsed time during processing.
+  std::chrono::nanoseconds elapsed;
+};
+
+/// Collects modulation metrics.
+struct channel_modulation_metrics {
+  /// Modulation.
+  modulation_scheme modulation;
+  /// Number of complex symbols to modulate.
+  unsigned nof_symbols;
   /// Elapsed time during processing.
   std::chrono::nanoseconds elapsed;
 };

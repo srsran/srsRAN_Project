@@ -233,7 +233,7 @@ private:
       return nullptr;
     }
 
-    std::shared_ptr<channel_modulation_factory> modulator_factory = create_channel_modulation_sw_factory();
+    std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_factory();
     if (!modulator_factory) {
       return nullptr;
     }

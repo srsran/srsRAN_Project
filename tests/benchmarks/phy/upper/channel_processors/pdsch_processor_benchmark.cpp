@@ -561,7 +561,7 @@ static pdsch_processor_factory& get_processor_factory()
   TESTASSERT(prg_factory);
 
   // Create demodulator mapper factory.
-  std::shared_ptr<channel_modulation_factory> chan_modulation_factory = create_channel_modulation_sw_factory();
+  std::shared_ptr<modulation_mapper_factory> chan_modulation_factory = create_modulation_mapper_factory();
   TESTASSERT(chan_modulation_factory);
 
   // Create CRC calculator factory.

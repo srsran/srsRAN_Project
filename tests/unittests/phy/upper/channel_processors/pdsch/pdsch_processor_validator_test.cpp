@@ -195,7 +195,7 @@ protected:
     ASSERT_NE(prg_factory, nullptr);
 
     // Create demodulator mapper factory.
-    std::shared_ptr<channel_modulation_factory> chan_modulation_factory = create_channel_modulation_sw_factory();
+    std::shared_ptr<modulation_mapper_factory> chan_modulation_factory = create_modulation_mapper_factory();
     ASSERT_NE(chan_modulation_factory, nullptr);
 
     // Create CRC calculator factory.

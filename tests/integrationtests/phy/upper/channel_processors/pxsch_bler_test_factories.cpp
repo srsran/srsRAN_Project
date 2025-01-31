@@ -121,7 +121,7 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
       create_pseudo_random_generator_sw_factory();
   report_fatal_error_if_not(pseudo_random_gen_factory, "Failed to create factory.");
 
-  std::shared_ptr<channel_modulation_factory> channel_mod_factory = create_channel_modulation_sw_factory();
+  std::shared_ptr<modulation_mapper_factory> channel_mod_factory = create_modulation_mapper_factory();
   report_fatal_error_if_not(channel_mod_factory, "Failed to create factory.");
 
   std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
@@ -255,15 +255,18 @@ srsran::create_sw_pusch_processor_factory(task_executor&                        
       create_channel_equalizer_generic_factory(equalizer_algorithm_type);
   report_fatal_error_if_not(eq_factory, "Failed to create factory.");
 
-  std::shared_ptr<channel_modulation_factory> chan_mod_factory = create_channel_modulation_sw_factory();
-  report_fatal_error_if_not(chan_mod_factory, "Failed to create factory.");
+  std::shared_ptr<demodulation_mapper_factory> chan_demod_factory = create_demodulation_mapper_factory();
+  report_fatal_error_if_not(chan_demod_factory, "Failed to create factory.");
+
+  std::shared_ptr<evm_calculator_factory> evm_calc_factory = create_evm_calculator_factory();
+  report_fatal_error_if_not(evm_calc_factory, "Failed to create factory.");
 
   std::shared_ptr<transform_precoder_factory> precoding_factory =
       create_dft_transform_precoder_factory(dft_proc_factory, MAX_RB);
   report_fatal_error_if_not(precoding_factory, "Invalid transform precoding factory.");
 
   std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
-      eq_factory, precoding_factory, chan_mod_factory, pseudo_random_gen_factory, MAX_RB, true, true);
+      eq_factory, precoding_factory, chan_demod_factory, evm_calc_factory, pseudo_random_gen_factory, MAX_RB, true);
   report_fatal_error_if_not(pusch_demod_factory, "Failed to create factory.");
 
   std::shared_ptr<ulsch_demultiplex_factory> demux_factory = create_ulsch_demultiplex_factory_sw();

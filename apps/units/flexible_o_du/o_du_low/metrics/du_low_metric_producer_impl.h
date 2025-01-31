@@ -11,6 +11,7 @@
 #pragma once
 
 #include "channel_equalizer_metrics_producer.h"
+#include "channel_modulation_metrics_producer.h"
 #include "channel_precoder_metrics_producer.h"
 #include "crc_calculator_metrics_producer.h"
 #include "ldpc_decoder_metrics_producer.h"
@@ -37,6 +38,9 @@ public:
     std::chrono::nanoseconds pusch_processor_total_time         = pusch_processor_producer.get_total_time();
     std::chrono::nanoseconds pusch_scrambling_total_time        = pusch_scrambling_producer.get_total_time();
     std::chrono::nanoseconds pusch_equalizer_total_time         = pusch_channel_equalizer_producer.get_total_time();
+    std::chrono::nanoseconds pusch_demodulation_total_time      = pusch_demodulation_mapper_producer.get_total_time();
+    std::chrono::nanoseconds pusch_evm_calc_total_time          = pusch_evm_calculator_producer.get_total_time();
+    std::chrono::nanoseconds pusch_waiting_time                 = pusch_processor_producer.get_total_wait_time();
 
     double ldpc_decoder_percent = 100.0 * static_cast<double>(ldpc_decoder_total_time.count()) /
                                   static_cast<double>(pusch_processor_total_time.count());
@@ -45,6 +49,12 @@ public:
     double pusch_scrambling_percent = 100.0 * static_cast<double>(pusch_scrambling_total_time.count()) /
                                       static_cast<double>(pusch_processor_total_time.count());
     double pusch_equalizer_percent = 100.0 * static_cast<double>(pusch_equalizer_total_time.count()) /
+                                     static_cast<double>(pusch_processor_total_time.count());
+    double pusch_demodulation_percent = 100.0 * static_cast<double>(pusch_demodulation_total_time.count()) /
+                                        static_cast<double>(pusch_processor_total_time.count());
+    double pusch_evm_calc_percent = 100.0 * static_cast<double>(pusch_evm_calc_total_time.count()) /
+                                    static_cast<double>(pusch_processor_total_time.count());
+    double pusch_wait_time_percent = 100.0 * static_cast<double>(pusch_waiting_time.count()) /
                                      static_cast<double>(pusch_processor_total_time.count());
 
     fmt::print("--- LDPC Encoder metrics (per codeblock) ---\n");
@@ -106,13 +116,42 @@ public:
     fmt::print("   Avg. PDSCH advance rate: {:.2f} Mbps\n", pdsch_scrambling_producer.get_advance_rate_Mbps());
     fmt::print("  Avg. PDSCH generate rate: {:.2f} Mbps\n", pdsch_scrambling_producer.get_generate_rate_Mbps());
     fmt::print("\n");
+    fmt::print("--- Modulation, demodulation and EVM calculation ---\n");
+    fmt::print("      Modulation rate QPSK: {:.2f} Mbps\n",
+               pdsch_modulation_mapper_producer.get_avg_rate_Mbps(modulation_scheme::QPSK));
+    fmt::print("                    16-QAM: {:.2f} Mbps\n",
+               pdsch_modulation_mapper_producer.get_avg_rate_Mbps(modulation_scheme::QAM16));
+    fmt::print("                    64-QAM: {:.2f} Mbps\n",
+               pdsch_modulation_mapper_producer.get_avg_rate_Mbps(modulation_scheme::QAM64));
+    fmt::print("                   256-QAM: {:.2f} Mbps\n",
+               pdsch_modulation_mapper_producer.get_avg_rate_Mbps(modulation_scheme::QAM256));
+    fmt::print("    Demodulation rate QPSK: {:.2f} Mbps\n",
+               pusch_demodulation_mapper_producer.get_avg_rate_Mbps(modulation_scheme::QPSK));
+    fmt::print("                    16-QAM: {:.2f} Mbps\n",
+               pusch_demodulation_mapper_producer.get_avg_rate_Mbps(modulation_scheme::QAM16));
+    fmt::print("                    64-QAM: {:.2f} Mbps\n",
+               pusch_demodulation_mapper_producer.get_avg_rate_Mbps(modulation_scheme::QAM64));
+    fmt::print("                   256-QAM: {:.2f} Mbps\n",
+               pusch_demodulation_mapper_producer.get_avg_rate_Mbps(modulation_scheme::QAM256));
+    fmt::print("  EVM calculator rate QPSK: {:.2f} Mbps\n",
+               pusch_evm_calculator_producer.get_avg_rate_Mbps(modulation_scheme::QPSK));
+    fmt::print("                    16-QAM: {:.2f} Mbps\n",
+               pusch_evm_calculator_producer.get_avg_rate_Mbps(modulation_scheme::QAM16));
+    fmt::print("                    64-QAM: {:.2f} Mbps\n",
+               pusch_evm_calculator_producer.get_avg_rate_Mbps(modulation_scheme::QAM64));
+    fmt::print("                   256-QAM: {:.2f} Mbps\n",
+               pusch_evm_calculator_producer.get_avg_rate_Mbps(modulation_scheme::QAM256));
+    fmt::print("\n");
     fmt::print("--- PUSCH Processor metrics ---\n");
     fmt::print("           Avg. data latency: {:.2f} us\n", pusch_processor_producer.get_avg_data_latency_us());
     fmt::print("            Avg. UCI latency: {:.2f} us\n", pusch_processor_producer.get_avg_uci_latency_us());
     fmt::print("  Avg. processing PUSCH rate: {:.2f} Mbps\n", pusch_processor_producer.get_processing_rate_Mbps());
     fmt::print("                Decoder time: {:.2f} % (asynchronous)\n", ldpc_decoder_percent);
+    fmt::print("                Decoder time: {:.2f} % (waiting time)\n", pusch_wait_time_percent);
     fmt::print("      Channel estimator time: {:.2f} %\n", pusch_channel_estimator_percent);
     fmt::print("      Channel equalizer time: {:.2f} %\n", pusch_equalizer_percent);
+    fmt::print("           Demodulation time: {:.2f} %\n", pusch_demodulation_percent);
+    fmt::print("        EVM calculation time: {:.2f} %\n", pusch_evm_calc_percent);
     fmt::print("             Scrambling time: {:.2f} %\n", pusch_scrambling_percent);
     fmt::print("\n");
     fmt::print("--- PDSCH Layer mapping and precoding metrics ---\n");
@@ -184,6 +223,24 @@ private:
     return pdsch_channel_precoder_producer.get_notifier();
   }
 
+  // See interface for documentation.
+  channel_modulation_metric_notifier& get_pdsch_modulation_mapper_notifier() override
+  {
+    return pdsch_modulation_mapper_producer.get_notifier();
+  }
+
+  // See interface for documentation.
+  channel_modulation_metric_notifier& get_pusch_demodulation_mapper_notifier() override
+  {
+    return pusch_demodulation_mapper_producer.get_notifier();
+  }
+
+  // See interface for documentation.
+  channel_modulation_metric_notifier& get_pusch_evm_calculator_notifier() override
+  {
+    return pusch_evm_calculator_producer.get_notifier();
+  }
+
   /// PDSCH CRC calculator metric producer implementation.
   crc_calculator_metric_producer_impl pdsch_crc_calculator_producer;
   /// PUSCH CRC calculator metric producer implementation.
@@ -204,6 +261,12 @@ private:
   channel_equalizer_metric_producer_impl pusch_channel_equalizer_producer;
   /// PDSCH channel precoder notifier.
   channel_precoder_metric_producer_impl pdsch_channel_precoder_producer;
+  /// PDSCH modulation mapper notifier.
+  channel_modulation_metric_producer_impl pdsch_modulation_mapper_producer;
+  /// PUSCH demodulation mapper notifier.
+  channel_modulation_metric_producer_impl pusch_demodulation_mapper_producer;
+  /// PUSCH EVM calculator notifier.
+  channel_modulation_metric_producer_impl pusch_evm_calculator_producer;
 }; // namespace srsran
 
 } // namespace srsran

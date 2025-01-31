@@ -17,15 +17,31 @@
 
 namespace srsran {
 
-class channel_modulation_factory
+class modulation_mapper_factory
 {
 public:
-  virtual ~channel_modulation_factory()                                     = default;
-  virtual std::unique_ptr<modulation_mapper>   create_modulation_mapper()   = 0;
-  virtual std::unique_ptr<demodulation_mapper> create_demodulation_mapper() = 0;
-  virtual std::unique_ptr<evm_calculator>      create_evm_calculator()      = 0;
+  virtual ~modulation_mapper_factory()                = default;
+  virtual std::unique_ptr<modulation_mapper> create() = 0;
 };
 
-std::shared_ptr<channel_modulation_factory> create_channel_modulation_sw_factory();
+std::shared_ptr<modulation_mapper_factory> create_modulation_mapper_factory();
+
+class demodulation_mapper_factory
+{
+public:
+  virtual ~demodulation_mapper_factory()                = default;
+  virtual std::unique_ptr<demodulation_mapper> create() = 0;
+};
+
+std::shared_ptr<demodulation_mapper_factory> create_demodulation_mapper_factory();
+
+class evm_calculator_factory
+{
+public:
+  virtual ~evm_calculator_factory()                = default;
+  virtual std::unique_ptr<evm_calculator> create() = 0;
+};
+
+std::shared_ptr<evm_calculator_factory> create_evm_calculator_factory();
 
 } // namespace srsran

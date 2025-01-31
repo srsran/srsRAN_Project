@@ -290,7 +290,7 @@ std::unique_ptr<upper_phy_ssb_example> srsran::upper_phy_ssb_example::create(con
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("lut");
   ASSERT_FACTORY(crc_calc_factory);
 
-  std::shared_ptr<channel_modulation_factory> modulator_factory = create_channel_modulation_sw_factory();
+  std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_factory();
   ASSERT_FACTORY(modulator_factory);
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
@@ -372,8 +372,8 @@ std::unique_ptr<upper_phy_ssb_example> srsran::upper_phy_ssb_example::create(con
   }
 
   // Create modulation mapper for random data.
-  std::shared_ptr<channel_modulation_factory> data_modulator_factory = create_channel_modulation_sw_factory();
-  std::unique_ptr<modulation_mapper>          data_modulator = data_modulator_factory->create_modulation_mapper();
+  std::shared_ptr<modulation_mapper_factory> data_modulator_factory = create_modulation_mapper_factory();
+  std::unique_ptr<modulation_mapper>         data_modulator         = data_modulator_factory->create();
 
   // Create resource grid mapper.
   std::unique_ptr<resource_grid_mapper> mapper = rg_mapper_factory->create();

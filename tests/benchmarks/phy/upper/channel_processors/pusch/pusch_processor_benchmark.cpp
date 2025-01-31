@@ -519,8 +519,15 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
   TESTASSERT(low_papr_sequence_gen_factory);
 
   // Create demodulator mapper factory.
-  std::shared_ptr<channel_modulation_factory> chan_modulation_factory = create_channel_modulation_sw_factory();
-  TESTASSERT(chan_modulation_factory);
+  std::shared_ptr<demodulation_mapper_factory> chan_demodulation_factory = create_demodulation_mapper_factory();
+  TESTASSERT(chan_demodulation_factory);
+
+  // Create EVM calculator mapper factory.
+  std::shared_ptr<evm_calculator_factory> evm_calc_factory = nullptr;
+  if (enable_evm) {
+    evm_calc_factory = create_evm_calculator_factory();
+    TESTASSERT(evm_calc_factory);
+  }
 
   // Create CRC calculator factory.
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
@@ -561,7 +568,7 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
 
   // Create PUSCH demodulator factory.
   std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
-      eq_factory, precoding_factory, chan_modulation_factory, prg_factory, MAX_RB, enable_evm, false);
+      eq_factory, precoding_factory, chan_demodulation_factory, evm_calc_factory, prg_factory, MAX_RB, false);
   TESTASSERT(pusch_demod_factory);
 
   // Create PUSCH demultiplexer factory.

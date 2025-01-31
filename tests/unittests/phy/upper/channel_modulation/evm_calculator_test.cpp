@@ -39,16 +39,22 @@ protected:
 
   void SetUp() override
   {
-    std::shared_ptr<channel_modulation_factory> factory = create_channel_modulation_sw_factory();
-    ASSERT_NE(factory, nullptr);
+    std::shared_ptr<evm_calculator_factory> evm_calc_factory = create_evm_calculator_factory();
+    ASSERT_NE(evm_calc_factory, nullptr);
 
-    calculator = factory->create_evm_calculator();
+    std::shared_ptr<demodulation_mapper_factory> demodulator_factory = create_demodulation_mapper_factory();
+    ASSERT_NE(demodulator_factory, nullptr);
+
+    std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_factory();
+    ASSERT_NE(modulator_factory, nullptr);
+
+    calculator = evm_calc_factory->create();
     ASSERT_TRUE(calculator);
 
-    demapper = factory->create_demodulation_mapper();
+    demapper = demodulator_factory->create();
     ASSERT_TRUE(demapper);
 
-    mapper = factory->create_modulation_mapper();
+    mapper = modulator_factory->create();
     ASSERT_TRUE(mapper);
   }
 };

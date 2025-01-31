@@ -32,7 +32,7 @@ public:
 
 std::shared_ptr<pucch_demodulator_factory>
 create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
-                                    std::shared_ptr<channel_modulation_factory>      demodulation_factory,
+                                    std::shared_ptr<demodulation_mapper_factory>     demodulation_factory,
                                     std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                     std::shared_ptr<transform_precoder_factory>      precoder_factory);
 

@@ -21,7 +21,7 @@ int main()
   std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw("auto");
   TESTASSERT(crc_calc_factory);
 
-  std::shared_ptr<channel_modulation_factory> modulator_factory = create_channel_modulation_sw_factory();
+  std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_factory();
   TESTASSERT(modulator_factory);
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
