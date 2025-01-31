@@ -21,7 +21,7 @@ namespace srsran {
 class phy_metrics_pusch_processor_decorator : public pusch_processor, private pusch_processor_result_notifier
 {
 public:
-  /// Creates a PUSCH processor decorator from a base PUSCH processor instance and metric notifier.
+  /// Creates a PUSCH processor decorator from a base PUSCH processor instance and a metric notifier.
   phy_metrics_pusch_processor_decorator(std::unique_ptr<pusch_processor> processor_,
                                         pusch_processor_metric_notifier& metric_notifier_) :
     processor(std::move(processor_)), metric_notifier(metric_notifier_)

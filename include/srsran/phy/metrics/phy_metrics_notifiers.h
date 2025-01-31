@@ -33,7 +33,9 @@ public:
 
 using crc_calculator_metric_notifier          = detail::phy_metric_notifier<crc_calculator_metrics>;
 using ldpc_encoder_metric_notifier            = detail::phy_metric_notifier<ldpc_encoder_metrics>;
+using ldpc_rate_matcher_metric_notifier       = detail::phy_metric_notifier<ldpc_rate_matcher_metrics>;
 using ldpc_decoder_metric_notifier            = detail::phy_metric_notifier<ldpc_decoder_metrics>;
+using ldpc_rate_dematcher_metric_notifier     = detail::phy_metric_notifier<ldpc_rate_dematcher_metrics>;
 using pusch_processor_metric_notifier         = detail::phy_metric_notifier<pusch_processor_metrics>;
 using pusch_channel_estimator_metric_notifier = detail::phy_metric_notifier<pusch_channel_estimator_metrics>;
 using pseudo_random_sequence_generator_metric_notifier =
@@ -44,25 +46,37 @@ using common_channel_modulation_metric_notifier = detail::phy_metric_notifier<mo
 using pdsch_modulation_mapper_metric_notifier   = common_channel_modulation_metric_notifier;
 using pusch_demodulation_mapper_metric_notifier = common_channel_modulation_metric_notifier;
 using pusch_evm_calculator_metric_notifier      = common_channel_modulation_metric_notifier;
+using ulsch_demultiplex_metric_notifier         = detail::phy_metric_notifier<ulsch_demultiplex_metrics>;
+using pusch_demodulator_metric_notifier         = detail::phy_metric_notifier<pusch_demodulator_metrics>;
+using time_alignment_estimator_metric_notifier  = detail::phy_metric_notifier<time_alignment_estimator_metrics>;
+using port_channel_estimator_metric_notifier    = detail::phy_metric_notifier<port_channel_estimator_metrics>;
+using transform_precoder_metric_notifier        = detail::phy_metric_notifier<transform_precoder_metrics>;
 
 /// Groups upper physical layer metric notifiers.
 class upper_phy_metrics_notifiers
 {
 public:
-  virtual ~upper_phy_metrics_notifiers()                                                             = default;
-  virtual crc_calculator_metric_notifier&                   get_pdsch_crc_calculator_notifier()      = 0;
-  virtual crc_calculator_metric_notifier&                   get_pusch_crc_calculator_notifier()      = 0;
-  virtual ldpc_encoder_metric_notifier&                     get_ldpc_encoder_notifier()              = 0;
-  virtual ldpc_decoder_metric_notifier&                     get_ldpc_decoder_notifier()              = 0;
-  virtual pusch_channel_estimator_metric_notifier&          get_pusch_channel_estimator_notifier()   = 0;
-  virtual pusch_processor_metric_notifier&                  get_pusch_processor_notifier()           = 0;
-  virtual pseudo_random_sequence_generator_metric_notifier& get_pusch_scrambling_notifier()          = 0;
-  virtual pseudo_random_sequence_generator_metric_notifier& get_pdsch_scrambling_notifier()          = 0;
-  virtual channel_precoder_metric_notifier&                 get_pdsch_channel_precoder_notifier()    = 0;
-  virtual channel_equalizer_metric_notifier&                get_pusch_channel_equalizer_notifier()   = 0;
-  virtual pdsch_modulation_mapper_metric_notifier&          get_pdsch_modulation_mapper_notifier()   = 0;
-  virtual pusch_demodulation_mapper_metric_notifier&        get_pusch_demodulation_mapper_notifier() = 0;
-  virtual pusch_evm_calculator_metric_notifier&             get_pusch_evm_calculator_notifier()      = 0;
+  virtual ~upper_phy_metrics_notifiers()                                                                = default;
+  virtual crc_calculator_metric_notifier&                   get_pdsch_crc_calculator_notifier()         = 0;
+  virtual crc_calculator_metric_notifier&                   get_pusch_crc_calculator_notifier()         = 0;
+  virtual ldpc_encoder_metric_notifier&                     get_ldpc_encoder_notifier()                 = 0;
+  virtual ldpc_rate_matcher_metric_notifier&                get_ldpc_rate_matcher_notifier()            = 0;
+  virtual ldpc_decoder_metric_notifier&                     get_ldpc_decoder_notifier()                 = 0;
+  virtual ldpc_rate_dematcher_metric_notifier&              get_ldpc_rate_dematcher_notifier()          = 0;
+  virtual pusch_channel_estimator_metric_notifier&          get_pusch_channel_estimator_notifier()      = 0;
+  virtual pusch_processor_metric_notifier&                  get_pusch_processor_notifier()              = 0;
+  virtual pseudo_random_sequence_generator_metric_notifier& get_pusch_scrambling_notifier()             = 0;
+  virtual pseudo_random_sequence_generator_metric_notifier& get_pdsch_scrambling_notifier()             = 0;
+  virtual channel_precoder_metric_notifier&                 get_pdsch_channel_precoder_notifier()       = 0;
+  virtual channel_equalizer_metric_notifier&                get_pusch_channel_equalizer_notifier()      = 0;
+  virtual pdsch_modulation_mapper_metric_notifier&          get_pdsch_modulation_mapper_notifier()      = 0;
+  virtual pusch_demodulation_mapper_metric_notifier&        get_pusch_demodulation_mapper_notifier()    = 0;
+  virtual pusch_evm_calculator_metric_notifier&             get_pusch_evm_calculator_notifier()         = 0;
+  virtual ulsch_demultiplex_metric_notifier&                get_ulsch_demultiplex_notifier()            = 0;
+  virtual pusch_demodulator_metric_notifier&                get_pusch_demodulator_notifier()            = 0;
+  virtual time_alignment_estimator_metric_notifier&         get_pusch_ta_estimator_notifier()           = 0;
+  virtual port_channel_estimator_metric_notifier&           get_pusch_port_channel_estimator_notifier() = 0;
+  virtual transform_precoder_metric_notifier&               get_pusch_transform_precoder_notifier()     = 0;
 };
 
 } // namespace srsran

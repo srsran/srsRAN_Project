@@ -99,7 +99,6 @@ private:
     metrics_modulation.sum_elapsed_ns += metrics.elapsed.count();
   }
 
-  /// Collection of metrics indexed by polynomials.
   metrics_per_modulation qpsk_metrics_collection;
   metrics_per_modulation qam16_metrics_collection;
   metrics_per_modulation qam64_metrics_collection;

@@ -36,6 +36,22 @@ struct ldpc_encoder_metrics {
   std::chrono::nanoseconds elapsed;
 };
 
+/// Collects LDPC rate matcher metrics.
+struct ldpc_rate_matcher_metrics {
+  /// Codeblock size.
+  units::bits output_size;
+  /// Elapsed time.
+  std::chrono::nanoseconds elapsed;
+};
+
+/// Collects LDPC rate dematcher metrics.
+struct ldpc_rate_dematcher_metrics {
+  /// Number of input bits.
+  units::bits input_size;
+  /// Elapsed time.
+  std::chrono::nanoseconds elapsed;
+};
+
 /// Collects LDPC decoder metrics.
 struct ldpc_decoder_metrics {
   /// Codeblock size.
@@ -137,5 +153,47 @@ using demodulation_mapper_metrics = channel_modulation_metrics;
 
 /// EVM calculator metrics, use common channel modulation metrics.
 using evm_calculator_metrics = channel_modulation_metrics;
+
+/// Collects UL-SCH demultiplexer metrics.
+struct ulsch_demultiplex_metrics {
+  /// Elapsed time during the new transmission initialization.
+  std::chrono::nanoseconds elapsed_init;
+  /// Accumulated elapsed time during the new block notifications.
+  std::chrono::nanoseconds elapsed_on_new_block;
+  /// Elapsed time during upon the notification of the end of the codeword.
+  std::chrono::nanoseconds elapsed_on_end_codeword;
+  /// Total number of bits that went through the demultiplexer.
+  unsigned sum_nof_bits;
+};
+
+/// Collects PUSCH demodulator metrics.
+struct pusch_demodulator_metrics {
+  /// Total PUSCH demodulator elapsed time.
+  std::chrono::nanoseconds elapsed;
+  /// Elapsed time calling codeword buffer methods.
+  std::chrono::nanoseconds elapsed_buffer;
+};
+
+/// Collects time alignment estimator metrics.
+struct time_alignment_estimator_metrics {
+  /// Total elapsed time.
+  std::chrono::nanoseconds elapsed;
+  /// Bandwidth in RE.
+  unsigned nof_re;
+};
+
+/// Collects port channel estimator metrics.
+struct port_channel_estimator_metrics {
+  /// Total elapsed time.
+  std::chrono::nanoseconds elapsed;
+};
+
+/// Collects transform precoder metrics.
+struct transform_precoder_metrics {
+  /// Total elapsed time.
+  std::chrono::nanoseconds elapsed;
+  /// Number of subcarriers.
+  unsigned nof_re;
+};
 
 } // namespace srsran

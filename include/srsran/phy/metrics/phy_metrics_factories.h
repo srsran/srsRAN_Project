@@ -26,6 +26,15 @@ create_crc_calculator_metric_decorator_factory(std::shared_ptr<crc_calculator_fa
 std::shared_ptr<ldpc_encoder_factory>
 create_ldpc_encoder_metric_decorator_factory(std::shared_ptr<ldpc_encoder_factory> base_factory,
                                              ldpc_encoder_metric_notifier&         notifier);
+/// Creates an LDPC rate matcher metric decorator factory.
+std::shared_ptr<ldpc_rate_matcher_factory>
+create_ldpc_rate_matcher_metric_decorator_factory(std::shared_ptr<ldpc_rate_matcher_factory> base_factory,
+                                                  ldpc_rate_matcher_metric_notifier&         notifier);
+
+/// Creates an LDPC rate dematcher metric decorator factory.
+std::shared_ptr<ldpc_rate_dematcher_factory>
+create_ldpc_rate_dematcher_metric_decorator_factory(std::shared_ptr<ldpc_rate_dematcher_factory> base_factory,
+                                                    ldpc_rate_dematcher_metric_notifier&         notifier);
 
 /// Creates an LDPC decoder metric decorator factory.
 std::shared_ptr<ldpc_decoder_factory>
@@ -70,5 +79,30 @@ create_demodulation_mapper_metric_decorator_factory(std::shared_ptr<demodulation
 std::shared_ptr<evm_calculator_factory>
 create_evm_calculator_metric_decorator_factory(std::shared_ptr<evm_calculator_factory>    base_factory,
                                                common_channel_modulation_metric_notifier& notifier);
+
+/// Creates a UL-SCH demultiplex metric decorator factory.
+std::shared_ptr<ulsch_demultiplex_factory>
+create_ulsch_demultiplex_metric_decorator_factory(std::shared_ptr<ulsch_demultiplex_factory> base_factory,
+                                                  ulsch_demultiplex_metric_notifier&         notifier);
+
+/// Creates a PUSCH demodulator metric decorator factory.
+std::shared_ptr<pusch_demodulator_factory>
+create_pusch_demodulator_metric_decorator_factory(std::shared_ptr<pusch_demodulator_factory> base_factory,
+                                                  pusch_demodulator_metric_notifier&         notifier);
+
+/// Creates a time alignment estimator metric decorator factory.
+std::shared_ptr<time_alignment_estimator_factory>
+create_time_alignment_estimator_metric_decorator_factory(std::shared_ptr<time_alignment_estimator_factory> base_factory,
+                                                         time_alignment_estimator_metric_notifier&         notifier);
+
+/// Creates a port channel estimator metric decorator factory.
+std::shared_ptr<port_channel_estimator_factory>
+create_port_channel_estimator_metric_decorator_factory(std::shared_ptr<port_channel_estimator_factory> base_factory,
+                                                       port_channel_estimator_metric_notifier&         notifier);
+
+/// Creates a transform precoder metric decorator factory.
+std::shared_ptr<transform_precoder_factory>
+create_transform_precoder_metric_decorator_factory(std::shared_ptr<transform_precoder_factory> base_factory,
+                                                   transform_precoder_metric_notifier&         notifier);
 
 } // namespace srsran

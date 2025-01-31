@@ -20,7 +20,7 @@ namespace srsran {
 class phy_metrics_evm_calculator_decorator : public evm_calculator
 {
 public:
-  /// Creates an EVM decorator from a base instance and metric notifier.
+  /// Creates an EVM decorator from a base instance and a metric notifier.
   phy_metrics_evm_calculator_decorator(std::unique_ptr<evm_calculator>            base_,
                                        common_channel_modulation_metric_notifier& notifier_) :
     base(std::move(base_)), notifier(notifier_)
@@ -32,11 +32,9 @@ public:
   float
   calculate(span<const log_likelihood_ratio> soft_bits, span<const cf_t> symbols, modulation_scheme modulation) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-
-    float ret = base->calculate(soft_bits, symbols, modulation);
-
-    auto tp_after = std::chrono::high_resolution_clock::now();
+    auto  tp_before = std::chrono::high_resolution_clock::now();
+    float ret       = base->calculate(soft_bits, symbols, modulation);
+    auto  tp_after  = std::chrono::high_resolution_clock::now();
 
     notifier.new_metric({.modulation  = modulation,
                          .nof_symbols = static_cast<unsigned>(symbols.size()),

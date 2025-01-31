@@ -20,7 +20,7 @@ namespace srsran {
 class phy_metrics_modulation_mapper_decorator : public modulation_mapper
 {
 public:
-  /// Creates a modulation mapper decorator from a base instance and metric notifier.
+  /// Creates a modulation mapper decorator from a base instance and a metric notifier.
   phy_metrics_modulation_mapper_decorator(std::unique_ptr<modulation_mapper>         base_,
                                           common_channel_modulation_metric_notifier& notifier_) :
     base(std::move(base_)), notifier(notifier_)
@@ -32,9 +32,7 @@ public:
   void modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme) override
   {
     auto tp_before = std::chrono::high_resolution_clock::now();
-
     base->modulate(symbols, input, scheme);
-
     auto tp_after = std::chrono::high_resolution_clock::now();
 
     notifier.new_metric(
