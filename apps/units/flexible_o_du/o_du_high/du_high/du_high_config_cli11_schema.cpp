@@ -1040,6 +1040,15 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
                  pucch_params.enable_closed_loop_pw_control,
                  "Enable closed-loop power control for PUCCH")
       ->capture_default_str();
+  app.add_option("--target_sinr_f0", pucch_params.pucch_f0_sinr_target_dB, "Target PUCCH F0 SINR in dB")
+      ->capture_default_str()
+      ->check(CLI::Range(-10.0, 20.0));
+  app.add_option("--target_sinr_f2", pucch_params.pucch_f2_sinr_target_dB, "Target PUCCH F2 SINR in dB")
+      ->capture_default_str()
+      ->check(CLI::Range(-10.0, 20.0));
+  app.add_option("--target_sinr_f3", pucch_params.pucch_f3_sinr_target_dB, "Target PUCCH F3 SINR in dB")
+      ->capture_default_str()
+      ->check(CLI::Range(-15.0, 10.0));
 }
 
 static void configure_cli11_srs_args(CLI::App& app, du_high_unit_srs_config& srs_params)
