@@ -386,8 +386,10 @@ void srsran_scheduler_adapter::cell_handler::handle_srs(const mac_srs_indication
   ind.cell_index = cell_idx;
   ind.slot_rx    = msg.sl_rx;
   for (const auto& mac_pdu : msg.srss) {
-    ind.srss.emplace_back(
-        parent.rnti_mng[mac_pdu.rnti], mac_pdu.rnti, mac_pdu.time_advance_offset, mac_pdu.channel_matrix);
+    // Only add PDUs with normalized channel IQ matrix.
+    if (const auto* matrix = std::get_if<mac_srs_pdu::normalized_channel_iq_matrix>(&mac_pdu.report))
+      ind.srss.emplace_back(
+          parent.rnti_mng[mac_pdu.rnti], mac_pdu.rnti, mac_pdu.time_advance_offset, matrix->channel_matrix);
   }
   // Forward SRS indication to the scheduler.
   parent.sched_impl->handle_srs_indication(ind);
