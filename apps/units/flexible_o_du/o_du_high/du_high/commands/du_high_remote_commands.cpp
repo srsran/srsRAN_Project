@@ -8,7 +8,7 @@
  *
  */
 
-#include "du_high_remote_commands.h"
+#include "apps/units/flexible_o_du/o_du_high/du_high/commands/du_high_remote_commands.h"
 #include "nlohmann/json.hpp"
 
 using namespace srsran;
@@ -19,8 +19,8 @@ error_type<std::string> ssb_modify_remote_command::execute(const nlohmann::json&
   if (cells_key == json.end()) {
     return make_unexpected("'cells' object is missing and it is mandatory");
   }
-  if (!cells_key->is_object()) {
-    return make_unexpected("'cells' object vale type should be an object");
+  if (!cells_key->is_array()) {
+    return make_unexpected("'cells' object vale type should be an array");
   }
 
   auto cells_items = cells_key->items();
@@ -30,20 +30,33 @@ error_type<std::string> ssb_modify_remote_command::execute(const nlohmann::json&
 
   srs_du::du_param_config_request req;
   for (const auto& cell : cells_items) {
-    const auto& nr_cgi_str_key = cell.key();
-    uint64_t    nr_cgi_int     = 0;
-    try {
-      nr_cgi_int = std::stoull(nr_cgi_str_key);
-    } catch (...) {
-      return make_unexpected("Cannot convert a NR-CGI string to an integer");
+    auto plmn_key = cell.value().find("plmn");
+    if (plmn_key == cell.value().end()) {
+      return make_unexpected("'plmn' object is missing and it is mandatory");
+    }
+    if (!plmn_key->is_string()) {
+      return make_unexpected("'plmn' object vale type should be a string");
     }
 
-    auto nci = nr_cell_identity::create(nr_cgi_int);
+    auto nci_key = cell.value().find("nci");
+    if (nci_key == cell.value().end()) {
+      return make_unexpected("'nci' object is missing and it is mandatory");
+    }
+    if (!nci_key->is_number_unsigned()) {
+      return make_unexpected("'nci' object vale type should be an integer");
+    }
+
+    auto plmn = plmn_identity::parse(plmn_key.value().get_ref<const nlohmann::json::string_t&>());
+    if (!plmn) {
+      return make_unexpected("Invalid PLMN identity value");
+    }
+    auto nci = nr_cell_identity::create(nci_key->get<uint64_t>());
     if (!nci) {
       return make_unexpected("Invalid NR cell identity value");
     }
     nr_cell_global_id_t nr_cgi;
-    nr_cgi.nci = nci.value();
+    nr_cgi.nci     = nci.value();
+    nr_cgi.plmn_id = plmn.value();
 
     auto ssb_block_power_key = cell.value().find("ssb_block_power");
     if (ssb_block_power_key == cell.value().end()) {
