@@ -125,18 +125,20 @@ class srsran::pdu_indication_pool
   constexpr static size_t BSR_INITIAL_POOL_SIZE = MAX_PUSCH_PDUS_PER_SLOT;
 
 public:
-  using uci_ptr = unbounded_object_pool<uci_indication::uci_pdu>::ptr;
-  using phr_ptr = unbounded_object_pool<ul_phr_indication_message>::ptr;
-  using crc_ptr = unbounded_object_pool<ul_crc_pdu_indication>::ptr;
-  using srs_ptr = unbounded_object_pool<srs_indication::srs_indication_pdu>::ptr;
-  using bsr_ptr = unbounded_object_pool<ul_bsr_indication_message>::ptr;
+  using uci_ptr     = unbounded_object_pool<uci_indication::uci_pdu>::ptr;
+  using phr_ptr     = unbounded_object_pool<ul_phr_indication_message>::ptr;
+  using crc_ptr     = unbounded_object_pool<ul_crc_pdu_indication>::ptr;
+  using srs_ptr     = unbounded_object_pool<srs_indication::srs_indication_pdu>::ptr;
+  using bsr_ptr     = unbounded_object_pool<ul_bsr_indication_message>::ptr;
+  using pos_req_ptr = unbounded_object_pool<positioning_measurement_request>::ptr;
 
   pdu_indication_pool() :
     pending_ucis(UCI_INITIAL_POOL_SIZE),
     pending_phrs(PHR_INITIAL_POOL_SIZE),
     pending_crcs(CRC_INITIAL_POOL_SIZE),
     pending_srss(SRS_INITIAL_POOL_SIZE),
-    pending_bsrs(BSR_INITIAL_POOL_SIZE)
+    pending_bsrs(BSR_INITIAL_POOL_SIZE),
+    pending_pos_reqs(0)
   {
   }
 
@@ -171,12 +173,20 @@ public:
     return ret;
   }
 
+  pos_req_ptr create_positioning_measurement_request(const positioning_measurement_request& req)
+  {
+    auto ret = pending_pos_reqs.get();
+    *ret     = req;
+    return ret;
+  }
+
 private:
   unbounded_object_pool<uci_indication::uci_pdu>            pending_ucis;
   unbounded_object_pool<ul_phr_indication_message>          pending_phrs;
   unbounded_object_pool<ul_crc_pdu_indication>              pending_crcs;
   unbounded_object_pool<srs_indication::srs_indication_pdu> pending_srss;
   unbounded_object_pool<ul_bsr_indication_message>          pending_bsrs;
+  unbounded_object_pool<positioning_measurement_request>    pending_pos_reqs;
 };
 
 // Initial capacity for the common and cell event lists, in order to avoid std::vector reallocations. We use the max
@@ -701,6 +711,30 @@ void ue_event_manager::handle_dl_mac_ce_indication(const dl_mac_ce_indication& c
 void ue_event_manager::handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs)
 {
   dl_bo_mng->handle_dl_buffer_state_indication(bs);
+}
+
+void ue_event_manager::handle_positioning_measurement_request(const positioning_measurement_request& req)
+{
+  auto req_ptr = ind_pdu_pool->create_positioning_measurement_request(req);
+  if (not common_events.try_push(
+          common_event_t{INVALID_DU_UE_INDEX, [this, req_ptr = std::move(req_ptr)]() {
+                           srsran_sanity_check(cell_exists(req_ptr->cell_index), "Invalid cell index");
+                           du_cells[req_ptr->cell_index].srs_sched->handle_positioning_measurement_request(*req_ptr);
+                         }})) {
+    logger.warning("cell={}: Positioning request was discarded. Cause: Event queue is full",
+                   fmt::underlying(req.cell_index));
+  }
+}
+
+void ue_event_manager::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
+{
+  if (not common_events.try_push(common_event_t{INVALID_DU_UE_INDEX, [this, cell_index, pos_rnti]() {
+                                                  du_cells[cell_index].srs_sched->handle_positioning_measurement_stop(
+                                                      cell_index, pos_rnti);
+                                                }})) {
+    logger.warning("cell={}: Positioning request stop request was discarded. Cause: Event queue is full",
+                   fmt::underlying(cell_index));
+  }
 }
 
 static void handle_discarded_pusch(const cell_slot_resource_allocator& prev_slot_result, ue_repository& ue_db)

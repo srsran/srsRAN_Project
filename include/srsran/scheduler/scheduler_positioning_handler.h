@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsran/ran/du_types.h"
-#include <cstdint>
 
 namespace srsran {
 
@@ -21,6 +20,8 @@ struct positioning_measurement_request {
   rnti_t pos_rnti;
   /// In case the positioning measurement is for a currently connected UE, we also define the UE index.
   std::optional<du_ue_index_t> ue_index;
+  /// Cell at which the positioning is to be made.
+  du_cell_index_t cell_index;
   /// SRS resources to measure.
   srs_config srs_to_measure;
 };
@@ -35,7 +36,7 @@ public:
   virtual void handle_positioning_measurement_request(const positioning_measurement_request& req) = 0;
 
   /// Shuts down an on-going positioning measurement
-  virtual void handle_positioning_measurement_stop(rnti_t pos_rnti) = 0;
+  virtual void handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti) = 0;
 };
 
 } // namespace srsran

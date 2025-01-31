@@ -52,6 +52,8 @@ public:
 
   scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() override { return event_mng; }
 
+  scheduler_positioning_handler& get_positioning_handler() override { return event_mng; }
+
 private:
   void run_sched_strategy(slot_point sl_tx, du_cell_index_t cell_index);
 

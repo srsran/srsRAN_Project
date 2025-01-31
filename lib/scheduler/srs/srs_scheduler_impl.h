@@ -35,6 +35,10 @@ public:
 
   void reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg) override;
 
+  void handle_positioning_measurement_request(const positioning_measurement_request& req) override;
+
+  void handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti) override;
+
 private:
   /// Information on currently configured SRS resources and corresponding UEs to be scheduled periodically.
   struct periodic_srs_info {
@@ -71,6 +75,9 @@ private:
 
   // UEs whose configuration has been updated in between the last and current slot indications.
   std::vector<rnti_t> updated_ues;
+
+  // Pending positioning requests.
+  std::vector<positioning_measurement_request> pending_pos_requests;
 };
 
 } // namespace srsran

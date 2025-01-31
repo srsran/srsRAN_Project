@@ -34,6 +34,7 @@ public:
 } // namespace
 
 std::unique_ptr<positioning_handler> srsran::create_positioning_handler(scheduler_positioning_handler& sched,
+                                                                        du_cell_index_t                cell_index,
                                                                         task_executor&                 ctrl_exec,
                                                                         srslog::basic_logger&          logger)
 {

@@ -114,8 +114,7 @@ void srs_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
         [srs_res_id](const srs_config::srs_resource& srs_res) { return srs_res.id.ue_res_id == srs_res_id; });
   };
 
-  for (const auto& srs_res_set :
-       ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.value().srs_res_set_list) {
+  for (const auto& srs_res_set : srs_cfg.srs_res_set_list) {
     if (not std::holds_alternative<srs_config::srs_resource_set::periodic_resource_type>(srs_res_set.res_type)) {
       continue;
     }
@@ -162,6 +161,87 @@ void srs_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, cons
 
   rem_ue(old_ue_cfg);
   add_ue_to_grid(new_ue_cfg, true);
+}
+
+void srs_scheduler_impl::handle_positioning_measurement_request(const positioning_measurement_request& req)
+{
+  // Ensure uniqueness of RNTI in the \c pending_pos_requests.
+  auto it = std::find_if(
+      pending_pos_requests.begin(),
+      pending_pos_requests.end(),
+      [&req](const positioning_measurement_request& prev_req) { return prev_req.pos_rnti == req.pos_rnti; });
+  if (it != pending_pos_requests.end()) {
+    // Avoid more than one positioning request per C-RNTI.
+    logger.info("rnti={}: Positioning measurement request discarded. Cause: A previous request with the same RNTI is "
+                "currently active",
+                req.pos_rnti);
+    return;
+  }
+
+  if (req.ue_index.has_value()) {
+    // It is a positioning request for a connected UE.
+    if (not ues.contains(req.ue_index.value())) {
+      logger.warning("ue={}: Positioning measurement request discarded. Cause: Non-existent UE",
+                     fmt::underlying(req.ue_index.value()));
+      return;
+    }
+    auto& u = ues[req.ue_index.value()];
+    if (u.crnti != req.pos_rnti) {
+      logger.warning("ue={}: Positioning measurement request discarded. Cause: Incorrect C-RNTI",
+                     fmt::underlying(req.ue_index.value()));
+      return;
+    }
+    const serving_cell_config& ue_cfg = u.get_pcell().cfg().cfg_dedicated();
+
+    if (not ue_cfg.ul_config.has_value() or not ue_cfg.ul_config.value().init_ul_bwp.srs_cfg.has_value()) {
+      logger.warning("ue={}: Positioning measurement request discarded. Cause: Could not find reusable SRS",
+                     fmt::underlying(req.ue_index.value()));
+      return;
+    }
+
+    // Register positioning request.
+    pending_pos_requests.push_back(req);
+  } else {
+    // It is a positioning measurement for a UE of another cell.
+
+    // Register positioning request.
+    pending_pos_requests.push_back(req);
+
+    // Add SRS config to slot wheel.
+    for (const auto& srs_res : req.srs_to_measure.srs_res_list) {
+      add_resource(req.pos_rnti,
+                   srs_res.periodicity_and_offset.value().period,
+                   srs_res.periodicity_and_offset.value().offset,
+                   srs_res.id.ue_res_id);
+    }
+  }
+}
+
+void srs_scheduler_impl::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
+{
+  auto it = std::find_if(
+      pending_pos_requests.begin(),
+      pending_pos_requests.end(),
+      [pos_rnti](const positioning_measurement_request& prev_req) { return prev_req.pos_rnti == pos_rnti; });
+  if (it == pending_pos_requests.end()) {
+    logger.warning("rnti={}: Positioning measurement could not be stopped. Cause: No matching positioning procedure "
+                   "for the same RNTI",
+                   pos_rnti);
+    return;
+  }
+
+  if (not it->ue_index.has_value()) {
+    // Case of positioning for a neighbor cell UE.
+    for (const auto& srs_res : it->srs_to_measure.srs_res_list) {
+      rem_resource(it->pos_rnti,
+                   srs_res.periodicity_and_offset.value().period,
+                   srs_res.periodicity_and_offset.value().offset,
+                   srs_res.id.ue_res_id);
+    }
+  }
+
+  // Remote positioning request from pending list.
+  pending_pos_requests.erase(it);
 }
 
 /////////////////////          Private functions        ////////////////////////////
@@ -284,6 +364,17 @@ void srs_scheduler_impl::fill_srs_pdu(srs_info&                       pdu,
 
   pdu.t_srs_period = srs_res_cfg.periodicity_and_offset.value().period;
   pdu.t_offset     = srs_res_cfg.periodicity_and_offset.value().offset;
+
+  pdu.normalized_channel_iq_matrix_requested = true;
+  pdu.positioning_report_requested           = false;
+
+  // Check if there is a pending positioning request.
+  for (const auto& pos_req : pending_pos_requests) {
+    if (pos_req.pos_rnti == pdu.crnti) {
+      pdu.positioning_report_requested = true;
+      break;
+    }
+  }
 }
 
 void srs_scheduler_impl::add_resource(rnti_t                 crnti,

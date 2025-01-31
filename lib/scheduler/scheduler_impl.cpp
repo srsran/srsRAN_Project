@@ -206,10 +206,16 @@ void scheduler_impl::handle_paging_information(const sched_paging_information& p
 
 void scheduler_impl::handle_positioning_measurement_request(const positioning_measurement_request& req)
 {
-  // TODO
+  du_cell_group_index_t group_idx = cfg_mng.get_cell_group_index(req.cell_index);
+  srsran_assert(group_idx != INVALID_DU_CELL_GROUP_INDEX, "cell={} does not exist", fmt::underlying(req.cell_index));
+  ue_scheduler& ue_sched = *groups[group_idx];
+  ue_sched.get_positioning_handler().handle_positioning_measurement_request(req);
 }
 
-void scheduler_impl::handle_positioning_measurement_stop(rnti_t pos_rnti)
+void scheduler_impl::handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti)
 {
-  // TODO
+  du_cell_group_index_t group_idx = cfg_mng.get_cell_group_index(cell_index);
+  srsran_assert(group_idx != INVALID_DU_CELL_GROUP_INDEX, "cell={} does not exist", fmt::underlying(cell_index));
+  ue_scheduler& ue_sched = *groups[group_idx];
+  ue_sched.get_positioning_handler().handle_positioning_measurement_stop(cell_index, pos_rnti);
 }
