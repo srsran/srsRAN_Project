@@ -572,6 +572,22 @@ static void fill_du_high_sched_expert_section(YAML::Node& node, const du_high_un
   }
 }
 
+static YAML::Node build_du_high_srs_section(const du_high_unit_srs_config& config)
+{
+  YAML::Node node;
+
+  if (config.srs_period_ms.has_value()) {
+    node["srs_period_ms"] = config.srs_period_ms.value();
+  }
+  node["srs_max_nof_sym_per_slot"] = config.max_nof_symbols_per_slot;
+  node["srs_nof_sym_per_resource"] = config.nof_symbols;
+  node["srs_tx_comb"]              = config.tx_comb;
+  node["srs_cyclic_shift_reuse"]   = config.cyclic_shift_reuse_factor;
+  node["srs_sequence_id_reuse"]    = config.sequence_id_reuse_factor;
+
+  return node;
+}
+
 static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
 {
   YAML::Node node;
@@ -607,6 +623,7 @@ static YAML::Node build_cell_entry(const du_high_unit_base_cell_config& config)
 
   node["paging"] = build_du_high_paging_section(config.paging_cfg);
   node["csi"]    = build_du_high_csi_section(config.csi_cfg);
+  node["srs"]    = build_du_high_srs_section(config.srs_cfg);
   fill_du_high_sched_expert_section(node, config.sched_expert_cfg);
 
   return node;
