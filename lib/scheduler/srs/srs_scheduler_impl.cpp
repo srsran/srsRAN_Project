@@ -166,11 +166,10 @@ void srs_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, cons
 void srs_scheduler_impl::handle_positioning_measurement_request(const positioning_measurement_request& req)
 {
   // Ensure uniqueness of RNTI in the \c pending_pos_requests.
-  auto it = std::find_if(
-      pending_pos_requests.begin(),
-      pending_pos_requests.end(),
-      [&req](const positioning_measurement_request& prev_req) { return prev_req.pos_rnti == req.pos_rnti; });
-  if (it != pending_pos_requests.end()) {
+  if (std::any_of(
+          pending_pos_requests.begin(),
+          pending_pos_requests.end(),
+          [&req](const positioning_measurement_request& prev_req) { return prev_req.pos_rnti == req.pos_rnti; })) {
     // Avoid more than one positioning request per C-RNTI.
     logger.info("rnti={}: Positioning measurement request discarded. Cause: A previous request with the same RNTI is "
                 "currently active",
@@ -194,7 +193,7 @@ void srs_scheduler_impl::handle_positioning_measurement_request(const positionin
     const serving_cell_config& ue_cfg = u.get_pcell().cfg().cfg_dedicated();
 
     if (not ue_cfg.ul_config.has_value() or not ue_cfg.ul_config.value().init_ul_bwp.srs_cfg.has_value()) {
-      logger.warning("ue={}: Positioning measurement request discarded. Cause: Could not find reusable SRS",
+      logger.warning("ue={}: Positioning measurement request discarded. Cause: UE has no configured SRS config",
                      fmt::underlying(req.ue_index.value()));
       return;
     }
@@ -203,6 +202,8 @@ void srs_scheduler_impl::handle_positioning_measurement_request(const positionin
     pending_pos_requests.push_back(req);
   } else {
     // It is a positioning measurement for a UE of another cell.
+    srsran_assert(not is_crnti(req.pos_rnti),
+                  "UEs of neighbor cells should be represented by RNTIs in the reserved range");
 
     // Register positioning request.
     pending_pos_requests.push_back(req);

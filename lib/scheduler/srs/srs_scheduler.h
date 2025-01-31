@@ -14,6 +14,7 @@ namespace srsran {
 
 struct cell_resource_allocator;
 class ue_cell_configuration;
+struct positioning_measurement_request;
 
 /// SRS scheduling interface, which handles the scheduling of SRS opportunities.
 class srs_scheduler
