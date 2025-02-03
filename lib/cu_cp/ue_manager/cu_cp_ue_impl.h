@@ -64,10 +64,7 @@ public:
   void stop();
 
   /// \brief Get the UE index of the UE.
-  ue_index_t get_ue_index() override { return ue_index; }
-
-  /// \brief Get the index of the DU where the UE is connected.
-  du_index_t get_du_index() override { return ue_ctxt.du_idx; }
+  ue_index_t get_ue_index() const override { return ue_index; }
 
   /// \brief Get the PCI of the UE.
   [[nodiscard]] pci_t get_pci() const { return pci; };
@@ -78,7 +75,7 @@ public:
   [[nodiscard]] gnb_du_id_t get_du_id() const { return ue_ctxt.du_id; }
 
   /// \brief Get the DU index of the UE.
-  [[nodiscard]] du_index_t get_du_index() const { return ue_ctxt.du_idx; }
+  [[nodiscard]] du_index_t get_du_index() const override { return ue_ctxt.du_idx; }
 
   /// \brief Get the PCell index of the UE.
   du_cell_index_t get_pcell_index() { return pcell_index; }

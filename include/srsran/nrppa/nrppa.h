@@ -37,10 +37,10 @@ public:
   virtual ~nrppa_cu_cp_ue_notifier() = default;
 
   /// \brief Get the UE index of the UE.
-  virtual ue_index_t get_ue_index() = 0;
+  virtual ue_index_t get_ue_index() const = 0;
 
   /// \brief Get the index of the DU where the UE is connected.
-  virtual du_index_t get_du_index() = 0;
+  virtual du_index_t get_du_index() const = 0;
 
   /// \brief Get the measurement results of the UE.
   virtual std::optional<cell_measurement_positioning_info>& on_measurement_results_required() = 0;

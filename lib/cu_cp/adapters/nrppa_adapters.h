@@ -58,14 +58,14 @@ public:
   void connect_ue(cu_cp_ue_impl_interface& ue_) { ue = &ue_; }
 
   /// \brief Get the UE index of the UE.
-  ue_index_t get_ue_index() override
+  ue_index_t get_ue_index() const override
   {
     srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_ue_index();
   }
 
   /// \brief Get the index of the DU where the UE is connected.
-  du_index_t get_du_index() override
+  du_index_t get_du_index() const override
   {
     srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_du_index();
