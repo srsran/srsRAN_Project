@@ -330,3 +330,52 @@ INSTANTIATE_TEST_SUITE_P(test_srs_scheduler_for_different_periods,
                                          srs_test_params{.is_tdd = true, .period = srs_periodicity::sl160},
                                          srs_test_params{.is_tdd = true, .period = srs_periodicity::sl320},
                                          srs_test_params{.is_tdd = true, .period = srs_periodicity::sl640}));
+
+class srs_positioning_scheduler_test : public test_bench, public ::testing::Test
+{
+public:
+  srs_positioning_scheduler_test() : test_bench(srs_test_params{true, srs_periodicity::sl20}) {}
+
+  const srs_periodicity srs_period = srs_periodicity::sl20;
+};
+
+TEST_F(srs_positioning_scheduler_test, when_connected_ue_positioning_is_requested_then_srs_pdu_contains_request)
+{
+  add_ue(srs_period);
+  rnti_t rnti = to_rnti(0x4601);
+
+  auto is_positioning_being_requested = [&]() -> bool {
+    const unsigned nof_slots_to_test = static_cast<unsigned>(srs_period) * 4;
+    for (unsigned sl_cnt = 0; sl_cnt < nof_slots_to_test; ++sl_cnt) {
+      srs_sched.run_slot(res_grid);
+
+      if (not res_grid[0].result.ul.srss.empty()) {
+        EXPECT_EQ(res_grid[0].result.ul.srss.size(), 1);
+        EXPECT_EQ(res_grid[0].result.ul.srss[0].crnti, rnti);
+        EXPECT_TRUE(res_grid[0].result.ul.srss[0].normalized_channel_iq_matrix_requested);
+        bool pos_requested = res_grid[0].result.ul.srss[0].positioning_report_requested;
+        slot_indication(++current_sl_tx);
+        return pos_requested;
+      }
+
+      // Update the slot indicator.
+      slot_indication(++current_sl_tx);
+    }
+    report_fatal_error("No SRS scheduled");
+    return false;
+  };
+
+  // Positioning not requested.
+  ASSERT_FALSE(is_positioning_being_requested());
+
+  // Positioning requested.
+  sched_ue_creation_request_message ue_req = sched_config_helper::create_default_sched_ue_creation_request();
+  auto& ue_srs_cfg = ue_req.cfg.cells.value().front().serv_cell_cfg.ul_config.value().init_ul_bwp.srs_cfg.value();
+  this->srs_sched.handle_positioning_measurement_request(
+      positioning_measurement_request{rnti, to_du_ue_index(0), to_du_cell_index(0), ue_srs_cfg});
+  ASSERT_TRUE(is_positioning_being_requested());
+
+  // Positioning stops being requested.
+  this->srs_sched.handle_positioning_measurement_stop(to_du_cell_index(0), rnti);
+  ASSERT_FALSE(is_positioning_being_requested());
+}

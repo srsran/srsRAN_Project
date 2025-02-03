@@ -46,6 +46,14 @@ private:
     srs_config::srs_res_id srs_res_id = srs_config::srs_res_id::MAX_NOF_SRS_RES;
   };
 
+  // Info related with a UE context update.
+  struct ue_update {
+    enum class type_t { new_ue, positioning_request, positioning_stop };
+
+    rnti_t rnti;
+    type_t type;
+  };
+
   // Helper to fetch a UE cell config.
   const ue_cell_configuration* get_ue_cfg(rnti_t rnti) const;
   // Helper that schedules the SRS for a given slot.
@@ -74,7 +82,7 @@ private:
   std::vector<static_vector<periodic_srs_info, MAX_SRS_PDUS_PER_SLOT>> periodic_srs_slot_wheel;
 
   // UEs whose configuration has been updated in between the last and current slot indications.
-  std::vector<rnti_t> updated_ues;
+  std::vector<ue_update> updated_ues;
 
   // Pending positioning requests.
   std::vector<positioning_measurement_request> pending_pos_requests;

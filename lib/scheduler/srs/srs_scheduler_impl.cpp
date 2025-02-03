@@ -95,7 +95,7 @@ void srs_scheduler_impl::add_ue_to_grid(const ue_cell_configuration& ue_cfg, boo
   // in the grid. While we don't fully support this feature, we leave the old SRSs in the grid. The worst that
   // can happen is some misdetected SRSs for a short period of time.
   if (not is_reconf) {
-    updated_ues.push_back(ue_cfg.crnti);
+    updated_ues.push_back({ue_cfg.crnti, ue_update::type_t::new_ue});
   }
 }
 
@@ -199,6 +199,7 @@ void srs_scheduler_impl::handle_positioning_measurement_request(const positionin
     }
 
     // Register positioning request.
+    updated_ues.push_back({req.pos_rnti, ue_update::type_t::positioning_request});
     pending_pos_requests.push_back(req);
   } else {
     // It is a positioning measurement for a UE of another cell.
@@ -241,6 +242,9 @@ void srs_scheduler_impl::handle_positioning_measurement_stop(du_cell_index_t cel
     }
   }
 
+  // Update allocated SRSs.
+  updated_ues.push_back({pos_rnti, ue_update::type_t::positioning_stop});
+
   // Remote positioning request from pending list.
   pending_pos_requests.erase(it);
 }
@@ -265,10 +269,20 @@ void srs_scheduler_impl::schedule_updated_ues_srs(cell_resource_allocator& cell_
 
       // For all the periodic SRS info element at this slot, allocate only those that belong to the UE updated_ues.
       for (const periodic_srs_info& srs : slot_srss) {
-        const bool rnti_in_updated_ues =
-            std::find(updated_ues.begin(), updated_ues.end(), srs.rnti) != updated_ues.end();
-        if (rnti_in_updated_ues) {
+        auto ue_it =
+            std::find_if(updated_ues.begin(), updated_ues.end(), [&srs](const auto& u) { return u.rnti == srs.rnti; });
+        if (ue_it == updated_ues.end()) {
+          continue;
+        }
+        if (ue_it->type == ue_update::type_t::new_ue) {
+          // New UE was created. Add SRS PDUs to the grid.
           allocate_srs_opportunity(cell_alloc[n], srs);
+        } else if (ue_it->type == ue_update::type_t::positioning_request or
+                   ue_it->type == ue_update::type_t::positioning_stop) {
+          const bool pos_requested = ue_it->type == ue_update::type_t::positioning_request;
+          for (auto& pdu : cell_alloc[n].result.ul.srss) {
+            pdu.positioning_report_requested = pos_requested;
+          }
         }
       }
     }
