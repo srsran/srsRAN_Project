@@ -38,7 +38,7 @@ struct pucch_info {
   context pdu_context;
 
   /// Returns the format of the PUCCH.
-  constexpr pucch_format get_format() const
+  constexpr pucch_format format() const
   {
     return std::visit(
         [](const auto& params) -> pucch_format {

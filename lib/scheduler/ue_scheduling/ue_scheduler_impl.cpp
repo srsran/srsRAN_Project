@@ -87,35 +87,31 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
   // Spans through the PUCCH grant list and update the HARQ-ACK PUCCH grant counter for the corresponding RNTI and HARQ
   // process id.
   for (const auto& pucch : slot_alloc.result.ul.pucchs) {
-    if (pucch.get_format() == pucch_format::FORMAT_0 or pucch.get_format() == pucch_format::FORMAT_1 or
-        pucch.get_format() == pucch_format::FORMAT_2) {
-      ue* user = ue_db.find_by_rnti(pucch.crnti);
-      // This is to handle the case of a UE that gets removed after the PUCCH gets allocated and before this PUCCH is
-      // expected to be sent.
-      if (user == nullptr) {
+    ue* user = ue_db.find_by_rnti(pucch.crnti);
+    // This is to handle the case of a UE that gets removed after the PUCCH gets allocated and before this PUCCH is
+    // expected to be sent.
+    if (user == nullptr) {
+      logger.warning("rnti={}: No user with such RNTI found in the ue scheduler database. Skipping PUCCH grant counter",
+                     pucch.crnti,
+                     slot_alloc.slot);
+      continue;
+    }
+    const unsigned nof_harqs_per_rnti_per_slot = pucch.get_harq_ack_nof_bits();
+    // Each PUCCH grants can potentially carry ACKs for different HARQ processes (as many as the harq_ack_nof_bits)
+    // expecting to be acknowledged on the same slot.
+    for (unsigned harq_bit_idx = 0; harq_bit_idx != nof_harqs_per_rnti_per_slot; ++harq_bit_idx) {
+      std::optional<dl_harq_process_handle> h_dl =
+          user->get_pcell().harqs.find_dl_harq_waiting_ack(slot_alloc.slot, harq_bit_idx);
+      if (not h_dl.has_value() or not h_dl->is_waiting_ack()) {
         logger.warning(
-            "rnti={}: No user with such RNTI found in the ue scheduler database. Skipping PUCCH grant counter",
-            pucch.crnti,
-            slot_alloc.slot);
+            "ue={} rnti={}: No DL HARQ process with state waiting-for-ack found at slot={} for harq-bit-index={}",
+            fmt::underlying(user->ue_index),
+            user->crnti,
+            slot_alloc.slot,
+            harq_bit_idx);
         continue;
-      }
-      const unsigned nof_harqs_per_rnti_per_slot = pucch.get_harq_ack_nof_bits();
-      // Each PUCCH grants can potentially carry ACKs for different HARQ processes (as many as the harq_ack_nof_bits)
-      // expecting to be acknowledged on the same slot.
-      for (unsigned harq_bit_idx = 0; harq_bit_idx != nof_harqs_per_rnti_per_slot; ++harq_bit_idx) {
-        std::optional<dl_harq_process_handle> h_dl =
-            user->get_pcell().harqs.find_dl_harq_waiting_ack(slot_alloc.slot, harq_bit_idx);
-        if (not h_dl.has_value() or not h_dl->is_waiting_ack()) {
-          logger.warning(
-              "ue={} rnti={}: No DL HARQ process with state waiting-for-ack found at slot={} for harq-bit-index={}",
-              fmt::underlying(user->ue_index),
-              user->crnti,
-              slot_alloc.slot,
-              harq_bit_idx);
-          continue;
-        };
-        h_dl->increment_pucch_counter();
-      }
+      };
+      h_dl->increment_pucch_counter();
     }
   }
 }
@@ -144,7 +140,7 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
                    "harq-bits={} csi-1-bits={} sr-bits={}",
                    pucch.crnti,
                    slot_alloc.slot,
-                   static_cast<unsigned>(pucch.get_format()),
+                   static_cast<unsigned>(pucch.format()),
                    harq_bits,
                    csi_bits,
                    sr_bits);

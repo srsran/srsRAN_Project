@@ -449,7 +449,7 @@ protected:
     pdu.crnti    = pucch.crnti;
     pdu.ue_index = bench->rnti_to_du_ue_index(pdu.crnti);
 
-    switch (pucch.get_format()) {
+    switch (pucch.format()) {
       case pucch_format::FORMAT_0:
       case pucch_format::FORMAT_1: {
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
@@ -796,7 +796,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
 
     for (const auto& pucch : bench->sched_res->ul.pucchs) {
       uci_ind.ucis.push_back(build_pucch_uci_pdu(pucch));
-      if (pucch.get_format() == pucch_format::FORMAT_2 and pucch.csi_rep_cfg.has_value()) {
+      if (pucch.format() == pucch_format::FORMAT_2 and pucch.csi_rep_cfg.has_value()) {
         // For now CSI report is only sent in PUCCH format 2.
         ++nof_cqi_reported;
       }

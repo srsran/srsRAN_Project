@@ -231,11 +231,11 @@ TEST_F(test_uci_allocator, uci_harq_alloc_over_existing_sr)
   // 2 PUCCH grants expected.
   ASSERT_EQ(2, slot_grid.result.ul.pucchs.size());
   ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [](const pucch_info& pdu) {
-    return pdu.get_format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 1U and
+    return pdu.format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 1U and
            pdu.get_sr_bits() == sr_nof_bits::one;
   }));
   ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [](const pucch_info& pdu) {
-    return pdu.get_format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 1U and
+    return pdu.format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 1U and
            pdu.get_sr_bits() == sr_nof_bits::no_sr;
   }));
   // Note: no need to check other PUCCH grant values, as this is part of pucch_allocator test.
@@ -259,11 +259,11 @@ TEST_F(test_uci_allocator, uci_harq_alloc_on_existing_pucch_harq_plus_sr)
   // 2 PUCCH grants expected, both with HARQ and SR bits.
   ASSERT_EQ(2, pucch_pdus.size());
   ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const pucch_info& pdu) {
-    return pdu.get_format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 2U and
+    return pdu.format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 2U and
            pdu.get_sr_bits() == sr_nof_bits::one;
   }));
   ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const pucch_info& pdu) {
-    return pdu.get_format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 2U and
+    return pdu.format() == pucch_format::FORMAT_1 and pdu.get_harq_ack_nof_bits() == 2U and
            pdu.get_sr_bits() == sr_nof_bits::no_sr;
   }));
   // Note: no need to check other PUCCH grant values, as this is part of pucch_allocator test.
@@ -285,7 +285,7 @@ TEST_F(test_uci_allocator, uci_harq_alloc_on_existing_harq_2_bits)
   // 1 PUCCH grant expected.
   ASSERT_EQ(1, pucch_pdus.size());
   ASSERT_TRUE(find_pucch_pdu(pucch_pdus, [](const pucch_info& pdu) {
-    return pdu.get_format() == pucch_format::FORMAT_2 and pdu.get_harq_ack_nof_bits() == 3U and
+    return pdu.format() == pucch_format::FORMAT_2 and pdu.get_harq_ack_nof_bits() == 3U and
            pdu.get_sr_bits() == sr_nof_bits::no_sr;
   }));
 }

@@ -670,7 +670,7 @@ existing_pucch_pdus_handler::existing_pucch_pdus_handler(rnti_t                c
     if (pucch.crnti == crnti and not pucch.pdu_context.is_common) {
       pucch.pdu_context.id = MAX_PUCCH_PDUS_PER_SLOT;
 
-      if (pucch.get_format() == pucch_format::FORMAT_0) {
+      if (pucch.format() == pucch_format::FORMAT_0) {
         // With Format 0, when there are both HARQ bits and SR bits in the same PDU (this means that the PUCCH HARQ
         // resource and SR resource have overlapping symbols), we only use the HARQ-ACK resource; the only case when the
         // SR PUCCH F0 is used is when there are only SR bits.
@@ -683,7 +683,7 @@ existing_pucch_pdus_handler::existing_pucch_pdus_handler(rnti_t                c
         } else {
           srsran_assertion_failure("Invalid HARQ/SR bits for PUCCH Format 0");
         }
-      } else if (pucch.get_format() == pucch_format::FORMAT_1) {
+      } else if (pucch.format() == pucch_format::FORMAT_1) {
         if (pucch.get_sr_bits() == sr_nof_bits::one and pucch_res_cfg != nullptr and
             sr_id_match(*pucch_res_cfg, pucch)) {
           sr_pdu = &pucch;
@@ -750,7 +750,7 @@ void existing_pucch_pdus_handler::update_sr_pdu_bits(sr_nof_bits sr_bits, unsign
   if (sr_pdu == nullptr) {
     return;
   }
-  srsran_assert(sr_pdu->get_format() == pucch_format::FORMAT_0 or sr_pdu->get_format() == pucch_format::FORMAT_1,
+  srsran_assert(sr_pdu->format() == pucch_format::FORMAT_0 or sr_pdu->format() == pucch_format::FORMAT_1,
                 "Only PUCCH Formats 0 or 1 can be used for SR grant");
 
   std::visit(
@@ -768,8 +768,8 @@ void existing_pucch_pdus_handler::update_sr_pdu_bits(sr_nof_bits sr_bits, unsign
 
 void existing_pucch_pdus_handler::update_csi_pdu_bits(unsigned csi_part1_bits, sr_nof_bits sr_bits)
 {
-  srsran_assert(csi_pdu->get_format() == pucch_format::FORMAT_2 or csi_pdu->get_format() == pucch_format::FORMAT_3 or
-                    csi_pdu->get_format() == pucch_format::FORMAT_4,
+  srsran_assert(csi_pdu->format() == pucch_format::FORMAT_2 or csi_pdu->format() == pucch_format::FORMAT_3 or
+                    csi_pdu->format() == pucch_format::FORMAT_4,
                 "Only PUCCH Formats 2, 3 and 4 can be used for CSI grant");
 
   std::visit(
@@ -795,7 +795,7 @@ void existing_pucch_pdus_handler::update_harq_pdu_bits(unsigned                 
                                                        const pucch_resource&                          pucch_res_cfg,
                                                        const std::optional<pucch_common_all_formats>& common_params)
 {
-  switch (harq_pdu->get_format()) {
+  switch (harq_pdu->format()) {
     case pucch_format::FORMAT_0: {
       auto& format_0             = std::get<pucch_format_0>(harq_pdu->format_params);
       format_0.harq_ack_nof_bits = harq_ack_bits;
@@ -1826,7 +1826,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
   // update the HARQ-ACK bits in the HARQ-ACK PDU.
   // TODO: handle F0+F3/F4.
   static constexpr unsigned csi_bits_format_0_and_1 = 0U;
-  if (existing_pdus.harq_pdu->get_format() == pucch_format::FORMAT_0) {
+  if (existing_pdus.harq_pdu->format() == pucch_format::FORMAT_0) {
     const pucch_resource* pucch_res_cfg = resource_manager.reserve_set_0_res_by_res_indicator(
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
@@ -1849,7 +1849,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
   }
   // If the HARQ PDU uses F1, there can be 1 HARQ PDU + an optional SR (F1). In the latter case, we need to update the
   // HARQ-ACK bits in the SR PDU as well.
-  else if (existing_pdus.harq_pdu->get_format() == pucch_format::FORMAT_1) {
+  else if (existing_pdus.harq_pdu->format() == pucch_format::FORMAT_1) {
     const pucch_resource* pucch_res_cfg = resource_manager.reserve_set_0_res_by_res_indicator(
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
@@ -1891,7 +1891,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
   }
   // If the HARQ PDU uses F2, there can be 1 HARQ PDU + an optional CSI (F2). In any case, we only need to update the
   // HARQ-ACK bits in the HARQ-ACK PDU.
-  else if (existing_pdus.harq_pdu->get_format() == pucch_format::FORMAT_2) {
+  else if (existing_pdus.harq_pdu->format() == pucch_format::FORMAT_2) {
     if (current_grants.pucch_grants.get_uci_bits().get_total_bits() >=
         ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().get_max_payload(
             pucch_format::FORMAT_2)) {
@@ -1923,7 +1923,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     current_grants.pucch_grants.harq_resource.value().bits.harq_ack_nof_bits = new_bits.harq_ack_nof_bits;
     // If the HARQ PDU uses F3, there can be 1 HARQ PDU + an optional CSI (F3). In any case, we only need to update the
     // HARQ-ACK bits in the HARQ-ACK PDU.
-  } else if (existing_pdus.harq_pdu->get_format() == pucch_format::FORMAT_3) {
+  } else if (existing_pdus.harq_pdu->format() == pucch_format::FORMAT_3) {
     if (current_grants.pucch_grants.get_uci_bits().get_total_bits() >=
         ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().get_max_payload(
             pucch_format::FORMAT_3)) {
@@ -1955,7 +1955,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     current_grants.pucch_grants.harq_resource.value().bits.harq_ack_nof_bits = new_bits.harq_ack_nof_bits;
     // If the HARQ PDU uses F4, there can be 1 HARQ PDU + an optional CSI (F4). In any case, we only need to update the
     // HARQ-ACK bits in the HARQ-ACK PDU.
-  } else if (existing_pdus.harq_pdu->get_format() == pucch_format::FORMAT_4) {
+  } else if (existing_pdus.harq_pdu->format() == pucch_format::FORMAT_4) {
     if (current_grants.pucch_grants.get_uci_bits().get_total_bits() >=
         ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().get_max_payload(
             pucch_format::FORMAT_4)) {

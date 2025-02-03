@@ -1112,7 +1112,7 @@ void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(du_cell_index_t 
     bool additional_dmrs        = false;
     bool intraslot_freq_hopping = false;
 
-    switch (pucch.get_format()) {
+    switch (pucch.format()) {
       case pucch_format::FORMAT_0:
         pucch_uci_bits.harq_ack_nof_bits = pucch.get_harq_ack_nof_bits();
         pucch_uci_bits.sr_bits           = pucch.get_sr_bits();
@@ -1149,7 +1149,7 @@ void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(du_cell_index_t 
     }
 
     user->get_pcell().get_pucch_power_controller().update_pucch_pw_ctrl_state(slot_alloc.slot,
-                                                                              pucch.get_format(),
+                                                                              pucch.format(),
                                                                               pucch.resources.prbs.length(),
                                                                               pucch.resources.symbols.length(),
                                                                               pucch_uci_bits,

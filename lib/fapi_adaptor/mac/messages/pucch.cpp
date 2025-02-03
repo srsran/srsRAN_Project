@@ -54,7 +54,7 @@ static void fill_format0_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   static constexpr bool use_pi_to_bpsk = false;
   // Format 0 does not support multi slot repetition.
   pucch_repetition_tx_slot pucch_repetition = pucch_repetition_tx_slot::no_multi_slot;
-  builder.set_common_parameters(mac_pdu.get_format(), pucch_repetition, use_pi_to_bpsk);
+  builder.set_common_parameters(mac_pdu.format(), pucch_repetition, use_pi_to_bpsk);
 
   // Format 0 does not support CSI.
   static constexpr unsigned csi_part1_bit_length = 0U;
@@ -74,7 +74,7 @@ static void fill_format1_parameters(fapi::ul_pucch_pdu_builder& builder, const p
 
   // Do not use pi/2 BPSK for UCI symbols.
   static constexpr bool use_pi_to_bpsk = false;
-  builder.set_common_parameters(mac_pdu.get_format(), f1.slot_repetition, use_pi_to_bpsk);
+  builder.set_common_parameters(mac_pdu.format(), f1.slot_repetition, use_pi_to_bpsk);
 
   // Time domain occasion.
   builder.set_format1_parameters(f1.time_domain_occ);
@@ -98,7 +98,7 @@ static void fill_format2_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   static const bool use_pi_to_bpsk = false;
   // Format 2 does not support multi slot repetition.
   pucch_repetition_tx_slot pucch_repetition = pucch_repetition_tx_slot::no_multi_slot;
-  builder.set_common_parameters(mac_pdu.get_format(), pucch_repetition, use_pi_to_bpsk);
+  builder.set_common_parameters(mac_pdu.format(), pucch_repetition, use_pi_to_bpsk);
 
   // Scrambling.
   builder.set_scrambling_parameters(f2.n_id_scambling);
@@ -128,7 +128,7 @@ static void fill_format3_parameters(fapi::ul_pucch_pdu_builder& builder, const p
       intra_slot_freq_hop, hop_prbs.start(), f3.group_hopping, f3.n_id_hopping, m0_format3);
 
   // Common parameters.
-  builder.set_common_parameters(mac_pdu.get_format(), f3.slot_repetition, f3.pi_2_bpsk);
+  builder.set_common_parameters(mac_pdu.format(), f3.slot_repetition, f3.pi_2_bpsk);
 
   // Scrambling.
   builder.set_scrambling_parameters(f3.n_id_scrambling);
@@ -176,7 +176,7 @@ static void fill_format4_parameters(fapi::ul_pucch_pdu_builder& builder, const p
       intra_slot_freq_hop, hop_prbs.start(), f4.group_hopping, f4.n_id_hopping, m0_format4);
 
   // Common parameters.
-  builder.set_common_parameters(mac_pdu.get_format(), f4.slot_repetition, f4.pi_2_bpsk);
+  builder.set_common_parameters(mac_pdu.format(), f4.slot_repetition, f4.pi_2_bpsk);
 
   // Scrambling.
   builder.set_scrambling_parameters(f4.n_id_scrambling);
@@ -196,7 +196,7 @@ static void fill_format4_parameters(fapi::ul_pucch_pdu_builder& builder, const p
 
 static void fill_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)
 {
-  switch (mac_pdu.get_format()) {
+  switch (mac_pdu.format()) {
     case pucch_format::FORMAT_0:
       fill_format0_parameters(builder, mac_pdu);
     case pucch_format::FORMAT_1:
@@ -212,7 +212,7 @@ static void fill_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pu
       fill_format4_parameters(builder, mac_pdu);
       break;
     default:
-      srsran_assert(0, "Invalid PUCCH format={}", fmt::underlying(mac_pdu.get_format()));
+      srsran_assert(0, "Invalid PUCCH format={}", fmt::underlying(mac_pdu.format()));
   }
 }
 

@@ -47,7 +47,7 @@ uci_indication::uci_pdu test_helper::create_uci_indication_pdu(du_ue_index_t ue_
   uci_indication::uci_pdu pdu;
   pdu.crnti    = pucch_pdu.crnti;
   pdu.ue_index = ue_idx;
-  switch (pucch_pdu.get_format()) {
+  switch (pucch_pdu.format()) {
     case pucch_format::FORMAT_1: {
       uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f1{};
       f1.harqs.resize(pucch_pdu.get_harq_ack_nof_bits());

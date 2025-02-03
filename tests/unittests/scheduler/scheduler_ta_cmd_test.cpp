@@ -50,7 +50,7 @@ protected:
     uci_ind.ucis.resize(1);
     uci_ind.ucis[0].crnti    = pucch_pdu.crnti;
     uci_ind.ucis[0].ue_index = ue_index;
-    switch (pucch_pdu.get_format()) {
+    switch (pucch_pdu.format()) {
       case pucch_format::FORMAT_1: {
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f1{};
         f1.harqs.resize(pucch_pdu.get_harq_ack_nof_bits());
@@ -120,7 +120,7 @@ TEST_P(scheduler_ta_cmd_tester, ta_cmd_is_scheduled)
     }
 
     for (const pucch_info& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
-      if (pucch.get_format() == pucch_format::FORMAT_1 and pucch.get_sr_bits() != sr_nof_bits::no_sr) {
+      if (pucch.format() == pucch_format::FORMAT_1 and pucch.get_sr_bits() != sr_nof_bits::no_sr) {
         // Skip SRs for this test.
         continue;
       }

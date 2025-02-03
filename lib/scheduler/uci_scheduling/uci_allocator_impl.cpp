@@ -144,8 +144,8 @@ uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resource_allocator&     res_al
   if (fallback_mode) {
     const auto* pucch_harq_grant_it = std::find_if(
         slot_alloc.result.ul.pucchs.begin(), slot_alloc.result.ul.pucchs.end(), [crnti](const pucch_info& pucch_grant) {
-          srsran_assert(pucch_grant.get_format() == pucch_format::FORMAT_1 or
-                            pucch_grant.get_format() == pucch_format::FORMAT_2,
+          srsran_assert(pucch_grant.format() == pucch_format::FORMAT_1 or
+                            pucch_grant.format() == pucch_format::FORMAT_2,
                         "Only PUCCH Format 1 and Format 2 are supported");
           const bool has_harq_ack_bits = pucch_grant.get_harq_ack_nof_bits() != 0U;
           return pucch_grant.crnti == crnti and has_harq_ack_bits;

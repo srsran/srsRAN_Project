@@ -57,96 +57,97 @@ public:
                                  .init_ul_bwp.pucch_cfg.value()
                                  .pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)]
                                  .pucch_res_id_list.size() -
-                             2U){// Set expected grant for PUCCH Format 0 SR.
-                                 {auto& format_0 = pucch_expected_f0_sr.format_params.emplace<pucch_format_0>();
-  pucch_expected_f0_sr.crnti   = to_rnti(0x4601);
-  pucch_expected_f0_sr.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+                             2U)
+  {
+    // Set expected grant for PUCCH Format 0 SR.
+    {
+      auto& format_0               = pucch_expected_f0_sr.format_params.emplace<pucch_format_0>();
+      pucch_expected_f0_sr.crnti   = to_rnti(0x4601);
+      pucch_expected_f0_sr.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-  pucch_expected_f0_sr.resources.prbs            = prb_interval{0, 1};
-  pucch_expected_f0_sr.resources.second_hop_prbs = prb_interval{0, 0};
-  pucch_expected_f0_sr.resources.symbols         = ofdm_symbol_range{12, 14};
+      pucch_expected_f0_sr.resources.prbs            = prb_interval{0, 1};
+      pucch_expected_f0_sr.resources.second_hop_prbs = prb_interval{0, 0};
+      pucch_expected_f0_sr.resources.symbols         = ofdm_symbol_range{12, 14};
 
-  format_0.initial_cyclic_shift = 0;
-  format_0.sr_bits              = sr_nof_bits::one;
-  format_0.harq_ack_nof_bits    = 0;
+      format_0.initial_cyclic_shift = 0;
+      format_0.sr_bits              = sr_nof_bits::one;
+      format_0.harq_ack_nof_bits    = 0;
 
-  format_0.group_hopping = pucch_group_hopping::NEITHER;
-  format_0.n_id_hopping  = t_bench.cell_cfg.pci;
-}
+      format_0.group_hopping = pucch_group_hopping::NEITHER;
+      format_0.n_id_hopping  = t_bench.cell_cfg.pci;
+    }
 
-// Set expected grant for PUCCH Format 0 HARQ.
-{
-  auto& format_0                 = pucch_expected_f0_harq.format_params.emplace<pucch_format_0>();
-  pucch_expected_f0_harq.crnti   = to_rnti(0x4601);
-  pucch_expected_f0_harq.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    // Set expected grant for PUCCH Format 0 HARQ.
+    {
+      auto& format_0                 = pucch_expected_f0_harq.format_params.emplace<pucch_format_0>();
+      pucch_expected_f0_harq.crnti   = to_rnti(0x4601);
+      pucch_expected_f0_harq.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-  pucch_expected_f0_harq.resources.prbs            = prb_interval{0, 1};
-  pucch_expected_f0_harq.resources.second_hop_prbs = prb_interval{0, 0};
-  pucch_expected_f0_harq.resources.symbols         = ofdm_symbol_range{0, 2};
+      pucch_expected_f0_harq.resources.prbs            = prb_interval{0, 1};
+      pucch_expected_f0_harq.resources.second_hop_prbs = prb_interval{0, 0};
+      pucch_expected_f0_harq.resources.symbols         = ofdm_symbol_range{0, 2};
 
-  format_0.initial_cyclic_shift = 0;
-  format_0.sr_bits              = sr_nof_bits::no_sr;
-  format_0.harq_ack_nof_bits    = 1;
+      format_0.initial_cyclic_shift = 0;
+      format_0.sr_bits              = sr_nof_bits::no_sr;
+      format_0.harq_ack_nof_bits    = 1;
 
-  format_0.group_hopping = pucch_group_hopping::NEITHER;
-  format_0.n_id_hopping  = t_bench.cell_cfg.pci;
-}
+      format_0.group_hopping = pucch_group_hopping::NEITHER;
+      format_0.n_id_hopping  = t_bench.cell_cfg.pci;
+    }
 
-{
-  auto& format_2                              = pucch_expected_f2.format_params.emplace<pucch_format_2>();
-  pucch_expected_f2.crnti                     = to_rnti(0x4601);
-  pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_expected_f2.resources.prbs            = prb_interval{1, 2};
-  pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
-  pucch_expected_f2.resources.symbols         = ofdm_symbol_range{0, 2};
+    {
+      auto& format_2                              = pucch_expected_f2.format_params.emplace<pucch_format_2>();
+      pucch_expected_f2.crnti                     = to_rnti(0x4601);
+      pucch_expected_f2.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+      pucch_expected_f2.resources.prbs            = prb_interval{1, 2};
+      pucch_expected_f2.resources.second_hop_prbs = prb_interval{0, 0};
+      pucch_expected_f2.resources.symbols         = ofdm_symbol_range{0, 2};
 
-  format_2.max_code_rate     = max_pucch_code_rate::dot_25;
-  format_2.n_id_scambling    = t_bench.cell_cfg.pci;
-  format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
-}
+      format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+      format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+      format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+    }
 
-// This PUCCH resource is located on the same symbols and PRBs as the PUCCH Format 0 resource for SR.
-{
-  auto& format_2                               = pucch_expected_f2_harq_for_sr.format_params.emplace<pucch_format_2>();
-  pucch_expected_f2_harq_for_sr.crnti          = to_rnti(0x4601);
-  pucch_expected_f2_harq_for_sr.bwp_cfg        = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_expected_f2_harq_for_sr.resources.prbs = prb_interval{0, 1};
-  pucch_expected_f2_harq_for_sr.resources.second_hop_prbs = prb_interval{0, 0};
-  pucch_expected_f2_harq_for_sr.resources.symbols         = ofdm_symbol_range{12, 14};
+    // This PUCCH resource is located on the same symbols and PRBs as the PUCCH Format 0 resource for SR.
+    {
+      auto& format_2                        = pucch_expected_f2_harq_for_sr.format_params.emplace<pucch_format_2>();
+      pucch_expected_f2_harq_for_sr.crnti   = to_rnti(0x4601);
+      pucch_expected_f2_harq_for_sr.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+      pucch_expected_f2_harq_for_sr.resources.prbs            = prb_interval{0, 1};
+      pucch_expected_f2_harq_for_sr.resources.second_hop_prbs = prb_interval{0, 0};
+      pucch_expected_f2_harq_for_sr.resources.symbols         = ofdm_symbol_range{12, 14};
 
-  format_2.max_code_rate     = max_pucch_code_rate::dot_25;
-  format_2.n_id_scambling    = t_bench.cell_cfg.pci;
-  format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
-}
+      format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+      format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+      format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+    }
 
-{
-  auto& format_2                               = pucch_expected_csi.format_params.emplace<pucch_format_2>();
-  pucch_expected_csi.crnti                     = to_rnti(0x4601);
-  pucch_expected_csi.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pucch_expected_csi.resources.prbs            = prb_interval{1, 2};
-  pucch_expected_csi.resources.second_hop_prbs = prb_interval{0, 0};
-  pucch_expected_csi.resources.symbols         = ofdm_symbol_range{12, 14};
+    {
+      auto& format_2                               = pucch_expected_csi.format_params.emplace<pucch_format_2>();
+      pucch_expected_csi.crnti                     = to_rnti(0x4601);
+      pucch_expected_csi.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+      pucch_expected_csi.resources.prbs            = prb_interval{1, 2};
+      pucch_expected_csi.resources.second_hop_prbs = prb_interval{0, 0};
+      pucch_expected_csi.resources.symbols         = ofdm_symbol_range{12, 14};
 
-  format_2.max_code_rate     = max_pucch_code_rate::dot_25;
-  format_2.n_id_scambling    = t_bench.cell_cfg.pci;
-  format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
-}
-}
-;
+      format_2.max_code_rate     = max_pucch_code_rate::dot_25;
+      format_2.n_id_scambling    = t_bench.cell_cfg.pci;
+      format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+    }
+  }
 
 protected:
-// Parameters that are passed by the routine to run the tests.
-pucch_info     pucch_expected_f0_sr;
-pucch_info     pucch_expected_f0_harq;
-pucch_info     pucch_expected_f2_harq_for_sr;
-pucch_info     pucch_expected_f2;
-pucch_info     pucch_expected_csi;
-const unsigned pucch_res_idx_f0_for_sr;
-const unsigned pucch_res_idx_f0_for_csi;
-const unsigned pucch_res_idx_f2_for_sr;
-const unsigned pucch_res_idx_f2_for_csi;
-}
-;
+  // Parameters that are passed by the routine to run the tests.
+  pucch_info     pucch_expected_f0_sr;
+  pucch_info     pucch_expected_f0_harq;
+  pucch_info     pucch_expected_f2_harq_for_sr;
+  pucch_info     pucch_expected_f2;
+  pucch_info     pucch_expected_csi;
+  const unsigned pucch_res_idx_f0_for_sr;
+  const unsigned pucch_res_idx_f0_for_csi;
+  const unsigned pucch_res_idx_f2_for_sr;
+  const unsigned pucch_res_idx_f2_for_csi;
+};
 
 TEST_F(test_pucch_allocator_format_0, test_sr_allocation_only)
 {

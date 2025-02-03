@@ -156,7 +156,7 @@ public:
         uci_indication::uci_pdu pdu;
         pdu.ue_index = to_du_ue_index(static_cast<unsigned>(pucch.crnti) - 0x4601);
         pdu.crnti    = pucch.crnti;
-        if (pucch.get_format() == pucch_format::FORMAT_1) {
+        if (pucch.format() == pucch_format::FORMAT_1) {
           uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f1{};
           f1.sr_detected = false;
           if (pucch.get_harq_ack_nof_bits() > 0 and pucch.get_sr_bits() == sr_nof_bits::no_sr) {
@@ -172,7 +172,7 @@ public:
           }
           pdu.pdu = f1;
           ind.ucis.push_back(pdu);
-        } else if (pucch.get_format() == pucch_format::FORMAT_2) {
+        } else if (pucch.format() == pucch_format::FORMAT_2) {
           uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2{};
           f2.ul_sinr_dB = 10;
           if (pucch.get_harq_ack_nof_bits() > 0) {

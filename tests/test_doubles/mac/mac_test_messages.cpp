@@ -76,7 +76,7 @@ mac_uci_pdu srsran::test_helpers::create_uci_pdu(const pucch_info& pucch)
 
   pdu.rnti = pucch.crnti;
 
-  switch (pucch.get_format()) {
+  switch (pucch.format()) {
     case pucch_format::FORMAT_1: {
       auto&       uci_f1   = pdu.pdu.emplace<mac_uci_pdu::pucch_f0_or_f1_type>();
       const auto& pucch_f1 = std::get<pucch_format_1>(pucch.format_params);

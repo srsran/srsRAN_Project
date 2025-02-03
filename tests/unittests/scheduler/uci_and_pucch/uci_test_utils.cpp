@@ -61,12 +61,12 @@ pucch_info srsran::build_pucch_info(const bwp_configuration* bwp_cfg,
 bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test)
 {
   bool is_equal =
-      expected.crnti == test.crnti && *expected.bwp_cfg == *test.bwp_cfg && expected.get_format() == test.get_format();
+      expected.crnti == test.crnti && *expected.bwp_cfg == *test.bwp_cfg && expected.format() == test.format();
   is_equal = is_equal && expected.resources.prbs == test.resources.prbs &&
              expected.resources.symbols == test.resources.symbols &&
              expected.resources.second_hop_prbs == test.resources.second_hop_prbs;
 
-  switch (expected.get_format()) {
+  switch (expected.format()) {
     case pucch_format::FORMAT_0: {
       const pucch_format_0& expected_f = std::get<pucch_format_0>(expected.format_params);
       const pucch_format_0& test_f     = std::get<pucch_format_0>(test.format_params);

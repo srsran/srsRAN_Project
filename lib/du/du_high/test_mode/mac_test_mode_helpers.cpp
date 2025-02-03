@@ -110,9 +110,9 @@ static mac_uci_pdu::pucch_f0_or_f1_type make_f0f1_uci_pdu(const pucch_info&     
   mac_uci_pdu::pucch_f0_or_f1_type pucch_ind;
 
   pucch_ind.ul_sinr_dB = 100;
-  srsran_assert(pucch.get_format() == pucch_format::FORMAT_0 or pucch.get_format() == pucch_format::FORMAT_1,
+  srsran_assert(pucch.format() == pucch_format::FORMAT_0 or pucch.format() == pucch_format::FORMAT_1,
                 "Expected PUCCH Format is F0 or F1");
-  if (pucch.get_format() == pucch_format::FORMAT_0) {
+  if (pucch.format() == pucch_format::FORMAT_0) {
     // In case of Format 0, unlike with Format 0, the GNB only schedules 1 PUCCH per slot; this PUCCH (and the
     // corresponding UCI indication) can have HARQ-ACK bits or SR bits, or both.
     if (pucch.get_sr_bits() != sr_nof_bits::no_sr) {
@@ -145,8 +145,8 @@ static mac_uci_pdu::pucch_f0_or_f1_type make_f0f1_uci_pdu(const pucch_info&     
 static mac_uci_pdu::pucch_f2_or_f3_or_f4_type
 make_f2f3f4_uci_pdu(const pucch_info& pucch, const du_test_mode_config::test_mode_ue_config& test_ue_cfg)
 {
-  srsran_assert(pucch.get_format() == pucch_format::FORMAT_2 or pucch.get_format() == pucch_format::FORMAT_3 or
-                    pucch.get_format() == pucch_format::FORMAT_4,
+  srsran_assert(pucch.format() == pucch_format::FORMAT_2 or pucch.format() == pucch_format::FORMAT_3 or
+                    pucch.format() == pucch_format::FORMAT_4,
                 "Expected PUCCH Format is F2, F3 or F4");
 
   const sr_nof_bits sr_bits           = pucch.get_sr_bits();
@@ -178,7 +178,7 @@ mac_uci_pdu srs_du::create_uci_pdu(const pucch_info& pucch, const du_test_mode_c
 {
   mac_uci_pdu pdu;
   pdu.rnti = pucch.crnti;
-  switch (pucch.get_format()) {
+  switch (pucch.format()) {
     case pucch_format::FORMAT_0:
     case pucch_format::FORMAT_1:
       pdu.pdu = make_f0f1_uci_pdu(pucch, test_ue_cfg);
@@ -222,7 +222,7 @@ bool srs_du::pucch_info_and_uci_ind_match(const pucch_info& pucch, const mac_uci
   if (pucch.crnti != uci_ind.rnti) {
     return false;
   }
-  if ((pucch.get_format() == pucch_format::FORMAT_0 or pucch.get_format() == pucch_format::FORMAT_1) and
+  if ((pucch.format() == pucch_format::FORMAT_0 or pucch.format() == pucch_format::FORMAT_1) and
       std::holds_alternative<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu)) {
     const auto  pucch_pdu_sr_bits = pucch.get_sr_bits();
     const auto& f0f1_ind          = std::get<mac_uci_pdu::pucch_f0_or_f1_type>(uci_ind.pdu);
@@ -235,8 +235,8 @@ bool srs_du::pucch_info_and_uci_ind_match(const pucch_info& pucch, const mac_uci
     }
     return true;
   }
-  if ((pucch.get_format() == pucch_format::FORMAT_2 or pucch.get_format() == pucch_format::FORMAT_3 or
-       pucch.get_format() == pucch_format::FORMAT_4) and
+  if ((pucch.format() == pucch_format::FORMAT_2 or pucch.format() == pucch_format::FORMAT_3 or
+       pucch.format() == pucch_format::FORMAT_4) and
       std::holds_alternative<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci_ind.pdu)) {
     const auto& f2f3f4_ind = std::get<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>(uci_ind.pdu);
 

@@ -51,7 +51,7 @@ public:
       format_2.n_id_scambling    = t_bench.cell_cfg.pci;
       format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
     }
-  };
+  }
 
 protected:
   // Parameters that are passed by the routine to run the tests.

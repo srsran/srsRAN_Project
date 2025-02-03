@@ -265,7 +265,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
   }
 
   for (const pucch_info& pucch : result.ul.pucchs) {
-    switch (pucch.get_format()) {
+    switch (pucch.format()) {
       case pucch_format::FORMAT_0: {
         const auto& format_0 = std::get<pucch_format_0>(pucch.format_params);
         format_to(

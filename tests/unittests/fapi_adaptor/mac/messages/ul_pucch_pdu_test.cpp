@@ -30,7 +30,7 @@ TEST(mac_fapi_ul_pucch_format1_pdu_conversor_test, ul_pucch_format1_pdu_valid_sh
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);
 
-  ASSERT_EQ(mac_pdu.get_format(), fapi_pdu.format_type);
+  ASSERT_EQ(mac_pdu.format(), fapi_pdu.format_type);
   ASSERT_EQ(mac_pdu.crnti, fapi_pdu.rnti);
 
   // Resources.
@@ -67,7 +67,7 @@ TEST(mac_fapi_ul_pucch_format2_pdu_conversor_test, ul_pucch_format2_pdu_valid_sh
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);
 
-  ASSERT_EQ(mac_pdu.get_format(), fapi_pdu.format_type);
+  ASSERT_EQ(mac_pdu.format(), fapi_pdu.format_type);
   ASSERT_EQ(mac_pdu.crnti, fapi_pdu.rnti);
 
   // Resources.
@@ -103,7 +103,7 @@ TEST(mac_fapi_ul_pucch_format3_pdu_conversor_test, ul_pucch_format3_pdu_valid_sh
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);
 
-  ASSERT_EQ(mac_pdu.get_format(), fapi_pdu.format_type);
+  ASSERT_EQ(mac_pdu.format(), fapi_pdu.format_type);
   ASSERT_EQ(mac_pdu.crnti, fapi_pdu.rnti);
 
   // Resources.
@@ -142,7 +142,7 @@ TEST(mac_fapi_ul_pucch_format4_pdu_conversor_test, ul_pucch_format4_pdu_valid_sh
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.bwp_start);
   ASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.bwp_size);
 
-  ASSERT_EQ(mac_pdu.get_format(), fapi_pdu.format_type);
+  ASSERT_EQ(mac_pdu.format(), fapi_pdu.format_type);
   ASSERT_EQ(mac_pdu.crnti, fapi_pdu.rnti);
 
   // Resources.

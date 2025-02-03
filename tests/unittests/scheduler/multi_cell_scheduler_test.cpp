@@ -119,7 +119,7 @@ protected:
     pdu.crnti    = get_ue_crnti(ue_idx);
     pdu.ue_index = to_du_ue_index(ue_idx);
 
-    switch (pucch_res.get_format()) {
+    switch (pucch_res.format()) {
       case pucch_format::FORMAT_1: {
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
         pucch_pdu.sr_detected = true;

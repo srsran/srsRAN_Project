@@ -898,7 +898,7 @@ public:
     for (const pucch_info& pucch : sim_phy.slot_ul_result.ul_res->pucchs) {
       mac_uci_pdu& uci_pdu = uci.ucis.emplace_back();
       uci_pdu.rnti         = pucch.crnti;
-      switch (pucch.get_format()) {
+      switch (pucch.format()) {
         case pucch_format::FORMAT_1: {
           mac_uci_pdu::pucch_f0_or_f1_type f1{};
           if (pucch.get_harq_ack_nof_bits() > 0) {

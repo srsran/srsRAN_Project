@@ -375,7 +375,7 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
         // UE is not test mode or it has already received Msg4.
         continue;
       }
-      if ((pucch.get_format() == pucch_format::FORMAT_0 or pucch.get_format() == pucch_format::FORMAT_1) and
+      if ((pucch.format() == pucch_format::FORMAT_0 or pucch.format() == pucch_format::FORMAT_1) and
           pucch.get_harq_ack_nof_bits() > 0) {
         // In case of PUCCH F1 with HARQ-ACK bits, we assume that the Msg4 is received. At this point, we
         // update the test UE with positive DL buffer states and BSR.

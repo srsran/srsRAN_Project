@@ -253,7 +253,7 @@ TEST_F(sched_ue_removal_test,
 
     const pucch_info* pucch = find_ue_pucch(rnti, *last_sched_res_list[to_du_cell_index(0)]);
     if (pucch != nullptr and
-        (pucch->get_format() == pucch_format::FORMAT_1 and pucch->get_sr_bits() != sr_nof_bits::no_sr)) {
+        (pucch->format() == pucch_format::FORMAT_1 and pucch->get_sr_bits() != sr_nof_bits::no_sr)) {
       // UCI indication sets SR indication.
       uci_indication uci;
       uci.cell_index = to_du_cell_index(0);
