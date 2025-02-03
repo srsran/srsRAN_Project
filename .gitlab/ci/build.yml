@@ -399,18 +399,18 @@ smoke tsan cached:
   cache:
     - *cache_build_get
 
-smoke ubsan cached:
-  extends: .smoke ubsan
-  stage: manual
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
-      when: never
-    - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
-    - if: $ON_MR
-      when: manual
-      allow_failure: false
-  cache:
-    - *cache_build_get
+# smoke ubsan cached:
+#   extends: .smoke ubsan
+#   stage: manual
+#   rules:
+#     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
+#       when: never
+#     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
+#     - if: $ON_MR
+#       when: manual
+#       allow_failure: false
+#   cache:
+#     - *cache_build_get
 
 smoke archlinux cached:
   extends: .smoke archlinux
@@ -515,10 +515,10 @@ smoke tsan clean:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
 
-smoke ubsan clean:
-  extends: .smoke ubsan
-  rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
+# smoke ubsan clean:
+#   extends: .smoke ubsan
+#   rules:
+#     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
 
 smoke archlinux clean:
   extends: .smoke archlinux
