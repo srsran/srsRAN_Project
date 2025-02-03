@@ -206,16 +206,24 @@ void srs_scheduler_impl::handle_positioning_measurement_request(const positionin
     srsran_assert(not is_crnti(req.pos_rnti),
                   "UEs of neighbor cells should be represented by RNTIs in the reserved range");
 
-    // Register positioning request.
-    pending_pos_requests.push_back(req);
-
     // Add SRS config to slot wheel.
+    bool res_added = false;
     for (const auto& srs_res : req.srs_to_measure.srs_res_list) {
+      if (not srs_res.periodicity_and_offset.has_value()) {
+        // Only periodic SRSs are handled at the moment.
+        continue;
+      }
       add_resource(req.pos_rnti,
                    srs_res.periodicity_and_offset.value().period,
                    srs_res.periodicity_and_offset.value().offset,
                    srs_res.id.ue_res_id);
+      res_added = true;
     }
+    srsran_assert(res_added, "Invalid positioning measurement request for rnti={}", req.pos_rnti);
+
+    // Register positioning request.
+    pending_pos_requests.push_back(req);
+    updated_ues.push_back({req.pos_rnti, ue_update::type_t::positioning_request});
   }
 }
 
@@ -327,7 +335,7 @@ bool srs_scheduler_impl::allocate_srs_opportunity(cell_slot_resource_allocator& 
 
   // Retrieve the SRS resource ID from the UE dedicated config.
   const auto* res_it = std::find_if(
-      srs_res_list.begin(), srs_res_list.end(), [srs_opportunity](const srs_config::srs_resource& srs_res) {
+      srs_res_list.begin(), srs_res_list.end(), [&srs_opportunity](const srs_config::srs_resource& srs_res) {
         return srs_res.id.ue_res_id == srs_opportunity.srs_res_id;
       });
 
