@@ -14,6 +14,43 @@
 
 using namespace srsran;
 
+// Helper to generate an SRS info PDU for a given SRS resource.
+static srs_info create_srs_pdu(rnti_t                          rnti,
+                               const bwp_configuration&        ul_bwp_cfg,
+                               const srs_config::srs_resource& srs_res_cfg,
+                               bool                            pos_meas_requested)
+{
+  srs_info pdu;
+  pdu.crnti             = rnti;
+  pdu.bwp_cfg           = &ul_bwp_cfg;
+  pdu.nof_antenna_ports = static_cast<uint8_t>(srs_res_cfg.nof_ports);
+
+  const unsigned nof_symbs_per_slot = get_nsymb_per_slot(ul_bwp_cfg.cp);
+  const unsigned starting_symb      = nof_symbs_per_slot - srs_res_cfg.res_mapping.start_pos - 1;
+  pdu.symbols.set(starting_symb, starting_symb + static_cast<unsigned>(srs_res_cfg.res_mapping.nof_symb));
+  pdu.nof_repetitions = srs_res_cfg.res_mapping.rept_factor;
+
+  pdu.config_index         = srs_res_cfg.freq_hop.c_srs;
+  pdu.sequence_id          = static_cast<uint8_t>(srs_res_cfg.sequence_id);
+  pdu.bw_index             = srs_res_cfg.freq_hop.b_srs;
+  pdu.tx_comb              = srs_res_cfg.tx_comb.size;
+  pdu.comb_offset          = srs_res_cfg.tx_comb.tx_comb_offset;
+  pdu.cyclic_shift         = srs_res_cfg.tx_comb.tx_comb_cyclic_shift;
+  pdu.freq_position        = srs_res_cfg.freq_domain_pos;
+  pdu.freq_shift           = srs_res_cfg.freq_domain_shift;
+  pdu.freq_hopping         = srs_res_cfg.freq_hop.b_hop;
+  pdu.group_or_seq_hopping = srs_res_cfg.grp_or_seq_hop;
+  pdu.resource_type        = srs_res_cfg.res_type;
+
+  pdu.t_srs_period = srs_res_cfg.periodicity_and_offset.value().period;
+  pdu.t_offset     = srs_res_cfg.periodicity_and_offset.value().offset;
+
+  pdu.normalized_channel_iq_matrix_requested = true;
+  pdu.positioning_report_requested           = pos_meas_requested;
+
+  return pdu;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 srs_scheduler_impl::srs_scheduler_impl(const cell_configuration& cell_cfg_, ue_repository& ues_) :
@@ -273,7 +310,18 @@ void srs_scheduler_impl::schedule_updated_ues_srs(cell_resource_allocator& cell_
   if (not updated_ues.empty()) {
     // Schedule SRS up to the farthest slot.
     for (unsigned n = 0; n != cell_alloc.max_ul_slot_alloc_delay; ++n) {
+      cell_slot_resource_allocator& slot_alloc = cell_alloc[n];
       auto& slot_srss = periodic_srs_slot_wheel[(cell_alloc.slot_tx() + n).to_uint() % periodic_srs_slot_wheel.size()];
+
+      // Positioning was requested/stopped. Set positioning flag for already allocated PDUs in the grid.
+      for (const ue_update& ue_upd : updated_ues) {
+        if (ue_upd.type == ue_update::type_t::positioning_stop or
+            ue_upd.type == ue_update::type_t::positioning_request) {
+          for (auto& pdu : slot_alloc.result.ul.srss) {
+            pdu.positioning_report_requested = ue_upd.type == ue_update::type_t::positioning_request;
+          }
+        }
+      }
 
       // For all the periodic SRS info element at this slot, allocate only those that belong to the UE updated_ues.
       for (const periodic_srs_info& srs : slot_srss) {
@@ -284,13 +332,10 @@ void srs_scheduler_impl::schedule_updated_ues_srs(cell_resource_allocator& cell_
         }
         if (ue_it->type == ue_update::type_t::new_ue) {
           // New UE was created. Add SRS PDUs to the grid.
-          allocate_srs_opportunity(cell_alloc[n], srs);
-        } else if (ue_it->type == ue_update::type_t::positioning_request or
-                   ue_it->type == ue_update::type_t::positioning_stop) {
-          const bool pos_requested = ue_it->type == ue_update::type_t::positioning_request;
-          for (auto& pdu : cell_alloc[n].result.ul.srss) {
-            pdu.positioning_report_requested = pos_requested;
-          }
+          allocate_srs_opportunity(slot_alloc, srs);
+        } else if (ue_it->type == ue_update::type_t::positioning_request and not is_crnti(ue_it->rnti)) {
+          // It is an SRS positioning request for a neighbor cell. Allocate SRS opportunities in the grid.
+          allocate_srs_opportunity(slot_alloc, srs);
         }
       }
     }
@@ -305,23 +350,6 @@ bool srs_scheduler_impl::allocate_srs_opportunity(cell_slot_resource_allocator& 
 {
   slot_point sl_srs = slot_alloc.slot;
 
-  const ue_cell_configuration* ue_cfg = get_ue_cfg(srs_opportunity.rnti);
-  if (ue_cfg == nullptr) {
-    logger.error("cell={} c-rnti={}: UE for which SRS is being scheduled was not found",
-                 fmt::underlying(cell_cfg.cell_index),
-                 srs_opportunity.rnti);
-    return false;
-  }
-
-  if (not ue_cfg->cell_cfg_common.is_ul_enabled(sl_srs)) {
-    logger.warning("cell={} c-rnti={}: slot={} for SRS resource id={} is being scheduled is not UL enabled",
-                   fmt::underlying(cell_cfg.cell_index),
-                   srs_opportunity.rnti,
-                   sl_srs,
-                   fmt::underlying(srs_opportunity.srs_res_id));
-    return false;
-  }
-
   if (slot_alloc.result.ul.srss.full()) {
     logger.warning("cell={} c-rnti={}: SRS resource id={} cannot be allocated for slot={}. Cause: SRS list is full",
                    fmt::underlying(cell_cfg.cell_index),
@@ -331,15 +359,52 @@ bool srs_scheduler_impl::allocate_srs_opportunity(cell_slot_resource_allocator& 
     return false;
   }
 
-  const auto srs_res_list = ue_cfg->cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.value().srs_res_list;
+  // Check if there is a pending positioning request.
+  const positioning_measurement_request* pos_req = nullptr;
+  for (const positioning_measurement_request& pending_req : pending_pos_requests) {
+    if (pending_req.pos_rnti == srs_opportunity.rnti) {
+      pos_req = &pending_req;
+      break;
+    }
+  }
+
+  span<const srs_config::srs_resource> srs_res_list;
+  if (is_crnti(srs_opportunity.rnti)) {
+    // SRS of UE connected to the cell.
+
+    // Fetch UE config.
+    const ue_cell_configuration* ue_cfg = get_ue_cfg(srs_opportunity.rnti);
+    if (ue_cfg == nullptr) {
+      logger.error("cell={} c-rnti={}: UE for which SRS is being scheduled was not found",
+                   fmt::underlying(cell_cfg.cell_index),
+                   srs_opportunity.rnti);
+      return false;
+    }
+
+    if (not ue_cfg->is_ul_enabled(sl_srs)) {
+      logger.warning("cell={} c-rnti={}: slot={} for SRS resource id={} is being scheduled is not UL enabled",
+                     fmt::underlying(cell_cfg.cell_index),
+                     srs_opportunity.rnti,
+                     sl_srs,
+                     fmt::underlying(srs_opportunity.srs_res_id));
+      return false;
+    }
+
+    srs_res_list = ue_cfg->cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.value().srs_res_list;
+
+  } else {
+    // SRS for UE of neighbor cell.
+    srsran_assert(pos_req != nullptr, "Positioning SRS requested for invalid C-RNTI");
+    srs_res_list = pos_req->srs_to_measure.srs_res_list;
+  }
 
   // Retrieve the SRS resource ID from the UE dedicated config.
-  const auto* res_it = std::find_if(
-      srs_res_list.begin(), srs_res_list.end(), [&srs_opportunity](const srs_config::srs_resource& srs_res) {
-        return srs_res.id.ue_res_id == srs_opportunity.srs_res_id;
+  const srs_config::srs_resource* srs_res =
+      std::find_if(srs_res_list.begin(), srs_res_list.end(), [&srs_opportunity](const srs_config::srs_resource& s) {
+        return s.id.ue_res_id == srs_opportunity.srs_res_id;
       });
 
-  if (res_it == srs_res_list.end()) {
+  if (srs_res == srs_res_list.end()) {
     logger.warning("cell={} c-rnti={}: SRS resource id={} cannot be allocated for slot={}. Cause: SRS resource not "
                    "found in UE ded. config",
                    fmt::underlying(cell_cfg.cell_index),
@@ -349,55 +414,19 @@ bool srs_scheduler_impl::allocate_srs_opportunity(cell_slot_resource_allocator& 
     return false;
   }
 
-  const unsigned nof_symbs_per_slot = get_nsymb_per_slot(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp);
-  const unsigned starting_symb      = nof_symbs_per_slot - res_it->res_mapping.start_pos - 1;
+  const bwp_configuration& ul_bwp_cfg         = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  const unsigned           nof_symbs_per_slot = get_nsymb_per_slot(ul_bwp_cfg.cp);
+  const unsigned           starting_symb      = nof_symbs_per_slot - srs_res->res_mapping.start_pos - 1;
   slot_alloc.ul_res_grid.fill(
-      grant_info(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs,
-                 ofdm_symbol_range{starting_symb, starting_symb + static_cast<unsigned>(res_it->res_mapping.nof_symb)},
-                 cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs));
-  fill_srs_pdu(slot_alloc.result.ul.srss.emplace_back(), *res_it, *ue_cfg);
+      grant_info(ul_bwp_cfg.scs,
+                 ofdm_symbol_range{starting_symb, starting_symb + static_cast<unsigned>(srs_res->res_mapping.nof_symb)},
+                 ul_bwp_cfg.crbs));
+
+  // Add SRS PDU into results.
+  slot_alloc.result.ul.srss.emplace_back(
+      create_srs_pdu(srs_opportunity.rnti, ul_bwp_cfg, *srs_res, pos_req != nullptr));
 
   return true;
-}
-
-void srs_scheduler_impl::fill_srs_pdu(srs_info&                       pdu,
-                                      const srs_config::srs_resource& srs_res_cfg,
-                                      const ue_cell_configuration&    ue_cfg)
-{
-  pdu.crnti             = ue_cfg.crnti;
-  pdu.bwp_cfg           = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  pdu.nof_antenna_ports = static_cast<uint8_t>(srs_res_cfg.nof_ports);
-
-  const unsigned nof_symbs_per_slot = get_nsymb_per_slot(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.cp);
-  const unsigned starting_symb      = nof_symbs_per_slot - srs_res_cfg.res_mapping.start_pos - 1;
-  pdu.symbols.set(starting_symb, starting_symb + static_cast<unsigned>(srs_res_cfg.res_mapping.nof_symb));
-  pdu.nof_repetitions = srs_res_cfg.res_mapping.rept_factor;
-
-  pdu.config_index         = srs_res_cfg.freq_hop.c_srs;
-  pdu.sequence_id          = static_cast<uint8_t>(srs_res_cfg.sequence_id);
-  pdu.bw_index             = srs_res_cfg.freq_hop.b_srs;
-  pdu.tx_comb              = srs_res_cfg.tx_comb.size;
-  pdu.comb_offset          = srs_res_cfg.tx_comb.tx_comb_offset;
-  pdu.cyclic_shift         = srs_res_cfg.tx_comb.tx_comb_cyclic_shift;
-  pdu.freq_position        = srs_res_cfg.freq_domain_pos;
-  pdu.freq_shift           = srs_res_cfg.freq_domain_shift;
-  pdu.freq_hopping         = srs_res_cfg.freq_hop.b_hop;
-  pdu.group_or_seq_hopping = srs_res_cfg.grp_or_seq_hop;
-  pdu.resource_type        = srs_res_cfg.res_type;
-
-  pdu.t_srs_period = srs_res_cfg.periodicity_and_offset.value().period;
-  pdu.t_offset     = srs_res_cfg.periodicity_and_offset.value().offset;
-
-  pdu.normalized_channel_iq_matrix_requested = true;
-  pdu.positioning_report_requested           = false;
-
-  // Check if there is a pending positioning request.
-  for (const auto& pos_req : pending_pos_requests) {
-    if (pos_req.pos_rnti == pdu.crnti) {
-      pdu.positioning_report_requested = true;
-      break;
-    }
-  }
 }
 
 void srs_scheduler_impl::add_resource(rnti_t                 crnti,

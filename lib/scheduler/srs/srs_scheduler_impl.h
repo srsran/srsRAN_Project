@@ -62,8 +62,6 @@ private:
   void schedule_updated_ues_srs(cell_resource_allocator& res_alloc);
   // Helper that allocates an SRS opportunity for a given UE.
   bool allocate_srs_opportunity(cell_slot_resource_allocator& slot_alloc, const periodic_srs_info& srs_opportunity);
-  // Helper that fills the SRS PDU fields.
-  void fill_srs_pdu(srs_info& pdu, const srs_config::srs_resource& srs_res_cfg, const ue_cell_configuration& ue_cfg);
 
   void add_ue_to_grid(const ue_cell_configuration& ue_cfg, bool is_reconf);
 

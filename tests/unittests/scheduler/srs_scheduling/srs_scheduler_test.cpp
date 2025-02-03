@@ -414,7 +414,18 @@ TEST_F(srs_positioning_scheduler_test, when_neighbor_cell_ue_positioning_is_requ
   // Stop positioning.
   this->srs_sched.handle_positioning_measurement_stop(to_du_cell_index(0), pos_rnti);
 
-  // Positioning is not being requested.
-  pdu = this->next_srs_info(pos_rnti);
-  ASSERT_EQ(pdu, nullptr);
+  // Positioning stops being requested.
+  // Note: given that some SRS were already scheduled in the grid, we have a transition period where SRSs are scheduled
+  // but without positioning.
+  const unsigned max_pdu_count = 6;
+  unsigned       count         = 0;
+  for (; count != max_pdu_count; ++count) {
+    pdu = this->next_srs_info(pos_rnti);
+    if (pdu != nullptr) {
+      ASSERT_FALSE(pdu->positioning_report_requested);
+    } else {
+      break;
+    }
+  }
+  ASSERT_LT(count, max_pdu_count);
 }
