@@ -26,6 +26,11 @@ static void configure_cli11_metrics_args(CLI::App& app, srs_du::metrics_appconfi
   app.add_option("--port", metrics_params.port, "Metrics UDP port.")
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
+  add_option(app,
+             "--resource_usage_report_period",
+             metrics_params.rusage_report_period,
+             "Resource usage metrics report period (in milliseconds)")
+      ->capture_default_str();
 }
 
 static void configure_cli11_f1ap_args(CLI::App& app, srs_du::f1ap_appconfig& f1c_params)

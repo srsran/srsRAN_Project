@@ -38,6 +38,8 @@ struct f1u_appconfig {
 struct metrics_appconfig {
   std::string addr = "127.0.0.1";
   uint16_t    port = 55555;
+  /// Resource usage report period in milliseconds.
+  unsigned rusage_report_period = 0;
 };
 
 } // namespace srs_du

@@ -17,8 +17,9 @@ using namespace srsran;
 
 static void fill_du_appconfig_metrics_section(YAML::Node node, const srs_du::metrics_appconfig& config)
 {
-  node["addr"] = config.addr;
-  node["port"] = config.port;
+  node["addr"]                         = config.addr;
+  node["port"]                         = config.port;
+  node["resource_usage_report_period"] = config.rusage_report_period;
 }
 
 static void fill_du_appconfig_hal_section(YAML::Node node, const std::optional<hal_appconfig>& config)

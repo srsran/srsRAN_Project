@@ -32,6 +32,9 @@ public:
   // See interface for documentation.
   void report_metrics(const scheduler_cell_metrics& report) override;
 
+  // See interface for documentation.
+  void on_new_report_period() override {}
+
   /// Callback for the scheduler cell metrics.
   app_services::metrics_callback get_callback();
 

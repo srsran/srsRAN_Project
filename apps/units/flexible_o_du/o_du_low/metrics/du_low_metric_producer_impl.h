@@ -166,6 +166,9 @@ public:
     fmt::print("\n");
   }
 
+  // See interface for documentation.
+  void on_new_report_period() override {}
+
   upper_phy_metrics_notifiers& get_notifiers() { return *this; }
 
 private:
