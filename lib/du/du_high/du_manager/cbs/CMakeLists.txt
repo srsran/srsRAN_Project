@@ -6,4 +6,4 @@
 # the distribution.
 #
 
-add_library(srsran_cbs_encoder STATIC cbs_encoder.cpp)
+add_library(srsran_cbs_encoder STATIC cbs_encoder_impl.cpp)

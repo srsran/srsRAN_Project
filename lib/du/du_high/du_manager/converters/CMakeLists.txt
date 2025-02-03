@@ -15,4 +15,4 @@ set(SOURCES
         scheduler_configuration_helpers.cpp)
 
 add_library(du_manager_converters STATIC ${SOURCES})
-target_link_libraries(du_manager_converters rrc_nr_asn1 srsran_support srsran_ran srsran_sched)
+target_link_libraries(du_manager_converters rrc_nr_asn1 srsran_support srsran_ran srsran_sched srsran_cbs_encoder)

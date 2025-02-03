@@ -1213,23 +1213,23 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
       ->check(CLI::IsMember({1, 2, 4, 8, 10, 20, 40, 80}));
 }
 
-static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::etws_params& sib_params)
+static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::etws_config& sib_params)
 {
   add_option(app, "--message_id", sib_params.message_id, "ETWS message ID.")
       ->capture_default_str()
-      ->check(CLI::Range(0, 0xFFFF));
+      ->check(CLI::Range(0, 0xffff));
 
   add_option(app, "--serial_num", sib_params.serial_num, "ETWS message serial number.")
       ->capture_default_str()
-      ->check(CLI::Range(0, 0xFFFF));
+      ->check(CLI::Range(0, 0xffff));
 
   add_option(app, "--warning_type", sib_params.warning_type, "ETWS warning type.")
       ->capture_default_str()
-      ->check(CLI::Range(0, 0xFFFF));
+      ->check(CLI::Range(0, 0xffff));
 
   add_option(app, "--data_coding_scheme", sib_params.data_coding_scheme, "ETWS message CBS coding scheme.")
       ->capture_default_str()
-      ->check(CLI::Range(0, 0xFF));
+      ->check(CLI::Range(0, 0xff));
 
   add_option(app,
              "--warning_message",
@@ -1238,19 +1238,19 @@ static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::et
       ->capture_default_str();
 }
 
-static void configure_cli11_cmas_args(CLI::App& app, du_high_unit_sib_config::cmas_params& sib_params)
+static void configure_cli11_cmas_args(CLI::App& app, du_high_unit_sib_config::cmas_config& sib_params)
 {
   add_option(app, "--message_id", sib_params.message_id, "CMAS message ID.")
       ->capture_default_str()
-      ->check(CLI::Range(0, 0xFFFF));
+      ->check(CLI::Range(0, 0xffff));
 
   add_option(app, "--serial_num", sib_params.serial_num, "CMAS message serial number.")
       ->capture_default_str()
-      ->check(CLI::Range(0, 0xFFFF));
+      ->check(CLI::Range(0, 0xffff));
 
   add_option(app, "--data_coding_scheme", sib_params.data_coding_scheme, "CMAS message CBS coding scheme.")
       ->capture_default_str()
-      ->check(CLI::Range(0, 0xFF));
+      ->check(CLI::Range(0, 0xff));
 
   add_option(app,
              "--warning_message",
@@ -1289,10 +1289,30 @@ static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib
       "Configures the scheduling for each of the SI-messages broadcast by the gNB");
 
   CLI::App* etws_subcmd = add_subcommand(app, "etws", "ETWS configuration parameters");
-  configure_cli11_etws_args(*etws_subcmd, sib_params.etws_config);
+  static du_high_unit_sib_config::etws_config etws_cfg;
+  configure_cli11_etws_args(*etws_subcmd, etws_cfg);
+  auto etws_verify_callback = [&]() {
+    CLI::App* etws_sub_cmd = app.get_subcommand("etws");
+    if (etws_sub_cmd->count() != 0) {
+      sib_params.etws_cfg.emplace(etws_cfg);
+    } else {
+      etws_sub_cmd->disabled();
+    }
+  };
+  etws_subcmd->parse_complete_callback(etws_verify_callback);
 
+  static du_high_unit_sib_config::cmas_config cmas_cfg;
   CLI::App* cmas_subcmd = add_subcommand(app, "cmas", "CMAS configuration parameters");
-  configure_cli11_cmas_args(*cmas_subcmd, sib_params.cmas_config);
+  configure_cli11_cmas_args(*cmas_subcmd, cmas_cfg);
+  auto cmas_verify_callback = [&]() {
+    CLI::App* cmas_sub_cmd = app.get_subcommand("cmas");
+    if (cmas_sub_cmd->count() != 0) {
+      sib_params.cmas_cfg.emplace(cmas_cfg);
+    } else {
+      cmas_sub_cmd->disabled();
+    }
+  };
+  cmas_subcmd->parse_complete_callback(cmas_verify_callback);
 
   add_option(app,
              "--t300",

@@ -12,6 +12,7 @@
 #include "asn1_rrc_config_helpers.h"
 #include "srsran/asn1/rrc_nr/bcch_dl_sch_msg.h"
 #include "srsran/asn1/rrc_nr/meas_timing_cfg.h"
+#include "srsran/du/du_high/du_manager/cbs/cbs_encoder.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/support/error_handling.h"
 
@@ -427,6 +428,24 @@ asn1::rrc_nr::sib6_s make_asn1_rrc_cell_sib6(const sib6_info& sib6_params)
   return sib6;
 }
 
+static std::vector<uint8_t> encode_warning_message(const std::string& warning_message, unsigned data_coding_scheme)
+{
+  // Number of bytes carried by each warning message segment. It must be set to a value below the SIB capacity.
+  static constexpr unsigned msg_segment_nof_bytes = 100;
+
+  // Encode the warning message.
+  std::unique_ptr<cbs_encoder> encoder                 = create_cbs_encoder();
+  std::vector<uint8_t>         encoded_warning_message = encoder->encode_cb_data(warning_message, data_coding_scheme);
+
+  if (encoded_warning_message.size() > msg_segment_nof_bytes) {
+    report_error("Endoded warning message length (i.e., {}) exceeded message segment size (i.e., {}.",
+                 encoded_warning_message.size(),
+                 msg_segment_nof_bytes);
+  }
+
+  return encoded_warning_message;
+}
+
 asn1::rrc_nr::sib7_s make_asn1_rrc_cell_sib7(const sib7_info& sib7_params)
 {
   using namespace asn1::rrc_nr;
@@ -435,22 +454,17 @@ asn1::rrc_nr::sib7_s make_asn1_rrc_cell_sib7(const sib7_info& sib7_params)
   sib7.msg_id.from_number(sib7_params.message_id);
   sib7.serial_num.from_number(sib7_params.serial_number);
 
-  span<const uint8_t> message_view(sib7_params.warning_message_segment);
-  sib7.warning_msg_segment.from_bytes(message_view);
+  // Encode the warning message into a single segment.
+  sib7.warning_msg_segment.from_bytes(
+      encode_warning_message(sib7_params.warning_message_segment, sib7_params.data_coding_scheme));
 
-  sib7.warning_msg_segment_type.value =
-      (sib7_params.warning_message_segment_type == warning_msg_seg_order::last_segment)
-          ? sib7_s::warning_msg_segment_type_opts::last_segment
-          : sib7_s::warning_msg_segment_type_opts::not_last_segment;
-  sib7.warning_msg_segment_num = sib7_params.warning_message_segment_number.to_uint();
+  // For now, segmentation is not supported.
+  sib7.warning_msg_segment_type.value = sib7_s::warning_msg_segment_type_opts::last_segment;
+  sib7.warning_msg_segment_num        = 0;
 
-  // Data and coding scheme is only present in the first message segment.
-  sib7.data_coding_scheme_present = sib7_params.warning_message_segment_number == 0;
-  if (sib7.data_coding_scheme_present) {
-    srsran_assert(sib7_params.data_coding_scheme.has_value(),
-                  "SIB-7 dataCodingScheme field must be present in the SIB carrying the first message segment.");
-    sib7.data_coding_scheme.from_number(sib7_params.data_coding_scheme.value());
-  }
+  // Data and coding scheme is present in the first message segment.
+  sib7.data_coding_scheme_present = true;
+  sib7.data_coding_scheme.from_number(sib7_params.data_coding_scheme);
 
   return sib7;
 }
@@ -463,22 +477,17 @@ asn1::rrc_nr::sib8_s make_asn1_rrc_cell_sib8(const sib8_info& sib8_params)
   sib8.msg_id.from_number(sib8_params.message_id);
   sib8.serial_num.from_number(sib8_params.serial_number);
 
-  span<const uint8_t> message_view(sib8_params.warning_message_segment);
-  sib8.warning_msg_segment.from_bytes(message_view);
+  // Encode the warning message into a single segment.
+  sib8.warning_msg_segment.from_bytes(
+      encode_warning_message(sib8_params.warning_message_segment, sib8_params.data_coding_scheme));
 
-  sib8.warning_msg_segment_type.value =
-      (sib8_params.warning_message_segment_type == warning_msg_seg_order::last_segment)
-          ? sib8_s::warning_msg_segment_type_opts::last_segment
-          : sib8_s::warning_msg_segment_type_opts::not_last_segment;
-  sib8.warning_msg_segment_num = sib8_params.warning_message_segment_number.to_uint();
+  // For now, segmentation is not supported.
+  sib8.warning_msg_segment_type.value = sib8_s::warning_msg_segment_type_opts::last_segment;
+  sib8.warning_msg_segment_num        = 0;
 
-  // Data and coding scheme is only present in the first message segment.
-  sib8.data_coding_scheme_present = sib8_params.warning_message_segment_number == 0;
-  if (sib8.data_coding_scheme_present) {
-    srsran_assert(sib8_params.data_coding_scheme.has_value(),
-                  "SIB-8 dataCodingScheme field must be present in the SIB carrying the first message segment.");
-    sib8.data_coding_scheme.from_number(sib8_params.data_coding_scheme.value());
-  }
+  // Data and coding scheme is present in the first message segment.
+  sib8.data_coding_scheme_present = true;
+  sib8.data_coding_scheme.from_number(sib8_params.data_coding_scheme);
 
   return sib8;
 }

@@ -202,7 +202,7 @@ TEST(asn1_bit_ref, pack_unpack_operators)
 TEST(asn1_octet_string_test, pack_unpack_operators)
 {
   std::string          hexstr = "014477aaff";
-  std::vector<uint8_t> bytes  = {0x01, 0x44, 0x77, 0xAA, 0xFF};
+  std::vector<uint8_t> bytes  = {0x01, 0x44, 0x77, 0xaa, 0xff};
 
   fixed_octstring<5> statstr;
   dyn_octstring      dynstr;
