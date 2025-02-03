@@ -11,15 +11,15 @@
 #pragma once
 
 #include "srsran/fapi/messages/base_message.h"
-#include "srsran/fapi/messages/dl_pdcch_pdu.h"
 
 namespace srsran {
 namespace fapi {
 
-struct validator_report;
-
-/// Validates the given DL PDCCH PDU and returns true on success, otherwise false.
-bool validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcch_pdu& pdu, validator_report& report);
+/// Slot indication message.
+struct slot_indication_message : public base_message {
+  uint16_t sfn;
+  uint16_t slot;
+};
 
 } // namespace fapi
 } // namespace srsran

@@ -10,7 +10,10 @@
 
 #include "../../../lib/fapi_adaptor/mac/mac_to_fapi_translator.h"
 #include "messages/helpers.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
+#include "srsran/fapi/messages/tx_data_request.h"
+#include "srsran/fapi/messages/ul_dci_request.h"
+#include "srsran/fapi/messages/ul_tti_request.h"
 #include "srsran/fapi/slot_last_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"

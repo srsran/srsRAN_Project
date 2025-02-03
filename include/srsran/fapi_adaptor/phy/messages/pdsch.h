@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
 #include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 

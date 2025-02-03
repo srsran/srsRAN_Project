@@ -13,7 +13,7 @@
 #include "srsran/du/du_cell_config.h"
 #include "srsran/du/du_low/du_low_factory.h"
 #include "srsran/du/du_low/o_du_low_config.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/config_request_tlvs.h"
 #include "srsran/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"

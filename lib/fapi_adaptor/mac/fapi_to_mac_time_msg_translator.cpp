@@ -9,7 +9,7 @@
  */
 
 #include "fapi_to_mac_time_msg_translator.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/slot_indication.h"
 #include "srsran/mac/mac_cell_slot_handler.h"
 
 using namespace srsran;

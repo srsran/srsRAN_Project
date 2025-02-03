@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
 
 namespace srsran {
 

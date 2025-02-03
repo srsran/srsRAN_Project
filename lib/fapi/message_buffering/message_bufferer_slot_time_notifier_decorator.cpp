@@ -11,7 +11,7 @@
 #include "message_bufferer_slot_time_notifier_decorator.h"
 #include "message_bufferer_slot_gateway_task_dispatcher.h"
 #include "srsran/fapi/message_builders.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/slot_indication.h"
 #include "srsran/ran/slot_point.h"
 
 using namespace srsran;
