@@ -128,16 +128,12 @@ struct ssb_info_t {
   std::vector<ssb_info_item_t> list_of_ssb_info;
 };
 
-struct prs_angle_item_ext_ies_t {
-  uint8_t prs_res_id;
-};
-
 struct prs_angle_item_t {
-  uint16_t                              nr_prs_azimuth;
-  std::optional<uint8_t>                nr_prs_azimuth_fine;
-  std::optional<uint8_t>                nr_prs_elevation;
-  std::optional<uint8_t>                nr_prs_elevation_fine;
-  std::vector<prs_angle_item_ext_ies_t> ie_exts;
+  uint16_t               nr_prs_azimuth;
+  std::optional<uint8_t> nr_prs_azimuth_fine;
+  std::optional<uint8_t> nr_prs_elevation;
+  std::optional<uint8_t> nr_prs_elevation_fine;
+  uint8_t                prs_res_id;
 };
 
 struct nr_prs_beam_info_item_t {
@@ -250,14 +246,10 @@ struct arp_location_info_item_t {
   arp_location_type_t arp_location_type;
 };
 
-struct geographical_coordinates_ext_ies_t {
-  std::vector<arp_location_info_item_t> arp_location_info;
-};
-
 struct geographical_coordinates_t {
-  trp_position_definition_type_t                  trp_position_definition_type;
-  std::optional<dl_prs_res_coordinates_t>         dl_prs_res_coordinates;
-  std::vector<geographical_coordinates_ext_ies_t> ie_exts;
+  trp_position_definition_type_t          trp_position_definition_type;
+  std::optional<dl_prs_res_coordinates_t> dl_prs_res_coordinates;
+  std::vector<arp_location_info_item_t>   arp_location_info;
 };
 
 enum class trp_type_t { prs_only_tp, srs_only_rp, tp, rp, trp };
@@ -316,9 +308,6 @@ struct trp_beam_ant_info_t {
   choice_trp_beam_ant_info_item_t choice_trp_beam_ant_info_item;
 };
 
-using trp_info_type_resp_item_ext_ies_t =
-    std::variant<trp_type_t, on_demand_prs_info_t, std::vector<trpteg_item_t>, trp_beam_ant_info_t>;
-
 using trp_information_type_response_item_t = std::variant<pci_t,
                                                           nr_cell_global_id_t,
                                                           uint32_t,
@@ -327,7 +316,10 @@ using trp_information_type_response_item_t = std::variant<pci_t,
                                                           uint64_t,
                                                           spatial_direction_info_t,
                                                           geographical_coordinates_t,
-                                                          trp_info_type_resp_item_ext_ies_t>;
+                                                          trp_type_t,
+                                                          on_demand_prs_info_t,
+                                                          std::vector<trpteg_item_t>,
+                                                          trp_beam_ant_info_t>;
 
 struct trp_info_t {
   trp_id_t                                          trp_id;
