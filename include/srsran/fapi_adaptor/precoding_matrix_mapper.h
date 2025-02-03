@@ -51,7 +51,9 @@ struct precoding_matrix_mapper_codebook_offset_configuration {
 class precoding_matrix_mapper
 {
 public:
-  precoding_matrix_mapper(unsigned nof_ports_, const precoding_matrix_mapper_codebook_offset_configuration& config);
+  precoding_matrix_mapper(unsigned                                                     sector_id_,
+                          unsigned                                                     nof_ports_,
+                          const precoding_matrix_mapper_codebook_offset_configuration& config);
 
   /// Maps the given MAC precoding information into a precoding matrix index.
   unsigned map(const mac_pdsch_precoding_info& precoding_info, unsigned nof_layers) const;
@@ -66,6 +68,8 @@ public:
   unsigned map(const mac_ssb_precoding_info& precoding_info) const;
 
 private:
+  /// Sector identifier;
+  const unsigned sector_id;
   /// Logger.
   srslog::basic_logger& logger;
   /// Number of ports.

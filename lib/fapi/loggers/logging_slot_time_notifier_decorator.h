@@ -20,7 +20,7 @@ namespace fapi {
 class logging_slot_time_notifier_decorator : public slot_time_message_notifier
 {
 public:
-  explicit logging_slot_time_notifier_decorator(srslog::basic_logger& logger_);
+  explicit logging_slot_time_notifier_decorator(unsigned sector_id_, srslog::basic_logger& logger_);
 
   // See interface for documentation.
   void on_slot_indication(const slot_indication_message& msg) override;
@@ -29,7 +29,7 @@ public:
   void set_slot_time_message_notifier(slot_time_message_notifier& time_notifier);
 
 private:
-  /// FAPI logger.
+  const unsigned              sector_id;
   srslog::basic_logger&       logger;
   slot_time_message_notifier* notifier;
 };

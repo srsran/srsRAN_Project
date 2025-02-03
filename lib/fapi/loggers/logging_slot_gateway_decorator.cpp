@@ -16,28 +16,28 @@ using namespace fapi;
 
 void logging_slot_gateway_decorator::dl_tti_request(const dl_tti_request_message& msg)
 {
-  log_dl_tti_request(msg, logger);
+  log_dl_tti_request(msg, sector_id, logger);
 
   gateway.dl_tti_request(msg);
 }
 
 void logging_slot_gateway_decorator::ul_tti_request(const ul_tti_request_message& msg)
 {
-  log_ul_tti_request(msg, logger);
+  log_ul_tti_request(msg, sector_id, logger);
 
   gateway.ul_tti_request(msg);
 }
 
 void logging_slot_gateway_decorator::ul_dci_request(const ul_dci_request_message& msg)
 {
-  log_ul_dci_request(msg, logger);
+  log_ul_dci_request(msg, sector_id, logger);
 
   gateway.ul_dci_request(msg);
 }
 
 void logging_slot_gateway_decorator::tx_data_request(const tx_data_request_message& msg)
 {
-  log_tx_data_request(msg, logger);
+  log_tx_data_request(msg, sector_id, logger);
 
   gateway.tx_data_request(msg);
 }

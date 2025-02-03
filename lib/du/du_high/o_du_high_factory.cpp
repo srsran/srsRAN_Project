@@ -46,7 +46,7 @@ generate_fapi_adaptor_dependencies(const o_du_high_config& config, o_du_high_dep
         {sector_dependencies.gateway,
          sector_dependencies.last_msg_notifier,
          std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(
-             fapi_adaptor::generate_precoding_matrix_tables(config.du_hi.ran.cells[i].dl_carrier.nof_ant))),
+             fapi_adaptor::generate_precoding_matrix_tables(config.du_hi.ran.cells[i].dl_carrier.nof_ant, i))),
          std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(
              fapi_adaptor::generate_uci_part2_correspondence(1))),
          sector_dependencies.fapi_executor});

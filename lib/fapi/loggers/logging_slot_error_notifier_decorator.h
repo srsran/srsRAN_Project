@@ -20,7 +20,7 @@ namespace fapi {
 class logging_slot_error_notifier_decorator : public slot_error_message_notifier
 {
 public:
-  explicit logging_slot_error_notifier_decorator(srslog::basic_logger& logger_);
+  logging_slot_error_notifier_decorator(unsigned sector_id_, srslog::basic_logger& logger_);
 
   // See interface for documentation.
   void on_error_indication(const error_indication_message& msg) override;
@@ -29,6 +29,8 @@ public:
   void set_slot_error_message_notifier(slot_error_message_notifier& error_notifier);
 
 private:
+  /// Sector identifier.
+  const unsigned sector_id;
   /// FAPI logger.
   srslog::basic_logger& logger;
   /// Error notifier.

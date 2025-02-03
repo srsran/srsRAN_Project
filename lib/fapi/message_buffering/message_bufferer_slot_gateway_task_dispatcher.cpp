@@ -17,42 +17,52 @@ using namespace srsran;
 using namespace fapi;
 
 message_bufferer_slot_gateway_task_dispatcher::message_bufferer_slot_gateway_task_dispatcher(
+    unsigned                    sector_id_,
     unsigned                    l2_nof_slots_ahead,
     subcarrier_spacing          scs_,
     fapi::slot_message_gateway& gateway,
     task_executor&              executor_) :
+  sector_id(sector_id_),
   scs(scs_),
   logger(srslog::fetch_basic_logger("FAPI")),
   executor(executor_),
-  message_bufferer_gateway(l2_nof_slots_ahead, scs_, gateway)
+  message_bufferer_gateway(sector_id, l2_nof_slots_ahead, scs_, gateway)
 {
 }
 
 void message_bufferer_slot_gateway_task_dispatcher::dl_tti_request(const dl_tti_request_message& msg)
 {
   if (!executor.defer([this, msg]() { message_bufferer_gateway.handle_dl_tti_request(msg); })) {
-    logger.warning("Failed to cache DL_TTI.request message for slot '{}'", slot_point(scs, msg.sfn, msg.slot));
+    logger.warning("Sector#{}: Failed to cache DL_TTI.request message for slot '{}'",
+                   sector_id,
+                   slot_point(scs, msg.sfn, msg.slot));
   }
 }
 
 void message_bufferer_slot_gateway_task_dispatcher::ul_tti_request(const ul_tti_request_message& msg)
 {
   if (!executor.defer([this, msg]() { message_bufferer_gateway.handle_ul_tti_request(msg); })) {
-    logger.warning("Failed to cache UL_TTI.request message for slot '{}'", slot_point(scs, msg.sfn, msg.slot));
+    logger.warning("Sector#{}: Failed to cache UL_TTI.request message for slot '{}'",
+                   sector_id,
+                   slot_point(scs, msg.sfn, msg.slot));
   }
 }
 
 void message_bufferer_slot_gateway_task_dispatcher::ul_dci_request(const ul_dci_request_message& msg)
 {
   if (!executor.defer([this, msg]() { message_bufferer_gateway.handle_ul_dci_request(msg); })) {
-    logger.warning("Failed to cache UL_DCI.request message for slot '{}'", slot_point(scs, msg.sfn, msg.slot));
+    logger.warning("Sector#{}: Failed to cache UL_DCI.request message for slot '{}'",
+                   sector_id,
+                   slot_point(scs, msg.sfn, msg.slot));
   }
 }
 
 void message_bufferer_slot_gateway_task_dispatcher::tx_data_request(const tx_data_request_message& msg)
 {
   if (!executor.defer([this, msg]() { message_bufferer_gateway.handle_tx_data_request(msg); })) {
-    logger.warning("Failed to cache TX_Data.request message for slot '{}'", slot_point(scs, msg.sfn, msg.slot));
+    logger.warning("Sector#{}: Failed to cache TX_Data.request message for slot '{}'",
+                   sector_id,
+                   slot_point(scs, msg.sfn, msg.slot));
   }
 }
 
@@ -64,6 +74,6 @@ void message_bufferer_slot_gateway_task_dispatcher::update_current_slot(slot_poi
 void message_bufferer_slot_gateway_task_dispatcher::forward_cached_messages(slot_point slot)
 {
   if (!executor.defer([this, slot]() { message_bufferer_gateway.forward_cached_messages(slot); })) {
-    logger.warning("Failed to dispatch cached messages for slot '{}'", slot);
+    logger.warning("Sector#{}: Failed to dispatch cached messages for slot '{}'", sector_id, slot);
   }
 }

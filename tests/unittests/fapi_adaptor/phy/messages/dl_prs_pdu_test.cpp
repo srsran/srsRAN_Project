@@ -24,7 +24,7 @@ TEST(fapi_phy_dl_prs_pdu_adaptor, valid_pdu_pass)
   fapi::dl_prs_pdu                   fapi_pdu = build_valid_dl_prs_pdu();
   prs_generator_configuration        prs_config;
   slot_point                         slot(fapi_pdu.scs, 0, 1);
-  auto                               pm_tools = generate_precoding_matrix_tables(1);
+  auto                               pm_tools = generate_precoding_matrix_tables(1, 0);
   const precoding_matrix_repository& pm_repo  = *std::get<std::unique_ptr<precoding_matrix_repository>>(pm_tools);
 
   convert_prs_fapi_to_phy(prs_config, fapi_pdu, slot.sfn(), slot.slot_index(), pm_repo);

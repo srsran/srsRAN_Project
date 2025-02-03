@@ -23,11 +23,14 @@ namespace fapi {
 class logging_decorator_impl : public fapi_decorator
 {
 public:
-  logging_decorator_impl(srslog::basic_logger&       logger,
+  logging_decorator_impl(unsigned                    sector_id,
+                         srslog::basic_logger&       logger,
                          slot_message_gateway&       gateway_,
                          slot_last_message_notifier& last_msg_notifier_);
 
-  logging_decorator_impl(srslog::basic_logger& logger, std::unique_ptr<fapi_decorator> next_decorator_);
+  logging_decorator_impl(unsigned                        sector_id,
+                         srslog::basic_logger&           logger,
+                         std::unique_ptr<fapi_decorator> next_decorator_);
 
   // See interface for documentation.
   slot_last_message_notifier& get_slot_last_message_notifier() override;

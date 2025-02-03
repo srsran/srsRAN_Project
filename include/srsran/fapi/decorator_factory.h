@@ -23,6 +23,7 @@ namespace fapi {
 
 /// FAPI message bufferer decorator configuration.
 struct message_bufferer_decorator_config {
+  unsigned                    sector_id;
   unsigned                    l2_nof_slots_ahead;
   subcarrier_spacing          scs;
   task_executor&              executor;
@@ -32,6 +33,7 @@ struct message_bufferer_decorator_config {
 
 /// FAPI logging decorator configuration.
 struct logging_decorator_config {
+  unsigned                    sector_id;
   srslog::basic_logger&       logger;
   slot_message_gateway&       gateway;
   slot_last_message_notifier& last_msg_notifier;

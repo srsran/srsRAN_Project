@@ -150,7 +150,7 @@ static void pdcch_conversion_benchmark()
     builder_dci.set_parameters_v4_dci(nid_dmrs_dist(gen));
 
     pdcch_processor::pdu_t             proc_pdu;
-    auto                               pm_tools = generate_precoding_matrix_tables(1);
+    auto                               pm_tools = generate_precoding_matrix_tables(1, 0);
     const precoding_matrix_repository& pm_repo  = *std::get<std::unique_ptr<precoding_matrix_repository>>(pm_tools);
 
     // Conversion block.

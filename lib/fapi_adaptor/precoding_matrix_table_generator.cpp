@@ -243,7 +243,7 @@ static void generate_4_ports_table(precoding_matrix_mapper_codebook_offset_confi
 }
 
 std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_matrix_repository>>
-srsran::fapi_adaptor::generate_precoding_matrix_tables(unsigned nof_antenna_ports)
+srsran::fapi_adaptor::generate_precoding_matrix_tables(unsigned nof_antenna_ports, unsigned sector_id)
 {
   srsran_assert(nof_antenna_ports > 0, "Invalid number of antenna ports={}", nof_antenna_ports);
   srsran_assert(nof_antenna_ports != 3, "Unsupported number of antenna ports={}", nof_antenna_ports);
@@ -255,19 +255,22 @@ srsran::fapi_adaptor::generate_precoding_matrix_tables(unsigned nof_antenna_port
   if (nof_antenna_ports == 1U) {
     generate_single_port_table(mapper_offsets, repo_builder);
 
-    return {std::make_unique<precoding_matrix_mapper>(nof_antenna_ports, mapper_offsets), repo_builder.build()};
+    return {std::make_unique<precoding_matrix_mapper>(sector_id, nof_antenna_ports, mapper_offsets),
+            repo_builder.build()};
   }
 
   if (nof_antenna_ports == 2U) {
     generate_2_ports_table(mapper_offsets, repo_builder);
 
-    return {std::make_unique<precoding_matrix_mapper>(nof_antenna_ports, mapper_offsets), repo_builder.build()};
+    return {std::make_unique<precoding_matrix_mapper>(sector_id, nof_antenna_ports, mapper_offsets),
+            repo_builder.build()};
   }
 
   if (nof_antenna_ports == 4U) {
     generate_4_ports_table(mapper_offsets, repo_builder);
 
-    return {std::make_unique<precoding_matrix_mapper>(nof_antenna_ports, mapper_offsets), repo_builder.build()};
+    return {std::make_unique<precoding_matrix_mapper>(sector_id, nof_antenna_ports, mapper_offsets),
+            repo_builder.build()};
   }
 
   srsran_assert(false, "Unsupported number of ports", nof_antenna_ports);

@@ -17,14 +17,15 @@ using namespace fapi;
 
 static slot_time_message_notifier_dummy dummy_notifier;
 
-logging_slot_time_notifier_decorator::logging_slot_time_notifier_decorator(srslog::basic_logger& logger_) :
-  logger(logger_), notifier(&dummy_notifier)
+logging_slot_time_notifier_decorator::logging_slot_time_notifier_decorator(unsigned              sector_id_,
+                                                                           srslog::basic_logger& logger_) :
+  sector_id(sector_id_), logger(logger_), notifier(&dummy_notifier)
 {
 }
 
 void logging_slot_time_notifier_decorator::on_slot_indication(const slot_indication_message& msg)
 {
-  log_slot_indication(msg, logger);
+  log_slot_indication(msg, sector_id, logger);
 
   notifier->on_slot_indication(msg);
 }

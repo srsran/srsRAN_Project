@@ -180,7 +180,7 @@ protected:
       &rg_pool,
       &pdu_repo,
       &ul_pdu_validator,
-      std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(generate_precoding_matrix_tables(1))),
+      std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(generate_precoding_matrix_tables(1, 0))),
       std::move(std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))};
   fapi_to_phy_translator translator;
 

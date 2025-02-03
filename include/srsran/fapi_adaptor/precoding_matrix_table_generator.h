@@ -20,7 +20,7 @@ namespace fapi_adaptor {
 
 /// Generates the precoding matrix mapper and precoding matrix repository for the given number of antenna ports.
 std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_matrix_repository>>
-generate_precoding_matrix_tables(unsigned nof_antenna_ports);
+generate_precoding_matrix_tables(unsigned nof_antenna_ports, unsigned sector_id);
 
 } // namespace fapi_adaptor
 } // namespace srsran

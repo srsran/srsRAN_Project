@@ -39,7 +39,7 @@ TEST(fapi_to_phy_pdcch_conversion_test, valid_pdu_conversion_success)
   std::uniform_int_distribution<unsigned> nid_dmrs_dist(0, 65535);
   std::uniform_int_distribution<unsigned> nid_data_dist(0, 65535);
 
-  auto                               pm_tools = generate_precoding_matrix_tables(1);
+  auto                               pm_tools = generate_precoding_matrix_tables(1, 0);
   const precoding_matrix_repository& pm_repo  = *std::get<std::unique_ptr<precoding_matrix_repository>>(pm_tools);
 
   for (auto cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {

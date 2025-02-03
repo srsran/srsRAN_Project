@@ -26,22 +26,24 @@ std::unique_ptr<fapi_decorator> fapi::create_decorators(const decorator_config& 
   if (config.bufferer_cfg && !config.logging_cfg) {
     const message_bufferer_decorator_config& cfg = config.bufferer_cfg.value();
     return std::make_unique<message_bufferer_decorator_impl>(
-        cfg.l2_nof_slots_ahead, cfg.scs, cfg.gateway, cfg.last_msg_notifier, cfg.executor);
+        cfg.sector_id, cfg.l2_nof_slots_ahead, cfg.scs, cfg.gateway, cfg.last_msg_notifier, cfg.executor);
   }
 
   // Create logging decorator.
   if (!config.bufferer_cfg && config.logging_cfg) {
     const logging_decorator_config& cfg = config.logging_cfg.value();
-    return std::make_unique<logging_decorator_impl>(cfg.logger, cfg.gateway, cfg.last_msg_notifier);
+    return std::make_unique<logging_decorator_impl>(cfg.sector_id, cfg.logger, cfg.gateway, cfg.last_msg_notifier);
   }
 
   // Create message bufferer and logging decorators.
   const message_bufferer_decorator_config& bufferer_cfg = config.bufferer_cfg.value();
-  auto bufferer_decorator = std::make_unique<message_bufferer_decorator_impl>(bufferer_cfg.l2_nof_slots_ahead,
+  auto bufferer_decorator = std::make_unique<message_bufferer_decorator_impl>(bufferer_cfg.sector_id,
+                                                                              bufferer_cfg.l2_nof_slots_ahead,
                                                                               bufferer_cfg.scs,
                                                                               bufferer_cfg.gateway,
                                                                               bufferer_cfg.last_msg_notifier,
                                                                               bufferer_cfg.executor);
 
-  return std::make_unique<logging_decorator_impl>(config.logging_cfg.value().logger, std::move(bufferer_decorator));
+  return std::make_unique<logging_decorator_impl>(
+      config.logging_cfg.value().sector_id, config.logging_cfg.value().logger, std::move(bufferer_decorator));
 }

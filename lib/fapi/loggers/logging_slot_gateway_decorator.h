@@ -20,8 +20,8 @@ namespace fapi {
 class logging_slot_gateway_decorator : public slot_message_gateway
 {
 public:
-  logging_slot_gateway_decorator(srslog::basic_logger& logger_, slot_message_gateway& gateway_) :
-    logger(logger_), gateway(gateway_)
+  logging_slot_gateway_decorator(unsigned sector_id_, srslog::basic_logger& logger_, slot_message_gateway& gateway_) :
+    sector_id(sector_id_), logger(logger_), gateway(gateway_)
   {
   }
 
@@ -38,7 +38,7 @@ public:
   void tx_data_request(const tx_data_request_message& msg) override;
 
 private:
-  /// FAPI logger.
+  const unsigned        sector_id;
   srslog::basic_logger& logger;
   slot_message_gateway& gateway;
 };
