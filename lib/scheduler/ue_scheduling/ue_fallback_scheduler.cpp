@@ -957,7 +957,7 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
         // bit.
         if (existing_pucch_count > 0) {
           if (existing_pucch_count == 1 and existing_pucch->format() == pucch_format::FORMAT_1 and
-              existing_pucch->get_sr_bits() != sr_nof_bits::no_sr and existing_pucch->get_harq_ack_nof_bits() == 0) {
+              existing_pucch->bits.sr_bits != sr_nof_bits::no_sr and existing_pucch->bits.harq_ack_nof_bits == 0) {
             // No PUSCH in slots with PUCCH. We cannot remove the PUCCH here, as we need to make sure the PUSCH will be
             // allocated. If not, we risk removing a PUCCH with SR opportunity.
             remove_pucch = true;

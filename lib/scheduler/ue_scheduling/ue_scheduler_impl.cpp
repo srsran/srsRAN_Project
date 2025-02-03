@@ -96,7 +96,7 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
                      slot_alloc.slot);
       continue;
     }
-    const unsigned nof_harqs_per_rnti_per_slot = pucch.get_harq_ack_nof_bits();
+    const unsigned nof_harqs_per_rnti_per_slot = pucch.bits.harq_ack_nof_bits;
     // Each PUCCH grants can potentially carry ACKs for different HARQ processes (as many as the harq_ack_nof_bits)
     // expecting to be acknowledged on the same slot.
     for (unsigned harq_bit_idx = 0; harq_bit_idx != nof_harqs_per_rnti_per_slot; ++harq_bit_idx) {
@@ -133,9 +133,9 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
                      [&pucch](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == pucch.crnti; });
 
     if (pusch_grant != slot_alloc.result.ul.puschs.end()) {
-      const unsigned harq_bits = pucch.get_harq_ack_nof_bits();
-      const unsigned sr_bits   = sr_nof_bits_to_uint(pucch.get_sr_bits());
-      const unsigned csi_bits  = pucch.get_csi_part1_bits();
+      const unsigned harq_bits = pucch.bits.harq_ack_nof_bits;
+      const unsigned sr_bits   = sr_nof_bits_to_uint(pucch.bits.sr_bits);
+      const unsigned csi_bits  = pucch.bits.csi_part1_bits;
       logger.error("rnti={}: has both PUCCH and PUSCH grants scheduled at slot {}, PUCCH  format={} with nof "
                    "harq-bits={} csi-1-bits={} sr-bits={}",
                    pucch.crnti,

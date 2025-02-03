@@ -13,7 +13,6 @@
 
 #include "test_utils/config_generators.h"
 #include "test_utils/indication_generators.h"
-#include "test_utils/result_test_helpers.h"
 #include "test_utils/scheduler_test_simulator.h"
 #include "tests/test_doubles/scheduler/cell_config_builder_profiles.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
@@ -93,7 +92,7 @@ TEST_P(scheduler_dl_tdd_tester, all_dl_slots_are_scheduled)
     }
 
     for (const pucch_info& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
-      if (pucch.format() == pucch_format::FORMAT_1 and pucch.get_sr_bits() != sr_nof_bits::no_sr) {
+      if (pucch.format() == pucch_format::FORMAT_1 and pucch.bits.sr_bits != sr_nof_bits::no_sr) {
         // Skip SRs for this test.
         continue;
       }

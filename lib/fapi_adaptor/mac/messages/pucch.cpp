@@ -59,7 +59,7 @@ static void fill_format0_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   // Format 0 does not support CSI.
   static constexpr unsigned csi_part1_bit_length = 0U;
   builder.set_bit_length_parameters(
-      convert_sr_bits_to_unsigned(f0.sr_bits), f0.harq_ack_nof_bits, csi_part1_bit_length);
+      convert_sr_bits_to_unsigned(mac_pdu.bits.sr_bits), mac_pdu.bits.harq_ack_nof_bits, csi_part1_bit_length);
 }
 
 /// Fills the Format 1 parameters.
@@ -82,7 +82,7 @@ static void fill_format1_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   // Format 1 does not support CSI.
   static constexpr unsigned csi_part1_bit_length = 0U;
   builder.set_bit_length_parameters(
-      convert_sr_bits_to_unsigned(f1.sr_bits), f1.harq_ack_nof_bits, csi_part1_bit_length);
+      convert_sr_bits_to_unsigned(mac_pdu.bits.sr_bits), mac_pdu.bits.harq_ack_nof_bits, csi_part1_bit_length);
 }
 
 /// Fills the Format 2 parameters.
@@ -108,7 +108,8 @@ static void fill_format2_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   builder.set_maintenance_v3_basic_parameters({static_cast<unsigned>(f2.max_code_rate)}, {});
 
   // Bit lengths.
-  builder.set_bit_length_parameters(convert_sr_bits_to_unsigned(f2.sr_bits), f2.harq_ack_nof_bits, f2.csi_part1_bits);
+  builder.set_bit_length_parameters(
+      convert_sr_bits_to_unsigned(mac_pdu.bits.sr_bits), mac_pdu.bits.harq_ack_nof_bits, mac_pdu.bits.csi_part1_bits);
 }
 
 /// Fills the Format 3 parameters.
@@ -140,7 +141,8 @@ static void fill_format3_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   builder.set_maintenance_v3_basic_parameters({static_cast<unsigned>(f3.max_code_rate)}, {});
 
   // Bit lengths.
-  builder.set_bit_length_parameters(convert_sr_bits_to_unsigned(f3.sr_bits), f3.harq_ack_nof_bits, f3.csi_part1_bits);
+  builder.set_bit_length_parameters(
+      convert_sr_bits_to_unsigned(mac_pdu.bits.sr_bits), mac_pdu.bits.harq_ack_nof_bits, mac_pdu.bits.csi_part1_bits);
 }
 
 /// Gets the cyclic shift index (m0) for PUCCH Format 4, as per TS 38.211 Table 6.4.1.3.3.1-1.
@@ -191,7 +193,8 @@ static void fill_format4_parameters(fapi::ul_pucch_pdu_builder& builder, const p
   builder.set_maintenance_v3_basic_parameters({static_cast<unsigned>(f4.max_code_rate)}, {});
 
   // Bit lengths.
-  builder.set_bit_length_parameters(convert_sr_bits_to_unsigned(f4.sr_bits), f4.harq_ack_nof_bits, f4.csi_part1_bits);
+  builder.set_bit_length_parameters(
+      convert_sr_bits_to_unsigned(mac_pdu.bits.sr_bits), mac_pdu.bits.harq_ack_nof_bits, mac_pdu.bits.csi_part1_bits);
 }
 
 static void fill_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pucch_info& mac_pdu)

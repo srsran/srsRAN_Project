@@ -372,7 +372,7 @@ TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_dl_retx_first_than_ue
   const slot_point  current_slot = next_slot - 1;
   const pucch_info& pucch        = this->res_grid[0].result.ul.pucchs[0];
   // Auto NACK HARQ.
-  const unsigned nof_ack_bits = pucch.get_harq_ack_nof_bits();
+  const unsigned nof_ack_bits = pucch.bits.harq_ack_nof_bits;
   du_ue_index_t  ue_with_retx;
 
   if (pucch.crnti == u1.crnti) {
@@ -616,7 +616,7 @@ TEST_F(scheduler_pf_test, pf_ensures_fairness_in_dl_when_ues_have_different_chan
 
     // Auto ACK HARQs.
     for (const pucch_info& pucch : this->res_grid[0].result.ul.pucchs) {
-      const unsigned nof_ack_bits = pucch.get_harq_ack_nof_bits();
+      const unsigned nof_ack_bits = pucch.bits.harq_ack_nof_bits;
       if (pucch.crnti == u1.crnti) {
         for (unsigned harq_bit_idx = 0; harq_bit_idx < nof_ack_bits; ++harq_bit_idx) {
           u1.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::ack, harq_bit_idx, 100);
@@ -771,7 +771,7 @@ TEST_P(scheduler_pf_qos_test, pf_upholds_qos_in_dl_gbr_flows)
     // Auto ACK HARQs.
     const slot_point current_slot = next_slot - 1;
     for (const pucch_info& pucch : this->res_grid[0].result.ul.pucchs) {
-      const unsigned nof_ack_bits = pucch.get_harq_ack_nof_bits();
+      const unsigned nof_ack_bits = pucch.bits.harq_ack_nof_bits;
       if (pucch.crnti == ue_with_gbr.crnti) {
         for (unsigned harq_bit_idx = 0; harq_bit_idx < nof_ack_bits; ++harq_bit_idx) {
           ue_with_gbr.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::ack, harq_bit_idx, 100);

@@ -633,8 +633,8 @@ pucch_info_test_helper unittests::build_valid_pucch_format_1_pdu()
   pucch.resources.prbs            = {1, 4};
   pucch.resources.symbols         = {0, 14};
   pucch.resources.second_hop_prbs = {2, 12};
-  format_1.harq_ack_nof_bits      = 2;
-  format_1.sr_bits                = sr_nof_bits::no_sr;
+  pucch.bits.harq_ack_nof_bits    = 2;
+  pucch.bits.sr_bits              = sr_nof_bits::no_sr;
   format_1.time_domain_occ        = 3;
   format_1.initial_cyclic_shift   = 9;
   format_1.n_id_hopping           = 2;
@@ -658,9 +658,9 @@ pucch_info_test_helper srsran::unittests::build_valid_pucch_format_2_pdu()
   pucch.resources.symbols         = {0, 1};
   pucch.resources.second_hop_prbs = {1, 11};
   format_2.max_code_rate          = max_pucch_code_rate::dot_08;
-  format_2.csi_part1_bits         = 102;
-  format_2.harq_ack_nof_bits      = 100;
-  format_2.sr_bits                = sr_nof_bits::one;
+  pucch.bits.csi_part1_bits       = 102;
+  pucch.bits.harq_ack_nof_bits    = 100;
+  pucch.bits.sr_bits              = sr_nof_bits::one;
   format_2.n_id_0_scrambling      = 256;
   format_2.n_id_scambling         = 382;
 
@@ -681,9 +681,9 @@ pucch_info_test_helper srsran::unittests::build_valid_pucch_format_3_pdu()
   pucch.resources.symbols         = {0, 3};
   pucch.resources.second_hop_prbs = {1, 11};
   format_3.max_code_rate          = max_pucch_code_rate::dot_08;
-  format_3.csi_part1_bits         = 102;
-  format_3.harq_ack_nof_bits      = 100;
-  format_3.sr_bits                = sr_nof_bits::one;
+  pucch.bits.csi_part1_bits       = 102;
+  pucch.bits.harq_ack_nof_bits    = 100;
+  pucch.bits.sr_bits              = sr_nof_bits::one;
   format_3.n_id_0_scrambling      = 256;
   format_3.n_id_scrambling        = 382;
   format_3.n_id_hopping           = 180;
@@ -707,9 +707,9 @@ pucch_info_test_helper srsran::unittests::build_valid_pucch_format_4_pdu()
   pucch.resources.symbols         = {0, 3};
   pucch.resources.second_hop_prbs = {10, 11};
   format_4.max_code_rate          = max_pucch_code_rate::dot_08;
-  format_4.csi_part1_bits         = 102;
-  format_4.harq_ack_nof_bits      = 100;
-  format_4.sr_bits                = sr_nof_bits::one;
+  pucch.bits.csi_part1_bits       = 102;
+  pucch.bits.harq_ack_nof_bits    = 100;
+  pucch.bits.sr_bits              = sr_nof_bits::one;
   format_4.n_id_0_scrambling      = 256;
   format_4.n_id_scrambling        = 382;
   format_4.n_id_hopping           = 180;

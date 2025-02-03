@@ -141,7 +141,7 @@ TEST_F(sched_ue_removal_test, when_ue_has_pending_harqs_then_scheduler_waits_for
         << "UE allocated despite having no SRB pending bytes and being marked for removal";
 
     pucch = find_ue_pucch(rnti, *last_sched_res_list[to_du_cell_index(0)]);
-    if (pucch != nullptr and pucch->get_harq_ack_nof_bits() > 0) {
+    if (pucch != nullptr and pucch->bits.harq_ack_nof_bits > 0) {
       break;
     }
   }
@@ -253,7 +253,7 @@ TEST_F(sched_ue_removal_test,
 
     const pucch_info* pucch = find_ue_pucch(rnti, *last_sched_res_list[to_du_cell_index(0)]);
     if (pucch != nullptr and
-        (pucch->format() == pucch_format::FORMAT_1 and pucch->get_sr_bits() != sr_nof_bits::no_sr)) {
+        (pucch->format() == pucch_format::FORMAT_1 and pucch->bits.sr_bits != sr_nof_bits::no_sr)) {
       // UCI indication sets SR indication.
       uci_indication uci;
       uci.cell_index = to_du_cell_index(0);

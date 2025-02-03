@@ -1114,32 +1114,29 @@ void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(du_cell_index_t 
 
     switch (pucch.format()) {
       case pucch_format::FORMAT_0:
-        pucch_uci_bits.harq_ack_nof_bits = pucch.get_harq_ack_nof_bits();
-        pucch_uci_bits.sr_bits           = pucch.get_sr_bits();
-        break;
       case pucch_format::FORMAT_1:
-        pucch_uci_bits.harq_ack_nof_bits = pucch.get_harq_ack_nof_bits();
-        pucch_uci_bits.sr_bits           = pucch.get_sr_bits();
+        pucch_uci_bits.harq_ack_nof_bits = pucch.bits.harq_ack_nof_bits;
+        pucch_uci_bits.sr_bits           = pucch.bits.sr_bits;
         break;
       case pucch_format::FORMAT_2:
-        pucch_uci_bits.harq_ack_nof_bits  = pucch.get_harq_ack_nof_bits();
-        pucch_uci_bits.sr_bits            = pucch.get_sr_bits();
-        pucch_uci_bits.csi_part1_nof_bits = pucch.get_csi_part1_bits();
+        pucch_uci_bits.harq_ack_nof_bits  = pucch.bits.harq_ack_nof_bits;
+        pucch_uci_bits.sr_bits            = pucch.bits.sr_bits;
+        pucch_uci_bits.csi_part1_nof_bits = pucch.bits.csi_part1_bits;
         break;
       case pucch_format::FORMAT_3: {
         const auto& format_3              = std::get<pucch_format_3>(pucch.format_params);
-        pucch_uci_bits.harq_ack_nof_bits  = format_3.harq_ack_nof_bits;
-        pucch_uci_bits.sr_bits            = format_3.sr_bits;
-        pucch_uci_bits.csi_part1_nof_bits = format_3.csi_part1_bits;
+        pucch_uci_bits.harq_ack_nof_bits  = pucch.bits.harq_ack_nof_bits;
+        pucch_uci_bits.sr_bits            = pucch.bits.sr_bits;
+        pucch_uci_bits.csi_part1_nof_bits = pucch.bits.csi_part1_bits;
         pi_2_bpsk                         = format_3.pi_2_bpsk;
         additional_dmrs                   = format_3.additional_dmrs;
         intraslot_freq_hopping            = not pucch.resources.second_hop_prbs.empty();
       } break;
       case pucch_format::FORMAT_4: {
         const auto& format_4              = std::get<pucch_format_4>(pucch.format_params);
-        pucch_uci_bits.harq_ack_nof_bits  = format_4.harq_ack_nof_bits;
-        pucch_uci_bits.sr_bits            = format_4.sr_bits;
-        pucch_uci_bits.csi_part1_nof_bits = format_4.csi_part1_bits;
+        pucch_uci_bits.harq_ack_nof_bits  = pucch.bits.harq_ack_nof_bits;
+        pucch_uci_bits.sr_bits            = pucch.bits.sr_bits;
+        pucch_uci_bits.csi_part1_nof_bits = pucch.bits.csi_part1_bits;
         pi_2_bpsk                         = format_4.pi_2_bpsk;
         additional_dmrs                   = format_4.additional_dmrs;
         intraslot_freq_hopping            = not pucch.resources.second_hop_prbs.empty();

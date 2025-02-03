@@ -147,8 +147,8 @@ TEST_P(scheduler_con_res_msg4_test,
 
 static bool is_f1_pucch(const pucch_info& pucch, bool is_common, bool has_sr)
 {
-  return pucch.format() == pucch_format::FORMAT_1 and ((pucch.get_sr_bits() != sr_nof_bits::no_sr) == has_sr) and
-         pucch.get_harq_ack_nof_bits() > 0 and (pucch.resources.second_hop_prbs.empty() != is_common);
+  return pucch.format() == pucch_format::FORMAT_1 and ((pucch.bits.sr_bits != sr_nof_bits::no_sr) == has_sr) and
+         pucch.bits.harq_ack_nof_bits > 0 and (pucch.resources.second_hop_prbs.empty() != is_common);
 };
 
 TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is_used)
@@ -168,7 +168,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
                        this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs.end(),
                        [rnti = this->rnti](const pucch_info& pucch) {
                          return pucch.crnti == rnti and pucch.format() == pucch_format::FORMAT_1 and
-                                pucch.get_harq_ack_nof_bits() > 0;
+                                pucch.bits.harq_ack_nof_bits > 0;
                        });
   }));
 
@@ -217,7 +217,7 @@ TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is
           pucch_res_ptrs.f1_common_ptr = &pucch;
         } else if (is_f1_pucch(pucch, false, false)) {
           pucch_res_ptrs.f1_ded_ptr = &pucch;
-        } else if (pucch.format() == pucch_format::FORMAT_2 and pucch.get_harq_ack_nof_bits() > 0) {
+        } else if (pucch.format() == pucch_format::FORMAT_2 and pucch.bits.harq_ack_nof_bits > 0) {
           pucch_res_ptrs.f2_ptr = &pucch;
         }
       }

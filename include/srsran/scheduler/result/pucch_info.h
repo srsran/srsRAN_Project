@@ -16,6 +16,13 @@
 
 namespace srsran {
 
+/// Information about the number of UCI bits of each type.
+struct uci_bits {
+  sr_nof_bits sr_bits;
+  unsigned    harq_ack_nof_bits;
+  unsigned    csi_part1_bits;
+};
+
 /// Info about PUCCH used resource.
 struct pucch_info {
   /// This information only is used by the scheduler and not passed to the PHY.
@@ -32,6 +39,7 @@ struct pucch_info {
   /// PRBs and symbols for this PUCCH resource.
   pucch_resources                                                                              resources;
   std::variant<pucch_format_0, pucch_format_1, pucch_format_2, pucch_format_3, pucch_format_4> format_params;
+  uci_bits                                                                                     bits;
   /// In case the PUCCH will contain CSI bits, this struct contains information how those bits are to be decoded.
   std::optional<csi_report_configuration> csi_rep_cfg;
 
@@ -81,33 +89,6 @@ struct pucch_info {
       default:
         srsran_assertion_failure("Invalid PUCCH format");
     }
-  }
-
-  /// Returns the number of HARQ ACK bits of the PUCCH.
-  unsigned get_harq_ack_nof_bits() const
-  {
-    return std::visit([](const auto& params) -> unsigned { return params.harq_ack_nof_bits; }, format_params);
-  }
-
-  /// Returns the number of SR bits of the PUCCH.
-  sr_nof_bits get_sr_bits() const
-  {
-    return std::visit([](const auto& params) -> sr_nof_bits { return params.sr_bits; }, format_params);
-  }
-
-  /// Returns the number of CSI Part 1 bits of the PUCCH.
-  unsigned get_csi_part1_bits() const
-  {
-    return std::visit(
-        [](const auto& params) -> unsigned {
-          using T = std::decay_t<decltype(params)>;
-          if constexpr (std::is_same_v<T, pucch_format_2> or std::is_same_v<T, pucch_format_3> or
-                        std::is_same_v<T, pucch_format_4>) {
-            return params.csi_part1_bits;
-          }
-          return 0;
-        },
-        format_params);
   }
 };
 

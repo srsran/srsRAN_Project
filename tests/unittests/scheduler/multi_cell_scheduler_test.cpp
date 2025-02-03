@@ -127,8 +127,8 @@ protected:
       } break;
       case pucch_format::FORMAT_2: {
         uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pucch_pdu{};
-        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch_res.get_sr_bits()));
-        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch_res.get_sr_bits()), true);
+        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch_res.bits.sr_bits));
+        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch_res.bits.sr_bits), true);
       } break;
       default:
         report_fatal_error("Not handling SR grant over PUCCH format 0, 3 and 4");
@@ -154,7 +154,7 @@ protected:
       return {};
     }
 
-    return pucch_res->get_sr_bits() != sr_nof_bits::no_sr ? std::optional(*pucch_res) : std::nullopt;
+    return pucch_res->bits.sr_bits != sr_nof_bits::no_sr ? std::optional(*pucch_res) : std::nullopt;
   }
 
   std::vector<config_helpers::cell_config_builder_params_extended> cell_cfg_builder_params_list;

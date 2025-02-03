@@ -453,8 +453,8 @@ protected:
       case pucch_format::FORMAT_0:
       case pucch_format::FORMAT_1: {
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
-        const sr_nof_bits                               sr_bits           = pucch.get_sr_bits();
-        const unsigned                                  harq_ack_nof_bits = pucch.get_harq_ack_nof_bits();
+        const sr_nof_bits                               sr_bits           = pucch.bits.sr_bits;
+        const unsigned                                  harq_ack_nof_bits = pucch.bits.harq_ack_nof_bits;
         pucch_pdu.sr_detected                                             = sr_nof_bits_to_uint(sr_bits) > 0;
         // Auto ACK harqs.
         pucch_pdu.harqs.resize(harq_ack_nof_bits, mac_harq_ack_report_status::ack);
@@ -464,10 +464,10 @@ protected:
       }
       case pucch_format::FORMAT_2: {
         uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pucch_pdu{};
-        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch.get_sr_bits()));
-        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch.get_sr_bits()), true);
+        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch.bits.sr_bits));
+        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch.bits.sr_bits), true);
         // Auto ACK harqs.
-        pucch_pdu.harqs.resize(pucch.get_harq_ack_nof_bits(), mac_harq_ack_report_status::ack);
+        pucch_pdu.harqs.resize(pucch.bits.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
         if (pucch.csi_rep_cfg.has_value()) {
           pucch_pdu.csi.emplace();
           // Fill with dummy values.

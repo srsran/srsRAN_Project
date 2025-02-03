@@ -198,11 +198,11 @@ TEST_F(mac_test_mode_test, when_test_mode_ue_has_pucch_grants_then_uci_indicatio
 {
   // PUCCH got scheduled for test mode UE.
   ul_sched_result ul_res{};
-  pucch_info&     pucch      = ul_res.pucchs.emplace_back();
-  pucch.crnti                = this->params.test_ue_cfg.rnti;
-  auto& format_1             = pucch.format_params.emplace<pucch_format_1>();
-  format_1.harq_ack_nof_bits = 1;
-  format_1.sr_bits           = sr_nof_bits::no_sr;
+  pucch_info&     pucch = ul_res.pucchs.emplace_back();
+  pucch.crnti           = this->params.test_ue_cfg.rnti;
+  pucch.format_params.emplace<pucch_format_1>();
+  pucch.bits.harq_ack_nof_bits = 1;
+  pucch.bits.sr_bits           = sr_nof_bits::no_sr;
   mac_events.next_ul_sched_res.emplace();
   mac_events.next_ul_sched_res->slot   = next_slot;
   mac_events.next_ul_sched_res->ul_res = &ul_res;
@@ -302,11 +302,11 @@ TEST_P(mac_test_mode_auto_uci_test, when_test_mode_ue_has_pucch_grants_then_uci_
 {
   // PUCCH got scheduled for test mode UE.
   ul_sched_result ul_res{};
-  pucch_info&     pucch      = ul_res.pucchs.emplace_back();
-  pucch.crnti                = this->params.test_ue_cfg.rnti;
-  auto& format_1             = pucch.format_params.emplace<pucch_format_1>();
-  format_1.harq_ack_nof_bits = 1;
-  format_1.sr_bits           = sr_nof_bits::no_sr;
+  pucch_info&     pucch = ul_res.pucchs.emplace_back();
+  pucch.crnti           = this->params.test_ue_cfg.rnti;
+  pucch.format_params.emplace<pucch_format_1>();
+  pucch.bits.harq_ack_nof_bits = 1;
+  pucch.bits.sr_bits           = sr_nof_bits::no_sr;
   mac_events.next_ul_sched_res.emplace();
   mac_events.next_ul_sched_res->slot   = next_slot;
   mac_events.next_ul_sched_res->ul_res = &ul_res;
@@ -372,15 +372,13 @@ TEST_P(mac_test_mode_auto_uci_test, when_uci_is_forwarded_to_mac_then_test_mode_
 {
   // PUCCH got scheduled for test mode UE.
   ul_sched_result ul_res{};
-  pucch_info&     pucch      = ul_res.pucchs.emplace_back();
-  pucch.crnti                = this->params.test_ue_cfg.rnti;
-  auto& format_2             = pucch.format_params.emplace<pucch_format_2>();
-  format_2.harq_ack_nof_bits = 1;
-  format_2.sr_bits           = sr_nof_bits::one;
-  format_2.csi_part1_bits    = 11;
-  pucch.csi_rep_cfg          = this->csi_cfg;
-  // pucch.format_1.harq_ack_nof_bits = 1;
-  // pucch.format_1.sr_bits           = sr_nof_bits::no_sr;
+  pucch_info&     pucch = ul_res.pucchs.emplace_back();
+  pucch.crnti           = this->params.test_ue_cfg.rnti;
+  pucch.format_params.emplace<pucch_format_2>();
+  pucch.bits.harq_ack_nof_bits = 1;
+  pucch.bits.sr_bits           = sr_nof_bits::one;
+  pucch.bits.csi_part1_bits    = 11;
+  pucch.csi_rep_cfg            = this->csi_cfg;
   mac_events.next_ul_sched_res.emplace();
   mac_events.next_ul_sched_res->slot   = next_slot;
   mac_events.next_ul_sched_res->ul_res = &ul_res;
