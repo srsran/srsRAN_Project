@@ -35,6 +35,7 @@ public:
 o_du_high_impl::o_du_high_impl(unsigned nof_cells_, o_du_high_impl_dependencies&& du_dependencies) :
   nof_cells(nof_cells_),
   logger(*du_dependencies.logger),
+  metrics_notifier_poxy(du_dependencies.metrics_notifier),
   du_high_adaptor(std::move(du_dependencies.du_high_adaptor)),
   du_high_result_notifier([](fapi_adaptor::mac_fapi_adaptor& fapi_adaptor, unsigned num_cells) {
     std::vector<std::reference_wrapper<mac_cell_result_notifier>> cells;
@@ -93,6 +94,11 @@ fapi_adaptor::mac_fapi_adaptor& o_du_high_impl::get_mac_fapi_adaptor()
 du_high& o_du_high_impl::get_du_high()
 {
   return *du_hi;
+}
+
+void o_du_high_impl::set_o_du_high_metrics_notifier(o_du_high_metrics_notifier& notifier)
+{
+  metrics_notifier_poxy.set_o_du_high_metrics_notifier(notifier);
 }
 
 void o_du_high_impl::set_du_high(std::unique_ptr<du_high> updated_du_high)

@@ -21,6 +21,7 @@ class mac_fapi_adaptor;
 namespace srs_du {
 
 class du_high;
+class o_du_high_metrics_notifier;
 
 /// O-RAN Distributed Unit high interface. O-DU high groups the DU high with the MAC-FAPI adaptor.
 class o_du_high
@@ -36,6 +37,9 @@ public:
 
   /// Returns the MAC-FAPI adaptor of this O-RAN DU high.
   virtual fapi_adaptor::mac_fapi_adaptor& get_mac_fapi_adaptor() = 0;
+
+  /// Sets the O-DU high metrics notifier to the given one.
+  virtual void set_o_du_high_metrics_notifier(o_du_high_metrics_notifier& notifier) = 0;
 };
 
 } // namespace srs_du

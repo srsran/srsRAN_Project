@@ -10,12 +10,12 @@
 
 #pragma once
 
+#include "o_du_high_metrics_notifier_proxy.h"
 #include "srsran/du/du_high/du_high.h"
 #include "srsran/du/du_high/o_du_high.h"
 #include "srsran/du/du_operation_controller.h"
 #include "srsran/du/o_du_config.h"
 #include "srsran/e2/e2.h"
-#include "srsran/fapi_adaptor/mac/mac_fapi_sector_adaptor.h"
 
 namespace srsran {
 namespace srs_du {
@@ -24,6 +24,7 @@ namespace srs_du {
 struct o_du_high_impl_dependencies {
   srslog::basic_logger*                           logger;
   std::unique_ptr<fapi_adaptor::mac_fapi_adaptor> du_high_adaptor;
+  scheduler_metrics_notifier*                     metrics_notifier;
 };
 
 /// O-RAN DU high implementation.
@@ -47,6 +48,9 @@ public:
   // See interface for documentation.
   du_high& get_du_high() override;
 
+  // See interface for documentation.
+  void set_o_du_high_metrics_notifier(o_du_high_metrics_notifier& notifier) override;
+
   /// Sets the DU high to the given one.
   void set_du_high(std::unique_ptr<du_high> updated_du_high);
 
@@ -56,9 +60,13 @@ public:
   /// Returns the MAC result notifier of this O-RAN DU high.
   mac_result_notifier& get_mac_result_notifier() { return *du_high_result_notifier; }
 
+  /// Returns the metrics notifier of this O-DU high implementation.
+  scheduler_metrics_notifier& get_scheduler_metrics_notifier() { return metrics_notifier_poxy; }
+
 private:
   const unsigned                                  nof_cells;
   srslog::basic_logger&                           logger;
+  o_du_high_metrics_notifier_proxy                metrics_notifier_poxy;
   std::unique_ptr<fapi_adaptor::mac_fapi_adaptor> du_high_adaptor;
   std::unique_ptr<mac_result_notifier>            du_high_result_notifier;
   std::unique_ptr<du_high>                        du_hi;
