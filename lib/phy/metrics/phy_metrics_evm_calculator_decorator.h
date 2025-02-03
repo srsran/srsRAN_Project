@@ -21,8 +21,8 @@ class phy_metrics_evm_calculator_decorator : public evm_calculator
 {
 public:
   /// Creates an EVM decorator from a base instance and metric notifier.
-  phy_metrics_evm_calculator_decorator(std::unique_ptr<evm_calculator>     base_,
-                                       channel_modulation_metric_notifier& notifier_) :
+  phy_metrics_evm_calculator_decorator(std::unique_ptr<evm_calculator>            base_,
+                                       common_channel_modulation_metric_notifier& notifier_) :
     base(std::move(base_)), notifier(notifier_)
   {
     srsran_assert(base, "Invalid base instance.");
@@ -46,8 +46,8 @@ public:
   }
 
 private:
-  std::unique_ptr<evm_calculator>     base;
-  channel_modulation_metric_notifier& notifier;
+  std::unique_ptr<evm_calculator>            base;
+  common_channel_modulation_metric_notifier& notifier;
 };
 
 } // namespace srsran

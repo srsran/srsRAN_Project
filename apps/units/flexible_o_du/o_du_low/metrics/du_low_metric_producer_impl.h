@@ -224,19 +224,19 @@ private:
   }
 
   // See interface for documentation.
-  channel_modulation_metric_notifier& get_pdsch_modulation_mapper_notifier() override
+  common_channel_modulation_metric_notifier& get_pdsch_modulation_mapper_notifier() override
   {
     return pdsch_modulation_mapper_producer.get_notifier();
   }
 
   // See interface for documentation.
-  channel_modulation_metric_notifier& get_pusch_demodulation_mapper_notifier() override
+  common_channel_modulation_metric_notifier& get_pusch_demodulation_mapper_notifier() override
   {
     return pusch_demodulation_mapper_producer.get_notifier();
   }
 
   // See interface for documentation.
-  channel_modulation_metric_notifier& get_pusch_evm_calculator_notifier() override
+  common_channel_modulation_metric_notifier& get_pusch_evm_calculator_notifier() override
   {
     return pusch_evm_calculator_producer.get_notifier();
   }

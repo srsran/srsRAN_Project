@@ -184,33 +184,33 @@ srsran::create_channel_equalizer_metric_decorator_factory(std::shared_ptr<channe
 
 std::shared_ptr<modulation_mapper_factory>
 srsran::create_modulation_mapper_metric_decorator_factory(std::shared_ptr<modulation_mapper_factory> base_factory,
-                                                          channel_modulation_metric_notifier&        notifier)
+                                                          common_channel_modulation_metric_notifier& notifier)
 {
   return std::make_shared<metric_decorator_factory<modulation_mapper,
                                                    modulation_mapper_factory,
-                                                   channel_modulation_metric_notifier,
+                                                   common_channel_modulation_metric_notifier,
                                                    phy_metrics_modulation_mapper_decorator>>(std::move(base_factory),
                                                                                              notifier);
 }
 
 std::shared_ptr<demodulation_mapper_factory>
 srsran::create_demodulation_mapper_metric_decorator_factory(std::shared_ptr<demodulation_mapper_factory> base_factory,
-                                                            channel_modulation_metric_notifier&          notifier)
+                                                            common_channel_modulation_metric_notifier&   notifier)
 {
   return std::make_shared<metric_decorator_factory<demodulation_mapper,
                                                    demodulation_mapper_factory,
-                                                   channel_modulation_metric_notifier,
+                                                   common_channel_modulation_metric_notifier,
                                                    phy_metrics_demodulation_mapper_decorator>>(std::move(base_factory),
                                                                                                notifier);
 }
 
 std::shared_ptr<evm_calculator_factory>
-srsran::create_evm_calculator_metric_decorator_factory(std::shared_ptr<evm_calculator_factory> base_factory,
-                                                       channel_modulation_metric_notifier&     notifier)
+srsran::create_evm_calculator_metric_decorator_factory(std::shared_ptr<evm_calculator_factory>    base_factory,
+                                                       common_channel_modulation_metric_notifier& notifier)
 {
   return std::make_shared<metric_decorator_factory<evm_calculator,
                                                    evm_calculator_factory,
-                                                   channel_modulation_metric_notifier,
+                                                   common_channel_modulation_metric_notifier,
                                                    phy_metrics_evm_calculator_decorator>>(std::move(base_factory),
                                                                                           notifier);
 }

@@ -109,35 +109,35 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
   report_fatal_error_if_not(crc_calc_factory, "Failed to create CRC calculator factory.");
 
   std::shared_ptr<ldpc_encoder_factory> ldpc_encoder_factory = create_ldpc_encoder_factory_sw("auto");
-  report_fatal_error_if_not(ldpc_encoder_factory, "Failed to create factory.");
+  report_fatal_error_if_not(ldpc_encoder_factory, "Failed to create LDPC encoder factory.");
 
   std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rate_matcher_factory = create_ldpc_rate_matcher_factory_sw();
-  report_fatal_error_if_not(ldpc_rate_matcher_factory, "Failed to create factory.");
+  report_fatal_error_if_not(ldpc_rate_matcher_factory, "Failed to create LDPC RM factory.");
 
   std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory = create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
-  report_fatal_error_if_not(segmenter_factory, "Failed to create factory.");
+  report_fatal_error_if_not(segmenter_factory, "Failed to create LDPC segmenter factory.");
 
   std::shared_ptr<pseudo_random_generator_factory> pseudo_random_gen_factory =
       create_pseudo_random_generator_sw_factory();
-  report_fatal_error_if_not(pseudo_random_gen_factory, "Failed to create factory.");
+  report_fatal_error_if_not(pseudo_random_gen_factory, "Failed to create pseudo-random generator factory.");
 
   std::shared_ptr<modulation_mapper_factory> channel_mod_factory = create_modulation_mapper_factory();
-  report_fatal_error_if_not(channel_mod_factory, "Failed to create factory.");
+  report_fatal_error_if_not(channel_mod_factory, "Failed to create modulation factory.");
 
   std::shared_ptr<channel_precoder_factory> precoding_factory = create_channel_precoder_factory("auto");
-  report_fatal_error_if_not(precoding_factory, "Failed to create factory.");
+  report_fatal_error_if_not(precoding_factory, "Failed to create precoding factory.");
 
   std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory =
       create_resource_grid_mapper_factory(precoding_factory);
-  report_fatal_error_if_not(rg_mapper_factory, "Failed to create factory.");
+  report_fatal_error_if_not(rg_mapper_factory, "Failed to create RG mapper factory.");
 
   std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_pdsch_proc_factory =
       create_dmrs_pdsch_processor_factory_sw(pseudo_random_gen_factory, rg_mapper_factory);
-  report_fatal_error_if_not(dmrs_pdsch_proc_factory, "Failed to create factory.");
+  report_fatal_error_if_not(dmrs_pdsch_proc_factory, "Failed to create DM-RS generator factory.");
 
   std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_gen_factory =
       create_ptrs_pdsch_generator_generic_factory(pseudo_random_gen_factory, rg_mapper_factory);
-  report_fatal_error_if_not(ptrs_pdsch_gen_factory, "Failed to create factory.");
+  report_fatal_error_if_not(ptrs_pdsch_gen_factory, "Failed to create PT-RS generator factory.");
 
 #if defined(HWACC_PDSCH_ENABLED) && defined(HWACC_PUSCH_ENABLED)
   if (pxsch_type.find("acc100") != std::string::npos) {

@@ -50,7 +50,7 @@ public:
   /// Gets the total time spend by PUSCH processors.
   std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_data_elapsed_ns); }
 
-  /// Gets the total time spend by PUSCH processors waiting for the asynchronous decoding to be completed.
+  /// Gets the total time spent by the PUSCH processors waiting for the asynchronous decoding to be completed.
   std::chrono::nanoseconds get_total_wait_time() const { return std::chrono::nanoseconds(sum_waiting_ns); }
 
 private:

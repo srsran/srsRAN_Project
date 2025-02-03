@@ -17,13 +17,13 @@
 namespace srsran {
 
 /// Modulation mapper metric producer.
-class channel_modulation_metric_producer_impl : private channel_modulation_metric_notifier
+class channel_modulation_metric_producer_impl : private detail::phy_metric_notifier<channel_modulation_metrics>
 {
 public:
   /// Gets the modulation mapper metric interface.
-  channel_modulation_metric_notifier& get_notifier() { return *this; }
+  detail::phy_metric_notifier<channel_modulation_metrics>& get_notifier() { return *this; }
 
-  /// Gets the processing rate in millions of bits per second.
+  /// Gets the processing rate in megabits per second.
   double get_avg_rate_Mbps(modulation_scheme modulation) const
   {
     const metrics_per_modulation& metrics = select_metrics(modulation);
@@ -47,7 +47,7 @@ public:
   }
 
 private:
-  /// Groups metrics a single polynomial.
+  /// Groups all metrics of a single modulation.
   struct metrics_per_modulation {
     std::atomic<uint64_t> sum_nof_symbols = {};
     std::atomic<uint64_t> sum_elapsed_ns  = {};

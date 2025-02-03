@@ -45,7 +45,7 @@ public:
   }
 
 private:
-  /// Groups metrics a single polynomial.
+  /// Groups all metrics of a single polynomial.
   struct metrics_per_polynomial {
     std::atomic<uint64_t> sum_nof_bits   = {};
     std::atomic<uint64_t> sum_elapsed_ns = {};

@@ -56,24 +56,19 @@ std::shared_ptr<channel_equalizer_factory>
 create_channel_equalizer_metric_decorator_factory(std::shared_ptr<channel_equalizer_factory> base_factory,
                                                   channel_equalizer_metric_notifier&         notifier);
 
-/// Creates modulation mapper metric decorator factory.
+/// Creates a modulation mapper metric decorator factory.
 std::shared_ptr<modulation_mapper_factory>
 create_modulation_mapper_metric_decorator_factory(std::shared_ptr<modulation_mapper_factory> base_factory,
-                                                  channel_modulation_metric_notifier&        notifier);
+                                                  common_channel_modulation_metric_notifier& notifier);
 
-/// Creates demodulation mapper metric decorator factory.
+/// Creates a demodulation mapper metric decorator factory.
 std::shared_ptr<demodulation_mapper_factory>
 create_demodulation_mapper_metric_decorator_factory(std::shared_ptr<demodulation_mapper_factory> base_factory,
-                                                    channel_modulation_metric_notifier&          notifier);
+                                                    common_channel_modulation_metric_notifier&   notifier);
 
-/// Creates demodulation mapper metric decorator factory.
-std::shared_ptr<demodulation_mapper_factory>
-create_demodulation_mapper_metric_decorator_factory(std::shared_ptr<demodulation_mapper_factory> base_factory,
-                                                    channel_modulation_metric_notifier&          notifier);
-
-/// Creates EVM calculator metric decorator factory.
+/// Creates an EVM calculator metric decorator factory.
 std::shared_ptr<evm_calculator_factory>
-create_evm_calculator_metric_decorator_factory(std::shared_ptr<evm_calculator_factory> base_factory,
-                                               channel_modulation_metric_notifier&     notifier);
+create_evm_calculator_metric_decorator_factory(std::shared_ptr<evm_calculator_factory>    base_factory,
+                                               common_channel_modulation_metric_notifier& notifier);
 
 } // namespace srsran

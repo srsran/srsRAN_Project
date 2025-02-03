@@ -129,4 +129,13 @@ struct channel_modulation_metrics {
   std::chrono::nanoseconds elapsed;
 };
 
+/// Modulation mapper metrics, use common channel modulation metrics.
+using modulation_mapper_metrics = channel_modulation_metrics;
+
+/// Demodulation mapper metrics, use common channel modulation metrics.
+using demodulation_mapper_metrics = channel_modulation_metrics;
+
+/// EVM calculator metrics, use common channel modulation metrics.
+using evm_calculator_metrics = channel_modulation_metrics;
+
 } // namespace srsran

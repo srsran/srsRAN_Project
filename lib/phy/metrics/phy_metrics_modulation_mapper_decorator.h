@@ -21,8 +21,8 @@ class phy_metrics_modulation_mapper_decorator : public modulation_mapper
 {
 public:
   /// Creates a modulation mapper decorator from a base instance and metric notifier.
-  phy_metrics_modulation_mapper_decorator(std::unique_ptr<modulation_mapper>  base_,
-                                          channel_modulation_metric_notifier& notifier_) :
+  phy_metrics_modulation_mapper_decorator(std::unique_ptr<modulation_mapper>         base_,
+                                          common_channel_modulation_metric_notifier& notifier_) :
     base(std::move(base_)), notifier(notifier_)
   {
     srsran_assert(base, "Invalid base instance.");
@@ -57,8 +57,8 @@ public:
   }
 
 private:
-  std::unique_ptr<modulation_mapper>  base;
-  channel_modulation_metric_notifier& notifier;
+  std::unique_ptr<modulation_mapper>         base;
+  common_channel_modulation_metric_notifier& notifier;
 };
 
 } // namespace srsran
