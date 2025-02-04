@@ -30,6 +30,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   logger("PDCP", {ue_index, rb_id_, "UL"}),
   cfg(cfg_),
   rx_window(logger, pdcp_window_size(pdcp_sn_size_to_uint(cfg.sn_size))),
+  token_mngr(ue_ul_timer_factory_),
   upper_dn(upper_dn_),
   upper_cn(upper_cn_),
   ue_ul_timer_factory(ue_ul_timer_factory_),
@@ -79,6 +80,11 @@ void pdcp_entity_rx::stop()
     reordering_timer.stop();
     logger.log_debug("Stopped PDCP entity");
   }
+}
+
+manual_event_flag& pdcp_entity_rx::crypto_awaitable()
+{
+  return token_mngr.get_awaitable();
 }
 
 void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
@@ -235,6 +241,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
   pdu_info.time_of_arrival = time_start;
 
   // apply security in crypto executor
+  token_mngr.get_token();
   auto fn = [this, pdu_info = std::move(pdu_info)]() mutable { apply_security(std::move(pdu_info)); };
   if (not crypto_executor.execute(std::move(fn))) {
     logger.log_warning("Dropped PDU, crypto executor queue is full. count={}", rcvd_count);
@@ -297,6 +304,7 @@ void pdcp_entity_rx::apply_security(pdcp_rx_sdu_info pdu_info)
 
 void pdcp_entity_rx::apply_reordering(pdcp_rx_sdu_info pdu_info)
 {
+  token_mngr.return_token();
   uint32_t rcvd_count = pdu_info.count;
   /*
    * Check valid rcvd_count:

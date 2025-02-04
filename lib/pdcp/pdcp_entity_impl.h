@@ -83,6 +83,8 @@ public:
     }
   }
 
+  manual_event_flag& rx_crypto_awaitable() override { return rx->crypto_awaitable(); }
+
 private:
   std::unique_ptr<pdcp_entity_tx> tx;
   std::unique_ptr<pdcp_entity_rx> rx;

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pdcp_bearer_logger.h"
+#include "pdcp_crypto_token.h"
 #include "pdcp_entity_tx_rx_base.h"
 #include "pdcp_interconnect.h"
 #include "pdcp_metrics_aggregator.h"
@@ -69,6 +70,10 @@ public:
 
   /// \brief Stop handling PDUs and stops timers
   void stop();
+
+  /// \brief Retrun awaitable to wait for cripto tasks to be
+  /// finished.
+  manual_event_flag& crypto_awaitable();
 
   void handle_pdu(byte_buffer_chain buf) override;
 
@@ -129,6 +134,10 @@ private:
   unique_timer reordering_timer;
   class reordering_callback;
   void handle_t_reordering_expire();
+
+  /// Crypto token manager. Used to wait for crypto engine to finish
+  /// when destroying DRB.
+  pdcp_crypto_token_manager token_mngr;
 
   // Handling of different PDU types
 

@@ -99,9 +99,17 @@ public:
 
   async_task<void> stop()
   {
-    /// Disconnect
-    pdu_session_manager.disconnect_all_pdu_sessions();
-    return ue_exec_mapper->stop();
+    return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      /// Disconnect PDU sessions.
+      pdu_session_manager.disconnect_all_pdu_sessions();
+
+      /// Await stopping of the UE executors
+      CORO_AWAIT(ue_exec_mapper->stop());
+
+      CORO_RETURN();
+    });
   }
 
   // security management

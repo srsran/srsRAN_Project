@@ -58,6 +58,9 @@ public:
   void disconnect_pdu_session(pdu_session_id_t pdu_session_id);
   void disconnect_all_pdu_sessions();
 
+  async_task<void> await_crypto_all_pdu_sessions();
+  async_task<void> await_crypto_all_drbs(const std::unique_ptr<pdu_session>& pdu_session);
+
   /// \brief Function used to allocate a local NG-U TEID
   /// This function allocates a new TEID based on the UE id, and PDU session ID.
   /// The allocation should look like this,
