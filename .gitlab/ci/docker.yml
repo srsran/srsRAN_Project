@@ -132,6 +132,7 @@ metrics version check in retina:
   tags:
     - amd64-avx2
   timeout: 2h
+  retry: 2
   variables:
     GIT_LFS_SKIP_SMUDGE: 1
   before_script: &docker_setup
@@ -298,6 +299,7 @@ grafana server image latest:
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       interruptible: false
+  retry: 2
   variables:
     GIT_LFS_SKIP_SMUDGE: 1
     KUBERNETES_CPU_REQUEST: ${SRS_CPU_LIMIT}
