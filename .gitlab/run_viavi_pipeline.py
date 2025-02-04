@@ -129,7 +129,6 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
     COMPILER = "gcc"
     TESTMODE = "none"
 
-    MAKE_ARGS = "-j6"
     BUILD_ARGS = args_definition.build_args
     DPDK_VERSION = args_definition.dpdk_version
 
@@ -151,7 +150,6 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
         {"key": "COMPILER", "value": COMPILER},
         {"key": "TEST_MODE", "value": TESTMODE},
         {"key": "BUILD_ARGS", "value": BUILD_ARGS},
-        {"key": "MAKE_ARGS", "value": MAKE_ARGS},
         {"key": "SRS_TARGET", "value": "gnb_split_7_2"},
         {"key": "PLUGIN_BRANCH", "value": "main"},
         {"key": "UHD_VERSION", "value": ""},

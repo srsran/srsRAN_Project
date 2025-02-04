@@ -31,9 +31,6 @@ variables:
   BUILD_ARGS:
     description: It will be passed to cmake
     value: ""
-  MAKE_ARGS:
-    description: It will be passed to make
-    value: ""
   UHD_VERSION:
     description: must be one version supported in the specified OS
     value: ""
