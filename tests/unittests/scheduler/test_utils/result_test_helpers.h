@@ -64,12 +64,12 @@ inline uci_indication::uci_pdu create_uci_pdu_with_harq_ack(du_ue_index_t ue_ind
   switch (pucch_pdu.format()) {
     case pucch_format::FORMAT_1: {
       uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f0_1_pdu{};
-      f0_1_pdu.harqs.resize(pucch_pdu.bits.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+      f0_1_pdu.harqs.resize(pucch_pdu.uci_bits.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
       pdu.pdu = f0_1_pdu;
     } break;
     case pucch_format::FORMAT_2: {
       uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2_pdu{};
-      f2_pdu.harqs.resize(pucch_pdu.bits.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+      f2_pdu.harqs.resize(pucch_pdu.uci_bits.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
       pdu.pdu = f2_pdu;
     } break;
     default:

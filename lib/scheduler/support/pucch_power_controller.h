@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../pucch_scheduling/pucch_uci_bits.h"
+#include "../../../include/srsran/ran/pucch/pucch_uci_bits.h"
 #include "srsran/adt/circular_array.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 #include "srsran/ran/slot_point.h"

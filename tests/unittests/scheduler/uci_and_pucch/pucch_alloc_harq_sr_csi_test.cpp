@@ -36,7 +36,7 @@ public:
     pucch_expected_harq_csi                = pucch_expected_harq_only;
     pucch_expected_harq_csi.resources.prbs = prb_interval{2, 4};
 
-    // This PUCCH grant will be for 4 CSI bits only, which are endoced in the maximum number of PRBs.
+    // This PUCCH grant will be for 4 CSI bits only, which are encoded in the maximum number of PRBs.
     auto& format2_csi                                 = pucch_expected_csi_only.format_params.emplace<pucch_format_2>();
     pucch_expected_csi_only.crnti                     = to_rnti(0x4601);
     pucch_expected_csi_only.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
@@ -60,9 +60,9 @@ protected:
 
 TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_csi_only)
 {
-  pucch_expected_csi_only.bits.harq_ack_nof_bits = 0;
-  pucch_expected_csi_only.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi_only.bits.csi_part1_bits    = 4;
+  pucch_expected_csi_only.uci_bits.harq_ack_nof_bits  = 0;
+  pucch_expected_csi_only.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_csi_only.uci_bits.csi_part1_nof_bits = 4;
 
   add_csi_grant();
 
@@ -77,9 +77,9 @@ TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_csi_only)
 
 TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_csi_sr)
 {
-  pucch_expected_csi_only.bits.harq_ack_nof_bits = 0;
-  pucch_expected_csi_only.bits.sr_bits           = sr_nof_bits::one;
-  pucch_expected_csi_only.bits.csi_part1_bits    = 4;
+  pucch_expected_csi_only.uci_bits.harq_ack_nof_bits  = 0;
+  pucch_expected_csi_only.uci_bits.sr_bits            = sr_nof_bits::one;
+  pucch_expected_csi_only.uci_bits.csi_part1_nof_bits = 4;
 
   add_sr_grant();
   add_csi_grant();
@@ -95,9 +95,9 @@ TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_csi_sr)
 
 TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_harq_only)
 {
-  pucch_expected_harq_only.bits.harq_ack_nof_bits = 5;
-  pucch_expected_harq_only.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_harq_only.bits.csi_part1_bits    = 0;
+  pucch_expected_harq_only.uci_bits.harq_ack_nof_bits  = 5;
+  pucch_expected_harq_only.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_harq_only.uci_bits.csi_part1_nof_bits = 0;
 
   add_harq_grant();
   add_harq_grant();
@@ -117,17 +117,17 @@ TEST_F(test_pucch_f2_alloc_several_prbs, test_prb_allocation_harq_csi_only)
 {
   // We don't know a-priori whether CSI and HARQ will be multilplexed within the same resource; we need to consider both
   // possibilities, (i) 2 separate PUCCH resources HARQ + CSI, and (ii) 1 PUCCH resource with both HARQ and CSI.
-  pucch_expected_harq_only.bits.harq_ack_nof_bits = 5;
-  pucch_expected_harq_only.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_harq_only.bits.csi_part1_bits    = 0;
+  pucch_expected_harq_only.uci_bits.harq_ack_nof_bits  = 5;
+  pucch_expected_harq_only.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_harq_only.uci_bits.csi_part1_nof_bits = 0;
 
-  pucch_expected_csi_only.bits.harq_ack_nof_bits = 0;
-  pucch_expected_csi_only.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi_only.bits.csi_part1_bits    = 4;
+  pucch_expected_csi_only.uci_bits.harq_ack_nof_bits  = 0;
+  pucch_expected_csi_only.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_csi_only.uci_bits.csi_part1_nof_bits = 4;
 
-  pucch_expected_harq_csi.bits.harq_ack_nof_bits = 5;
-  pucch_expected_harq_csi.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_harq_csi.bits.csi_part1_bits    = 4;
+  pucch_expected_harq_csi.uci_bits.harq_ack_nof_bits  = 5;
+  pucch_expected_harq_csi.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_harq_csi.uci_bits.csi_part1_nof_bits = 4;
 
   add_csi_grant();
   add_harq_grant();

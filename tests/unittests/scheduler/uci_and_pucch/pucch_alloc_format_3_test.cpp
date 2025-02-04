@@ -31,11 +31,11 @@ public:
     pucch_expected_f1_sr.crnti   = to_rnti(0x4601);
     pucch_expected_f1_sr.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-    pucch_expected_f1_sr.resources.prbs            = prb_interval{3, 4};
-    pucch_expected_f1_sr.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_f1_sr.resources.symbols         = ofdm_symbol_range{0, 14};
-    pucch_expected_f1_sr.bits.sr_bits              = sr_nof_bits::one;
-    pucch_expected_f1_sr.bits.harq_ack_nof_bits    = 0;
+    pucch_expected_f1_sr.resources.prbs             = prb_interval{3, 4};
+    pucch_expected_f1_sr.resources.second_hop_prbs  = prb_interval{0, 0};
+    pucch_expected_f1_sr.resources.symbols          = ofdm_symbol_range{0, 14};
+    pucch_expected_f1_sr.uci_bits.sr_bits           = sr_nof_bits::one;
+    pucch_expected_f1_sr.uci_bits.harq_ack_nof_bits = 0;
 
     format1_sr.initial_cyclic_shift = 0;
     format1_sr.time_domain_occ      = 0;
@@ -50,11 +50,11 @@ public:
     pucch_expected_f1_harq.crnti   = to_rnti(0x4601);
     pucch_expected_f1_harq.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-    pucch_expected_f1_harq.resources.prbs            = prb_interval{0, 1};
-    pucch_expected_f1_harq.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_f1_harq.resources.symbols         = ofdm_symbol_range{0, 14};
-    pucch_expected_f1_harq.bits.sr_bits              = sr_nof_bits::no_sr;
-    pucch_expected_f1_harq.bits.harq_ack_nof_bits    = 1;
+    pucch_expected_f1_harq.resources.prbs             = prb_interval{0, 1};
+    pucch_expected_f1_harq.resources.second_hop_prbs  = prb_interval{0, 0};
+    pucch_expected_f1_harq.resources.symbols          = ofdm_symbol_range{0, 14};
+    pucch_expected_f1_harq.uci_bits.sr_bits           = sr_nof_bits::no_sr;
+    pucch_expected_f1_harq.uci_bits.harq_ack_nof_bits = 1;
 
     format1_harq.initial_cyclic_shift = 0;
     format1_harq.time_domain_occ      = 0;
@@ -127,10 +127,10 @@ TEST_F(test_pucch_allocator_format_3, test_sr_allocation_only)
 
 TEST_F(test_pucch_allocator_format_3, test_csi_alloc_only)
 {
-  static constexpr unsigned csi_part1_bits  = 4;
-  pucch_expected_csi.bits.harq_ack_nof_bits = 0;
-  pucch_expected_csi.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi.bits.csi_part1_bits    = csi_part1_bits;
+  static constexpr unsigned csi_part1_bits       = 4;
+  pucch_expected_csi.uci_bits.harq_ack_nof_bits  = 0;
+  pucch_expected_csi.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_csi.uci_bits.csi_part1_nof_bits = csi_part1_bits;
 
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
   t_bench.pucch_alloc.pucch_allocate_csi_opportunity(
@@ -146,10 +146,10 @@ TEST_F(test_pucch_allocator_format_3, test_csi_alloc_only)
 
 TEST_F(test_pucch_allocator_format_3, test_csi_alloc_over_sr)
 {
-  static constexpr unsigned csi_part1_bits  = 4;
-  pucch_expected_csi.bits.harq_ack_nof_bits = 0;
-  pucch_expected_csi.bits.sr_bits           = sr_nof_bits::one;
-  pucch_expected_csi.bits.csi_part1_bits    = csi_part1_bits;
+  static constexpr unsigned csi_part1_bits       = 4;
+  pucch_expected_csi.uci_bits.harq_ack_nof_bits  = 0;
+  pucch_expected_csi.uci_bits.sr_bits            = sr_nof_bits::one;
+  pucch_expected_csi.uci_bits.csi_part1_nof_bits = csi_part1_bits;
 
   add_sr_grant();
 
@@ -167,10 +167,10 @@ TEST_F(test_pucch_allocator_format_3, test_csi_alloc_over_sr)
 
 TEST_F(test_pucch_allocator_format_3, test_csi_alloc_when_no_free_csi_resources)
 {
-  static constexpr unsigned csi_part1_bits  = 4;
-  pucch_expected_csi.bits.harq_ack_nof_bits = 0;
-  pucch_expected_csi.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi.bits.csi_part1_bits    = csi_part1_bits;
+  static constexpr unsigned csi_part1_bits       = 4;
+  pucch_expected_csi.uci_bits.harq_ack_nof_bits  = 0;
+  pucch_expected_csi.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_csi.uci_bits.csi_part1_nof_bits = csi_part1_bits;
 
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
 
@@ -191,10 +191,10 @@ TEST_F(test_pucch_allocator_format_3, test_csi_alloc_when_no_free_csi_resources)
 
 TEST_F(test_pucch_allocator_format_3, test_csi_alloc_over_common_harq_grant)
 {
-  static constexpr unsigned csi_part1_bits  = 4;
-  pucch_expected_csi.bits.harq_ack_nof_bits = 0;
-  pucch_expected_csi.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi.bits.csi_part1_bits    = csi_part1_bits;
+  static constexpr unsigned csi_part1_bits       = 4;
+  pucch_expected_csi.uci_bits.harq_ack_nof_bits  = 0;
+  pucch_expected_csi.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_csi.uci_bits.csi_part1_nof_bits = csi_part1_bits;
 
   auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
 
@@ -227,7 +227,7 @@ TEST_F(test_pucch_allocator_format_3, test_harq_alloc_3bits)
   ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator.value());
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(pucch_format::FORMAT_1, slot_grid.result.ul.pucchs[0].format());
-  ASSERT_EQ(1, slot_grid.result.ul.pucchs[0].bits.harq_ack_nof_bits);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs[0].uci_bits.harq_ack_nof_bits);
 
   test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
@@ -235,7 +235,7 @@ TEST_F(test_pucch_allocator_format_3, test_harq_alloc_3bits)
   ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator.value());
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(pucch_format::FORMAT_1, slot_grid.result.ul.pucchs[0].format());
-  ASSERT_EQ(2, slot_grid.result.ul.pucchs[0].bits.harq_ack_nof_bits);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs[0].uci_bits.harq_ack_nof_bits);
 
   // Convert to Format 3 and with 3 bits HARQ.
   test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
@@ -244,14 +244,14 @@ TEST_F(test_pucch_allocator_format_3, test_harq_alloc_3bits)
   ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator.value());
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
   ASSERT_EQ(pucch_format::FORMAT_3, slot_grid.result.ul.pucchs[0].format());
-  ASSERT_EQ(3, slot_grid.result.ul.pucchs[0].bits.harq_ack_nof_bits);
+  ASSERT_EQ(3, slot_grid.result.ul.pucchs[0].uci_bits.harq_ack_nof_bits);
 }
 
 TEST_F(test_pucch_allocator_format_3, test_harq_alloc_3bits_over_sr)
 {
-  pucch_expected_f3.bits.harq_ack_nof_bits = 3;
-  pucch_expected_f3.bits.sr_bits           = sr_nof_bits::one;
-  pucch_expected_f3.bits.csi_part1_bits    = 0;
+  pucch_expected_f3.uci_bits.harq_ack_nof_bits  = 3;
+  pucch_expected_f3.uci_bits.sr_bits            = sr_nof_bits::one;
+  pucch_expected_f3.uci_bits.csi_part1_nof_bits = 0;
 
   add_sr_grant();
   add_harq_grant();
@@ -273,9 +273,9 @@ TEST_F(test_pucch_allocator_format_3, test_harq_alloc_1bit_over_csi)
 {
   // With 1 HARQ-ACK bit, the F1 HARQ-ACK resource overlaps with the F3 resource for CSI, thus the 2 resources will be
   // multiplexed into 1, which is the PUCCH HARQ resource from set 1 (Format 3).
-  pucch_expected_f3.bits.harq_ack_nof_bits = 1;
-  pucch_expected_f3.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_f3.bits.csi_part1_bits    = 4;
+  pucch_expected_f3.uci_bits.harq_ack_nof_bits  = 1;
+  pucch_expected_f3.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_f3.uci_bits.csi_part1_nof_bits = 4;
 
   add_csi_grant();
   std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
@@ -299,9 +299,9 @@ TEST_F(test_pucch_allocator_format_3, test_harq_alloc_2bits_over_csi)
 {
   // With 2 HARQ-ACK bits, the F1 HARQ-ACK resource overlaps with the F3 resource for CSI, thus the 2 resources will be
   // multiplexed into 1, which is the PUCCH HARQ resource from set 1 (Format 3).
-  pucch_expected_f3.bits.harq_ack_nof_bits = 2;
-  pucch_expected_f3.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_f3.bits.csi_part1_bits    = 4;
+  pucch_expected_f3.uci_bits.harq_ack_nof_bits  = 2;
+  pucch_expected_f3.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_f3.uci_bits.csi_part1_nof_bits = 4;
 
   add_csi_grant();
   add_harq_grant();
@@ -326,18 +326,18 @@ TEST_F(test_pucch_allocator_format_3, test_harq_alloc_3bits_over_csi)
 {
   // We don't know a-priori whether CSI and HARQ will be multiplexed within the same resource; we need to consider both
   // possibilities, (i) 2 separate PUCCH resources HARQ + CSI, and (ii) 1 PUCCH resource with both HARQ and CSI.
-  pucch_expected_f3.bits.harq_ack_nof_bits = 3;
-  pucch_expected_f3.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_f3.bits.csi_part1_bits    = 0;
+  pucch_expected_f3.uci_bits.harq_ack_nof_bits  = 3;
+  pucch_expected_f3.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_f3.uci_bits.csi_part1_nof_bits = 0;
 
-  pucch_expected_csi.bits.harq_ack_nof_bits = 0;
-  pucch_expected_csi.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi.bits.csi_part1_bits    = 4;
+  pucch_expected_csi.uci_bits.harq_ack_nof_bits  = 0;
+  pucch_expected_csi.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_csi.uci_bits.csi_part1_nof_bits = 4;
 
-  pucch_info pucch_f3_harq_csi_mplexed             = pucch_expected_f3;
-  pucch_f3_harq_csi_mplexed.bits.harq_ack_nof_bits = 3;
-  pucch_f3_harq_csi_mplexed.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_f3_harq_csi_mplexed.bits.csi_part1_bits    = 4;
+  pucch_info pucch_f3_harq_csi_mplexed                  = pucch_expected_f3;
+  pucch_f3_harq_csi_mplexed.uci_bits.harq_ack_nof_bits  = 3;
+  pucch_f3_harq_csi_mplexed.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_f3_harq_csi_mplexed.uci_bits.csi_part1_nof_bits = 4;
 
   add_csi_grant();
   add_harq_grant();
@@ -371,9 +371,9 @@ TEST_F(test_pucch_allocator_format_3, test_harq_alloc_3bits_over_sr_and_csi)
 {
   // With SR and with PUCCH Format 1 it is guaranteed that the resources will be multiplexed, as PUCCH Format 1 for SR
   // spans over the 14 symbols.
-  pucch_expected_f3.bits.harq_ack_nof_bits = 3;
-  pucch_expected_f3.bits.sr_bits           = sr_nof_bits::one;
-  pucch_expected_f3.bits.csi_part1_bits    = 4;
+  pucch_expected_f3.uci_bits.harq_ack_nof_bits  = 3;
+  pucch_expected_f3.uci_bits.sr_bits            = sr_nof_bits::one;
+  pucch_expected_f3.uci_bits.csi_part1_nof_bits = 4;
 
   add_sr_grant();
   add_csi_grant();
@@ -398,9 +398,9 @@ TEST_F(test_pucch_allocator_format_3, test_harq_alloc_7bits_over_sr_and_csi)
   constexpr unsigned nof_harq_bits = 7;
   // With SR and with PUCCH Format 1 it is guaranteed that the resources will be multiplexed, as PUCCH Format 1 for SR
   // spans over the 14 symbols.
-  pucch_expected_f3.bits.harq_ack_nof_bits = nof_harq_bits;
-  pucch_expected_f3.bits.sr_bits           = sr_nof_bits::one;
-  pucch_expected_f3.bits.csi_part1_bits    = 4;
+  pucch_expected_f3.uci_bits.harq_ack_nof_bits  = nof_harq_bits;
+  pucch_expected_f3.uci_bits.sr_bits            = sr_nof_bits::one;
+  pucch_expected_f3.uci_bits.csi_part1_nof_bits = 4;
 
   add_sr_grant();
   add_csi_grant();

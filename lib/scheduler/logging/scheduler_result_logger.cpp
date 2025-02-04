@@ -275,8 +275,8 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
         format_to(std::back_inserter(fmtbuf),
                   " symb={} uci: harq_bits={} sr={}",
                   pucch.resources.symbols,
-                  pucch.bits.harq_ack_nof_bits,
-                  fmt::underlying(pucch.bits.sr_bits));
+                  pucch.uci_bits.harq_ack_nof_bits,
+                  fmt::underlying(pucch.uci_bits.sr_bits));
       } break;
       case pucch_format::FORMAT_1: {
         const auto& format_1 = std::get<pucch_format_1>(pucch.format_params);
@@ -290,8 +290,8 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                   pucch.resources.symbols,
                   format_1.initial_cyclic_shift,
                   format_1.time_domain_occ,
-                  pucch.bits.harq_ack_nof_bits,
-                  fmt::underlying(pucch.bits.sr_bits));
+                  pucch.uci_bits.harq_ack_nof_bits,
+                  fmt::underlying(pucch.uci_bits.sr_bits));
 
       } break;
       case pucch_format::FORMAT_2: {
@@ -303,9 +303,9 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
         format_to(std::back_inserter(fmtbuf),
                   " symb={} uci: harq_bits={} sr={} csi-1_bits={}",
                   pucch.resources.symbols,
-                  pucch.bits.harq_ack_nof_bits,
-                  fmt::underlying(pucch.bits.sr_bits),
-                  pucch.bits.csi_part1_bits);
+                  pucch.uci_bits.harq_ack_nof_bits,
+                  fmt::underlying(pucch.uci_bits.sr_bits),
+                  pucch.uci_bits.csi_part1_nof_bits);
 
       } break;
       case pucch_format::FORMAT_3: {
@@ -317,9 +317,9 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
         format_to(std::back_inserter(fmtbuf),
                   " symb={} uci: harq_bits={} sr={} csi-1_bits={}",
                   pucch.resources.symbols,
-                  pucch.bits.harq_ack_nof_bits,
-                  fmt::underlying(pucch.bits.sr_bits),
-                  pucch.bits.csi_part1_bits);
+                  pucch.uci_bits.harq_ack_nof_bits,
+                  fmt::underlying(pucch.uci_bits.sr_bits),
+                  pucch.uci_bits.csi_part1_nof_bits);
       } break;
       case pucch_format::FORMAT_4: {
         const auto& format_4 = std::get<pucch_format_4>(pucch.format_params);
@@ -333,9 +333,9 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                   pucch.resources.symbols,
                   format_4.orthog_seq_idx,
                   fmt::underlying(format_4.n_sf_pucch_f4),
-                  pucch.bits.harq_ack_nof_bits,
-                  fmt::underlying(pucch.bits.sr_bits),
-                  pucch.bits.csi_part1_bits);
+                  pucch.uci_bits.harq_ack_nof_bits,
+                  fmt::underlying(pucch.uci_bits.sr_bits),
+                  pucch.uci_bits.csi_part1_nof_bits);
       } break;
       default:
         srsran_assertion_failure("Invalid PUCCH format");

@@ -811,7 +811,7 @@ static void handle_discarded_pucch(const cell_slot_resource_allocator& prev_slot
     }
 
     // - The lower layers will not attempt to decode the PUCCH and will not send any UCI indication.
-    if (pucch.bits.harq_ack_nof_bits > 0) {
+    if (pucch.uci_bits.harq_ack_nof_bits > 0) {
       // Note: To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK
       // in the DL HARQ processes with UCI falling in this slot.
       // Note: We don't use this cancellation to update the DL OLLA, as we shouldn't take lates into account in link

@@ -901,17 +901,17 @@ public:
       switch (pucch.format()) {
         case pucch_format::FORMAT_1: {
           mac_uci_pdu::pucch_f0_or_f1_type f1{};
-          if (pucch.bits.harq_ack_nof_bits > 0) {
+          if (pucch.uci_bits.harq_ack_nof_bits > 0) {
             f1.harq_info.emplace();
             // Set PUCCHs with SR as DTX.
-            const uci_pucch_f0_or_f1_harq_values ack_val = pucch.bits.sr_bits == sr_nof_bits::no_sr
+            const uci_pucch_f0_or_f1_harq_values ack_val = pucch.uci_bits.sr_bits == sr_nof_bits::no_sr
                                                                ? uci_pucch_f0_or_f1_harq_values::ack
                                                                : uci_pucch_f0_or_f1_harq_values::dtx;
-            f1.harq_info->harqs.resize(pucch.bits.harq_ack_nof_bits, ack_val);
+            f1.harq_info->harqs.resize(pucch.uci_bits.harq_ack_nof_bits, ack_val);
           }
           // Forward positive SRs to scheduler only if UL is enabled for the benchmark, PUCCH grant is for SR and nof.
           // UL grants is 0 or scheduler stops allocating UL grants.
-          if (ul_bsr_bytes != 0 and pucch.bits.sr_bits != sr_nof_bits::no_sr and
+          if (ul_bsr_bytes != 0 and pucch.uci_bits.sr_bits != sr_nof_bits::no_sr and
               (sim_phy.metrics.nof_ul_grants == 0 or
                (sim_phy.metrics.nof_ul_grants ==
                 sim_phy.metrics.nof_ul_grants + sim_phy.slot_ul_result.ul_res->puschs.size()))) {
@@ -922,21 +922,21 @@ public:
         } break;
         case pucch_format::FORMAT_2: {
           mac_uci_pdu::pucch_f2_or_f3_or_f4_type f2{};
-          if (pucch.bits.harq_ack_nof_bits > 0) {
+          if (pucch.uci_bits.harq_ack_nof_bits > 0) {
             f2.harq_info.emplace();
             f2.harq_info->is_valid = true;
-            f2.harq_info->payload.resize(pucch.bits.harq_ack_nof_bits);
-            f2.harq_info->payload.fill(0, pucch.bits.harq_ack_nof_bits, true);
+            f2.harq_info->payload.resize(pucch.uci_bits.harq_ack_nof_bits);
+            f2.harq_info->payload.fill(0, pucch.uci_bits.harq_ack_nof_bits, true);
           }
           // Forward positive SRs to scheduler only if UL is enabled for the benchmark, PUCCH grant is for SR and nof.
           // UL grants is 0 or scheduler stops allocating UL grants.
-          if (ul_bsr_bytes != 0 and pucch.bits.sr_bits != sr_nof_bits::no_sr and
+          if (ul_bsr_bytes != 0 and pucch.uci_bits.sr_bits != sr_nof_bits::no_sr and
               (sim_phy.metrics.nof_ul_grants == 0 or
                (sim_phy.metrics.nof_ul_grants ==
                 sim_phy.metrics.nof_ul_grants + sim_phy.slot_ul_result.ul_res->puschs.size()))) {
             f2.sr_info.emplace();
-            f2.sr_info->resize(sr_nof_bits_to_uint(pucch.bits.sr_bits));
-            f2.sr_info->fill(0, sr_nof_bits_to_uint(pucch.bits.sr_bits), true);
+            f2.sr_info->resize(sr_nof_bits_to_uint(pucch.uci_bits.sr_bits));
+            f2.sr_info->fill(0, sr_nof_bits_to_uint(pucch.uci_bits.sr_bits), true);
           }
           if (pucch.csi_rep_cfg.has_value()) {
             f2.csi_part1_info.emplace();

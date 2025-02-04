@@ -80,12 +80,12 @@ mac_uci_pdu srsran::test_helpers::create_uci_pdu(const pucch_info& pucch)
     case pucch_format::FORMAT_1: {
       auto& uci_f1 = pdu.pdu.emplace<mac_uci_pdu::pucch_f0_or_f1_type>();
 
-      if (pucch.bits.harq_ack_nof_bits > 0) {
+      if (pucch.uci_bits.harq_ack_nof_bits > 0) {
         uci_f1.harq_info.emplace();
-        uci_f1.harq_info->harqs.resize(pucch.bits.harq_ack_nof_bits, uci_pucch_f0_or_f1_harq_values::ack);
+        uci_f1.harq_info->harqs.resize(pucch.uci_bits.harq_ack_nof_bits, uci_pucch_f0_or_f1_harq_values::ack);
       }
 
-      if (pucch.bits.sr_bits != sr_nof_bits::no_sr) {
+      if (pucch.uci_bits.sr_bits != sr_nof_bits::no_sr) {
         uci_f1.sr_info.emplace();
         uci_f1.sr_info->detected = true;
       }
@@ -93,22 +93,22 @@ mac_uci_pdu srsran::test_helpers::create_uci_pdu(const pucch_info& pucch)
     case pucch_format::FORMAT_2: {
       auto& uci_f2 = pdu.pdu.emplace<mac_uci_pdu::pucch_f2_or_f3_or_f4_type>();
 
-      if (pucch.bits.harq_ack_nof_bits > 0) {
+      if (pucch.uci_bits.harq_ack_nof_bits > 0) {
         uci_f2.harq_info.emplace();
         uci_f2.harq_info->is_valid = true;
-        uci_f2.harq_info->payload.resize(pucch.bits.harq_ack_nof_bits);
+        uci_f2.harq_info->payload.resize(pucch.uci_bits.harq_ack_nof_bits);
         uci_f2.harq_info->payload.fill(true);
       }
 
-      if (pucch.bits.sr_bits != sr_nof_bits::no_sr) {
+      if (pucch.uci_bits.sr_bits != sr_nof_bits::no_sr) {
         uci_f2.sr_info.emplace();
-        uci_f2.sr_info->resize(sr_nof_bits_to_uint(pucch.bits.sr_bits));
+        uci_f2.sr_info->resize(sr_nof_bits_to_uint(pucch.uci_bits.sr_bits));
       }
 
-      if (pucch.bits.csi_part1_bits > 0) {
+      if (pucch.uci_bits.csi_part1_nof_bits > 0) {
         uci_f2.csi_part1_info.emplace();
         uci_f2.csi_part1_info->is_valid = true;
-        uci_f2.csi_part1_info->payload.resize(pucch.bits.csi_part1_bits);
+        uci_f2.csi_part1_info->payload.resize(pucch.uci_bits.csi_part1_nof_bits);
         uci_f2.csi_part1_info->payload.fill(true);
       }
     } break;

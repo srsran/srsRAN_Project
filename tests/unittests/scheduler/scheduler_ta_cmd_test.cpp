@@ -53,7 +53,7 @@ protected:
     switch (pucch_pdu.format()) {
       case pucch_format::FORMAT_1: {
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f1{};
-        f1.harqs.resize(pucch_pdu.bits.harq_ack_nof_bits);
+        f1.harqs.resize(pucch_pdu.uci_bits.harq_ack_nof_bits);
         std::fill(f1.harqs.begin(), f1.harqs.end(), mac_harq_ack_report_status::ack);
         f1.ul_sinr_dB          = ul_sinr;
         f1.time_advance_offset = phy_time_unit::from_units_of_Tc(time_advance_offset_in_tc);
@@ -61,12 +61,12 @@ protected:
       } break;
       case pucch_format::FORMAT_2: {
         uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2{};
-        f2.harqs.resize(pucch_pdu.bits.harq_ack_nof_bits);
+        f2.harqs.resize(pucch_pdu.uci_bits.harq_ack_nof_bits);
         std::fill(f2.harqs.begin(), f2.harqs.end(), mac_harq_ack_report_status::ack);
         f2.ul_sinr_dB          = ul_sinr;
         f2.time_advance_offset = phy_time_unit::from_units_of_Tc(time_advance_offset_in_tc);
         uci_ind.ucis[0].pdu    = f2;
-        if (pucch_pdu.bits.csi_part1_bits > 0) {
+        if (pucch_pdu.uci_bits.csi_part1_nof_bits > 0) {
           f2.csi.emplace();
           f2.csi->first_tb_wideband_cqi = 15;
         }
@@ -120,7 +120,7 @@ TEST_P(scheduler_ta_cmd_tester, ta_cmd_is_scheduled)
     }
 
     for (const pucch_info& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
-      if (pucch.format() == pucch_format::FORMAT_1 and pucch.bits.sr_bits != sr_nof_bits::no_sr) {
+      if (pucch.format() == pucch_format::FORMAT_1 and pucch.uci_bits.sr_bits != sr_nof_bits::no_sr) {
         // Skip SRs for this test.
         continue;
       }

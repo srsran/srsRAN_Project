@@ -64,11 +64,11 @@ public:
     pucch_expected_f0_sr.crnti   = to_rnti(0x4601);
     pucch_expected_f0_sr.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-    pucch_expected_f0_sr.resources.prbs            = prb_interval{0, 1};
-    pucch_expected_f0_sr.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_f0_sr.resources.symbols         = ofdm_symbol_range{12, 14};
-    pucch_expected_f0_sr.bits.sr_bits              = sr_nof_bits::one;
-    pucch_expected_f0_sr.bits.harq_ack_nof_bits    = 0;
+    pucch_expected_f0_sr.resources.prbs             = prb_interval{0, 1};
+    pucch_expected_f0_sr.resources.second_hop_prbs  = prb_interval{0, 0};
+    pucch_expected_f0_sr.resources.symbols          = ofdm_symbol_range{12, 14};
+    pucch_expected_f0_sr.uci_bits.sr_bits           = sr_nof_bits::one;
+    pucch_expected_f0_sr.uci_bits.harq_ack_nof_bits = 0;
 
     format0_sr.initial_cyclic_shift = 0;
 
@@ -80,11 +80,11 @@ public:
     pucch_expected_f0_harq.crnti   = to_rnti(0x4601);
     pucch_expected_f0_harq.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-    pucch_expected_f0_harq.resources.prbs            = prb_interval{0, 1};
-    pucch_expected_f0_harq.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_expected_f0_harq.resources.symbols         = ofdm_symbol_range{0, 2};
-    pucch_expected_f0_harq.bits.sr_bits              = sr_nof_bits::no_sr;
-    pucch_expected_f0_harq.bits.harq_ack_nof_bits    = 1;
+    pucch_expected_f0_harq.resources.prbs             = prb_interval{0, 1};
+    pucch_expected_f0_harq.resources.second_hop_prbs  = prb_interval{0, 0};
+    pucch_expected_f0_harq.resources.symbols          = ofdm_symbol_range{0, 2};
+    pucch_expected_f0_harq.uci_bits.sr_bits           = sr_nof_bits::no_sr;
+    pucch_expected_f0_harq.uci_bits.harq_ack_nof_bits = 1;
 
     format0_harq.initial_cyclic_shift = 0;
 
@@ -181,7 +181,7 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_2_bits)
   const std::optional<unsigned> test_pucch_res_indicator_1 = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
-  pucch_expected_f0_harq.bits.harq_ack_nof_bits = 2U;
+  pucch_expected_f0_harq.uci_bits.harq_ack_nof_bits = 2U;
   ASSERT_TRUE(test_pucch_res_indicator_1.has_value());
   // PUCCH resource indicator after the second allocation should not have changed.
   ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator_1);
@@ -210,8 +210,8 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_over_sr)
   // HARQ-ACK bit + 1 SR bit is the HARQ-ACK resource. However, to circumvent the lack of capability of some UES (that
   // cannot transmit more than 1 PUCCH), we set last resource of PUCCH resource set 0 to be the SR resource and the UE
   // will use this.
-  pucch_expected_f0_sr.bits.harq_ack_nof_bits = 1U;
-  pucch_expected_f0_sr.bits.sr_bits           = sr_nof_bits::one;
+  pucch_expected_f0_sr.uci_bits.harq_ack_nof_bits = 1U;
+  pucch_expected_f0_sr.uci_bits.sr_bits           = sr_nof_bits::one;
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx_f0_for_sr, test_pucch_res_indicator);
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
@@ -237,8 +237,8 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_2_bits_over_sr)
   const std::optional<unsigned> test_pucch_res_indicator_1 = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
-  pucch_expected_f0_sr.bits.harq_ack_nof_bits = 2U;
-  pucch_expected_f0_sr.bits.sr_bits           = sr_nof_bits::one;
+  pucch_expected_f0_sr.uci_bits.harq_ack_nof_bits = 2U;
+  pucch_expected_f0_sr.uci_bits.sr_bits           = sr_nof_bits::one;
   ASSERT_TRUE(test_pucch_res_indicator_1.has_value());
   ASSERT_EQ(pucch_res_idx_f0_for_sr, test_pucch_res_indicator_1);
   ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
@@ -268,9 +268,9 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_3_bits_over_sr)
   const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
-  pucch_expected_f2_harq_for_sr.bits.harq_ack_nof_bits = 3U;
-  pucch_expected_f2_harq_for_sr.bits.sr_bits           = sr_nof_bits::one;
-  pucch_expected_f2_harq_for_sr.bits.csi_part1_bits    = 0U;
+  pucch_expected_f2_harq_for_sr.uci_bits.harq_ack_nof_bits  = 3U;
+  pucch_expected_f2_harq_for_sr.uci_bits.sr_bits            = sr_nof_bits::one;
+  pucch_expected_f2_harq_for_sr.uci_bits.csi_part1_nof_bits = 0U;
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx_f2_for_sr, test_pucch_res_indicator);
   ASSERT_EQ(1U, slot_grid.result.ul.pucchs.size());
@@ -290,9 +290,9 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_4_bits_over_sr)
   const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
-  pucch_expected_f2_harq_for_sr.bits.harq_ack_nof_bits = 4U;
-  pucch_expected_f2_harq_for_sr.bits.sr_bits           = sr_nof_bits::one;
-  pucch_expected_f2_harq_for_sr.bits.csi_part1_bits    = 0U;
+  pucch_expected_f2_harq_for_sr.uci_bits.harq_ack_nof_bits  = 4U;
+  pucch_expected_f2_harq_for_sr.uci_bits.sr_bits            = sr_nof_bits::one;
+  pucch_expected_f2_harq_for_sr.uci_bits.csi_part1_nof_bits = 0U;
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx_f2_for_sr, test_pucch_res_indicator);
   ASSERT_EQ(1U, slot_grid.result.ul.pucchs.size());
@@ -315,9 +315,9 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_over_csi)
   // After the multiplexing, the PUCCH F2 resource is that one that have the same PUCCH resource indicator as
   // pucch_res_idx_f0_for_csi; we need to update the PRBs and symbols accordingly. With the given configuration, this
   // resource will have the same PRBs and symbols as the F2 resource for SR.
-  pucch_expected_csi.bits.harq_ack_nof_bits = 1U;
-  pucch_expected_csi.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi.bits.csi_part1_bits    = 4U;
+  pucch_expected_csi.uci_bits.harq_ack_nof_bits  = 1U;
+  pucch_expected_csi.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_csi.uci_bits.csi_part1_nof_bits = 4U;
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   // The allocation should preserve the pucch_res_idx_f0_for_csi
   ASSERT_EQ(pucch_res_idx_f2_for_csi, test_pucch_res_indicator);
@@ -340,9 +340,9 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_2_bits_over_csi)
   const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
-  pucch_expected_csi.bits.harq_ack_nof_bits = 2U;
-  pucch_expected_csi.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi.bits.csi_part1_bits    = 4U;
+  pucch_expected_csi.uci_bits.harq_ack_nof_bits  = 2U;
+  pucch_expected_csi.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_csi.uci_bits.csi_part1_nof_bits = 4U;
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx_f2_for_csi, test_pucch_res_indicator);
   ASSERT_EQ(1U, slot_grid.result.ul.pucchs.size());
@@ -366,9 +366,9 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_3_bits_over_csi)
   const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
-  pucch_expected_csi.bits.harq_ack_nof_bits = 3U;
-  pucch_expected_csi.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi.bits.csi_part1_bits    = 4U;
+  pucch_expected_csi.uci_bits.harq_ack_nof_bits  = 3U;
+  pucch_expected_csi.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_csi.uci_bits.csi_part1_nof_bits = 4U;
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx_f2_for_csi, test_pucch_res_indicator);
   ASSERT_EQ(1U, slot_grid.result.ul.pucchs.size());
@@ -389,9 +389,9 @@ TEST_F(test_pucch_allocator_format_0, test_harq_allocation_4_bits_over_csi)
   const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
       t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
 
-  pucch_expected_csi.bits.harq_ack_nof_bits = 4U;
-  pucch_expected_csi.bits.sr_bits           = sr_nof_bits::no_sr;
-  pucch_expected_csi.bits.csi_part1_bits    = 4U;
+  pucch_expected_csi.uci_bits.harq_ack_nof_bits  = 4U;
+  pucch_expected_csi.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+  pucch_expected_csi.uci_bits.csi_part1_nof_bits = 4U;
   ASSERT_TRUE(test_pucch_res_indicator.has_value());
   ASSERT_EQ(pucch_res_idx_f2_for_csi, test_pucch_res_indicator);
   ASSERT_EQ(1U, slot_grid.result.ul.pucchs.size());

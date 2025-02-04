@@ -144,7 +144,7 @@ uci_allocator_impl::alloc_uci_harq_ue_helper(cell_resource_allocator&     res_al
   if (fallback_mode) {
     const auto* pucch_harq_grant_it = std::find_if(
         slot_alloc.result.ul.pucchs.begin(), slot_alloc.result.ul.pucchs.end(), [crnti](const pucch_info& pucch_grant) {
-          return pucch_grant.crnti == crnti and pucch_grant.bits.harq_ack_nof_bits != 0U;
+          return pucch_grant.crnti == crnti and pucch_grant.uci_bits.harq_ack_nof_bits != 0U;
         });
 
     // Do not allocate PUCCH on common resources if there is any pre-allocated grant using PUCCH dedicated resource

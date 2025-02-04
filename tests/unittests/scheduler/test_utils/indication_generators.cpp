@@ -50,15 +50,15 @@ uci_indication::uci_pdu test_helper::create_uci_indication_pdu(du_ue_index_t ue_
   switch (pucch_pdu.format()) {
     case pucch_format::FORMAT_1: {
       uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f1{};
-      f1.harqs.resize(pucch_pdu.bits.harq_ack_nof_bits);
+      f1.harqs.resize(pucch_pdu.uci_bits.harq_ack_nof_bits);
       std::fill(f1.harqs.begin(), f1.harqs.end(), mac_harq_ack_report_status::ack);
       pdu.pdu = f1;
     } break;
     case pucch_format::FORMAT_2: {
       uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2{};
-      f2.harqs.resize(pucch_pdu.bits.harq_ack_nof_bits);
+      f2.harqs.resize(pucch_pdu.uci_bits.harq_ack_nof_bits);
       std::fill(f2.harqs.begin(), f2.harqs.end(), mac_harq_ack_report_status::ack);
-      if (pucch_pdu.bits.harq_ack_nof_bits > 0) {
+      if (pucch_pdu.uci_bits.harq_ack_nof_bits > 0) {
         f2.csi.emplace();
         f2.csi->first_tb_wideband_cqi = 15;
       }
