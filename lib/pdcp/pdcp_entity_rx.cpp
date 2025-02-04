@@ -78,6 +78,7 @@ void pdcp_entity_rx::stop()
   if (not stopped) {
     stopped = true;
     reordering_timer.stop();
+    token_mngr.set_flag_when_finished();
     logger.log_debug("Stopped PDCP entity");
   }
 }

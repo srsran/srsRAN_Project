@@ -105,8 +105,29 @@ public:
       /// Disconnect PDU sessions.
       pdu_session_manager.disconnect_all_pdu_sessions();
 
+      CORO_RETURN();
+    });
+  }
+
+  async_task<void> disconnect()
+  {
+    return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
       /// Await stopping of the UE executors
       CORO_AWAIT(ue_exec_mapper->stop());
+
+      CORO_RETURN();
+    });
+  }
+
+  async_task<void> await_crypto_rx()
+  {
+    return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+
+      /// Disconnect PDU sessions.
+      pdu_session_manager.await_crypto_rx_all_pdu_sessions();
 
       CORO_RETURN();
     });

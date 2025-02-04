@@ -117,10 +117,18 @@ async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
   return launch_async([this, ue_ctxt = std::move(ue_ctxt), ue_index](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
-    // Dispatch execution context switch.
+    // Switch to UE control executor. Disconnect DRBS.
     CORO_AWAIT(execute_on_blocking(ue_ctxt->ue_exec_mapper->ctrl_executor(), timers));
+    CORO_AWAIT(ue_ctxt->disconnect());
 
-    // Stop and delete
+    // Switch to UE UL executor. Await pending UL crypto tasks.
+    CORO_AWAIT(execute_on_blocking(ue_ctxt->ue_exec_mapper->ul_pdu_executor(), timers));
+    CORO_AWAIT(ue_ctxt->await_crypto_rx());
+
+    // TODO await pending DL crypto tasks.
+
+    // Return to UE control executor. Stop executors and remove UE.
+    CORO_AWAIT(execute_on_blocking(ue_ctxt->ue_exec_mapper->ctrl_executor(), timers));
     CORO_AWAIT(ue_ctxt->stop());
     ue_ctxt.reset();
     logger.info("ue={}: UE removed", fmt::underlying(ue_index));
