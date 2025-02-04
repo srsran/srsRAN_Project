@@ -919,12 +919,20 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       ->check(CLI::IsMember({1.0F, 2.0F, 2.5F, 4.0F, 5.0F, 8.0F, 10.0F, 16.0F, 20.0F, 40.0F, 80.0F, 160.0F, 320.0F}));
   add_option(app, "--use_format_0", pucch_params.use_format_0, "Use Format 0 for PUCCH resources from resource set 0")
       ->capture_default_str();
-  add_option(app,
-             "--pucch_set1_format",
-             pucch_params.set1_format,
-             "Format to use for the resources from resource set 1. Values: {2, 3, 4}. Default: 2")
-      ->capture_default_str()
-      ->check(CLI::Range(2, 4));
+  app.add_option_function<unsigned>(
+         "--pucch_set1_format",
+         [&pucch_params](unsigned value) {
+           if (value == 3) {
+             pucch_params.set1_format = pucch_format::FORMAT_3;
+           } else if (value == 4) {
+             pucch_params.set1_format = pucch_format::FORMAT_4;
+           } else {
+             pucch_params.set1_format = pucch_format::FORMAT_2;
+           }
+         },
+         "Format to use for the resources from resource set 1. Values: {2, 3, 4}. Default: 2")
+      ->default_val(2U)
+      ->check(CLI::Range(2U, 4U));
   add_option(app,
              "--nof_ue_res_harq_per_set",
              pucch_params.nof_ue_pucch_res_harq_per_set,

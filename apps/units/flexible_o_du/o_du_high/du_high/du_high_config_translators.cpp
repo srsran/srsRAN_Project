@@ -576,8 +576,8 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
       auto& f0_params = du_pucch_cfg.f0_or_f1_params.emplace<pucch_f0_params>();
       // Subtract 2 PUCCH resources from value: with Format 0, 2 extra resources will be added by the DU resource
       // allocator when the DU create the UE configuration.
-      const unsigned extra_res_harq                     = user_pucch_cfg.set1_format == 2U ? 2U : 0U;
-      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq       = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - extra_res_harq;
+      const unsigned extra_res_harq               = user_pucch_cfg.set1_format == pucch_format::FORMAT_2 ? 2U : 0U;
+      du_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - extra_res_harq;
       du_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq = user_pucch_cfg.nof_ue_pucch_res_harq_per_set - extra_res_harq;
       f0_params.intraslot_freq_hopping                  = user_pucch_cfg.f0_intraslot_freq_hopping;
     } else {
@@ -590,14 +590,14 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     }
 
     switch (user_pucch_cfg.set1_format) {
-      case 2: {
+      case pucch_format::FORMAT_2: {
         auto& f2_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f2_params>();
         f2_params.max_code_rate          = user_pucch_cfg.f2_max_code_rate;
         f2_params.max_nof_rbs            = user_pucch_cfg.f2_max_nof_rbs;
         f2_params.intraslot_freq_hopping = user_pucch_cfg.f2_intraslot_freq_hopping;
         f2_params.max_payload_bits       = user_pucch_cfg.f2_max_payload_bits;
       } break;
-      case 3: {
+      case pucch_format::FORMAT_3: {
         auto& f3_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f3_params>();
         f3_params.max_code_rate          = user_pucch_cfg.f3_max_code_rate;
         f3_params.max_nof_rbs            = user_pucch_cfg.f3_max_nof_rbs;
@@ -606,7 +606,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
         f3_params.additional_dmrs        = user_pucch_cfg.f3_additional_dmrs;
         f3_params.pi2_bpsk               = user_pucch_cfg.f3_pi2_bpsk;
       } break;
-      case 4: {
+      case pucch_format::FORMAT_4: {
         auto& f4_params                  = du_pucch_cfg.f2_or_f3_or_f4_params.emplace<pucch_f4_params>();
         f4_params.max_code_rate          = user_pucch_cfg.f4_max_code_rate;
         f4_params.intraslot_freq_hopping = user_pucch_cfg.f4_intraslot_freq_hopping;
