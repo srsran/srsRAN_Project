@@ -16,6 +16,7 @@
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran {
+
 /// \brief Implements an exponential moving average accumulator, with simple moving average for faster initial
 /// convergence. This accumulator is useful for tracking the average of a series of values, with a bias towards the most
 /// recent values. The accumulator uses a simple moving average until a certain number of samples have been accumulated,
@@ -30,6 +31,8 @@ public:
     srsran_assert(alpha_value < 1, "Alpha must be less than 1");
     srsran_assert(start_size > 0, "Start size must be greater than 0");
   }
+
+  /// Push new sample.
   void push(T sample)
   {
     // Simple moving average until start_count_size is reached. This speeds up the convergence of the average value.
@@ -42,8 +45,37 @@ public:
       average = (1 - alpha_value) * average + alpha_value * sample;
     }
   }
-  T    get_average_value() const { return count == 0 ? 0 : average; }
-  T    get_alpha() const { return alpha_value; }
+
+  /// Push zeros \c n times.
+  void push_zeros(unsigned n)
+  {
+    if (count < start_count_size) {
+      const unsigned rem = std::min(start_count_size - count, n);
+      for (unsigned i = 0; i != rem; ++i) {
+        average -= average / (count + 1);
+        ++count;
+      }
+      n -= rem;
+    }
+
+    if (n > 0) {
+      average = std::pow(1 - alpha_value, n) * average;
+    }
+  }
+
+  void reset()
+  {
+    count   = 0;
+    average = 0;
+  }
+
+  /// Get the current average value.
+  T get_average_value() const { return average; }
+
+  /// Get the forgetting coefficient being used.
+  T get_alpha() const { return alpha_value; }
+
+  /// Whether the averager is in fast start stage or exponential average stage.
   bool is_exp_average_mode() const { return count >= start_count_size; }
 
 private:

@@ -408,6 +408,17 @@ double compute_ul_qos_weights(const slice_ue&                         u,
 
 } // namespace
 
+scheduler_time_qos::ue_ctxt::ue_ctxt(du_ue_index_t             ue_index_,
+                                     du_cell_index_t           cell_index_,
+                                     const scheduler_time_qos* parent_) :
+  ue_index(ue_index_),
+  cell_index(cell_index_),
+  parent(parent_),
+  total_dl_avg_rate_(parent->exp_avg_alpha),
+  total_ul_avg_rate_(parent->exp_avg_alpha)
+{
+}
+
 void scheduler_time_qos::ue_ctxt::compute_dl_prio(const slice_ue& u,
                                                   ran_slice_id_t  slice_id,
                                                   slot_point      pdcch_slot,
@@ -557,59 +568,29 @@ void scheduler_time_qos::ue_ctxt::compute_ul_prio(const slice_ue& u,
 void scheduler_time_qos::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
 {
   // In case more than one slot elapsed.
-  for (unsigned s = 0, e = std::max(nof_slots_elapsed, 1U) - 1; s != e; ++s) {
-    if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
-      // Fast start before transitioning to exponential average.
-      total_dl_avg_rate_ -= total_dl_avg_rate_ / (dl_nof_samples + 1);
-    } else {
-      total_dl_avg_rate_ -= parent->exp_avg_alpha * total_dl_avg_rate_;
-    }
-    dl_nof_samples++;
+  if (nof_slots_elapsed > 1) {
+    total_dl_avg_rate_.push_zeros(nof_slots_elapsed - 1);
   }
 
   // Compute DL average rate of the UE.
-  unsigned sched_bytes = dl_sum_alloc_bytes;
-  if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
-    // Fast start before transitioning to exponential average.
-    total_dl_avg_rate_ = total_dl_avg_rate_ + (sched_bytes - total_dl_avg_rate_) / (dl_nof_samples + 1);
-  } else {
-    total_dl_avg_rate_ = (1 - parent->exp_avg_alpha) * total_dl_avg_rate_ + (parent->exp_avg_alpha) * sched_bytes;
-  }
+  total_dl_avg_rate_.push(dl_sum_alloc_bytes);
 
   // Flush allocated bytes for the current slot.
   dl_sum_alloc_bytes = 0;
-
-  // Increment number of samples.
-  dl_nof_samples++;
 }
 
 void scheduler_time_qos::ue_ctxt::compute_ul_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
 {
   // In case more than one slot elapsed.
-  for (unsigned s = 0, e = std::max(nof_slots_elapsed, 1U) - 1; s != e; ++s) {
-    if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
-      // Fast start before transitioning to exponential average.
-      total_ul_avg_rate_ -= total_ul_avg_rate_ / (ul_nof_samples + 1);
-    } else {
-      total_ul_avg_rate_ -= parent->exp_avg_alpha * total_ul_avg_rate_;
-    }
-    ul_nof_samples++;
+  if (nof_slots_elapsed > 1) {
+    total_ul_avg_rate_.push_zeros(nof_slots_elapsed - 1);
   }
 
   // Compute UL average rate of the UE.
-  if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
-    // Fast start before transitioning to exponential average.
-    total_ul_avg_rate_ += (ul_sum_alloc_bytes - total_ul_avg_rate_) / (ul_nof_samples + 1);
-  } else {
-    total_ul_avg_rate_ =
-        (1 - parent->exp_avg_alpha) * total_ul_avg_rate_ + (parent->exp_avg_alpha) * ul_sum_alloc_bytes;
-  }
+  total_ul_avg_rate_.push(ul_sum_alloc_bytes);
 
   // Flush allocated bytes for the current slot.
   ul_sum_alloc_bytes = 0;
-
-  // Increment number of samples.
-  ul_nof_samples++;
 }
 
 void scheduler_time_qos::ue_ctxt::save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info)

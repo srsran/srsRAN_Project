@@ -11,6 +11,7 @@
 
 #include "../slicing/slice_ue_repository.h"
 #include "scheduler_policy.h"
+#include "srsran/support/math/exponential_averager.h"
 
 namespace srsran {
 
@@ -35,15 +36,12 @@ private:
 
   /// Holds the information needed to compute priority of a UE in a priority queue.
   struct ue_ctxt {
-    ue_ctxt(du_ue_index_t ue_index_, du_cell_index_t cell_index_, const scheduler_time_qos* parent_) :
-      ue_index(ue_index_), cell_index(cell_index_), parent(parent_)
-    {
-    }
+    ue_ctxt(du_ue_index_t ue_index_, du_cell_index_t cell_index_, const scheduler_time_qos* parent_);
 
     /// Returns average DL rate expressed in bytes per slot of the UE.
-    [[nodiscard]] double total_dl_avg_rate() const { return dl_nof_samples == 0 ? 0 : total_dl_avg_rate_; }
+    [[nodiscard]] double total_dl_avg_rate() const { return total_dl_avg_rate_.get_average_value(); }
     /// Returns average UL rate expressed in bytes per slot of the UE.
-    [[nodiscard]] double total_ul_avg_rate() const { return ul_nof_samples == 0 ? 0 : total_ul_avg_rate_; }
+    [[nodiscard]] double total_ul_avg_rate() const { return total_ul_avg_rate_.get_average_value(); }
 
     /// Computes the priority of the UE to be scheduled in DL based on the QoS and proportional fair metric.
     void compute_dl_prio(const slice_ue& u,
@@ -76,16 +74,12 @@ private:
 
     // Sum of DL bytes allocated for a given slot, before it is taken into account in the average rate computation.
     unsigned dl_sum_alloc_bytes = 0;
-    // Average DL rate expressed in bytes per slot experienced by UE.
-    double total_dl_avg_rate_ = 0;
     // Sum of UL bytes allocated for a given slot, before it is taken into account in the average rate computation.
     unsigned ul_sum_alloc_bytes = 0;
+    // Average DL rate expressed in bytes per slot experienced by UE.
+    exp_average_fast_start<double> total_dl_avg_rate_;
     // Average UL rate expressed in bytes per slot experienced by UE.
-    double total_ul_avg_rate_ = 0;
-    // Nof. DL samples over which average DL bitrate is computed.
-    uint32_t dl_nof_samples = 0;
-    // Nof. UL samples over which average DL bitrate is computed.
-    uint32_t ul_nof_samples = 0;
+    exp_average_fast_start<double> total_ul_avg_rate_;
   };
 
   dl_alloc_result schedule_dl_retxs(dl_sched_context ctxt);
