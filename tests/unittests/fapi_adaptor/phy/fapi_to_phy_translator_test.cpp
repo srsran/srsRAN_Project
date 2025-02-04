@@ -151,26 +151,43 @@ public:
   const downlink_processor_spy& processor(slot_point slot) const { return dl_processor[slot.slot_index()]; }
 };
 
+/// Spy implementation of an uplink request processor.
+class uplink_request_processor_spy : public uplink_request_processor
+{
+  bool is_prach_requested  = false;
+  bool is_uplink_requested = false;
+
+public:
+  void process_prach_request(const prach_buffer_context& context) override { is_prach_requested = true; }
+  void process_uplink_slot_request(const resource_grid_context& context, const shared_resource_grid& grid) override
+  {
+    is_uplink_requested = true;
+  }
+
+  /// Returns true if uplink has been requested, otherwise false.
+  bool has_uplink_been_requested() const { return is_uplink_requested; }
+};
+
 } // namespace
 
 class fapi_to_phy_translator_fixture : public ::testing::Test
 {
 protected:
-  downlink_processor_pool_dummy       dl_processor_pool;
-  resource_grid_pool_dummy            rg_pool;
-  uplink_request_processor_dummy      ul_request_processor;
-  uplink_slot_pdu_repository          pdu_repo;
-  const unsigned                      sector_id         = 0;
-  const unsigned                      headroom_in_slots = 2;
-  const subcarrier_spacing            scs               = subcarrier_spacing::kHz15;
-  const slot_point                    slot              = {scs, 1, 0};
-  fapi::prach_config                  prach_cfg;
-  fapi::carrier_config                carrier_cfg = {0, 0, {}, {11, 51, 106, 0, 0}, 0, 0, 0, {}, {}, 0, 0, 0, 0};
-  downlink_pdu_validator_dummy        dl_pdu_validator;
-  uplink_pdu_validator_dummy          ul_pdu_validator;
-  slot_error_message_notifier_spy     error_notifier_spy;
-  manual_task_worker                  worker;
-  fapi_to_phy_translator_config       config = {sector_id, headroom_in_slots, scs, scs, prach_cfg, carrier_cfg, {0}};
+  downlink_processor_pool_dummy   dl_processor_pool;
+  resource_grid_pool_dummy        rg_pool;
+  uplink_request_processor_spy    ul_request_processor;
+  uplink_slot_pdu_repository      pdu_repo;
+  const unsigned                  sector_id         = 0;
+  const unsigned                  headroom_in_slots = 2;
+  const subcarrier_spacing        scs               = subcarrier_spacing::kHz15;
+  const slot_point                slot              = {scs, 1, 0};
+  fapi::prach_config              prach_cfg;
+  fapi::carrier_config            carrier_cfg = {0, 0, {}, {11, 51, 106, 0, 0}, 0, 0, 0, {}, {}, 0, 0, 0, 0};
+  downlink_pdu_validator_dummy    dl_pdu_validator;
+  uplink_pdu_validator_dummy      ul_pdu_validator;
+  slot_error_message_notifier_spy error_notifier_spy;
+  manual_task_worker              worker;
+  fapi_to_phy_translator_config   config = {sector_id, headroom_in_slots, false, scs, scs, prach_cfg, carrier_cfg, {0}};
   fapi_to_phy_translator_dependencies dependencies = {
       &srslog::fetch_basic_logger("FAPI"),
       &dl_processor_pool,
@@ -386,4 +403,43 @@ TEST_F(fapi_to_phy_translator_fixture, message_received_is_sended_when_a_message
   // Assert that the finish processing PDUs method of the previous slot downlink_processor has been called.
   ASSERT_TRUE(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
   ASSERT_FALSE(error_notifier_spy.has_on_error_indication_been_called());
+}
+
+TEST_F(fapi_to_phy_translator_fixture,
+       empty_ul_tti_does_not_generate_request_when_allow_request_on_empty_slot_is_disabled)
+{
+  fapi::ul_tti_request_message msg;
+  msg.sfn  = slot.sfn();
+  msg.slot = slot.slot_index();
+
+  translator.handle_new_slot(slot);
+  translator.ul_tti_request(msg);
+
+  ASSERT_FALSE(ul_request_processor.has_uplink_been_requested());
+}
+
+TEST_F(fapi_to_phy_translator_fixture, empty_ul_tti_generates_request_when_allow_request_on_empty_slot_is_enabled)
+{
+  fapi_to_phy_translator translator_allow(
+      {sector_id, headroom_in_slots, true, scs, scs, prach_cfg, carrier_cfg, {0}},
+      {&srslog::fetch_basic_logger("FAPI"),
+       &dl_processor_pool,
+       &rg_pool,
+       &dl_pdu_validator,
+       &ul_request_processor,
+       &rg_pool,
+       &pdu_repo,
+       &ul_pdu_validator,
+       std::move(std::get<std::unique_ptr<precoding_matrix_repository>>(generate_precoding_matrix_tables(1, 0))),
+       std::move(
+           std::get<std::unique_ptr<uci_part2_correspondence_repository>>(generate_uci_part2_correspondence(1)))});
+
+  fapi::ul_tti_request_message msg;
+  msg.sfn  = slot.sfn();
+  msg.slot = slot.slot_index();
+
+  translator_allow.handle_new_slot(slot);
+  translator_allow.ul_tti_request(msg);
+
+  ASSERT_TRUE(ul_request_processor.has_uplink_been_requested());
 }

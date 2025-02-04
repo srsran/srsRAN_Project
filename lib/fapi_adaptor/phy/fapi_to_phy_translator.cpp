@@ -81,6 +81,7 @@ fapi_to_phy_translator::fapi_to_phy_translator(const fapi_to_phy_translator_conf
                                                fapi_to_phy_translator_dependencies&& dependencies) :
   sector_id(config.sector_id),
   nof_slots_request_headroom(config.nof_slots_request_headroom),
+  allow_request_on_empty_ul_tti(config.allow_request_on_empty_ul_tti),
   logger(*dependencies.logger),
   dl_pdu_validator(*dependencies.dl_pdu_validator),
   ul_request_processor(*dependencies.ul_request_processor),
@@ -547,7 +548,8 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
     ul_request_processor.process_prach_request(context);
   }
 
-  if (pdus.value().pusch.empty() && pdus.value().pucch.empty() && pdus.value().srs.empty()) {
+  if (!allow_request_on_empty_ul_tti && pdus.value().pusch.empty() && pdus.value().pucch.empty() &&
+      pdus.value().srs.empty()) {
     return;
   }
 

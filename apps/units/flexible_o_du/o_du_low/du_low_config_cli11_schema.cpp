@@ -223,6 +223,12 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
              "Maximum request headroom size in slots.")
       ->capture_default_str()
       ->check(CLI::Range(0, 30));
+
+  add_option(app,
+             "--allow_request_on_empty_uplink_slot",
+             expert_phy_params.allow_request_on_empty_uplink_slot,
+             "Generates an uplink request in an uplink slot with no PUCCH/PUSCH/SRS PDUs")
+      ->capture_default_str();
 }
 
 static void configure_cli11_hwacc_pdsch_enc_args(CLI::App& app, std::optional<hwacc_pdsch_appconfig>& config)

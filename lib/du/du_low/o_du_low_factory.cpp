@@ -32,6 +32,7 @@ static fapi_adaptor::phy_fapi_adaptor_config generate_fapi_adaptor_config(const 
     out_config.sectors.push_back(
         {i,
          upper_cfg.nof_slots_request_headroom,
+         upper_cfg.allow_request_on_empty_uplink_slot,
          cell_cfg,
          std::vector<uint8_t>(odu_low_cfg.prach_ports[i].begin(), odu_low_cfg.prach_ports[i].end())});
   }

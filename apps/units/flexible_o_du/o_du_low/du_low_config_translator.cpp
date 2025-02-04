@@ -108,24 +108,25 @@ static void generate_du_low_config(srs_du::du_low_config&             out_config
       max_pusch_concurrency = max_puschs_per_slot[i] * nof_ul_slots_per_frame;
     }
 
-    upper_phy_cell.nof_slots_request_headroom = du_low.expert_phy_cfg.nof_slots_request_headroom;
-    upper_phy_cell.pusch_max_nof_layers       = cell.pusch_max_nof_layers;
-    upper_phy_cell.log_level                  = du_low.loggers.phy_level;
-    upper_phy_cell.enable_logging_broadcast   = du_low.loggers.broadcast_enabled;
-    upper_phy_cell.rx_symbol_printer_filename = du_low.loggers.phy_rx_symbols_filename;
-    upper_phy_cell.rx_symbol_printer_port     = du_low.loggers.phy_rx_symbols_port;
-    upper_phy_cell.rx_symbol_printer_prach    = du_low.loggers.phy_rx_symbols_prach;
-    upper_phy_cell.logger_max_hex_size        = du_low.loggers.hex_max_size;
-    upper_phy_cell.nof_tx_ports               = cell.dl_carrier.nof_ant;
-    upper_phy_cell.nof_rx_ports               = cell.ul_carrier.nof_ant;
-    upper_phy_cell.ldpc_decoder_iterations    = du_low.expert_phy_cfg.pusch_decoder_max_iterations;
-    upper_phy_cell.ldpc_decoder_early_stop    = du_low.expert_phy_cfg.pusch_decoder_early_stop;
-    upper_phy_cell.nof_dl_rg                  = dl_pipeline_depth + 2;
-    upper_phy_cell.nof_dl_processors          = dl_pipeline_depth;
-    upper_phy_cell.nof_ul_rg                  = ul_pipeline_depth;
-    upper_phy_cell.max_ul_thread_concurrency  = du_low.expert_execution_cfg.threads.nof_ul_threads + 1;
-    upper_phy_cell.max_pusch_concurrency      = max_pusch_concurrency;
-    upper_phy_cell.nof_pusch_decoder_threads  = du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads +
+    upper_phy_cell.nof_slots_request_headroom         = du_low.expert_phy_cfg.nof_slots_request_headroom;
+    upper_phy_cell.allow_request_on_empty_uplink_slot = du_low.expert_phy_cfg.allow_request_on_empty_uplink_slot;
+    upper_phy_cell.pusch_max_nof_layers               = cell.pusch_max_nof_layers;
+    upper_phy_cell.log_level                          = du_low.loggers.phy_level;
+    upper_phy_cell.enable_logging_broadcast           = du_low.loggers.broadcast_enabled;
+    upper_phy_cell.rx_symbol_printer_filename         = du_low.loggers.phy_rx_symbols_filename;
+    upper_phy_cell.rx_symbol_printer_port             = du_low.loggers.phy_rx_symbols_port;
+    upper_phy_cell.rx_symbol_printer_prach            = du_low.loggers.phy_rx_symbols_prach;
+    upper_phy_cell.logger_max_hex_size                = du_low.loggers.hex_max_size;
+    upper_phy_cell.nof_tx_ports                       = cell.dl_carrier.nof_ant;
+    upper_phy_cell.nof_rx_ports                       = cell.ul_carrier.nof_ant;
+    upper_phy_cell.ldpc_decoder_iterations            = du_low.expert_phy_cfg.pusch_decoder_max_iterations;
+    upper_phy_cell.ldpc_decoder_early_stop            = du_low.expert_phy_cfg.pusch_decoder_early_stop;
+    upper_phy_cell.nof_dl_rg                          = dl_pipeline_depth + 2;
+    upper_phy_cell.nof_dl_processors                  = dl_pipeline_depth;
+    upper_phy_cell.nof_ul_rg                          = ul_pipeline_depth;
+    upper_phy_cell.max_ul_thread_concurrency          = du_low.expert_execution_cfg.threads.nof_ul_threads + 1;
+    upper_phy_cell.max_pusch_concurrency              = max_pusch_concurrency;
+    upper_phy_cell.nof_pusch_decoder_threads          = du_low.expert_execution_cfg.threads.nof_pusch_decoder_threads +
                                                du_low.expert_execution_cfg.threads.nof_ul_threads;
     upper_phy_cell.nof_prach_buffer           = prach_pipeline_depth * nof_slots_per_subframe;
     upper_phy_cell.max_nof_td_prach_occasions = prach_cfg.nof_occasions_within_slot;

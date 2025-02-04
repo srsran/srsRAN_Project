@@ -35,6 +35,8 @@ struct phy_fapi_sector_adaptor_config {
   unsigned sector_id;
   /// Request headroom size in slots.
   unsigned nof_slots_request_headroom;
+  /// Allow uplink requests on empty UL_TTI.requests.
+  bool allow_request_on_empty_ul_tti = false;
   /// DU cell configuration.
   const srs_du::du_cell_config& du_cell;
   /// PRACH port list.
