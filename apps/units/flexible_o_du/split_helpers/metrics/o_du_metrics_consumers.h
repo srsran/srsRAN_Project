@@ -10,17 +10,16 @@
 
 #pragma once
 
-#include "srsran/du/du_low/o_du_low_metrics_collector.h"
+#include "apps/services/metrics/metrics_consumer.h"
 
 namespace srsran {
-namespace srs_du {
 
-/// O-RAN DU low metrics collector implementation.
-class o_du_low_metrics_collector_impl : public o_du_low_metrics_collector
+/// Dummy consumer for the json O-DU metrics.
+class o_du_metrics_consumer_dummy : public app_services::metrics_consumer
 {
 public:
-  void collect_o_du_low_metrics(o_du_low_metrics& metrics) override;
+  // See interface for documentation.
+  void handle_metric(const app_services::metrics_set& metric) override;
 };
 
-} // namespace srs_du
 } // namespace srsran

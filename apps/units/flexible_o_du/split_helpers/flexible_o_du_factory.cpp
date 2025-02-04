@@ -16,6 +16,7 @@
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_factory.h"
 #include "apps/units/flexible_o_du/o_du_low/o_du_low_unit_factory.h"
 #include "flexible_o_du_impl.h"
+#include "metrics/o_du_metrics_builder.h"
 #include "srsran/du/o_du_factory.h"
 #include "srsran/e2/e2_du_metrics_connector.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
@@ -99,7 +100,12 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
 
   o_du.commands = std::move(odu_hi_unit.commands);
 
-  auto odu_instance = make_o_du(std::move(odu_hi_unit.o_du_hi), std::move(odu_lo_unit.o_du_lo));
+  srs_du::o_du_dependencies odu_dependencies;
+  odu_dependencies.odu_hi           = std::move(odu_hi_unit.o_du_hi);
+  odu_dependencies.odu_lo           = std::move(odu_lo_unit.o_du_lo);
+  odu_dependencies.metrics_notifier = generate_o_du_metrics(o_du.metrics, *dependencies.metrics_notifier);
+
+  auto odu_instance = make_o_du(std::move(odu_dependencies));
   report_error_if_not(odu_instance, "Invalid Distributed Unit");
 
   flexible_o_du_ru_config       ru_config{{du_cells},

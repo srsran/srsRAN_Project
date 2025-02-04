@@ -10,22 +10,14 @@
 
 #include "srsran/du/o_du_factory.h"
 #include "o_du_impl.h"
-#include "srsran/du/du_high/o_du_high_factory.h"
-#include "srsran/du/du_low/o_du_low_factory.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 using namespace srs_du;
 
-std::unique_ptr<o_du> srs_du::make_o_du(std::unique_ptr<o_du_high> odu_hi, std::unique_ptr<o_du_low> odu_lo)
+std::unique_ptr<o_du> srs_du::make_o_du(o_du_dependencies&& dependencies)
 {
-  srsran_assert(odu_hi, "Invalid O-DU high");
-  srsran_assert(odu_lo, "Invalid O-DU low");
-
   srslog::fetch_basic_logger("DU").info("O-DU created successfully");
 
-  o_du_impl_dependencies o_du_deps;
-  o_du_deps.du_lo = std::move(odu_lo);
-  o_du_deps.du_hi = std::move(odu_hi);
-
-  return std::make_unique<o_du_impl>(std::move(o_du_deps));
+  return std::make_unique<o_du_impl>(std::move(dependencies));
 }

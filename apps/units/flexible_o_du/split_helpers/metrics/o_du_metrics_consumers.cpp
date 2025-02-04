@@ -8,13 +8,11 @@
  *
  */
 
-#pragma once
+#include "o_du_metrics_consumers.h"
 
-namespace srsran {
-namespace srs_du {
+using namespace srsran;
 
-/// O-RAN DU low metrics.
-struct o_du_low_metrics {};
-
-} // namespace srs_du
-} // namespace srsran
+void o_du_metrics_consumer_dummy::handle_metric(const app_services::metrics_set& metric)
+{
+  // Implement me!
+}

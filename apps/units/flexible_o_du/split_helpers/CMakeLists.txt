@@ -6,16 +6,18 @@
 # the distribution.
 #
 
+add_subdirectory(metrics)
+
 set(SOURCES
         flexible_o_du_factory.cpp
         flexible_o_du_impl.cpp)
 
 add_library(srsran_flexible_du_helpers STATIC ${SOURCES})
 target_include_directories(srsran_flexible_du_helpers PRIVATE ${CMAKE_SOURCE_DIR})
-
 target_link_libraries(srsran_flexible_du_helpers
         srsran_o_du
         srsran_pcap
         srsran_app_services
         srsran_o_du_low_unit_helpers
-        srsran_o_du_high_unit_helpers)
+        srsran_o_du_high_unit_helpers
+        srsran_o_du_unit_metrics_helpers)

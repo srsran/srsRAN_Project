@@ -629,7 +629,7 @@ private:
   /// \param message_info Decoded message parameters.
   /// \return false if decoded parameters are invalid (a packet is considered corrupt then), true otherwise.
   ///
-  /// \note packet is considered corrupt if any of the decoded parameters has undefined in the ORAN specification
+  /// \note packet is considered corrupt if any of the decoded parameters has undefined in the O-RAN specification
   /// value, unsupported value (e.g. compression parameters) or unconfigured value (e.g. eAxC value).
   bool validate_rx_ofh_params(rx_message_info& message_info)
   {

@@ -8,13 +8,13 @@
  *
  */
 
-#pragma once
+#include "o_du_metrics_producer.h"
 
-namespace srsran {
-namespace srs_du {
+using namespace srsran;
 
-/// O-RAN DU low metrics.
-struct o_du_low_metrics {};
+void o_du_metrics_producer_impl::on_new_metrics(const srs_du::o_du_metrics& metrics)
+{
+  o_du_metrics_impl metric_set(metrics);
 
-} // namespace srs_du
-} // namespace srsran
+  notifier.on_new_metric(metric_set);
+}

@@ -15,7 +15,7 @@ namespace srs_du {
 
 struct o_du_metrics;
 
-/// ORAN DU metrics notifier.
+/// O-RAN DU metrics notifier.
 class o_du_metrics_notifier
 {
 public:

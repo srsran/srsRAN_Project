@@ -18,6 +18,9 @@
 #include "srsran/e2/e2.h"
 
 namespace srsran {
+
+class mac_result_notifier;
+
 namespace srs_du {
 
 /// O-RAN DU high implementation dependencies.

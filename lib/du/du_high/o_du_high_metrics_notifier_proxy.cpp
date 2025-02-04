@@ -23,7 +23,7 @@ public:
   void report_metrics(const scheduler_cell_metrics& report) override {}
 };
 
-/// ORAN DU high metrics notifier dummy implementation.
+/// O-RAN DU high metrics notifier dummy implementation.
 class o_du_high_metrics_notifier_dummy : public o_du_high_metrics_notifier
 {
 public:
