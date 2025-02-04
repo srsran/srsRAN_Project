@@ -269,19 +269,6 @@ variables:
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
 
-.smoke ubsan:
-  extends: .build_and_unit
-  variables:
-    OS: ubuntu-24.10
-    COMPILER: gcc
-    CMAKE_BUILD_TYPE: RelWithDebInfo
-    ASSERT_LEVEL: PARANOID
-    ENABLE_UBSAN: "True"
-    TEST_MODE: default
-    MARCH: x86-64-v3
-    INFRASTRUCTURE_TAG: amd64-avx2
-  timeout: 2 hours
-
 .smoke archlinux:
   extends: .build_and_unit
   variables:
@@ -399,19 +386,6 @@ smoke tsan cached:
   cache:
     - *cache_build_get
 
-# smoke ubsan cached:
-#   extends: .smoke ubsan
-#   stage: manual
-#   rules:
-#     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
-#       when: never
-#     - if: $ON_MR == "true" && $CI_MERGE_REQUEST_APPROVED == "true"
-#     - if: $ON_MR
-#       when: manual
-#       allow_failure: false
-#   cache:
-#     - *cache_build_get
-
 smoke archlinux cached:
   extends: .smoke archlinux
   stage: manual
@@ -514,11 +488,6 @@ smoke tsan clean:
   extends: .smoke tsan
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
-
-# smoke ubsan clean:
-#   extends: .smoke ubsan
-#   rules:
-#     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
 
 smoke archlinux clean:
   extends: .smoke archlinux
@@ -679,17 +648,6 @@ smoke tsan update cache:
       start_in: 45 minutes
   interruptible: false
   retry: 2
-  cache:
-    - *cache_build_set
-
-smoke ubsan update cache:
-  extends: .smoke ubsan
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
-      when: delayed
-      start_in: 45 minutes
-  retry: 2
-  interruptible: false
   cache:
     - *cache_build_set
 
@@ -996,6 +954,27 @@ ubuntu dpdk:
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
         DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
+
+# Nightly Sanitizers
+
+ubsan avx2:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 45 minutes
+  variables:
+    OS: ubuntu-24.10
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_UBSAN: "True"
+    TEST_MODE: default
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2-docker
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
+  timeout: 2 hours
 
 ###################
 # Alternative OSs #
