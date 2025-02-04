@@ -36,42 +36,26 @@ namespace srsran {
 
 namespace mm512 {
 
-/// \brief Computes absolute values.
-/// \param[in] value Input single-precision AVX512 register.
-/// \return A single-precision AVX512 register with the absolute value.
-inline __m512 abs_ps(__m512 value)
-{
-  const __m512 mask = _mm512_castsi512_ps(_mm512_set1_epi32(0x7fffffff));
-  return _mm512_and_ps(value, mask);
-}
-
-/// \brief Copies sign from a single-precision AVX512 register.
-/// \param[in] value0 Single-precision AVX512 register.
-/// \param[in] value1 Single-precision AVX512 register.
-/// \return A single-precision AVX512 register with the magnitudes of \c value0 and the signs of \c value1.
-/// \remark A zero in the second argument is considered as a positive number, following the convention of \c
-/// std::copysign.
-inline __m512 copysign_ps(__m512 value0, __m512 value1)
-{
-  __m512 abs_value0  = abs_ps(value0);
-  __m512 sign_value1 = _mm512_and_ps(value1, _mm512_set1_ps(-0.0));
-  return _mm512_or_ps(abs_value0, sign_value1);
-}
-
-/// \brief Clips the values of a single-precision AVX512 register.
+/// \brief Applies a scaling factor, rounds to the nearest integer and clips the resulting values.
 ///
 /// Values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
-/// limits.
+/// limits. Also, it sets to zero all the input values that are not a number.
 ///
 /// \param[in] value       Input values.
+/// \param[in] scale       Scaling factor.
 /// \param[in] range_ceil  Ceiling values.
 /// \param[in] range_floor Floor values.
 /// \return A single-precision AVX512 register containing the clipped values.
-inline __m512 clip_ps(__m512 value, __m512 range_ceil, __m512 range_floor)
+inline __m512 scale_clip_and_round_ps(__m512 value, __m512 scale, __m512 range_ceil, __m512 range_floor)
 {
-  value = _mm512_mask_blend_ps(_mm512_cmp_ps_mask(value, range_ceil, _CMP_GT_OS), value, range_ceil);
-  value = _mm512_mask_blend_ps(_mm512_cmp_ps_mask(value, range_floor, _CMP_LT_OS), value, range_floor);
-  return value;
+  // Detect NAN and set them to zero.
+  __mmask16 mask = _mm512_cmp_ps_mask(value, value, _CMP_ORD_Q);
+  // Apply scaling, round and discard NaN.
+  value = _mm512_maskz_mul_round_ps(mask, scale, value, _MM_FROUND_TO_NEAREST_INT | _MM_FROUND_NO_EXC);
+  // Apply ceil.
+  value = _mm512_min_ps(value, range_ceil);
+  // Apply floor.
+  return _mm512_max_ps(value, range_floor);
 }
 
 /// \brief Clips the values of an AVX512 register carrying sixteen signed 32-bit integers.
@@ -85,28 +69,8 @@ inline __m512 clip_ps(__m512 value, __m512 range_ceil, __m512 range_floor)
 /// \return An AVX512 register containing the clipped values.
 inline __m512i clip_epi32(__m512i value, __m512i range_ceil, __m512i range_floor)
 {
-  value = _mm512_mask_blend_epi32(_mm512_cmp_epi32_mask(value, range_ceil, _MM_CMPINT_NLT), value, range_ceil);
-  value = _mm512_mask_blend_epi32(_mm512_cmp_epi32_mask(range_floor, value, _MM_CMPINT_NLT), value, range_floor);
-  return value;
-}
-
-/// \brief Ensures that 32-bit integers in an AVX512 register are bounded, otherwise set them to zero.
-///
-/// \param[in] value      Integers to be tested.
-/// \param[in] bound_up   Upper bounds.
-/// \param[in] bound_low  Lower bounds.
-/// \return The input integers with zeros in place of the out-of-bound values.
-inline __m512i check_bounds_epi32(__m512i value, __m512i bound_up, __m512i bound_low)
-{
-  __m512i   ZEROS = _mm512_set1_epi32(0);
-  __mmask16 mask  = _mm512_cmp_epi32_mask(bound_up, value, _MM_CMPINT_LT);
-  // Since the mask is set for all bytes of the int32_t integers, we can use the byte-wise blend.
-  value = _mm512_mask_blend_epi32(mask, value, ZEROS);
-
-  mask = _mm512_cmp_epi32_mask(value, bound_low, _MM_CMPINT_LT);
-  // Since the mask is set for all bytes of the int32_t integers, we can use the byte-wise blend.
-  value = _mm512_mask_blend_epi32(mask, value, ZEROS);
-
+  value = _mm512_min_epi32(value, range_ceil);
+  value = _mm512_max_epi32(value, range_floor);
   return value;
 }
 
@@ -128,34 +92,20 @@ inline __m512i check_bounds_epi32(__m512i value, __m512i bound_up, __m512i bound
 /// <tt>&plusmn;LLR_MAX</tt>, depending on their sign.
 inline __m512i quantize_ps(__m512 value_0, __m512 value_1, __m512 value_2, __m512 value_3, float range_limit)
 {
-  // Scale.
-  __m512 SCALE = _mm512_set1_ps(static_cast<float>(log_likelihood_ratio::max().to_int()) / range_limit);
-  value_0      = _mm512_mul_ps(value_0, SCALE);
-  value_1      = _mm512_mul_ps(value_1, SCALE);
-  value_2      = _mm512_mul_ps(value_2, SCALE);
-  value_3      = _mm512_mul_ps(value_3, SCALE);
-
-  // Clip and round to the nearest integer.
+  // Scale and clip and round to the nearest integer.
+  __m512 SCALE       = _mm512_set1_ps(static_cast<float>(log_likelihood_ratio::max().to_int()) / range_limit);
   __m512 RANGE_CEIL  = _mm512_set1_ps(log_likelihood_ratio::max().to_int());
   __m512 RANGE_FLOOR = _mm512_set1_ps(log_likelihood_ratio::min().to_int());
-  value_0            = _mm512_roundscale_ps(clip_ps(value_0, RANGE_CEIL, RANGE_FLOOR), _MM_FROUND_TO_NEAREST_INT);
-  value_1            = _mm512_roundscale_ps(clip_ps(value_1, RANGE_CEIL, RANGE_FLOOR), _MM_FROUND_TO_NEAREST_INT);
-  value_2            = _mm512_roundscale_ps(clip_ps(value_2, RANGE_CEIL, RANGE_FLOOR), _MM_FROUND_TO_NEAREST_INT);
-  value_3            = _mm512_roundscale_ps(clip_ps(value_3, RANGE_CEIL, RANGE_FLOOR), _MM_FROUND_TO_NEAREST_INT);
+  value_0            = scale_clip_and_round_ps(value_0, SCALE, RANGE_CEIL, RANGE_FLOOR);
+  value_1            = scale_clip_and_round_ps(value_1, SCALE, RANGE_CEIL, RANGE_FLOOR);
+  value_2            = scale_clip_and_round_ps(value_2, SCALE, RANGE_CEIL, RANGE_FLOOR);
+  value_3            = scale_clip_and_round_ps(value_3, SCALE, RANGE_CEIL, RANGE_FLOOR);
 
   // Convert to 32 bit.
   __m512i llr_i32_0 = _mm512_cvtps_epi32(value_0);
   __m512i llr_i32_1 = _mm512_cvtps_epi32(value_1);
   __m512i llr_i32_2 = _mm512_cvtps_epi32(value_2);
   __m512i llr_i32_3 = _mm512_cvtps_epi32(value_3);
-
-  // Check bounds one more time: if value_X contains a NaN, its casting to int32_t is indeterminate - set it to zero.
-  __m512i BOUND_UP  = _mm512_set1_epi32(log_likelihood_ratio::max().to_int());
-  __m512i BOUND_LOW = _mm512_set1_epi32(log_likelihood_ratio::min().to_int());
-  llr_i32_0         = check_bounds_epi32(llr_i32_0, BOUND_UP, BOUND_LOW);
-  llr_i32_1         = check_bounds_epi32(llr_i32_1, BOUND_UP, BOUND_LOW);
-  llr_i32_2         = check_bounds_epi32(llr_i32_2, BOUND_UP, BOUND_LOW);
-  llr_i32_3         = check_bounds_epi32(llr_i32_3, BOUND_UP, BOUND_LOW);
 
   // Conversion to 16 bit.
   __m512i llr_i16_0 = _mm512_packs_epi32(llr_i32_0, llr_i32_1);
@@ -182,32 +132,20 @@ inline __m512i quantize_ps(__m512 value_0, __m512 value_1, __m512 value_2, __m51
 /// <tt>&plusmn;LLR_MAX</tt>, depending on their sign.
 inline __m512i quantize_ps(__m512 value_0, __m512 value_1, __m512 value_2, float range_limit)
 {
-  // Scale.
-  __m512 SCALE = _mm512_set1_ps(static_cast<float>(log_likelihood_ratio::max().to_int()) / range_limit);
-  value_0      = _mm512_mul_ps(value_0, SCALE);
-  value_1      = _mm512_mul_ps(value_1, SCALE);
-  value_2      = _mm512_mul_ps(value_2, SCALE);
-
-  // Clip and round to the nearest integer.
+  // Scale, clip and round to the nearest integer.
+  __m512 SCALE       = _mm512_set1_ps(static_cast<float>(log_likelihood_ratio::max().to_int()) / range_limit);
   __m512 RANGE_CEIL  = _mm512_set1_ps(log_likelihood_ratio::max().to_int());
   __m512 RANGE_FLOOR = _mm512_set1_ps(log_likelihood_ratio::min().to_int());
-  value_0            = _mm512_roundscale_ps(clip_ps(value_0, RANGE_CEIL, RANGE_FLOOR), _MM_FROUND_TO_NEAREST_INT);
-  value_1            = _mm512_roundscale_ps(clip_ps(value_1, RANGE_CEIL, RANGE_FLOOR), _MM_FROUND_TO_NEAREST_INT);
-  value_2            = _mm512_roundscale_ps(clip_ps(value_2, RANGE_CEIL, RANGE_FLOOR), _MM_FROUND_TO_NEAREST_INT);
+  value_0            = scale_clip_and_round_ps(value_0, SCALE, RANGE_CEIL, RANGE_FLOOR);
+  value_1            = scale_clip_and_round_ps(value_1, SCALE, RANGE_CEIL, RANGE_FLOOR);
+  value_2            = scale_clip_and_round_ps(value_2, SCALE, RANGE_CEIL, RANGE_FLOOR);
 
-  // Convert to 32 bit.
+  // Convert to 32-bit integer.
   __m512i llr_i32_0 = _mm512_cvtps_epi32(value_0);
   __m512i llr_i32_1 = _mm512_cvtps_epi32(value_1);
   __m512i llr_i32_2 = _mm512_cvtps_epi32(value_2);
 
-  // Check bounds one more time: if value_X contains a NaN, its casting to int32_t is indeterminate - set it to zero.
-  __m512i BOUND_UP  = _mm512_set1_epi32(log_likelihood_ratio::max().to_int());
-  __m512i BOUND_LOW = _mm512_set1_epi32(log_likelihood_ratio::min().to_int());
-  llr_i32_0         = check_bounds_epi32(llr_i32_0, BOUND_UP, BOUND_LOW);
-  llr_i32_1         = check_bounds_epi32(llr_i32_1, BOUND_UP, BOUND_LOW);
-  llr_i32_2         = check_bounds_epi32(llr_i32_2, BOUND_UP, BOUND_LOW);
-
-  // Conversion to 16 bit.
+  // Pack into 16-bit integer.
   __m512i llr_i16_0 = _mm512_packs_epi32(llr_i32_0, llr_i32_1);
   __m512i llr_i16_1 = _mm512_packs_epi32(llr_i32_2, _mm512_setzero_si512());
 
@@ -224,16 +162,13 @@ inline __m512i quantize_ps(__m512 value_0, __m512 value_1, __m512 value_2, float
 inline __m512i compute_interval_idx(__m512 value, float interval_width, int nof_intervals)
 {
   // Scale.
-  value = _mm512_mul_ps(value, _mm512_set1_ps(1.0F / interval_width));
+  value = _mm512_fmadd_ps(value, _mm512_set1_ps(1.0F / interval_width), _mm512_set1_ps(nof_intervals / 2));
 
   // Round to the lowest integer.
   value = _mm512_roundscale_ps(value, _MM_FROUND_TO_NEG_INF);
 
   // Convert to int32.
   __m512i idx = _mm512_cvtps_epi32(value);
-
-  // Add interval offset.
-  idx = _mm512_add_epi32(idx, _mm512_set1_epi32(nof_intervals / 2));
 
   // Clip index.
   idx = clip_epi32(idx, _mm512_set1_epi32(nof_intervals - 1), _mm512_setzero_si512());
@@ -251,7 +186,7 @@ inline __m512 look_up_table(const std::array<float, 8>& table, __m512i indices)
   // Load table in 256-bit register.
   __m256 table_m256 = _mm256_loadu_ps(table.data());
   // Cast the 256-bit register into a 512-bit register.
-  __m512 table_m512 = _mm512_zextps256_ps512(table_m256);
+  __m512 table_m512 = _mm512_castps256_ps512(table_m256);
   // Read the table.
   return _mm512_permutexvar_ps(indices, table_m512);
 }
@@ -287,17 +222,21 @@ inline __m512 interval_function(__m512       value,
                                 const Table& slopes,
                                 const Table& intercepts)
 {
-  __m512i interval_index = compute_interval_idx(value, interval_width, nof_intervals);
+  // Compute interval indices.
+  __m512i interval_indices = compute_interval_idx(value, interval_width, nof_intervals);
 
-  __m512 slope     = mm512::look_up_table(slopes, interval_index);
-  __m512 intercept = mm512::look_up_table(intercepts, interval_index);
+  // Look up slopes and intercepts using the computed indices.
+  __m512 slope     = mm512::look_up_table(slopes, interval_indices);
+  __m512 intercept = mm512::look_up_table(intercepts, interval_indices);
 
-  __m512 result = _mm512_mul_ps(_mm512_add_ps(_mm512_mul_ps(slope, value), intercept), rcp_noise);
+  // Compute the result: (slope * value + intercept) * rcp_noise.
+  __m512 result = _mm512_fmadd_ps(slope, value, intercept);
+  result        = _mm512_mul_ps(result, rcp_noise);
 
+  // Mask out results where |value| <= near_zero to avoid indeterminate results.
   __m512    zero_thr  = _mm512_set1_ps(near_zero);
-  __mmask16 zero_mask = _mm512_cmp_ps_mask(abs_ps(value), zero_thr, _CMP_LE_OQ);
-
-  return _mm512_mask_blend_ps(zero_mask, result, _mm512_setzero_ps());
+  __mmask16 zero_mask = _mm512_cmp_ps_mask(_mm512_abs_ps(value), zero_thr, _CMP_GT_OQ);
+  return _mm512_maskz_mov_ps(zero_mask, result);
 }
 
 /// \brief Safe division.
