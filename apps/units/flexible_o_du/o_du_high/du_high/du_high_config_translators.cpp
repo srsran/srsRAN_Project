@@ -851,9 +851,10 @@ std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const d
   // SRB1
   srb_cfg.insert(std::make_pair(srb_id_t::srb1, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb1) != config.srb_cfg.end()) {
-    auto& out_rlc = srb_cfg[srb_id_t::srb1].rlc;
-    out_rlc.mode  = rlc_mode::am;
-    out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb1).rlc);
+    auto& out_rlc             = srb_cfg[srb_id_t::srb1].rlc;
+    out_rlc.mode              = rlc_mode::am;
+    out_rlc.am                = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb1).rlc);
+    out_rlc.am.tx.pdcp_sn_len = pdcp_sn_size::size12bits;
   } else {
     srb_cfg.at(srb_id_t::srb1).rlc = make_default_srb_rlc_config();
   }
@@ -861,9 +862,10 @@ std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const d
   // SRB2
   srb_cfg.insert(std::make_pair(srb_id_t::srb2, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb2) != config.srb_cfg.end()) {
-    auto& out_rlc = srb_cfg[srb_id_t::srb2].rlc;
-    out_rlc.mode  = rlc_mode::am;
-    out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb2).rlc);
+    auto& out_rlc             = srb_cfg[srb_id_t::srb2].rlc;
+    out_rlc.mode              = rlc_mode::am;
+    out_rlc.am                = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb2).rlc);
+    out_rlc.am.tx.pdcp_sn_len = pdcp_sn_size::size12bits;
   } else {
     srb_cfg.at(srb_id_t::srb2).rlc = make_default_srb_rlc_config();
   }
@@ -871,9 +873,10 @@ std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const d
   // SRB3
   srb_cfg.insert(std::make_pair(srb_id_t::srb3, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb3) != config.srb_cfg.end()) {
-    auto& out_rlc = srb_cfg[srb_id_t::srb3].rlc;
-    out_rlc.mode  = rlc_mode::am;
-    out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb3).rlc);
+    auto& out_rlc             = srb_cfg[srb_id_t::srb3].rlc;
+    out_rlc.mode              = rlc_mode::am;
+    out_rlc.am                = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb3).rlc);
+    out_rlc.am.tx.pdcp_sn_len = pdcp_sn_size::size12bits;
   } else {
     srb_cfg.at(srb_id_t::srb3).rlc = make_default_srb_rlc_config();
   }
