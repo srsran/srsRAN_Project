@@ -676,30 +676,34 @@ void ue_event_manager::handle_srs_indication(const srs_indication& ind)
   for (unsigned i = 0, e = ind.srss.size(); i != e; ++i) {
     const srs_indication::srs_indication_pdu& srs_pdu = ind.srss[i];
 
-    if (not cell_specific_events[ind.cell_index].try_push(
-            cell_event_t{srs_pdu.ue_index,
-                         [this, srs_ptr = ind_pdu_pool->create_srs(ind.srss[i])](ue_cell& ue_cc) {
-                           // Indicate the channel matrix.
-                           ue_cc.handle_srs_channel_matrix(srs_ptr->channel_matrix);
+    if (not cell_specific_events[ind.cell_index].try_push(cell_event_t{
+            srs_pdu.ue_index,
+            [this, srs_ptr = ind_pdu_pool->create_srs(ind.srss[i])](ue_cell& ue_cc) {
+              // Indicate the channel matrix.
+              ue_cc.handle_srs_channel_matrix(srs_ptr->channel_matrix);
 
-                           // Handle time aligment measurement if present.
-                           if (srs_ptr->time_advance_offset.has_value()) {
-                             // Assume some SINR for the TA feedback using the channel matrix topology and near zero
-                             // noise variance.
-                             float frobenius_norm = srs_ptr->channel_matrix.frobenius_norm();
-                             float noise_var      = near_zero;
-                             float sinr_dB        = convert_power_to_dB(frobenius_norm * frobenius_norm / noise_var);
+              // Log event.
+              du_cells[ue_cc.cell_index].ev_logger->enqueue(scheduler_event_logger::srs_indication_event{
+                  srs_ptr->ue_index, srs_ptr->rnti, ue_cc.channel_state_manager().get_latest_tpmi_select_info()});
 
-                             // Notify UL TA update.
-                             ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                                 ue_cc.cell_index, sinr_dB, srs_ptr->time_advance_offset.value());
+              // Handle time aligment measurement if present.
+              if (srs_ptr->time_advance_offset.has_value()) {
+                // Assume some SINR for the TA feedback using the channel matrix topology and near zero
+                // noise variance.
+                float frobenius_norm = srs_ptr->channel_matrix.frobenius_norm();
+                float noise_var      = near_zero;
+                float sinr_dB        = convert_power_to_dB(frobenius_norm * frobenius_norm / noise_var);
 
-                             // Report the SRS PDU to the metrics handler.
-                             du_cells[ue_cc.cell_index].metrics->handle_srs_indication(*srs_ptr);
-                           }
-                         },
-                         "SRS",
-                         false})) {
+                // Notify UL TA update.
+                ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                    ue_cc.cell_index, sinr_dB, srs_ptr->time_advance_offset.value());
+
+                // Report the SRS PDU to the metrics handler.
+                du_cells[ue_cc.cell_index].metrics->handle_srs_indication(*srs_ptr);
+              }
+            },
+            "SRS",
+            false})) {
       logger.warning("SRS indication discarded. Cause: Event queue is full");
     }
   }

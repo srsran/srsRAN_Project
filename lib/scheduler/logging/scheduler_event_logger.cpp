@@ -10,6 +10,7 @@
 
 #include "scheduler_event_logger.h"
 #include "srsran/ran/csi_report/csi_report_formatters.h"
+#include "srsran/ran/pusch/pusch_tpmi_formatter.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 #include "fmt/std.h"
 
@@ -275,6 +276,16 @@ void scheduler_event_logger::enqueue_impl(const phr_event& phr_ev)
                    phr_ev.ph);
     if (phr_ev.p_cmax.has_value()) {
       fmt::format_to(std::back_inserter(fmtbuf), " p_cmax={}dBm", phr_ev.p_cmax.value());
+    }
+  }
+}
+
+void scheduler_event_logger::enqueue_impl(const srs_indication_event& srs_ev)
+{
+  if (mode == debug) {
+    fmt::format_to(std::back_inserter(fmtbuf), "\n- SRS: ue={} rnti={}", fmt::underlying(srs_ev.ue_index), srs_ev.rnti);
+    if (srs_ev.tpmi_info.has_value()) {
+      fmt::format_to(std::back_inserter(fmtbuf), " tpmi_info=[{:;}]", srs_ev.tpmi_info.value());
     }
   }
 }

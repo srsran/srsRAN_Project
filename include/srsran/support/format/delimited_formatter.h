@@ -59,8 +59,9 @@ public:
     // Set the first field indicator.
     first = true;
 
-    static constexpr std::string_view PREAMBLE_FORMAT   = "{:";
-    static constexpr std::string_view NEWLINE_DELIMITER = "\n  ";
+    static constexpr std::string_view PREAMBLE_FORMAT     = "{:";
+    static constexpr std::string_view NEWLINE_DELIMITER   = "\n  ";
+    static constexpr std::string_view SEMICOLON_DELIMITER = "; ";
 
     // Skip if context is empty and use default format.
     if (context.begin() == context.end()) {
@@ -76,6 +77,11 @@ public:
           // New line delimiter.
           delimiter_buffer.clear();
           delimiter_buffer.append(NEWLINE_DELIMITER.begin(), NEWLINE_DELIMITER.end());
+          break;
+        case ';':
+          // Semicolon delimiter.
+          delimiter_buffer.clear();
+          delimiter_buffer.append(SEMICOLON_DELIMITER.begin(), SEMICOLON_DELIMITER.end());
           break;
         case 's':
           // Short representation.

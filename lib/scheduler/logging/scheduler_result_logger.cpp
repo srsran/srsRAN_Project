@@ -232,7 +232,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
 
   for (const ul_sched_info& ul_info : result.ul.puschs) {
     fmt::format_to(std::back_inserter(fmtbuf),
-                   "\n- UE PUSCH: ue={} {}c-rnti={} h_id={} rb={} symb={} tbs={} rv={} nrtx={}",
+                   "\n- UE PUSCH: ue={} {}c-rnti={} h_id={} rb={} symb={} tbs={} rv={} nrtx={} nof_layers={}",
                    fmt::underlying(ul_info.context.ue_index),
                    ul_info.context.ue_index == INVALID_DU_UE_INDEX ? "t" : "",
                    ul_info.pusch_cfg.rnti,
@@ -241,7 +241,8 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
                    ul_info.pusch_cfg.symbols,
                    ul_info.pusch_cfg.tb_size_bytes,
                    ul_info.pusch_cfg.rv_index,
-                   ul_info.context.nof_retxs);
+                   ul_info.context.nof_retxs,
+                   ul_info.pusch_cfg.nof_layers);
     if (ul_info.context.olla_offset.has_value()) {
       fmt::format_to(std::back_inserter(fmtbuf), " olla={:.3}", ul_info.context.olla_offset.value());
     }
