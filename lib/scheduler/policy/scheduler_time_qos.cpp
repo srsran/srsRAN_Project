@@ -21,15 +21,12 @@ scheduler_time_qos::scheduler_time_qos(const scheduler_ue_expert_config& expert_
 {
 }
 
-dl_alloc_result scheduler_time_qos::schedule_dl_retxs(ue_pdsch_allocator&          pdsch_alloc,
-                                                      const ue_resource_grid_view& res_grid,
-                                                      dl_ran_slice_candidate&      slice_candidate,
-                                                      dl_harq_pending_retx_list    harq_list)
+dl_alloc_result scheduler_time_qos::schedule_dl_retxs(dl_sched_context ctxt)
 {
-  const ran_slice_id_t slice_id = slice_candidate.id();
-  auto&                ue_db    = slice_candidate.get_slice_ues();
+  const ran_slice_id_t slice_id = ctxt.slice_candidate.id();
+  auto&                ue_db    = ctxt.slice_candidate.get_slice_ues();
 
-  for (auto it = harq_list.begin(); it != harq_list.end();) {
+  for (auto it = ctxt.harq_pending_retx_list.begin(); it != ctxt.harq_pending_retx_list.end();) {
     // Note: During retx alloc, the pending HARQ list will mutate. So, we prefetch the next node.
     auto prev_it = it++;
     auto h       = *prev_it;
@@ -46,13 +43,13 @@ dl_alloc_result scheduler_time_qos::schedule_dl_retxs(ue_pdsch_allocator&       
                     fmt::underlying(ue_cc.ue_index));
 
       // [Implementation-defined] Skip UE if PDCCH is already allocated for this UE in this slot.
-      if (res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti()) or
-          not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index))) {
+      if (ctxt.res_grid.has_ue_dl_pdcch(ue_cc.cell_index, u.crnti()) or
+          not ue_cc.is_pdcch_enabled(ctxt.res_grid.get_pdcch_slot(ue_cc.cell_index))) {
         continue;
       }
 
       ue_pdsch_grant        grant{&u, ue_cc.cell_index, h.id()};
-      const dl_alloc_result result = pdsch_alloc.allocate_dl_grant(grant);
+      const dl_alloc_result result = ctxt.pdsch_alloc.allocate_dl_grant(grant);
       // Continue iteration until skip slot indication is received.
       // NOTE: Allocation status other than skip_slot can be ignored because allocation of reTxs is done from oldest
       // HARQ pending to newest. Hence, other allocation status are redundant.
@@ -69,12 +66,9 @@ dl_alloc_result scheduler_time_qos::schedule_dl_retxs(ue_pdsch_allocator&       
   return {alloc_status::success};
 }
 
-void scheduler_time_qos::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
-                                  const ue_resource_grid_view& res_grid,
-                                  dl_ran_slice_candidate&      slice_candidate,
-                                  dl_harq_pending_retx_list    harq_pending_retx_list)
+void scheduler_time_qos::dl_sched(dl_sched_context ctxt)
 {
-  const slice_ue_repository& ues = slice_candidate.get_slice_ues();
+  const slice_ue_repository& ues = ctxt.slice_candidate.get_slice_ues();
 
   // Remove deleted users from history.
   for (auto it = ue_history_db.begin(); it != ue_history_db.end();) {
@@ -92,45 +86,45 @@ void scheduler_time_qos::dl_sched(ue_pdsch_allocator&          pdsch_alloc,
   }
 
   // Schedule HARQ retxs.
-  auto retx_result = schedule_dl_retxs(pdsch_alloc, res_grid, slice_candidate, harq_pending_retx_list);
+  auto retx_result = schedule_dl_retxs(ctxt);
   if (retx_result.status == alloc_status::skip_slot) {
     return;
   }
 
   // Update DL priority queue.
   dl_queue.clear();
-  slot_point pdsch_slot        = slice_candidate.get_slot_tx();
+  slot_point pdsch_slot        = ctxt.slice_candidate.get_slot_tx();
   unsigned   nof_slots_elapsed = last_pdsch_slot.valid() ? pdsch_slot - last_pdsch_slot : 1;
   last_pdsch_slot              = pdsch_slot;
   for (const auto& u : ues) {
-    ue_ctxt& ctxt = ue_history_db[u.ue_index()];
-    ctxt.compute_dl_prio(
-        u, slice_candidate.id(), res_grid.get_pdcch_slot(u.get_pcell().cell_index), pdsch_slot, nof_slots_elapsed);
-    dl_queue.push(&ctxt);
+    ue_ctxt& uectxt = ue_history_db[u.ue_index()];
+    uectxt.compute_dl_prio(u,
+                           ctxt.slice_candidate.id(),
+                           ctxt.res_grid.get_pdcch_slot(u.get_pcell().cell_index),
+                           pdsch_slot,
+                           nof_slots_elapsed);
+    dl_queue.push(&uectxt);
   }
 
   dl_alloc_result alloc_result = {alloc_status::invalid_params};
-  unsigned        rem_rbs      = slice_candidate.remaining_rbs();
+  unsigned        rem_rbs      = ctxt.slice_candidate.remaining_rbs();
   while (not dl_queue.empty() and rem_rbs > 0 and alloc_result.status != alloc_status::skip_slot) {
     ue_ctxt& ue  = *dl_queue.top();
-    alloc_result = try_dl_alloc(ue, ues, pdsch_alloc, rem_rbs);
+    alloc_result = try_dl_alloc(ue, ues, ctxt.pdsch_alloc, rem_rbs);
     dl_queue.pop();
-    rem_rbs = slice_candidate.remaining_rbs();
+    rem_rbs = ctxt.slice_candidate.remaining_rbs();
   }
 }
 
-ul_alloc_result scheduler_time_qos::schedule_ul_retxs(ue_pusch_allocator&          pusch_alloc,
-                                                      const ue_resource_grid_view& res_grid,
-                                                      ul_ran_slice_candidate&      slice_candidate,
-                                                      ul_harq_pending_retx_list    harq_list)
+ul_alloc_result scheduler_time_qos::schedule_ul_retxs(ul_sched_context ctxt)
 {
-  auto& ue_db = slice_candidate.get_slice_ues();
+  auto& ue_db = ctxt.slice_candidate.get_slice_ues();
 
-  for (auto it = harq_list.begin(); it != harq_list.end();) {
+  for (auto it = ctxt.harq_pending_retx_list.begin(); it != ctxt.harq_pending_retx_list.end();) {
     // Note: During retx alloc, the pending HARQ list will mutate. So, we prefetch the next node.
     auto prev_it = it++;
     auto h       = *prev_it;
-    if (h.get_grant_params().slice_id != slice_candidate.id() or not ue_db.contains(h.ue_index())) {
+    if (h.get_grant_params().slice_id != ctxt.slice_candidate.id() or not ue_db.contains(h.ue_index())) {
       continue;
     }
     const slice_ue& u = ue_db[h.ue_index()];
@@ -141,14 +135,14 @@ ul_alloc_result scheduler_time_qos::schedule_ul_retxs(ue_pusch_allocator&       
                     "Policy scheduler called for UE={} in fallback",
                     fmt::underlying(ue_cc.ue_index));
 
-      if (not ue_cc.is_pdcch_enabled(res_grid.get_pdcch_slot(ue_cc.cell_index)) or
-          not ue_cc.is_ul_enabled(slice_candidate.get_slot_tx())) {
+      if (not ue_cc.is_pdcch_enabled(ctxt.res_grid.get_pdcch_slot(ue_cc.cell_index)) or
+          not ue_cc.is_ul_enabled(ctxt.slice_candidate.get_slot_tx())) {
         // Either the PDCCH slot or PUSCH slots are not available.
         continue;
       }
 
       ue_pusch_grant        grant{&u, ue_cc.cell_index, h.id()};
-      const ul_alloc_result result = pusch_alloc.allocate_ul_grant(grant);
+      const ul_alloc_result result = ctxt.pusch_alloc.allocate_ul_grant(grant);
       // Continue iteration until skip slot indication is received.
       // NOTE: Allocation status other than skip_slot can be ignored because allocation of reTxs is done from oldest
       // HARQ pending to newest. Hence, other allocation status are redundant.
@@ -164,12 +158,9 @@ ul_alloc_result scheduler_time_qos::schedule_ul_retxs(ue_pusch_allocator&       
   return {alloc_status::success};
 }
 
-void scheduler_time_qos::ul_sched(ue_pusch_allocator&          pusch_alloc,
-                                  const ue_resource_grid_view& res_grid,
-                                  ul_ran_slice_candidate&      slice_candidate,
-                                  ul_harq_pending_retx_list    harq_pending_retx_list)
+void scheduler_time_qos::ul_sched(ul_sched_context ul_ctxt)
 {
-  const slice_ue_repository& ues = slice_candidate.get_slice_ues();
+  const slice_ue_repository& ues = ul_ctxt.slice_candidate.get_slice_ues();
   // Remove deleted users from history.
   for (auto it = ue_history_db.begin(); it != ue_history_db.end();) {
     if (not ues.contains(it->ue_index)) {
@@ -186,33 +177,33 @@ void scheduler_time_qos::ul_sched(ue_pusch_allocator&          pusch_alloc,
   }
 
   // Schedule HARQ retxs.
-  auto retx_result = schedule_ul_retxs(pusch_alloc, res_grid, slice_candidate, harq_pending_retx_list);
+  auto retx_result = schedule_ul_retxs(ul_ctxt);
   if (retx_result.status == alloc_status::skip_slot) {
     return;
   }
 
   // Clear the existing contents of the queue.
   ul_queue.clear();
-  slot_point pusch_slot        = slice_candidate.get_slot_tx();
+  slot_point pusch_slot        = ul_ctxt.slice_candidate.get_slot_tx();
   unsigned   nof_slots_elapsed = last_pusch_slot.valid() ? pusch_slot - last_pusch_slot : 1;
   last_pusch_slot              = pusch_slot;
   for (const auto& u : ues) {
     ue_ctxt& ctxt = ue_history_db[u.ue_index()];
     ctxt.compute_ul_prio(u,
-                         slice_candidate.id(),
-                         res_grid.get_pdcch_slot(u.get_pcell().cell_index),
-                         slice_candidate.get_slot_tx(),
+                         ul_ctxt.slice_candidate.id(),
+                         ul_ctxt.res_grid.get_pdcch_slot(u.get_pcell().cell_index),
+                         ul_ctxt.slice_candidate.get_slot_tx(),
                          nof_slots_elapsed);
     ul_queue.push(&ctxt);
   }
 
   ul_alloc_result alloc_result = {alloc_status::invalid_params};
-  unsigned        rem_rbs      = slice_candidate.remaining_rbs();
+  unsigned        rem_rbs      = ul_ctxt.slice_candidate.remaining_rbs();
   while (not ul_queue.empty() and rem_rbs > 0 and alloc_result.status != alloc_status::skip_slot) {
     ue_ctxt& ue  = *ul_queue.top();
-    alloc_result = try_ul_alloc(ue, ues, pusch_alloc, rem_rbs);
+    alloc_result = try_ul_alloc(ue, ues, ul_ctxt.pusch_alloc, rem_rbs);
     ul_queue.pop();
-    rem_rbs = slice_candidate.remaining_rbs();
+    rem_rbs = ul_ctxt.slice_candidate.remaining_rbs();
   }
 }
 

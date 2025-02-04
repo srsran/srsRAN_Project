@@ -20,15 +20,9 @@ class scheduler_time_qos : public scheduler_policy
 public:
   scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_);
 
-  void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
-                const ue_resource_grid_view& res_grid,
-                dl_ran_slice_candidate&      slice_candidate,
-                dl_harq_pending_retx_list    harq_pending_retx_list) override;
+  void dl_sched(dl_sched_context dl_ctxt) override;
 
-  void ul_sched(ue_pusch_allocator&          pusch_alloc,
-                const ue_resource_grid_view& res_grid,
-                ul_ran_slice_candidate&      slice_candidate,
-                ul_harq_pending_retx_list    harq_pending_retx_list) override;
+  void ul_sched(ul_sched_context ul_ctxt) override;
 
 private:
   // Value used to flag that the UE cannot be allocated in a given slot.
@@ -94,14 +88,8 @@ private:
     uint32_t ul_nof_samples = 0;
   };
 
-  dl_alloc_result schedule_dl_retxs(ue_pdsch_allocator&          pdsch_alloc,
-                                    const ue_resource_grid_view& res_grid,
-                                    dl_ran_slice_candidate&      slice_candidate,
-                                    dl_harq_pending_retx_list    harq_pending_retx_list);
-  ul_alloc_result schedule_ul_retxs(ue_pusch_allocator&          pusch_alloc,
-                                    const ue_resource_grid_view& res_grid,
-                                    ul_ran_slice_candidate&      slice_candidate,
-                                    ul_harq_pending_retx_list    harq_pending_retx_list);
+  dl_alloc_result schedule_dl_retxs(dl_sched_context ctxt);
+  ul_alloc_result schedule_ul_retxs(ul_sched_context ctxt);
 
   /// \brief Attempts to allocate PDSCH for a UE.
   /// \return Returns allocation status, nof. allocated bytes and nof. allocated RBs.

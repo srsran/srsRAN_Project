@@ -18,15 +18,9 @@ class scheduler_time_rr : public scheduler_policy
 public:
   scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_);
 
-  void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
-                const ue_resource_grid_view& res_grid,
-                dl_ran_slice_candidate&      slice_candidate,
-                dl_harq_pending_retx_list    harq_pending_retx_list) override;
+  void dl_sched(dl_sched_context dl_ctxt) override;
 
-  void ul_sched(ue_pusch_allocator&          pusch_alloc,
-                const ue_resource_grid_view& res_grid,
-                ul_ran_slice_candidate&      slice_candidate,
-                ul_harq_pending_retx_list    harq_pending_retx_list) override;
+  void ul_sched(ul_sched_context ul_ctxt) override;
 
 private:
   void dl_sched_newtx(ue_pdsch_allocator&          pdsch_alloc,
