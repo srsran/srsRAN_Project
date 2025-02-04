@@ -16,6 +16,9 @@ using namespace srsran;
 // imprecision.
 constexpr unsigned MAX_PF_COEFF = 10;
 
+// [Implementation-defined] Maximum number of slots skipped between scheduling opportunities.
+constexpr unsigned MAX_SLOT_SKIPPED = 20;
+
 scheduler_time_qos::scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_) :
   params(std::get<time_qos_scheduler_expert_config>(expert_cfg_.strategy_cfg))
 {
@@ -68,6 +71,10 @@ dl_alloc_result scheduler_time_qos::schedule_dl_retxs(dl_sched_context ctxt)
 
 void scheduler_time_qos::dl_sched(dl_sched_context ctxt)
 {
+  slot_point pdsch_slot      = ctxt.slice_candidate.get_slot_tx();
+  unsigned nof_slots_elapsed = std::min(last_pdsch_slot.valid() ? pdsch_slot - last_pdsch_slot : 1U, MAX_SLOT_SKIPPED);
+  last_pdsch_slot            = pdsch_slot;
+
   const slice_ue_repository& ues = ctxt.slice_candidate.get_slice_ues();
 
   // Remove deleted users from history.
@@ -93,9 +100,6 @@ void scheduler_time_qos::dl_sched(dl_sched_context ctxt)
 
   // Update DL priority queue.
   dl_queue.clear();
-  slot_point pdsch_slot        = ctxt.slice_candidate.get_slot_tx();
-  unsigned   nof_slots_elapsed = last_pdsch_slot.valid() ? pdsch_slot - last_pdsch_slot : 1;
-  last_pdsch_slot              = pdsch_slot;
   for (const auto& u : ues) {
     ue_ctxt& uectxt = ue_history_db[u.ue_index()];
     uectxt.compute_dl_prio(u,
@@ -160,6 +164,10 @@ ul_alloc_result scheduler_time_qos::schedule_ul_retxs(ul_sched_context ctxt)
 
 void scheduler_time_qos::ul_sched(ul_sched_context ul_ctxt)
 {
+  slot_point pusch_slot      = ul_ctxt.slice_candidate.get_slot_tx();
+  unsigned nof_slots_elapsed = std::min(last_pusch_slot.valid() ? pusch_slot - last_pusch_slot : 1U, MAX_SLOT_SKIPPED);
+  last_pusch_slot            = pusch_slot;
+
   const slice_ue_repository& ues = ul_ctxt.slice_candidate.get_slice_ues();
   // Remove deleted users from history.
   for (auto it = ue_history_db.begin(); it != ue_history_db.end();) {
@@ -184,9 +192,6 @@ void scheduler_time_qos::ul_sched(ul_sched_context ul_ctxt)
 
   // Clear the existing contents of the queue.
   ul_queue.clear();
-  slot_point pusch_slot        = ul_ctxt.slice_candidate.get_slot_tx();
-  unsigned   nof_slots_elapsed = last_pusch_slot.valid() ? pusch_slot - last_pusch_slot : 1;
-  last_pusch_slot              = pusch_slot;
   for (const auto& u : ues) {
     ue_ctxt& ctxt = ue_history_db[u.ue_index()];
     ctxt.compute_ul_prio(u,
@@ -552,7 +557,7 @@ void scheduler_time_qos::ue_ctxt::compute_ul_prio(const slice_ue& u,
 void scheduler_time_qos::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
 {
   // In case more than one slot elapsed.
-  for (unsigned s = 0; s != nof_slots_elapsed - 1; ++s) {
+  for (unsigned s = 0, e = std::max(nof_slots_elapsed, 1U) - 1; s != e; ++s) {
     if (dl_nof_samples < 1 / parent->exp_avg_alpha) {
       // Fast start before transitioning to exponential average.
       total_dl_avg_rate_ -= total_dl_avg_rate_ / (dl_nof_samples + 1);
@@ -581,7 +586,7 @@ void scheduler_time_qos::ue_ctxt::compute_dl_avg_rate(const slice_ue& u, unsigne
 void scheduler_time_qos::ue_ctxt::compute_ul_avg_rate(const slice_ue& u, unsigned nof_slots_elapsed)
 {
   // In case more than one slot elapsed.
-  for (unsigned s = 0; s != nof_slots_elapsed - 1; ++s) {
+  for (unsigned s = 0, e = std::max(nof_slots_elapsed, 1U) - 1; s != e; ++s) {
     if (ul_nof_samples < 1 / parent->exp_avg_alpha) {
       // Fast start before transitioning to exponential average.
       total_ul_avg_rate_ -= total_ul_avg_rate_ / (ul_nof_samples + 1);
