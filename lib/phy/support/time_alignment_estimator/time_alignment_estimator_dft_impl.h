@@ -74,7 +74,7 @@ private:
 
   /// Estimates the TA assuming the complex symbols are already in the DFT input.
   static time_alignment_measurement
-  estimate_ta_correlation(span<const float> correlation, subcarrier_spacing scs, double max_ta);
+  estimate_ta_correlation(span<const float> correlation, unsigned stride, subcarrier_spacing scs, double max_ta);
 
   /// Buffer for storing the IDFT magnitude square.
   std::vector<float> idft_abs2;
