@@ -9,19 +9,19 @@
 - name: amarisoft-ue
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
-  labels: ["kubernetes.io/hostname=ci-buildmaster"]
+  labels: ["kubernetes.io/hostname=sdr4"]
   nof_ports: 4
   requirements:
     arch: amd64
     cpu:
-      requests: 12
-      limits: 12
+      requests: 8
+      limits: 8
     memory:
-      requests: "20G"
-      limits: "20G"
+      requests: "12G"
+      limits: "12G"
     ephemeral-storage:
-      requests: "6G"
-      limits: "6G"
+      requests: "9G"
+      limits: "9G"
   resources:
     - type: sdr
       model: b200
