@@ -57,6 +57,9 @@ public:
   // See interface for documentation.
   ru_uplink_plane_handler& get_uplink_plane_handler() override;
 
+  // See interface for documentation.
+  ru_metrics_collector* get_metrics_collector() override { return nullptr; }
+
 private:
   std::vector<std::unique_ptr<phy_error_adapter>>         phy_err_printer;
   std::vector<std::unique_ptr<phy_metrics_adapter>>       phy_metric_printer;

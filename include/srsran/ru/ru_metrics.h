@@ -10,18 +10,16 @@
 
 #pragma once
 
+#include "srsran/ru/dummy/ru_dummy_metrics.h"
+#include "srsran/ru/generic/ru_generic_metrics.h"
 #include "srsran/ru/ofh/ru_ofh_metrics.h"
+#include <variant>
 
 namespace srsran {
 
-/// Open Fronthaul Radio Unit metrics notifier.
-class ru_ofh_metrics_notifier
-{
-public:
-  virtual ~ru_ofh_metrics_notifier() = default;
-
-  /// Notifies new Open Fronthaul Radio Unit metrics.
-  virtual void on_new_metrics(const ru_ofh_metrics& metrics) = 0;
+/// Radio Unit metrics.
+struct ru_metrics {
+  std::variant<ru_dummy_metrics, ru_generic_metrics, ru_ofh_metrics> metrics;
 };
 
 } // namespace srsran

@@ -21,4 +21,4 @@ add_library(srsran_flexible_o_du_split_7_2 STATIC ${SOURCES})
 target_include_directories(srsran_flexible_o_du_split_7_2 PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(srsran_flexible_o_du_split_7_2
         srsran_split_7_2_app_unit_helpers
-        srsran_flexible_du_helpers)
+        srsran_flexible_o_du_helpers)

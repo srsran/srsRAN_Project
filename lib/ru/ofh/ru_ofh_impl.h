@@ -58,6 +58,9 @@ public:
   // See interface for documentation.
   ru_uplink_plane_handler& get_uplink_plane_handler() override;
 
+  // See interface for documentation.
+  ru_metrics_collector* get_metrics_collector() override { return nullptr; }
+
 private:
   ru_ofh_timing_notifier_impl               timing_notifier;
   ru_ofh_error_handler_impl                 error_handler;

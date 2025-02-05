@@ -10,16 +10,18 @@
 
 #pragma once
 
-#include "apps/services/metrics/metrics_consumer.h"
-
 namespace srsran {
 
-/// Dummy consumer for the json O-DU metrics.
-class o_du_metrics_consumer_dummy : public app_services::metrics_consumer
+struct flexible_o_du_metrics;
+
+/// Flexible O-DU metrics notifier.
+class flexible_o_du_metrics_notifier
 {
 public:
-  // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  virtual ~flexible_o_du_metrics_notifier() = default;
+
+  /// Notifies a new flexible O-DU metric.
+  virtual void on_new_metrics(const flexible_o_du_metrics& metric) = 0;
 };
 
 } // namespace srsran

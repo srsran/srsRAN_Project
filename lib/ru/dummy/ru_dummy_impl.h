@@ -58,6 +58,9 @@ public:
   // See radio_unit interface for documentation.
   ru_uplink_plane_handler& get_uplink_plane_handler() override { return *this; }
 
+  // See interface for documentation.
+  ru_metrics_collector* get_metrics_collector() override { return nullptr; }
+
 private:
   /// Possible internal states.
   enum class state : uint8_t { idle = 0, running, wait_stop, stopped };

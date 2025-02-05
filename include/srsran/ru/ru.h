@@ -14,6 +14,7 @@ namespace srsran {
 
 class ru_controller;
 class ru_downlink_plane_handler;
+class ru_metrics_collector;
 class ru_uplink_plane_handler;
 
 /// \brief Radio Unit interface.
@@ -35,6 +36,9 @@ public:
 
   /// Returns the uplink plane interface handler of this Radio Unit.
   virtual ru_uplink_plane_handler& get_uplink_plane_handler() = 0;
+
+  /// Returns the metrics collector of this Radio Unit.
+  virtual ru_metrics_collector* get_metrics_collector() = 0;
 };
 
 } // namespace srsran

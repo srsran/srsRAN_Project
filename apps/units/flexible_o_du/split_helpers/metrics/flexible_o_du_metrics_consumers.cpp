@@ -8,11 +8,11 @@
  *
  */
 
-#include "o_du_metrics_consumers.h"
+#include "flexible_o_du_metrics_consumers.h"
 
 using namespace srsran;
 
-void o_du_metrics_consumer_dummy::handle_metric(const app_services::metrics_set& metric)
+void flexible_o_du_metrics_consumer_dummy::handle_metric(const app_services::metrics_set& metric)
 {
   // Implement me!
 }

@@ -7,9 +7,9 @@
 #
 
 set(SOURCES
-        o_du_metrics_builder.cpp
-        o_du_metrics_consumers.cpp
-        o_du_metrics_producer.cpp)
+        flexible_o_du_metrics_builder.cpp
+        flexible_o_du_metrics_consumers.cpp
+        flexible_o_du_metrics_producer.cpp)
 
-add_library(srsran_o_du_unit_metrics_helpers STATIC ${SOURCES})
-target_include_directories(srsran_o_du_unit_metrics_helpers PRIVATE ${CMAKE_SOURCE_DIR})
+add_library(srsran_flexible_o_du_unit_metrics_helpers STATIC ${SOURCES})
+target_include_directories(srsran_flexible_o_du_unit_metrics_helpers PRIVATE ${CMAKE_SOURCE_DIR})
