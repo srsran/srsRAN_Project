@@ -37,6 +37,11 @@ public:
       expected<const asn1::f1ap::trp_info_resp_s*, const asn1::f1ap::trp_info_fail_s*>;
   event_signal<f1ap_trp_information_outcome_t> f1ap_trp_information_outcome;
 
+  /// F1 positioning measurement outcome
+  using f1ap_positioning_measurement_outcome_t =
+      expected<const asn1::f1ap::positioning_meas_resp_s*, const asn1::f1ap::positioning_meas_fail_s*>;
+  event_signal<f1ap_positioning_measurement_outcome_t> f1ap_positioning_measurement_outcome;
+
   explicit f1ap_event_manager(timer_factory timer_service) : transactions(MAX_NOF_TRANSACTIONS, timer_service) {}
 };
 

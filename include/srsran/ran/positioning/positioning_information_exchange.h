@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/positioning/common.h"
 #include "srsran/ran/positioning/measurement_information.h"
 #include "srsran/ran/srs/srs_configuration.h"
@@ -18,22 +17,6 @@
 #include <variant>
 
 namespace srsran {
-
-struct res_type_periodic_t {
-  uint16_t periodicity;
-  uint16_t offset;
-};
-
-struct res_type_semi_persistent_t {
-  uint16_t periodicity;
-  uint16_t offset;
-};
-
-struct res_type_aperiodic_t {
-  bool aperiodic_res_type;
-};
-
-using res_type_t = std::variant<res_type_periodic_t, res_type_semi_persistent_t, res_type_aperiodic_t>;
 
 using bw_srs_t = std::variant<uint8_t, uint16_t>;
 
@@ -112,32 +95,6 @@ struct ue_report_info_t {
 };
 
 enum class ue_teg_info_request_t { on_demand, periodic, stop };
-
-struct scs_specific_carrier_t {
-  uint16_t           offset_to_carrier;
-  subcarrier_spacing scs;
-  uint16_t           carrier_bw;
-};
-
-struct active_ul_bwp_t {
-  uint16_t            location_and_bw;
-  subcarrier_spacing  scs;
-  cyclic_prefix       cp;
-  uint16_t            tx_direct_current_location;
-  std::optional<bool> shift7dot5k_hz;
-  srs_config          srs_cfg;
-};
-
-struct srs_carrier_list_item_t {
-  uint32_t                            point_a;
-  std::vector<scs_specific_carrier_t> ul_ch_bw_per_scs_list;
-  active_ul_bwp_t                     active_ul_bwp;
-  std::optional<pci_t>                pci_nr;
-};
-
-struct srs_configuration_t {
-  std::vector<srs_carrier_list_item_t> srs_carrier_list;
-};
 
 struct carrier_freq_t {
   uint32_t point_a;

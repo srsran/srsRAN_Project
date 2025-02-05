@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ran/csi_rs/csi_rs_id.h"
+#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/ssb_properties.h"
@@ -142,6 +143,37 @@ struct spatial_relation_info_t {
 
   bool operator==(const spatial_relation_info_t& rhs) const { return reference_signals == rhs.reference_signals; }
   bool operator!=(const spatial_relation_info_t& rhs) const { return !(rhs == *this); }
+};
+
+struct scs_specific_carrier_t {
+  uint16_t           offset_to_carrier;
+  subcarrier_spacing scs;
+  uint16_t           carrier_bw;
+};
+
+struct active_ul_bwp_t {
+  uint16_t            location_and_bw;
+  subcarrier_spacing  scs;
+  cyclic_prefix       cp;
+  uint16_t            tx_direct_current_location;
+  std::optional<bool> shift7dot5k_hz;
+  srs_config          srs_cfg;
+};
+
+struct srs_carrier_list_item_t {
+  uint32_t                            point_a;
+  std::vector<scs_specific_carrier_t> ul_ch_bw_per_scs_list;
+  active_ul_bwp_t                     active_ul_bwp;
+  std::optional<pci_t>                pci_nr;
+};
+
+struct srs_configuration_t {
+  std::vector<srs_carrier_list_item_t> srs_carrier_list;
+};
+
+struct trp_tx_teg_info_t {
+  uint8_t trp_tx_teg_id;
+  uint8_t trp_tx_timing_error_margin;
 };
 
 } // namespace srsran

@@ -114,7 +114,7 @@ public:
   on_measurement_information_request(const measurement_request_t& request) override
   {
     srsran_assert(f1ap_handler != nullptr, "F1AP NRPPA handler must not be nullptr");
-    return f1ap_handler->handle_measurement_information_request(request);
+    return f1ap_handler->handle_positioning_measurement_request(request);
   }
 
 private:
