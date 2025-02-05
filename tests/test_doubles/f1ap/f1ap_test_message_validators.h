@@ -74,5 +74,7 @@ bool is_valid_f1ap_positioning_information_request(const f1ap_message& msg);
 
 bool is_valid_f1ap_positioning_activation_request(const f1ap_message& msg);
 
+bool is_valid_f1ap_positioning_measurement_request(const f1ap_message& msg);
+
 } // namespace test_helpers
 } // namespace srsran

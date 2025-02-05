@@ -641,7 +641,7 @@ f1ap_message srsran::test_helpers::generate_trp_information_response(const trp_i
   return {};
 }
 
-f1ap_message srsran::test_helpers::generate_trp_information_failure(const trp_id_t& trp_id)
+f1ap_message srsran::test_helpers::generate_trp_information_failure()
 {
   return {};
 }
@@ -666,6 +666,19 @@ f1ap_message srsran::test_helpers::generate_positioning_activation_response(gnb_
 
 f1ap_message srsran::test_helpers::generate_positioning_activation_failure(gnb_du_ue_f1ap_id_t du_ue_id,
                                                                            gnb_cu_ue_f1ap_id_t cu_ue_id)
+{
+  return {};
+}
+
+f1ap_message srsran::test_helpers::generate_positioning_measurement_response(trp_id_t      trp_id,
+                                                                             lmf_meas_id_t lmf_meas_id,
+                                                                             ran_meas_id_t ran_meas_id)
+{
+  return {};
+}
+
+f1ap_message srsran::test_helpers::generate_positioning_measurement_failure(lmf_meas_id_t lmf_meas_id,
+                                                                            ran_meas_id_t ran_meas_id)
 {
   return {};
 }
