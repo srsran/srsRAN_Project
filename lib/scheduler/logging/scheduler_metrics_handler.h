@@ -16,6 +16,7 @@
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/math/stats.h"
+#include "srsran/support/units.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -33,28 +34,32 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   struct ue_metric_context {
     /// \brief In this struct we store all the metadata that is reset at every report.
     struct non_persistent_data {
-      unsigned count_uci_harq_acks    = 0;
-      unsigned count_uci_harqs        = 0;
-      unsigned count_crc_acks         = 0;
-      unsigned count_crc_pdus         = 0;
-      unsigned count_sr               = 0;
-      unsigned dl_mcs                 = 0;
-      unsigned nof_dl_cws             = 0;
-      unsigned ul_mcs                 = 0;
-      unsigned nof_puschs             = 0;
-      uint64_t sum_dl_tb_bytes        = 0;
-      uint64_t sum_ul_tb_bytes        = 0;
-      double   sum_pusch_snrs         = 0;
-      double   sum_pucch_snrs         = 0;
-      double   sum_pusch_rsrp         = 0;
-      unsigned sum_crc_delay_slots    = 0;
-      unsigned nof_pucch_snr_reports  = 0;
-      unsigned nof_pusch_snr_reports  = 0;
-      unsigned nof_pusch_rsrp_reports = 0;
-      unsigned tot_dl_prbs_used       = 0;
-      unsigned tot_ul_prbs_used       = 0;
-      unsigned sum_ul_ce_delay_slots  = 0;
-      unsigned nof_ul_ces             = 0;
+      unsigned count_uci_harq_acks            = 0;
+      unsigned count_uci_harqs                = 0;
+      unsigned count_crc_acks                 = 0;
+      unsigned count_crc_pdus                 = 0;
+      unsigned count_sr                       = 0;
+      unsigned dl_mcs                         = 0;
+      unsigned nof_dl_cws                     = 0;
+      unsigned ul_mcs                         = 0;
+      unsigned nof_puschs                     = 0;
+      uint64_t sum_dl_tb_bytes                = 0;
+      uint64_t sum_ul_tb_bytes                = 0;
+      double   sum_pusch_snrs                 = 0;
+      double   sum_pucch_snrs                 = 0;
+      double   sum_pusch_rsrp                 = 0;
+      unsigned sum_crc_delay_slots            = 0;
+      unsigned nof_pucch_snr_reports          = 0;
+      unsigned nof_pucch_f2f3f4_invalid_harqs = 0;
+      unsigned nof_pucch_f2f3f4_invalid_csis  = 0;
+      unsigned nof_pusch_snr_reports          = 0;
+      unsigned nof_pusch_rsrp_reports         = 0;
+      unsigned nof_pusch_invalid_harqs        = 0;
+      unsigned nof_pusch_invalid_csis         = 0;
+      unsigned tot_dl_prbs_used               = 0;
+      unsigned tot_ul_prbs_used               = 0;
+      unsigned sum_ul_ce_delay_slots          = 0;
+      unsigned nof_ul_ces                     = 0;
       /// TA statistics over the metrics report interval, in seconds.
       sample_statistics<float> ta;
       /// PUSCH TA statistics over the metrics report interval, in seconds.
@@ -175,6 +180,10 @@ public:
 
 private:
   void handle_pucch_sinr(ue_metric_context& u, float sinr);
+  void handle_pucch_f2f3f4_invalid_harq(ue_metric_context& u);
+  void handle_pucch_f2f3f4_invalid_csi(ue_metric_context& u);
+  void handle_pusch_invalid_harq(ue_metric_context& u);
+  void handle_pusch_invalid_csi(ue_metric_context& u);
   void handle_csi_report(ue_metric_context& u, const csi_report_data& csi);
   void report_metrics();
   void handle_slot_result(const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);

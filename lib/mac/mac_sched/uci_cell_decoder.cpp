@@ -148,6 +148,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       if (pusch->harq_info.has_value()) {
         pdu.harqs =
             convert_mac_harq_bits_to_sched_harq_values(pusch->harq_info.value().is_valid, pusch->harq_info->payload);
+        pdu.invalid_harq_report = !pusch->harq_info->is_valid;
 
         // Report ACK for RLF detection purposes.
         for (mac_harq_ack_report_status harq : pdu.harqs) {
@@ -156,6 +157,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       }
 
       if (pusch->csi_part1_info.has_value()) {
+        pdu.invalid_csi_report = !pusch->csi_part1_info->is_valid;
         if (pusch->csi_part1_info->is_valid) {
           // Decode CSI bits given the CSI report config previously stored in the grid.
           const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
@@ -191,8 +193,9 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
         pdu.sr_info = pucch_f2f3f4->sr_info.value();
       }
       if (pucch_f2f3f4->harq_info.has_value()) {
-        pdu.harqs = convert_mac_harq_bits_to_sched_harq_values(pucch_f2f3f4->harq_info.value().is_valid,
+        pdu.harqs               = convert_mac_harq_bits_to_sched_harq_values(pucch_f2f3f4->harq_info.value().is_valid,
                                                                pucch_f2f3f4->harq_info->payload);
+        pdu.invalid_harq_report = !pucch_f2f3f4->harq_info->is_valid;
 
         // Report ACK for RLF detection purposes.
         for (mac_harq_ack_report_status harq_st : pdu.harqs) {
@@ -202,6 +205,7 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
 
       // Check if the UCI has been correctly decoded.
       if (pucch_f2f3f4->csi_part1_info.has_value()) {
+        pdu.invalid_csi_report = !pucch_f2f3f4->csi_part1_info->is_valid;
         if (pucch_f2f3f4->csi_part1_info->is_valid) {
           // Decode CSI bits given the CSI report config previously stored in the grid.
           const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];

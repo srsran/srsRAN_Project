@@ -104,6 +104,26 @@ void cell_metrics_handler::handle_pucch_sinr(ue_metric_context& u, float sinr)
   u.data.sum_pucch_snrs += sinr;
 }
 
+void cell_metrics_handler::handle_pucch_f2f3f4_invalid_harq(ue_metric_context& u)
+{
+  u.data.nof_pucch_f2f3f4_invalid_harqs++;
+}
+
+void cell_metrics_handler::handle_pucch_f2f3f4_invalid_csi(ue_metric_context& u)
+{
+  u.data.nof_pucch_f2f3f4_invalid_csis++;
+}
+
+void cell_metrics_handler::handle_pusch_invalid_harq(ue_metric_context& u)
+{
+  u.data.nof_pusch_invalid_harqs++;
+}
+
+void cell_metrics_handler::handle_pusch_invalid_csi(ue_metric_context& u)
+{
+  u.data.nof_pusch_invalid_csis++;
+}
+
 void cell_metrics_handler::handle_csi_report(ue_metric_context& u, const csi_report_data& csi)
 {
   // Add new CQI and RI observations if they are available in the CSI report.
@@ -144,27 +164,34 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
   if (ues.contains(pdu.ue_index)) {
     auto& u = ues[pdu.ue_index];
 
-    if (const auto* f1 = std::get_if<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(&pdu.pdu)) {
-      if (f1->ul_sinr_dB.has_value()) {
-        handle_pucch_sinr(u, f1->ul_sinr_dB.value());
+    if (const auto* f0f1 = std::get_if<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(&pdu.pdu)) {
+      if (f0f1->ul_sinr_dB.has_value()) {
+        handle_pucch_sinr(u, f0f1->ul_sinr_dB.value());
       }
 
-      if (f1->time_advance_offset.has_value()) {
-        u.data.ta.update(f1->time_advance_offset->to_seconds());
-        u.data.pucch_ta.update(f1->time_advance_offset->to_seconds());
+      if (f0f1->time_advance_offset.has_value()) {
+        u.data.ta.update(f0f1->time_advance_offset->to_seconds());
+        u.data.pucch_ta.update(f0f1->time_advance_offset->to_seconds());
       }
-    } else if (const auto* f2 = std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&pdu.pdu)) {
-      if (f2->ul_sinr_dB.has_value()) {
-        handle_pucch_sinr(u, f2->ul_sinr_dB.value());
-      }
-
-      if (f2->csi.has_value()) {
-        handle_csi_report(u, f2->csi.value());
+    } else if (const auto* f2f3f4 = std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&pdu.pdu)) {
+      if (f2f3f4->ul_sinr_dB.has_value()) {
+        handle_pucch_sinr(u, f2f3f4->ul_sinr_dB.value());
       }
 
-      if (f2->time_advance_offset.has_value()) {
-        u.data.ta.update(f2->time_advance_offset->to_seconds());
-        u.data.pucch_ta.update(f2->time_advance_offset->to_seconds());
+      if (f2f3f4->csi.has_value()) {
+        handle_csi_report(u, f2f3f4->csi.value());
+      }
+
+      if (f2f3f4->time_advance_offset.has_value()) {
+        u.data.ta.update(f2f3f4->time_advance_offset->to_seconds());
+        u.data.pucch_ta.update(f2f3f4->time_advance_offset->to_seconds());
+      }
+
+      if (f2f3f4->invalid_harq_report) {
+        handle_pucch_f2f3f4_invalid_harq(u);
+      }
+      if (f2f3f4->invalid_csi_report) {
+        handle_pucch_f2f3f4_invalid_csi(u);
       }
     } else {
       // PUSCH case.
@@ -172,6 +199,12 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
 
       if (pusch.csi.has_value()) {
         handle_csi_report(u, pusch.csi.value());
+      }
+      if (pusch.invalid_harq_report) {
+        handle_pusch_invalid_harq(u);
+      }
+      if (pusch.invalid_csi_report) {
+        handle_pusch_invalid_csi(u);
       }
     }
   }
@@ -381,6 +414,10 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   if (data.nof_ul_ces > 0) {
     ret.mean_ce_delay_msec = (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * slots_per_sf));
   }
+  ret.nof_pucch_f2f3f4_invalid_harqs = data.nof_pucch_f2f3f4_invalid_harqs;
+  ret.nof_pucch_f2f3f4_invalid_csis  = data.nof_pucch_f2f3f4_invalid_csis;
+  ret.nof_pusch_invalid_harqs        = data.nof_pusch_invalid_harqs;
+  ret.nof_pusch_invalid_csis         = data.nof_pusch_invalid_csis;
 
   // Reset UE stats metrics on every report.
   reset();
