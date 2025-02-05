@@ -88,13 +88,113 @@ inline void avx512_pack_prb_9b_big_endian(span<uint8_t> comp_prb_buffer, __m512i
   _mm_mask_storeu_epi8(data + bytes_per_lane * 2, lane_write_mask, _mm512_extracti64x2_epi64(iq_packed_epi8, 2));
 }
 
+/// \brief Packs 16bit IQ values of the PRB as 14 bit values in big-endian format.
+///
+/// \param[out] comp_prb_buffer Buffer dedicated for storing compressed packed bytes of the PRB.
+/// \param[in] reg              AVX512 register storing 16bit IQ samples of the PRB.
+inline void avx512_pack_prb_14b_big_endian(span<uint8_t> comp_prb_buffer, __m512i reg)
+{
+  // Number of bytes used by 1 packed PRB with IQ samples compressed to 14 bits.
+  static constexpr unsigned BYTES_PER_PRB_14BIT_COMPRESSION = 42;
+  static constexpr unsigned bytes_per_lane                  = BYTES_PER_PRB_14BIT_COMPRESSION / 3;
+  static constexpr unsigned lane_write_mask                 = 0x3fff;
+
+  srsran_assert(comp_prb_buffer.size() == BYTES_PER_PRB_14BIT_COMPRESSION,
+                "Output buffer has incorrect size for packing compressed samples");
+
+  // We will use logical operations for 32bit words. I and Q components represented as 32bit words:
+  // |            byte3          |            byte2        |               byte1        |           byte0          |
+  // | s s q13 q12 q11 q10 q9 q8 | q7 q6 q5 q4 q3 q2 q1 q0 | s  s i13 i12 i11 i10 i9 i8 | i7 i6 i5 i4 i3 i2  i1 i0 |
+  // where s is a sign bit.
+  //
+  // The results of the following operations are written down below:
+  // - shift32 left first word by 2 and mask.
+  // - shift32 right first word by 4.
+  // - shift32 left second word by 14 and mask.
+  // - shift32 right second word by 16.
+  //
+  // | 0 0 0 0 0   0   0   0   | 0   0   0  0  0  0  0  0  |i13 i12 i11 i10 i9  i8  i7 i6 | i5 i4 i3 i2 i1 i0 0  0 |
+  // | 0 0 0 0 0   0   q13 q12 | q11 q10 q9 q8 q7 q6 q5 q4 |q3  q2  q1  q0  0   0   0  0  | 0  0  0  0  0  0  0  0 |
+  // | 0 0 0 0 i13 i12 i11 i10 | i9  i8  i7 i6 i5 i4 i3 i2 |i1  i0  0   0   0   0   0  0  | 0  0  0  0  0  0  0  0 |
+  // | 0 0 0 0 0   0   0   0   | 0   0   0  0  0  0  0  0  |0   0   q13 q12 q11 q10 q9 q8 | q7 q6 q5 q4 q3 q2 q1 q0|
+
+  // Shift left by 2 and 14 bits and mask the result.
+  const __m512i k_shl_epi32      = _mm512_setr_epi32(2, 14, 2, 14, 2, 14, 2, 14, 2, 14, 2, 14, 2, 14, 2, 14);
+  const __m512i mask_sll_epi16   = _mm512_setr_epi32(0xffff,
+                                                   0xfffc000,
+                                                   0xffff,
+                                                   0xfffc000,
+                                                   0xffff,
+                                                   0xfffc000,
+                                                   0xffff,
+                                                   0xfffc000,
+                                                   0xffff,
+                                                   0xfffc000,
+                                                   0xffff,
+                                                   0xfffc000,
+                                                   0xffff,
+                                                   0xfffc000,
+                                                   0xffff,
+                                                   0xfffc000);
+  __m512i       in_reg_sll_epi32 = _mm512_and_si512(_mm512_sllv_epi32(reg, k_shl_epi32), mask_sll_epi16);
+
+  // Shift right by 4 and 16 bits and mask the result.
+  const __m512i k_shr_epi32      = _mm512_setr_epi32(4, 16, 4, 16, 4, 16, 4, 16, 4, 16, 4, 16, 4, 16, 4, 16);
+  const __m512i mask_srl_epi32   = _mm512_setr_epi32(0x3fff000,
+                                                   0x3fff,
+                                                   0x3fff000,
+                                                   0x3fff,
+                                                   0x3fff000,
+                                                   0x3fff,
+                                                   0x3fff000,
+                                                   0x3fff,
+                                                   0x3fff000,
+                                                   0x3fff,
+                                                   0x3fff000,
+                                                   0x3fff,
+                                                   0x3fff000,
+                                                   0x3fff,
+                                                   0x3fff000,
+                                                   0x3fff);
+  __m512i       in_reg_srl_epi32 = _mm512_and_si512(_mm512_srlv_epi32(reg, k_shr_epi32), mask_srl_epi32);
+
+  // Create new vectors by shuffling left and right shifted values. Two resulting vectors can be ORed and the result
+  // will be stored in a big-endian format.
+  __m512i shuffled_sll_epi8 = _mm512_shuffle_epi8(in_reg_sll_epi32,
+                                                  _mm512_setr_epi64(0x0904050607ff0001,
+                                                                    0xffff0c0d0e0fff08,
+                                                                    0x0904050607ff0001,
+                                                                    0xffff0c0d0e0fff08,
+                                                                    0x0904050607ff0001,
+                                                                    0xffff0c0d0e0fff08,
+                                                                    0x0904050607ff0001,
+                                                                    0xffff0c0d0e0fff08));
+  __m512i shuffled_srl_epi8 = _mm512_shuffle_epi8(in_reg_srl_epi32,
+                                                  _mm512_setr_epi64(0x0804050601020300,
+                                                                    0xffff0c0d0e090a0b,
+                                                                    0x0804050601020300,
+                                                                    0xffff0c0d0e090a0b,
+                                                                    0x0804050601020300,
+                                                                    0xffff0c0d0e090a0b,
+                                                                    0x0804050601020300,
+                                                                    0xffff0c0d0e090a0b));
+  // Perform logical OR between the two vectors.
+  __m512i result_epi8 = _mm512_or_si512(shuffled_sll_epi8, shuffled_srl_epi8);
+
+  // Store first 14 bytes of the first three 128bit lanes of the AVX512 register storing the packing results.
+  uint8_t* data = comp_prb_buffer.data();
+  _mm_mask_storeu_epi8(data, lane_write_mask, _mm512_extracti64x2_epi64(result_epi8, 0));
+  _mm_mask_storeu_epi8(data + bytes_per_lane, lane_write_mask, _mm512_extracti64x2_epi64(result_epi8, 1));
+  _mm_mask_storeu_epi8(data + bytes_per_lane * 2, lane_write_mask, _mm512_extracti64x2_epi64(result_epi8, 2));
+}
+
 /// \brief Packs 16bit IQ values of the PRB using big-endian format.
 ///
 /// \param[out] comp_prb_buffer Buffer dedicated for storing compressed packed bytes of the PRB.
 /// \param[in] reg              AVX512 register storing 16bit IQ samples of the PRB.
 inline void avx512_pack_prb_16b_big_endian(span<uint8_t> comp_prb_buffer, __m512i reg)
 {
-  /// Number of bytes used by 1 packed PRB with IQ samples compressed to 16 bits.
+  // Number of bytes used by 1 packed PRB with IQ samples compressed to 16 bits.
   static constexpr unsigned BYTES_PER_PRB_16BIT_COMPRESSION = 48;
 
   static constexpr unsigned write_mask = 0xffffff;
@@ -128,6 +228,9 @@ inline void pack_prb_big_endian(span<uint8_t> comp_prb_buffer, __m512i reg, unsi
 {
   if (iq_width == 9) {
     return avx512_pack_prb_9b_big_endian(comp_prb_buffer, reg);
+  }
+  if (iq_width == 14) {
+    return avx512_pack_prb_14b_big_endian(comp_prb_buffer, reg);
   }
   if (iq_width == 16) {
     return avx512_pack_prb_16b_big_endian(comp_prb_buffer, reg);
@@ -174,6 +277,75 @@ inline void avx512_unpack_prb_9b_be(span<int16_t> unpacked_iq_data, span<const u
   _mm512_mask_storeu_epi16(unpacked_iq_data.data(), 0x00ffffff, unpacked_data_epi16);
 }
 
+/// \brief Unpacks packed 14bit IQ samples stored as bytes in big-endian format to an array of 16bit signed values.
+///
+/// \param[out] unpacked_iq_data A span of 16bit integers, corresponding to \c NOF_CARRIERS_PER_RB unpacked IQ pairs.
+/// \param[in]  packed_data      A span of 42 packed bytes.
+inline void avx512_unpack_prb_14b_be(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data)
+{
+  // Number of packed bytes stored in the given array.
+  static constexpr unsigned BYTES_PER_PRB_14BIT_COMPRESSION = 42;
+  // Load only 42 bytes into the 64 bytes long AVX512 register.
+  static constexpr __mmask64 mask = (1UL << BYTES_PER_PRB_14BIT_COMPRESSION) - 1UL;
+
+  // Load input.
+  __m512i packed_data_epi8 = _mm512_maskz_loadu_epi8(mask, packed_data.data());
+
+  // Consider input bytes represented as 64-bit words:
+  // b7 | b6 | b5 | b4 | b3 | b2 | b1 | b0
+  // As a first step we shuffle input data so that every byte is used twice.
+  // The resulting 16-bit words, except two of them, will contain all bits of either I or Q component.
+  //
+  // Let's denote shuffled b5_b6 | b3_b4 | b1_b2 | b0_b1 vector as in_shuffled_1_epi16, where
+  // b0_b1: | i13 i12 i11 i10 i9  i8  i7  i6  | i5  i4  i3 i2 i1 i0 q13 q12 |  Has all bits of I0 component.
+  // b1_b2: | i5  i4  i3  i2  i1  i0  q13 q12 | q11 q10 q9 q8 q7 q6 q5  q4  |  Missing q3 q2 q1 q0 of Q0 component (b3).
+  // b3_b4: | q3  q2  q1  q0  i13 i12 i11 i10 | i9  i8  i7 i6 i5 i4 i3  i2  |  Missing i1 i0 of I1 component (b5).
+  // b5_b6: | i1  i0  q13 q12 q11 q10 q9  q8  | q7  q6  q5 q4 q3 q2 q1  q0  |  Has all bits of Q1 component.
+  const __m512i shuffle_mask1_epi8 = _mm512_setr_epi64(0x0506030401020001,
+                                                       0x0c0d0a0b08090708,
+                                                       0x131411120f100e0f,
+                                                       0x1a1b181916171516,
+                                                       0x21221f201d1e1c1d,
+                                                       0x2829262724252324,
+                                                       0x2f302d2e2b2c2a2b,
+                                                       0x3637343532333132);
+
+  __m512i tmp_in_shuffled_1_epi16 = _mm512_permutexvar_epi8(shuffle_mask1_epi8, packed_data_epi8);
+
+  // Shift left to align with 16-bit boundary, then shift right to sign-extend values.
+  const __m512i shl_mask_epi16 =
+      _mm512_set_epi16(2, 4, 6, 0, 2, 4, 6, 0, 2, 4, 6, 0, 2, 4, 6, 0, 2, 4, 6, 0, 2, 4, 6, 0, 2, 4, 6, 0, 2, 4, 6, 0);
+  __m512i in_shuffled_1_epi16 = _mm512_srai_epi16(_mm512_sllv_epi16(tmp_in_shuffled_1_epi16, shl_mask_epi16), 2);
+
+  // Create a vector of missing LSB bits,
+  // take them from input b3 and b5 of every 64-bit word:
+  //
+  // b3: | q3 q2 q1  q0  i13 i12 i11 i10 |  Right shift by 4 to put at LSB positions.
+  // b5: | i1 i0 q13 q12 q11 q10 q9  q8  |  Right shift by 6 to put at LSB positions.
+  const __m512i shuffle_mask2_epi8 = _mm512_setr_epi64(0x0000000500030000,
+                                                       0x0000000c000a0000,
+                                                       0x0000001300110000,
+                                                       0x0000001a00180000,
+                                                       0x00000021001f0000,
+                                                       0x0000002800260000,
+                                                       0x0000002f002d0000,
+                                                       0x0000003600340000);
+
+  __m512i tmp_in_shuffled_2_epi16 = _mm512_permutexvar_epi8(shuffle_mask2_epi8, packed_data_epi8);
+
+  // Shift right permuted bytes to align with in_shuffled_1_epi16.
+  const __m512i shift_right_mask_epi16 = _mm512_set1_epi64(0x0000000600040000);
+  __m512i       in_shuffled_2_epi16    = _mm512_srlv_epi16(tmp_in_shuffled_2_epi16, shift_right_mask_epi16);
+
+  // Finally, select bits between the two vectors.
+  const __m512i select_mask_epi64 = _mm512_set1_epi64(0x00000003000f0000);
+  __m512i       unpacked_data_epi64 =
+      _mm512_ternarylogic_epi64(in_shuffled_1_epi16, in_shuffled_2_epi16, select_mask_epi64, 0xd8);
+
+  // Write results to the output buffer.
+  _mm512_mask_storeu_epi16(unpacked_iq_data.data(), 0x00ffffff, unpacked_data_epi64);
+}
+
 /// \brief Unpacks packed 16bit IQ samples stored as bytes in big-endian format to an array of 16bit signed values.
 ///
 /// \param[out] unpacked_iq_data A span of 16bit integers, corresponding to \c NOF_CARRIERS_PER_RB unpacked IQ pairs.
@@ -210,6 +382,9 @@ inline void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uin
   if (iq_width == 9) {
     return avx512_unpack_prb_9b_be(unpacked_iq_data, packed_data);
   }
+  if (iq_width == 14) {
+    return avx512_unpack_prb_14b_be(unpacked_iq_data, packed_data);
+  }
   if (iq_width == 16) {
     return avx512_unpack_prb_16b_be(unpacked_iq_data, packed_data);
   }
@@ -222,7 +397,7 @@ inline void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uin
 /// \return True in case packing/unpacking with the requested bit width is supported.
 inline bool iq_width_packing_supported(unsigned iq_width)
 {
-  return ((iq_width == 9) || (iq_width == 16));
+  return ((iq_width == 9) || (iq_width == 14) || (iq_width == 16));
 }
 
 } // namespace mm512
