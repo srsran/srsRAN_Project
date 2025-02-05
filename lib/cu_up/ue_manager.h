@@ -12,6 +12,7 @@
 
 #include "ngu_session_manager.h"
 #include "ue_manager_interfaces.h"
+#include "srsran/adt/slotted_array.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"

@@ -9,6 +9,7 @@
  */
 
 #include "srsran/adt/slotted_array.h"
+#include "srsran/adt/slotted_vector.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <random>
@@ -30,14 +31,12 @@ static unsigned get_random_int(int lb = 0, int ub = std::numeric_limits<int>::ma
   return std::uniform_int_distribution<int>{lb, ub}(g);
 }
 
-static_assert(std::is_same<slotted_array<int, 5>::value_type, int>::value, "Invalid container value_type");
-static_assert(std::is_same<slotted_array<int, 5>::iterator::value_type, int>::value, "Invalid container value_type");
-static_assert(std::is_same<slotted_array<int, 5>::const_iterator::value_type, int>::value,
-              "Invalid container value_type");
-static_assert(std::is_same<slotted_vector<int>::value_type, int>::value, "Invalid container value_type");
-static_assert(std::is_same<slotted_vector<int>::iterator::value_type, int>::value, "Invalid container value_type");
-static_assert(std::is_same<slotted_vector<int>::const_iterator::value_type, int>::value,
-              "Invalid container value_type");
+static_assert(std::is_same_v<slotted_array<int, 5>::value_type, int>, "Invalid container value_type");
+static_assert(std::is_same_v<slotted_array<int, 5>::iterator::value_type, int>, "Invalid container value_type");
+static_assert(std::is_same_v<slotted_array<int, 5>::const_iterator::value_type, int>, "Invalid container value_type");
+static_assert(std::is_same_v<slotted_vector<int>::value_type, int>, "Invalid container value_type");
+static_assert(std::is_same_v<slotted_vector<int>::iterator::value_type, int>, "Invalid container value_type");
+static_assert(std::is_same_v<slotted_vector<int>::const_iterator::value_type, int>, "Invalid container value_type");
 
 template <typename T>
 class slotted_array_tester : public ::testing::Test

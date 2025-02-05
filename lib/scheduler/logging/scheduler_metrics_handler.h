@@ -11,6 +11,7 @@
 #pragma once
 
 #include "scheduler_metrics_ue_configurator.h"
+#include "srsran/adt/slotted_array.h"
 #include "srsran/scheduler/scheduler_dl_buffer_state_indication_handler.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"

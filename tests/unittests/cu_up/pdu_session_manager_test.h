@@ -134,7 +134,7 @@ generate_pdu_session_res_to_setup_item(pdu_session_id_t psi, drb_id_t drb_id, qo
   cell_group_info_item.cell_group_id = 0;
   drb_to_setup_item.cell_group_info.push_back(cell_group_info_item);
 
-  e1ap_qos_flow_qos_param_item qos_flow_info;
+  e1ap_qos_flow_qos_param_item qos_flow_info{};
   qos_flow_info.qos_flow_id = qfi;
   non_dyn_5qi_descriptor non_dyn_5qi;
   non_dyn_5qi.five_qi                                                           = five_qi;
@@ -198,9 +198,9 @@ generate_pdu_session_res_to_modify_item_to_setup_drb(pdu_session_id_t           
   drb_to_setup_item.cell_group_info.push_back(cell_group_info_item);
 
   for (const auto& qfi : qfi_list) {
-    e1ap_qos_flow_qos_param_item qos_flow_info;
+    e1ap_qos_flow_qos_param_item qos_flow_info{};
     qos_flow_info.qos_flow_id = qfi;
-    non_dyn_5qi_descriptor non_dyn_5qi;
+    non_dyn_5qi_descriptor non_dyn_5qi{};
     non_dyn_5qi.five_qi                                                           = five_qi;
     qos_flow_info.qos_flow_level_qos_params.qos_desc                              = non_dyn_5qi;
     qos_flow_info.qos_flow_level_qos_params.ng_ran_alloc_retention.prio_level_arp = 1;
