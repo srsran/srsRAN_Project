@@ -362,8 +362,8 @@ int main(int argc, char** argv)
   // Start processing.
   du_inst.get_operation_controller().start();
 
-  auto remote_control_server =
-      app_services::create_remote_server(du_cfg.remote_control_config.port, du_inst_and_cmds.commands.remote);
+  std::unique_ptr<app_services::remote_server> remote_control_server =
+      app_services::create_remote_server(du_cfg.remote_control_config, du_inst_and_cmds.commands.remote);
 
   periodic_metrics_controller.start();
   {
@@ -375,7 +375,9 @@ int main(int argc, char** argv)
   }
   periodic_metrics_controller.stop();
 
-  remote_control_server->stop();
+  if (remote_control_server) {
+    remote_control_server->stop();
+  }
 
   // Stop DU activity.
   du_inst.get_operation_controller().stop();

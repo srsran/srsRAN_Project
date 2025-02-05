@@ -407,7 +407,8 @@ int main(int argc, char** argv)
 
   o_cuup_unit.unit->get_operation_controller().start();
 
-  auto remote_control_server = app_services::create_remote_server(cu_cfg.remote_control_config.port, {});
+  std::unique_ptr<app_services::remote_server> remote_control_server =
+      app_services::create_remote_server(cu_cfg.remote_control_config, {});
 
   {
     app_services::application_message_banners app_banner(app_name);
@@ -417,7 +418,9 @@ int main(int argc, char** argv)
     }
   }
 
-  remote_control_server->stop();
+  if (remote_control_server) {
+    remote_control_server->stop();
+  }
 
   // Stop O-CU-UP activity.
   o_cuup_unit.unit->get_operation_controller().stop();

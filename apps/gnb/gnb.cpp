@@ -473,8 +473,8 @@ int main(int argc, char** argv)
   // Start processing.
   du_inst.get_operation_controller().start();
 
-  auto remote_control_server =
-      app_services::create_remote_server(gnb_cfg.remote_control_config.port, du_inst_and_cmds.commands.remote);
+  std::unique_ptr<app_services::remote_server> remote_control_server =
+      app_services::create_remote_server(gnb_cfg.remote_control_config, du_inst_and_cmds.commands.remote);
 
   {
     app_services::application_message_banners app_banner(app_name);
@@ -484,7 +484,9 @@ int main(int argc, char** argv)
     }
   }
 
-  remote_control_server->stop();
+  if (remote_control_server) {
+    remote_control_server->stop();
+  }
 
   // Stop DU activity.
   du_inst.get_operation_controller().stop();

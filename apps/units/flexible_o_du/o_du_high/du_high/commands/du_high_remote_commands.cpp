@@ -20,7 +20,7 @@ error_type<std::string> ssb_modify_remote_command::execute(const nlohmann::json&
     return make_unexpected("'cells' object is missing and it is mandatory");
   }
   if (!cells_key->is_array()) {
-    return make_unexpected("'cells' object vale type should be an array");
+    return make_unexpected("'cells' object value type should be an array");
   }
 
   auto cells_items = cells_key->items();
@@ -35,7 +35,7 @@ error_type<std::string> ssb_modify_remote_command::execute(const nlohmann::json&
       return make_unexpected("'plmn' object is missing and it is mandatory");
     }
     if (!plmn_key->is_string()) {
-      return make_unexpected("'plmn' object vale type should be a string");
+      return make_unexpected("'plmn' object value type should be a string");
     }
 
     auto nci_key = cell.value().find("nci");
@@ -43,7 +43,7 @@ error_type<std::string> ssb_modify_remote_command::execute(const nlohmann::json&
       return make_unexpected("'nci' object is missing and it is mandatory");
     }
     if (!nci_key->is_number_unsigned()) {
-      return make_unexpected("'nci' object vale type should be an integer");
+      return make_unexpected("'nci' object value type should be an integer");
     }
 
     auto plmn = plmn_identity::parse(plmn_key.value().get_ref<const nlohmann::json::string_t&>());
@@ -58,17 +58,18 @@ error_type<std::string> ssb_modify_remote_command::execute(const nlohmann::json&
     nr_cgi.nci     = nci.value();
     nr_cgi.plmn_id = plmn.value();
 
-    auto ssb_block_power_key = cell.value().find("ssb_block_power");
+    auto ssb_block_power_key = cell.value().find("ssb_block_power_dbm");
     if (ssb_block_power_key == cell.value().end()) {
-      return make_unexpected("'ssb_block_power' object is missing and it is mandatory");
+      return make_unexpected("'ssb_block_power_dbm' object is missing and it is mandatory");
     }
     if (!ssb_block_power_key->is_number_integer()) {
-      return make_unexpected("'ssb_block_power' object vale type should be an integer");
+      return make_unexpected("'ssb_block_power_dbm' object value type should be an integer");
     }
     int ssb_block_power_value = ssb_block_power_key->get<int>();
     if (ssb_block_power_value < -60 || ssb_block_power_value > 50) {
-      return make_unexpected(fmt::format(
-          "'ssb_block_power' value out of range, received '{}', valid range is from -60 to 50", ssb_block_power_value));
+      return make_unexpected(
+          fmt::format("'ssb_block_power_dbm' value out of range, received '{}', valid range is from -60 to 50",
+                      ssb_block_power_value));
     }
     req.cells.emplace_back(nr_cgi, ssb_block_power_value);
   }
@@ -77,5 +78,5 @@ error_type<std::string> ssb_modify_remote_command::execute(const nlohmann::json&
     return {};
   }
 
-  return make_unexpected("SSB modify command could not be applied by the DU");
+  return make_unexpected("SSB modify command procedure failed to be applied by the DU");
 }

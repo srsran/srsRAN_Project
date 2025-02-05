@@ -16,7 +16,8 @@ namespace srsran {
 
 /// Remote control application configuration.
 struct remote_control_appconfig {
-  uint16_t port = 8001;
+  bool     enabled = false;
+  uint16_t port    = 8001;
 };
 
 } // namespace srsran

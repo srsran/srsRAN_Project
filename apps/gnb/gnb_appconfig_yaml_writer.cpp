@@ -62,7 +62,8 @@ static void fill_gnb_appconfig_buffer_pool_section(YAML::Node node, const buffer
 
 static void fill_gnb_appconfig_remote_control_section(YAML::Node node, const remote_control_appconfig& config)
 {
-  node["port"] = config.port;
+  node["enable"] = config.enabled;
+  node["port"]   = config.port;
 }
 
 void srsran::fill_gnb_appconfig_in_yaml_schema(YAML::Node& node, const gnb_appconfig& config)

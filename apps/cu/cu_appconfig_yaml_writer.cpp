@@ -23,7 +23,8 @@ static void fill_cu_appconfig_buffer_pool_section(YAML::Node node, const buffer_
 
 static void fill_cu_appconfig_remote_control_section(YAML::Node node, const remote_control_appconfig& config)
 {
-  node["port"] = config.port;
+  node["enable"] = config.enabled;
+  node["port"]   = config.port;
 }
 
 static void fill_cu_appconfig_f1ap_section(YAML::Node node, const srs_cu::cu_f1ap_appconfig& config)

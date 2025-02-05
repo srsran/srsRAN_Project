@@ -10,6 +10,7 @@
 
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/remote_control/remote_command.h"
+#include "apps/services/remote_control/remote_control_appconfig.h"
 #include "nlohmann/json.hpp"
 #include "uWebSockets/App.h"
 #include "srsran/support/executors/unique_thread.h"
@@ -106,7 +107,7 @@ public:
                                }})
           .listen(port, [port](auto* listen_socket) {
             if (listen_socket) {
-              fmt::println("WebSocket server listening on port {}", port);
+              fmt::println("Remote control server listening on port {}", port);
             }
           });
 
@@ -171,7 +172,11 @@ private:
 } // namespace
 
 std::unique_ptr<remote_server>
-srsran::app_services::create_remote_server(unsigned port, span<std::unique_ptr<remote_command>> commands)
+srsran::app_services::create_remote_server(const remote_control_appconfig&       cfg,
+                                           span<std::unique_ptr<remote_command>> commands)
 {
-  return std::make_unique<remote_server_impl>(port, commands);
+  if (!cfg.enabled) {
+    return nullptr;
+  }
+  return std::make_unique<remote_server_impl>(cfg.port, commands);
 }

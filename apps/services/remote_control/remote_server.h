@@ -15,6 +15,9 @@
 #include <memory>
 
 namespace srsran {
+
+struct remote_control_appconfig;
+
 namespace app_services {
 
 /// \brief Remote server interface.
@@ -31,7 +34,8 @@ public:
 };
 
 /// Creates a Remote Server instance with a give list of commands.
-std::unique_ptr<remote_server> create_remote_server(unsigned port, span<std::unique_ptr<remote_command>> commands);
+std::unique_ptr<remote_server> create_remote_server(const remote_control_appconfig&       cfg,
+                                                    span<std::unique_ptr<remote_command>> commands);
 
 } // namespace app_services
 } // namespace srsran
