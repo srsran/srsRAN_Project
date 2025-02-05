@@ -62,7 +62,7 @@ public:
 class remote_server_impl : public remote_server
 {
 public:
-  remote_server_impl(unsigned port, span<std::unique_ptr<remote_command>> commands_)
+  remote_server_impl(const std::string& bind_addr, unsigned port, span<std::unique_ptr<remote_command>> commands_)
   {
     // Add the quit command.
     {
@@ -77,7 +77,7 @@ public:
       cmd       = std::move(remote_cmd);
     }
 
-    thread = unique_thread("ws_server", [this, port]() {
+    thread = unique_thread("ws_server", [this, bind_addr, port]() {
       uWS::App ws_server;
       struct dummy_type {};
       ws_server
@@ -105,9 +105,11 @@ public:
                                  std::string response = handle_command(message);
                                  ws->send(response, uWS::OpCode::TEXT, false);
                                }})
-          .listen(port, [port](auto* listen_socket) {
+          .listen(bind_addr, port, [bind_addr, port](auto* listen_socket) {
             if (listen_socket) {
-              fmt::println("Remote control server listening on port {}", port);
+              fmt::println("Remote control server listening on {}:{}", bind_addr, port);
+            } else {
+              fmt::println("Remote control server cannot listen on {}:{}", bind_addr, port);
             }
           });
 
@@ -178,5 +180,5 @@ srsran::app_services::create_remote_server(const remote_control_appconfig&      
   if (!cfg.enabled) {
     return nullptr;
   }
-  return std::make_unique<remote_server_impl>(cfg.port, commands);
+  return std::make_unique<remote_server_impl>(cfg.bind_addr, cfg.port, commands);
 }

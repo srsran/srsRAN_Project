@@ -15,7 +15,8 @@ using namespace srsran;
 
 static void configure_cli11_remote_control_args(CLI::App& app, remote_control_appconfig& config)
 {
-  app.add_option("--enable", config.enabled, "Enables the Remote Control Server")->always_capture_default();
+  app.add_option("--enabled", config.enabled, "Enables the Remote Control Server")->always_capture_default();
+  app.add_option("--bind_addr", config.bind_addr, "Remote Control Server bind address")->capture_default_str();
   app.add_option("--port", config.port, "Port where the remote control server listens for incoming connections")
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
