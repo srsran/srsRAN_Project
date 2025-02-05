@@ -591,6 +591,9 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     return {alloc_status::skip_ue};
   }
 
+  bool       no_prbs_available = false;
+  slot_point slot_to_skip;
+
   // Iterate through allocation parameter candidates.
   for (const ue_pusch_alloc_param_candidate_searcher::candidate& param_candidate : candidates) {
     const pusch_time_domain_resource_allocation& pusch_td_cfg = param_candidate.pusch_td_res();
@@ -685,6 +688,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
         pusch_td_cfg.symbols.stop() > (start_ul_symbols + cell_cfg.get_nof_ul_symbol_per_slot(pusch_alloc.slot)) or
         !sym_length_match_prev_grant_for_retx) {
       // Try next candidate.
+      no_prbs_available = false;
       continue;
     }
 
@@ -704,8 +708,9 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     const crb_interval ul_crb_lims = {start_rb, end_rb};
     const prb_bitmap   used_crbs   = pusch_alloc.ul_res_grid.used_crbs(scs, ul_crb_lims, pusch_td_cfg.symbols);
     if (used_crbs.all()) {
-      slots_with_no_pusch_space.push_back(pusch_alloc.slot);
-      return {alloc_status::skip_slot};
+      no_prbs_available = true;
+      slot_to_skip      = pusch_alloc.slot;
+      continue;
     }
 
     // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
@@ -1056,6 +1061,11 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
 
     return {alloc_status::success, h_ul->get_grant_params().tbs_bytes, crbs.length()};
+  }
+
+  if (no_prbs_available and slot_to_skip.valid()) {
+    slots_with_no_pusch_space.push_back(slot_to_skip);
+    return {alloc_status::skip_slot};
   }
 
   // No candidates for PUSCH allocation.

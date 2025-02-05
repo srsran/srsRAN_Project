@@ -296,6 +296,7 @@ srsran::config_helpers::generate_k2_candidates(cyclic_prefix cp, const tdd_ul_dl
   const unsigned nof_full_ul_slots = nof_full_ul_slots_per_tdd_period(tdd_cfg);
 
   std::vector<pusch_time_domain_resource_allocation> result;
+  result.reserve(pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS);
   for (unsigned idx = 0; idx < tdd_period_slots and result.size() < pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS;
        ++idx) {
     // For every slot containing DL symbols check for corresponding k2 value.

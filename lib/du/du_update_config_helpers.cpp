@@ -9,6 +9,7 @@
  */
 
 #include "srsran/du/du_update_config_helpers.h"
+#include "srsran/ran/pusch/pusch_constants.h"
 #include "srsran/scheduler/config/pucch_resource_generator.h"
 #include "srsran/scheduler/config/srs_builder_params.h"
 
@@ -128,4 +129,77 @@ config_helpers::compute_max_nof_pucch_symbols(const srs_builder_params& user_srs
   return user_srs_params.srs_period.has_value()
              ? NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - user_srs_params.max_nof_symbols.to_uint()
              : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+}
+
+void config_helpers::add_pusch_time_domain_resources(std::vector<pusch_time_domain_resource_allocation>& td_alloc_list,
+                                                     const srs_builder_params& user_srs_params,
+                                                     bool                      is_tdd)
+{
+  const unsigned td_alloc_size = td_alloc_list.size();
+  const unsigned max_srs_symb  = user_srs_params.max_nof_symbols.value();
+  const auto     symb_per_srs  = static_cast<unsigned>(user_srs_params.nof_symbols);
+
+  td_alloc_list.reserve(pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS);
+
+  if (is_tdd) {
+    // For TDD, duplicate the PUSCH resources by adding extra resources with the same k2 value but different    symbols.
+    // We add resource in this order, until we reached capacity the full of the vector,
+    // - Resources with ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - max_srs_symb}, placed at the end of the
+    // vector. This is to give priority to the SRS resources with more symbols.
+    // - Resources with ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - symb_per_srs}, placed after the first
+    // resources with full symbols.
+
+    // Number of resources over symbols {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - max_srs_symb}. Given that we copy the
+    // existing resources of the vector, cap this to the current vector size.
+    const unsigned nof_res_sym_0_to_srs_max =
+        pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS > td_alloc_size
+            ? std::min(td_alloc_size, pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS - td_alloc_size)
+            : 0U;
+    // Number of resources over symbols {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - symb_per_srs}. Given that we copy the
+    // existing resources of the vector, cap this to the current vector size.
+    const unsigned nof_res_sym_0_to_symb_per_srs =
+        nof_res_sym_0_to_srs_max != 0 and max_srs_symb != symb_per_srs
+            ? std::min(td_alloc_size,
+                       pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS - td_alloc_size - nof_res_sym_0_to_srs_max)
+            : 0U;
+
+    // If any, add resources with ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - symb_per_srs} first.
+    for (unsigned res_cnt = 0U; res_cnt != nof_res_sym_0_to_symb_per_srs and
+                                td_alloc_list.size() != pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS;
+         ++res_cnt) {
+      const auto& res_full_symbols = td_alloc_list[res_cnt];
+      td_alloc_list.push_back(
+          pusch_time_domain_resource_allocation{res_full_symbols.k2,
+                                                res_full_symbols.map_type,
+                                                ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - symb_per_srs}});
+    }
+
+    // If any, add resources with ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - max_srs_symb} at the end.
+    for (unsigned res_cnt = 0U;
+         res_cnt != nof_res_sym_0_to_srs_max and td_alloc_list.size() != pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS;
+         ++res_cnt) {
+      const auto& res_full_symbols = td_alloc_list[res_cnt];
+      td_alloc_list.push_back(
+          pusch_time_domain_resource_allocation{res_full_symbols.k2,
+                                                res_full_symbols.map_type,
+                                                ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - max_srs_symb}});
+    }
+  } else {
+    // For FDD, we duplicate the only resource by adding extra ones with the same k2 value but different symbols,
+    // at symb_per_srs steps.
+    for (unsigned srs_sym = symb_per_srs;
+         srs_sym <= max_srs_symb and td_alloc_list.size() != pusch_constants::MAX_NOF_PUSCH_TD_RES_ALLOCS;
+         srs_sym += symb_per_srs) {
+      const auto& res_full_symbols = td_alloc_list.front();
+      td_alloc_list.push_back(
+          pusch_time_domain_resource_allocation{res_full_symbols.k2,
+                                                res_full_symbols.map_type,
+                                                ofdm_symbol_range{0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - symb_per_srs}});
+    }
+  }
+
+  // Sorting in ascending order is performed to reduce the latency with which PUSCH is scheduled.
+  std::sort(td_alloc_list.begin(), td_alloc_list.end(), [](const auto& lhs, const auto& rhs) {
+    return lhs.k2 < rhs.k2 or (lhs.k2 == rhs.k2 and lhs.symbols.length() > rhs.symbols.length());
+  });
 }

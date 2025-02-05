@@ -293,7 +293,8 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     param.coreset0_index    = ssb_freq_loc->coreset0_idx;
 
     // Set TDD pattern.
-    if (band_helper::get_duplex_mode(*param.band) == duplex_mode::TDD) {
+    const bool is_tdd = band_helper::get_duplex_mode(*param.band) == duplex_mode::TDD;
+    if (is_tdd) {
       param.tdd_ul_dl_cfg_common.emplace(generate_tdd_pattern(param.scs_common, cell.cell.tdd_ul_dl_cfg.value()));
     }
 
@@ -721,6 +722,9 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
         auto& f4_params       = std::get<pucch_f3_params>(du_pucch_cfg.f2_or_f3_or_f4_params);
         f4_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f4_params.nof_symbols.to_uint());
       }
+      // Add extra PUSCH time-domain resources to enable PUSCH on symbols not used by the SRS.
+      config_helpers::add_pusch_time_domain_resources(
+          out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list, du_srs_cfg, is_tdd);
     }
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(

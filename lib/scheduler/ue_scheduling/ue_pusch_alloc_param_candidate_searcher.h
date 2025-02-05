@@ -246,8 +246,7 @@ private:
     }
 
     // Check whether PUSCH time domain resource fits in UL symbols of the slot.
-    if (ue_cc->cfg().cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot) !=
-        current.pusch_td_res().symbols.length()) {
+    if (ue_cc->cfg().cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot) < current.pusch_td_res().symbols.length()) {
       return false;
     }
 
