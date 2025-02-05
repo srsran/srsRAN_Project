@@ -97,6 +97,7 @@ public:
   }
   ~ue_context() override = default;
 
+  /// Stop UE executors
   async_task<void> stop()
   {
     return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
@@ -109,25 +110,16 @@ public:
     });
   }
 
-  async_task<void> disconnect()
-  {
-    return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
+  /// Disconnect PDU sessions.
+  void disconnect() { pdu_session_manager.disconnect_all_pdu_sessions(); }
 
-      /// Disconnect PDU sessions.
-      pdu_session_manager.disconnect_all_pdu_sessions();
-
-      CORO_RETURN();
-    });
-  }
-
+  /// Await processing of pending crypto PDUs to be finished.
   async_task<void> await_crypto_rx()
   {
     return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      /// Disconnect PDU sessions.
-      pdu_session_manager.await_crypto_rx_all_pdu_sessions();
+      CORO_AWAIT(pdu_session_manager.await_crypto_rx_all_pdu_sessions());
 
       CORO_RETURN();
     });

@@ -41,6 +41,15 @@ struct pdcp_rx_state {
   uint32_t rx_reord;
 };
 
+/// Helper structure used to pass RX buffers to the security engine.
+struct pdcp_rx_buffer_info {
+  byte_buffer                           buf;
+  uint32_t                              count = 0;
+  std::chrono::system_clock::time_point time_of_arrival;
+  pdcp_crypto_token                     token;
+};
+
+/// Structure used to hold RX SDUs in the RX window.
 struct pdcp_rx_sdu_info {
   byte_buffer                           sdu;
   uint32_t                              count = 0;
@@ -145,13 +154,13 @@ private:
   /// \param pdu The data PDU to be handled (including header and payload)
   void handle_data_pdu(byte_buffer pdu);
 
-  void apply_security(pdcp_rx_sdu_info pdu_info);
+  void apply_security(pdcp_rx_buffer_info pdu_info);
 
-  void apply_reordering(pdcp_rx_sdu_info pdu_info);
+  void apply_reordering(pdcp_rx_buffer_info pdu_info);
 
   /// \brief Handles a received control PDU.
   /// \param buf The control PDU to be handled (including header and payload)
-  void handle_control_pdu(byte_buffer_chain buf);
+  void handle_control_pdu(byte_buffer_chain pdu);
 
   void deliver_all_consecutive_counts();
   void deliver_all_sdus();

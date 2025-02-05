@@ -236,48 +236,46 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
     return;
   }
 
-  pdcp_rx_sdu_info pdu_info;
-  pdu_info.sdu             = std::move(pdu);
-  pdu_info.count           = rcvd_count;
-  pdu_info.time_of_arrival = time_start;
+  pdcp_rx_buffer_info pdu_info{
+      .buf = std::move(pdu), .count = rcvd_count, .time_of_arrival = time_start, .token = token_mngr.get_token()};
 
   // apply security in crypto executor
-  token_mngr.get_token();
   auto fn = [this, pdu_info = std::move(pdu_info)]() mutable { apply_security(std::move(pdu_info)); };
   if (not crypto_executor.execute(std::move(fn))) {
     logger.log_warning("Dropped PDU, crypto executor queue is full. count={}", rcvd_count);
   }
 }
 
-void pdcp_entity_rx::apply_security(pdcp_rx_sdu_info pdu_info)
+void pdcp_entity_rx::apply_security(pdcp_rx_buffer_info pdu_info)
 {
   uint32_t rcvd_count = pdu_info.count;
 
   // Apply deciphering and integrity check
-  security::security_result result = apply_deciphering_and_integrity_check(std::move(pdu_info.sdu), rcvd_count);
+  security::security_result result = apply_deciphering_and_integrity_check(std::move(pdu_info.buf), rcvd_count);
 
   if (!result.buf.has_value()) {
-    auto handle_failure = [this, sec_err = result.buf.error(), count = result.count]() {
-      switch (sec_err) {
-        case srsran::security::security_error::integrity_failure:
-          logger.log_warning("Integrity failed, dropping PDU. count={}", count);
-          metrics.add_integrity_failed_pdus(1);
-          upper_cn.on_integrity_failure();
-          break;
-        case srsran::security::security_error::ciphering_failure:
-          logger.log_warning("Deciphering failed, dropping PDU. count={}", count);
-          upper_cn.on_protocol_failure();
-          break;
-        case srsran::security::security_error::buffer_failure:
-          logger.log_error("Buffer error when decrypting and verifying integrity, dropping PDU. count={}", count);
-          upper_cn.on_protocol_failure();
-          break;
-        case srsran::security::security_error::engine_failure:
-          logger.log_error("Engine error when decrypting and verifying integrity, dropping PDU. count={}", count);
-          upper_cn.on_protocol_failure();
-          break;
-      }
-    };
+    auto handle_failure =
+        [this, sec_err = result.buf.error(), count = result.count, token = std::move(pdu_info.token)]() {
+          switch (sec_err) {
+            case srsran::security::security_error::integrity_failure:
+              logger.log_warning("Integrity failed, dropping PDU. count={}", count);
+              metrics.add_integrity_failed_pdus(1);
+              upper_cn.on_integrity_failure();
+              break;
+            case srsran::security::security_error::ciphering_failure:
+              logger.log_warning("Deciphering failed, dropping PDU. count={}", count);
+              upper_cn.on_protocol_failure();
+              break;
+            case srsran::security::security_error::buffer_failure:
+              logger.log_error("Buffer error when decrypting and verifying integrity, dropping PDU. count={}", count);
+              upper_cn.on_protocol_failure();
+              break;
+            case srsran::security::security_error::engine_failure:
+              logger.log_error("Engine error when decrypting and verifying integrity, dropping PDU. count={}", count);
+              upper_cn.on_protocol_failure();
+              break;
+          }
+        };
     if (not ue_ul_executor.execute(std::move(handle_failure))) {
       logger.log_warning("Dropped PDU with security error, UE executor queue is full. count={} sec_err={}",
                          rcvd_count,
@@ -291,7 +289,7 @@ void pdcp_entity_rx::apply_security(pdcp_rx_sdu_info pdu_info)
   unsigned hdr_size = cfg.sn_size == pdcp_sn_size::size12bits ? 2 : 3;
   result.buf.value().trim_head(hdr_size);
 
-  pdu_info.sdu = std::move(result.buf.value());
+  pdu_info.buf = std::move(result.buf.value());
 
   // apply reordering in UE executor
   auto fn = [this, pdu_info = std::move(pdu_info)]() mutable {
@@ -303,9 +301,8 @@ void pdcp_entity_rx::apply_security(pdcp_rx_sdu_info pdu_info)
   }
 }
 
-void pdcp_entity_rx::apply_reordering(pdcp_rx_sdu_info pdu_info)
+void pdcp_entity_rx::apply_reordering(pdcp_rx_buffer_info pdu_info)
 {
-  token_mngr.return_token();
   uint32_t rcvd_count = pdu_info.count;
   /*
    * Check valid rcvd_count:
@@ -332,7 +329,8 @@ void pdcp_entity_rx::apply_reordering(pdcp_rx_sdu_info pdu_info)
 
   // Store PDU in Rx window
   pdcp_rx_sdu_info& sdu_info = rx_window.add_sn(rcvd_count);
-  sdu_info                   = std::move(pdu_info);
+  sdu_info.sdu               = std::move(pdu_info.buf);
+  sdu_info.time_of_arrival   = pdu_info.time_of_arrival;
 
   // Update RX_NEXT
   if (rcvd_count >= st.rx_next) {

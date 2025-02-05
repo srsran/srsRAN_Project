@@ -16,6 +16,24 @@
 
 namespace srsran {
 
+class pdcp_crypto_token_manager;
+
+class pdcp_crypto_token
+{
+public:
+  pdcp_crypto_token(pdcp_crypto_token_manager& mngr_);
+
+  pdcp_crypto_token(pdcp_crypto_token&&)                 = default;
+  pdcp_crypto_token& operator=(pdcp_crypto_token&&)      = delete;
+  pdcp_crypto_token(const pdcp_crypto_token&)            = delete;
+  pdcp_crypto_token& operator=(const pdcp_crypto_token&) = delete;
+
+  ~pdcp_crypto_token();
+
+private:
+  pdcp_crypto_token_manager& mngr;
+};
+
 class pdcp_crypto_token_manager
 {
 public:
@@ -38,7 +56,10 @@ public:
     }
   }
 
-  void get_token()
+  [[nodiscard]] pdcp_crypto_token get_token() { return pdcp_crypto_token{*this}; }
+
+private:
+  void increment_token()
   {
     tokens++;
     logger.log_debug("Increased token count. tokens={}", tokens);
@@ -50,7 +71,6 @@ public:
     logger.log_debug("Decreased token count. tokens={}", tokens);
   }
 
-private:
   void set_once()
   {
     if (not was_set) {
@@ -67,6 +87,8 @@ private:
   timer_factory             ue_timer_factory;
   unique_timer              retry_timer;
   const pdcp_bearer_logger& logger;
+
+  friend class pdcp_crypto_token;
 };
 
 } // namespace srsran

@@ -592,7 +592,7 @@ async_task<void> pdu_session_manager_impl::await_crypto_rx_all_pdu_sessions()
 {
   logger.log_debug("Awaiting all crypto tasks to finish in PDU session");
   auto ps_it = pdu_sessions.begin();
-  return launch_async([this, &ps_it](coro_context<async_task<void>>& ctx) mutable {
+  return launch_async([this, ps_it](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     for (; ps_it != pdu_sessions.end(); ++ps_it) {
@@ -606,7 +606,7 @@ async_task<void> pdu_session_manager_impl::await_crypto_rx_all_drbs(const std::u
 {
   logger.log_debug("Awaiting all crypto tasks to finish in PDU session");
   auto drb_it = pdu_session->drbs.begin();
-  return launch_async([&drb_it, &pdu_session](coro_context<async_task<void>>& ctx) mutable {
+  return launch_async([drb_it, &pdu_session](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
     for (; drb_it != pdu_session->drbs.end(); ++drb_it) {
       CORO_AWAIT(drb_it->second->pdcp->rx_crypto_awaitable());

@@ -38,12 +38,12 @@ class pdcp_rx_test_frame : public pdcp_tx_status_handler,
                            public pdcp_rx_upper_control_notifier
 {
 public:
-  std::queue<byte_buffer>       sdu_queue              = {};
+  std::queue<byte_buffer>       sdu_queue;
   uint32_t                      sdu_counter            = 0;
   uint32_t                      integrity_fail_counter = 0;
   uint32_t                      nof_max_count_reached  = 0;
   uint32_t                      nof_protocol_failure   = 0;
-  std::queue<byte_buffer_chain> status_report_queue    = {};
+  std::queue<byte_buffer_chain> status_report_queue;
 
   /// PDCP TX status handler
   void on_status_report(byte_buffer_chain status) override { status_report_queue.push(std::move(status)); }
@@ -163,7 +163,7 @@ protected:
   pdcp_rx_config                      config  = {};
   timer_manager                       timers;
   manual_task_worker                  worker{64};
-  std::unique_ptr<pdcp_rx_test_frame> test_frame = {};
+  std::unique_ptr<pdcp_rx_test_frame> test_frame;
 
   const uint32_t nof_crypto_threads = 2;
   unsigned       crypto_queue_size  = 128;

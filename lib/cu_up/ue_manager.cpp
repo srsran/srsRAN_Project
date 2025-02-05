@@ -119,7 +119,7 @@ async_task<void> ue_manager::remove_ue(ue_index_t ue_index)
 
     // Switch to UE control executor. Disconnect DRBS.
     CORO_AWAIT(execute_on_blocking(ue_ctxt->ue_exec_mapper->ctrl_executor(), timers));
-    CORO_AWAIT(ue_ctxt->disconnect());
+    ue_ctxt->disconnect();
 
     // Switch to UE UL executor. Await pending UL crypto tasks.
     CORO_AWAIT(execute_on_blocking(ue_ctxt->ue_exec_mapper->ul_pdu_executor(), timers));
