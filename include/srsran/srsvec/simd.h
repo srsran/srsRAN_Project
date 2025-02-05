@@ -553,7 +553,8 @@ inline simd_f_t srsran_simd_f_sqrt(simd_f_t a)
 inline simd_f_t srsran_simd_f_neg(simd_f_t a)
 {
 #ifdef __AVX512F__
-  return _mm512_xor_ps(_mm512_set1_ps(-0.0f), a);
+  // Avoid using _mm512_xor_ps requires AVX512DQ.
+  return _mm512_castsi512_ps(_mm512_xor_si512(_mm512_castps_si512(_mm512_set1_ps(-0.0f)), _mm512_castps_si512(a)));
 #else /* __AVX512F__ */
 #ifdef __AVX2__
   return _mm256_xor_ps(_mm256_set1_ps(-0.0f), a);
