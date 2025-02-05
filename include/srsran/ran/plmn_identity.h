@@ -213,6 +213,7 @@ public:
 
   bool operator==(const plmn_identity& rhs) const { return data == rhs.data; }
   bool operator!=(const plmn_identity& rhs) const { return data != rhs.data; }
+  bool operator<(const plmn_identity& rhs) const { return data < rhs.data; }
 
 private:
   uint32_t data;
