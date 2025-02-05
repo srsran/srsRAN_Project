@@ -28,7 +28,10 @@ void du_param_config_procedure::operator()(coro_context<async_task<du_param_conf
   CORO_BEGIN(ctx);
 
   // Update DU cell configs.
-  handle_cell_config_updates();
+  if (not handle_cell_config_updates()) {
+    resp.success = false;
+    CORO_EARLY_RETURN(resp);
+  }
 
   for (; next_cell_idx != changed_cells.size(); ++next_cell_idx) {
     // Reconfigure cell in the MAC.
@@ -46,14 +49,14 @@ void du_param_config_procedure::operator()(coro_context<async_task<du_param_conf
   CORO_RETURN(resp);
 }
 
-void du_param_config_procedure::handle_cell_config_updates()
+bool du_param_config_procedure::handle_cell_config_updates()
 {
   for (const du_cell_param_config_request& cell_to_update : request.cells) {
     du_cell_index_t cell_index = du_cells.get_cell_index(cell_to_update.nr_cgi);
     if (cell_index == INVALID_DU_CELL_INDEX) {
-      logger.error("Discarding cell {} changes. Cause: No cell with the provided CGI was found",
-                   cell_to_update.nr_cgi.nci);
-      continue;
+      logger.warning("Discarding cell {} changes. Cause: No cell with the provided CGI was found",
+                     cell_to_update.nr_cgi.nci);
+      return false;
     }
 
     du_cell_config& cell_cfg = du_cells.get_cell_cfg(cell_index);
@@ -66,6 +69,8 @@ void du_param_config_procedure::handle_cell_config_updates()
       changed_cells.push_back(cell_index);
     }
   }
+
+  return true;
 }
 
 async_task<gnbdu_config_update_response> du_param_config_procedure::handle_f1_gnbdu_config_update()

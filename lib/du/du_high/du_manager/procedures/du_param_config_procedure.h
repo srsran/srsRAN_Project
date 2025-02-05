@@ -28,13 +28,13 @@ public:
   void operator()(coro_context<async_task<du_param_config_response>>& ctx);
 
 private:
-  // Helper to configure the DU cell parameters.
-  void handle_cell_config_updates();
+  /// Helper to configure the DU cell parameters.
+  bool handle_cell_config_updates();
 
-  // Helper to run F1AP gNB-DU config update procedure.
+  /// Helper to run F1AP gNB-DU config update procedure.
   async_task<gnbdu_config_update_response> handle_f1_gnbdu_config_update();
 
-  // Helper to update MAC of the new cell parameters.
+  /// Helper to update MAC of the new cell parameters.
   async_task<mac_cell_reconfig_response> handle_mac_cell_update(unsigned cell_idx);
 
   const du_param_config_request request;
