@@ -51,6 +51,8 @@ using pusch_demodulator_metric_notifier         = detail::phy_metric_notifier<pu
 using time_alignment_estimator_metric_notifier  = detail::phy_metric_notifier<time_alignment_estimator_metrics>;
 using port_channel_estimator_metric_notifier    = detail::phy_metric_notifier<port_channel_estimator_metrics>;
 using transform_precoder_metric_notifier        = detail::phy_metric_notifier<transform_precoder_metrics>;
+using pdsch_processor_metric_notifier           = detail::phy_metric_notifier<pdsch_processor_metrics>;
+using pdsch_dmrs_generator_metric_notifier      = detail::phy_metric_notifier<pdsch_dmrs_generator_metrics>;
 
 /// Groups upper physical layer metric notifiers.
 class upper_phy_metrics_notifiers
@@ -77,6 +79,8 @@ public:
   virtual time_alignment_estimator_metric_notifier&         get_pusch_ta_estimator_notifier()           = 0;
   virtual port_channel_estimator_metric_notifier&           get_pusch_port_channel_estimator_notifier() = 0;
   virtual transform_precoder_metric_notifier&               get_pusch_transform_precoder_notifier()     = 0;
+  virtual pdsch_processor_metric_notifier&                  get_pdsch_processor_notifier()              = 0;
+  virtual pdsch_dmrs_generator_metric_notifier&             get_pdsch_dmrs_generator()                  = 0;
 };
 
 } // namespace srsran

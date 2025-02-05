@@ -940,15 +940,22 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   std::shared_ptr<sss_processor_factory> sss_proc_factory = create_sss_processor_factory_sw();
   report_fatal_error_if_not(sss_proc_factory, "Invalid SSS factory.");
 
-  // Create DMRS generators - PDCCH
+  // Create PDCCH DM-RS generators.
   std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_pdcch_proc_factory =
       create_dmrs_pdcch_processor_factory_sw(prg_factory, rg_mapper_factory);
   report_fatal_error_if_not(dmrs_pdcch_proc_factory, "Invalid DMRS PDCCH factory.");
 
-  // Create DMRS generators - PDSCH
+  // Create PDSCH DM-RS generator.
   std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_pdsch_proc_factory =
       create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
   report_fatal_error_if_not(dmrs_pdsch_proc_factory, "Invalid DMRS PDSCH factory.");
+
+  // Wrap DM-RS for PDSCH factory with a metric decorator.
+  if (metric_notifier) {
+    dmrs_pdsch_proc_factory = create_dmrs_pdsch_generator_metric_decorator_factory(
+        std::move(dmrs_pdsch_proc_factory), metric_notifier->get_pdsch_dmrs_generator());
+    report_fatal_error_if_not(dmrs_pdsch_proc_factory, "Invalid metric DM-RS PDSCH generator factory.");
+  }
 
   // Create PTRS generators - PDSCH
   std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_gen_factory =
@@ -962,9 +969,11 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
   // Create channel processors - PDSCH
   std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory;
+  unsigned                                 max_nof_asynchronous_pdsch = 0;
   if (std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory = create_pdsch_processor_factory_sw(
         pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory, ptrs_pdsch_gen_factory);
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid generic PDSCH processor factory.");
   } else if (std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
     const pdsch_processor_concurrent_configuration& pdsch_processor_config =
         std::get<pdsch_processor_concurrent_configuration>(config.pdsch_processor);
@@ -972,6 +981,8 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                               "The number of threads (i.e., {}) must be equal to or greater than 1.");
     report_fatal_error_if_not(pdsch_processor_config.pdsch_codeblock_task_executor != nullptr,
                               "Invalid codeblock executor.");
+
+    max_nof_asynchronous_pdsch = pdsch_processor_config.max_nof_simultaneous_pdsch;
 
     // Create concurrent PDSCH processor factory base.
     pdsch_proc_factory =
@@ -985,11 +996,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                      ptrs_pdsch_gen_factory,
                                                      *pdsch_processor_config.pdsch_codeblock_task_executor,
                                                      pdsch_processor_config.nof_pdsch_codeblock_threads);
-    report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
-
-    // Wrap PDSCH processor factory with a PDSCH processor asynchronous pool.
-    pdsch_proc_factory = create_pdsch_processor_asynchronous_pool(std::move(pdsch_proc_factory),
-                                                                  pdsch_processor_config.max_nof_simultaneous_pdsch);
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid concurrent PDSCH processor factory.");
   } else if (std::holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory = create_pdsch_lite_processor_factory_sw(ldpc_seg_tx_factory,
                                                                 ldpc_enc_factory,
@@ -999,8 +1006,22 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                                 dmrs_pdsch_proc_factory,
                                                                 ptrs_pdsch_gen_factory,
                                                                 pdsch_rg_mapper_factory);
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid lite PDSCH processor factory.");
   }
-  report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
+
+  // Wrap PDSCH processor factory with a metric decorator.
+  if (metric_notifier) {
+    pdsch_proc_factory = create_pdsch_processor_metric_decorator_factory(
+        std::move(pdsch_proc_factory), metric_notifier->get_pdsch_processor_notifier());
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid metric PDSCH processor factory.");
+  }
+
+  // Wrap PDSCH processor factory with a PDSCH processor asynchronous pool if necessary.
+  if (max_nof_asynchronous_pdsch != 0) {
+    pdsch_proc_factory =
+        create_pdsch_processor_asynchronous_pool(std::move(pdsch_proc_factory), max_nof_asynchronous_pdsch);
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
+  }
 
   // Create channel processors - SSB
   ssb_processor_factory_sw_configuration ssb_factory_config;

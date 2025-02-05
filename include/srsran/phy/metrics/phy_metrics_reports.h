@@ -196,4 +196,20 @@ struct transform_precoder_metrics {
   unsigned nof_re;
 };
 
+/// Collects PDSCH processor metrics.
+struct pdsch_processor_metrics {
+  /// Codeblock size.
+  units::bytes tbs;
+  /// Elapsed time between the start of the processing and the return.
+  std::chrono::nanoseconds elapsed_return;
+  /// Elapsed time between the start of the processing and the completion of the processing.
+  std::chrono::nanoseconds elapsed_completion;
+};
+
+/// Collects PDSCH processor metrics.
+struct pdsch_dmrs_generator_metrics {
+  /// Total elapsed time.
+  std::chrono::nanoseconds elapsed;
+};
+
 } // namespace srsran

@@ -19,6 +19,8 @@
 #include "phy_metrics_ldpc_rate_dematcher_decorator.h"
 #include "phy_metrics_ldpc_rate_matcher_decorator.h"
 #include "phy_metrics_modulation_mapper_decorator.h"
+#include "phy_metrics_pdsch_dmrs_generator_decorator.h"
+#include "phy_metrics_pdsch_processor_decorator.h"
 #include "phy_metrics_port_channel_estimator_decorator.h"
 #include "phy_metrics_pseudo_random_generator_decorator.h"
 #include "phy_metrics_pusch_channel_estimator_decorator.h"
@@ -320,4 +322,27 @@ srsran::create_transform_precoder_metric_decorator_factory(std::shared_ptr<trans
                                                    transform_precoder_metric_notifier,
                                                    phy_metrics_transform_precoder_decorator>>(std::move(base_factory),
                                                                                               notifier);
+}
+
+std::shared_ptr<pdsch_processor_factory>
+srsran::create_pdsch_processor_metric_decorator_factory(std::shared_ptr<pdsch_processor_factory> base_factory,
+                                                        pdsch_processor_metric_notifier&         notifier)
+{
+  return std::make_shared<metric_decorator_factory_with_validator<pdsch_processor,
+                                                                  pdsch_pdu_validator,
+                                                                  pdsch_processor_factory,
+                                                                  pdsch_processor_metric_notifier,
+                                                                  phy_metrics_pdsch_processor_decorator>>(
+      std::move(base_factory), notifier);
+}
+
+std::shared_ptr<dmrs_pdsch_processor_factory>
+srsran::create_dmrs_pdsch_generator_metric_decorator_factory(std::shared_ptr<dmrs_pdsch_processor_factory> base_factory,
+                                                             pdsch_dmrs_generator_metric_notifier&         notifier)
+{
+  return std::make_shared<metric_decorator_factory<dmrs_pdsch_processor,
+                                                   dmrs_pdsch_processor_factory,
+                                                   pdsch_dmrs_generator_metric_notifier,
+                                                   phy_metrics_dmrs_pdsch_processor_decorator>>(std::move(base_factory),
+                                                                                                notifier);
 }

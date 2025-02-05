@@ -18,6 +18,8 @@
 #include "ldpc_encoder_metrics_producer.h"
 #include "ldpc_rate_dematcher_metrics_producer.h"
 #include "ldpc_rate_matcher_metrics_producer.h"
+#include "pdsch_dmrs_generator_metrics_producer.h"
+#include "pdsch_processor_metrics_producer.h"
 #include "port_channel_estimator_metrics_producer.h"
 #include "pseudo_random_sequence_metrics_producer.h"
 #include "pusch_channel_estimator_metrics_producer.h"
@@ -212,6 +214,14 @@ public:
     fmt::print("                  four layers: {:.2f} MREps\n",
                pdsch_channel_precoder_producer.get_average_rate_MRes(4));
     fmt::print("\n");
+    fmt::print("--- PDSCH Processor metrics ---\n");
+    fmt::print("  Avg. processing latency: {:.2f} us\n", pdsch_processor_producer.get_avg_latency_us());
+    fmt::print("      Avg. return latency: {:.2f} us\n", pdsch_processor_producer.get_avg_return_time_us());
+    fmt::print("     Avg. processing rate: {:.2f} Mbps\n", pdsch_processor_producer.get_process_rate_Mbps());
+    fmt::print("\n");
+    fmt::print("--- DM-RS for PDSCH generator metrics ---\n");
+    fmt::print("  Avg. generation latency: {:.2f} us\n", pdsch_dmrs_generator_producer.get_avg_latency_us());
+    fmt::print("\n");
   }
 
   // See interface for documentation.
@@ -334,6 +344,18 @@ private:
     return ldpc_rate_dematcher_producer.get_notifier();
   }
 
+  // See interface for documentation.
+  pdsch_processor_metric_notifier& get_pdsch_processor_notifier() override
+  {
+    return pdsch_processor_producer.get_notifier();
+  }
+
+  // See interface for documentation.
+  pdsch_dmrs_generator_metric_notifier& get_pdsch_dmrs_generator() override
+  {
+    return pdsch_dmrs_generator_producer.get_notifier();
+  }
+
   /// PDSCH CRC calculator metric producer implementation.
   crc_calculator_metric_producer_impl pdsch_crc_calculator_producer;
   /// PUSCH CRC calculator metric producer implementation.
@@ -374,6 +396,10 @@ private:
   port_channel_estimator_metric_producer_impl pusch_port_ch_estimator_producer;
   /// PUSCH transform precoder metric producer.
   transform_precoder_metric_producer_impl pusch_transform_precoder_producer;
+  /// PDSCH processor metric producer.
+  pdsch_processor_metric_producer_impl pdsch_processor_producer;
+  /// PDSCH DM-RS metric producer.
+  pdsch_dmrs_generator_metric_producer_impl pdsch_dmrs_generator_producer;
 }; // namespace srsran
 
 } // namespace srsran
