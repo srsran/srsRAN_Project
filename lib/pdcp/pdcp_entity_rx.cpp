@@ -78,7 +78,7 @@ void pdcp_entity_rx::stop()
   if (not stopped) {
     stopped = true;
     reordering_timer.stop();
-    token_mngr.set_flag_when_finished();
+    token_mngr.stop();
     logger.log_debug("Stopped PDCP entity");
   }
 }
@@ -246,7 +246,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
   }
 }
 
-void pdcp_entity_rx::apply_security(pdcp_rx_buffer_info pdu_info)
+void pdcp_entity_rx::apply_security(pdcp_rx_buffer_info&& pdu_info)
 {
   uint32_t rcvd_count = pdu_info.count;
 

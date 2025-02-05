@@ -65,6 +65,11 @@ public:
 class pdcp_rx_test_helper
 {
 protected:
+  pdcp_rx_test_helper(task_executor& crypto_exec_, manual_task_worker& ul_worker) :
+    worker(ul_worker), crypto_exec(crypto_exec_)
+  {
+  }
+
   /// \brief Initializes fixture according to size sequence number size
   /// \param sn_size_ size of the sequence number
   void init(std::tuple<pdcp_sn_size, unsigned> cfg_param,
@@ -162,9 +167,32 @@ protected:
   unsigned                            algo    = {};
   pdcp_rx_config                      config  = {};
   timer_manager                       timers;
-  manual_task_worker                  worker{64};
   std::unique_ptr<pdcp_rx_test_frame> test_frame;
 
+  const uint32_t nof_crypto_threads = 2;
+  unsigned       crypto_queue_size  = 128;
+
+  manual_task_worker& worker;
+  task_executor&      crypto_exec;
+
+  security::sec_128_as_config              sec_cfg;
+  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
+  std::unique_ptr<pdcp_entity_rx>          pdcp_rx;
+  mock_pdcp_metrics_notifier               metrics_notif;
+  pdcp_rx_lower_interface*                 pdcp_rx_lower = nullptr;
+};
+
+/// Fixture class for PDCP tests
+class pdcp_rx_test_helper_default_crypto : public pdcp_rx_test_helper
+{
+public:
+  pdcp_rx_test_helper_default_crypto() : pdcp_rx_test_helper(crypto_exec, ul_worker) {}
+
+protected:
+  void               wait_pending_crypto() { crypto_worker_pool.wait_pending_tasks(); }
+  manual_task_worker ul_worker{64};
+
+private:
   const uint32_t nof_crypto_threads = 2;
   unsigned       crypto_queue_size  = 128;
 
@@ -173,11 +201,25 @@ protected:
                                                                               crypto_queue_size};
   task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc> crypto_exec =
       task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(crypto_worker_pool);
+};
 
-  security::sec_128_as_config              sec_cfg;
-  std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
-  std::unique_ptr<pdcp_entity_rx>          pdcp_rx;
-  mock_pdcp_metrics_notifier               metrics_notif;
-  pdcp_rx_lower_interface*                 pdcp_rx_lower = nullptr;
+class pdcp_rx_test_helper_manual_crypto : public pdcp_rx_test_helper
+{
+public:
+  pdcp_rx_test_helper_manual_crypto() :
+    pdcp_rx_test_helper(crypto_worker, ul_worker),
+    crypto_worker(
+        4096,
+        true,
+        true) // use crypto worker explicit_mode to always have to manually pop tasks, even with matching thread IDs.
+  {
+  }
+
+protected:
+  void               wait_pending_crypto() { crypto_worker.run_pending_tasks(); }
+  manual_task_worker ul_worker{64, true, true};
+
+private:
+  manual_task_worker crypto_worker;
 };
 } // namespace srsran

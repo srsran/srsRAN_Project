@@ -12,6 +12,7 @@
 
 #include "pdcp_bearer_logger.h"
 #include "srsran/support/async/manual_event.h"
+#include "srsran/support/srsran_assert.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {
@@ -23,7 +24,7 @@ class pdcp_crypto_token
 public:
   pdcp_crypto_token(pdcp_crypto_token_manager& mngr_);
 
-  pdcp_crypto_token(pdcp_crypto_token&&)                 = default;
+  pdcp_crypto_token(pdcp_crypto_token&& obj) noexcept : mngr(obj.mngr) { obj.was_moved = true; }
   pdcp_crypto_token& operator=(pdcp_crypto_token&&)      = delete;
   pdcp_crypto_token(const pdcp_crypto_token&)            = delete;
   pdcp_crypto_token& operator=(const pdcp_crypto_token&) = delete;
@@ -31,6 +32,7 @@ public:
   ~pdcp_crypto_token();
 
 private:
+  bool                       was_moved = false;
   pdcp_crypto_token_manager& mngr;
 };
 
@@ -40,19 +42,15 @@ public:
   explicit pdcp_crypto_token_manager(timer_factory ue_timer_factory_, const pdcp_bearer_logger& logger_) :
     ue_timer_factory(ue_timer_factory_), logger(logger_)
   {
-    retry_timer = ue_timer_factory.create_timer();
-    retry_timer.set(std::chrono::milliseconds(5), [this](timer_id_t tid) { set_flag_when_finished(); });
   }
 
   manual_event_flag& get_awaitable() { return pending_crypto; }
 
-  void set_flag_when_finished()
+  void stop()
   {
+    stopped = true;
     if (tokens == 0) {
       set_once();
-    } else {
-      // Retry running the timer.
-      retry_timer.run();
     }
   }
 
@@ -61,13 +59,18 @@ public:
 private:
   void increment_token()
   {
+    srsran_assert(not stopped, "Trying to allocate more tokens, even though token manager has stopped.");
     tokens++;
     logger.log_debug("Increased token count. tokens={}", tokens);
   }
 
   void return_token()
   {
+    srsran_assert(tokens != 0, "Error counting crypto tokens. There are less tokens available then the ones granted.");
     tokens--;
+    if (stopped) {
+      set_once();
+    }
     logger.log_debug("Decreased token count. tokens={}", tokens);
   }
 
@@ -80,6 +83,7 @@ private:
     was_set = true;
   }
 
+  bool              stopped = false;
   bool              was_set = false;
   manual_event_flag pending_crypto;
 

@@ -154,7 +154,7 @@ private:
   /// \param pdu The data PDU to be handled (including header and payload)
   void handle_data_pdu(byte_buffer pdu);
 
-  void apply_security(pdcp_rx_buffer_info pdu_info);
+  void apply_security(pdcp_rx_buffer_info&& pdu_info);
 
   void apply_reordering(pdcp_rx_buffer_info pdu_info);
 

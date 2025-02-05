@@ -19,7 +19,9 @@ pdcp_crypto_token::pdcp_crypto_token(pdcp_crypto_token_manager& mngr_) : mngr(mn
 
 pdcp_crypto_token::~pdcp_crypto_token()
 {
-  mngr.return_token();
+  if (not was_moved) {
+    mngr.return_token();
+  }
 }
 
 } // namespace srsran

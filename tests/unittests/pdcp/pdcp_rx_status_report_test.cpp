@@ -48,7 +48,7 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
     get_test_pdu(i, test_pdu);
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu)).value());
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
 
     // Check status report while Rx'ing PDUs in reverse order (bitmap present)
@@ -74,7 +74,7 @@ TEST_P(pdcp_rx_status_report_test, build_status_report)
   pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu)).value());
 
   // Wait for crypto and reordering
-  crypto_worker_pool.wait_pending_tasks();
+  wait_pending_crypto();
   worker.run_pending_tasks();
 
   // Check status report in the final state (no bitmap present)
@@ -125,14 +125,14 @@ TEST_P(pdcp_rx_status_report_test, build_truncated_status_report)
   get_test_pdu(count + (9000 - 5) * 8, test_pdu1); // Rx PDU with a COUNT value at max capacity of the report
   pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
   // Wait for crypto and reordering
-  crypto_worker_pool.wait_pending_tasks();
+  wait_pending_crypto();
   worker.run_pending_tasks();
 
   byte_buffer test_pdu2;
   get_test_pdu(count + 1 + (9000 - 5) * 8, test_pdu2); // Rx PDU with a COUNT value beyond max capacity of the report
   pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
   // Wait for crypto and reordering
-  crypto_worker_pool.wait_pending_tasks();
+  wait_pending_crypto();
   worker.run_pending_tasks();
 
   // Check status report in the final state (truncated bitmap present)
@@ -186,7 +186,7 @@ TEST_P(pdcp_rx_status_report_test, rx_status_report)
   pdcp_rx->handle_pdu(byte_buffer_chain::create(buf.deep_copy().value()).value());
 
   // Wait for crypto and reordering
-  crypto_worker_pool.wait_pending_tasks();
+  wait_pending_crypto();
   worker.run_pending_tasks();
 
   // Check the status report was forwared to the Tx entity
@@ -199,7 +199,7 @@ TEST_P(pdcp_rx_status_report_test, rx_status_report)
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
-std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
+static std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer),
