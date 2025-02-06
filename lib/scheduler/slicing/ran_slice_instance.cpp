@@ -78,6 +78,8 @@ void ran_slice_instance::rem_ue(du_ue_index_t ue_idx)
   if (not slice_ues.contains(ue_idx)) {
     return;
   }
+
+  slice_ues[ue_idx].rem_logical_channels();
   slice_ues.erase(ue_idx);
 }
 

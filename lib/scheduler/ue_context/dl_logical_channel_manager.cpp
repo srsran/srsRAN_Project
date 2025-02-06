@@ -24,6 +24,7 @@ static unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
 // Initial capacity for the sorted_channels vector.
 constexpr unsigned INITIAL_CHANNEL_VEC_CAPACITY = 8;
 
+// Initial capacity for the slice_lcid_list_lookup vector.
 constexpr unsigned INITIAL_SLICE_CAPACITY = 4;
 
 dl_logical_channel_manager::dl_logical_channel_manager(subcarrier_spacing scs_common_) :
@@ -77,6 +78,17 @@ void dl_logical_channel_manager::reset_ran_slice(lcid_t lcid)
   channels[lcid].slice_id.reset();
 }
 
+void dl_logical_channel_manager::deactivate(ran_slice_id_t slice_id)
+{
+  if (not has_slice(slice_id)) {
+    return;
+  }
+  for (channel_context& ch : slice_lcid_list_lookup[slice_id.value()]) {
+    ch.slice_id.reset();
+  }
+  slice_lcid_list_lookup[slice_id.value()].clear();
+}
+
 void dl_logical_channel_manager::set_ran_slice(lcid_t lcid, ran_slice_id_t slice_id)
 {
   if (channels[lcid].slice_id == slice_id) {
@@ -117,6 +129,7 @@ void dl_logical_channel_manager::configure(logical_channel_config_list_ptr log_c
   if (old_cfgs.has_value()) {
     for (const auto& old_lc : *old_cfgs) {
       if (not channel_configs->contains(old_lc->lcid)) {
+        reset_ran_slice(old_lc->lcid);
         channels[old_lc->lcid].reset();
       }
     }

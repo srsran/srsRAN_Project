@@ -177,6 +177,7 @@ public:
 
   /// \brief UE UL logical channels.
   const ul_logical_channel_manager& ul_logical_channels() const { return ul_lc_ch_mgr; }
+  ul_logical_channel_manager&       ul_logical_channels() { return ul_lc_ch_mgr; }
 
   /// \brief Handle UL TB scheduling.
   void handle_ul_transport_block_info(unsigned tb_size_bytes) { ul_lc_ch_mgr.handle_ul_grant(tb_size_bytes); }

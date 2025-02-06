@@ -11,6 +11,8 @@
 #pragma once
 
 #include "../config/logical_channel_list_config.h"
+#include "../slicing/ran_slice_id.h"
+#include "srsran/adt/intrusive_list.h"
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/support/math/moving_averager.h"
@@ -31,6 +33,25 @@ public:
   /// Deactivate all logical channel groups, handling of SRs to prepare for UE removal.
   void deactivate();
 
+  /// Assign a RAN slice to a logical channel group.
+  void set_ran_slice(lcg_id_t lcgid, ran_slice_id_t slice_id);
+
+  /// Detach logical channel group from previously set RAN slice.
+  void reset_ran_slice(lcg_id_t lcgid);
+
+  /// Deactivate RAN slice and detach the associated logical channel groups.
+  void deactivate(ran_slice_id_t slice_id);
+
+  /// Determines whether a RAN slice has at least one bearer associated with it.
+  bool has_slice(ran_slice_id_t slice_id) const
+  {
+    unsigned idx = slice_id.value();
+    return idx < slice_lcgid_list_lookup.size() and not slice_lcgid_list_lookup[idx].empty();
+  }
+
+  /// Get the RAN slice ID associated with a logical channel group.
+  std::optional<ran_slice_id_t> get_slice_id(lcg_id_t lcgid) const { return groups[lcgid].slice_id; }
+
   /// Signal the start of a new slot.
   void slot_indication();
 
@@ -50,14 +71,10 @@ public:
   }
 
   /// \brief Calculates total number of UL bytes.
-  unsigned pending_bytes() const
-  {
-    unsigned bytes = 0;
-    for (unsigned i = 0; i <= MAX_LCG_ID; ++i) {
-      bytes += pending_bytes(uint_to_lcg_id(i));
-    }
-    return bytes;
-  }
+  unsigned pending_bytes() const;
+
+  /// \brief Calculates total number of UL bytes for a given slice.
+  unsigned pending_bytes(ran_slice_id_t slice_id) const;
 
   /// \brief Returns the last UL BSR for given LCG-ID plus the estimated number of bytes required for the upper layer
   /// headers and MAC subPDU subheader.
@@ -107,7 +124,7 @@ public:
   void handle_ul_grant(unsigned grant_size);
 
 private:
-  struct channel_group_context {
+  struct channel_group_context : public intrusive_double_linked_list_element<> {
     bool active = false;
     /// DL Buffer status of this logical channel.
     unsigned buf_st = 0;
@@ -117,6 +134,8 @@ private:
     unsigned last_sched_bytes = 0;
     /// Sched bytes since last BSR.
     unsigned sched_bytes_accum = 0;
+    /// Slice associated with this channel.
+    std::optional<ran_slice_id_t> slice_id;
   };
 
   /// \brief Adds an estimate of the upper layer required header bytes.
@@ -143,6 +162,9 @@ private:
   std::atomic<bool> sr_pending{false};
 
   std::array<channel_group_context, MAX_NOF_LCGS> groups;
+
+  // Mapping of RAN slice ID to the list of associated LCG-IDs.
+  std::vector<intrusive_double_linked_list<channel_group_context>> slice_lcgid_list_lookup;
 };
 
 } // namespace srsran

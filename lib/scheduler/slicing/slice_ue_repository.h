@@ -43,9 +43,6 @@ public:
     return contains(LCID_SRB0) or contains(LCID_SRB1) or contains(LCID_SRB2) or contains(LCID_SRB3);
   }
 
-  /// Fetches the bitmap of active logical channel groups belonging to this slice.
-  const bounded_bitset<MAX_NOF_LCGS>& get_lcgs() const { return lcg_ids; }
-
   /// Fetches the logical channel group associated with a given LCID.
   lcg_id_t get_lcg_id(lcid_t lcid) const
   {
@@ -56,8 +53,8 @@ public:
   /// Determines if bearer with LCID is part of this slice.
   bool contains(lcid_t lcid) const { return u.dl_logical_channels().get_slice_id(lcid) == slice_id; }
 
-  /// Determines if LCG is part of this slice.
-  bool contains(lcg_id_t lcg_id) const { return lcg_ids.size() > lcg_id and lcg_ids.test(lcg_id); }
+  /// Determines if LCG-ID is part of this slice.
+  bool contains(lcg_id_t lcg_id) const { return u.ul_logical_channels().get_slice_id(lcg_id) == slice_id; }
 
   /// Fetch DU cell index of UE's PCell.
   const ue_cell& get_pcell() const { return u.get_pcell(); }
@@ -68,14 +65,21 @@ public:
   /// Remove LCID from the bearers of the UE belonging to this slice.
   void rem_logical_channel(lcid_t lcid);
 
+  /// Remove all bearers of the UE belonging to this slice.
+  void rem_logical_channels();
+
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
   /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
-  bool has_pending_dl_newtx_bytes() const;
+  bool has_pending_dl_newtx_bytes() const { return u.dl_logical_channels().has_pending_bytes(slice_id); }
 
-  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ.
-  /// \return The number of DL pending bytes that are not already allocated in a DL HARQ.
-  unsigned pending_dl_newtx_bytes() const;
+  /// \brief Computes the number of DL pending bytes for a given RAN slice that are not already allocated in a DL HARQ.
+  /// \return Computed DL pending bytes.
+  /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
+  unsigned pending_dl_newtx_bytes() const { return u.dl_logical_channels().pending_bytes(slice_id); }
+
+  /// \brief Computes the number of DL pending bytes for a given LCID that are not already allocated in a DL HARQ.
+  /// \return Computed DL pending bytes.
   unsigned pending_dl_newtx_bytes(lcid_t lcid) const { return contains(lcid) ? u.pending_dl_newtx_bytes(lcid) : 0; }
 
   /// \brief Computes the number of UL pending bytes in bearers belonging to this slice that are not already allocated
@@ -114,13 +118,8 @@ public:
   }
 
 private:
-  /// Helper function to get LCG ID of a bearer.
-  lcg_id_t get_lcg_id_for_bearer(lcid_t lcid) const;
-
   ue&                  u;
   const ran_slice_id_t slice_id;
-  /// LCG IDs of bearers belonging to this slice.
-  bounded_bitset<MAX_NOF_LCGS> lcg_ids;
 };
 
 /// Container that store all UEs belonging to a slice.

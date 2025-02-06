@@ -50,6 +50,9 @@ public:
   /// Detach logical channel from previously set RAN slice.
   void reset_ran_slice(lcid_t lcid);
 
+  /// Remove RAN slice and detach all associated logical channels.
+  void deactivate(ran_slice_id_t slice_id);
+
   /// Determines whether a RAN slice has at least one bearer associated with it.
   bool has_slice(ran_slice_id_t slice_id) const
   {
@@ -200,7 +203,7 @@ private:
   // priority.
   std::vector<lcid_t> sorted_channels;
 
-  // List of LCID lists, one per RAN slice.
+  // Mapping of RAN slice ID to the list of associated LCIDs.
   std::vector<intrusive_double_linked_list<channel_context>> slice_lcid_list_lookup;
 
   // Whether the UE is in fallback (no DRB tx).

@@ -19,45 +19,49 @@ void slice_ue::add_logical_channel(lcid_t lcid, lcg_id_t lcg_id)
   // Add LCID to DL slice.
   u.dl_logical_channels().set_ran_slice(lcid, slice_id);
 
-  if (lcg_id >= lcg_ids.size()) {
-    lcg_ids.resize(lcg_id + 1);
-  }
-  lcg_ids.set(lcg_id);
+  // Add LCG-ID to UL slice.
+  u.ul_logical_channels().set_ran_slice(lcg_id, slice_id);
 }
 
 void slice_ue::rem_logical_channel(lcid_t lcid)
 {
-  lcg_id_t lcg_id_to_rem = get_lcg_id_for_bearer(lcid);
-  srsran_assert(lcg_id_to_rem < MAX_NOF_LCGS, "Unable to fetch LCG ID for bearer with LCID={}", fmt::underlying(lcid));
-  // Check whether there are bearers with same LCG ID. If not, remove LCG ID from slice.
-  logical_channel_config_list_ptr lc_chs = u.ue_cfg_dedicated()->logical_channels();
-  if (std::none_of(
-          lc_chs->begin(), lc_chs->end(), [lcg_id_to_rem](const auto& lc) { return lc->lc_group == lcg_id_to_rem; })) {
-    lcg_ids.reset(lcg_id_to_rem);
+  dl_logical_channel_manager& dl_lc_mng = u.dl_logical_channels();
+  srsran_sanity_check(dl_lc_mng.has_slice(slice_id), "slice_ue should not be created without slice");
+  if (dl_lc_mng.get_slice_id(lcid) != slice_id) {
+    // LCID is not associated with this slice.
+    return;
   }
-  u.dl_logical_channels().reset_ran_slice(lcid);
+
+  // Disconnect RAN slice from LCID.
+  dl_lc_mng.reset_ran_slice(lcid);
+
+  // If there are still other bearers in the slice, do not remove the LCG ID.
+  lcg_id_t                        lcg_id_to_rem = get_lcg_id(lcid);
+  logical_channel_config_list_ptr lc_chs        = u.ue_cfg_dedicated()->logical_channels();
+  bool                            to_destroy    = true;
+  for (logical_channel_config_ptr lc : *lc_chs) {
+    if (lc->lcid != lcid and lc->lc_group == lcg_id_to_rem and dl_lc_mng.get_slice_id(lc->lcid) == slice_id) {
+      to_destroy = false;
+      break;
+    }
+  }
+  if (to_destroy) {
+    u.ul_logical_channels().reset_ran_slice(lcg_id_to_rem);
+  }
 }
 
-bool slice_ue::has_pending_dl_newtx_bytes() const
+void slice_ue::rem_logical_channels()
 {
-  return u.dl_logical_channels().has_pending_bytes(slice_id);
-}
-
-unsigned slice_ue::pending_dl_newtx_bytes() const
-{
-  return u.dl_logical_channels().pending_bytes(slice_id);
+  u.dl_logical_channels().deactivate(slice_id);
+  u.ul_logical_channels().deactivate(slice_id);
 }
 
 unsigned slice_ue::pending_ul_newtx_bytes() const
 {
   static constexpr unsigned SR_GRANT_BYTES = 512;
 
-  unsigned pending_bytes = 0;
-  for (unsigned lcg_id = 0, e = lcg_ids.size(); lcg_id != e; ++lcg_id) {
-    if (lcg_ids.test(lcg_id)) {
-      pending_bytes += u.pending_ul_newtx_bytes(uint_to_lcg_id(lcg_id));
-    }
-  }
+  unsigned pending_bytes = u.ul_logical_channels().pending_bytes(slice_id);
+
   // Subtract the bytes already allocated in UL HARQs.
   unsigned bytes_in_harqs = 0;
   for (unsigned cell_idx = 0, e = nof_cells(); cell_idx != e; ++cell_idx) {
@@ -72,15 +76,12 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
     return pending_bytes;
   }
 
-  // If there are no pending bytes, check if a SR is pending.
-  // Note: We consider all LCGs, so that the UL grant is not unnecessarily small, when there are bytes already pending
-  // for other slices of the UE.
-  if (has_pending_sr()) {
-    for (unsigned lcg_id = 0, e = lcg_ids.size(); lcg_id != e; ++lcg_id) {
-      pending_bytes += u.pending_ul_newtx_bytes(uint_to_lcg_id(lcg_id));
-    }
+  // In case a SR is pending and this is the SRB slice, we return a minimum SR grant size if no other bearers have
+  // pending data.
+  if (slice_id == SRB_RAN_SLICE_ID and has_pending_sr()) {
+    pending_bytes = u.ul_logical_channels().pending_bytes();
     pending_bytes -= std::min(pending_bytes, bytes_in_harqs);
-    return std::max(pending_bytes, SR_GRANT_BYTES);
+    return pending_bytes == 0 ? SR_GRANT_BYTES : 0;
   }
 
   return 0;
@@ -89,10 +90,4 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
 bool slice_ue::has_pending_sr() const
 {
   return u.has_pending_sr();
-}
-
-lcg_id_t slice_ue::get_lcg_id_for_bearer(lcid_t lcid) const
-{
-  logical_channel_config_list_ptr lc_chs = u.ue_cfg_dedicated()->logical_channels();
-  return lc_chs->contains(lcid) ? lc_chs.value()[lcid]->lc_group : LCG_ID_INVALID;
 }
