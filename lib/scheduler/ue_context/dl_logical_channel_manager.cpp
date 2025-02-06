@@ -21,11 +21,14 @@ static unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
   return sdu_size < MAC_SDU_SUBHEADER_LENGTH_THRES ? sdu_size : sdu_size - 1;
 }
 
+// Initial capacity for the sorted_channels vector.
+constexpr unsigned INITIAL_CHANNEL_VEC_CAPACITY = 8;
+
 dl_logical_channel_manager::dl_logical_channel_manager(subcarrier_spacing scs_common_) :
   slots_per_sec(get_nof_slots_per_subframe(scs_common_) * 1000)
 {
   // Reserve entries to avoid allocating in hot path.
-  sorted_channels.reserve(LCID_MIN_DRB);
+  sorted_channels.reserve(INITIAL_CHANNEL_VEC_CAPACITY);
 }
 
 void dl_logical_channel_manager::slot_indication()
@@ -42,10 +45,10 @@ void dl_logical_channel_manager::slot_indication()
 void dl_logical_channel_manager::deactivate()
 {
   for (unsigned lcid = LCID_SRB0; lcid <= LCID_MAX_DRB; lcid++) {
-    set_status((lcid_t)lcid, false);
+    channels[lcid].active = false;
   }
-  pending_ces.clear();
   sorted_channels.clear();
+  pending_ces.clear();
 }
 
 void dl_logical_channel_manager::set_fallback_state(bool enter_fallback)
@@ -84,6 +87,22 @@ void dl_logical_channel_manager::set_status(lcid_t lcid, bool active)
 
   // set new state.
   channels[lcid].active = active;
+
+  if (not active) {
+    // Remove LCID from sorted list if it is not active.
+    srsran_sanity_check(std::find(sorted_channels.begin(), sorted_channels.end(), lcid) != sorted_channels.end(),
+                        "Invalid state");
+    auto it = std::find(sorted_channels.begin(), sorted_channels.end(), lcid);
+    sorted_channels.erase(it);
+  } else {
+    // Add LCID to sorted list if it is now active.
+    srsran_sanity_check(std::find(sorted_channels.begin(), sorted_channels.end(), lcid) == sorted_channels.end(),
+                        "Invalid state");
+    sorted_channels.push_back(lcid);
+    std::sort(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lhs, lcid_t rhs) {
+      return get_lc_prio(*channel_configs.value()[lhs]) < get_lc_prio(*channel_configs.value()[rhs]);
+    });
+  }
 }
 
 void dl_logical_channel_manager::configure(logical_channel_config_list_ptr log_channels_configs)
@@ -114,7 +133,6 @@ void dl_logical_channel_manager::configure(logical_channel_config_list_ptr log_c
 
   // Refresh sorted channels list.
   sorted_channels.clear();
-  sorted_channels.reserve(channel_configs->size());
   for (const auto& lc_cfg : *channel_configs) {
     sorted_channels.push_back(lc_cfg->lcid);
   }
@@ -136,8 +154,9 @@ bool dl_logical_channel_manager::has_pending_bytes(const bounded_bitset<MAX_NOF_
   }
 
   // If at least one slice bearer has pending data, return true.
-  for (lcid_t lcid : sorted_channels) {
-    if (lcid < bearers.size() and bearers.test(lcid) and has_pending_bytes(lcid)) {
+  unsigned offset = bearers.find_lowest(1, bearers.size());
+  for (unsigned e = bearers.size(); offset < e; offset = bearers.find_lowest(offset + 1, e)) {
+    if (has_pending_bytes(uint_to_lcid(offset))) {
       return true;
     }
   }
@@ -190,12 +209,11 @@ unsigned dl_logical_channel_manager::pending_bytes(const bounded_bitset<MAX_NOF_
            (srb1_chosen ? pending_bytes(LCID_SRB1) : 0);
   }
 
-  // Compute pending bytes for the given bearers.
+  // Compute pending bytes for the given bearers. SRB0 is ignored.
   unsigned total_bytes = 0;
-  for (lcid_t lcid : sorted_channels) {
-    if (lcid < bearers.size() and bearers.test(lcid)) {
-      total_bytes += pending_bytes(lcid);
-    }
+  unsigned offset      = bearers.find_lowest(1, bearers.size());
+  for (unsigned e = bearers.size(); offset < e; offset = bearers.find_lowest(offset + 1, e)) {
+    total_bytes += pending_bytes(uint_to_lcid(offset));
   }
 
   unsigned ce_bytes = pending_ce_bytes();

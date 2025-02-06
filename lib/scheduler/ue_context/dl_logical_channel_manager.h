@@ -179,7 +179,8 @@ private:
   // State of configured channels.
   std::array<channel_context, MAX_NOF_RB_LCIDS> channels;
 
-  // List of logical channel IDs sorted in decreasing order of priority. i.e. first element has the highest priority.
+  // List of active logical channel IDs sorted in decreasing order of priority. i.e. first element has the highest
+  // priority.
   std::vector<lcid_t> sorted_channels;
 
   // Whether the UE is in fallback (no DRB tx).
