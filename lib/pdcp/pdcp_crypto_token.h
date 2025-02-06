@@ -60,18 +60,19 @@ private:
   void increment_token()
   {
     srsran_assert(not stopped, "Trying to allocate more tokens, even though token manager has stopped.");
-    tokens++;
-    logger.log_debug("Increased token count. tokens={}", tokens);
+    uint32_t token = tokens.fetch_add(1, std::memory_order_relaxed);
+    logger.log_debug("Increased token count. token={}", token);
   }
 
   void return_token()
   {
-    srsran_assert(tokens != 0, "Error counting crypto tokens. There are less tokens available then the ones granted.");
-    tokens--;
+    uint32_t token = tokens.fetch_sub(1, std::memory_order_relaxed);
+    srsran_assert(tokens != UINT32_MAX,
+                  "Error counting crypto tokens. There are less tokens available then the ones granted.");
     if (stopped) {
       set_once();
     }
-    logger.log_debug("Decreased token count. tokens={}", tokens);
+    logger.log_debug("Decreased token count. tokens={}", token);
   }
 
   void set_once()
@@ -87,7 +88,7 @@ private:
   bool              was_set = false;
   manual_event_flag pending_crypto;
 
-  uint32_t                  tokens = 0;
+  std::atomic<uint32_t>     tokens = 0;
   timer_factory             ue_timer_factory;
   unique_timer              retry_timer;
   const pdcp_bearer_logger& logger;
