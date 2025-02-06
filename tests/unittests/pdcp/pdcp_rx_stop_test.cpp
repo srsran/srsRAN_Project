@@ -9,15 +9,12 @@
  */
 
 #include "pdcp_rx_stop_test.h"
-#include "pdcp_test_vectors.h"
-#include "srsran/pdcp/pdcp_config.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
-#include <queue>
 
 using namespace srsran;
 
-/// Test creation of PDCP RX entities
+/// Test stopping PDCP RX entities when no PDUs are present.
 TEST_P(pdcp_rx_stop_test, stop_when_there_are_no_pending_pdus)
 {
   init(GetParam());
@@ -36,7 +33,7 @@ TEST_P(pdcp_rx_stop_test, stop_when_there_are_no_pending_pdus)
   ASSERT_TRUE(awaitable.is_set());
 }
 
-/// Test creation of PDCP RX entities
+/// Test stopping PDCP RX entities when PDUs are present.
 TEST_P(pdcp_rx_stop_test, stop_when_there_are_pending_pdus)
 {
   init(GetParam());
@@ -82,10 +79,57 @@ TEST_P(pdcp_rx_stop_test, stop_when_there_are_pending_pdus)
   ASSERT_TRUE(awaitable.is_set());
 }
 
+/// Test stopping PDCP RX entities when PDUs are present.
+TEST_P(pdcp_rx_stop_test, stop_when_integrity_failed)
+{
+  init(GetParam());
+  srsran::test_delimit_logger delimiter("Normal stop test. SN_SIZE={} ", sn_size);
+
+  pdcp_rx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+
+  uint32_t count = 0;
+
+  // Generate test PDUs.
+  byte_buffer test_pdu1;
+  get_test_pdu(count, test_pdu1);
+  byte_buffer test_pdu2;
+  get_test_pdu(count + 1, test_pdu2);
+
+  ASSERT_TRUE(test_pdu2.append(0)); // mess up MAC-I
+
+  // Set PDCP state.
+  pdcp_rx_state init_state = {.rx_next = count, .rx_deliv = count, .rx_reord = 0};
+  pdcp_rx->set_state(init_state);
+
+  // Handle PDUs, but don't run the crypto worker
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
+  pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
+
+  // Check await rx crypto flag is not set.
+  manual_event_flag& awaitable = pdcp_rx->crypto_awaitable();
+
+  ASSERT_FALSE(awaitable.is_set());
+
+  pdcp_rx->stop();
+
+  // Awaitable is not set yet. Flushing the crypto and UL workers
+  // tasks are required for the waitable to be set.
+  ASSERT_FALSE(awaitable.is_set());
+
+  wait_pending_crypto();
+
+  // Awaitable is not set yet. The UL worker still requires to be flushed.
+  ASSERT_FALSE(awaitable.is_set());
+
+  worker.run_pending_tasks();
+
+  // Awaitable is now set.
+  ASSERT_TRUE(awaitable.is_set());
+}
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
-std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
+static std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer),
