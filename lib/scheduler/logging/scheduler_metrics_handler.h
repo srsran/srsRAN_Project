@@ -49,6 +49,7 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       double   sum_pucch_snrs                 = 0;
       double   sum_pusch_rsrp                 = 0;
       unsigned sum_crc_delay_slots            = 0;
+      unsigned max_crc_delay_slots            = 0;
       unsigned nof_pucch_snr_reports          = 0;
       unsigned nof_pucch_f0f1_invalid_harqs   = 0;
       unsigned nof_pucch_f2f3f4_invalid_harqs = 0;

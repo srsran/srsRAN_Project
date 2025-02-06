@@ -420,9 +420,9 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
                    " ul_error_rate={}%",
                    ul_total > 0 ? to_percentage<int>(ue.ul_nof_nok, ul_total) : 0);
     if (ul_total > 0) {
-      fmt::format_to(std::back_inserter(buffer), " crc_delay={:.3}ms", ue.crc_delay_ms);
+      fmt::format_to(std::back_inserter(buffer), " avg_crc_delay={:.3}ms", ue.avg_crc_delay_ms);
     } else {
-      fmt::format_to(std::back_inserter(buffer), " crc_delay=n/a");
+      fmt::format_to(std::back_inserter(buffer), " avg_crc_delay=n/a");
     }
     fmt::format_to(std::back_inserter(buffer), " ul_nof_prbs={}", ue.tot_ul_prbs_used);
     fmt::format_to(std::back_inserter(buffer), " bsr={}", scaled_fmt_integer(ue.bsr, false));
@@ -446,10 +446,10 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     } else {
       fmt::format_to(std::back_inserter(buffer), " last_phr=n/a");
     }
-    if (ue.mean_ce_delay_msec.has_value()) {
-      fmt::format_to(std::back_inserter(buffer), " ul_ce_delay={:.2}ms", ue.mean_ce_delay_msec.value());
+    if (ue.avg_ce_delay_ms.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " avg_ul_ce_delay={:.2}ms", ue.avg_ce_delay_ms.value());
     } else {
-      fmt::format_to(std::back_inserter(buffer), " ul_ce_delay=n/a");
+      fmt::format_to(std::back_inserter(buffer), " avg_ul_ce_delay=n/a");
     }
 
     logger.info("{}", to_c_str(buffer));

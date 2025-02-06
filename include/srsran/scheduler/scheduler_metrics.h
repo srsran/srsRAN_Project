@@ -36,7 +36,8 @@ struct scheduler_ue_metrics {
   sch_mcs_index        ul_mcs;
   unsigned             tot_ul_prbs_used;
   double               ul_brate_kbps;
-  double               crc_delay_ms;
+  double               avg_crc_delay_ms;
+  double               max_crc_delay_ms;
   unsigned             ul_nof_ok;
   unsigned             ul_nof_nok;
   unsigned             bsr;
@@ -50,7 +51,7 @@ struct scheduler_ue_metrics {
   std::optional<float> last_dl_olla;
   std::optional<float> last_ul_olla;
   std::optional<int>   last_phr;
-  std::optional<float> mean_ce_delay_msec;
+  std::optional<float> avg_ce_delay_ms;
   /// Time advance statistics in seconds.
   sample_statistics<float> ta_stats;
   sample_statistics<float> pusch_ta_stats;

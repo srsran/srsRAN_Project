@@ -85,6 +85,9 @@ void cell_metrics_handler::handle_crc_indication(slot_point                   sl
       u.data.pusch_ta.update(crc_pdu.time_advance_offset.value().to_seconds());
     }
     u.data.sum_crc_delay_slots += last_slot_tx - sl_rx;
+    if (static_cast<unsigned>(last_slot_tx - sl_rx) > u.data.max_crc_delay_slots) {
+      u.data.max_crc_delay_slots = last_slot_tx - sl_rx;
+    }
   }
 }
 
@@ -387,10 +390,17 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pucch_snr_db     = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
   ret.last_dl_olla     = last_dl_olla;
   ret.last_ul_olla     = last_ul_olla;
-  ret.crc_delay_ms = (data.count_crc_pdus > 0) ? data.sum_crc_delay_slots / (data.count_crc_pdus * slots_per_sf) : 0;
-  ret.bsr          = last_bsr;
-  ret.sr_count     = data.count_sr;
-  ret.dl_bs        = 0;
+  if (data.count_crc_pdus > 0) {
+    ret.max_crc_delay_ms = data.max_crc_delay_slots;
+    ret.avg_crc_delay_ms =
+        static_cast<double>(data.sum_crc_delay_slots) / static_cast<double>(data.count_crc_pdus * slots_per_sf);
+  } else {
+    ret.avg_crc_delay_ms = 0;
+    ret.max_crc_delay_ms = 0;
+  }
+  ret.bsr      = last_bsr;
+  ret.sr_count = data.count_sr;
+  ret.dl_bs    = 0;
   for (const unsigned value : last_dl_bs) {
     ret.dl_bs += value;
   }
@@ -400,7 +410,7 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.srs_ta_stats   = data.srs_ta;
   ret.last_phr       = last_phr;
   if (data.nof_ul_ces > 0) {
-    ret.mean_ce_delay_msec = (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * slots_per_sf));
+    ret.avg_ce_delay_ms = (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * slots_per_sf));
   }
   ret.nof_pucch_f0f1_invalid_harqs   = data.nof_pucch_f0f1_invalid_harqs;
   ret.nof_pucch_f2f3f4_invalid_harqs = data.nof_pucch_f2f3f4_invalid_harqs;
