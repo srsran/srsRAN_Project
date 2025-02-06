@@ -52,30 +52,6 @@ test_mode:
     ri: 4
     cqi: 15
     nof_ues: 1
-
-expert_execution:
-  affinities:
-    low_priority_cpus: {{low_priority_cpus}}
-    {% if ru_timing_cpu %}
-    ru_timing_cpu: {{ ru_timing_cpu }}
-    {% endif %}
-  cell_affinities:
-    - l1_dl_cpus: {{l1_dl_cpus}}
-      l1_dl_pinning: mask
-      l1_ul_cpus: {{l1_ul_cpus}}
-      l1_ul_pinning: mask
-      l2_cell_cpus: {{l2_cell_cpus}}
-      l2_cell_pinning: mask
-      ru_cpus: {{ru_cpus}}
-      ru_pinning: mask
-    - l1_dl_cpus: {{l1_dl_cpus}}
-      l1_dl_pinning: mask
-      l1_ul_cpus: {{l1_ul_cpus}}
-      l1_ul_pinning: mask
-      l2_cell_cpus: {{l2_cell_cpus}}
-      l2_cell_pinning: mask
-      ru_cpus: {{ru_cpus}}
-      ru_pinning: mask
       
 hal:
   bbdev_hwacc:

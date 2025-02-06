@@ -65,12 +65,5 @@ test_mode:
     pusch_active: true
     nof_ues: 50
 
-expert_execution:
-  threads:
-    upper_phy:
-      nof_dl_threads: 2
-      nof_ul_threads: 1
-      nof_pusch_decoder_threads: 2
-
 expert_phy:
   max_proc_delay: 6

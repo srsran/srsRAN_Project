@@ -44,18 +44,6 @@ test_mode:
     ri: 4
     nof_ues: 16
 
-expert_execution:
-  affinities:
-    low_priority_cpus: {{low_priority_cpus}}
-    {% if ru_timing_cpu %}
-    ru_timing_cpu: {{ ru_timing_cpu }}
-    {% endif %}
-  cell_affinities:
-    - l1_dl_cpus: {{l1_dl_cpus}}
-      l1_ul_cpus: {{l1_ul_cpus}}
-      l2_cell_cpus: {{l2_cell_cpus}}
-      ru_cpus: {{ru_cpus}}
-
 expert_phy:
   max_request_headroom_slots: 3
   max_proc_delay: 4
