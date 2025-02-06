@@ -89,6 +89,9 @@ public:
   // See interface for documentation.
   controller& get_controller() override;
 
+  // See interface for documentation.
+  receiver_metrics_collector* get_metrics_collector() override;
+
 private:
   closed_rx_window_handler             closed_window_handler;
   rx_window_checker                    window_checker;

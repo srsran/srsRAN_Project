@@ -50,6 +50,7 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.is_prach_control_plane_enabled     = config.is_prach_control_plane_enabled;
   rx_config.ignore_ecpri_payload_size_field    = config.ignore_ecpri_payload_size_field;
   rx_config.ignore_ecpri_seq_id_field          = config.ignore_ecpri_seq_id_field;
+  rx_config.are_metrics_enabled                = config.are_metrics_enabled;
   rx_config.log_unreceived_ru_frames           = config.log_unreceived_ru_frames;
 
   // For the rx eAxCs, configure only those that will be used, so the other eAxCs can be discarded as soon as possible.
@@ -198,7 +199,8 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                         cp_repo,
                                         prach_cp_repo);
 
-  return std::make_unique<sector_impl>(sector_impl_dependencies{std::move(receiver),
+  return std::make_unique<sector_impl>(sector_impl_config{sector_cfg.sector_id, sector_cfg.are_metrics_enabled},
+                                       sector_impl_dependencies{std::move(receiver),
                                                                 std::move(transmitter),
                                                                 std::move(cp_repo),
                                                                 std::move(prach_cp_repo),

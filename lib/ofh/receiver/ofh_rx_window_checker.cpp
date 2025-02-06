@@ -9,21 +9,15 @@
  */
 
 #include "ofh_rx_window_checker.h"
+#include "srsran/ofh/receiver/ofh_receiver_metrics.h"
 
 using namespace srsran;
 using namespace ofh;
 
 static constexpr unsigned OFH_MAX_NOF_SFN = 256U;
 
-rx_window_checker::rx_window_checker(srslog::basic_logger&                    logger_,
-                                     unsigned                                 sector_id,
-                                     const rx_window_timing_parameters&       params,
-                                     std::chrono::duration<double, std::nano> symbol_duration) :
-  timing_parameters(params),
-  nof_symbols_in_one_second(std::ceil(std::chrono::seconds(1) / symbol_duration)),
-  is_disabled(!is_log_enabled(logger_)),
-  nof_symbols(0),
-  statistics(logger_, sector_id)
+rx_window_checker::rx_window_checker(bool is_enabled, const rx_window_timing_parameters& params) :
+  timing_parameters(params), is_disabled(!is_enabled), slot_raw_value(0)
 {
 }
 
@@ -70,10 +64,7 @@ void rx_window_checker::on_new_symbol(slot_symbol_point symbol_point)
   slot_symbol_point ota_symbol_point = calculate_ofh_slot_symbol_point(symbol_point);
 
   // Update the stored slot symbol point as system value.
-  count_val.store(ota_symbol_point.to_uint(), std::memory_order_release);
-
-  // Print the statistics.
-  print_statistics();
+  slot_raw_value.store(ota_symbol_point.to_uint(), std::memory_order_release);
 }
 
 void rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_point)
@@ -84,7 +75,7 @@ void rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_poi
 
   // Store the ota symbol point to use the same value for the early and late points.
   slot_symbol_point ota_point(
-      symbol_point.get_numerology(), count_val.load(std::memory_order_acquire), symbol_point.get_nof_symbols());
+      symbol_point.get_numerology(), slot_raw_value.load(std::memory_order_acquire), symbol_point.get_nof_symbols());
 
   // Calculate the distance between the 2 slot symbol points in symbols.
   int diff = calculate_slot_symbol_point_distance(ota_point, symbol_point);
@@ -105,18 +96,12 @@ void rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_poi
   statistics.increment_on_time_counter();
 }
 
-void rx_window_checker::print_statistics()
+void rx_window_checker::collect_metrics(receiver_metrics& metrics)
 {
-  ++nof_symbols;
-  if (nof_symbols != nof_symbols_in_one_second) {
-    return;
-  }
-
-  nof_symbols = 0U;
-  statistics.print_statistics();
+  statistics.collect_metrics(metrics);
 }
 
-void rx_window_checker::rx_window_checker_statistics::print_statistics()
+void rx_window_checker::rx_window_checker_statistics::collect_metrics(receiver_metrics& metrics)
 {
   // Fetch the data.
   uint64_t current_nof_on_time = nof_on_time_messages();
@@ -124,16 +109,9 @@ void rx_window_checker::rx_window_checker_statistics::print_statistics()
   uint64_t current_nof_early   = nof_early_messages();
 
   // Calculate the difference since last print.
-  uint64_t nof_on_time = current_nof_on_time - last_on_time_value_printed;
-  uint64_t nof_early   = current_nof_early - last_early_value_printed;
-  uint64_t nof_late    = current_nof_late - last_late_value_printed;
-
-  logger.info("Sector#{} received packets: rx_total={} rx_early={}, rx_on_time={}, rx_late={}",
-              sector_id,
-              nof_on_time + nof_late + nof_early,
-              nof_early,
-              nof_on_time,
-              nof_late);
+  metrics.nof_on_time_messages = current_nof_on_time - last_on_time_value_printed;
+  metrics.nof_early_messages   = current_nof_early - last_early_value_printed;
+  metrics.nof_late_messages    = current_nof_late - last_late_value_printed;
 
   // Update last print.
   last_late_value_printed    = current_nof_late;

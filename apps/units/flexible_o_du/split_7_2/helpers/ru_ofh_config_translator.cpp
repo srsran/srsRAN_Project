@@ -118,6 +118,7 @@ static void generate_config(ru_ofh_configuration&              out_cfg,
     sector_cfg.is_downlink_broadcast_enabled   = cell_cfg.cell.is_downlink_broadcast_enabled;
     sector_cfg.ignore_ecpri_payload_size_field = cell_cfg.cell.ignore_ecpri_payload_size_field;
     sector_cfg.ignore_ecpri_seq_id_field       = cell_cfg.cell.ignore_ecpri_seq_id_field;
+    sector_cfg.are_metrics_enabled             = ru_cfg.loggers.metrics_level.level == srslog::basic_levels::info;
     sector_cfg.log_unreceived_ru_frames        = cell_cfg.cell.log_unreceived_ru_frames;
     sector_cfg.ul_compression_params           = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
                                                   cell_cfg.cell.compression_bitwidth_ul};

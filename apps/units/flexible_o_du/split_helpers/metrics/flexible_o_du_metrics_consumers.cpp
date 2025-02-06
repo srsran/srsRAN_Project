@@ -685,10 +685,34 @@ static void log_handle_du_low_metrics(srslog::basic_logger& logger, const srs_du
   logger.info("{}", to_c_str(buffer));
 }
 
+static void log_ru_ofh_metrics(srslog::basic_logger& logger, const ofh::metrics& metrics)
+{
+  for (unsigned i = 0, e = metrics.sectors.size(); i != e; ++i) {
+    const ofh::receiver_metrics& rx_metrics = metrics.sectors[i].rx_metrics;
+    logger.info("OFH sector#{} reception stats: rx_total={} rx_early={}, rx_on_time={}, rx_late={}",
+                i,
+                rx_metrics.nof_early_messages + rx_metrics.nof_on_time_messages + rx_metrics.nof_late_messages,
+                rx_metrics.nof_early_messages,
+                rx_metrics.nof_on_time_messages,
+                rx_metrics.nof_late_messages);
+  }
+}
+
+static void log_ru_metrics(srslog::basic_logger& logger, const ru_metrics& metrics)
+{
+  if (auto* ofh_metrics = std::get_if<ofh::metrics>(&metrics.metrics)) {
+    log_ru_ofh_metrics(logger, *ofh_metrics);
+  }
+}
+
 void flexible_o_du_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
 {
   const flexible_o_du_metrics& odu_metrics =
       static_cast<const flexible_o_du_app_service_metrics_impl&>(metric).get_metrics();
 
+  // Log DU low metrics.
   log_handle_du_low_metrics(logger, odu_metrics.du.low, verbose);
+
+  // Log RU metrics.
+  log_ru_metrics(logger, odu_metrics.ru);
 }

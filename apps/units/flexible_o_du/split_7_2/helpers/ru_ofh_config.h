@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "apps/services/logger/metrics_logger_appconfig.h"
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
@@ -104,7 +105,8 @@ struct ru_ofh_unit_cell_config {
 
 /// RU OFH logging functionalities.
 struct ru_ofh_unit_logger_config {
-  srslog::basic_levels ofh_level = srslog::basic_levels::warning;
+  srslog::basic_levels     ofh_level = srslog::basic_levels::warning;
+  metrics_logger_appconfig metrics_level;
 };
 
 /// CPU affinities configuration for the cell.

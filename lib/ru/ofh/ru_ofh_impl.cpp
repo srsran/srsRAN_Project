@@ -44,6 +44,15 @@ ru_ofh_impl::ru_ofh_impl(const ru_ofh_impl_config& config, ru_ofh_impl_dependenc
       out.emplace_back(&sector.get()->get_transmitter().get_uplink_request_handler());
     }
     return out;
+  }(sectors)),
+  metrics_collector([](span<std::unique_ptr<ofh::sector>> sectors_) {
+    std::vector<ofh::metrics_collector*> out;
+    for (const auto& sector : sectors_) {
+      if (auto* collector = sector->get_metrics_collector()) {
+        out.emplace_back(collector);
+      }
+    }
+    return out;
   }(sectors))
 {
   srsran_assert(std::all_of(sectors.begin(), sectors.end(), [](const auto& elem) { return elem != nullptr; }),
@@ -81,6 +90,11 @@ ru_downlink_plane_handler& ru_ofh_impl::get_downlink_plane_handler()
 ru_uplink_plane_handler& ru_ofh_impl::get_uplink_plane_handler()
 {
   return uplink_handler;
+}
+
+ru_metrics_collector* ru_ofh_impl::get_metrics_collector()
+{
+  return metrics_collector.disabled() ? nullptr : &metrics_collector;
 }
 
 ru_controller& ru_ofh_impl::get_controller()

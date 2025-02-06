@@ -10,6 +10,7 @@
 
 #include "ru_ofh_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
+#include "apps/services/logger/metrics_logger_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "ru_ofh_config.h"
 #include "srsran/support/cli11_utils.h"
@@ -382,6 +383,9 @@ void srsran::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_uni
   // Loggers section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, parsed_cfg.config.loggers);
+
+  // Metrics log section.
+  configure_cli11_with_metrics_logger_appconfig_schema(app, parsed_cfg.config.loggers.metrics_level);
 
   // Expert execution section.
   CLI::App* expert_subcmd = add_subcommand(app, "expert_execution", "Expert execution configuration")->configurable();

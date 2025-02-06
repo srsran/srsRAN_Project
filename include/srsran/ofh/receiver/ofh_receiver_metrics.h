@@ -10,16 +10,11 @@
 
 #pragma once
 
-#include <chrono>
-
 namespace srsran {
+namespace ofh {
 
-/// Open Fronthaul Radio Unit metrics.
-struct ru_ofh_metrics {
-  /// Timestamp of the OFH RU metrics.
-  std::chrono::time_point<std::chrono::system_clock> timestamp;
-  /// Radio sector identifier.
-  unsigned sector_id;
+/// Open Fronthaul sector metrics.
+struct receiver_metrics {
   /// Number of OFH messages received on time.
   unsigned nof_on_time_messages;
   /// Number of OFH messages received early.
@@ -28,4 +23,5 @@ struct ru_ofh_metrics {
   unsigned nof_late_messages;
 };
 
+} // namespace ofh
 } // namespace srsran

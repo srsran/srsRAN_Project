@@ -58,6 +58,8 @@ struct receiver_config {
   bool ignore_ecpri_payload_size_field = false;
   /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
   bool ignore_ecpri_seq_id_field = false;
+  /// If set to true, metrics are enabled in the receiver.
+  bool are_metrics_enabled = false;
   /// Warn of unreceived Radio Unit frames status.
   warn_unreceived_ru_frames log_unreceived_ru_frames = warn_unreceived_ru_frames::after_traffic_detection;
 };
