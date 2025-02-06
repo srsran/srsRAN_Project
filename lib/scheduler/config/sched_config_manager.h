@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "du_cell_group_config_pool.h"
 #include "ue_configuration.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
@@ -145,6 +146,9 @@ private:
   cell_common_configuration_list added_cells;
 
   std::array<std::unique_ptr<ue_configuration>, MAX_NOF_DU_UES> ue_cfg_list;
+
+  // Config Resources associated with this cell group.
+  slotted_vector<std::unique_ptr<du_cell_group_config_pool>> group_cfg_pool;
 
   // Mapping of UEs to DU Cell Groups.
   std::array<std::atomic<du_cell_group_index_t>, MAX_NOF_DU_UES> ue_to_cell_group_index;

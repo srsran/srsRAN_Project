@@ -14,6 +14,7 @@
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/pusch/pusch_default_time_allocation.h"
 #include "../support/pusch/pusch_resource_allocation.h"
+#include "sched_config_params.h"
 #include "srsran/support/math/math_utils.h"
 #include <algorithm>
 
@@ -785,22 +786,18 @@ bool ue_cell_configuration::is_ul_enabled(slot_point ul_slot) const
 
 //
 
-ue_configuration::ue_configuration(du_ue_index_t ue_index_, rnti_t crnti_) : ue_index(ue_index_), crnti(crnti_) {}
-
 ue_configuration::ue_configuration(du_ue_index_t                         ue_index_,
                                    rnti_t                                crnti_,
                                    const cell_common_configuration_list& common_cells,
-                                   const sched_ue_config_request&        cfg_req) :
-  ue_index(ue_index_), crnti(crnti_)
+                                   const ue_creation_params&             params) :
+  ue_index(ue_index_), crnti(crnti_), lc_list(params.lc_ch_list)
 {
-  update(common_cells, cfg_req);
+  update(common_cells, ue_reconfig_params{params.cfg_req, std::nullopt});
 }
 
-ue_configuration::ue_configuration(const ue_configuration& other) : ue_index(other.ue_index), crnti(other.crnti)
+ue_configuration::ue_configuration(const ue_configuration& other) :
+  ue_index(other.ue_index), crnti(other.crnti), lc_list(other.lc_list)
 {
-  // Update UE logical channels.
-  lc_list = other.lc_list;
-
   // Update UE dedicated cell config.
   for (const std::unique_ptr<ue_cell_configuration>& cell_cfg : other.du_cells) {
     du_cells.emplace(cell_cfg->cell_cfg_common.cell_index, std::make_unique<ue_cell_configuration>(*cell_cfg));
@@ -808,12 +805,13 @@ ue_configuration::ue_configuration(const ue_configuration& other) : ue_index(oth
   ue_cell_to_du_cell_index = other.ue_cell_to_du_cell_index;
 }
 
-void ue_configuration::update(const cell_common_configuration_list& common_cells,
-                              const sched_ue_config_request&        cfg_req)
+void ue_configuration::update(const cell_common_configuration_list& common_cells, const ue_reconfig_params& params)
 {
+  const auto& cfg_req = params.cfg_req;
+
   // Update UE logical channels.
-  if (cfg_req.lc_config_list.has_value()) {
-    lc_list = cfg_req.lc_config_list.value();
+  if (params.lc_ch_list.has_value()) {
+    lc_list = params.lc_ch_list.value();
   }
 
   // Update DRX config
@@ -867,7 +865,7 @@ void ue_configuration::update(const cell_common_configuration_list& common_cells
 bool ue_configuration::is_ue_cfg_complete() const
 {
   // [Implementation-defined] UE with only SRB0 configured is considered to not have complete UE configuration yet.
-  if ((lc_list.size() == 1 and lc_list.back().lcid == LCID_SRB0)) {
+  if (lc_list->size() == 1 and lc_list.value().contains(lcid_t::LCID_SRB0)) {
     return false;
   }
   return std::any_of(du_cells.begin(), du_cells.end(), [](const auto& ue_cell_cfg) {

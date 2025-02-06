@@ -10,9 +10,9 @@
 
 #pragma once
 
+#include "../config/logical_channel_list_config.h"
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/logical_channel/lcid_dl_sch.h"
-#include "srsran/scheduler/config/logical_channel_config.h"
 #include "srsran/scheduler/result/pdsch_info.h"
 #include "srsran/support/math/moving_averager.h"
 #include <queue>
@@ -46,7 +46,7 @@ public:
   void set_status(lcid_t lcid, bool active);
 
   /// \brief Update the configurations of the provided lists of bearers.
-  void configure(span<const logical_channel_config> log_channels_configs);
+  void configure(logical_channel_config_list_ptr log_channels_configs);
 
   /// \brief Verifies if logical channel is activated for DL.
   bool is_active(lcid_t lcid) const { return lcid <= LCID_MAX_DRB and channels[lcid].active; }
@@ -152,8 +152,6 @@ private:
   struct channel_context {
     /// Whether the configured logical channel is currently active.
     bool active = false;
-    /// Configuration of the logical channel.
-    const logical_channel_config* cfg = nullptr;
     /// DL Buffer status of this logical channel.
     unsigned buf_st = 0;
     /// Bytes-per-slot average for this logical channel.
@@ -176,7 +174,7 @@ private:
   const unsigned slots_per_sec;
 
   // List of UE-dedicated logical channel configurations.
-  span<const logical_channel_config> channel_configs;
+  logical_channel_config_list_ptr channel_configs;
 
   // State of configured channels.
   std::array<channel_context, MAX_NOF_RB_LCIDS> channels;

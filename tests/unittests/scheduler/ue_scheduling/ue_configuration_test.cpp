@@ -26,6 +26,7 @@ protected:
   sched_ue_creation_request_message ue_create_msg = sched_config_helper::create_default_sched_ue_creation_request();
 
   cell_common_configuration_list cell_cfg_db;
+  du_cell_group_config_pool      cfg_pool;
   cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
 };
 
@@ -75,7 +76,7 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
 {
   // Test Preamble.
   cell_cfg_db.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg));
-  ue_configuration ue_ded_cfg{ue_create_msg.ue_index, ue_create_msg.crnti, cell_cfg_db, ue_create_msg.cfg};
+  ue_configuration ue_ded_cfg{ue_create_msg.ue_index, ue_create_msg.crnti, cell_cfg_db, cfg_pool.add_ue(ue_create_msg)};
   ue               u{ue_creation_command{ue_ded_cfg, ue_create_msg.starts_in_fallback, cell_harqs}};
 
   // Pass Reconfiguration to UE with an new Logical Channel.
@@ -85,7 +86,7 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   recfg.cfg      = ue_create_msg.cfg;
   recfg.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(uint_to_lcid(4)));
   ue_configuration ue_ded_cfg2{ue_ded_cfg};
-  ue_ded_cfg2.update(cell_cfg_db, recfg.cfg);
+  ue_ded_cfg2.update(cell_cfg_db, cfg_pool.reconf_ue(recfg));
   u.handle_reconfiguration_request(ue_reconf_command{ue_ded_cfg2});
 
   // Confirm that the UE is in fallback.

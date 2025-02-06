@@ -82,6 +82,10 @@ const cell_configuration* sched_config_manager::add_cell(const sched_cell_config
 
   added_cells.emplace(msg.cell_index, std::make_unique<cell_configuration>(expert_params, msg));
 
+  if (not group_cfg_pool.contains(msg.cell_group_index)) {
+    group_cfg_pool.emplace(msg.cell_group_index, std::make_unique<du_cell_group_config_pool>());
+  }
+
   cell_metrics_handler* cell_metrics = metrics_handler.add_cell(*added_cells[msg.cell_index]);
   srsran_assert(cell_metrics != nullptr, "Unable to create metrics handler");
 
@@ -139,7 +143,8 @@ ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_requ
   srsran_assert(ue_cfg_list[cfg_req.ue_index] == nullptr, "Invalid ue_index={}", fmt::underlying(cfg_req.ue_index));
 
   // Create UE configuration.
-  auto next_ded_cfg = std::make_unique<ue_configuration>(cfg_req.ue_index, cfg_req.crnti, added_cells, cfg_req.cfg);
+  auto next_ded_cfg = std::make_unique<ue_configuration>(
+      cfg_req.ue_index, cfg_req.crnti, added_cells, group_cfg_pool[target_grp_idx]->add_ue(cfg_req));
 
   return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg), cfg_req.starts_in_fallback};
 }
@@ -170,7 +175,7 @@ ue_config_update_event sched_config_manager::update_ue(const sched_ue_reconfigur
   auto next_ded_cfg = std::make_unique<ue_configuration>(current_ue_cfg);
 
   // Apply the delta config.
-  next_ded_cfg->update(added_cells, cfg_req.cfg);
+  next_ded_cfg->update(added_cells, group_cfg_pool[group_idx]->reconf_ue(cfg_req));
 
   // Return RAII event.
   return ue_config_update_event{cfg_req.ue_index, *this, std::move(next_ded_cfg)};

@@ -98,12 +98,6 @@ bool slice_ue::has_pending_sr() const
 
 lcg_id_t slice_ue::get_lcg_id_for_bearer(lcid_t lcid) const
 {
-  const ue_configuration*            ue_ded_cfg = u.ue_cfg_dedicated();
-  span<const logical_channel_config> lc_cfgs    = ue_ded_cfg->logical_channels();
-  for (const auto& cfg : lc_cfgs) {
-    if (cfg.lcid == lcid) {
-      return cfg.lc_group;
-    }
-  }
-  return LCG_ID_INVALID;
+  logical_channel_config_list_ptr lc_chs = u.ue_cfg_dedicated()->logical_channels();
+  return lc_chs->contains(lcid) ? lc_chs.value()[lcid]->lc_group : LCG_ID_INVALID;
 }

@@ -253,7 +253,8 @@ test_bench::test_bench(const test_bench_params& params,
   }
 
   ue_req_main = ue_req;
-  ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
+  ue_ded_cfgs.push_back(
+      std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req)));
   ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs, {}}));
   uci_sched.add_ue(ues[ue_req.ue_index].get_pcell().cfg());
   last_allocated_rnti   = ue_req.crnti;
@@ -285,7 +286,8 @@ void test_bench::add_ue()
                     pucch_builder.add_build_new_ue_pucch_cfg(ue_req.cfg.cells.value().back().serv_cell_cfg),
                 "UE PUCCH configuration couldn't be built");
 
-  ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
+  ue_ded_cfgs.push_back(
+      std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req)));
   ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}));
   last_allocated_rnti = ue_req.crnti;
 }

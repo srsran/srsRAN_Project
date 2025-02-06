@@ -12,6 +12,7 @@
 
 #include "../support/pdcch/search_space_helper.h"
 #include "cell_configuration.h"
+#include "logical_channel_list_config.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
@@ -20,6 +21,9 @@
 #include "srsran/scheduler/config/bwp_configuration.h"
 
 namespace srsran {
+
+struct ue_creation_params;
+struct ue_reconfig_params;
 
 struct search_space_info;
 
@@ -242,11 +246,10 @@ private:
 class ue_configuration
 {
 public:
-  ue_configuration(du_ue_index_t ue_index, rnti_t crnti_);
   ue_configuration(du_ue_index_t                         ue_index,
                    rnti_t                                crnti_,
                    const cell_common_configuration_list& common_cells,
-                   const sched_ue_config_request&        cfg_req);
+                   const ue_creation_params&             params);
   ue_configuration(const ue_configuration& other);
 
   const du_ue_index_t ue_index;
@@ -287,10 +290,10 @@ public:
   const ue_cell_configuration& pcell_cfg() const { return ue_cell_cfg(to_ue_cell_index(0)); }
 
   /// Get logical channels configured for the UE.
-  span<const logical_channel_config> logical_channels() const { return lc_list; }
+  logical_channel_config_list_ptr logical_channels() const { return lc_list; }
 
   /// Update the UE dedicated configuration given a configuration request coming from outside the scheduler.
-  void update(const cell_common_configuration_list& common_cells, const sched_ue_config_request& cfg_req);
+  void update(const cell_common_configuration_list& common_cells, const ue_reconfig_params& reconf_params);
 
   /// Returns whether UE configuration is considered complete or not for scheduling the UE as a non-fallback UE.
   /// \remark UE can be scheduled in fallback scheduler even if UE does not have a complete configuration.
@@ -301,7 +304,7 @@ public:
 
 private:
   // List of configured logical channels
-  std::vector<logical_channel_config> lc_list;
+  logical_channel_config_list_ptr lc_list;
 
   // List of cells configured for a UE.
   slotted_id_vector<du_cell_index_t, std::unique_ptr<ue_cell_configuration>> du_cells;

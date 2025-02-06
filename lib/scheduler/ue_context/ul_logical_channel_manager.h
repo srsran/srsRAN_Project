@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "../config/logical_channel_list_config.h"
 #include "srsran/mac/mac_pdu_format.h"
-#include "srsran/scheduler/config/logical_channel_config.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/support/math/moving_averager.h"
 
@@ -26,7 +26,7 @@ public:
   void set_status(lcg_id_t lcg_id, bool active) { groups[lcg_id].active = active; }
 
   /// \brief Update the configurations of the provided lists of bearers.
-  void configure(span<const logical_channel_config> log_channels_configs);
+  void configure(logical_channel_config_list_ptr log_channels_configs);
 
   /// Deactivate all logical channel groups, handling of SRs to prepare for UE removal.
   void deactivate();
@@ -134,6 +134,9 @@ private:
 
   // Number of slots per second given the used SCS. Parameter used to compute bit rates.
   const unsigned slots_per_sec;
+
+  // List of UE-dedicated logical channel configurations.
+  logical_channel_config_list_ptr lc_channels_configs;
 
   // This state variable tells whether there is a pending SR. Note: It is an atomic variable because SR indications
   // can be received from different cells (in different threads).

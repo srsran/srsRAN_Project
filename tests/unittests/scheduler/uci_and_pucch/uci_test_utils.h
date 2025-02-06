@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "lib/scheduler/config/du_cell_group_config_pool.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/uci_scheduling/uci_scheduler_impl.h"
@@ -283,6 +284,7 @@ public:
   sched_cfg_dummy_notifier                       mac_notif;
   cell_common_configuration_list                 cell_cfg_list{};
   const cell_configuration&                      cell_cfg;
+  du_cell_group_config_pool                      cfg_pool;
   std::vector<std::unique_ptr<ue_configuration>> ue_ded_cfgs;
 
   cell_resource_allocator res_grid{cell_cfg};

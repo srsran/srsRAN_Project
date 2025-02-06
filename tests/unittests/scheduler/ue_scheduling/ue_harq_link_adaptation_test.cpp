@@ -10,6 +10,7 @@
 
 #include "../test_utils/dummy_test_components.h"
 #include "../test_utils/sched_random_utils.h"
+#include "lib/scheduler/config/du_cell_group_config_pool.h"
 #include "lib/scheduler/ue_context/ue.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
@@ -45,7 +46,8 @@ protected:
     for (const lcid_t lcid : std::array<lcid_t, 3>{uint_to_lcid(1), uint_to_lcid(2), uint_to_lcid(4)}) {
       ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
-    ue_ded_cfg.emplace(ue_creation_req.ue_index, ue_creation_req.crnti, cell_cfg_list, ue_creation_req.cfg);
+    ue_ded_cfg.emplace(
+        ue_creation_req.ue_index, ue_creation_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_creation_req));
     ue_ptr = std::make_unique<ue>(ue_creation_command{*ue_ded_cfg, ue_creation_req.starts_in_fallback, cell_harqs});
     ue_cc  = &ue_ptr->get_cell(to_ue_cell_index(0));
   }
@@ -93,6 +95,7 @@ protected:
   const scheduler_expert_config   sched_cfg = config_helpers::make_default_scheduler_expert_config();
   cell_common_configuration_list  cell_cfg_list;
   cell_configuration*             cell_cfg = nullptr;
+  du_cell_group_config_pool       cfg_pool;
   std::optional<ue_configuration> ue_ded_cfg;
   cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
 

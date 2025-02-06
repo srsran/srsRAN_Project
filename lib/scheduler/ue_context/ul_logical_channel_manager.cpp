@@ -30,18 +30,20 @@ void ul_logical_channel_manager::slot_indication()
 }
 
 /// \brief Update the configurations of the provided lists of bearers.
-void ul_logical_channel_manager::configure(span<const logical_channel_config> log_channels_configs)
+void ul_logical_channel_manager::configure(logical_channel_config_list_ptr lc_channel_configs_)
 {
+  lc_channels_configs = lc_channel_configs_;
+
   for (unsigned i = 1; i != groups.size(); ++i) {
     groups[i].active = false;
   }
-  for (const logical_channel_config& lc_ch : log_channels_configs) {
-    set_status(lc_ch.lc_group, true);
-    if (lc_ch.qos.has_value() and lc_ch.qos.value().gbr_qos_info.has_value()) {
+  for (logical_channel_config_ptr lc_ch : *lc_channels_configs) {
+    set_status(lc_ch->lc_group, true);
+    if (lc_ch->qos.has_value() and lc_ch->qos.value().gbr_qos_info.has_value()) {
       // Track average rate for GBR logical channel groups.
       // Note: average window size must be set for GBR QoS Flows.
-      unsigned win_size_msec = lc_ch.qos.value().qos.average_window_ms.value();
-      groups[lc_ch.lc_group].avg_bytes_per_slot.resize(win_size_msec * slots_per_sec / 1000);
+      unsigned win_size_msec = lc_ch->qos.value().qos.average_window_ms.value();
+      groups[lc_ch->lc_group].avg_bytes_per_slot.resize(win_size_msec * slots_per_sec / 1000);
     }
   }
 }

@@ -16,5 +16,10 @@ set(SOURCES serving_cell_config_factory.cpp
 add_library(sched_config STATIC ${SOURCES})
 target_link_libraries(sched_config srsran_ran du_resource_manager)
 
-add_library(sched_config_manager OBJECT cell_configuration.cpp ue_configuration.cpp sched_config_manager.cpp)
+add_library(sched_config_manager OBJECT
+        cell_configuration.cpp
+        ue_configuration.cpp
+        sched_config_manager.cpp
+        du_cell_group_config_pool.cpp
+)
 target_link_libraries(sched_config_manager srsran_ran)

@@ -122,7 +122,7 @@ protected:
   ue& add_ue(const sched_ue_creation_request_message& ue_req)
   {
     ue_ded_cell_cfg_list.push_back(
-        std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
+        std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req)));
     ues.add_ue(
         std::make_unique<ue>(ue_creation_command{*ue_ded_cell_cfg_list.back(), ue_req.starts_in_fallback, cell_harqs}));
     slice_sched.add_ue(ue_req.ue_index);
@@ -177,6 +177,7 @@ protected:
   scheduler_result_logger                        res_logger;
   scheduler_expert_config                        sched_cfg;
   cell_common_configuration_list                 cell_cfg_list;
+  du_cell_group_config_pool                      cfg_pool;
   std::vector<std::unique_ptr<ue_configuration>> ue_ded_cell_cfg_list;
 
   const cell_configuration&           cell_cfg;
@@ -752,7 +753,8 @@ TEST_P(scheduler_pf_qos_test, pf_upholds_qos_in_dl_gbr_flows)
   ue& ue_with_gbr =
       add_ue(make_ue_create_req(to_du_ue_index(0), to_rnti(0x4601), {non_gbr_bearer_lcid, gbr_bearer_lcid}, lcg_id));
   // Prepare request with GBR bearer information.
-  sched_ue_config_request cfg_req{};
+  sched_ue_reconfiguration_message recfg_req{};
+  sched_ue_config_request&         cfg_req = recfg_req.cfg;
   cfg_req.lc_config_list.emplace();
   cfg_req.lc_config_list->resize(4);
   (*cfg_req.lc_config_list)[0]          = config_helpers::create_default_logical_channel_config(lcid_t::LCID_SRB0);
@@ -767,7 +769,7 @@ TEST_P(scheduler_pf_qos_test, pf_upholds_qos_in_dl_gbr_flows)
   (*cfg_req.lc_config_list)[3].qos.emplace();
   (*cfg_req.lc_config_list)[3].qos->qos          = *get_5qi_to_qos_characteristics_mapping(uint_to_five_qi(1));
   (*cfg_req.lc_config_list)[3].qos->gbr_qos_info = gbr_qos_flow_information{brate, brate, brate, brate};
-  ue_ded_cell_cfg_list[0]->update(cell_cfg_list, cfg_req);
+  ue_ded_cell_cfg_list[0]->update(cell_cfg_list, cfg_pool.reconf_ue(recfg_req));
   // Add UE with no GBR bearer.
   ue& ue_with_no_gbr = add_ue(make_ue_create_req(to_du_ue_index(1), to_rnti(0x4602), {non_gbr_bearer_lcid}, lcg_id));
 

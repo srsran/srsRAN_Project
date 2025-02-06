@@ -9,30 +9,8 @@
  */
 
 #include "dl_logical_channel_manager.h"
-#include "srsran/scheduler/config/logical_channel_config_factory.h"
 
 using namespace srsran;
-
-static const logical_channel_config& get_default_logical_channel_config(lcid_t lcid)
-{
-  // Default logical channel configs.
-  constexpr static logical_channel_config lcid0_cfg = config_helpers::create_default_logical_channel_config(LCID_SRB0);
-  constexpr static logical_channel_config lcid1_cfg = config_helpers::create_default_logical_channel_config(LCID_SRB1);
-  constexpr static logical_channel_config lcid2_cfg = config_helpers::create_default_logical_channel_config(LCID_SRB2);
-  constexpr static logical_channel_config default_drb_cfg =
-      config_helpers::create_default_logical_channel_config(LCID_MIN_DRB);
-  switch (lcid) {
-    case LCID_SRB0:
-      return lcid0_cfg;
-    case LCID_SRB1:
-      return lcid1_cfg;
-    case LCID_SRB2:
-      return lcid2_cfg;
-    default:
-      break;
-  }
-  return default_drb_cfg;
-}
 
 static unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
 {
@@ -48,9 +26,6 @@ dl_logical_channel_manager::dl_logical_channel_manager(subcarrier_spacing scs_co
 {
   // Reserve entries to avoid allocating in hot path.
   sorted_channels.reserve(LCID_MIN_DRB);
-
-  // SRB0 is always activated.
-  set_status(LCID_SRB0, true);
 }
 
 void dl_logical_channel_manager::slot_indication()
@@ -98,89 +73,53 @@ void dl_logical_channel_manager::set_status(lcid_t lcid, bool active)
 {
   srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
 
-  if (channels[lcid].active == active and channels[lcid].cfg != nullptr) {
+  if (channels[lcid].active == active) {
     // No state change.
     return;
   }
 
-  // Update channel config.
-  const bool new_lc = channels[lcid].cfg == nullptr;
-  auto       it =
-      std::find_if(channel_configs.begin(), channel_configs.end(), [lcid](const auto& c) { return c.lcid == lcid; });
-  if (it != channel_configs.end()) {
-    // In case the channel config was specified.
-    channels[lcid].cfg = it;
-  } else {
-    // in case it was not specified, fallback to default config.
-    channels[lcid].cfg = &get_default_logical_channel_config(lcid);
-  }
-  if (not is_srb(lcid) and channels[lcid].cfg->qos.has_value() and
-      channels[lcid].cfg->qos.value().gbr_qos_info.has_value()) {
-    // Track average rate for GBR logical channels.
-    // Note: average window size must be set for GBR QoS Flows.
-    unsigned win_size_msec = channels[lcid].cfg->qos.value().qos.average_window_ms.value();
-    channels[lcid].avg_bytes_per_slot.resize(win_size_msec * slots_per_sec / 1000);
+  if (active) {
+    srsran_assert(channel_configs->contains(lcid), "Activating logical channel without associated config");
   }
 
   // set new state.
   channels[lcid].active = active;
-
-  // Refresh sorted_channels list.
-  if (new_lc) {
-    sorted_channels.push_back(lcid);
-  }
-  std::sort(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lhs, lcid_t rhs) {
-    return get_lc_prio(*channels[lhs].cfg) < get_lc_prio(*channels[rhs].cfg);
-  });
 }
 
-void dl_logical_channel_manager::configure(span<const logical_channel_config> log_channels_configs)
+void dl_logical_channel_manager::configure(logical_channel_config_list_ptr log_channels_configs)
 {
-  const bool cfg_changed = channel_configs != log_channels_configs;
-  channel_configs        = log_channels_configs;
-
-  if (not cfg_changed) {
-    // No change in the config. However, we may need to update channel config pointers.
-    for (const logical_channel_config& ch_cfg : channel_configs) {
-      channels[ch_cfg.lcid].cfg = &ch_cfg;
-    }
-    return;
-  }
+  auto old_cfgs   = channel_configs;
+  channel_configs = log_channels_configs;
 
   // If a previously custom configured LC is not in the list of new configs, we delete it.
   // Note: LCID will be removed from sorted_channels later.
-  for (lcid_t lcid : sorted_channels) {
-    if (channels[lcid].cfg != nullptr) {
-      auto it = std::find_if(
-          channel_configs.begin(), channel_configs.end(), [lcid](const auto& c) { return c.lcid == lcid; });
-      if (it == channel_configs.end() and channels[lcid].cfg != &get_default_logical_channel_config(lcid)) {
-        channels[lcid].reset();
+  if (old_cfgs.has_value()) {
+    for (const auto& old_lc : *old_cfgs) {
+      if (not channel_configs->contains(old_lc->lcid)) {
+        channels[old_lc->lcid].reset();
       }
     }
   }
 
   // Set new LC configurations.
-  for (const logical_channel_config& ch_cfg : channel_configs) {
-    channels[ch_cfg.lcid].cfg    = &ch_cfg;
-    channels[ch_cfg.lcid].active = true;
-    if (not is_srb(ch_cfg.lcid) and ch_cfg.qos.has_value() and ch_cfg.qos.value().gbr_qos_info.has_value()) {
+  for (logical_channel_config_ptr ch_cfg : *channel_configs) {
+    channels[ch_cfg->lcid].active = true;
+    if (not is_srb(ch_cfg->lcid) and ch_cfg->qos.has_value() and ch_cfg->qos.value().gbr_qos_info.has_value()) {
       // Track average rate for GBR logical channels.
-      unsigned win_size_msec = ch_cfg.qos.value().qos.average_window_ms.value();
-      channels[ch_cfg.lcid].avg_bytes_per_slot.resize(win_size_msec * slots_per_sec / 1000);
+      unsigned win_size_msec = ch_cfg->qos.value().qos.average_window_ms.value();
+      channels[ch_cfg->lcid].avg_bytes_per_slot.resize(win_size_msec * slots_per_sec / 1000);
     }
     // buffer state stays the same when configuration is updated.
   }
 
   // Refresh sorted channels list.
   sorted_channels.clear();
-  sorted_channels.reserve(channels.size());
-  for (unsigned lcid = 0, e = channels.size(); lcid != e; ++lcid) {
-    if (channels[lcid].cfg != nullptr) {
-      sorted_channels.push_back(channels[lcid].cfg->lcid);
-    }
+  sorted_channels.reserve(channel_configs->size());
+  for (const auto& lc_cfg : *channel_configs) {
+    sorted_channels.push_back(lc_cfg->lcid);
   }
   std::sort(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lhs, lcid_t rhs) {
-    return get_lc_prio(*channels[lhs].cfg) < get_lc_prio(*channels[rhs].cfg);
+    return get_lc_prio(*channel_configs.value()[lhs]) < get_lc_prio(*channel_configs.value()[rhs]);
   });
 }
 
@@ -410,7 +349,6 @@ unsigned dl_logical_channel_manager::allocate_mac_ce(dl_msg_lc_info& subpdu, uns
 void dl_logical_channel_manager::channel_context::reset()
 {
   active           = false;
-  cfg              = nullptr;
   buf_st           = 0;
   last_sched_bytes = 0;
   avg_bytes_per_slot.resize(0);

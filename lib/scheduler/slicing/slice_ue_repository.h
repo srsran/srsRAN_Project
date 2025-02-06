@@ -53,9 +53,7 @@ public:
   lcg_id_t get_lcg_id(lcid_t lcid) const
   {
     const auto& lchs = u.ue_cfg_dedicated()->logical_channels();
-    auto        it =
-        std::find_if(lchs.begin(), lchs.end(), [lcid](const logical_channel_config& lc) { return lc.lcid == lcid; });
-    return it != lchs.end() ? it->lc_group : MAX_NOF_LCGS;
+    return lchs.value().contains(lcid) ? lchs.value()[lcid]->lc_group : MAX_NOF_LCGS;
   }
 
   /// Determines if bearer with LCID is part of this slice.
@@ -98,7 +96,7 @@ public:
   bool has_pending_sr() const;
 
   /// Get QoS information of DRBs configured for the UE.
-  span<const logical_channel_config> logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); };
+  logical_channel_config_list_ptr logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); };
 
   /// Average DL bit rate, in bps, for a given UE logical channel.
   double dl_avg_bit_rate(lcid_t lcid) const
