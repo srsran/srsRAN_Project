@@ -9,6 +9,7 @@
  */
 
 #include "../test_utils/sched_random_utils.h"
+#include "lib/scheduler/config/logical_channel_config_pool.h"
 #include "lib/scheduler/ue_context/ue_drx_controller.h"
 #include "lib/scheduler/ue_context/ul_logical_channel_manager.h"
 #include "srsran/support/test_utils.h"
@@ -21,7 +22,10 @@ using msec = std::chrono::milliseconds;
 class base_ue_drx_controller_test
 {
 protected:
-  base_ue_drx_controller_test(const std::optional<drx_config>& drx_cfg_) : drx_cfg(drx_cfg_), ul_lc_ch_mng(scs) {}
+  base_ue_drx_controller_test(const std::optional<drx_config>& drx_cfg_) : drx_cfg(drx_cfg_), ul_lc_ch_mng(scs)
+  {
+    ul_lc_ch_mng.configure(cfg_pool.create({}));
+  }
 
   void tick()
   {
@@ -33,6 +37,7 @@ protected:
   const subcarrier_spacing        scs          = subcarrier_spacing::kHz30;
   const std::chrono::milliseconds conres_timer = msec{64};
   std::optional<drx_config>       drx_cfg;
+  logical_channel_config_pool     cfg_pool;
   ul_logical_channel_manager      ul_lc_ch_mng;
   slot_point                      ul_ccch_slot{to_numerology_value(scs), 0};
   srslog::basic_logger&           logger = srslog::fetch_basic_logger("SCHED");

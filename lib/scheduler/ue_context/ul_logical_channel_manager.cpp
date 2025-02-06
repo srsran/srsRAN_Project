@@ -19,8 +19,6 @@ ul_logical_channel_manager::ul_logical_channel_manager(subcarrier_spacing scs) :
   slots_per_sec(get_nof_slots_per_subframe(scs) * 1000)
 {
   slice_lcgid_list_lookup.reserve(INITIAL_SLICE_CAPACITY);
-
-  set_status(uint_to_lcg_id(0), true);
 }
 
 void ul_logical_channel_manager::set_ran_slice(lcg_id_t lcgid, ran_slice_id_t slice_id)
@@ -69,10 +67,11 @@ void ul_logical_channel_manager::deactivate(ran_slice_id_t slice_id)
 void ul_logical_channel_manager::slot_indication()
 {
   // Update the bit rates of the UE logical channel groups with tracked bit rates.
-  for (unsigned i = 0, e = groups.size(); i != e; ++i) {
-    if (groups[i].avg_bytes_per_slot.size() > 0) {
-      groups[i].avg_bytes_per_slot.push(groups[i].last_sched_bytes);
-      groups[i].last_sched_bytes = 0;
+  for (const auto& ch : *lc_channels_configs) {
+    auto& group = groups[ch->lc_group];
+    if (group.avg_bytes_per_slot.size() > 0) {
+      group.avg_bytes_per_slot.push(group.last_sched_bytes);
+      group.last_sched_bytes = 0;
     }
   }
 }
@@ -90,7 +89,7 @@ void ul_logical_channel_manager::configure(logical_channel_config_list_ptr lc_ch
     groups[i].active = false;
   }
   for (logical_channel_config_ptr lc_ch : *lc_channels_configs) {
-    set_status(lc_ch->lc_group, true);
+    groups[lc_ch->lc_group].active = true;
     if (lc_ch->qos.has_value() and lc_ch->qos.value().gbr_qos_info.has_value()) {
       // Track average rate for GBR logical channel groups.
       // Note: average window size must be set for GBR QoS Flows.
@@ -109,7 +108,7 @@ void ul_logical_channel_manager::deactivate()
 {
   // Disable UL SRBs and DRBs.
   for (unsigned lcg_id = 0; lcg_id <= MAX_LCG_ID; lcg_id++) {
-    set_status((lcg_id_t)lcg_id, false);
+    groups[lcg_id].active = false;
   }
 
   // Reset any pending SR.
@@ -119,8 +118,8 @@ void ul_logical_channel_manager::deactivate()
 unsigned ul_logical_channel_manager::pending_bytes() const
 {
   unsigned bytes = 0;
-  for (unsigned i = 0; i <= MAX_LCG_ID; ++i) {
-    bytes += pending_bytes(uint_to_lcg_id(i));
+  for (const auto& ch : *lc_channels_configs) {
+    bytes += pending_bytes(ch->lc_group);
   }
   return bytes;
 }

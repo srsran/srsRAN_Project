@@ -34,17 +34,6 @@ lcid_dl_sch_t get_random_dl_mac_ce()
                                                          (unsigned)lcid_dl_sch_t::UE_CON_RES_ID);
 }
 
-ul_bsr_indication_message make_sbsr(lcg_id_t lcg_id, unsigned bytes)
-{
-  ul_bsr_indication_message bsr{};
-  bsr.ue_index   = to_du_ue_index(0);
-  bsr.crnti      = to_rnti(0x4601);
-  bsr.cell_index = to_du_cell_index(0);
-  bsr.type       = bsr_format::SHORT_BSR;
-  bsr.reported_lcgs.push_back(ul_bsr_lcg_report{lcg_id, bytes});
-  return bsr;
-}
-
 class dl_logical_channel_tester : public ::testing::Test
 {
 public:
@@ -267,26 +256,6 @@ TEST(dl_logical_channel_ce_test, pending_ue_con_res_id_ce_bytes_does_not_include
   lch_mng.handle_mac_ce_indication({.ce_lcid = ce_lcid, .ce_payload = dummy_ce_payload});
 
   ASSERT_EQ(lch_mng.pending_con_res_ce_bytes(), 0);
-}
-
-TEST(ul_logical_channel_test, when_logical_channel_groups_are_inactive_then_no_ul_bytes_are_pending)
-{
-  lcg_id_t lcg_id = (lcg_id_t)test_rgen::uniform_int<unsigned>(0, MAX_LCG_ID);
-
-  ul_logical_channel_manager ul_lch_mng{subcarrier_spacing::kHz15};
-  ul_logical_channel_manager ul_lch_mng2{subcarrier_spacing::kHz15};
-
-  ul_lch_mng.set_status(lcg_id, false);
-  ul_lch_mng2.set_status(lcg_id, true);
-
-  ul_lch_mng.handle_bsr_indication(make_sbsr(lcg_id, 10));
-  ul_lch_mng2.handle_bsr_indication(make_sbsr(lcg_id, 10));
-
-  ASSERT_EQ(ul_lch_mng.pending_bytes(), 0);
-  ASSERT_GE(ul_lch_mng2.pending_bytes(), 10);
-
-  ul_lch_mng2.set_status(lcg_id, false);
-  ASSERT_EQ(ul_lch_mng2.pending_bytes(), 0);
 }
 
 TEST_F(dl_logical_channel_tester, assign_leftover_bytes_to_sdu_if_leftover_bytes_is_less_than_five_bytes)

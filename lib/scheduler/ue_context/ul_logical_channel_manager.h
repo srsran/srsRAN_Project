@@ -24,9 +24,6 @@ class ul_logical_channel_manager
 public:
   ul_logical_channel_manager(subcarrier_spacing scs);
 
-  /// Set the status of a logical channel group.
-  void set_status(lcg_id_t lcg_id, bool active) { groups[lcg_id].active = active; }
-
   /// \brief Update the configurations of the provided lists of bearers.
   void configure(logical_channel_config_list_ptr log_channels_configs);
 

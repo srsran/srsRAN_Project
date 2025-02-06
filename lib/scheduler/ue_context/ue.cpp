@@ -10,7 +10,6 @@
 
 #include "ue.h"
 #include "../support/dmrs_helpers.h"
-#include "../support/prbs_calculator.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
