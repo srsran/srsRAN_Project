@@ -20,8 +20,8 @@ jobs:
             EXTRA_CMAKE_ARGS: ""
             MARCH: ""
             PLATFORM: amd64
-            LIB: ""
-            LIB_VERSION: ""
+            UHD_VERSION: ""
+            DPDK_VERSION: ""
             DOCKERFILE: ./docker/metrics_server/Dockerfile
             CONTEXT: ./docker/metrics_server
           # --> grafana
@@ -30,64 +30,45 @@ jobs:
             EXTRA_CMAKE_ARGS: ""
             MARCH: ""
             PLATFORM: amd64
-            LIB: ""
-            LIB_VERSION: ""
+            UHD_VERSION: ""
+            DPDK_VERSION: ""
             DOCKERFILE: ./docker/grafana/Dockerfile
             CONTEXT: ./docker/grafana
-          # --> split72
+          # --> gnb
           # AMD AVX2
-          - TAGNAME: split72_release_avx2
+          - TAGNAME: release_avx2
             REPOSITORY: srsran-project
             MARCH: x86-64-v3
             PLATFORM: amd64
-            LIB: dpdk
-            LIB_VERSION: "23.11.1"
+            UHD_VERSION: "4.7.0.0"
+            DPDK_VERSION: "23.11.1"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
-          - TAGNAME: split72_release_with_debug_avx2
+          - TAGNAME: release_with_debug_avx2
             REPOSITORY: srsran-project
             EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
             MARCH: x86-64-v3
             PLATFORM: amd64
-            LIB: dpdk
-            LIB_VERSION: "23.11.1"
+            UHD_VERSION: "4.7.0.0"
+            DPDK_VERSION: "23.11.1"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
           # AMD AVX512
-          - TAGNAME: split72_release_avx512
+          - TAGNAME: release_avx512
             REPOSITORY: srsran-project
             MARCH: x86-64-v4
             PLATFORM: amd64
-            LIB: dpdk
-            LIB_VERSION: "23.11.1"
+            UHD_VERSION: "4.7.0.0"
+            DPDK_VERSION: "23.11.1"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
-          - TAGNAME: split72_release_with_debug_avx512
+          - TAGNAME: release_with_debug_avx512
             REPOSITORY: srsran-project
             EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
             MARCH: x86-64-v4
             PLATFORM: amd64
-            LIB: dpdk
-            LIB_VERSION: "23.11.1"
-            DOCKERFILE: ./docker/Dockerfile
-            CONTEXT: ./
-          # --> split8
-          # AMD AVX2
-          - TAGNAME: split8_release_avx2
-            REPOSITORY: srsran-project
-            MARCH: x86-64-v3
-            PLATFORM: amd64
-            LIB: uhd
-            LIB_VERSION: "4.7.0.0"
-            DOCKERFILE: ./docker/Dockerfile
-            CONTEXT: ./
-          - TAGNAME: split8_release_with_debug_avx2
-            REPOSITORY: srsran-project
-            EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-            MARCH: x86-64-v3
-            PLATFORM: amd64
-            LIB: uhd
-            LIB_VERSION: "4.7.0.0"
+            UHD_VERSION: "4.7.0.0"
+            DPDK_VERSION: "23.11.1"
             DOCKERFILE: ./docker/Dockerfile
             CONTEXT: ./
     env:
@@ -142,6 +123,6 @@ jobs:
           context: ${{ matrix.CONTEXT }}
           build-args: |
             NAME="${{ env.NAME }}"
-            LIB=${{ matrix.LIB }}
-            LIB_VERSION=${{ matrix.LIB_VERSION }}
+            UHD_VERSION=${{ matrix.UHD_VERSION }}
+            DPDK_VERSION=${{ matrix.DPDK_VERSION }}
             MARCH=${{ matrix.MARCH }}
