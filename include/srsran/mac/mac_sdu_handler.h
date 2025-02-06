@@ -3,7 +3,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/byte_buffer_chain.h"
-#include "srsran/rlc/rlc_tx.h"
+#include "srsran/rlc/rlc_buffer_state.h"
 
 namespace srsran {
 
