@@ -20,10 +20,7 @@ nrppa_dummy_impl::nrppa_dummy_impl() : logger(srslog::fetch_basic_logger("NRPPA"
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 nrppa_dummy_impl::~nrppa_dummy_impl() {}
 
-void nrppa_dummy_impl::remove_ue_context(ue_index_t ue_index)
-{
-  logger.info("NRPPa messages are not supported");
-}
+void nrppa_dummy_impl::remove_ue_context(ue_index_t ue_index) {}
 
 void nrppa_dummy_impl::handle_new_nrppa_pdu(const byte_buffer&                    nrppa_pdu,
                                             std::variant<ue_index_t, amf_index_t> ue_or_amf_index)
