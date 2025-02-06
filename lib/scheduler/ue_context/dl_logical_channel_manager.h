@@ -11,6 +11,8 @@
 #pragma once
 
 #include "../config/logical_channel_list_config.h"
+#include "../slicing/ran_slice_id.h"
+#include "srsran/adt/intrusive_list.h"
 #include "srsran/mac/mac_pdu_format.h"
 #include "srsran/ran/logical_channel/lcid_dl_sch.h"
 #include "srsran/scheduler/result/pdsch_info.h"
@@ -42,8 +44,21 @@ public:
   /// Set UE fallback state.
   void set_fallback_state(bool enter_fallback);
 
-  /// \brief Activate/Deactivate Bearer.
-  void set_status(lcid_t lcid, bool active);
+  /// Assign a RAN slice to a logical channel.
+  void set_ran_slice(lcid_t lcid, ran_slice_id_t slice_id);
+
+  /// Detach logical channel from previously set RAN slice.
+  void reset_ran_slice(lcid_t lcid);
+
+  /// Determines whether a RAN slice has at least one bearer associated with it.
+  bool has_slice(ran_slice_id_t slice_id) const
+  {
+    unsigned idx = slice_id.value();
+    return idx < slice_lcid_list_lookup.size() and not slice_lcid_list_lookup[idx].empty();
+  }
+
+  /// Get the RAN slice ID associated with a logical channel.
+  std::optional<ran_slice_id_t> get_slice_id(lcid_t lcid) const { return channels[lcid].slice_id; }
 
   /// \brief Update the configurations of the provided lists of bearers.
   void configure(logical_channel_config_list_ptr log_channels_configs);
@@ -62,8 +77,8 @@ public:
            });
   }
 
-  /// \brief Check whether the UE has pending data in the provided bearers, given its current state.
-  bool has_pending_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& bearers) const;
+  /// \brief Check whether the UE has pending data in the provided RAN slice.
+  bool has_pending_bytes(ran_slice_id_t slice_id) const;
 
   /// \brief Checks whether a logical channel has pending data.
   bool has_pending_bytes(lcid_t lcid) const { return channels[lcid].active and channels[lcid].buf_st > 0; }
@@ -81,8 +96,8 @@ public:
   /// \brief Calculates number of DL pending bytes, including MAC header overhead, and taking UE state into account.
   unsigned pending_bytes() const;
 
-  /// Calculates the number of DL pending bytes, including MAC header overhead, for a subset of LCIDs.
-  unsigned pending_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids) const;
+  /// Calculates the number of DL pending bytes, including MAC header overhead, for a RAN slice.
+  unsigned pending_bytes(ran_slice_id_t slice_id) const;
 
   /// \brief Returns the UE pending CEs' bytes to be scheduled, if any.
   unsigned pending_ce_bytes() const
@@ -149,7 +164,7 @@ public:
   span<const lcid_t> get_prioritized_logical_channels() const { return sorted_channels; }
 
 private:
-  struct channel_context {
+  struct channel_context : public intrusive_double_linked_list_element<> {
     /// Whether the configured logical channel is currently active.
     bool active = false;
     /// DL Buffer status of this logical channel.
@@ -160,6 +175,8 @@ private:
     unsigned last_sched_bytes = 0;
     /// Head-of-line (HOL) time-of-arrival
     slot_point hol_toa;
+    /// Slice associated with this channel.
+    std::optional<ran_slice_id_t> slice_id;
 
     void reset();
   };
@@ -182,6 +199,9 @@ private:
   // List of active logical channel IDs sorted in decreasing order of priority. i.e. first element has the highest
   // priority.
   std::vector<lcid_t> sorted_channels;
+
+  // List of LCID lists, one per RAN slice.
+  std::vector<intrusive_double_linked_list<channel_context>> slice_lcid_list_lookup;
 
   // Whether the UE is in fallback (no DRB tx).
   bool fallback_state = false;

@@ -86,14 +86,14 @@ const slice_ue_repository& ran_slice_instance::get_ues()
   return slice_ues;
 }
 
-void ran_slice_instance::add_logical_channel(const ue& u, lcid_t lcid, lcg_id_t lcg_id)
+void ran_slice_instance::add_logical_channel(ue& u, lcid_t lcid, lcg_id_t lcg_id)
 {
   if (lcid == LCID_SRB0) {
     // SRB0 is not handled by slice scheduler.
     return;
   }
   if (not slice_ues.contains(u.ue_index)) {
-    slice_ues.emplace(u.ue_index, u);
+    slice_ues.emplace(u.ue_index, u, id);
   }
   slice_ues[u.ue_index].add_logical_channel(lcid, lcg_id);
 }

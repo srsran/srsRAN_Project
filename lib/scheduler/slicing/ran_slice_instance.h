@@ -63,7 +63,7 @@ public:
   }
 
   /// Add a new UE to list of UEs (if not exists) and a new (UE, LCID) to the list of bearers managed by this slice.
-  void add_logical_channel(const ue& u, lcid_t lcid, lcg_id_t lcg_id);
+  void add_logical_channel(ue& u, lcid_t lcid, lcg_id_t lcg_id);
 
   /// Remove a (UE, LCID) from the list of bearers managed by this slice.
   /// \remark UE is removed if all LCIDs of a UE are removed.

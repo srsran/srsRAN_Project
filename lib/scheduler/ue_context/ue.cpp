@@ -212,14 +212,12 @@ bool ue::has_pending_sr() const
   return ul_lc_ch_mgr.has_pending_sr();
 }
 
-unsigned ue::build_dl_transport_block_info(dl_msg_tb_info&                         tb_info,
-                                           unsigned                                tb_size_bytes,
-                                           const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids)
+unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, ran_slice_id_t slice_id)
 {
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_mac_ces(tb_info, dl_lc_ch_mgr, tb_size_bytes);
   for (const auto lcid : dl_lc_ch_mgr.get_prioritized_logical_channels()) {
-    if (lcid < lcids.size() and lcids.test(lcid)) {
+    if (dl_lc_ch_mgr.get_slice_id(lcid) == slice_id) {
       total_subpdu_bytes +=
           allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, uint_to_lcid(lcid));
     }

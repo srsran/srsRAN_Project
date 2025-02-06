@@ -34,10 +34,10 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, ue_reposit
   // NOTE: We set \c min_prb for default SRB slice to maximum nof. PRBs of a UE carrier to give maximum priority to this
   // slice.
   slices.emplace_back(
-      default_srb_ran_slice_id, cell_cfg, slice_rrm_policy_config{.min_prb = cell_max_rbs, .max_prb = cell_max_rbs});
+      SRB_RAN_SLICE_ID, cell_cfg, slice_rrm_policy_config{.min_prb = cell_max_rbs, .max_prb = cell_max_rbs});
   slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
   // Default DRB slice.
-  slices.emplace_back(default_drb_ran_slice_id, cell_cfg, slice_rrm_policy_config{.max_prb = cell_max_rbs});
+  slices.emplace_back(DEFAULT_DRB_RAN_SLICE_ID, cell_cfg, slice_rrm_policy_config{.max_prb = cell_max_rbs});
   slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
   // NOTE: RAN slice IDs 0 and 1 are reserved for default SRB and default DRB slice respectively.
   ran_slice_id_t id_count{2};
@@ -152,7 +152,7 @@ void slice_scheduler::config_applied(du_ue_index_t ue_idx)
   add_impl(*u);
 }
 
-void slice_scheduler::add_impl(const ue& u)
+void slice_scheduler::add_impl(ue& u)
 {
   const ue_configuration& ue_cfg = *u.ue_cfg_dedicated();
   for (logical_channel_config_ptr lc_cfg : *ue_cfg.logical_channels()) {
@@ -197,14 +197,14 @@ ran_slice_instance& slice_scheduler::get_slice(const logical_channel_config& lc_
 {
   // Return default SRB slice if LCID belongs to a SRB.
   if (lc_cfg.lcid < LCID_MIN_DRB) {
-    return slices[default_srb_ran_slice_id.value()].inst;
+    return slices[SRB_RAN_SLICE_ID.value()].inst;
   }
   auto it = std::find_if(slices.begin(), slices.end(), [&lc_cfg](const ran_slice_sched_context& slice) {
     return slice.inst.cfg.rrc_member == lc_cfg.rrm_policy;
   });
   if (it == slices.end() or lc_cfg.rrm_policy == rrm_policy_member{}) {
     // Slice with the provided RRM policy member was not found. Return default DRB slice.
-    return slices[default_drb_ran_slice_id.value()].inst;
+    return slices[DEFAULT_DRB_RAN_SLICE_ID.value()].inst;
   }
   return it->inst;
 }

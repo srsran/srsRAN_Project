@@ -12,14 +12,13 @@
 
 using namespace srsran;
 
-slice_ue::slice_ue(const ue& u_) : u(u_) {}
+slice_ue::slice_ue(ue& u_, ran_slice_id_t slice_id_) : u(u_), slice_id(slice_id_) {}
 
 void slice_ue::add_logical_channel(lcid_t lcid, lcg_id_t lcg_id)
 {
-  if (lcid >= bearers.size()) {
-    bearers.resize(lcid + 1);
-  }
-  bearers.set(lcid);
+  // Add LCID to DL slice.
+  u.dl_logical_channels().set_ran_slice(lcid, slice_id);
+
   if (lcg_id >= lcg_ids.size()) {
     lcg_ids.resize(lcg_id + 1);
   }
@@ -28,29 +27,25 @@ void slice_ue::add_logical_channel(lcid_t lcid, lcg_id_t lcg_id)
 
 void slice_ue::rem_logical_channel(lcid_t lcid)
 {
-  bearers.reset(lcid);
   lcg_id_t lcg_id_to_rem = get_lcg_id_for_bearer(lcid);
   srsran_assert(lcg_id_to_rem < MAX_NOF_LCGS, "Unable to fetch LCG ID for bearer with LCID={}", fmt::underlying(lcid));
   // Check whether there are bearers with same LCG ID. If not, remove LCG ID from slice.
-  for (unsigned lcid_idx = 0, e = bearers.size(); lcid_idx != e; ++lcid_idx) {
-    if (bearers.test(uint_to_lcid(lcid_idx))) {
-      lcg_id_t other_lcg_id = get_lcg_id_for_bearer(uint_to_lcid(lcid_idx));
-      if (lcg_id_to_rem == other_lcg_id) {
-        return;
-      }
-    }
+  logical_channel_config_list_ptr lc_chs = u.ue_cfg_dedicated()->logical_channels();
+  if (std::none_of(
+          lc_chs->begin(), lc_chs->end(), [lcg_id_to_rem](const auto& lc) { return lc->lc_group == lcg_id_to_rem; })) {
+    lcg_ids.reset(lcg_id_to_rem);
   }
-  lcg_ids.reset(lcg_id_to_rem);
+  u.dl_logical_channels().reset_ran_slice(lcid);
 }
 
 bool slice_ue::has_pending_dl_newtx_bytes() const
 {
-  return u.has_pending_dl_newtx_bytes(bearers);
+  return u.dl_logical_channels().has_pending_bytes(slice_id);
 }
 
 unsigned slice_ue::pending_dl_newtx_bytes() const
 {
-  return u.pending_dl_newtx_bytes(bearers);
+  return u.dl_logical_channels().pending_bytes(slice_id);
 }
 
 unsigned slice_ue::pending_ul_newtx_bytes() const

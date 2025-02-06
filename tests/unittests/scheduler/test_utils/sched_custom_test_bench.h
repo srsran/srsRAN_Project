@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "lib/scheduler/config/du_cell_group_config_pool.h"
 #include "lib/scheduler/ue_scheduling/ue_repository.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
@@ -49,6 +50,7 @@ public:
   scheduler_expert_config        expert_cfg;
   cell_common_configuration_list cell_cfg_list{};
   const cell_configuration&      cell_cfg;
+  du_cell_group_config_pool      cfg_pool;
   cell_harq_manager              cell_harqs;
   ue_repository                  ues;
   std::vector<ue_configuration>  ue_ded_cfgs;
@@ -61,7 +63,7 @@ public:
   // Class methods.
   void add_ue(sched_ue_creation_request_message ue_req)
   {
-    ue_ded_cfgs.emplace_back(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg);
+    ue_ded_cfgs.emplace_back(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req));
     ues.add_ue(std::make_unique<ue>(ue_creation_command{ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}));
   }
 

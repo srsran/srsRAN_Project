@@ -24,11 +24,14 @@ static unsigned get_mac_sdu_size(unsigned sdu_and_subheader_bytes)
 // Initial capacity for the sorted_channels vector.
 constexpr unsigned INITIAL_CHANNEL_VEC_CAPACITY = 8;
 
+constexpr unsigned INITIAL_SLICE_CAPACITY = 4;
+
 dl_logical_channel_manager::dl_logical_channel_manager(subcarrier_spacing scs_common_) :
   slots_per_sec(get_nof_slots_per_subframe(scs_common_) * 1000)
 {
   // Reserve entries to avoid allocating in hot path.
   sorted_channels.reserve(INITIAL_CHANNEL_VEC_CAPACITY);
+  slice_lcid_list_lookup.reserve(INITIAL_SLICE_CAPACITY);
 }
 
 void dl_logical_channel_manager::slot_indication()
@@ -61,6 +64,38 @@ void dl_logical_channel_manager::set_fallback_state(bool enter_fallback)
   fallback_state = enter_fallback;
 }
 
+void dl_logical_channel_manager::reset_ran_slice(lcid_t lcid)
+{
+  if (not channels[lcid].slice_id.has_value()) {
+    // LCID has no slice.
+    return;
+  }
+
+  // Pop LCID from the slice linked list.
+  unsigned slice_idx = channels[lcid].slice_id.value().value();
+  slice_lcid_list_lookup[slice_idx].pop(&channels[lcid]);
+  channels[lcid].slice_id.reset();
+}
+
+void dl_logical_channel_manager::set_ran_slice(lcid_t lcid, ran_slice_id_t slice_id)
+{
+  if (channels[lcid].slice_id == slice_id) {
+    // No-op.
+    return;
+  }
+
+  // Remove LCID from previous slice.
+  reset_ran_slice(lcid);
+
+  // Add LCID to new slice.
+  unsigned slice_idx = slice_id.value();
+  if (slice_lcid_list_lookup.size() <= slice_idx) {
+    slice_lcid_list_lookup.resize(slice_idx + 1);
+  }
+  slice_lcid_list_lookup[slice_idx].push_back(&channels[lcid]);
+  channels[lcid].slice_id = slice_id;
+}
+
 static uint8_t get_lc_prio(const logical_channel_config& cfg)
 {
   uint8_t prio = 0;
@@ -70,39 +105,6 @@ static uint8_t get_lc_prio(const logical_channel_config& cfg)
     prio = cfg.qos.has_value() ? cfg.qos->qos.priority.value() : qos_prio_level_t::max();
   }
   return prio;
-}
-
-void dl_logical_channel_manager::set_status(lcid_t lcid, bool active)
-{
-  srsran_sanity_check(lcid < MAX_NOF_RB_LCIDS, "Max LCID value 32 exceeded");
-
-  if (channels[lcid].active == active) {
-    // No state change.
-    return;
-  }
-
-  if (active) {
-    srsran_assert(channel_configs->contains(lcid), "Activating logical channel without associated config");
-  }
-
-  // set new state.
-  channels[lcid].active = active;
-
-  if (not active) {
-    // Remove LCID from sorted list if it is not active.
-    srsran_sanity_check(std::find(sorted_channels.begin(), sorted_channels.end(), lcid) != sorted_channels.end(),
-                        "Invalid state");
-    auto it = std::find(sorted_channels.begin(), sorted_channels.end(), lcid);
-    sorted_channels.erase(it);
-  } else {
-    // Add LCID to sorted list if it is now active.
-    srsran_sanity_check(std::find(sorted_channels.begin(), sorted_channels.end(), lcid) == sorted_channels.end(),
-                        "Invalid state");
-    sorted_channels.push_back(lcid);
-    std::sort(sorted_channels.begin(), sorted_channels.end(), [this](lcid_t lhs, lcid_t rhs) {
-      return get_lc_prio(*channel_configs.value()[lhs]) < get_lc_prio(*channel_configs.value()[rhs]);
-    });
-  }
 }
 
 void dl_logical_channel_manager::configure(logical_channel_config_list_ptr log_channels_configs)
@@ -141,32 +143,26 @@ void dl_logical_channel_manager::configure(logical_channel_config_list_ptr log_c
   });
 }
 
-bool dl_logical_channel_manager::has_pending_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& bearers) const
+bool dl_logical_channel_manager::has_pending_bytes(ran_slice_id_t slice_id) const
 {
-  if (fallback_state) {
-    bool srb0_chosen = bearers.size() > 0 and bearers.test(LCID_SRB0);
-    bool srb1_chosen = bearers.size() > 1 and bearers.test(LCID_SRB1);
-    if (not srb0_chosen and not srb1_chosen) {
-      return false;
-    }
-    return is_con_res_id_pending() or (srb0_chosen and has_pending_bytes(LCID_SRB0)) or
-           (srb1_chosen and has_pending_bytes(LCID_SRB1));
+  if (fallback_state or not has_slice(slice_id)) {
+    return false;
   }
 
-  // If at least one slice bearer has pending data, return true.
-  unsigned offset = bearers.find_lowest(1, bearers.size());
-  for (unsigned e = bearers.size(); offset < e; offset = bearers.find_lowest(offset + 1, e)) {
-    if (has_pending_bytes(uint_to_lcid(offset))) {
+  // Iterate through bearers of the slice until we find one with pending data.
+  unsigned slice_idx = slice_id.value();
+  for (const channel_context& ch : slice_lcid_list_lookup[slice_idx]) {
+    if (ch.active and ch.buf_st > 0) {
       return true;
     }
   }
 
-  // In case SRB1 was selected (but with no data) and there are pending CE bytes.
-  if (bearers.size() > 1 and bearers.test(LCID_SRB1) and has_pending_ces()) {
-    // Check if any other bearer has pending data. If they do, CE is not considered.
+  // In case SRB slice was selected (but with no data) and there are pending CE bytes.
+  if (slice_id == SRB_RAN_SLICE_ID and has_pending_ces()) {
+    // Check if any other bearers have pending data. If they do, CE is not considered.
     // Note: This extra check is to avoid multiple slices report pending data.
     for (lcid_t lcid : sorted_channels) {
-      if (lcid > LCID_SRB1 and has_pending_bytes(lcid)) {
+      if (channels[lcid].slice_id != SRB_RAN_SLICE_ID and has_pending_bytes(lcid)) {
         return false;
       }
     }
@@ -197,23 +193,16 @@ unsigned dl_logical_channel_manager::pending_bytes() const
   return bytes;
 }
 
-unsigned dl_logical_channel_manager::pending_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& bearers) const
+unsigned dl_logical_channel_manager::pending_bytes(ran_slice_id_t slice_id) const
 {
-  if (fallback_state) {
-    bool srb0_chosen = bearers.size() > 0 and bearers.test(LCID_SRB0);
-    bool srb1_chosen = bearers.size() > 1 and bearers.test(LCID_SRB1);
-    if (not srb0_chosen and not srb1_chosen) {
-      return 0;
-    }
-    return pending_con_res_ce_bytes() + (srb0_chosen ? pending_bytes(LCID_SRB0) : 0) +
-           (srb1_chosen ? pending_bytes(LCID_SRB1) : 0);
+  if (fallback_state or not has_slice(slice_id)) {
+    return 0;
   }
 
-  // Compute pending bytes for the given bearers. SRB0 is ignored.
+  // Compute pending bytes for the given slice bearers.
   unsigned total_bytes = 0;
-  unsigned offset      = bearers.find_lowest(1, bearers.size());
-  for (unsigned e = bearers.size(); offset < e; offset = bearers.find_lowest(offset + 1, e)) {
-    total_bytes += pending_bytes(uint_to_lcid(offset));
+  for (const channel_context& ch : slice_lcid_list_lookup[slice_id.value()]) {
+    total_bytes += ch.active ? get_mac_sdu_required_bytes(ch.buf_st) : 0;
   }
 
   unsigned ce_bytes = pending_ce_bytes();
@@ -222,7 +211,7 @@ unsigned dl_logical_channel_manager::pending_bytes(const bounded_bitset<MAX_NOF_
     if (total_bytes > 0) {
       // In case the UE has pending bearer bytes, we also include the CE bytes.
       total_bytes += ce_bytes;
-    } else if (bearers.size() > 1 and bearers.test(LCID_SRB1)) {
+    } else if (slice_id == SRB_RAN_SLICE_ID) {
       // In case SRB1 was selected, and there are no pending bytes in the selected bearers, we return the pending CE
       // bytes iff the UE has no pending data on the remaining, non-selected bearers.
       // This is to avoid the situation where a UE, for instance, has DRB data to transmit, but the CE is allocated in

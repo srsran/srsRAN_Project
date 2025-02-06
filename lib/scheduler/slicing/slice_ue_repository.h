@@ -17,7 +17,7 @@ namespace srsran {
 class slice_ue
 {
 public:
-  explicit slice_ue(const ue& u);
+  explicit slice_ue(ue& u, ran_slice_id_t slice_id);
 
   /// Returns DU UE index.
   du_ue_index_t ue_index() const { return u.ue_index; }
@@ -35,16 +35,13 @@ public:
   const ue_cell& get_cell(ue_cell_index_t ue_cell_index) const { return u.get_cell(ue_cell_index); }
 
   /// Determines if at least one bearer of the UE is part of this slice.
-  bool has_bearers_in_slice() const { return bearers.any(); }
+  bool has_bearers_in_slice() const { return u.dl_logical_channels().has_slice(slice_id); }
 
   /// Determines if at least one SRB bearer of the UE is part of this slice.
   bool has_srb_bearers_in_slice() const
   {
     return contains(LCID_SRB0) or contains(LCID_SRB1) or contains(LCID_SRB2) or contains(LCID_SRB3);
   }
-
-  /// Fetches the bitmap of bearers belonging to this slice.
-  const bounded_bitset<MAX_NOF_RB_LCIDS>& get_bearers() const { return bearers; }
 
   /// Fetches the bitmap of active logical channel groups belonging to this slice.
   const bounded_bitset<MAX_NOF_LCGS>& get_lcgs() const { return lcg_ids; }
@@ -57,7 +54,7 @@ public:
   }
 
   /// Determines if bearer with LCID is part of this slice.
-  bool contains(lcid_t lcid) const { return bearers.size() > lcid and bearers.test(lcid); }
+  bool contains(lcid_t lcid) const { return u.dl_logical_channels().get_slice_id(lcid) == slice_id; }
 
   /// Determines if LCG is part of this slice.
   bool contains(lcg_id_t lcg_id) const { return lcg_ids.size() > lcg_id and lcg_ids.test(lcg_id); }
@@ -120,8 +117,8 @@ private:
   /// Helper function to get LCG ID of a bearer.
   lcg_id_t get_lcg_id_for_bearer(lcid_t lcid) const;
 
-  const ue&                        u;
-  bounded_bitset<MAX_NOF_RB_LCIDS> bearers;
+  ue&                  u;
+  const ran_slice_id_t slice_id;
   /// LCG IDs of bearers belonging to this slice.
   bounded_bitset<MAX_NOF_LCGS> lcg_ids;
 };

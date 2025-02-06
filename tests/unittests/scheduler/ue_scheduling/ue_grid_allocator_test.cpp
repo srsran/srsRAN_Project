@@ -117,7 +117,7 @@ protected:
     auto ev = cfg_mng.add_ue(ue_creation_req);
     ues.add_ue(
         std::make_unique<ue>(ue_creation_command{ev.next_config(), ue_creation_req.starts_in_fallback, cell_harqs}));
-    slice_ues.emplace(ue_creation_req.ue_index, ues[ue_creation_req.ue_index]);
+    slice_ues.emplace(ue_creation_req.ue_index, ues[ue_creation_req.ue_index], ran_slice_id_t{0});
     for (const auto& lc_cfg : *ue_creation_req.cfg.lc_config_list) {
       slice_ues[ue_creation_req.ue_index].add_logical_channel(lc_cfg.lcid, lc_cfg.lc_group);
     }

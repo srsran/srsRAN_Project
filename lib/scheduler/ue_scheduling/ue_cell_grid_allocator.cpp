@@ -492,8 +492,7 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
 
     if (is_new_data) {
       // Set MAC logical channels to schedule in this PDU if it is a newtx.
-      u.build_dl_transport_block_info(
-          msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, grant.user->get_bearers());
+      u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, slice_id);
 
       // Update context with buffer occupancy after the TB is built.
       msg.context.buffer_occupancy = u.pending_dl_newtx_bytes();
