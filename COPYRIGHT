@@ -118,6 +118,12 @@ Copyright: 2018-2020 Alex Hultman
 License:   Apache License, Version 2.0
 
 
+Files:     external/nlohmann/json.hpp
+           external/nlohmann/json_fwd.hpp
+Copyright: 2013-2023 Niels Lohmann
+License:   MIT
+
+
 License: MIT
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the "Software"),
