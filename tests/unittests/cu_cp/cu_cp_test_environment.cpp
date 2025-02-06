@@ -880,7 +880,6 @@ bool cu_cp_test_environment::setup_pdu_session(unsigned               du_idx,
           du_idx, du_ue_id, std::move(rrc_reconfiguration_complete), {psi}, {})) {
     return false;
   }
-  return true;
 
   return true;
 }
