@@ -78,8 +78,6 @@ pusch_index_list srsran::get_pusch_td_resource_indices(const cell_configuration&
 
     if (is_dl_heavy and pusch_td_res.k2 <= min_k1) {
       // DL-heavy case.
-      // [Implementation-defined] For DL heavy TDD configuration, only one entry in the PUSCH time domain
-      // resources list with k2 value less than or equal to minimum value of k1(s) is required.
       result.push_back(td_idx);
     }
     if (not is_dl_heavy) {

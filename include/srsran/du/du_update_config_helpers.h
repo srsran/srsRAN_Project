@@ -59,17 +59,17 @@ void compute_nof_sr_csi_pucch_res(pucch_builder_params&   user_params,
 
 bounded_integer<unsigned, 1, 14> compute_max_nof_pucch_symbols(const srs_builder_params& user_srs_params);
 
-/// \brief Add new PUSCH time-domain resources to the list.
+/// \brief Recompute or add new PUSCH time-domain resources to the list.
 ///
 /// This function is used to enable the PUSCH to be scheduled in the SRS slots, where not all OFDM symbols are
 /// available for PUSCH.
 ///
 /// \param td_alloc_list List of PUSCH time-domain resources.
 /// \param user_srs_params SRS configuration parameters.
-/// \param is_tdd boolean indicating if the cell is in TDD mode.
-void add_pusch_time_domain_resources(std::vector<pusch_time_domain_resource_allocation>& td_alloc_list,
-                                     const srs_builder_params&                           user_srs_params,
-                                     bool                                                is_tdd);
+/// \param tdd_cfg Optional TDD configuration.
+void recompute_pusch_time_domain_resources(std::vector<pusch_time_domain_resource_allocation>& td_alloc_list,
+                                           const srs_builder_params&                           user_srs_params,
+                                           const std::optional<tdd_ul_dl_config_common>        tdd_cfg);
 
 } // namespace config_helpers
 } // namespace srsran

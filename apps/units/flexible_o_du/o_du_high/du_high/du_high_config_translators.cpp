@@ -549,10 +549,8 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
         config_helpers::make_pdsch_time_domain_resource(param.search_space0_index,
                                                         out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
                                                         out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
-                                                        band_helper::get_duplex_mode(param.band.value()) ==
-                                                                duplex_mode::TDD
-                                                            ? out_cell.tdd_ul_dl_cfg_common.value()
-                                                            : std::optional<tdd_ul_dl_config_common>{});
+                                                        is_tdd ? out_cell.tdd_ul_dl_cfg_common.value()
+                                                               : std::optional<tdd_ul_dl_config_common>{});
 
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         static_cast<pdsch_serving_cell_config::nof_harq_proc_for_pdsch>(
@@ -723,8 +721,10 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
         f4_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f4_params.nof_symbols.to_uint());
       }
       // Add extra PUSCH time-domain resources to enable PUSCH on symbols not used by the SRS.
-      config_helpers::add_pusch_time_domain_resources(
-          out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list, du_srs_cfg, is_tdd);
+      config_helpers::recompute_pusch_time_domain_resources(
+          out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list,
+          du_srs_cfg,
+          out_cell.tdd_ul_dl_cfg_common);
     }
     if (update_msg1_frequency_start) {
       rach_cfg.rach_cfg_generic.msg1_frequency_start = config_helpers::compute_prach_frequency_start(
