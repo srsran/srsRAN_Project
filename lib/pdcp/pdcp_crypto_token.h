@@ -79,8 +79,8 @@ private:
     if (not was_set) {
       logger.log_debug("Set manual event flag");
       pending_crypto.set();
+      was_set = true;
     }
-    was_set = true;
   }
 
   bool              stopped = false;

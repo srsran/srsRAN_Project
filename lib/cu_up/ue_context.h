@@ -18,6 +18,7 @@
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
+#include "srsran/support/async/execute_on_blocking.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include <map>
 #include <utility>
@@ -97,29 +98,29 @@ public:
   }
   ~ue_context() override = default;
 
-  /// Stop UE executors
-  async_task<void> stop()
+  /// Stop UE executors. This routine will switch between executors as required
+  /// to stop/wait on events as required. At the end, it will return to the provided control executor.
+  async_task<void> stop(task_executor& ctrl_executor, timer_manager& timers)
   {
-    return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
+    return launch_async([this, &ctrl_executor, &timers](coro_context<async_task<void>>& ctx) mutable {
       CORO_BEGIN(ctx);
 
-      /// Await stopping of the UE executors
+      // Switch to UE control executor. Disconnect DRBS.
+      CORO_AWAIT(execute_on_blocking(ue_exec_mapper->ctrl_executor(), timers));
+      pdu_session_manager.disconnect_all_pdu_sessions();
+
+      // Switch to UE UL executor. Await pending UL crypto tasks.
+      CORO_AWAIT(execute_on_blocking(ue_exec_mapper->ul_pdu_executor(), timers));
+      CORO_AWAIT(pdu_session_manager.await_crypto_rx_all_pdu_sessions());
+
+      // TODO await pending DL crypto tasks.
+
+      // Return to UE control executor and stop UE specific executors.
+      CORO_AWAIT(execute_on_blocking(ue_exec_mapper->ctrl_executor(), timers));
       CORO_AWAIT(ue_exec_mapper->stop());
 
-      CORO_RETURN();
-    });
-  }
-
-  /// Disconnect PDU sessions.
-  void disconnect() { pdu_session_manager.disconnect_all_pdu_sessions(); }
-
-  /// Await processing of pending crypto PDUs to be finished.
-  async_task<void> await_crypto_rx()
-  {
-    return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
-
-      CORO_AWAIT(pdu_session_manager.await_crypto_rx_all_pdu_sessions());
+      // Continuation in the original executor.
+      CORO_AWAIT(execute_on_blocking(ctrl_executor, timers));
 
       CORO_RETURN();
     });
