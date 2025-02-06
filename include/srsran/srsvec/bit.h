@@ -15,7 +15,6 @@
 
 #include "srsran/adt/bit_buffer.h"
 #include "srsran/adt/span.h"
-#include "srsran/phy/upper/log_likelihood_ratio.h"
 #include <cstdint>
 
 namespace srsran {
