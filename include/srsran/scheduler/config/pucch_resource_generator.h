@@ -12,7 +12,6 @@
 
 #include "pucch_builder_params.h"
 #include "srsran/adt/expected.h"
-#include "srsran/ran/pucch/pucch_configuration.h"
 
 namespace srsran {
 

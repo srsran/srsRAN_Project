@@ -621,7 +621,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     }
 
     // Parameters for SRS-Config.
-    srs_du::srs_builder_params&    du_srs_cfg   = out_cell.srs_cfg;
+    srs_builder_params&            du_srs_cfg   = out_cell.srs_cfg;
     const du_high_unit_srs_config& user_srs_cfg = base_cell.srs_cfg;
     if (user_srs_cfg.srs_period_ms.has_value()) {
       const auto srs_period_slots = static_cast<unsigned>(

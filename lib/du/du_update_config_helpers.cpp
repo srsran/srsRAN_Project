@@ -10,6 +10,7 @@
 
 #include "srsran/du/du_update_config_helpers.h"
 #include "srsran/scheduler/config/pucch_resource_generator.h"
+#include "srsran/scheduler/config/srs_builder_params.h"
 
 using namespace srsran;
 using namespace config_helpers;
@@ -119,7 +120,7 @@ void config_helpers::compute_nof_sr_csi_pucch_res(pucch_builder_params&   user_p
 }
 
 bounded_integer<unsigned, 1, 14>
-config_helpers::compute_max_nof_pucch_symbols(const srs_du::srs_builder_params& user_srs_params)
+config_helpers::compute_max_nof_pucch_symbols(const srs_builder_params& user_srs_params)
 {
   // [Implementation-defined] In the following, we compute the maximum number of PUCCH symbols that can be used in a
   // slot based on the PUCCH and SRS configurations. The maximum number of PUCCH symbols is computed so that PUCCH and
