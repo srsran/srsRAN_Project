@@ -2,16 +2,16 @@
  *
  * Copyright 2021-2025 Software Radio Systems Limited
  *
- * By using this file, you agree to the terms and conditions set
- * forth in the LICENSE file which can be found at the top level of
- * the distribution.
+ * By using this file, you agree to the terms and conditions
+ * setdu/du_high/du_manager/ran_resource_management/pucch_resource_generator.h forth in the LICENSE file which can be
+ * found at the top level of the distribution.
  *
  */
 
 #pragma once
 
 #include "du_ue_resource_config.h"
-#include "pucch_resource_generator.h"
+#include "srsran/scheduler/config/pucch_resource_generator.h"
 #include <set>
 
 namespace srsran {

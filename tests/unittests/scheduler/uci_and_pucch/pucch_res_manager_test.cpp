@@ -8,9 +8,9 @@
  *
  */
 
-#include "lib/du/du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "uci_test_utils.h"
+#include "srsran/scheduler/config/pucch_resource_generator.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -476,10 +476,10 @@ TEST_F(test_pucch_resource_manager, test_cancel_last_ue_res_reservations_for_har
   // Don't set this reservation in the tracker, as we want to preserve this resource.
   res_manager.set_new_resource_allocation(to_rnti(0x4601), srsran::pucch_resource_usage::CSI);
 
-  auto* csi_resource = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+  const auto* csi_resource = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg);
   ASSERT_NE(nullptr, csi_resource);
 
-  auto* csi_resource_1 = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4602), ue_cell_cfg);
+  const auto* csi_resource_1 = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4602), ue_cell_cfg);
   ASSERT_EQ(nullptr, csi_resource_1);
 
   // Release the tracked resources of the first UE.
@@ -497,12 +497,12 @@ TEST_F(test_pucch_resource_manager, test_cancel_last_ue_res_reservations_for_har
   auto alloc = res_manager.reserve_next_set_0_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
   ASSERT_EQ(0U, alloc.pucch_res_indicator);
 
-  auto* sr_resource = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+  const auto* sr_resource = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
   ASSERT_NE(nullptr, sr_resource);
 
   res_manager.set_new_resource_allocation(to_rnti(0x4601), srsran::pucch_resource_usage::SR);
 
-  auto* sr_resource_1 = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
+  const auto* sr_resource_1 = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
   ASSERT_EQ(nullptr, sr_resource_1);
 
   // Release the tracked resources of the first UE.
@@ -539,7 +539,7 @@ protected:
   void generate_ue_serv_cell_cfg(serving_cell_config&         serv_cell_cfg,
                                  unsigned                     ue_idx,
                                  unsigned                     nof_pucch_cfgs,
-                                 std::vector<pucch_resource>& cell_res_list)
+                                 std::vector<pucch_resource>& cell_res_list) const
   {
     const unsigned nof_ue_pucch_f1_res_harq = nof_res_per_ue;
     const unsigned nof_ue_pucch_f2_res_harq = nof_res_per_ue;
@@ -610,12 +610,12 @@ protected:
   {
     nof_res_per_ue = nof_res_per_ue_;
     cell_pucch_res_list =
-        srs_du::generate_cell_pucch_res_list((nof_res_per_ue + 1) * nof_configurations,
-                                             (nof_res_per_ue + 1) * nof_configurations,
-                                             pucch_f1_params{},
-                                             pucch_f2_params{},
-                                             cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
-                                             NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
+        config_helpers::generate_cell_pucch_res_list((nof_res_per_ue + 1) * nof_configurations,
+                                                     (nof_res_per_ue + 1) * nof_configurations,
+                                                     pucch_f1_params{},
+                                                     pucch_f2_params{},
+                                                     cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+                                                     NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
     for (unsigned ue_idx = 0; ue_idx != nof_ues; ++ue_idx) {
       sched_ue_creation_request_message ue_req   = sched_config_helper::create_default_sched_ue_creation_request();
       serving_cell_config&              serv_cfg = ue_req.cfg.cells->front().serv_cell_cfg;

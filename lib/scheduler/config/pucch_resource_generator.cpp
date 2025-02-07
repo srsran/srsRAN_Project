@@ -8,11 +8,14 @@
  *
  */
 
-#include "pucch_resource_generator.h"
+#include "srsran/scheduler/config/pucch_resource_generator.h"
 #include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
+#include "srsran/ran/resource_allocation/rb_interval.h"
+#include "srsran/scheduler/config/serving_cell_config.h"
 
 using namespace srsran;
-using namespace srs_du;
+using namespace config_helpers;
 
 namespace {
 
@@ -534,7 +537,7 @@ static std::vector<pucch_grant> compute_f4_res(unsigned                         
   return res_list;
 }
 
-error_type<std::string> srs_du::pucch_parameters_validator(
+error_type<std::string> config_helpers::pucch_parameters_validator(
     unsigned                                                               nof_res_f0_f1,
     unsigned                                                               nof_res_f2_f3_f4,
     const std::variant<pucch_f1_params, pucch_f0_params>&                  f0_f1_params,
@@ -872,7 +875,7 @@ merge_f0_f1_f2_f3_f4_resource_lists(const std::vector<pucch_grant>& pucch_f0_f1_
   return resource_list;
 }
 
-std::vector<pucch_resource> srs_du::generate_cell_pucch_res_list(
+std::vector<pucch_resource> config_helpers::generate_cell_pucch_res_list(
     unsigned                                                               nof_res_f0_f1,
     unsigned                                                               nof_res_f2_f3_f4,
     const std::variant<pucch_f1_params, pucch_f0_params>&                  f0_f1_params,
@@ -1041,7 +1044,7 @@ static unsigned cell_res_list_and_params_validator(
   return tot_nof_f0_res != 0 ? tot_nof_f0_res : tot_nof_f1_res;
 }
 
-bool srs_du::ue_pucch_config_builder(
+bool config_helpers::ue_pucch_config_builder(
     serving_cell_config&                                   serv_cell_cfg,
     const std::vector<pucch_resource>&                     res_list,
     unsigned                                               du_harq_set_idx,

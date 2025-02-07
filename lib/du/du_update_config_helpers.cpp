@@ -9,8 +9,7 @@
  */
 
 #include "srsran/du/du_update_config_helpers.h"
-#include "du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
-#include "srsran/scheduler/config/pucch_builder_params.h"
+#include "srsran/scheduler/config/pucch_resource_generator.h"
 
 using namespace srsran;
 using namespace config_helpers;
@@ -58,7 +57,7 @@ prb_interval config_helpers::find_largest_prb_interval_without_pucch(const pucch
                                                                      unsigned                    bwp_size)
 {
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
-  const std::vector<pucch_resource>& res_list = srs_du::generate_cell_pucch_res_list(
+  const std::vector<pucch_resource>& res_list = config_helpers::generate_cell_pucch_res_list(
       user_params.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +
           user_params.nof_sr_resources,
       user_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() * user_params.nof_cell_harq_pucch_res_sets +

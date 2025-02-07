@@ -11,7 +11,8 @@ set(SOURCES serving_cell_config_factory.cpp
         scheduler_cell_config_validator.cpp
         scheduler_ue_config_validator.cpp
         serving_cell_config_validator.cpp
-        csi_helper.cpp)
+        csi_helper.cpp
+        pucch_resource_generator.cpp)
 add_library(sched_config STATIC ${SOURCES})
 target_link_libraries(sched_config srsran_ran du_resource_manager)
 

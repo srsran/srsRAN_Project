@@ -10,11 +10,17 @@
 
 #pragma once
 
-#include "du_ue_resource_config.h"
+#include "pucch_builder_params.h"
+#include "srsran/adt/expected.h"
 #include "srsran/ran/pucch/pucch_configuration.h"
 
-namespace srsran::srs_du {
+namespace srsran {
 
+struct serving_cell_config;
+
+namespace config_helpers {
+
+/// The following values have to be set according to the \ref pucch_resource_manager capabilities.
 /// The following values have to be set according to the \ref pucch_resource_manager capabilities.
 /// Maximum number of PUCCH F0/F1 resources per UE for HARQ-ACK reporting.
 constexpr unsigned max_ue_f0_f1_res_harq = 8;
@@ -83,29 +89,29 @@ generate_cell_pucch_res_list(unsigned                                           
 /// where N = nof_ue_pucch_f0_f1_res_harq and M = nof_ue_pucch_f2_f3_f4_res_harq,
 /// and with the following indices \ref res_id:
 /// - The first \ref nof_ue_pucch_f0_f1_res_harq are the PUCCH F0/F1 resources for HARQ-ACK and have index
-///   [ (du_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f0_f1_res_harq,
-///     (du_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f0_f1_res_harq + nof_ue_pucch_f0_f1_res_harq ).
+///   [ (cell_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f0_f1_res_harq,
+///     (cell_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f0_f1_res_harq + nof_ue_pucch_f0_f1_res_harq ).
 /// - The next resource in the list is the PUCCH F0/F1 resource for SR, which have index:
-///      nof_harq_pucch_sets * nof_ue_pucch_f0_f1_res_harq + du_sr_res_idx % nof_cell_pucch_f0_f1_res_sr.
+///      nof_harq_pucch_sets * nof_ue_pucch_f0_f1_res_harq + cell_sr_res_idx % nof_cell_pucch_f0_f1_res_sr.
 /// - The next \ref nof_ue_pucch_f2_f3_f4_res_harq are the PUCCH F2/F3/F4 resources for HARQ-ACK and have index
 ///   [  nof_harq_pucch_sets * nof_ue_pucch_f0_f1_res_harq + nof_cell_pucch_f0_f1_res_sr +
-///                     (du_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f2_f3_f4_res_harq,
+///                     (cell_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f2_f3_f4_res_harq,
 ///      nof_harq_pucch_sets * nof_ue_pucch_f0_f1_res_harq + nof_cell_pucch_f0_f1_res_sr +
-///                     (du_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f2_f3_f4_res_harq +
+///                     (cell_harq_set_idx % nof_harq_pucch_sets) * nof_ue_pucch_f2_f3_f4_res_harq +
 ///                     nof_ue_pucch_f2_f3_f4_res_harq).
 /// - The last resource in the list is the PUCCH F2/F3/F4 resource for CSI, which has index:
 ////     nof_harq_pucch_sets * nof_ue_pucch_f0_f1_res_harq + nof_cell_pucch_f0_f1_res_sr +
-///                     nof_ue_pucch_f2_f3_f4_res_harq * nof_harq_pucch_sets + du_csi_res_idx %
+///                     nof_ue_pucch_f2_f3_f4_res_harq * nof_harq_pucch_sets + cell_csi_res_idx %
 ///                     nof_cell_pucch_f2_f3_f4_res_csi.
 ///
 /// \param[in,out] serv_cell_cfg default \c ServingCellConfig that will be overwritten by this function.
 /// \param[in] res_list cell PUCCH resource list from which the function picks the UE PUCCH resources.
-/// \param[in] du_harq_set_idx defines which PUCCH resource set for HARQ to be assigned to this UE among
+/// \param[in] cell_harq_set_idx defines which PUCCH resource set for HARQ to be assigned to this UE among
 ///            \ref nof_harq_pucch_sets possible ones; the chosen set for this UE has index
-///            du_harq_set_idx % nof_harq_pucch_sets.
-/// \param[in] du_sr_res_idx defines which PUCCH resource for SR to be assigned to this UE among
+///            cell_harq_set_idx % nof_harq_pucch_sets.
+/// \param[in] cell_sr_res_idx defines which PUCCH resource for SR to be assigned to this UE among
 ///            \ref nof_cell_pucch_f0_f1_res_sr possible ones.  Values: {0, ..., nof_cell_pucch_f0_f1_res_sr-1}.
-/// \param[in] du_csi_res_idx defines which PUCCH resource for CSI to be assigned to this UE among
+/// \param[in] cell_csi_res_idx defines which PUCCH resource for CSI to be assigned to this UE among
 ///            \ref nof_cell_pucch_f2_f3_f4_res_csi possible ones.  Values: {0, ..., nof_cell_pucch_f2_f3_f4_res_csi-1}.
 /// \param[in] nof_ue_pucch_f0_f1_res_harq desired number of UE PUCCH F0/F1 resources (HARQ-ACK) in UE configuration.
 /// \param[in] nof_ue_pucch_f2_f3_f4_res_harq desired number of UE PUCCH F2/F3/F4 resources (HARQ-ACK) in UE
@@ -115,12 +121,14 @@ generate_cell_pucch_res_list(unsigned                                           
 /// the building is successful, false otherwise.
 bool ue_pucch_config_builder(serving_cell_config&                                   serv_cell_cfg,
                              const std::vector<pucch_resource>&                     res_list,
-                             unsigned                                               du_harq_set_idx,
-                             unsigned                                               du_sr_res_idx,
-                             unsigned                                               du_csi_res_idx,
+                             unsigned                                               cell_harq_set_idx,
+                             unsigned                                               cell_sr_res_idx,
+                             unsigned                                               cell_csi_res_idx,
                              bounded_integer<unsigned, 1, max_ue_f0_f1_res_harq>    nof_ue_pucch_f0_f1_res_harq,
                              bounded_integer<unsigned, 1, max_ue_f2_f3_f4_res_harq> nof_ue_pucch_f2_f3_f4_res_harq,
                              unsigned                                               nof_harq_pucch_sets,
                              unsigned                                               nof_cell_pucch_f0_f1_res_sr,
                              unsigned nof_cell_pucch_f2_f3_f4_res_csi = 1);
-} // namespace srsran::srs_du
+
+} // namespace config_helpers
+} // namespace srsran

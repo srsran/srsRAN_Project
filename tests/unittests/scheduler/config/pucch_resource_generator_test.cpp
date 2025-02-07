@@ -8,17 +8,15 @@
  *
  */
 
-#include "lib/du/du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
-#include "srsran/du/du_cell_config_helpers.h"
+#include "srsran/scheduler/config/pucch_resource_generator.h"
 #include "srsran/support/test_utils.h"
 #include "fmt/ostream.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
-using namespace srs_du;
 
-namespace du_pucch_gen {
+namespace sched_pucch_gen {
 // Test struct.
 struct pucch_gen_params {
   unsigned                         nof_res_f0;
@@ -131,9 +129,9 @@ std::ostream& operator<<(std::ostream& os, const pucch_cfg_builder_params& param
   return os;
 }
 
-} // namespace du_pucch_gen
+} // namespace sched_pucch_gen
 
-using namespace du_pucch_gen;
+using namespace sched_pucch_gen;
 
 // This class implements a resource grid for PUCCH resources. It allocates the resource on the grid and verify whether a
 // resource collides with the previously allocated ones.
@@ -521,7 +519,7 @@ public:
               if (grid_unit.format != pucch_format::FORMAT_4) {
                 return true;
               }
-              const unsigned occ_index = static_cast<unsigned>(res_f4.occ_index);
+              const auto occ_index = static_cast<unsigned>(res_f4.occ_index);
               srsran_assert(occ_index < static_cast<unsigned>(res_f4.occ_length), " OCC index exceeds OCC length");
               if (grid_unit.allocated_occ_cs_list[occ_index]) {
                 return true;
@@ -541,7 +539,7 @@ public:
               if (grid_unit.format != pucch_format::FORMAT_4) {
                 return true;
               }
-              const unsigned occ_index = static_cast<unsigned>(res_f4.occ_index);
+              const auto occ_index = static_cast<unsigned>(res_f4.occ_index);
               srsran_assert(occ_index < static_cast<unsigned>(res_f4.occ_length), " OCC index exceeds OCC length");
               if (grid_unit.allocated_occ_cs_list[occ_index]) {
                 return true;
@@ -561,7 +559,7 @@ public:
               if (grid_unit.format != pucch_format::FORMAT_4) {
                 return true;
               }
-              const unsigned occ_index = static_cast<unsigned>(res_f4.occ_index);
+              const auto occ_index = static_cast<unsigned>(res_f4.occ_index);
               srsran_assert(occ_index < static_cast<unsigned>(res_f4.occ_length), " OCC index exceeds OCC length");
               if (grid_unit.allocated_occ_cs_list[occ_index]) {
                 return true;
@@ -688,7 +686,7 @@ TEST_P(test_pucch_res_generator_params, test_pucch_res_given_number)
     nof_res_f2_f3_f4 = nof_res_f4;
   }
 
-  std::vector<pucch_resource> res_list = generate_cell_pucch_res_list(
+  std::vector<pucch_resource> res_list = config_helpers::generate_cell_pucch_res_list(
       nof_res_f0_f1, nof_res_f2_f3_f4, f0_f1_params, f2_f3_f4_params, bwp_size, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
 
   ASSERT_FALSE(res_list.empty());
@@ -1468,7 +1466,7 @@ TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
     f2_f3_f4_params.emplace<pucch_f4_params>(f4_params);
   }
 
-  res_list = generate_cell_pucch_res_list(
+  res_list = config_helpers::generate_cell_pucch_res_list(
       nof_res_f0_f1, nof_res_f2_f3_f4, f0_f1_params, f2_f3_f4_params, bwp_size, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
 
   const auto harq_idx_cfg = test_rgen::uniform_int<unsigned>(0, nof_harq_cfg_per_ue - 1);
@@ -1476,16 +1474,16 @@ TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
   const auto csi_idx_cfg  = test_rgen::uniform_int<unsigned>(0, nof_csi_res_per_cell - 1);
 
   // Update pucch_cfg with the UE list of resources (with at max 8 HARQ F1, 8 HARQ F2, 4 SR).
-  ue_pucch_config_builder(serv_cell_cfg,
-                          res_list,
-                          harq_idx_cfg,
-                          sr_idx_cfg,
-                          csi_idx_cfg,
-                          nof_ue_pucch_f0_f1_res_harq,
-                          nof_ue_pucch_f2_f3_f4_res_harq,
-                          nof_harq_cfg_per_ue,
-                          nof_sr_res_per_cell,
-                          nof_csi_res_per_cell);
+  config_helpers::ue_pucch_config_builder(serv_cell_cfg,
+                                          res_list,
+                                          harq_idx_cfg,
+                                          sr_idx_cfg,
+                                          csi_idx_cfg,
+                                          nof_ue_pucch_f0_f1_res_harq,
+                                          nof_ue_pucch_f2_f3_f4_res_harq,
+                                          nof_harq_cfg_per_ue,
+                                          nof_sr_res_per_cell,
+                                          nof_csi_res_per_cell);
 
   ASSERT_TRUE(verify_nof_res_and_idx(harq_idx_cfg, sr_idx_cfg, csi_idx_cfg));
 }
@@ -1493,54 +1491,54 @@ TEST_P(test_ue_pucch_config_builder, test_validator_too_many_resources)
 INSTANTIATE_TEST_SUITE_P(ue_pucch_config_builder,
                          test_ue_pucch_config_builder,
                          // clang-format off
-                         //                                   nof:  f0  |  f1  |  f2  |  f3  |  f4  | harq |  sr  | csi
-                         //                                   nof:  f0  |  f1  |  f2  |  f3  |  f4  | cfg  |  sr  | csi
-                         ::testing::Values(
-                                           // Format 0 and Format 2 test cases.
-                                           pucch_cfg_builder_params{ 6, 0, 6, 0, 0, 1, 8, 8 },
-                                           pucch_cfg_builder_params{ 5, 0, 3, 0, 0, 1, 1, 1 },
-                                           pucch_cfg_builder_params{ 6, 0, 6, 0, 0, 1, 4, 1 },
-                                           pucch_cfg_builder_params{ 2, 0, 2, 0, 0, 1, 1, 1 },
-                                           pucch_cfg_builder_params{ 3, 0, 5, 0, 0, 1, 3, 1 },
-                                           pucch_cfg_builder_params{ 3, 0, 5, 0, 0, 1, 1, 3 },
-                                           pucch_cfg_builder_params{ 6, 0, 6, 0, 0, 4, 4, 4 },
-                                           pucch_cfg_builder_params{ 5, 0, 2, 0, 0, 10, 2, 7 },
-                                           pucch_cfg_builder_params{ 2, 0, 5, 0, 0, 10, 2, 7 },
-                                           pucch_cfg_builder_params{ 2, 0, 5, 0, 0, 10, 7, 2 },
-                                           pucch_cfg_builder_params{ 4, 0, 4, 0, 0, 10, 21, 14 },
-                                           pucch_cfg_builder_params{ 2, 0, 6, 0, 0, 3, 7, 3 },
-                                           pucch_cfg_builder_params{ 6, 0, 4, 0, 0, 5, 6, 2 },
-                                           pucch_cfg_builder_params{ 6, 0, 6, 0, 0, 3, 6, 0 },
-                                           // Format 1 and Format 2 test cases.
-                                           pucch_cfg_builder_params{ 0, 3, 6, 0, 0, 1, 2, 1 },
-                                           pucch_cfg_builder_params{ 0, 7, 3, 0, 0, 1, 1, 1 },
-                                           pucch_cfg_builder_params{ 0, 8, 8, 0, 0, 1, 4, 1 },
-                                           pucch_cfg_builder_params{ 0, 1, 1, 0, 0, 1, 1, 1 },
-                                           pucch_cfg_builder_params{ 0, 7, 7, 0, 0, 1, 3, 1 },
-                                           pucch_cfg_builder_params{ 0, 8, 8, 0, 0, 4, 4, 4 },
-                                           pucch_cfg_builder_params{ 0, 5, 2, 0, 0, 8, 2, 7 },
-                                           pucch_cfg_builder_params{ 0, 2, 7, 0, 0, 3, 7, 3 },
-                                           pucch_cfg_builder_params{ 0, 6, 4, 0, 0, 5, 6, 2 },
-                                           // Format 1 and Format 3 test cases.
-                                           pucch_cfg_builder_params{ 0, 3, 0, 6, 0, 1, 2, 1 },
-                                           pucch_cfg_builder_params{ 0, 7, 0, 3, 0, 1, 1, 1 },
-                                           pucch_cfg_builder_params{ 0, 8, 0, 8, 0, 1, 4, 1 },
-                                           pucch_cfg_builder_params{ 0, 1, 0, 1, 0, 1, 1, 1 },
-                                           pucch_cfg_builder_params{ 0, 7, 0, 7, 0, 1, 3, 1 },
-                                           pucch_cfg_builder_params{ 0, 8, 0, 8, 0, 4, 4, 4 },
-                                           pucch_cfg_builder_params{ 0, 5, 0, 2, 0, 8, 2, 7 },
-                                           pucch_cfg_builder_params{ 0, 2, 0, 7, 0, 3, 7, 3 },
-                                           pucch_cfg_builder_params{ 0, 6, 0, 4, 0, 5, 6, 2 },
-                                           // Format 1 and Format 4 test cases.
-                                           pucch_cfg_builder_params{ 0, 3, 0, 0, 6, 1, 2, 1 },
-                                           pucch_cfg_builder_params{ 0, 7, 0, 0, 3, 1, 1, 1 },
-                                           pucch_cfg_builder_params{ 0, 8, 0, 0, 8, 1, 4, 1 },
-                                           pucch_cfg_builder_params{ 0, 1, 0, 0, 1, 1, 1, 1 },
-                                           pucch_cfg_builder_params{ 0, 7, 0, 0, 7, 1, 3, 1 },
-                                           pucch_cfg_builder_params{ 0, 8, 0, 0, 8, 4, 4, 4 },
-                                           pucch_cfg_builder_params{ 0, 5, 0, 0, 2, 8, 2, 7 },
-                                           pucch_cfg_builder_params{ 0, 2, 0, 0, 7, 3, 7, 3 },
-                                           pucch_cfg_builder_params{ 0, 6, 0, 0, 4, 5, 6, 2 }
+                        //                                   nof:  f0  |  f1  |  f2  |  f3  |  f4  | harq |  sr  | csi
+                        //                                   nof:  f0  |  f1  |  f2  |  f3  |  f4  | cfg  |  sr  | csi
+                        ::testing::Values(
+                                          // Format 0 and Format 2 test cases.
+                                          pucch_cfg_builder_params{ 6, 0, 6, 0, 0, 1, 8, 8 },
+                                          pucch_cfg_builder_params{ 5, 0, 3, 0, 0, 1, 1, 1 },
+                                          pucch_cfg_builder_params{ 6, 0, 6, 0, 0, 1, 4, 1 },
+                                          pucch_cfg_builder_params{ 2, 0, 2, 0, 0, 1, 1, 1 },
+                                          pucch_cfg_builder_params{ 3, 0, 5, 0, 0, 1, 3, 1 },
+                                          pucch_cfg_builder_params{ 3, 0, 5, 0, 0, 1, 1, 3 },
+                                          pucch_cfg_builder_params{ 6, 0, 6, 0, 0, 4, 4, 4 },
+                                          pucch_cfg_builder_params{ 5, 0, 2, 0, 0, 10, 2, 7 },
+                                          pucch_cfg_builder_params{ 2, 0, 5, 0, 0, 10, 2, 7 },
+                                          pucch_cfg_builder_params{ 2, 0, 5, 0, 0, 10, 7, 2 },
+                                          pucch_cfg_builder_params{ 4, 0, 4, 0, 0, 10, 21, 14 },
+                                          pucch_cfg_builder_params{ 2, 0, 6, 0, 0, 3, 7, 3 },
+                                          pucch_cfg_builder_params{ 6, 0, 4, 0, 0, 5, 6, 2 },
+                                          pucch_cfg_builder_params{ 6, 0, 6, 0, 0, 3, 6, 0 },
+                                          // Format 1 and Format 2 test cases.
+                                          pucch_cfg_builder_params{ 0, 3, 6, 0, 0, 1, 2, 1 },
+                                          pucch_cfg_builder_params{ 0, 7, 3, 0, 0, 1, 1, 1 },
+                                          pucch_cfg_builder_params{ 0, 8, 8, 0, 0, 1, 4, 1 },
+                                          pucch_cfg_builder_params{ 0, 1, 1, 0, 0, 1, 1, 1 },
+                                          pucch_cfg_builder_params{ 0, 7, 7, 0, 0, 1, 3, 1 },
+                                          pucch_cfg_builder_params{ 0, 8, 8, 0, 0, 4, 4, 4 },
+                                          pucch_cfg_builder_params{ 0, 5, 2, 0, 0, 8, 2, 7 },
+                                          pucch_cfg_builder_params{ 0, 2, 7, 0, 0, 3, 7, 3 },
+                                          pucch_cfg_builder_params{ 0, 6, 4, 0, 0, 5, 6, 2 },
+                                          // Format 1 and Format 3 test cases.
+                                          pucch_cfg_builder_params{ 0, 3, 0, 6, 0, 1, 2, 1 },
+                                          pucch_cfg_builder_params{ 0, 7, 0, 3, 0, 1, 1, 1 },
+                                          pucch_cfg_builder_params{ 0, 8, 0, 8, 0, 1, 4, 1 },
+                                          pucch_cfg_builder_params{ 0, 1, 0, 1, 0, 1, 1, 1 },
+                                          pucch_cfg_builder_params{ 0, 7, 0, 7, 0, 1, 3, 1 },
+                                          pucch_cfg_builder_params{ 0, 8, 0, 8, 0, 4, 4, 4 },
+                                          pucch_cfg_builder_params{ 0, 5, 0, 2, 0, 8, 2, 7 },
+                                          pucch_cfg_builder_params{ 0, 2, 0, 7, 0, 3, 7, 3 },
+                                          pucch_cfg_builder_params{ 0, 6, 0, 4, 0, 5, 6, 2 },
+                                          // Format 1 and Format 4 test cases.
+                                          pucch_cfg_builder_params{ 0, 3, 0, 0, 6, 1, 2, 1 },
+                                          pucch_cfg_builder_params{ 0, 7, 0, 0, 3, 1, 1, 1 },
+                                          pucch_cfg_builder_params{ 0, 8, 0, 0, 8, 1, 4, 1 },
+                                          pucch_cfg_builder_params{ 0, 1, 0, 0, 1, 1, 1, 1 },
+                                          pucch_cfg_builder_params{ 0, 7, 0, 0, 7, 1, 3, 1 },
+                                          pucch_cfg_builder_params{ 0, 8, 0, 0, 8, 4, 4, 4 },
+                                          pucch_cfg_builder_params{ 0, 5, 0, 0, 2, 8, 2, 7 },
+                                          pucch_cfg_builder_params{ 0, 2, 0, 0, 7, 3, 7, 3 },
+                                          pucch_cfg_builder_params{ 0, 6, 0, 0, 4, 5, 6, 2 }
 )
                          // clang-format on
 );

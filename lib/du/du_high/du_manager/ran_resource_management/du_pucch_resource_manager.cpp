@@ -12,6 +12,7 @@
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/pucch/pucch_info.h"
+#include "srsran/scheduler/config/pucch_resource_generator.h"
 #include "srsran/scheduler/result/pucch_format.h"
 #include <numeric>
 
@@ -58,17 +59,17 @@ static pucch_config build_default_pucch_cfg(const pucch_config& pucch_cfg, const
 du_pucch_resource_manager::du_pucch_resource_manager(span<const du_cell_config> cell_cfg_list_,
                                                      unsigned                   max_pucch_grants_per_slot_) :
   user_defined_pucch_cfg(cell_cfg_list_[0].pucch_cfg),
-  default_pucch_res_list(
-      srs_du::generate_cell_pucch_res_list(cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
-                                                   cell_cfg_list_[0].pucch_cfg.nof_cell_harq_pucch_res_sets +
-                                               cell_cfg_list_[0].pucch_cfg.nof_sr_resources,
-                                           cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() *
-                                                   cell_cfg_list_[0].pucch_cfg.nof_cell_harq_pucch_res_sets +
-                                               cell_cfg_list_[0].pucch_cfg.nof_csi_resources,
-                                           cell_cfg_list_[0].pucch_cfg.f0_or_f1_params,
-                                           cell_cfg_list_[0].pucch_cfg.f2_or_f3_or_f4_params,
-                                           cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-                                           cell_cfg_list_[0].pucch_cfg.max_nof_symbols)),
+  default_pucch_res_list(config_helpers::generate_cell_pucch_res_list(
+      cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() *
+              cell_cfg_list_[0].pucch_cfg.nof_cell_harq_pucch_res_sets +
+          cell_cfg_list_[0].pucch_cfg.nof_sr_resources,
+      cell_cfg_list_[0].pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() *
+              cell_cfg_list_[0].pucch_cfg.nof_cell_harq_pucch_res_sets +
+          cell_cfg_list_[0].pucch_cfg.nof_csi_resources,
+      cell_cfg_list_[0].pucch_cfg.f0_or_f1_params,
+      cell_cfg_list_[0].pucch_cfg.f2_or_f3_or_f4_params,
+      cell_cfg_list_[0].ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+      cell_cfg_list_[0].pucch_cfg.max_nof_symbols)),
   default_pucch_cfg(
       build_default_pucch_cfg(cell_cfg_list_[0].ue_ded_serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.value(),
                               user_defined_pucch_cfg)),
@@ -297,16 +298,16 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
   }
 
   // Generate PUCCH resource list for the UE.
-  srs_du::ue_pucch_config_builder(cell_grp_cfg.cells[0].serv_cell_cfg,
-                                  default_pucch_res_list,
-                                  cells[0].ue_idx,
-                                  sr_res_offset.value().first,
-                                  csi_res_offset.has_value() ? csi_res_offset.value().first : 0,
-                                  user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq,
-                                  user_defined_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq,
-                                  user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets,
-                                  user_defined_pucch_cfg.nof_sr_resources,
-                                  user_defined_pucch_cfg.nof_csi_resources);
+  config_helpers::ue_pucch_config_builder(cell_grp_cfg.cells[0].serv_cell_cfg,
+                                          default_pucch_res_list,
+                                          cells[0].ue_idx,
+                                          sr_res_offset.value().first,
+                                          csi_res_offset.has_value() ? csi_res_offset.value().first : 0,
+                                          user_defined_pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq,
+                                          user_defined_pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq,
+                                          user_defined_pucch_cfg.nof_cell_harq_pucch_res_sets,
+                                          user_defined_pucch_cfg.nof_sr_resources,
+                                          user_defined_pucch_cfg.nof_csi_resources);
 
   // Set the offsets for SR and CSI.
   cell_grp_cfg.cells[0].serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg->sr_res_list.front().offset =
