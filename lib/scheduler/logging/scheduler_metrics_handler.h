@@ -180,10 +180,6 @@ public:
 
 private:
   void handle_pucch_sinr(ue_metric_context& u, float sinr);
-  void handle_pucch_f2f3f4_invalid_harq(ue_metric_context& u);
-  void handle_pucch_f2f3f4_invalid_csi(ue_metric_context& u);
-  void handle_pusch_invalid_harq(ue_metric_context& u);
-  void handle_pusch_invalid_csi(ue_metric_context& u);
   void handle_csi_report(ue_metric_context& u, const csi_report_data& csi);
   void report_metrics();
   void handle_slot_result(const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);

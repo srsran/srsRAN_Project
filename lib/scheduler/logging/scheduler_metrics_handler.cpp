@@ -10,6 +10,7 @@
 
 #include "scheduler_metrics_handler.h"
 #include "../config/cell_configuration.h"
+
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/srslog/srslog.h"
@@ -104,26 +105,6 @@ void cell_metrics_handler::handle_pucch_sinr(ue_metric_context& u, float sinr)
   u.data.sum_pucch_snrs += sinr;
 }
 
-void cell_metrics_handler::handle_pucch_f2f3f4_invalid_harq(ue_metric_context& u)
-{
-  u.data.nof_pucch_f2f3f4_invalid_harqs++;
-}
-
-void cell_metrics_handler::handle_pucch_f2f3f4_invalid_csi(ue_metric_context& u)
-{
-  u.data.nof_pucch_f2f3f4_invalid_csis++;
-}
-
-void cell_metrics_handler::handle_pusch_invalid_harq(ue_metric_context& u)
-{
-  u.data.nof_pusch_invalid_harqs++;
-}
-
-void cell_metrics_handler::handle_pusch_invalid_csi(ue_metric_context& u)
-{
-  u.data.nof_pusch_invalid_csis++;
-}
-
 void cell_metrics_handler::handle_csi_report(ue_metric_context& u, const csi_report_data& csi)
 {
   // Add new CQI and RI observations if they are available in the CSI report.
@@ -187,11 +168,11 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
         u.data.pucch_ta.update(f2f3f4->time_advance_offset->to_seconds());
       }
 
-      if (f2f3f4->invalid_harq_report) {
-        handle_pucch_f2f3f4_invalid_harq(u);
+      if (not f2f3f4->harqs.empty() and f2f3f4->harqs[0] != mac_harq_ack_report_status::dtx) {
+        u.data.nof_pucch_f2f3f4_invalid_harqs++;
       }
       if (f2f3f4->invalid_csi_report) {
-        handle_pucch_f2f3f4_invalid_csi(u);
+        u.data.nof_pucch_f2f3f4_invalid_csis++;
       }
     } else {
       // PUSCH case.
@@ -200,11 +181,11 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
       if (pusch.csi.has_value()) {
         handle_csi_report(u, pusch.csi.value());
       }
-      if (pusch.invalid_harq_report) {
-        handle_pusch_invalid_harq(u);
+      if (not pusch.harqs.empty() and pusch.harqs[0] != mac_harq_ack_report_status::dtx) {
+        u.data.nof_pusch_invalid_harqs++;
       }
       if (pusch.invalid_csi_report) {
-        handle_pusch_invalid_csi(u);
+        u.data.nof_pusch_invalid_csis++;
       }
     }
   }

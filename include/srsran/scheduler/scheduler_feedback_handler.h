@@ -176,7 +176,6 @@ struct uci_indication {
     struct uci_pusch_pdu {
       /// HARQ bits.
       harq_ack_report_list harqs;
-      bool                 invalid_harq_report = false;
       /// CSI report.
       std::optional<csi_report_data> csi;
       bool                           invalid_csi_report = false;
@@ -191,7 +190,6 @@ struct uci_indication {
       bounded_bitset<MAX_SR_PAYLOAD_SIZE_BITS> sr_info;
       /// HARQ bits.
       harq_ack_report_list harqs;
-      bool                 invalid_harq_report = false;
       /// CSI report.
       std::optional<csi_report_data> csi;
       bool                           invalid_csi_report = false;
