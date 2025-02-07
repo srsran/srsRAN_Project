@@ -376,7 +376,7 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
 
   port_channel_estimator_td_interpolation_strategy pusch_chan_estimator_td_strategy =
       port_channel_estimator_td_interpolation_strategy::average;
-  if (config.pusch_channel_equalizer_algorithm == "interpolate") {
+  if (config.pusch_channel_estimator_td_strategy == "interpolate") {
     pusch_chan_estimator_td_strategy = port_channel_estimator_td_interpolation_strategy::interpolate;
   }
 

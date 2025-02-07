@@ -1469,6 +1469,25 @@ inline void srsran_simd_i_store(int32_t* x, simd_i_t reg)
 #endif /* __AVX512F__ */
 }
 
+inline void srsran_simd_i_storeu(int32_t* x, simd_i_t reg)
+{
+#ifdef __AVX512F__
+  _mm512_storeu_epi32(reinterpret_cast<__m512i*>(x), reg);
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(x), reg);
+#else
+#ifdef __SSE4_1__
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(x), reg);
+#else
+#ifdef __ARM_NEON
+  vst1q_s32(reinterpret_cast<int*>(x), reg);
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+}
+
 inline simd_i_t srsran_simd_i_set1(int x)
 {
 #ifdef __AVX512F__
