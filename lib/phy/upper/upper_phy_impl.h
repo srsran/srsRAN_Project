@@ -35,6 +35,8 @@ struct upper_phy_impl_config {
   unsigned ul_bw_rb;
   /// Number of receive antenna ports.
   unsigned nof_rx_ports;
+  /// Maximum number of layers for PUSCH transmissions.
+  unsigned pusch_max_nof_layers;
   /// Downlink processor pool.
   std::unique_ptr<downlink_processor_pool> dl_processor_pool;
   /// Uplink processor pool.

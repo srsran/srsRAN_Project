@@ -24,6 +24,8 @@ namespace {
 class UpperPhyRxSymbolHandlerFixture : public ::testing::Test
 {
 protected:
+  static constexpr unsigned                  max_nof_prb    = 1;
+  static constexpr unsigned                  max_nof_layers = 1;
   std::unique_ptr<rx_buffer_pool_controller> rm_buffer_pool;
   uplink_processor_spy*                      ul_proc_spy;
   std::unique_ptr<uplink_processor_pool>     ul_processor_pool;
@@ -87,7 +89,7 @@ protected:
 
   void handle_pucch_pdu()
   {
-    const unsigned nof_symbols = 2;
+    static constexpr unsigned nof_symbols = 2;
 
     uplink_processor::pucch_pdu pdu     = {};
     auto&                       format0 = pdu.config.emplace<pucch_processor::format0_configuration>();
@@ -110,7 +112,12 @@ protected:
     rm_buffer_pool(create_rx_buffer_pool(rx_buffer_pool_config{16, 2, 2, 16})),
     ul_processor_pool(create_ul_processor_pool()),
     pdu_repo(2),
-    rx_handler(*ul_processor_pool, pdu_repo, rm_buffer_pool->get_pool(), rx_results_wrapper),
+    rx_handler(*ul_processor_pool,
+               pdu_repo,
+               rm_buffer_pool->get_pool(),
+               rx_results_wrapper,
+               max_nof_prb,
+               max_nof_layers),
     shared_rg(rg)
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);

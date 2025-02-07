@@ -767,6 +767,7 @@ public:
   {
     upper_phy_impl_config phy_config;
     phy_config.ul_bw_rb                    = config.ul_bw_rb;
+    phy_config.pusch_max_nof_layers        = config.pusch_max_nof_layers;
     phy_config.nof_rx_ports                = config.nof_rx_ports;
     phy_config.log_level                   = config.log_level;
     phy_config.rx_symbol_printer_filename  = config.rx_symbol_printer_filename;
