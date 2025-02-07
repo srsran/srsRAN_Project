@@ -17,7 +17,7 @@ using namespace srsran;
 static srs_du::du_cell_config generate_du_cell_config(const bwp_uplink_common&               init_ul_bwp,
                                                       std::optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common,
                                                       const serving_cell_config&             base_ue_cfg,
-                                                      const srs_du::pucch_builder_params&    pucch_cfg)
+                                                      const pucch_builder_params&            pucch_cfg)
 {
   srs_du::du_cell_config cell_cfg;
   cell_cfg.ul_cfg_common.init_ul_bwp = init_ul_bwp;
@@ -32,15 +32,15 @@ pucch_res_builder_test_helper::pucch_res_builder_test_helper() : pucch_res_mgr(s
 pucch_res_builder_test_helper::pucch_res_builder_test_helper(
     const bwp_uplink_common&               init_ul_bwp,
     std::optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common,
-    const srs_du::pucch_builder_params&    pucch_cfg) :
+    const pucch_builder_params&            pucch_cfg) :
   required_info(pucch_res_builder_info{.init_ul_bwp          = init_ul_bwp,
                                        .tdd_ul_dl_cfg_common = tdd_ul_dl_cfg_common,
                                        .pucch_cfg            = pucch_cfg})
 {
 }
 
-pucch_res_builder_test_helper::pucch_res_builder_test_helper(const cell_configuration&           cell_cfg,
-                                                             const srs_du::pucch_builder_params& pucch_cfg) :
+pucch_res_builder_test_helper::pucch_res_builder_test_helper(const cell_configuration&   cell_cfg,
+                                                             const pucch_builder_params& pucch_cfg) :
   required_info(pucch_res_builder_info{.init_ul_bwp          = cell_cfg.ul_cfg_common.init_ul_bwp,
                                        .tdd_ul_dl_cfg_common = cell_cfg.tdd_cfg_common,
                                        .pucch_cfg            = pucch_cfg})
@@ -49,7 +49,7 @@ pucch_res_builder_test_helper::pucch_res_builder_test_helper(const cell_configur
 
 void pucch_res_builder_test_helper::setup(const bwp_uplink_common&               init_ul_bwp_,
                                           std::optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common_,
-                                          const srs_du::pucch_builder_params&    pucch_cfg)
+                                          const pucch_builder_params&            pucch_cfg)
 {
   if (required_info.has_value()) {
     return;
@@ -58,8 +58,7 @@ void pucch_res_builder_test_helper::setup(const bwp_uplink_common&              
       .init_ul_bwp = init_ul_bwp_, .tdd_ul_dl_cfg_common = tdd_ul_dl_cfg_common_, .pucch_cfg = pucch_cfg});
 }
 
-void pucch_res_builder_test_helper::setup(const cell_configuration&           cell_cfg,
-                                          const srs_du::pucch_builder_params& pucch_cfg)
+void pucch_res_builder_test_helper::setup(const cell_configuration& cell_cfg, const pucch_builder_params& pucch_cfg)
 {
   setup(cell_cfg.ul_cfg_common.init_ul_bwp, cell_cfg.tdd_cfg_common, pucch_cfg);
 }

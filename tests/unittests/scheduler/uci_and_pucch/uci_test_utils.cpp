@@ -192,9 +192,9 @@ test_bench::test_bench(const test_bench_params& params,
   csi_report.report_slot_offset = params.csi_offset;
 
   if (set1_format != pucch_format::FORMAT_2 || use_format_0) {
-    srs_du::pucch_builder_params pucch_params{};
+    pucch_builder_params pucch_params{};
     if (use_format_0) {
-      pucch_params.f0_or_f1_params.emplace<srs_du::pucch_f0_params>();
+      pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
       pucch_params.nof_ue_pucch_f0_or_f1_res_harq       = 6;
       pucch_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
     }
@@ -202,10 +202,10 @@ test_bench::test_bench(const test_bench_params& params,
       case pucch_format::FORMAT_2:
         break;
       case pucch_format::FORMAT_3:
-        pucch_params.f2_or_f3_or_f4_params.emplace<srs_du::pucch_f3_params>();
+        pucch_params.f2_or_f3_or_f4_params.emplace<pucch_f3_params>();
         break;
       case pucch_format::FORMAT_4:
-        pucch_params.f2_or_f3_or_f4_params.emplace<srs_du::pucch_f4_params>();
+        pucch_params.f2_or_f3_or_f4_params.emplace<pucch_f4_params>();
         break;
       default:
         srsran_assertion_failure("Invalid PUCCH Format for Set Id 1 (valid values are 2, 3 or 4)");

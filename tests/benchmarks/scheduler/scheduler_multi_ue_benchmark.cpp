@@ -81,7 +81,7 @@ public:
     next_sl_tx(builder_params.scs_common, 0)
   {
     du_cell_cfgs = {config_helpers::make_default_du_cell_config(builder_params)};
-    std::get<srs_du::pucch_f2_params>(du_cell_cfgs[0].pucch_cfg.f2_or_f3_or_f4_params).max_code_rate =
+    std::get<pucch_f2_params>(du_cell_cfgs[0].pucch_cfg.f2_or_f3_or_f4_params).max_code_rate =
         max_pucch_code_rate::dot_35;
     du_cell_cfgs[0].pucch_cfg.nof_csi_resources                    = 4;
     du_cell_cfgs[0].pucch_cfg.nof_sr_resources                     = 2;

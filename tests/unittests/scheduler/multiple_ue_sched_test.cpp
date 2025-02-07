@@ -9,7 +9,6 @@
  */
 
 #include "lib/scheduler/scheduler_impl.h"
-#include "lib/scheduler/ue_scheduling/ue_fallback_scheduler.h"
 #include "test_utils/dummy_test_components.h"
 #include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
@@ -79,8 +78,6 @@ protected:
   std::optional<test_bench>     bench;
   pucch_res_builder_test_helper pucch_cfg_builder;
 
-  unsigned last_csi_report_offset = 0;
-
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
   unsigned max_k_value = 0;
 
@@ -117,13 +114,13 @@ protected:
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     bench->sched_res = &bench->sch.slot_indication(current_slot, to_du_cell_index(0));
 
-    srs_du::pucch_builder_params pucch_basic_params{.nof_ue_pucch_f0_or_f1_res_harq       = 8,
-                                                    .nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8,
-                                                    .nof_sr_resources                     = 8,
-                                                    .nof_csi_resources                    = 8};
-    auto&                        f1_params = pucch_basic_params.f0_or_f1_params.emplace<srs_du::pucch_f1_params>();
-    f1_params.nof_cyc_shifts               = srs_du::nof_cyclic_shifts::twelve;
-    f1_params.occ_supported                = true;
+    pucch_builder_params pucch_basic_params{.nof_ue_pucch_f0_or_f1_res_harq       = 8,
+                                            .nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8,
+                                            .nof_sr_resources                     = 8,
+                                            .nof_csi_resources                    = 8};
+    auto&                f1_params = pucch_basic_params.f0_or_f1_params.emplace<pucch_f1_params>();
+    f1_params.nof_cyc_shifts       = pucch_nof_cyclic_shifts::twelve;
+    f1_params.occ_supported        = true;
     pucch_cfg_builder.setup(bench->cell_cfg, pucch_basic_params);
   }
 

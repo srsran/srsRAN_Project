@@ -10,6 +10,7 @@
 
 #include "srsran/du/du_update_config_helpers.h"
 #include "du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
+#include "srsran/scheduler/config/pucch_builder_params.h"
 
 using namespace srsran;
 using namespace config_helpers;
@@ -53,8 +54,8 @@ static prb_interval find_pucch_inner_prbs(const pucch_resource& res, unsigned bw
   return prb_interval{max_rb_idx_on_left_side, min_rb_idx_on_right_side};
 }
 
-prb_interval config_helpers::find_largest_prb_interval_without_pucch(const srs_du::pucch_builder_params& user_params,
-                                                                     unsigned                            bwp_size)
+prb_interval config_helpers::find_largest_prb_interval_without_pucch(const pucch_builder_params& user_params,
+                                                                     unsigned                    bwp_size)
 {
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
   const std::vector<pucch_resource>& res_list = srs_du::generate_cell_pucch_res_list(
@@ -78,19 +79,19 @@ prb_interval config_helpers::find_largest_prb_interval_without_pucch(const srs_d
   return prb_without_pucch;
 }
 
-unsigned config_helpers::compute_prach_frequency_start(const srs_du::pucch_builder_params& user_params,
-                                                       unsigned                            bwp_size,
-                                                       bool                                is_long_prach)
+unsigned config_helpers::compute_prach_frequency_start(const pucch_builder_params& user_params,
+                                                       unsigned                    bwp_size,
+                                                       bool                        is_long_prach)
 {
   // This is to preserve a guardband between the PUCCH and PRACH.
   const unsigned pucch_to_prach_guardband = is_long_prach ? 0U : 3U;
   return find_largest_prb_interval_without_pucch(user_params, bwp_size).start() + pucch_to_prach_guardband;
 }
 
-void config_helpers::compute_nof_sr_csi_pucch_res(srs_du::pucch_builder_params& user_params,
-                                                  unsigned                      max_pucch_grants_per_slot,
-                                                  float                         sr_period_msec,
-                                                  std::optional<unsigned>       csi_period_msec)
+void config_helpers::compute_nof_sr_csi_pucch_res(pucch_builder_params&   user_params,
+                                                  unsigned                max_pucch_grants_per_slot,
+                                                  float                   sr_period_msec,
+                                                  std::optional<unsigned> csi_period_msec)
 {
   // [Implementation-defined] In the following, we compute the estimated number of PUCCH resources that are needed for
   // SR and CSI; we assume we cannot allocate more than max_pucch_grants_per_slot - 1U (1 is reserved for HARQ-ACK)

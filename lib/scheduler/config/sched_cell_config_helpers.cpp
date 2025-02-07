@@ -10,13 +10,13 @@
 
 #include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "../../du/du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
+#include "srsran/scheduler/config/pucch_builder_params.h"
 #include "srsran/scheduler/config/serving_cell_config_factory.h"
 
 using namespace srsran;
-using namespace srsran::config_helpers;
 
 std::vector<sched_grid_resource>
-srsran::config_helpers::build_pucch_guardbands_list(const srs_du::pucch_builder_params& user_params, unsigned bwp_size)
+srsran::config_helpers::build_pucch_guardbands_list(const pucch_builder_params& user_params, unsigned bwp_size)
 {
   // Compute the cell PUCCH resource list, depending on which parameter that has been passed.
   std::vector<pucch_resource> res_list = srs_du::generate_cell_pucch_res_list(
