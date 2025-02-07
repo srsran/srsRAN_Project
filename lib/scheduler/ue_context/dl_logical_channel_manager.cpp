@@ -27,12 +27,16 @@ constexpr unsigned INITIAL_CHANNEL_VEC_CAPACITY = 8;
 // Initial capacity for the slice_lcid_list_lookup vector.
 constexpr unsigned INITIAL_SLICE_CAPACITY = 4;
 
-dl_logical_channel_manager::dl_logical_channel_manager(subcarrier_spacing scs_common_) :
-  slots_per_sec(get_nof_slots_per_subframe(scs_common_) * 1000)
+dl_logical_channel_manager::dl_logical_channel_manager(subcarrier_spacing              scs_common_,
+                                                       bool                            starts_in_fallback,
+                                                       logical_channel_config_list_ptr log_channels_configs) :
+  slots_per_sec(get_nof_slots_per_subframe(scs_common_) * 1000), fallback_state(starts_in_fallback)
 {
   // Reserve entries to avoid allocating in hot path.
   sorted_channels.reserve(INITIAL_CHANNEL_VEC_CAPACITY);
   slice_lcid_list_lookup.reserve(INITIAL_SLICE_CAPACITY);
+
+  configure(log_channels_configs);
 }
 
 void dl_logical_channel_manager::slot_indication()

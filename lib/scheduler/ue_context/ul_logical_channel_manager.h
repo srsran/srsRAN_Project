@@ -22,7 +22,7 @@ namespace srsran {
 class ul_logical_channel_manager
 {
 public:
-  ul_logical_channel_manager(subcarrier_spacing scs);
+  ul_logical_channel_manager(subcarrier_spacing scs, logical_channel_config_list_ptr log_channels_configs);
 
   /// \brief Update the configurations of the provided lists of bearers.
   void configure(logical_channel_config_list_ptr log_channels_configs);

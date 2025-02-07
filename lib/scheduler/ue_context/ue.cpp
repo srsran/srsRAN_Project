@@ -22,8 +22,10 @@ ue::ue(const ue_creation_command& cmd) :
   ue_ded_cfg(&cmd.cfg),
   pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
-  dl_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs),
-  ul_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs),
+  dl_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs,
+               cmd.starts_in_fallback,
+               cmd.cfg.logical_channels()),
+  ul_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs, cmd.cfg.logical_channels()),
   ta_mgr(expert_cfg,
          cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
          ue_ded_cfg->pcell_cfg().cfg_dedicated().tag_id,
@@ -43,7 +45,6 @@ ue::ue(const ue_creation_command& cmd) :
       cell->set_fallback_state(cmd.starts_in_fallback);
     }
   }
-  dl_lc_ch_mgr.set_fallback_state(cmd.starts_in_fallback);
 }
 
 void ue::slot_indication(slot_point sl_tx)

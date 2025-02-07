@@ -33,7 +33,9 @@ public:
     std::variant<ta_cmd_ce_payload, dummy_ce_payload> ce_payload;
   };
 
-  dl_logical_channel_manager(subcarrier_spacing scs_common);
+  dl_logical_channel_manager(subcarrier_spacing              scs_common,
+                             bool                            starts_in_fallback,
+                             logical_channel_config_list_ptr log_channels_configs);
 
   /// Signal the start of a new slot.
   void slot_indication();

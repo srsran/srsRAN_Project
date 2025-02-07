@@ -15,10 +15,13 @@ using namespace srsran;
 // Initial capacity for the slice_lcid_list_lookup vector.
 constexpr unsigned INITIAL_SLICE_CAPACITY = 4;
 
-ul_logical_channel_manager::ul_logical_channel_manager(subcarrier_spacing scs) :
+ul_logical_channel_manager::ul_logical_channel_manager(subcarrier_spacing              scs,
+                                                       logical_channel_config_list_ptr log_channels_configs) :
   slots_per_sec(get_nof_slots_per_subframe(scs) * 1000)
 {
   slice_lcgid_list_lookup.reserve(INITIAL_SLICE_CAPACITY);
+
+  configure(log_channels_configs);
 }
 
 void ul_logical_channel_manager::set_ran_slice(lcg_id_t lcgid, ran_slice_id_t slice_id)

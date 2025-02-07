@@ -8,6 +8,7 @@
  *
  */
 
+#include "lib/scheduler/config/logical_channel_config_pool.h"
 #include "lib/scheduler/ue_context/dl_logical_channel_manager.h"
 #include "lib/scheduler/ue_context/ta_manager.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
@@ -23,7 +24,7 @@ class ta_manager_tester : public ::testing::TestWithParam<duplex_mode>
 protected:
   ta_manager_tester() :
     ul_scs(GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30),
-    dl_lc_ch_mgr{ul_scs},
+    dl_lc_ch_mgr{ul_scs, false, cfg_pool.create({})},
     ta_mgr(expert_cfg.ue, ul_scs, time_alignment_group::id_t{0}, &dl_lc_ch_mgr),
     current_sl(to_numerology_value(ul_scs), test_rgen::uniform_int<unsigned>(0, 10239))
   {
@@ -55,11 +56,12 @@ protected:
     return {};
   }
 
-  subcarrier_spacing         ul_scs;
-  scheduler_expert_config    expert_cfg = config_helpers::make_default_scheduler_expert_config();
-  dl_logical_channel_manager dl_lc_ch_mgr;
-  ta_manager                 ta_mgr;
-  slot_point                 current_sl;
+  subcarrier_spacing          ul_scs;
+  scheduler_expert_config     expert_cfg = config_helpers::make_default_scheduler_expert_config();
+  logical_channel_config_pool cfg_pool;
+  dl_logical_channel_manager  dl_lc_ch_mgr;
+  ta_manager                  ta_mgr;
+  slot_point                  current_sl;
 };
 
 TEST_P(ta_manager_tester, ta_cmd_is_not_triggered_when_reported_ul_n_ta_update_indication_has_low_sinr)

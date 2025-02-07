@@ -27,7 +27,7 @@ protected:
     cell_cfg(expert_cfg, sched_cfg),
     serv_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config()),
     ue_cc_cfg(to_rnti(0x4601), cell_cfg, serv_cell_cfg),
-    ul_lc_ch_mng(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs)
+    ul_lc_ch_mng(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, {})
   {
   }
 

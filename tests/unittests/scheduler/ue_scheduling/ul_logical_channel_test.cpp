@@ -79,9 +79,8 @@ public:
 
 TEST_F(ul_logical_channel_tester, when_bsr_is_zero_no_tx_data_is_pending)
 {
-  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   const lcg_id_t             lcgid = uint_to_lcg_id(get_random_uint(0, MAX_LCG_ID));
-  lch_mng.configure(create_lcid_config(lcgid));
+  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15, create_lcid_config(lcgid)};
 
   if (get_random_uint(0, 1) > 0) {
     lch_mng.handle_bsr_indication(make_sbsr(lcgid, 0));
@@ -94,9 +93,8 @@ TEST_F(ul_logical_channel_tester, when_bsr_is_zero_no_tx_data_is_pending)
 
 TEST_F(ul_logical_channel_tester, bsr_has_no_effect_in_inactive_bearer)
 {
-  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
+  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15, cfg_pool.create({})};
   const lcg_id_t             lcgid = uint_to_lcg_id(get_random_uint(1, MAX_LCG_ID));
-  lch_mng.configure(cfg_pool.create({}));
 
   lch_mng.handle_bsr_indication(make_sbsr(lcgid, get_random_uint(1, 1000)));
 
@@ -107,9 +105,8 @@ TEST_F(ul_logical_channel_tester, bsr_has_no_effect_in_inactive_bearer)
 
 TEST_F(ul_logical_channel_tester, bsr_updates_tx_pending_bytes)
 {
-  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
   const lcg_id_t             lcgid = uint_to_lcg_id(get_random_uint(0, MAX_LCG_ID));
-  lch_mng.configure(create_lcid_config(lcgid));
+  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15, create_lcid_config(lcgid)};
 
   unsigned bsr = get_random_uint(0, 100);
   lch_mng.handle_bsr_indication(make_sbsr(lcgid, bsr));
@@ -121,13 +118,12 @@ TEST_F(ul_logical_channel_tester, bsr_updates_tx_pending_bytes)
 
 TEST_F(ul_logical_channel_tester, total_pending_bytes_equal_sum_of_logical_channel_pending_bytes)
 {
-  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15};
-  std::vector<lcg_id_t>      lcgids;
-  std::vector<unsigned>      bsrs;
+  std::vector<lcg_id_t> lcgids;
+  std::vector<unsigned> bsrs;
   for (unsigned i = 0; i != MAX_NOF_LCGS; ++i) {
     lcgids.push_back(uint_to_lcg_id(i));
   }
-  lch_mng.configure(this->create_lcid_config(lcgids));
+  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15, this->create_lcid_config(lcgids)};
   for (unsigned i = 0; i != lcgids.size(); ++i) {
     unsigned bsr = get_random_uint(0, 10000);
     bsrs.push_back(add_header_bytes(lcgids[i], bsr));
@@ -145,11 +141,8 @@ TEST_F(ul_logical_channel_tester, when_logical_channel_groups_are_inactive_then_
 {
   lcg_id_t lcg_id = (lcg_id_t)test_rgen::uniform_int<unsigned>(1, MAX_LCG_ID);
 
-  ul_logical_channel_manager ul_lch_mng{subcarrier_spacing::kHz15};
-  ul_logical_channel_manager ul_lch_mng2{subcarrier_spacing::kHz15};
-
-  ul_lch_mng.configure(cfg_pool.create({}));
-  ul_lch_mng2.configure(create_lcid_config(lcg_id));
+  ul_logical_channel_manager ul_lch_mng{subcarrier_spacing::kHz15, cfg_pool.create({})};
+  ul_logical_channel_manager ul_lch_mng2{subcarrier_spacing::kHz15, create_lcid_config(lcg_id)};
 
   ul_lch_mng.handle_bsr_indication(make_sbsr(lcg_id, 10));
   ul_lch_mng2.handle_bsr_indication(make_sbsr(lcg_id, 10));
