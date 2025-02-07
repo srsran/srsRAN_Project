@@ -43,30 +43,22 @@ public:
 
   manual_event_flag& get_awaitable() { return pending_crypto; }
 
-  void stop()
-  {
-    stopped = true;
-    if (tokens == 0) {
-      set_once();
-    }
-  }
+  void stop() { return_token(); }
 
   [[nodiscard]] pdcp_crypto_token get_token() { return pdcp_crypto_token{*this}; }
 
 private:
-  void increment_token()
-  {
-    srsran_assert(not stopped, "Trying to allocate more tokens, even though token manager has stopped.");
-    tokens.fetch_add(1, std::memory_order_relaxed);
-  }
+  void increment_token() { tokens.fetch_add(1, std::memory_order_relaxed); }
 
   void return_token()
   {
     uint32_t prev_token = tokens.fetch_sub(1, std::memory_order_relaxed);
-    srsran_assert(prev_token != 0,
-                  "Error counting crypto tokens. There are less tokens available then the ones granted. token={}",
-                  prev_token);
-    if (stopped and prev_token == 1) {
+    srsran_assert(prev_token != UINT32_MAX,
+                  "Error counting crypto tokens. There are less tokens available then the ones granted.");
+
+    // If there is one less token then the ones granted, the stop() has been called,
+    // and all tokens have been returned.
+    if (prev_token == 0) {
       set_once();
     }
   }
@@ -79,7 +71,6 @@ private:
     }
   }
 
-  bool              stopped = false;
   bool              was_set = false;
   manual_event_flag pending_crypto;
 
