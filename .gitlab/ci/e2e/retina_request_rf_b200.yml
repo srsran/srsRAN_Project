@@ -9,16 +9,16 @@
 - name: amarisoft-ue
   type: ue
   image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_VERSION}_${RETINA_VERSION}
-  labels: ["kubernetes.io/hostname=sdr4"]
+  labels: ["kubernetes.io/hostname=sdr6"]
   nof_ports: 4
   requirements:
     arch: amd64
     cpu:
-      requests: 8
-      limits: 8
+      requests: 12
+      limits: 12
     memory:
-      requests: "12G"
-      limits: "12G"
+      requests: "20G"
+      limits: "20G"
     ephemeral-storage:
       requests: "9G"
       limits: "9G"
@@ -31,15 +31,15 @@
 - name: srs-gnb
   type: gnb
   image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
-  labels: ["kubernetes.io/hostname=sdr6"]
+  labels: ["kubernetes.io/hostname=sdr4"]
   requirements:
     arch: amd64
     cpu:
-      requests: 12
-      limits: 12
+      requests: 8
+      limits: 8
     memory:
-      requests: "20G"
-      limits: "20G"
+      requests: "12G"
+      limits: "12G"
     ephemeral-storage:
       requests: "9G"
       limits: "9G"
