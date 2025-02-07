@@ -302,3 +302,56 @@ TEST_F(dl_logical_channel_tester, ta_cmd_mac_ce_gets_updated_if_already_in_pendi
   ASSERT_TRUE(std::holds_alternative<ta_cmd_ce_payload>(subpdu.ce_payload));
   ASSERT_EQ(std::get<ta_cmd_ce_payload>(subpdu.ce_payload).ta_cmd, second_ta_cmd_ce_payload.ta_cmd);
 }
+
+TEST_F(dl_logical_channel_tester, when_pending_bytes_are_requested_for_a_slice_then_bearers_are_selected_accordingly)
+{
+  dl_logical_channel_manager lch_mng{
+      subcarrier_spacing::kHz15, false, create_lcid_config({LCID_SRB1, LCID_MIN_DRB, uint_to_lcid(LCID_MIN_DRB + 1)})};
+  lch_mng.set_ran_slice(LCID_SRB1, ran_slice_id_t{0});
+  lch_mng.set_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
+  lch_mng.set_ran_slice(uint_to_lcid(LCID_MIN_DRB + 1), ran_slice_id_t{1});
+
+  ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{0}));
+  ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{1}));
+
+  const unsigned srb1_bytes = 10000, drb1_bytes = 20000, drb2_bytes = 50;
+  lch_mng.handle_dl_buffer_status_indication(LCID_SRB1, srb1_bytes);
+  lch_mng.handle_dl_buffer_status_indication(LCID_MIN_DRB, drb1_bytes);
+  lch_mng.handle_dl_buffer_status_indication(uint_to_lcid(LCID_MIN_DRB + 1), drb2_bytes);
+  ASSERT_TRUE(lch_mng.has_pending_bytes(ran_slice_id_t{0}));
+  ASSERT_EQ(lch_mng.pending_bytes(ran_slice_id_t{0}), get_mac_sdu_required_bytes(srb1_bytes));
+  ASSERT_TRUE(lch_mng.has_pending_bytes(ran_slice_id_t{1}));
+  ASSERT_EQ(lch_mng.pending_bytes(ran_slice_id_t{1}),
+            get_mac_sdu_required_bytes(drb1_bytes) + get_mac_sdu_required_bytes(drb2_bytes));
+
+  // Remove SRB1 from slice.
+  lch_mng.reset_ran_slice(LCID_SRB1);
+  ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{0}));
+
+  // Deactivate the whole slice.
+  lch_mng.deactivate(ran_slice_id_t{1});
+  ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{1}));
+}
+
+TEST_F(dl_logical_channel_tester, when_ce_is_pending_and_non_srb_slice_has_pending_bytes_then_ce_goes_in_that_slice)
+{
+  dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15, false, create_lcid_config({LCID_SRB1, LCID_MIN_DRB})};
+  lch_mng.set_ran_slice(LCID_SRB1, ran_slice_id_t{0});
+  lch_mng.set_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
+
+  // CE is pending. SRB slice should be the selected slice to send it.
+  const auto second_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = time_alignment_group::id_t{0}, .ta_cmd = 33};
+  lch_mng.handle_mac_ce_indication({.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = second_ta_cmd_ce_payload});
+  ASSERT_TRUE(lch_mng.has_pending_bytes(ran_slice_id_t{0}));
+  ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{1}));
+
+  // Non-SRB slice has now pending bytes. CE should go in the Non-SRB slice.
+  lch_mng.handle_dl_buffer_status_indication(LCID_MIN_DRB, 10);
+  ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{0}));
+  ASSERT_TRUE(lch_mng.has_pending_bytes(ran_slice_id_t{1}));
+
+  // Non-SRB slice doesn't have pending bytes. CE should go in the SRB slice.
+  lch_mng.handle_dl_buffer_status_indication(LCID_MIN_DRB, 0);
+  ASSERT_TRUE(lch_mng.has_pending_bytes(ran_slice_id_t{0}));
+  ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{1}));
+}
