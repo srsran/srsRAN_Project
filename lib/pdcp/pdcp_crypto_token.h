@@ -39,10 +39,7 @@ private:
 class pdcp_crypto_token_manager
 {
 public:
-  explicit pdcp_crypto_token_manager(timer_factory ue_timer_factory_, const pdcp_bearer_logger& logger_) :
-    ue_timer_factory(ue_timer_factory_), logger(logger_)
-  {
-  }
+  explicit pdcp_crypto_token_manager() = default;
 
   manual_event_flag& get_awaitable() { return pending_crypto; }
 
@@ -60,26 +57,23 @@ private:
   void increment_token()
   {
     srsran_assert(not stopped, "Trying to allocate more tokens, even though token manager has stopped.");
-    uint32_t token = tokens.fetch_add(1, std::memory_order_relaxed);
-    logger.log_debug("Increased token count. token={}", token);
+    tokens.fetch_add(1, std::memory_order_relaxed);
   }
 
   void return_token()
   {
-    uint32_t token = tokens.fetch_sub(1, std::memory_order_relaxed);
-    srsran_assert(token != 0,
+    uint32_t prev_token = tokens.fetch_sub(1, std::memory_order_relaxed);
+    srsran_assert(prev_token != 0,
                   "Error counting crypto tokens. There are less tokens available then the ones granted. token={}",
-                  token);
-    if (stopped and token == 1) {
+                  prev_token);
+    if (stopped and prev_token == 1) {
       set_once();
     }
-    logger.log_debug("Decreased token count. tokens={}", token);
   }
 
   void set_once()
   {
     if (not was_set) {
-      logger.log_debug("Set manual event flag");
       pending_crypto.set();
       was_set = true;
     }
@@ -89,10 +83,7 @@ private:
   bool              was_set = false;
   manual_event_flag pending_crypto;
 
-  std::atomic<uint32_t>     tokens = 0;
-  timer_factory             ue_timer_factory;
-  unique_timer              retry_timer;
-  const pdcp_bearer_logger& logger;
+  std::atomic<uint32_t> tokens = 0;
 
   friend class pdcp_crypto_token;
 };
