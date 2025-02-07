@@ -44,7 +44,7 @@ async_task<void> ue_manager::stop()
 
     // Remove all UEs.
     while (ue_it != ue_db.end()) {
-      CORO_AWAIT(remove_ue((ue_it++)->first));
+      CORO_AWAIT(schedule_and_wait_ue_removal((ue_it++)->first));
     }
 
     CORO_RETURN();
@@ -143,4 +143,24 @@ void ue_manager::schedule_ue_async_task(ue_index_t ue_index, async_task<void> ta
     return;
   }
   ue_ctx->task_sched.schedule(std::move(task));
+}
+
+async_task<bool> ue_manager::schedule_and_wait_ue_removal(ue_index_t ue_index)
+{
+  ue_context* ue_ctx = find_ue(ue_index);
+  if (ue_ctx == nullptr) {
+    logger.error("Cannot schedule UE removal, could not find UE. ue_index={}", fmt::underlying(ue_index));
+    return launch_async([](coro_context<async_task<bool>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(false);
+    });
+  }
+
+  auto fn = [this, ue_index](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT(remove_ue(ue_index));
+    CORO_RETURN();
+  };
+
+  return when_coroutine_completed_on_task_sched(ue_ctx->task_sched, std::move(fn));
 }

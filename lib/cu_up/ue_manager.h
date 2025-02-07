@@ -65,6 +65,8 @@ private:
   /// \return The UE index.
   ue_index_t get_next_ue_index();
 
+  async_task<bool> schedule_and_wait_ue_removal(ue_index_t ue_index);
+
   const n3_interface_config&    n3_config;
   const cu_up_test_mode_config& test_mode_config;
   e1ap_control_message_handler& e1ap;
