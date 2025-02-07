@@ -25,9 +25,10 @@ public:
   virtual ~lower_phy_cfo_controller() = default;
 
   /// \brief Schedules a CFO command.
-  /// \param time   Time at which the CFO value is applied.
+  /// \param time Time at which the CFO value is applied.
   /// \param cfo_Hz New CFO value in Hertz.
-  virtual bool schedule_cfo_command(time_point time, float cfo_Hz) = 0;
+  /// \param cfo_drift_Hz_s New CFO drift value in Hertz per second.
+  virtual bool schedule_cfo_command(time_point time, float cfo_Hz, float cfo_drift_Hz_s = 0) = 0;
 };
 
 } // namespace srsran

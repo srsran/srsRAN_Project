@@ -221,12 +221,14 @@ public:
       return;
     }
 
-    if (!controller.set_tx_cfo(sector_id.value(), cfo.value())) {
+    cfo_compensation_request cfo_reqs;
+    cfo_reqs.cfo_hz = cfo.value();
+    if (!controller.set_tx_cfo(sector_id.value(), cfo_reqs)) {
       fmt::print("Setting TX CFO was not successful. The radio may not support this feature.\n");
       return;
     }
 
-    if (!controller.set_rx_cfo(sector_id.value(), cfo.value())) {
+    if (!controller.set_rx_cfo(sector_id.value(), cfo_reqs)) {
       fmt::print("Setting RX CFO was not successful. The radio may not support this feature.\n");
       return;
     }

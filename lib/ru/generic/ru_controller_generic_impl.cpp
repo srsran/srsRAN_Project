@@ -68,18 +68,24 @@ bool ru_gain_controller_generic_impl::set_rx_gain(unsigned port_id, double gain_
   return radio.get_management_plane().set_rx_gain(port_id, gain_dB);
 }
 
-bool ru_cfo_controller_generic_impl::set_tx_cfo(unsigned sector_id, float cfo_hz)
+bool ru_cfo_controller_generic_impl::set_tx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request)
 {
   if (sector_id < tx_cfo_control.size()) {
-    return tx_cfo_control[sector_id]->schedule_cfo_command(std::chrono::system_clock::now(), cfo_hz);
+    return tx_cfo_control[sector_id]->schedule_cfo_command(
+        cfo_request.start_timestamp.value_or(std::chrono::system_clock::now()),
+        cfo_request.cfo_hz,
+        cfo_request.cfo_drift_hz_s);
   }
   return false;
 }
 
-bool ru_cfo_controller_generic_impl::set_rx_cfo(unsigned sector_id, float cfo_hz)
+bool ru_cfo_controller_generic_impl::set_rx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request)
 {
   if (sector_id < rx_cfo_control.size()) {
-    return rx_cfo_control[sector_id]->schedule_cfo_command(std::chrono::system_clock::now(), cfo_hz);
+    return rx_cfo_control[sector_id]->schedule_cfo_command(
+        cfo_request.start_timestamp.value_or(std::chrono::system_clock::now()),
+        cfo_request.cfo_hz,
+        cfo_request.cfo_drift_hz_s);
   }
   return false;
 }
