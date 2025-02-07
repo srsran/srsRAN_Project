@@ -67,9 +67,10 @@ private:
   void return_token()
   {
     uint32_t token = tokens.fetch_sub(1, std::memory_order_relaxed);
-    srsran_assert(tokens != UINT32_MAX,
-                  "Error counting crypto tokens. There are less tokens available then the ones granted.");
-    if (stopped) {
+    srsran_assert(token != 0,
+                  "Error counting crypto tokens. There are less tokens available then the ones granted. token={}",
+                  token);
+    if (stopped and token == 1) {
       set_once();
     }
     logger.log_debug("Decreased token count. tokens={}", token);

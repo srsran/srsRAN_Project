@@ -217,6 +217,7 @@ public:
 
 protected:
   void               wait_pending_crypto() { crypto_worker.run_pending_tasks(); }
+  void               wait_one_crypto_task() { crypto_worker.try_run_next(); }
   manual_task_worker ul_worker{64, true, true};
 
 private:

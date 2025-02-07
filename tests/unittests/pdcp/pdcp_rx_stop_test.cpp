@@ -68,7 +68,15 @@ TEST_P(pdcp_rx_stop_test, stop_when_there_are_pending_pdus)
   // tasks are required for the waitable to be set.
   ASSERT_FALSE(awaitable.is_set());
 
-  wait_pending_crypto();
+  // Process one PDU, one more remains in the queue.
+  wait_one_crypto_task();
+  worker.run_pending_tasks();
+
+  // Token count should be 1 still, double check flag is not set.
+  ASSERT_FALSE(awaitable.is_set());
+
+  // Process second PDU in the crypto engine.
+  wait_one_crypto_task();
 
   // Awaitable is not set yet. The UL worker still requires to be flushed.
   ASSERT_FALSE(awaitable.is_set());
