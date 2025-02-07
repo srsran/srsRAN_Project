@@ -12,6 +12,7 @@
 #include "../logging/scheduler_event_logger.h"
 #include "../logging/scheduler_metrics_handler.h"
 #include "../srs/srs_scheduler.h"
+#include "../support/sr_helper.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "srsran/support/memory_pool/unbounded_object_pool.h"
 
@@ -545,8 +546,29 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
     if (not cell_specific_events[ind.cell_index].try_push(cell_event_t{
             ind.ucis[i].ue_index,
             [this, uci_sl = ind.slot_rx, uci_pdu = std::move(uci_ptr)](ue_cell& ue_cc) {
+              bool is_sr_opportunity_and_f1 = false;
               if (const auto* pucch_f0f1 =
                       std::get_if<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(&uci_pdu->pdu)) {
+                // Check if this UCI is from slot with a SR opportunity.
+                if (ue_cc.cfg().cfg_dedicated().ul_config.has_value() and
+                    ue_cc.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
+                  const auto& pucch_cfg = ue_cc.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
+
+                  bool is_format_1 = false;
+                  for (const auto& pucch_res : pucch_cfg.pucch_res_list) {
+                    if (pucch_res.format == pucch_format::FORMAT_1) {
+                      is_format_1 = true;
+                      break;
+                    }
+                    if (pucch_res.format == pucch_format::FORMAT_0) {
+                      break;
+                    }
+                  }
+
+                  // This check is only needed for PUCCH Format 1.
+                  is_sr_opportunity_and_f1 = is_format_1 and sr_helper::is_sr_opportunity_slot(pucch_cfg, uci_sl);
+                }
+
                 // Process DL HARQ ACKs.
                 if (not pucch_f0f1->harqs.empty()) {
                   handle_harq_ind(ue_cc, uci_sl, pucch_f0f1->harqs, pucch_f0f1->ul_sinr_dB);
@@ -634,7 +656,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
               }
 
               // Report the UCI PDU to the metrics handler.
-              du_cells[ue_cc.cell_index].metrics->handle_uci_pdu_indication(*uci_pdu);
+              du_cells[ue_cc.cell_index].metrics->handle_uci_pdu_indication(*uci_pdu, is_sr_opportunity_and_f1);
             },
             "UCI",
             // Note: We do not warn if the UE is not found, because there is this transient period when the UE

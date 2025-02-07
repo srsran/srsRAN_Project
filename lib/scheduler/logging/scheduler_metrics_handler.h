@@ -50,6 +50,7 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       double   sum_pusch_rsrp                 = 0;
       unsigned sum_crc_delay_slots            = 0;
       unsigned nof_pucch_snr_reports          = 0;
+      unsigned nof_pucch_f0f1_invalid_harqs   = 0;
       unsigned nof_pucch_f2f3f4_invalid_harqs = 0;
       unsigned nof_pucch_f2f3f4_invalid_csis  = 0;
       unsigned nof_pusch_snr_reports          = 0;
@@ -155,7 +156,7 @@ public:
   void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl);
 
   /// \brief Handle UCI PDU indication.
-  void handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu);
+  void handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu, bool is_sr_opportunity_and_f1);
 
   /// \brief Handle SR indication.
   void handle_sr_indication(du_ue_index_t ue_index);

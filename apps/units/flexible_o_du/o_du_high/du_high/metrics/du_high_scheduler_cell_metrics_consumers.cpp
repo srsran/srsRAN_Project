@@ -41,6 +41,7 @@ DECLARE_METRIC("ul_brate", metric_ul_brate, double, "");
 DECLARE_METRIC("ul_nof_ok", metric_ul_nof_ok, unsigned, "");
 DECLARE_METRIC("ul_nof_nok", metric_ul_nof_nok, unsigned, "");
 DECLARE_METRIC("bsr", metric_bsr, unsigned, "");
+DECLARE_METRIC("nof_pucch_f0f1_invalid_harqs", metric_nof_pucch_f0f1_invalid_harqs, unsigned, "");
 DECLARE_METRIC("nof_pucch_f2f3f4_invalid_harqs", metric_nof_pucch_f2f3f4_invalid_harqs, unsigned, "");
 DECLARE_METRIC("nof_pucch_f2f3f4_invalid_csis", metric_nof_pucch_f2f3f4_invalid_csis, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_harqs", metric_nof_pusch_invalid_harqs, unsigned, "");
@@ -67,6 +68,7 @@ DECLARE_METRIC_SET("ue_container",
                    metric_ul_nof_ok,
                    metric_ul_nof_nok,
                    metric_bsr,
+                   metric_nof_pucch_f0f1_invalid_harqs,
                    metric_nof_pucch_f2f3f4_invalid_harqs,
                    metric_nof_pucch_f2f3f4_invalid_csis,
                    metric_nof_pusch_invalid_harqs,
@@ -253,6 +255,7 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
     output.write<metric_dl_nof_ok>(ue.dl_nof_ok);
     output.write<metric_dl_nof_nok>(ue.dl_nof_nok);
     output.write<metric_dl_bs>(ue.dl_bs);
+    output.write<metric_nof_pucch_f0f1_invalid_harqs>(ue.nof_pucch_f0f1_invalid_harqs);
     output.write<metric_nof_pucch_f2f3f4_invalid_harqs>(ue.nof_pucch_f2f3f4_invalid_harqs);
     output.write<metric_nof_pucch_f2f3f4_invalid_csis>(ue.nof_pucch_f2f3f4_invalid_csis);
     output.write<metric_nof_pusch_invalid_harqs>(ue.nof_pusch_invalid_harqs);

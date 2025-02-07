@@ -42,6 +42,7 @@ struct scheduler_ue_metrics {
   unsigned             bsr;
   unsigned             sr_count;
   unsigned             dl_bs;
+  unsigned             nof_pucch_f0f1_invalid_harqs;
   unsigned             nof_pucch_f2f3f4_invalid_harqs;
   unsigned             nof_pucch_f2f3f4_invalid_csis;
   unsigned             nof_pusch_invalid_harqs;

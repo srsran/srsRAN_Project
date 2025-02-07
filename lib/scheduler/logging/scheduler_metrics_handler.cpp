@@ -140,7 +140,7 @@ void cell_metrics_handler::handle_harq_timeout(du_ue_index_t ue_index, bool is_d
   }
 }
 
-void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu)
+void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu, bool is_sr_opportunity_and_f1)
 {
   if (ues.contains(pdu.ue_index)) {
     auto& u = ues[pdu.ue_index];
@@ -153,6 +153,11 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
       if (f0f1->time_advance_offset.has_value()) {
         u.data.ta.update(f0f1->time_advance_offset->to_seconds());
         u.data.pucch_ta.update(f0f1->time_advance_offset->to_seconds());
+      }
+
+      if (not is_sr_opportunity_and_f1 and not f0f1->harqs.empty() and
+          f0f1->harqs[0] != mac_harq_ack_report_status::dtx) {
+        u.data.nof_pucch_f0f1_invalid_harqs++;
       }
     } else if (const auto* f2f3f4 = std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&pdu.pdu)) {
       if (f2f3f4->ul_sinr_dB.has_value()) {
@@ -395,6 +400,8 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   if (data.nof_ul_ces > 0) {
     ret.mean_ce_delay_msec = (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * slots_per_sf));
   }
+  ret.nof_pucch_f0f1_invalid_harqs   = data.nof_pucch_f0f1_invalid_harqs;
+  ret.nof_pucch_f2f3f4_invalid_harqs = data.nof_pucch_f2f3f4_invalid_harqs;
   ret.nof_pucch_f2f3f4_invalid_harqs = data.nof_pucch_f2f3f4_invalid_harqs;
   ret.nof_pucch_f2f3f4_invalid_csis  = data.nof_pucch_f2f3f4_invalid_csis;
   ret.nof_pusch_invalid_harqs        = data.nof_pusch_invalid_harqs;
