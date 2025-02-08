@@ -290,7 +290,7 @@ int main(int argc, char** argv)
     std::unique_ptr<gtpu_gateway> f1u_gw     = create_udp_gtpu_gateway(
         f1u_gw_config,
         *epoll_broker,
-        workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
+        workers.get_du_high_executor_mapper().ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
         *workers.non_rt_low_prio_exec);
     if (not sock_cfg.five_qi.has_value()) {
       f1u_gw_maps.default_gws.push_back(std::move(f1u_gw));
