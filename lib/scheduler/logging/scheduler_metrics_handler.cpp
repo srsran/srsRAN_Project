@@ -156,7 +156,7 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
       }
 
       if (not is_sr_opportunity_and_f1 and not f0f1->harqs.empty() and
-          f0f1->harqs[0] != mac_harq_ack_report_status::dtx) {
+          f0f1->harqs[0] == mac_harq_ack_report_status::dtx) {
         ++u.data.nof_pucch_f0f1_invalid_harqs;
       }
     } else if (const auto* f2f3f4 = std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&pdu.pdu)) {
@@ -177,7 +177,7 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
         u.data.pucch_ta.update(f2f3f4->time_advance_offset->to_seconds());
       }
 
-      if (not f2f3f4->harqs.empty() and f2f3f4->harqs[0] != mac_harq_ack_report_status::dtx) {
+      if (not f2f3f4->harqs.empty() and f2f3f4->harqs[0] == mac_harq_ack_report_status::dtx) {
         ++u.data.nof_pucch_f2f3f4_invalid_harqs;
       }
     } else {
@@ -191,7 +191,7 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
           ++u.data.nof_pusch_invalid_csis;
         }
       }
-      if (not pusch.harqs.empty() and pusch.harqs[0] != mac_harq_ack_report_status::dtx) {
+      if (not pusch.harqs.empty() and pusch.harqs[0] == mac_harq_ack_report_status::dtx) {
         ++u.data.nof_pusch_invalid_harqs;
       }
     }
