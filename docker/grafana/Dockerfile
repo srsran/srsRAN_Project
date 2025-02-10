@@ -11,3 +11,8 @@ FROM grafana/grafana-oss:${GRAFANA_VERSION}
 
 ADD provisioning /etc/grafana/provisioning
 ADD dashboards   /etc/dashboards
+
+USER root
+ARG LOGO_URL=https://raw.githubusercontent.com/srsran/srsRAN_Project_docs/main/docs/source/.imgs/logo.png
+RUN wget -O /usr/share/grafana/public/img/logo.png ${LOGO_URL}
+USER grafana
