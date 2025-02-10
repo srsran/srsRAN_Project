@@ -515,7 +515,7 @@ qos:
           sn: 12
           t-reassembly: 10
   -
-    # 5QI = 84 e.g Discrete Automation
+    # 5QI = 84 e.g Intelligent transport systems
     # PDB = 30ms PER = 10^-5
     five_qi: 84
     pdcp:
@@ -542,13 +542,13 @@ qos:
           sn: 12
           t-reassembly: 10
   -
-    # 5QI = 85 e.g Discrete Automation
+    # 5QI = 85 e.g Electricity Distribution-high voltage
     # PDB = 5ms PER = 10^-5
     five_qi: 85
     pdcp:
       tx:
         sn: 12
-        discard_timer: 5
+        discard_timer: 10
         status_report_required: false
       rx:
         sn: 12
@@ -569,13 +569,13 @@ qos:
           sn: 12
           t-reassembly: 10
   -
-    # 5QI = 86 e.g Discrete Automation
+    # 5QI = 86 e.g V2X messages
     # PDB = 5ms PER = 10^-4
     five_qi: 86
     pdcp:
       tx:
         sn: 12
-        discard_timer: 5
+        discard_timer: 10
         status_report_required: false
       rx:
         sn: 12
@@ -596,13 +596,13 @@ qos:
           sn: 12
           t-reassembly: 10
   -
-    # 5QI = 87 e.g Discrete Automation
+    # 5QI = 87 e.g Interactive Service-Motion tracking data
     # PDB = 5ms PER = 10^-3
     five_qi: 87
     pdcp:
       tx:
         sn: 12
-        discard_timer: 5
+        discard_timer: 10
         status_report_required: false
       rx:
         sn: 12
@@ -623,7 +623,7 @@ qos:
           sn: 12
           t-reassembly: 10
   -
-    # 5QI = 88 e.g Discrete Automation
+    # 5QI = 88 e.g Interactive Service-Motion tracking data 
     # PDB = 10ms PER = 10^-3
     five_qi: 88
     pdcp:
@@ -650,13 +650,13 @@ qos:
           sn: 12
           t-reassembly: 10
   -
-    # 5QI = 89 e.g Discrete Automation
+    # 5QI = 89 e.g Visual content for cloud/edge/split rendering
     # PDB = 15ms PER = 10^-4
     five_qi: 89
     pdcp:
       tx:
         sn: 12
-        discard_timer: 10
+        discard_timer: 20
         status_report_required: false
       rx:
         sn: 12
@@ -677,7 +677,7 @@ qos:
           sn: 12
           t-reassembly: 10
   -
-    # 5QI = 90 e.g Discrete Automation
+    # 5QI = 90 e.g Visual content for cloud/edge/split rendering
     # PDB = 20ms PER = 10^-4
     five_qi: 90
     pdcp:

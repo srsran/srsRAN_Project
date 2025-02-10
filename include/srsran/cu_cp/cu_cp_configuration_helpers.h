@@ -405,7 +405,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_config                 pdcp_cfg{};
 
     pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
-    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
     pdcp_cfg.ciphering_required            = true;
     pdcp_cfg.integrity_protection_required = false;
 
@@ -429,7 +429,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_config                 pdcp_cfg{};
 
     pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
-    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
     pdcp_cfg.ciphering_required            = true;
     pdcp_cfg.integrity_protection_required = false;
 
@@ -453,7 +453,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_config                 pdcp_cfg{};
 
     pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
-    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
     pdcp_cfg.ciphering_required            = true;
     pdcp_cfg.integrity_protection_required = false;
 
@@ -477,7 +477,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_config                 pdcp_cfg{};
 
     pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
-    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
     pdcp_cfg.ciphering_required            = true;
     pdcp_cfg.integrity_protection_required = false;
 
@@ -501,7 +501,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_config                 pdcp_cfg{};
 
     pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
-    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
     pdcp_cfg.ciphering_required            = true;
     pdcp_cfg.integrity_protection_required = false;
 
@@ -525,7 +525,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_config                 pdcp_cfg{};
 
     pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
-    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
     pdcp_cfg.ciphering_required            = true;
     pdcp_cfg.integrity_protection_required = false;
 
@@ -549,7 +549,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_config                 pdcp_cfg{};
 
     pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
-    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
     pdcp_cfg.ciphering_required            = true;
     pdcp_cfg.integrity_protection_required = false;
 
@@ -573,7 +573,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_config                 pdcp_cfg{};
 
     pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
-    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
     pdcp_cfg.ciphering_required            = true;
     pdcp_cfg.integrity_protection_required = false;
 
@@ -597,7 +597,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_config                 pdcp_cfg{};
 
     pdcp_cfg.rb_type                       = pdcp_rb_type::drb;
-    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::am;
+    pdcp_cfg.rlc_mode                      = pdcp_rlc_mode::um;
     pdcp_cfg.ciphering_required            = true;
     pdcp_cfg.integrity_protection_required = false;
 
