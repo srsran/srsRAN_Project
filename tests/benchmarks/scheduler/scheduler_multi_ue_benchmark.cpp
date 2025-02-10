@@ -185,7 +185,8 @@ public:
                                 std::nullopt,
                                 csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{0, std::nullopt, 0}},
                                 15,
-                                std::nullopt};
+                                std::nullopt,
+                                true};
           }
           pdu.pdu = f2;
           ind.ucis.push_back(pdu);
@@ -206,7 +207,8 @@ public:
                               std::nullopt,
                               csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{0, std::nullopt, 0}},
                               15,
-                              std::nullopt};
+                              std::nullopt,
+                              true};
           ind.ucis.push_back(pdu);
         }
       }

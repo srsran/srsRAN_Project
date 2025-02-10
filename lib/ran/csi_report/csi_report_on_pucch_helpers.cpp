@@ -64,7 +64,7 @@ static units::bits get_csi_report_pucch_size_cri_ri_li_pmi_cqi(const csi_report_
 static csi_report_data csi_report_unpack_pucch_cri_ri_li_pmi_cqi(const csi_report_packed&        packed,
                                                                  const csi_report_configuration& config)
 {
-  csi_report_data data;
+  csi_report_data data{.valid = true};
 
   // Validate input size.
   units::bits csi_report_size = get_csi_report_pucch_size(config);

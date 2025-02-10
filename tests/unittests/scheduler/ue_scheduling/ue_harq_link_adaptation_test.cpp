@@ -109,6 +109,7 @@ TEST_F(ue_harq_link_adaptation_test, harq_not_retx_when_cqi_drops_below_threshol
   // Action: UE reports CQI value of 15.
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{15};
+  csi.valid                 = true;
   ue_cc->handle_csi_report(csi);
 
   dl_harq_process_handle h = handle_harq_newtx();
@@ -135,6 +136,7 @@ TEST_F(ue_harq_link_adaptation_test, harq_not_retx_when_ri_drops_below_threshold
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{15};
   csi.ri                    = 2;
+  csi.valid                 = true;
   ue_cc->handle_csi_report(csi);
 
   dl_harq_process_handle h = handle_harq_newtx();

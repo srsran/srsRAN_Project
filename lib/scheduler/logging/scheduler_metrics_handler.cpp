@@ -168,7 +168,7 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
         if (f2f3f4->csi->valid) {
           handle_csi_report(u, f2f3f4->csi.value());
         } else {
-          u.data.nof_pusch_invalid_csis++;
+          ++u.data.nof_pucch_f2f3f4_invalid_csis;
         }
       }
 

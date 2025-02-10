@@ -67,9 +67,8 @@ struct csi_report_data {
   std::optional<wideband_cqi_type> first_tb_wideband_cqi;
   /// Wideband CQI for the second TB.
   std::optional<wideband_cqi_type> second_tb_wideband_cqi;
-
   /// Flag indicating if the CSI was detected correctly.
-  bool valid = true;
+  bool valid;
 };
 
 } // namespace srsran

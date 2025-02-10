@@ -65,8 +65,8 @@ protected:
     uci.ucis.resize(1);
     uci.ucis[0].crnti    = ue_cfg.crnti;
     uci.ucis[0].ue_index = ue_cfg.ue_index;
-    uci.ucis[0].pdu =
-        uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu{.csi = csi_report_data{.first_tb_wideband_cqi = 15}};
+    uci.ucis[0].pdu      = uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu{
+             .csi = csi_report_data{.first_tb_wideband_cqi = 15, .valid = true}};
     this->sched->handle_uci_indication(uci);
 
     ue_count++;
