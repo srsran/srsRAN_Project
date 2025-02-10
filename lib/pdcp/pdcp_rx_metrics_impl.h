@@ -11,14 +11,12 @@
 #pragma once
 
 #include "srsran/pdcp/pdcp_rx_metrics.h"
-#include <mutex>
 
 namespace srsran {
 
 class pdcp_rx_metrics
 {
   pdcp_rx_metrics_container metrics = {};
-  std::mutex                metrics_mutex;
 
 public:
   void add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
