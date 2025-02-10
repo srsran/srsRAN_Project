@@ -89,8 +89,8 @@ void pusch_decoder_empty_impl::decoder_buffer_impl::on_end_softbits()
     }
   }
 
-  // Release buffer.
-  rm_buffer.release();
+  // Unlock buffer for a retransmissions.
+  rm_buffer.unlock();
 
   // Notify completion.
   notifier->on_sch_data(result);
