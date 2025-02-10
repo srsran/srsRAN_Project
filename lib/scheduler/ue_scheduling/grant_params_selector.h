@@ -38,9 +38,27 @@ pdsch_config_params compute_retx_pdsch_config_params(const ue_cell&             
                                                      const dl_harq_process_handle&                h_dl,
                                                      const pdsch_time_domain_resource_allocation& pdsch_td_cfg);
 
-/// Derive PDSCH grant parameters and recommended MCS and number of PRBs for a newTx PDSCH grant.
+/// Derive recommended MCS and number of PRBs for a newTx PDSCH grant.
 std::optional<mcs_prbs_selection>
 compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg, const ue_cell& ue_cc, unsigned pending_bytes);
+
+/// Compute PUSCH grant parameters for a newTx given the UE state, DCI type and PUSCH time-domain resource.
+pusch_config_params compute_newtx_pusch_config_params(const ue_cell&                               ue_cc,
+                                                      dci_ul_rnti_config_type                      dci_type,
+                                                      const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                      unsigned                                     uci_bits,
+                                                      bool                                         is_csi_report_slot);
+
+/// Compute PUSCH grant parameters for a reTx given the UE state, DCI type and PUSCH time-domain resource.
+pusch_config_params compute_retx_pusch_config_params(const ue_cell&                               ue_cc,
+                                                     const ul_harq_process_handle&                h_ul,
+                                                     const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                     unsigned                                     uci_bits,
+                                                     bool                                         is_csi_report_slot);
+
+/// Derive recommended MCS and number of PRBs for a newTx PUSCH grant.
+mcs_prbs_selection
+compute_newtx_required_mcs_and_prbs(const pusch_config_params& pusch_cfg, const ue_cell& ue_cc, unsigned pending_bytes);
 
 } // namespace sched_helper
 } // namespace srsran

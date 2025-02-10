@@ -169,59 +169,6 @@ std::optional<ue_cell::dl_ack_info_result> ue_cell::handle_dl_ack_info(slot_poin
   return dl_ack_info_result{outcome, h_dl.value()};
 }
 
-grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
-                                         unsigned                                     pending_bytes,
-                                         dci_ul_rnti_config_type                      dci_type) const
-{
-  const bwp_uplink_common& bwp_ul_cmn = *ue_cfg->bwp(active_bwp_id()).ul_common;
-
-  // In the following, we allocate extra bits to account for the possible UCI overhead. At this point, we don't
-  // differentiate between HARQ-ACK bits and CSI bits, which would be necessary to compute the beta-offset values.
-  // Here, we only need to allocate some extra space.
-  const unsigned uci_bits_overallocation = 20U;
-  const bool     is_csi_report_slot      = false;
-
-  pusch_config_params pusch_cfg;
-  switch (dci_type) {
-    case dci_ul_rnti_config_type::tc_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
-      break;
-    case dci_ul_rnti_config_type::c_rnti_f0_0:
-      pusch_cfg = get_pusch_config_f0_0_c_rnti(
-          cell_cfg, ue_cfg, bwp_ul_cmn, pusch_td_cfg, uci_bits_overallocation, is_csi_report_slot);
-      break;
-    case dci_ul_rnti_config_type::c_rnti_f0_1:
-      pusch_cfg = get_pusch_config_f0_1_c_rnti(
-          *ue_cfg, pusch_td_cfg, channel_state.get_nof_ul_layers(), uci_bits_overallocation, is_csi_report_slot);
-      break;
-    default:
-      report_fatal_error("Unsupported PDCCH DCI UL format");
-  }
-
-  sch_mcs_index       mcs = ue_mcs_calculator.calculate_ul_mcs(pusch_cfg.mcs_table);
-  sch_mcs_description mcs_config =
-      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, false);
-
-  const auto nof_symbols = static_cast<unsigned>(pusch_td_cfg.symbols.length());
-
-  sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
-                                                                  nof_symbols,
-                                                                  calculate_nof_dmrs_per_rb(pusch_cfg.dmrs),
-                                                                  pusch_cfg.nof_oh_prb,
-                                                                  mcs_config,
-                                                                  pusch_cfg.nof_layers});
-
-  unsigned nof_prbs = std::min(prbs_tbs.nof_prbs, bwp_ul_cmn.generic_params.crbs.length());
-
-  // Apply grant size limits specified in the config.
-  nof_prbs = std::max(std::min(nof_prbs, cell_cfg.expert_cfg.ue.pusch_nof_rbs.stop()),
-                      cell_cfg.expert_cfg.ue.pusch_nof_rbs.start());
-  nof_prbs = std::max(std::min(nof_prbs, ue_cfg->rrm_cfg().pusch_grant_size_limits.stop()),
-                      ue_cfg->rrm_cfg().pusch_grant_size_limits.start());
-
-  return grant_prbs_mcs{mcs, nof_prbs};
-}
-
 int ue_cell::handle_crc_pdu(slot_point pusch_slot, const ul_crc_pdu_indication& crc_pdu)
 {
   // Find UL HARQ with matching PUSCH slot.

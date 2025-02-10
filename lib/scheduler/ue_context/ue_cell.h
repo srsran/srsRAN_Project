@@ -28,13 +28,6 @@ class ue_drx_controller;
 struct pdsch_config_params;
 struct pusch_config_params;
 
-struct grant_prbs_mcs {
-  /// MCS to use for the UE's PxSCH.
-  sch_mcs_index mcs;
-  /// Number of PRBs to be allocated for the UE's PxSCH.
-  unsigned n_prbs;
-};
-
 /// \brief Context respective to a UE serving cell.
 class ue_cell
 {
@@ -81,11 +74,6 @@ public:
                                                        mac_harq_ack_report_status ack_value,
                                                        unsigned                   harq_bit_idx,
                                                        std::optional<float>       pucch_snr);
-
-  /// \brief Estimate the number of required UL PRBs to allocate the given number of bytes.
-  grant_prbs_mcs required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
-                                  unsigned                                     pending_bytes,
-                                  dci_ul_rnti_config_type                      dci_type) const;
 
   uint8_t get_pdsch_rv(unsigned nof_retxs) const
   {

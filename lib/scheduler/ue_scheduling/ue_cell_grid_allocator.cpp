@@ -757,15 +757,28 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     }
 
     // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
-    grant_prbs_mcs mcs_prbs =
-        is_retx ? grant_prbs_mcs{h_ul->get_grant_params().mcs, h_ul->get_grant_params().rbs.type1().length()}
-                : ue_cc->required_ul_prbs(pusch_td_cfg, grant.recommended_nof_bytes.value(), dci_type);
-    // Try to limit the grant PRBs.
-    if (not is_retx) {
+    pusch_config_params              pusch_cfg;
+    sched_helper::mcs_prbs_selection mcs_prbs;
+    // Note: We assume k2 <= k1, which means that all the HARQ bits are set at this point for this UL slot and UE.
+    const unsigned nof_harq_ack_bits =
+        get_uci_alloc(grant.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
+    const bool is_csi_report_slot =
+        csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot);
+    if (is_retx) {
+      pusch_cfg = sched_helper::compute_retx_pusch_config_params(
+          *ue_cc, *h_ul, pusch_td_cfg, nof_harq_ack_bits, is_csi_report_slot);
+      mcs_prbs =
+          sched_helper::mcs_prbs_selection{h_ul->get_grant_params().mcs, h_ul->get_grant_params().rbs.type1().length()};
+    } else {
+      pusch_cfg = sched_helper::compute_newtx_pusch_config_params(
+          *ue_cc, dci_type, pusch_td_cfg, nof_harq_ack_bits, is_csi_report_slot);
+      mcs_prbs =
+          sched_helper::compute_newtx_required_mcs_and_prbs(pusch_cfg, *ue_cc, grant.recommended_nof_bytes.value());
+
       // [Implementation-defined] Check whether max. UL grants per slot is reached if PUSCH for current UE succeeds. If
       // so, allocate remaining RBs to the current UE only if it's a new Tx.
       if (pusch_pdu_rem_space == 1 and not u.has_pending_sr()) {
-        mcs_prbs.n_prbs = rb_helper::find_empty_interval_of_length(used_crbs, used_crbs.size(), 0).length();
+        mcs_prbs.nof_prbs = rb_helper::find_empty_interval_of_length(used_crbs, used_crbs.size(), 0).length();
       }
       // Due to the pre-allocated UCI bits, MCS 0 and PRB 1 would not leave any space for the payload on the TBS, as
       // all the space would be taken by the UCI bits. As a result of this, the effective code rate would be 0 and the
@@ -775,40 +788,40 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       // TODO: Remove this part and handle the problem with a loop that is general for any configuration.
       const sch_mcs_index min_mcs_for_1_prb  = static_cast<sch_mcs_index>(6U);
       const unsigned      min_allocable_prbs = 1U;
-      if (mcs_prbs.mcs < min_mcs_for_1_prb and mcs_prbs.n_prbs <= min_allocable_prbs) {
-        ++mcs_prbs.n_prbs;
+      if (mcs_prbs.mcs < min_mcs_for_1_prb and mcs_prbs.nof_prbs <= min_allocable_prbs) {
+        ++mcs_prbs.nof_prbs;
       }
       // [Implementation-defined]
       // Check whether to allocate all remaining RBs or not. This is done to ensure we allocate only X nof. UEs per slot
       // and not X+1 nof. UEs. One way is by checking if the emtpy interval is less than 2 times the required RBs. If
       // so, allocate all remaining RBs. NOTE: This approach won't hold good in case of low traffic scenario.
       const unsigned twice_grant_crbs_length =
-          rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs * 2, 0).length();
-      if (twice_grant_crbs_length < (mcs_prbs.n_prbs * 2)) {
-        mcs_prbs.n_prbs = twice_grant_crbs_length;
+          rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.nof_prbs * 2, 0).length();
+      if (twice_grant_crbs_length < (mcs_prbs.nof_prbs * 2)) {
+        mcs_prbs.nof_prbs = twice_grant_crbs_length;
       }
       // Limit nof. RBs to allocate to maximum RBs provided in grant.
       if (grant.max_nof_rbs.has_value()) {
-        mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, grant.max_nof_rbs.value());
+        mcs_prbs.nof_prbs = std::min(mcs_prbs.nof_prbs, grant.max_nof_rbs.value());
       }
       // Re-apply nof. PUSCH RBs to allocate limits.
-      mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.start());
-      mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, expert_cfg.pusch_nof_rbs.stop());
-      mcs_prbs.n_prbs = std::max(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.start());
-      mcs_prbs.n_prbs = std::min(mcs_prbs.n_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.stop());
+      mcs_prbs.nof_prbs = std::max(mcs_prbs.nof_prbs, expert_cfg.pusch_nof_rbs.start());
+      mcs_prbs.nof_prbs = std::min(mcs_prbs.nof_prbs, expert_cfg.pusch_nof_rbs.stop());
+      mcs_prbs.nof_prbs = std::max(mcs_prbs.nof_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.start());
+      mcs_prbs.nof_prbs = std::min(mcs_prbs.nof_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.stop());
       // Ensure the number of PRB is valid if the transform precoder is used. The condition the PUSCH bandwidth with
       // transform precoder is defined in TS 38.211 Section 6.1.3. The number of PRB must be lower than or equal to
       // current number of PRB.
       if ((dci_type == dci_ul_rnti_config_type::c_rnti_f0_1)
               ? ue_cell_cfg.use_pusch_transform_precoding_dci_0_1()
               : ue_cell_cfg.cell_cfg_common.use_msg3_transform_precoder()) {
-        mcs_prbs.n_prbs =
-            get_transform_precoding_nearest_lower_nof_prb_valid(mcs_prbs.n_prbs).value_or(mcs_prbs.n_prbs);
+        mcs_prbs.nof_prbs =
+            get_transform_precoding_nearest_lower_nof_prb_valid(mcs_prbs.nof_prbs).value_or(mcs_prbs.nof_prbs);
       }
     }
 
-    // NOTE: This should never happen, but it's safe not to proceed if we get n_prbs == 0.
-    if (mcs_prbs.n_prbs == 0) {
+    // NOTE: This should never happen, but it's safe not to proceed if we get nof_prbs == 0.
+    if (mcs_prbs.nof_prbs == 0) {
       logger.debug(
           "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: MCS and PRBs computation resulted in no PRBs "
           "allocated to this UE",
@@ -818,7 +831,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       return {alloc_status::skip_ue};
     }
 
-    crb_interval crbs = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.n_prbs, 0);
+    crb_interval crbs = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.nof_prbs, 0);
     if (crbs.empty()) {
       logger.debug("ue={} rnti={}: Failed to allocate PUSCH. Cause: Cause: No more RBs available at slot={}",
                    fmt::underlying(u.ue_index),
@@ -886,33 +899,6 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
         nof_cces_left -= std::min(nof_cces_left, to_nof_cces(ul_pdcch.ctx.cces.aggr_lvl));
       }
       return {nof_cces_left == 0 ? alloc_status::skip_slot : alloc_status::skip_ue};
-    }
-
-    const unsigned nof_harq_ack_bits =
-        get_uci_alloc(grant.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
-
-    const bool is_csi_report_slot =
-        csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot);
-
-    // Fetch PUSCH parameters based on type of transmission.
-    pusch_config_params pusch_cfg;
-    switch (dci_type) {
-      case dci_ul_rnti_config_type::tc_rnti_f0_0:
-        pusch_cfg = get_pusch_config_f0_0_tc_rnti(cell_cfg, pusch_td_cfg);
-        break;
-      case dci_ul_rnti_config_type::c_rnti_f0_0:
-        pusch_cfg = get_pusch_config_f0_0_c_rnti(
-            cell_cfg, &ue_cell_cfg, bwp_ul_cmn, pusch_td_cfg, nof_harq_ack_bits, is_csi_report_slot);
-        break;
-      case dci_ul_rnti_config_type::c_rnti_f0_1:
-        pusch_cfg = get_pusch_config_f0_1_c_rnti(ue_cell_cfg,
-                                                 pusch_td_cfg,
-                                                 ue_cc->channel_state_manager().get_nof_ul_layers(),
-                                                 nof_harq_ack_bits,
-                                                 is_csi_report_slot);
-        break;
-      default:
-        report_fatal_error("Unsupported PDCCH DCI UL format");
     }
 
     // Compute MCS and TBS for this transmission.
