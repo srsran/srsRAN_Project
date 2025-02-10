@@ -68,13 +68,13 @@ void cell_metrics_handler::handle_crc_indication(slot_point                   sl
   if (ues.contains(crc_pdu.ue_index)) {
     auto& u = ues[crc_pdu.ue_index];
     u.data.count_crc_acks += crc_pdu.tb_crc_success ? 1 : 0;
-    u.data.count_crc_pdus++;
+    ++u.data.count_crc_pdus;
     if (crc_pdu.ul_sinr_dB.has_value()) {
-      u.data.nof_pusch_snr_reports++;
+      ++u.data.nof_pusch_snr_reports;
       u.data.sum_pusch_snrs += crc_pdu.ul_sinr_dB.value();
     }
     if (crc_pdu.ul_rsrp_dBFS.has_value()) {
-      u.data.nof_pusch_rsrp_reports++;
+      ++u.data.nof_pusch_rsrp_reports;
       u.data.sum_pusch_rsrp += crc_pdu.ul_rsrp_dBFS.value();
     }
     if (crc_pdu.tb_crc_success) {
@@ -101,7 +101,7 @@ void cell_metrics_handler::handle_srs_indication(const srs_indication::srs_indic
 
 void cell_metrics_handler::handle_pucch_sinr(ue_metric_context& u, float sinr)
 {
-  u.data.nof_pucch_snr_reports++;
+  ++u.data.nof_pucch_snr_reports;
   u.data.sum_pucch_snrs += sinr;
 }
 
@@ -121,7 +121,7 @@ void cell_metrics_handler::handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, 
   if (ues.contains(ue_index)) {
     auto& u = ues[ue_index];
     u.data.count_uci_harq_acks += ack ? 1 : 0;
-    u.data.count_uci_harqs++;
+    ++u.data.count_uci_harqs;
     if (ack) {
       u.data.sum_dl_tb_bytes += tbs.value();
     }
@@ -133,9 +133,9 @@ void cell_metrics_handler::handle_harq_timeout(du_ue_index_t ue_index, bool is_d
   if (ues.contains(ue_index)) {
     auto& u = ues[ue_index];
     if (is_dl) {
-      u.data.count_uci_harqs++;
+      ++u.data.count_uci_harqs;
     } else {
-      u.data.count_crc_pdus++;
+      ++u.data.count_crc_pdus;
     }
   }
 }
@@ -157,7 +157,7 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
 
       if (not is_sr_opportunity_and_f1 and not f0f1->harqs.empty() and
           f0f1->harqs[0] != mac_harq_ack_report_status::dtx) {
-        u.data.nof_pucch_f0f1_invalid_harqs++;
+        ++u.data.nof_pucch_f0f1_invalid_harqs;
       }
     } else if (const auto* f2f3f4 = std::get_if<uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu>(&pdu.pdu)) {
       if (f2f3f4->ul_sinr_dB.has_value()) {
@@ -178,7 +178,7 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
       }
 
       if (not f2f3f4->harqs.empty() and f2f3f4->harqs[0] != mac_harq_ack_report_status::dtx) {
-        u.data.nof_pucch_f2f3f4_invalid_harqs++;
+        ++u.data.nof_pucch_f2f3f4_invalid_harqs;
       }
     } else {
       // PUSCH case.
@@ -188,11 +188,11 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
         if (pusch.csi->valid) {
           handle_csi_report(u, pusch.csi.value());
         } else {
-          u.data.nof_pusch_invalid_csis++;
+          ++u.data.nof_pusch_invalid_csis;
         }
       }
       if (not pusch.harqs.empty() and pusch.harqs[0] != mac_harq_ack_report_status::dtx) {
-        u.data.nof_pusch_invalid_harqs++;
+        ++u.data.nof_pusch_invalid_harqs;
       }
     }
   }
@@ -202,7 +202,7 @@ void cell_metrics_handler::handle_sr_indication(du_ue_index_t ue_index)
 {
   if (ues.contains(ue_index)) {
     auto& u = ues[ue_index];
-    u.data.count_sr++;
+    ++u.data.count_sr;
   }
 }
 
@@ -231,7 +231,7 @@ void cell_metrics_handler::handle_ul_phr_indication(const ul_phr_indication_mess
       interval<int> rg = phr_ind.phr.get_phr().front().ph;
       u.last_phr       = (rg.start() + rg.stop()) / 2;
       u.data.sum_ul_ce_delay_slots += last_slot_tx - phr_ind.slot_rx;
-      u.data.nof_ul_ces++;
+      ++u.data.nof_ul_ces;
     }
   }
 }
@@ -248,7 +248,7 @@ void cell_metrics_handler::handle_dl_buffer_state_indication(const dl_buffer_sta
 
 void cell_metrics_handler::handle_error_indication()
 {
-  error_indication_counter++;
+  ++error_indication_counter;
 }
 
 void cell_metrics_handler::report_metrics()
@@ -294,7 +294,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     ue_metric_context& u = ues[it->second];
     for (const auto& cw : dl_grant.pdsch_cfg.codewords) {
       u.data.dl_mcs += cw.mcs_index.to_uint();
-      u.data.nof_dl_cws++;
+      ++u.data.nof_dl_cws;
     }
     if (dl_grant.pdsch_cfg.rbs.is_type0()) {
       u.data.tot_dl_prbs_used += convert_rbgs_to_prbs(dl_grant.pdsch_cfg.rbs.type0(),
@@ -324,7 +324,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     ue_metric_context& u = ues[it->second];
     u.data.ul_mcs += ul_grant.pusch_cfg.mcs_index.to_uint();
     u.last_ul_olla = ul_grant.context.olla_offset;
-    u.data.nof_puschs++;
+    ++u.data.nof_puschs;
   }
 
   // Count only full DL/UL slots.
@@ -335,7 +335,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
   decision_latency_sum += slot_decision_latency;
   unsigned bin_idx = slot_decision_latency.count() / scheduler_cell_metrics::nof_usec_per_bin;
   bin_idx          = std::min(bin_idx, scheduler_cell_metrics::latency_hist_bins - 1);
-  decision_latency_hist[bin_idx]++;
+  ++decision_latency_hist[bin_idx];
 }
 
 void cell_metrics_handler::push_result(slot_point                sl_tx,
