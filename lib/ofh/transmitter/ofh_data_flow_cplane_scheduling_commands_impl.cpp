@@ -138,6 +138,7 @@ data_flow_cplane_scheduling_commands_impl::data_flow_cplane_scheduling_commands_
   ul_compr_params(config.ul_compr_params),
   prach_compr_params(config.prach_compr_params),
   ul_cplane_context_repo(std::move(dependencies.ul_cplane_context_repo)),
+  prach_cplane_context_repo(std::move(dependencies.prach_cplane_context_repo)),
   frame_pool(std::move(dependencies.frame_pool)),
   eth_builder(std::move(dependencies.eth_builder)),
   ecpri_builder(std::move(dependencies.ecpri_builder)),
@@ -147,7 +148,8 @@ data_flow_cplane_scheduling_commands_impl::data_flow_cplane_scheduling_commands_
   srsran_assert(ecpri_builder, "Invalid eCPRI packet builder");
   srsran_assert(cp_builder, "Invalid Control-Plane message builder");
   srsran_assert(frame_pool, "Invalid frame pool");
-  srsran_assert(ul_cplane_context_repo, "Invalid UL repository");
+  srsran_assert(ul_cplane_context_repo, "Invalid UL Control-Plane context repository");
+  srsran_assert(prach_cplane_context_repo, "Invalid PRACH Control-Plane context repository");
 }
 
 void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
@@ -259,12 +261,12 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
   unsigned bytes_written = cp_builder->build_prach_mixed_numerology_message(ofh_buffer, ofh_ctrl_params);
   unsigned eaxc          = context.eaxc;
 
-  ul_cplane_context_repo->add(slot,
-                              eaxc,
-                              {ofh_ctrl_params.radio_hdr,
-                               ofh_ctrl_params.section_fields.common_fields.prb_start,
-                               ofh_ctrl_params.section_fields.common_fields.nof_prb,
-                               ofh_ctrl_params.section_fields.common_fields.nof_symbols});
+  prach_cplane_context_repo->add(slot,
+                                 eaxc,
+                                 {ofh_ctrl_params.radio_hdr,
+                                  ofh_ctrl_params.section_fields.common_fields.prb_start,
+                                  ofh_ctrl_params.section_fields.common_fields.nof_prb,
+                                  ofh_ctrl_params.section_fields.common_fields.nof_symbols});
 
   // Add eCPRI header.
   span<uint8_t> ecpri_buffer = buffer.subspan(ether_hdr_size.value(), ecpri_hdr_size.value() + bytes_written);

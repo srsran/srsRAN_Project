@@ -32,7 +32,8 @@ std::unique_ptr<receiver> create_receiver(const receiver_config&                
                                           std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                                           std::shared_ptr<prach_context_repository>         prach_context_repo,
                                           std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
-                                          std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo);
+                                          std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
+                                          std::shared_ptr<uplink_cplane_context_repository> prach_cp_context_repo);
 
 } // namespace ofh
 } // namespace srsran

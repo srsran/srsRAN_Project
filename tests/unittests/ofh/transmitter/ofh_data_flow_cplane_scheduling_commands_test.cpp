@@ -84,6 +84,8 @@ protected:
   ru_compression_params                             prach_compr_params = {compression_type::BFP, 8};
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo =
       std::make_shared<uplink_cplane_context_repository>(58);
+  std::shared_ptr<uplink_cplane_context_repository> prach_cplane_context_repo =
+      std::make_shared<uplink_cplane_context_repository>(58);
   std::shared_ptr<ether::eth_frame_pool>    frame_pool = std::make_shared<ether::eth_frame_pool>(units::bytes(9000), 2);
   ether::testing::vlan_frame_builder_spy*   vlan_builder;
   ecpri::testing::packet_builder_spy*       ecpri_builder;
@@ -113,9 +115,10 @@ private:
   {
     data_flow_cplane_scheduling_commands_impl_dependencies dependencies;
 
-    dependencies.ul_cplane_context_repo = ul_cplane_context_repo;
-    dependencies.frame_pool             = frame_pool;
-    dependencies.logger                 = &srslog::fetch_basic_logger("TEST");
+    dependencies.ul_cplane_context_repo    = ul_cplane_context_repo;
+    dependencies.prach_cplane_context_repo = prach_cplane_context_repo;
+    dependencies.frame_pool                = frame_pool;
+    dependencies.logger                    = &srslog::fetch_basic_logger("TEST");
     {
       auto temp               = std::make_unique<cplane_message_builder_spy>();
       cplane_builder          = temp.get();
@@ -394,7 +397,7 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
   data_flow.enqueue_section_type_3_prach_message(context);
 
   // Assert that an entry was created for the uplink Control-Plane message.
-  auto repo_context = ul_cplane_context_repo->get(context.slot, 0, context.filter_type, context.eaxc);
+  auto repo_context = prach_cplane_context_repo->get(context.slot, 0, context.filter_type, context.eaxc);
   ASSERT_TRUE(repo_context.has_value());
 
   // Check radio header.
@@ -411,7 +414,7 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
 
   // Check that the context can be found for all the configured symbols.
   for (unsigned i = 0, e = context.nof_repetitions; i != e; ++i) {
-    auto ctxt = ul_cplane_context_repo->get(context.slot, i, context.filter_type, context.eaxc);
+    auto ctxt = prach_cplane_context_repo->get(context.slot, i, context.filter_type, context.eaxc);
 
     ASSERT_TRUE(ctxt.has_value());
   }

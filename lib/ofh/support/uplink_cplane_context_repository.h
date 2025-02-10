@@ -14,6 +14,7 @@
 #include "srsran/adt/expected.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/serdes/ofh_cplane_message_properties.h"
+#include "srsran/ran/slot_pdu_capacity_constants.h"
 #include <array>
 #include <mutex>
 #include <vector>
@@ -57,7 +58,11 @@ class uplink_cplane_context_repository
   }
 
 public:
-  explicit uplink_cplane_context_repository(unsigned size_) : repo(size_) {}
+  explicit uplink_cplane_context_repository(unsigned size_) : repo(size_)
+  {
+    static_assert(MAX_PRACH_OCCASIONS_PER_SLOT == 1,
+                  "Uplink Control-Plane context repository only supports one context per slot and eAxC");
+  }
 
   /// Add the given context to the repo at the given slot and eAxC.
   void add(slot_point slot, unsigned eaxc, const ul_cplane_context& context)

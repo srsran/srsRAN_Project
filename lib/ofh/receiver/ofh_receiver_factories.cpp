@@ -59,17 +59,17 @@ create_uplink_prach_data_flow(const receiver_config&                            
                               srslog::basic_logger&                             logger,
                               std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                               std::shared_ptr<prach_context_repository>         prach_context_repo,
-                              std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
+                              std::shared_ptr<uplink_cplane_context_repository> prach_cp_context_repo)
 {
   data_flow_uplane_uplink_prach_impl_config config;
   config.is_prach_cplane_enabled = receiver_cfg.is_prach_control_plane_enabled;
   config.prach_eaxcs             = receiver_cfg.prach_eaxc;
 
   data_flow_uplane_uplink_prach_impl_dependencies dependencies;
-  dependencies.logger                 = &logger;
-  dependencies.notifier               = std::move(notifier);
-  dependencies.ul_cplane_context_repo = std::move(ul_cp_context_repo);
-  dependencies.prach_context_repo     = std::move(prach_context_repo);
+  dependencies.logger                    = &logger;
+  dependencies.notifier                  = std::move(notifier);
+  dependencies.prach_cplane_context_repo = std::move(prach_cp_context_repo);
+  dependencies.prach_context_repo        = std::move(prach_context_repo);
   dependencies.uplane_decoder = create_uplane_decoder(receiver_cfg, logger, receiver_cfg.prach_compression_params);
 
   return std::make_unique<data_flow_uplane_uplink_prach_impl>(config, std::move(dependencies));
@@ -104,7 +104,8 @@ resolve_receiver_dependencies(const receiver_config&                            
                               std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                               std::shared_ptr<prach_context_repository>         prach_context_repo,
                               std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
-                              std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
+                              std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
+                              std::shared_ptr<uplink_cplane_context_repository> prach_cp_context_repo)
 {
   receiver_impl_dependencies dependencies;
   dependencies.logger   = &logger;
@@ -127,10 +128,10 @@ resolve_receiver_dependencies(const receiver_config&                            
   }
   msg_rx_dependencies.eth_frame_decoder = ether::create_vlan_frame_decoder(logger, receiver_cfg.sector);
 
-  msg_rx_dependencies.data_flow_uplink =
-      create_uplink_data_flow(receiver_cfg, logger, notifier, std::move(ul_slot_context_repo), ul_cp_context_repo);
-  msg_rx_dependencies.data_flow_prach =
-      create_uplink_prach_data_flow(receiver_cfg, logger, notifier, std::move(prach_context_repo), ul_cp_context_repo);
+  msg_rx_dependencies.data_flow_uplink = create_uplink_data_flow(
+      receiver_cfg, logger, notifier, std::move(ul_slot_context_repo), std::move(ul_cp_context_repo));
+  msg_rx_dependencies.data_flow_prach = create_uplink_prach_data_flow(
+      receiver_cfg, logger, notifier, std::move(prach_context_repo), std::move(prach_cp_context_repo));
 
   msg_rx_dependencies.seq_id_checker =
       (receiver_cfg.ignore_ecpri_seq_id_field)
@@ -150,7 +151,8 @@ srsran::ofh::create_receiver(const receiver_config&                            r
                              std::shared_ptr<uplane_rx_symbol_notifier>        notifier,
                              std::shared_ptr<prach_context_repository>         prach_context_repo,
                              std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
-                             std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo)
+                             std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
+                             std::shared_ptr<uplink_cplane_context_repository> prach_cp_context_repo)
 {
   auto rx_deps = resolve_receiver_dependencies(receiver_cfg,
                                                logger,
@@ -159,7 +161,8 @@ srsran::ofh::create_receiver(const receiver_config&                            r
                                                std::move(notifier),
                                                std::move(prach_context_repo),
                                                std::move(ul_slot_context_repo),
-                                               std::move(ul_cp_context_repo));
+                                               std::move(ul_cp_context_repo),
+                                               std::move(prach_cp_context_repo));
 
   return std::make_unique<receiver_impl>(receiver_cfg, std::move(rx_deps));
 }

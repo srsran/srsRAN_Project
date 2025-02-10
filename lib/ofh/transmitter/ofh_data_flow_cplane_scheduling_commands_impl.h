@@ -43,6 +43,8 @@ struct data_flow_cplane_scheduling_commands_impl_dependencies {
   srslog::basic_logger* logger = nullptr;
   /// Uplink Control-Plane context repository.
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo;
+  /// PRACH Control-Plane context repository.
+  std::shared_ptr<uplink_cplane_context_repository> prach_cplane_context_repo;
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> frame_pool;
   /// VLAN frame builder.
@@ -57,9 +59,8 @@ struct data_flow_cplane_scheduling_commands_impl_dependencies {
 class data_flow_cplane_scheduling_commands_impl : public data_flow_cplane_scheduling_commands
 {
 public:
-  explicit data_flow_cplane_scheduling_commands_impl(
-      const data_flow_cplane_scheduling_commands_impl_config&  config,
-      data_flow_cplane_scheduling_commands_impl_dependencies&& dependencies);
+  data_flow_cplane_scheduling_commands_impl(const data_flow_cplane_scheduling_commands_impl_config&  config,
+                                            data_flow_cplane_scheduling_commands_impl_dependencies&& dependencies);
 
   // See interface for documentation.
   void enqueue_section_type_1_message(const data_flow_cplane_type_1_context& context) override;
@@ -78,6 +79,7 @@ private:
   sequence_identifier_generator                     cp_dl_seq_gen;
   sequence_identifier_generator                     cp_ul_seq_gen;
   std::shared_ptr<uplink_cplane_context_repository> ul_cplane_context_repo;
+  std::shared_ptr<uplink_cplane_context_repository> prach_cplane_context_repo;
   std::shared_ptr<ether::eth_frame_pool>            frame_pool;
   std::unique_ptr<ether::frame_builder>             eth_builder;
   std::unique_ptr<ecpri::packet_builder>            ecpri_builder;
