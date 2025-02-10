@@ -81,7 +81,7 @@ TEST_P(NzpCsiRsGeneratorFixture, Vector)
   resource_grid_writer_spy grid(max_ports, max_symb, max_prb);
 
   // The configuration must be valid.
-  ASSERT_TRUE(validator->is_valid(test_case.config));
+  ASSERT_TRUE(validator->is_valid(test_case.config).has_value());
 
   // Map NZP-CSI-RS using the test case arguments.
   generator->map(grid, test_case.config);

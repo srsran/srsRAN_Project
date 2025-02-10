@@ -25,7 +25,7 @@ class nzp_csi_rs_configuration_validator_impl : public nzp_csi_rs_configuration_
 {
 public:
   // See interface for documentation.
-  bool is_valid(const nzp_csi_rs_generator::config_t& config) override;
+  error_type<std::string> is_valid(const nzp_csi_rs_generator::config_t& config) const override;
 };
 
 /// Defines a NZP-CSI-RS signal generator.

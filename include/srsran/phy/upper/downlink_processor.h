@@ -183,8 +183,8 @@ public:
   virtual ~downlink_pdu_validator() = default;
 
   /// \brief Validates the SS/PBCH block processor configuration parameters.
-  /// \return True if the parameters contained in \c pdu are supported, false otherwise.
-  virtual bool is_valid(const ssb_processor::pdu_t& pdu) const = 0;
+  /// \return A success if the parameters contained in \c pdu are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const ssb_processor::pdu_t& pdu) const = 0;
 
   /// \brief Validates PDCCH processor configuration parameters.
   /// \return A success if the parameters contained in \c pdu are supported, an error message otherwise.
@@ -195,8 +195,8 @@ public:
   virtual error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu) const = 0;
 
   /// \brief Validates NZP-CSI-RS generator configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const nzp_csi_rs_generator::config_t& config) const = 0;
+  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const nzp_csi_rs_generator::config_t& config) const = 0;
 
   /// \brief Validates PRS generator configuration parameters.
   /// \return A success if the parameters contained in \c config are supported, an error message otherwise.

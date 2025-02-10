@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/precoding_configuration.h"
@@ -83,8 +84,8 @@ public:
   virtual ~nzp_csi_rs_configuration_validator() = default;
 
   /// \brief Validates NZP-CSI-RS generator configuration parameters.
-  /// \return True if the parameters contained in \c config are supported, false otherwise.
-  virtual bool is_valid(const nzp_csi_rs_generator::config_t& config) = 0;
+  /// \return A success if the parameters contained in \c config are supported, an error message otherwise.
+  virtual error_type<std::string> is_valid(const nzp_csi_rs_generator::config_t& config) const = 0;
 };
 
 } // namespace srsran

@@ -236,9 +236,12 @@ static expected<downlink_pdus> translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_
         }
         nzp_csi_rs_generator::config_t& csi_pdu = pdus.csi_rs.emplace_back();
         convert_csi_rs_fapi_to_phy(csi_pdu, pdu.csi_rs_pdu, msg.sfn, msg.slot, cell_bandwidth_prb);
-        if (!dl_pdu_validator.is_valid(csi_pdu)) {
-          logger.warning("Sector#{}: Skipping DL_TTI.request: CSI-RS PDU flagged as invalid by the Upper PHY",
-                         sector_id);
+        error_type<std::string> phy_csi_validator = dl_pdu_validator.is_valid(csi_pdu);
+        if (!phy_csi_validator.has_value()) {
+          logger.warning("Sector#{}: Skipping DL_TTI.request: NZP-CSI-RS PDU flagged as invalid by the Upper PHY with "
+                         "the following error\n    {}",
+                         sector_id,
+                         phy_csi_validator.error());
 
           return make_unexpected(default_error_t{});
         }
@@ -278,8 +281,12 @@ static expected<downlink_pdus> translate_dl_tti_pdus_to_phy_pdus(const fapi::dl_
       case fapi::dl_pdu_type::SSB: {
         ssb_processor::pdu_t& ssb_pdu = pdus.ssb.emplace_back();
         convert_ssb_fapi_to_phy(ssb_pdu, pdu.ssb_pdu, msg.sfn, msg.slot, scs_common);
-        if (!dl_pdu_validator.is_valid(ssb_pdu)) {
-          logger.warning("Sector#{}: Skipping DL_TTI.request: SSB PDU flagged as invalid by the Upper PHY", sector_id);
+        error_type<std::string> phy_ssb_validator = dl_pdu_validator.is_valid(ssb_pdu);
+        if (!phy_ssb_validator.has_value()) {
+          logger.warning("Sector#{}: Skipping DL_TTI.request: SSB PDU flagged as invalid by the Upper PHY with the "
+                         "following error\n    {}",
+                         sector_id,
+                         phy_ssb_validator.error());
 
           return make_unexpected(default_error_t{});
         }

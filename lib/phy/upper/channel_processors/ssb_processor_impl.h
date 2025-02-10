@@ -32,7 +32,7 @@ class ssb_processor_validator_impl : public ssb_pdu_validator
 {
 public:
   // See interface for documentation.
-  bool is_valid(const ssb_processor::pdu_t& pdu) const override { return true; }
+  error_type<std::string> is_valid(const ssb_processor::pdu_t& pdu) const override { return default_success_t(); }
 };
 
 /// SSB processor implementation.
