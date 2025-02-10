@@ -96,6 +96,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 
   trace_point rx_tp = up_tracer.now();
   metrics.add_pdus(1, buf.length());
+  std::chrono::system_clock::time_point time_of_arrival = std::chrono::high_resolution_clock::now();
 
   // Log PDU
   logger.log_debug(buf.begin(), buf.end(), "RX PDU. pdu_len={}", buf.length());
@@ -116,7 +117,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 
   pdcp_dc_field dc = pdcp_pdu_get_dc(*(pdu.begin()));
   if (is_srb() || dc == pdcp_dc_field::data) {
-    handle_data_pdu(std::move(pdu));
+    handle_data_pdu(std::move(pdu), time_of_arrival);
   } else {
     handle_control_pdu(std::move(buf));
   }
@@ -169,7 +170,7 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg)
   configure_security(sec_cfg, integrity_enabled, ciphering_enabled);
 }
 
-void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
+void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::system_clock::time_point time_of_arrival)
 {
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
@@ -177,7 +178,6 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
     logger.log_error(pdu.begin(), pdu.end(), "RX PDU too small. pdu_len={} hdr_len={}", pdu.length(), hdr_len_bytes);
     return;
   }
-  std::chrono::system_clock::time_point time_start = std::chrono::system_clock::now();
   // Log state
   log_state(srslog::basic_levels::debug);
 
@@ -235,10 +235,10 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
     return;
   }
 
-  pdcp_rx_buffer_info pdu_info{.buf             = std::move(pdu),
-                               .count           = rcvd_count,
-                               .time_of_arrival = time_start,
-                               .token           = pdcp_crypto_token(token_mngr)};
+  pdcp_rx_pdu_info pdu_info{.buf             = std::move(pdu),
+                            .count           = rcvd_count,
+                            .time_of_arrival = time_of_arrival,
+                            .token           = pdcp_crypto_token(token_mngr)};
 
   // apply security in crypto executor
   auto fn = [this, pdu_info = std::move(pdu_info)]() mutable { apply_security(std::move(pdu_info)); };
@@ -247,7 +247,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
   }
 }
 
-void pdcp_entity_rx::apply_security(pdcp_rx_buffer_info&& pdu_info)
+void pdcp_entity_rx::apply_security(pdcp_rx_pdu_info&& pdu_info)
 {
   uint32_t rcvd_count = pdu_info.count;
 
@@ -302,7 +302,7 @@ void pdcp_entity_rx::apply_security(pdcp_rx_buffer_info&& pdu_info)
   }
 }
 
-void pdcp_entity_rx::apply_reordering(pdcp_rx_buffer_info pdu_info)
+void pdcp_entity_rx::apply_reordering(pdcp_rx_pdu_info pdu_info)
 {
   uint32_t rcvd_count = pdu_info.count;
   /*
@@ -330,7 +330,7 @@ void pdcp_entity_rx::apply_reordering(pdcp_rx_buffer_info pdu_info)
 
   // Store PDU in Rx window
   pdcp_rx_sdu_info& sdu_info = rx_window.add_sn(rcvd_count);
-  sdu_info.sdu               = std::move(pdu_info.buf);
+  sdu_info.buf               = std::move(pdu_info.buf);
   sdu_info.time_of_arrival   = pdu_info.time_of_arrival;
 
   // Update RX_NEXT
@@ -401,9 +401,9 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
     logger.log_info("RX SDU. count={}", st.rx_deliv);
 
     // Pass PDCP SDU to the upper layers
-    metrics.add_sdus(1, sdu_info.sdu.length());
+    metrics.add_sdus(1, sdu_info.buf.length());
     record_reordering_dealy(sdu_info.time_of_arrival);
-    upper_dn.on_new_sdu(std::move(sdu_info.sdu));
+    upper_dn.on_new_sdu(std::move(sdu_info.buf));
     rx_window.remove_sn(st.rx_deliv);
 
     // Update RX_DELIV
@@ -422,9 +422,9 @@ void pdcp_entity_rx::deliver_all_sdus()
       logger.log_info("RX SDU. count={}", count);
 
       // Pass PDCP SDU to the upper layers
-      metrics.add_sdus(1, sdu_info.sdu.length());
+      metrics.add_sdus(1, sdu_info.buf.length());
       record_reordering_dealy(sdu_info.time_of_arrival);
-      upper_dn.on_new_sdu(std::move(sdu_info.sdu));
+      upper_dn.on_new_sdu(std::move(sdu_info.buf));
       rx_window.remove_sn(count);
     }
   }
@@ -608,9 +608,9 @@ void pdcp_entity_rx::handle_t_reordering_expire()
       logger.log_info("RX SDU. count={}", st.rx_deliv);
 
       // Pass PDCP SDU to the upper layers
-      metrics.add_sdus(1, sdu_info.sdu.length());
+      metrics.add_sdus(1, sdu_info.buf.length());
       record_reordering_dealy(sdu_info.time_of_arrival);
-      upper_dn.on_new_sdu(std::move(sdu_info.sdu));
+      upper_dn.on_new_sdu(std::move(sdu_info.buf));
       rx_window.remove_sn(st.rx_deliv);
     }
 

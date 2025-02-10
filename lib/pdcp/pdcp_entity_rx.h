@@ -41,18 +41,25 @@ struct pdcp_rx_state {
   uint32_t rx_reord;
 };
 
-/// Helper structure used to pass RX buffers to the security engine.
-struct pdcp_rx_buffer_info {
-  byte_buffer                           buf;
-  uint32_t                              count = 0;
+/// Helper structure used to pass RX PDUs to the security engine.
+struct pdcp_rx_pdu_info {
+  /// The PDU buffer
+  byte_buffer buf;
+  /// The count value of the PDU
+  uint32_t count = 0;
+  /// Time of arrival at the PDCP entity
   std::chrono::system_clock::time_point time_of_arrival;
-  pdcp_crypto_token                     token;
+  /// The PDCP crypto token
+  pdcp_crypto_token token;
 };
 
 /// Structure used to hold RX SDUs in the RX window.
 struct pdcp_rx_sdu_info {
-  byte_buffer                           sdu;
-  uint32_t                              count = 0;
+  /// The SDU buffer
+  byte_buffer buf;
+  /// The count value of the SDU
+  uint32_t count = 0;
+  /// Time of arrival at the PDCP entity
   std::chrono::system_clock::time_point time_of_arrival;
 };
 
@@ -152,11 +159,12 @@ private:
 
   /// \brief Handles a received data PDU.
   /// \param pdu The data PDU to be handled (including header and payload)
-  void handle_data_pdu(byte_buffer pdu);
+  /// \param time_of_arrival The time of arrival at the PDCP entity
+  void handle_data_pdu(byte_buffer pdu, std::chrono::system_clock::time_point time_of_arrival);
 
-  void apply_security(pdcp_rx_buffer_info&& pdu_info);
+  void apply_security(pdcp_rx_pdu_info&& pdu_info);
 
-  void apply_reordering(pdcp_rx_buffer_info pdu_info);
+  void apply_reordering(pdcp_rx_pdu_info pdu_info);
 
   /// \brief Handles a received control PDU.
   /// \param buf The control PDU to be handled (including header and payload)
