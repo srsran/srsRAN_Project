@@ -47,6 +47,18 @@ public:
     metrics.reordering_counter++;
   }
 
+  void add_sdu_latency_ns(uint32_t sdu_latency_ns)
+  {
+    metrics.sum_sdu_latency_ns += sdu_latency_ns;
+
+    unsigned bin_idx = sdu_latency_ns / (1000 * pdcp_rx_metrics_container::nof_usec_per_bin);
+
+    bin_idx = std::min(bin_idx, pdcp_rx_metrics_container::sdu_latency_hist_bins - 1);
+    metrics.sdu_latency_hist[bin_idx]++;
+
+    metrics.max_sdu_latency_ns = std::max(sdu_latency_ns, metrics.max_sdu_latency_ns);
+  }
+
   pdcp_rx_metrics_container get_metrics() { return metrics; }
 
   pdcp_rx_metrics_container get_metrics_and_reset()

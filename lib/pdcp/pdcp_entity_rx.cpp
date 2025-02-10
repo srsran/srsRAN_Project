@@ -403,6 +403,9 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
     // Pass PDCP SDU to the upper layers
     metrics.add_sdus(1, sdu_info.buf.length());
     record_reordering_dealy(sdu_info.time_of_arrival);
+    auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::high_resolution_clock::now() - sdu_info.time_of_arrival);
+    metrics.add_sdu_latency_ns(sdu_latency_ns.count());
     upper_dn.on_new_sdu(std::move(sdu_info.buf));
     rx_window.remove_sn(st.rx_deliv);
 
@@ -424,6 +427,9 @@ void pdcp_entity_rx::deliver_all_sdus()
       // Pass PDCP SDU to the upper layers
       metrics.add_sdus(1, sdu_info.buf.length());
       record_reordering_dealy(sdu_info.time_of_arrival);
+      auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+          std::chrono::high_resolution_clock::now() - sdu_info.time_of_arrival);
+      metrics.add_sdu_latency_ns(sdu_latency_ns.count());
       upper_dn.on_new_sdu(std::move(sdu_info.buf));
       rx_window.remove_sn(count);
     }
@@ -610,6 +616,9 @@ void pdcp_entity_rx::handle_t_reordering_expire()
       // Pass PDCP SDU to the upper layers
       metrics.add_sdus(1, sdu_info.buf.length());
       record_reordering_dealy(sdu_info.time_of_arrival);
+      auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+          std::chrono::high_resolution_clock::now() - sdu_info.time_of_arrival);
+      metrics.add_sdu_latency_ns(sdu_latency_ns.count());
       upper_dn.on_new_sdu(std::move(sdu_info.buf));
       rx_window.remove_sn(st.rx_deliv);
     }
