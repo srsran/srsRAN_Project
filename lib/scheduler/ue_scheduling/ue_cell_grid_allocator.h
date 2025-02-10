@@ -13,6 +13,7 @@
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../policy/ue_allocator.h"
 #include "../slicing/ran_slice_candidate.h"
+#include "grant_params_selector.h"
 #include "ue_repository.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 
@@ -55,13 +56,13 @@ private:
   };
 
   struct dl_grant_params {
-    alloc_status            status;
-    search_space_id         ss_id;
-    uint8_t                 pdsch_td_res_index;
-    crb_interval            crb_lims;
-    dci_dl_rnti_config_type dci_type;
-    grant_prbs_mcs          recommended_prbs_mcs;
-    unsigned                nof_layers;
+    alloc_status                     status;
+    search_space_id                  ss_id;
+    uint8_t                          pdsch_td_res_index;
+    crb_interval                     crb_lims;
+    dci_dl_rnti_config_type          dci_type;
+    pdsch_config_params              pdsch_cfg;
+    sched_helper::mcs_prbs_selection recommended_mcs_prbs;
   };
 
   dl_grant_params get_dl_grant_params(const ue_pdsch_grant& sched_params);

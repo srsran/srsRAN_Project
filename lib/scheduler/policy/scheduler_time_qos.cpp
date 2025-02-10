@@ -9,6 +9,7 @@
 
 #include "scheduler_time_qos.h"
 #include "../support/csi_report_helpers.h"
+#include "../ue_scheduling/grant_params_selector.h"
 
 using namespace srsran;
 
@@ -457,21 +458,12 @@ void scheduler_time_qos::ue_ctxt::compute_dl_prio(const slice_ue& u,
   // order of nof. PDSCH symbols. And, we want to calculate estimate of instantaneous achievable rate with maximum
   // nof. PDSCH symbols.
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg = pdsch_td_res_list.front();
+  const dci_dl_rnti_config_type                dci_type     = ss_info->get_dl_dci_format() == dci_dl_format::f1_0
+                                                                  ? dci_dl_rnti_config_type::c_rnti_f1_0
+                                                                  : dci_dl_rnti_config_type::c_rnti_f1_1;
 
-  pdsch_config_params pdsch_cfg;
-  switch (ss_info->get_dl_dci_format()) {
-    case dci_dl_format::f1_0:
-      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(ue_cc->cfg().cell_cfg_common, &ue_cc->cfg(), pdsch_td_cfg);
-      break;
-    case dci_dl_format::f1_1:
-      pdsch_cfg =
-          get_pdsch_config_f1_1_c_rnti(ue_cc->cfg(), pdsch_td_cfg, ue_cc->channel_state_manager().get_nof_dl_layers());
-      break;
-    default:
-      report_fatal_error("Unsupported PDCCH DCI DL format");
-  }
-
-  std::optional<sch_mcs_index> mcs = ue_cc->link_adaptation_controller().calculate_dl_mcs(pdsch_cfg.mcs_table);
+  const pdsch_config_params pdsch_cfg = sched_helper::compute_newtx_pdsch_config_params(*ue_cc, dci_type, pdsch_td_cfg);
+  auto                      mcs       = ue_cc->link_adaptation_controller().calculate_dl_mcs(pdsch_cfg.mcs_table);
   if (not mcs.has_value()) {
     // CQI is either 0 or above 15, which means no DL.
     return;

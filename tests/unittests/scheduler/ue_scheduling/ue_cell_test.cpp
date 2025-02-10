@@ -8,6 +8,7 @@
  *
  */
 
+#include "lib/scheduler/support/sch_pdu_builder.h"
 #include "lib/scheduler/ue_context/ue_cell.h"
 #include "lib/scheduler/ue_context/ue_drx_controller.h"
 #include "lib/scheduler/ue_context/ul_logical_channel_manager.h"

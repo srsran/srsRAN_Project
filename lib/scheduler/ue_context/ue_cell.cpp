@@ -13,6 +13,7 @@
 #include "../support/mcs_calculator.h"
 #include "../support/pdcch_aggregation_level_calculator.h"
 #include "../support/prbs_calculator.h"
+#include "../support/sch_pdu_builder.h"
 #include "ue_drx_controller.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
@@ -166,55 +167,6 @@ std::optional<ue_cell::dl_ack_info_result> ue_cell::handle_dl_ack_info(slot_poin
   }
 
   return dl_ack_info_result{outcome, h_dl.value()};
-}
-
-grant_prbs_mcs ue_cell::required_dl_prbs(const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
-                                         unsigned                                     pending_bytes,
-                                         dci_dl_rnti_config_type                      dci_type) const
-{
-  pdsch_config_params pdsch_cfg;
-  switch (dci_type) {
-    case dci_dl_rnti_config_type::tc_rnti_f1_0:
-      pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg);
-      break;
-    case dci_dl_rnti_config_type::c_rnti_f1_0:
-      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, &cfg(), pdsch_td_cfg);
-      break;
-    case dci_dl_rnti_config_type::c_rnti_f1_1:
-      pdsch_cfg = get_pdsch_config_f1_1_c_rnti(cfg(), pdsch_td_cfg, channel_state_manager().get_nof_dl_layers());
-      break;
-    default:
-      report_fatal_error("Unsupported PDCCH DCI DL format");
-  }
-
-  std::optional<sch_mcs_index> mcs = ue_mcs_calculator.calculate_dl_mcs(pdsch_cfg.mcs_table);
-  if (not mcs.has_value()) {
-    // Return a grant with no PRBs if the MCS is invalid (CQI is either 0, for UE out of range, or > 15).
-    return grant_prbs_mcs{.n_prbs = 0};
-  }
-  sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs.value());
-
-  sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
-                                                                  (unsigned)pdsch_cfg.symbols.length(),
-                                                                  calculate_nof_dmrs_per_rb(pdsch_cfg.dmrs),
-                                                                  pdsch_cfg.nof_oh_prb,
-                                                                  mcs_config,
-                                                                  pdsch_cfg.nof_layers});
-  if (prbs_tbs.nof_prbs == 0) {
-    return grant_prbs_mcs{.n_prbs = 0};
-  }
-
-  // Bound Nof PRBs by the number of PRBs in the BWP and the limits defined in the scheduler config.
-  const bwp_downlink_common& bwp_dl_cmn = *ue_cfg->bwp(active_bwp_id()).dl_common;
-  unsigned                   nof_prbs   = std::min(prbs_tbs.nof_prbs, bwp_dl_cmn.generic_params.crbs.length());
-
-  // Apply grant size limits specified in the config.
-  nof_prbs = std::max(std::min(nof_prbs, cell_cfg.expert_cfg.ue.pdsch_nof_rbs.stop()),
-                      cell_cfg.expert_cfg.ue.pdsch_nof_rbs.start());
-  nof_prbs = std::max(std::min(nof_prbs, ue_cfg->rrm_cfg().pdsch_grant_size_limits.stop()),
-                      ue_cfg->rrm_cfg().pdsch_grant_size_limits.start());
-
-  return grant_prbs_mcs{mcs.value(), nof_prbs};
 }
 
 grant_prbs_mcs ue_cell::required_ul_prbs(const pusch_time_domain_resource_allocation& pusch_td_cfg,
