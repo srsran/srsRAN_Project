@@ -49,6 +49,8 @@ def configure_test_parameters(
     pdsch_mcs_table: str = "qam256",
     pusch_mcs_table: str = "qam256",
     cu_cp_inactivity_timer: int = -1,
+    use_format_0: bool = False,
+    pucch_set1_format: int = 2,
 ):
     """
     Configure test parameters
@@ -92,6 +94,8 @@ def configure_test_parameters(
                 "pdsch_mcs_table": pdsch_mcs_table,
                 "pusch_mcs_table": pusch_mcs_table,
                 "cu_cp_inactivity_timer": cu_cp_inactivity_timer,
+                "use_format_0": use_format_0,
+                "pucch_set1_format": pucch_set1_format,
             },
         },
         "5gc": {"parameters": {"ims_mode": ims_mode}},
