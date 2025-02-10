@@ -235,8 +235,10 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
     return;
   }
 
-  pdcp_rx_buffer_info pdu_info{
-      .buf = std::move(pdu), .count = rcvd_count, .time_of_arrival = time_start, .token = token_mngr.get_token()};
+  pdcp_rx_buffer_info pdu_info{.buf             = std::move(pdu),
+                               .count           = rcvd_count,
+                               .time_of_arrival = time_start,
+                               .token           = pdcp_crypto_token(token_mngr)};
 
   // apply security in crypto executor
   auto fn = [this, pdu_info = std::move(pdu_info)]() mutable { apply_security(std::move(pdu_info)); };

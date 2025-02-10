@@ -10,31 +10,10 @@
 
 #pragma once
 
-#include "pdcp_bearer_logger.h"
 #include "srsran/support/async/manual_event.h"
 #include "srsran/support/srsran_assert.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
-
-class pdcp_crypto_token_manager;
-
-class pdcp_crypto_token
-{
-public:
-  pdcp_crypto_token(pdcp_crypto_token_manager& mngr_);
-
-  pdcp_crypto_token(pdcp_crypto_token&& obj) noexcept : mngr(obj.mngr) { obj.was_moved = true; }
-  pdcp_crypto_token& operator=(pdcp_crypto_token&&)      = delete;
-  pdcp_crypto_token(const pdcp_crypto_token&)            = delete;
-  pdcp_crypto_token& operator=(const pdcp_crypto_token&) = delete;
-
-  ~pdcp_crypto_token();
-
-private:
-  bool                       was_moved = false;
-  pdcp_crypto_token_manager& mngr;
-};
 
 class pdcp_crypto_token_manager
 {
@@ -44,8 +23,6 @@ public:
   manual_event_flag& get_awaitable() { return pending_crypto; }
 
   void stop() { return_token(); }
-
-  [[nodiscard]] pdcp_crypto_token get_token() { return pdcp_crypto_token{*this}; }
 
 private:
   void increment_token() { tokens.fetch_add(1, std::memory_order_relaxed); }
@@ -77,6 +54,28 @@ private:
   std::atomic<uint32_t> tokens = 0;
 
   friend class pdcp_crypto_token;
+};
+
+class pdcp_crypto_token
+{
+public:
+  pdcp_crypto_token(pdcp_crypto_token_manager& mngr_) : mngr(mngr_) { mngr.increment_token(); }
+
+  ~pdcp_crypto_token()
+  {
+    if (not was_moved) {
+      mngr.return_token();
+    }
+  }
+
+  pdcp_crypto_token(pdcp_crypto_token&& obj) noexcept : mngr(obj.mngr) { obj.was_moved = true; }
+  pdcp_crypto_token& operator=(pdcp_crypto_token&&)      = delete;
+  pdcp_crypto_token(const pdcp_crypto_token&)            = delete;
+  pdcp_crypto_token& operator=(const pdcp_crypto_token&) = delete;
+
+private:
+  bool                       was_moved = false;
+  pdcp_crypto_token_manager& mngr;
 };
 
 } // namespace srsran
