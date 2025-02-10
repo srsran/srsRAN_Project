@@ -178,7 +178,6 @@ struct uci_indication {
       harq_ack_report_list harqs;
       /// CSI report.
       std::optional<csi_report_data> csi;
-      bool                           invalid_csi_report = false;
     };
 
     /// UCI carried in PUCCH Format2, Format3 or Format4.
@@ -192,7 +191,6 @@ struct uci_indication {
       harq_ack_report_list harqs;
       /// CSI report.
       std::optional<csi_report_data> csi;
-      bool                           invalid_csi_report = false;
       /// Metric of channel quality in dB.
       std::optional<float> ul_sinr_dB;
       /// Timing Advance Offset measured for the UE.

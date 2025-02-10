@@ -156,7 +156,6 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
       }
 
       if (pusch->csi_part1_info.has_value()) {
-        pdu.invalid_csi_report = !pusch->csi_part1_info->is_valid;
         if (pusch->csi_part1_info->is_valid) {
           // Decode CSI bits given the CSI report config previously stored in the grid.
           const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
@@ -174,7 +173,10 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
                            fmt::underlying(uci_pdu.ue_index),
                            uci_pdu.crnti);
           }
+        } else {
+          pdu.csi = csi_report_data{.valid = false};
         }
+
         // NOTE: The RLF detection based on CSI is used when the UE only transmits PUCCHs; if the UE transmit PUSCHs,
         // the RLF detection will be based on the PUSCH CRC. However, if the PUSCH UCI has a correctly decoded CSI, we
         // need to reset the CSI KOs counter.
@@ -203,7 +205,6 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
 
       // Check if the UCI has been correctly decoded.
       if (pucch_f2f3f4->csi_part1_info.has_value()) {
-        pdu.invalid_csi_report = !pucch_f2f3f4->csi_part1_info->is_valid;
         if (pucch_f2f3f4->csi_part1_info->is_valid) {
           // Decode CSI bits given the CSI report config previously stored in the grid.
           const auto& slot_ucis = expected_uci_report_grid[to_grid_index(msg.sl_rx)];
@@ -221,7 +222,10 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
                            fmt::underlying(uci_pdu.ue_index),
                            uci_pdu.crnti);
           }
+        } else {
+          pdu.csi = csi_report_data{.valid = false};
         }
+
         // We consider any status other than "crc_pass" as non-decoded CSI.
         rlf_handler.handle_csi(uci_pdu.ue_index, cell_index, pucch_f2f3f4->csi_part1_info->is_valid);
       }

@@ -165,7 +165,11 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
       }
 
       if (f2f3f4->csi.has_value()) {
-        handle_csi_report(u, f2f3f4->csi.value());
+        if (f2f3f4->csi->valid) {
+          handle_csi_report(u, f2f3f4->csi.value());
+        } else {
+          u.data.nof_pusch_invalid_csis++;
+        }
       }
 
       if (f2f3f4->time_advance_offset.has_value()) {
@@ -176,21 +180,19 @@ void cell_metrics_handler::handle_uci_pdu_indication(const uci_indication::uci_p
       if (not f2f3f4->harqs.empty() and f2f3f4->harqs[0] != mac_harq_ack_report_status::dtx) {
         u.data.nof_pucch_f2f3f4_invalid_harqs++;
       }
-      if (f2f3f4->invalid_csi_report) {
-        u.data.nof_pucch_f2f3f4_invalid_csis++;
-      }
     } else {
       // PUSCH case.
       const auto& pusch = std::get<uci_indication::uci_pdu::uci_pusch_pdu>(pdu.pdu);
 
       if (pusch.csi.has_value()) {
-        handle_csi_report(u, pusch.csi.value());
+        if (pusch.csi->valid) {
+          handle_csi_report(u, pusch.csi.value());
+        } else {
+          u.data.nof_pusch_invalid_csis++;
+        }
       }
       if (not pusch.harqs.empty() and pusch.harqs[0] != mac_harq_ack_report_status::dtx) {
         u.data.nof_pusch_invalid_harqs++;
-      }
-      if (pusch.invalid_csi_report) {
-        u.data.nof_pusch_invalid_csis++;
       }
     }
   }
