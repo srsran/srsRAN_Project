@@ -9,6 +9,7 @@
  */
 
 #include "ue_fallback_scheduler.h"
+#include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../support/csi_rs_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"

@@ -54,6 +54,23 @@ private:
     cell_resource_allocator*  cell_alloc;
   };
 
+  struct dl_grant_params {
+    alloc_status            status;
+    search_space_id         ss_id;
+    uint8_t                 pdsch_td_res_index;
+    crb_interval            crb_lims;
+    dci_dl_rnti_config_type dci_type;
+    grant_prbs_mcs          recommended_prbs_mcs;
+    unsigned                nof_layers;
+  };
+
+  dl_grant_params get_dl_grant_params(const ue_pdsch_grant& sched_params);
+
+  expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(ue_cell& ue_cc, const search_space_info& ss_info);
+
+  expected<uci_allocation, alloc_status>
+  alloc_uci(ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pdsch_td_res_index);
+
   bool has_cell(du_cell_index_t cell_index) const { return cells.contains(cell_index); }
 
   pdcch_resource_allocator& get_pdcch_sched(du_cell_index_t cell_index) { return *cells[cell_index].pdcch_sched; }
