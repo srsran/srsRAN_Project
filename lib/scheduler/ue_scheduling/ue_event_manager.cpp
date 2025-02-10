@@ -504,6 +504,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
                                        span<const mac_harq_ack_report_status> harq_bits,
                                        std::optional<float>                   pucch_snr)
 {
+  du_cells[ue_cc.cell_index].metrics->handle_dl_harq_ack_pdu(ue_cc.ue_index, uci_sl, pucch_snr.has_value());
   for (unsigned harq_idx = 0, harq_end_idx = harq_bits.size(); harq_idx != harq_end_idx; ++harq_idx) {
     // Update UE HARQ state with received HARQ-ACK.
     std::optional<ue_cell::dl_ack_info_result> result =

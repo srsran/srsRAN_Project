@@ -85,9 +85,7 @@ void cell_metrics_handler::handle_crc_indication(slot_point                   sl
       u.data.pusch_ta.update(crc_pdu.time_advance_offset.value().to_seconds());
     }
     u.data.sum_crc_delay_slots += last_slot_tx - sl_rx;
-    if (static_cast<unsigned>(last_slot_tx - sl_rx) > u.data.max_crc_delay_slots) {
-      u.data.max_crc_delay_slots = last_slot_tx - sl_rx;
-    }
+    u.data.max_crc_delay_slots = std::max(static_cast<unsigned>(last_slot_tx - sl_rx), u.data.max_crc_delay_slots);
   }
 }
 
@@ -116,6 +114,24 @@ void cell_metrics_handler::handle_csi_report(ue_metric_context& u, const csi_rep
   }
   if (csi.ri.has_value()) {
     u.data.ri.update(csi.ri->to_uint());
+  }
+}
+
+void cell_metrics_handler::handle_dl_harq_ack_pdu(du_ue_index_t ue_index, slot_point sl_rx, bool pucch)
+{
+  if (ues.contains(ue_index)) {
+    auto& u = ues[ue_index];
+    if (pucch) {
+      u.data.sum_pucch_harq_delay_slots += last_slot_tx - sl_rx;
+      u.data.max_pucch_harq_delay_slots =
+          std::max(static_cast<unsigned>(last_slot_tx - sl_rx), u.data.max_pucch_harq_delay_slots);
+      ++u.data.count_pucch_harq_pdus;
+    } else {
+      u.data.sum_pusch_harq_delay_slots += last_slot_tx - sl_rx;
+      u.data.max_pusch_harq_delay_slots =
+          std::max(static_cast<unsigned>(last_slot_tx - sl_rx), u.data.max_pusch_harq_delay_slots);
+      ++u.data.count_pusch_harq_pdus;
+    }
   }
 }
 
@@ -390,17 +406,9 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pucch_snr_db     = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
   ret.last_dl_olla     = last_dl_olla;
   ret.last_ul_olla     = last_ul_olla;
-  if (data.count_crc_pdus > 0) {
-    ret.max_crc_delay_ms = data.max_crc_delay_slots;
-    ret.avg_crc_delay_ms =
-        static_cast<double>(data.sum_crc_delay_slots) / static_cast<double>(data.count_crc_pdus * slots_per_sf);
-  } else {
-    ret.avg_crc_delay_ms = 0;
-    ret.max_crc_delay_ms = 0;
-  }
-  ret.bsr      = last_bsr;
-  ret.sr_count = data.count_sr;
-  ret.dl_bs    = 0;
+  ret.bsr              = last_bsr;
+  ret.sr_count         = data.count_sr;
+  ret.dl_bs            = 0;
   for (const unsigned value : last_dl_bs) {
     ret.dl_bs += value;
   }
@@ -418,6 +426,30 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.nof_pucch_f2f3f4_invalid_csis  = data.nof_pucch_f2f3f4_invalid_csis;
   ret.nof_pusch_invalid_harqs        = data.nof_pusch_invalid_harqs;
   ret.nof_pusch_invalid_csis         = data.nof_pusch_invalid_csis;
+  if (data.count_crc_pdus > 0) {
+    ret.avg_crc_delay_ms =
+        static_cast<double>(data.sum_crc_delay_slots) / static_cast<double>(data.count_crc_pdus * slots_per_sf);
+    ret.max_crc_delay_ms = data.max_crc_delay_slots;
+  } else {
+    ret.avg_crc_delay_ms = 0;
+    ret.max_crc_delay_ms = 0;
+  }
+  if (data.count_pucch_harq_pdus > 0) {
+    ret.avg_pucch_harq_delay_ms = static_cast<double>(data.sum_pucch_harq_delay_slots) /
+                                  static_cast<double>(data.count_pucch_harq_pdus * slots_per_sf);
+    ret.max_pucch_harq_delay_ms = data.max_pucch_harq_delay_slots;
+  } else {
+    ret.avg_pucch_harq_delay_ms = 0;
+    ret.max_pucch_harq_delay_ms = 0;
+  }
+  if (data.count_pusch_harq_pdus > 0) {
+    ret.avg_pusch_harq_delay_ms = static_cast<double>(data.sum_pusch_harq_delay_slots) /
+                                  static_cast<double>(data.count_pusch_harq_pdus * slots_per_sf);
+    ret.max_pusch_harq_delay_ms = data.max_pusch_harq_delay_slots;
+  } else {
+    ret.avg_pusch_harq_delay_ms = 0;
+    ret.max_pusch_harq_delay_ms = 0;
+  }
 
   // Reset UE stats metrics on every report.
   reset();

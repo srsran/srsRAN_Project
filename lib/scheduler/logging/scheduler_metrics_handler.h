@@ -38,6 +38,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       unsigned count_uci_harqs                = 0;
       unsigned count_crc_acks                 = 0;
       unsigned count_crc_pdus                 = 0;
+      unsigned count_pucch_harq_pdus          = 0;
+      unsigned count_pusch_harq_pdus          = 0;
       unsigned count_sr                       = 0;
       unsigned dl_mcs                         = 0;
       unsigned nof_dl_cws                     = 0;
@@ -50,6 +52,10 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       double   sum_pusch_rsrp                 = 0;
       unsigned sum_crc_delay_slots            = 0;
       unsigned max_crc_delay_slots            = 0;
+      unsigned sum_pusch_harq_delay_slots     = 0;
+      unsigned max_pusch_harq_delay_slots     = 0;
+      unsigned sum_pucch_harq_delay_slots     = 0;
+      unsigned max_pucch_harq_delay_slots     = 0;
       unsigned nof_pucch_snr_reports          = 0;
       unsigned nof_pucch_f0f1_invalid_harqs   = 0;
       unsigned nof_pucch_f2f3f4_invalid_harqs = 0;
@@ -149,6 +155,9 @@ public:
 
   /// \brief Handle SRS indication.
   void handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu);
+
+  /// \brief Register UCI HARQ-ACK PDU indication.
+  void handle_dl_harq_ack_pdu(du_ue_index_t ue_index, slot_point slot_rx, bool pucch);
 
   /// \brief Register HARQ-ACK UCI indication.
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);

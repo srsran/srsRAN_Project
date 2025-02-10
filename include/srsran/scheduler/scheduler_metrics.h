@@ -23,31 +23,38 @@ namespace srsran {
 
 /// \brief Snapshot of the metrics for a UE.
 struct scheduler_ue_metrics {
-  pci_t                pci;
-  rnti_t               rnti;
-  sch_mcs_index        dl_mcs;
-  unsigned             tot_dl_prbs_used;
-  double               dl_brate_kbps;
-  unsigned             dl_nof_ok;
-  unsigned             dl_nof_nok;
-  float                pusch_snr_db;
-  float                pusch_rsrp_db;
-  float                pucch_snr_db;
-  sch_mcs_index        ul_mcs;
-  unsigned             tot_ul_prbs_used;
-  double               ul_brate_kbps;
-  double               avg_crc_delay_ms;
-  double               max_crc_delay_ms;
-  unsigned             ul_nof_ok;
-  unsigned             ul_nof_nok;
-  unsigned             bsr;
-  unsigned             sr_count;
-  unsigned             dl_bs;
-  unsigned             nof_pucch_f0f1_invalid_harqs;
-  unsigned             nof_pucch_f2f3f4_invalid_harqs;
-  unsigned             nof_pucch_f2f3f4_invalid_csis;
-  unsigned             nof_pusch_invalid_harqs;
-  unsigned             nof_pusch_invalid_csis;
+  pci_t         pci;
+  rnti_t        rnti;
+  sch_mcs_index dl_mcs;
+  unsigned      tot_dl_prbs_used;
+  double        dl_brate_kbps;
+  unsigned      dl_nof_ok;
+  unsigned      dl_nof_nok;
+  float         pusch_snr_db;
+  float         pusch_rsrp_db;
+  float         pucch_snr_db;
+  sch_mcs_index ul_mcs;
+  unsigned      tot_ul_prbs_used;
+  double        ul_brate_kbps;
+  unsigned      ul_nof_ok;
+  unsigned      ul_nof_nok;
+  unsigned      bsr;
+  unsigned      sr_count;
+  unsigned      dl_bs;
+  unsigned      nof_pucch_f0f1_invalid_harqs;
+  unsigned      nof_pucch_f2f3f4_invalid_harqs;
+  unsigned      nof_pucch_f2f3f4_invalid_csis;
+  unsigned      nof_pusch_invalid_harqs;
+  unsigned      nof_pusch_invalid_csis;
+  /// Delay metrics.
+  /// @{
+  double avg_crc_delay_ms;
+  double max_crc_delay_ms;
+  double avg_pusch_harq_delay_ms;
+  double max_pusch_harq_delay_ms;
+  double avg_pucch_harq_delay_ms;
+  double max_pucch_harq_delay_ms;
+  /// @}
   std::optional<float> last_dl_olla;
   std::optional<float> last_ul_olla;
   std::optional<int>   last_phr;

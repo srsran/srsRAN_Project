@@ -46,6 +46,12 @@ DECLARE_METRIC("nof_pucch_f2f3f4_invalid_harqs", metric_nof_pucch_f2f3f4_invalid
 DECLARE_METRIC("nof_pucch_f2f3f4_invalid_csis", metric_nof_pucch_f2f3f4_invalid_csis, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_harqs", metric_nof_pusch_invalid_harqs, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_csis", metric_nof_pusch_invalid_csis, unsigned, "");
+DECLARE_METRIC("avg_crc_delay", metric_avg_crc_delay, double, "ms");
+DECLARE_METRIC("max_crc_delay", metric_max_crc_delay, double, "ms");
+DECLARE_METRIC("avg_pusch_harq_delay", metric_avg_pusch_harq_delay, double, "ms");
+DECLARE_METRIC("max_pusch_harq_delay", metric_max_pusch_harq_delay, double, "ms");
+DECLARE_METRIC("avg_pucch_harq_delay", metric_avg_pucch_harq_delay, double, "ms");
+DECLARE_METRIC("max_pucch_harq_delay", metric_max_pucch_harq_delay, double, "ms");
 DECLARE_METRIC_SET("ue_container",
                    mset_ue_container,
                    metric_pci,
@@ -72,7 +78,13 @@ DECLARE_METRIC_SET("ue_container",
                    metric_nof_pucch_f2f3f4_invalid_harqs,
                    metric_nof_pucch_f2f3f4_invalid_csis,
                    metric_nof_pusch_invalid_harqs,
-                   metric_nof_pusch_invalid_csis);
+                   metric_nof_pusch_invalid_csis,
+                   metric_avg_crc_delay,
+                   metric_max_crc_delay,
+                   metric_avg_pusch_harq_delay,
+                   metric_max_pusch_harq_delay,
+                   metric_avg_pucch_harq_delay,
+                   metric_max_pucch_harq_delay);
 
 // Cell event metrics.
 DECLARE_METRIC("sfn", metric_sfn, uint16_t, "");
@@ -279,6 +291,13 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
     output.write<metric_ul_nof_ok>(ue.ul_nof_ok);
     output.write<metric_ul_nof_nok>(ue.ul_nof_nok);
     output.write<metric_bsr>(ue.bsr);
+
+    output.write<metric_avg_crc_delay>(ue.avg_crc_delay_ms);
+    output.write<metric_max_crc_delay>(ue.max_crc_delay_ms);
+    output.write<metric_avg_pusch_harq_delay>(ue.avg_pusch_harq_delay_ms);
+    output.write<metric_max_pusch_harq_delay>(ue.max_pusch_harq_delay_ms);
+    output.write<metric_avg_pucch_harq_delay>(ue.avg_pucch_harq_delay_ms);
+    output.write<metric_max_pucch_harq_delay>(ue.max_pucch_harq_delay_ms);
   }
 
   for (const auto& event : metrics.events) {
