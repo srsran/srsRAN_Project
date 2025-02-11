@@ -139,7 +139,7 @@ metrics version check in retina:
 
 gnb docker compose:
   extends: .docker compose
-  variables: &gnb_build_args
+  variables:
     DOCKER_UHD_VERSION: "4.7.0.0"
     DOCKER_DPDK_VERSION: "23.11.1"
   rules:
@@ -276,70 +276,3 @@ grafana server image latest:
   before_script:
     - |
       export VERSION=latest
-
-srsran image:
-  extends: .docker-builder
-  stage: publish
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
-      interruptible: false
-  retry: 2
-  variables:
-    # CI
-    GIT_LFS_SKIP_SMUDGE: 1
-    KUBERNETES_CPU_REQUEST: ${SRS_CPU_LIMIT}
-    KUBERNETES_CPU_LIMIT: ${SRS_CPU_LIMIT}
-    KUBERNETES_MEMORY_REQUEST: ${SRS_MEMORY_LIMIT}
-    KUBERNETES_MEMORY_LIMIT: ${SRS_MEMORY_LIMIT}
-    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "70G"
-    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "70G"
-    # Docker
-    REGISTRY_URI: $GITLAB_REGISTRY_URI
-    CONTEXT: ${CI_PROJECT_DIR}
-    DOCKERFILE: docker
-    MODE: build
-    <<: *gnb_build_args
-  timeout: 2 hours
-  tags:
-    - ${TAG}-docker
-  before_script:
-    - |
-      export NAME="srsran-project"
-      export VERSION="${SPLIT}_${SUFFIX}"
-      export BUILD_ARGS="UHD_VERSION=${DOCKER_UHD_VERSION};DPDK_VERSION=${DOCKER_DPDK_VERSION};MARCH=${MARCH};NUM_JOBS=${KUBERNETES_CPU_LIMIT};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
-  parallel:
-    matrix:
-      # AMD AVX2
-      - SUFFIX: release_avx2
-        MARCH: x86-64-v3
-        TAG: amd64-avx2
-        PLATFORM: amd64
-      - SUFFIX: release_with_debug_avx2
-        EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-        MARCH: x86-64-v3
-        TAG: amd64-avx2
-        PLATFORM: amd64
-      # AMD AVX512
-      - SUFFIX: release_avx512
-        MARCH: x86-64-v4
-        TAG: amd64-avx2-avx512
-        PLATFORM: amd64
-      - SUFFIX: release_with_debug_avx512
-        EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-        MARCH: x86-64-v4
-        TAG: amd64-avx2-avx512
-        PLATFORM: amd64
-      # ARM
-      - SUFFIX: release_arm
-        MARCH: armv8.2-a+crypto+fp16+dotprod
-        TAG: arm64
-        PLATFORM: arm64
-      - SUFFIX: release_with_debug_arm
-        EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
-        MARCH: armv8.2-a+crypto+fp16+dotprod
-        TAG: arm64
-        PLATFORM: arm64
-  needs:
-    - job: gnb docker compose
-      optional: true
-      artifacts: false

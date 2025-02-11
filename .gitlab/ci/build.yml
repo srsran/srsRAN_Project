@@ -191,8 +191,8 @@ variables:
         exit $ret
       }
       if [[ $CI_MERGE_REQUEST_LABELS != *"ci-no-plugin"* && -n $PLUGIN_BRANCH ]]; then
-        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH} >/dev/null 2>&1
-        git submodule set-branch --branch ${PLUGIN_BRANCH} ${PLUGIN_PATH} >/dev/null 2>&1
+        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
+        git submodule set-branch --branch ${PLUGIN_BRANCH} ${PLUGIN_PATH}
       fi
     - build_srsgnb "${SRS_TARGET}"
     - launch_tests
