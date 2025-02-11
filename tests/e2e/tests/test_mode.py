@@ -303,7 +303,7 @@ def _test_ru(
         gnb.Start(
             GNBStartInfo(
                 plmn=PLMN(mcc="001", mnc="01"),
-                ue_definition=UEDefinition(),
+                ue_definition=UEDefinition(zmq_port_array=tuple(range(nof_ant))),
                 fivegc_definition=FiveGCDefinition(amf_ip="127.0.0.1", amf_port=38412),
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
