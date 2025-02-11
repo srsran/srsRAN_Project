@@ -36,6 +36,7 @@ from .steps.stub import _stop_stub, GNB_STARTUP_TIMEOUT, handle_start_error, sto
 
 _OMIT_VIAVI_FAILURE_LIST = ["authentication"]
 _FLAKY_ERROR_LIST = ["Error creating the pod", "Viavi API call timed out"]
+_GNB_STOP_TIMEOUT = 15  # When timeout reached, retina gets GDB backtrace and sends sigkill. 0 means no timeout
 
 
 # pylint: disable=too-many-instance-attributes
@@ -166,7 +167,7 @@ def test_viavi_manual(
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
-    gnb_stop_timeout: int = 0,
+    gnb_stop_timeout: int = _GNB_STOP_TIMEOUT,
     log_search: bool = True,
 ):
     """
@@ -232,7 +233,7 @@ def test_viavi(
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
-    gnb_stop_timeout: int = 0,
+    gnb_stop_timeout: int = _GNB_STOP_TIMEOUT,
     log_search: bool = True,
 ):
     """
@@ -288,7 +289,7 @@ def test_viavi_debug(
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
-    gnb_stop_timeout: int = 0,
+    gnb_stop_timeout: int = _GNB_STOP_TIMEOUT,
     log_search: bool = True,
 ):
     """
@@ -332,7 +333,7 @@ def _test_viavi(
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
-    gnb_stop_timeout: int = 0,
+    gnb_stop_timeout: int = _GNB_STOP_TIMEOUT,
     log_search: bool = True,
 ):
     """
