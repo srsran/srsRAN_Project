@@ -70,7 +70,7 @@ public:
 };
 
 std::shared_ptr<pdsch_modulator_factory>
-create_pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>,
+create_pdsch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>,
                                   std::shared_ptr<pseudo_random_generator_factory>,
                                   std::shared_ptr<resource_grid_mapper_factory> rg_mapper_factory);
 
@@ -95,7 +95,7 @@ create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_f
                                              std::shared_ptr<ldpc_rate_matcher_factory>       ldpc_rm_factory,
                                              std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                              std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory,
-                                             std::shared_ptr<channel_modulation_factory>      modulator_factory,
+                                             std::shared_ptr<modulation_mapper_factory>       modulator_factory,
                                              std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
                                              std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory,
                                              task_executor&                                   executor,
@@ -106,7 +106,7 @@ create_pdsch_lite_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory
                                        std::shared_ptr<ldpc_encoder_factory>            encoder_factory,
                                        std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory,
                                        std::shared_ptr<pseudo_random_generator_factory> scrambler_factory,
-                                       std::shared_ptr<channel_modulation_factory>      modulator_factory,
+                                       std::shared_ptr<modulation_mapper_factory>       modulator_factory,
                                        std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
                                        std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory,
                                        std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory);

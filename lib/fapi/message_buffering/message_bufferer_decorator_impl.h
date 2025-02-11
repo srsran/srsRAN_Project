@@ -39,13 +39,14 @@ namespace fapi {
 class message_bufferer_decorator_impl : public fapi_decorator
 {
 public:
-  message_bufferer_decorator_impl(unsigned                    l2_nof_slots_ahead,
+  message_bufferer_decorator_impl(unsigned                    sector_id,
+                                  unsigned                    l2_nof_slots_ahead,
                                   subcarrier_spacing          scs,
                                   slot_message_gateway&       gateway,
                                   slot_last_message_notifier& last_msg_notifier_,
                                   task_executor&              executor) :
     fapi_decorator({}),
-    dispatcher(l2_nof_slots_ahead, scs, gateway, executor),
+    dispatcher(sector_id, l2_nof_slots_ahead, scs, gateway, executor),
     time_notifier(l2_nof_slots_ahead, scs, dispatcher)
   {
     last_msg_notifier.set_slot_last_message_notifier(last_msg_notifier_);

@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "apps/services/application_command.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/metrics/metrics_config.h"
+#include "apps/units/application_unit_commands.h"
 #include "o_cu_cp_unit_impl.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/e2/e2_cu_metrics_connector.h"
@@ -62,9 +62,9 @@ struct o_cu_cp_unit_dependencies {
 
 /// O-RAN CU-CP unit.
 struct o_cu_cp_unit {
-  std::unique_ptr<srs_cu_cp::o_cu_cp>                             unit;
-  std::vector<std::unique_ptr<app_services::application_command>> commands;
-  std::vector<app_services::metrics_config>                       metrics;
+  std::unique_ptr<srs_cu_cp::o_cu_cp>       unit;
+  application_unit_commands                 commands;
+  std::vector<app_services::metrics_config> metrics;
 };
 
 /// Builds an O-RAN CU-CP unit with the given configuration and dependencies.

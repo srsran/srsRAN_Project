@@ -153,8 +153,14 @@ static sib19_info create_sib19_info(const du_high_unit_config& config)
   if (config.ntn_cfg.value().k_mac.has_value()) {
     sib19.k_mac = config.ntn_cfg.value().k_mac.value();
   }
+  if (config.ntn_cfg.value().ntn_ul_sync_validity_dur.has_value()) {
+    sib19.ntn_ul_sync_validity_dur = config.ntn_cfg.value().ntn_ul_sync_validity_dur.value();
+  }
   if (config.ntn_cfg.value().ta_info.has_value()) {
     sib19.ta_info = config.ntn_cfg.value().ta_info.value();
+    sib19.ta_info.value().ta_common /= 0.004072;
+    sib19.ta_info.value().ta_common_drift /= 0.0002;
+    sib19.ta_info.value().ta_common_drift_variant /= 0.00002;
   }
   if (config.ntn_cfg.value().reference_location.has_value()) {
     sib19.ref_location = config.ntn_cfg.value().reference_location.value();
@@ -857,9 +863,10 @@ std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const d
   // SRB1
   srb_cfg.insert(std::make_pair(srb_id_t::srb1, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb1) != config.srb_cfg.end()) {
-    auto& out_rlc = srb_cfg[srb_id_t::srb1].rlc;
-    out_rlc.mode  = rlc_mode::am;
-    out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb1).rlc);
+    auto& out_rlc             = srb_cfg[srb_id_t::srb1].rlc;
+    out_rlc.mode              = rlc_mode::am;
+    out_rlc.am                = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb1).rlc);
+    out_rlc.am.tx.pdcp_sn_len = pdcp_sn_size::size12bits;
   } else {
     srb_cfg.at(srb_id_t::srb1).rlc = make_default_srb_rlc_config();
   }
@@ -867,9 +874,10 @@ std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const d
   // SRB2
   srb_cfg.insert(std::make_pair(srb_id_t::srb2, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb2) != config.srb_cfg.end()) {
-    auto& out_rlc = srb_cfg[srb_id_t::srb2].rlc;
-    out_rlc.mode  = rlc_mode::am;
-    out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb2).rlc);
+    auto& out_rlc             = srb_cfg[srb_id_t::srb2].rlc;
+    out_rlc.mode              = rlc_mode::am;
+    out_rlc.am                = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb2).rlc);
+    out_rlc.am.tx.pdcp_sn_len = pdcp_sn_size::size12bits;
   } else {
     srb_cfg.at(srb_id_t::srb2).rlc = make_default_srb_rlc_config();
   }
@@ -877,9 +885,10 @@ std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const d
   // SRB3
   srb_cfg.insert(std::make_pair(srb_id_t::srb3, srs_du::du_srb_config{}));
   if (config.srb_cfg.find(srb_id_t::srb3) != config.srb_cfg.end()) {
-    auto& out_rlc = srb_cfg[srb_id_t::srb3].rlc;
-    out_rlc.mode  = rlc_mode::am;
-    out_rlc.am    = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb3).rlc);
+    auto& out_rlc             = srb_cfg[srb_id_t::srb3].rlc;
+    out_rlc.mode              = rlc_mode::am;
+    out_rlc.am                = generate_du_rlc_am_config(config.srb_cfg.at(srb_id_t::srb3).rlc);
+    out_rlc.am.tx.pdcp_sn_len = pdcp_sn_size::size12bits;
   } else {
     srb_cfg.at(srb_id_t::srb3).rlc = make_default_srb_rlc_config();
   }

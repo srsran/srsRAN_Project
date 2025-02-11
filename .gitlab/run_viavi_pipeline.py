@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 import argparse
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import pathlib
-from typing import List
+import sys
+from typing import Dict, List
 
 try:
     import yaml
@@ -30,6 +31,7 @@ class _TestDefinition:
     campaign_filename: str = ""
     test_name: str = ""
     description: str = ""
+    gnb_extra_config: Dict = field(default_factory=dict)
 
 
 # pylint: disable=too-many-instance-attributes
@@ -43,9 +45,22 @@ class _ArgsDefinition:
     testid: str = ""
     campaign_path: str = ""
     timeout: int = ""
-    gnb_extra: str = ""
+    gnb_cli: str = ""
     build_args: str = DEFAULT_BUILD_ARGS
     dpdk_version: str = DEFAULT_DPDK_VERSION
+
+
+def _convert_extra_config_into_command(extra_config: dict) -> str:
+    """
+    Convert extra config into command
+    """
+    cmd_args = ""
+    for key, value in sorted(extra_config.items(), key=lambda item: isinstance(item[1], dict)):
+        if isinstance(value, dict):
+            cmd_args += f"{key} " + _convert_extra_config_into_command(value)
+        else:
+            cmd_args += f"--{key}={value} "
+    return cmd_args
 
 
 def get_viavi_tests():
@@ -62,6 +77,7 @@ def get_viavi_tests():
         test_definition.campaign_filename = test["campaign_filename"]
         test_definition.test_name = test["test_name"]
         test_definition.description = test.get("description", "")
+        test_definition.gnb_extra_config = test.get("gnb_extra_config", "")
         test_list.append(test_definition)
     return test_list
 
@@ -73,7 +89,7 @@ def validate_args(args) -> _ArgsDefinition:
     args_definition.branch = args.branch
     args_definition.testid = args.testid
     args_definition.timeout = args.timeout
-    args_definition.gnb_extra = args.srsgnb_extra
+    args_definition.gnb_cli = args.srsgnb_cli
     args_definition.build_args = args.build_args
     args_definition.dpdk_version = args.dpdk_version
 
@@ -114,7 +130,6 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
     COMPILER = "gcc"
     TESTMODE = "none"
 
-    MAKE_ARGS = "-j6"
     BUILD_ARGS = args_definition.build_args
     DPDK_VERSION = args_definition.dpdk_version
 
@@ -122,8 +137,19 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
     MARKERS = "viavi_manual"
 
     PYARGS = f'--viavi-manual-campaign-filename "{test_definition.campaign_filename}" --viavi-manual-test-name "{test_definition.id}" --viavi-manual-test-timeout {timeout} --retina-pod-timeout 900'
-    if args_definition.gnb_extra:
-        PYARGS += f' --viavi-manual-extra-gnb-arguments "{args_definition.gnb_extra}"'
+    if args_definition.gnb_cli:
+        PYARGS += f' --viavi-manual-gnb-arguments "{args_definition.gnb_cli}"'
+        print("")
+        print(
+            "⚠️  Using srsgnb-cli overwrites the configuration defined in the test_declaration.yml for the test. Please review your new config carefully!!"
+        )
+        print("⚠️  OLD configuration: ", _convert_extra_config_into_command(test_definition.gnb_extra_config))
+        print("⚠️  NEW configuration: ", args_definition.gnb_cli)
+        print("")
+        if input("Do you want to continue with the new configuration? (yes/no): ").strip().lower() not in ("y", "yes"):
+            print("Exiting as per user request.")
+            sys.exit(0)
+        print("")
 
     RETINA_ARGS = "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
 
@@ -133,7 +159,6 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
         {"key": "COMPILER", "value": COMPILER},
         {"key": "TEST_MODE", "value": TESTMODE},
         {"key": "BUILD_ARGS", "value": BUILD_ARGS},
-        {"key": "MAKE_ARGS", "value": MAKE_ARGS},
         {"key": "SRS_TARGET", "value": "gnb_split_7_2"},
         {"key": "PLUGIN_BRANCH", "value": "main"},
         {"key": "UHD_VERSION", "value": ""},
@@ -150,10 +175,9 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
 
     print(f"Creating Viavi pipeline for branch {branch}...")
     print(f"    - Test ID: {test_definition.id}")
-    print(f"    - Extra arguments to gnb binary: {args_definition.gnb_extra}")
+    print(f"    - OS {OS_NAME}")
     print(f"    - BUILD_ARGS {BUILD_ARGS}")
     print(f"    - DPDK_VERSION {DPDK_VERSION}")
-    print(f"    - OS {OS_NAME}")
 
     gl = gitlab.Gitlab("https://gitlab.com", private_token=private_token)
     project = gl.projects.get("softwareradiosystems/srsgnb")
@@ -161,7 +185,7 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
 
     pipeline_url = pipeline.web_url
 
-    print(f"Pipeline created: {pipeline_url}")
+    print(f"🟢 Pipeline created: {pipeline_url}")
 
 
 def main():
@@ -188,9 +212,9 @@ def main():
     )
 
     parser.add_argument(
-        "--srsgnb-extra",
+        "--srsgnb-cli",
         default="",
-        help='Extra agruments passed to the gnb binary. E.g: "log --metrics_level=info"',
+        help='Arguments passed to the gnb binary. E.g: "log --metrics_level=info". This overwrites the arguments in the test_declaration.yml file.',
     )
 
     parser.add_argument(

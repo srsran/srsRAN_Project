@@ -179,26 +179,20 @@ public:
   std::unique_ptr<pucch_demodulator> create() override
   {
     std::unique_ptr<pucch_demodulator_format2> demodulator_format2 = std::make_unique<pucch_demodulator_format2>(
-        equalizer_factory->create(), demodulation_factory->create_demodulation_mapper(), prg_factory->create());
+        equalizer_factory->create(), demodulation_factory->create(), prg_factory->create());
 
-    std::unique_ptr<pucch_demodulator_format3> demodulator_format3 =
-        std::make_unique<pucch_demodulator_format3>(equalizer_factory->create(),
-                                                    demodulation_factory->create_demodulation_mapper(),
-                                                    prg_factory->create(),
-                                                    precoder_factory->create());
+    std::unique_ptr<pucch_demodulator_format3> demodulator_format3 = std::make_unique<pucch_demodulator_format3>(
+        equalizer_factory->create(), demodulation_factory->create(), prg_factory->create(), precoder_factory->create());
 
-    std::unique_ptr<pucch_demodulator_format4> demodulator_format4 =
-        std::make_unique<pucch_demodulator_format4>(equalizer_factory->create(),
-                                                    demodulation_factory->create_demodulation_mapper(),
-                                                    prg_factory->create(),
-                                                    precoder_factory->create());
+    std::unique_ptr<pucch_demodulator_format4> demodulator_format4 = std::make_unique<pucch_demodulator_format4>(
+        equalizer_factory->create(), demodulation_factory->create(), prg_factory->create(), precoder_factory->create());
 
     return std::make_unique<pucch_demodulator_impl>(
         std::move(demodulator_format2), std::move(demodulator_format3), std::move(demodulator_format4));
   }
 
   pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory_,
-                               std::shared_ptr<channel_modulation_factory>      demodulation_factory_,
+                               std::shared_ptr<demodulation_mapper_factory>     demodulation_factory_,
                                std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
                                std::shared_ptr<transform_precoder_factory>      precoder_factory_) :
     equalizer_factory(std::move(equalizer_factory_)),
@@ -214,7 +208,7 @@ public:
 
 private:
   std::shared_ptr<channel_equalizer_factory>       equalizer_factory;
-  std::shared_ptr<channel_modulation_factory>      demodulation_factory;
+  std::shared_ptr<demodulation_mapper_factory>     demodulation_factory;
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
   std::shared_ptr<transform_precoder_factory>      precoder_factory;
 };
@@ -251,7 +245,7 @@ srsran::create_pucch_processor_pool_factory(std::shared_ptr<pucch_processor_fact
 
 std::shared_ptr<pucch_demodulator_factory>
 srsran::create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_factory>       equalizer_factory,
-                                            std::shared_ptr<channel_modulation_factory>      demodulation_factory,
+                                            std::shared_ptr<demodulation_mapper_factory>     demodulation_factory,
                                             std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                             std::shared_ptr<transform_precoder_factory>      precoder_factory)
 {

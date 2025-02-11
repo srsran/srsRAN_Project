@@ -68,6 +68,10 @@ struct du_low_unit_expert_upper_phy_config {
   /// The request headroom size is the number of delayed slots that the upper physical layer will accept, ie, if the
   /// current slot is M, the upper phy will consider the slot M - nof_slots_request_headroom as valid and process it.
   unsigned nof_slots_request_headroom = 0U;
+  /// \brief Allows resource grid requests on empty uplink slots.
+  ///
+  /// An uplink slot is considered empty when it does not contain PUCCH/PUSCH/SRS PDUs.
+  bool allow_request_on_empty_uplink_slot = false;
 };
 
 /// DU low logging functionalities.

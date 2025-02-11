@@ -43,7 +43,7 @@ TEST(precoding_matrix_table_generator, one_port)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_matrix_tables(1);
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(1, 0);
 
   mac_pdsch_precoding_info info;
   info.report.reset();
@@ -61,7 +61,7 @@ TEST(precoding_matrix_table_generator, two_port_one_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_matrix_tables(2);
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(2, 0);
 
   // Iterate over all possible PMI.
   for (unsigned pmi = 0; pmi != 4; ++pmi) {
@@ -82,7 +82,7 @@ TEST(precoding_matrix_table_generator, two_port_two_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_matrix_tables(2);
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(2, 0);
 
   // Iterate over all possible PMI.
   for (unsigned pmi = 0; pmi != 2; ++pmi) {
@@ -103,7 +103,7 @@ TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_mode1_one_la
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_matrix_tables(4);
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(4, 0);
 
   // Iterate over all possible PMI.
   for (unsigned i_1_1 = 0; i_1_1 != 8; ++i_1_1) {
@@ -126,7 +126,7 @@ TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_mode1_two_la
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_matrix_tables(4);
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(4, 0);
 
   // Iterate over all possible PMI.
   for (unsigned i_1_1 = 0; i_1_1 != 8; ++i_1_1) {
@@ -151,7 +151,7 @@ TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_three_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_matrix_tables(4);
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(4, 0);
 
   // Iterate over all possible PMI.
   for (unsigned i_1_1 = 0; i_1_1 != 8; ++i_1_1) {
@@ -174,7 +174,7 @@ TEST(precoding_matrix_table_generator, four_port_typeI_single_panel_four_layer)
 {
   std::unique_ptr<precoding_matrix_mapper>     mapper;
   std::unique_ptr<precoding_matrix_repository> repository;
-  std::tie(mapper, repository) = generate_precoding_matrix_tables(4);
+  std::tie(mapper, repository) = generate_precoding_matrix_tables(4, 0);
 
   // Iterate over all possible PMI.
   for (unsigned i_1_1 = 0; i_1_1 != 8; ++i_1_1) {

@@ -24,6 +24,7 @@
 
 #include "../support/pdcch/search_space_helper.h"
 #include "cell_configuration.h"
+#include "srsran/adt/slotted_array.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"

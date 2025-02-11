@@ -42,12 +42,9 @@ public:
   void init(unsigned c_init) override
   {
     auto tp_before = std::chrono::high_resolution_clock::now();
-
     base_generator->init(c_init);
-
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    // Create report metrics.
     notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::init,
                          .nof_bits = 0,
                          .elapsed  = tp_after - tp_before});
@@ -63,12 +60,9 @@ public:
   void advance(unsigned count) override
   {
     auto tp_before = std::chrono::high_resolution_clock::now();
-
     base_generator->advance(count);
-
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    // Create report metrics.
     notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::advance,
                          .nof_bits = count,
                          .elapsed  = tp_after - tp_before});
@@ -78,12 +72,9 @@ public:
   void apply_xor(bit_buffer& out, const bit_buffer& in) override
   {
     auto tp_before = std::chrono::high_resolution_clock::now();
-
     base_generator->apply_xor(out, in);
-
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    // Create report metrics.
     notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_packed,
                          .nof_bits = in.size(),
                          .elapsed  = tp_after - tp_before});
@@ -93,12 +84,9 @@ public:
   void apply_xor(span<uint8_t> out, span<const uint8_t> in) override
   {
     auto tp_before = std::chrono::high_resolution_clock::now();
-
     base_generator->apply_xor(out, in);
-
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    // Create report metrics.
     notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_unpacked,
                          .nof_bits = in.size(),
                          .elapsed  = tp_after - tp_before});
@@ -108,12 +96,9 @@ public:
   void apply_xor(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) override
   {
     auto tp_before = std::chrono::high_resolution_clock::now();
-
     base_generator->apply_xor(out, in);
-
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    // Create report metrics.
     notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_soft_bit,
                          .nof_bits = in.size(),
                          .elapsed  = tp_after - tp_before});
@@ -123,12 +108,9 @@ public:
   void generate(bit_buffer& data) override
   {
     auto tp_before = std::chrono::high_resolution_clock::now();
-
     base_generator->generate(data);
-
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    // Create report metrics.
     notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::generate_bit_packed,
                          .nof_bits = data.size(),
                          .elapsed  = tp_after - tp_before});
@@ -138,12 +120,9 @@ public:
   void generate(span<float> buffer, float value) override
   {
     auto tp_before = std::chrono::high_resolution_clock::now();
-
     base_generator->generate(buffer, value);
-
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    // Create report metrics.
     notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::generate_float,
                          .nof_bits = buffer.size(),
                          .elapsed  = tp_after - tp_before});

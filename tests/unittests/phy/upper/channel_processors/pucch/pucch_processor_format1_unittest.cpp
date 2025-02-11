@@ -54,8 +54,8 @@ protected:
       std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_generic_factory();
       ASSERT_NE(equalizer_factory, nullptr) << "Cannot create equalizer factory.";
 
-      std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();
-      ASSERT_NE(demod_factory, nullptr) << "Cannot create channel modulation factory.";
+      std::shared_ptr<demodulation_mapper_factory> demod_factory = create_demodulation_mapper_factory();
+      ASSERT_NE(demod_factory, nullptr) << "Cannot create channel demodulation factory.";
 
       std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
       ASSERT_NE(prg_factory, nullptr) << "Cannot create pseudo random generator factory.";

@@ -60,20 +60,20 @@ using ModulationMapperParams = test_case_t;
 class ModulationMapperFixture : public ::testing::TestWithParam<ModulationMapperParams>
 {
 protected:
-  static std::shared_ptr<channel_modulation_factory> factory;
-  static std::unique_ptr<modulation_mapper>          modulator;
+  static std::shared_ptr<modulation_mapper_factory> factory;
+  static std::unique_ptr<modulation_mapper>         modulator;
 
   static void SetUpTestSuite()
   {
     // Create modulation mapper factory.
     if (!factory) {
-      factory = create_channel_modulation_sw_factory();
+      factory = create_modulation_mapper_factory();
       ASSERT_NE(factory, nullptr) << "Cannot create factory";
     }
 
     // Create modulation mapper.
     if (!modulator) {
-      modulator = factory->create_modulation_mapper();
+      modulator = factory->create();
       ASSERT_NE(modulator, nullptr) << "Cannot create modulator";
     }
   }
@@ -83,8 +83,8 @@ protected:
     ASSERT_NE(modulator, nullptr) << "Cannot create modulator";
   }
 };
-std::shared_ptr<channel_modulation_factory> ModulationMapperFixture::factory   = nullptr;
-std::unique_ptr<modulation_mapper>          ModulationMapperFixture::modulator = nullptr;
+std::shared_ptr<modulation_mapper_factory> ModulationMapperFixture::factory   = nullptr;
+std::unique_ptr<modulation_mapper>         ModulationMapperFixture::modulator = nullptr;
 
 TEST_P(ModulationMapperFixture, ModulationMapperTest)
 {

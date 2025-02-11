@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "fmt/format.h"
+#include "srsran/rlc/rlc_buffer_state.h"
 #include <optional>
 
 /*
@@ -145,16 +145,6 @@ public:
 /***************************************
  * Interfaces/notifiers for lower layers
  ***************************************/
-/// Structure used to represent RLC buffer state.
-/// The buffer state is transmitted towards lower layers (i.e. the MAC and the scheduler).
-/// It includes the amount of data pending for transmission (queued SDUs, headers, and for RLC AM, ReTx and status PDUs)
-/// and the time of arrival of the oldest PDU among those queues.
-struct rlc_buffer_state {
-  /// Amount of bytes pending for transmission.
-  unsigned pending_bytes = 0;
-  /// Head of line (HOL) time of arrival (TOA) holds the TOA of the oldest SDU or ReTx that is queued for transmission.
-  std::optional<std::chrono::system_clock::time_point> hol_toa;
-};
 
 /// This interface represents the data exit point of the transmitting side of a RLC entity.
 /// The lower layers will use this interface to pull a PDU from the RLC, or to
@@ -200,22 +190,3 @@ public:
   virtual void on_buffer_state_update(const rlc_buffer_state& bsr) = 0;
 };
 } // namespace srsran
-
-namespace fmt {
-
-// associated formatter
-template <>
-struct formatter<srsran::rlc_buffer_state> {
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx)
-  {
-    return ctx.begin();
-  }
-
-  template <typename FormatContext>
-  auto format(const srsran::rlc_buffer_state& bs, FormatContext& ctx) const
-  {
-    return format_to(ctx.out(), "pending_bytes={} hol_toa={}", bs.pending_bytes, bs.hol_toa);
-  }
-};
-} // namespace fmt

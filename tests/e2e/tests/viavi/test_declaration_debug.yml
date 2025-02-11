@@ -18,36 +18,34 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+# id: name of test in Pytest
 # campaign_filename: path to Viavi campaign file
 # test_name: name of test in Viavi campaign file
 # test_timeout: timeout for test in seconds
-# gnb_extra_commands: extra GNB configuration
-# id: name of test in Pytest
-# max_pdschs_per_slot: maximum number of PDSCHs per slot
-# max_puschs_per_slot: maximum number of PUSCHs per slot
-# enable_qos_viavi: enable QoS in GNB configuration for Viavi
+# gnb_extra_config: extra GNB configuration
 # expected_dl_bitrate: pass/fail criteria, expected downlink bitrate in bps
 # expected_ul_bitrate: pass/fail criteria, expected uplink bitrate in bps
 # expected_nof_kos: expected_nof_kos
 # warning_as_errors: treat warnings as errors
 
-campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
-gnb_extra_commands: &gnb_extra_commands "log --metrics_level=info metrics --rlc_report_period=1000"
-test_timeout: &test_timeout 2400 # 40 * 60
-
 tests:
-  - campaign_filename: *campaign_filename
+  - id: "32UE ideal UDP bidirectional - Debug"
+    campaign_filename: "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
     test_name: "32UE ideal UDP bidirectional"
-    test_timeout: *test_timeout
-    gnb_extra_commands: *gnb_extra_commands
-    id: "32UE ideal UDP bidirectional - Debug"
-    max_pdschs_per_slot: 8
-    max_puschs_per_slot: 8
-    enable_qos_viavi: false
+    test_timeout: 2400
+    # Configuration
+    gnb_extra_config:
+      log:
+        metrics_level: info
+      metrics:
+        rlc_report_period: 1000
+      cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 8
+        pusch:
+          max_puschs_per_slot: 8
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
     warning_as_errors: false
-    warning_allowlist:
-      - missed incoming User-Plane PRACH messages

@@ -23,6 +23,7 @@
 #pragma once
 
 #include "pdcp_bearer_logger.h"
+#include "pdcp_crypto_token.h"
 #include "pdcp_entity_tx_rx_base.h"
 #include "pdcp_interconnect.h"
 #include "pdcp_metrics_aggregator.h"
@@ -52,6 +53,15 @@ struct pdcp_rx_state {
   uint32_t rx_reord;
 };
 
+/// Helper structure used to pass RX buffers to the security engine.
+struct pdcp_rx_buffer_info {
+  byte_buffer                           buf;
+  uint32_t                              count = 0;
+  std::chrono::system_clock::time_point time_of_arrival;
+  pdcp_crypto_token                     token;
+};
+
+/// Structure used to hold RX SDUs in the RX window.
 struct pdcp_rx_sdu_info {
   byte_buffer                           sdu;
   uint32_t                              count = 0;
@@ -81,6 +91,10 @@ public:
 
   /// \brief Stop handling PDUs and stops timers
   void stop();
+
+  /// \brief Retrun awaitable to wait for cripto tasks to be
+  /// finished.
+  manual_event_flag& crypto_awaitable();
 
   void handle_pdu(byte_buffer_chain buf) override;
 
@@ -142,19 +156,23 @@ private:
   class reordering_callback;
   void handle_t_reordering_expire();
 
+  /// Crypto token manager. Used to wait for crypto engine to finish
+  /// when destroying DRB.
+  pdcp_crypto_token_manager token_mngr;
+
   // Handling of different PDU types
 
   /// \brief Handles a received data PDU.
   /// \param pdu The data PDU to be handled (including header and payload)
   void handle_data_pdu(byte_buffer pdu);
 
-  void apply_security(pdcp_rx_sdu_info pdu_info);
+  void apply_security(pdcp_rx_buffer_info&& pdu_info);
 
-  void apply_reordering(pdcp_rx_sdu_info pdu_info);
+  void apply_reordering(pdcp_rx_buffer_info pdu_info);
 
   /// \brief Handles a received control PDU.
   /// \param buf The control PDU to be handled (including header and payload)
-  void handle_control_pdu(byte_buffer_chain buf);
+  void handle_control_pdu(byte_buffer_chain pdu);
 
   void deliver_all_consecutive_counts();
   void deliver_all_sdus();

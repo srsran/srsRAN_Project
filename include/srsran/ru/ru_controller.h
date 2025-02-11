@@ -22,6 +22,8 @@
 
 #pragma once
 
+#include <optional>
+
 namespace srsran {
 
 /// \brief Radio Unit - operation control interface.
@@ -65,6 +67,16 @@ public:
   virtual bool set_rx_gain(unsigned port_id, double gain_dB) = 0;
 };
 
+/// \brief Structure used to set CFO via RU CFO controller.
+struct cfo_compensation_request {
+  using time_point = std::chrono::system_clock::time_point;
+  /// Carrier Frequency Offset in Hz.
+  float cfo_hz = 0.0;
+  /// Carrier Frequency Offset drift in Hz/s relative to the start time. Set it to 0 for no drift.
+  float cfo_drift_hz_s = 0.0;
+  /// Optional timestamp at which the CFO command is applied. Set to \c std::nullopt for applying it immediately.
+  std::optional<time_point> start_timestamp;
+};
 /// \brief Radio Unit - carrier frequency offset control interface.
 ///
 /// Allows modify the carrier frequency offset for downlink and uplink of the Radio Unit.
@@ -75,15 +87,15 @@ public:
 
   /// \brief Sets the downlink carrier frequency offset for the specified sector.
   /// \param[in] sector_id Sector identifier.
-  /// \param[in] cfo_hz    Transmission CFO in Hz.
+  /// \param[in] cfo_request CFO config to be set.
   /// \return \c true if the operation is successful, \c false otherwise.
-  virtual bool set_tx_cfo(unsigned sector_id, float cfo_offset) = 0;
+  virtual bool set_tx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request) = 0;
 
   /// \brief Sets the uplink carrier frequency offset for the specified sector.
   /// \param[in] sector_id Sector identifier.
-  /// \param[in] cfo_hz    Transmission CFO in Hz.
+  /// \param[in] cfo_request CFO config to be set.
   /// \return \c true if the operation is successful, \c false otherwise.
-  virtual bool set_rx_cfo(unsigned sector_id, float cfo_offset) = 0;
+  virtual bool set_rx_cfo(unsigned sector_id, const cfo_compensation_request& cfo_request) = 0;
 };
 
 /// \brief Radio Unit - control interface.

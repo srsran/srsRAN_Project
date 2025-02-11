@@ -32,7 +32,7 @@ namespace srsran {
 class phy_metrics_channel_equalizer_decorator : public channel_equalizer
 {
 public:
-  /// Creates a channel equalizer decorator from a base instance and metric notifier.
+  /// Creates a channel equalizer decorator from a base instance and a metric notifier.
   phy_metrics_channel_equalizer_decorator(std::unique_ptr<channel_equalizer> base_equalizer_,
                                           channel_equalizer_metric_notifier& notifier_) :
     base_equalizer(std::move(base_equalizer_)), notifier(notifier_)
@@ -49,13 +49,9 @@ public:
                 float                            tx_scaling) override
   {
     auto tp_before = std::chrono::high_resolution_clock::now();
-
-    // Call base equalizer.
     base_equalizer->equalize(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
-
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    // Create report metrics.
     notifier.new_metric({.nof_re     = ch_estimates.get_nof_re(),
                          .nof_layers = ch_estimates.get_nof_tx_layers(),
                          .nof_ports  = ch_estimates.get_nof_rx_ports(),

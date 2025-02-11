@@ -397,6 +397,171 @@ inline std::map<five_qi_t, srs_du::du_qos_config> make_default_du_qos_config_lis
 
     qos_list[uint_to_five_qi(70)] = cfg;
   }
+  //
+  // Delay-critical Guaranteed Bitrate 5QIs
+  //
+  {
+    // 5QI = 82 e.g Discrete Automation
+    // PDB = 10ms PER = 10^-4
+    srs_du::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                   = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.t_reassembly     = 10;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify              = 10;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(82)] = cfg;
+  }
+  {
+    // 5QI = 83 e.g Discrete Automation
+    // PDB = 10ms PER = 10^-4
+    srs_du::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                   = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.t_reassembly     = 10;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify              = 10;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(83)] = cfg;
+  }
+  {
+    // 5QI = 84 e.g Intelligent transport systems
+    // PDB = 30ms PER = 10^-5
+    srs_du::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                   = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.t_reassembly     = 30;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify              = 10;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(84)] = cfg;
+  }
+  {
+    // 5QI = 85 e.g Electricity Distribution-high voltage
+    // PDB = 5ms PER = 10^-5
+    srs_du::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                   = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.t_reassembly     = 5;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify              = 10;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(85)] = cfg;
+  }
+  {
+    // 5QI = 86 e.g V2X messages
+    // PDB = 5ms PER = 10^-4
+    srs_du::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                   = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.t_reassembly     = 5;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify              = 10;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(86)] = cfg;
+  }
+  {
+    // 5QI = 87 e.g Interactive Service-Motion tracking data
+    // PDB = 5ms PER = 10^-3
+    srs_du::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                   = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.t_reassembly     = 5;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify              = 10;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(87)] = cfg;
+  }
+  {
+    // 5QI = 88 e.g Interactive Service-Motion tracking data
+    // PDB = 10ms PER = 10^-3
+    srs_du::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                   = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.t_reassembly     = 5;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify              = 10;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(88)] = cfg;
+  }
+  {
+    // 5QI = 89 e.g Visual content for cloud/edge/split rendering
+    // PDB = 15ms PER = 10^-4
+    srs_du::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                   = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.t_reassembly     = 15;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify              = 10;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(89)] = cfg;
+  }
+  {
+    // 5QI = 90 e.g Visual content for cloud/edge/split rendering
+    // PDB = 20ms PER = 10^-4
+    srs_du::du_qos_config cfg{};
+    // RLC
+    cfg.rlc.mode                   = rlc_mode::um_bidir;
+    cfg.rlc.um.tx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.sn_field_length  = rlc_um_sn_size::size6bits;
+    cfg.rlc.um.rx.t_reassembly     = 20;
+    cfg.rlc.um.tx.queue_size       = default_rlc_queue_size_sdus;
+    cfg.rlc.um.tx.queue_size_bytes = default_rlc_queue_size_bytes;
+    cfg.rlc.metrics_period         = std::chrono::milliseconds(rlc_metrics_report);
+    // F1-U
+    cfg.f1u.t_notify              = 10;
+    cfg.f1u.rlc_queue_bytes_limit = default_rlc_queue_size_bytes;
+
+    qos_list[uint_to_five_qi(90)] = cfg;
+  }
   return qos_list;
 }
 

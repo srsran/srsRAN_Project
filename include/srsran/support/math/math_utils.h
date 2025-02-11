@@ -33,10 +33,10 @@
 namespace srsran {
 
 /// Defines two times Pi.
-constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);
+static constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);
 
 /// Floating point near zero value.
-constexpr float near_zero = 1e-9;
+static constexpr float near_zero = 1e-9;
 
 /// \brief Performs an integer division rounding up.
 ///

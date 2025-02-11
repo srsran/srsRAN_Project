@@ -62,6 +62,9 @@ public:
   /// Gets the total time spend by PUSCH processors.
   std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_data_elapsed_ns); }
 
+  /// Gets the total time spent by the PUSCH processors waiting for the asynchronous decoding to be completed.
+  std::chrono::nanoseconds get_total_wait_time() const { return std::chrono::nanoseconds(sum_waiting_ns); }
+
 private:
   // See interface for documentation.
   void new_metric(const pusch_processor_metrics& metrics) override
@@ -69,6 +72,9 @@ private:
     sum_tbs += metrics.tbs.to_bits().value();
     sum_data_elapsed_ns += metrics.elapsed_data.count();
     sum_return_elapsed_ns += metrics.elapsed_return.count();
+    if (metrics.elapsed_data > metrics.elapsed_return) {
+      sum_waiting_ns += metrics.elapsed_data.count() - metrics.elapsed_return.count();
+    }
     if (metrics.crc_ok) {
       ++sum_crc_ok;
     }
@@ -85,6 +91,7 @@ private:
   std::atomic<uint64_t> sum_return_elapsed_ns = {};
   std::atomic<uint64_t> sum_data_elapsed_ns   = {};
   std::atomic<uint64_t> sum_uci_elapsed_ns    = {};
+  std::atomic<uint64_t> sum_waiting_ns        = {};
   std::atomic<uint64_t> count                 = {};
   std::atomic<uint64_t> uci_count             = {};
 };

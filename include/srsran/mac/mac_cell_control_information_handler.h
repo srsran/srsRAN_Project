@@ -254,9 +254,20 @@ struct mac_uci_indication_message {
 };
 
 struct mac_srs_pdu {
+  struct normalized_channel_iq_matrix {
+    /// Channel matrix reported in the SRS codebook-based report.
+    /// \remark This Channel matrix assumes that the SRS usage is codebook-based, which is the only usage currently
+    /// supported.
+    srs_channel_matrix channel_matrix;
+  };
+  struct positioning_report {
+    /// UL relative Time of Arrival. Values: {-985024Tc,...,985024Tc}.
+    std::optional<phy_time_unit> ul_rtoa;
+  };
+
   mac_srs_pdu() = default;
   mac_srs_pdu(rnti_t rnti_, std::optional<phy_time_unit> ta, srs_channel_matrix& matrix) :
-    rnti(rnti_), time_advance_offset(ta), channel_matrix(matrix)
+    rnti(rnti_), time_advance_offset(ta), report(normalized_channel_iq_matrix{matrix})
   {
   }
 
@@ -264,10 +275,8 @@ struct mac_srs_pdu {
   rnti_t rnti;
   /// Timing Advance Offset measured for the UE.
   std::optional<phy_time_unit> time_advance_offset;
-  /// Channel matrix reported in the SRS codebook-based report.
-  /// \remark This Channel matrix assumes that the SRS usage is codebook-based, which is the only usage currently
-  /// supported.
-  srs_channel_matrix channel_matrix;
+  /// \brief Report, which can be of several types, namely normalized channel IQ matrix, positioning.
+  std::variant<normalized_channel_iq_matrix, positioning_report> report;
 };
 
 /// List of SRS indication PDUs for a given slot.

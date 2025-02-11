@@ -37,6 +37,7 @@ set(SOURCES
         byte_buffer_chain.cpp
         config_yaml.cpp
         cpu_architecture_info.cpp
+        resource_usage/resource_usage_utils.cpp
         signal_handling.cpp
         sysinfo.cpp
         timers.cpp

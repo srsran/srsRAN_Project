@@ -51,7 +51,7 @@
 - name: open5gs
   type: 5gc
   image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
-  taints: ["purpose=retina"]
+  labels: ["kubernetes.io/hostname=k8s-worker-uhd1"]
   requirements:
     arch: amd64
     cpu:

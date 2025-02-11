@@ -29,19 +29,21 @@
 
 namespace srsran {
 
-/// F1-U sockets configuration
+/// F1-U sockets configuration.
 struct f1u_socket_appconfig {
-  std::string              bind_addr = "127.0.10.1"; /// Bind address used by the F1-U interface
-  std::optional<five_qi_t> five_qi;                  /// If the 5QI is not present, the socket will be used by default.
+  /// Bind address used by the F1-U interface.
+  std::string bind_addr = "127.0.10.1";
+  /// If the 5QI is not present, the socket will be used by default.
+  std::optional<five_qi_t> five_qi;
   udp_appconfig            udp_config;
 };
 
-/// F1-U configuration
+/// F1-U configuration.
 struct f1u_sockets_appconfig {
   std::vector<f1u_socket_appconfig> f1u_socket_cfg;
 };
 
-/// \brief TODO write docs.
+/// Configures the given CLI11 application with the F1U sockets application configuration schema.
 void configure_cli11_f1u_sockets_args(CLI::App& app, f1u_sockets_appconfig& f1u_params);
 
 } // namespace srsran

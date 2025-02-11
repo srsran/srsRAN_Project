@@ -27,14 +27,14 @@ using namespace srsran;
 using namespace srs_cu_up;
 
 /// Helper functions
-void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info);
-void process_successful_pdu_resource_modification_outcome(
+static void fill_sec_as_config(security::sec_as_config& sec_as_config, const e1ap_security_info& sec_info);
+static void process_successful_pdu_resource_modification_outcome(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_modified_item>& pdu_session_resource_modified_list,
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_failed_item>&
                                            pdu_session_resource_failed_to_modify_list,
     const pdu_session_modification_result& result,
     const srslog::basic_logger&            logger);
-void process_successful_pdu_resource_setup_mod_outcome(
+static void process_successful_pdu_resource_setup_mod_outcome(
     slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_resource_setup_modification_item>&
                                     pdu_session_resource_setup_list,
     const pdu_session_setup_result& result);

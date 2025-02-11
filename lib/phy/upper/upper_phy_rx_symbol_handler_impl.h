@@ -45,17 +45,24 @@ class rx_payload_buffer_pool
 {
   /// Maximum number of slots to store.
   static constexpr size_t nof_slots = 40U;
-  /// Maximum number of bits that could potentially be allocated in a slot.
-  static constexpr units::bits max_buffer_size = units::bits(MAX_RB * 156 * 8 * 2);
   /// Minimum block size. It ensures that the payload offsets are selected using multiples of blocks.
   static constexpr unsigned min_block_size = 64;
 
 public:
+  /// Create the receive transport block buffer pool from the maximum number of PRB and layers.
+  rx_payload_buffer_pool(unsigned max_nof_prb, unsigned max_nof_layers) :
+    max_buffer_size(units::bits(max_nof_prb * 156 * 8 * max_nof_layers)),
+    pool(max_buffer_size.truncate_to_bytes().value() * nof_slots)
+  {
+    srsran_assert(max_nof_prb != 0, "Invalid number of PRB.");
+    srsran_assert(max_nof_layers != 0, "Invalid number of layers.");
+  }
+
   /// Returns the next available portion of the pool.
   span<uint8_t> acquire_payload_buffer(units::bytes size)
   {
     // Convert the maximum buffer size from bits to bytes for comparison and allocation.
-    static constexpr units::bytes max_buffer_size_bytes = max_buffer_size.truncate_to_bytes();
+    units::bytes max_buffer_size_bytes = max_buffer_size.truncate_to_bytes();
 
     srsran_assert(
         size <= max_buffer_size_bytes, "Buffer size (i.e., {}) exceeds maximum {}.", size, max_buffer_size_bytes);
@@ -77,8 +84,10 @@ public:
   }
 
 private:
+  /// Maximum number of bits that could potentially be allocated in a slot.
+  units::bits max_buffer_size;
   /// Pool.
-  std::array<uint8_t, max_buffer_size.truncate_to_bytes().value() * nof_slots> pool;
+  std::vector<uint8_t> pool;
   /// Span that points to the unused portion of the pool.
   span<uint8_t> available;
 };
@@ -95,7 +104,9 @@ public:
   upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool_,
                                    uplink_slot_pdu_repository&    ul_pdu_repository_,
                                    rx_buffer_pool&                buffer_pool_,
-                                   upper_phy_rx_results_notifier& rx_results_notifier_);
+                                   upper_phy_rx_results_notifier& rx_results_notifier_,
+                                   unsigned                       max_nof_prb,
+                                   unsigned                       max_nof_layers);
 
   // See interface for documentation.
   void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid) override;

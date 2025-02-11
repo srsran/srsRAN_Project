@@ -42,5 +42,5 @@ def pytest_addoption(parser: pytest.Parser):
     parser.addoption("--viavi-manual-test-name", action="store", default="default_test", help="Viavi test name")
     parser.addoption("--viavi-manual-test-timeout", action="store", type=int, default=1800, help="Viavi test timeout")
     parser.addoption(
-        "--viavi-manual-extra-gnb-arguments", action="store", type=str, default="", help="Viavi gnb extra arguments"
+        "--viavi-manual-gnb-arguments", action="store", type=str, default="", help="Viavi gnb arguments"
     )

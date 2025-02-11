@@ -106,6 +106,46 @@ TEST(ul_srs_pdu_builder, valid_frequency_parameters_passes)
   ASSERT_EQ(group_or_sequence_hopping, pdu.group_or_sequence_hopping);
 }
 
+TEST(ul_srs_pdu_builder, request_normalized_channel_iq_report_passes)
+{
+  ul_srs_pdu         pdu;
+  ul_srs_pdu_builder builder(pdu);
+
+  ASSERT_FALSE(pdu.srs_params_v4.report_type.test(to_value(srs_report_type::normalized_channel_iq_matrix)));
+
+  builder.set_report_params(true, false);
+
+  ASSERT_FALSE(pdu.srs_params_v4.report_type.test(to_value(srs_report_type::positioning)));
+  ASSERT_TRUE(pdu.srs_params_v4.report_type.test(to_value(srs_report_type::normalized_channel_iq_matrix)));
+}
+
+TEST(ul_srs_pdu_builder, request_positioning_report_passes)
+{
+  ul_srs_pdu         pdu;
+  ul_srs_pdu_builder builder(pdu);
+
+  ASSERT_FALSE(pdu.srs_params_v4.report_type.test(to_value(srs_report_type::positioning)));
+
+  builder.set_report_params(false, true);
+
+  ASSERT_TRUE(pdu.srs_params_v4.report_type.test(to_value(srs_report_type::positioning)));
+  ASSERT_FALSE(pdu.srs_params_v4.report_type.test(to_value(srs_report_type::normalized_channel_iq_matrix)));
+}
+
+TEST(ul_srs_pdu_builder, request_positioning_and_channel_iq_matrix_reports_passes)
+{
+  ul_srs_pdu         pdu;
+  ul_srs_pdu_builder builder(pdu);
+
+  ASSERT_FALSE(pdu.srs_params_v4.report_type.test(to_value(srs_report_type::positioning)));
+  ASSERT_FALSE(pdu.srs_params_v4.report_type.test(to_value(srs_report_type::normalized_channel_iq_matrix)));
+
+  builder.set_report_params(true, true);
+
+  ASSERT_TRUE(pdu.srs_params_v4.report_type.test(to_value(srs_report_type::positioning)));
+  ASSERT_TRUE(pdu.srs_params_v4.report_type.test(to_value(srs_report_type::normalized_channel_iq_matrix)));
+}
+
 TEST(ul_srs_pdu_builder, valid_srs_parameters_passes)
 {
   unsigned          nof_antenna_ports = 4;

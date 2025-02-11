@@ -26,10 +26,15 @@
 using namespace srsran;
 using namespace fapi;
 
-message_bufferer_slot_gateway_impl::message_bufferer_slot_gateway_impl(unsigned              l2_nof_slots_ahead_,
+message_bufferer_slot_gateway_impl::message_bufferer_slot_gateway_impl(unsigned              sector_id_,
+                                                                       unsigned              l2_nof_slots_ahead_,
                                                                        subcarrier_spacing    scs_,
                                                                        slot_message_gateway& gateway_) :
-  l2_nof_slots_ahead(l2_nof_slots_ahead_), scs(scs_), gateway(gateway_), logger(srslog::fetch_basic_logger("FAPI"))
+  sector_id(sector_id_),
+  l2_nof_slots_ahead(l2_nof_slots_ahead_),
+  scs(scs_),
+  gateway(gateway_),
+  logger(srslog::fetch_basic_logger("FAPI"))
 {
   // Pool size is 1 unit bigger than the number of slots the L2 is ahead of the L1, in case that an incoming message
   // arrives before the notification of a new slot.
@@ -55,12 +60,13 @@ void message_bufferer_slot_gateway_impl::handle_message(T&& msg, P pool, Functio
   int difference = msg_slot - current_slot;
 
   if (difference > int(l2_nof_slots_ahead)) {
-    logger.warning(
-        "Skipping FAPI message as the difference '{}' between the slot of the message and the current slot '{}' "
-        "is bigger than the configured delay '{}'",
-        difference,
-        current_slot,
-        l2_nof_slots_ahead);
+    logger.warning("Sector#{}: Skipping FAPI message as the difference '{}' between the slot of the message and the "
+                   "current slot '{}' "
+                   "is bigger than the configured delay '{}'",
+                   sector_id,
+                   difference,
+                   current_slot,
+                   l2_nof_slots_ahead);
 
     return;
   }
@@ -75,7 +81,8 @@ void message_bufferer_slot_gateway_impl::handle_message(T&& msg, P pool, Functio
   auto& msg_pool_entry = pool[msg_slot.system_slot() % pool.size()];
 
   if (msg_pool_entry) {
-    logger.warning("Detected unsent cached FAPI message type '{}' for slot '{}'",
+    logger.warning("Sector#{}: Detected unsent cached FAPI message type '{}' for slot '{}'",
+                   sector_id,
                    fmt::underlying(msg_pool_entry->message_type),
                    slot_point(scs, msg_pool_entry->sfn, msg_pool_entry->slot));
   }
@@ -88,6 +95,7 @@ void message_bufferer_slot_gateway_impl::handle_message(T&& msg, P pool, Functio
 template <typename T, typename Function>
 static void send_message(slot_point             slot,
                          subcarrier_spacing     scs,
+                         unsigned               sector_id,
                          srslog::basic_logger&  logger,
                          span<std::optional<T>> pool,
                          Function               func)
@@ -101,8 +109,10 @@ static void send_message(slot_point             slot,
   if (auto msg_type = pool_entry->message_type; pool_message_slot == slot) {
     func(*pool_entry);
   } else {
-    logger.warning(
-        "Detected unsent cached FAPI message id '{}' for slot '{}'", fmt::underlying(msg_type), pool_message_slot);
+    logger.warning("Sector#{}: Detected unsent cached FAPI message id '{}' for slot '{}'",
+                   sector_id,
+                   fmt::underlying(msg_type),
+                   pool_message_slot);
   }
 
   pool_entry.reset();
@@ -111,16 +121,24 @@ static void send_message(slot_point             slot,
 void message_bufferer_slot_gateway_impl::forward_cached_messages(slot_point slot)
 {
   send_message<dl_tti_request_message>(
-      slot, scs, logger, dl_tti_pool, [this](const dl_tti_request_message& msg) { gateway.dl_tti_request(msg); });
+      slot, scs, sector_id, logger, dl_tti_pool, [this](const dl_tti_request_message& msg) {
+        gateway.dl_tti_request(msg);
+      });
 
   send_message<ul_tti_request_message>(
-      slot, scs, logger, ul_tti_pool, [this](const ul_tti_request_message& msg) { gateway.ul_tti_request(msg); });
+      slot, scs, sector_id, logger, ul_tti_pool, [this](const ul_tti_request_message& msg) {
+        gateway.ul_tti_request(msg);
+      });
 
   send_message<ul_dci_request_message>(
-      slot, scs, logger, ul_dci_pool, [this](const ul_dci_request_message& msg) { gateway.ul_dci_request(msg); });
+      slot, scs, sector_id, logger, ul_dci_pool, [this](const ul_dci_request_message& msg) {
+        gateway.ul_dci_request(msg);
+      });
 
   send_message<tx_data_request_message>(
-      slot, scs, logger, tx_data_pool, [this](const tx_data_request_message& msg) { gateway.tx_data_request(msg); });
+      slot, scs, sector_id, logger, tx_data_pool, [this](const tx_data_request_message& msg) {
+        gateway.tx_data_request(msg);
+      });
 }
 
 void message_bufferer_slot_gateway_impl::handle_dl_tti_request(const dl_tti_request_message& msg)

@@ -80,5 +80,7 @@ bool is_valid_f1_reset_ack(const f1ap_message& req, const f1ap_message& resp);
 
 bool is_valid_positioning_information_response(const f1ap_message& msg);
 
+bool is_valid_f1ap_trp_information_request(const f1ap_message& msg);
+
 } // namespace test_helpers
 } // namespace srsran

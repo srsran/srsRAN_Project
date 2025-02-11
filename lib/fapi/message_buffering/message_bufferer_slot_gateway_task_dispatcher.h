@@ -35,7 +35,8 @@ namespace fapi {
 class message_bufferer_slot_gateway_task_dispatcher : public slot_message_gateway
 {
 public:
-  message_bufferer_slot_gateway_task_dispatcher(unsigned              l2_nof_slots_ahead,
+  message_bufferer_slot_gateway_task_dispatcher(unsigned              sector_id_,
+                                                unsigned              l2_nof_slots_ahead,
                                                 subcarrier_spacing    scs_,
                                                 slot_message_gateway& gateway,
                                                 task_executor&        executor_);
@@ -59,6 +60,7 @@ public:
   void tx_data_request(const tx_data_request_message& msg) override;
 
 private:
+  const unsigned                     sector_id;
   const subcarrier_spacing           scs;
   srslog::basic_logger&              logger;
   task_executor&                     executor;

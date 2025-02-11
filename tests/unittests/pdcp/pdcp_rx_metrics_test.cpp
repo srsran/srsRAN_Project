@@ -50,7 +50,7 @@ TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
     pdcp_rx->set_state(init_state);
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu)).value());
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
 
     tick_all(150);
@@ -104,7 +104,7 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
     pdcp_rx->set_state(init_state);
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu)).value());
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
 
     tick_all(100);
@@ -154,7 +154,7 @@ TEST_P(pdcp_rx_metrics_test, rx_reordering_timer)
     pdcp_rx->set_state(init_state);
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(0, test_frame->sdu_queue.size());
     tick_all(150);

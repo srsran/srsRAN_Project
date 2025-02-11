@@ -32,6 +32,7 @@
 #include "srsran/pcap/rlc_pcap.h"
 #include "srsran/scheduler/mac_scheduler.h"
 #include "srsran/scheduler/result/sched_result.h"
+#include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
 
@@ -120,6 +121,8 @@ public:
   }
   void handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, error_outcome event) override {}
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override {}
+  void handle_positioning_measurement_request(const positioning_measurement_request& req) override {}
+  void handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti) override {}
 };
 
 class dummy_mac_scheduler_adapter : public mac_scheduler_cell_info_handler
@@ -143,6 +146,13 @@ public:
                                      unsigned        sib_version,
                                      units::bytes    new_payload_size) override
   {
+  }
+
+  async_task<mac_cell_positioning_measurement_response>
+  handle_positioning_measurement_request(du_cell_index_t                                 cell_index,
+                                         const mac_cell_positioning_measurement_request& req) override
+  {
+    return launch_no_op_task(mac_cell_positioning_measurement_response{});
   }
 };
 

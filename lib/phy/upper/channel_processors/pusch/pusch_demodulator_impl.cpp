@@ -26,6 +26,7 @@
 #include "pusch_demodulator_impl.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator_notifier.h"
+#include "srsran/srsvec/simd.h"
 
 #if defined(__SSE3__)
 #include <immintrin.h>
@@ -126,6 +127,53 @@ revert_scrambling(span<log_likelihood_ratio> out, span<const log_likelihood_rati
   }
 }
 
+static float filter_infinite_and_accumulate(unsigned& count, span<const float> input)
+{
+  float    sum = 0;
+  unsigned i   = 0;
+
+#if SRSRAN_SIMD_F_SIZE
+  const simd_f_t simd_infinity     = srsran_simd_f_set1(std::numeric_limits<float>::infinity());
+  const simd_f_t simd_neg_infinity = srsran_simd_f_set1(-std::numeric_limits<float>::infinity());
+  const simd_i_t simd_one          = srsran_simd_i_set1(1);
+
+  if (input.size() > 2 * SRSRAN_SIMD_F_SIZE) {
+    simd_i_t simd_count = srsran_simd_i_set1(0);
+    simd_f_t simd_sum   = srsran_simd_f_set1(0.0);
+    for (unsigned i_end = (input.size() / SRSRAN_SIMD_F_SIZE) * SRSRAN_SIMD_F_SIZE; i != i_end;
+         i += SRSRAN_SIMD_F_SIZE) {
+      simd_f_t in = srsran_simd_f_loadu(&input[i]);
+
+      simd_sel_t isnormal_mask =
+          srsran_simd_sel_and(srsran_simd_f_max(simd_infinity, in), srsran_simd_f_min(simd_neg_infinity, in));
+
+      simd_sum   = srsran_simd_f_select(simd_sum, srsran_simd_f_add(simd_sum, in), isnormal_mask);
+      simd_count = srsran_simd_i_select(simd_count, srsran_simd_i_add(simd_count, simd_one), isnormal_mask);
+    }
+
+    std::array<float, SRSRAN_SIMD_F_SIZE> temp_sum;
+    srsran_simd_f_storeu(temp_sum.data(), simd_sum);
+    sum = std::accumulate(temp_sum.begin(), temp_sum.end(), 0.0F);
+    std::array<int, SRSRAN_SIMD_I_SIZE> temp_count;
+    srsran_simd_i_storeu(temp_count.data(), simd_count);
+    count += std::accumulate(temp_count.begin(), temp_count.end(), 0);
+  }
+#endif // SRSRAN_SIMD_F_SIZE
+
+  for (unsigned i_end = input.size(); i != i_end; ++i) {
+    // Exclude outliers with infinite variance. This makes sure that handling of the DC carrier does not skew
+    // the SINR results.
+    if (std::isinf(input[i])) {
+      continue;
+    }
+
+    sum += input[i];
+    ++count;
+  }
+
+  return sum;
+}
+
 void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buffer,
                                         pusch_demodulator_notifier& notifier,
                                         const resource_grid_reader& grid,
@@ -205,17 +253,7 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
 
     // Estimate post equalization Signal-to-Interference-plus-Noise Ratio.
     if (compute_post_eq_sinr) {
-      noise_var_accumulate +=
-          std::accumulate(eq_noise_vars.begin(), eq_noise_vars.end(), 0.0F, [&sinr_softbit_count](float sum, float in) {
-            // Exclude outliers with infinite variance. This makes sure that handling of the DC carrier does not skew
-            // the SINR results.
-            if (std::isinf(in)) {
-              return sum;
-            }
-
-            ++sinr_softbit_count;
-            return sum + in;
-          });
+      noise_var_accumulate += filter_infinite_and_accumulate(sinr_softbit_count, eq_noise_vars);
     }
 
     // Counts the number of processed RE for the OFDM symbol.

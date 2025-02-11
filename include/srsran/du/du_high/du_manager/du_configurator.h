@@ -51,6 +51,12 @@ struct du_mac_sched_control_config_response {
 
 /// Parameters of a cell that need to be configured during the DU cell operation.
 struct du_cell_param_config_request {
+  du_cell_param_config_request() = default;
+  du_cell_param_config_request(nr_cell_global_id_t nr_cgi_, std::optional<int> ssb_pwr_mod_) :
+    nr_cgi(nr_cgi_), ssb_pwr_mod(ssb_pwr_mod_)
+  {
+  }
+
   nr_cell_global_id_t nr_cgi;
   std::optional<int>  ssb_pwr_mod;
 };

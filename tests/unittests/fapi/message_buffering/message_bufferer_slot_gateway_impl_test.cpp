@@ -281,11 +281,12 @@ public:
 
 TEST(bufferer_slot_gateway_impl_test, dl_tti_request_from_same_slot_is_transmitted)
 {
+  unsigned                 sector_id          = 0;
   unsigned                 l2_nof_slots_ahead = 2U;
   subcarrier_spacing       scs                = subcarrier_spacing::kHz30;
   slot_message_gateway_spy spy;
 
-  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(l2_nof_slots_ahead, scs, spy);
+  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(sector_id, l2_nof_slots_ahead, scs, spy);
 
   const dl_tti_request_message& msg  = unittest::build_valid_dl_tti_request();
   slot_point                    slot = slot_point(scs, msg.sfn, msg.slot);
@@ -301,11 +302,12 @@ TEST(bufferer_slot_gateway_impl_test, dl_tti_request_from_same_slot_is_transmitt
 
 TEST(bufferer_slot_gateway_impl_test, cached_slot_is_sended_when_the_current_slot_matches)
 {
+  unsigned                 sector_id          = 0;
   unsigned                 l2_nof_slots_ahead = 2U;
   subcarrier_spacing       scs                = subcarrier_spacing::kHz30;
   slot_message_gateway_spy spy;
 
-  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(l2_nof_slots_ahead, scs, spy);
+  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(sector_id, l2_nof_slots_ahead, scs, spy);
 
   slot_point              current_slot(scs, 10, 0);
   dl_tti_request_message  dl_tti_msg  = unittest::build_valid_dl_tti_request();
@@ -377,11 +379,12 @@ TEST(bufferer_slot_gateway_impl_test, cached_slot_is_sended_when_the_current_slo
 
 TEST(bufferer_slot_gateway_impl_test, older_slots_than_supported_delay_are_sended)
 {
+  unsigned                 sector_id          = 0;
   unsigned                 l2_nof_slots_ahead = 2U;
   subcarrier_spacing       scs                = subcarrier_spacing::kHz30;
   slot_message_gateway_spy spy;
 
-  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(l2_nof_slots_ahead, scs, spy);
+  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(sector_id, l2_nof_slots_ahead, scs, spy);
 
   slot_point             current_slot(scs, 5, 0);
   dl_tti_request_message msg      = unittest::build_valid_dl_tti_request();
@@ -401,11 +404,12 @@ TEST(bufferer_slot_gateway_impl_test, older_slots_than_supported_delay_are_sende
 #ifdef ASSERTS_ENABLED
 TEST(bufferer_slot_gateway_impl_test, message_with_slot_bigger_than_delay_deads)
 {
+  unsigned                 sector_id          = 0;
   unsigned                 l2_nof_slots_ahead = 2U;
   subcarrier_spacing       scs                = subcarrier_spacing::kHz30;
   slot_message_gateway_spy spy;
 
-  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(l2_nof_slots_ahead, scs, spy);
+  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(sector_id, l2_nof_slots_ahead, scs, spy);
 
   slot_point             current_slot(scs, 5, 0);
   dl_tti_request_message msg      = unittest::build_valid_dl_tti_request();
@@ -422,11 +426,12 @@ TEST(bufferer_slot_gateway_impl_test, message_with_slot_bigger_than_delay_deads)
 
 TEST(bufferer_slot_gateway_impl_test, all_cached_slot_is_sended_when_the_current_slot_matches)
 {
+  unsigned                 sector_id          = 0;
   unsigned                 l2_nof_slots_ahead = 2U;
   subcarrier_spacing       scs                = subcarrier_spacing::kHz30;
   slot_message_gateway_spy spy;
 
-  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(l2_nof_slots_ahead, scs, spy);
+  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(sector_id, l2_nof_slots_ahead, scs, spy);
 
   slot_point             current_slot(scs, 10, 0);
   dl_tti_request_message dl_tti_msg = unittest::build_valid_dl_tti_request();
@@ -469,11 +474,12 @@ TEST(bufferer_slot_gateway_impl_test, all_cached_slot_is_sended_when_the_current
 
 TEST(bufferer_slot_gateway_impl_test, no_cached_messages_send_nothing)
 {
+  unsigned                 sector_id          = 0;
   unsigned                 l2_nof_slots_ahead = 2U;
   subcarrier_spacing       scs                = subcarrier_spacing::kHz30;
   slot_message_gateway_spy spy;
 
-  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(l2_nof_slots_ahead, scs, spy);
+  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(sector_id, l2_nof_slots_ahead, scs, spy);
 
   slot_point current_slot(scs, 10, 0);
 
@@ -488,11 +494,12 @@ TEST(bufferer_slot_gateway_impl_test, no_cached_messages_send_nothing)
 
 TEST(bufferer_slot_gateway_impl_test, sended_messages_are_removed_from_the_pool)
 {
+  unsigned                 sector_id          = 0;
   unsigned                 l2_nof_slots_ahead = 2U;
   subcarrier_spacing       scs                = subcarrier_spacing::kHz30;
   slot_message_gateway_spy spy;
 
-  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(l2_nof_slots_ahead, scs, spy);
+  auto bufferer = std::make_unique<message_bufferer_slot_gateway_impl>(sector_id, l2_nof_slots_ahead, scs, spy);
 
   slot_point             current_slot(scs, 10, 0);
   dl_tti_request_message dl_tti_msg = unittest::build_valid_dl_tti_request();

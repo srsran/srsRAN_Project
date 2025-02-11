@@ -67,6 +67,8 @@ public:
   virtual scheduler_feedback_handler& get_feedback_handler() = 0;
 
   virtual scheduler_dl_buffer_state_indication_handler& get_dl_buffer_state_indication_handler() = 0;
+
+  virtual scheduler_positioning_handler& get_positioning_handler() = 0;
 };
 
 } // namespace srsran

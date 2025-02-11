@@ -29,8 +29,9 @@ using namespace srsran;
 
 static void fill_du_appconfig_metrics_section(YAML::Node node, const srs_du::metrics_appconfig& config)
 {
-  node["addr"] = config.addr;
-  node["port"] = config.port;
+  node["addr"]                         = config.addr;
+  node["port"]                         = config.port;
+  node["resource_usage_report_period"] = config.rusage_report_period;
 }
 
 static void fill_du_appconfig_hal_section(YAML::Node node, const std::optional<hal_appconfig>& config)
@@ -73,6 +74,13 @@ static void fill_du_appconfig_buffer_pool_section(YAML::Node node, const buffer_
   node["segment_size"] = config.segment_size;
 }
 
+static void fill_du_appconfig_remote_control_section(YAML::Node node, const remote_control_appconfig& config)
+{
+  node["enabled"]      = config.enabled;
+  node["bind_address"] = config.bind_addr;
+  node["port"]         = config.port;
+}
+
 static void fill_du_appconfig_f1u_section(YAML::Node node, const srs_du::f1u_appconfig& config)
 {
   node["queue_size"] = config.pdu_queue_size;
@@ -92,6 +100,7 @@ void srsran::fill_du_appconfig_in_yaml_schema(YAML::Node& node, const du_appconf
   fill_du_appconfig_hal_section(node, config.hal_config);
   fill_du_appconfig_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_du_appconfig_buffer_pool_section(node["buffer_pool"], config.buffer_pool_config);
+  fill_du_appconfig_remote_control_section(node["remote_control"], config.remote_control_config);
   fill_du_appconfig_f1u_section(node["f1u"], config.f1u_cfg);
   fill_du_appconfig_f1ap_section(node["f1ap"], config.f1ap_cfg);
 }

@@ -132,7 +132,7 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
   std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
   std::uniform_real_distribution<float>   power_dist(-32, 32.0);
 
-  auto                               pm_tools = generate_precoding_matrix_tables(1);
+  auto                               pm_tools = generate_precoding_matrix_tables(1, 0);
   const precoding_matrix_repository& pm_repo  = *std::get<std::unique_ptr<precoding_matrix_repository>>(pm_tools);
 
   for (auto cyclic_p : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {

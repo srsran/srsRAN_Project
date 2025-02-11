@@ -35,6 +35,10 @@ class metrics_producer
 public:
   /// Default destructor.
   virtual ~metrics_producer() = default;
+
+  /// This method can be called periodically to process accumulated metrics and produce the metrics to be consumed by
+  /// the corresponding metrics consumers.
+  virtual void on_new_report_period() = 0;
 };
 
 } // namespace app_services

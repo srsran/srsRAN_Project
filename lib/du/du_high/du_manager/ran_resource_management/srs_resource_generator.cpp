@@ -46,11 +46,14 @@ std::vector<du_srs_resource> srsran::srs_du::generate_cell_srs_list(const du_cel
   // Compute the available Sequence IDs.
   // NOTE: we only consider the number of orthogonal sequences that can be generated, as per TS 38.211,
   // Section 6.4.1.4.2, which is 30.
+  // NOTE: Contiguous PCIs will be assigned different (sequence ID % 30) values, which means that their
+  // SRS resources will be orthogonal.
   constexpr unsigned max_seq_id_values = 30U;
+  constexpr unsigned nof_sequence_ids  = 1024;
   const unsigned seq_id_step = max_seq_id_values / static_cast<unsigned>(du_cell_cfg.srs_cfg.sequence_id_reuse_factor);
   std::vector<unsigned> seq_id_values;
   for (unsigned seq_id = 0; seq_id < max_seq_id_values; seq_id += seq_id_step) {
-    seq_id_values.push_back(static_cast<unsigned>(du_cell_cfg.pci) + seq_id);
+    seq_id_values.push_back((static_cast<unsigned>(du_cell_cfg.pci) + seq_id) % nof_sequence_ids);
   }
 
   // At this point, the SRS resource is not assigned to a given slot, and we need to consider all possible UL symbols

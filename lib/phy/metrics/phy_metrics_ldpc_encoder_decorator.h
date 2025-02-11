@@ -33,7 +33,7 @@ namespace srsran {
 class phy_metrics_ldpc_encoder_decorator : public ldpc_encoder
 {
 public:
-  /// Creates an LDPC encoder decorator from a base LDPC encoder instance and metric notifier.
+  /// Creates an LDPC encoder decorator from a base LDPC encoder instance and a metric notifier.
   phy_metrics_ldpc_encoder_decorator(std::unique_ptr<ldpc_encoder> base_encoder_,
                                      ldpc_encoder_metric_notifier& notifier_) :
     base_encoder(std::move(base_encoder_)), notifier(notifier_)
@@ -44,14 +44,10 @@ public:
   // See interface for documentation.
   const ldpc_encoder_buffer& encode(const bit_buffer& input, const codeblock_metadata::tb_common_metadata& cfg) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
+    auto                       tp_before = std::chrono::high_resolution_clock::now();
+    const ldpc_encoder_buffer& ret       = base_encoder->encode(input, cfg);
+    auto                       tp_after  = std::chrono::high_resolution_clock::now();
 
-    // Call base encoder.
-    const ldpc_encoder_buffer& ret = base_encoder->encode(input, cfg);
-
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    // Create report metrics.
     notifier.new_metric({.cb_sz = units::bits(input.size()), .elapsed = tp_after - tp_before});
 
     return ret;

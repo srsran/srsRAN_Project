@@ -72,6 +72,13 @@ static void fill_gnb_appconfig_buffer_pool_section(YAML::Node node, const buffer
   node["segment_size"] = config.segment_size;
 }
 
+static void fill_gnb_appconfig_remote_control_section(YAML::Node node, const remote_control_appconfig& config)
+{
+  node["enabled"]      = config.enabled;
+  node["bind_address"] = config.bind_addr;
+  node["port"]         = config.port;
+}
+
 void srsran::fill_gnb_appconfig_in_yaml_schema(YAML::Node& node, const gnb_appconfig& config)
 {
   node["gnb_id"]            = config.gnb_id.id;
@@ -83,4 +90,5 @@ void srsran::fill_gnb_appconfig_in_yaml_schema(YAML::Node& node, const gnb_appco
   fill_gnb_appconfig_hal_section(node, config.hal_config);
   fill_gnb_appconfig_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_gnb_appconfig_buffer_pool_section(node["buffer_pool"], config.buffer_pool_config);
+  fill_gnb_appconfig_remote_control_section(node["remote_control"], config.remote_control_config);
 }

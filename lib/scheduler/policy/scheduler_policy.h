@@ -117,6 +117,30 @@ private:
   slotted_array<const cell_resource_allocator*, MAX_NOF_DU_CELLS> cell_res_grids;
 };
 
+/// Contextual information used by the scheduler policy to make decisions for a slot and slice in DL.
+struct dl_sched_context {
+  /// PDSCH grant allocator. This object provides a handle to allocate PDSCH grants in the gNB resource grid.
+  ue_pdsch_allocator& pdsch_alloc;
+  /// View of the current resource grid occupancy state for all gnb cells.
+  const ue_resource_grid_view& res_grid;
+  /// Slice candidate to be scheduled in the given slot.
+  dl_ran_slice_candidate& slice_candidate;
+  /// List of DL HARQs pending retransmissions.
+  dl_harq_pending_retx_list harq_pending_retx_list;
+};
+
+/// Contextual information used by the scheduler policy to make decisions for a slot and slice in UL.
+struct ul_sched_context {
+  /// PUSCH grant allocator. This object provides a handle to allocate PUSCH grants in the gNB resource grid.
+  ue_pusch_allocator& pusch_alloc;
+  /// View of the current resource grid occupancy state for all gnb cells.
+  const ue_resource_grid_view& res_grid;
+  /// Slice candidate to be scheduled in the given slot.
+  ul_ran_slice_candidate& slice_candidate;
+  /// List of UL HARQs pending retransmissions.
+  ul_harq_pending_retx_list harq_pending_retx_list;
+};
+
 /// Interface of data scheduler that is used to allocate UE DL and UL grants in a given slot
 /// The data_scheduler object will be common to all cells and slots.
 class scheduler_policy
@@ -125,26 +149,10 @@ public:
   virtual ~scheduler_policy() = default;
 
   /// Schedule UE DL grants for a given slot and one or more cells.
-  /// \param[out] pdsch_alloc PDSCH grant allocator. This object provides a handle to allocate PDSCH grants in the
-  ///                            gNB resource grid.
-  /// \param[in] res_grid View of the current resource grid occupancy state for all gnb cells.
-  /// \param[in] slice_candidate Slice candidate to be scheduled in the given slot.
-  /// \param[in] harq_pending_retx_list List of DL HARQs pending retransmissions.
-  virtual void dl_sched(ue_pdsch_allocator&          pdsch_alloc,
-                        const ue_resource_grid_view& res_grid,
-                        dl_ran_slice_candidate&      slice_candidate,
-                        dl_harq_pending_retx_list    harq_pending_retx_list) = 0;
+  virtual void dl_sched(dl_sched_context dl_ctxt) = 0;
 
   /// Schedule UE UL grants for a given {slot, cell}.
-  /// \param[out] pusch_alloc PUSCH grant allocator. This object provides a handle to allocate PUSCH grants in the
-  ///                            gNB resource grid.
-  /// \param[in] res_grid View of the current resource grid occupancy state for all gnb cells.
-  /// \param[in] slice_candidate Slice candidate to be scheduled in the given slot.
-  /// \param[in] harq_pending_retx_list List of UL HARQs pending retransmissions.
-  virtual void ul_sched(ue_pusch_allocator&          pusch_alloc,
-                        const ue_resource_grid_view& res_grid,
-                        ul_ran_slice_candidate&      slice_candidate,
-                        ul_harq_pending_retx_list    harq_pending_retx_list) = 0;
+  virtual void ul_sched(ul_sched_context ul_ctxt) = 0;
 };
 
 } // namespace srsran

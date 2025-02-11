@@ -43,6 +43,10 @@ srsran::srs_du::decode_ue_nr_cap_container(const byte_buffer& ue_cap_container)
   if (ue_cap.phy_params.phy_params_fr1_present) {
     ue_caps.pdsch_qam256_supported = ue_cap.phy_params.phy_params_fr1.pdsch_256_qam_fr1_present;
   }
+  if (ue_cap.phy_params.phy_params_frx_diff_present) {
+    ue_caps.pdsch_qam64lowse_supported = ue_cap.phy_params.phy_params_frx_diff.dl_64_qam_mcs_table_alt_present;
+    ue_caps.pusch_qam64lowse_supported = ue_cap.phy_params.phy_params_frx_diff.ul_64_qam_mcs_table_alt_present;
+  }
   for (const auto& band : ue_cap.rf_params.supported_band_list_nr) {
     // Create and convert band capability.
     ue_capability_summary::supported_band band_cap;
@@ -228,12 +232,18 @@ pdsch_mcs_table ue_capability_manager::select_pdsch_mcs_table(du_cell_index_t ce
 {
   const auto& init_dl_bwp = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.init_dl_bwp;
 
-  if (not init_dl_bwp.pdsch_cfg.has_value() or not ue_caps.has_value() or not ue_caps->pdsch_qam256_supported) {
-    // No base cell PDSCH config. Default to QAM64.
-    return pdsch_mcs_table::qam64;
+  if (init_dl_bwp.pdsch_cfg.has_value() and ue_caps.has_value()) {
+    if (init_dl_bwp.pdsch_cfg.value().mcs_table == pdsch_mcs_table::qam256 and ue_caps->pdsch_qam256_supported) {
+      return pdsch_mcs_table::qam256;
+    }
+    if (init_dl_bwp.pdsch_cfg.value().mcs_table == pdsch_mcs_table::qam64LowSe and
+        ue_caps->pdsch_qam64lowse_supported) {
+      return pdsch_mcs_table::qam64LowSe;
+    }
   }
 
-  return init_dl_bwp.pdsch_cfg->mcs_table;
+  // Default to QAM64 if no base cell PDSCH config of if the UE capabilities are not available.
+  return pdsch_mcs_table::qam64;
 }
 
 pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t cell_idx) const
@@ -258,7 +268,10 @@ pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t ce
         })) {
       return pusch_mcs_table::qam64;
     }
+  } else if (base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table == pusch_mcs_table::qam64LowSe) {
+    return ue_caps.value().pusch_qam64lowse_supported ? pusch_mcs_table::qam64LowSe : pusch_mcs_table::qam64;
   }
+
   return base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table;
 }
 

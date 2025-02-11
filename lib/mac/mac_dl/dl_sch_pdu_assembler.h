@@ -25,6 +25,7 @@
 #include "mac_dl_ue_repository.h"
 #include "srsran/ran/logical_channel/lcid_dl_sch.h"
 #include "srsran/scheduler/harq_id.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 

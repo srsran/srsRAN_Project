@@ -310,7 +310,7 @@ static pucch_processor_factory& get_pucch_processor_factory()
   std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_generic_factory();
   TESTASSERT(equalizer_factory);
 
-  std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();
+  std::shared_ptr<demodulation_mapper_factory> demod_factory = create_demodulation_mapper_factory();
   TESTASSERT(demod_factory);
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();

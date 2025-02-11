@@ -18,8 +18,6 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-
-
 add_library(srsran_metrics_logger_utils STATIC metrics_logger_appconfig_cli11_schema.cpp metrics_logger_appconfig_yaml_writer.cpp)
 target_include_directories(srsran_metrics_logger_utils PRIVATE ${CMAKE_SOURCE_DIR})
 

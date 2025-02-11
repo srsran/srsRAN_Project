@@ -47,11 +47,23 @@ public:
 
   void reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg) override;
 
+  void handle_positioning_measurement_request(const positioning_measurement_request& req) override;
+
+  void handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti) override;
+
 private:
   /// Information on currently configured SRS resources and corresponding UEs to be scheduled periodically.
   struct periodic_srs_info {
     rnti_t                 rnti       = rnti_t::INVALID_RNTI;
     srs_config::srs_res_id srs_res_id = srs_config::srs_res_id::MAX_NOF_SRS_RES;
+  };
+
+  // Info related with a UE context update.
+  struct ue_update {
+    enum class type_t { new_ue, positioning_request, positioning_stop };
+
+    rnti_t rnti;
+    type_t type;
   };
 
   // Helper to fetch a UE cell config.
@@ -62,8 +74,6 @@ private:
   void schedule_updated_ues_srs(cell_resource_allocator& res_alloc);
   // Helper that allocates an SRS opportunity for a given UE.
   bool allocate_srs_opportunity(cell_slot_resource_allocator& slot_alloc, const periodic_srs_info& srs_opportunity);
-  // Helper that fills the SRS PDU fields.
-  void fill_srs_pdu(srs_info& pdu, const srs_config::srs_resource& srs_res_cfg, const ue_cell_configuration& ue_cfg);
 
   void add_ue_to_grid(const ue_cell_configuration& ue_cfg, bool is_reconf);
 
@@ -82,7 +92,10 @@ private:
   std::vector<static_vector<periodic_srs_info, MAX_SRS_PDUS_PER_SLOT>> periodic_srs_slot_wheel;
 
   // UEs whose configuration has been updated in between the last and current slot indications.
-  std::vector<rnti_t> updated_ues;
+  std::vector<ue_update> updated_ues;
+
+  // Pending positioning requests.
+  std::vector<positioning_measurement_request> pending_pos_requests;
 };
 
 } // namespace srsran

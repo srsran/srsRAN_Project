@@ -24,7 +24,8 @@ set(SOURCES
         du_high_config_cli11_schema.cpp
         du_high_config_translators.cpp
         du_high_config_validator.cpp
-        du_high_config_yaml_writer.cpp)
+        du_high_config_yaml_writer.cpp
+        commands/du_high_remote_commands.cpp)
 
 add_library(srsran_du_high_unit_helpers STATIC ${SOURCES})
 target_include_directories(srsran_du_high_unit_helpers PRIVATE ${CMAKE_SOURCE_DIR})

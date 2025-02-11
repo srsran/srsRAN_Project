@@ -50,7 +50,7 @@ static void signal_handler(int signal)
       if (auto handler = cleanup_handler.exchange(nullptr)) {
         handler(signal);
       }
-      ::raise(SIGKILL);
+      std::raise(SIGKILL);
       [[fallthrough]];
     default:
       // All other registered signals try to stop the application gracefully.
@@ -69,10 +69,10 @@ void srsran::register_interrupt_signal_handler(srsran_signal_handler handler)
 {
   interrupt_handler.store(handler);
 
-  ::signal(SIGINT, signal_handler);
-  ::signal(SIGTERM, signal_handler);
-  ::signal(SIGHUP, signal_handler);
-  ::signal(SIGALRM, signal_handler);
+  std::signal(SIGINT, signal_handler);
+  std::signal(SIGTERM, signal_handler);
+  std::signal(SIGHUP, signal_handler);
+  std::signal(SIGALRM, signal_handler);
 }
 
 void srsran::register_cleanup_signal_handler(srsran_signal_handler handler)

@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/unique_function.h"
 #include "srsran/support/async/async_queue.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/eager_async_task.h"
@@ -112,7 +111,7 @@ private:
 /// \return
 template <typename Callback,
           typename ReturnType = detail::function_return_t<decltype(&std::decay_t<Callback>::operator())>,
-          std::enable_if_t<std::is_same<ReturnType, void>::value, int> = 0>
+          std::enable_if_t<std::is_same_v<ReturnType, void>, int> = 0>
 async_task<bool> when_completed_on_task_sched(fifo_async_task_scheduler& task_sched, Callback&& task_to_run)
 {
   struct task_offloader {
@@ -156,7 +155,7 @@ async_task<bool> when_completed_on_task_sched(fifo_async_task_scheduler& task_sc
 
 template <typename Callback,
           typename ReturnType = detail::function_return_t<decltype(&std::decay_t<Callback>::operator())>,
-          std::enable_if_t<not std::is_same<ReturnType, void>::value, int> = 0>
+          std::enable_if_t<not std::is_same_v<ReturnType, void>, int> = 0>
 async_task<std::optional<ReturnType>> when_completed_on_task_sched(fifo_async_task_scheduler& task_sched,
                                                                    Callback&&                 task_to_run)
 {
@@ -197,4 +196,58 @@ async_task<std::optional<ReturnType>> when_completed_on_task_sched(fifo_async_ta
   return launch_async<task_offloader>(task_sched, std::forward<Callback>(task_to_run));
 }
 
+/// \brief Launches a coroutine on the given task sequencer and returns an async task that is only
+/// complete when the former is complete.
+///
+/// This function is useful to synchronize two procedures running in separate task schedulers.
+/// \tparam Routine Type of the routine to run in the provided task scheduler.
+/// \tparam ReturnType Return type of coroutine's operator. Must be void.
+/// \param task_sched Task scheduler to which switch the execution too.
+/// \param routine_to_run Routine to run in the task scheduler.
+/// \return Returns and async_task<bool> that can be awaited on.
+template <typename Routine,
+          typename ReturnType = detail::function_return_t<decltype(&std::decay_t<Routine>::operator())>,
+          std::enable_if_t<std::is_same_v<ReturnType, void>, int> = 0>
+async_task<bool> when_coroutine_completed_on_task_sched(fifo_async_task_scheduler& task_sched, Routine&& routine_to_run)
+{
+  struct task_offloader {
+    task_offloader(fifo_async_task_scheduler& task_sched_, Routine&& routine_) :
+      task_sched(task_sched_), routine(std::forward<Routine>(routine_))
+    {
+    }
+
+    void operator()(coro_context<async_task<bool>>& ctx)
+    {
+      CORO_BEGIN(ctx);
+
+      task_sched.schedule(dispatched_task());
+
+      CORO_AWAIT_VALUE(const bool result, rx);
+
+      CORO_RETURN(result);
+    }
+
+  private:
+    async_task<void> dispatched_task()
+    {
+      return launch_async([this, tx = rx.get_sender()](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+
+        CORO_AWAIT(launch_routine());
+
+        tx.set();
+
+        CORO_RETURN();
+      });
+    }
+
+    async_task<void> launch_routine() { return launch_async<Routine>(std::forward<Routine>(routine)); }
+
+    fifo_async_task_scheduler& task_sched;
+    Routine                    routine;
+    event_receiver<void>       rx;
+  };
+
+  return launch_async<task_offloader>(task_sched, std::forward<Routine>(routine_to_run));
+}
 } // namespace srsran

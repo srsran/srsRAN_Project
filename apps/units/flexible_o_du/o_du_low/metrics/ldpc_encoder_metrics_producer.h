@@ -53,7 +53,7 @@ public:
     return static_cast<double>(sum_cb_sz) / static_cast<double>(sum_elapsed_ns) * 1000;
   }
 
-  /// Gets the total amount of time the LDPC encoder spent decoding.
+  /// Gets the total amount of time the LDPC encoder spent encoding.
   std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_elapsed_ns); }
 
 private:

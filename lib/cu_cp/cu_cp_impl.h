@@ -130,6 +130,8 @@ public:
   nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(ue_index_t ue_index) override;
   void                     handle_ul_nrppa_pdu(const byte_buffer&                    nrppa_pdu,
                                                std::variant<ue_index_t, amf_index_t> ue_or_amf_index) override;
+  async_task<trp_information_cu_cp_response_t>
+  handle_trp_information_request(const trp_information_request_t& request) override;
 
   // cu_cp_measurement_handler.
   std::optional<rrc_meas_cfg>
@@ -229,6 +231,9 @@ private:
 
   // NRPPa to CU-CP adapter.
   nrppa_cu_cp_adapter nrppa_cu_cp_ev_notifier;
+
+  // NRPPa to F1AP adapter.
+  std::map<du_index_t, nrppa_f1ap_adapter> nrppa_f1ap_ev_notifiers;
 
   // NRPPA entity.
   std::unique_ptr<nrppa_interface> nrppa_entity;

@@ -24,6 +24,7 @@
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
 #include "apps/services/hal/hal_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_schema.h"
+#include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_cli11_schema.h"
 #include "du_appconfig.h"
 #include "srsran/adt/interval.h"
@@ -37,6 +38,11 @@ static void configure_cli11_metrics_args(CLI::App& app, srs_du::metrics_appconfi
   app.add_option("--port", metrics_params.port, "Metrics UDP port.")
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
+  add_option(app,
+             "--resource_usage_report_period",
+             metrics_params.rusage_report_period,
+             "Resource usage metrics report period (in milliseconds)")
+      ->capture_default_str();
 }
 
 static void configure_cli11_f1ap_args(CLI::App& app, srs_du::f1ap_appconfig& f1c_params)
@@ -79,6 +85,9 @@ void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfi
   // HAL section.
   du_cfg.hal_config.emplace();
   configure_cli11_with_hal_appconfig_schema(app, *du_cfg.hal_config);
+
+  // Remote control section.
+  configure_cli11_with_remote_control_appconfig_schema(app, du_cfg.remote_control_config);
 }
 
 static void manage_hal_optional(CLI::App& app, du_appconfig& du_cfg)

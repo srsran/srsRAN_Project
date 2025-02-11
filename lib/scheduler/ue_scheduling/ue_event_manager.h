@@ -56,7 +56,8 @@ struct cell_creation_event {
 /// of the UEs and logging in a thread-safe manner.
 class ue_event_manager final : public sched_ue_configuration_handler,
                                public scheduler_feedback_handler,
-                               public scheduler_dl_buffer_state_indication_handler
+                               public scheduler_dl_buffer_state_indication_handler,
+                               public scheduler_positioning_handler
 {
 public:
   ue_event_manager(ue_repository& ue_db);
@@ -80,6 +81,10 @@ public:
 
   /// Scheduler DL buffer state indication handler interface.
   void handle_dl_buffer_state_indication(const dl_buffer_state_indication_message& bs) override;
+
+  /// Positioning interface.
+  void handle_positioning_measurement_request(const positioning_measurement_request& req) override;
+  void handle_positioning_measurement_stop(du_cell_index_t cell_index, rnti_t pos_rnti) override;
 
   void
   handle_error_indication(slot_point sl_tx, du_cell_index_t cell_index, scheduler_slot_handler::error_outcome event);

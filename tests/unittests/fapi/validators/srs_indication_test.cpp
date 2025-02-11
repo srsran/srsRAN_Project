@@ -122,7 +122,7 @@ TEST(validate_srs_indication, invalid_indication_fails)
 
   msg.pdus.back().timing_advance_offset    = 64U;
   msg.pdus.back().timing_advance_offset_ns = 17000U;
-  msg.pdus.back().report_type              = 2U;
+  msg.pdus.back().report_type              = static_cast<srs_report_type>(28);
 
   const auto& result = validate_srs_indication(msg);
 

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/adt/slotted_array.h"
+#include "srsran/adt/slotted_vector.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/ran/cause/e1ap_cause.h"
 #include "srsran/ran/cu_types.h"
@@ -31,8 +31,6 @@
 #include "srsran/ran/up_transport_layer_info.h"
 #include "srsran/security/security.h"
 #include <cstdint>
-#include <limits>
-#include <type_traits>
 
 namespace srsran {
 

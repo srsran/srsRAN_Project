@@ -22,7 +22,8 @@ set(SOURCES
         du_low_factory.cpp
         du_low_impl.cpp
         o_du_low_factory.cpp
-        o_du_low_impl.cpp)
+        o_du_low_impl.cpp
+        o_du_low_metrics_collector_impl.cpp)
 
 add_library(srsran_o_du_low STATIC ${SOURCES})
 set(DU_LOW_LIBRARIES srsran_phy_fapi_adaptor srsran_upper_phy)

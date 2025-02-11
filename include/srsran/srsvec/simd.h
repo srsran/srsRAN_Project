@@ -565,7 +565,8 @@ inline simd_f_t srsran_simd_f_sqrt(simd_f_t a)
 inline simd_f_t srsran_simd_f_neg(simd_f_t a)
 {
 #ifdef __AVX512F__
-  return _mm512_xor_ps(_mm512_set1_ps(-0.0f), a);
+  // Avoid using _mm512_xor_ps requires AVX512DQ.
+  return _mm512_castsi512_ps(_mm512_xor_si512(_mm512_castps_si512(_mm512_set1_ps(-0.0f)), _mm512_castps_si512(a)));
 #else /* __AVX512F__ */
 #ifdef __AVX2__
   return _mm256_xor_ps(_mm256_set1_ps(-0.0f), a);
@@ -1471,6 +1472,25 @@ inline void srsran_simd_i_store(int32_t* x, simd_i_t reg)
 #else
 #ifdef __SSE4_1__
   _mm_store_si128(reinterpret_cast<__m128i*>(x), reg);
+#else
+#ifdef __ARM_NEON
+  vst1q_s32(reinterpret_cast<int*>(x), reg);
+#endif /* __ARM_NEON */
+#endif /* __SSE4_1__ */
+#endif /* __AVX2__ */
+#endif /* __AVX512F__ */
+}
+
+inline void srsran_simd_i_storeu(int32_t* x, simd_i_t reg)
+{
+#ifdef __AVX512F__
+  _mm512_storeu_epi32(reinterpret_cast<__m512i*>(x), reg);
+#else /* __AVX512F__ */
+#ifdef __AVX2__
+  _mm256_storeu_si256(reinterpret_cast<__m256i*>(x), reg);
+#else
+#ifdef __SSE4_1__
+  _mm_storeu_si128(reinterpret_cast<__m128i*>(x), reg);
 #else
 #ifdef __ARM_NEON
   vst1q_s32(reinterpret_cast<int*>(x), reg);

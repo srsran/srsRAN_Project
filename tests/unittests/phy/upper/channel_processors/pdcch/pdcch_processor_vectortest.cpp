@@ -59,7 +59,7 @@ protected:
           create_pdcch_encoder_factory_sw(crc_factory, polar_factory);
       ASSERT_NE(encoder_factory, nullptr);
 
-      std::shared_ptr<channel_modulation_factory> mod_factory = create_channel_modulation_sw_factory();
+      std::shared_ptr<modulation_mapper_factory> mod_factory = create_modulation_mapper_factory();
       ASSERT_NE(mod_factory, nullptr);
 
       std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();

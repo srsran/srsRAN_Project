@@ -123,7 +123,7 @@ protected:
   mac_cell_slot_handler_spy                                                                         slot_handler_spy;
   const unsigned                                                                                    nof_prbs = 51U;
   std::pair<std::unique_ptr<precoding_matrix_mapper>, std::unique_ptr<precoding_matrix_repository>> pm_tools =
-      generate_precoding_matrix_tables(1);
+      generate_precoding_matrix_tables(1, 0);
   std::pair<std::unique_ptr<uci_part2_correspondence_mapper>, std::unique_ptr<uci_part2_correspondence_repository>>
                          uci_part2_tools = generate_uci_part2_correspondence(1);
   mac_to_fapi_translator translator;

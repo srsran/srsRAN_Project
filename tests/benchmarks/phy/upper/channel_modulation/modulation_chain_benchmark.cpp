@@ -66,14 +66,23 @@ int main(int argc, char** argv)
 {
   parse_args(argc, argv);
 
-  std::shared_ptr<channel_modulation_factory> factory = create_channel_modulation_sw_factory();
-  TESTASSERT(factory);
+  std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_factory();
+  TESTASSERT(modulator_factory);
 
-  std::unique_ptr<modulation_mapper> modulator = factory->create_modulation_mapper();
+  std::shared_ptr<demodulation_mapper_factory> demodulator_factory = create_demodulation_mapper_factory();
+  TESTASSERT(demodulator_factory);
+
+  std::shared_ptr<evm_calculator_factory> evm_calc_factory = create_evm_calculator_factory();
+  TESTASSERT(evm_calc_factory);
+
+  std::unique_ptr<modulation_mapper> modulator = modulator_factory->create();
   TESTASSERT(modulator);
 
-  std::unique_ptr<demodulation_mapper> demodulator = factory->create_demodulation_mapper();
+  std::unique_ptr<demodulation_mapper> demodulator = demodulator_factory->create();
   TESTASSERT(demodulator);
+
+  std::unique_ptr<evm_calculator> evm_calc = evm_calc_factory->create();
+  TESTASSERT(evm_calc);
 
   std::uniform_int_distribution<uint8_t> bit_dist(0, 1);
 
@@ -115,6 +124,11 @@ int main(int argc, char** argv)
       // Measure performance of the demodulation mapper.
       perf_meas.new_measure(to_string(modulation) + " demapper " + std::to_string(nof_symbols), nof_bits, [&]() {
         demodulator->demodulate_soft(soft_bits, cf_symbols, noise_var, modulation);
+      });
+
+      // Measure performance of the EVM calculator.
+      perf_meas.new_measure(to_string(modulation) + " EVM calculator " + std::to_string(nof_symbols), nof_bits, [&]() {
+        evm_calc->calculate(soft_bits, cf_symbols, modulation);
       });
     }
   }

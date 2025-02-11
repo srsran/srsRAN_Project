@@ -21,13 +21,16 @@
  */
 
 #include "adapters/f1_gateways.h"
+#include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
+#include "apps/services/cmdline/cmdline_command_dispatcher.h"
 #include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
-#include "apps/services/stdin_command_dispatcher.h"
+#include "apps/services/periodic_metrics_report_controller.h"
+#include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
@@ -323,7 +326,14 @@ int main(int argc, char** argv)
                                         E2_DU_PPID));
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
-  o_du_unit_dependencies                    du_dependencies;
+
+  // Create app-level resource usage service and metrics.
+  auto app_resource_usage_service = app_services::build_app_resource_usage_service(
+      metrics_notifier_forwarder, du_cfg.log_cfg.metrics_level.level, json_sink);
+
+  std::vector<app_services::metrics_config> app_metrics = std::move(app_resource_usage_service.metrics);
+
+  o_du_unit_dependencies du_dependencies;
   du_dependencies.workers            = &workers;
   du_dependencies.f1c_client_handler = f1c_gw.get();
   du_dependencies.f1u_gw             = du_f1u_conn.get();
@@ -336,26 +346,49 @@ int main(int argc, char** argv)
 
   auto du_inst_and_cmds = o_du_app_unit->create_flexible_o_du_unit(du_dependencies);
 
+  // Move app-units metrics to the application metrics.
+  std::move(du_inst_and_cmds.metrics.begin(), du_inst_and_cmds.metrics.end(), std::back_inserter(app_metrics));
+
+  // Create periodic metrics report controller.
+  std::vector<app_services::metrics_producer*> producers;
+  for (auto& metric_cfg : app_metrics) {
+    for (auto& producer : metric_cfg.producers) {
+      producers.push_back(producer.get());
+    }
+  }
+  auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
+  app_services::periodic_metrics_report_controller periodic_metrics_controller(
+      producers, std::move(app_metrics_timer), std::chrono::milliseconds(du_cfg.metrics_cfg.rusage_report_period));
+
   // Only DU has metrics now.
-  app_services::metrics_manager metrics_mngr(
-      srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, du_inst_and_cmds.metrics);
+  app_services::metrics_manager metrics_mngr(srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, app_metrics);
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
   srs_du::du& du_inst = *du_inst_and_cmds.unit;
 
   // Register the commands.
-  app_services::stdin_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_low_prio_exec, du_inst_and_cmds.commands);
+  app_services::cmdline_command_dispatcher command_parser(
+      *epoll_broker, *workers.non_rt_low_prio_exec, du_inst_and_cmds.commands.cmdline);
 
   // Start processing.
   du_inst.get_operation_controller().start();
+
+  std::unique_ptr<app_services::remote_server> remote_control_server =
+      app_services::create_remote_server(du_cfg.remote_control_config, du_inst_and_cmds.commands.remote);
+
+  periodic_metrics_controller.start();
   {
     app_services::application_message_banners app_banner(app_name);
 
     while (is_app_running) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
+  }
+  periodic_metrics_controller.stop();
+
+  if (remote_control_server) {
+    remote_control_server->stop();
   }
 
   // Stop DU activity.

@@ -35,12 +35,12 @@ namespace {
 class pdcch_modulator_factory_sw : public pdcch_modulator_factory
 {
 private:
-  std::shared_ptr<channel_modulation_factory>      modulator_factory;
+  std::shared_ptr<modulation_mapper_factory>       modulator_factory;
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
   std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory;
 
 public:
-  pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory_,
+  pdcch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory_,
                              std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
                              std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_) :
     modulator_factory(std::move(modulator_factory_)),
@@ -55,7 +55,7 @@ public:
   std::unique_ptr<pdcch_modulator> create() override
   {
     return std::make_unique<pdcch_modulator_impl>(
-        modulator_factory->create_modulation_mapper(), prg_factory->create(), rg_mapper_factory->create());
+        modulator_factory->create(), prg_factory->create(), rg_mapper_factory->create());
   }
 };
 
@@ -175,7 +175,7 @@ srsran::create_pdcch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory> 
 }
 
 std::shared_ptr<pdcch_modulator_factory>
-srsran::create_pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
+srsran::create_pdcch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory,
                                           std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                           std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory)
 {

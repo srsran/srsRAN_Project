@@ -23,7 +23,7 @@
 #pragma once
 
 #include "../rnti_value_table.h"
-#include "srsran/adt/slotted_array.h"
+#include "srsran/adt/slotted_vector.h"
 #include "srsran/mac/mac.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/du_ue_list.h"

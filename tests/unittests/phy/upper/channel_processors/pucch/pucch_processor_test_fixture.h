@@ -79,7 +79,7 @@ protected:
         create_pucch_detector_factory_sw(lpc_factory, prg_factory, equalizer_factory);
     ASSERT_NE(detector_factory, nullptr);
 
-    std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();
+    std::shared_ptr<demodulation_mapper_factory> demod_factory = create_demodulation_mapper_factory();
     ASSERT_NE(demod_factory, nullptr) << "Cannot create channel modulation factory.";
 
     std::shared_ptr<transform_precoder_factory> precoding_factory =

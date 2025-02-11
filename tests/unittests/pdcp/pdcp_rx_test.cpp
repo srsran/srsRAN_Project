@@ -87,7 +87,7 @@ TEST_P(pdcp_rx_test, rx_in_order)
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
 
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(2, test_frame->sdu_queue.size());
     while (not test_frame->sdu_queue.empty()) {
@@ -132,7 +132,7 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
 
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(0, test_frame->sdu_queue.size());
     // check rx_reord matches rx_next matches count + 2
@@ -142,7 +142,7 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu3)).value());
 
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(0, test_frame->sdu_queue.size());
     // check rx_reord still maches count + 2, i.e did not change because t_reord is already running; rx_next moved on
@@ -152,7 +152,7 @@ TEST_P(pdcp_rx_test, rx_out_of_order)
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
 
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(3, test_frame->sdu_queue.size());
     while (not test_frame->sdu_queue.empty()) {
@@ -194,7 +194,7 @@ TEST_P(pdcp_rx_test, rx_reordering_timer)
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
 
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(0, test_frame->sdu_queue.size());
     tick_all(10);
@@ -202,7 +202,7 @@ TEST_P(pdcp_rx_test, rx_reordering_timer)
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
 
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(1, test_frame->sdu_queue.size());
     while (not test_frame->sdu_queue.empty()) {
@@ -243,13 +243,13 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_0ms)
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu2)).value());
 
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(1, test_frame->sdu_queue.size());
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
 
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(1, test_frame->sdu_queue.size());
     while (not test_frame->sdu_queue.empty()) {
@@ -292,14 +292,14 @@ TEST_P(pdcp_rx_test, rx_reordering_timer_infinite)
     tick_all(6000); // max t-Reordering is 3000ms
 
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(0, test_frame->sdu_queue.size());
 
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
 
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(2, test_frame->sdu_queue.size());
     while (not test_frame->sdu_queue.empty()) {
@@ -339,7 +339,7 @@ TEST_P(pdcp_rx_test, rx_integrity_fail)
     pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(test_pdu1)).value());
 
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
     ASSERT_EQ(0, test_frame->sdu_queue.size());
     ASSERT_EQ(prev_integrity_fail_counter + 1, test_frame->integrity_fail_counter);
@@ -385,7 +385,7 @@ TEST_P(pdcp_rx_test, count_wraparound)
       pdcp_rx->handle_pdu(byte_buffer_chain::create(std::move(pdu)).value());
     }
     // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
+    wait_pending_crypto();
     worker.run_pending_tasks();
 
     // check nof max_count reached and max protocol failures.

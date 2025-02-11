@@ -33,7 +33,7 @@ namespace srsran {
 class phy_metrics_crc_calculator_decorator : public crc_calculator
 {
 public:
-  /// Creates an CRC calculator decorator from a base instance and metric notifier.
+  /// Creates an CRC calculator decorator from a base instance and a metric notifier.
   phy_metrics_crc_calculator_decorator(std::unique_ptr<crc_calculator> base_calculator_,
                                        crc_calculator_metric_notifier& notifier_) :
     base_calculator(std::move(base_calculator_)), notifier(notifier_)
@@ -44,14 +44,10 @@ public:
   // See interface for documentation.
   crc_calculator_checksum_t calculate_byte(span<const uint8_t> data) const override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
+    auto                      tp_before = std::chrono::high_resolution_clock::now();
+    crc_calculator_checksum_t ret       = base_calculator->calculate_byte(data);
+    auto                      tp_after  = std::chrono::high_resolution_clock::now();
 
-    // Call base instance.
-    crc_calculator_checksum_t ret = base_calculator->calculate_byte(data);
-
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    // Create report metrics.
     notifier.new_metric({.poly     = base_calculator->get_generator_poly(),
                          .nof_bits = units::bytes(data.size()).to_bits(),
                          .elapsed  = tp_after - tp_before});
@@ -62,12 +58,9 @@ public:
   // See interface for documentation.
   crc_calculator_checksum_t calculate_bit(span<const uint8_t> data) const override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-
-    // Call base instance.
-    crc_calculator_checksum_t ret = base_calculator->calculate_bit(data);
-
-    auto tp_after = std::chrono::high_resolution_clock::now();
+    auto                      tp_before = std::chrono::high_resolution_clock::now();
+    crc_calculator_checksum_t ret       = base_calculator->calculate_bit(data);
+    auto                      tp_after  = std::chrono::high_resolution_clock::now();
 
     // Create report metrics.
     notifier.new_metric({.poly     = base_calculator->get_generator_poly(),
@@ -80,12 +73,9 @@ public:
   // See interface for documentation.
   crc_calculator_checksum_t calculate(const bit_buffer& data) const override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-
-    // Call base instance.
-    crc_calculator_checksum_t ret = base_calculator->calculate(data);
-
-    auto tp_after = std::chrono::high_resolution_clock::now();
+    auto                      tp_before = std::chrono::high_resolution_clock::now();
+    crc_calculator_checksum_t ret       = base_calculator->calculate(data);
+    auto                      tp_after  = std::chrono::high_resolution_clock::now();
 
     // Create report metrics.
     notifier.new_metric({.poly     = base_calculator->get_generator_poly(),

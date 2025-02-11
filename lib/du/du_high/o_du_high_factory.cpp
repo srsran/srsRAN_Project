@@ -58,7 +58,7 @@ generate_fapi_adaptor_dependencies(const o_du_high_config& config, o_du_high_dep
         {sector_dependencies.gateway,
          sector_dependencies.last_msg_notifier,
          std::move(std::get<std::unique_ptr<fapi_adaptor::precoding_matrix_mapper>>(
-             fapi_adaptor::generate_precoding_matrix_tables(config.du_hi.ran.cells[i].dl_carrier.nof_ant))),
+             fapi_adaptor::generate_precoding_matrix_tables(config.du_hi.ran.cells[i].dl_carrier.nof_ant, i))),
          std::move(std::get<std::unique_ptr<fapi_adaptor::uci_part2_correspondence_mapper>>(
              fapi_adaptor::generate_uci_part2_correspondence(1))),
          sector_dependencies.fapi_executor});
@@ -74,6 +74,7 @@ std::unique_ptr<o_du_high> srsran::srs_du::make_o_du_high(const o_du_high_config
   dependencies.logger          = &srslog::fetch_basic_logger("DU");
   dependencies.du_high_adaptor = fapi_adaptor::create_mac_fapi_adaptor_factory()->create(
       generate_fapi_adaptor_config(config), generate_fapi_adaptor_dependencies(config, odu_dependencies));
+  dependencies.metrics_notifier = odu_dependencies.du_hi.sched_ue_metrics_notifier;
 
   dependencies.logger->debug("FAPI adaptors created successfully");
 
@@ -81,8 +82,9 @@ std::unique_ptr<o_du_high> srsran::srs_du::make_o_du_high(const o_du_high_config
 
   auto odu = std::make_unique<o_du_high_impl>(config.du_hi.ran.cells.size(), std::move(dependencies));
 
-  // Instantiate DU-high.
-  odu_dependencies.du_hi.phy_adapter = &odu->get_mac_result_notifier();
+  // Resolve dependencies for DU-high.
+  odu_dependencies.du_hi.phy_adapter               = &odu->get_mac_result_notifier();
+  odu_dependencies.du_hi.sched_ue_metrics_notifier = &odu->get_scheduler_metrics_notifier();
 
   if (!odu_dependencies.e2_client) {
     odu->set_du_high(make_du_high(du_hi_cfg, odu_dependencies.du_hi));

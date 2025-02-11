@@ -255,8 +255,14 @@ private:
     }
 
     // Create demodulator mapper factory.
-    std::shared_ptr<channel_modulation_factory> chan_modulation_factory = create_channel_modulation_sw_factory();
-    if (!chan_modulation_factory) {
+    std::shared_ptr<demodulation_mapper_factory> chan_demodulation_factory = create_demodulation_mapper_factory();
+    if (!chan_demodulation_factory) {
+      return nullptr;
+    }
+
+    // Create EVM calculator factory.
+    std::shared_ptr<evm_calculator_factory> evm_calc_factory = create_evm_calculator_factory();
+    if (!evm_calc_factory) {
       return nullptr;
     }
 
@@ -317,7 +323,7 @@ private:
 
     // Create PUSCH demodulator factory.
     std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
-        eq_factory, precoding_factory, chan_modulation_factory, prg_factory, MAX_NOF_PRBS, true, true);
+        eq_factory, precoding_factory, chan_demodulation_factory, evm_calc_factory, prg_factory, MAX_NOF_PRBS, true);
     if (!pusch_demod_factory) {
       return nullptr;
     }

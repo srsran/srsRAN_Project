@@ -44,11 +44,12 @@ public:
   baseband_cfo_processor(sampling_rate srate_) : srate(srate_) {}
 
   /// \brief Notifies a new CFO command.
-  /// \param time   Time at which the new CFO value is used.
+  /// \param time Time at which the new CFO value is used.
   /// \param cfo_Hz New CFO value in Hertz.
-  bool schedule_cfo_command(time_point time, float cfo_Hz) override
+  /// \param cfo_drift_Hz_s New CFO drift value in Hertz per second.
+  bool schedule_cfo_command(time_point time_, float cfo_Hz_, float cfo_drift_Hz_s_ = 0) override
   {
-    cfo_command command{time, cfo_Hz};
+    cfo_command command{time_, cfo_Hz_, cfo_drift_Hz_s_};
     if (!cfo_command_queue.try_push(command)) {
       return false;
     }
@@ -67,18 +68,27 @@ public:
     }
 
     // Get the reference of the next command.
-    const cfo_command& command = *cfo_command_queue.begin();
+    const cfo_command& command             = *cfo_command_queue.begin();
+    auto [cfo_start_ts, cfo_Hz, cfo_drift] = command;
 
     // Get the current time.
     auto now = std::chrono::system_clock::now();
 
     // If the time for the command has come...
-    if (now >= command.first) {
+    if (now >= cfo_start_ts) {
       // Update the current normalized CFO.
-      current_cfo = command.second / srate.to_Hz<float>();
+      initial_cfo         = cfo_Hz / srate.to_Hz<float>();
+      current_cfo         = initial_cfo;
+      cfo_start_timestamp = cfo_start_ts;
+      cfo_drift_hz_s      = cfo_drift;
 
       // Pop the current command.
       cfo_command_queue.pop();
+    }
+
+    if (std::isnormal(cfo_drift_hz_s)) {
+      auto elapsed_time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - cfo_start_timestamp).count();
+      current_cfo          = initial_cfo + (cfo_drift_hz_s * elapsed_time_ms / 1e3) / srate.to_Hz<float>();
     }
   }
 
@@ -102,7 +112,7 @@ public:
 
 private:
   /// CFO command data type.
-  using cfo_command = std::pair<time_point, float>;
+  using cfo_command = std::tuple<time_point, float, float>;
   /// Maximum number of commands that can be enqueued.
   static constexpr unsigned max_nof_commands = 128;
 
@@ -114,6 +124,12 @@ private:
   unsigned sample_offset = 0;
   /// Current normalized CFO.
   float current_cfo = 0.0;
+  /// Normalized CFO at the start time.
+  float initial_cfo = 0.0;
+  /// Current CFO start timestamp.
+  time_point cfo_start_timestamp;
+  /// Current CFO drift.
+  float cfo_drift_hz_s = 0.0;
 };
 
 } // namespace srsran

@@ -77,6 +77,8 @@ public:
   /// \return The DU processor object.
   du_processor& get_du_processor(du_index_t du_index);
 
+  std::vector<du_index_t> get_du_processor_indexes() const;
+
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override;
 
   size_t get_nof_f1ap_ues();

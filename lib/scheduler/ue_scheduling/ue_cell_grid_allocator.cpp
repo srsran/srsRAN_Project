@@ -629,6 +629,14 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
       return {alloc_status::skip_ue};
     }
 
+    // Check if there is space for more PUSCH PDUs.
+    if (pusch_alloc.result.ul.puschs.full()) {
+      logger.debug("ue={} rnti={}: Failed to allocate PUSCH. Cause: No space available in scheduler output list",
+                   fmt::underlying(u.ue_index),
+                   u.crnti);
+      return {alloc_status::skip_slot};
+    }
+
     // Check if there is space in PUSCH resource grid.
     const bool is_pusch_full =
         std::find(slots_with_no_pusch_space.begin(), slots_with_no_pusch_space.end(), pusch_alloc.slot) !=

@@ -513,14 +513,18 @@ viavi:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/    
   parallel:
     matrix:
       - KEYWORDS:
           [
-            "ideal and 1UE",
+            "ideal and 1UE and not MIMO",
+            "ideal and 1UE and MIMO",
             "ideal and 32UE and not experimental and not tdd and not extended",
             "tdd",
-            "fading and 1UE",
+            "fading and 1UE and not MIMO",
+            "fading and 1UE and MIMO",
             "fading and 32UE",
             "birth-death and 1UE",
             "32UE and experimental and not extended",

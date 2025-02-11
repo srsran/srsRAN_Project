@@ -139,6 +139,14 @@ static bool validate_ru_ofh_unit_config(span<const ru_ofh_unit_cell_config>     
       return false;
     }
 
+    if (cell_cfg.nof_antennas_ul > ofh_cell.ru_prach_port_id.size()) {
+      fmt::print("RU number of PRACH ports={} must be equal or greater than the number of reception antennas={}\n",
+                 ofh_cell.ru_prach_port_id.size(),
+                 cell_cfg.nof_antennas_ul);
+
+      return false;
+    }
+
     if (cell_cfg.nof_prach_ports > ofh_cell.ru_prach_port_id.size()) {
       fmt::print("RU number of PRACH ports={} must be equal or greater than the cell number of PRACH ports={}\n",
                  ofh_cell.ru_prach_port_id.size(),

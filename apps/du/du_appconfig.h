@@ -26,6 +26,7 @@
 #include "apps/services/f1u/f1u_cli11_schema.h"
 #include "apps/services/hal/hal_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
+#include "apps/services/remote_control/remote_control_appconfig.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
 #include <optional>
 
@@ -49,6 +50,8 @@ struct f1u_appconfig {
 struct metrics_appconfig {
   std::string addr = "127.0.0.1";
   uint16_t    port = 55555;
+  /// Resource usage report period in milliseconds.
+  unsigned rusage_report_period = 0;
 };
 
 } // namespace srs_du
@@ -71,6 +74,8 @@ struct du_appconfig {
   expert_execution_appconfig expert_execution_cfg;
   /// HAL configuration.
   std::optional<hal_appconfig> hal_config;
+  /// Remote control configuration.
+  remote_control_appconfig remote_control_config;
 };
 
 } // namespace srsran

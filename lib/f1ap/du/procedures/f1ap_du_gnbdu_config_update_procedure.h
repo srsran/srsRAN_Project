@@ -47,10 +47,10 @@ private:
 
   gnbdu_config_update_response generate_du_response() const;
 
-  const gnbdu_config_update_request& request;
-  f1ap_message_notifier&             cu_notif;
-  f1ap_event_manager&                ev_mng;
-  srslog::basic_logger&              logger;
+  const gnbdu_config_update_request request;
+  f1ap_message_notifier&            cu_notif;
+  f1ap_event_manager&               ev_mng;
+  srslog::basic_logger&             logger;
 
   f1ap_transaction transaction;
 };

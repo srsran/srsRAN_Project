@@ -28,7 +28,7 @@
 #include "srsran/ran/slot_point.h"
 #include "srsran/scheduler/resource_grid_util.h"
 #include "srsran/srslog/logger.h"
-#include "srsran/support/math/accumulators.h"
+#include "srsran/support/math/exponential_averager.h"
 #include <optional>
 
 namespace srsran {

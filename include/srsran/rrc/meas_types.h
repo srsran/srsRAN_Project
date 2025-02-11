@@ -24,6 +24,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/adt/slotted_vector.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <string>

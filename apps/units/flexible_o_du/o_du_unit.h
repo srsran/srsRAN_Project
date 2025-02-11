@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "apps/services/application_command.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/metrics/metrics_config.h"
+#include "apps/units/application_unit_commands.h"
 #include "srsran/du/du.h"
 #include <memory>
 #include <vector>
@@ -51,9 +51,9 @@ struct worker_manager;
 
 /// O-DU unit.
 struct o_du_unit {
-  std::unique_ptr<srs_du::du>                                     unit;
-  std::vector<std::unique_ptr<app_services::application_command>> commands;
-  std::vector<app_services::metrics_config>                       metrics;
+  std::unique_ptr<srs_du::du>               unit;
+  std::vector<app_services::metrics_config> metrics;
+  application_unit_commands                 commands;
   std::unique_ptr<e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>
       e2_metric_connectors;
 };

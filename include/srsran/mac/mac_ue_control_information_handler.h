@@ -24,6 +24,8 @@
 
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/logical_channel/lcid.h"
+#include <chrono>
+#include <optional>
 
 namespace srsran {
 

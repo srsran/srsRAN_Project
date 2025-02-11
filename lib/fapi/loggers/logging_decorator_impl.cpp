@@ -25,21 +25,27 @@
 using namespace srsran;
 using namespace fapi;
 
-logging_decorator_impl::logging_decorator_impl(srslog::basic_logger&       logger,
+logging_decorator_impl::logging_decorator_impl(unsigned                    sector_id,
+                                               srslog::basic_logger&       logger,
                                                slot_message_gateway&       gateway_,
                                                slot_last_message_notifier& last_msg_notifier_) :
-  fapi_decorator({}), data_notifier(logger), error_notifier(logger), time_notifier(logger), gateway(logger, gateway_)
+  fapi_decorator({}),
+  data_notifier(sector_id, logger),
+  error_notifier(sector_id, logger),
+  time_notifier(sector_id, logger),
+  gateway(sector_id, logger, gateway_)
 {
   last_msg_notifier.set_slot_last_message_notifier(last_msg_notifier_);
 }
 
-logging_decorator_impl::logging_decorator_impl(srslog::basic_logger&           logger,
+logging_decorator_impl::logging_decorator_impl(unsigned                        sector_id,
+                                               srslog::basic_logger&           logger,
                                                std::unique_ptr<fapi_decorator> next_decorator_) :
   fapi_decorator({std::move(next_decorator_)}),
-  data_notifier(logger),
-  error_notifier(logger),
-  time_notifier(logger),
-  gateway(logger, next_decorator->get_slot_message_gateway())
+  data_notifier(sector_id, logger),
+  error_notifier(sector_id, logger),
+  time_notifier(sector_id, logger),
+  gateway(sector_id, logger, next_decorator->get_slot_message_gateway())
 {
   last_msg_notifier.set_slot_last_message_notifier(next_decorator->get_slot_last_message_notifier());
   connect_notifiers();

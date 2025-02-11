@@ -33,7 +33,7 @@ namespace srsran {
 class phy_metrics_ldpc_decoder_decorator : public ldpc_decoder
 {
 public:
-  /// Creates an LDPC decoder decorator from a base LDPC decoder instance and metric notifier.
+  /// Creates an LDPC decoder decorator from a base LDPC decoder instance and a metric notifier.
   phy_metrics_ldpc_decoder_decorator(std::unique_ptr<ldpc_decoder> base_decoder_,
                                      ldpc_decoder_metric_notifier& notifier_) :
     base_decoder(std::move(base_decoder_)), notifier(notifier_)
@@ -47,14 +47,10 @@ public:
                                  crc_calculator*                  crc,
                                  const configuration&             cfg) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
+    auto                    tp_before = std::chrono::high_resolution_clock::now();
+    std::optional<unsigned> ret       = base_decoder->decode(output, input, crc, cfg);
+    auto                    tp_after  = std::chrono::high_resolution_clock::now();
 
-    // Call base decoder.
-    std::optional<unsigned> ret = base_decoder->decode(output, input, crc, cfg);
-
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    // Create report metrics.
     notifier.new_metric({.cb_sz          = units::bits(output.size()),
                          .nof_iterations = ret.value_or(cfg.algorithm_conf.max_iterations),
                          .crc_ok         = ret.has_value(),

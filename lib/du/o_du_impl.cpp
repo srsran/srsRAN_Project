@@ -23,39 +23,68 @@
 #include "o_du_impl.h"
 #include "srsran/du/du_high/o_du_high.h"
 #include "srsran/du/du_low/du_low.h"
-#include "srsran/fapi_adaptor/mac/mac_fapi_sector_adaptor.h"
-#include "srsran/fapi_adaptor/phy/phy_fapi_adaptor.h"
-#include "srsran/fapi_adaptor/phy/phy_fapi_sector_adaptor.h"
-#include "srsran/support/srsran_assert.h"
+#include "srsran/du/du_low/o_du_low_metrics_collector.h"
+#include "srsran/du/o_du_metrics.h"
 
 using namespace srsran;
 using namespace srs_du;
 
-o_du_impl::o_du_impl(o_du_impl_dependencies&& dependencies) :
-  du_hi(std::move(dependencies.du_hi)), du_lo(std::move(dependencies.du_lo))
+namespace {
+
+/// O-DU metrics notifier dummy implementation.
+class o_du_metrics_notifier_dummy : public o_du_metrics_notifier
 {
-  srsran_assert(du_lo, "Invalid DU low");
-  srsran_assert(du_hi, "Invalid DU high");
+public:
+  // See interface for documentation.
+  void on_new_metrics(const o_du_metrics& metrics) override {}
+};
+
+} // namespace
+
+/// Dummy O-DU metrics notifier.
+static o_du_metrics_notifier_dummy dummy_notifier;
+
+o_du_impl::o_du_impl(o_du_impl_dependencies&& dependencies) :
+  metrics_notifier(dependencies.metrics_notifier ? *dependencies.metrics_notifier : dummy_notifier),
+  odu_hi(std::move(dependencies.du_hi)),
+  odu_lo(std::move(dependencies.du_lo))
+{
+  srsran_assert(odu_lo, "Invalid DU low");
+  srsran_assert(odu_hi, "Invalid DU high");
+
+  // Register the O-DU in the O-DU high to listen to O-DU high metrics.
+  odu_hi->set_o_du_high_metrics_notifier(*this);
+}
+
+void o_du_impl::on_new_metrics(const o_du_high_metrics& metrics)
+{
+  o_du_metrics du_metrics;
+
+  // Get O-DU low metrics.
+  odu_lo->get_metrics_collector().collect_o_du_low_metrics(du_metrics.low);
+
+  // Notify the metrics.
+  metrics_notifier.on_new_metrics(du_metrics);
 }
 
 void o_du_impl::start()
 {
-  du_hi->get_operation_controller().start();
-  du_lo->get_operation_controller().start();
+  odu_hi->get_operation_controller().start();
+  odu_lo->get_operation_controller().start();
 }
 
 void o_du_impl::stop()
 {
-  du_lo->get_operation_controller().stop();
-  du_hi->get_operation_controller().stop();
+  odu_lo->get_operation_controller().stop();
+  odu_hi->get_operation_controller().stop();
 }
 
 o_du_high& o_du_impl::get_o_du_high()
 {
-  return *du_hi;
+  return *odu_hi;
 }
 
 o_du_low& o_du_impl::get_o_du_low()
 {
-  return *du_lo;
+  return *odu_lo;
 }

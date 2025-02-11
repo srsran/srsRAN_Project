@@ -28,12 +28,6 @@ slice_ue::slice_ue(const ue& u_) : u(u_) {}
 
 void slice_ue::add_logical_channel(lcid_t lcid, lcg_id_t lcg_id)
 {
-  srsran_assert(lcid < MAX_NOF_RB_LCIDS, "Invalid LCID={} to add for a slice UE", fmt::underlying(lcid));
-  srsran_assert(lcg_id < MAX_NOF_LCGS,
-                "Invalid LCG ID={} for bearer with LCID={}",
-                fmt::underlying(lcg_id),
-                fmt::underlying(lcid));
-
   if (lcid >= bearers.size()) {
     bearers.resize(lcid + 1);
   }
@@ -46,7 +40,6 @@ void slice_ue::add_logical_channel(lcid_t lcid, lcg_id_t lcg_id)
 
 void slice_ue::rem_logical_channel(lcid_t lcid)
 {
-  srsran_assert(lcid < MAX_NOF_RB_LCIDS, "Invalid LCID={} to remove from a slice UE", fmt::underlying(lcid));
   bearers.reset(lcid);
   lcg_id_t lcg_id_to_rem = get_lcg_id_for_bearer(lcid);
   srsran_assert(lcg_id_to_rem < MAX_NOF_LCGS, "Unable to fetch LCG ID for bearer with LCID={}", fmt::underlying(lcid));

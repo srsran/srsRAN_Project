@@ -388,7 +388,7 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
 
   port_channel_estimator_td_interpolation_strategy pusch_chan_estimator_td_strategy =
       port_channel_estimator_td_interpolation_strategy::average;
-  if (config.pusch_channel_equalizer_algorithm == "interpolate") {
+  if (config.pusch_channel_estimator_td_strategy == "interpolate") {
     pusch_chan_estimator_td_strategy = port_channel_estimator_td_interpolation_strategy::interpolate;
   }
 
@@ -423,15 +423,11 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
     report_fatal_error_if_not(prach_factory, "Invalid PRACH detector pool factory.");
   }
 
-  std::shared_ptr<time_alignment_estimator_factory> ta_estimator_factory =
-      create_time_alignment_estimator_dft_factory(dft_factory);
-  report_fatal_error_if_not(ta_estimator_factory, "Invalid TA estimator factory.");
-
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   report_error_if_not(prg_factory, "Invalid pseudo-random sequence generator factory.");
 
   std::shared_ptr<port_channel_estimator_factory> ch_estimator_factory =
-      create_port_channel_estimator_factory_sw(ta_estimator_factory);
+      create_port_channel_estimator_factory_sw(ta_est_factory);
   report_error_if_not(prg_factory, "Invalid channel estimator factory.");
 
   std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory =
@@ -450,16 +446,30 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
       create_dft_transform_precoder_factory(dft_factory, config.ul_bw_rb);
   report_fatal_error_if_not(precoding_factory, "Invalid transform precoder factory.");
 
-  std::shared_ptr<channel_modulation_factory> demodulation_factory = create_channel_modulation_sw_factory();
+  std::shared_ptr<demodulation_mapper_factory> demodulation_factory = create_demodulation_mapper_factory();
   report_error_if_not(demodulation_factory, "Invalid demodulation factory.");
+
+  std::shared_ptr<evm_calculator_factory> evm_calc_factory = create_evm_calculator_factory();
+  report_error_if_not(evm_calc_factory, "Invalid EVM calculator factory.");
 
   std::shared_ptr<crc_calculator_factory> crc_calc_factory =
       create_crc_calculator_factory_sw(config.crc_calculator_type);
   report_fatal_error_if_not(crc_calc_factory, "Invalid CRC calculator factory of type {}.", config.crc_calculator_type);
 
+  // Create PUSCH channel estimator.
+  std::shared_ptr<dmrs_pusch_estimator_factory> pusch_channel_estimator_factory =
+      create_dmrs_pusch_estimator_factory_sw(
+          prg_factory, low_papr_sequence_gen_factory, ch_estimator_factory, pusch_chan_estimator_td_strategy);
+
+  std::shared_ptr<ulsch_demultiplex_factory> ulsch_demux_factory = create_ulsch_demultiplex_factory_sw();
+  report_fatal_error_if_not(ulsch_demux_factory, "Failed to create UL-SCH demultiplex factory.");
+
   // Create metric notifier decorators.
-  std::shared_ptr<crc_calculator_factory>          pusch_crc_calc_factory   = crc_calc_factory;
-  std::shared_ptr<pseudo_random_generator_factory> pusch_scrambling_factory = prg_factory;
+  std::shared_ptr<crc_calculator_factory>          pusch_crc_calc_factory     = crc_calc_factory;
+  std::shared_ptr<pseudo_random_generator_factory> pusch_scrambling_factory   = prg_factory;
+  std::shared_ptr<demodulation_mapper_factory>     pusch_demodulation_factory = demodulation_factory;
+  std::shared_ptr<evm_calculator_factory>          pusch_evm_calc_factory     = evm_calc_factory;
+  std::shared_ptr<transform_precoder_factory>      pusch_precoding_factory    = precoding_factory;
   if (metric_notifier) {
     pusch_scrambling_factory = create_pseudo_random_generator_metric_decorator_factory(
         std::move(pusch_scrambling_factory), metric_notifier->get_pusch_scrambling_notifier());
@@ -472,6 +482,43 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
     pusch_crc_calc_factory = create_crc_calculator_metric_decorator_factory(
         std::move(pusch_crc_calc_factory), metric_notifier->get_pusch_crc_calculator_notifier());
     report_fatal_error_if_not(pusch_crc_calc_factory, "Invalid PUSCH CRC calculator factory.");
+
+    pusch_demodulation_factory = create_demodulation_mapper_metric_decorator_factory(
+        std::move(pusch_demodulation_factory), metric_notifier->get_pusch_demodulation_mapper_notifier());
+    report_fatal_error_if_not(pusch_demodulation_factory, "Failed to create factory.");
+
+    pusch_evm_calc_factory = create_evm_calculator_metric_decorator_factory(
+        std::move(pusch_evm_calc_factory), metric_notifier->get_pusch_evm_calculator_notifier());
+    report_fatal_error_if_not(pusch_evm_calc_factory, "Failed to create factory.");
+
+    std::shared_ptr<time_alignment_estimator_factory> pusch_ta_est_factory =
+        create_time_alignment_estimator_metric_decorator_factory(ta_est_factory,
+                                                                 metric_notifier->get_pusch_ta_estimator_notifier());
+    report_fatal_error_if_not(pusch_ta_est_factory, "Failed to create TA estimator factory.");
+
+    std::shared_ptr<port_channel_estimator_factory> pusch_ch_estimator_factory =
+        create_port_channel_estimator_factory_sw(pusch_ta_est_factory);
+    report_error_if_not(pusch_ch_estimator_factory, "Invalid channel estimator factory.");
+
+    pusch_ch_estimator_factory = create_port_channel_estimator_metric_decorator_factory(
+        std::move(pusch_ch_estimator_factory), metric_notifier->get_pusch_port_channel_estimator_notifier());
+    report_error_if_not(pusch_ch_estimator_factory, "Invalid port channel estimator factory.");
+
+    pusch_channel_estimator_factory = create_dmrs_pusch_estimator_factory_sw(
+        prg_factory, low_papr_sequence_gen_factory, pusch_ch_estimator_factory, pusch_chan_estimator_td_strategy);
+    report_error_if_not(pusch_channel_estimator_factory, "Invalid channel estimator factory.");
+
+    pusch_channel_estimator_factory = create_pusch_channel_estimator_metric_decorator_factory(
+        std::move(pusch_channel_estimator_factory), metric_notifier->get_pusch_channel_estimator_notifier());
+    report_fatal_error_if_not(pusch_channel_estimator_factory, "Failed to create factory.");
+
+    ulsch_demux_factory = create_ulsch_demultiplex_metric_decorator_factory(
+        std::move(ulsch_demux_factory), metric_notifier->get_ulsch_demultiplex_notifier());
+    report_fatal_error_if_not(ulsch_demux_factory, "Failed to create UL-SCH demultiplex factory.");
+
+    pusch_precoding_factory = create_transform_precoder_metric_decorator_factory(
+        std::move(pusch_precoding_factory), metric_notifier->get_pusch_transform_precoder_notifier());
+    report_fatal_error_if_not(pusch_precoding_factory, "Failed to create transform precoder factory.");
   }
 
   // Check if a hardware-accelerated PUSCH processor is requested.
@@ -496,7 +543,10 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
     if (metric_notifier) {
       decoder_config.decoder_factory = create_ldpc_decoder_metric_decorator_factory(
           std::move(decoder_config.decoder_factory), metric_notifier->get_ldpc_decoder_notifier());
-      report_fatal_error_if_not(decoder_config.decoder_factory, "Failed to create factory.");
+      report_fatal_error_if_not(decoder_config.decoder_factory, "Failed to create LDPC decoder factory.");
+      decoder_config.dematcher_factory = create_ldpc_rate_dematcher_metric_decorator_factory(
+          std::move(decoder_config.dematcher_factory), metric_notifier->get_ldpc_rate_dematcher_notifier());
+      report_fatal_error_if_not(decoder_config.dematcher_factory, "Failed to create LDPC rate dematcher factory.");
     }
 
     pusch_config.decoder_factory = create_pusch_decoder_factory_sw(decoder_config);
@@ -530,28 +580,33 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
   bool enable_eq_sinr = (config.pusch_sinr_calc_method == channel_state_information::sinr_type::post_equalization) ||
                         (config.log_level == srslog::basic_levels::debug);
 
+  // Create PUSCH demodulator.
+  std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory =
+      create_pusch_demodulator_factory_sw(pusch_equalizer_factory,
+                                          pusch_precoding_factory,
+                                          pusch_demodulation_factory,
+                                          (enable_evm) ? pusch_evm_calc_factory : nullptr,
+                                          pusch_scrambling_factory,
+                                          config.ul_bw_rb,
+                                          enable_eq_sinr);
+  report_fatal_error_if_not(uci_dec_factory, "Invalid PUSCH demodulator.");
+
+  // Wrap PUSCH demodulator with the metric decorator if necessary.
+  if (metric_notifier) {
+    pusch_demod_factory = create_pusch_demodulator_metric_decorator_factory(
+        std::move(pusch_demod_factory), metric_notifier->get_pusch_demodulator_notifier());
+    report_fatal_error_if_not(uci_dec_factory, "Invalid PUSCH demodulator.");
+  }
+
   // Add the remaining PUSCH processor configuration values.
-  pusch_config.estimator_factory = create_dmrs_pusch_estimator_factory_sw(
-      prg_factory, low_papr_sequence_gen_factory, ch_estimator_factory, pusch_chan_estimator_td_strategy);
-  pusch_config.demodulator_factory        = create_pusch_demodulator_factory_sw(pusch_equalizer_factory,
-                                                                         precoding_factory,
-                                                                         demodulation_factory,
-                                                                         pusch_scrambling_factory,
-                                                                         config.ul_bw_rb,
-                                                                         enable_evm,
-                                                                         enable_eq_sinr);
-  pusch_config.demux_factory              = create_ulsch_demultiplex_factory_sw();
+  pusch_config.estimator_factory          = pusch_channel_estimator_factory;
+  pusch_config.demodulator_factory        = pusch_demod_factory;
+  pusch_config.demux_factory              = ulsch_demux_factory;
   pusch_config.uci_dec_factory            = uci_dec_factory;
   pusch_config.dec_nof_iterations         = config.ldpc_decoder_iterations;
   pusch_config.dec_enable_early_stop      = config.ldpc_decoder_early_stop;
   pusch_config.csi_sinr_calc_method       = config.pusch_sinr_calc_method;
   pusch_config.max_nof_concurrent_threads = config.max_ul_thread_concurrency;
-
-  if (metric_notifier) {
-    pusch_config.estimator_factory = create_pusch_channel_estimator_metric_decorator_factory(
-        std::move(pusch_config.estimator_factory), metric_notifier->get_pusch_channel_estimator_notifier());
-    report_fatal_error_if_not(pusch_config.estimator_factory, "Failed to create factory.");
-  }
 
   // :TODO: check these values in the future. Extract them to more public config.
   pusch_config.ch_estimate_dimensions.nof_symbols        = MAX_NSYMB_PER_SLOT;
@@ -601,7 +656,7 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
 
   // Create channel estimator factory.
   std::shared_ptr<port_channel_estimator_factory> port_chan_estimator_factory =
-      create_port_channel_estimator_factory_sw(ta_estimator_factory);
+      create_port_channel_estimator_factory_sw(ta_est_factory);
   report_fatal_error_if_not(port_chan_estimator_factory, "Invalid port channel estimator factory.");
 
   std::shared_ptr<dmrs_pucch_estimator_factory> pucch_dmrs_factory =
@@ -724,6 +779,7 @@ public:
   {
     upper_phy_impl_config phy_config;
     phy_config.ul_bw_rb                    = config.ul_bw_rb;
+    phy_config.pusch_max_nof_layers        = config.pusch_max_nof_layers;
     phy_config.nof_rx_ports                = config.nof_rx_ports;
     phy_config.log_level                   = config.log_level;
     phy_config.rx_symbol_printer_filename  = config.rx_symbol_printer_filename;
@@ -799,10 +855,15 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   report_fatal_error_if_not(prg_factory, "Invalid PRG factory.");
 
+  // Create modulation mapper factory.
+  std::shared_ptr<modulation_mapper_factory> mod_factory = create_modulation_mapper_factory();
+  report_fatal_error_if_not(mod_factory, "Invalid modulation factory.");
+
   // Create metric decorators if applicable.
   std::shared_ptr<pseudo_random_generator_factory> pdsch_scrambling_factory = prg_factory;
   std::shared_ptr<resource_grid_mapper_factory>    pdsch_rg_mapper_factory  = rg_mapper_factory;
   std::shared_ptr<crc_calculator_factory>          pdsch_crc_calc_factory   = crc_calc_factory;
+  std::shared_ptr<modulation_mapper_factory>       pdsch_mod_mapper_factory = mod_factory;
   if (metric_notifier) {
     std::shared_ptr<channel_precoder_factory> pdsch_precoding_factory = precoding_factory;
     pdsch_precoding_factory = create_channel_precoder_metric_decorator_factory(
@@ -816,6 +877,10 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                                     metric_notifier->get_ldpc_encoder_notifier());
     report_fatal_error_if_not(ldpc_enc_factory, "Invalid LDPC encoder factory.");
 
+    ldpc_rm_factory = create_ldpc_rate_matcher_metric_decorator_factory(
+        std::move(ldpc_rm_factory), metric_notifier->get_ldpc_rate_matcher_notifier());
+    report_fatal_error_if_not(ldpc_enc_factory, "Invalid LDPC rate matcher factory.");
+
     pdsch_scrambling_factory = create_pseudo_random_generator_metric_decorator_factory(
         std::move(pdsch_scrambling_factory), metric_notifier->get_pdsch_scrambling_notifier());
     report_fatal_error_if_not(ldpc_enc_factory, "Invalid PDSCH scrambling factory.");
@@ -823,16 +888,16 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
     pdsch_crc_calc_factory = create_crc_calculator_metric_decorator_factory(
         std::move(pdsch_crc_calc_factory), metric_notifier->get_pdsch_crc_calculator_notifier());
     report_fatal_error_if_not(pdsch_crc_calc_factory, "Invalid PDSCH CRC calculator factory.");
+
+    pdsch_mod_mapper_factory = create_modulation_mapper_metric_decorator_factory(
+        std::move(pdsch_mod_mapper_factory), metric_notifier->get_pdsch_modulation_mapper_notifier());
+    report_fatal_error_if_not(pdsch_mod_mapper_factory, "Invalid PDSCH modulation mapper factory.");
   }
 
   // Create channel coding factories - LDPC
   std::shared_ptr<ldpc_segmenter_tx_factory> ldpc_seg_tx_factory =
       create_ldpc_segmenter_tx_factory_sw(pdsch_crc_calc_factory);
   report_fatal_error_if_not(ldpc_seg_tx_factory, "Invalid LDPC segmenter factory.");
-
-  // Create modulation mapper factory.
-  std::shared_ptr<channel_modulation_factory> mod_factory = create_channel_modulation_sw_factory();
-  report_fatal_error_if_not(mod_factory, "Invalid modulation factory.");
 
   // Create channel processors encoder factories - PBCH
   std::shared_ptr<pbch_encoder_factory> pbch_enc_factory =
@@ -874,7 +939,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
   // Create channel processors modulation factories - PDSCH
   std::shared_ptr<pdsch_modulator_factory> pdsch_mod_factory =
-      create_pdsch_modulator_factory_sw(mod_factory, pdsch_scrambling_factory, pdsch_rg_mapper_factory);
+      create_pdsch_modulator_factory_sw(pdsch_mod_mapper_factory, pdsch_scrambling_factory, pdsch_rg_mapper_factory);
   report_fatal_error_if_not(pdsch_mod_factory, "Invalid PDSCH modulation factory.");
 
   // Create DMRS generators - PBCH, PSS, SSS
@@ -888,15 +953,22 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   std::shared_ptr<sss_processor_factory> sss_proc_factory = create_sss_processor_factory_sw();
   report_fatal_error_if_not(sss_proc_factory, "Invalid SSS factory.");
 
-  // Create DMRS generators - PDCCH
+  // Create PDCCH DM-RS generators.
   std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_pdcch_proc_factory =
       create_dmrs_pdcch_processor_factory_sw(prg_factory, rg_mapper_factory);
   report_fatal_error_if_not(dmrs_pdcch_proc_factory, "Invalid DMRS PDCCH factory.");
 
-  // Create DMRS generators - PDSCH
+  // Create PDSCH DM-RS generator.
   std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_pdsch_proc_factory =
       create_dmrs_pdsch_processor_factory_sw(prg_factory, rg_mapper_factory);
   report_fatal_error_if_not(dmrs_pdsch_proc_factory, "Invalid DMRS PDSCH factory.");
+
+  // Wrap DM-RS for PDSCH factory with a metric decorator.
+  if (metric_notifier) {
+    dmrs_pdsch_proc_factory = create_dmrs_pdsch_generator_metric_decorator_factory(
+        std::move(dmrs_pdsch_proc_factory), metric_notifier->get_pdsch_dmrs_generator());
+    report_fatal_error_if_not(dmrs_pdsch_proc_factory, "Invalid metric DM-RS PDSCH generator factory.");
+  }
 
   // Create PTRS generators - PDSCH
   std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_pdsch_gen_factory =
@@ -910,9 +982,11 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
 
   // Create channel processors - PDSCH
   std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory;
+  unsigned                                 max_nof_asynchronous_pdsch = 0;
   if (std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory = create_pdsch_processor_factory_sw(
         pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory, ptrs_pdsch_gen_factory);
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid generic PDSCH processor factory.");
   } else if (std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
     const pdsch_processor_concurrent_configuration& pdsch_processor_config =
         std::get<pdsch_processor_concurrent_configuration>(config.pdsch_processor);
@@ -921,6 +995,8 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
     report_fatal_error_if_not(pdsch_processor_config.pdsch_codeblock_task_executor != nullptr,
                               "Invalid codeblock executor.");
 
+    max_nof_asynchronous_pdsch = pdsch_processor_config.max_nof_simultaneous_pdsch;
+
     // Create concurrent PDSCH processor factory base.
     pdsch_proc_factory =
         create_pdsch_concurrent_processor_factory_sw(ldpc_seg_tx_factory,
@@ -928,27 +1004,37 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
                                                      ldpc_rm_factory,
                                                      pdsch_scrambling_factory,
                                                      pdsch_rg_mapper_factory,
-                                                     mod_factory,
+                                                     pdsch_mod_mapper_factory,
                                                      dmrs_pdsch_proc_factory,
                                                      ptrs_pdsch_gen_factory,
                                                      *pdsch_processor_config.pdsch_codeblock_task_executor,
                                                      pdsch_processor_config.nof_pdsch_codeblock_threads);
-    report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
-
-    // Wrap PDSCH processor factory with a PDSCH processor asynchronous pool.
-    pdsch_proc_factory = create_pdsch_processor_asynchronous_pool(std::move(pdsch_proc_factory),
-                                                                  pdsch_processor_config.max_nof_simultaneous_pdsch);
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid concurrent PDSCH processor factory.");
   } else if (std::holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory = create_pdsch_lite_processor_factory_sw(ldpc_seg_tx_factory,
                                                                 ldpc_enc_factory,
                                                                 ldpc_rm_factory,
                                                                 pdsch_scrambling_factory,
-                                                                mod_factory,
+                                                                pdsch_mod_mapper_factory,
                                                                 dmrs_pdsch_proc_factory,
                                                                 ptrs_pdsch_gen_factory,
                                                                 pdsch_rg_mapper_factory);
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid lite PDSCH processor factory.");
   }
-  report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
+
+  // Wrap PDSCH processor factory with a metric decorator.
+  if (metric_notifier) {
+    pdsch_proc_factory = create_pdsch_processor_metric_decorator_factory(
+        std::move(pdsch_proc_factory), metric_notifier->get_pdsch_processor_notifier());
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid metric PDSCH processor factory.");
+  }
+
+  // Wrap PDSCH processor factory with a PDSCH processor asynchronous pool if necessary.
+  if (max_nof_asynchronous_pdsch != 0) {
+    pdsch_proc_factory =
+        create_pdsch_processor_asynchronous_pool(std::move(pdsch_proc_factory), max_nof_asynchronous_pdsch);
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
+  }
 
   // Create channel processors - SSB
   ssb_processor_factory_sw_configuration ssb_factory_config;

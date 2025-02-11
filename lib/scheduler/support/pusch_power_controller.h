@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../ue_context/ue_channel_state_manager.h"
+#include "srsran/adt/circular_array.h"
 
 namespace srsran {
 

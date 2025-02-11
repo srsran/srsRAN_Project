@@ -64,10 +64,10 @@ public:
   }
 
   // See interface for documentation.
-  bool set_tx_cfo(unsigned port_id, float cfo_hz) override;
+  bool set_tx_cfo(unsigned port_id, const cfo_compensation_request& cfo_request) override;
 
   // See interface for documentation.
-  bool set_rx_cfo(unsigned port_id, float cfo_hz) override;
+  bool set_rx_cfo(unsigned port_id, const cfo_compensation_request& cfo_request) override;
 };
 
 /// Radio Unit controller generic implementation.

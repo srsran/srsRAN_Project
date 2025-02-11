@@ -112,7 +112,8 @@ std::unique_ptr<mac_fapi_adaptor> mac_fapi_adaptor_factory_impl::create(const ma
     // Create FAPI decorators configuration.
     fapi::decorator_config decorator_cfg;
     if (sector_cfg.log_level == srslog::basic_levels::debug) {
-      decorator_cfg.logging_cfg.emplace(fapi::logging_decorator_config{srslog::fetch_basic_logger("FAPI", true),
+      decorator_cfg.logging_cfg.emplace(fapi::logging_decorator_config{i,
+                                                                       srslog::fetch_basic_logger("FAPI", true),
                                                                        *sector_dependencies.gateway,
                                                                        *sector_dependencies.last_msg_notifier});
     }
@@ -120,7 +121,8 @@ std::unique_ptr<mac_fapi_adaptor> mac_fapi_adaptor_factory_impl::create(const ma
       srsran_assert(sector_dependencies.bufferer_task_executor,
                     "Invalid executor for the FAPI message bufferer decorator");
       decorator_cfg.bufferer_cfg.emplace(
-          fapi::message_bufferer_decorator_config{sector_cfg.l2_nof_slots_ahead,
+          fapi::message_bufferer_decorator_config{i,
+                                                  sector_cfg.l2_nof_slots_ahead,
                                                   sector_cfg.scs,
                                                   *sector_dependencies.bufferer_task_executor.value(),
                                                   *sector_dependencies.gateway,

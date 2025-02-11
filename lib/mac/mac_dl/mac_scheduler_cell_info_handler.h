@@ -56,6 +56,13 @@ public:
   /// \param[in] new_payload_size Size of the SIB1 PDU payload.
   virtual void
   handle_sib1_update_indication(du_cell_index_t cell_index, unsigned sib_version, units::bytes new_payload_size) = 0;
+
+  /// \brief Handle request to measure the metrics related with a UE position.
+  /// \param[in] cell_index Index of the cell for which the measurement is directed.
+  /// \param[in] req Request to measure a UE position.
+  virtual async_task<mac_cell_positioning_measurement_response>
+  handle_positioning_measurement_request(du_cell_index_t                                 cell_index,
+                                         const mac_cell_positioning_measurement_request& req) = 0;
 };
 
 } // namespace srsran

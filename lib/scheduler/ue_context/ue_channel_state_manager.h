@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/circular_array.h"
 #include "srsran/ran/csi_report/csi_report_data.h"
 #include "srsran/ran/logical_channel/phr_report.h"
 #include "srsran/ran/phy_time_unit.h"
@@ -33,7 +32,7 @@
 #include "srsran/scheduler/resource_grid_util.h"
 #include "srsran/scheduler/result/pdsch_info.h"
 #include "srsran/srslog/logger.h"
-#include "srsran/support/math/accumulators.h"
+#include "srsran/support/math/exponential_averager.h"
 
 namespace srsran {
 

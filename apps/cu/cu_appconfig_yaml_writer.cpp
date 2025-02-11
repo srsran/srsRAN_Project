@@ -33,6 +33,13 @@ static void fill_cu_appconfig_buffer_pool_section(YAML::Node node, const buffer_
   node["segment_size"] = config.segment_size;
 }
 
+static void fill_cu_appconfig_remote_control_section(YAML::Node node, const remote_control_appconfig& config)
+{
+  node["enabled"]      = config.enabled;
+  node["bind_address"] = config.bind_addr;
+  node["port"]         = config.port;
+}
+
 static void fill_cu_appconfig_f1ap_section(YAML::Node node, const srs_cu::cu_f1ap_appconfig& config)
 {
   YAML::Node cu_cp_node     = node["cu_cp"];
@@ -50,6 +57,7 @@ void srsran::fill_cu_appconfig_in_yaml_schema(YAML::Node& node, const cu_appconf
 {
   fill_logger_appconfig_in_yaml_schema(node, config.log_cfg);
   fill_cu_appconfig_buffer_pool_section(node["buffer_pool"], config.buffer_pool_config);
+  fill_cu_appconfig_remote_control_section(node["remote_control"], config.remote_control_config);
   fill_cu_appconfig_f1ap_section(node, config.f1ap_cfg);
   fill_cu_appconfig_f1u_section(node, config.f1u_cfg);
 }

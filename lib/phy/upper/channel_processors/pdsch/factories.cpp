@@ -96,12 +96,12 @@ public:
 class pdsch_modulator_factory_sw : public pdsch_modulator_factory
 {
 private:
-  std::shared_ptr<channel_modulation_factory>      modulator_factory;
+  std::shared_ptr<modulation_mapper_factory>       modulator_factory;
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
   std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory;
 
 public:
-  pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory_,
+  pdsch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory_,
                              std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
                              std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_) :
     modulator_factory(std::move(modulator_factory_)),
@@ -116,7 +116,7 @@ public:
   std::unique_ptr<pdsch_modulator> create() override
   {
     return std::make_unique<pdsch_modulator_impl>(
-        modulator_factory->create_modulation_mapper(), prg_factory->create(), rg_mapper_factory->create());
+        modulator_factory->create(), prg_factory->create(), rg_mapper_factory->create());
   }
 };
 
@@ -164,7 +164,7 @@ public:
                                         std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory,
                                         std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
                                         std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_,
-                                        std::shared_ptr<channel_modulation_factory>      modulator_factory,
+                                        std::shared_ptr<modulation_mapper_factory>       modulator_factory,
                                         std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
                                         std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory,
                                         task_executor&                                   executor_,
@@ -187,11 +187,10 @@ public:
     // Create vector of codeblock processors.
     std::vector<std::unique_ptr<pdsch_codeblock_processor>> cb_processors;
     for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
-      cb_processors.emplace_back(
-          std::make_unique<pdsch_codeblock_processor>(encoder_factory->create(),
-                                                      rate_matcher_factory->create(),
-                                                      prg_factory->create(),
-                                                      modulator_factory->create_modulation_mapper()));
+      cb_processors.emplace_back(std::make_unique<pdsch_codeblock_processor>(encoder_factory->create(),
+                                                                             rate_matcher_factory->create(),
+                                                                             prg_factory->create(),
+                                                                             modulator_factory->create()));
     }
 
     // Create pool of codeblock processors. It is common for all PDSCH processors.
@@ -252,7 +251,7 @@ private:
   std::shared_ptr<ldpc_encoder_factory>            encoder_factory;
   std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory;
   std::shared_ptr<pseudo_random_generator_factory> scrambler_factory;
-  std::shared_ptr<channel_modulation_factory>      modulator_factory;
+  std::shared_ptr<modulation_mapper_factory>       modulator_factory;
   std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory;
   std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory;
   std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory;
@@ -262,7 +261,7 @@ public:
                                   std::shared_ptr<ldpc_encoder_factory>            encoder_factory_,
                                   std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory_,
                                   std::shared_ptr<pseudo_random_generator_factory> scrambler_factory_,
-                                  std::shared_ptr<channel_modulation_factory>      modulator_factory_,
+                                  std::shared_ptr<modulation_mapper_factory>       modulator_factory_,
                                   std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory_,
                                   std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory_,
                                   std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_) :
@@ -291,7 +290,7 @@ public:
                                                        encoder_factory->create(),
                                                        rate_matcher_factory->create(),
                                                        scrambler_factory->create(),
-                                                       modulator_factory->create_modulation_mapper(),
+                                                       modulator_factory->create(),
                                                        dmrs_factory->create(),
                                                        ptrs_factory->create(),
                                                        rg_mapper_factory->create());
@@ -409,7 +408,7 @@ srsran::create_pdsch_encoder_factory_hw(const pdsch_encoder_factory_hw_configura
 }
 
 std::shared_ptr<pdsch_modulator_factory>
-srsran::create_pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
+srsran::create_pdsch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory,
                                           std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                           std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory)
 {
@@ -433,7 +432,7 @@ srsran::create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<ldpc_segmen
                                                      std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rm_factory,
                                                      std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                                      std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory,
-                                                     std::shared_ptr<channel_modulation_factory>      modulator_factory,
+                                                     std::shared_ptr<modulation_mapper_factory>       modulator_factory,
                                                      std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
                                                      std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory,
                                                      task_executor&                                   executor,
@@ -456,7 +455,7 @@ srsran::create_pdsch_lite_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx
                                                std::shared_ptr<ldpc_encoder_factory>            encoder_factory,
                                                std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory,
                                                std::shared_ptr<pseudo_random_generator_factory> scrambler_factory,
-                                               std::shared_ptr<channel_modulation_factory>      modulator_factory,
+                                               std::shared_ptr<modulation_mapper_factory>       modulator_factory,
                                                std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
                                                std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory,
                                                std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory)

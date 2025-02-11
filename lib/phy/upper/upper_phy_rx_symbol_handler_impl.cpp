@@ -34,15 +34,17 @@
 
 using namespace srsran;
 
-upper_phy_rx_symbol_handler_impl::upper_phy_rx_symbol_handler_impl(
-    uplink_processor_pool&         ul_processor_pool_,
-    uplink_slot_pdu_repository&    ul_pdu_repository_,
-    rx_buffer_pool&                rm_buffer_pool_,
-    upper_phy_rx_results_notifier& rx_results_notifier_) :
+upper_phy_rx_symbol_handler_impl::upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool_,
+                                                                   uplink_slot_pdu_repository&    ul_pdu_repository_,
+                                                                   rx_buffer_pool&                rm_buffer_pool_,
+                                                                   upper_phy_rx_results_notifier& rx_results_notifier_,
+                                                                   unsigned                       max_nof_prb,
+                                                                   unsigned                       max_nof_layers) :
   ul_processor_pool(ul_processor_pool_),
   ul_pdu_repository(ul_pdu_repository_),
   rm_buffer_pool(rm_buffer_pool_),
-  rx_results_notifier(rx_results_notifier_)
+  rx_results_notifier(rx_results_notifier_),
+  rx_payload_pool(max_nof_prb, max_nof_layers)
 {
 }
 

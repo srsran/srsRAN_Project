@@ -37,6 +37,9 @@ public:
   // See interface for documentation.
   void report_metrics(const pdcp_metrics_container& metrics) override;
 
+  // See interface for documentation.
+  void on_new_report_period() override {}
+
 private:
   app_services::metrics_notifier& notifier;
 };

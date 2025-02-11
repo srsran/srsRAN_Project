@@ -16,20 +16,11 @@
                     "test_timeout": {
                         "type": "integer"
                     },
-                    "gnb_extra_commands": {
-                        "type": "string"
+                    "gnb_extra_config": {
+                        "type": "object"
                     },
                     "id": {
                         "type": "string"
-                    },
-                    "max_pdschs_per_slot": {
-                        "type": "integer"
-                    },
-                    "max_puschs_per_slot": {
-                        "type": "integer"
-                    },
-                    "enable_qos_viavi": {
-                        "type": "boolean"
                     },
                     "expected_dl_bitrate": {
                         "type": "integer"
@@ -43,15 +34,6 @@
                     "warning_as_errors": {
                         "type": "boolean"
                     },
-                    "enable_dddsu": {
-                        "type": "boolean"
-                    },
-                    "ul_heavy_7u2d": {
-                        "type": "boolean"
-                    },
-                    "ul_heavy_6u3d": {
-                        "type": "boolean"
-                    },
                     "warning_allowlist": {
                         "type": "array",
                         "items": {
@@ -60,14 +42,11 @@
                     }
                 },
                 "required": [
+                    "id",
                     "campaign_filename",
                     "test_name",
                     "test_timeout",
-                    "gnb_extra_commands",
-                    "id",
-                    "max_pdschs_per_slot",
-                    "max_puschs_per_slot",
-                    "enable_qos_viavi",
+                    "gnb_extra_config",
                     "expected_dl_bitrate",
                     "expected_ul_bitrate",
                     "expected_nof_kos",

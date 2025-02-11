@@ -24,9 +24,10 @@
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
+#include "apps/services/cmdline/cmdline_command_dispatcher.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
-#include "apps/services/stdin_command_dispatcher.h"
+#include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
 #include "apps/units/o_cu_cp/o_cu_cp_application_unit.h"
@@ -375,8 +376,8 @@ int main(int argc, char** argv)
   srs_cu_cp::o_cu_cp& o_cucp_obj  = *o_cucp_unit.unit;
 
   // Create console helper object for commands and metrics printing.
-  app_services::stdin_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands);
+  app_services::cmdline_command_dispatcher command_parser(
+      *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands.cmdline);
   std::vector<app_services::metrics_config> metrics_configs = std::move(o_cucp_unit.metrics);
 
   // Connect E1AP to O-CU-CP.
@@ -417,12 +418,20 @@ int main(int argc, char** argv)
   metrics_notifier_forwarder.connect(metrics_mngr);
 
   o_cuup_unit.unit->get_operation_controller().start();
+
+  std::unique_ptr<app_services::remote_server> remote_control_server =
+      app_services::create_remote_server(cu_cfg.remote_control_config, {});
+
   {
     app_services::application_message_banners app_banner(app_name);
 
     while (is_app_running) {
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
+  }
+
+  if (remote_control_server) {
+    remote_control_server->stop();
   }
 
   // Stop O-CU-UP activity.

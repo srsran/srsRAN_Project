@@ -69,8 +69,8 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t c
       while (dl_slice_candidate.has_value()) {
         auto&                           policy = cells[cell_index].slice_sched.get_policy(dl_slice_candidate->id());
         dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{ue_alloc, *dl_slice_candidate};
-        policy.dl_sched(
-            slice_pdsch_alloc, ue_res_grid_view, *dl_slice_candidate, cells[cell_index].cell_harqs.pending_dl_retxs());
+        policy.dl_sched(dl_sched_context{
+            slice_pdsch_alloc, ue_res_grid_view, *dl_slice_candidate, cells[cell_index].cell_harqs.pending_dl_retxs()});
         dl_slice_candidate = cells[cell_index].slice_sched.get_next_dl_candidate();
       }
     }
@@ -79,8 +79,8 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t c
     while (ul_slice_candidate.has_value()) {
       auto&                           policy = cells[cell_index].slice_sched.get_policy(ul_slice_candidate->id());
       ul_slice_ue_cell_grid_allocator slice_pusch_alloc{ue_alloc, *ul_slice_candidate};
-      policy.ul_sched(
-          slice_pusch_alloc, ue_res_grid_view, *ul_slice_candidate, cells[cell_index].cell_harqs.pending_ul_retxs());
+      policy.ul_sched(ul_sched_context{
+          slice_pusch_alloc, ue_res_grid_view, *ul_slice_candidate, cells[cell_index].cell_harqs.pending_ul_retxs()});
       ul_slice_candidate = cells[cell_index].slice_sched.get_next_ul_candidate();
     }
   }

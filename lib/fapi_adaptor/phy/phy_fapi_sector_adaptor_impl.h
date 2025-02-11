@@ -44,6 +44,8 @@ struct phy_fapi_sector_adaptor_impl_config {
   unsigned sector_id;
   /// Request headroom size in slots.
   unsigned nof_slots_request_headroom;
+  /// Allows to request uplink on empty UL_TTI.request.
+  bool allow_request_on_empty_ul_tti;
   /// Subcarrier spacing as per TS38.211 Section 4.2.
   subcarrier_spacing scs;
   /// Common subcarrier spacing, as per TS38.331 Section 6.2.2.

@@ -89,13 +89,14 @@ std::unique_ptr<phy_fapi_adaptor> phy_fapi_adaptor_factory_impl::create(const ph
     auto&       sector_dependencies = dependencies.sectors[i];
 
     phy_fapi_sector_adaptor_impl_config adaptor_config;
-    adaptor_config.sector_id                  = sector_cfg.sector_id;
-    adaptor_config.nof_slots_request_headroom = sector_cfg.nof_slots_request_headroom;
-    adaptor_config.scs                        = sector_cfg.du_cell.scs_common;
-    adaptor_config.scs_common                 = sector_cfg.du_cell.scs_common;
-    adaptor_config.prach_cfg                  = generate_prach_config_tlv(sector_cfg.du_cell);
-    adaptor_config.carrier_cfg                = generate_carrier_config_tlv(sector_cfg.du_cell);
-    adaptor_config.prach_ports                = sector_cfg.prach_ports;
+    adaptor_config.sector_id                     = sector_cfg.sector_id;
+    adaptor_config.nof_slots_request_headroom    = sector_cfg.nof_slots_request_headroom;
+    adaptor_config.allow_request_on_empty_ul_tti = sector_cfg.allow_request_on_empty_ul_tti;
+    adaptor_config.scs                           = sector_cfg.du_cell.scs_common;
+    adaptor_config.scs_common                    = sector_cfg.du_cell.scs_common;
+    adaptor_config.prach_cfg                     = generate_prach_config_tlv(sector_cfg.du_cell);
+    adaptor_config.carrier_cfg                   = generate_carrier_config_tlv(sector_cfg.du_cell);
+    adaptor_config.prach_ports                   = sector_cfg.prach_ports;
 
     phy_fapi_sector_adaptor_impl_dependencies adaptor_dependencies;
     adaptor_dependencies.logger               = sector_dependencies.logger;

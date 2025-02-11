@@ -65,7 +65,7 @@ protected:
     if (factory) {
       return;
     }
-    factory = create_channel_modulation_sw_factory();
+    factory = create_demodulation_mapper_factory();
     ASSERT_NE(factory, nullptr);
   }
 
@@ -76,7 +76,7 @@ protected:
 
     // Create a demodulator.
     test_case_t test_case = GetParam();
-    demodulator           = factory->create_demodulation_mapper();
+    demodulator           = factory->create();
     ASSERT_NE(demodulator, nullptr);
 
     // Read test input and output.
@@ -97,15 +97,15 @@ protected:
     ASSERT_EQ(soft_bits_expected.size(), nof_bits) << "Error reading soft bits.";
   }
 
-  static std::shared_ptr<channel_modulation_factory> factory;
-  std::unique_ptr<demodulation_mapper>               demodulator        = nullptr;
-  std::vector<cf_t>                                  symbols            = {};
-  std::vector<float>                                 noise_var          = {};
-  std::vector<log_likelihood_ratio>                  soft_bits_expected = {};
-  modulation_scheme                                  mod                = {};
+  static std::shared_ptr<demodulation_mapper_factory> factory;
+  std::unique_ptr<demodulation_mapper>                demodulator        = nullptr;
+  std::vector<cf_t>                                   symbols            = {};
+  std::vector<float>                                  noise_var          = {};
+  std::vector<log_likelihood_ratio>                   soft_bits_expected = {};
+  modulation_scheme                                   mod                = {};
 };
 
-std::shared_ptr<channel_modulation_factory> DemodulatorFixture::factory = nullptr;
+std::shared_ptr<demodulation_mapper_factory> DemodulatorFixture::factory = nullptr;
 
 TEST_P(DemodulatorFixture, DemodulatorTest)
 {

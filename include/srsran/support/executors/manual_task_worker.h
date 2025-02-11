@@ -32,8 +32,11 @@ namespace srsran {
 class manual_task_worker : public task_executor
 {
 public:
-  manual_task_worker(size_t q_size, bool blocking_mode_ = true) :
-    t_id(std::this_thread::get_id()), pending_tasks(q_size), blocking_mode(blocking_mode_)
+  manual_task_worker(size_t q_size, bool blocking_mode_ = true, bool explicit_mode_ = false) :
+    t_id(std::this_thread::get_id()),
+    pending_tasks(q_size),
+    blocking_mode(blocking_mode_),
+    explicit_mode(explicit_mode_)
   {
   }
 
@@ -41,7 +44,7 @@ public:
 
   [[nodiscard]] bool execute(unique_task task) override
   {
-    if (std::this_thread::get_id() == t_id) {
+    if (std::this_thread::get_id() == t_id and not explicit_mode) {
       task();
       return true;
     }
@@ -128,6 +131,7 @@ private:
   std::thread::id             t_id;
   blocking_queue<unique_task> pending_tasks;
   bool                        blocking_mode;
+  bool                        explicit_mode;
 };
 
 } // namespace srsran

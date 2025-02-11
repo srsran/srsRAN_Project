@@ -108,6 +108,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   std::for_each(odu_hi_unit.metrics.begin(), odu_hi_unit.metrics.end(), [&](auto& e) {
     o_du.metrics.emplace_back(std::move(e));
   });
+
   o_du.commands = std::move(odu_hi_unit.commands);
 
   auto odu_instance = make_o_du(std::move(odu_hi_unit.o_du_hi), std::move(odu_lo_unit.o_du_lo));
@@ -125,19 +126,19 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
 
   srsran_assert(ru, "Invalid Radio Unit");
 
-  // Add RU commands.
-  o_du.commands.push_back(std::make_unique<change_log_level_app_command>());
-  o_du.commands.push_back(std::make_unique<ru_metrics_app_command>(ru->get_controller()));
+  // Add RU command-line commands.
+  o_du.commands.cmdline.push_back(std::make_unique<change_log_level_app_command>());
+  o_du.commands.cmdline.push_back(std::make_unique<ru_metrics_app_command>(ru->get_controller()));
 
   // Create the RU gain commands.
   if (auto* controller = ru->get_controller().get_gain_controller()) {
-    o_du.commands.push_back(std::make_unique<tx_gain_app_command>(*controller));
-    o_du.commands.push_back(std::make_unique<rx_gain_app_command>(*controller));
+    o_du.commands.cmdline.push_back(std::make_unique<tx_gain_app_command>(*controller));
+    o_du.commands.cmdline.push_back(std::make_unique<rx_gain_app_command>(*controller));
   }
 
   // Create the RU CFO command.
   if (auto* controller = ru->get_controller().get_cfo_controller()) {
-    o_du.commands.push_back(std::make_unique<cfo_app_command>(*controller));
+    o_du.commands.cmdline.push_back(std::make_unique<cfo_app_command>(*controller));
   }
 
   // Configure the RU and DU in the dynamic DU.

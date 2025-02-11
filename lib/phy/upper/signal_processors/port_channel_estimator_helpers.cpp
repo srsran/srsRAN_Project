@@ -409,31 +409,33 @@ static span<cf_t> extract_re_prb(span<cf_t> out, const bounded_bitset<NRE>& re_m
   }
 
   if ((re_mask == re_pattern_pusch_0) || (re_mask == re_pattern_pusch_1)) {
+    // Shuffle indices.
+    static constexpr std::array<uint8_t, 32> idx = {
+        0xff, 0xff, 0x00, 0x01, 0xff, 0xff, 0x02, 0x03, // 0 - 7
+        0xff, 0xff, 0x08, 0x09, 0xff, 0xff, 0x0a, 0x0b, // 8 - 15
+        0xff, 0xff, 0x10, 0x01, 0xff, 0xff, 0x12, 0x13, // 16 - 23
+        0xff, 0xff, 0x18, 0x19, 0xff, 0xff, 0x1a, 0x1b, // 24 - 31
+    };
+
     unsigned nof_dmrs = nof_prb * 6;
     unsigned i_dmrs   = 0;
     unsigned offset   = (re_mask == re_pattern_pusch_1) ? 1 : 0;
     for (unsigned end = (nof_dmrs / 4) * 4; i_dmrs != end; i_dmrs += 4) {
-      __m128i data_idx = _mm_setr_epi32(0, 2, 4, 6);
+      // Load 8 contiguous RE in Complex BF16.
+      __m256i data_cbf16 = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(in.data() + 2 * i_dmrs + offset));
 
-      // Gather data RE as 32-bit unsigned integers.
-      __m128i data_cbf16 =
-          _mm_i32gather_epi32(reinterpret_cast<const int*>(in.data() + 2 * i_dmrs + offset), data_idx, 4);
-
-      // Convert to single precision.
-      __m128i data_ps_lo = _mm_unpacklo_epi16(_mm_setzero_si128(), data_cbf16);
-      __m128i data_ps_hi = _mm_unpackhi_epi16(_mm_setzero_si128(), data_cbf16);
-      __m256i data_si256 = _mm256_set_m128i(data_ps_hi, data_ps_lo);
+      // Shuffle the contiguous RE from Complex BF16 to single-precision FP, discarding the unwanted REs.
+      __m256i data_cf =
+          _mm256_shuffle_epi8(data_cbf16, _mm256_loadu_si256(reinterpret_cast<const __m256i*>(idx.data())));
 
       // Store DM-RS REs.
-      _mm256_storeu_si256(reinterpret_cast<__m256i*>(out.data() + i_dmrs), data_si256);
+      _mm256_storeu_si256(reinterpret_cast<__m256i*>(out.data() + i_dmrs), data_cf);
     }
 
     if (i_dmrs != nof_dmrs) {
-      __m128i data_idx = _mm_setr_epi32(0, 2, 2, 2);
-      __m128i data_cbf16 =
-          _mm_i32gather_epi32(reinterpret_cast<const int*>(in.data() + 2 * i_dmrs + offset), data_idx, 4);
-      __m128i data_ps_lo = _mm_unpacklo_epi16(_mm_setzero_si128(), data_cbf16);
-      _mm_storeu_si128(reinterpret_cast<__m128i*>(out.data() + i_dmrs), data_ps_lo);
+      __m128i data_cbf16 = _mm_loadu_si128(reinterpret_cast<const __m128i*>(in.data() + 2 * i_dmrs + offset));
+      __m128i data_cf    = _mm_shuffle_epi8(data_cbf16, _mm_loadu_si128(reinterpret_cast<const __m128i*>(idx.data())));
+      _mm_storeu_si128(reinterpret_cast<__m128i*>(out.data() + i_dmrs), data_cf);
     }
 
     return out.last(out.size() - nof_dmrs);

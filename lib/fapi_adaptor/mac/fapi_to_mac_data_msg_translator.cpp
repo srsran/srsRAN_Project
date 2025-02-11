@@ -322,7 +322,17 @@ void fapi_to_mac_data_msg_translator::on_srs_indication(const fapi::srs_indicati
     mac_srs_pdu& mac_pdu        = mac_msg.srss.emplace_back();
     mac_pdu.rnti                = pdu.rnti;
     mac_pdu.time_advance_offset = convert_fapi_to_mac_ta_offset(pdu.timing_advance_offset_ns);
-    mac_pdu.channel_matrix      = pdu.matrix;
+    switch (pdu.report_type) {
+      case fapi::srs_report_type::normalized_channel_iq_matrix:
+        mac_pdu.report = mac_srs_pdu::normalized_channel_iq_matrix{pdu.matrix};
+        break;
+      case fapi::srs_report_type::positioning:
+        mac_pdu.report = mac_srs_pdu::positioning_report{pdu.positioning.ul_relative_toa};
+        break;
+      default:
+        srsran_assert(0, "Unsupported SRS report type '{}'", fapi::to_value(pdu.report_type));
+        break;
+    }
   }
 
   cell_control_handler.get().handle_srs(mac_msg);

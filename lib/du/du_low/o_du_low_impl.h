@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "o_du_low_metrics_collector_impl.h"
 #include "srsran/du/du_low/du_low.h"
 #include "srsran/du/du_low/o_du_low.h"
 #include "srsran/du/du_operation_controller.h"
@@ -48,12 +49,16 @@ public:
   fapi_adaptor::phy_fapi_adaptor& get_phy_fapi_adaptor() override;
 
   // See interface for documentation.
+  o_du_low_metrics_collector& get_metrics_collector() override { return metrics_collector; }
+
+  // See interface for documentation.
   void start() override;
 
   // See interface for documentation.
   void stop() override;
 
 private:
+  o_du_low_metrics_collector_impl                 metrics_collector;
   std::unique_ptr<du_low>                         du_lo;
   std::unique_ptr<fapi_adaptor::phy_fapi_adaptor> fapi_adaptor;
 };

@@ -45,13 +45,14 @@ generate_fapi_to_phy_translator_config(const phy_fapi_sector_adaptor_impl_config
 {
   fapi_to_phy_translator_config fapi_config;
 
-  fapi_config.sector_id                  = config.sector_id;
-  fapi_config.nof_slots_request_headroom = config.nof_slots_request_headroom;
-  fapi_config.scs                        = config.scs;
-  fapi_config.scs_common                 = config.scs_common;
-  fapi_config.prach_cfg                  = config.prach_cfg;
-  fapi_config.carrier_cfg                = config.carrier_cfg;
-  fapi_config.prach_ports                = config.prach_ports;
+  fapi_config.sector_id                     = config.sector_id;
+  fapi_config.nof_slots_request_headroom    = config.nof_slots_request_headroom;
+  fapi_config.allow_request_on_empty_ul_tti = config.allow_request_on_empty_ul_tti;
+  fapi_config.scs                           = config.scs;
+  fapi_config.scs_common                    = config.scs_common;
+  fapi_config.prach_cfg                     = config.prach_cfg;
+  fapi_config.carrier_cfg                   = config.carrier_cfg;
+  fapi_config.prach_ports                   = config.prach_ports;
 
   return fapi_config;
 }

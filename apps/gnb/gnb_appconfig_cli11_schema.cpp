@@ -24,6 +24,7 @@
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
 #include "apps/services/hal/hal_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_schema.h"
+#include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_cli11_schema.h"
 #include "gnb_appconfig.h"
 #include "srsran/support/cli11_utils.h"
@@ -71,6 +72,9 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // HAL section.
   gnb_cfg.hal_config.emplace();
   configure_cli11_with_hal_appconfig_schema(app, *gnb_cfg.hal_config);
+
+  // Remote control section.
+  configure_cli11_with_remote_control_appconfig_schema(app, gnb_cfg.remote_control_config);
 }
 
 void srsran::autoderive_gnb_parameters_after_parsing(CLI::App& app, gnb_appconfig& config)

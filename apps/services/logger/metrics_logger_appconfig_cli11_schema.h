@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include <CLI/CLI11.hpp>
+#include "CLI/CLI11.hpp"
 
 namespace srsran {
 

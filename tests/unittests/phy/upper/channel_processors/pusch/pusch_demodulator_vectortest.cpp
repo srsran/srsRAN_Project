@@ -95,8 +95,11 @@ protected:
     std::shared_ptr<channel_equalizer_factory> equalizer_factory = create_channel_equalizer_generic_factory();
     ASSERT_TRUE(equalizer_factory);
 
-    std::shared_ptr<channel_modulation_factory> demod_factory = create_channel_modulation_sw_factory();
+    std::shared_ptr<demodulation_mapper_factory> demod_factory = create_demodulation_mapper_factory();
     ASSERT_TRUE(demod_factory);
+
+    std::shared_ptr<evm_calculator_factory> evm_calc_factory = create_evm_calculator_factory();
+    ASSERT_TRUE(evm_calc_factory);
 
     std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
     ASSERT_TRUE(prg_factory);
@@ -109,7 +112,7 @@ protected:
     ASSERT_TRUE(precoding_factory);
 
     std::shared_ptr<pusch_demodulator_factory> pusch_demod_factory = create_pusch_demodulator_factory_sw(
-        equalizer_factory, precoding_factory, demod_factory, prg_factory, MAX_RB, true, true);
+        equalizer_factory, precoding_factory, demod_factory, evm_calc_factory, prg_factory, MAX_RB, true);
     ASSERT_TRUE(pusch_demod_factory);
 
     // Create actual PUSCH demodulator.

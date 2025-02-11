@@ -295,6 +295,8 @@ struct upper_phy_config {
   unsigned ul_bw_rb;
   /// Request headroom size in slots.
   unsigned nof_slots_request_headroom;
+  /// Allow request on empty uplink slots.
+  bool allow_request_on_empty_uplink_slot;
   /// Maximum number of layers for PUSCH transmissions.
   unsigned pusch_max_nof_layers;
   /// List of active subcarrier spacing, indexed by numerology.

@@ -50,7 +50,8 @@ constexpr unsigned MAX_NUM_BUFFERED_MESSAGES = 8U;
 class message_bufferer_slot_gateway_impl
 {
 public:
-  message_bufferer_slot_gateway_impl(unsigned              l2_nof_slots_ahead_,
+  message_bufferer_slot_gateway_impl(unsigned              sector_id_,
+                                     unsigned              l2_nof_slots_ahead_,
                                      subcarrier_spacing    scs_,
                                      slot_message_gateway& gateway_);
 
@@ -96,6 +97,7 @@ private:
   void handle_message(T&& msg, P pool, Function func);
 
 private:
+  const unsigned                                                                   sector_id;
   const unsigned                                                                   l2_nof_slots_ahead;
   const subcarrier_spacing                                                         scs;
   slot_message_gateway&                                                            gateway;

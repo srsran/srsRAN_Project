@@ -99,7 +99,7 @@ private:
 class baseband_cfo_processor_spy : public lower_phy_cfo_controller
 {
 public:
-  bool schedule_cfo_command(time_point time, float cfo_Hz) override { return false; }
+  bool schedule_cfo_command(time_point time, float cfo_Hz, float cfo_drift_Hz_s) override { return false; }
 };
 
 class lower_phy_downlink_processor_spy : public lower_phy_downlink_processor

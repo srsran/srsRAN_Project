@@ -34,6 +34,7 @@
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/f1ap/f1ap_message.h"
+#include "srsran/ran/positioning/measurement_information.h"
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -48,7 +49,8 @@ f1ap_cu_impl::f1ap_cu_impl(const f1ap_configuration&   f1ap_cfg_,
   ue_ctxt_list(timer_factory{timers_, ctrl_exec_}, logger),
   du_processor_notifier(f1ap_du_processor_notifier_),
   ctrl_exec(ctrl_exec_),
-  tx_pdu_notifier(*this, tx_pdu_notifier_)
+  tx_pdu_notifier(*this, tx_pdu_notifier_),
+  ev_mng(timer_factory{timers_, ctrl_exec_})
 {
 }
 
@@ -178,6 +180,31 @@ void f1ap_cu_impl::remove_ue_context(ue_index_t ue_index)
   ue_ctxt_list.remove_ue(ue_index);
 }
 
+#ifndef SRSRAN_HAS_ENTERPRISE
+
+async_task<expected<trp_information_response_t, trp_information_failure_t>>
+f1ap_cu_impl::handle_trp_information_request(const trp_information_request_t& request)
+{
+  logger.info("TRP information requests are not supported");
+  return launch_async(
+      [](coro_context<async_task<expected<trp_information_response_t, trp_information_failure_t>>>& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_RETURN(make_unexpected(trp_information_failure_t{}));
+      });
+}
+
+async_task<expected<measurement_response_t, measurement_failure_t>>
+f1ap_cu_impl::handle_measurement_information_request(const measurement_request_t& request)
+{
+  logger.info("Measurement requests are not supported");
+  return launch_async([](coro_context<async_task<expected<measurement_response_t, measurement_failure_t>>>& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_RETURN(make_unexpected(measurement_failure_t{}));
+  });
+}
+
+#endif // SRSRAN_HAS_ENTERPRISE
+
 void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
@@ -197,10 +224,27 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
     case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::options::ue_context_release_request:
       handle_ue_context_release_request(msg.value.ue_context_release_request());
       break;
+    case asn1::f1ap::f1ap_elem_procs_o::init_msg_c::types_opts::options::gnb_du_cfg_upd:
+      handle_du_cfg_update(msg.value.gnb_du_cfg_upd());
+      break;
     default:
       logger.warning("Initiating message of type {} is not supported", msg.value.type().to_string());
       break;
   }
+}
+
+void f1ap_cu_impl::handle_du_cfg_update(const asn1::f1ap::gnb_du_cfg_upd_s& request)
+{
+  f1ap_message f1ap_msg;
+
+  // TODO: for now, always reply with a config update acknowledge.
+  f1ap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_GNB_DU_CFG_UPD);
+  auto& resp = f1ap_msg.pdu.successful_outcome().value.gnb_du_cfg_upd_ack();
+
+  resp->transaction_id = request->transaction_id;
+
+  // Send F1AP PDU to DU.
+  tx_pdu_notifier.on_new_message(f1ap_msg);
 }
 
 void f1ap_cu_impl::handle_f1_setup_request(const asn1::f1ap::f1_setup_request_s& request)
@@ -359,6 +403,8 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
     return ue_ctxt;
   };
 
+  std::optional<uint8_t> transaction_id = std::nullopt;
+
   switch (outcome.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete:
       if (auto* ue_ctxt = get_ue_ctxt_in_ue_assoc_msg(outcome)) {
@@ -373,6 +419,16 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
     case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_mod_resp:
       if (auto* ue_ctxt = get_ue_ctxt_in_ue_assoc_msg(outcome)) {
         ue_ctxt->ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_resp());
+      }
+      break;
+    case asn1::f1ap::f1ap_elem_procs_o::successful_outcome_c::types_opts::trp_info_resp:
+      transaction_id = get_transaction_id(outcome);
+      if (not transaction_id.has_value()) {
+        logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+        break;
+      }
+      if (not ev_mng.transactions.set_response(transaction_id.value(), outcome)) {
+        logger.warning("Unexpected transaction id={}", transaction_id.value());
       }
       break;
     default:
@@ -400,6 +456,8 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
     return ue_ctxt;
   };
 
+  std::optional<uint8_t> transaction_id = std::nullopt;
+
   switch (outcome.value.type().value) {
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_setup_fail:
       if (auto* ue_ctxt = get_ue_ctxt_in_ue_assoc_msg(outcome)) {
@@ -409,6 +467,16 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
     case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_mod_fail:
       if (auto* ue_ctxt = get_ue_ctxt_in_ue_assoc_msg(outcome)) {
         ue_ctxt->ev_mng.context_modification_outcome.set(outcome.value.ue_context_mod_fail());
+      }
+      break;
+    case asn1::f1ap::f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::trp_info_fail:
+      transaction_id = get_transaction_id(outcome);
+      if (not transaction_id.has_value()) {
+        logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
+        break;
+      }
+      if (not ev_mng.transactions.set_response(transaction_id.value(), make_unexpected(outcome))) {
+        logger.warning("Unexpected transaction id={}", transaction_id.value());
       }
       break;
     default:

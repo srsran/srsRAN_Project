@@ -32,7 +32,7 @@ namespace srsran {
 class phy_metrics_channel_precoder_decorator : public channel_precoder
 {
 public:
-  /// Creates a channel precoder decorator from a base instance and metric notifier.
+  /// Creates a channel precoder decorator from a base instance and a metric notifier.
   phy_metrics_channel_precoder_decorator(std::unique_ptr<channel_precoder> base_precoder_,
                                          channel_precoder_metric_notifier& notifier_) :
     base_precoder(std::move(base_precoder_)), notifier(notifier_)
@@ -46,13 +46,9 @@ public:
                        const precoding_weight_matrix& precoding) const override
   {
     auto tp_before = std::chrono::high_resolution_clock::now();
-
-    // Call base precoder.
     base_precoder->apply_precoding(output, input, precoding);
-
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    // Create report metrics.
     notifier.new_metric({.method     = channel_precoder_metrics::methods::apply_precoding,
                          .nof_re     = output.get_nof_re(),
                          .nof_layers = precoding.get_nof_layers(),
