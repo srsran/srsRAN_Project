@@ -46,12 +46,14 @@ DECLARE_METRIC("nof_pucch_f2f3f4_invalid_harqs", metric_nof_pucch_f2f3f4_invalid
 DECLARE_METRIC("nof_pucch_f2f3f4_invalid_csis", metric_nof_pucch_f2f3f4_invalid_csis, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_harqs", metric_nof_pusch_invalid_harqs, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_csis", metric_nof_pusch_invalid_csis, unsigned, "");
-DECLARE_METRIC("avg_crc_delay", metric_avg_crc_delay, double, "ms");
-DECLARE_METRIC("max_crc_delay", metric_max_crc_delay, double, "ms");
-DECLARE_METRIC("avg_pusch_harq_delay", metric_avg_pusch_harq_delay, double, "ms");
-DECLARE_METRIC("max_pusch_harq_delay", metric_max_pusch_harq_delay, double, "ms");
-DECLARE_METRIC("avg_pucch_harq_delay", metric_avg_pucch_harq_delay, double, "ms");
-DECLARE_METRIC("max_pucch_harq_delay", metric_max_pucch_harq_delay, double, "ms");
+DECLARE_METRIC("avg_ce_delay", metric_avg_ce_delay, float, "ms");
+DECLARE_METRIC("max_ce_delay", metric_max_ce_delay, float, "ms");
+DECLARE_METRIC("avg_crc_delay", metric_avg_crc_delay, float, "ms");
+DECLARE_METRIC("max_crc_delay", metric_max_crc_delay, float, "ms");
+DECLARE_METRIC("avg_pusch_harq_delay", metric_avg_pusch_harq_delay, float, "ms");
+DECLARE_METRIC("max_pusch_harq_delay", metric_max_pusch_harq_delay, float, "ms");
+DECLARE_METRIC("avg_pucch_harq_delay", metric_avg_pucch_harq_delay, float, "ms");
+DECLARE_METRIC("max_pucch_harq_delay", metric_max_pucch_harq_delay, float, "ms");
 DECLARE_METRIC_SET("ue_container",
                    mset_ue_container,
                    metric_pci,
@@ -79,6 +81,8 @@ DECLARE_METRIC_SET("ue_container",
                    metric_nof_pucch_f2f3f4_invalid_csis,
                    metric_nof_pusch_invalid_harqs,
                    metric_nof_pusch_invalid_csis,
+                   metric_avg_ce_delay,
+                   metric_max_ce_delay,
                    metric_avg_crc_delay,
                    metric_max_crc_delay,
                    metric_avg_pusch_harq_delay,
@@ -292,12 +296,14 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
     output.write<metric_ul_nof_nok>(ue.ul_nof_nok);
     output.write<metric_bsr>(ue.bsr);
 
-    output.write<metric_avg_crc_delay>(ue.avg_crc_delay_ms);
-    output.write<metric_max_crc_delay>(ue.max_crc_delay_ms);
-    output.write<metric_avg_pusch_harq_delay>(ue.avg_pusch_harq_delay_ms);
-    output.write<metric_max_pusch_harq_delay>(ue.max_pusch_harq_delay_ms);
-    output.write<metric_avg_pucch_harq_delay>(ue.avg_pucch_harq_delay_ms);
-    output.write<metric_max_pucch_harq_delay>(ue.max_pucch_harq_delay_ms);
+    output.write<metric_avg_ce_delay>(ue.avg_ce_delay_ms.value_or(0.0f));
+    output.write<metric_max_ce_delay>(ue.max_ce_delay_ms.value_or(0.0f));
+    output.write<metric_avg_crc_delay>(ue.avg_crc_delay_ms.value_or(0.0f));
+    output.write<metric_max_crc_delay>(ue.max_crc_delay_ms.value_or(0.0f));
+    output.write<metric_avg_pusch_harq_delay>(ue.avg_pusch_harq_delay_ms.value_or(0.0f));
+    output.write<metric_max_pusch_harq_delay>(ue.max_pusch_harq_delay_ms.value_or(0.0f));
+    output.write<metric_avg_pucch_harq_delay>(ue.avg_pucch_harq_delay_ms.value_or(0.0f));
+    output.write<metric_max_pucch_harq_delay>(ue.max_pucch_harq_delay_ms.value_or(0.0f));
   }
 
   for (const auto& event : metrics.events) {
@@ -446,6 +452,11 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     fmt::format_to(std::back_inserter(buffer), " ul_nof_prbs={}", ue.tot_ul_prbs_used);
     fmt::format_to(std::back_inserter(buffer), " bsr={}", scaled_fmt_integer(ue.bsr, false));
     fmt::format_to(std::back_inserter(buffer), " sr_count={}", ue.sr_count);
+    fmt::format_to(std::back_inserter(buffer), " f0f1_invalid_harqs={}", ue.nof_pucch_f0f1_invalid_harqs);
+    fmt::format_to(std::back_inserter(buffer), " f2f3f4_invalid_harqs={}", ue.nof_pucch_f2f3f4_invalid_harqs);
+    fmt::format_to(std::back_inserter(buffer), " f2f3f4_invalid_csis={}", ue.nof_pucch_f2f3f4_invalid_csis);
+    fmt::format_to(std::back_inserter(buffer), " pusch_invalid_harqs={}", ue.nof_pusch_invalid_harqs);
+    fmt::format_to(std::back_inserter(buffer), " pusch_invalid_csis={}", ue.nof_pusch_invalid_csis);
     if (ue.last_ul_olla.has_value()) {
       fmt::format_to(std::back_inserter(buffer), " ul_olla={}", ue.last_ul_olla.value());
     }
@@ -469,6 +480,41 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
       fmt::format_to(std::back_inserter(buffer), " avg_ul_ce_delay={:.2}ms", ue.avg_ce_delay_ms.value());
     } else {
       fmt::format_to(std::back_inserter(buffer), " avg_ul_ce_delay=n/a");
+    }
+    if (ue.max_ce_delay_ms.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " max_ul_ce_delay={:.2}ms", ue.max_ce_delay_ms.value());
+    } else {
+      fmt::format_to(std::back_inserter(buffer), " max_ul_ce_delay=n/a");
+    }
+    if (ue.avg_crc_delay_ms.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " avg_crc_delay={:.2}ms", ue.avg_crc_delay_ms.value());
+    } else {
+      fmt::format_to(std::back_inserter(buffer), " avg_crc_delay=n/a");
+    }
+    if (ue.max_crc_delay_ms.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " max_crc_delay={:.2}ms", ue.max_crc_delay_ms.value());
+    } else {
+      fmt::format_to(std::back_inserter(buffer), " max_crc_delay=n/a");
+    }
+    if (ue.avg_pusch_harq_delay_ms.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " avg_pusch_harq_delay={:.2}ms", ue.avg_pusch_harq_delay_ms.value());
+    } else {
+      fmt::format_to(std::back_inserter(buffer), " avg_pusch_harq_delay=n/a");
+    }
+    if (ue.max_pusch_harq_delay_ms.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " max_pusch_harq_delay={:.2}ms", ue.max_pusch_harq_delay_ms.value());
+    } else {
+      fmt::format_to(std::back_inserter(buffer), " max_pusch_harq_delay=n/a");
+    }
+    if (ue.avg_pucch_harq_delay_ms.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " avg_pucch_harq_delay={:.2}ms", ue.avg_pucch_harq_delay_ms.value());
+    } else {
+      fmt::format_to(std::back_inserter(buffer), " avg_pucch_harq_delay=n/a");
+    }
+    if (ue.max_pucch_harq_delay_ms.has_value()) {
+      fmt::format_to(std::back_inserter(buffer), " max_pucch_harq_delay={:.2}ms", ue.max_pucch_harq_delay_ms.value());
+    } else {
+      fmt::format_to(std::back_inserter(buffer), " max_pucch_harq_delay=n/a");
     }
 
     logger.info("{}", to_c_str(buffer));

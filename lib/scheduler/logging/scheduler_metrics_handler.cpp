@@ -117,7 +117,7 @@ void cell_metrics_handler::handle_csi_report(ue_metric_context& u, const csi_rep
   }
 }
 
-void cell_metrics_handler::handle_dl_harq_ack_pdu(du_ue_index_t ue_index, slot_point sl_rx, bool pucch)
+void cell_metrics_handler::handle_uci_with_harq_ack(du_ue_index_t ue_index, slot_point sl_rx, bool pucch)
 {
   if (ues.contains(ue_index)) {
     auto& u = ues[ue_index];
@@ -250,6 +250,8 @@ void cell_metrics_handler::handle_ul_phr_indication(const ul_phr_indication_mess
       interval<int> rg = phr_ind.phr.get_phr().front().ph;
       u.last_phr       = (rg.start() + rg.stop()) / 2;
       u.data.sum_ul_ce_delay_slots += last_slot_tx - phr_ind.slot_rx;
+      u.data.max_ul_ce_delay_slots =
+          std::max(static_cast<unsigned>(last_slot_tx - phr_ind.slot_rx), u.data.max_ul_ce_delay_slots);
       ++u.data.nof_ul_ces;
     }
   }
@@ -412,43 +414,35 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   for (const unsigned value : last_dl_bs) {
     ret.dl_bs += value;
   }
-  ret.ta_stats       = data.ta;
-  ret.pusch_ta_stats = data.pusch_ta;
-  ret.pucch_ta_stats = data.pucch_ta;
-  ret.srs_ta_stats   = data.srs_ta;
-  ret.last_phr       = last_phr;
-  if (data.nof_ul_ces > 0) {
-    ret.avg_ce_delay_ms = (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * slots_per_sf));
-  }
+  ret.ta_stats                       = data.ta;
+  ret.pusch_ta_stats                 = data.pusch_ta;
+  ret.pucch_ta_stats                 = data.pucch_ta;
+  ret.srs_ta_stats                   = data.srs_ta;
+  ret.last_phr                       = last_phr;
   ret.nof_pucch_f0f1_invalid_harqs   = data.nof_pucch_f0f1_invalid_harqs;
   ret.nof_pucch_f2f3f4_invalid_harqs = data.nof_pucch_f2f3f4_invalid_harqs;
   ret.nof_pucch_f2f3f4_invalid_harqs = data.nof_pucch_f2f3f4_invalid_harqs;
   ret.nof_pucch_f2f3f4_invalid_csis  = data.nof_pucch_f2f3f4_invalid_csis;
   ret.nof_pusch_invalid_harqs        = data.nof_pusch_invalid_harqs;
   ret.nof_pusch_invalid_csis         = data.nof_pusch_invalid_csis;
+  if (data.nof_ul_ces > 0) {
+    ret.avg_ce_delay_ms = (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * slots_per_sf));
+    ret.max_ce_delay_ms = data.max_ul_ce_delay_slots;
+  }
   if (data.count_crc_pdus > 0) {
     ret.avg_crc_delay_ms =
         static_cast<double>(data.sum_crc_delay_slots) / static_cast<double>(data.count_crc_pdus * slots_per_sf);
     ret.max_crc_delay_ms = data.max_crc_delay_slots;
-  } else {
-    ret.avg_crc_delay_ms = 0;
-    ret.max_crc_delay_ms = 0;
   }
   if (data.count_pucch_harq_pdus > 0) {
     ret.avg_pucch_harq_delay_ms = static_cast<double>(data.sum_pucch_harq_delay_slots) /
                                   static_cast<double>(data.count_pucch_harq_pdus * slots_per_sf);
     ret.max_pucch_harq_delay_ms = data.max_pucch_harq_delay_slots;
-  } else {
-    ret.avg_pucch_harq_delay_ms = 0;
-    ret.max_pucch_harq_delay_ms = 0;
   }
   if (data.count_pusch_harq_pdus > 0) {
     ret.avg_pusch_harq_delay_ms = static_cast<double>(data.sum_pusch_harq_delay_slots) /
                                   static_cast<double>(data.count_pusch_harq_pdus * slots_per_sf);
     ret.max_pusch_harq_delay_ms = data.max_pusch_harq_delay_slots;
-  } else {
-    ret.avg_pusch_harq_delay_ms = 0;
-    ret.max_pusch_harq_delay_ms = 0;
   }
 
   // Reset UE stats metrics on every report.

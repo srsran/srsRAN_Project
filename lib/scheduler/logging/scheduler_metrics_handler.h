@@ -67,6 +67,7 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       unsigned tot_dl_prbs_used               = 0;
       unsigned tot_ul_prbs_used               = 0;
       unsigned sum_ul_ce_delay_slots          = 0;
+      unsigned max_ul_ce_delay_slots          = 0;
       unsigned nof_ul_ces                     = 0;
       /// TA statistics over the metrics report interval, in seconds.
       sample_statistics<float> ta;
@@ -156,8 +157,8 @@ public:
   /// \brief Handle SRS indication.
   void handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu);
 
-  /// \brief Register UCI HARQ-ACK PDU indication.
-  void handle_dl_harq_ack_pdu(du_ue_index_t ue_index, slot_point slot_rx, bool pucch);
+  /// \brief Handle UCI that contains HARQ-ACK information.
+  void handle_uci_with_harq_ack(du_ue_index_t ue_index, slot_point slot_rx, bool pucch);
 
   /// \brief Register HARQ-ACK UCI indication.
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);

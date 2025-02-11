@@ -48,17 +48,18 @@ struct scheduler_ue_metrics {
   unsigned      nof_pusch_invalid_csis;
   /// Delay metrics.
   /// @{
-  double avg_crc_delay_ms;
-  double max_crc_delay_ms;
-  double avg_pusch_harq_delay_ms;
-  double max_pusch_harq_delay_ms;
-  double avg_pucch_harq_delay_ms;
-  double max_pucch_harq_delay_ms;
+  std::optional<float> avg_ce_delay_ms;
+  std::optional<float> max_ce_delay_ms;
+  std::optional<float> avg_crc_delay_ms;
+  std::optional<float> max_crc_delay_ms;
+  std::optional<float> avg_pusch_harq_delay_ms;
+  std::optional<float> max_pusch_harq_delay_ms;
+  std::optional<float> avg_pucch_harq_delay_ms;
+  std::optional<float> max_pucch_harq_delay_ms;
   /// @}
   std::optional<float> last_dl_olla;
   std::optional<float> last_ul_olla;
   std::optional<int>   last_phr;
-  std::optional<float> avg_ce_delay_ms;
   /// Time advance statistics in seconds.
   sample_statistics<float> ta_stats;
   sample_statistics<float> pusch_ta_stats;
