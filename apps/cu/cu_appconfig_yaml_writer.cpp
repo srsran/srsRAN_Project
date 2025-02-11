@@ -15,6 +15,13 @@
 
 using namespace srsran;
 
+static void fill_cu_appconfig_metrics_section(YAML::Node node, const srs_cu::metrics_appconfig& config)
+{
+  node["addr"]                         = config.addr;
+  node["port"]                         = config.port;
+  node["resource_usage_report_period"] = config.rusage_report_period;
+}
+
 static void fill_cu_appconfig_buffer_pool_section(YAML::Node node, const buffer_pool_appconfig& config)
 {
   node["nof_segments"] = config.nof_segments;
@@ -44,6 +51,7 @@ static void fill_cu_appconfig_f1u_section(YAML::Node& node, const f1u_sockets_ap
 void srsran::fill_cu_appconfig_in_yaml_schema(YAML::Node& node, const cu_appconfig& config)
 {
   fill_logger_appconfig_in_yaml_schema(node, config.log_cfg);
+  fill_cu_appconfig_metrics_section(node["metrics"], config.metrics_cfg);
   fill_cu_appconfig_buffer_pool_section(node["buffer_pool"], config.buffer_pool_config);
   fill_cu_appconfig_remote_control_section(node["remote_control"], config.remote_control_config);
   fill_cu_appconfig_f1ap_section(node, config.f1ap_cfg);

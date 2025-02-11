@@ -14,7 +14,13 @@
 
 using namespace srsran;
 
-void pdcp_metrics_consumer_e2::handle_metric(const app_services::metrics_set& metric)
+void cu_up_pdcp_metrics_consumer_e2::handle_metric(const app_services::metrics_set& metric)
 {
-  notifier.report_metrics(static_cast<const pdcp_metrics_impl&>(metric).get_metrics());
+  notifier.report_metrics(static_cast<const cu_up_pdcp_metrics_impl&>(metric).get_metrics());
+}
+
+void cu_up_pdcp_metrics_consumer_json::handle_metric(const app_services::metrics_set& metric)
+{
+  // Implement me and remove this line.
+  log_chan.enabled();
 }

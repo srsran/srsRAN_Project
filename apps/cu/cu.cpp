@@ -348,6 +348,10 @@ int main(int argc, char** argv)
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
+  // Set up the JSON log channel used by metrics.
+  srslog::sink& json_sink =
+      srslog::fetch_udp_sink(cu_cfg.metrics_cfg.addr, cu_cfg.metrics_cfg.port, srslog::create_json_formatter());
+
   // Create O-CU-CP dependencies.
   o_cu_cp_unit_dependencies o_cucp_deps;
   o_cucp_deps.cu_cp_executor       = workers.cu_cp_exec;
@@ -358,6 +362,7 @@ int main(int argc, char** argv)
   o_cucp_deps.broker               = epoll_broker.get();
   o_cucp_deps.e2_gw                = e2_gw_cu_cp.get();
   o_cucp_deps.metrics_notifier     = &metrics_notifier_forwarder;
+  o_cucp_deps.json_sink            = &json_sink;
 
   // Create O-CU-CP.
   auto                o_cucp_unit = o_cu_cp_app_unit->create_o_cu_cp(o_cucp_deps);
@@ -395,6 +400,7 @@ int main(int argc, char** argv)
   o_cuup_unit_deps.io_brk           = epoll_broker.get();
   o_cuup_unit_deps.e2_gw            = e2_gw_cu_up.get();
   o_cuup_unit_deps.metrics_notifier = &metrics_notifier_forwarder;
+  o_cuup_unit_deps.json_sink        = &json_sink;
 
   auto o_cuup_unit = o_cu_up_app_unit->create_o_cu_up_unit(o_cuup_unit_deps);
   for (auto& metric : o_cuup_unit.metrics) {

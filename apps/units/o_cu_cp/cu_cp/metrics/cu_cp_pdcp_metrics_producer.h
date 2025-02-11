@@ -16,11 +16,11 @@
 
 namespace srsran {
 
-/// CU-UP PDCP metrics producer implementation.
-class cu_up_pdcp_metrics_producer_impl : public pdcp_metrics_notifier, public app_services::metrics_producer
+/// CU-CP PDCP metrics producer implementation.
+class cu_cp_pdcp_metrics_producer_impl : public pdcp_metrics_notifier, public app_services::metrics_producer
 {
 public:
-  explicit cu_up_pdcp_metrics_producer_impl(app_services::metrics_notifier& notifier_) : notifier(notifier_) {}
+  explicit cu_cp_pdcp_metrics_producer_impl(app_services::metrics_notifier& notifier_) : notifier(notifier_) {}
 
   // See interface for documentation.
   void report_metrics(const pdcp_metrics_container& metrics) override;

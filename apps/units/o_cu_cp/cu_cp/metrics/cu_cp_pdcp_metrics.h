@@ -18,21 +18,21 @@
 
 namespace srsran {
 
-/// CU-UP PDCP metrics properties implementation.
-class cu_up_pdcp_metrics_properties_impl : public app_services::metrics_properties
+/// CU-CP PDCP metrics properties implementation.
+class cu_cp_pdcp_metrics_properties_impl : public app_services::metrics_properties
 {
 public:
-  std::string_view name() const override { return "CU-UP PDCP metrics"; }
+  std::string_view name() const override { return "CU-CP PDCP metrics"; }
 };
 
-/// CU-UP PDCP metrics implementation.
-class cu_up_pdcp_metrics_impl : public app_services::metrics_set
+/// CU-CP PDCP metrics implementation.
+class cu_cp_pdcp_metrics_impl : public app_services::metrics_set
 {
-  cu_up_pdcp_metrics_properties_impl properties;
+  cu_cp_pdcp_metrics_properties_impl properties;
   pdcp_metrics_container             metrics;
 
 public:
-  explicit cu_up_pdcp_metrics_impl(const pdcp_metrics_container& metrics_) : metrics(metrics_) {}
+  explicit cu_cp_pdcp_metrics_impl(const pdcp_metrics_container& metrics_) : metrics(metrics_) {}
 
   // See interface for documentation.
   const app_services::metrics_properties& get_properties() const override { return properties; }
@@ -40,12 +40,12 @@ public:
   const pdcp_metrics_container& get_metrics() const { return metrics; }
 };
 
-/// Callback for the CU-UP PDCP metrics.
-inline auto cu_up_pdcp_metrics_callback = [](const app_services::metrics_set&      report,
+/// Callback for the CU-CP PDCP metrics.
+inline auto cu_cp_pdcp_metrics_callback = [](const app_services::metrics_set&      report,
                                              span<app_services::metrics_consumer*> consumers,
                                              task_executor&                        executor,
                                              srslog::basic_logger&                 logger) {
-  const auto& metric = static_cast<const cu_up_pdcp_metrics_impl&>(report);
+  const auto& metric = static_cast<const cu_cp_pdcp_metrics_impl&>(report);
 
   if (!executor.defer([metric, consumers]() {
         for (auto& consumer : consumers) {

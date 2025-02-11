@@ -17,30 +17,40 @@
 #include "e2/o_cu_up_e2_config_translators.h"
 #include "o_cu_up_unit_config.h"
 #include "srsran/cu_up/o_cu_up_factory.h"
-#include "srsran/e2/e2_cu_metrics_connector.h"
 
 using namespace srsran;
 
-static pdcp_metrics_notifier* build_pdcp_metrics(std::vector<app_services::metrics_config>& cu_up_services_cfg,
-                                                 app_services::metrics_notifier&            metrics_notifier,
-                                                 bool                                       e2_enabled,
-                                                 e2_cu_metrics_notifier&                    e2_notifier)
+static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services::metrics_config>& cu_up_services_cfg,
+                                                        app_services::metrics_notifier&            metrics_notifier,
+                                                        bool                                       e2_enabled,
+                                                        e2_cu_metrics_notifier&                    e2_notifier,
+                                                        const cu_up_unit_metrics_config&           cu_up_metrics_cfg,
+                                                        srslog::sink&                              json_sink)
 {
   pdcp_metrics_notifier* out = nullptr;
 
   // Do not instantiate the metrics if the E2 is not enabled.
-  if (!e2_enabled) {
+  if (!e2_enabled &&
+      (cu_up_metrics_cfg.cu_up_statistics_report_period == 0 || cu_up_metrics_cfg.pdcp.report_period == 0)) {
     return out;
   }
 
-  auto metrics_generator                    = std::make_unique<pdcp_metrics_producer_impl>(metrics_notifier);
+  auto metrics_generator                    = std::make_unique<cu_up_pdcp_metrics_producer_impl>(metrics_notifier);
   out                                       = &(*metrics_generator);
   app_services::metrics_config& metrics_cfg = cu_up_services_cfg.emplace_back();
-  metrics_cfg.metric_name                   = pdcp_metrics_properties_impl().name();
-  metrics_cfg.callback                      = pdcp_metrics_callback;
+  metrics_cfg.metric_name                   = cu_up_pdcp_metrics_properties_impl().name();
+  metrics_cfg.callback                      = cu_up_pdcp_metrics_callback;
   metrics_cfg.producers.push_back(std::move(metrics_generator));
 
-  metrics_cfg.consumers.push_back(std::make_unique<pdcp_metrics_consumer_e2>(e2_notifier));
+  if (cu_up_metrics_cfg.pdcp.report_period != 0) {
+    srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
+    json_channel.set_enabled(true);
+    metrics_cfg.consumers.push_back(std::make_unique<cu_up_pdcp_metrics_consumer_json>(json_channel));
+  }
+
+  if (e2_enabled) {
+    metrics_cfg.consumers.push_back(std::make_unique<cu_up_pdcp_metrics_consumer_e2>(e2_notifier));
+  }
 
   return out;
 }
@@ -99,10 +109,12 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
     ocu_up_dependencies.e2_client          = dependencies.e2_gw;
     ocu_up_dependencies.e2_cu_metric_iface = &(*e2_metric_connectors).get_e2_metrics_interface(0);
   }
-  auto pdcp_metric_notifier = build_pdcp_metrics(ocu_unit.metrics,
-                                                 *dependencies.metrics_notifier,
-                                                 unit_cfg.e2_cfg.base_config.enable_unit_e2,
-                                                 e2_metric_connectors->get_e2_metric_notifier(0));
+  auto pdcp_metric_notifier = build_pdcp_metrics_config(ocu_unit.metrics,
+                                                        *dependencies.metrics_notifier,
+                                                        unit_cfg.e2_cfg.base_config.enable_unit_e2,
+                                                        e2_metric_connectors->get_e2_metric_notifier(0),
+                                                        unit_cfg.cu_up_cfg.metrics,
+                                                        *dependencies.json_sink);
 
   for (auto& qos_ : config.cu_up_cfg.qos) {
     qos_.second.pdcp_custom_cfg.metrics_notifier = pdcp_metric_notifier;

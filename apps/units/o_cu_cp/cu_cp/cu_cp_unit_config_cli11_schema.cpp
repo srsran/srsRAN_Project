@@ -534,6 +534,9 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_confi
              metrics_params.cu_cp_statistics_report_period,
              "CU-CP statistics report period in seconds. Set this value to 0 to disable this feature")
       ->capture_default_str();
+  add_option(
+      app, "--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period (in milliseconds)")
+      ->capture_default_str();
 }
 
 void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_unit_config& unit_cfg)

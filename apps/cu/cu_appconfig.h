@@ -26,6 +26,14 @@ struct cu_f1ap_appconfig {
   std::string bind_addr = "127.0.10.1";
 };
 
+/// Metrics report configuration.
+struct metrics_appconfig {
+  std::string addr = "127.0.0.1";
+  uint16_t    port = 55555;
+  /// Resource usage report period in milliseconds.
+  unsigned rusage_report_period = 0;
+};
+
 } // namespace srs_cu
 
 /// CU application configuration.
@@ -44,6 +52,8 @@ struct cu_appconfig {
   buffer_pool_appconfig buffer_pool_config;
   /// Remote control configuration.
   remote_control_appconfig remote_control_config;
+  /// Metrics configuration.
+  srs_cu::metrics_appconfig metrics_cfg;
 };
 
 } // namespace srsran

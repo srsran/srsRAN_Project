@@ -42,6 +42,7 @@ struct o_cu_up_unit_dependencies {
   dlt_pcap*                        gtpu_pcap        = nullptr;
   timer_manager*                   timers           = nullptr;
   io_broker*                       io_brk           = nullptr;
+  srslog::sink*                    json_sink        = nullptr;
 };
 
 /// O-RAN CU-CP unit.

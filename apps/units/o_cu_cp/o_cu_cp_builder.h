@@ -46,6 +46,7 @@ struct o_cu_cp_unit_dependencies {
   io_broker*                      broker               = nullptr;
   e2_connection_client*           e2_gw                = nullptr;
   app_services::metrics_notifier* metrics_notifier     = nullptr;
+  srslog::sink*                   json_sink            = nullptr;
 };
 
 /// O-RAN CU-CP unit.

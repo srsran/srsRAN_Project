@@ -23,6 +23,19 @@ static void configure_cli11_f1ap_args(CLI::App& app, srs_cu::cu_f1ap_appconfig& 
   add_option(app, "--bind_addr", f1ap_params.bind_addr, "F1-C bind address")->capture_default_str();
 }
 
+static void configure_cli11_metrics_args(CLI::App& app, srs_cu::metrics_appconfig& metrics_params)
+{
+  app.add_option("--addr", metrics_params.addr, "Metrics address.")->capture_default_str()->check(CLI::ValidIPV4);
+  app.add_option("--port", metrics_params.port, "Metrics UDP port.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 65535));
+  add_option(app,
+             "--resource_usage_report_period",
+             metrics_params.rusage_report_period,
+             "Resource usage metrics report period (in milliseconds)")
+      ->capture_default_str();
+}
+
 void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_cfg)
 {
   // Logging section.
@@ -36,6 +49,10 @@ void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfi
 
   // Remote control section.
   configure_cli11_with_remote_control_appconfig_schema(app, cu_cfg.remote_control_config);
+
+  // Metrics section.
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
+  configure_cli11_metrics_args(*metrics_subcmd, cu_cfg.metrics_cfg);
 
   // F1AP section.
   CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-UP parameters")->configurable();
