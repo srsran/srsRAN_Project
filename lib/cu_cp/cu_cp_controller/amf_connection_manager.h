@@ -54,10 +54,7 @@ private:
 
   std::unordered_map<amf_index_t, std::atomic<bool>> amfs_connected;
 
-  std::atomic<bool>       stopped{false};
-  std::mutex              stop_mutex;
-  std::condition_variable stop_cvar;
-  bool                    stop_completed = false;
+  std::atomic<bool> stopped{false};
 };
 
 } // namespace srs_cu_cp

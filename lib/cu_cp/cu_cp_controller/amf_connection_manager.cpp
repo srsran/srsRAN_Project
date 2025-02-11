@@ -15,6 +15,7 @@
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ran/plmn_identity.h"
+#include "srsran/support/synchronization/baton.h"
 #include <thread>
 
 using namespace srsran;
@@ -64,36 +65,39 @@ async_task<void> amf_connection_manager::disconnect_amf()
 
 void amf_connection_manager::stop()
 {
+  if (stopped) {
+    return;
+  }
+
+  baton               stop_baton;
+  scoped_baton_sender signal_stop{stop_baton};
+
   // Stop and delete AMF connections.
-  while (not cu_cp_exec.defer([this]() mutable {
-    common_task_sched.schedule_async_task(launch_async([this](coro_context<async_task<void>>& ctx) {
-      CORO_BEGIN(ctx);
-      // Disconnect AMF connection.
-      CORO_AWAIT(disconnect_amf());
+  while (not cu_cp_exec.defer([this, signal_stop = std::move(signal_stop)]() mutable {
+    common_task_sched.schedule_async_task(
+        launch_async([this, signal_stop = std::move(signal_stop)](coro_context<async_task<void>>& ctx) mutable {
+          CORO_BEGIN(ctx);
+          // Disconnect AMF connection.
+          CORO_AWAIT(disconnect_amf());
 
-      // AMF disconnection successfully finished.
-      // Dispatch main async task loop destruction via defer so that the current coroutine ends successfully.
-      while (not cu_cp_exec.defer([this]() {
-        std::lock_guard<std::mutex> lock(stop_mutex);
-        stop_completed = true;
-        stop_cvar.notify_one();
-      })) {
-        logger.warning("Unable to stop AMF Manager. Retrying...");
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-      }
+          // AMF disconnection successfully finished.
+          // Dispatch main async task loop destruction via defer so that the current coroutine ends successfully.
+          while (not cu_cp_exec.defer([signal_stop = std::move(signal_stop)]() mutable { signal_stop.post(); })) {
+            logger.warning("Unable to stop AMF Manager. Retrying...");
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          }
 
-      CORO_RETURN();
-    }));
+          CORO_RETURN();
+        }));
   })) {
     logger.warning("Failed to dispatch AMF stop task. Retrying...");
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 
   // Wait for AMF stop to complete.
-  {
-    std::unique_lock<std::mutex> lock(stop_mutex);
-    stop_cvar.wait(lock, [this] { return stop_completed; });
-  }
+  stop_baton.wait();
+
+  stopped = true;
 }
 
 bool amf_connection_manager::is_amf_connected(plmn_identity plmn) const
