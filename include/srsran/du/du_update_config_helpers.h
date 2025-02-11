@@ -69,7 +69,7 @@ bounded_integer<unsigned, 1, 14> compute_max_nof_pucch_symbols(const srs_builder
 /// \param tdd_cfg Optional TDD configuration.
 void recompute_pusch_time_domain_resources(std::vector<pusch_time_domain_resource_allocation>& td_alloc_list,
                                            const srs_builder_params&                           user_srs_params,
-                                           const std::optional<tdd_ul_dl_config_common>        tdd_cfg);
+                                           const std::optional<tdd_ul_dl_config_common>&       tdd_cfg);
 
 } // namespace config_helpers
 } // namespace srsran

@@ -134,7 +134,7 @@ config_helpers::compute_max_nof_pucch_symbols(const srs_builder_params& user_srs
 void config_helpers::recompute_pusch_time_domain_resources(
     std::vector<pusch_time_domain_resource_allocation>& td_alloc_list,
     const srs_builder_params&                           user_srs_params,
-    const std::optional<tdd_ul_dl_config_common>        tdd_cfg)
+    const std::optional<tdd_ul_dl_config_common>&       tdd_cfg)
 {
   const unsigned td_alloc_size = td_alloc_list.size();
   const unsigned max_srs_symb  = user_srs_params.max_nof_symbols.value();

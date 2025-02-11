@@ -549,8 +549,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
         config_helpers::make_pdsch_time_domain_resource(param.search_space0_index,
                                                         out_cell.dl_cfg_common.init_dl_bwp.pdcch_common,
                                                         out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdcch_cfg,
-                                                        is_tdd ? out_cell.tdd_ul_dl_cfg_common.value()
-                                                               : std::optional<tdd_ul_dl_config_common>{});
+                                                        out_cell.tdd_ul_dl_cfg_common);
 
     out_cell.ue_ded_serv_cell_cfg.pdsch_serv_cell_cfg->nof_harq_proc =
         static_cast<pdsch_serving_cell_config::nof_harq_proc_for_pdsch>(
