@@ -13,15 +13,16 @@ import logging
 from typing import Tuple
 
 from google.protobuf.empty_pb2 import Empty
-from pytest import mark, fail, param
+from pytest import fail, mark, param
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
+from retina.protocol.base_pb2 import Metrics
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
+from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
-from retina.protocol.base_pb2 import Metrics
 
-from tests.steps.stub import ping_start, ping_start_from_5gc, ping_wait_until_finish, start_network, stop, ue_start_and_attach
+from tests.steps.stub import iperf_start, iperf_wait_until_finish, start_network, stop, ue_start_and_attach
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
 
@@ -54,6 +55,8 @@ def test_pucch(
     band = 78
     common_scs = 30
     bandwidth = 50
+    iperf_duration = 10
+    iperf_bitrate = int(1e6)
 
     configure_test_parameters(
         retina_manager=retina_manager,
@@ -73,10 +76,25 @@ def test_pucch(
     start_network(ue_array, gnb, fivegc)
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
-    ping_task_array = ping_start(ue_attach_info_dict, fivegc, 10)
-    ping_wait_until_finish(ping_task_array)
-    ping_task_array = ping_start_from_5gc(ue_attach_info_dict, fivegc, 10)
-    ping_wait_until_finish(ping_task_array)
+    iperf_array = []
+    for ue_stub in ue_array:
+        iperf_array.append(
+            (
+                ue_attach_info_dict[ue_stub],
+                *iperf_start(
+                    ue_stub,
+                    ue_attach_info_dict[ue_stub],
+                    fivegc,
+                    duration=iperf_duration,
+                    direction=IPerfDir.BIDIRECTIONAL,
+                    protocol=IPerfProto.UDP,
+                    bitrate=iperf_bitrate,
+                ),
+            )
+        )
+
+    for ue_attached_info, task, iperf_request in iperf_array:
+        iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)
 
     stop(
         ue_array,
@@ -86,14 +104,18 @@ def test_pucch(
         fail_if_kos=True,
     )
 
-    metrics : Metrics = gnb.GetMetrics(Empty())
+    metrics: Metrics = gnb.GetMetrics(Empty())
+    nof_pucch_f0f1_invalid_harqs = 0
     nof_pucch_f2f3f4_invalid_harqs = 0
     nof_pucch_f2f3f4_invalid_csis = 0
     for ue_info in metrics.ue_array:
+        nof_pucch_f0f1_invalid_harqs += ue_info.nof_pucch_f0f1_invalid_harqs
         nof_pucch_f2f3f4_invalid_harqs += ue_info.nof_pucch_f2f3f4_invalid_harqs
         nof_pucch_f2f3f4_invalid_csis += ue_info.nof_pucch_f2f3f4_invalid_csis
 
+    if nof_pucch_f0f1_invalid_harqs > 0:
+        fail(f"There are invalid PUCCH F{0 if use_format_0 else 1} HARQ-ACK transmissions")
+    if nof_pucch_f2f3f4_invalid_harqs > 0:
+        fail(f"There are invalid PUCCH F{pucch_set1_format} HARQ-ACK transmissions")
     if nof_pucch_f2f3f4_invalid_csis > 0:
         fail(f"There are invalid PUCCH F{pucch_set1_format} CSI transmissions")
-    if nof_pucch_f2f3f4_invalid_harqs > 0:
-        fail("There are invalid PUCCH F{pucch_set1_format} HARQ-ACK transmissions")
