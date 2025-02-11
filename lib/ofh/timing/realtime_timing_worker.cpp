@@ -119,7 +119,7 @@ void realtime_timing_worker::start()
 void realtime_timing_worker::stop()
 {
   logger.info("Requesting stop of the realtime timing worker");
-  status.store(worker_status::stop_requested, std::memory_order_relaxed);
+  status.store(worker_status::stop_requested, std::memory_order_release);
 
   // Wait for the timing thread to stop.
   while (status.load(std::memory_order_acquire) != worker_status::stopped) {
@@ -132,7 +132,7 @@ void realtime_timing_worker::stop()
 void realtime_timing_worker::timing_loop()
 {
   while (true) {
-    if (SRSRAN_UNLIKELY(status.load(std::memory_order_relaxed) == worker_status::stop_requested)) {
+    if (SRSRAN_UNLIKELY(status.load(std::memory_order_acquire) == worker_status::stop_requested)) {
       // Clear the subscribed notifiers.
       ota_notifiers.clear();
       // Release semantics - The destructor of this class accesses the ota_notifiers vector from a different thread from
