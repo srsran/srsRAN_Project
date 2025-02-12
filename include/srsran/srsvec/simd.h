@@ -981,8 +981,8 @@ inline simd_cf_t srsran_simd_cf_prod(simd_cf_t a, simd_cf_t b)
 {
   simd_cf_t ret;
 #ifdef __AVX512F__
-  ret.re = _mm512_sub_ps(_mm512_mul_ps(a.re, b.re), _mm512_mul_ps(a.im, b.im));
-  ret.im = _mm512_add_ps(_mm512_mul_ps(a.re, b.im), _mm512_mul_ps(a.im, b.re));
+  ret.re = _mm512_fmsub_ps(a.re, b.re, _mm512_mul_ps(a.im, b.im));
+  ret.im = _mm512_fmadd_ps(a.re, b.im, _mm512_mul_ps(a.im, b.re));
 #else /* __AVX512F__ */
 #ifdef __AVX2__
 #ifdef __FMA__

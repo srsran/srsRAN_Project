@@ -35,12 +35,107 @@ revert_scrambling(span<log_likelihood_ratio> out, span<const log_likelihood_rati
   unsigned i      = 0;
   unsigned length = in.size();
 
-#ifdef __SSE3__
-  // Number of bits that can be processed with a SIMD register.
-  static constexpr unsigned nof_bits_per_simd = 16;
+#if defined(__AVX512F__) && defined(__AVX512BW__)
+  // Number of bits that can be processed with an AVX512 register.
+  static constexpr unsigned nof_bits_per_avx512 = 64;
 
-  for (unsigned i_byte = 0, i_end = (length / nof_bits_per_simd) * nof_bits_per_simd; i != i_end;
-       i_byte += 2, i += nof_bits_per_simd) {
+  const __mmask64* avx512_sequence_ptr = reinterpret_cast<const __mmask64*>(sequence.get_buffer().data());
+  for (unsigned i_end = (length / nof_bits_per_avx512) * nof_bits_per_avx512; i != i_end; i += nof_bits_per_avx512) {
+    // Load 64 bits in a go as a mask.
+    __mmask64 xor_mask = *(avx512_sequence_ptr++);
+
+    // Convert XOR mask to 0xff (for 1s) and 0x00 (for 0s).
+    __m512i mask = _mm512_movm_epi8(xor_mask);
+
+    // Reverses bits within bytes.
+    __m512i shuffle_idx = _mm512_set_epi8(
+        // clang-format off
+        0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
+        0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+        0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f,
+        0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f,
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
+        // clang-format on
+    );
+    mask = _mm512_shuffle_epi8(mask, shuffle_idx);
+
+    // Load 64 soft bits.
+    __m512i data = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(in.data() + i));
+
+    // Negate.
+    data = _mm512_xor_si512(mask, data);
+
+    // Add one.
+    mask = _mm512_and_si512(mask, _mm512_set1_epi8(1));
+    data = _mm512_add_epi8(mask, data);
+
+    // Store register.
+    _mm512_storeu_si512(reinterpret_cast<__m512i*>(out.data() + i), data);
+  }
+#endif // defined(__AVX512F__) && defined(__AVX512BW__)
+
+#if defined(__AVX__) && defined(__AVX2__)
+  // Number of bits that can be processed with an AVX register.
+  static constexpr unsigned nof_bits_per_avx  = 32;
+  const uint8_t*            avx2_sequence_ptr = sequence.get_buffer().data();
+
+  for (unsigned i_byte = i / 8, i_end = (length / nof_bits_per_avx) * nof_bits_per_avx; i != i_end;
+       i_byte += nof_bits_per_avx / 8, i += nof_bits_per_avx) {
+    // Load sequence in different registers.
+    __m256i mask = _mm256_setzero_si256();
+    mask         = _mm256_insert_epi8(mask, avx2_sequence_ptr[i_byte + 0], 0);
+    mask         = _mm256_insert_epi8(mask, avx2_sequence_ptr[i_byte + 1], 8);
+    mask         = _mm256_insert_epi8(mask, avx2_sequence_ptr[i_byte + 2], 16);
+    mask         = _mm256_insert_epi8(mask, avx2_sequence_ptr[i_byte + 3], 24);
+
+    // Repeats each byte 8 times.
+    __m256i shuffle_mask = _mm256_setr_epi8(
+        // clang-format off
+        0, 0, 0, 0, 0, 0, 0, 0,
+        8, 8, 8, 8, 8, 8, 8, 8,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        8, 8, 8, 8, 8, 8, 8, 8
+        // clang-format on
+    );
+    mask = _mm256_shuffle_epi8(mask, shuffle_mask);
+
+    // Selects each of the bits.
+    __m256i bit_mask = _mm256_set_epi8(
+        // clang-format off
+        1, 2, 4, 8, 16, 32, 64, -128,
+        1, 2, 4, 8, 16, 32, 64, -128,
+        1, 2, 4, 8, 16, 32, 64, -128,
+        1, 2, 4, 8, 16, 32, 64, -128
+        // clang-format on
+    );
+    mask = _mm256_and_si256(bit_mask, mask);
+
+    mask = ~_mm256_cmpeq_epi8(mask, _mm256_setzero_si256());
+
+    // Load 64 soft bits.
+    __m256i data = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(in.data() + i));
+
+    // Negate.
+    data = _mm256_xor_si256(mask, data);
+
+    // Add one.
+    mask = _mm256_and_si256(mask, _mm256_set1_epi8(1));
+    data = _mm256_add_epi8(mask, data);
+
+    // Store register.
+    _mm256_storeu_si256(reinterpret_cast<__m256i*>(out.data() + i), data);
+  }
+#endif // defined(__AVX__) && defined(__AVX2__)
+
+#if defined(__SSE2__) && defined(__SSE3__)
+  // Number of bits that can be processed with an SSE register.
+  static constexpr unsigned nof_bits_per_sse = 16;
+
+  for (unsigned i_byte = i / 8, i_end = (length / nof_bits_per_sse) * nof_bits_per_sse; i != i_end;
+       i_byte += 2, i += nof_bits_per_sse) {
     uint8_t byte0 = sequence.get_byte(i_byte);
     uint8_t byte1 = sequence.get_byte(i_byte + 1);
     int32_t c     = static_cast<int32_t>(byte0) + (static_cast<int32_t>(byte1) << 8);
@@ -67,7 +162,7 @@ revert_scrambling(span<log_likelihood_ratio> out, span<const log_likelihood_rati
 
     _mm_storeu_si128(reinterpret_cast<__m128i*>(out.data() + i), v);
   }
-#endif // __SSE3__
+#endif // defined(__SSE2__) && defined(__SSE3__)
 
 #ifdef __aarch64__
   // Number of bits that can be processed with a SIMD register.
