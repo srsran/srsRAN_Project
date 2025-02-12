@@ -23,6 +23,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
                                  f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                                  timer_factory                  ue_dl_timer_factory,
                                  unique_timer&                  ue_inactivity_timer_,
+                                 task_executor&                 dl_exec_,
                                  task_executor&                 ul_exec_) :
   logger("CU-F1-U", {ue_index, drb_id_, ul_tnl_info_}),
   cfg(config),
@@ -30,6 +31,7 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   rx_delivery_notifier(rx_delivery_notifier_),
   rx_sdu_notifier(rx_sdu_notifier_),
   ul_tnl_info(ul_tnl_info_),
+  dl_exec(ul_exec_),
   ul_exec(ul_exec_),
   dl_notif_timer(ue_dl_timer_factory.create_timer()),
   ue_inactivity_timer(ue_inactivity_timer_)
@@ -67,7 +69,11 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
     nru_dl_data_delivery_status& status = msg.data_delivery_status.value();
 
     // Desired buffer size
-    rx_delivery_notifier.on_desired_buffer_size_notification(status.desired_buffer_size_for_drb);
+    if (not dl_exec.defer([this, status]() {
+          rx_delivery_notifier.on_desired_buffer_size_notification(status.desired_buffer_size_for_drb);
+        })) {
+      logger.log_warning("Could not pass desired buffer size notification to PDCP");
+    }
 
     // Highest transmitted PDCP SN
     if (status.highest_transmitted_pdcp_sn.has_value()) {
@@ -76,7 +82,9 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
         ue_inactivity_timer.run(); // restart inactivity timer due to confirmed transmission of DL PDU
         logger.log_debug("Notifying highest transmitted pdcp_sn={}", pdcp_sn);
         notif_highest_transmitted_pdcp_sn = pdcp_sn;
-        rx_delivery_notifier.on_transmit_notification(pdcp_sn);
+        if (not dl_exec.defer([this, pdcp_sn]() { rx_delivery_notifier.on_transmit_notification(pdcp_sn); })) {
+          logger.log_warning("Could not pass desired buffer size notification to PDCP");
+        }
       } else {
         logger.log_debug("Ignored duplicate notification of highest transmitted pdcp_sn={}", pdcp_sn);
       }
@@ -87,7 +95,9 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
       if (pdcp_sn != notif_highest_delivered_pdcp_sn) {
         logger.log_debug("Notifying highest successfully delivered pdcp_sn={}", pdcp_sn);
         notif_highest_delivered_pdcp_sn = pdcp_sn;
-        rx_delivery_notifier.on_delivery_notification(pdcp_sn);
+        if (not dl_exec.defer([this, pdcp_sn]() { rx_delivery_notifier.on_delivery_notification(pdcp_sn); })) {
+          logger.log_warning("Could not pass highest delivered notification to PDCP");
+        }
       } else {
         logger.log_debug("Ignored duplicate notification of highest successfully delivered pdcp_sn={}", pdcp_sn);
       }
@@ -96,13 +106,18 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
     if (status.highest_retransmitted_pdcp_sn.has_value()) {
       uint32_t pdcp_sn = status.highest_retransmitted_pdcp_sn.value();
       logger.log_debug("Notifying highest retransmitted pdcp_sn={}", pdcp_sn);
-      rx_delivery_notifier.on_retransmit_notification(pdcp_sn);
+      if (not dl_exec.defer([this, pdcp_sn]() { rx_delivery_notifier.on_retransmit_notification(pdcp_sn); })) {
+        logger.log_warning("Could not pass highest retransmitted notification to PDCP");
+      }
     }
     // Highest successfully delivered retransmitted PDCP SN
     if (status.highest_delivered_retransmitted_pdcp_sn.has_value()) {
       uint32_t pdcp_sn = status.highest_delivered_retransmitted_pdcp_sn.value();
       logger.log_debug("Notifying highest successfully delivered retransmitted pdcp_sn={}", pdcp_sn);
-      rx_delivery_notifier.on_delivery_retransmitted_notification(pdcp_sn);
+      if (not dl_exec.defer(
+              [this, pdcp_sn]() { rx_delivery_notifier.on_delivery_retransmitted_notification(pdcp_sn); })) {
+        logger.log_warning("Could not pass highest retransmitted notification to PDCP");
+      }
     }
   }
 }
