@@ -38,7 +38,8 @@ struct pdcp_rx_metrics_container {
   uint32_t reordering_counter;
   uint32_t sum_sdu_latency_ns; ///< total SDU latency (in ns)
   unsigned counter;
-  double   cpu_usage;
+
+  uint32_t sum_crypto_used_cpu_time_us;
 
   // Histogram of SDU latencies
   static constexpr unsigned                   sdu_latency_hist_bins = 8;
@@ -71,7 +72,9 @@ inline std::string format_pdcp_rx_metrics(timer_duration metrics_period, const p
     first_bin = false;
   }
   fmt::format_to(std::back_inserter(buffer), "] max_sdu_latency={}us", m.max_sdu_latency_ns * 1e-3);
-  fmt::format_to(std::back_inserter(buffer), " cpu_usage={}", m.cpu_usage);
+  fmt::format_to(std::back_inserter(buffer),
+                 " crypto_cpu_usage={}\%",
+                 static_cast<float>(m.sum_crypto_used_cpu_time_us) / (1000 * metrics_period.count()) * 100);
   return to_c_str(buffer);
 }
 } // namespace srsran
@@ -93,7 +96,7 @@ struct formatter<srsran::pdcp_rx_metrics_container> {
                      "num_sdus={} num_sdu_bytes={} num_dropped_pdus={} num_pdus={} num_pdu_bytes={} "
                      "num_integrity_verified_pdus={} num_integrity_failed_pdus={} num_t_reordering_timeouts={} "
                      "reordering_delay={}us reordering_counter={} sum_sdu_latency={}ns sdu_latency_hist=[{}] "
-                     "max_sdu_latency={}ns cpu_usage={}",
+                     "max_sdu_latency={}ns crypto_cpu_time={}us",
                      m.num_sdus,
                      m.num_sdu_bytes,
                      m.num_dropped_pdus,
@@ -107,7 +110,7 @@ struct formatter<srsran::pdcp_rx_metrics_container> {
                      m.sum_sdu_latency_ns,
                      fmt::join(m.sdu_latency_hist, " "),
                      m.max_sdu_latency_ns,
-                     m.cpu_usage);
+                     m.sum_crypto_used_cpu_time_us);
   }
 };
 } // namespace fmt
