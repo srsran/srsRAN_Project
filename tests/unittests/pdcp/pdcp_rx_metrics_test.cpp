@@ -57,7 +57,7 @@ TEST_F(pdcp_rx_metrics_container_test, init)
   {
     // Check custom formatter
     timer_duration dur{2}; // 2ms
-    std::string    out_str = format_pdcp_tx_metrics(dur, m);
+    std::string    out_str = format_pdcp_rx_metrics(dur, m);
     std::string    exp_str =
         "num_sdus=0 sdu_rate= 0bps num_dropped_pdus=0 num_pdus=0 pdu_rate= 0bps num_integrity_verified_pdus=0 "
         "num_integrity_failed_pdus=0 num_t_reordering_timeouts=0 reordering_delay=0us reordering_counter=0 "
@@ -122,7 +122,7 @@ TEST_F(pdcp_rx_metrics_container_test, values)
   {
     // Check custom formatter
     timer_duration dur{2}; // 2ms
-    std::string    out_str = format_pdcp_tx_metrics(dur, m);
+    std::string    out_str = format_pdcp_rx_metrics(dur, m);
     std::string    exp_str =
         "num_sdus=59.5k sdu_rate=80Mbps num_dropped_pdus=94.9k num_pdus=49.5k pdu_rate=40Mbps "
         "num_integrity_verified_pdus=450k num_integrity_failed_pdus=865k num_t_reordering_timeouts=4.46k "

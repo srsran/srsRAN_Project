@@ -46,7 +46,7 @@ struct pdcp_rx_metrics_container {
   uint32_t                                    max_sdu_latency_ns;
 };
 
-inline std::string format_pdcp_tx_metrics(timer_duration metrics_period, const pdcp_rx_metrics_container& m)
+inline std::string format_pdcp_rx_metrics(timer_duration metrics_period, const pdcp_rx_metrics_container& m)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer),
