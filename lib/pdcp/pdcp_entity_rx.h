@@ -43,7 +43,7 @@ struct pdcp_rx_state {
 
 /// Helper structure used to pass RX PDUs to the security engine.
 struct pdcp_rx_pdu_info {
-  /// The PDU buffer
+  /// The PDU/SDU buffer (PDU header/footer are removed during processing so that finally the SDU remains.)
   byte_buffer buf;
   /// The count value of the PDU
   uint32_t count = 0;
