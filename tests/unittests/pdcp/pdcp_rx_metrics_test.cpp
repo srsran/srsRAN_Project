@@ -48,7 +48,7 @@ TEST_F(pdcp_rx_metrics_container_test, init)
     std::string exp_str =
         "num_sdus=0 num_sdu_bytes=0 num_dropped_pdus=0 num_pdus=0 num_pdu_bytes=0 num_integrity_verified_pdus=0 "
         "num_integrity_failed_pdus=0 num_t_reordering_timeouts=0 reordering_delay=0us reordering_counter=0 "
-        "sum_sdu_latency=0ns sdu_latency_hist=[0 0 0 0 0 0 0 0] max_sdu_latency=0ns";
+        "sum_sdu_latency=0ns sdu_latency_hist=[0 0 0 0 0 0 0 0] max_sdu_latency=0ns cpu_usage=0";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     ASSERT_EQ(out_str, exp_str);
@@ -61,7 +61,7 @@ TEST_F(pdcp_rx_metrics_container_test, init)
     std::string    exp_str =
         "num_sdus=0 sdu_rate= 0bps num_dropped_pdus=0 num_pdus=0 pdu_rate= 0bps num_integrity_verified_pdus=0 "
         "num_integrity_failed_pdus=0 num_t_reordering_timeouts=0 reordering_delay=0us reordering_counter=0 "
-        "sum_sdu_latency=0ns sdu_latency_hist=[ 0  0  0  0  0  0  0  0] max_sdu_latency=0us";
+        "sum_sdu_latency=0ns sdu_latency_hist=[ 0  0  0  0  0  0  0  0] max_sdu_latency=0us cpu_usage=0";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     ASSERT_EQ(out_str, exp_str);
@@ -82,6 +82,7 @@ TEST_F(pdcp_rx_metrics_container_test, values)
                                  .reordering_counter          = 23,
                                  .sum_sdu_latency_ns          = 547454,
                                  .counter                     = 833333332,
+                                 .cpu_usage                   = 0.6,
                                  .sdu_latency_hist            = {999, 20, 400, 8000, 160000, 3200000, 64000000, 128},
                                  .max_sdu_latency_ns          = 54322};
 
@@ -100,6 +101,7 @@ TEST_F(pdcp_rx_metrics_container_test, values)
   ASSERT_EQ(m.reordering_counter, 23);
   ASSERT_EQ(m.sum_sdu_latency_ns, 547454);
   ASSERT_EQ(m.counter, 833333332);
+  ASSERT_EQ(m.cpu_usage, 0.6);
   std::array<uint32_t, 8> h = {999, 20, 400, 8000, 160000, 3200000, 64000000, 128};
   ASSERT_EQ(m.sdu_latency_hist, h);
   ASSERT_EQ(m.max_sdu_latency_ns, 54322);
@@ -113,7 +115,7 @@ TEST_F(pdcp_rx_metrics_container_test, values)
         "num_sdus=59493 num_sdu_bytes=20000 num_dropped_pdus=94925 num_pdus=49532 num_pdu_bytes=10000 "
         "num_integrity_verified_pdus=449993 num_integrity_failed_pdus=865423 num_t_reordering_timeouts=4456 "
         "reordering_delay=456773us reordering_counter=23 sum_sdu_latency=547454ns sdu_latency_hist=[999 20 400 8000 "
-        "160000 3200000 64000000 128] max_sdu_latency=54322ns";
+        "160000 3200000 64000000 128] max_sdu_latency=54322ns cpu_usage=0.6";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     EXPECT_EQ(out_str, exp_str);
@@ -127,7 +129,7 @@ TEST_F(pdcp_rx_metrics_container_test, values)
         "num_sdus=59.5k sdu_rate=80Mbps num_dropped_pdus=94.9k num_pdus=49.5k pdu_rate=40Mbps "
         "num_integrity_verified_pdus=450k num_integrity_failed_pdus=865k num_t_reordering_timeouts=4.46k "
         "reordering_delay=456773us reordering_counter=23 sum_sdu_latency=547454ns sdu_latency_hist=[ 999  20  400 8.0k "
-        "160k 3.2M 64M  128] max_sdu_latency=54.322us";
+        "160k 3.2M 64M  128] max_sdu_latency=54.322us cpu_usage=0.6";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     EXPECT_EQ(out_str, exp_str);

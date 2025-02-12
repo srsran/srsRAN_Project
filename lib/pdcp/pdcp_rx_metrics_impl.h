@@ -11,9 +11,10 @@
 #pragma once
 
 #include "srsran/pdcp/pdcp_rx_metrics.h"
+#include "srsran/support/resource_usage/resource_usage_utils.h"
+#include <atomic>
 
 namespace srsran {
-
 class pdcp_rx_metrics
 {
   pdcp_rx_metrics_container metrics = {};
@@ -47,6 +48,14 @@ public:
     metrics.reordering_counter++;
   }
 
+  // Called from the security engine, possibly from many threads.
+  void add_cpu_usage_metrics(resource_usage_utils::measurements cpu_usage)
+  {
+    sum_crypto_cpu_duration_us.fetch_add(cpu_usage.duration.count(), std::memory_order_relaxed);
+    sum_crypto_used_cpu_time_us.fetch_add(cpu_usage.system_time.count() + cpu_usage.user_time.count(),
+                                          std::memory_order_relaxed);
+  }
+
   void add_sdu_latency_ns(uint32_t sdu_latency_ns)
   {
     metrics.sum_sdu_latency_ns += sdu_latency_ns;
@@ -59,17 +68,38 @@ public:
     metrics.max_sdu_latency_ns = std::max(sdu_latency_ns, metrics.max_sdu_latency_ns);
   }
 
-  pdcp_rx_metrics_container get_metrics() { return metrics; }
-
-  pdcp_rx_metrics_container get_metrics_and_reset()
+  pdcp_rx_metrics_container get_metrics()
   {
     pdcp_rx_metrics_container ret = metrics;
-    ret.counter++;
-    metrics = {};
+    metrics.cpu_usage             = get_cpu_usage();
     return ret;
   }
 
-  void reset_metrics() { metrics = {}; }
+  pdcp_rx_metrics_container get_metrics_and_reset()
+  {
+    pdcp_rx_metrics_container ret = get_metrics();
+    ret.counter++;
+    reset_metrics();
+    return ret;
+  }
+
+  void reset_metrics()
+  {
+    metrics                     = {};
+    sum_crypto_cpu_duration_us  = 0;
+    sum_crypto_used_cpu_time_us = 0;
+  }
+
+private:
+  double get_cpu_usage()
+  {
+    return sum_crypto_cpu_duration_us.load(std::memory_order_relaxed)
+               ? static_cast<double>(sum_crypto_used_cpu_time_us) / static_cast<double>(sum_crypto_cpu_duration_us)
+               : 0.0;
+  }
+
+  std::atomic<uint32_t> sum_crypto_cpu_duration_us  = 0;
+  std::atomic<uint32_t> sum_crypto_used_cpu_time_us = 0;
 };
 
 } // namespace srsran

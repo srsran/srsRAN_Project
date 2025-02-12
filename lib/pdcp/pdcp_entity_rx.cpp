@@ -13,6 +13,7 @@
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/execution_context_description.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 
 using namespace srsran;
 
@@ -241,7 +242,13 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::system_clock:
                             .token           = pdcp_crypto_token(token_mngr)};
 
   // apply security in crypto executor
-  auto fn = [this, pdu_info = std::move(pdu_info)]() mutable { apply_security(std::move(pdu_info)); };
+  auto fn = [this, pdu_info = std::move(pdu_info)]() mutable {
+    resource_usage_utils::measurements cpu_usage;
+    {
+      resource_usage_utils::scoped_resource_usage s(cpu_usage, resource_usage_utils::rusage_measurement_type::THREAD);
+      apply_security(std::move(pdu_info));
+    }
+  };
   if (not crypto_executor.execute(std::move(fn))) {
     logger.log_warning("Dropped PDU, crypto executor queue is full. count={}", rcvd_count);
   }
