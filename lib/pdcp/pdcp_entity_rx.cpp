@@ -248,6 +248,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::system_clock:
       resource_usage_utils::scoped_resource_usage s(cpu_usage, resource_usage_utils::rusage_measurement_type::THREAD);
       apply_security(std::move(pdu_info));
     }
+    metrics.add_cpu_usage_metrics(cpu_usage);
   };
   if (not crypto_executor.execute(std::move(fn))) {
     logger.log_warning("Dropped PDU, crypto executor queue is full. count={}", rcvd_count);
