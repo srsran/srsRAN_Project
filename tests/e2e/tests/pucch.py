@@ -37,6 +37,7 @@ from .steps.configuration import configure_test_parameters, get_minimum_sample_r
         param(False, 4, id="f1_f4"),
     ),
 )
+# pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
 def test_pucch(
     retina_manager: RetinaTestManager,
     retina_data: RetinaTestData,
@@ -71,7 +72,7 @@ def test_pucch(
         pucch_set1_format=pucch_set1_format,
     )
 
-    logging.info(f"PUCCH F{0 if use_format_0 else 1}+F{pucch_set1_format} Test")
+    logging.info("PUCCH F%d+F%d Test", 0 if use_format_0 else 1, pucch_set1_format)
 
     start_network(ue_array, gnb, fivegc)
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
