@@ -227,7 +227,11 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     }
 
     // Place SDU in TX window
-    tx_window.add_sdu(st.tx_next, std::move(sdu), discard_timer.now());
+    pdcp_tx_xdu_info sdu_info = {.buf                   = std::move(sdu),
+                                 .count                 = st.tx_next,
+                                 .time_of_arrival       = time_of_arrival,
+                                 .tick_point_of_arrival = discard_timer.now()};
+    tx_window.add_sdu(std::move(sdu_info));
 
     logger.log_debug("Added to tx window. count={} discard_timer={}", st.tx_next, cfg.discard_timer);
   }
@@ -532,14 +536,14 @@ void pdcp_entity_tx::retransmit_all_pdus()
 
   for (uint32_t count = st.tx_next_ack; count < st.tx_next; count++) {
     if (tx_window.has_sn(count)) {
-      pdcp_tx_sdu_info& sdu_info = tx_window[count];
+      pdcp_tx_xdu_info& sdu_info = tx_window[count];
 
       // Prepare header
       pdcp_data_pdu_header hdr = {};
       hdr.sn                   = SN(sdu_info.count);
 
       // Pack header
-      auto buf_copy = sdu_info.sdu.deep_copy();
+      auto buf_copy = sdu_info.buf.deep_copy();
       if (not buf_copy.has_value()) {
         logger.log_error("Could not deep copy SDU, dropping SDU and notifying RRC. count={} {}", sdu_info.count, st);
         upper_cn.on_protocol_failure();
@@ -834,8 +838,8 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
 
   // There are still old PDUs, restart discard timer.
   if (st.tx_next_ack != st.tx_next) {
-    tick_point_t now         = discard_timer.now();
-    unsigned     new_timeout = tx_window[st.tx_next_ack].time_of_arrival + (unsigned)cfg.discard_timer.value() - now;
+    tick_point_t now     = discard_timer.now();
+    unsigned new_timeout = tx_window[st.tx_next_ack].tick_point_of_arrival + (unsigned)cfg.discard_timer.value() - now;
     discard_timer.set(std::chrono::milliseconds(new_timeout), [this](timer_id_t timer_id) { discard_callback(); });
     discard_timer.run();
   }
@@ -886,16 +890,16 @@ void pdcp_entity_tx::discard_callback()
   }
 
   // Discard all PDUs that match the discard timer tick.
-  tick_point_t oldest_timepoint = tx_window[st.tx_next_ack].time_of_arrival;
+  tick_point_t oldest_timepoint = tx_window[st.tx_next_ack].tick_point_of_arrival;
   do {
     discard_pdu(st.tx_next_ack); // this updates st.tx_next_ack to the oldest PDU still in the window.
     if (not tx_window.has_sn(st.tx_next_ack)) {
       logger.log_debug("Finished discard callback. There are no new PDUs. st={}", st);
       break;
     }
-    if (tx_window[st.tx_next_ack].time_of_arrival != oldest_timepoint) {
+    if (tx_window[st.tx_next_ack].tick_point_of_arrival != oldest_timepoint) {
       // Restart timeout for any pending SDUs.
-      unsigned new_timeout = (tx_window[st.tx_next_ack].time_of_arrival - oldest_timepoint);
+      unsigned new_timeout = (tx_window[st.tx_next_ack].tick_point_of_arrival - oldest_timepoint);
       logger.log_debug("Finished discard callback. There are new PDUs with a new discard timer. new_timeout={}, st={}",
                        new_timeout,
                        st);

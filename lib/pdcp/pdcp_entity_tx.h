@@ -24,7 +24,6 @@
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
 #include "srsran/security/security_engine.h"
-#include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {

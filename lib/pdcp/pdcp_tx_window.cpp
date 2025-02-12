@@ -10,7 +10,6 @@
 
 #include "pdcp_tx_window.h"
 #include "srsran/pdcp/pdcp_config.h"
-#include "srsran/support/srsran_assert.h"
 #include <utility>
 
 using namespace srsran;
@@ -32,22 +31,22 @@ bool pdcp_tx_window::has_sn(uint32_t count) const
   return tx_window.has_sn(count);
 }
 
-pdcp_tx_sdu_info& pdcp_tx_window::operator[](uint32_t count)
+pdcp_tx_xdu_info& pdcp_tx_window::operator[](uint32_t count)
 {
-  return tx_window[count];
+  return tx_window[count].sdu_info;
 }
 
-void pdcp_tx_window::add_sdu(uint32_t count, byte_buffer sdu, tick_point_t toa)
+void pdcp_tx_window::add_sdu(pdcp_tx_xdu_info&& sdu_info)
 {
-  pdcp_tx_sdu_info& sdu_info = tx_window.add_sn(count);
-  sdu_info.count             = count;
-  sdu_info.time_of_arrival   = toa;
-  sdu_info.sdu_length        = sdu.length();
+  pdcp_tx_window_element& elem = tx_window.add_sn(sdu_info.count);
+  elem.sdu_info                = std::move(sdu_info);
+  elem.sdu_length              = elem.sdu_info.buf.length();
 
-  sdu_bytes += sdu_info.sdu_length;
+  sdu_bytes += elem.sdu_length;
   nof_sdus++;
-  if (rlc_mode == pdcp_rlc_mode::am) {
-    sdu_info.sdu = std::move(sdu);
+  if (rlc_mode != pdcp_rlc_mode::am) {
+    // No need to store the SDU for non-AM bearer
+    elem.sdu_info.buf.clear();
   }
 }
 

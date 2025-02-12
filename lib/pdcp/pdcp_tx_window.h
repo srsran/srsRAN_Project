@@ -11,20 +11,19 @@
 #pragma once
 
 #include "pdcp_bearer_logger.h"
-#include "srsran/adt/byte_buffer.h"
+#include "pdcp_tx_xdu_info.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/pdcp/pdcp_sn_size.h"
 #include "srsran/security/security.h"
 #include "srsran/support/sdu_window.h"
-#include "srsran/support/timers.h"
 
 namespace srsran {
 
-struct pdcp_tx_sdu_info {
-  uint32_t     count;
-  byte_buffer  sdu;
-  tick_point_t time_of_arrival;
-  uint32_t     sdu_length;
+struct pdcp_tx_window_element {
+  /// The actual SDU with additional meta info
+  pdcp_tx_xdu_info sdu_info;
+  /// The length of the SDU/PDU buffer (for optimized interaction with tx window)
+  uint32_t sdu_length;
 };
 
 /// Wrapper to PDCP tx window.
@@ -38,7 +37,7 @@ public:
 
   /// \brief Add SDU to TX window
   /// This method adds an SDU from the TX window. It will keep track of the PDU bytes in the window.
-  void add_sdu(uint32_t count, byte_buffer sdu, tick_point_t toa);
+  void add_sdu(pdcp_tx_xdu_info&& sdu_info);
 
   /// \brief Remove SDU from TX window
   /// This method removes an SDU from the TX window. It will keep track of the PDU bytes in the window.
@@ -46,7 +45,7 @@ public:
   /// \return true if the SDU exists in the window and was removed, false otherwise.
   void remove_sdu(uint32_t count);
 
-  pdcp_tx_sdu_info& operator[](uint32_t count);
+  pdcp_tx_xdu_info& operator[](uint32_t count);
 
   void clear();
 
@@ -61,7 +60,7 @@ private:
   /// This container is used to store discard timers of transmitted SDUs and, only for AM, a copy of the SDU for data
   /// recovery procedure. Upon expiry of a discard timer, the PDCP Tx entity instructs the lower layers to discard the
   /// associated PDCP PDU. See section 5.2.1 and 7.3 of TS 38.323.
-  sdu_window<pdcp_tx_sdu_info, pdcp_bearer_logger> tx_window;
+  sdu_window<pdcp_tx_window_element, pdcp_bearer_logger> tx_window;
 
   /// Creates the tx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
