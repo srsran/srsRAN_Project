@@ -47,6 +47,8 @@ void flexible_o_du_metrics_aggregator::on_new_metrics(const srs_du::o_du_metrics
 {
   flexible_o_du_metrics metrics;
 
+  // Caution, the copy may become expensive when the DU metrics grow.
+  metrics.du = odu_metrics;
   ru_collector->collect_metrics(metrics.ru);
   notifier.on_new_metrics(metrics);
 }

@@ -44,7 +44,7 @@ public:
     auto tp_after = std::chrono::high_resolution_clock::now();
 
     // Notify metrics.
-    notifier.new_metric(
+    notifier.on_new_metric(
         {.elapsed = tp_after - tp_before, .elapsed_buffer = elapsed_on_new_block + elapsed_on_end_codeword});
   }
 

@@ -12,6 +12,7 @@
 
 #include "srsran/phy/upper/channel_coding/crc_calculator.h"
 #include "srsran/ran/sch/modulation_scheme.h"
+#include "srsran/support/resource_usage/resource_usage_utils.h"
 #include "srsran/support/units.h"
 #include <chrono>
 #include <optional>
@@ -62,6 +63,8 @@ struct ldpc_decoder_metrics {
   bool crc_ok;
   /// Elapsed time.
   std::chrono::nanoseconds elapsed;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects PUSCH channel estimator metrics.

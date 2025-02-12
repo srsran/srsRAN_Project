@@ -39,7 +39,7 @@ public:
     base->rate_dematch(output, input, new_data, cfg);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.input_size = units::bits(input.size()), .elapsed = tp_after - tp_before});
+    notifier.on_new_metric({.input_size = units::bits(input.size()), .elapsed = tp_after - tp_before});
   }
 
 private:

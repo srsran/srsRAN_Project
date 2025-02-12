@@ -89,7 +89,7 @@ private:
   }
 
   // See interface for documentation.
-  void new_metric(const crc_calculator_metrics& metrics) override
+  void on_new_metric(const crc_calculator_metrics& metrics) override
   {
     metrics_per_polynomial& metrics_poly = select_metrics(metrics.poly);
     metrics_poly.sum_nof_bits += metrics.nof_bits.value();

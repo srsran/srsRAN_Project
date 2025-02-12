@@ -49,7 +49,7 @@ public:
 
 private:
   // See interface for documentation.
-  void new_metric(const ldpc_decoder_metrics& metrics) override
+  void on_new_metric(const ldpc_decoder_metrics& metrics) override
   {
     sum_cb_sz += metrics.cb_sz.value();
     sum_nof_iterations += metrics.nof_iterations;

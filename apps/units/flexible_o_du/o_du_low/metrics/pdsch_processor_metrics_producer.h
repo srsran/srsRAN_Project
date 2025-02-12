@@ -51,7 +51,7 @@ public:
 
 private:
   // See interface for documentation.
-  void new_metric(const pdsch_processor_metrics& metrics) override
+  void on_new_metric(const pdsch_processor_metrics& metrics) override
   {
     sum_tb_sz += metrics.tbs.to_bits().value();
     sum_elapsed_return_ns += metrics.elapsed_return.count();

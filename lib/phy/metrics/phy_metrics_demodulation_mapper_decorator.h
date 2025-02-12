@@ -38,7 +38,7 @@ public:
     base->demodulate_soft(llrs, symbols, noise_vars, mod);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric(
+    notifier.on_new_metric(
         {.modulation = mod, .nof_symbols = static_cast<unsigned>(symbols.size()), .elapsed = tp_after - tp_before});
   }
 

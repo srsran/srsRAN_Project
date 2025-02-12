@@ -33,9 +33,9 @@ public:
     base_generator->init(c_init);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::init,
-                         .nof_bits = 0,
-                         .elapsed  = tp_after - tp_before});
+    notifier.on_new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::init,
+                            .nof_bits = 0,
+                            .elapsed  = tp_after - tp_before});
   }
 
   // See interface for documentation.
@@ -51,9 +51,9 @@ public:
     base_generator->advance(count);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::advance,
-                         .nof_bits = count,
-                         .elapsed  = tp_after - tp_before});
+    notifier.on_new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::advance,
+                            .nof_bits = count,
+                            .elapsed  = tp_after - tp_before});
   }
 
   // See interface for documentation.
@@ -63,9 +63,9 @@ public:
     base_generator->apply_xor(out, in);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_packed,
-                         .nof_bits = in.size(),
-                         .elapsed  = tp_after - tp_before});
+    notifier.on_new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_packed,
+                            .nof_bits = in.size(),
+                            .elapsed  = tp_after - tp_before});
   }
 
   // See interface for documentation.
@@ -75,9 +75,9 @@ public:
     base_generator->apply_xor(out, in);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_unpacked,
-                         .nof_bits = in.size(),
-                         .elapsed  = tp_after - tp_before});
+    notifier.on_new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_unpacked,
+                            .nof_bits = in.size(),
+                            .elapsed  = tp_after - tp_before});
   }
 
   // See interface for documentation.
@@ -87,9 +87,9 @@ public:
     base_generator->apply_xor(out, in);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_soft_bit,
-                         .nof_bits = in.size(),
-                         .elapsed  = tp_after - tp_before});
+    notifier.on_new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_soft_bit,
+                            .nof_bits = in.size(),
+                            .elapsed  = tp_after - tp_before});
   }
 
   // See interface for documentation.
@@ -99,9 +99,9 @@ public:
     base_generator->generate(data);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::generate_bit_packed,
-                         .nof_bits = data.size(),
-                         .elapsed  = tp_after - tp_before});
+    notifier.on_new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::generate_bit_packed,
+                            .nof_bits = data.size(),
+                            .elapsed  = tp_after - tp_before});
   }
 
   // See interface for documentation.
@@ -111,9 +111,9 @@ public:
     base_generator->generate(buffer, value);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::generate_float,
-                         .nof_bits = buffer.size(),
-                         .elapsed  = tp_after - tp_before});
+    notifier.on_new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::generate_float,
+                            .nof_bits = buffer.size(),
+                            .elapsed  = tp_after - tp_before});
   }
 
 private:

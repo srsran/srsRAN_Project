@@ -37,7 +37,7 @@ public:
 
 private:
   // See interface for documentation.
-  void new_metric(const transform_precoder_metrics& metrics) override
+  void on_new_metric(const transform_precoder_metrics& metrics) override
   {
     sum_nof_re += metrics.nof_re;
     sum_elapsed_ns += metrics.elapsed.count();

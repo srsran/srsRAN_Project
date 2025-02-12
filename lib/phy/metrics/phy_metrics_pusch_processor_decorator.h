@@ -127,7 +127,7 @@ private:
       metrics.elapsed_uci = time_uci_local - time_start;
     }
 
-    metric_notifier.new_metric(metrics);
+    metric_notifier.on_new_metric(metrics);
   }
 
   std::unique_ptr<pusch_processor>                      processor;

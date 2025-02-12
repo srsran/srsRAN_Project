@@ -8,12 +8,12 @@
  *
  */
 
-#include "o_du_low_metrics_collector_impl.h"
+#include "du_low_pdsch_metrics_collector.h"
 
 using namespace srsran;
 using namespace srs_du;
 
-void o_du_low_metrics_collector_impl::collect_o_du_low_metrics(o_du_low_metrics& metrics)
+void du_low_pdsch_metrics_collector::collect_metrics(o_du_low_pdsch_metrics& metrics)
 {
   // Implement me!
 }

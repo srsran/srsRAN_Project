@@ -37,10 +37,10 @@ public:
     base_precoder->apply_precoding(output, input, precoding);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.method     = channel_precoder_metrics::methods::apply_precoding,
-                         .nof_re     = output.get_nof_re(),
-                         .nof_layers = precoding.get_nof_layers(),
-                         .elapsed    = tp_after - tp_before});
+    notifier.on_new_metric({.method     = channel_precoder_metrics::methods::apply_precoding,
+                            .nof_re     = output.get_nof_re(),
+                            .nof_layers = precoding.get_nof_layers(),
+                            .elapsed    = tp_after - tp_before});
   }
 
   // See interface for documentation.
@@ -56,11 +56,11 @@ public:
     auto tp_after = std::chrono::high_resolution_clock::now();
 
     // Create report metrics.
-    notifier.new_metric({.method     = channel_precoder_metrics::methods::apply_layer_map_and_precoding,
-                         .nof_re     = output.get_nof_re(),
-                         .nof_layers = precoding.get_nof_layers(),
-                         .nof_ports  = precoding.get_nof_ports(),
-                         .elapsed    = tp_after - tp_before});
+    notifier.on_new_metric({.method     = channel_precoder_metrics::methods::apply_layer_map_and_precoding,
+                            .nof_re     = output.get_nof_re(),
+                            .nof_layers = precoding.get_nof_layers(),
+                            .nof_ports  = precoding.get_nof_ports(),
+                            .elapsed    = tp_after - tp_before});
   }
 
 private:

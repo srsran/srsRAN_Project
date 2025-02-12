@@ -55,7 +55,7 @@ public:
 
 private:
   // See interface for documentation.
-  void new_metric(const pusch_processor_metrics& metrics) override
+  void on_new_metric(const pusch_processor_metrics& metrics) override
   {
     sum_tbs += metrics.tbs.to_bits().value();
     sum_data_elapsed_ns += metrics.elapsed_data.count();

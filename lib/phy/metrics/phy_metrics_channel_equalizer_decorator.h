@@ -40,10 +40,10 @@ public:
     base_equalizer->equalize(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.nof_re     = ch_estimates.get_nof_re(),
-                         .nof_layers = ch_estimates.get_nof_tx_layers(),
-                         .nof_ports  = ch_estimates.get_nof_rx_ports(),
-                         .elapsed    = tp_after - tp_before});
+    notifier.on_new_metric({.nof_re     = ch_estimates.get_nof_re(),
+                            .nof_layers = ch_estimates.get_nof_tx_layers(),
+                            .nof_ports  = ch_estimates.get_nof_rx_ports(),
+                            .elapsed    = tp_after - tp_before});
   }
 
   // See interface for documentation.

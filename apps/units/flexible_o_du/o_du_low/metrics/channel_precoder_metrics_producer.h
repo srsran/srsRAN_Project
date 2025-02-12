@@ -47,7 +47,7 @@ public:
 
 private:
   // See interface for documentation.
-  void new_metric(const channel_precoder_metrics& metrics) override
+  void on_new_metric(const channel_precoder_metrics& metrics) override
   {
     if (metrics.nof_layers < 1) {
       return;

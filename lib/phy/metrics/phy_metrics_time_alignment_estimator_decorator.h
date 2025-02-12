@@ -38,7 +38,7 @@ public:
     time_alignment_measurement ret       = base->estimate(symbols, mask, scs, max_ta);
     auto                       tp_after  = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.size())});
+    notifier.on_new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.size())});
 
     return ret;
   }
@@ -53,7 +53,7 @@ public:
     time_alignment_measurement ret       = base->estimate(symbols, mask, scs, max_ta);
     auto                       tp_after  = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.get_nof_re())});
+    notifier.on_new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.get_nof_re())});
 
     return ret;
   }
@@ -66,7 +66,7 @@ public:
     time_alignment_measurement ret       = base->estimate(symbols, stride, scs, max_ta);
     auto                       tp_after  = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.size())});
+    notifier.on_new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.size())});
 
     return ret;
   }
@@ -79,7 +79,7 @@ public:
     time_alignment_measurement ret       = base->estimate(symbols, stride, scs, max_ta);
     auto                       tp_after  = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.get_nof_re())});
+    notifier.on_new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.get_nof_re())});
 
     return ret;
   }

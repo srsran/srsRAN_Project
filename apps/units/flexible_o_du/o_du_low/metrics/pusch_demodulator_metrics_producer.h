@@ -37,7 +37,7 @@ public:
 
 private:
   // See interface for documentation.
-  void new_metric(const pusch_demodulator_metrics& metrics) override
+  void on_new_metric(const pusch_demodulator_metrics& metrics) override
   {
     sum_elapsed_ns += metrics.elapsed.count();
     sum_elapsed_buffer_ns += metrics.elapsed_buffer.count();

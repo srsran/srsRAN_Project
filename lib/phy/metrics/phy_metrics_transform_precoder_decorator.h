@@ -35,7 +35,7 @@ public:
     base->deprecode_ofdm_symbol(out, in);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(out.size())});
+    notifier.on_new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(out.size())});
   }
 
   // See interface for documentation.

@@ -49,7 +49,7 @@ public:
 
 private:
   // See interface for documentation.
-  void new_metric(const ulsch_demultiplex_metrics& metrics) override
+  void on_new_metric(const ulsch_demultiplex_metrics& metrics) override
   {
     sum_elapsed_init_ns += metrics.elapsed_init.count();
     sum_elapsed_on_new_block_ns += metrics.elapsed_on_new_block.count();

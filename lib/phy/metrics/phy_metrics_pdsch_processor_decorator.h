@@ -68,9 +68,9 @@ private:
       return;
     }
 
-    notifier.new_metric({.tbs                = tbs,
-                         .elapsed_return     = std::chrono::nanoseconds(elapsed_return_ns),
-                         .elapsed_completion = std::chrono::nanoseconds(elapsed_completion_ns)});
+    notifier.on_new_metric({.tbs                = tbs,
+                            .elapsed_return     = std::chrono::nanoseconds(elapsed_return_ns),
+                            .elapsed_completion = std::chrono::nanoseconds(elapsed_completion_ns)});
   }
 
   std::chrono::high_resolution_clock::time_point start_time            = {};

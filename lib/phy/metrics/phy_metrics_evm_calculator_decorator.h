@@ -36,9 +36,9 @@ public:
     float ret       = base->calculate(soft_bits, symbols, modulation);
     auto  tp_after  = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.modulation  = modulation,
-                         .nof_symbols = static_cast<unsigned>(symbols.size()),
-                         .elapsed     = tp_after - tp_before});
+    notifier.on_new_metric({.modulation  = modulation,
+                            .nof_symbols = static_cast<unsigned>(symbols.size()),
+                            .elapsed     = tp_after - tp_before});
 
     return ret;
   }

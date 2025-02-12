@@ -88,10 +88,10 @@ private:
     auto tp_after = std::chrono::high_resolution_clock::now();
 
     // Notify metrics.
-    notifier.new_metric({.elapsed_init            = elapsed_init,
-                         .elapsed_on_new_block    = elapsed_on_new_block,
-                         .elapsed_on_end_codeword = tp_after - tp_before,
-                         .sum_nof_bits            = sum_nof_bits});
+    notifier.on_new_metric({.elapsed_init            = elapsed_init,
+                            .elapsed_on_new_block    = elapsed_on_new_block,
+                            .elapsed_on_end_codeword = tp_after - tp_before,
+                            .sum_nof_bits            = sum_nof_bits});
 
     // Reset base buffer pointer and counters
     base_buffer          = nullptr;

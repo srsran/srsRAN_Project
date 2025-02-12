@@ -31,7 +31,7 @@ public:
 
 private:
   // See interface for documentation.
-  void new_metric(const port_channel_estimator_metrics& metrics) override
+  void on_new_metric(const port_channel_estimator_metrics& metrics) override
   {
     sum_elapsed_ns += metrics.elapsed.count();
     ++count;

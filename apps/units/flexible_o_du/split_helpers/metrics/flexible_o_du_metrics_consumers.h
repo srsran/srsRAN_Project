@@ -11,6 +11,7 @@
 #pragma once
 
 #include "apps/services/metrics/metrics_consumer.h"
+#include "srsran/srslog/logger.h"
 
 namespace srsran {
 
@@ -20,6 +21,19 @@ class flexible_o_du_metrics_consumer_dummy : public app_services::metrics_consum
 public:
   // See interface for documentation.
   void handle_metric(const app_services::metrics_set& metric) override;
+};
+
+// Consumer for the log resource usage metrics.
+class flexible_o_du_metrics_consumer_log : public app_services::metrics_consumer
+{
+public:
+  explicit flexible_o_du_metrics_consumer_log(srslog::basic_logger& logger_);
+
+  // See interface for documentation.
+  void handle_metric(const app_services::metrics_set& metric) override;
+
+private:
+  srslog::basic_logger& logger;
 };
 
 } // namespace srsran

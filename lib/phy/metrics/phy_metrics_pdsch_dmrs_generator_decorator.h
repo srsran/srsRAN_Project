@@ -36,7 +36,7 @@ public:
     base->map(grid, config);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.elapsed = tp_after - tp_before});
+    notifier.on_new_metric({.elapsed = tp_after - tp_before});
   }
 
 private:

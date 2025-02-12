@@ -31,7 +31,7 @@ public:
 
 private:
   // See interface for documentation.
-  void new_metric(const pdsch_dmrs_generator_metrics& metrics) override
+  void on_new_metric(const pdsch_dmrs_generator_metrics& metrics) override
   {
     sum_elapsed_ns += metrics.elapsed.count();
     ++count;

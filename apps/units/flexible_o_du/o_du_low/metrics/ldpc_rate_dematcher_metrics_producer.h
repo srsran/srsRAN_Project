@@ -40,7 +40,7 @@ public:
 
 private:
   // See interface for documentation.
-  void new_metric(const ldpc_rate_dematcher_metrics& metrics) override
+  void on_new_metric(const ldpc_rate_dematcher_metrics& metrics) override
   {
     sum_input_size += metrics.input_size.value();
     sum_elapsed_ns += metrics.elapsed.count();

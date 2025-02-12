@@ -19,11 +19,9 @@ namespace srs_du {
 
 struct du_cell_config;
 struct o_du_low_config;
-struct o_du_low_dependencies;
 
 /// Creates and returns an O-RAN Distributed Unit (O-DU) low.
-std::unique_ptr<o_du_low>
-make_o_du_low(const o_du_low_config& config, span<const du_cell_config> du_cells, o_du_low_dependencies&& dependencies);
+std::unique_ptr<o_du_low> make_o_du_low(const o_du_low_config& config, span<const du_cell_config> du_cells);
 
 } // namespace srs_du
 } // namespace srsran

@@ -36,7 +36,7 @@ public:
     const ldpc_encoder_buffer& ret       = base_encoder->encode(input, cfg);
     auto                       tp_after  = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.cb_sz = units::bits(input.size()), .elapsed = tp_after - tp_before});
+    notifier.on_new_metric({.cb_sz = units::bits(input.size()), .elapsed = tp_after - tp_before});
 
     return ret;
   }

@@ -92,7 +92,7 @@ private:
   }
 
   // See interface for documentation.
-  void new_metric(const channel_modulation_metrics& metrics) override
+  void on_new_metric(const channel_modulation_metrics& metrics) override
   {
     metrics_per_modulation& metrics_modulation = select_metrics(metrics.modulation);
     metrics_modulation.sum_nof_symbols += metrics.nof_symbols;

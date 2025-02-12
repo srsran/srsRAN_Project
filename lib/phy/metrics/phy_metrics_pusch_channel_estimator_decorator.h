@@ -36,7 +36,7 @@ public:
     base->estimate(estimate, grid, config);
     auto tp_after = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.nof_prb = static_cast<unsigned>(config.rb_mask.count()), .elapsed = tp_after - tp_before});
+    notifier.on_new_metric({.nof_prb = static_cast<unsigned>(config.rb_mask.count()), .elapsed = tp_after - tp_before});
   }
 
 private:

@@ -48,7 +48,7 @@ public:
 
 private:
   // See interface for documentation.
-  void new_metric(const pseudo_random_sequence_generator_metrics& metrics) override
+  void on_new_metric(const pseudo_random_sequence_generator_metrics& metrics) override
   {
     switch (metrics.method) {
       case pseudo_random_sequence_generator_metrics::methods::init:

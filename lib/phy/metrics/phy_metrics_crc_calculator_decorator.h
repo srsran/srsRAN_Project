@@ -36,9 +36,9 @@ public:
     crc_calculator_checksum_t ret       = base_calculator->calculate_byte(data);
     auto                      tp_after  = std::chrono::high_resolution_clock::now();
 
-    notifier.new_metric({.poly     = base_calculator->get_generator_poly(),
-                         .nof_bits = units::bytes(data.size()).to_bits(),
-                         .elapsed  = tp_after - tp_before});
+    notifier.on_new_metric({.poly     = base_calculator->get_generator_poly(),
+                            .nof_bits = units::bytes(data.size()).to_bits(),
+                            .elapsed  = tp_after - tp_before});
 
     return ret;
   }
@@ -51,9 +51,9 @@ public:
     auto                      tp_after  = std::chrono::high_resolution_clock::now();
 
     // Create report metrics.
-    notifier.new_metric({.poly     = base_calculator->get_generator_poly(),
-                         .nof_bits = units::bits(data.size()),
-                         .elapsed  = tp_after - tp_before});
+    notifier.on_new_metric({.poly     = base_calculator->get_generator_poly(),
+                            .nof_bits = units::bits(data.size()),
+                            .elapsed  = tp_after - tp_before});
 
     return ret;
   }
@@ -66,9 +66,9 @@ public:
     auto                      tp_after  = std::chrono::high_resolution_clock::now();
 
     // Create report metrics.
-    notifier.new_metric({.poly     = base_calculator->get_generator_poly(),
-                         .nof_bits = units::bits(data.size()),
-                         .elapsed  = tp_after - tp_before});
+    notifier.on_new_metric({.poly     = base_calculator->get_generator_poly(),
+                            .nof_bits = units::bits(data.size()),
+                            .elapsed  = tp_after - tp_before});
 
     return ret;
   }
