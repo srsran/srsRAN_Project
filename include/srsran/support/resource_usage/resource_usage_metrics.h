@@ -30,6 +30,7 @@ struct memory_metrics {
 struct resource_usage_metrics {
   cpu_metrics    cpu_stats;
   memory_metrics memory_stats;
+  double         power_usage_watts;
 };
 
 } // namespace srsran

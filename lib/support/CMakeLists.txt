@@ -25,6 +25,9 @@ set(SOURCES
         byte_buffer_chain.cpp
         config_yaml.cpp
         cpu_architecture_info.cpp
+        resource_usage/powercap_energy_reader_impl.cpp
+        resource_usage/rapl_msr_energy_reader_impl.cpp
+        resource_usage/power_consumption.cpp
         resource_usage/resource_usage_utils.cpp
         signal_handling.cpp
         sysinfo.cpp

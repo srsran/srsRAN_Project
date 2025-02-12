@@ -30,6 +30,7 @@ public:
                 sys_metrics.cpu_stats.cpu_usage_percentage,
                 sys_metrics.cpu_stats.cpu_utilization_nof_cpus);
     logger.info("Application memory usage: {} Bytes", sys_metrics.memory_stats.memory_usage.value());
+    logger.info("CPU package power usage: {:02f} Watts", sys_metrics.power_usage_watts);
   }
 
 private:

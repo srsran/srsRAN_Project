@@ -24,7 +24,7 @@ public:
   /// Constructor receives measurement struct that needs to be filled and measurement type.
   scoped_resource_usage(measurements& measurements_, rusage_measurement_type type_) : meas(measurements_), type(type_)
   {
-    start_snapshot = now(type);
+    start_snapshot = cpu_usage_now(type);
     if (!start_snapshot) {
       srslog::fetch_basic_logger("METRICS").warning(
           "Scoped resource usage tracker failed to query current resource usage, errno={}", start_snapshot.error());
@@ -38,7 +38,7 @@ public:
       meas.reset();
       return;
     }
-    auto current_snapshot = now(type);
+    auto current_snapshot = cpu_usage_now(type);
     if (!current_snapshot) {
       srslog::fetch_basic_logger("METRICS").warning(
           "Scoped resource usage tracker failed to query current resource usage, errno={}", current_snapshot.error());
@@ -54,9 +54,9 @@ public:
   }
 
 private:
-  measurements&           meas;
-  rusage_measurement_type type;
-  expected<snapshot, int> start_snapshot;
+  measurements&               meas;
+  rusage_measurement_type     type;
+  expected<cpu_snapshot, int> start_snapshot;
 };
 
 } // namespace resource_usage_utils

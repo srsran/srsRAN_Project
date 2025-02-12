@@ -50,7 +50,7 @@ struct measurements {
 measurements operator+(const measurements& lhs, const measurements& rhs);
 
 /// Snapshot of the resource usage statistics of a specific thread or process at a given point in time.
-struct snapshot {
+struct cpu_snapshot {
   /// Time point when the snapshot was taken.
   rusage_meas_time_point tp;
   /// User CPU time.
@@ -62,7 +62,7 @@ struct snapshot {
 };
 
 /// On success returns a snapshot of the resource usage, otherwise returns an errno value.
-expected<snapshot, int> now(rusage_measurement_type type);
+expected<cpu_snapshot, int> cpu_usage_now(rusage_measurement_type type);
 
 /// Convert measurements to metrics.
 resource_usage_metrics res_usage_measurements_to_metrics(measurements measurements, std::chrono::microseconds period);
