@@ -36,8 +36,8 @@ public:
 
   pdcp_tx_metrics_container get_metrics()
   {
-    pdcp_tx_metrics_container ret = metrics;
-    ret.cpu_usage                 = get_cpu_usage();
+    pdcp_tx_metrics_container ret       = metrics;
+    metrics.sum_crypto_used_cpu_time_us = sum_crypto_used_cpu_time_us;
     return ret;
   }
 
@@ -63,7 +63,6 @@ public:
 
   void add_cpu_usage_metrics(resource_usage_utils::measurements cpu_usage)
   {
-    sum_crypto_cpu_duration_us.fetch_add(cpu_usage.duration.count(), std::memory_order_relaxed);
     sum_crypto_used_cpu_time_us.fetch_add(cpu_usage.system_time.count() + cpu_usage.user_time.count(),
                                           std::memory_order_relaxed);
   }
@@ -71,19 +70,10 @@ public:
   void reset_metrics()
   {
     metrics                     = {};
-    sum_crypto_cpu_duration_us  = 0;
     sum_crypto_used_cpu_time_us = 0;
   }
 
 private:
-  double get_cpu_usage()
-  {
-    return sum_crypto_cpu_duration_us.load(std::memory_order_relaxed)
-               ? static_cast<double>(sum_crypto_used_cpu_time_us) / static_cast<double>(sum_crypto_cpu_duration_us)
-               : 0.0;
-  }
-
-  std::atomic<uint32_t> sum_crypto_cpu_duration_us  = 0;
   std::atomic<uint32_t> sum_crypto_used_cpu_time_us = 0;
 };
 } // namespace srsran
