@@ -34,6 +34,9 @@ struct pdcp_tx_metrics_container {
   uint32_t sum_pdu_latency_ns; ///< total PDU latency (in ns)
   unsigned counter;
 
+  // CPU Usage metrics
+  double cpu_usage;
+
   // Histogram of PDU latencies
   static constexpr unsigned                   pdu_latency_hist_bins = 8;
   static constexpr unsigned                   nof_usec_per_bin      = 1;
@@ -58,14 +61,15 @@ inline std::string format_pdcp_tx_metrics(timer_duration metrics_period, const p
     fmt::format_to(std::back_inserter(buffer), "{}{}", first_bin ? "" : " ", float_to_eng_string(freq, 1, false));
     first_bin = false;
   }
-  fmt::format_to(std::back_inserter(buffer), "] max_pdu_latency={}us", m.max_pdu_latency_ns * 1e-3);
+  fmt::format_to(
+      std::back_inserter(buffer), "] max_pdu_latency={}us cpu_usage={}", m.max_pdu_latency_ns * 1e-3, m.cpu_usage);
   return to_c_str(buffer);
 }
 
 } // namespace srsran
 
 namespace fmt {
-// PDCP RX metrics formatter
+// PDCP TX metrics formatter
 template <>
 struct formatter<srsran::pdcp_tx_metrics_container> {
   template <typename ParseContext>
@@ -79,7 +83,7 @@ struct formatter<srsran::pdcp_tx_metrics_container> {
   {
     return format_to(ctx.out(),
                      "num_sdus={} num_sdu_bytes={} num_pdus={} num_pdu_bytes={} num_discard_timeouts={} "
-                     "sum_pdu_latency={}ns sdu_latency_hist=[{}] max_sdu_latency={}ns",
+                     "sum_pdu_latency={}ns sdu_latency_hist=[{}] max_sdu_latency={}ns cpu_usage={}",
                      m.num_sdus,
                      m.num_sdu_bytes,
                      m.num_pdus,
@@ -87,7 +91,8 @@ struct formatter<srsran::pdcp_tx_metrics_container> {
                      m.num_discard_timeouts,
                      m.sum_pdu_latency_ns,
                      fmt::join(m.pdu_latency_hist, " "),
-                     m.max_pdu_latency_ns);
+                     m.max_pdu_latency_ns,
+                     m.cpu_usage);
   }
 };
 } // namespace fmt

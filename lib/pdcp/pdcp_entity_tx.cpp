@@ -13,6 +13,7 @@
 #include "../security/security_engine_impl.h"
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/bit_encoding.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 #include "srsran/support/srsran_assert.h"
 #include <algorithm>
 
@@ -191,14 +192,20 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   // Apply ciphering and integrity protection
-  expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), st.tx_next);
-  if (not exp_buf.has_value()) {
-    logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
-                     st.tx_next);
-    upper_cn.on_protocol_failure();
-    return;
+  byte_buffer                        protected_buf;
+  resource_usage_utils::measurements cpu_usage;
+  {
+    resource_usage_utils::scoped_resource_usage s(cpu_usage, resource_usage_utils::rusage_measurement_type::THREAD);
+    expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), st.tx_next);
+    if (not exp_buf.has_value()) {
+      logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
+                       st.tx_next);
+      upper_cn.on_protocol_failure();
+      return;
+    }
+    protected_buf = std::move(exp_buf.value());
   }
-  byte_buffer protected_buf = std::move(exp_buf.value());
+  metrics.add_cpu_usage_metrics(cpu_usage);
 
   // Create a discard timer and put into tx_window. For AM, also store the SDU for a possible data recovery procedure.
   if (cfg.discard_timer.has_value()) {

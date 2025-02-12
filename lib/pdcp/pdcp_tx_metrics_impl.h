@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/pdcp/pdcp_tx_metrics.h"
+#include "srsran/support/resource_usage/resource_usage_utils.h"
 
 namespace srsran {
 
@@ -33,12 +34,18 @@ public:
 
   void add_discard_timouts(uint32_t num_discard_timeouts_) { metrics.num_discard_timeouts += num_discard_timeouts_; }
 
-  pdcp_tx_metrics_container get_metrics() { return metrics; }
+  pdcp_tx_metrics_container get_metrics()
+  {
+    pdcp_tx_metrics_container ret = metrics;
+    ret.cpu_usage                 = get_cpu_usage();
+    return ret;
+  }
 
   pdcp_tx_metrics_container get_metrics_and_reset()
   {
-    pdcp_tx_metrics_container ret = metrics;
-    metrics                       = {};
+    pdcp_tx_metrics_container ret = get_metrics();
+    ret.counter++;
+    reset_metrics();
     return ret;
   }
 
@@ -54,6 +61,29 @@ public:
     metrics.max_pdu_latency_ns = std::max(sdu_latency_ns, metrics.max_pdu_latency_ns);
   }
 
-  void reset_metrics() { metrics = {}; }
+  void add_cpu_usage_metrics(resource_usage_utils::measurements cpu_usage)
+  {
+    sum_crypto_cpu_duration_us.fetch_add(cpu_usage.duration.count(), std::memory_order_relaxed);
+    sum_crypto_used_cpu_time_us.fetch_add(cpu_usage.system_time.count() + cpu_usage.user_time.count(),
+                                          std::memory_order_relaxed);
+  }
+
+  void reset_metrics()
+  {
+    metrics                     = {};
+    sum_crypto_cpu_duration_us  = 0;
+    sum_crypto_used_cpu_time_us = 0;
+  }
+
+private:
+  double get_cpu_usage()
+  {
+    return sum_crypto_cpu_duration_us.load(std::memory_order_relaxed)
+               ? static_cast<double>(sum_crypto_used_cpu_time_us) / static_cast<double>(sum_crypto_cpu_duration_us)
+               : 0.0;
+  }
+
+  std::atomic<uint32_t> sum_crypto_cpu_duration_us  = 0;
+  std::atomic<uint32_t> sum_crypto_used_cpu_time_us = 0;
 };
 } // namespace srsran

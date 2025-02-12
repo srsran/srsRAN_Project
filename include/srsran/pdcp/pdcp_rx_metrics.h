@@ -39,6 +39,7 @@ struct pdcp_rx_metrics_container {
   uint32_t sum_sdu_latency_ns; ///< total SDU latency (in ns)
   unsigned counter;
 
+  // CPU Usage metrics
   uint32_t sum_crypto_used_cpu_time_us;
 
   // Histogram of SDU latencies
