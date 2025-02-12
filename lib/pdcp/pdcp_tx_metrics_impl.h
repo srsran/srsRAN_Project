@@ -42,6 +42,18 @@ public:
     return ret;
   }
 
+  void add_pdu_latency_ns(uint32_t sdu_latency_ns)
+  {
+    metrics.sum_pdu_latency_ns += sdu_latency_ns;
+
+    unsigned bin_idx = sdu_latency_ns / (1000 * pdcp_tx_metrics_container::nof_usec_per_bin);
+
+    bin_idx = std::min(bin_idx, pdcp_tx_metrics_container::pdu_latency_hist_bins - 1);
+    metrics.pdu_latency_hist[bin_idx]++;
+
+    metrics.max_pdu_latency_ns = std::max(sdu_latency_ns, metrics.max_pdu_latency_ns);
+  }
+
   void reset_metrics() { metrics = {}; }
 };
 } // namespace srsran

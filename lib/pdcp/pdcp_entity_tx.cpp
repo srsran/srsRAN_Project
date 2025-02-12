@@ -100,7 +100,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     return;
   }
 
-  trace_point tx_tp = up_tracer.now();
+  trace_point                           tx_tp           = up_tracer.now();
+  std::chrono::system_clock::time_point time_of_arrival = std::chrono::high_resolution_clock::now();
 
   if (is_drb()) {
     if (desired_buffer_size == 0) {
@@ -221,6 +222,10 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     logger.log_debug("Added to tx window. count={} discard_timer={}", st.tx_next, cfg.discard_timer);
   }
 
+  // TODO: move SDU latency computation to write_data_pdu_to_lower_layers
+  auto sdu_latency_ns =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - time_of_arrival);
+  metrics.add_pdu_latency_ns(sdu_latency_ns.count());
   // Write to lower layers
   write_data_pdu_to_lower_layers(st.tx_next, std::move(protected_buf), /* is_retx = */ false);
 
@@ -297,6 +302,7 @@ void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer 
                   count,
                   is_retx);
   metrics.add_pdus(1, buf.length());
+  // TODO: put SDU latency computation here (and remove from handle_sdu) once TOA is stored with the SDU.
   lower_dn.on_new_pdu(std::move(buf), is_retx);
 }
 

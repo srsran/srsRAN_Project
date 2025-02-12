@@ -10,12 +10,8 @@
 
 #pragma once
 
-#include "lib/pdcp/pdcp_entity_tx.h"
-#include "pdcp_test_vectors.h"
 #include "pdcp_tx_test_helpers.h"
-#include "srsran/pdcp/pdcp_config.h"
 #include <gtest/gtest.h>
-#include <queue>
 
 namespace srsran {
 
@@ -43,4 +39,22 @@ protected:
     srslog::flush();
   }
 };
+
+class pdcp_tx_metrics_container_test : public pdcp_tx_test_helper, public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    // init test's logger
+    srslog::init();
+    logger.set_level(srslog::basic_levels::debug);
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+};
+
 } // namespace srsran
