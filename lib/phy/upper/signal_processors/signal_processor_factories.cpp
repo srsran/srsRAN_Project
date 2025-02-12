@@ -169,11 +169,12 @@ public:
 
   std::unique_ptr<dmrs_pusch_estimator> create() override
   {
+    bool complensate_cfo = td_interpolation_strategy == port_channel_estimator_td_interpolation_strategy::average;
     return std::make_unique<dmrs_pusch_estimator_impl>(
         prg_factory->create(),
         low_papr_gen_factory->create(),
         ch_estimator_factory->create(
-            port_channel_estimator_fd_smoothing_strategy::filter, td_interpolation_strategy, true));
+            port_channel_estimator_fd_smoothing_strategy::filter, td_interpolation_strategy, complensate_cfo));
   }
 
 private:
