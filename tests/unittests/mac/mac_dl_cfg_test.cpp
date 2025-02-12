@@ -13,6 +13,7 @@
 #include "lib/mac/rnti_manager.h"
 #include "mac_ctrl_test_dummies.h"
 #include "mac_test_helpers.h"
+#include "tests/test_doubles/mac/dummy_mac_metrics_notifier.h"
 #include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
 #include "srsran/mac/config/mac_config_helpers.h"
 #include "srsran/support/async/eager_async_task.h"
@@ -97,21 +98,30 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
   dummy_dl_executor_mapper            dl_exec_mapper{dl_execs[0]};
   dummy_mac_event_indicator           du_mng_notifier;
   dummy_mac_result_notifier           phy_notifier;
-  dummy_scheduler_ue_metrics_notifier metrics_notif;
+  dummy_scheduler_ue_metrics_notifier sched_metrics_notif;
+  dummy_mac_metrics_notifier          mac_metrics_notif;
   null_mac_pcap                       pcap;
   timer_manager                       timers;
-  mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
-  mac_config    maccfg{du_mng_notifier,
+  mac_dl_config                       mac_dl_cfg{ul_exec_mapper,
+                           dl_exec_mapper,
+                           ctrl_worker,
+                           phy_notifier,
+                           pcap,
+                           timers,
+                           std::chrono::milliseconds{1000},
+                           mac_metrics_notif};
+  mac_config                          maccfg{du_mng_notifier,
                     ul_exec_mapper,
                     dl_exec_mapper,
                     ctrl_worker,
                     phy_notifier,
                     mac_expert_config{.configs = {{10000, 10000, 10000}}},
                     pcap,
+                    timers,
+                    mac_metrics_notif,
                     scheduler_expert_config{},
-                    metrics_notif,
-                    timers};
-  rnti_manager  rnti_mng;
+                    sched_metrics_notif};
+  rnti_manager                        rnti_mng;
 
   srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
@@ -154,19 +164,28 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
   dummy_mac_result_notifier           phy_notifier;
   null_mac_pcap                       pcap;
   timer_manager                       timers;
-  dummy_scheduler_ue_metrics_notifier metrics_notif;
-  mac_dl_config mac_dl_cfg{ul_exec_mapper, dl_exec_mapper, ctrl_worker, phy_notifier, pcap, timers};
-  mac_config    maccfg{du_mng_notifier,
+  dummy_scheduler_ue_metrics_notifier sched_metrics_notif;
+  dummy_mac_metrics_notifier          mac_metrics_notif;
+  mac_dl_config                       mac_dl_cfg{ul_exec_mapper,
+                           dl_exec_mapper,
+                           ctrl_worker,
+                           phy_notifier,
+                           pcap,
+                           timers,
+                           std::chrono::milliseconds{1000},
+                           mac_metrics_notif};
+  mac_config                          maccfg{du_mng_notifier,
                     ul_exec_mapper,
                     dl_exec_mapper,
                     ctrl_worker,
                     phy_notifier,
                     mac_expert_config{.configs = {{10000, 10000, 10000}}},
                     pcap,
+                    timers,
+                    mac_metrics_notif,
                     scheduler_expert_config{},
-                    metrics_notif,
-                    timers};
-  rnti_manager  rnti_mng;
+                    sched_metrics_notif};
+  rnti_manager                        rnti_mng;
 
   srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);

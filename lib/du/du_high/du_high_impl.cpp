@@ -9,12 +9,15 @@
  */
 
 #include "du_high_impl.h"
+
+#include "../../mac/mac_dl/mac_cell_processor.h"
 #include "adapters/adapters.h"
 #include "adapters/du_high_adapter_factories.h"
 #include "adapters/f1ap_adapters.h"
 #include "test_mode/f1ap_test_mode_adapter.h"
 #include "srsran/du/du_high/du_manager/du_manager_factory.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
+#include "srsran/mac/mac_metrics.h"
 #include "srsran/support/executors/task_redispatcher.h"
 #include "srsran/support/timers.h"
 
@@ -94,27 +97,39 @@ public:
   }
 };
 
+class mac_metrics_null_notifier final : public mac_metrics_notifier
+{
+public:
+  void on_new_metrics_report(const mac_metric_report& metrics) override
+  {
+    // do nothing.
+  }
+};
+
 du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_dependencies& dependencies) :
   cfg(config_),
   logger(srslog::fetch_basic_logger("DU")),
   timers(*dependencies.timers),
   adapters(std::make_unique<layer_connector>(*dependencies.timers, dependencies.exec_mapper->du_control_executor())),
-  metrics_notifier(std::make_unique<scheduler_ue_metrics_null_notifier>())
+  sched_metrics_notifier(
+      dependencies.sched_ue_metrics_notifier ? nullptr : std::make_unique<scheduler_ue_metrics_null_notifier>()),
+  mac_metrics_notif(std::make_unique<mac_metrics_null_notifier>())
 {
   // Create layers
-  mac = create_du_high_mac(
-      mac_config{adapters->mac_ev_notifier,
-                 dependencies.exec_mapper->ue_mapper(),
-                 dependencies.exec_mapper->cell_mapper(),
-                 dependencies.exec_mapper->du_control_executor(),
-                 *dependencies.phy_adapter,
-                 cfg.ran.mac_cfg,
-                 *dependencies.mac_p,
-                 cfg.ran.sched_cfg,
-                 dependencies.sched_ue_metrics_notifier ? *dependencies.sched_ue_metrics_notifier : *metrics_notifier,
-                 timers},
-      cfg.test_cfg,
-      cfg.ran.cells.size());
+  mac  = create_du_high_mac(mac_config{adapters->mac_ev_notifier,
+                                      dependencies.exec_mapper->ue_mapper(),
+                                      dependencies.exec_mapper->cell_mapper(),
+                                      dependencies.exec_mapper->du_control_executor(),
+                                      *dependencies.phy_adapter,
+                                      cfg.ran.mac_cfg,
+                                      *dependencies.mac_p,
+                                      timers,
+                                      *mac_metrics_notif,
+                                      cfg.ran.sched_cfg,
+                                      dependencies.sched_ue_metrics_notifier ? *dependencies.sched_ue_metrics_notifier
+                                                                              : *sched_metrics_notifier},
+                           cfg.test_cfg,
+                           cfg.ran.cells.size());
   f1ap = create_du_high_f1ap(*dependencies.f1c_client,
                              adapters->f1_to_du_notifier,
                              dependencies.exec_mapper->du_control_executor(),

@@ -21,6 +21,7 @@
 namespace srsran {
 
 class timer_manager;
+class mac_metrics_notifier;
 
 /// \brief Implementation-specific parameters used to tune MAC operation.
 struct mac_expert_config {
@@ -47,10 +48,11 @@ struct mac_config {
   mac_result_notifier&                  phy_notifier;
   mac_expert_config                     mac_cfg;
   mac_pcap&                             pcap;
+  timer_manager&                        timers;
+  mac_metrics_notifier&                 metrics_notifier;
   // Parameters passed to MAC scheduler.
   scheduler_expert_config     sched_cfg;
-  scheduler_metrics_notifier& metric_notifier;
-  timer_manager&              timers;
+  scheduler_metrics_notifier& sched_metric_notifier;
 };
 
 } // namespace srsran

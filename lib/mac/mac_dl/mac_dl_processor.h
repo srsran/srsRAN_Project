@@ -20,6 +20,8 @@
 
 namespace srsran {
 
+class mac_metrics_notifier;
+
 struct mac_dl_config {
   srs_du::du_high_ue_executor_mapper&   ue_exec_mapper;
   srs_du::du_high_cell_executor_mapper& cell_exec_mapper;
@@ -27,6 +29,8 @@ struct mac_dl_config {
   mac_result_notifier&                  phy_notifier;
   mac_pcap&                             pcap;
   timer_manager&                        timers;
+  std::chrono::milliseconds             metrics_report_period;
+  mac_metrics_notifier&                 metrics_notifier;
 };
 
 class mac_dl_processor final : public mac_dl_configurator
