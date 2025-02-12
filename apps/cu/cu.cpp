@@ -9,6 +9,7 @@
  */
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
+#include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
@@ -352,6 +353,12 @@ int main(int argc, char** argv)
   srslog::sink& json_sink =
       srslog::fetch_udp_sink(cu_cfg.metrics_cfg.addr, cu_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
+  // Create app-level resource usage service and metrics.
+  auto app_resource_usage_service = app_services::build_app_resource_usage_service(
+      metrics_notifier_forwarder, cu_cfg.log_cfg.metrics_level.level, json_sink);
+
+  std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
+
   // Create O-CU-CP dependencies.
   o_cu_cp_unit_dependencies o_cucp_deps;
   o_cucp_deps.cu_cp_executor       = workers.cu_cp_exec;
@@ -371,7 +378,10 @@ int main(int argc, char** argv)
   // Create console helper object for commands and metrics printing.
   app_services::cmdline_command_dispatcher command_parser(
       *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands.cmdline);
-  std::vector<app_services::metrics_config> metrics_configs = std::move(o_cucp_unit.metrics);
+
+  for (auto& metric : o_cucp_unit.metrics) {
+    metrics_configs.push_back(std::move(metric));
+  }
 
   // Connect E1AP to O-CU-CP.
   e1_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_e1_handler());

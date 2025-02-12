@@ -8,6 +8,7 @@
  *
  */
 
+#include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
@@ -364,7 +365,12 @@ int main(int argc, char** argv)
       srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
-  std::vector<app_services::metrics_config> metrics_configs;
+
+  // Create app-level resource usage service and metrics.
+  auto app_resource_usage_service = app_services::build_app_resource_usage_service(
+      metrics_notifier_forwarder, gnb_cfg.log_cfg.metrics_level.level, json_sink);
+
+  std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
 
   // Instantiate E2AP client gateways.
   std::unique_ptr<e2_connection_client> e2_gw_du = create_e2_gateway_client(
@@ -401,7 +407,9 @@ int main(int argc, char** argv)
   // create O-CU-CP.
   auto                o_cucp_unit = o_cu_cp_app_unit->create_o_cu_cp(o_cucp_deps);
   srs_cu_cp::o_cu_cp& o_cucp_obj  = *o_cucp_unit.unit;
-  metrics_configs                 = std::move(o_cucp_unit.metrics);
+  for (auto& metric : o_cucp_unit.metrics) {
+    metrics_configs.push_back(std::move(metric));
+  }
 
   // Create CU-UP
   o_cu_up_unit_dependencies o_cuup_unit_deps;
