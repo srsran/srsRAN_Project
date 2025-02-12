@@ -76,6 +76,28 @@ def test_pucch(
     start_network(ue_array, gnb, fivegc)
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
+    # DL iperf test
+    iperf_array = []
+    for ue_stub in ue_array:
+        iperf_array.append(
+            (
+                ue_attach_info_dict[ue_stub],
+                *iperf_start(
+                    ue_stub,
+                    ue_attach_info_dict[ue_stub],
+                    fivegc,
+                    duration=iperf_duration,
+                    direction=IPerfDir.DOWNLINK,
+                    protocol=IPerfProto.UDP,
+                    bitrate=iperf_bitrate,
+                ),
+            )
+        )
+
+    for ue_attached_info, task, iperf_request in iperf_array:
+        iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)
+
+    # Bidirectional iperf test
     iperf_array = []
     for ue_stub in ue_array:
         iperf_array.append(
