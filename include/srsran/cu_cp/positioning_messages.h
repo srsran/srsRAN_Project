@@ -89,9 +89,9 @@ struct positioning_information_request_t {
 };
 
 struct positioning_information_response_t {
-  std::optional<srs_configuration_t> srs_cfg;
-  std::optional<uint64_t>            sfn_initialization_time;
-  std::optional<crit_diagnostics_t>  crit_diagnostics;
+  std::optional<srs_configuration_t>       srs_cfg;
+  std::optional<sfn_initialization_time_t> sfn_initialization_time;
+  std::optional<crit_diagnostics_t>        crit_diagnostics;
   // Optional list.
   std::vector<ue_tx_teg_assoc_item_t> ue_tx_teg_assoc_list;
 };

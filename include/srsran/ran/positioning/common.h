@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ran/pci.h"
+#include "srsran/ran/ssb_properties.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <cstdint>
 #include <optional>
@@ -71,15 +72,21 @@ struct ssb_burst_position_t {
   uint64_t      bitmap;
 };
 
+// Time in seconds relative to 00:00:00 on 1 January 1900 (calculated as continuous time without leap seconds and
+// traceable to a common time reference) where binary encoding of the integer part is in the first 32 bits and binary
+// encoding of the fraction part in the last 32 bits. The fraction part is expressed with a granularity of 1 /2**32
+// second
+using sfn_initialization_time_t = uint64_t;
+
 struct tf_config_t {
-  uint32_t                            ssb_freq;
-  subcarrier_spacing                  ssb_subcarrier_spacing;
-  int8_t                              ssb_tx_pwr;
-  uint8_t                             ssb_periodicity;
-  uint8_t                             ssb_half_frame_offset;
-  uint8_t                             ssb_sfn_offset;
-  std::optional<ssb_burst_position_t> ssb_burst_position;
-  std::optional<uint64_t>             sfn_initialization_time;
+  uint32_t                                 ssb_freq;
+  subcarrier_spacing                       ssb_subcarrier_spacing;
+  int8_t                                   ssb_tx_pwr;
+  ssb_periodicity                          ssb_period;
+  uint8_t                                  ssb_half_frame_offset;
+  uint8_t                                  ssb_sfn_offset;
+  std::optional<ssb_burst_position_t>      ssb_burst_position;
+  std::optional<sfn_initialization_time_t> sfn_initialization_time;
 };
 
 struct ssb_info_item_t {
