@@ -9,6 +9,7 @@
  */
 
 #include "mac_cell_processor.h"
+#include "mac_dl_metric_handler.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/mac/mac_cell_result.h"
 #include "srsran/pcap/dlt_pcap.h"
@@ -31,7 +32,8 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
                                        task_executor&                   slot_exec_,
                                        task_executor&                   ctrl_exec_,
                                        mac_pcap&                        pcap_,
-                                       timer_manager&                   timers_) :
+                                       timer_manager&                   timers_,
+                                       mac_dl_cell_metric_handler&      cell_metrics) :
   logger(srslog::fetch_basic_logger("MAC")),
   cell_cfg(cell_cfg_req_),
   cell_exec(cell_exec_),
@@ -56,6 +58,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   dlsch_assembler(ue_mng, dl_harq_buffers),
   paging_assembler(pdu_pool),
   sched(sched_),
+  metrics(cell_metrics),
   pcap(pcap_)
 {
 }
@@ -257,8 +260,9 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx) SRSRAN_RT
 {
   // * Start of Critical Path * //
 
+  auto metrics_meas = metrics.start_slot();
   l2_late_tracer[cell_cfg.cell_index].start();
-  trace_point sched_tp = l2_tracer.now();
+  trace_point sched_tp = metrics_meas.start_time_point();
 
   logger.set_context(sl_tx.sfn(), sl_tx.slot_index());
 

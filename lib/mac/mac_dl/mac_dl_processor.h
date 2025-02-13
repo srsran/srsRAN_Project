@@ -12,6 +12,7 @@
 
 #include "../mac_config_interfaces.h"
 #include "mac_cell_processor.h"
+#include "mac_dl_metric_handler.h"
 #include "mac_dl_ue_repository.h"
 #include "mac_scheduler_cell_info_handler.h"
 #include "srsran/mac/mac.h"
@@ -75,6 +76,9 @@ private:
 
   /// \brief Reference to MAC scheduler interface used by the MAC DL processor.
   mac_scheduler_cell_info_handler& sched;
+
+  /// Handler of MAC DL metrics.
+  mac_dl_metric_handler metrics;
 };
 
 } // namespace srsran

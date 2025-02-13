@@ -25,6 +25,7 @@
 namespace srsran {
 
 class timer_manager;
+class mac_dl_cell_metric_handler;
 
 class mac_cell_processor final : public mac_cell_slot_handler, public mac_cell_controller
 {
@@ -37,7 +38,8 @@ public:
                      task_executor&                   slot_exec,
                      task_executor&                   ctrl_exec,
                      mac_pcap&                        pcap,
-                     timer_manager&                   timers);
+                     timer_manager&                   timers,
+                     mac_dl_cell_metric_handler&      cell_metrics);
 
   /// Starts configured cell.
   async_task<void> start() override;
@@ -111,6 +113,9 @@ private:
   paging_pdu_assembler paging_assembler;
 
   mac_scheduler_cell_info_handler& sched;
+
+  // Handler of cell metrics
+  mac_dl_cell_metric_handler& metrics;
 
   /// Represents activation cell state.
   // Note: For now, cells start active.

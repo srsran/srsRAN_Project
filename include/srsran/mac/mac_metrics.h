@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/support/tracing/resource_usage.h"
 #include <chrono>
 #include <vector>
 

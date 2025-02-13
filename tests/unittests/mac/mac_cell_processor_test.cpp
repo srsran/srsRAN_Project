@@ -9,6 +9,7 @@
  */
 
 #include "lib/mac/mac_dl/mac_cell_processor.h"
+#include "lib/mac/mac_dl/mac_dl_metric_handler.h"
 #include "mac_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -28,7 +29,8 @@ public:
              task_worker,
              task_worker,
              pcap,
-             timers)
+             timers,
+             cell_metrics)
   {
   }
 
@@ -44,6 +46,9 @@ public:
   manual_task_worker                           task_worker{128};
   null_mac_pcap                                pcap;
   timer_manager                                timers;
+  mac_dl_cell_metric_handler                   cell_metrics{to_du_cell_index(0),
+                                          1,
+                                          [](du_cell_index_t, const mac_dl_cell_metric_report&) {}};
   mac_cell_processor                           mac_cell;
 };
 
