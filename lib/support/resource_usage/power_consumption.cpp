@@ -39,7 +39,7 @@ resource_usage_utils::build_energy_consumption_reader(srslog::basic_logger& logg
   }
 
   logger.info("Energy consumption utils are not available.");
-  return std::unique_ptr<dummy_energy_consumption_reader>();
+  return std::make_unique<dummy_energy_consumption_reader>();
 }
 
 uint64_t resource_usage_utils::calculate_energy_diff(uint64_t current_uj, uint64_t previous_uj)

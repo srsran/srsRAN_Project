@@ -64,5 +64,5 @@ resource_usage_utils::build_sysfs_powercap_reader(srslog::basic_logger& logger)
     return nullptr;
   }
 
-  return std::unique_ptr<sysfs_powercap_reader>();
+  return std::make_unique<sysfs_powercap_reader>();
 }

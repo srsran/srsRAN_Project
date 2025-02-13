@@ -152,5 +152,5 @@ std::unique_ptr<energy_consumption_reader> resource_usage_utils::build_rapl_msr_
     return nullptr;
   }
 
-  return std::unique_ptr<rapl_msr_reader>();
+  return std::make_unique<rapl_msr_reader>();
 }
