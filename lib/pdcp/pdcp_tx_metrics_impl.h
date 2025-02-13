@@ -36,8 +36,8 @@ public:
 
   pdcp_tx_metrics_container get_metrics()
   {
-    pdcp_tx_metrics_container ret            = metrics;
-    metrics.sum_crypto_processing_latency_ns = sum_crypto_processing_latency_ns;
+    pdcp_tx_metrics_container ret        = metrics;
+    ret.sum_crypto_processing_latency_ns = sum_crypto_processing_latency_ns;
     return ret;
   }
 
