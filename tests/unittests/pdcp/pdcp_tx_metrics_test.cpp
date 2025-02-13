@@ -34,7 +34,7 @@ TEST_F(pdcp_tx_metrics_container_test, init)
     ASSERT_EQ(freq, 0);
   }
   ASSERT_EQ(m.max_pdu_latency_ns, 0);
-  ASSERT_EQ(m.sum_crypto_used_cpu_time_us, 0.0);
+  ASSERT_EQ(m.sum_crypto_processing_latency_ns, 0.0);
 
   {
     // Check fmt formatter
@@ -43,7 +43,7 @@ TEST_F(pdcp_tx_metrics_container_test, init)
     std::string out_str = to_c_str(buffer);
     std::string exp_str =
         "num_sdus=0 num_sdu_bytes=0 num_pdus=0 num_pdu_bytes=0 num_discard_timeouts=0 "
-        "sum_pdu_latency=0ns sdu_latency_hist=[0 0 0 0 0 0 0 0] max_sdu_latency=0ns crypto_cpu_time=0us";
+        "sum_pdu_latency=0ns sdu_latency_hist=[0 0 0 0 0 0 0 0] max_sdu_latency=0ns sum_crypto_latency=0ns";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     ASSERT_EQ(out_str, exp_str);
@@ -64,16 +64,16 @@ TEST_F(pdcp_tx_metrics_container_test, init)
 
 TEST_F(pdcp_tx_metrics_container_test, values)
 {
-  pdcp_tx_metrics_container m = {.num_sdus                    = 4598,
-                                 .num_sdu_bytes               = 39029,
-                                 .num_pdus                    = 9396,
-                                 .num_pdu_bytes               = 69494,
-                                 .num_discard_timeouts        = 7,
-                                 .sum_pdu_latency_ns          = 89684,
-                                 .counter                     = 4939,
-                                 .sum_crypto_used_cpu_time_us = 10,
-                                 .pdu_latency_hist            = {999, 20, 400, 8000, 160000, 3200000, 64000000, 128},
-                                 .max_pdu_latency_ns          = 54322};
+  pdcp_tx_metrics_container m = {.num_sdus                         = 4598,
+                                 .num_sdu_bytes                    = 39029,
+                                 .num_pdus                         = 9396,
+                                 .num_pdu_bytes                    = 69494,
+                                 .num_discard_timeouts             = 7,
+                                 .sum_pdu_latency_ns               = 89684,
+                                 .counter                          = 4939,
+                                 .sum_crypto_processing_latency_ns = 10000,
+                                 .pdu_latency_hist   = {999, 20, 400, 8000, 160000, 3200000, 64000000, 128},
+                                 .max_pdu_latency_ns = 54322};
 
   srslog::fetch_basic_logger("TEST", false).info("Metrics: {}", m);
 
@@ -96,7 +96,7 @@ TEST_F(pdcp_tx_metrics_container_test, values)
     std::string out_str = to_c_str(buffer);
     std::string exp_str = "num_sdus=4598 num_sdu_bytes=39029 num_pdus=9396 num_pdu_bytes=69494 num_discard_timeouts=7 "
                           "sum_pdu_latency=89684ns sdu_latency_hist=[999 20 400 8000 160000 3200000 64000000 128] "
-                          "max_sdu_latency=54322ns crypto_cpu_time=10us";
+                          "max_sdu_latency=54322ns sum_crypto_latency=10000ns";
     srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
     srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
     ASSERT_EQ(out_str, exp_str);

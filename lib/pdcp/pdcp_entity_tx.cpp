@@ -228,9 +228,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   // Apply ciphering and integrity protection
-  resource_usage_utils::measurements cpu_usage;
   {
-    resource_usage_utils::scoped_resource_usage s(cpu_usage, resource_usage_utils::rusage_measurement_type::THREAD);
+    auto                  pre     = std::chrono::high_resolution_clock::now();
     expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf_info.buf), st.tx_next);
     if (not exp_buf.has_value()) {
       logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
@@ -238,9 +237,11 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
       upper_cn.on_protocol_failure();
       return;
     }
-    buf_info.buf = std::move(exp_buf.value());
+    buf_info.buf        = std::move(exp_buf.value());
+    auto post           = std::chrono::high_resolution_clock::now();
+    auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
+    metrics.add_crypto_processing_latency(sdu_latency_ns.count());
   }
-  metrics.add_cpu_usage_metrics(cpu_usage);
 
   // Write to lower layers
   write_data_pdu_to_lower_layers(std::move(buf_info), /* is_retx = */ false);
@@ -571,8 +572,8 @@ void pdcp_entity_tx::retransmit_all_pdus()
       }
 
       // Apply ciphering and integrity protection
-      resource_usage_utils::measurements cpu_usage;
       {
+        auto                  pre = std::chrono::high_resolution_clock::now();
         expected<byte_buffer> exp_buf =
             apply_ciphering_and_integrity_protection(std::move(buf_info.buf), buf_info.count);
         if (not exp_buf.has_value()) {
@@ -584,9 +585,11 @@ void pdcp_entity_tx::retransmit_all_pdus()
           upper_cn.on_protocol_failure();
           return;
         }
-        buf_info.buf = std::move(exp_buf.value());
+        buf_info.buf        = std::move(exp_buf.value());
+        auto post           = std::chrono::high_resolution_clock::now();
+        auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
+        metrics.add_crypto_processing_latency(sdu_latency_ns.count());
       }
-      metrics.add_cpu_usage_metrics(cpu_usage);
 
       // Write to lower layers
       write_data_pdu_to_lower_layers(std::move(buf_info), /* is_retx = */ true);

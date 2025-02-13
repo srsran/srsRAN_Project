@@ -35,7 +35,7 @@ struct pdcp_tx_metrics_container {
   unsigned counter;
 
   // CPU Usage metrics
-  uint32_t sum_crypto_used_cpu_time_us;
+  uint32_t sum_crypto_processing_latency_ns;
 
   // Histogram of PDU latencies
   static constexpr unsigned                   pdu_latency_hist_bins = 8;
@@ -64,7 +64,7 @@ inline std::string format_pdcp_tx_metrics(timer_duration metrics_period, const p
   fmt::format_to(std::back_inserter(buffer),
                  "] max_pdu_latency={}us crypto_cpu_usage={}\%",
                  m.max_pdu_latency_ns * 1e-3,
-                 static_cast<float>(m.sum_crypto_used_cpu_time_us) / (1000 * metrics_period.count()) * 100);
+                 static_cast<float>(m.sum_crypto_processing_latency_ns) / (1000000 * metrics_period.count()) * 100);
   return to_c_str(buffer);
 }
 
@@ -85,7 +85,7 @@ struct formatter<srsran::pdcp_tx_metrics_container> {
   {
     return format_to(ctx.out(),
                      "num_sdus={} num_sdu_bytes={} num_pdus={} num_pdu_bytes={} num_discard_timeouts={} "
-                     "sum_pdu_latency={}ns sdu_latency_hist=[{}] max_sdu_latency={}ns crypto_cpu_time={}us",
+                     "sum_pdu_latency={}ns sdu_latency_hist=[{}] max_sdu_latency={}ns sum_crypto_latency={}ns",
                      m.num_sdus,
                      m.num_sdu_bytes,
                      m.num_pdus,
@@ -94,7 +94,7 @@ struct formatter<srsran::pdcp_tx_metrics_container> {
                      m.sum_pdu_latency_ns,
                      fmt::join(m.pdu_latency_hist, " "),
                      m.max_pdu_latency_ns,
-                     m.sum_crypto_used_cpu_time_us);
+                     m.sum_crypto_processing_latency_ns);
   }
 };
 } // namespace fmt
