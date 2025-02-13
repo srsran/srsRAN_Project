@@ -16,6 +16,12 @@ using namespace srs_du;
 
 void o_du_low_metrics_collector_impl::collect_o_du_low_metrics(o_du_low_metrics& metrics)
 {
+  if (last_timestamp == std::chrono::time_point<std::chrono::high_resolution_clock>()) {
+    last_timestamp         = std::chrono::high_resolution_clock::now();
+    metrics.metrics_period = {};
+    return;
+  }
+
   // Collect LDPC mettrics.
   ldpc_collector.collect_metrics(metrics.ldpc_metrics);
 
@@ -24,4 +30,8 @@ void o_du_low_metrics_collector_impl::collect_o_du_low_metrics(o_du_low_metrics&
 
   // Collect PDSCH processing metrics.
   pdsch_collector.collect_metrics(metrics.pdsch_metrics);
+
+  auto tp_now            = std::chrono::high_resolution_clock::now();
+  metrics.metrics_period = std::chrono::duration_cast<std::chrono::microseconds>(tp_now - last_timestamp);
+  last_timestamp         = tp_now;
 }

@@ -12,6 +12,7 @@
 #include "srsran/phy/generic_functions/precoding/channel_precoder.h"
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/metrics/phy_metrics_reports.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 #include <memory>
 
 namespace srsran {
@@ -33,14 +34,22 @@ public:
                        const re_buffer_reader<>&      input,
                        const precoding_weight_matrix& precoding) const override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_precoder->apply_precoding(output, input, precoding);
-    auto tp_after = std::chrono::high_resolution_clock::now();
+    channel_precoder_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
+                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
 
-    notifier.on_new_metric({.method     = channel_precoder_metrics::methods::apply_precoding,
-                            .nof_re     = output.get_nof_re(),
-                            .nof_layers = precoding.get_nof_layers(),
-                            .elapsed    = tp_after - tp_before});
+      auto tp_before = std::chrono::high_resolution_clock::now();
+      base_precoder->apply_precoding(output, input, precoding);
+      auto tp_after = std::chrono::high_resolution_clock::now();
+
+      metrics.elapsed = tp_after - tp_before;
+    }
+    metrics.method     = channel_precoder_metrics::methods::apply_precoding;
+    metrics.nof_re     = output.get_nof_re();
+    metrics.nof_layers = precoding.get_nof_layers();
+    notifier.on_new_metric(metrics);
   }
 
   // See interface for documentation.
@@ -48,19 +57,25 @@ public:
                                      span<const ci8_t>              input,
                                      const precoding_weight_matrix& precoding) const override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
+    channel_precoder_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
+                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
 
-    // Call base precoder.
-    base_precoder->apply_layer_map_and_precoding(output, input, precoding);
+      // Call base precoder.
+      auto tp_before = std::chrono::high_resolution_clock::now();
+      base_precoder->apply_layer_map_and_precoding(output, input, precoding);
+      auto tp_after = std::chrono::high_resolution_clock::now();
 
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    // Create report metrics.
-    notifier.on_new_metric({.method     = channel_precoder_metrics::methods::apply_layer_map_and_precoding,
-                            .nof_re     = output.get_nof_re(),
-                            .nof_layers = precoding.get_nof_layers(),
-                            .nof_ports  = precoding.get_nof_ports(),
-                            .elapsed    = tp_after - tp_before});
+      metrics.elapsed = tp_after - tp_before;
+    }
+    // Report metrics.
+    metrics.method     = channel_precoder_metrics::methods::apply_layer_map_and_precoding;
+    metrics.nof_re     = output.get_nof_re();
+    metrics.nof_layers = precoding.get_nof_layers();
+    metrics.nof_ports  = precoding.get_nof_ports();
+    notifier.on_new_metric(metrics);
   }
 
 private:

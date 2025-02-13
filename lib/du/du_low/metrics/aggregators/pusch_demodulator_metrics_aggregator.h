@@ -19,12 +19,48 @@ namespace srsran {
 /// PUSCH demodulator metrics aggregator.
 class pusch_demodulator_metrics_aggregator : public pusch_demodulator_metric_notifier
 {
+public:
+  /// Gets the PUSCH demodulator average processing time in us.
+  double get_average_processing_time_us() const
+  {
+    return count.load(std::memory_order_relaxed)
+               ? static_cast<double>(sum_elapsed_ns) / static_cast<double>(count) / 1000.0
+               : 0;
+  }
+
+  /// Gets the PUSCH demodulator total processing time excluding buffer operations in us.
+  std::chrono::nanoseconds get_total_time() const
+  {
+    return std::chrono::nanoseconds(sum_elapsed_ns - sum_elapsed_buffer_ns);
+  }
+
+  /// Gets the CPU usage in microseconds of the PUSCH demodulator.
+  uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
+
+  /// Resets values of all internal counters.
+  void reset()
+  {
+    count                 = 0;
+    sum_elapsed_ns        = 0;
+    sum_elapsed_buffer_ns = 0;
+    sum_used_cpu_time_us  = 0;
+  }
+
 private:
   // See interface for documentation.
   void on_new_metric(const pusch_demodulator_metrics& metrics) override
   {
-    // Implement me!
+    sum_elapsed_ns += metrics.elapsed.count();
+    sum_elapsed_buffer_ns += metrics.elapsed_buffer.count();
+    ++count;
+
+    sum_used_cpu_time_us += (metrics.cpu_measurements.user_time.count() + metrics.cpu_measurements.system_time.count());
   }
+
+  std::atomic<uint64_t> sum_elapsed_ns        = {};
+  std::atomic<uint64_t> sum_elapsed_buffer_ns = {};
+  std::atomic<uint64_t> count                 = {};
+  std::atomic<uint64_t> sum_used_cpu_time_us  = {};
 };
 
 } // namespace srsran

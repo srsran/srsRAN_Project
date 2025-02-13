@@ -13,6 +13,7 @@
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/metrics/phy_metrics_reports.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pusch_estimator.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 #include <memory>
 
 namespace srsran {
@@ -32,11 +33,20 @@ public:
   // See interface for documentation.
   void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const configuration& config) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base->estimate(estimate, grid, config);
-    auto tp_after = std::chrono::high_resolution_clock::now();
+    pusch_channel_estimator_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
+                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
 
-    notifier.on_new_metric({.nof_prb = static_cast<unsigned>(config.rb_mask.count()), .elapsed = tp_after - tp_before});
+      auto tp_before = std::chrono::high_resolution_clock::now();
+      base->estimate(estimate, grid, config);
+      auto tp_after = std::chrono::high_resolution_clock::now();
+
+      metrics.elapsed = tp_after - tp_before;
+    }
+    metrics.nof_prb = static_cast<unsigned>(config.rb_mask.count());
+    notifier.on_new_metric(metrics);
   }
 
 private:

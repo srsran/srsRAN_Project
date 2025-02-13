@@ -13,6 +13,7 @@
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/upper/channel_modulation/evm_calculator.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 
 namespace srsran {
 
@@ -32,13 +33,22 @@ public:
   float
   calculate(span<const log_likelihood_ratio> soft_bits, span<const cf_t> symbols, modulation_scheme modulation) override
   {
-    auto  tp_before = std::chrono::high_resolution_clock::now();
-    float ret       = base->calculate(soft_bits, symbols, modulation);
-    auto  tp_after  = std::chrono::high_resolution_clock::now();
+    evm_calculator_metrics metrics;
+    float                  ret;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
+                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
 
-    notifier.on_new_metric({.modulation  = modulation,
-                            .nof_symbols = static_cast<unsigned>(symbols.size()),
-                            .elapsed     = tp_after - tp_before});
+      auto tp_before = std::chrono::high_resolution_clock::now();
+      ret            = base->calculate(soft_bits, symbols, modulation);
+      auto tp_after  = std::chrono::high_resolution_clock::now();
+
+      metrics.elapsed = tp_after - tp_before;
+    }
+    metrics.modulation  = modulation;
+    metrics.nof_symbols = static_cast<unsigned>(symbols.size());
+    notifier.on_new_metric(metrics);
 
     return ret;
   }

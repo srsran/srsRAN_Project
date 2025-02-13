@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "aggregator_helpers.h"
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/metrics/phy_metrics_reports.h"
 #include "srsran/ran/subcarrier_spacing.h"
@@ -21,12 +22,133 @@ namespace srsran {
 /// PUSCH processor metrics aggregator.
 class pusch_processor_metrics_aggregator : public pusch_processor_metric_notifier
 {
+public:
+  /// Gets the average data processing latency in microseconds.
+  double get_avg_data_latency_us() const
+  {
+    return count.load(std::memory_order_relaxed)
+               ? static_cast<double>(sum_data_elapsed_ns) / static_cast<double>(count) * 1e-3
+               : 0;
+  }
+
+  /// Gets the minimum data processing latency in microseconds.
+  double get_min_data_latency_us() const
+  {
+    return (min_data_latency_ns == UINT64_MAX) ? 0 : static_cast<double>(min_data_latency_ns) / 1000.0;
+  }
+
+  /// Gets the maximum data processing latency in microseconds.
+  double get_max_data_latency_us() const { return static_cast<double>(max_data_latency_ns) / 1000.0; }
+
+  /// Gets the minimum UCI processing latency in microseconds.
+  double get_min_uci_latency_us() const
+  {
+    return (min_uci_latency_ns == UINT64_MAX) ? 0 : static_cast<double>(min_uci_latency_ns) / 1000.0;
+  }
+
+  /// Gets the maximum UCI processing latency in microseconds.
+  double get_max_uci_latency_us() const { return static_cast<double>(max_uci_latency_ns) / 1000.0; }
+
+  /// Gets the average codeblock latency in microseconds.
+  double get_avg_uci_latency_us() const
+  {
+    return uci_count.load(std::memory_order_relaxed)
+               ? static_cast<double>(sum_uci_elapsed_ns) / static_cast<double>(uci_count) * 1e-3
+               : 0;
+  }
+
+  /// \brief Gets the average PUSCH processing transmission rate.
+  ///
+  /// This metric is calculated as the ratio of the total number of processed bits and the total elapsed time.
+  double get_processing_rate_Mbps() const
+  {
+    return sum_data_elapsed_ns.load(std::memory_order_relaxed)
+               ? static_cast<double>(sum_tbs) / static_cast<double>(sum_data_elapsed_ns) * 1000
+               : 0;
+  }
+
+  /// Gets the total time spend by PUSCH processors.
+  std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_data_elapsed_ns); }
+
+  /// Gets the total time spent by the PUSCH processors waiting for the asynchronous decoding to be completed.
+  std::chrono::nanoseconds get_total_wait_time() const { return std::chrono::nanoseconds(sum_waiting_ns); }
+
+  /// Gets the CPU usage in microseconds of scrambling operations.
+  uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
+
+  /// Gets SINR in decibels as a result of channel estimation.
+  float get_ch_est_sinr() const { return ch_est_sinr_db; };
+
+  /// Gets EVM as a result of channel estimation.
+  float get_ch_est_evm() const { return ch_est_evm; };
+
+  double get_decoding_bler() const
+  {
+    return count.load(std::memory_order_relaxed) ? static_cast<double>(count - sum_crc_ok) / static_cast<double>(count)
+                                                 : 0;
+  }
+
+  /// Resets values of all internal counters.
+  void reset()
+  {
+    sum_tbs               = 0;
+    sum_crc_ok            = 0;
+    sum_return_elapsed_ns = 0;
+    sum_data_elapsed_ns   = 0;
+    sum_uci_elapsed_ns    = 0;
+    sum_waiting_ns        = 0;
+    count                 = 0;
+    uci_count             = 0;
+    sum_used_cpu_time_us  = 0;
+    min_data_latency_ns   = UINT64_MAX;
+    max_data_latency_ns   = 0;
+    min_uci_latency_ns    = UINT64_MAX;
+    max_uci_latency_ns    = 0;
+  }
+
 private:
   // See interface for documentation.
   void on_new_metric(const pusch_processor_metrics& metrics) override
   {
-    // Implement me!
+    sum_tbs += metrics.tbs.to_bits().value();
+    sum_data_elapsed_ns += metrics.elapsed_data.count();
+    sum_return_elapsed_ns += metrics.elapsed_return.count();
+    if (metrics.elapsed_data > metrics.elapsed_return) {
+      sum_waiting_ns += metrics.elapsed_data.count() - metrics.elapsed_return.count();
+    }
+    if (metrics.crc_ok) {
+      ++sum_crc_ok;
+    }
+    ++count;
+    update_minmax(metrics.elapsed_data.count(), max_data_latency_ns, min_data_latency_ns);
+    if (metrics.elapsed_uci.has_value()) {
+      sum_uci_elapsed_ns += metrics.elapsed_uci.value().count();
+      update_minmax(metrics.elapsed_data.count(), max_uci_latency_ns, min_uci_latency_ns);
+      ++uci_count;
+    }
+
+    sum_used_cpu_time_us += metrics.cpu_time_usage_us;
+
+    // Save last channel estimation metrics.
+    ch_est_sinr_db = metrics.sinr_dB;
+    ch_est_evm     = metrics.evm;
   }
+
+  std::atomic<uint64_t> sum_tbs               = {};
+  std::atomic<uint64_t> sum_crc_ok            = {};
+  std::atomic<uint64_t> sum_return_elapsed_ns = {};
+  std::atomic<uint64_t> sum_data_elapsed_ns   = {};
+  std::atomic<uint64_t> sum_uci_elapsed_ns    = {};
+  std::atomic<uint64_t> sum_waiting_ns        = {};
+  std::atomic<uint64_t> count                 = {};
+  std::atomic<uint64_t> uci_count             = {};
+  std::atomic<float>    ch_est_sinr_db        = {};
+  std::atomic<float>    ch_est_evm            = {};
+  std::atomic<uint64_t> sum_used_cpu_time_us  = {};
+  std::atomic<uint64_t> min_data_latency_ns   = UINT64_MAX;
+  std::atomic<uint64_t> max_data_latency_ns   = 0;
+  std::atomic<uint64_t> min_uci_latency_ns    = UINT64_MAX;
+  std::atomic<uint64_t> max_uci_latency_ns    = 0;
 };
 
 } // namespace srsran

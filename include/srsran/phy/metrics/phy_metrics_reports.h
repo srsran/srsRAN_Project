@@ -27,6 +27,8 @@ struct crc_calculator_metrics {
   units::bits nof_bits;
   /// Elapsed time.
   std::chrono::nanoseconds elapsed;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects LDPC encoder metrics.
@@ -35,6 +37,8 @@ struct ldpc_encoder_metrics {
   units::bits cb_sz;
   /// Elapsed time.
   std::chrono::nanoseconds elapsed;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects LDPC rate matcher metrics.
@@ -43,6 +47,8 @@ struct ldpc_rate_matcher_metrics {
   units::bits output_size;
   /// Elapsed time.
   std::chrono::nanoseconds elapsed;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects LDPC rate dematcher metrics.
@@ -51,6 +57,8 @@ struct ldpc_rate_dematcher_metrics {
   units::bits input_size;
   /// Elapsed time.
   std::chrono::nanoseconds elapsed;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects LDPC decoder metrics.
@@ -73,6 +81,8 @@ struct pusch_channel_estimator_metrics {
   unsigned nof_prb;
   /// Elapsed time.
   std::chrono::nanoseconds elapsed;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects PUSCH processor metrics.
@@ -88,6 +98,12 @@ struct pusch_processor_metrics {
   /// Optional elapsed time between the start of the processing and the UCI notification. Set to default value if UCI
   /// is not present.
   std::optional<std::chrono::nanoseconds> elapsed_uci;
+  /// Utilized CPU resources in microseconds.
+  uint64_t cpu_time_usage_us;
+  /// SINR value from the channel estimator, expressed in decibels.
+  float sinr_dB;
+  /// EVM value extracted from channel estimator.
+  float evm;
 };
 
 /// Collects scrambling metrics for PDSCH and PUSCH.
@@ -108,6 +124,8 @@ struct pseudo_random_sequence_generator_metrics {
   std::size_t nof_bits;
   /// Elapsed time during processing.
   std::chrono::nanoseconds elapsed;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects channel precoder metrics.
@@ -124,6 +142,8 @@ struct channel_precoder_metrics {
   unsigned nof_ports;
   /// Elapsed time during processing.
   std::chrono::nanoseconds elapsed;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects channel equalizer metrics.
@@ -136,6 +156,8 @@ struct channel_equalizer_metrics {
   unsigned nof_ports;
   /// Elapsed time during processing.
   std::chrono::nanoseconds elapsed;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects modulation metrics.
@@ -146,6 +168,8 @@ struct channel_modulation_metrics {
   unsigned nof_symbols;
   /// Elapsed time during processing.
   std::chrono::nanoseconds elapsed;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Modulation mapper metrics, use common channel modulation metrics.
@@ -167,6 +191,8 @@ struct ulsch_demultiplex_metrics {
   std::chrono::nanoseconds elapsed_on_end_codeword;
   /// Total number of bits that went through the demultiplexer.
   unsigned sum_nof_bits;
+  /// Utilized CPU resources in microseconds.
+  std::chrono::microseconds cpu_time_usage;
 };
 
 /// Collects PUSCH demodulator metrics.
@@ -175,6 +201,8 @@ struct pusch_demodulator_metrics {
   std::chrono::nanoseconds elapsed;
   /// Elapsed time calling codeword buffer methods.
   std::chrono::nanoseconds elapsed_buffer;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects time alignment estimator metrics.
@@ -183,6 +211,8 @@ struct time_alignment_estimator_metrics {
   std::chrono::nanoseconds elapsed;
   /// Bandwidth in RE.
   unsigned nof_re;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects port channel estimator metrics.
@@ -197,6 +227,8 @@ struct transform_precoder_metrics {
   std::chrono::nanoseconds elapsed;
   /// Number of subcarriers.
   unsigned nof_re;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 /// Collects PDSCH processor metrics.
@@ -207,12 +239,16 @@ struct pdsch_processor_metrics {
   std::chrono::nanoseconds elapsed_return;
   /// Elapsed time between the start of the processing and the completion of the processing.
   std::chrono::nanoseconds elapsed_completion;
+  /// Utilized CPU resources in microseconds, excluding asynchronous workers.
+  std::chrono::microseconds self_cpu_time_usage;
 };
 
 /// Collects PDSCH processor metrics.
 struct pdsch_dmrs_generator_metrics {
   /// Total elapsed time.
   std::chrono::nanoseconds elapsed;
+  /// Utilized CPU resources.
+  resource_usage_utils::measurements cpu_measurements;
 };
 
 } // namespace srsran

@@ -20,6 +20,7 @@
 #include "aggregators/scrambling_metrics_aggregator.h"
 #include "aggregators/time_alignment_estimator_metrics_aggregator.h"
 #include "aggregators/transform_precoder_metrics_aggregators.h"
+#include "aggregators/ulsch_demultiplex_metrics_aggregator.h"
 #include "srsran/du/du_low/o_du_low_metrics.h"
 
 namespace srsran {
@@ -107,6 +108,8 @@ private:
   time_alignment_estimator_metrics_aggregator pusch_ta_estimator_aggregator;
   /// Port channel estimator metrics aggregator.
   port_channel_estimator_metrics_aggregator pusch_port_ch_estimator_aggregator;
+  /// UL-SCH demultiplexer metrics aggregator.
+  ulsch_demultiplex_metrics_aggregator ulsch_demux_aggregator;
   /// PUSCH processor metrics aggregator.
   pusch_processor_metrics_aggregator pusch_processor_aggregator;
 };

@@ -13,6 +13,7 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_demodulator_notifier.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 
 namespace srsran {
 
@@ -38,14 +39,23 @@ public:
     elapsed_on_new_block    = {};
     elapsed_on_end_codeword = {};
 
-    // Prepare base and save the base buffer.
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base->demodulate(*this, demodulator_notifier, grid, estimates, config);
-    auto tp_after = std::chrono::high_resolution_clock::now();
+    pusch_demodulator_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
+                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
+
+      // Prepare base and save the base buffer.
+      auto tp_before = std::chrono::high_resolution_clock::now();
+      base->demodulate(*this, demodulator_notifier, grid, estimates, config);
+      auto tp_after = std::chrono::high_resolution_clock::now();
+
+      metrics.elapsed = tp_after - tp_before;
+    }
+    metrics.elapsed_buffer = elapsed_on_new_block + elapsed_on_end_codeword;
 
     // Notify metrics.
-    notifier.on_new_metric(
-        {.elapsed = tp_after - tp_before, .elapsed_buffer = elapsed_on_new_block + elapsed_on_end_codeword});
+    notifier.on_new_metric(metrics);
   }
 
 private:

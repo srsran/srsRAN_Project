@@ -61,9 +61,9 @@ private:
   channel_precoder_metrics_aggregator pdsch_channel_precoder_aggregator;
   /// PDSCH modulation mapper metrics aggregator.
   channel_modulation_metrics_aggregator pdsch_modulation_mapper_aggregator;
-  /// PDSCH processor metric producer.
+  /// PDSCH processor metric aggregator.
   pdsch_processor_metrics_aggregator pdsch_processor_aggregator;
-  /// PDSCH DM-RS metric producer.
+  /// PDSCH DM-RS metric aggregator.
   pdsch_dmrs_generator_metrics_aggregator pdsch_dmrs_generator_aggregator;
 };
 

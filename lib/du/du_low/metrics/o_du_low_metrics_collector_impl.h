@@ -165,6 +165,8 @@ private:
   du_low_pdsch_metrics_collector pdsch_collector;
   /// UL-SCH demultiplexer metrics aggregator.
   ulsch_demultiplex_metrics_aggregator ulsch_demultiplex_aggregator;
+  /// Save the time when the metrics where collected last time.
+  std::chrono::high_resolution_clock::time_point last_timestamp = {};
 };
 
 } // namespace srs_du

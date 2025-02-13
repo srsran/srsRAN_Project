@@ -13,6 +13,7 @@
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/metrics/phy_metrics_reports.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 #include <memory>
 
 namespace srsran {
@@ -42,8 +43,14 @@ public:
     processor_notifier    = &notifier_;
     tbs                   = units::bytes(data.front().get_buffer().size());
 
-    base->process(grid, *this, data, pdu);
-
+    // Use scoped resource usage class to measure CPU usage of this block.
+    resource_usage_utils::measurements cpu_measurements;
+    {
+      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements,
+                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
+      base->process(grid, *this, data, pdu);
+    }
+    self_cpu_usage_us = (cpu_measurements.user_time + cpu_measurements.system_time).count();
     elapsed_return_ns = std::chrono::nanoseconds(std::chrono::high_resolution_clock::now() - start_time).count();
 
     report_metrics();
@@ -68,14 +75,16 @@ private:
       return;
     }
 
-    notifier.on_new_metric({.tbs                = tbs,
-                            .elapsed_return     = std::chrono::nanoseconds(elapsed_return_ns),
-                            .elapsed_completion = std::chrono::nanoseconds(elapsed_completion_ns)});
+    notifier.on_new_metric({.tbs                 = tbs,
+                            .elapsed_return      = std::chrono::nanoseconds(elapsed_return_ns),
+                            .elapsed_completion  = std::chrono::nanoseconds(elapsed_completion_ns),
+                            .self_cpu_time_usage = std::chrono::microseconds(self_cpu_usage_us)});
   }
 
   std::chrono::high_resolution_clock::time_point start_time            = {};
   std::atomic<uint64_t>                          elapsed_return_ns     = {};
   std::atomic<uint64_t>                          elapsed_completion_ns = {};
+  std::atomic<uint64_t>                          self_cpu_usage_us     = {};
   units::bytes                                   tbs;
   pdsch_processor_notifier*                      processor_notifier = nullptr;
   std::unique_ptr<pdsch_processor>               base;

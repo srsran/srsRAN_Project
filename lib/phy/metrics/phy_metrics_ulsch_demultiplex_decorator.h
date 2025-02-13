@@ -12,6 +12,7 @@
 
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/ulsch_demultiplex.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 
 namespace srsran {
 
@@ -43,13 +44,19 @@ public:
   {
     srsran_assert(base_buffer == nullptr, "Invalid base buffer.");
 
-    // Prepare base and save the base buffer.
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_buffer    = &base->demultiplex(sch_data, harq_ack, csi_part1, config);
-    auto tp_after  = std::chrono::high_resolution_clock::now();
+    resource_usage_utils::measurements cpu_measurements;
+    {
+      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements,
+                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
+      // Prepare base and save the base buffer.
+      auto tp_before = std::chrono::high_resolution_clock::now();
+      base_buffer    = &base->demultiplex(sch_data, harq_ack, csi_part1, config);
+      auto tp_after  = std::chrono::high_resolution_clock::now();
 
-    // Save the initial elapsed time.
-    elapsed_init = tp_after - tp_before;
+      // Save the initial elapsed time.
+      elapsed_init = tp_after - tp_before;
+    }
+    cpu_usage_us = (cpu_measurements.user_time + cpu_measurements.system_time);
 
     return *this;
   }
@@ -69,12 +76,19 @@ private:
   {
     srsran_assert(base_buffer != nullptr, "Invalid base buffer.");
 
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_buffer->on_new_block(data, scrambling_seq);
-    auto tp_after = std::chrono::high_resolution_clock::now();
+    resource_usage_utils::measurements cpu_measurements;
+    {
+      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements,
+                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
 
-    // Accumulate elapsed time and number of bits.
-    elapsed_on_new_block += tp_after - tp_before;
+      auto tp_before = std::chrono::high_resolution_clock::now();
+      base_buffer->on_new_block(data, scrambling_seq);
+      auto tp_after = std::chrono::high_resolution_clock::now();
+
+      // Accumulate elapsed time and number of bits.
+      elapsed_on_new_block += tp_after - tp_before;
+    }
+    cpu_usage_us += (cpu_measurements.user_time + cpu_measurements.system_time);
     sum_nof_bits += data.size();
   }
 
@@ -83,20 +97,32 @@ private:
   {
     srsran_assert(base_buffer != nullptr, "Invalid base buffer.");
 
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_buffer->on_end_codeword();
-    auto tp_after = std::chrono::high_resolution_clock::now();
+    resource_usage_utils::measurements cpu_measurements;
+    std::chrono::nanoseconds           elapsed_on_end_codeword;
+    {
+      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements,
+                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
+
+      auto tp_before = std::chrono::high_resolution_clock::now();
+      base_buffer->on_end_codeword();
+      auto tp_after = std::chrono::high_resolution_clock::now();
+
+      elapsed_on_end_codeword = tp_after - tp_before;
+    }
+    cpu_usage_us += (cpu_measurements.user_time + cpu_measurements.system_time);
 
     // Notify metrics.
     notifier.on_new_metric({.elapsed_init            = elapsed_init,
                             .elapsed_on_new_block    = elapsed_on_new_block,
-                            .elapsed_on_end_codeword = tp_after - tp_before,
-                            .sum_nof_bits            = sum_nof_bits});
+                            .elapsed_on_end_codeword = elapsed_on_end_codeword,
+                            .sum_nof_bits            = sum_nof_bits,
+                            .cpu_time_usage          = cpu_usage_us});
 
-    // Reset base buffer pointer and counters
+    // Reset base buffer pointer and counters.
     base_buffer          = nullptr;
     elapsed_init         = {};
     elapsed_on_new_block = {};
+    cpu_usage_us         = {};
     sum_nof_bits         = 0;
   }
 
@@ -105,6 +131,7 @@ private:
   pusch_codeword_buffer*             base_buffer          = nullptr;
   std::chrono::nanoseconds           elapsed_init         = {};
   std::chrono::nanoseconds           elapsed_on_new_block = {};
+  std::chrono::microseconds          cpu_usage_us         = {};
   unsigned                           sum_nof_bits         = 0;
 };
 

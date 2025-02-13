@@ -13,6 +13,7 @@
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/metrics/phy_metrics_reports.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 #include <memory>
 
 namespace srsran {
@@ -35,11 +36,20 @@ public:
                     bool                             new_data,
                     const codeblock_metadata&        cfg) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base->rate_dematch(output, input, new_data, cfg);
-    auto tp_after = std::chrono::high_resolution_clock::now();
+    ldpc_rate_dematcher_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
+                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
 
-    notifier.on_new_metric({.input_size = units::bits(input.size()), .elapsed = tp_after - tp_before});
+      auto tp_before = std::chrono::high_resolution_clock::now();
+      base->rate_dematch(output, input, new_data, cfg);
+      auto tp_after = std::chrono::high_resolution_clock::now();
+
+      metrics.elapsed = tp_after - tp_before;
+    }
+    metrics.input_size = units::bits(input.size());
+    notifier.on_new_metric(metrics);
   }
 
 private:
