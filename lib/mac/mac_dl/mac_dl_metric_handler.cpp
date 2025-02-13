@@ -21,7 +21,8 @@ mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(
 {
 }
 
-void mac_dl_cell_metric_handler::handle_slot_completion(std::chrono::high_resolution_clock::time_point start_tp,
+void mac_dl_cell_metric_handler::handle_slot_completion(slot_point                                     sl_tx,
+                                                        std::chrono::high_resolution_clock::time_point start_tp,
                                                         const expected<resource_usage::snapshot, int>& start_rusg)
 {
   // Time difference
@@ -50,7 +51,14 @@ void mac_dl_cell_metric_handler::handle_slot_completion(std::chrono::high_resolu
     data.count_invol_context_switches += rusg_diff.value().invol_ctxt_switch_count;
   }
 
-  if (data.nof_slots == period_slots) {
+  if (not next_report_slot.valid()) {
+    // We enter here in the first call to this function.
+    // We will make the \c next_report_slot aligned with the period.
+    unsigned mod_val = sl_tx.to_uint() % period_slots;
+    next_report_slot = mod_val > 0 ? sl_tx + period_slots - mod_val : sl_tx;
+  }
+
+  if (sl_tx >= next_report_slot) {
     // Prepare cell report.
     mac_dl_cell_metric_report report;
     report.nof_slots                          = data.nof_slots;
@@ -61,6 +69,9 @@ void mac_dl_cell_metric_handler::handle_slot_completion(std::chrono::high_resolu
 
     // Reset counters.
     data = {};
+
+    // Set next report slot.
+    next_report_slot += period_slots;
 
     // Forward cell report.
     on_new_cell_report(cell_index, report);

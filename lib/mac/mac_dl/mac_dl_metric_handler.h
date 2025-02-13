@@ -16,6 +16,7 @@
 #include "srsran/adt/slotted_array.h"
 #include "srsran/mac/mac_metrics.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/slot_point.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/tracing/resource_usage.h"
 #include <memory>
@@ -30,7 +31,8 @@ class mac_dl_cell_metric_handler
 {
 public:
   struct slot_measurement {
-    slot_measurement(mac_dl_cell_metric_handler& parent_) : parent(parent_.enabled() ? &parent_ : nullptr)
+    slot_measurement(mac_dl_cell_metric_handler& parent_, slot_point sl_tx_) :
+      parent(parent_.enabled() ? &parent_ : nullptr), sl_tx(sl_tx_)
     {
       if (enabled()) {
         start_tp   = std::chrono::high_resolution_clock::now();
@@ -40,7 +42,7 @@ public:
     ~slot_measurement()
     {
       if (enabled()) {
-        parent->handle_slot_completion(start_tp, start_rusg);
+        parent->handle_slot_completion(sl_tx, start_tp, start_rusg);
       }
     }
 
@@ -50,6 +52,7 @@ public:
 
   private:
     std::unique_ptr<mac_dl_cell_metric_handler, noop_operation> parent;
+    slot_point                                                  sl_tx;
     std::chrono::high_resolution_clock::time_point              start_tp;
     expected<resource_usage::snapshot, int>                     start_rusg;
   };
@@ -59,7 +62,7 @@ public:
                              std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report);
 
   /// Initiate new slot measurements.
-  auto start_slot() { return slot_measurement{*this}; }
+  auto start_slot(slot_point sl_tx) { return slot_measurement{*this, sl_tx}; }
 
   bool enabled() const { return true; }
 
@@ -72,12 +75,16 @@ private:
     unsigned                 count_invol_context_switches{0};
   };
 
-  void handle_slot_completion(std::chrono::high_resolution_clock::time_point start_tp,
+  void handle_slot_completion(slot_point                                     sl_tx,
+                              std::chrono::high_resolution_clock::time_point start_tp,
                               const expected<resource_usage::snapshot, int>& rusg_diff);
 
   const du_cell_index_t                                                  cell_index;
   std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report;
-  unsigned                                                               period_slots;
+  const unsigned                                                         period_slots;
+
+  // Slot at which the next report is generated.
+  slot_point next_report_slot;
 
   // Metrics tracked
   non_persistent_data data;

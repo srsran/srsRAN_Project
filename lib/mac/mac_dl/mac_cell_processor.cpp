@@ -260,7 +260,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx) SRSRAN_RT
 {
   // * Start of Critical Path * //
 
-  auto metrics_meas = metrics.start_slot();
+  auto metrics_meas = metrics.start_slot(sl_tx);
   l2_late_tracer[cell_cfg.cell_index].start();
   trace_point sched_tp = metrics_meas.start_time_point();
 
