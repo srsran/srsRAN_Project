@@ -236,12 +236,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
   metrics.add_cpu_usage_metrics(cpu_usage);
 
-  // TODO: move SDU latency computation to write_data_pdu_to_lower_layers
-  auto sdu_latency_ns =
-      std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - time_of_arrival);
-  metrics.add_pdu_latency_ns(sdu_latency_ns.count());
   // Write to lower layers
-  write_data_pdu_to_lower_layers(st.tx_next, std::move(sdu_info.buf), /* is_retx = */ false);
+  write_data_pdu_to_lower_layers(std::move(sdu_info), /* is_retx = */ false);
 
   // Increment TX_NEXT
   uint32_t tx_count = st.tx_next++;
@@ -306,18 +302,20 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg)
   logger.log_info("Reestablished PDCP. st={}", st);
 }
 
-void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf, bool is_retx)
+void pdcp_entity_tx::write_data_pdu_to_lower_layers(pdcp_tx_xdu_info&& pdu_info, bool is_retx)
 {
-  logger.log_info(buf.begin(),
-                  buf.end(),
+  logger.log_info(pdu_info.buf.begin(),
+                  pdu_info.buf.end(),
                   "TX PDU. type=data pdu_len={} sn={} count={} is_retx={}",
-                  buf.length(),
-                  SN(count),
-                  count,
+                  pdu_info.buf.length(),
+                  SN(pdu_info.count),
+                  pdu_info.count,
                   is_retx);
-  metrics.add_pdus(1, buf.length());
-  // TODO: put SDU latency computation here (and remove from handle_sdu) once TOA is stored with the SDU.
-  lower_dn.on_new_pdu(std::move(buf), is_retx);
+  metrics.add_pdus(1, pdu_info.buf.length());
+  auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
+                                                                             pdu_info.time_of_arrival);
+  metrics.add_pdu_latency_ns(sdu_latency_ns.count());
+  lower_dn.on_new_pdu(std::move(pdu_info.buf), is_retx);
 }
 
 void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
@@ -536,44 +534,56 @@ void pdcp_entity_tx::retransmit_all_pdus()
 
   for (uint32_t count = st.tx_next_ack; count < st.tx_next; count++) {
     if (tx_window.has_sn(count)) {
-      pdcp_tx_xdu_info& sdu_info = tx_window[count];
+      pdcp_tx_xdu_info& sdu_info_ref = tx_window[count];
+
+      // Create a copy of the SDU info that is stored in the TX window
+      pdcp_tx_xdu_info sdu_info = sdu_info_ref.copy_without_buffer();
+      // Also copy the SDU buffer
+      auto sdu_buf_copy = sdu_info_ref.buf.deep_copy();
+      if (not sdu_buf_copy.has_value()) {
+        logger.log_error("Could not deep copy SDU for retransmission, dropping SDU and notifying RRC. count={} {}",
+                         sdu_info.count,
+                         st);
+        upper_cn.on_protocol_failure();
+        return;
+      }
+      sdu_info.buf = std::move(sdu_buf_copy.value());
+
+      // Perform header compression if required
+      // (TODO)
 
       // Prepare header
       pdcp_data_pdu_header hdr = {};
       hdr.sn                   = SN(sdu_info.count);
 
       // Pack header
-      auto buf_copy = sdu_info.buf.deep_copy();
-      if (not buf_copy.has_value()) {
-        logger.log_error("Could not deep copy SDU, dropping SDU and notifying RRC. count={} {}", sdu_info.count, st);
-        upper_cn.on_protocol_failure();
-        return;
-      }
-
-      byte_buffer buf = std::move(buf_copy.value());
-      if (not write_data_pdu_header(buf, hdr)) {
+      if (not write_data_pdu_header(sdu_info.buf, hdr)) {
         logger.log_error(
             "Could not append PDU header, dropping SDU and notifying RRC. count={} {}", sdu_info.count, st);
         upper_cn.on_protocol_failure();
         return;
       }
 
-      // Perform header compression if required
-      // (TODO)
-
-      // Perform integrity protection and ciphering
-      expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), sdu_info.count);
-      if (not exp_buf.has_value()) {
-        logger.log_error("Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
-                         "notifying RRC. count={} {}",
-                         sdu_info.count,
-                         st);
-        upper_cn.on_protocol_failure();
-        return;
+      // Apply ciphering and integrity protection
+      resource_usage_utils::measurements cpu_usage;
+      {
+        expected<byte_buffer> exp_buf =
+            apply_ciphering_and_integrity_protection(std::move(sdu_info.buf), sdu_info.count);
+        if (not exp_buf.has_value()) {
+          logger.log_error(
+              "Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
+              "notifying RRC. count={} {}",
+              sdu_info.count,
+              st);
+          upper_cn.on_protocol_failure();
+          return;
+        }
+        sdu_info.buf = std::move(exp_buf.value());
       }
+      metrics.add_cpu_usage_metrics(cpu_usage);
 
-      byte_buffer protected_buf = std::move(exp_buf.value());
-      write_data_pdu_to_lower_layers(sdu_info.count, std::move(protected_buf), /* is_retx = */ true);
+      // Write to lower layers
+      write_data_pdu_to_lower_layers(std::move(sdu_info), /* is_retx = */ true);
     }
   }
 }
