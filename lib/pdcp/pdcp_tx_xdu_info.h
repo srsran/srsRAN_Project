@@ -15,7 +15,8 @@
 
 namespace srsran {
 
-/// Helper structure used to pass and store TX PDUs/SDUs along the PDCP TX entity and the security engine.
+/// Helper structure used to pass and store TX PDUs/SDUs along the PDCP TX entity, the security engine and post
+/// processing.
 struct pdcp_tx_xdu_info {
   /// The SDU/PDU buffer (PDU header/footer are added during processing.)
   byte_buffer buf;
