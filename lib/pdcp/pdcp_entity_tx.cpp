@@ -95,7 +95,7 @@ void pdcp_entity_tx::stop()
 /// \ref TS 38.323 section 5.2.1: Transmit operation
 void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 {
-  if (stopped) {
+  if (SRSRAN_UNLIKELY(stopped)) {
     if (not cfg.custom.warn_on_drop) {
       logger.log_info("Dropping SDU. Entity is stopped");
     } else {
@@ -579,6 +579,11 @@ void pdcp_entity_tx::retransmit_all_pdus()
  */
 void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
 {
+  if (SRSRAN_UNLIKELY(stopped)) {
+    logger.log_warning("Dropping transmit notification. Entity is stopped");
+    return;
+  }
+
   logger.log_debug("Handling transmit notification for notif_sn={}", notif_sn);
   if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
     logger.log_error("Invalid transmit notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
@@ -610,6 +615,11 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
 
 void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 {
+  if (SRSRAN_UNLIKELY(stopped)) {
+    logger.log_warning("Dropping delivery notification. Entity is stopped");
+    return;
+  }
+
   logger.log_debug("Handling delivery notification for notif_sn={}", notif_sn);
   if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
     logger.log_error("Invalid delivery notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
@@ -635,6 +645,11 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 
 void pdcp_entity_tx::handle_retransmit_notification(uint32_t notif_sn)
 {
+  if (SRSRAN_UNLIKELY(stopped)) {
+    logger.log_warning("Dropping retransmit notification. Entity is stopped");
+    return;
+  }
+
   if (SRSRAN_UNLIKELY(is_srb())) {
     logger.log_error("Ignored unexpected PDU retransmit notification in SRB. notif_sn={}", notif_sn);
     return;
@@ -650,6 +665,11 @@ void pdcp_entity_tx::handle_retransmit_notification(uint32_t notif_sn)
 
 void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_sn)
 {
+  if (SRSRAN_UNLIKELY(stopped)) {
+    logger.log_warning("Dropping delivery retransmitted notification. Entity is stopped");
+    return;
+  }
+
   if (SRSRAN_UNLIKELY(is_srb())) {
     logger.log_error("Ignored unexpected PDU delivery retransmitted notification in SRB. notif_sn={}", notif_sn);
     return;
@@ -667,6 +687,10 @@ void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_s
 
 void pdcp_entity_tx::handle_desired_buffer_size_notification(uint32_t desired_bs)
 {
+  if (SRSRAN_UNLIKELY(stopped)) {
+    logger.log_warning("Dropping desired buffer size notification. Entity is stopped");
+    return;
+  }
   desired_buffer_size = desired_bs;
 }
 
