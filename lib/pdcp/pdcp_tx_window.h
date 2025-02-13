@@ -36,9 +36,15 @@ public:
 
   bool has_sn(uint32_t count) const;
 
-  /// \brief Add SDU to TX window
-  /// This method adds an SDU from the TX window. It will keep track of the PDU bytes in the window.
-  void add_sdu(pdcp_tx_xdu_info&& sdu_info);
+  /// \brief Add SDU info to TX window
+  ///
+  /// This method adds the SDU info to TX window. For AM, the SDU info shall also include a deep copy of the SDU buffer
+  /// for a possible data recovery procedure. Otherwise the SDU buffer may be empty. In any case, the SDU length must be
+  /// provided explicitly to track the total number of bytes in flight.
+  ///
+  /// \param sdu_info The SDU info that shall be stored in the TX window.
+  /// \param sdu_length The length of the SDU (regardless of the presence of a SDU buffer copy in the SDU info).
+  void add_sdu(pdcp_tx_xdu_info&& sdu_info, uint32_t sdu_length);
 
   /// \brief Remove SDU from TX window
   /// This method removes an SDU from the TX window. It will keep track of the PDU bytes in the window.

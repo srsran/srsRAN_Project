@@ -168,16 +168,43 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     }
   }
 
-  // We will need a copy of the SDU for the discard timer when using AM
-  byte_buffer sdu;
-  if (cfg.discard_timer.has_value() && is_am()) {
-    auto sdu_copy = buf.deep_copy();
-    if (not sdu_copy.has_value()) {
-      logger.log_error("Unable to deep copy SDU");
-      upper_cn.on_protocol_failure();
-      return;
+  // Wrap SDU with meta information
+  pdcp_tx_xdu_info sdu_info = {.buf                   = std::move(buf),
+                               .count                 = st.tx_next,
+                               .time_of_arrival       = time_of_arrival,
+                               .tick_point_of_arrival = discard_timer.now()};
+
+  if (cfg.discard_timer.has_value()) {
+    // Only start for finite durations and if not running already.
+    if (cfg.discard_timer.value() != pdcp_discard_timer::infinity && not discard_timer.is_running()) {
+      discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
+                        [this](timer_id_t timer_id) { discard_callback(); });
+      discard_timer.run();
     }
-    sdu = std::move(sdu_copy.value());
+
+    // If the place in the TX window is occupied by an old element from previous wrap, discard that element first.
+    if (tx_window.has_sn(st.tx_next)) {
+      uint32_t old_count = tx_window[st.tx_next].count;
+      logger.log_error("Tx window full. Discarding old_count={}. tx_next={}", old_count, st.tx_next);
+      discard_pdu(old_count);
+    }
+
+    // Prepare a copy of SDU info for storage in TX window.
+    // For AM, also copy the SDU buffer for a possible data recovery procedure.
+    pdcp_tx_xdu_info sdu_info_copy = sdu_info.copy_without_buffer();
+    if (cfg.discard_timer.has_value() && is_am()) {
+      auto sdu_buf_copy = sdu_info.buf.deep_copy();
+      if (not sdu_buf_copy.has_value()) {
+        logger.log_error("Unable to deep copy SDU");
+        upper_cn.on_protocol_failure();
+        return;
+      }
+      sdu_info_copy.buf = std::move(sdu_buf_copy.value());
+    }
+
+    // Move the copy into TX window; determine the SDU length from original buffer
+    tx_window.add_sdu(std::move(sdu_info_copy), sdu_info.buf.length());
+    logger.log_debug("Added to tx window. count={} discard_timer={}", st.tx_next, cfg.discard_timer);
   }
 
   // Perform header compression
@@ -188,60 +215,33 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   hdr.sn                   = SN(st.tx_next);
 
   // Pack header
-  if (not write_data_pdu_header(buf, hdr)) {
+  if (not write_data_pdu_header(sdu_info.buf, hdr)) {
     logger.log_error("Could not append PDU header, dropping SDU and notifying RRC. count={}", st.tx_next);
     upper_cn.on_protocol_failure();
     return;
   }
 
   // Apply ciphering and integrity protection
-  byte_buffer                        protected_buf;
   resource_usage_utils::measurements cpu_usage;
   {
     resource_usage_utils::scoped_resource_usage s(cpu_usage, resource_usage_utils::rusage_measurement_type::THREAD);
-    expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), st.tx_next);
+    expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(sdu_info.buf), st.tx_next);
     if (not exp_buf.has_value()) {
       logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
                        st.tx_next);
       upper_cn.on_protocol_failure();
       return;
     }
-    protected_buf = std::move(exp_buf.value());
+    sdu_info.buf = std::move(exp_buf.value());
   }
   metrics.add_cpu_usage_metrics(cpu_usage);
-
-  // Create a discard timer and put into tx_window. For AM, also store the SDU for a possible data recovery procedure.
-  if (cfg.discard_timer.has_value()) {
-    // Only start for finite durations and if not running already.
-    if (cfg.discard_timer.value() != pdcp_discard_timer::infinity && not discard_timer.is_running()) {
-      discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
-                        [this](timer_id_t timer_id) { discard_callback(); });
-      discard_timer.run();
-    }
-
-    // If the place in the tx_window is occupied by an old element from previous wrap, discard that element first.
-    if (tx_window.has_sn(st.tx_next)) {
-      uint32_t old_count = tx_window[st.tx_next].count;
-      logger.log_error("Tx window full. Discarding old_count={}. tx_next={}", old_count, st.tx_next);
-      discard_pdu(old_count);
-    }
-
-    // Place SDU in TX window
-    pdcp_tx_xdu_info sdu_info = {.buf                   = std::move(sdu),
-                                 .count                 = st.tx_next,
-                                 .time_of_arrival       = time_of_arrival,
-                                 .tick_point_of_arrival = discard_timer.now()};
-    tx_window.add_sdu(std::move(sdu_info));
-
-    logger.log_debug("Added to tx window. count={} discard_timer={}", st.tx_next, cfg.discard_timer);
-  }
 
   // TODO: move SDU latency computation to write_data_pdu_to_lower_layers
   auto sdu_latency_ns =
       std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - time_of_arrival);
   metrics.add_pdu_latency_ns(sdu_latency_ns.count());
   // Write to lower layers
-  write_data_pdu_to_lower_layers(st.tx_next, std::move(protected_buf), /* is_retx = */ false);
+  write_data_pdu_to_lower_layers(st.tx_next, std::move(sdu_info.buf), /* is_retx = */ false);
 
   // Increment TX_NEXT
   uint32_t tx_count = st.tx_next++;

@@ -26,6 +26,14 @@ struct pdcp_tx_xdu_info {
   std::chrono::system_clock::time_point time_of_arrival;
   /// Tick point of arrival at the PDCP entity
   tick_point_t tick_point_of_arrival;
+
+  pdcp_tx_xdu_info copy_without_buffer()
+  {
+    return pdcp_tx_xdu_info{.buf                   = {}, // do not copy the buffer
+                            .count                 = count,
+                            .time_of_arrival       = time_of_arrival,
+                            .tick_point_of_arrival = tick_point_of_arrival};
+  }
 };
 
 } // namespace srsran

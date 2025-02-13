@@ -36,18 +36,14 @@ pdcp_tx_xdu_info& pdcp_tx_window::operator[](uint32_t count)
   return tx_window[count].sdu_info;
 }
 
-void pdcp_tx_window::add_sdu(pdcp_tx_xdu_info&& sdu_info)
+void pdcp_tx_window::add_sdu(pdcp_tx_xdu_info&& sdu_info, uint32_t sdu_length)
 {
   pdcp_tx_window_element& elem = tx_window.add_sn(sdu_info.count);
   elem.sdu_info                = std::move(sdu_info);
-  elem.sdu_length              = elem.sdu_info.buf.length();
+  elem.sdu_length              = sdu_length;
 
   sdu_bytes += elem.sdu_length;
   nof_sdus++;
-  if (rlc_mode != pdcp_rlc_mode::am) {
-    // No need to store the SDU for non-AM bearer
-    elem.sdu_info.buf.clear();
-  }
 }
 
 void pdcp_tx_window::remove_sdu(uint32_t count)
