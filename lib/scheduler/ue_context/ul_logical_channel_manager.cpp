@@ -101,7 +101,7 @@ void ul_logical_channel_manager::configure(logical_channel_config_list_ptr lc_ch
     }
   }
   for (unsigned i = 0; i != groups.size(); ++i) {
-    if (not groups[i].active and has_slice(*groups[i].slice_id)) {
+    if (not groups[i].active and groups[i].slice_id.has_value() and has_slice(*groups[i].slice_id)) {
       reset_ran_slice(uint_to_lcg_id(i));
     }
   }
