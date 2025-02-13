@@ -38,18 +38,26 @@ public:
   /// Update the SIB1 and SI messages.
   void handle_si_change_request(const mac_cell_sys_info_config& req);
 
+  // TODO(joaquim): add the old function extra arguments (old function shown here):
+  span<const uint8_t>
+  encode_si_message_pdu(unsigned si_msg_idx, unsigned si_version, bool is_repetition, units::bytes tbs_bytes);
+
   /// \brief Retrieve the encoded SI message.
   span<const uint8_t> encode_si_pdu(slot_point sl_tx, const sib_information& si_info);
 
 private:
+  /// Variant that can either hold a single BCCH payload, or multiple versions of such payload for segmented messages.
+  template <typename T>
+  using bcch_payload_type = std::variant<T, segmented_sib_buffer<T>>;
+
   using bcch_dl_sch_buffer = std::shared_ptr<const std::vector<uint8_t>>;
 
   /// A snapshot of a SIB1 and SI messages within a given SI change window.
   struct si_buffer_snapshot {
-    unsigned                                                 version;
-    units::bytes                                             sib1_len;
-    bcch_dl_sch_buffer                                       sib1_buffer;
-    std::vector<std::pair<units::bytes, bcch_dl_sch_buffer>> si_msg_buffers;
+    unsigned                                                                    version;
+    units::bytes                                                                sib1_len;
+    bcch_dl_sch_buffer                                                          sib1_buffer;
+    std::vector<std::pair<units::bytes, bcch_payload_type<bcch_dl_sch_buffer>>> si_msg_buffers;
   };
 
   void save_buffers(si_version_type si_version, const mac_cell_sys_info_config& req);

@@ -178,8 +178,10 @@ struct sib_information {
   std::optional<uint8_t> si_msg_index;
   /// \brief Version of the SIB1/SI message payload. This counter should be incremented every time the content of the
   /// respective SIB1/SI message changes.
-  unsigned          version;
-  unsigned          nof_txs;
+  unsigned version;
+  unsigned nof_txs;
+  /// Set to \c true if the SIB allocation is for an SIB retransmission, \c false otherwise.
+  bool              is_repetition;
   pdsch_information pdsch_cfg;
 };
 

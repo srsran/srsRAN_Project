@@ -110,6 +110,8 @@ void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
 
     // SI window start detected.
     pending_messages[i].window = {sl_tx, sl_tx + si_sched_cfg->si_window_len_slots};
+    // TODO(Joaquim): line of code carried from my commits. check it works fine.
+    pending_messages[i].nof_tx = 0;
   }
 }
 
@@ -133,7 +135,8 @@ void si_message_scheduler::schedule_pending_si_messages(cell_slot_resource_alloc
 
     if (allocate_si_message(i, res_grid)) {
       si_ctxt.nof_tx++;
-      pending_messages[i].window = {};
+      // TODO(joaquim) consider removing this line, as it prevents SIB repetitions.
+      //      pending_messages[i].window = {};
     }
   }
 }
@@ -197,8 +200,17 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
   res_grid.dl_res_grid.fill(
       grant_info{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, si_ofdm_symbols, si_crbs});
 
+  // TODO(joaquim): code from my commits. check it works fine.
+  // > Determine if the SI message has been transmitted within this window or not.
+  bool is_repetition = (pending_messages[si_message].nof_tx != 0);
+  //  fmt::print(stderr,
+  //             "SI={}, nof_tx={}, window={}\n",
+  //             si_message,
+  //             pending_messages[si_message].nof_tx,
+  //             pending_messages[si_message].window);
+
   // > Delegate filling SI message grants to helper function.
-  fill_si_grant(res_grid, si_message, si_crbs, time_resource, dmrs_info, si_prbs_tbs.tbs_bytes);
+  fill_si_grant(res_grid, si_message, si_crbs, time_resource, dmrs_info, si_prbs_tbs.tbs_bytes, is_repetition);
   return true;
 }
 
@@ -207,7 +219,8 @@ void si_message_scheduler::fill_si_grant(cell_slot_resource_allocator& res_grid,
                                          crb_interval                  si_crbs_grant,
                                          uint8_t                       time_resource,
                                          const dmrs_information&       dmrs_info,
-                                         unsigned                      tbs)
+                                         unsigned                      tbs,
+                                         bool                          is_repetition)
 {
   // System information indicator for SI message as per TS 38.212, Section 7.3.1.2.1 and Table 7.3.1.2.1-2.
 
@@ -228,7 +241,15 @@ void si_message_scheduler::fill_si_grant(cell_slot_resource_allocator& res_grid,
   sib_information& si = res_grid.result.dl.bc.sibs.emplace_back();
   si.si_indicator     = sib_information::si_indicator_type::other_si;
   si.si_msg_index     = si_message;
+
+  // TODO(joaquim): code from my commits
+  si.version          = 0;
+  si.is_repetition    = is_repetition;
+
+  // TODO(joaquim): code it replaces.
   si.version          = version;
+ // TODO(joaquim): end
+
   si.nof_txs          = 0;
 
   // Fill PDSCH configuration.
