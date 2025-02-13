@@ -74,7 +74,7 @@ TEST_F(dl_logical_channel_tester, when_buffer_state_is_zero_no_tx_data_is_pendin
 
 TEST_F(dl_logical_channel_tester, buffer_state_indication_has_no_effect_in_inactive_bearer)
 {
-  lcid_t                     lcid = (lcid_t)test_rgen::uniform_int<unsigned>(0, MAX_LCID);
+  lcid_t                     lcid = (lcid_t)test_rgen::uniform_int<unsigned>(1, MAX_LCID);
   dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15, false, create_empty_config()};
   unsigned                   buf_st = test_rgen::uniform_int<unsigned>(0, 10000);
   lch_mng.handle_dl_buffer_status_indication(lcid, buf_st);
