@@ -16,6 +16,7 @@
 #include "fmt/format.h"
 #include "fmt/ranges.h"
 #include <array>
+#include <optional>
 
 /*
  * This file will hold the interfaces and structures for the
@@ -46,7 +47,9 @@ struct pdcp_rx_metrics_container {
   static constexpr unsigned                   sdu_latency_hist_bins = 8;
   static constexpr unsigned                   nof_usec_per_bin      = 1;
   std::array<uint32_t, sdu_latency_hist_bins> sdu_latency_hist;
-  uint32_t                                    max_sdu_latency_ns;
+
+  std::optional<uint32_t> min_sdu_latency_ns;
+  std::optional<uint32_t> max_sdu_latency_ns;
 };
 
 inline std::string format_pdcp_rx_metrics(timer_duration metrics_period, const pdcp_rx_metrics_container& m)
@@ -72,7 +75,17 @@ inline std::string format_pdcp_rx_metrics(timer_duration metrics_period, const p
     fmt::format_to(std::back_inserter(buffer), "{}{}", first_bin ? "" : " ", float_to_eng_string(freq, 1, false));
     first_bin = false;
   }
-  fmt::format_to(std::back_inserter(buffer), "] max_sdu_latency={}us", m.max_sdu_latency_ns * 1e-3);
+  fmt::format_to(std::back_inserter(buffer), "]");
+  if (m.min_sdu_latency_ns.has_value()) {
+    fmt::format_to(std::back_inserter(buffer), " min_sdu_latency={}us", m.min_sdu_latency_ns.value() * 1e-3);
+  } else {
+    fmt::format_to(std::back_inserter(buffer), " min_sdu_latency=none");
+  }
+  if (m.max_sdu_latency_ns) {
+    fmt::format_to(std::back_inserter(buffer), " max_sdu_latency={}us", m.max_sdu_latency_ns.value() * 1e-3);
+  } else {
+    fmt::format_to(std::back_inserter(buffer), " max_sdu_latency=none");
+  }
   fmt::format_to(std::back_inserter(buffer),
                  " crypto_cpu_usage={}\%",
                  static_cast<float>(m.sum_crypto_processing_latency_ns) / (1000000 * metrics_period.count()) * 100);
@@ -97,7 +110,7 @@ struct formatter<srsran::pdcp_rx_metrics_container> {
                      "num_sdus={} num_sdu_bytes={} num_dropped_pdus={} num_pdus={} num_pdu_bytes={} "
                      "num_integrity_verified_pdus={} num_integrity_failed_pdus={} num_t_reordering_timeouts={} "
                      "reordering_delay={}us reordering_counter={} sum_sdu_latency={}ns sdu_latency_hist=[{}] "
-                     "max_sdu_latency={}ns sum_crypto_latency={}ns",
+                     "min_sdu_latency={}{} max_sdu_latency={}{} sum_crypto_latency={}ns",
                      m.num_sdus,
                      m.num_sdu_bytes,
                      m.num_dropped_pdus,
@@ -110,7 +123,10 @@ struct formatter<srsran::pdcp_rx_metrics_container> {
                      m.reordering_counter,
                      m.sum_sdu_latency_ns,
                      fmt::join(m.sdu_latency_hist, " "),
+                     m.min_sdu_latency_ns,
+                     m.min_sdu_latency_ns.has_value() ? "ns" : "",
                      m.max_sdu_latency_ns,
+                     m.max_sdu_latency_ns.has_value() ? "ns" : "",
                      m.sum_crypto_processing_latency_ns);
   }
 };

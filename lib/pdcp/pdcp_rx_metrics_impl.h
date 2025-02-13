@@ -63,7 +63,8 @@ public:
     bin_idx = std::min(bin_idx, pdcp_rx_metrics_container::sdu_latency_hist_bins - 1);
     metrics.sdu_latency_hist[bin_idx]++;
 
-    metrics.max_sdu_latency_ns = std::max(sdu_latency_ns, metrics.max_sdu_latency_ns);
+    metrics.min_sdu_latency_ns = std::min(metrics.min_sdu_latency_ns, std::optional<uint32_t>{sdu_latency_ns});
+    metrics.max_sdu_latency_ns = std::max(metrics.max_sdu_latency_ns, std::optional<uint32_t>{sdu_latency_ns});
   }
 
   pdcp_rx_metrics_container get_metrics()
