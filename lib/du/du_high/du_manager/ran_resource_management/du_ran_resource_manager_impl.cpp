@@ -270,6 +270,6 @@ void du_ran_resource_manager_impl::deallocate_cell_resources(du_ue_index_t ue_in
 }
 
 du_ran_resource_manager_impl::ue_resource_context::ue_resource_context(du_ran_resource_manager_impl& parent) :
-  ue_cap_manager(parent.cell_cfg_list, parent.drx_res_mng, parent.logger)
+  ue_cap_manager(parent.cell_cfg_list, parent.drx_res_mng, parent.logger, parent.test_cfg)
 {
 }
