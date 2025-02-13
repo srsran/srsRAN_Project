@@ -10,17 +10,17 @@
 
 #pragma once
 
-#include "srsran/mac/mac_metrics.h"
-#include "srsran/mac/mac_metrics_notifier.h"
-
 namespace srsran {
 
-class dummy_mac_metrics_notifier : public mac_metrics_notifier
+struct mac_metric_report;
+
+/// Notifier used by MAC to report new metrics.
+class mac_metrics_notifier
 {
 public:
-  std::optional<mac_metric_report> last_report;
+  virtual ~mac_metrics_notifier() = default;
 
-  void on_new_metrics_report(const mac_metric_report& report) override { last_report = report; }
+  virtual void on_new_metrics_report(const mac_metric_report& report) = 0;
 };
 
 } // namespace srsran

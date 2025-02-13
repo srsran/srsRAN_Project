@@ -52,6 +52,7 @@ struct du_high_dependencies {
   timer_manager*                   timers                    = nullptr;
   scheduler_metrics_notifier*      sched_ue_metrics_notifier = nullptr;
   rlc_metrics_notifier*            rlc_metrics_notif         = nullptr;
+  mac_metrics_notifier*            mac_metrics_notif         = nullptr;
   mac_pcap*                        mac_p                     = nullptr;
   rlc_pcap*                        rlc_p                     = nullptr;
 };

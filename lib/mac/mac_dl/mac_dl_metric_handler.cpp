@@ -9,6 +9,7 @@
  */
 
 #include "mac_dl_metric_handler.h"
+#include "srsran/mac/mac_metrics_notifier.h"
 #include "srsran/support/executors/execute_until_success.h"
 
 using namespace srsran;

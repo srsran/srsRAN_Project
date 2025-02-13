@@ -13,6 +13,9 @@
 #include "du_high/commands/du_high_cmdline_commands.h"
 #include "du_high/commands/du_high_remote_commands.h"
 #include "du_high/du_high_config_translators.h"
+#include "du_high/metrics/du_high_mac_metrics.h"
+#include "du_high/metrics/du_high_mac_metrics_consumers.h"
+#include "du_high/metrics/du_high_mac_metrics_producer.h"
 #include "du_high/metrics/du_high_rlc_metrics.h"
 #include "du_high/metrics/du_high_rlc_metrics_consumers.h"
 #include "du_high/metrics/du_high_rlc_metrics_producer.h"
@@ -190,6 +193,35 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   return out;
 }
 
+static mac_metrics_notifier* build_mac_du_metrics(std::vector<app_services::metrics_config>& metrics,
+                                                  app_services::metrics_notifier&            metrics_notifier,
+                                                  const o_du_high_unit_config&               o_du_high_unit_cfg,
+                                                  srslog::sink&                              json_sink)
+{
+  mac_metrics_notifier*      out       = nullptr;
+  const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
+
+  // MAC metrics.
+  if (!du_hi_cfg.metrics.enable_json_metrics) {
+    return out;
+  }
+
+  app_services::metrics_config& mac_metrics_cfg = metrics.emplace_back();
+  mac_metrics_cfg.metric_name                   = mac_metrics_properties_impl().name();
+  mac_metrics_cfg.callback                      = mac_metrics_callback;
+
+  // Fill the generator.
+  auto mac_metric_gen = std::make_unique<mac_metrics_producer_impl>(metrics_notifier);
+  out                 = &(*mac_metric_gen);
+  mac_metrics_cfg.producers.push_back(std::move(mac_metric_gen));
+
+  srslog::log_channel& mac_json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
+  mac_json_channel.set_enabled(true);
+  mac_metrics_cfg.consumers.push_back(std::make_unique<mac_metrics_consumer_json>(mac_json_channel));
+
+  return out;
+}
+
 o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_high_unit_cfg,
                                            o_du_high_unit_dependencies&& dependencies)
 {
@@ -245,6 +277,9 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
                                                       o_du_high_unit_cfg,
                                                       dependencies.json_sink,
                                                       dependencies.e2_metric_connectors.get_e2_metric_notifier(0));
+
+  du_hi_deps.mac_metrics_notif =
+      build_mac_du_metrics(odu_unit.metrics, dependencies.metrics_notifier, o_du_high_unit_cfg, dependencies.json_sink);
 
   // Configure test mode
   if (du_high_unit_cfg.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {

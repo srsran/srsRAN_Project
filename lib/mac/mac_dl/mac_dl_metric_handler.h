@@ -24,6 +24,7 @@
 namespace srsran {
 
 class mac_dl_metric_handler;
+class mac_metrics_notifier;
 class task_executor;
 class timer_manager;
 

@@ -46,13 +46,4 @@ struct mac_metric_report {
   mac_dl_metric_report dl;
 };
 
-/// Notifier used by MAC to report new metrics.
-class mac_metrics_notifier
-{
-public:
-  virtual ~mac_metrics_notifier() = default;
-
-  virtual void on_new_metrics_report(const mac_metric_report& report) = 0;
-};
-
 } // namespace srsran
