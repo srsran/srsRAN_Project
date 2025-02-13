@@ -32,7 +32,7 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
   // NOTE: do not report CU-CP metrics for now. Remove this when CU-CP metrics are needed.
   return nullptr;
 
-  if (cu_cp_metrics_cfg.cu_cp_statistics_report_period == 0 || cu_cp_metrics_cfg.pdcp.report_period == 0) {
+  if (!cu_cp_metrics_cfg.enable_json_metrics == 0) {
     return nullptr;
   }
 

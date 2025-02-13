@@ -103,10 +103,10 @@ energy_snapshot app_resource_usage::energy_usage_now()
 app_resource_usage_service
 app_services::build_app_resource_usage_service(app_services::metrics_notifier& metrics_notifier,
                                                srslog::basic_levels            metrics_level,
-                                               srslog::sink&                   json_sink)
+                                               srslog::sink*                   json_sink)
 {
   app_resource_usage_service app_res_usage;
-  if (metrics_level != srslog::basic_levels::info) {
+  if (metrics_level != srslog::basic_levels::info && !json_sink) {
     return app_res_usage;
   }
   app_res_usage.service =
@@ -117,8 +117,15 @@ app_services::build_app_resource_usage_service(app_services::metrics_notifier& m
   app_res_usage_metrics.callback                      = rusage_metrics_callback;
   app_res_usage_metrics.producers.emplace_back(
       std::make_unique<resource_usage_metrics_producer_impl>(metrics_notifier, *app_res_usage.service));
-  app_res_usage_metrics.consumers.push_back(
-      std::make_unique<resource_usage_metrics_consumer_log>(srslog::fetch_basic_logger("METRICS")));
+
+  if (metrics_level != srslog::basic_levels::info) {
+    app_res_usage_metrics.consumers.push_back(
+        std::make_unique<resource_usage_metrics_consumer_log>(srslog::fetch_basic_logger("METRICS")));
+  }
+
+  if (json_sink) {
+    // Add json consumer.
+  }
 
   return app_res_usage;
 }

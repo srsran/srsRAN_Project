@@ -354,8 +354,10 @@ int main(int argc, char** argv)
       srslog::fetch_udp_sink(cu_cfg.metrics_cfg.addr, cu_cfg.metrics_cfg.port, srslog::create_json_formatter());
 
   // Create app-level resource usage service and metrics.
-  auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, cu_cfg.log_cfg.metrics_level.level, json_sink);
+  auto app_resource_usage_service =
+      app_services::build_app_resource_usage_service(metrics_notifier_forwarder,
+                                                     cu_cfg.log_cfg.metrics_level.level,
+                                                     cu_cfg.metrics_cfg.enable_json_metrics ? &json_sink : nullptr);
 
   std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
 

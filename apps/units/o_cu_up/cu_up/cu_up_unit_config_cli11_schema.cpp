@@ -130,6 +130,9 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_confi
   add_option(
       app, "--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period (in milliseconds)")
       ->capture_default_str();
+
+  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
+      ->always_capture_default();
 }
 
 static void configure_cli11_f1u_cu_up_args(CLI::App& app, cu_cp_unit_f1u_config& f1u_cu_up_params)

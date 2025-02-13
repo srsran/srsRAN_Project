@@ -43,6 +43,7 @@ static void fill_cu_up_ngu_section(YAML::Node node, const cu_up_unit_ngu_config&
 static void fill_cu_up_metrics_section(YAML::Node node, const cu_up_unit_metrics_config& config)
 {
   node["cu_up_statistics_report_period"] = config.cu_up_statistics_report_period;
+  node["enable_json_metrics"]            = config.enable_json_metrics;
   node["pdcp_report_period"]             = config.pdcp.report_period;
 }
 

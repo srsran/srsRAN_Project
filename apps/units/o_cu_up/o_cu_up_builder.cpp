@@ -30,8 +30,7 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
   pdcp_metrics_notifier* out = nullptr;
 
   // Do not instantiate the metrics if the E2 is not enabled.
-  if (!e2_enabled &&
-      (cu_up_metrics_cfg.cu_up_statistics_report_period == 0 || cu_up_metrics_cfg.pdcp.report_period == 0)) {
+  if (!e2_enabled && !cu_up_metrics_cfg.enable_json_metrics) {
     return out;
   }
 
@@ -42,7 +41,7 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
   metrics_cfg.callback                      = cu_up_pdcp_metrics_callback;
   metrics_cfg.producers.push_back(std::move(metrics_generator));
 
-  if (cu_up_metrics_cfg.pdcp.report_period != 0) {
+  if (cu_up_metrics_cfg.enable_json_metrics) {
     srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
     json_channel.set_enabled(true);
     metrics_cfg.consumers.push_back(std::make_unique<cu_up_pdcp_metrics_consumer_json>(json_channel));

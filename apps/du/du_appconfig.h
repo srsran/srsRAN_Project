@@ -40,6 +40,7 @@ struct metrics_appconfig {
   uint16_t    port = 55555;
   /// Resource usage report period in milliseconds.
   unsigned rusage_report_period = 0;
+  bool     enable_json_metrics  = false;
 };
 
 } // namespace srs_du

@@ -31,6 +31,8 @@ static void configure_cli11_metrics_args(CLI::App& app, srs_du::metrics_appconfi
              metrics_params.rusage_report_period,
              "Resource usage metrics report period (in milliseconds)")
       ->capture_default_str();
+  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
+      ->always_capture_default();
 }
 
 static void configure_cli11_f1ap_args(CLI::App& app, srs_du::f1ap_appconfig& f1c_params)

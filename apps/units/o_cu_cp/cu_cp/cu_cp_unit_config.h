@@ -259,6 +259,7 @@ struct cu_cp_unit_metrics_config {
   struct pdcp_metrics {
     unsigned report_period = 0; // PDCP report period in ms
   } pdcp;
+  bool enable_json_metrics = false;
 };
 
 /// CU-CP application unit configuration.

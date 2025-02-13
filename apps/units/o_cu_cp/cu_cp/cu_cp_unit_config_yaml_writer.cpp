@@ -288,6 +288,7 @@ static void fill_cu_cp_pcap_section(YAML::Node node, const cu_cp_unit_pcap_confi
 static void fill_cu_cp_metrics_section(YAML::Node node, const cu_cp_unit_metrics_config& config)
 {
   node["cu_cp_statistics_report_period"] = config.cu_cp_statistics_report_period;
+  node["enable_json_metrics"]            = config.enable_json_metrics;
   node["pdcp_report_period"]             = config.pdcp.report_period;
 }
 

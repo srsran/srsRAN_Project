@@ -28,8 +28,9 @@ struct cu_up_appconfig {
 
 /// Metrics report configuration.
 struct metrics_appconfig {
-  std::string addr = "127.0.0.1";
-  uint16_t    port = 55555;
+  std::string addr                = "127.0.0.1";
+  uint16_t    port                = 55555;
+  bool        enable_json_metrics = false;
 };
 
 /// Monolithic gnb application configuration.

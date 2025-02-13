@@ -34,6 +34,8 @@ static void configure_cli11_metrics_args(CLI::App& app, srs_cu::metrics_appconfi
              metrics_params.rusage_report_period,
              "Resource usage metrics report period (in milliseconds)")
       ->capture_default_str();
+  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
+      ->always_capture_default();
 }
 
 void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_cfg)

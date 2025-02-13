@@ -26,6 +26,7 @@ struct cu_up_unit_metrics_config {
   struct pdcp_metrics {
     unsigned report_period = 0; // PDCP report period in ms
   } pdcp;
+  bool enable_json_metrics = false;
 };
 
 struct cu_up_unit_ngu_socket_config {
