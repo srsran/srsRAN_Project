@@ -79,7 +79,10 @@ void pdcp_entity_tx::stop()
 {
   if (not stopped) {
     stopped = true;
-    tx_window.clear(); // discard all SDUs and stop discard timers
+    tx_window.clear(); // discard all SDUs
+    if (cfg.discard_timer.has_value()) {
+      discard_timer.stop();
+    }
     logger.log_debug("Stopped PDCP entity");
   }
 }
