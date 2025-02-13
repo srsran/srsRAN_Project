@@ -17,11 +17,18 @@ namespace srsran {
 
 /// Metrics relative to a specific MAC cell.
 struct mac_dl_cell_metric_report {
-  unsigned                 nof_slots;
-  double                   avg_latency_ms;
+  /// Number of slots considered in this report.
+  unsigned nof_slots;
+  /// Average latency, in nanoseconds, that it took for the MAC to handle a slot indication.
+  std::chrono::nanoseconds avg_latency;
+  /// Maximum latency, in nanoseconds, that it took for the MAC to handle a slot indication.
   std::chrono::nanoseconds max_latency;
-  unsigned                 count_voluntary_context_switches;
-  unsigned                 count_involuntary_context_switches;
+  /// Minimum latency, in nanoseconds, that it took for the MAC to handle a slot indication.
+  std::chrono::nanoseconds min_latency;
+  /// Number of voluntary context switches.
+  unsigned count_voluntary_context_switches;
+  /// Number of involuntary context switches.
+  unsigned count_involuntary_context_switches;
 };
 
 struct mac_dl_metric_report {

@@ -70,6 +70,7 @@ private:
   struct non_persistent_data {
     unsigned                 nof_slots = 0;
     std::chrono::nanoseconds sum_latency_ns{0};
+    std::chrono::nanoseconds min_latency{std::chrono::nanoseconds::max()};
     std::chrono::nanoseconds max_latency{0};
     unsigned                 count_vol_context_switches{0};
     unsigned                 count_invol_context_switches{0};

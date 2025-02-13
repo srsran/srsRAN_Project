@@ -9,14 +9,11 @@
  */
 
 #include "du_high_impl.h"
-
-#include "../../mac/mac_dl/mac_cell_processor.h"
 #include "adapters/adapters.h"
 #include "adapters/du_high_adapter_factories.h"
 #include "adapters/f1ap_adapters.h"
 #include "test_mode/f1ap_test_mode_adapter.h"
 #include "srsran/du/du_high/du_manager/du_manager_factory.h"
-#include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/mac/mac_metrics.h"
 #include "srsran/support/executors/task_redispatcher.h"
 #include "srsran/support/timers.h"

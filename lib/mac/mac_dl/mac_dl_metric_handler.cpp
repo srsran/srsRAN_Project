@@ -46,6 +46,7 @@ void mac_dl_cell_metric_handler::handle_slot_completion(slot_point              
   data.nof_slots++;
   data.sum_latency_ns += time_diff;
   data.max_latency = std::max(data.max_latency, time_diff);
+  data.min_latency = std::min(data.min_latency, time_diff);
   if (rusg_diff.has_value()) {
     data.count_vol_context_switches += rusg_diff.value().vol_ctxt_switch_count;
     data.count_invol_context_switches += rusg_diff.value().invol_ctxt_switch_count;
@@ -62,7 +63,8 @@ void mac_dl_cell_metric_handler::handle_slot_completion(slot_point              
     // Prepare cell report.
     mac_dl_cell_metric_report report;
     report.nof_slots                          = data.nof_slots;
-    report.avg_latency_ms                     = static_cast<double>(data.sum_latency_ns.count()) / period_slots / 1e6;
+    report.avg_latency                        = data.sum_latency_ns / period_slots;
+    report.min_latency                        = data.min_latency;
     report.max_latency                        = data.max_latency;
     report.count_voluntary_context_switches   = data.count_vol_context_switches;
     report.count_involuntary_context_switches = data.count_invol_context_switches;

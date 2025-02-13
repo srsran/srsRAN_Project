@@ -21,10 +21,11 @@ static void print_report(const mac_dl_metric_report& rep)
   fmt::print("New report:\n", rep.cells.size());
   for (unsigned i = 0; i != rep.cells.size(); ++i) {
     auto& cell = rep.cells[i];
-    fmt::print("- cell={}: slots={} avg_latency={}nsec max_latency={}nsec vol_ctx_switches={} invol_ctx_switches={}\n",
+    fmt::print("- cell={}: slots={} latency={{avg={}, min={}, max={}}}nsec vol_ctx_switches={} invol_ctx_switches={}\n",
                i,
                cell.nof_slots,
-               cell.avg_latency_ms * 1.0e6,
+               cell.avg_latency.count(),
+               cell.min_latency.count(),
                cell.max_latency.count(),
                cell.count_voluntary_context_switches,
                cell.count_involuntary_context_switches);
@@ -100,9 +101,11 @@ TEST_F(mac_dl_metric_handler_test, when_multi_cell_then_mac_report_generated_whe
   ASSERT_EQ(metric_notifier.last_report.value().dl.cells.size(), 2);
   auto& cells = metric_notifier.last_report.value().dl.cells;
   ASSERT_EQ(cells[0].nof_slots, period.count());
-  ASSERT_GE(cells[0].max_latency, std::chrono::milliseconds{static_cast<long>(cells[0].avg_latency_ms)});
+  ASSERT_GE(cells[0].max_latency, cells[0].avg_latency);
+  ASSERT_GE(cells[0].avg_latency, cells[0].min_latency);
   ASSERT_EQ(cells[1].nof_slots, period.count());
-  ASSERT_GE(cells[1].max_latency, std::chrono::milliseconds{static_cast<long>(cells[1].avg_latency_ms)});
+  ASSERT_GE(cells[1].max_latency, cells[1].avg_latency);
+  ASSERT_GE(cells[1].avg_latency, cells[1].min_latency);
 
   print_report(metric_notifier.last_report.value().dl);
 }
