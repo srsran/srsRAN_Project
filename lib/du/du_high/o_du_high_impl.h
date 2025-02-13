@@ -27,7 +27,7 @@ namespace srs_du {
 struct o_du_high_impl_dependencies {
   srslog::basic_logger*                           logger;
   std::unique_ptr<fapi_adaptor::mac_fapi_adaptor> du_high_adaptor;
-  scheduler_metrics_notifier*                     metrics_notifier;
+  mac_metrics_notifier*                           metrics_notifier;
 };
 
 /// O-RAN DU high implementation.
@@ -64,7 +64,7 @@ public:
   mac_result_notifier& get_mac_result_notifier() { return *du_high_result_notifier; }
 
   /// Returns the metrics notifier of this O-DU high implementation.
-  scheduler_metrics_notifier& get_scheduler_metrics_notifier() { return metrics_notifier_poxy; }
+  mac_metrics_notifier& get_mac_metrics_notifier() { return metrics_notifier_poxy; }
 
 private:
   const unsigned                                  nof_cells;
