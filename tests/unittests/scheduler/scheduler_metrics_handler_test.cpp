@@ -101,7 +101,8 @@ TEST_F(scheduler_metrics_handler_tester, when_no_events_took_place_then_metrics_
 
   // Check that the CQI and RI statistics have no observations.
   ASSERT_EQ(ue_metrics.cqi_stats.get_nof_observations(), 0);
-  ASSERT_EQ(ue_metrics.ri_stats.get_nof_observations(), 0);
+  ASSERT_EQ(ue_metrics.dl_ri_stats.get_nof_observations(), 0);
+  ASSERT_EQ(ue_metrics.ul_ri_stats.get_nof_observations(), 0);
 }
 
 TEST_F(scheduler_metrics_handler_tester, compute_nof_dl_oks_and_noks)

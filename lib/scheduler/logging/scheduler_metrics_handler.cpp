@@ -89,13 +89,14 @@ void cell_metrics_handler::handle_crc_indication(slot_point                   sl
   }
 }
 
-void cell_metrics_handler::handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu)
+void cell_metrics_handler::handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu, unsigned ri)
 {
   if (ues.contains(srs_pdu.ue_index)) {
     auto& u = ues[srs_pdu.ue_index];
     if (srs_pdu.time_advance_offset.has_value()) {
       u.data.ta.update(srs_pdu.time_advance_offset.value().to_seconds());
       u.data.srs_ta.update(srs_pdu.time_advance_offset.value().to_seconds());
+      u.data.ul_ri.update(ri);
     }
   }
 }
@@ -113,7 +114,7 @@ void cell_metrics_handler::handle_csi_report(ue_metric_context& u, const csi_rep
     u.data.cqi.update(csi.first_tb_wideband_cqi->to_uint());
   }
   if (csi.ri.has_value()) {
-    u.data.ri.update(csi.ri->to_uint());
+    u.data.dl_ri.update(csi.ri->to_uint());
   }
 }
 
@@ -389,7 +390,7 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pci              = pci;
   ret.rnti             = rnti;
   ret.cqi_stats        = data.cqi;
-  ret.ri_stats         = data.ri;
+  ret.dl_ri_stats      = data.dl_ri;
   uint8_t mcs          = data.nof_dl_cws > 0 ? std::roundf(static_cast<float>(data.dl_mcs) / data.nof_dl_cws) : 0;
   ret.dl_mcs           = sch_mcs_index{mcs};
   mcs                  = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
@@ -405,6 +406,7 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.pusch_snr_db     = data.nof_pusch_snr_reports > 0 ? data.sum_pusch_snrs / data.nof_pusch_snr_reports : 0;
   ret.pusch_rsrp_db    = data.nof_pusch_rsrp_reports > 0 ? data.sum_pusch_rsrp / data.nof_pusch_rsrp_reports
                                                          : -std::numeric_limits<float>::infinity();
+  ret.ul_ri_stats      = data.ul_ri;
   ret.pucch_snr_db     = data.nof_pucch_snr_reports > 0 ? data.sum_pucch_snrs / data.nof_pucch_snr_reports : 0;
   ret.last_dl_olla     = last_dl_olla;
   ret.last_ul_olla     = last_ul_olla;

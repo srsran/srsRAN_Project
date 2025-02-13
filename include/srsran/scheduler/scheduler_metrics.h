@@ -67,8 +67,10 @@ struct scheduler_ue_metrics {
   sample_statistics<float> srs_ta_stats;
   /// CQI statistics over the metrics report interval.
   sample_statistics<unsigned> cqi_stats;
-  /// RI statistics over the metrics report interval.
-  sample_statistics<unsigned> ri_stats;
+  /// DL RI statistics over the metrics report interval.
+  sample_statistics<unsigned> dl_ri_stats;
+  /// UL RI statistics over the metrics report interval.
+  sample_statistics<unsigned> ul_ri_stats;
 };
 
 /// \brief Event that occurred in the cell of the scheduler.

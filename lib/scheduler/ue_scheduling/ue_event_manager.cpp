@@ -700,7 +700,8 @@ void ue_event_manager::handle_srs_indication(const srs_indication& ind)
                     ue_cc.cell_index, sinr_dB, srs_ptr->time_advance_offset.value());
 
                 // Report the SRS PDU to the metrics handler.
-                du_cells[ue_cc.cell_index].metrics->handle_srs_indication(*srs_ptr);
+                du_cells[ue_cc.cell_index].metrics->handle_srs_indication(
+                    *srs_ptr, ue_cc.channel_state_manager().get_nof_ul_layers());
               }
             },
             "SRS",

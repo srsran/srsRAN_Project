@@ -79,8 +79,10 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       sample_statistics<float> srs_ta;
       /// CQI statistics over the metrics report interval.
       sample_statistics<unsigned> cqi;
-      /// RI statistics over the metrics report interval.
-      sample_statistics<unsigned> ri;
+      /// DL RI statistics over the metrics report interval.
+      sample_statistics<unsigned> dl_ri;
+      /// UL RI statistics over the metrics report interval.
+      sample_statistics<unsigned> ul_ri;
     };
 
     // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
@@ -155,7 +157,7 @@ public:
   void handle_crc_indication(slot_point sl_rx, const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
 
   /// \brief Handle SRS indication.
-  void handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu);
+  void handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu, unsigned ri);
 
   /// \brief Handle UCI that contains HARQ-ACK information.
   void handle_uci_with_harq_ack(du_ue_index_t ue_index, slot_point slot_rx, bool pucch);
