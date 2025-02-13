@@ -22,12 +22,12 @@ from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
-from tests.steps.stub import iperf_start, iperf_wait_until_finish, start_network, stop, ue_start_and_attach
+from tests.steps.stub import iperf_parallel, start_network, stop, ue_start_and_attach
 
 from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
 
 
-@mark.pucch
+@mark.zmq
 @mark.parametrize(
     "use_format_0, pucch_set1_format",
     (
@@ -78,46 +78,10 @@ def test_pucch(
     ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
 
     # DL iperf test
-    iperf_array = []
-    for ue_stub in ue_array:
-        iperf_array.append(
-            (
-                ue_attach_info_dict[ue_stub],
-                *iperf_start(
-                    ue_stub,
-                    ue_attach_info_dict[ue_stub],
-                    fivegc,
-                    duration=iperf_duration,
-                    direction=IPerfDir.DOWNLINK,
-                    protocol=IPerfProto.UDP,
-                    bitrate=iperf_bitrate,
-                ),
-            )
-        )
-
-    for ue_attached_info, task, iperf_request in iperf_array:
-        iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)
+    iperf_parallel(ue_attach_info_dict, fivegc, IPerfProto.UDP, IPerfDir.DOWNLINK, iperf_duration, iperf_bitrate)
 
     # Bidirectional iperf test
-    iperf_array = []
-    for ue_stub in ue_array:
-        iperf_array.append(
-            (
-                ue_attach_info_dict[ue_stub],
-                *iperf_start(
-                    ue_stub,
-                    ue_attach_info_dict[ue_stub],
-                    fivegc,
-                    duration=iperf_duration,
-                    direction=IPerfDir.BIDIRECTIONAL,
-                    protocol=IPerfProto.UDP,
-                    bitrate=iperf_bitrate,
-                ),
-            )
-        )
-
-    for ue_attached_info, task, iperf_request in iperf_array:
-        iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)
+    iperf_parallel(ue_attach_info_dict, fivegc, IPerfProto.UDP, IPerfDir.BIDIRECTIONAL, iperf_duration, iperf_bitrate)
 
     stop(
         ue_array,
@@ -128,17 +92,16 @@ def test_pucch(
     )
 
     metrics: Metrics = gnb.GetMetrics(Empty())
-    nof_pucch_f0f1_invalid_harqs = 0
-    nof_pucch_f2f3f4_invalid_harqs = 0
-    nof_pucch_f2f3f4_invalid_csis = 0
-    for ue_info in metrics.ue_array:
-        nof_pucch_f0f1_invalid_harqs += ue_info.nof_pucch_f0f1_invalid_harqs
-        nof_pucch_f2f3f4_invalid_harqs += ue_info.nof_pucch_f2f3f4_invalid_harqs
-        nof_pucch_f2f3f4_invalid_csis += ue_info.nof_pucch_f2f3f4_invalid_csis
+    invalid_pucch = False
+    if metrics.total.nof_pucch_f0f1_invalid_harqs > 0:
+        logging.error("There are invalid PUCCH F%d HARQ-ACK transmissions", 0 if use_format_0 else 1)
+        invalid_pucch = True
+    if metrics.total.nof_pucch_f2f3f4_invalid_harqs > 0:
+        logging.error("There are invalid PUCCH F%d HARQ-ACK transmissions", pucch_set1_format)
+        invalid_pucch = True
+    if metrics.total.nof_pucch_f2f3f4_invalid_csis > 0:
+        logging.error("There are invalid PUCCH F%d CSI transmissions", pucch_set1_format)
+        invalid_pucch = True
 
-    if nof_pucch_f0f1_invalid_harqs > 0:
-        fail(f"There are invalid PUCCH F{0 if use_format_0 else 1} HARQ-ACK transmissions")
-    if nof_pucch_f2f3f4_invalid_harqs > 0:
-        fail(f"There are invalid PUCCH F{pucch_set1_format} HARQ-ACK transmissions")
-    if nof_pucch_f2f3f4_invalid_csis > 0:
-        fail(f"There are invalid PUCCH F{pucch_set1_format} CSI transmissions")
+    if invalid_pucch:
+        fail("Invalid PUCCH transmissions have been registered during the test")
