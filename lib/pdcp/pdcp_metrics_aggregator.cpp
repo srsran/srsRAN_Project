@@ -26,7 +26,7 @@ pdcp_metrics_aggregator::pdcp_metrics_aggregator(uint32_t               ue_index
   logger("PDCP", {ue_index_, rb_id_, "UL"})
 {
   m_tx.counter = 0;
-  m_rx.counter = 0;
+  m_rx.counter = -1;
 }
 
 void pdcp_metrics_aggregator::push_tx_metrics(pdcp_tx_metrics_container m_tx_)
@@ -46,19 +46,22 @@ void pdcp_metrics_aggregator::push_rx_metrics(pdcp_rx_metrics_container m_rx_)
 void pdcp_metrics_aggregator::push_tx_metrics_impl(pdcp_tx_metrics_container m_tx_)
 {
   m_tx = m_tx_;
-  m_tx.counter++;
   push_report();
 }
 
 void pdcp_metrics_aggregator::push_rx_metrics_impl(pdcp_rx_metrics_container m_rx_)
 {
   m_rx = m_rx_;
-  m_rx.counter++;
   push_report();
 }
 
 void pdcp_metrics_aggregator::push_report()
 {
+  // Notify tx and rx in the same PDCP metrics container.
+  if (m_rx.counter != m_tx.counter) {
+    return;
+  }
+
   pdcp_metrics_container metrics = {ue_index, rb_id, m_tx, m_rx, metrics_period};
   pdcp_metrics_notif->report_metrics(metrics);
 }

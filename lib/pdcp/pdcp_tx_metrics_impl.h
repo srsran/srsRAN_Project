@@ -36,7 +36,7 @@ public:
 
   pdcp_tx_metrics_container get_metrics()
   {
-    pdcp_tx_metrics_container ret        = metrics;
+    pdcp_tx_metrics_container ret        = metrics.copy();
     ret.sum_crypto_processing_latency_ns = sum_crypto_processing_latency_ns;
     return ret;
   }
@@ -44,7 +44,6 @@ public:
   pdcp_tx_metrics_container get_metrics_and_reset()
   {
     pdcp_tx_metrics_container ret = get_metrics();
-    ret.counter++;
     reset_metrics();
     return ret;
   }
@@ -69,7 +68,11 @@ public:
 
   void reset_metrics()
   {
-    metrics                          = {};
+    // Ugly way to reset all metrics but not the counter.
+    unsigned counter = metrics.counter;
+    metrics          = {};
+    metrics.counter  = counter;
+
     sum_crypto_processing_latency_ns = 0;
   }
 

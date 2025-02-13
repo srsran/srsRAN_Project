@@ -45,6 +45,13 @@ struct pdcp_tx_metrics_container {
 
   std::optional<uint32_t> min_pdu_latency_ns;
   std::optional<uint32_t> max_pdu_latency_ns;
+
+  pdcp_tx_metrics_container copy()
+  {
+    pdcp_tx_metrics_container copy = *this;
+    ++counter;
+    return copy;
+  }
 };
 
 inline std::string format_pdcp_tx_metrics(timer_duration metrics_period, const pdcp_tx_metrics_container& m)

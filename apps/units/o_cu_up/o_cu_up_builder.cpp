@@ -25,7 +25,9 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
                                                         bool                                       e2_enabled,
                                                         e2_cu_metrics_notifier&                    e2_notifier,
                                                         const cu_up_unit_metrics_config&           cu_up_metrics_cfg,
-                                                        srslog::sink&                              json_sink)
+                                                        srslog::sink&                              json_sink,
+                                                        worker_manager&                            workers,
+                                                        timer_manager&                             timers)
 {
   pdcp_metrics_notifier* out = nullptr;
 
@@ -44,7 +46,12 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
   if (cu_up_metrics_cfg.enable_json_metrics) {
     srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
     json_channel.set_enabled(true);
-    metrics_cfg.consumers.push_back(std::make_unique<cu_up_pdcp_metrics_consumer_json>(json_channel));
+    metrics_cfg.consumers.push_back(
+        std::make_unique<cu_up_pdcp_metrics_consumer_json>(srslog::fetch_basic_logger("APP"),
+                                                           json_channel,
+                                                           *workers.metrics_hub_exec,
+                                                           timers.create_unique_timer(*workers.non_rt_low_prio_exec),
+                                                           cu_up_metrics_cfg.pdcp.report_period));
   }
 
   if (e2_enabled) {
@@ -113,7 +120,9 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
                                                         unit_cfg.e2_cfg.base_config.enable_unit_e2,
                                                         e2_metric_connectors->get_e2_metric_notifier(0),
                                                         unit_cfg.cu_up_cfg.metrics,
-                                                        *dependencies.json_sink);
+                                                        *dependencies.json_sink,
+                                                        *dependencies.workers,
+                                                        *dependencies.timers);
 
   for (auto& qos_ : config.cu_up_cfg.qos) {
     qos_.second.pdcp_custom_cfg.metrics_notifier = pdcp_metric_notifier;
