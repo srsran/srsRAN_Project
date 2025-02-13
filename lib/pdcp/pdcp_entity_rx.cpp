@@ -243,12 +243,11 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::system_clock:
 
   // apply security in crypto executor
   auto fn = [this, pdu_info = std::move(pdu_info)]() mutable {
-    resource_usage_utils::measurements cpu_usage;
-    {
-      resource_usage_utils::scoped_resource_usage s(cpu_usage, resource_usage_utils::rusage_measurement_type::THREAD);
-      apply_security(std::move(pdu_info));
-    }
-    metrics.add_cpu_usage_metrics(cpu_usage);
+    auto pre = std::chrono::high_resolution_clock::now();
+    apply_security(std::move(pdu_info));
+    auto post           = std::chrono::high_resolution_clock::now();
+    auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
+    metrics.add_crypto_processing_latency(sdu_latency_ns.count());
   };
   if (not crypto_executor.execute(std::move(fn))) {
     logger.log_warning("Dropped PDU, crypto executor queue is full. count={}", rcvd_count);

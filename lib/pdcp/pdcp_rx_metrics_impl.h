@@ -49,10 +49,9 @@ public:
   }
 
   // Called from the security engine, possibly from many threads.
-  void add_cpu_usage_metrics(resource_usage_utils::measurements cpu_usage)
+  void add_crypto_processing_latency(uint32_t crypto_processing_latency)
   {
-    sum_crypto_used_cpu_time_us.fetch_add(cpu_usage.system_time.count() + cpu_usage.user_time.count(),
-                                          std::memory_order_relaxed);
+    sum_crypto_processing_latency_ns.fetch_add(crypto_processing_latency, std::memory_order_relaxed);
   }
 
   void add_sdu_latency_ns(uint32_t sdu_latency_ns)
@@ -69,8 +68,8 @@ public:
 
   pdcp_rx_metrics_container get_metrics()
   {
-    pdcp_rx_metrics_container ret       = metrics;
-    metrics.sum_crypto_used_cpu_time_us = sum_crypto_used_cpu_time_us;
+    pdcp_rx_metrics_container ret            = metrics;
+    metrics.sum_crypto_processing_latency_ns = sum_crypto_processing_latency_ns;
     return ret;
   }
 
@@ -84,12 +83,12 @@ public:
 
   void reset_metrics()
   {
-    metrics                     = {};
-    sum_crypto_used_cpu_time_us = 0;
+    metrics                          = {};
+    sum_crypto_processing_latency_ns = 0;
   }
 
 private:
-  std::atomic<uint32_t> sum_crypto_used_cpu_time_us = 0;
+  std::atomic<uint32_t> sum_crypto_processing_latency_ns = 0;
 };
 
 } // namespace srsran
