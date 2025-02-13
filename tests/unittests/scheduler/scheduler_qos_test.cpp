@@ -23,7 +23,7 @@ static logical_channel_config::qos_info make_qos(qos_prio_level_t          prio 
                                                  unsigned                  dl_gbr = 0,
                                                  unsigned                  ul_gbr = 0)
 {
-  logical_channel_config::qos_info qos;
+  logical_channel_config::qos_info qos{};
   qos.qos.average_window_ms      = 100;
   qos.qos.priority               = prio;
   qos.qos.packet_delay_budget_ms = pdb.count();
