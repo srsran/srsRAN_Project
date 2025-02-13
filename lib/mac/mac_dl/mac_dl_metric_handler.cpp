@@ -84,6 +84,7 @@ mac_dl_cell_metric_handler& mac_dl_metric_handler::add_cell(du_cell_index_t cell
                       cell_index, period_slots, [this](du_cell_index_t cidx, const mac_dl_cell_metric_report& rep) {
                         handle_cell_report(cidx, rep);
                       }));
+    cell_left_bitmap.fetch_add((1U << static_cast<unsigned>(cell_index)), std::memory_order_acq_rel);
   }
   return cells[cell_index]->handler;
 }
@@ -102,7 +103,7 @@ void mac_dl_metric_handler::handle_cell_report(du_cell_index_t cell_index, const
   if (cell_left_bitmap.fetch_and(~cell_bit, std::memory_order_acq_rel) == cell_bit) {
     // All cells have reported. Prepare and forward the full report.
 
-    execute_until_success(ctrl_exec, timers, [this]() { prepare_full_report(); });
+    defer_until_success(ctrl_exec, timers, [this]() { prepare_full_report(); });
   }
 }
 
