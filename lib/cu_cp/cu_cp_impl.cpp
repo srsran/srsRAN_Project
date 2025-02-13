@@ -148,6 +148,10 @@ ngap_message_handler* cu_cp_impl::get_ngap_message_handler(const plmn_identity& 
 
 bool cu_cp_impl::amfs_are_connected()
 {
+  if (cfg.test_mode_cfg.no_core) {
+    return true;
+  }
+
   for (const auto& [amf_index, ngap] : ngap_db->get_ngaps()) {
     if (not controller->amf_connection_handler().is_amf_connected(amf_index)) {
       return false;

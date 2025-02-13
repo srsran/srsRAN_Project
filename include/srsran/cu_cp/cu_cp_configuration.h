@@ -105,6 +105,10 @@ struct cu_cp_configuration {
     std::chrono::seconds statistics_report_period{1};
   };
 
+  struct test_mode_config {
+    bool no_core = false;
+  };
+
   /// NG-RAN node parameters.
   ran_node_configuration node;
   /// Parameters to determine the admission of new CU-UP, DU and UE connections.
@@ -131,6 +135,8 @@ struct cu_cp_configuration {
   service_params services;
   /// PDCP metrics notifier.
   pdcp_metrics_notifier* pdcp_metric_notifier = nullptr;
+  /// Configuration for testing purposes.
+  test_mode_config test_mode_cfg = {};
 };
 
 } // namespace srs_cu_cp

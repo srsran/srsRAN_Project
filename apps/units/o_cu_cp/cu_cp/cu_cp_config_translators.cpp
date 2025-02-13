@@ -327,6 +327,8 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   out_cfg.node.gnb_id        = cu_cfg.gnb_id;
   out_cfg.node.ran_node_name = cu_cfg.ran_node_name;
 
+  out_cfg.test_mode_cfg.no_core = cu_cfg.amf_config.no_core;
+
   {
     std::vector<srs_cu_cp::supported_tracking_area> supported_tas;
     for (const auto& supported_ta : cu_cfg.amf_config.amf.supported_tas) {
