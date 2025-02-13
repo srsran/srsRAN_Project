@@ -109,6 +109,12 @@ struct scheduler_ue_expert_config {
   /// @{
   /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
   unsigned ta_measurement_slot_period{80};
+  /// \brief Delay in nof. slots between issuing the TA_CMD and starting TA measurements.
+  ///
+  /// This parameter specifies the mandatory waiting period (i.e. the prohibit period) that must elapse after the
+  /// Timing Advance command (TA_CMD) is issued before the system begins its Timing Advance measurements.
+  /// The delay allows the system to settle, ensuring that measurements are taken under stable conditions.
+  unsigned ta_measurement_slot_prohibit_period{0};
   /// \brief Timing Advance Command (T_A) offset threshold.
   ///
   /// A TA command is triggered if the estimated TA is equal to or greater than this threshold. Possible valid values

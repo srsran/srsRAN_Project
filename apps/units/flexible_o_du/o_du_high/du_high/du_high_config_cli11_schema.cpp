@@ -600,6 +600,12 @@ static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit
              "Measurements periodicity in nof. slots over which the new Timing Advance Command is computed")
       ->capture_default_str();
   add_option(app,
+             "--ta_measurement_slot_prohibit_period",
+             ta_params.ta_measurement_slot_prohibit_period,
+             "Delay in nof. slots between issuing the TA_CMD and starting TA measurements.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 10000));
+  add_option(app,
              "--ta_cmd_offset_threshold",
              ta_params.ta_cmd_offset_threshold,
              "Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. If set to "

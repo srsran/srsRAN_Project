@@ -65,6 +65,8 @@ struct du_high_unit_logger_config {
 struct du_high_unit_ta_sched_expert_config {
   /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
   unsigned ta_measurement_slot_period = 80;
+  ///  Delay in nof. slots between issuing the TA_CMD and starting TA measurements.
+  unsigned ta_measurement_slot_prohibit_period = 0;
   /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. Possible valid
   /// values {0,...,32}. If set to less than zero, issuing of TA Command is disabled.
   /// \remark T_A is defined in TS 38.213, clause 4.2.
