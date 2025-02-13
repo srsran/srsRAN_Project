@@ -22,7 +22,8 @@ namespace srsran {
 struct pdcp_tx_window_element {
   /// The actual SDU with additional meta info
   pdcp_tx_xdu_info sdu_info;
-  /// The length of the SDU/PDU buffer (for optimized interaction with tx window)
+  /// Holds the SDU length even in case no SDU is stored (e.g. UM bearer or discard timer off). Required for tracking
+  /// the total number of bytes in TX window to consider the desired buffer size from lower layers.
   uint32_t sdu_length;
 };
 
