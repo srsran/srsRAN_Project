@@ -245,8 +245,19 @@ pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t ce
   nr_band     band        = base_cell_cfg_list[cell_idx].ul_carrier.band;
   const auto& base_ul_cfg = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.ul_config;
 
-  if (not base_ul_cfg.has_value() or not base_ul_cfg->init_ul_bwp.pusch_cfg.has_value() or not ue_caps.has_value()) {
-    // No PUSCH config or no UE capabilities decoded yet. Default to QAM64.
+  if (not base_ul_cfg.has_value() or not base_ul_cfg->init_ul_bwp.pusch_cfg.has_value()) {
+    // No PUSCH config present. Default to QAM64.
+    return pusch_mcs_table::qam64;
+  }
+
+  const pusch_mcs_table app_mcs_table = base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table;
+
+  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+    // In case of test mode, we do not need to rely on capabilities.
+    return app_mcs_table;
+  }
+  if (not ue_caps.has_value()) {
+    // UE capabilities have not been decoded yet. Default to QAM64.
     return pusch_mcs_table::qam64;
   }
 
