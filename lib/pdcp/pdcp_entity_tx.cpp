@@ -830,7 +830,10 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
   // Get oldest PDU time of arrival.
   if (not tx_window.has_sn(st.tx_next_ack)) {
     logger.log_error(
-        "Trying to stop discard timers, but TX_NEXT_ACK in TX window. highest_count={} st={}", highest_count, st);
+        "Trying to stop discard timers, but TX_NEXT_ACK not in TX window. highest_count={} st={} tx_window_size={}",
+        highest_count,
+        st,
+        tx_window.get_nof_sdus());
     return;
   }
 

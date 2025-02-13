@@ -56,6 +56,8 @@ public:
 
   void clear();
 
+  uint32_t get_nof_sdus() const;
+
   uint32_t get_sdu_bytes() const;
 
   uint32_t get_pdu_bytes(security::integrity_enabled integrity) const;

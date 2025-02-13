@@ -62,6 +62,11 @@ void pdcp_tx_window::clear()
   tx_window.clear();
 }
 
+uint32_t pdcp_tx_window::get_nof_sdus() const
+{
+  return nof_sdus;
+}
+
 uint32_t pdcp_tx_window::get_sdu_bytes() const
 {
   return sdu_bytes;
