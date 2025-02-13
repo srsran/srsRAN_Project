@@ -373,7 +373,7 @@ void logger_event_tracer<true>::push(const rusage_trace_event& event) const
       "{:l}",
       rusage_trace_event_extended{trace_event{event.name, event.start_tp},
                                   dur,
-                                  resource_usage::now().value_or(resource_usage::snapshot{0, 0}) - event.rusg_capture});
+                                  resource_usage::now().value_or(resource_usage::snapshot{}) - event.rusg_capture});
 }
 
 template <>
@@ -381,11 +381,11 @@ void logger_event_tracer<true>::push(const rusage_thres_trace_event& event) cons
 {
   const auto dur = std::chrono::duration_cast<trace_duration>(now() - event.start_tp);
   if (dur >= event.thres) {
-    (*log_ch)("{:l}",
-              rusage_trace_event_extended{trace_event{event.name, event.start_tp},
-                                          dur,
-                                          resource_usage::now().value_or(resource_usage::snapshot{0, 0}) -
-                                              event.rusg_capture});
+    (*log_ch)(
+        "{:l}",
+        rusage_trace_event_extended{trace_event{event.name, event.start_tp},
+                                    dur,
+                                    resource_usage::now().value_or(resource_usage::snapshot{}) - event.rusg_capture});
   }
 }
 

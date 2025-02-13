@@ -13,6 +13,16 @@
 
 using namespace srsran;
 
+mac_dl_cell_metric_report::latency_report
+mac_dl_cell_metric_handler::non_persistent_data::latency_data::get_report(unsigned nof_slots_) const
+{
+  mac_dl_cell_metric_report::latency_report result;
+  result.min     = min;
+  result.max     = max;
+  result.average = sum / nof_slots_;
+  return result;
+}
+
 mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(
     du_cell_index_t                                                        cell_index_,
     unsigned                                                               period_slots_,
@@ -44,12 +54,19 @@ void mac_dl_cell_metric_handler::handle_slot_completion(slot_point              
 
   // Update metrics.
   data.nof_slots++;
-  data.sum_latency_ns += time_diff;
-  data.max_latency = std::max(data.max_latency, time_diff);
-  data.min_latency = std::min(data.min_latency, time_diff);
+  data.wall.sum += time_diff;
+  data.wall.max = std::max(data.wall.max, time_diff);
+  data.wall.min = std::min(data.wall.min, time_diff);
   if (rusg_diff.has_value()) {
-    data.count_vol_context_switches += rusg_diff.value().vol_ctxt_switch_count;
-    data.count_invol_context_switches += rusg_diff.value().invol_ctxt_switch_count;
+    auto& rusg_val = rusg_diff.value();
+    data.count_vol_context_switches += rusg_val.vol_ctxt_switch_count;
+    data.count_invol_context_switches += rusg_val.invol_ctxt_switch_count;
+    data.user.sum += rusg_val.user_time;
+    data.user.max = std::max(std::chrono::nanoseconds{rusg_val.user_time}, data.user.max);
+    data.user.min = std::min(std::chrono::nanoseconds{rusg_val.user_time}, data.user.min);
+    data.sys.sum += rusg_val.sys_time;
+    data.sys.max = std::max(std::chrono::nanoseconds{rusg_val.sys_time}, data.sys.max);
+    data.sys.min = std::min(std::chrono::nanoseconds{rusg_val.sys_time}, data.sys.min);
   }
 
   if (not next_report_slot.valid()) {
@@ -63,9 +80,9 @@ void mac_dl_cell_metric_handler::handle_slot_completion(slot_point              
     // Prepare cell report.
     mac_dl_cell_metric_report report;
     report.nof_slots                          = data.nof_slots;
-    report.avg_latency                        = data.sum_latency_ns / period_slots;
-    report.min_latency                        = data.min_latency;
-    report.max_latency                        = data.max_latency;
+    report.wall_clock_latency                 = data.wall.get_report(data.nof_slots);
+    report.user_time                          = data.user.get_report(data.nof_slots);
+    report.sys_time                           = data.sys.get_report(data.nof_slots);
     report.count_voluntary_context_switches   = data.count_vol_context_switches;
     report.count_involuntary_context_switches = data.count_invol_context_switches;
 

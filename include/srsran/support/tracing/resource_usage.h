@@ -23,6 +23,10 @@ struct diff {
   long vol_ctxt_switch_count;
   /// Number of involuntary context switches between the two snapshots.
   long invol_ctxt_switch_count;
+  /// Time spent in user mode between two snapshots.
+  std::chrono::microseconds user_time{0};
+  /// Time spent in kernel mode between two snapshots.
+  std::chrono::microseconds sys_time{0};
 };
 
 /// Snapshot of the resource usage statistics of a specific thread at given point in time.
@@ -31,10 +35,20 @@ struct snapshot {
   long int vol_ctxt_switch_count = 0;
   /// Number of involuntary context switches at this point in time.
   long int invol_ctxt_switch_count = 0;
+  /// Time spent in user mode.
+  std::chrono::microseconds user_time{0};
+  /// Time spent in kernel mode.
+  std::chrono::microseconds sys_time{0};
 
   constexpr snapshot() {}
-  constexpr snapshot(long int vol_cswitch_, long int invol_switch_) :
-    vol_ctxt_switch_count(vol_cswitch_), invol_ctxt_switch_count(invol_switch_)
+  constexpr snapshot(long int                  vol_cswitch_,
+                     long int                  invol_switch_,
+                     std::chrono::microseconds user_time_,
+                     std::chrono::microseconds sys_time_) :
+    vol_ctxt_switch_count(vol_cswitch_),
+    invol_ctxt_switch_count(invol_switch_),
+    user_time(user_time_),
+    sys_time(sys_time_)
   {
   }
 

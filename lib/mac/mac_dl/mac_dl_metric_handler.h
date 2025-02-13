@@ -68,12 +68,20 @@ public:
 
 private:
   struct non_persistent_data {
-    unsigned                 nof_slots = 0;
-    std::chrono::nanoseconds sum_latency_ns{0};
-    std::chrono::nanoseconds min_latency{std::chrono::nanoseconds::max()};
-    std::chrono::nanoseconds max_latency{0};
-    unsigned                 count_vol_context_switches{0};
-    unsigned                 count_invol_context_switches{0};
+    struct latency_data {
+      std::chrono::nanoseconds min{std::chrono::nanoseconds::max()};
+      std::chrono::nanoseconds max{0};
+      std::chrono::nanoseconds sum{0};
+
+      mac_dl_cell_metric_report::latency_report get_report(unsigned nof_slots) const;
+    };
+
+    unsigned     nof_slots = 0;
+    latency_data wall;
+    latency_data user;
+    latency_data sys;
+    unsigned     count_vol_context_switches{0};
+    unsigned     count_invol_context_switches{0};
   };
 
   void handle_slot_completion(slot_point                                     sl_tx,
@@ -106,9 +114,11 @@ public:
   void remove_cell(du_cell_index_t cell_index);
 
 private:
-  using report_queue_type = concurrent_queue<mac_dl_cell_metric_report,
+  using report_queue_type           = concurrent_queue<mac_dl_cell_metric_report,
                                              concurrent_queue_policy::lockfree_mpmc,
                                              concurrent_queue_wait_policy::non_blocking>;
+  using cell_activation_bitmap_type = unsigned;
+  static_assert(sizeof(cell_activation_bitmap_type) * 8U <= MAX_NOF_DU_CELLS, "Invalid cell activation bitmap size");
 
   struct cell_context {
     report_queue_type          queue;
@@ -133,7 +143,7 @@ private:
 
   slotted_array<std::unique_ptr<cell_context>, MAX_NOF_DU_CELLS> cells;
 
-  std::atomic<unsigned> cell_left_bitmap{0};
+  std::atomic<cell_activation_bitmap_type> cell_left_bitmap{0};
 
   mac_metric_report next_report;
 };

@@ -21,12 +21,19 @@ static void print_report(const mac_dl_metric_report& rep)
   fmt::print("New report:\n", rep.cells.size());
   for (unsigned i = 0; i != rep.cells.size(); ++i) {
     auto& cell = rep.cells[i];
-    fmt::print("- cell={}: slots={} latency={{avg={}, min={}, max={}}}nsec vol_ctx_switches={} invol_ctx_switches={}\n",
+    fmt::print("- cell={}: slots={} wall_latency={{avg={}, min={}, max={}}}nsec, user_latency={{avg={}, min={}, "
+               "max={}}}, sys_latency={{avg={}, min={}, max={}}}, vol_ctx_switches={} invol_ctx_switches={}\n",
                i,
                cell.nof_slots,
-               cell.avg_latency.count(),
-               cell.min_latency.count(),
-               cell.max_latency.count(),
+               cell.wall_clock_latency.average.count(),
+               cell.wall_clock_latency.min.count(),
+               cell.wall_clock_latency.max.count(),
+               cell.user_time.average.count(),
+               cell.user_time.min.count(),
+               cell.user_time.max.count(),
+               cell.sys_time.average.count(),
+               cell.sys_time.min.count(),
+               cell.sys_time.max.count(),
                cell.count_voluntary_context_switches,
                cell.count_involuntary_context_switches);
   }
@@ -101,11 +108,11 @@ TEST_F(mac_dl_metric_handler_test, when_multi_cell_then_mac_report_generated_whe
   ASSERT_EQ(metric_notifier.last_report.value().dl.cells.size(), 2);
   auto& cells = metric_notifier.last_report.value().dl.cells;
   ASSERT_EQ(cells[0].nof_slots, period.count());
-  ASSERT_GE(cells[0].max_latency, cells[0].avg_latency);
-  ASSERT_GE(cells[0].avg_latency, cells[0].min_latency);
+  ASSERT_GE(cells[0].wall_clock_latency.max, cells[0].wall_clock_latency.average);
+  ASSERT_GE(cells[0].wall_clock_latency.average, cells[0].wall_clock_latency.min);
   ASSERT_EQ(cells[1].nof_slots, period.count());
-  ASSERT_GE(cells[1].max_latency, cells[1].avg_latency);
-  ASSERT_GE(cells[1].avg_latency, cells[1].min_latency);
+  ASSERT_GE(cells[1].wall_clock_latency.max, cells[1].wall_clock_latency.average);
+  ASSERT_GE(cells[1].wall_clock_latency.average, cells[1].wall_clock_latency.min);
 
   print_report(metric_notifier.last_report.value().dl);
 }
