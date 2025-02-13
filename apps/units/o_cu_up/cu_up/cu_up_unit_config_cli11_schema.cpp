@@ -193,3 +193,11 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   };
   add_option_cell(app, "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
 }
+
+void srsran::autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& unit_cfg)
+{
+  if (unit_cfg.metrics.enable_json_metrics && unit_cfg.metrics.pdcp.report_period == 0) {
+    // Default report period 1 second.
+    unit_cfg.metrics.pdcp.report_period = 1000;
+  }
+}

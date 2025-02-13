@@ -117,7 +117,7 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
 
   for (auto& qos_ : config.cu_up_cfg.qos) {
     qos_.second.pdcp_custom_cfg.metrics_notifier = pdcp_metric_notifier;
-    if (!pdcp_metric_notifier) { // Disable PDCP metrics if E2 is not enabled since there is no consumer.
+    if (!pdcp_metric_notifier) {
       qos_.second.pdcp_custom_cfg.metrics_period = std::chrono::milliseconds(0);
     }
   }
