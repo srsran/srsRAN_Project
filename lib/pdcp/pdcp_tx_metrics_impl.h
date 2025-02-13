@@ -58,7 +58,8 @@ public:
     bin_idx = std::min(bin_idx, pdcp_tx_metrics_container::pdu_latency_hist_bins - 1);
     metrics.pdu_latency_hist[bin_idx]++;
 
-    metrics.max_pdu_latency_ns = std::max(sdu_latency_ns, metrics.max_pdu_latency_ns);
+    metrics.min_pdu_latency_ns = std::min(metrics.min_pdu_latency_ns, std::optional<uint32_t>{sdu_latency_ns});
+    metrics.max_pdu_latency_ns = std::max(metrics.max_pdu_latency_ns, std::optional<uint32_t>{sdu_latency_ns});
   }
 
   void add_crypto_processing_latency(uint32_t crypto_processing_latency)

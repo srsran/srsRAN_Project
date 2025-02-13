@@ -16,6 +16,7 @@
 #include "fmt/format.h"
 #include "fmt/ranges.h"
 #include <array>
+#include <optional>
 
 /*
  * This file will hold the interfaces and structures for the
@@ -41,7 +42,9 @@ struct pdcp_tx_metrics_container {
   static constexpr unsigned                   pdu_latency_hist_bins = 8;
   static constexpr unsigned                   nof_usec_per_bin      = 1;
   std::array<uint32_t, pdu_latency_hist_bins> pdu_latency_hist;
-  uint32_t                                    max_pdu_latency_ns;
+
+  std::optional<uint32_t> min_pdu_latency_ns;
+  std::optional<uint32_t> max_pdu_latency_ns;
 };
 
 inline std::string format_pdcp_tx_metrics(timer_duration metrics_period, const pdcp_tx_metrics_container& m)
@@ -61,9 +64,19 @@ inline std::string format_pdcp_tx_metrics(timer_duration metrics_period, const p
     fmt::format_to(std::back_inserter(buffer), "{}{}", first_bin ? "" : " ", float_to_eng_string(freq, 1, false));
     first_bin = false;
   }
+  fmt::format_to(std::back_inserter(buffer), "]");
+  if (m.min_pdu_latency_ns.has_value()) {
+    fmt::format_to(std::back_inserter(buffer), " min_pdu_latency={}us", m.min_pdu_latency_ns.value() * 1e-3);
+  } else {
+    fmt::format_to(std::back_inserter(buffer), " min_pdu_latency=none");
+  }
+  if (m.max_pdu_latency_ns) {
+    fmt::format_to(std::back_inserter(buffer), " max_pdu_latency={}us", m.max_pdu_latency_ns.value() * 1e-3);
+  } else {
+    fmt::format_to(std::back_inserter(buffer), " max_pdu_latency=none");
+  }
   fmt::format_to(std::back_inserter(buffer),
-                 "] max_pdu_latency={}us crypto_cpu_usage={}\%",
-                 m.max_pdu_latency_ns * 1e-3,
+                 " crypto_cpu_usage={}\%",
                  static_cast<float>(m.sum_crypto_processing_latency_ns) / (1000000 * metrics_period.count()) * 100);
   return to_c_str(buffer);
 }
@@ -83,18 +96,22 @@ struct formatter<srsran::pdcp_tx_metrics_container> {
   template <typename FormatContext>
   auto format(srsran::pdcp_tx_metrics_container m, FormatContext& ctx) const
   {
-    return format_to(ctx.out(),
-                     "num_sdus={} num_sdu_bytes={} num_pdus={} num_pdu_bytes={} num_discard_timeouts={} "
-                     "sum_pdu_latency={}ns sdu_latency_hist=[{}] max_sdu_latency={}ns sum_crypto_latency={}ns",
-                     m.num_sdus,
-                     m.num_sdu_bytes,
-                     m.num_pdus,
-                     m.num_pdu_bytes,
-                     m.num_discard_timeouts,
-                     m.sum_pdu_latency_ns,
-                     fmt::join(m.pdu_latency_hist, " "),
-                     m.max_pdu_latency_ns,
-                     m.sum_crypto_processing_latency_ns);
+    return format_to(
+        ctx.out(),
+        "num_sdus={} num_sdu_bytes={} num_pdus={} num_pdu_bytes={} num_discard_timeouts={} sum_pdu_latency={}ns "
+        "sdu_latency_hist=[{}] min_sdu_latency={}{} max_sdu_latency={}{} sum_crypto_latency={}ns",
+        m.num_sdus,
+        m.num_sdu_bytes,
+        m.num_pdus,
+        m.num_pdu_bytes,
+        m.num_discard_timeouts,
+        m.sum_pdu_latency_ns,
+        fmt::join(m.pdu_latency_hist, " "),
+        m.min_pdu_latency_ns,
+        m.min_pdu_latency_ns.has_value() ? "ns" : "",
+        m.max_pdu_latency_ns,
+        m.max_pdu_latency_ns.has_value() ? "ns" : "",
+        m.sum_crypto_processing_latency_ns);
   }
 };
 } // namespace fmt
