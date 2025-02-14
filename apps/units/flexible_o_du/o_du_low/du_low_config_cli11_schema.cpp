@@ -312,7 +312,8 @@ static void configure_cli11_hal_args(CLI::App& app, std::optional<du_low_unit_ha
 
 static void configure_cli11_metrics_args(CLI::App& app, du_low_unit_metrics_config& config)
 {
-  app.add_option("--enable_upper_phy", config.enable, "Enables upper physical layer metrics.")->capture_default_str();
+  add_option(app, "--enable_json_metrics", config.enable_json_metrics, "Enable JSON metrics reporting")
+      ->always_capture_default();
 }
 
 static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)

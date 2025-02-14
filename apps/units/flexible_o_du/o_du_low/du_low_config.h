@@ -208,7 +208,7 @@ struct du_low_unit_hal_config {
 
 /// Metrics configuration of the DU low.
 struct du_low_unit_metrics_config {
-  bool enable = false;
+  bool enable_json_metrics = false;
 };
 
 /// DU low configuration.
