@@ -588,6 +588,11 @@ valgrind changed tests:
     - launch_tests
   cache:
     - *cache_build_get
+  artifacts:
+    when: on_failure
+    paths:
+      - build/Testing/Temporary
+    expire_in: 1 day
 
 intermediate commits clean:
   extends: intermediate commits cached
