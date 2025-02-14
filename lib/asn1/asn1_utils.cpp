@@ -957,7 +957,7 @@ uint64_t octet_string_helper::to_uint(const byte_buffer& buf)
   uint64_t val = 0;
   auto     it  = buf.begin();
   for (unsigned i = 0; i < nbytes; ++i) {
-    val += static_cast<uint64_t>(*it) << static_cast<uint64_t>((nbytes - 1 - i) * 8U);
+    val |= (static_cast<uint64_t>(*it) & 0xffu) << static_cast<uint64_t>(i * 8U);
     ++it;
   }
   return val;
