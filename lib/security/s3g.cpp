@@ -196,21 +196,8 @@ uint32_t s3g_div_alpha(uint8_t c)
 *********************************************************************/
 uint32_t s3g_s1(uint32_t w)
 {
-  uint8_t r0 = 0, r1 = 0, r2 = 0, r3 = 0;
-  uint8_t srw0 = SR[(uint8_t)((w >> 24) & 0xff)];
-  uint8_t srw1 = SR[(uint8_t)((w >> 16) & 0xff)];
-  uint8_t srw2 = SR[(uint8_t)((w >> 8) & 0xff)];
-  uint8_t srw3 = SR[(uint8_t)((w) & 0xff)];
-
-  r0 = ((s3g_mul_x(srw0, 0x1b)) ^ (srw1) ^ (srw2) ^ ((s3g_mul_x(srw3, 0x1b)) ^ srw3));
-
-  r1 = (((s3g_mul_x(srw0, 0x1b)) ^ srw0) ^ (s3g_mul_x(srw1, 0x1b)) ^ (srw2) ^ (srw3));
-
-  r2 = ((srw0) ^ ((s3g_mul_x(srw1, 0x1b)) ^ srw1) ^ (s3g_mul_x(srw2, 0x1b)) ^ (srw3));
-
-  r3 = ((srw0) ^ (srw1) ^ ((s3g_mul_x(srw2, 0x1b)) ^ srw2) ^ (s3g_mul_x(srw3, 0x1b)));
-
-  return ((((uint32_t)r0) << 24) | (((uint32_t)r1) << 16) | (((uint32_t)r2) << 8) | (((uint32_t)r3)));
+  return S1_T0[static_cast<uint8_t>(w & 0xff)] ^ S1_T1[static_cast<uint8_t>((w >> 8) & 0xff)] ^
+         S1_T2[static_cast<uint8_t>((w >> 16) & 0xff)] ^ S1_T3[static_cast<uint8_t>((w >> 24) & 0xff)];
 }
 
 /*********************************************************************
@@ -224,21 +211,8 @@ uint32_t s3g_s1(uint32_t w)
 *********************************************************************/
 uint32_t s3g_s2(uint32_t w)
 {
-  uint8_t r0 = 0, r1 = 0, r2 = 0, r3 = 0;
-  uint8_t sqw0 = SQ[(uint8_t)((w >> 24) & 0xff)];
-  uint8_t sqw1 = SQ[(uint8_t)((w >> 16) & 0xff)];
-  uint8_t sqw2 = SQ[(uint8_t)((w >> 8) & 0xff)];
-  uint8_t sqw3 = SQ[(uint8_t)((w) & 0xff)];
-
-  r0 = ((s3g_mul_x(sqw0, 0x69)) ^ (sqw1) ^ (sqw2) ^ ((s3g_mul_x(sqw3, 0x69)) ^ sqw3));
-
-  r1 = (((s3g_mul_x(sqw0, 0x69)) ^ sqw0) ^ (s3g_mul_x(sqw1, 0x69)) ^ (sqw2) ^ (sqw3));
-
-  r2 = ((sqw0) ^ ((s3g_mul_x(sqw1, 0x69)) ^ sqw1) ^ (s3g_mul_x(sqw2, 0x69)) ^ (sqw3));
-
-  r3 = ((sqw0) ^ (sqw1) ^ ((s3g_mul_x(sqw2, 0x69)) ^ sqw2) ^ (s3g_mul_x(sqw3, 0x69)));
-
-  return ((((uint32_t)r0) << 24) | (((uint32_t)r1) << 16) | (((uint32_t)r2) << 8) | (((uint32_t)r3)));
+  return S2_T0[static_cast<uint8_t>(w & 0xff)] ^ S2_T1[static_cast<uint8_t>((w >> 8) & 0xff)] ^
+         S2_T2[static_cast<uint8_t>((w >> 16) & 0xff)] ^ S2_T3[static_cast<uint8_t>((w >> 24) & 0xff)];
 }
 
 /*********************************************************************
