@@ -24,6 +24,8 @@ struct mac_dl_cell_metric_report {
   };
   /// Number of slots considered in this report.
   unsigned nof_slots;
+  /// Slot duration.
+  std::chrono::nanoseconds slot_duration;
   /// Description of the wall clock latency of the MAC at handling slot indications.
   latency_report wall_clock_latency;
   /// Description of the time spent by the MAC in user mode when handling slot indications.

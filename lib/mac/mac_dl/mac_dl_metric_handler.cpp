@@ -80,11 +80,12 @@ void mac_dl_cell_metric_handler::handle_slot_completion(slot_point              
   if (sl_tx >= next_report_slot) {
     // Prepare cell report.
     mac_dl_cell_metric_report report;
-    report.nof_slots                          = data.nof_slots;
-    report.wall_clock_latency                 = data.wall.get_report(data.nof_slots);
-    report.user_time                          = data.user.get_report(data.nof_slots);
-    report.sys_time                           = data.sys.get_report(data.nof_slots);
-    report.count_voluntary_context_switches   = data.count_vol_context_switches;
+    report.slot_duration                    = std::chrono::nanoseconds(unsigned(1e9 / sl_tx.nof_slots_per_subframe()));
+    report.nof_slots                        = data.nof_slots;
+    report.wall_clock_latency               = data.wall.get_report(data.nof_slots);
+    report.user_time                        = data.user.get_report(data.nof_slots);
+    report.sys_time                         = data.sys.get_report(data.nof_slots);
+    report.count_voluntary_context_switches = data.count_vol_context_switches;
     report.count_involuntary_context_switches = data.count_invol_context_switches;
 
     // Reset counters.
