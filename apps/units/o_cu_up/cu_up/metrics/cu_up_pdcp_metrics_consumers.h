@@ -33,13 +33,21 @@ private:
 class cu_up_pdcp_metrics_consumer_json : public app_services::metrics_consumer
 {
   struct aggregated_metrics {
-    bool empty() { return is_empty; }
-    void reset() { is_empty = true; }
+    void reset()
+    {
+      tx             = {};
+      rx             = {};
+      metrics_period = {};
+      is_empty       = true;
+    }
 
     bool is_empty = true;
 
-    std::chrono::time_point<std::chrono::system_clock> start_time;
-    pdcp_metrics_container                             metric;
+    pdcp_tx_metrics_container tx;
+    pdcp_rx_metrics_container rx;
+    double                    tx_cpu_usage = 0.0;
+    double                    rx_cpu_usage = 0.0;
+    timer_duration            metrics_period;
   };
 
 public:
@@ -58,9 +66,6 @@ private:
 
   // Clear metrics.
   void clear_metrics() { aggr_metrics.reset(); }
-
-  // Aggregate metrics.
-  void aggregate_metrics(const pdcp_metrics_container& metrics);
 
   // Initialize timer.
   void initialize_timer();
