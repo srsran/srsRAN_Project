@@ -597,7 +597,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
 void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
 {
   if (SRSRAN_UNLIKELY(stopped)) {
-    logger.log_warning("Dropping transmit notification. Entity is stopped");
+    logger.log_debug("Dropping transmit notification. Entity is stopped");
     return;
   }
 
@@ -633,7 +633,7 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
 void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 {
   if (SRSRAN_UNLIKELY(stopped)) {
-    logger.log_warning("Dropping delivery notification. Entity is stopped");
+    logger.log_debug("Dropping delivery notification. Entity is stopped");
     return;
   }
 
@@ -663,7 +663,7 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 void pdcp_entity_tx::handle_retransmit_notification(uint32_t notif_sn)
 {
   if (SRSRAN_UNLIKELY(stopped)) {
-    logger.log_warning("Dropping retransmit notification. Entity is stopped");
+    logger.log_debug("Dropping retransmit notification. Entity is stopped");
     return;
   }
 
@@ -683,7 +683,7 @@ void pdcp_entity_tx::handle_retransmit_notification(uint32_t notif_sn)
 void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_sn)
 {
   if (SRSRAN_UNLIKELY(stopped)) {
-    logger.log_warning("Dropping delivery retransmitted notification. Entity is stopped");
+    logger.log_debug("Dropping delivery retransmitted notification. Entity is stopped");
     return;
   }
 
@@ -705,7 +705,7 @@ void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_s
 void pdcp_entity_tx::handle_desired_buffer_size_notification(uint32_t desired_bs)
 {
   if (SRSRAN_UNLIKELY(stopped)) {
-    logger.log_warning("Dropping desired buffer size notification. Entity is stopped");
+    logger.log_debug("Dropping desired buffer size notification. Entity is stopped");
     return;
   }
   desired_buffer_size = desired_bs;
