@@ -1698,6 +1698,29 @@ basic asan:
     <<: *build_artifacts
     expire_in: 3 days
 
+basic rtsan:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    SRS_TARGET: gnb
+    OS: ubuntu-24.04-rtsan
+    COMPILER: clang
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_RTSAN: "True"
+    ENABLE_WERROR: "False"
+    TEST_MODE: none
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 days
+
 basic memcheck:
   extends: .build_and_unit
   rules:
