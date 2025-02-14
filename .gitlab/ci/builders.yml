@@ -543,6 +543,97 @@ manifest [ubuntu, 24.04]:
       - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
 
 ################################################################################
+# Ubuntu 24.04-rtsan
+################################################################################
+image-build-publish [ubuntu, 24.04-rtsan, amd64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: debian-rtsan
+    OS_NAME: ubuntu
+    OS_VERSION: "24.04-rtsan"
+    PLATFORM: amd64
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "70G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "70G"
+  tags:
+    - ${PLATFORM}-docker
+  needs:
+    - builder version
+    - job: ubuntu-uhd-builder avx2
+      parallel:
+        matrix:
+          - os_version: "24.04"
+            uhd_version: ["4.7.0.0"] # "4.6.0.0" default
+    - job: ubuntu-dpdk-builder avx2
+      parallel:
+        matrix:
+          - os_version: "24.04"
+            dpdk_version: ["23.11.1"]
+    - job: ubuntu-dpdk-builder avx512
+      parallel:
+        matrix:
+          - os_version: "24.04"
+            dpdk_version: ["23.11.1"]
+
+alternative-tag [ubuntu, 24.04-rtsan, amd64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "24.04-rtsan"
+    VERSION: ${DOCKER_BUILDER_VERSION}-amd64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 24.04-rtsan, amd64]
+
+image-build-publish [ubuntu, 24.04-rtsan, arm64]:
+  extends:
+    - .image-build-publish
+  variables:
+    OS_FAMILY: debian-rtsan
+    OS_NAME: ubuntu
+    OS_VERSION: "24.04-rtsan"
+    PLATFORM: arm64
+  needs:
+    - builder version
+    - job: ubuntu-uhd-builder arm64
+      parallel:
+        matrix:
+          - os_version: "24.04"
+            uhd_version: ["4.7.0.0"] # "4.6.0.0" default
+    - job: ubuntu-dpdk-builder arm64
+      parallel:
+        matrix:
+          - os_version: "24.04"
+            dpdk_version: ["23.11.1"]
+
+alternative-tag [ubuntu, 24.04-rtsan, arm64]:
+  extends:
+    - .alternative-tag
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "24.04-rtsan"
+    VERSION: ${DOCKER_BUILDER_VERSION}-arm64
+  needs:
+    - builder version
+    - image-build-publish [ubuntu, 24.04-rtsan, arm64]
+
+manifest [ubuntu, 24.04-rtsan]:
+  extends: .manifest
+  variables:
+    OS_NAME: ubuntu
+    OS_VERSION: "24.04-rtsan"
+  needs:
+    - builder version
+    - job: alternative-tag [ubuntu, 24.04-rtsan, amd64]
+      optional: false
+    - job: alternative-tag [ubuntu, 24.04-rtsan, arm64]
+      optional: false
+  parallel:
+    matrix:
+      - REGISTRY_URI: ["${CR_REGISTRY_URI}", "${GITLAB_REGISTRY_URI}"]
+
+################################################################################
 # Ubuntu 24.10
 ################################################################################
 image-build-publish [ubuntu, 24.10, amd64]:

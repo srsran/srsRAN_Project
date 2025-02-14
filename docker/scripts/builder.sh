@@ -133,12 +133,12 @@ set -- "${@:1:$#-1}"
 
 case $COMPILER in
 gcc)
-    export CC=/usr/bin/gcc
-    export CXX=/usr/bin/g++
+    CC=$(which gcc)
+    CXX=$(which g++)
     ;;
 clang)
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
+    CC=$(which clang)
+    CXX=$(which clang++)
     ;;
 *)
     echo "Error: Invalid compiler $COMPILER" >&2
@@ -147,6 +147,9 @@ clang)
     exit 1
     ;;
 esac
+
+export CC
+export CXX
 
 cd "$FOLDER" || exit
 
