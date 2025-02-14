@@ -113,9 +113,10 @@ protected:
     sec_cfg.cipher_algo = static_cast<security::ciphering_algorithm>(algo);
 
     // Create PDCP RX entity
-    test_frame  = std::make_unique<pdcp_rx_test_frame>();
-    metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, rb_id, timer_duration{100}, &metrics_notif, worker);
-    pdcp_rx     = std::make_unique<pdcp_entity_rx>(0,
+    test_frame = std::make_unique<pdcp_rx_test_frame>();
+    metrics_agg =
+        std::make_unique<pdcp_metrics_aggregator>(0, rb_id, timer_duration{100}, &metrics_notif, worker, false);
+    pdcp_rx = std::make_unique<pdcp_entity_rx>(0,
                                                rb_id,
                                                config,
                                                *test_frame,

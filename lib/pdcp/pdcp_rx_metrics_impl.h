@@ -83,9 +83,9 @@ public:
 
   void reset_metrics()
   {
-    unsigned counter            = metrics.counter;
-    metrics                     = {};
-    metrics.counter             = counter;
+    unsigned counter                 = metrics.counter;
+    metrics                          = {};
+    metrics.counter                  = counter;
     sum_crypto_processing_latency_ns = 0;
   }
 

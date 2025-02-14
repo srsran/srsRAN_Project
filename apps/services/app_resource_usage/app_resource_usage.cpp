@@ -118,7 +118,7 @@ app_services::build_app_resource_usage_service(app_services::metrics_notifier& m
   app_res_usage_metrics.producers.emplace_back(
       std::make_unique<resource_usage_metrics_producer_impl>(metrics_notifier, *app_res_usage.service));
 
-  if (metrics_level != srslog::basic_levels::info) {
+  if (metrics_level == srslog::basic_levels::info) {
     app_res_usage_metrics.consumers.push_back(
         std::make_unique<resource_usage_metrics_consumer_log>(srslog::fetch_basic_logger("METRICS")));
   }

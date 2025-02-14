@@ -140,7 +140,8 @@ protected:
     // Allow for config adjustments
     init_adjustments();
 
-    metrics_agg = std::make_unique<pdcp_metrics_aggregator>(0, rb_id, timer_duration{100}, &metrics_notif, worker);
+    metrics_agg =
+        std::make_unique<pdcp_metrics_aggregator>(0, rb_id, timer_duration{100}, &metrics_notif, worker, false);
     // Create PDCP entity
     pdcp_tx = std::make_unique<pdcp_entity_tx>(
         0, rb_id, config, test_frame, test_frame, timer_factory{timers, worker}, worker, worker, *metrics_agg);
