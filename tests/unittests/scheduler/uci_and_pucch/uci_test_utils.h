@@ -234,13 +234,20 @@ inline pdcch_dl_information make_default_dci(unsigned n_cces, const coreset_conf
   return dci;
 }
 
-inline sched_cell_configuration_request_message make_custom_sched_cell_configuration_request(unsigned pucch_res_common,
-                                                                                             bool     is_tdd = false)
+inline sched_cell_configuration_request_message
+make_custom_sched_cell_configuration_request(unsigned pucch_res_common, bool is_tdd = false, unsigned nof_dl_ports = 1)
 {
+  subcarrier_spacing                     scs = is_tdd ? subcarrier_spacing::kHz30 : subcarrier_spacing::kHz15;
+  std::optional<tdd_ul_dl_config_common> tdd_cfg;
+  if (is_tdd) {
+    tdd_cfg = {scs, {10, 6, 8, 3, 0}, std::nullopt};
+  }
   sched_cell_configuration_request_message req = sched_config_helper::make_default_sched_cell_configuration_request(
-      cell_config_builder_params{.scs_common     = is_tdd ? subcarrier_spacing::kHz30 : subcarrier_spacing::kHz15,
-                                 .channel_bw_mhz = bs_channel_bandwidth::MHz10,
-                                 .dl_f_ref_arfcn = is_tdd ? 520000U : 365000U});
+      cell_config_builder_params{.scs_common           = is_tdd ? subcarrier_spacing::kHz30 : subcarrier_spacing::kHz15,
+                                 .channel_bw_mhz       = bs_channel_bandwidth::MHz10,
+                                 .dl_f_ref_arfcn       = is_tdd ? 520000U : 365000U,
+                                 .nof_dl_ports         = nof_dl_ports,
+                                 .tdd_ul_dl_cfg_common = tdd_cfg});
   req.ul_cfg_common.init_ul_bwp.pucch_cfg_common->pucch_resource_common = pucch_res_common;
   return req;
 }

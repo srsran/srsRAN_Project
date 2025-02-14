@@ -61,7 +61,7 @@ private:
     uint8_t                          pdsch_td_res_index;
     crb_interval                     crb_lims;
     dci_dl_rnti_config_type          dci_type;
-    pdsch_config_params              pdsch_cfg;
+    const pdsch_config_params*       pdsch_cfg;
     sched_helper::mcs_prbs_selection recommended_mcs_prbs;
   };
 

@@ -486,8 +486,8 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
 
   const dci_dl_rnti_config_type dci_type  = get_dci_type(u, h_dl_retx);
   const pdsch_config_params     pdsch_cfg = dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0
-                                                ? get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg)
-                                                : get_pdsch_config_f1_0_c_rnti(cell_cfg, nullptr, pdsch_td_cfg);
+                                                ? sched_helper::get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg)
+                                                : sched_helper::get_pdsch_config_f1_0_c_rnti(cell_cfg, pdsch_td_cfg);
 
   // For DCI 1-0 scrambled with TC-RNTI, as per TS 38.213, Section 7.3.1.2.1, we should consider the size of CORESET#0
   // as the size for the BWP.

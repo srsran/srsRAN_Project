@@ -41,9 +41,9 @@ public:
     cell_cfg(expert_cfg, sched_config_helper::make_default_sched_cell_configuration_request()),
     ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
     time_resource{0},
-    pdsch_cfg(get_pdsch_config_f1_0_c_rnti(
+    pdsch_cfg(sched_helper::get_pdsch_config_f1_0_c_rnti(
         cell_cfg,
-        &ue_cell_cfg,
+        ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg,
         cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource]))
   {
   }

@@ -16,49 +16,6 @@
 using namespace srsran;
 using namespace sched_helper;
 
-static pdsch_config_params compute_pdsch_config_params(const ue_cell&                               ue_cc,
-                                                       dci_dl_rnti_config_type                      dci_type,
-                                                       unsigned                                     nof_layers,
-                                                       const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
-{
-  const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
-  const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-
-  pdsch_config_params pdsch_cfg;
-  switch (dci_type) {
-    case dci_dl_rnti_config_type::tc_rnti_f1_0:
-      pdsch_cfg = get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg);
-      break;
-    case dci_dl_rnti_config_type::c_rnti_f1_0:
-      pdsch_cfg = get_pdsch_config_f1_0_c_rnti(cell_cfg, &ue_cell_cfg, pdsch_td_cfg);
-      break;
-    case dci_dl_rnti_config_type::c_rnti_f1_1:
-      pdsch_cfg = get_pdsch_config_f1_1_c_rnti(ue_cell_cfg, pdsch_td_cfg, nof_layers);
-      break;
-    default:
-      report_fatal_error("Unsupported PDCCH DCI DL format");
-  }
-
-  return pdsch_cfg;
-}
-
-pdsch_config_params
-sched_helper::compute_newtx_pdsch_config_params(const ue_cell&                               ue_cc,
-                                                dci_dl_rnti_config_type                      dci_type,
-                                                const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
-{
-  return compute_pdsch_config_params(ue_cc, dci_type, ue_cc.channel_state_manager().get_nof_dl_layers(), pdsch_td_cfg);
-}
-
-pdsch_config_params
-sched_helper::compute_retx_pdsch_config_params(const ue_cell&                               ue_cc,
-                                               const dl_harq_process_handle&                h_dl,
-                                               const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
-{
-  return compute_pdsch_config_params(
-      ue_cc, h_dl.get_grant_params().dci_cfg_type, h_dl.get_grant_params().nof_layers, pdsch_td_cfg);
-}
-
 std::optional<mcs_prbs_selection>
 sched_helper::compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg,
                                                   const ue_cell&             ue_cc,

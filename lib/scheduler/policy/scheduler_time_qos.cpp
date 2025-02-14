@@ -453,17 +453,14 @@ void scheduler_time_qos::ue_ctxt::compute_dl_prio(const slice_ue& u,
   if (ss_info == nullptr) {
     return;
   }
-  span<const pdsch_time_domain_resource_allocation> pdsch_td_res_list = ss_info->pdsch_time_domain_list;
   // [Implementation-defined] We pick the first element since PDSCH time domain resource list is sorted in descending
   // order of nof. PDSCH symbols. And, we want to calculate estimate of instantaneous achievable rate with maximum
   // nof. PDSCH symbols.
-  const pdsch_time_domain_resource_allocation& pdsch_td_cfg = pdsch_td_res_list.front();
-  const dci_dl_rnti_config_type                dci_type     = ss_info->get_dl_dci_format() == dci_dl_format::f1_0
-                                                                  ? dci_dl_rnti_config_type::c_rnti_f1_0
-                                                                  : dci_dl_rnti_config_type::c_rnti_f1_1;
+  uint8_t                    pdsch_time_res_index = 0;
+  const pdsch_config_params& pdsch_cfg =
+      ss_info->get_pdsch_config(pdsch_time_res_index, ue_cc->channel_state_manager().get_nof_dl_layers());
 
-  const pdsch_config_params pdsch_cfg = sched_helper::compute_newtx_pdsch_config_params(*ue_cc, dci_type, pdsch_td_cfg);
-  auto                      mcs       = ue_cc->link_adaptation_controller().calculate_dl_mcs(pdsch_cfg.mcs_table);
+  auto mcs = ue_cc->link_adaptation_controller().calculate_dl_mcs(pdsch_cfg.mcs_table);
   if (not mcs.has_value()) {
     // CQI is either 0 or above 15, which means no DL.
     return;

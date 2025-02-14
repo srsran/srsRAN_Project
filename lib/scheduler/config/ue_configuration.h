@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../support/pdcch/search_space_helper.h"
+#include "../support/pdsch/pdsch_config_params.h"
 #include "cell_configuration.h"
 #include "logical_channel_list_config.h"
 #include "srsran/adt/slotted_array.h"
@@ -24,7 +25,7 @@ namespace srsran {
 
 struct ue_creation_params;
 struct ue_reconfig_params;
-
+class ue_cell_configuration;
 struct search_space_info;
 
 /// \brief Grouping of common and UE-dedicated information associated with a given BWP.
@@ -77,9 +78,16 @@ struct search_space_info {
     return crbs_of_candidates[pdcch_slot.to_uint() % crbs_of_candidates.size()][to_aggregation_level_index(aggr_lvl)];
   }
 
+  const pdsch_config_params& get_pdsch_config(unsigned pdsch_td_res_index, unsigned nof_layers) const
+  {
+    return pdsch_cfg_list[pdsch_td_res_index][nof_layers - 1];
+  }
+
   /// \brief Assigns computed PDCCH candidates to a SearchSpace.
   void update_pdcch_candidates(const std::vector<std::array<pdcch_candidate_list, NOF_AGGREGATION_LEVELS>>& candidates,
                                pci_t                                                                        pci);
+
+  void update_pdsch_time_domain_list(const ue_cell_configuration& ue_cell_cfg);
 
 private:
   // PDCCH candidates of the SearchSpace for different slot offsets and aggregation levels. Indexed by
@@ -90,6 +98,9 @@ private:
 
   // List of CRBs used by each PDCCH candidate.
   std::vector<std::array<std::vector<crb_index_list>, NOF_AGGREGATION_LEVELS>> crbs_of_candidates;
+
+  // List of PDSCH Configs for each PDSCH Time Domain Resource.
+  std::vector<std::vector<pdsch_config_params>> pdsch_cfg_list;
 };
 
 /// UE-dedicated configuration for a given cell.

@@ -28,16 +28,6 @@ struct mcs_prbs_selection {
   unsigned nof_prbs;
 };
 
-/// Compute PDSCH grant parameters for a newTx given the UE state, DCI type and PDSCH time-domain resource.
-pdsch_config_params compute_newtx_pdsch_config_params(const ue_cell&                               ue_cc,
-                                                      dci_dl_rnti_config_type                      dci_type,
-                                                      const pdsch_time_domain_resource_allocation& pdsch_td_cfg);
-
-/// Compute PDSCH grant parameters for a reTx given the UE state, HARQ to be retx, and PDSCH time-domain resource.
-pdsch_config_params compute_retx_pdsch_config_params(const ue_cell&                               ue_cc,
-                                                     const dl_harq_process_handle&                h_dl,
-                                                     const pdsch_time_domain_resource_allocation& pdsch_td_cfg);
-
 /// Derive recommended MCS and number of PRBs for a newTx PDSCH grant.
 std::optional<mcs_prbs_selection>
 compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg, const ue_cell& ue_cc, unsigned pending_bytes);

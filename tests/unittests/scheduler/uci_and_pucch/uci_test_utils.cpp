@@ -151,10 +151,11 @@ test_bench::test_bench(const test_bench_params& params,
                        unsigned                 max_ul_grants_per_slot_) :
   expert_cfg{config_helpers::make_default_scheduler_expert_config()},
   cell_cfg{[this, &params]() -> const cell_configuration& {
-    cell_cfg_list.emplace(
-        to_du_cell_index(0),
-        std::make_unique<cell_configuration>(
-            expert_cfg, make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)));
+    cell_cfg_list.emplace(to_du_cell_index(0),
+                          std::make_unique<cell_configuration>(
+                              expert_cfg,
+                              make_custom_sched_cell_configuration_request(
+                                  params.pucch_res_common, params.is_tdd, params.cfg_for_mimo_4x4 ? 4 : 1)));
     return *cell_cfg_list[to_du_cell_index(0)];
   }()},
   cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>()},
