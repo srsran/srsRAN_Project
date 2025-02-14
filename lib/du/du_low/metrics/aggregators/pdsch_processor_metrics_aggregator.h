@@ -22,7 +22,7 @@ class pdsch_processor_metrics_aggregator : public pdsch_processor_metric_notifie
 {
 public:
   /// Gets the total number of processed codeblocks.
-  uint64_t get_nof_processed_cb() const { return count; }
+  uint64_t get_nof_processed_tbs() const { return count; }
 
   /// Gets the average transmission latency in microseconds.
   double get_avg_latency_us() const

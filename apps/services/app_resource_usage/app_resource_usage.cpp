@@ -124,7 +124,10 @@ app_services::build_app_resource_usage_service(app_services::metrics_notifier& m
   }
 
   if (json_sink) {
-    // Add json consumer.
+    srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", *json_sink, {});
+    json_channel.set_enabled(true);
+
+    app_res_usage_metrics.consumers.push_back(std::make_unique<resource_usage_metrics_consumer_json>(json_channel));
   }
 
   return app_res_usage;

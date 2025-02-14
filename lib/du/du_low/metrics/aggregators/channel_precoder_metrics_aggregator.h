@@ -34,7 +34,7 @@ public:
                : 0;
   }
 
-  /// Gets the total time spent by the channel precoder.
+  /// Gets the total time spent by the channel precoder processing given number of layers.
   std::chrono::nanoseconds get_total_time(unsigned nof_layers) const
   {
     if (nof_layers < 1) {
@@ -43,6 +43,9 @@ public:
     const metrics_per_layer& temp = metrics_collection[nof_layers - 1];
     return std::chrono::nanoseconds(temp.sum_elapsed_ns);
   }
+
+  /// Gets the total time spent by the channel precoder.
+  uint64_t get_total_time_ns() const { return total_elapsed_ns; }
 
   /// Gets the CPU usage in microseconds of the layer mapper and precoder.
   uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
@@ -53,6 +56,7 @@ public:
     for (auto& metrics : metrics_collection) {
       metrics.reset();
     }
+    total_elapsed_ns     = 0;
     sum_used_cpu_time_us = 0;
   }
 
@@ -67,7 +71,7 @@ private:
     temp.sum_nof_re_layer += metrics.nof_re;
     temp.sum_elapsed_ns += metrics.elapsed.count();
     ++temp.count;
-
+    total_elapsed_ns += metrics.elapsed.count();
     sum_used_cpu_time_us += (metrics.cpu_measurements.user_time.count() + metrics.cpu_measurements.system_time.count());
   }
 
@@ -85,6 +89,7 @@ private:
   };
 
   std::array<metrics_per_layer, pdsch_constants::MAX_NOF_LAYERS> metrics_collection;
+  std::atomic<uint64_t>                                          total_elapsed_ns     = {};
   std::atomic<uint64_t>                                          sum_used_cpu_time_us = {};
 };
 

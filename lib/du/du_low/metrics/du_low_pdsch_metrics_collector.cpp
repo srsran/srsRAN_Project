@@ -43,6 +43,7 @@ void du_low_pdsch_metrics_collector::collect_metrics(o_du_low_pdsch_metrics& met
   metrics.precoding_metrics.avg_rate_MRes_two_layers   = pdsch_channel_precoder_aggregator.get_average_rate_MRes(2);
   metrics.precoding_metrics.avg_rate_MRes_three_layers = pdsch_channel_precoder_aggregator.get_average_rate_MRes(3);
   metrics.precoding_metrics.avg_rate_MRes_four_layers  = pdsch_channel_precoder_aggregator.get_average_rate_MRes(4);
+  metrics.precoding_metrics.total_latency_ns           = pdsch_channel_precoder_aggregator.get_total_time_ns();
   metrics.precoding_metrics.cpu_usage_us               = pdsch_channel_precoder_aggregator.get_cpu_usage_us();
   pdsch_channel_precoder_aggregator.reset();
 
@@ -69,6 +70,7 @@ void du_low_pdsch_metrics_collector::collect_metrics(o_du_low_pdsch_metrics& met
   metrics.pdsch_proc_metrics.max_latency_us       = pdsch_processor_aggregator.get_max_latency_us();
   metrics.pdsch_proc_metrics.avg_return_time_us   = pdsch_processor_aggregator.get_avg_return_time_us();
   metrics.pdsch_proc_metrics.processing_rate_Mbps = pdsch_processor_aggregator.get_process_rate_Mbps();
+  metrics.pdsch_proc_metrics.tbs_processed        = pdsch_processor_aggregator.get_nof_processed_tbs();
   metrics.pdsch_proc_metrics.cpu_usage_us         = pdsch_processor_aggregator.get_cpu_usage_us();
   pdsch_processor_aggregator.reset();
 }

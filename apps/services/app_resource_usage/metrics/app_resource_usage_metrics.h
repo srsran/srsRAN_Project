@@ -13,6 +13,7 @@
 #include "apps/services/metrics/metrics_consumer.h"
 #include "apps/services/metrics/metrics_properties.h"
 #include "apps/services/metrics/metrics_set.h"
+#include "srsran/adt/span.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/resource_usage/resource_usage_metrics.h"

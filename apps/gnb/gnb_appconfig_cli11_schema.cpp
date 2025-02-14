@@ -28,6 +28,11 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
       ->check(CLI::Range(0, 65535));
   add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
       ->always_capture_default();
+  add_option(app,
+             "--resource_usage_report_period",
+             metrics_params.rusage_report_period,
+             "Resource usage metrics report period (in milliseconds)")
+      ->capture_default_str();
 }
 
 static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)

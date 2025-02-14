@@ -31,6 +31,8 @@ struct metrics_appconfig {
   std::string addr                = "127.0.0.1";
   uint16_t    port                = 55555;
   bool        enable_json_metrics = false;
+  /// Resource usage report period in milliseconds.
+  unsigned rusage_report_period = 0;
 };
 
 /// Monolithic gnb application configuration.

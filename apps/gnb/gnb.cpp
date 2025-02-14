@@ -17,6 +17,7 @@
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
+#include "apps/services/periodic_metrics_report_controller.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
@@ -372,6 +373,13 @@ int main(int argc, char** argv)
                                                      gnb_cfg.log_cfg.metrics_level.level,
                                                      gnb_cfg.metrics_cfg.enable_json_metrics ? &json_sink : nullptr);
 
+  // Create service for periodically polling app resource usage.
+  auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
+  app_services::periodic_metrics_report_controller periodic_metrics_controller(
+      {app_resource_usage_service.metrics[0].producers[0].get()},
+      std::move(app_metrics_timer),
+      std::chrono::milliseconds(gnb_cfg.metrics_cfg.rusage_report_period));
+
   std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
 
   // Instantiate E2AP client gateways.
@@ -484,6 +492,7 @@ int main(int argc, char** argv)
 
   // Start processing.
   du_inst.get_operation_controller().start();
+  periodic_metrics_controller.start();
 
   std::unique_ptr<app_services::remote_server> remote_control_server =
       app_services::create_remote_server(gnb_cfg.remote_control_config, du_inst_and_cmds.commands.remote);
@@ -495,6 +504,8 @@ int main(int argc, char** argv)
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
   }
+
+  periodic_metrics_controller.stop();
 
   if (remote_control_server) {
     remote_control_server->stop();

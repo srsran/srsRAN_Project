@@ -22,6 +22,8 @@ class metrics_notifier;
 
 /// Builds the flexible O-DU metrics configuration.
 flexible_o_du_metrics_notifier* build_flexible_o_du_metrics_config(std::vector<app_services::metrics_config>& metrics,
-                                                                   app_services::metrics_notifier&            notifier);
+                                                                   app_services::metrics_notifier&            notifier,
+                                                                   srslog::basic_levels metrics_level,
+                                                                   srslog::sink*        json_sink);
 
 } // namespace srsran

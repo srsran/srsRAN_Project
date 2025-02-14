@@ -7,7 +7,8 @@
 #
 
 set(SOURCES
-        app_resource_usage.cpp)
+        app_resource_usage.cpp
+        metrics/app_resource_usage_metrics_consumer.cpp)
 
 add_library(srsran_resource_usage_app_service STATIC ${SOURCES})
 target_include_directories(srsran_resource_usage_app_service PRIVATE ${CMAKE_SOURCE_DIR})

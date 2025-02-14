@@ -16,6 +16,7 @@
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
+#include "apps/services/periodic_metrics_report_controller.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
@@ -359,6 +360,13 @@ int main(int argc, char** argv)
                                                      cu_cfg.log_cfg.metrics_level.level,
                                                      cu_cfg.metrics_cfg.enable_json_metrics ? &json_sink : nullptr);
 
+  // Create service for periodically polling app resource usage.
+  auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
+  app_services::periodic_metrics_report_controller periodic_metrics_controller(
+      {app_resource_usage_service.metrics[0].producers[0].get()},
+      std::move(app_metrics_timer),
+      std::chrono::milliseconds(cu_cfg.metrics_cfg.rusage_report_period));
+
   std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
 
   // Create O-CU-CP dependencies.
@@ -425,6 +433,8 @@ int main(int argc, char** argv)
 
   o_cuup_unit.unit->get_operation_controller().start();
 
+  periodic_metrics_controller.start();
+
   std::unique_ptr<app_services::remote_server> remote_control_server =
       app_services::create_remote_server(cu_cfg.remote_control_config, {});
 
@@ -435,6 +445,8 @@ int main(int argc, char** argv)
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
   }
+
+  periodic_metrics_controller.stop();
 
   if (remote_control_server) {
     remote_control_server->stop();

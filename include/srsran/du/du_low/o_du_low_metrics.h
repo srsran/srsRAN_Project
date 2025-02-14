@@ -279,6 +279,8 @@ struct o_du_low_pdsch_metrics {
     double avg_rate_MRes_two_layers;
     double avg_rate_MRes_three_layers;
     double avg_rate_MRes_four_layers;
+    /// Totol time in nanoseconds spent in the mapping and precoding block.
+    uint64_t total_latency_ns;
     /// CPU usage in microseconds of the layer mapping and precoding.
     uint64_t cpu_usage_us;
   };
@@ -295,6 +297,8 @@ struct o_du_low_pdsch_metrics {
     double avg_return_time_us;
     /// Processing rate in Mbps.
     double processing_rate_Mbps;
+    /// Number of processed TBs.
+    uint64_t tbs_processed;
     /// CPU usage in microseconds.
     uint64_t cpu_usage_us;
   };

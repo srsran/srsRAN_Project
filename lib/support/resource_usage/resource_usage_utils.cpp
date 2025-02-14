@@ -52,9 +52,11 @@ resource_usage_metrics resource_usage_utils::res_usage_measurements_to_metrics(m
 
   auto total_cpu_time_used = measurements.user_time + measurements.system_time;
 
-  resource_usage_metrics metrics             = {};
-  metrics.cpu_stats.cpu_usage_percentage     = total_cpu_time_used / (period);
-  metrics.cpu_stats.cpu_utilization_nof_cpus = total_cpu_time_used / (measurements.duration);
-  metrics.memory_stats.memory_usage          = units::bytes(BYTES_IN_KB * measurements.max_rss);
+  resource_usage_metrics metrics = {};
+  metrics.cpu_stats.cpu_usage_percentage =
+      static_cast<double>(total_cpu_time_used.count()) / static_cast<double>(period.count());
+  metrics.cpu_stats.cpu_utilization_nof_cpus =
+      static_cast<double>(total_cpu_time_used.count()) / static_cast<double>(measurements.duration.count());
+  metrics.memory_stats.memory_usage = units::bytes(BYTES_IN_KB * measurements.max_rss);
   return metrics;
 }
