@@ -109,14 +109,14 @@ private:
   {
     srsran_assert(notifier, "Invalid notifier");
 
+    // Save SCH results.
+    results.sch = sch;
+
     // Data size in bytes for printing hex dump only if SCH is present and CRC is passed.
     unsigned data_size = 0;
     if (results.sch.has_value() && results.sch->data.tb_crc_ok) {
       data_size = data.size();
     }
-
-    // Save SCH results.
-    results.sch = sch;
 
     std::chrono::time_point<std::chrono::steady_clock> time_end = std::chrono::steady_clock::now();
 
