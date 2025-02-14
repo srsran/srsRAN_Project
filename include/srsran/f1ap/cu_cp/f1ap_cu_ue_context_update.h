@@ -19,7 +19,6 @@
 #include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/s_nssai.h"
-#include "srsran/rlc/rlc_config.h"
 #include <vector>
 
 namespace srsran {

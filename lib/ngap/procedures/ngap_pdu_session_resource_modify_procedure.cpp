@@ -9,7 +9,7 @@
  */
 
 #include "ngap_pdu_session_resource_modify_procedure.h"
-#include "../ngap/ngap_asn1_converters.h"
+#include "../ngap_asn1_converters.h"
 #include "srsran/asn1/ngap/common.h"
 #include "srsran/ngap/ngap_message.h"
 

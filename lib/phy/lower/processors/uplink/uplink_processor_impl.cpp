@@ -17,8 +17,8 @@
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_notifier.h"
 #include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/dot_prod.h"
-#include "srsran/srsvec/zero.h"
 #include "srsran/support/math/stats.h"
 
 using namespace srsran;
