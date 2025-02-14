@@ -80,11 +80,12 @@ const cell_configuration* sched_config_manager::add_cell(const sched_cell_config
   auto ret = config_validators::validate_sched_cell_configuration_request_message(msg, expert_params);
   srsran_assert(ret.has_value(), "Invalid cell configuration request message. Cause: {}", ret.error().c_str());
 
-  added_cells.emplace(msg.cell_index, std::make_unique<cell_configuration>(expert_params, msg));
-
   if (not group_cfg_pool.contains(msg.cell_group_index)) {
     group_cfg_pool.emplace(msg.cell_group_index, std::make_unique<du_cell_group_config_pool>());
   }
+  group_cfg_pool[msg.cell_group_index]->add_cell(msg);
+
+  added_cells.emplace(msg.cell_index, std::make_unique<cell_configuration>(expert_params, msg));
 
   cell_metrics_handler* cell_metrics = metrics_handler.add_cell(*added_cells[msg.cell_index]);
   srsran_assert(cell_metrics != nullptr, "Unable to create metrics handler");

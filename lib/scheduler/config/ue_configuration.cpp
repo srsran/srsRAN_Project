@@ -821,7 +821,7 @@ ue_configuration::ue_configuration(du_ue_index_t                         ue_inde
                                    const ue_creation_params&             params) :
   ue_index(ue_index_), crnti(crnti_), lc_list(params.lc_ch_list)
 {
-  update(common_cells, ue_reconfig_params{params.cfg_req, std::nullopt});
+  update(common_cells, ue_reconfig_params{params.cfg_req, std::nullopt, params.cells});
 }
 
 ue_configuration::ue_configuration(const ue_configuration& other) :

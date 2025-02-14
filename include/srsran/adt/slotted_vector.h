@@ -273,6 +273,9 @@ public:
   const_iterator begin() const { return const_iterator{objects, index_mapper, 0}; }
   const_iterator end() const { return const_iterator{objects, index_mapper, index_mapper.size()}; }
 
+  bool operator==(const slotted_vector& other) const { return std::equal(begin(), end(), other.begin(), other.end()); }
+  bool operator!=(const slotted_vector& other) const { return not(*this == other); }
+
 private:
   std::vector<T>      objects;
   std::vector<size_t> index_mapper;
@@ -346,6 +349,9 @@ public:
   {
     return IdToIntConversion::get_id(find_first_empty(to_index(start_guess)));
   }
+
+  bool operator==(const slotted_id_vector& other) const { return sl_vec == other.sl_vec; }
+  bool operator!=(const slotted_id_vector& other) const { return sl_vec != other.sl_vec; }
 
 private:
   constexpr std::size_t to_index(key_type k) const { return IdToIntConversion::get_index(k); }
