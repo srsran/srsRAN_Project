@@ -51,7 +51,7 @@ public:
   }
 
   /// Gets the CPU usage in microseconds of the UL-SCH demultiplexer.
-  uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
+  double get_cpu_usage_us() const { return sum_used_cpu_time_ns / 1000; }
 
   /// Resets values of all internal counters.
   void reset()
@@ -61,7 +61,7 @@ public:
     sum_elapsed_on_end_codeword_ns = 0;
     sum_nof_bits                   = 0;
     count                          = 0;
-    sum_used_cpu_time_us           = 0;
+    sum_used_cpu_time_ns           = 0;
   }
 
 private:
@@ -72,7 +72,7 @@ private:
     sum_elapsed_on_new_block_ns += metrics.elapsed_on_new_block.count();
     sum_elapsed_on_end_codeword_ns += metrics.elapsed_on_end_codeword.count();
     sum_nof_bits += metrics.sum_nof_bits;
-    sum_used_cpu_time_us += metrics.cpu_time_usage.count();
+    sum_used_cpu_time_ns += metrics.cpu_time_usage.count();
     ++count;
   }
 
@@ -81,7 +81,7 @@ private:
   std::atomic<uint64_t> sum_elapsed_on_end_codeword_ns = {};
   std::atomic<uint64_t> sum_nof_bits                   = {};
   std::atomic<uint64_t> count                          = {};
-  std::atomic<uint64_t> sum_used_cpu_time_us           = {};
+  std::atomic<uint64_t> sum_used_cpu_time_ns           = {};
 };
 
 } // namespace srsran

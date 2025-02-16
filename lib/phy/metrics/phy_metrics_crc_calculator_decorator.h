@@ -37,14 +37,8 @@ public:
     crc_calculator_checksum_t ret;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
-      ret            = base_calculator->calculate_byte(data);
-      auto tp_after  = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base_calculator->calculate_byte(data);
     }
     // Report metrics.
     metrics.poly     = base_calculator->get_generator_poly();
@@ -61,14 +55,8 @@ public:
     crc_calculator_checksum_t ret;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
-      ret            = base_calculator->calculate_bit(data);
-      auto tp_after  = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base_calculator->calculate_bit(data);
     }
     // Report metrics.
     metrics.poly     = base_calculator->get_generator_poly();
@@ -85,14 +73,8 @@ public:
     crc_calculator_checksum_t ret;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
-      ret            = base_calculator->calculate(data);
-      auto tp_after  = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base_calculator->calculate(data);
     }
     // Report metrics.
     metrics.poly     = base_calculator->get_generator_poly();

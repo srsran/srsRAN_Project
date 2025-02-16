@@ -42,15 +42,9 @@ public:
     pusch_demodulator_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       // Prepare base and save the base buffer.
-      auto tp_before = std::chrono::high_resolution_clock::now();
       base->demodulate(*this, demodulator_notifier, grid, estimates, config);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     metrics.elapsed_buffer = elapsed_on_new_block + elapsed_on_end_codeword;
 

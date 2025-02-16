@@ -71,7 +71,8 @@ void app_resource_usage::update_cpu_usage_metric(const cpu_snapshot&     current
   // Save current snapshot.
   last_snapshot->cpu_usage = current_cpu_snapshot;
   // Update metrics.
-  metrics = res_usage_measurements_to_metrics(measurements, measurements.duration);
+  metrics = res_usage_measurements_to_metrics(
+      measurements, std::chrono::duration_cast<std::chrono::microseconds>(measurements.duration));
 }
 
 void app_resource_usage::update_power_consumption_metric(resource_usage_metrics& metrics)

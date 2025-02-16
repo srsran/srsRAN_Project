@@ -44,13 +44,12 @@ public:
     tbs                   = units::bytes(data.front().get_buffer().size());
 
     // Use scoped resource usage class to measure CPU usage of this block.
-    resource_usage_utils::measurements cpu_measurements;
+    resource_usage_utils::measurements measurements;
     {
-      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
+      resource_usage_utils::scoped_resource_usage rusage_tracker(measurements);
       base->process(grid, *this, data, pdu);
     }
-    self_cpu_usage_us = (cpu_measurements.user_time + cpu_measurements.system_time).count();
+    self_cpu_usage_ns = measurements.duration.count();
     elapsed_return_ns = std::chrono::nanoseconds(std::chrono::high_resolution_clock::now() - start_time).count();
 
     report_metrics();
@@ -78,13 +77,13 @@ private:
     notifier.on_new_metric({.tbs                 = tbs,
                             .elapsed_return      = std::chrono::nanoseconds(elapsed_return_ns),
                             .elapsed_completion  = std::chrono::nanoseconds(elapsed_completion_ns),
-                            .self_cpu_time_usage = std::chrono::microseconds(self_cpu_usage_us)});
+                            .self_cpu_time_usage = std::chrono::nanoseconds(self_cpu_usage_ns)});
   }
 
   std::chrono::high_resolution_clock::time_point start_time            = {};
   std::atomic<uint64_t>                          elapsed_return_ns     = {};
   std::atomic<uint64_t>                          elapsed_completion_ns = {};
-  std::atomic<uint64_t>                          self_cpu_usage_us     = {};
+  std::atomic<uint64_t>                          self_cpu_usage_ns     = {};
   units::bytes                                   tbs;
   pdsch_processor_notifier*                      processor_notifier = nullptr;
   std::unique_ptr<pdsch_processor>               base;

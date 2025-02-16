@@ -66,19 +66,18 @@ public:
   std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_elapsed_ns); }
 
   /// Gets the CPU usage in microseconds of the LDPC decoder.
-  uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
+  double get_cpu_usage_us() const { return static_cast<double>(sum_elapsed_ns) / 1000.0; }
 
   /// Resets values of all internal counters.
   void reset()
   {
-    sum_cb_sz            = 0;
-    sum_nof_iterations   = 0;
-    sum_elapsed_ns       = 0;
-    count                = 0;
-    sum_crc_ok           = 0;
-    sum_used_cpu_time_us = 0;
-    min_cb_latency_ns    = UINT64_MAX;
-    max_cb_latency_ns    = 0;
+    sum_cb_sz          = 0;
+    sum_nof_iterations = 0;
+    sum_elapsed_ns     = 0;
+    count              = 0;
+    sum_crc_ok         = 0;
+    min_cb_latency_ns  = UINT64_MAX;
+    max_cb_latency_ns  = 0;
   }
 
 private:
@@ -87,23 +86,21 @@ private:
   {
     sum_cb_sz += metrics.cb_sz.value();
     sum_nof_iterations += metrics.nof_iterations;
-    sum_elapsed_ns += metrics.elapsed.count();
+    sum_elapsed_ns += metrics.measurements.duration.count();
     if (metrics.crc_ok) {
       ++sum_crc_ok;
     }
     ++count;
-    update_minmax(metrics.elapsed.count(), max_cb_latency_ns, min_cb_latency_ns);
-    sum_used_cpu_time_us += (metrics.cpu_measurements.user_time.count() + metrics.cpu_measurements.system_time.count());
+    update_minmax(metrics.measurements.duration.count(), max_cb_latency_ns, min_cb_latency_ns);
   }
 
-  std::atomic<uint64_t> sum_cb_sz            = {};
-  std::atomic<uint64_t> sum_nof_iterations   = {};
-  std::atomic<uint64_t> sum_crc_ok           = {};
-  std::atomic<uint64_t> sum_elapsed_ns       = {};
-  std::atomic<uint64_t> count                = {};
-  std::atomic<uint64_t> sum_used_cpu_time_us = {};
-  std::atomic<uint64_t> min_cb_latency_ns    = UINT64_MAX;
-  std::atomic<uint64_t> max_cb_latency_ns    = 0;
+  std::atomic<uint64_t> sum_cb_sz          = {};
+  std::atomic<uint64_t> sum_nof_iterations = {};
+  std::atomic<uint64_t> sum_crc_ok         = {};
+  std::atomic<uint64_t> sum_elapsed_ns     = {};
+  std::atomic<uint64_t> count              = {};
+  std::atomic<uint64_t> min_cb_latency_ns  = UINT64_MAX;
+  std::atomic<uint64_t> max_cb_latency_ns  = 0;
 };
 
 } // namespace srsran

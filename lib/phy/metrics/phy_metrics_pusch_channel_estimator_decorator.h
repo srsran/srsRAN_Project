@@ -36,14 +36,8 @@ public:
     pusch_channel_estimator_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       base->estimate(estimate, grid, config);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     metrics.nof_prb = static_cast<unsigned>(config.rb_mask.count());
     notifier.on_new_metric(metrics);

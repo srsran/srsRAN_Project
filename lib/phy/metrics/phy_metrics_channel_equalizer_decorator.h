@@ -40,14 +40,8 @@ public:
     channel_equalizer_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       base_equalizer->equalize(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     metrics.nof_re     = ch_estimates.get_nof_re();
     metrics.nof_layers = ch_estimates.get_nof_tx_layers();

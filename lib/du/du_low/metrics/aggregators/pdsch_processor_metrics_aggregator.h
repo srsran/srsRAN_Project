@@ -63,7 +63,7 @@ public:
   std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_elapsed_completion_ns); }
 
   /// Gets the CPU usage in microseconds of the PDSCH processor.
-  uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
+  double get_cpu_usage_us() const { return static_cast<double>(sum_used_cpu_time_ns) / 1000.0; }
 
   /// Resets values of all internal counters.
   void reset()
@@ -72,7 +72,7 @@ public:
     sum_elapsed_return_ns     = 0;
     sum_elapsed_completion_ns = 0;
     count                     = 0;
-    sum_used_cpu_time_us      = 0;
+    sum_used_cpu_time_ns      = 0;
     min_latency_ns            = UINT64_MAX;
     max_latency_ns            = 0;
   }
@@ -86,14 +86,14 @@ private:
     sum_elapsed_completion_ns += metrics.elapsed_completion.count();
     update_minmax(metrics.elapsed_completion.count(), max_latency_ns, min_latency_ns);
     ++count;
-    sum_used_cpu_time_us += metrics.self_cpu_time_usage.count();
+    sum_used_cpu_time_ns += metrics.self_cpu_time_usage.count();
   }
 
   std::atomic<uint64_t> sum_tb_sz                 = {};
   std::atomic<uint64_t> sum_elapsed_return_ns     = {};
   std::atomic<uint64_t> sum_elapsed_completion_ns = {};
   std::atomic<uint64_t> count                     = {};
-  std::atomic<uint64_t> sum_used_cpu_time_us      = {};
+  std::atomic<uint64_t> sum_used_cpu_time_ns      = {};
   std::atomic<uint64_t> min_latency_ns            = UINT64_MAX;
   std::atomic<uint64_t> max_latency_ns            = 0;
 };

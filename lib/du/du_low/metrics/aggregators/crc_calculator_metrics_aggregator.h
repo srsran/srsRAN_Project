@@ -47,7 +47,12 @@ public:
   }
 
   /// Gets the CPU usage in microseconds of the CRC calculation.
-  uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
+  double get_cpu_usage_us() const
+  {
+    return static_cast<double>(crc16_metrics_collection.sum_elapsed_ns + crc24A_metrics_collection.sum_elapsed_ns +
+                               crc24B_metrics_collection.sum_elapsed_ns + other_metrics_collection.sum_elapsed_ns) /
+           1000.0;
+  }
 
   /// Resets values of all internal counters.
   void reset()
@@ -56,7 +61,6 @@ public:
     crc24A_metrics_collection.reset();
     crc24B_metrics_collection.reset();
     other_metrics_collection.reset();
-    sum_used_cpu_time_us = 0;
   }
 
 private:
@@ -116,18 +120,14 @@ private:
   {
     metrics_per_polynomial& metrics_poly = select_metrics(metrics.poly);
     metrics_poly.sum_nof_bits += metrics.nof_bits.value();
-    metrics_poly.sum_elapsed_ns += metrics.elapsed.count();
+    metrics_poly.sum_elapsed_ns += metrics.measurements.duration.count();
     ++metrics_poly.count;
-
-    sum_used_cpu_time_us += (metrics.cpu_measurements.user_time.count() + metrics.cpu_measurements.system_time.count());
   }
 
   metrics_per_polynomial crc16_metrics_collection;
   metrics_per_polynomial crc24A_metrics_collection;
   metrics_per_polynomial crc24B_metrics_collection;
   metrics_per_polynomial other_metrics_collection;
-
-  std::atomic<uint64_t> sum_used_cpu_time_us = {};
 };
 
 } // namespace srsran

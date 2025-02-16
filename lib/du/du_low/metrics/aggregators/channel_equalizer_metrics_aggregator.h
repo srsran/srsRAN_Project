@@ -42,7 +42,14 @@ public:
   }
 
   /// Gets the CPU usage in microseconds of the channel equalizer.
-  uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
+  double get_cpu_usage_us() const
+  {
+    uint64_t sum = 0;
+    for (const auto& m : metrics_collection) {
+      sum += m.sum_elapsed_ns;
+    }
+    return static_cast<double>(sum) / 1000.0;
+  }
 
   /// Resets values of all internal counters.
   void reset()
@@ -50,7 +57,6 @@ public:
     for (auto& metrics : metrics_collection) {
       metrics.reset();
     }
-    sum_used_cpu_time_us = 0;
   }
 
 private:
@@ -62,10 +68,8 @@ private:
     }
     metrics_per_layer& temp = metrics_collection[metrics.nof_layers - 1];
     temp.sum_nof_re_layer += metrics.nof_re;
-    temp.sum_elapsed_ns += metrics.elapsed.count();
+    temp.sum_elapsed_ns += metrics.measurements.duration.count();
     ++temp.count;
-
-    sum_used_cpu_time_us += (metrics.cpu_measurements.user_time.count() + metrics.cpu_measurements.system_time.count());
   }
 
   struct metrics_per_layer {
@@ -82,7 +86,6 @@ private:
   };
 
   std::array<metrics_per_layer, pusch_constants::MAX_NOF_LAYERS> metrics_collection;
-  std::atomic<uint64_t>                                          sum_used_cpu_time_us = {};
 };
 
 } // namespace srsran

@@ -52,17 +52,16 @@ public:
   std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_elapsed_ns); }
 
   /// Gets the CPU usage in microseconds of the PUSCH channel estimator.
-  uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
+  double get_cpu_usage_us() const { return static_cast<double>(sum_elapsed_ns) / 1000.0; }
 
   /// Resets values of all internal counters.
   void reset()
   {
-    count                = 0;
-    sum_nof_prb          = 0;
-    sum_elapsed_ns       = 0;
-    sum_used_cpu_time_us = 0;
-    min_proc_latency_ns  = UINT64_MAX;
-    max_proc_latency_ns  = 0;
+    count               = 0;
+    sum_nof_prb         = 0;
+    sum_elapsed_ns      = 0;
+    min_proc_latency_ns = UINT64_MAX;
+    max_proc_latency_ns = 0;
   }
 
 private:
@@ -70,18 +69,16 @@ private:
   void on_new_metric(const pusch_channel_estimator_metrics& metrics) override
   {
     sum_nof_prb += metrics.nof_prb;
-    sum_elapsed_ns += metrics.elapsed.count();
+    sum_elapsed_ns += metrics.measurements.duration.count();
     ++count;
-    update_minmax(metrics.elapsed.count(), max_proc_latency_ns, min_proc_latency_ns);
-    sum_used_cpu_time_us += (metrics.cpu_measurements.user_time.count() + metrics.cpu_measurements.system_time.count());
+    update_minmax(metrics.measurements.duration.count(), max_proc_latency_ns, min_proc_latency_ns);
   }
 
-  std::atomic<uint64_t> count                = {};
-  std::atomic<uint64_t> sum_nof_prb          = {};
-  std::atomic<uint64_t> sum_elapsed_ns       = {};
-  std::atomic<uint64_t> sum_used_cpu_time_us = {};
-  std::atomic<uint64_t> min_proc_latency_ns  = UINT64_MAX;
-  std::atomic<uint64_t> max_proc_latency_ns  = 0;
+  std::atomic<uint64_t> count               = {};
+  std::atomic<uint64_t> sum_nof_prb         = {};
+  std::atomic<uint64_t> sum_elapsed_ns      = {};
+  std::atomic<uint64_t> min_proc_latency_ns = UINT64_MAX;
+  std::atomic<uint64_t> max_proc_latency_ns = 0;
 };
 
 } // namespace srsran

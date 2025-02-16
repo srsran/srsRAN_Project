@@ -40,14 +40,8 @@ public:
     std::optional<unsigned> ret;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
-      ret            = base_decoder->decode(output, input, crc, cfg);
-      auto tp_after  = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base_decoder->decode(output, input, crc, cfg);
     }
     metrics.cb_sz          = units::bits(output.size());
     metrics.nof_iterations = ret.value_or(cfg.algorithm_conf.max_iterations);

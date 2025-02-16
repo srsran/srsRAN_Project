@@ -74,7 +74,7 @@ public:
   std::chrono::nanoseconds get_total_wait_time() const { return std::chrono::nanoseconds(sum_waiting_ns); }
 
   /// Gets the CPU usage in microseconds of scrambling operations.
-  uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
+  double get_cpu_usage_us() const { return static_cast<double>(sum_used_cpu_time_ns) / 1000.0; }
 
   /// Gets SINR in decibels as a result of channel estimation.
   float get_ch_est_sinr() const { return ch_est_sinr_db; };
@@ -99,7 +99,7 @@ public:
     sum_waiting_ns        = 0;
     count                 = 0;
     uci_count             = 0;
-    sum_used_cpu_time_us  = 0;
+    sum_used_cpu_time_ns  = 0;
     min_data_latency_ns   = UINT64_MAX;
     max_data_latency_ns   = 0;
     min_uci_latency_ns    = UINT64_MAX;
@@ -123,11 +123,11 @@ private:
     update_minmax(metrics.elapsed_data.count(), max_data_latency_ns, min_data_latency_ns);
     if (metrics.elapsed_uci.has_value()) {
       sum_uci_elapsed_ns += metrics.elapsed_uci.value().count();
-      update_minmax(metrics.elapsed_data.count(), max_uci_latency_ns, min_uci_latency_ns);
+      update_minmax(metrics.elapsed_uci->count(), max_uci_latency_ns, min_uci_latency_ns);
       ++uci_count;
     }
 
-    sum_used_cpu_time_us += metrics.cpu_time_usage_us;
+    sum_used_cpu_time_ns += metrics.cpu_time_usage_ns;
 
     // Save last channel estimation metrics.
     ch_est_sinr_db = metrics.sinr_dB;
@@ -144,7 +144,7 @@ private:
   std::atomic<uint64_t> uci_count             = {};
   std::atomic<float>    ch_est_sinr_db        = {};
   std::atomic<float>    ch_est_evm            = {};
-  std::atomic<uint64_t> sum_used_cpu_time_us  = {};
+  std::atomic<uint64_t> sum_used_cpu_time_ns  = {};
   std::atomic<uint64_t> min_data_latency_ns   = UINT64_MAX;
   std::atomic<uint64_t> max_data_latency_ns   = 0;
   std::atomic<uint64_t> min_uci_latency_ns    = UINT64_MAX;

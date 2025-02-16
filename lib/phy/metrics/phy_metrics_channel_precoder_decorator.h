@@ -37,14 +37,9 @@ public:
     channel_precoder_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      // Call base precoder.
       base_precoder->apply_precoding(output, input, precoding);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     metrics.method     = channel_precoder_metrics::methods::apply_precoding;
     metrics.nof_re     = output.get_nof_re();
@@ -60,15 +55,8 @@ public:
     channel_precoder_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      // Call base precoder.
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       base_precoder->apply_layer_map_and_precoding(output, input, precoding);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     // Report metrics.
     metrics.method     = channel_precoder_metrics::methods::apply_layer_map_and_precoding;

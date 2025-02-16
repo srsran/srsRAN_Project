@@ -50,7 +50,10 @@ public:
   std::chrono::nanoseconds get_total_time() const { return std::chrono::nanoseconds(sum_elapsed_ns); }
 
   /// Gets the CPU usage in microseconds of scrambling operations.
-  uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
+  double get_cpu_usage_us() const
+  {
+    return static_cast<double>(sum_init_elapsed_ns + sum_advance_elapsed_ns + sum_elapsed_ns) / 1000.0;
+  }
 
   /// Resets values of all internal counters.
   void reset()
@@ -62,7 +65,6 @@ public:
     sum_nof_bits           = 0;
     sum_elapsed_ns         = 0;
     count                  = 0;
-    sum_used_cpu_time_us   = 0;
   }
 
 private:
@@ -71,12 +73,12 @@ private:
   {
     switch (metrics.method) {
       case pseudo_random_sequence_generator_metrics::methods::init:
-        sum_init_elapsed_ns += metrics.elapsed.count();
+        sum_init_elapsed_ns += metrics.measurements.duration.count();
         ++init_count;
         break;
       case pseudo_random_sequence_generator_metrics::methods::advance:
         sum_advance_nof_bits += metrics.nof_bits;
-        sum_advance_elapsed_ns += metrics.elapsed.count();
+        sum_advance_elapsed_ns += metrics.measurements.duration.count();
         break;
       case pseudo_random_sequence_generator_metrics::methods::apply_xor_soft_bit:
       case pseudo_random_sequence_generator_metrics::methods::apply_xor_unpacked:
@@ -84,12 +86,10 @@ private:
       case pseudo_random_sequence_generator_metrics::methods::generate_bit_packed:
       case pseudo_random_sequence_generator_metrics::methods::generate_float:
         sum_nof_bits += metrics.nof_bits;
-        sum_elapsed_ns += metrics.elapsed.count();
+        sum_elapsed_ns += metrics.measurements.duration.count();
         break;
     }
     ++count;
-
-    sum_used_cpu_time_us += (metrics.cpu_measurements.user_time.count() + metrics.cpu_measurements.system_time.count());
   }
 
   std::atomic<uint64_t> sum_init_elapsed_ns    = {};
@@ -99,7 +99,6 @@ private:
   std::atomic<uint64_t> sum_nof_bits           = {};
   std::atomic<uint64_t> sum_elapsed_ns         = {};
   std::atomic<uint64_t> count                  = {};
-  std::atomic<uint64_t> sum_used_cpu_time_us   = {};
 };
 
 } // namespace srsran

@@ -39,14 +39,8 @@ public:
     time_alignment_measurement       ret;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
-      ret            = base->estimate(symbols, mask, scs, max_ta);
-      auto tp_after  = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base->estimate(symbols, mask, scs, max_ta);
     }
     metrics.nof_re = static_cast<unsigned>(symbols.size());
     notifier.on_new_metric(metrics);
@@ -64,14 +58,8 @@ public:
     time_alignment_measurement       ret;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
-      ret            = base->estimate(symbols, mask, scs, max_ta);
-      auto tp_after  = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base->estimate(symbols, mask, scs, max_ta);
     }
     metrics.nof_re = static_cast<unsigned>(symbols.get_nof_re());
     notifier.on_new_metric(metrics);
@@ -87,14 +75,8 @@ public:
     time_alignment_measurement       ret;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
-      ret            = base->estimate(symbols, stride, scs, max_ta);
-      auto tp_after  = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base->estimate(symbols, stride, scs, max_ta);
     }
     metrics.nof_re = static_cast<unsigned>(symbols.size());
     notifier.on_new_metric(metrics);
@@ -110,14 +92,8 @@ public:
     time_alignment_measurement       ret;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
-      ret            = base->estimate(symbols, stride, scs, max_ta);
-      auto tp_after  = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base->estimate(symbols, stride, scs, max_ta);
     }
     metrics.nof_re = static_cast<unsigned>(symbols.get_nof_re());
     notifier.on_new_metric(metrics);

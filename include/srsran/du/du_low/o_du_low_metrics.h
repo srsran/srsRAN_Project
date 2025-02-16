@@ -34,7 +34,7 @@ struct o_du_low_ldpc_metrics {
     /// Total time spent in the decoder.
     std::chrono::nanoseconds total_proc_time;
     /// CPU usage in microseconds of the decoder.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   /// LDPC encoder metrics.
@@ -50,7 +50,7 @@ struct o_du_low_ldpc_metrics {
     /// Processing rate in Mbps.
     double encoding_rate_Mbps;
     /// CPU usage in microseconds of the encoder.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   /// LDPC rate matching metrics.
@@ -64,7 +64,7 @@ struct o_du_low_ldpc_metrics {
     /// Processing rate in Mbps.
     double processing_rate_Mbps;
     /// CPU usage in microseconds of the rate matcher.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   /// LDPC rate dematching metrics.
@@ -78,7 +78,7 @@ struct o_du_low_ldpc_metrics {
     /// Processing rate in Mbps.
     double processing_rate_Mbps;
     /// CPU usage in microseconds of the rate dematcher.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   ldpc_decoder_metrics      decoder_metrics;
@@ -102,7 +102,7 @@ struct o_du_low_crc_metrics {
   /// Average CRC24B processing rate.
   double crc24b_avg_rate_Mbps;
   /// CPU usage in microseconds of all CRC calculations.
-  uint64_t cpu_usage_us;
+  double cpu_usage_us;
 };
 
 /// Pseudo-random generator metrics.
@@ -116,7 +116,7 @@ struct o_du_low_scrambling_metrics {
   /// Total time spent in the scrabler/descrambler.
   std::chrono::nanoseconds total_proc_time;
   /// CPU usage in microseconds of the scrambling process.
-  uint64_t cpu_usage_us;
+  double cpu_usage_us;
 };
 
 /// Modulation mapper and EVM calculator metrics.
@@ -130,7 +130,7 @@ struct o_du_low_mod_demod_evm_metrics {
   /// Total time spent in the modulation/demodulation mapper.
   std::chrono::nanoseconds total_proc_time;
   /// CPU usage in microseconds of the modulation/demodulation.
-  uint64_t cpu_usage_us;
+  double cpu_usage_us;
 };
 
 /// Aggregates different PUSCH processing metrics.
@@ -148,7 +148,7 @@ struct o_du_low_pusch_metrics {
     /// Total time spent in PUSCH channel estimator.
     std::chrono::nanoseconds total_processing_latency;
     /// CPU usage in microseconds.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   /// PUSCH port channel estimator metrics.
@@ -169,7 +169,7 @@ struct o_du_low_pusch_metrics {
     /// Total time spent in the channel equalizer.
     std::chrono::nanoseconds total_proc_time;
     /// CPU usage in microseconds of the channel equalizer.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   /// PUSCH demodulator metrics.
@@ -177,7 +177,7 @@ struct o_du_low_pusch_metrics {
     /// PUSCH demodulator total processing time excluding buffer operations.
     std::chrono::nanoseconds total_proc_time;
     /// CPU usage in microseconds.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   /// PUSCH transform precoder metrics.
@@ -189,7 +189,7 @@ struct o_du_low_pusch_metrics {
     /// Average processing latency in microseconds per symbol.
     double avg_latency_us;
     /// CPU usage in microseconds.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   /// PUSCH Time alignment estimator metrics.
@@ -201,7 +201,7 @@ struct o_du_low_pusch_metrics {
     /// Total processing time.
     std::chrono::nanoseconds total_proc_time;
     /// CPU usage in microseconds.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   /// UL-SCH demultiplexer metrics.
@@ -215,7 +215,7 @@ struct o_du_low_pusch_metrics {
     /// Total time spent by the UL-SCH demultiplexer.
     std::chrono::nanoseconds total_proc_time;
     /// CPU usage in microseconds.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   /// PUSCH processor metrics.
@@ -239,7 +239,7 @@ struct o_du_low_pusch_metrics {
     /// The total time spent by the PUSCH processors waiting for the asynchronous decoding to be completed.
     std::chrono::nanoseconds total_wait_time;
     /// CPU usage in microseconds.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
     /// SINR value expressed in decibels extracted from channel estimator.
     float sinr_dB;
     /// EVM value extracted from channel estimator.
@@ -269,7 +269,7 @@ struct o_du_low_pdsch_metrics {
     /// Average latency in microseconds.
     double avg_latency_us;
     /// CPU usage in microseconds.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   /// PDSCH Layer mapping and precoding metrics.
@@ -282,7 +282,7 @@ struct o_du_low_pdsch_metrics {
     /// Totol time in nanoseconds spent in the mapping and precoding block.
     uint64_t total_latency_ns;
     /// CPU usage in microseconds of the layer mapping and precoding.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   /// PDSCH processor metrics.
@@ -300,7 +300,7 @@ struct o_du_low_pdsch_metrics {
     /// Number of processed TBs.
     uint64_t tbs_processed;
     /// CPU usage in microseconds.
-    uint64_t cpu_usage_us;
+    double cpu_usage_us;
   };
 
   o_du_low_crc_metrics           crc_metrics;

@@ -33,14 +33,8 @@ public:
     pseudo_random_sequence_generator_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       base_generator->init(c_init);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     // Report metrics.
     metrics.method   = pseudo_random_sequence_generator_metrics::methods::init;
@@ -60,14 +54,8 @@ public:
     pseudo_random_sequence_generator_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       base_generator->advance(count);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     // Report metrics.
     metrics.method   = pseudo_random_sequence_generator_metrics::methods::advance;
@@ -81,14 +69,8 @@ public:
     pseudo_random_sequence_generator_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       base_generator->apply_xor(out, in);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     // Report metrics.
     metrics.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_packed;
@@ -102,14 +84,8 @@ public:
     pseudo_random_sequence_generator_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       base_generator->apply_xor(out, in);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     // Report metrics.
     metrics.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_unpacked;
@@ -123,14 +99,8 @@ public:
     pseudo_random_sequence_generator_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       base_generator->apply_xor(out, in);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     // Report metrics.
     metrics.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_soft_bit;
@@ -144,14 +114,8 @@ public:
     pseudo_random_sequence_generator_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       base_generator->generate(data);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     // Report metrics.
     metrics.method   = pseudo_random_sequence_generator_metrics::methods::generate_bit_packed;
@@ -165,14 +129,8 @@ public:
     pseudo_random_sequence_generator_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       base_generator->generate(buffer, value);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     // Report metrics.
     metrics.method   = pseudo_random_sequence_generator_metrics::methods::generate_float;

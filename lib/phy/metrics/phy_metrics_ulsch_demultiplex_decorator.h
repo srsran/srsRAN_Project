@@ -46,8 +46,7 @@ public:
 
     resource_usage_utils::measurements cpu_measurements;
     {
-      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
+      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements);
       // Prepare base and save the base buffer.
       auto tp_before = std::chrono::high_resolution_clock::now();
       base_buffer    = &base->demultiplex(sch_data, harq_ack, csi_part1, config);
@@ -56,7 +55,7 @@ public:
       // Save the initial elapsed time.
       elapsed_init = tp_after - tp_before;
     }
-    cpu_usage_us = (cpu_measurements.user_time + cpu_measurements.system_time);
+    cpu_usage_us = cpu_measurements.duration;
 
     return *this;
   }
@@ -78,8 +77,7 @@ private:
 
     resource_usage_utils::measurements cpu_measurements;
     {
-      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
+      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements);
 
       auto tp_before = std::chrono::high_resolution_clock::now();
       base_buffer->on_new_block(data, scrambling_seq);
@@ -88,7 +86,7 @@ private:
       // Accumulate elapsed time and number of bits.
       elapsed_on_new_block += tp_after - tp_before;
     }
-    cpu_usage_us += (cpu_measurements.user_time + cpu_measurements.system_time);
+    cpu_usage_us += cpu_measurements.duration;
     sum_nof_bits += data.size();
   }
 
@@ -100,8 +98,7 @@ private:
     resource_usage_utils::measurements cpu_measurements;
     std::chrono::nanoseconds           elapsed_on_end_codeword;
     {
-      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
+      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements);
 
       auto tp_before = std::chrono::high_resolution_clock::now();
       base_buffer->on_end_codeword();
@@ -109,7 +106,7 @@ private:
 
       elapsed_on_end_codeword = tp_after - tp_before;
     }
-    cpu_usage_us += (cpu_measurements.user_time + cpu_measurements.system_time);
+    cpu_usage_us += cpu_measurements.duration;
 
     // Notify metrics.
     notifier.on_new_metric({.elapsed_init            = elapsed_init,
@@ -131,7 +128,7 @@ private:
   pusch_codeword_buffer*             base_buffer          = nullptr;
   std::chrono::nanoseconds           elapsed_init         = {};
   std::chrono::nanoseconds           elapsed_on_new_block = {};
-  std::chrono::microseconds          cpu_usage_us         = {};
+  std::chrono::nanoseconds           cpu_usage_us         = {};
   unsigned                           sum_nof_bits         = 0;
 };
 

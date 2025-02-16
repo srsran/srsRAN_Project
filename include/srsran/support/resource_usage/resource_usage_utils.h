@@ -20,14 +20,14 @@ namespace resource_usage_utils {
 
 using rusage_meas_clock      = std::chrono::high_resolution_clock;
 using rusage_meas_time_point = rusage_meas_clock::time_point;
-using rusage_meas_duration   = std::chrono::microseconds;
+using rusage_meas_duration   = std::chrono::nanoseconds;
 
-enum class rusage_measurement_type : __rusage_who_t { THREAD = RUSAGE_THREAD, PROCESS = RUSAGE_SELF };
+enum class rusage_measurement_type : __rusage_who_t { THREAD = RUSAGE_THREAD, PROCESS = RUSAGE_SELF, NONE };
 
 /// Used to store the CPU time used by a thread or process, as well as process's memory usage.
 struct measurements {
   /// Duration of the measurement.
-  std::chrono::microseconds duration;
+  std::chrono::nanoseconds duration;
   /// User CPU time.
   std::chrono::microseconds user_time;
   /// System CPU time.
@@ -37,7 +37,6 @@ struct measurements {
   /// Resets measurements making them invalid.
   void reset()
   {
-    duration    = std::chrono::microseconds::zero();
     user_time   = std::chrono::microseconds::zero();
     system_time = std::chrono::microseconds::zero();
     max_rss     = -1;

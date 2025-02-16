@@ -46,20 +46,19 @@ public:
     time_data         = 0;
     time_uci          = 0;
     time_return       = 0;
-    cpu_time_usage_us = 0;
+    cpu_time_usage_ns = 0;
 
     // Clear processor results.
     sch_result.reset();
     uci_result.reset();
 
-    resource_usage_utils::measurements cpu_measurements;
+    resource_usage_utils::measurements measurements;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
+      resource_usage_utils::scoped_resource_usage rusage_tracker(measurements);
       processor->process(data, std::move(rm_buffer), *this, grid, pdu);
     }
-    cpu_time_usage_us = (cpu_measurements.user_time + cpu_measurements.system_time).count();
+    cpu_time_usage_ns = measurements.duration.count();
     time_return       = std::chrono::steady_clock::now().time_since_epoch().count();
 
     // Notify metrics.
@@ -128,7 +127,7 @@ private:
     metrics.crc_ok            = sch_result.value().data.tb_crc_ok;
     metrics.elapsed_return    = time_return_local - time_start;
     metrics.elapsed_data      = time_data_local - time_start;
-    metrics.cpu_time_usage_us = cpu_time_usage_us;
+    metrics.cpu_time_usage_ns = cpu_time_usage_ns;
 
     if (uci_result.has_value()) {
       std::chrono::time_point<std::chrono::steady_clock> time_uci_local =
@@ -153,7 +152,7 @@ private:
   std::atomic<uint64_t>                                 time_uci;
   std::atomic<uint64_t>                                 time_data;
   std::atomic<uint64_t>                                 time_return;
-  std::atomic<uint64_t>                                 cpu_time_usage_us;
+  std::atomic<uint64_t>                                 cpu_time_usage_ns;
   pusch_processor_metric_notifier&                      metric_notifier;
   std::optional<srsran::pusch_processor_result_control> uci_result;
   std::optional<srsran::pusch_processor_result_data>    sch_result;
@@ -162,7 +161,7 @@ private:
   static_assert(std::atomic<decltype(time_uci)>::is_always_lock_free);
   static_assert(std::atomic<decltype(time_data)>::is_always_lock_free);
   static_assert(std::atomic<decltype(time_return)>::is_always_lock_free);
-  static_assert(std::atomic<decltype(cpu_time_usage_us)>::is_always_lock_free);
+  static_assert(std::atomic<decltype(cpu_time_usage_ns)>::is_always_lock_free);
 };
 
 } // namespace srsran

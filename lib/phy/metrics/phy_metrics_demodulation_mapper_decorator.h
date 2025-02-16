@@ -38,14 +38,8 @@ public:
     demodulation_mapper_metrics metrics;
     {
       // Use scoped resource usage class to measure CPU usage of this block.
-      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.cpu_measurements,
-                                                                 resource_usage_utils::rusage_measurement_type::THREAD);
-
-      auto tp_before = std::chrono::high_resolution_clock::now();
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
       base->demodulate_soft(llrs, symbols, noise_vars, mod);
-      auto tp_after = std::chrono::high_resolution_clock::now();
-
-      metrics.elapsed = tp_after - tp_before;
     }
     metrics.modulation  = mod;
     metrics.nof_symbols = static_cast<unsigned>(symbols.size());

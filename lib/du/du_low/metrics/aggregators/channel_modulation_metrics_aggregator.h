@@ -44,7 +44,13 @@ public:
   }
 
   /// Gets the CPU usage in microseconds of the modulation mapper.
-  uint64_t get_cpu_usage_us() const { return sum_used_cpu_time_us; }
+  double get_cpu_usage_us() const
+  {
+    return static_cast<double>(qpsk_metrics_collection.sum_elapsed_ns + qam16_metrics_collection.sum_elapsed_ns +
+                               qam64_metrics_collection.sum_elapsed_ns + qam256_metrics_collection.sum_elapsed_ns +
+                               other_metrics_collection.sum_elapsed_ns) /
+           1000.0;
+  }
 
   /// Resets values of all internal counters.
   void reset()
@@ -54,7 +60,6 @@ public:
     qam64_metrics_collection.reset();
     qam256_metrics_collection.reset();
     other_metrics_collection.reset();
-    sum_used_cpu_time_us = 0;
   }
 
 private:
@@ -113,9 +118,7 @@ private:
   {
     metrics_per_modulation& metrics_modulation = select_metrics(metrics.modulation);
     metrics_modulation.sum_nof_symbols += metrics.nof_symbols;
-    metrics_modulation.sum_elapsed_ns += metrics.elapsed.count();
-
-    sum_used_cpu_time_us += (metrics.cpu_measurements.user_time.count() + metrics.cpu_measurements.system_time.count());
+    metrics_modulation.sum_elapsed_ns += metrics.measurements.duration.count();
   }
 
   metrics_per_modulation qpsk_metrics_collection;
@@ -123,7 +126,6 @@ private:
   metrics_per_modulation qam64_metrics_collection;
   metrics_per_modulation qam256_metrics_collection;
   metrics_per_modulation other_metrics_collection;
-  std::atomic<uint64_t>  sum_used_cpu_time_us = {};
 };
 
 } // namespace srsran
