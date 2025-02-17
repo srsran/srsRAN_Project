@@ -222,7 +222,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   /// Prepare buffer info struct to pass to crypto executor.
-  pdcp_tx_buffer_info buf_info{.buf = std::move(buf), .count = st.tx_next};
+  pdcp_tx_buffer_info buf_info{.buf = std::move(buf), .count = st.tx_next, .retx_id = retransmit_id};
 
   // Increment TX_NEXT. We do this before passing the SDU+Header
   // to the crypto executor, so that the reordering function has the updated state.
@@ -246,6 +246,19 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
 void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx)
 {
+  logger.log_debug("Applying reordering. count={} st={}", buf_info.count, st);
+
+  // Drop PDU if its out of date due to retransmissions.
+  if (buf_info.retx_id != retransmit_id) {
+    logger.log_debug(
+        "Dropping PDU, PDU out of date due to retransmissions. count={} st={} old_retx_id={} new_retx_id={}",
+        buf_info.count,
+        st,
+        buf_info.retx_id,
+        retransmit_id);
+    return;
+  }
+
   // Drop PDU if TX widnow has advanced and COUNT is no longer inside the TX window.
   if (buf_info.count < st.tx_next_ack) {
     logger.log_warning("Dropping PDU, COUNT no longer inside TX window. count={} st={}", buf_info.count, st);
@@ -459,8 +472,7 @@ void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info, bool is_retx)
   }
   logger.log_debug(result.buf.value().begin(), result.buf.value().end(), "Security applied. count={}", tx_count);
 
-  pdcp_tx_buffer_info pdu_info;
-  pdu_info = {.buf = std::move(result.buf.value()), .count = tx_count};
+  pdcp_tx_buffer_info pdu_info{.buf = std::move(result.buf.value()), .count = tx_count, .retx_id = buf_info.retx_id};
 
   // apply reordering in UE executor
   auto fn = [this, pdu_info = std::move(pdu_info), is_retx]() mutable {
@@ -640,6 +652,11 @@ void pdcp_entity_tx::retransmit_all_pdus()
   // Since we are retransmitting, rewind tx_trans to tx_next_ack
   st.tx_trans = st.tx_next_ack;
 
+  // Also rewind tx_trans_pending to tx_next_ack. Any PDUs pending
+  // transmission will be dropped, as the retransmit ID will no longer match.
+  st.tx_trans_pending = st.tx_next_ack;
+  retransmit_id++;
+
   for (uint32_t count = st.tx_next_ack; count < st.tx_next; count++) {
     if (tx_window.has_sn(count)) {
       pdcp_tx_window_element& window_elem = tx_window[count];
@@ -670,7 +687,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
       }
 
       /// Prepare buffer info struct to pass to crypto executor.
-      pdcp_tx_buffer_info buf_info{.buf = std::move(buf), .count = count};
+      pdcp_tx_buffer_info buf_info{.buf = std::move(buf), .count = count, .retx_id = retransmit_id};
 
       auto fn = [this, buf_info = std::move(buf_info)]() mutable {
         auto pre = std::chrono::high_resolution_clock::now();

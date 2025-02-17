@@ -63,8 +63,9 @@ struct pdcp_tx_state {
 
 /// Helper struct to pass buffer to security functions.
 struct pdcp_tx_buffer_info {
-  byte_buffer buf;   /// In/Out parameter for SDU+Header/PDU.
-  uint32_t    count; /// COUNT associated with this SDU/PDU.
+  byte_buffer buf;     /// In/Out parameter for SDU+Header/PDU.
+  uint32_t    count;   /// COUNT associated with this SDU/PDU.
+  uint32_t    retx_id; /// ID used to identify if PDU is out of date.
 };
 
 /// Helper struct to pass PDUs+metadata to the lower layers.
@@ -186,6 +187,9 @@ private:
   pdcp_tx_state st                  = {0, 0, 0, 0};
   uint32_t      desired_buffer_size = 0;
   uint32_t      max_nof_crypto_workers;
+
+  /// Id used to identify out of date PDUs after a retransmission.
+  uint32_t retransmit_id = 0;
 
   using sec_engine_vec = std::vector<std::unique_ptr<security::security_engine_tx>>;
   sec_engine_vec sec_engine_pool;
