@@ -762,7 +762,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
   // Allocate DL HARQ.
   // NOTE: We do not multiplex the SRB1 PUCCH with existing PUCCH HARQs, thus both DAI and HARQ-ACK bit index are 0.
   if (not is_retx) {
-    h_dl = u.get_pcell().harqs.alloc_dl_harq(pdsch_slot, uci.k1, expert_cfg.max_nof_harq_retxs, uci.harq_bit_idx);
+    h_dl = u.get_pcell().harqs.alloc_dl_harq(pdsch_slot, uci.k1, expert_cfg.max_nof_dl_harq_retxs, uci.harq_bit_idx);
   } else {
     bool result = h_dl->new_retx(pdsch_slot, uci.k1, uci.harq_bit_idx);
     srsran_sanity_check(result, "Unable to allocate HARQ retx");
@@ -1173,7 +1173,7 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                               
     srsran_sanity_check(result, "Failed to setup HARQ retx");
   } else {
     // It is a new tx.
-    h_ul = u.get_pcell().harqs.alloc_ul_harq(pdcch_slot + k2, expert_cfg.max_nof_harq_retxs);
+    h_ul = u.get_pcell().harqs.alloc_ul_harq(pdcch_slot + k2, expert_cfg.max_nof_ul_harq_retxs);
   }
 
   uint8_t                  rv                  = u.get_pcell().get_pusch_rv(h_ul->nof_retxs());

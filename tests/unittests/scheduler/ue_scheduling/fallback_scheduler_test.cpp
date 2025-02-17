@@ -211,7 +211,6 @@ protected:
     scheduler_ue_expert_config& uecfg = cfg.ue;
     uecfg.dl_mcs                      = {10, 10};
     uecfg.ul_mcs                      = {10, 10};
-    uecfg.max_nof_harq_retxs          = 4;
     uecfg.max_msg4_mcs                = max_msg4_mcs_index;
     return cfg;
   }

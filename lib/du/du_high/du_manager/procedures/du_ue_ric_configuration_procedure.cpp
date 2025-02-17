@@ -109,7 +109,7 @@ async_task<mac_ue_reconfiguration_response> du_ue_ric_configuration_procedure::h
 
   res_alloc_cfg.max_pdsch_harq_retxs = req.num_harq_retransmissions.has_value()
                                            ? req.num_harq_retransmissions.value()
-                                           : du_params.mac.sched_cfg.ue.max_nof_harq_retxs;
+                                           : du_params.mac.sched_cfg.ue.max_nof_dl_harq_retxs;
   res_alloc_cfg.max_pusch_harq_retxs = res_alloc_cfg.max_pdsch_harq_retxs;
 
   return du_params.mac.ue_cfg.handle_ue_reconfiguration_request(mac_request);

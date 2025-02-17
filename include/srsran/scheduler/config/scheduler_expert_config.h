@@ -85,7 +85,10 @@ struct scheduler_ue_expert_config {
   /// Sequence of redundancy versions used for PUSCH scheduling. Possible values: {0, 1, 2, 3}.
   std::vector<uint8_t> pusch_rv_sequence;
   unsigned             initial_cqi;
-  unsigned             max_nof_harq_retxs;
+  /// Maximum number of DL HARQ retxs.
+  unsigned max_nof_dl_harq_retxs = 4;
+  /// Maximum number of UL HARQ retxs.
+  unsigned max_nof_ul_harq_retxs = 4;
   /// Maximum MCS index that can be assigned when scheduling MSG4.
   sch_mcs_index max_msg4_mcs;
   /// Initial UL SINR value used for Dynamic UL MCS computation (in dB).

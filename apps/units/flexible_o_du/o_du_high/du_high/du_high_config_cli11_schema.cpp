@@ -237,7 +237,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
              pdsch_params.max_nof_harq_retxs,
              "Maximum number of times a DL HARQ can be retransmitted, before it gets discarded")
       ->capture_default_str()
-      ->check(CLI::Range(0, 4));
+      ->check(CLI::Range(0, 64));
   add_option(app,
              "--max_consecutive_kos",
              pdsch_params.max_consecutive_kos,
@@ -683,6 +683,12 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   add_option(app, "--max_ue_mcs", pusch_params.max_ue_mcs, "Maximum UE MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
+  add_option(app,
+             "--max_nof_harq_retxs",
+             pusch_params.max_nof_harq_retxs,
+             "Maximum number of times a UL HARQ can be retransmitted, before it gets discarded")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 64));
   add_option(app,
              "--max_consecutive_kos",
              pusch_params.max_consecutive_kos,

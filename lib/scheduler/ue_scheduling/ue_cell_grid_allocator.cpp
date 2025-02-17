@@ -442,7 +442,7 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
   bool is_new_data = not is_retx;
   if (is_new_data) {
     // It is a new tx.
-    h_dl = ue_cc.harqs.alloc_dl_harq(pdsch_alloc.slot, k1, expert_cfg.max_nof_harq_retxs, uci.harq_bit_idx).value();
+    h_dl = ue_cc.harqs.alloc_dl_harq(pdsch_alloc.slot, k1, expert_cfg.max_nof_dl_harq_retxs, uci.harq_bit_idx).value();
   } else {
     // It is a retx.
     bool result = h_dl->new_retx(pdsch_alloc.slot, k1, uci.harq_bit_idx);
@@ -956,7 +956,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     bool is_new_data = not is_retx;
     if (is_new_data) {
       // It is a new tx.
-      h_ul = ue_cc->harqs.alloc_ul_harq(pusch_alloc.slot, expert_cfg.max_nof_harq_retxs);
+      h_ul = ue_cc->harqs.alloc_ul_harq(pusch_alloc.slot, expert_cfg.max_nof_ul_harq_retxs);
       srsran_assert(h_ul.has_value(), "Failed to allocate HARQ");
     } else {
       // It is a retx.
