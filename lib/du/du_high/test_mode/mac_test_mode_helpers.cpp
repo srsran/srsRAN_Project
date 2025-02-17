@@ -36,6 +36,21 @@ srs_du::create_test_pdu_with_bsr(du_cell_index_t cell_index, slot_point sl_rx, r
       sl_rx, cell_index, mac_rx_pdu_list{mac_rx_pdu{test_rnti, 0, harq_id, std::move(buf.value())}}};
 }
 
+expected<mac_rx_data_indication> srs_du::create_test_pdu_with_rrc_setup_complete(du_cell_index_t cell_index,
+                                                                                 slot_point      sl_rx,
+                                                                                 rnti_t          test_rnti,
+                                                                                 harq_id_t       harq_id)
+{
+  auto buf = byte_buffer::create({0x01, 0x23, 0xc0, 0x00, 0x00, 0x00, 0x10, 0x00, 0x05, 0xdf, 0x80, 0x10, 0x5e, 0x40,
+                                  0x03, 0x40, 0x40, 0x3c, 0x44, 0x3c, 0x3f, 0xc0, 0x00, 0x04, 0x0c, 0x95, 0x1d, 0xa6,
+                                  0x0b, 0x80, 0xb8, 0x38, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3d, 0x00, 0x39, 0x37, 0x35});
+  if (not buf.has_value()) {
+    return make_unexpected(default_error_t{});
+  }
+  return mac_rx_data_indication{
+      sl_rx, cell_index, mac_rx_pdu_list{mac_rx_pdu{test_rnti, 0, harq_id, std::move(buf.value())}}};
+}
+
 static void fill_csi_bits(bounded_bitset<uci_constants::MAX_NOF_CSI_PART1_OR_PART2_BITS>& payload,
                           rnti_t                                                          rnti,
                           unsigned                                                        nof_ports,

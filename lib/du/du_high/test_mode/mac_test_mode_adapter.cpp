@@ -396,6 +396,10 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
 
         // Mark Msg4 received for the UE.
         ue_info_mgr.msg4_rxed(pucch.crnti, true);
+
+        // Push an UL PDU that will serve as rrcSetupComplete and get the UE out of fallback mode.
+        auto rx_pdu = create_test_pdu_with_rrc_setup_complete(cell_index, ul_res.slot, pucch.crnti, to_harq_id(0));
+        pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
       }
     }
   }
@@ -535,7 +539,7 @@ async_task<mac_ue_create_response> mac_test_mode_adapter::handle_ue_create_reque
   if (ue_info_mgr.is_test_ue(cfg.crnti)) {
     // It is the test UE.
     mac_ue_create_request cfg_copy = cfg;
-    cfg_copy.initial_fallback      = false;
+    cfg_copy.initial_fallback      = true;
 
     // Save UE index and configuration of test mode UE.
     ue_info_mgr.add_ue(cfg.crnti, cfg_copy.ue_index, cfg_copy.sched_cfg);

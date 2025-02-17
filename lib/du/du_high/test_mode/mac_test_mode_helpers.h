@@ -27,6 +27,12 @@ namespace srs_du {
 expected<mac_rx_data_indication>
 create_test_pdu_with_bsr(du_cell_index_t cell_index, slot_point sl_rx, rnti_t test_rnti, harq_id_t harq_id);
 
+/// Create dummy PDU with rrcSetupComplete.
+expected<mac_rx_data_indication> create_test_pdu_with_rrc_setup_complete(du_cell_index_t cell_index,
+                                                                         slot_point      sl_rx,
+                                                                         rnti_t          test_rnti,
+                                                                         harq_id_t       harq_id);
+
 /// Setters for UCI PDUs based on config values.
 mac_uci_pdu create_uci_pdu(const pucch_info& pucch, const du_test_mode_config::test_mode_ue_config& test_ue_cfg);
 mac_uci_pdu create_uci_pdu(const ul_sched_info& pusch, const du_test_mode_config::test_mode_ue_config& test_ue_cfg);
