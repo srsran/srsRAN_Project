@@ -205,6 +205,7 @@ static void fill_custom_parameters(fapi::ul_pucch_pdu_builder& builder, const pu
   switch (mac_pdu.format()) {
     case pucch_format::FORMAT_0:
       fill_format0_parameters(builder, mac_pdu);
+      break;
     case pucch_format::FORMAT_1:
       fill_format1_parameters(builder, mac_pdu);
       break;
