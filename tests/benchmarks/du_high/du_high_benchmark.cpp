@@ -153,6 +153,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
         break;
       case 'a': {
         std::string optstr{optarg};
+        params.du_cell_cores.clear();
         if (optstr.find(",") != std::string::npos) {
           size_t pos = optstr.find(",");
           while (pos != std::string::npos) {
@@ -161,7 +162,7 @@ static void parse_args(int argc, char** argv, bench_params& params)
             pos    = optstr.find(",");
           }
         } else {
-          params.du_cell_cores = {(unsigned)std::strtol(optstr.c_str(), nullptr, 10)};
+          params.du_cell_cores.resize(1, (unsigned)std::strtol(optstr.c_str(), nullptr, 10));
         }
       } break;
       case 'p':
