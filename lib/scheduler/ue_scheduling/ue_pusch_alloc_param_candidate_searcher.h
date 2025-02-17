@@ -157,11 +157,9 @@ public:
                                           du_cell_index_t                              cell_index,
                                           const std::optional<ul_harq_process_handle>& ul_harq_,
                                           slot_point                                   pdcch_slot_,
-                                          span<const slot_point>                       slots_with_no_pusch_space_,
                                           slot_point                                   pusch_slot_) :
     ue_ref(ue_ref_),
     ue_cc(ue_ref.find_cell(cell_index)),
-    slots_with_no_pusch_space(slots_with_no_pusch_space_),
     ul_harq(ul_harq_),
     is_retx(ul_harq.has_value()),
     pdcch_slot(pdcch_slot_),
@@ -246,12 +244,6 @@ private:
       return false;
     }
 
-    // Check whether there is any space left in PUSCH slot for allocation.
-    if (slots_with_no_pusch_space.end() !=
-        std::find(slots_with_no_pusch_space.begin(), slots_with_no_pusch_space.end(), pusch_slot)) {
-      return false;
-    }
-
     // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
     // the first transmission.
     if (is_retx and current.pusch_td_res().symbols.length() != ul_harq->get_grant_params().nof_symbols) {
@@ -291,9 +283,6 @@ private:
   const ue& ue_ref;
   // UE cell being allocated.
   const ue_cell* ue_cc;
-
-  // Slots with no RBs left for PUSCH allocation.
-  span<const slot_point> slots_with_no_pusch_space;
 
   // UL HARQ considered for allocation.
   const std::optional<ul_harq_process_handle>& ul_harq;

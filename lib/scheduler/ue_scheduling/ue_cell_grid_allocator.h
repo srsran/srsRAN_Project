@@ -65,7 +65,19 @@ private:
     sched_helper::mcs_prbs_selection recommended_mcs_prbs;
   };
 
-  dl_grant_params get_dl_grant_params(const ue_pdsch_grant& sched_params);
+  struct ul_grant_params {
+    alloc_status                     status;
+    search_space_id                  ss_id;
+    uint8_t                          pusch_td_res_index;
+    crb_interval                     crb_lims;
+    dci_ul_rnti_config_type          dci_type;
+    pusch_config_params              pusch_cfg;
+    sched_helper::mcs_prbs_selection recommended_mcs_prbs;
+  };
+
+  dl_grant_params get_dl_grant_params(const ue_pdsch_grant& grant_params);
+
+  ul_grant_params get_ul_grant_params(const ue_pusch_grant& grant_params, slot_point pusch_slot);
 
   expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(ue_cell& ue_cc, const search_space_info& ss_info);
 
@@ -96,8 +108,6 @@ private:
 
   // List of slots at which there is no PDSCH space for further allocations.
   static_vector<slot_point, SCHEDULER_MAX_K0> slots_with_no_pdsch_space;
-  // List of slots at which there is no PUSCH space for further allocations.
-  static_vector<slot_point, SCHEDULER_MAX_K2> slots_with_no_pusch_space;
 
   // Number of allocation attempts for DL and UL in the given slot.
   unsigned dl_attempts_count = 0, ul_attempts_count = 0;

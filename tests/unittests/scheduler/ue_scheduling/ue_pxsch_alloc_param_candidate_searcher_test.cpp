@@ -89,7 +89,7 @@ TEST_F(ue_pxsch_alloc_param_candidate_searcher_test, only_searchspaces_in_ue_ded
     ASSERT_TRUE(ss_list.contains(candidate.ss().cfg->get_id()));
   }
   ue_pusch_alloc_param_candidate_searcher ul_searcher(
-      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.ul_harq(h_id), pdcch_slot, {}, get_next_ul_slot(pdcch_slot));
+      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.ul_harq(h_id), pdcch_slot, get_next_ul_slot(pdcch_slot));
   ASSERT_TRUE(not ul_searcher.is_empty());
   for (const auto& candidate : ul_searcher) {
     bool ss_present_in_ue_ded_cfg =
@@ -107,7 +107,7 @@ TEST_F(ue_pxsch_alloc_param_candidate_searcher_test, only_candidates_for_given_p
   const slot_point pusch_slot = get_next_ul_slot(pdcch_slot);
 
   ue_pusch_alloc_param_candidate_searcher ul_searcher(
-      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.ul_harq(h_id), pdcch_slot, {}, pusch_slot);
+      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.ul_harq(h_id), pdcch_slot, pusch_slot);
   ASSERT_TRUE(not ul_searcher.is_empty());
   for (const auto& candidate : ul_searcher) {
     ASSERT_EQ(pdcch_slot + candidate.pusch_td_res().k2, pusch_slot) << "Candidate is not for the given PUSCH slot";
