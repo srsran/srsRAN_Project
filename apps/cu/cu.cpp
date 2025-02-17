@@ -362,8 +362,13 @@ int main(int argc, char** argv)
 
   // Create service for periodically polling app resource usage.
   auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
+  std::vector<app_services::metrics_producer*> metric_producers;
+  for (auto& metric : app_resource_usage_service.metrics) {
+    for (auto& producer : metric.producers)
+      metric_producers.push_back(producer.get());
+  }
   app_services::periodic_metrics_report_controller periodic_metrics_controller(
-      {app_resource_usage_service.metrics[0].producers[0].get()},
+      metric_producers,
       std::move(app_metrics_timer),
       std::chrono::milliseconds(cu_cfg.metrics_cfg.rusage_report_period));
 
