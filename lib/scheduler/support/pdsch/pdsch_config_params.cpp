@@ -19,7 +19,7 @@ sched_helper::get_pdsch_config_f1_0_tc_rnti(const cell_configuration&           
                                             const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
 {
   static constexpr pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
-  // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
+  // As per TS 38.214, Section 5.1.3.2, TB scaling field can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
   static constexpr unsigned tb_scaling_field = 0;
   // As per TS 38.214, Section 5.1.3.2, nof_oh_prb by \c xOverhead, defined in \c PDSCH-ServingCellConfig, TS 38.331; it
   // is in the dedicated resources, configured the after DCI Format 1-0 TC-RNTI is used. Hence, nof_oh_prb is here set

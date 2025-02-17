@@ -99,7 +99,8 @@ private:
   // List of CRBs used by each PDCCH candidate.
   std::vector<std::array<std::vector<crb_index_list>, NOF_AGGREGATION_LEVELS>> crbs_of_candidates;
 
-  // List of PDSCH Configs for each PDSCH Time Domain Resource.
+  // Mapping of PDSCH time domain resources to lists of PDSCH Configs. Each index corresponds to a different PDSCH
+  // time resource index, which points to a list whose indexes correspond to different numbers of DL layers.
   std::vector<std::vector<pdsch_config_params>> pdsch_cfg_list;
 };
 
