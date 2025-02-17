@@ -635,9 +635,10 @@ void pdu_session_manager_impl::notify_pdcp_pdu_processing_stopped()
 
   for (const auto& [psi, pdu_session] : pdu_sessions) {
     for (const auto& [drb_id, drb] : pdu_session->drbs) {
-      // reestablish rx and configure rx security
       auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
       pdcp_rx_ctrl.notify_pdu_processing_stopped();
+      auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
+      pdcp_tx_ctrl.notify_pdu_processing_stopped();
     }
   }
 }
@@ -648,16 +649,17 @@ void pdu_session_manager_impl::restart_pdcp_pdu_processing()
 
   for (const auto& [psi, pdu_session] : pdu_sessions) {
     for (const auto& [drb_id, drb] : pdu_session->drbs) {
-      // reestablish rx and configure rx security
       auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
       pdcp_rx_ctrl.restart_pdu_processing();
+      auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
+      pdcp_tx_ctrl.restart_pdu_processing();
     }
   }
 }
 
 async_task<void> pdu_session_manager_impl::await_crypto_rx_all_pdu_sessions()
 {
-  logger.log_debug("Awaiting all crypto tasks to finish in UE");
+  logger.log_debug("Awaiting all RX crypto tasks to finish in UE");
   auto ps_it = pdu_sessions.begin();
   return launch_async([this, ps_it](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
@@ -671,7 +673,7 @@ async_task<void> pdu_session_manager_impl::await_crypto_rx_all_pdu_sessions()
 
 async_task<void> pdu_session_manager_impl::await_crypto_rx_all_drbs(const std::unique_ptr<pdu_session>& pdu_session)
 {
-  logger.log_debug("Awaiting all crypto tasks to finish in PDU session. psi={}", pdu_session->pdu_session_id);
+  logger.log_debug("Awaiting all RX crypto tasks to finish in PDU session. psi={}", pdu_session->pdu_session_id);
   auto drb_it = pdu_session->drbs.begin();
   return launch_async([drb_it, &pdu_session, this](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
@@ -679,6 +681,35 @@ async_task<void> pdu_session_manager_impl::await_crypto_rx_all_drbs(const std::u
       logger.log_debug(
           "Awaiting all crypto tasks to finish in DRB. psi={}, drb_id={}", pdu_session->pdu_session_id, drb_it->first);
       CORO_AWAIT(drb_it->second->pdcp->rx_crypto_awaitable());
+    }
+    CORO_RETURN();
+  });
+}
+
+async_task<void> pdu_session_manager_impl::await_crypto_tx_all_pdu_sessions()
+{
+  logger.log_debug("Awaiting all TX crypto tasks to finish in UE");
+  auto ps_it = pdu_sessions.begin();
+  return launch_async([this, ps_it](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    for (; ps_it != pdu_sessions.end(); ++ps_it) {
+      CORO_AWAIT(await_crypto_tx_all_drbs(ps_it->second));
+    }
+    CORO_RETURN();
+  });
+}
+
+async_task<void> pdu_session_manager_impl::await_crypto_tx_all_drbs(const std::unique_ptr<pdu_session>& pdu_session)
+{
+  logger.log_debug("Awaiting all crypto tasks to finish in PDU session. psi={}", pdu_session->pdu_session_id);
+  auto drb_it = pdu_session->drbs.begin();
+  return launch_async([drb_it, &pdu_session, this](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+    for (; drb_it != pdu_session->drbs.end(); ++drb_it) {
+      logger.log_debug(
+          "Awaiting all crypto tasks to finish in DRB. psi={}, drb_id={}", pdu_session->pdu_session_id, drb_it->first);
+      CORO_AWAIT(drb_it->second->pdcp->tx_crypto_awaitable());
     }
     CORO_RETURN();
   });

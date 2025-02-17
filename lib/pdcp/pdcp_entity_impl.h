@@ -85,6 +85,7 @@ public:
     }
   }
 
+  manual_event_flag& tx_crypto_awaitable() override { return tx->crypto_awaitable(); }
   manual_event_flag& rx_crypto_awaitable() override { return rx->crypto_awaitable(); }
 
 private:

@@ -118,9 +118,9 @@ public:
       CORO_AWAIT(execute_on_blocking(ue_exec_mapper->ul_pdu_executor(), timers));
       CORO_AWAIT(pdu_session_manager.await_crypto_rx_all_pdu_sessions());
 
-      // Switch to UE DL executor. Flush pending DL tasks.
-      // TODO await pending DL crypto tasks.
+      // Switch to UE DL executor. Await pending DL crypto tasks.
       CORO_AWAIT(execute_on_blocking(ue_exec_mapper->dl_pdu_executor(), timers));
+      CORO_AWAIT(pdu_session_manager.await_crypto_tx_all_pdu_sessions());
 
       // Return to UE control executor and stop UE specific executors.
       CORO_AWAIT(execute_on_blocking(ue_exec_mapper->ctrl_executor(), timers));
@@ -139,10 +139,12 @@ public:
     cfg.security_info = security_info;
     pdu_session_manager.update_security_config(security_info);
   }
+
   void notify_pdcp_pdu_processing_stopped() { pdu_session_manager.notify_pdcp_pdu_processing_stopped(); }
   void restart_pdcp_pdu_processing() { pdu_session_manager.restart_pdcp_pdu_processing(); }
 
   async_task<void> await_rx_crypto_tasks() { return pdu_session_manager.await_crypto_rx_all_pdu_sessions(); }
+  async_task<void> await_tx_crypto_tasks() { return pdu_session_manager.await_crypto_tx_all_pdu_sessions(); }
 
   // pdu_session_manager_ctrl
   pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override

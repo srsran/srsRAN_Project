@@ -36,7 +36,7 @@ TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_pdus_dropped)
     byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
   }
-  crypto_worker_pool.wait_pending_tasks();
+  wait_pending_crypto();
   worker.run_pending_tasks();
 
   FLUSH_AND_ASSERT_EQ(5, pdcp_tx->nof_pdus_in_window());
@@ -64,10 +64,10 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_and_discard_t
     byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
   }
+  wait_pending_crypto();
+  worker.run_pending_tasks();
   FLUSH_AND_ASSERT_EQ(5, pdcp_tx->nof_pdus_in_window());
   pdcp_tx->reestablish(sec_cfg);
-  crypto_worker_pool.wait_pending_tasks();
-  worker.run_pending_tasks();
   FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
 
   // Check the state is reset
@@ -91,6 +91,8 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
     byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
   }
+  wait_pending_crypto();
+  worker.run_pending_tasks();
   tick_all(5);
   FLUSH_AND_ASSERT_EQ(5, pdcp_tx->nof_pdus_in_window());
 
@@ -114,7 +116,7 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
   }
 
   pdcp_tx->reestablish(sec_cfg);
-  crypto_worker_pool.wait_pending_tasks();
+  wait_pending_crypto();
   worker.run_pending_tasks();
 
   FLUSH_AND_ASSERT_EQ(5, test_frame.pdu_queue.size());  // unchanged

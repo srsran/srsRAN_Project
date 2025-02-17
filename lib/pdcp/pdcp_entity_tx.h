@@ -11,6 +11,7 @@
 #pragma once
 
 #include "pdcp_bearer_logger.h"
+#include "pdcp_crypto_token.h"
 #include "pdcp_entity_tx_rx_base.h"
 #include "pdcp_interconnect.h"
 #include "pdcp_metrics_aggregator.h"
@@ -63,9 +64,10 @@ struct pdcp_tx_state {
 
 /// Helper struct to pass buffer to security functions.
 struct pdcp_tx_buffer_info {
-  byte_buffer buf;     /// In/Out parameter for SDU+Header/PDU.
-  uint32_t    count;   /// COUNT associated with this SDU/PDU.
-  uint32_t    retx_id; /// ID used to identify if PDU is out of date.
+  byte_buffer       buf;     /// In/Out parameter for SDU+Header/PDU.
+  uint32_t          count;   /// COUNT associated with this SDU/PDU.
+  uint32_t          retx_id; /// ID used to identify if PDU is out of date.
+  pdcp_crypto_token token;   /// Crypto token to count in-flight PDUs.
 };
 
 /// Helper struct to pass PDUs+metadata to the lower layers.
@@ -99,6 +101,13 @@ public:
 
   /// \brief Stop handling SDUs and stop timers
   void stop();
+
+  /// \brief Retrun awaitable to wait for crypto tasks to be
+  /// finished.
+  manual_event_flag& crypto_awaitable();
+
+  void notify_pdu_processing_stopped() override;
+  void restart_pdu_processing() override;
 
   /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
   void reestablish(security::sec_128_as_config sec_cfg) override;
@@ -199,6 +208,10 @@ private:
 
   early_drop_reason check_early_drop(const byte_buffer& buf);
   uint32_t          warn_on_drop_count = 0;
+
+  /// Crypto token manager. Used to wait for crypto engine to finish
+  /// when destroying DRB.
+  pdcp_crypto_token_manager token_mngr;
 
   /// Apply ciphering and integrity protection to SDU+header buffer.
   /// It will pass this buffer to the crypto engine for parallization.

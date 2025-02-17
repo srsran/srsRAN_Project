@@ -74,6 +74,10 @@ TEST_P(pdcp_tx_test, pdu_gen)
     byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
 
+    // Wait for crypto and reordering
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+
     // Get generated PDU
     ASSERT_EQ(test_frame.pdu_queue.size(), 1);
     byte_buffer pdu = std::move(test_frame.pdu_queue.front());
@@ -82,10 +86,6 @@ TEST_P(pdcp_tx_test, pdu_gen)
     // Get expected PDU
     byte_buffer exp_pdu;
     get_expected_pdu(tx_next, exp_pdu);
-
-    // Wait for crypto and reordering
-    crypto_worker_pool.wait_pending_tasks();
-    worker.run_pending_tasks();
 
     // Check valid PDU.
     ASSERT_EQ(pdu.length(), exp_pdu.length());
@@ -132,7 +132,7 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_notif)
       pdcp_tx->handle_sdu(std::move(sdu));
 
       // Wait for crypto and reordering
-      crypto_worker_pool.wait_pending_tasks();
+      wait_pending_crypto();
       worker.run_pending_tasks();
 
       // Check there is a new PDU
@@ -147,7 +147,7 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_notif)
       pdcp_tx->handle_sdu(std::move(sdu));
 
       // Wait for crypto and reordering
-      crypto_worker_pool.wait_pending_tasks();
+      wait_pending_crypto();
       worker.run_pending_tasks();
 
       // Check there is no new PDU
@@ -172,6 +172,10 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_notif)
       // Write an SDU that should not be dropped
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
 
       // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
@@ -223,6 +227,11 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_retx_notif)
     for (uint32_t count = tx_next; count < tx_next + stall; ++count) {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
+
       // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       byte_buffer pdu = std::move(test_frame.pdu_queue.front());
@@ -235,7 +244,7 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_retx_notif)
       pdcp_tx->handle_sdu(std::move(sdu));
 
       // Wait for crypto and reordering
-      crypto_worker_pool.wait_pending_tasks();
+      wait_pending_crypto();
       worker.run_pending_tasks();
 
       // Check there is no new PDU
@@ -250,6 +259,10 @@ TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_retx_notif)
       // Write an SDU that should not be dropped
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
 
       // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
@@ -290,7 +303,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next, sn_size));
 
       // Wait for crypto and reordering
-      crypto_worker_pool.wait_pending_tasks();
+      wait_pending_crypto();
       worker.run_pending_tasks();
 
       FLUSH_AND_ASSERT_EQ(1, pdcp_tx->nof_pdus_in_window());
@@ -302,7 +315,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 1, sn_size));
 
       // Wait for crypto and reordering
-      crypto_worker_pool.wait_pending_tasks();
+      wait_pending_crypto();
       worker.run_pending_tasks();
 
       FLUSH_AND_ASSERT_EQ(2, pdcp_tx->nof_pdus_in_window());
@@ -315,7 +328,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_expiry)
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + 2, sn_size));
 
       // Wait for crypto and reordering
-      crypto_worker_pool.wait_pending_tasks();
+      wait_pending_crypto();
       worker.run_pending_tasks();
 
       FLUSH_AND_ASSERT_EQ(3, pdcp_tx->nof_pdus_in_window());
@@ -366,7 +379,13 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
     for (uint32_t i = 0; i < nof_sdus; i++) {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
+
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + i, sn_size));
+
       ASSERT_EQ(i + 1, pdcp_tx->nof_pdus_in_window());
     }
     // Write one SDU with one more tick, to make sure the discard timer is restarted
@@ -374,6 +393,11 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
     timers.tick();
     byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
+
+    // Wait for crypto and reordering
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+
     pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + nof_sdus, sn_size));
     ASSERT_EQ(nof_sdus + 1, pdcp_tx->nof_pdus_in_window());
 
@@ -468,6 +492,10 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
 
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
+
       // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       byte_buffer pdu = std::move(test_frame.pdu_queue.front());
@@ -493,6 +521,10 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
 
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
+
       // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       byte_buffer pdu = std::move(test_frame.pdu_queue.front());
@@ -502,6 +534,10 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
       // Write an SDU that should be dropped
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
 
       // Check there is no new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 0);
@@ -514,6 +550,10 @@ TEST_P(pdcp_tx_test, pdu_stall_with_discard)
       // Write an SDU that should not be dropped
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
 
       // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
@@ -559,6 +599,10 @@ TEST_P(pdcp_tx_test, count_wraparound)
     for (uint32_t i = 0; i < n_sdus; i++) {
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
+
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + i, sn_size));
     }
     // check nof max_count reached and max protocol failures.

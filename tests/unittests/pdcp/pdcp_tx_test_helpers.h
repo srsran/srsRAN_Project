@@ -84,6 +84,10 @@ public:
 class pdcp_tx_test_helper
 {
 public:
+  pdcp_tx_test_helper(uint32_t nof_crypto_threads_, task_executor& crypto_exec_, manual_task_worker& dl_worker) :
+    nof_crypto_threads(nof_crypto_threads_), worker(dl_worker), crypto_exec(crypto_exec_)
+  {
+  }
   virtual ~pdcp_tx_test_helper() = default;
 
 protected:
@@ -151,7 +155,7 @@ protected:
                                                test_frame,
                                                timer_factory{timers, worker},
                                                worker,
-                                               worker,
+                                               crypto_exec,
                                                nof_crypto_threads,
                                                *metrics_agg);
     pdcp_tx->set_status_provider(&test_frame);
@@ -184,7 +188,6 @@ protected:
   uint32_t           mac_hdr_len = 4;
   pdcp_tx_config     config      = {};
   timer_manager      timers;
-  manual_task_worker worker{4098};
   pdcp_tx_test_frame test_frame = {};
 
   uint32_t rlc_sdu_queue_size = 20 * (1 << 20);
@@ -197,14 +200,42 @@ protected:
   std::unique_ptr<pdcp_metrics_aggregator> metrics_agg;
   std::unique_ptr<pdcp_entity_tx>          pdcp_tx;
 
-  // Crypto worker pool
-  const uint32_t nof_crypto_threads = 2;
-  unsigned       crypto_queue_size  = 128;
+  const uint32_t      nof_crypto_threads;
+  manual_task_worker& worker;
+  task_executor&      crypto_exec;
+};
+
+/// Fixture class for PDCP tests
+class pdcp_tx_test_helper_default_crypto : public pdcp_tx_test_helper
+{
+public:
+  pdcp_tx_test_helper_default_crypto() : pdcp_tx_test_helper(2, crypto_worker, dl_worker) {}
+
+protected:
+  void wait_pending_crypto() { crypto_worker_pool.wait_pending_tasks(); }
+
+private:
+  manual_task_worker dl_worker{64};
+  unsigned           crypto_queue_size = 128;
 
   task_worker_pool<concurrent_queue_policy::lockfree_mpmc>          crypto_worker_pool{"crypto",
                                                                               nof_crypto_threads,
                                                                               crypto_queue_size};
-  task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc> crypto_exec =
+  task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc> crypto_worker =
       task_worker_pool_executor<concurrent_queue_policy::lockfree_mpmc>(crypto_worker_pool);
+};
+
+class pdcp_tx_test_helper_manual_crypto : public pdcp_tx_test_helper
+{
+public:
+  pdcp_tx_test_helper_manual_crypto() : pdcp_tx_test_helper(1, crypto_worker, dl_worker) {}
+
+protected:
+  void wait_pending_crypto() { crypto_worker.run_pending_tasks(); }
+  void wait_one_crypto_task() { crypto_worker.try_run_next(); }
+
+private:
+  manual_task_worker dl_worker{64, true, true};
+  manual_task_worker crypto_worker{4096, true, true};
 };
 } // namespace srsran

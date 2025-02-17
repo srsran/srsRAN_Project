@@ -35,6 +35,11 @@ TEST_P(pdcp_tx_status_report_test, handle_status_report)
       // Write SDU
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
+
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, sn_size));
 
       // Get generated PDU
@@ -129,6 +134,11 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
       // Write SDU
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Wait for crypto and reordering
+      wait_pending_crypto();
+      worker.run_pending_tasks();
+
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(count, sn_size));
 
       // Get generated PDU
@@ -139,6 +149,10 @@ TEST_P(pdcp_tx_status_report_test, data_recovery)
     }
 
     pdcp_tx->data_recovery();
+
+    // Wait for crypto and reordering
+    wait_pending_crypto();
+    worker.run_pending_tasks();
 
     // read the status report
     {

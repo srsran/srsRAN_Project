@@ -20,7 +20,7 @@ constexpr uint32_t pool_size = 128;
 
 /// Fixture class for PDCP TX tests
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
-class pdcp_tx_empty_pool_test : public pdcp_tx_test_helper,
+class pdcp_tx_empty_pool_test : public pdcp_tx_test_helper_default_crypto,
                                 public ::testing::Test,
                                 public ::testing::WithParamInterface<std::tuple<pdcp_sn_size, unsigned>>
 {

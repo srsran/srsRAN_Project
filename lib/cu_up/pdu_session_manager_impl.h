@@ -61,11 +61,13 @@ public:
   void disconnect_all_pdu_sessions();
   void update_security_config(const security::sec_as_config& security_info);
 
-  void             notify_pdcp_pdu_processing_stopped();
-  void             restart_pdcp_pdu_processing();
+  void notify_pdcp_pdu_processing_stopped();
+  void restart_pdcp_pdu_processing();
+
   async_task<void> await_crypto_rx_all_pdu_sessions();
   async_task<void> await_crypto_rx_all_drbs(const std::unique_ptr<pdu_session>& pdu_session);
-  async_task<void> await_crypto_drb(const std::unique_ptr<drb_context>& drb);
+  async_task<void> await_crypto_tx_all_pdu_sessions();
+  async_task<void> await_crypto_tx_all_drbs(const std::unique_ptr<pdu_session>& pdu_session);
 
   /// \brief Function used to allocate a local NG-U TEID
   /// This function allocates a new TEID based on the UE id, and PDU session ID.

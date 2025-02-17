@@ -92,8 +92,30 @@ void pdcp_entity_tx::stop()
       discard_timer.stop();
     }
     metrics_timer.stop();
+    token_mngr.stop();
     logger.log_debug("Stopped PDCP entity");
   }
+}
+
+void pdcp_entity_tx::notify_pdu_processing_stopped()
+{
+  if (not stopped) {
+    token_mngr.stop();
+    logger.log_debug("Stopped PDCP entity PDU processing");
+  }
+}
+
+void pdcp_entity_tx::restart_pdu_processing()
+{
+  if (not stopped) {
+    token_mngr.start();
+    logger.log_debug("Started PDCP entity PDU processing");
+  }
+}
+
+manual_event_flag& pdcp_entity_tx::crypto_awaitable()
+{
+  return token_mngr.get_awaitable();
 }
 
 /// \brief Receive an SDU from the upper layers, apply encryption
@@ -222,7 +244,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   }
 
   /// Prepare buffer info struct to pass to crypto executor.
-  pdcp_tx_buffer_info buf_info{.buf = std::move(buf), .count = st.tx_next, .retx_id = retransmit_id};
+  pdcp_tx_buffer_info buf_info{
+      .buf = std::move(buf), .count = st.tx_next, .retx_id = retransmit_id, .token = pdcp_crypto_token(token_mngr)};
 
   // Increment TX_NEXT. We do this before passing the SDU+Header
   // to the crypto executor, so that the reordering function has the updated state.
@@ -240,6 +263,11 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 
 void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx)
 {
+  if (SRSRAN_UNLIKELY(stopped)) {
+    logger.log_debug("Dropping security protected PDU. Entity is stopped");
+    return;
+  }
+
   logger.log_debug("Applying reordering. count={} st={}", buf_info.count, st);
 
   // Drop PDU if its out of date due to retransmissions.
@@ -253,13 +281,13 @@ void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx
     return;
   }
 
-  // Drop PDU if TX widnow has advanced and COUNT is no longer inside the TX window.
+  // Drop PDU if TX window has advanced and COUNT is no longer inside the TX window.
   if (buf_info.count < st.tx_next_ack) {
     logger.log_warning("Dropping PDU, COUNT no longer inside TX window. count={} st={}", buf_info.count, st);
     return;
   }
 
-  // Drop PDU if PDU is inside window, but we already got a tranission notification for it.
+  // Drop PDU if PDU is inside window, but we already got a transmission notification for it.
   if (buf_info.count < st.tx_trans) {
     logger.log_error(
         "Dropping PDU, already got transmission notification for this COUNT. count={} st={}", buf_info.count, st);
@@ -467,7 +495,10 @@ void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info, bool is_retx)
   }
   logger.log_debug(result.buf.value().begin(), result.buf.value().end(), "Security applied. count={}", tx_count);
 
-  pdcp_tx_buffer_info pdu_info{.buf = std::move(result.buf.value()), .count = tx_count, .retx_id = buf_info.retx_id};
+  pdcp_tx_buffer_info pdu_info{.buf     = std::move(result.buf.value()),
+                               .count   = tx_count,
+                               .retx_id = buf_info.retx_id,
+                               .token   = std::move(buf_info.token)};
 
   auto post           = std::chrono::high_resolution_clock::now();
   auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
@@ -688,7 +719,8 @@ void pdcp_entity_tx::retransmit_all_pdus()
       }
 
       /// Prepare buffer info struct to pass to crypto executor.
-      pdcp_tx_buffer_info buf_info{.buf = std::move(buf), .count = count, .retx_id = retransmit_id};
+      pdcp_tx_buffer_info buf_info{
+          .buf = std::move(buf), .count = count, .retx_id = retransmit_id, .token = pdcp_crypto_token(token_mngr)};
 
       auto fn = [this, buf_info = std::move(buf_info)]() mutable { apply_security(std::move(buf_info), true); };
       if (not crypto_executor.execute(std::move(fn))) {

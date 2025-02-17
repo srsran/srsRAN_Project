@@ -142,6 +142,11 @@ TEST_P(pdcp_tx_metrics_test, sdu_pdu)
     // Write SDU
     byte_buffer sdu = byte_buffer::create(sdu1).value();
     pdcp_tx->handle_sdu(std::move(sdu));
+
+    // Wait for crypto and reordering
+    wait_pending_crypto();
+    worker.run_pending_tasks();
+
     pdcp_tx->handle_transmit_notification(pdcp_compute_sn(st.tx_next + 1, sn_size));
 
     uint32_t exp_sdu_size = 2;
