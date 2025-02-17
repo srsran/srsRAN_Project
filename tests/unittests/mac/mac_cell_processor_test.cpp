@@ -48,6 +48,7 @@ public:
   timer_manager                                timers;
   mac_dl_cell_metric_handler                   cell_metrics{to_du_cell_index(0),
                                           1,
+                                          1,
                                           [](du_cell_index_t, const mac_dl_cell_metric_report&) {}};
   mac_cell_processor                           mac_cell;
 };

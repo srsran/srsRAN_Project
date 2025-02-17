@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/pci.h"
 #include <chrono>
 #include <vector>
 
@@ -22,6 +23,8 @@ struct mac_dl_cell_metric_report {
     std::chrono::nanoseconds max;
     std::chrono::nanoseconds average;
   };
+  /// Physical cell id.
+  pci_t pci;
   /// Number of slots considered in this report.
   unsigned nof_slots;
   /// Slot duration.

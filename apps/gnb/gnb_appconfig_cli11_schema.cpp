@@ -75,4 +75,9 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
 void srsran::autoderive_gnb_parameters_after_parsing(CLI::App& app, gnb_appconfig& config)
 {
   manage_hal_optional(app, config);
+
+  if (config.metrics_cfg.enable_json_metrics && config.metrics_cfg.rusage_report_period == 0) {
+    // Default report period 1 second.
+    config.metrics_cfg.rusage_report_period = 1000;
+  }
 }

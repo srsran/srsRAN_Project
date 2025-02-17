@@ -53,17 +53,17 @@ protected:
 
 TEST_F(mac_dl_metric_handler_test, cell_created_successfully)
 {
-  auto& cell_metrics1 = metrics.add_cell(to_du_cell_index(0), subcarrier_spacing::kHz15);
+  auto& cell_metrics1 = metrics.add_cell(to_du_cell_index(0), 1, subcarrier_spacing::kHz15);
   ASSERT_TRUE(cell_metrics1.enabled());
 
-  auto& cell_metrics2 = metrics.add_cell(to_du_cell_index(1), subcarrier_spacing::kHz15);
+  auto& cell_metrics2 = metrics.add_cell(to_du_cell_index(1), 2, subcarrier_spacing::kHz15);
   ASSERT_TRUE(cell_metrics2.enabled());
   ASSERT_NE(&cell_metrics2, &cell_metrics1);
 }
 
 TEST_F(mac_dl_metric_handler_test, for_single_cell_on_period_elapsed_then_report_is_generated)
 {
-  auto& cell_metrics = metrics.add_cell(to_du_cell_index(0), subcarrier_spacing::kHz15);
+  auto& cell_metrics = metrics.add_cell(to_du_cell_index(0), 1, subcarrier_spacing::kHz15);
 
   // Number of slots equal to period has elapsed.
   for (unsigned i = 0; i != period.count(); ++i) {
@@ -81,8 +81,8 @@ TEST_F(mac_dl_metric_handler_test, for_single_cell_on_period_elapsed_then_report
 
 TEST_F(mac_dl_metric_handler_test, when_multi_cell_then_mac_report_generated_when_all_cells_generated_report)
 {
-  auto& cell_metrics1 = metrics.add_cell(to_du_cell_index(0), subcarrier_spacing::kHz15);
-  auto& cell_metrics2 = metrics.add_cell(to_du_cell_index(1), subcarrier_spacing::kHz15);
+  auto& cell_metrics1 = metrics.add_cell(to_du_cell_index(0), 1, subcarrier_spacing::kHz15);
+  auto& cell_metrics2 = metrics.add_cell(to_du_cell_index(1), 2, subcarrier_spacing::kHz15);
 
   // Number of slots equal to period-1 has elapsed.
   for (unsigned i = 0; i != period.count() - 1; ++i) {
@@ -119,7 +119,7 @@ TEST_F(mac_dl_metric_handler_test, when_multi_cell_then_mac_report_generated_whe
 
 TEST_F(mac_dl_metric_handler_test, when_multi_cell_creation_staggered_then_reports_are_aligned_in_slot)
 {
-  auto& cell_metrics1 = metrics.add_cell(to_du_cell_index(0), subcarrier_spacing::kHz15);
+  auto& cell_metrics1 = metrics.add_cell(to_du_cell_index(0), 1, subcarrier_spacing::kHz15);
 
   // Number of slots lower than period has elapsed.
   const unsigned count_until_cell2 = period.count() - 5;
@@ -132,7 +132,7 @@ TEST_F(mac_dl_metric_handler_test, when_multi_cell_creation_staggered_then_repor
   ASSERT_FALSE(metric_notifier.last_report.has_value());
 
   // Cell 2 is created and we run the remaining slots.
-  auto& cell_metrics2 = metrics.add_cell(to_du_cell_index(1), subcarrier_spacing::kHz15);
+  auto& cell_metrics2 = metrics.add_cell(to_du_cell_index(1), 2, subcarrier_spacing::kHz15);
   for (unsigned i = 0; i != period.count() - count_until_cell2; ++i) {
     task_worker.run_pending_tasks();
     auto meas1 = cell_metrics1.start_slot(next_point);

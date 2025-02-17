@@ -27,9 +27,9 @@ DECLARE_METRIC("qam16_mod_throughput_Mbps", metric_qam16_mod_avg_throughput, dou
 DECLARE_METRIC("qam64_mod_throughput_Mbps", metric_qam64_mod_avg_throughput, double, "Mbps");
 DECLARE_METRIC("qam256_mod_throughput_Mbps", metric_qam256_mod_avg_throughput, double, "Mbps");
 DECLARE_METRIC("cpu_usage_percent", metric_cpu_usage, double, "");
-DECLARE_METRIC("BLER", metric_bler, double, "");
-DECLARE_METRIC("EVM", metric_evm, double, "");
-DECLARE_METRIC("SINR_dB", metric_sinr, double, "dB");
+DECLARE_METRIC("bler", metric_bler, double, "");
+DECLARE_METRIC("evm", metric_evm, double, "");
+DECLARE_METRIC("sinr_db", metric_sinr, double, "dB");
 
 /// DL processing metrics.
 // LDPC encoder metrics.
@@ -71,11 +71,11 @@ DECLARE_METRIC_SET("precoding_layer_mapping",
                    mlist_precoder_throughputs,
                    metric_cpu_usage);
 // FEC metrics.
-DECLARE_METRIC_SET("FEC", mset_fec_dl, metric_avg_throughput_mbps, metric_cpu_usage);
+DECLARE_METRIC_SET("fec", mset_fec_dl, metric_avg_throughput_mbps, metric_cpu_usage);
 
-// L1 Downlink metrics container.
-DECLARE_METRIC_SET("DL",
-                   mset_dl_l1,
+// Upper PHY Downlink metrics container.
+DECLARE_METRIC_SET("dl",
+                   mset_upper_phy_dl,
                    metric_avg_throughput_mbps,
                    metric_cpu_usage,
                    mset_ldpc_encoder,
@@ -130,12 +130,12 @@ DECLARE_METRIC_SET("transform_precoder",
                    metric_avg_throughput_mreps,
                    metric_cpu_usage);
 // FEC metrics.
-DECLARE_METRIC_SET("FEC", mset_fec_ul, metric_avg_throughput_mbps, metric_cpu_usage);
+DECLARE_METRIC_SET("fec", mset_fec_ul, metric_avg_throughput_mbps, metric_cpu_usage);
 // Algorithm efficiency
-DECLARE_METRIC_SET("Algo_efficiency", mset_algorithms, metric_bler, metric_evm, metric_sinr);
-// L1 Uplink metrics container.
-DECLARE_METRIC_SET("UL",
-                   mset_ul_l1,
+DECLARE_METRIC_SET("algo_efficiency", mset_algorithms, metric_bler, metric_evm, metric_sinr);
+// Upper PHY Uplink metrics container.
+DECLARE_METRIC_SET("ul",
+                   mset_upper_phy_ul,
                    metric_avg_throughput_mbps,
                    metric_cpu_usage,
                    mset_ldpc_decoder,
@@ -147,12 +147,15 @@ DECLARE_METRIC_SET("UL",
                    mset_fec_ul,
                    mset_algorithms);
 
+DECLARE_METRIC_SET("upper_phy", mset_upper_phy, mset_upper_phy_dl, mset_upper_phy_ul);
+DECLARE_METRIC_SET("du_low", mset_du_low, mset_upper_phy);
+
 /// Metrics root object.
 DECLARE_METRIC("timestamp", metric_timestamp_tag, double, "");
-DECLARE_METRIC_SET("L1", mset_l1, mset_dl_l1, mset_ul_l1);
+DECLARE_METRIC_SET("du", mset_du, mset_du_low);
 
 /// Metrics context.
-using metric_context_t = srslog::build_context_type<metric_timestamp_tag, mset_l1>;
+using metric_context_t = srslog::build_context_type<metric_timestamp_tag, mset_du>;
 
 } // namespace
 
@@ -173,13 +176,13 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   }
   double metric_period_us = static_cast<double>(odu_metrics.du.low.metrics_period.count());
 
-  metric_context_t ctx("JSON L1 Metrics");
+  metric_context_t ctx("JSON Upper PHY Metrics");
 
   /// DL path.
-  auto& dl_l1 = ctx.get<mset_l1>().get<mset_dl_l1>();
+  auto& upper_phy_dl = ctx.get<mset_du>().get<mset_du_low>().get<mset_upper_phy>().get<mset_upper_phy_dl>();
 
   // LDPC encoder.
-  auto&       ldpc_encoder       = dl_l1.get<mset_ldpc_encoder>();
+  auto&       ldpc_encoder       = upper_phy_dl.get<mset_ldpc_encoder>();
   const auto& metric_enc         = odu_metrics.du.low.ldpc_metrics.encoder_metrics;
   double      ldpc_enc_cpu_usage = 100.0 * metric_enc.cpu_usage_us / metric_period_us;
   ldpc_encoder.write<metric_average_cb_size>(metric_enc.avg_cb_size);
@@ -190,7 +193,7 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   ldpc_encoder.write<metric_cpu_usage>(ldpc_enc_cpu_usage);
 
   // LDPC rate matching.
-  auto&       ldpc_rm           = dl_l1.get<mset_ldpc_rate_matcher>();
+  auto&       ldpc_rm           = upper_phy_dl.get<mset_ldpc_rate_matcher>();
   const auto& metric_rm         = odu_metrics.du.low.ldpc_metrics.rate_match_metrics;
   double      ldpc_rm_cpu_usage = 100.0 * metric_rm.cpu_usage_us / metric_period_us;
   ldpc_rm.write<metric_average_latency>(metric_rm.avg_cb_latency);
@@ -200,13 +203,13 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   ldpc_rm.write<metric_cpu_usage>(ldpc_rm_cpu_usage);
 
   // Scrambling.
-  auto&       scrambling       = dl_l1.get<mset_scrambling>();
+  auto&       scrambling       = upper_phy_dl.get<mset_scrambling>();
   const auto& metric_scrmbl    = odu_metrics.du.low.pdsch_metrics.scrambling_metrics;
   double      scrmbl_cpu_usage = 100.0 * metric_scrmbl.cpu_usage_us / metric_period_us;
   scrambling.write<metric_cpu_usage>(scrmbl_cpu_usage);
 
   // Modulation mapper.
-  auto&       mod_mapper       = dl_l1.get<mset_modulation_map>();
+  auto&       mod_mapper       = upper_phy_dl.get<mset_modulation_map>();
   const auto& metric_modul_map = odu_metrics.du.low.pdsch_metrics.modulator_metrics;
   double      mod_cpu_usage    = 100.0 * metric_modul_map.cpu_usage_us / metric_period_us;
   if (std::isnormal(metric_modul_map.qpsk_avg_rate_Mbps)) {
@@ -224,7 +227,7 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   mod_mapper.write<metric_cpu_usage>(mod_cpu_usage);
 
   // Precoding and layer mapping.
-  auto&       precoding         = dl_l1.get<mset_precoding>();
+  auto&       precoding         = upper_phy_dl.get<mset_precoding>();
   const auto& metric_precode    = odu_metrics.du.low.pdsch_metrics.precoding_metrics;
   const auto& metric_pdsch_proc = odu_metrics.du.low.pdsch_metrics.pdsch_proc_metrics;
   double      precode_cpu_usage = 100.0 * metric_precode.cpu_usage_us / metric_period_us;
@@ -243,23 +246,23 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   const auto& metric_crc         = odu_metrics.du.low.pdsch_metrics.crc_metrics;
   double      total_cpu_usage_us = metric_enc.cpu_usage_us + metric_rm.cpu_usage_us + metric_crc.cpu_usage_us;
   double      dl_fec_cpu_usage   = 100.0 * total_cpu_usage_us / metric_period_us;
-  auto&       fec_dl             = dl_l1.get<mset_fec_dl>();
+  auto&       fec_dl             = upper_phy_dl.get<mset_fec_dl>();
   fec_dl.write<metric_avg_throughput_mbps>(metric_enc.encoding_rate_Mbps);
   fec_dl.write<metric_cpu_usage>(dl_fec_cpu_usage);
 
   // L1 DL processing.
   double dmrs_cpu_usage = 100.0 * odu_metrics.du.low.pdsch_metrics.dmrs_metrics.cpu_usage_us / metric_period_us;
   // Since FEC is running asynchronously in a separate thread pool, we add its CPU usage to the rest of L1 processing.
-  double dl_l1_cpu_usage = 100.0 * metric_pdsch_proc.cpu_usage_us / metric_period_us + dmrs_cpu_usage +
-                           dl_fec_cpu_usage + scrmbl_cpu_usage + mod_cpu_usage;
-  dl_l1.write<metric_avg_throughput_mbps>(metric_pdsch_proc.processing_rate_Mbps);
-  dl_l1.write<metric_cpu_usage>(dl_l1_cpu_usage);
+  double upper_phy_dl_cpu_usage = 100.0 * metric_pdsch_proc.cpu_usage_us / metric_period_us + dmrs_cpu_usage +
+                                  dl_fec_cpu_usage + scrmbl_cpu_usage + mod_cpu_usage;
+  upper_phy_dl.write<metric_avg_throughput_mbps>(metric_pdsch_proc.processing_rate_Mbps);
+  upper_phy_dl.write<metric_cpu_usage>(upper_phy_dl_cpu_usage);
 
   /// UL path.
-  auto& ul_l1 = ctx.get<mset_l1>().get<mset_ul_l1>();
+  auto& upper_phy_ul = ctx.get<mset_du>().get<mset_du_low>().get<mset_upper_phy>().get<mset_upper_phy_ul>();
 
   // LDPC decoder.
-  auto&       ldpc_decoder       = ul_l1.get<mset_ldpc_decoder>();
+  auto&       ldpc_decoder       = upper_phy_ul.get<mset_ldpc_decoder>();
   const auto& metric_dec         = odu_metrics.du.low.ldpc_metrics.decoder_metrics;
   double      ldpc_dec_cpu_usage = 100.0 * metric_dec.cpu_usage_us / metric_period_us;
   ldpc_decoder.write<metric_average_cb_size>(metric_dec.avg_cb_size);
@@ -270,7 +273,7 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   ldpc_decoder.write<metric_cpu_usage>(ldpc_dec_cpu_usage);
 
   // LDPC rate dematching.
-  auto&       ldpc_rdm           = ul_l1.get<mset_ldpc_rate_dematcher>();
+  auto&       ldpc_rdm           = upper_phy_ul.get<mset_ldpc_rate_dematcher>();
   const auto& metric_rdm         = odu_metrics.du.low.ldpc_metrics.rate_dematch_metrics;
   double      ldpc_rdm_cpu_usage = 100.0 * metric_rdm.cpu_usage_us / metric_period_us;
   ldpc_rdm.write<metric_average_latency>(metric_rdm.avg_cb_latency);
@@ -280,13 +283,13 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   ldpc_rdm.write<metric_cpu_usage>(ldpc_rdm_cpu_usage);
 
   // Decrambling.
-  auto&       descrambling       = ul_l1.get<mset_descrambling>();
+  auto&       descrambling       = upper_phy_ul.get<mset_descrambling>();
   const auto& metric_descrmbl    = odu_metrics.du.low.pusch_metrics.scrambling_metrics;
   double      descrmbl_cpu_usage = 100.0 * metric_descrmbl.cpu_usage_us / metric_period_us;
   descrambling.write<metric_cpu_usage>(descrmbl_cpu_usage);
 
   // Demodulation mapper.
-  auto&       demod_mapper     = ul_l1.get<mset_demodulation_map>();
+  auto&       demod_mapper     = upper_phy_ul.get<mset_demodulation_map>();
   const auto& metric_demod_map = odu_metrics.du.low.pusch_metrics.demod_demapper_metrics;
   double      demod_cpu_usage  = 100.0 * metric_demod_map.cpu_usage_us / metric_period_us;
   if (std::isnormal(metric_demod_map.qpsk_avg_rate_Mbps)) {
@@ -304,7 +307,7 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   demod_mapper.write<metric_cpu_usage>(demod_cpu_usage);
 
   // Channel estimator.
-  auto&       ch_estimator    = ul_l1.get<mset_channel_estimation>();
+  auto&       ch_estimator    = upper_phy_ul.get<mset_channel_estimation>();
   const auto& metric_chest    = odu_metrics.du.low.pusch_metrics.ch_estimator_metrics;
   double      chest_cpu_usage = 100.0 * metric_chest.cpu_usage_us / metric_period_us;
   ch_estimator.write<metric_average_latency>(metric_chest.avg_processing_latency);
@@ -314,7 +317,7 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   ch_estimator.write<metric_cpu_usage>(chest_cpu_usage);
 
   // Transform precoder.
-  auto&       xform_precoder       = ul_l1.get<mset_transform_precoder>();
+  auto&       xform_precoder       = upper_phy_ul.get<mset_transform_precoder>();
   const auto& metric_xform_precode = odu_metrics.du.low.pusch_metrics.xform_precoder_metrics;
   double      xform_precode_cpu    = 100.0 * metric_xform_precode.cpu_usage_us / metric_period_us;
   xform_precoder.write<metric_average_latency>(metric_xform_precode.avg_latency_us);
@@ -324,19 +327,19 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   const auto& metric_crc_ul       = odu_metrics.du.low.pusch_metrics.crc_metrics;
   double      ul_fec_cpu_usage_us = metric_dec.cpu_usage_us + metric_rdm.cpu_usage_us + metric_crc_ul.cpu_usage_us;
   double      ul_fec_cpu_usage    = 100.0 * ul_fec_cpu_usage_us / metric_period_us;
-  auto&       fec_ul              = ul_l1.get<mset_fec_ul>();
+  auto&       fec_ul              = upper_phy_ul.get<mset_fec_ul>();
   fec_ul.write<metric_avg_throughput_mbps>(metric_dec.decoding_rate_Mbps);
   fec_ul.write<metric_cpu_usage>(ul_fec_cpu_usage);
 
   // L1 UL processing.
   const auto& metric_pusch_proc = odu_metrics.du.low.pusch_metrics.pusch_proc_metrics;
   // Since FEC is running asynchronously in a separate thread pool, we add its CPU usage to the rest of L1 processing.
-  double ul_l1_cpu_usage = 100.0 * metric_pusch_proc.cpu_usage_us / metric_period_us + ul_fec_cpu_usage;
+  double upper_phy_ul_cpu_usage = 100.0 * metric_pusch_proc.cpu_usage_us / metric_period_us + ul_fec_cpu_usage;
 
-  ul_l1.write<metric_avg_throughput_mbps>(metric_pusch_proc.processing_rate_Mbps);
-  ul_l1.write<metric_cpu_usage>(ul_l1_cpu_usage);
+  upper_phy_ul.write<metric_avg_throughput_mbps>(metric_pusch_proc.processing_rate_Mbps);
+  upper_phy_ul.write<metric_cpu_usage>(upper_phy_ul_cpu_usage);
 
-  auto& algorithms = ul_l1.get<mset_algorithms>();
+  auto& algorithms = upper_phy_ul.get<mset_algorithms>();
   algorithms.write<metric_bler>(metric_pusch_proc.decoding_bler);
   algorithms.write<metric_evm>(metric_pusch_proc.evm);
   algorithms.write<metric_sinr>(metric_pusch_proc.sinr_dB);
@@ -417,10 +420,6 @@ static void log_handle_du_low_metrics(srslog::basic_logger& logger, const srs_du
                                    static_cast<double>(du_lo.pusch_metrics.pusch_proc_metrics.total_proc_time.count());
 
   fmt::basic_memory_buffer<char, str_buffer_size> buffer;
-
-  fmt::format_to(std::back_inserter(buffer),
-                 "\n--- DU low metrics accumulated over {}ms ---\n",
-                 static_cast<double>(du_lo.metrics_period.count()) / 1000.0);
 
   const auto& ldpc_encoder = du_lo.ldpc_metrics.encoder_metrics;
   fmt::format_to(std::back_inserter(buffer), "--- LDPC Encoder metrics (per codeblock) ---\n");
@@ -593,21 +592,23 @@ static void log_handle_du_low_metrics(srslog::basic_logger& logger, const srs_du
   double ldpc_enc_cpu_usage = 100.0 * ldpc_encoder.cpu_usage_us / metric_period_us;
   double ldpc_dec_cpu_usage = 100.0 * ldpc_decoder.cpu_usage_us / metric_period_us;
   double dl_fec_cpu_usage =
-      ldpc_encoder.cpu_usage_us + ldpc_rm.cpu_usage_us + crc_pdsch.cpu_usage_us / metric_period_us;
+      100.0 * (ldpc_encoder.cpu_usage_us + ldpc_rm.cpu_usage_us + crc_pdsch.cpu_usage_us) / metric_period_us;
   double ul_fec_cpu_usage =
-      ldpc_decoder.cpu_usage_us + ldpc_rdm.cpu_usage_us + crc_pusch.cpu_usage_us / metric_period_us;
-  double ldpc_rm_cpu_usage       = ldpc_rm.cpu_usage_us / metric_period_us;
-  double ldpc_rdm_cpu_usage      = ldpc_rdm.cpu_usage_us / metric_period_us;
-  double scramble_cpu_usage      = prg_pdsch.cpu_usage_us / metric_period_us;
-  double descramble_cpu_usage    = prg_pusch.cpu_usage_us / metric_period_us;
-  double pdsch_mod_map_cpu       = pdsch_mod.cpu_usage_us / metric_period_us;
-  double pusch_demod_map_cpu     = pusch_demod_map.cpu_usage_us / metric_period_us;
-  double pdsch_precode_cpu_usage = p.cpu_usage_us / metric_period_us;
-  double pusch_precode_cpu_usage = xform.cpu_usage_us / metric_period_us;
-  // Since FEC is running asynchronously in a separate thread pool, we add its CPU usage to the rest of L1 processing.
-  double dl_l1_cpu_usage =
-      100.0 * pdsch_proc.cpu_usage_us / metric_period_us + dl_fec_cpu_usage + pdsch_mod_map_cpu + scramble_cpu_usage;
-  double ul_l1_cpu_usage = 100.0 * pusch_proc.cpu_usage_us / metric_period_us + ul_fec_cpu_usage;
+      100.0 * (ldpc_decoder.cpu_usage_us + ldpc_rdm.cpu_usage_us + crc_pusch.cpu_usage_us) / metric_period_us;
+  double ldpc_rm_cpu_usage       = 100.0 * ldpc_rm.cpu_usage_us / metric_period_us;
+  double ldpc_rdm_cpu_usage      = 100.0 * ldpc_rdm.cpu_usage_us / metric_period_us;
+  double scramble_cpu_usage      = 100.0 * prg_pdsch.cpu_usage_us / metric_period_us;
+  double descramble_cpu_usage    = 100.0 * prg_pusch.cpu_usage_us / metric_period_us;
+  double pdsch_mod_map_cpu       = 100.0 * pdsch_mod.cpu_usage_us / metric_period_us;
+  double pusch_demod_map_cpu     = 100.0 * pusch_demod_map.cpu_usage_us / metric_period_us;
+  double pdsch_dmrs_cpu_usage    = 100.0 * pdsch_dmrs.cpu_usage_us / metric_period_us;
+  double pdsch_precode_cpu_usage = 100.0 * p.cpu_usage_us / metric_period_us;
+  double pusch_precode_cpu_usage = 100.0 * xform.cpu_usage_us / metric_period_us;
+  // Since FEC is running asynchronously in a separate thread pool, we add its CPU usage to the rest of upper phy
+  // processing.
+  double upper_phy_dl_cpu_usage = 100.0 * pdsch_proc.cpu_usage_us / metric_period_us + dl_fec_cpu_usage +
+                                  pdsch_mod_map_cpu + scramble_cpu_usage + pdsch_dmrs_cpu_usage;
+  double upper_phy_ul_cpu_usage = 100.0 * pusch_proc.cpu_usage_us / metric_period_us + ul_fec_cpu_usage;
 
   fmt::format_to(std::back_inserter(buffer), "-------- CPU usage -------\n");
   fmt::format_to(std::back_inserter(buffer), "           DL FEC: {:.2f} %\n", dl_fec_cpu_usage);
@@ -622,8 +623,8 @@ static void log_handle_du_low_metrics(srslog::basic_logger& logger, const srs_du
   fmt::format_to(std::back_inserter(buffer), "  Demodul. mapper: {:.2f} %\n", pusch_demod_map_cpu);
   fmt::format_to(std::back_inserter(buffer), "     DL layer map: {:.2f} %\n", pdsch_precode_cpu_usage);
   fmt::format_to(std::back_inserter(buffer), "     UL precoding: {:.2f} %\n", pusch_precode_cpu_usage);
-  fmt::format_to(std::back_inserter(buffer), "            L1 DL: {:.2f} %\n", dl_l1_cpu_usage);
-  fmt::format_to(std::back_inserter(buffer), "            L1 UL: {:.2f} %\n", ul_l1_cpu_usage);
+  fmt::format_to(std::back_inserter(buffer), "            L1 DL: {:.2f} %\n", upper_phy_dl_cpu_usage);
+  fmt::format_to(std::back_inserter(buffer), "            L1 UL: {:.2f} %\n", upper_phy_ul_cpu_usage);
   fmt::format_to(std::back_inserter(buffer), "\n");
 
   // Flush buffer to the logger.

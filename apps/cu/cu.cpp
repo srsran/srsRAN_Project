@@ -207,6 +207,11 @@ int main(int argc, char** argv)
 
     autoderive_cu_up_parameters_after_parsing(
         cu_cfg, o_cu_up_app_unit->get_o_cu_up_unit_config(), o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
+
+    if (cu_cfg.metrics_cfg.enable_json_metrics && cu_cfg.metrics_cfg.rusage_report_period == 0) {
+      // Default report period 1 second.
+      cu_cfg.metrics_cfg.rusage_report_period = 1000;
+    }
   });
 
   // Parse arguments.

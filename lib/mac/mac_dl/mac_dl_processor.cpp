@@ -33,7 +33,8 @@ void mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req)
   srsran_assert(not has_cell(cell_cfg_req.cell_index), "Overwriting existing cell is invalid.");
 
   // Add cell in metric reports.
-  mac_dl_cell_metric_handler& cell_metrics = metrics.add_cell(cell_cfg_req.cell_index, cell_cfg_req.scs_common);
+  mac_dl_cell_metric_handler& cell_metrics =
+      metrics.add_cell(cell_cfg_req.cell_index, cell_cfg_req.pci, cell_cfg_req.scs_common);
 
   // Create MAC cell and add it to list.
   cells[cell_cfg_req.cell_index] =

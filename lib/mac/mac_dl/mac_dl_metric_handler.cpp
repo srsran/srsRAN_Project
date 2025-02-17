@@ -26,9 +26,13 @@ mac_dl_cell_metric_handler::non_persistent_data::latency_data::get_report(unsign
 
 mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(
     du_cell_index_t                                                        cell_index_,
+    pci_t                                                                  cell_pci_,
     unsigned                                                               period_slots_,
     std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report_) :
-  cell_index(cell_index_), on_new_cell_report(std::move(on_new_cell_report_)), period_slots(period_slots_)
+  cell_index(cell_index_),
+  cell_pci(cell_pci_),
+  on_new_cell_report(std::move(on_new_cell_report_)),
+  period_slots(period_slots_)
 {
 }
 
@@ -80,6 +84,7 @@ void mac_dl_cell_metric_handler::handle_slot_completion(slot_point              
   if (sl_tx >= next_report_slot) {
     // Prepare cell report.
     mac_dl_cell_metric_report report;
+    report.pci                              = cell_pci;
     report.slot_duration                    = std::chrono::nanoseconds(unsigned(1e9 / sl_tx.nof_slots_per_subframe()));
     report.nof_slots                        = data.nof_slots;
     report.wall_clock_latency               = data.wall.get_report(data.nof_slots);
@@ -107,15 +112,17 @@ mac_dl_metric_handler::mac_dl_metric_handler(std::chrono::milliseconds period_,
 {
 }
 
-mac_dl_cell_metric_handler& mac_dl_metric_handler::add_cell(du_cell_index_t cell_index, subcarrier_spacing scs)
+mac_dl_cell_metric_handler&
+mac_dl_metric_handler::add_cell(du_cell_index_t cell_index, pci_t pci, subcarrier_spacing scs)
 {
   if (not cells.contains(cell_index)) {
     unsigned period_slots = period.count() * get_nof_slots_per_subframe(scs);
-    cells.emplace(cell_index,
-                  std::make_unique<cell_context>(
-                      cell_index, period_slots, [this](du_cell_index_t cidx, const mac_dl_cell_metric_report& rep) {
-                        handle_cell_report(cidx, rep);
-                      }));
+    cells.emplace(
+        cell_index,
+        std::make_unique<cell_context>(
+            cell_index, pci, period_slots, [this](du_cell_index_t cidx, const mac_dl_cell_metric_report& rep) {
+              handle_cell_report(cidx, rep);
+            }));
     cell_left_bitmap.fetch_add((1U << static_cast<unsigned>(cell_index)), std::memory_order_acq_rel);
   }
   return cells[cell_index]->handler;

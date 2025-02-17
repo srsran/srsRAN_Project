@@ -16,6 +16,7 @@
 #include "srsran/adt/slotted_array.h"
 #include "srsran/mac/mac_metrics.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/ran/pci.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/tracing/resource_usage.h"
@@ -59,6 +60,7 @@ public:
   };
 
   mac_dl_cell_metric_handler(du_cell_index_t                                                        cell_index,
+                             pci_t                                                                  cell_pci,
                              unsigned                                                               period_slots_,
                              std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report);
 
@@ -90,6 +92,7 @@ private:
                               const expected<resource_usage::snapshot, int>& rusg_diff);
 
   const du_cell_index_t                                                  cell_index;
+  const pci_t                                                            cell_pci;
   std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report;
   const unsigned                                                         period_slots;
 
@@ -109,7 +112,7 @@ public:
                         task_executor&            ctrl_exec);
 
   /// Add new cell to be managed by the metrics handler.
-  mac_dl_cell_metric_handler& add_cell(du_cell_index_t cell_index, subcarrier_spacing scs);
+  mac_dl_cell_metric_handler& add_cell(du_cell_index_t cell_index, pci_t pci, subcarrier_spacing scs);
 
   /// Remove cell from metric handler.
   void remove_cell(du_cell_index_t cell_index);
@@ -126,9 +129,10 @@ private:
     mac_dl_cell_metric_handler handler;
 
     cell_context(du_cell_index_t                                                        cell_index,
+                 pci_t                                                                  pci,
                  unsigned                                                               period_slots,
                  std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report) :
-      queue(2), handler(cell_index, period_slots, std::move(on_new_cell_report))
+      queue(2), handler(cell_index, pci, period_slots, std::move(on_new_cell_report))
     {
     }
   };

@@ -100,4 +100,9 @@ void srsran::autoderive_du_parameters_after_parsing(CLI::App& app, du_appconfig&
 {
   manage_hal_optional(app, du_cfg);
   configure_default_f1u(du_cfg);
+
+  if (du_cfg.metrics_cfg.enable_json_metrics && du_cfg.metrics_cfg.rusage_report_period == 0) {
+    // Default report period 1 second.
+    du_cfg.metrics_cfg.rusage_report_period = 1000;
+  }
 }
