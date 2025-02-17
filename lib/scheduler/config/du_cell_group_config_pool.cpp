@@ -22,8 +22,8 @@ ue_cell_config_ptr du_cell_config_pool::update_ue(const serving_cell_config& ue_
 {
   ue_cell_res_config ret;
   ret.cell_index = ue_cell.cell_index;
-  if (ue_cell.ul_config.has_value()) {
-    ret.ul_config.emplace(ul_cfg_pool.create(ue_cell.ul_config.value()));
+  if (ue_cell.ul_config.has_value() and ue_cell.ul_config.value().pusch_serv_cell_cfg.has_value()) {
+    ret.pusch_serv_cell_cfg.emplace(pusch_serv_cell_pool.create(ue_cell.ul_config.value().pusch_serv_cell_cfg.value()));
   }
   if (ue_cell.pdsch_serv_cell_cfg.has_value()) {
     ret.pdsch_serv_cell_cfg = pdsch_serv_cell_pool.create(ue_cell.pdsch_serv_cell_cfg.value());
@@ -62,7 +62,7 @@ void du_cell_config_pool::add_bwp(ue_cell_res_config&           out,
   bwp_config bwp_cfg;
   bwp_cfg.bwp_id = bwp_id;
   // BWP DL Common
-  bwp_cfg.dl_common = dl_bwp_common;
+  bwp_cfg.dl_common = bwp_dl_common_config_pool.create(dl_bwp_common);
   if (dl_bwp_common.pdcch_common.coreset0.has_value()) {
     auto& coreset0 = dl_bwp_common.pdcch_common.coreset0.value();
     bwp_cfg.coresets.emplace(coreset0.id, coreset_config_pool.create(coreset0));
@@ -79,7 +79,7 @@ void du_cell_config_pool::add_bwp(ue_cell_res_config&           out,
 
   // BWP DL Dedicated
   if (dl_bwp_ded != nullptr) {
-    bwp_cfg.dl_ded = *dl_bwp_ded;
+    bwp_cfg.dl_ded = bwp_dl_ded_config_pool.create(*dl_bwp_ded);
     for (const coreset_configuration& cs : dl_bwp_ded->pdcch_cfg->coresets) {
       // TS 38.331, "PDCCH-Config" - In case network reconfigures control resource set with the same
       // ControlResourceSetId as used for commonControlResourceSet configured via PDCCH-ConfigCommon,
@@ -96,7 +96,7 @@ void du_cell_config_pool::add_bwp(ue_cell_res_config&           out,
 
   // BWP UL Common
   if (ul_bwp_common != nullptr) {
-    bwp_cfg.ul_common = *ul_bwp_common;
+    bwp_cfg.ul_common = bwp_ul_common_config_pool.create(*ul_bwp_common);
   }
 
   // BWP UL Dedicated

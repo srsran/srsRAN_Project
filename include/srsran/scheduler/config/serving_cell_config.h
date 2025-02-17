@@ -213,12 +213,12 @@ struct pusch_serving_cell_config {
 /// Uplink configuration, as per \c UplinkConfig, in \c ServingCellConfig, TS 38.331.
 struct uplink_config {
   bwp_uplink_dedicated                     init_ul_bwp;
-  std::optional<pusch_serving_cell_config> pusch_scell_cfg;
+  std::optional<pusch_serving_cell_config> pusch_serv_cell_cfg;
   // TODO: add remaining fields.
 
   bool operator==(const uplink_config& other) const
   {
-    return init_ul_bwp == other.init_ul_bwp and pusch_scell_cfg == other.pusch_scell_cfg;
+    return init_ul_bwp == other.init_ul_bwp and pusch_serv_cell_cfg == other.pusch_serv_cell_cfg;
   }
 };
 

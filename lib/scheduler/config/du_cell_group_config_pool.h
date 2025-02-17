@@ -48,9 +48,12 @@ private:
   // Pools of UE-dedicated configurations.
   config_object_pool<ue_cell_res_config>        cell_cfg_pool;
   config_object_pool<bwp_config>                bwp_config_pool;
+  config_object_pool<bwp_downlink_common>       bwp_dl_common_config_pool;
+  config_object_pool<bwp_downlink_dedicated>    bwp_dl_ded_config_pool;
+  config_object_pool<bwp_uplink_common>         bwp_ul_common_config_pool;
   config_object_pool<coreset_configuration>     coreset_config_pool;
-  config_object_pool<uplink_config>             ul_cfg_pool;
   config_object_pool<pdsch_serving_cell_config> pdsch_serv_cell_pool;
+  config_object_pool<pusch_serving_cell_config> pusch_serv_cell_pool;
   config_object_pool<csi_meas_config>           csi_meas_config_pool;
 };
 

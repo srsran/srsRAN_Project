@@ -295,7 +295,7 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
   const search_space_info&                     ss_info     = ue_cell_cfg.search_space(grant_params.ss_id);
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg =
       ss_info.pdsch_time_domain_list[grant_params.pdsch_td_res_index];
-  const subcarrier_spacing              scs      = ss_info.bwp->dl_common->generic_params.scs;
+  const subcarrier_spacing              scs      = ss_info.bwp->dl_common->value().generic_params.scs;
   const cell_configuration&             cell_cfg = ue_cell_cfg.cell_cfg_common;
   std::optional<dl_harq_process_handle> h_dl;
   const bool                            is_retx = grant.h_id != INVALID_HARQ_ID;
@@ -644,7 +644,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     const search_space_info&                     ss_info      = param_candidate.ss();
     const dci_ul_rnti_config_type                dci_type     = param_candidate.dci_ul_rnti_cfg_type();
     const search_space_configuration&            ss_cfg       = *ss_info.cfg;
-    const bwp_uplink_common&                     bwp_ul_cmn   = *ss_info.bwp->ul_common;
+    const bwp_uplink_common&                     bwp_ul_cmn   = *ss_info.bwp->ul_common.value();
     const subcarrier_spacing                     scs          = bwp_ul_cmn.generic_params.scs;
     const unsigned                               final_k2     = pusch_td_cfg.k2 + cell_cfg.ntn_cs_koffset;
 
@@ -940,9 +940,9 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
           pusch_cfg.max_nof_csi_part2_bits,
           static_cast<unsigned>(pusch_cfg.mcs_table),
           ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos == dmrs_typeA_position::pos2 ? "pos2" : "pos3",
-          ue_cell_cfg.ul_cfg()->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value().is_dmrs_type2 ? "yes" : "no",
+          ue_cell_cfg.init_bwp().ul_ded->pusch_cfg->pusch_mapping_type_a_dmrs.value().is_dmrs_type2 ? "yes" : "no",
           static_cast<unsigned>(
-              ue_cell_cfg.ul_cfg()->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value().additional_positions));
+              ue_cell_cfg.init_bwp().ul_ded->pusch_cfg->pusch_mapping_type_a_dmrs.value().additional_positions));
       get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
       return {alloc_status::invalid_params};
     }
@@ -984,8 +984,8 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     switch (dci_type) {
       case dci_ul_rnti_config_type::tc_rnti_f0_0:
         build_dci_f0_0_tc_rnti(pdcch->dci,
-                               *ue_cell_cfg.bwp(to_bwp_id(0)).dl_common,
-                               ue_cell_cfg.bwp(ue_cc->active_bwp_id()).ul_common->generic_params,
+                               *ue_cell_cfg.bwp(to_bwp_id(0)).dl_common.value(),
+                               ue_cell_cfg.bwp(ue_cc->active_bwp_id()).ul_common->value().generic_params,
                                crbs,
                                param_candidate.pusch_td_res_index(),
                                mcs_tbs_info.value().mcs,

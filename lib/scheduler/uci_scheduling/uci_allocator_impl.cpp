@@ -57,7 +57,7 @@ static void add_csi_to_uci_on_pusch(uci_info::csi_info& uci_csi, const ue_cell_c
     csi_report_pusch_size csi_size = get_csi_report_pusch_size(uci_csi.csi_rep_cfg);
     uci_csi.csi_part1_nof_bits     = csi_size.part1_size.value();
 
-    const auto& uci_cfg = ue_cell_cfg.ul_cfg()->init_ul_bwp.pusch_cfg.value().uci_cfg.value();
+    const auto& uci_cfg = ue_cell_cfg.init_bwp().ul_ded->pusch_cfg.value().uci_cfg.value();
 
     // We assume the configuration contains the values for beta_offsets.
     const auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
@@ -78,7 +78,7 @@ static void add_csi_to_uci_on_pusch(uci_info::csi_info& uci_csi, const ue_cell_c
     uci_csi.csi_part1_nof_bits = get_csi_report_pucch_size(uci_csi.csi_rep_cfg).value();
     // NOTE: with PUCCH-configured CSI report, CSI patrt 2 is not supported.
 
-    const auto& uci_cfg = ue_cell_cfg.ul_cfg()->init_ul_bwp.pusch_cfg.value().uci_cfg.value();
+    const auto& uci_cfg = ue_cell_cfg.init_bwp().ul_ded->pusch_cfg.value().uci_cfg.value();
 
     // We assume the configuration contains the values for beta_offsets.
     const auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg.beta_offsets_cfg.value());
@@ -268,7 +268,7 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
 
   // We assume that at this point, there are no existing UCI grants in the PUSCH; allocate a new one.
   uci_info& uci = pusch_grant.uci.emplace();
-  uci.alpha     = ue_cell_cfg.ul_cfg()->init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling;
+  uci.alpha     = ue_cell_cfg.init_bwp().ul_ded->pusch_cfg.value().uci_cfg.value().scaling;
 
   if (pucch_uci.csi_part1_nof_bits != 0) {
     // The number of bits is computed based on the CSI report configuration.
@@ -279,7 +279,7 @@ void uci_allocator_impl::multiplex_uci_on_pusch(ul_sched_info&                pu
     uci.harq.emplace(uci_info::harq_info());
     uci.harq.value().harq_ack_nof_bits = pucch_uci.harq_ack_nof_bits;
     update_uci_on_pusch_harq_offsets(uci.harq.value(),
-                                     ue_cell_cfg.ul_cfg()->init_ul_bwp.pusch_cfg.value().uci_cfg.value());
+                                     ue_cell_cfg.init_bwp().ul_ded->pusch_cfg.value().uci_cfg.value());
   }
 }
 
@@ -322,7 +322,7 @@ void uci_allocator_impl::uci_allocate_csi_opportunity(cell_slot_resource_allocat
     // If there is UCI grant allocated, allocate it.
     srsran_assert(not existing_pusch->uci.has_value(), "UCI on PUSCH grant for CSI cannot be already allocated");
     existing_pusch->uci.emplace();
-    existing_pusch->uci.value().alpha = ue_cell_cfg.ul_cfg()->init_ul_bwp.pusch_cfg.value().uci_cfg.value().scaling;
+    existing_pusch->uci.value().alpha = ue_cell_cfg.init_bwp().ul_ded->pusch_cfg.value().uci_cfg.value().scaling;
 
     add_csi_to_uci_on_pusch(existing_pusch->uci.value().csi.emplace(uci_info::csi_info()), ue_cell_cfg);
     return;

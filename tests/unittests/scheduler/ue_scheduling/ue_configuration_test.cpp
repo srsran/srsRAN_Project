@@ -38,7 +38,8 @@ TEST_F(ue_configuration_test, configuration_valid_on_creation)
 
   // Test Common Config.
   TESTASSERT(ue_cfg.find_bwp(to_bwp_id(0)) != nullptr);
-  TESTASSERT(ue_cfg.bwp(to_bwp_id(0)).dl_common->generic_params == cell_cfg.dl_cfg_common.init_dl_bwp.generic_params);
+  TESTASSERT(ue_cfg.bwp(to_bwp_id(0)).dl_common->value().generic_params ==
+             cell_cfg.dl_cfg_common.init_dl_bwp.generic_params);
   TESTASSERT(ue_cfg.coreset(to_coreset_id(0)).id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->id);
   TESTASSERT_EQ(0, fmt::underlying(ue_cfg.search_space(to_search_space_id(0)).cfg->get_id()));
   TESTASSERT(*ue_cfg.search_space(to_search_space_id(0)).cfg ==
@@ -157,7 +158,7 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
   ue_cell_configuration ue_cfg{crnti, cell_cfg, cfg_pool.add_ue(ue_create_msg).cells[to_du_cell_index(0)]};
 
   const bwp_config& bwp            = ue_cfg.bwp(to_bwp_id(0));
-  const unsigned    max_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
+  const unsigned    max_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->value().generic_params.scs);
 
   unsigned       sfn = test_rgen::uniform_int<unsigned>(0, 1023);
   const unsigned slots_to_test =

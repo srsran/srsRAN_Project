@@ -69,7 +69,7 @@ protected:
     const pdsch_codeword cw{
         sch_mcs_description{modulation_scheme::QAM256, 0.9}, sch_mcs_index{5}, pdsch_mcs_table::qam64, 0, 128};
     const pdsch_information pdsch{ue_ptr->crnti,
-                                  &ss.bwp->dl_common->generic_params,
+                                  &ss.bwp->dl_common->value().generic_params,
                                   ss.coreset,
                                   vrb_alloc{vrb_interval{0, 5}},
                                   ss.pdsch_time_domain_list[0].symbols,

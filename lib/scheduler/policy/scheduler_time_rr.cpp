@@ -99,7 +99,7 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const slice_ue_repository&  
   const slice_ue&              u      = *ues.begin();
   const ue_cell_configuration& ue_cfg = u.get_pcell().cfg();
   const auto*                  ss_info =
-      ue_cfg.find_search_space(ue_cfg.bwp(to_bwp_id(0)).dl_ded->pdcch_cfg->search_spaces.back().get_id());
+      ue_cfg.find_search_space(ue_cfg.bwp(to_bwp_id(0)).dl_ded.value()->pdcch_cfg->search_spaces.back().get_id());
   if (ss_info == nullptr) {
     return 0;
   }
@@ -107,7 +107,7 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const slice_ue_repository&  
   if (is_dl) {
     bwp_crb_limits = pdsch_helper::get_ra_crb_limits(ss_info->get_dl_dci_format(),
                                                      ue_cfg.cell_cfg_common.dl_cfg_common.init_dl_bwp,
-                                                     *ss_info->bwp->dl_common,
+                                                     *ss_info->bwp->dl_common.value(),
                                                      *ss_info->cfg,
                                                      *ss_info->coreset);
   } else {

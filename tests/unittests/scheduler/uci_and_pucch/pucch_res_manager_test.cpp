@@ -33,7 +33,7 @@ public:
     // TODO: when the CSI is enabled in the main config, replace create_initial_ue_serving_cell_config_with_csi() with
     //       config_helpers::create_default_initial_ue_serving_cell_config().
     ue_cell_cfg(to_rnti(0x4601), cell_cfg, cell_cfg_pool.update_ue(ue_create_req)),
-    pucch_cfg{ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value()},
+    pucch_cfg{ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value()},
     sl_tx(slot_point(0, 0))
   {
     uplink_config ul_cfg = test_helpers::make_test_ue_uplink_config(cell_config_builder_params{});
@@ -530,10 +530,7 @@ protected:
 
       };
 
-    [[nodiscard]] const pucch_config& get_pucch_cfg() const
-    {
-      return ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value();
-    }
+    [[nodiscard]] const pucch_config& get_pucch_cfg() const { return ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value(); }
 
     rnti_t                cnrti;
     ue_cell_configuration ue_cell_cfg;

@@ -117,7 +117,7 @@ pdcch_dl_information* pdcch_resource_allocator_impl::alloc_dl_pdcch_ue(cell_slot
 {
   // Find Common or UE-specific BWP and CORESET configurations.
   const search_space_info&   ss_cfg         = user.search_space(ss_id);
-  const bwp_configuration&   bwp_cfg        = ss_cfg.bwp->dl_common->generic_params;
+  const bwp_configuration&   bwp_cfg        = ss_cfg.bwp->dl_common.value()->generic_params;
   span<const uint8_t>        candidates     = ss_cfg.get_pdcch_candidates(aggr_lvl, slot_alloc.slot);
   span<const crb_index_list> candidate_crbs = ss_cfg.get_crb_list_of_pdcch_candidates(aggr_lvl, slot_alloc.slot);
 
@@ -133,7 +133,7 @@ pdcch_ul_information* pdcch_resource_allocator_impl::alloc_ul_pdcch_ue(cell_slot
 {
   // Find Common or UE-specific BWP and CORESET configurations.
   const search_space_info&         ss_cfg         = user.search_space(ss_id);
-  const bwp_configuration&         bwp_cfg        = ss_cfg.bwp->ul_common->generic_params;
+  const bwp_configuration&         bwp_cfg        = ss_cfg.bwp->ul_common->value().generic_params;
   span<const pdcch_candidate_type> candidates     = ss_cfg.get_pdcch_candidates(aggr_lvl, slot_alloc.slot);
   span<const crb_index_list>       candidate_crbs = ss_cfg.get_crb_list_of_pdcch_candidates(aggr_lvl, slot_alloc.slot);
 

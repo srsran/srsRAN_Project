@@ -144,9 +144,9 @@ public:
     t_bench{test_bench_params{.csi_period = csi_period, .csi_offset = csi_offset}}
   {
     sr_period = sr_periodicity_to_slot(
-        t_bench.get_main_ue().get_pcell().cfg().ul_cfg()->init_ul_bwp.pucch_cfg.value().sr_res_list[0].period);
+        t_bench.get_main_ue().get_pcell().cfg().init_bwp().ul_ded->pucch_cfg.value().sr_res_list[0].period);
 
-    sr_offset = t_bench.get_main_ue().get_pcell().cfg().ul_cfg()->init_ul_bwp.pucch_cfg.value().sr_res_list[0].offset;
+    sr_offset = t_bench.get_main_ue().get_pcell().cfg().init_bwp().ul_ded->pucch_cfg.value().sr_res_list[0].offset;
 
     // In the slots with SR + CSI, the expected format is Format 2.
     auto& format2_csi_and_sr                          = pucch_csi_and_sr_test.format_params.emplace<pucch_format_2>();

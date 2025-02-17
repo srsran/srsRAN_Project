@@ -28,29 +28,17 @@ static unsigned get_n_id0_scrambling(const ue_cell_configuration& ue_cell_cfg, u
   // dmrs-UplinkForPUSCH-MappingTypeB.
 
   // Check \c scrambling_id0 in \c dmrs-UplinkForPUSCH-MappingTypeB, first
-  auto& ul_cfg = *ue_cell_cfg.ul_cfg();
-  if (ul_cfg.init_ul_bwp.pusch_cfg.value().pusch_mapping_type_b_dmrs.has_value() and
-      ul_cfg.init_ul_bwp.pusch_cfg.value().pusch_mapping_type_b_dmrs.value().trans_precoder_disabled.has_value() and
-      ul_cfg.init_ul_bwp.pusch_cfg.value()
-          .pusch_mapping_type_b_dmrs.value()
-          .trans_precoder_disabled.value()
-          .scrambling_id0.has_value()) {
-    return ul_cfg.init_ul_bwp.pusch_cfg.value()
-        .pusch_mapping_type_b_dmrs.value()
-        .trans_precoder_disabled.value()
-        .scrambling_id0.value();
+  auto& pusch_cfg = *ue_cell_cfg.init_bwp().ul_ded->pusch_cfg;
+  if (pusch_cfg.pusch_mapping_type_b_dmrs.has_value() and
+      pusch_cfg.pusch_mapping_type_b_dmrs.value().trans_precoder_disabled.has_value() and
+      pusch_cfg.pusch_mapping_type_b_dmrs.value().trans_precoder_disabled.value().scrambling_id0.has_value()) {
+    return pusch_cfg.pusch_mapping_type_b_dmrs.value().trans_precoder_disabled.value().scrambling_id0.value();
   }
   // Else, check \c scrambling_id0 in \c dmrs-UplinkForPUSCH-MappingTypeA.
-  if (ul_cfg.init_ul_bwp.pusch_cfg.value().pusch_mapping_type_a_dmrs.has_value() and
-      ul_cfg.init_ul_bwp.pusch_cfg.value().pusch_mapping_type_a_dmrs.value().trans_precoder_disabled.has_value() and
-      ul_cfg.init_ul_bwp.pusch_cfg.value()
-          .pusch_mapping_type_a_dmrs.value()
-          .trans_precoder_disabled.value()
-          .scrambling_id0.has_value()) {
-    return ul_cfg.init_ul_bwp.pusch_cfg.value()
-        .pusch_mapping_type_a_dmrs.value()
-        .trans_precoder_disabled.value()
-        .scrambling_id0.value();
+  if (pusch_cfg.pusch_mapping_type_a_dmrs.has_value() and
+      pusch_cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_disabled.has_value() and
+      pusch_cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_disabled.value().scrambling_id0.has_value()) {
+    return pusch_cfg.pusch_mapping_type_a_dmrs.value().trans_precoder_disabled.value().scrambling_id0.value();
   }
 
   return cell_pci;
@@ -337,7 +325,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
 
   // Get the index of the PUCCH resource to be used for SR.
   const pucch_resource* pucch_sr_res = resource_manager.reserve_sr_res_available(
-      pucch_slot_alloc.slot, crnti, ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value());
+      pucch_slot_alloc.slot, crnti, ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value());
   if (pucch_sr_res == nullptr) {
     logger.warning("rnti={}: SR occasion allocation for slot={} skipped. Cause: PUCCH F1 ded. resource not available",
                    crnti,
@@ -432,7 +420,7 @@ pucch_uci_bits pucch_allocator_impl::remove_ue_uci_from_pucch(cell_slot_resource
   pucch_uci_bits removed_uci_info;
 
   slot_point          sl_uci    = slot_alloc.slot;
-  const pucch_config& pucch_cfg = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value();
+  const pucch_config& pucch_cfg = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value();
 
   // Get the PUCCH grants for the slot.
   auto& ue_pucchs = pucch_grants_alloc_grid[sl_uci.to_uint()];
@@ -1079,7 +1067,7 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
       continue;
     }
 
-    const pucch_config&     pucch_cfg = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value();
+    const pucch_config&     pucch_cfg = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value();
     std::optional<unsigned> pucch_res_ind;
 
     // Look for an available PUCCH dedicated resource with the same PUCCH resource indicator as the common's.
@@ -1137,7 +1125,7 @@ std::optional<unsigned> pucch_allocator_impl::allocate_harq_grant(cell_slot_reso
   }
 
   const pucch_harq_resource_alloc_record pucch_harq_res_info = resource_manager.reserve_next_set_0_harq_res_available(
-      pucch_slot_alloc.slot, crnti, ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value());
+      pucch_slot_alloc.slot, crnti, ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value());
   if (pucch_harq_res_info.pucch_res == nullptr) {
     logger.debug("rnti={}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH F1 ded. resource not available",
                  crnti,
@@ -1208,7 +1196,7 @@ void pucch_allocator_impl::allocate_csi_grant(cell_slot_resource_allocator& pucc
   // are the only UCI bits to be considered.
   // It's the validator that should make sure the CSI bits fit into a PUCCH Format 2/3/4 resource.
   const unsigned max_payload =
-      ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().get_max_payload(csi_f2_f3_f4_res->format);
+      ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().get_max_payload(csi_f2_f3_f4_res->format);
   srsran_assert(csi_part1_bits <= max_payload,
                 "rnti={}: PUCCH F2/F3/F4 max payload {} is insufficient for {} candidate UCI bits",
                 crnti,
@@ -1348,7 +1336,7 @@ void pucch_allocator_impl::fill_pucch_format2_grant(pucch_info&                 
   pucch_pdu.uci_bits.harq_ack_nof_bits  = harq_ack_bits;
   pucch_pdu.uci_bits.csi_part1_nof_bits = csi_part1_bits;
   // \f$n_{ID}\f$ as per Section 6.3.2.5.1 and 6.3.2.6.1, TS 38.211.
-  const auto& init_ul_bwp = ue_cell_cfg.ul_cfg()->init_ul_bwp;
+  const auto& init_ul_bwp = ue_cell_cfg.init_bwp().ul_ded.value();
   format_2.n_id_scambling = init_ul_bwp.pusch_cfg.value().data_scrambling_id_pusch.has_value()
                                 ? init_ul_bwp.pusch_cfg.value().data_scrambling_id_pusch.value()
                                 : cell_cfg.pci;
@@ -1395,7 +1383,7 @@ void pucch_allocator_impl::fill_pucch_format3_grant(pucch_info&                 
   // [Implementation-defined] We do not implement PUCCH over several slots.
   format_3.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
   // \f$n_{ID}\f$ as per Section 6.3.2.5.1 and 6.3.2.6.1, TS 38.211.
-  const auto& init_ul_bwp    = ue_cell_cfg.ul_cfg()->init_ul_bwp;
+  const auto& init_ul_bwp    = ue_cell_cfg.init_bwp().ul_ded.value();
   format_3.n_id_scrambling   = init_ul_bwp.pusch_cfg.value().data_scrambling_id_pusch.has_value()
                                    ? init_ul_bwp.pusch_cfg.value().data_scrambling_id_pusch.value()
                                    : cell_cfg.pci;
@@ -1444,7 +1432,7 @@ void pucch_allocator_impl::fill_pucch_format4_grant(pucch_info&                 
   // [Implementation-defined] We do not implement PUCCH over several slots.
   format_4.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
   // \f$n_{ID}\f$ as per Section 6.3.2.5.1 and 6.3.2.6.1, TS 38.211.
-  const auto& init_ul_bwp    = ue_cell_cfg.ul_cfg()->init_ul_bwp;
+  const auto& init_ul_bwp    = ue_cell_cfg.init_bwp().ul_ded.value();
   format_4.n_id_scrambling   = init_ul_bwp.pusch_cfg.value().data_scrambling_id_pusch.has_value()
                                    ? init_ul_bwp.pusch_cfg.value().data_scrambling_id_pusch.value()
                                    : cell_cfg.pci;
@@ -1480,7 +1468,7 @@ void pucch_allocator_impl::remove_unused_pucch_res(slot_point                   
                                                    const ue_grants&             existing_pucchs,
                                                    const ue_cell_configuration& ue_cell_cfg)
 {
-  const auto& init_ul_bwp = ue_cell_cfg.ul_cfg()->init_ul_bwp;
+  const auto& init_ul_bwp = ue_cell_cfg.init_bwp().ul_ded.value();
 
   // Remove the PUCCH resources by evaluating the difference between the previously allocated resources and the current
   // ones.
@@ -1577,7 +1565,7 @@ pucch_allocator_impl::get_pucch_res_pre_multiplexing(slot_point                 
 {
   pucch_grant_list candidate_resources;
 
-  const pucch_config& pucch_cfg = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value();
+  const pucch_config& pucch_cfg = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value();
 
   if (new_bits.sr_bits != sr_nof_bits::no_sr) {
     candidate_resources.sr_resource.emplace(pucch_grant{.type = pucch_grant_type::sr});
@@ -1723,7 +1711,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
 {
   slot_point sl_tx = pucch_slot_alloc.slot;
 
-  const pucch_config& pucch_cfg = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value();
+  const pucch_config& pucch_cfg = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value();
 
   auto& pucch_pdus = pucch_slot_alloc.result.ul.pucchs;
 
@@ -1776,7 +1764,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
         harq_format_1.initial_cyclic_shift,
         harq_format_1.time_domain_occ,
         new_bits);
-    const auto& common_params = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().format_1_common_param;
+    const auto& common_params = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().format_1_common_param;
     existing_pdus.update_harq_pdu_bits(
         new_bits.harq_ack_nof_bits, sr_nof_bits::no_sr, csi_bits_format_0_and_1, *pucch_res_cfg, common_params);
     // Update the current grants with the new UCI (HARQ) bits.
@@ -1801,7 +1789,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
   // HARQ-ACK bits in the HARQ-ACK PDU.
   else if (existing_pdus.harq_pdu->format() == pucch_format::FORMAT_2) {
     if (current_grants.pucch_grants.get_uci_bits().get_total_bits() >=
-        ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().get_max_payload(pucch_format::FORMAT_2)) {
+        ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().get_max_payload(pucch_format::FORMAT_2)) {
       logger.debug("rnti={}: PUCCH allocation (HARQ-ACK) for slot={} skipped. Cause: UCI bits exceed PUCCH payload",
                    current_grants.rnti,
                    sl_tx);
@@ -1817,7 +1805,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
                  existing_pdus.harq_pdu->resources.prbs,
                  existing_pdus.harq_pdu->resources.symbols,
                  existing_pdus.harq_pdu->uci_bits);
-    const auto& common_params = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().format_2_common_param;
+    const auto& common_params = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().format_2_common_param;
     existing_pdus.update_harq_pdu_bits(new_bits.harq_ack_nof_bits,
                                        current_grants.pucch_grants.harq_resource.value().bits.sr_bits,
                                        current_grants.pucch_grants.harq_resource.value().bits.csi_part1_nof_bits,
@@ -1828,7 +1816,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     // HARQ-ACK bits in the HARQ-ACK PDU.
   } else if (existing_pdus.harq_pdu->format() == pucch_format::FORMAT_3) {
     if (current_grants.pucch_grants.get_uci_bits().get_total_bits() >=
-        ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().get_max_payload(pucch_format::FORMAT_3)) {
+        ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().get_max_payload(pucch_format::FORMAT_3)) {
       logger.debug("rnti={}: PUCCH allocation (HARQ-ACK) for slot={} skipped. Cause: UCI bits exceed PUCCH payload",
                    current_grants.rnti,
                    sl_tx);
@@ -1844,7 +1832,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
                  existing_pdus.harq_pdu->resources.prbs,
                  existing_pdus.harq_pdu->resources.symbols,
                  existing_pdus.harq_pdu->uci_bits);
-    const auto& common_params = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().format_3_common_param;
+    const auto& common_params = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().format_3_common_param;
     existing_pdus.update_harq_pdu_bits(new_bits.harq_ack_nof_bits,
                                        current_grants.pucch_grants.harq_resource.value().bits.sr_bits,
                                        current_grants.pucch_grants.harq_resource.value().bits.csi_part1_nof_bits,
@@ -1855,7 +1843,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     // HARQ-ACK bits in the HARQ-ACK PDU.
   } else if (existing_pdus.harq_pdu->format() == pucch_format::FORMAT_4) {
     if (current_grants.pucch_grants.get_uci_bits().get_total_bits() >=
-        ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().get_max_payload(pucch_format::FORMAT_4)) {
+        ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().get_max_payload(pucch_format::FORMAT_4)) {
       logger.debug("rnti={}: PUCCH allocation (HARQ-ACK) for slot={} skipped. Cause: UCI bits exceed PUCCH payload",
                    current_grants.rnti,
                    sl_tx);
@@ -1875,7 +1863,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
         format_4.orthog_seq_idx,
         fmt::underlying(format_4.n_sf_pucch_f4),
         existing_pdus.harq_pdu->uci_bits);
-    const auto& common_params = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().format_4_common_param;
+    const auto& common_params = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().format_4_common_param;
     existing_pdus.update_harq_pdu_bits(new_bits.harq_ack_nof_bits,
                                        current_grants.pucch_grants.harq_resource.value().bits.sr_bits,
                                        current_grants.pucch_grants.harq_resource.value().bits.csi_part1_nof_bits,
@@ -1938,7 +1926,7 @@ pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
             merge_pucch_resources(span<const pucch_grant>(&resource_set_q[j_cnt - o_cnt], o_cnt + 1),
                                   sl_tx,
                                   crnti,
-                                  ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value(),
+                                  ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value(),
                                   preserve_res_indicator);
         if (not new_res.has_value()) {
           return {};
@@ -1968,7 +1956,7 @@ pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
       resource_set_q.front().bits.harq_ack_nof_bits != 0 and
       resource_set_q.front().bits.sr_bits != sr_nof_bits::no_sr) {
     const pucch_resource* sr_res =
-        resource_manager.reserve_sr_res_available(sl_tx, crnti, ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value());
+        resource_manager.reserve_sr_res_available(sl_tx, crnti, ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value());
     resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::SR);
     if (sr_res == nullptr) {
       logger.error("This is not expected");
@@ -2224,7 +2212,7 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
 
   // Retrieve the existing PUCCH PDUs.
   existing_pucch_pdus_handler existing_pdus(
-      crnti, pucch_pdus, get_sr_pucch_res_cfg(ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value()));
+      crnti, pucch_pdus, get_sr_pucch_res_cfg(ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value()));
 
   // Check if we can fit the new PUCCH PDUs in the output results.
   if ((grants_to_tx.get_nof_grants() >= existing_pdus.get_nof_unallocated_pdu()) and
@@ -2427,7 +2415,7 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
       case pucch_format::FORMAT_2: {
         const auto& f2_cfg              = std::get<pucch_format_2_3_cfg>(harq_res.pucch_res_cfg->format_params);
         const float max_pucch_code_rate = to_max_code_rate_float(
-            ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().format_2_common_param.value().max_c_rate);
+            ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().format_2_common_param.value().max_c_rate);
         const unsigned nof_prbs =
             get_pucch_format2_nof_prbs(bits.get_total_bits(), f2_cfg.nof_prbs, f2_cfg.nof_symbols, max_pucch_code_rate);
         fill_pucch_format2_grant(*grant,
@@ -2449,8 +2437,8 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
       case pucch_format::FORMAT_3: {
         const auto& f3                  = std::get<pucch_format_2_3_cfg>(harq_res.pucch_res_cfg->format_params);
         const float max_pucch_code_rate = to_max_code_rate_float(
-            ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().format_3_common_param.value().max_c_rate);
-        const auto&    common_param = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().format_3_common_param.value();
+            ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().format_3_common_param.value().max_c_rate);
+        const auto&    common_param = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().format_3_common_param.value();
         const unsigned nof_prbs     = get_pucch_format3_nof_prbs(bits.get_total_bits(),
                                                              f3.nof_prbs,
                                                              f3.nof_symbols,

@@ -32,7 +32,7 @@ sched_helper::compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pds
   sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs.value());
 
   // Estimate max RBs per grant.
-  const bwp_downlink_common& bwp_dl_cmn = *ue_cell_cfg.bwp(ue_cc.active_bwp_id()).dl_common;
+  const bwp_downlink_common& bwp_dl_cmn = *ue_cell_cfg.bwp(ue_cc.active_bwp_id()).dl_common.value();
   unsigned                   max_prbs   = std::min({bwp_dl_cmn.generic_params.crbs.length(),
                                                     cell_cfg.expert_cfg.ue.pdsch_nof_rbs.stop(),
                                                     ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.stop()});
@@ -67,7 +67,7 @@ static pusch_config_params compute_pusch_config_params(const ue_cell&           
 {
   const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
   const cell_configuration&    cell_cfg    = ue_cc.cfg().cell_cfg_common;
-  const bwp_uplink_common&     bwp_ul_cmn  = *ue_cell_cfg.bwp(ue_cc.active_bwp_id()).ul_common;
+  const bwp_uplink_common&     bwp_ul_cmn  = *ue_cell_cfg.bwp(ue_cc.active_bwp_id()).ul_common.value();
 
   pusch_config_params pusch_cfg;
   switch (dci_type) {
@@ -120,7 +120,7 @@ mcs_prbs_selection sched_helper::compute_newtx_required_mcs_and_prbs(const pusch
 {
   const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
   const cell_configuration&    cell_cfg    = ue_cc.cfg().cell_cfg_common;
-  const bwp_uplink_common&     bwp_ul_cmn  = *ue_cell_cfg.bwp(ue_cc.active_bwp_id()).ul_common;
+  const bwp_uplink_common&     bwp_ul_cmn  = *ue_cell_cfg.bwp(ue_cc.active_bwp_id()).ul_common.value();
 
   sch_mcs_index       mcs = ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table);
   sch_mcs_description mcs_config =

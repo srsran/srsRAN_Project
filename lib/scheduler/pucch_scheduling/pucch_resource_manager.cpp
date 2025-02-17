@@ -140,7 +140,7 @@ const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point   
     return nullptr;
   }
 
-  span<const pucch_resource> pucch_res_list = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().pucch_res_list;
+  span<const pucch_resource> pucch_res_list = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().pucch_res_list;
   // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
   const auto* res_cfg =
       std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [csi_pucch_res_idx](const pucch_resource& res) {
@@ -332,13 +332,13 @@ void pucch_resource_manager::cancel_last_ue_res_reservations(slot_point         
   }
 
   if (last_ue_allocations.harq_set_0) {
-    release_harq_set_0_resource(slot_tx, crnti, ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value());
+    release_harq_set_0_resource(slot_tx, crnti, ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value());
   }
   if (last_ue_allocations.harq_set_1) {
-    release_harq_set_1_resource(slot_tx, crnti, ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value());
+    release_harq_set_1_resource(slot_tx, crnti, ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value());
   }
   if (last_ue_allocations.sr) {
-    release_sr_resource(slot_tx, crnti, ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value());
+    release_sr_resource(slot_tx, crnti, ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value());
   }
   if (last_ue_allocations.csi) {
     release_csi_resource(slot_tx, crnti, ue_cell_cfg);

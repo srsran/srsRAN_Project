@@ -27,11 +27,11 @@ struct bwp_config {
   /// UE-specific BWP Identifier
   bwp_id_t bwp_id;
   /// BWP Downlink Common Configuration
-  std::optional<bwp_downlink_common> dl_common;
+  std::optional<config_ptr<bwp_downlink_common>> dl_common;
   /// BWP Downlink Dedicated Configuration
-  std::optional<bwp_downlink_dedicated> dl_ded;
+  std::optional<config_ptr<bwp_downlink_dedicated>> dl_ded;
   /// BWP Uplink Common Configuration
-  std::optional<bwp_uplink_common> ul_common;
+  std::optional<config_ptr<bwp_uplink_common>> ul_common;
   /// BWP Uplink Dedicated Configuration
   std::optional<bwp_uplink_dedicated> ul_ded;
   /// CoreSets associated with this BWP.
@@ -62,11 +62,12 @@ struct ue_cell_res_config {
   slotted_id_vector<search_space_id, search_space_configuration> search_spaces;
   /// List of BWPs configured in this cell.
   bwp_config_list bwps;
-  /// \c uplinkConfig, containing the UL configuration.
-  std::optional<config_ptr<uplink_config>> ul_config;
   /// \brief \c pdsch-ServingCellConfig, used to configure UE specific PDSCH parameters that are common across the UE's
   /// BWPs of one serving cell.
   std::optional<config_ptr<pdsch_serving_cell_config>> pdsch_serv_cell_cfg;
+  /// \brief \c pusch-ServingCellConfig, used to configure UE specific PUSCH parameters that are common across the UE's
+  /// BWPs of one serving cell.
+  std::optional<config_ptr<pusch_serving_cell_config>> pusch_serv_cell_cfg;
   /// \c CSI-MeasConfig.
   std::optional<config_ptr<csi_meas_config>> csi_meas_cfg;
   /// Timing Advance Group ID to which this cell belongs to.
@@ -75,8 +76,9 @@ struct ue_cell_res_config {
   bool operator==(const ue_cell_res_config& other) const
   {
     return cell_index == other.cell_index and coresets == other.coresets and search_spaces == other.search_spaces and
-           bwps == other.bwps and ul_config == other.ul_config and pdsch_serv_cell_cfg == other.pdsch_serv_cell_cfg and
-           csi_meas_cfg == other.csi_meas_cfg and tag_id == other.tag_id;
+           bwps == other.bwps and pdsch_serv_cell_cfg == other.pdsch_serv_cell_cfg and
+           pusch_serv_cell_cfg == other.pusch_serv_cell_cfg and csi_meas_cfg == other.csi_meas_cfg and
+           tag_id == other.tag_id;
   }
 };
 using ue_cell_config_ptr = config_ptr<ue_cell_res_config>;
