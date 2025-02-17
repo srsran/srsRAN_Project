@@ -229,13 +229,7 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   st.tx_next++;
 
   // Apply security in crypto executor
-  auto fn = [this, buf_info = std::move(buf_info)]() mutable {
-    auto pre = std::chrono::high_resolution_clock::now();
-    apply_security(std::move(buf_info), false);
-    auto post           = std::chrono::high_resolution_clock::now();
-    auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
-    metrics.add_crypto_processing_latency(sdu_latency_ns.count());
-  };
+  auto fn = [this, buf_info = std::move(buf_info)]() mutable { apply_security(std::move(buf_info), false); };
   if (not crypto_executor.execute(std::move(fn))) {
     logger.log_warning("Dropped PDU, crypto executor queue is full. st={}", st);
     metrics.add_lost_sdus(1);
@@ -437,6 +431,7 @@ void pdcp_entity_tx::handle_status_report(byte_buffer_chain status)
  */
 void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info, bool is_retx)
 {
+  auto     pre      = std::chrono::high_resolution_clock::now();
   uint32_t tx_count = buf_info.count;
 
   // Apply deciphering and integrity check
@@ -473,6 +468,10 @@ void pdcp_entity_tx::apply_security(pdcp_tx_buffer_info buf_info, bool is_retx)
   logger.log_debug(result.buf.value().begin(), result.buf.value().end(), "Security applied. count={}", tx_count);
 
   pdcp_tx_buffer_info pdu_info{.buf = std::move(result.buf.value()), .count = tx_count, .retx_id = buf_info.retx_id};
+
+  auto post           = std::chrono::high_resolution_clock::now();
+  auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
+  metrics.add_crypto_processing_latency(sdu_latency_ns.count());
 
   // apply reordering in UE executor
   auto fn = [this, pdu_info = std::move(pdu_info), is_retx]() mutable {
@@ -691,13 +690,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
       /// Prepare buffer info struct to pass to crypto executor.
       pdcp_tx_buffer_info buf_info{.buf = std::move(buf), .count = count, .retx_id = retransmit_id};
 
-      auto fn = [this, buf_info = std::move(buf_info)]() mutable {
-        auto pre = std::chrono::high_resolution_clock::now();
-        apply_security(std::move(buf_info), true);
-        auto post           = std::chrono::high_resolution_clock::now();
-        auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
-        metrics.add_crypto_processing_latency(sdu_latency_ns.count());
-      };
+      auto fn = [this, buf_info = std::move(buf_info)]() mutable { apply_security(std::move(buf_info), true); };
       if (not crypto_executor.execute(std::move(fn))) {
         logger.log_warning("Dropped PDU, crypto executor queue is full. st={}", st);
       }
