@@ -22,25 +22,27 @@ struct sched_ue_config_request;
 using coreset_config_ptr      = config_ptr<coreset_configuration>;
 using serving_cell_config_ptr = config_ptr<serving_cell_config>;
 
-/// Configuration of a BWP.
+/// Configuration of a BWP. It aggregates both the common and dedicated configurations for DL and UL.
 struct bwp_config {
   /// UE-specific BWP Identifier
   bwp_id_t bwp_id;
   /// BWP Downlink Common Configuration
-  std::optional<bwp_downlink_common> bwp_dl_common;
+  std::optional<bwp_downlink_common> dl_common;
   /// BWP Downlink Dedicated Configuration
-  std::optional<bwp_downlink_dedicated> bwp_dl_ded;
+  std::optional<bwp_downlink_dedicated> dl_ded;
   /// BWP Uplink Common Configuration
-  std::optional<bwp_uplink_common> bwp_ul_common;
+  std::optional<bwp_uplink_common> ul_common;
   /// BWP Uplink Dedicated Configuration
-  std::optional<bwp_uplink_dedicated> bwp_ul_ded;
+  std::optional<bwp_uplink_dedicated> ul_ded;
+  /// CoreSets associated with this BWP.
+  slotted_id_vector<coreset_id, coreset_config_ptr> coresets;
   /// Search Spaces associated with this BWP.
   slotted_id_vector<search_space_id, search_space_configuration> search_spaces;
 
   bool operator==(const bwp_config& other) const
   {
-    return bwp_id == other.bwp_id and bwp_dl_common == other.bwp_dl_common and bwp_dl_ded == other.bwp_dl_ded and
-           bwp_ul_common == other.bwp_ul_common and bwp_ul_ded == other.bwp_ul_ded and
+    return bwp_id == other.bwp_id and dl_common == other.dl_common and dl_ded == other.dl_ded and
+           ul_common == other.ul_common and ul_ded == other.ul_ded and coresets == other.coresets and
            search_spaces == other.search_spaces;
   }
 };
@@ -48,11 +50,10 @@ struct bwp_config {
 using bwp_config_ptr  = config_ptr<bwp_config>;
 using bwp_config_list = slotted_id_vector<bwp_id_t, bwp_config_ptr>;
 
-struct ue_cell_config {
+/// UE-dedicated resources for a given cell.
+struct ue_cell_res_config {
   /// DU-specific cell identifier.
   du_cell_index_t cell_index;
-  /// Base serving cell configuration without derived parameters.
-  serving_cell_config_ptr cfg;
   /// Container that maps Coreset-Ids to CORESET configurations for this BWP.
   /// Note: The ID space of CoresetIds is common among the BWPs of a Serving Cell as per TS 38.331.
   slotted_id_vector<coreset_id, coreset_config_ptr> coresets;
@@ -71,20 +72,23 @@ struct ue_cell_config {
   /// Timing Advance Group ID to which this cell belongs to.
   time_alignment_group::id_t tag_id{0};
 
-  bool operator==(const ue_cell_config& other) const
+  bool operator==(const ue_cell_res_config& other) const
   {
-    return cfg == other.cfg and cell_index == other.cell_index and coresets == other.coresets and
-           search_spaces == other.search_spaces and bwps == other.bwps and csi_meas_cfg == other.csi_meas_cfg;
+    return cell_index == other.cell_index and coresets == other.coresets and search_spaces == other.search_spaces and
+           bwps == other.bwps and ul_config == other.ul_config and pdsch_serv_cell_cfg == other.pdsch_serv_cell_cfg and
+           csi_meas_cfg == other.csi_meas_cfg and tag_id == other.tag_id;
   }
 };
-using ue_cell_config_ptr = config_ptr<ue_cell_config>;
+using ue_cell_config_ptr = config_ptr<ue_cell_res_config>;
 
+/// Parameters used to generate a UE configuration object.
 struct ue_creation_params {
   const sched_ue_config_request&                         cfg_req;
   logical_channel_config_list_ptr                        lc_ch_list;
   slotted_id_vector<du_cell_index_t, ue_cell_config_ptr> cells;
 };
 
+/// Parameters used to reconfigure a UE configuration object.
 struct ue_reconfig_params {
   const sched_ue_config_request&                         cfg_req;
   std::optional<logical_channel_config_list_ptr>         lc_ch_list;

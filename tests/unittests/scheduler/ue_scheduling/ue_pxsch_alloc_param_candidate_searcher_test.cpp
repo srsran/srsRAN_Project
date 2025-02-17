@@ -78,19 +78,15 @@ protected:
 
 TEST_F(ue_pxsch_alloc_param_candidate_searcher_test, only_searchspaces_in_ue_dedicated_cfg_is_considered)
 {
-  const harq_id_t                        h_id = to_harq_id(0);
-  const slot_point                       pdcch_slot{0, 0};
-  span<const search_space_configuration> ss_list = ue_cc->cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces;
+  const harq_id_t  h_id = to_harq_id(0);
+  const slot_point pdcch_slot{0, 0};
+  const auto&      ss_list = ue_cc->cfg().bwp(to_bwp_id(0)).search_spaces;
 
   ue_pdsch_alloc_param_candidate_searcher dl_searcher(
       *ue_ptr, to_du_cell_index(0), ue_cc->harqs.dl_harq(h_id), pdcch_slot, {});
   ASSERT_TRUE(not dl_searcher.is_empty());
   for (const auto& candidate : dl_searcher) {
-    bool ss_present_in_ue_ded_cfg =
-        std::find_if(ss_list.begin(), ss_list.end(), [&candidate](const search_space_configuration& ss_cfg) {
-          return ss_cfg.get_id() == candidate.ss().cfg->get_id();
-        }) != ss_list.end();
-    ASSERT_TRUE(ss_present_in_ue_ded_cfg);
+    ASSERT_TRUE(ss_list.contains(candidate.ss().cfg->get_id()));
   }
   ue_pusch_alloc_param_candidate_searcher ul_searcher(
       *ue_ptr, to_du_cell_index(0), ue_cc->harqs.ul_harq(h_id), pdcch_slot, {}, get_next_ul_slot(pdcch_slot));

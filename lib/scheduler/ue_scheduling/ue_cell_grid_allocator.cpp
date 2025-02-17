@@ -764,7 +764,8 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
     const unsigned nof_harq_ack_bits =
         get_uci_alloc(grant.cell_index).get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
     const bool is_csi_report_slot =
-        csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_alloc.slot);
+        u.get_pcell().cfg().csi_meas_cfg() != nullptr and
+        csi_helper::is_csi_reporting_slot(*u.get_pcell().cfg().csi_meas_cfg(), pusch_alloc.slot);
     if (is_retx) {
       pusch_cfg = sched_helper::compute_retx_pusch_config_params(
           *ue_cc, *h_ul, pusch_td_cfg, nof_harq_ack_bits, is_csi_report_slot);

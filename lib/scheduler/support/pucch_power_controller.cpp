@@ -44,9 +44,8 @@ pucch_power_controller::pucch_power_controller(const ue_cell_configuration& ue_c
 
 void pucch_power_controller::reconfigure(const ue_cell_configuration& ue_cell_cfg)
 {
-  if (ue_cell_cfg.cfg_dedicated().ul_config.has_value() and
-      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
-    const auto& pucch_cfg = ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
+  if (ue_cell_cfg.ul_cfg() != nullptr and ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.has_value()) {
+    const auto& pucch_cfg = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value();
     // Retrieve the Format of the resources in PUCCH set 0 and 1. NOTE: all resources are expected to be of the same
     // format.
     static constexpr size_t id_pucch_res_set_0 = 0U;
@@ -71,9 +70,8 @@ void pucch_power_controller::reconfigure(const ue_cell_configuration& ue_cell_cf
                   rnti,
                   pucch_res_set_1_id);
     format_set_1 = res_set_1->format;
-    if (ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().pucch_pw_control.has_value()) {
-      pucch_pwr_ctrl.emplace(
-          ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().pucch_pw_control.value());
+    if (ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().pucch_pw_control.has_value()) {
+      pucch_pwr_ctrl.emplace(ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().pucch_pw_control.value());
     }
   }
 }

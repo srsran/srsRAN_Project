@@ -23,8 +23,8 @@ static int get_pucch_res_idx_for_csi(const ue_cell_configuration& ue_cell_cfg)
   const unsigned csi_report_cfg_idx = 0;
   // We assume we use the First BWP.
   // TODO: extend by passing the BWP id.
-  const bwp_id_t bwp_id      = MIN_BWP_ID;
-  const auto& csi_report_cfg = ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
+  const bwp_id_t bwp_id         = MIN_BWP_ID;
+  const auto&    csi_report_cfg = ue_cell_cfg.csi_meas_cfg()->csi_report_cfg_list[csi_report_cfg_idx];
   span<const csi_report_config::pucch_csi_resource> csi_pucch_res_list =
       std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type)
           .pucch_csi_res_list;
@@ -140,8 +140,7 @@ const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point   
     return nullptr;
   }
 
-  span<const pucch_resource> pucch_res_list =
-      ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().pucch_res_list;
+  span<const pucch_resource> pucch_res_list = ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().pucch_res_list;
   // Search for the PUCCH resource with the correct PUCCH resource ID from the PUCCH resource list.
   const auto* res_cfg =
       std::find_if(pucch_res_list.begin(), pucch_res_list.end(), [csi_pucch_res_idx](const pucch_resource& res) {
@@ -333,15 +332,13 @@ void pucch_resource_manager::cancel_last_ue_res_reservations(slot_point         
   }
 
   if (last_ue_allocations.harq_set_0) {
-    release_harq_set_0_resource(
-        slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+    release_harq_set_0_resource(slot_tx, crnti, ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value());
   }
   if (last_ue_allocations.harq_set_1) {
-    release_harq_set_1_resource(
-        slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+    release_harq_set_1_resource(slot_tx, crnti, ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value());
   }
   if (last_ue_allocations.sr) {
-    release_sr_resource(slot_tx, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+    release_sr_resource(slot_tx, crnti, ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value());
   }
   if (last_ue_allocations.csi) {
     release_csi_resource(slot_tx, crnti, ue_cell_cfg);

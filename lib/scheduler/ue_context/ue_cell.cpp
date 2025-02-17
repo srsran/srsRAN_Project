@@ -223,9 +223,10 @@ get_prioritized_search_spaces(const ue_cell& ue_cc, FilterSearchSpace filter, bo
 
   // Get all Search Spaces configured in PDCCH-Config for active BWP.
   const auto& bwp_ss_lst = ue_cc.cfg().bwp(ue_cc.active_bwp_id()).search_spaces;
-  for (const search_space_info* search_space : bwp_ss_lst) {
-    if (filter(*search_space)) {
-      active_search_spaces.push_back(search_space);
+  for (const search_space_configuration& ss : bwp_ss_lst) {
+    const search_space_info& ss_info = ue_cc.cfg().search_space(ss.get_id());
+    if (filter(ss_info)) {
+      active_search_spaces.push_back(&ss_info);
     }
   }
 

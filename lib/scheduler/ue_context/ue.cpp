@@ -28,7 +28,7 @@ ue::ue(const ue_creation_command& cmd) :
   ul_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs, cmd.cfg.logical_channels()),
   ta_mgr(expert_cfg,
          cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
-         ue_ded_cfg->pcell_cfg().cfg_dedicated().tag_id,
+         ue_ded_cfg->pcell_cfg().tag_id(),
          &dl_lc_ch_mgr),
   drx(cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
       cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer,

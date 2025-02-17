@@ -156,8 +156,8 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
   rnti_t crnti = to_rnti(test_rgen::uniform_int<uint16_t>(to_value(rnti_t::MIN_CRNTI), to_value(rnti_t::MAX_CRNTI)));
   ue_cell_configuration ue_cfg{crnti, cell_cfg, cfg_pool.add_ue(ue_create_msg).cells[to_du_cell_index(0)]};
 
-  const bwp_info& bwp            = ue_cfg.bwp(to_bwp_id(0));
-  const unsigned  max_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
+  const bwp_config& bwp            = ue_cfg.bwp(to_bwp_id(0));
+  const unsigned    max_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
 
   unsigned       sfn = test_rgen::uniform_int<unsigned>(0, 1023);
   const unsigned slots_to_test =
@@ -168,11 +168,12 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
     for (unsigned l = 0; l != NOF_AGGREGATION_LEVELS; ++l) {
       const aggregation_level aggr_lvl = aggregation_index_to_level(l);
 
-      for (const search_space_info* ss : bwp.search_spaces) {
-        ASSERT_GE(ss->cfg->get_nof_candidates()[l], ss->get_pdcch_candidates(aggr_lvl, pdcch_slot).size())
+      for (const search_space_configuration& ss : bwp.search_spaces) {
+        ASSERT_GE(ss.get_nof_candidates()[l],
+                  ue_cfg.search_space(ss.get_id()).get_pdcch_candidates(aggr_lvl, pdcch_slot).size())
             << "The generated candidates cannot exceed the number of candidates passed in the SearchSpace config";
 
-        pdcch_candidates_count += ss->get_pdcch_candidates(aggr_lvl, pdcch_slot).size();
+        pdcch_candidates_count += ue_cfg.search_space(ss.get_id()).get_pdcch_candidates(aggr_lvl, pdcch_slot).size();
       }
     }
 

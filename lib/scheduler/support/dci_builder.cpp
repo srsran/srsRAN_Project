@@ -231,7 +231,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   const bwp_downlink_common& active_dl_bwp_cmn = *ss_info.bwp->dl_common;
   const bwp_configuration&   active_dl_bwp     = active_dl_bwp_cmn.generic_params;
   const auto                 k1_candidates     = ss_info.get_k1_candidates();
-  const auto&                opt_pdsch_cfg     = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg;
+  const auto&                opt_pdsch_cfg     = ue_cell_cfg.bwp(to_bwp_id(0)).dl_ded->pdsch_cfg;
 
   dci.type                    = dci_dl_rnti_config_type::c_rnti_f1_1;
   dci.c_rnti_f1_1             = {};
@@ -240,9 +240,9 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
   f1_1.tpc_command             = static_cast<unsigned>(tpc);
   f1_1.srs_request             = 0;
   f1_1.dmrs_seq_initialization = 0;
-  srsran_assert(ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value(),
+  srsran_assert(ss_info.bwp->dl_ded->pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value(),
                 "No DMRS configured in PDSCH configuration");
-  const auto& dmrs_cfg = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.value();
+  const auto& dmrs_cfg = ss_info.bwp->dl_ded->pdsch_cfg->pdsch_mapping_type_a_dmrs.value();
   f1_1.antenna_ports   = get_pdsch_antenna_port_mapping_row_index(
       nof_layers,
       ue_cell_cfg.cell_cfg_common.dl_carrier.nof_ant,

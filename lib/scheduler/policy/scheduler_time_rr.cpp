@@ -99,7 +99,7 @@ static unsigned compute_max_nof_rbs_per_ue_per_slot(const slice_ue_repository&  
   const slice_ue&              u      = *ues.begin();
   const ue_cell_configuration& ue_cfg = u.get_pcell().cfg();
   const auto*                  ss_info =
-      ue_cfg.find_search_space(ue_cfg.cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id());
+      ue_cfg.find_search_space(ue_cfg.bwp(to_bwp_id(0)).dl_ded->pdcch_cfg->search_spaces.back().get_id());
   if (ss_info == nullptr) {
     return 0;
   }

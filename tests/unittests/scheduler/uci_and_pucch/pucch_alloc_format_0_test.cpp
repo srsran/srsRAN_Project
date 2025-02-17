@@ -25,36 +25,32 @@ public:
     pucch_res_idx_f0_for_sr(t_bench.get_main_ue()
                                 .get_pcell()
                                 .cfg()
-                                .cfg_dedicated()
-                                .ul_config.value()
-                                .init_ul_bwp.pucch_cfg.value()
+                                .ul_cfg()
+                                ->init_ul_bwp.pucch_cfg.value()
                                 .pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_0)]
                                 .pucch_res_id_list.size() -
                             1U),
     pucch_res_idx_f0_for_csi(t_bench.get_main_ue()
                                  .get_pcell()
                                  .cfg()
-                                 .cfg_dedicated()
-                                 .ul_config.value()
-                                 .init_ul_bwp.pucch_cfg.value()
+                                 .ul_cfg()
+                                 ->init_ul_bwp.pucch_cfg.value()
                                  .pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_0)]
                                  .pucch_res_id_list.size() -
                              2U),
     pucch_res_idx_f2_for_sr(t_bench.get_main_ue()
                                 .get_pcell()
                                 .cfg()
-                                .cfg_dedicated()
-                                .ul_config.value()
-                                .init_ul_bwp.pucch_cfg.value()
+                                .ul_cfg()
+                                ->init_ul_bwp.pucch_cfg.value()
                                 .pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)]
                                 .pucch_res_id_list.size() -
                             1U),
     pucch_res_idx_f2_for_csi(t_bench.get_main_ue()
                                  .get_pcell()
                                  .cfg()
-                                 .cfg_dedicated()
-                                 .ul_config.value()
-                                 .init_ul_bwp.pucch_cfg.value()
+                                 .ul_cfg()
+                                 ->init_ul_bwp.pucch_cfg.value()
                                  .pucch_res_set[pucch_res_set_idx_to_uint(pucch_res_set_idx::set_1)]
                                  .pucch_res_id_list.size() -
                              2U)

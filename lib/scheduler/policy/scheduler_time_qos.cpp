@@ -448,17 +448,15 @@ void scheduler_time_qos::ue_ctxt::compute_dl_prio(const slice_ue& u,
   }
 
   // [Implementation-defined] We consider only the SearchSpace defined in UE dedicated configuration.
-  const auto* ss_info =
-      ue_cc->cfg().find_search_space(ue_cc->cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id());
-  if (ss_info == nullptr) {
-    return;
-  }
+  const search_space_id ue_ded_ss_id = to_search_space_id(2);
+  const auto&           ss_info      = ue_cc->cfg().search_space(ue_ded_ss_id);
+
   // [Implementation-defined] We pick the first element since PDSCH time domain resource list is sorted in descending
   // order of nof. PDSCH symbols. And, we want to calculate estimate of instantaneous achievable rate with maximum
   // nof. PDSCH symbols.
   uint8_t                    pdsch_time_res_index = 0;
   const pdsch_config_params& pdsch_cfg =
-      ss_info->get_pdsch_config(pdsch_time_res_index, ue_cc->channel_state_manager().get_nof_dl_layers());
+      ss_info.get_pdsch_config(pdsch_time_res_index, ue_cc->channel_state_manager().get_nof_dl_layers());
 
   auto mcs = ue_cc->link_adaptation_controller().calculate_dl_mcs(pdsch_cfg.mcs_table);
   if (not mcs.has_value()) {
@@ -468,7 +466,7 @@ void scheduler_time_qos::ue_ctxt::compute_dl_prio(const slice_ue& u,
 
   // Calculate DL PF priority.
   // NOTE: Estimated instantaneous DL rate is calculated assuming entire BWP CRBs are allocated to UE.
-  const double estimated_rate = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info->dl_crb_lims.length());
+  const double estimated_rate = ue_cc->get_estimated_dl_rate(pdsch_cfg, mcs.value(), ss_info.dl_crb_lims.length());
   const double current_total_avg_rate = total_dl_avg_rate();
   dl_prio = compute_dl_qos_weights(u, estimated_rate, current_total_avg_rate, pdcch_slot, parent->params);
 }
@@ -506,24 +504,22 @@ void scheduler_time_qos::ue_ctxt::compute_ul_prio(const slice_ue& u,
   }
 
   // [Implementation-defined] We consider only the SearchSpace defined in UE dedicated configuration.
-  const auto* ss_info =
-      ue_cc->cfg().find_search_space(ue_cc->cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces.back().get_id());
-  if (ss_info == nullptr) {
-    return;
-  }
+  const search_space_id ue_ded_ss_id = to_search_space_id(2);
+  const auto&           ss_info      = ue_cc->cfg().search_space(ue_ded_ss_id);
 
-  span<const pusch_time_domain_resource_allocation> pusch_td_res_list = ss_info->pusch_time_domain_list;
+  span<const pusch_time_domain_resource_allocation> pusch_td_res_list = ss_info.pusch_time_domain_list;
   // [Implementation-defined] We pick the first element since PUSCH time domain resource list is sorted in descending
   // order of nof. PUSCH symbols. And, we want to calculate estimate of instantaneous achievable rate with maximum
   // nof. PUSCH symbols.
   const pusch_time_domain_resource_allocation& pusch_td_cfg = pusch_td_res_list.front();
   // [Implementation-defined] We assume nof. HARQ ACK bits is zero at PUSCH slot as a simplification in calculating
   // estimated instantaneous achievable rate.
-  constexpr unsigned nof_harq_ack_bits = 0;
-  const bool is_csi_report_slot = csi_helper::is_csi_reporting_slot(u.get_pcell().cfg().cfg_dedicated(), pusch_slot);
+  constexpr unsigned nof_harq_ack_bits  = 0;
+  const bool         is_csi_report_slot = u.get_pcell().cfg().csi_meas_cfg() != nullptr and
+                                  csi_helper::is_csi_reporting_slot(*u.get_pcell().cfg().csi_meas_cfg(), pusch_slot);
 
   pusch_config_params pusch_cfg;
-  switch (ss_info->get_ul_dci_format()) {
+  switch (ss_info.get_ul_dci_format()) {
     case dci_ul_format::f0_0:
       pusch_cfg = get_pusch_config_f0_0_c_rnti(ue_cc->cfg().cell_cfg_common,
                                                &ue_cc->cfg(),
@@ -547,7 +543,7 @@ void scheduler_time_qos::ue_ctxt::compute_ul_prio(const slice_ue& u,
 
   // Calculate UL PF priority.
   // NOTE: Estimated instantaneous UL rate is calculated assuming entire BWP CRBs are allocated to UE.
-  const double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info->ul_crb_lims.length());
+  const double estimated_rate   = ue_cc->get_estimated_ul_rate(pusch_cfg, mcs.value(), ss_info.ul_crb_lims.length());
   const double current_avg_rate = total_ul_avg_rate();
 
   // Compute LC weight function.

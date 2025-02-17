@@ -98,7 +98,7 @@ public:
   void handle_ul_n_ta_update_indication(du_cell_index_t cell_index, float ul_sinr, phy_time_unit n_ta_diff)
   {
     const ue_cell* ue_cc = find_cell(cell_index);
-    ta_mgr.handle_ul_n_ta_update_indication(ue_cc->cfg().cfg_dedicated().tag_id, n_ta_diff.to_Tc(), ul_sinr);
+    ta_mgr.handle_ul_n_ta_update_indication(ue_cc->cfg().tag_id(), n_ta_diff.to_Tc(), ul_sinr);
   }
 
   /// \brief Handles MAC CE indication.

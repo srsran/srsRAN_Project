@@ -34,18 +34,19 @@ public:
   ue_cell_config_ptr update_ue(const serving_cell_config& ue_cell);
 
 private:
-  void add_bwp(ue_cell_config&               out,
+  void add_bwp(ue_cell_res_config&           out,
                bwp_id_t                      bwp_id,
                const bwp_downlink_common&    dl_bwp_common,
                const bwp_downlink_dedicated* dl_bwp_ded,
                const bwp_uplink_common*      ul_bwp_common,
                const bwp_uplink_dedicated*   ul_bwp_ded);
 
+  // Cell common BWP configurations.
   const bwp_downlink_common init_dl_bwp;
   const bwp_uplink_common   init_ul_bwp;
 
-  config_object_pool<ue_cell_config>            cell_cfg_pool;
-  config_object_pool<serving_cell_config>       serving_cell_cfg_pool;
+  // Pools of UE-dedicated configurations.
+  config_object_pool<ue_cell_res_config>        cell_cfg_pool;
   config_object_pool<bwp_config>                bwp_config_pool;
   config_object_pool<coreset_configuration>     coreset_config_pool;
   config_object_pool<uplink_config>             ul_cfg_pool;

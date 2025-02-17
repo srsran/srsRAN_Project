@@ -26,21 +26,9 @@ namespace srsran {
 
 struct ue_creation_params;
 struct ue_reconfig_params;
-struct ue_cell_config;
+struct ue_cell_res_config;
 class ue_cell_configuration;
 struct search_space_info;
-
-/// \brief Grouping of common and UE-dedicated information associated with a given BWP.
-struct bwp_info {
-  bwp_id_t                      bwp_id;
-  const bwp_downlink_common*    dl_common = nullptr;
-  const bwp_downlink_dedicated* dl_ded    = nullptr;
-  const bwp_uplink_common*      ul_common = nullptr;
-  const bwp_uplink_dedicated*   ul_ded    = nullptr;
-
-  /// \brief List of SearchSpaces associated with this BWP.
-  slotted_id_table<search_space_id, search_space_info*, MAX_NOF_SEARCH_SPACE_PER_BWP> search_spaces;
-};
 
 /// List of CRBs for a given PDCCH candidate.
 using crb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH>;
@@ -49,7 +37,7 @@ using crb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH
 struct search_space_info {
   const search_space_configuration*                 cfg     = nullptr;
   const coreset_configuration*                      coreset = nullptr;
-  const bwp_info*                                   bwp     = nullptr;
+  bwp_config_ptr                                    bwp;
   crb_interval                                      dl_crb_lims;
   crb_interval                                      ul_crb_lims;
   span<const pdsch_time_domain_resource_allocation> pdsch_time_domain_list;
@@ -132,7 +120,6 @@ public:
   /// Retrieve the parameters relative to the RRM of a UE in the scheduler.
   const sched_ue_resource_alloc_config& rrm_cfg() const { return ue_res_alloc_cfg; }
 
-  const serving_cell_config&       cfg_dedicated() const { return *ue_cell_cfg->cfg; }
   const std::optional<drx_config>& get_drx_cfg() const { return drx_cfg; }
 
   /// Returns whether UE dedicated configuration is considered complete or not for scheduling the UE as a non-fallback
@@ -140,23 +127,19 @@ public:
   /// \remark UE can be scheduled in fallback scheduler even if UE does not have a complete UE dedicated configuration.
   bool is_cfg_dedicated_complete() const;
 
-  bool has_bwp_id(bwp_id_t bwp_id) const { return bwp_table[bwp_id].dl_common != nullptr; }
+  bool has_bwp_id(bwp_id_t bwp_id) const { return cell_ded->bwps.contains(bwp_id); }
 
   /// Get BWP information given a BWP-Id.
-  const bwp_info* find_bwp(bwp_id_t bwp_id) const { return has_bwp_id(bwp_id) ? &bwp_table[bwp_id] : nullptr; }
-  const bwp_info& bwp(bwp_id_t bwp_id) const
-  {
-    const bwp_info* bwp = find_bwp(bwp_id);
-    srsran_assert(bwp != nullptr, "Invalid BWP-Id={} access", fmt::underlying(bwp_id));
-    return *bwp;
-  }
+  const bwp_config*      find_bwp(bwp_id_t bwp_id) const { return has_bwp_id(bwp_id) ? &bwp(bwp_id) : nullptr; }
+  const bwp_config&      bwp(bwp_id_t bwp_id) const { return cell_ded->bwps[bwp_id].value(); }
+  const bwp_config_list& bwps() const { return cell_ded->bwps; }
 
   /// Fetches CORESET configuration based on Coreset-Id.
   const coreset_configuration* find_coreset(coreset_id cs_id) const
   {
-    return ue_cell_cfg->coresets.contains(cs_id) ? &ue_cell_cfg->coresets[cs_id].value() : nullptr;
+    return cell_ded->coresets.contains(cs_id) ? &cell_ded->coresets[cs_id].value() : nullptr;
   }
-  const coreset_configuration& coreset(coreset_id cs_id) const { return ue_cell_cfg->coresets[cs_id].value(); }
+  const coreset_configuration& coreset(coreset_id cs_id) const { return cell_ded->coresets[cs_id].value(); }
 
   /// Fetches SearchSpace configuration based on SearchSpace-Id.
   /// Note: The ID space of SearchSpaceIds is common across all the BWPs of a Serving Cell.
@@ -178,35 +161,36 @@ public:
   /// Get CSI-MeasConfig for the UE.
   const csi_meas_config* csi_meas_cfg() const
   {
-    return ue_cell_cfg->csi_meas_cfg.has_value() ? &*ue_cell_cfg->csi_meas_cfg.value() : nullptr;
+    return cell_ded->csi_meas_cfg.has_value() ? &*cell_ded->csi_meas_cfg.value() : nullptr;
   }
 
   /// Parameters relative to UE UL configuration.
   const uplink_config* ul_cfg() const
   {
-    return ue_cell_cfg->ul_config.has_value() ? &*ue_cell_cfg->ul_config.value() : nullptr;
+    return cell_ded->ul_config.has_value() ? &*cell_ded->ul_config.value() : nullptr;
   }
 
   /// PDSCH parameters common to all BWPs.
   const pdsch_serving_cell_config* pdsch_serving_cell_cfg() const
   {
-    return ue_cell_cfg->pdsch_serv_cell_cfg.has_value() ? &*ue_cell_cfg->pdsch_serv_cell_cfg.value() : nullptr;
+    return cell_ded->pdsch_serv_cell_cfg.has_value() ? &*cell_ded->pdsch_serv_cell_cfg.value() : nullptr;
   }
+
+  time_alignment_group::id_t tag_id() const { return cell_ded->tag_id; }
 
   /// Determines the use of transform precoding for DCI Format 0_1 for C-RNTI.
   bool use_pusch_transform_precoding_dci_0_1() const
   {
     // If the UE is not configured with the higher layer parameter transformPrecoder in pusch-Config, determine the
     // transform precoder use according to parameter msg3-transformPrecoder.
-    if (not ue_cell_cfg->ul_config.has_value() or
-        not ue_cell_cfg->ul_config->value().init_ul_bwp.pusch_cfg.has_value() or
-        ue_cell_cfg->ul_config->value().init_ul_bwp.pusch_cfg->trans_precoder ==
+    if (not cell_ded->ul_config.has_value() or not cell_ded->ul_config->value().init_ul_bwp.pusch_cfg.has_value() or
+        cell_ded->ul_config->value().init_ul_bwp.pusch_cfg->trans_precoder ==
             pusch_config::transform_precoder::not_set) {
       return cell_cfg_common.use_msg3_transform_precoder();
     }
 
     // Otherwise, determine the use of transform pecoding according to transformPrecoder in pusch-Config.
-    return ue_cell_cfg->ul_config->value().init_ul_bwp.pusch_cfg->trans_precoder ==
+    return cell_ded->ul_config->value().init_ul_bwp.pusch_cfg->trans_precoder ==
            pusch_config::transform_precoder::enabled;
   }
 
@@ -217,27 +201,26 @@ public:
   /// \remark An assertion is triggered if the transmission scheme is not present or not set to codebook.
   const tx_scheme_codebook& get_pusch_codebook_config() const
   {
-    srsran_assert(ue_cell_cfg->ul_config.has_value(), "Missing dedicated UL configuration.");
-    srsran_assert(ue_cell_cfg->ul_config.value()->init_ul_bwp.pusch_cfg.has_value(),
+    srsran_assert(cell_ded->ul_config.has_value(), "Missing dedicated UL configuration.");
+    srsran_assert(cell_ded->ul_config.value()->init_ul_bwp.pusch_cfg.has_value(),
                   "Missing dedicated PUSCH configuration.");
-    srsran_assert(ue_cell_cfg->ul_config.value()->init_ul_bwp.pusch_cfg.value().tx_cfg.has_value(),
+    srsran_assert(cell_ded->ul_config.value()->init_ul_bwp.pusch_cfg.value().tx_cfg.has_value(),
                   "Missing transmit configuration.");
     srsran_assert(std::holds_alternative<tx_scheme_codebook>(
-                      ue_cell_cfg->ul_config.value()->init_ul_bwp.pusch_cfg.value().tx_cfg.value()),
+                      cell_ded->ul_config.value()->init_ul_bwp.pusch_cfg.value().tx_cfg.value()),
                   "PUSCH Transmission scheme must be set to codebook.");
-    return std::get<tx_scheme_codebook>(ue_cell_cfg->ul_config.value()->init_ul_bwp.pusch_cfg.value().tx_cfg.value());
+    return std::get<tx_scheme_codebook>(cell_ded->ul_config.value()->init_ul_bwp.pusch_cfg.value().tx_cfg.value());
   }
 
   /// \brief Gets the SRS transmit number of ports.
   /// \remark An assertion is triggered if no SRS resource is present.
   const auto& get_srs_nof_ports() const
   {
-    srsran_assert(ue_cell_cfg->ul_config.has_value(), "Missing dedicated UL configuration.");
-    srsran_assert(ue_cell_cfg->ul_config.value()->init_ul_bwp.srs_cfg.has_value(),
-                  "Missing dedicated SRS configuration.");
-    srsran_assert(ue_cell_cfg->ul_config.value()->init_ul_bwp.srs_cfg.value().srs_res_list.size() == 1,
+    srsran_assert(cell_ded->ul_config.has_value(), "Missing dedicated UL configuration.");
+    srsran_assert(cell_ded->ul_config.value()->init_ul_bwp.srs_cfg.has_value(), "Missing dedicated SRS configuration.");
+    srsran_assert(cell_ded->ul_config.value()->init_ul_bwp.srs_cfg.value().srs_res_list.size() == 1,
                   "SRS resource list size must be one.");
-    return ue_cell_cfg->ul_config.value()->init_ul_bwp.srs_cfg.value().srs_res_list.front().nof_ports;
+    return cell_ded->ul_config.value()->init_ul_bwp.srs_cfg.value().srs_res_list.front().nof_ports;
   }
 
 private:
@@ -247,13 +230,10 @@ private:
   void configure_bwp_ded_cfg(bwp_id_t bwpid, const bwp_uplink_dedicated& bwp_ul_ded);
 
   /// Dedicated cell configuration.
-  ue_cell_config_ptr             ue_cell_cfg;
+  ue_cell_config_ptr             cell_ded;
   std::optional<meas_gap_config> meas_gap_cfg;
   std::optional<drx_config>      drx_cfg;
   bool                           multi_cells_configured;
-
-  /// Lookup table for BWP params indexed by BWP-Id.
-  std::array<bwp_info, MAX_NOF_BWPS> bwp_table = {};
 
   /// This array maps SearchSpace-Ids (the array indexes) to SearchSpace parameters (the array values).
   slotted_array<search_space_info, MAX_NOF_SEARCH_SPACES> search_spaces;

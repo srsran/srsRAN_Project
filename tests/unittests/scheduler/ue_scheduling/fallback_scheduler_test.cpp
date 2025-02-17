@@ -1418,7 +1418,7 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb0_is_retx_ed_only_pucch_common
   add_ue(to_rnti(0x4601), to_du_ue_index(0), true);
   auto& u = bench->ue_db[to_du_ue_index(0)];
 
-  ASSERT_FALSE(u.get_pcell().cfg().cfg_dedicated().ul_config.has_value());
+  ASSERT_EQ(u.get_pcell().cfg().ul_cfg(), nullptr);
 
   slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb0_traffic_slot()};
 
