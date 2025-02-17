@@ -33,6 +33,7 @@ protected:
     const sched_cell_configuration_request_message sched_cell_cfg_req =
         sched_config_helper::make_default_sched_cell_configuration_request(params);
 
+    cfg_pool.add_cell(sched_cell_cfg_req);
     cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, sched_cell_cfg_req));
     cell_cfg = cell_cfg_list[to_du_cell_index(0)].get();
 
@@ -93,9 +94,9 @@ protected:
   }
 
   const scheduler_expert_config   sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  du_cell_group_config_pool       cfg_pool;
   cell_common_configuration_list  cell_cfg_list;
   cell_configuration*             cell_cfg = nullptr;
-  du_cell_group_config_pool       cfg_pool;
   std::optional<ue_configuration> ue_ded_cfg;
   cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
 

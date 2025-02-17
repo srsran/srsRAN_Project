@@ -57,6 +57,7 @@ protected:
     logger.set_level(srslog::basic_levels::debug);
     srslog::init();
 
+    cfg_pool.add_cell(msg);
     grid_alloc.add_cell(to_du_cell_index(0), pdcch_alloc, uci_alloc, res_grid);
     ue_res_grid.add_cell(res_grid);
   }

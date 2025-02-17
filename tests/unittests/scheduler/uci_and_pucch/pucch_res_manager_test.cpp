@@ -30,10 +30,9 @@ class test_pucch_resource_manager : public ::testing::Test
 {
 public:
   test_pucch_resource_manager() :
-    cell_cfg{sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()},
     // TODO: when the CSI is enabled in the main config, replace create_initial_ue_serving_cell_config_with_csi() with
     //       config_helpers::create_default_initial_ue_serving_cell_config().
-    ue_cell_cfg(to_rnti(0x4601), cell_cfg, create_initial_ue_serving_cell_config_with_csi()),
+    ue_cell_cfg(to_rnti(0x4601), cell_cfg, cell_cfg_pool.update_ue(ue_create_req)),
     pucch_cfg{ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value()},
     sl_tx(slot_point(0, 0))
   {
@@ -44,9 +43,13 @@ public:
   };
 
 protected:
-  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  cell_configuration            cell_cfg;
-  ue_cell_configuration         ue_cell_cfg;
+  const scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const sched_cell_configuration_request_message cell_req =
+      sched_config_helper::make_default_sched_cell_configuration_request();
+  const serving_cell_config ue_create_req = create_initial_ue_serving_cell_config_with_csi();
+  du_cell_config_pool       cell_cfg_pool{cell_req};
+  cell_configuration        cell_cfg{sched_cfg, cell_req};
+  ue_cell_configuration     ue_cell_cfg;
   // Helper variable.
   const pucch_config& pucch_cfg;
   // Config with alternative configuration for SR using PUCCH resource idx 10.
@@ -521,9 +524,9 @@ public:
 
 protected:
   struct dummy_ue {
-    dummy_ue(rnti_t rnti, const cell_configuration& cell_cfg_common_, const serving_cell_config& serv_cell_cfg_) :
+    dummy_ue(rnti_t rnti, const cell_configuration& cell_cfg_common_, ue_cell_config_ptr ue_cell_cfg_) :
       cnrti{rnti},
-      ue_cell_cfg{rnti, cell_cfg_common_, serv_cell_cfg_} {
+      ue_cell_cfg{rnti, cell_cfg_common_, ue_cell_cfg_} {
 
       };
 
@@ -620,7 +623,8 @@ protected:
       sched_ue_creation_request_message ue_req   = sched_config_helper::create_default_sched_ue_creation_request();
       serving_cell_config&              serv_cfg = ue_req.cfg.cells->front().serv_cell_cfg;
       generate_ue_serv_cell_cfg(serv_cfg, ue_idx, nof_configurations, cell_pucch_res_list);
-      ues.emplace_back(std::make_unique<dummy_ue>(to_rnti(0x4601 + ue_idx), cell_cfg, serv_cfg));
+      ues.emplace_back(
+          std::make_unique<dummy_ue>(to_rnti(0x4601 + ue_idx), cell_cfg, cell_cfg_pool.update_ue(serv_cfg)));
     }
   }
 

@@ -23,11 +23,10 @@ class ue_cell_tester : public ::testing::Test
 {
 protected:
   ue_cell_tester() :
-    sched_cfg(sched_config_helper::make_default_sched_cell_configuration_request()),
     expert_cfg(config_helpers::make_default_scheduler_expert_config()),
-    cell_cfg(expert_cfg, sched_cfg),
+    sched_cfg(sched_config_helper::make_default_sched_cell_configuration_request()),
     serv_cell_cfg(config_helpers::create_default_initial_ue_serving_cell_config()),
-    ue_cc_cfg(to_rnti(0x4601), cell_cfg, serv_cell_cfg),
+    ue_cc_cfg(to_rnti(0x4601), cell_cfg, cfg_pool.update_ue(serv_cell_cfg)),
     ul_lc_ch_mng(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, {})
   {
   }
@@ -38,12 +37,11 @@ protected:
   {
     switch (dci_type) {
       case dci_dl_rnti_config_type::c_rnti_f1_0:
-        return sched_helper::get_pdsch_config_f1_0_c_rnti(
-            cell_cfg, ue_cc.cfg().cfg_dedicated().pdsch_serv_cell_cfg, pdsch_td_cfg);
+        return sched_helper::get_pdsch_config_f1_0_c_rnti(cell_cfg, ue_cc.cfg().pdsch_serving_cell_cfg(), pdsch_td_cfg);
       case dci_dl_rnti_config_type::c_rnti_f1_1:
         return sched_helper::get_pdsch_config_f1_1_c_rnti(cell_cfg,
                                                           ue_cc.cfg().cfg_dedicated().init_dl_bwp.pdsch_cfg.value(),
-                                                          ue_cc.cfg().cfg_dedicated().pdsch_serv_cell_cfg,
+                                                          ue_cc.cfg().pdsch_serving_cell_cfg(),
                                                           pdsch_td_cfg,
                                                           ue_cc.channel_state_manager().get_nof_dl_layers());
       default:
@@ -82,10 +80,11 @@ protected:
     }
   }
 
-  sched_cell_configuration_request_message sched_cfg;
   scheduler_expert_config                  expert_cfg;
-  cell_configuration                       cell_cfg;
+  sched_cell_configuration_request_message sched_cfg;
+  cell_configuration                       cell_cfg{expert_cfg, sched_cfg};
   serving_cell_config                      serv_cell_cfg;
+  du_cell_config_pool                      cfg_pool{sched_cfg};
   ue_cell_configuration                    ue_cc_cfg;
   cell_harq_manager                        cell_harqs{1, MAX_NOF_HARQS};
   ul_logical_channel_manager               ul_lc_ch_mng;

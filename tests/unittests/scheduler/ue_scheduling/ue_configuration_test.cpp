@@ -32,8 +32,9 @@ protected:
 
 TEST_F(ue_configuration_test, configuration_valid_on_creation)
 {
-  cell_configuration    cell_cfg{sched_cfg, msg};
-  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, (*ue_create_msg.cfg.cells)[0].serv_cell_cfg};
+  cell_configuration cell_cfg{sched_cfg, msg};
+  cfg_pool.add_cell(msg);
+  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, cfg_pool.add_ue(ue_create_msg).cells[to_du_cell_index(0)]};
 
   // Test Common Config.
   TESTASSERT(ue_cfg.find_bwp(to_bwp_id(0)) != nullptr);
@@ -56,16 +57,21 @@ TEST_F(ue_configuration_test, configuration_valid_on_creation)
 
 TEST_F(ue_configuration_test, configuration_valid_on_reconfiguration)
 {
-  cell_configuration    cell_cfg{sched_cfg, msg};
-  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, (*ue_create_msg.cfg.cells)[0].serv_cell_cfg};
+  cell_configuration cell_cfg{sched_cfg, msg};
+  cfg_pool.add_cell(msg);
+  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, cfg_pool.add_ue(ue_create_msg).cells[to_du_cell_index(0)]};
 
-  cell_config_dedicated ue_cell_reconf{};
+  sched_ue_reconfiguration_message recfg_req;
+  recfg_req.ue_index = ue_create_msg.ue_index;
+  recfg_req.crnti    = ue_create_msg.crnti;
+  recfg_req.cfg.cells.emplace();
+  recfg_req.cfg.cells.value().resize(1);
+  cell_config_dedicated& ue_cell_reconf = recfg_req.cfg.cells.value()[0];
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg.emplace();
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.emplace_back();
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.back() = config_helpers::make_default_coreset_config();
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.back().id = to_coreset_id(2);
-
-  ue_cfg.reconfigure(ue_cell_reconf.serv_cell_cfg);
+  ue_cfg.reconfigure(cfg_pool.reconf_ue(recfg_req).cells[to_du_cell_index(0)]);
 
   TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) != nullptr);
   TESTASSERT_EQ(2, fmt::underlying(ue_cfg.coreset(to_coreset_id(2)).id));
@@ -76,6 +82,7 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
 {
   // Test Preamble.
   cell_cfg_db.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg));
+  cfg_pool.add_cell(msg);
   ue_configuration ue_ded_cfg{ue_create_msg.ue_index, ue_create_msg.crnti, cell_cfg_db, cfg_pool.add_ue(ue_create_msg)};
   ue               u{ue_creation_command{ue_ded_cfg, ue_create_msg.starts_in_fallback, cell_harqs}};
 
@@ -145,8 +152,9 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
                                      config_helpers::compute_max_nof_candidates(aggregation_level::n16, cset_cfg)});
 
   cell_configuration cell_cfg{sched_cfg, msg};
+  cfg_pool.add_cell(msg);
   rnti_t crnti = to_rnti(test_rgen::uniform_int<uint16_t>(to_value(rnti_t::MIN_CRNTI), to_value(rnti_t::MAX_CRNTI)));
-  ue_cell_configuration ue_cfg{crnti, cell_cfg, (*ue_create_msg.cfg.cells)[0].serv_cell_cfg};
+  ue_cell_configuration ue_cfg{crnti, cell_cfg, cfg_pool.add_ue(ue_create_msg).cells[to_du_cell_index(0)]};
 
   const bwp_info& bwp            = ue_cfg.bwp(to_bwp_id(0));
   const unsigned  max_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);

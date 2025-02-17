@@ -551,9 +551,8 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
               if (const auto* pucch_f0f1 =
                       std::get_if<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(&uci_pdu->pdu)) {
                 // Check if this UCI is from slot with a SR opportunity.
-                if (ue_cc.cfg().cfg_dedicated().ul_config.has_value() and
-                    ue_cc.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
-                  const auto& pucch_cfg = ue_cc.cfg().cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
+                if (ue_cc.cfg().ul_cfg() != nullptr and ue_cc.cfg().ul_cfg()->init_ul_bwp.pucch_cfg.has_value()) {
+                  const auto& pucch_cfg = ue_cc.cfg().ul_cfg()->init_ul_bwp.pucch_cfg.value();
 
                   bool is_format_1 = false;
                   for (const auto& pucch_res : pucch_cfg.pucch_res_list) {

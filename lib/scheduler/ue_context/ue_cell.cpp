@@ -37,8 +37,8 @@ ue_cell::ue_cell(du_ue_index_t                ue_index_,
   cell_index(ue_cell_cfg_.cell_cfg_common.cell_index),
   harqs(cell_harq_pool.add_ue(ue_index,
                               crnti_val,
-                              ue_cell_cfg_.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
-                                  ? (unsigned)ue_cell_cfg_.cfg_dedicated().pdsch_serv_cell_cfg->nof_harq_proc
+                              ue_cell_cfg_.pdsch_serving_cell_cfg() != nullptr
+                                  ? (unsigned)ue_cell_cfg_.pdsch_serving_cell_cfg()->nof_harq_proc
                                   : DEFAULT_NOF_DL_HARQS,
                               NOF_UL_HARQS)),
   crnti_(crnti_val),
@@ -414,9 +414,9 @@ aggregation_level ue_cell::get_aggregation_level(float cqi, const search_space_i
     }
   }
 
-  if (not ss_info.cfg->is_common_search_space() and cfg().cfg_dedicated().csi_meas_cfg.has_value()) {
+  if (not ss_info.cfg->is_common_search_space() and cfg().csi_meas_cfg() != nullptr) {
     // NOTE: It is assumed there is atleast one CSI report configured for UE.
-    cqi_table = cfg().cfg_dedicated().csi_meas_cfg->csi_report_cfg_list.back().cqi_table.value();
+    cqi_table = cfg().csi_meas_cfg()->csi_report_cfg_list.back().cqi_table.value();
   }
 
   return map_cqi_to_aggregation_level(cqi, cqi_table, ss_info.cfg->get_nof_candidates(), dci_size);

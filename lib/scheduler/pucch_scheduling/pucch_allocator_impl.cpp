@@ -28,47 +28,26 @@ static unsigned get_n_id0_scrambling(const ue_cell_configuration& ue_cell_cfg, u
   // dmrs-UplinkForPUSCH-MappingTypeB.
 
   // Check \c scrambling_id0 in \c dmrs-UplinkForPUSCH-MappingTypeB, first
-  if (ue_cell_cfg.cfg_dedicated()
-          .ul_config.value()
-          .init_ul_bwp.pusch_cfg.value()
-          .pusch_mapping_type_b_dmrs.has_value() and
-      ue_cell_cfg.cfg_dedicated()
-          .ul_config.value()
-          .init_ul_bwp.pusch_cfg.value()
-          .pusch_mapping_type_b_dmrs.value()
-          .trans_precoder_disabled.has_value() and
-      ue_cell_cfg.cfg_dedicated()
-          .ul_config.value()
-          .init_ul_bwp.pusch_cfg.value()
+  auto& ul_cfg = *ue_cell_cfg.ul_cfg();
+  if (ul_cfg.init_ul_bwp.pusch_cfg.value().pusch_mapping_type_b_dmrs.has_value() and
+      ul_cfg.init_ul_bwp.pusch_cfg.value().pusch_mapping_type_b_dmrs.value().trans_precoder_disabled.has_value() and
+      ul_cfg.init_ul_bwp.pusch_cfg.value()
           .pusch_mapping_type_b_dmrs.value()
           .trans_precoder_disabled.value()
           .scrambling_id0.has_value()) {
-    return ue_cell_cfg.cfg_dedicated()
-        .ul_config.value()
-        .init_ul_bwp.pusch_cfg.value()
+    return ul_cfg.init_ul_bwp.pusch_cfg.value()
         .pusch_mapping_type_b_dmrs.value()
         .trans_precoder_disabled.value()
         .scrambling_id0.value();
   }
   // Else, check \c scrambling_id0 in \c dmrs-UplinkForPUSCH-MappingTypeA.
-  if (ue_cell_cfg.cfg_dedicated()
-          .ul_config.value()
-          .init_ul_bwp.pusch_cfg.value()
-          .pusch_mapping_type_a_dmrs.has_value() and
-      ue_cell_cfg.cfg_dedicated()
-          .ul_config.value()
-          .init_ul_bwp.pusch_cfg.value()
-          .pusch_mapping_type_a_dmrs.value()
-          .trans_precoder_disabled.has_value() and
-      ue_cell_cfg.cfg_dedicated()
-          .ul_config.value()
-          .init_ul_bwp.pusch_cfg.value()
+  if (ul_cfg.init_ul_bwp.pusch_cfg.value().pusch_mapping_type_a_dmrs.has_value() and
+      ul_cfg.init_ul_bwp.pusch_cfg.value().pusch_mapping_type_a_dmrs.value().trans_precoder_disabled.has_value() and
+      ul_cfg.init_ul_bwp.pusch_cfg.value()
           .pusch_mapping_type_a_dmrs.value()
           .trans_precoder_disabled.value()
           .scrambling_id0.has_value()) {
-    return ue_cell_cfg.cfg_dedicated()
-        .ul_config.value()
-        .init_ul_bwp.pusch_cfg.value()
+    return ul_cfg.init_ul_bwp.pusch_cfg.value()
         .pusch_mapping_type_a_dmrs.value()
         .trans_precoder_disabled.value()
         .scrambling_id0.value();
@@ -358,7 +337,7 @@ void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allo
 
   // Get the index of the PUCCH resource to be used for SR.
   const pucch_resource* pucch_sr_res = resource_manager.reserve_sr_res_available(
-      pucch_slot_alloc.slot, crnti, ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value());
+      pucch_slot_alloc.slot, crnti, ue_cell_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value());
   if (pucch_sr_res == nullptr) {
     logger.warning("rnti={}: SR occasion allocation for slot={} skipped. Cause: PUCCH F1 ded. resource not available",
                    crnti,

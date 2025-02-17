@@ -65,12 +65,12 @@ sched_helper::get_pdsch_config_f1_0_c_rnti(const cell_configuration&            
 }
 
 pdsch_config_params
-sched_helper::get_pdsch_config_f1_0_c_rnti(const cell_configuration&                       cell_cfg_common,
-                                           const std::optional<pdsch_serving_cell_config>& pdsch_serv_cfg,
-                                           const pdsch_time_domain_resource_allocation&    pdsch_td_cfg)
+sched_helper::get_pdsch_config_f1_0_c_rnti(const cell_configuration&                    cell_cfg_common,
+                                           const pdsch_serving_cell_config*             pdsch_serv_cfg,
+                                           const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
 {
   pdsch_config_params params = get_pdsch_config_f1_0_c_rnti(cell_cfg_common, pdsch_td_cfg);
-  if (pdsch_serv_cfg.has_value()) {
+  if (pdsch_serv_cfg != nullptr) {
     // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
     params.nof_oh_prb = static_cast<unsigned>(pdsch_serv_cfg->x_ov_head);
   }
@@ -78,11 +78,11 @@ sched_helper::get_pdsch_config_f1_0_c_rnti(const cell_configuration&            
 }
 
 pdsch_config_params
-sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&                       cell_cfg_common,
-                                           const pdsch_config&                             pdsch_cfg,
-                                           const std::optional<pdsch_serving_cell_config>& pdsch_serv_cfg,
-                                           const pdsch_time_domain_resource_allocation&    pdsch_td_cfg,
-                                           unsigned                                        nof_layers)
+sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&                    cell_cfg_common,
+                                           const pdsch_config&                          pdsch_cfg,
+                                           const pdsch_serving_cell_config*             pdsch_serv_cfg,
+                                           const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
+                                           unsigned                                     nof_layers)
 {
   // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
   static constexpr unsigned tb_scaling_field = 0;
@@ -102,12 +102,12 @@ sched_helper::get_pdsch_config_f1_1_c_rnti(const cell_configuration&            
 
   // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
-  pdsch.nof_oh_prb       = pdsch_serv_cfg.has_value() ? static_cast<unsigned>(pdsch_serv_cfg.value().x_ov_head)
-                                                      : static_cast<unsigned>(x_overhead::not_set);
-  pdsch.symbols          = pdsch_td_cfg.symbols;
-  pdsch.mcs_table        = pdsch_cfg.mcs_table;
-  pdsch.tb_scaling_field = tb_scaling_field;
-  pdsch.nof_layers       = nof_layers;
+  pdsch.nof_oh_prb                   = pdsch_serv_cfg != nullptr ? static_cast<unsigned>(pdsch_serv_cfg->x_ov_head)
+                                                                 : static_cast<unsigned>(x_overhead::not_set);
+  pdsch.symbols                      = pdsch_td_cfg.symbols;
+  pdsch.mcs_table                    = pdsch_cfg.mcs_table;
+  pdsch.tb_scaling_field             = tb_scaling_field;
+  pdsch.nof_layers                   = nof_layers;
   pdsch.max_nof_cws_scheduled_by_dci = pdsch_cfg.is_max_cw_sched_by_dci_is_two ? 2 : 1;
 
   return pdsch;

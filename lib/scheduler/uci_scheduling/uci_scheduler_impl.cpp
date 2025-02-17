@@ -114,13 +114,12 @@ void uci_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
 
 void uci_scheduler_impl::add_ue_to_grid(const ue_cell_configuration& ue_cfg, bool is_reconf)
 {
-  if (not ue_cfg.cfg_dedicated().ul_config.has_value() or
-      not ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
+  if (ue_cfg.ul_cfg() == nullptr or not ue_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.has_value()) {
     return;
   }
 
   // Save SR resources in the slot wheel.
-  const auto& sr_resource_cfg_list = ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value().sr_res_list;
+  const auto& sr_resource_cfg_list = ue_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.value().sr_res_list;
   for (unsigned i = 0; i != sr_resource_cfg_list.size(); ++i) {
     const auto& sr_res = sr_resource_cfg_list[i];
     srsran_assert(sr_res.period >= sr_periodicity::sl_1, "Minimum supported SR periodicity is 1 slot.");
@@ -129,10 +128,10 @@ void uci_scheduler_impl::add_ue_to_grid(const ue_cell_configuration& ue_cfg, boo
     add_resource(ue_cfg.crnti, sr_res.offset, period_slots, true);
   }
 
-  if (ue_cfg.cfg_dedicated().csi_meas_cfg.has_value()) {
+  if (ue_cfg.csi_meas_cfg() != nullptr) {
     // We assume we only use the first CSI report configuration.
     const unsigned csi_report_cfg_idx = 0;
-    const auto&    csi_report_cfg = ue_cfg.cfg_dedicated().csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
+    const auto&    csi_report_cfg     = ue_cfg.csi_meas_cfg()->csi_report_cfg_list[csi_report_cfg_idx];
     const auto&    period_pucch =
         std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type);
 
@@ -172,8 +171,7 @@ void uci_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, cons
 
 void uci_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
 {
-  if (not ue_cfg.cfg_dedicated().ul_config.has_value() or
-      not ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.has_value()) {
+  if (ue_cfg.ul_cfg() == nullptr or not ue_cfg.ul_cfg()->init_ul_bwp.pucch_cfg.has_value()) {
     return;
   }
 

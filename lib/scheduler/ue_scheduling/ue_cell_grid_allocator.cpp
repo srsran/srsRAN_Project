@@ -939,12 +939,9 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
           pusch_cfg.max_nof_csi_part2_bits,
           static_cast<unsigned>(pusch_cfg.mcs_table),
           ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos == dmrs_typeA_position::pos2 ? "pos2" : "pos3",
-          ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value().is_dmrs_type2
-              ? "yes"
-              : "no",
-          static_cast<unsigned>(ue_cell_cfg.cfg_dedicated()
-                                    .ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value()
-                                    .additional_positions));
+          ue_cell_cfg.ul_cfg()->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value().is_dmrs_type2 ? "yes" : "no",
+          static_cast<unsigned>(
+              ue_cell_cfg.ul_cfg()->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value().additional_positions));
       get_pdcch_sched(grant.cell_index).cancel_last_pdcch(pdcch_alloc);
       return {alloc_status::invalid_params};
     }

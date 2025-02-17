@@ -41,6 +41,15 @@ struct rach_config_generic {
   uint8_t preamble_trans_max = 7;
   /// Power ramping steps for PRACH. Values {0, 2, 4, 6}.
   uint8_t power_ramping_step_db = 4;
+
+  bool operator==(const rach_config_generic& other) const
+  {
+    return prach_config_index == other.prach_config_index and ra_resp_window == other.ra_resp_window and
+           msg1_fdm == other.msg1_fdm and msg1_frequency_start == other.msg1_frequency_start and
+           zero_correlation_zone_config == other.zero_correlation_zone_config and
+           preamble_rx_target_pw == other.preamble_rx_target_pw and preamble_trans_max == other.preamble_trans_max and
+           power_ramping_step_db == other.power_ramping_step_db;
+  }
 };
 
 /// Used to specify the cell-specific random-access parameters as per TS 38.331, "RACH-ConfigCommon".
@@ -70,6 +79,16 @@ struct rach_config_common {
   /// \c ssb-perRACH-OccasionAndCB-PreamblesPerSSB.
   /// \remark Values of \c cb_preambles_per_ssb depends on value of \c ssb_per_ro.
   uint8_t nof_cb_preambles_per_ssb = 4;
+
+  bool operator==(const rach_config_common& other) const
+  {
+    return rach_cfg_generic == other.rach_cfg_generic and total_nof_ra_preambles == other.total_nof_ra_preambles and
+           ra_con_res_timer == other.ra_con_res_timer and
+           is_prach_root_seq_index_l839 == other.is_prach_root_seq_index_l839 and
+           prach_root_seq_index == other.prach_root_seq_index and msg1_scs == other.msg1_scs and
+           restricted_set == other.restricted_set and msg3_transform_precoder == other.msg3_transform_precoder and
+           nof_ssb_per_ro == other.nof_ssb_per_ro and nof_cb_preambles_per_ssb == other.nof_cb_preambles_per_ssb;
+  }
 };
 
 } // namespace srsran

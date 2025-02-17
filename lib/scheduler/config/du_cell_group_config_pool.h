@@ -31,17 +31,26 @@ public:
   du_cell_config_pool(const du_cell_config_pool&)            = delete;
   du_cell_config_pool& operator=(const du_cell_config_pool&) = delete;
 
-  ue_cell_creation_params update_ue(const cell_config_dedicated& ue_cell);
+  ue_cell_config_ptr update_ue(const serving_cell_config& ue_cell);
 
 private:
-  dl_bwp_config_ptr add_bwp(const bwp_downlink_common& bwp_common, const bwp_downlink_dedicated* bwp_ded);
+  void add_bwp(ue_cell_config&               out,
+               bwp_id_t                      bwp_id,
+               const bwp_downlink_common&    dl_bwp_common,
+               const bwp_downlink_dedicated* dl_bwp_ded,
+               const bwp_uplink_common*      ul_bwp_common,
+               const bwp_uplink_dedicated*   ul_bwp_ded);
 
-  bwp_downlink_common init_dl_bwp;
+  const bwp_downlink_common init_dl_bwp;
+  const bwp_uplink_common   init_ul_bwp;
 
-  config_object_pool<bwp_pdcch_config> pdcch_config_pool;
-  bwp_pdcch_config_ptr                 common_pdcch;
-
-  config_object_pool<dl_bwp_config> dl_bwp_config_pool;
+  config_object_pool<ue_cell_config>            cell_cfg_pool;
+  config_object_pool<serving_cell_config>       serving_cell_cfg_pool;
+  config_object_pool<bwp_config>                bwp_config_pool;
+  config_object_pool<coreset_configuration>     coreset_config_pool;
+  config_object_pool<uplink_config>             ul_cfg_pool;
+  config_object_pool<pdsch_serving_cell_config> pdsch_serv_cell_pool;
+  config_object_pool<csi_meas_config>           csi_meas_config_pool;
 };
 
 /// Class responsible for managing the configurations of all the entities (cells, UEs, slices) in a cell group.

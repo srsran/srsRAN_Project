@@ -145,9 +145,9 @@ public:
   test_bench(srs_test_params params) :
     expert_cfg{config_helpers::make_default_scheduler_expert_config()},
     cell_cfg{[this, &params]() -> const cell_configuration& {
-      cell_cfg_list.emplace(to_du_cell_index(0),
-                            std::make_unique<cell_configuration>(
-                                expert_cfg, make_custom_sched_cell_configuration_request(params.is_tdd)));
+      auto cell_req = make_custom_sched_cell_configuration_request(params.is_tdd);
+      cfg_pool.add_cell(cell_req);
+      cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(expert_cfg, cell_req));
       return *cell_cfg_list[to_du_cell_index(0)];
     }()},
     cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>()},
@@ -160,9 +160,9 @@ public:
 
   // Class members.
   scheduler_expert_config        expert_cfg;
+  du_cell_group_config_pool      cfg_pool;
   cell_common_configuration_list cell_cfg_list{};
   const cell_configuration&      cell_cfg;
-  du_cell_group_config_pool      cfg_pool;
   cell_harq_manager              cell_harqs;
   ue_repository                  ues;
   std::vector<ue_configuration>  ue_ded_cfgs;
