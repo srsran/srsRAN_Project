@@ -243,11 +243,8 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::system_clock:
 
   // apply security in crypto executor
   auto fn = [this, pdu_info = std::move(pdu_info)]() mutable {
-    auto pre = std::chrono::high_resolution_clock::now();
-    apply_security(std::move(pdu_info));
-    auto post           = std::chrono::high_resolution_clock::now();
-    auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
-    metrics.add_crypto_processing_latency(sdu_latency_ns.count());
+    apply_security(std::move(pdu_info)); // we should not use the PDCP entity past this point, as we possibly no longer
+                                         // hold the crypto token causing races upon deletion.
   };
   if (not crypto_executor.execute(std::move(fn))) {
     logger.log_warning("Dropped PDU, crypto executor queue is full. count={}", rcvd_count);
@@ -256,6 +253,7 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::system_clock:
 
 void pdcp_entity_rx::apply_security(pdcp_rx_pdu_info&& pdu_info)
 {
+  auto     pre        = std::chrono::high_resolution_clock::now();
   uint32_t rcvd_count = pdu_info.count;
 
   // Apply deciphering and integrity check
@@ -298,6 +296,10 @@ void pdcp_entity_rx::apply_security(pdcp_rx_pdu_info&& pdu_info)
   result.buf.value().trim_head(hdr_size);
 
   pdu_info.buf = std::move(result.buf.value());
+
+  auto post           = std::chrono::high_resolution_clock::now();
+  auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
+  metrics.add_crypto_processing_latency(sdu_latency_ns.count());
 
   // apply reordering in UE executor
   auto fn = [this, pdu_info = std::move(pdu_info)]() mutable {
@@ -554,8 +556,8 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
   // integrity protection algorithm is used, 'NULL' ciphering algorithm is also used.
   // Ref: TS 38.331 Sec. 5.3.1.2
   //
-  // From TS 38.501 Sec. 6.7.3.6: UEs that are in limited service mode (LSM) and that cannot be authenticated (...) may
-  // still be allowed to establish emergency session by sending the emergency registration request message. (...)
+  // From TS 38.501 Sec. 6.7.3.6: UEs that are in limited service mode (LSM) and that cannot be authenticated (...)
+  // may still be allowed to establish emergency session by sending the emergency registration request message. (...)
   if ((sec_cfg.integ_algo == security::integrity_algorithm::nia0) &&
       (is_drb() || (is_srb() && sec_cfg.cipher_algo != security::ciphering_algorithm::nea0))) {
     logger.log_error("Integrity algorithm NIA0 is only permitted for SRBs configured with NEA0. is_srb={} NIA{} NEA{}",
