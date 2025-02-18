@@ -31,9 +31,6 @@ public:
 
   void slot_indication(slot_point slot_tx);
 
-  /// \brief Handle skipped slot indication.
-  void skipped_slot_indication(slot_point prev_slot, slot_point current_slot);
-
   bool active() const { return not slice_ues.empty(); }
 
   /// Save PDSCH grant.
@@ -100,6 +97,7 @@ public:
   ran_slice_id_t            id;
   const cell_configuration* cell_cfg;
   slice_rrm_policy_config   cfg;
+  const unsigned            min_k2;
 
   /// Counter of how many RBs have been scheduled for PDSCH in the current slot for this slice.
   unsigned pdsch_rb_count = 0;

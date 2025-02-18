@@ -38,39 +38,25 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 
 void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t cell_index)
 {
-  if (ue_res_grid_view.get_cell_cfg_common(cell_index).is_dl_enabled(slot_tx)) {
-    // This slot is inactive for PDCCH in this cell. We therefore, can skip the scheduling strategy.
-    // Note: we are currently assuming that all cells have the same TDD pattern and that the scheduling strategy
-    // only allocates PDCCHs for the current slot_tx.
+  auto& cell = cells[cell_index];
 
-    // Update slice context and compute slice priorities.
-    cells[cell_index].slice_sched.slot_indication(slot_tx, ue_res_grid_view.get_grid(cell_index));
+  // Update slice context and compute slice priorities.
+  cell.slice_sched.slot_indication(slot_tx, ue_res_grid_view.get_grid(cell_index));
 
-    // Perform round-robin prioritization of UL and DL scheduling. This gives unfair preference to DL over UL. This is
-    // done to avoid the issue of sending wrong DAI value in DCI format 0_1 to UE while the PDSCH is allocated
-    // right after allocating PUSCH in the same slot, resulting in gNB expecting 1 HARQ ACK bit to be multiplexed in
-    // UCI in PUSCH and UE sending 4 HARQ ACK bits (DAI = 3).
-    // Example: K1==K2=4 and PUSCH is allocated before PDSCH.
-    if (expert_cfg.enable_csi_rs_pdsch_multiplexing or
-        (*cells[cell_index].cell_res_alloc)[0].result.dl.csi_rs.empty()) {
-      auto dl_slice_candidate = cells[cell_index].slice_sched.get_next_dl_candidate();
-      while (dl_slice_candidate.has_value()) {
-        auto&                           policy = cells[cell_index].slice_sched.get_policy(dl_slice_candidate->id());
-        dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{ue_alloc, *dl_slice_candidate};
-        policy.dl_sched(dl_sched_context{
-            slice_pdsch_alloc, ue_res_grid_view, *dl_slice_candidate, cells[cell_index].cell_harqs.pending_dl_retxs()});
-        dl_slice_candidate = cells[cell_index].slice_sched.get_next_dl_candidate();
-      }
-    }
+  // Schedule DL first.
+  // Note: DL should be scheduled first so that the right DAI value is picked in DCI format 0_1.
+  while (auto dl_slice_candidate = cell.slice_sched.get_next_dl_candidate()) {
+    scheduler_policy&               policy = cell.slice_sched.get_policy(dl_slice_candidate->id());
+    dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{ue_alloc, *dl_slice_candidate};
+    policy.dl_sched(
+        dl_sched_context{slice_pdsch_alloc, ue_res_grid_view, *dl_slice_candidate, cell.cell_harqs.pending_dl_retxs()});
+  }
 
-    auto ul_slice_candidate = cells[cell_index].slice_sched.get_next_ul_candidate();
-    while (ul_slice_candidate.has_value()) {
-      auto&                           policy = cells[cell_index].slice_sched.get_policy(ul_slice_candidate->id());
-      ul_slice_ue_cell_grid_allocator slice_pusch_alloc{ue_alloc, *ul_slice_candidate};
-      policy.ul_sched(ul_sched_context{
-          slice_pusch_alloc, ue_res_grid_view, *ul_slice_candidate, cells[cell_index].cell_harqs.pending_ul_retxs()});
-      ul_slice_candidate = cells[cell_index].slice_sched.get_next_ul_candidate();
-    }
+  while (auto ul_slice_candidate = cell.slice_sched.get_next_ul_candidate()) {
+    scheduler_policy&               policy = cell.slice_sched.get_policy(ul_slice_candidate->id());
+    ul_slice_ue_cell_grid_allocator slice_pusch_alloc{ue_alloc, *ul_slice_candidate};
+    policy.ul_sched(
+        ul_sched_context{slice_pusch_alloc, ue_res_grid_view, *ul_slice_candidate, cell.cell_harqs.pending_ul_retxs()});
   }
 
   // The post processing is done for either DL and UL slots.
@@ -214,10 +200,10 @@ private:
 
 } // namespace
 
-ue_scheduler_impl::cell::cell(const scheduler_ue_expert_config& expert_cfg,
-                              const ue_scheduler_cell_params&   params,
-                              ue_repository&                    ues,
-                              cell_metrics_handler&             metrics_handler) :
+ue_scheduler_impl::cell_context::cell_context(const scheduler_ue_expert_config& expert_cfg,
+                                              const ue_scheduler_cell_params&   params,
+                                              ue_repository&                    ues,
+                                              cell_metrics_handler&             metrics_handler) :
   cell_res_alloc(params.cell_res_alloc),
   cell_harqs(MAX_NOF_DU_UES,
              MAX_NOF_HARQS,

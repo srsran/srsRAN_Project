@@ -58,12 +58,8 @@ private:
     }
 
     /// Determines the slice candidate priority.
-    priority_type get_prio(bool            is_dl,
-                           slot_count_type current_slot_count,
-                           slot_point      pdcch_slot,
-                           slot_point      pxsch_slot,
-                           unsigned        nof_slices,
-                           bool            slice_resched) const;
+    priority_type
+    get_prio(bool is_dl, slot_point pdcch_slot, slot_point pxsch_slot, unsigned nof_slices, bool slice_resched) const;
   };
 
   struct slice_candidate_context {
@@ -133,10 +129,6 @@ private:
   // Queue of slice candidates sorted by priority.
   slice_prio_queue dl_prio_queue;
   slice_prio_queue ul_prio_queue;
-
-  // Count that gets incremented with every new slot. Useful for time round-robin of slices with the same priority.
-  // Note: This unsigned value will wrap-around.
-  slot_count_type slot_count = 0;
 };
 
 } // namespace srsran

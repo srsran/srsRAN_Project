@@ -60,7 +60,7 @@ private:
   /// Counts the number of PUCCH grants that are allocated for a given user at a specific slot.
   void update_harq_pucch_counter(cell_resource_allocator& cell_alloc);
 
-  struct cell {
+  struct cell_context {
     cell_resource_allocator* cell_res_alloc;
 
     /// HARQ pool for this cell.
@@ -78,16 +78,16 @@ private:
     /// SRS scheduler
     srs_scheduler_impl srs_sched;
 
-    cell(const scheduler_ue_expert_config& expert_cfg,
-         const ue_scheduler_cell_params&   params,
-         ue_repository&                    ues,
-         cell_metrics_handler&             metrics_handler);
+    cell_context(const scheduler_ue_expert_config& expert_cfg,
+                 const ue_scheduler_cell_params&   params,
+                 ue_repository&                    ues,
+                 cell_metrics_handler&             metrics_handler);
   };
 
   const scheduler_ue_expert_config& expert_cfg;
 
   // List of cells of the UE scheduler.
-  slotted_array<cell, MAX_NOF_DU_CELLS> cells;
+  slotted_array<cell_context, MAX_NOF_DU_CELLS> cells;
 
   /// Scheduling Strategy.
   ue_resource_grid_view ue_res_grid_view;

@@ -18,7 +18,6 @@ using namespace srsran;
 slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_) :
   cell_cfg(cell_cfg_),
   logger(srslog::fetch_basic_logger("SCHED")),
-  current_slot(to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0),
   ues(ues_),
   valid_pusch_td_list_per_slot(get_fairly_distributed_pusch_td_resource_indices(cell_cfg))
 {
@@ -56,33 +55,41 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, ue_reposit
 
 void slice_scheduler::slot_indication(slot_point slot_tx, const cell_resource_allocator& res_grid)
 {
-  // If there are skipped slots, handle them.
-  if ((current_slot + 1) != slot_tx) {
+  // Update the context of each slice.
+  if (not current_slot.valid()) {
+    // First call.
+    current_slot = slot_tx - 1;
+  }
+  while (current_slot != slot_tx) {
+    ++current_slot;
     for (auto& slice : slices) {
-      slice.inst.skipped_slot_indication(current_slot, slot_tx);
+      slice.inst.slot_indication(current_slot);
     }
   }
-  // Update current slot.
-  current_slot = slot_tx;
 
-  slot_count++;
+  // Clear the priority queues.
+  dl_prio_queue.clear();
+  ul_prio_queue.clear();
 
-  // Update the context of each slice.
-  for (auto& slice : slices) {
-    slice.inst.slot_indication(slot_tx);
+  if (not res_grid.cfg.is_dl_enabled(slot_tx)) {
+    // If PDCCH is inactive in this slot, we don't generate any slice candidates.
+    return;
   }
 
   // Recompute the priority queues.
-  dl_prio_queue.clear();
-  ul_prio_queue.clear();
+  unsigned max_rbs = 0;
   for (const auto& slice : slices) {
-    unsigned max_rbs = slice.inst.pdsch_rb_count <= slice.inst.cfg.min_prb and slice.inst.cfg.min_prb > 0
-                           ? slice.inst.cfg.min_prb
-                           : slice.inst.cfg.max_prb;
-    dl_prio_queue.push(slice_candidate_context{slice.inst.id,
-                                               slice.get_prio(true, slot_count, slot_tx, slot_tx, slices.size(), false),
-                                               {slice.inst.pdsch_rb_count, max_rbs},
-                                               slot_tx});
+    const bool pdsch_enabled =
+        res_grid.cfg.expert_cfg.ue.enable_csi_rs_pdsch_multiplexing or res_grid[0].result.dl.csi_rs.empty();
+    if (pdsch_enabled) {
+      max_rbs = slice.inst.pdsch_rb_count <= slice.inst.cfg.min_prb and slice.inst.cfg.min_prb > 0
+                    ? slice.inst.cfg.min_prb
+                    : slice.inst.cfg.max_prb;
+      dl_prio_queue.push(slice_candidate_context{slice.inst.id,
+                                                 slice.get_prio(true, slot_tx, slot_tx, slices.size(), false),
+                                                 {slice.inst.pdsch_rb_count, max_rbs},
+                                                 slot_tx});
+    }
 
     // TODO: Revisit when PUSCH time domain resource list is also defined in UE dedicated configuration.
     span<const pusch_time_domain_resource_allocation> pusch_time_domain_list =
@@ -103,11 +110,10 @@ void slice_scheduler::slot_indication(slot_point slot_tx, const cell_resource_al
       unsigned   pusch_rb_count = slice.inst.nof_pusch_rbs_allocated(pusch_slot);
       max_rbs = pusch_rb_count <= slice.inst.cfg.min_prb and slice.inst.cfg.min_prb > 0 ? slice.inst.cfg.min_prb
                                                                                         : slice.inst.cfg.max_prb;
-      ul_prio_queue.push(
-          slice_candidate_context{slice.inst.id,
-                                  slice.get_prio(false, slot_count, slot_tx, pusch_slot, slices.size(), false),
-                                  {pusch_rb_count, max_rbs},
-                                  pusch_slot});
+      ul_prio_queue.push(slice_candidate_context{slice.inst.id,
+                                                 slice.get_prio(false, slot_tx, pusch_slot, slices.size(), false),
+                                                 {pusch_rb_count, max_rbs},
+                                                 pusch_slot});
     }
   }
 }
@@ -240,7 +246,7 @@ slice_scheduler::get_next_candidate()
         rb_lims.stop() != cfg.max_prb) {
       // For the special case when minRB ratio>0, the first candidate for this slice was bounded between {RBLimsMin,
       // RBLimsMax}. We re-add the slice as a candidate, this time, with RB bounds {RBLimsMax, maxRB}.
-      priority_type prio = chosen_slice.get_prio(IsDownlink, slot_count, current_slot, pxsch_slot, slices.size(), true);
+      priority_type prio    = chosen_slice.get_prio(IsDownlink, current_slot, pxsch_slot, slices.size(), true);
       unsigned      min_rbs = rb_count > 0 ? rb_count : cfg.min_prb;
       prio_queue.push(slice_candidate_context{chosen_slice.inst.id, prio, {min_rbs, cfg.max_prb}, pxsch_slot});
     }
@@ -261,12 +267,11 @@ std::optional<ul_ran_slice_candidate> slice_scheduler::get_next_ul_candidate()
   return get_next_candidate<false>();
 }
 
-slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_prio(bool            is_dl,
-                                                                                  slot_count_type current_slot_count,
-                                                                                  slot_point      pdcch_slot,
-                                                                                  slot_point      pxsch_slot,
-                                                                                  unsigned        nof_slices,
-                                                                                  bool            slice_resched) const
+slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_prio(bool       is_dl,
+                                                                                  slot_point pdcch_slot,
+                                                                                  slot_point pxsch_slot,
+                                                                                  unsigned   nof_slices,
+                                                                                  bool       slice_resched) const
 {
   // Note: The positive integer representing the priority of a slice consists of a concatenation of three priority
   // values:
