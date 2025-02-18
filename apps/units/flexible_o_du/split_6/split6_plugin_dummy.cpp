@@ -26,7 +26,7 @@ namespace {
 /// Dummy FAPI adaptor implementation.
 class fapi_adaptor_dummy : public fapi::fapi_adaptor,
                            fapi::fapi_message_interface_collection,
-                           fapi::fapi_power_operation_controller
+                           fapi::fapi_operation_controller
 {
   /// Dummy slot message gateway implementation.
   class slot_message_gateway_dummy : public fapi::slot_message_gateway
@@ -55,7 +55,7 @@ class fapi_adaptor_dummy : public fapi::fapi_adaptor,
 
 public:
   // See interface for documentation.
-  fapi_power_operation_controller& get_power_operation_controller() override { return *this; }
+  fapi_operation_controller& get_operation_controller() override { return *this; }
 
   // See interface for documentation.
   fapi_message_interface_collection& get_message_interface_collection() override { return *this; }

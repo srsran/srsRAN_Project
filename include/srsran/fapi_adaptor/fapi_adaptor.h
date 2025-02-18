@@ -43,11 +43,11 @@ public:
   virtual void set_slot_error_message_notifier(slot_error_message_notifier& notifier_) = 0;
 };
 
-/// FAPI power operation controller interface.
-class fapi_power_operation_controller
+/// FAPI operation controller interface.
+class fapi_operation_controller
 {
 public:
-  virtual ~fapi_power_operation_controller() = default;
+  virtual ~fapi_operation_controller() = default;
 
   /// Starts the underlying PHY. Returns true on success, false otherwise.
   virtual bool start() = 0;
@@ -65,8 +65,8 @@ class fapi_adaptor
 public:
   virtual ~fapi_adaptor() = default;
 
-  /// Returns the power operation controller of this FAPI adaptor.
-  virtual fapi_power_operation_controller& get_power_operation_controller() = 0;
+  /// Returns the operation controller of this FAPI adaptor.
+  virtual fapi_operation_controller& get_operation_controller() = 0;
 
   /// Returns the message interface collection of this FAPI adaptor.
   virtual fapi_message_interface_collection& get_message_interface_collection() = 0;
