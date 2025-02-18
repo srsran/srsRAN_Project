@@ -238,6 +238,11 @@ tests:
           nof_dl_symbols: 10
           nof_ul_slots: 7
           nof_ul_symbols: 0
+      expert_execution:
+        threads:
+          upper_phy:
+            nof_ul_threads: 3
+            nof_pusch_decoder_threads: 3
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
@@ -266,6 +271,11 @@ tests:
           nof_dl_symbols: 10
           nof_ul_slots: 6
           nof_ul_symbols: 0
+      expert_execution:
+        threads:
+          upper_phy:
+            nof_ul_threads: 3
+            nof_pusch_decoder_threads: 3
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
