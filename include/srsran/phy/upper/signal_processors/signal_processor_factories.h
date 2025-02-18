@@ -75,7 +75,9 @@ std::shared_ptr<dmrs_pusch_estimator_factory> create_dmrs_pusch_estimator_factor
     std::shared_ptr<pseudo_random_generator_factory>     prg_factory,
     std::shared_ptr<low_papr_sequence_generator_factory> low_papr_sequence_gen_factory,
     std::shared_ptr<port_channel_estimator_factory>      ch_estimator_factory,
-    port_channel_estimator_td_interpolation_strategy     td_interpolation_strategy);
+    port_channel_estimator_fd_smoothing_strategy         fd_smoothing_strategy,
+    port_channel_estimator_td_interpolation_strategy     td_interpolation_strategy,
+    bool                                                 compensate_cfo);
 
 class nzp_csi_rs_generator_factory
 {

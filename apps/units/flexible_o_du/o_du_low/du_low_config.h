@@ -37,6 +37,13 @@ struct du_low_unit_expert_upper_phy_config {
   /// -\c post_equalization: SINR is calculated using the post-equalization noise variances of the equalized RE.
   /// -\c evm: SINR is obtained from the EVM of the PUSCH symbols.
   std::string pusch_sinr_calc_method = "post_equalization";
+  /// \brief PUSCH channel estimator frequency-domain smoothing strategy.
+  ///
+  /// Use one of these options:
+  /// - \c filter: applies a low pass filter to the channel estimates, or
+  /// - \c mean: averages the channel estimates, or
+  /// - \c none: it does not apply any smoothing strategy.
+  std::string pusch_channel_estimator_fd_strategy = "filter";
   /// \brief PUSCH channel estimator time-domain interpolation strategy.
   ///
   /// Use one of these options:
@@ -46,6 +53,8 @@ struct du_low_unit_expert_upper_phy_config {
   /// The \c average strategy is more robust against noise and interference while \c interpolate is more robust for
   /// fast fading channels.
   std::string pusch_channel_estimator_td_strategy = "average";
+  /// PUSCH channel estimator CFO compensation.
+  bool pusch_channel_estimator_cfo_compensation = true;
   /// \brief PUSCH channel equalizer algorithm.
   ///
   /// Use one of these options:

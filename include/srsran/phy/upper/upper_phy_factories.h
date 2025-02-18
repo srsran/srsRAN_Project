@@ -236,6 +236,13 @@ struct upper_phy_config {
   /// - \c lut: for using a look-up table CRC calculator, or
   /// - \c clmul: for using a look-up table CRC calculator (x86_64 CPUs only).
   std::string crc_calculator_type;
+  /// \brief PUSCH channel estimator frequency-domain smoothing strategy.
+  ///
+  /// Use one of these options:
+  /// - \c filter: applies a low pass filter to the channel estimates, or
+  /// - \c mean: averages the channel estimates, or
+  /// - \c none: it does not apply any smoothing strategy.
+  std::string pusch_channel_estimator_fd_strategy;
   /// \brief PUSCH channel estimator time-domain interpolation strategy.
   ///
   /// Use one of these options:
@@ -245,6 +252,8 @@ struct upper_phy_config {
   /// The \c average strategy is more robust against noise and interference while \c interpolate is more robust for
   /// fast fading channels.
   std::string pusch_channel_estimator_td_strategy;
+  /// PUSCH channel estimator CFO compensation.
+  bool pusch_channel_estimator_compensate_cfo;
   /// \brief PUSCH channel equalizer algorithm.
   ///
   /// Use one of these options:

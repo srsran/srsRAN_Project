@@ -116,8 +116,11 @@ static unsigned                           nof_cdm_groups_without_data = 2;
 static bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask =
     {false, false, true, false, false, false, false, false, false, false, false, true, false, false};
 static constexpr channel_equalizer_algorithm_type equalizer_algorithm_type = channel_equalizer_algorithm_type::zf;
+static constexpr port_channel_estimator_fd_smoothing_strategy fd_smoothing_strategy =
+    port_channel_estimator_fd_smoothing_strategy::filter;
 static constexpr port_channel_estimator_td_interpolation_strategy td_interpolation_strategy =
     port_channel_estimator_td_interpolation_strategy::interpolate;
+static constexpr bool                                                                    compensate_cfo = true;
 static unsigned                                                                          nof_pusch_decoder_threads = 0;
 static std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool = nullptr;
 static std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor    = nullptr;
@@ -553,8 +556,12 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
 
   // Create DM-RS for PUSCH channel estimator.
   std::shared_ptr<dmrs_pusch_estimator_factory> dmrs_pusch_chan_estimator_factory =
-      create_dmrs_pusch_estimator_factory_sw(
-          prg_factory, low_papr_sequence_gen_factory, port_chan_estimator_factory, td_interpolation_strategy);
+      create_dmrs_pusch_estimator_factory_sw(prg_factory,
+                                             low_papr_sequence_gen_factory,
+                                             port_chan_estimator_factory,
+                                             fd_smoothing_strategy,
+                                             td_interpolation_strategy,
+                                             compensate_cfo);
   TESTASSERT(dmrs_pusch_chan_estimator_factory);
 
   // Create channel equalizer factory.

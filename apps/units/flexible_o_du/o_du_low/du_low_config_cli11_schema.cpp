@@ -193,6 +193,12 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
     }
     return "Invalid PUSCH SINR calculation method. Accepted values [channel_estimator,post_equalization,evm]";
   };
+  auto pusch_channel_estimator_fd_strategy_method_check = [](const std::string& value) -> std::string {
+    if ((value == "filter") || (value == "mean") || (value == "none")) {
+      return {};
+    }
+    return "Invalid PUSCH channel estimator frequency-domain strategy. Accepted values [filter,mean,none]";
+  };
   auto pusch_channel_estimator_td_strategy_method_check = [](const std::string& value) -> std::string {
     if ((value == "average") || (value == "interpolate")) {
       return {};
@@ -230,11 +236,22 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
       ->capture_default_str()
       ->check(pusch_sinr_method_check);
   add_option(app,
+             "--pusch_channel_estimator_fd_strategy",
+             expert_phy_params.pusch_channel_estimator_fd_strategy,
+             "PUSCH channel estimator frequency-domain smoothing strategy: filter, mean and none.")
+      ->capture_default_str()
+      ->check(pusch_channel_estimator_fd_strategy_method_check);
+  add_option(app,
              "--pusch_channel_estimator_td_strategy",
              expert_phy_params.pusch_channel_estimator_td_strategy,
              "PUSCH channel estimator time-domain strategy: average and interpolate.")
       ->capture_default_str()
       ->check(pusch_channel_estimator_td_strategy_method_check);
+  add_option(app,
+             "--pusch_channel_estimator_cfo_compensation",
+             expert_phy_params.pusch_channel_estimator_cfo_compensation,
+             "PUSCH channel estimator CFO compensation.")
+      ->capture_default_str();
   add_option(app,
              "--pusch_channel_equalizer_algorithm",
              expert_phy_params.pusch_channel_equalizer_algorithm,

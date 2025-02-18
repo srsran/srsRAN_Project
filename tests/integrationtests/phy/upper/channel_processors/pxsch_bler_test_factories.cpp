@@ -249,8 +249,13 @@ srsran::create_sw_pusch_processor_factory(task_executor&                        
       create_port_channel_estimator_factory_sw(ta_est_factory);
   report_fatal_error_if_not(chan_estimator_factory, "Failed to create factory.");
 
-  std::shared_ptr<dmrs_pusch_estimator_factory> chan_est_factory = create_dmrs_pusch_estimator_factory_sw(
-      pseudo_random_gen_factory, low_papr_sequence_gen_factory, chan_estimator_factory, td_interpolation_strategy);
+  std::shared_ptr<dmrs_pusch_estimator_factory> chan_est_factory =
+      create_dmrs_pusch_estimator_factory_sw(pseudo_random_gen_factory,
+                                             low_papr_sequence_gen_factory,
+                                             chan_estimator_factory,
+                                             port_channel_estimator_fd_smoothing_strategy::filter,
+                                             td_interpolation_strategy,
+                                             true);
   report_fatal_error_if_not(chan_est_factory, "Failed to create factory.");
 
   std::shared_ptr<channel_equalizer_factory> eq_factory =

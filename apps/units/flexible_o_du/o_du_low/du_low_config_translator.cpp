@@ -149,8 +149,11 @@ static void generate_du_low_config(srs_du::du_low_config&             out_config
     upper_phy_cell.crc_calculator_type                   = "auto";
     upper_phy_cell.ldpc_rate_dematcher_type              = "auto";
     upper_phy_cell.ldpc_decoder_type                     = "auto";
+    upper_phy_cell.pusch_channel_estimator_fd_strategy   = du_low.expert_phy_cfg.pusch_channel_estimator_fd_strategy;
     upper_phy_cell.pusch_channel_estimator_td_strategy   = du_low.expert_phy_cfg.pusch_channel_estimator_td_strategy;
-    upper_phy_cell.pusch_channel_equalizer_algorithm     = du_low.expert_phy_cfg.pusch_channel_equalizer_algorithm;
+    upper_phy_cell.pusch_channel_estimator_compensate_cfo =
+        du_low.expert_phy_cfg.pusch_channel_estimator_cfo_compensation;
+    upper_phy_cell.pusch_channel_equalizer_algorithm = du_low.expert_phy_cfg.pusch_channel_equalizer_algorithm;
 
     if (!is_valid_upper_phy_config(upper_phy_cell)) {
       report_error("Invalid upper PHY configuration.\n");

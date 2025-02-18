@@ -374,6 +374,14 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
     pusch_equalizer_algorithm_type = channel_equalizer_algorithm_type::mmse;
   }
 
+  port_channel_estimator_fd_smoothing_strategy pusch_chan_estimator_fd_strategy =
+      port_channel_estimator_fd_smoothing_strategy::filter;
+  if (config.pusch_channel_estimator_td_strategy == "none") {
+    pusch_chan_estimator_fd_strategy = port_channel_estimator_fd_smoothing_strategy::none;
+  } else if (config.pusch_channel_estimator_td_strategy == "mean") {
+    pusch_chan_estimator_fd_strategy = port_channel_estimator_fd_smoothing_strategy::mean;
+  }
+
   port_channel_estimator_td_interpolation_strategy pusch_chan_estimator_td_strategy =
       port_channel_estimator_td_interpolation_strategy::average;
   if (config.pusch_channel_estimator_td_strategy == "interpolate") {
@@ -446,8 +454,12 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
 
   // Create PUSCH channel estimator.
   std::shared_ptr<dmrs_pusch_estimator_factory> pusch_channel_estimator_factory =
-      create_dmrs_pusch_estimator_factory_sw(
-          prg_factory, low_papr_sequence_gen_factory, ch_estimator_factory, pusch_chan_estimator_td_strategy);
+      create_dmrs_pusch_estimator_factory_sw(prg_factory,
+                                             low_papr_sequence_gen_factory,
+                                             ch_estimator_factory,
+                                             pusch_chan_estimator_fd_strategy,
+                                             pusch_chan_estimator_td_strategy,
+                                             config.pusch_channel_estimator_compensate_cfo);
 
   std::shared_ptr<ulsch_demultiplex_factory> ulsch_demux_factory = create_ulsch_demultiplex_factory_sw();
   report_fatal_error_if_not(ulsch_demux_factory, "Failed to create UL-SCH demultiplex factory.");
@@ -492,8 +504,13 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
         std::move(pusch_ch_estimator_factory), metric_notifier->get_pusch_port_channel_estimator_notifier());
     report_error_if_not(pusch_ch_estimator_factory, "Invalid port channel estimator factory.");
 
-    pusch_channel_estimator_factory = create_dmrs_pusch_estimator_factory_sw(
-        prg_factory, low_papr_sequence_gen_factory, pusch_ch_estimator_factory, pusch_chan_estimator_td_strategy);
+    pusch_channel_estimator_factory = pusch_channel_estimator_factory =
+        create_dmrs_pusch_estimator_factory_sw(prg_factory,
+                                               low_papr_sequence_gen_factory,
+                                               ch_estimator_factory,
+                                               pusch_chan_estimator_fd_strategy,
+                                               pusch_chan_estimator_td_strategy,
+                                               config.pusch_channel_estimator_compensate_cfo);
     report_error_if_not(pusch_channel_estimator_factory, "Invalid channel estimator factory.");
 
     pusch_channel_estimator_factory = create_pusch_channel_estimator_metric_decorator_factory(
