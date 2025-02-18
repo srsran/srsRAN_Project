@@ -49,23 +49,6 @@ template <typename T, size_t N, bool ForcePower2Size>
 struct circular_map_storage<std::array<T, N>, ForcePower2Size> {
   constexpr circular_map_storage() = default;
 
-  constexpr circular_map_storage(const circular_map_storage& other) = default;
-
-  circular_map_storage(circular_map_storage&& other) noexcept : data(std::move(other.data)), count(other.count)
-  {
-    other.clear();
-  }
-
-  constexpr circular_map_storage& operator=(const circular_map_storage& other) = default;
-
-  circular_map_storage& operator=(circular_map_storage&& other) noexcept
-  {
-    data  = std::move(other.data);
-    count = other.count;
-    other.clear();
-    return *this;
-  }
-
   void clear()
   {
     // std::fill() and friends forward the 'fill object' by const reference, making non-copyable types to not compile.
@@ -91,28 +74,10 @@ template <typename T>
 struct circular_map_storage<std::vector<T>, false> {
   constexpr circular_map_storage() = default;
 
-  constexpr circular_map_storage(const circular_map_storage& other) = default;
-
-  circular_map_storage(circular_map_storage&& other) noexcept : data(std::move(other.data)), count(other.count)
-  {
-    other.data.resize(data.size());
-    other.clear();
-  }
-
-  constexpr circular_map_storage& operator=(const circular_map_storage& other) = default;
-
-  circular_map_storage& operator=(circular_map_storage&& other) noexcept
-  {
-    data  = std::move(other.data);
-    count = other.count;
-    other.data.resize(data.size());
-    other.clear();
-
-    return *this;
-  }
-
   void clear()
   {
+    // Restore size for a potentially moved from vector to bring it back to a known state.
+    data.resize(capacity);
     // vector::assign() forward the 'fill object' by const reference, making non-copyable types to not compile. Instead,
     // use a rvalue for assignment.
     for (auto& elem : data) {
@@ -126,6 +91,7 @@ struct circular_map_storage<std::vector<T>, false> {
     srsran_assert(data.size() == 0 or size == data.size(),
                   "Dynamic resizes not supported when circular map is not empty");
     data.resize(size);
+    capacity = size;
   }
 
   constexpr size_t get_circular_idx(size_t idx) const { return idx % max_size(); }
@@ -133,7 +99,8 @@ struct circular_map_storage<std::vector<T>, false> {
   constexpr size_t max_size() const { return data.size(); }
 
   std::vector<T> data;
-  size_t         count = 0;
+  size_t         capacity = 0;
+  size_t         count    = 0;
 };
 
 /// \brief Specialization of the internal data storage for the case an std::vector is used.
@@ -184,7 +151,24 @@ class circular_map_impl
 
   static constexpr bool has_static_size = detail::is_std_array<Container>::value;
 
-  using obj_t          = std::pair<K, V>;
+  /// Hand rolled pair-like type that is trivially copyable.
+  template <typename F, typename S>
+  struct kv_obj {
+    template <typename A, typename B>
+    kv_obj(A&& first_, B&& second_) : first(std::forward<A>(first_)), second(std::forward<B>(second_))
+    {
+    }
+
+    template <typename A, typename... ArgsB>
+    kv_obj(A&& first_, ArgsB&&... second_) : first(std::forward<A>(first_)), second(std::forward<ArgsB>(second_)...)
+    {
+    }
+
+    F first;
+    S second;
+  };
+
+  using obj_t          = kv_obj<K, V>;
   using container_elem = std::optional<obj_t>;
   using raw_container  = typename circular_map_traits::rebind_map_storage<Container, container_elem>::type;
   using buffer_type    = detail::circular_map_storage<raw_container, ForcePower2Size>;
@@ -321,14 +305,13 @@ public:
   template <typename... Args>
   constexpr bool emplace(K key, Args&&... args)
   {
-    static_assert(std::is_constructible<V, Args...>::value, "Invalid argument types");
+    static_assert(std::is_constructible_v<V, Args...>, "Invalid argument types");
     size_t idx = storage.get_circular_idx(key);
     if (storage.data[idx]) {
       return false;
     }
 
-    storage.data[idx].emplace(
-        std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple(std::forward<Args>(args)...));
+    storage.data[idx].emplace(key, std::forward<Args>(args)...);
     ++storage.count;
     return true;
   }

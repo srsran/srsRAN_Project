@@ -22,6 +22,9 @@ using namespace srsran;
 
 namespace {
 
+/// The static variant of the circular_map should be trivially copyable for trivially copyable value types.
+static_assert(std::is_trivially_copyable_v<static_circular_map<unsigned, int, 4>>);
+
 template <typename U>
 struct is_static_circular_map : std::false_type {
 };
@@ -76,7 +79,7 @@ TYPED_TEST(circular_map_tester_1, test_id_map)
 
   // TEST: iteration.
   uint32_t count = 0;
-  for (auto& obj : this->mymap) {
+  for (const auto& obj : this->mymap) {
     ASSERT_TRUE(obj.second == "obj" + std::to_string(count++));
   }
 
@@ -135,8 +138,6 @@ TYPED_TEST_SUITE(circular_map_tester_2, test_value_types_2);
 TYPED_TEST(circular_map_tester_2, test_correct_destruction)
 {
   ASSERT_TRUE(C::count == 0);
-
-  ASSERT_TRUE(C::count == 0);
   ASSERT_TRUE(this->mymap.insert(0, C{}));
   ASSERT_TRUE(C::count == 1);
   ASSERT_TRUE(this->mymap.insert(1, C{}));
@@ -151,24 +152,23 @@ TYPED_TEST(circular_map_tester_2, test_correct_destruction)
 
   std::array<uint32_t, 3> content{0, 2, 3};
   size_t                  i = 0;
-  for (auto& e : this->mymap) {
+  for (const auto& e : this->mymap) {
     ASSERT_TRUE(content[i] == e.first);
     ++i;
   }
 
   ASSERT_TRUE(C::count == 3);
   this->mymap2 = std::move(this->mymap);
+  this->mymap.clear();
   ASSERT_TRUE(C::count == 3);
 
   ASSERT_TRUE(this->mymap3.insert(1, C{}));
   ASSERT_TRUE(C::count == 4);
   this->mymap2 = std::move(this->mymap3);
+  this->mymap3.clear();
   ASSERT_TRUE(C::count == 1);
 
-  this->mymap.clear();
   this->mymap2.clear();
-  this->mymap3.clear();
-
   ASSERT_TRUE(C::count == 0);
 }
 
