@@ -34,21 +34,37 @@ static void generate_dl_processor_config(downlink_processor_factory_sw_config& o
     out_cfg.hw_encoder_factory = hw_encoder_factory;
   }
 
-  // Hardware-acceleration is currently supported for 'generic' PDSCH processor types only.
-  if ((!hwacc_pdsch_processor) &&
-      ((upper_phy_threads_cfg.pdsch_processor_type == "lite") ||
-       ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_dl_threads == 1)))) {
-    out_cfg.pdsch_processor.emplace<pdsch_processor_lite_configuration>();
-  } else if ((!hwacc_pdsch_processor) &&
-             ((upper_phy_threads_cfg.pdsch_processor_type == "concurrent") ||
-              ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_dl_threads > 1)))) {
-    pdsch_processor_concurrent_configuration pdsch_proc_config;
-    pdsch_proc_config.nof_pdsch_codeblock_threads = upper_phy_threads_cfg.nof_dl_threads;
-    pdsch_proc_config.max_nof_simultaneous_pdsch =
-        (MAX_UE_PDUS_PER_SLOT + 1) * unit_cfg.expert_phy_cfg.max_processing_delay_slots;
-    pdsch_proc_config.pdsch_codeblock_task_executor = &pdsch_codeblock_executor;
-    out_cfg.pdsch_processor.emplace<pdsch_processor_concurrent_configuration>(pdsch_proc_config);
-  } else if ((hwacc_pdsch_processor) || (upper_phy_threads_cfg.pdsch_processor_type == "generic")) {
+  // The flexible PDSCH processor implementation will be used by default.
+  if ((upper_phy_threads_cfg.pdsch_processor_type == "auto") ||
+      (upper_phy_threads_cfg.pdsch_processor_type == "flexible")) {
+    // The worker pool in charge of processing PDSCH CBs is shared with the rest of the DL processors.
+    unsigned nof_pdsch_codeblock_threads = upper_phy_threads_cfg.nof_dl_threads;
+
+    // Setup parameters for synchronous operation:
+    // - the batch size must be the maximum to avoid more than one batch; and
+    // - the maximum number of simultaneous PDSCH equals to the number of DL processing threads.
+    unsigned cb_batch_length            = pdsch_processor_flexible_configuration::synchronous_cb_batch_length;
+    unsigned max_nof_simultaneous_pdsch = upper_phy_threads_cfg.nof_dl_threads;
+
+    // Override default parameters if the CB batch length is set for asynchronous concurrent operation.
+    if (upper_phy_threads_cfg.pdsch_cb_batch_length != du_low_unit_expert_threads_config::synchronous_cb_batch_length) {
+      // For asynchronous operation:
+      // - Use the given CB batch length;
+      // - The number of simultaneous PDSCH is equal to the maximum number of PDSCH per slot times the maximum allowed
+      //   processing time.
+      cb_batch_length            = upper_phy_threads_cfg.pdsch_cb_batch_length;
+      max_nof_simultaneous_pdsch = (MAX_UE_PDUS_PER_SLOT + 1) * unit_cfg.expert_phy_cfg.max_processing_delay_slots;
+    }
+
+    // Emplace configuration parameters.
+    out_cfg.pdsch_processor.emplace<pdsch_processor_flexible_configuration>(
+        pdsch_processor_flexible_configuration{.nof_pdsch_codeblock_threads   = nof_pdsch_codeblock_threads,
+                                               .cb_batch_length               = cb_batch_length,
+                                               .max_nof_simultaneous_pdsch    = max_nof_simultaneous_pdsch,
+                                               .pdsch_codeblock_task_executor = pdsch_codeblock_executor
+
+        });
+  } else if (upper_phy_threads_cfg.pdsch_processor_type == "generic") {
     out_cfg.pdsch_processor.emplace<pdsch_processor_generic_configuration>();
   } else {
     srsran_assert(false,

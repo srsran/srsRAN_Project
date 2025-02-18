@@ -165,16 +165,18 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
   }
 #endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
 
-  return create_pdsch_concurrent_processor_factory_sw(segmenter_factory,
-                                                      ldpc_encoder_factory,
-                                                      ldpc_rate_matcher_factory,
-                                                      pseudo_random_gen_factory,
-                                                      rg_mapper_factory,
-                                                      channel_mod_factory,
-                                                      dmrs_pdsch_proc_factory,
-                                                      ptrs_pdsch_gen_factory,
-                                                      executor,
-                                                      max_nof_threads);
+  // Create PDSCH block processor factory.
+  std::shared_ptr<pdsch_block_processor_factory> block_processor_factory = create_pdsch_block_processor_factory_sw(
+      ldpc_encoder_factory, ldpc_rate_matcher_factory, pseudo_random_gen_factory, channel_mod_factory);
+  report_fatal_error_if_not(block_processor_factory, "Failed to create factory.");
+
+  return create_pdsch_flexible_processor_factory_sw(segmenter_factory,
+                                                    block_processor_factory,
+                                                    rg_mapper_factory,
+                                                    dmrs_pdsch_proc_factory,
+                                                    ptrs_pdsch_gen_factory,
+                                                    executor,
+                                                    max_nof_threads);
 }
 
 std::shared_ptr<pusch_processor_factory>

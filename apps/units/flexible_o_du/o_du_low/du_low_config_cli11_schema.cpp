@@ -109,18 +109,41 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, du_low_unit_cpu_af
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_expert_threads_config& config)
 {
   auto pdsch_processor_check = [](const std::string& value) -> std::string {
-    if ((value == "auto") || (value == "generic") || (value == "concurrent") || (value == "lite")) {
+    if ((value == "auto") || (value == "generic") || (value == "flexible")) {
       return {};
     }
-    return "Invalid PDSCH processor type. Accepted values [auto,generic,concurrent,lite]";
+    return "Invalid PDSCH processor type. Accepted values [auto,generic,flexible]";
   };
 
-  add_option(app,
-             "--pdsch_processor_type",
-             config.pdsch_processor_type,
-             "PDSCH processor type: auto, generic, concurrent and lite.")
+  auto pdsch_cb_batch_length_transform = [](const std::string& value) -> std::string {
+    unsigned pdsch_cb_batch_length;
+    if (value == "auto") {
+      pdsch_cb_batch_length = 0;
+    } else if (value == "synchronous") {
+      pdsch_cb_batch_length = du_low_unit_expert_threads_config::synchronous_cb_batch_length;
+    } else {
+      char* val             = nullptr;
+      pdsch_cb_batch_length = std::strtol(value.c_str(), &val, 10);
+      if (val != value.c_str() + value.length()) {
+        return fmt::format("Invalid PDSCH CB batch size '{}'. Set to auto, synchronous, or an integer number.", value);
+      }
+    }
+    return std::to_string(pdsch_cb_batch_length);
+  };
+
+  add_option(
+      app, "--pdsch_processor_type", config.pdsch_processor_type, "PDSCH processor type: auto, generic and flexible.")
       ->capture_default_str()
       ->check(pdsch_processor_check);
+  add_option(app,
+             "--pdsch_cb_batch_length",
+             config.pdsch_cb_batch_length,
+             "PDSCH flexible processor codeblock-batch size.\n"
+             "Set it to 'auto' to adapt the batch length to the number of threads dedicated to downlink processing,\n"
+             "set it to 'synchronous' to disable batch-splitting and ensure that TB processing remains within the \n"
+             "calling thread without parallelization.")
+      ->capture_default_str()
+      ->transform(pdsch_cb_batch_length_transform);
   add_option(app, "--nof_pusch_decoder_threads", config.nof_pusch_decoder_threads, "Number of threads to decode PUSCH.")
       ->capture_default_str()
       ->check(CLI::Number);

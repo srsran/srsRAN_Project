@@ -111,14 +111,22 @@ struct du_low_unit_expert_threads_config {
     }
   }
 
+  /// Codeblock batch length for ensuring synchronous processing within the flexible PDSCH processor implementation.
+  static constexpr unsigned synchronous_cb_batch_length = std::numeric_limits<unsigned>::max();
+
   /// \brief PDSCH processor type.
   ///
-  /// Use of there options:
-  /// - \c automatic: selects \c lite implementation if \c nof_pdsch_threads is one, otherwise \c concurrent, or
+  /// Use of one of these options:
+  /// - \c auto: selects \c flexible implementation, or
   /// - \c generic: for using unoptimized PDSCH processing, or
-  /// - \c concurrent: for using a processor that processes code blocks in parallel, or
-  /// - \c lite: for using a memory optimized processor.
+  /// - \c flexible: for using a memory optimized processor if the number of codeblocks is smaller than \c
+  /// pdsch_cb_batch_length, or a performance-optimized implementation that processes code blocks in parallel otherwise.
   std::string pdsch_processor_type = "auto";
+  /// \brief PDSCH codeblock-batch length per thread (flexible PDSCH processor only).
+  ///
+  /// Set it to 0 (default) for an homogeneous split of codeblocks per thread. Set it to \c pdsch_cb_batch_length_sync
+  /// for guaranteeing synchronous processing with the most memory-optimized processor.
+  unsigned pdsch_cb_batch_length = 0;
   /// \brief Number of threads for concurrent PUSCH decoding.
   ///
   /// If the number of PUSCH decoder threads is greater than zero, the PUSCH decoder will enqueue received soft bits and

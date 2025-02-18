@@ -195,8 +195,17 @@ void pdsch_encoder_hw_impl::set_hw_enc_tb_configuration(hal::hw_pdsch_encoder_co
   unsigned nof_segments = segment_buffer->get_nof_codeblocks();
   hw_cfg.nof_segments   = nof_segments;
 
-  // Compute the TB CRC bits (needed in TB mode).
+  // In CB mode, both TB and CB CRC attachment are implemented by the segmenter (and, thus, disabled in the
+  // accelerator). In TB mode, CB CRC attachment is supported (for segmented TBs), but TB CRC attachment is not.
+  hw_cfg.attach_cb_crc = false;
+  hw_cfg.attach_tb_crc = false;
   if (!cb_mode) {
+    hw_cfg.attach_tb_crc = true;
+    if (nof_segments > 1) {
+      hw_cfg.attach_cb_crc = true;
+    }
+
+    // Compute the TB CRC.
     crc_calculator_checksum_t tb_crc     = compute_tb_crc(transport_block, hw_cfg.nof_tb_crc_bits);
     uint8_t                   crc_byte_0 = (static_cast<uint32_t>(tb_crc) >> 16) & 0xff;
     uint8_t                   crc_byte_1 = (static_cast<uint32_t>(tb_crc) >> 8) & 0xff;

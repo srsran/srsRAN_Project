@@ -57,6 +57,12 @@ struct hw_pdsch_encoder_configuration {
   static_vector<uint8_t, 3> tb_crc;
   /// Operation mode of the PDSCH encoder (CB = true, TB = false [default]).
   bool cb_mode = false;
+  // Request the accelerator to attach the CB CRC.
+  bool attach_cb_crc = false;
+  // Request the accelerator to attach the TB CRC.
+  bool attach_tb_crc = false;
+  // Request to unpack the accelerator output data.
+  bool do_unpack = true;
 };
 
 /// Generic hardware accelerated PDSCH encoder functions.

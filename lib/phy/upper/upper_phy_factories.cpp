@@ -968,60 +968,53 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
       create_pdcch_processor_factory_sw(pdcch_enc_factory, pdcch_mod_factory, dmrs_pdcch_proc_factory);
   report_fatal_error_if_not(pdcch_proc_factory, "Invalid PDCCH processor factory.");
 
+  // Create PDSCH block processor factory (if needed).
+  std::shared_ptr<pdsch_block_processor_factory> block_processor_factory;
+  if (!std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
+    if (!config.hw_encoder_factory) {
+      block_processor_factory =
+          create_pdsch_block_processor_factory_sw(ldpc_enc_factory, ldpc_rm_factory, prg_factory, mod_factory);
+      report_fatal_error_if_not(block_processor_factory, "Invalid SW PDSCH block processor factory.");
+    } else {
+      block_processor_factory =
+          create_pdsch_block_processor_factory_hw(config.hw_encoder_factory.value(), prg_factory, mod_factory);
+      report_fatal_error_if_not(block_processor_factory, "Invalid HW PDSCH block processor factory.");
+    }
+  }
+
   // Create channel processors - PDSCH
   std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory;
-  unsigned                                 max_nof_asynchronous_pdsch = 0;
+  bool                                     async_pdsch_pool = false;
   if (std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
     pdsch_proc_factory = create_pdsch_processor_factory_sw(
         pdsch_enc_factory, pdsch_mod_factory, dmrs_pdsch_proc_factory, ptrs_pdsch_gen_factory);
     report_fatal_error_if_not(pdsch_proc_factory, "Invalid generic PDSCH processor factory.");
-  } else if (std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
-    const pdsch_processor_concurrent_configuration& pdsch_processor_config =
-        std::get<pdsch_processor_concurrent_configuration>(config.pdsch_processor);
+  } else if (std::holds_alternative<pdsch_processor_flexible_configuration>(config.pdsch_processor)) {
+    const pdsch_processor_flexible_configuration& pdsch_processor_config =
+        std::get<pdsch_processor_flexible_configuration>(config.pdsch_processor);
     report_fatal_error_if_not(pdsch_processor_config.nof_pdsch_codeblock_threads >= 1,
                               "The number of threads (i.e., {}) must be equal to or greater than 1.");
-    report_fatal_error_if_not(pdsch_processor_config.pdsch_codeblock_task_executor != nullptr,
-                              "Invalid codeblock executor.");
 
-    max_nof_asynchronous_pdsch = pdsch_processor_config.max_nof_simultaneous_pdsch;
-
-    // Create concurrent PDSCH processor factory base.
+    // Create a flexible PDSCH processor factory.
     pdsch_proc_factory =
-        create_pdsch_concurrent_processor_factory_sw(ldpc_seg_tx_factory,
-                                                     ldpc_enc_factory,
-                                                     ldpc_rm_factory,
-                                                     pdsch_scrambling_factory,
-                                                     pdsch_rg_mapper_factory,
-                                                     pdsch_mod_mapper_factory,
-                                                     dmrs_pdsch_proc_factory,
-                                                     ptrs_pdsch_gen_factory,
-                                                     *pdsch_processor_config.pdsch_codeblock_task_executor,
-                                                     pdsch_processor_config.nof_pdsch_codeblock_threads);
-    report_fatal_error_if_not(pdsch_proc_factory, "Invalid concurrent PDSCH processor factory.");
-  } else if (std::holds_alternative<pdsch_processor_lite_configuration>(config.pdsch_processor)) {
-    pdsch_proc_factory = create_pdsch_lite_processor_factory_sw(ldpc_seg_tx_factory,
-                                                                ldpc_enc_factory,
-                                                                ldpc_rm_factory,
-                                                                pdsch_scrambling_factory,
-                                                                pdsch_mod_mapper_factory,
-                                                                dmrs_pdsch_proc_factory,
-                                                                ptrs_pdsch_gen_factory,
-                                                                pdsch_rg_mapper_factory);
-    report_fatal_error_if_not(pdsch_proc_factory, "Invalid lite PDSCH processor factory.");
-  }
+        create_pdsch_flexible_processor_factory_sw(ldpc_seg_tx_factory,
+                                                   block_processor_factory,
+                                                   rg_mapper_factory,
+                                                   dmrs_pdsch_proc_factory,
+                                                   ptrs_pdsch_gen_factory,
+                                                   pdsch_processor_config.pdsch_codeblock_task_executor,
+                                                   pdsch_processor_config.nof_pdsch_codeblock_threads,
+                                                   pdsch_processor_config.cb_batch_length);
 
-  // Wrap PDSCH processor factory with a metric decorator.
-  if (metric_notifier) {
-    pdsch_proc_factory = create_pdsch_processor_metric_decorator_factory(
-        std::move(pdsch_proc_factory), metric_notifier->get_pdsch_processor_notifier());
-    report_fatal_error_if_not(pdsch_proc_factory, "Invalid metric PDSCH processor factory.");
-  }
-
-  // Wrap PDSCH processor factory with a PDSCH processor asynchronous pool if necessary.
-  if (max_nof_asynchronous_pdsch != 0) {
-    pdsch_proc_factory =
-        create_pdsch_processor_asynchronous_pool(std::move(pdsch_proc_factory), max_nof_asynchronous_pdsch);
-    report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor factory.");
+    // Wrap PDSCH processor factory with a PDSCH processor asynchronous pool if the batch length could result in
+    // asynchronous operation of the PDSCH processor.
+    if (pdsch_processor_config.cb_batch_length != pdsch_processor_flexible_configuration::synchronous_cb_batch_length) {
+      pdsch_proc_factory = create_pdsch_processor_asynchronous_pool(std::move(pdsch_proc_factory),
+                                                                    pdsch_processor_config.max_nof_simultaneous_pdsch);
+      async_pdsch_pool   = true;
+      report_fatal_error_if_not(pdsch_proc_factory, "Invalid asynchronous PDSCH processor pool factory.");
+    }
+    report_fatal_error_if_not(pdsch_proc_factory, "Invalid flexible PDSCH processor factory.");
   }
 
   // Create channel processors - SSB
@@ -1050,9 +1043,9 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
         create_pdcch_processor_pool_factory(std::move(pdcch_proc_factory), config.nof_concurrent_threads);
     report_fatal_error_if_not(pdcch_proc_factory, "Invalid PDCCH processor pool factory.");
 
-    // If the PDSCH instance is concurrent, the operation is asynchronous. In this case, each DL processor has an
-    // asynchronous pool of processors and no more pools are necessary.
-    if (!std::holds_alternative<pdsch_processor_concurrent_configuration>(config.pdsch_processor)) {
+    // If the flexible PDSCH instance is concurrent (and uses more than 1 thread), the operation is asynchronous. In
+    // this case, each DL processor has an asynchronous pool of processors and no more pools are necessary.
+    if (!async_pdsch_pool) {
       pdsch_proc_factory = create_pdsch_processor_pool(std::move(pdsch_proc_factory), config.nof_concurrent_threads);
       report_fatal_error_if_not(pdsch_proc_factory, "Invalid PDSCH processor pool factory.");
     }
