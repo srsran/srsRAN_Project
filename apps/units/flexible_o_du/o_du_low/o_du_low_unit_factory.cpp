@@ -86,7 +86,8 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
 {
   srs_du::o_du_low_config o_du_low_cfg;
   o_du_low_cfg.du_low_cfg.logger = &srslog::fetch_basic_logger("DU");
-  o_du_low_cfg.enable_metrics    = params.du_low_unit_cfg.metrics_config.enable_json_metrics;
+  o_du_low_cfg.enable_metrics    = params.du_low_unit_cfg.metrics_config.enable_json_metrics ||
+                                params.du_low_unit_cfg.loggers.metrics_level.level == srslog::basic_levels::info;
 
   generate_o_du_low_config(o_du_low_cfg, params.du_low_unit_cfg, params.du_cells, params.max_puschs_per_slot);
 

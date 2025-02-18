@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "apps/services/logger/metrics_logger_appconfig.h"
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include <optional>
 #include <string>
@@ -64,8 +65,12 @@ struct du_low_unit_expert_upper_phy_config {
 
 /// DU low logging functionalities.
 struct du_low_unit_logger_config {
+  /// Upper physical layer log level.
   srslog::basic_levels phy_level = srslog::basic_levels::warning;
+  /// Hardware Abstraction Layer log level.
   srslog::basic_levels hal_level = srslog::basic_levels::warning;
+  /// Upper physical layer metric log level.
+  metrics_logger_appconfig metrics_level;
   /// Set to true to log broadcasting messages and all PRACH opportunities.
   bool broadcast_enabled = false;
   /// Maximum number of bytes to write when dumping hex arrays.
@@ -216,6 +221,7 @@ struct du_low_unit_hal_config {
 
 /// Metrics configuration of the DU low.
 struct du_low_unit_metrics_config {
+  /// Set to \c true to enable the DU low metrics.
   bool enable_json_metrics = false;
 };
 
@@ -229,7 +235,7 @@ struct du_low_unit_config {
   du_low_unit_expert_execution_config expert_execution_cfg;
   /// HAL configuration.
   std::optional<du_low_unit_hal_config> hal_config;
-  /// Metrics configuration. Set to \c true to enable the DU low metrics.
+  /// Metrics configuration.
   du_low_unit_metrics_config metrics_config;
 };
 

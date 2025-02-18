@@ -10,6 +10,7 @@
 
 #include "du_low_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
+#include "apps/services/logger/metrics_logger_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_low_config.h"
 #include "srsran/adt/expected.h"
@@ -357,6 +358,8 @@ static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
 void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_unit_config& parsed_cfg)
 {
   // Loggers section.
+  configure_cli11_with_metrics_logger_appconfig_schema(app, parsed_cfg.loggers.metrics_level);
+
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, parsed_cfg.loggers);
 

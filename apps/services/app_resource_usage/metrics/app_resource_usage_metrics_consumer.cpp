@@ -9,6 +9,7 @@
  */
 
 #include "app_resource_usage_metrics_consumer.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
 
@@ -38,11 +39,11 @@ static double get_time_stamp()
   return std::chrono::duration_cast<std::chrono::milliseconds>(tp).count() * 1e-3;
 }
 
+/// Bytes in one Mega Byte.
+static constexpr double BYTES_IN_MB = (1 << 20);
+
 void resource_usage_metrics_consumer_json::handle_metric(const app_services::metrics_set& metric)
 {
-  // Bytes in one Mega Byte.
-  static constexpr double BYTES_IN_MB = (1 << 20);
-
   const resource_usage_metrics& sys_metrics = static_cast<const resource_usage_metrics_impl&>(metric).get_metrics();
   // Convert used memory to Megabytes.
   double mem_usage = static_cast<double>(sys_metrics.memory_stats.memory_usage.value()) / BYTES_IN_MB;
@@ -61,10 +62,16 @@ void resource_usage_metrics_consumer_json::handle_metric(const app_services::met
 void resource_usage_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
 {
   const resource_usage_metrics& sys_metrics = static_cast<const resource_usage_metrics_impl&>(metric).get_metrics();
+  // Convert used memory to Megabytes.
+  double mem_usage = static_cast<double>(sys_metrics.memory_stats.memory_usage.value()) / BYTES_IN_MB;
 
-  logger.info("Application CPU usage: {}%, {} CPUs",
-              sys_metrics.cpu_stats.cpu_usage_percentage,
-              sys_metrics.cpu_stats.cpu_utilization_nof_cpus);
-  logger.info("Application memory usage: {} Bytes", sys_metrics.memory_stats.memory_usage.value());
-  logger.info("CPU package power usage: {:02f} Watts", sys_metrics.power_usage_watts);
+  fmt::memory_buffer buffer;
+  fmt::format_to(std::back_inserter(buffer),
+                 "App resource usage: cpu_usage={:.2f}%, memory_usage={:.2f} MB, power_consumption={:.2f} Watts",
+                 sys_metrics.cpu_stats.cpu_usage_percentage * 100.0,
+                 mem_usage,
+                 sys_metrics.power_usage_watts);
+
+  // Flush buffer to the logger.
+  logger.info("{}", to_c_str(buffer));
 }
