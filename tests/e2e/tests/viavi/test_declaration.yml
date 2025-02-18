@@ -35,6 +35,10 @@ tests:
           max_pdschs_per_slot: 8
         pusch:
           max_puschs_per_slot: 8
+      expert_execution:
+        threads:
+          non_rt:
+            non_rt_task_queue_size: 8192
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
@@ -169,6 +173,10 @@ tests:
           max_pdschs_per_slot: 8
         pusch:
           max_puschs_per_slot: 8
+      expert_execution:
+        threads:
+          non_rt:
+            non_rt_task_queue_size: 8192
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
@@ -243,6 +251,8 @@ tests:
           upper_phy:
             nof_ul_threads: 3
             nof_pusch_decoder_threads: 3
+          non_rt:
+            non_rt_task_queue_size: 8192
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
@@ -276,6 +286,8 @@ tests:
           upper_phy:
             nof_ul_threads: 3
             nof_pusch_decoder_threads: 3
+          non_rt:
+            non_rt_task_queue_size: 8192
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
