@@ -10,6 +10,7 @@
 #pragma once
 
 #include "scheduler_policy.h"
+#include "slice_allocator.h"
 
 namespace srsran {
 
@@ -18,17 +19,13 @@ class scheduler_time_rr : public scheduler_policy
 public:
   scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_);
 
-  void dl_sched(dl_sched_context dl_ctxt) override;
+  void dl_sched(slice_dl_sched_context& ctxt) override;
 
-  void ul_sched(ul_sched_context ul_ctxt) override;
+  void ul_sched(slice_ul_sched_context& ul_ctxt) override;
 
 private:
-  void dl_sched_newtx(ue_pdsch_allocator&          pdsch_alloc,
-                      const ue_resource_grid_view& res_grid,
-                      dl_ran_slice_candidate&      slice_candidate);
-  void ul_sched_newtx(ue_pusch_allocator&          pusch_alloc,
-                      const ue_resource_grid_view& res_grid,
-                      ul_ran_slice_candidate&      slice_candidate);
+  void dl_sched_newtx(slice_dl_sched_context& ctxt);
+  void ul_sched_newtx(slice_ul_sched_context& ctxt);
 
   srslog::basic_logger& logger;
   du_ue_index_t         next_dl_ue_index, next_ul_ue_index;

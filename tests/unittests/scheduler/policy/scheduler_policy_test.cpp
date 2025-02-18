@@ -80,18 +80,18 @@ protected:
     if (cell_cfg.is_dl_enabled(next_slot)) {
       auto dl_slice_candidate = slice_sched.get_next_dl_candidate();
       while (dl_slice_candidate.has_value()) {
-        auto&                           policy = slice_sched.get_policy(dl_slice_candidate->id());
-        dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{grid_alloc, *dl_slice_candidate};
-        policy.dl_sched(
-            dl_sched_context{slice_pdsch_alloc, ue_res_grid, *dl_slice_candidate, cell_harqs.pending_dl_retxs()});
+        auto&                  policy = slice_sched.get_policy(dl_slice_candidate->id());
+        slice_dl_sched_context ctxt{
+            ue_res_grid.get_grid(to_du_cell_index(0)), *dl_slice_candidate, grid_alloc, cell_harqs.pending_dl_retxs()};
+        policy.dl_sched(ctxt);
         dl_slice_candidate = slice_sched.get_next_dl_candidate();
       }
       auto ul_slice_candidate = slice_sched.get_next_ul_candidate();
       while (ul_slice_candidate.has_value()) {
-        auto&                           policy = slice_sched.get_policy(ul_slice_candidate->id());
-        ul_slice_ue_cell_grid_allocator slice_pusch_alloc{grid_alloc, *ul_slice_candidate};
-        policy.ul_sched(
-            ul_sched_context{slice_pusch_alloc, ue_res_grid, *ul_slice_candidate, cell_harqs.pending_ul_retxs()});
+        auto&                  policy = slice_sched.get_policy(ul_slice_candidate->id());
+        slice_ul_sched_context ctxt{
+            ue_res_grid.get_grid(to_du_cell_index(0)), *ul_slice_candidate, grid_alloc, cell_harqs.pending_ul_retxs()};
+        policy.ul_sched(ctxt);
         ul_slice_candidate = slice_sched.get_next_ul_candidate();
       }
     }

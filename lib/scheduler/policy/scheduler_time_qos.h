@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "../slicing/slice_ue_repository.h"
 #include "scheduler_policy.h"
+#include "slice_allocator.h"
 #include "srsran/support/math/exponential_averager.h"
 
 namespace srsran {
@@ -21,9 +21,9 @@ class scheduler_time_qos : public scheduler_policy
 public:
   scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_);
 
-  void dl_sched(dl_sched_context dl_ctxt) override;
+  void dl_sched(slice_dl_sched_context& dl_ctxt) override;
 
-  void ul_sched(ul_sched_context ul_ctxt) override;
+  void ul_sched(slice_ul_sched_context& ul_ctxt) override;
 
 private:
   // Value used to flag that the UE cannot be allocated in a given slot.
@@ -44,17 +44,9 @@ private:
     [[nodiscard]] double total_ul_avg_rate() const { return total_ul_avg_rate_.get_average_value(); }
 
     /// Computes the priority of the UE to be scheduled in DL based on the QoS and proportional fair metric.
-    void compute_dl_prio(const slice_ue& u,
-                         ran_slice_id_t  slice_id,
-                         slot_point      pdcch_slot,
-                         slot_point      pdsch_slot,
-                         unsigned        nof_slots_elapsed);
+    void compute_dl_prio(const slice_ue& u, slot_point pdcch_slot, slot_point pdsch_slot, unsigned nof_slots_elapsed);
     /// Computes the priority of the UE to be scheduled in UL based on the proportional fair metric.
-    void compute_ul_prio(const slice_ue& u,
-                         ran_slice_id_t  slice_id,
-                         slot_point      pdcch_slot,
-                         slot_point      pusch_slot,
-                         unsigned        nof_slots_elapsed);
+    void compute_ul_prio(const slice_ue& u, slot_point pdcch_slot, slot_point pusch_slot, unsigned nof_slots_elapsed);
 
     void save_dl_alloc(uint32_t total_alloc_bytes, const dl_msg_tb_info& tb_info);
     void save_ul_alloc(unsigned alloc_bytes);
@@ -82,17 +74,17 @@ private:
     exp_average_fast_start<double> total_ul_avg_rate_;
   };
 
-  dl_alloc_result schedule_dl_retxs(dl_sched_context ctxt);
-  ul_alloc_result schedule_ul_retxs(ul_sched_context ctxt);
+  dl_alloc_result schedule_dl_retxs(slice_dl_sched_context& ctxt);
+  ul_alloc_result schedule_ul_retxs(slice_ul_sched_context& ctxt);
 
   /// \brief Attempts to allocate PDSCH for a UE.
   /// \return Returns allocation status, nof. allocated bytes and nof. allocated RBs.
   dl_alloc_result
-  try_dl_alloc(ue_ctxt& ctxt, const slice_ue_repository& ues, ue_pdsch_allocator& pdsch_alloc, unsigned max_rbs);
+  try_dl_alloc(ue_ctxt& ctxt, const slice_ue_repository& ues, slice_dl_sched_context& slice_ctxt, unsigned max_rbs);
   /// \brief Attempts to allocate PUSCH for a UE.
   /// \return Returns allocation status, nof. allocated bytes and nof. allocated RBs.
   ul_alloc_result
-  try_ul_alloc(ue_ctxt& ctxt, const slice_ue_repository& ues, ue_pusch_allocator& pusch_alloc, unsigned max_rbs);
+  try_ul_alloc(ue_ctxt& ctxt, const slice_ue_repository& ues, slice_ul_sched_context& slice_ctxt, unsigned max_rbs);
 
   slotted_id_table<du_ue_index_t, ue_ctxt, MAX_NOF_DU_UES> ue_history_db;
 

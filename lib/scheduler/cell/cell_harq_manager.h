@@ -382,6 +382,10 @@ public:
     typename intrusive_double_linked_list<harq_impl_type>::iterator it;
   };
 
+public:
+  using value_type      = handle_type;
+  using difference_type = std::ptrdiff_t;
+
   explicit harq_pending_retx_list_impl(harq_pool& pool_) : pool(&pool_) {}
 
   bool empty() const { return pool->harq_pending_retx_list.empty(); }

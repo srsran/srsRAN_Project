@@ -11,6 +11,7 @@
 
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
+#include "../policy/slice_allocator.h"
 #include "../policy/ue_allocator.h"
 #include "../slicing/ran_slice_candidate.h"
 #include "grant_params_selector.h"
@@ -21,7 +22,7 @@ namespace srsran {
 
 /// This class implements the methods to allocate PDSCH and PUSCH grants in different cells for a slice, and the
 /// methods to fetch the current gNB resource grid DL and UL states.
-class ue_cell_grid_allocator
+class ue_cell_grid_allocator final : public ue_pdsch_grid_allocator, public ue_pusch_grid_allocator
 {
 public:
   ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
@@ -38,9 +39,13 @@ public:
 
   void slot_indication(slot_point sl);
 
-  dl_alloc_result allocate_dl_grant(const ue_pdsch_grant& grant, ran_slice_id_t slice_id);
+  dl_alloc_result allocate_dl_grant(du_cell_index_t               cell_index,
+                                    const dl_ran_slice_candidate& slice,
+                                    const ue_pdsch_grant&         grant) override;
 
-  ul_alloc_result allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id, slot_point pusch_slot);
+  ul_alloc_result allocate_ul_grant(du_cell_index_t               cell_index,
+                                    const ul_ran_slice_candidate& slice,
+                                    const ue_pusch_grant&         grant) override;
 
   /// \brief Called at the end of a slot to process the allocations that took place and make some final adjustments.
   ///
@@ -75,9 +80,12 @@ private:
     sched_helper::mcs_prbs_selection recommended_mcs_prbs;
   };
 
-  dl_grant_params get_dl_grant_params(const ue_pdsch_grant& grant_params);
+  dl_grant_params get_dl_grant_params(du_cell_index_t               cell_index,
+                                      const dl_ran_slice_candidate& slice,
+                                      const ue_pdsch_grant&         grant_params);
 
-  ul_grant_params get_ul_grant_params(const ue_pusch_grant& grant_params, slot_point pusch_slot);
+  ul_grant_params
+  get_ul_grant_params(du_cell_index_t cell_index, const ul_ran_slice_candidate& slice, const ue_pusch_grant& grant);
 
   expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(ue_cell& ue_cc, const search_space_info& ss_info);
 
@@ -111,55 +119,6 @@ private:
 
   // Number of allocation attempts for DL and UL in the given slot.
   unsigned dl_attempts_count = 0, ul_attempts_count = 0;
-};
-
-/// This class implements the ue_pdsch_allocator interface and updates a DL slice candidate with the allocated RBs if
-/// the PDSCH grant allocation is successful.
-class dl_slice_ue_cell_grid_allocator : public ue_pdsch_allocator
-{
-public:
-  dl_slice_ue_cell_grid_allocator(ue_cell_grid_allocator& pdsch_alloc_, dl_ran_slice_candidate& slice_candidate_) :
-    pdsch_alloc(pdsch_alloc_), slice_candidate(slice_candidate_)
-  {
-  }
-
-  dl_alloc_result allocate_dl_grant(const ue_pdsch_grant& grant) override
-  {
-    const dl_alloc_result result = pdsch_alloc.allocate_dl_grant(grant, slice_candidate.id());
-    if (result.status == alloc_status::success) {
-      slice_candidate.store_grant(result.alloc_nof_rbs);
-    }
-    return result;
-  }
-
-private:
-  ue_cell_grid_allocator& pdsch_alloc;
-  dl_ran_slice_candidate& slice_candidate;
-};
-
-/// This class implements the ue_pusch_allocator interface and updates a UL slice candidate with the allocated RBs if
-/// the PUSCH grant allocation is successful.
-class ul_slice_ue_cell_grid_allocator : public ue_pusch_allocator
-{
-public:
-  ul_slice_ue_cell_grid_allocator(ue_cell_grid_allocator& pusch_alloc_, ul_ran_slice_candidate& slice_candidate_) :
-    pusch_alloc(pusch_alloc_), slice_candidate(slice_candidate_)
-  {
-  }
-
-  ul_alloc_result allocate_ul_grant(const ue_pusch_grant& grant) override
-  {
-    const ul_alloc_result result =
-        pusch_alloc.allocate_ul_grant(grant, slice_candidate.id(), slice_candidate.get_slot_tx());
-    if (result.status == alloc_status::success) {
-      slice_candidate.store_grant(result.alloc_nof_rbs);
-    }
-    return result;
-  }
-
-private:
-  ue_cell_grid_allocator& pusch_alloc;
-  ul_ran_slice_candidate& slice_candidate;
 };
 
 } // namespace srsran

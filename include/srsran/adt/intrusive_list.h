@@ -137,7 +137,7 @@ class intrusive_double_linked_list
   template <typename U>
   class iterator_impl
   {
-    using elem_t = std::conditional_t<std::is_const<U>::value, const node_t, node_t>;
+    using elem_t = std::conditional_t<std::is_const_v<U>, const node_t, node_t>;
 
   public:
     using iterator_category = std::bidirectional_iterator_tag;

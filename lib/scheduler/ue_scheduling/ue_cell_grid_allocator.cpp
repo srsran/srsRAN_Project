@@ -53,10 +53,11 @@ void ue_cell_grid_allocator::slot_indication(slot_point sl)
   }
 }
 
-ue_cell_grid_allocator::dl_grant_params ue_cell_grid_allocator::get_dl_grant_params(const ue_pdsch_grant& sched_params)
+ue_cell_grid_allocator::dl_grant_params ue_cell_grid_allocator::get_dl_grant_params(du_cell_index_t cell_index,
+                                                                                    const dl_ran_slice_candidate& slice,
+                                                                                    const ue_pdsch_grant& sched_params)
 {
-  const slice_ue&       slice_ue   = *sched_params.user;
-  const du_cell_index_t cell_index = sched_params.cell_index;
+  const slice_ue& slice_ue = *sched_params.user;
   srsran_assert(
       ues.contains(slice_ue.ue_index()), "Invalid UE candidate index={}", fmt::underlying(slice_ue.ue_index()));
   srsran_assert(has_cell(cell_index), "Invalid UE candidate cell_index={}", fmt::underlying(cell_index));
@@ -221,12 +222,12 @@ ue_cell_grid_allocator::dl_grant_params ue_cell_grid_allocator::get_dl_grant_par
   return {alloc_status::skip_ue};
 }
 
-ue_cell_grid_allocator::ul_grant_params ue_cell_grid_allocator::get_ul_grant_params(const ue_pusch_grant& sched_params,
-                                                                                    slot_point            pusch_slot)
+ue_cell_grid_allocator::ul_grant_params ue_cell_grid_allocator::get_ul_grant_params(du_cell_index_t cell_index,
+                                                                                    const ul_ran_slice_candidate& slice,
+                                                                                    const ue_pusch_grant& sched_params)
 {
   static constexpr unsigned pdcch_delay_in_slots = 0;
   const slice_ue&           slice_ue             = *sched_params.user;
-  const du_cell_index_t     cell_index           = sched_params.cell_index;
   srsran_assert(
       ues.contains(slice_ue.ue_index()), "Invalid UE candidate index={}", fmt::underlying(slice_ue.ue_index()));
   srsran_assert(has_cell(cell_index), "Invalid UE candidate cell_index={}", fmt::underlying(cell_index));
@@ -283,7 +284,8 @@ ue_cell_grid_allocator::ul_grant_params ue_cell_grid_allocator::get_ul_grant_par
   }
 
   // Create PUSCH param candidate search object.
-  ue_pusch_alloc_param_candidate_searcher candidates{u, sched_params.cell_index, h_ul, pdcch_alloc.slot, pusch_slot};
+  ue_pusch_alloc_param_candidate_searcher candidates{
+      u, sched_params.cell_index, h_ul, pdcch_alloc.slot, slice.get_slot_tx()};
   if (candidates.is_empty()) {
     // The conditions for a new PUSCH allocation for this UE were not met (e.g. lack of available SearchSpaces).
     return {alloc_status::skip_ue};
@@ -487,10 +489,12 @@ ue_cell_grid_allocator::alloc_uci(ue_cell& ue_cc, const search_space_info& ss_in
   return uci.value();
 }
 
-dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& grant, ran_slice_id_t slice_id)
+dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(du_cell_index_t               cell_index,
+                                                          const dl_ran_slice_candidate& slice,
+                                                          const ue_pdsch_grant&         grant)
 {
   // Derive DL grant parameters and verify conditions for allocation.
-  dl_grant_params grant_params = get_dl_grant_params(grant);
+  dl_grant_params grant_params = get_dl_grant_params(cell_index, slice, grant);
   if (grant_params.status != alloc_status::success) {
     return {grant_params.status};
   }
@@ -742,13 +746,13 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
   if (is_new_data) {
     pdsch_sched_ctx.olla_mcs =
         ue_cc.link_adaptation_controller().calculate_dl_mcs(msg.pdsch_cfg.codewords[0].mcs_table);
-    pdsch_sched_ctx.slice_id = slice_id;
+    pdsch_sched_ctx.slice_id = slice.id();
   }
   pdsch_sched_ctx.cqi = ue_cc.channel_state_manager().get_wideband_cqi();
 
   if (is_new_data) {
     // Set MAC logical channels to schedule in this PDU if it is a newtx.
-    u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, slice_id);
+    u.build_dl_transport_block_info(msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, slice.id());
 
     // Update context with buffer occupancy after the TB is built.
     msg.context.buffer_occupancy = u.pending_dl_newtx_bytes();
@@ -765,10 +769,11 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_pdsch_grant& 
           is_new_data ? msg.tb_list.back() : dl_msg_tb_info{}};
 }
 
-ul_alloc_result
-ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice_id_t slice_id, slot_point pusch_slot)
+ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(du_cell_index_t               cell_index,
+                                                          const ul_ran_slice_candidate& slice,
+                                                          const ue_pusch_grant&         grant)
 {
-  ul_grant_params grant_params = get_ul_grant_params(grant, pusch_slot);
+  ul_grant_params grant_params = get_ul_grant_params(cell_index, slice, grant);
   if (grant_params.status != alloc_status::success) {
     return {grant_params.status};
   }
@@ -895,7 +900,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
   // computed, the channel state manager will update close-loop power control adjustment.
   static constexpr uint8_t default_tpc_command = 1U;
   const uint8_t            tpc_command         = dci_type != dci_ul_rnti_config_type::tc_rnti_f0_0
-                                                     ? ue_cc.get_pusch_power_controller().compute_tpc_command(pusch_slot)
+                                                     ? ue_cc.get_pusch_power_controller().compute_tpc_command(slice.get_slot_tx())
                                                      : default_tpc_command;
 
   // If this is not a retx, then we need to adjust the number of PRBs to the PHR, to prevent the UE from reducing the
@@ -1112,7 +1117,7 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_pusch_grant& grant, ran_slice
   pusch_sched_ctx.dci_cfg_type = pdcch->dci.type;
   if (is_new_data) {
     pusch_sched_ctx.olla_mcs = ue_cc.link_adaptation_controller().calculate_ul_mcs(msg.pusch_cfg.mcs_table);
-    pusch_sched_ctx.slice_id = slice_id;
+    pusch_sched_ctx.slice_id = slice.id();
   }
 
   h_ul->save_grant_params(pusch_sched_ctx, msg.pusch_cfg);

@@ -28,18 +28,19 @@ class filter_view
   template <typename Data>
   class iter_impl
   {
-    using range_it_t = std::conditional_t<std::is_const<Data>::value,
+    using range_it_t = std::conditional_t<std::is_const_v<Data>,
                                           typename std::decay_t<Range>::const_iterator,
                                           typename std::decay_t<Range>::iterator>;
 
   public:
     using value_type        = std::remove_const_t<Data>;
-    using reference         = Data&;
+    using reference         = typename std::iterator_traits<range_it_t>::reference;
     using pointer           = Data*;
     using difference_type   = std::ptrdiff_t;
     using iterator_category = std::forward_iterator_tag;
 
     iter_impl(filter_view<Range, FilterFunc>& parent_, range_it_t it_) : parent(&parent_), it(it_) { next_valid_it(); }
+    iter_impl(const iter_impl<std::remove_const_t<Data>>& other) : parent(other.parent), it(other.it) {}
 
     iter_impl<Data>& operator++()
     {
@@ -49,13 +50,17 @@ class filter_view
       return *this;
     }
 
-    value_type& operator*() { return *it; }
-    value_type* operator->() { return &(*it); }
+    reference         operator*() { return *it; }
+    const reference   operator*() const { return *it; }
+    value_type*       operator->() { return &(*it); }
+    const value_type* operator->() const { return &(*it); }
 
     bool operator==(const iter_impl<Data>& other) const { return it == other.it; }
     bool operator!=(const iter_impl<Data>& other) const { return it != other.it; }
 
   private:
+    friend class iter_impl<const Data>;
+
     void next_valid_it()
     {
       while (it != parent->r.end() and not parent->pred(*it)) {

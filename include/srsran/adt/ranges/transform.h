@@ -36,12 +36,13 @@ class transform_view
 
   public:
     using value_type        = std::remove_const_t<transform_value_type>;
-    using reference         = transform_value_type&;
+    using reference         = typename std::iterator_traits<range_it_t>::reference;
     using pointer           = Data*;
     using difference_type   = typename std::iterator_traits<range_it_t>::difference_type;
     using iterator_category = typename std::iterator_traits<range_it_t>::iterator_category;
 
     iter_impl(parent_type& parent_, range_it_t it_) : parent(&parent_), it(it_) {}
+    iter_impl(const iter_impl<std::remove_const_t<Data>>& other) : parent(other.parent), it(other.it) {}
 
     iter_impl<Data>& operator++()
     {
@@ -68,6 +69,7 @@ class transform_view
     }
 
     auto operator*() { return parent->pred(*it); }
+    auto operator*() const { return parent->pred(*it); }
 
     bool operator==(const iter_impl<Data>& other) const { return it == other.it; }
     bool operator!=(const iter_impl<Data>& other) const { return it != other.it; }

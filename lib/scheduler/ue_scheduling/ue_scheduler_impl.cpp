@@ -10,6 +10,7 @@
 
 #include "ue_scheduler_impl.h"
 #include "../logging/scheduler_metrics_handler.h"
+#include "../policy/slice_allocator.h"
 
 using namespace srsran;
 
@@ -46,17 +47,21 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t c
   // Schedule DL first.
   // Note: DL should be scheduled first so that the right DAI value is picked in DCI format 0_1.
   while (auto dl_slice_candidate = cell.slice_sched.get_next_dl_candidate()) {
-    scheduler_policy&               policy = cell.slice_sched.get_policy(dl_slice_candidate->id());
-    dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{ue_alloc, *dl_slice_candidate};
-    policy.dl_sched(
-        dl_sched_context{slice_pdsch_alloc, ue_res_grid_view, *dl_slice_candidate, cell.cell_harqs.pending_dl_retxs()});
+    scheduler_policy&      policy = cell.slice_sched.get_policy(dl_slice_candidate->id());
+    slice_dl_sched_context dl_ctxt{ue_res_grid_view.get_grid(cell_index),
+                                   dl_slice_candidate.value(),
+                                   ue_alloc,
+                                   cell.cell_harqs.pending_dl_retxs()};
+    policy.dl_sched(dl_ctxt);
   }
 
   while (auto ul_slice_candidate = cell.slice_sched.get_next_ul_candidate()) {
-    scheduler_policy&               policy = cell.slice_sched.get_policy(ul_slice_candidate->id());
-    ul_slice_ue_cell_grid_allocator slice_pusch_alloc{ue_alloc, *ul_slice_candidate};
-    policy.ul_sched(
-        ul_sched_context{slice_pusch_alloc, ue_res_grid_view, *ul_slice_candidate, cell.cell_harqs.pending_ul_retxs()});
+    scheduler_policy&      policy = cell.slice_sched.get_policy(ul_slice_candidate->id());
+    slice_ul_sched_context ul_ctxt{ue_res_grid_view.get_grid(cell_index),
+                                   ul_slice_candidate.value(),
+                                   ue_alloc,
+                                   cell.cell_harqs.pending_ul_retxs()};
+    policy.ul_sched(ul_ctxt);
   }
 
   // The post processing is done for either DL and UL slots.
