@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 import argparse
-from dataclasses import dataclass, field
 import pathlib
 import sys
+from dataclasses import dataclass, field
 from typing import Dict, List
 
 try:
@@ -214,7 +214,7 @@ def main():
     parser.add_argument(
         "--srsgnb-cli",
         default="",
-        help='Arguments passed to the gnb binary. E.g: "log --metrics_level=info". This overwrites the arguments in the test_declaration.yml file.',
+        help='Arguments passed to the gnb binary. E.g: "log --all_level=info". This overwrites the arguments in the test_declaration.yml file.',
     )
 
     parser.add_argument(

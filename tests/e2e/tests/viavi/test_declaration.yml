@@ -26,10 +26,9 @@ tests:
     test_timeout: *test_timeout
     # Configuration
     gnb_extra_config: &base_config
-      log:
-        metrics_level: info
       metrics:
         rlc_report_period: 1000
+        enable_log_metrics: true
       cell_cfg:
         pdsch:
           max_pdschs_per_slot: 8
