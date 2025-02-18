@@ -89,9 +89,6 @@ private:
   // List of cells of the UE scheduler.
   slotted_array<cell_context, MAX_NOF_DU_CELLS> cells;
 
-  /// Scheduling Strategy.
-  ue_resource_grid_view ue_res_grid_view;
-
   /// Repository of created UEs.
   ue_repository ue_db;
 

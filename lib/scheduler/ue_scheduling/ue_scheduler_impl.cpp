@@ -24,7 +24,6 @@ ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cf
 
 void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 {
-  ue_res_grid_view.add_cell(*params.cell_res_alloc);
   cells.emplace(params.cell_index, expert_cfg, params, ue_db, *params.cell_metrics);
   event_mng.add_cell(cell_creation_event{*params.cell_res_alloc,
                                          cells[params.cell_index].cell_harqs,
@@ -42,25 +41,21 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t c
   auto& cell = cells[cell_index];
 
   // Update slice context and compute slice priorities.
-  cell.slice_sched.slot_indication(slot_tx, ue_res_grid_view.get_grid(cell_index));
+  cell.slice_sched.slot_indication(slot_tx, *cell.cell_res_alloc);
 
   // Schedule DL first.
   // Note: DL should be scheduled first so that the right DAI value is picked in DCI format 0_1.
   while (auto dl_slice_candidate = cell.slice_sched.get_next_dl_candidate()) {
     scheduler_policy&      policy = cell.slice_sched.get_policy(dl_slice_candidate->id());
-    slice_dl_sched_context dl_ctxt{ue_res_grid_view.get_grid(cell_index),
-                                   dl_slice_candidate.value(),
-                                   ue_alloc,
-                                   cell.cell_harqs.pending_dl_retxs()};
+    slice_dl_sched_context dl_ctxt{
+        *cell.cell_res_alloc, dl_slice_candidate.value(), ue_alloc, cell.cell_harqs.pending_dl_retxs()};
     policy.dl_sched(dl_ctxt);
   }
 
   while (auto ul_slice_candidate = cell.slice_sched.get_next_ul_candidate()) {
     scheduler_policy&      policy = cell.slice_sched.get_policy(ul_slice_candidate->id());
-    slice_ul_sched_context ul_ctxt{ue_res_grid_view.get_grid(cell_index),
-                                   ul_slice_candidate.value(),
-                                   ue_alloc,
-                                   cell.cell_harqs.pending_ul_retxs()};
+    slice_ul_sched_context ul_ctxt{
+        *cell.cell_res_alloc, ul_slice_candidate.value(), ue_alloc, cell.cell_harqs.pending_ul_retxs()};
     policy.ul_sched(ul_ctxt);
   }
 

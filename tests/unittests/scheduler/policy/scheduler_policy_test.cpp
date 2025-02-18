@@ -59,7 +59,6 @@ protected:
 
     cfg_pool.add_cell(msg);
     grid_alloc.add_cell(to_du_cell_index(0), pdcch_alloc, uci_alloc, res_grid);
-    ue_res_grid.add_cell(res_grid);
   }
 
   ~base_scheduler_policy_test() { srslog::flush(); }
@@ -75,22 +74,20 @@ protected:
     pucch_alloc.slot_indication(next_slot);
     uci_alloc.slot_indication(next_slot);
 
-    slice_sched.slot_indication(next_slot, ue_res_grid.get_grid(to_du_cell_index(0)));
+    slice_sched.slot_indication(next_slot, res_grid);
 
     if (cell_cfg.is_dl_enabled(next_slot)) {
       auto dl_slice_candidate = slice_sched.get_next_dl_candidate();
       while (dl_slice_candidate.has_value()) {
         auto&                  policy = slice_sched.get_policy(dl_slice_candidate->id());
-        slice_dl_sched_context ctxt{
-            ue_res_grid.get_grid(to_du_cell_index(0)), *dl_slice_candidate, grid_alloc, cell_harqs.pending_dl_retxs()};
+        slice_dl_sched_context ctxt{res_grid, *dl_slice_candidate, grid_alloc, cell_harqs.pending_dl_retxs()};
         policy.dl_sched(ctxt);
         dl_slice_candidate = slice_sched.get_next_dl_candidate();
       }
       auto ul_slice_candidate = slice_sched.get_next_ul_candidate();
       while (ul_slice_candidate.has_value()) {
         auto&                  policy = slice_sched.get_policy(ul_slice_candidate->id());
-        slice_ul_sched_context ctxt{
-            ue_res_grid.get_grid(to_du_cell_index(0)), *ul_slice_candidate, grid_alloc, cell_harqs.pending_ul_retxs()};
+        slice_ul_sched_context ctxt{res_grid, *ul_slice_candidate, grid_alloc, cell_harqs.pending_ul_retxs()};
         policy.ul_sched(ctxt);
         ul_slice_candidate = slice_sched.get_next_ul_candidate();
       }
@@ -192,7 +189,6 @@ protected:
   pdcch_resource_allocator_impl pdcch_alloc{cell_cfg};
   pucch_allocator_impl   pucch_alloc{cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot};
   uci_allocator_impl     uci_alloc{pucch_alloc};
-  ue_resource_grid_view  ue_res_grid;
   ue_repository          ues;
   ue_cell_grid_allocator grid_alloc{sched_cfg.ue, ues, logger};
   // NOTE: Policy scheduler is part of RAN slice instances created in slice scheduler.
