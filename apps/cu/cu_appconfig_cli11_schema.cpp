@@ -9,6 +9,7 @@
  */
 
 #include "cu_appconfig_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_schema.h"
 #include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
@@ -25,17 +26,11 @@ static void configure_cli11_f1ap_args(CLI::App& app, srs_cu::cu_f1ap_appconfig& 
 
 static void configure_cli11_metrics_args(CLI::App& app, srs_cu::metrics_appconfig& metrics_params)
 {
-  app.add_option("--addr", metrics_params.addr, "Metrics address.")->capture_default_str()->check(CLI::ValidIPV4);
-  app.add_option("--port", metrics_params.port, "Metrics UDP port.")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 65535));
   add_option(app,
              "--resource_usage_report_period",
              metrics_params.rusage_report_period,
              "Resource usage metrics report period (in milliseconds)")
       ->capture_default_str();
-  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
-      ->always_capture_default();
 }
 
 void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_cfg)
@@ -55,6 +50,7 @@ void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfi
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, cu_cfg.metrics_cfg);
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, cu_cfg.metrics_cfg.common_metrics_cfg);
 
   // F1AP section.
   CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-UP parameters")->configurable();

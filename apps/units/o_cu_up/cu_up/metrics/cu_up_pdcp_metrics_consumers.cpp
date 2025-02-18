@@ -117,7 +117,6 @@ void cu_up_pdcp_metrics_consumer_json::handle_metric(const app_services::metrics
   aggr_rx.num_t_reordering_timeouts += rx_metric.num_t_reordering_timeouts;
   aggr_rx.reordering_counter += rx_metric.reordering_counter;
 
-  // :TODO: check these ones.
   aggr_rx.reordering_delay_us += rx_metric.reordering_delay_us;
   aggr_rx.sum_sdu_latency_ns += rx_metric.sum_sdu_latency_ns;
   aggr_rx.sum_crypto_processing_latency_ns += rx_metric.sum_crypto_processing_latency_ns;

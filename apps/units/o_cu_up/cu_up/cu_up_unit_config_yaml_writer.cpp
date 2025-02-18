@@ -9,6 +9,7 @@
  */
 
 #include "cu_up_unit_config_yaml_writer.h"
+#include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "apps/services/network/udp_config_yaml_writer.h"
 #include "cu_up_unit_config.h"
 #include "srsran/adt/span.h"
@@ -43,7 +44,6 @@ static void fill_cu_up_ngu_section(YAML::Node node, const cu_up_unit_ngu_config&
 static void fill_cu_up_metrics_section(YAML::Node node, const cu_up_unit_metrics_config& config)
 {
   node["cu_up_statistics_report_period"] = config.cu_up_statistics_report_period;
-  node["enable_json_metrics"]            = config.enable_json_metrics;
   node["pdcp_report_period"]             = config.pdcp.report_period;
 }
 
@@ -115,6 +115,8 @@ void srsran::fill_cu_up_config_in_yaml_schema(YAML::Node& node, const cu_up_unit
   node["gnb_id"]            = config.gnb_id.id;
   node["gnb_id_bit_length"] = static_cast<unsigned>(config.gnb_id.bit_length);
   node["gnb_cu_up_id"]      = static_cast<uint64_t>(config.gnb_cu_up_id);
+
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics.common_metrics_cfg);
 
   YAML::Node cu_up_node = node["cu_up"];
   fill_cu_up_section(cu_up_node, config);

@@ -20,13 +20,13 @@ namespace srsran {
 class resource_usage_metrics_consumer_log : public app_services::metrics_consumer
 {
 public:
-  explicit resource_usage_metrics_consumer_log(srslog::basic_logger& logger_) : logger(logger_) {}
+  explicit resource_usage_metrics_consumer_log(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
 
   // See interface for documentation.
   void handle_metric(const app_services::metrics_set& metric) override;
 
 private:
-  srslog::basic_logger& logger;
+  srslog::log_channel& log_chan;
 };
 
 /// JSON consumer for the resource usage metrics.

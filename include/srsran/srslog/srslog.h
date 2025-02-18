@@ -35,6 +35,11 @@ log_channel* find_log_channel(const std::string& id);
 log_channel& fetch_log_channel(const std::string& id);
 
 /// Returns an instance of a log_channel with the specified id that writes to
+/// the default sink using the given log channel configuration.
+/// NOTE: Any '#' characters in the id will get removed.
+log_channel& fetch_log_channel(const std::string& id, log_channel_config config);
+
+/// Returns an instance of a log_channel with the specified id that writes to
 /// the specified sink.
 /// NOTE: Any '#' characters in the id will get removed.
 log_channel& fetch_log_channel(const std::string& id, sink& s, log_channel_config config);

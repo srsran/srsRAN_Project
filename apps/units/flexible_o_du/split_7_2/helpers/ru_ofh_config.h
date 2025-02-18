@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "apps/services/logger/metrics_logger_appconfig.h"
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
@@ -105,8 +105,7 @@ struct ru_ofh_unit_cell_config {
 
 /// RU OFH logging functionalities.
 struct ru_ofh_unit_logger_config {
-  srslog::basic_levels     ofh_level = srslog::basic_levels::warning;
-  metrics_logger_appconfig metrics_level;
+  srslog::basic_levels ofh_level = srslog::basic_levels::warning;
 };
 
 /// CPU affinities configuration for the cell.
@@ -165,6 +164,8 @@ struct ru_ofh_unit_config {
   ru_ofh_unit_expert_execution_config expert_execution_cfg;
   /// HAL configuration.
   std::optional<ru_ofh_unit_hal_config> hal_config;
+  /// Metrics configuration.
+  app_helpers::metrics_config metrics_cfg;
 };
 
 /// gNB app Open Fronthaul Radio Unit configuration.

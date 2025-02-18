@@ -10,14 +10,11 @@
 
 #include "logger_appconfig_yaml_writer.h"
 #include "logger_appconfig.h"
-#include "metrics_logger_appconfig_yaml_writer.h"
 
 using namespace srsran;
 
 void srsran::fill_logger_appconfig_in_yaml_schema(YAML::Node& node, const logger_appconfig& config)
 {
-  fill_metrics_logger_appconfig_in_yaml_schema(node, config.metrics_level);
-
   YAML::Node log_node      = node["log"];
   log_node["filename"]     = config.filename;
   log_node["lib_level"]    = srslog::basic_level_to_string(config.lib_level);

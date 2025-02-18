@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "apps/services/logger/metrics_logger_appconfig.h"
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
@@ -48,8 +48,6 @@ struct du_high_unit_logger_config {
   srslog::basic_levels f1ap_level = srslog::basic_levels::warning;
   srslog::basic_levels f1u_level  = srslog::basic_levels::warning;
   srslog::basic_levels gtpu_level = srslog::basic_levels::warning;
-
-  metrics_logger_appconfig metrics_level;
 
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
@@ -835,10 +833,10 @@ struct du_high_unit_metrics_config {
     /// RLC report period in ms.
     unsigned report_period = 0;
   } rlc;
-  bool enable_json_metrics = false;
   /// Scheduler report period in milliseconds.
-  unsigned sched_report_period      = 1000;
-  bool     autostart_stdout_metrics = false;
+  unsigned                    sched_report_period      = 1000;
+  bool                        autostart_stdout_metrics = false;
+  app_helpers::metrics_config common_metrics_cfg;
 };
 
 struct du_high_unit_pcap_config {

@@ -8,6 +8,7 @@
  *
  */
 
+#include "apps/helpers/metrics/metrics_helpers.h"
 #include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
@@ -115,11 +116,12 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const logger_appconfig&         log_cfg,
+static void register_app_logs(const gnb_appconfig&            gnb_cfg,
                               o_cu_cp_application_unit&       cu_cp_app_unit,
                               o_cu_up_application_unit&       cu_up_app_unit,
                               flexible_o_du_application_unit& du_app_unit)
 {
+  const logger_appconfig& log_cfg = gnb_cfg.log_cfg;
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
@@ -137,13 +139,13 @@ static void register_app_logs(const logger_appconfig&         log_cfg,
   config_logger.set_level(log_cfg.config_level);
   config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
-  auto& metrics_logger = srslog::fetch_basic_logger("METRICS", false);
-  metrics_logger.set_level(log_cfg.metrics_level.level);
-  metrics_logger.set_hex_dump_max_size(log_cfg.metrics_level.hex_max_size);
-
   auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
   e2ap_logger.set_level(log_cfg.e2ap_level);
   e2ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
+  // Metrics log channels.
+  const app_helpers::metrics_config& metrics_cfg = gnb_cfg.metrics_cfg.common_metrics_cfg;
+  app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
 
   // Register units logs.
   cu_cp_app_unit.on_loggers_registration();
@@ -254,7 +256,7 @@ int main(int argc, char** argv)
 
   // Set up logging.
   initialize_log(gnb_cfg.log_cfg.filename);
-  register_app_logs(gnb_cfg.log_cfg, *o_cu_cp_app_unit, *o_cu_up_app_unit, *o_du_app_unit);
+  register_app_logs(gnb_cfg, *o_cu_cp_app_unit, *o_cu_up_app_unit, *o_du_app_unit);
 
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
@@ -361,17 +363,11 @@ int main(int argc, char** argv)
   // Create F1-U connector
   std::unique_ptr<f1u_local_connector> f1u_conn = std::make_unique<f1u_local_connector>();
 
-  // Set up the JSON log channel used by metrics.
-  srslog::sink& json_sink =
-      srslog::fetch_udp_sink(gnb_cfg.metrics_cfg.addr, gnb_cfg.metrics_cfg.port, srslog::create_json_formatter());
-
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
   // Create app-level resource usage service and metrics.
-  auto app_resource_usage_service =
-      app_services::build_app_resource_usage_service(metrics_notifier_forwarder,
-                                                     gnb_cfg.log_cfg.metrics_level.level,
-                                                     gnb_cfg.metrics_cfg.enable_json_metrics ? &json_sink : nullptr);
+  auto app_resource_usage_service = app_services::build_app_resource_usage_service(
+      metrics_notifier_forwarder, gnb_cfg.metrics_cfg.common_metrics_cfg);
 
   // Create service for periodically polling app resource usage.
   auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
@@ -417,7 +413,6 @@ int main(int argc, char** argv)
   o_cucp_deps.broker               = epoll_broker.get();
   o_cucp_deps.metrics_notifier     = &metrics_notifier_forwarder;
   o_cucp_deps.e2_gw                = e2_gw_cu_cp.get();
-  o_cucp_deps.json_sink            = &json_sink;
 
   // create O-CU-CP.
   auto                o_cucp_unit = o_cu_cp_app_unit->create_o_cu_cp(o_cucp_deps);
@@ -437,7 +432,6 @@ int main(int argc, char** argv)
   o_cuup_unit_deps.io_brk           = epoll_broker.get();
   o_cuup_unit_deps.e2_gw            = e2_gw_cu_up.get();
   o_cuup_unit_deps.metrics_notifier = &metrics_notifier_forwarder;
-  o_cuup_unit_deps.json_sink        = &json_sink;
 
   auto o_cuup_obj = o_cu_up_app_unit->create_o_cu_up_unit(o_cuup_unit_deps);
   for (auto& metric : o_cuup_obj.metrics) {
@@ -452,7 +446,6 @@ int main(int argc, char** argv)
   odu_dependencies.mac_p              = du_pcaps.mac.get();
   odu_dependencies.rlc_p              = du_pcaps.rlc.get();
   odu_dependencies.e2_client_handler  = e2_gw_du.get();
-  odu_dependencies.json_sink          = &json_sink;
   odu_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
   auto du_inst_and_cmds = o_du_app_unit->create_flexible_o_du_unit(odu_dependencies);

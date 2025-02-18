@@ -21,5 +21,5 @@ target_link_libraries(srsran_du_high_unit_helpers
         sched_config
         srsran_cpu_affinities_helper
         srsran_du_high_unit_metrics_helpers
-        srsran_metrics_logger_utils
+        srsran_metrics_app_helpers
         srsran_pusch_processor)

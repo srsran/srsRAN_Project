@@ -10,13 +10,15 @@
 
 #pragma once
 
-#include "CLI/CLI11.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace srsran {
+namespace app_helpers {
 
-struct metrics_logger_appconfig;
+struct metrics_config;
 
-/// Configures the given CLI11 application with the metrics logger application configuration schema.
-void configure_cli11_with_metrics_logger_appconfig_schema(CLI::App& app, metrics_logger_appconfig& config);
+/// Fills the given node with the metrics application configuration helper values.
+void fill_metrics_appconfig_in_yaml_schema(YAML::Node& node, const metrics_config& config);
 
+} // namespace app_helpers
 } // namespace srsran

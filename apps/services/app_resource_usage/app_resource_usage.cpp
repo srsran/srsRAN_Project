@@ -9,6 +9,8 @@
  */
 
 #include "apps/services/app_resource_usage/app_resource_usage.h"
+#include "apps/helpers/metrics/metrics_config.h"
+#include "apps/helpers/metrics/metrics_helpers.h"
 #include "apps/services/app_resource_usage/metrics/app_resource_usage_metrics_consumer.h"
 #include "apps/services/app_resource_usage/metrics/app_resource_usage_metrics_producer.h"
 
@@ -102,12 +104,11 @@ energy_snapshot app_resource_usage::energy_usage_now()
 }
 
 app_resource_usage_service
-app_services::build_app_resource_usage_service(app_services::metrics_notifier& metrics_notifier,
-                                               srslog::basic_levels            metrics_level,
-                                               srslog::sink*                   json_sink)
+app_services::build_app_resource_usage_service(app_services::metrics_notifier&    metrics_notifier,
+                                               const app_helpers::metrics_config& metrics_cfg)
 {
   app_resource_usage_service app_res_usage;
-  if (metrics_level != srslog::basic_levels::info && !json_sink) {
+  if (!metrics_cfg.enabled()) {
     return app_res_usage;
   }
   app_res_usage.service =
@@ -119,16 +120,14 @@ app_services::build_app_resource_usage_service(app_services::metrics_notifier& m
   app_res_usage_metrics.producers.emplace_back(
       std::make_unique<resource_usage_metrics_producer_impl>(metrics_notifier, *app_res_usage.service));
 
-  if (metrics_level == srslog::basic_levels::info) {
+  if (metrics_cfg.enable_log_metrics) {
     app_res_usage_metrics.consumers.push_back(
-        std::make_unique<resource_usage_metrics_consumer_log>(srslog::fetch_basic_logger("METRICS")));
+        std::make_unique<resource_usage_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
-  if (json_sink) {
-    srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", *json_sink, {});
-    json_channel.set_enabled(true);
-
-    app_res_usage_metrics.consumers.push_back(std::make_unique<resource_usage_metrics_consumer_json>(json_channel));
+  if (metrics_cfg.json_config.enable_json_metrics) {
+    app_res_usage_metrics.consumers.push_back(
+        std::make_unique<resource_usage_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
   }
 
   return app_res_usage;

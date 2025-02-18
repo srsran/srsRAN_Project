@@ -9,6 +9,8 @@
  */
 
 #include "flexible_o_du_metrics_builder.h"
+#include "apps/helpers/metrics/metrics_config.h"
+#include "apps/helpers/metrics/metrics_helpers.h"
 #include "flexible_o_du_metrics_consumers.h"
 #include "flexible_o_du_metrics_producer.h"
 
@@ -17,12 +19,11 @@ using namespace srsran;
 flexible_o_du_metrics_notifier*
 srsran::build_flexible_o_du_metrics_config(std::vector<app_services::metrics_config>& metrics,
                                            app_services::metrics_notifier&            notifier,
-                                           srslog::basic_levels                       metrics_level,
-                                           srslog::sink*                              json_sink)
+                                           const app_helpers::metrics_config&         metrics_cfg)
 {
   flexible_o_du_metrics_notifier* out_value = nullptr;
 
-  if (metrics_level != srslog::basic_levels::info && !json_sink) {
+  if (!metrics_cfg.enabled()) {
     return out_value;
   }
 
@@ -33,16 +34,14 @@ srsran::build_flexible_o_du_metrics_config(std::vector<app_services::metrics_con
   odu_metric.metric_name = flexible_o_du_app_service_metrics_properties_impl().name();
   odu_metric.callback    = flexible_o_du_metrics_callback;
 
-  if (metrics_level == srslog::basic_levels::info) {
+  if (metrics_cfg.enable_log_metrics) {
     odu_metric.consumers.push_back(
-        std::make_unique<flexible_o_du_metrics_consumer_log>(srslog::fetch_basic_logger("METRICS")));
+        std::make_unique<flexible_o_du_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
-  if (json_sink) {
-    srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", *json_sink, {});
-    json_channel.set_enabled(true);
-
-    odu_metric.consumers.push_back(std::make_unique<flexible_o_du_metrics_consumer_json>(json_channel));
+  if (metrics_cfg.json_config.enable_json_metrics) {
+    odu_metric.consumers.push_back(
+        std::make_unique<flexible_o_du_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
   }
 
   return out_value;

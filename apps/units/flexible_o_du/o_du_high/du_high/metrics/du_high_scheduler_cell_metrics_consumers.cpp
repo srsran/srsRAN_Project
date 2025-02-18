@@ -385,7 +385,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     }
     fmt::format_to(std::back_inserter(buffer), "]");
   }
-  logger.info("{}", to_c_str(buffer));
+  log_chan("{}", to_c_str(buffer));
   buffer.clear();
 
   // log ue-specific metrics
@@ -534,7 +534,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
       fmt::format_to(std::back_inserter(buffer), " max_pucch_harq_delay=n/a");
     }
 
-    logger.info("{}", to_c_str(buffer));
+    log_chan("{}", to_c_str(buffer));
     buffer.clear();
   }
 }

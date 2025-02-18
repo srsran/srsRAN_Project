@@ -15,6 +15,11 @@
 #include "srsran/support/resource_usage/resource_usage_utils.h"
 
 namespace srsran {
+
+namespace app_helpers {
+struct metrics_config;
+}
+
 namespace app_services {
 
 class metrics_notifier;
@@ -58,9 +63,8 @@ struct app_resource_usage_service {
 };
 
 /// Builds application resource usage service and related metrics.
-app_resource_usage_service build_app_resource_usage_service(app_services::metrics_notifier& metrics_notifier,
-                                                            srslog::basic_levels            metrics_level,
-                                                            srslog::sink*                   json_sink);
+app_resource_usage_service build_app_resource_usage_service(app_services::metrics_notifier&    metrics_notifier,
+                                                            const app_helpers::metrics_config& metrics_cfg);
 
 } // namespace app_services
 } // namespace srsran

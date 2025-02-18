@@ -9,6 +9,7 @@
  */
 
 #include "du_low_config_yaml_writer.h"
+#include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "du_low_config.h"
 
 using namespace srsran;
@@ -122,6 +123,7 @@ static void fill_du_low_hal_section(YAML::Node node, const du_low_unit_hal_confi
 
 void srsran::fill_du_low_config_in_yaml_schema(YAML::Node& node, const du_low_unit_config& config)
 {
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg.common_metrics_cfg);
   fill_du_low_log_section(node["log"], config.loggers);
   fill_du_low_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_du_low_expert_section(node["expert_phy"], config.expert_phy_cfg);

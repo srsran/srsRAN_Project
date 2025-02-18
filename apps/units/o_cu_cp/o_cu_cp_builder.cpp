@@ -9,6 +9,7 @@
  */
 
 #include "o_cu_cp_builder.h"
+#include "apps/helpers/metrics/metrics_helpers.h"
 #include "apps/services/metrics/metrics_config.h"
 #include "cu_cp/cu_cp_cmdline_commands.h"
 #include "cu_cp/cu_cp_config_translators.h"
@@ -26,28 +27,27 @@ using namespace srsran;
 
 static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services::metrics_config>& cu_up_services_cfg,
                                                         app_services::metrics_notifier&            metrics_notifier,
-                                                        const cu_cp_unit_metrics_config&           cu_cp_metrics_cfg,
-                                                        srslog::sink&                              json_sink)
+                                                        const cu_cp_unit_metrics_config&           cu_cp_metrics_cfg)
 {
   // NOTE: do not report CU-CP metrics for now. Remove this when CU-CP metrics are needed.
   return nullptr;
 
-  if (!cu_cp_metrics_cfg.enable_json_metrics == 0) {
+  const app_helpers::metrics_config& unit_metrics_cfg = cu_cp_metrics_cfg.common_metrics_cfg;
+  if (!unit_metrics_cfg.json_config.enable_json_metrics) {
     return nullptr;
   }
 
   pdcp_metrics_notifier* out = nullptr;
 
-  auto metrics_generator                    = std::make_unique<cu_cp_pdcp_metrics_producer_impl>(metrics_notifier);
-  out                                       = &(*metrics_generator);
-  app_services::metrics_config& metrics_cfg = cu_up_services_cfg.emplace_back();
-  metrics_cfg.metric_name                   = cu_cp_pdcp_metrics_properties_impl().name();
-  metrics_cfg.callback                      = cu_cp_pdcp_metrics_callback;
-  metrics_cfg.producers.push_back(std::move(metrics_generator));
+  auto metrics_generator = std::make_unique<cu_cp_pdcp_metrics_producer_impl>(metrics_notifier);
+  out                    = &(*metrics_generator);
+  app_services::metrics_config& metrics_service_cfg = cu_up_services_cfg.emplace_back();
+  metrics_service_cfg.metric_name                   = cu_cp_pdcp_metrics_properties_impl().name();
+  metrics_service_cfg.callback                      = cu_cp_pdcp_metrics_callback;
+  metrics_service_cfg.producers.push_back(std::move(metrics_generator));
 
-  srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
-  json_channel.set_enabled(true);
-  metrics_cfg.consumers.push_back(std::make_unique<cu_cp_pdcp_metrics_consumer_json>(json_channel));
+  metrics_service_cfg.consumers.push_back(
+      std::make_unique<cu_cp_pdcp_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
 
   return out;
 }
@@ -70,8 +70,8 @@ o_cu_cp_unit srsran::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, o_cu_cp_
   cu_cp_cfg.services.timers                     = dependencies.timers;
 
   o_cu_cp_unit ocucp;
-  cu_cp_cfg.pdcp_metric_notifier = build_pdcp_metrics_config(
-      ocucp.metrics, *dependencies.metrics_notifier, unit_cfg.cucp_cfg.metrics, *dependencies.json_sink);
+  cu_cp_cfg.pdcp_metric_notifier =
+      build_pdcp_metrics_config(ocucp.metrics, *dependencies.metrics_notifier, unit_cfg.cucp_cfg.metrics);
 
   // Create N2 Client Gateways.
   std::vector<std::unique_ptr<srs_cu_cp::n2_connection_client>> n2_clients;

@@ -9,8 +9,8 @@
  */
 
 #include "du_low_config_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
-#include "apps/services/logger/metrics_logger_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_low_config.h"
 #include "srsran/adt/expected.h"
@@ -334,12 +334,6 @@ static void configure_cli11_hal_args(CLI::App& app, std::optional<du_low_unit_ha
   configure_cli11_bbdev_hwacc_args(*bbdev_hwacc_subcmd, config->bbdev_hwacc);
 }
 
-static void configure_cli11_metrics_args(CLI::App& app, du_low_unit_metrics_config& config)
-{
-  add_option(app, "--enable_json_metrics", config.enable_json_metrics, "Enable JSON metrics reporting")
-      ->always_capture_default();
-}
-
 static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
 {
   // Clean the HAL optional.
@@ -358,8 +352,6 @@ static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
 void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_unit_config& parsed_cfg)
 {
   // Loggers section.
-  configure_cli11_with_metrics_logger_appconfig_schema(app, parsed_cfg.loggers.metrics_level);
-
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, parsed_cfg.loggers);
 
@@ -377,8 +369,7 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
   configure_cli11_hal_args(*hal_subcmd, parsed_cfg.hal_config);
 
   // Metrics section.
-  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
-  configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.metrics_config);
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.metrics_cfg.common_metrics_cfg);
 }
 
 void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,

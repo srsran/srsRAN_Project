@@ -9,6 +9,7 @@
  */
 
 #include "cu_appconfig_yaml_writer.h"
+#include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "apps/services/f1u/f1u_config_yaml_writer.h"
 #include "apps/services/logger/logger_appconfig_yaml_writer.h"
 #include "cu_appconfig.h"
@@ -17,8 +18,6 @@ using namespace srsran;
 
 static void fill_cu_appconfig_metrics_section(YAML::Node node, const srs_cu::metrics_appconfig& config)
 {
-  node["addr"]                         = config.addr;
-  node["port"]                         = config.port;
   node["resource_usage_report_period"] = config.rusage_report_period;
 }
 
@@ -50,6 +49,7 @@ static void fill_cu_appconfig_f1u_section(YAML::Node& node, const f1u_sockets_ap
 
 void srsran::fill_cu_appconfig_in_yaml_schema(YAML::Node& node, const cu_appconfig& config)
 {
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg.common_metrics_cfg);
   fill_logger_appconfig_in_yaml_schema(node, config.log_cfg);
   fill_cu_appconfig_metrics_section(node["metrics"], config.metrics_cfg);
   fill_cu_appconfig_buffer_pool_section(node["buffer_pool"], config.buffer_pool_config);

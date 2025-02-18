@@ -10,11 +10,16 @@
 
 #pragma once
 
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/metrics/metrics_config.h"
 
 namespace srsran {
 
 class flexible_o_du_metrics_notifier;
+
+namespace app_helpers {
+struct metrics_config;
+}
 
 namespace app_services {
 class metrics_notifier;
@@ -23,7 +28,6 @@ class metrics_notifier;
 /// Builds the flexible O-DU metrics configuration.
 flexible_o_du_metrics_notifier* build_flexible_o_du_metrics_config(std::vector<app_services::metrics_config>& metrics,
                                                                    app_services::metrics_notifier&            notifier,
-                                                                   srslog::basic_levels metrics_level,
-                                                                   srslog::sink*        json_sink);
+                                                                   const app_helpers::metrics_config& metrics_cfg);
 
 } // namespace srsran

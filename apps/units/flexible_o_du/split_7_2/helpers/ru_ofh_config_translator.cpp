@@ -78,14 +78,14 @@ static void generate_config(ru_ofh_configuration&              out_cfg,
     const srs_du::du_cell_config&  du_cell_cfg = du_cells[i];
     ofh::sector_configuration&     sector_cfg  = out_cfg.sector_configs.emplace_back();
 
-    sector_cfg.sector_id                  = i;
-    sector_cfg.max_processing_delay_slots = max_processing_delay_slots;
-    sector_cfg.dl_processing_time         = std::chrono::microseconds(ru_cfg.dl_processing_time);
-    sector_cfg.uses_dpdk                  = ru_cfg.hal_config.has_value();
-
+    sector_cfg.sector_id                    = i;
+    sector_cfg.max_processing_delay_slots   = max_processing_delay_slots;
+    sector_cfg.dl_processing_time           = std::chrono::microseconds(ru_cfg.dl_processing_time);
+    sector_cfg.uses_dpdk                    = ru_cfg.hal_config.has_value();
     sector_cfg.interface                    = cell_cfg.network_interface;
     sector_cfg.is_promiscuous_mode_enabled  = cell_cfg.enable_promiscuous_mode;
     sector_cfg.is_link_status_check_enabled = cell_cfg.check_link_status;
+    sector_cfg.are_metrics_enabled          = ru_cfg.metrics_cfg.enabled();
     sector_cfg.mtu_size                     = cell_cfg.mtu_size;
     if (!parse_mac_address(cell_cfg.du_mac_address, sector_cfg.mac_src_address)) {
       srsran_terminate("Invalid Distributed Unit MAC address");
@@ -118,7 +118,7 @@ static void generate_config(ru_ofh_configuration&              out_cfg,
     sector_cfg.is_downlink_broadcast_enabled   = cell_cfg.cell.is_downlink_broadcast_enabled;
     sector_cfg.ignore_ecpri_payload_size_field = cell_cfg.cell.ignore_ecpri_payload_size_field;
     sector_cfg.ignore_ecpri_seq_id_field       = cell_cfg.cell.ignore_ecpri_seq_id_field;
-    sector_cfg.are_metrics_enabled             = ru_cfg.loggers.metrics_level.level == srslog::basic_levels::info;
+    sector_cfg.are_metrics_enabled             = ru_cfg.metrics_cfg.enabled();
     sector_cfg.log_unreceived_ru_frames        = cell_cfg.cell.log_unreceived_ru_frames;
     sector_cfg.ul_compression_params           = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
                                                   cell_cfg.cell.compression_bitwidth_ul};

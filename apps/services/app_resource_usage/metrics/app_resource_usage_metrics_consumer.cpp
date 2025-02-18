@@ -73,5 +73,5 @@ void resource_usage_metrics_consumer_log::handle_metric(const app_services::metr
                  sys_metrics.power_usage_watts);
 
   // Flush buffer to the logger.
-  logger.info("{}", to_c_str(buffer));
+  log_chan("{}", to_c_str(buffer));
 }

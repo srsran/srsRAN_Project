@@ -6,10 +6,5 @@
 # the distribution.
 #
 
-add_subdirectory(cu)
-add_subdirectory(du)
-add_subdirectory(examples)
-add_subdirectory(gnb)
-add_subdirectory(helpers)
-add_subdirectory(services)
-add_subdirectory(units)
+
+add_subdirectory(metrics)

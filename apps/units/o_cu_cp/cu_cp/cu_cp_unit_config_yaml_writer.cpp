@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_unit_config_yaml_writer.h"
+#include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "cu_cp_unit_config.h"
 #include "srsran/adt/span.h"
 
@@ -288,7 +289,6 @@ static void fill_cu_cp_pcap_section(YAML::Node node, const cu_cp_unit_pcap_confi
 static void fill_cu_cp_metrics_section(YAML::Node node, const cu_cp_unit_metrics_config& config)
 {
   node["cu_cp_statistics_report_period"] = config.cu_cp_statistics_report_period;
-  node["enable_json_metrics"]            = config.enable_json_metrics;
   node["pdcp_report_period"]             = config.pdcp.report_period;
 }
 
@@ -407,7 +407,10 @@ void srsran::fill_cu_cp_config_in_yaml_schema(YAML::Node& node, const cu_cp_unit
   node["gnb_id"]            = config.gnb_id.id;
   node["gnb_id_bit_length"] = static_cast<unsigned>(config.gnb_id.bit_length);
   node["ran_node_name"]     = config.ran_node_name;
-  node["cu_cp"]             = build_cu_cp_section(config);
+
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics.common_metrics_cfg);
+
+  node["cu_cp"] = build_cu_cp_section(config);
   fill_cu_cp_log_section(node["log"], config.loggers);
   fill_cu_cp_pcap_section(node["pcap"], config.pcap_cfg);
   fill_cu_cp_metrics_section(node["metrics"], config.metrics);

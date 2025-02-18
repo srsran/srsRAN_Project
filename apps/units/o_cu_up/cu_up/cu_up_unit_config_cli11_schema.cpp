@@ -9,6 +9,7 @@
  */
 
 #include "cu_up_unit_config_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_config.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_pcap_config.h"
@@ -130,9 +131,6 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_confi
   add_option(
       app, "--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period (in milliseconds)")
       ->capture_default_str();
-
-  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
-      ->always_capture_default();
 }
 
 static void configure_cli11_f1u_cu_up_args(CLI::App& app, cu_cp_unit_f1u_config& f1u_cu_up_params)
@@ -175,6 +173,7 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, unit_cfg.metrics.common_metrics_cfg);
 
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {
@@ -196,7 +195,7 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
 
 void srsran::autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& unit_cfg)
 {
-  if (unit_cfg.metrics.enable_json_metrics && unit_cfg.metrics.pdcp.report_period == 0) {
+  if (unit_cfg.metrics.common_metrics_cfg.json_config.enable_json_metrics && unit_cfg.metrics.pdcp.report_period == 0) {
     // Default report period 1 second.
     unit_cfg.metrics.pdcp.report_period = 1000;
   }

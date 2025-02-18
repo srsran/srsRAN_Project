@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/f1u/f1u_cli11_schema.h"
 #include "apps/services/hal/hal_appconfig.h"
@@ -36,11 +37,9 @@ struct f1u_appconfig {
 
 /// Metrics report configuration.
 struct metrics_appconfig {
-  std::string addr = "127.0.0.1";
-  uint16_t    port = 55555;
+  app_helpers::metrics_config common_metrics_cfg;
   /// Resource usage report period in milliseconds.
   unsigned rusage_report_period = 0;
-  bool     enable_json_metrics  = false;
 };
 
 } // namespace srs_du
