@@ -244,6 +244,7 @@ variables:
     - |
       rm ${CI_PROJECT_DIR}/build/apps/gnb_split_7_2/gnb
       rm ${CI_PROJECT_DIR}/build/apps/gnb_split_8/gnb
+      rm ${CI_PROJECT_DIR}/build/apps/gnb_split_6/gnb
     - launch_tests
   variables:
     PLUGIN_BRANCH: $MR_PLUGIN_REF
