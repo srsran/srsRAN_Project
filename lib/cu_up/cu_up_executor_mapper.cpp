@@ -33,7 +33,9 @@ public:
 
   ~cancellable_task_executor() override
   {
-    srsran_assert(cancelled, "cancellable_task_executor destroyed before tasks being cancelled");
+    if (!cancelled) {
+      logger.error("cancellable_task_executor destroyed before tasks being cancelled");
+    }
   }
 
   [[nodiscard]] bool execute(unique_task task) override
@@ -66,6 +68,9 @@ private:
   task_executor*           exec;
   const std::atomic<bool>& cancelled;
   timer_manager&           timers;
+
+  // logger
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 };
 
 /// Implementation of the UE executor mapper.
@@ -87,8 +92,9 @@ public:
 
   ~ue_executor_mapper_impl() override
   {
-    srsran_assert(cancelled_flag.load(std::memory_order_relaxed),
-                  "cancellable_task_executor destroyed before tasks being cancelled");
+    if (!cancelled_flag.load(std::memory_order_relaxed)) {
+      logger.error("ue_executor_mapper_impl destroyed before tasks being cancelled");
+    }
   }
 
   async_task<void> stop() override
@@ -123,6 +129,9 @@ private:
   cancellable_task_executor ul_exec;
   cancellable_task_executor dl_exec;
   task_executor&            crypto_exec;
+
+  // logger
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 };
 
 struct base_cu_up_executor_pool_config {
