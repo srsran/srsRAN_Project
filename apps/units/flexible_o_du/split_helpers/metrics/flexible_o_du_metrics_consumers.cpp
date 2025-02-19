@@ -238,6 +238,9 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
                                                  metric_precode.avg_rate_MRes_four_layers};
   double              avg_precoder_latency_us = static_cast<double>(metric_precode.total_latency_ns) /
                                    static_cast<double>(metric_pdsch_proc.tbs_processed) / 100.0;
+  if (std::isnan(avg_precoder_latency_us) || std::isinf(avg_precoder_latency_us)) {
+    avg_precoder_latency_us = 0.0;
+  }
   precoding.write<mlist_precoder_throughputs>(throughputs);
   precoding.write<metric_average_latency>(avg_precoder_latency_us);
   precoding.write<metric_cpu_usage>(precode_cpu_usage);
