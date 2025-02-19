@@ -89,6 +89,8 @@ public:
 
   /// Start CU-CP connection to AMF and run NG setup procedure to completion.
   void run_ng_setup();
+  /// Drop TNL connection between the AMF and the CU-CP.
+  bool drop_amf_connection(unsigned amf_idx);
 
   /// Establish a TNL connection between a DU and the CU-CP.
   std::optional<unsigned> connect_new_du();

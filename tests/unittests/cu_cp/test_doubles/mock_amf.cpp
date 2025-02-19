@@ -59,6 +59,8 @@ public:
 
   void enqueue_next_tx_pdu(const ngap_message& pdu) override { pending_tx_pdus.push_blocking(pdu); }
 
+  void drop_connection() override { rx_pdu_notifier.reset(); }
+
 private:
   using ngap_pdu_queue = concurrent_queue<ngap_message,
                                           concurrent_queue_policy::locking_mpmc,

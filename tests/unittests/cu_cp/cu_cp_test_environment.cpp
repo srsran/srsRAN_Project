@@ -320,6 +320,16 @@ void cu_cp_test_environment::run_ng_setup()
   }
 }
 
+bool cu_cp_test_environment::drop_amf_connection(unsigned amf_idx)
+{
+  auto it = amf_configs.find(amf_idx);
+  if (it == amf_configs.end()) {
+    return false;
+  }
+  it->second.amf_stub->drop_connection();
+  return true;
+}
+
 std::optional<unsigned> cu_cp_test_environment::connect_new_du()
 {
   auto du_stub = create_mock_du({get_cu_cp().get_f1c_handler()});
