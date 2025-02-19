@@ -664,7 +664,7 @@ cu_cp_impl::handle_trp_information_request(const trp_information_request_t& requ
 
 #endif // SRSRAN_HAS_ENTERPRISE
 
-void cu_cp_impl::handle_n2_disconnection()
+void cu_cp_impl::handle_n2_disconnection(const std::vector<plmn_identity>& plmns)
 {
   // TODO
 }
