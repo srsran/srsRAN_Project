@@ -71,7 +71,7 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
   dl_prio_queue.clear();
   ul_prio_queue.clear();
 
-  if (not res_grid.cfg.is_dl_enabled(slot_tx)) {
+  if (not cell_cfg.is_dl_enabled(slot_tx)) {
     // If PDCCH is inactive in this slot, we don't generate any slice candidates.
     return;
   }
@@ -80,7 +80,7 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
   unsigned max_rbs = 0;
   for (const auto& slice : slices) {
     const bool pdsch_enabled =
-        res_grid.cfg.expert_cfg.ue.enable_csi_rs_pdsch_multiplexing or res_grid[0].result.dl.csi_rs.empty();
+        cell_cfg.expert_cfg.ue.enable_csi_rs_pdsch_multiplexing or res_grid[0].result.dl.csi_rs.empty();
     if (pdsch_enabled) {
       max_rbs = slice.inst.pdsch_rb_count <= slice.inst.cfg.min_prb and slice.inst.cfg.min_prb > 0
                     ? slice.inst.cfg.min_prb

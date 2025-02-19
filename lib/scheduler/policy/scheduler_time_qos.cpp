@@ -62,7 +62,7 @@ dl_alloc_result scheduler_time_qos::schedule_dl_retxs(slice_dl_sched_context& ct
 
 void scheduler_time_qos::dl_sched(slice_dl_sched_context& ctxt)
 {
-  slot_point pdsch_slot        = ctxt.pdsch_slot();
+  slot_point pdsch_slot      = ctxt.pdsch_slot();
   unsigned nof_slots_elapsed = std::min(last_pdsch_slot.valid() ? pdsch_slot - last_pdsch_slot : 1U, MAX_SLOT_SKIPPED);
   last_pdsch_slot            = pdsch_slot;
 
@@ -143,7 +143,7 @@ ul_alloc_result scheduler_time_qos::schedule_ul_retxs(slice_ul_sched_context& ct
 
 void scheduler_time_qos::ul_sched(slice_ul_sched_context& ul_ctxt)
 {
-  slot_point pusch_slot        = ul_ctxt.pusch_slot();
+  slot_point pusch_slot      = ul_ctxt.pusch_slot();
   unsigned nof_slots_elapsed = std::min(last_pusch_slot.valid() ? pusch_slot - last_pusch_slot : 1U, MAX_SLOT_SKIPPED);
   last_pusch_slot            = pusch_slot;
 
