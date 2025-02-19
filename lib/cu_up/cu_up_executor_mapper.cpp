@@ -214,15 +214,20 @@ class strand_based_cu_up_executor_mapper final : public cu_up_executor_mapper
 {
 public:
   strand_based_cu_up_executor_mapper(const strand_based_executor_config& config) :
-    cu_up_strand(&config.worker_pool_executor, config.default_task_queue_size), cu_up_exec_pool(create_strands(config))
+    cu_up_strand(&config.worker_pool_executor,
+                 std::array<concurrent_queue_params, 2>{
+                     {{concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size},
+                      {concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size}}}),
+    ctrl_exec(cu_up_strand.get_executors()[0]),
+    cu_up_exec_pool(create_strands(config))
   {
   }
 
-  task_executor& ctrl_executor() override { return cu_up_strand; }
+  task_executor& ctrl_executor() override { return ctrl_exec; }
 
   task_executor& io_ul_executor() override { return *io_ul_exec_ptr; }
 
-  task_executor& e2_executor() override { return cu_up_strand; }
+  task_executor& e2_executor() override { return ctrl_exec; }
 
   std::unique_ptr<ue_executor_mapper> create_ue_executor_mapper() override
   {
@@ -230,14 +235,14 @@ public:
   }
 
 private:
-  using cu_up_strand_type        = task_strand<task_executor*, concurrent_queue_policy::lockfree_mpmc>;
+  using cu_up_strand_type        = priority_task_strand<task_executor*>;
   using io_dedicated_strand_type = task_strand<task_executor*, concurrent_queue_policy::lockfree_mpmc>;
-  using ue_strand_type           = priority_task_strand<cu_up_strand_type*>;
+  using ue_strand_type = priority_task_strand<priority_task_strand_executor<priority_task_strand<task_executor*>&>>;
 
   base_cu_up_executor_pool_config create_strands(const strand_based_executor_config& config)
   {
-    concurrent_queue_params qparams{srsran::concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size};
-    concurrent_queue_params data_qparams{srsran::concurrent_queue_policy::lockfree_mpmc, config.gtpu_task_queue_size};
+    concurrent_queue_params qparams{concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size};
+    concurrent_queue_params data_qparams{concurrent_queue_policy::lockfree_mpmc, config.gtpu_task_queue_size};
 
     // Create IO executor that can be either inlined with CU-UP strand or its own strand.
     if (config.dedicated_io_strand) {
@@ -255,7 +260,7 @@ private:
     ue_dl_execs.resize(config.max_nof_ue_strands);
     std::array<concurrent_queue_params, 3> ue_queue_params = {qparams, data_qparams, data_qparams};
     for (unsigned i = 0; i != config.max_nof_ue_strands; ++i) {
-      ue_strands[i]                             = std::make_unique<ue_strand_type>(&cu_up_strand, ue_queue_params);
+      ue_strands[i] = std::make_unique<ue_strand_type>(cu_up_strand.get_executors()[1], ue_queue_params);
       span<ue_strand_type::executor_type> execs = ue_strands[i]->get_executors();
       srsran_assert(execs.size() == 3, "Three executors should have been created for the three priorities");
       ue_ctrl_execs[i] = &execs[0];
@@ -264,11 +269,12 @@ private:
     }
 
     return base_cu_up_executor_pool_config{
-        cu_up_strand, ue_dl_execs, ue_ul_execs, ue_ctrl_execs, config.worker_pool_executor, *config.timers};
+        ctrl_exec, ue_dl_execs, ue_ul_execs, ue_ctrl_execs, config.worker_pool_executor, *config.timers};
   }
 
   // Base strand that sequentializes accesses to the worker pool executor.
   cu_up_strand_type cu_up_strand;
+  task_executor&    ctrl_exec;
 
   // IO executor with two modes
   std::variant<inline_task_executor, io_dedicated_strand_type> io_ul_exec;
