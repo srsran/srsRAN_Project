@@ -30,7 +30,7 @@ public:
   // See interface for documentation.
   void on_tti_boundary(const lower_phy_timing_context& context) override
   {
-    timing_handler.on_tti_boundary(context.slot);
+    timing_handler.on_tti_boundary({context.slot, context.time_point});
     radio_event_counter->print();
   }
 

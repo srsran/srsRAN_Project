@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsran/ran/slot_point.h"
-
 namespace srsran {
+
+struct upper_phy_timing_context;
 
 /// Upper physical layer timing notifier.
 class upper_phy_timing_notifier
@@ -22,8 +22,8 @@ public:
 
   /// \brief Notifies a new TTI boundary event.
   ///
-  /// \param[in] slot Notification context.
-  virtual void on_tti_boundary(slot_point slot) = 0;
+  /// \param[in]  context Notification context.
+  virtual void on_tti_boundary(const upper_phy_timing_context& context) = 0;
 };
 
 } // namespace srsran

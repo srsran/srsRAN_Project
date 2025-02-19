@@ -542,7 +542,7 @@ void srsran::fapi::log_slot_indication(const slot_indication_message& msg,
                                        srslog::basic_logger&          logger)
 {
   logger.set_context(msg.sfn, msg.slot);
-  logger.debug("Sector#{}: Slot.indication", sector_id);
+  logger.debug("Sector#{}: Slot.indication time_point={}", sector_id, msg.time_point.time_since_epoch().count());
 }
 
 void srsran::fapi::log_ul_dci_request(const ul_dci_request_message& msg,

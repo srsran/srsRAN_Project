@@ -54,14 +54,14 @@ static int calculate_slot_symbol_point_distance(slot_symbol_point lhs, slot_symb
   return a;
 }
 
-void rx_window_checker::on_new_symbol(slot_symbol_point symbol_point)
+void rx_window_checker::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
 {
   if (SRSRAN_LIKELY(is_disabled)) {
     return;
   }
 
   // Build a new slot symbol point that manages that the SFN values in OFH is 1 byte.
-  slot_symbol_point ota_symbol_point = calculate_ofh_slot_symbol_point(symbol_point);
+  slot_symbol_point ota_symbol_point = calculate_ofh_slot_symbol_point(symbol_point_context.symbol_point);
 
   // Update the stored slot symbol point as system value.
   slot_raw_value.store(ota_symbol_point.to_uint(), std::memory_order_release);

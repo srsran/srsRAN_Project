@@ -86,10 +86,10 @@ generate_closed_rx_window_dependencies(receiver_impl_dependencies::close_rx_wind
   return out_dependencies;
 }
 
-void ota_symbol_boundary_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
+void ota_symbol_boundary_dispatcher::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
 {
   for (auto& handler : handlers) {
-    handler->on_new_symbol(symbol_point);
+    handler->on_new_symbol(symbol_point_context);
   }
 }
 

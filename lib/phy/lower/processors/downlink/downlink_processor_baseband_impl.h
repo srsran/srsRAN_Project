@@ -206,6 +206,8 @@ private:
   amplitude_controller& amplitude_control;
   /// Number of slots notified in advanced in the TTI boundary.
   unsigned nof_slot_tti_in_advance;
+  /// Number of slots notified in advanced in the TTI boundary in nanoseconds.
+  std::chrono::nanoseconds nof_slot_tti_in_advance_ns;
   /// Sector identifier.
   unsigned sector_id;
   /// Subcarrier spacing.

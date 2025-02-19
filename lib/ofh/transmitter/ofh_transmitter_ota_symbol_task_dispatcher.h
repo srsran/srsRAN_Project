@@ -28,15 +28,15 @@ public:
   {
   }
 
-  void on_new_symbol(slot_symbol_point symbol_point) override
+  void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override
   {
-    window_checker.on_new_symbol(symbol_point);
+    window_checker.on_new_symbol(symbol_point_context);
 
-    if (!executor.execute([&, symbol_point]() { symbol_handler.on_new_symbol(symbol_point); })) {
+    if (!executor.execute([&, symbol_point_context]() { symbol_handler.on_new_symbol(symbol_point_context); })) {
       srslog::fetch_basic_logger("OFH").warning(
           "Failed to dispatch new symbol task in the message transmitter for slot '{}' and symbol '{}'",
-          symbol_point.get_slot(),
-          symbol_point.get_symbol_index());
+          symbol_point_context.symbol_point.get_slot(),
+          symbol_point_context.symbol_point.get_symbol_index());
     }
   }
 

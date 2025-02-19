@@ -10,19 +10,17 @@
 
 #pragma once
 
-#include "srsran/fapi/messages/base_message.h"
+#include "srsran/ran/slot_point.h"
 #include <chrono>
 
 namespace srsran {
-namespace fapi {
 
-/// Slot indication message.
-struct slot_indication_message : public base_message {
-  uint16_t sfn;
-  uint16_t slot;
-  /// Vendor specific properties.
+/// Describes the context of the current timing boundary.
+struct upper_phy_timing_context {
+  /// Indicates the current slot.
+  slot_point slot;
+  /// Indicates the system time point associated to the current slot.
   std::chrono::time_point<std::chrono::system_clock> time_point;
 };
 
-} // namespace fapi
 } // namespace srsran

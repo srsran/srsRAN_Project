@@ -25,6 +25,8 @@ downlink_processor_baseband_impl::downlink_processor_baseband_impl(
   pdxch_proc_baseband(pdxch_proc_baseband_),
   amplitude_control(amplitude_control_),
   nof_slot_tti_in_advance(config.nof_slot_tti_in_advance),
+  nof_slot_tti_in_advance_ns(config.nof_slot_tti_in_advance * 1000000 /
+                             slot_point(config.scs, 0).nof_slots_per_subframe()),
   sector_id(config.sector_id),
   scs(config.scs),
   nof_rx_ports(config.nof_tx_ports),
@@ -152,7 +154,8 @@ baseband_gateway_transmitter_metadata downlink_processor_baseband_impl::process(
       if ((!last_notified_slot.has_value() || (slot > last_notified_slot.value())) && (i_symbol == 0)) {
         // Notify slot boundary.
         lower_phy_timing_context context;
-        context.slot = slot + nof_slot_tti_in_advance;
+        context.slot       = slot + nof_slot_tti_in_advance;
+        context.time_point = std::chrono::system_clock::now() + nof_slot_tti_in_advance_ns;
         last_notified_slot.emplace(slot);
         notifier->on_tti_boundary(context);
       }

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/phy/lower/lower_phy_timing_notifier.h"
+#include "srsran/phy/upper/upper_phy_timing_context.h"
 #include "srsran/phy/upper/upper_phy_timing_handler.h"
 
 namespace srsran {
@@ -30,7 +31,8 @@ public:
   {
     report_fatal_error_if_not(timing_handler, "Adapter is not connected.");
     upper_phy_timing_context upper_context;
-    upper_context.slot = context.slot;
+    upper_context.slot       = context.slot;
+    upper_context.time_point = context.time_point;
     timing_handler->handle_tti_boundary(upper_context);
   }
 

@@ -63,7 +63,7 @@ void message_transmitter_impl::enqueue_messages_into_burst(
                interval.end.get_symbol_index());
 }
 
-void message_transmitter_impl::on_new_symbol(slot_symbol_point symbol_point)
+void message_transmitter_impl::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
 {
   trace_point tp = ofh_tracer.now();
 
@@ -71,20 +71,20 @@ void message_transmitter_impl::on_new_symbol(slot_symbol_point symbol_point)
 
   // Enqueue pending DL Control-Plane messages.
   ether::frame_pool_interval interval_cp_dl{{message_type::control_plane, data_direction::downlink},
-                                            symbol_point + timing_params.sym_cp_dl_end,
-                                            symbol_point + timing_params.sym_cp_dl_start};
+                                            symbol_point_context.symbol_point + timing_params.sym_cp_dl_end,
+                                            symbol_point_context.symbol_point + timing_params.sym_cp_dl_start};
   enqueue_messages_into_burst(interval_cp_dl, frame_burst);
 
   // Enqueue pending UL Control-Plane messages.
   ether::frame_pool_interval interval_cp_ul{{message_type::control_plane, data_direction::uplink},
-                                            symbol_point + timing_params.sym_cp_ul_end,
-                                            symbol_point + timing_params.sym_cp_ul_start};
+                                            symbol_point_context.symbol_point + timing_params.sym_cp_ul_end,
+                                            symbol_point_context.symbol_point + timing_params.sym_cp_ul_start};
   enqueue_messages_into_burst(interval_cp_ul, frame_burst);
 
   // Enqueue pending User-Plane messages.
   ether::frame_pool_interval interval_up{{message_type::user_plane, data_direction::downlink},
-                                         symbol_point + timing_params.sym_up_dl_end,
-                                         symbol_point + timing_params.sym_up_dl_start};
+                                         symbol_point_context.symbol_point + timing_params.sym_up_dl_end,
+                                         symbol_point_context.symbol_point + timing_params.sym_up_dl_start};
   enqueue_messages_into_burst(interval_up, frame_burst);
 
   // Transmit the data.

@@ -12,6 +12,7 @@
 
 #include "srsran/fapi/slot_time_message_notifier.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include <chrono>
 #include <functional>
 
 namespace srsran {
@@ -35,8 +36,9 @@ public:
   void set_slot_time_notifier(slot_time_message_notifier& time_notifier) { notifier = std::ref(time_notifier); }
 
 private:
-  const unsigned                                     l2_nof_slots_ahead;
   const subcarrier_spacing                           scs;
+  const unsigned                                     l2_nof_slots_ahead;
+  const std::chrono::nanoseconds                     l2_nof_slots_ahead_ns;
   message_bufferer_slot_gateway_task_dispatcher&     gateway_task_dispatcher;
   std::reference_wrapper<slot_time_message_notifier> notifier;
 };

@@ -158,7 +158,7 @@ public:
     window_checker(false, {}),
     ul_handler(generate_config(), generate_dependencies())
   {
-    window_checker.on_new_symbol({{1, 0}, 0, 14});
+    window_checker.on_new_symbol({{{1, 0}, 0, 14}, {}});
   }
 
   message_receiver_config generate_config()

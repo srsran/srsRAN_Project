@@ -42,7 +42,7 @@ public:
                            std::shared_ptr<ether::eth_frame_pool> frame_pool);
 
   // See interface for documentation.
-  void on_new_symbol(slot_symbol_point symbol_point) override;
+  void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override;
 
 private:
   /// Transmits the given frame burst.

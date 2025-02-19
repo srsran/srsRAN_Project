@@ -28,8 +28,9 @@ namespace srsran {
 
 /// Open Fronthaul implementation configuration.
 struct ru_ofh_impl_config {
-  unsigned nof_slot_offset_du_ru;
-  unsigned nof_symbols_per_slot;
+  unsigned           nof_slot_offset_du_ru;
+  unsigned           nof_symbols_per_slot;
+  subcarrier_spacing scs;
 };
 
 /// Open Fronthaul implementation dependencies.

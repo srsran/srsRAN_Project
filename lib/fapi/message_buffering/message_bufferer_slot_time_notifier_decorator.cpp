@@ -35,8 +35,9 @@ message_bufferer_slot_time_notifier_decorator::message_bufferer_slot_time_notifi
     unsigned                                       l2_nof_slots_ahead_,
     subcarrier_spacing                             scs_,
     message_bufferer_slot_gateway_task_dispatcher& gateway_task_dispatcher_) :
-  l2_nof_slots_ahead(l2_nof_slots_ahead_),
   scs(scs_),
+  l2_nof_slots_ahead(l2_nof_slots_ahead_),
+  l2_nof_slots_ahead_ns(l2_nof_slots_ahead * 1000000 / slot_point(scs, 0).nof_slots_per_subframe()),
   gateway_task_dispatcher(gateway_task_dispatcher_),
   notifier(dummy_notifier)
 {
@@ -51,7 +52,8 @@ void message_bufferer_slot_time_notifier_decorator::on_slot_indication(const slo
 
   // Notify the upper layers.
   slot_point delayed_slot = slot + l2_nof_slots_ahead;
-  notifier.get().on_slot_indication(build_slot_indication_message(delayed_slot.sfn(), delayed_slot.slot_index()));
+  notifier.get().on_slot_indication(build_slot_indication_message(
+      delayed_slot.sfn(), delayed_slot.slot_index(), msg.time_point + l2_nof_slots_ahead_ns));
 
   // Forward cached messages.
   gateway_task_dispatcher.forward_cached_messages(slot);

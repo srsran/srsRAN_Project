@@ -61,7 +61,7 @@ public:
   rx_window_checker(bool is_enabled, const rx_window_timing_parameters& params);
 
   // See interface for documentation.
-  void on_new_symbol(slot_symbol_point symbol_point) override;
+  void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override;
 
   // See interface for documentation.
   void collect_metrics(receiver_metrics& metrics) override;

@@ -199,17 +199,18 @@ void realtime_timing_worker::poll()
       nof_symbols_per_slot);
 
   for (unsigned i = 0; i != delta; ++i) {
+    unsigned skipped_symbol_id = delta - 1 - i;
     // Notify pending symbols from oldest to newest.
-    notify_slot_symbol_point(symbol_point - (delta - 1 - i));
+    notify_slot_symbol_point({symbol_point - skipped_symbol_id, std::chrono::system_clock::now()});
   }
 }
 
-void realtime_timing_worker::notify_slot_symbol_point(slot_symbol_point slot)
+void realtime_timing_worker::notify_slot_symbol_point(const slot_symbol_point_context& slot_context)
 {
   ofh_tracer << instant_trace_event("ofh_timing_notify_symbol", instant_trace_event::cpu_scope::global);
 
   for (auto* notifier : ota_notifiers) {
-    notifier->on_new_symbol(slot);
+    notifier->on_new_symbol(slot_context);
   }
 }
 

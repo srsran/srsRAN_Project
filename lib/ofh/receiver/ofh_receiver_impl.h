@@ -72,7 +72,7 @@ public:
   }
 
   // See interface for documentation
-  void on_new_symbol(slot_symbol_point symbol_point) override;
+  void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override;
 };
 
 /// \brief Open Fronthaul receiver.

@@ -115,7 +115,10 @@ void ru_dummy_impl::loop()
     ++current_slot;
 
     // Notify new slot boundary.
-    timing_notifier.on_tti_boundary(current_slot + max_processing_delay_slots);
+    tti_boundary_context context;
+    context.slot       = current_slot + max_processing_delay_slots;
+    context.time_point = std::chrono::system_clock::now() + (slot_duration * max_processing_delay_slots);
+    timing_notifier.on_tti_boundary(context);
 
     // Notify UL half slot.
     timing_notifier.on_ul_half_slot_boundary(current_slot);

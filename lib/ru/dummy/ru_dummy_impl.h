@@ -132,7 +132,7 @@ private:
   /// Slot time in microseconds.
   std::chrono::microseconds slot_duration;
   /// Number of slots is notified in advance of the transmission time.
-  unsigned max_processing_delay_slots;
+  const unsigned max_processing_delay_slots;
   /// Current slot.
   slot_point current_slot;
   /// Radio unit sectors.

@@ -73,7 +73,7 @@ private:
   void poll();
 
   /// Notifies the given slot symbol point through the registered notifiers.
-  void notify_slot_symbol_point(slot_symbol_point slot);
+  void notify_slot_symbol_point(const slot_symbol_point_context& slot_context);
 };
 
 } // namespace ofh
