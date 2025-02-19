@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/scheduler/slicing/slice_scheduler.h"
+#include "lib/scheduler/slicing/inter_slice_scheduler.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
@@ -68,7 +68,7 @@ protected:
   ue_repository     ues;
 
   cell_resource_allocator dummy_alloc{cell_cfg};
-  slice_scheduler         slice_sched{cell_cfg, ues};
+  inter_slice_scheduler   slice_sched{cell_cfg, ues};
 
 public:
   slot_point next_slot{to_numerology_value(cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs), 0};

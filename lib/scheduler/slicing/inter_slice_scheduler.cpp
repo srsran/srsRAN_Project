@@ -8,14 +8,14 @@
  *
  */
 
-#include "slice_scheduler.h"
+#include "inter_slice_scheduler.h"
 #include "../policy/scheduler_policy_factory.h"
 #include "../support/pusch/pusch_td_resource_indices.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 
-slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_) :
+inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_) :
   cell_cfg(cell_cfg_),
   logger(srslog::fetch_basic_logger("SCHED")),
   ues(ues_),
@@ -53,7 +53,7 @@ slice_scheduler::slice_scheduler(const cell_configuration& cell_cfg_, ue_reposit
   }
 }
 
-void slice_scheduler::slot_indication(slot_point slot_tx, const cell_resource_allocator& res_grid)
+void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resource_allocator& res_grid)
 {
   // Update the context of each slice.
   if (not current_slot.valid()) {
@@ -118,7 +118,7 @@ void slice_scheduler::slot_indication(slot_point slot_tx, const cell_resource_al
   }
 }
 
-void slice_scheduler::add_ue(du_ue_index_t ue_idx)
+void inter_slice_scheduler::add_ue(du_ue_index_t ue_idx)
 {
   ue* u = fetch_ue_to_update(ue_idx);
   if (u == nullptr) {
@@ -129,14 +129,14 @@ void slice_scheduler::add_ue(du_ue_index_t ue_idx)
   add_impl(*u);
 }
 
-void slice_scheduler::reconf_ue(du_ue_index_t ue_idx)
+void inter_slice_scheduler::reconf_ue(du_ue_index_t ue_idx)
 {
   // When the UE is reconfigured, it enters fallback mode and only leaves it when config_applied is called.
   // For this reason, we remove the UE from its slices.
   rem_ue(ue_idx);
 }
 
-void slice_scheduler::rem_ue(du_ue_index_t ue_idx)
+void inter_slice_scheduler::rem_ue(du_ue_index_t ue_idx)
 {
   // Remove all logical channels of UE.
   // Note: We take the conservative approach of traversing all slices, because the current UE config might not match
@@ -146,7 +146,7 @@ void slice_scheduler::rem_ue(du_ue_index_t ue_idx)
   }
 }
 
-void slice_scheduler::config_applied(du_ue_index_t ue_idx)
+void inter_slice_scheduler::config_applied(du_ue_index_t ue_idx)
 {
   ue* u = fetch_ue_to_update(ue_idx);
   if (u == nullptr) {
@@ -158,7 +158,7 @@ void slice_scheduler::config_applied(du_ue_index_t ue_idx)
   add_impl(*u);
 }
 
-void slice_scheduler::add_impl(ue& u)
+void inter_slice_scheduler::add_impl(ue& u)
 {
   const ue_configuration& ue_cfg = *u.ue_cfg_dedicated();
   for (logical_channel_config_ptr lc_cfg : *ue_cfg.logical_channels()) {
@@ -167,7 +167,7 @@ void slice_scheduler::add_impl(ue& u)
   }
 }
 
-ue* slice_scheduler::fetch_ue_to_update(du_ue_index_t ue_idx)
+ue* inter_slice_scheduler::fetch_ue_to_update(du_ue_index_t ue_idx)
 {
   if (not ues.contains(ue_idx)) {
     // UE should be added to the repository at this stage.
@@ -199,7 +199,7 @@ ue* slice_scheduler::fetch_ue_to_update(du_ue_index_t ue_idx)
   return &u;
 }
 
-ran_slice_instance& slice_scheduler::get_slice(const logical_channel_config& lc_cfg)
+ran_slice_instance& inter_slice_scheduler::get_slice(const logical_channel_config& lc_cfg)
 {
   // Return default SRB slice if LCID belongs to a SRB.
   if (lc_cfg.lcid < LCID_MIN_DRB) {
@@ -217,7 +217,7 @@ ran_slice_instance& slice_scheduler::get_slice(const logical_channel_config& lc_
 
 template <bool IsDownlink>
 std::optional<std::conditional_t<IsDownlink, dl_ran_slice_candidate, ul_ran_slice_candidate>>
-slice_scheduler::get_next_candidate()
+inter_slice_scheduler::get_next_candidate()
 {
   using candidate_type = std::conditional_t<IsDownlink, dl_ran_slice_candidate, ul_ran_slice_candidate>;
 
@@ -257,21 +257,21 @@ slice_scheduler::get_next_candidate()
   return std::nullopt;
 }
 
-std::optional<dl_ran_slice_candidate> slice_scheduler::get_next_dl_candidate()
+std::optional<dl_ran_slice_candidate> inter_slice_scheduler::get_next_dl_candidate()
 {
   return get_next_candidate<true>();
 }
 
-std::optional<ul_ran_slice_candidate> slice_scheduler::get_next_ul_candidate()
+std::optional<ul_ran_slice_candidate> inter_slice_scheduler::get_next_ul_candidate()
 {
   return get_next_candidate<false>();
 }
 
-slice_scheduler::priority_type slice_scheduler::ran_slice_sched_context::get_prio(bool       is_dl,
-                                                                                  slot_point pdcch_slot,
-                                                                                  slot_point pxsch_slot,
-                                                                                  unsigned   nof_slices,
-                                                                                  bool       slice_resched) const
+inter_slice_scheduler::priority_type inter_slice_scheduler::ran_slice_sched_context::get_prio(bool       is_dl,
+                                                                                              slot_point pdcch_slot,
+                                                                                              slot_point pxsch_slot,
+                                                                                              unsigned   nof_slices,
+                                                                                              bool slice_resched) const
 {
   // Note: The positive integer representing the priority of a slice consists of a concatenation of three priority
   // values:

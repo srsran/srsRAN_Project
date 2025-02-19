@@ -12,7 +12,7 @@
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
-#include "lib/scheduler/slicing/slice_scheduler.h"
+#include "lib/scheduler/slicing/inter_slice_scheduler.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
@@ -192,7 +192,7 @@ protected:
   ue_repository          ues;
   ue_cell_grid_allocator grid_alloc{sched_cfg.ue, ues, logger};
   // NOTE: Policy scheduler is part of RAN slice instances created in slice scheduler.
-  slice_scheduler slice_sched;
+  inter_slice_scheduler slice_sched;
 
   slot_point next_slot{0, test_rgen::uniform_int<unsigned>(0, 10239)};
 };

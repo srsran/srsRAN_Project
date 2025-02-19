@@ -18,14 +18,14 @@
 namespace srsran {
 
 /// Inter-slice Scheduler.
-class slice_scheduler
+class inter_slice_scheduler
 {
   using priority_type                      = uint32_t;
   using slot_count_type                    = uint32_t;
   static constexpr priority_type skip_prio = 0;
 
 public:
-  slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_);
+  inter_slice_scheduler(const cell_configuration& cell_cfg_, ue_repository& ues_);
 
   /// Reset the state of the slices.
   void slot_indication(slot_point slot_tx, const cell_resource_allocator& res_grid);

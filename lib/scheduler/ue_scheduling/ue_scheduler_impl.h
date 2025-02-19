@@ -12,9 +12,8 @@
 
 #include "../cell/cell_harq_manager.h"
 #include "../logging/scheduler_event_logger.h"
-#include "../policy/scheduler_policy.h"
 #include "../pucch_scheduling/pucch_guardbands_scheduler.h"
-#include "../slicing/slice_scheduler.h"
+#include "../slicing/inter_slice_scheduler.h"
 #include "../srs/srs_scheduler_impl.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "ue_cell_grid_allocator.h"
@@ -73,7 +72,7 @@ private:
     ue_fallback_scheduler fallback_sched;
 
     /// Slice scheduler.
-    slice_scheduler slice_sched;
+    inter_slice_scheduler slice_sched;
 
     /// SRS scheduler
     srs_scheduler_impl srs_sched;
