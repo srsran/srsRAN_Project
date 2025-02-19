@@ -18,6 +18,7 @@ pusch_power_controller::pusch_power_controller(const ue_cell_configuration&    u
                                                const ue_channel_state_manager& ch_state_manager) :
   rnti(ue_cell_cfg.crnti),
   cl_pw_control_enabled(ue_cell_cfg.cell_cfg_common.expert_cfg.ue.ul_power_ctrl.enable_pusch_cl_pw_control),
+  phr_bw_adaptation_enabled(ue_cell_cfg.cell_cfg_common.expert_cfg.ue.ul_power_ctrl.enable_phr_bw_adaptation),
   p0_nominal_pusch(
       ue_cell_cfg.cell_cfg_common.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().p0_nominal_with_grant.to_int()),
   channel_state_manager(ch_state_manager),
@@ -43,6 +44,7 @@ pusch_power_controller::pusch_power_controller(const ue_cell_configuration&    u
   // Dummy casts only needed to prevent Clang from complaining about unused variables.
   static_cast<void>(rnti);
   static_cast<void>(cl_pw_control_enabled);
+  static_cast<void>(phr_bw_adaptation_enabled);
   static_cast<void>(channel_state_manager);
   static_cast<void>(ref_path_loss_for_target_sinr);
   static_cast<void>(pusch_sinr_target_dB);

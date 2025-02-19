@@ -243,6 +243,8 @@ struct du_high_unit_pusch_config {
 
   /// Enable closed-loop PUSCH power control.
   bool enable_closed_loop_pw_control = false;
+  /// Enable bandwidth adaptation to prevent negative PHR.
+  bool enable_phr_bw_adaptation = false;
   /// Target PUSCH SINR to be achieved with close-loop power control, in dB. Only relevant if \c
   /// enable_closed_loop_pw_control is set to true.
   float target_pusch_sinr{10.0f};

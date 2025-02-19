@@ -861,6 +861,10 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
                  pusch_params.enable_closed_loop_pw_control,
                  "Enable closed-loop power control for PUSCH")
       ->capture_default_str();
+  app.add_option("--enable_phr_bw_adaptation",
+                 pusch_params.enable_phr_bw_adaptation,
+                 "Enable bandwidth adaptation to prevent negative PHR")
+      ->capture_default_str();
   app.add_option("--target_sinr", pusch_params.target_pusch_sinr, "Target PUSCH SINR in dB")
       ->capture_default_str()
       ->check(CLI::Range(-5.0, 30.0));

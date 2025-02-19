@@ -59,6 +59,8 @@ using policy_scheduler_expert_config = std::variant<time_rr_scheduler_expert_con
 struct ul_power_control {
   /// Enable closed-loop PUSCH power control.
   bool enable_pusch_cl_pw_control = false;
+  /// Enable bandwidth adaptation to prevent negative PHR.
+  bool enable_phr_bw_adaptation = false;
   /// Target PUSCH SINR to be achieved with Close-loop power control, in dB.
   /// Only relevant if \c enable_closed_loop_pw_control is set to true.
   float target_pusch_sinr{10.0f};
