@@ -13,7 +13,7 @@ Configuration related steps
 import logging
 from collections import defaultdict
 from pprint import pformat
-from typing import Optional, Tuple, Union
+from typing import List, NamedTuple, Optional, Tuple, Union
 
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -218,6 +218,13 @@ def _get_dl_arfcn(band: int) -> int:
     return {3: 368500, 7: 536020, 41: 520002, 78: 632628, 256: 437000}[band]
 
 
+def _get_ul_arfcn(band: int) -> int:
+    """
+    Get dl arfcn
+    """
+    return {3: 349500, 7: 512020, 41: 520002, 78: 632628, 256: 399000}[band]
+
+
 def _get_ssb_arfcn(band: int, bandwidth: int) -> int:
     """
     Get SSB arfcn
@@ -297,3 +304,46 @@ def configure_metric_server_for_gnb(
     logging.info("Test config: \n%s", pformat(retina_data.test_config))
     retina_manager.parse_configuration(retina_data.test_config)
     retina_manager.push_all_config()
+
+
+class NrRasterParams(NamedTuple):
+    """
+    Class to store NR-ARFCN parameters for the global frequency raster,
+    as per Table 5.4.2.1-1, TS 38.104, Rel. 17, version 17.8.0.
+    """
+
+    F_low: float  # Lower frequency in MHz
+    F_high: float  # Upper frequency in MHz
+    delta_F_kHz: int  # Frequency step in kHz
+    F_REF_Offs_MHz: float
+    N_REF_Offs: int
+    N_REF_min: int
+    N_REF_max: int
+
+
+nr_fr_params: List[NrRasterParams] = [
+    NrRasterParams(0, 3000, 5, 0.0, 0, 0, 599999),
+    NrRasterParams(3000, 24250, 15, 3000.0, 600000, 600000, 2016666),
+    NrRasterParams(24250, 100000, 60, 24250.08, 2016667, 2016667, 3279165),
+]
+
+
+def get_raster_params(nr_arfcn: int) -> Optional[NrRasterParams]:
+    """
+    Find the corresponding raster parameters for the given NR ARFCN.
+    """
+    for fr in nr_fr_params:
+        if fr.N_REF_min <= nr_arfcn <= fr.N_REF_max:
+            return fr
+    return None
+
+
+def nr_arfcn_to_freq(nr_arfcn: int) -> float:
+    """
+    Convert NR ARFCN to frequency in Hz using the raster parameters.
+    """
+    params = get_raster_params(nr_arfcn)
+    if params is None:
+        return 0.0
+
+    return int(params.F_REF_Offs_MHz * 1e6 + params.delta_F_kHz * (nr_arfcn - params.N_REF_Offs) * 1e3)

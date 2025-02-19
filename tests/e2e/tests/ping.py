@@ -26,7 +26,13 @@ from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
-from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
+from .steps.configuration import (
+    _get_dl_arfcn,
+    _get_ul_arfcn,
+    configure_test_parameters,
+    get_minimum_sample_rate_for_bandwidth,
+    nr_arfcn_to_freq,
+)
 from .steps.stub import (
     get_ntn_configs,
     is_ntn_channel_emulator,
@@ -641,12 +647,12 @@ def test_ntn(
     ntn_scenario_def.pass_start_offset_s = 10
     ntn_scenario_def.delay_offset_us = 100
     ntn_scenario_def.sample_rate = 5760000
-    ntn_scenario_def.enable_doppler = True
-    ntn_scenario_def.access_link_dl_freq_hz = 2185000000
-    ntn_scenario_def.access_link_ul_freq_hz = 1995000000
     ntn_scenario_def.enable_feeder_link = enable_feeder_link
-    ntn_scenario_def.feeder_link_dl_freq_hz = 2185000000
-    ntn_scenario_def.feeder_link_ul_freq_hz = 1995000000
+    ntn_scenario_def.enable_doppler = True
+    ntn_scenario_def.access_link_dl_freq_hz = nr_arfcn_to_freq(_get_dl_arfcn(band))
+    ntn_scenario_def.access_link_ul_freq_hz = nr_arfcn_to_freq(_get_ul_arfcn(band))
+    ntn_scenario_def.feeder_link_dl_freq_hz = nr_arfcn_to_freq(_get_dl_arfcn(band))
+    ntn_scenario_def.feeder_link_ul_freq_hz = nr_arfcn_to_freq(_get_ul_arfcn(band))
 
     _ping(
         retina_manager=retina_manager,
