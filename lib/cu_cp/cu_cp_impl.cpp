@@ -666,7 +666,34 @@ cu_cp_impl::handle_trp_information_request(const trp_information_request_t& requ
 
 void cu_cp_impl::handle_n2_disconnection(const std::vector<plmn_identity>& plmns)
 {
-  // TODO
+  logger.info("Handling N2 disconnection");
+
+  // Stop accepting new UEs for the given PLMNs.
+  ue_mng.add_blocked_plmns(plmns);
+
+  // Release all UEs with the PLMNs served by the disconnected AMF.
+  for (const auto& plmn : plmns) {
+    std::vector<cu_cp_ue*> ues = ue_mng.find_ues(plmn);
+
+    for (const auto& ue : ues) {
+      if (ue != nullptr) {
+        logger.info("ue={}: Releasing UE (PLMN {}) due to N2 disconnection", ue->get_ue_index(), plmn);
+        ue->get_task_sched().schedule_async_task(launch_async(
+            [this,
+             command = cu_cp_ue_context_release_command{ue->get_ue_index(), ngap_cause_misc_t::hardware_fail, true}](
+                coro_context<async_task<void>>& ctx) {
+              CORO_BEGIN(ctx);
+              // The outcome of the procedure is ignored, as we don't send anything to the (lost) AMF.
+              CORO_AWAIT(handle_ue_context_release_command(command));
+              CORO_RETURN();
+            }));
+      }
+    }
+  }
+
+  // TODO: Retry connection to the AMF.
+
+  // TODO: Notify the DU via F1AP to stop related cells.
 }
 
 std::optional<rrc_meas_cfg>

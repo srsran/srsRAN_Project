@@ -174,6 +174,18 @@ void ue_manager::remove_blocked_plmns(const std::vector<plmn_identity>& plmns)
   }
 }
 
+std::vector<cu_cp_ue*> ue_manager::find_ues(plmn_identity plmn)
+{
+  std::vector<cu_cp_ue*> found_ues;
+  for (auto& ue : ues) {
+    if (ue.second.get_ue_context().plmn == plmn) {
+      found_ues.push_back(&ue.second);
+    }
+  }
+
+  return found_ues;
+}
+
 ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t rnti)
 {
   if (pci_rnti_to_ue_index.find(std::make_tuple(pci, rnti)) != pci_rnti_to_ue_index.end()) {

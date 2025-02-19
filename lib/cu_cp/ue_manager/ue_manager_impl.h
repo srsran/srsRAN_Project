@@ -48,6 +48,11 @@ public:
   /// \param[in] plmns PLMN identities of the UEs to be allowed again.
   void remove_blocked_plmns(const std::vector<plmn_identity>& plmns);
 
+  /// \brief Find the UEs with the given PLMN identity.
+  /// \param[in] plmn PLMN identity of the UEs to be found.
+  /// \return Vector of pointers to the found UEs.
+  std::vector<cu_cp_ue*> find_ues(plmn_identity plmn);
+
   /// \brief Get the UE index of the UE.
   /// \param[in] pci The PCI of the cell the UE is/was connected to.
   /// \param[in] c_rnti The RNTI of the UE.
