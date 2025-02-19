@@ -876,7 +876,7 @@ struct worker_manager {
       const single_worker ru_worker{name,
                                     {concurrent_queue_policy::lockfree_spsc, 4},
                                     {{exec_name}},
-                                    std::chrono::microseconds{0},
+                                    std::chrono::microseconds{1},
                                     os_thread_realtime_priority::max() - 0};
       if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
