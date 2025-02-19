@@ -612,7 +612,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   const search_space_info&    ss_info    = ue_cell_cfg.search_space(ss_id);
   const bwp_config&           bwp_info   = *ss_info.bwp;
   const bwp_uplink_dedicated* bwp_ul_ded = bwp_info.ul_ded.has_value() ? &bwp_info.ul_ded.value() : nullptr;
-  const bwp_uplink_common&                 bwp_ul_cmn    = *bwp_info.ul_common.value();
+  const bwp_uplink_common&    bwp_ul_cmn = *bwp_info.ul_common.value();
   const std::optional<rach_config_common>& opt_rach_cfg  = bwp_ul_cmn.rach_cfg_common;
   const std::optional<pusch_config>&       pusch_cfg_ded = bwp_ul_ded->pusch_cfg;
   const prb_interval                       prbs          = crb_to_prb(bwp_ul_cmn.generic_params.crbs, crbs);
