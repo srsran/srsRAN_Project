@@ -1090,7 +1090,11 @@ pucch_allocator_impl::find_common_and_ded_harq_res_available(cell_slot_resource_
     // The PUCCH resource indicator must match the one used for the common resource.
     pucch_res_ind = multiplex_and_allocate_pucch(pucch_alloc, bits_for_uci, existing_grants, ue_cell_cfg, d_pri);
 
-    if (not pucch_res_ind.has_value()) {
+    // In the case of PUCCH Format 0, the PUCCH (dedicated) resources that can be used when there are SR/CSI
+    // pre-allocated are constrained in the PUCCH resource indicator. Therefore, the \ref multiplex_and_allocate_pucch
+    // function might not preserve the requested PUCCH resource indicator \ref d_pri.
+    const bool is_format0 = pucch_cfg.pucch_res_list.front().format == pucch_format::FORMAT_0;
+    if (not pucch_res_ind.has_value() or (is_format0 and pucch_res_ind.value() != d_pri)) {
       resource_manager.cancel_last_ue_res_reservations(pucch_alloc.slot, rnti, ue_cell_cfg);
       continue;
     }
