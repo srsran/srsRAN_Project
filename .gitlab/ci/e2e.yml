@@ -402,7 +402,6 @@ test mode ru acc100:
     TESTBED: "test_mode_acc100"
     MARKERS: "test_mode_acc100"
     KEYWORDS: ""
-  allow_failure: true
 
 ################################################################################
 # RF

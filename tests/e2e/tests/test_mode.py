@@ -14,13 +14,15 @@ import logging
 import tempfile
 from pathlib import Path
 from time import sleep
+from typing import Iterable
 
+import pytest
 from google.protobuf.empty_pb2 import Empty
 from pytest import mark, param
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts
-from retina.protocol.base_pb2 import FiveGCDefinition, GNBDefinition, PLMN, StartInfo, UEDefinition
+from retina.protocol.base_pb2 import FiveGCDefinition, GNBDefinition, Metrics, PLMN, StartInfo, UEDefinition
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2 import GNBStartInfo
@@ -156,7 +158,16 @@ def test_ru_acc100(
     Run gnb in test mode ru dummy.
     """
     _test_ru(
-        retina_manager, retina_data, gnb, ru_config="config_ru_acc100.yml", extra_cli_config="log --hal_level=debug"
+        retina_manager,
+        retina_data,
+        gnb,
+        ru_config="config_ru_acc100.yml",
+        min_dl_bitrate=1e6,
+        warning_allowlist=(
+            "Resource grid with identifier",
+            "Could not enqueue PDCCH",
+            "received late DL request from slot",
+        ),
     )
 
 
@@ -265,10 +276,13 @@ def _test_ru(
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
+    # Criteria
     log_search: bool = True,
     warning_as_errors: bool = True,
+    warning_allowlist: Iterable[str] = tuple(),
     fail_if_kos: bool = True,
-    extra_cli_config: str = "",
+    min_dl_bitrate: float = 1,
+    min_ul_bitrate: float = 1,
 ):  # pylint: disable=too-many-locals
     # Configuration
     with tempfile.NamedTemporaryFile(mode="w+") as tmp_file:
@@ -282,6 +296,9 @@ def _test_ru(
                     "pcap": False,
                     "nof_antennas_dl": nof_ant,
                     "nof_antennas_ul": nof_ant,
+                    "warning_extra_regex": (
+                        (r"(?!.*" + r")(?!.*".join(warning_allowlist) + r")") if warning_allowlist else ""
+                    ),
                 },
                 "templates": {
                     "cu": str(Path(__file__).joinpath(f"../test_mode/{ru_config}").resolve()),
@@ -307,7 +324,7 @@ def _test_ru(
                 fivegc_definition=FiveGCDefinition(amf_ip="127.0.0.1", amf_port=38412),
                 start_info=StartInfo(
                     timeout=gnb_startup_timeout,
-                    post_commands=(f"cu_cp amf --no_core 1 {extra_cli_config}",),
+                    post_commands=("cu_cp amf --no_core 1",),
                 ),
             )
         )
@@ -326,3 +343,9 @@ def _test_ru(
         warning_as_errors=warning_as_errors,
         fail_if_kos=fail_if_kos,
     )
+
+    metrics: Metrics = gnb.GetMetrics(Empty())
+    if metrics.total.dl_bitrate < min_dl_bitrate:
+        pytest.fail(f"Low DL Bitrate: {metrics.total.dl_bitrate} [< {min_dl_bitrate}]")
+    if metrics.total.ul_bitrate < min_ul_bitrate:
+        pytest.fail(f"Low UL Bitrate: {metrics.total.ul_bitrate} [< {min_ul_bitrate}]")
