@@ -10,8 +10,6 @@
 
 #include "srsran/cu_up/cu_up_executor_mapper.h"
 #include "srsran/adt/mpmc_queue.h"
-#include "srsran/support/async/async_no_op_task.h"
-#include "srsran/support/async/execute_on.h"
 #include "srsran/support/async/execute_on_blocking.h"
 #include "srsran/support/executors/inline_task_executor.h"
 #include "srsran/support/executors/strand_executor.h"
