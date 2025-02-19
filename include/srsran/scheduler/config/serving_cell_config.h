@@ -163,9 +163,12 @@ struct bwp_downlink_dedicated {
 
 /// "BWP-Downlink" as per TS 38.331.
 struct bwp_downlink {
-  bwp_id_t                              bwp_id;
-  std::optional<bwp_downlink_common>    bwp_dl_common;
-  std::optional<bwp_downlink_dedicated> bwp_dl_ded;
+  /// Identifier of BWP. Value 0 is reserved for the initial BWP.
+  bwp_id_t bwp_id;
+  /// Common parameters of the BWP.
+  bwp_downlink_common bwp_dl_common;
+  /// UE-dedicated parameters of the BWP.
+  bwp_downlink_dedicated bwp_dl_ded;
 
   bool operator==(const bwp_downlink& other) const
   {

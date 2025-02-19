@@ -36,16 +36,11 @@ ue_cell_config_ptr du_cell_config_pool::update_ue(const serving_cell_config& ue_
   add_bwp(ret,
           to_bwp_id(0),
           init_dl_bwp,
-          &ue_cell.init_dl_bwp,
+          ue_cell.init_dl_bwp,
           &init_ul_bwp,
           ue_cell.ul_config.has_value() ? &ue_cell.ul_config->init_ul_bwp : nullptr);
   for (const auto& bwp : ue_cell.dl_bwps) {
-    add_bwp(ret,
-            bwp.bwp_id,
-            bwp.bwp_dl_common.value(),
-            bwp.bwp_dl_ded.has_value() ? &bwp.bwp_dl_ded.value() : nullptr,
-            nullptr,
-            nullptr);
+    add_bwp(ret, bwp.bwp_id, bwp.bwp_dl_common, bwp.bwp_dl_ded, nullptr, nullptr);
   }
 
   return cell_cfg_pool.create(ret);
@@ -54,7 +49,7 @@ ue_cell_config_ptr du_cell_config_pool::update_ue(const serving_cell_config& ue_
 void du_cell_config_pool::add_bwp(ue_cell_res_config&           out,
                                   bwp_id_t                      bwp_id,
                                   const bwp_downlink_common&    dl_bwp_common,
-                                  const bwp_downlink_dedicated* dl_bwp_ded,
+                                  const bwp_downlink_dedicated& dl_bwp_ded,
                                   const bwp_uplink_common*      ul_bwp_common,
                                   const bwp_uplink_dedicated*   ul_bwp_ded)
 {
@@ -78,9 +73,9 @@ void du_cell_config_pool::add_bwp(ue_cell_res_config&           out,
   }
 
   // BWP DL Dedicated
-  if (dl_bwp_ded != nullptr) {
-    bwp_cfg.dl_ded = bwp_dl_ded_config_pool.create(*dl_bwp_ded);
-    for (const coreset_configuration& cs : dl_bwp_ded->pdcch_cfg->coresets) {
+  bwp_cfg.dl_ded = bwp_dl_ded_config_pool.create(dl_bwp_ded);
+  if (dl_bwp_ded.pdcch_cfg.has_value()) {
+    for (const coreset_configuration& cs : dl_bwp_ded.pdcch_cfg->coresets) {
       // TS 38.331, "PDCCH-Config" - In case network reconfigures control resource set with the same
       // ControlResourceSetId as used for commonControlResourceSet configured via PDCCH-ConfigCommon,
       // the configuration from PDCCH-Config always takes precedence and should not be updated by the UE based on
@@ -88,7 +83,7 @@ void du_cell_config_pool::add_bwp(ue_cell_res_config&           out,
       bwp_cfg.coresets.emplace(cs.id, coreset_config_pool.create(cs));
       out.coresets.emplace(cs.id, bwp_cfg.coresets[cs.id]);
     }
-    for (const auto& ss : dl_bwp_ded->pdcch_cfg->search_spaces) {
+    for (const auto& ss : dl_bwp_ded.pdcch_cfg->search_spaces) {
       bwp_cfg.search_spaces.emplace(ss.get_id(), ss);
       out.search_spaces.emplace(ss.get_id(), ss);
     }

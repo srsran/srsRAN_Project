@@ -37,7 +37,7 @@ private:
   void add_bwp(ue_cell_res_config&           out,
                bwp_id_t                      bwp_id,
                const bwp_downlink_common&    dl_bwp_common,
-               const bwp_downlink_dedicated* dl_bwp_ded,
+               const bwp_downlink_dedicated& dl_bwp_ded,
                const bwp_uplink_common*      ul_bwp_common,
                const bwp_uplink_dedicated*   ul_bwp_ded);
 
