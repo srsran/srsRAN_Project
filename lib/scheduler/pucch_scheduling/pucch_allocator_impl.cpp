@@ -1891,7 +1891,9 @@ pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
   // slot without repetitions where".
   pucch_grant_list mplexed_grants;
 
-  std::vector<pucch_grant> resource_set_q;
+  // The vector should contain at most 1 HARQ-ACK grant, 1 SR grant, 1 CSI grant.
+  static constexpr size_t                   max_nof_grant = 3;
+  static_vector<pucch_grant, max_nof_grant> resource_set_q;
 
   // Build the resource set Q. Refer to Section 9.2.5, TS 38.213.
   if (candidate_grants.harq_resource.has_value()) {
@@ -1940,6 +1942,7 @@ pucch_allocator_impl::multiplex_resources(slot_point                   sl_tx,
         resource_set_q.erase(resource_set_q.begin() + j_cnt - o_cnt, resource_set_q.begin() + j_cnt + 1);
 
         // Add the new resource (resulting from the previous merge) to the set.
+        srsran_assert(not resource_set_q.full(), "PUCCH resource_set_q is full before adding a new resource");
         resource_set_q.push_back(new_res.value());
 
         // Sort the resources in the set based on the first symbol position and number of symbols.
