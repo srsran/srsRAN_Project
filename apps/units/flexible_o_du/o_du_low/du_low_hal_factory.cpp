@@ -76,19 +76,17 @@ o_du_low_hal_dependencies srsran::make_du_low_hal_dependencies(const std::option
       std::shared_ptr<hal::ext_harq_buffer_context_repository> harq_buffer_context = nullptr;
       hwacc_pusch_dec_cfg.acc_type                                                 = bbdev_app_cfg.hwacc_type;
       hwacc_pusch_dec_cfg.bbdev_accelerator                                        = accelerator;
-      hwacc_pusch_dec_cfg.ext_softbuffer = bbdev_app_cfg.pusch_dec->ext_softbuffer;
-      if (hwacc_pusch_dec_cfg.ext_softbuffer) {
-        // Set up an external HARQ buffer context repository.
-        unsigned nof_cbs            = bbdev_app_cfg.pusch_dec->harq_context_size.value_or(MAX_NOF_SEGMENTS);
-        uint64_t ext_harq_buff_size = hwacc_pusch_dec_cfg.bbdev_accelerator->get_harq_buff_size_bytes();
-        harq_buffer_context = hal::create_ext_harq_buffer_context_repository(nof_cbs, ext_harq_buff_size, false);
-        report_error_if_not(harq_buffer_context,
-                            "Unable to create the external HARQ buffer context for the {} hardware-accelerator.",
-                            bbdev_app_cfg.hwacc_type);
-        hwacc_pusch_dec_cfg.harq_buffer_context = harq_buffer_context;
-      }
-      hwacc_pusch_dec_cfg.dedicated_queue = bbdev_app_cfg.pusch_dec->dedicated_queue;
-      hal_dependencies.hw_decoder_factory = hal::create_bbdev_pusch_dec_acc_factory(hwacc_pusch_dec_cfg);
+      uint64_t ext_harq_buff_size          = hwacc_pusch_dec_cfg.bbdev_accelerator->get_harq_buff_size_bytes();
+      hwacc_pusch_dec_cfg.force_local_harq = bbdev_app_cfg.pusch_dec->force_local_harq;
+      // Set up an external HARQ buffer context repository.
+      unsigned nof_cbs    = bbdev_app_cfg.pusch_dec->harq_context_size.value_or(MAX_NOF_SEGMENTS);
+      harq_buffer_context = hal::create_ext_harq_buffer_context_repository(nof_cbs, ext_harq_buff_size, false);
+      report_error_if_not(harq_buffer_context,
+                          "Unable to create the external HARQ buffer context for the {} hardware-accelerator.",
+                          bbdev_app_cfg.hwacc_type);
+      hwacc_pusch_dec_cfg.harq_buffer_context = harq_buffer_context;
+      hwacc_pusch_dec_cfg.dedicated_queue     = bbdev_app_cfg.pusch_dec->dedicated_queue;
+      hal_dependencies.hw_decoder_factory     = hal::create_bbdev_pusch_dec_acc_factory(hwacc_pusch_dec_cfg);
     }
   }
 #endif // DPDK_FOUND

@@ -84,9 +84,9 @@ static void fill_du_low_bbdev_pdsch_enc_section(YAML::Node node, const hwacc_pds
 
 static void fill_du_low_bbdev_pusch_dec_section(YAML::Node node, const hwacc_pusch_appconfig& config)
 {
-  node["nof_hwacc"]       = config.nof_hwacc;
-  node["ext_softbuffer"]  = config.ext_softbuffer;
-  node["dedicated_queue"] = config.dedicated_queue;
+  node["nof_hwacc"]        = config.nof_hwacc;
+  node["force_local_harq"] = config.force_local_harq;
+  node["dedicated_queue"]  = config.dedicated_queue;
   if (config.harq_context_size) {
     node["harq_context_size"] = config.harq_context_size.value();
   }

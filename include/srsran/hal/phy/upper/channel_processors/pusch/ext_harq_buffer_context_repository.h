@@ -43,8 +43,9 @@ public:
   explicit ext_harq_buffer_context_repository(unsigned nof_codeblocks_, uint64_t ext_harq_buff_size, bool debug_mode_) :
     nof_codeblocks(nof_codeblocks_)
   {
+    // Check if there is enough capacity in the external HARQ buffer (only if the hardware-accelerator embeds one).
     uint64_t requested_size = static_cast<uint64_t>(nof_codeblocks_) * static_cast<uint64_t>(HARQ_INCR.value());
-    srsran_assert(requested_size <= ext_harq_buff_size,
+    srsran_assert(((requested_size <= ext_harq_buff_size) || (ext_harq_buff_size == 0)),
                   "Requested size ({} bytes) for {} codeblocks exceeds external HARQ buffer capacity ({} bytes).",
                   requested_size,
                   nof_codeblocks_,

@@ -186,7 +186,7 @@ void pusch_decoder_hw_impl::run_asynch_hw_decoder()
   // Decode the CBs.
   unsigned last_enqueued_cb_id = 0, last_dequeued_cb_id = 0, enq_tb_offset = 0, deq_tb_offset = 0;
   bool     all_enqueued = false, all_dequeued = false;
-  bool     external_harq = decoder.is_external_harq_supported();
+  bool     external_harq = decoder.is_harq_external();
 
   // Validate that all CBs have been succesfully enqueued and dequeued.
   while (!all_enqueued || !all_dequeued) {

@@ -166,7 +166,7 @@ struct hwacc_pdsch_appconfig {
   /// Set to the maximum supported size by default.
   std::optional<unsigned> max_buffer_size;
   /// \brief Type of hardware queue usage (dedicated = true [default], shared = false). In case of a shared usage, the
-  /// accelerated function needs to reseve a hardware-queue for each operation.
+  /// accelerated function needs to reserve a hardware-queue for each operation.
   bool dedicated_queue = true;
 };
 
@@ -174,14 +174,14 @@ struct hwacc_pdsch_appconfig {
 struct hwacc_pusch_appconfig {
   /// \brief Number of hardware-accelerated PUSCH decoding functions.
   unsigned nof_hwacc;
-  /// \brief Defines if the soft-buffer is implemented in the accelerator (true [default]) or not (false).
-  bool ext_softbuffer = true;
   /// \brief Size of the HARQ context repository.
   ///
   /// Set to the maximum number of CBs supported by the gNB config by default.
   std::optional<unsigned> harq_context_size;
+  /// \brief Force using the host memory to implement the HARQ buffer (disabled by default).
+  bool force_local_harq = false;
   /// \brief Type of hardware queue usage (dedicated = true [default], shared = false). In case of a shared usage, the
-  /// accelerated function needs to reseve a hardware-queue for each operation.
+  /// accelerated function needs to reserve a hardware-queue for each operation.
   bool dedicated_queue = true;
 };
 

@@ -280,11 +280,10 @@ static void configure_cli11_hwacc_pusch_dec_args(CLI::App& app, std::optional<hw
   app.add_option("--nof_hwacc", config->nof_hwacc, "Number of hardware-accelerated PDSCH encoding functions")
       ->capture_default_str()
       ->check(CLI::Range(0, 64));
-  app.add_option("--ext_softbuffer",
-                 config->ext_softbuffer,
-                 "Defines if the soft-buffer is implemented in the accelerator or not")
-      ->capture_default_str();
   app.add_option("--harq_context_size", config->harq_context_size, "Size of the HARQ context repository")
+      ->capture_default_str();
+  app.add_option(
+         "--force_local_harq", config->force_local_harq, "Force using the host memory to implement the HARQ buffer")
       ->capture_default_str();
   app.add_option("--dedicated_queue",
                  config->dedicated_queue,

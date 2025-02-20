@@ -86,7 +86,7 @@ static void create_hwacc_pxsch_factories(const std::string& eal_arguments)
     hal::bbdev_hwacc_pusch_dec_factory_configuration hw_decoder_config;
     hw_decoder_config.acc_type            = "acc100";
     hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
-    hw_decoder_config.ext_softbuffer      = true;
+    hw_decoder_config.force_local_harq    = false;
     hw_decoder_config.harq_buffer_context = harq_buffer_context;
     hw_decoder_config.dedicated_queue     = true;
     // ACC100 hardware-accelerator implementation.
