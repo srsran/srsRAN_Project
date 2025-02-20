@@ -831,7 +831,7 @@ struct du_high_unit_cell_config {
 struct du_high_unit_metrics_config {
   struct rlc_metrics {
     /// RLC report period in ms.
-    unsigned report_period = 0;
+    unsigned report_period = 1000;
   } rlc;
   /// Scheduler report period in milliseconds.
   unsigned                    sched_report_period      = 1000;

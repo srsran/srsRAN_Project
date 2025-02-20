@@ -258,7 +258,7 @@ struct cu_cp_unit_metrics_config {
   /// Statistics report period in seconds
   unsigned cu_cp_statistics_report_period = 1;
   struct pdcp_metrics {
-    unsigned report_period = 0; // PDCP report period in ms
+    unsigned report_period = 1000; // PDCP report period in ms
   } pdcp;
   app_helpers::metrics_config common_metrics_cfg;
 };

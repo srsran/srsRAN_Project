@@ -193,10 +193,18 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   add_option_cell(app, "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
 }
 
-void srsran::autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& unit_cfg)
+void srsran::autoderive_cu_up_parameters_after_parsing(CLI::App&          app,
+                                                       cu_up_unit_config& unit_cfg,
+                                                       bool               pdpc_metrics_requested)
 {
-  if (unit_cfg.metrics.common_metrics_cfg.json_config.enable_json_metrics && unit_cfg.metrics.pdcp.report_period == 0) {
-    // Default report period 1 second.
-    unit_cfg.metrics.pdcp.report_period = 1000;
+  // Do nothing when PDCP period if present in the config file.
+  if (auto* metrics_subcmd = app.get_subcommand("metrics");
+      metrics_subcmd && metrics_subcmd->count("--pdcp_report_period")) {
+    return;
+  }
+
+  // Disable PDCP report period when the metrics and E2 are not enabled.
+  if (!pdpc_metrics_requested && !unit_cfg.metrics.common_metrics_cfg.enabled()) {
+    unit_cfg.metrics.pdcp.report_period = 0;
   }
 }

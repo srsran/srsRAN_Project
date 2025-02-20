@@ -2069,8 +2069,21 @@ static void derive_auto_params(du_high_unit_config& config)
   }
 }
 
-void srsran::autoderive_du_high_parameters_after_parsing(CLI::App& app, du_high_unit_config& unit_cfg)
+void srsran::autoderive_du_high_parameters_after_parsing(CLI::App&            app,
+                                                         du_high_unit_config& unit_cfg,
+                                                         bool                 rlc_metrics_requested)
 {
   manage_ntn_optional(app, unit_cfg);
   derive_auto_params(unit_cfg);
+
+  // RLC period defined in the config file. Do nothing.
+  if (auto* metrics_subcmd = app.get_subcommand("metrics");
+      metrics_subcmd && metrics_subcmd->count("--rlc_report_period")) {
+    return;
+  }
+
+  // No metrics requested, set the RLC period to 0.
+  if (!rlc_metrics_requested && !unit_cfg.metrics.common_metrics_cfg.enabled()) {
+    unit_cfg.metrics.rlc.report_period = 0;
+  }
 }
