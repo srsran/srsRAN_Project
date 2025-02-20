@@ -664,8 +664,10 @@ cu_cp_impl::handle_trp_information_request(const trp_information_request_t& requ
 
 #endif // SRSRAN_HAS_ENTERPRISE
 
-void cu_cp_impl::handle_n2_disconnection(const std::vector<plmn_identity>& plmns)
+void cu_cp_impl::handle_n2_disconnection(amf_index_t amf_index)
 {
+  std::vector<plmn_identity> plmns = ngap_db->find_ngap(amf_index)->get_ngap_context().get_supported_plmns();
+
   std::string plmn_list;
   for (const auto& plmn : plmns) {
     plmn_list += plmn.to_string() + " ";

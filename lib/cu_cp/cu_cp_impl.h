@@ -112,7 +112,7 @@ public:
   ue_index_t       handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) override;
   void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
   void handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) override;
-  void handle_n2_disconnection(const std::vector<plmn_identity>& plmns) override;
+  void handle_n2_disconnection(amf_index_t amf_index) override;
 
   // cu_cp_nrppa_handler.
   nrppa_cu_cp_ue_notifier* handle_new_nrppa_ue(ue_index_t ue_index) override;

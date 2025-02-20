@@ -318,7 +318,7 @@ public:
     });
   }
 
-  void on_n2_disconnection(const std::vector<plmn_identity>& plmns) override {}
+  void on_n2_disconnection(amf_index_t amf_index) override {}
 
   cu_cp_ue_context_release_command last_command;
   byte_buffer                      last_handover_command;

@@ -44,7 +44,7 @@ ngap_impl::ngap_impl(const ngap_configuration& ngap_cfg_,
   timers(timers_),
   ctrl_exec(ctrl_exec_),
   ev_mng(timer_factory{timers, ctrl_exec}),
-  conn_handler(context, n2_gateway, *this, cu_cp_notifier, ctrl_exec)
+  conn_handler(ngap_cfg_.amf_index, n2_gateway, *this, cu_cp_notifier, ctrl_exec)
 {
   context.gnb_id                      = ngap_cfg_.gnb_id;
   context.ran_node_name               = ngap_cfg_.ran_node_name;

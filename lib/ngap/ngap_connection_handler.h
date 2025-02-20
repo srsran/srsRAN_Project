@@ -26,7 +26,7 @@ class n2_connection_client;
 class ngap_connection_handler
 {
 public:
-  ngap_connection_handler(const ngap_context_t& context_,
+  ngap_connection_handler(amf_index_t           amf_index_,
                           n2_connection_client& client_handler_,
                           ngap_message_handler& rx_pdu_handler_,
                           ngap_cu_cp_notifier&  cu_cp_notifier_,
@@ -49,7 +49,7 @@ private:
   // Called from within NGAP execution context to handle a TNL association loss.
   void handle_connection_loss_impl();
 
-  const ngap_context_t& context;
+  amf_index_t           amf_index;
   n2_connection_client& client_handler;
   ngap_message_handler& rx_pdu_handler;
   ngap_cu_cp_notifier&  cu_cp_notifier;
