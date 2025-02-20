@@ -11,6 +11,7 @@
 #pragma once
 
 #include "adapters/ngap_adapters.h"
+#include "task_schedulers/ngap_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/gateways/n2_connection_client.h"
@@ -55,6 +56,8 @@ public:
   /// \brief Get the all NGAP interfaces.
   std::map<amf_index_t, ngap_interface*> get_ngaps();
 
+  ngap_task_scheduler& get_ngap_task_scheduler() { return amf_task_sched; }
+
   /// Number of NGAPs managed by the CU-CP.
   size_t get_nof_ngaps() const { return ngap_db.size(); }
 
@@ -74,6 +77,8 @@ private:
 
   ngap_repository_config cfg;
   srslog::basic_logger&  logger;
+
+  ngap_task_scheduler amf_task_sched;
 
   std::unordered_map<plmn_identity, amf_index_t> plmn_to_amf_index;
   std::map<amf_index_t, ngap_context>            ngap_db;

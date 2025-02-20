@@ -44,6 +44,7 @@ set(SOURCES
       routines/mobility/intra_cu_handover_target_routine.cpp
       routines/mobility/inter_cu_handover_target_routine.cpp
       routines/mobility/handover_reconfiguration_routine.cpp
+      task_schedulers/ngap_task_scheduler.cpp
       task_schedulers/cu_up_task_scheduler.cpp
       ue_manager/cu_cp_ue_impl.cpp
       ue_manager/ue_manager_impl.cpp
