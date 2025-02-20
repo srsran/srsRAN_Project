@@ -117,7 +117,7 @@ def test_zmq(
         direction=direction,
         global_timing_advance=0,
         time_alignment_calibration=0,
-        always_download_artifacts=True,
+        always_download_artifacts=False,
         ue_stop_timeout=45,
         ue_settle_time=45,
     )
