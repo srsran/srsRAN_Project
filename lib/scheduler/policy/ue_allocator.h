@@ -11,8 +11,6 @@
 
 #include "../cell/resource_grid.h"
 #include "../slicing/slice_ue_repository.h"
-#include "../ue_context/ue.h"
-#include "../ue_scheduling/ue_repository.h"
 #include "../ue_scheduling/ue_scheduler.h"
 
 namespace srsran {
