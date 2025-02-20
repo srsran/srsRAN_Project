@@ -467,9 +467,9 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
         ru_timing_mask.any() ? ru_timing_mask
                              : affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru);
     const single_worker ru_worker{name,
-                                  {concurrent_queue_policy::lockfree_spsc, 4},
+                                  {concurrent_queue_policy::locking_mpsc, 4},
                                   {{exec_name}},
-                                  std::chrono::microseconds{0},
+                                  std::nullopt,
                                   os_thread_realtime_priority::max() - 0,
                                   ru_timing_cpu_mask};
     if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
