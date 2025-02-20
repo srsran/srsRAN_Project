@@ -31,6 +31,7 @@
     - type: ru
       model: viavi-ru
   environment:
+    - RTSAN_OPTIONS: halt_on_error=false:suppress_equal_stacks=true
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
     - LD_LIBRARY_PATH: /opt/dpdk/${DPDK_VERSION}/lib/x86_64-linux-gnu/
   shared_files:

@@ -1620,7 +1620,7 @@ ubuntu-24.10 amd64 avx512 dpdk:
 basic package:
   extends: .deb-package
   tags:
-    - ${INFRASTRUCTURE_TAG}  
+    - ${INFRASTRUCTURE_TAG}
   stage: build and unit tests
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
@@ -1803,6 +1803,16 @@ basic avx512 dpdk withassert:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   variables:
     ASSERT_LEVEL: PARANOID
+
+basic avx512 dpdk rtsan:
+  extends: basic avx512 dpdk
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+  variables:
+    OS: ubuntu-24.04-rtsan
+    COMPILER: clang
+    ENABLE_RTSAN: "True"
+    ENABLE_WERROR: "False"
 
 #######
 # Web #

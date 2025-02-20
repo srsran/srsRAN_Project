@@ -576,6 +576,19 @@ viavi-debug:
       artifacts: true
     - *retina-needs
 
+viavi-rtsan:
+  extends: .viavi
+  needs:
+    - job: "basic avx512 dpdk rtsan"
+      artifacts: true
+    - *retina-needs
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+  parallel:
+    matrix:
+      - KEYWORDS: ["tdd and 6u3d"]
+  allow_failure: true
+
 ################################################################################
 # Garbage collector
 ################################################################################

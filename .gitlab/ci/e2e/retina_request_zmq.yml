@@ -51,6 +51,7 @@
   resources:
     - type: zmq
   environment:
+    - RTSAN_OPTIONS: halt_on_error=false:suppress_equal_stacks=true
     - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
   shared_files:
     - local_path: ${GNB_BUILD_PATH}/apps/gnb/gnb
