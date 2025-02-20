@@ -34,9 +34,14 @@ public:
 
   void slot_indication(slot_point sl_tx);
 
-  void dl_sched(slot_point                    sl_tx,
+  void dl_sched(slot_point                    pdcch_slot,
                 du_cell_index_t               cell_index,
                 const dl_ran_slice_candidate& candidate,
+                scheduler_policy&             dl_policy);
+
+  void ul_sched(slot_point                    pdcch_slot,
+                du_cell_index_t               cell_index,
+                const ul_ran_slice_candidate& candidate,
                 scheduler_policy&             dl_policy);
 
 private:
@@ -54,20 +59,41 @@ private:
                           const slice_ue& u,
                           const ue_cell&  ue_cc) const;
 
-  std::optional<ue_pdsch_newtx_candidate> create_newtx_dl_candidate(slot_point      sl_pdcch,
-                                                                    slot_point      sl_pdsch,
-                                                                    du_cell_index_t cell_index,
-                                                                    const slice_ue& u) const;
+  bool can_allocate_pusch(slot_point      pdcch_slot,
+                          slot_point      pusch_slot,
+                          du_cell_index_t cell_index,
+                          const slice_ue& u,
+                          const ue_cell&  ue_cc) const;
 
-  unsigned schedule_retx_candidates(du_cell_index_t               cell_index,
-                                    const dl_ran_slice_candidate& slice,
-                                    unsigned                      max_ue_grants_to_alloc);
+  std::optional<ue_newtx_candidate> create_newtx_dl_candidate(slot_point      pdcch_slot,
+                                                              slot_point      pdsch_slot,
+                                                              du_cell_index_t cell_index,
+                                                              const slice_ue& u) const;
 
-  unsigned schedule_newtx_candidates(du_cell_index_t               cell_index,
-                                     const dl_ran_slice_candidate& slice,
-                                     unsigned                      max_ue_grants_to_alloc);
+  std::optional<ue_newtx_candidate> create_newtx_ul_candidate(slot_point      pdcch_slot,
+                                                              slot_point      pusch_slot,
+                                                              du_cell_index_t cell_index,
+                                                              const slice_ue& u) const;
+
+  unsigned schedule_dl_retx_candidates(du_cell_index_t               cell_index,
+                                       const dl_ran_slice_candidate& slice,
+                                       unsigned                      max_ue_grants_to_alloc);
+
+  unsigned schedule_ul_retx_candidates(du_cell_index_t               cell_index,
+                                       const ul_ran_slice_candidate& slice,
+                                       unsigned                      max_ue_grants_to_alloc);
+
+  unsigned schedule_dl_newtx_candidates(du_cell_index_t               cell_index,
+                                        const dl_ran_slice_candidate& slice,
+                                        unsigned                      max_ue_grants_to_alloc);
+
+  unsigned schedule_ul_newtx_candidates(du_cell_index_t               cell_index,
+                                        const ul_ran_slice_candidate& slice,
+                                        unsigned                      max_ue_grants_to_alloc);
 
   unsigned max_pdschs_to_alloc(slot_point pdcch_slot, slot_point pdsch_slot, du_cell_index_t cell_index);
+
+  unsigned max_puschs_to_alloc(slot_point pdcch_slot, slot_point pusch_slot, du_cell_index_t cell_index);
 
   const scheduler_ue_expert_config& expert_cfg;
   ue_repository&                    ues;
@@ -81,8 +107,10 @@ private:
 
   // Number of allocation attempts for DL in the given slot.
   unsigned dl_attempts_count = 0;
+  unsigned ul_attempts_count = 0;
 
-  std::vector<ue_pdsch_newtx_candidate> dl_newtx_candidates;
+  std::vector<ue_newtx_candidate> dl_newtx_candidates;
+  std::vector<ue_newtx_candidate> ul_newtx_candidates;
 };
 
 } // namespace srsran

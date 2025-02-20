@@ -60,16 +60,16 @@ dl_alloc_result scheduler_time_qos::schedule_dl_retxs(slice_dl_sched_context& ct
   return {alloc_status::success};
 }
 
-void scheduler_time_qos::compute_ue_priorities(slot_point                     pdcch_slot,
-                                               slot_point                     pdsch_slot,
-                                               du_cell_index_t                cell_index,
-                                               span<ue_pdsch_newtx_candidate> ue_candidates)
+void scheduler_time_qos::compute_ue_dl_priorities(slot_point               pdcch_slot,
+                                                  slot_point               pdsch_slot,
+                                                  du_cell_index_t          cell_index,
+                                                  span<ue_newtx_candidate> ue_candidates)
 {
   unsigned nof_slots_elapsed = std::min(last_pdsch_slot.valid() ? pdsch_slot - last_pdsch_slot : 1U, MAX_SLOT_SKIPPED);
   last_pdsch_slot            = pdsch_slot;
 
   // Update UE dB history.
-  for (const ue_pdsch_newtx_candidate& ue_candidate : ue_candidates) {
+  for (const ue_newtx_candidate& ue_candidate : ue_candidates) {
     du_ue_index_t ue_index = ue_candidate.ue->ue_index();
     if (not ue_history_db.contains(ue_index)) {
       ue_history_db.emplace(ue_index, ue_ctxt{ue_index, cell_index, this});
@@ -85,11 +85,44 @@ void scheduler_time_qos::compute_ue_priorities(slot_point                     pd
   }
 }
 
+void scheduler_time_qos::compute_ue_ul_priorities(slot_point               pdcch_slot,
+                                                  slot_point               pusch_slot,
+                                                  du_cell_index_t          cell_index,
+                                                  span<ue_newtx_candidate> ue_candidates)
+{
+  unsigned nof_slots_elapsed = std::min(last_pusch_slot.valid() ? pusch_slot - last_pusch_slot : 1U, MAX_SLOT_SKIPPED);
+  last_pusch_slot            = pusch_slot;
+
+  // Update UE dB history.
+  for (const ue_newtx_candidate& ue_candidate : ue_candidates) {
+    du_ue_index_t ue_index = ue_candidate.ue->ue_index();
+    if (not ue_history_db.contains(ue_index)) {
+      ue_history_db.emplace(ue_index, ue_ctxt{ue_index, cell_index, this});
+    }
+    // TODO: Remove UEs as well.
+  }
+
+  // Compute UE candidate priorities.
+  for (auto& u : ue_candidates) {
+    ue_ctxt& uectxt = ue_history_db[u.ue->ue_index()];
+    uectxt.compute_ul_prio(*u.ue, pdcch_slot, pusch_slot, nof_slots_elapsed);
+    u.priority = uectxt.ul_prio;
+  }
+}
+
 void scheduler_time_qos::save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants)
 {
   // Save result of DL grants in UE history.
   for (const dl_msg_alloc& grant : dl_grants) {
     ue_history_db[grant.context.ue_index].save_dl_alloc(grant.pdsch_cfg.codewords[0].tb_size_bytes, grant.tb_list[0]);
+  }
+}
+
+void scheduler_time_qos::save_ul_newtx_grants(span<const ul_sched_info> ul_grants)
+{
+  // Save result of UL grants in UE history.
+  for (const ul_sched_info& grant : ul_grants) {
+    ue_history_db[grant.context.ue_index].save_ul_alloc(grant.pusch_cfg.tb_size_bytes);
   }
 }
 
