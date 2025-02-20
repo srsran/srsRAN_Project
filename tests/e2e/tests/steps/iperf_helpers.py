@@ -150,7 +150,7 @@ def get_max_theoretical_bitrate(
     bandwidth: int,
     band: int,
     nof_antennas: int,
-    direction: IPerfDir,
+    is_dl: bool,
     qam: QAMTable,
 ):
     """
@@ -160,14 +160,11 @@ def get_max_theoretical_bitrate(
     max_bw = 100
     nof_symbols_per_ms = 28  # 14 slots per subframe, 2 subframes per ms
     # This is the number of DL symbols per TDD period, with 7 DL slots and 8 DL symbols
-    if direction == IPerfDir.DOWNLINK:
+    if is_dl:
         perc_dl_symb_over_tdd_period = (14 * 6 + 8) / (14 * 10) if is_tdd(band) else 1.0
-    elif direction == IPerfDir.UPLINK:
-        perc_dl_symb_over_tdd_period = 14 * 3 / (14 * 10) if is_tdd(band) else 1.0
     else:
-        raise ValueError(
-            "Direction:{direction} invalid. Must be DOWNLINK {IPerfDir.DOWNLINK} or UPLINK {IPerfDir.UPLINK}"
-        )
+        perc_dl_symb_over_tdd_period = 14 * 3 / (14 * 10) if is_tdd(band) else 1.0
+
     # Theoretical maximum SE for QAM64 and QAM256, as per Table 5.1.3.1-1 and 5.1.3.1-2, TS 38.214.
     max_se = 7.4063 if qam == QAMTable.QAM256 else 5.5547
     # Theoretical maximum bitrate in bps. The factor 1000 is to convert the ms (ref. to nof_symbols_per_ms) into sec.
@@ -217,7 +214,7 @@ def assess_iperf_bitrate(
         bw,
         band,
         nof_antennas_dl,
-        IPerfDir.DOWNLINK,
+        True,
         QAMTable.QAM256 if pdsch_mcs_table == "qam256" else QAMTable.QAM64,
     )
 
@@ -225,7 +222,7 @@ def assess_iperf_bitrate(
         bw,
         band,
         1,
-        IPerfDir.UPLINK,
+        False,
         QAMTable.QAM256 if pusch_mcs_table == "qam256" else QAMTable.QAM64,
     )
 

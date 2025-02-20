@@ -14,7 +14,7 @@ cu_cp:
   inactivity_timer: 3
   rrc:
     force_reestablishment_fallback: false
-
+  
 cell_cfg:
   dl_arfcn: 625000
   band: 78

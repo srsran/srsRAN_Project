@@ -43,6 +43,7 @@ markers = [
   "test_mode",
   "test_mode_acc100",
   "test_mode_not_crash",
+  "test_mode_many_ues",
   "viavi",
   "viavi_manual",
   "viavi_debug",
