@@ -21,11 +21,27 @@ intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& e
   ul_newtx_candidates.reserve(MAX_NOF_DU_UES);
 }
 
+void intra_slice_scheduler::add_cell(du_cell_index_t           cell_index,
+                                     pdcch_resource_allocator& pdcch_sched,
+                                     uci_allocator&            uci_alloc,
+                                     cell_resource_allocator&  cell_alloc,
+                                     cell_harq_manager&        cell_harqs)
+{
+  cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &uci_alloc, &cell_alloc, &cell_harqs});
+
+  ue_alloc.add_cell(cell_index, pdcch_sched, uci_alloc, cell_alloc);
+}
+
 void intra_slice_scheduler::slot_indication(slot_point sl_tx)
 {
   last_sl_tx        = sl_tx;
   dl_attempts_count = 0;
   ul_attempts_count = 0;
+}
+
+void intra_slice_scheduler::post_process_results()
+{
+  ue_alloc.post_process_results();
 }
 
 void intra_slice_scheduler::dl_sched(slot_point                    pdcch_slot,

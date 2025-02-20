@@ -34,6 +34,8 @@ public:
 
   void slot_indication(slot_point sl_tx);
 
+  void post_process_results();
+
   void dl_sched(slot_point                    pdcch_slot,
                 du_cell_index_t               cell_index,
                 const dl_ran_slice_candidate& candidate,
@@ -99,7 +101,7 @@ private:
   ue_repository&                    ues;
   srslog::basic_logger&             logger;
 
-  static_vector<cell_t, MAX_NOF_DU_CELLS> cells;
+  slotted_id_vector<du_cell_index_t, cell_t> cells;
 
   ue_cell_grid_allocator ue_alloc;
 

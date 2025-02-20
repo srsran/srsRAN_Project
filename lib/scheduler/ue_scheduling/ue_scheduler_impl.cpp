@@ -16,8 +16,8 @@ using namespace srsran;
 
 ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_) :
   expert_cfg(expert_cfg_),
-  ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED")),
   event_mng(ue_db),
+  intra_slice_sched(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED")),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
 }
@@ -25,15 +25,19 @@ ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cf
 void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 {
   cells.emplace(params.cell_index, expert_cfg, params, ue_db, *params.cell_metrics);
+  auto& cell = cells[params.cell_index];
+
   event_mng.add_cell(cell_creation_event{*params.cell_res_alloc,
-                                         cells[params.cell_index].cell_harqs,
-                                         cells[params.cell_index].fallback_sched,
-                                         cells[params.cell_index].uci_sched,
-                                         cells[params.cell_index].slice_sched,
-                                         cells[params.cell_index].srs_sched,
+                                         cell.cell_harqs,
+                                         cell.fallback_sched,
+                                         cell.uci_sched,
+                                         cell.slice_sched,
+                                         cell.srs_sched,
                                          *params.cell_metrics,
                                          *params.ev_logger});
-  ue_alloc.add_cell(params.cell_index, *params.pdcch_sched, *params.uci_alloc, *params.cell_res_alloc);
+
+  intra_slice_sched.add_cell(
+      params.cell_index, *params.pdcch_sched, *params.uci_alloc, *params.cell_res_alloc, cell.cell_harqs);
 }
 
 void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t cell_index)
@@ -46,21 +50,17 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t c
   // Schedule DL first.
   // Note: DL should be scheduled first so that the right DAI value is picked in DCI format 0_1.
   while (auto dl_slice_candidate = cell.slice_sched.get_next_dl_candidate()) {
-    scheduler_policy&      policy = cell.slice_sched.get_policy(dl_slice_candidate->id());
-    slice_dl_sched_context dl_ctxt{
-        *cell.cell_res_alloc, dl_slice_candidate.value(), ue_alloc, cell.cell_harqs.pending_dl_retxs()};
-    policy.dl_sched(dl_ctxt);
+    scheduler_policy& policy = cell.slice_sched.get_policy(dl_slice_candidate->id());
+    intra_slice_sched.dl_sched(slot_tx, cell_index, dl_slice_candidate.value(), policy);
   }
 
   while (auto ul_slice_candidate = cell.slice_sched.get_next_ul_candidate()) {
-    scheduler_policy&      policy = cell.slice_sched.get_policy(ul_slice_candidate->id());
-    slice_ul_sched_context ul_ctxt{
-        *cell.cell_res_alloc, ul_slice_candidate.value(), ue_alloc, cell.cell_harqs.pending_ul_retxs()};
-    policy.ul_sched(ul_ctxt);
+    scheduler_policy& policy = cell.slice_sched.get_policy(ul_slice_candidate->id());
+    intra_slice_sched.ul_sched(slot_tx, cell_index, ul_slice_candidate.value(), policy);
   }
 
-  // The post processing is done for either DL and UL slots.
-  ue_alloc.post_process_results();
+  // The post processing is done for DL and UL slots.
+  intra_slice_sched.post_process_results();
 }
 
 void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_alloc)
@@ -157,7 +157,7 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx)
     ue_db.slot_indication(slot_tx);
 
     // Mark the start of a new slot in the UE grid allocator.
-    ue_alloc.slot_indication(slot_tx);
+    intra_slice_sched.slot_indication(slot_tx);
 
     // Check for timeouts in the cell HARQ processes.
     group_cell.cell_harqs.slot_indication(slot_tx);
