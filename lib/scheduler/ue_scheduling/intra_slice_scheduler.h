@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../policy/scheduler_policy.h"
 #include "ue_cell_grid_allocator.h"
 
 namespace srsran {
@@ -17,16 +18,6 @@ namespace srsran {
 class pdcch_resource_allocator;
 class uci_allocator;
 class scheduler_policy;
-
-using ue_sched_priority                       = double;
-const ue_sched_priority forbid_sched_priority = std::numeric_limits<ue_sched_priority>::min();
-
-struct ue_pdsch_newtx_candidate {
-  const slice_ue* ue;
-  const ue_cell*  ue_cc;
-  unsigned        pending_bytes;
-  double          priority;
-};
 
 class intra_slice_scheduler
 {
@@ -72,9 +63,9 @@ private:
                                     const dl_ran_slice_candidate& slice,
                                     unsigned                      max_ue_grants_to_alloc);
 
-  void schedule_newtx_candidates(du_cell_index_t               cell_index,
-                                 const dl_ran_slice_candidate& slice,
-                                 unsigned                      max_ue_grants_to_alloc);
+  unsigned schedule_newtx_candidates(du_cell_index_t               cell_index,
+                                     const dl_ran_slice_candidate& slice,
+                                     unsigned                      max_ue_grants_to_alloc);
 
   unsigned max_pdschs_to_alloc(slot_point pdcch_slot, slot_point pdsch_slot, du_cell_index_t cell_index);
 

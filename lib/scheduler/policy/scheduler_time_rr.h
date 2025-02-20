@@ -19,6 +19,13 @@ class scheduler_time_rr : public scheduler_policy
 public:
   scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_);
 
+  void compute_ue_priorities(slot_point                     pdcch_slot,
+                             slot_point                     pdsch_slot,
+                             du_cell_index_t                cell_index,
+                             span<ue_pdsch_newtx_candidate> ue_candidates) override;
+
+  void save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants) override;
+
   void dl_sched(slice_dl_sched_context& ctxt) override;
 
   void ul_sched(slice_ul_sched_context& ul_ctxt) override;

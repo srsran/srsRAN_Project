@@ -48,6 +48,7 @@ void intra_slice_scheduler::dl_sched(slot_point                    pdcch_slot,
   }
 
   // Build list of UE candidates.
+  dl_newtx_candidates.clear();
   for (const slice_ue& u : slice_ues) {
     auto ue_candidate = create_newtx_dl_candidate(pdcch_slot, pdsch_slot, cell_index, u);
     if (ue_candidate.has_value()) {
@@ -56,7 +57,7 @@ void intra_slice_scheduler::dl_sched(slot_point                    pdcch_slot,
   }
 
   // Compute priorities using the provided policy.
-  // TODO
+  policy.compute_ue_priorities(pdcch_slot, pdsch_slot, cell_index, dl_newtx_candidates);
 
   // Sort candidates by priority in descending order.
   std::sort(dl_newtx_candidates.begin(), dl_newtx_candidates.end(), [](const auto& a, const auto& b) {
@@ -73,7 +74,11 @@ void intra_slice_scheduler::dl_sched(slot_point                    pdcch_slot,
   }
 
   // Allocate UE newTx grants.
-  schedule_newtx_candidates(cell_index, candidate, pdschs_to_alloc);
+  unsigned new_tx_allocs = schedule_newtx_candidates(cell_index, candidate, pdschs_to_alloc);
+
+  // Update policy with allocation results.
+  const auto& pdschs = (*cells[cell_index].cell_alloc)[pdsch_slot].result.dl.ue_grants;
+  policy.save_dl_newtx_grants(span<const dl_msg_alloc>(pdschs.end() - new_tx_allocs, pdschs.end()));
 }
 
 static std::pair<unsigned, unsigned>
@@ -118,7 +123,7 @@ unsigned intra_slice_scheduler::schedule_retx_candidates(du_cell_index_t        
                                                          const dl_ran_slice_candidate& slice,
                                                          unsigned                      max_ue_grants_to_alloc)
 {
-  auto&                          slice_ues     = slice.get_slice_ues();
+  const slice_ue_repository&     slice_ues     = slice.get_slice_ues();
   const cell_resource_allocator& cell_alloc    = *cells[cell_index].cell_alloc;
   slot_point                     pdcch_slot    = cell_alloc.slot_tx();
   slot_point                     pdsch_slot    = slice.get_slot_tx();
@@ -168,15 +173,15 @@ unsigned intra_slice_scheduler::schedule_retx_candidates(du_cell_index_t        
   return alloc_count;
 }
 
-void intra_slice_scheduler::schedule_newtx_candidates(du_cell_index_t               cell_index,
-                                                      const dl_ran_slice_candidate& slice,
-                                                      unsigned                      max_ue_grants_to_alloc)
+unsigned intra_slice_scheduler::schedule_newtx_candidates(du_cell_index_t               cell_index,
+                                                          const dl_ran_slice_candidate& slice,
+                                                          unsigned                      max_ue_grants_to_alloc)
 {
   const cell_resource_allocator& cell_alloc = *cells[cell_index].cell_alloc;
   auto [max_allocs, max_rbs_per_grant] =
       get_max_grants_and_dl_rb_grant_size(dl_newtx_candidates, cell_alloc, slice, max_ue_grants_to_alloc);
   if (max_rbs_per_grant == 0) {
-    return;
+    return 0;
   }
   max_ue_grants_to_alloc = max_allocs;
 
@@ -223,6 +228,8 @@ void intra_slice_scheduler::schedule_newtx_candidates(du_cell_index_t           
       break;
     }
   }
+
+  return alloc_count;
 }
 
 bool intra_slice_scheduler::can_allocate_pdsch(slot_point      pdcch_slot,

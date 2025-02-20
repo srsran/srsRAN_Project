@@ -398,6 +398,26 @@ void scheduler_time_rr::dl_sched(slice_dl_sched_context& ctxt)
   dl_sched_newtx(ctxt);
 }
 
+void scheduler_time_rr::compute_ue_priorities(slot_point                     pdcch_slot,
+                                              slot_point                     pdsch_slot,
+                                              du_cell_index_t                cell_index,
+                                              span<ue_pdsch_newtx_candidate> ue_candidates)
+{
+  for (ue_pdsch_newtx_candidate& candidate : ue_candidates) {
+    int index_diff     = next_dl_ue_index - candidate.ue->ue_index();
+    index_diff         = (index_diff < 0) ? (ue_candidates.size() + index_diff) : index_diff;
+    candidate.priority = static_cast<double>(index_diff);
+  }
+}
+
+void scheduler_time_rr::save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants)
+{
+  if (dl_grants.empty()) {
+    return;
+  }
+  next_dl_ue_index = to_du_ue_index(dl_grants[0].context.ue_index + 1);
+}
+
 void scheduler_time_rr::dl_sched_newtx(slice_dl_sched_context& ctxt)
 {
   const slice_ue_repository& ues            = ctxt.get_slice().get_slice_ues();

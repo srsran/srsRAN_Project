@@ -16,10 +16,17 @@
 namespace srsran {
 
 /// Time-domain QoS-aware scheduler policy.
-class scheduler_time_qos : public scheduler_policy
+class scheduler_time_qos final : public scheduler_policy
 {
 public:
   scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_);
+
+  void compute_ue_priorities(slot_point                     pdcch_slot,
+                             slot_point                     pdsch_slot,
+                             du_cell_index_t                cell_index,
+                             span<ue_pdsch_newtx_candidate> ue_candidates) override;
+
+  void save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants) override;
 
   void dl_sched(slice_dl_sched_context& dl_ctxt) override;
 
