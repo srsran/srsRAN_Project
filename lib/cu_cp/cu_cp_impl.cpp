@@ -666,7 +666,11 @@ cu_cp_impl::handle_trp_information_request(const trp_information_request_t& requ
 
 void cu_cp_impl::handle_n2_disconnection(const std::vector<plmn_identity>& plmns)
 {
-  logger.info("Handling N2 disconnection");
+  std::string plmn_list;
+  for (const auto& plmn : plmns) {
+    plmn_list += plmn.to_string() + " ";
+  }
+  logger.warning("Handling N2 disconnection. Lost PLMNs: {}", plmn_list);
 
   // Stop accepting new UEs for the given PLMNs.
   ue_mng.add_blocked_plmns(plmns);

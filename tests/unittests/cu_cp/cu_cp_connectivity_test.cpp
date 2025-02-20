@@ -103,6 +103,7 @@ TEST_F(cu_cp_connectivity_test, when_amf_connection_is_lost_then_connected_ues_a
 
   ASSERT_TRUE(drop_amf_connection(0));
 
+  // TEST: Verify that connected UEs are released.
   {
     // Verify F1AP UE Context Release Command is sent to DU.
     f1ap_message f1ap_pdu;
