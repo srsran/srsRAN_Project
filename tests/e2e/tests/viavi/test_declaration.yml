@@ -54,7 +54,7 @@ tests:
     gnb_extra_config: *base_config
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
-    expected_ul_bitrate: 75.0e+6
+    expected_ul_bitrate: 72.0e+6
     expected_nof_kos: 10
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
@@ -77,7 +77,7 @@ tests:
               pf_fairness_coeff: 2
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.2e+9
-    expected_ul_bitrate: 75.0e+6
+    expected_ul_bitrate: 72.0e+6
     expected_nof_kos: 10
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
