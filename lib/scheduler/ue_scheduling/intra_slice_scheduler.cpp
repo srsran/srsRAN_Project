@@ -94,6 +94,8 @@ void intra_slice_scheduler::ul_sched(slot_point                    pdcch_slot,
   schedule_ul_newtx_candidates(cell_index, slice, ul_policy, puschs_to_alloc);
 }
 
+/// \brief Helper function that returns a pair with the number of RBs to allocate in this slice scheduling opportunity
+/// and the recommended number of RBs per UE grant.
 template <typename SliceCandidate>
 static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const ue_newtx_candidate> ue_candidates,
                                                                       const cell_resource_allocator& cell_alloc,
@@ -111,8 +113,8 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
     return std::make_pair(0, 0);
   }
 
-  // Reduce number of UEs to alloc based on the number of UE candidates.
-  max_ue_grants_to_alloc =
+  // Determine how many UE grants to allocate in the slot (assuming full buffer).
+  unsigned expected_grants =
       std::min(max_ue_grants_to_alloc, std::min(std::max((unsigned)ue_candidates.size() / 4U, 1U), 8U));
 
   // > Compute maximum nof. PDCCH candidates allowed for each direction.
@@ -128,12 +130,12 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
   // > Ensure fairness in PDCCH allocation between DL and UL.
   // [Implementation-defined] To avoid running out of PDCCH candidates for UL allocation in multi-UE scenario and short
   // BW (e.g. TDD and 10Mhz BW), apply further limits on nof. UEs to be scheduled per slot.
-  max_ue_grants_to_alloc = std::min(max_nof_candidates, max_ue_grants_to_alloc);
+  expected_grants = std::min(max_nof_candidates, expected_grants);
 
   const crb_interval& bwp_crb_limits = is_dl ? ss_info->dl_crb_lims : ss_info->ul_crb_lims;
   unsigned            max_nof_rbs    = std::min(bwp_crb_limits.length(), slice.remaining_rbs());
 
-  return std::make_pair(max_ue_grants_to_alloc, std::max(divide_ceil(max_nof_rbs, max_ue_grants_to_alloc), 4U));
+  return std::make_pair(max_nof_rbs, std::max(divide_ceil(max_nof_rbs, expected_grants), 4U));
 }
 
 unsigned intra_slice_scheduler::schedule_dl_retx_candidates(du_cell_index_t               cell_index,
@@ -328,12 +330,11 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(du_cell_index_t    
   // Recompute max number of UE grants that can be scheduled in this slot and the number of RBs per grant.
   slot_point                     pdsch_slot = slice.get_slot_tx();
   const cell_resource_allocator& cell_alloc = *cells[cell_index].cell_alloc;
-  auto [max_allocs, max_rbs_per_grant] =
+  auto [rbs_to_alloc, max_rbs_per_grant] =
       get_max_grants_and_rb_grant_size(dl_newtx_candidates, cell_alloc, slice, max_ue_grants_to_alloc);
   if (max_rbs_per_grant == 0) {
     return 0;
   }
-  max_ue_grants_to_alloc = max_allocs;
 
   // Allocate DL grants.
   unsigned alloc_count = 0;
@@ -341,7 +342,8 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(du_cell_index_t    
   for (const auto& ue_candidate : dl_newtx_candidates) {
     // Determine the max grant size in RBs.
     unsigned max_grant_size = 0;
-    if (alloc_count == max_ue_grants_to_alloc - 1) {
+    unsigned alloc_rb_count = alloc_count * max_rbs_per_grant - rbs_missing;
+    if (rbs_to_alloc - alloc_rb_count < max_grant_size * 2) {
       // If we are in the last allocation of the slot, fill remaining RBs.
       max_grant_size = slice.remaining_rbs();
     } else {
@@ -401,12 +403,11 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(du_cell_index_t    
   // Recompute max number of UE grants that can be scheduled in this slot and the number of RBs per grant.
   slot_point                     pusch_slot = slice.get_slot_tx();
   const cell_resource_allocator& cell_alloc = *cells[cell_index].cell_alloc;
-  auto [max_allocs, max_rbs_per_grant] =
+  auto [rbs_to_alloc, max_rbs_per_grant] =
       get_max_grants_and_rb_grant_size(ul_newtx_candidates, cell_alloc, slice, max_ue_grants_to_alloc);
   if (max_rbs_per_grant == 0) {
     return 0;
   }
-  max_ue_grants_to_alloc = max_allocs;
 
   // Allocate UL grants.
   unsigned alloc_count = 0;
@@ -414,8 +415,9 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(du_cell_index_t    
   for (const auto& ue_candidate : ul_newtx_candidates) {
     // Determine the max grant size in RBs.
     unsigned max_grant_size = 0;
-    if (alloc_count == max_ue_grants_to_alloc - 1) {
-      // If we are in the last allocation of the slot, fill remaining RBs.
+    unsigned alloc_rb_count = alloc_count * max_rbs_per_grant - rbs_missing;
+    if (rbs_to_alloc - alloc_rb_count < max_grant_size * 2) {
+      // This is the last UE to allocate. Fill the remaining RBs.
       max_grant_size = slice.remaining_rbs();
     } else {
       // Account the RBs that were left to be allocated earlier that changes on each allocation.
@@ -471,7 +473,8 @@ bool intra_slice_scheduler::can_allocate_pdsch(slot_point      pdcch_slot,
   }
 
   // Check if PDSCH is active for the PDSCH slot.
-  if (not ue_cc.is_pdsch_enabled(pdsch_slot)) {
+  // Note: no need to do this check if PDSCH slot == PDCCH slot.
+  if (pdcch_slot != pdsch_slot and not ue_cc.is_pdsch_enabled(pdsch_slot)) {
     return false;
   }
 
