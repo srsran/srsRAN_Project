@@ -39,17 +39,25 @@ class scheduler_policy
 public:
   virtual ~scheduler_policy() = default;
 
+  virtual void add_ue(du_ue_index_t ue_index) = 0;
+
+  virtual void rem_ue(du_ue_index_t ue_index) = 0;
+
   /// Compute UE candidate priorities for DL scheduling.
-  virtual void compute_ue_dl_priorities(slot_point               pdcch_slot,
-                                        slot_point               pdsch_slot,
-                                        du_cell_index_t          cell_index,
-                                        span<ue_newtx_candidate> ue_candidates) = 0;
+  ///
+  /// \param[in] pdcch_slot PDCCH slot.
+  /// \param[in] pdsch_slot PDSCH slot.
+  /// \param[in] ue_candidates UE candidates with new HARQ transmissions to be scheduled.
+  virtual void
+  compute_ue_dl_priorities(slot_point pdcch_slot, slot_point pdsch_slot, span<ue_newtx_candidate> ue_candidates) = 0;
 
   /// Compute UE candidate priorities for UL scheduling.
-  virtual void compute_ue_ul_priorities(slot_point               pdcch_slot,
-                                        slot_point               pusch_slot,
-                                        du_cell_index_t          cell_index,
-                                        span<ue_newtx_candidate> ue_candidates) = 0;
+  ///
+  /// \param[in] pdcch_slot PDCCH slot.
+  /// \param[in] pusch_slot PUSCH slot.
+  /// \param[in] ue_candidates UE candidates with new HARQ transmissions to be scheduled.
+  virtual void
+  compute_ue_ul_priorities(slot_point pdcch_slot, slot_point pusch_slot, span<ue_newtx_candidate> ue_candidates) = 0;
 
   /// Save UE DL newtx grants.
   virtual void save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants) = 0;

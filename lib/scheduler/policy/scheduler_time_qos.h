@@ -20,16 +20,18 @@ namespace srsran {
 class scheduler_time_qos final : public scheduler_policy
 {
 public:
-  scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_);
+  scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_, du_cell_index_t cell_index);
+
+  void add_ue(du_ue_index_t ue_index) override;
+
+  void rem_ue(du_ue_index_t ue_index) override;
 
   void compute_ue_dl_priorities(slot_point               pdcch_slot,
                                 slot_point               pdsch_slot,
-                                du_cell_index_t          cell_index,
                                 span<ue_newtx_candidate> ue_candidates) override;
 
   void compute_ue_ul_priorities(slot_point               pdcch_slot,
                                 slot_point               pusch_slot,
-                                du_cell_index_t          cell_index,
                                 span<ue_newtx_candidate> ue_candidates) override;
 
   void save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants) override;
@@ -42,6 +44,7 @@ private:
 
   // Policy parameters.
   const time_qos_scheduler_expert_config params;
+  const du_cell_index_t                  cell_index;
   /// Coefficient used to compute exponential moving average.
   const double exp_avg_alpha = 0.01;
 

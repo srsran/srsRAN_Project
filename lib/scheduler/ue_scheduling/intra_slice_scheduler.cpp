@@ -267,7 +267,7 @@ void intra_slice_scheduler::prepare_newtx_dl_candidates(du_cell_index_t         
   }
 
   // Compute priorities using the provided policy.
-  dl_policy.compute_ue_dl_priorities(pdcch_slot, pdsch_slot, cell_index, dl_newtx_candidates);
+  dl_policy.compute_ue_dl_priorities(pdcch_slot, pdsch_slot, dl_newtx_candidates);
 
   // Sort candidates by priority in descending order.
   std::sort(dl_newtx_candidates.begin(), dl_newtx_candidates.end(), [](const auto& a, const auto& b) {
@@ -302,7 +302,7 @@ void intra_slice_scheduler::prepare_newtx_ul_candidates(du_cell_index_t         
   }
 
   // Compute priorities using the provided policy.
-  ul_policy.compute_ue_ul_priorities(pdcch_slot, pusch_slot, cell_index, ul_newtx_candidates);
+  ul_policy.compute_ue_ul_priorities(pdcch_slot, pusch_slot, ul_newtx_candidates);
 
   // Sort candidates by priority in descending order.
   std::sort(ul_newtx_candidates.begin(), ul_newtx_candidates.end(), [](const auto& a, const auto& b) {

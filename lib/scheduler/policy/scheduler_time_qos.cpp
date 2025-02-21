@@ -21,27 +21,28 @@ constexpr unsigned MAX_PF_COEFF = 10;
 // [Implementation-defined] Maximum number of slots skipped between scheduling opportunities.
 constexpr unsigned MAX_SLOT_SKIPPED = 20;
 
-scheduler_time_qos::scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_) :
-  params(std::get<time_qos_scheduler_expert_config>(expert_cfg_.strategy_cfg))
+scheduler_time_qos::scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_, du_cell_index_t cell_index_) :
+  params(std::get<time_qos_scheduler_expert_config>(expert_cfg_.strategy_cfg)), cell_index(cell_index_)
 {
+}
+
+void scheduler_time_qos::add_ue(du_ue_index_t ue_index)
+{
+  srsran_assert(not ue_history_db.contains(ue_index), "UE was already added to this slice");
+  ue_history_db.emplace(ue_index, ue_ctxt{ue_index, cell_index, this});
+}
+
+void scheduler_time_qos::rem_ue(du_ue_index_t ue_index)
+{
+  ue_history_db.erase(ue_index);
 }
 
 void scheduler_time_qos::compute_ue_dl_priorities(slot_point               pdcch_slot,
                                                   slot_point               pdsch_slot,
-                                                  du_cell_index_t          cell_index,
                                                   span<ue_newtx_candidate> ue_candidates)
 {
   unsigned nof_slots_elapsed = std::min(last_pdsch_slot.valid() ? pdsch_slot - last_pdsch_slot : 1U, MAX_SLOT_SKIPPED);
   last_pdsch_slot            = pdsch_slot;
-
-  // Update UE dB history.
-  for (const ue_newtx_candidate& ue_candidate : ue_candidates) {
-    du_ue_index_t ue_index = ue_candidate.ue->ue_index();
-    if (not ue_history_db.contains(ue_index)) {
-      ue_history_db.emplace(ue_index, ue_ctxt{ue_index, cell_index, this});
-    }
-    // TODO: Remove UEs as well.
-  }
 
   // Compute UE candidate priorities.
   for (auto& u : ue_candidates) {
@@ -53,20 +54,10 @@ void scheduler_time_qos::compute_ue_dl_priorities(slot_point               pdcch
 
 void scheduler_time_qos::compute_ue_ul_priorities(slot_point               pdcch_slot,
                                                   slot_point               pusch_slot,
-                                                  du_cell_index_t          cell_index,
                                                   span<ue_newtx_candidate> ue_candidates)
 {
   unsigned nof_slots_elapsed = std::min(last_pusch_slot.valid() ? pusch_slot - last_pusch_slot : 1U, MAX_SLOT_SKIPPED);
   last_pusch_slot            = pusch_slot;
-
-  // Update UE dB history.
-  for (const ue_newtx_candidate& ue_candidate : ue_candidates) {
-    du_ue_index_t ue_index = ue_candidate.ue->ue_index();
-    if (not ue_history_db.contains(ue_index)) {
-      ue_history_db.emplace(ue_index, ue_ctxt{ue_index, cell_index, this});
-    }
-    // TODO: Remove UEs as well.
-  }
 
   // Compute UE candidate priorities.
   for (auto& u : ue_candidates) {

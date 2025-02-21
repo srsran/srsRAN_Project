@@ -32,21 +32,26 @@ public:
                 cell_resource_allocator&  cell_alloc,
                 cell_harq_manager&        cell_harqs);
 
+  /// Reset context in preparation for new slot.
   void slot_indication(slot_point sl_tx);
 
+  /// Called once all the UE grants have been allocated for a slot and cell.
   void post_process_results();
 
+  /// Schedule DL grants for a given slice candidate.
   void dl_sched(slot_point             pdcch_slot,
                 du_cell_index_t        cell_index,
                 dl_ran_slice_candidate slice,
                 scheduler_policy&      dl_policy);
 
+  /// Schedule UL grants for a given slice candidate.
   void ul_sched(slot_point             pdcch_slot,
                 du_cell_index_t        cell_index,
                 ul_ran_slice_candidate slice,
                 scheduler_policy&      dl_policy);
 
 private:
+  /// Context of a given cell.
   struct cell_t {
     du_cell_index_t           cell_index;
     pdcch_resource_allocator* pdcch_sched;
@@ -55,12 +60,14 @@ private:
     cell_harq_manager*        cell_harqs;
   };
 
+  /// Determines whether a UE can be DL scheduled in a given slot.
   bool can_allocate_pdsch(slot_point      sl_tx,
                           slot_point      sl_pdsch,
                           du_cell_index_t cell_index,
                           const slice_ue& u,
                           const ue_cell&  ue_cc) const;
 
+  /// Determines whether a UE can be UL scheduled in a given slot.
   bool can_allocate_pusch(slot_point      pdcch_slot,
                           slot_point      pusch_slot,
                           du_cell_index_t cell_index,

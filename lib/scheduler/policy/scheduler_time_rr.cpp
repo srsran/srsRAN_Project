@@ -12,11 +12,13 @@
 
 using namespace srsran;
 
-scheduler_time_rr::scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_) : expert_cfg(expert_cfg_) {}
+scheduler_time_rr::scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_, du_cell_index_t cell_index_) :
+  expert_cfg(expert_cfg_), cell_index(cell_index_)
+{
+}
 
 void scheduler_time_rr::compute_ue_dl_priorities(slot_point               pdcch_slot,
                                                  slot_point               pdsch_slot,
-                                                 du_cell_index_t          cell_index,
                                                  span<ue_newtx_candidate> ue_candidates)
 {
   // We perform round-robin by assigning priorities based on the distance between each UE index and the next UE index
@@ -32,7 +34,6 @@ void scheduler_time_rr::compute_ue_dl_priorities(slot_point               pdcch_
 
 void scheduler_time_rr::compute_ue_ul_priorities(slot_point               pdcch_slot,
                                                  slot_point               pusch_slot,
-                                                 du_cell_index_t          cell_index,
                                                  span<ue_newtx_candidate> ue_candidates)
 {
   for (ue_newtx_candidate& candidate : ue_candidates) {
