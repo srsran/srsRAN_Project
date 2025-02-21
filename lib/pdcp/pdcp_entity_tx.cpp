@@ -42,6 +42,9 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   if (metrics_agg.get_metrics_period().count()) {
     metrics_timer = ue_dl_timer_factory.create_timer();
     metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this](timer_id_t tid) {
+      if (stopped) {
+        return;
+      }
       metrics_agg.push_tx_metrics(metrics.get_metrics_and_reset());
       metrics_timer.run();
     });
