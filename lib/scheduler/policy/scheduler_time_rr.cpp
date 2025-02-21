@@ -404,9 +404,9 @@ void scheduler_time_rr::compute_ue_dl_priorities(slot_point               pdcch_
                                                  span<ue_newtx_candidate> ue_candidates)
 {
   for (ue_newtx_candidate& candidate : ue_candidates) {
-    int index_diff     = next_dl_ue_index - candidate.ue->ue_index();
-    index_diff         = (index_diff < 0) ? (ue_candidates.size() + index_diff) : index_diff;
-    candidate.priority = static_cast<double>(index_diff);
+    int index_diff     = candidate.ue->ue_index() - next_dl_ue_index;
+    index_diff         = (index_diff < 0) ? (MAX_NOF_DU_UES + index_diff) : index_diff;
+    candidate.priority = static_cast<double>(-index_diff);
   }
 }
 
@@ -416,9 +416,9 @@ void scheduler_time_rr::compute_ue_ul_priorities(slot_point               pdcch_
                                                  span<ue_newtx_candidate> ue_candidates)
 {
   for (ue_newtx_candidate& candidate : ue_candidates) {
-    int index_diff     = next_ul_ue_index - candidate.ue->ue_index();
-    index_diff         = (index_diff < 0) ? (ue_candidates.size() + index_diff) : index_diff;
-    candidate.priority = static_cast<double>(index_diff);
+    int index_diff     = candidate.ue->ue_index() - next_ul_ue_index;
+    index_diff         = (index_diff < 0) ? (MAX_NOF_DU_UES + index_diff) : index_diff;
+    candidate.priority = static_cast<double>(-index_diff);
   }
 }
 
@@ -432,7 +432,7 @@ void scheduler_time_rr::save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants)
 
 void scheduler_time_rr::save_ul_newtx_grants(span<const ul_sched_info> ul_grants)
 {
-  if (ul_grants.size()) {
+  if (ul_grants.empty()) {
     return;
   }
   next_ul_ue_index = to_du_ue_index(ul_grants[0].context.ue_index + 1);

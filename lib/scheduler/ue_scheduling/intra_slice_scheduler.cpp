@@ -37,6 +37,8 @@ void intra_slice_scheduler::slot_indication(slot_point sl_tx)
   last_sl_tx        = sl_tx;
   dl_attempts_count = 0;
   ul_attempts_count = 0;
+
+  ue_alloc.slot_indication(sl_tx);
 }
 
 void intra_slice_scheduler::post_process_results()
@@ -72,6 +74,9 @@ void intra_slice_scheduler::dl_sched(slot_point                    pdcch_slot,
     if (ue_candidate.has_value()) {
       dl_newtx_candidates.push_back(ue_candidate.value());
     }
+  }
+  if (dl_newtx_candidates.empty()) {
+    return;
   }
 
   // Compute priorities using the provided policy.
@@ -128,6 +133,9 @@ void intra_slice_scheduler::ul_sched(slot_point                    pdcch_slot,
       ul_newtx_candidates.push_back(ue_candidate.value());
     }
   }
+  if (ul_newtx_candidates.empty()) {
+    return;
+  }
 
   // Compute priorities using the provided policy.
   ul_policy.compute_ue_ul_priorities(pdcch_slot, pusch_slot, cell_index, ul_newtx_candidates);
@@ -173,7 +181,7 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
 
   // Reduce number of UEs to alloc based on the number of UE candidates.
   max_ue_grants_to_alloc =
-      std::min(max_ue_grants_to_alloc, std::max(std::min((unsigned)ue_candidates.size() / 4U, 1U), 8U));
+      std::min(max_ue_grants_to_alloc, std::min(std::max((unsigned)ue_candidates.size() / 4U, 1U), 8U));
 
   // > Compute maximum nof. PDCCH candidates allowed for each direction.
   // [Implementation-defined]
@@ -193,7 +201,7 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
   const crb_interval& bwp_crb_limits = is_dl ? ss_info->dl_crb_lims : ss_info->ul_crb_lims;
   unsigned            max_nof_rbs    = std::min(bwp_crb_limits.length(), slice.remaining_rbs());
 
-  return std::make_pair(max_ue_grants_to_alloc, std::min(max_nof_rbs / max_ue_grants_to_alloc, 4U));
+  return std::make_pair(max_ue_grants_to_alloc, std::max(divide_ceil(max_nof_rbs, max_ue_grants_to_alloc), 4U));
 }
 
 unsigned intra_slice_scheduler::schedule_dl_retx_candidates(du_cell_index_t               cell_index,

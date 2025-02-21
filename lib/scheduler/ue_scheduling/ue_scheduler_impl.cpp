@@ -147,6 +147,9 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx)
   }
   last_sl_ind = slot_tx;
 
+  // Mark the start of a new slot for the intra-slice scheduler.
+  intra_slice_sched.slot_indication(slot_tx);
+
   for (auto& group_cell : cells) {
     du_cell_index_t cell_index = group_cell.cell_res_alloc->cfg.cell_index;
 
@@ -155,9 +158,6 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx)
 
     // Update all UEs state.
     ue_db.slot_indication(slot_tx);
-
-    // Mark the start of a new slot in the UE grid allocator.
-    intra_slice_sched.slot_indication(slot_tx);
 
     // Check for timeouts in the cell HARQ processes.
     group_cell.cell_harqs.slot_indication(slot_tx);
