@@ -33,16 +33,8 @@ public:
 
   void save_ul_newtx_grants(span<const ul_sched_info> ul_grants) override;
 
-  void dl_sched(slice_dl_sched_context& ctxt) override;
-
-  void ul_sched(slice_ul_sched_context& ul_ctxt) override;
-
 private:
-  void dl_sched_newtx(slice_dl_sched_context& ctxt);
-  void ul_sched_newtx(slice_ul_sched_context& ctxt);
-
-  srslog::basic_logger& logger;
-  du_ue_index_t         next_dl_ue_index, next_ul_ue_index;
+  du_ue_index_t next_dl_ue_index = MAX_NOF_DU_UES, next_ul_ue_index = MAX_NOF_DU_UES;
 
   const scheduler_ue_expert_config expert_cfg;
 };

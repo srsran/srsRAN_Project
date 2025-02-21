@@ -36,15 +36,15 @@ public:
 
   void post_process_results();
 
-  void dl_sched(slot_point                    pdcch_slot,
-                du_cell_index_t               cell_index,
-                const dl_ran_slice_candidate& candidate,
-                scheduler_policy&             dl_policy);
+  void dl_sched(slot_point             pdcch_slot,
+                du_cell_index_t        cell_index,
+                dl_ran_slice_candidate slice,
+                scheduler_policy&      dl_policy);
 
-  void ul_sched(slot_point                    pdcch_slot,
-                du_cell_index_t               cell_index,
-                const ul_ran_slice_candidate& candidate,
-                scheduler_policy&             dl_policy);
+  void ul_sched(slot_point             pdcch_slot,
+                du_cell_index_t        cell_index,
+                ul_ran_slice_candidate slice,
+                scheduler_policy&      dl_policy);
 
 private:
   struct cell_t {
@@ -93,19 +93,19 @@ private:
                                        const ul_ran_slice_candidate& slice,
                                        unsigned                      max_ue_grants_to_alloc);
 
-  unsigned schedule_dl_newtx_candidates(du_cell_index_t               cell_index,
-                                        const dl_ran_slice_candidate& slice,
-                                        scheduler_policy&             dl_policy,
-                                        unsigned                      max_ue_grants_to_alloc);
+  unsigned schedule_dl_newtx_candidates(du_cell_index_t         cell_index,
+                                        dl_ran_slice_candidate& slice,
+                                        scheduler_policy&       dl_policy,
+                                        unsigned                max_ue_grants_to_alloc);
 
-  unsigned schedule_ul_newtx_candidates(du_cell_index_t               cell_index,
-                                        const ul_ran_slice_candidate& slice,
-                                        scheduler_policy&             ul_policy,
-                                        unsigned                      max_ue_grants_to_alloc);
+  unsigned schedule_ul_newtx_candidates(du_cell_index_t         cell_index,
+                                        ul_ran_slice_candidate& slice,
+                                        scheduler_policy&       ul_policy,
+                                        unsigned                max_ue_grants_to_alloc);
 
-  unsigned max_pdschs_to_alloc(slot_point pdcch_slot, slot_point pdsch_slot, du_cell_index_t cell_index);
+  unsigned max_pdschs_to_alloc(slot_point pdcch_slot, const dl_ran_slice_candidate& slice, du_cell_index_t cell_index);
 
-  unsigned max_puschs_to_alloc(slot_point pdcch_slot, slot_point pusch_slot, du_cell_index_t cell_index);
+  unsigned max_puschs_to_alloc(slot_point pdcch_slot, const ul_ran_slice_candidate& slice, du_cell_index_t cell_index);
 
   const scheduler_ue_expert_config& expert_cfg;
   ue_repository&                    ues;
