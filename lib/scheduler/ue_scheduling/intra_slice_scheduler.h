@@ -77,6 +77,14 @@ private:
                                                               du_cell_index_t cell_index,
                                                               const slice_ue& u) const;
 
+  void prepare_newtx_dl_candidates(du_cell_index_t               cell_index,
+                                   const dl_ran_slice_candidate& slice,
+                                   scheduler_policy&             dl_policy);
+
+  void prepare_newtx_ul_candidates(du_cell_index_t               cell_index,
+                                   const ul_ran_slice_candidate& slice,
+                                   scheduler_policy&             dl_policy);
+
   unsigned schedule_dl_retx_candidates(du_cell_index_t               cell_index,
                                        const dl_ran_slice_candidate& slice,
                                        unsigned                      max_ue_grants_to_alloc);
@@ -87,10 +95,12 @@ private:
 
   unsigned schedule_dl_newtx_candidates(du_cell_index_t               cell_index,
                                         const dl_ran_slice_candidate& slice,
+                                        scheduler_policy&             dl_policy,
                                         unsigned                      max_ue_grants_to_alloc);
 
   unsigned schedule_ul_newtx_candidates(du_cell_index_t               cell_index,
                                         const ul_ran_slice_candidate& slice,
+                                        scheduler_policy&             ul_policy,
                                         unsigned                      max_ue_grants_to_alloc);
 
   unsigned max_pdschs_to_alloc(slot_point pdcch_slot, slot_point pdsch_slot, du_cell_index_t cell_index);
