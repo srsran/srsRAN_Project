@@ -42,6 +42,8 @@ class uplink_cplane_context_repository
   std::vector<repo_entry> repo;
   //: TODO: make this lock free
   mutable std::mutex mutex;
+  /// Ignore the start symbol value received in the PRACH U-Plane packets.
+  bool ignore_prach_start_symbol;
 
   /// Returns the entry of the repository for the given slot and eAxC.
   ul_cplane_context& entry(slot_point slot, unsigned eaxc)
@@ -58,7 +60,8 @@ class uplink_cplane_context_repository
   }
 
 public:
-  explicit uplink_cplane_context_repository(unsigned size_) : repo(size_)
+  explicit uplink_cplane_context_repository(unsigned size_, bool ignore_prach_start_symbol_ = false) :
+    repo(size_), ignore_prach_start_symbol(ignore_prach_start_symbol_)
   {
     static_assert(MAX_PRACH_OCCASIONS_PER_SLOT == 1,
                   "Uplink Control-Plane context repository only supports one context per slot and eAxC");
@@ -78,9 +81,22 @@ public:
     std::lock_guard<std::mutex> lock(mutex);
 
     const ul_cplane_context& cp_param = entry(slot, eaxc);
-    if (symbol >= cp_param.radio_hdr.start_symbol &&
-        symbol < (cp_param.radio_hdr.start_symbol + cp_param.nof_symbols) &&
-        filter_index == cp_param.radio_hdr.filter_index) {
+
+    auto is_start_symbol_valid = [this, &cp_param](unsigned start_symbol) {
+      if (ignore_prach_start_symbol &&
+          (cp_param.radio_hdr.filter_index == filter_index_type::ul_prach_preamble_1p25khz)) {
+        // Some RUs always set PRACH symbolId to 0 when long format is used ignoring the value indicated in C-Plane.
+        if (start_symbol >= cp_param.radio_hdr.start_symbol) {
+          start_symbol -= cp_param.radio_hdr.start_symbol;
+        }
+        return start_symbol < cp_param.nof_symbols;
+      }
+
+      return (start_symbol >= cp_param.radio_hdr.start_symbol) &&
+             (start_symbol < (cp_param.radio_hdr.start_symbol + cp_param.nof_symbols));
+    };
+
+    if (filter_index == cp_param.radio_hdr.filter_index && is_start_symbol_valid(symbol)) {
       return cp_param;
     }
 

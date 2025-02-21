@@ -45,6 +45,8 @@ struct ru_ofh_unit_base_cell_config {
   std::chrono::microseconds Ta4_min{85};
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = true;
+  /// Ignore the start symbol value received in the PRACH U-Plane packets.
+  bool ignore_prach_start_symbol = false;
   /// \brief Downlink broadcast flag.
   ///
   /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAxCs.

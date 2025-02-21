@@ -112,6 +112,11 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
              config.ignore_ecpri_payload_size_field,
              "Ignore eCPRI payload size field value")
       ->capture_default_str();
+  add_option(app,
+             "--ignore_prach_start_symbol",
+             config.ignore_prach_start_symbol,
+             "Ignore the start symbol field in the PRACH U-Plane packets")
+      ->capture_default_str();
 
   add_option_function<std::string>(
       app,
