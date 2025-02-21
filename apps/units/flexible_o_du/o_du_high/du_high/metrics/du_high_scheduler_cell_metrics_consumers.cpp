@@ -211,7 +211,7 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const app_services::m
     if (ue.ul_ri_stats.get_nof_observations() > 0) {
       fmt::print(" {:>3.1f}", ue.ul_ri_stats.get_mean());
     } else {
-      fmt::print(" {:>3}", "n/a");
+      fmt::print("   1");
     }
 
     fmt::print("   {:>2}", ue.ul_mcs.to_uint());
@@ -444,7 +444,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     if (ue.ul_ri_stats.get_nof_observations() > 0) {
       fmt::format_to(std::back_inserter(buffer), " ul_ri={:.1f}", ue.ul_ri_stats.get_mean());
     } else {
-      fmt::format_to(std::back_inserter(buffer), " ul_ri=n/a");
+      fmt::format_to(std::back_inserter(buffer), " ul_ri=1");
     }
 
     fmt::format_to(std::back_inserter(buffer), " ul_mcs={}", ue.ul_mcs.to_uint());
