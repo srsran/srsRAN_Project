@@ -163,9 +163,6 @@ private:
 
   // List of slots at which there is no PDSCH space for further allocations.
   static_vector<slot_point, SCHEDULER_MAX_K0> slots_with_no_pdsch_space;
-
-  // Number of allocation attempts for DL and UL in the given slot.
-  unsigned dl_attempts_count = 0, ul_attempts_count = 0;
 };
 
 } // namespace srsran

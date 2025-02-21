@@ -138,12 +138,14 @@ protected:
 
   ul_alloc_result allocate_ul_grant(const ue_pusch_grant& grant)
   {
-    ul_ran_slice_candidate slice{slice_inst, get_next_ul_slot(current_slot), rrm_policy.max_prb};
-    return alloc.allocate_ul_grant(to_du_cell_index(0), slice, grant);
+    return allocate_ul_grant(grant, get_next_ul_slot(current_slot));
   }
 
   ul_alloc_result allocate_ul_grant(const ue_pusch_grant& grant, slot_point pusch_slot)
   {
+    if (not cell_cfg.is_dl_enabled(current_slot)) {
+      return ul_alloc_result{alloc_status::invalid_params};
+    }
     ul_ran_slice_candidate slice{slice_inst, pusch_slot, rrm_policy.max_prb};
     return alloc.allocate_ul_grant(to_du_cell_index(0), slice, grant);
   }
@@ -630,50 +632,6 @@ TEST_P(ue_grid_allocator_remaining_rbs_alloc_tester, remaining_dl_rbs_are_alloca
   // Allocates all remaining RBs to UE2.
   ASSERT_EQ(find_ue_pdsch(u2.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
             (total_crbs - crbs_allocated));
-}
-
-TEST_P(ue_grid_allocator_remaining_rbs_alloc_tester, remaining_ul_rbs_are_allocated_if_max_ul_grant_per_slot_is_reached)
-{
-  sched_ue_creation_request_message ue_creation_req =
-      sched_config_helper::create_default_sched_ue_creation_request(this->cfg_builder_params);
-  ue_creation_req.ue_index = to_du_ue_index(0);
-  ue_creation_req.crnti    = to_rnti(0x4601);
-  const ue& u1             = add_ue(ue_creation_req);
-  ue_creation_req.ue_index = to_du_ue_index(1);
-  ue_creation_req.crnti    = to_rnti(0x4602);
-  const ue& u2             = add_ue(ue_creation_req);
-
-  const unsigned recommended_nof_bytes_to_schedule = 200U;
-
-  const crb_interval   cell_crbs = {cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start(),
-                                    cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.stop()};
-  const ue_pusch_grant grant1{.user                  = &slice_ues[u1.ue_index],
-                              .h_id                  = INVALID_HARQ_ID,
-                              .recommended_nof_bytes = recommended_nof_bytes_to_schedule};
-  const ue_pusch_grant grant2{.user                  = &slice_ues[u2.ue_index],
-                              .h_id                  = INVALID_HARQ_ID,
-                              .recommended_nof_bytes = recommended_nof_bytes_to_schedule};
-  // The UE needs to have pending data for its grant to be extended.
-  ues[u2.ue_index].handle_bsr_indication(ul_bsr_indication_message{
-      to_du_cell_index(0), u2.ue_index, u2.crnti, bsr_format::SHORT_BSR, {ul_bsr_lcg_report{lcg_id_t{0}, 3000}}});
-
-  ASSERT_TRUE(run_until(
-      [&]() {
-        allocate_ul_grant(grant1);
-        allocate_ul_grant(grant2);
-      },
-      [&]() {
-        return find_ue_pusch(u1.crnti, res_grid[0].result.ul) != nullptr and
-               find_ue_pusch(u2.crnti, res_grid[0].result.ul) != nullptr;
-      }));
-  // Successfully allocates PUSCH corresponding to the grant.
-  ASSERT_GE(find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.tb_size_bytes, grant1.recommended_nof_bytes);
-
-  const unsigned remaining_crbs =
-      cell_crbs.length() - find_ue_pusch(u1.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length();
-
-  // Allocates all remaining RBs to UE2.
-  ASSERT_EQ(find_ue_pusch(u2.crnti, res_grid[0].result.ul)->pusch_cfg.rbs.type1().length(), remaining_crbs);
 }
 
 class ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester : public ue_grid_allocator_tester

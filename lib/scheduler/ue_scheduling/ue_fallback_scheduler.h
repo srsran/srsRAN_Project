@@ -18,7 +18,7 @@ namespace srsran {
 class pdcch_resource_allocator;
 class pucch_allocator;
 class uci_allocator;
-class cell_resource_allocator;
+struct cell_resource_allocator;
 struct pdcch_dl_information;
 struct pdcch_ul_information;
 struct uci_allocation;

@@ -337,19 +337,20 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(du_cell_index_t    
   }
 
   // Allocate DL grants.
-  unsigned alloc_count = 0;
-  int      rbs_missing = 0;
+  unsigned alloc_count           = 0;
+  int      rbs_missing           = 0;
+  unsigned expected_ues_to_alloc = divide_ceil(rbs_to_alloc, max_rbs_per_grant);
   for (const auto& ue_candidate : dl_newtx_candidates) {
     // Determine the max grant size in RBs.
     unsigned max_grant_size = 0;
-    unsigned alloc_rb_count = alloc_count * max_rbs_per_grant - rbs_missing;
-    if (rbs_to_alloc - alloc_rb_count < max_rbs_per_grant * 2) {
+    unsigned rem_rbs        = rbs_to_alloc - (alloc_count * max_rbs_per_grant - rbs_missing);
+    if (rem_rbs < max_rbs_per_grant * 2 or alloc_count + 1 >= expected_ues_to_alloc) {
       // If we are in the last allocation of the slot, fill remaining RBs.
-      max_grant_size = slice.remaining_rbs();
+      max_grant_size = rem_rbs;
     } else {
       // Account the RBs that were left to be allocated earlier that changes on each allocation.
       max_grant_size = std::max((int)max_rbs_per_grant + rbs_missing, 0);
-      max_grant_size = std::min(max_grant_size, slice.remaining_rbs());
+      max_grant_size = std::min(max_grant_size, rem_rbs);
     }
     if (max_grant_size == 0) {
       break;
@@ -411,19 +412,20 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(du_cell_index_t    
   }
 
   // Allocate UL grants.
-  unsigned alloc_count = 0;
-  int      rbs_missing = 0;
+  unsigned alloc_count           = 0;
+  int      rbs_missing           = 0;
+  unsigned expected_ues_to_alloc = divide_ceil(rbs_to_alloc, max_rbs_per_grant);
   for (const auto& ue_candidate : ul_newtx_candidates) {
     // Determine the max grant size in RBs.
     unsigned max_grant_size = 0;
-    unsigned alloc_rb_count = alloc_count * max_rbs_per_grant - rbs_missing;
-    if (rbs_to_alloc - alloc_rb_count < max_rbs_per_grant * 2) {
+    unsigned rem_rbs        = rbs_to_alloc - (alloc_count * max_rbs_per_grant - rbs_missing);
+    if (rem_rbs < max_rbs_per_grant * 2 or alloc_count + 1 >= expected_ues_to_alloc) {
       // This is the last UE to allocate. Fill the remaining RBs.
-      max_grant_size = slice.remaining_rbs();
+      max_grant_size = rem_rbs;
     } else {
       // Account the RBs that were left to be allocated earlier that changes on each allocation.
       max_grant_size = std::max((int)max_rbs_per_grant + rbs_missing, 0);
-      max_grant_size = std::min(max_grant_size, slice.remaining_rbs());
+      max_grant_size = std::min(max_grant_size, rem_rbs);
     }
     if (max_grant_size == 0) {
       break;
@@ -642,7 +644,7 @@ unsigned intra_slice_scheduler::max_puschs_to_alloc(slot_point                  
   // We cannot allocate more than the number of UEs available.
   int puschs_to_alloc = slice.get_slice_ues().size();
 
-  // The max PUSCHs per slot limit cannot be exceeded.
+  // The max PUSCHs-per-slot limit cannot be exceeded.
   slot_point pusch_slot = slice.get_slot_tx();
   auto&      pusch_res  = (*cells[cell_index].cell_alloc)[pusch_slot].result;
   // Note: We use signed integer to avoid unsigned overflow.
