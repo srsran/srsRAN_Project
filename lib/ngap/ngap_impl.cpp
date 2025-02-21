@@ -83,12 +83,16 @@ bool ngap_impl::update_ue_index(ue_index_t              new_ue_index,
 
 bool ngap_impl::handle_amf_tnl_connection_request()
 {
+  // This could be a reconnection, so make sure the tx_pdu_notifier is released before creating a new one.
+  if (tx_pdu_notifier) {
+    tx_pdu_notifier.reset();
+  }
+
   std::unique_ptr<ngap_message_notifier> pdu_notifier = conn_handler.connect_to_amf();
   if (pdu_notifier == nullptr) {
     return false;
   }
   tx_pdu_notifier = std::make_unique<tx_pdu_notifier_with_logging>(*this, std::move(pdu_notifier));
-
   return true;
 }
 

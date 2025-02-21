@@ -670,6 +670,9 @@ void cu_cp_impl::handle_n2_disconnection(amf_index_t amf_index)
 
   logger.warning("Handling N2 disconnection. Lost PLMNs: {}", fmt::format("{}", fmt::join(plmns, " ")));
 
+  // Notify AMF connection manager about the disconnection.
+  controller->amf_connection_handler().handle_amf_connection_loss(amf_index);
+
   // Stop accepting new UEs for the given PLMNs.
   ue_mng.add_blocked_plmns(plmns);
 
@@ -693,9 +696,8 @@ void cu_cp_impl::handle_n2_disconnection(amf_index_t amf_index)
     }
   }
 
-  // TODO: Retry connection to the AMF.
-
-  // TODO: Notify the DU via F1AP to stop related cells.
+  // Try to reconnect to AMF.
+  controller->amf_connection_handler().reconnect_to_amf(amf_index, &ue_mng);
 }
 
 std::optional<rrc_meas_cfg>
