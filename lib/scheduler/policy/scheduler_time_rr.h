@@ -10,7 +10,7 @@
 #pragma once
 
 #include "scheduler_policy.h"
-#include "slice_allocator.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 
 namespace srsran {
 

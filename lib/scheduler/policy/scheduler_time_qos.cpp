@@ -8,6 +8,7 @@
  */
 
 #include "scheduler_time_qos.h"
+#include "../slicing/slice_ue_repository.h"
 #include "../support/csi_report_helpers.h"
 #include "../ue_scheduling/grant_params_selector.h"
 

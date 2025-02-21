@@ -8,6 +8,7 @@
  */
 
 #include "scheduler_time_rr.h"
+#include "../slicing/slice_ue_repository.h"
 
 using namespace srsran;
 

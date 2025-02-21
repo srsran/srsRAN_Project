@@ -10,7 +10,6 @@
 
 #include "ue_scheduler_impl.h"
 #include "../logging/scheduler_metrics_handler.h"
-#include "../policy/slice_allocator.h"
 
 using namespace srsran;
 

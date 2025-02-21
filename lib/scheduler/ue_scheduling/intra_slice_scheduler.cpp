@@ -167,7 +167,7 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(du_cell_index_t     
       continue;
     }
 
-    ue_pdsch_grant  grant{&u, cell_index, h.id()};
+    ue_pdsch_grant  grant{&u, h.id()};
     dl_alloc_result result = ue_alloc.allocate_dl_grant(cell_index, slice, grant);
 
     if (result.status == alloc_status::skip_slot) {
@@ -221,7 +221,7 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(du_cell_index_t     
       continue;
     }
 
-    ue_pusch_grant  grant{&u, cell_index, h.id()};
+    ue_pusch_grant  grant{&u, h.id()};
     ul_alloc_result result = ue_alloc.allocate_ul_grant(cell_index, slice, grant);
 
     if (result.status == alloc_status::skip_slot) {
@@ -359,7 +359,7 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(du_cell_index_t    
     dl_alloc_result result = ue_alloc.allocate_dl_grant(
         cell_index,
         slice,
-        ue_pdsch_grant{ue_candidate.ue, cell_index, INVALID_HARQ_ID, ue_candidate.pending_bytes, max_rbs_per_grant});
+        ue_pdsch_grant{ue_candidate.ue, INVALID_HARQ_ID, ue_candidate.pending_bytes, max_rbs_per_grant});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
@@ -433,7 +433,7 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(du_cell_index_t    
     ul_alloc_result result = ue_alloc.allocate_ul_grant(
         cell_index,
         slice,
-        ue_pusch_grant{ue_candidate.ue, cell_index, INVALID_HARQ_ID, ue_candidate.pending_bytes, max_rbs_per_grant});
+        ue_pusch_grant{ue_candidate.ue, INVALID_HARQ_ID, ue_candidate.pending_bytes, max_rbs_per_grant});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.

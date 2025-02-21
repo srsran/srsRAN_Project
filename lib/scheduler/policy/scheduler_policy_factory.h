@@ -11,8 +11,11 @@
 #pragma once
 
 #include "scheduler_policy.h"
+#include <memory>
 
 namespace srsran {
+
+struct scheduler_ue_expert_config;
 
 std::unique_ptr<scheduler_policy> create_scheduler_strategy(const scheduler_ue_expert_config& expert_cfg_);
 

@@ -10,13 +10,21 @@
 
 #pragma once
 
-#include "slice_allocator.h"
+#include "srsran/scheduler/result/pdsch_info.h"
+#include "srsran/scheduler/result/pusch_info.h"
 
 namespace srsran {
 
-using ue_sched_priority                       = double;
+class slice_ue;
+class ue_cell;
+
+/// Type used to represent a UE priority.
+using ue_sched_priority = double;
+
+/// Priority value used to represent that the UE must not be scheduled.
 const ue_sched_priority forbid_sched_priority = std::numeric_limits<ue_sched_priority>::min();
 
+/// UE candidate for DL or UL scheduling.
 struct ue_newtx_candidate {
   const slice_ue*   ue;
   const ue_cell*    ue_cc;
