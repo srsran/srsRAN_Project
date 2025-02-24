@@ -610,70 +610,28 @@ byte_buffer srsran::test_helpers::extract_dl_dcch_msg(const byte_buffer& rrc_con
   return pdu;
 }
 
+#ifndef SRSRAN_HAS_ENTERPRISE
+
 f1ap_message srsran::test_helpers::generate_trp_information_response(const trp_id_t& trp_id)
 {
-  f1ap_message pdu = {};
-
-  pdu.pdu.set_successful_outcome();
-  pdu.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_TRP_INFO_EXCHANGE);
-
-  auto& trp_info_resp           = pdu.pdu.successful_outcome().value.trp_info_resp();
-  trp_info_resp->transaction_id = 0;
-
-  asn1::protocol_ie_single_container_s<asn1::f1ap::trp_info_item_trp_resp_o> trp_resp_item_container;
-  asn1::f1ap::trp_info_item_s& trp_info_item = trp_resp_item_container->trp_info_item();
-  trp_info_item.trp_info.trp_id              = trp_id_to_uint(trp_id);
-
-  asn1::f1ap::trp_info_type_resp_item_c trp_info_type_resp_item;
-  trp_info_type_resp_item.set_pci_nr() = 1;
-  trp_info_item.trp_info.trp_info_type_resp_list.push_back(trp_info_type_resp_item);
-
-  trp_info_resp->trp_info_list_trp_resp.push_back(trp_resp_item_container);
-
-  return pdu;
+  return {};
 }
 
 f1ap_message srsran::test_helpers::generate_trp_information_failure(const trp_id_t& trp_id)
 {
-  f1ap_message pdu = {};
-
-  pdu.pdu.set_unsuccessful_outcome();
-  pdu.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_TRP_INFO_EXCHANGE);
-
-  auto& trp_info_fail                      = pdu.pdu.unsuccessful_outcome().value.trp_info_fail();
-  trp_info_fail->transaction_id            = 0;
-  trp_info_fail->cause.set_radio_network() = cause_radio_network_e::unspecified;
-
-  return pdu;
+  return {};
 }
 
 f1ap_message srsran::test_helpers::generate_positioning_information_response(gnb_du_ue_f1ap_id_t du_ue_id,
                                                                              gnb_cu_ue_f1ap_id_t cu_ue_id)
 {
-  f1ap_message pdu = {};
-
-  pdu.pdu.set_successful_outcome();
-  pdu.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_POSITIONING_INFO_EXCHANGE);
-
-  auto& pos_info_resp              = pdu.pdu.successful_outcome().value.positioning_info_resp();
-  pos_info_resp->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(cu_ue_id);
-  pos_info_resp->gnb_du_ue_f1ap_id = gnb_du_ue_f1ap_id_to_uint(du_ue_id);
-
-  return pdu;
+  return {};
 }
 
 f1ap_message srsran::test_helpers::generate_positioning_information_failure(gnb_du_ue_f1ap_id_t du_ue_id,
                                                                             gnb_cu_ue_f1ap_id_t cu_ue_id)
 {
-  f1ap_message pdu = {};
-
-  pdu.pdu.set_unsuccessful_outcome();
-  pdu.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_POSITIONING_INFO_EXCHANGE);
-
-  auto& pos_info_fail                      = pdu.pdu.unsuccessful_outcome().value.positioning_info_fail();
-  pos_info_fail->gnb_cu_ue_f1ap_id         = gnb_cu_ue_f1ap_id_to_uint(cu_ue_id);
-  pos_info_fail->gnb_du_ue_f1ap_id         = gnb_du_ue_f1ap_id_to_uint(du_ue_id);
-  pos_info_fail->cause.set_radio_network() = cause_radio_network_e::unspecified;
-
-  return pdu;
+  return {};
 }
+
+#endif // SRSRAN_HAS_ENTERPRISE
