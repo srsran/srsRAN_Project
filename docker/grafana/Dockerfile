@@ -14,5 +14,9 @@ ADD dashboards   /etc/dashboards
 
 USER root
 ARG LOGO_URL=https://raw.githubusercontent.com/srsran/srsRAN_Project_docs/main/docs/source/.imgs/logo.png
-RUN wget -O /usr/share/grafana/public/img/logo.png ${LOGO_URL}
+RUN if [ -f "${LOGO_URL}" ]; then \
+        mv "${LOGO_URL}" /usr/share/grafana/public/img/logo.png; \
+    else \
+        wget -O /usr/share/grafana/public/img/logo.png ${LOGO_URL}; \
+    fi
 USER grafana
