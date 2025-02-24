@@ -82,6 +82,7 @@ void pdcp_entity_rx::stop()
     stopped = true;
     reordering_timer.stop();
     token_mngr.stop();
+    metrics_timer.stop();
     logger.log_debug("Stopped PDCP entity");
   }
 }
