@@ -43,7 +43,14 @@ public:
   f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
 
-  void stop() override { dl_notif_timer.stop(); }
+  void stop() override
+  {
+    if (stopped) {
+      return;
+    }
+    stopped = true;
+    dl_notif_timer.stop();
+  }
 
   void handle_pdu(nru_ul_message msg) override;
   void handle_sdu(byte_buffer sdu, bool is_retx) override;
@@ -72,6 +79,8 @@ private:
   up_transport_layer_info   ul_tnl_info;
   task_executor&            dl_exec;
   task_executor&            ul_exec;
+
+  bool stopped = false;
 
   /// Sentinel value representing a not-yet set PDCP SN
   static constexpr uint32_t unset_pdcp_sn = UINT32_MAX;

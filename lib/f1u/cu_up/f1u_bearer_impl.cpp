@@ -55,6 +55,9 @@ void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
 
 void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
 {
+  if (stopped) {
+    return;
+  }
   logger.log_debug("F1-U bearer received PDU");
 
   // handle T-PDU
@@ -124,6 +127,10 @@ void f1u_bearer_impl::handle_pdu_impl(nru_ul_message msg)
 
 void f1u_bearer_impl::handle_sdu(byte_buffer sdu, bool is_retx)
 {
+  if (stopped) {
+    return;
+  }
+
   logger.log_debug("F1-U bearer received SDU. size={} is_retx={}", sdu.length(), is_retx);
   nru_dl_message msg = {};
 
@@ -186,6 +193,9 @@ void f1u_bearer_impl::fill_discard_blocks(nru_dl_message& msg)
 
 void f1u_bearer_impl::on_expired_dl_notif_timer()
 {
+  if (stopped) {
+    return;
+  }
   logger.log_debug("DL notification timer expired");
   flush_discard_blocks();
 }
