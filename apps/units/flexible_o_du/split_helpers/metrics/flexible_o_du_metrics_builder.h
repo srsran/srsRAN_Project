@@ -12,6 +12,7 @@
 
 #include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/metrics/metrics_config.h"
+#include "srsran/ran/pci.h"
 
 namespace srsran {
 
@@ -28,6 +29,7 @@ class metrics_notifier;
 /// Builds the flexible O-DU metrics configuration.
 flexible_o_du_metrics_notifier* build_flexible_o_du_metrics_config(std::vector<app_services::metrics_config>& metrics,
                                                                    app_services::metrics_notifier&            notifier,
-                                                                   const app_helpers::metrics_config& metrics_cfg);
+                                                                   const app_helpers::metrics_config& metrics_cfg,
+                                                                   std::vector<pci_t>                 pci_cell_map);
 
 } // namespace srsran

@@ -38,9 +38,17 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
 
   auto du_cells = generate_du_cell_config(du_hi);
 
+  std::vector<pci_t> pci_cell_mapper;
+
+  for (const auto& cell : du_cells) {
+    pci_cell_mapper.push_back(cell.pci);
+  }
   // Create flexible O-DU metrics configuration.
-  flexible_o_du_metrics_notifier* flexible_odu_metrics_notifier = build_flexible_o_du_metrics_config(
-      o_du.metrics, *dependencies.metrics_notifier, config.odu_high_cfg.du_high_cfg.config.metrics.common_metrics_cfg);
+  flexible_o_du_metrics_notifier* flexible_odu_metrics_notifier =
+      build_flexible_o_du_metrics_config(o_du.metrics,
+                                         *dependencies.metrics_notifier,
+                                         config.odu_high_cfg.du_high_cfg.config.metrics.common_metrics_cfg,
+                                         std::move(pci_cell_mapper));
 
   // Create flexible O-DU implementation.
   auto du_impl = std::make_unique<flexible_o_du_impl>(nof_cells, flexible_odu_metrics_notifier);

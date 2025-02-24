@@ -10,6 +10,7 @@
 
 #include "flexible_o_du_metrics_consumers.h"
 #include "flexible_o_du_app_service_metrics.h"
+#include "srsran/ran/pci.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
@@ -30,6 +31,8 @@ DECLARE_METRIC("cpu_usage_percent", metric_cpu_usage, double, "");
 DECLARE_METRIC("bler", metric_bler, double, "");
 DECLARE_METRIC("evm", metric_evm, double, "");
 DECLARE_METRIC("sinr_db", metric_sinr, double, "dB");
+
+DECLARE_METRIC("pci", metric_pci, pci_t, "");
 
 /// DL processing metrics.
 // LDPC encoder metrics.
@@ -157,6 +160,27 @@ DECLARE_METRIC_SET("du", mset_du, mset_du_low);
 /// Metrics context.
 using metric_context_t = srslog::build_context_type<metric_timestamp_tag, mset_du>;
 
+/// RU metrics.
+DECLARE_METRIC("total", ofh_metrics_rx_total_pkts, unsigned, "");
+DECLARE_METRIC("early", ofh_metrics_rx_early_pkts, unsigned, "");
+DECLARE_METRIC("on_time", ofh_metrics_rx_on_time_pkts, unsigned, "");
+DECLARE_METRIC("late", ofh_metrics_rx_late_pkts, unsigned, "");
+DECLARE_METRIC_SET("received_packets",
+                   mset_ofh_metrics_rx,
+                   ofh_metrics_rx_total_pkts,
+                   ofh_metrics_rx_early_pkts,
+                   ofh_metrics_rx_on_time_pkts,
+                   ofh_metrics_rx_late_pkts);
+
+DECLARE_METRIC_SET("ul", ofh_metrics_ul, mset_ofh_metrics_rx);
+DECLARE_METRIC_SET("cell", ofh_metrics_cell, metric_pci, ofh_metrics_ul);
+DECLARE_METRIC_LIST("ofh_cells", mlist_ofh_cells, std::vector<ofh_metrics_cell>);
+
+DECLARE_METRIC_SET("ru", mset_ofh_ru, mlist_ofh_cells);
+
+/// OFH metrics context.
+using ofh_metric_context_t = srslog::build_context_type<metric_timestamp_tag, mset_ofh_ru>;
+
 } // namespace
 
 /// Returns the current time in seconds with ms precision since UNIX epoch.
@@ -171,9 +195,13 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   const flexible_o_du_metrics& odu_metrics =
       static_cast<const flexible_o_du_app_service_metrics_impl&>(metric).get_metrics();
 
+  // Handle RU metrics.
+  oru_metrics_handler.handle_metric(odu_metrics.ru);
+
   if (odu_metrics.du.low.metrics_period == std::chrono::microseconds()) {
     return;
   }
+
   double metric_period_us = static_cast<double>(odu_metrics.du.low.metrics_period.count());
 
   metric_context_t ctx("JSON Upper PHY Metrics");
@@ -716,4 +744,42 @@ void flexible_o_du_metrics_consumer_log::handle_metric(const app_services::metri
 
   // Log RU metrics.
   log_ru_metrics(log_chan, odu_metrics.ru);
+}
+
+static void
+log_ru_ofh_metrics_json(srslog::log_channel& log_chan, const ofh::metrics& metrics, span<const pci_t> pci_sector_map)
+{
+  ofh_metric_context_t ctx("JSON RU-OFH Metrics");
+
+  auto& ofh_cells = ctx.get<mset_ofh_ru>().get<mlist_ofh_cells>();
+
+  srsran_assert(metrics.sectors.size() == pci_sector_map.size(),
+                "OFH metrics number of sectors '{}' does not match number of cells '{}'",
+                metrics.sectors.size(),
+                pci_sector_map.size());
+
+  for (unsigned i = 0, e = metrics.sectors.size(); i != e; ++i) {
+    const ofh::receiver_metrics& rx_metrics = metrics.sectors[i].rx_metrics;
+
+    auto& output = ofh_cells.emplace_back();
+    output.write<metric_pci>(static_cast<unsigned>(pci_sector_map[i]));
+
+    auto& ul_output = output.get<ofh_metrics_ul>().get<mset_ofh_metrics_rx>();
+    ul_output.write<ofh_metrics_rx_total_pkts>(static_cast<unsigned>(
+        rx_metrics.nof_early_messages + rx_metrics.nof_on_time_messages + rx_metrics.nof_late_messages));
+    ul_output.write<ofh_metrics_rx_early_pkts>(static_cast<unsigned>(rx_metrics.nof_early_messages));
+    ul_output.write<ofh_metrics_rx_on_time_pkts>(static_cast<unsigned>(rx_metrics.nof_on_time_messages));
+    ul_output.write<ofh_metrics_rx_late_pkts>(static_cast<unsigned>(rx_metrics.nof_late_messages));
+  }
+
+  // Log the context.
+  ctx.write<metric_timestamp_tag>(get_time_stamp());
+  log_chan(ctx);
+}
+
+void o_ru_metrics_handler_json::handle_metric(const ru_metrics& metric)
+{
+  if (auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
+    log_ru_ofh_metrics_json(log_chan, *ofh_metrics, pci_sector_map);
+  }
 }

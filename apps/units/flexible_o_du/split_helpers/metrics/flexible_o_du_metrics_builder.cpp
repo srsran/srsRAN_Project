@@ -19,7 +19,8 @@ using namespace srsran;
 flexible_o_du_metrics_notifier*
 srsran::build_flexible_o_du_metrics_config(std::vector<app_services::metrics_config>& metrics,
                                            app_services::metrics_notifier&            notifier,
-                                           const app_helpers::metrics_config&         metrics_cfg)
+                                           const app_helpers::metrics_config&         metrics_cfg,
+                                           std::vector<pci_t>                         pci_cell_map)
 {
   flexible_o_du_metrics_notifier* out_value = nullptr;
 
@@ -40,8 +41,8 @@ srsran::build_flexible_o_du_metrics_config(std::vector<app_services::metrics_con
   }
 
   if (metrics_cfg.json_config.enable_json_metrics) {
-    odu_metric.consumers.push_back(
-        std::make_unique<flexible_o_du_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
+    odu_metric.consumers.push_back(std::make_unique<flexible_o_du_metrics_consumer_json>(
+        app_helpers::fetch_json_metrics_log_channel(), std::move(pci_cell_map)));
   }
 
   return out_value;
