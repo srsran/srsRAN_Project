@@ -27,8 +27,13 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
+  // Handle passed DU unit config.
+  void configure_du_cells();
+
   async_task<f1_setup_response_message> start_f1_setup_request();
-  void                                  handle_f1_setup_response(const f1_setup_response_message& resp);
+
+  // Handle F1 setup response with list of cells to activate.
+  async_task<void> handle_f1_setup_response(const f1_setup_response_message& resp);
 
   const du_manager_params& params;
   du_cell_manager&         cell_mng;

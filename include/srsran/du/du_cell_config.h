@@ -69,7 +69,8 @@ struct du_cell_config {
   ssb_configuration  ssb_cfg;
 
   /// Whether the DU automatically attempts to activate the cell or waits for a command from the SMO.
-  bool auto_activated = true;
+  /// Note: If set to false, the DU won't add this cell to the list of served cells in the F1 Setup Request.
+  bool enabled = true;
 
   dmrs_typeA_position dmrs_typeA_pos;
 

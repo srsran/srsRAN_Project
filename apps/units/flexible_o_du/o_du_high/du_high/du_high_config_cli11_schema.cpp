@@ -1485,7 +1485,7 @@ static void configure_cli11_common_cell_args(CLI::App& app, du_high_unit_base_ce
 
     return (tac <= 0xffffffU) ? "" : "TAC value out of range";
   });
-  add_option(app, "--auto_activated", cell_params.auto_activated, "Automatically activate the cell on startup")
+  add_option(app, "--auto_activated", cell_params.enabled, "Automatically activate the cell on startup")
       ->capture_default_str();
   add_option(app,
              "--q_rx_lev_min",

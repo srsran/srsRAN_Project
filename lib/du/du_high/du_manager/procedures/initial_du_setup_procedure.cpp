@@ -32,58 +32,92 @@ void initial_du_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
     report_error("Failed to connect DU to CU-CP");
   }
 
+  // Configure cells.
+  configure_du_cells();
+
   // Initiate F1 Setup.
   CORO_AWAIT_VALUE(response_msg, start_f1_setup_request());
 
-  // Handle F1 setup result.
-  handle_f1_setup_response(response_msg);
+  // Handle F1 setup result and activate cells.
+  CORO_AWAIT(handle_f1_setup_response(response_msg));
 
-  // Configure DU Cells.
-  for (unsigned idx = 0; idx < cell_mng.nof_cells(); ++idx) {
-    du_cell_index_t           cell_index = to_du_cell_index(idx);
-    const du_cell_config&     du_cfg     = cell_mng.get_cell_cfg(cell_index);
-    std::vector<byte_buffer>  bcch_msgs  = srs_du::make_asn1_rrc_cell_bcch_dl_sch_msgs(du_cfg);
+  CORO_RETURN();
+}
+
+void initial_du_setup_procedure::configure_du_cells()
+{
+  // Save cell configurations.
+  for (const du_cell_config& cell : params.ran.cells) {
+    cell_mng.add_cell(cell);
+  }
+
+  // Configure MAC Cells (without activating them).
+  for (unsigned idx = 0, e = cell_mng.nof_cells(); idx != e; ++idx) {
+    du_cell_index_t       cell_index = to_du_cell_index(idx);
+    const du_cell_config& du_cfg     = cell_mng.get_cell_cfg(cell_index);
+
+    std::vector<byte_buffer>  bcch_msgs = make_asn1_rrc_cell_bcch_dl_sch_msgs(du_cfg);
     std::vector<units::bytes> bcch_msg_payload_lens(bcch_msgs.size());
     for (unsigned i = 0; i < bcch_msgs.size(); ++i) {
       bcch_msg_payload_lens[i] = units::bytes(bcch_msgs[i].length());
     }
-    auto                    sched_cfg = srs_du::make_sched_cell_config_req(cell_index, du_cfg, bcch_msg_payload_lens);
+    auto                    sched_cfg = make_sched_cell_config_req(cell_index, du_cfg, bcch_msg_payload_lens);
     error_type<std::string> result =
         config_validators::validate_sched_cell_configuration_request_message(sched_cfg, params.mac.sched_cfg);
     if (not result.has_value()) {
       report_error("Invalid cell={} configuration. Cause: {}", fmt::underlying(cell_index), result.error());
     }
+
+    // Forward config to MAC.
     params.mac.cell_mng.add_cell(make_mac_cell_config(cell_index, du_cfg, std::move(bcch_msgs), sched_cfg));
   }
-
-  // Activate DU Cells.
-  params.mac.cell_mng.get_cell_controller(to_du_cell_index(0)).start();
-
-  CORO_RETURN();
 }
 
 async_task<f1_setup_response_message> initial_du_setup_procedure::start_f1_setup_request()
 {
   // Prepare request to send to F1.
-  f1_setup_request_message request_msg = {};
+  f1_setup_request_message req = {};
 
-  std::vector<std::string> sib1_jsons;
-  fill_f1_setup_request(request_msg, params.ran, &sib1_jsons);
+  req.gnb_du_id   = params.ran.gnb_du_id;
+  req.gnb_du_name = params.ran.gnb_du_name;
+  req.rrc_version = params.ran.rrc_version;
 
-  // Log RRC ASN.1 SIB1 json.
-  for (unsigned i = 0; i != sib1_jsons.size(); ++i) {
-    logger.info(request_msg.served_cells[i].du_sys_info.packed_sib1.begin(),
-                request_msg.served_cells[i].du_sys_info.packed_sib1.end(),
-                "SIB1 cell={}: {}",
-                fmt::underlying(to_du_cell_index(i)),
-                sib1_jsons[i]);
+  bool log_si_info = logger.info.enabled();
+  req.served_cells.reserve(cell_mng.nof_cells());
+  for (unsigned i = 0, e = cell_mng.nof_cells(); i != e; ++i) {
+    du_cell_index_t       cell_index  = to_du_cell_index(i);
+    const du_cell_config& du_cell_cfg = cell_mng.get_cell_cfg(cell_index);
+    if (not du_cell_cfg.enabled) {
+      // Served cell is disabled. Do not forward it to the CU-CP.
+      continue;
+    }
+    auto& serv_cell = req.served_cells.emplace_back();
+
+    // Fill serving cell info.
+    serv_cell.cell_info = make_f1ap_du_cell_info(du_cell_cfg);
+    for (const auto& slice : du_cell_cfg.rrm_policy_members) {
+      serv_cell.slices.push_back(slice.rrc_member.s_nssai);
+    }
+
+    // Pack RRC ASN.1 Serving Cell system info.
+    std::string js_str;
+    serv_cell.du_sys_info = make_f1ap_du_sys_info(du_cell_cfg, log_si_info ? &js_str : nullptr);
+
+    // Log RRC ASN.1 SIB1 json.
+    if (log_si_info) {
+      logger.info(serv_cell.du_sys_info.packed_sib1.begin(),
+                  serv_cell.du_sys_info.packed_sib1.end(),
+                  "SIB1 cell={}: {}",
+                  fmt::underlying(to_du_cell_index(i)),
+                  js_str);
+    }
   }
 
   // Initiate F1 Setup Request.
-  return params.f1ap.conn_mng.handle_f1_setup_request(request_msg);
+  return params.f1ap.conn_mng.handle_f1_setup_request(req);
 }
 
-void initial_du_setup_procedure::handle_f1_setup_response(const f1_setup_response_message& resp)
+async_task<void> initial_du_setup_procedure::handle_f1_setup_response(const f1_setup_response_message& resp)
 {
   if (resp.result != f1_setup_response_message::result_code::success) {
     std::string cause;
@@ -107,4 +141,23 @@ void initial_du_setup_procedure::handle_f1_setup_response(const f1_setup_respons
     }
     report_error("F1 Setup failed. Cause: {}", cause);
   }
+
+  // Success case.
+  // Note: For now, we assume all served cells in the config get activated.
+
+  return launch_async([this, i = 0U](coro_context<async_task<void>>& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    for (; i != cell_mng.nof_cells(); ++i) {
+      if (not cell_mng.get_cell_cfg(to_du_cell_index(i)).enabled) {
+        // Skip cells not forwarded to CU-CP as served cell.
+        continue;
+      }
+
+      // Start cell.
+      CORO_AWAIT(cell_mng.start(to_du_cell_index(i)));
+    }
+
+    CORO_RETURN();
+  });
 }

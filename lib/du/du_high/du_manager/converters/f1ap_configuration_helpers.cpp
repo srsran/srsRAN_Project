@@ -802,8 +802,7 @@ gnb_du_sys_info srsran::srs_du::make_f1ap_du_sys_info(const du_cell_config& du_c
 }
 
 void srsran::srs_du::fill_f1_setup_request(f1_setup_request_message&            req,
-                                           const du_manager_params::ran_params& ran_params,
-                                           std::vector<std::string>*            sib1_jsons)
+                                           const du_manager_params::ran_params& ran_params)
 {
   req.gnb_du_id   = ran_params.gnb_du_id;
   req.gnb_du_name = ran_params.gnb_du_name;
@@ -823,11 +822,7 @@ void srsran::srs_du::fill_f1_setup_request(f1_setup_request_message&            
 
     // Pack RRC ASN.1 Serving Cell system info.
     std::string js_str;
-    serv_cell.du_sys_info = make_f1ap_du_sys_info(cell_cfg, sib1_jsons != nullptr ? &js_str : nullptr);
-
-    if (sib1_jsons != nullptr) {
-      sib1_jsons->push_back(js_str);
-    }
+    serv_cell.du_sys_info = make_f1ap_du_sys_info(cell_cfg, nullptr);
   }
 }
 
