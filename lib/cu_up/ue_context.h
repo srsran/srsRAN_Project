@@ -109,11 +109,14 @@ public:
       CORO_AWAIT(execute_on_blocking(ue_exec_mapper->ctrl_executor(), timers));
       pdu_session_manager.disconnect_all_pdu_sessions();
 
-      // Switch to UE UL executor. Await pending UL crypto tasks.
+      // Switch to UE UL executor. Flush pending UL tasks and
+      // await pending UL crypto tasks.
       CORO_AWAIT(execute_on_blocking(ue_exec_mapper->ul_pdu_executor(), timers));
       CORO_AWAIT(pdu_session_manager.await_crypto_rx_all_pdu_sessions());
 
+      // Switch to UE DL executor. Flush pending DL tasks.
       // TODO await pending DL crypto tasks.
+      CORO_AWAIT(execute_on_blocking(ue_exec_mapper->dl_pdu_executor(), timers));
 
       // Return to UE control executor and stop UE specific executors.
       CORO_AWAIT(execute_on_blocking(ue_exec_mapper->ctrl_executor(), timers));
