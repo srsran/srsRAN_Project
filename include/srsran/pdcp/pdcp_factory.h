@@ -37,6 +37,7 @@ struct pdcp_entity_creation_message {
   timer_factory                   ue_ctrl_timer_factory;
   task_executor*                  ue_dl_executor;
   task_executor*                  ue_ul_executor;
+  task_executor*                  ue_ctrl_executor;
   task_executor*                  crypto_executor;
   uint32_t                        max_nof_crypto_workers;
 };

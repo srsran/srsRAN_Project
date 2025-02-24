@@ -69,6 +69,7 @@ struct srb_pdcp_context {
     // Uplink, Downlink, Control and Crypto run in the same executor
     srb_pdcp.ue_dl_executor         = &executor;
     srb_pdcp.ue_ul_executor         = &inline_executor; // synchronous inline execution required to unpack RRC msgs
+    srb_pdcp.ue_ctrl_executor       = &executor;
     srb_pdcp.crypto_executor        = &inline_executor; // synchronous inline execution required to unpack RRC msgs
     srb_pdcp.max_nof_crypto_workers = max_nof_crypto_workers;
 
