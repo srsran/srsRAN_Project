@@ -12,7 +12,6 @@
 
 #include "ru_dummy_rx_prach_buffer.h"
 #include "ru_dummy_rx_resource_grid.h"
-#include "srsran/adt/circular_array.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_context.h"
@@ -24,12 +23,27 @@
 #include "srsran/srslog/logger.h"
 #include <mutex>
 #include <utility>
+#include <vector>
 
 namespace srsran {
 
 /// Implements a RU dummy sector.
 class ru_dummy_sector : public ru_uplink_plane_handler, public ru_downlink_plane_handler
 {
+  /// Calculates the request buffer size from a downlink data margin.
+  static constexpr unsigned get_request_buffer_size(unsigned margin)
+  {
+    // Start selecting a minimum of 4 slots.
+    unsigned ret = std::max(margin, 4U);
+
+    // Ensure 10240 can be divisible by the selected buffer size.
+    while (10240 % ret != 0) {
+      ++ret;
+    }
+
+    return ret;
+  }
+
 public:
   /// \brief Creates a dummy RU sector.
   /// \param sector_id          Sector identifier.
@@ -50,7 +64,10 @@ public:
     symbol_notifier(symbol_notifier_),
     rx_symbols_resource_grid(sector_id, rx_rg_nof_prb * NRE, MAX_NSYMB_PER_SLOT, rx_rg_nof_ports),
     rx_symbols_prach_buffer(sector_id, rx_prach_nof_ports),
-    dl_data_margin(dl_data_margin_)
+    dl_data_margin(dl_data_margin_),
+    ul_request(get_request_buffer_size(dl_data_margin)),
+    prach_request(get_request_buffer_size(dl_data_margin)),
+    dl_request(get_request_buffer_size(dl_data_margin))
   {
   }
 
@@ -59,7 +76,10 @@ public:
     symbol_notifier(other.symbol_notifier),
     rx_symbols_resource_grid(std::move(other.rx_symbols_resource_grid)),
     rx_symbols_prach_buffer(std::move(other.rx_symbols_prach_buffer)),
-    dl_data_margin(other.dl_data_margin)
+    dl_data_margin(other.dl_data_margin),
+    ul_request(get_request_buffer_size(dl_data_margin)),
+    prach_request(get_request_buffer_size(dl_data_margin)),
+    dl_request(get_request_buffer_size(dl_data_margin))
   {
   }
 
@@ -68,7 +88,7 @@ public:
   {
     std::lock_guard<std::mutex> lock(dl_request_mutex);
     request_information         info = {context, grid.copy()};
-    std::swap(info, dl_request[context.slot.system_slot()]);
+    std::swap(info, dl_request[context.slot.system_slot() % dl_request.size()]);
     ++total_dl_request_count;
 
     // If the previous slot is valid, it is a late.
@@ -84,7 +104,8 @@ public:
   void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override
   {
     std::lock_guard<std::mutex> lock(prach_request_mutex);
-    prach_buffer_context        info = std::exchange(prach_request[context.slot.system_slot()], context);
+    prach_buffer_context        info =
+        std::exchange(prach_request[context.slot.system_slot() % prach_request.size()], context);
     ++total_prach_request_count;
 
     // Detect if there is an unhandled request from a different slot.
@@ -103,7 +124,7 @@ public:
   {
     std::lock_guard<std::mutex> lock(ul_request_mutex);
     request_information         info = {context, grid.copy()};
-    std::swap(info, ul_request[context.slot.system_slot()]);
+    std::swap(info, ul_request[context.slot.system_slot() % ul_request.size()]);
     ++total_ul_request_count;
 
     // Detect if there is an unhandled request from a different slot.
@@ -126,7 +147,7 @@ public:
     request_information dl_info = {};
     {
       std::lock_guard<std::mutex> lock(dl_request_mutex);
-      std::swap(dl_info, dl_request[current_dl_slot.system_slot()]);
+      std::swap(dl_info, dl_request[current_dl_slot.system_slot() % dl_request.size()]);
     }
 
     // Notify with a warning message if the DL previous saved context do not match with the current slot.
@@ -143,7 +164,7 @@ public:
     request_information ul_info = {};
     {
       std::lock_guard<std::mutex> lock(ul_request_mutex);
-      std::swap(ul_info, ul_request[slot.system_slot()]);
+      std::swap(ul_info, ul_request[slot.system_slot() % ul_request.size()]);
     }
 
     // Check if the UL context from the request list is valid.
@@ -175,7 +196,7 @@ public:
     prach_buffer_context prach_context{};
     {
       std::lock_guard<std::mutex> lock(prach_request_mutex);
-      prach_context = std::exchange(prach_request[slot.system_slot()], prach_context);
+      prach_context = std::exchange(prach_request[slot.system_slot() % prach_request.size()], prach_context);
     }
 
     // Check if the UL context from the request list is valid.
@@ -208,9 +229,6 @@ public:
   }
 
 private:
-  /// Maximum number of requests stored in the ring buffers.
-  static constexpr unsigned max_nof_request = 40;
-
   struct request_information {
     resource_grid_context context;
     shared_resource_grid  grid;
@@ -227,15 +245,15 @@ private:
   /// Downlink request margin.
   unsigned dl_data_margin;
   /// Buffer containing the UL requests slots.
-  circular_array<request_information, max_nof_request> ul_request;
+  std::vector<request_information> ul_request;
   /// Protects the circular buffer containing the UL requests.
   std::mutex ul_request_mutex;
   /// Buffer containing the PRACH requests slots.
-  circular_array<prach_buffer_context, max_nof_request> prach_request;
+  std::vector<prach_buffer_context> prach_request;
   /// Protects the circular buffer containing the PRACH requests.
   std::mutex prach_request_mutex;
   /// Circular buffer containing the DL requests indexed by system slot.
-  circular_array<request_information, max_nof_request> dl_request;
+  std::vector<request_information> dl_request;
   /// Protects the circular buffer containing the DL requests.
   std::mutex dl_request_mutex;
   /// \name  Group of event counters.
