@@ -73,7 +73,7 @@ void initial_du_setup_procedure::configure_du_cells()
   }
 }
 
-async_task<f1_setup_response_message> initial_du_setup_procedure::start_f1_setup_request()
+async_task<f1_setup_result> initial_du_setup_procedure::start_f1_setup_request()
 {
   // Prepare request to send to F1.
   f1_setup_request_message req = {};
@@ -117,24 +117,24 @@ async_task<f1_setup_response_message> initial_du_setup_procedure::start_f1_setup
   return params.f1ap.conn_mng.handle_f1_setup_request(req);
 }
 
-async_task<void> initial_du_setup_procedure::handle_f1_setup_response(const f1_setup_response_message& resp)
+async_task<void> initial_du_setup_procedure::handle_f1_setup_response(const f1_setup_result& resp)
 {
-  if (resp.result != f1_setup_response_message::result_code::success) {
+  if (not resp.has_value()) {
     std::string cause;
-    switch (resp.result) {
-      case f1_setup_response_message::result_code::f1_setup_failure:
+    switch (resp.error().result) {
+      case f1_setup_failure::result_code::f1_setup_failure:
         cause = "CU-CP responded with \"F1 Setup Failure\"";
-        if (resp.f1_setup_failure_cause != "unspecified") {
-          cause += fmt::format(" with F1AP cause \"{}\"", resp.f1_setup_failure_cause);
+        if (resp.error().f1_setup_failure_cause != "unspecified") {
+          cause += fmt::format(" with F1AP cause \"{}\"", resp.error().f1_setup_failure_cause);
         }
         break;
-      case f1_setup_response_message::result_code::invalid_response:
+      case f1_setup_failure::result_code::invalid_response:
         cause = "CU-CP response to F1 Setup Request is invalid";
         break;
-      case f1_setup_response_message::result_code::timeout:
+      case f1_setup_failure::result_code::timeout:
         cause = "CU-CP did not respond to F1 Setup Request";
         break;
-      case f1_setup_response_message::result_code::proc_failure:
+      case f1_setup_failure::result_code::proc_failure:
         cause = "DU failed to run F1 Setup Procedure";
       default:
         report_fatal_error("Invalid F1 Setup Response");
@@ -143,21 +143,17 @@ async_task<void> initial_du_setup_procedure::handle_f1_setup_response(const f1_s
   }
 
   // Success case.
-  // Note: For now, we assume all served cells in the config get activated.
 
-  return launch_async([this, i = 0U](coro_context<async_task<void>>& ctx) mutable {
-    CORO_BEGIN(ctx);
+  // Activate respective cells.
+  return launch_async(
+      [this, cells_to_activ = resp.value().cells_to_activate, i = 0U](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
 
-    for (; i != cell_mng.nof_cells(); ++i) {
-      if (not cell_mng.get_cell_cfg(to_du_cell_index(i)).enabled) {
-        // Skip cells not forwarded to CU-CP as served cell.
-        continue;
-      }
+        for (; i != cells_to_activ.size(); ++i) {
+          // Start MAC cell.
+          CORO_AWAIT(cell_mng.start(cell_mng.get_cell_index(cells_to_activ[i].cgi)));
+        }
 
-      // Start cell.
-      CORO_AWAIT(cell_mng.start(to_du_cell_index(i)));
-    }
-
-    CORO_RETURN();
-  });
+        CORO_RETURN();
+      });
 }

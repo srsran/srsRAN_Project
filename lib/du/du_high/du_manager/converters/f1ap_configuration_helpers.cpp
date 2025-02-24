@@ -821,7 +821,6 @@ void srsran::srs_du::fill_f1_setup_request(f1_setup_request_message&            
     }
 
     // Pack RRC ASN.1 Serving Cell system info.
-    std::string js_str;
     serv_cell.du_sys_info = make_f1ap_du_sys_info(cell_cfg, nullptr);
   }
 }

@@ -38,8 +38,8 @@ public:
   {
     adapted->handle_rrc_delivery_report(report);
   }
-  [[nodiscard]] bool                    connect_to_cu_cp() override { return adapted->connect_to_cu_cp(); }
-  async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override
+  [[nodiscard]] bool          connect_to_cu_cp() override { return adapted->connect_to_cu_cp(); }
+  async_task<f1_setup_result> handle_f1_setup_request(const f1_setup_request_message& request) override
   {
     return adapted->handle_f1_setup_request(request);
   }
@@ -161,6 +161,9 @@ public:
               cell_item.nr_cgi         = cell->gnb_du_served_cells_item().served_cell_info.nr_cgi;
               cell_item.nr_pci_present = true;
               cell_item.nr_pci         = cell->gnb_du_served_cells_item().served_cell_info.nr_pci;
+              f1_setup_resp->cells_to_be_activ_list.push_back({});
+              f1_setup_resp->cells_to_be_activ_list.back().load_info_obj(ASN1_F1AP_ID_CELLS_TO_BE_ACTIV_LIST_ITEM);
+              f1_setup_resp->cells_to_be_activ_list.back().value().cells_to_be_activ_list_item() = cell_item;
             }
           }
           f1_setup_resp->gnb_cu_rrc_version = f1_setup->gnb_du_rrc_version;

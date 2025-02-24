@@ -108,7 +108,7 @@ bool f1ap_du_impl::connect_to_cu_cp()
   return true;
 }
 
-async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_request(const f1_setup_request_message& request)
+async_task<f1_setup_result> f1ap_du_impl::handle_f1_setup_request(const f1_setup_request_message& request)
 {
   return launch_async<f1ap_du_setup_procedure>(request, *tx_pdu_notifier, *events, du_mng.get_timer_factory(), ctxt);
 }
