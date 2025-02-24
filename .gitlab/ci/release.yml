@@ -195,7 +195,7 @@ download final branch:
   before_script:
     - *git_setup
   script:
-    - git clone --branch ${PRIVATE_BRANCH} https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git ${CI_PROJECT_DIR}
+    - git clone --recurse-submodules --branch ${PRIVATE_BRANCH} https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@gitlab.com/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME}.git ${CI_PROJECT_DIR}
     - cd ${CI_PROJECT_DIR}
     - git config --global --add safe.directory ${CI_PROJECT_DIR}
   artifacts:
