@@ -68,6 +68,9 @@ struct du_cell_config {
   subcarrier_spacing scs_common;
   ssb_configuration  ssb_cfg;
 
+  /// Whether the DU automatically attempts to activate the cell or waits for a command from the SMO.
+  bool auto_activated = true;
+
   dmrs_typeA_position dmrs_typeA_pos;
 
   /// CORESET#0 index of Table 13-{1, ..., 10}, TS 38.213.

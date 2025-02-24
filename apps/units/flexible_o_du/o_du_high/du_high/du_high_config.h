@@ -750,6 +750,8 @@ struct du_high_unit_base_cell_config {
   std::string plmn = "00101";
   /// TAC.
   tac_t tac = 7;
+  /// Whether the DU automatically attempts to activate the cell or it waits for external request.
+  bool auto_activated = true;
   /// \c q-RxLevMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dBm.
   int q_rx_lev_min = -70;
   /// \c q-QualMin, part of \c cellSelectionInfo, \c SIB1, TS 38.311, in dB.
