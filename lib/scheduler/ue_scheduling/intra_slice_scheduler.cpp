@@ -94,8 +94,8 @@ void intra_slice_scheduler::ul_sched(slot_point             pdcch_slot,
   schedule_ul_newtx_candidates(cell_index, slice, ul_policy, puschs_to_alloc);
 }
 
-/// \brief Helper function that returns a pair with the number of RBs to allocate in this slice scheduling opportunity
-/// and the recommended number of RBs per UE grant.
+/// \brief Helper function that returns a pair with the remaining number of RBs to allocate in this slice scheduling
+/// opportunity and the recommended number of RBs per UE grant.
 template <typename SliceCandidate>
 static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const ue_newtx_candidate> ue_candidates,
                                                                       const cell_resource_allocator& cell_alloc,
@@ -105,7 +105,7 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
   constexpr bool is_dl = std::is_same_v<dl_ran_slice_candidate, SliceCandidate>;
   static_assert(is_dl or std::is_same_v<ul_ran_slice_candidate, SliceCandidate>, "Invalid slice candidate");
 
-  // (Implementation-defined) We use the same searchSpace config to determine the number of RBs available.
+  // [Implementation-defined] We use the same searchSpace config to determine the number of RBs available.
   const ue_cell_configuration& ue_cfg  = ue_candidates[0].ue_cc->cfg();
   const search_space_id        ss_id   = ue_cfg.init_bwp().dl_ded.value()->pdcch_cfg->search_spaces.back().get_id();
   const auto*                  ss_info = ue_cfg.find_search_space(ss_id);
@@ -113,9 +113,12 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
     return std::make_pair(0, 0);
   }
 
-  // Determine how many UE grants to allocate in the slot (assuming full buffer).
-  unsigned expected_grants =
-      std::min(max_ue_grants_to_alloc, std::min(std::max((unsigned)ue_candidates.size() / 4U, 1U), 8U));
+  // Determine how many UE grants to allocate in the slot (assuming full buffer). As an heuristic, we divide the number
+  // of candidates by 4 and set 8 as the maximum number of UEs to be scheduled per slot, assuming full buffer. This
+  // heuristic is a result of a tradeoff between minimizing latency and ensuring we don't deplete the PDCCH resources.
+  static constexpr unsigned MAX_UE_GRANT_PER_SLOT = 8;
+  unsigned                  expected_grants       = std::min(
+      max_ue_grants_to_alloc, std::min(std::max((unsigned)ue_candidates.size() / 4U, 1U), MAX_UE_GRANT_PER_SLOT));
 
   // > Compute maximum nof. PDCCH candidates allowed for each direction.
   // [Implementation-defined]
@@ -131,11 +134,15 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
   // [Implementation-defined] To avoid running out of PDCCH candidates for UL allocation in multi-UE scenario and short
   // BW (e.g. TDD and 10Mhz BW), apply further limits on nof. UEs to be scheduled per slot.
   expected_grants = std::min(max_nof_candidates, expected_grants);
+  if (expected_grants == 0) {
+    return std::make_pair(0, 0);
+  }
 
   const crb_interval& bwp_crb_limits = is_dl ? ss_info->dl_crb_lims : ss_info->ul_crb_lims;
   unsigned            max_nof_rbs    = std::min(bwp_crb_limits.length(), slice.remaining_rbs());
 
-  return std::make_pair(max_nof_rbs, std::max(divide_ceil(max_nof_rbs, expected_grants), 4U));
+  static constexpr unsigned MIN_RB_PER_GRANT = 4;
+  return std::make_pair(max_nof_rbs, std::max(divide_ceil(max_nof_rbs, expected_grants), MIN_RB_PER_GRANT));
 }
 
 unsigned intra_slice_scheduler::schedule_dl_retx_candidates(du_cell_index_t               cell_index,

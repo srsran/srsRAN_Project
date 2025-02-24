@@ -36,6 +36,7 @@ void scheduler_time_rr::compute_ue_ul_priorities(slot_point               pdcch_
                                                  slot_point               pusch_slot,
                                                  span<ue_newtx_candidate> ue_candidates)
 {
+  // \ref compute_ue_dl_priorities
   for (ue_newtx_candidate& candidate : ue_candidates) {
     int index_diff     = candidate.ue->ue_index() - next_ul_ue_index;
     index_diff         = (index_diff < 0) ? (MAX_NOF_DU_UES + index_diff) : index_diff;
@@ -48,7 +49,8 @@ void scheduler_time_rr::save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants)
   if (dl_grants.empty()) {
     return;
   }
-  // Mark the UE after the first allocation to be the first UE to get allocated in the following slot.
+  // Mark the UE after the first allocation to be the first UE to get allocated in the following slot. For example,
+  // if {1,...,N} UEs are allocated, then the next UE will be 2.
   // It is important that we equally distribute the opportunity to be the first UE being allocated in a slot for
   // all UEs. Otherwise, we could end up in a situation, where a UE is always the last one to be allocated and
   // can only use the RBs that were left from the previous UE allocations.
@@ -60,5 +62,6 @@ void scheduler_time_rr::save_ul_newtx_grants(span<const ul_sched_info> ul_grants
   if (ul_grants.empty()) {
     return;
   }
+  // \ref save_dl_newtx_grants
   next_ul_ue_index = to_du_ue_index(ul_grants[0].context.ue_index + 1);
 }
