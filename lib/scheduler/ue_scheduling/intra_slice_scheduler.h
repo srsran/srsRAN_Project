@@ -115,7 +115,6 @@ private:
   unsigned max_puschs_to_alloc(slot_point pdcch_slot, const ul_ran_slice_candidate& slice, du_cell_index_t cell_index);
 
   const scheduler_ue_expert_config& expert_cfg;
-  ue_repository&                    ues;
   srslog::basic_logger&             logger;
 
   slotted_id_vector<du_cell_index_t, cell_t> cells;

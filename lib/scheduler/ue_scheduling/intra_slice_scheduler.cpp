@@ -15,7 +15,7 @@ using namespace srsran;
 intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& expert_cfg_,
                                              ue_repository&                    ues_,
                                              srslog::basic_logger&             logger_) :
-  expert_cfg(expert_cfg_), ues(ues_), logger(logger_), ue_alloc(expert_cfg_, ues_, logger_)
+  expert_cfg(expert_cfg_), logger(logger_), ue_alloc(expert_cfg_, ues_, logger_)
 {
   dl_newtx_candidates.reserve(MAX_NOF_DU_UES);
   ul_newtx_candidates.reserve(MAX_NOF_DU_UES);

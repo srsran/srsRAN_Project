@@ -17,7 +17,7 @@ namespace srsran {
 class scheduler_time_rr : public scheduler_policy
 {
 public:
-  scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_, du_cell_index_t cell_index);
+  scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_);
 
   void add_ue(du_ue_index_t ue_index) override {}
 
@@ -37,8 +37,8 @@ public:
 
 private:
   const scheduler_ue_expert_config expert_cfg;
-  const du_cell_index_t            cell_index;
 
+  /// Indices of the UEs to be allocated first in the next slot.
   du_ue_index_t next_dl_ue_index = MAX_NOF_DU_UES, next_ul_ue_index = MAX_NOF_DU_UES;
 };
 

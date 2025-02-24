@@ -12,8 +12,8 @@
 
 using namespace srsran;
 
-scheduler_time_rr::scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_, du_cell_index_t cell_index_) :
-  expert_cfg(expert_cfg_), cell_index(cell_index_)
+scheduler_time_rr::scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_) :
+  expert_cfg(expert_cfg_)
 {
 }
 
