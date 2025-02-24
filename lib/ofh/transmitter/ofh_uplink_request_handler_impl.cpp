@@ -57,7 +57,7 @@ uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_ha
 }
 
 /// Determines slot index where U-Plane packet is expected for long format PRACH.
-static slot_point get_long_prach_length_slots(const prach_buffer_context& context)
+static slot_point get_long_prach_expected_slot(const prach_buffer_context& context)
 {
   static constexpr unsigned nof_symbols_per_slot = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   srsran_assert(is_long_preamble(context.format), "Long PRACH format expected");
@@ -118,15 +118,16 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   static constexpr double ref_srate_Hz = 30.72e6;
 
   // Store the context in the repository, use correct slot index for long format accounting for PRACH duration.
+  auto slot_idx = context.slot;
   if (is_short_preamble(context.format)) {
     ul_prach_repo->add(context, buffer, std::nullopt, std::nullopt);
   } else {
     // Determine slot index where the PRACH U-Plane is expected.
-    slot_point slot = get_long_prach_length_slots(context);
+    slot_idx = get_long_prach_expected_slot(context);
     // Determine PRACH start symbol.
     unsigned start_symbol = get_prach_start_symbol(context);
 
-    ul_prach_repo->add(context, buffer, start_symbol, slot);
+    ul_prach_repo->add(context, buffer, start_symbol, slot_idx);
   }
 
   if (!is_prach_cp_enabled) {
@@ -150,7 +151,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   unsigned K         = (1000 * scs_to_khz(context.pusch_scs)) / ra_scs_to_Hz(preamble_info.scs);
 
   data_flow_cplane_scheduling_prach_context cp_prach_context;
-  cp_prach_context.slot            = context.slot;
+  cp_prach_context.slot            = slot_idx;
   cp_prach_context.nof_repetitions = preamble_info.nof_symbols;
   cp_prach_context.start_symbol    = get_prach_start_symbol(context);
   cp_prach_context.prach_scs       = preamble_info.scs;
