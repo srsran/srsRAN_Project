@@ -13,7 +13,6 @@
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/cause/nrppa_cause.h"
-#include "srsran/ran/crit_diagnostics.h"
 #include "srsran/ran/positioning/measurement_information.h"
 #include "srsran/ran/positioning/positioning_information_exchange.h"
 #include "srsran/ran/positioning/trp_information_exchange.h"
@@ -29,12 +28,10 @@ struct trp_information_request_t {
 
 struct trp_information_response_t {
   std::vector<trp_information_list_trp_response_item_t> trp_info_list_trp_resp;
-  std::optional<crit_diagnostics_t>                     crit_diagnostics;
 };
 
 struct trp_information_failure_t {
-  nrppa_cause_t                     cause;
-  std::optional<crit_diagnostics_t> crit_diagnostics;
+  nrppa_cause_t cause;
 };
 
 struct measurement_request_t {
@@ -51,13 +48,11 @@ struct measurement_response_t {
   lmf_meas_id_t                                lmf_meas_id;
   ran_meas_id_t                                ran_meas_id;
   std::vector<trp_measurement_response_item_t> trp_meas_resp_list;
-  std::optional<crit_diagnostics_t>            crit_diagnostics;
 };
 
 struct measurement_failure_t {
-  lmf_meas_id_t                     lmf_meas_id;
-  nrppa_cause_t                     cause;
-  std::optional<crit_diagnostics_t> crit_diagnostics;
+  lmf_meas_id_t lmf_meas_id;
+  nrppa_cause_t cause;
 };
 
 struct measurement_report_t {
@@ -91,14 +86,12 @@ struct positioning_information_request_t {
 struct positioning_information_response_t {
   std::optional<srs_configuration_t>       srs_cfg;
   std::optional<sfn_initialization_time_t> sfn_initialization_time;
-  std::optional<crit_diagnostics_t>        crit_diagnostics;
   // Optional list.
   std::vector<ue_tx_teg_assoc_item_t> ue_tx_teg_assoc_list;
 };
 
 struct positioning_information_failure_t {
-  nrppa_cause_t                     cause;
-  std::optional<crit_diagnostics_t> crit_diagnostics;
+  nrppa_cause_t cause;
 };
 
 } // namespace srsran::srs_cu_cp
