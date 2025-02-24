@@ -200,6 +200,10 @@ void srsran::autoderive_cu_up_parameters_after_parsing(CLI::App&          app,
   // Do nothing when PDCP period if present in the config file.
   if (auto* metrics_subcmd = app.get_subcommand("metrics");
       metrics_subcmd && metrics_subcmd->count("--pdcp_report_period")) {
+    // Disable metrics if report period is configured to 0.
+    unit_cfg.metrics.common_metrics_cfg.enable_log_metrics              = unit_cfg.metrics.pdcp.report_period != 0;
+    unit_cfg.metrics.common_metrics_cfg.json_config.enable_json_metrics = unit_cfg.metrics.pdcp.report_period != 0;
+
     return;
   }
 
