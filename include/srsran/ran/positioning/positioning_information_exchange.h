@@ -13,6 +13,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/positioning/common.h"
 #include "srsran/ran/positioning/measurement_information.h"
+#include "srsran/ran/srs/srs_configuration.h"
 #include <cstdint>
 #include <variant>
 
@@ -154,137 +155,13 @@ struct scs_specific_carrier_t {
   uint16_t           carrier_bw;
 };
 
-struct n2_t {
-  uint8_t comb_offset_n2;
-  uint8_t cyclic_shift_n2;
-};
-
-struct n4_t {
-  uint8_t comb_offset_n4;
-  uint8_t cyclic_shift_n4;
-};
-
-using tx_comb_t = std::variant<n2_t, n4_t>;
-
-enum class group_or_seq_hop_t { neither, group_hop, seq_hop };
-
-struct srs_res_t {
-  uint8_t            srs_res_id;
-  uint8_t            nrof_srs_ports;
-  tx_comb_t          tx_comb;
-  uint8_t            start_position;
-  uint8_t            nrof_symbols;
-  uint8_t            repeat_factor;
-  uint8_t            freq_domain_position;
-  uint16_t           freq_domain_shift;
-  uint8_t            c_srs;
-  uint8_t            b_srs;
-  uint8_t            b_hop;
-  group_or_seq_hop_t group_or_seq_hop;
-  res_type_t         res_type;
-  uint16_t           seq_id;
-};
-
-struct n8_t {
-  uint8_t comb_offset_n8;
-  uint8_t cyclic_shift_n8;
-};
-
-using tx_comb_pos_t = std::variant<n2_t, n4_t, n8_t>;
-
-struct res_type_periodic_pos_t {
-  uint32_t periodicity;
-  uint32_t offset;
-};
-
-struct res_type_semi_persistent_pos_t {
-  uint32_t periodicity;
-  uint32_t offset;
-};
-
-struct res_type_aperiodic_pos_t {
-  uint8_t slot_offset;
-};
-
-using res_type_pos_t = std::variant<res_type_periodic_pos_t, res_type_semi_persistent_pos_t, res_type_aperiodic_pos_t>;
-
-struct prs_information_pos_t {
-  uint16_t               prs_id_pos;
-  uint8_t                prs_res_set_id_pos;
-  std::optional<uint8_t> prs_res_id_pos;
-};
-
-using spatial_relation_pos_t = std::variant<ssb_t, prs_information_pos_t>;
-
-struct pos_srs_res_item_t {
-  uint8_t                               srs_pos_res_id;
-  tx_comb_pos_t                         tx_comb_pos;
-  uint8_t                               start_position;
-  uint8_t                               nrof_symbols;
-  uint16_t                              freq_domain_shift;
-  uint8_t                               c_srs;
-  group_or_seq_hop_t                    group_or_seq_hop;
-  res_type_pos_t                        res_type_pos;
-  uint32_t                              seq_id;
-  std::optional<spatial_relation_pos_t> spatial_relation_pos;
-};
-
-struct res_set_type_periodic_t {
-  bool periodic_set;
-};
-
-struct res_set_type_semi_persistent_t {
-  bool semi_persistent_set;
-};
-
-struct res_set_type_aperiodic_t {
-  uint8_t srs_res_trigger_list;
-  uint8_t slot_offset;
-};
-
-using res_set_type_t = std::variant<res_set_type_periodic_t, res_set_type_semi_persistent_t, res_set_type_aperiodic_t>;
-
-struct srs_res_set_t {
-  uint8_t              srs_res_set_id;
-  std::vector<uint8_t> srs_res_id_list;
-  res_set_type_t       res_set_type;
-};
-
-struct pos_res_set_type_periodic_t {
-  bool pos_periodic_set;
-};
-
-struct pos_res_set_type_semi_persistent_t {
-  bool pos_semi_persistent_set;
-};
-
-struct pos_res_set_type_aperiodic_t {
-  uint8_t srs_res_trigger_list;
-};
-
-using pos_res_set_type_t =
-    std::variant<pos_res_set_type_periodic_t, pos_res_set_type_semi_persistent_t, pos_res_set_type_aperiodic_t>;
-
-struct pos_srs_res_set_item_t {
-  uint8_t              pos_srs_res_set_id;
-  std::vector<uint8_t> pos_srs_res_id_per_set_list;
-  pos_res_set_type_t   pos_res_set_type;
-};
-
-struct srs_config_t {
-  std::vector<srs_res_t>              srs_res_list;
-  std::vector<pos_srs_res_item_t>     pos_srs_res_list;
-  std::vector<srs_res_set_t>          srs_res_set_list;
-  std::vector<pos_srs_res_set_item_t> pos_srs_res_set_list;
-};
-
 struct active_ul_bwp_t {
   uint16_t            location_and_bw;
   subcarrier_spacing  scs;
   cyclic_prefix       cp;
   uint16_t            tx_direct_current_location;
   std::optional<bool> shift7dot5k_hz;
-  srs_config_t        srs_cfg;
+  srs_config          srs_cfg;
 };
 
 struct srs_carrier_list_item_t {

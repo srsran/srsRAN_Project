@@ -59,10 +59,10 @@ TEST_F(ue_manager_test, when_more_than_max_ue_indexes_allocated_then_ue_index_in
 /// Test successful creation of a DU UE
 TEST_F(ue_manager_test, when_valid_du_context_added_at_creation_then_ue_added)
 {
-  du_index_t      du_index    = du_index_t::min;
-  rnti_t          rnti        = to_rnti(0x4601);
-  du_cell_index_t pcell_index = du_cell_index_t::min;
-  ue_index_t      ue_index =
+  du_index_t                 du_index    = du_index_t::min;
+  rnti_t                     rnti        = to_rnti(0x4601);
+  srs_cu_cp::du_cell_index_t pcell_index = srs_cu_cp::du_cell_index_t::min;
+  ue_index_t                 ue_index =
       ue_mng.add_ue(du_index, plmn_identity::test_value(), gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
   auto* ue = ue_mng.find_ue(ue_index);
 
@@ -95,10 +95,10 @@ TEST_F(ue_manager_test, when_valid_du_context_added_at_creation_then_ue_added)
 /// Test successful creation of a DU UE
 TEST_F(ue_manager_test, when_du_context_valid_then_ue_updated)
 {
-  du_index_t      du_index    = du_index_t::min;
-  ue_index_t      ue_index    = ue_mng.add_ue(du_index, plmn_identity::test_value());
-  rnti_t          rnti        = to_rnti(0x4601);
-  du_cell_index_t pcell_index = du_cell_index_t::min;
+  du_index_t                 du_index    = du_index_t::min;
+  ue_index_t                 ue_index    = ue_mng.add_ue(du_index, plmn_identity::test_value());
+  rnti_t                     rnti        = to_rnti(0x4601);
+  srs_cu_cp::du_cell_index_t pcell_index = srs_cu_cp::du_cell_index_t::min;
 
   auto* ue = ue_mng.set_ue_du_context(ue_index, gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
 
@@ -131,10 +131,10 @@ TEST_F(ue_manager_test, when_du_context_valid_then_ue_updated)
 /// Test finding invalid UE index
 TEST_F(ue_manager_test, when_ue_index_invalid_then_ue_not_found)
 {
-  du_index_t      du_index    = du_index_t::min;
-  rnti_t          rnti        = to_rnti(0x4601);
-  du_cell_index_t pcell_index = du_cell_index_t::min;
-  ue_index_t      ue_index =
+  du_index_t                 du_index    = du_index_t::min;
+  rnti_t                     rnti        = to_rnti(0x4601);
+  srs_cu_cp::du_cell_index_t pcell_index = srs_cu_cp::du_cell_index_t::min;
+  ue_index_t                 ue_index =
       ue_mng.add_ue(du_index, plmn_identity::test_value(), gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
   auto* ue = ue_mng.find_ue(ue_index);
 
@@ -148,10 +148,10 @@ TEST_F(ue_manager_test, when_ue_index_invalid_then_ue_not_found)
 /// Test duplicate UE creation
 TEST_F(ue_manager_test, when_rnti_already_exits_then_ue_not_added)
 {
-  du_index_t      du_index    = du_index_t::min;
-  rnti_t          rnti        = to_rnti(0x4601);
-  du_cell_index_t pcell_index = du_cell_index_t::min;
-  ue_index_t      ue_index =
+  du_index_t                 du_index    = du_index_t::min;
+  rnti_t                     rnti        = to_rnti(0x4601);
+  srs_cu_cp::du_cell_index_t pcell_index = srs_cu_cp::du_cell_index_t::min;
+  ue_index_t                 ue_index =
       ue_mng.add_ue(du_index, plmn_identity::test_value(), gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
 
   // check that the number of DU UEs is 1
@@ -167,10 +167,10 @@ TEST_F(ue_manager_test, when_rnti_already_exits_then_ue_not_added)
 /// Test successful removal of a DU UE
 TEST_F(ue_manager_test, when_ue_exists_then_removal_successful)
 {
-  du_index_t      du_index    = du_index_t::min;
-  rnti_t          rnti        = to_rnti(0x4601);
-  du_cell_index_t pcell_index = du_cell_index_t::min;
-  ue_index_t      ue_index =
+  du_index_t                 du_index    = du_index_t::min;
+  rnti_t                     rnti        = to_rnti(0x4601);
+  srs_cu_cp::du_cell_index_t pcell_index = srs_cu_cp::du_cell_index_t::min;
+  ue_index_t                 ue_index =
       ue_mng.add_ue(du_index, plmn_identity::test_value(), gnb_du_id_t::min, MIN_PCI, rnti, pcell_index);
   auto* ue = ue_mng.find_ue(ue_index);
 
@@ -183,8 +183,8 @@ TEST_F(ue_manager_test, when_ue_exists_then_removal_successful)
 /// Test creation of multiple DU UEs
 TEST_F(ue_manager_test, when_multiple_ues_added_then_ues_exist)
 {
-  du_index_t      du_index    = du_index_t::min;
-  du_cell_index_t pcell_index = du_cell_index_t::min;
+  du_index_t                 du_index    = du_index_t::min;
+  srs_cu_cp::du_cell_index_t pcell_index = srs_cu_cp::du_cell_index_t::min;
 
   // reduce log level to avoid flooding the log
   ue_mng_logger.set_level(srslog::basic_levels::warning);
@@ -228,8 +228,8 @@ TEST_F(ue_manager_test, when_multiple_ues_added_then_ues_exist)
 /// Test creation of unsupported number of DU UEs
 TEST_F(ue_manager_test, when_more_than_max_ues_added_then_ue_not_created)
 {
-  du_index_t      du_index    = du_index_t::min;
-  du_cell_index_t pcell_index = du_cell_index_t::min;
+  du_index_t                 du_index    = du_index_t::min;
+  srs_cu_cp::du_cell_index_t pcell_index = srs_cu_cp::du_cell_index_t::min;
 
   // reduce log level to avoid flooding the log
   ue_mng_logger.set_level(srslog::basic_levels::warning);
