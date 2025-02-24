@@ -30,7 +30,7 @@ o_du_unit srsran::create_o_du_split6(const split6_o_du_unit_config&             
       e2_metric_connector_manager<e2_du_metrics_connector, e2_du_metrics_notifier, e2_du_metrics_interface>>(
       du_unit_cfg.odu_high_cfg.du_high_cfg.config.cells_cfg.size());
 
-  o_du_high_unit_dependencies odu_hi_unit_dependencies = {du_dependencies.workers->get_du_high_executor_mapper(),
+  o_du_high_unit_dependencies odu_hi_unit_dependencies = {du_dependencies.workers->get_du_high_executor_mapper(0),
                                                           *du_dependencies.f1c_client_handler,
                                                           *du_dependencies.f1u_gw,
                                                           *du_dependencies.timer_mng,

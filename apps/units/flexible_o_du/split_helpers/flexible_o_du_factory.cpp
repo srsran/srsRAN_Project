@@ -62,7 +62,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
     o_du.metrics.emplace_back(std::move(e));
   });
 
-  o_du_high_unit_dependencies odu_hi_unit_dependencies = {dependencies.workers->get_du_high_executor_mapper(),
+  o_du_high_unit_dependencies odu_hi_unit_dependencies = {dependencies.workers->get_du_high_executor_mapper(0),
                                                           *dependencies.f1c_client_handler,
                                                           *dependencies.f1u_gw,
                                                           *dependencies.timer_mng,
