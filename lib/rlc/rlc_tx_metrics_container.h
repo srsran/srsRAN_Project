@@ -103,7 +103,21 @@ public:
     if (not enabled) {
       return;
     }
-    metrics_lo.mode = mode;
+    switch (mode) {
+      case rlc_mode::tm:
+        metrics_lo.mode_specific = rlc_tm_tx_metrics_lower{};
+        break;
+      case rlc_mode::um_bidir:
+      case rlc_mode::um_unidir_dl:
+      case rlc_mode::um_unidir_ul:
+        metrics_lo.mode_specific = rlc_um_tx_metrics_lower{};
+        break;
+      case rlc_mode::am:
+        metrics_lo.mode_specific = rlc_am_tx_metrics_lower{};
+        break;
+      default:
+        break;
+    }
   }
 
   void metrics_add_pdus_no_segmentation(uint32_t num_pdus, size_t num_pdu_bytes)
@@ -152,8 +166,9 @@ public:
     if (not enabled) {
       return;
     }
-    srsran_assert(metrics_lo.mode == rlc_mode::tm, "Wrong mode for TM metrics.");
-    metrics_lo.mode_specific.tm.num_small_allocs += num_allocs;
+    srsran_assert(std::holds_alternative<rlc_tm_tx_metrics_lower>(metrics_lo.mode_specific),
+                  "Wrong mode for TM metrics.");
+    std::get<rlc_tm_tx_metrics_lower>(metrics_lo.mode_specific).num_small_allocs += num_allocs;
   }
 
   // UM specific metrics
@@ -162,10 +177,11 @@ public:
     if (not enabled) {
       return;
     }
-    rlc_mode mode = metrics_lo.mode;
-    srsran_assert(mode == rlc_mode::um_bidir || mode == rlc_mode::um_unidir_dl, "Wrong mode for UM metrics.");
-    metrics_lo.mode_specific.um.num_pdus_with_segmentation += num_pdus;
-    metrics_lo.mode_specific.um.num_pdu_bytes_with_segmentation += num_pdu_bytes;
+    srsran_assert(std::holds_alternative<rlc_um_tx_metrics_lower>(metrics_lo.mode_specific),
+                  "Wrong mode for UM metrics.");
+    auto& um = std::get<rlc_um_tx_metrics_lower>(metrics_lo.mode_specific);
+    um.num_pdus_with_segmentation += num_pdus;
+    um.num_pdu_bytes_with_segmentation += num_pdu_bytes;
   }
 
   // AM specific metrics
@@ -174,9 +190,11 @@ public:
     if (not enabled) {
       return;
     }
-    srsran_assert(metrics_lo.mode == rlc_mode::am, "Wrong mode for AM metrics.");
-    metrics_lo.mode_specific.am.num_pdus_with_segmentation += num_pdus;
-    metrics_lo.mode_specific.am.num_pdu_bytes_with_segmentation += num_pdu_bytes;
+    srsran_assert(std::holds_alternative<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific),
+                  "Wrong mode for AM metrics.");
+    auto& am = std::get<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific);
+    am.num_pdus_with_segmentation += num_pdus;
+    am.num_pdu_bytes_with_segmentation += num_pdu_bytes;
   }
 
   void metrics_add_retx_pdus(uint32_t num_pdus, size_t num_pdu_bytes)
@@ -184,9 +202,11 @@ public:
     if (not enabled) {
       return;
     }
-    srsran_assert(metrics_lo.mode == rlc_mode::am, "Wrong mode for AM metrics.");
-    metrics_lo.mode_specific.am.num_retx_pdus += num_pdus;
-    metrics_lo.mode_specific.am.num_retx_pdu_bytes += num_pdu_bytes;
+    srsran_assert(std::holds_alternative<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific),
+                  "Wrong mode for AM metrics.");
+    auto& am = std::get<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific);
+    am.num_retx_pdus += num_pdus;
+    am.num_retx_pdu_bytes += num_pdu_bytes;
   }
 
   void metrics_add_ctrl_pdus(uint32_t num_pdus, size_t num_pdu_bytes)
@@ -194,9 +214,26 @@ public:
     if (not enabled) {
       return;
     }
-    srsran_assert(metrics_lo.mode == rlc_mode::am, "Wrong mode for AM metrics.");
-    metrics_lo.mode_specific.am.num_ctrl_pdus += num_pdus;
-    metrics_lo.mode_specific.am.num_ctrl_pdu_bytes += num_pdu_bytes;
+    srsran_assert(std::holds_alternative<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific),
+                  "Wrong mode for AM metrics.");
+    auto& am = std::get<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific);
+    am.num_ctrl_pdus += num_pdus;
+    am.num_ctrl_pdu_bytes += num_pdu_bytes;
+  }
+
+  void metrics_add_poll_latency_ms(uint32_t poll_latency_ms)
+  {
+    if (not enabled) {
+      return;
+    }
+    srsran_assert(std::holds_alternative<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific),
+                  "Wrong mode for AM metrics.");
+    auto& am = std::get<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific);
+    am.sum_poll_latency_ms += poll_latency_ms;
+    am.num_poll_latency_meas++;
+
+    am.min_poll_latency_ms = std::min(am.min_poll_latency_ms, std::optional<uint32_t>{poll_latency_ms});
+    am.max_poll_latency_ms = std::max(am.max_poll_latency_ms, std::optional<uint32_t>{poll_latency_ms});
   }
 
   // Metrics getters and setters

@@ -688,6 +688,14 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) SRSRAN_RTSAN_
     }
   }
 
+  // Determine poll latency
+  if (metrics_low.is_enabled() && meta.time_of_poll.has_value()) {
+    auto poll_latency = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() -
+                                                                              meta.time_of_poll.value());
+    metrics_low.metrics_add_poll_latency_ms(poll_latency.count());
+    meta.time_of_poll.reset();
+  }
+
   /**
    * Section 5.3.3.3: Reception of a STATUS report
    * - if the STATUS report comprises a positive or negative acknowledgement for the RLC SDU with sequence
@@ -1121,6 +1129,8 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
       }
       logger.log_debug("Started poll retransmit timer. poll_sn={}", st.poll_sn);
     }
+    // Store the time of poll
+    meta.time_of_poll = std::chrono::steady_clock::now();
   }
   return poll;
 }

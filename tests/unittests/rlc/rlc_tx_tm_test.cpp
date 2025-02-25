@@ -323,8 +323,8 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
       byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
 
   rlc_tx_metrics m = rlc->get_metrics();
-  ASSERT_EQ(m.tx_low.mode, rlc_mode::tm);
-  ASSERT_EQ(m.tx_low.mode_specific.tm.num_small_allocs, 1);
+  ASSERT_TRUE(std::holds_alternative<rlc_tm_tx_metrics_lower>(m.tx_low.mode_specific));
+  ASSERT_EQ(std::get<rlc_tm_tx_metrics_lower>(m.tx_low.mode_specific).num_small_allocs, 1);
 }
 
 int main(int argc, char** argv)

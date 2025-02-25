@@ -20,7 +20,6 @@
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
-#include <mutex>
 
 namespace srsran {
 
@@ -65,6 +64,14 @@ struct rlc_tx_am_state {
   uint32_t byte_without_poll = 0;
 };
 
+/// \brief TX meta information
+///
+/// This struct holds meta information about the RLC entity.
+struct rlc_tx_am_meta_info {
+  /// time point of the last polling bit transmitted
+  std::optional<std::chrono::time_point<std::chrono::steady_clock>> time_of_poll;
+};
+
 class rlc_tx_am_entity : public rlc_tx_entity, public rlc_tx_am_status_handler, public rlc_tx_am_status_notifier
 {
 private:
@@ -76,6 +83,11 @@ private:
 
   // TX state variables
   rlc_tx_am_state st;
+
+  // TX meta information
+  rlc_tx_am_meta_info meta;
+
+  // TX helper variables
 
   // TX SDU buffers
   rlc_sdu_queue_lockfree sdu_queue;

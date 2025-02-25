@@ -56,7 +56,6 @@ rlc_metrics generate_non_zero_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)
   rlc_metric.rx.num_malformed_pdus = 1;
   rlc_metric.rx.sdu_latency_us     = 1000;
 
-  rlc_metric.tx.tx_low.mode                          = rlc_mode::am;
   rlc_metric.tx.tx_high.num_sdus                     = 10;
   rlc_metric.tx.tx_high.num_sdu_bytes                = rlc_metric.tx.tx_high.num_sdus * 1000;
   rlc_metric.tx.tx_high.num_dropped_sdus             = 1;
@@ -66,9 +65,12 @@ rlc_metrics generate_non_zero_rlc_metrics(uint32_t ue_idx, uint32_t bearer_id)
   rlc_metric.tx.tx_low.num_of_pulled_sdus            = 1;
   rlc_metric.tx.tx_low.num_pdus_no_segmentation      = 10;
   rlc_metric.tx.tx_low.num_pdu_bytes_no_segmentation = rlc_metric.tx.tx_low.num_pdus_no_segmentation * 1000;
-  rlc_metric.tx.tx_low.mode_specific.am.num_pdus_with_segmentation = 2;
-  rlc_metric.tx.tx_low.mode_specific.am.num_pdu_bytes_with_segmentation =
-      rlc_metric.tx.tx_low.mode_specific.am.num_pdus_with_segmentation * 1000;
+
+  rlc_metric.tx.tx_low.mode_specific = rlc_am_tx_metrics_lower{};
+  auto& am                           = std::get<rlc_am_tx_metrics_lower>(rlc_metric.tx.tx_low.mode_specific);
+  am.num_pdus_with_segmentation      = 2;
+  am.num_pdu_bytes_with_segmentation = am.num_pdus_with_segmentation * 1000;
+
   return rlc_metric;
 }
 

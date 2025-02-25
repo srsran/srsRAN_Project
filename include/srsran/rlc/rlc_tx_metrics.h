@@ -70,6 +70,11 @@ struct rlc_am_tx_metrics_lower {
   uint32_t num_ctrl_pdus;                   ///< Number of control PDUs
   uint32_t num_ctrl_pdu_bytes;              ///< Number of control PDUs bytes
 
+  uint32_t                num_poll_latency_meas; ///< Number of poll latency measurements
+  uint32_t                sum_poll_latency_ms;   ///< Total poll latency over a (in ms)
+  std::optional<uint32_t> min_poll_latency_ms;   ///< Minimum poll latency (in ms)
+  std::optional<uint32_t> max_poll_latency_ms;   ///< Maximum poll latency (in ms)
+
   void reset()
   {
     num_pdus_with_segmentation      = {};
@@ -78,6 +83,11 @@ struct rlc_am_tx_metrics_lower {
     num_retx_pdu_bytes              = {};
     num_ctrl_pdus                   = {};
     num_ctrl_pdu_bytes              = {};
+
+    num_poll_latency_meas = {};
+    sum_poll_latency_ms   = {};
+    min_poll_latency_ms   = {};
+    max_poll_latency_ms   = {};
   }
 };
 
@@ -94,21 +104,14 @@ struct rlc_tx_metrics_lower {
   std::array<uint32_t, pdu_latency_hist_bins> pdu_latency_hist_ns;
   uint32_t                                    max_pdu_latency_ns;
 
-  /// RLC mode of the entity
-  rlc_mode mode;
-
   /// Mode-specific metrics
   ///
-  /// The associated union member is indicated by \c mode.
-  /// Contents of the other fields are undefined.
-  union {
-    rlc_tm_tx_metrics_lower tm;
-    rlc_um_tx_metrics_lower um;
-    rlc_am_tx_metrics_lower am;
-  } mode_specific;
+  /// Variant that holds mode-specific metrics for TM, UM, or AM.
+  std::variant<rlc_tm_tx_metrics_lower, rlc_um_tx_metrics_lower, rlc_am_tx_metrics_lower> mode_specific;
 
-  uint32_t counter = 0; ///< Counter of amount of times we collected metrics.
-                        ///  Useful to aggregate high and low metrics.
+  /// Counter of amount of times we collected metrics.
+  /// Useful to aggregate high and low metrics.
+  uint32_t counter = 0;
 
   rlc_tx_metrics_lower get()
   {
@@ -127,20 +130,12 @@ struct rlc_tx_metrics_lower {
     max_pdu_latency_ns            = {};
 
     // reset mode-specific values
-    switch (mode) {
-      case rlc_mode::tm:
-        mode_specific.tm.reset();
-        break;
-      case rlc_mode::um_bidir:
-      case rlc_mode::um_unidir_dl:
-        mode_specific.um.reset();
-        break;
-      case rlc_mode::am:
-        mode_specific.am.reset();
-        break;
-      default:
-        // nothing to do here
-        break;
+    if (std::holds_alternative<rlc_tm_tx_metrics_lower>(mode_specific)) {
+      std::get<rlc_tm_tx_metrics_lower>(mode_specific).reset();
+    } else if (std::holds_alternative<rlc_um_tx_metrics_lower>(mode_specific)) {
+      std::get<rlc_um_tx_metrics_lower>(mode_specific).reset();
+    } else if (std::holds_alternative<rlc_am_tx_metrics_lower>(mode_specific)) {
+      std::get<rlc_am_tx_metrics_lower>(mode_specific).reset();
     }
   }
 };
@@ -180,39 +175,31 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
       float_to_eng_string(
           static_cast<float>(m.tx_low.num_pdu_bytes_no_segmentation) * 8 * 1000 / metrics_period.count(), 1, false));
 
-  if (m.tx_low.mode == rlc_mode::tm) {
-    // No TM specific metrics for RX
-  } else if ((m.tx_low.mode == rlc_mode::um_bidir || m.tx_low.mode == rlc_mode::um_unidir_dl)) {
+  if (std::holds_alternative<rlc_um_tx_metrics_lower>(m.tx_low.mode_specific)) {
+    auto& um = std::get<rlc_um_tx_metrics_lower>(m.tx_low.mode_specific);
     fmt::format_to(std::back_inserter(buffer),
                    " num_pdus_with_segm={} pdu_with_segm_rate={}bps",
-                   m.tx_low.mode_specific.um.num_pdus_with_segmentation,
-                   static_cast<float>(m.tx_low.mode_specific.um.num_pdu_bytes_with_segmentation) * 8 /
-                       metrics_period.count());
-  } else if (m.tx_low.mode == rlc_mode::am) {
-    fmt::format_to(std::back_inserter(buffer),
-                   " num_pdus_with_segm={} pdu_rate_with_segm={}bps num_retx={} "
-                   "retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps pull_latency_avg={}",
-                   scaled_fmt_integer(m.tx_low.mode_specific.am.num_pdus_with_segmentation, false),
-                   float_to_eng_string(static_cast<float>(m.tx_low.mode_specific.am.num_pdu_bytes_with_segmentation) *
-                                           8 * 1000 / metrics_period.count(),
-                                       1,
-                                       false),
-                   scaled_fmt_integer(m.tx_low.mode_specific.am.num_retx_pdus, false),
-                   float_to_eng_string(static_cast<float>(m.tx_low.mode_specific.am.num_retx_pdu_bytes) * 8 * 1000 /
-                                           metrics_period.count(),
-                                       1,
-                                       false),
-                   scaled_fmt_integer(m.tx_low.mode_specific.am.num_ctrl_pdus, false),
-                   float_to_eng_string(static_cast<float>(m.tx_low.mode_specific.am.num_ctrl_pdu_bytes) * 8 * 1000 /
-                                           (double)metrics_period.count(),
-                                       1,
-                                       false),
-                   float_to_eng_string(
-                       static_cast<float>(m.tx_low.sum_pdu_latency_ns * 1e-9) /
-                           (m.tx_low.num_pdus_no_segmentation + m.tx_low.mode_specific.am.num_pdus_with_segmentation +
-                            m.tx_low.mode_specific.am.num_retx_pdus + m.tx_low.mode_specific.am.num_ctrl_pdus),
-                       1,
-                       false));
+                   um.num_pdus_with_segmentation,
+                   static_cast<float>(um.num_pdu_bytes_with_segmentation) * 8 / metrics_period.count());
+  } else if (std::holds_alternative<rlc_am_tx_metrics_lower>(m.tx_low.mode_specific)) {
+    auto& am = std::get<rlc_am_tx_metrics_lower>(m.tx_low.mode_specific);
+    fmt::format_to(
+        std::back_inserter(buffer),
+        " num_pdus_with_segm={} pdu_rate_with_segm={}bps num_retx={} "
+        "retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps pull_latency_avg={}",
+        scaled_fmt_integer(am.num_pdus_with_segmentation, false),
+        float_to_eng_string(
+            static_cast<float>(am.num_pdu_bytes_with_segmentation) * 8 * 1000 / metrics_period.count(), 1, false),
+        scaled_fmt_integer(am.num_retx_pdus, false),
+        float_to_eng_string(static_cast<float>(am.num_retx_pdu_bytes) * 8 * 1000 / metrics_period.count(), 1, false),
+        scaled_fmt_integer(am.num_ctrl_pdus, false),
+        float_to_eng_string(
+            static_cast<float>(am.num_ctrl_pdu_bytes) * 8 * 1000 / (double)metrics_period.count(), 1, false),
+        float_to_eng_string(static_cast<float>(m.tx_low.sum_pdu_latency_ns * 1e-9) /
+                                (m.tx_low.num_pdus_no_segmentation + am.num_pdus_with_segmentation + am.num_retx_pdus +
+                                 am.num_ctrl_pdus),
+                            1,
+                            false));
   }
   fmt::format_to(std::back_inserter(buffer), " pdu_latency_hist=[");
   for (unsigned i = 0; i < rlc_tx_metrics_lower::pdu_latency_hist_bins; i++) {
