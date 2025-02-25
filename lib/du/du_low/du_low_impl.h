@@ -10,9 +10,11 @@
 
 #pragma once
 
+#include "du_low_metrics_collector_impl.h"
 #include "srsran/du/du_low/du_low.h"
 #include "srsran/du/du_operation_controller.h"
 #include "srsran/phy/upper/upper_phy.h"
+#include <memory>
 
 namespace srsran {
 namespace srs_du {
@@ -30,6 +32,9 @@ public:
   du_operation_controller& get_operation_controller() override { return *this; }
 
   // See interface for documentation.
+  du_low_metrics_collector* get_metrics_collector() override;
+
+  // See interface for documentation.
   void start() override;
 
   // See interface for documentation.
@@ -38,6 +43,7 @@ public:
 private:
   std::vector<std::unique_ptr<upper_phy>> upper;
   std::vector<upper_phy*>                 upper_ptrs;
+  du_low_metrics_collector_impl           metrics_collector;
 };
 
 } // namespace srs_du

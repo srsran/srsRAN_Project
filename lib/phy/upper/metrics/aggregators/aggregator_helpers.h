@@ -12,7 +12,6 @@
 
 #include "srsran/ran/slot_point.h"
 #include <atomic>
-#include <functional>
 
 namespace srsran {
 

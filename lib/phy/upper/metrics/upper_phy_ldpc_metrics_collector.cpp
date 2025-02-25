@@ -8,12 +8,11 @@
  *
  */
 
-#include "du_low_ldpc_metrics_collector.h"
+#include "upper_phy_ldpc_metrics_collector.h"
 
 using namespace srsran;
-using namespace srs_du;
 
-void du_low_ldpc_metrics_collector::collect_metrics(o_du_low_ldpc_metrics& metrics)
+void upper_phy_ldpc_metrics_collector::collect_metrics(upper_phy_ldpc_metrics& metrics)
 {
   // Collect metrics from the LDPC decoder metrics aggregator.
   metrics.decoder_metrics.avg_cb_latency_us  = ldpc_decoder_aggregator.get_avg_cb_latency_us();

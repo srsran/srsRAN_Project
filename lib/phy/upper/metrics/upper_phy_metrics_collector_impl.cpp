@@ -8,13 +8,11 @@
  *
  */
 
-#include "o_du_low_metrics_collector_impl.h"
-#include "srsran/du/du_low/o_du_low_metrics.h"
+#include "upper_phy_metrics_collector_impl.h"
 
 using namespace srsran;
-using namespace srs_du;
 
-void o_du_low_metrics_collector_impl::collect_o_du_low_metrics(o_du_low_metrics& metrics)
+void upper_phy_metrics_collector_impl::collect_metrics(upper_phy_metrics& metrics)
 {
   if (last_timestamp == std::chrono::time_point<std::chrono::high_resolution_clock>()) {
     last_timestamp         = std::chrono::high_resolution_clock::now();

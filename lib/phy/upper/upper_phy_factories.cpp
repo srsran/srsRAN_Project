@@ -11,6 +11,7 @@
 #include "srsran/phy/upper/upper_phy_factories.h"
 #include "downlink_processor_pool_impl.h"
 #include "downlink_processor_single_executor_impl.h"
+#include "metrics/upper_phy_metrics_collector_impl.h"
 #include "uplink_processor_impl.h"
 #include "uplink_processor_pool_impl.h"
 #include "upper_phy_impl.h"
@@ -29,7 +30,6 @@
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/phy/upper/signal_processors/prs/factories.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_factory.h"
-#include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/support/error_handling.h"
 #include <algorithm>
 
@@ -745,19 +745,26 @@ static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_conf
 class upper_phy_factory_impl : public upper_phy_factory
 {
 public:
-  upper_phy_factory_impl(std::shared_ptr<downlink_processor_factory> downlink_proc_factory_,
-                         std::shared_ptr<resource_grid_factory>      rg_factory_,
-                         upper_phy_metrics_notifiers*                metric_notifier_) :
-    downlink_proc_factory(std::move(downlink_proc_factory_)),
-    rg_factory(std::move(rg_factory_)),
-    metric_notifier(metric_notifier_)
+  explicit upper_phy_factory_impl(const downlink_processor_factory_sw_config& dl_fact_config_) :
+    dl_fact_config(dl_fact_config_), rg_factory(create_resource_grid_factory())
   {
-    srsran_assert(downlink_proc_factory, "Invalid downlink processor factory.");
     srsran_assert(rg_factory, "Invalid resource grid factory.");
   }
 
   std::unique_ptr<upper_phy> create(const upper_phy_config& config) override
   {
+    // Create upper PHY metrics collector.
+    upper_phy_metrics_notifiers*                      metric_notifier = nullptr;
+    std::unique_ptr<upper_phy_metrics_collector_impl> metrics_collector;
+    if (config.enable_metrics) {
+      metrics_collector = std::make_unique<upper_phy_metrics_collector_impl>();
+      metric_notifier   = &(*metrics_collector);
+    }
+
+    std::shared_ptr<downlink_processor_factory> downlink_proc_factory =
+        create_downlink_processor_factory_sw(dl_fact_config, metric_notifier);
+    report_fatal_error_if_not(downlink_proc_factory, "Invalid DL processor factory.");
+
     upper_phy_impl_config phy_config;
     phy_config.ul_bw_rb                    = config.ul_bw_rb;
     phy_config.pusch_max_nof_layers        = config.pusch_max_nof_layers;
@@ -802,13 +809,15 @@ public:
     phy_config.dl_pdu_validator = downlink_proc_factory->create_pdu_validator();
     phy_config.ul_pdu_validator = ul_processor_fact->create_pdu_validator();
 
+    // Add the metrics collector.
+    phy_config.metrics_collector = std::move(metrics_collector);
+
     return std::make_unique<upper_phy_impl>(std::move(phy_config));
   }
 
 private:
-  std::shared_ptr<downlink_processor_factory> downlink_proc_factory;
-  std::shared_ptr<resource_grid_factory>      rg_factory;
-  upper_phy_metrics_notifiers*                metric_notifier;
+  const downlink_processor_factory_sw_config dl_fact_config;
+  std::shared_ptr<resource_grid_factory>     rg_factory;
 };
 
 } // namespace
@@ -1103,10 +1112,7 @@ std::unique_ptr<downlink_processor_pool> srsran::create_dl_processor_pool(downli
 }
 
 std::unique_ptr<upper_phy_factory>
-srsran::create_upper_phy_factory(std::shared_ptr<downlink_processor_factory> downlink_proc_factory,
-                                 std::shared_ptr<resource_grid_factory>      rg_factory,
-                                 upper_phy_metrics_notifiers*                metric_notifier)
+srsran::create_upper_phy_factory(const downlink_processor_factory_sw_config& dl_fact_config)
 {
-  return std::make_unique<upper_phy_factory_impl>(
-      std::move(downlink_proc_factory), std::move(rg_factory), metric_notifier);
+  return std::make_unique<upper_phy_factory_impl>(dl_fact_config);
 }

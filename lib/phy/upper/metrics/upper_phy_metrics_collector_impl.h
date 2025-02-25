@@ -11,22 +11,22 @@
 #pragma once
 
 #include "aggregators/ulsch_demultiplex_metrics_aggregator.h"
-#include "du_low_downlink_processor_metrics_collector.h"
-#include "du_low_ldpc_metrics_collector.h"
-#include "du_low_pdsch_metrics_collector.h"
-#include "du_low_pusch_metrics_collector.h"
-#include "srsran/du/du_low/o_du_low_metrics_collector.h"
+#include "upper_phy_downlink_processor_metrics_collector.h"
+#include "upper_phy_ldpc_metrics_collector.h"
+#include "upper_phy_pdsch_metrics_collector.h"
+#include "upper_phy_pusch_metrics_collector.h"
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
+#include "srsran/phy/upper/upper_phy_metrics.h"
+#include "srsran/phy/upper/upper_phy_metrics_collector.h"
 
 namespace srsran {
-namespace srs_du {
 
 /// O-RAN DU low metrics collector implementation.
-class o_du_low_metrics_collector_impl : public o_du_low_metrics_collector, public upper_phy_metrics_notifiers
+class upper_phy_metrics_collector_impl : public upper_phy_metrics_collector, public upper_phy_metrics_notifiers
 {
 public:
   // See interface for documentation.
-  void collect_o_du_low_metrics(o_du_low_metrics& metrics) override;
+  void collect_metrics(upper_phy_metrics& metrics) override;
 
 private:
   // See interface for documentation.
@@ -165,18 +165,17 @@ private:
   }
 
   /// General downlink processor collector.
-  du_low_downlink_processor_metrics_collector dl_processor_collector;
+  upper_phy_downlink_processor_metrics_collector dl_processor_collector;
   /// LDPC metrics collector.
-  du_low_ldpc_metrics_collector ldpc_collector;
+  upper_phy_ldpc_metrics_collector ldpc_collector;
   /// PUSCH processing metrics collector.
-  du_low_pusch_metrics_collector pusch_collector;
+  upper_phy_pusch_metrics_collector pusch_collector;
   /// PDSCH processing metrics collector.
-  du_low_pdsch_metrics_collector pdsch_collector;
+  upper_phy_pdsch_metrics_collector pdsch_collector;
   /// UL-SCH demultiplexer metrics aggregator.
   ulsch_demultiplex_metrics_aggregator ulsch_demultiplex_aggregator;
   /// Save the time when the metrics where collected last time.
   std::chrono::high_resolution_clock::time_point last_timestamp = {};
 };
 
-} // namespace srs_du
 } // namespace srsran

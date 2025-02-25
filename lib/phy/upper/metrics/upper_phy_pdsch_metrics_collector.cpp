@@ -8,12 +8,11 @@
  *
  */
 
-#include "du_low_pdsch_metrics_collector.h"
+#include "upper_phy_pdsch_metrics_collector.h"
 
 using namespace srsran;
-using namespace srs_du;
 
-void du_low_pdsch_metrics_collector::collect_metrics(o_du_low_pdsch_metrics& metrics)
+void upper_phy_pdsch_metrics_collector::collect_metrics(upper_phy_pdsch_metrics& metrics)
 {
   // Collect metrics from the CRC metrics aggregator.
   metrics.crc_metrics.crc16_avg_latency_us =

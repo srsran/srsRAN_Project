@@ -10,15 +10,17 @@
 
 #pragma once
 
-#include "du_low_metrics.h"
+#include "srsran/adt/static_vector.h"
+#include "srsran/phy/upper/upper_phy_metrics.h"
+#include "srsran/ran/gnb_constants.h"
 
 namespace srsran {
 namespace srs_du {
 
-/// O-RAN DU low metrics.
-struct o_du_low_metrics {
-  /// DU low metrics.
-  du_low_metrics du_lo_metrics;
+/// DU low metrics.
+struct du_low_metrics {
+  /// Sector metrics.
+  static_vector<upper_phy_metrics, MAX_CELLS_PER_DU> sector_metrics;
 };
 
 } // namespace srs_du

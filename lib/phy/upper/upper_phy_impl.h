@@ -21,6 +21,7 @@
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy.h"
+#include "srsran/phy/upper/upper_phy_metrics_collector.h"
 #include "srsran/phy/upper/upper_phy_timing_handler.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include "srsran/srslog/srslog.h"
@@ -64,6 +65,8 @@ struct upper_phy_impl_config {
   std::unique_ptr<downlink_pdu_validator> dl_pdu_validator;
   /// Uplink PDU validator.
   std::unique_ptr<uplink_pdu_validator> ul_pdu_validator;
+  /// Metrics collector.
+  std::unique_ptr<upper_phy_metrics_collector> metrics_collector;
 };
 
 /// \brief Implementation of the upper PHY interface.
@@ -124,6 +127,9 @@ public:
   uplink_pdu_slot_repository_pool& get_uplink_pdu_slot_repository() override;
 
   // See interface for documentation.
+  upper_phy_metrics_collector* get_metrics_collector() override;
+
+  // See interface for documentation.
   const downlink_pdu_validator& get_downlink_pdu_validator() const override;
 
   // See interface for documentation.
@@ -143,6 +149,8 @@ public:
 private:
   /// Upper PHY logger.
   srslog::basic_logger& logger;
+  /// Metrics collector.
+  std::unique_ptr<upper_phy_metrics_collector> metrics_collector;
   /// Receive buffer pool.
   std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
   /// Downlink resource grid pool.

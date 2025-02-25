@@ -14,17 +14,16 @@
 #include "aggregators/ldpc_encoder_metrics_aggregator.h"
 #include "aggregators/ldpc_rate_dematcher_metrics_aggregator.h"
 #include "aggregators/ldpc_rate_matcher_metrics_aggregator.h"
-#include "srsran/du/du_low/o_du_low_metrics.h"
+#include "srsran/phy/upper/upper_phy_metrics.h"
 
 namespace srsran {
-namespace srs_du {
 
 /// LDPC processing metrics collector.
-class du_low_ldpc_metrics_collector
+class upper_phy_ldpc_metrics_collector
 {
 public:
   /// Collects the metrics from the LDPC aggregators and writes them into the given metrics argument.
-  void collect_metrics(o_du_low_ldpc_metrics& metrics);
+  void collect_metrics(upper_phy_ldpc_metrics& metrics);
 
   /// Returns LDPC decoding metric aggregator's interface for metrics notification.
   ldpc_decoder_metric_notifier& get_ldpc_decoder_notifier() { return ldpc_decoder_aggregator; }
@@ -49,5 +48,4 @@ private:
   ldpc_encoder_metrics_aggregator ldpc_encoder_aggregator;
 };
 
-} // namespace srs_du
 } // namespace srsran

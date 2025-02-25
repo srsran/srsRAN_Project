@@ -10,16 +10,15 @@
 
 #pragma once
 
-#include "du_low_metrics.h"
+#include <chrono>
 
 namespace srsran {
-namespace srs_du {
 
-/// O-RAN DU low metrics.
-struct o_du_low_metrics {
-  /// DU low metrics.
-  du_low_metrics du_lo_metrics;
-};
+/// Returns the current time in seconds with ms precision since UNIX epoch.
+inline double get_time_stamp()
+{
+  auto tp = std::chrono::system_clock::now().time_since_epoch();
+  return std::chrono::duration_cast<std::chrono::milliseconds>(tp).count() * 1e-3;
+}
 
-} // namespace srs_du
 } // namespace srsran

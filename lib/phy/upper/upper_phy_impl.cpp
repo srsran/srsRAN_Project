@@ -29,6 +29,7 @@ static upper_phy_timing_notifier_dummy notifier_dummy;
 
 upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   logger(srslog::fetch_basic_logger("PHY", true)),
+  metrics_collector(std::move(config.metrics_collector)),
   rx_buf_pool(std::move(config.rx_buf_pool)),
   dl_rg_pool(std::move(config.dl_rg_pool)),
   ul_rg_pool(std::move(config.ul_rg_pool)),
@@ -108,6 +109,11 @@ uplink_request_processor& upper_phy_impl::get_uplink_request_processor()
 uplink_pdu_slot_repository_pool& upper_phy_impl::get_uplink_pdu_slot_repository()
 {
   return ul_processor_pool->get_slot_pdu_repository_pool();
+}
+
+upper_phy_metrics_collector* upper_phy_impl::get_metrics_collector()
+{
+  return metrics_collector ? metrics_collector.get() : nullptr;
 }
 
 void upper_phy_impl::set_error_notifier(upper_phy_error_notifier& notifier)

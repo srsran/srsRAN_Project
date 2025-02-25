@@ -10,15 +10,19 @@
 
 #pragma once
 
-#include "du_low_metrics.h"
-
 namespace srsran {
 namespace srs_du {
 
-/// O-RAN DU low metrics.
-struct o_du_low_metrics {
-  /// DU low metrics.
-  du_low_metrics du_lo_metrics;
+struct du_low_metrics;
+
+/// DU low metrics collector.
+class du_low_metrics_collector
+{
+public:
+  virtual ~du_low_metrics_collector() = default;
+
+  /// Collect the metrics of this DU low.
+  virtual void collect_metrics(srs_du::du_low_metrics& metrics) = 0;
 };
 
 } // namespace srs_du

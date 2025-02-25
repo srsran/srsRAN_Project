@@ -21,17 +21,16 @@
 #include "aggregators/time_alignment_estimator_metrics_aggregator.h"
 #include "aggregators/transform_precoder_metrics_aggregators.h"
 #include "aggregators/ulsch_demultiplex_metrics_aggregator.h"
-#include "srsran/du/du_low/o_du_low_metrics.h"
+#include "srsran/phy/upper/upper_phy_metrics.h"
 
 namespace srsran {
-namespace srs_du {
 
-/// DU low PUSCH processing metrics collector.
-class du_low_pusch_metrics_collector
+/// PUSCH processing metrics collector.
+class upper_phy_pusch_metrics_collector
 {
 public:
   /// Collects the metrics from the PUSCH aggregators and writes them into the given metrics argument.
-  void collect_metrics(o_du_low_pusch_metrics& metrics);
+  void collect_metrics(upper_phy_pusch_metrics& metrics);
 
   /// Returns CRC calculator metric aggregator's interface for metrics notification.
   crc_calculator_metric_notifier& get_pusch_crc_calculator_notifier() { return pusch_crc_calculator_aggregator; }
@@ -114,5 +113,4 @@ private:
   pusch_processor_metrics_aggregator pusch_processor_aggregator;
 };
 
-} // namespace srs_du
 } // namespace srsran

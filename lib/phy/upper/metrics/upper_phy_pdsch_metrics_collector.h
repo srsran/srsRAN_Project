@@ -16,17 +16,16 @@
 #include "aggregators/pdsch_dmrs_generator_metrics_aggregator.h"
 #include "aggregators/pdsch_processor_metrics_aggregator.h"
 #include "aggregators/scrambling_metrics_aggregator.h"
-#include "srsran/du/du_low/o_du_low_metrics.h"
+#include "srsran/phy/upper/upper_phy_metrics.h"
 
 namespace srsran {
-namespace srs_du {
 
-/// DU low PDSCH processing metrics collector.
-class du_low_pdsch_metrics_collector
+/// PDSCH processing metrics collector.
+class upper_phy_pdsch_metrics_collector
 {
 public:
   /// Collects the metrics from the PDSCH aggregators and writes them into the given metrics argument.
-  void collect_metrics(o_du_low_pdsch_metrics& metrics);
+  void collect_metrics(upper_phy_pdsch_metrics& metrics);
 
   /// Returns CRC calculator metric aggregator's interface for metrics notification.
   crc_calculator_metric_notifier& get_pdsch_crc_calculator_notifier() { return pdsch_crc_calculator_aggregator; }
@@ -67,5 +66,4 @@ private:
   pdsch_dmrs_generator_metrics_aggregator pdsch_dmrs_generator_aggregator;
 };
 
-} // namespace srs_du
 } // namespace srsran

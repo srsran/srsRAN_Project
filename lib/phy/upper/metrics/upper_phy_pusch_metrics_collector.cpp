@@ -8,12 +8,11 @@
  *
  */
 
-#include "du_low_pusch_metrics_collector.h"
+#include "upper_phy_pusch_metrics_collector.h"
 
 using namespace srsran;
-using namespace srs_du;
 
-void du_low_pusch_metrics_collector::collect_metrics(o_du_low_pusch_metrics& metrics)
+void upper_phy_pusch_metrics_collector::collect_metrics(upper_phy_pusch_metrics& metrics)
 {
   // Collect metrics from the CRC metrics aggregator.
   auto& crc                 = metrics.crc_metrics;

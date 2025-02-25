@@ -19,6 +19,7 @@ class uplink_pdu_validator;
 class uplink_request_processor;
 class upper_phy_error_handler;
 class upper_phy_error_notifier;
+class upper_phy_metrics_collector;
 class upper_phy_rx_results_notifier;
 class upper_phy_rx_symbol_handler;
 class upper_phy_timing_handler;
@@ -63,6 +64,9 @@ public:
 
   /// Returns the uplink slot PDU repository of this upper PHY.
   virtual uplink_pdu_slot_repository_pool& get_uplink_pdu_slot_repository() = 0;
+
+  /// Returns the metrics collector of this upper PHY or nullptr if upper PHY metrics are not enabled.
+  virtual upper_phy_metrics_collector* get_metrics_collector() = 0;
 
   /// Returns the downlink PDU validator of this upper PHY.
   virtual const downlink_pdu_validator& get_downlink_pdu_validator() const = 0;
