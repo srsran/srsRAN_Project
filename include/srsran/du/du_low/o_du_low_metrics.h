@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "srsran/ran/slot_point.h"
 #include <chrono>
+#include <utility>
 
 namespace srsran {
 namespace srs_du {
@@ -292,7 +294,7 @@ struct o_du_low_pdsch_metrics {
     /// Minimum processing latency in microseconds.
     double min_latency_us;
     /// Maximum processing latency in microseconds.
-    double max_latency_us;
+    std::pair<double, slot_point> max_latency_us;
     /// Average return time in microseconds (processing time of a single-thread PDSCH processor).
     double avg_return_time_us;
     /// Processing rate in Mbps.

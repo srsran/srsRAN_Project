@@ -11,6 +11,7 @@
 #include "flexible_o_du_metrics_consumers.h"
 #include "flexible_o_du_app_service_metrics.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/slot_point.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
@@ -584,10 +585,11 @@ static void log_upper_phy_metrics_verbose(fmt::basic_memory_buffer<char, str_buf
 
   const auto& pdsch_proc = du_lo.pdsch_metrics.pdsch_proc_metrics;
   fmt::format_to(std::back_inserter(buffer),
-                 "{:<25} avg_latency={:.2f} us, avg_return_latency={:.2f} us, proc_rate={:.2f} Mbps\n",
+                 "{:<25} avg_latency={:.2f} us, max_latency={:.2f} us at slot={}, proc_rate={:.2f} Mbps\n",
                  "  PDSCH Processor:",
                  validate_fp_value(pdsch_proc.avg_latency_us),
-                 validate_fp_value(pdsch_proc.avg_return_time_us),
+                 validate_fp_value(pdsch_proc.max_latency_us.first),
+                 pdsch_proc.max_latency_us.second,
                  validate_fp_value(pdsch_proc.processing_rate_Mbps));
 
   const auto& pdsch_dmrs = du_lo.pdsch_metrics.dmrs_metrics;

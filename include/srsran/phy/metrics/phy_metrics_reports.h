@@ -12,6 +12,7 @@
 
 #include "srsran/phy/upper/channel_coding/crc_calculator.h"
 #include "srsran/ran/sch/modulation_scheme.h"
+#include "srsran/ran/slot_point.h"
 #include "srsran/support/resource_usage/resource_usage_utils.h"
 #include "srsran/support/units.h"
 #include <chrono>
@@ -207,6 +208,8 @@ struct transform_precoder_metrics {
 
 /// Collects PDSCH processor metrics.
 struct pdsch_processor_metrics {
+  /// Slot context.
+  slot_point slot;
   /// Codeblock size.
   units::bytes tbs;
   /// Elapsed time between the start of the processing and the return.
