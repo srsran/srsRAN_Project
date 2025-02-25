@@ -75,8 +75,11 @@ private:
       std::chrono::nanoseconds min{std::chrono::nanoseconds::max()};
       std::chrono::nanoseconds max{0};
       std::chrono::nanoseconds sum{0};
+      slot_point               max_slot;
 
       mac_dl_cell_metric_report::latency_report get_report(unsigned nof_slots) const;
+
+      void save_sample(slot_point sl_tx, std::chrono::nanoseconds tdiff);
     };
 
     unsigned     nof_slots = 0;

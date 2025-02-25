@@ -18,10 +18,22 @@ mac_dl_cell_metric_report::latency_report
 mac_dl_cell_metric_handler::non_persistent_data::latency_data::get_report(unsigned nof_slots_) const
 {
   mac_dl_cell_metric_report::latency_report result;
-  result.min     = min;
-  result.max     = max;
-  result.average = sum / nof_slots_;
+  result.min      = min;
+  result.max      = max;
+  result.average  = sum / nof_slots_;
+  result.max_slot = max_slot;
   return result;
+}
+
+void mac_dl_cell_metric_handler::non_persistent_data::latency_data::save_sample(slot_point               sl_tx,
+                                                                                std::chrono::nanoseconds tdiff)
+{
+  sum += tdiff;
+  min = std::min(min, tdiff);
+  if (max < tdiff) {
+    max      = tdiff;
+    max_slot = sl_tx;
+  }
 }
 
 mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(
@@ -59,19 +71,13 @@ void mac_dl_cell_metric_handler::handle_slot_completion(slot_point              
 
   // Update metrics.
   data.nof_slots++;
-  data.wall.sum += time_diff;
-  data.wall.max = std::max(data.wall.max, time_diff);
-  data.wall.min = std::min(data.wall.min, time_diff);
+  data.wall.save_sample(sl_tx, time_diff);
   if (rusg_diff.has_value()) {
     auto& rusg_val = rusg_diff.value();
     data.count_vol_context_switches += rusg_val.vol_ctxt_switch_count;
     data.count_invol_context_switches += rusg_val.invol_ctxt_switch_count;
-    data.user.sum += rusg_val.user_time;
-    data.user.max = std::max(std::chrono::nanoseconds{rusg_val.user_time}, data.user.max);
-    data.user.min = std::min(std::chrono::nanoseconds{rusg_val.user_time}, data.user.min);
-    data.sys.sum += rusg_val.sys_time;
-    data.sys.max = std::max(std::chrono::nanoseconds{rusg_val.sys_time}, data.sys.max);
-    data.sys.min = std::min(std::chrono::nanoseconds{rusg_val.sys_time}, data.sys.min);
+    data.user.save_sample(sl_tx, std::chrono::nanoseconds{rusg_val.user_time});
+    data.sys.save_sample(sl_tx, std::chrono::nanoseconds{rusg_val.sys_time});
   }
 
   if (not next_report_slot.valid()) {
