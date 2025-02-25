@@ -668,11 +668,7 @@ void cu_cp_impl::handle_n2_disconnection(amf_index_t amf_index)
 {
   std::vector<plmn_identity> plmns = ngap_db->find_ngap(amf_index)->get_ngap_context().get_supported_plmns();
 
-  std::string plmn_list;
-  for (const auto& plmn : plmns) {
-    plmn_list += plmn.to_string() + " ";
-  }
-  logger.warning("Handling N2 disconnection. Lost PLMNs: {}", plmn_list);
+  logger.warning("Handling N2 disconnection. Lost PLMNs: {}", fmt::format("{}", fmt::join(plmns, " ")));
 
   // Stop accepting new UEs for the given PLMNs.
   ue_mng.add_blocked_plmns(plmns);
