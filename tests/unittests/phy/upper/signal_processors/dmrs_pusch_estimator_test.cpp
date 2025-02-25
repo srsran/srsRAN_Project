@@ -109,7 +109,9 @@ protected:
         create_dmrs_pusch_estimator_factory_sw(prg_factory,
                                                low_papr_sequence_gen_factory_factory,
                                                port_estimator_factory,
-                                               port_channel_estimator_td_interpolation_strategy::average);
+                                               port_channel_estimator_fd_smoothing_strategy::filter,
+                                               port_channel_estimator_td_interpolation_strategy::average,
+                                               true);
     ASSERT_TRUE(estimator_factory);
 
     // Create actual channel estimator.

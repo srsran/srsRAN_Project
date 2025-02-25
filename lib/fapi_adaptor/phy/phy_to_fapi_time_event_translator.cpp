@@ -24,6 +24,8 @@
 #include "fapi_to_phy_translator.h"
 #include "srsran/fapi/message_builders.h"
 #include "srsran/fapi/message_validators.h"
+#include "srsran/phy/upper/upper_phy_timing_context.h"
+#include "srsran/phy/upper/upper_phy_timing_handler.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;
@@ -47,10 +49,11 @@ phy_to_fapi_time_event_translator::phy_to_fapi_time_event_translator(fapi_to_phy
 {
 }
 
-void phy_to_fapi_time_event_translator::on_tti_boundary(slot_point slot)
+void phy_to_fapi_time_event_translator::on_tti_boundary(const upper_phy_timing_context& context)
 {
-  translator.handle_new_slot(slot);
+  translator.handle_new_slot(context.slot);
 
   // Delivering the slot.indication message must always be the last step.
-  time_notifier.get().on_slot_indication(fapi::build_slot_indication_message(slot.sfn(), slot.slot_index()));
+  time_notifier.get().on_slot_indication(
+      fapi::build_slot_indication_message(context.slot.sfn(), context.slot.slot_index(), context.time_point));
 }

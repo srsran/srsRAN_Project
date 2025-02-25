@@ -32,14 +32,14 @@ namespace resource_usage_utils {
 
 using rusage_meas_clock      = std::chrono::high_resolution_clock;
 using rusage_meas_time_point = rusage_meas_clock::time_point;
-using rusage_meas_duration   = std::chrono::microseconds;
+using rusage_meas_duration   = std::chrono::nanoseconds;
 
-enum class rusage_measurement_type : __rusage_who_t { THREAD = RUSAGE_THREAD, PROCESS = RUSAGE_SELF };
+enum class rusage_measurement_type : __rusage_who_t { THREAD = RUSAGE_THREAD, PROCESS = RUSAGE_SELF, NONE };
 
 /// Used to store the CPU time used by a thread or process, as well as process's memory usage.
 struct measurements {
   /// Duration of the measurement.
-  std::chrono::microseconds duration;
+  std::chrono::nanoseconds duration;
   /// User CPU time.
   std::chrono::microseconds user_time;
   /// System CPU time.
@@ -49,7 +49,6 @@ struct measurements {
   /// Resets measurements making them invalid.
   void reset()
   {
-    duration    = std::chrono::microseconds::zero();
     user_time   = std::chrono::microseconds::zero();
     system_time = std::chrono::microseconds::zero();
     max_rss     = -1;
@@ -62,7 +61,7 @@ struct measurements {
 measurements operator+(const measurements& lhs, const measurements& rhs);
 
 /// Snapshot of the resource usage statistics of a specific thread or process at a given point in time.
-struct snapshot {
+struct cpu_snapshot {
   /// Time point when the snapshot was taken.
   rusage_meas_time_point tp;
   /// User CPU time.
@@ -74,7 +73,7 @@ struct snapshot {
 };
 
 /// On success returns a snapshot of the resource usage, otherwise returns an errno value.
-expected<snapshot, int> now(rusage_measurement_type type);
+expected<cpu_snapshot, int> cpu_usage_now(rusage_measurement_type type);
 
 /// Convert measurements to metrics.
 resource_usage_metrics res_usage_measurements_to_metrics(measurements measurements, std::chrono::microseconds period);

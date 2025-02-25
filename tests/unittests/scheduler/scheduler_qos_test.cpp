@@ -35,7 +35,7 @@ static logical_channel_config::qos_info make_qos(qos_prio_level_t          prio 
                                                  unsigned                  dl_gbr = 0,
                                                  unsigned                  ul_gbr = 0)
 {
-  logical_channel_config::qos_info qos;
+  logical_channel_config::qos_info qos{};
   qos.qos.average_window_ms      = 100;
   qos.qos.priority               = prio;
   qos.qos.packet_delay_budget_ms = pdb.count();
@@ -79,13 +79,13 @@ public:
     this->add_cell(cell_cfg_req);
 
     // Create PUCCH builder that will be used to add UEs.
-    srs_du::pucch_builder_params pucch_basic_params{.nof_ue_pucch_f0_or_f1_res_harq       = 8,
-                                                    .nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8,
-                                                    .nof_sr_resources                     = 8,
-                                                    .nof_csi_resources                    = 8};
-    auto&                        f1_params = pucch_basic_params.f0_or_f1_params.emplace<srs_du::pucch_f1_params>();
-    f1_params.nof_cyc_shifts               = srs_du::nof_cyclic_shifts::twelve;
-    f1_params.occ_supported                = true;
+    pucch_builder_params pucch_basic_params{.nof_ue_pucch_f0_or_f1_res_harq       = 8,
+                                            .nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8,
+                                            .nof_sr_resources                     = 8,
+                                            .nof_csi_resources                    = 8};
+    auto&                f1_params = pucch_basic_params.f0_or_f1_params.emplace<pucch_f1_params>();
+    f1_params.nof_cyc_shifts       = pucch_nof_cyclic_shifts::twelve;
+    f1_params.occ_supported        = true;
     pucch_cfg_builder.setup(cell_cfg_list[0], pucch_basic_params);
   }
 
@@ -137,7 +137,7 @@ public:
 
     // Handle PUCCHs.
     for (const pucch_info& pucch : this->last_sched_res_list[to_du_cell_index(0)]->ul.pucchs) {
-      if (pucch.format == pucch_format::FORMAT_1 and pucch.format_1.sr_bits != sr_nof_bits::no_sr) {
+      if (pucch.format() == pucch_format::FORMAT_1 and pucch.uci_bits.sr_bits != sr_nof_bits::no_sr) {
         // Skip SRs for this test.
         continue;
       }

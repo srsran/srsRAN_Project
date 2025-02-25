@@ -25,12 +25,10 @@
 #include "ru_ofh_controller_impl.h"
 #include "ru_ofh_downlink_plane_handler_proxy.h"
 #include "ru_ofh_error_handler_impl.h"
+#include "ru_ofh_metrics_collector_impl.h"
 #include "ru_ofh_timing_notifier_impl.h"
 #include "ru_ofh_uplink_plane_handler_proxy.h"
-#include "srsran/ofh/ethernet/ethernet_frame_pool.h"
-#include "srsran/ofh/ethernet/ethernet_gateway.h"
 #include "srsran/ofh/ofh_sector.h"
-#include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/ofh/timing/ofh_timing_manager.h"
 #include "srsran/ru/ofh/ru_ofh_configuration.h"
 #include "srsran/ru/ru.h"
@@ -42,8 +40,9 @@ namespace srsran {
 
 /// Open Fronthaul implementation configuration.
 struct ru_ofh_impl_config {
-  unsigned nof_slot_offset_du_ru;
-  unsigned nof_symbols_per_slot;
+  unsigned           nof_slot_offset_du_ru;
+  unsigned           nof_symbols_per_slot;
+  subcarrier_spacing scs;
 };
 
 /// Open Fronthaul implementation dependencies.
@@ -70,6 +69,9 @@ public:
   // See interface for documentation.
   ru_uplink_plane_handler& get_uplink_plane_handler() override;
 
+  // See interface for documentation.
+  ru_metrics_collector* get_metrics_collector() override;
+
 private:
   ru_ofh_timing_notifier_impl               timing_notifier;
   ru_ofh_error_handler_impl                 error_handler;
@@ -78,6 +80,7 @@ private:
   ru_ofh_controller_impl                    controller;
   ru_downlink_plane_handler_proxy           downlink_handler;
   ru_uplink_plane_handler_proxy             uplink_handler;
+  ru_ofh_metrics_collector_impl             metrics_collector;
 };
 
 } // namespace srsran

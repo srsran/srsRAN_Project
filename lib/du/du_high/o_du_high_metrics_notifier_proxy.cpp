@@ -21,6 +21,8 @@
  */
 
 #include "o_du_high_metrics_notifier_proxy.h"
+#include "srsran/du/du_high/o_du_high_metrics.h"
+#include "srsran/support/error_handling.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -28,14 +30,14 @@ using namespace srs_du;
 namespace {
 
 /// Scheduler metrics notifier dummy implementation.
-class scheduler_metrics_notifier_dummy : public scheduler_metrics_notifier
+class scheduler_metrics_notifier_dummy : public mac_metrics_notifier
 {
 public:
   // See interface for documentation.
-  void report_metrics(const scheduler_cell_metrics& report) override {}
+  void on_new_metrics_report(const mac_metric_report& report) override {}
 };
 
-/// ORAN DU high metrics notifier dummy implementation.
+/// O-RAN DU high metrics notifier dummy implementation.
 class o_du_high_metrics_notifier_dummy : public o_du_high_metrics_notifier
 {
 public:
@@ -51,15 +53,15 @@ public:
 static o_du_high_metrics_notifier_dummy dummy_odu_high_notifier;
 static scheduler_metrics_notifier_dummy dummy_scheduler_notifier;
 
-o_du_high_metrics_notifier_proxy::o_du_high_metrics_notifier_proxy(scheduler_metrics_notifier* notifier_) :
-  sched_notifier(notifier_ ? notifier_ : &dummy_scheduler_notifier), odu_hi_notifier(&dummy_odu_high_notifier)
+o_du_high_metrics_notifier_proxy::o_du_high_metrics_notifier_proxy(mac_metrics_notifier* notifier_) :
+  mac_notifier(notifier_ ? notifier_ : &dummy_scheduler_notifier), odu_hi_notifier(&dummy_odu_high_notifier)
 {
 }
 
-void o_du_high_metrics_notifier_proxy::report_metrics(const scheduler_cell_metrics& report)
+void o_du_high_metrics_notifier_proxy::on_new_metrics_report(const mac_metric_report& report)
 {
   // Continue to report as expected.
-  sched_notifier->report_metrics(report);
+  mac_notifier->on_new_metrics_report(report);
 
   // Report to E2.
   // :TODO:

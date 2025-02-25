@@ -25,6 +25,7 @@
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 
 namespace srsran {
 
@@ -46,12 +47,15 @@ public:
                        span<const float>          noise_vars,
                        modulation_scheme          mod) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base->demodulate_soft(llrs, symbols, noise_vars, mod);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric(
-        {.modulation = mod, .nof_symbols = static_cast<unsigned>(symbols.size()), .elapsed = tp_after - tp_before});
+    demodulation_mapper_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base->demodulate_soft(llrs, symbols, noise_vars, mod);
+    }
+    metrics.modulation  = mod;
+    metrics.nof_symbols = static_cast<unsigned>(symbols.size());
+    notifier.on_new_metric(metrics);
   }
 
 private:

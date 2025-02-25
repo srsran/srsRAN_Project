@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/base_message.h"
+#include "srsran/fapi/messages/dl_pdcch_pdu.h"
 
 namespace srsran {
 namespace fapi {

@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "apps/services/logger/metrics_logger_appconfig.h"
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
@@ -61,8 +61,6 @@ struct du_high_unit_logger_config {
   srslog::basic_levels f1u_level  = srslog::basic_levels::warning;
   srslog::basic_levels gtpu_level = srslog::basic_levels::warning;
 
-  metrics_logger_appconfig metrics_level;
-
   /// Maximum number of bytes to write when dumping hex arrays.
   int hex_max_size = 0;
   /// Set to true to log broadcasting messages and all PRACH opportunities.
@@ -77,6 +75,8 @@ struct du_high_unit_logger_config {
 struct du_high_unit_ta_sched_expert_config {
   /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
   unsigned ta_measurement_slot_period = 80;
+  ///  Delay in nof. slots between issuing the TA_CMD and starting TA measurements.
+  unsigned ta_measurement_slot_prohibit_period = 0;
   /// Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. Possible valid
   /// values {0,...,32}. If set to less than zero, issuing of TA Command is disabled.
   /// \remark T_A is defined in TS 38.213, clause 4.2.
@@ -140,7 +140,7 @@ struct du_high_unit_pdsch_config {
   unsigned fixed_sib1_mcs = 5;
   /// Number of UE DL HARQ processes.
   unsigned nof_harqs = 16;
-  /// Maximum number of times an HARQ process can be retransmitted, before it gets discarded.
+  /// Maximum number of times a DL HARQ process can be retransmitted, before it gets discarded.
   unsigned max_nof_harq_retxs = 4;
   /// Maximum number of consecutive DL KOs before an RLF is reported.
   unsigned max_consecutive_kos = 100;
@@ -190,6 +190,8 @@ struct du_high_unit_pusch_config {
   /// Maximum modulation and coding scheme index for C-RNTI PUSCH allocations. To set a fixed MCS, set \c min_ue_mcs
   /// equal to the \c max_ue_mcs.
   unsigned max_ue_mcs = 28;
+  /// Maximum number of times a UL HARQ process can be retransmitted, before it gets discarded.
+  unsigned max_nof_harq_retxs = 4;
   /// Maximum number of consecutive UL KOs before an RLF is reported.
   unsigned max_consecutive_kos = 100;
   /// Redundancy version sequence to use. Each element can have one of the following values: {0, 1, 2, 3}.
@@ -251,6 +253,8 @@ struct du_high_unit_pusch_config {
 
   /// Enable closed-loop PUSCH power control.
   bool enable_closed_loop_pw_control = false;
+  /// Enable bandwidth adaptation to prevent negative PHR.
+  bool enable_phr_bw_adaptation = false;
   /// Target PUSCH SINR to be achieved with close-loop power control, in dB. Only relevant if \c
   /// enable_closed_loop_pw_control is set to true.
   float target_pusch_sinr{10.0f};
@@ -278,7 +282,7 @@ struct du_high_unit_pucch_config {
   /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
   bool use_format_0 = false;
   /// Select the format for the PUCCH resources belonging to PUCCH resource set 1. Values: {2, 3, 4}.
-  unsigned set1_format = 2;
+  pucch_format set1_format = pucch_format::FORMAT_2;
   /// Number of PUCCH resources per UE (per PUCCH resource set) for HARQ-ACK reporting.
   /// Values {3,...,8} if \c use_format_0 is set. Else, Values {1,...,8}.
   /// \remark We assume the number of PUCCH F0/F1 resources for HARQ-ACK is equal to the equivalent number of Format 2
@@ -512,6 +516,69 @@ struct du_high_unit_sib_config {
     std::optional<unsigned> si_window_position;
   };
 
+  /// \brief Earthquake and Tsunami Warning System (ETWS) message parameters.
+  ///
+  /// ETWS messages are broadcasted over SIB 6 and SIB 7. SIB 6 carries the ETWS primary notification, while SIB-7
+  /// carries the secondary notification.
+  struct etws_config {
+    /// \brief ETWS message ID (see \ref sib6_info::message_id). Values: {0, ..., 0xffff}
+    /// \remark See TS23.041 Section 9.4.1.2.2 for a list of meaningful values.
+    unsigned message_id = 0x1104;
+    /// \brief ETWS message serial number (see \ref sib6_info::serial_number). Values: {0, ..., 0xffff}
+    /// \remark See TS23.041 Section 9.4.1.2.1 for a list of meaningful values.
+    unsigned serial_num = 0x3000;
+    /// \brief ETWS warning type (see \ref sib6_info::warning_type). Values: {0, ..., 0xffff}
+    /// \remark See TS23.041 Section 9.3.24 for a list of meaningful values.
+    unsigned warning_type = 0x0980;
+    /// \brief CBS Coding scheme used for the warning message Values: {0, ..., 0xff}.
+    ///
+    /// Supported coding schemes:
+    ///   - 0x00..0x0f: Languages using GSM-7 default alphabet.
+    ///   - 0x40..0x4f: General data coding indication (uncompressed text, no message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0x50..0x5f: General data coding indication (uncompressed text, message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0xf0..0xff: Data coding / message handling.
+    ///     Bit 2 must be set to 0 (GSM-7 encoding).
+    ///
+    /// \remark See TS23.038 Section 5 for a list of meaningful values.
+    unsigned data_coding_scheme = 0x00;
+    /// \brief ETWS warning message.
+    ///
+    /// Character support depends on the chosen coding scheme (see \ref data_coding_scheme).
+    ///
+    /// \remark Required if SIB-7 is scheduled in \ref si_sched_info, otherwise leave unset.
+    std::optional<std::string> warning_message;
+  };
+
+  /// \brief Commercial Mobile Alert Service (CMAS) message parameters.
+  ///
+  /// CMAS messages are broadcasted over SIB 8.
+  struct cmas_config {
+    /// \brief CMAS message ID (see \ref sib8_info::message_id). Values: {0, ..., 0xffff}
+    /// \remark See TS23.041 Section 9.4.1.2.2 for a list of meaningful values.
+    unsigned message_id = 0x1112;
+    /// \brief CMAS message serial number (see \ref sib8_info::serial_number). Values: {0, ..., 0xffff}
+    /// \remark See TS23.041 Section 9.4.1.2.1 for a list of meaningful values.
+    unsigned serial_num = 0x3003;
+    /// \brief CBS Coding scheme used for the warning message Values: {0, ..., 0xff}.
+    ///
+    /// Supported coding schemes:
+    ///   - 0x00..0x0f: Languages using GSM-7 default alphabet.
+    ///   - 0x40..0x4f: General data coding indication (uncompressed text, no message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0x50..0x5f: General data coding indication (uncompressed text, message class meaning).
+    ///     Set bits 3..2 to 0b00 for GSM-7 or 0b10 for UCS-2. Other character sets are not supported.
+    ///   - 0xf0..0xff: Data coding / message handling.
+    ///     Bit 2 must be set to 0 (GSM-7 encoding).
+    ///
+    /// \remark See TS23.038 Section 5 for a list of meaningful values.
+    unsigned data_coding_scheme = 0x00;
+    /// \brief CMAS warning message.
+    /// \remark Character support depends on the chosen coding scheme (see \ref data_coding_scheme).
+    std::string warning_message;
+  };
+
   struct sib_ue_timers_and_constants {
     /// t300
     /// Values (in ms): {100, 200, 300, 400, 600, 1000, 1500, 2000}
@@ -545,6 +612,10 @@ struct du_high_unit_sib_config {
   sib_ue_timers_and_constants ue_timers_and_constants;
   /// Parameters of the SIB19.
   sib19_info sib19;
+  /// ETWS configuration parameters.
+  std::optional<etws_config> etws_cfg;
+  /// CMAS configuration parameters.
+  std::optional<cmas_config> cmas_cfg;
 };
 
 struct du_high_unit_csi_config {
@@ -772,12 +843,12 @@ struct du_high_unit_cell_config {
 struct du_high_unit_metrics_config {
   struct rlc_metrics {
     /// RLC report period in ms.
-    unsigned report_period = 0;
+    unsigned report_period = 1000;
   } rlc;
-  bool enable_json_metrics = false;
   /// Scheduler report period in milliseconds.
-  unsigned sched_report_period      = 1000;
-  bool     autostart_stdout_metrics = false;
+  unsigned                    sched_report_period      = 1000;
+  bool                        autostart_stdout_metrics = false;
+  app_helpers::metrics_config common_metrics_cfg;
 };
 
 struct du_high_unit_pcap_config {

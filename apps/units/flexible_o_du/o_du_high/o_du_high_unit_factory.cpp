@@ -21,10 +21,14 @@
  */
 
 #include "o_du_high_unit_factory.h"
+#include "apps/helpers/metrics/metrics_helpers.h"
 #include "apps/services/e2/e2_metric_connector_manager.h"
 #include "du_high/commands/du_high_cmdline_commands.h"
 #include "du_high/commands/du_high_remote_commands.h"
 #include "du_high/du_high_config_translators.h"
+#include "du_high/metrics/du_high_mac_metrics.h"
+#include "du_high/metrics/du_high_mac_metrics_consumers.h"
+#include "du_high/metrics/du_high_mac_metrics_producer.h"
 #include "du_high/metrics/du_high_rlc_metrics.h"
 #include "du_high/metrics/du_high_rlc_metrics_consumers.h"
 #include "du_high/metrics/du_high_rlc_metrics_producer.h"
@@ -121,7 +125,6 @@ build_scheduler_du_metrics(std::vector<app_services::metrics_config>&           
                            std::vector<std::unique_ptr<app_services::cmdline_command>>& unit_commands,
                            app_services::metrics_notifier&                              metrics_notifier,
                            const o_du_high_unit_config&                                 o_du_high_unit_cfg,
-                           srslog::sink&                                                json_sink,
                            e2_du_metrics_notifier&                                      e2_notifier)
 {
   // Scheduler cell metrics.
@@ -139,16 +142,16 @@ build_scheduler_du_metrics(std::vector<app_services::metrics_config>&           
   unit_commands.push_back(std::make_unique<toggle_stdout_metrics_app_command>(*metrics_stdout));
   sched_metrics_cfg.consumers.push_back(std::move(metrics_stdout));
 
-  if (du_hi_cfg.loggers.metrics_level.level == srslog::basic_levels::info) {
+  const app_helpers::metrics_config& metrics_cfg = du_hi_cfg.metrics.common_metrics_cfg;
+  if (metrics_cfg.enable_log_metrics) {
     sched_metrics_cfg.consumers.push_back(
-        std::make_unique<scheduler_cell_metrics_consumer_log>(srslog::fetch_basic_logger("METRICS")));
+        std::make_unique<scheduler_cell_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
   // Connect JSON metrics reporter to DU Scheduler UE metrics.
-  if (du_hi_cfg.metrics.enable_json_metrics) {
-    srslog::log_channel& json_channel = srslog::fetch_log_channel("JSON_channel", json_sink, {});
-    json_channel.set_enabled(true);
-    sched_metrics_cfg.consumers.push_back(std::make_unique<scheduler_cell_metrics_consumer_json>(json_channel));
+  if (metrics_cfg.json_config.enable_json_metrics) {
+    sched_metrics_cfg.consumers.push_back(
+        std::make_unique<scheduler_cell_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
   }
 
   // Connect E2 agent to DU Scheduler UE metrics.
@@ -162,15 +165,14 @@ build_scheduler_du_metrics(std::vector<app_services::metrics_config>&           
 static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metrics_config>& metrics,
                                                   app_services::metrics_notifier&            metrics_notifier,
                                                   const o_du_high_unit_config&               o_du_high_unit_cfg,
-                                                  srslog::sink&                              json_sink,
                                                   e2_du_metrics_notifier&                    e2_notifier)
 {
   rlc_metrics_notifier*      out       = nullptr;
   const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
 
   // RLC metrics.
-  if (!du_hi_cfg.metrics.enable_json_metrics && !o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2 &&
-      du_hi_cfg.loggers.metrics_level.level != srslog::basic_levels::info) {
+  const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
+  if (!metrics_config.enabled() && !o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
     return out;
   }
 
@@ -184,20 +186,47 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   rlc_metrics_cfg.producers.push_back(std::move(rlc_metric_gen));
 
   // Consumers.
-  if (du_hi_cfg.loggers.metrics_level.level == srslog::basic_levels::info) {
+  if (metrics_config.enable_log_metrics) {
     rlc_metrics_cfg.consumers.push_back(
-        std::make_unique<rlc_metrics_consumer_log>(srslog::fetch_basic_logger("METRICS")));
+        std::make_unique<rlc_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
-  if (du_hi_cfg.metrics.enable_json_metrics) {
-    srslog::log_channel& rlc_json_channel = srslog::fetch_log_channel("JSON_RLC_channel", json_sink, {});
-    rlc_json_channel.set_enabled(true);
-    rlc_metrics_cfg.consumers.push_back(std::make_unique<rlc_metrics_consumer_json>(rlc_json_channel));
+  if (metrics_config.json_config.enable_json_metrics) {
+    rlc_metrics_cfg.consumers.push_back(
+        std::make_unique<rlc_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
   }
 
   if (o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
     rlc_metrics_cfg.consumers.push_back(std::make_unique<rlc_metrics_consumer_e2>(e2_notifier));
   }
+
+  return out;
+}
+
+static mac_metrics_notifier* build_mac_du_metrics(std::vector<app_services::metrics_config>& metrics,
+                                                  app_services::metrics_notifier&            metrics_notifier,
+                                                  const o_du_high_unit_config&               o_du_high_unit_cfg)
+{
+  mac_metrics_notifier*      out       = nullptr;
+  const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
+
+  // MAC metrics.
+  const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
+  if (!metrics_config.json_config.enable_json_metrics) {
+    return out;
+  }
+
+  app_services::metrics_config& mac_metrics_cfg = metrics.emplace_back();
+  mac_metrics_cfg.metric_name                   = mac_metrics_properties_impl().name();
+  mac_metrics_cfg.callback                      = mac_metrics_callback;
+
+  // Fill the generator.
+  auto mac_metric_gen = std::make_unique<mac_metrics_producer_impl>(metrics_notifier);
+  out                 = &(*mac_metric_gen);
+  mac_metrics_cfg.producers.push_back(std::move(mac_metric_gen));
+
+  mac_metrics_cfg.consumers.push_back(
+      std::make_unique<mac_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
 
   return out;
 }
@@ -249,14 +278,15 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
                                  odu_unit.commands.cmdline,
                                  dependencies.metrics_notifier,
                                  o_du_high_unit_cfg,
-                                 dependencies.json_sink,
                                  dependencies.e2_metric_connectors.get_e2_metric_notifier(0));
 
   du_hi_deps.rlc_metrics_notif = build_rlc_du_metrics(odu_unit.metrics,
                                                       dependencies.metrics_notifier,
                                                       o_du_high_unit_cfg,
-                                                      dependencies.json_sink,
                                                       dependencies.e2_metric_connectors.get_e2_metric_notifier(0));
+
+  du_hi_deps.mac_metrics_notif =
+      build_mac_du_metrics(odu_unit.metrics, dependencies.metrics_notifier, o_du_high_unit_cfg);
 
   // Configure test mode
   if (du_high_unit_cfg.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {

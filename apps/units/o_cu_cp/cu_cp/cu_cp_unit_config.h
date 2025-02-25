@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_pcap_config.h"
 #include "cu_cp_unit_logger_config.h"
 #include "srsran/ran/gnb_id.h"
@@ -268,6 +269,10 @@ struct cu_cp_unit_qos_config {
 struct cu_cp_unit_metrics_config {
   /// Statistics report period in seconds
   unsigned cu_cp_statistics_report_period = 1;
+  struct pdcp_metrics {
+    unsigned report_period = 1000; // PDCP report period in ms
+  } pdcp;
+  app_helpers::metrics_config common_metrics_cfg;
 };
 
 /// CU-CP application unit configuration.

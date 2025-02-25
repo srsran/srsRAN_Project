@@ -32,4 +32,4 @@ target_link_libraries(srsran_flexible_o_du_split_dynamic
         srsran_ru_dummy
         srsran_split_8_app_unit_helpers
         srsran_split_7_2_app_unit_helpers
-        srsran_flexible_du_helpers)
+        srsran_flexible_o_du_helpers)

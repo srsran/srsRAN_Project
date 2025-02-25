@@ -42,9 +42,9 @@ static bool validate_upper_phy_threads_appconfig(const du_low_unit_expert_thread
     valid = false;
   }
 
-  if ((config.pdsch_processor_type != "auto") && (config.pdsch_processor_type != "concurrent") &&
-      config.pdsch_processor_type != "generic" && (config.pdsch_processor_type != "lite")) {
-    fmt::print("Invalid PDSCH processor type. Valid types are: auto, generic, concurrent and lite.\n");
+  if ((config.pdsch_processor_type != "auto") && (config.pdsch_processor_type != "flexible") &&
+      (config.pdsch_processor_type != "generic")) {
+    fmt::print("Invalid PDSCH processor type. Valid types are: auto, generic and flexible.\n");
     valid = false;
   }
 

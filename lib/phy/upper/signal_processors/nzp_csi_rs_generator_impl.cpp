@@ -28,9 +28,10 @@
 
 using namespace srsran;
 
-bool nzp_csi_rs_configuration_validator_impl::is_valid(const nzp_csi_rs_generator::config_t& config)
+error_type<std::string>
+nzp_csi_rs_configuration_validator_impl::is_valid(const nzp_csi_rs_generator::config_t& config) const
 {
-  return true;
+  return default_success_t();
 }
 
 const std::array<const nzp_csi_rs_generator_impl::cdm_sequence, 2> nzp_csi_rs_generator_impl::fd_cdm2_table = {{

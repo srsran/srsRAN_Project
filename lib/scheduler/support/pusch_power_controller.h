@@ -66,6 +66,7 @@ private:
 
   const rnti_t rnti;
   const bool   cl_pw_control_enabled;
+  const bool   phr_bw_adaptation_enabled;
   const int    p0_nominal_pusch;
   // Configuration for the PUSCH power control.
   std::optional<pusch_config::pusch_power_control> pusch_pwr_ctrl;

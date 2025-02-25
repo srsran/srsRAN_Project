@@ -67,7 +67,7 @@ public:
                            closed_rx_window_handler_dependencies&& dependencies);
 
   // See interface for documentation.
-  void on_new_symbol(slot_symbol_point symbol_point) override;
+  void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override;
 
   /// Starts logging unreceived OFH messages.
   void start_logging_unreceived_messages()

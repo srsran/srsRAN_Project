@@ -27,11 +27,13 @@ from collections import defaultdict
 from time import sleep
 from typing import Optional, Sequence, Tuple, Union
 
+import pytest
+from google.protobuf.empty_pb2 import Empty
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
-from retina.protocol.base_pb2 import PLMN
+from retina.protocol.base_pb2 import Metrics, PLMN
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ric_pb2_grpc import NearRtRicStub
@@ -578,6 +580,7 @@ def test_smoke(
         always_download_artifacts=False,
         bitrate_threshold=0,
         ue_stop_timeout=30,
+        gnb_post_cmd=("", "metrics --enable_log_metrics=True"),
     )
 
 
@@ -824,3 +827,7 @@ def _iperf(
         warning_as_errors=warning_as_errors,
         ric=ric,
     )
+
+    metrics: Metrics = gnb.GetMetrics(Empty())
+    if metrics.total.dl_bitrate + metrics.total.ul_bitrate <= 0:
+        pytest.fail("No traffic detected in GNB metrics")

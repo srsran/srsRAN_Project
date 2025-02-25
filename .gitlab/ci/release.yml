@@ -13,6 +13,9 @@ include:
   - project: softwareradiosystems/ci/tools
     ref: "20"
     file: .gitlab/ci-shared/features/all.yml
+  - project: softwareradiosystems/ci/tools
+    ref: "20"
+    file: .gitlab/ci-shared/tools/docker.yml
 
 stages:
   - pre private
@@ -342,7 +345,6 @@ notify branch published:
       artifacts: true
   variables:
     CI_DESCRIPTION: "$PUBLIC_REPO GitHub Updated"
-    MSG: "$PUBLIC_BRANCH branch has been updated."
     SLACK_CHANNEL: $SLACK_CHANNEL_OK
     LEVEL: "ok"
 
@@ -477,3 +479,94 @@ update ppa packages:
     - job: release public
       optional: false
       artifacts: false
+
+srsran image:
+  extends: .docker-builder
+  stage: post release
+  rules:
+    - if: *on_custom_push
+  retry: 2
+  variables:
+    # CI & Infrastructure
+    GIT_LFS_SKIP_SMUDGE: 1
+    KUBERNETES_CPU_REQUEST: ${SRS_CPU_LIMIT}
+    KUBERNETES_CPU_LIMIT: ${SRS_CPU_LIMIT}
+    KUBERNETES_MEMORY_REQUEST: ${SRS_MEMORY_LIMIT}
+    KUBERNETES_MEMORY_LIMIT: ${SRS_MEMORY_LIMIT}
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "70G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "70G"
+    # Docker
+    REGISTRY_URI: ${GITLAB_REGISTRY_URI}
+    REGISTRY_ORG: /${SRSRAN_IMAGE_PREFIX}
+    CONTEXT: ${CI_PROJECT_DIR}
+    DOCKERFILE: docker
+    MODE: publish
+    # Arguments
+    DOCKER_UHD_VERSION: "4.7.0.0"
+    DOCKER_DPDK_VERSION: "23.11.1"
+  timeout: 2 hours
+  tags:
+    - ${TAG}-docker
+  before_script:
+    # Include plugins
+    - |
+      git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
+      git submodule set-branch --branch ${MR_PLUGIN_REF} ${PLUGIN_PATH}
+      cd ${PLUGIN_PATH}
+      PLUGIN_COMMIT=$(git rev-parse --short=8 HEAD)
+      cd ${CI_PROJECT_DIR}
+    # Set variables
+    - |
+      export NAME="srsran_${SUFFIX}"
+      export VERSION="${CI_COMMIT_SHORT_SHA}_${PLUGIN_COMMIT}"
+      export BUILD_ARGS="UHD_VERSION=${DOCKER_UHD_VERSION};DPDK_VERSION=${DOCKER_DPDK_VERSION};MARCH=${MARCH};NUM_JOBS=${KUBERNETES_CPU_LIMIT};EXTRA_CMAKE_ARGS=\"${EXTRA_CMAKE_ARGS}\""
+  parallel:
+    matrix:
+      # AMD AVX2
+      - SUFFIX: release_avx2
+        MARCH: x86-64-v3
+        TAG: amd64-avx2
+        PLATFORM: amd64
+      - SUFFIX: release_with_debug_avx2
+        EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
+        MARCH: x86-64-v3
+        TAG: amd64-avx2
+        PLATFORM: amd64
+      # AMD AVX512
+      - SUFFIX: release_avx512
+        MARCH: x86-64-v4
+        TAG: amd64-avx2-avx512
+        PLATFORM: amd64
+      - SUFFIX: release_with_debug_avx512
+        EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
+        MARCH: x86-64-v4
+        TAG: amd64-avx2-avx512
+        PLATFORM: amd64
+      # ARM
+      - SUFFIX: release_arm
+        MARCH: armv8.2-a+crypto+fp16+dotprod
+        TAG: arm64
+        PLATFORM: arm64
+      - SUFFIX: release_with_debug_arm
+        EXTRA_CMAKE_ARGS: -DFORCE_DEBUG_INFO=On
+        MARCH: armv8.2-a+crypto+fp16+dotprod
+        TAG: arm64
+        PLATFORM: arm64
+  needs:
+    - job: basic build final branch
+      optional: false
+      artifacts: true
+
+notify schedule failed:
+  extends: .notifier
+  rules:
+    - if: *on_public_push
+      when: on_failure
+    - if: *on_public_release
+      when: on_failure
+    - if: *on_custom_push
+      when: on_failure
+  variables:
+    CI_DESCRIPTION: "GitHub Update Process Failed"
+    SLACK_CHANNEL: $SLACK_CHANNEL_FAIL
+    LEVEL: "fail"

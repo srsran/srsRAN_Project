@@ -23,7 +23,6 @@
 #pragma once
 
 #include "../cell/resource_grid.h"
-#include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../slicing/slice_ue_repository.h"
 #include "../ue_context/ue.h"
 #include "../ue_scheduling/ue_repository.h"

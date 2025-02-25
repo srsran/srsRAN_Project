@@ -24,6 +24,7 @@
 #include "../logging/scheduler_event_logger.h"
 #include "../logging/scheduler_metrics_handler.h"
 #include "../srs/srs_scheduler.h"
+#include "../support/sr_helper.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
 #include "srsran/support/memory_pool/unbounded_object_pool.h"
 
@@ -515,6 +516,7 @@ void ue_event_manager::handle_harq_ind(ue_cell&                               ue
                                        span<const mac_harq_ack_report_status> harq_bits,
                                        std::optional<float>                   pucch_snr)
 {
+  du_cells[ue_cc.cell_index].metrics->handle_uci_with_harq_ack(ue_cc.ue_index, uci_sl, pucch_snr.has_value());
   for (unsigned harq_idx = 0, harq_end_idx = harq_bits.size(); harq_idx != harq_end_idx; ++harq_idx) {
     // Update UE HARQ state with received HARQ-ACK.
     std::optional<ue_cell::dl_ack_info_result> result =
@@ -557,8 +559,29 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
     if (not cell_specific_events[ind.cell_index].try_push(cell_event_t{
             ind.ucis[i].ue_index,
             [this, uci_sl = ind.slot_rx, uci_pdu = std::move(uci_ptr)](ue_cell& ue_cc) {
+              bool is_sr_opportunity_and_f1 = false;
               if (const auto* pucch_f0f1 =
                       std::get_if<uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu>(&uci_pdu->pdu)) {
+                // Check if this UCI is from slot with a SR opportunity.
+                if (ue_cc.cfg().init_bwp().ul_ded.has_value() and
+                    ue_cc.cfg().init_bwp().ul_ded->pucch_cfg.has_value()) {
+                  const auto& pucch_cfg = ue_cc.cfg().init_bwp().ul_ded->pucch_cfg.value();
+
+                  bool is_format_1 = false;
+                  for (const auto& pucch_res : pucch_cfg.pucch_res_list) {
+                    if (pucch_res.format == pucch_format::FORMAT_1) {
+                      is_format_1 = true;
+                      break;
+                    }
+                    if (pucch_res.format == pucch_format::FORMAT_0) {
+                      break;
+                    }
+                  }
+
+                  // This check is only needed for PUCCH Format 1.
+                  is_sr_opportunity_and_f1 = is_format_1 and sr_helper::is_sr_opportunity_slot(pucch_cfg, uci_sl);
+                }
+
                 // Process DL HARQ ACKs.
                 if (not pucch_f0f1->harqs.empty()) {
                   handle_harq_ind(ue_cc, uci_sl, pucch_f0f1->harqs, pucch_f0f1->ul_sinr_dB);
@@ -646,7 +669,7 @@ void ue_event_manager::handle_uci_indication(const uci_indication& ind)
               }
 
               // Report the UCI PDU to the metrics handler.
-              du_cells[ue_cc.cell_index].metrics->handle_uci_pdu_indication(*uci_pdu);
+              du_cells[ue_cc.cell_index].metrics->handle_uci_pdu_indication(*uci_pdu, is_sr_opportunity_and_f1);
             },
             "UCI",
             // Note: We do not warn if the UE is not found, because there is this transient period when the UE
@@ -666,30 +689,35 @@ void ue_event_manager::handle_srs_indication(const srs_indication& ind)
   for (unsigned i = 0, e = ind.srss.size(); i != e; ++i) {
     const srs_indication::srs_indication_pdu& srs_pdu = ind.srss[i];
 
-    if (not cell_specific_events[ind.cell_index].try_push(
-            cell_event_t{srs_pdu.ue_index,
-                         [this, srs_ptr = ind_pdu_pool->create_srs(ind.srss[i])](ue_cell& ue_cc) {
-                           // Indicate the channel matrix.
-                           ue_cc.handle_srs_channel_matrix(srs_ptr->channel_matrix);
+    if (not cell_specific_events[ind.cell_index].try_push(cell_event_t{
+            srs_pdu.ue_index,
+            [this, srs_ptr = ind_pdu_pool->create_srs(ind.srss[i])](ue_cell& ue_cc) {
+              // Indicate the channel matrix.
+              ue_cc.handle_srs_channel_matrix(srs_ptr->channel_matrix);
 
-                           // Handle time aligment measurement if present.
-                           if (srs_ptr->time_advance_offset.has_value()) {
-                             // Assume some SINR for the TA feedback using the channel matrix topology and near zero
-                             // noise variance.
-                             float frobenius_norm = srs_ptr->channel_matrix.frobenius_norm();
-                             float noise_var      = near_zero;
-                             float sinr_dB        = convert_power_to_dB(frobenius_norm * frobenius_norm / noise_var);
+              // Log event.
+              du_cells[ue_cc.cell_index].ev_logger->enqueue(scheduler_event_logger::srs_indication_event{
+                  srs_ptr->ue_index, srs_ptr->rnti, ue_cc.channel_state_manager().get_latest_tpmi_select_info()});
 
-                             // Notify UL TA update.
-                             ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
-                                 ue_cc.cell_index, sinr_dB, srs_ptr->time_advance_offset.value());
+              // Handle time aligment measurement if present.
+              if (srs_ptr->time_advance_offset.has_value()) {
+                // Assume some SINR for the TA feedback using the channel matrix topology and near zero
+                // noise variance.
+                float frobenius_norm = srs_ptr->channel_matrix.frobenius_norm();
+                float noise_var      = near_zero;
+                float sinr_dB        = convert_power_to_dB(frobenius_norm * frobenius_norm / noise_var);
 
-                             // Report the SRS PDU to the metrics handler.
-                             du_cells[ue_cc.cell_index].metrics->handle_srs_indication(*srs_ptr);
-                           }
-                         },
-                         "SRS",
-                         false})) {
+                // Notify UL TA update.
+                ue_db[ue_cc.ue_index].handle_ul_n_ta_update_indication(
+                    ue_cc.cell_index, sinr_dB, srs_ptr->time_advance_offset.value());
+
+                // Report the SRS PDU to the metrics handler.
+                du_cells[ue_cc.cell_index].metrics->handle_srs_indication(
+                    *srs_ptr, ue_cc.channel_state_manager().get_nof_ul_layers());
+              }
+            },
+            "SRS",
+            false})) {
       logger.warning("SRS indication discarded. Cause: Event queue is full");
     }
   }
@@ -794,20 +822,9 @@ static void handle_discarded_pucch(const cell_slot_resource_allocator& prev_slot
       // UE has been removed.
       continue;
     }
-    bool has_harq_ack = false;
-    switch (pucch.format) {
-      case pucch_format::FORMAT_1:
-        has_harq_ack = pucch.format_1.harq_ack_nof_bits > 0;
-        break;
-      case pucch_format::FORMAT_2:
-        has_harq_ack = pucch.format_2.harq_ack_nof_bits > 0;
-        break;
-      default:
-        break;
-    }
 
     // - The lower layers will not attempt to decode the PUCCH and will not send any UCI indication.
-    if (has_harq_ack) {
+    if (pucch.uci_bits.harq_ack_nof_bits > 0) {
       // Note: To avoid a long DL HARQ timeout window (due to lack of UCI indication), it is important to force a NACK
       // in the DL HARQ processes with UCI falling in this slot.
       // Note: We don't use this cancellation to update the DL OLLA, as we shouldn't take lates into account in link

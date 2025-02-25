@@ -24,6 +24,7 @@
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/metrics/phy_metrics_reports.h"
 #include "srsran/phy/upper/equalization/channel_equalizer.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 #include <memory>
 
 namespace srsran {
@@ -48,14 +49,16 @@ public:
                 span<const float>                noise_var_estimates,
                 float                            tx_scaling) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_equalizer->equalize(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.nof_re     = ch_estimates.get_nof_re(),
-                         .nof_layers = ch_estimates.get_nof_tx_layers(),
-                         .nof_ports  = ch_estimates.get_nof_rx_ports(),
-                         .elapsed    = tp_after - tp_before});
+    channel_equalizer_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base_equalizer->equalize(eq_symbols, eq_noise_vars, ch_symbols, ch_estimates, noise_var_estimates, tx_scaling);
+    }
+    metrics.nof_re     = ch_estimates.get_nof_re();
+    metrics.nof_layers = ch_estimates.get_nof_tx_layers();
+    metrics.nof_ports  = ch_estimates.get_nof_rx_ports();
+    notifier.on_new_metric(metrics);
   }
 
   // See interface for documentation.

@@ -38,17 +38,20 @@ protected:
   sched_ue_creation_request_message ue_create_msg = sched_config_helper::create_default_sched_ue_creation_request();
 
   cell_common_configuration_list cell_cfg_db;
+  du_cell_group_config_pool      cfg_pool;
   cell_harq_manager cell_harqs{1, MAX_NOF_HARQS, std::make_unique<scheduler_harq_timeout_dummy_notifier>()};
 };
 
 TEST_F(ue_configuration_test, configuration_valid_on_creation)
 {
-  cell_configuration    cell_cfg{sched_cfg, msg};
-  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, (*ue_create_msg.cfg.cells)[0].serv_cell_cfg};
+  cell_configuration cell_cfg{sched_cfg, msg};
+  cfg_pool.add_cell(msg);
+  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, cfg_pool.add_ue(ue_create_msg).cells[to_du_cell_index(0)]};
 
   // Test Common Config.
   TESTASSERT(ue_cfg.find_bwp(to_bwp_id(0)) != nullptr);
-  TESTASSERT(ue_cfg.bwp(to_bwp_id(0)).dl_common->generic_params == cell_cfg.dl_cfg_common.init_dl_bwp.generic_params);
+  TESTASSERT(ue_cfg.bwp(to_bwp_id(0)).dl_common->value().generic_params ==
+             cell_cfg.dl_cfg_common.init_dl_bwp.generic_params);
   TESTASSERT(ue_cfg.coreset(to_coreset_id(0)).id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->id);
   TESTASSERT_EQ(0, fmt::underlying(ue_cfg.search_space(to_search_space_id(0)).cfg->get_id()));
   TESTASSERT(*ue_cfg.search_space(to_search_space_id(0)).cfg ==
@@ -67,16 +70,21 @@ TEST_F(ue_configuration_test, configuration_valid_on_creation)
 
 TEST_F(ue_configuration_test, configuration_valid_on_reconfiguration)
 {
-  cell_configuration    cell_cfg{sched_cfg, msg};
-  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, (*ue_create_msg.cfg.cells)[0].serv_cell_cfg};
+  cell_configuration cell_cfg{sched_cfg, msg};
+  cfg_pool.add_cell(msg);
+  ue_cell_configuration ue_cfg{to_rnti(0x4601), cell_cfg, cfg_pool.add_ue(ue_create_msg).cells[to_du_cell_index(0)]};
 
-  cell_config_dedicated ue_cell_reconf{};
+  sched_ue_reconfiguration_message recfg_req;
+  recfg_req.ue_index = ue_create_msg.ue_index;
+  recfg_req.crnti    = ue_create_msg.crnti;
+  recfg_req.cfg.cells.emplace();
+  recfg_req.cfg.cells.value().resize(1);
+  cell_config_dedicated& ue_cell_reconf = recfg_req.cfg.cells.value()[0];
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg.emplace();
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.emplace_back();
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.back() = config_helpers::make_default_coreset_config();
   ue_cell_reconf.serv_cell_cfg.init_dl_bwp.pdcch_cfg->coresets.back().id = to_coreset_id(2);
-
-  ue_cfg.reconfigure(ue_cell_reconf.serv_cell_cfg);
+  ue_cfg.reconfigure(cfg_pool.reconf_ue(recfg_req).cells[to_du_cell_index(0)]);
 
   TESTASSERT(ue_cfg.find_coreset(to_coreset_id(2)) != nullptr);
   TESTASSERT_EQ(2, fmt::underlying(ue_cfg.coreset(to_coreset_id(2)).id));
@@ -87,7 +95,8 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
 {
   // Test Preamble.
   cell_cfg_db.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg));
-  ue_configuration ue_ded_cfg{ue_create_msg.ue_index, ue_create_msg.crnti, cell_cfg_db, ue_create_msg.cfg};
+  cfg_pool.add_cell(msg);
+  ue_configuration ue_ded_cfg{ue_create_msg.ue_index, ue_create_msg.crnti, cell_cfg_db, cfg_pool.add_ue(ue_create_msg)};
   ue               u{ue_creation_command{ue_ded_cfg, ue_create_msg.starts_in_fallback, cell_harqs}};
 
   // Pass Reconfiguration to UE with an new Logical Channel.
@@ -97,7 +106,7 @@ TEST_F(ue_configuration_test, when_reconfiguration_is_received_then_ue_updates_l
   recfg.cfg      = ue_create_msg.cfg;
   recfg.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(uint_to_lcid(4)));
   ue_configuration ue_ded_cfg2{ue_ded_cfg};
-  ue_ded_cfg2.update(cell_cfg_db, recfg.cfg);
+  ue_ded_cfg2.update(cell_cfg_db, cfg_pool.reconf_ue(recfg));
   u.handle_reconfiguration_request(ue_reconf_command{ue_ded_cfg2});
 
   // Confirm that the UE is in fallback.
@@ -156,11 +165,12 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
                                      config_helpers::compute_max_nof_candidates(aggregation_level::n16, cset_cfg)});
 
   cell_configuration cell_cfg{sched_cfg, msg};
+  cfg_pool.add_cell(msg);
   rnti_t crnti = to_rnti(test_rgen::uniform_int<uint16_t>(to_value(rnti_t::MIN_CRNTI), to_value(rnti_t::MAX_CRNTI)));
-  ue_cell_configuration ue_cfg{crnti, cell_cfg, (*ue_create_msg.cfg.cells)[0].serv_cell_cfg};
+  ue_cell_configuration ue_cfg{crnti, cell_cfg, cfg_pool.add_ue(ue_create_msg).cells[to_du_cell_index(0)]};
 
-  const bwp_info& bwp            = ue_cfg.bwp(to_bwp_id(0));
-  const unsigned  max_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->generic_params.scs);
+  const bwp_config& bwp            = ue_cfg.bwp(to_bwp_id(0));
+  const unsigned    max_candidates = max_nof_monitored_pdcch_candidates(bwp.dl_common->value().generic_params.scs);
 
   unsigned       sfn = test_rgen::uniform_int<unsigned>(0, 1023);
   const unsigned slots_to_test =
@@ -171,11 +181,12 @@ TEST_F(ue_configuration_test, search_spaces_pdcch_candidate_lists_does_not_surpa
     for (unsigned l = 0; l != NOF_AGGREGATION_LEVELS; ++l) {
       const aggregation_level aggr_lvl = aggregation_index_to_level(l);
 
-      for (const search_space_info* ss : bwp.search_spaces) {
-        ASSERT_GE(ss->cfg->get_nof_candidates()[l], ss->get_pdcch_candidates(aggr_lvl, pdcch_slot).size())
+      for (const search_space_configuration& ss : bwp.search_spaces) {
+        ASSERT_GE(ss.get_nof_candidates()[l],
+                  ue_cfg.search_space(ss.get_id()).get_pdcch_candidates(aggr_lvl, pdcch_slot).size())
             << "The generated candidates cannot exceed the number of candidates passed in the SearchSpace config";
 
-        pdcch_candidates_count += ss->get_pdcch_candidates(aggr_lvl, pdcch_slot).size();
+        pdcch_candidates_count += ue_cfg.search_space(ss.get_id()).get_pdcch_candidates(aggr_lvl, pdcch_slot).size();
       }
     }
 

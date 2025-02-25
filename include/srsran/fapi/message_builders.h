@@ -23,7 +23,17 @@
 #pragma once
 
 #include "srsran/adt/span.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/crc_indication.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
+#include "srsran/fapi/messages/error_indication.h"
+#include "srsran/fapi/messages/rach_indication.h"
+#include "srsran/fapi/messages/rx_data_indication.h"
+#include "srsran/fapi/messages/slot_indication.h"
+#include "srsran/fapi/messages/srs_indication.h"
+#include "srsran/fapi/messages/tx_data_request.h"
+#include "srsran/fapi/messages/uci_indication.h"
+#include "srsran/fapi/messages/ul_dci_request.h"
+#include "srsran/fapi/messages/ul_tti_request.h"
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/pdcch/coreset.h"
 #include "srsran/ran/pdcch/dci_packing.h"
@@ -1905,13 +1915,17 @@ public:
 
 /// Builds and returns a slot.indication message with the given parameters, as per SCF-222 v4.0 section 3.4.1 in table
 /// Slot indication message body.
-inline slot_indication_message build_slot_indication_message(unsigned sfn, unsigned slot)
+inline slot_indication_message
+build_slot_indication_message(unsigned                                           sfn,
+                              unsigned                                           slot,
+                              std::chrono::time_point<std::chrono::system_clock> time_point)
 {
   slot_indication_message msg;
   msg.message_type = message_type_id::slot_indication;
 
-  msg.sfn  = sfn;
-  msg.slot = slot;
+  msg.sfn        = sfn;
+  msg.slot       = slot;
+  msg.time_point = time_point;
 
   return msg;
 }

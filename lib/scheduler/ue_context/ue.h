@@ -110,7 +110,7 @@ public:
   void handle_ul_n_ta_update_indication(du_cell_index_t cell_index, float ul_sinr, phy_time_unit n_ta_diff)
   {
     const ue_cell* ue_cc = find_cell(cell_index);
-    ta_mgr.handle_ul_n_ta_update_indication(ue_cc->cfg().cfg_dedicated().tag_id, n_ta_diff.to_Tc(), ul_sinr);
+    ta_mgr.handle_ul_n_ta_update_indication(ue_cc->cfg().tag_id(), n_ta_diff.to_Tc(), ul_sinr);
   }
 
   /// \brief Handles MAC CE indication.
@@ -134,10 +134,6 @@ public:
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
   bool has_pending_dl_newtx_bytes() const { return dl_lc_ch_mgr.has_pending_bytes(); }
-  bool has_pending_dl_newtx_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& bearers) const
-  {
-    return dl_lc_ch_mgr.has_pending_bytes(bearers);
-  }
 
   /// \brief Checks if there are DL pending bytes for a specific LCID that are yet to be allocated in a DL HARQ.
   bool has_pending_dl_newtx_bytes(lcid_t lcid) const { return dl_lc_ch_mgr.has_pending_bytes(lcid); }
@@ -162,10 +158,6 @@ public:
   {
     return lcid != INVALID_LCID ? dl_lc_ch_mgr.pending_bytes(lcid) : dl_lc_ch_mgr.pending_bytes();
   }
-  unsigned pending_dl_newtx_bytes(const bounded_bitset<MAX_NOF_RB_LCIDS>& bearers) const
-  {
-    return dl_lc_ch_mgr.pending_bytes(bearers);
-  }
 
   /// \brief Computes the number of UL pending bytes that are not already allocated in a UL HARQ. The value is used
   /// to derive the required transport block size for an UL grant.
@@ -183,9 +175,7 @@ public:
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block.
   /// \return Returns the number of bytes reserved in the TB for subPDUs (other than padding).
   /// \remark Excludes SRB0.
-  unsigned build_dl_transport_block_info(dl_msg_tb_info&                         tb_info,
-                                         unsigned                                tb_size_bytes,
-                                         const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids);
+  unsigned build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, ran_slice_id_t slice_id);
 
   /// \brief Defines the list of subPDUs, including LCID and payload size, that will compose the transport block for
   /// SRB0 or for SRB1 in fallback mode.
@@ -195,9 +185,11 @@ public:
 
   /// \brief UE DL logical channels.
   const dl_logical_channel_manager& dl_logical_channels() const { return dl_lc_ch_mgr; }
+  dl_logical_channel_manager&       dl_logical_channels() { return dl_lc_ch_mgr; }
 
   /// \brief UE UL logical channels.
   const ul_logical_channel_manager& ul_logical_channels() const { return ul_lc_ch_mgr; }
+  ul_logical_channel_manager&       ul_logical_channels() { return ul_lc_ch_mgr; }
 
   /// \brief Handle UL TB scheduling.
   void handle_ul_transport_block_info(unsigned tb_size_bytes) { ul_lc_ch_mgr.handle_ul_grant(tb_size_bytes); }

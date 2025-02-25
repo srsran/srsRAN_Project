@@ -21,6 +21,7 @@
  */
 
 #include "du_appconfig_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
 #include "apps/services/hal/hal_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_schema.h"
@@ -34,10 +35,6 @@ using namespace srsran;
 
 static void configure_cli11_metrics_args(CLI::App& app, srs_du::metrics_appconfig& metrics_params)
 {
-  app.add_option("--addr", metrics_params.addr, "Metrics address.")->capture_default_str()->check(CLI::ValidIPV4);
-  app.add_option("--port", metrics_params.port, "Metrics UDP port.")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 65535));
   add_option(app,
              "--resource_usage_report_period",
              metrics_params.rusage_report_period,
@@ -81,6 +78,7 @@ void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfi
   // Metrics section.
   CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, du_cfg.metrics_cfg);
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, du_cfg.metrics_cfg.common_metrics_cfg);
 
   // HAL section.
   du_cfg.hal_config.emplace();
@@ -110,4 +108,9 @@ void srsran::autoderive_du_parameters_after_parsing(CLI::App& app, du_appconfig&
 {
   manage_hal_optional(app, du_cfg);
   configure_default_f1u(du_cfg);
+
+  if (du_cfg.metrics_cfg.common_metrics_cfg.enabled() && du_cfg.metrics_cfg.rusage_report_period == 0) {
+    // Default report period 1 second.
+    du_cfg.metrics_cfg.rusage_report_period = 1000;
+  }
 }

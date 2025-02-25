@@ -188,6 +188,21 @@ def _publish_data(
                             record_time_key="time",
                         )
                     logging.debug("Pushed %s", metric)
+                elif "app_resource_usage" in metric:
+                    timestamp = datetime.fromtimestamp(metric["timestamp"], UTC).isoformat()
+                    _influx_push(
+                        write_api,
+                        bucket=bucket,
+                        record={
+                            "measurement": "app_resource_usage",
+                            "tags": {
+                                "testbed": testbed,
+                            },
+                            "fields": dict(metric["app_resource_usage"].items()),
+                            "time": timestamp,
+                        },
+                        record_time_key="time",
+                    )
             except Exception as err:  # pylint: disable=broad-exception-caught
                 logging.exception(err)
 

@@ -78,7 +78,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<img src=\"https://raw.githubusercontent.com/srsran/srsRAN_Project_docs/main/docs/source/.imgs/logo.png\" />",
+        "content": "<img src=/public/img/logo.png />",
         "mode": "html"
       },
       "pluginVersion": "10.2.0-61719",

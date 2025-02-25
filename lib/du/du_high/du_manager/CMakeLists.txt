@@ -18,6 +18,7 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+add_subdirectory(cbs)
 add_subdirectory(converters)
 add_subdirectory(du_ue)
 add_subdirectory(procedures)

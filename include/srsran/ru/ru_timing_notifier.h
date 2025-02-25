@@ -26,6 +26,14 @@
 
 namespace srsran {
 
+/// TTI boundary context.
+struct tti_boundary_context {
+  /// Slot point associated with the time point.
+  slot_point slot;
+  /// Time point associated to the slot point.
+  std::chrono::time_point<std::chrono::system_clock> time_point;
+};
+
 /// Radio Unit interface to notify timing related events.
 class ru_timing_notifier
 {
@@ -37,8 +45,8 @@ public:
   ///
   /// Notifies that the processing of a new slot has started.
   ///
-  /// \param[in] slot Current slot.
-  virtual void on_tti_boundary(slot_point slot) = 0;
+  /// \param[in] slot_context Slot time point context.
+  virtual void on_tti_boundary(const tti_boundary_context& slot_context) = 0;
 
   /// \brief Notifies that an uplink half slot has been received and processed by the Radio Unit.
   ///

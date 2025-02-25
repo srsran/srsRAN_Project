@@ -19,6 +19,8 @@
 #
 
 set(SOURCES
+        du_high_mac_metrics_producer.cpp
+        du_high_mac_metrics_consumers.cpp
         du_high_rlc_metrics_producer.cpp
         du_high_rlc_metrics_consumers.cpp
         du_high_scheduler_cell_metrics_producer.cpp

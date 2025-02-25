@@ -22,7 +22,7 @@
 
 #include "ul_srs_pdu.h"
 #include "field_checkers.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/ul_tti_request.h"
 #include "srsran/ran/srs/srs_configuration.h"
 
 using namespace srsran;

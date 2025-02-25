@@ -141,8 +141,9 @@ static void set_ul_mimo(serving_cell_config&      cell_cfg,
 
 ue_capability_manager::ue_capability_manager(span<const du_cell_config> cell_cfg_list_,
                                              du_drx_resource_manager&   drx_mng_,
-                                             srslog::basic_logger&      logger_) :
-  base_cell_cfg_list(cell_cfg_list_), drx_res_mng(drx_mng_), logger(logger_)
+                                             srslog::basic_logger&      logger_,
+                                             const du_test_mode_config& test_mode_) :
+  base_cell_cfg_list(cell_cfg_list_), drx_res_mng(drx_mng_), logger(logger_), test_cfg(test_mode_)
 {
 }
 
@@ -232,13 +233,18 @@ pdsch_mcs_table ue_capability_manager::select_pdsch_mcs_table(du_cell_index_t ce
 {
   const auto& init_dl_bwp = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.init_dl_bwp;
 
-  if (init_dl_bwp.pdsch_cfg.has_value() and ue_caps.has_value()) {
-    if (init_dl_bwp.pdsch_cfg.value().mcs_table == pdsch_mcs_table::qam256 and ue_caps->pdsch_qam256_supported) {
-      return pdsch_mcs_table::qam256;
-    }
-    if (init_dl_bwp.pdsch_cfg.value().mcs_table == pdsch_mcs_table::qam64LowSe and
-        ue_caps->pdsch_qam64lowse_supported) {
-      return pdsch_mcs_table::qam64LowSe;
+  if (init_dl_bwp.pdsch_cfg.has_value()) {
+    pdsch_mcs_table app_mcs_table = init_dl_bwp.pdsch_cfg.value().mcs_table;
+    if (ue_caps.has_value()) {
+      if (app_mcs_table == pdsch_mcs_table::qam256 and ue_caps->pdsch_qam256_supported) {
+        return pdsch_mcs_table::qam256;
+      }
+      if (app_mcs_table == pdsch_mcs_table::qam64LowSe and ue_caps->pdsch_qam64lowse_supported) {
+        return pdsch_mcs_table::qam64LowSe;
+      }
+    } else if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+      // Has no capabilities but the UE is in test mode.
+      return app_mcs_table;
     }
   }
 
@@ -251,8 +257,19 @@ pusch_mcs_table ue_capability_manager::select_pusch_mcs_table(du_cell_index_t ce
   nr_band     band        = base_cell_cfg_list[cell_idx].ul_carrier.band;
   const auto& base_ul_cfg = base_cell_cfg_list[cell_idx].ue_ded_serv_cell_cfg.ul_config;
 
-  if (not base_ul_cfg.has_value() or not base_ul_cfg->init_ul_bwp.pusch_cfg.has_value() or not ue_caps.has_value()) {
-    // No PUSCH config or no UE capabilities decoded yet. Default to QAM64.
+  if (not base_ul_cfg.has_value() or not base_ul_cfg->init_ul_bwp.pusch_cfg.has_value()) {
+    // No PUSCH config present. Default to QAM64.
+    return pusch_mcs_table::qam64;
+  }
+
+  const pusch_mcs_table app_mcs_table = base_ul_cfg->init_ul_bwp.pusch_cfg->mcs_table;
+
+  if (test_cfg.test_ue.has_value() and test_cfg.test_ue->rnti != rnti_t::INVALID_RNTI) {
+    // In case of test mode, we do not need to rely on capabilities.
+    return app_mcs_table;
+  }
+  if (not ue_caps.has_value()) {
+    // UE capabilities have not been decoded yet. Default to QAM64.
     return pusch_mcs_table::qam64;
   }
 

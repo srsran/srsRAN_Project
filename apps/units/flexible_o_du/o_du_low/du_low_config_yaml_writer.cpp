@@ -21,6 +21,7 @@
  */
 
 #include "du_low_config_yaml_writer.h"
+#include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "du_low_config.h"
 
 using namespace srsran;
@@ -95,9 +96,9 @@ static void fill_du_low_bbdev_pdsch_enc_section(YAML::Node node, const hwacc_pds
 
 static void fill_du_low_bbdev_pusch_dec_section(YAML::Node node, const hwacc_pusch_appconfig& config)
 {
-  node["nof_hwacc"]       = config.nof_hwacc;
-  node["ext_softbuffer"]  = config.ext_softbuffer;
-  node["dedicated_queue"] = config.dedicated_queue;
+  node["nof_hwacc"]        = config.nof_hwacc;
+  node["force_local_harq"] = config.force_local_harq;
+  node["dedicated_queue"]  = config.dedicated_queue;
   if (config.harq_context_size) {
     node["harq_context_size"] = config.harq_context_size.value();
   }
@@ -134,6 +135,7 @@ static void fill_du_low_hal_section(YAML::Node node, const du_low_unit_hal_confi
 
 void srsran::fill_du_low_config_in_yaml_schema(YAML::Node& node, const du_low_unit_config& config)
 {
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg.common_metrics_cfg);
   fill_du_low_log_section(node["log"], config.loggers);
   fill_du_low_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_du_low_expert_section(node["expert_phy"], config.expert_phy_cfg);

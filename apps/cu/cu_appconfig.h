@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/f1u/f1u_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig.h"
@@ -36,6 +37,13 @@ namespace srs_cu {
 struct cu_f1ap_appconfig {
   /// F1-C bind address.
   std::string bind_addr = "127.0.10.1";
+};
+
+/// Metrics report configuration.
+struct metrics_appconfig {
+  app_helpers::metrics_config common_metrics_cfg;
+  /// Resource usage report period in milliseconds.
+  unsigned rusage_report_period = 0;
 };
 
 } // namespace srs_cu
@@ -56,6 +64,8 @@ struct cu_appconfig {
   buffer_pool_appconfig buffer_pool_config;
   /// Remote control configuration.
   remote_control_appconfig remote_control_config;
+  /// Metrics configuration.
+  srs_cu::metrics_appconfig metrics_cfg;
 };
 
 } // namespace srsran

@@ -21,6 +21,7 @@
  */
 
 #include "ru_ofh_config_yaml_writer.h"
+#include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "ru_ofh_config.h"
 
 using namespace srsran;
@@ -103,6 +104,7 @@ static YAML::Node build_ru_ofh_cell_section(const ru_ofh_unit_cell_config& confi
   node["ta4_min"]                    = config.cell.Ta4_min.count();
   node["is_prach_cp_enabled"]        = config.cell.is_prach_control_plane_enabled;
   node["is_dl_broadcast_enabled"]    = config.cell.is_downlink_broadcast_enabled;
+  node["ignore_prach_start_symbol"]  = config.cell.ignore_prach_start_symbol;
   node["ignore_ecpri_seq_id"]        = config.cell.ignore_ecpri_seq_id_field;
   node["ignore_ecpri_payload_size"]  = config.cell.ignore_ecpri_payload_size_field;
   node["warn_unreceived_ru_frames"]  = to_string(config.cell.log_unreceived_ru_frames);
@@ -156,6 +158,7 @@ static void fill_ru_ofh_section(YAML::Node node, const ru_ofh_unit_config& confi
 
 void srsran::fill_ru_ofh_config_in_yaml_schema(YAML::Node& node, const ru_ofh_unit_config& config)
 {
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg);
   fill_ru_ofh_log_section(node["log"], config.loggers);
   fill_ru_ofh_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_ru_ofh_section(node["ru_ofh"], config);

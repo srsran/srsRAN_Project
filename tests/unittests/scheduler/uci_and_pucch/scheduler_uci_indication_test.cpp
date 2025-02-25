@@ -132,12 +132,7 @@ protected:
   bool ue_pucch_harq_ack_grant_scheduled() const
   {
     return std::any_of(last_sched_res->ul.pucchs.begin(), last_sched_res->ul.pucchs.end(), [](const pucch_info& pucch) {
-      bool is_harq_ack{false};
-      if (pucch.format == pucch_format::FORMAT_1) {
-        is_harq_ack = pucch.format_1.harq_ack_nof_bits > 0;
-      } else if (pucch.format == pucch_format::FORMAT_2) {
-        is_harq_ack = pucch.format_2.harq_ack_nof_bits > 0;
-      }
+      bool is_harq_ack = pucch.uci_bits.harq_ack_nof_bits > 0;
       return pucch.crnti == ue_rnti and is_harq_ack;
     });
   }

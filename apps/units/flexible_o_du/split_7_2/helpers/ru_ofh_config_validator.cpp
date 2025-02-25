@@ -184,11 +184,6 @@ static bool validate_hal_config(const std::optional<ru_ofh_unit_hal_config>& con
     fmt::print("It is mandatory to fill the EAL configuration arguments to initialize DPDK correctly\n");
     return false;
   }
-#else
-  if (config) {
-    fmt::print("Unable to use DPDK as the application was not compiled with DPDK support\n");
-    return false;
-  }
 #endif
   return true;
 }

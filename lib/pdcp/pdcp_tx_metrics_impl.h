@@ -23,14 +23,13 @@
 #pragma once
 
 #include "srsran/pdcp/pdcp_tx_metrics.h"
-#include <mutex>
+#include "srsran/support/resource_usage/resource_usage_utils.h"
 
 namespace srsran {
 
 class pdcp_tx_metrics
 {
   pdcp_tx_metrics_container metrics = {};
-  std::mutex                metrics_mutex;
 
 public:
   void add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
@@ -47,15 +46,49 @@ public:
 
   void add_discard_timouts(uint32_t num_discard_timeouts_) { metrics.num_discard_timeouts += num_discard_timeouts_; }
 
-  pdcp_tx_metrics_container get_metrics() { return metrics; }
-
-  pdcp_tx_metrics_container get_metrics_and_reset()
+  pdcp_tx_metrics_container get_metrics()
   {
-    pdcp_tx_metrics_container ret = metrics;
-    metrics                       = {};
+    pdcp_tx_metrics_container ret        = metrics.copy();
+    ret.sum_crypto_processing_latency_ns = sum_crypto_processing_latency_ns;
     return ret;
   }
 
-  void reset_metrics() { metrics = {}; }
+  pdcp_tx_metrics_container get_metrics_and_reset()
+  {
+    pdcp_tx_metrics_container ret = get_metrics();
+    reset_metrics();
+    return ret;
+  }
+
+  void add_pdu_latency_ns(uint32_t sdu_latency_ns)
+  {
+    metrics.sum_pdu_latency_ns += sdu_latency_ns;
+
+    unsigned bin_idx = sdu_latency_ns / (1000 * pdcp_tx_metrics_container::nof_usec_per_bin);
+
+    bin_idx = std::min(bin_idx, pdcp_tx_metrics_container::pdu_latency_hist_bins - 1);
+    metrics.pdu_latency_hist[bin_idx]++;
+
+    metrics.min_pdu_latency_ns = std::min(metrics.min_pdu_latency_ns, std::optional<uint32_t>{sdu_latency_ns});
+    metrics.max_pdu_latency_ns = std::max(metrics.max_pdu_latency_ns, std::optional<uint32_t>{sdu_latency_ns});
+  }
+
+  void add_crypto_processing_latency(uint32_t crypto_processing_latency)
+  {
+    sum_crypto_processing_latency_ns.fetch_add(crypto_processing_latency, std::memory_order_relaxed);
+  }
+
+  void reset_metrics()
+  {
+    // Ugly way to reset all metrics but not the counter.
+    unsigned counter = metrics.counter;
+    metrics          = {};
+    metrics.counter  = counter;
+
+    sum_crypto_processing_latency_ns = 0;
+  }
+
+private:
+  std::atomic<uint32_t> sum_crypto_processing_latency_ns = 0;
 };
 } // namespace srsran

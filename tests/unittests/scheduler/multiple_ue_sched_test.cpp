@@ -21,7 +21,6 @@
  */
 
 #include "lib/scheduler/scheduler_impl.h"
-#include "lib/scheduler/ue_scheduling/ue_fallback_scheduler.h"
 #include "test_utils/dummy_test_components.h"
 #include "tests/test_doubles/scheduler/pucch_res_test_builder_helper.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
@@ -91,8 +90,6 @@ protected:
   std::optional<test_bench>     bench;
   pucch_res_builder_test_helper pucch_cfg_builder;
 
-  unsigned last_csi_report_offset = 0;
-
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
   unsigned max_k_value = 0;
 
@@ -129,13 +126,13 @@ protected:
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     bench->sched_res = &bench->sch.slot_indication(current_slot, to_du_cell_index(0));
 
-    srs_du::pucch_builder_params pucch_basic_params{.nof_ue_pucch_f0_or_f1_res_harq       = 8,
-                                                    .nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8,
-                                                    .nof_sr_resources                     = 8,
-                                                    .nof_csi_resources                    = 8};
-    auto&                        f1_params = pucch_basic_params.f0_or_f1_params.emplace<srs_du::pucch_f1_params>();
-    f1_params.nof_cyc_shifts               = srs_du::nof_cyclic_shifts::twelve;
-    f1_params.occ_supported                = true;
+    pucch_builder_params pucch_basic_params{.nof_ue_pucch_f0_or_f1_res_harq       = 8,
+                                            .nof_ue_pucch_f2_or_f3_or_f4_res_harq = 8,
+                                            .nof_sr_resources                     = 8,
+                                            .nof_csi_resources                    = 8};
+    auto&                f1_params = pucch_basic_params.f0_or_f1_params.emplace<pucch_f1_params>();
+    f1_params.nof_cyc_shifts       = pucch_nof_cyclic_shifts::twelve;
+    f1_params.occ_supported        = true;
     pucch_cfg_builder.setup(bench->cell_cfg, pucch_basic_params);
   }
 
@@ -464,29 +461,25 @@ protected:
     pdu.crnti    = pucch.crnti;
     pdu.ue_index = bench->rnti_to_du_ue_index(pdu.crnti);
 
-    switch (pucch.format) {
+    switch (pucch.format()) {
       case pucch_format::FORMAT_0:
       case pucch_format::FORMAT_1: {
         uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu pucch_pdu{};
-        if (pucch.format == pucch_format::FORMAT_0) {
-          pucch_pdu.sr_detected = sr_nof_bits_to_uint(pucch.format_0.sr_bits) > 0;
-          // Auto ACK harqs.
-          pucch_pdu.harqs.resize(pucch.format_0.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
-        } else {
-          pucch_pdu.sr_detected = sr_nof_bits_to_uint(pucch.format_1.sr_bits) > 0;
-          // Auto ACK harqs.
-          pucch_pdu.harqs.resize(pucch.format_1.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
-        }
+        const sr_nof_bits                               sr_bits           = pucch.uci_bits.sr_bits;
+        const unsigned                                  harq_ack_nof_bits = pucch.uci_bits.harq_ack_nof_bits;
+        pucch_pdu.sr_detected                                             = sr_nof_bits_to_uint(sr_bits) > 0;
+        // Auto ACK harqs.
+        pucch_pdu.harqs.resize(harq_ack_nof_bits, mac_harq_ack_report_status::ack);
         pucch_pdu.ul_sinr_dB = 55;
         pdu.pdu              = pucch_pdu;
         break;
       }
       case pucch_format::FORMAT_2: {
         uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu pucch_pdu{};
-        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch.format_2.sr_bits));
-        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch.format_2.sr_bits), true);
+        pucch_pdu.sr_info.resize(sr_nof_bits_to_uint(pucch.uci_bits.sr_bits));
+        pucch_pdu.sr_info.fill(0, sr_nof_bits_to_uint(pucch.uci_bits.sr_bits), true);
         // Auto ACK harqs.
-        pucch_pdu.harqs.resize(pucch.format_2.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+        pucch_pdu.harqs.resize(pucch.uci_bits.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
         if (pucch.csi_rep_cfg.has_value()) {
           pucch_pdu.csi.emplace();
           // Fill with dummy values.
@@ -815,7 +808,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
 
     for (const auto& pucch : bench->sched_res->ul.pucchs) {
       uci_ind.ucis.push_back(build_pucch_uci_pdu(pucch));
-      if (pucch.format == srsran::pucch_format::FORMAT_2 and pucch.csi_rep_cfg.has_value()) {
+      if (pucch.format() == pucch_format::FORMAT_2 and pucch.csi_rep_cfg.has_value()) {
         // For now CSI report is only sent in PUCCH format 2.
         ++nof_cqi_reported;
       }

@@ -31,4 +31,10 @@ namespace srsran {
 struct ran_slice_id_tag {};
 using ran_slice_id_t = strong_type<uint8_t, struct ran_slice_id_tag, strong_increment_decrement, strong_equality>;
 
+/// RAN slice ID for slice used to schedule SRB(s) traffic.
+constexpr ran_slice_id_t SRB_RAN_SLICE_ID = ran_slice_id_t{0};
+
+/// RAN slice ID for default slice used to schedule DRB(s) traffic.
+constexpr ran_slice_id_t DEFAULT_DRB_RAN_SLICE_ID = ran_slice_id_t{1};
+
 } // namespace srsran

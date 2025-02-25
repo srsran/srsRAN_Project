@@ -21,6 +21,7 @@
  */
 
 #include "gnb_appconfig_yaml_writer.h"
+#include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "apps/services/logger/logger_appconfig_yaml_writer.h"
 #include "gnb_appconfig.h"
 
@@ -28,8 +29,7 @@ using namespace srsran;
 
 static void fill_gnb_appconfig_metrics_section(YAML::Node node, const metrics_appconfig& config)
 {
-  node["addr"] = config.addr;
-  node["port"] = config.port;
+  node["resource_usage_report_period"] = config.rusage_report_period;
 }
 
 static void fill_gnb_appconfig_hal_section(YAML::Node node, const std::optional<hal_appconfig>& config)
@@ -85,6 +85,7 @@ void srsran::fill_gnb_appconfig_in_yaml_schema(YAML::Node& node, const gnb_appco
   node["gnb_id_bit_length"] = static_cast<unsigned>(config.gnb_id.bit_length);
   node["ran_node_name"]     = config.ran_node_name;
 
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg.common_metrics_cfg);
   fill_logger_appconfig_in_yaml_schema(node, config.log_cfg);
   fill_gnb_appconfig_metrics_section(node["metrics"], config.metrics_cfg);
   fill_gnb_appconfig_hal_section(node, config.hal_config);

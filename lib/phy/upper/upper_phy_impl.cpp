@@ -32,7 +32,7 @@ namespace {
 class upper_phy_timing_notifier_dummy : public upper_phy_timing_notifier
 {
 public:
-  void on_tti_boundary(slot_point slot) override {}
+  void on_tti_boundary(const upper_phy_timing_context& context) override {}
 };
 
 } // namespace

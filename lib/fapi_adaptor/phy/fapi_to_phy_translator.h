@@ -22,7 +22,11 @@
 
 #pragma once
 
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/config_request_tlvs.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
+#include "srsran/fapi/messages/tx_data_request.h"
+#include "srsran/fapi/messages/ul_dci_request.h"
+#include "srsran/fapi/messages/ul_tti_request.h"
 #include "srsran/fapi/slot_error_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
@@ -30,7 +34,6 @@
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/srslog/logger.h"
-#include "srsran/support/executors/task_executor.h"
 #include <atomic>
 
 namespace srsran {

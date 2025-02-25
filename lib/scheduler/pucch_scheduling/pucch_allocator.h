@@ -22,10 +22,10 @@
 
 #pragma once
 
+#include "../../../include/srsran/ran/pucch/pucch_uci_bits.h"
 #include "../cell/resource_grid.h"
 #include "../config/ue_configuration.h"
 #include "../ue_context/ue.h"
-#include "pucch_uci_bits.h"
 
 namespace srsran {
 

@@ -28,6 +28,7 @@
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/math/stats.h"
+#include "srsran/support/units.h"
 #include <unordered_map>
 
 namespace srsran {
@@ -45,28 +46,41 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   struct ue_metric_context {
     /// \brief In this struct we store all the metadata that is reset at every report.
     struct non_persistent_data {
-      unsigned count_uci_harq_acks    = 0;
-      unsigned count_uci_harqs        = 0;
-      unsigned count_crc_acks         = 0;
-      unsigned count_crc_pdus         = 0;
-      unsigned count_sr               = 0;
-      unsigned dl_mcs                 = 0;
-      unsigned nof_dl_cws             = 0;
-      unsigned ul_mcs                 = 0;
-      unsigned nof_puschs             = 0;
-      uint64_t sum_dl_tb_bytes        = 0;
-      uint64_t sum_ul_tb_bytes        = 0;
-      double   sum_pusch_snrs         = 0;
-      double   sum_pucch_snrs         = 0;
-      double   sum_pusch_rsrp         = 0;
-      unsigned sum_crc_delay_slots    = 0;
-      unsigned nof_pucch_snr_reports  = 0;
-      unsigned nof_pusch_snr_reports  = 0;
-      unsigned nof_pusch_rsrp_reports = 0;
-      unsigned tot_dl_prbs_used       = 0;
-      unsigned tot_ul_prbs_used       = 0;
-      unsigned sum_ul_ce_delay_slots  = 0;
-      unsigned nof_ul_ces             = 0;
+      unsigned count_uci_harq_acks            = 0;
+      unsigned count_uci_harqs                = 0;
+      unsigned count_crc_acks                 = 0;
+      unsigned count_crc_pdus                 = 0;
+      unsigned count_pucch_harq_pdus          = 0;
+      unsigned count_pusch_harq_pdus          = 0;
+      unsigned count_sr                       = 0;
+      unsigned dl_mcs                         = 0;
+      unsigned nof_dl_cws                     = 0;
+      unsigned ul_mcs                         = 0;
+      unsigned nof_puschs                     = 0;
+      uint64_t sum_dl_tb_bytes                = 0;
+      uint64_t sum_ul_tb_bytes                = 0;
+      double   sum_pusch_snrs                 = 0;
+      double   sum_pucch_snrs                 = 0;
+      double   sum_pusch_rsrp                 = 0;
+      unsigned sum_crc_delay_slots            = 0;
+      unsigned max_crc_delay_slots            = 0;
+      unsigned sum_pusch_harq_delay_slots     = 0;
+      unsigned max_pusch_harq_delay_slots     = 0;
+      unsigned sum_pucch_harq_delay_slots     = 0;
+      unsigned max_pucch_harq_delay_slots     = 0;
+      unsigned nof_pucch_snr_reports          = 0;
+      unsigned nof_pucch_f0f1_invalid_harqs   = 0;
+      unsigned nof_pucch_f2f3f4_invalid_harqs = 0;
+      unsigned nof_pucch_f2f3f4_invalid_csis  = 0;
+      unsigned nof_pusch_snr_reports          = 0;
+      unsigned nof_pusch_rsrp_reports         = 0;
+      unsigned nof_pusch_invalid_harqs        = 0;
+      unsigned nof_pusch_invalid_csis         = 0;
+      unsigned tot_dl_prbs_used               = 0;
+      unsigned tot_ul_prbs_used               = 0;
+      unsigned sum_ul_ce_delay_slots          = 0;
+      unsigned max_ul_ce_delay_slots          = 0;
+      unsigned nof_ul_ces                     = 0;
       /// TA statistics over the metrics report interval, in seconds.
       sample_statistics<float> ta;
       /// PUSCH TA statistics over the metrics report interval, in seconds.
@@ -77,8 +91,10 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
       sample_statistics<float> srs_ta;
       /// CQI statistics over the metrics report interval.
       sample_statistics<unsigned> cqi;
-      /// RI statistics over the metrics report interval.
-      sample_statistics<unsigned> ri;
+      /// DL RI statistics over the metrics report interval.
+      sample_statistics<unsigned> dl_ri;
+      /// UL RI statistics over the metrics report interval.
+      sample_statistics<unsigned> ul_ri;
     };
 
     // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
@@ -153,7 +169,10 @@ public:
   void handle_crc_indication(slot_point sl_rx, const ul_crc_pdu_indication& crc_pdu, units::bytes tbs);
 
   /// \brief Handle SRS indication.
-  void handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu);
+  void handle_srs_indication(const srs_indication::srs_indication_pdu& srs_pdu, unsigned ri);
+
+  /// \brief Handle UCI that contains HARQ-ACK information.
+  void handle_uci_with_harq_ack(du_ue_index_t ue_index, slot_point slot_rx, bool pucch);
 
   /// \brief Register HARQ-ACK UCI indication.
   void handle_dl_harq_ack(du_ue_index_t ue_index, bool ack, units::bytes tbs);
@@ -162,7 +181,7 @@ public:
   void handle_harq_timeout(du_ue_index_t ue_index, bool is_dl);
 
   /// \brief Handle UCI PDU indication.
-  void handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu);
+  void handle_uci_pdu_indication(const uci_indication::uci_pdu& pdu, bool is_sr_opportunity_and_f1);
 
   /// \brief Handle SR indication.
   void handle_sr_indication(du_ue_index_t ue_index);

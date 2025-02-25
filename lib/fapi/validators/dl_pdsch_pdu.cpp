@@ -22,7 +22,7 @@
 
 #include "dl_pdsch_pdu.h"
 #include "field_checkers.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
 #include "srsran/fapi/validator_report.h"
 
 using namespace srsran;

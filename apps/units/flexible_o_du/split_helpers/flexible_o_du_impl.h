@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "flexible_o_du_metrics_aggregator.h"
 #include "srsran/du/du.h"
 #include "srsran/du/du_operation_controller.h"
 #include "srsran/du/o_du.h"
@@ -38,7 +39,7 @@ class radio_unit;
 class flexible_o_du_impl : public srs_du::du, public du_operation_controller
 {
 public:
-  explicit flexible_o_du_impl(unsigned nof_cells_);
+  flexible_o_du_impl(unsigned nof_cells_, flexible_o_du_metrics_notifier* notifier);
 
   // See interface for documentation.
   du_operation_controller& get_operation_controller() override { return *this; }
@@ -55,6 +56,9 @@ public:
   /// Adds the given DU to this flexible O-RAN DU.
   void add_du(std::unique_ptr<srs_du::o_du> active_du);
 
+  /// Returns the O-DU metrics notifier of this flexible O-DU implementation.
+  srs_du::o_du_metrics_notifier& get_o_du_metrics_notifier() { return odu_metrics_handler; }
+
   /// Getters to the adaptors.
   upper_phy_ru_ul_adapter&         get_upper_ru_ul_adapter() { return ru_ul_adapt; }
   upper_phy_ru_timing_adapter&     get_upper_ru_timing_adapter() { return ru_timing_adapt; }
@@ -63,14 +67,15 @@ public:
   upper_phy_ru_ul_request_adapter& get_upper_ru_ul_request_adapter() { return ru_ul_request_adapt; }
 
 private:
-  const unsigned                  nof_cells;
-  upper_phy_ru_ul_adapter         ru_ul_adapt;
-  upper_phy_ru_timing_adapter     ru_timing_adapt;
-  upper_phy_ru_error_adapter      ru_error_adapt;
-  std::unique_ptr<srs_du::o_du>   du;
-  std::unique_ptr<radio_unit>     ru;
-  upper_phy_ru_dl_rg_adapter      ru_dl_rg_adapt;
-  upper_phy_ru_ul_request_adapter ru_ul_request_adapt;
+  const unsigned                   nof_cells;
+  upper_phy_ru_ul_adapter          ru_ul_adapt;
+  upper_phy_ru_timing_adapter      ru_timing_adapt;
+  upper_phy_ru_error_adapter       ru_error_adapt;
+  flexible_o_du_metrics_aggregator odu_metrics_handler;
+  std::unique_ptr<srs_du::o_du>    du;
+  std::unique_ptr<radio_unit>      ru;
+  upper_phy_ru_dl_rg_adapter       ru_dl_rg_adapt;
+  upper_phy_ru_ul_request_adapter  ru_ul_request_adapt;
 };
 
 } // namespace srsran

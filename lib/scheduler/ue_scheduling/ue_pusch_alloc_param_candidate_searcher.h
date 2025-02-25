@@ -169,11 +169,9 @@ public:
                                           du_cell_index_t                              cell_index,
                                           const std::optional<ul_harq_process_handle>& ul_harq_,
                                           slot_point                                   pdcch_slot_,
-                                          span<const slot_point>                       slots_with_no_pusch_space_,
                                           slot_point                                   pusch_slot_) :
     ue_ref(ue_ref_),
     ue_cc(ue_ref.find_cell(cell_index)),
-    slots_with_no_pusch_space(slots_with_no_pusch_space_),
     ul_harq(ul_harq_),
     is_retx(ul_harq.has_value()),
     pdcch_slot(pdcch_slot_),
@@ -212,8 +210,8 @@ private:
     // Update alloc_params list.
     ss_candidate_list = ue_cc->get_active_ul_search_spaces(pdcch_slot, preferred_rnti_type);
     // Consider SearchSpaces only in UE dedicated configuration.
-    span<const search_space_configuration> ue_ded_cfg_ss =
-        ue_cc->cfg().cfg_dedicated().init_dl_bwp.pdcch_cfg->search_spaces;
+    const slotted_id_vector<search_space_id, search_space_configuration>& ue_ded_cfg_ss =
+        ue_cc->cfg().bwp(to_bwp_id(0)).search_spaces;
     bool is_css_in_ue_dedicated_cfg =
         std::any_of(ue_ded_cfg_ss.begin(), ue_ded_cfg_ss.end(), [](const search_space_configuration& ss) {
           return ss.is_common_search_space();
@@ -225,11 +223,7 @@ private:
     if (not is_css_in_ue_dedicated_cfg) {
       const search_space_info** ss_iterator = ss_candidate_list.begin();
       while (ss_iterator != ss_candidate_list.end()) {
-        const auto* ue_ded_cfg_ss_it = std::find_if(
-            ue_ded_cfg_ss.begin(),
-            ue_ded_cfg_ss.end(),
-            [id = (*ss_iterator)->cfg->get_id()](const search_space_configuration& ss) { return ss.get_id() == id; });
-        if (ue_ded_cfg_ss_it == ue_ded_cfg_ss.end()) {
+        if (not ue_ded_cfg_ss.contains((*ss_iterator)->cfg->get_id())) {
           ss_iterator = ss_candidate_list.erase(ss_iterator);
         } else {
           ++ss_iterator;
@@ -258,14 +252,7 @@ private:
     }
 
     // Check whether PUSCH time domain resource fits in UL symbols of the slot.
-    if (ue_cc->cfg().cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot) !=
-        current.pusch_td_res().symbols.length()) {
-      return false;
-    }
-
-    // Check whether there is any space left in PUSCH slot for allocation.
-    if (slots_with_no_pusch_space.end() !=
-        std::find(slots_with_no_pusch_space.begin(), slots_with_no_pusch_space.end(), pusch_slot)) {
+    if (ue_cc->cfg().cell_cfg_common.get_nof_ul_symbol_per_slot(pusch_slot) < current.pusch_td_res().symbols.length()) {
       return false;
     }
 
@@ -308,9 +295,6 @@ private:
   const ue& ue_ref;
   // UE cell being allocated.
   const ue_cell* ue_cc;
-
-  // Slots with no RBs left for PUSCH allocation.
-  span<const slot_point> slots_with_no_pusch_space;
 
   // UL HARQ considered for allocation.
   const std::optional<ul_harq_process_handle>& ul_harq;

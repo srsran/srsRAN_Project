@@ -24,6 +24,7 @@
 
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 
 namespace srsran {
 
@@ -41,13 +42,16 @@ public:
   // See interface for documentation.
   void init(unsigned c_init) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_generator->init(c_init);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::init,
-                         .nof_bits = 0,
-                         .elapsed  = tp_after - tp_before});
+    pseudo_random_sequence_generator_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base_generator->init(c_init);
+    }
+    // Report metrics.
+    metrics.method   = pseudo_random_sequence_generator_metrics::methods::init;
+    metrics.nof_bits = 0;
+    notifier.on_new_metric(metrics);
   }
 
   // See interface for documentation.
@@ -59,73 +63,91 @@ public:
   // See interface for documentation.
   void advance(unsigned count) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_generator->advance(count);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::advance,
-                         .nof_bits = count,
-                         .elapsed  = tp_after - tp_before});
+    pseudo_random_sequence_generator_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base_generator->advance(count);
+    }
+    // Report metrics.
+    metrics.method   = pseudo_random_sequence_generator_metrics::methods::advance;
+    metrics.nof_bits = count;
+    notifier.on_new_metric(metrics);
   }
 
   // See interface for documentation.
   void apply_xor(bit_buffer& out, const bit_buffer& in) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_generator->apply_xor(out, in);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_packed,
-                         .nof_bits = in.size(),
-                         .elapsed  = tp_after - tp_before});
+    pseudo_random_sequence_generator_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base_generator->apply_xor(out, in);
+    }
+    // Report metrics.
+    metrics.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_packed;
+    metrics.nof_bits = in.size();
+    notifier.on_new_metric(metrics);
   }
 
   // See interface for documentation.
   void apply_xor(span<uint8_t> out, span<const uint8_t> in) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_generator->apply_xor(out, in);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_unpacked,
-                         .nof_bits = in.size(),
-                         .elapsed  = tp_after - tp_before});
+    pseudo_random_sequence_generator_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base_generator->apply_xor(out, in);
+    }
+    // Report metrics.
+    metrics.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_unpacked;
+    metrics.nof_bits = in.size();
+    notifier.on_new_metric(metrics);
   }
 
   // See interface for documentation.
   void apply_xor(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_generator->apply_xor(out, in);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_soft_bit,
-                         .nof_bits = in.size(),
-                         .elapsed  = tp_after - tp_before});
+    pseudo_random_sequence_generator_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base_generator->apply_xor(out, in);
+    }
+    // Report metrics.
+    metrics.method   = pseudo_random_sequence_generator_metrics::methods::apply_xor_soft_bit;
+    metrics.nof_bits = in.size();
+    notifier.on_new_metric(metrics);
   }
 
   // See interface for documentation.
   void generate(bit_buffer& data) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_generator->generate(data);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::generate_bit_packed,
-                         .nof_bits = data.size(),
-                         .elapsed  = tp_after - tp_before});
+    pseudo_random_sequence_generator_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base_generator->generate(data);
+    }
+    // Report metrics.
+    metrics.method   = pseudo_random_sequence_generator_metrics::methods::generate_bit_packed;
+    metrics.nof_bits = data.size();
+    notifier.on_new_metric(metrics);
   }
 
   // See interface for documentation.
   void generate(span<float> buffer, float value) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base_generator->generate(buffer, value);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.method   = pseudo_random_sequence_generator_metrics::methods::generate_float,
-                         .nof_bits = buffer.size(),
-                         .elapsed  = tp_after - tp_before});
+    pseudo_random_sequence_generator_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base_generator->generate(buffer, value);
+    }
+    // Report metrics.
+    metrics.method   = pseudo_random_sequence_generator_metrics::methods::generate_float;
+    metrics.nof_bits = buffer.size();
+    notifier.on_new_metric(metrics);
   }
 
 private:

@@ -86,11 +86,20 @@ void ta_manager::slot_indication(slot_point current_sl)
     return;
   }
 
+  if (state == state_t::prohibit) {
+    if ((current_sl - prohibit_start_time) > (int)expert_cfg.ta_measurement_slot_prohibit_period) {
+      meas_start_time = current_sl;
+      state           = state_t::measure;
+    }
+    return;
+  }
+
   // Early return if measurement interval is short.
   if ((current_sl - meas_start_time) < (int)expert_cfg.ta_measurement_slot_period) {
     return;
   }
 
+  bool ta_cmd_sent = false;
   for (unsigned tag_idx = 0; tag_idx != n_ta_reports.size(); ++tag_idx) {
     if (n_ta_reports[tag_idx].samples.empty()) {
       continue;
@@ -105,14 +114,21 @@ void ta_manager::slot_indication(slot_point current_sl)
       // Send Timing Advance Command to UE.
       dl_lc_ch_mgr->handle_mac_ce_indication(
           {.ce_lcid = lcid_dl_sch_t::TA_CMD, .ce_payload = ta_cmd_ce_payload{.tag_id = tag_id, .ta_cmd = new_t_a}});
+      ta_cmd_sent = true;
     }
 
     // Reset stored measurements.
     reset_measurements(tag_idx);
   }
 
-  // Set TA manager state to idle.
-  state = state_t::idle;
+  if (ta_cmd_sent and expert_cfg.ta_measurement_slot_prohibit_period > 0) {
+    // Set TA manager state to prohibit state.
+    state               = state_t::prohibit;
+    prohibit_start_time = current_sl;
+  } else {
+    // Set TA manager state to idle.
+    state = state_t::idle;
+  }
 }
 
 int64_t ta_manager::compute_avg_n_ta_difference(unsigned tag_idx)

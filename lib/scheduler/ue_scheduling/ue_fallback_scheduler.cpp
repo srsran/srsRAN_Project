@@ -21,6 +21,7 @@
  */
 
 #include "ue_fallback_scheduler.h"
+#include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../support/csi_rs_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
@@ -497,8 +498,8 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
 
   const dci_dl_rnti_config_type dci_type  = get_dci_type(u, h_dl_retx);
   const pdsch_config_params     pdsch_cfg = dci_type == dci_dl_rnti_config_type::tc_rnti_f1_0
-                                                ? get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg)
-                                                : get_pdsch_config_f1_0_c_rnti(cell_cfg, nullptr, pdsch_td_cfg);
+                                                ? sched_helper::get_pdsch_config_f1_0_tc_rnti(cell_cfg, pdsch_td_cfg)
+                                                : sched_helper::get_pdsch_config_f1_0_c_rnti(cell_cfg, pdsch_td_cfg);
 
   // For DCI 1-0 scrambled with TC-RNTI, as per TS 38.213, Section 7.3.1.2.1, we should consider the size of CORESET#0
   // as the size for the BWP.
@@ -773,7 +774,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
   // Allocate DL HARQ.
   // NOTE: We do not multiplex the SRB1 PUCCH with existing PUCCH HARQs, thus both DAI and HARQ-ACK bit index are 0.
   if (not is_retx) {
-    h_dl = u.get_pcell().harqs.alloc_dl_harq(pdsch_slot, uci.k1, expert_cfg.max_nof_harq_retxs, uci.harq_bit_idx);
+    h_dl = u.get_pcell().harqs.alloc_dl_harq(pdsch_slot, uci.k1, expert_cfg.max_nof_dl_harq_retxs, uci.harq_bit_idx);
   } else {
     bool result = h_dl->new_retx(pdsch_slot, uci.k1, uci.harq_bit_idx);
     srsran_sanity_check(result, "Unable to allocate HARQ retx");
@@ -968,9 +969,9 @@ ue_fallback_scheduler::ul_srb_sched_outcome ue_fallback_scheduler::schedule_ul_u
         // We remove PUCCH grant only if there exists only ONE PUCCH grant, and it's a PUCCH F1 dedicated with only SR
         // bit.
         if (existing_pucch_count > 0) {
-          if (existing_pucch_count == 1 and existing_pucch->format == pucch_format::FORMAT_1 and
-              existing_pucch->format_1.sr_bits != sr_nof_bits::no_sr and
-              existing_pucch->format_1.harq_ack_nof_bits == 0) {
+          if (existing_pucch_count == 1 and existing_pucch->format() == pucch_format::FORMAT_1 and
+              existing_pucch->uci_bits.sr_bits != sr_nof_bits::no_sr and
+              existing_pucch->uci_bits.harq_ack_nof_bits == 0) {
             // No PUSCH in slots with PUCCH. We cannot remove the PUCCH here, as we need to make sure the PUSCH will be
             // allocated. If not, we risk removing a PUCCH with SR opportunity.
             remove_pucch = true;
@@ -1184,7 +1185,7 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                               
     srsran_sanity_check(result, "Failed to setup HARQ retx");
   } else {
     // It is a new tx.
-    h_ul = u.get_pcell().harqs.alloc_ul_harq(pdcch_slot + k2, expert_cfg.max_nof_harq_retxs);
+    h_ul = u.get_pcell().harqs.alloc_ul_harq(pdcch_slot + k2, expert_cfg.max_nof_ul_harq_retxs);
   }
 
   uint8_t                  rv                  = u.get_pcell().get_pusch_rv(h_ul->nof_retxs());

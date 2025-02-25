@@ -41,57 +41,46 @@ public:
                               .period           = sr_period,
                               .offset           = sr_offset}}
   {
-    csi_offset = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(t_bench.get_main_ue()
-                                                                                              .get_pcell()
-                                                                                              .cfg()
-                                                                                              .cfg_dedicated()
-                                                                                              .csi_meas_cfg.value()
-                                                                                              .csi_report_cfg_list[0]
-                                                                                              .report_cfg_type)
+    csi_offset = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                     t_bench.get_main_ue().get_pcell().cfg().csi_meas_cfg()->csi_report_cfg_list[0].report_cfg_type)
                      .report_slot_offset;
 
-    csi_period = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(t_bench.get_main_ue()
-                                                                                              .get_pcell()
-                                                                                              .cfg()
-                                                                                              .cfg_dedicated()
-                                                                                              .csi_meas_cfg.value()
-                                                                                              .csi_report_cfg_list[0]
-                                                                                              .report_cfg_type)
+    csi_period = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+                     t_bench.get_main_ue().get_pcell().cfg().csi_meas_cfg()->csi_report_cfg_list[0].report_cfg_type)
                      .report_slot_period;
 
     // In the slots with SR only, the expected format is Format 1.
-    pucch_sr_only_test.format  = srsran::pucch_format::FORMAT_1;
+    auto& format1_sr           = pucch_sr_only_test.format_params.emplace<pucch_format_1>();
     pucch_sr_only_test.crnti   = to_rnti(0x4601);
     pucch_sr_only_test.bwp_cfg = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
 
-    pucch_sr_only_test.resources.prbs            = prb_interval{49, 50};
-    pucch_sr_only_test.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_sr_only_test.resources.symbols         = ofdm_symbol_range{0, 14};
+    pucch_sr_only_test.resources.prbs             = prb_interval{49, 50};
+    pucch_sr_only_test.resources.second_hop_prbs  = prb_interval{0, 0};
+    pucch_sr_only_test.resources.symbols          = ofdm_symbol_range{0, 14};
+    pucch_sr_only_test.uci_bits.sr_bits           = sr_nof_bits::one;
+    pucch_sr_only_test.uci_bits.harq_ack_nof_bits = 0;
 
-    pucch_sr_only_test.format_1.initial_cyclic_shift = 0;
-    pucch_sr_only_test.format_1.sr_bits              = sr_nof_bits::one;
-    pucch_sr_only_test.format_1.harq_ack_nof_bits    = 0;
-    pucch_sr_only_test.format_1.time_domain_occ      = 0;
+    format1_sr.initial_cyclic_shift = 0;
+    format1_sr.time_domain_occ      = 0;
 
-    pucch_sr_only_test.format_1.group_hopping   = pucch_group_hopping::NEITHER;
-    pucch_sr_only_test.format                   = pucch_format::FORMAT_1;
-    pucch_sr_only_test.format_1.n_id_hopping    = t_bench.cell_cfg.pci;
-    pucch_sr_only_test.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+    format1_sr.group_hopping   = pucch_group_hopping::NEITHER;
+    format1_sr.n_id_hopping    = t_bench.cell_cfg.pci;
+    format1_sr.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
 
     // In the slots with SR + CSI, the expected format is Format 2.
-    pucch_sr_csi_test.format                    = srsran::pucch_format::FORMAT_2;
-    pucch_sr_csi_test.crnti                     = to_rnti(0x4601);
-    pucch_sr_csi_test.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_sr_csi_test.resources.prbs            = prb_interval{2, 3};
-    pucch_sr_csi_test.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_sr_csi_test.resources.symbols         = ofdm_symbol_range{12, 14};
+    auto& format2_sr_csi                          = pucch_sr_csi_test.format_params.emplace<pucch_format_2>();
+    pucch_sr_csi_test.crnti                       = to_rnti(0x4601);
+    pucch_sr_csi_test.bwp_cfg                     = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_sr_csi_test.resources.prbs              = prb_interval{2, 3};
+    pucch_sr_csi_test.resources.second_hop_prbs   = prb_interval{0, 0};
+    pucch_sr_csi_test.resources.symbols           = ofdm_symbol_range{12, 14};
+    pucch_sr_csi_test.uci_bits.harq_ack_nof_bits  = 0;
+    pucch_sr_csi_test.uci_bits.sr_bits            = sr_nof_bits::one;
+    pucch_sr_csi_test.uci_bits.csi_part1_nof_bits = 4;
 
-    pucch_sr_csi_test.format_2.harq_ack_nof_bits = 0;
-    pucch_sr_csi_test.format_2.sr_bits           = sr_nof_bits::one;
-    pucch_sr_csi_test.format_2.csi_part1_bits    = 4;
-    pucch_sr_csi_test.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
-    pucch_sr_csi_test.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
-    pucch_sr_csi_test.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+    format2_sr_csi.max_code_rate     = max_pucch_code_rate::dot_25;
+    format2_sr_csi.n_id_scambling    = t_bench.cell_cfg.pci;
+    format2_sr_csi.n_id_0_scrambling = t_bench.cell_cfg.pci;
   };
 
 protected:
@@ -166,53 +155,40 @@ public:
     csi_offset(test_rgen::uniform_int<unsigned>(0, csi_report_periodicity_to_uint(GetParam()) - 1)),
     t_bench{test_bench_params{.csi_period = csi_period, .csi_offset = csi_offset}}
   {
-    sr_period = sr_periodicity_to_slot(t_bench.get_main_ue()
-                                           .get_pcell()
-                                           .cfg()
-                                           .cfg_dedicated()
-                                           .ul_config.value()
-                                           .init_ul_bwp.pucch_cfg.value()
-                                           .sr_res_list[0]
-                                           .period);
+    sr_period = sr_periodicity_to_slot(
+        t_bench.get_main_ue().get_pcell().cfg().init_bwp().ul_ded->pucch_cfg.value().sr_res_list[0].period);
 
-    sr_offset = t_bench.get_main_ue()
-                    .get_pcell()
-                    .cfg()
-                    .cfg_dedicated()
-                    .ul_config.value()
-                    .init_ul_bwp.pucch_cfg.value()
-                    .sr_res_list[0]
-                    .offset;
+    sr_offset = t_bench.get_main_ue().get_pcell().cfg().init_bwp().ul_ded->pucch_cfg.value().sr_res_list[0].offset;
 
     // In the slots with SR + CSI, the expected format is Format 2.
-    pucch_csi_and_sr_test.format                    = srsran::pucch_format::FORMAT_2;
-    pucch_csi_and_sr_test.crnti                     = to_rnti(0x4601);
-    pucch_csi_and_sr_test.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_csi_and_sr_test.resources.prbs            = prb_interval{2, 3};
-    pucch_csi_and_sr_test.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_csi_and_sr_test.resources.symbols         = ofdm_symbol_range{12, 14};
+    auto& format2_csi_and_sr                          = pucch_csi_and_sr_test.format_params.emplace<pucch_format_2>();
+    pucch_csi_and_sr_test.crnti                       = to_rnti(0x4601);
+    pucch_csi_and_sr_test.bwp_cfg                     = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_csi_and_sr_test.resources.prbs              = prb_interval{2, 3};
+    pucch_csi_and_sr_test.resources.second_hop_prbs   = prb_interval{0, 0};
+    pucch_csi_and_sr_test.resources.symbols           = ofdm_symbol_range{12, 14};
+    pucch_csi_and_sr_test.uci_bits.harq_ack_nof_bits  = 0;
+    pucch_csi_and_sr_test.uci_bits.sr_bits            = sr_nof_bits::one;
+    pucch_csi_and_sr_test.uci_bits.csi_part1_nof_bits = 4;
 
-    pucch_csi_and_sr_test.format_2.harq_ack_nof_bits = 0;
-    pucch_csi_and_sr_test.format_2.sr_bits           = sr_nof_bits::one;
-    pucch_csi_and_sr_test.format_2.csi_part1_bits    = 4;
-    pucch_csi_and_sr_test.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
-    pucch_csi_and_sr_test.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
-    pucch_csi_and_sr_test.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+    format2_csi_and_sr.max_code_rate     = max_pucch_code_rate::dot_25;
+    format2_csi_and_sr.n_id_scambling    = t_bench.cell_cfg.pci;
+    format2_csi_and_sr.n_id_0_scrambling = t_bench.cell_cfg.pci;
 
     // In the slots with CSI only, the expected format is Format 2.
-    pucch_csi_only_test.format                    = srsran::pucch_format::FORMAT_2;
-    pucch_csi_only_test.crnti                     = to_rnti(0x4601);
-    pucch_csi_only_test.bwp_cfg                   = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-    pucch_csi_only_test.resources.prbs            = prb_interval{2, 3};
-    pucch_csi_only_test.resources.second_hop_prbs = prb_interval{0, 0};
-    pucch_csi_only_test.resources.symbols         = ofdm_symbol_range{12, 14};
+    auto& format2_csi                               = pucch_csi_only_test.format_params.emplace<pucch_format_2>();
+    pucch_csi_only_test.crnti                       = to_rnti(0x4601);
+    pucch_csi_only_test.bwp_cfg                     = &t_bench.cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+    pucch_csi_only_test.resources.prbs              = prb_interval{2, 3};
+    pucch_csi_only_test.resources.second_hop_prbs   = prb_interval{0, 0};
+    pucch_csi_only_test.resources.symbols           = ofdm_symbol_range{12, 14};
+    pucch_csi_only_test.uci_bits.harq_ack_nof_bits  = 0;
+    pucch_csi_only_test.uci_bits.sr_bits            = sr_nof_bits::no_sr;
+    pucch_csi_only_test.uci_bits.csi_part1_nof_bits = 4;
 
-    pucch_csi_only_test.format_2.harq_ack_nof_bits = 0;
-    pucch_csi_only_test.format_2.sr_bits           = sr_nof_bits::no_sr;
-    pucch_csi_only_test.format_2.csi_part1_bits    = 4;
-    pucch_csi_only_test.format_2.max_code_rate     = max_pucch_code_rate::dot_25;
-    pucch_csi_only_test.format_2.n_id_scambling    = t_bench.cell_cfg.pci;
-    pucch_csi_only_test.format_2.n_id_0_scrambling = t_bench.cell_cfg.pci;
+    format2_csi.max_code_rate     = max_pucch_code_rate::dot_25;
+    format2_csi.n_id_scambling    = t_bench.cell_cfg.pci;
+    format2_csi.n_id_0_scrambling = t_bench.cell_cfg.pci;
   };
 
 protected:

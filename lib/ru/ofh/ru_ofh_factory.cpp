@@ -99,6 +99,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
   ru_ofh_impl_config ru_config;
   ru_config.nof_slot_offset_du_ru = config.sector_configs.back().max_processing_delay_slots;
   ru_config.nof_symbols_per_slot  = get_nsymb_per_slot(config.sector_configs.back().cp);
+  ru_config.scs                   = config.sector_configs.back().scs;
 
   return std::make_unique<ru_ofh_impl>(ru_config, std::move(ofh_dependencies));
 }

@@ -18,6 +18,7 @@
 # and at http://www.gnu.org/licenses/.
 #
 
+add_subdirectory(metrics)
 
 set(SOURCES
         cu_cp_unit_config_cli11_schema.cpp
@@ -27,4 +28,4 @@ set(SOURCES
 
 add_library(srsran_cu_cp_app_unit STATIC ${SOURCES})
 target_include_directories(srsran_cu_cp_app_unit PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_cu_cp_app_unit)
+target_link_libraries(srsran_cu_cp_app_unit PRIVATE srsran_cu_cp_unit_metrics_helpers srsran_metrics_app_helpers)

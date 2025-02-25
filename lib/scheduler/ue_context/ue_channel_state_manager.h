@@ -45,6 +45,11 @@ public:
 
   const std::optional<csi_report_data>& get_latest_csi_report() const { return latest_csi_report; }
 
+  const std::optional<pusch_tpmi_select_info>& get_latest_tpmi_select_info() const
+  {
+    return last_pusch_tpmi_select_info;
+  }
+
   void update_pusch_snr(float snr_db);
 
   /// \brief Get PUSCH SNR in dB.

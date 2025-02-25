@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
@@ -56,6 +57,8 @@ struct ru_ofh_unit_base_cell_config {
   std::chrono::microseconds Ta4_min{85};
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = true;
+  /// Ignore the start symbol value received in the PRACH U-Plane packets.
+  bool ignore_prach_start_symbol = false;
   /// \brief Downlink broadcast flag.
   ///
   /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAxCs.
@@ -175,6 +178,8 @@ struct ru_ofh_unit_config {
   ru_ofh_unit_expert_execution_config expert_execution_cfg;
   /// HAL configuration.
   std::optional<ru_ofh_unit_hal_config> hal_config;
+  /// Metrics configuration.
+  app_helpers::metrics_config metrics_cfg;
 };
 
 /// gNB app Open Fronthaul Radio Unit configuration.

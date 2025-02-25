@@ -96,7 +96,7 @@ class upper_phy_impl : public upper_phy
     void handle_tti_boundary(const upper_phy_timing_context& context) override
     {
       // Propagate the event.
-      notifier.get().on_tti_boundary(context.slot);
+      notifier.get().on_tti_boundary(context);
     }
 
     // See interface for documentation.

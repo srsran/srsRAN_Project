@@ -1602,22 +1602,22 @@ INSTANTIATE_TEST_SUITE_P(DciPacking,
                          DciFallbackPackingFixture,
                          ::testing::Combine(
                              // Bandwidth of the initial UL BWP in number of Resource Blocks.
-                             ::testing::Values(12, 96, MAX_RB),
+                             ::testing::Values(12, 96, MAX_NOF_PRBS),
                              // Bandwidth of the active UL BWP in number of Resource Blocks.
-                             ::testing::Values(12, 96, MAX_RB),
+                             ::testing::Values(12, 96, MAX_NOF_PRBS),
                              // Bandwidth of the initial DL BWP in number of Resource Blocks.
-                             ::testing::Values(12, 96, MAX_RB),
+                             ::testing::Values(12, 96, MAX_NOF_PRBS),
                              // Bandwidth of the active DL BWP in number of Resource Blocks.
-                             ::testing::Values(12, 96, MAX_RB)));
+                             ::testing::Values(12, 96, MAX_NOF_PRBS)));
 
 // Creates test suite that combines the most relevant DCI size parameters for non-fallback DCI formats.
 INSTANTIATE_TEST_SUITE_P(DciPacking,
                          DciNonFallbackPackingFixture,
                          ::testing::Combine(
                              // Bandwidth of the initial UL/DL BWP in number of Resource Blocks.
-                             ::testing::Values(12, 96, MAX_RB),
+                             ::testing::Values(12, 96, MAX_NOF_PRBS),
                              // Bandwidth of the active UL/DL BWP in number of Resource Blocks.
-                             ::testing::Values(12, 96, MAX_RB),
+                             ::testing::Values(12, 96, MAX_NOF_PRBS),
                              // PDSCH HARQ-ACK codebook type.
                              ::testing::Values(pdsch_harq_ack_codebook::semistatic, pdsch_harq_ack_codebook::dynamic),
                              // Number of UL/DL BWP configured by RRC.

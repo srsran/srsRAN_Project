@@ -84,17 +84,18 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed
   unsigned i_byte       = 0;
   uint8_t* unpacked_ptr = unpacked.data();
 
-#if defined(__AVX512F__) && defined(__AVX512VBMI__) && defined(__AVX512BW__)
+#if defined(__AVX512F__) && defined(__AVX512BW__)
   const __mmask64* avx512_packed_ptr = reinterpret_cast<const __mmask64*>(packed.get_buffer().data());
   for (unsigned i_byte_end = (packed.size() / 64) * 8; i_byte != i_byte_end; i_byte += 8) {
     // Load 64 bits in a go as a mask.
     __mmask64 blend_mask = *(avx512_packed_ptr++);
 
-    // Load 64 bits in a go.
-    __m512i reg = _mm512_mask_blend_epi8(blend_mask, _mm512_set1_epi8(0), _mm512_set1_epi8(1));
+    // Convert mask to 0x01 (for 1s) and 0x00 (for 0s).
+    __m512i reg = _mm512_movm_epi8(blend_mask);
+    reg         = _mm512_and_si512(reg, _mm512_set1_epi8(0x01));
 
     // Reverses bits within bytes.
-    __m512i permute_mask = _mm512_set_epi8(
+    __m512i shuffle_idx = _mm512_set_epi8(
         // clang-format off
         0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
         0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
@@ -106,12 +107,12 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
         // clang-format on
     );
-    reg = _mm512_permutexvar_epi8(permute_mask, reg);
+    reg = _mm512_shuffle_epi8(reg, shuffle_idx);
 
     // Store register.
     _mm512_storeu_si512(reinterpret_cast<__m512i*>(unpacked_ptr + 8 * i_byte), reg);
   }
-#endif // defined(__AVX512F__) && defined(__AVX512VBMI__) && defined(__AVX512BW__)
+#endif // defined(__AVX512F__) && defined(__AVX512BW__)
 
 #if defined(__AVX__) && defined(__AVX2__)
   const uint8_t* avx2_packed_ptr   = packed.get_buffer().data();
@@ -132,7 +133,7 @@ void srsran::srsvec::bit_unpack(span<uint8_t> unpacked, const bit_buffer& packed
         8, 8, 8, 8, 8, 8, 8, 8,
         0, 0, 0, 0, 0, 0, 0, 0,
         8, 8, 8, 8, 8, 8, 8, 8
-        // clang-format off
+        // clang-format on
     );
     in = _mm256_shuffle_epi8(in, shuffle_mask);
 
@@ -236,14 +237,14 @@ void srsran::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)
                 unpacked.size());
   unsigned i_byte = 0;
 
-#if defined(__AVX512F__) && defined(__AVX512VBMI__) && defined(__AVX512BW__)
+#if defined(__AVX512F__) && defined(__AVX512BW__)
   __mmask64* avx_packed_ptr = reinterpret_cast<__mmask64*>(packed.get_buffer().data());
   for (unsigned i_byte_end = (packed.size() / 64) * 8; i_byte != i_byte_end; i_byte += 8) {
     // Load the 64 input values into an AVX-512 register.
     __m512i reg = _mm512_loadu_si512(reinterpret_cast<const __m512i*>(unpacked.data()));
 
     // Reverses bits within bytes.
-    __m512i permute_mask = _mm512_set_epi8(
+    __m512i shuffle_idx = _mm512_set_epi8(
         // clang-format off
         0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
         0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
@@ -255,14 +256,14 @@ void srsran::srsvec::bit_pack(bit_buffer& packed, span<const uint8_t> unpacked)
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
         // clang-format on
     );
-    reg = _mm512_permutexvar_epi8(permute_mask, reg);
+    reg = _mm512_shuffle_epi8(reg, shuffle_idx);
 
     // Extract the LSBs using a bitwise AND operation.
     *(avx_packed_ptr++) = _mm512_test_epi8_mask(reg, _mm512_set1_epi8(1));
 
     unpacked = unpacked.last(unpacked.size() - 64);
   }
-#endif // defined(__AVX512F__) && defined(__AVX512VBMI__) && defined(__AVX512BW__)
+#endif // defined(__AVX512F__) && defined(__AVX512BW__)
 
   // Use raw pointers to avoid an overuse of span<>::operator[].
   uint8_t*       packed_ptr   = packed.get_buffer().data();

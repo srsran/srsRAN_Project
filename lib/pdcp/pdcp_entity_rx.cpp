@@ -25,6 +25,7 @@
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/execution_context_description.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 
 using namespace srsran;
 
@@ -53,6 +54,9 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   if (metrics_agg.get_metrics_period().count()) {
     metrics_timer = ue_ul_timer_factory.create_timer();
     metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this](timer_id_t tid) {
+      if (stopped) {
+        return;
+      }
       metrics_agg.push_rx_metrics(metrics.get_metrics_and_reset());
       metrics_timer.run();
     });
@@ -90,6 +94,7 @@ void pdcp_entity_rx::stop()
     stopped = true;
     reordering_timer.stop();
     token_mngr.stop();
+    metrics_timer.stop();
     logger.log_debug("Stopped PDCP entity");
   }
 }
@@ -108,6 +113,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 
   trace_point rx_tp = up_tracer.now();
   metrics.add_pdus(1, buf.length());
+  std::chrono::system_clock::time_point time_of_arrival = std::chrono::high_resolution_clock::now();
 
   // Log PDU
   logger.log_debug(buf.begin(), buf.end(), "RX PDU. pdu_len={}", buf.length());
@@ -128,7 +134,7 @@ void pdcp_entity_rx::handle_pdu(byte_buffer_chain buf)
 
   pdcp_dc_field dc = pdcp_pdu_get_dc(*(pdu.begin()));
   if (is_srb() || dc == pdcp_dc_field::data) {
-    handle_data_pdu(std::move(pdu));
+    handle_data_pdu(std::move(pdu), time_of_arrival);
   } else {
     handle_control_pdu(std::move(buf));
   }
@@ -181,7 +187,7 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg)
   configure_security(sec_cfg, integrity_enabled, ciphering_enabled);
 }
 
-void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
+void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::system_clock::time_point time_of_arrival)
 {
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
@@ -189,7 +195,6 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
     logger.log_error(pdu.begin(), pdu.end(), "RX PDU too small. pdu_len={} hdr_len={}", pdu.length(), hdr_len_bytes);
     return;
   }
-  std::chrono::system_clock::time_point time_start = std::chrono::system_clock::now();
   // Log state
   log_state(srslog::basic_levels::debug);
 
@@ -247,20 +252,24 @@ void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu)
     return;
   }
 
-  pdcp_rx_buffer_info pdu_info{.buf             = std::move(pdu),
-                               .count           = rcvd_count,
-                               .time_of_arrival = time_start,
-                               .token           = pdcp_crypto_token(token_mngr)};
+  pdcp_rx_pdu_info pdu_info{.buf             = std::move(pdu),
+                            .count           = rcvd_count,
+                            .time_of_arrival = time_of_arrival,
+                            .token           = pdcp_crypto_token(token_mngr)};
 
   // apply security in crypto executor
-  auto fn = [this, pdu_info = std::move(pdu_info)]() mutable { apply_security(std::move(pdu_info)); };
+  auto fn = [this, pdu_info = std::move(pdu_info)]() mutable {
+    apply_security(std::move(pdu_info)); // we should not use the PDCP entity past this point, as we possibly no longer
+                                         // hold the crypto token causing races upon deletion.
+  };
   if (not crypto_executor.execute(std::move(fn))) {
     logger.log_warning("Dropped PDU, crypto executor queue is full. count={}", rcvd_count);
   }
 }
 
-void pdcp_entity_rx::apply_security(pdcp_rx_buffer_info&& pdu_info)
+void pdcp_entity_rx::apply_security(pdcp_rx_pdu_info&& pdu_info)
 {
+  auto     pre        = std::chrono::high_resolution_clock::now();
   uint32_t rcvd_count = pdu_info.count;
 
   // Apply deciphering and integrity check
@@ -304,6 +313,10 @@ void pdcp_entity_rx::apply_security(pdcp_rx_buffer_info&& pdu_info)
 
   pdu_info.buf = std::move(result.buf.value());
 
+  auto post           = std::chrono::high_resolution_clock::now();
+  auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
+  metrics.add_crypto_processing_latency(sdu_latency_ns.count());
+
   // apply reordering in UE executor
   auto fn = [this, pdu_info = std::move(pdu_info)]() mutable {
     metrics.add_integrity_verified_pdus(1);
@@ -314,7 +327,7 @@ void pdcp_entity_rx::apply_security(pdcp_rx_buffer_info&& pdu_info)
   }
 }
 
-void pdcp_entity_rx::apply_reordering(pdcp_rx_buffer_info pdu_info)
+void pdcp_entity_rx::apply_reordering(pdcp_rx_pdu_info pdu_info)
 {
   uint32_t rcvd_count = pdu_info.count;
   /*
@@ -342,7 +355,7 @@ void pdcp_entity_rx::apply_reordering(pdcp_rx_buffer_info pdu_info)
 
   // Store PDU in Rx window
   pdcp_rx_sdu_info& sdu_info = rx_window.add_sn(rcvd_count);
-  sdu_info.sdu               = std::move(pdu_info.buf);
+  sdu_info.buf               = std::move(pdu_info.buf);
   sdu_info.time_of_arrival   = pdu_info.time_of_arrival;
 
   // Update RX_NEXT
@@ -413,9 +426,12 @@ void pdcp_entity_rx::deliver_all_consecutive_counts()
     logger.log_info("RX SDU. count={}", st.rx_deliv);
 
     // Pass PDCP SDU to the upper layers
-    metrics.add_sdus(1, sdu_info.sdu.length());
+    metrics.add_sdus(1, sdu_info.buf.length());
     record_reordering_dealy(sdu_info.time_of_arrival);
-    upper_dn.on_new_sdu(std::move(sdu_info.sdu));
+    auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::high_resolution_clock::now() - sdu_info.time_of_arrival);
+    metrics.add_sdu_latency_ns(sdu_latency_ns.count());
+    upper_dn.on_new_sdu(std::move(sdu_info.buf));
     rx_window.remove_sn(st.rx_deliv);
 
     // Update RX_DELIV
@@ -434,9 +450,12 @@ void pdcp_entity_rx::deliver_all_sdus()
       logger.log_info("RX SDU. count={}", count);
 
       // Pass PDCP SDU to the upper layers
-      metrics.add_sdus(1, sdu_info.sdu.length());
+      metrics.add_sdus(1, sdu_info.buf.length());
       record_reordering_dealy(sdu_info.time_of_arrival);
-      upper_dn.on_new_sdu(std::move(sdu_info.sdu));
+      auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+          std::chrono::high_resolution_clock::now() - sdu_info.time_of_arrival);
+      metrics.add_sdu_latency_ns(sdu_latency_ns.count());
+      upper_dn.on_new_sdu(std::move(sdu_info.buf));
       rx_window.remove_sn(count);
     }
   }
@@ -553,8 +572,8 @@ void pdcp_entity_rx::configure_security(security::sec_128_as_config sec_cfg,
   // integrity protection algorithm is used, 'NULL' ciphering algorithm is also used.
   // Ref: TS 38.331 Sec. 5.3.1.2
   //
-  // From TS 38.501 Sec. 6.7.3.6: UEs that are in limited service mode (LSM) and that cannot be authenticated (...) may
-  // still be allowed to establish emergency session by sending the emergency registration request message. (...)
+  // From TS 38.501 Sec. 6.7.3.6: UEs that are in limited service mode (LSM) and that cannot be authenticated (...)
+  // may still be allowed to establish emergency session by sending the emergency registration request message. (...)
   if ((sec_cfg.integ_algo == security::integrity_algorithm::nia0) &&
       (is_drb() || (is_srb() && sec_cfg.cipher_algo != security::ciphering_algorithm::nea0))) {
     logger.log_error("Integrity algorithm NIA0 is only permitted for SRBs configured with NEA0. is_srb={} NIA{} NEA{}",
@@ -620,9 +639,12 @@ void pdcp_entity_rx::handle_t_reordering_expire()
       logger.log_info("RX SDU. count={}", st.rx_deliv);
 
       // Pass PDCP SDU to the upper layers
-      metrics.add_sdus(1, sdu_info.sdu.length());
+      metrics.add_sdus(1, sdu_info.buf.length());
       record_reordering_dealy(sdu_info.time_of_arrival);
-      upper_dn.on_new_sdu(std::move(sdu_info.sdu));
+      auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+          std::chrono::high_resolution_clock::now() - sdu_info.time_of_arrival);
+      metrics.add_sdu_latency_ns(sdu_latency_ns.count());
+      upper_dn.on_new_sdu(std::move(sdu_info.buf));
       rx_window.remove_sn(st.rx_deliv);
     }
 

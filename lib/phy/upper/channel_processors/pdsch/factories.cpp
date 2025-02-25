@@ -22,13 +22,14 @@
 
 #include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "logging_pdsch_processor_decorator.h"
+#include "pdsch_block_processor_hw_impl.h"
+#include "pdsch_block_processor_impl.h"
 #include "pdsch_encoder_hw_impl.h"
 #include "pdsch_encoder_impl.h"
 #include "pdsch_modulator_impl.h"
 #include "pdsch_processor_asynchronous_pool.h"
-#include "pdsch_processor_concurrent_impl.h"
+#include "pdsch_processor_flexible_impl.h"
 #include "pdsch_processor_impl.h"
-#include "pdsch_processor_lite_impl.h"
 #include "pdsch_processor_pool.h"
 #include "pdsch_processor_validator_impl.h"
 #include "srsran/phy/support/support_factories.h"
@@ -156,150 +157,220 @@ public:
   }
 };
 
-class pdsch_processor_concurrent_factory_sw : public pdsch_processor_factory
+class pdsch_block_processor_factory_sw : public pdsch_block_processor_factory
 {
 public:
-  pdsch_processor_concurrent_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>       segmenter_factory_,
-                                        std::shared_ptr<ldpc_encoder_factory>            encoder_factory,
-                                        std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory,
-                                        std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
-                                        std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_,
-                                        std::shared_ptr<modulation_mapper_factory>       modulator_factory,
-                                        std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
-                                        std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory,
-                                        task_executor&                                   executor_,
-                                        unsigned                                         nof_concurrent_threads) :
-    segmenter_factory(std::move(segmenter_factory_)),
+  pdsch_block_processor_factory_sw(std::shared_ptr<ldpc_encoder_factory>            encoder_factory_,
+                                   std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory_,
+                                   std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
+                                   std::shared_ptr<modulation_mapper_factory>       modulator_factory_) :
+    encoder_factory(std::move(encoder_factory_)),
+    rate_matcher_factory(std::move(rate_matcher_factory_)),
     prg_factory(std::move(prg_factory_)),
-    rg_mapper_factory(std::move(rg_mapper_factory_)),
-    executor(executor_)
+    modulator_factory(std::move(modulator_factory_))
   {
-    srsran_assert(segmenter_factory, "Invalid segmenter factory.");
     srsran_assert(encoder_factory, "Invalid encoder factory.");
     srsran_assert(rate_matcher_factory, "Invalid rate matcher factory.");
     srsran_assert(prg_factory, "Invalid PRG factory.");
-    srsran_assert(rg_mapper_factory, "Invalid resource grid mapper factory.");
     srsran_assert(modulator_factory, "Invalid modulator factory.");
-    srsran_assert(dmrs_factory, "Invalid DM-RS factory.");
-    srsran_assert(ptrs_factory, "Invalid PT-RS factory.");
-    srsran_assert(nof_concurrent_threads > 1, "Number of concurrent threads must be greater than one.");
-
-    // Create vector of codeblock processors.
-    std::vector<std::unique_ptr<pdsch_codeblock_processor>> cb_processors;
-    for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
-      cb_processors.emplace_back(std::make_unique<pdsch_codeblock_processor>(encoder_factory->create(),
-                                                                             rate_matcher_factory->create(),
-                                                                             prg_factory->create(),
-                                                                             modulator_factory->create()));
-    }
-
-    // Create pool of codeblock processors. It is common for all PDSCH processors.
-    cb_processor_pool =
-        std::make_shared<pdsch_processor_concurrent_impl::codeblock_processor_pool>(std::move(cb_processors));
-
-    // Create vector of PDSCH DM-RS generators.
-    std::vector<std::unique_ptr<dmrs_pdsch_processor>> dmrs_generators;
-    for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
-      dmrs_generators.emplace_back(dmrs_factory->create());
-    }
-
-    // Create vector of PDSCH PT-RS generators.
-    std::vector<std::unique_ptr<ptrs_pdsch_generator>> ptrs_generators;
-    for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
-      ptrs_generators.emplace_back(ptrs_factory->create());
-    }
-
-    // Create pool of PDSCH DM-RS generators. It is common for all PDSCH processors.
-    dmrs_generator_pool =
-        std::make_shared<pdsch_processor_concurrent_impl::pdsch_dmrs_generator_pool>(std::move(dmrs_generators));
-
-    // Create pool of PDSCH PT-RS generators. It is common for all PDSCH processors.
-    ptrs_generator_pool =
-        std::make_shared<pdsch_processor_concurrent_impl::pdsch_ptrs_generator_pool>(std::move(ptrs_generators));
   }
 
-  std::unique_ptr<pdsch_processor> create() override
+  std::unique_ptr<pdsch_block_processor> create() override
   {
-    return std::make_unique<pdsch_processor_concurrent_impl>(segmenter_factory->create(),
-                                                             cb_processor_pool,
-                                                             prg_factory->create(),
-                                                             rg_mapper_factory->create(),
-                                                             dmrs_generator_pool,
-                                                             ptrs_generator_pool,
-                                                             executor);
-  }
-
-  std::unique_ptr<pdsch_pdu_validator> create_validator() override
-  {
-    return std::make_unique<pdsch_processor_validator_impl>();
+    return std::make_unique<pdsch_block_processor_impl>(
+        encoder_factory->create(), rate_matcher_factory->create(), prg_factory->create(), modulator_factory->create());
   }
 
 private:
-  std::shared_ptr<ldpc_segmenter_tx_factory>                                  segmenter_factory;
-  std::shared_ptr<pseudo_random_generator_factory>                            prg_factory;
-  std::shared_ptr<resource_grid_mapper_factory>                               rg_mapper_factory;
-  task_executor&                                                              executor;
-  std::shared_ptr<pdsch_processor_concurrent_impl::codeblock_processor_pool>  cb_processor_pool;
-  std::shared_ptr<pdsch_processor_concurrent_impl::pdsch_dmrs_generator_pool> dmrs_generator_pool;
-  std::shared_ptr<pdsch_processor_concurrent_impl::pdsch_ptrs_generator_pool> ptrs_generator_pool;
-};
-
-class pdsch_processor_lite_factory_sw : public pdsch_processor_factory
-{
-private:
-  std::shared_ptr<ldpc_segmenter_tx_factory>       segmenter_factory;
   std::shared_ptr<ldpc_encoder_factory>            encoder_factory;
   std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory;
-  std::shared_ptr<pseudo_random_generator_factory> scrambler_factory;
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory;
   std::shared_ptr<modulation_mapper_factory>       modulator_factory;
-  std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory;
-  std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory;
-  std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory;
+};
 
+class pdsch_block_processor_factory_hw : public pdsch_block_processor_factory
+{
 public:
-  pdsch_processor_lite_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>       segmenter_factory_,
-                                  std::shared_ptr<ldpc_encoder_factory>            encoder_factory_,
-                                  std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory_,
-                                  std::shared_ptr<pseudo_random_generator_factory> scrambler_factory_,
-                                  std::shared_ptr<modulation_mapper_factory>       modulator_factory_,
-                                  std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory_,
-                                  std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory_,
-                                  std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory_) :
-    segmenter_factory(std::move(segmenter_factory_)),
+  pdsch_block_processor_factory_hw(std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> encoder_factory_,
+                                   std::shared_ptr<pseudo_random_generator_factory>       prg_factory_,
+                                   std::shared_ptr<modulation_mapper_factory>             modulator_factory_) :
     encoder_factory(std::move(encoder_factory_)),
-    rate_matcher_factory(std::move(rate_matcher_factory_)),
-    scrambler_factory(std::move(scrambler_factory_)),
-    modulator_factory(std::move(modulator_factory_)),
+    prg_factory(std::move(prg_factory_)),
+    modulator_factory(std::move(modulator_factory_))
+  {
+    srsran_assert(encoder_factory, "Invalid hardware-accelerated encoder factory.");
+    srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsran_assert(modulator_factory, "Invalid modulator factory.");
+  }
+
+  std::unique_ptr<pdsch_block_processor> create() override
+  {
+    return std::make_unique<pdsch_block_processor_hw_impl>(
+        encoder_factory->create(), prg_factory->create(), modulator_factory->create());
+  }
+
+private:
+  std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> encoder_factory;
+  std::shared_ptr<pseudo_random_generator_factory>       prg_factory;
+  std::shared_ptr<modulation_mapper_factory>             modulator_factory;
+};
+
+class pdsch_block_processor_pool_factory_sw
+{
+public:
+  pdsch_block_processor_pool_factory_sw(std::shared_ptr<pdsch_block_processor_factory> block_processor_factory_,
+                                        unsigned                                       nof_concurrent_threads_) :
+    block_processor_factory(std::move(block_processor_factory_)), nof_concurrent_threads(nof_concurrent_threads_)
+  {
+    srsran_assert(block_processor_factory, "Invalid PDSCH block processor factory.");
+    srsran_assert(nof_concurrent_threads > 0, "Number of concurrent threads must be greater or equal to one.");
+  }
+
+  std::shared_ptr<pdsch_processor_flexible_impl::pdsch_block_processor_pool> create()
+  {
+    if (!pool) {
+      // Create vector of PDSCH block processors.
+      std::vector<std::unique_ptr<pdsch_block_processor>> block_processors;
+      for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
+        block_processors.emplace_back(block_processor_factory->create());
+      }
+      pool = std::make_unique<pdsch_processor_flexible_impl::pdsch_block_processor_pool>(std::move(block_processors));
+    }
+
+    return pool;
+  }
+
+private:
+  std::shared_ptr<pdsch_processor_flexible_impl::pdsch_block_processor_pool> pool;
+  std::shared_ptr<pdsch_block_processor_factory>                             block_processor_factory;
+  unsigned                                                                   nof_concurrent_threads;
+};
+
+class dmrs_generator_pool_factory_sw
+{
+public:
+  dmrs_generator_pool_factory_sw(std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_factory_,
+                                 unsigned                                      nof_concurrent_threads_) :
+    dmrs_factory(std::move(dmrs_factory_)), nof_concurrent_threads(nof_concurrent_threads_)
+  {
+    srsran_assert(dmrs_factory, "Invalid DM-RS factory.");
+    srsran_assert(nof_concurrent_threads > 0, "Number of concurrent threads must be greater or equal to one.");
+  }
+
+  std::shared_ptr<pdsch_processor_flexible_impl::pdsch_dmrs_generator_pool> create()
+  {
+    if (!pool) {
+      // Create vector of PDSCH DM-RS generators.
+      std::vector<std::unique_ptr<dmrs_pdsch_processor>> dmrs_generators;
+      for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
+        dmrs_generators.emplace_back(dmrs_factory->create());
+      }
+
+      pool = std::make_shared<pdsch_processor_flexible_impl::pdsch_dmrs_generator_pool>(std::move(dmrs_generators));
+    }
+    return pool;
+  }
+
+private:
+  std::shared_ptr<pdsch_processor_flexible_impl::pdsch_dmrs_generator_pool> pool;
+  std::shared_ptr<dmrs_pdsch_processor_factory>                             dmrs_factory;
+  unsigned                                                                  nof_concurrent_threads;
+};
+
+class ptrs_generator_pool_factory_sw
+{
+public:
+  ptrs_generator_pool_factory_sw(std::shared_ptr<ptrs_pdsch_generator_factory> ptrs_factory_,
+                                 unsigned                                      nof_concurrent_threads_) :
+    ptrs_factory(std::move(ptrs_factory_)), nof_concurrent_threads(nof_concurrent_threads_)
+  {
+    srsran_assert(ptrs_factory, "Invalid PT-RS factory.");
+    srsran_assert(nof_concurrent_threads > 0, "Number of concurrent threads must be greater or equal to one.");
+  }
+
+  std::shared_ptr<pdsch_processor_flexible_impl::pdsch_ptrs_generator_pool> create()
+  {
+    if (!pool) {
+      // Create vector of PDSCH PT-RS generators.
+      std::vector<std::unique_ptr<ptrs_pdsch_generator>> ptrs_generators;
+      for (unsigned i_encoder = 0; i_encoder != nof_concurrent_threads; ++i_encoder) {
+        ptrs_generators.emplace_back(ptrs_factory->create());
+      }
+      pool = std::make_shared<pdsch_processor_flexible_impl::pdsch_ptrs_generator_pool>(std::move(ptrs_generators));
+    }
+    return pool;
+  }
+
+private:
+  std::shared_ptr<pdsch_processor_flexible_impl::pdsch_ptrs_generator_pool> pool;
+  std::shared_ptr<ptrs_pdsch_generator_factory>                             ptrs_factory;
+  unsigned                                                                  nof_concurrent_threads;
+};
+
+class pdsch_processor_flexible_factory_sw : public pdsch_processor_factory
+{
+public:
+  pdsch_processor_flexible_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>     segmenter_factory_,
+                                      std::shared_ptr<pdsch_block_processor_factory> block_processor_factory_,
+                                      std::shared_ptr<resource_grid_mapper_factory>  rg_mapper_factory_,
+                                      std::shared_ptr<dmrs_pdsch_processor_factory>  dmrs_factory_,
+                                      std::shared_ptr<ptrs_pdsch_generator_factory>  ptrs_factory_,
+                                      task_executor&                                 executor_,
+                                      unsigned                                       nof_concurrent_threads,
+                                      unsigned                                       cb_batch_length_) :
+    segmenter_factory(std::move(segmenter_factory_)),
+    block_processor_factory(std::move(block_processor_factory_)),
+    rg_mapper_factory(std::move(rg_mapper_factory_)),
     dmrs_factory(std::move(dmrs_factory_)),
     ptrs_factory(std::move(ptrs_factory_)),
-    rg_mapper_factory(std::move(rg_mapper_factory_))
+    executor(executor_),
+    cb_batch_length(cb_batch_length_)
   {
     srsran_assert(segmenter_factory, "Invalid segmenter factory.");
-    srsran_assert(encoder_factory, "Invalid encoder factory.");
-    srsran_assert(rate_matcher_factory, "Invalid rate matcher factory.");
-    srsran_assert(scrambler_factory, "Invalid scrambler factory.");
-    srsran_assert(modulator_factory, "Invalid modulator factory.");
+    srsran_assert(block_processor_factory, "Invalid PDSCH block processor factory.");
+    srsran_assert(rg_mapper_factory, "Invalid resource grid mapper factory.");
     srsran_assert(dmrs_factory, "Invalid DM-RS factory.");
     srsran_assert(ptrs_factory, "Invalid PT-RS factory.");
-    srsran_assert(rg_mapper_factory, "Invalid resource grid mapper factory.");
+    srsran_assert(nof_concurrent_threads > 0, "Number of concurrent threads must be greater or equal to one.");
+
+    // Create a PDSCH block processor pool factory.
+    block_pool_factory =
+        std::make_unique<pdsch_block_processor_pool_factory_sw>(block_processor_factory, nof_concurrent_threads);
+
+    // Create a PDSCH DM-RS generator factory.
+    dmrs_pool_factory = std::make_unique<dmrs_generator_pool_factory_sw>(dmrs_factory, nof_concurrent_threads);
+
+    // Create a PDSCH PT-RS generator factory.
+    ptrs_pool_factory = std::make_unique<ptrs_generator_pool_factory_sw>(ptrs_factory, nof_concurrent_threads);
   }
 
   std::unique_ptr<pdsch_processor> create() override
   {
-    return std::make_unique<pdsch_processor_lite_impl>(segmenter_factory->create(),
-                                                       encoder_factory->create(),
-                                                       rate_matcher_factory->create(),
-                                                       scrambler_factory->create(),
-                                                       modulator_factory->create(),
-                                                       dmrs_factory->create(),
-                                                       ptrs_factory->create(),
-                                                       rg_mapper_factory->create());
+    return std::make_unique<pdsch_processor_flexible_impl>(segmenter_factory->create(),
+                                                           rg_mapper_factory->create(),
+                                                           block_pool_factory->create(),
+                                                           dmrs_pool_factory->create(),
+                                                           ptrs_pool_factory->create(),
+                                                           executor,
+                                                           cb_batch_length);
   }
 
   std::unique_ptr<pdsch_pdu_validator> create_validator() override
   {
     return std::make_unique<pdsch_processor_validator_impl>();
   }
+
+private:
+  std::shared_ptr<ldpc_segmenter_tx_factory>             segmenter_factory;
+  std::shared_ptr<pdsch_block_processor_factory>         block_processor_factory;
+  std::shared_ptr<resource_grid_mapper_factory>          rg_mapper_factory;
+  std::shared_ptr<dmrs_pdsch_processor_factory>          dmrs_factory;
+  std::shared_ptr<ptrs_pdsch_generator_factory>          ptrs_factory;
+  task_executor&                                         executor;
+  std::unique_ptr<pdsch_block_processor_pool_factory_sw> block_pool_factory;
+  std::unique_ptr<dmrs_generator_pool_factory_sw>        dmrs_pool_factory;
+  std::unique_ptr<ptrs_generator_pool_factory_sw>        ptrs_pool_factory;
+  unsigned                                               cb_batch_length;
 };
 
 class pdsch_processor_asynchronous_pool_factory : public pdsch_processor_factory
@@ -426,48 +497,45 @@ srsran::create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>
       std::move(encoder_factory), std::move(modulator_factory), std::move(dmrs_factory), std::move(ptrs_factory));
 }
 
-std::shared_ptr<pdsch_processor_factory>
-srsran::create_pdsch_concurrent_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory> ldpc_segmenter_factory,
-                                                     std::shared_ptr<ldpc_encoder_factory>      ldpc_enc_factory,
-                                                     std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rm_factory,
-                                                     std::shared_ptr<pseudo_random_generator_factory> prg_factory,
-                                                     std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory,
-                                                     std::shared_ptr<modulation_mapper_factory>       modulator_factory,
-                                                     std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
-                                                     std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory,
-                                                     task_executor&                                   executor,
-                                                     unsigned nof_concurrent_threads)
+std::shared_ptr<pdsch_block_processor_factory>
+srsran::create_pdsch_block_processor_factory_sw(std::shared_ptr<ldpc_encoder_factory>            encoder_factory,
+                                                std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory,
+                                                std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                                std::shared_ptr<modulation_mapper_factory>       modulator_factory)
 {
-  return std::make_shared<pdsch_processor_concurrent_factory_sw>(std::move(ldpc_segmenter_factory),
-                                                                 std::move(ldpc_enc_factory),
-                                                                 std::move(ldpc_rm_factory),
-                                                                 std::move(prg_factory),
-                                                                 std::move(rg_mapper_factory),
-                                                                 std::move(modulator_factory),
-                                                                 std::move(dmrs_factory),
-                                                                 std::move(ptrs_factory),
-                                                                 executor,
-                                                                 nof_concurrent_threads);
+  return std::make_shared<pdsch_block_processor_factory_sw>(std::move(encoder_factory),
+                                                            std::move(rate_matcher_factory),
+                                                            std::move(prg_factory),
+                                                            std::move(modulator_factory));
 }
 
-std::shared_ptr<pdsch_processor_factory>
-srsran::create_pdsch_lite_processor_factory_sw(std::shared_ptr<ldpc_segmenter_tx_factory>       segmenter_factory,
-                                               std::shared_ptr<ldpc_encoder_factory>            encoder_factory,
-                                               std::shared_ptr<ldpc_rate_matcher_factory>       rate_matcher_factory,
-                                               std::shared_ptr<pseudo_random_generator_factory> scrambler_factory,
-                                               std::shared_ptr<modulation_mapper_factory>       modulator_factory,
-                                               std::shared_ptr<dmrs_pdsch_processor_factory>    dmrs_factory,
-                                               std::shared_ptr<ptrs_pdsch_generator_factory>    ptrs_factory,
-                                               std::shared_ptr<resource_grid_mapper_factory>    rg_mapper_factory)
+std::shared_ptr<pdsch_block_processor_factory>
+srsran::create_pdsch_block_processor_factory_hw(std::shared_ptr<hal::hw_accelerator_pdsch_enc_factory> encoder_factory,
+                                                std::shared_ptr<pseudo_random_generator_factory>       prg_factory,
+                                                std::shared_ptr<modulation_mapper_factory> modulator_factory)
 {
-  return std::make_shared<pdsch_processor_lite_factory_sw>(std::move(segmenter_factory),
-                                                           std::move(encoder_factory),
-                                                           std::move(rate_matcher_factory),
-                                                           std::move(scrambler_factory),
-                                                           std::move(modulator_factory),
-                                                           std::move(dmrs_factory),
-                                                           std::move(ptrs_factory),
-                                                           std::move(rg_mapper_factory));
+  return std::make_shared<pdsch_block_processor_factory_hw>(
+      std::move(encoder_factory), std::move(prg_factory), std::move(modulator_factory));
+}
+
+std::shared_ptr<pdsch_processor_factory> srsran::create_pdsch_flexible_processor_factory_sw(
+    std::shared_ptr<ldpc_segmenter_tx_factory>     ldpc_segmenter_factory,
+    std::shared_ptr<pdsch_block_processor_factory> block_processor_factory,
+    std::shared_ptr<resource_grid_mapper_factory>  rg_mapper_factory,
+    std::shared_ptr<dmrs_pdsch_processor_factory>  dmrs_factory,
+    std::shared_ptr<ptrs_pdsch_generator_factory>  ptrs_factory,
+    task_executor&                                 executor,
+    unsigned                                       nof_concurrent_threads,
+    unsigned                                       cb_batch_length)
+{
+  return std::make_shared<pdsch_processor_flexible_factory_sw>(std::move(ldpc_segmenter_factory),
+                                                               std::move(block_processor_factory),
+                                                               std::move(rg_mapper_factory),
+                                                               std::move(dmrs_factory),
+                                                               std::move(ptrs_factory),
+                                                               executor,
+                                                               nof_concurrent_threads,
+                                                               cb_batch_length);
 }
 
 std::shared_ptr<pdsch_processor_factory>

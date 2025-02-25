@@ -28,6 +28,7 @@
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_factory.h"
 #include "apps/units/flexible_o_du/o_du_low/o_du_low_unit_factory.h"
 #include "flexible_o_du_impl.h"
+#include "metrics/flexible_o_du_metrics_builder.h"
 #include "srsran/du/o_du_factory.h"
 #include "srsran/e2/e2_du_metrics_connector.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
@@ -49,7 +50,20 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
 
   auto du_cells = generate_du_cell_config(du_hi);
 
-  auto du_impl = std::make_unique<flexible_o_du_impl>(nof_cells);
+  std::vector<pci_t> pci_cell_mapper;
+
+  for (const auto& cell : du_cells) {
+    pci_cell_mapper.push_back(cell.pci);
+  }
+  // Create flexible O-DU metrics configuration.
+  flexible_o_du_metrics_notifier* flexible_odu_metrics_notifier =
+      build_flexible_o_du_metrics_config(o_du.metrics,
+                                         *dependencies.metrics_notifier,
+                                         config.odu_high_cfg.du_high_cfg.config.metrics.common_metrics_cfg,
+                                         std::move(pci_cell_mapper));
+
+  // Create flexible O-DU implementation.
+  auto du_impl = std::make_unique<flexible_o_du_impl>(nof_cells, flexible_odu_metrics_notifier);
 
   std::vector<srs_du::cell_prach_ports_entry> prach_ports;
   std::vector<unsigned>                       max_pusch_per_slot;
@@ -76,7 +90,6 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
                                                           *dependencies.rlc_p,
                                                           *dependencies.e2_client_handler,
                                                           *(o_du.e2_metric_connectors),
-                                                          *dependencies.json_sink,
                                                           *dependencies.metrics_notifier,
                                                           {}};
 
@@ -111,7 +124,12 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
 
   o_du.commands = std::move(odu_hi_unit.commands);
 
-  auto odu_instance = make_o_du(std::move(odu_hi_unit.o_du_hi), std::move(odu_lo_unit.o_du_lo));
+  srs_du::o_du_dependencies odu_dependencies;
+  odu_dependencies.odu_hi           = std::move(odu_hi_unit.o_du_hi);
+  odu_dependencies.odu_lo           = std::move(odu_lo_unit.o_du_lo);
+  odu_dependencies.metrics_notifier = &du_impl->get_o_du_metrics_notifier();
+
+  auto odu_instance = make_o_du(std::move(odu_dependencies));
   report_error_if_not(odu_instance, "Invalid Distributed Unit");
 
   flexible_o_du_ru_config       ru_config{{du_cells},

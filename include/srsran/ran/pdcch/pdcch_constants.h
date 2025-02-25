@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/phy/constants.h"
+#include "srsran/ran/resource_block.h"
 
 namespace srsran {
 namespace pdcch_constants {
@@ -33,7 +33,7 @@ static constexpr unsigned NOF_RB_PER_FREQ_RESOURCE = 6;
 
 /// Defines the maximum number of frequency resources in a CORESET as per TS38.331 in ControlResourceSet
 /// information element.
-static constexpr unsigned MAX_NOF_FREQ_RESOURCES = MAX_RB / NOF_RB_PER_FREQ_RESOURCE;
+static constexpr unsigned MAX_NOF_FREQ_RESOURCES = MAX_NOF_PRBS / NOF_RB_PER_FREQ_RESOURCE;
 
 /// Maximum number of DCIs in a single transmission (it is not specified by the TS).
 static constexpr unsigned MAX_NOF_DCI = 1;
@@ -42,7 +42,7 @@ static constexpr unsigned MAX_NOF_DCI = 1;
 static constexpr unsigned MAX_DCI_PAYLOAD_SIZE = 128;
 
 /// Number of REs used for data in per RB and symbol as per TS38.211 section 7.3.2.5.
-static constexpr unsigned NOF_RE_PDCCH_PER_RB = NRE - 3;
+static constexpr unsigned NOF_RE_PDCCH_PER_RB = NOF_SUBCARRIERS_PER_RB - 3;
 
 /// Number of REGs per CCE as per TS38.211 Section 7.3.2.2.
 static constexpr unsigned NOF_REG_PER_CCE = 6;

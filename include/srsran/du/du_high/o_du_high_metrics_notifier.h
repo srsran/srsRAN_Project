@@ -27,7 +27,7 @@ namespace srs_du {
 
 struct o_du_high_metrics;
 
-/// ORAN DU high metrics notifier.
+/// O-RAN DU high metrics notifier.
 class o_du_high_metrics_notifier
 {
 public:

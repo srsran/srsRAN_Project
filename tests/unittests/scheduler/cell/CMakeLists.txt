@@ -31,5 +31,5 @@ target_link_libraries(scheduler_cell_resource_test
         sched_test_doubles
         gtest
         gtest_main)
-gtest_discover_tests(scheduler_cell_resource_test)
+add_test(scheduler_cell_resource_test scheduler_cell_resource_test)
 

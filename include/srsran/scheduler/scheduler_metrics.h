@@ -35,29 +35,43 @@ namespace srsran {
 
 /// \brief Snapshot of the metrics for a UE.
 struct scheduler_ue_metrics {
-  pci_t                pci;
-  rnti_t               rnti;
-  sch_mcs_index        dl_mcs;
-  unsigned             tot_dl_prbs_used;
-  double               dl_brate_kbps;
-  unsigned             dl_nof_ok;
-  unsigned             dl_nof_nok;
-  float                pusch_snr_db;
-  float                pusch_rsrp_db;
-  float                pucch_snr_db;
-  sch_mcs_index        ul_mcs;
-  unsigned             tot_ul_prbs_used;
-  double               ul_brate_kbps;
-  double               crc_delay_ms;
-  unsigned             ul_nof_ok;
-  unsigned             ul_nof_nok;
-  unsigned             bsr;
-  unsigned             sr_count;
-  unsigned             dl_bs;
+  pci_t         pci;
+  rnti_t        rnti;
+  sch_mcs_index dl_mcs;
+  unsigned      tot_dl_prbs_used;
+  double        dl_brate_kbps;
+  unsigned      dl_nof_ok;
+  unsigned      dl_nof_nok;
+  float         pusch_snr_db;
+  float         pusch_rsrp_db;
+  float         pucch_snr_db;
+  sch_mcs_index ul_mcs;
+  unsigned      tot_ul_prbs_used;
+  double        ul_brate_kbps;
+  unsigned      ul_nof_ok;
+  unsigned      ul_nof_nok;
+  unsigned      bsr;
+  unsigned      sr_count;
+  unsigned      dl_bs;
+  unsigned      nof_pucch_f0f1_invalid_harqs;
+  unsigned      nof_pucch_f2f3f4_invalid_harqs;
+  unsigned      nof_pucch_f2f3f4_invalid_csis;
+  unsigned      nof_pusch_invalid_harqs;
+  unsigned      nof_pusch_invalid_csis;
+  /// Delay metrics.
+  /// @{
+  std::optional<float> avg_ce_delay_ms;
+  std::optional<float> max_ce_delay_ms;
+  std::optional<float> avg_crc_delay_ms;
+  std::optional<float> max_crc_delay_ms;
+  std::optional<float> avg_pusch_harq_delay_ms;
+  std::optional<float> max_pusch_harq_delay_ms;
+  std::optional<float> avg_pucch_harq_delay_ms;
+  std::optional<float> max_pucch_harq_delay_ms;
+  /// @}
   std::optional<float> last_dl_olla;
   std::optional<float> last_ul_olla;
   std::optional<int>   last_phr;
-  std::optional<float> mean_ce_delay_msec;
   /// Time advance statistics in seconds.
   sample_statistics<float> ta_stats;
   sample_statistics<float> pusch_ta_stats;
@@ -65,8 +79,10 @@ struct scheduler_ue_metrics {
   sample_statistics<float> srs_ta_stats;
   /// CQI statistics over the metrics report interval.
   sample_statistics<unsigned> cqi_stats;
-  /// RI statistics over the metrics report interval.
-  sample_statistics<unsigned> ri_stats;
+  /// DL RI statistics over the metrics report interval.
+  sample_statistics<unsigned> dl_ri_stats;
+  /// UL RI statistics over the metrics report interval.
+  sample_statistics<unsigned> ul_ri_stats;
 };
 
 /// \brief Event that occurred in the cell of the scheduler.

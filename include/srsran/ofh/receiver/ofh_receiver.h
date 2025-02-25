@@ -22,12 +22,13 @@
 
 #pragma once
 
-#include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 
 namespace srsran {
 namespace ofh {
+
+class receiver_metrics_collector;
 
 /// Open Fronthaul receiver interface.
 class receiver
@@ -40,6 +41,9 @@ public:
 
   /// Returns the controller of this Open Fronthaul receiver.
   virtual controller& get_controller() = 0;
+
+  /// Returns the metrics collector of this Open Fronthaul receiver.
+  virtual receiver_metrics_collector* get_metrics_collector() = 0;
 };
 
 } // namespace ofh

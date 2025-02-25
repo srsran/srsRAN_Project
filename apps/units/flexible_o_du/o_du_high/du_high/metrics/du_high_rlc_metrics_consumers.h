@@ -32,7 +32,10 @@ namespace srsran {
 class rlc_metrics_consumer_json : public app_services::metrics_consumer
 {
 public:
-  explicit rlc_metrics_consumer_json(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
+  explicit rlc_metrics_consumer_json(srslog::log_channel& log_chan_) : log_chan(log_chan_)
+  {
+    srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
+  }
 
   // See interface for documentation.
   void handle_metric(const app_services::metrics_set& metric) override;
@@ -45,13 +48,16 @@ private:
 class rlc_metrics_consumer_log : public app_services::metrics_consumer
 {
 public:
-  explicit rlc_metrics_consumer_log(srslog::basic_logger& logger_) : logger(logger_) {}
+  explicit rlc_metrics_consumer_log(srslog::log_channel& log_chan_) : log_chan(log_chan_)
+  {
+    srsran_assert(log_chan.enabled(), "Logger log channel is not enabled");
+  }
 
   // See interface for documentation.
   void handle_metric(const app_services::metrics_set& metric) override;
 
 private:
-  srslog::basic_logger& logger;
+  srslog::log_channel& log_chan;
 };
 
 /// Consumer for the E2 RLC metrics.

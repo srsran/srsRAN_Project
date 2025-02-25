@@ -23,7 +23,7 @@
 #pragma once
 
 #include "du_ue_resource_config.h"
-#include "pucch_resource_generator.h"
+#include "srsran/scheduler/config/pucch_resource_generator.h"
 #include <set>
 
 namespace srsran {

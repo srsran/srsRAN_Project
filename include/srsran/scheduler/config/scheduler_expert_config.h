@@ -71,6 +71,8 @@ using policy_scheduler_expert_config = std::variant<time_rr_scheduler_expert_con
 struct ul_power_control {
   /// Enable closed-loop PUSCH power control.
   bool enable_pusch_cl_pw_control = false;
+  /// Enable bandwidth adaptation to prevent negative PHR.
+  bool enable_phr_bw_adaptation = false;
   /// Target PUSCH SINR to be achieved with Close-loop power control, in dB.
   /// Only relevant if \c enable_closed_loop_pw_control is set to true.
   float target_pusch_sinr{10.0f};
@@ -97,7 +99,10 @@ struct scheduler_ue_expert_config {
   /// Sequence of redundancy versions used for PUSCH scheduling. Possible values: {0, 1, 2, 3}.
   std::vector<uint8_t> pusch_rv_sequence;
   unsigned             initial_cqi;
-  unsigned             max_nof_harq_retxs;
+  /// Maximum number of DL HARQ retxs.
+  unsigned max_nof_dl_harq_retxs = 4;
+  /// Maximum number of UL HARQ retxs.
+  unsigned max_nof_ul_harq_retxs = 4;
   /// Maximum MCS index that can be assigned when scheduling MSG4.
   sch_mcs_index max_msg4_mcs;
   /// Initial UL SINR value used for Dynamic UL MCS computation (in dB).
@@ -121,6 +126,12 @@ struct scheduler_ue_expert_config {
   /// @{
   /// Measurements periodicity in nof. slots over which the new Timing Advance Command is computed.
   unsigned ta_measurement_slot_period{80};
+  /// \brief Delay in nof. slots between issuing the TA_CMD and starting TA measurements.
+  ///
+  /// This parameter specifies the mandatory waiting period (i.e. the prohibit period) that must elapse after the
+  /// Timing Advance command (TA_CMD) is issued before the system begins its Timing Advance measurements.
+  /// The delay allows the system to settle, ensuring that measurements are taken under stable conditions.
+  unsigned ta_measurement_slot_prohibit_period{0};
   /// \brief Timing Advance Command (T_A) offset threshold.
   ///
   /// A TA command is triggered if the estimated TA is equal to or greater than this threshold. Possible valid values

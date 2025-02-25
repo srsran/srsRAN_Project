@@ -21,6 +21,7 @@
  */
 
 #include "cu_cp_unit_config_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "cu_cp_unit_config.h"
 #include "srsran/ran/nr_cell_identity.h"
@@ -546,6 +547,9 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_confi
              metrics_params.cu_cp_statistics_report_period,
              "CU-CP statistics report period in seconds. Set this value to 0 to disable this feature")
       ->capture_default_str();
+  add_option(
+      app, "--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period (in milliseconds)")
+      ->capture_default_str();
 }
 
 void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_unit_config& unit_cfg)
@@ -571,6 +575,7 @@ void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, unit_cfg.metrics.common_metrics_cfg);
 
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {

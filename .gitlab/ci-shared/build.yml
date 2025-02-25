@@ -53,6 +53,9 @@ variables:
     ENABLE_ASAN: "" # Empty for cmake default
     ENABLE_TSAN: "" # Empty for cmake default
     ENABLE_GCOV: "" # Empty for cmake default
+    ENABLE_UBSAN: "" # Empty for cmake default
+    ENABLE_UBSAN_MIN: "" # Empty for cmake default
+    ENABLE_RTSAN: "" # Empty for cmake default
     ENABLE_WERROR: "" # Empty for cmake default
     FORCE_DEBUG_INFO: "" # Empty for cmake default
     MARCH: "" # Empty for cmake default

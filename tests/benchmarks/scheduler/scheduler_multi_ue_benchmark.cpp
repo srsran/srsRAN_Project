@@ -93,7 +93,7 @@ public:
     next_sl_tx(builder_params.scs_common, 0)
   {
     du_cell_cfgs = {config_helpers::make_default_du_cell_config(builder_params)};
-    std::get<srs_du::pucch_f2_params>(du_cell_cfgs[0].pucch_cfg.f2_or_f3_or_f4_params).max_code_rate =
+    std::get<pucch_f2_params>(du_cell_cfgs[0].pucch_cfg.f2_or_f3_or_f4_params).max_code_rate =
         max_pucch_code_rate::dot_35;
     du_cell_cfgs[0].pucch_cfg.nof_csi_resources                    = 4;
     du_cell_cfgs[0].pucch_cfg.nof_sr_resources                     = 2;
@@ -168,27 +168,27 @@ public:
         uci_indication::uci_pdu pdu;
         pdu.ue_index = to_du_ue_index(static_cast<unsigned>(pucch.crnti) - 0x4601);
         pdu.crnti    = pucch.crnti;
-        if (pucch.format == pucch_format::FORMAT_1) {
+        if (pucch.format() == pucch_format::FORMAT_1) {
           uci_indication::uci_pdu::uci_pucch_f0_or_f1_pdu f1{};
           f1.sr_detected = false;
-          if (pucch.format_1.harq_ack_nof_bits > 0 and pucch.format_1.sr_bits == sr_nof_bits::no_sr) {
+          if (pucch.uci_bits.harq_ack_nof_bits > 0 and pucch.uci_bits.sr_bits == sr_nof_bits::no_sr) {
             f1.ul_sinr_dB = 10;
-            f1.harqs.resize(pucch.format_1.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
-          } else if (pucch.format_1.harq_ack_nof_bits > 0) {
+            f1.harqs.resize(pucch.uci_bits.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+          } else if (pucch.uci_bits.harq_ack_nof_bits > 0) {
             // ACK+SR
             f1.ul_sinr_dB = -10;
-            f1.harqs.resize(pucch.format_1.harq_ack_nof_bits, mac_harq_ack_report_status::dtx);
+            f1.harqs.resize(pucch.uci_bits.harq_ack_nof_bits, mac_harq_ack_report_status::dtx);
           } else {
             f1.ul_sinr_dB  = -10;
             f1.sr_detected = false;
           }
           pdu.pdu = f1;
           ind.ucis.push_back(pdu);
-        } else if (pucch.format == pucch_format::FORMAT_2) {
+        } else if (pucch.format() == pucch_format::FORMAT_2) {
           uci_indication::uci_pdu::uci_pucch_f2_or_f3_or_f4_pdu f2{};
           f2.ul_sinr_dB = 10;
-          if (pucch.format_2.harq_ack_nof_bits > 0) {
-            f2.harqs.resize(pucch.format_2.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
+          if (pucch.uci_bits.harq_ack_nof_bits > 0) {
+            f2.harqs.resize(pucch.uci_bits.harq_ack_nof_bits, mac_harq_ack_report_status::ack);
           }
           if (pucch.csi_rep_cfg.has_value()) {
             f2.csi =
@@ -197,7 +197,8 @@ public:
                                 std::nullopt,
                                 csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{0, std::nullopt, 0}},
                                 15,
-                                std::nullopt};
+                                std::nullopt,
+                                true};
           }
           pdu.pdu = f2;
           ind.ucis.push_back(pdu);
@@ -218,7 +219,8 @@ public:
                               std::nullopt,
                               csi_report_pmi{csi_report_pmi::typeI_single_panel_4ports_mode1{0, std::nullopt, 0}},
                               15,
-                              std::nullopt};
+                              std::nullopt,
+                              true};
           ind.ucis.push_back(pdu);
         }
       }

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "lib/scheduler/config/du_cell_group_config_pool.h"
 #include "lib/scheduler/ue_scheduling/ue_repository.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
@@ -47,6 +48,7 @@ public:
                                 const sched_cell_configuration_request_message& sched_cell_cfg_req) :
     expert_cfg{sched_exp_cfg},
     cell_cfg{[this, sched_cell_cfg_req]() -> const cell_configuration& {
+      cfg_pool.add_cell(sched_cell_cfg_req);
       cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(expert_cfg, sched_cell_cfg_req));
       return *cell_cfg_list[to_du_cell_index(0)];
     }()},
@@ -60,6 +62,7 @@ public:
   // Class members.
   scheduler_expert_config        expert_cfg;
   cell_common_configuration_list cell_cfg_list{};
+  du_cell_group_config_pool      cfg_pool;
   const cell_configuration&      cell_cfg;
   cell_harq_manager              cell_harqs;
   ue_repository                  ues;
@@ -73,7 +76,7 @@ public:
   // Class methods.
   void add_ue(sched_ue_creation_request_message ue_req)
   {
-    ue_ded_cfgs.emplace_back(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg);
+    ue_ded_cfgs.emplace_back(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req));
     ues.add_ue(std::make_unique<ue>(ue_creation_command{ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}));
   }
 

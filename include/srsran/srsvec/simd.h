@@ -993,8 +993,8 @@ inline simd_cf_t srsran_simd_cf_prod(simd_cf_t a, simd_cf_t b)
 {
   simd_cf_t ret;
 #ifdef __AVX512F__
-  ret.re = _mm512_sub_ps(_mm512_mul_ps(a.re, b.re), _mm512_mul_ps(a.im, b.im));
-  ret.im = _mm512_add_ps(_mm512_mul_ps(a.re, b.im), _mm512_mul_ps(a.im, b.re));
+  ret.re = _mm512_fmsub_ps(a.re, b.re, _mm512_mul_ps(a.im, b.im));
+  ret.im = _mm512_fmadd_ps(a.re, b.im, _mm512_mul_ps(a.im, b.re));
 #else /* __AVX512F__ */
 #ifdef __AVX2__
 #ifdef __FMA__
@@ -1465,7 +1465,7 @@ inline simd_i_t srsran_simd_i_load(const int32_t* x)
 inline void srsran_simd_i_store(int32_t* x, simd_i_t reg)
 {
 #ifdef __AVX512F__
-  _mm512_store_epi32(reinterpret_cast<__m512i*>(x), reg);
+  _mm512_store_si512(reinterpret_cast<__m512i*>(x), reg);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
   _mm256_store_si256(reinterpret_cast<__m256i*>(x), reg);
@@ -1484,7 +1484,7 @@ inline void srsran_simd_i_store(int32_t* x, simd_i_t reg)
 inline void srsran_simd_i_storeu(int32_t* x, simd_i_t reg)
 {
 #ifdef __AVX512F__
-  _mm512_storeu_epi32(reinterpret_cast<__m512i*>(x), reg);
+  _mm512_storeu_si512(reinterpret_cast<__m512i*>(x), reg);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
   _mm256_storeu_si256(reinterpret_cast<__m256i*>(x), reg);

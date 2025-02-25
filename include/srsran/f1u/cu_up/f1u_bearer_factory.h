@@ -30,8 +30,7 @@
 #include "srsran/ran/rb_id.h"
 #include "srsran/support/timers.h"
 
-namespace srsran {
-namespace srs_cu_up {
+namespace srsran::srs_cu_up {
 
 /// \brief Creates an F1-U bearer for the CU-UP.
 std::unique_ptr<f1u_bearer> create_f1u_bearer(uint32_t                       ue_index,
@@ -43,7 +42,7 @@ std::unique_ptr<f1u_bearer> create_f1u_bearer(uint32_t                       ue_
                                               f1u_rx_sdu_notifier&           rx_sdu_notifier,
                                               timer_factory                  ue_dl_timer_factory,
                                               unique_timer&                  ue_inactivity_timer,
+                                              task_executor&                 dl_exec,
                                               task_executor&                 ul_exec);
 
-} // namespace srs_cu_up
-} // namespace srsran
+} // namespace srsran::srs_cu_up

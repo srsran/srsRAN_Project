@@ -32,7 +32,7 @@ namespace srsran {
 class split6_o_du_application_unit_impl : public flexible_o_du_application_unit
 {
 public:
-  explicit split6_o_du_application_unit_impl(std::string_view app_name);
+  split6_o_du_application_unit_impl(std::string_view app_name, std::unique_ptr<split6_plugin> plugin_);
 
   // See interface for documentation.
   void on_parsing_configuration_registration(CLI::App& app) override;

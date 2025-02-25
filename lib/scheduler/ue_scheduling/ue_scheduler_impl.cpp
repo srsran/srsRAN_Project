@@ -22,6 +22,7 @@
 
 #include "ue_scheduler_impl.h"
 #include "../logging/scheduler_metrics_handler.h"
+#include "../policy/slice_allocator.h"
 
 using namespace srsran;
 
@@ -35,7 +36,6 @@ ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cf
 
 void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 {
-  ue_res_grid_view.add_cell(*params.cell_res_alloc);
   cells.emplace(params.cell_index, expert_cfg, params, ue_db, *params.cell_metrics);
   event_mng.add_cell(cell_creation_event{*params.cell_res_alloc,
                                          cells[params.cell_index].cell_harqs,
@@ -50,39 +50,25 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 
 void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t cell_index)
 {
-  if (ue_res_grid_view.get_cell_cfg_common(cell_index).is_dl_enabled(slot_tx)) {
-    // This slot is inactive for PDCCH in this cell. We therefore, can skip the scheduling strategy.
-    // Note: we are currently assuming that all cells have the same TDD pattern and that the scheduling strategy
-    // only allocates PDCCHs for the current slot_tx.
+  auto& cell = cells[cell_index];
 
-    // Update slice context and compute slice priorities.
-    cells[cell_index].slice_sched.slot_indication(slot_tx, ue_res_grid_view.get_grid(cell_index));
+  // Update slice context and compute slice priorities.
+  cell.slice_sched.slot_indication(slot_tx, *cell.cell_res_alloc);
 
-    // Perform round-robin prioritization of UL and DL scheduling. This gives unfair preference to DL over UL. This is
-    // done to avoid the issue of sending wrong DAI value in DCI format 0_1 to UE while the PDSCH is allocated
-    // right after allocating PUSCH in the same slot, resulting in gNB expecting 1 HARQ ACK bit to be multiplexed in
-    // UCI in PUSCH and UE sending 4 HARQ ACK bits (DAI = 3).
-    // Example: K1==K2=4 and PUSCH is allocated before PDSCH.
-    if (expert_cfg.enable_csi_rs_pdsch_multiplexing or
-        (*cells[cell_index].cell_res_alloc)[0].result.dl.csi_rs.empty()) {
-      auto dl_slice_candidate = cells[cell_index].slice_sched.get_next_dl_candidate();
-      while (dl_slice_candidate.has_value()) {
-        auto&                           policy = cells[cell_index].slice_sched.get_policy(dl_slice_candidate->id());
-        dl_slice_ue_cell_grid_allocator slice_pdsch_alloc{ue_alloc, *dl_slice_candidate};
-        policy.dl_sched(dl_sched_context{
-            slice_pdsch_alloc, ue_res_grid_view, *dl_slice_candidate, cells[cell_index].cell_harqs.pending_dl_retxs()});
-        dl_slice_candidate = cells[cell_index].slice_sched.get_next_dl_candidate();
-      }
-    }
+  // Schedule DL first.
+  // Note: DL should be scheduled first so that the right DAI value is picked in DCI format 0_1.
+  while (auto dl_slice_candidate = cell.slice_sched.get_next_dl_candidate()) {
+    scheduler_policy&      policy = cell.slice_sched.get_policy(dl_slice_candidate->id());
+    slice_dl_sched_context dl_ctxt{
+        *cell.cell_res_alloc, dl_slice_candidate.value(), ue_alloc, cell.cell_harqs.pending_dl_retxs()};
+    policy.dl_sched(dl_ctxt);
+  }
 
-    auto ul_slice_candidate = cells[cell_index].slice_sched.get_next_ul_candidate();
-    while (ul_slice_candidate.has_value()) {
-      auto&                           policy = cells[cell_index].slice_sched.get_policy(ul_slice_candidate->id());
-      ul_slice_ue_cell_grid_allocator slice_pusch_alloc{ue_alloc, *ul_slice_candidate};
-      policy.ul_sched(ul_sched_context{
-          slice_pusch_alloc, ue_res_grid_view, *ul_slice_candidate, cells[cell_index].cell_harqs.pending_ul_retxs()});
-      ul_slice_candidate = cells[cell_index].slice_sched.get_next_ul_candidate();
-    }
+  while (auto ul_slice_candidate = cell.slice_sched.get_next_ul_candidate()) {
+    scheduler_policy&      policy = cell.slice_sched.get_policy(ul_slice_candidate->id());
+    slice_ul_sched_context ul_ctxt{
+        *cell.cell_res_alloc, ul_slice_candidate.value(), ue_alloc, cell.cell_harqs.pending_ul_retxs()};
+    policy.ul_sched(ul_ctxt);
   }
 
   // The post processing is done for either DL and UL slots.
@@ -99,55 +85,35 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
   // Spans through the PUCCH grant list and update the HARQ-ACK PUCCH grant counter for the corresponding RNTI and HARQ
   // process id.
   for (const auto& pucch : slot_alloc.result.ul.pucchs) {
-    if ((pucch.format == pucch_format::FORMAT_0 and pucch.format_0.harq_ack_nof_bits > 0) or
-        (pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) or
-        (pucch.format == pucch_format::FORMAT_2 and pucch.format_2.harq_ack_nof_bits > 0)) {
-      ue* user = ue_db.find_by_rnti(pucch.crnti);
-      // This is to handle the case of a UE that gets removed after the PUCCH gets allocated and before this PUCCH is
-      // expected to be sent.
-      if (user == nullptr) {
+    const unsigned nof_harqs_per_rnti_per_slot = pucch.uci_bits.harq_ack_nof_bits;
+    if (nof_harqs_per_rnti_per_slot == 0) {
+      continue;
+    }
+
+    ue* user = ue_db.find_by_rnti(pucch.crnti);
+    // This is to handle the case of a UE that gets removed after the PUCCH gets allocated and before this PUCCH is
+    // expected to be sent.
+    if (user == nullptr) {
+      logger.warning("rnti={}: No user with such RNTI found in the ue scheduler database. Skipping PUCCH grant counter",
+                     pucch.crnti,
+                     slot_alloc.slot);
+      continue;
+    }
+    // Each PUCCH grants can potentially carry ACKs for different HARQ processes (as many as the harq_ack_nof_bits)
+    // expecting to be acknowledged on the same slot.
+    for (unsigned harq_bit_idx = 0; harq_bit_idx != nof_harqs_per_rnti_per_slot; ++harq_bit_idx) {
+      std::optional<dl_harq_process_handle> h_dl =
+          user->get_pcell().harqs.find_dl_harq_waiting_ack(slot_alloc.slot, harq_bit_idx);
+      if (not h_dl.has_value() or not h_dl->is_waiting_ack()) {
         logger.warning(
-            "rnti={}: No user with such RNTI found in the ue scheduler database. Skipping PUCCH grant counter",
-            pucch.crnti,
-            slot_alloc.slot);
+            "ue={} rnti={}: No DL HARQ process with state waiting-for-ack found at slot={} for harq-bit-index={}",
+            fmt::underlying(user->ue_index),
+            user->crnti,
+            slot_alloc.slot,
+            harq_bit_idx);
         continue;
-      }
-      unsigned nof_harqs_per_rnti_per_slot = 0;
-      switch (pucch.format) {
-        case pucch_format::FORMAT_0:
-          nof_harqs_per_rnti_per_slot = pucch.format_0.harq_ack_nof_bits;
-          break;
-        case pucch_format::FORMAT_1:
-          nof_harqs_per_rnti_per_slot = pucch.format_1.harq_ack_nof_bits;
-          break;
-        case pucch_format::FORMAT_2:
-          nof_harqs_per_rnti_per_slot = pucch.format_2.harq_ack_nof_bits;
-          break;
-        case pucch_format::FORMAT_3:
-          nof_harqs_per_rnti_per_slot = pucch.format_3.harq_ack_nof_bits;
-          break;
-        case pucch_format::FORMAT_4:
-          nof_harqs_per_rnti_per_slot = pucch.format_4.harq_ack_nof_bits;
-          break;
-        default:
-          srsran_assertion_failure("rnti={}: Invalid PUCCH format", pucch.crnti);
-      }
-      // Each PUCCH grants can potentially carry ACKs for different HARQ processes (as many as the harq_ack_nof_bits)
-      // expecting to be acknowledged on the same slot.
-      for (unsigned harq_bit_idx = 0; harq_bit_idx != nof_harqs_per_rnti_per_slot; ++harq_bit_idx) {
-        std::optional<dl_harq_process_handle> h_dl =
-            user->get_pcell().harqs.find_dl_harq_waiting_ack(slot_alloc.slot, harq_bit_idx);
-        if (not h_dl.has_value() or not h_dl->is_waiting_ack()) {
-          logger.warning(
-              "ue={} rnti={}: No DL HARQ process with state waiting-for-ack found at slot={} for harq-bit-index={}",
-              fmt::underlying(user->ue_index),
-              user->crnti,
-              slot_alloc.slot,
-              harq_bit_idx);
-          continue;
-        };
-        h_dl->increment_pucch_counter();
-      }
+      };
+      h_dl->increment_pucch_counter();
     }
   }
 }
@@ -169,33 +135,11 @@ void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_
                      [&pucch](const ul_sched_info& pusch) { return pusch.pusch_cfg.rnti == pucch.crnti; });
 
     if (pusch_grant != slot_alloc.result.ul.puschs.end()) {
-      unsigned harq_bits = 0;
-      unsigned csi_bits  = 0;
-      unsigned sr_bits   = 0;
-      if (pucch.format == pucch_format::FORMAT_1) {
-        harq_bits = pucch.format_1.harq_ack_nof_bits;
-        sr_bits   = sr_nof_bits_to_uint(pucch.format_1.sr_bits);
-      } else if (pucch.format == pucch_format::FORMAT_2) {
-        harq_bits = pucch.format_2.harq_ack_nof_bits;
-        csi_bits  = pucch.format_2.csi_part1_bits;
-        sr_bits   = sr_nof_bits_to_uint(pucch.format_2.sr_bits);
-      } else if (pucch.format == pucch_format::FORMAT_3) {
-        harq_bits = pucch.format_3.harq_ack_nof_bits;
-        csi_bits  = pucch.format_3.csi_part1_bits;
-        sr_bits   = sr_nof_bits_to_uint(pucch.format_3.sr_bits);
-      } else if (pucch.format == pucch_format::FORMAT_4) {
-        harq_bits = pucch.format_4.harq_ack_nof_bits;
-        csi_bits  = pucch.format_4.csi_part1_bits;
-        sr_bits   = sr_nof_bits_to_uint(pucch.format_4.sr_bits);
-      }
-      logger.error("rnti={}: has both PUCCH and PUSCH grants scheduled at slot {}, PUCCH  format={} with nof "
-                   "harq-bits={} csi-1-bits={} sr-bits={}",
+      logger.error("rnti={}: has both PUCCH and PUSCH grants scheduled at slot {}, PUCCH  format={} with uci_bits={}",
                    pucch.crnti,
                    slot_alloc.slot,
-                   static_cast<unsigned>(pucch.format),
-                   harq_bits,
-                   csi_bits,
-                   sr_bits);
+                   static_cast<unsigned>(pucch.format()),
+                   pucch.uci_bits);
       return false;
     }
   }
@@ -268,10 +212,10 @@ private:
 
 } // namespace
 
-ue_scheduler_impl::cell::cell(const scheduler_ue_expert_config& expert_cfg,
-                              const ue_scheduler_cell_params&   params,
-                              ue_repository&                    ues,
-                              cell_metrics_handler&             metrics_handler) :
+ue_scheduler_impl::cell_context::cell_context(const scheduler_ue_expert_config& expert_cfg,
+                                              const ue_scheduler_cell_params&   params,
+                                              ue_repository&                    ues,
+                                              cell_metrics_handler&             metrics_handler) :
   cell_res_alloc(params.cell_res_alloc),
   cell_harqs(MAX_NOF_DU_UES,
              MAX_NOF_HARQS,

@@ -191,8 +191,8 @@ variables:
         exit $ret
       }
       if [[ $CI_MERGE_REQUEST_LABELS != *"ci-no-plugin"* && -n $PLUGIN_BRANCH ]]; then
-        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH} >/dev/null 2>&1
-        git submodule set-branch --branch ${PLUGIN_BRANCH} ${PLUGIN_PATH} >/dev/null 2>&1
+        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
+        git submodule set-branch --branch ${PLUGIN_BRANCH} ${PLUGIN_PATH}
       fi
     - build_srsgnb "${SRS_TARGET}"
     - launch_tests
@@ -244,6 +244,7 @@ variables:
     - |
       rm ${CI_PROJECT_DIR}/build/apps/gnb_split_7_2/gnb
       rm ${CI_PROJECT_DIR}/build/apps/gnb_split_8/gnb
+      rm ${CI_PROJECT_DIR}/build/apps/gnb_split_6/gnb
     - launch_tests
   variables:
     PLUGIN_BRANCH: $MR_PLUGIN_REF
@@ -588,6 +589,11 @@ valgrind changed tests:
     - launch_tests
   cache:
     - *cache_build_get
+  artifacts:
+    when: on_failure
+    paths:
+      - build/Testing/Temporary
+    expire_in: 1 day
 
 intermediate commits clean:
   extends: intermediate commits cached
@@ -1614,7 +1620,7 @@ ubuntu-24.10 amd64 avx512 dpdk:
 basic package:
   extends: .deb-package
   tags:
-    - ${INFRASTRUCTURE_TAG}  
+    - ${INFRASTRUCTURE_TAG}
   stage: build and unit tests
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests OpenSource/
@@ -1693,6 +1699,29 @@ basic asan:
     <<: *build_artifacts
     expire_in: 3 days
 
+basic rtsan:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    SRS_TARGET: gnb
+    OS: ubuntu-24.04-rtsan
+    COMPILER: clang
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_RTSAN: "True"
+    ENABLE_WERROR: "False"
+    TEST_MODE: none
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 days
+
 basic memcheck:
   extends: .build_and_unit
   rules:
@@ -1761,7 +1790,7 @@ basic avx512 dpdk:
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: AUTO
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
-    BUILD_ARGS: -DEXIT_TIMEOUT=15
+    BUILD_ARGS: -DEXIT_TIMEOUT=30
   after_script:
     - *build_after_script
   artifacts:
@@ -1774,6 +1803,16 @@ basic avx512 dpdk withassert:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
   variables:
     ASSERT_LEVEL: PARANOID
+
+basic avx512 dpdk rtsan:
+  extends: basic avx512 dpdk
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+  variables:
+    OS: ubuntu-24.04-rtsan
+    COMPILER: clang
+    ENABLE_RTSAN: "True"
+    ENABLE_WERROR: "False"
 
 #######
 # Web #

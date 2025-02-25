@@ -25,6 +25,7 @@
 #include "srsran/du/du_low/du_low.h"
 #include "srsran/du/du_low/o_du_low_metrics_collector.h"
 #include "srsran/du/o_du_metrics.h"
+#include "srsran/du/o_du_metrics_notifier.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -44,10 +45,10 @@ public:
 /// Dummy O-DU metrics notifier.
 static o_du_metrics_notifier_dummy dummy_notifier;
 
-o_du_impl::o_du_impl(o_du_impl_dependencies&& dependencies) :
+o_du_impl::o_du_impl(o_du_dependencies&& dependencies) :
   metrics_notifier(dependencies.metrics_notifier ? *dependencies.metrics_notifier : dummy_notifier),
-  odu_hi(std::move(dependencies.du_hi)),
-  odu_lo(std::move(dependencies.du_lo))
+  odu_hi(std::move(dependencies.odu_hi)),
+  odu_lo(std::move(dependencies.odu_lo))
 {
   srsran_assert(odu_lo, "Invalid DU low");
   srsran_assert(odu_hi, "Invalid DU high");
@@ -61,7 +62,9 @@ void o_du_impl::on_new_metrics(const o_du_high_metrics& metrics)
   o_du_metrics du_metrics;
 
   // Get O-DU low metrics.
-  odu_lo->get_metrics_collector().collect_o_du_low_metrics(du_metrics.low);
+  if (auto* du_low_collector = odu_lo->get_metrics_collector()) {
+    du_low_collector->collect_o_du_low_metrics(du_metrics.low);
+  }
 
   // Notify the metrics.
   metrics_notifier.on_new_metrics(du_metrics);

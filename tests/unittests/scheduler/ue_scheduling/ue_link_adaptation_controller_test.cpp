@@ -96,6 +96,7 @@ TEST_F(ue_link_adaptation_controller_test, cqi_0_reports_empty_mcs)
 
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{0};
+  csi.valid                 = true;
   ue_channel_state.handle_csi_report(csi);
 
   std::optional<sch_mcs_index> mcs = controller.calculate_dl_mcs(dl_mcs_table);
@@ -109,6 +110,7 @@ TEST_F(ue_link_adaptation_controller_test, cqi_positive_reports_non_empty_mcs)
 
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{test_rgen::uniform_int<uint8_t>(1, 15)};
+  csi.valid                 = true;
   ue_channel_state.handle_csi_report(csi);
 
   std::optional<sch_mcs_index> mcs = controller.calculate_dl_mcs(dl_mcs_table);
@@ -127,6 +129,7 @@ TEST_F(ue_link_adaptation_controller_mcs_derivation_test,
 {
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{5};
+  csi.valid                 = true;
   ue_channel_state.handle_csi_report(csi);
 
   const sch_mcs_index mcs_lb = map_cqi_to_mcs(csi.first_tb_wideband_cqi->value(), dl_mcs_table).value();

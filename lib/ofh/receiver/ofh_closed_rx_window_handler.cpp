@@ -43,17 +43,17 @@ closed_rx_window_handler::closed_rx_window_handler(const closed_rx_window_handle
   srsran_assert(notifier, "Invalid U-Plane received symbol notifier");
 }
 
-void closed_rx_window_handler::on_new_symbol(slot_symbol_point symbol_point)
+void closed_rx_window_handler::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
 {
-  if (!executor.defer([internal_slot = symbol_point - notification_delay_in_symbols, this]() {
+  if (!executor.defer([internal_slot = symbol_point_context.symbol_point - notification_delay_in_symbols, this]() {
         handle_uplink_context(internal_slot);
         handle_prach_context(internal_slot);
       })) {
     logger.warning(
         "Sector#{}: failed to dispatch task for checking for lost messages in reception for slot '{}' and symbol '{}'",
         sector_id,
-        symbol_point.get_slot(),
-        symbol_point.get_symbol_index());
+        symbol_point_context.symbol_point.get_slot(),
+        symbol_point_context.symbol_point.get_symbol_index());
   }
 }
 

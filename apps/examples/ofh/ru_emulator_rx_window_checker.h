@@ -74,7 +74,7 @@ public:
   explicit ru_emulator_rx_window_checker(ofh::rx_window_timing_parameters params) : timing_parameters(params) {}
 
   // See interface for documentation.
-  void on_new_symbol(ofh::slot_symbol_point symbol_point) override;
+  void on_new_symbol(const ofh::slot_symbol_point_context& symbol_point_context) override;
 
   /// \brief Updates the Rx window statistics.
   ///

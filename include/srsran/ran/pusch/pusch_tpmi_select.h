@@ -68,6 +68,12 @@ public:
   /// Constructs a PUSCH TPMI information from an initializer list.
   pusch_tpmi_select_info(const std::initializer_list<tpmi_info>& info_) : info(info_.begin(), info_.end()) {}
 
+  /// Copy constructor.
+  pusch_tpmi_select_info(const pusch_tpmi_select_info& other) noexcept : info(other.info.begin(), other.info.end())
+  {
+    // Do nothing.
+  }
+
 private:
   /// TPMI information for each number of layers.
   static_vector<tpmi_info, pusch_constants::MAX_NOF_LAYERS> info;

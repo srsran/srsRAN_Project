@@ -166,13 +166,26 @@ struct bwp_downlink_dedicated {
   std::optional<pdcch_config> pdcch_cfg;
   std::optional<pdsch_config> pdsch_cfg;
   // TODO: Remaining
+
+  bool operator==(const bwp_downlink_dedicated& other) const
+  {
+    return pdcch_cfg == other.pdcch_cfg and pdsch_cfg == other.pdsch_cfg;
+  }
 };
 
 /// "BWP-Downlink" as per TS 38.331.
 struct bwp_downlink {
-  bwp_id_t                              bwp_id;
-  std::optional<bwp_downlink_common>    bwp_dl_common;
-  std::optional<bwp_downlink_dedicated> bwp_dl_ded;
+  /// Identifier of BWP. Value 0 is reserved for the initial BWP.
+  bwp_id_t bwp_id;
+  /// Common parameters of the BWP.
+  bwp_downlink_common bwp_dl_common;
+  /// UE-dedicated parameters of the BWP.
+  bwp_downlink_dedicated bwp_dl_ded;
+
+  bool operator==(const bwp_downlink& other) const
+  {
+    return bwp_id == other.bwp_id and bwp_dl_common == other.bwp_dl_common and bwp_dl_ded == other.bwp_dl_ded;
+  }
 };
 
 /// Used to configure the dedicated UE-specific parameters of an UL BWP.
@@ -181,6 +194,11 @@ struct bwp_uplink_dedicated {
   std::optional<pucch_config> pucch_cfg;
   std::optional<pusch_config> pusch_cfg;
   std::optional<srs_config>   srs_cfg;
+
+  bool operator==(const bwp_uplink_dedicated& other) const
+  {
+    return pucch_cfg == other.pucch_cfg and pusch_cfg == other.pusch_cfg and srs_cfg == other.srs_cfg;
+  }
 };
 
 /// \brief Used to configure UE specific PUSCH parameters that are common across the UE's BWPs of one serving cell.
@@ -191,17 +209,32 @@ struct pusch_serving_cell_config {
     enum class max_code_block_groups_per_transport_block { n2 = 2, n4 = 4, n6 = 6, n8 = 8 };
 
     max_code_block_groups_per_transport_block max_cgb_per_tb;
+
+    bool operator==(const pusch_code_block_group_transmission& other) const
+    {
+      return max_cgb_per_tb == other.max_cgb_per_tb;
+    }
   };
 
   std::optional<pusch_code_block_group_transmission> cbg_tx;
   x_overhead                                         x_ov_head{x_overhead::not_set};
+
+  bool operator==(const pusch_serving_cell_config& other) const
+  {
+    return cbg_tx == other.cbg_tx and x_ov_head == other.x_ov_head;
+  }
 };
 
 /// Uplink configuration, as per \c UplinkConfig, in \c ServingCellConfig, TS 38.331.
 struct uplink_config {
   bwp_uplink_dedicated                     init_ul_bwp;
-  std::optional<pusch_serving_cell_config> pusch_scell_cfg;
+  std::optional<pusch_serving_cell_config> pusch_serv_cell_cfg;
   // TODO: add remaining fields.
+
+  bool operator==(const uplink_config& other) const
+  {
+    return init_ul_bwp == other.init_ul_bwp and pusch_serv_cell_cfg == other.pusch_serv_cell_cfg;
+  }
 };
 
 /// \c PDSCH-CodeBlockGroupTransmission, as per TS38.331.
@@ -231,7 +264,7 @@ struct pdsch_serving_cell_config {
   /// See TS 38.331, \c nrofHARQ-ProcessesForPDSCH.
   nof_harq_proc_for_pdsch          nof_harq_proc{nof_harq_proc_for_pdsch::n16};
   std::optional<serv_cell_index_t> pucch_cell;
-  /// Values {1,...,8};
+  /// Maximum number of MIMO layers to be used for PDSCH in all BWPs of this serving cell. Values {1,...,8};
   unsigned            max_mimo_layers;
   std::optional<bool> processing_type_2_enabled;
 
@@ -260,6 +293,13 @@ struct serving_cell_config {
   std::optional<csi_meas_config> csi_meas_cfg;
   /// Timing Advance Group ID to which this cell belongs to.
   time_alignment_group::id_t tag_id{0};
+
+  bool operator==(const serving_cell_config& other) const
+  {
+    return cell_index == other.cell_index and init_dl_bwp == other.init_dl_bwp and dl_bwps == other.dl_bwps and
+           ul_config == other.ul_config and pdsch_serv_cell_cfg == other.pdsch_serv_cell_cfg and
+           csi_meas_cfg == other.csi_meas_cfg and tag_id == other.tag_id;
+  }
 };
 
 /// UE-dedicated configuration for serving cell.

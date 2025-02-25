@@ -22,9 +22,11 @@
 
 #pragma once
 
-#include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
+#include "srsran/fapi/messages/tx_data_request.h"
+#include "srsran/fapi/messages/ul_dci_request.h"
+#include "srsran/fapi/messages/ul_tti_request.h"
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/srslog/logger.h"
 #include <atomic>

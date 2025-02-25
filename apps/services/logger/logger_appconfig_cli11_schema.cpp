@@ -23,7 +23,6 @@
 #include "logger_appconfig_cli11_schema.h"
 #include "logger_appconfig.h"
 #include "logger_appconfig_cli11_utils.h"
-#include "metrics_logger_appconfig_cli11_schema.h"
 #include "srsran/support/cli11_utils.h"
 
 using namespace srsran;
@@ -85,19 +84,6 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
         }
       }
 
-      // Metrics logger have only subset of levels.
-      if (option->check_name("--metrics_level") && !is_valid_metrics_levels(log_params.all_level)) {
-        // When all level is debug, set the metrics to info.
-        if (log_params.all_level == srslog::basic_levels::debug) {
-          option->default_val<std::string>("info");
-          continue;
-        }
-
-        // For the rest of not valid cases, disable the metrics logger.
-        option->default_val<std::string>("none");
-        continue;
-      }
-
       option->default_val<std::string>(srslog::basic_level_to_string(log_params.all_level));
     }
   });
@@ -105,8 +91,6 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
 
 void srsran::configure_cli11_with_logger_appconfig_schema(CLI::App& app, logger_appconfig& config)
 {
-  configure_cli11_with_metrics_logger_appconfig_schema(app, config.metrics_level);
-
   // Logging section.
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, config);

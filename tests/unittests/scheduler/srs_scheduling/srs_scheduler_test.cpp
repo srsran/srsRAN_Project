@@ -157,9 +157,9 @@ public:
   test_bench(srs_test_params params) :
     expert_cfg{config_helpers::make_default_scheduler_expert_config()},
     cell_cfg{[this, &params]() -> const cell_configuration& {
-      cell_cfg_list.emplace(to_du_cell_index(0),
-                            std::make_unique<cell_configuration>(
-                                expert_cfg, make_custom_sched_cell_configuration_request(params.is_tdd)));
+      auto cell_req = make_custom_sched_cell_configuration_request(params.is_tdd);
+      cfg_pool.add_cell(cell_req);
+      cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(expert_cfg, cell_req));
       return *cell_cfg_list[to_du_cell_index(0)];
     }()},
     cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>()},
@@ -172,6 +172,7 @@ public:
 
   // Class members.
   scheduler_expert_config        expert_cfg;
+  du_cell_group_config_pool      cfg_pool;
   cell_common_configuration_list cell_cfg_list{};
   const cell_configuration&      cell_cfg;
   cell_harq_manager              cell_harqs;
@@ -191,7 +192,7 @@ public:
         srs_period,
         cell_cfg_list[to_du_cell_index(0)]->ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
         cell_cfg.tdd_cfg_common);
-    ue_ded_cfgs.emplace_back(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg);
+    ue_ded_cfgs.emplace_back(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req));
     ues.add_ue(std::make_unique<ue>(ue_creation_command{ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}));
     srs_sched.add_ue(ues[ue_req.ue_index].get_pcell().cfg());
   }
@@ -205,8 +206,7 @@ public:
 
   expected<bool, std::string> test_srs_pdu(const srs_info& srs_pdu) const
   {
-    const auto& srs_cfg =
-        ues[to_du_ue_index(0)].get_pcell().cfg().cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.value();
+    const auto& srs_cfg     = ues[to_du_ue_index(0)].get_pcell().cfg().init_bwp().ul_ded->srs_cfg.value();
     const auto& srs_res_cfg = srs_cfg.srs_res_list.front();
 
     if (srs_pdu.crnti != ues[to_du_ue_index(0)].crnti) {
@@ -280,9 +280,8 @@ public:
     return ues[to_du_ue_index(0U)]
         .get_pcell()
         .cfg()
-        .cfg_dedicated()
-        .ul_config.value()
-        .init_ul_bwp.srs_cfg.value()
+        .init_bwp()
+        .ul_ded->srs_cfg.value()
         .srs_res_list.front()
         .periodicity_and_offset->offset;
   }
@@ -390,12 +389,7 @@ TEST_F(srs_positioning_scheduler_test, when_connected_ue_positioning_is_requeste
   ASSERT_FALSE(is_positioning_being_requested());
 
   // Positioning requested.
-  auto& ue_srs_cfg = ues[to_du_ue_index(0)]
-                         .ue_cfg_dedicated()
-                         ->pcell_cfg()
-                         .cfg_dedicated()
-                         .ul_config.value()
-                         .init_ul_bwp.srs_cfg.value();
+  auto& ue_srs_cfg = ues[to_du_ue_index(0)].ue_cfg_dedicated()->pcell_cfg().init_bwp().ul_ded->srs_cfg.value();
   this->srs_sched.handle_positioning_measurement_request(
       positioning_measurement_request{rnti, to_du_ue_index(0), to_du_cell_index(0), ue_srs_cfg});
   ASSERT_TRUE(is_positioning_being_requested());

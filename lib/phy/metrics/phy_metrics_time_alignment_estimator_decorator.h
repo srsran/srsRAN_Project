@@ -25,6 +25,7 @@
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 
 namespace srsran {
 
@@ -46,11 +47,15 @@ public:
                                       subcarrier_spacing              scs,
                                       double                          max_ta) override
   {
-    auto                       tp_before = std::chrono::high_resolution_clock::now();
-    time_alignment_measurement ret       = base->estimate(symbols, mask, scs, max_ta);
-    auto                       tp_after  = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.size())});
+    time_alignment_estimator_metrics metrics;
+    time_alignment_measurement       ret;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base->estimate(symbols, mask, scs, max_ta);
+    }
+    metrics.nof_re = static_cast<unsigned>(symbols.size());
+    notifier.on_new_metric(metrics);
 
     return ret;
   }
@@ -61,11 +66,15 @@ public:
                                       subcarrier_spacing              scs,
                                       double                          max_ta) override
   {
-    auto                       tp_before = std::chrono::high_resolution_clock::now();
-    time_alignment_measurement ret       = base->estimate(symbols, mask, scs, max_ta);
-    auto                       tp_after  = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.get_nof_re())});
+    time_alignment_estimator_metrics metrics;
+    time_alignment_measurement       ret;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base->estimate(symbols, mask, scs, max_ta);
+    }
+    metrics.nof_re = static_cast<unsigned>(symbols.get_nof_re());
+    notifier.on_new_metric(metrics);
 
     return ret;
   }
@@ -74,11 +83,15 @@ public:
   time_alignment_measurement
   estimate(span<const cf_t> symbols, unsigned stride, subcarrier_spacing scs, double max_ta) override
   {
-    auto                       tp_before = std::chrono::high_resolution_clock::now();
-    time_alignment_measurement ret       = base->estimate(symbols, stride, scs, max_ta);
-    auto                       tp_after  = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.size())});
+    time_alignment_estimator_metrics metrics;
+    time_alignment_measurement       ret;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base->estimate(symbols, stride, scs, max_ta);
+    }
+    metrics.nof_re = static_cast<unsigned>(symbols.size());
+    notifier.on_new_metric(metrics);
 
     return ret;
   }
@@ -87,11 +100,15 @@ public:
   time_alignment_measurement
   estimate(const re_buffer_reader<cf_t>& symbols, unsigned stride, subcarrier_spacing scs, double max_ta) override
   {
-    auto                       tp_before = std::chrono::high_resolution_clock::now();
-    time_alignment_measurement ret       = base->estimate(symbols, stride, scs, max_ta);
-    auto                       tp_after  = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(symbols.get_nof_re())});
+    time_alignment_estimator_metrics metrics;
+    time_alignment_measurement       ret;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base->estimate(symbols, stride, scs, max_ta);
+    }
+    metrics.nof_re = static_cast<unsigned>(symbols.get_nof_re());
+    notifier.on_new_metric(metrics);
 
     return ret;
   }

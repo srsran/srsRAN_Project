@@ -92,7 +92,7 @@ static void sc_prod_ccc_simd(const cbf16_t* x, cf_t h, cbf16_t* z, std::size_t l
 
 #if SRSRAN_SIMD_CF_SIZE
   simd_cf_t b = srsran_simd_cf_set1(h);
-  for (; i + SRSRAN_SIMD_CF_SIZE < len + 1; i += SRSRAN_SIMD_F_SIZE) {
+  for (unsigned i_end = (len / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; i != i_end; i += SRSRAN_SIMD_CF_SIZE) {
     simd_cf_t a = srsran_simd_cbf16_loadu(x + i);
 
     simd_cf_t r = srsran_simd_cf_prod(a, b);

@@ -20,6 +20,7 @@
  *
  */
 
+#include "lib/scheduler/config/du_cell_group_config_pool.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/support/pdcch/pdcch_mapping.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
@@ -63,9 +64,10 @@ protected:
     rnti_t                                 rnti;
     std::unique_ptr<ue_cell_configuration> cfg;
 
-    test_ue(const cell_configuration& cell_cfg, const sched_ue_creation_request_message& req) :
-      rnti(req.crnti),
-      cfg(std::make_unique<ue_cell_configuration>(req.crnti, cell_cfg, (*req.cfg.cells)[0].serv_cell_cfg))
+    test_ue(const cell_configuration&                cell_cfg,
+            const sched_ue_creation_request_message& req,
+            const ue_cell_config_ptr&                ue_cfg_ptr) :
+      rnti(req.crnti), cfg(std::make_unique<ue_cell_configuration>(req.crnti, cell_cfg, ue_cfg_ptr))
     {
       srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
 
@@ -78,7 +80,10 @@ protected:
       sched_cell_configuration_request_message msg =
           sched_config_helper::make_default_sched_cell_configuration_request(),
       cell_config_dedicated ue_cell = sched_config_helper::create_test_initial_ue_spcell_cell_config()) :
-    cell_cfg{sched_cfg, msg}, default_ue_cfg{crnti, cell_cfg, ue_cell.serv_cell_cfg}
+    cfg_pool(msg),
+    cell_cfg{sched_cfg, msg},
+    default_ue_cell_req(ue_cell.serv_cell_cfg),
+    default_ue_cfg{crnti, cell_cfg, cfg_pool.update_ue(default_ue_cell_req)}
   {
     test_logger.set_level(srslog::basic_levels::debug);
     srslog::init();
@@ -96,7 +101,13 @@ protected:
 
   test_ue* add_ue(const sched_ue_creation_request_message& ue_creation_req)
   {
-    return &test_ues.insert(std::make_pair(ue_creation_req.crnti, test_ue{cell_cfg, ue_creation_req})).first->second;
+    return &test_ues
+                .insert(std::make_pair(
+                    ue_creation_req.crnti,
+                    test_ue{cell_cfg,
+                            ue_creation_req,
+                            cfg_pool.update_ue(ue_creation_req.cfg.cells.value()[to_du_cell_index(0)].serv_cell_cfg)}))
+                .first->second;
   }
 
   sched_ue_creation_request_message create_ue_cfg(rnti_t rnti)
@@ -104,7 +115,7 @@ protected:
     sched_ue_creation_request_message ue_creation_req = sched_config_helper::create_default_sched_ue_creation_request();
     ue_creation_req.crnti                             = rnti;
     ue_creation_req.starts_in_fallback                = false;
-    (*ue_creation_req.cfg.cells)[0].serv_cell_cfg     = default_ue_cfg.cfg_dedicated();
+    (*ue_creation_req.cfg.cells)[0].serv_cell_cfg     = default_ue_cell_req;
     return ue_creation_req;
   }
 
@@ -251,7 +262,9 @@ protected:
   srslog::basic_logger&         logger      = srslog::fetch_basic_logger("SCHED");
   srslog::basic_logger&         test_logger = srslog::fetch_basic_logger("TEST");
   const scheduler_expert_config sched_cfg   = config_helpers::make_default_scheduler_expert_config();
+  du_cell_config_pool           cfg_pool;
   cell_configuration            cell_cfg;
+  const serving_cell_config     default_ue_cell_req;
   ue_cell_configuration         default_ue_cfg;
 
   cell_resource_allocator res_grid{cell_cfg};
@@ -405,7 +418,7 @@ TEST_P(ue_pdcch_resource_allocator_scrambling_tester,
   ASSERT_TRUE(res_grid[0].result.dl.ul_pdcchs.empty());
   ASSERT_EQ(res_grid[0].result.dl.dl_pdcchs.size(), 1);
   ASSERT_EQ(pdcch, &res_grid[0].result.dl.dl_pdcchs[0]) << "Returned PDCCH ptr does not match allocated ptr";
-  ASSERT_EQ(pdcch->ctx.bwp_cfg, &cell_cfg.dl_cfg_common.init_dl_bwp.generic_params);
+  ASSERT_EQ(*pdcch->ctx.bwp_cfg, cell_cfg.dl_cfg_common.init_dl_bwp.generic_params);
   ASSERT_NO_FATAL_FAILURE(verify_pdcch_context(pdcch->ctx, *u, params.ss_id));
   ASSERT_EQ(pdcch->ctx.cces.aggr_lvl, aggregation_level::n4);
   ASSERT_EQ(pdcch->ctx.starting_symbol, 0);
@@ -436,7 +449,7 @@ TEST_P(ue_pdcch_resource_allocator_scrambling_tester,
   ASSERT_TRUE(res_grid[0].result.dl.dl_pdcchs.empty());
   ASSERT_EQ(res_grid[0].result.dl.ul_pdcchs.size(), 1);
   ASSERT_EQ(pdcch, &res_grid[0].result.dl.ul_pdcchs[0]) << "Returned PDCCH ptr does not match allocated ptr";
-  ASSERT_EQ(pdcch->ctx.bwp_cfg, &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params);
+  ASSERT_EQ(*pdcch->ctx.bwp_cfg, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params);
   ASSERT_NO_FATAL_FAILURE(verify_pdcch_context(pdcch->ctx, *u, params.ss_id));
   ASSERT_EQ(pdcch->ctx.cces.aggr_lvl, aggregation_level::n4);
   ASSERT_EQ(pdcch->ctx.starting_symbol, 0);

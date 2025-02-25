@@ -111,7 +111,7 @@ public:
 
   /// Checks if the hardware-accelerated PUSCH decoder uses an external HARQ buffer.
   /// \return True if an external HARQ buffer is used, false otherwise.
-  virtual bool is_external_harq_supported() const = 0;
+  virtual bool is_harq_external() const = 0;
 };
 
 } // namespace hal

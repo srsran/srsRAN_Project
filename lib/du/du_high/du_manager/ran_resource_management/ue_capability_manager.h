@@ -94,7 +94,8 @@ class ue_capability_manager
 public:
   explicit ue_capability_manager(span<const du_cell_config> cell_cfg_list,
                                  du_drx_resource_manager&   drx_mng_,
-                                 srslog::basic_logger&      logger_);
+                                 srslog::basic_logger&      logger_,
+                                 const du_test_mode_config& test_mode_);
 
   /// \brief Called on creation of a new UE.
   ///
@@ -131,8 +132,9 @@ private:
 
   span<const du_cell_config> base_cell_cfg_list;
   // Allocator of DRX and measGap resources for the cellGroup.
-  du_drx_resource_manager& drx_res_mng;
-  srslog::basic_logger&    logger;
+  du_drx_resource_manager&   drx_res_mng;
+  srslog::basic_logger&      logger;
+  const du_test_mode_config& test_cfg;
 
   // Flag that tells whether this is the first time that update is called.
   std::optional<ue_capability_summary> ue_caps;

@@ -22,6 +22,7 @@
 
 #include "srsran/ran/cause/f1ap_cause_converters.h"
 #include "srsran/support/error_handling.h"
+#include <variant>
 
 using namespace srsran;
 
@@ -107,4 +108,40 @@ ngap_cause_t srsran::f1ap_to_ngap_cause(f1ap_cause_t f1ap_cause)
 
   report_fatal_error("Cannot convert cause to F1AP type: {}", f1ap_cause);
   return ngap_cause;
+}
+
+static constexpr uint8_t f1ap_to_nrppa_cause_protocol[] = {
+    (uint8_t)nrppa_cause_protocol_t::transfer_syntax_error,                   // transfer_syntax_error
+    (uint8_t)nrppa_cause_protocol_t::abstract_syntax_error_reject,            // abstract_syntax_error_reject
+    (uint8_t)nrppa_cause_protocol_t::abstract_syntax_error_ignore_and_notify, // abstract_syntax_error_ignore_and_notify
+    (uint8_t)nrppa_cause_protocol_t::msg_not_compatible_with_receiver_state,  // msg_not_compatible_with_receiver_state
+    (uint8_t)nrppa_cause_protocol_t::semantic_error,                          // semantic_error
+    (uint8_t)nrppa_cause_protocol_t::
+        abstract_syntax_error_falsely_constructed_msg, // abstract_syntax_error_falsely_constructed_msg
+    (uint8_t)nrppa_cause_protocol_t::unspecified,      // unspecified
+};
+
+nrppa_cause_t srsran::f1ap_to_nrppa_cause(f1ap_cause_t f1ap_cause)
+{
+  nrppa_cause_t nrppa_cause;
+
+  if (std::holds_alternative<f1ap_cause_radio_network_t>(f1ap_cause)) {
+    nrppa_cause = nrppa_cause_radio_network_t::unspecified;
+    return nrppa_cause;
+  }
+  if (std::holds_alternative<f1ap_cause_transport_t>(f1ap_cause)) {
+    nrppa_cause = nrppa_cause_misc_t::unspecified;
+    return nrppa_cause;
+  }
+  if (const auto* result = std::get_if<cause_protocol_t>(&f1ap_cause)) {
+    nrppa_cause = nrppa_cause_protocol_t(f1ap_to_nrppa_cause_protocol[uint8_t(*result)]);
+    return nrppa_cause;
+  }
+  if (std::holds_alternative<cause_misc_t>(f1ap_cause)) {
+    nrppa_cause = nrppa_cause_misc_t::unspecified;
+    return nrppa_cause;
+  }
+
+  report_fatal_error("Cannot convert cause to F1AP type: {}", f1ap_cause);
+  return nrppa_cause;
 }

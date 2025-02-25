@@ -83,19 +83,25 @@ pusch_index_list srsran::get_pusch_td_resource_indices(const cell_configuration&
   pusch_index_list result;
   for (unsigned td_idx = 0; td_idx != pusch_time_domain_list.size(); ++td_idx) {
     const pusch_time_domain_resource_allocation& pusch_td_res = pusch_time_domain_list[td_idx];
-    const ofdm_symbol_range                      symbols      = get_active_tdd_ul_symbols(
-        cell_cfg.tdd_cfg_common.value(), (pdcch_slot + pusch_td_res.k2).slot_index(), cyclic_prefix::NORMAL);
-    if (symbols != pusch_td_res.symbols) {
-      // [Implementation-defined] Only select slots with matching PUSCH symbols.
+    // [Implementation-defined] PUSCH on partial UL slots is not supported.
+    if (is_tdd_partial_ul_slot(cell_cfg.tdd_cfg_common.value(), (pdcch_slot + pusch_td_res.k2).slot_index())) {
       continue;
     }
 
     if (is_dl_heavy and pusch_td_res.k2 <= min_k1) {
       // DL-heavy case.
-      // [Implementation-defined] For DL heavy TDD configuration, only one entry in the PUSCH time domain
-      // resources list with k2 value less than or equal to minimum value of k1(s) is required.
+      // [Implementation-defined] For DL heavy TDD configuration, in the PUSCH time domain resources list, we allow only
+      // entries with the same k2 value that less than or equal to minimum value of k1(s); these multiple entries can
+      // have different symbols.
+      if (not result.empty() and
+          std::any_of(result.begin(),
+                      result.end(),
+                      [candidate_k2 = pusch_td_res.k2, pusch_time_domain_list](unsigned td_idx_it) {
+                        return candidate_k2 != pusch_time_domain_list[td_idx_it].k2 ? true : false;
+                      })) {
+        break;
+      }
       result.push_back(td_idx);
-      break;
     }
     if (not is_dl_heavy) {
       // UL-heavy case.

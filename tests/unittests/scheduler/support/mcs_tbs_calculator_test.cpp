@@ -20,6 +20,7 @@
  *
  */
 
+#include "lib/scheduler/config/du_cell_group_config_pool.h"
 #include "lib/scheduler/support/dmrs_helpers.h"
 #include "lib/scheduler/support/mcs_tbs_calculator.h"
 #include "lib/scheduler/support/sch_pdu_builder.h"
@@ -44,28 +45,35 @@ struct mcs_test_entry {
   unsigned nof_prbs;
 };
 
+class common_mcs_tbs_calculator_test
+{
+public:
+  const scheduler_expert_config                  expert_cfg = config_helpers::make_default_scheduler_expert_config();
+  const sched_cell_configuration_request_message cell_req =
+      sched_config_helper::make_default_sched_cell_configuration_request();
+  const serving_cell_config   serv_cell_cfg = config_helpers::create_default_initial_ue_serving_cell_config();
+  du_cell_config_pool         cell_cfg_pool{cell_req};
+  const cell_configuration    cell_cfg{expert_cfg, cell_req};
+  const ue_cell_configuration ue_cell_cfg{to_rnti(0x4601), cell_cfg, cell_cfg_pool.update_ue(serv_cell_cfg)};
+};
+
 ///////////////       DL TEST         ///////////////
 
-class dl_mcs_tbs_calculator_test_bench : public ::testing::TestWithParam<mcs_test_entry>
+class dl_mcs_tbs_calculator_test_bench : public common_mcs_tbs_calculator_test,
+                                         public ::testing::TestWithParam<mcs_test_entry>
 {
 public:
   dl_mcs_tbs_calculator_test_bench() :
-    cell_cfg(expert_cfg, sched_config_helper::make_default_sched_cell_configuration_request()),
-    ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
-    time_resource{0},
-    pdsch_cfg(get_pdsch_config_f1_0_c_rnti(
+    pdsch_cfg(sched_helper::get_pdsch_config_f1_0_c_rnti(
         cell_cfg,
-        &ue_cell_cfg,
+        ue_cell_cfg.pdsch_serving_cell_cfg(),
         cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource]))
   {
   }
 
 protected:
-  const scheduler_expert_config expert_cfg = config_helpers::make_default_scheduler_expert_config();
-  const cell_configuration      cell_cfg;
-  const ue_cell_configuration   ue_cell_cfg;
-  unsigned                      time_resource;
-  pdsch_config_params           pdsch_cfg;
+  unsigned            time_resource{0};
+  pdsch_config_params pdsch_cfg;
 };
 
 TEST_P(dl_mcs_tbs_calculator_test_bench, test_values)
@@ -98,13 +106,11 @@ INSTANTIATE_TEST_SUITE_P(
 
 ///////////////       UL TEST         ///////////////
 
-class ul_mcs_tbs_prbs_calculator_test_bench : public ::testing::TestWithParam<mcs_test_entry>
+class ul_mcs_tbs_prbs_calculator_test_bench : public common_mcs_tbs_calculator_test,
+                                              public ::testing::TestWithParam<mcs_test_entry>
 {
 public:
   ul_mcs_tbs_prbs_calculator_test_bench() :
-    cell_cfg(sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()),
-    ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
-    time_resource{0},
     pusch_cfg(get_pusch_config_f0_0_tc_rnti(
         cell_cfg,
         cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource]))
@@ -112,11 +118,8 @@ public:
   }
 
 protected:
-  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  const cell_configuration      cell_cfg;
-  const ue_cell_configuration   ue_cell_cfg;
-  unsigned                      time_resource;
-  pusch_config_params           pusch_cfg;
+  unsigned            time_resource{0};
+  pusch_config_params pusch_cfg;
 };
 
 TEST_P(ul_mcs_tbs_prbs_calculator_test_bench, test_values)
@@ -148,13 +151,11 @@ INSTANTIATE_TEST_SUITE_P(
                     mcs_test_entry{.final_mcs = 0, .tbs_bytes = 19, .max_mcs = 0, .nof_prbs = 5},
                     mcs_test_entry{.final_mcs = 0, .tbs_bytes = 3, .max_mcs = 0, .nof_prbs = 1}));
 
-class ul_mcs_tbs_prbs_calculator_dci_0_1_test_bench : public ::testing::TestWithParam<mcs_test_entry>
+class ul_mcs_tbs_prbs_calculator_dci_0_1_test_bench : public common_mcs_tbs_calculator_test,
+                                                      public ::testing::TestWithParam<mcs_test_entry>
 {
 public:
   ul_mcs_tbs_prbs_calculator_dci_0_1_test_bench() :
-    cell_cfg(sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()),
-    ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
-    time_resource{0},
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
         ue_cell_cfg,
         cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource],
@@ -165,11 +166,8 @@ public:
   }
 
 protected:
-  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  const cell_configuration      cell_cfg;
-  const ue_cell_configuration   ue_cell_cfg;
-  unsigned                      time_resource;
-  pusch_config_params           pusch_cfg;
+  unsigned            time_resource{0};
+  pusch_config_params pusch_cfg;
 };
 
 TEST_P(ul_mcs_tbs_prbs_calculator_dci_0_1_test_bench, test_values_with_uci)
@@ -201,13 +199,10 @@ INSTANTIATE_TEST_SUITE_P(
                     mcs_test_entry{.final_mcs = 0, .tbs_bytes = 19, .max_mcs = 0, .nof_prbs = 5},
                     mcs_test_entry{.final_mcs = 0, .tbs_bytes = 7, .max_mcs = 0, .nof_prbs = 2}));
 
-class ul_mcs_tbs_prbs_calculator_low_mcs_test_bench : public ::testing::Test
+class ul_mcs_tbs_prbs_calculator_low_mcs_test_bench : public common_mcs_tbs_calculator_test, public ::testing::Test
 {
 public:
   ul_mcs_tbs_prbs_calculator_low_mcs_test_bench() :
-    cell_cfg(sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()),
-    ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
-    time_resource{0},
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
         ue_cell_cfg,
         cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource],
@@ -218,11 +213,8 @@ public:
   }
 
 protected:
-  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  const cell_configuration      cell_cfg;
-  const ue_cell_configuration   ue_cell_cfg;
-  unsigned                      time_resource;
-  pusch_config_params           pusch_cfg;
+  unsigned            time_resource{0};
+  pusch_config_params pusch_cfg;
 };
 
 TEST_F(ul_mcs_tbs_prbs_calculator_low_mcs_test_bench, test_values_with_uci)
@@ -269,13 +261,10 @@ TEST_F(ul_mcs_tbs_prbs_calculator_low_mcs_test_bench, test_values_with_uci)
   ASSERT_EQ(test_2_prb_mcs_0.tbs_bytes, test.value().tbs);
 }
 
-class ul_mcs_tbs_prbs_calculator_with_harq_ack : public ::testing::Test
+class ul_mcs_tbs_prbs_calculator_with_harq_ack : public common_mcs_tbs_calculator_test, public ::testing::Test
 {
 public:
   ul_mcs_tbs_prbs_calculator_with_harq_ack() :
-    cell_cfg(sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()),
-    ue_cell_cfg(to_rnti(0x4601), cell_cfg, config_helpers::create_default_initial_ue_serving_cell_config()),
-    time_resource{0},
     pusch_cfg(get_pusch_config_f0_1_c_rnti(
         ue_cell_cfg,
         cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource],
@@ -286,11 +275,8 @@ public:
   }
 
 protected:
-  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  const cell_configuration      cell_cfg;
-  const ue_cell_configuration   ue_cell_cfg;
-  unsigned                      time_resource;
-  pusch_config_params           pusch_cfg;
+  unsigned            time_resource{0};
+  pusch_config_params pusch_cfg;
 };
 
 TEST_F(ul_mcs_tbs_prbs_calculator_with_harq_ack, test_values_with_2_harq_bits)

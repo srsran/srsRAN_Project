@@ -23,6 +23,17 @@
 #pragma once
 
 #include "srsran/adt/expected.h"
+#include "srsran/fapi/messages/crc_indication.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
+#include "srsran/fapi/messages/error_indication.h"
+#include "srsran/fapi/messages/rach_indication.h"
+#include "srsran/fapi/messages/rx_data_indication.h"
+#include "srsran/fapi/messages/slot_indication.h"
+#include "srsran/fapi/messages/srs_indication.h"
+#include "srsran/fapi/messages/tx_data_request.h"
+#include "srsran/fapi/messages/uci_indication.h"
+#include "srsran/fapi/messages/ul_dci_request.h"
+#include "srsran/fapi/messages/ul_tti_request.h"
 #include "srsran/fapi/validator_report.h"
 #include "srsran/srslog/logger.h"
 

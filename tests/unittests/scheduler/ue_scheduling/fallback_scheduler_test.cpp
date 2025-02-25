@@ -223,7 +223,6 @@ protected:
     scheduler_ue_expert_config& uecfg = cfg.ue;
     uecfg.dl_mcs                      = {10, 10};
     uecfg.ul_mcs                      = {10, 10};
-    uecfg.max_nof_harq_retxs          = 4;
     uecfg.max_msg4_mcs                = max_msg4_mcs_index;
     return cfg;
   }
@@ -436,6 +435,7 @@ TEST_P(fallback_scheduler_tester, successfully_allocated_resources_for_srb1_pdu_
   // UE reports CQI 0.
   csi_report_data csi_report{};
   csi_report.first_tb_wideband_cqi.emplace(0);
+  csi_report.valid = true;
   test_ue.get_pcell().handle_csi_report(csi_report);
   // Notify about SRB1 message in DL of size 320 bytes.
   const unsigned mac_srb1_sdu_size = 320;
@@ -1430,7 +1430,7 @@ TEST_F(fallback_sched_ue_w_out_pucch_cfg, when_srb0_is_retx_ed_only_pucch_common
   add_ue(to_rnti(0x4601), to_du_ue_index(0), true);
   auto& u = bench->ue_db[to_du_ue_index(0)];
 
-  ASSERT_FALSE(u.get_pcell().cfg().cfg_dedicated().ul_config.has_value());
+  ASSERT_FALSE(u.get_pcell().cfg().init_bwp().ul_ded.has_value());
 
   slot_point slot_update_srb_traffic{current_slot.numerology(), generate_srb0_traffic_slot()};
 

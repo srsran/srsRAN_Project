@@ -119,6 +119,8 @@ struct worker_manager_config {
   timer_manager* app_timers = nullptr;
   /// Vector of affinities mask indexed by cell.
   std::vector<std::vector<os_sched_affinity_config>> config_affinities;
+  /// Split 6 enabled flag.
+  bool is_split6_enabled = false;
   /// CU-UP configuration.
   std::optional<cu_up_config> cu_up_cfg;
   /// DU high configuration.

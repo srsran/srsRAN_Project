@@ -284,6 +284,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
   pdcp_msg.ue_ctrl_timer_factory                = ue_ctrl_timer_factory;
   pdcp_msg.ue_dl_executor                       = &ue_dl_exec;
   pdcp_msg.ue_ul_executor                       = &ue_ul_exec;
+  pdcp_msg.ue_ctrl_executor                     = &ue_ctrl_exec;
   pdcp_msg.crypto_executor                      = &crypto_exec;
   pdcp_msg.max_nof_crypto_workers               = nof_cores;
   new_drb->pdcp                                 = srsran::create_pdcp_entity(pdcp_msg);
@@ -352,6 +353,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                               new_drb->f1u_to_pdcp_adapter,
                                               ue_dl_timer_factory,
                                               ue_inactivity_timer,
+                                              ue_dl_exec,
                                               ue_ul_exec);
 
   new_drb->f1u_ul_teid = f1u_ul_teid;
@@ -466,6 +468,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                                               drb->f1u_to_pdcp_adapter,
                                               ue_dl_timer_factory,
                                               ue_inactivity_timer,
+                                              ue_dl_exec,
                                               ue_ul_exec);
 
       drb_iter->second->pdcp_to_f1u_adapter.disconnect_f1u();

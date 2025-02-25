@@ -67,7 +67,6 @@ struct o_du_unit_dependencies {
   mac_pcap*                       mac_p              = nullptr;
   rlc_pcap*                       rlc_p              = nullptr;
   e2_connection_client*           e2_client_handler  = nullptr;
-  srslog::sink*                   json_sink          = nullptr;
   app_services::metrics_notifier* metrics_notifier   = nullptr;
 };
 

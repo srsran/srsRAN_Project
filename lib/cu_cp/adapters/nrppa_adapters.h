@@ -70,10 +70,17 @@ public:
   void connect_ue(cu_cp_ue_impl_interface& ue_) { ue = &ue_; }
 
   /// \brief Get the UE index of the UE.
-  ue_index_t get_ue_index() override
+  ue_index_t get_ue_index() const override
   {
     srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
     return ue->get_ue_index();
+  }
+
+  /// \brief Get the index of the DU where the UE is connected.
+  du_index_t get_du_index() const override
+  {
+    srsran_assert(ue != nullptr, "CU-CP UE must not be nullptr");
+    return ue->get_du_index();
   }
 
   std::optional<cell_measurement_positioning_info>& on_measurement_results_required() override
@@ -100,6 +107,13 @@ public:
   nrppa_f1ap_adapter() = default;
 
   void connect_f1ap(f1ap_nrppa_message_handler& f1ap_handler_) { f1ap_handler = &f1ap_handler_; }
+
+  async_task<expected<positioning_information_response_t, positioning_information_failure_t>>
+  on_positioning_information_request(const positioning_information_request_t& request) override
+  {
+    srsran_assert(f1ap_handler != nullptr, "F1AP NRPPA handler must not be nullptr");
+    return f1ap_handler->handle_positioning_information_request(request);
+  }
 
   async_task<expected<measurement_response_t, measurement_failure_t>>
   on_measurement_information_request(const measurement_request_t& request) override

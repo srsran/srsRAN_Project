@@ -34,12 +34,8 @@ struct o_du_low_config {
   du_low_config du_low_cfg;
   /// PRACH ports.
   std::vector<cell_prach_ports_entry> prach_ports;
-};
-
-/// O-RAN DU low dependencies.
-struct o_du_low_dependencies {
-  /// DU low dependencies.
-  du_low_dependencies du_low_deps;
+  /// Metrics configuration. Set to \c true to enable the DU low metrics.
+  bool enable_metrics;
 };
 
 } // namespace srs_du

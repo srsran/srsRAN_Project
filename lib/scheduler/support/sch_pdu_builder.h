@@ -26,19 +26,10 @@
 #include "../config/ue_configuration.h"
 #include "../ue_context/ue_channel_state_manager.h"
 #include "mcs_tbs_calculator.h"
+#include "pdsch/pdsch_config_params.h"
 #include "srsran/scheduler/result/pusch_info.h"
 
 namespace srsran {
-
-struct pdsch_config_params {
-  pdsch_mcs_table   mcs_table;
-  ofdm_symbol_range symbols;
-  unsigned          nof_oh_prb;
-  unsigned          tb_scaling_field;
-  unsigned          nof_layers;
-  dmrs_information  dmrs;
-  unsigned          max_nof_cws_scheduled_by_dci;
-};
 
 /// Contains some of the PUSCH parameters needed to compute the MCS, the number of PRBs, the TBS and to build the PUSCH
 /// PDU.
@@ -55,26 +46,6 @@ struct pusch_config_params {
   unsigned          nof_csi_part1_bits{0};
   unsigned          max_nof_csi_part2_bits{0};
 };
-
-/// \brief Fetches the PDSCH parameters needed for PDSCH PDU for DCI format 1_0, scrambled by TC-RNTI.
-///
-/// Returns parameters needed to compute the number of PRBs, MCS and TBS.
-pdsch_config_params get_pdsch_config_f1_0_tc_rnti(const cell_configuration&                    cell_cfg,
-                                                  const pdsch_time_domain_resource_allocation& pdsch_td_cfg);
-
-/// \brief Fetches the PDSCH parameters needed for PUSCH PDU for DCI format 1_0, scrambled by C-RNTI.
-///
-/// Returns parameters needed to compute the number of PRBs, MCS and TBS.
-pdsch_config_params get_pdsch_config_f1_0_c_rnti(const cell_configuration&                    cell_cfg,
-                                                 const ue_cell_configuration*                 ue_cell_cfg,
-                                                 const pdsch_time_domain_resource_allocation& pdsch_td_cfg);
-
-/// \brief Fetches the PDSCH parameters needed for PUSCH PDU for DCI format 1_1, scrambled by C-RNTI.
-///
-/// Returns parameters needed to compute the number of PRBs, MCS and TBS.
-pdsch_config_params get_pdsch_config_f1_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
-                                                 const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
-                                                 unsigned                                     nof_layers);
 
 /// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
 ///

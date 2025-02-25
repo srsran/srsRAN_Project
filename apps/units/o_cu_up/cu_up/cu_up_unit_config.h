@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/network/udp_cli11_schema.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_pcap_config.h"
 #include "cu_up_unit_logger_config.h"
@@ -36,8 +37,9 @@ struct cu_up_unit_metrics_config {
   /// Statistics report period in seconds.
   unsigned cu_up_statistics_report_period = 1;
   struct pdcp_metrics {
-    unsigned report_period = 0; // PDCP report period in ms
+    unsigned report_period = 1000; // PDCP report period in ms
   } pdcp;
+  app_helpers::metrics_config common_metrics_cfg;
 };
 
 struct cu_up_unit_ngu_socket_config {

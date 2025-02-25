@@ -51,7 +51,7 @@ void split6_o_du_impl::start()
   odu_hi->get_operation_controller().start();
 
   for (auto& adaptor : adaptors) {
-    adaptor->get_power_operation_controller().start();
+    adaptor->get_operation_controller().start();
   }
 }
 
@@ -60,6 +60,6 @@ void split6_o_du_impl::stop()
   odu_hi->get_operation_controller().stop();
 
   for (auto& adaptor : adaptors) {
-    adaptor->get_power_operation_controller().stop();
+    adaptor->get_operation_controller().stop();
   }
 }

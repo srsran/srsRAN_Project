@@ -21,7 +21,11 @@
  */
 
 #include "fapi_to_mac_data_msg_translator.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/crc_indication.h"
+#include "srsran/fapi/messages/rach_indication.h"
+#include "srsran/fapi/messages/rx_data_indication.h"
+#include "srsran/fapi/messages/srs_indication.h"
+#include "srsran/fapi/messages/uci_indication.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;

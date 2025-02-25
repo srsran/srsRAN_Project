@@ -43,98 +43,6 @@ get_pdsch_n_id(pci_t pci, const bwp_downlink_dedicated* bwp_dl_ded, dci_dl_forma
   return pci;
 }
 
-pdsch_config_params srsran::get_pdsch_config_f1_0_tc_rnti(const cell_configuration&                    cell_cfg,
-                                                          const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
-{
-  static constexpr pdsch_mcs_table mcs_table = pdsch_mcs_table::qam64;
-  // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
-  static constexpr unsigned tb_scaling_field = 0;
-  // As per TS 38.214, Section 5.1.3.2, nof_oh_prb by \c xOverhead, defined in \c PDSCH-ServingCellConfig, TS 38.331; it
-  // is in the dedicated resources, configured the after DCI Format 1-0 TC-RNTI is used. Hence, nof_oh_prb is here set
-  // as 0.
-  static constexpr unsigned nof_oh_prb = 0;
-  static constexpr unsigned nof_layers = 1;
-
-  pdsch_config_params pdsch;
-
-  pdsch.dmrs = make_dmrs_info_common(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
-
-  pdsch.nof_oh_prb                   = nof_oh_prb;
-  pdsch.symbols                      = pdsch_td_cfg.symbols;
-  pdsch.mcs_table                    = mcs_table;
-  pdsch.tb_scaling_field             = tb_scaling_field;
-  pdsch.nof_layers                   = nof_layers;
-  pdsch.max_nof_cws_scheduled_by_dci = 1;
-
-  return pdsch;
-}
-
-pdsch_config_params srsran::get_pdsch_config_f1_0_c_rnti(const cell_configuration&                    cell_cfg,
-                                                         const ue_cell_configuration*                 ue_cell_cfg,
-                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg)
-{
-  // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
-  static constexpr unsigned        tb_scaling_field = 0;
-  static constexpr unsigned        nof_layers       = 1;
-  static constexpr pdsch_mcs_table mcs_table        = pdsch_mcs_table::qam64;
-
-  pdsch_config_params pdsch;
-
-  pdsch.dmrs = make_dmrs_info_common(pdsch_td_cfg, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
-  // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
-  // NOTE: x_overhead::not_set is mapped to 0.
-  pdsch.nof_oh_prb = ue_cell_cfg != nullptr and ue_cell_cfg->cfg_dedicated().pdsch_serv_cell_cfg.has_value()
-                         ? static_cast<unsigned>(ue_cell_cfg->cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
-                         : static_cast<unsigned>(x_overhead::not_set);
-
-  pdsch.symbols                      = pdsch_td_cfg.symbols;
-  pdsch.mcs_table                    = mcs_table;
-  pdsch.tb_scaling_field             = tb_scaling_field;
-  pdsch.nof_layers                   = nof_layers;
-  pdsch.max_nof_cws_scheduled_by_dci = 1;
-
-  return pdsch;
-}
-
-pdsch_config_params srsran::get_pdsch_config_f1_1_c_rnti(const ue_cell_configuration&                 ue_cell_cfg,
-                                                         const pdsch_time_domain_resource_allocation& pdsch_td_cfg,
-                                                         unsigned                                     nof_layers)
-{
-  // As per TS 38.214, Section 5.1.3.2, TB scaling filed can be different to 0 only for DCI 1_0 with P-RNTI, or RA-RNTI.
-  static constexpr unsigned tb_scaling_field = 0;
-
-  // TODO: Update the value based on nof. CWs enabled.
-  static const bool are_both_cws_enabled = false;
-
-  pdsch_config_params pdsch;
-
-  srsran_assert(ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.has_value(),
-                "No DMRS configured in PDSCH configuration");
-  pdsch.dmrs =
-      make_dmrs_info_dedicated(pdsch_td_cfg,
-                               ue_cell_cfg.cell_cfg_common.pci,
-                               ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos,
-                               ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs.value(),
-                               nof_layers,
-                               ue_cell_cfg.cell_cfg_common.dl_carrier.nof_ant,
-                               are_both_cws_enabled);
-
-  // According to TS 38.214, Section 5.1.3.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
-  // NOTE: x_overhead::not_set is mapped to 0.
-  pdsch.nof_oh_prb = ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.has_value()
-                         ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().pdsch_serv_cell_cfg.value().x_ov_head)
-                         : static_cast<unsigned>(x_overhead::not_set);
-
-  pdsch.symbols          = pdsch_td_cfg.symbols;
-  pdsch.mcs_table        = ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->mcs_table;
-  pdsch.tb_scaling_field = tb_scaling_field;
-  pdsch.nof_layers       = nof_layers;
-  pdsch.max_nof_cws_scheduled_by_dci =
-      ue_cell_cfg.cfg_dedicated().init_dl_bwp.pdsch_cfg->is_max_cw_sched_by_dci_is_two ? 2 : 1;
-
-  return pdsch;
-}
-
 pusch_config_params srsran::get_pusch_config_f0_0_tc_rnti(const cell_configuration&                    cell_cfg,
                                                           const pusch_time_domain_resource_allocation& pusch_td_cfg)
 {
@@ -200,21 +108,18 @@ pusch_config_params srsran::get_pusch_config_f0_0_c_rnti(const cell_configuratio
 
   // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
-  pusch.nof_oh_prb =
-      ue_cell_cfg != nullptr and ue_cell_cfg->cfg_dedicated().ul_config.has_value() and
-              ue_cell_cfg->cfg_dedicated().ul_config.value().pusch_scell_cfg.has_value()
-          ? static_cast<unsigned>(ue_cell_cfg->cfg_dedicated().ul_config.value().pusch_scell_cfg.value().x_ov_head)
-          : static_cast<unsigned>(x_overhead::not_set);
+  pusch.nof_oh_prb = ue_cell_cfg != nullptr and ue_cell_cfg->pusch_serving_cell_cfg() != nullptr
+                         ? static_cast<unsigned>(ue_cell_cfg->pusch_serving_cell_cfg()->x_ov_head)
+                         : static_cast<unsigned>(x_overhead::not_set);
 
   // TODO: verify if this needs to be set depending on some configuration.
   pusch.nof_harq_ack_bits = nof_harq_ack_bits;
   if (is_csi_report_slot and ue_cell_cfg != nullptr) {
-    csi_report_configuration csi_rep_cfg =
-        create_csi_report_configuration(ue_cell_cfg->cfg_dedicated().csi_meas_cfg.value());
+    csi_report_configuration csi_rep_cfg = create_csi_report_configuration(*ue_cell_cfg->csi_meas_cfg());
     // NOTE: The CSI size depends on whether the CSI is configured on PUSCH or PUCCH, as per Section 5.2.3, TS 38.214:
     // "For both Type I and Type II reports configured for PUCCH but transmitted on PUSCH, the determination of the
     // payload for CSI part 1 and CSI part 2 follows that of PUCCH as described in clause 5.2.4."
-    if (is_pusch_configured(ue_cell_cfg->cfg_dedicated().csi_meas_cfg.value())) {
+    if (is_pusch_configured(*ue_cell_cfg->csi_meas_cfg())) {
       csi_report_pusch_size csi_size = get_csi_report_pusch_size(csi_rep_cfg);
       pusch.nof_csi_part1_bits       = csi_size.part1_size.value();
       pusch.max_nof_csi_part2_bits   = csi_size.part2_max_size.value();
@@ -232,7 +137,7 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
                                                          const unsigned                               nof_harq_ack_bits,
                                                          bool is_csi_report_slot)
 {
-  const pusch_mcs_table mcs_table = ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->mcs_table;
+  const pusch_mcs_table mcs_table = ue_cell_cfg.init_bwp().ul_ded->pusch_cfg->mcs_table;
   // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
   // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
   constexpr unsigned tb_scaling_field = 0;
@@ -244,16 +149,15 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
   pusch_config_params pusch;
 
   // TODO: Consider DMRS configured in PUSCH-Config. Need helpers from Phy.
-  srsran_assert(ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.has_value(),
+  srsran_assert(ue_cell_cfg.init_bwp().ul_ded->pusch_cfg->pusch_mapping_type_a_dmrs.has_value(),
                 "No DMRS configured in PUSCH configuration");
-  pusch.dmrs = make_dmrs_info_dedicated(
-      pusch_td_cfg,
-      ue_cell_cfg.cell_cfg_common.pci,
-      ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos,
-      ue_cell_cfg.cfg_dedicated().ul_config->init_ul_bwp.pusch_cfg->pusch_mapping_type_a_dmrs.value(),
-      nof_layers,
-      ue_cell_cfg.cell_cfg_common.ul_carrier.nof_ant,
-      are_both_cws_enabled);
+  pusch.dmrs = make_dmrs_info_dedicated(pusch_td_cfg,
+                                        ue_cell_cfg.cell_cfg_common.pci,
+                                        ue_cell_cfg.cell_cfg_common.dmrs_typeA_pos,
+                                        ue_cell_cfg.init_bwp().ul_ded->pusch_cfg->pusch_mapping_type_a_dmrs.value(),
+                                        nof_layers,
+                                        ue_cell_cfg.cell_cfg_common.ul_carrier.nof_ant,
+                                        are_both_cws_enabled);
 
   pusch.symbols = pusch_td_cfg.symbols;
 
@@ -265,21 +169,18 @@ pusch_config_params srsran::get_pusch_config_f0_1_c_rnti(const ue_cell_configura
 
   // According to TS 38.214, Section 6.1.4.2, nof_oh_prb is set equal to xOverhead, when set; else nof_oh_prb = 0.
   // NOTE: x_overhead::not_set is mapped to 0.
-  pusch.nof_oh_prb =
-      ue_cell_cfg.cfg_dedicated().ul_config.has_value() and
-              ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.has_value()
-          ? static_cast<unsigned>(ue_cell_cfg.cfg_dedicated().ul_config.value().pusch_scell_cfg.value().x_ov_head)
-          : static_cast<unsigned>(x_overhead::not_set);
+  pusch.nof_oh_prb = ue_cell_cfg.pusch_serving_cell_cfg() != nullptr
+                         ? static_cast<unsigned>(ue_cell_cfg.pusch_serving_cell_cfg()->x_ov_head)
+                         : static_cast<unsigned>(x_overhead::not_set);
 
   // TODO: verify if this needs to be set depending on some configuration.
   pusch.nof_harq_ack_bits = nof_harq_ack_bits;
   if (is_csi_report_slot) {
-    csi_report_configuration csi_rep_cfg =
-        create_csi_report_configuration(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value());
+    csi_report_configuration csi_rep_cfg = create_csi_report_configuration(*ue_cell_cfg.csi_meas_cfg());
     // NOTE: The CSI size depends on whether the CSI is configured on PUSCH or PUCCH, as per Section 5.2.3, TS 38.214:
     // "For both Type I and Type II reports configured for PUCCH but transmitted on PUSCH, the determination of the
     // payload for CSI part 1 and CSI part 2 follows that of PUCCH as described in clause 5.2.4."
-    if (is_pusch_configured(ue_cell_cfg.cfg_dedicated().csi_meas_cfg.value())) {
+    if (is_pusch_configured(*ue_cell_cfg.csi_meas_cfg())) {
       csi_report_pusch_size csi_size = get_csi_report_pusch_size(csi_rep_cfg);
       pusch.nof_csi_part1_bits       = csi_size.part1_size.value();
       pusch.max_nof_csi_part2_bits   = csi_size.part2_max_size.value();
@@ -501,8 +402,8 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                                      bool                                is_new_data)
 {
   const coreset_configuration& cs_cfg     = *ss_info.coreset;
-  const bwp_info&              active_bwp = *ss_info.bwp;
-  const bwp_downlink_common&   bwp_dl     = *active_bwp.dl_common;
+  const bwp_config&            active_bwp = *ss_info.bwp;
+  const bwp_downlink_common&   bwp_dl     = *active_bwp.dl_common.value();
 
   pdsch.rnti        = rnti;
   pdsch.bwp_cfg     = &bwp_dl.generic_params;
@@ -525,7 +426,7 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.dci_fmt = dci_dl_format::f1_0;
   pdsch.harq_id = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  const bwp_downlink_dedicated* bwp_dl_ded = active_bwp.dl_ded;
+  const bwp_downlink_dedicated* bwp_dl_ded = active_bwp.dl_ded.has_value() ? &*active_bwp.dl_ded.value() : nullptr;
   pdsch.n_id = get_pdsch_n_id(cell_cfg.pci, bwp_dl_ded, dci_dl_format::f1_0, ss_info.cfg->is_common_search_space());
   pdsch.nof_layers = 1;
 
@@ -563,8 +464,8 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   const cell_configuration&    cell_cfg       = ue_cell_cfg.cell_cfg_common;
   const search_space_info&     ss_info        = ue_cell_cfg.search_space(ss_id);
   const coreset_configuration& cs_cfg         = *ss_info.coreset;
-  const bwp_info&              active_bwp     = *ss_info.bwp;
-  const bwp_configuration&     active_bwp_cfg = active_bwp.dl_common->generic_params;
+  const bwp_config&            active_bwp     = *ss_info.bwp;
+  const bwp_configuration&     active_bwp_cfg = active_bwp.dl_common.value()->generic_params;
   const prb_interval           prbs           = crb_to_prb(active_bwp_cfg.crbs, crbs);
 
   pdsch.rnti        = rnti;
@@ -580,8 +481,10 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   pdsch.dci_fmt     = dci_dl_format::f1_1;
   pdsch.harq_id     = to_harq_id(dci_cfg.harq_process_number);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  pdsch.n_id =
-      get_pdsch_n_id(cell_cfg.pci, active_bwp.dl_ded, dci_dl_format::f1_1, ss_info.cfg->is_common_search_space());
+  pdsch.n_id       = get_pdsch_n_id(cell_cfg.pci,
+                              active_bwp.dl_ded.has_value() ? &*active_bwp.dl_ded.value() : nullptr,
+                              dci_dl_format::f1_1,
+                              ss_info.cfg->is_common_search_space());
   pdsch.nof_layers = pdsch_cfg.nof_layers;
 
   // TODO: Add second Codeword when supported.
@@ -718,11 +621,11 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
                                      const crb_interval&          crbs,
                                      bool                         is_new_data)
 {
-  const cell_configuration&                cell_cfg      = ue_cell_cfg.cell_cfg_common;
-  const search_space_info&                 ss_info       = ue_cell_cfg.search_space(ss_id);
-  const bwp_info&                          bwp_info      = *ss_info.bwp;
-  const bwp_uplink_dedicated*              bwp_ul_ded    = bwp_info.ul_ded;
-  const bwp_uplink_common&                 bwp_ul_cmn    = *bwp_info.ul_common;
+  const cell_configuration&   cell_cfg   = ue_cell_cfg.cell_cfg_common;
+  const search_space_info&    ss_info    = ue_cell_cfg.search_space(ss_id);
+  const bwp_config&           bwp_info   = *ss_info.bwp;
+  const bwp_uplink_dedicated* bwp_ul_ded = bwp_info.ul_ded.has_value() ? &bwp_info.ul_ded.value() : nullptr;
+  const bwp_uplink_common&    bwp_ul_cmn = *bwp_info.ul_common.value();
   const std::optional<rach_config_common>& opt_rach_cfg  = bwp_ul_cmn.rach_cfg_common;
   const std::optional<pusch_config>&       pusch_cfg_ded = bwp_ul_ded->pusch_cfg;
   const prb_interval                       prbs          = crb_to_prb(bwp_ul_cmn.generic_params.crbs, crbs);
@@ -738,7 +641,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   pusch.rnti = rnti;
 
   // PUSCH resources.
-  pusch.bwp_cfg = &bwp_info.ul_common->generic_params;
+  pusch.bwp_cfg = &bwp_info.ul_common->value().generic_params;
   pusch.rbs     = vrb_interval{prbs.start(), prbs.stop()};
   pusch.symbols = pusch_cfg.symbols;
 

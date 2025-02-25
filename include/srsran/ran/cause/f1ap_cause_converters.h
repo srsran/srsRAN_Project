@@ -24,10 +24,14 @@
 
 #include "srsran/ran/cause/f1ap_cause.h"
 #include "srsran/ran/cause/ngap_cause.h"
+#include "srsran/ran/cause/nrppa_cause.h"
 
 namespace srsran {
 
-/// \brief Converts an F1AP cause to an NGAP cause.
+/// \brief Converts an F1AP cause to a NGAP cause.
 ngap_cause_t f1ap_to_ngap_cause(f1ap_cause_t f1ap_cause);
+
+/// \brief Converts an F1AP cause to a NRPPa cause.
+nrppa_cause_t f1ap_to_nrppa_cause(f1ap_cause_t f1ap_cause);
 
 } // namespace srsran

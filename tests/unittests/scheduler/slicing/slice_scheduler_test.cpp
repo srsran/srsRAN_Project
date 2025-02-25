@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/scheduler/slicing/slice_scheduler.h"
+#include "lib/scheduler/slicing/inter_slice_scheduler.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "tests/unittests/scheduler/test_utils/dummy_test_components.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
@@ -57,9 +57,9 @@ protected:
 
   void run_slot()
   {
-    dummy_alloc.slot_indication(current_slot);
-    slice_sched.slot_indication(current_slot, dummy_alloc);
-    ++current_slot;
+    dummy_alloc.slot_indication(next_slot);
+    slice_sched.slot_indication(next_slot, dummy_alloc);
+    ++next_slot;
   }
 
   const ue_configuration* add_ue(const sched_ue_creation_request_message& req)
@@ -80,10 +80,10 @@ protected:
   ue_repository     ues;
 
   cell_resource_allocator dummy_alloc{cell_cfg};
-  slice_scheduler         slice_sched{cell_cfg, ues};
+  inter_slice_scheduler   slice_sched{cell_cfg, ues};
 
 public:
-  slot_point current_slot{to_numerology_value(cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs), 0};
+  slot_point next_slot{to_numerology_value(cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs), 0};
 };
 
 class default_slice_scheduler_test : public slice_scheduler_test, public ::testing::Test
@@ -120,20 +120,25 @@ TEST_F(default_slice_scheduler_test, when_lcid_is_part_of_default_slice_then_def
   ASSERT_NE(this->add_ue(to_du_ue_index(0)), nullptr);
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
+    bool is_dl_active = has_active_tdd_dl_symbols(cell_cfg.tdd_cfg_common.value(), next_slot.slot_index());
     run_slot();
 
     auto next_dl_slice = slice_sched.get_next_dl_candidate();
-    ASSERT_TRUE(next_dl_slice.has_value());
-    ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
-    ASSERT_TRUE(next_dl_slice->is_candidate(to_du_ue_index(0)));
-    ASSERT_TRUE(next_dl_slice->is_candidate(to_du_ue_index(0), lcid_t::LCID_SRB1));
-
     auto next_ul_slice = slice_sched.get_next_ul_candidate();
-    if (next_ul_slice.has_value()) {
+
+    if (is_dl_active) {
+      ASSERT_TRUE(next_dl_slice.has_value());
+      ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
+      ASSERT_TRUE(next_dl_slice->is_candidate(to_du_ue_index(0)));
+      ASSERT_TRUE(next_dl_slice->is_candidate(to_du_ue_index(0), lcid_t::LCID_SRB1));
+
       ASSERT_TRUE(next_ul_slice.has_value());
       ASSERT_EQ(next_ul_slice->id(), ran_slice_id_t{0});
       ASSERT_TRUE(next_ul_slice->is_candidate(to_du_ue_index(0)));
       ASSERT_TRUE(next_ul_slice->is_candidate(to_du_ue_index(0), lcid_t::LCID_SRB1));
+    } else {
+      ASSERT_FALSE(next_dl_slice.has_value());
+      ASSERT_FALSE(next_ul_slice.has_value());
     }
   }
 }
@@ -479,16 +484,21 @@ TEST_F(srb_prioritization_slice_scheduler_test, schedules_default_srb_slice_firs
   ASSERT_NE(this->add_ue(to_du_ue_index(1)), nullptr);
 
   for (unsigned count = 0, e = 10; count != e; ++count) {
+    bool is_pdcch_active = has_active_tdd_dl_symbols(cell_cfg.tdd_cfg_common.value(), next_slot.slot_index());
     run_slot();
 
     auto next_dl_slice = slice_sched.get_next_dl_candidate();
-    ASSERT_TRUE(next_dl_slice.has_value());
-    ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
-
     auto next_ul_slice = slice_sched.get_next_ul_candidate();
-    if (next_ul_slice.has_value()) {
+
+    if (is_pdcch_active) {
+      ASSERT_TRUE(next_dl_slice.has_value());
+      ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
+
       ASSERT_TRUE(next_ul_slice.has_value());
       ASSERT_EQ(next_ul_slice->id(), ran_slice_id_t{0});
+    } else {
+      ASSERT_FALSE(next_dl_slice.has_value());
+      ASSERT_FALSE(next_ul_slice.has_value());
     }
   }
 }

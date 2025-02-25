@@ -98,7 +98,7 @@ static void create_hwacc_pxsch_factories(const std::string& eal_arguments)
     hal::bbdev_hwacc_pusch_dec_factory_configuration hw_decoder_config;
     hw_decoder_config.acc_type            = "acc100";
     hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
-    hw_decoder_config.ext_softbuffer      = true;
+    hw_decoder_config.force_local_harq    = false;
     hw_decoder_config.harq_buffer_context = harq_buffer_context;
     hw_decoder_config.dedicated_queue     = true;
     // ACC100 hardware-accelerator implementation.
@@ -177,16 +177,18 @@ std::shared_ptr<pdsch_processor_factory> srsran::create_sw_pdsch_processor_facto
   }
 #endif // HWACC_PDSCH_ENABLED && HWACC_PUSCH_ENABLED
 
-  return create_pdsch_concurrent_processor_factory_sw(segmenter_factory,
-                                                      ldpc_encoder_factory,
-                                                      ldpc_rate_matcher_factory,
-                                                      pseudo_random_gen_factory,
-                                                      rg_mapper_factory,
-                                                      channel_mod_factory,
-                                                      dmrs_pdsch_proc_factory,
-                                                      ptrs_pdsch_gen_factory,
-                                                      executor,
-                                                      max_nof_threads);
+  // Create PDSCH block processor factory.
+  std::shared_ptr<pdsch_block_processor_factory> block_processor_factory = create_pdsch_block_processor_factory_sw(
+      ldpc_encoder_factory, ldpc_rate_matcher_factory, pseudo_random_gen_factory, channel_mod_factory);
+  report_fatal_error_if_not(block_processor_factory, "Failed to create factory.");
+
+  return create_pdsch_flexible_processor_factory_sw(segmenter_factory,
+                                                    block_processor_factory,
+                                                    rg_mapper_factory,
+                                                    dmrs_pdsch_proc_factory,
+                                                    ptrs_pdsch_gen_factory,
+                                                    executor,
+                                                    max_nof_threads);
 }
 
 std::shared_ptr<pusch_processor_factory>
@@ -259,8 +261,13 @@ srsran::create_sw_pusch_processor_factory(task_executor&                        
       create_port_channel_estimator_factory_sw(ta_est_factory);
   report_fatal_error_if_not(chan_estimator_factory, "Failed to create factory.");
 
-  std::shared_ptr<dmrs_pusch_estimator_factory> chan_est_factory = create_dmrs_pusch_estimator_factory_sw(
-      pseudo_random_gen_factory, low_papr_sequence_gen_factory, chan_estimator_factory, td_interpolation_strategy);
+  std::shared_ptr<dmrs_pusch_estimator_factory> chan_est_factory =
+      create_dmrs_pusch_estimator_factory_sw(pseudo_random_gen_factory,
+                                             low_papr_sequence_gen_factory,
+                                             chan_estimator_factory,
+                                             port_channel_estimator_fd_smoothing_strategy::filter,
+                                             td_interpolation_strategy,
+                                             true);
   report_fatal_error_if_not(chan_est_factory, "Failed to create factory.");
 
   std::shared_ptr<channel_equalizer_factory> eq_factory =

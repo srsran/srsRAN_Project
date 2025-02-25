@@ -209,7 +209,7 @@ void ru_emulator_timing_notifier::poll()
 void ru_emulator_timing_notifier::notify_slot_symbol_point(slot_symbol_point slot)
 {
   for (auto* notifier : ota_notifiers) {
-    notifier->on_new_symbol(slot);
+    notifier->on_new_symbol({slot, {}});
   }
 }
 

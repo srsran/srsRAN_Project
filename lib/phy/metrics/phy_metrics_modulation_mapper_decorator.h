@@ -25,6 +25,7 @@
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 
 namespace srsran {
 
@@ -43,25 +44,30 @@ public:
   // See interface for documentation.
   void modulate(span<cf_t> symbols, const bit_buffer& input, modulation_scheme scheme) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base->modulate(symbols, input, scheme);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric(
-        {.modulation = scheme, .nof_symbols = static_cast<unsigned>(symbols.size()), .elapsed = tp_after - tp_before});
+    channel_modulation_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base->modulate(symbols, input, scheme);
+    }
+    metrics.modulation  = scheme;
+    metrics.nof_symbols = static_cast<unsigned>(symbols.size());
+    notifier.on_new_metric(metrics);
   }
 
   // See interface for documentation.
   float modulate(span<ci8_t> symbols, const bit_buffer& input, modulation_scheme scheme) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-
-    float ret = base->modulate(symbols, input, scheme);
-
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric(
-        {.modulation = scheme, .nof_symbols = static_cast<unsigned>(symbols.size()), .elapsed = tp_after - tp_before});
+    channel_modulation_metrics metrics;
+    float                      ret;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base->modulate(symbols, input, scheme);
+    }
+    metrics.modulation  = scheme;
+    metrics.nof_symbols = static_cast<unsigned>(symbols.size());
+    notifier.on_new_metric(metrics);
 
     return ret;
   }

@@ -25,6 +25,7 @@
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/metrics/phy_metrics_reports.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 #include <memory>
 
 namespace srsran {
@@ -47,14 +48,18 @@ public:
                                  crc_calculator*                  crc,
                                  const configuration&             cfg) override
   {
-    auto                    tp_before = std::chrono::high_resolution_clock::now();
-    std::optional<unsigned> ret       = base_decoder->decode(output, input, crc, cfg);
-    auto                    tp_after  = std::chrono::high_resolution_clock::now();
+    ldpc_decoder_metrics    metrics;
+    std::optional<unsigned> ret;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      ret = base_decoder->decode(output, input, crc, cfg);
+    }
+    metrics.cb_sz          = units::bits(output.size());
+    metrics.nof_iterations = ret.value_or(cfg.algorithm_conf.max_iterations);
+    metrics.crc_ok         = ret.has_value();
 
-    notifier.new_metric({.cb_sz          = units::bits(output.size()),
-                         .nof_iterations = ret.value_or(cfg.algorithm_conf.max_iterations),
-                         .crc_ok         = ret.has_value(),
-                         .elapsed        = tp_after - tp_before});
+    notifier.on_new_metric(metrics);
 
     return ret;
   }

@@ -96,11 +96,10 @@ void srs_scheduler_impl::add_ue(const ue_cell_configuration& ue_cfg)
 
 void srs_scheduler_impl::add_ue_to_grid(const ue_cell_configuration& ue_cfg, bool is_reconf)
 {
-  if (not ue_cfg.cfg_dedicated().ul_config.has_value() or
-      not ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.has_value()) {
+  if (not ue_cfg.init_bwp().ul_ded.has_value() or not ue_cfg.init_bwp().ul_ded->srs_cfg.has_value()) {
     return;
   }
-  const srs_config& srs_cfg = ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.value();
+  const srs_config& srs_cfg = ue_cfg.init_bwp().ul_ded->srs_cfg.value();
 
   auto get_srs_res_with_id = [&srs_cfg](unsigned srs_res_id) {
     return std::find_if(
@@ -109,8 +108,7 @@ void srs_scheduler_impl::add_ue_to_grid(const ue_cell_configuration& ue_cfg, boo
         [srs_res_id](const srs_config::srs_resource& srs_res) { return srs_res.id.ue_res_id == srs_res_id; });
   };
 
-  for (const auto& srs_res_set :
-       ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.value().srs_res_set_list) {
+  for (const auto& srs_res_set : srs_cfg.srs_res_set_list) {
     // This scheduler is only for periodic SRS resources.
     if (not std::holds_alternative<srs_config::srs_resource_set::periodic_resource_type>(srs_res_set.res_type)) {
       continue;
@@ -150,11 +148,10 @@ void srs_scheduler_impl::add_ue_to_grid(const ue_cell_configuration& ue_cfg, boo
 
 void srs_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
 {
-  if (not ue_cfg.cfg_dedicated().ul_config.has_value() or
-      not ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.has_value()) {
+  if (not ue_cfg.init_bwp().ul_ded.has_value() or not ue_cfg.init_bwp().ul_ded->srs_cfg.has_value()) {
     return;
   }
-  const srs_config& srs_cfg = ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.value();
+  const srs_config& srs_cfg = ue_cfg.init_bwp().ul_ded->srs_cfg.value();
 
   auto get_srs_res_with_id = [&srs_cfg](unsigned srs_res_id) {
     return std::find_if(
@@ -194,12 +191,11 @@ void srs_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
 
 void srs_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, const ue_cell_configuration& old_ue_cfg)
 {
-  if (new_ue_cfg.cfg_dedicated().ul_config.has_value() and old_ue_cfg.cfg_dedicated().ul_config.has_value() and
-      new_ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.has_value() and
-      old_ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.has_value()) {
+  if (new_ue_cfg.init_bwp().ul_ded.has_value() and old_ue_cfg.init_bwp().ul_ded.has_value() and
+      new_ue_cfg.init_bwp().ul_ded->srs_cfg.has_value() and old_ue_cfg.init_bwp().ul_ded->srs_cfg.has_value()) {
     // Both old and new UE config have SRS config.
-    const auto& new_srs_cfg = new_ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.value();
-    const auto& old_srs_cfg = old_ue_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.value();
+    const auto& new_srs_cfg = new_ue_cfg.init_bwp().ul_ded->srs_cfg.value();
+    const auto& old_srs_cfg = old_ue_cfg.init_bwp().ul_ded->srs_cfg.value();
 
     if (new_srs_cfg.srs_res_set_list == old_srs_cfg.srs_res_set_list and
         new_srs_cfg.srs_res_list == old_srs_cfg.srs_res_list) {
@@ -239,9 +235,9 @@ void srs_scheduler_impl::handle_positioning_measurement_request(const positionin
                      fmt::underlying(req.ue_index.value()));
       return;
     }
-    const serving_cell_config& ue_cfg = u.get_pcell().cfg().cfg_dedicated();
+    const auto& ul_cfg = u.get_pcell().cfg().init_bwp().ul_ded;
 
-    if (not ue_cfg.ul_config.has_value() or not ue_cfg.ul_config.value().init_ul_bwp.srs_cfg.has_value()) {
+    if (not ul_cfg.has_value() or not ul_cfg->srs_cfg.has_value()) {
       logger.warning("ue={}: Positioning measurement request discarded. Cause: UE has no configured SRS config",
                      fmt::underlying(req.ue_index.value()));
       return;
@@ -402,7 +398,7 @@ bool srs_scheduler_impl::allocate_srs_opportunity(cell_slot_resource_allocator& 
       return false;
     }
 
-    srs_res_list = ue_cfg->cfg_dedicated().ul_config.value().init_ul_bwp.srs_cfg.value().srs_res_list;
+    srs_res_list = ue_cfg->init_bwp().ul_ded->srs_cfg.value().srs_res_list;
 
   } else {
     // SRS for UE of neighbor cell.

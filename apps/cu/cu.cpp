@@ -21,12 +21,15 @@
  */
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_helpers.h"
+#include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
+#include "apps/services/periodic_metrics_report_controller.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
@@ -124,10 +127,11 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const logger_appconfig&   log_cfg,
+static void register_app_logs(const cu_appconfig&       cu_cfg,
                               o_cu_cp_application_unit& cu_cp_app_unit,
                               o_cu_up_application_unit& cu_up_app_unit)
 {
+  const logger_appconfig& log_cfg = cu_cfg.log_cfg;
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
@@ -145,9 +149,9 @@ static void register_app_logs(const logger_appconfig&   log_cfg,
   config_logger.set_level(log_cfg.config_level);
   config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
-  auto& metrics_logger = srslog::fetch_basic_logger("METRICS", false);
-  metrics_logger.set_level(log_cfg.metrics_level.level);
-  metrics_logger.set_hex_dump_max_size(log_cfg.metrics_level.hex_max_size);
+  // Metrics log channels.
+  const app_helpers::metrics_config& metrics_cfg = cu_cfg.metrics_cfg.common_metrics_cfg;
+  app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
 
   // Register units logs.
   cu_cp_app_unit.on_loggers_registration();
@@ -217,6 +221,11 @@ int main(int argc, char** argv)
 
     autoderive_cu_up_parameters_after_parsing(
         cu_cfg, o_cu_up_app_unit->get_o_cu_up_unit_config(), o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
+
+    if (cu_cfg.metrics_cfg.common_metrics_cfg.enabled() && cu_cfg.metrics_cfg.rusage_report_period == 0) {
+      // Default report period 1 second.
+      cu_cfg.metrics_cfg.rusage_report_period = 1000;
+    }
   });
 
   // Parse arguments.
@@ -231,7 +240,7 @@ int main(int argc, char** argv)
 
   // Set up logging.
   initialize_log(cu_cfg.log_cfg.filename);
-  register_app_logs(cu_cfg.log_cfg, *o_cu_cp_app_unit, *o_cu_up_app_unit);
+  register_app_logs(cu_cfg, *o_cu_cp_app_unit, *o_cu_up_app_unit);
 
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
@@ -360,6 +369,24 @@ int main(int argc, char** argv)
 
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
+  // Create app-level resource usage service and metrics.
+  auto app_resource_usage_service =
+      app_services::build_app_resource_usage_service(metrics_notifier_forwarder, cu_cfg.metrics_cfg.common_metrics_cfg);
+
+  // Create service for periodically polling app resource usage.
+  auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
+  std::vector<app_services::metrics_producer*> metric_producers;
+  for (auto& metric : app_resource_usage_service.metrics) {
+    for (auto& producer : metric.producers)
+      metric_producers.push_back(producer.get());
+  }
+  app_services::periodic_metrics_report_controller periodic_metrics_controller(
+      metric_producers,
+      std::move(app_metrics_timer),
+      std::chrono::milliseconds(cu_cfg.metrics_cfg.rusage_report_period));
+
+  std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
+
   // Create O-CU-CP dependencies.
   o_cu_cp_unit_dependencies o_cucp_deps;
   o_cucp_deps.cu_cp_executor       = workers.cu_cp_exec;
@@ -378,7 +405,10 @@ int main(int argc, char** argv)
   // Create console helper object for commands and metrics printing.
   app_services::cmdline_command_dispatcher command_parser(
       *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands.cmdline);
-  std::vector<app_services::metrics_config> metrics_configs = std::move(o_cucp_unit.metrics);
+
+  for (auto& metric : o_cucp_unit.metrics) {
+    metrics_configs.push_back(std::move(metric));
+  }
 
   // Connect E1AP to O-CU-CP.
   e1_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_e1_handler());
@@ -419,6 +449,8 @@ int main(int argc, char** argv)
 
   o_cuup_unit.unit->get_operation_controller().start();
 
+  periodic_metrics_controller.start();
+
   std::unique_ptr<app_services::remote_server> remote_control_server =
       app_services::create_remote_server(cu_cfg.remote_control_config, {});
 
@@ -429,6 +461,8 @@ int main(int argc, char** argv)
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
   }
+
+  periodic_metrics_controller.stop();
 
   if (remote_control_server) {
     remote_control_server->stop();

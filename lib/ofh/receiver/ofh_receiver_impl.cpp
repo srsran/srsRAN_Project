@@ -98,10 +98,10 @@ generate_closed_rx_window_dependencies(receiver_impl_dependencies::close_rx_wind
   return out_dependencies;
 }
 
-void ota_symbol_boundary_dispatcher::on_new_symbol(slot_symbol_point symbol_point)
+void ota_symbol_boundary_dispatcher::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
 {
   for (auto& handler : handlers) {
-    handler->on_new_symbol(symbol_point);
+    handler->on_new_symbol(symbol_point_context);
   }
 }
 
@@ -110,11 +110,7 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
                         generate_closed_rx_window_dependencies(std::move(dependencies.window_handler_dependencies),
                                                                *dependencies.logger,
                                                                *dependencies.executor)),
-  window_checker(*dependencies.logger,
-                 config.sector,
-                 config.rx_timing_params,
-                 std::chrono::duration<double, std::nano>(
-                     1e6 / (get_nsymb_per_slot(config.cp) * get_nof_slots_per_subframe(config.scs)))),
+  window_checker(config.are_metrics_enabled, config.rx_timing_params),
   symbol_boundary_dispatcher([](closed_rx_window_handler& handler, rx_window_checker& checker) {
     std::vector<ota_symbol_boundary_notifier*> handlers;
     if (!checker.disabled()) {
@@ -141,4 +137,9 @@ ota_symbol_boundary_notifier* receiver_impl::get_ota_symbol_boundary_notifier()
 controller& receiver_impl::get_controller()
 {
   return ctrl;
+}
+
+receiver_metrics_collector* receiver_impl::get_metrics_collector()
+{
+  return window_checker.disabled() ? nullptr : &window_checker;
 }

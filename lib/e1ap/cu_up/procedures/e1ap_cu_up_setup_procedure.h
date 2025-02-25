@@ -26,7 +26,6 @@
 #include "e1ap_cu_up_event_manager.h"
 #include "srsran/e1ap/common/e1_setup_messages.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up.h"
-#include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/async/async_task.h"
 

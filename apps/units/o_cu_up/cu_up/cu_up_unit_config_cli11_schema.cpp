@@ -21,6 +21,7 @@
  */
 
 #include "cu_up_unit_config_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_config.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_pcap_config.h"
@@ -184,6 +185,7 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, unit_cfg.metrics);
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, unit_cfg.metrics.common_metrics_cfg);
 
   // QoS section.
   auto qos_lambda = [&unit_cfg](const std::vector<std::string>& values) {
@@ -201,4 +203,24 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
     }
   };
   add_option_cell(app, "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
+}
+
+void srsran::autoderive_cu_up_parameters_after_parsing(CLI::App&          app,
+                                                       cu_up_unit_config& unit_cfg,
+                                                       bool               pdpc_metrics_requested)
+{
+  // Do nothing when PDCP period if present in the config file.
+  if (auto* metrics_subcmd = app.get_subcommand("metrics");
+      metrics_subcmd && metrics_subcmd->count("--pdcp_report_period")) {
+    // Disable metrics if report period is configured to 0.
+    unit_cfg.metrics.common_metrics_cfg.enable_log_metrics              = unit_cfg.metrics.pdcp.report_period != 0;
+    unit_cfg.metrics.common_metrics_cfg.json_config.enable_json_metrics = unit_cfg.metrics.pdcp.report_period != 0;
+
+    return;
+  }
+
+  // Disable PDCP report period when the metrics and E2 are not enabled.
+  if (!pdpc_metrics_requested && !unit_cfg.metrics.common_metrics_cfg.enabled()) {
+    unit_cfg.metrics.pdcp.report_period = 0;
+  }
 }

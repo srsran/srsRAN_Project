@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/fapi/slot_time_message_notifier.h"
+#include "srsran/phy/upper/upper_phy_timing_handler.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
 #include <functional>
 
@@ -44,7 +45,7 @@ public:
   explicit phy_to_fapi_time_event_translator(fapi_to_phy_translator& translator_);
 
   // See interface for documentation.
-  void on_tti_boundary(slot_point slot) override;
+  void on_tti_boundary(const upper_phy_timing_context& context) override;
 
   /// \brief Configures the FAPI slot-based, time-specific notifier to the given one.
   void set_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_slot_notifier)

@@ -18,6 +18,6 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-set(SOURCES scheduler_result_logger.cpp scheduler_metric_handler.cpp scheduler_event_logger.cpp)
+set(SOURCES scheduler_result_logger.cpp scheduler_metrics_handler.cpp scheduler_event_logger.cpp)
 add_library(scheduler_logger STATIC ${SOURCES})
 target_link_libraries(scheduler_logger srsran_sched srsran_ran srslog)

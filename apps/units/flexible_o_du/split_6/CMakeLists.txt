@@ -25,8 +25,11 @@ set(SOURCES
         split6_o_du_unit_cli11_schema.cpp
         split6_o_du_unit_config_validator.cpp)
 
-add_library(srsran_flexible_o_du_split6 STATIC ${SOURCES})
-target_include_directories(srsran_flexible_o_du_split6 PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_flexible_o_du_split6
+add_library(srsran_split6_plugin STATIC split6_plugin_dummy.cpp)
+
+add_library(srsran_flexible_o_du_split_6 STATIC ${SOURCES})
+target_include_directories(srsran_flexible_o_du_split_6 PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(srsran_flexible_o_du_split_6
         srsran_o_du
-        srsran_o_du_high_unit_helpers)
+        srsran_o_du_high_unit_helpers
+        srsran_split6_plugin)

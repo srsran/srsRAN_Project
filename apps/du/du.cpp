@@ -21,6 +21,7 @@
  */
 
 #include "adapters/f1_gateways.h"
+#include "apps/helpers/metrics/metrics_helpers.h"
 #include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
 #include "apps/services/application_tracer.h"
@@ -116,8 +117,9 @@ static void initialize_log(const std::string& filename)
   srslog::init();
 }
 
-static void register_app_logs(const logger_appconfig& log_cfg, flexible_o_du_application_unit& du_app_unit)
+static void register_app_logs(const du_appconfig& du_cfg, flexible_o_du_application_unit& du_app_unit)
 {
+  const logger_appconfig& log_cfg = du_cfg.log_cfg;
   // Set log-level of app and all non-layer specific components to app level.
   for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
@@ -135,9 +137,9 @@ static void register_app_logs(const logger_appconfig& log_cfg, flexible_o_du_app
   config_logger.set_level(log_cfg.config_level);
   config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
-  auto& metrics_logger = srslog::fetch_basic_logger("METRICS", false);
-  metrics_logger.set_level(log_cfg.metrics_level.level);
-  metrics_logger.set_hex_dump_max_size(log_cfg.metrics_level.hex_max_size);
+  // Metrics log channels.
+  const app_helpers::metrics_config& metrics_cfg = du_cfg.metrics_cfg.common_metrics_cfg;
+  app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
 
   auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
   e2ap_logger.set_level(log_cfg.e2ap_level);
@@ -195,7 +197,7 @@ int main(int argc, char** argv)
 
   // Set up logging.
   initialize_log(du_cfg.log_cfg.filename);
-  register_app_logs(du_cfg.log_cfg, *o_du_app_unit);
+  register_app_logs(du_cfg, *o_du_app_unit);
 
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
@@ -313,10 +315,6 @@ int main(int argc, char** argv)
   std::unique_ptr<srs_du::f1u_du_udp_gateway> du_f1u_conn =
       srs_du::create_split_f1u_gw({f1u_gw_maps, du_f1u_gtpu_demux.get(), *du_pcaps.f1u, GTPU_PORT});
 
-  // Set up the JSON log channel used by metrics.
-  srslog::sink& json_sink =
-      srslog::fetch_udp_sink(du_cfg.metrics_cfg.addr, du_cfg.metrics_cfg.port, srslog::create_json_formatter());
-
   // Instantiate E2AP client gateway.
   std::unique_ptr<e2_connection_client> e2_gw = create_e2_gateway_client(
       generate_e2_client_gateway_config(o_du_app_unit->get_o_du_high_unit_config().e2_cfg.base_cfg,
@@ -328,8 +326,8 @@ int main(int argc, char** argv)
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
   // Create app-level resource usage service and metrics.
-  auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, du_cfg.log_cfg.metrics_level.level, json_sink);
+  auto app_resource_usage_service =
+      app_services::build_app_resource_usage_service(metrics_notifier_forwarder, du_cfg.metrics_cfg.common_metrics_cfg);
 
   std::vector<app_services::metrics_config> app_metrics = std::move(app_resource_usage_service.metrics);
 
@@ -341,7 +339,6 @@ int main(int argc, char** argv)
   du_dependencies.mac_p              = du_pcaps.mac.get();
   du_dependencies.rlc_p              = du_pcaps.rlc.get();
   du_dependencies.e2_client_handler  = e2_gw.get();
-  du_dependencies.json_sink          = &json_sink;
   du_dependencies.metrics_notifier   = &metrics_notifier_forwarder;
 
   auto du_inst_and_cmds = o_du_app_unit->create_flexible_o_du_unit(du_dependencies);

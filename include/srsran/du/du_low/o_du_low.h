@@ -29,6 +29,7 @@ class phy_fapi_adaptor;
 }
 
 class du_operation_controller;
+class upper_phy_metrics_notifiers;
 
 namespace srs_du {
 
@@ -52,7 +53,7 @@ public:
   virtual fapi_adaptor::phy_fapi_adaptor& get_phy_fapi_adaptor() = 0;
 
   /// Returns the metrics collector of this O-DU low.
-  virtual o_du_low_metrics_collector& get_metrics_collector() = 0;
+  virtual o_du_low_metrics_collector* get_metrics_collector() = 0;
 };
 
 } // namespace srs_du

@@ -25,7 +25,7 @@
 namespace srsran {
 namespace srs_du {
 
-/// ORAN DU high metrics.
+/// O-RAN DU high metrics.
 struct o_du_high_metrics {};
 
 } // namespace srs_du

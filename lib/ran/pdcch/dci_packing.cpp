@@ -1505,8 +1505,8 @@ error_type<std::string> srsran::validate_dci_size_config(const dci_size_config& 
   static constexpr unsigned max_nof_time_domain_res = 16;
 
   // Valid bandwidth range.
-  static constexpr interval<unsigned, true> bwp_bw_range(1, MAX_RB);
-  static constexpr interval<unsigned, true> coreset0_bw_range(0, MAX_RB);
+  static constexpr interval<unsigned, true> bwp_bw_range(1, MAX_NOF_PRBS);
+  static constexpr interval<unsigned, true> coreset0_bw_range(0, MAX_NOF_PRBS);
   static constexpr interval<unsigned, true> nof_bwp_rrc_range(0, max_nof_bwp_rrc);
   static constexpr interval<unsigned, true> nof_time_domain_res_range(1, max_nof_time_domain_res);
   static constexpr interval<unsigned, true> non_codebook_nof_srs_res_range(1, 4);

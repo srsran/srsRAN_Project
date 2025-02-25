@@ -22,23 +22,17 @@
 
 #include "csi_report_helpers.h"
 
-bool srsran::csi_helper::is_csi_reporting_slot(const serving_cell_config& ue_cfg, slot_point sl_tx)
+bool srsran::csi_helper::is_csi_reporting_slot(const csi_meas_config& csi_meas, slot_point sl_tx)
 {
-  if (ue_cfg.csi_meas_cfg.has_value()) {
-    // We assume we only use the first CSI report configuration.
-    const unsigned csi_report_cfg_idx = 0;
-    const auto&    csi_report_cfg     = ue_cfg.csi_meas_cfg.value().csi_report_cfg_list[csi_report_cfg_idx];
-    const auto&    csi_report_cfg_type =
-        std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type);
+  // We assume we only use the first CSI report configuration.
+  const unsigned csi_report_cfg_idx = 0;
+  const auto&    csi_report_cfg     = csi_meas.csi_report_cfg_list[csi_report_cfg_idx];
+  const auto&    csi_report_cfg_type =
+      std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(csi_report_cfg.report_cfg_type);
 
-    // > Scheduler CSI grants.
-    unsigned csi_offset = csi_report_cfg_type.report_slot_offset;
-    unsigned csi_period = csi_report_periodicity_to_uint(csi_report_cfg_type.report_slot_period);
+  // > Scheduler CSI grants.
+  unsigned csi_offset = csi_report_cfg_type.report_slot_offset;
+  unsigned csi_period = csi_report_periodicity_to_uint(csi_report_cfg_type.report_slot_period);
 
-    if ((sl_tx - csi_offset).to_uint() % csi_period == 0) {
-      return true;
-    }
-  }
-
-  return false;
+  return (sl_tx - csi_offset).to_uint() % csi_period == 0;
 }

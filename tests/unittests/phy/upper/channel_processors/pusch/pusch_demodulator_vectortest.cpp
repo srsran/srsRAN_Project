@@ -24,6 +24,7 @@
 #include "pusch_demodulator_notifier_test_doubles.h"
 #include "pusch_demodulator_test_data.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
+#include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
 #include "srsran/srsvec/conversion.h"
 #include "fmt/ostream.h"
@@ -157,6 +158,10 @@ TEST_P(PuschDemodulatorFixture, PuschDemodulatorUnittest)
   ce_dims.nof_rx_ports  = estimates.get_dimension_size(ch_dims::rx_port);
   ce_dims.nof_tx_layers = estimates.get_dimension_size(ch_dims::tx_layer);
   channel_estimate chan_estimates(ce_dims);
+
+  if ((ce_dims.nof_tx_layers > 1) && (get_pusch_processor_phy_capabilities().max_nof_layers < 2)) {
+    GTEST_SKIP() << "The PUSCH demodulator for 2 or more layers is not supported in this version - skipping the test.";
+  }
 
   // Populate channel estimate.
   for (unsigned i_rx_port = 0; i_rx_port != ce_dims.nof_rx_ports; ++i_rx_port) {

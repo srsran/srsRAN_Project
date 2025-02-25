@@ -39,7 +39,7 @@ struct cell_selection_info {
   bounded_integer<int, -43, -12> q_qual_min = -20;
 };
 
-enum class sib_type { sib1 = 1, sib2 = 2, sib19 = 19, sib_invalid };
+enum class sib_type { sib1 = 1, sib2 = 2, sib6 = 6, sib7 = 7, sib8 = 8, sib19 = 19, sib_invalid };
 
 /// Configures a pattern of SSBs. See TS 38.331, \c SSB-ToMeasure.
 /// Equates to longBitmap when size of bitset equals to 64.
@@ -179,6 +179,87 @@ struct sib2_info {
   bool derive_ssb_index_from_cell;
 };
 
+/// ETWS primary notification SIB contents (see TS38.331 Section 6.3.2, Information Element \e SIB6).
+struct sib6_info {
+  /// \brief Parameter "messageIdentifier".
+  ///
+  /// It carries the NGAP Message Identifier IE (see TS38.413, Section 9.3.1.35), which is set according to the Message
+  /// Identifier field of the Cell Broadcast Service (CBS) ETWS Primary Notification Message (see TS23.041,
+  /// Section 9.4.3.3.4). It identifies the source and type of the warning message.
+  unsigned message_id;
+  /// \brief Parameter "serialNumber".
+  ///
+  /// It carries the NGAP Serial Number IE (see TS38.413, Section 9.3.1.36), which is set according to the Serial
+  /// Number field of the Cell Broadcast Service (CBS) ETWS Primary Notification Message (see TS23.041,
+  /// Section 9.4.3.3.3). It identifies a specific warning message from other message of the same type. It must be
+  /// incremented when a new warning message is broadcast.
+  unsigned serial_number;
+  /// \brief Parameter "warningType".
+  ///
+  /// It carries the NGAP Warning Type IE (see TS38.413, Section 9.3.1.39), which is set according to the Warning
+  /// Type field of the Cell Broadcast Service (CBS) ETWS Primary Notification Message (see TS23.041,
+  /// Section 9.4.3.3.5). It identifies the type of ETWS warning between Earthquake, Tsunami, Earthquake and Tsunami and
+  /// Test. It also carries the Emergency User Alert and Popup fields, which activate the audible warning and
+  /// notification popup features on the UEs.
+  unsigned warning_type;
+};
+
+/// ETWS secondary notification SIB contents (see TS38.331 Section 6.3.2, Information Element \e SIB7).
+struct sib7_info {
+  /// \brief Parameter "messageIdentifier".
+  ///
+  /// It carries the Message Identifier NGAP IE (see TS38.413, Section 9.3.1.35), which is set according to the Message
+  /// Identifier field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.1). It identifies the
+  /// source and type of the warning message.
+  unsigned message_id;
+  /// \brief Parameter "serialNumber".
+  ///
+  /// It carries the Serial Number NGAP IE (see TS38.413, Section 9.3.1.36), which is set according to the Serial
+  /// Number field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.2). It identifies a
+  /// specific warning message from other message of the same type. It must be incremented when a new warning message is
+  /// broadcast.
+  unsigned serial_number;
+  /// \brief Parameter "warningMessageSegment".
+  ///
+  /// It carries a segment of the ETWS warning message contents NGAP IE defined in TS TS38.413, Section 9.3.1.41, which
+  /// has the contents of a CBS message CB Data IE (See TS23.041 Section 9.4.3.2.4).
+  std::string warning_message_segment;
+  /// \brief Parameter "dataCodingScheme".
+  ///
+  /// It carries the Data Coding Scheme NGAP IE (see TS38.413, Section 9.3.1.41), which is set according to the Data
+  /// Coding Scheme field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.3). It identifies
+  /// the coding and the language of the warning message as per TS23.041 Section 9.4.2.2.4.
+  unsigned data_coding_scheme;
+};
+
+/// CMAS notification SIB contents (see TS38.331 Section 6.3.2, Information Element \e SIB8).
+struct sib8_info {
+  /// \brief Parameter "messageIdentifier".
+  ///
+  /// It carries the Message Identifier NGAP IE (see TS38.413, Section 9.3.1.35), which is set according to the Message
+  /// Identifier field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.1). It identifies the
+  /// source and type of the warning message.
+  unsigned message_id;
+  /// \brief Parameter "serialNumber".
+  ///
+  /// It carries the Serial Number NGAP IE (see TS38.413, Section 9.3.1.36), which is set according to the Serial
+  /// Number field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.2). It identifies a
+  /// specific warning message from other message of the same type. It must be incremented when a new warning message is
+  /// broadcast.
+  unsigned serial_number;
+  /// \brief Parameter "warningMessageSegment".
+  ///
+  /// It carries a segment of the CMAS warning message contents NGAP IE defined in TS TS38.413, Section 9.3.1.41, which
+  /// has the contents of a CBS message CB Data IE (See TS23.041 Section 9.4.3.2.4).
+  std::string warning_message_segment;
+  /// \brief Parameter "dataCodingScheme".
+  ///
+  /// It carries the Data Coding Scheme NGAP IE (see TS38.413, Section 9.3.1.41), which is set according to the Data
+  /// Coding Scheme field of the Cell Broadcast Service (CBS) message (see TS23.041, Section 9.4.3.2.3). It identifies
+  /// the coding and the language of the warning message as per TS23.041 Section 9.4.2.2.4.
+  unsigned data_coding_scheme;
+};
+
 struct sib19_info {
   // This user provided constructor is added here to fix a Clang compilation error related to the use of nested types
   // with std::optional.
@@ -195,12 +276,21 @@ struct sib19_info {
 };
 
 /// \brief Variant type that can hold different types of SIBs that go in a SI message.
-using sib_info = std::variant<sib2_info, sib19_info>;
+using sib_info = std::variant<sib2_info, sib6_info, sib7_info, sib8_info, sib19_info>;
 
 inline sib_type get_sib_info_type(const sib_info& sib)
 {
   if (std::holds_alternative<sib2_info>(sib)) {
     return sib_type::sib2;
+  }
+  if (std::holds_alternative<sib6_info>(sib)) {
+    return sib_type::sib6;
+  }
+  if (std::holds_alternative<sib7_info>(sib)) {
+    return sib_type::sib7;
+  }
+  if (std::holds_alternative<sib8_info>(sib)) {
+    return sib_type::sib8;
   }
   if (std::holds_alternative<sib19_info>(sib)) {
     return sib_type::sib19;

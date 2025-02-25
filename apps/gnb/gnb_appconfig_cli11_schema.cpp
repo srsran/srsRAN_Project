@@ -21,6 +21,7 @@
  */
 
 #include "gnb_appconfig_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
 #include "apps/services/hal/hal_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_schema.h"
@@ -34,10 +35,11 @@ using namespace srsran;
 
 static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
 {
-  app.add_option("--addr", metrics_params.addr, "Metrics address.")->capture_default_str();
-  app.add_option("--port", metrics_params.port, "Metrics UDP port.")
-      ->capture_default_str()
-      ->check(CLI::Range(0, 65535));
+  add_option(app,
+             "--resource_usage_report_period",
+             metrics_params.rusage_report_period,
+             "Resource usage metrics report period (in milliseconds)")
+      ->capture_default_str();
 }
 
 static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)
@@ -68,6 +70,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   // Metrics section.
   CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, gnb_cfg.metrics_cfg);
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, gnb_cfg.metrics_cfg.common_metrics_cfg);
 
   // HAL section.
   gnb_cfg.hal_config.emplace();
@@ -80,4 +83,9 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
 void srsran::autoderive_gnb_parameters_after_parsing(CLI::App& app, gnb_appconfig& config)
 {
   manage_hal_optional(app, config);
+
+  if (config.metrics_cfg.common_metrics_cfg.enabled() && config.metrics_cfg.rusage_report_period == 0) {
+    // Default report period 1 second.
+    config.metrics_cfg.rusage_report_period = 1000;
+  }
 }

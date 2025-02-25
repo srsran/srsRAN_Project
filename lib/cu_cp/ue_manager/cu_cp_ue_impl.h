@@ -30,6 +30,7 @@
 #include "../up_resource_manager/up_resource_manager_impl.h"
 #include "cu_cp_ue_impl_interface.h"
 #include "ue_task_scheduler_impl.h"
+#include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ran/plmn_identity.h"
 #include <optional>
 #include <unordered_map>
@@ -75,7 +76,7 @@ public:
   void stop();
 
   /// \brief Get the UE index of the UE.
-  ue_index_t get_ue_index() override { return ue_index; }
+  ue_index_t get_ue_index() const override { return ue_index; }
 
   /// \brief Get the PCI of the UE.
   [[nodiscard]] pci_t get_pci() const { return pci; };
@@ -86,7 +87,7 @@ public:
   [[nodiscard]] gnb_du_id_t get_du_id() const { return ue_ctxt.du_id; }
 
   /// \brief Get the DU index of the UE.
-  [[nodiscard]] du_index_t get_du_index() const { return ue_ctxt.du_idx; }
+  [[nodiscard]] du_index_t get_du_index() const override { return ue_ctxt.du_idx; }
 
   /// \brief Get the PCell index of the UE.
   du_cell_index_t get_pcell_index() { return pcell_index; }

@@ -88,11 +88,6 @@ target_include_directories(du_ran_resource_manager_test PRIVATE ${CMAKE_SOURCE_D
 target_link_libraries(du_ran_resource_manager_test du_manager_test_helpers gtest gtest_main)
 gtest_discover_tests(du_ran_resource_manager_test)
 
-add_executable(pucch_resource_generator_test pucch_resource_generator_test.cpp)
-target_include_directories(pucch_resource_generator_test PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(pucch_resource_generator_test du_manager_test_helpers sched_test_doubles gtest gtest_main)
-gtest_discover_tests(pucch_resource_generator_test)
-
 add_executable(srs_resource_generator_test srs_resource_generator_test.cpp)
 target_include_directories(srs_resource_generator_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(srs_resource_generator_test du_manager_test_helpers gtest gtest_main)
@@ -102,3 +97,7 @@ add_executable(du_srs_resource_manager_test du_srs_resource_manager_test.cpp)
 target_include_directories(du_srs_resource_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(du_srs_resource_manager_test du_manager_test_helpers gtest gtest_main)
 gtest_discover_tests(du_srs_resource_manager_test)
+
+add_executable(cbs_encoder_test cbs/cbs_encoder_test.cpp)
+target_include_directories(cbs_encoder_test PRIVATE ${CMAKE_SOURCE_DIR})
+target_link_libraries(cbs_encoder_test srsran_cbs_encoder srsran_support gtest gtest_main)

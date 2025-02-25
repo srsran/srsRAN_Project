@@ -42,27 +42,27 @@ pucch_info srsran::build_pucch_info(const bwp_configuration* bwp_cfg,
     pucch_test.resources.second_hop_prbs = second_hop_prbs;
     pucch_test.resources.symbols         = symbols;
 
-    pucch_test.format_0.initial_cyclic_shift = initial_cyclic_shift;
-    pucch_test.format_0.sr_bits              = sr_bits;
-    pucch_test.format_0.harq_ack_nof_bits    = harq_ack_nof_bits;
+    auto& format_0                        = pucch_test.format_params.emplace<pucch_format_0>();
+    format_0.initial_cyclic_shift         = initial_cyclic_shift;
+    pucch_test.uci_bits.sr_bits           = sr_bits;
+    pucch_test.uci_bits.harq_ack_nof_bits = harq_ack_nof_bits;
 
-    pucch_test.format_0.group_hopping = pucch_group_hopping::NEITHER;
-    pucch_test.format                 = pucch_format::FORMAT_0;
-    pucch_test.format_0.n_id_hopping  = pci;
+    format_0.group_hopping = pucch_group_hopping::NEITHER;
+    format_0.n_id_hopping  = pci;
   } else if (format == pucch_format::FORMAT_1) {
     pucch_test.resources.prbs            = prbs;
     pucch_test.resources.second_hop_prbs = second_hop_prbs;
     pucch_test.resources.symbols         = symbols;
 
-    pucch_test.format_1.initial_cyclic_shift = initial_cyclic_shift;
-    pucch_test.format_1.sr_bits              = sr_bits;
-    pucch_test.format_1.harq_ack_nof_bits    = harq_ack_nof_bits;
-    pucch_test.format_1.time_domain_occ      = time_domain_occ;
+    auto& format_1                        = pucch_test.format_params.emplace<pucch_format_1>();
+    format_1.initial_cyclic_shift         = initial_cyclic_shift;
+    pucch_test.uci_bits.sr_bits           = sr_bits;
+    pucch_test.uci_bits.harq_ack_nof_bits = harq_ack_nof_bits;
+    format_1.time_domain_occ              = time_domain_occ;
 
-    pucch_test.format_1.group_hopping   = pucch_group_hopping::NEITHER;
-    pucch_test.format                   = pucch_format::FORMAT_1;
-    pucch_test.format_1.n_id_hopping    = pci;
-    pucch_test.format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
+    format_1.group_hopping   = pucch_group_hopping::NEITHER;
+    format_1.n_id_hopping    = pci;
+    format_1.slot_repetition = pucch_repetition_tx_slot::no_multi_slot;
   } else {
     return pucch_info{};
   }
@@ -72,59 +72,65 @@ pucch_info srsran::build_pucch_info(const bwp_configuration* bwp_cfg,
 
 bool srsran::pucch_info_match(const pucch_info& expected, const pucch_info& test)
 {
-  bool is_equal = expected.crnti == test.crnti && *expected.bwp_cfg == *test.bwp_cfg && expected.format == test.format;
-  is_equal      = is_equal && expected.resources.prbs == test.resources.prbs &&
+  bool is_equal =
+      expected.crnti == test.crnti && *expected.bwp_cfg == *test.bwp_cfg && expected.format() == test.format();
+  is_equal = is_equal && expected.resources.prbs == test.resources.prbs &&
              expected.resources.symbols == test.resources.symbols &&
              expected.resources.second_hop_prbs == test.resources.second_hop_prbs;
 
-  switch (expected.format) {
+  switch (expected.format()) {
     case pucch_format::FORMAT_0: {
-      const pucch_format_0& expected_f = expected.format_0;
-      const pucch_format_0& test_f     = test.format_0;
+      const pucch_format_0& expected_f = std::get<pucch_format_0>(expected.format_params);
+      const pucch_format_0& test_f     = std::get<pucch_format_0>(test.format_params);
       is_equal                         = is_equal && expected_f.group_hopping == test_f.group_hopping &&
                  expected_f.n_id_hopping == test_f.n_id_hopping &&
                  expected_f.initial_cyclic_shift == test_f.initial_cyclic_shift &&
-                 expected_f.sr_bits == test_f.sr_bits && expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits;
+                 expected.uci_bits.sr_bits == test.uci_bits.sr_bits &&
+                 expected.uci_bits.harq_ack_nof_bits == test.uci_bits.harq_ack_nof_bits;
     } break;
     case pucch_format::FORMAT_1: {
-      const pucch_format_1& expected_f = expected.format_1;
-      const pucch_format_1& test_f     = test.format_1;
+      const pucch_format_1& expected_f = std::get<pucch_format_1>(expected.format_params);
+      const pucch_format_1& test_f     = std::get<pucch_format_1>(test.format_params);
       is_equal                         = is_equal && expected_f.group_hopping == test_f.group_hopping &&
                  expected_f.n_id_hopping == test_f.n_id_hopping &&
                  expected_f.initial_cyclic_shift == test_f.initial_cyclic_shift &&
-                 expected_f.sr_bits == test_f.sr_bits && expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits &&
+                 expected.uci_bits.sr_bits == test.uci_bits.sr_bits &&
+                 expected.uci_bits.harq_ack_nof_bits == test.uci_bits.harq_ack_nof_bits &&
                  expected_f.slot_repetition == test_f.slot_repetition &&
                  expected_f.time_domain_occ == test_f.time_domain_occ;
     } break;
     case pucch_format::FORMAT_2: {
-      const pucch_format_2& expected_f = expected.format_2;
-      const pucch_format_2& test_f     = test.format_2;
+      const pucch_format_2& expected_f = std::get<pucch_format_2>(expected.format_params);
+      const pucch_format_2& test_f     = std::get<pucch_format_2>(test.format_params);
       is_equal                         = is_equal && expected_f.max_code_rate == test_f.max_code_rate &&
                  expected_f.n_id_scambling == test_f.n_id_scambling &&
-                 expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling && expected_f.sr_bits == test_f.sr_bits &&
-                 expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits &&
-                 expected_f.csi_part1_bits == test_f.csi_part1_bits;
+                 expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling &&
+                 expected.uci_bits.sr_bits == test.uci_bits.sr_bits &&
+                 expected.uci_bits.harq_ack_nof_bits == test.uci_bits.harq_ack_nof_bits &&
+                 expected.uci_bits.csi_part1_nof_bits == test.uci_bits.csi_part1_nof_bits;
     } break;
     case pucch_format::FORMAT_3: {
-      const pucch_format_3& expected_f = expected.format_3;
-      const pucch_format_3& test_f     = test.format_3;
-      is_equal =
-          is_equal && expected_f.group_hopping == test_f.group_hopping &&
-          expected_f.n_id_hopping == test_f.n_id_hopping && expected_f.sr_bits == test_f.sr_bits &&
-          expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits &&
-          expected_f.csi_part1_bits == test_f.csi_part1_bits && expected_f.slot_repetition == test_f.slot_repetition &&
-          expected_f.n_id_scrambling == test_f.n_id_scrambling && expected_f.pi_2_bpsk == test_f.pi_2_bpsk &&
-          expected_f.max_code_rate == test_f.max_code_rate && expected_f.additional_dmrs == test_f.additional_dmrs &&
-          expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling;
+      const pucch_format_3& expected_f = std::get<pucch_format_3>(expected.format_params);
+      const pucch_format_3& test_f     = std::get<pucch_format_3>(test.format_params);
+      is_equal                         = is_equal && expected_f.group_hopping == test_f.group_hopping &&
+                 expected_f.n_id_hopping == test_f.n_id_hopping && expected.uci_bits.sr_bits == test.uci_bits.sr_bits &&
+                 expected.uci_bits.harq_ack_nof_bits == test.uci_bits.harq_ack_nof_bits &&
+                 expected.uci_bits.csi_part1_nof_bits == test.uci_bits.csi_part1_nof_bits &&
+                 expected_f.slot_repetition == test_f.slot_repetition &&
+                 expected_f.n_id_scrambling == test_f.n_id_scrambling && expected_f.pi_2_bpsk == test_f.pi_2_bpsk &&
+                 expected_f.max_code_rate == test_f.max_code_rate &&
+                 expected_f.additional_dmrs == test_f.additional_dmrs &&
+                 expected_f.n_id_0_scrambling == test_f.n_id_0_scrambling;
     } break;
     case pucch_format::FORMAT_4: {
-      const pucch_format_4& expected_f = expected.format_4;
-      const pucch_format_4& test_f     = test.format_4;
+      const pucch_format_4& expected_f = std::get<pucch_format_4>(expected.format_params);
+      const pucch_format_4& test_f     = std::get<pucch_format_4>(test.format_params);
       is_equal =
           is_equal && expected_f.group_hopping == test_f.group_hopping &&
-          expected_f.n_id_hopping == test_f.n_id_hopping && expected_f.sr_bits == test_f.sr_bits &&
-          expected_f.harq_ack_nof_bits == test_f.harq_ack_nof_bits &&
-          expected_f.csi_part1_bits == test_f.csi_part1_bits && expected_f.slot_repetition == test_f.slot_repetition &&
+          expected_f.n_id_hopping == test_f.n_id_hopping && expected.uci_bits.sr_bits == test.uci_bits.sr_bits &&
+          expected.uci_bits.harq_ack_nof_bits == test.uci_bits.harq_ack_nof_bits &&
+          expected.uci_bits.csi_part1_nof_bits == test.uci_bits.csi_part1_nof_bits &&
+          expected_f.slot_repetition == test_f.slot_repetition &&
           expected_f.n_id_scrambling == test_f.n_id_scrambling && expected_f.pi_2_bpsk == test_f.pi_2_bpsk &&
           expected_f.max_code_rate == test_f.max_code_rate && expected_f.orthog_seq_idx == test_f.orthog_seq_idx &&
           expected_f.n_sf_pucch_f4 == test_f.n_sf_pucch_f4 && expected_f.additional_dmrs == test_f.additional_dmrs &&
@@ -157,10 +163,10 @@ test_bench::test_bench(const test_bench_params& params,
                        unsigned                 max_ul_grants_per_slot_) :
   expert_cfg{config_helpers::make_default_scheduler_expert_config()},
   cell_cfg{[this, &params]() -> const cell_configuration& {
-    cell_cfg_list.emplace(
-        to_du_cell_index(0),
-        std::make_unique<cell_configuration>(
-            expert_cfg, make_custom_sched_cell_configuration_request(params.pucch_res_common, params.is_tdd)));
+    auto cell_req = make_custom_sched_cell_configuration_request(
+        params.pucch_res_common, params.is_tdd, params.cfg_for_mimo_4x4 ? 4 : 1);
+    cfg_pool.add_cell(cell_req);
+    cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(expert_cfg, cell_req));
     return *cell_cfg_list[to_du_cell_index(0)];
   }()},
   cell_harqs{MAX_NOF_DU_UES, MAX_NOF_HARQS, std::make_unique<dummy_harq_timeout_notifier>()},
@@ -204,9 +210,9 @@ test_bench::test_bench(const test_bench_params& params,
   csi_report.report_slot_offset = params.csi_offset;
 
   if (set1_format != pucch_format::FORMAT_2 || use_format_0) {
-    srs_du::pucch_builder_params pucch_params{};
+    pucch_builder_params pucch_params{};
     if (use_format_0) {
-      pucch_params.f0_or_f1_params.emplace<srs_du::pucch_f0_params>();
+      pucch_params.f0_or_f1_params.emplace<pucch_f0_params>();
       pucch_params.nof_ue_pucch_f0_or_f1_res_harq       = 6;
       pucch_params.nof_ue_pucch_f2_or_f3_or_f4_res_harq = 6;
     }
@@ -214,10 +220,10 @@ test_bench::test_bench(const test_bench_params& params,
       case pucch_format::FORMAT_2:
         break;
       case pucch_format::FORMAT_3:
-        pucch_params.f2_or_f3_or_f4_params.emplace<srs_du::pucch_f3_params>();
+        pucch_params.f2_or_f3_or_f4_params.emplace<pucch_f3_params>();
         break;
       case pucch_format::FORMAT_4:
-        pucch_params.f2_or_f3_or_f4_params.emplace<srs_du::pucch_f4_params>();
+        pucch_params.f2_or_f3_or_f4_params.emplace<pucch_f4_params>();
         break;
       default:
         srsran_assertion_failure("Invalid PUCCH Format for Set Id 1 (valid values are 2, 3 or 4)");
@@ -265,7 +271,8 @@ test_bench::test_bench(const test_bench_params& params,
   }
 
   ue_req_main = ue_req;
-  ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
+  ue_ded_cfgs.push_back(
+      std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req)));
   ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs, {}}));
   uci_sched.add_ue(ues[ue_req.ue_index].get_pcell().cfg());
   last_allocated_rnti   = ue_req.crnti;
@@ -297,7 +304,8 @@ void test_bench::add_ue()
                     pucch_builder.add_build_new_ue_pucch_cfg(ue_req.cfg.cells.value().back().serv_cell_cfg),
                 "UE PUCCH configuration couldn't be built");
 
-  ue_ded_cfgs.push_back(std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, ue_req.cfg));
+  ue_ded_cfgs.push_back(
+      std::make_unique<ue_configuration>(ue_req.ue_index, ue_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_req)));
   ues.add_ue(std::make_unique<ue>(ue_creation_command{*ue_ded_cfgs.back(), ue_req.starts_in_fallback, cell_harqs}));
   last_allocated_rnti = ue_req.crnti;
 }

@@ -32,8 +32,12 @@
 
 using namespace srsran;
 
-split6_o_du_application_unit_impl::split6_o_du_application_unit_impl(std::string_view app_name)
+split6_o_du_application_unit_impl::split6_o_du_application_unit_impl(std::string_view               app_name,
+                                                                     std::unique_ptr<split6_plugin> plugin_) :
+  plugin(std::move(plugin_))
 {
+  srsran_assert(plugin, "Invalid split 6 plugin");
+
   unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.f1ap.filename = fmt::format("/tmp/{}_f1ap.pcap", app_name);
   unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.f1u.filename  = fmt::format("/tmp/{}_f1u.pcap", app_name);
   unit_cfg.odu_high_cfg.du_high_cfg.config.pcaps.rlc.filename  = fmt::format("/tmp/{}_rlc.pcap", app_name);
@@ -92,4 +96,10 @@ void split6_o_du_application_unit_impl::fill_worker_manager_config(worker_manage
   // Split 6 always runs in non blocking mode.
   bool is_blocking_mode_enable = false;
   fill_o_du_high_worker_manager_config(config, unit_cfg.odu_high_cfg, is_blocking_mode_enable);
+  plugin->fill_worker_manager_config(config);
+}
+
+std::unique_ptr<flexible_o_du_application_unit> srsran::create_flexible_o_du_application_unit(std::string_view app_name)
+{
+  return std::make_unique<split6_o_du_application_unit_impl>(app_name, create_split6_plugin(app_name));
 }

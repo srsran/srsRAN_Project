@@ -22,6 +22,7 @@
 
 #include "../test_utils/dummy_test_components.h"
 #include "../test_utils/sched_random_utils.h"
+#include "lib/scheduler/config/du_cell_group_config_pool.h"
 #include "lib/scheduler/ue_context/ue.h"
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
@@ -44,6 +45,7 @@ protected:
     const sched_cell_configuration_request_message sched_cell_cfg_req =
         sched_config_helper::make_default_sched_cell_configuration_request(params);
 
+    cfg_pool.add_cell(sched_cell_cfg_req);
     cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, sched_cell_cfg_req));
     cell_cfg = cell_cfg_list[to_du_cell_index(0)].get();
 
@@ -57,7 +59,8 @@ protected:
     for (const lcid_t lcid : std::array<lcid_t, 3>{uint_to_lcid(1), uint_to_lcid(2), uint_to_lcid(4)}) {
       ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
     }
-    ue_ded_cfg.emplace(ue_creation_req.ue_index, ue_creation_req.crnti, cell_cfg_list, ue_creation_req.cfg);
+    ue_ded_cfg.emplace(
+        ue_creation_req.ue_index, ue_creation_req.crnti, cell_cfg_list, cfg_pool.add_ue(ue_creation_req));
     ue_ptr = std::make_unique<ue>(ue_creation_command{*ue_ded_cfg, ue_creation_req.starts_in_fallback, cell_harqs});
     ue_cc  = &ue_ptr->get_cell(to_ue_cell_index(0));
   }
@@ -78,7 +81,7 @@ protected:
     const pdsch_codeword cw{
         sch_mcs_description{modulation_scheme::QAM256, 0.9}, sch_mcs_index{5}, pdsch_mcs_table::qam64, 0, 128};
     const pdsch_information pdsch{ue_ptr->crnti,
-                                  &ss.bwp->dl_common->generic_params,
+                                  &ss.bwp->dl_common->value().generic_params,
                                   ss.coreset,
                                   vrb_alloc{vrb_interval{0, 5}},
                                   ss.pdsch_time_domain_list[0].symbols,
@@ -103,6 +106,7 @@ protected:
   }
 
   const scheduler_expert_config   sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  du_cell_group_config_pool       cfg_pool;
   cell_common_configuration_list  cell_cfg_list;
   cell_configuration*             cell_cfg = nullptr;
   std::optional<ue_configuration> ue_ded_cfg;
@@ -121,6 +125,7 @@ TEST_F(ue_harq_link_adaptation_test, harq_not_retx_when_cqi_drops_below_threshol
   // Action: UE reports CQI value of 15.
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{15};
+  csi.valid                 = true;
   ue_cc->handle_csi_report(csi);
 
   dl_harq_process_handle h = handle_harq_newtx();
@@ -147,6 +152,7 @@ TEST_F(ue_harq_link_adaptation_test, harq_not_retx_when_ri_drops_below_threshold
   csi_report_data csi{};
   csi.first_tb_wideband_cqi = cqi_value{15};
   csi.ri                    = 2;
+  csi.valid                 = true;
   ue_cc->handle_csi_report(csi);
 
   dl_harq_process_handle h = handle_harq_newtx();

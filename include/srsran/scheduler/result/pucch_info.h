@@ -24,6 +24,7 @@
 
 #include "srsran/ran/csi_report/csi_report_configuration.h"
 #include "srsran/ran/pucch/pucch_mapping.h"
+#include "srsran/ran/pucch/pucch_uci_bits.h"
 #include "srsran/scheduler/result/pucch_format.h"
 
 namespace srsran {
@@ -41,20 +42,59 @@ struct pucch_info {
 
   rnti_t                   crnti;
   const bwp_configuration* bwp_cfg;
-  pucch_format             format;
   /// PRBs and symbols for this PUCCH resource.
-  pucch_resources resources;
-  union {
-    pucch_format_0 format_0;
-    pucch_format_1 format_1;
-    pucch_format_2 format_2;
-    pucch_format_3 format_3;
-    pucch_format_4 format_4;
-  };
+  pucch_resources                                                                              resources;
+  std::variant<pucch_format_0, pucch_format_1, pucch_format_2, pucch_format_3, pucch_format_4> format_params;
+  pucch_uci_bits                                                                               uci_bits;
   /// In case the PUCCH will contain CSI bits, this struct contains information how those bits are to be decoded.
   std::optional<csi_report_configuration> csi_rep_cfg;
 
   context pdu_context;
+
+  /// Returns the format of the PUCCH.
+  constexpr pucch_format format() const
+  {
+    if (std::holds_alternative<pucch_format_0>(format_params)) {
+      return pucch_format::FORMAT_0;
+    }
+    if (std::holds_alternative<pucch_format_1>(format_params)) {
+      return pucch_format::FORMAT_1;
+    }
+    if (std::holds_alternative<pucch_format_2>(format_params)) {
+      return pucch_format::FORMAT_2;
+    }
+    if (std::holds_alternative<pucch_format_3>(format_params)) {
+      return pucch_format::FORMAT_3;
+    }
+    if (std::holds_alternative<pucch_format_4>(format_params)) {
+      return pucch_format::FORMAT_4;
+    }
+    return pucch_format::NOF_FORMATS;
+  }
+
+  /// Sets the format parameters to the appropiate type for the PUCCH format.
+  void set_format(pucch_format format)
+  {
+    switch (format) {
+      case pucch_format::FORMAT_0:
+        format_params.emplace<pucch_format_0>();
+        break;
+      case pucch_format::FORMAT_1:
+        format_params.emplace<pucch_format_1>();
+        break;
+      case pucch_format::FORMAT_2:
+        format_params.emplace<pucch_format_2>();
+        break;
+      case pucch_format::FORMAT_3:
+        format_params.emplace<pucch_format_3>();
+        break;
+      case pucch_format::FORMAT_4:
+        format_params.emplace<pucch_format_4>();
+        break;
+      default:
+        srsran_assertion_failure("Invalid PUCCH format");
+    }
+  }
 };
 
 } // namespace srsran

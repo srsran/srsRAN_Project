@@ -58,6 +58,8 @@ private:
     idle,
     /// Performing measurements.
     measure,
+    /// Prohibit state.
+    prohibit,
     /// Disabled.
     disabled,
   };
@@ -87,6 +89,8 @@ private:
 
   /// Starting point of the measurement interval.
   slot_point meas_start_time;
+  /// Starting point of the prohibit interval.
+  slot_point prohibit_start_time;
   /// List of N_TA update (N_TA_new - N_TA_old value in T_C units) measurements maintained per Timing Advance Group.
   /// The array index corresponds to TAG ID. And, the corresponding array value (i.e. vector) holds N_TA update
   /// measurements for that TAG ID.

@@ -36,6 +36,7 @@ set(SOURCES mac_factory.cpp
         mac_dl/sib_pdu_assembler.cpp
         mac_dl/mac_dl_ue_repository.cpp
         mac_dl/cell_dl_harq_buffer_pool.cpp
+        mac_dl/mac_dl_metric_handler.cpp
         mac_ul/mac_ul_sch_pdu.cpp
         mac_ul/ul_bsr.cpp
         mac_ul/pdu_rx_handler.cpp

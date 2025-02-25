@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/hal/hal_appconfig.h"
 #include "apps/services/logger/logger_appconfig.h"
@@ -40,8 +41,9 @@ struct cu_up_appconfig {
 
 /// Metrics report configuration.
 struct metrics_appconfig {
-  std::string addr = "127.0.0.1";
-  uint16_t    port = 55555;
+  app_helpers::metrics_config common_metrics_cfg;
+  /// Resource usage report period in milliseconds.
+  unsigned rusage_report_period = 0;
 };
 
 /// Monolithic gnb application configuration.

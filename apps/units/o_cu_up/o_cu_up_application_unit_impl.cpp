@@ -49,6 +49,7 @@ void o_cu_up_application_unit_impl::on_parsing_configuration_registration(CLI::A
 
 void o_cu_up_application_unit_impl::on_configuration_parameters_autoderivation(CLI::App& app)
 {
+  autoderive_cu_up_parameters_after_parsing(app, unit_cfg.cu_up_cfg, unit_cfg.e2_cfg.base_config.enable_unit_e2);
   autoderive_o_cu_up_e2_parameters_after_parsing(unit_cfg.e2_cfg);
 }
 

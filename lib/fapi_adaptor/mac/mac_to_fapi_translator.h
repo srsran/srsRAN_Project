@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/fapi/messages.h"
 #include "srsran/fapi_adaptor/precoding_matrix_mapper.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_mapper.h"
 #include "srsran/mac/mac_cell_result.h"

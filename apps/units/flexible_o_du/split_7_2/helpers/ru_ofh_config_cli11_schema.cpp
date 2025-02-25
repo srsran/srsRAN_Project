@@ -21,6 +21,7 @@
  */
 
 #include "ru_ofh_config_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "ru_ofh_config.h"
@@ -122,6 +123,11 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
              "--ignore_ecpri_payload_size",
              config.ignore_ecpri_payload_size_field,
              "Ignore eCPRI payload size field value")
+      ->capture_default_str();
+  add_option(app,
+             "--ignore_prach_start_symbol",
+             config.ignore_prach_start_symbol,
+             "Ignore the start symbol field in the PRACH U-Plane packets")
       ->capture_default_str();
 
   add_option_function<std::string>(
@@ -402,6 +408,9 @@ void srsran::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_uni
   // HAL section.
   CLI::App* hal_subcmd = add_subcommand(app, "hal", "HAL configuration")->configurable();
   configure_cli11_hal_args(*hal_subcmd, parsed_cfg.config.hal_config);
+
+  // Metrics section.
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.config.metrics_cfg);
 }
 
 static void manage_hal_optional(CLI::App& app, std::optional<ru_ofh_unit_hal_config>& hal_config)

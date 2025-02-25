@@ -21,8 +21,8 @@
  */
 
 #include "du_high_config_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
-#include "apps/services/logger/metrics_logger_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_high_config.h"
 #include "srsran/adt/ranges/transform.h"
@@ -249,7 +249,7 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
              pdsch_params.max_nof_harq_retxs,
              "Maximum number of times a DL HARQ can be retransmitted, before it gets discarded")
       ->capture_default_str()
-      ->check(CLI::Range(0, 4));
+      ->check(CLI::Range(0, 64));
   add_option(app,
              "--max_consecutive_kos",
              pdsch_params.max_consecutive_kos,
@@ -612,6 +612,12 @@ static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit
              "Measurements periodicity in nof. slots over which the new Timing Advance Command is computed")
       ->capture_default_str();
   add_option(app,
+             "--ta_measurement_slot_prohibit_period",
+             ta_params.ta_measurement_slot_prohibit_period,
+             "Delay in nof. slots between issuing the TA_CMD and starting TA measurements.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 10000));
+  add_option(app,
              "--ta_cmd_offset_threshold",
              ta_params.ta_cmd_offset_threshold,
              "Timing Advance Command (T_A) offset threshold above which Timing Advance Command is triggered. If set to "
@@ -689,6 +695,12 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   add_option(app, "--max_ue_mcs", pusch_params.max_ue_mcs, "Maximum UE MCS")
       ->capture_default_str()
       ->check(CLI::Range(0, 28));
+  add_option(app,
+             "--max_nof_harq_retxs",
+             pusch_params.max_nof_harq_retxs,
+             "Maximum number of times a UL HARQ can be retransmitted, before it gets discarded")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 64));
   add_option(app,
              "--max_consecutive_kos",
              pusch_params.max_consecutive_kos,
@@ -861,6 +873,10 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
                  pusch_params.enable_closed_loop_pw_control,
                  "Enable closed-loop power control for PUSCH")
       ->capture_default_str();
+  app.add_option("--enable_phr_bw_adaptation",
+                 pusch_params.enable_phr_bw_adaptation,
+                 "Enable bandwidth adaptation to prevent negative PHR")
+      ->capture_default_str();
   app.add_option("--target_sinr", pusch_params.target_pusch_sinr, "Target PUSCH SINR in dB")
       ->capture_default_str()
       ->check(CLI::Range(-5.0, 30.0));
@@ -931,12 +947,20 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
       ->check(CLI::IsMember({1.0F, 2.0F, 2.5F, 4.0F, 5.0F, 8.0F, 10.0F, 16.0F, 20.0F, 40.0F, 80.0F, 160.0F, 320.0F}));
   add_option(app, "--use_format_0", pucch_params.use_format_0, "Use Format 0 for PUCCH resources from resource set 0")
       ->capture_default_str();
-  add_option(app,
-             "--pucch_set1_format",
-             pucch_params.set1_format,
-             "Format to use for the resources from resource set 1. Values: {2, 3, 4}. Default: 2")
-      ->capture_default_str()
-      ->check(CLI::Range(2, 4));
+  app.add_option_function<unsigned>(
+         "--pucch_set1_format",
+         [&pucch_params](unsigned value) {
+           if (value == 3) {
+             pucch_params.set1_format = pucch_format::FORMAT_3;
+           } else if (value == 4) {
+             pucch_params.set1_format = pucch_format::FORMAT_4;
+           } else {
+             pucch_params.set1_format = pucch_format::FORMAT_2;
+           }
+         },
+         "Format to use for the resources from resource set 1. Values: {2, 3, 4}. Default: 2")
+      ->default_val(2U)
+      ->check(CLI::Range(2U, 4U));
   add_option(app,
              "--nof_ue_res_harq_per_set",
              pucch_params.nof_ue_pucch_res_harq_per_set,
@@ -1125,7 +1149,7 @@ static void configure_cli11_si_sched_info(CLI::App& app, du_high_unit_sib_config
              "Mapping of SIB types to SI-messages. SIB numbers should not be repeated")
       ->default_function(get_vector_default_function(span<const uint8_t>(si_sched_info.sib_mapping_info)))
       ->capture_default_str()
-      ->check(CLI::IsMember({2, 19}));
+      ->check(CLI::IsMember({2, 6, 7, 8, 19}));
   add_option(
       app, "--si_window_position", si_sched_info.si_window_position, "SI window position of the associated SI-message")
       ->capture_default_str()
@@ -1217,6 +1241,52 @@ static void configure_cli11_prach_args(CLI::App& app, du_high_unit_prach_config&
       ->check(CLI::IsMember({1, 2, 4, 8, 10, 20, 40, 80}));
 }
 
+static void configure_cli11_etws_args(CLI::App& app, du_high_unit_sib_config::etws_config& sib_params)
+{
+  add_option(app, "--message_id", sib_params.message_id, "ETWS message ID.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xffff));
+
+  add_option(app, "--serial_num", sib_params.serial_num, "ETWS message serial number.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xffff));
+
+  add_option(app, "--warning_type", sib_params.warning_type, "ETWS warning type.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xffff));
+
+  add_option(app, "--data_coding_scheme", sib_params.data_coding_scheme, "ETWS message CBS coding scheme.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xff));
+
+  add_option(app,
+             "--warning_message",
+             sib_params.warning_message,
+             "ETWS warning message. Max. Length and character support depends on the chosen coding scheme.")
+      ->capture_default_str();
+}
+
+static void configure_cli11_cmas_args(CLI::App& app, du_high_unit_sib_config::cmas_config& sib_params)
+{
+  add_option(app, "--message_id", sib_params.message_id, "CMAS message ID.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xffff));
+
+  add_option(app, "--serial_num", sib_params.serial_num, "CMAS message serial number.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xffff));
+
+  add_option(app, "--data_coding_scheme", sib_params.data_coding_scheme, "CMAS message CBS coding scheme.")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 0xff));
+
+  add_option(app,
+             "--warning_message",
+             sib_params.warning_message,
+             "CMAS warning message. Max. Length and character support depends on the chosen coding scheme.")
+      ->capture_default_str();
+}
+
 static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib_params)
 {
   add_option(app,
@@ -1245,6 +1315,32 @@ static void configure_cli11_sib_args(CLI::App& app, du_high_unit_sib_config& sib
         }
       },
       "Configures the scheduling for each of the SI-messages broadcast by the gNB");
+
+  CLI::App* etws_subcmd = add_subcommand(app, "etws", "ETWS configuration parameters");
+  static du_high_unit_sib_config::etws_config etws_cfg;
+  configure_cli11_etws_args(*etws_subcmd, etws_cfg);
+  auto etws_verify_callback = [&]() {
+    CLI::App* etws_sub_cmd = app.get_subcommand("etws");
+    if (etws_sub_cmd->count() != 0) {
+      sib_params.etws_cfg.emplace(etws_cfg);
+    } else {
+      etws_sub_cmd->disabled();
+    }
+  };
+  etws_subcmd->parse_complete_callback(etws_verify_callback);
+
+  static du_high_unit_sib_config::cmas_config cmas_cfg;
+  CLI::App* cmas_subcmd = add_subcommand(app, "cmas", "CMAS configuration parameters");
+  configure_cli11_cmas_args(*cmas_subcmd, cmas_cfg);
+  auto cmas_verify_callback = [&]() {
+    CLI::App* cmas_sub_cmd = app.get_subcommand("cmas");
+    if (cmas_sub_cmd->count() != 0) {
+      sib_params.cmas_cfg.emplace(cmas_cfg);
+    } else {
+      cmas_sub_cmd->disabled();
+    }
+  };
+  cmas_subcmd->parse_complete_callback(cmas_verify_callback);
 
   add_option(app,
              "--t300",
@@ -1631,9 +1727,6 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
       app, "--rlc_report_period", metrics_params.rlc.report_period, "RLC metrics report period (in milliseconds)")
       ->capture_default_str();
 
-  add_option(app, "--enable_json_metrics", metrics_params.enable_json_metrics, "Enable JSON metrics reporting")
-      ->always_capture_default();
-
   add_option(
       app, "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
       ->capture_default_str();
@@ -1805,13 +1898,13 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
       ->check(CLI::Range(static_cast<uint64_t>(0U), static_cast<uint64_t>(pow(2, 36) - 1)));
 
   // Loggers section.
-  configure_cli11_with_metrics_logger_appconfig_schema(app, parsed_cfg.config.loggers.metrics_level);
   CLI::App* log_subcmd = add_subcommand(app, "log", "Logging configuration")->configurable();
   configure_cli11_log_args(*log_subcmd, parsed_cfg.config.loggers);
 
   // Metrics section.
   CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.config.metrics);
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.config.metrics.common_metrics_cfg);
 
   // PCAP section.
   CLI::App* pcap_subcmd = add_subcommand(app, "pcap", "PCAP configuration")->configurable();
@@ -1988,8 +2081,21 @@ static void derive_auto_params(du_high_unit_config& config)
   }
 }
 
-void srsran::autoderive_du_high_parameters_after_parsing(CLI::App& app, du_high_unit_config& unit_cfg)
+void srsran::autoderive_du_high_parameters_after_parsing(CLI::App&            app,
+                                                         du_high_unit_config& unit_cfg,
+                                                         bool                 rlc_metrics_requested)
 {
   manage_ntn_optional(app, unit_cfg);
   derive_auto_params(unit_cfg);
+
+  // RLC period defined in the config file. Do nothing.
+  if (auto* metrics_subcmd = app.get_subcommand("metrics");
+      metrics_subcmd && metrics_subcmd->count("--rlc_report_period")) {
+    return;
+  }
+
+  // No metrics requested, set the RLC period to 0.
+  if (!rlc_metrics_requested && !unit_cfg.metrics.common_metrics_cfg.enabled()) {
+    unit_cfg.metrics.rlc.report_period = 0;
+  }
 }

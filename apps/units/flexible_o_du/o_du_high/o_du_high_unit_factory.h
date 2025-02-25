@@ -78,7 +78,6 @@ struct o_du_high_unit_dependencies {
   rlc_pcap&                        rlc_p;
   e2_connection_client&            e2_client_handler;
   e2_du_metrics_connector_manager& e2_metric_connectors;
-  srslog::sink&                    json_sink;
   app_services::metrics_notifier&  metrics_notifier;
   srs_du::o_du_high_dependencies   o_du_hi_dependencies;
 };

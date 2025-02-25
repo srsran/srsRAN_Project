@@ -21,14 +21,136 @@
  */
 
 #include "pdcp_rx_metrics_test.h"
-#include "lib/pdcp/pdcp_entity_impl.h"
-#include "pdcp_test_vectors.h"
 #include "srsran/pdcp/pdcp_config.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 #include <queue>
 
 using namespace srsran;
+
+TEST_F(pdcp_rx_metrics_container_test, init)
+{
+  pdcp_rx_metrics_container m = {};
+
+  srslog::fetch_basic_logger("TEST", false).info("Metrics: {}", m);
+
+  // Check values
+  ASSERT_EQ(m.num_pdus, 0);
+  ASSERT_EQ(m.num_pdu_bytes, 0);
+  ASSERT_EQ(m.num_dropped_pdus, 0);
+  ASSERT_EQ(m.num_sdus, 0);
+  ASSERT_EQ(m.num_sdu_bytes, 0);
+  ASSERT_EQ(m.num_integrity_verified_pdus, 0);
+  ASSERT_EQ(m.num_integrity_failed_pdus, 0);
+  ASSERT_EQ(m.num_t_reordering_timeouts, 0);
+  ASSERT_EQ(m.reordering_delay_us, 0);
+  ASSERT_EQ(m.reordering_counter, 0);
+  ASSERT_EQ(m.sum_sdu_latency_ns, 0);
+  ASSERT_EQ(m.counter, 0);
+  for (auto freq : m.sdu_latency_hist) {
+    ASSERT_EQ(freq, 0);
+  }
+  ASSERT_EQ(m.min_sdu_latency_ns, std::nullopt);
+  ASSERT_EQ(m.max_sdu_latency_ns, std::nullopt);
+
+  {
+    // Check fmt formatter
+    fmt::memory_buffer buffer;
+    fmt::format_to(std::back_inserter(buffer), "{}", m);
+    std::string out_str = to_c_str(buffer);
+    std::string exp_str = "num_sdus=0 num_sdu_bytes=0 num_dropped_pdus=0 num_pdus=0 num_pdu_bytes=0 "
+                          "num_integrity_verified_pdus=0 num_integrity_failed_pdus=0 num_t_reordering_timeouts=0 "
+                          "reordering_delay=0us reordering_counter=0 sum_sdu_latency=0ns sdu_latency_hist=[0 0 0 0 0 0 "
+                          "0 0] min_sdu_latency=none max_sdu_latency=none sum_crypto_latency=0ns";
+    srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
+    srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
+    EXPECT_EQ(out_str, exp_str);
+  }
+
+  {
+    // Check custom formatter
+    timer_duration dur{2}; // 2ms
+    std::string    out_str = format_pdcp_rx_metrics(dur, m);
+    std::string    exp_str = "num_sdus=0 sdu_rate= 0bps num_dropped_pdus=0 num_pdus=0 pdu_rate= 0bps "
+                             "num_integrity_verified_pdus=0 num_integrity_failed_pdus=0 num_t_reordering_timeouts=0 "
+                             "reordering_delay=0us reordering_counter=0 sum_sdu_latency=0ns sdu_latency_hist=[ 0  0  0  0 "
+                             " 0  0  0  0] min_sdu_latency=none max_sdu_latency=none crypto_cpu_usage=0\%";
+    srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
+    srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
+    EXPECT_EQ(out_str, exp_str);
+  }
+}
+
+TEST_F(pdcp_rx_metrics_container_test, values)
+{
+  pdcp_rx_metrics_container m = {.num_pdus                         = 49532,
+                                 .num_pdu_bytes                    = 10000,
+                                 .num_dropped_pdus                 = 94925,
+                                 .num_sdus                         = 59493,
+                                 .num_sdu_bytes                    = 20000,
+                                 .num_integrity_verified_pdus      = 449993,
+                                 .num_integrity_failed_pdus        = 865423,
+                                 .num_t_reordering_timeouts        = 4456,
+                                 .reordering_delay_us              = 456773,
+                                 .reordering_counter               = 23,
+                                 .sum_sdu_latency_ns               = 547454,
+                                 .counter                          = 833333332,
+                                 .sum_crypto_processing_latency_ns = 10000,
+                                 .sdu_latency_hist   = {999, 20, 400, 8000, 160000, 3200000, 64000000, 128},
+                                 .min_sdu_latency_ns = 1200,
+                                 .max_sdu_latency_ns = 54322};
+
+  srslog::fetch_basic_logger("TEST", false).info("Metrics: {}", m);
+
+  // Check values
+  ASSERT_EQ(m.num_pdus, 49532);
+  ASSERT_EQ(m.num_pdu_bytes, 10000);
+  ASSERT_EQ(m.num_dropped_pdus, 94925);
+  ASSERT_EQ(m.num_sdus, 59493);
+  ASSERT_EQ(m.num_sdu_bytes, 20000);
+  ASSERT_EQ(m.num_integrity_verified_pdus, 449993);
+  ASSERT_EQ(m.num_integrity_failed_pdus, 865423);
+  ASSERT_EQ(m.num_t_reordering_timeouts, 4456);
+  ASSERT_EQ(m.reordering_delay_us, 456773);
+  ASSERT_EQ(m.reordering_counter, 23);
+  ASSERT_EQ(m.sum_sdu_latency_ns, 547454);
+  ASSERT_EQ(m.counter, 833333332);
+  ASSERT_EQ(m.sum_crypto_processing_latency_ns, 10000);
+  std::array<uint32_t, 8> h = {999, 20, 400, 8000, 160000, 3200000, 64000000, 128};
+  ASSERT_EQ(m.sdu_latency_hist, h);
+  ASSERT_EQ(m.min_sdu_latency_ns, 1200);
+  ASSERT_EQ(m.max_sdu_latency_ns, 54322);
+
+  {
+    // Check fmt formatter
+    fmt::memory_buffer buffer;
+    fmt::format_to(std::back_inserter(buffer), "{}", m);
+    std::string out_str = to_c_str(buffer);
+    std::string exp_str =
+        "num_sdus=59493 num_sdu_bytes=20000 num_dropped_pdus=94925 num_pdus=49532 num_pdu_bytes=10000 "
+        "num_integrity_verified_pdus=449993 num_integrity_failed_pdus=865423 num_t_reordering_timeouts=4456 "
+        "reordering_delay=456773us reordering_counter=23 sum_sdu_latency=547454ns sdu_latency_hist=[999 20 400 8000 "
+        "160000 3200000 64000000 128] min_sdu_latency=optional(1200)ns max_sdu_latency=optional(54322)ns "
+        "sum_crypto_latency=10000ns";
+    srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
+    srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
+    EXPECT_EQ(out_str, exp_str);
+  }
+
+  {
+    // Check custom formatter
+    timer_duration dur{2}; // 2ms
+    std::string    out_str = format_pdcp_rx_metrics(dur, m);
+    std::string    exp_str =
+        "num_sdus=59.5k sdu_rate=80Mbps num_dropped_pdus=94.9k num_pdus=49.5k pdu_rate=40Mbps "
+        "num_integrity_verified_pdus=450k num_integrity_failed_pdus=865k num_t_reordering_timeouts=4.46k "
+        "reordering_delay=456773us reordering_counter=23 sum_sdu_latency=547454ns sdu_latency_hist=[ 999  20  400 8.0k "
+        "160k 3.2M 64M  128] min_sdu_latency=1.2us max_sdu_latency=54.322us crypto_cpu_usage=0.5\%";
+    srslog::fetch_basic_logger("TEST", false).info("out_str={}", out_str);
+    srslog::fetch_basic_logger("TEST", false).info("exp_str={}", exp_str);
+    EXPECT_EQ(out_str, exp_str);
+  }
+}
 
 /// \brief Test correct metrics counting of PDCP data SDUs/PDUs
 TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)

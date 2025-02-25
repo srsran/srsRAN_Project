@@ -31,8 +31,7 @@
 #include "srsran/ran/rb_id.h"
 #include "srsran/support/timers.h"
 
-namespace srsran {
-namespace srs_cu_up {
+namespace srsran::srs_cu_up {
 
 class f1u_bearer_impl final : public f1u_bearer, public f1u_rx_pdu_handler, public f1u_tx_sdu_handler
 {
@@ -46,6 +45,7 @@ public:
                   f1u_rx_sdu_notifier&           rx_sdu_notifier_,
                   timer_factory                  ue_dl_timer_factory,
                   unique_timer&                  ue_inactivity_timer_,
+                  task_executor&                 dl_exec_,
                   task_executor&                 ul_exec_);
   f1u_bearer_impl(const f1u_bearer_impl&)            = delete;
   f1u_bearer_impl& operator=(const f1u_bearer_impl&) = delete;
@@ -55,7 +55,14 @@ public:
   f1u_rx_pdu_handler& get_rx_pdu_handler() override { return *this; }
   f1u_tx_sdu_handler& get_tx_sdu_handler() override { return *this; }
 
-  void stop() override { dl_notif_timer.stop(); }
+  void stop() override
+  {
+    if (stopped) {
+      return;
+    }
+    stopped = true;
+    dl_notif_timer.stop();
+  }
 
   void handle_pdu(nru_ul_message msg) override;
   void handle_sdu(byte_buffer sdu, bool is_retx) override;
@@ -82,7 +89,10 @@ private:
   f1u_rx_delivery_notifier& rx_delivery_notifier;
   f1u_rx_sdu_notifier&      rx_sdu_notifier;
   up_transport_layer_info   ul_tnl_info;
+  task_executor&            dl_exec;
   task_executor&            ul_exec;
+
+  bool stopped = false;
 
   /// Sentinel value representing a not-yet set PDCP SN
   static constexpr uint32_t unset_pdcp_sn = UINT32_MAX;
@@ -115,5 +125,4 @@ private:
   void flush_discard_blocks();
 };
 
-} // namespace srs_cu_up
-} // namespace srsran
+} // namespace srsran::srs_cu_up

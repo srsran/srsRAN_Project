@@ -69,6 +69,20 @@ log_channel& srslog::fetch_log_channel(const std::string& id)
   return fetch_log_channel_helper(clean_id, instance.get_default_sink(), instance.get_backend());
 }
 
+log_channel& srslog::fetch_log_channel(const std::string& id, log_channel_config config)
+{
+  assert(!id.empty() && "Empty id string");
+
+  std::string clean_id = remove_sharp_chars(id);
+
+  if (auto* c = find_log_channel(clean_id)) {
+    return *c;
+  }
+
+  srslog_instance& instance = srslog_instance::get();
+  return fetch_log_channel_helper(clean_id, instance.get_default_sink(), instance.get_backend(), std::move(config));
+}
+
 log_channel& srslog::fetch_log_channel(const std::string& id, sink& s, log_channel_config config)
 {
   assert(!id.empty() && "Empty id string");

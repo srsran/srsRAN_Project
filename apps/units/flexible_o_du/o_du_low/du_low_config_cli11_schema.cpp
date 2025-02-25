@@ -21,6 +21,7 @@
  */
 
 #include "du_low_config_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_low_config.h"
@@ -121,18 +122,41 @@ static void configure_cli11_cell_affinity_args(CLI::App& app, du_low_unit_cpu_af
 static void configure_cli11_upper_phy_threads_args(CLI::App& app, du_low_unit_expert_threads_config& config)
 {
   auto pdsch_processor_check = [](const std::string& value) -> std::string {
-    if ((value == "auto") || (value == "generic") || (value == "concurrent") || (value == "lite")) {
+    if ((value == "auto") || (value == "generic") || (value == "flexible")) {
       return {};
     }
-    return "Invalid PDSCH processor type. Accepted values [auto,generic,concurrent,lite]";
+    return "Invalid PDSCH processor type. Accepted values [auto,generic,flexible]";
   };
 
-  add_option(app,
-             "--pdsch_processor_type",
-             config.pdsch_processor_type,
-             "PDSCH processor type: auto, generic, concurrent and lite.")
+  auto pdsch_cb_batch_length_transform = [](const std::string& value) -> std::string {
+    unsigned pdsch_cb_batch_length;
+    if (value == "auto") {
+      pdsch_cb_batch_length = 0;
+    } else if (value == "synchronous") {
+      pdsch_cb_batch_length = du_low_unit_expert_threads_config::synchronous_cb_batch_length;
+    } else {
+      char* val             = nullptr;
+      pdsch_cb_batch_length = std::strtol(value.c_str(), &val, 10);
+      if (val != value.c_str() + value.length()) {
+        return fmt::format("Invalid PDSCH CB batch size '{}'. Set to auto, synchronous, or an integer number.", value);
+      }
+    }
+    return std::to_string(pdsch_cb_batch_length);
+  };
+
+  add_option(
+      app, "--pdsch_processor_type", config.pdsch_processor_type, "PDSCH processor type: auto, generic and flexible.")
       ->capture_default_str()
       ->check(pdsch_processor_check);
+  add_option(app,
+             "--pdsch_cb_batch_length",
+             config.pdsch_cb_batch_length,
+             "PDSCH flexible processor codeblock-batch size.\n"
+             "Set it to 'auto' to adapt the batch length to the number of threads dedicated to downlink processing,\n"
+             "set it to 'synchronous' to disable batch-splitting and ensure that TB processing remains within the \n"
+             "calling thread without parallelization.")
+      ->capture_default_str()
+      ->transform(pdsch_cb_batch_length_transform);
   add_option(app, "--nof_pusch_decoder_threads", config.nof_pusch_decoder_threads, "Number of threads to decode PUSCH.")
       ->capture_default_str()
       ->check(CLI::Number);
@@ -181,6 +205,12 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
     }
     return "Invalid PUSCH SINR calculation method. Accepted values [channel_estimator,post_equalization,evm]";
   };
+  auto pusch_channel_estimator_fd_strategy_method_check = [](const std::string& value) -> std::string {
+    if ((value == "filter") || (value == "mean") || (value == "none")) {
+      return {};
+    }
+    return "Invalid PUSCH channel estimator frequency-domain strategy. Accepted values [filter,mean,none]";
+  };
   auto pusch_channel_estimator_td_strategy_method_check = [](const std::string& value) -> std::string {
     if ((value == "average") || (value == "interpolate")) {
       return {};
@@ -218,11 +248,22 @@ static void configure_cli11_expert_phy_args(CLI::App& app, du_low_unit_expert_up
       ->capture_default_str()
       ->check(pusch_sinr_method_check);
   add_option(app,
+             "--pusch_channel_estimator_fd_strategy",
+             expert_phy_params.pusch_channel_estimator_fd_strategy,
+             "PUSCH channel estimator frequency-domain smoothing strategy: filter, mean and none.")
+      ->capture_default_str()
+      ->check(pusch_channel_estimator_fd_strategy_method_check);
+  add_option(app,
              "--pusch_channel_estimator_td_strategy",
              expert_phy_params.pusch_channel_estimator_td_strategy,
              "PUSCH channel estimator time-domain strategy: average and interpolate.")
       ->capture_default_str()
       ->check(pusch_channel_estimator_td_strategy_method_check);
+  add_option(app,
+             "--pusch_channel_estimator_cfo_compensation",
+             expert_phy_params.pusch_channel_estimator_cfo_compensation,
+             "PUSCH channel estimator CFO compensation.")
+      ->capture_default_str();
   add_option(app,
              "--pusch_channel_equalizer_algorithm",
              expert_phy_params.pusch_channel_equalizer_algorithm,
@@ -268,11 +309,10 @@ static void configure_cli11_hwacc_pusch_dec_args(CLI::App& app, std::optional<hw
   app.add_option("--nof_hwacc", config->nof_hwacc, "Number of hardware-accelerated PDSCH encoding functions")
       ->capture_default_str()
       ->check(CLI::Range(0, 64));
-  app.add_option("--ext_softbuffer",
-                 config->ext_softbuffer,
-                 "Defines if the soft-buffer is implemented in the accelerator or not")
-      ->capture_default_str();
   app.add_option("--harq_context_size", config->harq_context_size, "Size of the HARQ context repository")
+      ->capture_default_str();
+  app.add_option(
+         "--force_local_harq", config->force_local_harq, "Force using the host memory to implement the HARQ buffer")
       ->capture_default_str();
   app.add_option("--dedicated_queue",
                  config->dedicated_queue,
@@ -322,11 +362,6 @@ static void configure_cli11_hal_args(CLI::App& app, std::optional<du_low_unit_ha
   configure_cli11_bbdev_hwacc_args(*bbdev_hwacc_subcmd, config->bbdev_hwacc);
 }
 
-static void configure_cli11_metrics_args(CLI::App& app, du_low_unit_metrics_config& config)
-{
-  app.add_option("--enable_upper_phy", config.enable, "Enables upper physical layer metrics.")->capture_default_str();
-}
-
 static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
 {
   // Clean the HAL optional.
@@ -362,8 +397,7 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
   configure_cli11_hal_args(*hal_subcmd, parsed_cfg.hal_config);
 
   // Metrics section.
-  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
-  configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.metrics_config);
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.metrics_cfg.common_metrics_cfg);
 }
 
 void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,

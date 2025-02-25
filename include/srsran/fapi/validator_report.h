@@ -23,7 +23,8 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/base_message.h"
+#include <optional>
 
 namespace srsran {
 namespace fapi {

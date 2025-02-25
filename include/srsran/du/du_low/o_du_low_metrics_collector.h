@@ -27,7 +27,7 @@ namespace srs_du {
 
 struct o_du_low_metrics;
 
-/// ORAN DU low metrics collector used for collecting metrics from the O-DU low.
+/// O-RAN DU low metrics collector used for collecting metrics from the O-DU low.
 class o_du_low_metrics_collector
 {
 public:

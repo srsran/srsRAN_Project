@@ -25,6 +25,7 @@
 #include "srsran/phy/generic_functions/transform_precoding/transform_precoder.h"
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 
 namespace srsran {
 
@@ -43,11 +44,14 @@ public:
   // See interface for documentation.
   void deprecode_ofdm_symbol(span<cf_t> out, span<const cf_t> in) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base->deprecode_ofdm_symbol(out, in);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.elapsed = tp_after - tp_before, .nof_re = static_cast<unsigned>(out.size())});
+    transform_precoder_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base->deprecode_ofdm_symbol(out, in);
+    }
+    metrics.nof_re = static_cast<unsigned>(out.size());
+    notifier.on_new_metric(metrics);
   }
 
   // See interface for documentation.

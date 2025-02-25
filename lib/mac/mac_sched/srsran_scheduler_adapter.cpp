@@ -56,7 +56,7 @@ srsran_scheduler_adapter::srsran_scheduler_adapter(const mac_config& params, rnt
   ctrl_exec(params.ctrl_exec),
   logger(srslog::fetch_basic_logger("MAC")),
   notifier(*this),
-  sched_impl(create_scheduler(scheduler_config{params.sched_cfg, notifier, params.metric_notifier})),
+  sched_impl(create_scheduler(scheduler_config{params.sched_cfg, notifier, params.sched_metric_notifier})),
   rach_handler(*sched_impl, rnti_mng, logger)
 {
   srsran_assert(last_slot_point.is_lock_free(), "slot point is not lock free");

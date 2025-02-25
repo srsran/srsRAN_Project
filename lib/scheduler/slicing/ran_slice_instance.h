@@ -43,9 +43,6 @@ public:
 
   void slot_indication(slot_point slot_tx);
 
-  /// \brief Handle skipped slot indication.
-  void skipped_slot_indication(slot_point prev_slot, slot_point current_slot);
-
   bool active() const { return not slice_ues.empty(); }
 
   /// Save PDSCH grant.
@@ -75,7 +72,7 @@ public:
   }
 
   /// Add a new UE to list of UEs (if not exists) and a new (UE, LCID) to the list of bearers managed by this slice.
-  void add_logical_channel(const ue& u, lcid_t lcid, lcg_id_t lcg_id);
+  void add_logical_channel(ue& u, lcid_t lcid, lcg_id_t lcg_id);
 
   /// Remove a (UE, LCID) from the list of bearers managed by this slice.
   /// \remark UE is removed if all LCIDs of a UE are removed.
@@ -112,6 +109,7 @@ public:
   ran_slice_id_t            id;
   const cell_configuration* cell_cfg;
   slice_rrm_policy_config   cfg;
+  const unsigned            min_k2;
 
   /// Counter of how many RBs have been scheduled for PDSCH in the current slot for this slice.
   unsigned pdsch_rb_count = 0;

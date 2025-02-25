@@ -21,6 +21,7 @@
  */
 
 #include "cu_appconfig_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
 #include "apps/services/logger/logger_appconfig_cli11_schema.h"
 #include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
@@ -33,6 +34,15 @@ using namespace srsran;
 static void configure_cli11_f1ap_args(CLI::App& app, srs_cu::cu_f1ap_appconfig& f1ap_params)
 {
   add_option(app, "--bind_addr", f1ap_params.bind_addr, "F1-C bind address")->capture_default_str();
+}
+
+static void configure_cli11_metrics_args(CLI::App& app, srs_cu::metrics_appconfig& metrics_params)
+{
+  add_option(app,
+             "--resource_usage_report_period",
+             metrics_params.rusage_report_period,
+             "Resource usage metrics report period (in milliseconds)")
+      ->capture_default_str();
 }
 
 void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_cfg)
@@ -48,6 +58,11 @@ void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfi
 
   // Remote control section.
   configure_cli11_with_remote_control_appconfig_schema(app, cu_cfg.remote_control_config);
+
+  // Metrics section.
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
+  configure_cli11_metrics_args(*metrics_subcmd, cu_cfg.metrics_cfg);
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, cu_cfg.metrics_cfg.common_metrics_cfg);
 
   // F1AP section.
   CLI::App* cu_cp_subcmd = add_subcommand(app, "cu_cp", "CU-UP parameters")->configurable();

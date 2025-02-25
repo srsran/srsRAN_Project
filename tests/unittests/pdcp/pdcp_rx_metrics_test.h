@@ -51,4 +51,22 @@ protected:
     srslog::flush();
   }
 };
+
+class pdcp_rx_metrics_container_test : public pdcp_rx_test_helper_default_crypto, public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    // init test's logger
+    srslog::init();
+    logger.set_level(srslog::basic_levels::debug);
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+};
+
 } // namespace srsran

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "../config/sched_config_manager.h"
-#include "../slicing/slice_scheduler.h"
+#include "../slicing/inter_slice_scheduler.h"
 #include "../ue_context/ue.h"
 #include "ue_fallback_scheduler.h"
 #include "srsran/adt/concurrent_queue.h"
@@ -45,7 +45,7 @@ struct cell_creation_event {
   cell_harq_manager&       cell_harqs;
   ue_fallback_scheduler&   fallback_sched;
   uci_scheduler_impl&      uci_sched;
-  slice_scheduler&         slice_sched;
+  inter_slice_scheduler&   slice_sched;
   srs_scheduler&           srs_sched;
   cell_metrics_handler&    metrics;
   scheduler_event_logger&  ev_logger;
@@ -152,7 +152,7 @@ private:
     cell_harq_manager*        cell_harqs     = nullptr;
     ue_fallback_scheduler*    fallback_sched = nullptr;
     uci_scheduler_impl*       uci_sched      = nullptr;
-    slice_scheduler*          slice_sched    = nullptr;
+    inter_slice_scheduler*    slice_sched    = nullptr;
     srs_scheduler*            srs_sched      = nullptr;
     cell_metrics_handler*     metrics        = nullptr;
     scheduler_event_logger*   ev_logger      = nullptr;

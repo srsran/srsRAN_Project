@@ -185,7 +185,10 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
                            fmt::underlying(uci_pdu.ue_index),
                            uci_pdu.crnti);
           }
+        } else {
+          pdu.csi = csi_report_data{.valid = false};
         }
+
         // NOTE: The RLF detection based on CSI is used when the UE only transmits PUCCHs; if the UE transmit PUSCHs,
         // the RLF detection will be based on the PUSCH CRC. However, if the PUSCH UCI has a correctly decoded CSI, we
         // need to reset the CSI KOs counter.
@@ -231,7 +234,10 @@ uci_indication uci_cell_decoder::decode_uci(const mac_uci_indication_message& ms
                            fmt::underlying(uci_pdu.ue_index),
                            uci_pdu.crnti);
           }
+        } else {
+          pdu.csi = csi_report_data{.valid = false};
         }
+
         // We consider any status other than "crc_pass" as non-decoded CSI.
         rlf_handler.handle_csi(uci_pdu.ue_index, cell_index, pucch_f2f3f4->csi_part1_info->is_valid);
       }

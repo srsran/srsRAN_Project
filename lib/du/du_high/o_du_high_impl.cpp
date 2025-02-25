@@ -23,6 +23,7 @@
 #include "o_du_high_impl.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_sector_adaptor.h"
+#include "srsran/mac/mac_cell_result.h"
 
 using namespace srsran;
 using namespace srs_du;

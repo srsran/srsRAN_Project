@@ -55,8 +55,8 @@ notify_binary_target(srsdu)
 
 
 # Add the targets for the rest of the splits.
-set(EXTENSIONS du_split_7_2 du_split_8)
-set(LIBRARIES srsran_flexible_o_du_split_7_2 srsran_flexible_o_du_split_8)
+set(EXTENSIONS du_split_6 du_split_7_2 du_split_8)
+set(LIBRARIES srsran_flexible_o_du_split_6 srsran_flexible_o_du_split_7_2 srsran_flexible_o_du_split_8)
 
 foreach (NAME LIB IN ZIP_LISTS EXTENSIONS LIBRARIES)
     # Prepend srs to the target name to make it consistent with the dynamic one.

@@ -207,9 +207,9 @@ TEST_F(DciValidatorFallbackFixture, BadInitialBandwidth)
 {
   {
     dci_size_config config   = get_base_dci_config();
-    config.ul_bwp_initial_bw = MAX_RB + 1;
+    config.ul_bwp_initial_bw = MAX_NOF_PRBS + 1;
     std::string assert_message =
-        fmt::format("UL initial BWP bandwidth {} is out of range [1..{}].", config.ul_bwp_initial_bw, MAX_RB);
+        fmt::format("UL initial BWP bandwidth {} is out of range [1..{}].", config.ul_bwp_initial_bw, MAX_NOF_PRBS);
 
     test_validator(config, assert_message);
   }
@@ -217,15 +217,15 @@ TEST_F(DciValidatorFallbackFixture, BadInitialBandwidth)
     dci_size_config config   = get_base_dci_config();
     config.ul_bwp_initial_bw = 0;
     std::string assert_message =
-        fmt::format("UL initial BWP bandwidth {} is out of range [1..{}].", config.ul_bwp_initial_bw, MAX_RB);
+        fmt::format("UL initial BWP bandwidth {} is out of range [1..{}].", config.ul_bwp_initial_bw, MAX_NOF_PRBS);
 
     test_validator(config, assert_message);
   }
   {
     dci_size_config config   = get_base_dci_config();
-    config.dl_bwp_initial_bw = MAX_RB + 1;
+    config.dl_bwp_initial_bw = MAX_NOF_PRBS + 1;
     std::string assert_message =
-        fmt::format("DL initial BWP bandwidth {} is out of range [1..{}].", config.dl_bwp_initial_bw, MAX_RB);
+        fmt::format("DL initial BWP bandwidth {} is out of range [1..{}].", config.dl_bwp_initial_bw, MAX_NOF_PRBS);
 
     test_validator(config, assert_message);
   }
@@ -233,15 +233,15 @@ TEST_F(DciValidatorFallbackFixture, BadInitialBandwidth)
     dci_size_config config   = get_base_dci_config();
     config.dl_bwp_initial_bw = 0;
     std::string assert_message =
-        fmt::format("DL initial BWP bandwidth {} is out of range [1..{}].", config.dl_bwp_initial_bw, MAX_RB);
+        fmt::format("DL initial BWP bandwidth {} is out of range [1..{}].", config.dl_bwp_initial_bw, MAX_NOF_PRBS);
 
     test_validator(config, assert_message);
   }
   {
     dci_size_config config = get_base_dci_config();
-    config.coreset0_bw     = MAX_RB + 1;
+    config.coreset0_bw     = MAX_NOF_PRBS + 1;
     std::string assert_message =
-        fmt::format("CORESET0 bandwidth {} is out of range [0..{}].", config.coreset0_bw, MAX_RB);
+        fmt::format("CORESET0 bandwidth {} is out of range [0..{}].", config.coreset0_bw, MAX_NOF_PRBS);
 
     test_validator(config, assert_message);
   }
@@ -252,18 +252,18 @@ TEST_F(DciValidatorFallbackFixture, BadActiveBandwidth)
 {
   {
     dci_size_config config  = get_base_dci_config();
-    config.ul_bwp_active_bw = MAX_RB + 1;
+    config.ul_bwp_active_bw = MAX_NOF_PRBS + 1;
     std::string assert_message =
-        fmt::format("UL active BWP bandwidth {} is out of range [1..{}].", config.ul_bwp_active_bw, MAX_RB);
+        fmt::format("UL active BWP bandwidth {} is out of range [1..{}].", config.ul_bwp_active_bw, MAX_NOF_PRBS);
 
     test_validator(config, assert_message);
   }
 
   {
     dci_size_config config  = get_base_dci_config();
-    config.dl_bwp_active_bw = MAX_RB + 1;
+    config.dl_bwp_active_bw = MAX_NOF_PRBS + 1;
     std::string assert_message =
-        fmt::format("DL active BWP bandwidth {} is out of range [1..{}].", config.dl_bwp_active_bw, MAX_RB);
+        fmt::format("DL active BWP bandwidth {} is out of range [1..{}].", config.dl_bwp_active_bw, MAX_NOF_PRBS);
 
     test_validator(config, assert_message);
   }

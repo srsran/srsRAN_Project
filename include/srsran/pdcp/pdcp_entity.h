@@ -22,12 +22,11 @@
 
 #pragma once
 
-#include "srsran/adt/byte_buffer.h"
 #include "srsran/pdcp/pdcp_rx.h"
 #include "srsran/pdcp/pdcp_rx_metrics.h"
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/pdcp/pdcp_tx_metrics.h"
-#include "srsran/security/security.h"
+#include "srsran/ran/rb_id.h"
 #include "srsran/support/async/manual_event.h"
 #include "srsran/support/timers.h"
 
@@ -35,6 +34,7 @@ namespace srsran {
 
 struct pdcp_metrics_container {
   uint32_t                  ue_index;
+  rb_id_t                   rb_id;
   pdcp_tx_metrics_container tx;
   pdcp_rx_metrics_container rx;
   timer_duration            metrics_period;

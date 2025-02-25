@@ -22,7 +22,8 @@
 
 #pragma once
 
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/config_request_tlvs.h"
+#include "srsran/fapi/messages/ul_tti_request.h"
 
 namespace srsran {
 

@@ -47,12 +47,13 @@ public:
                    timer_factory                   ue_ctrl_timer_factory,
                    task_executor&                  ue_dl_executor,
                    task_executor&                  ue_ul_executor,
+                   task_executor&                  ue_ctrl_executor,
                    task_executor&                  crypto_executor,
                    uint32_t                        max_nof_crypto_workers) :
     logger("PDCP", {ue_index, rb_id, "DL/UL"}),
     metrics_period(config.custom.metrics_period),
     metrics_timer(ue_ctrl_timer_factory.create_timer()),
-    metrics_agg(ue_index, rb_id, metrics_period, config.custom.metrics_notifier, ue_dl_executor)
+    metrics_agg(ue_index, rb_id, metrics_period, config.custom.metrics_notifier, ue_ctrl_executor)
   {
     tx = std::make_unique<pdcp_entity_tx>(ue_index,
                                           rb_id,

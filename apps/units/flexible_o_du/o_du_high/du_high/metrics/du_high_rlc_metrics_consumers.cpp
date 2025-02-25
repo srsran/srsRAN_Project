@@ -163,7 +163,7 @@ void rlc_metrics_consumer_log::handle_metric(const app_services::metrics_set& me
   fmt::format_to(std::back_inserter(buffer), " mode={}", drb.rx.mode);
   fmt::format_to(std::back_inserter(buffer), " TX=[{}]", format_rlc_tx_metrics(drb.metrics_period, drb.tx));
   fmt::format_to(std::back_inserter(buffer), " RX=[{}]  ", format_rlc_rx_metrics(drb.metrics_period, drb.rx));
-  logger.info("{}", to_c_str(buffer));
+  log_chan("{}", to_c_str(buffer));
 }
 
 void rlc_metrics_consumer_e2::handle_metric(const app_services::metrics_set& metric)

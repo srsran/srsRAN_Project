@@ -21,10 +21,13 @@
  */
 
 #include "pdcp_entity_tx.h"
+
 #include "../security/security_engine_impl.h"
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/bit_encoding.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 #include "srsran/support/srsran_assert.h"
+#include <algorithm>
 
 using namespace srsran;
 
@@ -51,6 +54,9 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   if (metrics_agg.get_metrics_period().count()) {
     metrics_timer = ue_dl_timer_factory.create_timer();
     metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this](timer_id_t tid) {
+      if (stopped) {
+        return;
+      }
       metrics_agg.push_tx_metrics(metrics.get_metrics_and_reset());
       metrics_timer.run();
     });
@@ -72,6 +78,8 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
 
   logger.log_info("PDCP configured. {}", cfg);
 
+  discard_timer = ue_dl_timer_factory.create_timer();
+
   // TODO: implement usage of crypto_executor
   (void)ue_dl_executor;
   (void)crypto_executor;
@@ -86,7 +94,11 @@ void pdcp_entity_tx::stop()
 {
   if (not stopped) {
     stopped = true;
-    tx_window.clear(); // discard all SDUs and stop discard timers
+    tx_window.clear(); // discard all SDUs
+    if (cfg.discard_timer.has_value()) {
+      discard_timer.stop();
+    }
+    metrics_timer.stop();
     logger.log_debug("Stopped PDCP entity");
   }
 }
@@ -99,7 +111,7 @@ void pdcp_entity_tx::stop()
 /// \ref TS 38.323 section 5.2.1: Transmit operation
 void pdcp_entity_tx::handle_sdu(byte_buffer buf)
 {
-  if (stopped) {
+  if (SRSRAN_UNLIKELY(stopped)) {
     if (not cfg.custom.warn_on_drop) {
       logger.log_info("Dropping SDU. Entity is stopped");
     } else {
@@ -108,7 +120,8 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     return;
   }
 
-  trace_point tx_tp = up_tracer.now();
+  trace_point                           tx_tp           = up_tracer.now();
+  std::chrono::system_clock::time_point time_of_arrival = std::chrono::high_resolution_clock::now();
 
   if (is_drb()) {
     if (desired_buffer_size == 0) {
@@ -171,16 +184,49 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
     }
   }
 
-  // We will need a copy of the SDU for the discard timer when using AM
-  byte_buffer sdu;
-  if (cfg.discard_timer.has_value() && is_am()) {
-    auto sdu_copy = buf.deep_copy();
-    if (not sdu_copy.has_value()) {
-      logger.log_error("Unable to deep copy SDU");
-      upper_cn.on_protocol_failure();
-      return;
+  // Wrap SDU with meta information
+  pdcp_tx_buf_info buf_info = {
+      .buf                   = std::move(buf),
+      .count                 = st.tx_next,
+      .time_of_arrival       = time_of_arrival,
+      .tick_point_of_arrival = {} // set later only for finite discard timer
+  };
+
+  if (cfg.discard_timer.has_value()) {
+    // Only start for finite durations and if not running already.
+    if (cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
+      // set SDU arrival time
+      buf_info.tick_point_of_arrival = discard_timer.now();
+      if (not discard_timer.is_running()) {
+        discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
+                          [this](timer_id_t timer_id) { discard_callback(); });
+        discard_timer.run();
+      }
     }
-    sdu = std::move(sdu_copy.value());
+
+    // If the place in the TX window is occupied by an old element from previous wrap, discard that element first.
+    if (tx_window.has_sn(st.tx_next)) {
+      uint32_t old_count = tx_window[st.tx_next].count;
+      logger.log_error("Tx window full. Discarding old_count={}. tx_next={}", old_count, st.tx_next);
+      discard_pdu(old_count);
+    }
+
+    // Prepare a copy of SDU info for storage in TX window.
+    // For AM, also copy the SDU buffer for a possible data recovery procedure.
+    pdcp_tx_buf_info buf_info_copy = buf_info.copy_without_buffer();
+    if (cfg.discard_timer.has_value() && is_am()) {
+      auto sdu_buf_copy = buf_info.buf.deep_copy();
+      if (not sdu_buf_copy.has_value()) {
+        logger.log_error("Unable to deep copy SDU");
+        upper_cn.on_protocol_failure();
+        return;
+      }
+      buf_info_copy.buf = std::move(sdu_buf_copy.value());
+    }
+
+    // Move the copy into TX window; determine the SDU length from original buffer
+    tx_window.add_sdu(std::move(buf_info_copy), buf_info.buf.length());
+    logger.log_debug("Added to tx window. count={} discard_timer={}", st.tx_next, cfg.discard_timer);
   }
 
   // Perform header compression
@@ -191,48 +237,28 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   hdr.sn                   = SN(st.tx_next);
 
   // Pack header
-  if (not write_data_pdu_header(buf, hdr)) {
+  if (not write_data_pdu_header(buf_info.buf, hdr)) {
     logger.log_error("Could not append PDU header, dropping SDU and notifying RRC. count={}", st.tx_next);
     upper_cn.on_protocol_failure();
     return;
   }
 
   // Apply ciphering and integrity protection
-  expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), st.tx_next);
+  auto                  pre     = std::chrono::high_resolution_clock::now();
+  expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf_info.buf), st.tx_next);
   if (not exp_buf.has_value()) {
     logger.log_error("Could not apply ciphering and integrity protection, dropping SDU and notifying RRC. count={}",
                      st.tx_next);
     upper_cn.on_protocol_failure();
     return;
   }
-  byte_buffer protected_buf = std::move(exp_buf.value());
-
-  // Create a discard timer and put into tx_window. For AM, also store the SDU for a possible data recovery procedure.
-  if (cfg.discard_timer.has_value()) {
-    unique_timer discard_timer = {};
-    // Only start for finite durations
-    if (cfg.discard_timer.value() != pdcp_discard_timer::infinity) {
-      discard_timer = ue_dl_timer_factory.create_timer();
-      discard_timer.set(std::chrono::milliseconds(static_cast<unsigned>(cfg.discard_timer.value())),
-                        discard_callback{this, st.tx_next});
-      discard_timer.run();
-    }
-
-    // If the place in the tx_window is occupied by an old element from previous wrap, discard that element first.
-    if (tx_window.has_sn(st.tx_next)) {
-      uint32_t old_count = tx_window[st.tx_next].count;
-      logger.log_error("Tx window full. Discarding old_count={}. tx_next={}", old_count, st.tx_next);
-      discard_pdu(old_count);
-    }
-
-    // Place SDU in TX window
-    tx_window.add_sdu(st.tx_next, std::move(sdu), std::move(discard_timer));
-
-    logger.log_debug("Added to tx window. count={} discard_timer={}", st.tx_next, cfg.discard_timer);
-  }
+  buf_info.buf        = std::move(exp_buf.value());
+  auto post           = std::chrono::high_resolution_clock::now();
+  auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
+  metrics.add_crypto_processing_latency(sdu_latency_ns.count());
 
   // Write to lower layers
-  write_data_pdu_to_lower_layers(st.tx_next, std::move(protected_buf), /* is_retx = */ false);
+  write_data_pdu_to_lower_layers(std::move(buf_info), /* is_retx = */ false);
 
   // Increment TX_NEXT
   uint32_t tx_count = st.tx_next++;
@@ -297,17 +323,20 @@ void pdcp_entity_tx::reestablish(security::sec_128_as_config sec_cfg)
   logger.log_info("Reestablished PDCP. st={}", st);
 }
 
-void pdcp_entity_tx::write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf, bool is_retx)
+void pdcp_entity_tx::write_data_pdu_to_lower_layers(pdcp_tx_buf_info&& buf_info, bool is_retx)
 {
-  logger.log_info(buf.begin(),
-                  buf.end(),
+  logger.log_info(buf_info.buf.begin(),
+                  buf_info.buf.end(),
                   "TX PDU. type=data pdu_len={} sn={} count={} is_retx={}",
-                  buf.length(),
-                  SN(count),
-                  count,
+                  buf_info.buf.length(),
+                  SN(buf_info.count),
+                  buf_info.count,
                   is_retx);
-  metrics.add_pdus(1, buf.length());
-  lower_dn.on_new_pdu(std::move(buf), is_retx);
+  metrics.add_pdus(1, buf_info.buf.length());
+  auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
+                                                                             buf_info.time_of_arrival);
+  metrics.add_pdu_latency_ns(sdu_latency_ns.count());
+  lower_dn.on_new_pdu(std::move(buf_info.buf), is_retx);
 }
 
 void pdcp_entity_tx::write_control_pdu_to_lower_layers(byte_buffer buf)
@@ -428,8 +457,8 @@ void pdcp_entity_tx::configure_security(security::sec_128_as_config sec_cfg,
   // integrity protection algorithm is used, 'NULL' ciphering algorithm is also used.
   // Ref: TS 38.331 Sec. 5.3.1.2
   //
-  // From TS 38.501 Sec. 6.7.3.6: UEs that are in limited service mode (LSM) and that cannot be authenticated (...) may
-  // still be allowed to establish emergency session by sending the emergency registration request message. (...)
+  // From TS 38.501 Sec. 6.7.3.6: UEs that are in limited service mode (LSM) and that cannot be authenticated (...)
+  // may still be allowed to establish emergency session by sending the emergency registration request message. (...)
   if ((sec_cfg.integ_algo == security::integrity_algorithm::nia0) &&
       (is_drb() || (is_srb() && sec_cfg.cipher_algo != security::ciphering_algorithm::nea0))) {
     logger.log_error("Integrity algorithm NIA0 is only permitted for SRBs configured with NEA0. is_srb={} NIA{} NEA{}",
@@ -526,44 +555,54 @@ void pdcp_entity_tx::retransmit_all_pdus()
 
   for (uint32_t count = st.tx_next_ack; count < st.tx_next; count++) {
     if (tx_window.has_sn(count)) {
-      pdcp_tx_sdu_info& sdu_info = tx_window[count];
+      pdcp_tx_buf_info& buf_info_ref = tx_window[count];
 
-      // Prepare header
-      pdcp_data_pdu_header hdr = {};
-      hdr.sn                   = SN(sdu_info.count);
-
-      // Pack header
-      auto buf_copy = sdu_info.sdu.deep_copy();
-      if (not buf_copy.has_value()) {
-        logger.log_error("Could not deep copy SDU, dropping SDU and notifying RRC. count={} {}", sdu_info.count, st);
-        upper_cn.on_protocol_failure();
-        return;
-      }
-
-      byte_buffer buf = std::move(buf_copy.value());
-      if (not write_data_pdu_header(buf, hdr)) {
-        logger.log_error(
-            "Could not append PDU header, dropping SDU and notifying RRC. count={} {}", sdu_info.count, st);
-        upper_cn.on_protocol_failure();
-        return;
-      }
-
-      // Perform header compression if required
-      // (TODO)
-
-      // Perform integrity protection and ciphering
-      expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf), sdu_info.count);
-      if (not exp_buf.has_value()) {
-        logger.log_error("Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
-                         "notifying RRC. count={} {}",
-                         sdu_info.count,
+      // Create a copy of the SDU info that is stored in the TX window
+      pdcp_tx_buf_info buf_info = buf_info_ref.copy_without_buffer();
+      // Also copy the SDU buffer
+      auto exp_buf_copy = buf_info_ref.buf.deep_copy();
+      if (not exp_buf_copy.has_value()) {
+        logger.log_error("Could not deep copy SDU for retransmission, dropping SDU and notifying RRC. count={} {}",
+                         buf_info.count,
                          st);
         upper_cn.on_protocol_failure();
         return;
       }
+      buf_info.buf = std::move(exp_buf_copy.value());
 
-      byte_buffer protected_buf = std::move(exp_buf.value());
-      write_data_pdu_to_lower_layers(sdu_info.count, std::move(protected_buf), /* is_retx = */ true);
+      // Perform header compression if required
+      // (TODO)
+
+      // Prepare header
+      pdcp_data_pdu_header hdr = {};
+      hdr.sn                   = SN(buf_info.count);
+
+      // Pack header
+      if (not write_data_pdu_header(buf_info.buf, hdr)) {
+        logger.log_error(
+            "Could not append PDU header, dropping SDU and notifying RRC. count={} {}", buf_info.count, st);
+        upper_cn.on_protocol_failure();
+        return;
+      }
+
+      // Apply ciphering and integrity protection
+      auto                  pre     = std::chrono::high_resolution_clock::now();
+      expected<byte_buffer> exp_buf = apply_ciphering_and_integrity_protection(std::move(buf_info.buf), buf_info.count);
+      if (not exp_buf.has_value()) {
+        logger.log_error("Could not apply ciphering and integrity protection during retransmissions, dropping SDU and "
+                         "notifying RRC. count={} {}",
+                         buf_info.count,
+                         st);
+        upper_cn.on_protocol_failure();
+        return;
+      }
+      buf_info.buf        = std::move(exp_buf.value());
+      auto post           = std::chrono::high_resolution_clock::now();
+      auto sdu_latency_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(post - pre);
+      metrics.add_crypto_processing_latency(sdu_latency_ns.count());
+
+      // Write to lower layers
+      write_data_pdu_to_lower_layers(std::move(buf_info), /* is_retx = */ true);
     }
   }
 }
@@ -573,6 +612,11 @@ void pdcp_entity_tx::retransmit_all_pdus()
  */
 void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
 {
+  if (SRSRAN_UNLIKELY(stopped)) {
+    logger.log_debug("Dropping transmit notification. Entity is stopped");
+    return;
+  }
+
   logger.log_debug("Handling transmit notification for notif_sn={}", notif_sn);
   if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
     logger.log_error("Invalid transmit notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
@@ -604,6 +648,11 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
 
 void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 {
+  if (SRSRAN_UNLIKELY(stopped)) {
+    logger.log_debug("Dropping delivery notification. Entity is stopped");
+    return;
+  }
+
   logger.log_debug("Handling delivery notification for notif_sn={}", notif_sn);
   if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
     logger.log_error("Invalid delivery notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
@@ -629,6 +678,11 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
 
 void pdcp_entity_tx::handle_retransmit_notification(uint32_t notif_sn)
 {
+  if (SRSRAN_UNLIKELY(stopped)) {
+    logger.log_debug("Dropping retransmit notification. Entity is stopped");
+    return;
+  }
+
   if (SRSRAN_UNLIKELY(is_srb())) {
     logger.log_error("Ignored unexpected PDU retransmit notification in SRB. notif_sn={}", notif_sn);
     return;
@@ -644,6 +698,11 @@ void pdcp_entity_tx::handle_retransmit_notification(uint32_t notif_sn)
 
 void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_sn)
 {
+  if (SRSRAN_UNLIKELY(stopped)) {
+    logger.log_debug("Dropping delivery retransmitted notification. Entity is stopped");
+    return;
+  }
+
   if (SRSRAN_UNLIKELY(is_srb())) {
     logger.log_error("Ignored unexpected PDU delivery retransmitted notification in SRB. notif_sn={}", notif_sn);
     return;
@@ -661,10 +720,14 @@ void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_s
 
 void pdcp_entity_tx::handle_desired_buffer_size_notification(uint32_t desired_bs)
 {
+  if (SRSRAN_UNLIKELY(stopped)) {
+    logger.log_debug("Dropping desired buffer size notification. Entity is stopped");
+    return;
+  }
   desired_buffer_size = desired_bs;
 }
 
-uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn)
+uint32_t pdcp_entity_tx::notification_count_estimation(uint32_t notification_sn) const
 {
   // Get lower edge of the window. If discard timer is enabled, use the lower edge of the tx_window, i.e. TX_NEXT_ACK.
   // If discard timer is not configured, use TX_TRANS as lower edge of window.
@@ -757,7 +820,7 @@ bool pdcp_entity_tx::write_data_pdu_header(byte_buffer& buf, const pdcp_data_pdu
   return true;
 }
 
-uint32_t pdcp_entity_tx::get_pdu_size(const byte_buffer& sdu)
+uint32_t pdcp_entity_tx::get_pdu_size(const byte_buffer& sdu) const
 {
   return pdcp_data_header_size(sn_size) + sdu.length() + (integrity_enabled == security::integrity_enabled::on ? 4 : 0);
 }
@@ -777,7 +840,18 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
   }
   logger.log_debug("Stopping discard timers. highest_count={}", highest_count);
 
+  // Get oldest PDU time of arrival.
+  if (not tx_window.has_sn(st.tx_next_ack)) {
+    logger.log_error(
+        "Trying to stop discard timers, but TX_NEXT_ACK not in TX window. highest_count={} st={} tx_window_size={}",
+        highest_count,
+        st,
+        tx_window.get_nof_sdus());
+    return;
+  }
+
   // Stop discard timers and update TX_NEXT_ACK to oldest element in tx_window
+  discard_timer.stop();
   while (st.tx_next_ack <= highest_count) {
     if (tx_window.has_sn(st.tx_next_ack)) {
       tx_window.remove_sdu(st.tx_next_ack);
@@ -787,8 +861,23 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
   }
 
   // Update TX_TRANS if it falls out of the tx_window
-  if (st.tx_trans < st.tx_next_ack) {
-    st.tx_trans = st.tx_next_ack;
+  st.tx_trans = std::max(st.tx_trans, st.tx_next_ack);
+
+  // Restart discard timer if requrired.
+  if (cfg.discard_timer.value() == pdcp_discard_timer::infinity) {
+    return;
+  }
+
+  // There are still old PDUs, restart discard timer.
+  if (st.tx_next_ack != st.tx_next) {
+    pdcp_tx_buf_info& buf_info = tx_window[st.tx_next_ack];
+    srsran_assert(buf_info.tick_point_of_arrival.has_value(),
+                  "Cannot update discard timer for SDU without arrival time. count={}",
+                  buf_info.count);
+    tick_point_t now         = discard_timer.now();
+    unsigned     new_timeout = buf_info.tick_point_of_arrival.value() + (unsigned)cfg.discard_timer.value() - now;
+    discard_timer.set(std::chrono::milliseconds(new_timeout), [this](timer_id_t timer_id) { discard_callback(); });
+    discard_timer.run();
   }
 }
 
@@ -819,20 +908,48 @@ void pdcp_entity_tx::discard_pdu(uint32_t count)
   }
 
   // Update TX_TRANS if it falls out of the tx_window
-  if (st.tx_trans < st.tx_next_ack) {
-    st.tx_trans = st.tx_next_ack;
-  }
+  st.tx_trans = std::max(st.tx_trans, st.tx_next_ack);
 }
 
 // Discard Timer Callback (discardTimer)
-void pdcp_entity_tx::discard_callback::operator()(timer_id_t timer_id)
+void pdcp_entity_tx::discard_callback()
 {
-  parent->logger.log_debug("Discard timer expired. count={}", discard_count);
+  logger.log_debug("Discard timer expired. st={}", st);
 
-  // Add discard to metrics
-  parent->metrics.add_discard_timouts(1);
+  // Add discard to metrics.
+  metrics.add_discard_timouts(1);
 
-  // Discard PDU
-  // NOTE: this will delete the callback. It *must* be the last instruction.
-  parent->discard_pdu(discard_count);
+  // Sanity check oldest PDU.
+  if (not tx_window.has_sn(st.tx_next_ack)) {
+    logger.log_error("Discard timer expired, but oldest PDU not in TX window. st={}", st);
+    return;
+  }
+
+  // Discard all PDUs that match the discard timer tick.
+  pdcp_tx_buf_info& oldest_buf_info = tx_window[st.tx_next_ack];
+  srsran_assert(oldest_buf_info.tick_point_of_arrival.has_value(),
+                "Cannot determine oldest time point in discard callback: SDU without arrival time. count={}",
+                oldest_buf_info.count);
+  tick_point_t oldest_timepoint = oldest_buf_info.tick_point_of_arrival.value();
+  do {
+    discard_pdu(st.tx_next_ack); // this updates st.tx_next_ack to the oldest PDU still in the window.
+    if (not tx_window.has_sn(st.tx_next_ack)) {
+      logger.log_debug("Finished discard callback. There are no new PDUs. st={}", st);
+      break;
+    }
+    pdcp_tx_buf_info& buf_info = tx_window[st.tx_next_ack];
+    srsran_assert(buf_info.tick_point_of_arrival.has_value(),
+                  "Cannot update discard timer for SDU without arrival time. count={}",
+                  buf_info.count);
+    if (buf_info.tick_point_of_arrival != oldest_timepoint) {
+      // Restart timeout for any pending SDUs.
+      unsigned new_timeout = (buf_info.tick_point_of_arrival.value() - oldest_timepoint);
+      logger.log_debug("Finished discard callback. There are new PDUs with a new discard timer. new_timeout={}, st={}",
+                       new_timeout,
+                       st);
+      discard_timer.set(std::chrono::milliseconds(new_timeout), [this](timer_id_t timer_id) { discard_callback(); });
+      discard_timer.run();
+      break;
+    }
+  } while (st.tx_next_ack != st.tx_next);
 }

@@ -25,6 +25,7 @@
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/metrics/phy_metrics_reports.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsran/support/resource_usage/scoped_resource_usage.h"
 #include <memory>
 
 namespace srsran {
@@ -44,11 +45,13 @@ public:
   // See interface for documentation.
   void map(resource_grid_writer& grid, const config_t& config) override
   {
-    auto tp_before = std::chrono::high_resolution_clock::now();
-    base->map(grid, config);
-    auto tp_after = std::chrono::high_resolution_clock::now();
-
-    notifier.new_metric({.elapsed = tp_after - tp_before});
+    pdsch_dmrs_generator_metrics metrics;
+    {
+      // Use scoped resource usage class to measure CPU usage of this block.
+      resource_usage_utils::scoped_resource_usage rusage_tracker(metrics.measurements);
+      base->map(grid, config);
+    }
+    notifier.on_new_metric(metrics);
   }
 
 private:

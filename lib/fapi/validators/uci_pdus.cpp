@@ -22,7 +22,7 @@
 
 #include "uci_pdus.h"
 #include "field_checkers.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/uci_indication.h"
 
 using namespace srsran;
 using namespace fapi;

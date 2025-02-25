@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/adt/expected.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
 #include "srsran/fapi/validator_report.h"
 #include <gtest/gtest.h>
 

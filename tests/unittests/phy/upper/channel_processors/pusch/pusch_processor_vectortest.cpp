@@ -182,7 +182,7 @@ private:
     hal::bbdev_hwacc_pusch_dec_factory_configuration hw_decoder_config;
     hw_decoder_config.acc_type            = "acc100";
     hw_decoder_config.bbdev_accelerator   = bbdev_accelerator;
-    hw_decoder_config.ext_softbuffer      = true;
+    hw_decoder_config.force_local_harq    = false;
     hw_decoder_config.harq_buffer_context = harq_buffer_context;
     hw_decoder_config.dedicated_queue     = true;
 
@@ -304,7 +304,9 @@ private:
         create_dmrs_pusch_estimator_factory_sw(prg_factory,
                                                low_papr_sequence_gen_factory,
                                                port_chan_estimator_factory,
-                                               port_channel_estimator_td_interpolation_strategy::average);
+                                               port_channel_estimator_fd_smoothing_strategy::filter,
+                                               port_channel_estimator_td_interpolation_strategy::average,
+                                               true);
     if (!dmrs_pusch_chan_estimator_factory) {
       return nullptr;
     }

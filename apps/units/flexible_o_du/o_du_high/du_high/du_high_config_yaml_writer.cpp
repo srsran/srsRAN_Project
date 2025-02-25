@@ -21,7 +21,7 @@
  */
 
 #include "du_high_config_yaml_writer.h"
-#include "apps/services/logger/metrics_logger_appconfig_yaml_writer.h"
+#include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "du_high_config.h"
 #include "srsran/adt/span.h"
 
@@ -30,7 +30,6 @@ using namespace srsran;
 static void fill_du_high_metrics_section(YAML::Node node, const du_high_unit_metrics_config& config)
 {
   node["rlc_report_period"]   = config.rlc.report_period;
-  node["enable_json_metrics"] = config.enable_json_metrics;
   node["sched_report_period"] = config.sched_report_period;
 }
 
@@ -422,7 +421,7 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
   node["p0_nominal"]                      = config.p0_nominal;
   node["pucch_resource_common"]           = config.pucch_resource_common;
   node["use_format_0"]                    = config.use_format_0;
-  node["pucch_set1_format"]               = config.set1_format;
+  node["pucch_set1_format"]               = static_cast<unsigned>(config.set1_format);
   node["sr_period_ms"]                    = config.sr_period_msec;
   node["nof_ue_pucch_res_harq_per_set"]   = config.nof_ue_pucch_res_harq_per_set;
   node["f0_or_f1_nof_cell_res_sr"]        = config.nof_cell_sr_resources;
@@ -774,7 +773,7 @@ void srsran::fill_du_high_config_in_yaml_schema(YAML::Node& node, const du_high_
   node["gnb_id_bit_length"] = static_cast<unsigned>(config.gnb_id.bit_length);
   node["gnb_du_id"]         = static_cast<uint64_t>(config.gnb_du_id);
 
-  fill_metrics_logger_appconfig_in_yaml_schema(node, config.loggers.metrics_level);
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics.common_metrics_cfg);
   fill_du_high_log_section(node["log"], config.loggers);
   fill_du_high_metrics_section(node["metrics"], config.metrics);
   fill_du_high_pcap_section(node["pcap"], config.pcaps);

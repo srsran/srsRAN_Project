@@ -22,10 +22,14 @@
 
 #pragma once
 
+#include "srsran/ran/pdcch/search_space.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/scheduler/result/dci_info.h"
 
 namespace srsran {
+
+struct bwp_configuration;
+struct coreset_configuration;
 
 /// The precoding information associated with PDCCH PDUs.
 struct pdcch_precoding_info {};

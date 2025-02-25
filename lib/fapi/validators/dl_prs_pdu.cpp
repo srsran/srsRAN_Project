@@ -22,7 +22,7 @@
 
 #include "dl_prs_pdu.h"
 #include "field_checkers.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
 
 using namespace srsran;
 using namespace fapi;

@@ -23,8 +23,8 @@
 #pragma once
 
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
-#include "srsran/ofh/timing/slot_symbol_point.h"
 #include "srsran/ru/ru_timing_notifier.h"
+#include <chrono>
 
 namespace srsran {
 
@@ -35,22 +35,18 @@ class ru_ofh_timing_notifier_impl : public ofh::ota_symbol_boundary_notifier
 public:
   ru_ofh_timing_notifier_impl(unsigned            nof_slot_offset_du_ru_,
                               unsigned            nof_symbols_per_slot,
-                              ru_timing_notifier& timing_notifier_) :
-    nof_slot_offset_du_ru(nof_slot_offset_du_ru_),
-    half_slot_symbol(nof_symbols_per_slot / 2U - 1U),
-    full_slot_symbol(nof_symbols_per_slot - 1U),
-    timing_notifier(timing_notifier_)
-  {
-  }
+                              subcarrier_spacing  scs,
+                              ru_timing_notifier& timing_notifier_);
 
   // See interface for documentation.
-  void on_new_symbol(ofh::slot_symbol_point symbol_point) override;
+  void on_new_symbol(const ofh::slot_symbol_point_context& symbol_point_context) override;
 
 private:
-  const unsigned      nof_slot_offset_du_ru;
-  const unsigned      half_slot_symbol;
-  const unsigned      full_slot_symbol;
-  ru_timing_notifier& timing_notifier;
+  const unsigned                 nof_slot_offset_du_ru;
+  const std::chrono::nanoseconds nof_slots_offset_du_ru_ns;
+  const unsigned                 half_slot_symbol;
+  const unsigned                 full_slot_symbol;
+  ru_timing_notifier&            timing_notifier;
 };
 
 } // namespace srsran

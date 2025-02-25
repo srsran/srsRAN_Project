@@ -81,7 +81,7 @@ static csi_report_data unpack_pusch_csi_cri_ri_li_pmi_cqi(const csi_report_packe
                                                           const csi_report_packed&        csi2_packed,
                                                           const csi_report_configuration& config)
 {
-  csi_report_data data;
+  csi_report_data data{.valid = true};
 
   // Gets RI, LI, CQI and CRI field sizes as if the rank was one.
   ri_li_cqi_cri_sizes sizes =

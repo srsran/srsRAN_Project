@@ -122,25 +122,32 @@ struct pdsch_processor_generic_configuration {
   // No parameter.
 };
 
-/// Concurrent PDSCH processor configuration parameters.
-struct pdsch_processor_concurrent_configuration {
+/// \brief Flexible PDSCH processor configuration parameters.
+///
+/// Collects the necessary parameters for creating a flexible PDSCH processor. See \ref pdsch_processor_flexible_impl
+/// for implementation details.
+struct pdsch_processor_flexible_configuration {
+  /// CB batch length for guaranteeing a single batch in synchronous operation mode.
+  static constexpr unsigned synchronous_cb_batch_length = std::numeric_limits<unsigned>::max();
   /// \brief Number of threads for processing PDSCH codeblocks concurrently.
   ///
-  /// Only used when \ref pdsch_processor is set to \c concurrent. Ignored otherwise.
+  /// Set it to the number of threads that can potentially call the processor and the number of threads comprised in
+  /// \c pdsch_codeblock_task_executor.
   ///
-  /// \remark An assertion is triggered if it is not greater than 1.
+  /// \remark An assertion is triggered if it is less than one.
+  /// \remark A failure is reported in runtime if the number of threads processing codeblocks exceed this number.
   unsigned nof_pdsch_codeblock_threads = 0;
+  /// \brief Length of the codeblock-batch per thread.
+  ///
+  /// Set to zero if not initialized, which splits the codeblocks homogeneously amongst all threads. Set to
+  /// \ref synchronous_cb_batch_length for guaranteeing a memory-optimized synchronous operation.
+  unsigned cb_batch_length = 0;
   /// \brief Maximum number of simultaneous active PDSCH transmissions.
   ///
   /// Sets the maximum number of PDSCH processor instances that can be used simultaneously.
   unsigned max_nof_simultaneous_pdsch = 0;
   /// PDSCH codeblock task executor. Set to \c nullptr if \ref nof_pdsch_codeblock_threads is less than 2.
-  task_executor* pdsch_codeblock_task_executor = nullptr;
-};
-
-/// Lite PDSCH processor configuration parameters.
-struct pdsch_processor_lite_configuration {
-  // No parameter.
+  task_executor& pdsch_codeblock_task_executor;
 };
 
 /// \brief Downlink processor software factory configuration.
@@ -149,7 +156,7 @@ struct pdsch_processor_lite_configuration {
 struct downlink_processor_factory_sw_config {
   /// \brief LDPC encoder type.
   ///
-  /// Use of there options:
+  /// Use of these options:
   /// - \c auto: let the factory select the most efficient given the CPU architecture, or
   /// - \c generic: for using unoptimized LDPC encoder, or
   /// - \c avx2: for using AVX2 optimized LDPC encoder (x86_64 CPUs only), or
@@ -157,21 +164,17 @@ struct downlink_processor_factory_sw_config {
   std::string ldpc_encoder_type;
   /// \brief CRC calculator type.
   ///
-  /// Use of there options:
+  /// Use of these options:
   /// - \c auto: let the factory select the most efficient given the CPU architecture, or
   /// - \c lut: for using a look-up table CRC calculator, or
   /// - \c clmul: for using a look-up table CRC calculator (x86_64 CPUs only).
   std::string crc_calculator_type;
   /// \brief PDSCH processor type.
   ///
-  /// Use of there options:
+  /// Use of these options:
   /// - \c generic: for using unoptimized PDSCH processing, or
-  /// - \c concurrent: for using a processor that processes code blocks in parallel, or
-  /// - \c lite: for using a memory optimized processor.
-  std::variant<pdsch_processor_generic_configuration,
-               pdsch_processor_concurrent_configuration,
-               pdsch_processor_lite_configuration>
-      pdsch_processor;
+  /// - \c flexible: for using configurable processor that optimizes memory or performance via concurrency.
+  std::variant<pdsch_processor_generic_configuration, pdsch_processor_flexible_configuration> pdsch_processor;
   /// Number of concurrent threads processing downlink transmissions.
   unsigned nof_concurrent_threads;
   /// \brief Optional hardware-accelerated PDSCH encoder factory.
@@ -245,6 +248,13 @@ struct upper_phy_config {
   /// - \c lut: for using a look-up table CRC calculator, or
   /// - \c clmul: for using a look-up table CRC calculator (x86_64 CPUs only).
   std::string crc_calculator_type;
+  /// \brief PUSCH channel estimator frequency-domain smoothing strategy.
+  ///
+  /// Use one of these options:
+  /// - \c filter: applies a low pass filter to the channel estimates, or
+  /// - \c mean: averages the channel estimates, or
+  /// - \c none: it does not apply any smoothing strategy.
+  std::string pusch_channel_estimator_fd_strategy;
   /// \brief PUSCH channel estimator time-domain interpolation strategy.
   ///
   /// Use one of these options:
@@ -254,6 +264,8 @@ struct upper_phy_config {
   /// The \c average strategy is more robust against noise and interference while \c interpolate is more robust for
   /// fast fading channels.
   std::string pusch_channel_estimator_td_strategy;
+  /// PUSCH channel estimator CFO compensation.
+  bool pusch_channel_estimator_compensate_cfo;
   /// \brief PUSCH channel equalizer algorithm.
   ///
   /// Use one of these options:

@@ -162,6 +162,19 @@ amari 1UE 4x4 mimo:
     MARKERS: "zmq_4x4_mimo"
     RETINA_PARAM_ARGS: "gnb.all.enable_integrity_protection=True"
 
+amari 1UE rtsan:
+  extends: .zmq
+  variables:
+    KEYWORDS: "bidirectional"
+    MARKERS: "zmq_single_ue"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True"
+  needs:
+    - job: "basic rtsan"
+      artifacts: true
+    - *txrx-lib
+    - *retina-needs
+  allow_failure: true
+
 amari 4UE deb:
   extends: .zmq
   rules:
@@ -389,7 +402,6 @@ test mode ru acc100:
     TESTBED: "test_mode_acc100"
     MARKERS: "test_mode_acc100"
     KEYWORDS: ""
-  allow_failure: true
 
 ################################################################################
 # RF
@@ -514,7 +526,7 @@ viavi:
       artifacts: true
     - *retina-needs
   rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/    
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
   parallel:
     matrix:
       - KEYWORDS:
@@ -563,6 +575,19 @@ viavi-debug:
     - job: "basic avx512 dpdk withassert"
       artifacts: true
     - *retina-needs
+
+viavi-rtsan:
+  extends: .viavi
+  needs:
+    - job: "basic avx512 dpdk rtsan"
+      artifacts: true
+    - *retina-needs
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+  parallel:
+    matrix:
+      - KEYWORDS: ["tdd and 6u3d"]
+  allow_failure: true
 
 ################################################################################
 # Garbage collector

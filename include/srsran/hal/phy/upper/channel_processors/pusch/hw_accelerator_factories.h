@@ -36,10 +36,10 @@ struct bbdev_hwacc_pusch_dec_factory_configuration {
   std::string acc_type;
   /// Interfacing to a bbdev-based hardware-accelerator.
   std::shared_ptr<srsran::dpdk::bbdev_acc> bbdev_accelerator;
-  /// Defines if the soft-buffer is implemented in the accelerator or not.
-  bool ext_softbuffer;
   /// Interfacing to an external HARQ buffer context repository.
   std::shared_ptr<ext_harq_buffer_context_repository> harq_buffer_context;
+  /// Forces using the host memory to implement the soft-buffer.
+  bool force_local_harq = false;
   /// Indicates if the accelerated function uses a dedicated hardware queue or needs to reserve one for each operation.
   bool dedicated_queue = true;
 };

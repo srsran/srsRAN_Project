@@ -30,8 +30,12 @@
 
 using namespace srsran;
 
-flexible_o_du_impl::flexible_o_du_impl(unsigned nof_cells_) :
-  nof_cells(nof_cells_), ru_ul_adapt(nof_cells_), ru_timing_adapt(nof_cells_), ru_error_adapt(nof_cells_)
+flexible_o_du_impl::flexible_o_du_impl(unsigned nof_cells_, flexible_o_du_metrics_notifier* notifier) :
+  nof_cells(nof_cells_),
+  ru_ul_adapt(nof_cells_),
+  ru_timing_adapt(nof_cells_),
+  ru_error_adapt(nof_cells_),
+  odu_metrics_handler(notifier)
 {
 }
 
@@ -55,6 +59,11 @@ void flexible_o_du_impl::add_ru(std::unique_ptr<radio_unit> active_ru)
   // Connect the RU adaptor to the RU.
   ru_dl_rg_adapt.connect(ru->get_downlink_plane_handler());
   ru_ul_request_adapt.connect(ru->get_uplink_plane_handler());
+
+  // Update the RU metrics collector.
+  if (auto* collector = ru->get_metrics_collector()) {
+    odu_metrics_handler.set_ru_metrics_collector(*collector);
+  }
 }
 
 void flexible_o_du_impl::add_du(std::unique_ptr<srs_du::o_du> active_du)

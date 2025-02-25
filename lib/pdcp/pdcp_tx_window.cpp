@@ -22,7 +22,6 @@
 
 #include "pdcp_tx_window.h"
 #include "srsran/pdcp/pdcp_config.h"
-#include "srsran/support/srsran_assert.h"
 #include <utility>
 
 using namespace srsran;
@@ -44,23 +43,19 @@ bool pdcp_tx_window::has_sn(uint32_t count) const
   return tx_window.has_sn(count);
 }
 
-pdcp_tx_sdu_info& pdcp_tx_window::operator[](uint32_t count)
+pdcp_tx_buf_info& pdcp_tx_window::operator[](uint32_t count)
 {
-  return tx_window[count];
+  return tx_window[count].sdu_info;
 }
 
-void pdcp_tx_window::add_sdu(uint32_t count, byte_buffer sdu, unique_timer discard_timer)
+void pdcp_tx_window::add_sdu(pdcp_tx_buf_info&& sdu_info, uint32_t sdu_length)
 {
-  pdcp_tx_sdu_info& sdu_info = tx_window.add_sn(count);
-  sdu_info.count             = count;
-  sdu_info.discard_timer     = std::move(discard_timer);
-  sdu_info.sdu_length        = sdu.length();
+  pdcp_tx_window_element& elem = tx_window.add_sn(sdu_info.count);
+  elem.sdu_info                = std::move(sdu_info);
+  elem.sdu_length              = sdu_length;
 
-  sdu_bytes += sdu_info.sdu_length;
+  sdu_bytes += elem.sdu_length;
   nof_sdus++;
-  if (rlc_mode == pdcp_rlc_mode::am) {
-    sdu_info.sdu = std::move(sdu);
-  }
 }
 
 void pdcp_tx_window::remove_sdu(uint32_t count)
@@ -77,6 +72,11 @@ void pdcp_tx_window::clear()
   sdu_bytes = 0;
   nof_sdus  = 0;
   tx_window.clear();
+}
+
+uint32_t pdcp_tx_window::get_nof_sdus() const
+{
+  return nof_sdus;
 }
 
 uint32_t pdcp_tx_window::get_sdu_bytes() const

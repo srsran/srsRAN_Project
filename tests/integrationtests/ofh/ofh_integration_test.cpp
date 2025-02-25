@@ -417,12 +417,12 @@ class dummy_timing_notifier : public ru_timing_notifier
 {
 public:
   // See interface for documentation.
-  void on_tti_boundary(slot_point slot_) override
+  void on_tti_boundary(const tti_boundary_context& slot_context) override
   {
     if (!slot_synchronized) {
-      slot_val          = (slot_ + processing_delay_slots).to_uint();
+      slot_val          = (slot_context.slot + processing_delay_slots).to_uint();
       slot_synchronized = true;
-      fmt::print("Initial slot set to {}\n", slot_point(slot_.numerology(), slot_val));
+      fmt::print("Initial slot set to {}\n", slot_point(slot_context.slot.numerology(), slot_val));
     }
   }
 
@@ -888,7 +888,7 @@ struct worker_manager {
       const single_worker ru_worker{name,
                                     {concurrent_queue_policy::lockfree_spsc, 4},
                                     {{exec_name}},
-                                    std::chrono::microseconds{0},
+                                    std::chrono::microseconds{1},
                                     os_thread_realtime_priority::max() - 0};
       if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);

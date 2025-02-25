@@ -107,10 +107,13 @@ public:
   }
 
   // See interface for documentation.
-  bool                    is_valid(const ssb_processor::pdu_t& pdu) const override { return ssb->is_valid(pdu); }
+  error_type<std::string> is_valid(const ssb_processor::pdu_t& pdu) const override { return ssb->is_valid(pdu); }
   error_type<std::string> is_valid(const pdcch_processor::pdu_t& pdu) const override { return pdcch->is_valid(pdu); }
   error_type<std::string> is_valid(const pdsch_processor::pdu_t& pdu) const override { return pdsch->is_valid(pdu); }
-  bool is_valid(const nzp_csi_rs_generator::config_t& config) const override { return csi->is_valid(config); }
+  error_type<std::string> is_valid(const nzp_csi_rs_generator::config_t& config) const override
+  {
+    return csi->is_valid(config);
+  }
   error_type<std::string> is_valid(const prs_generator_configuration& config) const override
   {
     return prs->is_valid(config);

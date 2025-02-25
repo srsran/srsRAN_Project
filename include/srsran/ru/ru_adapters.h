@@ -28,6 +28,7 @@
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_handler.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_request_notifier.h"
+#include "srsran/phy/upper/upper_phy_timing_context.h"
 #include "srsran/phy/upper/upper_phy_timing_handler.h"
 #include "srsran/ru/ru_downlink_plane.h"
 #include "srsran/ru/ru_error_notifier.h"
@@ -118,11 +119,11 @@ public:
   explicit upper_phy_ru_timing_adapter(unsigned nof_sectors) : handlers(nof_sectors) {}
 
   // See interface for documentation.
-  void on_tti_boundary(slot_point slot) override
+  void on_tti_boundary(const tti_boundary_context& slot_context) override
   {
     srsran_assert(!handlers.empty(), "Adapter is not connected");
     for (auto& handler : handlers) {
-      handler->handle_tti_boundary({slot});
+      handler->handle_tti_boundary({slot_context.slot, slot_context.time_point});
     }
   }
 

@@ -29,8 +29,8 @@
 #include "srsran/phy/lower/processors/uplink/puxch/puxch_processor_baseband.h"
 #include "srsran/phy/lower/processors/uplink/uplink_processor_notifier.h"
 #include "srsran/srsvec/compare.h"
+#include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/dot_prod.h"
-#include "srsran/srsvec/zero.h"
 #include "srsran/support/math/stats.h"
 
 using namespace srsran;
@@ -171,6 +171,10 @@ void lower_phy_uplink_processor_impl::process_symbol_boundary(const baseband_gat
   current_symbol_timestamp = timestamp;
   temp_buffer.resize(current_symbol_size);
 
+  if (i_symbol == 0) {
+    cfo_processor.next_cfo_command();
+  }
+
   // Process baseband.
   process_collecting(samples, timestamp);
 }
@@ -215,6 +219,15 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
     return;
   }
 
+  // Perform carrier frequency offset compensation.
+  for (unsigned i_channel = 0; i_channel != temp_buffer.get_nof_channels(); ++i_channel) {
+    span<cf_t> channel_buffer = temp_buffer.get_writer().get_channel_buffer(i_channel);
+    cfo_processor.process(channel_buffer);
+  }
+
+  // Advance CFO processor number of samples.
+  cfo_processor.advance(temp_buffer.get_nof_samples());
+
   // Process symbol by PRACH processor.
   prach_processor_baseband::symbol_context prach_context;
   prach_context.slot   = current_slot;
@@ -246,9 +259,6 @@ void lower_phy_uplink_processor_impl::process_collecting(const baseband_gateway_
       peak_power.update(srsvec::max_abs_element(channel_buffer).second);
       nof_clipped_samples += srsvec::count_if_part_abs_greater_than(channel_buffer, 0.95);
       total_processed_samples += channel_buffer.size();
-
-      // Perform carrier frequency offset.
-      cfo_processor.process(channel_buffer);
     }
 
     metrics.avg_power  = avg_power.get_mean();

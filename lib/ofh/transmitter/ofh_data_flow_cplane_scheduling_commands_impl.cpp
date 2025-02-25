@@ -73,7 +73,7 @@ generate_section1_control_parameters(const data_flow_cplane_type_1_context& cont
   return msg_params;
 }
 
-/// \brief Converts PRACH subcarrier spacing numerology to ORAN specific value.
+/// Converts PRACH subcarrier spacing numerology to O-RAN specific value.
 static cplane_scs cplane_convert_scs(prach_subcarrier_spacing scs)
 {
   switch (scs) {

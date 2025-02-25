@@ -21,15 +21,14 @@
  */
 
 #include "srsran/support/resource_usage/resource_usage_utils.h"
-#include "srsran/support/cpu_architecture_info.h"
 
 using namespace srsran;
 using namespace resource_usage_utils;
 
 /// Converts rusage struct to the snapshot.
-static snapshot to_snapshot(const ::rusage& rusg)
+static cpu_snapshot to_snapshot(const ::rusage& rusg)
 {
-  snapshot s;
+  cpu_snapshot s;
   s.tp          = rusage_meas_clock::now();
   s.user_time   = std::chrono::seconds{rusg.ru_utime.tv_sec} + std::chrono::microseconds{rusg.ru_utime.tv_usec};
   s.system_time = std::chrono::seconds{rusg.ru_stime.tv_sec} + std::chrono::microseconds{rusg.ru_stime.tv_usec};
@@ -38,7 +37,7 @@ static snapshot to_snapshot(const ::rusage& rusg)
   return s;
 }
 
-expected<snapshot, int> resource_usage_utils::now(rusage_measurement_type type)
+expected<cpu_snapshot, int> resource_usage_utils::cpu_usage_now(rusage_measurement_type type)
 {
   ::rusage ret;
   if (::getrusage(static_cast<__rusage_who_t>(type), &ret) == 0) {
@@ -63,12 +62,13 @@ resource_usage_metrics resource_usage_utils::res_usage_measurements_to_metrics(m
 {
   static constexpr unsigned BYTES_IN_KB = 1024;
 
-  unsigned nof_cpus            = cpu_architecture_info::get().get_host_total_nof_cpus();
-  auto     total_cpu_time_used = measurements.user_time + measurements.system_time;
+  auto total_cpu_time_used = measurements.user_time + measurements.system_time;
 
-  resource_usage_metrics metrics;
-  metrics.cpu_stats.cpu_usage_percentage     = total_cpu_time_used / (period * nof_cpus);
-  metrics.cpu_stats.cpu_utilization_nof_cpus = total_cpu_time_used / (measurements.duration * nof_cpus);
-  metrics.memory_stats.memory_usage          = units::bytes(BYTES_IN_KB * measurements.max_rss);
+  resource_usage_metrics metrics = {};
+  metrics.cpu_stats.cpu_usage_percentage =
+      static_cast<double>(total_cpu_time_used.count()) / static_cast<double>(period.count());
+  metrics.cpu_stats.cpu_utilization_nof_cpus =
+      static_cast<double>(total_cpu_time_used.count()) / static_cast<double>(measurements.duration.count());
+  metrics.memory_stats.memory_usage = units::bytes(BYTES_IN_KB * measurements.max_rss);
   return metrics;
 }

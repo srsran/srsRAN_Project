@@ -25,7 +25,7 @@
 
 using namespace srsran;
 
-void pdcp_metrics_producer_impl::report_metrics(const pdcp_metrics_container& report)
+void cu_up_pdcp_metrics_producer_impl::report_metrics(const pdcp_metrics_container& report)
 {
-  notifier.on_new_metric(pdcp_metrics_impl(report));
+  notifier.on_new_metric(cu_up_pdcp_metrics_impl(report));
 }

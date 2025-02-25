@@ -24,6 +24,7 @@
 
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/logical_channel/lcid.h"
+#include "srsran/ran/slot_point.h"
 
 namespace srsran {
 

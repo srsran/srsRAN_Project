@@ -22,21 +22,20 @@
 
 #pragma once
 
-#include "srsran/du/du_high/o_du_high_config.h"
-#include "srsran/du/du_low/o_du_low_config.h"
+#include "srsran/du/du_high/o_du_high.h"
+#include "srsran/du/du_low/o_du_low.h"
+#include <memory>
 
 namespace srsran {
 namespace srs_du {
 
-/// O-RAN DU configuration.
-struct o_du_config {
-  o_du_high_config du_high_cfg;
-  o_du_low_config  du_low_cfg;
-};
+class o_du_metrics_notifier;
 
-/// O-RAN DU dependencies.
+/// O-RAN Distributed Unit dependencies.
 struct o_du_dependencies {
-  o_du_high_dependencies du_high_deps;
+  o_du_metrics_notifier*     metrics_notifier = nullptr;
+  std::unique_ptr<o_du_high> odu_hi;
+  std::unique_ptr<o_du_low>  odu_lo;
 };
 
 } // namespace srs_du

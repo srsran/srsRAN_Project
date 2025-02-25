@@ -22,7 +22,6 @@
 
 #include "ue.h"
 #include "../support/dmrs_helpers.h"
-#include "../support/prbs_calculator.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -35,11 +34,13 @@ ue::ue(const ue_creation_command& cmd) :
   ue_ded_cfg(&cmd.cfg),
   pcell_harq_pool(cmd.pcell_harq_pool),
   logger(srslog::fetch_basic_logger("SCHED")),
-  dl_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs),
-  ul_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs),
+  dl_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs,
+               cmd.starts_in_fallback,
+               cmd.cfg.logical_channels()),
+  ul_lc_ch_mgr(cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params.scs, cmd.cfg.logical_channels()),
   ta_mgr(expert_cfg,
          cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
-         ue_ded_cfg->pcell_cfg().cfg_dedicated().tag_id,
+         ue_ded_cfg->pcell_cfg().tag_id(),
          &dl_lc_ch_mgr),
   drx(cell_cfg_common.ul_cfg_common.init_ul_bwp.generic_params.scs,
       cell_cfg_common.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer,
@@ -56,7 +57,6 @@ ue::ue(const ue_creation_command& cmd) :
       cell->set_fallback_state(cmd.starts_in_fallback);
     }
   }
-  dl_lc_ch_mgr.set_fallback_state(cmd.starts_in_fallback);
 }
 
 void ue::slot_indication(slot_point sl_tx)
@@ -224,14 +224,12 @@ bool ue::has_pending_sr() const
   return ul_lc_ch_mgr.has_pending_sr();
 }
 
-unsigned ue::build_dl_transport_block_info(dl_msg_tb_info&                         tb_info,
-                                           unsigned                                tb_size_bytes,
-                                           const bounded_bitset<MAX_NOF_RB_LCIDS>& lcids)
+unsigned ue::build_dl_transport_block_info(dl_msg_tb_info& tb_info, unsigned tb_size_bytes, ran_slice_id_t slice_id)
 {
   unsigned total_subpdu_bytes = 0;
   total_subpdu_bytes += allocate_mac_ces(tb_info, dl_lc_ch_mgr, tb_size_bytes);
   for (const auto lcid : dl_lc_ch_mgr.get_prioritized_logical_channels()) {
-    if (lcid < lcids.size() and lcids.test(lcid)) {
+    if (dl_lc_ch_mgr.get_slice_id(lcid) == slice_id) {
       total_subpdu_bytes +=
           allocate_mac_sdus(tb_info, dl_lc_ch_mgr, tb_size_bytes - total_subpdu_bytes, uint_to_lcid(lcid));
     }

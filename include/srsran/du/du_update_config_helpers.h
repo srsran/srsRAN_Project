@@ -26,6 +26,10 @@
 #include "srsran/du/du_cell_config.h"
 
 namespace srsran {
+
+struct pucch_builder_params;
+struct srs_builder_params;
+
 namespace config_helpers {
 
 /// \brief Compute the largest (internal) BWP PRB interval without PUCCH resources.
@@ -40,8 +44,7 @@ namespace config_helpers {
 /// \param user_params parameters passed by the user for the generation the PUCCH resource list.
 /// \param bwp_size size of the BWP in RBs.
 /// \return The largest (internal) BWP PRB interval without PUCCH resources.
-prb_interval find_largest_prb_interval_without_pucch(const srs_du::pucch_builder_params& user_params,
-                                                     unsigned                            bwp_size);
+prb_interval find_largest_prb_interval_without_pucch(const pucch_builder_params& user_params, unsigned bwp_size);
 
 /// \brief Compute the PRACH frequency start as a function of the PUCCH guardbands.
 ///
@@ -51,8 +54,7 @@ prb_interval find_largest_prb_interval_without_pucch(const srs_du::pucch_builder
 /// \param user_params parameters passed by the user for the generation the PUCCH resource list.
 /// \param bwp_size size of the BWP in RBs.
 /// \return PRACH frequency start.
-unsigned
-compute_prach_frequency_start(const srs_du::pucch_builder_params& user_params, unsigned bwp_size, bool is_long_prach);
+unsigned compute_prach_frequency_start(const pucch_builder_params& user_params, unsigned bwp_size, bool is_long_prach);
 
 /// \brief Compute the number of PUCCH resources that are used for SR and CSI.
 ///
@@ -62,12 +64,24 @@ compute_prach_frequency_start(const srs_du::pucch_builder_params& user_params, u
 /// \param max_pucch_grants_per_slot maximum number of PUCCH grants that can be allocated per slot in the cell.
 /// \param sr_period_msec SR period in milliseconds.
 /// \param csi_period_msec CSI period in milliseconds.
-void compute_nof_sr_csi_pucch_res(srs_du::pucch_builder_params& user_params,
-                                  unsigned                      max_pucch_grants_per_slot,
-                                  float                         sr_period_msec,
-                                  std::optional<unsigned>       csi_period_msec);
+void compute_nof_sr_csi_pucch_res(pucch_builder_params&   user_params,
+                                  unsigned                max_pucch_grants_per_slot,
+                                  float                   sr_period_msec,
+                                  std::optional<unsigned> csi_period_msec);
 
-bounded_integer<unsigned, 1, 14> compute_max_nof_pucch_symbols(const srs_du::srs_builder_params& user_srs_params);
+bounded_integer<unsigned, 1, 14> compute_max_nof_pucch_symbols(const srs_builder_params& user_srs_params);
+
+/// \brief Recompute or add new PUSCH time-domain resources to the list.
+///
+/// This function is used to enable the PUSCH to be scheduled in the SRS slots, where not all OFDM symbols are
+/// available for PUSCH.
+///
+/// \param td_alloc_list List of PUSCH time-domain resources.
+/// \param user_srs_params SRS configuration parameters.
+/// \param tdd_cfg Optional TDD configuration.
+void recompute_pusch_time_domain_resources(std::vector<pusch_time_domain_resource_allocation>& td_alloc_list,
+                                           const srs_builder_params&                           user_srs_params,
+                                           const std::optional<tdd_ul_dl_config_common>&       tdd_cfg);
 
 } // namespace config_helpers
 } // namespace srsran

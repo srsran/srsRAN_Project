@@ -21,7 +21,17 @@
  */
 
 #include "message_loggers.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/crc_indication.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
+#include "srsran/fapi/messages/error_indication.h"
+#include "srsran/fapi/messages/rach_indication.h"
+#include "srsran/fapi/messages/rx_data_indication.h"
+#include "srsran/fapi/messages/slot_indication.h"
+#include "srsran/fapi/messages/srs_indication.h"
+#include "srsran/fapi/messages/tx_data_request.h"
+#include "srsran/fapi/messages/uci_indication.h"
+#include "srsran/fapi/messages/ul_dci_request.h"
+#include "srsran/fapi/messages/ul_tti_request.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
@@ -544,7 +554,7 @@ void srsran::fapi::log_slot_indication(const slot_indication_message& msg,
                                        srslog::basic_logger&          logger)
 {
   logger.set_context(msg.sfn, msg.slot);
-  logger.debug("Sector#{}: Slot.indication", sector_id);
+  logger.debug("Sector#{}: Slot.indication time_point={}", sector_id, msg.time_point.time_since_epoch().count());
 }
 
 void srsran::fapi::log_ul_dci_request(const ul_dci_request_message& msg,

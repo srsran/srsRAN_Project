@@ -20,9 +20,9 @@
  *
  */
 
-#include "lib/du/du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "uci_test_utils.h"
+#include "srsran/scheduler/config/pucch_resource_generator.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -42,11 +42,10 @@ class test_pucch_resource_manager : public ::testing::Test
 {
 public:
   test_pucch_resource_manager() :
-    cell_cfg{sched_cfg, sched_config_helper::make_default_sched_cell_configuration_request()},
     // TODO: when the CSI is enabled in the main config, replace create_initial_ue_serving_cell_config_with_csi() with
     //       config_helpers::create_default_initial_ue_serving_cell_config().
-    ue_cell_cfg(to_rnti(0x4601), cell_cfg, create_initial_ue_serving_cell_config_with_csi()),
-    pucch_cfg{ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value()},
+    ue_cell_cfg(to_rnti(0x4601), cell_cfg, cell_cfg_pool.update_ue(ue_create_req)),
+    pucch_cfg{ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value()},
     sl_tx(slot_point(0, 0))
   {
     uplink_config ul_cfg = test_helpers::make_test_ue_uplink_config(cell_config_builder_params{});
@@ -56,9 +55,13 @@ public:
   };
 
 protected:
-  const scheduler_expert_config sched_cfg = config_helpers::make_default_scheduler_expert_config();
-  cell_configuration            cell_cfg;
-  ue_cell_configuration         ue_cell_cfg;
+  const scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  const sched_cell_configuration_request_message cell_req =
+      sched_config_helper::make_default_sched_cell_configuration_request();
+  const serving_cell_config ue_create_req = create_initial_ue_serving_cell_config_with_csi();
+  du_cell_config_pool       cell_cfg_pool{cell_req};
+  cell_configuration        cell_cfg{sched_cfg, cell_req};
+  ue_cell_configuration     ue_cell_cfg;
   // Helper variable.
   const pucch_config& pucch_cfg;
   // Config with alternative configuration for SR using PUCCH resource idx 10.
@@ -488,10 +491,10 @@ TEST_F(test_pucch_resource_manager, test_cancel_last_ue_res_reservations_for_har
   // Don't set this reservation in the tracker, as we want to preserve this resource.
   res_manager.set_new_resource_allocation(to_rnti(0x4601), srsran::pucch_resource_usage::CSI);
 
-  auto* csi_resource = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg);
+  const auto* csi_resource = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4601), ue_cell_cfg);
   ASSERT_NE(nullptr, csi_resource);
 
-  auto* csi_resource_1 = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4602), ue_cell_cfg);
+  const auto* csi_resource_1 = res_manager.reserve_csi_resource(sl_tx, to_rnti(0x4602), ue_cell_cfg);
   ASSERT_EQ(nullptr, csi_resource_1);
 
   // Release the tracked resources of the first UE.
@@ -509,12 +512,12 @@ TEST_F(test_pucch_resource_manager, test_cancel_last_ue_res_reservations_for_har
   auto alloc = res_manager.reserve_next_set_0_harq_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
   ASSERT_EQ(0U, alloc.pucch_res_indicator);
 
-  auto* sr_resource = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
+  const auto* sr_resource = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4601), pucch_cfg);
   ASSERT_NE(nullptr, sr_resource);
 
   res_manager.set_new_resource_allocation(to_rnti(0x4601), srsran::pucch_resource_usage::SR);
 
-  auto* sr_resource_1 = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
+  const auto* sr_resource_1 = res_manager.reserve_sr_res_available(sl_tx, to_rnti(0x4602), pucch_cfg);
   ASSERT_EQ(nullptr, sr_resource_1);
 
   // Release the tracked resources of the first UE.
@@ -533,16 +536,13 @@ public:
 
 protected:
   struct dummy_ue {
-    dummy_ue(rnti_t rnti, const cell_configuration& cell_cfg_common_, const serving_cell_config& serv_cell_cfg_) :
+    dummy_ue(rnti_t rnti, const cell_configuration& cell_cfg_common_, ue_cell_config_ptr ue_cell_cfg_) :
       cnrti{rnti},
-      ue_cell_cfg{rnti, cell_cfg_common_, serv_cell_cfg_} {
+      ue_cell_cfg{rnti, cell_cfg_common_, ue_cell_cfg_} {
 
       };
 
-    [[nodiscard]] const pucch_config& get_pucch_cfg() const
-    {
-      return ue_cell_cfg.cfg_dedicated().ul_config.value().init_ul_bwp.pucch_cfg.value();
-    }
+    [[nodiscard]] const pucch_config& get_pucch_cfg() const { return ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value(); }
 
     rnti_t                cnrti;
     ue_cell_configuration ue_cell_cfg;
@@ -551,7 +551,7 @@ protected:
   void generate_ue_serv_cell_cfg(serving_cell_config&         serv_cell_cfg,
                                  unsigned                     ue_idx,
                                  unsigned                     nof_pucch_cfgs,
-                                 std::vector<pucch_resource>& cell_res_list)
+                                 std::vector<pucch_resource>& cell_res_list) const
   {
     const unsigned nof_ue_pucch_f1_res_harq = nof_res_per_ue;
     const unsigned nof_ue_pucch_f2_res_harq = nof_res_per_ue;
@@ -622,17 +622,18 @@ protected:
   {
     nof_res_per_ue = nof_res_per_ue_;
     cell_pucch_res_list =
-        srs_du::generate_cell_pucch_res_list((nof_res_per_ue + 1) * nof_configurations,
-                                             (nof_res_per_ue + 1) * nof_configurations,
-                                             srs_du::pucch_f1_params{},
-                                             srs_du::pucch_f2_params{},
-                                             cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
-                                             NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
+        config_helpers::generate_cell_pucch_res_list((nof_res_per_ue + 1) * nof_configurations,
+                                                     (nof_res_per_ue + 1) * nof_configurations,
+                                                     pucch_f1_params{},
+                                                     pucch_f2_params{},
+                                                     cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length(),
+                                                     NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
     for (unsigned ue_idx = 0; ue_idx != nof_ues; ++ue_idx) {
       sched_ue_creation_request_message ue_req   = sched_config_helper::create_default_sched_ue_creation_request();
       serving_cell_config&              serv_cfg = ue_req.cfg.cells->front().serv_cell_cfg;
       generate_ue_serv_cell_cfg(serv_cfg, ue_idx, nof_configurations, cell_pucch_res_list);
-      ues.emplace_back(std::make_unique<dummy_ue>(to_rnti(0x4601 + ue_idx), cell_cfg, serv_cfg));
+      ues.emplace_back(
+          std::make_unique<dummy_ue>(to_rnti(0x4601 + ue_idx), cell_cfg, cell_cfg_pool.update_ue(serv_cfg)));
     }
   }
 

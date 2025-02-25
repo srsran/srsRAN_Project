@@ -47,6 +47,14 @@ struct pdcch_config_common {
   std::optional<search_space_id>          paging_search_space_id;
   /// SearchSpace of RA procedure. If field is invalid, the UE does not receive RAR in this BWP.
   search_space_id ra_search_space_id;
+
+  bool operator==(const pdcch_config_common& other) const
+  {
+    return coreset0 == other.coreset0 and common_coreset == other.common_coreset and
+           search_spaces == other.search_spaces and sib1_search_space_id == other.sib1_search_space_id and
+           other_si_search_space_id == other.other_si_search_space_id and
+           paging_search_space_id == other.paging_search_space_id and ra_search_space_id == other.ra_search_space_id;
+  }
 };
 
 /// BWP-Id used to identify a BWP from the perspective of a UE.
@@ -62,6 +70,8 @@ constexpr bwp_id_t to_bwp_id(std::underlying_type_t<bwp_id_t> value)
 struct pdsch_config_common {
   /// PDSCH time domain resource allocations. Size: (0..maxNrofDL-Allocations=16).
   std::vector<pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
+
+  bool operator==(const pdsch_config_common& other) const { return pdsch_td_alloc_list == other.pdsch_td_alloc_list; }
 };
 
 /// Used to configure the common, cell-specific parameters of a DL BWP.
@@ -70,6 +80,12 @@ struct bwp_downlink_common {
   bwp_configuration   generic_params;
   pdcch_config_common pdcch_common;
   pdsch_config_common pdsch_common;
+
+  bool operator==(const bwp_downlink_common& other) const
+  {
+    return generic_params == other.generic_params and pdcch_common == other.pdcch_common and
+           pdsch_common == other.pdsch_common;
+  }
 };
 
 /// \remark See TS 38.331, "PUSCH-ConfigCommon".
@@ -87,6 +103,12 @@ struct pusch_config_common {
   /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS 38.213.
   /// Values {-6,...,8} and must be a multiple of 2.
   bounded_integer<int, -6, 8> msg3_delta_power;
+
+  bool operator==(const pusch_config_common& other) const
+  {
+    return pusch_td_alloc_list == other.pusch_td_alloc_list and msg3_delta_preamble == other.msg3_delta_preamble and
+           p0_nominal_with_grant == other.p0_nominal_with_grant and msg3_delta_power == other.msg3_delta_power;
+  }
 };
 
 /// \remark See TS 38.331, "PUCCH-ConfigCommon".
@@ -98,6 +120,12 @@ struct pucch_config_common {
   std::optional<unsigned> hopping_id;
   /// Values: {-202, ..., 24}
   int p0_nominal;
+
+  bool operator==(const pucch_config_common& other) const
+  {
+    return pucch_resource_common == other.pucch_resource_common and group_hopping == other.group_hopping and
+           hopping_id == other.hopping_id and p0_nominal == other.p0_nominal;
+  }
 };
 
 /// Used to configure the common, cell-specific parameters of an UL BWP.
@@ -107,6 +135,12 @@ struct bwp_uplink_common {
   std::optional<rach_config_common>  rach_cfg_common;
   std::optional<pusch_config_common> pusch_cfg_common;
   std::optional<pucch_config_common> pucch_cfg_common;
+
+  bool operator==(const bwp_uplink_common& other) const
+  {
+    return generic_params == other.generic_params and rach_cfg_common == other.rach_cfg_common and
+           pusch_cfg_common == other.pusch_cfg_common and pucch_cfg_common == other.pucch_cfg_common;
+  }
 };
 
 /// \brief Used to indicate a frequency band

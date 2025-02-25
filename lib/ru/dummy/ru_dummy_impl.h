@@ -70,6 +70,9 @@ public:
   // See radio_unit interface for documentation.
   ru_uplink_plane_handler& get_uplink_plane_handler() override { return *this; }
 
+  // See interface for documentation.
+  ru_metrics_collector* get_metrics_collector() override { return nullptr; }
+
 private:
   /// Possible internal states.
   enum class state : uint8_t { idle = 0, running, wait_stop, stopped };
@@ -141,7 +144,7 @@ private:
   /// Slot time in microseconds.
   std::chrono::microseconds slot_duration;
   /// Number of slots is notified in advance of the transmission time.
-  unsigned max_processing_delay_slots;
+  const unsigned max_processing_delay_slots;
   /// Current slot.
   slot_point current_slot;
   /// Radio unit sectors.

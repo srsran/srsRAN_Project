@@ -38,7 +38,7 @@ public:
   virtual ~phy_metric_notifier() = default;
 
   /// Notifies a new metric collection.
-  virtual void new_metric(const Metrics& metrics) = 0;
+  virtual void on_new_metric(const Metrics& metrics) = 0;
 };
 
 } // namespace detail
@@ -54,6 +54,7 @@ using pseudo_random_sequence_generator_metric_notifier =
     detail::phy_metric_notifier<pseudo_random_sequence_generator_metrics>;
 using channel_precoder_metric_notifier          = detail::phy_metric_notifier<channel_precoder_metrics>;
 using channel_equalizer_metric_notifier         = detail::phy_metric_notifier<channel_equalizer_metrics>;
+using channel_modulation_metrics_notifier       = detail::phy_metric_notifier<channel_modulation_metrics>;
 using common_channel_modulation_metric_notifier = detail::phy_metric_notifier<modulation_mapper_metrics>;
 using pdsch_modulation_mapper_metric_notifier   = common_channel_modulation_metric_notifier;
 using pusch_demodulation_mapper_metric_notifier = common_channel_modulation_metric_notifier;

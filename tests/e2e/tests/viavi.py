@@ -48,6 +48,7 @@ from .steps.stub import _stop_stub, GNB_STARTUP_TIMEOUT, handle_start_error, sto
 
 _OMIT_VIAVI_FAILURE_LIST = ["authentication"]
 _FLAKY_ERROR_LIST = ["Error creating the pod", "Viavi API call timed out"]
+_GNB_STOP_TIMEOUT = 15  # When timeout reached, retina gets GDB backtrace and sends sigkill. 0 means no timeout
 
 
 # pylint: disable=too-many-instance-attributes
@@ -78,8 +79,9 @@ class _ViaviResult:
     """
 
     criteria_name: str
-    expected: float
     current: float
+    expected_operator: str
+    expected: float
     is_ok: bool
 
 
@@ -177,7 +179,7 @@ def test_viavi_manual(
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
-    gnb_stop_timeout: int = 0,
+    gnb_stop_timeout: int = _GNB_STOP_TIMEOUT,
     log_search: bool = True,
 ):
     """
@@ -243,7 +245,7 @@ def test_viavi(
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
-    gnb_stop_timeout: int = 0,
+    gnb_stop_timeout: int = _GNB_STOP_TIMEOUT,
     log_search: bool = True,
 ):
     """
@@ -299,7 +301,7 @@ def test_viavi_debug(
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
-    gnb_stop_timeout: int = 0,
+    gnb_stop_timeout: int = _GNB_STOP_TIMEOUT,
     log_search: bool = True,
 ):
     """
@@ -343,7 +345,7 @@ def _test_viavi(
     # Test extra params
     always_download_artifacts: bool = True,
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
-    gnb_stop_timeout: int = 0,
+    gnb_stop_timeout: int = _GNB_STOP_TIMEOUT,
     log_search: bool = True,
 ):
     """
@@ -479,107 +481,70 @@ def check_metrics_criteria(
     Check pass/fail criteria
     """
 
-    is_ok = True
-
     # Check metrics
     viavi_kpis: ViaviKPIs = viavi.get_test_kpis()
+    viavi_kpis.print_procedure_failures(_OMIT_VIAVI_FAILURE_LIST)
     kpis: KPIs = get_kpis(gnb, viavi_kpis=viavi_kpis, metrics_summary=metrics_summary)
 
-    criteria_result: List[_ViaviResult] = []
-    criteria_dl_brate_aggregate = check_criteria(
-        kpis.dl_brate_aggregate, test_configuration.expected_dl_bitrate, operator.gt
-    )
-    criteria_result.append(
-        _ViaviResult(
-            "DL bitrate", test_configuration.expected_dl_bitrate, kpis.dl_brate_aggregate, criteria_dl_brate_aggregate
-        )
-    )
-
-    criteria_ul_brate_aggregate = check_criteria(
-        kpis.ul_brate_aggregate, test_configuration.expected_ul_bitrate, operator.gt
-    )
-    criteria_result.append(
-        _ViaviResult(
-            "UL bitrate", test_configuration.expected_ul_bitrate, kpis.ul_brate_aggregate, criteria_ul_brate_aggregate
-        )
-    )
-
-    criteria_nof_ko_dl_gnb = check_criteria(kpis.nof_ko_dl, test_configuration.expected_nof_kos + 100, operator.lt)
-    criteria_result.append(
-        _ViaviResult(
-            "DL KOs (gnb)",
-            test_configuration.expected_nof_kos + 100,
-            kpis.nof_ko_dl,
-            criteria_nof_ko_dl_gnb,
-        )
-    )
-
-    viavi_dl_kos = viavi_kpis.dl_data.num_tbs_errors if viavi_kpis.dl_data.num_tbs_errors is not None else 0
-    criteria_nof_ko_dl_viavi = check_criteria(viavi_dl_kos, test_configuration.expected_nof_kos, operator.lt)
-    criteria_result.append(
-        _ViaviResult(
+    criteria_result = [
+        _create_viavi_result(
+            "DL bitrate", kpis.dl_brate_aggregate, operator.gt, test_configuration.expected_dl_bitrate
+        ),
+        _create_viavi_result(
+            "UL bitrate", kpis.ul_brate_aggregate, operator.gt, test_configuration.expected_ul_bitrate
+        ),
+        _create_viavi_result("DL KOs (gnb)", kpis.nof_ko_dl, operator.lt, test_configuration.expected_nof_kos + 100),
+        _create_viavi_result(
             "DL KOs (viavi)",
+            viavi_kpis.dl_data.num_tbs_errors if viavi_kpis.dl_data.num_tbs_errors is not None else 0,
+            operator.lt,
             test_configuration.expected_nof_kos,
-            viavi_dl_kos,
-            criteria_nof_ko_dl_viavi,
-        )
-    )
-
-    criteria_nof_ko_ul_gnb = check_criteria(kpis.nof_ko_ul, test_configuration.expected_nof_kos, operator.lt)
-    criteria_result.append(
-        _ViaviResult(
-            "UL KOs (gnb)",
-            test_configuration.expected_nof_kos,
-            kpis.nof_ko_ul,
-            criteria_nof_ko_ul_gnb,
-        )
-    )
-
-    viavi_ul_kos = viavi_kpis.ul_data.num_tbs_nack if viavi_kpis.ul_data.num_tbs_nack is not None else 0
-    criteria_nof_ko_ul_viavi = check_criteria(viavi_ul_kos, test_configuration.expected_nof_kos, operator.lt)
-    criteria_result.append(
-        _ViaviResult(
+        ),
+        _create_viavi_result("UL KOs (gnb)", kpis.nof_ko_ul, operator.lt, test_configuration.expected_nof_kos),
+        _create_viavi_result(
             "UL KOs (viavi)",
+            viavi_kpis.ul_data.num_tbs_nack if viavi_kpis.ul_data.num_tbs_nack is not None else 0,
+            operator.lt,
             test_configuration.expected_nof_kos,
-            viavi_ul_kos,
-            criteria_nof_ko_ul_viavi,
-        )
-    )
-
-    criteria_nof_errors = check_criteria(gnb_error_count, 0, operator.eq)
-    criteria_result.append(
-        _ViaviResult("Errors" + (" & warnings" if warning_as_errors else ""), 0, gnb_error_count, criteria_nof_errors)
-    )
-
-    # Check procedure table
-    viavi_kpis.print_procedure_failures(_OMIT_VIAVI_FAILURE_LIST)
-    criteria_procedure_table = viavi_kpis.get_number_of_procedure_failures(_OMIT_VIAVI_FAILURE_LIST) == 0
-    criteria_result.append(
-        _ViaviResult(
-            "Procedure table",
-            0,
-            viavi_kpis.get_number_of_procedure_failures(_OMIT_VIAVI_FAILURE_LIST),
-            criteria_procedure_table,
-        )
-    )
-
-    is_ok = (
-        criteria_dl_brate_aggregate
-        and criteria_ul_brate_aggregate
-        and criteria_nof_ko_dl_gnb
-        and criteria_nof_ko_dl_viavi
-        and criteria_nof_ko_ul_gnb
-        and criteria_nof_ko_ul_viavi
-        and criteria_procedure_table
-    )
+        ),
+        _create_viavi_result("Errors" + (" & warnings" if warning_as_errors else ""), gnb_error_count, operator.eq, 0),
+        _create_viavi_result(
+            "Procedure table", viavi_kpis.get_number_of_procedure_failures(_OMIT_VIAVI_FAILURE_LIST), operator.eq, 0
+        ),
+    ]
 
     create_table(criteria_result, capsys)
-    if not is_ok:
-        criteria_errors_str = []
-        for criteria in criteria_result:
-            if not criteria.is_ok:
-                criteria_errors_str.append(criteria.criteria_name)
+    criteria_errors_str = []
+    for criteria in criteria_result:
+        if not criteria.is_ok:
+            criteria_errors_str.append(criteria.criteria_name)
+    if criteria_errors_str:
         pytest.fail("Test didn't pass the following criteria: " + ", ".join(criteria_errors_str))
+
+
+def _create_viavi_result(
+    criteria_name: str,
+    current: float,
+    operator_method: Callable,
+    expected: float,
+) -> _ViaviResult:
+
+    is_ok = operator_method(current, expected)
+
+    return _ViaviResult(
+        criteria_name=criteria_name,
+        current=current,
+        expected_operator={
+            operator.lt: "<",
+            operator.le: "<=",
+            operator.eq: "==",
+            operator.ne: "!=",
+            operator.gt: ">",
+            operator.ge: ">=",
+        }.get(operator_method, "?"),
+        expected=expected,
+        is_ok=is_ok,
+    )
 
 
 def create_table(results: List[_ViaviResult], capsys):
@@ -589,16 +554,16 @@ def create_table(results: List[_ViaviResult], capsys):
     table = Table(title="Viavi Results")
 
     table.add_column("Criteria Name", justify="left", style="cyan", no_wrap=True)
-    table.add_column("Expected", justify="right", style="magenta")
     table.add_column("Result", justify="right", style="magenta")
+    table.add_column("Expected", justify="right", style="magenta")
     table.add_column("Pass", justify="center", style="magenta")
 
     for result in results:
         row_style = "green" if result.is_ok else "red"
         table.add_row(
             result.criteria_name,
-            f"{get_str_number_criteria(result.expected)}",
             f"{get_str_number_criteria(result.current)}",
+            f"{result.expected_operator} {get_str_number_criteria(result.expected)}",
             "✅" if result.is_ok else "❌",
             style=row_style,
         )

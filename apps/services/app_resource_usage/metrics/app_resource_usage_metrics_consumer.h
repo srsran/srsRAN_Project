@@ -23,29 +23,35 @@
 #pragma once
 
 #include "apps/services/app_resource_usage/metrics/app_resource_usage_metrics.h"
+#include "srsran/srslog/log_channel.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {
 
-/// Consumer for the log resource usage metrics.
+/// Log consumer for the resource usage metrics.
 class resource_usage_metrics_consumer_log : public app_services::metrics_consumer
 {
 public:
-  explicit resource_usage_metrics_consumer_log(srslog::basic_logger& logger_) : logger(logger_) {}
+  explicit resource_usage_metrics_consumer_log(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
 
   // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override
-  {
-    const resource_usage_metrics& sys_metrics = static_cast<const resource_usage_metrics_impl&>(metric).get_metrics();
-
-    logger.info("Application CPU usage: {}%, {} CPUs",
-                sys_metrics.cpu_stats.cpu_usage_percentage,
-                sys_metrics.cpu_stats.cpu_utilization_nof_cpus);
-    logger.info("Application memory usage: {} Bytes", sys_metrics.memory_stats.memory_usage.value());
-  }
+  void handle_metric(const app_services::metrics_set& metric) override;
 
 private:
-  srslog::basic_logger& logger;
+  srslog::log_channel& log_chan;
+};
+
+/// JSON consumer for the resource usage metrics.
+class resource_usage_metrics_consumer_json : public app_services::metrics_consumer
+{
+public:
+  explicit resource_usage_metrics_consumer_json(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
+
+  // See interface for documentation.
+  void handle_metric(const app_services::metrics_set& metric) override;
+
+private:
+  srslog::log_channel& log_chan;
 };
 
 } // namespace srsran

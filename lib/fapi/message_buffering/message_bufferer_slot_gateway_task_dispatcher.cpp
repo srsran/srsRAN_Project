@@ -21,7 +21,10 @@
  */
 
 #include "message_bufferer_slot_gateway_task_dispatcher.h"
-#include "srsran/fapi/messages.h"
+#include "srsran/fapi/messages/dl_tti_request.h"
+#include "srsran/fapi/messages/tx_data_request.h"
+#include "srsran/fapi/messages/ul_dci_request.h"
+#include "srsran/fapi/messages/ul_tti_request.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/task_executor.h"
 

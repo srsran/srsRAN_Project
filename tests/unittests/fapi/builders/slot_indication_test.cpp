@@ -28,11 +28,13 @@ using namespace fapi;
 
 TEST(slot_indication_builder, valid_basic_parameters_passes)
 {
-  unsigned sfn  = 419;
-  unsigned slot = 12;
+  unsigned                                           sfn        = 419;
+  unsigned                                           slot       = 12;
+  std::chrono::time_point<std::chrono::system_clock> time_point = std::chrono::system_clock::now();
 
-  const auto& msg = build_slot_indication_message(sfn, slot);
+  const auto& msg = build_slot_indication_message(sfn, slot, time_point);
 
   ASSERT_EQ(sfn, msg.sfn);
   ASSERT_EQ(slot, msg.slot);
+  ASSERT_EQ(time_point, msg.time_point);
 }

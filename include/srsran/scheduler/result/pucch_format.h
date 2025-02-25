@@ -65,9 +65,7 @@ struct pucch_format_0 {
   /// \f$n_{ID}\f$ as per Section 6.3.2.2.1, TS 38.211.
   unsigned n_id_hopping;
   /// \c initialCyclicShift, as per TS 38.331, or Section 9.2.1, TS 38.211.
-  uint8_t     initial_cyclic_shift;
-  sr_nof_bits sr_bits;
-  unsigned    harq_ack_nof_bits;
+  uint8_t initial_cyclic_shift;
 };
 
 /// Scheduler output for PUCCH Format 1.
@@ -80,16 +78,11 @@ struct pucch_format_1 {
   uint8_t initial_cyclic_shift;
   /// \c timeDomainOCC as per TS 38.331, or equivalent to index \f$n\f$ in Table 6.3.2.4.1-2, TS 38.211.
   uint8_t                  time_domain_occ;
-  sr_nof_bits              sr_bits;
-  unsigned                 harq_ack_nof_bits;
   pucch_repetition_tx_slot slot_repetition;
 };
 
 /// Scheduler output for PUCCH Format 2.
 struct pucch_format_2 {
-  sr_nof_bits sr_bits;
-  unsigned    harq_ack_nof_bits;
-  unsigned    csi_part1_bits;
   /// \f$n_{ID}\f$ as per Section 6.3.2.5.1 and 6.3.2.6.1, TS 38.211.
   uint16_t n_id_scambling;
   /// \f$N_{ID}^0\f$ as per TS 38.211, Section 6.4.1.3.2.1.
@@ -103,9 +96,6 @@ struct pucch_format_3 {
   pucch_group_hopping group_hopping;
   /// \f$n_{ID}\f$ as per Section 6.3.2.2.1, TS 38.211.
   unsigned                 n_id_hopping;
-  sr_nof_bits              sr_bits;
-  unsigned                 harq_ack_nof_bits;
-  unsigned                 csi_part1_bits;
   pucch_repetition_tx_slot slot_repetition;
   uint16_t                 n_id_scrambling;
   bool                     pi_2_bpsk;
@@ -121,9 +111,6 @@ struct pucch_format_4 {
   pucch_group_hopping group_hopping;
   /// \f$n_{ID}\f$ as per Section 6.3.2.2.1, TS 38.211.
   unsigned                 n_id_hopping;
-  sr_nof_bits              sr_bits;
-  unsigned                 harq_ack_nof_bits;
-  unsigned                 csi_part1_bits;
   pucch_repetition_tx_slot slot_repetition;
   uint16_t                 n_id_scrambling;
   bool                     pi_2_bpsk;

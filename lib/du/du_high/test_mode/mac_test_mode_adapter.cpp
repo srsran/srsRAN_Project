@@ -387,8 +387,8 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
         // UE is not test mode or it has already received Msg4.
         continue;
       }
-      if ((pucch.format == pucch_format::FORMAT_1 and pucch.format_1.harq_ack_nof_bits > 0) or
-          (pucch.format == pucch_format::FORMAT_0 and pucch.format_0.harq_ack_nof_bits > 0)) {
+      if ((pucch.format() == pucch_format::FORMAT_0 or pucch.format() == pucch_format::FORMAT_1) and
+          pucch.uci_bits.harq_ack_nof_bits > 0) {
         // In case of PUCCH F1 with HARQ-ACK bits, we assume that the Msg4 is received. At this point, we
         // update the test UE with positive DL buffer states and BSR.
         if (test_ue_cfg.pdsch_active) {
@@ -408,6 +408,10 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
 
         // Mark Msg4 received for the UE.
         ue_info_mgr.msg4_rxed(pucch.crnti, true);
+
+        // Push an UL PDU that will serve as rrcSetupComplete and get the UE out of fallback mode.
+        auto rx_pdu = create_test_pdu_with_rrc_setup_complete(cell_index, ul_res.slot, pucch.crnti, to_harq_id(0));
+        pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
       }
     }
   }
@@ -547,7 +551,7 @@ async_task<mac_ue_create_response> mac_test_mode_adapter::handle_ue_create_reque
   if (ue_info_mgr.is_test_ue(cfg.crnti)) {
     // It is the test UE.
     mac_ue_create_request cfg_copy = cfg;
-    cfg_copy.initial_fallback      = false;
+    cfg_copy.initial_fallback      = true;
 
     // Save UE index and configuration of test mode UE.
     ue_info_mgr.add_ue(cfg.crnti, cfg_copy.ue_index, cfg_copy.sched_cfg);
@@ -612,8 +616,9 @@ std::unique_ptr<mac_interface> srsran::srs_du::create_du_high_mac(const mac_conf
                                               mac_testmode->get_phy_notifier(),
                                               mac_cfg.mac_cfg,
                                               mac_cfg.pcap,
+                                              mac_cfg.timers,
+                                              mac_cfg.metrics_notifier,
                                               mac_cfg.sched_cfg,
-                                              mac_cfg.metric_notifier,
-                                              mac_cfg.timers}));
+                                              mac_cfg.sched_metric_notifier}));
   return mac_testmode;
 }

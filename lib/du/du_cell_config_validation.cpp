@@ -21,7 +21,6 @@
  */
 
 #include "srsran/du/du_cell_config_validation.h"
-#include "du_high/du_manager/ran_resource_management/pucch_resource_generator.h"
 #include "srsran/asn1/rrc_nr/serving_cell.h"
 #include "srsran/du/du_update_config_helpers.h"
 #include "srsran/ran/band_helper.h"
@@ -32,11 +31,11 @@
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/ran/ssb_mapping.h"
+#include "srsran/scheduler/config/pucch_resource_generator.h"
 #include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/config/serving_cell_config_validator.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/support/config/validator_helpers.h"
-#include <numeric>
 
 using namespace srsran;
 using namespace srs_du;
@@ -659,7 +658,7 @@ check_outcome srs_du::is_du_cell_config_valid(const du_cell_config& cell_cfg)
   HANDLE_ERROR(check_ssb_configuration(cell_cfg));
   HANDLE_ERROR(check_tdd_ul_dl_config(cell_cfg));
   const pucch_builder_params& pucch_cfg = cell_cfg.pucch_cfg;
-  HANDLE_ERROR(srs_du::pucch_parameters_validator(
+  HANDLE_ERROR(config_helpers::pucch_parameters_validator(
       pucch_cfg.nof_ue_pucch_f0_or_f1_res_harq.to_uint() * pucch_cfg.nof_cell_harq_pucch_res_sets +
           pucch_cfg.nof_sr_resources,
       pucch_cfg.nof_ue_pucch_f2_or_f3_or_f4_res_harq.to_uint() * pucch_cfg.nof_cell_harq_pucch_res_sets +

@@ -21,8 +21,8 @@
  */
 
 #include "o_du_low_unit_factory.h"
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/worker_manager/worker_manager.h"
-#include "apps/units/flexible_o_du/o_du_low/metrics/du_low_metric_producer_impl.h"
 #include "du_low_config.h"
 #include "du_low_config_translator.h"
 #include "du_low_hal_factory.h"
@@ -47,21 +47,37 @@ static void generate_dl_processor_config(downlink_processor_factory_sw_config& o
     out_cfg.hw_encoder_factory = hw_encoder_factory;
   }
 
-  // Hardware-acceleration is currently supported for 'generic' PDSCH processor types only.
-  if ((!hwacc_pdsch_processor) &&
-      ((upper_phy_threads_cfg.pdsch_processor_type == "lite") ||
-       ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_dl_threads == 1)))) {
-    out_cfg.pdsch_processor.emplace<pdsch_processor_lite_configuration>();
-  } else if ((!hwacc_pdsch_processor) &&
-             ((upper_phy_threads_cfg.pdsch_processor_type == "concurrent") ||
-              ((upper_phy_threads_cfg.pdsch_processor_type == "auto") && (upper_phy_threads_cfg.nof_dl_threads > 1)))) {
-    pdsch_processor_concurrent_configuration pdsch_proc_config;
-    pdsch_proc_config.nof_pdsch_codeblock_threads = upper_phy_threads_cfg.nof_dl_threads;
-    pdsch_proc_config.max_nof_simultaneous_pdsch =
-        (MAX_UE_PDUS_PER_SLOT + 1) * unit_cfg.expert_phy_cfg.max_processing_delay_slots;
-    pdsch_proc_config.pdsch_codeblock_task_executor = &pdsch_codeblock_executor;
-    out_cfg.pdsch_processor.emplace<pdsch_processor_concurrent_configuration>(pdsch_proc_config);
-  } else if ((hwacc_pdsch_processor) || (upper_phy_threads_cfg.pdsch_processor_type == "generic")) {
+  // The flexible PDSCH processor implementation will be used by default.
+  if ((upper_phy_threads_cfg.pdsch_processor_type == "auto") ||
+      (upper_phy_threads_cfg.pdsch_processor_type == "flexible")) {
+    // The worker pool in charge of processing PDSCH CBs is shared with the rest of the DL processors.
+    unsigned nof_pdsch_codeblock_threads = upper_phy_threads_cfg.nof_dl_threads;
+
+    // Setup parameters for synchronous operation:
+    // - the batch size must be the maximum to avoid more than one batch; and
+    // - the maximum number of simultaneous PDSCH equals to the number of DL processing threads.
+    unsigned cb_batch_length            = pdsch_processor_flexible_configuration::synchronous_cb_batch_length;
+    unsigned max_nof_simultaneous_pdsch = upper_phy_threads_cfg.nof_dl_threads;
+
+    // Override default parameters if the CB batch length is set for asynchronous concurrent operation.
+    if (upper_phy_threads_cfg.pdsch_cb_batch_length != du_low_unit_expert_threads_config::synchronous_cb_batch_length) {
+      // For asynchronous operation:
+      // - Use the given CB batch length;
+      // - The number of simultaneous PDSCH is equal to the maximum number of PDSCH per slot times the maximum allowed
+      //   processing time.
+      cb_batch_length            = upper_phy_threads_cfg.pdsch_cb_batch_length;
+      max_nof_simultaneous_pdsch = (MAX_UE_PDUS_PER_SLOT + 1) * unit_cfg.expert_phy_cfg.max_processing_delay_slots;
+    }
+
+    // Emplace configuration parameters.
+    out_cfg.pdsch_processor.emplace<pdsch_processor_flexible_configuration>(
+        pdsch_processor_flexible_configuration{.nof_pdsch_codeblock_threads   = nof_pdsch_codeblock_threads,
+                                               .cb_batch_length               = cb_batch_length,
+                                               .max_nof_simultaneous_pdsch    = max_nof_simultaneous_pdsch,
+                                               .pdsch_codeblock_task_executor = pdsch_codeblock_executor
+
+        });
+  } else if (upper_phy_threads_cfg.pdsch_processor_type == "generic") {
     out_cfg.pdsch_processor.emplace<pdsch_processor_generic_configuration>();
   } else {
     srsran_assert(false,
@@ -83,6 +99,10 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
 {
   srs_du::o_du_low_config o_du_low_cfg;
   o_du_low_cfg.du_low_cfg.logger = &srslog::fetch_basic_logger("DU");
+
+  // Configure the metrics.
+  const app_helpers::metrics_config& metrics_cfg = params.du_low_unit_cfg.metrics_cfg.common_metrics_cfg;
+  o_du_low_cfg.enable_metrics                    = metrics_cfg.enabled();
 
   generate_o_du_low_config(o_du_low_cfg, params.du_low_unit_cfg, params.du_cells, params.max_puschs_per_slot);
 
@@ -112,18 +132,8 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
     dependencies.workers.get_du_low_dl_executors(upper.dl_executors, i);
   }
 
-  o_du_low_unit                         unit;
-  srsran::srs_du::o_du_low_dependencies o_du_low_deps;
-
-  if (params.du_low_unit_cfg.metrics_config.enable) {
-    auto du_low_metrics                       = std::make_unique<du_low_metric_producer_impl>();
-    o_du_low_deps.du_low_deps.metric_notifier = &du_low_metrics->get_notifiers();
-    app_services::metrics_config& metrics     = unit.metrics.emplace_back();
-    metrics.metric_name                       = "upper_phy";
-    metrics.producers.emplace_back(std::move(du_low_metrics));
-  }
-
-  unit.o_du_lo = srs_du::make_o_du_low(o_du_low_cfg, params.du_cells, std::move(o_du_low_deps));
+  o_du_low_unit unit;
+  unit.o_du_lo = srs_du::make_o_du_low(o_du_low_cfg, params.du_cells);
   report_error_if_not(unit.o_du_lo, "Invalid O-DU low");
 
   return unit;

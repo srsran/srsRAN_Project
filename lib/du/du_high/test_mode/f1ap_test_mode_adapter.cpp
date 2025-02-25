@@ -22,6 +22,8 @@
 
 #include "f1ap_test_mode_adapter.h"
 #include "srsran/asn1/f1ap/common.h"
+#include "srsran/asn1/f1ap/f1ap.h"
+#include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
 #include "srsran/f1ap/f1ap_message.h"
@@ -35,9 +37,8 @@ class f1ap_test_mode_adapter final : public f1ap_du, public f1c_connection_clien
 {
 public:
   f1ap_test_mode_adapter(const du_test_mode_config::test_mode_ue_config& test_ue_cfg_,
-                         f1c_connection_client&                          f1c_client_handler_,
-                         task_executor&                                  ctrl_exec_) :
-    test_ue_cfg(test_ue_cfg_), f1c_client(f1c_client_handler_), ctrl_exec(ctrl_exec_)
+                         f1c_connection_client&                          f1c_client_handler_) :
+    test_ue_cfg(test_ue_cfg_), f1c_client(f1c_client_handler_)
   {
   }
 
@@ -126,38 +127,8 @@ private:
     return false;
   }
 
-  void handle_cu_cp_message(const f1ap_message& msg)
-  {
-    using namespace asn1::f1ap;
-
-    if (msg.pdu.type().value == f1ap_pdu_c::types_opts::init_msg) {
-      if (msg.pdu.init_msg().value.type().value == f1ap_elem_procs_o::init_msg_c::types_opts::dl_rrc_msg_transfer) {
-        auto&               ie       = msg.pdu.init_msg().value.dl_rrc_msg_transfer();
-        gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(ie->gnb_du_ue_f1ap_id);
-        auto                it       = du_ue_to_rnti.find(du_ue_id);
-        if (it != du_ue_to_rnti.end()) {
-          // It is a test mode UE.
-          if (ie->srb_id == 0) {
-            // An RRC Setup was sent to the DU. We should generate and send the RRC Setup Complete back to the CU-CP
-            // to complete the RRC Setup procedure.
-            f1ap_message pdu_resp;
-            pdu_resp.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UL_RRC_MSG_TRANSFER);
-            auto& resp_ie              = pdu_resp.pdu.init_msg().value.ul_rrc_msg_transfer();
-            resp_ie->srb_id            = 1;
-            resp_ie->gnb_du_ue_f1ap_id = ie->gnb_du_ue_f1ap_id;
-            resp_ie->gnb_cu_ue_f1ap_id = ie->gnb_cu_ue_f1ap_id;
-            resp_ie->rrc_container.from_string("0000100005df80105e400340403c443c3fc000040c951da60b80b8380000000000");
-            logger.info("Test Mode: Injected F1AP UL RRC Message (containing rrcSetupComplete)");
-            tx_notifier->on_new_message(pdu_resp);
-          }
-        }
-      }
-    }
-  }
-
   const du_test_mode_config::test_mode_ue_config& test_ue_cfg;
   f1c_connection_client&                          f1c_client;
-  task_executor&                                  ctrl_exec;
   srslog::basic_logger&                           logger = srslog::fetch_basic_logger("DU-F1");
 
   std::unordered_map<gnb_du_ue_f1ap_id_t, rnti_t> du_ue_to_rnti;
@@ -171,7 +142,7 @@ private:
 class f1ap_test_mode_adapter::f1ap_to_gw_pdu_interceptor : public f1ap_message_notifier
 {
 public:
-  f1ap_to_gw_pdu_interceptor(f1ap_test_mode_adapter& parent_) : parent(parent_), adapted_notif(*parent.tx_notifier) {}
+  f1ap_to_gw_pdu_interceptor(f1ap_test_mode_adapter& parent_) : parent(parent_) {}
   ~f1ap_to_gw_pdu_interceptor() override
   {
     // Called by F1AP-DU thread when the DU wants to release the connection.
@@ -184,34 +155,91 @@ public:
 
     if (msg.pdu.type().value == f1ap_pdu_c::types_opts::init_msg) {
       switch (msg.pdu.init_msg().value.type().value) {
+        case f1ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request: {
+          const asn1::f1ap::f1_setup_request_s& f1_setup = msg.pdu.init_msg().value.f1_setup_request();
+
+          parent.logger.info("Test Mode: Intercepted F1AP F1 Setup Request");
+
+          f1ap_message pdu_resp;
+          pdu_resp.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+          asn1::f1ap::f1_setup_resp_s& f1_setup_resp = pdu_resp.pdu.successful_outcome().value.f1_setup_resp();
+
+          f1_setup_resp->transaction_id = f1_setup->transaction_id;
+          f1_setup_resp->gnb_cu_name.from_string("srsgnb01");
+          if (f1_setup->gnb_du_served_cells_list_present) {
+            f1_setup_resp->cells_to_be_activ_list_present = true;
+            for (const auto& cell : f1_setup->gnb_du_served_cells_list) {
+              asn1::f1ap::cells_to_be_activ_list_item_s cell_item;
+              cell_item.nr_cgi         = cell->gnb_du_served_cells_item().served_cell_info.nr_cgi;
+              cell_item.nr_pci_present = true;
+              cell_item.nr_pci         = cell->gnb_du_served_cells_item().served_cell_info.nr_pci;
+            }
+          }
+          f1_setup_resp->gnb_cu_rrc_version = f1_setup->gnb_du_rrc_version;
+
+          parent.logger.info("Test Mode: Injected F1AP F1 Setup Response Message");
+          parent.handle_message(pdu_resp);
+
+        } break;
         case f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer: {
-          auto& ie = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
+          const asn1::f1ap::init_ul_rrc_msg_transfer_s& ie = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
           // In case of test mode, save gNB-DU-UE-F1AP-ID of test mode UE.
           rnti_t rnti = to_rnti(ie->c_rnti);
           if (parent.is_test_mode_ue(rnti)) {
             gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(ie->gnb_du_ue_f1ap_id);
             parent.du_ue_to_rnti.insert(std::make_pair(du_ue_id, rnti));
           }
+
+          f1ap_message pdu_resp;
+          pdu_resp.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
+          asn1::f1ap::dl_rrc_msg_transfer_s& rrc_setup = pdu_resp.pdu.init_msg().value.dl_rrc_msg_transfer();
+          rrc_setup->gnb_du_ue_f1ap_id                 = ie->gnb_du_ue_f1ap_id;
+          rrc_setup->gnb_cu_ue_f1ap_id                 = next_cu_ue_id;
+          rrc_setup->srb_id                            = 0;
+          rrc_setup->rrc_container.from_string(
+              "204004094ae00580088bd76380830f0003e0102341e0400020904c0ca8000ff800000000183708420001e01650020c00000081a6"
+              "040514280038e2400040d55f21070004103081430727122858c1a3879022000010a00010016a00021910a00031916a00040090a0"
+              "0050096a00061890a00071896a00080210a0009032080280c8240b0320a0300c82c0d0320c0380c8340f0320e040588201103a0a"
+              "4092e4a9286050e23a2b3c4de4d03a41078bbf03043800000071ffa5294a529e502c0000432ec00000000000000000018ad54500"
+              "47001800082000e21005c400e0202108001c4200b8401c080441000388401708038180842000710802e18070401104000e21005c"
+              "300080000008218081018201c1a0001c71000000080100020180020240088029800008c40089c7001800");
+
+          // Increment next_cu_ue_id for the next test mode UE.
+          next_cu_ue_id++;
+
+          parent.logger.info("Test Mode: Injected F1AP DL RRC Message (containing rrcSetup)");
+          parent.handle_message(pdu_resp);
+
         } break;
+        case f1ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request: {
+          const asn1::f1ap::f1_removal_request_s& ie = msg.pdu.init_msg().value.f1_removal_request();
+          f1ap_message                            pdu_resp;
+          pdu_resp.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_REMOVAL);
+          asn1::f1ap::f1_removal_resp_s& f1_removal_resp = pdu_resp.pdu.successful_outcome().value.f1_removal_resp();
+          f1_removal_resp->transaction_id                = ie->begin()->value().transaction_id();
+
+          parent.logger.info("Test Mode: Injected F1AP F1 Removal Response Message");
+          parent.handle_message(pdu_resp);
+
+        } break;
+
         default:
           break;
       }
     }
-
-    // Forward message to adapted notifier.
-    adapted_notif.on_new_message(msg);
   }
 
 private:
+  unsigned next_cu_ue_id = 0;
+
   f1ap_test_mode_adapter& parent;
-  f1ap_message_notifier&  adapted_notif;
 };
 
 class f1ap_test_mode_adapter::gw_to_f1ap_pdu_interceptor : public f1ap_message_notifier
 {
 public:
-  gw_to_f1ap_pdu_interceptor(f1ap_test_mode_adapter& parent_, std::unique_ptr<f1ap_message_notifier> adapted_notif_) :
-    parent(parent_), adapted_notif(std::move(adapted_notif_))
+  gw_to_f1ap_pdu_interceptor(std::unique_ptr<f1ap_message_notifier> adapted_notif_) :
+    adapted_notif(std::move(adapted_notif_))
   {
   }
 
@@ -219,15 +247,9 @@ public:
   {
     // Forward message to F1AP-DU.
     adapted_notif->on_new_message(msg);
-
-    // Handle intercepted message from F1AP-CU.
-    if (not parent.ctrl_exec.defer([this, msg]() { parent.handle_cu_cp_message(msg); })) {
-      parent.logger.error("Failed to handle DL F1AP PDU");
-    }
   }
 
 private:
-  f1ap_test_mode_adapter&                parent;
   std::unique_ptr<f1ap_message_notifier> adapted_notif;
 };
 
@@ -236,7 +258,7 @@ std::unique_ptr<f1ap_message_notifier>
 f1ap_test_mode_adapter::handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier)
 {
   tx_notifier = f1c_client.handle_du_connection_request(
-      std::make_unique<gw_to_f1ap_pdu_interceptor>(*this, std::move(du_rx_pdu_notifier)));
+      std::make_unique<gw_to_f1ap_pdu_interceptor>(std::move(du_rx_pdu_notifier)));
   if (tx_notifier == nullptr) {
     return nullptr;
   }
@@ -258,7 +280,7 @@ std::unique_ptr<f1ap_du> srsran::srs_du::create_du_high_f1ap(f1c_connection_clie
   }
 
   // Create a F1AP test mode adapter that wraps the real F1AP and intercepts messages to the F1-C client.
-  auto f1ap_testmode = std::make_unique<f1ap_test_mode_adapter>(*test_cfg.test_ue, f1c_client_handler, ctrl_exec);
+  auto f1ap_testmode = std::make_unique<f1ap_test_mode_adapter>(*test_cfg.test_ue, f1c_client_handler);
   f1ap_testmode->connect(create_f1ap(*f1ap_testmode, du_mng, ctrl_exec, ue_exec_mapper, paging_notifier, timers));
   return f1ap_testmode;
 }

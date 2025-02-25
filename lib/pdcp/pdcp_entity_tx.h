@@ -36,7 +36,6 @@
 #include "srsran/pdcp/pdcp_tx.h"
 #include "srsran/security/security.h"
 #include "srsran/security/security_engine.h"
-#include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 
 namespace srsran {
@@ -136,7 +135,7 @@ public:
 
   const pdcp_tx_state& get_state() const { return st; };
 
-  uint32_t nof_discard_timers() const { return st.tx_next - st.tx_next_ack; }
+  uint32_t nof_pdus_in_window() const { return st.tx_next - st.tx_next_ack; }
 
   /*
    * Security configuration
@@ -165,6 +164,7 @@ private:
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
   timer_factory                   ue_dl_timer_factory;
+  unique_timer                    discard_timer;
   unique_timer                    metrics_timer;
 
   task_executor& ue_dl_executor;
@@ -178,13 +178,13 @@ private:
   security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
   security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;
 
-  void write_data_pdu_to_lower_layers(uint32_t count, byte_buffer buf, bool is_retx);
+  void write_data_pdu_to_lower_layers(pdcp_tx_buf_info&& buf_info, bool is_retx);
   void write_control_pdu_to_lower_layers(byte_buffer buf);
 
   /// Apply ciphering and integrity protection to the payload
   expected<byte_buffer> apply_ciphering_and_integrity_protection(byte_buffer buf, uint32_t count);
 
-  uint32_t notification_count_estimation(uint32_t notification_sn);
+  uint32_t notification_count_estimation(uint32_t notification_sn) const;
 
   /// \brief Stops all discard timer up to a PDCP PDU COUNT number that is provided as argument.
   /// \param highest_count Highest PDCP PDU COUNT to which all discard timers shall be stopped.
@@ -202,24 +202,16 @@ private:
   pdcp_tx_window tx_window;
 
   /// \brief Get estimated size of a PDU from an SDU
-  uint32_t get_pdu_size(const byte_buffer& sdu);
+  uint32_t get_pdu_size(const byte_buffer& sdu) const;
+
+  /// \breif Callback ran upon discard timer expiration. If there are still PDUs in the TX window that require
+  /// a discard timer, it is responsible to restart the discard timer with the correct timeout.
+  void discard_callback();
 
   pdcp_tx_metrics          metrics;
   pdcp_metrics_aggregator& metrics_agg;
-
-  class discard_callback;
 };
 
-class pdcp_entity_tx::discard_callback
-{
-public:
-  discard_callback(pdcp_entity_tx* parent_, uint32_t count_) : parent(parent_), discard_count(count_) {}
-  void operator()(timer_id_t timer_id);
-
-private:
-  pdcp_entity_tx* parent;
-  uint32_t        discard_count;
-};
 } // namespace srsran
 
 namespace fmt {

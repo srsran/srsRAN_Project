@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "ofh_metrics_collector_impl.h"
 #include "ofh_sector_controller.h"
 #include "support/prach_context_repository.h"
 #include "support/uplink_context_repository.h"
@@ -33,7 +34,13 @@
 namespace srsran {
 namespace ofh {
 
-/// Open Fronthaul sector implementation dependencies.
+/// Sector implementation configuration.
+struct sector_impl_config {
+  unsigned sector_id;
+  bool     are_metrics_enabled = false;
+};
+
+/// Sector implementation dependencies.
 struct sector_impl_dependencies {
   std::unique_ptr<receiver>                         ofh_receiver;
   std::unique_ptr<transmitter>                      ofh_transmitter;
@@ -47,14 +54,15 @@ struct sector_impl_dependencies {
 class sector_impl : public sector
 {
 public:
-  sector_impl(sector_impl_dependencies&& dependencies) :
+  sector_impl(const sector_impl_config& config, sector_impl_dependencies&& dependencies) :
     cp_repo(std::move(dependencies.cp_repo)),
     cp_prach_repo(std::move(dependencies.cp_prach_repo)),
     prach_repo(std::move(dependencies.prach_repo)),
     slot_repo(std::move(dependencies.slot_repo)),
     ofh_receiver(std::move(dependencies.ofh_receiver)),
     ofh_transmitter(std::move(dependencies.ofh_transmitter)),
-    ofh_sector_controller(*ofh_receiver)
+    ofh_sector_controller(*ofh_receiver),
+    ofh_metrics_collector(ofh_receiver->get_metrics_collector(), config.are_metrics_enabled, config.sector_id)
   {
     srsran_assert(ofh_receiver, "Invalid Open Fronthaul receiver");
     srsran_assert(ofh_transmitter, "Invalid Open Fronthaul transmitter");
@@ -74,6 +82,9 @@ public:
   controller& get_controller() override;
 
   // See interface for documentation.
+  metrics_collector* get_metrics_collector() override;
+
+  // See interface for documentation.
   void set_error_notifier(error_notifier& notifier) override;
 
 private:
@@ -84,6 +95,7 @@ private:
   std::unique_ptr<receiver>                         ofh_receiver;
   std::unique_ptr<transmitter>                      ofh_transmitter;
   sector_controller                                 ofh_sector_controller;
+  metrics_collector_impl                            ofh_metrics_collector;
 };
 
 } // namespace ofh

@@ -422,7 +422,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     return false;
   }
 
-  if (pucch_cfg.use_format_0 and pucch_cfg.set1_format != 2) {
+  if (pucch_cfg.use_format_0 and pucch_cfg.set1_format != pucch_format::FORMAT_2) {
     fmt::print("Using PUCCH Formats 3 and 4 is not supported when Format 0 is used.\n");
     return false;
   }
@@ -510,7 +510,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
   const unsigned nof_res_f2_f3_f4 =
       pucch_cfg.nof_ue_pucch_res_harq_per_set * pucch_cfg.nof_cell_harq_pucch_sets + pucch_cfg.nof_cell_csi_resources;
   switch (pucch_cfg.set1_format) {
-    case 2: {
+    case pucch_format::FORMAT_2: {
       // The number of symbols per PUCCH resource F2 is not exposed to the DU user interface and set by default to 2.
       constexpr unsigned pucch_f2_nof_symbols = 2U;
       const unsigned     f2_max_rbs =
@@ -529,7 +529,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
         nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
       }
     } break;
-    case 3: {
+    case pucch_format::FORMAT_3: {
       // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F3, we use all
       // symbols available for PUCCH within a slot.
       const unsigned pucch_f3_nof_symbols = max_nof_pucch_symbols;
@@ -553,7 +553,7 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
         nof_f2_f3_f4_rbs = static_cast<unsigned>(std::ceil(static_cast<float>(nof_f2_f3_f4_rbs) / 2.0F)) * 2;
       }
     } break;
-    case 4: {
+    case pucch_format::FORMAT_4: {
       // The number of symbols per PUCCH resource is not exposed to the DU user interface; for PUCCH F4, we use all
       // symbols available for PUCCH within a slot.
       const unsigned pucch_f4_nof_symbols = max_nof_pucch_symbols;

@@ -213,11 +213,16 @@ TEST(asn1_bit_ref, pack_unpack_operators)
 
 TEST(asn1_octet_string_test, pack_unpack_operators)
 {
-  std::string        hexstr = "014477aaff";
+  std::string          hexstr = "014477aaff";
+  std::vector<uint8_t> bytes  = {0x01, 0x44, 0x77, 0xaa, 0xff};
+
   fixed_octstring<5> statstr;
   dyn_octstring      dynstr;
+  dyn_octstring      dynstr_from_bytes;
+
   statstr.from_string(hexstr);
   dynstr.from_string(hexstr);
+  dynstr_from_bytes.from_bytes(bytes);
 
   TESTASSERT(sizeof(statstr) == statstr.size());
   TESTASSERT(statstr.size() == 5);
@@ -227,6 +232,7 @@ TEST(asn1_octet_string_test, pack_unpack_operators)
   TESTASSERT(statstr.to_string() == hexstr);
   TESTASSERT(statstr.to_string() == dynstr.to_string());
   TESTASSERT(statstr.to_number() == dynstr.to_number());
+  TESTASSERT(statstr.to_number() == dynstr_from_bytes.to_number());
 
   // check endianess
   TESTASSERT(statstr.to_number() == 5443660543);

@@ -125,6 +125,9 @@ services:
     image: srsran/grafana
     build:
       context: grafana
+      args:
+        GRAFANA_VERSION: ${DOCKER_GRAFANA_VERSION}
+        LOGO_URL: ${GRAFANA_LOGO_URL}
     volumes:
       - grafana-storage:/var/lib/grafana:rw
     env_file:

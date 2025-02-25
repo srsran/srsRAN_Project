@@ -29,7 +29,7 @@ namespace srsran {
 class slice_ue
 {
 public:
-  explicit slice_ue(const ue& u);
+  explicit slice_ue(ue& u, ran_slice_id_t slice_id);
 
   /// Returns DU UE index.
   du_ue_index_t ue_index() const { return u.ue_index; }
@@ -47,7 +47,7 @@ public:
   const ue_cell& get_cell(ue_cell_index_t ue_cell_index) const { return u.get_cell(ue_cell_index); }
 
   /// Determines if at least one bearer of the UE is part of this slice.
-  bool has_bearers_in_slice() const { return bearers.any(); }
+  bool has_bearers_in_slice() const { return u.dl_logical_channels().has_slice(slice_id); }
 
   /// Determines if at least one SRB bearer of the UE is part of this slice.
   bool has_srb_bearers_in_slice() const
@@ -55,26 +55,18 @@ public:
     return contains(LCID_SRB0) or contains(LCID_SRB1) or contains(LCID_SRB2) or contains(LCID_SRB3);
   }
 
-  /// Fetches the bitmap of bearers belonging to this slice.
-  const bounded_bitset<MAX_NOF_RB_LCIDS>& get_bearers() const { return bearers; }
-
-  /// Fetches the bitmap of active logical channel groups belonging to this slice.
-  const bounded_bitset<MAX_NOF_LCGS>& get_lcgs() const { return lcg_ids; }
-
   /// Fetches the logical channel group associated with a given LCID.
   lcg_id_t get_lcg_id(lcid_t lcid) const
   {
     const auto& lchs = u.ue_cfg_dedicated()->logical_channels();
-    auto        it =
-        std::find_if(lchs.begin(), lchs.end(), [lcid](const logical_channel_config& lc) { return lc.lcid == lcid; });
-    return it != lchs.end() ? it->lc_group : MAX_NOF_LCGS;
+    return lchs.value().contains(lcid) ? lchs.value()[lcid]->lc_group : MAX_NOF_LCGS;
   }
 
   /// Determines if bearer with LCID is part of this slice.
-  bool contains(lcid_t lcid) const { return bearers.size() > lcid and bearers.test(lcid); }
+  bool contains(lcid_t lcid) const { return u.dl_logical_channels().get_slice_id(lcid) == slice_id; }
 
-  /// Determines if LCG is part of this slice.
-  bool contains(lcg_id_t lcg_id) const { return lcg_ids.size() > lcg_id and lcg_ids.test(lcg_id); }
+  /// Determines if LCG-ID is part of this slice.
+  bool contains(lcg_id_t lcg_id) const { return u.ul_logical_channels().get_slice_id(lcg_id) == slice_id; }
 
   /// Fetch DU cell index of UE's PCell.
   const ue_cell& get_pcell() const { return u.get_pcell(); }
@@ -85,14 +77,21 @@ public:
   /// Remove LCID from the bearers of the UE belonging to this slice.
   void rem_logical_channel(lcid_t lcid);
 
+  /// Remove all bearers of the UE belonging to this slice.
+  void rem_logical_channels();
+
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
   /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
-  bool has_pending_dl_newtx_bytes() const;
+  bool has_pending_dl_newtx_bytes() const { return u.dl_logical_channels().has_pending_bytes(slice_id); }
 
-  /// \brief Computes the number of DL pending bytes that are not already allocated in a DL HARQ.
-  /// \return The number of DL pending bytes that are not already allocated in a DL HARQ.
-  unsigned pending_dl_newtx_bytes() const;
+  /// \brief Computes the number of DL pending bytes for a given RAN slice that are not already allocated in a DL HARQ.
+  /// \return Computed DL pending bytes.
+  /// \remark Excludes SRB0 and UE Contention Resolution Identity CE.
+  unsigned pending_dl_newtx_bytes() const { return u.dl_logical_channels().pending_bytes(slice_id); }
+
+  /// \brief Computes the number of DL pending bytes for a given LCID that are not already allocated in a DL HARQ.
+  /// \return Computed DL pending bytes.
   unsigned pending_dl_newtx_bytes(lcid_t lcid) const { return contains(lcid) ? u.pending_dl_newtx_bytes(lcid) : 0; }
 
   /// \brief Computes the number of UL pending bytes in bearers belonging to this slice that are not already allocated
@@ -110,7 +109,7 @@ public:
   bool has_pending_sr() const;
 
   /// Get QoS information of DRBs configured for the UE.
-  span<const logical_channel_config> logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); };
+  logical_channel_config_list_ptr logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); };
 
   /// Average DL bit rate, in bps, for a given UE logical channel.
   double dl_avg_bit_rate(lcid_t lcid) const
@@ -131,13 +130,8 @@ public:
   }
 
 private:
-  /// Helper function to get LCG ID of a bearer.
-  lcg_id_t get_lcg_id_for_bearer(lcid_t lcid) const;
-
-  const ue&                        u;
-  bounded_bitset<MAX_NOF_RB_LCIDS> bearers;
-  /// LCG IDs of bearers belonging to this slice.
-  bounded_bitset<MAX_NOF_LCGS> lcg_ids;
+  ue&                  u;
+  const ran_slice_id_t slice_id;
 };
 
 /// Container that store all UEs belonging to a slice.

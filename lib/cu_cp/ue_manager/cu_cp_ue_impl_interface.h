@@ -43,7 +43,10 @@ public:
   virtual ~cu_cp_ue_impl_interface() = default;
 
   /// \brief Get the UE index of the UE.
-  virtual ue_index_t get_ue_index() = 0;
+  virtual ue_index_t get_ue_index() const = 0;
+
+  /// \brief Get the index of the DU where the UE is connected.
+  virtual du_index_t get_du_index() const = 0;
 
   /// \brief Get the UP resource manager of the UE.
   virtual up_resource_manager& get_up_resource_manager() = 0;
