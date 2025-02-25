@@ -115,6 +115,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
 
   unsigned                                                        error_indication_counter = 0;
   std::chrono::microseconds                                       decision_latency_sum{0};
+  std::chrono::microseconds                                       max_decision_latency{0};
+  slot_point                                                      max_decision_latency_slot;
   std::array<unsigned, scheduler_cell_metrics::latency_hist_bins> decision_latency_hist{};
 
   slotted_id_table<du_ue_index_t, ue_metric_context, MAX_NOF_DU_UES> ues;

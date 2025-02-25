@@ -280,21 +280,25 @@ void cell_metrics_handler::report_metrics()
     next_report.ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
   }
 
-  next_report.nof_error_indications    = error_indication_counter;
-  next_report.average_decision_latency = decision_latency_sum / report_period_slots;
-  next_report.latency_histogram        = decision_latency_hist;
-  next_report.nof_prbs                 = cell_cfg.nof_dl_prbs; // TODO: to be removed from the report.
-  next_report.nof_dl_slots             = nof_dl_slots;
-  next_report.nof_ul_slots             = nof_ul_slots;
-  next_report.nof_prach_preambles      = nof_prach_preambles;
+  next_report.nof_error_indications     = error_indication_counter;
+  next_report.average_decision_latency  = decision_latency_sum / report_period_slots;
+  next_report.max_decision_latency      = max_decision_latency;
+  next_report.max_decision_latency_slot = max_decision_latency_slot;
+  next_report.latency_histogram         = decision_latency_hist;
+  next_report.nof_prbs                  = cell_cfg.nof_dl_prbs; // TODO: to be removed from the report.
+  next_report.nof_dl_slots              = nof_dl_slots;
+  next_report.nof_ul_slots              = nof_ul_slots;
+  next_report.nof_prach_preambles       = nof_prach_preambles;
 
   // Reset cell-wide metric counters.
-  error_indication_counter = 0;
-  decision_latency_sum     = std::chrono::microseconds{0};
-  decision_latency_hist    = {};
-  nof_dl_slots             = 0;
-  nof_ul_slots             = 0;
-  nof_prach_preambles      = 0;
+  error_indication_counter  = 0;
+  decision_latency_sum      = std::chrono::microseconds{0};
+  max_decision_latency      = std::chrono::microseconds{0};
+  max_decision_latency_slot = {};
+  decision_latency_hist     = {};
+  nof_dl_slots              = 0;
+  nof_ul_slots              = 0;
+  nof_prach_preambles       = 0;
 
   // Report all UE metrics in a batch.
   notifier.report_metrics(next_report);
@@ -355,6 +359,10 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
 
   // Process latency.
   decision_latency_sum += slot_decision_latency;
+  if (max_decision_latency < slot_decision_latency) {
+    max_decision_latency      = slot_decision_latency;
+    max_decision_latency_slot = last_slot_tx;
+  }
   unsigned bin_idx = slot_decision_latency.count() / scheduler_cell_metrics::nof_usec_per_bin;
   bin_idx          = std::min(bin_idx, scheduler_cell_metrics::latency_hist_bins - 1);
   ++decision_latency_hist[bin_idx];

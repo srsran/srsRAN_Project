@@ -105,6 +105,8 @@ struct scheduler_cell_metrics {
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};
+  std::chrono::microseconds               max_decision_latency{0};
+  slot_point                              max_decision_latency_slot;
   std::array<unsigned, latency_hist_bins> latency_histogram{0};
   std::vector<scheduler_cell_event>       events;
   std::vector<scheduler_ue_metrics>       ue_metrics;
