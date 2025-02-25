@@ -12,6 +12,7 @@ Test Iperf
 
 import logging
 from collections import defaultdict
+from enum import Enum
 from time import sleep
 from typing import Optional, Sequence, Tuple, Union
 
@@ -50,6 +51,12 @@ HIGH_BITRATE = int(50e6)
 MAX_BITRATE = int(600e6)
 
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s"
+
+
+class QAMTable(Enum):
+    QAM64 = 0
+    QAM256 = 1
+
 
 # TDD throughput (empirical measurements, might become outdated if RF conditions change)
 tdd_ul_udp = defaultdict(
@@ -157,6 +164,61 @@ def get_maximum_throughput(bandwidth: int, band: int, direction: IPerfDir, proto
     if is_tdd(band):
         return get_maximum_throughput_tdd(bandwidth, direction, protocol)
     return get_maximum_throughput_fdd(bandwidth, direction, protocol)
+
+
+def get_max_theoretical_bitrate(
+    bandwidth: int,
+    band: int,
+    nof_antennas: int,
+    direction: IPerfDir,
+    qam: QAMTable,
+):
+    """
+    Get the expected bitrate for bandwidth, band, direction and protocol
+    """
+    max_nof_res = 273 * 12  # 273 resource blocks, 12 subcarriers per resource block
+    max_bw = 100
+    nof_symbols_per_ms = 28  # 14 slots per subframe, 2 subframes per ms
+    # This is the number of DL symbols per TDD period, with 7 DL slots and 8 DL symbols
+    if direction == IPerfDir.DOWNLINK:
+        perc_dl_symb_over_tdd_period = (14 * 6 + 8) / (14 * 10) if is_tdd(band) else 1.0
+    elif direction == IPerfDir.UPLINK:
+        perc_dl_symb_over_tdd_period = 14 * 3 / (14 * 10) if is_tdd(band) else 1.0
+    else:
+        raise ValueError(
+            "Input paramer direction:{direction} invalid. Must be DOWNLINK {IPerfDir.DOWNLINK} or UPLINK {IPerfDir.UPLINK}"
+        )
+    # Theoretical maximum SE for QAM64 and QAM256, as per Table 5.1.3.1-1 and 5.1.3.1-2, TS 38.214.
+    max_se = 7.4063 if qam == QAMTable.QAM256 else 5.5547
+    # Theoretical maximum bitrate in bps. The factor 1000 is to convert the ms (ref. to nof_symbols_per_ms) into sec.
+    phy_max_bitrate = (
+        perc_dl_symb_over_tdd_period
+        * max_nof_res
+        * bandwidth
+        / max_bw
+        * nof_symbols_per_ms
+        * max_se
+        * nof_antennas
+        * 1000
+    )
+
+    return phy_max_bitrate
+
+
+def get_peak_average_bitrate(
+    iperf_duration: int,
+    metrics: Metrics,
+):
+    """
+    Get the correct peak average bitrate reported metric based on the given iperf duration
+    """
+
+    if iperf_duration == TINY_DURATION:
+        return metrics.total.dl_bitrate_peak_av.av_5_samples, metrics.total.ul_bitrate_peak_av.av_5_samples
+    elif iperf_duration == SHORT_DURATION:
+        return metrics.total.dl_bitrate_peak_av.av_15_samples, metrics.total.ul_bitrate_peak_av.av_15_samples
+    else:
+        return metrics.total.dl_bitrate_peak_av.av_30_samples, metrics.total.ul_bitrate_peak_av.av_30_samples
 
 
 @mark.parametrize(
@@ -459,6 +521,64 @@ def test_zmq_2x2_mimo(
         nof_antennas_dl=2,
         nof_antennas_ul=2,
         inter_ue_start_period=1.5,  # Due to uesim
+        assess_bitrate=False,
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(41, 30, 50, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.zmq_64_ues
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_zmq_64_ues(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_64: Tuple[UEStub, ...],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ 2x2 mimo IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_64,
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
+        bitrate=MEDIUM_BITRATE,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration=0,
+        always_download_artifacts=False,
+        rx_to_tx_latency=2,
+        enable_dddsu=False,
+        nof_antennas_dl=2,
+        nof_antennas_ul=2,
+        inter_ue_start_period=1.5,  # Due to uesim
+        assess_bitrate=True,
     )
 
 
@@ -747,6 +867,7 @@ def _iperf(
     pusch_mcs_table: str = "qam256",
     inter_ue_start_period=INTER_UE_START_PERIOD,
     ric: Optional[NearRtRicStub] = None,
+    assess_bitrate: bool = False,
 ):
     wait_before_power_off = 5
 
@@ -770,6 +891,7 @@ def _iperf(
         pdsch_mcs_table=pdsch_mcs_table,
         pusch_mcs_table=pusch_mcs_table,
     )
+
     configure_artifacts(
         retina_data=retina_data,
         always_download_artifacts=always_download_artifacts,
@@ -806,6 +928,7 @@ def _iperf(
     sleep(wait_before_power_off)
     if ric:
         ric_validate_e2_interface(ric, kpm_expected=True, rc_expected=True)
+
     stop(
         ue_array,
         gnb,
@@ -817,5 +940,65 @@ def _iperf(
     )
 
     metrics: Metrics = gnb.GetMetrics(Empty())
+
     if metrics.total.dl_bitrate + metrics.total.ul_bitrate <= 0:
         pytest.fail("No traffic detected in GNB metrics")
+
+    if assess_bitrate and protocol == IPerfProto.UDP:
+
+        min_dl_bitrate = get_max_theoretical_bitrate(
+            bandwidth,
+            band,
+            nof_antennas_dl,
+            IPerfDir.DOWNLINK,
+            QAMTable.QAM256 if pdsch_mcs_table == "qam256" else QAMTable.QAM64,
+        )
+
+        min_ul_bitrate = get_max_theoretical_bitrate(
+            bandwidth,
+            band,
+            1,
+            IPerfDir.UPLINK,
+            QAMTable.QAM256 if pusch_mcs_table == "qam256" else QAMTable.QAM64,
+        )
+
+        # Defines the actual DL/UL bitrate as a percentage of the max theoretical bitrates
+        effective_rate_coeff_dl = 0.66  # empirical value
+        effective_rate_coeff_ul = 0.46  # empirical value
+        # Defines the expected bitrate to be achived as a percentage of the DL/UL bitrates
+        expected_to_max_coeff = 0.9
+
+        dl_brate_threshold = min_dl_bitrate * effective_rate_coeff_dl * expected_to_max_coeff
+        ul_brate_threshold = min_ul_bitrate * effective_rate_coeff_ul * expected_to_max_coeff
+
+        dl_bitrate_peak_average, ul_bitrate_peak_average = get_peak_average_bitrate(iperf_duration, metrics)
+        dl_brate_assessment_ok = dl_bitrate_peak_average >= dl_brate_threshold
+        ul_brate_assessment_ok = ul_bitrate_peak_average >= ul_brate_threshold
+        if dl_brate_assessment_ok:
+            logging.info(
+                "DL tot brate %.3f Mbps is above the %.3f Mbps threshold",
+                dl_bitrate_peak_average * 1e-6,
+                dl_brate_threshold * 1e-6,
+            )
+        else:
+            logging.error(
+                "DL tot brate %.3f Mbps is below the %.3f Mbps threshold",
+                dl_bitrate_peak_average * 1e-6,
+                dl_brate_threshold * 1e-6,
+            )
+        if ul_brate_assessment_ok:
+            logging.info(
+                "UL tot brate %.3f Mbps is above the %.3f Mbps threshold",
+                ul_bitrate_peak_average * 1e-6,
+                ul_brate_threshold * 1e-6,
+            )
+        else:
+            logging.error(
+                "UL tot brate %.3f Mbps is below %.3f Mbps threshold",
+                ul_bitrate_peak_average * 1e-6,
+                ul_brate_threshold * 1e-6,
+            )
+        if not dl_brate_assessment_ok or not ul_brate_assessment_ok:
+            pytest.fail(
+                f"Bitrate assessment: DL={"PASSED" if dl_brate_assessment_ok else "FAILED"} UL={"PASSED" if ul_brate_assessment_ok else "FAILED"}"
+            )

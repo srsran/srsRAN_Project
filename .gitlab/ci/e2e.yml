@@ -281,6 +281,12 @@ amari 32UE 2x2 mimo:
     MARKERS: "zmq_2x2_mimo"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
 
+amari 64UE 2x2 mimo:
+  extends: .zmq-uesim
+  variables:
+    MARKERS: "zmq_64_ues"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+
 cudu amari 8UE:
   extends: .zmq
   timeout: 2h
