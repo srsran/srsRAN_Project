@@ -356,9 +356,29 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
 
   unsigned sum_dl_bitrate_kbps = 0;
   unsigned sum_ul_bitrate_kbps = 0;
+  unsigned sum_pdsch_rbs       = 0;
+  unsigned sum_pusch_rbs       = 0;
+  float    max_crc_delay       = std::numeric_limits<float>::min();
+  float    max_ce_delay        = std::numeric_limits<float>::min();
+  float    max_pucch_delay     = std::numeric_limits<float>::min();
+  float    max_pusch_delay     = std::numeric_limits<float>::min();
   for (const auto& ue : metrics.ue_metrics) {
     sum_dl_bitrate_kbps += ue.dl_brate_kbps;
     sum_ul_bitrate_kbps += ue.ul_brate_kbps;
+    sum_pdsch_rbs += ue.tot_pdsch_prbs_used;
+    sum_pusch_rbs += ue.tot_pusch_prbs_used;
+    if (ue.max_crc_delay_ms.has_value()) {
+      max_crc_delay = std::max(max_crc_delay, ue.max_crc_delay_ms.value());
+    }
+    if (ue.max_ce_delay_ms.has_value()) {
+      max_ce_delay = std::max(max_ce_delay, ue.max_ce_delay_ms.value());
+    }
+    if (ue.max_pucch_harq_delay_ms.has_value()) {
+      max_pucch_delay = std::max(max_pucch_delay, ue.max_pucch_harq_delay_ms.value());
+    }
+    if (ue.max_pusch_harq_delay_ms.has_value()) {
+      max_pusch_delay = std::max(max_pusch_delay, ue.max_pusch_harq_delay_ms.value());
+    }
   }
 
   // log cell-wide metrics
@@ -366,17 +386,32 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
   fmt::format_to(
       std::back_inserter(buffer),
       " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} error_indications={} "
-      "mean_latency={}usec max_latency={}usec max_latency_slot={} latency_hist=[{}]",
+      "pdsch_rbs_per_slot={} pusch_rbs_per_slot={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
+      "latency_hist=[{}]",
       float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
       float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
       metrics.nof_prbs,
       metrics.nof_dl_slots,
       metrics.nof_ul_slots,
       metrics.nof_error_indications,
+      sum_pdsch_rbs / metrics.nof_dl_slots,
+      sum_pusch_rbs / metrics.nof_ul_slots,
       metrics.average_decision_latency.count(),
       metrics.max_decision_latency.count(),
       metrics.max_decision_latency_slot,
       fmt::join(metrics.latency_histogram.begin(), metrics.latency_histogram.end(), ", "));
+  if (max_crc_delay != std::numeric_limits<float>::min()) {
+    fmt::format_to(std::back_inserter(buffer), " max_crc_delay={}ms", max_crc_delay);
+  }
+  if (max_ce_delay != std::numeric_limits<float>::min()) {
+    fmt::format_to(std::back_inserter(buffer), " max_ce_delay={}ms", max_ce_delay);
+  }
+  if (max_pucch_delay != std::numeric_limits<float>::min()) {
+    fmt::format_to(std::back_inserter(buffer), " max_pucch_harq_delay={}ms", max_pucch_delay);
+  }
+  if (max_pusch_delay != std::numeric_limits<float>::min()) {
+    fmt::format_to(std::back_inserter(buffer), " max_pusch_harq_delay={}ms", max_pusch_delay);
+  }
   if (not metrics.events.empty()) {
     fmt::format_to(std::back_inserter(buffer), " events=[");
     bool first = true;
@@ -426,7 +461,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
                    " dl_error_rate={}%",
                    dl_total > 0 ? to_percentage<int>(ue.dl_nof_nok, dl_total) : 0);
     fmt::format_to(std::back_inserter(buffer), " dl_bs={}", scaled_fmt_integer(ue.dl_bs, false));
-    fmt::format_to(std::back_inserter(buffer), " dl_nof_prbs={}", ue.tot_dl_prbs_used);
+    fmt::format_to(std::back_inserter(buffer), " dl_nof_prbs={}", ue.tot_pdsch_prbs_used);
     if (ue.last_dl_olla.has_value()) {
       fmt::format_to(std::back_inserter(buffer), " dl_olla={}", ue.last_dl_olla);
     }
@@ -466,7 +501,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     unsigned ul_total = ue.ul_nof_ok + ue.ul_nof_nok;
     auto     out_it   = std::back_inserter(buffer);
     fmt::format_to(out_it, " ul_error_rate={}%", ul_total > 0 ? to_percentage<int>(ue.ul_nof_nok, ul_total) : 0);
-    fmt::format_to(out_it, " ul_nof_prbs={}", ue.tot_ul_prbs_used);
+    fmt::format_to(out_it, " ul_nof_prbs={}", ue.tot_pusch_prbs_used);
     fmt::format_to(out_it, " bsr={}", scaled_fmt_integer(ue.bsr, false));
     fmt::format_to(out_it, " sr_count={}", ue.sr_count);
     fmt::format_to(out_it, " f0f1_invalid_harqs={}", ue.nof_pucch_f0f1_invalid_harqs);

@@ -57,7 +57,7 @@ void cell_metrics_handler::handle_ue_deletion(du_ue_index_t ue_index)
 void cell_metrics_handler::handle_rach_indication(const rach_indication_message& msg)
 {
   for (auto& occ : msg.occasions) {
-    nof_prach_preambles += occ.preambles.size();
+    data.nof_prach_preambles += occ.preambles.size();
   }
 }
 
@@ -270,7 +270,7 @@ void cell_metrics_handler::handle_dl_buffer_state_indication(const dl_buffer_sta
 
 void cell_metrics_handler::handle_error_indication()
 {
-  ++error_indication_counter;
+  ++data.error_indication_counter;
 }
 
 void cell_metrics_handler::report_metrics()
@@ -280,25 +280,18 @@ void cell_metrics_handler::report_metrics()
     next_report.ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
   }
 
-  next_report.nof_error_indications     = error_indication_counter;
-  next_report.average_decision_latency  = decision_latency_sum / report_period_slots;
-  next_report.max_decision_latency      = max_decision_latency;
-  next_report.max_decision_latency_slot = max_decision_latency_slot;
-  next_report.latency_histogram         = decision_latency_hist;
+  next_report.nof_error_indications     = data.error_indication_counter;
+  next_report.average_decision_latency  = data.decision_latency_sum / report_period_slots;
+  next_report.max_decision_latency      = data.max_decision_latency;
+  next_report.max_decision_latency_slot = data.max_decision_latency_slot;
+  next_report.latency_histogram         = data.decision_latency_hist;
   next_report.nof_prbs                  = cell_cfg.nof_dl_prbs; // TODO: to be removed from the report.
-  next_report.nof_dl_slots              = nof_dl_slots;
-  next_report.nof_ul_slots              = nof_ul_slots;
-  next_report.nof_prach_preambles       = nof_prach_preambles;
+  next_report.nof_dl_slots              = data.nof_dl_slots;
+  next_report.nof_ul_slots              = data.nof_ul_slots;
+  next_report.nof_prach_preambles       = data.nof_prach_preambles;
 
   // Reset cell-wide metric counters.
-  error_indication_counter  = 0;
-  decision_latency_sum      = std::chrono::microseconds{0};
-  max_decision_latency      = std::chrono::microseconds{0};
-  max_decision_latency_slot = {};
-  decision_latency_hist     = {};
-  nof_dl_slots              = 0;
-  nof_ul_slots              = 0;
-  nof_prach_preambles       = 0;
+  data = {};
 
   // Report all UE metrics in a batch.
   notifier.report_metrics(next_report);
@@ -353,19 +346,19 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     ++u.data.nof_puschs;
   }
 
-  // Count only full DL/UL slots.
-  nof_dl_slots += (slot_result.dl.nof_dl_symbols > 0);
-  nof_ul_slots += (slot_result.ul.nof_ul_symbols == 14); // Note: PUSCH in special slot not supported.;
+  // Count DL and UL slots.
+  data.nof_dl_slots += (slot_result.dl.nof_dl_symbols > 0);
+  data.nof_ul_slots += (slot_result.ul.nof_ul_symbols == 14); // Note: PUSCH in special slot not supported.;
 
   // Process latency.
-  decision_latency_sum += slot_decision_latency;
-  if (max_decision_latency < slot_decision_latency) {
-    max_decision_latency      = slot_decision_latency;
-    max_decision_latency_slot = last_slot_tx;
+  data.decision_latency_sum += slot_decision_latency;
+  if (data.max_decision_latency < slot_decision_latency) {
+    data.max_decision_latency      = slot_decision_latency;
+    data.max_decision_latency_slot = last_slot_tx;
   }
   unsigned bin_idx = slot_decision_latency.count() / scheduler_cell_metrics::nof_usec_per_bin;
   bin_idx          = std::min(bin_idx, scheduler_cell_metrics::latency_hist_bins - 1);
-  ++decision_latency_hist[bin_idx];
+  ++data.decision_latency_hist[bin_idx];
 }
 
 void cell_metrics_handler::push_result(slot_point                sl_tx,
@@ -403,8 +396,8 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.dl_mcs           = sch_mcs_index{mcs};
   mcs                  = data.nof_puschs > 0 ? std::roundf(static_cast<float>(data.ul_mcs) / data.nof_puschs) : 0;
   ret.ul_mcs           = sch_mcs_index{mcs};
-  ret.tot_dl_prbs_used = data.tot_dl_prbs_used;
-  ret.tot_ul_prbs_used = data.tot_ul_prbs_used;
+  ret.tot_pdsch_prbs_used = data.tot_dl_prbs_used;
+  ret.tot_pusch_prbs_used = data.tot_ul_prbs_used;
   ret.dl_brate_kbps    = static_cast<double>(data.sum_dl_tb_bytes * 8U) / metric_report_period.count();
   ret.ul_brate_kbps    = static_cast<double>(data.sum_ul_tb_bytes * 8U) / metric_report_period.count();
   ret.dl_nof_ok        = data.count_uci_harq_acks;

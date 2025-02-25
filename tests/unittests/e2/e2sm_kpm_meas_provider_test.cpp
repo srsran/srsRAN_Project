@@ -246,9 +246,9 @@ scheduler_cell_metrics generate_sched_metrics(uint32_t                          
     scheduler_ue_metrics ue_metrics = {0};
     ue_metrics.pci                  = 1;
     ue_metrics.rnti                 = static_cast<rnti_t>(0x1000 + ue_idx);
-    ue_metrics.tot_dl_prbs_used =
+    ue_metrics.tot_pdsch_prbs_used =
         (ue_idx < dl_grants.size()) ? std::accumulate(dl_grants[ue_idx].begin(), dl_grants[ue_idx].end(), 0) : 0;
-    ue_metrics.tot_ul_prbs_used =
+    ue_metrics.tot_pusch_prbs_used =
         (ue_idx < ul_grants.size()) ? std::accumulate(ul_grants[ue_idx].begin(), ul_grants[ue_idx].end(), 0) : 0;
     sched_metric.ue_metrics.push_back(ue_metrics);
   }
