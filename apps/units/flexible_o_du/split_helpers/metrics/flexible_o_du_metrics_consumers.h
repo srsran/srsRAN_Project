@@ -25,7 +25,7 @@ struct ru_metrics;
 class flexible_o_du_metrics_consumer_log : public app_services::metrics_consumer
 {
 public:
-  explicit flexible_o_du_metrics_consumer_log(srslog::log_channel& log_chan_) : log_chan(log_chan_), verbose(true)
+  explicit flexible_o_du_metrics_consumer_log(srslog::log_channel& log_chan_) : log_chan(log_chan_), verbose(false)
   {
     srsran_assert(log_chan.enabled(), "Logger log channel is not enabled");
   }

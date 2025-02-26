@@ -76,6 +76,8 @@ struct pusch_channel_estimator_metrics {
 
 /// Collects PUSCH processor metrics.
 struct pusch_processor_metrics {
+  /// Slot context
+  slot_point slot;
   /// Codeblock size.
   units::bytes tbs;
   /// Set to true if the CRC matches.
@@ -224,6 +226,21 @@ struct pdsch_processor_metrics {
 struct pdsch_dmrs_generator_metrics {
   /// Total elapsed time and utilized CPU resources.
   resource_usage_utils::measurements measurements;
+};
+
+/// Collects upper PHY downlink processor metrics.
+struct downlink_processor_metrics {
+  /// Slot context
+  slot_point slot;
+
+  /// Elapsed time that comprises the configuration of the resource grid and the completion of PDUs.
+  std::chrono::nanoseconds elapsed_data;
+  /// Elapsed time between the time point in which the resource grid is configured and the time point the resource grid
+  /// is sent over the gateway.
+  std::chrono::nanoseconds elapsed_configure;
+  /// Elapsed time between the time point in the downlink processor PDU queueing is completed and the time point the
+  /// resource grid is sent over the gateway.
+  std::chrono::nanoseconds elapsed_finish;
 };
 
 } // namespace srsran

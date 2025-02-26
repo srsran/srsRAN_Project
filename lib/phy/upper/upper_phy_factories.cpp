@@ -801,6 +801,12 @@ public:
     phy_config.ul_rg_pool = create_ul_resource_grid_pool(config, rg_factory);
     report_fatal_error_if_not(phy_config.ul_rg_pool, "Invalid uplink resource grid pool.");
 
+    if (metric_notifier) {
+      downlink_proc_factory = create_downlink_processor_generator_metric_decorator_factory(
+          std::move(downlink_proc_factory), metric_notifier->get_downlink_processor_notifier());
+      report_fatal_error_if_not(downlink_proc_factory, "Invalid downlink processor metric decorator.");
+    }
+
     phy_config.dl_processor_pool = create_downlink_processor_pool(downlink_proc_factory, config);
     report_fatal_error_if_not(phy_config.dl_processor_pool, "Invalid downlink processor pool.");
 
@@ -971,7 +977,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   // Wrap DM-RS for PDSCH factory with a metric decorator.
   if (metric_notifier) {
     dmrs_pdsch_proc_factory = create_dmrs_pdsch_generator_metric_decorator_factory(
-        std::move(dmrs_pdsch_proc_factory), metric_notifier->get_pdsch_dmrs_generator());
+        std::move(dmrs_pdsch_proc_factory), metric_notifier->get_pdsch_dmrs_generator_notifier());
     report_fatal_error_if_not(dmrs_pdsch_proc_factory, "Invalid metric DM-RS PDSCH generator factory.");
   }
 
@@ -989,12 +995,12 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   std::shared_ptr<pdsch_block_processor_factory> block_processor_factory;
   if (!std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
     if (!config.hw_encoder_factory) {
-      block_processor_factory =
-          create_pdsch_block_processor_factory_sw(ldpc_enc_factory, ldpc_rm_factory, prg_factory, mod_factory);
+      block_processor_factory = create_pdsch_block_processor_factory_sw(
+          ldpc_enc_factory, ldpc_rm_factory, pdsch_scrambling_factory, pdsch_mod_mapper_factory);
       report_fatal_error_if_not(block_processor_factory, "Invalid SW PDSCH block processor factory.");
     } else {
-      block_processor_factory =
-          create_pdsch_block_processor_factory_hw(config.hw_encoder_factory.value(), prg_factory, mod_factory);
+      block_processor_factory = create_pdsch_block_processor_factory_hw(
+          config.hw_encoder_factory.value(), pdsch_scrambling_factory, pdsch_mod_mapper_factory);
       report_fatal_error_if_not(block_processor_factory, "Invalid HW PDSCH block processor factory.");
     }
   }
@@ -1016,7 +1022,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
     pdsch_proc_factory =
         create_pdsch_flexible_processor_factory_sw(ldpc_seg_tx_factory,
                                                    block_processor_factory,
-                                                   rg_mapper_factory,
+                                                   pdsch_rg_mapper_factory,
                                                    dmrs_pdsch_proc_factory,
                                                    ptrs_pdsch_gen_factory,
                                                    pdsch_processor_config.pdsch_codeblock_task_executor,

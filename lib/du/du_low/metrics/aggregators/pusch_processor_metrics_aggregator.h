@@ -34,11 +34,19 @@ public:
   /// Gets the minimum data processing latency in microseconds.
   double get_min_data_latency_us() const
   {
-    return (min_data_latency_ns == UINT64_MAX) ? 0 : static_cast<double>(min_data_latency_ns) / 1000.0;
+    uint64_t min_data_latency_ns = unpack_duration(packed_min_data_latency_ns);
+    return (min_data_latency_ns == unpack_duration(default_packed_min_latency_ns))
+               ? 0
+               : static_cast<double>(min_data_latency_ns) / 1000.0;
   }
 
-  /// Gets the maximum data processing latency in microseconds.
-  double get_max_data_latency_us() const { return static_cast<double>(max_data_latency_ns) / 1000.0; }
+  /// Gets the maximum transmission latency in microseconds and the slot point in which was detected.
+  std::pair<double, slot_point> get_max_data_latency_us() const
+  {
+    uint64_t   max_data_latency_ns = unpack_duration(packed_max_data_latency_ns);
+    slot_point slot                = unpack_slot(packed_max_data_latency_ns);
+    return {static_cast<double>(max_data_latency_ns) / 1000.0, slot};
+  }
 
   /// Gets the minimum UCI processing latency in microseconds.
   double get_min_uci_latency_us() const
@@ -91,22 +99,27 @@ public:
   /// Resets values of all internal counters.
   void reset()
   {
-    sum_tbs               = 0;
-    sum_crc_ok            = 0;
-    sum_return_elapsed_ns = 0;
-    sum_data_elapsed_ns   = 0;
-    sum_uci_elapsed_ns    = 0;
-    sum_waiting_ns        = 0;
-    count                 = 0;
-    uci_count             = 0;
-    sum_used_cpu_time_ns  = 0;
-    min_data_latency_ns   = UINT64_MAX;
-    max_data_latency_ns   = 0;
-    min_uci_latency_ns    = UINT64_MAX;
-    max_uci_latency_ns    = 0;
+    sum_tbs                    = 0;
+    sum_crc_ok                 = 0;
+    sum_return_elapsed_ns      = 0;
+    sum_data_elapsed_ns        = 0;
+    sum_uci_elapsed_ns         = 0;
+    sum_waiting_ns             = 0;
+    count                      = 0;
+    uci_count                  = 0;
+    sum_used_cpu_time_ns       = 0;
+    packed_min_data_latency_ns = default_packed_min_latency_ns;
+    packed_max_data_latency_ns = default_packed_max_latency_ns;
+    min_uci_latency_ns         = UINT64_MAX;
+    max_uci_latency_ns         = 0;
   }
 
 private:
+  static constexpr uint64_t default_packed_min_latency_ns =
+      pack_slot_and_duration({}, std::numeric_limits<uint32_t>::max());
+  static constexpr uint64_t default_packed_max_latency_ns =
+      pack_slot_and_duration({}, std::numeric_limits<uint32_t>::min());
+
   // See interface for documentation.
   void on_new_metric(const pusch_processor_metrics& metrics) override
   {
@@ -120,7 +133,8 @@ private:
       ++sum_crc_ok;
     }
     ++count;
-    update_minmax(metrics.elapsed_data.count(), max_data_latency_ns, min_data_latency_ns);
+    update_slotmax(metrics.slot, metrics.elapsed_data.count(), packed_max_data_latency_ns);
+    update_slotmin(metrics.slot, metrics.elapsed_data.count(), packed_min_data_latency_ns);
     if (metrics.elapsed_uci.has_value()) {
       sum_uci_elapsed_ns += metrics.elapsed_uci.value().count();
       update_minmax(metrics.elapsed_uci->count(), max_uci_latency_ns, min_uci_latency_ns);
@@ -134,21 +148,21 @@ private:
     ch_est_evm     = metrics.evm;
   }
 
-  std::atomic<uint64_t> sum_tbs               = {};
-  std::atomic<uint64_t> sum_crc_ok            = {};
-  std::atomic<uint64_t> sum_return_elapsed_ns = {};
-  std::atomic<uint64_t> sum_data_elapsed_ns   = {};
-  std::atomic<uint64_t> sum_uci_elapsed_ns    = {};
-  std::atomic<uint64_t> sum_waiting_ns        = {};
-  std::atomic<uint64_t> count                 = {};
-  std::atomic<uint64_t> uci_count             = {};
-  std::atomic<float>    ch_est_sinr_db        = {};
-  std::atomic<float>    ch_est_evm            = {};
-  std::atomic<uint64_t> sum_used_cpu_time_ns  = {};
-  std::atomic<uint64_t> min_data_latency_ns   = UINT64_MAX;
-  std::atomic<uint64_t> max_data_latency_ns   = 0;
-  std::atomic<uint64_t> min_uci_latency_ns    = UINT64_MAX;
-  std::atomic<uint64_t> max_uci_latency_ns    = 0;
+  std::atomic<uint64_t> sum_tbs                    = {};
+  std::atomic<uint64_t> sum_crc_ok                 = {};
+  std::atomic<uint64_t> sum_return_elapsed_ns      = {};
+  std::atomic<uint64_t> sum_data_elapsed_ns        = {};
+  std::atomic<uint64_t> sum_uci_elapsed_ns         = {};
+  std::atomic<uint64_t> sum_waiting_ns             = {};
+  std::atomic<uint64_t> count                      = {};
+  std::atomic<uint64_t> uci_count                  = {};
+  std::atomic<float>    ch_est_sinr_db             = {};
+  std::atomic<float>    ch_est_evm                 = {};
+  std::atomic<uint64_t> sum_used_cpu_time_ns       = {};
+  std::atomic<uint64_t> packed_min_data_latency_ns = default_packed_min_latency_ns;
+  std::atomic<uint64_t> packed_max_data_latency_ns = default_packed_max_latency_ns;
+  std::atomic<uint64_t> min_uci_latency_ns         = UINT64_MAX;
+  std::atomic<uint64_t> max_uci_latency_ns         = 0;
 };
 
 } // namespace srsran
