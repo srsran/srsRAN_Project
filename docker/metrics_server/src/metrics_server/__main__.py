@@ -185,6 +185,38 @@ def _publish_data(
                         },
                         record_time_key="time",
                     )
+                elif "ru" in metric and "ofh_cells" in metric["ru"] and metric["ru"]["ofh_cells"]:
+                    timestamp = datetime.fromtimestamp(metric["timestamp"], UTC).isoformat()
+                    for cell in metric["ru"]["ofh_cells"]:
+                        cell = cell["cell"]
+                        if cell["ul"]["received_packets"]:
+                            _influx_push(
+                                write_api,
+                                bucket=bucket,
+                                record={
+                                    "measurement": "ofh_ul_received_packets",
+                                    "tags": {
+                                        "pci": cell["pci"],
+                                        "testbed": testbed,
+                                    },
+                                    "fields": dict(cell["ul"]["received_packets"].items()),
+                                    "time": timestamp,
+                                },
+                                record_time_key="time",
+                            )
+                    _influx_push(
+                        write_api,
+                        bucket=bucket,
+                        record={
+                            "measurement": "app_resource_usage",
+                            "tags": {
+                                "testbed": testbed,
+                            },
+                            "fields": dict(metric["app_resource_usage"].items()),
+                            "time": timestamp,
+                        },
+                        record_time_key="time",
+                    )
             except Exception as err:  # pylint: disable=broad-exception-caught
                 logging.exception(err)
 
