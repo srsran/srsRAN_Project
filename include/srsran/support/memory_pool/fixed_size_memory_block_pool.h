@@ -250,7 +250,9 @@ public:
   /// This method is useful to avoid the overhead of thread_local initialization in critical paths.
   void init_worker_cache()
   {
-    (void)get_worker_cache();
+    if (void* p = allocate_node(mblock_size)) {
+      deallocate_node(p);
+    }
   }
 
 private:

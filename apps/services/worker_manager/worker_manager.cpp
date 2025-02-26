@@ -9,6 +9,7 @@
  */
 
 #include "worker_manager.h"
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 
 using namespace srsran;
@@ -245,6 +246,11 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
     if (not exec_mng.add_execution_context(create_execution_context(slot_workers[cell_id]))) {
       report_fatal_error("Failed to instantiate {} execution context", slot_workers[cell_id].name);
     }
+
+    // Pre-initialize byte buffer pool TLS to avoid doing it in the critical path.
+    bool result =
+        exec_mng.executors().at("slot_exec#" + cell_id_str)->defer([]() { init_byte_buffer_segment_pool_tls(); });
+    report_error_if_not(result, "Unexpected failure to dispatch cell task");
   }
 
   // Instantiate DU-high executor mapper.
