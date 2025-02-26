@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "srsran/rlc/rlc_mode.h"
 #include "srsran/rlc/rlc_tx_metrics.h"
+#include "srsran/support/srsran_assert.h"
 
 namespace srsran {
 
