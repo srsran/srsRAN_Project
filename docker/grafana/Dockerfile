@@ -13,10 +13,12 @@ ADD provisioning /etc/grafana/provisioning
 ADD dashboards   /etc/dashboards
 
 USER root
-ARG LOGO_URL=https://raw.githubusercontent.com/srsran/srsRAN_Project_docs/main/docs/source/.imgs/logo.png
-RUN if [ -f "${LOGO_URL}" ]; then \
-        mv "${LOGO_URL}" /usr/share/grafana/public/img/logo.png; \
+ARG LOGO_SRC=https://raw.githubusercontent.com/srsran/srsRAN_Project_docs/main/docs/source/.imgs/logo.png
+# If LOGO_SRC is a valid path inside the container, then move it to the correct location
+# Otherwise, download it from the URL
+RUN if [ -f "${LOGO_SRC}" ]; then \
+        mv "${LOGO_SRC}" /usr/share/grafana/public/img/logo.png; \
     else \
-        wget -O /usr/share/grafana/public/img/logo.png ${LOGO_URL}; \
+        wget -O /usr/share/grafana/public/img/logo.png ${LOGO_SRC}; \
     fi
 USER grafana

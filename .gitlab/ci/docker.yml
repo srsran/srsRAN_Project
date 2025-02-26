@@ -270,7 +270,7 @@ grafana server image:
       if [ -n "$LOGO_URL" ]; then
         DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends ca-certificates wget
         wget --header="PRIVATE-TOKEN: $CODEBOT_TOKEN" -O ${CONTEXT}/provisioning/logo.png ${LOGO_URL}
-        export BUILD_ARGS="LOGO_URL=/etc/grafana/provisioning/logo.png"
+        export BUILD_ARGS="LOGO_SRC=/etc/grafana/provisioning/logo.png"
       fi
     - |
       export VERSION=$(cat docker/grafana/version.yml | grep SRS_GRAFANA_VERSION | cut -d'"' -f2)
