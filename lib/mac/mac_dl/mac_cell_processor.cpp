@@ -65,7 +65,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
 
 static void initialize_cell_tracer(du_cell_index_t cell_idx, subcarrier_spacing scs)
 {
-  constexpr static size_t MAX_EVENTS = 8;
+  static constexpr size_t MAX_EVENTS = 8;
 
   std::chrono::microseconds slot_dur{1000 / get_nof_slots_per_subframe(scs)};
 
