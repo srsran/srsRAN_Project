@@ -339,7 +339,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                               *new_drb->f1u_gw_bearer,
                                               new_drb->f1u_to_pdcp_adapter,
                                               new_drb->f1u_to_pdcp_adapter,
-                                              ue_dl_timer_factory,
+                                              ue_ctrl_timer_factory,
                                               ue_inactivity_timer,
                                               ue_dl_exec,
                                               ue_ul_exec);
@@ -454,7 +454,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                                               *drb->f1u_gw_bearer,
                                               drb->f1u_to_pdcp_adapter,
                                               drb->f1u_to_pdcp_adapter,
-                                              ue_dl_timer_factory,
+                                              ue_ctrl_timer_factory,
                                               ue_inactivity_timer,
                                               ue_dl_exec,
                                               ue_ul_exec);
