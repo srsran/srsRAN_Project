@@ -94,7 +94,8 @@ async_task<f1_setup_result> initial_du_setup_procedure::start_f1_setup_request()
     auto& serv_cell = req.served_cells.emplace_back();
 
     // Fill serving cell info.
-    serv_cell.cell_info = make_f1ap_du_cell_info(du_cell_cfg);
+    serv_cell.cell_index = cell_index;
+    serv_cell.cell_info  = make_f1ap_du_cell_info(du_cell_cfg);
     for (const auto& slice : du_cell_cfg.rrm_policy_members) {
       serv_cell.slices.push_back(slice.rrc_member.s_nssai);
     }

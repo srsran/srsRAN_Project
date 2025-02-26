@@ -213,12 +213,15 @@ f1_setup_result f1ap_du_setup_procedure::create_f1_setup_result()
   du_ctxt.du_id       = request.gnb_du_id;
   du_ctxt.gnb_du_name = request.gnb_du_name;
   if (asn1_success.cells_to_be_activ_list_present) {
-    du_ctxt.served_cells.resize(asn1_success.cells_to_be_activ_list.size());
     success.cells_to_activate.resize(asn1_success.cells_to_be_activ_list.size());
-    for (unsigned i = 0, e = du_ctxt.served_cells.size(); i != e; ++i) {
-      auto& asn1_cell                  = asn1_success.cells_to_be_activ_list[i]->cells_to_be_activ_list_item();
-      du_ctxt.served_cells[i].nr_cgi   = cgi_from_asn1(asn1_cell.nr_cgi).value();
-      success.cells_to_activate[i].cgi = du_ctxt.served_cells[i].nr_cgi;
+    for (unsigned i = 0, e = asn1_success.cells_to_be_activ_list.size(); i != e; ++i) {
+      auto&               asn1_cell    = asn1_success.cells_to_be_activ_list[i]->cells_to_be_activ_list_item();
+      nr_cell_global_id_t cgi          = cgi_from_asn1(asn1_cell.nr_cgi).value();
+      success.cells_to_activate[i].cgi = cgi;
+      auto it                          = std::find_if(request.served_cells.begin(),
+                             request.served_cells.end(),
+                             [&cgi](const f1_cell_setup_params& c) { return c.cell_info.nr_cgi == cgi; });
+      du_ctxt.served_cells.emplace(it->cell_index, f1ap_du_cell_context{it->cell_index, cgi});
     }
   }
 

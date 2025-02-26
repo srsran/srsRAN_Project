@@ -565,17 +565,14 @@ void f1ap_du_impl::handle_paging_request(const asn1::f1ap::paging_s& msg)
       logger.error("Invalid CGI in paging cell list");
       continue;
     }
-    auto       paging_cell_cgi = ret.value();
-    const auto du_cell_it =
-        std::find_if(ctxt.served_cells.cbegin(),
-                     ctxt.served_cells.cend(),
-                     [&paging_cell_cgi](const f1ap_du_cell_context& cell) { return paging_cell_cgi == cell.nr_cgi; });
-    // Cell not served by this DU.
-    if (du_cell_it == ctxt.served_cells.cend()) {
+    auto                        paging_cell_cgi = ret.value();
+    const f1ap_du_cell_context* cell_same_cgi   = ctxt.find_cell(paging_cell_cgi);
+    if (cell_same_cgi == nullptr) {
+      // Cell not served by this DU.
       logger.error("Cell with PLMN={} and NCI={} not handled by DU", paging_cell_cgi.plmn_id, paging_cell_cgi.nci);
       continue;
     }
-    info.paging_cells.push_back(to_du_cell_index(std::distance(ctxt.served_cells.cbegin(), du_cell_it)));
+    info.paging_cells.push_back(cell_same_cgi->cell_index);
   }
   paging_notifier.on_paging_received(info);
 }

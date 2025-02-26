@@ -12,6 +12,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/carrier_configuration.h"
+#include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/nr_cgi.h"
@@ -45,6 +46,8 @@ struct du_served_cell_info {
 
 /// \brief Served cell configuration that will be passed to CU-CP.
 struct f1_cell_setup_params {
+  // DU-internal identifier of the cell.
+  du_cell_index_t        cell_index;
   du_served_cell_info    cell_info;
   gnb_du_sys_info        du_sys_info;
   std::vector<s_nssai_t> slices;

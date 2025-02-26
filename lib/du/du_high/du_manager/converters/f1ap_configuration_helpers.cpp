@@ -815,7 +815,8 @@ void srsran::srs_du::fill_f1_setup_request(f1_setup_request_message&            
     f1_cell_setup_params& serv_cell = req.served_cells[i];
 
     // Fill serving cell info.
-    serv_cell.cell_info = make_f1ap_du_cell_info(cell_cfg);
+    serv_cell.cell_index = to_du_cell_index(i);
+    serv_cell.cell_info  = make_f1ap_du_cell_info(cell_cfg);
     for (const auto& slice : cell_cfg.rrm_policy_members) {
       serv_cell.slices.push_back(slice.rrc_member.s_nssai);
     }
