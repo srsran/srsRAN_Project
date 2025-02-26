@@ -11,6 +11,7 @@
 #include "du_high_mac_metrics_consumers.h"
 #include "srsran/mac/mac_metrics.h"
 #include "srsran/ran/pci.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
 
@@ -73,4 +74,51 @@ void mac_metrics_consumer_json::handle_metric(const app_services::metrics_set& m
   // Log the context.
   ctx.write<metric_timestamp_tag>(get_time_stamp());
   log_chan(ctx);
+}
+
+static void write_latency_information(fmt::memory_buffer&                              buffer,
+                                      const mac_dl_cell_metric_report::latency_report& report,
+                                      std::string_view                                 name,
+                                      bool                                             add_space    = true,
+                                      bool                                             add_new_line = false)
+{
+  fmt::format_to(std::back_inserter(buffer),
+                 "{}=[avg={}usec max={}usec max_slot={}]",
+                 name,
+                 std::round(report.average.count() * 1e-3),
+                 std::round(report.max.count() * 1e-3),
+                 report.max_slot);
+
+  if (add_space) {
+    fmt::format_to(std::back_inserter(buffer), " ");
+  }
+  if (add_new_line) {
+    fmt::format_to(std::back_inserter(buffer), "\n");
+  }
+}
+
+void mac_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
+{
+  const mac_metric_report& mac_metrics = static_cast<const mac_metrics_impl&>(metric).get_metrics();
+
+  fmt::memory_buffer buffer;
+  fmt::format_to(std::back_inserter(buffer), "Mac Metrics: \n");
+
+  for (unsigned i = 0, e = mac_metrics.dl.cells.size(), last_index = e - 1; i != e; ++i) {
+    const mac_dl_cell_metric_report& cell = mac_metrics.dl.cells[i];
+
+    fmt::format_to(std::back_inserter(buffer),
+                   "  - pci={} nof_slots={} slot_duration={}usec nof_voluntary_context_switches={} "
+                   "nof_involuntary_context_switches={} ",
+                   static_cast<unsigned>(cell.pci),
+                   cell.nof_slots,
+                   std::round(cell.slot_duration.count() * 1e-3),
+                   cell.count_voluntary_context_switches,
+                   cell.count_involuntary_context_switches);
+
+    write_latency_information(buffer, cell.wall_clock_latency, "wall_clock_latency");
+    write_latency_information(buffer, cell.slot_ind_handle_latency, "slot_ind_latency", false, i != last_index);
+  }
+
+  log_chan("{}", to_c_str(buffer));
 }
