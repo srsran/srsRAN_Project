@@ -106,3 +106,13 @@ build uesim zmq driver:
   artifacts:
     <<: *trx_artifacts
     expire_in: 3 days
+
+build amariue ntn zmq driver:
+  extends: build trx driver
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  variables:
+    AMARISOFT_VERSION: "2024-12-13"
+  artifacts:
+    <<: *trx_artifacts
+    expire_in: 3 days

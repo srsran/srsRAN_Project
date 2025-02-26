@@ -318,6 +318,18 @@ ric:
     TESTBED: "zmq_ric"
     MARKERS: "zmq_ric"
 
+ntn:
+  extends: .zmq
+  variables:
+    TESTBED: "zmq_ntn"
+    MARKERS: "zmq_ntn"
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - job: "build amariue ntn zmq driver"
+      artifacts: true
+    - *retina-needs
+
 ################################################################################
 # TEST MODE
 ################################################################################
