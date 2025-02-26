@@ -28,8 +28,8 @@ struct rlc_tx_am_sdu_info {
   byte_buffer                           sdu;             ///< SDU buffer
   bool                                  is_retx = false; ///< Determines whether this SDU is a PDCP retransmission
   std::optional<uint32_t>               pdcp_sn;         ///< Optional PDCP sequence number
-  std::chrono::system_clock::time_point time_of_arrival;
-  uint32_t                              next_so    = 0;                      ///< Segmentation progress
+  std::chrono::system_clock::time_point time_of_arrival; ///< Time of arrival
+  uint32_t                              next_so    = 0;  ///< Segmentation progress
   uint32_t                              retx_count = RETX_COUNT_NOT_STARTED; ///< Retransmission counter
 };
 

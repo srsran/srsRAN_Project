@@ -75,6 +75,11 @@ struct rlc_am_tx_metrics_lower {
   std::optional<uint32_t> min_poll_latency_ms;   ///< Minimum poll latency (in ms)
   std::optional<uint32_t> max_poll_latency_ms;   ///< Maximum poll latency (in ms)
 
+  uint32_t                num_ack_latency_meas; ///< Number of ACK latency measurements
+  uint32_t                sum_ack_latency_ms;   ///< Total ACK latency over a (in ms)
+  std::optional<uint32_t> min_ack_latency_ms;   ///< Minimum ACK latency (in ms)
+  std::optional<uint32_t> max_ack_latency_ms;   ///< Maximum ACK latency (in ms)
+
   void reset()
   {
     num_pdus_with_segmentation      = {};
@@ -88,6 +93,11 @@ struct rlc_am_tx_metrics_lower {
     sum_poll_latency_ms   = {};
     min_poll_latency_ms   = {};
     max_poll_latency_ms   = {};
+
+    num_ack_latency_meas = {};
+    sum_ack_latency_ms   = {};
+    min_ack_latency_ms   = {};
+    max_ack_latency_ms   = {};
   }
 };
 

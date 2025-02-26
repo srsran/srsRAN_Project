@@ -236,6 +236,21 @@ public:
     am.max_poll_latency_ms = std::max(am.max_poll_latency_ms, std::optional<uint32_t>{poll_latency_ms});
   }
 
+  void metrics_add_ack_latency_ms(uint32_t ack_latency_ms)
+  {
+    if (not enabled) {
+      return;
+    }
+    srsran_assert(std::holds_alternative<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific),
+                  "Wrong mode for AM metrics.");
+    auto& am = std::get<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific);
+    am.sum_ack_latency_ms += ack_latency_ms;
+    am.num_ack_latency_meas++;
+
+    am.min_ack_latency_ms = std::min(am.min_ack_latency_ms, std::optional<uint32_t>{ack_latency_ms});
+    am.max_ack_latency_ms = std::max(am.max_ack_latency_ms, std::optional<uint32_t>{ack_latency_ms});
+  }
+
   // Metrics getters and setters
   rlc_tx_metrics_lower get_low_metrics()
   {
