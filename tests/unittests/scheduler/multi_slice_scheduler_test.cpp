@@ -82,7 +82,7 @@ protected:
 class single_slice_limited_max_rbs_scheduler_test : public base_multi_slice_scheduler_tester, public ::testing::Test
 {
 protected:
-  constexpr static unsigned max_slice_rbs = 10;
+  static constexpr unsigned max_slice_rbs = 10;
 
   single_slice_limited_max_rbs_scheduler_test() :
     base_multi_slice_scheduler_tester(
