@@ -23,7 +23,7 @@ class upper_phy_rx_results_notifier;
 class upper_phy_rx_symbol_handler;
 class upper_phy_timing_handler;
 class upper_phy_timing_notifier;
-class uplink_slot_pdu_repository;
+class uplink_pdu_slot_repository_pool;
 
 /// \brief Upper PHY interface.
 ///
@@ -62,7 +62,7 @@ public:
   virtual uplink_request_processor& get_uplink_request_processor() = 0;
 
   /// Returns the uplink slot PDU repository of this upper PHY.
-  virtual uplink_slot_pdu_repository& get_uplink_slot_pdu_repository() = 0;
+  virtual uplink_pdu_slot_repository_pool& get_uplink_pdu_slot_repository() = 0;
 
   /// Returns the downlink PDU validator of this upper PHY.
   virtual const downlink_pdu_validator& get_downlink_pdu_validator() const = 0;

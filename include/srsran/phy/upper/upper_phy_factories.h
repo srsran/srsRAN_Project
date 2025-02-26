@@ -30,7 +30,16 @@ class upper_phy_rg_gateway;
 class upper_phy_rx_symbol_request_notifier;
 
 /// Configuration parameters for uplink processors.
-struct uplink_processor_config {};
+struct uplink_processor_config {
+  /// Uplink processor result notifier.
+  upper_phy_rx_results_notifier& notifier;
+  /// Rate Matching receive buffer pool.
+  rx_buffer_pool& rm_buffer_pool;
+  /// PUSCH allocation maximum number of PRB.
+  unsigned max_nof_rb;
+  /// PUSCH allocation maximum number of layers.
+  unsigned max_nof_layers;
+};
 
 /// Uplink processor factory.
 class uplink_processor_factory

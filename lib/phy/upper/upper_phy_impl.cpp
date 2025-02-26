@@ -32,19 +32,14 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   rx_buf_pool(std::move(config.rx_buf_pool)),
   dl_rg_pool(std::move(config.dl_rg_pool)),
   ul_rg_pool(std::move(config.ul_rg_pool)),
-  pdu_repository(config.nof_slots_ul_pdu_repository),
   prach_pool(std::move(config.prach_pool)),
   dl_processor_pool(std::move(config.dl_processor_pool)),
   ul_processor_pool(std::move(config.ul_processor_pool)),
   dl_pdu_validator(std::move(config.dl_pdu_validator)),
   ul_pdu_validator(std::move(config.ul_pdu_validator)),
   ul_request_processor(*config.rx_symbol_request_notifier, *prach_pool),
-  rx_symbol_handler(std::make_unique<upper_phy_rx_symbol_handler_impl>(*ul_processor_pool,
-                                                                       pdu_repository,
-                                                                       rx_buf_pool->get_pool(),
-                                                                       rx_results_notifier,
-                                                                       config.ul_bw_rb,
-                                                                       config.pusch_max_nof_layers)),
+  rx_results_notifier(std::move(config.rx_results_notifier)),
+  rx_symbol_handler(std::make_unique<upper_phy_rx_symbol_handler_impl>(ul_processor_pool->get_slot_processor_pool())),
   timing_handler(notifier_dummy)
 {
   srsran_assert(dl_processor_pool, "Invalid downlink processor pool");
@@ -55,6 +50,7 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   srsran_assert(rx_buf_pool, "Invalid receive buffer pool");
   srsran_assert(dl_pdu_validator, "Invalid downlink PDU validator");
   srsran_assert(ul_pdu_validator, "Invalid uplink PDU validator");
+  srsran_assert(rx_results_notifier, "Invalid receive results notifier");
 
   logger.set_level(config.log_level);
 
@@ -109,9 +105,9 @@ uplink_request_processor& upper_phy_impl::get_uplink_request_processor()
   return ul_request_processor;
 }
 
-uplink_slot_pdu_repository& upper_phy_impl::get_uplink_slot_pdu_repository()
+uplink_pdu_slot_repository_pool& upper_phy_impl::get_uplink_pdu_slot_repository()
 {
-  return pdu_repository;
+  return ul_processor_pool->get_slot_pdu_repository();
 }
 
 void upper_phy_impl::set_error_notifier(upper_phy_error_notifier& notifier)
@@ -126,7 +122,7 @@ void upper_phy_impl::set_timing_notifier(srsran::upper_phy_timing_notifier& noti
 
 void upper_phy_impl::set_rx_results_notifier(upper_phy_rx_results_notifier& notifier)
 {
-  rx_results_notifier.connect(notifier);
+  rx_results_notifier->connect(notifier);
 }
 
 const uplink_pdu_validator& upper_phy_impl::get_uplink_pdu_validator() const
