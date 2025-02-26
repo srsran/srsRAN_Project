@@ -46,12 +46,13 @@ void scheduler_time_rr::save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants)
   if (dl_grants.empty()) {
     return;
   }
-  // Mark the UE after the first allocation to be the first UE to get allocated in the following slot. For example,
-  // if {1,...,N} UEs are allocated, then the next UE will be 2.
-  // It is important that we equally distribute the opportunity to be the first UE being allocated in a slot for
-  // all UEs. Otherwise, we could end up in a situation, where a UE is always the last one to be allocated and
-  // can only use the RBs that were left from the previous UE allocations.
-  next_dl_ue_index = to_du_ue_index(dl_grants[0].context.ue_index + 1);
+
+  // Mark the UE after the second last allocation to be the first UE to get allocated in the following slot. For
+  // example, if {1,...,M,N} UEs are allocated, then the next UE should be M+1. We do this because the last UE might
+  // have been allocated with a smaller grant size and we want to give it a chance to get a bigger grant size in the
+  // next slot.
+  auto& prev_full_grant_ue = dl_grants.size() > 1 ? dl_grants[dl_grants.size() - 2] : dl_grants[0];
+  next_dl_ue_index         = to_du_ue_index(prev_full_grant_ue.context.ue_index + 1);
 }
 
 void scheduler_time_rr::save_ul_newtx_grants(span<const ul_sched_info> ul_grants)
@@ -60,5 +61,6 @@ void scheduler_time_rr::save_ul_newtx_grants(span<const ul_sched_info> ul_grants
     return;
   }
   // \ref save_dl_newtx_grants
-  next_ul_ue_index = to_du_ue_index(ul_grants[0].context.ue_index + 1);
+  auto& prev_full_grant_ue = ul_grants.size() > 1 ? ul_grants[ul_grants.size() - 2] : ul_grants[0];
+  next_ul_ue_index         = to_du_ue_index(prev_full_grant_ue.context.ue_index + 1);
 }
