@@ -19,10 +19,8 @@
 
 namespace srsran {
 
-/// \brief Implements a generic physical layer metrics adapter.
-///
-/// Currently, the adapter only collects the lower physical layer metrics.
-class phy_metrics_adapter : public lower_phy_metrics_notifier
+/// Implements a generic lower physical layer metrics printer.
+class ru_generic_metrics_printer : public lower_phy_metrics_notifier
 {
 public:
   // See interface for documentation.
@@ -57,8 +55,8 @@ public:
 
   static void print_header()
   {
-    fmt::print("| ------------------- TX ------------------ | ------------------- RX ------------------ |\n");
-    fmt::print("| Avg. power | Peak power | PAPR | Clipping | Avg. power | Peak power | PAPR | Clipping |\n");
+    fmt::println("| ------------------- TX ------------------ | ------------------- RX ------------------ |");
+    fmt::println("| Avg. power | Peak power | PAPR | Clipping | Avg. power | Peak power | PAPR | Clipping |");
   }
 
   void print_metrics()
@@ -101,15 +99,15 @@ public:
       rx_clipping.reset();
     }
 
-    fmt::print("| {:>10.1f} | {:>10.1f} | {:>4.1f} | {:>8.1e} | {:>10.1f} | {:>10.1f} | {:>4.1f} | {:>8.1e} |\n",
-               tx_avg_power_dB,
-               tx_peak_power_dB,
-               tx_papr_dB,
-               tx_clipping_prob,
-               rx_avg_power_dB,
-               rx_peak_power_dB,
-               rx_papr_dB,
-               rx_clipping_prob);
+    fmt::println("| {:>10.1f} | {:>10.1f} | {:>4.1f} | {:>8.1e} | {:>10.1f} | {:>10.1f} | {:>4.1f} | {:>8.1e} |",
+                 tx_avg_power_dB,
+                 tx_peak_power_dB,
+                 tx_papr_dB,
+                 tx_clipping_prob,
+                 rx_avg_power_dB,
+                 rx_peak_power_dB,
+                 rx_papr_dB,
+                 rx_clipping_prob);
   }
 
 private:

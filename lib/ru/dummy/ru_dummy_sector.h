@@ -219,13 +219,13 @@ public:
   /// Prints in \c stdout the current gathered metrics. It does not reset the metrics.
   void print_metrics() const
   {
-    fmt::print("| {:^11} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} |\n",
-               total_dl_request_count.load(),
-               late_dl_request_count.load(),
-               total_ul_request_count.load(),
-               late_ul_request_count.load(),
-               total_prach_request_count.load(),
-               late_prach_request_count.load());
+    fmt::println("| {:^11} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} |",
+                 total_dl_request_count.load(),
+                 late_dl_request_count.load(),
+                 total_ul_request_count.load(),
+                 late_ul_request_count.load(),
+                 total_prach_request_count.load(),
+                 late_prach_request_count.load());
   }
 
 private:

@@ -16,18 +16,15 @@
 
 namespace srsran {
 
-/// \brief Implements a generic physical layer error adapter.
-///
-/// Currently, the adapter only logs the error and the context.
-class phy_error_adapter : public lower_phy_error_notifier
+/// Implements a generic lower physical layer error logger.
+class ru_generic_error_logger : public lower_phy_error_notifier
 {
-private:
-  /// Adapter logger.
+  /// Logger.
   srslog::basic_logger& logger;
 
 public:
   /// Creates an adapter with a given logger.
-  explicit phy_error_adapter(srslog::basic_logger& logger_) : logger(logger_) {}
+  explicit ru_generic_error_logger(srslog::basic_logger& logger_) : logger(logger_) {}
 
   // See interface for documentation.
   void on_late_resource_grid(const resource_grid_context& context) override

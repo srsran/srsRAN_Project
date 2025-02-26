@@ -81,13 +81,13 @@ void ru_dummy_impl::stop()
 
 void ru_dummy_impl::print_metrics()
 {
-  fmt::print("| {:^11} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} |\n",
-             "DL Count",
-             "DL Late",
-             "UL Count",
-             "UL Late",
-             "PRACH Count",
-             "PRACH Late");
+  fmt::println("| {:^11} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} |",
+               "DL Count",
+               "DL Late",
+               "UL Count",
+               "UL Late",
+               "PRACH Count",
+               "PRACH Late");
   for (auto& sector : sectors) {
     sector.print_metrics();
   }
