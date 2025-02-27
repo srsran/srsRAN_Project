@@ -280,6 +280,7 @@ void cell_metrics_handler::report_metrics()
     next_report.ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
   }
 
+  next_report.nof_slots                 = report_period_slots;
   next_report.nof_error_indications     = data.error_indication_counter;
   next_report.average_decision_latency  = data.decision_latency_sum / report_period_slots;
   next_report.max_decision_latency      = data.max_decision_latency;
@@ -369,21 +370,25 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
                                        const sched_result&       slot_result,
                                        std::chrono::microseconds slot_decision_latency)
 {
-  if (report_period_slots == 0) {
-    // The SCS common is now known.
+  if (SRSRAN_UNLIKELY(not next_report_slot.valid())) {
+    // We enter here in the first call to this function.
+    // We will make the \c next_report_slot aligned with the period.
     nof_slots_per_sf    = get_nof_slots_per_subframe(to_subcarrier_spacing(sl_tx.numerology()));
     usecs slot_dur      = usecs{1000U >> sl_tx.numerology()};
     report_period_slots = usecs{report_period} / slot_dur;
+    unsigned mod_val    = sl_tx.to_uint() % report_period_slots;
+    next_report_slot    = mod_val > 0 ? sl_tx + report_period_slots - mod_val : sl_tx;
   }
-
   last_slot_tx = sl_tx;
 
   handle_slot_result(slot_result, slot_decision_latency);
 
-  ++slot_counter;
-  if (slot_counter >= report_period_slots) {
+  if (sl_tx >= next_report_slot) {
+    // Prepare report and forward it to the notifier.
     report_metrics();
-    slot_counter = 0;
+
+    // Set next report slot.
+    next_report_slot += report_period_slots;
   }
 }
 

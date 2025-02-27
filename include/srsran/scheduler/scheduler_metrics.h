@@ -113,6 +113,9 @@ struct scheduler_cell_metrics {
   static constexpr unsigned latency_hist_bins = 10;
   /// Distance between histogram bins.
   static constexpr unsigned nof_usec_per_bin = 50;
+
+  /// Number of slots accounted for in this report.
+  unsigned nof_slots = 0;
   /// Number of cell PRBs.
   unsigned nof_prbs = 0;
   /// Number of downlink slots.

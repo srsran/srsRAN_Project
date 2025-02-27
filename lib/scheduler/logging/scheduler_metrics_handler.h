@@ -136,15 +136,13 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   unsigned report_period_slots = 0;
 
   slot_point last_slot_tx;
+  slot_point next_report_slot;
 
   slotted_id_table<du_ue_index_t, ue_metric_context, MAX_NOF_DU_UES> ues;
   std::unordered_map<rnti_t, du_ue_index_t>                          rnti_to_ue_index_lookup;
 
   /// Metrics tracked that are reset on every report.
   non_persistent_data data;
-
-  /// Counter of number of slots elapsed since the last report.
-  unsigned slot_counter = 0;
 
   scheduler_cell_metrics next_report;
 
