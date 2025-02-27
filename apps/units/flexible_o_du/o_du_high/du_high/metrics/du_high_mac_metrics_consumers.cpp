@@ -79,8 +79,8 @@ void mac_metrics_consumer_json::handle_metric(const app_services::metrics_set& m
 static void write_latency_information(fmt::memory_buffer&                              buffer,
                                       const mac_dl_cell_metric_report::latency_report& report,
                                       std::string_view                                 name,
-                                      bool                                             add_space    = true,
-                                      bool                                             add_new_line = false)
+                                      bool                                             add_space = true,
+                                      bool                                             add_comma = false)
 {
   fmt::format_to(std::back_inserter(buffer),
                  "{}=[avg={}usec max={}usec max_slot={}]",
@@ -92,8 +92,8 @@ static void write_latency_information(fmt::memory_buffer&                       
   if (add_space) {
     fmt::format_to(std::back_inserter(buffer), " ");
   }
-  if (add_new_line) {
-    fmt::format_to(std::back_inserter(buffer), "\n");
+  if (add_comma) {
+    fmt::format_to(std::back_inserter(buffer), ", ");
   }
 }
 
@@ -102,13 +102,13 @@ void mac_metrics_consumer_log::handle_metric(const app_services::metrics_set& me
   const mac_metric_report& mac_metrics = static_cast<const mac_metrics_impl&>(metric).get_metrics();
 
   fmt::memory_buffer buffer;
-  fmt::format_to(std::back_inserter(buffer), "Mac Metrics: \n");
+  fmt::format_to(std::back_inserter(buffer), "MAC metrics: ");
 
   for (unsigned i = 0, e = mac_metrics.dl.cells.size(), last_index = e - 1; i != e; ++i) {
     const mac_dl_cell_metric_report& cell = mac_metrics.dl.cells[i];
 
     fmt::format_to(std::back_inserter(buffer),
-                   "  - pci={} nof_slots={} slot_duration={}usec nof_voluntary_context_switches={} "
+                   "pci={} nof_slots={} slot_duration={}usec nof_voluntary_context_switches={} "
                    "nof_involuntary_context_switches={} ",
                    static_cast<unsigned>(cell.pci),
                    cell.nof_slots,
