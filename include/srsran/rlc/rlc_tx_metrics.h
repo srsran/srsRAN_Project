@@ -198,8 +198,10 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
     auto& am = std::get<rlc_am_tx_metrics_lower>(m.tx_low.mode_specific);
     fmt::format_to(
         std::back_inserter(buffer),
-        " num_pdus_with_segm={} pdu_rate_with_segm={}bps num_retx={} "
-        "retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps pull_latency_avg={}",
+        " num_pdus_with_segm={} pdu_rate_with_segm={}bps num_retx={}"
+        " retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps pull_latency_avg={}"
+        " num_poll_latency_meas={} poll_latency_min={}ms poll_latency_avg={}s poll_latency_max={}ms"
+        " num_ack_latency_meas={} ack_latency_min={}ms ack_latency_avg={}s ack_latency_max={}ms",
         scaled_fmt_integer(am.num_pdus_with_segmentation, false),
         float_to_eng_string(
             static_cast<float>(am.num_pdu_bytes_with_segmentation) * 8 * 1000 / metrics_period.count(), 1, false),
@@ -212,7 +214,15 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
                                 (m.tx_low.num_pdus_no_segmentation + am.num_pdus_with_segmentation + am.num_retx_pdus +
                                  am.num_ctrl_pdus),
                             1,
-                            false));
+                            false),
+        scaled_fmt_integer(am.num_poll_latency_meas, false),
+        am.min_poll_latency_ms,
+        float_to_eng_string(static_cast<float>(am.sum_poll_latency_ms * 1e-3) / am.num_poll_latency_meas, 1, false),
+        am.max_poll_latency_ms,
+        scaled_fmt_integer(am.num_ack_latency_meas, false),
+        am.min_ack_latency_ms,
+        float_to_eng_string(static_cast<float>(am.sum_ack_latency_ms * 1e-3) / am.num_ack_latency_meas, 1, false),
+        am.max_ack_latency_ms);
   }
   fmt::format_to(std::back_inserter(buffer), " pdu_latency_hist=[");
   for (unsigned i = 0; i < rlc_tx_metrics_lower::pdu_latency_hist_bins; i++) {
