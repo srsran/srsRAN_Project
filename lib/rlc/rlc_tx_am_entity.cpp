@@ -692,7 +692,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) SRSRAN_RTSAN_
   auto t_status = std::chrono::steady_clock::now();
   if (metrics_low.is_enabled() && meta.time_of_poll.has_value()) {
     auto poll_latency = std::chrono::duration_cast<std::chrono::milliseconds>(t_status - meta.time_of_poll.value());
-    metrics_low.metrics_add_ack_latency_ms(poll_latency.count());
+    metrics_low.metrics_add_poll_latency_ms(poll_latency.count());
     meta.time_of_poll.reset();
   }
 
@@ -739,7 +739,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) SRSRAN_RTSAN_
         }
       }
       auto ack_latency = std::chrono::duration_cast<std::chrono::milliseconds>(t_start - sdu_info.time_of_arrival);
-      metrics_low.metrics_add_poll_latency_ms(ack_latency.count());
+      metrics_low.metrics_add_ack_latency_ms(ack_latency.count());
       // move the PDU's byte_buffer from tx_window into pdu_recycler (if possible) for deletion off the critical path.
       if (!pdu_recycler.add_discarded_pdu(std::move(sdu_info.sdu))) {
         // recycle bin is full and the PDU was deleted on the spot, which may slow down this worker. Warn later.
