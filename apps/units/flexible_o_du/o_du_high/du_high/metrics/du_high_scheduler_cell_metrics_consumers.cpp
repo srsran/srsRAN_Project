@@ -386,8 +386,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
   fmt::format_to(
       std::back_inserter(buffer),
       " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} error_indications={} "
-      "pdsch_rbs_per_slot={} pusch_rbs_per_slot={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
-      "latency_hist=[{}]",
+      "pdsch_rbs_per_slot={} pusch_rbs_per_slot={} nof_ues={} mean_latency={}usec max_latency={}usec "
+      "max_latency_slot={} latency_hist=[{}]",
       float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
       float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
       metrics.nof_prbs,
@@ -396,6 +396,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
       metrics.nof_error_indications,
       sum_pdsch_rbs / metrics.nof_dl_slots,
       sum_pusch_rbs / metrics.nof_ul_slots,
+      metrics.ue_metrics.size(),
       metrics.average_decision_latency.count(),
       metrics.max_decision_latency.count(),
       metrics.max_decision_latency_slot,
