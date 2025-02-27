@@ -302,23 +302,25 @@ static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& con
   }
 
   if (config.end_rb <= config.start_rb) {
-    fmt::print("Invalid RB allocation range [{}, {}) for UE PDSCHs. The start_rb must be less or equal to the end_rb",
-               config.start_rb,
-               config.end_rb);
+    fmt::print(
+        "Invalid RB allocation range [{}, {}) for UE PDSCHs. The start_rb must be less or equal to the end_rb.\n",
+        config.start_rb,
+        config.end_rb);
     return false;
   }
 
-  if (config.max_rb_size <= config.min_rb_size) {
-    fmt::print("Invalid UE PDSCH RB range [{}, {}). The min_rb_size must be less or equal to the max_rb_size",
+  if (config.max_rb_size < config.min_rb_size) {
+    fmt::print("Invalid UE PDSCH RB range [{}, {}). The min_rb_size must be less or equal to the max_rb_size.\n",
                config.min_rb_size,
                config.max_rb_size);
     return false;
   }
 
   if (config.end_rb < config.start_rb) {
-    fmt::print("Invalid RB allocation range [{}, {}) for UE PDSCHs. The start_rb must be less or equal to the end_rb",
-               config.start_rb,
-               config.end_rb);
+    fmt::print(
+        "Invalid RB allocation range [{}, {}) for UE PDSCHs. The start_rb must be less or equal to the end_rb.\n",
+        config.start_rb,
+        config.end_rb);
     return false;
   }
 
@@ -360,7 +362,7 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
   }
 
   if (config.max_rb_size < config.min_rb_size) {
-    fmt::print("Invalid UE PUSCH RB range [{}, {}). The min_rb_size must be less or equal to the max_rb_size",
+    fmt::print("Invalid UE PUSCH RB range [{}, {}). The min_rb_size must be less or equal to the max_rb_size.\n",
                config.min_rb_size,
                config.max_rb_size);
     return false;
@@ -376,14 +378,15 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
   }
 
   if (config.end_rb < config.start_rb) {
-    fmt::print("Invalid RB allocation range [{}, {}) for UE PUSCHs. The start_rb must be less or equal to the end_rb",
-               config.start_rb,
-               config.end_rb);
+    fmt::print(
+        "Invalid RB allocation range [{}, {}) for UE PUSCHs. The start_rb must be less or equal to the end_rb.\n",
+        config.start_rb,
+        config.end_rb);
     return false;
   }
 
   if (config.start_rb >= cell_crbs) {
-    fmt::print("Invalid start RB {} for UE PUSCHs. The start_rb must be less than the cell BW", config.start_rb);
+    fmt::print("Invalid start RB {} for UE PUSCHs. The start_rb must be less than the cell BW.\n", config.start_rb);
     return false;
   }
 
