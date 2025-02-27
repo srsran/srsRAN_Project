@@ -28,7 +28,7 @@
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/e2/e2_cu.h"
-#include "srsran/e2/e2_cu_factory.h"
+#include "srsran/e2/e2_cu_up_factory.h"
 #include "srsran/f1ap/cu_cp/f1ap_cu.h"
 #include "srsran/nrppa/nrppa.h"
 #include "srsran/ran/plmn_identity.h"
