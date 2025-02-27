@@ -27,9 +27,9 @@ uint32_t e2sm_rc_control_action_du_executor_base::get_action_id()
   return action_id;
 }
 
-bool e2sm_rc_control_action_du_executor_base::fill_ran_function_description(
-    asn1::e2sm::ran_function_definition_ctrl_action_item_s& action_item)
+ran_function_definition_ctrl_action_item_s e2sm_rc_control_action_du_executor_base::get_control_action_definition()
 {
+  ran_function_definition_ctrl_action_item_s action_item;
   action_item.ric_ctrl_action_id = action_id;
   action_item.ric_ctrl_action_name.from_string(action_name);
 
@@ -40,8 +40,9 @@ bool e2sm_rc_control_action_du_executor_base::fill_ran_function_description(
     action_item.ran_ctrl_action_params_list.push_back(ctrl_action_ran_param_item);
   }
 
-  return true;
+  return action_item;
 }
+
 async_task<e2sm_ric_control_response>
 e2sm_rc_control_action_du_executor_base::return_ctrl_failure(const e2sm_ric_control_request& req)
 {
