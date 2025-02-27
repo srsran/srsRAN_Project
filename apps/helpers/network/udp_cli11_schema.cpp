@@ -9,6 +9,7 @@
  */
 
 #include "udp_cli11_schema.h"
+#include "udp_appconfig.h"
 #include "srsran/support/cli11_utils.h"
 
 using namespace srsran;

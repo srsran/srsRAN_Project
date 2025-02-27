@@ -9,8 +9,8 @@
  */
 
 #include "du_high_config_cli11_schema.h"
+#include "apps/helpers/logger/logger_appconfig_cli11_utils.h"
 #include "apps/helpers/metrics/metrics_config_cli11_schema.h"
-#include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_high_config.h"
 #include "srsran/adt/ranges/transform.h"
@@ -59,12 +59,12 @@ static std::function<std::string()> get_vector_default_function(span<const Integ
 
 static void configure_cli11_log_args(CLI::App& app, du_high_unit_logger_config& log_params)
 {
-  app_services::add_log_option(app, log_params.mac_level, "--mac_level", "MAC log level");
-  app_services::add_log_option(app, log_params.rlc_level, "--rlc_level", "RLC log level");
-  app_services::add_log_option(app, log_params.f1ap_level, "--f1ap_level", "F1AP log level");
-  app_services::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
-  app_services::add_log_option(app, log_params.gtpu_level, "--gtpu_level", "GTPU log level");
-  app_services::add_log_option(app, log_params.du_level, "--du_level", "Log level for the DU");
+  app_helpers::add_log_option(app, log_params.mac_level, "--mac_level", "MAC log level");
+  app_helpers::add_log_option(app, log_params.rlc_level, "--rlc_level", "RLC log level");
+  app_helpers::add_log_option(app, log_params.f1ap_level, "--f1ap_level", "F1AP log level");
+  app_helpers::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
+  app_helpers::add_log_option(app, log_params.gtpu_level, "--gtpu_level", "GTPU log level");
+  app_helpers::add_log_option(app, log_params.du_level, "--du_level", "Log level for the DU");
 
   add_option(
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")

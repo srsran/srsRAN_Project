@@ -7,8 +7,7 @@
 #
 
 set(SOURCES
-        e2_cli11_schema.cpp
-        e2_config_yaml_writer.cpp)
+        hal_cli11_schema.cpp)
 
-add_library(srsran_e2_app_service STATIC ${SOURCES})
-target_include_directories(srsran_e2_app_service PRIVATE ${CMAKE_SOURCE_DIR})
+add_library(srsran_hal_app_helpers STATIC ${SOURCES})
+target_include_directories(srsran_hal_app_helpers PRIVATE ${CMAKE_SOURCE_DIR})

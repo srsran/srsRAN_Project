@@ -9,6 +9,8 @@
  */
 
 #include "f1u_cli11_schema.h"
+#include "apps/helpers/f1u/f1u_appconfig.h"
+#include "apps/helpers/network/udp_cli11_schema.h"
 #include "srsran/support/cli11_utils.h"
 #include "srsran/support/config_parsers.h"
 

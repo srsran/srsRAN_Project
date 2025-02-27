@@ -8,8 +8,8 @@
  *
  */
 
-#include "apps/services/network/udp_config_yaml_writer.h"
-#include "apps/services/network/udp_cli11_schema.h"
+#include "udp_config_yaml_writer.h"
+#include "udp_appconfig.h"
 #include <yaml-cpp/yaml.h>
 
 namespace srsran {

@@ -6,9 +6,9 @@
 # the distribution.
 #
 
-set(SOURCES f1u_cli11_schema.cpp
-            f1u_config_yaml_writer.cpp
-)
+set(SOURCES
+        e2_cli11_schema.cpp
+        e2_config_yaml_writer.cpp)
 
-add_library(srsran_f1u_app_service STATIC ${SOURCES})
-target_include_directories(srsran_f1u_app_service PRIVATE ${CMAKE_SOURCE_DIR})
+add_library(srsran_e2_app_helpers STATIC ${SOURCES})
+target_include_directories(srsran_e2_app_helpers PRIVATE ${CMAKE_SOURCE_DIR})

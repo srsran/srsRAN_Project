@@ -10,10 +10,9 @@
 
 #pragma once
 
-#include "apps/services/network/udp_cli11_schema.h"
+#include "apps/helpers/network/udp_appconfig.h"
 #include "srsran/ran/qos/five_qi.h"
-#include "CLI/CLI11.hpp"
-#include <optional>
+#include <vector>
 
 namespace srsran {
 
@@ -30,8 +29,5 @@ struct f1u_socket_appconfig {
 struct f1u_sockets_appconfig {
   std::vector<f1u_socket_appconfig> f1u_socket_cfg;
 };
-
-/// Configures the given CLI11 application with the F1U sockets application configuration schema.
-void configure_cli11_f1u_sockets_args(CLI::App& app, f1u_sockets_appconfig& f1u_params);
 
 } // namespace srsran

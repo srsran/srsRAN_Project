@@ -29,13 +29,13 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
 
   app.add_option("--filename", log_params.filename, "Log file output path")->capture_default_str();
 
-  app_services::add_log_option(
+  app_helpers::add_log_option(
       app, log_params.all_level, "--all_level", "Default log level for PHY, MAC, RLC, PDCP, RRC, SDAP, NGAP and GTPU");
-  app_services::add_log_option(app, log_params.lib_level, "--lib_level", "Generic log level ");
-  app_services::add_log_option(app, log_params.e2ap_level, " --e2ap_level", "E2AP log level");
+  app_helpers::add_log_option(app, log_params.lib_level, "--lib_level", "Generic log level ");
+  app_helpers::add_log_option(app, log_params.e2ap_level, " --e2ap_level", "E2AP log level");
 
   add_option_function<std::string>(
-      app, " --config_level", app_services::capture_log_level_function(log_params.config_level), "Config log level")
+      app, " --config_level", app_helpers::capture_log_level_function(log_params.config_level), "Config log level")
       ->default_str(srslog::basic_level_to_string(log_params.config_level))
       ->check(config_level_check);
   add_option(

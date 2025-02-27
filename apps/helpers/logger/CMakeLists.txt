@@ -11,5 +11,5 @@ set(SOURCES
         logger_appconfig_validator.cpp
         logger_appconfig_yaml_writer.cpp)
 
-add_library(srsran_logger_app_service STATIC ${SOURCES})
-target_include_directories(srsran_logger_app_service PRIVATE ${CMAKE_SOURCE_DIR})
+add_library(srsran_logger_app_helpers STATIC ${SOURCES})
+target_include_directories(srsran_logger_app_helpers PRIVATE ${CMAKE_SOURCE_DIR})

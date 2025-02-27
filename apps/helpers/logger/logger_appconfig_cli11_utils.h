@@ -14,7 +14,7 @@
 #include "srsran/support/cli11_utils.h"
 
 namespace srsran {
-namespace app_services {
+namespace app_helpers {
 
 /// Function to capture the log level.
 inline auto capture_log_level_function = [](srslog::basic_levels& level) {
@@ -42,5 +42,5 @@ add_log_option(CLI::App& app, srslog::basic_levels& level, const std::string& na
       ->check(check_log_level);
 }
 
-} // namespace app_services
+} // namespace app_helpers
 } // namespace srsran

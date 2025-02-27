@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "CLI/CLI11.hpp"
 #include <optional>
+#include <string>
 
 namespace srsran {
 
@@ -26,11 +26,5 @@ struct udp_appconfig {
   /// External address advertised by the UDP-GW.
   std::string ext_addr = "auto";
 };
-
-/// \brief Configures the given CLI11 application with the UDP application configuration schema.
-///
-/// \param[out] app CLI11 application to configure.
-/// \param[out] config UDP configuration that stores the parameters.
-void configure_cli11_with_udp_config_schema(CLI::App& app, udp_appconfig& config);
 
 } // namespace srsran
