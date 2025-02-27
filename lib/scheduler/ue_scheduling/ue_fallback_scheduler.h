@@ -22,11 +22,18 @@
 
 #pragma once
 
-#include "../policy/ue_allocator.h"
 #include "../support/sch_pdu_builder.h"
 #include "ue_repository.h"
 
 namespace srsran {
+
+class pdcch_resource_allocator;
+class pucch_allocator;
+class uci_allocator;
+struct cell_resource_allocator;
+struct pdcch_dl_information;
+struct pdcch_ul_information;
+struct uci_allocation;
 
 /// Defines the scheduler that is used to allocate grants for DL SRB0 and SRB1 messages and UL SRB1 messages for UE in
 /// fallback state.

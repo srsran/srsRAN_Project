@@ -28,15 +28,14 @@
 #include "../support/pucch_power_controller.h"
 #include "../support/pusch_power_controller.h"
 #include "ue_channel_state_manager.h"
+#include "ue_drx_controller.h"
 #include "ue_link_adaptation_controller.h"
-#include "srsran/ran/uci/uci_constants.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 
 namespace srsran {
 
 struct ul_crc_pdu_indication;
-class ue_drx_controller;
 struct pdsch_config_params;
 struct pusch_config_params;
 
@@ -74,8 +73,11 @@ public:
 
   void set_fallback_state(bool in_fallback);
 
-  bool is_pdcch_enabled(slot_point dl_slot) const;
-  bool is_pdsch_enabled(slot_point dl_slot) const;
+  bool is_pdcch_enabled(slot_point dl_slot) const
+  {
+    return active and cfg().is_dl_enabled(dl_slot) and drx_ctrl.is_pdcch_enabled();
+  }
+  bool is_pdsch_enabled(slot_point dl_slot) const { return active and cfg().is_dl_enabled(dl_slot); }
   bool is_ul_enabled(slot_point ul_slot) const;
 
   struct dl_ack_info_result {

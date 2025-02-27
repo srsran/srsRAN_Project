@@ -34,14 +34,14 @@ enum class dci_ul_format { f0_0, f0_1 };
 
 inline const char* dci_dl_format_to_string(dci_dl_format type)
 {
-  constexpr static std::array<const char*, 4> names = {"1_0", "1_1", "2_0", "invalid"};
+  static constexpr std::array<const char*, 4> names = {"1_0", "1_1", "2_0", "invalid"};
   unsigned                                    idx   = static_cast<unsigned>(type);
   return names[idx < names.size() ? idx : names.size() - 1];
 }
 
 inline const char* dci_ul_format_to_string(dci_ul_format type)
 {
-  constexpr static std::array<const char*, 3> names = {"0_0", "0_1", "invalid"};
+  static constexpr std::array<const char*, 3> names = {"0_0", "0_1", "invalid"};
   unsigned                                    idx   = static_cast<unsigned>(type);
   return names[idx < names.size() ? idx : names.size() - 1];
 }

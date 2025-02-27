@@ -22,7 +22,12 @@
 
 #pragma once
 
+#include "srsran/ran/pci.h"
+#include "srsran/ran/ssb_properties.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include <cstdint>
+#include <optional>
+#include <vector>
 
 namespace srsran {
 
@@ -68,6 +73,59 @@ struct ng_ran_access_point_position_t {
   uint8_t                 orientation_of_major_axis;
   uint8_t                 uncertainty_altitude;
   uint8_t                 confidence;
+};
+
+struct ssb_burst_position_t {
+  enum class bitmap_type_t : uint8_t { /* uint8_t */ short_bitmap,
+                                       /* uint8_t */ medium_bitmap,
+                                       /* uint64_t */ long_bitmap };
+
+  bitmap_type_t type;
+  uint64_t      bitmap;
+};
+
+// Time in seconds relative to 00:00:00 on 1 January 1900 (calculated as continuous time without leap seconds and
+// traceable to a common time reference) where binary encoding of the integer part is in the first 32 bits and binary
+// encoding of the fraction part in the last 32 bits. The fraction part is expressed with a granularity of 1 /2**32
+// second
+using sfn_initialization_time_t = uint64_t;
+
+struct tf_config_t {
+  uint32_t                                 ssb_freq;
+  subcarrier_spacing                       ssb_subcarrier_spacing;
+  int8_t                                   ssb_tx_pwr;
+  ssb_periodicity                          ssb_period;
+  uint8_t                                  ssb_half_frame_offset;
+  uint8_t                                  ssb_sfn_offset;
+  std::optional<ssb_burst_position_t>      ssb_burst_position;
+  std::optional<sfn_initialization_time_t> sfn_initialization_time;
+};
+
+struct ssb_info_item_t {
+  tf_config_t ssb_cfg;
+  pci_t       pci_nr;
+};
+
+struct ssb_info_t {
+  std::vector<ssb_info_item_t> list_of_ssb_info;
+};
+
+struct ssb_t {
+  pci_t                  pci_nr;
+  std::optional<uint8_t> ssb_idx;
+};
+
+struct time_stamp_slot_idx_t {
+  enum class idx_type { scs15, scs30, scs60, scs120 };
+
+  idx_type type;
+  uint8_t  value;
+};
+
+struct time_stamp_t {
+  uint16_t                sys_frame_num;
+  time_stamp_slot_idx_t   slot_idx;
+  std::optional<uint64_t> meas_time;
 };
 
 } // namespace srsran

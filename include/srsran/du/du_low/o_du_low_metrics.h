@@ -22,7 +22,9 @@
 
 #pragma once
 
+#include "srsran/ran/slot_point.h"
 #include <chrono>
+#include <utility>
 
 namespace srsran {
 namespace srs_du {
@@ -54,7 +56,7 @@ struct o_du_low_ldpc_metrics {
     /// Average codeblock size in bits.
     double avg_cb_size;
     /// Average codeblock latency in microseconds.
-    double avg_cb_latency;
+    double avg_cb_latency_us;
     /// Minimum codeblock latency in microseconds.
     double min_cb_latency_us;
     /// Maximum codeblock latency in microseconds.
@@ -237,7 +239,7 @@ struct o_du_low_pusch_metrics {
     /// Minimum data processing latency in microseconds.
     double min_data_latency_us;
     /// Maximum data processing latency in microseconds.
-    double max_data_latency_us;
+    std::pair<double, slot_point> max_data_latency_us;
     /// Average UCI processing latency in microseconds.
     double avg_uci_latency_us;
     /// Minimum UCI processing latency in microseconds.
@@ -304,7 +306,7 @@ struct o_du_low_pdsch_metrics {
     /// Minimum processing latency in microseconds.
     double min_latency_us;
     /// Maximum processing latency in microseconds.
-    double max_latency_us;
+    std::pair<double, slot_point> max_latency_us;
     /// Average return time in microseconds (processing time of a single-thread PDSCH processor).
     double avg_return_time_us;
     /// Processing rate in Mbps.
@@ -323,12 +325,20 @@ struct o_du_low_pdsch_metrics {
   pdsch_processing_metrics       pdsch_proc_metrics;
 };
 
+/// Aggregates downlink processor metrics.
+struct o_du_low_dl_processor_metrics {
+  double                        min_latency_us;
+  double                        avg_latency_us;
+  std::pair<double, slot_point> max_latency_us;
+};
+
 /// O-RAN DU low metrics.
 struct o_du_low_metrics {
-  o_du_low_ldpc_metrics     ldpc_metrics;
-  o_du_low_pusch_metrics    pusch_metrics;
-  o_du_low_pdsch_metrics    pdsch_metrics;
-  std::chrono::microseconds metrics_period;
+  o_du_low_ldpc_metrics         ldpc_metrics;
+  o_du_low_pusch_metrics        pusch_metrics;
+  o_du_low_pdsch_metrics        pdsch_metrics;
+  o_du_low_dl_processor_metrics dl_processor_metrics;
+  std::chrono::microseconds     metrics_period;
 };
 
 } // namespace srs_du

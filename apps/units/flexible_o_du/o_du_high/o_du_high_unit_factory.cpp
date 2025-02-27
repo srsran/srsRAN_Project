@@ -212,7 +212,7 @@ static mac_metrics_notifier* build_mac_du_metrics(std::vector<app_services::metr
 
   // MAC metrics.
   const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
-  if (!metrics_config.json_config.enable_json_metrics) {
+  if (!metrics_config.enabled()) {
     return out;
   }
 
@@ -225,8 +225,15 @@ static mac_metrics_notifier* build_mac_du_metrics(std::vector<app_services::metr
   out                 = &(*mac_metric_gen);
   mac_metrics_cfg.producers.push_back(std::move(mac_metric_gen));
 
-  mac_metrics_cfg.consumers.push_back(
-      std::make_unique<mac_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
+  if (metrics_config.enable_log_metrics) {
+    mac_metrics_cfg.consumers.push_back(
+        std::make_unique<mac_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
+  }
+
+  if (metrics_config.json_config.enable_json_metrics) {
+    mac_metrics_cfg.consumers.push_back(
+        std::make_unique<mac_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
+  }
 
   return out;
 }

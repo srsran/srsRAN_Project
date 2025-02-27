@@ -68,17 +68,12 @@ struct prs_muting_t {
   std::optional<prs_muting_option2_t> prs_muting_option2;
 };
 
-struct prs_resource_qcl_source_ssb_t {
-  pci_t                  pci_nr;
-  std::optional<uint8_t> ssb_idx;
-};
-
 struct prs_resource_qcl_source_prs_t {
   uint8_t                qcl_source_prs_res_set_id;
   std::optional<uint8_t> qcl_source_prs_res_id;
 };
 
-using prs_resource_qcl_info_t = std::variant<prs_resource_qcl_source_ssb_t, prs_resource_qcl_source_prs_t>;
+using prs_resource_qcl_info_t = std::variant<ssb_t, prs_resource_qcl_source_prs_t>;
 
 struct prs_res_item_t {
   uint8_t                                prs_res_id;
@@ -109,35 +104,6 @@ struct prs_resource_set_item_t {
 
 struct prs_cfg_t {
   std::vector<prs_resource_set_item_t> prs_res_set_list;
-};
-
-struct ssb_burst_position_t {
-  enum class bitmap_type_t : uint8_t { /* uint8_t */ short_bitmap,
-                                       /* uint8_t */ medium_bitmap,
-                                       /* uint64_t */ long_bitmap };
-
-  bitmap_type_t type;
-  uint64_t      bitmap;
-};
-
-struct tf_config_t {
-  uint32_t                            ssb_freq;
-  subcarrier_spacing                  ssb_subcarrier_spacing;
-  int8_t                              ssb_tx_pwr;
-  uint8_t                             ssb_periodicity;
-  uint8_t                             ssb_half_frame_offset;
-  uint8_t                             ssb_sfn_offset;
-  std::optional<ssb_burst_position_t> ssb_burst_position;
-  std::optional<uint64_t>             sfn_initialization_time;
-};
-
-struct ssb_info_item_t {
-  tf_config_t ssb_cfg;
-  pci_t       pci_nr;
-};
-
-struct ssb_info_t {
-  std::vector<ssb_info_item_t> list_of_ssb_info;
 };
 
 struct prs_angle_item_t {

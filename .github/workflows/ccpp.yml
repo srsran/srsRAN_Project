@@ -18,7 +18,10 @@ jobs:
         os: [ubuntu-24.04]
         compiler: [gcc]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        token: ${{ secrets.CI_TOKEN != '' && secrets.CI_TOKEN || github.token }}
     - name: Install Dependencies
       run: |
         sudo docker/scripts/install_dependencies.sh

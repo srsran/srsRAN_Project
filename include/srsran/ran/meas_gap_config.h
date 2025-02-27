@@ -52,7 +52,7 @@ struct meas_gap_config {
 /// Convert measurement gap length into a float in milliseconds.
 inline float meas_gap_length_to_msec(meas_gap_length len)
 {
-  constexpr static std::array<float, 6> vals{1.5, 3, 3.5, 4, 5.5, 6};
+  static constexpr std::array<float, 6> vals{1.5, 3, 3.5, 4, 5.5, 6};
   return vals[static_cast<unsigned>(len)];
 }
 

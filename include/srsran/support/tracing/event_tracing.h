@@ -45,10 +45,10 @@ using trace_point    = trace_clock::time_point;
 using trace_duration = std::chrono::microseconds;
 
 /// Trace point value when tracing is disabled.
-constexpr static trace_point null_trace_point = {};
+static constexpr trace_point null_trace_point = {};
 
 /// Resource usaged value when tracing is disabled.
-constexpr static resource_usage::snapshot null_rusage_snapshot{};
+static constexpr resource_usage::snapshot null_rusage_snapshot{};
 
 /// Open a file to write trace events to.
 void open_trace_file(std::string_view trace_file_name = "/tmp/srsran_trace.json");

@@ -88,19 +88,6 @@ struct trp_meas_quantities_list_item_t {
 
 enum class trp_measured_results_value_t { ul_angle_of_arrival, ul_srs_rsrp, ul_rtoa, gnb_rx_tx_time_diff };
 
-struct time_stamp_slot_idx_t {
-  enum class idx_type { scs15, scs30, scs60, scs120 };
-
-  idx_type type;
-  uint8_t  value;
-};
-
-struct time_stamp_t {
-  uint16_t                sys_frame_num;
-  time_stamp_slot_idx_t   slot_idx;
-  std::optional<uint64_t> meas_time;
-};
-
 struct timing_meas_quality_t {
   enum class resolution_t { m0dot1, m1, m10, m30 };
 

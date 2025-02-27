@@ -25,6 +25,7 @@
 #include "phy_metrics_channel_precoder_decorator.h"
 #include "phy_metrics_crc_calculator_decorator.h"
 #include "phy_metrics_demodulation_mapper_decorator.h"
+#include "phy_metrics_downlink_processor_decorator.h"
 #include "phy_metrics_evm_calculator_decorator.h"
 #include "phy_metrics_ldpc_decoder_decorator.h"
 #include "phy_metrics_ldpc_encoder_decorator.h"
@@ -141,6 +142,57 @@ public:
 private:
   std::shared_ptr<port_channel_estimator_factory> base_factory;
   port_channel_estimator_metric_notifier&         notifier;
+};
+
+/// Metric decorator factory for downlink processor.
+class metric_decorator_downlink_processor_factory : public downlink_processor_factory
+{
+public:
+  metric_decorator_downlink_processor_factory(std::shared_ptr<downlink_processor_factory> base_factory_,
+                                              downlink_processor_metric_notifier&         notifier_) :
+    base_factory(std::move(base_factory_)), notifier(notifier_)
+  {
+    srsran_assert(base_factory, "Invalid base factory.");
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<downlink_processor_controller> create(const downlink_processor_config& config) override
+  {
+    // Create RG gateway adaptor.
+    auto gateway_adaptor =
+        std::make_unique<phy_metrics_downlink_processor_decorator::rg_gateway_adaptor>(*config.gateway, notifier);
+
+    // Modify base configuration.
+    downlink_processor_config base_config = config;
+    base_config.gateway                   = &gateway_adaptor->get_gateway();
+
+    return std::make_unique<phy_metrics_downlink_processor_decorator>(base_factory->create(base_config),
+                                                                      std::move(gateway_adaptor));
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<downlink_processor_controller>
+  create(const downlink_processor_config& config, srslog::basic_logger& logger, bool enable_broadcast) override
+  {
+    // Create RG gateway adaptor.
+    auto gateway_adaptor =
+        std::make_unique<phy_metrics_downlink_processor_decorator::rg_gateway_adaptor>(*config.gateway, notifier);
+
+    // Modify base configuration.
+    downlink_processor_config base_config = config;
+    base_config.gateway                   = &gateway_adaptor->get_gateway();
+
+    return std::make_unique<phy_metrics_downlink_processor_decorator>(
+        base_factory->create(base_config, logger, enable_broadcast), std::move(gateway_adaptor));
+  }
+  std::unique_ptr<downlink_pdu_validator> create_pdu_validator() override
+  {
+    return base_factory->create_pdu_validator();
+  }
+
+private:
+  std::shared_ptr<downlink_processor_factory> base_factory;
+  downlink_processor_metric_notifier&         notifier;
 };
 
 } // namespace
@@ -357,4 +409,11 @@ srsran::create_dmrs_pdsch_generator_metric_decorator_factory(std::shared_ptr<dmr
                                                    pdsch_dmrs_generator_metric_notifier,
                                                    phy_metrics_dmrs_pdsch_processor_decorator>>(std::move(base_factory),
                                                                                                 notifier);
+}
+
+std::shared_ptr<downlink_processor_factory> srsran::create_downlink_processor_generator_metric_decorator_factory(
+    std::shared_ptr<downlink_processor_factory> base_factory,
+    downlink_processor_metric_notifier&         notifier)
+{
+  return std::make_shared<metric_decorator_downlink_processor_factory>(std::move(base_factory), notifier);
 }

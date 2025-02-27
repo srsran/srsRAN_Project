@@ -66,6 +66,7 @@ using port_channel_estimator_metric_notifier    = detail::phy_metric_notifier<po
 using transform_precoder_metric_notifier        = detail::phy_metric_notifier<transform_precoder_metrics>;
 using pdsch_processor_metric_notifier           = detail::phy_metric_notifier<pdsch_processor_metrics>;
 using pdsch_dmrs_generator_metric_notifier      = detail::phy_metric_notifier<pdsch_dmrs_generator_metrics>;
+using downlink_processor_metric_notifier        = detail::phy_metric_notifier<downlink_processor_metrics>;
 
 /// Groups upper physical layer metric notifiers.
 class upper_phy_metrics_notifiers
@@ -93,7 +94,8 @@ public:
   virtual port_channel_estimator_metric_notifier&           get_pusch_port_channel_estimator_notifier() = 0;
   virtual transform_precoder_metric_notifier&               get_pusch_transform_precoder_notifier()     = 0;
   virtual pdsch_processor_metric_notifier&                  get_pdsch_processor_notifier()              = 0;
-  virtual pdsch_dmrs_generator_metric_notifier&             get_pdsch_dmrs_generator()                  = 0;
+  virtual pdsch_dmrs_generator_metric_notifier&             get_pdsch_dmrs_generator_notifier()         = 0;
+  virtual downlink_processor_metric_notifier&               get_downlink_processor_notifier()           = 0;
 };
 
 } // namespace srsran

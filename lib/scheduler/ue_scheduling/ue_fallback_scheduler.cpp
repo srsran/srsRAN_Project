@@ -22,6 +22,7 @@
 
 #include "ue_fallback_scheduler.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
+#include "../pucch_scheduling/pucch_allocator.h"
 #include "../support/csi_rs_helpers.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
@@ -29,6 +30,7 @@
 #include "../support/pdsch/pdsch_resource_allocation.h"
 #include "../support/prbs_calculator.h"
 #include "../support/pusch/pusch_td_resource_indices.h"
+#include "../uci_scheduling/uci_allocator.h"
 #include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/srslog/srslog.h"

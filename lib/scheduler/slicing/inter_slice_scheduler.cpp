@@ -46,10 +46,10 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
   // slice.
   slices.emplace_back(
       SRB_RAN_SLICE_ID, cell_cfg, slice_rrm_policy_config{.min_prb = cell_max_rbs, .max_prb = cell_max_rbs});
-  slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
+  slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index);
   // Default DRB slice.
   slices.emplace_back(DEFAULT_DRB_RAN_SLICE_ID, cell_cfg, slice_rrm_policy_config{.max_prb = cell_max_rbs});
-  slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue);
+  slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index);
   // NOTE: RAN slice IDs 0 and 1 are reserved for default SRB and default DRB slice respectively.
   ran_slice_id_t id_count{2};
   // Configured RRM policy members.
@@ -60,7 +60,7 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
     // Set policy scheduler based on slice configuration.
     scheduler_ue_expert_config slice_scheduler_ue_expert_cfg{cell_cfg.expert_cfg.ue};
     slice_scheduler_ue_expert_cfg.strategy_cfg = rrm.policy_sched_cfg;
-    slices.back().policy                       = create_scheduler_strategy(slice_scheduler_ue_expert_cfg);
+    slices.back().policy = create_scheduler_strategy(slice_scheduler_ue_expert_cfg, cell_cfg.cell_index);
     ++id_count;
   }
 }
@@ -93,7 +93,7 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
   for (const auto& slice : slices) {
     const bool pdsch_enabled =
         cell_cfg.expert_cfg.ue.enable_csi_rs_pdsch_multiplexing or res_grid[0].result.dl.csi_rs.empty();
-    if (pdsch_enabled) {
+    if (pdsch_enabled and slice.inst.pdsch_rb_count < slice.inst.cfg.max_prb) {
       max_rbs = slice.inst.pdsch_rb_count <= slice.inst.cfg.min_prb and slice.inst.cfg.min_prb > 0
                     ? slice.inst.cfg.min_prb
                     : slice.inst.cfg.max_prb;
@@ -109,7 +109,15 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
     for (const unsigned pusch_td_res_idx :
          valid_pusch_td_list_per_slot[slot_tx.to_uint() % valid_pusch_td_list_per_slot.size()]) {
       const cell_slot_resource_allocator& pusch_alloc = res_grid[pusch_time_domain_list[pusch_td_res_idx].k2];
-      const crb_bitmap                    pusch_used_crbs =
+      slot_point                          pusch_slot  = slot_tx + pusch_time_domain_list[pusch_td_res_idx].k2;
+
+      unsigned pusch_rb_count = slice.inst.nof_pusch_rbs_allocated(pusch_slot);
+      if (pusch_rb_count >= slice.inst.cfg.max_prb) {
+        // Slice reached max RBs.
+        continue;
+      }
+
+      const crb_bitmap pusch_used_crbs =
           pusch_alloc.ul_res_grid.used_crbs(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs,
                                             cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs,
                                             pusch_time_domain_list[pusch_td_res_idx].symbols);
@@ -118,8 +126,6 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
         continue;
       }
 
-      slot_point pusch_slot     = slot_tx + pusch_time_domain_list[pusch_td_res_idx].k2;
-      unsigned   pusch_rb_count = slice.inst.nof_pusch_rbs_allocated(pusch_slot);
       max_rbs = pusch_rb_count <= slice.inst.cfg.min_prb and slice.inst.cfg.min_prb > 0 ? slice.inst.cfg.min_prb
                                                                                         : slice.inst.cfg.max_prb;
       ul_prio_queue.push(slice_candidate_context{slice.inst.id,
@@ -154,6 +160,9 @@ void inter_slice_scheduler::rem_ue(du_ue_index_t ue_idx)
   // Note: We take the conservative approach of traversing all slices, because the current UE config might not match
   // the UE repositories inside each slice instance (e.g. in case of fallback or during reconfig).
   for (auto& slice : slices) {
+    if (slice.inst.contains(ue_idx)) {
+      get_policy(slice.inst.id).rem_ue(ue_idx);
+    }
     slice.inst.rem_ue(ue_idx);
   }
 }
@@ -175,6 +184,9 @@ void inter_slice_scheduler::add_impl(ue& u)
   const ue_configuration& ue_cfg = *u.ue_cfg_dedicated();
   for (logical_channel_config_ptr lc_cfg : *ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(*lc_cfg);
+    if (lc_cfg->lcid != LCID_SRB0 and not sl_inst.contains(u.ue_index)) {
+      get_policy(sl_inst.id).add_ue(u.ue_index);
+    }
     sl_inst.add_logical_channel(u, lc_cfg->lcid, lc_cfg->lc_group);
   }
 }

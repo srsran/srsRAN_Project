@@ -131,11 +131,11 @@ private:
 
 class srsran::pdu_indication_pool
 {
-  constexpr static size_t UCI_INITIAL_POOL_SIZE = MAX_PUCCH_PDUS_PER_SLOT;
-  constexpr static size_t PHR_INITIAL_POOL_SIZE = 8;
-  constexpr static size_t CRC_INITIAL_POOL_SIZE = MAX_PUSCH_PDUS_PER_SLOT;
-  constexpr static size_t SRS_INITIAL_POOL_SIZE = MAX_SRS_PDUS_PER_SLOT;
-  constexpr static size_t BSR_INITIAL_POOL_SIZE = MAX_PUSCH_PDUS_PER_SLOT;
+  static constexpr size_t UCI_INITIAL_POOL_SIZE = MAX_PUCCH_PDUS_PER_SLOT;
+  static constexpr size_t PHR_INITIAL_POOL_SIZE = 8;
+  static constexpr size_t CRC_INITIAL_POOL_SIZE = MAX_PUSCH_PDUS_PER_SLOT;
+  static constexpr size_t SRS_INITIAL_POOL_SIZE = MAX_SRS_PDUS_PER_SLOT;
+  static constexpr size_t BSR_INITIAL_POOL_SIZE = MAX_PUSCH_PDUS_PER_SLOT;
 
 public:
   using uci_ptr     = unbounded_object_pool<uci_indication::uci_pdu>::ptr;

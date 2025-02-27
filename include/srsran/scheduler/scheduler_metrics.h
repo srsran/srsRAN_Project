@@ -35,29 +35,49 @@ namespace srsran {
 
 /// \brief Snapshot of the metrics for a UE.
 struct scheduler_ue_metrics {
-  pci_t         pci;
-  rnti_t        rnti;
+  /// PCI of the UE's PCell.
+  pci_t pci;
+  /// Currently used C-RNTI for this UE.
+  rnti_t rnti;
+  /// Average MCS index used for DL grants.
   sch_mcs_index dl_mcs;
-  unsigned      tot_dl_prbs_used;
-  double        dl_brate_kbps;
-  unsigned      dl_nof_ok;
-  unsigned      dl_nof_nok;
-  float         pusch_snr_db;
-  float         pusch_rsrp_db;
-  float         pucch_snr_db;
+  /// Number of RBs used for PDSCH.
+  unsigned tot_pdsch_prbs_used;
+  /// \brief Experienced MAC DL bit rate in kbps, considering the size of the allocated MAC DL PDUs for which a positive
+  /// HARQ-ACK was received.
+  double dl_brate_kbps;
+  /// Number of positive HARQ-ACKs received.
+  unsigned dl_nof_ok;
+  /// Number of detected HARQ NACKs or HARQ-ACK misdetections.
+  unsigned dl_nof_nok;
+  /// SNR in dB estimated for the PUSCH.
+  float pusch_snr_db;
+  /// RSRP in dB estimated for the PUSCH.
+  float pusch_rsrp_db;
+  /// SNR in dB estimated for the PUCCH.
+  float pucch_snr_db;
+  /// Average MCS index used for UL grants.
   sch_mcs_index ul_mcs;
-  unsigned      tot_ul_prbs_used;
-  double        ul_brate_kbps;
-  unsigned      ul_nof_ok;
-  unsigned      ul_nof_nok;
-  unsigned      bsr;
-  unsigned      sr_count;
-  unsigned      dl_bs;
-  unsigned      nof_pucch_f0f1_invalid_harqs;
-  unsigned      nof_pucch_f2f3f4_invalid_harqs;
-  unsigned      nof_pucch_f2f3f4_invalid_csis;
-  unsigned      nof_pusch_invalid_harqs;
-  unsigned      nof_pusch_invalid_csis;
+  /// Number of RBs used for PUSCH.
+  unsigned tot_pusch_prbs_used;
+  /// \brief Experienced MAC UL bit rate in kbps, considering the size of the allocated MAC UL PDUs for which the
+  /// respective CRC was decoded.
+  double ul_brate_kbps;
+  /// Number of positive CRC PDU indications received.
+  unsigned ul_nof_ok;
+  /// Number of negative CRC PDU indications received.
+  unsigned ul_nof_nok;
+  /// Sum of the last UL buffer status reports (BSRs) of all logical channel groups.
+  unsigned bsr;
+  /// Number of scheduling requests detected.
+  unsigned sr_count;
+  /// Sum of the last DL buffer occupancy reports of all logical channels.
+  unsigned dl_bs;
+  unsigned nof_pucch_f0f1_invalid_harqs;
+  unsigned nof_pucch_f2f3f4_invalid_harqs;
+  unsigned nof_pucch_f2f3f4_invalid_csis;
+  unsigned nof_pusch_invalid_harqs;
+  unsigned nof_pusch_invalid_csis;
   /// Delay metrics.
   /// @{
   std::optional<float> avg_ce_delay_ms;
@@ -108,15 +128,17 @@ struct scheduler_cell_metrics {
   static constexpr unsigned nof_usec_per_bin = 50;
   /// Number of cell PRBs.
   unsigned nof_prbs = 0;
-  /// Number of full downlink slots.
+  /// Number of downlink slots.
   unsigned nof_dl_slots = 0;
-  /// Number of full uplink slots.
+  /// Number of uplink slots (only full uplink slots counted for now).
   unsigned nof_ul_slots = 0;
   /// Number of PRACH preambles detected.
   unsigned nof_prach_preambles = 0;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};
+  std::chrono::microseconds               max_decision_latency{0};
+  slot_point                              max_decision_latency_slot;
   std::array<unsigned, latency_hist_bins> latency_histogram{0};
   std::vector<scheduler_cell_event>       events;
   std::vector<scheduler_ue_metrics>       ue_metrics;

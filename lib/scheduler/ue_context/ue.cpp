@@ -172,7 +172,7 @@ void ue::handle_dl_buffer_state_indication(lcid_t lcid, unsigned bs, slot_point 
   // reported RLC DL buffer occupancy report (reminder: we haven't built the RLC PDU yet!). If we account for this
   // overhead in the computation of pending bytes, the final value will be too low, which will lead to one extra
   // tiny grant. To avoid this, we make the pessimization that every HARQ contains one RLC header due to segmentation.
-  constexpr static unsigned RLC_AM_HEADER_SIZE_ESTIM = 4;
+  static constexpr unsigned RLC_AM_HEADER_SIZE_ESTIM = 4;
   for (unsigned c = 0, ce = nof_cells(); c != ce; ++c) {
     auto& ue_cc = *ue_cells[c];
 

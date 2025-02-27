@@ -684,7 +684,7 @@ void dl_harq_process_handle::increment_pucch_counter()
 
 void dl_harq_process_handle::save_grant_params(const dl_harq_alloc_context& ctx, const dl_msg_alloc& ue_pdsch)
 {
-  constexpr static size_t CW_INDEX = 0;
+  static constexpr size_t CW_INDEX = 0;
 
   const pdsch_information& pdsch = ue_pdsch.pdsch_cfg;
   srsran_assert(pdsch.codewords.size() == 1, "Only one codeword supported");

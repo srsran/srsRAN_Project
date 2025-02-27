@@ -132,22 +132,6 @@ void ue_cell::set_fallback_state(bool set_fallback)
       "ue={} rnti={}: {} fallback mode", fmt::underlying(ue_index), rnti(), in_fallback_mode ? "Entering" : "Leaving");
 }
 
-bool ue_cell::is_pdcch_enabled(slot_point dl_slot) const
-{
-  if (not active) {
-    return false;
-  }
-  return cfg().is_dl_enabled(dl_slot) and drx_ctrl.is_pdcch_enabled();
-}
-
-bool ue_cell::is_pdsch_enabled(slot_point dl_slot) const
-{
-  if (not active) {
-    return false;
-  }
-  return cfg().is_dl_enabled(dl_slot);
-}
-
 bool ue_cell::is_ul_enabled(slot_point ul_slot) const
 {
   if (not active) {

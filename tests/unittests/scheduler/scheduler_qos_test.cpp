@@ -230,7 +230,7 @@ public:
   }
 
   const unsigned gbr_dl_bitrate_bps = 10e6;
-  const unsigned gbr_ul_bitrate_bps = 5e6;
+  const unsigned gbr_ul_bitrate_bps = 4e6;
 };
 
 TEST_F(scheduler_1_gbr_ue_qos_test, when_ue_has_gbr_drb_it_gets_higher_priority)

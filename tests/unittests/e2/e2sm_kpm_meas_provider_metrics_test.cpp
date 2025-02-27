@@ -95,8 +95,8 @@ scheduler_cell_metrics generate_non_zero_sched_metrics()
   scheduler_ue_metrics ue_metrics = {0};
   ue_metrics.pci                  = 1;
   ue_metrics.rnti                 = static_cast<rnti_t>(0x1000 + 1);
-  ue_metrics.tot_dl_prbs_used     = 1200;
-  ue_metrics.tot_ul_prbs_used     = 1200;
+  ue_metrics.tot_pdsch_prbs_used  = 1200;
+  ue_metrics.tot_pusch_prbs_used  = 1200;
   ue_metrics.avg_crc_delay_ms     = 100;
   ue_metrics.pusch_snr_db         = 10;
   for (auto i = 0; i < 10; i++) {

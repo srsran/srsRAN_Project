@@ -53,6 +53,7 @@ public:
     elapsed_return_ns     = {};
     elapsed_completion_ns = {};
     processor_notifier    = &notifier_;
+    slot                  = pdu.slot;
     tbs                   = units::bytes(data.front().get_buffer().size());
 
     // Use scoped resource usage class to measure CPU usage of this block.
@@ -86,16 +87,19 @@ private:
       return;
     }
 
-    notifier.on_new_metric({.tbs                 = tbs,
-                            .elapsed_return      = std::chrono::nanoseconds(elapsed_return_ns),
-                            .elapsed_completion  = std::chrono::nanoseconds(elapsed_completion_ns),
-                            .self_cpu_time_usage = std::chrono::nanoseconds(self_cpu_usage_ns)});
+    notifier.on_new_metric(
+        pdsch_processor_metrics{.slot                = slot,
+                                .tbs                 = tbs,
+                                .elapsed_return      = std::chrono::nanoseconds(elapsed_return_ns),
+                                .elapsed_completion  = std::chrono::nanoseconds(elapsed_completion_ns),
+                                .self_cpu_time_usage = std::chrono::nanoseconds(self_cpu_usage_ns)});
   }
 
   std::chrono::high_resolution_clock::time_point start_time            = {};
   std::atomic<uint64_t>                          elapsed_return_ns     = {};
   std::atomic<uint64_t>                          elapsed_completion_ns = {};
   std::atomic<uint64_t>                          self_cpu_usage_ns     = {};
+  slot_point                                     slot;
   units::bytes                                   tbs;
   pdsch_processor_notifier*                      processor_notifier = nullptr;
   std::unique_ptr<pdsch_processor>               base;

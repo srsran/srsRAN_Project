@@ -22,9 +22,27 @@
 
 #pragma once
 
-#include "slice_allocator.h"
+#include "srsran/scheduler/result/pdsch_info.h"
+#include "srsran/scheduler/result/pusch_info.h"
 
 namespace srsran {
+
+class slice_ue;
+class ue_cell;
+
+/// Type used to represent a UE priority.
+using ue_sched_priority = double;
+
+/// Priority value used to represent that the UE must not be scheduled.
+const ue_sched_priority forbid_sched_priority = std::numeric_limits<ue_sched_priority>::min();
+
+/// UE candidate for DL or UL scheduling.
+struct ue_newtx_candidate {
+  const slice_ue*   ue;
+  const ue_cell*    ue_cc;
+  unsigned          pending_bytes;
+  ue_sched_priority priority;
+};
 
 /// Interface of data scheduler that is used to allocate UE DL and UL grants in a given slot
 /// The data_scheduler object will be common to all cells and slots.
@@ -33,11 +51,31 @@ class scheduler_policy
 public:
   virtual ~scheduler_policy() = default;
 
-  /// Schedule UE DL grants for a given slot and one or more cells.
-  virtual void dl_sched(slice_dl_sched_context& dl_ctxt) = 0;
+  virtual void add_ue(du_ue_index_t ue_index) = 0;
 
-  /// Schedule UE UL grants for a given {slot, cell}.
-  virtual void ul_sched(slice_ul_sched_context& ul_ctxt) = 0;
+  virtual void rem_ue(du_ue_index_t ue_index) = 0;
+
+  /// Compute UE candidate priorities for DL scheduling.
+  ///
+  /// \param[in] pdcch_slot PDCCH slot.
+  /// \param[in] pdsch_slot PDSCH slot.
+  /// \param[in] ue_candidates UE candidates with new HARQ transmissions to be scheduled.
+  virtual void
+  compute_ue_dl_priorities(slot_point pdcch_slot, slot_point pdsch_slot, span<ue_newtx_candidate> ue_candidates) = 0;
+
+  /// Compute UE candidate priorities for UL scheduling.
+  ///
+  /// \param[in] pdcch_slot PDCCH slot.
+  /// \param[in] pusch_slot PUSCH slot.
+  /// \param[in] ue_candidates UE candidates with new HARQ transmissions to be scheduled.
+  virtual void
+  compute_ue_ul_priorities(slot_point pdcch_slot, slot_point pusch_slot, span<ue_newtx_candidate> ue_candidates) = 0;
+
+  /// Save UE DL newtx grants.
+  virtual void save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants) = 0;
+
+  /// Save UE UL newtx grants.
+  virtual void save_ul_newtx_grants(span<const ul_sched_info> dl_grants) = 0;
 };
 
 } // namespace srsran

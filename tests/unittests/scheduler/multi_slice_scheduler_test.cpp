@@ -94,7 +94,7 @@ protected:
 class single_slice_limited_max_rbs_scheduler_test : public base_multi_slice_scheduler_tester, public ::testing::Test
 {
 protected:
-  constexpr static unsigned max_slice_rbs = 10;
+  static constexpr unsigned max_slice_rbs = 10;
 
   single_slice_limited_max_rbs_scheduler_test() :
     base_multi_slice_scheduler_tester(
@@ -155,11 +155,11 @@ TEST_F(multi_slice_with_prio_slice_scheduler_test, multi_ue_limited_to_max_rbs)
 {
   // Create 3 UEs and fill their buffers.
   this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))});
-  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(0), LCID_MIN_DRB, 10000});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(0), LCID_MIN_DRB, 100000});
   this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 1))});
-  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(1), LCID_MIN_DRB, 10000});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(1), LCID_MIN_DRB, 100000});
   this->add_ue({std::make_pair(LCID_MIN_DRB, get_nssai(1, 2))});
-  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(2), LCID_MIN_DRB, 10000});
+  this->push_dl_buffer_state(dl_buffer_state_indication_message{to_du_ue_index(2), LCID_MIN_DRB, 100000});
 
   unsigned                nof_checks = 4;
   std::array<unsigned, 3> rnti_sum_rbs{0};

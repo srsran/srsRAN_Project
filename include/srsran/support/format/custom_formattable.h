@@ -39,6 +39,19 @@ public:
   FormatFunc format;
 };
 
+template <typename T>
+struct value_or_else {
+  template <typename U>
+  value_or_else(U&& opt_, const char* unit_str_, const char* else_) :
+    opt(std::forward<U>(opt_)), unit_str(unit_str_), else_str(else_)
+  {
+  }
+
+  T           opt;
+  const char* unit_str;
+  const char* else_str;
+};
+
 } // namespace detail
 
 /// \brief Creates a formattable object, whose format function is the passed functor/lambda \c func.
@@ -52,6 +65,23 @@ template <typename FormatFunc>
 detail::custom_formattable<FormatFunc> make_formattable(FormatFunc func)
 {
   return detail::custom_formattable<FormatFunc>(std::move(func));
+}
+
+/// \brief Creates a formattable object that formats the value of an std::optional if present, otherwise it formats
+/// the passed \c else_str string.
+/// \param[in] opt Optional with value to format.
+/// \param[in] else_str String to format in case the optional has no value.
+/// \return Formattable object.
+template <typename T>
+auto format_value_or(T&& opt, const char* else_str)
+{
+  return detail::value_or_else<T>{std::forward<T>(opt), "", else_str};
+}
+
+template <typename T>
+auto format_unit_or(T&& opt, const char* unit_str, const char* else_str)
+{
+  return detail::value_or_else<T>{std::forward<T>(opt), unit_str, else_str};
 }
 
 namespace detail {
@@ -112,6 +142,28 @@ struct formatter<srsran::detail::optional_prefix_formatter<T>> : public basic_pa
       }
     }
     return ctx.out();
+  }
+};
+
+template <typename T>
+struct formatter<srsran::detail::value_or_else<T>> {
+  using value_type = typename std::decay_t<T>::value_type;
+
+  formatter<value_type> value_formatter;
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return value_formatter.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::detail::value_or_else<T>& obj, FormatContext& ctx) const
+  {
+    if (not obj.opt.has_value()) {
+      return fmt::format_to(ctx.out(), "{}", obj.else_str);
+    }
+    return fmt::format_to(value_formatter.format(obj.opt.value(), ctx), "{}", obj.unit_str);
   }
 };
 

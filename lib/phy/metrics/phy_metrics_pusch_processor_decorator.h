@@ -134,26 +134,30 @@ private:
       return;
     }
 
-    pusch_processor_metrics metrics;
-    metrics.tbs               = units::bytes(data.size());
-    metrics.crc_ok            = sch_result.value().data.tb_crc_ok;
-    metrics.elapsed_return    = time_return_local - time_start;
-    metrics.elapsed_data      = time_data_local - time_start;
-    metrics.cpu_time_usage_ns = cpu_time_usage_ns;
-
+    std::optional<std::chrono::nanoseconds> elapsed_uci;
     if (uci_result.has_value()) {
       std::chrono::time_point<std::chrono::steady_clock> time_uci_local =
           std::chrono::time_point<std::chrono::steady_clock>(std::chrono::steady_clock::duration(time_uci));
 
-      metrics.elapsed_uci = time_uci_local - time_start;
+      elapsed_uci = time_uci_local - time_start;
     }
 
+    float sinr_dB = std::numeric_limits<float>::quiet_NaN();
+    float evm     = std::numeric_limits<float>::quiet_NaN();
     if (sch_result.has_value()) {
-      metrics.sinr_dB = sch_result.value().csi.get_sinr_dB().value_or(0.0);
-      metrics.evm     = sch_result.value().csi.get_evm().value_or(0.0);
+      sinr_dB = sch_result.value().csi.get_sinr_dB().value_or(0.0);
+      evm     = sch_result.value().csi.get_evm().value_or(0.0);
     }
 
-    metric_notifier.on_new_metric(metrics);
+    metric_notifier.on_new_metric({.slot              = pdu.slot,
+                                   .tbs               = units::bytes(data.size()),
+                                   .crc_ok            = sch_result.value().data.tb_crc_ok,
+                                   .elapsed_return    = time_return_local - time_start,
+                                   .elapsed_data      = time_data_local - time_start,
+                                   .elapsed_uci       = elapsed_uci,
+                                   .cpu_time_usage_ns = cpu_time_usage_ns,
+                                   .sinr_dB           = sinr_dB,
+                                   .evm               = evm});
   }
 
   std::unique_ptr<pusch_processor>                      processor;

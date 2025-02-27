@@ -34,7 +34,7 @@ static size_t get_ring_size(const sched_cell_configuration_request_message& cell
 {
   // Estimation of the time it takes the UL lower-layers to process and forward CRC/UCI indications.
   // Note: The size of this ring has to be larger than that of the test mode internal buffer.
-  constexpr static unsigned MAX_UL_PHY_DELAY = 80;
+  static constexpr unsigned MAX_UL_PHY_DELAY = 80;
   // Note: The history ring size has to be a multiple of the TDD frame size in slots.
   // Number of slots managed by this container.
   return get_allocator_ring_size_gt_min(get_max_slot_ul_alloc_delay(cell_cfg.ntn_cs_koffset) + MAX_UL_PHY_DELAY);

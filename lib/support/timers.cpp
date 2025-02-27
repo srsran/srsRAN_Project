@@ -70,9 +70,9 @@ struct cmd_t {
 /// Queue used by timer frontend to report that they have a new pending action to be processed by the backend.
 class timer_update_signaller
 {
-  constexpr static size_t initial_batch_size            = 128;
-  constexpr static size_t warn_on_nof_dequeues_per_tick = 4096U;
-  constexpr static size_t default_queue_capacity        = 16384;
+  static constexpr size_t initial_batch_size            = 128;
+  static constexpr size_t warn_on_nof_dequeues_per_tick = 4096U;
+  static constexpr size_t default_queue_capacity        = 16384;
 
 public:
   explicit timer_update_signaller(srslog::basic_logger& logger_, size_t initial_capacity = default_queue_capacity) :
@@ -273,7 +273,7 @@ private:
 /// Implementation of timer_manager.
 class timer_manager::manager_impl
 {
-  constexpr static size_t TIMER_CREATION_QUEUE_INITIAL_CAPACITY = 32;
+  static constexpr size_t TIMER_CREATION_QUEUE_INITIAL_CAPACITY = 32;
 
 public:
   /// Timer context used solely by the back-end side of the timer manager.

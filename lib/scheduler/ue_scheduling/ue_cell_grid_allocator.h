@@ -24,18 +24,67 @@
 
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
-#include "../policy/slice_allocator.h"
-#include "../policy/ue_allocator.h"
 #include "../slicing/ran_slice_candidate.h"
+#include "../uci_scheduling/uci_allocator.h"
 #include "grant_params_selector.h"
 #include "ue_repository.h"
-#include "srsran/scheduler/config/scheduler_expert_config.h"
 
 namespace srsran {
 
+struct scheduler_ue_expert_config;
+
+/// Information relative to a UE PDSCH grant.
+struct ue_pdsch_grant {
+  const slice_ue* user;
+  harq_id_t       h_id;
+  /// Recommended nof. bytes to schedule. This field is not present/ignored in case of HARQ retransmission.
+  std::optional<unsigned> recommended_nof_bytes;
+  /// Maximum nof. RBs to allocate to the UE. This field is not present/ignored in case of HARQ retransmission.
+  std::optional<unsigned> max_nof_rbs;
+};
+
+/// Information relative to a UE PUSCH grant.
+struct ue_pusch_grant {
+  const slice_ue* user;
+  harq_id_t       h_id;
+  /// Recommended nof. bytes to schedule. This field is not present/ignored in case of HARQ retransmission.
+  std::optional<unsigned> recommended_nof_bytes;
+  /// Maximum nof. RBs to allocate to the UE. This field is not present/ignored in case of HARQ retransmission.
+  std::optional<unsigned> max_nof_rbs;
+};
+
+/// \brief Status of a UE grant allocation, and action for the scheduler policy to follow afterwards.
+///
+/// The current status are:
+/// - success - the allocation was successful with the provided parameters.
+/// - skip_slot - failure to allocate and the scheduler policy should terminate the current slot processing.
+/// - skip_ue - failure to allocate and the scheduler policy should move on to the next candidate UE.
+/// - invalid_params - failure to allocate and the scheduler policy should try a different set of grant parameters.
+enum class alloc_status { success, skip_slot, skip_ue, invalid_params };
+
+/// Allocation result of a UE DL grant allocation.
+struct dl_alloc_result {
+  alloc_status status;
+  /// Nof. of bytes allocated if allocation was successful.
+  unsigned alloc_bytes{0};
+  /// Nof. of resource blocks allocated if allocation was successful.
+  unsigned alloc_nof_rbs{0};
+  /// List of logical channels scheduled in this TB if allocation was successful.
+  dl_msg_tb_info tb_info;
+};
+
+/// Allocation result of a UE UL grant allocation.
+struct ul_alloc_result {
+  alloc_status status;
+  /// Nof. of bytes allocated if allocation was successful.
+  unsigned alloc_bytes{0};
+  /// Nof. of resource blocks allocated if allocation was successful.
+  unsigned alloc_nof_rbs{0};
+};
+
 /// This class implements the methods to allocate PDSCH and PUSCH grants in different cells for a slice, and the
 /// methods to fetch the current gNB resource grid DL and UL states.
-class ue_cell_grid_allocator final : public ue_pdsch_grid_allocator, public ue_pusch_grid_allocator
+class ue_cell_grid_allocator
 {
 public:
   ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
@@ -52,13 +101,11 @@ public:
 
   void slot_indication(slot_point sl);
 
-  dl_alloc_result allocate_dl_grant(du_cell_index_t               cell_index,
-                                    const dl_ran_slice_candidate& slice,
-                                    const ue_pdsch_grant&         grant) override;
+  dl_alloc_result
+  allocate_dl_grant(du_cell_index_t cell_index, const dl_ran_slice_candidate& slice, const ue_pdsch_grant& grant);
 
-  ul_alloc_result allocate_ul_grant(du_cell_index_t               cell_index,
-                                    const ul_ran_slice_candidate& slice,
-                                    const ue_pusch_grant&         grant) override;
+  ul_alloc_result
+  allocate_ul_grant(du_cell_index_t cell_index, const ul_ran_slice_candidate& slice, const ue_pusch_grant& grant);
 
   /// \brief Called at the end of a slot to process the allocations that took place and make some final adjustments.
   ///
@@ -129,9 +176,6 @@ private:
 
   // List of slots at which there is no PDSCH space for further allocations.
   static_vector<slot_point, SCHEDULER_MAX_K0> slots_with_no_pdsch_space;
-
-  // Number of allocation attempts for DL and UL in the given slot.
-  unsigned dl_attempts_count = 0, ul_attempts_count = 0;
 };
 
 } // namespace srsran

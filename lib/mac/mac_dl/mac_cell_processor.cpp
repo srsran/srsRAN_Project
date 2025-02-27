@@ -77,7 +77,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
 
 static void initialize_cell_tracer(du_cell_index_t cell_idx, subcarrier_spacing scs)
 {
-  constexpr static size_t MAX_EVENTS = 8;
+  static constexpr size_t MAX_EVENTS = 8;
 
   std::chrono::microseconds slot_dur{1000 / get_nof_slots_per_subframe(scs)};
 
@@ -166,11 +166,11 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
 
 void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
 {
-  trace_point slot_ind_enqueue_tp = l2_tracer.now();
+  trace_point slot_ind_enqueue_tp = metric_clock::now();
   // Change execution context to slot indication executor.
   if (not slot_exec.execute([this, sl_tx, slot_ind_enqueue_tp]() {
         l2_tracer << trace_event{"mac_slot_ind_enqueue", slot_ind_enqueue_tp};
-        handle_slot_indication_impl(sl_tx);
+        handle_slot_indication_impl(sl_tx, slot_ind_enqueue_tp);
       })) {
     logger.warning("Skipped slot indication={}. Cause: DL task queue is full.", sl_tx);
   }
@@ -268,11 +268,12 @@ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span
       });
 }
 
-void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx) SRSRAN_RTSAN_NONBLOCKING
+void mac_cell_processor::handle_slot_indication_impl(slot_point               sl_tx,
+                                                     metric_clock::time_point enqueue_slot_tp) SRSRAN_RTSAN_NONBLOCKING
 {
   // * Start of Critical Path * //
 
-  auto metrics_meas = metrics.start_slot(sl_tx);
+  auto metrics_meas = metrics.start_slot(sl_tx, enqueue_slot_tp);
   l2_late_tracer[cell_cfg.cell_index].start();
   trace_point sched_tp = metrics_meas.start_time_point();
 

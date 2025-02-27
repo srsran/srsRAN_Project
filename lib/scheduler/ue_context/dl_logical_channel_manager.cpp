@@ -330,7 +330,7 @@ unsigned dl_logical_channel_manager::allocate_mac_sdu(dl_msg_lc_info& subpdu, lc
   channels[lcid].buf_st -= channels[lcid].last_sched_bytes;
 
   if (lcid != LCID_SRB0 and channels[lcid].buf_st > 0) {
-    constexpr static unsigned RLC_SEGMENTATION_OVERHEAD = 4;
+    static constexpr unsigned RLC_SEGMENTATION_OVERHEAD = 4;
     // Allocation was not enough to empty the logical channel. In this specific case, we add some bytes to account
     // for the RLC segmentation overhead.
     // Note: This update is only relevant for PDSCH allocations for slots > slot_tx. For the case of PDSCH

@@ -28,6 +28,7 @@
 #include "../slicing/inter_slice_scheduler.h"
 #include "../srs/srs_scheduler_impl.h"
 #include "../uci_scheduling/uci_scheduler_impl.h"
+#include "intra_slice_scheduler.h"
 #include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
 #include "ue_fallback_scheduler.h"
@@ -103,11 +104,11 @@ private:
   /// Repository of created UEs.
   ue_repository ue_db;
 
-  /// Allocator of grants in the resource grid.
-  ue_cell_grid_allocator ue_alloc;
-
   /// Processor of UE input events.
   ue_event_manager event_mng;
+
+  /// Intra-slice scheduler.
+  intra_slice_scheduler intra_slice_sched;
 
   // Mutex to lock cells of the same cell group (when CA enabled) for joint carrier scheduling
   std::mutex cell_group_mutex;

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "scheduler_policy.h"
-#include "slice_allocator.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 
 namespace srsran {
 
@@ -32,18 +32,27 @@ class scheduler_time_rr : public scheduler_policy
 public:
   scheduler_time_rr(const scheduler_ue_expert_config& expert_cfg_);
 
-  void dl_sched(slice_dl_sched_context& ctxt) override;
+  void add_ue(du_ue_index_t ue_index) override {}
 
-  void ul_sched(slice_ul_sched_context& ul_ctxt) override;
+  void rem_ue(du_ue_index_t ue_index) override {}
+
+  void compute_ue_dl_priorities(slot_point               pdcch_slot,
+                                slot_point               pdsch_slot,
+                                span<ue_newtx_candidate> ue_candidates) override;
+
+  void compute_ue_ul_priorities(slot_point               pdcch_slot,
+                                slot_point               pusch_slot,
+                                span<ue_newtx_candidate> ue_candidates) override;
+
+  void save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants) override;
+
+  void save_ul_newtx_grants(span<const ul_sched_info> ul_grants) override;
 
 private:
-  void dl_sched_newtx(slice_dl_sched_context& ctxt);
-  void ul_sched_newtx(slice_ul_sched_context& ctxt);
-
-  srslog::basic_logger& logger;
-  du_ue_index_t         next_dl_ue_index, next_ul_ue_index;
-
   const scheduler_ue_expert_config expert_cfg;
+
+  /// Indices of the UEs to be allocated first in the next slot.
+  du_ue_index_t next_dl_ue_index = MAX_NOF_DU_UES, next_ul_ue_index = MAX_NOF_DU_UES;
 };
 
 } // namespace srsran

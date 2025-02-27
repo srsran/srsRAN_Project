@@ -23,6 +23,7 @@
 #pragma once
 
 #include "aggregators/ulsch_demultiplex_metrics_aggregator.h"
+#include "du_low_downlink_processor_metrics_collector.h"
 #include "du_low_ldpc_metrics_collector.h"
 #include "du_low_pdsch_metrics_collector.h"
 #include "du_low_pusch_metrics_collector.h"
@@ -164,11 +165,19 @@ private:
   }
 
   // See interface for documentation.
-  pdsch_dmrs_generator_metric_notifier& get_pdsch_dmrs_generator() override
+  pdsch_dmrs_generator_metric_notifier& get_pdsch_dmrs_generator_notifier() override
   {
     return pdsch_collector.get_pdsch_dmrs_generator();
   }
 
+  // See interface for documentation.
+  downlink_processor_metric_notifier& get_downlink_processor_notifier() override
+  {
+    return dl_processor_collector.get_notifier();
+  }
+
+  /// General downlink processor collector.
+  du_low_downlink_processor_metrics_collector dl_processor_collector;
   /// LDPC metrics collector.
   du_low_ldpc_metrics_collector ldpc_collector;
   /// PUSCH processing metrics collector.

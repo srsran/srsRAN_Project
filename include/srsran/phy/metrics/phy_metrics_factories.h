@@ -27,6 +27,7 @@
 #include "srsran/phy/upper/channel_processors/pdsch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_factories.h"
+#include "srsran/phy/upper/upper_phy_factories.h"
 
 namespace srsran {
 
@@ -127,5 +128,10 @@ create_pdsch_processor_metric_decorator_factory(std::shared_ptr<pdsch_processor_
 std::shared_ptr<dmrs_pdsch_processor_factory>
 create_dmrs_pdsch_generator_metric_decorator_factory(std::shared_ptr<dmrs_pdsch_processor_factory> base_factory,
                                                      pdsch_dmrs_generator_metric_notifier&         notifier);
+
+/// Creates a downlink processor metric decorator factory.
+std::shared_ptr<downlink_processor_factory>
+create_downlink_processor_generator_metric_decorator_factory(std::shared_ptr<downlink_processor_factory> base_factory,
+                                                             downlink_processor_metric_notifier&         notifier);
 
 } // namespace srsran

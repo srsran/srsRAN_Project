@@ -141,7 +141,7 @@ public:
   auto end() const { return to_span().end(); }
 
 private:
-  constexpr static size_t nof_harq_reports_thres = 11;
+  static constexpr size_t nof_harq_reports_thres = 11;
   // type used when the number of harq-bits is equal or below \c nof_harq_reports_thres
   using small_buffer_type = static_vector<mac_harq_ack_report_status, nof_harq_reports_thres>;
   // type used when the number of harq-bits is above \c nof_harq_reports_thres

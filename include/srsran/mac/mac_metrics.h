@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ran/pci.h"
+#include "srsran/ran/slot_point.h"
 #include <chrono>
 #include <vector>
 
@@ -34,6 +35,7 @@ struct mac_dl_cell_metric_report {
     std::chrono::nanoseconds min;
     std::chrono::nanoseconds max;
     std::chrono::nanoseconds average;
+    slot_point               max_slot;
   };
   /// Physical cell id.
   pci_t pci;
@@ -47,6 +49,9 @@ struct mac_dl_cell_metric_report {
   latency_report user_time;
   /// Description of the time spent by the MAC in kernel mode when handling slot indications.
   latency_report sys_time;
+  /// \brief Description of the wall clock latency between the lower layers signalling a slot indication and the MAC
+  /// starting to handle it.
+  latency_report slot_ind_handle_latency;
   /// Number of voluntary context switches.
   unsigned count_voluntary_context_switches;
   /// Number of involuntary context switches.

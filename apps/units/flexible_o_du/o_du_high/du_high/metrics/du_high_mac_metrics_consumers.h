@@ -40,4 +40,17 @@ private:
   srslog::log_channel& log_chan;
 };
 
+/// Consumer for the logger MAC metrics.
+class mac_metrics_consumer_log : public app_services::metrics_consumer
+{
+public:
+  explicit mac_metrics_consumer_log(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
+
+  // See interface for documentation.
+  void handle_metric(const app_services::metrics_set& metric) override;
+
+private:
+  srslog::log_channel& log_chan;
+};
+
 } // namespace srsran

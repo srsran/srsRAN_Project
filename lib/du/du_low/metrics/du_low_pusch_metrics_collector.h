@@ -38,7 +38,7 @@
 namespace srsran {
 namespace srs_du {
 
-/// PUSCH processing metrics collector.
+/// DU low PUSCH processing metrics collector.
 class du_low_pusch_metrics_collector
 {
 public:

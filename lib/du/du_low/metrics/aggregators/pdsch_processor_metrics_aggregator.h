@@ -26,6 +26,7 @@
 #include "srsran/phy/metrics/phy_metrics_notifiers.h"
 #include "srsran/phy/metrics/phy_metrics_reports.h"
 #include <atomic>
+#include <utility>
 
 namespace srsran {
 
@@ -47,11 +48,19 @@ public:
   /// Gets the minimum transmission latency in microseconds.
   double get_min_latency_us() const
   {
-    return (min_latency_ns == UINT64_MAX) ? 0 : static_cast<double>(min_latency_ns) / 1000.0;
+    uint64_t packed_min_latency = packed_min_latency_ns;
+    uint64_t min_latency_ns     = unpack_duration(packed_min_latency);
+    return (min_latency_ns == std::numeric_limits<uint32_t>::max()) ? 0 : static_cast<double>(min_latency_ns) / 1000.0;
   }
 
-  /// Gets the maximum transmission latency in microseconds.
-  double get_max_latency_us() const { return static_cast<double>(max_latency_ns) / 1000.0; }
+  /// Gets the maximum transmission latency in microseconds and the slot point in which was detected.
+  std::pair<double, slot_point> get_max_latency_us() const
+  {
+    uint64_t   packed_max_latency = packed_max_latency_ns;
+    uint64_t   max_latency_ns     = unpack_duration(packed_max_latency);
+    slot_point slot               = unpack_slot(packed_max_latency);
+    return {static_cast<double>(max_latency_ns) / 1000.0, slot};
+  }
 
   /// \brief Gets the average return time in microseconds.
   ///
@@ -85,18 +94,24 @@ public:
     sum_elapsed_completion_ns = 0;
     count                     = 0;
     sum_used_cpu_time_ns      = 0;
-    min_latency_ns            = UINT64_MAX;
-    max_latency_ns            = 0;
+    packed_min_latency_ns     = default_packed_min_latency_ns;
+    packed_max_latency_ns     = default_packed_max_latency_ns;
   }
 
 private:
+  static constexpr uint64_t default_packed_min_latency_ns =
+      pack_slot_and_duration({}, std::numeric_limits<uint32_t>::max());
+  static constexpr uint64_t default_packed_max_latency_ns =
+      pack_slot_and_duration({}, std::numeric_limits<uint32_t>::min());
+
   // See interface for documentation.
   void on_new_metric(const pdsch_processor_metrics& metrics) override
   {
     sum_tb_sz += metrics.tbs.to_bits().value();
     sum_elapsed_return_ns += metrics.elapsed_return.count();
     sum_elapsed_completion_ns += metrics.elapsed_completion.count();
-    update_minmax(metrics.elapsed_completion.count(), max_latency_ns, min_latency_ns);
+    update_slotmin(metrics.slot, metrics.elapsed_completion.count(), packed_min_latency_ns);
+    update_slotmax(metrics.slot, metrics.elapsed_completion.count(), packed_max_latency_ns);
     ++count;
     sum_used_cpu_time_ns += metrics.self_cpu_time_usage.count();
   }
@@ -106,8 +121,8 @@ private:
   std::atomic<uint64_t> sum_elapsed_completion_ns = {};
   std::atomic<uint64_t> count                     = {};
   std::atomic<uint64_t> sum_used_cpu_time_ns      = {};
-  std::atomic<uint64_t> min_latency_ns            = UINT64_MAX;
-  std::atomic<uint64_t> max_latency_ns            = 0;
+  std::atomic<uint64_t> packed_min_latency_ns     = default_packed_min_latency_ns;
+  std::atomic<uint64_t> packed_max_latency_ns     = default_packed_max_latency_ns;
 };
 
 } // namespace srsran

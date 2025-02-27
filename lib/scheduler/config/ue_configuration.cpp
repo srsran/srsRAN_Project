@@ -778,19 +778,6 @@ bool ue_cell_configuration::is_cfg_dedicated_complete() const
          bwp.ul_ded.has_value() and bwp.ul_ded->pucch_cfg.has_value();
 }
 
-bool ue_cell_configuration::is_dl_enabled(slot_point dl_slot) const
-{
-  if (not cell_cfg_common.is_dl_enabled(dl_slot)) {
-    return false;
-  }
-  if (meas_gap_cfg.has_value()) {
-    if (is_inside_meas_gap(meas_gap_cfg.value(), dl_slot)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 bool ue_cell_configuration::is_ul_enabled(slot_point ul_slot) const
 {
   if (not cell_cfg_common.is_ul_enabled(ul_slot)) {

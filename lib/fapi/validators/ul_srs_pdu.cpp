@@ -237,8 +237,8 @@ static bool validate_frequency_hopping(unsigned value, validator_report& report)
 /// Validates the group or sequence hopping property of the SRS PDU, as per SCF-222 v4.0 Section 3.4.3.3
 static bool validate_group_or_sequence_hopping(srs_group_or_sequence_hopping value, validator_report& report)
 {
-  if (value == srs_group_or_sequence_hopping::groupHopping || value == srs_group_or_sequence_hopping::sequenceHopping ||
-      value == srs_group_or_sequence_hopping::neither) {
+  if (value == srs_group_or_sequence_hopping::group_hopping ||
+      value == srs_group_or_sequence_hopping::sequence_hopping || value == srs_group_or_sequence_hopping::neither) {
     return true;
   }
 

@@ -23,20 +23,33 @@
 #pragma once
 
 #include "scheduler_policy.h"
-#include "slice_allocator.h"
+#include "srsran/adt/slotted_array.h"
+#include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/support/math/exponential_averager.h"
 
 namespace srsran {
 
 /// Time-domain QoS-aware scheduler policy.
-class scheduler_time_qos : public scheduler_policy
+class scheduler_time_qos final : public scheduler_policy
 {
 public:
-  scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_);
+  scheduler_time_qos(const scheduler_ue_expert_config& expert_cfg_, du_cell_index_t cell_index);
 
-  void dl_sched(slice_dl_sched_context& dl_ctxt) override;
+  void add_ue(du_ue_index_t ue_index) override;
 
-  void ul_sched(slice_ul_sched_context& ul_ctxt) override;
+  void rem_ue(du_ue_index_t ue_index) override;
+
+  void compute_ue_dl_priorities(slot_point               pdcch_slot,
+                                slot_point               pdsch_slot,
+                                span<ue_newtx_candidate> ue_candidates) override;
+
+  void compute_ue_ul_priorities(slot_point               pdcch_slot,
+                                slot_point               pusch_slot,
+                                span<ue_newtx_candidate> ue_candidates) override;
+
+  void save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants) override;
+
+  void save_ul_newtx_grants(span<const ul_sched_info> ul_grants) override;
 
 private:
   // Value used to flag that the UE cannot be allocated in a given slot.
@@ -44,6 +57,7 @@ private:
 
   // Policy parameters.
   const time_qos_scheduler_expert_config params;
+  const du_cell_index_t                  cell_index;
   /// Coefficient used to compute exponential moving average.
   const double exp_avg_alpha = 0.01;
 
@@ -87,84 +101,10 @@ private:
     exp_average_fast_start<double> total_ul_avg_rate_;
   };
 
-  dl_alloc_result schedule_dl_retxs(slice_dl_sched_context& ctxt);
-  ul_alloc_result schedule_ul_retxs(slice_ul_sched_context& ctxt);
-
-  /// \brief Attempts to allocate PDSCH for a UE.
-  /// \return Returns allocation status, nof. allocated bytes and nof. allocated RBs.
-  dl_alloc_result
-  try_dl_alloc(ue_ctxt& ctxt, const slice_ue_repository& ues, slice_dl_sched_context& slice_ctxt, unsigned max_rbs);
-  /// \brief Attempts to allocate PUSCH for a UE.
-  /// \return Returns allocation status, nof. allocated bytes and nof. allocated RBs.
-  ul_alloc_result
-  try_ul_alloc(ue_ctxt& ctxt, const slice_ue_repository& ues, slice_ul_sched_context& slice_ctxt, unsigned max_rbs);
-
   slotted_id_table<du_ue_index_t, ue_ctxt, MAX_NOF_DU_UES> ue_history_db;
-
-  struct ue_dl_prio_compare {
-    bool operator()(const ue_ctxt* lhs, const ue_ctxt* rhs) const;
-  };
-  struct ue_ul_prio_compare {
-    bool operator()(const ue_ctxt* lhs, const ue_ctxt* rhs) const;
-  };
-
-  // Note: the std::priority_queue makes its underlying container protected, so it seems that they are ok with
-  // inheritance.
-  class ue_dl_queue_t : public std::priority_queue<ue_ctxt*, std::vector<ue_ctxt*>, ue_dl_prio_compare>
-  {
-    using base_type = std::priority_queue<ue_ctxt*, std::vector<ue_ctxt*>, ue_dl_prio_compare>;
-
-  public:
-    // Note: faster than while(!empty()) pop() because it avoids the O(NlogN). Faster than = {}, because it preserves
-    // memory.
-    void clear()
-    {
-      // Access to underlying vector.
-      this->c.clear();
-    }
-
-    // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
-    void push(ue_ctxt* elem)
-    {
-      if (elem->dl_prio == forbid_prio) {
-        return;
-      }
-      base_type::push(elem);
-    }
-  };
-
-  // Note: the std::priority_queue makes its underlying container protected, so it seems that they are ok with
-  // inheritance.
-  class ue_ul_queue_t : public std::priority_queue<ue_ctxt*, std::vector<ue_ctxt*>, ue_ul_prio_compare>
-  {
-    using base_type = std::priority_queue<ue_ctxt*, std::vector<ue_ctxt*>, ue_ul_prio_compare>;
-
-  public:
-    // Note: faster than while(!empty()) pop() because it avoids the O(NlogN). Faster than = {}, because it preserves
-    // memory.
-    void clear()
-    {
-      // Access to underlying vector.
-      this->c.clear();
-    }
-
-    // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
-    void push(ue_ctxt* elem)
-    {
-      if (elem->ul_prio == forbid_prio) {
-        return;
-      }
-      base_type::push(elem);
-    }
-  };
 
   slot_point last_pdsch_slot;
   slot_point last_pusch_slot;
-
-  /// Priority queue of UEs to be scheduled in DL. The UE in front of the queue has highest priority and vice versa.
-  ue_dl_queue_t dl_queue;
-  /// Priority queue of UEs to be scheduled in UL. The UE in front of the queue has highest priority and vice versa.
-  ue_ul_queue_t ul_queue;
 };
 
 } // namespace srsran

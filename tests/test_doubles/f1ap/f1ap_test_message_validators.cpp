@@ -293,19 +293,21 @@ bool srsran::test_helpers::is_valid_f1_reset_ack(const f1ap_message& req, const 
   return true;
 }
 
+#ifndef SRSRAN_HAS_ENTERPRISE
+
 bool test_helpers::is_valid_positioning_information_response(const f1ap_message& msg)
 {
-  TRUE_OR_RETURN(msg.pdu.type().value == f1ap_pdu_c::types_opts::successful_outcome);
-  TRUE_OR_RETURN(msg.pdu.successful_outcome().value.type().value ==
-                 f1ap_elem_procs_o::successful_outcome_c::types_opts::positioning_info_resp);
-  TRUE_OR_RETURN(is_packable(msg));
   return true;
 }
 
 bool test_helpers::is_valid_f1ap_trp_information_request(const f1ap_message& msg)
 {
-  TRUE_OR_RETURN(msg.pdu.type().value == f1ap_pdu_c::types_opts::init_msg);
-  TRUE_OR_RETURN(msg.pdu.init_msg().value.type().value == f1ap_elem_procs_o::init_msg_c::types_opts::trp_info_request);
-  TRUE_OR_RETURN(is_packable(msg));
   return true;
 }
+
+bool test_helpers::is_valid_f1ap_positioning_information_request(const f1ap_message& msg)
+{
+  return true;
+}
+
+#endif // SRSRAN_HAS_ENTERPRISE

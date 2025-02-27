@@ -81,7 +81,7 @@ prioritized_bit_rate srsran::get_pbr_ceil(uint64_t bitrate_bps)
   // Convert given bitrate (bps) to kilo Bytes per second.
   const float given_bitrate_kBps = bitrate_bps / (1000 * 8);
   // Prioritized bitrate values as per TS 38.331, \c prioritisedBitRate.
-  constexpr static std::array<unsigned, 15> pbr_kBps{
+  static constexpr std::array<unsigned, 15> pbr_kBps{
       0, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536};
   // Find PBR value greater than or equal to give bitrate.
   for (unsigned pbr : pbr_kBps) {

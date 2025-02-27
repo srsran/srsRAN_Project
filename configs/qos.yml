@@ -351,7 +351,7 @@ qos:
       am:
         tx:
           sn: 18
-          t-poll-retransmit: 20
+          t-poll-retransmit: 100
           max-retx-threshold: 32
           poll-pdu: 16
           poll-byte: -1

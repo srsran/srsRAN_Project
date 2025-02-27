@@ -80,7 +80,7 @@ TEST_F(mac_dl_metric_handler_test, for_single_cell_on_period_elapsed_then_report
   // Number of slots equal to period has elapsed.
   for (unsigned i = 0; i != period.count(); ++i) {
     task_worker.run_pending_tasks();
-    auto meas = cell_metrics.start_slot(next_point);
+    auto meas = cell_metrics.start_slot(next_point, metric_clock::now());
     ++next_point;
   }
 
@@ -89,6 +89,8 @@ TEST_F(mac_dl_metric_handler_test, for_single_cell_on_period_elapsed_then_report
   ASSERT_TRUE(metric_notifier.last_report.has_value());
   ASSERT_EQ(metric_notifier.last_report.value().dl.cells.size(), 1);
   ASSERT_EQ(metric_notifier.last_report.value().dl.cells[0].nof_slots, period.count());
+  auto expected_slot_dur = std::chrono::nanoseconds{std::chrono::milliseconds{1}} / next_point.nof_slots_per_subframe();
+  ASSERT_EQ(metric_notifier.last_report.value().dl.cells[0].slot_duration, expected_slot_dur);
 }
 
 TEST_F(mac_dl_metric_handler_test, when_multi_cell_then_mac_report_generated_when_all_cells_generated_report)
@@ -99,21 +101,21 @@ TEST_F(mac_dl_metric_handler_test, when_multi_cell_then_mac_report_generated_whe
   // Number of slots equal to period-1 has elapsed.
   for (unsigned i = 0; i != period.count() - 1; ++i) {
     task_worker.run_pending_tasks();
-    auto meas1 = cell_metrics1.start_slot(next_point);
-    auto meas2 = cell_metrics2.start_slot(next_point);
+    auto meas1 = cell_metrics1.start_slot(next_point, metric_clock::now());
+    auto meas2 = cell_metrics2.start_slot(next_point, metric_clock::now());
     ++next_point;
   }
 
   // All but one cell have produced the report.
   {
-    auto meas = cell_metrics2.start_slot(next_point);
+    auto meas = cell_metrics2.start_slot(next_point, metric_clock::now());
   }
   task_worker.run_pending_tasks();
   ASSERT_FALSE(metric_notifier.last_report.has_value());
 
   // Last cell makes report.
   {
-    auto meas = cell_metrics1.start_slot(next_point);
+    auto meas = cell_metrics1.start_slot(next_point, metric_clock::now());
   }
   task_worker.run_pending_tasks();
   ASSERT_TRUE(metric_notifier.last_report.has_value());
@@ -137,7 +139,7 @@ TEST_F(mac_dl_metric_handler_test, when_multi_cell_creation_staggered_then_repor
   const unsigned count_until_cell2 = period.count() - 5;
   for (unsigned i = 0; i != count_until_cell2; ++i) {
     task_worker.run_pending_tasks();
-    auto meas1 = cell_metrics1.start_slot(next_point);
+    auto meas1 = cell_metrics1.start_slot(next_point, metric_clock::now());
     ++next_point;
   }
   task_worker.run_pending_tasks();
@@ -147,8 +149,8 @@ TEST_F(mac_dl_metric_handler_test, when_multi_cell_creation_staggered_then_repor
   auto& cell_metrics2 = metrics.add_cell(to_du_cell_index(1), 2, subcarrier_spacing::kHz15);
   for (unsigned i = 0; i != period.count() - count_until_cell2; ++i) {
     task_worker.run_pending_tasks();
-    auto meas1 = cell_metrics1.start_slot(next_point);
-    auto meas2 = cell_metrics2.start_slot(next_point);
+    auto meas1 = cell_metrics1.start_slot(next_point, metric_clock::now());
+    auto meas2 = cell_metrics2.start_slot(next_point, metric_clock::now());
     ++next_point;
   }
 

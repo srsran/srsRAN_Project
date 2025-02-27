@@ -23,6 +23,7 @@
 #include "flexible_o_du_metrics_consumers.h"
 #include "flexible_o_du_app_service_metrics.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/slot_point.h"
 #include "srsran/support/format/fmt_to_c_str.h"
 
 using namespace srsran;
@@ -226,7 +227,7 @@ void flexible_o_du_metrics_consumer_json::handle_metric(const app_services::metr
   const auto& metric_enc         = odu_metrics.du.low.ldpc_metrics.encoder_metrics;
   double      ldpc_enc_cpu_usage = 100.0 * metric_enc.cpu_usage_us / metric_period_us;
   ldpc_encoder.write<metric_average_cb_size>(metric_enc.avg_cb_size);
-  ldpc_encoder.write<metric_average_latency>(metric_enc.avg_cb_latency);
+  ldpc_encoder.write<metric_average_latency>(metric_enc.avg_cb_latency_us);
   ldpc_encoder.write<metric_min_latency>(metric_enc.min_cb_latency_us);
   ldpc_encoder.write<metric_max_latency>(metric_enc.max_cb_latency_us);
   ldpc_encoder.write<metric_avg_throughput_mbps>(metric_enc.encoding_rate_Mbps);
@@ -467,6 +468,14 @@ static void log_upper_phy_metrics_verbose(fmt::basic_memory_buffer<char, str_buf
   double pusch_wait_time_percent =
       validate_fp_value(100.0 * static_cast<double>(du_lo.pusch_metrics.pusch_proc_metrics.total_wait_time.count()) /
                         static_cast<double>(du_lo.pusch_metrics.pusch_proc_metrics.total_proc_time.count()));
+  fmt::format_to(std::back_inserter(buffer), "\n");
+
+  const auto& dl_processor = du_lo.dl_processor_metrics;
+  fmt::format_to(std::back_inserter(buffer),
+                 "{:<25} max_latency={:.2f} us in slot={}\n",
+                 "  DL processing:",
+                 validate_fp_value(dl_processor.max_latency_us.first),
+                 dl_processor.max_latency_us.second);
 
   const auto& ldpc_encoder = du_lo.ldpc_metrics.encoder_metrics;
   fmt::format_to(std::back_inserter(buffer),
@@ -474,7 +483,7 @@ static void log_upper_phy_metrics_verbose(fmt::basic_memory_buffer<char, str_buf
                  "encode_rate={:.2f} Mbps\n",
                  "  LDPC Encoder:",
                  validate_fp_value(ldpc_encoder.avg_cb_size),
-                 validate_fp_value(ldpc_encoder.avg_cb_latency),
+                 validate_fp_value(ldpc_encoder.avg_cb_latency_us),
                  validate_fp_value(ldpc_encoder.max_cb_latency_us),
                  validate_fp_value(ldpc_encoder.encoding_rate_Mbps));
 
@@ -596,10 +605,11 @@ static void log_upper_phy_metrics_verbose(fmt::basic_memory_buffer<char, str_buf
 
   const auto& pdsch_proc = du_lo.pdsch_metrics.pdsch_proc_metrics;
   fmt::format_to(std::back_inserter(buffer),
-                 "{:<25} avg_latency={:.2f} us, avg_return_latency={:.2f} us, proc_rate={:.2f} Mbps\n",
+                 "{:<25} avg_latency={:.2f} us, max_latency={:.2f} us at slot={}, proc_rate={:.2f} Mbps\n",
                  "  PDSCH Processor:",
                  validate_fp_value(pdsch_proc.avg_latency_us),
-                 validate_fp_value(pdsch_proc.avg_return_time_us),
+                 validate_fp_value(pdsch_proc.max_latency_us.first),
+                 pdsch_proc.max_latency_us.second,
                  validate_fp_value(pdsch_proc.processing_rate_Mbps));
 
   const auto& pdsch_dmrs = du_lo.pdsch_metrics.dmrs_metrics;
@@ -644,38 +654,6 @@ static void log_upper_phy_metrics_verbose(fmt::basic_memory_buffer<char, str_buf
   fmt::format_to(std::back_inserter(buffer), "     |-> UL-SCH Demux: {:.2f} %\n", ulsch_demux_percent);
   fmt::format_to(
       std::back_inserter(buffer), "     |------> Decoder: {:.2f} % (multi-threaded)\n", pusch_wait_time_percent);
-}
-
-static void
-log_handle_du_low_metrics(srslog::log_channel& log_chan, const srs_du::o_du_low_metrics& du_lo, bool verbose)
-{
-  if (du_lo.metrics_period == std::chrono::microseconds()) {
-    return;
-  }
-
-  fmt::basic_memory_buffer<char, str_buffer_size> buffer;
-  fmt::format_to(std::back_inserter(buffer), "Upper PHY metrics:\n");
-
-  // Verbose logging.
-  if (verbose) {
-    log_upper_phy_metrics_verbose(buffer, du_lo);
-  }
-
-  const auto& ldpc_encoder    = du_lo.ldpc_metrics.encoder_metrics;
-  const auto& ldpc_decoder    = du_lo.ldpc_metrics.decoder_metrics;
-  const auto& ldpc_rm         = du_lo.ldpc_metrics.rate_match_metrics;
-  const auto& ldpc_rdm        = du_lo.ldpc_metrics.rate_dematch_metrics;
-  const auto& crc_pdsch       = du_lo.pdsch_metrics.crc_metrics;
-  const auto& crc_pusch       = du_lo.pusch_metrics.crc_metrics;
-  const auto& prg_pdsch       = du_lo.pdsch_metrics.scrambling_metrics;
-  const auto& prg_pusch       = du_lo.pusch_metrics.scrambling_metrics;
-  const auto& pusch_demod_map = du_lo.pusch_metrics.demod_demapper_metrics;
-  const auto& pdsch_mod       = du_lo.pdsch_metrics.modulator_metrics;
-  const auto& pdsch_dmrs      = du_lo.pdsch_metrics.dmrs_metrics;
-  const auto& p               = du_lo.pdsch_metrics.precoding_metrics;
-  const auto& xform           = du_lo.pusch_metrics.xform_precoder_metrics;
-  const auto& pdsch_proc      = du_lo.pdsch_metrics.pdsch_proc_metrics;
-  const auto& pusch_proc      = du_lo.pusch_metrics.pusch_proc_metrics;
 
   // CPU consumption.
   double metric_period_us   = static_cast<double>(du_lo.metrics_period.count());
@@ -721,6 +699,41 @@ log_handle_du_low_metrics(srslog::log_channel& log_chan, const srs_du::o_du_low_
                  validate_fp_value(descramble_cpu_usage),
                  validate_fp_value(pusch_demod_map_cpu),
                  validate_fp_value(pusch_precode_cpu_usage));
+}
+
+static void
+log_handle_du_low_metrics(srslog::log_channel& log_chan, const srs_du::o_du_low_metrics& du_lo, bool verbose)
+{
+  if (du_lo.metrics_period == std::chrono::microseconds()) {
+    return;
+  }
+
+  fmt::basic_memory_buffer<char, str_buffer_size> buffer;
+  fmt::format_to(std::back_inserter(buffer),
+                 "PHY metrics: "
+                 "dl_processing_max_latency={:.1f}us "
+                 "dl_processing_max_slot={} "
+                 "ul_processing_max_latency={:.1f}us "
+                 "ul_processing_max_slot={} "
+                 "ldpc_encoder_avg_latency={:.1f}us "
+                 "ldpc_encoder_max_latency={:.1f}us "
+                 "ldpc_decoder_avg_latency={:.1f}us "
+                 "ldp_decoder_max_latency={:.1f}us "
+                 "ldpc_decoder_avg_nof_iter={}",
+                 validate_fp_value(du_lo.dl_processor_metrics.max_latency_us.first),
+                 du_lo.dl_processor_metrics.max_latency_us.second,
+                 validate_fp_value(du_lo.pusch_metrics.pusch_proc_metrics.max_data_latency_us.first),
+                 du_lo.pusch_metrics.pusch_proc_metrics.max_data_latency_us.second,
+                 du_lo.ldpc_metrics.encoder_metrics.avg_cb_latency_us,
+                 du_lo.ldpc_metrics.encoder_metrics.max_cb_latency_us,
+                 du_lo.ldpc_metrics.decoder_metrics.avg_cb_latency_us,
+                 du_lo.ldpc_metrics.decoder_metrics.max_cb_latency_us,
+                 du_lo.ldpc_metrics.decoder_metrics.avg_nof_iterations);
+
+  // Verbose logging.
+  if (verbose) {
+    log_upper_phy_metrics_verbose(buffer, du_lo);
+  }
 
   // Flush buffer to the logger.
   log_chan("{}", to_c_str(buffer));

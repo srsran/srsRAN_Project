@@ -39,7 +39,7 @@ void du_low_ldpc_metrics_collector::collect_metrics(o_du_low_ldpc_metrics& metri
   ldpc_decoder_aggregator.reset();
 
   // Collect metrics from the LDPC encoder metrics aggregator.
-  metrics.encoder_metrics.avg_cb_latency     = ldpc_encoder_aggregator.get_avg_cb_latency_us();
+  metrics.encoder_metrics.avg_cb_latency_us  = ldpc_encoder_aggregator.get_avg_cb_latency_us();
   metrics.encoder_metrics.min_cb_latency_us  = ldpc_encoder_aggregator.get_min_cb_latency_us();
   metrics.encoder_metrics.max_cb_latency_us  = ldpc_encoder_aggregator.get_max_cb_latency_us();
   metrics.encoder_metrics.avg_cb_size        = ldpc_encoder_aggregator.get_avg_cb_size();

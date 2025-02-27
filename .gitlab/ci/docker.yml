@@ -265,14 +265,26 @@ grafana server image:
     NAME: grafana
     CONTEXT: ${CI_PROJECT_DIR}/docker/grafana
     MODE: publish
-  before_script:
+  before_script: &grafana_before_script
+    - |
+      if [ -n "$LOGO_URL" ]; then
+        DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends ca-certificates wget
+        wget --header="PRIVATE-TOKEN: $CODEBOT_TOKEN" -O ${CONTEXT}/provisioning/logo.png ${LOGO_URL}
+        export BUILD_ARGS="LOGO_SRC=/etc/grafana/provisioning/logo.png"
+      fi
     - |
       export VERSION=$(cat docker/grafana/version.yml | grep SRS_GRAFANA_VERSION | cut -d'"' -f2)
+  parallel:
+    matrix:
+      - REGISTRY_ORG: /${CI_PROJECT_NAME}
+      - REGISTRY_ORG: /${SRSRAN_IMAGE_PREFIX}
+        LOGO_URL: ${SRSRAN_IMAGE_LOGO_URL}
 
 grafana server image latest:
   extends: grafana server image
   variables:
     OVERWRITE: "true"
   before_script:
+    - *grafana_before_script
     - |
       export VERSION=latest

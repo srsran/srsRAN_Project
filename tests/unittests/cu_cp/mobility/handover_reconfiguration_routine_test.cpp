@@ -229,7 +229,7 @@ protected:
                                                           int_to_gnb_du_id(0),
                                                           source_pci,
                                                           source_rnti,
-                                                          du_cell_index_t::min);
+                                                          srs_cu_cp::du_cell_index_t::min);
     source_ue                  = get_ue_manager()->find_ue(source_ue_index);
     ASSERT_NE(source_ue, nullptr);
     source_rrc_ue.set_transaction_id(transaction_id_);
@@ -240,7 +240,7 @@ protected:
                                                           int_to_gnb_du_id(0),
                                                           target_pci,
                                                           target_rnti,
-                                                          du_cell_index_t::min);
+                                                          srs_cu_cp::du_cell_index_t::min);
     target_ue                  = get_ue_manager()->find_ue(target_ue_index);
     ASSERT_NE(target_ue, nullptr);
     source_f1ap_ue_ctxt_mng.set_ue_context_modification_outcome(

@@ -300,7 +300,7 @@ inline std::map<five_qi_t, srs_du::du_qos_config> make_default_du_qos_config_lis
     // RLC
     cfg.rlc.mode                    = rlc_mode::am;
     cfg.rlc.am.tx.sn_field_length   = rlc_am_sn_size::size18bits;
-    cfg.rlc.am.tx.t_poll_retx       = 20;
+    cfg.rlc.am.tx.t_poll_retx       = 100;
     cfg.rlc.am.tx.poll_pdu          = 16;
     cfg.rlc.am.tx.poll_byte         = -1;
     cfg.rlc.am.tx.max_retx_thresh   = 32;
