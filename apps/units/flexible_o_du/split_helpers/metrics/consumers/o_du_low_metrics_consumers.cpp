@@ -685,7 +685,7 @@ void o_du_low_metrics_consumer_log::handle_metric(const srs_du::o_du_low_metrics
                    "ldpc_encoder_avg_latency={:.1f}us "
                    "ldpc_encoder_max_latency={:.1f}us "
                    "ldpc_decoder_avg_latency={:.1f}us "
-                   "ldp_decoder_max_latency={:.1f}us "
+                   "ldpc_decoder_max_latency={:.1f}us "
                    "ldpc_decoder_avg_nof_iter={:.1f}",
                    validate_fp_value(upper_metrics.dl_processor_metrics.max_latency_us.first),
                    upper_metrics.dl_processor_metrics.max_latency_us.second,

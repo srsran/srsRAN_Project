@@ -396,6 +396,9 @@ scheduler_ue_metrics
 cell_metrics_handler::ue_metric_context::compute_report(std::chrono::milliseconds metric_report_period,
                                                         unsigned                  slots_per_sf)
 {
+  auto convert_slots_to_ms = [slots_per_sf](unsigned slots) {
+    return static_cast<float>(slots) / static_cast<float>(slots_per_sf);
+  };
   scheduler_ue_metrics ret{};
   ret.pci                 = pci;
   ret.rnti                = rnti;
@@ -438,23 +441,22 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.nof_pusch_invalid_harqs        = data.nof_pusch_invalid_harqs;
   ret.nof_pusch_invalid_csis         = data.nof_pusch_invalid_csis;
   if (data.nof_ul_ces > 0) {
-    ret.avg_ce_delay_ms = (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * slots_per_sf));
-    ret.max_ce_delay_ms = data.max_ul_ce_delay_slots;
+    ret.avg_ce_delay_ms = convert_slots_to_ms(data.sum_ul_ce_delay_slots) / static_cast<float>(data.nof_ul_ces);
+    ret.max_ce_delay_ms = convert_slots_to_ms(data.max_ul_ce_delay_slots);
   }
   if (data.count_crc_pdus > 0) {
-    ret.avg_crc_delay_ms =
-        static_cast<double>(data.sum_crc_delay_slots) / static_cast<double>(data.count_crc_pdus * slots_per_sf);
-    ret.max_crc_delay_ms = data.max_crc_delay_slots;
+    ret.avg_crc_delay_ms = convert_slots_to_ms(data.sum_crc_delay_slots) / static_cast<float>(data.count_crc_pdus);
+    ret.max_crc_delay_ms = convert_slots_to_ms(data.max_crc_delay_slots);
   }
   if (data.count_pucch_harq_pdus > 0) {
-    ret.avg_pucch_harq_delay_ms = static_cast<double>(data.sum_pucch_harq_delay_slots) /
-                                  static_cast<double>(data.count_pucch_harq_pdus * slots_per_sf);
-    ret.max_pucch_harq_delay_ms = data.max_pucch_harq_delay_slots;
+    ret.avg_pucch_harq_delay_ms =
+        convert_slots_to_ms(data.sum_pucch_harq_delay_slots) / static_cast<float>(data.count_pucch_harq_pdus);
+    ret.max_pucch_harq_delay_ms = convert_slots_to_ms(data.max_pucch_harq_delay_slots);
   }
   if (data.count_pusch_harq_pdus > 0) {
-    ret.avg_pusch_harq_delay_ms = static_cast<double>(data.sum_pusch_harq_delay_slots) /
-                                  static_cast<double>(data.count_pusch_harq_pdus * slots_per_sf);
-    ret.max_pusch_harq_delay_ms = data.max_pusch_harq_delay_slots;
+    ret.avg_pusch_harq_delay_ms =
+        convert_slots_to_ms(data.sum_pusch_harq_delay_slots) / static_cast<float>(data.count_pusch_harq_pdus);
+    ret.max_pusch_harq_delay_ms = convert_slots_to_ms(data.max_pusch_harq_delay_slots);
   }
 
   // Reset UE stats metrics on every report.
