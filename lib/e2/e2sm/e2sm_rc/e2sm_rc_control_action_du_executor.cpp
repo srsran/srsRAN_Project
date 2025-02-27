@@ -31,11 +31,13 @@ ran_function_definition_ctrl_action_item_s e2sm_rc_control_action_du_executor_ba
 {
   ran_function_definition_ctrl_action_item_s action_item;
   action_item.ric_ctrl_action_id = action_id;
+  action_item.ric_ctrl_action_name.resize(action_name.size());
   action_item.ric_ctrl_action_name.from_string(action_name);
 
   for (auto& ran_p : action_params) {
     ctrl_action_ran_param_item_s ctrl_action_ran_param_item;
     ctrl_action_ran_param_item.ran_param_id = ran_p.first;
+    ctrl_action_ran_param_item.ran_param_name.resize(ran_p.second.size());
     ctrl_action_ran_param_item.ran_param_name.from_string(ran_p.second);
     action_item.ran_ctrl_action_params_list.push_back(ctrl_action_ran_param_item);
   }
