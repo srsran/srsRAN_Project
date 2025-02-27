@@ -12,7 +12,6 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/ran/pci.h"
-#include "srsran/ran/phy_time_unit.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
@@ -122,6 +121,10 @@ struct scheduler_cell_metrics {
   unsigned nof_ul_slots = 0;
   /// Number of PRACH preambles detected.
   unsigned nof_prach_preambles = 0;
+  /// Counter of UE PDSCH grants (RARs, SIBs and Paging are not considered).
+  unsigned dl_grants_count = 0;
+  /// Counter of UE PUSCH grants.
+  unsigned ul_grants_count = 0;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};

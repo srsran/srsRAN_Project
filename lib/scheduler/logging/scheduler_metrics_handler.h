@@ -121,6 +121,10 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     unsigned nof_dl_slots = 0;
     // Number of uplink slots.
     unsigned nof_ul_slots = 0;
+    // Sum of UE PDSCH grants.
+    unsigned nof_ue_pdsch_grants = 0;
+    // Sum of UE PUSCH grants.
+    unsigned nof_ue_pusch_grants = 0;
   };
 
   scheduler_metrics_notifier&     notifier;

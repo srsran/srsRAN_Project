@@ -289,6 +289,8 @@ void cell_metrics_handler::report_metrics()
   next_report.nof_dl_slots              = data.nof_dl_slots;
   next_report.nof_ul_slots              = data.nof_ul_slots;
   next_report.nof_prach_preambles       = data.nof_prach_preambles;
+  next_report.dl_grants_count           = data.nof_ue_pdsch_grants;
+  next_report.ul_grants_count           = data.nof_ue_pusch_grants;
 
   // Reset cell-wide metric counters.
   data = {};
@@ -304,6 +306,7 @@ void cell_metrics_handler::report_metrics()
 void cell_metrics_handler::handle_slot_result(const sched_result&       slot_result,
                                               std::chrono::microseconds slot_decision_latency)
 {
+  data.nof_ue_pdsch_grants += slot_result.dl.ue_grants.size();
   for (const dl_msg_alloc& dl_grant : slot_result.dl.ue_grants) {
     auto it = rnti_to_ue_index_lookup.find(dl_grant.pdsch_cfg.rnti);
     if (it == rnti_to_ue_index_lookup.end()) {
@@ -326,6 +329,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     u.last_dl_olla = dl_grant.context.olla_offset;
   }
 
+  data.nof_ue_pusch_grants += slot_result.ul.puschs.size();
   for (const ul_sched_info& ul_grant : slot_result.ul.puschs) {
     auto it = rnti_to_ue_index_lookup.find(ul_grant.pusch_cfg.rnti);
     if (it == rnti_to_ue_index_lookup.end()) {
