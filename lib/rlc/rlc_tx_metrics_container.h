@@ -234,7 +234,8 @@ public:
     am.sum_poll_latency_ms += poll_latency_ms;
     am.num_poll_latency_meas++;
 
-    am.min_poll_latency_ms = std::min(am.min_poll_latency_ms, std::optional<uint32_t>{poll_latency_ms});
+    am.min_poll_latency_ms =
+        am.min_poll_latency_ms ? std::min(*am.min_poll_latency_ms, poll_latency_ms) : poll_latency_ms;
     am.max_poll_latency_ms = std::max(am.max_poll_latency_ms, std::optional<uint32_t>{poll_latency_ms});
   }
 
@@ -249,7 +250,7 @@ public:
     am.sum_ack_latency_ms += ack_latency_ms;
     am.num_ack_latency_meas++;
 
-    am.min_ack_latency_ms = std::min(am.min_ack_latency_ms, std::optional<uint32_t>{ack_latency_ms});
+    am.min_ack_latency_ms = am.min_ack_latency_ms ? std::min(*am.min_ack_latency_ms, ack_latency_ms) : ack_latency_ms;
     am.max_ack_latency_ms = std::max(am.max_ack_latency_ms, std::optional<uint32_t>{ack_latency_ms});
   }
 
