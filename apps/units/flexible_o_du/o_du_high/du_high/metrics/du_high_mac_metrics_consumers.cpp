@@ -117,6 +117,8 @@ void mac_metrics_consumer_log::handle_metric(const app_services::metrics_set& me
                    cell.count_involuntary_context_switches);
 
     write_latency_information(buffer, cell.wall_clock_latency, "wall_clock_latency");
+    write_latency_information(buffer, cell.dl_tti_req_latency, "dl_tti_req_latency");
+    write_latency_information(buffer, cell.tx_data_req_latency, "tx_data_req_latency");
     write_latency_information(buffer, cell.slot_ind_handle_latency, "slot_ind_latency", false, i != last_index);
   }
 

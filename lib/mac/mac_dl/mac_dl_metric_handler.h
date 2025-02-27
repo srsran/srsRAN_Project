@@ -50,7 +50,7 @@ public:
     ~slot_measurement()
     {
       if (enabled()) {
-        parent->handle_slot_completion(sl_tx, slot_ind_enqueue_tp, start_tp, start_rusg);
+        parent->handle_slot_completion(*this);
       }
     }
 
@@ -58,11 +58,29 @@ public:
 
     auto start_time_point() const { return start_tp; }
 
+    void on_dl_tti_req()
+    {
+      if (enabled()) {
+        dl_tti_req_tp = metric_clock::now();
+      }
+    }
+
+    void on_tx_data_req()
+    {
+      if (enabled()) {
+        tx_data_req_tp = metric_clock::now();
+      }
+    }
+
   private:
+    friend class mac_dl_cell_metric_handler;
+
     std::unique_ptr<mac_dl_cell_metric_handler, noop_operation> parent;
     slot_point                                                  sl_tx;
     metric_clock::time_point                                    slot_ind_enqueue_tp;
     metric_clock::time_point                                    start_tp;
+    metric_clock::time_point                                    dl_tti_req_tp{};
+    metric_clock::time_point                                    tx_data_req_tp{};
     expected<resource_usage::snapshot, int>                     start_rusg;
   };
 
@@ -99,14 +117,13 @@ private:
     latency_data user;
     latency_data sys;
     latency_data slot_enqueue;
+    latency_data dl_tti_req;
+    latency_data tx_data_req;
     unsigned     count_vol_context_switches{0};
     unsigned     count_invol_context_switches{0};
   };
 
-  void handle_slot_completion(slot_point                                     sl_tx,
-                              metric_clock::time_point                       slot_ind_enqueue_tp,
-                              metric_clock::time_point                       start_tp,
-                              const expected<resource_usage::snapshot, int>& rusg_diff);
+  void handle_slot_completion(const slot_measurement& meas);
 
   const du_cell_index_t                                                  cell_index;
   const pci_t                                                            cell_pci;
@@ -115,7 +132,7 @@ private:
 
   // Slot at which the next report is generated.
   slot_point               next_report_slot;
-  std::chrono::nanoseconds slot_duration;
+  std::chrono::nanoseconds slot_duration{0};
 
   // Metrics tracked
   non_persistent_data data;

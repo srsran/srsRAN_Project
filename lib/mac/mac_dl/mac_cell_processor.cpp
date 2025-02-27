@@ -310,6 +310,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
     // Send DL sched result to PHY.
     phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
 
+    metrics_meas.on_dl_tti_req();
     l2_late_tracer[cell_cfg.cell_index].add_section("mac_dl_tti_req");
     l2_tracer << trace_event{"mac_dl_tti_req", dl_tti_req_tp};
 
@@ -323,6 +324,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
       // Send DL Data to PHY.
       phy_cell.on_new_downlink_data(data_res);
 
+      metrics_meas.on_tx_data_req();
       l2_late_tracer[cell_cfg.cell_index].add_section("mac_tx_data_req");
       l2_tracer << trace_event{"mac_tx_data_req", tx_data_req_tp};
     }

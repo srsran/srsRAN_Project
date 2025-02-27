@@ -40,6 +40,11 @@ struct mac_dl_cell_metric_report {
   /// \brief Description of the wall clock latency between the lower layers signalling a slot indication and the MAC
   /// starting to handle it.
   latency_report slot_ind_handle_latency;
+  /// \brief Description of the delays between the MAC starting the processing of a slot indication and generating a DL
+  /// TTI request.
+  latency_report dl_tti_req_latency;
+  /// \brief Description of the delays between the MAC completing a DL TTI request and completing a TX Data request.
+  latency_report tx_data_req_latency;
   /// Number of voluntary context switches.
   unsigned count_voluntary_context_switches;
   /// Number of involuntary context switches.
