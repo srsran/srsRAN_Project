@@ -83,7 +83,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(gnb_du_id_t                          gnb_du_i
 void rlc_tx_am_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
 {
   rlc_sdu sdu;
-  sdu.time_of_arrival = std::chrono::high_resolution_clock::now();
+  sdu.time_of_arrival = std::chrono::steady_clock::now();
 
   sdu.buf     = std::move(sdu_buf);
   sdu.is_retx = is_retx;
@@ -310,8 +310,8 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   logger.log_info(rlc_pdu_buf.data(), pdu_len, "TX PDU. {} pdu_len={} grant_len={}", hdr, pdu_len, grant_len);
 
   // Update TX Next
-  auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
-                                                                      sdu_info.time_of_arrival);
+  auto latency =
+      std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - sdu_info.time_of_arrival);
   metrics_low.metrics_add_sdu_latency_us(latency.count() / 1000);
   metrics_low.metrics_add_pulled_sdus(1);
   st.tx_next = (st.tx_next + 1) % mod;
@@ -472,7 +472,7 @@ size_t rlc_tx_am_entity::build_continued_sdu_segment(span<uint8_t> rlc_pdu_buf, 
 
   // Update TX Next (when segmentation has finished)
   if (si == rlc_si_field::last_segment) {
-    auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() -
+    auto latency = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() -
                                                                         sdu_info.time_of_arrival);
     metrics_low.metrics_add_sdu_latency_us(latency.count() / 1000);
     metrics_low.metrics_add_pulled_sdus(1);

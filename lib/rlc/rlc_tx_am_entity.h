@@ -37,7 +37,7 @@ struct rlc_tx_am_sdu_info {
   /// \brief Time of arrival at RLC from upper layers.
   ///
   /// This represents the time where the SDU is put into the SDU queue.
-  std::chrono::system_clock::time_point time_of_arrival;
+  std::chrono::time_point<std::chrono::steady_clock> time_of_arrival;
 
   /// \brief Time of departure from RLC towards lower layers.
   ///
