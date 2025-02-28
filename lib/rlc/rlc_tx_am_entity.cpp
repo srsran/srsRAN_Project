@@ -260,6 +260,7 @@ size_t rlc_tx_am_entity::build_new_pdu(span<uint8_t> rlc_pdu_buf)
   sdu_info.is_retx             = sdu.is_retx;
   sdu_info.pdcp_sn             = sdu.pdcp_sn;
   sdu_info.time_of_arrival     = sdu.time_of_arrival;
+  sdu_info.time_of_departure   = std::chrono::steady_clock::now();
 
   // Notify the upper layer about the beginning of the transfer of the current SDU
   if (sdu.pdcp_sn.has_value()) {
@@ -639,10 +640,10 @@ void rlc_tx_am_entity::on_status_pdu(rlc_am_status_pdu status)
 void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) SRSRAN_RTSAN_NONBLOCKING
 {
   trace_point status_tp = l2_tracer.now();
-  auto        t_start   = std::chrono::high_resolution_clock::now();
+  auto        t_start   = std::chrono::steady_clock::now();
 
   auto on_function_exit = make_scope_exit([&]() {
-    auto t_end    = std::chrono::high_resolution_clock::now();
+    auto t_end    = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t_end - t_start);
     logger.log_info("Handled status report. t={}us {}", duration.count(), status);
 
@@ -730,7 +731,7 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status) SRSRAN_RTSAN_
           max_deliv_pdcp_sn = tx_window[sn].pdcp_sn;
         }
       }
-      auto ack_latency = std::chrono::duration_cast<std::chrono::milliseconds>(t_start - sdu_info.time_of_arrival);
+      auto ack_latency = std::chrono::duration_cast<std::chrono::milliseconds>(t_start - sdu_info.time_of_departure);
       metrics_low.metrics_add_ack_latency_ms(ack_latency.count());
       // move the PDU's byte_buffer from tx_window into pdu_recycler (if possible) for deletion off the critical path.
       if (!pdu_recycler.add_discarded_pdu(std::move(sdu_info.sdu))) {
