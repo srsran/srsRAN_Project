@@ -30,7 +30,8 @@ public:
 
   /// \brief Configures the uplink processor for a given slot and returns the PDU repository interface.
   ///
-  /// If the uplink processor assigned to the given slot is not available, the slot repository will contain an invalid.
+  /// If the uplink processor assigned to the given slot is not available, the unique PDU slot repository will be
+  /// invalid.
   virtual unique_uplink_pdu_slot_repository get_pdu_slot_repository(slot_point slot) = 0;
 
   /// Gets the slot processing interface.
@@ -48,6 +49,6 @@ public:
   virtual uplink_slot_processor_pool& get_slot_processor_pool() = 0;
 
   /// Gets the uplink slot PDU repository pool interface.
-  virtual uplink_pdu_slot_repository_pool& get_slot_pdu_repository() = 0;
+  virtual uplink_pdu_slot_repository_pool& get_slot_pdu_repository_pool() = 0;
 };
 } // namespace srsran

@@ -44,7 +44,7 @@ public:
   uplink_slot_processor_pool& get_slot_processor_pool() override { return *this; }
 
   // See uplink_processor_pool interface for documentation.
-  uplink_pdu_slot_repository_pool& get_slot_pdu_repository() override { return *this; }
+  uplink_pdu_slot_repository_pool& get_slot_pdu_repository_pool() override { return *this; }
 
 private:
   // See uplink_slot_processor_pool interface for documentation.

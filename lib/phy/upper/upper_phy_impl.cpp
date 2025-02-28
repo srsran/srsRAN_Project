@@ -107,7 +107,7 @@ uplink_request_processor& upper_phy_impl::get_uplink_request_processor()
 
 uplink_pdu_slot_repository_pool& upper_phy_impl::get_uplink_pdu_slot_repository()
 {
-  return ul_processor_pool->get_slot_pdu_repository();
+  return ul_processor_pool->get_slot_pdu_repository_pool();
 }
 
 void upper_phy_impl::set_error_notifier(upper_phy_error_notifier& notifier)
