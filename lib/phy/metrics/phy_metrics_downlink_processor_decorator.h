@@ -95,13 +95,21 @@ public:
   unique_downlink_processor configure_resource_grid(const resource_grid_context& context,
                                                     shared_resource_grid         grid) override
   {
-    adaptor->on_configure_grid(context.slot);
-    base_processor = base->configure_resource_grid(context, std::move(grid));
+    // Try to configure underlying downlink processor.
+    unique_downlink_processor proc = base->configure_resource_grid(context, std::move(grid));
 
-    if (!base_processor.is_valid()) {
+    // Ensure the resulting processor is valid.
+    if (!proc.is_valid()) {
       return {};
     }
 
+    // Save underlying unique processor.
+    base_processor = std::move(proc);
+
+    // Notify the configuration of the gNb.
+    adaptor->on_configure_grid(context.slot);
+
+    // Return a unique downlink processor based on this instance.
     return unique_downlink_processor(*this);
   }
 
