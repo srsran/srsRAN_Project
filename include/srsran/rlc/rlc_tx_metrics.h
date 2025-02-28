@@ -189,7 +189,7 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
     fmt::format_to(
         std::back_inserter(buffer),
         " num_pdus_with_segm={} pdu_rate_with_segm={}bps num_retx={}"
-        " retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps pull_latency_avg={}"
+        " retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps pull_latency_avg={} pull_latency_sum={}s"
         " num_ack_latency_meas={} ack_latency_min={}ms ack_latency_avg={}s ack_latency_max={}ms",
         scaled_fmt_integer(am.num_pdus_with_segmentation, false),
         float_to_eng_string(
@@ -204,6 +204,7 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
                                  am.num_ctrl_pdus),
                             1,
                             false),
+        float_to_eng_string(static_cast<float>(m.tx_low.sum_pdu_latency_ns) * 1e-9, 1, false),
         scaled_fmt_integer(am.num_ack_latency_meas, false),
         am.min_ack_latency_ms,
         float_to_eng_string(static_cast<float>(am.sum_ack_latency_ms * 1e-3) / am.num_ack_latency_meas, 1, false),
