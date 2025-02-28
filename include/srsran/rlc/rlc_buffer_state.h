@@ -42,8 +42,13 @@ struct formatter<srsran::rlc_buffer_state> {
   template <typename FormatContext>
   auto format(const srsran::rlc_buffer_state& bs, FormatContext& ctx) const
   {
-    // TODO: add formatter for std::chrono::time_point<std::chrono::steady_clock>
-    return format_to(ctx.out(), "pending_bytes={} hol_toa={}", bs.pending_bytes, bs.hol_toa.has_value());
+    if (bs.hol_toa) {
+      return format_to(ctx.out(),
+                       "pending_bytes={} hol_toa={}",
+                       bs.pending_bytes,
+                       std::chrono::duration_cast<std::chrono::microseconds>(bs.hol_toa->time_since_epoch()));
+    }
+    return format_to(ctx.out(), "pending_bytes={} hol_toa=none", bs.pending_bytes);
   }
 };
 } // namespace fmt
