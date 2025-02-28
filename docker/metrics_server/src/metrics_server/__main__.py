@@ -164,7 +164,7 @@ def _publish_data(
                                     "rnti": f"{rnti:x}",
                                     "testbed": testbed,
                                 },
-                                "fields": dict(ue_container.items()),
+                                "fields": dict(convert_integers_to_floats(ue_container.items())),
                                 "time": timestamp,
                             },
                             record_time_key="time",
@@ -180,7 +180,7 @@ def _publish_data(
                             "tags": {
                                 "testbed": testbed,
                             },
-                            "fields": dict(metric["app_resource_usage"].items()),
+                            "fields": dict(convert_integers_to_floats(metric["app_resource_usage"].items())),
                             "time": timestamp,
                         },
                         record_time_key="time",
@@ -199,7 +199,7 @@ def _publish_data(
                                         "pci": cell["pci"],
                                         "testbed": testbed,
                                     },
-                                    "fields": dict(cell["ul"]["received_packets"].items()),
+                                    "fields": dict(convert_integers_to_floats(cell["ul"]["received_packets"].items())),
                                     "time": timestamp,
                                 },
                                 record_time_key="time",
@@ -212,7 +212,7 @@ def _publish_data(
                             "tags": {
                                 "testbed": testbed,
                             },
-                            "fields": dict(metric["app_resource_usage"].items()),
+                            "fields": dict(convert_integers_to_floats(metric["app_resource_usage"].items())),
                             "time": timestamp,
                         },
                         record_time_key="time",
@@ -239,6 +239,16 @@ def _recreate_bucket(client: InfluxDBClient, bucket_name: str) -> None:
     api.delete_bucket(bucket_ref)
     api.create_bucket(bucket_ref)
     logging.info("Bucket cleaned")
+
+
+def convert_integers_to_floats(dictionary):
+    """
+    Function to convert all integers in a dictionary to floats
+    """
+    for key, value in dictionary.items():
+        if isinstance(value, int):
+            dictionary[key] = float(value)
+    return dictionary
 
 
 if __name__ == "__main__":
