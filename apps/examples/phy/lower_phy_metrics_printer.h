@@ -14,13 +14,12 @@
 #include "srsran/phy/lower/lower_phy_metrics_notifier.h"
 #include "srsran/support/math/math_utils.h"
 #include "srsran/support/math/stats.h"
-#include "fmt/format.h"
 #include <mutex>
 
 namespace srsran {
 
 /// Implements a generic lower physical layer metrics printer.
-class ru_generic_metrics_printer : public lower_phy_metrics_notifier
+class lower_phy_metrics_printer : public lower_phy_metrics_notifier
 {
 public:
   // See interface for documentation.

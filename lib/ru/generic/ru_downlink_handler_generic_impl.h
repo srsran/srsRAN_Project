@@ -15,21 +15,20 @@
 
 namespace srsran {
 
+class lower_phy_sector;
 class lower_phy_rg_handler;
 
 /// Radio Unit downlink handler generic implementation.
 class ru_downlink_handler_generic_impl : public ru_downlink_plane_handler
 {
 public:
-  explicit ru_downlink_handler_generic_impl(std::vector<lower_phy_rg_handler*> handler_) : handler(std::move(handler_))
-  {
-  }
+  explicit ru_downlink_handler_generic_impl(std::vector<lower_phy_sector*> handler_) : handler(std::move(handler_)) {}
 
   // See interface for documentation.
   void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override;
 
 private:
-  std::vector<lower_phy_rg_handler*> handler;
+  std::vector<lower_phy_sector*> handler;
 };
 
 } // namespace srsran

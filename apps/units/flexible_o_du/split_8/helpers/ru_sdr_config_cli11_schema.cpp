@@ -10,6 +10,7 @@
 
 #include "ru_sdr_config_cli11_schema.h"
 #include "apps/helpers/logger/logger_appconfig_cli11_utils.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "ru_sdr_config.h"
 #include "srsran/support/cli11_utils.h"
@@ -266,6 +267,9 @@ void srsran::configure_cli11_with_ru_sdr_config_schema(CLI::App& app, srsran::ru
   // Expert execution section.
   CLI::App* expert_subcmd = add_subcommand(app, "expert_execution", "Expert execution configuration")->configurable();
   configure_cli11_expert_execution_args(*expert_subcmd, parsed_cfg.expert_execution_cfg);
+
+  // Metrics section.
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.metrics_cfg);
 }
 
 void srsran::autoderive_ru_sdr_parameters_after_parsing(CLI::App&           app,

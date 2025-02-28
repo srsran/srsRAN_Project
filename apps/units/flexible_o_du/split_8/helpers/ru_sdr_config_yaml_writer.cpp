@@ -9,6 +9,7 @@
  */
 
 #include "ru_sdr_config_yaml_writer.h"
+#include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "ru_sdr_config.h"
 
 using namespace srsran;
@@ -109,6 +110,8 @@ static void fill_ru_sdr_section(YAML::Node node, const ru_sdr_unit_config& confi
 
 void srsran::fill_ru_sdr_config_in_yaml_schema(YAML::Node& node, const ru_sdr_unit_config& config)
 {
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg);
+
   fill_ru_sdr_log_section(node["log"], config.loggers);
   fill_ru_sdr_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_ru_sdr_section(node["ru_sdr"], config);

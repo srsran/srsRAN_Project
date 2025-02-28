@@ -8,19 +8,11 @@
  *
  */
 
-#pragma once
+#include "lower_phy_factory.h"
 
-#include "srsran/phy/lower/lower_phy.h"
-#include "srsran/phy/lower/lower_phy_factory.h"
-#include <memory>
+using namespace srsran;
 
-namespace srsran {
-
-struct lower_phy_configuration;
-class task_executor;
-
-/// Helper class that creates the lower PHY factory using the given configuration.
-inline std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_configuration& config,
+static std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_configuration& config,
                                                                    unsigned max_nof_prach_concurrent_requests)
 {
   // Deduce frequency range from the subcarrier spacing.
@@ -103,4 +95,28 @@ inline std::shared_ptr<lower_phy_factory> create_lower_phy_factory(lower_phy_con
   return create_lower_phy_factory_sw(downlink_proc_factory, uplink_proc_factory);
 }
 
-} // namespace srsran
+std::unique_ptr<lower_phy_sector> srsran::create_low_phy_sector(unsigned max_nof_prach_concurrent_requests,
+                                                                lower_phy_configuration&   low_cfg,
+                                                                lower_phy_error_notifier&  error_notifier,
+                                                                lower_phy_timing_notifier* timing_notifier)
+{
+  auto sector = std::make_unique<lower_phy_sector>(timing_notifier);
+
+  // Fill the sector notifiers.
+  low_cfg.timing_notifier = &sector->get_timing_notifier();
+  low_cfg.error_notifier  = &error_notifier;
+  low_cfg.metric_notifier = &sector->get_metrics_collector();
+
+  // Create lower PHY factory.
+  auto lphy_factory = create_lower_phy_factory(low_cfg, max_nof_prach_concurrent_requests);
+  report_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
+
+  // Create lower PHY.
+  auto phy = lphy_factory->create(low_cfg);
+  report_error_if_not(phy, "Unable to create lower PHY.");
+
+  // Move PHY to the sector.
+  sector->set_lower_phy(std::move(phy));
+
+  return sector;
+}

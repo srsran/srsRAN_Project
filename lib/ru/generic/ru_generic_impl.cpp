@@ -12,67 +12,17 @@
 
 using namespace srsran;
 
-ru_generic_impl::ru_generic_impl(ru_generic_impl_config&& config) :
-  phy_err_logger(std::move(config.phy_err_printer)),
-  phy_metric_printer(std::move(config.phy_metrics_printer)),
-  ru_rx_adapter(std::move(config.ru_rx_adapter)),
-  ru_time_adapter(std::move(config.ru_time_adapter)),
-  radio(std::move(config.radio)),
-  low_phy(std::move(config.low_phy)),
-  ru_ctrl(
-      [](span<std::unique_ptr<lower_phy>> sectors) {
-        std::vector<lower_phy_controller*> out;
-        for (auto& sector : sectors) {
-          out.push_back(&sector->get_controller());
-          srsran_assert(out.back(), "Invalid lower PHY controller");
-        }
-        return out;
-      }(low_phy),
-      [](span<std::unique_ptr<ru_generic_metrics_printer>> metric_printers) {
-        std::vector<ru_generic_metrics_printer*> out;
-        for (auto& metric_printer : metric_printers) {
-          out.push_back(metric_printer.get());
-          srsran_assert(out.back(), "Invalid lower PHY metric printer");
-        }
-        return out;
-      }(phy_metric_printer),
-      [](span<std::unique_ptr<lower_phy>> sectors) {
-        std::vector<lower_phy_cfo_controller*> out;
-        for (auto& sector : sectors) {
-          out.push_back(&sector->get_tx_cfo_control());
-          srsran_assert(out.back(), "Invalid lower PHY controller");
-        }
-        return out;
-      }(low_phy),
-      [](span<std::unique_ptr<lower_phy>> sectors) {
-        std::vector<lower_phy_cfo_controller*> out;
-        for (auto& sector : sectors) {
-          out.push_back(&sector->get_rx_cfo_control());
-          srsran_assert(out.back(), "Invalid lower PHY controller");
-        }
-        return out;
-      }(low_phy),
-      *radio,
-      config.srate_MHz),
-  ru_downlink_hdlr([](span<std::unique_ptr<lower_phy>> sectors) {
-    std::vector<lower_phy_rg_handler*> out;
-    for (auto& sector : sectors) {
-      out.push_back(&sector->get_rg_handler());
-      srsran_assert(out.back(), "Invalid lower PHY resource grid handler");
-    }
-    return out;
-  }(low_phy)),
-  ru_uplink_request_hdlr([](span<std::unique_ptr<lower_phy>> sectors) {
-    std::vector<lower_phy_request_handler*> out;
-    for (auto& sector : sectors) {
-      out.push_back(&sector->get_request_handler());
-      srsran_assert(out.back(), "Invalid lower PHY request handler");
-    }
-    return out;
-  }(low_phy))
+ru_generic_impl::ru_generic_impl(const ru_generic_impl_config& config, ru_generic_impl_dependencies&& dependencies) :
+  are_metrics_enabled(config.are_metrics_enabled),
+  error_adapter(dependencies.logger, dependencies.error_notifier),
+  rx_adapter(dependencies.rx_symbol_handler),
+  timing_adapter(dependencies.timing_handler, std::move(dependencies.radio_event_counter)),
+  radio(std::move(dependencies.radio)),
+  metrics_collector({}),
+  ru_ctrl(*radio, config.srate_MHz),
+  ru_downlink_hdlr({}),
+  ru_uplink_request_hdlr({})
 {
-  srsran_assert(ru_rx_adapter, "Invalid Radio Unit receiver adapter");
-  srsran_assert(radio, "Invalid radio session");
 }
 
 ru_controller& ru_generic_impl::get_controller()
@@ -88,4 +38,22 @@ ru_downlink_plane_handler& ru_generic_impl::get_downlink_plane_handler()
 ru_uplink_plane_handler& ru_generic_impl::get_uplink_plane_handler()
 {
   return ru_uplink_request_hdlr;
+}
+
+void ru_generic_impl::set_lower_phy_sectors(std::vector<std::unique_ptr<lower_phy_sector>> sectors)
+{
+  phy_sectors = std::move(sectors);
+
+  srsran_assert(!phy_sectors.empty(), "Invalid Radio Unit sectors");
+
+  std::vector<lower_phy_sector*> sector_ptrs;
+  for (auto& phy_sector : phy_sectors) {
+    sector_ptrs.push_back(phy_sector.get());
+  }
+
+  ru_ctrl.set_lower_phy_sectors(sector_ptrs);
+
+  metrics_collector      = ru_metrics_collector_generic_impl(sector_ptrs);
+  ru_downlink_hdlr       = ru_downlink_handler_generic_impl(sector_ptrs);
+  ru_uplink_request_hdlr = ru_uplink_request_handler_generic_impl(sector_ptrs);
 }

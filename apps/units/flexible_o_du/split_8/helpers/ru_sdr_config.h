@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include <string>
 
@@ -169,6 +170,8 @@ struct ru_sdr_unit_config {
   amplitude_control_unit_config amplitude_cfg;
   /// Expert execution parameters for the SDR Radio Unit.
   ru_sdr_unit_expert_execution_config expert_execution_cfg;
+  /// Metrics configuration.
+  app_helpers::metrics_config metrics_cfg;
 };
 
 } // namespace srsran

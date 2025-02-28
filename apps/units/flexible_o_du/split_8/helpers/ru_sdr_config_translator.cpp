@@ -19,7 +19,8 @@ using namespace srsran;
 /// Fills the given low PHY configuration from the given gnb configuration.
 static lower_phy_configuration generate_low_phy_config(const srs_du::du_cell_config& config,
                                                        const ru_sdr_unit_config&     ru_cfg,
-                                                       unsigned                      max_processing_delay_slot)
+                                                       unsigned                      max_processing_delay_slot,
+                                                       unsigned                      sector_id)
 {
   /// Static configuration that the gnb supports.
   static constexpr cyclic_prefix cp = cyclic_prefix::NORMAL;
@@ -28,6 +29,7 @@ static lower_phy_configuration generate_low_phy_config(const srs_du::du_cell_con
 
   out_cfg.scs                        = config.scs_common;
   out_cfg.cp                         = cp;
+  out_cfg.sector_id                  = sector_id;
   out_cfg.dft_window_offset          = 0.5F;
   out_cfg.max_processing_delay_slots = max_processing_delay_slot;
 
@@ -248,11 +250,13 @@ ru_generic_configuration srsran::generate_ru_sdr_config(const ru_sdr_unit_config
                                                         unsigned                           max_processing_delay_slots)
 {
   ru_generic_configuration out_cfg;
-  out_cfg.device_driver = ru_cfg.device_driver;
+  out_cfg.are_metrics_enabled = ru_cfg.metrics_cfg.enabled();
+  out_cfg.device_driver       = ru_cfg.device_driver;
   generate_radio_config(out_cfg.radio_cfg, ru_cfg, du_cells);
 
+  unsigned sector_id = 0;
   for (const auto& cell : du_cells) {
-    out_cfg.lower_phy_config.push_back(generate_low_phy_config(cell, ru_cfg, max_processing_delay_slots));
+    out_cfg.lower_phy_config.push_back(generate_low_phy_config(cell, ru_cfg, max_processing_delay_slots, sector_id++));
   }
 
   return out_cfg;

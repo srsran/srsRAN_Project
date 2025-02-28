@@ -8,7 +8,7 @@
  *
  */
 
-#include "lower_phy_factory.h"
+#include "lower_phy/lower_phy_factory.h"
 #include "ru_config_validator.h"
 #include "ru_generic_error_adapter.h"
 #include "ru_generic_impl.h"
@@ -17,21 +17,6 @@
 #include "srsran/ru/generic/ru_generic_factory.h"
 
 using namespace srsran;
-
-namespace {
-
-/// Lower PHY timing notifier dummy.
-class lower_phy_timing_notifier_dummy : public lower_phy_timing_notifier
-{
-public:
-  void on_tti_boundary(const lower_phy_timing_context& context) override {}
-
-  void on_ul_half_slot_boundary(const lower_phy_timing_context& context) override {}
-
-  void on_ul_full_slot_boundary(const lower_phy_timing_context& context) override {}
-};
-
-} // namespace
 
 /// Creates a radio session with the given parameters.
 static std::unique_ptr<radio_session> create_radio_session(task_executor&              executor,
@@ -79,43 +64,32 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
   auto radio = create_radio_session(*config.radio_exec, *radio_event_counter, config.radio_cfg, config.device_driver);
   report_error_if_not(radio, "Unable to create radio session.");
 
-  // Create received symbol adapter.
-  auto ru_rx_adapter = std::make_unique<ru_rx_symbol_adapter>(*config.symbol_notifier);
+  ru_generic_impl_config       ru_config = {config.lower_phy_config.front().srate.to_MHz(), config.are_metrics_enabled};
+  ru_generic_impl_dependencies ru_dependencies = {*config.symbol_notifier,
+                                                  *config.timing_notifier,
+                                                  *config.lower_phy_config.front().logger,
+                                                  *config.error_notifier,
+                                                  std::move(radio_event_counter),
+                                                  std::move(radio)};
 
-  // Create RU and return.
-  ru_generic_impl_config ru_cfg;
-  ru_cfg.srate_MHz     = config.lower_phy_config.front().srate.to_MHz();
-  ru_cfg.ru_rx_adapter = std::move(ru_rx_adapter);
-  ru_cfg.radio         = std::move(radio);
+  auto ru = std::make_unique<ru_generic_impl>(ru_config, std::move(ru_dependencies));
 
+  std::vector<std::unique_ptr<lower_phy_sector>> phy_sectors;
   for (unsigned sector_id = 0, sector_end = config.lower_phy_config.size(); sector_id != sector_end; ++sector_id) {
     lower_phy_configuration& low_cfg = config.lower_phy_config[sector_id];
-    low_cfg.sector_id                = sector_id;
+
     // Update the config with the adapters.
-    low_cfg.bb_gateway         = &ru_cfg.radio->get_baseband_gateway(sector_id);
-    low_cfg.rx_symbol_notifier = ru_cfg.ru_rx_adapter.get();
+    low_cfg.bb_gateway         = &ru->get_baseband_gateway(sector_id);
+    low_cfg.rx_symbol_notifier = &ru->get_rx_symbol_notifier();
 
-    ru_cfg.ru_time_adapter.push_back(
-        (sector_id == 0) ? static_cast<std::unique_ptr<lower_phy_timing_notifier>>(std::make_unique<ru_timing_adapter>(
-                               *config.timing_notifier, std::move(radio_event_counter)))
-                         : static_cast<std::unique_ptr<lower_phy_timing_notifier>>(
-                               std::make_unique<lower_phy_timing_notifier_dummy>()));
-    low_cfg.timing_notifier = ru_cfg.ru_time_adapter.back().get();
-
-    ru_cfg.phy_err_printer.push_back(
-        std::make_unique<ru_generic_error_adapter>(*low_cfg.logger, *config.error_notifier));
-    ru_cfg.phy_metrics_printer.push_back(std::make_unique<ru_generic_metrics_printer>());
-    low_cfg.error_notifier  = ru_cfg.phy_err_printer.back().get();
-    low_cfg.metric_notifier = ru_cfg.phy_metrics_printer.back().get();
-
-    // Create lower PHY factory.
-    auto lphy_factory = create_lower_phy_factory(low_cfg, config.max_nof_prach_concurrent_requests);
-    report_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
-
-    // Create lower PHY.
-    ru_cfg.low_phy.push_back(lphy_factory->create(low_cfg));
-    report_error_if_not(ru_cfg.low_phy.back(), "Unable to create lower PHY.");
+    phy_sectors.push_back(create_low_phy_sector(config.max_nof_prach_concurrent_requests,
+                                                low_cfg,
+                                                ru->get_error_notifier(),
+                                                sector_id ? nullptr : &ru->get_timing_notifier()));
   }
 
-  return std::make_unique<ru_generic_impl>(std::move(ru_cfg));
+  // Add lower PHY sector dependencies.
+  ru->set_lower_phy_sectors(std::move(phy_sectors));
+
+  return ru;
 }
