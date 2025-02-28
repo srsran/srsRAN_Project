@@ -221,7 +221,6 @@ public:
           // Increment next_cu_ue_id for the next test mode UE.
           next_cu_ue_id++;
 
-          parent.logger.info("Test Mode: Injected F1AP DL RRC Message (containing rrcSetup)");
           parent.handle_message(pdu_resp);
 
         } break;

@@ -334,6 +334,42 @@ void mac_test_mode_cell_adapter::on_new_downlink_scheduler_results(const mac_dl_
     last_slot_ind = dl_res.slot;
   }
 
+  for (auto& grant : dl_res.dl_res->ue_grants) {
+    rnti_t crnti = grant.pdsch_cfg.rnti;
+    if (not ue_info_mgr.is_cell_test_ue(cell_index, crnti) or ue_info_mgr.is_msg4_rxed(crnti)) {
+      // UE is not test mode or it has already received Msg4.
+      continue;
+    }
+
+    // In case of SRB PDU received, we assume that the Msg4 is received. At this point, we update the test UE with
+    // positive DL buffer states and BSR.
+    auto& lchs = grant.tb_list[0].lc_chs_to_sched;
+    if (std::any_of(
+            lchs.begin(), lchs.end(), [](const auto& lc) { return lc.lcid.is_sdu() and is_srb(lc.lcid.to_lcid()); })) {
+      if (test_ue_cfg.pdsch_active) {
+        // Update DL buffer state automatically.
+        dl_bs_notifier(crnti);
+      }
+
+      if (test_ue_cfg.pusch_active) {
+        auto rx_pdu = create_test_pdu_with_bsr(cell_index, dl_res.slot, crnti, to_harq_id(0));
+        if (not rx_pdu.has_value()) {
+          logger.warning("TEST_MODE c-rnti={}: Unable to create test PDU with BSR", crnti);
+          continue;
+        }
+        // In case of PUSCH test mode is enabled, push a BSR to trigger the first PUSCH.
+        pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
+      }
+
+      // Mark Msg4 received for the UE.
+      ue_info_mgr.msg4_rxed(crnti, true);
+
+      // Push an UL PDU that will serve as rrcSetupComplete and get the UE out of fallback mode.
+      auto rx_pdu = create_test_pdu_with_rrc_setup_complete(cell_index, dl_res.slot, crnti, to_harq_id(0));
+      pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
+    }
+  }
+
   // Dispatch result to lower layers.
   result_notifier.on_new_downlink_scheduler_results(dl_res);
 }
@@ -365,41 +401,6 @@ void mac_test_mode_cell_adapter::on_new_uplink_scheduler_results(const mac_ul_sc
     for (const ul_sched_info& pusch : ul_res.ul_res->puschs) {
       if (ue_info_mgr.is_cell_test_ue(cell_index, pusch.pusch_cfg.rnti)) {
         entry.puschs.push_back(pusch);
-      }
-    }
-  }
-
-  if (ul_res.ul_res != nullptr and not ul_res.ul_res->pucchs.empty()) {
-    for (const pucch_info& pucch : ul_res.ul_res->pucchs) {
-      if (not ue_info_mgr.is_cell_test_ue(cell_index, pucch.crnti) or ue_info_mgr.is_msg4_rxed(pucch.crnti)) {
-        // UE is not test mode or it has already received Msg4.
-        continue;
-      }
-      if ((pucch.format() == pucch_format::FORMAT_0 or pucch.format() == pucch_format::FORMAT_1) and
-          pucch.uci_bits.harq_ack_nof_bits > 0) {
-        // In case of PUCCH F1 with HARQ-ACK bits, we assume that the Msg4 is received. At this point, we
-        // update the test UE with positive DL buffer states and BSR.
-        if (test_ue_cfg.pdsch_active) {
-          // Update DL buffer state automatically.
-          dl_bs_notifier(pucch.crnti);
-        }
-
-        if (test_ue_cfg.pusch_active) {
-          auto rx_pdu = create_test_pdu_with_bsr(cell_index, ul_res.slot, pucch.crnti, to_harq_id(0));
-          if (not rx_pdu.has_value()) {
-            logger.warning("TEST_MODE c-rnti={}: Unable to create test PDU with BSR", pucch.crnti);
-            continue;
-          }
-          // In case of PUSCH test mode is enabled, push a BSR to trigger the first PUSCH.
-          pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
-        }
-
-        // Mark Msg4 received for the UE.
-        ue_info_mgr.msg4_rxed(pucch.crnti, true);
-
-        // Push an UL PDU that will serve as rrcSetupComplete and get the UE out of fallback mode.
-        auto rx_pdu = create_test_pdu_with_rrc_setup_complete(cell_index, ul_res.slot, pucch.crnti, to_harq_id(0));
-        pdu_handler.handle_rx_data_indication(std::move(rx_pdu.value()));
       }
     }
   }
