@@ -73,11 +73,6 @@ struct rlc_am_tx_metrics_lower {
   uint32_t num_ctrl_pdus;                   ///< Number of control PDUs
   uint32_t num_ctrl_pdu_bytes;              ///< Number of control PDUs bytes
 
-  uint32_t                num_poll_latency_meas; ///< Number of poll latency measurements
-  uint32_t                sum_poll_latency_ms;   ///< Total poll latency over a (in ms)
-  std::optional<uint32_t> min_poll_latency_ms;   ///< Minimum poll latency (in ms)
-  std::optional<uint32_t> max_poll_latency_ms;   ///< Maximum poll latency (in ms)
-
   uint32_t                num_ack_latency_meas; ///< Number of ACK latency measurements
   uint32_t                sum_ack_latency_ms;   ///< Total ACK latency over a (in ms)
   std::optional<uint32_t> min_ack_latency_ms;   ///< Minimum ACK latency (in ms)
@@ -91,11 +86,6 @@ struct rlc_am_tx_metrics_lower {
     num_retx_pdu_bytes              = {};
     num_ctrl_pdus                   = {};
     num_ctrl_pdu_bytes              = {};
-
-    num_poll_latency_meas = {};
-    sum_poll_latency_ms   = {};
-    min_poll_latency_ms   = {};
-    max_poll_latency_ms   = {};
 
     num_ack_latency_meas = {};
     sum_ack_latency_ms   = {};
@@ -200,7 +190,6 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
         std::back_inserter(buffer),
         " num_pdus_with_segm={} pdu_rate_with_segm={}bps num_retx={}"
         " retx_rate={}bps ctrl_pdus={} ctrl_rate={}bps pull_latency_avg={}"
-        " num_poll_latency_meas={} poll_latency_min={}ms poll_latency_avg={}s poll_latency_max={}ms"
         " num_ack_latency_meas={} ack_latency_min={}ms ack_latency_avg={}s ack_latency_max={}ms",
         scaled_fmt_integer(am.num_pdus_with_segmentation, false),
         float_to_eng_string(
@@ -215,10 +204,6 @@ inline std::string format_rlc_tx_metrics(timer_duration metrics_period, const rl
                                  am.num_ctrl_pdus),
                             1,
                             false),
-        scaled_fmt_integer(am.num_poll_latency_meas, false),
-        am.min_poll_latency_ms,
-        float_to_eng_string(static_cast<float>(am.sum_poll_latency_ms * 1e-3) / am.num_poll_latency_meas, 1, false),
-        am.max_poll_latency_ms,
         scaled_fmt_integer(am.num_ack_latency_meas, false),
         am.min_ack_latency_ms,
         float_to_eng_string(static_cast<float>(am.sum_ack_latency_ms * 1e-3) / am.num_ack_latency_meas, 1, false),

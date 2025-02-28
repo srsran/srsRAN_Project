@@ -223,22 +223,6 @@ public:
     am.num_ctrl_pdu_bytes += num_pdu_bytes;
   }
 
-  void metrics_add_poll_latency_ms(uint32_t poll_latency_ms)
-  {
-    if (not enabled) {
-      return;
-    }
-    srsran_assert(std::holds_alternative<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific),
-                  "Wrong mode for AM metrics.");
-    auto& am = std::get<rlc_am_tx_metrics_lower>(metrics_lo.mode_specific);
-    am.sum_poll_latency_ms += poll_latency_ms;
-    am.num_poll_latency_meas++;
-
-    am.min_poll_latency_ms =
-        am.min_poll_latency_ms ? std::min(*am.min_poll_latency_ms, poll_latency_ms) : poll_latency_ms;
-    am.max_poll_latency_ms = std::max(am.max_poll_latency_ms, std::optional<uint32_t>{poll_latency_ms});
-  }
-
   void metrics_add_ack_latency_ms(uint32_t ack_latency_ms)
   {
     if (not enabled) {
