@@ -204,19 +204,6 @@ def _publish_data(
                                 },
                                 record_time_key="time",
                             )
-                    _influx_push(
-                        write_api,
-                        bucket=bucket,
-                        record={
-                            "measurement": "app_resource_usage",
-                            "tags": {
-                                "testbed": testbed,
-                            },
-                            "fields": dict(convert_integers_to_floats(metric["app_resource_usage"]).items()),
-                            "time": timestamp,
-                        },
-                        record_time_key="time",
-                    )
             except Exception as err:  # pylint: disable=broad-exception-caught
                 logging.exception(err)
 
