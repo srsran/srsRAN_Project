@@ -28,7 +28,7 @@ tests:
         enable_log_metrics: true
       cell_cfg:
         pusch:
-          max_puschs_per_slot: 1
+          max_puschs_per_slot: 2
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6

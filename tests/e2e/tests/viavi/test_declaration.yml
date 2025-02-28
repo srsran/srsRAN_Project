@@ -31,7 +31,7 @@ tests:
         enable_log_metrics: true
       cell_cfg:
         pusch:
-          max_puschs_per_slot: 1
+          max_puschs_per_slot: 2
       expert_execution:
         threads:
           non_rt:
@@ -66,7 +66,7 @@ tests:
       <<: *base_config
       cell_cfg:
         pusch:
-          max_puschs_per_slot: 1
+          max_puschs_per_slot: 2
         sched_expert_cfg:
           policy_sched_cfg:
             qos_sched:
@@ -165,7 +165,7 @@ tests:
         rlc_report_period: 5000
       cell_cfg:
         pusch:
-          max_puschs_per_slot: 1
+          max_puschs_per_slot: 2
       expert_execution:
         threads:
           non_rt:
@@ -198,7 +198,7 @@ tests:
       <<: *base_config
       cell_cfg:
         pusch:
-          max_puschs_per_slot: 1
+          max_puschs_per_slot: 2
         pucch:
           sr_period_ms: 20
           f2_or_f3_or_f4_nof_cell_res_csi: 21
@@ -225,7 +225,7 @@ tests:
       <<: *base_config
       cell_cfg:
         pusch:
-          max_puschs_per_slot: 1
+          max_puschs_per_slot: 2
         pucch:
           sr_period_ms: 40
           f0_or_f1_nof_cell_res_sr: 30
@@ -258,7 +258,7 @@ tests:
       <<: *base_config
       cell_cfg:
         pusch:
-          max_puschs_per_slot: 1
+          max_puschs_per_slot: 2
         pucch:
           sr_period_ms: 40
           f0_or_f1_nof_cell_res_sr: 30
@@ -359,7 +359,7 @@ tests:
       <<: *base_config
       cell_cfg:
         pusch:
-          max_puschs_per_slot: 1
+          max_puschs_per_slot: 2
         nof_antennas_ul: 2
         srs:
           srs_period_ms: 10
