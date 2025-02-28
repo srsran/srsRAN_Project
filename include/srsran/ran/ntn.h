@@ -11,6 +11,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <variant>
 
@@ -69,5 +70,10 @@ struct ntn_config {
   /// Network-controlled common timing advanced value and it may include any timing offset considered necessary by the
   /// network.
   std::optional<ta_info_t> ta_info;
+  /// SIB19 scheduling information.
+  unsigned                si_msg_idx;
+  unsigned                si_period_rf;
+  unsigned                si_window_len_slots;
+  std::optional<unsigned> si_window_position;
 };
 } // namespace srsran
