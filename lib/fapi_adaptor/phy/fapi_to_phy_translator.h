@@ -232,14 +232,14 @@ private:
   /// Returns this adaptor current slot.
   slot_point get_current_slot() const
   {
-    return slot_point(scs, current_slot_count_val.load(std::memory_order_acquire));
+    return slot_point(scs, current_slot_count_val.load(std::memory_order_relaxed));
   }
 
   /// Updates this adaptor current slot to the given value.
   void update_current_slot(slot_point slot)
   {
     // Update the atomic variable that holds the slot point.
-    current_slot_count_val.store(slot.system_slot(), std::memory_order_release);
+    current_slot_count_val.store(slot.system_slot(), std::memory_order_relaxed);
   }
 
 private:

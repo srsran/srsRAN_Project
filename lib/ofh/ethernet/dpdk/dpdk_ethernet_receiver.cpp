@@ -50,8 +50,7 @@ void dpdk_receiver_impl::start(frame_notifier& notifier_)
   std::future<void>  fut = p.get_future();
 
   if (!executor.defer([this, &p]() {
-        rx_status.store(receiver_status::running, std::memory_order_relaxed);
-        // Signal start() caller thread that the operation is complete.
+        // Signal to the start() caller thread that the operation is complete.
         p.set_value();
         receive_loop();
       })) {
