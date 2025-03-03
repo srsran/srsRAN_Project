@@ -22,7 +22,7 @@ using namespace security;
 integrity_engine_nia2_cmac::integrity_engine_nia2_cmac(sec_128_key        k_128_int_,
                                                        uint8_t            bearer_id_,
                                                        security_direction direction_) :
-  k_128_int(k_128_int_), bearer_id(bearer_id_), direction(direction_)
+  k_128_int(k_128_int_), bearer_id(bearer_id_), direction(direction_), logger(srslog::fetch_basic_logger("SEC"))
 {
   cipher_info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_AES_128_ECB);
   if (cipher_info == nullptr) {
@@ -138,6 +138,12 @@ security_result integrity_engine_nia2_cmac::verify_integrity(byte_buffer buf, ui
   // verify MAC
   if (!std::equal(mac.value().begin(), mac.value().end(), m.begin(), m.end())) {
     result.buf = make_unexpected(security_error::integrity_failure);
+    span m_rx{mac.value().data(), sec_mac_len};
+    logger.warning("Integrity check failed. count={}", count);
+    logger.warning("K_int: {}", k_128_int);
+    logger.warning("MAC received: {:x}", m_rx);
+    logger.warning("MAC expected: {}", m);
+    logger.warning(v.begin(), v.end(), "Message input:");
     return result;
   }
 
