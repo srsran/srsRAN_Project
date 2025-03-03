@@ -135,14 +135,18 @@
           "text": "All",
           "value": "$__all"
         },
-        "definition": "from(bucket: \"srsran\")\n  |> range(start: -15m)\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> map(fn: (r) => ({ r with _value: r[\"pci\"] }))\n  |> group(columns: [\"pci\"])\n  |> distinct(column: \"pci\")\n",
+        "datasource": {
+          "type": "influxdb",
+          "uid": "JOSE3g9KVz"
+        },
+        "definition": "from(bucket: \"srsran\")\n  |> range(start: -15m)\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ofh_ul_received_packets\")\n  |> map(fn: (r) => ({ r with _value: r[\"pci\"] }))\n  |> group(columns: [\"pci\"])\n  |> distinct(column: \"pci\")\n",
         "includeAll": false,
         "multi": true,
         "name": "pci",
         "options": [],
         "query": {
           "maxDataPoints": 1000,
-          "query": "from(bucket: \"srsran\")\n  |> range(start: -15m)\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> map(fn: (r) => ({ r with _value: r[\"pci\"] }))\n  |> group(columns: [\"pci\"])\n  |> distinct(column: \"pci\")\n",
+          "query": "from(bucket: \"srsran\")\n  |> range(start: -15m)\n  |> filter(fn: (r) => r[\"testbed\"] == \"default\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"ofh_ul_received_packets\")\n  |> map(fn: (r) => ({ r with _value: r[\"pci\"] }))\n  |> group(columns: [\"pci\"])\n  |> distinct(column: \"pci\")\n",
           "refId": "InfluxVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
@@ -174,6 +178,6 @@
   "timezone": "browser",
   "title": "OFH Metrics",
   "uid": "eee8440pj5hq8b",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

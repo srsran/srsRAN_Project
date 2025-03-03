@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-ARG GRAFANA_VERSION=10.1.5
+ARG GRAFANA_VERSION=11.5.1
 FROM grafana/grafana-oss:${GRAFANA_VERSION}
 
 ADD provisioning /etc/grafana/provisioning
