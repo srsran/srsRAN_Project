@@ -128,6 +128,46 @@ tests:
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
+  - id: "32UE ideal TCP downlink UM"
+    campaign_filename: *campaign_filename
+    test_name: "32UE ideal TCP downlink UM"
+    test_timeout: *test_timeout
+    # Configuration
+    gnb_extra_config:
+      <<: *base_config
+      qos:
+        -
+          five_qi: 9
+          pdcp:
+            tx:
+              sn: 18
+              discard_timer: -1
+              status_report_required: false
+            rx:
+              sn: 18
+              t_reordering: 50
+              out_of_order_delivery: false
+          f1u_cu_up:
+            backoff_timer: 10
+          f1u_du:
+            backoff_timer: 10
+          rlc:
+            mode: um-bidir
+            um-bidir:
+              tx:
+                sn: 12
+                queue-size: 16384
+                queue-bytes: 6172672
+              rx:
+                sn: 12
+                t-reassembly: 100
+    # Pass / Fail Criteria
+    expected_dl_bitrate: 1.0e+9
+    expected_ul_bitrate: 1.0e+3
+    expected_nof_kos: 10
+    warning_as_errors: true
+    warning_allowlist: *base_warning_allowlist
+
   - id: "1UE fading TCP downlink"
     campaign_filename: *campaign_filename
     test_name: "1UE fading TCP downlink"
