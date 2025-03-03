@@ -125,9 +125,8 @@ build_scheduler_du_metrics(std::vector<app_services::metrics_config>&           
 
   const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
   // Create the consumer for STDOUT. Also create the command for toggle the metrics.
-  auto metrics_stdout =
-      std::make_unique<scheduler_cell_metrics_consumer_stdout>(du_hi_cfg.metrics.autostart_stdout_metrics);
-  unit_commands.push_back(std::make_unique<toggle_stdout_metrics_app_command>(*metrics_stdout));
+  auto metrics_stdout = std::make_unique<scheduler_cell_metrics_consumer_stdout>();
+  unit_commands.push_back(std::make_unique<toggle_stdout_du_high_metrics_app_command>(*metrics_stdout));
   sched_metrics_cfg.consumers.push_back(std::move(metrics_stdout));
 
   const app_helpers::metrics_config& metrics_cfg = du_hi_cfg.metrics.common_metrics_cfg;

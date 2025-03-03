@@ -46,7 +46,7 @@ void fill_metrics_single_ue()
 
 int main()
 {
-  scheduler_cell_metrics_consumer_stdout plotter(true);
+  scheduler_cell_metrics_consumer_stdout plotter;
 
   fill_metrics_single_ue();
 

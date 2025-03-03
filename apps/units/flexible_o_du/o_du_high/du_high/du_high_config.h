@@ -842,8 +842,7 @@ struct du_high_unit_metrics_config {
     unsigned report_period = 1000;
   } rlc;
   /// Scheduler report period in milliseconds.
-  unsigned                    sched_report_period      = 1000;
-  bool                        autostart_stdout_metrics = false;
+  unsigned                    sched_report_period = 1000;
   app_helpers::metrics_config common_metrics_cfg;
 };
 

@@ -12,6 +12,7 @@
 
 #include "apps/services/cmdline/cmdline_command.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher_utils.h"
+#include "split_helpers/metrics/flexible_o_du_metrics_consumers.h"
 #include "srsran/adt/expected.h"
 #include "srsran/adt/to_array.h"
 #include "srsran/ru/ru_controller.h"
@@ -200,7 +201,7 @@ public:
   std::string_view get_name() const override { return "cfo"; }
 
   // See interface for documentation.
-  std::string_view get_description() const override { return " <sector_id> <cfo>:           set CFO"; }
+  std::string_view get_description() const override { return " <sector_id> <cfo>:                set CFO"; }
 
   // See interface for documentation.
   void execute(span<const std::string> args) override
@@ -234,6 +235,38 @@ public:
     }
 
     fmt::print("CFO set to {}Hz for sector {}.\n", cfo.value(), sector_id.value());
+  }
+};
+
+/// Application command to display/hide the DU high metrics in STDOUT.
+class toggle_stdout_ru_metrics_app_command : public app_services::cmdline_command
+{
+  ru_metrics_consumer_stdout& printer;
+
+public:
+  explicit toggle_stdout_ru_metrics_app_command(ru_metrics_consumer_stdout& printer_) : printer(printer_) {}
+
+  // See interface for documentation.
+  std::string_view get_name() const override { return "ru"; }
+
+  // See interface for documentation.
+  std::string_view get_description() const override { return "Radio Unit metrics"; }
+
+  // See interface for documentation.
+  void execute(span<const std::string> args) override
+  {
+    if (args.size() > 1) {
+      fmt::println("This command only accepts zero or one argument, '{}' provided", args.size());
+
+      return;
+    }
+
+    // Force to print the metrics header.
+    if (!args.empty() && args.front() == "true") {
+      printer.force_print_header();
+    }
+
+    printer.toggle_print();
   }
 };
 

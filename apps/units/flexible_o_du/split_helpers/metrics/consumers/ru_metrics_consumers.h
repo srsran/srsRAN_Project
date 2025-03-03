@@ -15,6 +15,7 @@
 
 namespace srsran {
 
+struct ru_generic_metrics;
 struct ru_metrics;
 
 /// JSON handler for the O-RU metrics.
@@ -51,6 +52,27 @@ public:
 private:
   srslog::log_channel& log_chan;
   span<const pci_t>    pci_sector_map;
+};
+
+/// STDOUT handler for the O-RU metrics.
+class ru_metrics_handler_stdout
+{
+public:
+  explicit ru_metrics_handler_stdout(span<const pci_t> pci_sector_map_) : pci_sector_map(pci_sector_map_) {}
+
+  // Handles the O-RU metrics.
+  void handle_metric(const ru_metrics& metric);
+
+  /// Prints the header in the next metric handle.
+  void force_print_header() { nof_lines = 10; }
+
+private:
+  /// Log SDR RU metrics in STDOUT.
+  void log_ru_sdr_metrics_in_stdout(const ru_generic_metrics& sdr_metrics);
+
+private:
+  unsigned          nof_lines = 10;
+  span<const pci_t> pci_sector_map;
 };
 
 } // namespace srsran

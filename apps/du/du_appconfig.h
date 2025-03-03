@@ -39,7 +39,8 @@ struct f1u_appconfig {
 struct metrics_appconfig {
   app_helpers::metrics_config common_metrics_cfg;
   /// Resource usage report period in milliseconds.
-  unsigned rusage_report_period = 0;
+  unsigned rusage_report_period     = 0;
+  bool     autostart_stdout_metrics = false;
 };
 
 } // namespace srs_du

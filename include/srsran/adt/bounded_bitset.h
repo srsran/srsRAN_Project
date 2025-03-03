@@ -560,6 +560,18 @@ public:
     return test_(pos);
   }
 
+  /// \brief Toggle the value at position pos. Assertion is triggered if pos >= N.
+  /// \param[in] pos Position in bitset.
+  void flip(size_t pos)
+  {
+    assert_within_bounds_(pos, true);
+    if (test(pos)) {
+      reset_(pos);
+    } else {
+      set_(pos);
+    }
+  }
+
   /// \brief Toggle values of bits in bitset.
   /// \return Returns this object.
   bounded_bitset<N, LowestInfoBitIsMSB>& flip() noexcept

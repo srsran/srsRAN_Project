@@ -101,3 +101,53 @@ void ru_metrics_consumer_log::handle_metric(const ru_metrics& metric)
     log_ru_ofh_metrics(log_chan, *ofh_metrics, pci_sector_map);
   }
 }
+
+static void print_header()
+{
+  fmt::println("     | ------------------- TX ------------------ | ------------------- RX ------------------ |");
+  fmt::println(" pci | Avg. power | Peak power | PAPR | Clipping | Avg. power | Peak power | PAPR | Clipping |");
+}
+
+void ru_metrics_handler_stdout::handle_metric(const ru_metrics& metric)
+{
+  if (auto* sdr_metrics = std::get_if<ru_generic_metrics>(&metric.metrics)) {
+    log_ru_sdr_metrics_in_stdout(*sdr_metrics);
+  }
+}
+
+/// Return the given value if it is not a Nan or Inf, otherwise returns 0.
+static double validate_fp_value(double value)
+{
+  if (!std::isnan(value) && !std::isinf(value)) {
+    return value;
+  }
+  return 0.0;
+}
+
+void ru_metrics_handler_stdout::log_ru_sdr_metrics_in_stdout(const ru_generic_metrics& sdr_metrics)
+{
+  if (sdr_metrics.cells.size() > 10) {
+    print_header();
+  } else if (++nof_lines > 10 && !sdr_metrics.cells.empty()) {
+    nof_lines = 0;
+    print_header();
+  }
+
+  for (const auto& cell : sdr_metrics.cells) {
+    srsran_assert(cell.sector_id < pci_sector_map.size(),
+                  "Invalid sector index '{}', number of cells '{}'",
+                  cell.sector_id,
+                  pci_sector_map.size());
+
+    fmt::println(" {:>3} | {:>10.1f} | {:>10.1f} | {:>4.1f} | {:>8.1e} | {:>10.1f} | {:>10.1f} | {:>4.1f} | {:>8.1e} |",
+                 static_cast<unsigned>(pci_sector_map[cell.sector_id]),
+                 validate_fp_value(cell.tx_avg_power_dB),
+                 validate_fp_value(cell.tx_peak_power_dB),
+                 validate_fp_value(cell.tx_papr_dB),
+                 validate_fp_value(cell.tx_clipping_prob),
+                 validate_fp_value(cell.rx_avg_power_dB),
+                 validate_fp_value(cell.rx_peak_power_dB),
+                 validate_fp_value(cell.rx_papr_dB),
+                 validate_fp_value(cell.rx_clipping_prob));
+  }
+}

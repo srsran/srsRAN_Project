@@ -30,3 +30,13 @@ void flexible_o_du_metrics_consumer_log::handle_metric(const app_services::metri
   odu_low_metrics_handler.handle_metric(odu_metrics.du.low);
   ru_metrics_handler.handle_metric(odu_metrics.ru);
 }
+
+void ru_metrics_consumer_stdout::handle_metric(const app_services::metrics_set& metric)
+{
+  if (!print_metrics) {
+    return;
+  }
+
+  const ru_metrics& metrics = static_cast<const flexible_o_du_app_service_metrics_impl&>(metric).get_metrics().ru;
+  handler.handle_metric(metrics);
+}

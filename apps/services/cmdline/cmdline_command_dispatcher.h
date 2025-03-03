@@ -29,7 +29,8 @@ class cmdline_command_dispatcher
 public:
   cmdline_command_dispatcher(io_broker&                             io_broker,
                              task_executor&                         executor,
-                             span<std::unique_ptr<cmdline_command>> commands_);
+                             span<std::unique_ptr<cmdline_command>> commands_,
+                             bool                                   autostart_stdout_metrics = false);
 
 private:
   /// Parses any contents in the STDIN file descriptor.

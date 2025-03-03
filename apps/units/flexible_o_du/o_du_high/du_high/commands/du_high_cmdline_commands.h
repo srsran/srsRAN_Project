@@ -16,24 +16,38 @@
 namespace srsran {
 
 /// Application command to display/hide the DU high metrics in STDOUT.
-class toggle_stdout_metrics_app_command : public app_services::cmdline_command
+class toggle_stdout_du_high_metrics_app_command : public app_services::cmdline_command
 {
   scheduler_cell_metrics_consumer_stdout& printer;
 
 public:
-  explicit toggle_stdout_metrics_app_command(scheduler_cell_metrics_consumer_stdout& printer_) : printer(printer_) {}
-
-  // See interface for documentation.
-  std::string_view get_name() const override { return "t"; }
-
-  // See interface for documentation.
-  std::string_view get_description() const override
+  explicit toggle_stdout_du_high_metrics_app_command(scheduler_cell_metrics_consumer_stdout& printer_) :
+    printer(printer_)
   {
-    return ":                                    start/stop console trace";
   }
 
   // See interface for documentation.
-  void execute(span<const std::string> args) override { printer.toggle_print(); }
+  std::string_view get_name() const override { return "ue"; }
+
+  // See interface for documentation.
+  std::string_view get_description() const override { return "UE scheduler metrics"; }
+
+  // See interface for documentation.
+  void execute(span<const std::string> args) override
+  {
+    if (args.size() > 1) {
+      fmt::println("This command only accepts zero or one argument, '{}' provided", args.size());
+
+      return;
+    }
+
+    // Force to print the metrics header.
+    if (!args.empty() && args.front() == "true") {
+      printer.force_print_header();
+    }
+
+    printer.toggle_print();
+  }
 };
 
 } // namespace srsran

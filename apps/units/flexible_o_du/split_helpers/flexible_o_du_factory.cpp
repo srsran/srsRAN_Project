@@ -46,6 +46,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   // Create flexible O-DU metrics configuration.
   flexible_o_du_metrics_notifier* flexible_odu_metrics_notifier =
       build_flexible_o_du_metrics_config(o_du.metrics,
+                                         o_du.commands.cmdline,
                                          *dependencies.metrics_notifier,
                                          config.odu_high_cfg.du_high_cfg.config.metrics.common_metrics_cfg,
                                          std::move(pci_cell_mapper));
@@ -110,7 +111,16 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
     o_du.metrics.emplace_back(std::move(e));
   });
 
-  o_du.commands = std::move(odu_hi_unit.commands);
+  // Manage commands.
+  o_du.commands.remote = std::move(odu_hi_unit.commands.remote);
+  for (auto& cmd : odu_hi_unit.commands.cmdline) {
+    o_du.commands.cmdline.push_back(std::move(cmd));
+  }
+
+  // Make the scheduler STDOUT metrics the default one by moving it to the first position of the commands vector.
+  if (o_du.commands.cmdline.size() > 1) {
+    std::swap(o_du.commands.cmdline[0], o_du.commands.cmdline[1]);
+  }
 
   srs_du::o_du_dependencies odu_dependencies;
   odu_dependencies.odu_hi           = std::move(odu_hi_unit.o_du_hi);
@@ -134,7 +144,6 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
 
   // Add RU command-line commands.
   o_du.commands.cmdline.push_back(std::make_unique<change_log_level_app_command>());
-  o_du.commands.cmdline.push_back(std::make_unique<ru_metrics_app_command>(ru->get_controller()));
 
   // Create the RU gain commands.
   if (auto* controller = ru->get_controller().get_gain_controller()) {

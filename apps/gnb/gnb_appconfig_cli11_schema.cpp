@@ -28,6 +28,10 @@ static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metri
              metrics_params.rusage_report_period,
              "Resource usage metrics report period (in milliseconds)")
       ->capture_default_str();
+
+  add_option(
+      app, "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
+      ->capture_default_str();
 }
 
 static void manage_hal_optional(CLI::App& app, gnb_appconfig& gnb_cfg)

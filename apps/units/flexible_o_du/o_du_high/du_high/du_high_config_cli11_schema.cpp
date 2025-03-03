@@ -1723,10 +1723,6 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
       app, "--rlc_report_period", metrics_params.rlc.report_period, "RLC metrics report period (in milliseconds)")
       ->capture_default_str();
 
-  add_option(
-      app, "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
-      ->capture_default_str();
-
   add_option(app,
              "--sched_report_period",
              metrics_params.sched_report_period,

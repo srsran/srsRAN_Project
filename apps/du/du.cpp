@@ -353,8 +353,10 @@ int main(int argc, char** argv)
   srs_du::du& du_inst = *du_inst_and_cmds.unit;
 
   // Register the commands.
-  app_services::cmdline_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_low_prio_exec, du_inst_and_cmds.commands.cmdline);
+  app_services::cmdline_command_dispatcher command_parser(*epoll_broker,
+                                                          *workers.non_rt_low_prio_exec,
+                                                          du_inst_and_cmds.commands.cmdline,
+                                                          du_cfg.metrics_cfg.autostart_stdout_metrics);
 
   // Start processing.
   du_inst.get_operation_controller().start();
