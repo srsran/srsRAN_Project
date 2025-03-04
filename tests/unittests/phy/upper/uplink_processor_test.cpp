@@ -55,7 +55,11 @@ public:
     return buffer;
   }
 
-  void lock() override { is_buffer_locked = true; }
+  bool try_lock() override
+  {
+    is_buffer_locked = true;
+    return true;
+  }
   void unlock() override { is_buffer_locked = false; }
   void release() override { is_buffer_locked = false; }
 
@@ -266,7 +270,7 @@ TEST_F(UplinkProcessorFixture, pusch_locked_rx_buffer)
   shared_resource_grid shared_grid = grid.get_grid();
 
   // Lock buffer pool to ensure it fails to retrieve a buffer.
-  buffer_pool_spy.lock();
+  ASSERT_TRUE(buffer_pool_spy.try_lock());
 
   // Notify reception of receive symbol.
   ul_processor->get_slot_processor().handle_rx_symbol(shared_grid, end_symbol_index);

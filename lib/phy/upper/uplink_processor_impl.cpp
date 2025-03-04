@@ -76,7 +76,6 @@ unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository
   // Reset processor states.
   current_slot         = slot;
   count_pusch_adaptors = 0;
-  rm_buffer_pool.run_slot(slot);
   rx_payload_pool.reset();
 
   // Create a valid unique PDU slot repository.
@@ -87,6 +86,11 @@ void uplink_processor_impl::handle_rx_symbol(const shared_resource_grid& grid, u
 {
   // Extract PDUs for the given number of OFDM symbols.
   const auto pdus = pdu_repository.get_pdus(end_symbol_index);
+
+  // Run rate matching buffer pool only at the first symbol.
+  if (end_symbol_index == 0) {
+    rm_buffer_pool.run_slot(current_slot);
+  }
 
   // Skip if no PDUs are available.
   if (pdus.empty()) {
