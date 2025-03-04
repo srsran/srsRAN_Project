@@ -557,7 +557,7 @@ srsran image:
       optional: false
       artifacts: true
 
-notify schedule failed:
+notify release failed:
   extends: .notifier
   rules:
     - if: *on_public_push
