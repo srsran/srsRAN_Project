@@ -55,7 +55,7 @@ build trx driver:
         mkdir amarisoft
         tar -zxf amarisoft*.tar.gz -C amarisoft
         for file in amarisoft/*/trx_uhd*.tar.gz; do tar -zxf "$file" -C amarisoft/; done
-        mv amarisoft/trx_uhd-linux* amarisoft/trx_uhd-linux
+        mv amarisoft/trx_uhd* amarisoft/trx_uhd-linux
       }
     - |
       build_srsran_trx() {
