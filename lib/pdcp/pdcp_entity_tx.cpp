@@ -37,6 +37,7 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   ue_dl_executor(ue_dl_executor_),
   crypto_executor(crypto_executor_),
   tx_window(cfg.rb_type, cfg.rlc_mode, cfg.sn_size, logger),
+  metrics(metrics_agg_.get_metrics_period().count()),
   metrics_agg(metrics_agg_)
 {
   if (metrics_agg.get_metrics_period().count()) {
