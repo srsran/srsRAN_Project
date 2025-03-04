@@ -539,6 +539,12 @@ std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_dl_candida
     return std::nullopt;
   }
 
+  // Check if the UE has pending data to transmit.
+  unsigned pending_bytes = u.pending_dl_newtx_bytes();
+  if (pending_bytes == 0) {
+    return std::nullopt;
+  }
+
   if (not can_allocate_pdsch(pdcch_slot, pdsch_slot, cell_index, u, *ue_cc)) {
     return std::nullopt;
   }
@@ -558,12 +564,6 @@ std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_dl_candida
     return std::nullopt;
   }
 
-  // Check if the UE has pending data to transmit.
-  unsigned pending_bytes = u.pending_dl_newtx_bytes();
-  if (pending_bytes == 0) {
-    return std::nullopt;
-  }
-
   return ue_newtx_candidate{&u, ue_cc, pending_bytes, forbid_sched_priority};
 }
 
@@ -574,6 +574,12 @@ std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_ul_candida
 {
   const ue_cell* ue_cc = u.find_cell(cell_index);
   if (ue_cc == nullptr or not ue_cc->is_active() or ue_cc->is_in_fallback_mode()) {
+    return std::nullopt;
+  }
+
+  // Check if the UE has pending data to transmit.
+  unsigned pending_bytes = u.pending_ul_newtx_bytes();
+  if (pending_bytes == 0) {
     return std::nullopt;
   }
 
@@ -591,12 +597,6 @@ std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_ul_candida
                      fmt::underlying(ue_cc->ue_index),
                      ue_cc->rnti());
     }
-    return std::nullopt;
-  }
-
-  // Check if the UE has pending data to transmit.
-  unsigned pending_bytes = u.pending_ul_newtx_bytes();
-  if (pending_bytes == 0) {
     return std::nullopt;
   }
 
