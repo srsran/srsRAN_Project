@@ -41,7 +41,8 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   ul_request_processor(*config.rx_symbol_request_notifier, *prach_pool),
   rx_results_notifier(std::move(config.rx_results_notifier)),
   rx_symbol_handler(std::make_unique<upper_phy_rx_symbol_handler_impl>(ul_processor_pool->get_slot_processor_pool())),
-  timing_handler(notifier_dummy)
+  timing_handler(notifier_dummy),
+  error_handler(ul_processor_pool->get_slot_processor_pool())
 {
   srsran_assert(dl_processor_pool, "Invalid downlink processor pool");
   srsran_assert(dl_rg_pool, "Invalid downlink resource grid pool");

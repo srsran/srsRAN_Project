@@ -19,6 +19,7 @@
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ru/ru_downlink_plane.h"
+#include "srsran/ru/ru_error_notifier.h"
 #include "srsran/ru/ru_uplink_plane.h"
 #include "srsran/srslog/logger.h"
 #include <mutex>
@@ -33,8 +34,8 @@ class ru_dummy_sector : public ru_uplink_plane_handler, public ru_downlink_plane
   /// Calculates the request buffer size from a downlink data margin.
   static constexpr unsigned get_request_buffer_size(unsigned margin)
   {
-    // Start selecting a minimum of 4 slots.
-    unsigned ret = std::max(margin, 4U);
+    // Start selecting a minimum of 8 slots.
+    unsigned ret = std::max(margin, 8U);
 
     // Ensure 10240 can be divisible by the selected buffer size.
     while (10240 % ret != 0) {
@@ -53,15 +54,18 @@ public:
   /// \param dl_data_margin_    Downlink data handling margin.
   /// \param logger_            Internal logger, used for notifying real-time failures.
   /// \param symbol_notifier_   Receive symbol notifier.
+  /// \param error_notifier_    RU error notifier notifier.
   ru_dummy_sector(unsigned                            sector_id,
                   unsigned                            rx_rg_nof_prb,
                   unsigned                            rx_rg_nof_ports,
                   unsigned                            rx_prach_nof_ports,
                   unsigned                            dl_data_margin_,
                   srslog::basic_logger&               logger_,
-                  ru_uplink_plane_rx_symbol_notifier& symbol_notifier_) :
+                  ru_uplink_plane_rx_symbol_notifier& symbol_notifier_,
+                  ru_error_notifier&                  error_notifier_) :
     logger(logger_),
     symbol_notifier(symbol_notifier_),
+    error_notifier(error_notifier_),
     rx_symbols_resource_grid(sector_id, rx_rg_nof_prb * NRE, MAX_NSYMB_PER_SLOT, rx_rg_nof_ports),
     rx_symbols_prach_buffer(sector_id, rx_prach_nof_ports),
     dl_data_margin(dl_data_margin_),
@@ -74,6 +78,7 @@ public:
   ru_dummy_sector(ru_dummy_sector&& other) noexcept :
     logger(other.logger),
     symbol_notifier(other.symbol_notifier),
+    error_notifier(other.error_notifier),
     rx_symbols_resource_grid(std::move(other.rx_symbols_resource_grid)),
     rx_symbols_prach_buffer(std::move(other.rx_symbols_prach_buffer)),
     dl_data_margin(other.dl_data_margin),
@@ -93,7 +98,10 @@ public:
 
     // If the previous slot is valid, it is a late.
     if (info.context.slot.valid()) {
-      logger.warning("Real-time failure in RU: received late DL request from slot {} in sector {}.",
+      error_notifier.on_late_downlink_message({.slot = info.context.slot, .sector = info.context.sector});
+      logger.warning(context.slot.sfn(),
+                     context.slot.slot_index(),
+                     "Real-time failure in RU: received late DL request from slot {} in sector {}.",
                      info.context.slot,
                      info.context.sector);
       ++late_dl_request_count;
@@ -129,6 +137,7 @@ public:
 
     // Detect if there is an unhandled request from a different slot.
     if (info.context.slot.valid()) {
+      error_notifier.on_late_uplink_message({.slot = info.context.slot, .sector = info.context.sector});
       logger.warning(context.slot.sfn(),
                      context.slot.slot_index(),
                      "Real-time failure in RU: received late UL request from slot {} in sector {}.",
@@ -152,6 +161,7 @@ public:
 
     // Notify with a warning message if the DL previous saved context do not match with the current slot.
     if (dl_info.context.slot.valid() && (dl_info.context.slot != current_dl_slot)) {
+      error_notifier.on_late_downlink_message({.slot = dl_info.context.slot, .sector = dl_info.context.sector});
       logger.warning(current_dl_slot.sfn(),
                      current_dl_slot.slot_index(),
                      "Real-time failure in RU: detected late DL request from slot {} in sector {}.",
@@ -183,6 +193,7 @@ public:
 
       } else {
         // Notify with a warning message if the UL previous saved context do not match with the current slot.
+        error_notifier.on_late_uplink_message({.slot = ul_info.context.slot, .sector = ul_info.context.sector});
         logger.warning(slot.sfn(),
                        slot.slot_index(),
                        "Real-time failure in RU: detected late UL request from slot {} in sector {}.",
@@ -238,6 +249,8 @@ private:
   srslog::basic_logger& logger;
   /// Receive symbol notifier.
   ru_uplink_plane_rx_symbol_notifier& symbol_notifier;
+  /// RU error notifier.
+  ru_error_notifier& error_notifier;
   /// Receive resource grid.
   ru_dummy_rx_resource_grid rx_symbols_resource_grid;
   /// Receive PRACH buffer.

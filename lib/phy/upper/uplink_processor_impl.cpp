@@ -241,16 +241,7 @@ void uplink_processor_impl::process_pucch(const shared_resource_grid&           
   if (!success) {
     logger.warning(
         pdu.context.slot.sfn(), pdu.context.slot.slot_index(), "Failed to execute PUCCH. Ignoring processing.");
-
-    // Select the number of HARQ-ACK feedback number of bits.
-    const unsigned nof_harq_ack = std::visit([](const auto& config) { return config.nof_harq_ack; }, pdu.config);
-
-    // Report control-related discarded result if HARQ-ACK feedback is present.
-    if (nof_harq_ack > 0) {
-      ul_pucch_results discarded_results = ul_pucch_results::create_discarded(pdu.context, nof_harq_ack);
-      notifier.on_new_pucch_results(discarded_results);
-    }
-    pdu_repository.on_finish_processing_pdu();
+    notify_discard_pucch(pdu);
   }
 }
 
@@ -294,4 +285,36 @@ void uplink_processor_impl::notify_discard_pusch(const uplink_pdu_slot_repositor
   }
 
   pdu_repository.on_finish_processing_pdu();
+}
+
+void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repository::pucch_pdu& pdu)
+{
+  // Select the number of HARQ-ACK feedback number of bits.
+  const unsigned nof_harq_ack = std::visit([](const auto& config) { return config.nof_harq_ack; }, pdu.config);
+
+  // Report control-related discarded result if HARQ-ACK feedback is present.
+  if (nof_harq_ack > 0) {
+    ul_pucch_results discarded_results = ul_pucch_results::create_discarded(pdu.context, nof_harq_ack);
+    notifier.on_new_pucch_results(discarded_results);
+  }
+  pdu_repository.on_finish_processing_pdu();
+}
+
+void uplink_processor_impl::discard_slot()
+{
+  logger.warning(current_slot.sfn(), current_slot.slot_index(), "Discarded uplink slot. Ignoring processing.");
+
+  // Iterate all possible symbols.
+  for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
+    span<const uplink_slot_pdu_entry> pdus = pdu_repository.get_pdus(i_symbol);
+
+    // Notify all the discarded PDUs.
+    for (const auto& pdu : pdus) {
+      if (const auto* pusch_pdu = std::get_if<uplink_pdu_slot_repository::pusch_pdu>(&pdu)) {
+        notify_discard_pusch(*pusch_pdu);
+      } else if (const auto* pucch_pdu = std::get_if<uplink_pdu_slot_repository::pucch_pdu>(&pdu)) {
+        notify_discard_pucch(*pucch_pdu);
+      }
+    }
+  }
 }

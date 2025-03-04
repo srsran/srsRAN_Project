@@ -53,6 +53,9 @@ public:
   /// \param[in] buffer   Channel symbols the PRACH detection is performed on.
   /// \param[in] context  Context used by the underlying PRACH detector.
   virtual void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) = 0;
+
+  /// Discards the slot processing due to an error.
+  virtual void discard_slot() = 0;
 };
 
 /// \brief Pool of uplink processors.
@@ -65,6 +68,9 @@ public:
   virtual ~uplink_slot_processor_pool() = default;
 
   /// \brief Returns an uplink slot processor for the given slot.
+  ///
+  /// Slots must be requested in order to detects gaps, intermediate slots that are not requested will be considered
+  /// lost and the uplink processors will be released accordingly.
   ///
   /// \param slot[in]      Slot point.
   /// \return An uplink processor.

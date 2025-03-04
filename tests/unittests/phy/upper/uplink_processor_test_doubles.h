@@ -65,6 +65,8 @@ private:
     has_process_prach_method_called = true;
   }
 
+  void discard_slot() override {}
+
 private:
   bool     has_add_pusch_pdu_method_called = false;
   bool     has_add_pucch_pdu_method_called = false;

@@ -10,10 +10,10 @@
 
 #include "lower_phy_factory.h"
 #include "ru_config_validator.h"
+#include "ru_generic_error_adapter.h"
 #include "ru_generic_impl.h"
 #include "ru_radio_notifier_handler.h"
 #include "srsran/radio/radio_factory.h"
-#include "srsran/ru/generic/ru_generic_error_logger.h"
 #include "srsran/ru/generic/ru_generic_factory.h"
 
 using namespace srsran;
@@ -102,7 +102,8 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
                                std::make_unique<lower_phy_timing_notifier_dummy>()));
     low_cfg.timing_notifier = ru_cfg.ru_time_adapter.back().get();
 
-    ru_cfg.phy_err_printer.push_back(std::make_unique<ru_generic_error_logger>(*low_cfg.logger));
+    ru_cfg.phy_err_printer.push_back(
+        std::make_unique<ru_generic_error_adapter>(*low_cfg.logger, *config.error_notifier));
     ru_cfg.phy_metrics_printer.push_back(std::make_unique<ru_generic_metrics_printer>());
     low_cfg.error_notifier  = ru_cfg.phy_err_printer.back().get();
     low_cfg.metric_notifier = ru_cfg.phy_metrics_printer.back().get();

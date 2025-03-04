@@ -12,12 +12,12 @@
 
 #include "ru_controller_generic_impl.h"
 #include "ru_downlink_handler_generic_impl.h"
+#include "ru_generic_error_adapter.h"
 #include "ru_timing_adapter.h"
 #include "ru_uplink_request_handler_generic_impl.h"
 #include "rx_symbol_adapter.h"
 #include "srsran/phy/lower/lower_phy.h"
 #include "srsran/radio/radio_session.h"
-#include "srsran/ru/generic/ru_generic_error_logger.h"
 #include "srsran/ru/generic/ru_generic_metrics_printer.h"
 #include "srsran/ru/ru.h"
 #include <memory>
@@ -29,7 +29,7 @@ struct ru_generic_impl_config {
   /// Sampling rate in MHz.
   double srate_MHz;
   /// PHY error printer.
-  std::vector<std::unique_ptr<ru_generic_error_logger>> phy_err_printer;
+  std::vector<std::unique_ptr<ru_generic_error_adapter>> phy_err_printer;
   /// PHY metrics printer.
   std::vector<std::unique_ptr<ru_generic_metrics_printer>> phy_metrics_printer;
   /// Radio Unit received symbol adapter.
@@ -61,7 +61,7 @@ public:
   ru_metrics_collector* get_metrics_collector() override { return nullptr; }
 
 private:
-  std::vector<std::unique_ptr<ru_generic_error_logger>>    phy_err_logger;
+  std::vector<std::unique_ptr<ru_generic_error_adapter>>   phy_err_logger;
   std::vector<std::unique_ptr<ru_generic_metrics_printer>> phy_metric_printer;
   std::unique_ptr<ru_rx_symbol_adapter>                    ru_rx_adapter;
   std::vector<std::unique_ptr<lower_phy_timing_notifier>>  ru_time_adapter;

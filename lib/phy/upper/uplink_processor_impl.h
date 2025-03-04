@@ -188,6 +188,9 @@ private:
   // See uplink_slot_processor interface for documentation.
   void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) override;
 
+  // See uplink_slot_processor interface for documentation.
+  void discard_slot() override;
+
   /// Helper method for processing PUSCH.
   void process_pusch(const shared_resource_grid& grid, const uplink_pdu_slot_repository::pusch_pdu& pdu);
 
@@ -199,6 +202,9 @@ private:
 
   /// Helper method for notifying a discarded PUSCH reception.
   void notify_discard_pusch(const uplink_pdu_slot_repository::pusch_pdu& pdu);
+
+  /// Helper method for notifying a discarded PUCCH reception.
+  void notify_discard_pucch(const uplink_pdu_slot_repository::pucch_pdu& pdu);
 
   /// PDU repository.
   uplink_pdu_slot_repository_impl pdu_repository;

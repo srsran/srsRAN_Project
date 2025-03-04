@@ -10,21 +10,18 @@
 
 #pragma once
 
-#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/lower/lower_phy_error_notifier.h"
 #include "srsran/phy/support/resource_grid_context.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
 
-/// Implements a generic lower physical layer error logger.
-class ru_generic_error_logger : public lower_phy_error_notifier
+/// Implements a lower physical layer error adapter to an RU error adapter.
+class lower_phy_error_logger : public lower_phy_error_notifier
 {
-  /// Logger.
-  srslog::basic_logger& logger;
-
 public:
   /// Creates an adapter with a given logger.
-  explicit ru_generic_error_logger(srslog::basic_logger& logger_) : logger(logger_) {}
+  explicit lower_phy_error_logger(srslog::basic_logger& logger_) : logger(logger_) {}
 
   // See interface for documentation.
   void on_late_resource_grid(const resource_grid_context& context) override
@@ -34,7 +31,6 @@ public:
                    "Real-time failure in low-phy: Downlink data late for sector {} and slot {}.",
                    context.sector,
                    context.slot);
-    l1_tracer << instant_trace_event{"on_late_resource_grid", instant_trace_event::cpu_scope::global};
   }
 
   // See interface for documentation.
@@ -46,7 +42,6 @@ public:
                    context.sector,
                    context.slot,
                    context.start_symbol);
-    l1_tracer << instant_trace_event{"on_prach_request_late", instant_trace_event::cpu_scope::global};
   }
 
   // See interface for documentation.
@@ -58,7 +53,6 @@ public:
                    context.sector,
                    context.slot,
                    context.start_symbol);
-    l1_tracer << instant_trace_event{"on_prach_request_overflow", instant_trace_event::cpu_scope::global};
   }
 
   // See interface for documentation.
@@ -69,8 +63,11 @@ public:
                    "Real-time failure in low-phy: PUxCH request late for sector {}, slot {}.",
                    context.sector,
                    context.slot);
-    l1_tracer << instant_trace_event{"on_puxch_request_late", instant_trace_event::cpu_scope::global};
   }
+
+private:
+  /// Logger.
+  srslog::basic_logger& logger;
 };
 
 } // namespace srsran

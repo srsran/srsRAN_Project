@@ -108,14 +108,6 @@ private:
     srsran_assert((prev & accepting_pdu_mask) != 0, "The slot repository is the invalid state of NOT accepting PDUs.");
   }
 
-  /// \brief Decrement the pending PDU count.
-  /// \remark An assertion is triggered if the pending PDU count contains the accepting PDU mask.
-  void decrement_pending_pdu_count()
-  {
-    [[maybe_unused]] uint64_t prev = pending_pdu_count.fetch_sub(1);
-    srsran_assert((prev & accepting_pdu_mask) != 0, "The slot repository is not in accepting PDU state.");
-  }
-
   /// Repository that contains the PDUs.
   std::array<static_vector<uplink_slot_pdu_entry, MAX_UL_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> repository;
   /// Counts the number of pending PDUs.
