@@ -36,6 +36,9 @@ security_result integrity_engine_generic::protect_integrity(byte_buffer buf, uin
 
   byte_buffer_view v{result.buf.value().begin(), result.buf.value().end()};
 
+  logger.debug("Applying integrity protection. count={}", count);
+  logger.debug(v.begin(), v.end(), "Message input:");
+
   switch (integ_algo) {
     case security::integrity_algorithm::nia0:
       // TS 33.501, Sec. D.1
@@ -59,6 +62,12 @@ security_result integrity_engine_generic::protect_integrity(byte_buffer buf, uin
   if (not result.buf->append(mac)) {
     result.buf = make_unexpected(security_error::buffer_failure);
   }
+
+  logger.debug("Integrity check passed. count={}", count);
+  logger.debug("K_int: {}", k_128_int);
+  logger.debug("MAC: {}", mac);
+  logger.debug(result.buf.value().begin(), result.buf.value().end(), "Message output:");
+
   return result;
 }
 

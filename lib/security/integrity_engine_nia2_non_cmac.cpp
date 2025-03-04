@@ -112,6 +112,9 @@ security_result integrity_engine_nia2_non_cmac::protect_integrity(byte_buffer bu
   security_result  result{.buf = std::move(buf), .count = count};
   byte_buffer_view v{result.buf.value().begin(), result.buf.value().end()};
 
+  logger.debug("Applying integrity protection. count={}", count);
+  logger.debug(v.begin(), v.end(), "Message input:");
+
   expected<security::sec_mac, security_error> mac = compute_mac(v, count);
 
   if (not mac.has_value()) {
@@ -122,6 +125,10 @@ security_result integrity_engine_nia2_non_cmac::protect_integrity(byte_buffer bu
   if (not result.buf->append(mac.value())) {
     result.buf = make_unexpected(security_error::buffer_failure);
   }
+
+  logger.debug("K_int: {}", k_128_int);
+  logger.debug("MAC: {}", mac.value());
+  logger.debug(result.buf.value().begin(), result.buf.value().end(), "Message output:");
 
   return result;
 }
@@ -136,7 +143,7 @@ security_result integrity_engine_nia2_non_cmac::verify_integrity(byte_buffer buf
   }
 
   byte_buffer_view v{result.buf.value(), 0, result.buf.value().length() - sec_mac_len};
-  byte_buffer_view m{result.buf.value(), result.buf.value().length() - sec_mac_len, sec_mac_len};
+  byte_buffer_view m_rx{result.buf.value(), result.buf.value().length() - sec_mac_len, sec_mac_len};
 
   // compute MAC
   expected<security::sec_mac, security_error> mac = compute_mac(v, count);
@@ -145,27 +152,25 @@ security_result integrity_engine_nia2_non_cmac::verify_integrity(byte_buffer buf
     result.buf = make_unexpected(mac.error());
     return result;
   }
+  span m_exp{mac.value().data(), sec_mac_len};
 
   // verify MAC
-  if (!std::equal(mac.value().begin(), mac.value().end(), m.begin(), m.end())) {
+  if (!std::equal(mac.value().begin(), mac.value().end(), m_rx.begin(), m_rx.end())) {
     result.buf = make_unexpected(security_error::integrity_failure);
-    span m_rx{mac.value().data(), sec_mac_len};
     logger.warning("Integrity check failed. count={}", count);
     logger.warning("K_int: {}", k_128_int);
     logger.warning("MAC received: {:x}", m_rx);
-    logger.warning("MAC expected: {}", m);
+    logger.warning("MAC expected: {}", m_exp);
     logger.warning(v.begin(), v.end(), "Message input:");
     return result;
   }
   logger.debug("Integrity check passed. count={}", count);
   logger.debug("K_int: {}", k_128_int);
-  logger.debug("MAC: {}", m);
+  logger.debug("MAC: {}", mac.value());
   logger.debug(v.begin(), v.end(), "Message input:");
 
   // trim MAC from PDU
   result.buf.value().trim_tail(sec_mac_len);
-
-  logger.debug(result.buf.value().begin(), result.buf.value().end(), "Message output:");
 
   return result;
 }
