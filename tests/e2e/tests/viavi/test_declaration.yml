@@ -11,6 +11,7 @@
 # test_name: name of test in Viavi campaign file
 # test_timeout: timeout for test in seconds
 # gnb_extra_config: extra GNB configuration
+# retina_params: extra Retina parameters [Optional]
 # expected_dl_bitrate: pass/fail criteria, expected downlink bitrate in bps
 # expected_ul_bitrate: pass/fail criteria, expected uplink bitrate in bps
 # expected_nof_kos: expected_nof_kos
@@ -133,34 +134,9 @@ tests:
     test_name: "32UE ideal TCP downlink UM"
     test_timeout: *test_timeout
     # Configuration
-    gnb_extra_config:
-      <<: *base_config
-      qos:
-        -
-          five_qi: 9
-          pdcp:
-            tx:
-              sn: 18
-              discard_timer: -1
-              status_report_required: false
-            rx:
-              sn: 18
-              t_reordering: 50
-              out_of_order_delivery: false
-          f1u_cu_up:
-            backoff_timer: 10
-          f1u_du:
-            backoff_timer: 10
-          rlc:
-            mode: um-bidir
-            um-bidir:
-              tx:
-                sn: 12
-                queue-size: 16384
-                queue-bytes: 6172672
-              rx:
-                sn: 12
-                t-reassembly: 100
+    gnb_extra_config: *base_config
+    retina_params:
+      enable_qos_um: true
     # Pass / Fail Criteria
     expected_dl_bitrate: 1.0e+9
     expected_ul_bitrate: 1.0e+3

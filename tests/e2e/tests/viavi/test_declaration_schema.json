@@ -19,6 +19,9 @@
                     "gnb_extra_config": {
                         "type": "object"
                     },
+                    "retina_params": {
+                        "type": "object"
+                    },
                     "id": {
                         "type": "string"
                     },
