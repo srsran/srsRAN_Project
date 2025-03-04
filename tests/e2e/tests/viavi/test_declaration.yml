@@ -131,7 +131,7 @@ tests:
 
   - id: "32UE ideal TCP downlink UM"
     campaign_filename: *campaign_filename
-    test_name: "32UE ideal TCP downlink UM"
+    test_name: "32UE ideal TCP downlink"
     test_timeout: *test_timeout
     # Configuration
     gnb_extra_config: *base_config
