@@ -17,7 +17,7 @@ namespace srsran {
 
 class slice_ue_repository;
 
-/// UE managed by a given RAN slice for a given cell.
+/// UE that is a candidate for scheduling in a given RAN slice for a given cell.
 class slice_ue
 {
 public:
@@ -26,26 +26,11 @@ public:
   /// Returns DU UE index.
   du_ue_index_t ue_index() const { return u.ue_index; }
 
-  /// Returns number of cells configured for the UE.
-  unsigned nof_cells() const { return u.nof_cells(); }
-
   /// Returns UE C-RNTI.
   rnti_t crnti() const { return u.crnti; }
 
   /// Fetch UE carrier context managed by this slice for this UE.
   const ue_cell& get_cc() const { return ue_cc; }
-
-  /// \brief Fetch UE cell based on DU cell index.
-  const ue_cell* find_cell(du_cell_index_t cell_index) const { return u.find_cell(cell_index); }
-
-  /// \brief Fetch UE cell based on UE-specific cell identifier. E.g. PCell corresponds to ue_cell_index==0.
-  const ue_cell& get_cell(ue_cell_index_t ue_cell_index) const { return u.get_cell(ue_cell_index); }
-
-  /// Determines if at least one SRB bearer of the UE is part of this slice.
-  bool has_srb_bearers_in_slice() const
-  {
-    return contains(LCID_SRB0) or contains(LCID_SRB1) or contains(LCID_SRB2) or contains(LCID_SRB3);
-  }
 
   /// Fetches the logical channel group associated with a given LCID.
   lcg_id_t get_lcg_id(lcid_t lcid) const
@@ -59,9 +44,6 @@ public:
 
   /// Determines if LCG-ID is part of this slice.
   bool contains(lcg_id_t lcg_id) const { return u.ul_logical_channels().get_slice_id(lcg_id) == slice_id; }
-
-  /// Fetch DU cell index of UE's PCell.
-  const ue_cell& get_pcell() const { return u.get_pcell(); }
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
@@ -89,7 +71,7 @@ public:
   }
 
   /// \brief Returns whether a SR indication handling is pending.
-  bool has_pending_sr() const;
+  bool has_pending_sr() const { return u.has_pending_sr(); }
 
   /// Get QoS information of DRBs configured for the UE.
   logical_channel_config_list_ptr logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); };
@@ -126,8 +108,10 @@ class slice_ue_repository
 public:
   slice_ue_repository(ran_slice_id_t slice_id_, du_cell_index_t cell_index_);
 
+  /// Whether this slice has no UEs.
   bool empty() const { return ue_map.empty(); }
 
+  /// Number of UEs managed by this slice.
   size_t size() const { return ue_map.size(); }
 
   /// Determine if at least one bearer of the given UE is currently managed by this slice.

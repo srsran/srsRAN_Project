@@ -109,8 +109,8 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
 
   // Subtract the bytes already allocated in UL HARQs.
   unsigned bytes_in_harqs = 0;
-  for (unsigned cell_idx = 0, e = nof_cells(); cell_idx != e; ++cell_idx) {
-    const ue_cell& cc = get_cell(to_ue_cell_index(cell_idx));
+  for (unsigned cell_idx = 0, e = u.nof_cells(); cell_idx != e; ++cell_idx) {
+    const ue_cell& cc = u.get_cell(to_ue_cell_index(cell_idx));
     if (pending_bytes <= bytes_in_harqs) {
       break;
     }
@@ -130,9 +130,4 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
   }
 
   return 0;
-}
-
-bool slice_ue::has_pending_sr() const
-{
-  return u.has_pending_sr();
 }

@@ -164,13 +164,8 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(du_cell_index_t     
     if (h.get_grant_params().slice_id != slice.id()) {
       continue;
     }
-    const slice_ue& u     = slice_ues[h.ue_index()];
-    const ue_cell*  ue_cc = u.find_cell(cell_index);
-    if (ue_cc == nullptr) {
-      continue;
-    }
-
-    if (not can_allocate_pdsch(pdcch_slot, pdsch_slot, cell_index, u, *ue_cc)) {
+    const slice_ue& u = slice_ues[h.ue_index()];
+    if (not can_allocate_pdsch(pdcch_slot, pdsch_slot, cell_index, u, u.get_cc())) {
       continue;
     }
 
@@ -218,13 +213,9 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(du_cell_index_t     
     if (h.get_grant_params().slice_id != slice.id()) {
       continue;
     }
-    const slice_ue& u     = slice_ues[h.ue_index()];
-    const ue_cell*  ue_cc = u.find_cell(cell_index);
-    if (ue_cc == nullptr) {
-      continue;
-    }
+    const slice_ue& u = slice_ues[h.ue_index()];
 
-    if (not can_allocate_pusch(pdcch_slot, pdsch_slot, cell_index, u, *ue_cc)) {
+    if (not can_allocate_pusch(pdcch_slot, pdsch_slot, cell_index, u, u.get_cc())) {
       continue;
     }
 
@@ -534,10 +525,8 @@ std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_dl_candida
                                                                                    du_cell_index_t cell_index,
                                                                                    const slice_ue& u) const
 {
-  const ue_cell* ue_cc = u.find_cell(cell_index);
-  if (ue_cc == nullptr or not ue_cc->is_active() or ue_cc->is_in_fallback_mode()) {
-    return std::nullopt;
-  }
+  const ue_cell& ue_cc = u.get_cc();
+  srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(), "Invalid slice UE state");
 
   // Check if the UE has pending data to transmit.
   unsigned pending_bytes = u.pending_dl_newtx_bytes();
@@ -545,26 +534,26 @@ std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_dl_candida
     return std::nullopt;
   }
 
-  if (not can_allocate_pdsch(pdcch_slot, pdsch_slot, cell_index, u, *ue_cc)) {
+  if (not can_allocate_pdsch(pdcch_slot, pdsch_slot, cell_index, u, ue_cc)) {
     return std::nullopt;
   }
 
-  if (not ue_cc->harqs.has_empty_dl_harqs()) {
+  if (not ue_cc.harqs.has_empty_dl_harqs()) {
     // No available HARQs.
-    if (not ue_cc->harqs.find_pending_dl_retx().has_value()) {
+    if (not ue_cc.harqs.find_pending_dl_retx().has_value()) {
       // All HARQs are waiting for their respective HARQ-ACK. This may be a symptom of a long RTT for the PDSCH
       // and HARQ-ACK.
       logger.warning(
           "ue={} rnti={} PDSCH allocation skipped. Cause: All the HARQs are allocated and waiting for their "
           "respective HARQ-ACK. Check if any HARQ-ACK went missing in the lower layers or is arriving too late to "
           "the scheduler.",
-          fmt::underlying(ue_cc->ue_index),
-          ue_cc->rnti());
+          fmt::underlying(ue_cc.ue_index),
+          ue_cc.rnti());
     }
     return std::nullopt;
   }
 
-  return ue_newtx_candidate{&u, ue_cc, pending_bytes, forbid_sched_priority};
+  return ue_newtx_candidate{&u, &ue_cc, pending_bytes, forbid_sched_priority};
 }
 
 std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_ul_candidate(slot_point      pdcch_slot,
@@ -572,10 +561,8 @@ std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_ul_candida
                                                                                    du_cell_index_t cell_index,
                                                                                    const slice_ue& u) const
 {
-  const ue_cell* ue_cc = u.find_cell(cell_index);
-  if (ue_cc == nullptr or not ue_cc->is_active() or ue_cc->is_in_fallback_mode()) {
-    return std::nullopt;
-  }
+  const ue_cell& ue_cc = u.get_cc();
+  srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(), "Invalid slice UE state");
 
   // Check if the UE has pending data to transmit.
   unsigned pending_bytes = u.pending_ul_newtx_bytes();
@@ -583,24 +570,24 @@ std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_ul_candida
     return std::nullopt;
   }
 
-  if (not can_allocate_pusch(pdcch_slot, pusch_slot, cell_index, u, *ue_cc)) {
+  if (not can_allocate_pusch(pdcch_slot, pusch_slot, cell_index, u, ue_cc)) {
     return std::nullopt;
   }
 
-  if (not ue_cc->harqs.has_empty_ul_harqs()) {
+  if (not ue_cc.harqs.has_empty_ul_harqs()) {
     // No available HARQs.
-    if (not ue_cc->harqs.find_pending_ul_retx().has_value()) {
+    if (not ue_cc.harqs.find_pending_ul_retx().has_value()) {
       // All HARQs are waiting for their respective CRC. This may be a symptom of a slow PUSCH processing chain.
       logger.warning("ue={} rnti={} PUSCH allocation skipped. Cause: All the UE HARQs are busy waiting for "
                      "their respective CRC result. Check if any CRC PDU went missing in the lower layers or is "
                      "arriving too late to the scheduler.",
-                     fmt::underlying(ue_cc->ue_index),
-                     ue_cc->rnti());
+                     fmt::underlying(ue_cc.ue_index),
+                     ue_cc.rnti());
     }
     return std::nullopt;
   }
 
-  return ue_newtx_candidate{&u, ue_cc, pending_bytes, forbid_sched_priority};
+  return ue_newtx_candidate{&u, &ue_cc, pending_bytes, forbid_sched_priority};
 }
 
 unsigned intra_slice_scheduler::max_pdschs_to_alloc(slot_point                    pdcch_slot,
