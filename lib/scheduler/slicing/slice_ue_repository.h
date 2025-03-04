@@ -15,10 +15,13 @@
 
 namespace srsran {
 
+class slice_ue_repository;
+
+/// UE managed by a given RAN slice for a given cell.
 class slice_ue
 {
 public:
-  explicit slice_ue(ue& u, ran_slice_id_t slice_id);
+  explicit slice_ue(ue& u, ue_cell& ue_cc_, ran_slice_id_t slice_id);
 
   /// Returns DU UE index.
   du_ue_index_t ue_index() const { return u.ue_index; }
@@ -29,14 +32,14 @@ public:
   /// Returns UE C-RNTI.
   rnti_t crnti() const { return u.crnti; }
 
+  /// Fetch UE carrier context managed by this slice for this UE.
+  const ue_cell& get_cc() const { return ue_cc; }
+
   /// \brief Fetch UE cell based on DU cell index.
   const ue_cell* find_cell(du_cell_index_t cell_index) const { return u.find_cell(cell_index); }
 
   /// \brief Fetch UE cell based on UE-specific cell identifier. E.g. PCell corresponds to ue_cell_index==0.
   const ue_cell& get_cell(ue_cell_index_t ue_cell_index) const { return u.get_cell(ue_cell_index); }
-
-  /// Determines if at least one bearer of the UE is part of this slice.
-  bool has_bearers_in_slice() const { return u.dl_logical_channels().has_slice(slice_id); }
 
   /// Determines if at least one SRB bearer of the UE is part of this slice.
   bool has_srb_bearers_in_slice() const
@@ -59,15 +62,6 @@ public:
 
   /// Fetch DU cell index of UE's PCell.
   const ue_cell& get_pcell() const { return u.get_pcell(); }
-
-  /// Add LCID to the bearers of the UE belonging to this slice.
-  void add_logical_channel(lcid_t lcid, lcg_id_t lcg_id);
-
-  /// Remove LCID from the bearers of the UE belonging to this slice.
-  void rem_logical_channel(lcid_t lcid);
-
-  /// Remove all bearers of the UE belonging to this slice.
-  void rem_logical_channels();
 
   /// \brief Checks if there are DL pending bytes that are yet to be allocated in a DL HARQ.
   /// This method is faster than computing \c pending_dl_newtx_bytes() > 0.
@@ -119,7 +113,10 @@ public:
   }
 
 private:
+  friend class slice_ue_repository;
+
   ue&                  u;
+  ue_cell&             ue_cc;
   const ran_slice_id_t slice_id;
 };
 
@@ -127,25 +124,20 @@ private:
 class slice_ue_repository
 {
 public:
-  slice_ue_repository(ran_slice_id_t slice_id_) : slice_id(slice_id_) {}
+  slice_ue_repository(ran_slice_id_t slice_id_, du_cell_index_t cell_index_);
 
   bool empty() const { return ue_map.empty(); }
 
   size_t size() const { return ue_map.size(); }
 
   /// Determine if at least one bearer of the given UE is currently managed by this slice.
-  bool contains(du_ue_index_t ue_index) const
-  {
-    return ue_map.contains(ue_index) and ue_map[ue_index].has_bearers_in_slice();
-  }
+  bool contains(du_ue_index_t ue_index) const { return ue_map.contains(ue_index); }
 
   /// Determine if a (UE, LCID) tuple are managed by this slice.
   bool contains(du_ue_index_t ue_idx, lcid_t lcid) const { return contains(ue_idx) and ue_map[ue_idx].contains(lcid); }
 
   slice_ue&       operator[](du_ue_index_t ue_index) { return ue_map[ue_index]; }
   const slice_ue& operator[](du_ue_index_t ue_index) const { return ue_map[ue_index]; }
-
-  void add_ue(ue& u) { ue_map.emplace(u.ue_index, u, slice_id); }
 
   /// Add a new UE to list of UEs (if not exists) and a new (UE, LCID) to the list of bearers managed by this slice.
   void add_logical_channel(ue& u, lcid_t lcid, lcg_id_t lcg_id);
@@ -163,7 +155,11 @@ public:
   auto end() const { return ue_map.end(); }
 
 private:
-  const ran_slice_id_t slice_id;
+  /// Add new UE to the RAN slice.
+  bool add_ue(ue& u);
+
+  const ran_slice_id_t  slice_id;
+  const du_cell_index_t cell_index;
 
   slotted_id_table<du_ue_index_t, slice_ue, MAX_NOF_DU_UES> ue_map;
 };

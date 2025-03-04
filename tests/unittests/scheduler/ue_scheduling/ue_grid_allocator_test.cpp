@@ -45,7 +45,7 @@ protected:
       srsran_assert(cfg != nullptr, "Cell configuration failed");
       return cfg;
     }()),
-    slice_ues(ran_slice_id_t{0}),
+    slice_ues(ran_slice_id_t{0}, to_du_cell_index(0)),
     current_slot(cfg_builder_params.scs_common, 0)
   {
     logger.set_level(srslog::basic_levels::debug);
@@ -118,9 +118,8 @@ protected:
     auto ev = cfg_mng.add_ue(ue_creation_req);
     ues.add_ue(
         std::make_unique<ue>(ue_creation_command{ev.next_config(), ue_creation_req.starts_in_fallback, cell_harqs}));
-    slice_ues.add_ue(ues[ue_creation_req.ue_index]);
     for (const auto& lc_cfg : *ue_creation_req.cfg.lc_config_list) {
-      slice_ues[ue_creation_req.ue_index].add_logical_channel(lc_cfg.lcid, lc_cfg.lc_group);
+      slice_ues.add_logical_channel(ues[ue_creation_req.ue_index], lc_cfg.lcid, lc_cfg.lc_group);
     }
     ev.notify_completion();
     return ues[ue_creation_req.ue_index];
@@ -517,7 +516,7 @@ TEST_P(ue_grid_allocator_tester, successfully_allocates_pdsch_with_gbr_lc_priort
 
   // Add LCID to the bearers of the UE belonging to this slice.
   for (const auto& lc_cfg : *cfg_req.lc_config_list) {
-    slice_ues[u1.ue_index].add_logical_channel(lc_cfg.lcid, lc_cfg.lc_group);
+    slice_ues.add_logical_channel(u1, lc_cfg.lcid, lc_cfg.lc_group);
   }
 
   // Push buffer state update to both bearers.

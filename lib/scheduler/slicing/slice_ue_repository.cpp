@@ -12,18 +12,28 @@
 
 using namespace srsran;
 
-slice_ue::slice_ue(ue& u_, ran_slice_id_t slice_id_) : u(u_), slice_id(slice_id_)
+slice_ue::slice_ue(ue& u_, ue_cell& ue_cc_, ran_slice_id_t slice_id_) : u(u_), ue_cc(ue_cc_), slice_id(slice_id_)
 {
   u.dl_logical_channels().register_ran_slice(slice_id);
 }
 
-void slice_ue::add_logical_channel(lcid_t lcid, lcg_id_t lcg_id)
-{
-  // Add LCID to DL slice.
-  u.dl_logical_channels().set_lcid_ran_slice(lcid, slice_id);
+// class slice_ue_repository
 
-  // Add LCG-ID to UL slice.
-  u.ul_logical_channels().set_lcg_ran_slice(lcg_id, slice_id);
+slice_ue_repository::slice_ue_repository(ran_slice_id_t slice_id_, du_cell_index_t cell_index_) :
+  slice_id(slice_id_), cell_index(cell_index_)
+{
+}
+
+bool slice_ue_repository::add_ue(ue& u)
+{
+  if (not ue_map.contains(u.ue_index)) {
+    u.dl_logical_channels().register_ran_slice(slice_id);
+    ue_cell* ue_cc = u.find_cell(cell_index);
+    srsran_sanity_check(ue_cc != nullptr, "Invalid UE added to RAN slice");
+    ue_map.emplace(u.ue_index, u, *ue_cc, slice_id);
+    return true;
+  }
+  return false;
 }
 
 void slice_ue_repository::add_logical_channel(ue& u, lcid_t lcid, lcg_id_t lcg_id)
@@ -34,15 +44,23 @@ void slice_ue_repository::add_logical_channel(ue& u, lcid_t lcid, lcg_id_t lcg_i
   }
 
   // Create UE entry if not created yet.
-  if (not ue_map.contains(u.ue_index)) {
-    add_ue(u);
-  }
-  ue_map[u.ue_index].add_logical_channel(lcid, lcg_id);
+  add_ue(u);
+
+  // Add LCID to DL slice.
+  u.dl_logical_channels().set_lcid_ran_slice(lcid, slice_id);
+
+  // Add LCG-ID to UL slice.
+  u.ul_logical_channels().set_lcg_ran_slice(lcg_id, slice_id);
 }
 
-void slice_ue::rem_logical_channel(lcid_t lcid)
+void slice_ue_repository::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
 {
-  dl_logical_channel_manager& dl_lc_mng = u.dl_logical_channels();
+  if (not ue_map.contains(ue_idx)) {
+    return;
+  }
+  auto& slice_u = ue_map[ue_idx];
+
+  dl_logical_channel_manager& dl_lc_mng = slice_u.u.dl_logical_channels();
   srsran_sanity_check(dl_lc_mng.has_slice(slice_id), "slice_ue should not be created without slice");
   if (dl_lc_mng.get_slice_id(lcid) != slice_id) {
     // LCID is not associated with this slice.
@@ -52,10 +70,15 @@ void slice_ue::rem_logical_channel(lcid_t lcid)
   // Disconnect RAN slice from LCID.
   dl_lc_mng.reset_lcid_ran_slice(lcid);
 
+  if (not slice_u.u.dl_logical_channels().has_slice(slice_id)) {
+    // If no more bearers active for this UE, remove it from the slice.
+    rem_ue(ue_idx);
+  }
+
   // If there are still other bearers in the slice, do not remove the LCG ID.
-  lcg_id_t                        lcg_id_to_rem = get_lcg_id(lcid);
-  logical_channel_config_list_ptr lc_chs        = u.ue_cfg_dedicated()->logical_channels();
-  bool                            to_destroy    = true;
+  logical_channel_config_list_ptr lc_chs = slice_u.u.ue_cfg_dedicated()->logical_channels();
+  lcg_id_t lcg_id_to_rem = lc_chs.value().contains(lcid) ? lc_chs.value()[lcid]->lc_group : MAX_NOF_LCGS;
+  bool     to_destroy    = true;
   for (logical_channel_config_ptr lc : *lc_chs) {
     if (lc->lcid != lcid and lc->lc_group == lcg_id_to_rem and dl_lc_mng.get_slice_id(lc->lcid) == slice_id) {
       to_destroy = false;
@@ -63,20 +86,7 @@ void slice_ue::rem_logical_channel(lcid_t lcid)
     }
   }
   if (to_destroy) {
-    u.ul_logical_channels().reset_lcg_ran_slice(lcg_id_to_rem);
-  }
-}
-
-void slice_ue_repository::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
-{
-  if (not ue_map.contains(ue_idx)) {
-    return;
-  }
-  ue_map[ue_idx].rem_logical_channel(lcid);
-
-  if (not ue_map[ue_idx].has_bearers_in_slice()) {
-    // If no more bearers active for this UE, remove it from the slice.
-    rem_ue(ue_idx);
+    slice_u.u.ul_logical_channels().reset_lcg_ran_slice(lcg_id_to_rem);
   }
 }
 
@@ -85,14 +95,10 @@ void slice_ue_repository::rem_ue(du_ue_index_t ue_index)
   if (not ue_map.contains(ue_index)) {
     return;
   }
-  ue_map[ue_index].rem_logical_channels();
+  auto& slice_u = ue_map[ue_index];
+  slice_u.u.dl_logical_channels().deregister_ran_slice(slice_id);
+  slice_u.u.ul_logical_channels().deregister_ran_slice(slice_id);
   ue_map.erase(ue_index);
-}
-
-void slice_ue::rem_logical_channels()
-{
-  u.dl_logical_channels().deregister_ran_slice(slice_id);
-  u.ul_logical_channels().deregister_ran_slice(slice_id);
 }
 
 unsigned slice_ue::pending_ul_newtx_bytes() const
@@ -104,11 +110,11 @@ unsigned slice_ue::pending_ul_newtx_bytes() const
   // Subtract the bytes already allocated in UL HARQs.
   unsigned bytes_in_harqs = 0;
   for (unsigned cell_idx = 0, e = nof_cells(); cell_idx != e; ++cell_idx) {
-    const ue_cell& ue_cc = get_cell(to_ue_cell_index(cell_idx));
+    const ue_cell& cc = get_cell(to_ue_cell_index(cell_idx));
     if (pending_bytes <= bytes_in_harqs) {
       break;
     }
-    bytes_in_harqs += ue_cc.harqs.total_ul_bytes_waiting_ack();
+    bytes_in_harqs += cc.harqs.total_ul_bytes_waiting_ack();
   }
   pending_bytes -= std::min(pending_bytes, bytes_in_harqs);
   if (pending_bytes > 0) {
