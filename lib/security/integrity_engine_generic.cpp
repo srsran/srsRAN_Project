@@ -107,6 +107,10 @@ security_result integrity_engine_generic::verify_integrity(byte_buffer buf, uint
     logger.warning(v.begin(), v.end(), "Message input:");
     return result;
   }
+  logger.debug("Integrity check passed. count={}", count);
+  logger.debug("K_int: {}", k_128_int);
+  logger.debug("MAC: {}", m);
+  logger.debug(v.begin(), v.end(), "Message input:");
 
   // Trim MAC from PDU
   result.buf.value().trim_tail(mac.size());

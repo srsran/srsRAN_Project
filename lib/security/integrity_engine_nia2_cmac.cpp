@@ -146,9 +146,15 @@ security_result integrity_engine_nia2_cmac::verify_integrity(byte_buffer buf, ui
     logger.warning(v.begin(), v.end(), "Message input:");
     return result;
   }
+  logger.debug("Integrity check passed. count={}", count);
+  logger.debug("K_int: {}", k_128_int);
+  logger.debug("MAC: {}", m);
+  logger.debug(v.begin(), v.end(), "Message input:");
 
   // trim MAC from PDU
   result.buf.value().trim_tail(sec_mac_len);
+
+  logger.debug(result.buf.value().begin(), result.buf.value().end(), "Message output:");
 
   return result;
 }

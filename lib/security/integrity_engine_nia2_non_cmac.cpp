@@ -20,7 +20,7 @@ using namespace security;
 integrity_engine_nia2_non_cmac::integrity_engine_nia2_non_cmac(sec_128_key        k_128_int_,
                                                                uint8_t            bearer_id_,
                                                                security_direction direction_) :
-  k_128_int(k_128_int_), bearer_id(bearer_id_), direction(direction_)
+  k_128_int(k_128_int_), bearer_id(bearer_id_), direction(direction_), logger(srslog::fetch_basic_logger("SEC"))
 {
   std::array<uint8_t, 16> l;
 
@@ -149,11 +149,23 @@ security_result integrity_engine_nia2_non_cmac::verify_integrity(byte_buffer buf
   // verify MAC
   if (!std::equal(mac.value().begin(), mac.value().end(), m.begin(), m.end())) {
     result.buf = make_unexpected(security_error::integrity_failure);
+    span m_rx{mac.value().data(), sec_mac_len};
+    logger.warning("Integrity check failed. count={}", count);
+    logger.warning("K_int: {}", k_128_int);
+    logger.warning("MAC received: {:x}", m_rx);
+    logger.warning("MAC expected: {}", m);
+    logger.warning(v.begin(), v.end(), "Message input:");
     return result;
   }
+  logger.debug("Integrity check passed. count={}", count);
+  logger.debug("K_int: {}", k_128_int);
+  logger.debug("MAC: {}", m);
+  logger.debug(v.begin(), v.end(), "Message input:");
 
   // trim MAC from PDU
   result.buf.value().trim_tail(sec_mac_len);
+
+  logger.debug(result.buf.value().begin(), result.buf.value().end(), "Message output:");
 
   return result;
 }
