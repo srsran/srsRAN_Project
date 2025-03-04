@@ -125,8 +125,8 @@ inline uint8x16_t pack_neon_register_14b_big_endian(int16x8_t reg)
   int32x4_t iq_shr_s32 = vshlq_s32(reg_s32, rshift_mask_s32);
 
   // Mask 32bit words to keep only the 14 bits we are interested in.
-  const int32x4_t shl_mask_s32 = vcombine_s32(vcreate_s32(0x0fffc0000000ffff), vcreate_s16(0x0fffc0000000ffff));
-  const int32x4_t shr_mask_s32 = vcombine_s32(vcreate_s32(0x00003fff03fff000), vcreate_s16(0x00003fff03fff000));
+  const int32x4_t shl_mask_s32 = vcombine_s32(vcreate_s32(0x0fffc0000000ffff), vcreate_s32(0x0fffc0000000ffff));
+  const int32x4_t shr_mask_s32 = vcombine_s32(vcreate_s32(0x00003fff03fff000), vcreate_s32(0x00003fff03fff000));
   iq_shl_s32                   = vandq_s32(iq_shl_s32, shl_mask_s32);
   iq_shr_s32                   = vandq_s32(iq_shr_s32, shr_mask_s32);
 
