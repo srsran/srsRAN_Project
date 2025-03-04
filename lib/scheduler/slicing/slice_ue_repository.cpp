@@ -12,15 +12,32 @@
 
 using namespace srsran;
 
-slice_ue::slice_ue(ue& u_, ran_slice_id_t slice_id_) : u(u_), slice_id(slice_id_) {}
+slice_ue::slice_ue(ue& u_, ran_slice_id_t slice_id_) : u(u_), slice_id(slice_id_)
+{
+  u.dl_logical_channels().register_ran_slice(slice_id);
+}
 
 void slice_ue::add_logical_channel(lcid_t lcid, lcg_id_t lcg_id)
 {
   // Add LCID to DL slice.
-  u.dl_logical_channels().set_ran_slice(lcid, slice_id);
+  u.dl_logical_channels().set_lcid_ran_slice(lcid, slice_id);
 
   // Add LCG-ID to UL slice.
-  u.ul_logical_channels().set_ran_slice(lcg_id, slice_id);
+  u.ul_logical_channels().set_lcg_ran_slice(lcg_id, slice_id);
+}
+
+void slice_ue_repository::add_logical_channel(ue& u, lcid_t lcid, lcg_id_t lcg_id)
+{
+  if (lcid == LCID_SRB0) {
+    // SRB0 is never handled by slice scheduler.
+    return;
+  }
+
+  // Create UE entry if not created yet.
+  if (not ue_map.contains(u.ue_index)) {
+    add_ue(u);
+  }
+  ue_map[u.ue_index].add_logical_channel(lcid, lcg_id);
 }
 
 void slice_ue::rem_logical_channel(lcid_t lcid)
@@ -33,7 +50,7 @@ void slice_ue::rem_logical_channel(lcid_t lcid)
   }
 
   // Disconnect RAN slice from LCID.
-  dl_lc_mng.reset_ran_slice(lcid);
+  dl_lc_mng.reset_lcid_ran_slice(lcid);
 
   // If there are still other bearers in the slice, do not remove the LCG ID.
   lcg_id_t                        lcg_id_to_rem = get_lcg_id(lcid);
@@ -46,14 +63,36 @@ void slice_ue::rem_logical_channel(lcid_t lcid)
     }
   }
   if (to_destroy) {
-    u.ul_logical_channels().reset_ran_slice(lcg_id_to_rem);
+    u.ul_logical_channels().reset_lcg_ran_slice(lcg_id_to_rem);
   }
+}
+
+void slice_ue_repository::rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid)
+{
+  if (not ue_map.contains(ue_idx)) {
+    return;
+  }
+  ue_map[ue_idx].rem_logical_channel(lcid);
+
+  if (not ue_map[ue_idx].has_bearers_in_slice()) {
+    // If no more bearers active for this UE, remove it from the slice.
+    rem_ue(ue_idx);
+  }
+}
+
+void slice_ue_repository::rem_ue(du_ue_index_t ue_index)
+{
+  if (not ue_map.contains(ue_index)) {
+    return;
+  }
+  ue_map[ue_index].rem_logical_channels();
+  ue_map.erase(ue_index);
 }
 
 void slice_ue::rem_logical_channels()
 {
-  u.dl_logical_channels().deactivate(slice_id);
-  u.ul_logical_channels().deactivate(slice_id);
+  u.dl_logical_channels().deregister_ran_slice(slice_id);
+  u.ul_logical_channels().deregister_ran_slice(slice_id);
 }
 
 unsigned slice_ue::pending_ul_newtx_bytes() const

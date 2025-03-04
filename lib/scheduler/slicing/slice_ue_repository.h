@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../ue_context/ue.h"
+#include "srsran/adt/slotted_array.h"
 
 namespace srsran {
 
@@ -122,7 +123,49 @@ private:
   const ran_slice_id_t slice_id;
 };
 
-/// Container that store all UEs belonging to a slice.
-using slice_ue_repository = slotted_id_table<du_ue_index_t, slice_ue, MAX_NOF_DU_UES>;
+/// Container that store all UEs belonging to a RAN slice that are candidates for transmission.
+class slice_ue_repository
+{
+public:
+  slice_ue_repository(ran_slice_id_t slice_id_) : slice_id(slice_id_) {}
+
+  bool empty() const { return ue_map.empty(); }
+
+  size_t size() const { return ue_map.size(); }
+
+  /// Determine if at least one bearer of the given UE is currently managed by this slice.
+  bool contains(du_ue_index_t ue_index) const
+  {
+    return ue_map.contains(ue_index) and ue_map[ue_index].has_bearers_in_slice();
+  }
+
+  /// Determine if a (UE, LCID) tuple are managed by this slice.
+  bool contains(du_ue_index_t ue_idx, lcid_t lcid) const { return contains(ue_idx) and ue_map[ue_idx].contains(lcid); }
+
+  slice_ue&       operator[](du_ue_index_t ue_index) { return ue_map[ue_index]; }
+  const slice_ue& operator[](du_ue_index_t ue_index) const { return ue_map[ue_index]; }
+
+  void add_ue(ue& u) { ue_map.emplace(u.ue_index, u, slice_id); }
+
+  /// Add a new UE to list of UEs (if not exists) and a new (UE, LCID) to the list of bearers managed by this slice.
+  void add_logical_channel(ue& u, lcid_t lcid, lcg_id_t lcg_id);
+
+  /// Remove a (UE, LCID) from the list of bearers managed by this slice.
+  /// \remark UE is removed if all LCIDs of a UE are removed.
+  void rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid);
+
+  /// Remove UE from the list of managed UEs for this slice.
+  void rem_ue(du_ue_index_t ue_index);
+
+  auto begin() { return ue_map.begin(); }
+  auto begin() const { return ue_map.begin(); }
+  auto end() { return ue_map.end(); }
+  auto end() const { return ue_map.end(); }
+
+private:
+  const ran_slice_id_t slice_id;
+
+  slotted_id_table<du_ue_index_t, slice_ue, MAX_NOF_DU_UES> ue_map;
+};
 
 } // namespace srsran

@@ -32,23 +32,30 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
   // Default SRB slice.
   // NOTE: We set \c min_prb for default SRB slice to maximum nof. PRBs of a UE carrier to give maximum priority to this
   // slice.
-  slices.emplace_back(
-      SRB_RAN_SLICE_ID, cell_cfg, slice_rrm_policy_config{.min_prb = cell_max_rbs, .max_prb = cell_max_rbs});
-  slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index);
+  slices.emplace_back(SRB_RAN_SLICE_ID,
+                      cell_cfg,
+                      slice_rrm_policy_config{.min_prb = cell_max_rbs, .max_prb = cell_max_rbs},
+                      create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index));
   // Default DRB slice.
-  slices.emplace_back(DEFAULT_DRB_RAN_SLICE_ID, cell_cfg, slice_rrm_policy_config{.max_prb = cell_max_rbs});
-  slices.back().policy = create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index);
+  slices.emplace_back(DEFAULT_DRB_RAN_SLICE_ID,
+                      cell_cfg,
+                      slice_rrm_policy_config{.max_prb = cell_max_rbs},
+                      create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index));
   // NOTE: RAN slice IDs 0 and 1 are reserved for default SRB and default DRB slice respectively.
   ran_slice_id_t id_count{2};
   // Configured RRM policy members.
   for (const slice_rrm_policy_config& rrm : cell_cfg.rrm_policy_members) {
-    slices.emplace_back(id_count, cell_cfg, rrm);
     // Adjust maximum PRBs per slice based on the number of PRBs in a cell.
-    slices.back().inst.cfg.max_prb = std::min(slices.back().inst.cfg.max_prb, cell_max_rbs);
+    auto rrm_adjusted    = rrm;
+    rrm_adjusted.max_prb = std::min(rrm.max_prb, cell_max_rbs);
     // Set policy scheduler based on slice configuration.
     scheduler_ue_expert_config slice_scheduler_ue_expert_cfg{cell_cfg.expert_cfg.ue};
     slice_scheduler_ue_expert_cfg.strategy_cfg = rrm.policy_sched_cfg;
-    slices.back().policy = create_scheduler_strategy(slice_scheduler_ue_expert_cfg, cell_cfg.cell_index);
+    // Create custom RAN slice.
+    slices.emplace_back(id_count,
+                        cell_cfg,
+                        rrm_adjusted,
+                        create_scheduler_strategy(slice_scheduler_ue_expert_cfg, cell_cfg.cell_index));
     ++id_count;
   }
 }
@@ -148,10 +155,10 @@ void inter_slice_scheduler::rem_ue(du_ue_index_t ue_idx)
   // Note: We take the conservative approach of traversing all slices, because the current UE config might not match
   // the UE repositories inside each slice instance (e.g. in case of fallback or during reconfig).
   for (auto& slice : slices) {
-    if (slice.inst.contains(ue_idx)) {
+    if (slice.inst.get_ues().contains(ue_idx)) {
       get_policy(slice.inst.id).rem_ue(ue_idx);
     }
-    slice.inst.rem_ue(ue_idx);
+    slice.inst.get_ues().rem_ue(ue_idx);
   }
 }
 
@@ -172,10 +179,10 @@ void inter_slice_scheduler::add_impl(ue& u)
   const ue_configuration& ue_cfg = *u.ue_cfg_dedicated();
   for (logical_channel_config_ptr lc_cfg : *ue_cfg.logical_channels()) {
     ran_slice_instance& sl_inst = get_slice(*lc_cfg);
-    if (lc_cfg->lcid != LCID_SRB0 and not sl_inst.contains(u.ue_index)) {
+    if (lc_cfg->lcid != LCID_SRB0 and not sl_inst.get_ues().contains(u.ue_index)) {
       get_policy(sl_inst.id).add_ue(u.ue_index);
     }
-    sl_inst.add_logical_channel(u, lc_cfg->lcid, lc_cfg->lc_group);
+    sl_inst.get_ues().add_logical_channel(u, lc_cfg->lcid, lc_cfg->lc_group);
   }
 }
 
