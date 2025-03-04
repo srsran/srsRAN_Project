@@ -15,8 +15,7 @@
 #include "srsran/security/ciphering_engine.h"
 #include "srsran/security/security.h"
 
-namespace srsran {
-namespace security {
+namespace srsran::security {
 
 class ciphering_engine_nea1 final : public ciphering_engine
 {
@@ -30,7 +29,8 @@ private:
   sec_128_key        k_128_enc;
   uint8_t            bearer_id;
   security_direction direction;
+
+  srslog::basic_logger& logger;
 };
 
-} // namespace security
-} // namespace srsran
+} // namespace srsran::security
