@@ -296,19 +296,14 @@ publish matlab:
         ON_SCHEDULE: "true"
         CI_DESCRIPTION: Release
         NOTIFY_SLACK: "false"
-        SRSRAN_REPO_URL: https://${PUBLIC_PUSH_TOKEN}@github.com/${PUBLIC_REPO}.git
+        SRSRAN_REPO_URL: https://github.com/srsran/srsRAN_Project.git
         SRSRAN_COMMIT: main
-        DOCKER_BUILDER_VERSION: $DOCKER_BUILDER_VERSION
+        DOCKER_BUILDER_VERSION: latest
     - if: *on_public_release
       variables:
         <<: *matlab_release_var
   needs:
     - job: publish main
-    - job: builder version
-  inherit:
-    variables:
-      - PUBLIC_PUSH_TOKEN
-      - PUBLIC_REPO
   trigger:
     project: softwareradiosystems/srsgnb_matlab
     branch: master
