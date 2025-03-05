@@ -29,6 +29,9 @@ public:
   /// Returns UE C-RNTI.
   rnti_t crnti() const { return u.crnti; }
 
+  /// Returns the RAN slice ID.
+  ran_slice_id_t ran_slice_id() const { return slice_id; }
+
   /// Fetch UE carrier context managed by this slice for this UE.
   const ue_cell& get_cc() const { return ue_cc; }
 

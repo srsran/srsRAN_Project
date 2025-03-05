@@ -169,8 +169,8 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(du_cell_index_t     
       continue;
     }
 
-    ue_pdsch_grant  grant{&u, h.id()};
-    dl_alloc_result result = ue_alloc.allocate_dl_grant(cell_index, slice, grant);
+    // Perform allocation of PDCCH, PDSCH and UCI.
+    dl_alloc_result result = ue_alloc.allocate_retx_dl_grant(cell_index, ue_dl_retx_grant_request{u, h});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
@@ -219,8 +219,8 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(du_cell_index_t     
       continue;
     }
 
-    ue_pusch_grant  grant{&u, h.id()};
-    ul_alloc_result result = ue_alloc.allocate_ul_grant(cell_index, slice, grant);
+    // Allocate PDCCH and PUSCH.
+    ul_alloc_result result = ue_alloc.allocate_retx_ul_grant(cell_index, slice, ue_ul_retx_grant_request{u, h});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
@@ -355,10 +355,8 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(du_cell_index_t    
     }
 
     // Allocate DL grant.
-    dl_alloc_result result = ue_alloc.allocate_dl_grant(
-        cell_index,
-        slice,
-        ue_pdsch_grant{ue_candidate.ue, INVALID_HARQ_ID, ue_candidate.pending_bytes, max_rbs_per_grant});
+    dl_alloc_result result = ue_alloc.allocate_newtx_dl_grant(
+        cell_index, ue_dl_newtx_grant_request{*ue_candidate.ue, ue_candidate.pending_bytes, max_rbs_per_grant});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
@@ -429,11 +427,9 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(du_cell_index_t    
       break;
     }
 
-    // Allocate UL grant.
-    ul_alloc_result result = ue_alloc.allocate_ul_grant(
-        cell_index,
-        slice,
-        ue_pusch_grant{ue_candidate.ue, INVALID_HARQ_ID, ue_candidate.pending_bytes, max_rbs_per_grant});
+    // Allocate PDCCH and PUSCH for a new Tx.
+    ul_alloc_result result = ue_alloc.allocate_newtx_ul_grant(
+        cell_index, slice, ue_ul_newtx_grant_request{*ue_candidate.ue, ue_candidate.pending_bytes, max_rbs_per_grant});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.

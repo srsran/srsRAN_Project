@@ -20,24 +20,40 @@ namespace srsran {
 
 struct scheduler_ue_expert_config;
 
-/// Information relative to a UE PDSCH grant.
-struct ue_pdsch_grant {
-  const slice_ue* user;
-  harq_id_t       h_id;
-  /// Recommended nof. bytes to schedule. This field is not present/ignored in case of HARQ retransmission.
-  std::optional<unsigned> recommended_nof_bytes;
-  /// Maximum nof. RBs to allocate to the UE. This field is not present/ignored in case of HARQ retransmission.
+/// Request for a newTx DL grant allocation.
+struct ue_dl_newtx_grant_request {
+  /// UE to allocate.
+  const slice_ue& user;
+  /// Pending bytes to schedule.
+  unsigned pending_bytes;
+  /// Maximum number of RBs to allocate. This limit can be determined based on slicing or UE configuration.
   std::optional<unsigned> max_nof_rbs;
 };
 
-/// Information relative to a UE PUSCH grant.
-struct ue_pusch_grant {
-  const slice_ue* user;
-  harq_id_t       h_id;
-  /// Recommended nof. bytes to schedule. This field is not present/ignored in case of HARQ retransmission.
-  std::optional<unsigned> recommended_nof_bytes;
-  /// Maximum nof. RBs to allocate to the UE. This field is not present/ignored in case of HARQ retransmission.
+/// Request for a reTx DL grant allocation.
+struct ue_dl_retx_grant_request {
+  /// UE to allocate.
+  const slice_ue& user;
+  /// HARQ process to be retransmitted.
+  dl_harq_process_handle h_dl;
+};
+
+/// Request for a newTx UL grant allocation.
+struct ue_ul_newtx_grant_request {
+  /// UE to allocate.
+  const slice_ue& user;
+  /// Pending bytes to schedule.
+  unsigned pending_bytes;
+  /// Maximum number of RBs to allocate. This limit can be determined based on slicing or UE configuration.
   std::optional<unsigned> max_nof_rbs;
+};
+
+/// Request for a reTx UL grant allocation.
+struct ue_ul_retx_grant_request {
+  /// UE to allocate.
+  const slice_ue& user;
+  /// HARQ process to be retransmitted.
+  ul_harq_process_handle h_ul;
 };
 
 /// \brief Status of a UE grant allocation, and action for the scheduler policy to follow afterwards.
@@ -88,11 +104,21 @@ public:
 
   void slot_indication(slot_point sl);
 
-  dl_alloc_result
-  allocate_dl_grant(du_cell_index_t cell_index, const dl_ran_slice_candidate& slice, const ue_pdsch_grant& grant);
+  /// Allocates DL grant for a UE newTx.
+  dl_alloc_result allocate_newtx_dl_grant(du_cell_index_t cell_index, const ue_dl_newtx_grant_request& request);
 
-  ul_alloc_result
-  allocate_ul_grant(du_cell_index_t cell_index, const ul_ran_slice_candidate& slice, const ue_pusch_grant& grant);
+  /// Allocates DL grant for a UE reTx.
+  dl_alloc_result allocate_retx_dl_grant(du_cell_index_t cell_index, const ue_dl_retx_grant_request& request);
+
+  /// Allocates UL grant for a UE newTx.
+  ul_alloc_result allocate_newtx_ul_grant(du_cell_index_t                  cell_index,
+                                          const ul_ran_slice_candidate&    slice,
+                                          const ue_ul_newtx_grant_request& request);
+
+  /// Allocates UL grant for a UE reTx.
+  ul_alloc_result allocate_retx_ul_grant(du_cell_index_t                 cell_index,
+                                         const ul_ran_slice_candidate&   slice,
+                                         const ue_ul_retx_grant_request& request);
 
   /// \brief Called at the end of a slot to process the allocations that took place and make some final adjustments.
   ///
@@ -105,6 +131,20 @@ private:
     pdcch_resource_allocator* pdcch_sched;
     uci_allocator*            uci_alloc;
     cell_resource_allocator*  cell_alloc;
+  };
+
+  struct common_ue_dl_grant_request {
+    const slice_ue*                       user;
+    std::optional<dl_harq_process_handle> h_dl;
+    std::optional<unsigned>               recommended_nof_bytes;
+    std::optional<unsigned>               max_nof_rbs;
+  };
+
+  struct common_ue_ul_grant_request {
+    const slice_ue*                       user;
+    std::optional<ul_harq_process_handle> h_ul;
+    std::optional<unsigned>               recommended_nof_bytes;
+    std::optional<unsigned>               max_nof_rbs;
   };
 
   struct dl_grant_params {
@@ -127,12 +167,17 @@ private:
     sched_helper::mcs_prbs_selection recommended_mcs_prbs;
   };
 
-  dl_grant_params get_dl_grant_params(du_cell_index_t               cell_index,
-                                      const dl_ran_slice_candidate& slice,
-                                      const ue_pdsch_grant&         grant_params);
+  dl_alloc_result allocate_dl_grant(du_cell_index_t cell_index, const common_ue_dl_grant_request& grant);
 
-  ul_grant_params
-  get_ul_grant_params(du_cell_index_t cell_index, const ul_ran_slice_candidate& slice, const ue_pusch_grant& grant);
+  ul_alloc_result allocate_ul_grant(du_cell_index_t                   cell_index,
+                                    const ul_ran_slice_candidate&     slice,
+                                    const common_ue_ul_grant_request& grant);
+
+  dl_grant_params get_dl_grant_params(du_cell_index_t cell_index, const common_ue_dl_grant_request& grant_params);
+
+  ul_grant_params get_ul_grant_params(du_cell_index_t                   cell_index,
+                                      const ul_ran_slice_candidate&     slice,
+                                      const common_ue_ul_grant_request& grant);
 
   expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(ue_cell& ue_cc, const search_space_info& ss_info);
 
