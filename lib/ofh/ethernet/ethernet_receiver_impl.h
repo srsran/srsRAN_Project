@@ -50,12 +50,12 @@ private:
   void receive();
 
 private:
-  srslog::basic_logger&                  logger;
-  task_executor&                         executor;
-  std::reference_wrapper<frame_notifier> notifier;
-  int                                    socket_fd = -1;
-  std::atomic<receiver_status>           rx_status{receiver_status::running};
-  ethernet_rx_buffer_pool                buffer_pool;
+  srslog::basic_logger&        logger;
+  task_executor&               executor;
+  frame_notifier*              notifier;
+  int                          socket_fd = -1;
+  std::atomic<receiver_status> rx_status{receiver_status::running};
+  ethernet_rx_buffer_pool      buffer_pool;
 };
 
 } // namespace ether

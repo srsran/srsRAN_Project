@@ -24,13 +24,8 @@ public:
   tx_window_checker(srslog::basic_logger& logger_,
                     unsigned              sector_id_,
                     uint32_t              advance_time_in_symbols_,
-                    uint32_t              nof_symbols_,
-                    uint32_t              numerology_) :
-    logger(logger_),
-    sector_id(sector_id_),
-    advance_time_in_symbols(advance_time_in_symbols_),
-    nof_symbols(nof_symbols_),
-    numerology(numerology_)
+                    uint32_t              nof_symbols_) :
+    logger(logger_), sector_id(sector_id_), advance_time_in_symbols(advance_time_in_symbols_), nof_symbols(nof_symbols_)
   {
   }
 
@@ -45,7 +40,7 @@ public:
   bool is_late(slot_point slot) const
   {
     slot_symbol_point ota_symbol_point(
-        numerology, count_val.load(std::memory_order::memory_order_relaxed), nof_symbols);
+        slot.numerology(), count_val.load(std::memory_order::memory_order_relaxed), nof_symbols);
 
     // Use symbol 0 as the worst case for the resource grid slot.
     slot_symbol_point rg_point(slot, 0, nof_symbols);
@@ -72,7 +67,6 @@ private:
   const unsigned        sector_id;
   const uint32_t        advance_time_in_symbols;
   const uint32_t        nof_symbols;
-  const uint32_t        numerology;
   std::atomic<uint32_t> count_val;
 };
 

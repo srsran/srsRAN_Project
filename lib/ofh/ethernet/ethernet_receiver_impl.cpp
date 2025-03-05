@@ -44,7 +44,7 @@ receiver_impl::receiver_impl(const std::string&    interface,
                              bool                  is_promiscuous_mode_enabled,
                              task_executor&        executor_,
                              srslog::basic_logger& logger_) :
-  logger(logger_), executor(executor_), notifier(dummy_notifier), buffer_pool(BUFFER_SIZE)
+  logger(logger_), executor(executor_), notifier(&dummy_notifier), buffer_pool(BUFFER_SIZE)
 {
   socket_fd = ::socket(AF_PACKET, SOCK_RAW, htons(ECPRI_ETH_TYPE));
   if (socket_fd < 0) {
@@ -86,7 +86,7 @@ void receiver_impl::start(frame_notifier& notifier_)
 {
   logger.info("Starting the ethernet frame receiver");
 
-  notifier = std::ref(notifier_);
+  notifier = &notifier_;
 
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
@@ -167,6 +167,6 @@ void receiver_impl::receive()
   }
   buffer.resize(nof_bytes);
 
-  notifier.get().on_new_frame(unique_rx_buffer(std::move(buffer)));
+  notifier->on_new_frame(unique_rx_buffer(std::move(buffer)));
   ofh_tracer << trace_event("ofh_receiver", tp);
 }

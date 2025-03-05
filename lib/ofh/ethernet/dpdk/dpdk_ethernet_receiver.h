@@ -47,11 +47,11 @@ private:
   void receive();
 
 private:
-  srslog::basic_logger&                  logger;
-  task_executor&                         executor;
-  std::reference_wrapper<frame_notifier> notifier;
-  std::shared_ptr<dpdk_port_context>     port_ctx;
-  std::atomic<receiver_status>           rx_status{receiver_status::running};
+  srslog::basic_logger&              logger;
+  task_executor&                     executor;
+  frame_notifier*                    notifier;
+  std::shared_ptr<dpdk_port_context> port_ctx;
+  std::atomic<receiver_status>       rx_status{receiver_status::running};
 };
 
 } // namespace ether

@@ -9,6 +9,8 @@
  */
 
 #include "ofh_uplink_request_handler_impl.h"
+#include "helpers.h"
+#include "srsran/ofh/ofh_error_notifier.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
@@ -17,6 +19,20 @@
 
 using namespace srsran;
 using namespace ofh;
+
+namespace {
+/// Open Fronthaul error notifier dummy implementation.
+class error_notifier_dummy : public error_notifier
+{
+public:
+  void on_late_downlink_message(const error_context& context) override {}
+  void on_late_uplink_message(const error_context& context) override {}
+};
+
+} // namespace
+
+/// Dummy error notifier for the uplink request handler construction.
+static error_notifier_dummy dummy_err_notifier;
 
 /// Determines and returns Open Fronthaul filter index type given the PRACH preamble info and associated context.
 static filter_index_type get_prach_cplane_filter_index(const prach_buffer_context&       context,
@@ -37,6 +53,17 @@ static filter_index_type get_prach_cplane_filter_index(const prach_buffer_contex
   return filter_index_type::ul_prach_preamble_short;
 }
 
+/// Returns timing parameters with only UL parameters copied from the input, others set to zero.
+static tx_window_timing_parameters extract_ul_cp_timing(const tx_window_timing_parameters tx_timing_params)
+{
+  return tx_window_timing_parameters{.sym_cp_dl_start = 0,
+                                     .sym_cp_dl_end   = 0,
+                                     .sym_cp_ul_start = tx_timing_params.sym_cp_ul_start,
+                                     .sym_cp_ul_end   = tx_timing_params.sym_cp_ul_end,
+                                     .sym_up_dl_start = 0,
+                                     .sym_up_dl_end   = 0};
+}
+
 uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_handler_impl_config&  config,
                                                          uplink_request_handler_impl_dependencies&& dependencies) :
   logger(*dependencies.logger),
@@ -45,10 +72,18 @@ uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_ha
   tdd_config(config.tdd_config),
   prach_eaxc(config.prach_eaxc),
   ul_eaxc(config.ul_data_eaxc),
+  window_checker(*dependencies.logger,
+                 config.sector,
+                 calculate_nof_symbols_before_ota(config.cp,
+                                                  config.scs,
+                                                  config.ul_processing_time,
+                                                  extract_ul_cp_timing(config.tx_timing_params)),
+                 get_nsymb_per_slot(config.cp)),
   ul_slot_repo(std::move(dependencies.ul_slot_repo)),
   ul_prach_repo(std::move(dependencies.ul_prach_repo)),
   data_flow(std::move(dependencies.data_flow)),
-  frame_pool(std::move(dependencies.frame_pool))
+  frame_pool(std::move(dependencies.frame_pool)),
+  err_notifier(&dummy_err_notifier)
 {
   srsran_assert(ul_slot_repo, "Invalid uplink repository");
   srsran_assert(ul_prach_repo, "Invalid PRACH repository");
@@ -111,6 +146,16 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   logger.debug("Registering PRACH context entry for slot '{}' and sector#{}", context.slot, context.sector);
 
   frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
+
+  if (window_checker.is_late(context.slot)) {
+    err_notifier->on_late_uplink_message({context.slot, context.sector});
+
+    logger.warning(
+        "Sector#{}: dropped late PRACH request in slot '{}'. No OFH data will be requested from an RU for this slot",
+        context.sector,
+        context.slot);
+    return;
+  }
 
   // Sampling rate defining the \f$T_s = 1/(\Delta f_{ref} \times N_{f,ref})\f$ parameter, see 3GPP TS38.211,
   // clause 4.1.
@@ -175,6 +220,16 @@ void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_con
   logger.debug("Registering UL context entry for slot '{}' and sector#{}", context.slot, context.sector);
 
   frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
+
+  if (window_checker.is_late(context.slot)) {
+    err_notifier->on_late_uplink_message({context.slot, context.sector});
+
+    logger.warning(
+        "Sector#{}: dropped late uplink request in slot '{}'. No OFH data will be requested from an RU for this slot",
+        context.sector,
+        context.slot);
+    return;
+  }
 
   data_flow_cplane_type_1_context df_context;
   df_context.slot         = context.slot;
