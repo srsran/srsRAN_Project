@@ -83,19 +83,6 @@ builder version:
   needs:
     - job: download srsran
 
-load retina variables:
-  extends: .load retina variables
-  rules:
-    - if: $ON_MR
-    - if: $ON_WEB
-    - if: $ON_API
-    - if: $ON_SCHEDULE
-    - if: $CI_DESCRIPTION
-  variables:
-    SRSRANDIR: *srsran_dir
-  needs:
-    - job: download srsran
-
 ##################
 # Build template #
 ##################
@@ -205,15 +192,3 @@ load retina variables:
     when: always
     expire_in: 1 day
   cache: []
-
-################
-# E2E template #
-################
-.e2e-run:
-  extends: .e2e-run-template
-  stage: e2e
-  variables:
-    SRSRANDIR: *srsran_dir
-  needs:
-    - job: download srsran
-    - job: load retina variables

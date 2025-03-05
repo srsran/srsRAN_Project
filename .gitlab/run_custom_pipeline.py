@@ -22,7 +22,7 @@ except ImportError:
     sys.exit(1)
 
 
-def _parse_args() -> Tuple[str, str, str, str, str, int, bool]:
+def _parse_args() -> Tuple[str, str, str, str, int, bool]:
     parser = argparse.ArgumentParser(description="Run a custom pipeline")
     parser.add_argument(
         "--token",
@@ -58,7 +58,7 @@ def _parse_args() -> Tuple[str, str, str, str, str, int, bool]:
         "--dryrun", action="store_true", help="Search the job but skip pipeline creation (default: false)"
     )
     args = parser.parse_args()
-    return args.token, args.project, args.branch, args.plugin_branch, args.job.strip(), args.timeout, args.dryrun
+    return args.token, args.project, args.branch, args.job.strip(), args.timeout, args.dryrun
 
 
 def _get_project(token: str, instance: str, project: str) -> Project:
@@ -121,10 +121,9 @@ def main():
     Entrypoint runner.
     """
     try:
-        token, project_name, branch, plugin_branch, job, timeout, dryrun = _parse_args()
+        token, project_name, branch, job, timeout, dryrun = _parse_args()
         project = _get_project(token=token, instance=GITLAB_URL, project=project_name)
         variable_dict = _search_job_by_name(project=project, job_name=job, timeout=timeout)
-        variable_dict["PLUGIN_BRANCH"] = plugin_branch
         _create_pipeline(project=project, branch=branch, variables=variable_dict, dryrun=dryrun)
     except KeyboardInterrupt:
         print()

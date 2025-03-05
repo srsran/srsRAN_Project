@@ -72,11 +72,11 @@
             ],
             "allowed_to_push": [
                 {
-                    "id": 125247413,
-                    "access_level": 0,
-                    "access_level_description": "No one",
+                    "id": 179427095,
+                    "access_level": 40,
+                    "access_level_description": "$CODEBOT_USERNAME",
                     "group_id": null,
-                    "user_id": null,
+                    "user_id": $CODEBOT_USER_ID,
                     "deploy_key_id": null
                 }
             ],

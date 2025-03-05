@@ -55,6 +55,7 @@ load release variables:
         echo "PUBLIC_BRANCH=main" >> repo.env
         TOKEN_VAR_NAME="PUBLIC_${KEY}_TOKEN"
         echo "PUBLIC_PUSH_TOKEN=${!TOKEN_VAR_NAME}" >> repo.env
+        echo "CI_PLUGIN_COMMIT_SHA=$(cat .gitlab/ci/plugin_version.txt)" >> repo.env
       else
         echo "PRIVATE_BRANCH=agpl_main" >> repo.env
         echo "PUBLIC_NAME=srsRAN Project" >> repo.env
@@ -160,7 +161,7 @@ update private branch:
     - |
       git submodule init
       git submodule update
-      git submodule foreach 'git fetch origin && git checkout $(git remote show origin | sed -n "/HEAD branch/s/.*: //p") && git pull origin $(git remote show origin | sed -n "/HEAD branch/s/.*: //p")'
+      git submodule foreach "git fetch origin && git checkout ${CI_PLUGIN_COMMIT_SHA} && git pull origin ${CI_PLUGIN_COMMIT_SHA}"
       git commit -a --amend --no-edit
     - |
       if [ "$HEADERS" = "true" ]; then
@@ -506,9 +507,11 @@ srsran image:
     # Include plugins
     - |
       git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
-      git submodule set-branch --branch ${MR_PLUGIN_REF} ${PLUGIN_PATH}
       cd ${PLUGIN_PATH}
-      PLUGIN_COMMIT=$(git rev-parse --short=8 HEAD)
+      git fetch origin ${CI_PLUGIN_COMMIT_SHA} > /dev/null
+      git config advice.detachedHead false
+      git checkout ${CI_PLUGIN_COMMIT_SHA}
+      PLUGIN_COMMIT=$(echo $CI_PLUGIN_COMMIT_SHA | head -c8)
       cd ${CI_PROJECT_DIR}
     # Set variables
     - |
@@ -548,6 +551,8 @@ srsran image:
         TAG: arm64
         PLATFORM: arm64
   needs:
+    - job: load release variables
+      artifacts: true  
     - job: basic build final branch
       optional: false
       artifacts: true

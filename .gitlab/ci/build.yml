@@ -54,6 +54,9 @@ variables:
     - job: trigger builder
       optional: true
       artifacts: false
+    - job: get plugin commit
+      optional: false
+      artifacts: true
   script:
     - &srs_functions |
       CMAKE_FLAGS_CMD=""
@@ -69,7 +72,6 @@ variables:
       echo "UHD_VERSION=${UHD_VERSION}"
       echo "DPDK_VERSION=${DPDK_VERSION}"
       echo "SRS_TARGET=${SRS_TARGET}"
-      echo "PLUGIN_BRANCH=${PLUGIN_BRANCH}"
 
       build_srsgnb() {
         target="$1"
@@ -190,9 +192,16 @@ variables:
 
         exit $ret
       }
-      if [[ $CI_MERGE_REQUEST_LABELS != *"ci-no-plugin"* && -n $PLUGIN_BRANCH ]]; then
+      if [[ -n $CI_PLUGIN_COMMIT_SHA ]] && [[ $CI_DISABLE_PLUGINS != "True" ]]; then
+        echo "#########################"
+        echo "#### Plugin checkout ####"
+        echo "#########################"
         git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
-        git submodule set-branch --branch ${PLUGIN_BRANCH} ${PLUGIN_PATH}
+        cd ${PLUGIN_PATH}
+        git fetch origin ${CI_PLUGIN_COMMIT_SHA} > /dev/null
+        git config advice.detachedHead false
+        git checkout ${CI_PLUGIN_COMMIT_SHA}
+        cd ${CI_PROJECT_DIR}
       fi
     - build_srsgnb "${SRS_TARGET}"
     - launch_tests
@@ -247,7 +256,6 @@ variables:
       rm ${CI_PROJECT_DIR}/build/apps/gnb_split_6/gnb
     - launch_tests
   variables:
-    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: clang
     CMAKE_BUILD_TYPE: RelWithDebInfo
@@ -259,7 +267,6 @@ variables:
 .smoke tsan:
   extends: .build_and_unit
   variables:
-    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.10
     COMPILER: clang
     CMAKE_BUILD_TYPE: Debug
@@ -272,7 +279,6 @@ variables:
 .smoke archlinux:
   extends: .build_and_unit
   variables:
-    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: archlinux-latest
     ENABLE_WERROR: "False"
     COMPILER: gcc
@@ -285,7 +291,6 @@ variables:
 .smoke dpdk:
   extends: .build_and_unit
   variables:
-    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-22.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -300,7 +305,6 @@ variables:
 .smoke valgrind:
   extends: .build_and_unit
   variables:
-    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Debug
@@ -312,7 +316,6 @@ variables:
 .smoke avx512:
   extends: .build_and_unit
   variables:
-    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -324,7 +327,6 @@ variables:
 .smoke arm:
   extends: .build_and_unit
   variables:
-    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -336,7 +338,6 @@ variables:
 .smoke arm neon:
   extends: .build_and_unit
   variables:
-    PLUGIN_BRANCH: $MR_PLUGIN_REF
     OS: ubuntu-24.04
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
@@ -528,7 +529,9 @@ intermediate commits cached:
     - if: $CI_MERGE_REQUEST_LABELS =~ /ci-no-cache/
       when: never
     - if: $ON_MR
-  timeout: 2 hour
+  timeout: 2 hours
+  variables:
+    CI_DISABLE_PLUGINS: "True"
   script:
     - *srs_functions
     - git config advice.detachedHead false

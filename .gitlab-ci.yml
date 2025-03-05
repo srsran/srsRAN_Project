@@ -55,23 +55,87 @@ variables:
   SLACK_CHANNEL_FAIL: "#ci_gnb"
   SLACK_CHANNEL_INFO_MSG: "#ci_gnb_verbose"
   AUTOREBASER_PRS_IN_QUEUE: 1
-  MR_PLUGIN_REF: main
 
 ################################################################################
-## CI
+## CI MR
 ################################################################################
-job cleaner:
-  extends: .job cleaner
-  timeout: 4h
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
 
-pr reminder:
-  extends: .pr reminder
+.blocked MRs:
+  image: alpine/curl:8.12.1
+  retry: 2
+  variables:
+    GIT_LFS_SKIP_SMUDGE: 1
+  before_script:
+    - apk add --no-cache jq
+    - |
+      REPO_PLUGIN_COMMIT_SHA=$(cat .gitlab/ci/plugin_version.txt)
+    - |
+      MR_JSON=$(
+        curl -s -H "PRIVATE-TOKEN: $CODEBOT_TOKEN" \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/blockees" | \
+        jq --argjson PLUGIN_PROJECT_ID "$PLUGIN_PROJECT_ID" -r '
+          .[] 
+          | select(.blocked_merge_request.project_id == $PLUGIN_PROJECT_ID) 
+          | select(.blocked_merge_request.target_branch == "main") 
+          | .blocked_merge_request'
+      )
+      echo $MR_JSON | jq
+    - |
+      if test $(echo $MR_JSON | jq '.id' | wc -l) -gt 1; then
+        echo "Found multiple plugin MRs blocked by this one! Only 1 is allowed"
+        exit 1
+      fi
+
+get plugin commit:
+  extends: .blocked MRs
+  stage: ci
   rules:
-    - if: $NOTIFY_SLACK != "true"
+    - if: $CI_DISABLE_PLUGINS
       when: never
-    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
+    - if: $ON_MR
+    - if: $ON_WEB
+    - if: $ON_API
+    - if: $ON_TAG
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+    - if: $CI_DESCRIPTION =~ /Weekly/
+    - if: $CI_DESCRIPTION =~ /Alternative OSs/
+  script:
+    - |
+      CI_PLUGIN_COMMIT_SHA=$(echo $MR_JSON | jq -r '.sha')
+      if [[ -z $CI_PLUGIN_COMMIT_SHA ]]; then
+        CI_PLUGIN_COMMIT_SHA=$REPO_PLUGIN_COMMIT_SHA
+      fi
+    - echo "CI_PLUGIN_COMMIT_SHA=$CI_PLUGIN_COMMIT_SHA" >> info.env
+    - cat info.env
+  artifacts:
+    reports:
+      dotenv: info.env
+  needs: []
+
+validate blocked MRs:
+  extends: .blocked MRs
+  stage: .post
+  rules:
+    - if: $ON_MR
+  script:
+    - |
+      TO_VALIDATE_PLUGIN_COMMIT_SHA=$(
+        echo $MR_JSON | jq -r '
+          select(.draft==false) 
+          | select(.work_in_progress==false) 
+          | select(.merge_when_pipeline_succeeds==true) 
+          | select(.has_conflicts==false) 
+          | select(.blocking_discussions_resolved==true) 
+          | select(.detailed_merge_status=="merge_request_blocked") 
+          | .sha'
+      )
+      if [[ -z $TO_VALIDATE_PLUGIN_COMMIT_SHA ]]; then
+        TO_VALIDATE_PLUGIN_COMMIT_SHA=$REPO_PLUGIN_COMMIT_SHA
+      fi
+    - test "$TO_VALIDATE_PLUGIN_COMMIT_SHA" = "$CI_PLUGIN_COMMIT_SHA"
+  dependencies:
+    - get plugin commit
 
 trigger builder:
   stage: ci
@@ -111,6 +175,23 @@ trigger docker:
     strategy: depend
   variables:
     PY_DIR: docker/metrics_server
+
+################################################################################
+## CI Scheduled pipelines
+################################################################################
+
+job cleaner:
+  extends: .job cleaner
+  timeout: 4h
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
+
+pr reminder:
+  extends: .pr reminder
+  rules:
+    - if: $NOTIFY_SLACK != "true"
+      when: never
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
 
 matlab nightly:
   stage: ci
@@ -191,6 +272,9 @@ full-code-format:
     - job: trigger builder
       optional: true
       artifacts: false
+    - job: get plugin commit
+      optional: false
+      artifacts: true
   variables:
     ANALYZER: ""
     ANALYZER_ARGS: ""
@@ -215,9 +299,12 @@ full-code-format:
       -*lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs
       -*lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs" >/tmp/codechecker_skip
     - |
-      if [[ $CI_MERGE_REQUEST_LABELS != *"ci-no-plugin"* && -n $PLUGIN_BRANCH ]]; then
-        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
-        git submodule set-branch --branch ${PLUGIN_BRANCH} ${PLUGIN_PATH}
+      if [[ -n $CI_PLUGIN_COMMIT_SHA ]]; then
+        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH} >/dev/null 2>&1
+        cd ${PLUGIN_PATH}
+        git fetch origin ${CI_PLUGIN_COMMIT_SHA} >/dev/null 2>&1
+        git checkout ${CI_PLUGIN_COMMIT_SHA} >/dev/null 2>&1
+        cd ${CI_PROJECT_DIR}
       fi
     - |
       export CC=/usr/bin/clang
@@ -261,7 +348,6 @@ clang-tidy:
       when: manual
       allow_failure: false
   variables:
-    PLUGIN_BRANCH: $MR_PLUGIN_REF
     ANALYZER: clang-tidy
     ANALYZER_ARGS: --analyzer-config clang-tidy:take-config-from-directory=true --tidy-config .clang-tidy
     ARTIFACT_EXTRA_PATH: "/index.html"

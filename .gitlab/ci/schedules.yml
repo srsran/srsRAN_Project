@@ -37,10 +37,6 @@ Nightly Build Unit Tests Plugin:
       key: SLACK_CHANNEL_OK
       value: "#ci_gnb"
       raw: false
-    - variable_type: env_var
-      key: PLUGIN_BRANCH
-      value: "main"
-      raw: false
 
 Nightly E2E Tests Plugin:
   cron: "00 22 * * 1-5"
@@ -58,10 +54,6 @@ Nightly E2E Tests Plugin:
     - variable_type: env_var
       key: SLACK_CHANNEL_OK
       value: "#ci_gnb"
-      raw: false
-    - variable_type: env_var
-      key: PLUGIN_BRANCH
-      value: "main"
       raw: false
 
 Weekly:
@@ -81,10 +73,6 @@ Weekly:
       key: SLACK_CHANNEL_OK
       value: "#ci_gnb"
       raw: false
-    - variable_type: env_var
-      key: PLUGIN_BRANCH
-      value: "main"
-      raw: false
 
 Alternative OSs:
   cron: "00 10 * * 6"
@@ -103,10 +91,6 @@ Alternative OSs:
       key: SLACK_CHANNEL_OK
       value: "#ci_gnb"
       raw: false
-    - variable_type: env_var
-      key: PLUGIN_BRANCH
-      value: "main"
-      raw: false
 
 Nightly Build Unit Tests OpenSource:
   cron: "45 23 * * 0"
@@ -116,6 +100,10 @@ Nightly Build Unit Tests OpenSource:
     - variable_type: env_var
       key: CI_DESCRIPTION
       value: "Nightly Build Unit Tests OpenSource"
+      raw: false
+    - variable_type: env_var
+      key: CI_DISABLE_PLUGINS
+      value: "True"
       raw: false
     - variable_type: env_var
       key: NOTIFY_SLACK
@@ -134,6 +122,10 @@ Nightly E2E Tests OpenSource:
     - variable_type: env_var
       key: CI_DESCRIPTION
       value: "Nightly E2E Tests OpenSource"
+      raw: false
+    - variable_type: env_var
+      key: CI_DISABLE_PLUGINS
+      value: "True"
       raw: false
     - variable_type: env_var
       key: NOTIFY_SLACK
