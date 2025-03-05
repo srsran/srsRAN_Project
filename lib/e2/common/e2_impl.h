@@ -32,7 +32,8 @@ class e2_event_manager;
 class e2_impl final : public e2_interface
 {
 public:
-  e2_impl(const e2ap_configuration& cfg_,
+  e2_impl(srslog::basic_logger&     logger_,
+          const e2ap_configuration& cfg_,
           e2ap_e2agent_notifier&    agent_notifier_,
           timer_factory             timers_,
           e2_connection_client&     e2_client_,

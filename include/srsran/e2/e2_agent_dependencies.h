@@ -28,6 +28,7 @@ struct e2sm_module {
 
 /// O-RAN E2 Agent dependencies.
 struct e2_agent_dependencies {
+  srslog::basic_logger*    logger;
   e2ap_configuration       cfg;
   e2_connection_client*    e2_client;
   timer_factory*           timers;

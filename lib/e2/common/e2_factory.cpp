@@ -36,8 +36,14 @@ std::unique_ptr<e2_interface> srsran::create_e2(e2ap_configuration&      e2ap_cf
                                                 e2sm_manager&            e2sm_mngr_,
                                                 task_executor&           task_exec_)
 {
-  auto e2 = std::make_unique<e2_impl>(
-      e2ap_cfg_, agent_notifier_, timers_, e2_client_, e2_subscription_mngr_, e2sm_mngr_, task_exec_);
+  auto e2 = std::make_unique<e2_impl>(srslog::fetch_basic_logger("E2"),
+                                      e2ap_cfg_,
+                                      agent_notifier_,
+                                      timers_,
+                                      e2_client_,
+                                      e2_subscription_mngr_,
+                                      e2sm_mngr_,
+                                      task_exec_);
   return e2;
 }
 
@@ -49,8 +55,9 @@ std::unique_ptr<e2_agent> srsran::create_e2_du_agent(const e2ap_configuration&  
                                                      timer_factory                  timers_,
                                                      task_executor&                 e2_exec_)
 {
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2-DU");
   e2_agent_dependencies dependencies;
+  dependencies.logger    = &logger;
   dependencies.cfg       = e2ap_cfg_;
   dependencies.e2_client = &e2_client_;
   dependencies.timers    = &timers_;
@@ -95,8 +102,9 @@ std::unique_ptr<e2_agent> srsran::create_e2_cu_up_agent(const e2ap_configuration
                                                         timer_factory             timers_,
                                                         task_executor&            e2_exec_)
 {
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2-CU-UP");
   e2_agent_dependencies dependencies;
+  dependencies.logger    = &logger;
   dependencies.cfg       = e2ap_cfg_;
   dependencies.e2_client = &e2_client_;
   dependencies.timers    = &timers_;
@@ -132,8 +140,9 @@ std::unique_ptr<e2_agent> srsran::create_e2_cu_cp_agent(const e2ap_configuration
                                                         timer_factory             timers_,
                                                         task_executor&            e2_exec_)
 {
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2");
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2-CU-CP");
   e2_agent_dependencies dependencies;
+  dependencies.logger    = &logger;
   dependencies.cfg       = e2ap_cfg_;
   dependencies.e2_client = &e2_client_;
   dependencies.timers    = &timers_;

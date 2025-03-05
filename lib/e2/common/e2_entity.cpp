@@ -17,10 +17,7 @@ using namespace srsran;
 using namespace asn1::e2ap;
 
 e2_entity::e2_entity(e2_agent_dependencies&& dependencies) :
-  logger(srslog::fetch_basic_logger("E2")),
-  cfg(dependencies.cfg),
-  task_exec(*dependencies.task_exec),
-  main_ctrl_loop(128)
+  logger(*dependencies.logger), cfg(dependencies.cfg), task_exec(*dependencies.task_exec), main_ctrl_loop(128)
 {
   e2sm_mngr         = std::make_unique<e2sm_manager>(logger);
   subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
@@ -32,7 +29,8 @@ e2_entity::e2_entity(e2_agent_dependencies&& dependencies) :
     subscription_mngr->add_ran_function_oid(ran_func_id, oid);
   }
 
-  e2ap = std::make_unique<e2_impl>(cfg,
+  e2ap = std::make_unique<e2_impl>(logger,
+                                   cfg,
                                    *this,
                                    *dependencies.timers,
                                    *dependencies.e2_client,

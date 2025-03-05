@@ -19,14 +19,15 @@ using namespace srsran;
 using namespace asn1::e2ap;
 using namespace asn1;
 
-e2_impl::e2_impl(const e2ap_configuration& cfg_,
+e2_impl::e2_impl(srslog::basic_logger&     logger_,
+                 const e2ap_configuration& cfg_,
                  e2ap_e2agent_notifier&    agent_notifier_,
                  timer_factory             timers_,
                  e2_connection_client&     e2_client_,
                  e2_subscription_manager&  subscription_mngr_,
                  e2sm_manager&             e2sm_mngr_,
                  task_executor&            task_exec_) :
-  logger(srslog::fetch_basic_logger("E2")),
+  logger(logger_),
   cfg(cfg_),
   timers(timers_),
   subscription_proc(subscription_mngr_),
@@ -76,7 +77,7 @@ async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_
 async_task<e2_setup_response_message> e2_impl::start_initial_e2_setup_routine()
 {
   e2_setup_request_message request;
-  fill_asn1_e2ap_setup_request(request.request, cfg, e2sm_mngr);
+  fill_asn1_e2ap_setup_request(logger, request.request, cfg, e2sm_mngr);
 
   for (const auto& ran_function : request.request->ran_functions_added) {
     auto&    ran_function_item = ran_function.value().ran_function_item();

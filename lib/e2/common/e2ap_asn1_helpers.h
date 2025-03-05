@@ -26,11 +26,12 @@
 
 namespace srsran {
 
-inline void
-fill_ran_function_item(asn1::e2ap::e2setup_request_s& setup, const std::string& ran_oid, e2sm_interface* e2_iface)
+inline void fill_ran_function_item(srslog::basic_logger&          logger,
+                                   asn1::e2ap::e2setup_request_s& setup,
+                                   const std::string&             ran_oid,
+                                   e2sm_interface*                e2_iface)
 {
   using namespace asn1::e2ap;
-  srslog::basic_logger&                                         logger = srslog::fetch_basic_logger("E2");
   asn1::protocol_ie_single_container_s<ran_function_item_ies_o> ran_func_item;
   ran_func_item.load_info_obj(ASN1_E2AP_ID_RAN_FUNCTION_ITEM);
   auto& ran_function_item = ran_func_item->ran_function_item();
@@ -48,14 +49,14 @@ fill_ran_function_item(asn1::e2ap::e2setup_request_s& setup, const std::string& 
   }
 }
 
-inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
+inline void fill_asn1_e2ap_setup_request(srslog::basic_logger&          logger,
+                                         asn1::e2ap::e2setup_request_s& setup,
                                          const e2ap_configuration&      e2ap_config,
                                          e2sm_manager&                  e2sm_mngr)
 {
   using namespace asn1::e2ap;
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2");
-  e2_message            e2_msg;
-  init_msg_s&           initmsg = e2_msg.pdu.set_init_msg();
+  e2_message  e2_msg;
+  init_msg_s& initmsg = e2_msg.pdu.set_init_msg();
   initmsg.load_info_obj(ASN1_E2AP_ID_E2SETUP);
   setup = initmsg.value.e2setup_request();
 
@@ -85,7 +86,7 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
     logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
     e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface) {
-      fill_ran_function_item(setup, ran_oid, e2_iface);
+      fill_ran_function_item(logger, setup, ran_oid, e2_iface);
     } else {
       logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
     }
@@ -95,7 +96,7 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
     logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
     e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface) {
-      fill_ran_function_item(setup, ran_oid, e2_iface);
+      fill_ran_function_item(logger, setup, ran_oid, e2_iface);
     } else {
       logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
     }
