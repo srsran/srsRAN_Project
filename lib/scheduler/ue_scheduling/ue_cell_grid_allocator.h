@@ -105,10 +105,14 @@ public:
   void slot_indication(slot_point sl);
 
   /// Allocates DL grant for a UE newTx.
-  dl_alloc_result allocate_newtx_dl_grant(du_cell_index_t cell_index, const ue_dl_newtx_grant_request& request);
+  dl_alloc_result allocate_newtx_dl_grant(du_cell_index_t                  cell_index,
+                                          const dl_ran_slice_candidate&    slice,
+                                          const ue_dl_newtx_grant_request& request);
 
   /// Allocates DL grant for a UE reTx.
-  dl_alloc_result allocate_retx_dl_grant(du_cell_index_t cell_index, const ue_dl_retx_grant_request& request);
+  dl_alloc_result allocate_retx_dl_grant(du_cell_index_t                 cell_index,
+                                         const dl_ran_slice_candidate&   slice,
+                                         const ue_dl_retx_grant_request& request);
 
   /// Allocates UL grant for a UE newTx.
   ul_alloc_result allocate_newtx_ul_grant(du_cell_index_t                  cell_index,
@@ -167,19 +171,23 @@ private:
     sched_helper::mcs_prbs_selection recommended_mcs_prbs;
   };
 
-  dl_alloc_result allocate_dl_grant(du_cell_index_t cell_index, const common_ue_dl_grant_request& grant);
+  dl_alloc_result allocate_dl_grant(du_cell_index_t                   cell_index,
+                                    const dl_ran_slice_candidate&     slice,
+                                    const common_ue_dl_grant_request& grant);
 
   ul_alloc_result allocate_ul_grant(du_cell_index_t                   cell_index,
                                     const ul_ran_slice_candidate&     slice,
                                     const common_ue_ul_grant_request& grant);
 
-  dl_grant_params get_dl_grant_params(du_cell_index_t cell_index, const common_ue_dl_grant_request& grant_params);
+  dl_grant_params get_dl_grant_params(du_cell_index_t                   cell_index,
+                                      const dl_ran_slice_candidate&     slice,
+                                      const common_ue_dl_grant_request& grant_params);
 
   ul_grant_params get_ul_grant_params(du_cell_index_t                   cell_index,
                                       const ul_ran_slice_candidate&     slice,
                                       const common_ue_ul_grant_request& grant);
 
-  expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(ue_cell& ue_cc, const search_space_info& ss_info);
+  expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(const ue_cell& ue_cc, const search_space_info& ss_info);
 
   expected<uci_allocation, alloc_status>
   alloc_uci(ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pdsch_td_res_index);
@@ -205,9 +213,6 @@ private:
   srslog::basic_logger& logger;
 
   slotted_array<cell_t, MAX_NOF_DU_CELLS> cells;
-
-  // List of slots at which there is no PDSCH space for further allocations.
-  static_vector<slot_point, SCHEDULER_MAX_K0> slots_with_no_pdsch_space;
 };
 
 } // namespace srsran

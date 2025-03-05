@@ -132,12 +132,14 @@ protected:
 
   void allocate_dl_newtx_grant(const ue_dl_newtx_grant_request& grant)
   {
-    alloc.allocate_newtx_dl_grant(to_du_cell_index(0), grant);
+    dl_ran_slice_candidate slice{slice_inst, current_slot, rrm_policy.max_prb};
+    alloc.allocate_newtx_dl_grant(to_du_cell_index(0), slice, grant);
   }
 
   void allocate_dl_retx_grant(const ue_dl_retx_grant_request& grant)
   {
-    alloc.allocate_retx_dl_grant(to_du_cell_index(0), grant);
+    dl_ran_slice_candidate slice{slice_inst, current_slot, rrm_policy.max_prb};
+    alloc.allocate_retx_dl_grant(to_du_cell_index(0), slice, grant);
   }
 
   ul_alloc_result allocate_ul_newtx_grant(const ue_ul_newtx_grant_request& grant)

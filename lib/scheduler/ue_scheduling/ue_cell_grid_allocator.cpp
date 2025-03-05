@@ -38,21 +38,12 @@ void ue_cell_grid_allocator::add_cell(du_cell_index_t           cell_index,
   cells.emplace(cell_index, cell_t{cell_index, &pdcch_sched, &uci_alloc, &cell_alloc});
 }
 
-void ue_cell_grid_allocator::slot_indication(slot_point sl)
-{
-  // Clear slots which are in the past relative to current slot indication.
-  auto* pdsch_slot = slots_with_no_pdsch_space.begin();
-  while (pdsch_slot != slots_with_no_pdsch_space.end()) {
-    if (*pdsch_slot < sl) {
-      pdsch_slot = slots_with_no_pdsch_space.erase(pdsch_slot);
-      continue;
-    }
-    ++pdsch_slot;
-  }
-}
+void ue_cell_grid_allocator::slot_indication(slot_point sl) {}
 
 ue_cell_grid_allocator::dl_grant_params
-ue_cell_grid_allocator::get_dl_grant_params(du_cell_index_t cell_index, const common_ue_dl_grant_request& sched_params)
+ue_cell_grid_allocator::get_dl_grant_params(du_cell_index_t                   cell_index,
+                                            const dl_ran_slice_candidate&     slice,
+                                            const common_ue_dl_grant_request& sched_params)
 {
   const slice_ue& slice_ue = *sched_params.user;
   srsran_sanity_check(ues.contains(slice_ue.ue_index()), "Invalid UE candidate index");
@@ -72,7 +63,7 @@ ue_cell_grid_allocator::get_dl_grant_params(du_cell_index_t cell_index, const co
   srsran_sanity_check(ue_cc.is_pdcch_enabled(pdcch_alloc.slot), "DL is not active in the PDCCH slot");
 
   // Create PDSCH param candidate search object.
-  ue_pdsch_alloc_param_candidate_searcher candidates{u, cell_index, h_dl, pdcch_alloc.slot, slots_with_no_pdsch_space};
+  ue_pdsch_alloc_param_candidate_searcher candidates{u, cell_index, h_dl, pdcch_alloc.slot, slice.get_slot_tx()};
   if (candidates.is_empty()) {
     // The conditions for a new PDSCH allocation for this UE were not met (e.g. lack of available SearchSpaces).
     return {alloc_status::skip_ue};
@@ -86,15 +77,6 @@ ue_cell_grid_allocator::get_dl_grant_params(du_cell_index_t cell_index, const co
 
     // Fetch PDSCH resource grid allocator.
     cell_slot_resource_allocator& pdsch_alloc = get_res_alloc(cell_index)[pdsch_td_cfg.k0];
-
-    // Check if there is space in PDSCH resource grid.
-    const bool is_pdsch_full =
-        std::find(slots_with_no_pdsch_space.begin(), slots_with_no_pdsch_space.end(), pdsch_alloc.slot) !=
-        slots_with_no_pdsch_space.end();
-    if (is_pdsch_full) {
-      // Try next candidate.
-      continue;
-    }
 
     // Verify only one PDSCH exists for the same RNTI in the same slot, and that the PDSCHs are in the same order as
     // PDCCHs.
@@ -322,7 +304,7 @@ ue_cell_grid_allocator::get_ul_grant_params(du_cell_index_t                   ce
   return {alloc_status::skip_ue};
 }
 
-expected<pdcch_dl_information*, alloc_status> ue_cell_grid_allocator::alloc_dl_pdcch(ue_cell&                 ue_cc,
+expected<pdcch_dl_information*, alloc_status> ue_cell_grid_allocator::alloc_dl_pdcch(const ue_cell&           ue_cc,
                                                                                      const search_space_info& ss_info)
 {
   const du_cell_index_t cell_index = ue_cc.cell_index;
@@ -374,24 +356,29 @@ ue_cell_grid_allocator::alloc_uci(ue_cell& ue_cc, const search_space_info& ss_in
 }
 
 dl_alloc_result ue_cell_grid_allocator::allocate_newtx_dl_grant(du_cell_index_t                  cell_index,
+                                                                const dl_ran_slice_candidate&    slice,
                                                                 const ue_dl_newtx_grant_request& request)
 {
   return allocate_dl_grant(
-      cell_index, common_ue_dl_grant_request{&request.user, std::nullopt, request.pending_bytes, request.max_nof_rbs});
+      cell_index,
+      slice,
+      common_ue_dl_grant_request{&request.user, std::nullopt, request.pending_bytes, request.max_nof_rbs});
 }
 
 dl_alloc_result ue_cell_grid_allocator::allocate_retx_dl_grant(du_cell_index_t                 cell_index,
+                                                               const dl_ran_slice_candidate&   slice,
                                                                const ue_dl_retx_grant_request& request)
 {
-  return allocate_dl_grant(cell_index,
-                           common_ue_dl_grant_request{&request.user, request.h_dl, std::nullopt, std::nullopt});
+  return allocate_dl_grant(
+      cell_index, slice, common_ue_dl_grant_request{&request.user, request.h_dl, std::nullopt, std::nullopt});
 }
 
 dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(du_cell_index_t                   cell_index,
+                                                          const dl_ran_slice_candidate&     slice,
                                                           const common_ue_dl_grant_request& grant)
 {
   // Derive DL grant parameters and verify conditions for allocation.
-  dl_grant_params grant_params = get_dl_grant_params(cell_index, grant);
+  dl_grant_params grant_params = get_dl_grant_params(cell_index, slice, grant);
   if (grant_params.status != alloc_status::success) {
     return {grant_params.status};
   }
@@ -417,7 +404,6 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(du_cell_index_t       
 
   const crb_bitmap used_crbs = pdsch_alloc.dl_res_grid.used_crbs(scs, grant_params.crb_lims, pdsch_td_cfg.symbols);
   if (used_crbs.all()) {
-    slots_with_no_pdsch_space.push_back(pdsch_alloc.slot);
     return {alloc_status::skip_slot};
   }
 
