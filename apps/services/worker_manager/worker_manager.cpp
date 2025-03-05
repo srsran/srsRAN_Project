@@ -250,8 +250,8 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
     }
 
     // Pre-initialize TLS to avoid doing it in the critical path.
-    auto* exec_to_init = exec_mng.executors().at("slot_exec#" + cell_id_str);
-    bool  result       = exec_to_init->defer([&timer, &exec_to_init]() {
+    task_executor* exec_to_init = exec_mng.executors().at("slot_exec#" + cell_id_str);
+    bool           result       = exec_to_init->defer([&timer, exec_to_init]() {
       // Pre-initialize byte buffer pool to avoid doing it in the critical path.
       init_byte_buffer_segment_pool_tls();
       // Pre-initialize timer queues to avoid doing it in the critical path.
