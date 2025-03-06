@@ -29,6 +29,7 @@ set(SOURCES
         resource_usage/rapl_msr_energy_reader_impl.cpp
         resource_usage/power_consumption.cpp
         resource_usage/resource_usage_utils.cpp
+        rate_limiting/token_bucket.cpp
         signal_handling.cpp
         sysinfo.cpp
         timers.cpp
