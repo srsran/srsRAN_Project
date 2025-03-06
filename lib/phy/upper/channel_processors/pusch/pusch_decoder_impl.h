@@ -69,8 +69,7 @@ public:
     decoder_pool(std::move(decoder_pool_)),
     crc_set(std::move(crc_set_)),
     executor(executor_),
-    softbits_buffer(pusch_constants::get_max_codeword_size(nof_prb, nof_layers).value()),
-    cb_stats(MAX_NOF_SEGMENTS)
+    softbits_buffer(pusch_constants::get_max_codeword_size(nof_prb, nof_layers).value())
   {
     srsran_assert(segmenter, "Invalid segmenter.");
     srsran_assert(decoder_pool, "Invalid codeblock decoder pool.");
@@ -174,8 +173,8 @@ private:
   std::atomic<unsigned> cb_task_counter;
   /// Counts the number of CB available for decoding.
   unsigned available_cb_counter;
-  /// Enqueues code block decoder statistics.
-  concurrent_queue<unsigned, concurrent_queue_policy::locking_mpsc, concurrent_queue_wait_policy::sleep> cb_stats;
+  /// Number of iterations for each of the codeblocks.
+  std::array<unsigned, MAX_NOF_SEGMENTS> cb_stats;
   /// Number of UL-SCH codeword softbits. If set, the decoder will start decoding codeblocks as they become available.
   std::optional<units::bits> nof_ulsch_softbits;
   /// Number of codeblocks in the current codeword.

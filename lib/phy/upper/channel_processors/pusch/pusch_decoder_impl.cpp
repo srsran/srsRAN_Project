@@ -344,10 +344,10 @@ void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
 
     if (nof_iters.has_value()) {
       // If successful decoding, flag the CRC, record number of iterations and copy bits to the TB buffer.
-      cb_crcs[cb_id] = true;
-      cb_stats.push_blocking(nof_iters.value());
+      cb_crcs[cb_id]  = true;
+      cb_stats[cb_id] = nof_iters.value();
     } else {
-      cb_stats.push_blocking(current_config.nof_ldpc_iterations);
+      cb_stats[cb_id] = current_config.nof_ldpc_iterations;
     }
 
     if (cb_task_counter.fetch_sub(1) == 1) {
@@ -387,11 +387,7 @@ void pusch_decoder_impl::join_and_notify()
   stats.ldpc_decoder_stats.reset();
 
   // Calculate statistics.
-  std::optional<unsigned> cb_nof_iter = cb_stats.try_pop();
-  while (cb_nof_iter.has_value()) {
-    stats.ldpc_decoder_stats.update(cb_nof_iter.value());
-    cb_nof_iter = cb_stats.try_pop();
-  }
+  std::for_each_n(cb_stats.begin(), nof_cbs, [&stats](unsigned element) { stats.ldpc_decoder_stats.update(element); });
 
   if (nof_cbs == 1) {
     // When only one codeblock, the CRC of codeblock and transport block are the same.

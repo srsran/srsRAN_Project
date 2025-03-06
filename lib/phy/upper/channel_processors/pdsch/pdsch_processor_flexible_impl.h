@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include "srsran/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
-#include "srsran/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_buffer.h"
 #include "srsran/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_block_processor.h"
