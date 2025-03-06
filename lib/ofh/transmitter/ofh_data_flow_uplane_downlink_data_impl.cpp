@@ -31,7 +31,7 @@ static uplane_message_params generate_dl_ofh_user_parameters(slot_point         
   uplane_message_params params;
   params.direction                     = data_direction::downlink;
   params.slot                          = slot;
-  params.filter_index                  = srsran::ofh::filter_index_type::standard_channel_filter;
+  params.filter_index                  = filter_index_type::standard_channel_filter;
   params.start_prb                     = start_prb;
   params.nof_prb                       = nof_prb;
   params.symbol_id                     = symbol_id;
@@ -159,7 +159,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
 
       ofh_tracer << instant_trace_event{"ofh_uplane_symbol", instant_trace_event::cpu_scope::thread};
 
-      const uplane_message_params& up_params =
+      uplane_message_params up_params =
           generate_dl_ofh_user_parameters(context.slot, symbol_id, fragment_start_prb, fragment_nof_prbs, compr_params);
 
       unsigned used_size = enqueue_section_type_1_message_symbol(

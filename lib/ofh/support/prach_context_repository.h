@@ -231,7 +231,7 @@ public:
   {
     std::lock_guard<std::mutex> lock(mutex);
 
-    const auto result = entry(slot).try_getting_complete_prach_buffer();
+    auto result = entry(slot).try_getting_complete_prach_buffer();
 
     // Clear the entry if the pop was a success.
     if (result.has_value()) {
@@ -252,7 +252,7 @@ public:
       return make_unexpected(default_error_t());
     }
 
-    const auto result = context.get_context_information();
+    auto result = context.get_context_information();
     context           = {};
 
     return result;

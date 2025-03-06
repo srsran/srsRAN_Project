@@ -411,7 +411,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, peek_prach_filter_index)
   auto value = uplane_peeker::peek_filter_index(packet);
 
   ASSERT_TRUE(value.has_value());
-  ASSERT_EQ(filter_index_type::ul_prach_preamble_1p25khz, value.value<>());
+  ASSERT_EQ(filter_index_type::ul_prach_preamble_1p25khz, value.value());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, peek_slot_symbol_point)

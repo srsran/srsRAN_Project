@@ -87,14 +87,14 @@ void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_poi
   }
 
   slot_point  slot    = symbol_point.get_slot() - 1;
-  const auto& context = prach_repo->pop_prach_buffer(slot);
+  auto context = prach_repo->pop_prach_buffer(slot);
 
   // Nothing to do.
   if (!context.has_value()) {
     return;
   }
 
-  const auto& ctx_value = context.value<>();
+  const auto& ctx_value = context.value();
 
   notifier->on_new_prach_window_data(ctx_value.context, *ctx_value.buffer);
 

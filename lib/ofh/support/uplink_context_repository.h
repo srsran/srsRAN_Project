@@ -205,7 +205,7 @@ public:
 
     auto& result = entry(slot, symbol);
 
-    // Symbol does not exists. Do nothing.
+    // Symbol does not exist. Do nothing.
     if (result.empty()) {
       return make_unexpected(default_error_t{});
     }

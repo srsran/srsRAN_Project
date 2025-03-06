@@ -179,11 +179,11 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
   span<uint8_t>        buffer       = frame_buffer.data();
 
   // Build the Open Fronthaul control message. Only one port supported.
-  units::bytes  ether_hdr_size  = eth_builder->get_header_size();
-  units::bytes  ecpri_hdr_size  = ecpri_builder->get_header_size(ecpri::message_type::rt_control_data);
-  units::bytes  offset          = ether_hdr_size + ecpri_hdr_size;
-  span<uint8_t> ofh_buffer      = span<uint8_t>(buffer).last(buffer.size() - offset.value());
-  const auto&   ofh_ctrl_params = generate_section1_control_parameters(
+  units::bytes                    ether_hdr_size = eth_builder->get_header_size();
+  units::bytes                    ecpri_hdr_size = ecpri_builder->get_header_size(ecpri::message_type::rt_control_data);
+  units::bytes                    offset         = ether_hdr_size + ecpri_hdr_size;
+  span<uint8_t>                   ofh_buffer     = span<uint8_t>(buffer).last(buffer.size() - offset.value());
+  cplane_section_type1_parameters ofh_ctrl_params = generate_section1_control_parameters(
       context, ru_nof_prbs, (direction == data_direction::downlink) ? dl_compr_params : ul_compr_params);
   unsigned bytes_written = cp_builder->build_dl_ul_radio_channel_message(ofh_buffer, ofh_ctrl_params);
 
@@ -239,11 +239,12 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
   span<uint8_t>        buffer       = frame_buffer.data();
 
   // Build the Open Fronthaul control message. Only one port supported.
-  units::bytes  ether_hdr_size  = eth_builder->get_header_size();
-  units::bytes  ecpri_hdr_size  = ecpri_builder->get_header_size(ecpri::message_type::rt_control_data);
-  units::bytes  offset          = ether_hdr_size + ecpri_hdr_size;
-  span<uint8_t> ofh_buffer      = buffer.last(buffer.size() - offset.value());
-  const auto&   ofh_ctrl_params = generate_prach_control_parameters(context, prach_compr_params, ru_nof_prbs);
+  units::bytes                    ether_hdr_size = eth_builder->get_header_size();
+  units::bytes                    ecpri_hdr_size = ecpri_builder->get_header_size(ecpri::message_type::rt_control_data);
+  units::bytes                    offset         = ether_hdr_size + ecpri_hdr_size;
+  span<uint8_t>                   ofh_buffer     = buffer.last(buffer.size() - offset.value());
+  cplane_section_type3_parameters ofh_ctrl_params =
+      generate_prach_control_parameters(context, prach_compr_params, ru_nof_prbs);
 
   logger.debug(
       "Sector#{}: generated a PRACH request for eaxc '{}', slot '{}': numSymbols={}, startSym={}, start_re={}, "

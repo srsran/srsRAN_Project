@@ -90,11 +90,10 @@ bool ofh_uplane_fragment_size_calculator::calculate_fragment_size(unsigned& frag
   return false;
 }
 
-unsigned
-ofh_uplane_fragment_size_calculator::calculate_nof_segments(units::bytes                              frame_size,
-                                                            unsigned                                  nof_prbs,
-                                                            const srsran::ofh::ru_compression_params& compr_params,
-                                                            units::bytes                              headers_size)
+unsigned ofh_uplane_fragment_size_calculator::calculate_nof_segments(units::bytes                 frame_size,
+                                                                     unsigned                     nof_prbs,
+                                                                     const ru_compression_params& compr_params,
+                                                                     units::bytes                 headers_size)
 {
   units::bytes prb_size              = get_prb_data_size(compr_params);
   units::bytes frame_size_data       = frame_size - headers_size;

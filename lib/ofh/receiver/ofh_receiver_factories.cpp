@@ -27,31 +27,30 @@ static std::unique_ptr<uplane_message_decoder> create_uplane_decoder(const recei
                                                                      const ru_compression_params& compr_params)
 {
   // Compressors.
-  std::array<std::unique_ptr<ofh::iq_decompressor>, ofh::NOF_COMPRESSION_TYPES_SUPPORTED> decompr;
-  for (unsigned i = 0; i != ofh::NOF_COMPRESSION_TYPES_SUPPORTED; ++i) {
-    decompr[i] = create_iq_decompressor(static_cast<ofh::compression_type>(i), logger);
+  std::array<std::unique_ptr<iq_decompressor>, NOF_COMPRESSION_TYPES_SUPPORTED> decompr;
+  for (unsigned i = 0; i != NOF_COMPRESSION_TYPES_SUPPORTED; ++i) {
+    decompr[i] = create_iq_decompressor(static_cast<compression_type>(i), logger);
   }
 
   unsigned nof_prbs_ru =
       get_max_Nprb(bs_channel_bandwidth_to_MHz(receiver_cfg.ru_operating_bw), receiver_cfg.scs, frequency_range::FR1);
 
   // Open FrontHaul decoder.
-  return (receiver_cfg.is_uplink_static_compr_hdr_enabled)
-             ? ofh::create_static_compr_method_ofh_user_plane_packet_decoder(
-                   logger,
-                   receiver_cfg.scs,
-                   receiver_cfg.cp,
-                   nof_prbs_ru,
-                   receiver_cfg.sector,
-                   create_iq_decompressor_selector(std::move(decompr)),
-                   compr_params)
-             : ofh::create_dynamic_compr_method_ofh_user_plane_packet_decoder(
-                   logger,
-                   receiver_cfg.scs,
-                   receiver_cfg.cp,
-                   nof_prbs_ru,
-                   receiver_cfg.sector,
-                   create_iq_decompressor_selector(std::move(decompr)));
+  return (receiver_cfg.is_uplink_static_compr_hdr_enabled) ? create_static_compr_method_ofh_user_plane_packet_decoder(
+                                                                 logger,
+                                                                 receiver_cfg.scs,
+                                                                 receiver_cfg.cp,
+                                                                 nof_prbs_ru,
+                                                                 receiver_cfg.sector,
+                                                                 create_iq_decompressor_selector(std::move(decompr)),
+                                                                 compr_params)
+                                                           : create_dynamic_compr_method_ofh_user_plane_packet_decoder(
+                                                                 logger,
+                                                                 receiver_cfg.scs,
+                                                                 receiver_cfg.cp,
+                                                                 nof_prbs_ru,
+                                                                 receiver_cfg.sector,
+                                                                 create_iq_decompressor_selector(std::move(decompr)));
 }
 
 static std::unique_ptr<data_flow_uplane_uplink_prach>
