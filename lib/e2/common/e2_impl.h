@@ -85,6 +85,10 @@ private:
   /// \param[in] msg The received ric subscription delete request message.
   void handle_ric_subscription_delete_request(const asn1::e2ap::ric_sub_delete_request_s& msg);
 
+  /// \brief Notify about the reception of a E2 Connection Update message.
+  /// \param[in] msg The received E2 Connection Update message.
+  void handle_e2_connection_update(const asn1::e2ap::e2conn_upd_s& msg);
+
   /// \brief handle e2 setup response message from the ric interface.
   /// @param[in] msg  The received e2 setup response message.
   void handle_e2_setup_response(const e2_setup_response_message& msg);
