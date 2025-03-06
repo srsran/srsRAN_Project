@@ -343,6 +343,8 @@ ue_cell_grid_allocator::alloc_uci(ue_cell& ue_cc, const search_space_info& ss_in
 
 dl_alloc_result ue_cell_grid_allocator::allocate_newtx_dl_grant(const ue_dl_newtx_grant_request& request)
 {
+  srsran_sanity_check(not request.max_nof_rbs.has_value() and request.max_nof_rbs.value() > 0,
+                      "Invalid max number of RBs");
   return allocate_dl_grant(common_ue_dl_grant_request{
       request.pdsch_slot, &request.user, std::nullopt, request.pending_bytes, request.max_nof_rbs});
 }
@@ -400,11 +402,6 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_gra
     n_prbs = std::min(n_prbs, expert_cfg.pdsch_nof_rbs.stop());
     n_prbs = std::max(n_prbs, ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.start());
     n_prbs = std::min(n_prbs, ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.stop());
-
-    if (n_prbs == 0) {
-      logger.debug("ue={} rnti={} PDSCH allocation skipped. Cause: UE's CQI=0 ", fmt::underlying(u.ue_index), u.crnti);
-      return {alloc_status::skip_ue};
-    }
   }
 
   crb_interval crbs = rb_helper::find_empty_interval_of_length(used_crbs, n_prbs, 0);
@@ -627,6 +624,8 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_gra
 
 ul_alloc_result ue_cell_grid_allocator::allocate_newtx_ul_grant(const ue_ul_newtx_grant_request& request)
 {
+  srsran_sanity_check(not request.max_nof_rbs.has_value() and request.max_nof_rbs.value() > 0,
+                      "Invalid max number of RBs");
   return allocate_ul_grant(common_ue_ul_grant_request{
       request.pusch_slot, &request.user, std::nullopt, request.pending_bytes, request.max_nof_rbs});
 }
