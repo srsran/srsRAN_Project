@@ -16,21 +16,19 @@
 namespace srsran {
 
 class pdcch_resource_allocator;
-class uci_allocator;
 class scheduler_policy;
+class ue_repository;
 
 class intra_slice_scheduler
 {
 public:
   intra_slice_scheduler(const scheduler_ue_expert_config& expert_cfg_,
-                        ue_repository&                    ues_,
+                        ue_repository&                    ues,
+                        pdcch_resource_allocator&         pdcch_alloc,
+                        uci_allocator&                    uci_alloc,
+                        cell_resource_allocator&          cell_alloc,
+                        cell_harq_manager&                cell_harqs_,
                         srslog::basic_logger&             logger_);
-
-  void add_cell(du_cell_index_t           cell_index,
-                pdcch_resource_allocator& pdcch_sched,
-                uci_allocator&            uci_alloc,
-                cell_resource_allocator&  cell_alloc,
-                cell_harq_manager&        cell_harqs);
 
   /// Reset context in preparation for new slot.
   void slot_indication(slot_point sl_tx);
@@ -39,86 +37,50 @@ public:
   void post_process_results();
 
   /// Schedule DL grants for a given slice candidate.
-  void dl_sched(slot_point             pdcch_slot,
-                du_cell_index_t        cell_index,
-                dl_ran_slice_candidate slice,
-                scheduler_policy&      dl_policy);
+  void dl_sched(slot_point pdcch_slot, dl_ran_slice_candidate slice, scheduler_policy& dl_policy);
 
   /// Schedule UL grants for a given slice candidate.
-  void ul_sched(slot_point             pdcch_slot,
-                du_cell_index_t        cell_index,
-                ul_ran_slice_candidate slice,
-                scheduler_policy&      dl_policy);
+  void ul_sched(slot_point pdcch_slot, ul_ran_slice_candidate slice, scheduler_policy& dl_policy);
 
 private:
-  /// Context of a given cell.
-  struct cell_t {
-    du_cell_index_t           cell_index;
-    pdcch_resource_allocator* pdcch_sched;
-    uci_allocator*            uci_alloc;
-    cell_resource_allocator*  cell_alloc;
-    cell_harq_manager*        cell_harqs;
-  };
-
   /// Determines whether a UE can be DL scheduled in a given slot.
-  bool can_allocate_pdsch(slot_point      sl_tx,
-                          slot_point      sl_pdsch,
-                          du_cell_index_t cell_index,
-                          const slice_ue& u,
-                          const ue_cell&  ue_cc) const;
+  bool can_allocate_pdsch(slot_point sl_tx, slot_point sl_pdsch, const slice_ue& u, const ue_cell& ue_cc) const;
 
   /// Determines whether a UE can be UL scheduled in a given slot.
-  bool can_allocate_pusch(slot_point      pdcch_slot,
-                          slot_point      pusch_slot,
-                          du_cell_index_t cell_index,
-                          const slice_ue& u,
-                          const ue_cell&  ue_cc) const;
+  bool can_allocate_pusch(slot_point pdcch_slot, slot_point pusch_slot, const slice_ue& u, const ue_cell& ue_cc) const;
 
-  std::optional<ue_newtx_candidate> create_newtx_dl_candidate(slot_point      pdcch_slot,
-                                                              slot_point      pdsch_slot,
-                                                              du_cell_index_t cell_index,
-                                                              const slice_ue& u) const;
+  std::optional<ue_newtx_candidate>
+  create_newtx_dl_candidate(slot_point pdcch_slot, slot_point pdsch_slot, const slice_ue& u) const;
 
-  std::optional<ue_newtx_candidate> create_newtx_ul_candidate(slot_point      pdcch_slot,
-                                                              slot_point      pusch_slot,
-                                                              du_cell_index_t cell_index,
-                                                              const slice_ue& u) const;
+  std::optional<ue_newtx_candidate>
+  create_newtx_ul_candidate(slot_point pdcch_slot, slot_point pusch_slot, const slice_ue& u) const;
 
-  void prepare_newtx_dl_candidates(du_cell_index_t               cell_index,
-                                   const dl_ran_slice_candidate& slice,
-                                   scheduler_policy&             dl_policy);
+  void prepare_newtx_dl_candidates(const dl_ran_slice_candidate& slice, scheduler_policy& dl_policy);
 
-  void prepare_newtx_ul_candidates(du_cell_index_t               cell_index,
-                                   const ul_ran_slice_candidate& slice,
-                                   scheduler_policy&             dl_policy);
+  void prepare_newtx_ul_candidates(const ul_ran_slice_candidate& slice, scheduler_policy& dl_policy);
 
-  unsigned schedule_dl_retx_candidates(du_cell_index_t               cell_index,
-                                       const dl_ran_slice_candidate& slice,
-                                       unsigned                      max_ue_grants_to_alloc);
+  unsigned schedule_dl_retx_candidates(const dl_ran_slice_candidate& slice, unsigned max_ue_grants_to_alloc);
 
-  unsigned schedule_ul_retx_candidates(du_cell_index_t               cell_index,
-                                       const ul_ran_slice_candidate& slice,
-                                       unsigned                      max_ue_grants_to_alloc);
+  unsigned schedule_ul_retx_candidates(const ul_ran_slice_candidate& slice, unsigned max_ue_grants_to_alloc);
 
-  unsigned schedule_dl_newtx_candidates(du_cell_index_t         cell_index,
-                                        dl_ran_slice_candidate& slice,
+  unsigned schedule_dl_newtx_candidates(dl_ran_slice_candidate& slice,
                                         scheduler_policy&       dl_policy,
                                         unsigned                max_ue_grants_to_alloc);
 
-  unsigned schedule_ul_newtx_candidates(du_cell_index_t         cell_index,
-                                        ul_ran_slice_candidate& slice,
+  unsigned schedule_ul_newtx_candidates(ul_ran_slice_candidate& slice,
                                         scheduler_policy&       ul_policy,
                                         unsigned                max_ue_grants_to_alloc);
 
-  unsigned max_pdschs_to_alloc(slot_point pdcch_slot, const dl_ran_slice_candidate& slice, du_cell_index_t cell_index);
+  unsigned max_pdschs_to_alloc(slot_point pdcch_slot, const dl_ran_slice_candidate& slice);
 
-  unsigned max_puschs_to_alloc(slot_point pdcch_slot, const ul_ran_slice_candidate& slice, du_cell_index_t cell_index);
+  unsigned max_puschs_to_alloc(slot_point pdcch_slot, const ul_ran_slice_candidate& slice);
 
   const scheduler_ue_expert_config& expert_cfg;
+  const cell_resource_allocator&    cell_alloc;
+  cell_harq_manager&                cell_harqs;
   srslog::basic_logger&             logger;
 
-  slotted_id_vector<du_cell_index_t, cell_t> cells;
-
+  /// Handler of grid allocations.
   ue_cell_grid_allocator ue_alloc;
 
   slot_point last_sl_tx;

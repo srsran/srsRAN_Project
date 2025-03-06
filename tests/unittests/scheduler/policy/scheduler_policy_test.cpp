@@ -54,13 +54,12 @@ protected:
       return cell_cfg_list.emplace(to_du_cell_index(0), std::make_unique<cell_configuration>(sched_cfg, msg)).get();
     }()),
     slice_sched(cell_cfg, ues),
-    intra_slice_sched(cell_cfg.expert_cfg.ue, ues, logger)
+    intra_slice_sched(cell_cfg.expert_cfg.ue, ues, pdcch_alloc, uci_alloc, res_grid, cell_harqs, logger)
   {
     logger.set_level(srslog::basic_levels::debug);
     srslog::init();
 
     cfg_pool.add_cell(msg);
-    intra_slice_sched.add_cell(to_du_cell_index(0), pdcch_alloc, uci_alloc, res_grid, cell_harqs);
   }
 
   ~base_scheduler_policy_test() { srslog::flush(); }
@@ -80,16 +79,12 @@ protected:
 
     if (cell_cfg.is_dl_enabled(next_slot)) {
       while (auto dl_slice_candidate = slice_sched.get_next_dl_candidate()) {
-        intra_slice_sched.dl_sched(next_slot,
-                                   to_du_cell_index(0),
-                                   dl_slice_candidate.value(),
-                                   slice_sched.get_policy(dl_slice_candidate->id()));
+        intra_slice_sched.dl_sched(
+            next_slot, dl_slice_candidate.value(), slice_sched.get_policy(dl_slice_candidate->id()));
       }
       while (auto ul_slice_candidate = slice_sched.get_next_ul_candidate()) {
-        intra_slice_sched.ul_sched(next_slot,
-                                   to_du_cell_index(0),
-                                   ul_slice_candidate.value(),
-                                   slice_sched.get_policy(ul_slice_candidate->id()));
+        intra_slice_sched.ul_sched(
+            next_slot, ul_slice_candidate.value(), slice_sched.get_policy(ul_slice_candidate->id()));
       }
     }
 
