@@ -56,7 +56,7 @@ static int calculate_slot_symbol_point_distance(slot_symbol_point lhs, slot_symb
 
 void rx_window_checker::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
 {
-  if (SRSRAN_LIKELY(is_disabled)) {
+  if (is_disabled) {
     return;
   }
 
@@ -69,7 +69,7 @@ void rx_window_checker::on_new_symbol(const slot_symbol_point_context& symbol_po
 
 void rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_point)
 {
-  if (SRSRAN_LIKELY(is_disabled)) {
+  if (is_disabled) {
     return;
   }
 
