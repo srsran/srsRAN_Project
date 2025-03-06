@@ -125,7 +125,7 @@ using metric_context_t = srslog::build_context_type<metric_timestamp_tag, cell_m
 
 } // namespace
 
-static void print_header()
+static void print_sched_header()
 {
   fmt::print("\n");
   fmt::print(
@@ -159,10 +159,10 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const app_services::m
   const scheduler_cell_metrics& metrics = static_cast<const scheduler_cell_metrics_impl&>(metric).get_metrics();
 
   if (metrics.ue_metrics.size() > 10) {
-    print_header();
+    print_sched_header();
   } else if (++nof_lines > 10 && !metrics.ue_metrics.empty()) {
     nof_lines = 0;
-    print_header();
+    print_sched_header();
   }
 
   for (const auto& ue : metrics.ue_metrics) {

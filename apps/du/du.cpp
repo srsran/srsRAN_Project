@@ -352,11 +352,15 @@ int main(int argc, char** argv)
 
   srs_du::du& du_inst = *du_inst_and_cmds.unit;
 
+  // Add the metrics STDOUT command.
+  if (std::unique_ptr<app_services::cmdline_command> cmd = app_services::create_stdout_metrics_app_command(
+          {{du_inst_and_cmds.commands.cmdline.metrics_subcommands}}, du_cfg.metrics_cfg.autostart_stdout_metrics)) {
+    du_inst_and_cmds.commands.cmdline.commands.push_back(std::move(cmd));
+  }
+
   // Register the commands.
-  app_services::cmdline_command_dispatcher command_parser(*epoll_broker,
-                                                          *workers.non_rt_low_prio_exec,
-                                                          du_inst_and_cmds.commands.cmdline,
-                                                          du_cfg.metrics_cfg.autostart_stdout_metrics);
+  app_services::cmdline_command_dispatcher command_parser(
+      *epoll_broker, *workers.non_rt_low_prio_exec, du_inst_and_cmds.commands.cmdline.commands);
 
   // Start processing.
   du_inst.get_operation_controller().start();

@@ -391,9 +391,14 @@ int main(int argc, char** argv)
   auto                o_cucp_unit = o_cu_cp_app_unit->create_o_cu_cp(o_cucp_deps);
   srs_cu_cp::o_cu_cp& o_cucp_obj  = *o_cucp_unit.unit;
 
+  if (std::unique_ptr<app_services::cmdline_command> cmd = app_services::create_stdout_metrics_app_command(
+          {{o_cucp_unit.commands.cmdline.metrics_subcommands}}, false)) {
+    o_cucp_unit.commands.cmdline.commands.push_back(std::move(cmd));
+  }
+
   // Create console helper object for commands and metrics printing.
   app_services::cmdline_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands.cmdline);
+      *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands.cmdline.commands);
 
   for (auto& metric : o_cucp_unit.metrics) {
     metrics_configs.push_back(std::move(metric));

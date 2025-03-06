@@ -377,6 +377,11 @@ static void configure_cli11_hal_args(CLI::App& app, std::optional<ru_ofh_unit_ha
   add_option(app, "--eal_args", config->eal_args, "EAL configuration parameters used to initialize DPDK");
 }
 
+static void configure_cli11_metrics_args(CLI::App& app, ru_ofh_unit_metrics_config& config)
+{
+  add_option(app, "--enable_ru", config.enable_ru_metrics, "Radio Unit metrics enabled flag");
+}
+
 void srsran::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_unit_parsed_config& parsed_cfg)
 {
   // OFH RU section.
@@ -396,7 +401,9 @@ void srsran::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_uni
   configure_cli11_hal_args(*hal_subcmd, parsed_cfg.config.hal_config);
 
   // Metrics section.
-  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.config.metrics_cfg);
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.config.metrics_cfg.metrics_cfg);
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
+  configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.config.metrics_cfg);
 }
 
 static void manage_hal_optional(CLI::App& app, std::optional<ru_ofh_unit_hal_config>& hal_config)

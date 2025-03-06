@@ -43,13 +43,19 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   for (const auto& cell : du_cells) {
     pci_cell_mapper.push_back(cell.pci);
   }
+
+  std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>>
+      ru_metrics_subcommands;
   // Create flexible O-DU metrics configuration.
-  flexible_o_du_metrics_notifier* flexible_odu_metrics_notifier =
-      build_flexible_o_du_metrics_config(o_du.metrics,
-                                         o_du.commands.cmdline,
-                                         *dependencies.metrics_notifier,
-                                         config.odu_high_cfg.du_high_cfg.config.metrics.common_metrics_cfg,
-                                         std::move(pci_cell_mapper));
+  flexible_o_du_metrics_notifier* flexible_odu_metrics_notifier = nullptr;
+
+  if (config.ru_cfg.enable_ru_metrics) {
+    flexible_odu_metrics_notifier = build_flexible_o_du_metrics_config(o_du.metrics,
+                                                                       ru_metrics_subcommands,
+                                                                       *dependencies.metrics_notifier,
+                                                                       config.ru_cfg.config,
+                                                                       std::move(pci_cell_mapper));
+  }
 
   // Create flexible O-DU implementation.
   auto du_impl = std::make_unique<flexible_o_du_impl>(nof_cells, flexible_odu_metrics_notifier);
@@ -112,15 +118,7 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   });
 
   // Manage commands.
-  o_du.commands.remote = std::move(odu_hi_unit.commands.remote);
-  for (auto& cmd : odu_hi_unit.commands.cmdline) {
-    o_du.commands.cmdline.push_back(std::move(cmd));
-  }
-
-  // Make the scheduler STDOUT metrics the default one by moving it to the first position of the commands vector.
-  if (o_du.commands.cmdline.size() > 1) {
-    std::swap(o_du.commands.cmdline[0], o_du.commands.cmdline[1]);
-  }
+  o_du.commands = std::move(odu_hi_unit.commands);
 
   srs_du::o_du_dependencies odu_dependencies;
   odu_dependencies.odu_hi           = std::move(odu_hi_unit.o_du_hi);
@@ -142,18 +140,23 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
 
   srsran_assert(ru, "Invalid Radio Unit");
 
+  // Add RU metrics subcommands.
+  for (auto& subcmd : ru_metrics_subcommands) {
+    o_du.commands.cmdline.metrics_subcommands.emplace_back(std::move(subcmd));
+  }
+
   // Add RU command-line commands.
-  o_du.commands.cmdline.push_back(std::make_unique<change_log_level_app_command>());
+  o_du.commands.cmdline.commands.push_back(std::make_unique<change_log_level_app_command>());
 
   // Create the RU gain commands.
   if (auto* controller = ru->get_controller().get_gain_controller()) {
-    o_du.commands.cmdline.push_back(std::make_unique<tx_gain_app_command>(*controller));
-    o_du.commands.cmdline.push_back(std::make_unique<rx_gain_app_command>(*controller));
+    o_du.commands.cmdline.commands.push_back(std::make_unique<tx_gain_app_command>(*controller));
+    o_du.commands.cmdline.commands.push_back(std::make_unique<rx_gain_app_command>(*controller));
   }
 
   // Create the RU CFO command.
   if (auto* controller = ru->get_controller().get_cfo_controller()) {
-    o_du.commands.cmdline.push_back(std::make_unique<cfo_app_command>(*controller));
+    o_du.commands.cmdline.commands.push_back(std::make_unique<cfo_app_command>(*controller));
   }
 
   // Configure the RU and DU in the dynamic DU.

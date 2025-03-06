@@ -108,7 +108,7 @@ o_cu_cp_unit srsran::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, o_cu_cp_
       std::move(n2_clients), std::move(e2_metric_connectors), srs_cu_cp::create_o_cu_cp(o_cu_cp_cfg, ocu_dependencies));
 
   // Add the commands;
-  ocucp.commands.cmdline.push_back(
+  ocucp.commands.cmdline.commands.push_back(
       std::make_unique<handover_app_command>(ocucp.unit->get_cu_cp().get_command_handler()));
 
   return ocucp;

@@ -15,6 +15,7 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
+#include "apps/services/cmdline/stdout_metrics_command.h"
 #include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
@@ -462,15 +463,21 @@ int main(int argc, char** argv)
   metrics_notifier_forwarder.connect(metrics_mngr);
 
   std::vector<std::unique_ptr<app_services::cmdline_command>> commands;
-  for (auto& cmd : o_cucp_unit.commands.cmdline) {
+  for (auto& cmd : o_cucp_unit.commands.cmdline.commands) {
     commands.push_back(std::move(cmd));
   }
-  for (auto& cmd : du_inst_and_cmds.commands.cmdline) {
+  for (auto& cmd : du_inst_and_cmds.commands.cmdline.commands) {
     commands.push_back(std::move(cmd));
   }
 
-  app_services::cmdline_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_low_prio_exec, commands, gnb_cfg.metrics_cfg.autostart_stdout_metrics);
+  // Add the metrics STDOUT command.
+  if (std::unique_ptr<app_services::cmdline_command> cmd = app_services::create_stdout_metrics_app_command(
+          {{du_inst_and_cmds.commands.cmdline.metrics_subcommands}, {o_cucp_unit.commands.cmdline.metrics_subcommands}},
+          gnb_cfg.metrics_cfg.autostart_stdout_metrics)) {
+    commands.push_back(std::move(cmd));
+  }
+
+  app_services::cmdline_command_dispatcher command_parser(*epoll_broker, *workers.non_rt_low_prio_exec, commands);
 
   // Connect E1AP to O-CU-CP.
   e1_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_e1_handler());

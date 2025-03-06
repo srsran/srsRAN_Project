@@ -44,9 +44,6 @@ public:
   /// Sets the sectors controllers.
   void set_sector_controllers(std::vector<ofh::controller*> controllers);
 
-  // See interface for documentation.
-  void print_metrics() override;
-
 private:
   srslog::basic_logger&         logger;
   std::vector<ofh::controller*> sector_controllers;

@@ -80,8 +80,7 @@ public:
 
 cmdline_command_dispatcher::cmdline_command_dispatcher(io_broker&                             io_broker,
                                                        task_executor&                         executor,
-                                                       span<std::unique_ptr<cmdline_command>> commands_,
-                                                       bool autostart_stdout_metrics) :
+                                                       span<std::unique_ptr<cmdline_command>> commands_) :
   logger(srslog::fetch_basic_logger("APP"))
 {
   // Add the sleep command.
@@ -97,26 +96,10 @@ cmdline_command_dispatcher::cmdline_command_dispatcher(io_broker&               
     cmd             = std::move(close_cmd);
   }
 
-  // Temporal storage for STDOUT metrics subcommands.
-  std::vector<std::unique_ptr<cmdline_command>> metrics_subcommands;
-
   // Store the commands.
   for (auto& app_cmd : commands_) {
-    if (app_cmd->get_description().find("metrics") != std::string::npos) {
-      metrics_subcommands.push_back(std::move(app_cmd));
-      continue;
-    }
-
     auto& cmd = commands[std::string(app_cmd->get_name())];
     cmd       = std::move(app_cmd);
-  }
-
-  // Add the metrics STDOUT command if there are metrics subcommands.
-  if (!metrics_subcommands.empty()) {
-    auto metrics_cmd =
-        std::make_unique<toggle_stdout_metrics_app_command>(std::move(metrics_subcommands), autostart_stdout_metrics);
-    auto& cmd = commands[std::string(metrics_cmd->get_name())];
-    cmd       = std::move(metrics_cmd);
   }
 
   // Set STDIN file descriptor into non-blocking mode.

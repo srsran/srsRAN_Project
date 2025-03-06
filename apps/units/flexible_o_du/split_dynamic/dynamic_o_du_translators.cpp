@@ -34,6 +34,7 @@ ru_dummy_configuration srsran::generate_ru_dummy_config(const ru_dummy_unit_conf
       MHz_to_bs_channel_bandwidth(cell.dl_carrier.carrier_bw_mhz), cell.scs_common, frequency_range::FR1);
 
   // Fill configuration parameters.
+  out_cfg.are_metrics_enabled        = ru_cfg.metrics_cfg.enable_ru_metrics;
   out_cfg.scs                        = cell.scs_common;
   out_cfg.nof_sectors                = du_cells.size();
   out_cfg.rx_rg_nof_prb              = channel_bw_prb;

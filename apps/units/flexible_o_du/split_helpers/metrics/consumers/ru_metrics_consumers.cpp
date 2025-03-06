@@ -102,7 +102,7 @@ void ru_metrics_consumer_log::handle_metric(const ru_metrics& metric)
   }
 }
 
-static void print_header()
+static void print_sdr_header()
 {
   fmt::println("     | ------------------- TX ------------------ | ------------------- RX ------------------ |");
   fmt::println(" pci | Avg. power | Peak power | PAPR | Clipping | Avg. power | Peak power | PAPR | Clipping |");
@@ -112,6 +112,10 @@ void ru_metrics_handler_stdout::handle_metric(const ru_metrics& metric)
 {
   if (auto* sdr_metrics = std::get_if<ru_generic_metrics>(&metric.metrics)) {
     log_ru_sdr_metrics_in_stdout(*sdr_metrics);
+  }
+
+  if (auto* dummy_metrics = std::get_if<ru_dummy_metrics>(&metric.metrics)) {
+    log_ru_dummy_metrics_in_stdout(*dummy_metrics);
   }
 }
 
@@ -127,10 +131,10 @@ static double validate_fp_value(double value)
 void ru_metrics_handler_stdout::log_ru_sdr_metrics_in_stdout(const ru_generic_metrics& sdr_metrics)
 {
   if (sdr_metrics.cells.size() > 10) {
-    print_header();
+    print_sdr_header();
   } else if (++nof_lines > 10 && !sdr_metrics.cells.empty()) {
     nof_lines = 0;
-    print_header();
+    print_sdr_header();
   }
 
   for (const auto& cell : sdr_metrics.cells) {
@@ -149,5 +153,42 @@ void ru_metrics_handler_stdout::log_ru_sdr_metrics_in_stdout(const ru_generic_me
                  validate_fp_value(cell.rx_peak_power_dB),
                  validate_fp_value(cell.rx_papr_dB),
                  validate_fp_value(cell.rx_clipping_prob));
+  }
+}
+
+static void print_dummy_header()
+{
+  fmt::println(" pci | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} |",
+               "DL Count",
+               "DL Late",
+               "UL Count",
+               "UL Late",
+               "PRACH Count",
+               "PRACH Late");
+}
+
+void ru_metrics_handler_stdout::log_ru_dummy_metrics_in_stdout(const ru_dummy_metrics& dummy_metrics)
+{
+  if (dummy_metrics.sectors.size() > 10) {
+    print_dummy_header();
+  } else if (++nof_lines > 10 && !dummy_metrics.sectors.empty()) {
+    nof_lines = 0;
+    print_dummy_header();
+  }
+
+  for (const auto& cell : dummy_metrics.sectors) {
+    srsran_assert(cell.sector_id < pci_sector_map.size(),
+                  "Invalid sector index '{}', number of cells '{}'",
+                  cell.sector_id,
+                  pci_sector_map.size());
+
+    fmt::println(" {:^3} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} |",
+                 static_cast<unsigned>(pci_sector_map[cell.sector_id]),
+                 cell.total_dl_request_count,
+                 cell.late_dl_request_count,
+                 cell.total_ul_request_count,
+                 cell.late_ul_request_count,
+                 cell.total_prach_request_count,
+                 cell.late_prach_request_count);
   }
 }

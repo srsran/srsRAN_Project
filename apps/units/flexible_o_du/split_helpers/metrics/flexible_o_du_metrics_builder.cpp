@@ -17,12 +17,13 @@
 
 using namespace srsran;
 
-flexible_o_du_metrics_notifier*
-srsran::build_flexible_o_du_metrics_config(std::vector<app_services::metrics_config>&                   metrics,
-                                           std::vector<std::unique_ptr<app_services::cmdline_command>>& unit_commands,
-                                           app_services::metrics_notifier&                              notifier,
-                                           const app_helpers::metrics_config&                           metrics_cfg,
-                                           std::vector<pci_t>                                           pci_cell_map)
+flexible_o_du_metrics_notifier* srsran::build_flexible_o_du_metrics_config(
+    std::vector<app_services::metrics_config>& metrics,
+    std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>>&
+                                       metrics_subcommands,
+    app_services::metrics_notifier&    notifier,
+    const app_helpers::metrics_config& metrics_cfg,
+    std::vector<pci_t>                 pci_cell_map)
 {
   flexible_o_du_metrics_notifier* out_value = nullptr;
 
@@ -35,7 +36,7 @@ srsran::build_flexible_o_du_metrics_config(std::vector<app_services::metrics_con
 
   // Create STDOUT consumer.
   auto metrics_stdout = std::make_unique<ru_metrics_consumer_stdout>(pci_cell_map);
-  unit_commands.push_back(std::make_unique<toggle_stdout_ru_metrics_app_command>(*metrics_stdout));
+  metrics_subcommands.push_back(std::make_unique<ru_metrics_subcommand_stdout>(*metrics_stdout));
   odu_metric.consumers.push_back(std::move(metrics_stdout));
 
   if (metrics_cfg.enable_log_metrics) {

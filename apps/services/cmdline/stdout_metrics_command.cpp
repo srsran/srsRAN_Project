@@ -22,7 +22,7 @@ static std::string generate_command_description(span<const std::string_view> sub
 }
 
 static std::vector<std::string_view>
-get_subcommand_names(span<const std::unique_ptr<app_services::cmdline_command>> subcommands)
+get_subcommand_names(span<const std::unique_ptr<toggle_stdout_metrics_app_command::metrics_subcommand>> subcommands)
 {
   std::vector<std::string_view> metrics_list;
   for (const auto& subcommand : subcommands) {
@@ -33,8 +33,8 @@ get_subcommand_names(span<const std::unique_ptr<app_services::cmdline_command>> 
 }
 
 toggle_stdout_metrics_app_command::toggle_stdout_metrics_app_command(
-    std::vector<std::unique_ptr<cmdline_command>> available_metric_commands_,
-    bool                                          is_auto_start_enabled) :
+    std::vector<std::unique_ptr<metrics_subcommand>> available_metric_commands_,
+    bool                                             is_auto_start_enabled) :
   metric_subcommands(std::move(available_metric_commands_)),
   subcommand_active_status(metric_subcommands.size()),
   metric_subcommand_names(get_subcommand_names(metric_subcommands)),
@@ -75,11 +75,17 @@ void toggle_stdout_metrics_app_command::execute_subcommand(unsigned index)
   bool print_header = stop_current_active_subcommand(index);
 
   subcommand_active_status.flip(index);
-  std::vector<std::string> args;
+
+  // Print header when a change of subcommand is detected.
   if (print_header) {
-    args = {"true"};
+    metric_subcommands[index]->print_header();
   }
-  metric_subcommands[index]->execute(args);
+
+  if (subcommand_active_status.test(index)) {
+    metric_subcommands[index]->enable();
+  } else {
+    metric_subcommands[index]->disable();
+  }
 }
 
 bool toggle_stdout_metrics_app_command::stop_current_active_subcommand(unsigned index)
@@ -101,7 +107,7 @@ bool toggle_stdout_metrics_app_command::stop_current_active_subcommand(unsigned 
 
   // In this case the active subcommand changes. Disable current active subcommand.
   subcommand_active_status.flip(current_active);
-  metric_subcommands[current_active]->execute({});
+  metric_subcommands[current_active]->disable();
 
   srsran_assert(subcommand_active_status.none(), "No subcommand must be active at this point");
   return true;
@@ -109,10 +115,28 @@ bool toggle_stdout_metrics_app_command::stop_current_active_subcommand(unsigned 
 
 int toggle_stdout_metrics_app_command::get_subcommand_index(const std::string& args) const
 {
-  auto I = std::find_if(
-      metric_subcommands.begin(),
-      metric_subcommands.end(),
-      [&args](const std::unique_ptr<app_services::cmdline_command>& cmd) { return args == cmd->get_name(); });
+  auto I = std::find_if(metric_subcommands.begin(),
+                        metric_subcommands.end(),
+                        [&args](const std::unique_ptr<toggle_stdout_metrics_app_command::metrics_subcommand>& cmd) {
+                          return args == cmd->get_name();
+                        });
 
   return I == metric_subcommands.end() ? -1 : std::distance(metric_subcommands.begin(), I);
+}
+
+std::unique_ptr<cmdline_command> srsran::app_services::create_stdout_metrics_app_command(
+    std::vector<span<std::unique_ptr<toggle_stdout_metrics_app_command::metrics_subcommand>>> metrics_subcommand,
+    bool                                                                                      is_auto_start_enabled)
+{
+  std::vector<std::unique_ptr<toggle_stdout_metrics_app_command::metrics_subcommand>> subcommands;
+  for (auto& unit : metrics_subcommand) {
+    for (auto& subcmd : unit) {
+      subcommands.push_back(std::move(subcmd));
+    }
+  }
+
+  // Return nulls if no subcommand is passed.
+  return subcommands.empty()
+             ? nullptr
+             : std::make_unique<toggle_stdout_metrics_app_command>(std::move(subcommands), is_auto_start_enabled);
 }

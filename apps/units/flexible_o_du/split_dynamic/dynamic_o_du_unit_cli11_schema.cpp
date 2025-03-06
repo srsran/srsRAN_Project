@@ -9,6 +9,7 @@
  */
 
 #include "dynamic_o_du_unit_cli11_schema.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_config_cli11_schema.h"
 #include "apps/units/flexible_o_du/o_du_low/du_low_config_cli11_schema.h"
@@ -78,6 +79,11 @@ static void configure_cli11_expert_execution_args(CLI::App& app, ru_dummy_unit_c
       "Sets the cell CPU affinities configuration on a per cell basis");
 }
 
+static void configure_cli11_metrics_args(CLI::App& app, ru_dummy_unit_metrics_config& config)
+{
+  add_option(app, "--enable_ru", config.enable_ru_metrics, "Radio Unit metrics enabled flag");
+}
+
 void srsran::configure_cli11_with_dynamic_o_du_unit_config_schema(CLI::App& app, dynamic_o_du_unit_config& parsed_cfg)
 {
   configure_cli11_with_o_du_high_config_schema(app, parsed_cfg.odu_high_cfg);
@@ -87,6 +93,11 @@ void srsran::configure_cli11_with_dynamic_o_du_unit_config_schema(CLI::App& app,
 
   CLI::App* ru_dummy_subcmd = add_subcommand(app, "ru_dummy", "Dummy Radio Unit configuration")->configurable();
   configure_cli11_ru_dummy_args(*ru_dummy_subcmd, dummy_cfg);
+
+  // Metrics section.
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, dummy_cfg.metrics_cfg.metrics_cfg);
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
+  configure_cli11_metrics_args(*metrics_subcmd, dummy_cfg.metrics_cfg);
 
   // Expert execution section.
   CLI::App* expert_subcmd = add_subcommand(app, "expert_execution", "Expert execution configuration")->configurable();

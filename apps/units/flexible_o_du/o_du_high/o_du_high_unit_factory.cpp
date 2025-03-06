@@ -108,12 +108,13 @@ static void validates_derived_du_params(span<const srs_du::du_cell_config> cells
   }
 }
 
-static scheduler_metrics_notifier*
-build_scheduler_du_metrics(std::vector<app_services::metrics_config>&                   unit_metrics,
-                           std::vector<std::unique_ptr<app_services::cmdline_command>>& unit_commands,
-                           app_services::metrics_notifier&                              metrics_notifier,
-                           const o_du_high_unit_config&                                 o_du_high_unit_cfg,
-                           e2_du_metrics_notifier&                                      e2_notifier)
+static scheduler_metrics_notifier* build_scheduler_du_metrics(
+    std::vector<app_services::metrics_config>& unit_metrics,
+    std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>>&
+                                    metrics_subcommands,
+    app_services::metrics_notifier& metrics_notifier,
+    const o_du_high_unit_config&    o_du_high_unit_cfg,
+    e2_du_metrics_notifier&         e2_notifier)
 {
   // Scheduler cell metrics.
   auto sched_cell_metrics_gen                     = std::make_unique<scheduler_metrics_producer_impl>(metrics_notifier);
@@ -126,7 +127,7 @@ build_scheduler_du_metrics(std::vector<app_services::metrics_config>&           
   const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
   // Create the consumer for STDOUT. Also create the command for toggle the metrics.
   auto metrics_stdout = std::make_unique<scheduler_cell_metrics_consumer_stdout>();
-  unit_commands.push_back(std::make_unique<toggle_stdout_du_high_metrics_app_command>(*metrics_stdout));
+  metrics_subcommands.push_back(std::make_unique<du_high_metrics_subcommand_stdout>(*metrics_stdout));
   sched_metrics_cfg.consumers.push_back(std::move(metrics_stdout));
 
   const app_helpers::metrics_config& metrics_cfg = du_hi_cfg.metrics.common_metrics_cfg;
@@ -269,7 +270,7 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
 
   du_hi_deps.sched_ue_metrics_notifier =
       build_scheduler_du_metrics(odu_unit.metrics,
-                                 odu_unit.commands.cmdline,
+                                 odu_unit.commands.cmdline.metrics_subcommands,
                                  dependencies.metrics_notifier,
                                  o_du_high_unit_cfg,
                                  dependencies.e2_metric_connectors.get_e2_metric_notifier(0));

@@ -142,6 +142,14 @@ struct ru_ofh_unit_hal_config {
   std::string eal_args;
 };
 
+/// Metrics configuration.
+struct ru_ofh_unit_metrics_config {
+  /// Metrics configuration.
+  app_helpers::metrics_config metrics_cfg;
+  /// Flag that control RU metrics.
+  bool enable_ru_metrics = false;
+};
+
 /// gNB app Open Fronthaul Radio Unit configuration.
 struct ru_ofh_unit_config {
   /// GPS Alpha - Valid value range: [0, 1.2288e7].
@@ -165,7 +173,7 @@ struct ru_ofh_unit_config {
   /// HAL configuration.
   std::optional<ru_ofh_unit_hal_config> hal_config;
   /// Metrics configuration.
-  app_helpers::metrics_config metrics_cfg;
+  ru_ofh_unit_metrics_config metrics_cfg;
 };
 
 /// gNB app Open Fronthaul Radio Unit configuration.

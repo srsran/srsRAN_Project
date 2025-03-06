@@ -22,14 +22,28 @@ class toggle_stdout_metrics_app_command : public app_services::cmdline_command
   /// [Implementation defined] Maximum number of metrics subcommands.
   static constexpr size_t MAX_NOF_METRICS_SUBCOMMANDS = 32;
 
-  std::vector<std::unique_ptr<cmdline_command>> metric_subcommands;
-  bounded_bitset<MAX_NOF_METRICS_SUBCOMMANDS>   subcommand_active_status;
-  std::vector<std::string_view>                 metric_subcommand_names;
-  const std::string                             description;
-
 public:
-  toggle_stdout_metrics_app_command(std::vector<std::unique_ptr<cmdline_command>> available_metric_commands_,
-                                    bool                                          is_auto_start_enabled = false);
+  /// Metrics subcommand interface for STDOUT.
+  class metrics_subcommand
+  {
+  public:
+    virtual ~metrics_subcommand() = default;
+
+    /// Get the metrics name.
+    virtual std::string_view get_name() const = 0;
+
+    /// Prints this metrics header.
+    virtual void print_header() = 0;
+
+    /// Enables this subcommand.
+    virtual void enable() = 0;
+
+    /// Disables this subcommand.
+    virtual void disable() = 0;
+  };
+
+  toggle_stdout_metrics_app_command(std::vector<std::unique_ptr<metrics_subcommand>> available_metric_commands_,
+                                    bool                                             is_auto_start_enabled = false);
 
   // See interface for documentation.
   std::string_view get_name() const override { return "t"; }
@@ -57,7 +71,18 @@ private:
   ///
   ///   \return True if a subcommand was stopped, false otherwise.
   bool stop_current_active_subcommand(unsigned index);
+
+private:
+  std::vector<std::unique_ptr<metrics_subcommand>> metric_subcommands;
+  bounded_bitset<MAX_NOF_METRICS_SUBCOMMANDS>      subcommand_active_status;
+  std::vector<std::string_view>                    metric_subcommand_names;
+  const std::string                                description;
 };
+
+/// Creates a STDOUT metrics application command with the given parameters.
+std::unique_ptr<cmdline_command> create_stdout_metrics_app_command(
+    std::vector<span<std::unique_ptr<toggle_stdout_metrics_app_command::metrics_subcommand>>> metrics_subcommand,
+    bool                                                                                      is_auto_start_enabled);
 
 } // namespace app_services
 } // namespace srsran

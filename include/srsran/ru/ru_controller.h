@@ -107,9 +107,6 @@ public:
   /// Returns the carrier frequency offset controller of this Radio Unit or nullptr if the Radio Unit does not support
   /// it.
   virtual ru_cfo_controller* get_cfo_controller() = 0;
-
-  /// Prints RU specific metrics once.
-  virtual void print_metrics() = 0;
 };
 
 } // namespace srsran

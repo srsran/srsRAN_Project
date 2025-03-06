@@ -21,10 +21,7 @@ class dynamic_o_du_factory : public flexible_o_du_factory
   const dynamic_o_du_unit_config& unit_config;
 
 public:
-  explicit dynamic_o_du_factory(const dynamic_o_du_unit_config& config_) :
-    flexible_o_du_factory({config_.odu_high_cfg, config_.du_low_cfg}), unit_config(config_)
-  {
-  }
+  explicit dynamic_o_du_factory(const dynamic_o_du_unit_config& config_);
 
 private:
   std::unique_ptr<radio_unit> create_radio_unit(const flexible_o_du_ru_config&       ru_config,

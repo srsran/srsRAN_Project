@@ -32,15 +32,16 @@ static inline uint64_t get_current_system_slot(std::chrono::microseconds slot_du
 
 ru_dummy_impl::ru_dummy_impl(const ru_dummy_configuration& config, ru_dummy_dependencies dependencies) noexcept :
   state_stopped(state_wait_stop + 2 * config.max_processing_delay_slots),
+  are_metrics_enabled(config.are_metrics_enabled),
   logger(dependencies.logger),
   executor(*dependencies.executor),
   timing_notifier(dependencies.timing_notifier),
   slot_duration(static_cast<unsigned>(config.time_scaling * 1000.0 / pow2(to_numerology_value(config.scs)))),
   max_processing_delay_slots(config.max_processing_delay_slots),
-  current_slot(config.scs, config.max_processing_delay_slots)
+  current_slot(config.scs, config.max_processing_delay_slots),
+  metrics_collector({})
 {
   srsran_assert(config.max_processing_delay_slots > 0, "The maximum processing delay must be greater than 0.");
-  srsran_assert(dependencies.executor != nullptr, "Invalid executor.");
 
   sectors.reserve(config.nof_sectors);
   for (unsigned i_sector = 0; i_sector != config.nof_sectors; ++i_sector) {
@@ -53,6 +54,8 @@ ru_dummy_impl::ru_dummy_impl(const ru_dummy_configuration& config, ru_dummy_depe
                          dependencies.symbol_notifier,
                          dependencies.error_notifier);
   }
+
+  metrics_collector = ru_dummy_metrics_collector(sectors);
 }
 
 void ru_dummy_impl::start()
@@ -82,20 +85,6 @@ void ru_dummy_impl::stop()
   // Wait for the state to transition to stop.
   while (internal_state.load() < state_stopped) {
     std::this_thread::sleep_for(std::chrono::microseconds(10));
-  }
-}
-
-void ru_dummy_impl::print_metrics()
-{
-  fmt::println("| {:^11} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} |",
-               "DL Count",
-               "DL Late",
-               "UL Count",
-               "UL Late",
-               "PRACH Count",
-               "PRACH Late");
-  for (auto& sector : sectors) {
-    sector.print_metrics();
   }
 }
 

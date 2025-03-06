@@ -78,9 +78,6 @@ public:
   /// Set low phy sectors.
   void set_lower_phy_sectors(std::vector<lower_phy_sector*> sectors);
 
-  // See interface for documentation.
-  void print_metrics() override {}
-
 private:
   double                          srate_MHz;
   radio_session&                  radio;

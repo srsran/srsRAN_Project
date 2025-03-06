@@ -15,6 +15,7 @@
 
 namespace srsran {
 
+struct ru_dummy_metrics;
 struct ru_generic_metrics;
 struct ru_metrics;
 
@@ -64,11 +65,14 @@ public:
   void handle_metric(const ru_metrics& metric);
 
   /// Prints the header in the next metric handle.
-  void force_print_header() { nof_lines = 10; }
+  void print_header() { nof_lines = 10; }
 
 private:
   /// Log SDR RU metrics in STDOUT.
   void log_ru_sdr_metrics_in_stdout(const ru_generic_metrics& sdr_metrics);
+
+  /// Log dummy RU metrics in STDOUT.
+  void log_ru_dummy_metrics_in_stdout(const ru_dummy_metrics& dummy_metrics);
 
 private:
   unsigned          nof_lines = 10;

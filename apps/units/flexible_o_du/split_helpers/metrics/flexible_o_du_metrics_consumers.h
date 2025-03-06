@@ -71,11 +71,14 @@ public:
   // See interface for documentation.
   void handle_metric(const app_services::metrics_set& metric) override;
 
-  /// This can be called from another execution context to turn on/off the actual plotting.
-  void toggle_print() { print_metrics = !print_metrics; }
+  /// This can be called from another execution context to enable the metrics.
+  void enable() { print_metrics = true; }
+
+  /// This can be called from another execution context to disable the metrics.
+  void disable() { print_metrics = false; }
 
   /// Prints the header in the next metric handle.
-  void force_print_header() { handler.force_print_header(); }
+  void print_header() { handler.print_header(); }
 
 private:
   const std::vector<pci_t>  pci_sector_map;

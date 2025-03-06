@@ -42,8 +42,3 @@ void ru_ofh_controller_impl::set_sector_controllers(std::vector<ofh::controller*
                             [](const auto& elem) { return elem != nullptr; }),
                 "Invalid sector controller");
 }
-
-void ru_ofh_controller_impl::print_metrics()
-{
-  fmt::println("No statistics implemented.");
-}

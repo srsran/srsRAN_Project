@@ -18,6 +18,7 @@
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/ru/dummy/ru_dummy_metrics.h"
 #include "srsran/ru/ru_downlink_plane.h"
 #include "srsran/ru/ru_error_notifier.h"
 #include "srsran/ru/ru_uplink_plane.h"
@@ -245,16 +246,15 @@ public:
   /// Instruct the RU sector to discard new transmit/receive requests.
   void stop() { stopped = true; }
 
-  /// Prints in \c stdout the current gathered metrics. It does not reset the metrics.
-  void print_metrics() const
+  /// Collects the RU dummy sector metrics. It does not reset the metrics.
+  void collect_metrics(ru_dummy_sector_metrics& metrics) const
   {
-    fmt::println("| {:^11} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} |",
-                 total_dl_request_count.load(),
-                 late_dl_request_count.load(),
-                 total_ul_request_count.load(),
-                 late_ul_request_count.load(),
-                 total_prach_request_count.load(),
-                 late_prach_request_count.load());
+    metrics.total_dl_request_count    = total_dl_request_count.load();
+    metrics.late_dl_request_count     = late_dl_request_count.load();
+    metrics.total_ul_request_count    = total_ul_request_count.load();
+    metrics.late_ul_request_count     = late_ul_request_count.load();
+    metrics.total_prach_request_count = total_prach_request_count.load();
+    metrics.late_prach_request_count  = late_prach_request_count.load();
   }
 
 private:
