@@ -80,7 +80,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
   cu_cp_cfg.bearers.drb_config            = config_helpers::make_default_cu_cp_qos_config_list();
   // > NGAP config
   for (const auto& [amf_index, amf_config] : amf_configs) {
-    cu_cp_cfg.ngaps.push_back(cu_cp_configuration::ngap_params{&*amf_config.amf_stub, amf_config.supported_tas});
+    cu_cp_cfg.ngap.ngaps.push_back(cu_cp_configuration::ngap_config{&*amf_config.amf_stub, amf_config.supported_tas});
   }
   // > Security config.
   cu_cp_cfg.security.int_algo_pref_list = {security::integrity_algorithm::nia2,

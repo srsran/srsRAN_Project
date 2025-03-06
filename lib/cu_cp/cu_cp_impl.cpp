@@ -41,8 +41,8 @@ using namespace srs_cu_cp;
 static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
   srsran_assert(cfg.services.cu_cp_executor != nullptr, "Invalid CU-CP executor");
-  srsran_assert(!cfg.ngaps.empty(), "No NGAPs configured");
-  for (const auto& ngap : cfg.ngaps) {
+  srsran_assert(!cfg.ngap.ngaps.empty(), "No NGAPs configured");
+  for (const auto& ngap : cfg.ngap.ngaps) {
     srsran_assert(ngap.n2_gw != nullptr, "Invalid N2 GW client handler");
   }
   srsran_assert(cfg.services.timers != nullptr, "Invalid timers");
@@ -148,7 +148,7 @@ ngap_message_handler* cu_cp_impl::get_ngap_message_handler(const plmn_identity& 
 
 bool cu_cp_impl::amfs_are_connected()
 {
-  if (cfg.test_mode_cfg.no_core) {
+  if (cfg.ngap.no_core) {
     return true;
   }
 
@@ -697,7 +697,7 @@ void cu_cp_impl::handle_n2_disconnection(amf_index_t amf_index)
   }
 
   // Try to reconnect to AMF.
-  controller->amf_connection_handler().reconnect_to_amf(amf_index, &ue_mng);
+  controller->amf_connection_handler().reconnect_to_amf(amf_index, &ue_mng, cfg.ngap.amf_reconnection_retry_time);
 }
 
 std::optional<rrc_meas_cfg>

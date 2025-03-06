@@ -37,7 +37,7 @@ public:
 
   /// \brief Adds a NGAP object to the CU-CP.
   /// \return A pointer to the interface of the added NGAP object if it was successfully created, a nullptr otherwise.
-  ngap_interface* add_ngap(amf_index_t amf_index, const cu_cp_configuration::ngap_params& config);
+  ngap_interface* add_ngap(amf_index_t amf_index, const cu_cp_configuration::ngap_config& config);
 
   /// \brief Updates the PLMN lookup table with the PLMNs supported by the connected NGAP.
   /// \param[in] amf_index The AMF index to identify the NGAP.

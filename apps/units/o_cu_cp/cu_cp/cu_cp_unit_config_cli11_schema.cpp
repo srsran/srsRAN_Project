@@ -151,7 +151,11 @@ static void configure_cli11_amf_item_args(CLI::App& app, cu_cp_unit_amf_config_i
 static void configure_cli11_amf_args(CLI::App& app, cu_cp_unit_amf_config& config)
 {
   add_option(app, "--no_core", config.no_core, "Allow CU-CP to run without a core")->capture_default_str();
-
+  add_option(app,
+             "--amf_reconnection_retry_time",
+             config.amf_reconnection_retry_time,
+             "Time to wait after a failed AMF reconnection attempt in ms")
+      ->capture_default_str();
   // AMF parameters.
   configure_cli11_amf_item_args(app, config.amf);
 }

@@ -17,13 +17,20 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-async_task<bool> srsran::srs_cu_cp::start_amf_reconnection(ngap_interface& ngap, timer_factory timers)
+async_task<bool> srsran::srs_cu_cp::start_amf_reconnection(ngap_interface&           ngap,
+                                                           timer_factory             timers,
+                                                           std::chrono::milliseconds reconnection_retry_time)
 {
-  return launch_async<amf_connection_loss_routine>(ngap, timers);
+  return launch_async<amf_connection_loss_routine>(ngap, timers, reconnection_retry_time);
 }
 
-amf_connection_loss_routine::amf_connection_loss_routine(ngap_interface& ngap_, timer_factory timers) :
-  ngap(ngap_), logger(srslog::fetch_basic_logger("CU-CP")), amf_tnl_connection_retry_timer(timers.create_timer())
+amf_connection_loss_routine::amf_connection_loss_routine(ngap_interface&           ngap_,
+                                                         timer_factory             timers,
+                                                         std::chrono::milliseconds reconnection_retry_time_) :
+  ngap(ngap_),
+  logger(srslog::fetch_basic_logger("CU-CP")),
+  amf_tnl_connection_retry_timer(timers.create_timer()),
+  reconnection_retry_time(reconnection_retry_time_)
 {
 }
 
@@ -32,8 +39,8 @@ void amf_connection_loss_routine::operator()(coro_context<async_task<bool>>& ctx
   CORO_BEGIN(ctx);
 
   while (not ngap.handle_amf_tnl_connection_request()) {
-    logger.info("TNL connection establishment to AMF failed. Retrying in 5 seconds...");
-    CORO_AWAIT(async_wait_for(amf_tnl_connection_retry_timer, std::chrono::milliseconds{5000}));
+    logger.info("TNL connection establishment to AMF failed. Retrying in {}...", reconnection_retry_time);
+    CORO_AWAIT(async_wait_for(amf_tnl_connection_retry_timer, reconnection_retry_time));
   }
 
   // Initiate NG Setup.

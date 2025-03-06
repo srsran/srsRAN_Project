@@ -18,13 +18,16 @@
 namespace srsran {
 namespace srs_cu_cp {
 
-async_task<bool> start_amf_reconnection(ngap_interface& ngap, timer_factory timers);
+async_task<bool>
+start_amf_reconnection(ngap_interface& ngap, timer_factory timers, std::chrono::milliseconds reconnection_retry_time);
 
 /// \brief Handles the reconnection between the CU-CP and AMF.
 class amf_connection_loss_routine
 {
 public:
-  amf_connection_loss_routine(ngap_interface& ngap_, timer_factory timers);
+  amf_connection_loss_routine(ngap_interface&           ngap_,
+                              timer_factory             timers,
+                              std::chrono::milliseconds reconnection_retry_time_);
 
   void operator()(coro_context<async_task<bool>>& ctx);
 
@@ -32,7 +35,8 @@ private:
   ngap_interface&       ngap;
   srslog::basic_logger& logger;
 
-  unique_timer amf_tnl_connection_retry_timer;
+  unique_timer              amf_tnl_connection_retry_timer;
+  std::chrono::milliseconds reconnection_retry_time;
 
   ngap_ng_setup_result result_msg = {};
   bool                 success    = false;

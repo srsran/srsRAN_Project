@@ -17,6 +17,7 @@
 #include "srsran/ngap/ngap.h"
 #include "srsran/ran/plmn_identity.h"
 #include "srsran/support/synchronization/baton.h"
+#include <chrono>
 #include <thread>
 
 using namespace srsran;
@@ -71,7 +72,9 @@ void amf_connection_manager::handle_amf_connection_loss(amf_index_t amf_index)
   amfs_connected.erase(amf_index);
 }
 
-void amf_connection_manager::reconnect_to_amf(amf_index_t amf_index, ue_manager* ue_mng)
+void amf_connection_manager::reconnect_to_amf(amf_index_t               amf_index,
+                                              ue_manager*               ue_mng,
+                                              std::chrono::milliseconds amf_reconnection_retry_time)
 {
   if (ngaps.find_ngap(amf_index) == nullptr) {
     logger.debug("AMF index {} for reconnection not found", amf_index);
@@ -80,11 +83,14 @@ void amf_connection_manager::reconnect_to_amf(amf_index_t amf_index, ue_manager*
 
   ngaps.get_ngap_task_scheduler().handle_amf_async_task(
       amf_index,
-      launch_async([this, amf_index, success = bool{false}, ue_mng](coro_context<async_task<void>>& ctx) mutable {
+      launch_async([this, amf_index, success = bool{false}, ue_mng, amf_reconnection_retry_time](
+                       coro_context<async_task<void>>& ctx) mutable {
         CORO_BEGIN(ctx);
 
         CORO_AWAIT_VALUE(success,
-                         start_amf_reconnection(*ngaps.find_ngap(amf_index), timer_factory{timers, cu_cp_exec}));
+                         start_amf_reconnection(*ngaps.find_ngap(amf_index),
+                                                timer_factory{timers, cu_cp_exec},
+                                                amf_reconnection_retry_time));
 
         if (success) {
           // Update PLMN lookups in NGAP repository after successful reconnection.
