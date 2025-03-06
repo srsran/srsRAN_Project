@@ -53,14 +53,16 @@ void message_transmitter_impl::enqueue_messages_into_burst(
     frame_burst.emplace_back(frame->data());
   }
 
-  logger.debug("Enqueueing '{}' frame(s) of type '{}-{}' in interval '{}_{}':{}_{} for tx burst",
-               frame_buffers.size(),
-               (interval.type.type == message_type::control_plane) ? "control-plane" : "user-plane",
-               (interval.type.direction == data_direction::downlink) ? "downlink" : "uplink",
-               interval.start.get_slot(),
-               interval.start.get_symbol_index(),
-               interval.end.get_slot(),
-               interval.end.get_symbol_index());
+  if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+    logger.debug("Enqueueing '{}' frame(s) of type '{}-{}' in interval '{}_{}':{}_{} for tx burst",
+                 frame_buffers.size(),
+                 (interval.type.type == message_type::control_plane) ? "control-plane" : "user-plane",
+                 (interval.type.direction == data_direction::downlink) ? "downlink" : "uplink",
+                 interval.start.get_slot(),
+                 interval.start.get_symbol_index(),
+                 interval.end.get_slot(),
+                 interval.end.get_symbol_index());
+  }
 }
 
 void message_transmitter_impl::on_new_symbol(const slot_symbol_point_context& symbol_point_context)

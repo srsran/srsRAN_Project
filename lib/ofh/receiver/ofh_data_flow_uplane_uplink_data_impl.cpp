@@ -51,7 +51,8 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
     unsigned                              eaxc,
     const uplane_message_decoder_results& results) const
 {
-  if (results.params.filter_index == filter_index_type::reserved || is_a_prach_message(results.params.filter_index)) {
+  if (SRSRAN_UNLIKELY(results.params.filter_index == filter_index_type::reserved ||
+                      is_a_prach_message(results.params.filter_index))) {
     logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet for slot '{}' and symbol '{}' as decoded "
                 "filter  index value '{}' is not valid",
                 sector_id,
@@ -66,7 +67,7 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
   expected<ul_cplane_context>  ex_cp_context =
       ul_cplane_context_repo->get(params.slot, params.symbol_id, params.filter_index, eaxc);
 
-  if (!ex_cp_context) {
+  if (SRSRAN_UNLIKELY(!ex_cp_context)) {
     logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as no data was expected for slot '{}', "
                 "symbol '{}' and eAxC '{}'",
                 sector_id,
@@ -82,7 +83,7 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
 
   return std::any_of(
       results.sections.begin(), results.sections.end(), [&cp_context, this](const uplane_section_params& up_section) {
-        if (!up_section.is_every_rb_used) {
+        if (SRSRAN_UNLIKELY(!up_section.is_every_rb_used)) {
           logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as 'every other resource block is "
                       "used' mode is not supported",
                       sector_id);
@@ -90,7 +91,7 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
           return true;
         }
 
-        if (!up_section.use_current_symbol_number) {
+        if (SRSRAN_UNLIKELY(!up_section.use_current_symbol_number)) {
           logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as 'increment the current symbol "
                       "number and use that' mode is not supported",
                       sector_id);
@@ -102,7 +103,7 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
             (up_section.start_prb < cp_context.prb_start ||
              (up_section.start_prb + up_section.nof_prbs) > (cp_context.prb_start + cp_context.nof_prb));
 
-        if (is_up_section_not_found_in_cp_section) {
+        if (SRSRAN_UNLIKELY(is_up_section_not_found_in_cp_section)) {
           logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as PRB index range '{}:{}' does "
                       "not match the expected range '{}:{}'",
                       sector_id,

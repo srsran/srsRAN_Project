@@ -115,7 +115,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
     trace_point         pool_access_tp = ofh_tracer.now();
     slot_symbol_point   symbol_point(context.slot, symbol_id, nof_symbols_per_slot);
     scoped_frame_buffer scoped_buffer(*frame_pool, symbol_point, message_type::user_plane, data_direction::downlink);
-    if (scoped_buffer.empty()) {
+    if (SRSRAN_UNLIKELY(scoped_buffer.empty())) {
       logger.warning("Sector#{}: not enough space in the buffer pool to create a downlink User-Plane message for slot "
                      "'{}' and eAxC '{}', symbol_id '{}'",
                      sector_id,
@@ -148,7 +148,7 @@ void data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_symbol_
           fragment_start_prb, fragment_nof_prbs, data.size() - headers_size.value());
 
       // Skip frame buffers so small that cannot carry one PRB.
-      if (fragment_nof_prbs == 0) {
+      if (SRSRAN_UNLIKELY(fragment_nof_prbs == 0)) {
         logger.warning("Sector#{}: skipped frame buffer as it cannot store data for a single PRB, required buffer size "
                        "is '{}' bytes",
                        sector_id,
@@ -196,15 +196,17 @@ unsigned data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_sym
   span<uint8_t> eth_buffer = span<uint8_t>(buffer).first(ether_header_size.value() + bytes_written);
   eth_builder->build_frame(eth_buffer);
 
-  logger.debug("Sector#{}: packing a downlink User-Plane message for slot '{}' and eAxC '{}', symbol_id '{}', PRB "
-               "range '{}:{}', size '{}' bytes",
-               sector_id,
-               params.slot,
-               eaxc,
-               params.symbol_id,
-               params.start_prb,
-               params.nof_prb,
-               eth_buffer.size());
+  if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+    logger.debug("Sector#{}: packing a downlink User-Plane message for slot '{}' and eAxC '{}', symbol_id '{}', PRB "
+                 "range '{}:{}', size '{}' bytes",
+                 sector_id,
+                 params.slot,
+                 eaxc,
+                 params.symbol_id,
+                 params.start_prb,
+                 params.nof_prb,
+                 eth_buffer.size());
+  }
 
   return eth_buffer.size();
 }

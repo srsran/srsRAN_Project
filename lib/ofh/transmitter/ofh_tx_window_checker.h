@@ -50,14 +50,16 @@ public:
       return false;
     }
 
-    logger.debug("Sector#{}: a late upper-PHY downlink request arrived to OFH in slot '{}_{}' with current "
-                 "ota_slot='{}_{}', OFH processing time requires a minimum of '{}' symbols",
-                 sector_id,
-                 slot,
-                 0,
-                 ota_symbol_point.get_slot(),
-                 ota_symbol_point.get_symbol_index(),
-                 advance_time_in_symbols);
+    if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+      logger.debug("Sector#{}: a late upper-PHY downlink request arrived to OFH in slot '{}_{}' with current "
+                   "ota_slot='{}_{}', OFH processing time requires a minimum of '{}' symbols",
+                   sector_id,
+                   slot,
+                   0,
+                   ota_symbol_point.get_slot(),
+                   ota_symbol_point.get_symbol_index(),
+                   advance_time_in_symbols);
+    }
 
     return true;
   }

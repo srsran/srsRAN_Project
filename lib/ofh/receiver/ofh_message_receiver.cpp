@@ -75,7 +75,7 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   unsigned                         eaxc            = ecpri_iq_params.pc_id;
   int nof_skipped_seq_id = seq_id_checker->update_and_compare_seq_id(eaxc, (ecpri_iq_params.seq_id >> 8));
   // Drop the message when it is from the past.
-  if (nof_skipped_seq_id < 0) {
+  if (SRSRAN_UNLIKELY(nof_skipped_seq_id < 0)) {
     logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet for eAxC value '{}' as sequence "
                 "identifier field is "
                 "from the past",
@@ -89,7 +89,7 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
 
   expected<slot_symbol_point, std::string> slot_point =
       uplane_peeker::peek_slot_symbol_point(ofh_pdu, nof_symbols, scs);
-  if (!slot_point.has_value()) {
+  if (SRSRAN_UNLIKELY(!slot_point.has_value())) {
     logger.info(
         "Sector#{}: dropped received Open Fronthaul User-Plane packet as the slot could not be peeked with error: {}",
         sector_id,
@@ -103,7 +103,7 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
 
   // Peek the filter index and check that it is valid.
   expected<filter_index_type, const char*> filter_type = uplane_peeker::peek_filter_index(ofh_pdu);
-  if (!filter_type.has_value()) {
+  if (SRSRAN_UNLIKELY(!filter_type.has_value())) {
     logger.info("Sector#{}: dropped received Open Fronthaul User-Plane message as the filter index could not be peeked "
                 "with error: {}",
                 sector_id,
@@ -125,7 +125,7 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
 
 bool message_receiver_impl::should_ecpri_packet_be_filtered(const ecpri::packet_parameters& ecpri_params) const
 {
-  if (ecpri_params.header.msg_type != ecpri::message_type::iq_data) {
+  if (SRSRAN_UNLIKELY(ecpri_params.header.msg_type != ecpri::message_type::iq_data)) {
     logger.info(
         "Sector#{}: dropped received Open Fronthaul User-Plane packet as decoded eCPRI message type is not for IQ data",
         sector_id);
@@ -134,8 +134,9 @@ bool message_receiver_impl::should_ecpri_packet_be_filtered(const ecpri::packet_
   }
 
   const ecpri::iq_data_parameters& ecpri_iq_params = std::get<ecpri::iq_data_parameters>(ecpri_params.type_params);
-  if ((std::find(ul_eaxc.begin(), ul_eaxc.end(), ecpri_iq_params.pc_id) == ul_eaxc.end()) &&
-      (std::find(ul_prach_eaxc.begin(), ul_prach_eaxc.end(), ecpri_iq_params.pc_id) == ul_prach_eaxc.end())) {
+  if (SRSRAN_UNLIKELY(
+          (std::find(ul_eaxc.begin(), ul_eaxc.end(), ecpri_iq_params.pc_id) == ul_eaxc.end()) &&
+          (std::find(ul_prach_eaxc.begin(), ul_prach_eaxc.end(), ecpri_iq_params.pc_id) == ul_prach_eaxc.end()))) {
     logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as decoded eAxC value '{}' is not "
                 "configured in reception",
                 sector_id,
@@ -149,7 +150,7 @@ bool message_receiver_impl::should_ecpri_packet_be_filtered(const ecpri::packet_
 
 bool message_receiver_impl::should_ethernet_frame_be_filtered(const ether::vlan_frame_params& eth_params) const
 {
-  if (eth_params.mac_src_address != vlan_params.mac_src_address) {
+  if (SRSRAN_UNLIKELY(eth_params.mac_src_address != vlan_params.mac_src_address)) {
     logger.debug("Sector#{}: dropped received Ethernet frame as source MAC addresses do not match (detected={:02X}, "
                  "expected={:02X})",
                  sector_id,
@@ -159,7 +160,7 @@ bool message_receiver_impl::should_ethernet_frame_be_filtered(const ether::vlan_
     return true;
   }
 
-  if (eth_params.mac_dst_address != vlan_params.mac_dst_address) {
+  if (SRSRAN_UNLIKELY(eth_params.mac_dst_address != vlan_params.mac_dst_address)) {
     logger.debug(
         "Sector#{}: dropped received Ethernet frame as destination MAC addresses do not match match (detected={:02X}, "
         "expected={:02X})",
@@ -170,7 +171,7 @@ bool message_receiver_impl::should_ethernet_frame_be_filtered(const ether::vlan_
     return true;
   }
 
-  if (eth_params.eth_type != vlan_params.eth_type) {
+  if (SRSRAN_UNLIKELY(eth_params.eth_type != vlan_params.eth_type)) {
     logger.info("Sector#{}: dropped received Ethernet frame as decoded Ethernet type is '{}' but expected '{}'",
                 sector_id,
                 eth_params.eth_type,

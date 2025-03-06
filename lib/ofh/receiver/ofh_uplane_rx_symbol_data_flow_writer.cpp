@@ -23,7 +23,7 @@ void uplane_rx_symbol_data_flow_writer::write_to_resource_grid(unsigned         
   slot_point     slot       = results.params.slot;
   unsigned       symbol     = results.params.symbol_id;
   uplink_context ul_context = ul_context_repo->get(slot, symbol);
-  if (ul_context.empty()) {
+  if (SRSRAN_UNLIKELY(ul_context.empty())) {
     logger.warning(
         "Sector#{}: dropped received Open Fronthaul message as no uplink slot context was found for slot '{}', symbol "
         "'{}' and eAxC '{}'",
