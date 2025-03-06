@@ -20,7 +20,8 @@ using namespace srsran;
 // aggregation level.
 // For example: For the input Aggregation level 2 and MCS table 1, the corresponding output is a minimum modulation
 // scheme of QAM16. This means that  PDCCH candidates of aggregation level 2 can only be used if MCS is 10 or above.
-static modulation_scheme get_min_modulation_scheme_per_aggr_lvl(aggregation_level lvl, pdsch_mcs_table mcs_table)
+[[maybe_unused]] static modulation_scheme get_min_modulation_scheme_per_aggr_lvl(aggregation_level lvl,
+                                                                                 pdsch_mcs_table   mcs_table)
 {
   // NOTE: The minimum modulation scheme for a particular aggregation level is chosen based on the tests using SNR ramp
   // script and tables 5.1.3.1-[1-3] in TS 38.214.
@@ -87,10 +88,11 @@ static sch_mcs_description get_mcs_config(float cqi, pdsch_mcs_table mcs_table)
 }
 
 // Computes PDCCH code rate for a given aggregation level.
-static double compute_pdcch_code_rate(unsigned nof_dci_bits, aggregation_level lvl)
+static float compute_pdcch_code_rate(unsigned nof_dci_bits, aggregation_level lvl)
 {
-  static const unsigned pdcch_crc_bits = 24U;
-  return ((double)nof_dci_bits + pdcch_crc_bits) / (double)(pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
+  static constexpr unsigned pdcch_crc_bits = 24U;
+  return static_cast<float>(nof_dci_bits + pdcch_crc_bits) /
+         static_cast<float>(pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
 }
 
 // Return whether DCI fits in given aggregation level (in turn nof. CCEs).
@@ -133,14 +135,15 @@ aggregation_level srsran::map_cqi_to_aggregation_level(float               cqi,
       if (not does_dci_bits_fit_in_cces(nof_dci_bits, aggr_lvl)) {
         continue;
       }
+      // There is no point in comparing code rate for higher modulation schemes.
+      if (mcs_cfg.modulation > modulation_scheme::QPSK) {
+        return aggr_lvl;
+      }
       // Check whether code rate is not exceeding the target code rate at effective CQI.
       if (compute_pdcch_code_rate(nof_dci_bits, aggr_lvl) > mcs_cfg.get_normalised_target_code_rate()) {
         continue;
       }
-      // Check whether aggregation level can be at derived MCS.
-      if (mcs_cfg.modulation >= get_min_modulation_scheme_per_aggr_lvl(aggr_lvl, mcs_table)) {
-        return aggr_lvl;
-      }
+      return aggr_lvl;
     }
   }
 

@@ -82,7 +82,7 @@ expected<pdcch_dl_information*, alloc_status> ue_cell_grid_allocator::alloc_dl_p
   const rnti_t crnti = ue_cc.rnti();
 
   const aggregation_level aggr_lvl =
-      ue_cc.get_aggregation_level(ue_cc.link_adaptation_controller().get_effective_cqi(), ss_info, true);
+      ue_cc.get_aggregation_level(ue_cc.link_adaptation_controller().get_wideband_cqi(), ss_info, true);
 
   cell_slot_resource_allocator& pdcch_alloc = cell_alloc[0];
   pdcch_dl_information*         pdcch =

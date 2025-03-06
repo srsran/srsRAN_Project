@@ -208,7 +208,9 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   CHECK_TRUE(not bwp.pdsch_common.pdsch_td_alloc_list.empty(), "Empty PDSCH-TimeDomainAllocationList");
   for (const auto& pdsch : bwp.pdsch_common.pdsch_td_alloc_list) {
     CHECK_EQ_OR_BELOW(pdsch.k0, 32, "PDSCH k0");
-    // TODO: Remaining.
+    CHECK_EQ_OR_BELOW(pdsch.symbols.start(), 10, "PDSCH S");
+    CHECK_EQ_OR_ABOVE(pdsch.symbols.length(), 2, "PDSCH L");
+    CHECK_EQ_OR_BELOW(pdsch.symbols.length(), 12, "PDSCH L");
   }
   return {};
 }
