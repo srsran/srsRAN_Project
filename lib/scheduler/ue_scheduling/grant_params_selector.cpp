@@ -14,7 +14,6 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/prbs_calculator.h"
 #include "../ue_context/ue_cell.h"
-#include "ue_pdsch_alloc_param_candidate_searcher.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 
 using namespace srsran;

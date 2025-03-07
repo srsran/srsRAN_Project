@@ -14,9 +14,6 @@
 #include "../support/sched_result_helpers.h"
 #include "../ue_context/ue_drx_controller.h"
 #include "grant_params_selector.h"
-#include "ue_pdsch_alloc_param_candidate_searcher.h"
-#include "ue_pusch_alloc_param_candidate_searcher.h"
-
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/scheduler/result/dci_info.h"
 #include "srsran/support/error_handling.h"
