@@ -81,10 +81,11 @@ cu_up_manager_impl::handle_bearer_context_setup_request(const e1ap_bearer_contex
   // 1. Create new UE context
   ue_context_cfg ue_cfg = {};
   fill_sec_as_config(ue_cfg.security_info, msg.security_info);
-  ue_cfg.activity_level        = msg.activity_notif_level;
-  ue_cfg.ue_inactivity_timeout = msg.ue_inactivity_timer;
-  ue_cfg.qos                   = qos;
-  ue_context* ue_ctxt          = ue_mng->add_ue(ue_cfg);
+  ue_cfg.activity_level                   = msg.activity_notif_level;
+  ue_cfg.ue_inactivity_timeout            = msg.ue_inactivity_timer;
+  ue_cfg.qos                              = qos;
+  ue_cfg.ue_dl_aggregate_maximum_bit_rate = msg.ue_dl_aggregate_maximum_bit_rate;
+  ue_context* ue_ctxt                     = ue_mng->add_ue(ue_cfg);
   if (ue_ctxt == nullptr) {
     logger.error("Could not create UE context");
     return response;
@@ -220,6 +221,8 @@ async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable
   bearer_context_setup.security_info.up_security_key.integrity_protection_key =
       make_byte_buffer("0001020304050607080910111213141516171819202122232425262728293031").value();
   bearer_context_setup.ue_inactivity_timer = std::chrono::seconds(3600);
+
+  bearer_context_setup.ue_dl_aggregate_maximum_bit_rate = 40000000000; // Limit at 40 Gbps.
 
   /// Setup test PDU session
   pdu_session_id_t                   psi{1};

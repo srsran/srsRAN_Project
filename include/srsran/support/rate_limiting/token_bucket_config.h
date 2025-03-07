@@ -29,8 +29,8 @@ inline token_bucket_config generate_token_bucket_config(uint64_t                
 {
   token_bucket_config cfg = {};
   cfg.refill_period       = refill_period;
-  cfg.refill_token        = avg_rate_bps * avg_rate_bps / 8 * 1e-3;
-  cfg.max_tokens          = max_rate_bps * avg_rate_bps / 8 * 1e-3;
+  cfg.refill_token        = avg_rate_bps * refill_period.count() / 8 * 1e-3;
+  cfg.max_tokens          = max_rate_bps * refill_period.count() / 8 * 1e-3;
   cfg.timer_f             = timer_f;
   return cfg;
 }

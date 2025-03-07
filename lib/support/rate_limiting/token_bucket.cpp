@@ -17,7 +17,12 @@ using namespace srsran;
 
 token_bucket::token_bucket(token_bucket_config cfg) : max_tokens(cfg.max_tokens), tokens_in_bucket(cfg.max_tokens)
 {
-  srsran_assert(cfg.refill_token < max_tokens, "Incorrectly configured bucket. refill_token > max_token");
+  srsran_assert(cfg.refill_token != 0, "Incorrectly configured bucket. refill_token=0 ");
+  srsran_assert(cfg.max_tokens != 0, "Incorrectly configured bucket. max_tokens=0 ");
+  srsran_assert(cfg.refill_token <= max_tokens,
+                "Incorrectly configured bucket. refill_token={} > max_tokens={}",
+                cfg.refill_token,
+                cfg.max_tokens);
   refill_timer = cfg.timer_f.create_timer();
   refill_timer.set(cfg.refill_period,
                    [this, refill_token = cfg.refill_token](timer_id_t /*timer_id*/) { refill(refill_token); });
