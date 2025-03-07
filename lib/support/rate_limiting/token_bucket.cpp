@@ -15,15 +15,12 @@
 
 using namespace srsran;
 
-token_bucket::token_bucket(uint32_t                  refill_token,
-                           std::chrono::milliseconds refill_period,
-                           uint32_t                  max_tokens_,
-                           timer_factory             timer_factory) :
-  max_tokens(max_tokens_), tokens_in_bucket(max_tokens_)
+token_bucket::token_bucket(token_bucket_config cfg) : max_tokens(cfg.max_tokens), tokens_in_bucket(cfg.max_tokens)
 {
-  srsran_assert(refill_token < max_tokens, "Incorrectly configured bucket. refill_token > max_token");
-  refill_timer = timer_factory.create_timer();
-  refill_timer.set(refill_period, [this, refill_token](timer_id_t /*timer_id*/) { refill(refill_token); });
+  srsran_assert(cfg.refill_token < max_tokens, "Incorrectly configured bucket. refill_token > max_token");
+  refill_timer = cfg.timer_f.create_timer();
+  refill_timer.set(cfg.refill_period,
+                   [this, refill_token = cfg.refill_token](timer_id_t /*timer_id*/) { refill(refill_token); });
   refill_timer.run();
 }
 

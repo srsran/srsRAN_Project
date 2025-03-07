@@ -25,10 +25,11 @@ static void tick_all(timer_manager& timers, manual_task_worker& worker, uint32_t
 /// \brief Test token bucket consume and re-fill.
 TEST(token_bucket_test, consume_and_refill_test)
 {
-  timer_manager      timers;
-  manual_task_worker worker(1024);
-  auto               timers_f = timer_factory{timers, worker};
-  auto               bucket   = token_bucket(5, std::chrono::milliseconds(5), 50, timers_f);
+  timer_manager       timers;
+  manual_task_worker  worker(1024);
+  timer_factory       timers_f{timers, worker};
+  token_bucket_config cfg{5, std::chrono::milliseconds(5), 50, timers_f};
+  token_bucket        bucket{cfg};
 
   ASSERT_TRUE(bucket.consume(20));
   ASSERT_FALSE(bucket.consume(60));

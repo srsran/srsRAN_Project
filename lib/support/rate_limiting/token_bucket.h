@@ -10,8 +10,9 @@
 
 #pragma once
 
+#include "srsran/support/rate_limiting/rate_limiter.h"
+#include "srsran/support/rate_limiting/token_bucket_config.h"
 #include "srsran/support/timers.h"
-#include <chrono>
 #include <cstdint>
 
 namespace srsran {
@@ -19,17 +20,14 @@ namespace srsran {
 /// \brief Rate limiter class that implements a rate limiter
 /// based on the token bucket algorithm.
 ///
-class token_bucket
+class token_bucket final : public rate_limiter
 {
 public:
-  token_bucket(uint32_t                  refill_token,
-               std::chrono::milliseconds refill_period,
-               uint32_t                  max_tokens,
-               timer_factory             timer_factory);
+  token_bucket(token_bucket_config cfg);
 
-  bool consume(uint32_t tokens);
+  bool consume(uint32_t tokens) override;
 
-  void stop();
+  void stop() override;
 
 private:
   void refill(uint32_t tokens);

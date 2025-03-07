@@ -20,6 +20,7 @@
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/execute_on_blocking.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
+#include "srsran/support/rate_limiting/rate_limiter.h"
 #include <map>
 #include <utility>
 
@@ -33,6 +34,7 @@ struct ue_context_cfg {
   activity_notification_level_t                    activity_level;
   std::optional<std::chrono::seconds>              ue_inactivity_timeout;
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> qos;
+  uint64_t                                         ue_dl_aggregate_maximum_bit_rate;
 };
 
 /// \brief Context for a UE within the CU-UP with storage for all active PDU sessions.
@@ -169,6 +171,8 @@ private:
   timer_factory ue_ctrl_timer_factory;
 
   unique_timer ue_inactivity_timer;
+
+  // rate_limiter& ue_ambr_limiter;
 
   /// Handle expired UE inactivity timer. This function is called from a timer that is run in UE executor,
   /// therefore it handovers the handling to control executor.
