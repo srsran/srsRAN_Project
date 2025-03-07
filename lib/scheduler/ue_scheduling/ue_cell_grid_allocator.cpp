@@ -38,18 +38,20 @@ ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config&
 {
 }
 
-ue_cell_grid_allocator::dl_grant_params
-ue_cell_grid_allocator::get_dl_grant_params(const common_ue_dl_grant_request& sched_params)
+ue_cell_grid_allocator::dl_grant_params ue_cell_grid_allocator::get_dl_grant_params(const ue_dl_grant_request& req)
 {
-  const slice_ue& slice_ue = *sched_params.user;
-  const bool      is_retx  = sched_params.h_dl.has_value();
+  const slice_ue& slice_ue = req.user;
+  const bool      is_retx  = std::holds_alternative<ue_dl_grant_request::retx_params>(req.type);
   const ue&       u        = ues[slice_ue.ue_index()];
   const ue_cell&  ue_cc    = slice_ue.get_cc();
   srsran_sanity_check(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(), "Invalid UE state");
 
-  const ue_cell_configuration&                 ue_cell_cfg = ue_cc.cfg();
-  const cell_configuration&                    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  const std::optional<dl_harq_process_handle>& h_dl        = sched_params.h_dl;
+  const ue_cell_configuration&          ue_cell_cfg = ue_cc.cfg();
+  const cell_configuration&             cell_cfg    = ue_cell_cfg.cell_cfg_common;
+  std::optional<dl_harq_process_handle> h_dl;
+  if (is_retx) {
+    h_dl = std::get<ue_dl_grant_request::retx_params>(req.type).h_dl;
+  }
 
   // Fetch PDCCH resource grid allocator.
   cell_slot_resource_allocator& pdcch_alloc = cell_alloc[0];
@@ -58,7 +60,7 @@ ue_cell_grid_allocator::get_dl_grant_params(const common_ue_dl_grant_request& sc
 
   // Create PDSCH param candidate search object.
   ue_pdsch_alloc_param_candidate_searcher candidates{
-      u, cell_alloc.cell_index(), h_dl, pdcch_alloc.slot, sched_params.pdsch_slot};
+      u, cell_alloc.cell_index(), h_dl, pdcch_alloc.slot, req.pdsch_slot};
   if (candidates.is_empty()) {
     // The conditions for a new PDSCH allocation for this UE were not met (e.g. lack of available SearchSpaces).
     return {alloc_status::skip_ue};
@@ -110,13 +112,11 @@ ue_cell_grid_allocator::get_dl_grant_params(const common_ue_dl_grant_request& sc
       mcs_prbs =
           sched_helper::mcs_prbs_selection{h_dl->get_grant_params().mcs, h_dl->get_grant_params().rbs.type1().length()};
     } else {
+      auto& newtx_params                   = std::get<ue_dl_grant_request::newtx_params>(req.type);
       nof_layers                           = ue_cc.channel_state_manager().get_nof_dl_layers();
       const pdsch_config_params& pdsch_cfg = ss_info.get_pdsch_config(param_candidate.pdsch_td_res_index(), nof_layers);
       auto                       result    = sched_helper::compute_newtx_required_mcs_and_prbs(
-          pdsch_cfg,
-          ue_cc,
-          sched_params.recommended_nof_bytes.value(),
-          sched_params.max_nof_rbs.has_value() ? sched_params.max_nof_rbs.value() : MAX_NOF_PRBS);
+          pdsch_cfg, ue_cc, newtx_params.pending_bytes, newtx_params.max_nof_rbs.value_or(MAX_NOF_PRBS));
       if (not result.has_value()) {
         return {alloc_status::skip_ue};
       }
@@ -385,39 +385,28 @@ ue_cell_grid_allocator::alloc_uci(ue_cell& ue_cc, const search_space_info& ss_in
   return uci.value();
 }
 
-dl_alloc_result ue_cell_grid_allocator::allocate_newtx_dl_grant(const ue_dl_newtx_grant_request& request)
-{
-  srsran_sanity_check(not request.max_nof_rbs.has_value() and request.max_nof_rbs.value() > 0,
-                      "Invalid max number of RBs");
-  return allocate_dl_grant(common_ue_dl_grant_request{
-      request.pdsch_slot, &request.user, std::nullopt, request.pending_bytes, request.max_nof_rbs});
-}
-
-dl_alloc_result ue_cell_grid_allocator::allocate_retx_dl_grant(const ue_dl_retx_grant_request& request)
-{
-  return allocate_dl_grant(
-      common_ue_dl_grant_request{request.pdsch_slot, &request.user, request.h_dl, std::nullopt, std::nullopt});
-}
-
-dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_grant_request& grant)
+dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_dl_grant_request& request)
 {
   // Derive DL grant parameters and verify conditions for allocation.
-  dl_grant_params grant_params = get_dl_grant_params(grant);
+  dl_grant_params grant_params = get_dl_grant_params(request);
   if (grant_params.status != alloc_status::success) {
     return {grant_params.status};
   }
 
   // Derive remaining parameters from \c dl_grant_params.
-  ue&                                          u           = ues[grant.user->ue_index()];
+  ue&                                          u           = ues[request.user.ue_index()];
   ue_cell&                                     ue_cc       = *u.find_cell(cell_alloc.cell_index());
   const ue_cell_configuration&                 ue_cell_cfg = ue_cc.cfg();
   const search_space_info&                     ss_info     = ue_cell_cfg.search_space(grant_params.ss_id);
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg =
       ss_info.pdsch_time_domain_list[grant_params.pdsch_td_res_index];
-  const subcarrier_spacing              scs      = ss_info.bwp->dl_common->value().generic_params.scs;
-  const cell_configuration&             cell_cfg = ue_cell_cfg.cell_cfg_common;
-  std::optional<dl_harq_process_handle> h_dl     = grant.h_dl;
-  const bool                            is_retx  = h_dl.has_value();
+  const subcarrier_spacing  scs      = ss_info.bwp->dl_common->value().generic_params.scs;
+  const cell_configuration& cell_cfg = ue_cell_cfg.cell_cfg_common;
+  const bool                is_retx  = std::holds_alternative<ue_dl_grant_request::retx_params>(request.type);
+  std::optional<dl_harq_process_handle> h_dl;
+  if (is_retx) {
+    h_dl = std::get<ue_dl_grant_request::retx_params>(request.type).h_dl;
+  }
   const auto& pdsch_cfg = ss_info.get_pdsch_config(grant_params.pdsch_td_res_index, grant_params.nof_layers);
 
   // Fetch PDCCH and PDSCH resource grid allocators.
@@ -591,14 +580,14 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_gra
   if (is_new_data) {
     pdsch_sched_ctx.olla_mcs =
         ue_cc.link_adaptation_controller().calculate_dl_mcs(msg.pdsch_cfg.codewords[0].mcs_table);
-    pdsch_sched_ctx.slice_id = grant.user->ran_slice_id();
+    pdsch_sched_ctx.slice_id = request.user.ran_slice_id();
   }
   pdsch_sched_ctx.cqi = ue_cc.channel_state_manager().get_wideband_cqi();
 
   if (is_new_data) {
     // Set MAC logical channels to schedule in this PDU if it is a newtx.
     u.build_dl_transport_block_info(
-        msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, grant.user->ran_slice_id());
+        msg.tb_list.emplace_back(), msg.pdsch_cfg.codewords[0].tb_size_bytes, request.user.ran_slice_id());
 
     // Update context with buffer occupancy after the TB is built.
     msg.context.buffer_occupancy = u.pending_dl_newtx_bytes();

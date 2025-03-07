@@ -20,26 +20,25 @@ namespace srsran {
 
 struct scheduler_ue_expert_config;
 
-/// Request for a newTx DL grant allocation.
-struct ue_dl_newtx_grant_request {
-  /// Slot at which PDSCH PDU shall be allocated.
-  slot_point pdsch_slot;
-  /// UE to allocate.
-  const slice_ue& user;
-  /// Pending bytes to schedule.
-  unsigned pending_bytes;
-  /// Maximum number of RBs to allocate. This limit can be determined based on slicing or UE configuration.
-  std::optional<unsigned> max_nof_rbs;
-};
+/// Request for a DL grant allocation.
+struct ue_dl_grant_request {
+  struct newtx_params {
+    /// Pending bytes to schedule.
+    unsigned pending_bytes;
+    /// Maximum number of RBs to allocate. This limit can be determined based on slicing or UE configuration.
+    std::optional<unsigned> max_nof_rbs;
+  };
+  struct retx_params {
+    /// HARQ process to be retransmitted.
+    dl_harq_process_handle h_dl;
+  };
 
-/// Request for a reTx DL grant allocation.
-struct ue_dl_retx_grant_request {
   /// Slot at which PDSCH PDU shall be allocated.
   slot_point pdsch_slot;
   /// UE to allocate.
   const slice_ue& user;
-  /// HARQ process to be retransmitted.
-  dl_harq_process_handle h_dl;
+  /// Parameters relative to retx or newtx.
+  std::variant<newtx_params, retx_params> type;
 };
 
 /// Request for a newTx UL grant allocation.
@@ -105,11 +104,8 @@ public:
                          cell_resource_allocator&          cell_alloc_,
                          srslog::basic_logger&             logger_);
 
-  /// Allocates DL grant for a UE newTx.
-  dl_alloc_result allocate_newtx_dl_grant(const ue_dl_newtx_grant_request& request);
-
-  /// Allocates DL grant for a UE reTx.
-  dl_alloc_result allocate_retx_dl_grant(const ue_dl_retx_grant_request& request);
+  /// Allocates DL grant for a UE.
+  dl_alloc_result allocate_dl_grant(const ue_dl_grant_request& request);
 
   /// Allocates UL grant for a UE newTx.
   ul_alloc_result allocate_newtx_ul_grant(const ue_ul_newtx_grant_request& request);
@@ -123,14 +119,6 @@ public:
   void post_process_results();
 
 private:
-  struct common_ue_dl_grant_request {
-    slot_point                            pdsch_slot;
-    const slice_ue*                       user;
-    std::optional<dl_harq_process_handle> h_dl;
-    std::optional<unsigned>               recommended_nof_bytes;
-    std::optional<unsigned>               max_nof_rbs;
-  };
-
   struct common_ue_ul_grant_request {
     slot_point                            pusch_slot;
     const slice_ue*                       user;
@@ -158,11 +146,9 @@ private:
     sched_helper::mcs_prbs_selection recommended_mcs_prbs;
   };
 
-  dl_alloc_result allocate_dl_grant(const common_ue_dl_grant_request& grant);
-
   ul_alloc_result allocate_ul_grant(const common_ue_ul_grant_request& grant);
 
-  dl_grant_params get_dl_grant_params(const common_ue_dl_grant_request& grant_params);
+  dl_grant_params get_dl_grant_params(const ue_dl_grant_request& req);
 
   ul_grant_params get_ul_grant_params(const common_ue_ul_grant_request& grant);
 

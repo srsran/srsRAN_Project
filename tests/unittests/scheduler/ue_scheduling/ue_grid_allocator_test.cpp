@@ -133,12 +133,13 @@ protected:
                                unsigned                pending_bytes,
                                std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
-    alloc.allocate_newtx_dl_grant(ue_dl_newtx_grant_request{current_slot, user, pending_bytes, max_nof_rbs});
+    alloc.allocate_dl_grant(
+        ue_dl_grant_request{current_slot, user, ue_dl_grant_request::newtx_params{pending_bytes, max_nof_rbs}});
   }
 
   void allocate_dl_retx_grant(const slice_ue& user, dl_harq_process_handle h_dl)
   {
-    alloc.allocate_retx_dl_grant(ue_dl_retx_grant_request{current_slot, user, h_dl});
+    alloc.allocate_dl_grant(ue_dl_grant_request{current_slot, user, ue_dl_grant_request::retx_params{h_dl}});
   }
 
   ul_alloc_result allocate_ul_newtx_grant(const slice_ue&         user,

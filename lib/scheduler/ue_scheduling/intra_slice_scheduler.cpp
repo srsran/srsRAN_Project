@@ -157,7 +157,8 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(const dl_ran_slice_c
     }
 
     // Perform allocation of PDCCH, PDSCH and UCI.
-    dl_alloc_result result = ue_alloc.allocate_retx_dl_grant(ue_dl_retx_grant_request{pdsch_slot, u, h});
+    dl_alloc_result result =
+        ue_alloc.allocate_dl_grant(ue_dl_grant_request{pdsch_slot, u, ue_dl_grant_request::retx_params{h}});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
@@ -336,8 +337,10 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
     }
 
     // Allocate DL grant.
-    dl_alloc_result result = ue_alloc.allocate_newtx_dl_grant(
-        ue_dl_newtx_grant_request{pdsch_slot, *ue_candidate.ue, ue_candidate.pending_bytes, max_rbs_per_grant});
+    dl_alloc_result result = ue_alloc.allocate_dl_grant(
+        ue_dl_grant_request{pdsch_slot,
+                            *ue_candidate.ue,
+                            ue_dl_grant_request::newtx_params{ue_candidate.pending_bytes, max_rbs_per_grant}});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
