@@ -142,7 +142,7 @@ protected:
       return;
     }
     auto result = alloc.allocate_dl_grant(ue_dl_grant_request{current_slot, user, std::nullopt, params.value()});
-    if (result.status == alloc_status::success) {
+    if (result == alloc_status::success) {
       used_dl_crbs.fill(params.value().alloc_crbs.start(), params.value().alloc_crbs.stop());
     }
   }
@@ -155,7 +155,7 @@ protected:
       return;
     }
     auto result = alloc.allocate_dl_grant(ue_dl_grant_request{current_slot, user, h_dl, params.value()});
-    if (result.status == alloc_status::success) {
+    if (result == alloc_status::success) {
       used_dl_crbs.fill(params.value().alloc_crbs.start(), params.value().alloc_crbs.stop());
     }
   }

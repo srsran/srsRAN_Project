@@ -162,7 +162,7 @@ std::optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params&
                                  .mcs_descr          = mcs_info,
                                  .nof_rb             = nof_prbs,
                                  .start_symbol_index = pdsch_params.symbols.start(),
-                                 .nof_symbols        = static_cast<unsigned>(pdsch_params.symbols.length()),
+                                 .nof_symbols        = pdsch_params.symbols.length(),
                                  .dmrs_type          = pdsch_params.dmrs.config_type,
                                  .dmrs_symbol_mask   = pdsch_params.dmrs.dmrs_symb_pos,
                                  .nof_cdm_groups_without_data =

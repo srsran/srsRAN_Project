@@ -167,14 +167,14 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(const dl_ran_slice_c
     }
 
     // Perform allocation of PDCCH, PDSCH and UCI.
-    dl_alloc_result result = ue_alloc.allocate_dl_grant(ue_dl_grant_request{pdsch_slot, u, h, params.value()});
+    alloc_status result = ue_alloc.allocate_dl_grant(ue_dl_grant_request{pdsch_slot, u, h, params.value()});
 
-    if (result.status == alloc_status::skip_slot) {
+    if (result == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
       break;
     }
 
-    if (result.status == alloc_status::success) {
+    if (result == alloc_status::success) {
       used_dl_crbs.fill(params.value().alloc_crbs.start(), params.value().alloc_crbs.stop());
       if (++alloc_count >= max_ue_grants_to_alloc) {
         // Maximum number of allocations reached.
@@ -358,23 +358,23 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
     }
 
     // Allocate DL grant.
-    dl_alloc_result result =
+    alloc_status result =
         ue_alloc.allocate_dl_grant(ue_dl_grant_request{pdsch_slot, *ue_candidate.ue, std::nullopt, params.value()});
 
-    if (result.status == alloc_status::skip_slot) {
+    if (result == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
       break;
     }
 
-    if (result.status == alloc_status::success) {
+    if (result == alloc_status::success) {
       used_dl_crbs.fill(params.value().alloc_crbs.start(), params.value().alloc_crbs.stop());
-      slice.store_grant(result.alloc_nof_rbs);
+      slice.store_grant(params.value().alloc_crbs.length());
       if (++alloc_count >= max_ue_grants_to_alloc) {
         // Maximum number of allocations reached.
         break;
       }
       // Check if the grant was too small and we need to compensate in the next grants.
-      rbs_missing += (max_rbs_per_grant - result.alloc_nof_rbs);
+      rbs_missing += (max_rbs_per_grant - params.value().alloc_crbs.length());
     }
 
     dl_attempts_count++;

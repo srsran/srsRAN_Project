@@ -15,10 +15,23 @@
 #include "../uci_scheduling/uci_allocator.h"
 #include "grant_params_selector.h"
 #include "ue_repository.h"
+#include "srsran/adt/noop_functor.h"
 
 namespace srsran {
 
 struct scheduler_ue_expert_config;
+
+/// Request to reserve space for control channels of a DL grant.
+struct ue_dl_grant_builder_request {
+  /// UE to allocate.
+  const slice_ue& user;
+  /// DL HARQ process to use, in case of HARQ reTx.
+  std::optional<dl_harq_process_handle> h_dl;
+  /// SearchSpace to use.
+  search_space_id ss_id;
+  /// PDSCH time-domain resource index.
+  uint8_t pdsch_td_res_index;
+};
 
 /// Request for a DL grant allocation.
 struct ue_dl_grant_request {
@@ -78,6 +91,31 @@ struct ul_alloc_result {
 class ue_cell_grid_allocator
 {
 public:
+  /// Placeholder for a grant in the DL resource grid, which allows deferred setting of PDSCH parameters.
+  struct dl_grant_builder {
+    dl_grant_builder(dl_grant_builder&&) noexcept            = default;
+    dl_grant_builder& operator=(dl_grant_builder&&) noexcept = default;
+    ~dl_grant_builder() { srsran_assert(parent == nullptr, "PDSCH parameters were not set"); }
+
+    /// Sets the CRBs, MCS and number of layers for the PDSCH allocation.
+    alloc_status set_pdsch_params(crb_interval crbs, sch_mcs_index mcs, unsigned nof_layers)
+    {
+      // Set PDSCH parameters and set parent as nullptr to avoid further modifications.
+      return std::exchange(parent, nullptr)->set_pdsch_params(grant_index, crbs, mcs, nof_layers);
+    }
+
+  private:
+    friend class ue_cell_grid_allocator;
+
+    dl_grant_builder(ue_cell_grid_allocator& parent_, unsigned grant_index_) :
+      parent(&parent_), grant_index(grant_index_)
+    {
+    }
+
+    std::unique_ptr<ue_cell_grid_allocator, noop_operation> parent;
+    unsigned                                                grant_index;
+  };
+
   ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
                          ue_repository&                    ues_,
                          pdcch_resource_allocator&         pdcch_sched_,
@@ -85,8 +123,11 @@ public:
                          cell_resource_allocator&          cell_alloc_,
                          srslog::basic_logger&             logger_);
 
+  /// Allocate PDCCH, UCI and PDSCH PDUs for a UE DL grant and return a builder to set the PDSCH parameters.
+  expected<dl_grant_builder, alloc_status> allocate_dl_grant(const ue_dl_grant_builder_request& request);
+
   /// Allocates DL grant for a UE.
-  dl_alloc_result allocate_dl_grant(const ue_dl_grant_request& request);
+  alloc_status allocate_dl_grant(const ue_dl_grant_request& request);
 
   /// Allocates UL grant for a UE newTx.
   ul_alloc_result allocate_ul_grant(const ue_ul_grant_request& request);
@@ -97,16 +138,29 @@ public:
   void post_process_results();
 
 private:
-  std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(const sched_helper::dl_grant_sched_params&   grant_params,
-                                                  const search_space_info&                     ss_info,
-                                                  cell_slot_resource_allocator&                pdsch_alloc,
-                                                  const crb_interval&                          crbs,
-                                                  const std::optional<dl_harq_process_handle>& h_dl);
+  struct dl_grant_info {
+    const slice_ue*          user;
+    const search_space_info* ss_info;
+    uint8_t                  pdsch_td_res_index;
+    dl_harq_process_handle   h_dl;
+    pdcch_dl_information*    pdcch;
+    dl_msg_alloc*            pdsch;
+    uci_allocation           uci_alloc;
+  };
+
+  alloc_status set_pdsch_params(unsigned grant_index, crb_interval crbs, sch_mcs_index mcs, unsigned nof_layers);
+
+  sch_mcs_tbs calculate_dl_mcs_tbs(cell_slot_resource_allocator& pdsch_alloc,
+                                   const search_space_info&      ss_info,
+                                   uint8_t                       pdsch_td_res_index,
+                                   const crb_interval&           crbs,
+                                   sch_mcs_index                 mcs,
+                                   unsigned                      nof_layers);
 
   expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(const ue_cell& ue_cc, const search_space_info& ss_info);
 
   expected<uci_allocation, alloc_status>
-  alloc_uci(ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pdsch_td_res_index);
+  alloc_uci(const ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pdsch_td_res_index);
 
   // Save the PUCCH power control results for the given slot.
   void post_process_pucch_pw_ctrl_results(slot_point slot);
@@ -117,6 +171,8 @@ private:
   uci_allocator&                    uci_alloc;
   cell_resource_allocator&          cell_alloc;
   srslog::basic_logger&             logger;
+
+  std::vector<dl_grant_info> dl_grants;
 };
 
 } // namespace srsran
