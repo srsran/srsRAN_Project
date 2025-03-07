@@ -48,7 +48,8 @@ class mac_dummy : public mac_interface,
                   public mac_ue_configurator,
                   public mac_pdu_handler,
                   public mac_paging_information_handler,
-                  public mac_cell_controller
+                  public mac_cell_controller,
+                  public mac_cell_time_mapper
 {
 public:
   mac_event_interceptor& events;
@@ -87,6 +88,7 @@ public:
   mac_cell_controller&               add_cell(const mac_cell_creation_request& cell_cfg) override { return *this; }
   void                               remove_cell(du_cell_index_t cell_index) override {}
   mac_cell_controller&               get_cell_controller(du_cell_index_t cell_index) override { return *this; }
+  mac_cell_time_mapper&              get_time_mapper(du_cell_index_t cell_index) override { return *this; }
   async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& cfg) override
   {
     events.last_ue_created = cfg;
@@ -112,6 +114,10 @@ public:
   {
     return launch_no_op_task(mac_cell_reconfig_response{true});
   }
+
+  std::optional<mac_cell_slot_time_info> get_last_mapping() const override { return std::nullopt; }
+  std::optional<time_point>              get_time_point(slot_point slot) const override { return std::nullopt; }
+  std::optional<slot_point>              get_slot_point(time_point time) const override { return std::nullopt; }
 };
 
 struct test_params {

@@ -258,7 +258,16 @@ public:
     }
   };
 
-  mac_cell_dummy mac_cell;
+  class mac_cell_dummy_time_mapper final : public mac_cell_time_mapper
+  {
+  public:
+    std::optional<mac_cell_slot_time_info> get_last_mapping() const override { return std::nullopt; }
+    std::optional<time_point>              get_time_point(slot_point slot) const override { return std::nullopt; }
+    std::optional<slot_point>              get_slot_point(time_point time) const override { return std::nullopt; }
+  };
+
+  mac_cell_dummy             mac_cell;
+  mac_cell_dummy_time_mapper time_mapper;
 
   std::optional<mac_ue_create_request>                      last_ue_create_msg{};
   std::optional<mac_ue_reconfiguration_request>             last_ue_reconf_msg{};
@@ -271,9 +280,10 @@ public:
   wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
   bool                                                      next_ul_ccch_msg_result = true;
 
-  mac_cell_controller& add_cell(const mac_cell_creation_request& cell_cfg) override { return mac_cell; }
-  void                 remove_cell(du_cell_index_t cell_index) override {}
-  mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return mac_cell; }
+  mac_cell_controller&  add_cell(const mac_cell_creation_request& cell_cfg) override { return mac_cell; }
+  void                  remove_cell(du_cell_index_t cell_index) override {}
+  mac_cell_controller&  get_cell_controller(du_cell_index_t cell_index) override { return mac_cell; }
+  mac_cell_time_mapper& get_time_mapper(du_cell_index_t cell_index) override { return time_mapper; }
 
   async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& msg) override
   {

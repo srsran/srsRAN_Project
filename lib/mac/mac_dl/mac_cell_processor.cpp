@@ -60,7 +60,8 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   paging_assembler(pdu_pool),
   sched(sched_),
   metrics(cell_metrics),
-  pcap(pcap_)
+  pcap(pcap_),
+  slot_time_mapper(to_numerology_value(cell_cfg_req_.scs_common))
 {
   // Update broadcast System Information.
   auto si_resp = sib_assembler.handle_si_change_request(cell_cfg.sys_info);
@@ -153,6 +154,7 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
 
 void mac_cell_processor::handle_slot_indication(const mac_cell_timing_context& context)
 {
+  slot_time_mapper.handle_slot_indication(context);
   trace_point slot_ind_enqueue_tp = metric_clock::now();
   // Change execution context to slot indication executor.
   if (not slot_exec.execute([this, context, slot_ind_enqueue_tp]() {

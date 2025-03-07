@@ -136,6 +136,8 @@ public:
   void                 remove_cell(du_cell_index_t cell_index) override;
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override;
 
+  mac_cell_time_mapper& get_time_mapper(du_cell_index_t cell_index) override;
+
   mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) override
   {
     return mac_adapted->get_rach_handler(cell_index);

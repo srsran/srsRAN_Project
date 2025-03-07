@@ -47,6 +47,8 @@ public:
     return dl_unit.get_cell_controller(cell_index);
   }
 
+  mac_cell_time_mapper& get_time_mapper(du_cell_index_t cell_index) override;
+
   /// Creates UE in MAC and scheduler.
   async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& msg) override;
 

@@ -12,6 +12,7 @@
 
 #include "cell_dl_harq_buffer_pool.h"
 #include "dl_sch_pdu_assembler.h"
+#include "mac_cell_time_mapper_impl.h"
 #include "mac_dl_ue_repository.h"
 #include "mac_scheduler_cell_info_handler.h"
 #include "paging_pdu_assembler.h"
@@ -48,6 +49,8 @@ public:
   async_task<void> stop() override;
 
   async_task<mac_cell_reconfig_response> reconfigure(const mac_cell_reconfig_request& request) override;
+
+  mac_cell_time_mapper_impl& get_time_mapper() { return slot_time_mapper; }
 
   void handle_slot_indication(const mac_cell_timing_context& context) override;
   void handle_error_indication(slot_point sl_tx, error_event event) override;
@@ -122,6 +125,8 @@ private:
   enum class cell_state { inactive, active } state = cell_state::inactive;
 
   mac_pcap& pcap;
+
+  mac_cell_time_mapper_impl slot_time_mapper;
 
   bool sib1_pcap_dumped = false;
 };
