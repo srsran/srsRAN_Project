@@ -45,7 +45,32 @@ public:
     entry.msg                   = pucch_uci_message({0, config.nof_harq_ack, 0, 0});
     span<uint8_t> harq_ack_bits = entry.msg.get_harq_ack_bits();
     std::generate(harq_ack_bits.begin(), harq_ack_bits.end(), [this]() { return rgen() & 1; });
-    return {entry.msg, 1};
+    return {.uci_message = entry.msg, .detection_metric = 1};
+  }
+
+  const pucch_format1_map<pucch_detector::pucch_detection_result>&
+  detect(const resource_grid_reader&                  grid,
+         const pucch_detector::format1_configuration& config,
+         const pucch_format1_map<unsigned>&           mux_nof_harq_ack) override
+  {
+    mux_results.clear();
+    // for (auto this_pucch_nof_harq_ack = mux_map.begin(); this_pucch_nof_harq_ack != mux_map.end();
+    //      ++this_pucch_nof_harq_ack) {
+    for (const auto& this_pucch_nof_harq_ack : mux_nof_harq_ack) {
+      entries_format1.emplace_back();
+      entry_format1& entry              = entries_format1.back();
+      entry.grid                        = &grid;
+      entry.config                      = config;
+      unsigned ics                      = this_pucch_nof_harq_ack.initial_cyclic_shift;
+      unsigned occi                     = this_pucch_nof_harq_ack.time_domain_occ;
+      entry.config.initial_cyclic_shift = ics;
+      entry.config.time_domain_occ      = occi;
+      entry.msg                         = pucch_uci_message({0, config.nof_harq_ack, 0, 0});
+      span<uint8_t> harq_ack_bits       = entry.msg.get_harq_ack_bits();
+      std::generate(harq_ack_bits.begin(), harq_ack_bits.end(), [this]() { return rgen() & 1; });
+      mux_results.insert(ics, occi, {.uci_message = entry.msg, .detection_metric = 1});
+    }
+    return mux_results;
   }
 
   const std::vector<entry_format1>& get_entries_format1() const { return entries_format1; }
@@ -53,8 +78,9 @@ public:
   void clear() { entries_format1.clear(); }
 
 private:
-  std::mt19937               rgen;
-  std::vector<entry_format1> entries_format1;
+  std::mt19937                                              rgen;
+  std::vector<entry_format1>                                entries_format1;
+  pucch_format1_map<pucch_detector::pucch_detection_result> mux_results;
 };
 
 PHY_SPY_FACTORY_TEMPLATE(pucch_detector);

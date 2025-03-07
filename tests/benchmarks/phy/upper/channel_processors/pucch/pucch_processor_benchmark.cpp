@@ -339,7 +339,7 @@ static pucch_processor_factory& get_pucch_processor_factory()
 
   // Create PUCCH detector factory.
   std::shared_ptr<pucch_detector_factory> detector_factory =
-      create_pucch_detector_factory_sw(lpc_factory, prg_factory, equalizer_factory);
+      create_pucch_detector_factory_sw(lpc_factory, prg_factory, equalizer_factory, dft_factory);
   TESTASSERT(detector_factory);
 
   // Create short block detector factory.

@@ -14,6 +14,7 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_estimation.h"
+#include "srsran/phy/upper/channel_processors/pucch/pucch_format1_map.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_uci_message.h"
 #include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/slot_point.h"
@@ -147,5 +148,22 @@ public:
   /// \return The detected PUCCH message.
   virtual pucch_detection_result
   detect(const resource_grid_reader& grid, const channel_estimate& estimates, const format1_configuration& config) = 0;
+
+  /// \brief Detects multiplexed PUCCH Format 1 transmissions.
+  ///
+  /// All multiplexed PUCCH transmissions share the configuration parameters in \c config, except for the initial cyclic
+  /// shift, the time domain orthogonal cover code and the number of ACK bits, which are specified in \c mux_map.
+  /// \param[in]  grid               Input resource grid.
+  /// \param[in]  config             PUCCH Format 1 common configuration parameters (parameters \c initial_cyclic_shift,
+  ///                                \c time_domain_occ and \c nof_harq_ack are ignored).
+  /// \param[in]  mux_nof_harq_ack   Multiplexed PUCCHs - each (initial cyclic shift, time domain OCC) pair is mapped to
+  ///                                the number of HARQ-ACK bits, if the corresponding PUCCH is scheduled, or to
+  ///                                \c nullopt otherwise.
+  /// \return A reference to a map of results - each (initial cyclic shift, time domain OCC) pair is mapped to the
+  ///         corresponding detection result, if the PUCCH is scheduled, or to \c nullopt otherwise.
+  virtual const pucch_format1_map<pucch_detection_result>&
+  detect(const resource_grid_reader&        grid,
+         const format1_configuration&       config,
+         const pucch_format1_map<unsigned>& mux_nof_harq_ack) = 0;
 };
 } // namespace srsran

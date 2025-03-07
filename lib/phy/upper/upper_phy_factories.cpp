@@ -627,7 +627,7 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
 
   std::shared_ptr<pseudo_random_generator_factory> pseudorandom = create_pseudo_random_generator_sw_factory();
   std::shared_ptr<pucch_detector_factory>          pucch_detector_fact =
-      create_pucch_detector_factory_sw(lpc_factory, pseudorandom, pucch_equalizer_factory);
+      create_pucch_detector_factory_sw(lpc_factory, pseudorandom, pucch_equalizer_factory, dft_factory);
   report_fatal_error_if_not(pucch_detector_fact, "Invalid PUCCH detector factory.");
 
   // Create PUCCH demodulator factory.

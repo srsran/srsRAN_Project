@@ -16,6 +16,7 @@
 #include "pucch_detector_impl.h"
 #include "pucch_processor_impl.h"
 #include "pucch_processor_pool.h"
+#include "srsran/phy/generic_functions/generic_functions_factories.h"
 #include "srsran/phy/generic_functions/transform_precoding/transform_precoding_factories.h"
 #include "srsran/phy/upper/channel_processors/pucch/formatters.h"
 
@@ -29,16 +30,22 @@ private:
   std::shared_ptr<low_papr_sequence_collection_factory> low_papr_factory;
   std::shared_ptr<pseudo_random_generator_factory>      prg_factory;
   std::shared_ptr<channel_equalizer_factory>            eqzr_factory;
+  std::shared_ptr<dft_processor_factory>                dft_factory;
 
 public:
   pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_factory> lpcf,
                             std::shared_ptr<pseudo_random_generator_factory>      prgf,
-                            std::shared_ptr<channel_equalizer_factory>            eqzrf) :
-    low_papr_factory(std::move(lpcf)), prg_factory(std::move(prgf)), eqzr_factory(std::move(eqzrf))
+                            std::shared_ptr<channel_equalizer_factory>            eqzrf,
+                            std::shared_ptr<dft_processor_factory>                dftf) :
+    low_papr_factory(std::move(lpcf)),
+    prg_factory(std::move(prgf)),
+    eqzr_factory(std::move(eqzrf)),
+    dft_factory(std::move(dftf))
   {
     srsran_assert(low_papr_factory, "Invalid low-PAPR sequence collection factory.");
     srsran_assert(prg_factory, "Invalid pseudorandom generator factory.");
     srsran_assert(eqzr_factory, "Invalid channel equalizer factory.");
+    srsran_assert(dft_factory, "Invalid DFT processor factory.");
   }
 
   std::unique_ptr<pucch_detector> create() override
@@ -52,7 +59,11 @@ public:
         std::make_unique<pucch_detector_format0>(prg_factory->create(), low_papr_factory->create(1, 0, alphas));
 
     std::unique_ptr<pucch_detector_format1> detector_format1 = std::make_unique<pucch_detector_format1>(
-        low_papr_factory->create(1, 0, alphas), prg_factory->create(), eqzr_factory->create());
+        low_papr_factory->create(1, 0, alphas),
+        prg_factory->create(),
+        eqzr_factory->create(),
+        dft_factory->create({.size = NRE, .dir = dft_processor::direction::DIRECT}),
+        dft_factory->create({.size = NRE, .dir = dft_processor::direction::INVERSE}));
 
     return std::make_unique<pucch_detector_impl>(std::move(detector_format0), std::move(detector_format1));
   }
@@ -246,9 +257,11 @@ srsran::create_pucch_demodulator_factory_sw(std::shared_ptr<channel_equalizer_fa
 std::shared_ptr<pucch_detector_factory>
 srsran::create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_collection_factory> lpcf,
                                          std::shared_ptr<pseudo_random_generator_factory>      prgf,
-                                         std::shared_ptr<channel_equalizer_factory>            eqzrf)
+                                         std::shared_ptr<channel_equalizer_factory>            eqzrf,
+                                         std::shared_ptr<dft_processor_factory>                dftf)
 {
-  return std::make_shared<pucch_detector_factory_sw>(std::move(lpcf), std::move(prgf), std::move(eqzrf));
+  return std::make_shared<pucch_detector_factory_sw>(
+      std::move(lpcf), std::move(prgf), std::move(eqzrf), std::move(dftf));
 }
 
 std::unique_ptr<pucch_processor> pucch_processor_factory::create(srslog::basic_logger& logger)
