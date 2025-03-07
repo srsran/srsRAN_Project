@@ -17,6 +17,7 @@
 namespace srsran {
 
 class ue_cell;
+class slice_ue;
 
 namespace sched_helper {
 
@@ -51,6 +52,35 @@ pusch_config_params compute_retx_pusch_config_params(const ue_cell&             
 /// Derive recommended MCS and number of PRBs for a newTx PUSCH grant.
 mcs_prbs_selection
 compute_newtx_required_mcs_and_prbs(const pusch_config_params& pusch_cfg, const ue_cell& ue_cc, unsigned pending_bytes);
+
+/// Parameters recommended for a DL grant.
+struct dl_grant_sched_params {
+  /// SearchSpace to use.
+  search_space_id ss_id;
+  /// PDSCH time-domain resource index.
+  uint8_t pdsch_td_res_index;
+  /// Recommended MCS.
+  sch_mcs_index mcs;
+  /// Recommended number of RBs.
+  unsigned nof_rbs;
+  /// Recommended number of layers.
+  unsigned nof_layers;
+  /// Limits in CRBs for DL grant allocation.
+  crb_interval crb_lims;
+};
+
+/// Derive recommended parameters for a DL newTx grant.
+std::optional<dl_grant_sched_params> compute_newtx_dl_grant_sched_params(const slice_ue&                u,
+                                                                         slot_point                     pdcch_slot,
+                                                                         slot_point                     pdsch_slot,
+                                                                         unsigned                       pending_bytes,
+                                                                         const std::optional<unsigned>& max_rbs);
+
+/// Derive recommended parameters for a DL reTx grant.
+std::optional<dl_grant_sched_params> compute_retx_dl_grant_sched_params(const slice_ue&               u,
+                                                                        slot_point                    pdcch_slot,
+                                                                        slot_point                    pdsch_slot,
+                                                                        const dl_harq_process_handle& h_dl);
 
 } // namespace sched_helper
 } // namespace srsran

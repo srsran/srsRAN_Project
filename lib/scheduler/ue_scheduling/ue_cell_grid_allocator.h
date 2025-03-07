@@ -22,23 +22,14 @@ struct scheduler_ue_expert_config;
 
 /// Request for a DL grant allocation.
 struct ue_dl_grant_request {
-  struct newtx_params {
-    /// Pending bytes to schedule.
-    unsigned pending_bytes;
-    /// Maximum number of RBs to allocate. This limit can be determined based on slicing or UE configuration.
-    std::optional<unsigned> max_nof_rbs;
-  };
-  struct retx_params {
-    /// HARQ process to be retransmitted.
-    dl_harq_process_handle h_dl;
-  };
-
   /// Slot at which PDSCH PDU shall be allocated.
   slot_point pdsch_slot;
   /// UE to allocate.
   const slice_ue& user;
-  /// Parameters relative to retx or newtx.
-  std::variant<newtx_params, retx_params> type;
+  /// DL HARQ process to use, in case of HARQ reTx.
+  std::optional<dl_harq_process_handle> h_dl;
+  /// Recommended allocation parameters.
+  sched_helper::dl_grant_sched_params alloc_params;
 };
 
 /// Request for a newTx UL grant allocation.
@@ -127,15 +118,6 @@ private:
     std::optional<unsigned>               max_nof_rbs;
   };
 
-  struct dl_grant_params {
-    alloc_status                     status;
-    search_space_id                  ss_id;
-    uint8_t                          pdsch_td_res_index;
-    crb_interval                     crb_lims;
-    unsigned                         nof_layers;
-    sched_helper::mcs_prbs_selection recommended_mcs_prbs;
-  };
-
   struct ul_grant_params {
     alloc_status                     status;
     search_space_id                  ss_id;
@@ -148,11 +130,9 @@ private:
 
   ul_alloc_result allocate_ul_grant(const common_ue_ul_grant_request& grant);
 
-  dl_grant_params get_dl_grant_params(const ue_dl_grant_request& req);
-
   ul_grant_params get_ul_grant_params(const common_ue_ul_grant_request& grant);
 
-  std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(const dl_grant_params&                       grant_params,
+  std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(const sched_helper::dl_grant_sched_params&   grant_params,
                                                   const search_space_info&                     ss_info,
                                                   cell_slot_resource_allocator&                pdsch_alloc,
                                                   const crb_interval&                          crbs,

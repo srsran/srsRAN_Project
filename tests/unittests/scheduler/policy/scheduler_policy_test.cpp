@@ -74,17 +74,14 @@ protected:
     pucch_alloc.slot_indication(next_slot);
     uci_alloc.slot_indication(next_slot);
     intra_slice_sched.slot_indication(next_slot);
-
     slice_sched.slot_indication(next_slot, res_grid);
 
     if (cell_cfg.is_dl_enabled(next_slot)) {
       while (auto dl_slice_candidate = slice_sched.get_next_dl_candidate()) {
-        intra_slice_sched.dl_sched(
-            next_slot, dl_slice_candidate.value(), slice_sched.get_policy(dl_slice_candidate->id()));
+        intra_slice_sched.dl_sched(dl_slice_candidate.value(), slice_sched.get_policy(dl_slice_candidate->id()));
       }
       while (auto ul_slice_candidate = slice_sched.get_next_ul_candidate()) {
-        intra_slice_sched.ul_sched(
-            next_slot, ul_slice_candidate.value(), slice_sched.get_policy(ul_slice_candidate->id()));
+        intra_slice_sched.ul_sched(ul_slice_candidate.value(), slice_sched.get_policy(ul_slice_candidate->id()));
       }
     }
 

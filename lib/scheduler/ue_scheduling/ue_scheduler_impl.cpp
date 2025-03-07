@@ -33,7 +33,7 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
                                          *params.ev_logger});
 }
 
-void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t cell_index)
+void ue_scheduler_impl::run_sched_strategy(du_cell_index_t cell_index)
 {
   auto& cell = cells[cell_index];
 
@@ -41,12 +41,12 @@ void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t c
   // Note: DL should be scheduled first so that the right DAI value is picked in DCI format 0_1.
   while (auto dl_slice_candidate = cell.slice_sched.get_next_dl_candidate()) {
     scheduler_policy& policy = cell.slice_sched.get_policy(dl_slice_candidate->id());
-    cell.intra_slice_sched.dl_sched(slot_tx, dl_slice_candidate.value(), policy);
+    cell.intra_slice_sched.dl_sched(dl_slice_candidate.value(), policy);
   }
 
   while (auto ul_slice_candidate = cell.slice_sched.get_next_ul_candidate()) {
     scheduler_policy& policy = cell.slice_sched.get_policy(ul_slice_candidate->id());
-    cell.intra_slice_sched.ul_sched(slot_tx, ul_slice_candidate.value(), policy);
+    cell.intra_slice_sched.ul_sched(ul_slice_candidate.value(), policy);
   }
 }
 
@@ -162,7 +162,7 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx)
     group_cell.intra_slice_sched.slot_indication(slot_tx);
 
     // Run slice scheduler policies.
-    run_sched_strategy(slot_tx, cell_index);
+    run_sched_strategy(cell_index);
 
     // The post processing is done for DL and UL slots.
     group_cell.intra_slice_sched.post_process_results();

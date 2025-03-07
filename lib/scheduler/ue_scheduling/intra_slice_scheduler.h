@@ -37,23 +37,21 @@ public:
   void post_process_results();
 
   /// Schedule DL grants for a given slice candidate.
-  void dl_sched(slot_point pdcch_slot, dl_ran_slice_candidate slice, scheduler_policy& dl_policy);
+  void dl_sched(dl_ran_slice_candidate slice, scheduler_policy& dl_policy);
 
   /// Schedule UL grants for a given slice candidate.
-  void ul_sched(slot_point pdcch_slot, ul_ran_slice_candidate slice, scheduler_policy& dl_policy);
+  void ul_sched(ul_ran_slice_candidate slice, scheduler_policy& dl_policy);
 
 private:
   /// Determines whether a UE can be DL scheduled in a given slot.
-  bool can_allocate_pdsch(slot_point sl_tx, slot_point sl_pdsch, const slice_ue& u, const ue_cell& ue_cc) const;
+  bool can_allocate_pdsch(slot_point sl_pdsch, const slice_ue& u, const ue_cell& ue_cc) const;
 
   /// Determines whether a UE can be UL scheduled in a given slot.
-  bool can_allocate_pusch(slot_point pdcch_slot, slot_point pusch_slot, const slice_ue& u, const ue_cell& ue_cc) const;
+  bool can_allocate_pusch(slot_point pusch_slot, const slice_ue& u, const ue_cell& ue_cc) const;
 
-  std::optional<ue_newtx_candidate>
-  create_newtx_dl_candidate(slot_point pdcch_slot, slot_point pdsch_slot, const slice_ue& u) const;
+  std::optional<ue_newtx_candidate> create_newtx_dl_candidate(slot_point pdsch_slot, const slice_ue& u) const;
 
-  std::optional<ue_newtx_candidate>
-  create_newtx_ul_candidate(slot_point pdcch_slot, slot_point pusch_slot, const slice_ue& u) const;
+  std::optional<ue_newtx_candidate> create_newtx_ul_candidate(slot_point pusch_slot, const slice_ue& u) const;
 
   void prepare_newtx_dl_candidates(const dl_ran_slice_candidate& slice, scheduler_policy& dl_policy);
 
@@ -71,9 +69,9 @@ private:
                                         scheduler_policy&       ul_policy,
                                         unsigned                max_ue_grants_to_alloc);
 
-  unsigned max_pdschs_to_alloc(slot_point pdcch_slot, const dl_ran_slice_candidate& slice);
+  unsigned max_pdschs_to_alloc(const dl_ran_slice_candidate& slice);
 
-  unsigned max_puschs_to_alloc(slot_point pdcch_slot, const ul_ran_slice_candidate& slice);
+  unsigned max_puschs_to_alloc(const ul_ran_slice_candidate& slice);
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_resource_allocator&    cell_alloc;
@@ -83,7 +81,8 @@ private:
   /// Handler of grid allocations.
   ue_cell_grid_allocator ue_alloc;
 
-  slot_point last_sl_tx;
+  // Slot at which PDCCH is scheduled.
+  slot_point pdcch_slot;
 
   // Number of allocation attempts for DL in the given slot.
   unsigned dl_attempts_count = 0;

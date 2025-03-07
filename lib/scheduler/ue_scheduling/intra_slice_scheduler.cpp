@@ -31,7 +31,7 @@ intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& e
 
 void intra_slice_scheduler::slot_indication(slot_point sl_tx)
 {
-  last_sl_tx        = sl_tx;
+  pdcch_slot        = sl_tx;
   dl_attempts_count = 0;
   ul_attempts_count = 0;
 }
@@ -41,12 +41,12 @@ void intra_slice_scheduler::post_process_results()
   ue_alloc.post_process_results();
 }
 
-void intra_slice_scheduler::dl_sched(slot_point pdcch_slot, dl_ran_slice_candidate slice, scheduler_policy& policy)
+void intra_slice_scheduler::dl_sched(dl_ran_slice_candidate slice, scheduler_policy& policy)
 {
   srsran_sanity_check(slice.remaining_rbs() > 0, "Invalid slice slice");
 
   // Determine max number of UE grants that can be scheduled in this slot.
-  unsigned pdschs_to_alloc = max_pdschs_to_alloc(pdcch_slot, slice);
+  unsigned pdschs_to_alloc = max_pdschs_to_alloc(slice);
   if (pdschs_to_alloc == 0) {
     return;
   }
@@ -62,12 +62,12 @@ void intra_slice_scheduler::dl_sched(slot_point pdcch_slot, dl_ran_slice_candida
   schedule_dl_newtx_candidates(slice, policy, pdschs_to_alloc);
 }
 
-void intra_slice_scheduler::ul_sched(slot_point pdcch_slot, ul_ran_slice_candidate slice, scheduler_policy& ul_policy)
+void intra_slice_scheduler::ul_sched(ul_ran_slice_candidate slice, scheduler_policy& ul_policy)
 {
   srsran_sanity_check(slice.remaining_rbs() > 0, "Invalid slice slice");
 
   // Determine max number of UE grants that can be scheduled in this slot.
-  unsigned puschs_to_alloc = max_puschs_to_alloc(pdcch_slot, slice);
+  unsigned puschs_to_alloc = max_puschs_to_alloc(slice);
   if (puschs_to_alloc == 0) {
     return;
   }
@@ -138,7 +138,6 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(const dl_ran_slice_c
                                                             unsigned                      max_ue_grants_to_alloc)
 {
   const slice_ue_repository& slice_ues     = slice.get_slice_ues();
-  slot_point                 pdcch_slot    = cell_alloc.slot_tx();
   slot_point                 pdsch_slot    = slice.get_slot_tx();
   dl_harq_pending_retx_list  pending_harqs = cell_harqs.pending_dl_retxs();
 
@@ -152,13 +151,19 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(const dl_ran_slice_c
       continue;
     }
     const slice_ue& u = slice_ues[h.ue_index()];
-    if (not can_allocate_pdsch(pdcch_slot, pdsch_slot, u, u.get_cc())) {
+    if (not can_allocate_pdsch(pdsch_slot, u, u.get_cc())) {
+      continue;
+    }
+
+    // Derive recommended parameters for the DL reTx grant.
+    auto params = sched_helper::compute_retx_dl_grant_sched_params(u, pdcch_slot, pdsch_slot, h);
+    if (not params.has_value()) {
+      // No valid parameters were found for this slot and UE candidate.
       continue;
     }
 
     // Perform allocation of PDCCH, PDSCH and UCI.
-    dl_alloc_result result =
-        ue_alloc.allocate_dl_grant(ue_dl_grant_request{pdsch_slot, u, ue_dl_grant_request::retx_params{h}});
+    dl_alloc_result result = ue_alloc.allocate_dl_grant(ue_dl_grant_request{pdsch_slot, u, h, params.value()});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
@@ -186,7 +191,6 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(const ul_ran_slice_c
                                                             unsigned                      max_ue_grants_to_alloc)
 {
   const slice_ue_repository& slice_ues     = slice.get_slice_ues();
-  slot_point                 pdcch_slot    = cell_alloc.slot_tx();
   slot_point                 pusch_slot    = slice.get_slot_tx();
   ul_harq_pending_retx_list  pending_harqs = cell_harqs.pending_ul_retxs();
 
@@ -201,7 +205,7 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(const ul_ran_slice_c
     }
     const slice_ue& u = slice_ues[h.ue_index()];
 
-    if (not can_allocate_pusch(pdcch_slot, pusch_slot, u, u.get_cc())) {
+    if (not can_allocate_pusch(pusch_slot, u, u.get_cc())) {
       continue;
     }
 
@@ -234,13 +238,12 @@ void intra_slice_scheduler::prepare_newtx_dl_candidates(const dl_ran_slice_candi
                                                         scheduler_policy&             dl_policy)
 {
   const slice_ue_repository& slice_ues  = slice.get_slice_ues();
-  slot_point                 pdcch_slot = cell_alloc.slot_tx();
   slot_point                 pdsch_slot = slice.get_slot_tx();
 
   // Build list of UE candidates for newTx.
   dl_newtx_candidates.clear();
   for (const slice_ue& u : slice_ues) {
-    auto ue_candidate = create_newtx_dl_candidate(pdcch_slot, pdsch_slot, u);
+    auto ue_candidate = create_newtx_dl_candidate(pdsch_slot, u);
     if (ue_candidate.has_value()) {
       dl_newtx_candidates.push_back(ue_candidate.value());
     }
@@ -268,13 +271,12 @@ void intra_slice_scheduler::prepare_newtx_ul_candidates(const ul_ran_slice_candi
                                                         scheduler_policy&             ul_policy)
 {
   const slice_ue_repository& slice_ues  = slice.get_slice_ues();
-  slot_point                 pdcch_slot = cell_alloc.slot_tx();
   slot_point                 pusch_slot = slice.get_slot_tx();
 
   // Build list of UE candidates.
   ul_newtx_candidates.clear();
   for (const slice_ue& u : slice_ues) {
-    auto ue_candidate = create_newtx_ul_candidate(pdcch_slot, pusch_slot, u);
+    auto ue_candidate = create_newtx_ul_candidate(pusch_slot, u);
     if (ue_candidate.has_value()) {
       ul_newtx_candidates.push_back(ue_candidate.value());
     }
@@ -336,11 +338,17 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
       break;
     }
 
+    // Derive recommended parameters for the DL newTx grant.
+    auto params = sched_helper::compute_newtx_dl_grant_sched_params(
+        *ue_candidate.ue, pdcch_slot, pdsch_slot, ue_candidate.pending_bytes, max_rbs_per_grant);
+    if (not params.has_value()) {
+      // No valid parameters were found for this slot and UE candidate.
+      continue;
+    }
+
     // Allocate DL grant.
-    dl_alloc_result result = ue_alloc.allocate_dl_grant(
-        ue_dl_grant_request{pdsch_slot,
-                            *ue_candidate.ue,
-                            ue_dl_grant_request::newtx_params{ue_candidate.pending_bytes, max_rbs_per_grant}});
+    dl_alloc_result result =
+        ue_alloc.allocate_dl_grant(ue_dl_grant_request{pdsch_slot, *ue_candidate.ue, std::nullopt, params.value()});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
@@ -441,10 +449,7 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
   return alloc_count;
 }
 
-bool intra_slice_scheduler::can_allocate_pdsch(slot_point      pdcch_slot,
-                                               slot_point      pdsch_slot,
-                                               const slice_ue& u,
-                                               const ue_cell&  ue_cc) const
+bool intra_slice_scheduler::can_allocate_pdsch(slot_point pdsch_slot, const slice_ue& u, const ue_cell& ue_cc) const
 {
   // Check if PDCCH is active for this slot (e.g. not in UL slot or measGap)
   if (not ue_cc.is_pdcch_enabled(pdcch_slot)) {
@@ -469,10 +474,7 @@ bool intra_slice_scheduler::can_allocate_pdsch(slot_point      pdcch_slot,
   return true;
 }
 
-bool intra_slice_scheduler::can_allocate_pusch(slot_point      pdcch_slot,
-                                               slot_point      pusch_slot,
-                                               const slice_ue& u,
-                                               const ue_cell&  ue_cc) const
+bool intra_slice_scheduler::can_allocate_pusch(slot_point pusch_slot, const slice_ue& u, const ue_cell& ue_cc) const
 {
   // Check if PDCCH is active for this slot (e.g. not in UL slot or measGap)
   if (not ue_cc.is_pdcch_enabled(pdcch_slot)) {
@@ -496,8 +498,8 @@ bool intra_slice_scheduler::can_allocate_pusch(slot_point      pdcch_slot,
   return true;
 }
 
-std::optional<ue_newtx_candidate>
-intra_slice_scheduler::create_newtx_dl_candidate(slot_point pdcch_slot, slot_point pdsch_slot, const slice_ue& u) const
+std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_dl_candidate(slot_point      pdsch_slot,
+                                                                                   const slice_ue& u) const
 {
   const ue_cell& ue_cc = u.get_cc();
   srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(), "Invalid slice UE state");
@@ -508,7 +510,7 @@ intra_slice_scheduler::create_newtx_dl_candidate(slot_point pdcch_slot, slot_poi
     return std::nullopt;
   }
 
-  if (not can_allocate_pdsch(pdcch_slot, pdsch_slot, u, ue_cc)) {
+  if (not can_allocate_pdsch(pdsch_slot, u, ue_cc)) {
     return std::nullopt;
   }
 
@@ -530,8 +532,8 @@ intra_slice_scheduler::create_newtx_dl_candidate(slot_point pdcch_slot, slot_poi
   return ue_newtx_candidate{&u, &ue_cc, pending_bytes, forbid_sched_priority};
 }
 
-std::optional<ue_newtx_candidate>
-intra_slice_scheduler::create_newtx_ul_candidate(slot_point pdcch_slot, slot_point pusch_slot, const slice_ue& u) const
+std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_ul_candidate(slot_point      pusch_slot,
+                                                                                   const slice_ue& u) const
 {
   const ue_cell& ue_cc = u.get_cc();
   srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(), "Invalid slice UE state");
@@ -542,7 +544,7 @@ intra_slice_scheduler::create_newtx_ul_candidate(slot_point pdcch_slot, slot_poi
     return std::nullopt;
   }
 
-  if (not can_allocate_pusch(pdcch_slot, pusch_slot, u, ue_cc)) {
+  if (not can_allocate_pusch(pusch_slot, u, ue_cc)) {
     return std::nullopt;
   }
 
@@ -562,7 +564,7 @@ intra_slice_scheduler::create_newtx_ul_candidate(slot_point pdcch_slot, slot_poi
   return ue_newtx_candidate{&u, &ue_cc, pending_bytes, forbid_sched_priority};
 }
 
-unsigned intra_slice_scheduler::max_pdschs_to_alloc(slot_point pdcch_slot, const dl_ran_slice_candidate& slice)
+unsigned intra_slice_scheduler::max_pdschs_to_alloc(const dl_ran_slice_candidate& slice)
 {
   // We cannot allocate more than the number of UEs available.
   int pdschs_to_alloc = slice.get_slice_ues().size();
@@ -601,7 +603,7 @@ unsigned intra_slice_scheduler::max_pdschs_to_alloc(slot_point pdcch_slot, const
   return std::max(pdschs_to_alloc, 0);
 }
 
-unsigned intra_slice_scheduler::max_puschs_to_alloc(slot_point pdcch_slot, const ul_ran_slice_candidate& slice)
+unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate& slice)
 {
   // We cannot allocate more than the number of UEs available.
   int puschs_to_alloc = slice.get_slice_ues().size();
