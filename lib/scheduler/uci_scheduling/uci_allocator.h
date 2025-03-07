@@ -77,10 +77,10 @@ public:
                                             const ue_cell_configuration&  ue_cell_cfg) = 0;
 
   /// Get the number of PDSCHs currently scheduled for a given UE UCI.
-  /// \param[in] slot_alloc struct with scheduling results.
+  /// \param[in] uci_slot UCI slot of the respective PDSCHs.
   /// \param[in] crnti C-RNTI of the UE.
   /// \return Returns number of PDSCHs scheduled if UCI allocation if found, 0 otherwise.
-  virtual uint8_t get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) = 0;
+  virtual uint8_t get_scheduled_pdsch_counter_in_ue_uci(slot_point uci_slot, rnti_t crnti) = 0;
 
   /// Returns whether a UCI HARQ-ACK allocated on common PUCCH resource exists at a given slot or not.
   /// \param[in] crnti C-RNTI of the UE.

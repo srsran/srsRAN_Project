@@ -29,9 +29,10 @@ struct pusch_config_params {
   bool              tp_pi2bpsk_present;
   bool              use_transform_precoder;
   dmrs_information  dmrs;
-  unsigned          nof_harq_ack_bits{0};
-  unsigned          nof_csi_part1_bits{0};
-  unsigned          max_nof_csi_part2_bits{0};
+  /// Number of HARQ-ACK bits allocated as part of PUCCH in the UL slot where the PUSCH is going to be allocated.
+  unsigned nof_harq_ack_bits{0};
+  unsigned nof_csi_part1_bits{0};
+  unsigned max_nof_csi_part2_bits{0};
 };
 
 /// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.

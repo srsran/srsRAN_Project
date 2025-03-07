@@ -15,13 +15,14 @@ using namespace srsran;
 intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& expert_cfg_,
                                              ue_repository&                    ues,
                                              pdcch_resource_allocator&         pdcch_alloc,
-                                             uci_allocator&                    uci_alloc,
+                                             uci_allocator&                    uci_alloc_,
                                              cell_resource_allocator&          cell_alloc_,
                                              cell_harq_manager&                cell_harqs_,
                                              srslog::basic_logger&             logger_) :
   expert_cfg(expert_cfg_),
   cell_alloc(cell_alloc_),
   cell_harqs(cell_harqs_),
+  uci_alloc(uci_alloc_),
   logger(logger_),
   ue_alloc(expert_cfg, ues, pdcch_alloc, uci_alloc, cell_alloc_, logger_)
 {
@@ -209,8 +210,16 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(const ul_ran_slice_c
       continue;
     }
 
+    // Derive recommended parameters for the UL reTx grant.
+    unsigned pending_uci_harq_bits = uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(pusch_slot, u.crnti());
+    auto params = sched_helper::compute_retx_ul_grant_sched_params(u, pdcch_slot, pusch_slot, h, pending_uci_harq_bits);
+    if (not params.has_value()) {
+      // No valid parameters were found for this slot and UE candidate.
+      continue;
+    }
+
     // Allocate PDCCH and PUSCH.
-    ul_alloc_result result = ue_alloc.allocate_retx_ul_grant(ue_ul_retx_grant_request{pusch_slot, u, h});
+    ul_alloc_result result = ue_alloc.allocate_ul_grant(ue_ul_grant_request{pusch_slot, u, h, params.value()});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
@@ -417,9 +426,19 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
       break;
     }
 
+    // Derive recommended parameters for the UL newTx grant.
+    unsigned pending_uci_harq_bits =
+        uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(pusch_slot, ue_candidate.ue->crnti());
+    auto params = sched_helper::compute_newtx_ul_grant_sched_params(
+        *ue_candidate.ue, pdcch_slot, pusch_slot, ue_candidate.pending_bytes, pending_uci_harq_bits, max_rbs_per_grant);
+    if (not params.has_value()) {
+      // No valid parameters were found for this slot and UE candidate.
+      continue;
+    }
+
     // Allocate PDCCH and PUSCH for a new Tx.
-    ul_alloc_result result = ue_alloc.allocate_newtx_ul_grant(
-        ue_ul_newtx_grant_request{pusch_slot, *ue_candidate.ue, ue_candidate.pending_bytes, max_rbs_per_grant});
+    ul_alloc_result result =
+        ue_alloc.allocate_ul_grant(ue_ul_grant_request{pusch_slot, *ue_candidate.ue, std::nullopt, params.value()});
 
     if (result.status == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.

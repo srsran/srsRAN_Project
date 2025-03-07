@@ -165,7 +165,12 @@ protected:
     if (not cell_cfg.is_dl_enabled(current_slot)) {
       return ul_alloc_result{alloc_status::invalid_params};
     }
-    return alloc.allocate_newtx_ul_grant(ue_ul_newtx_grant_request{pusch_slot, user, pending_bytes, max_nof_rbs});
+    auto params = sched_helper::compute_newtx_ul_grant_sched_params(
+        user, current_slot, pusch_slot, pending_bytes, 0, max_nof_rbs);
+    if (not params.has_value()) {
+      return ul_alloc_result{alloc_status::invalid_params};
+    }
+    return alloc.allocate_ul_grant(ue_ul_grant_request{pusch_slot, user, std::nullopt, params.value()});
   }
 
   scheduler_expert_config                 sched_cfg;

@@ -50,8 +50,10 @@ pusch_config_params compute_retx_pusch_config_params(const ue_cell&             
                                                      bool                                         is_csi_report_slot);
 
 /// Derive recommended MCS and number of PRBs for a newTx PUSCH grant.
-mcs_prbs_selection
-compute_newtx_required_mcs_and_prbs(const pusch_config_params& pusch_cfg, const ue_cell& ue_cc, unsigned pending_bytes);
+mcs_prbs_selection compute_newtx_required_mcs_and_prbs(const pusch_config_params& pusch_cfg,
+                                                       const ue_cell&             ue_cc,
+                                                       unsigned                   pending_bytes,
+                                                       unsigned                   max_nof_rbs = MAX_NOF_PRBS);
 
 /// Parameters recommended for a DL grant.
 struct dl_grant_sched_params {
@@ -81,6 +83,37 @@ std::optional<dl_grant_sched_params> compute_retx_dl_grant_sched_params(const sl
                                                                         slot_point                    pdcch_slot,
                                                                         slot_point                    pdsch_slot,
                                                                         const dl_harq_process_handle& h_dl);
+
+/// Parameters recommended for a UL grant.
+struct ul_grant_sched_params {
+  /// SearchSpace to use.
+  search_space_id ss_id;
+  /// PUSCH time-domain resource index.
+  uint8_t pusch_td_res_index;
+  /// Recommended MCS.
+  sch_mcs_index mcs;
+  /// Recommended number of RBs.
+  unsigned nof_rbs;
+  /// Limits in CRBs for UL grant allocation.
+  crb_interval crb_lims;
+  /// PUSCH config params.
+  pusch_config_params pusch_cfg;
+};
+
+/// Derive recommended parameters for a UL newTx grant.
+std::optional<ul_grant_sched_params> compute_newtx_ul_grant_sched_params(const slice_ue& u,
+                                                                         slot_point      pdcch_slot,
+                                                                         slot_point      pusch_slot,
+                                                                         unsigned        pending_bytes,
+                                                                         unsigned        uci_nof_harq_bits,
+                                                                         const std::optional<unsigned>& max_rbs);
+
+/// Derive recommended parameters for a DL reTx grant.
+std::optional<ul_grant_sched_params> compute_retx_ul_grant_sched_params(const slice_ue&               u,
+                                                                        slot_point                    pdcch_slot,
+                                                                        slot_point                    pusch_slot,
+                                                                        const ul_harq_process_handle& h_ul,
+                                                                        unsigned uci_nof_harq_bits);
 
 } // namespace sched_helper
 } // namespace srsran

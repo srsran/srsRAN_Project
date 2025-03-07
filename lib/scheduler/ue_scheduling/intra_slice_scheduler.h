@@ -76,6 +76,7 @@ private:
   const scheduler_ue_expert_config& expert_cfg;
   const cell_resource_allocator&    cell_alloc;
   cell_harq_manager&                cell_harqs;
+  uci_allocator&                    uci_alloc;
   srslog::basic_logger&             logger;
 
   /// Handler of grid allocations.

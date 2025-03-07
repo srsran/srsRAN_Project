@@ -38,156 +38,6 @@ ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config&
 {
 }
 
-ue_cell_grid_allocator::ul_grant_params
-ue_cell_grid_allocator::get_ul_grant_params(const common_ue_ul_grant_request& sched_params)
-{
-  static constexpr unsigned pdcch_delay_in_slots = 0;
-  const slice_ue&           slice_ue             = *sched_params.user;
-  srsran_sanity_check(ues.contains(slice_ue.ue_index()), "Invalid UE candidate index");
-  const bool is_retx = sched_params.h_ul.has_value();
-
-  ue&            u     = ues[slice_ue.ue_index()];
-  const ue_cell& ue_cc = sched_params.user->get_cc();
-  srsran_sanity_check(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(), "Invalid UE candidate");
-
-  const ue_cell_configuration&                 ue_cell_cfg = ue_cc.cfg();
-  const cell_configuration&                    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  const std::optional<ul_harq_process_handle>& h_ul        = sched_params.h_ul;
-
-  // Fetch PDCCH resource grid allocators.
-  cell_slot_resource_allocator& pdcch_alloc = cell_alloc[pdcch_delay_in_slots];
-  srsran_sanity_check(ue_cc.is_pdcch_enabled(pdcch_alloc.slot), "DL is not active in the PDCCH slot");
-  srsran_sanity_check(not pdcch_alloc.result.dl.ul_pdcchs.full(), "Maximum number of UL PDCCH grants per slot reached");
-
-  // Create PUSCH param candidate search object.
-  ue_pusch_alloc_param_candidate_searcher candidates{
-      u, cell_alloc.cell_index(), h_ul, pdcch_alloc.slot, sched_params.pusch_slot};
-  if (candidates.is_empty()) {
-    // The conditions for a new PUSCH allocation for this UE were not met (e.g. lack of available SearchSpaces).
-    return {alloc_status::skip_ue};
-  }
-
-  // Iterate through allocation parameter candidates.
-  for (const ue_pusch_alloc_param_candidate_searcher::candidate& param_candidate : candidates) {
-    const pusch_time_domain_resource_allocation& pusch_td_cfg = param_candidate.pusch_td_res();
-    const search_space_info&                     ss_info      = param_candidate.ss();
-    const dci_ul_rnti_config_type                dci_type     = param_candidate.dci_ul_rnti_cfg_type();
-    const unsigned                               final_k2     = pusch_td_cfg.k2 + cell_cfg.ntn_cs_koffset;
-
-    // Fetch PUSCH resource grid allocators.
-    cell_slot_resource_allocator& pusch_alloc = cell_alloc[pdcch_delay_in_slots + final_k2];
-
-    // Verify that the order of PUSCHs for the same UE matches the order of PDCCHs and that there is at most one PUSCH
-    // per slot.
-    // [TS 38.214, 6.1] "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to transmit a
-    // PUSCH that overlaps in time with another PUSCH".
-    // [TS 38.214, 6.1] "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to start a first
-    // PUSCH transmission starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be scheduled to
-    // transmit a PUSCH starting earlier than the end of the first PUSCH by a PDCCH that ends later than symbol i".
-    slot_point last_pusch_slot = ue_cc.harqs.last_pusch_slot();
-    if (last_pusch_slot.valid() and pusch_alloc.slot <= last_pusch_slot) {
-      return {alloc_status::skip_ue};
-    }
-
-    // Check if there is space for more PUSCH PDUs.
-    srsran_sanity_check(not pusch_alloc.result.ul.puschs.full(), "No PUSCH space available in scheduler output list");
-    srsran_sanity_check(cell_cfg.is_ul_enabled(pusch_alloc.slot), "UL is not active in the PUSCH slot");
-
-    // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE will
-    // be removed when multiplexing the UCI on PUSCH.
-    unsigned pusch_pdu_rem_space = get_space_left_for_pusch_pdus(pusch_alloc.result, u.crnti, expert_cfg);
-    if (pusch_pdu_rem_space == 0) {
-      if (pusch_alloc.result.ul.puschs.size() >= expert_cfg.max_puschs_per_slot) {
-        logger.info(
-            "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Max number of PUSCHs per slot {} was reached.",
-            fmt::underlying(u.ue_index),
-            u.crnti,
-            pusch_alloc.slot,
-            expert_cfg.max_puschs_per_slot);
-      } else {
-        logger.info("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Max number of UL grants per slot {} "
-                    "was reached.",
-                    fmt::underlying(u.ue_index),
-                    u.crnti,
-                    pusch_alloc.slot,
-                    expert_cfg.max_puschs_per_slot);
-      }
-      return {alloc_status::skip_slot};
-    }
-
-    // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common
-    // PUCCH resources.
-    if (uci_alloc.has_uci_harq_on_common_pucch_res(u.crnti, pusch_alloc.slot)) {
-      logger.debug("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: UE has PUCCH grant using common PUCCH "
-                   "resources scheduled",
-                   fmt::underlying(u.ue_index),
-                   u.crnti,
-                   pusch_alloc.slot);
-      return {alloc_status::skip_ue};
-    }
-
-    const unsigned start_ul_symbols =
-        NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - cell_cfg.get_nof_ul_symbol_per_slot(pusch_alloc.slot);
-    // If it is a retx, we need to ensure we use a time_domain_resource with the same number of symbols as used for
-    // the first transmission.
-    const bool sym_length_match_prev_grant_for_retx =
-        is_retx ? pusch_td_cfg.symbols.length() == h_ul->get_grant_params().nof_symbols : true;
-    if (pusch_td_cfg.symbols.start() < start_ul_symbols or
-        pusch_td_cfg.symbols.stop() > (start_ul_symbols + cell_cfg.get_nof_ul_symbol_per_slot(pusch_alloc.slot)) or
-        !sym_length_match_prev_grant_for_retx) {
-      // Try next candidate.
-      continue;
-    }
-
-    // Apply RB allocation limits.
-    const unsigned start_rb = std::max(expert_cfg.pusch_crb_limits.start(), ss_info.ul_crb_lims.start());
-    const unsigned end_rb   = std::min(expert_cfg.pusch_crb_limits.stop(), ss_info.ul_crb_lims.stop());
-    if (start_rb >= end_rb) {
-      logger.debug("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Invalid RB allocation range [{}, {})",
-                   fmt::underlying(u.ue_index),
-                   u.crnti,
-                   pusch_alloc.slot,
-                   start_rb,
-                   end_rb);
-      return {alloc_status::skip_slot};
-    }
-    const crb_interval ul_crb_lims = {start_rb, end_rb};
-
-    // Compute the MCS and the number of PRBs, depending on the pending bytes to transmit.
-    pusch_config_params              pusch_cfg;
-    sched_helper::mcs_prbs_selection mcs_prbs;
-    // Note: We assume k2 <= k1, which means that all the HARQ bits are set at this point for this UL slot and UE.
-    const unsigned nof_harq_ack_bits = uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
-    const bool     is_csi_report_slot =
-        u.get_pcell().cfg().csi_meas_cfg() != nullptr and
-        csi_helper::is_csi_reporting_slot(*u.get_pcell().cfg().csi_meas_cfg(), pusch_alloc.slot);
-    if (is_retx) {
-      pusch_cfg = sched_helper::compute_retx_pusch_config_params(
-          ue_cc, *h_ul, pusch_td_cfg, nof_harq_ack_bits, is_csi_report_slot);
-      mcs_prbs =
-          sched_helper::mcs_prbs_selection{h_ul->get_grant_params().mcs, h_ul->get_grant_params().rbs.type1().length()};
-    } else {
-      pusch_cfg = sched_helper::compute_newtx_pusch_config_params(
-          ue_cc, dci_type, pusch_td_cfg, nof_harq_ack_bits, is_csi_report_slot);
-      mcs_prbs = sched_helper::compute_newtx_required_mcs_and_prbs(
-          pusch_cfg, ue_cc, sched_params.recommended_nof_bytes.value());
-    }
-
-    // Generate result.
-    ul_grant_params result;
-    result.status               = alloc_status::success;
-    result.ss_id                = ss_info.cfg->get_id();
-    result.pusch_td_res_index   = param_candidate.pusch_td_res_index();
-    result.crb_lims             = ul_crb_lims;
-    result.dci_type             = dci_type;
-    result.pusch_cfg            = pusch_cfg;
-    result.recommended_mcs_prbs = mcs_prbs;
-    return result;
-  }
-
-  return {alloc_status::skip_ue};
-}
-
 std::optional<sch_mcs_tbs>
 ue_cell_grid_allocator::calculate_dl_mcs_tbs(const sched_helper::dl_grant_sched_params&   grant_params,
                                              const search_space_info&                     ss_info,
@@ -497,109 +347,54 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_dl_grant_requ
           is_new_data ? msg.tb_list.back() : dl_msg_tb_info{}};
 }
 
-ul_alloc_result ue_cell_grid_allocator::allocate_newtx_ul_grant(const ue_ul_newtx_grant_request& request)
+ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_ul_grant_request& request)
 {
-  srsran_sanity_check(not request.max_nof_rbs.has_value() and request.max_nof_rbs.value() > 0,
-                      "Invalid max number of RBs");
-  return allocate_ul_grant(common_ue_ul_grant_request{
-      request.pusch_slot, &request.user, std::nullopt, request.pending_bytes, request.max_nof_rbs});
-}
-
-ul_alloc_result ue_cell_grid_allocator::allocate_retx_ul_grant(const ue_ul_retx_grant_request& request)
-{
-  return allocate_ul_grant(
-      common_ue_ul_grant_request{request.pusch_slot, &request.user, request.h_ul, std::nullopt, std::nullopt});
-}
-
-ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(const common_ue_ul_grant_request& grant)
-{
-  ul_grant_params grant_params = get_ul_grant_params(grant);
-  if (grant_params.status != alloc_status::success) {
-    return {grant_params.status};
-  }
   static constexpr unsigned pdcch_delay_in_slots = 0;
-  ue&                       u                    = ues[grant.user->ue_index()];
+  ue&                       u                    = ues[request.user.ue_index()];
   ue_cell&                  ue_cc                = *u.find_cell(cell_alloc.cell_index());
 
   const ue_cell_configuration&  ue_cell_cfg = ue_cc.cfg();
   const cell_configuration&     cell_cfg    = ue_cell_cfg.cell_cfg_common;
   cell_slot_resource_allocator& pdcch_alloc = cell_alloc[pdcch_delay_in_slots];
+  srsran_sanity_check(not pdcch_alloc.result.dl.ul_pdcchs.full(), "Maximum number of UL PDCCH grants per slot reached");
 
   // Derive remaining parameters from \c ul_grant_params.
-  const search_space_info&                     ss_info     = ue_cell_cfg.search_space(grant_params.ss_id);
+  const search_space_info&                     ss_info     = ue_cell_cfg.search_space(request.alloc_params.ss_id);
   const search_space_configuration&            ss_cfg      = *ss_info.cfg;
   const bwp_uplink_common&                     bwp_ul_cmn  = *ss_info.bwp->ul_common.value();
   const subcarrier_spacing                     scs         = bwp_ul_cmn.generic_params.scs;
-  const dci_ul_rnti_config_type                dci_type    = grant_params.dci_type;
-  const crb_interval&                          ul_crb_lims = grant_params.crb_lims;
-  const pusch_time_domain_resource_allocation& pusch_td_cfg =
-      ss_info.pusch_time_domain_list[grant_params.pusch_td_res_index];
-  const pusch_config_params&            pusch_cfg = grant_params.pusch_cfg;
-  const bool                            is_retx   = grant.h_ul.has_value();
-  std::optional<ul_harq_process_handle> h_ul;
-  if (is_retx) {
-    h_ul = ue_cc.harqs.ul_harq(grant.h_ul->id());
-  }
+  const dci_ul_rnti_config_type                dci_type    = ss_info.get_ul_dci_format() == dci_ul_format::f0_0
+                                                                 ? dci_ul_rnti_config_type::c_rnti_f0_0
+                                                                 : dci_ul_rnti_config_type::c_rnti_f0_1;
+  const crb_interval&                          ul_crb_lims = request.alloc_params.crb_lims;
+  uint8_t                                      pusch_td_res_index = request.alloc_params.pusch_td_res_index;
+  const pusch_time_domain_resource_allocation& pusch_td_cfg       = ss_info.pusch_time_domain_list[pusch_td_res_index];
+  const pusch_config_params&                   pusch_cfg          = request.alloc_params.pusch_cfg;
+  const bool                                   is_retx            = request.h_ul.has_value();
+  std::optional<ul_harq_process_handle>        h_ul               = request.h_ul;
 
   // Fetch PUSCH resource grid allocators.
   const unsigned                final_k2    = pusch_td_cfg.k2 + cell_cfg.ntn_cs_koffset;
   cell_slot_resource_allocator& pusch_alloc = cell_alloc[pdcch_delay_in_slots + final_k2];
+  srsran_sanity_check(not pusch_alloc.result.ul.puschs.full(), "No PUSCH space available in scheduler output list");
+
+  // [Implementation-defined] We skip allocation of PUSCH if there is already a PUCCH grant scheduled using common
+  // PUCCH resources.
+  if (uci_alloc.has_uci_harq_on_common_pucch_res(u.crnti, pusch_alloc.slot)) {
+    logger.debug("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: UE has PUCCH grant using common PUCCH "
+                 "resources scheduled",
+                 fmt::underlying(u.ue_index),
+                 u.crnti,
+                 pusch_alloc.slot);
+    return {alloc_status::skip_ue};
+  }
 
   const prb_bitmap used_crbs = pusch_alloc.ul_res_grid.used_crbs(scs, ul_crb_lims, pusch_td_cfg.symbols);
   if (used_crbs.all()) {
     return {alloc_status::skip_slot};
   }
 
-  sched_helper::mcs_prbs_selection mcs_prbs = grant_params.recommended_mcs_prbs;
-  if (not is_retx) {
-    // newTx case.
-
-    // Due to the pre-allocated UCI bits, MCS 0 and PRB 1 would not leave any space for the payload on the TBS, as
-    // all the space would be taken by the UCI bits. As a result of this, the effective code rate would be 0 and the
-    // allocation would fail and be postponed to the next slot.
-    // [Implementation-defined] In our tests, we have seen that MCS 5 with 1 PRB can lead (depending on the
-    // configuration) to a non-valid MCS-PRB allocation; therefore, we set 6 as minimum value for 1 PRB.
-    // TODO: Remove this part and handle the problem with a loop that is general for any configuration.
-    const sch_mcs_index min_mcs_for_1_prb{6U};
-    const unsigned      min_allocable_prbs = 1U;
-    if (mcs_prbs.mcs < min_mcs_for_1_prb and mcs_prbs.nof_prbs <= min_allocable_prbs) {
-      ++mcs_prbs.nof_prbs;
-    }
-
-    // Limit nof. RBs to allocate to maximum RBs provided in grant.
-    if (grant.max_nof_rbs.has_value()) {
-      mcs_prbs.nof_prbs = std::min(mcs_prbs.nof_prbs, grant.max_nof_rbs.value());
-    }
-
-    // Re-apply nof. PUSCH RBs to allocate limits.
-    mcs_prbs.nof_prbs = std::max(mcs_prbs.nof_prbs, expert_cfg.pusch_nof_rbs.start());
-    mcs_prbs.nof_prbs = std::min(mcs_prbs.nof_prbs, expert_cfg.pusch_nof_rbs.stop());
-    mcs_prbs.nof_prbs = std::max(mcs_prbs.nof_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.start());
-    mcs_prbs.nof_prbs = std::min(mcs_prbs.nof_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.stop());
-
-    // Ensure the number of PRB is valid if the transform precoder is used. The condition the PUSCH bandwidth with
-    // transform precoder is defined in TS 38.211 Section 6.1.3. The number of PRB must be lower than or equal to
-    // current number of PRB.
-    if ((dci_type == dci_ul_rnti_config_type::c_rnti_f0_1)
-            ? ue_cell_cfg.use_pusch_transform_precoding_dci_0_1()
-            : ue_cell_cfg.cell_cfg_common.use_msg3_transform_precoder()) {
-      mcs_prbs.nof_prbs =
-          get_transform_precoding_nearest_lower_nof_prb_valid(mcs_prbs.nof_prbs).value_or(mcs_prbs.nof_prbs);
-    }
-  }
-
-  // NOTE: This should never happen, but it's safe not to proceed if we get nof_prbs == 0.
-  if (mcs_prbs.nof_prbs == 0) {
-    logger.debug(
-        "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: MCS and PRBs computation resulted in no PRBs "
-        "allocated to this UE",
-        fmt::underlying(u.ue_index),
-        u.crnti,
-        pusch_alloc.slot);
-    return {alloc_status::skip_ue};
-  }
-
-  crb_interval crbs = rb_helper::find_empty_interval_of_length(used_crbs, mcs_prbs.nof_prbs, 0);
+  crb_interval crbs = rb_helper::find_empty_interval_of_length(used_crbs, request.alloc_params.nof_rbs, 0);
   if (crbs.empty()) {
     logger.debug("ue={} rnti={}: Failed to allocate PUSCH. Cause: Cause: No more RBs available at slot={}",
                  fmt::underlying(u.ue_index),
@@ -619,11 +414,33 @@ ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(const common_ue_ul_gra
     return {alloc_status::skip_ue};
   }
 
+  // When checking the number of remaining grants for PUSCH, take into account that the PUCCH grants for this UE will
+  // be removed when multiplexing the UCI on PUSCH.
+  unsigned pusch_pdu_rem_space = get_space_left_for_pusch_pdus(pusch_alloc.result, u.crnti, expert_cfg);
+  if (pusch_pdu_rem_space == 0) {
+    if (pusch_alloc.result.ul.puschs.size() >= expert_cfg.max_puschs_per_slot) {
+      logger.info(
+          "ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Max number of PUSCHs per slot {} was reached.",
+          fmt::underlying(u.ue_index),
+          u.crnti,
+          pusch_alloc.slot,
+          expert_cfg.max_puschs_per_slot);
+    } else {
+      logger.info("ue={} rnti={}: Failed to allocate PUSCH in slot={}. Cause: Max number of UL grants per slot {} "
+                  "was reached.",
+                  fmt::underlying(u.ue_index),
+                  u.crnti,
+                  pusch_alloc.slot,
+                  expert_cfg.max_puschs_per_slot);
+    }
+    return {alloc_status::skip_slot};
+  }
+
   // Compute TPC command before computing the nof_prbs adaptation based on PHR; this is because, when the TPC gets
   // computed, the channel state manager will update close-loop power control adjustment.
   static constexpr uint8_t default_tpc_command = 1U;
   const uint8_t            tpc_command         = dci_type != dci_ul_rnti_config_type::tc_rnti_f0_0
-                                                     ? ue_cc.get_pusch_power_controller().compute_tpc_command(grant.pusch_slot)
+                                                     ? ue_cc.get_pusch_power_controller().compute_tpc_command(request.pusch_slot)
                                                      : default_tpc_command;
 
   // If this is not a retx, then we need to adjust the number of PRBs to the PHR, to prevent the UE from reducing the
@@ -674,7 +491,7 @@ ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(const common_ue_ul_gra
     bool contains_dc =
         dc_offset_helper::is_contained(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, crbs);
 
-    mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, &ue_cell_cfg, mcs_prbs.mcs, crbs.length(), contains_dc);
+    mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, &ue_cell_cfg, request.alloc_params.mcs, crbs.length(), contains_dc);
   }
   // If it's a reTx, fetch the MCS, TBS and number of layers from the previous transmission.
   else {
@@ -727,7 +544,6 @@ ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(const common_ue_ul_gra
 
   // Compute total DAI. See TS 38.213, 9.1.3.2.
   // Note: We assume k2 <= k1, which means that all the HARQ bits are set at this point for this UL slot and UE.
-  const unsigned nof_harq_ack_bits = uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(pusch_alloc, u.crnti);
   // Total DAI provides total number of transmissions at the end of each interval (slot in a cell). Values range from
   // 1 to 4. If a UE is not provided PDSCH-CodeBlockGroupTransmission and the UE is scheduled for a PUSCH transmission
   // by DCI format 0_1 with DAI field value V_T_DAI_UL = 4 and the UE has not received any PDCCH within the monitoring
@@ -737,7 +553,7 @@ ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(const common_ue_ul_gra
   // NOTE: DAI is encoded as per left most column in Table 9.1.3-2 of TS 38.213.
   unsigned dai = 3;
   if (dci_type == dci_ul_rnti_config_type::c_rnti_f0_1) {
-    unsigned total_harq_ack_in_uci = nof_harq_ack_bits;
+    unsigned total_harq_ack_in_uci = pusch_cfg.nof_harq_ack_bits;
     if (total_harq_ack_in_uci != 0) {
       // See TS 38.213, Table 9.1.3-2. dai value below maps to the leftmost column in the table.
       dai = ((total_harq_ack_in_uci - 1) % 4);
@@ -747,21 +563,12 @@ ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(const common_ue_ul_gra
   // Fill UL PDCCH DCI.
   uint8_t rv = ue_cc.get_pusch_rv(h_ul->nof_retxs());
   switch (dci_type) {
-    case dci_ul_rnti_config_type::tc_rnti_f0_0:
-      build_dci_f0_0_tc_rnti(pdcch->dci,
-                             *ue_cell_cfg.bwp(to_bwp_id(0)).dl_common.value(),
-                             ue_cell_cfg.bwp(ue_cc.active_bwp_id()).ul_common->value().generic_params,
-                             crbs,
-                             grant_params.pusch_td_res_index,
-                             mcs_tbs_info.value().mcs,
-                             rv);
-      break;
     case dci_ul_rnti_config_type::c_rnti_f0_0:
       build_dci_f0_0_c_rnti(pdcch->dci,
                             ss_info,
                             cell_cfg.ul_cfg_common.init_ul_bwp,
                             crbs,
-                            grant_params.pusch_td_res_index,
+                            pusch_td_res_index,
                             mcs_tbs_info.value().mcs,
                             rv,
                             *h_ul,
@@ -772,7 +579,7 @@ ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(const common_ue_ul_gra
                             ue_cell_cfg,
                             ss_cfg.get_id(),
                             crbs,
-                            grant_params.pusch_td_res_index,
+                            pusch_td_res_index,
                             mcs_tbs_info.value().mcs,
                             rv,
                             *h_ul,
@@ -839,7 +646,7 @@ ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(const common_ue_ul_gra
   pusch_sched_ctx.dci_cfg_type = pdcch->dci.type;
   if (is_new_data) {
     pusch_sched_ctx.olla_mcs = ue_cc.link_adaptation_controller().calculate_ul_mcs(msg.pusch_cfg.mcs_table);
-    pusch_sched_ctx.slice_id = grant.user->ran_slice_id();
+    pusch_sched_ctx.slice_id = request.user.ran_slice_id();
   }
 
   h_ul->save_grant_params(pusch_sched_ctx, msg.pusch_cfg);

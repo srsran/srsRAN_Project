@@ -32,26 +32,16 @@ struct ue_dl_grant_request {
   sched_helper::dl_grant_sched_params alloc_params;
 };
 
-/// Request for a newTx UL grant allocation.
-struct ue_ul_newtx_grant_request {
-  /// Slot at which PUSCH PDU shall be allocated.
-  slot_point pusch_slot;
-  /// UE to allocate.
-  const slice_ue& user;
-  /// Pending bytes to schedule.
-  unsigned pending_bytes;
-  /// Maximum number of RBs to allocate. This limit can be determined based on slicing or UE configuration.
-  std::optional<unsigned> max_nof_rbs;
-};
-
-/// Request for a reTx UL grant allocation.
-struct ue_ul_retx_grant_request {
+/// Request for a UL grant allocation.
+struct ue_ul_grant_request {
   /// Slot at which PUSCH PDU shall be allocated.
   slot_point pusch_slot;
   /// UE to allocate.
   const slice_ue& user;
   /// HARQ process to be retransmitted.
-  ul_harq_process_handle h_ul;
+  std::optional<ul_harq_process_handle> h_ul;
+  /// Recommended allocation parameters.
+  sched_helper::ul_grant_sched_params alloc_params;
 };
 
 /// \brief Status of a UE grant allocation, and action for the scheduler policy to follow afterwards.
@@ -99,10 +89,7 @@ public:
   dl_alloc_result allocate_dl_grant(const ue_dl_grant_request& request);
 
   /// Allocates UL grant for a UE newTx.
-  ul_alloc_result allocate_newtx_ul_grant(const ue_ul_newtx_grant_request& request);
-
-  /// Allocates UL grant for a UE reTx.
-  ul_alloc_result allocate_retx_ul_grant(const ue_ul_retx_grant_request& request);
+  ul_alloc_result allocate_ul_grant(const ue_ul_grant_request& request);
 
   /// \brief Called at the end of a slot to process the allocations that took place and make some final adjustments.
   ///
@@ -110,28 +97,6 @@ public:
   void post_process_results();
 
 private:
-  struct common_ue_ul_grant_request {
-    slot_point                            pusch_slot;
-    const slice_ue*                       user;
-    std::optional<ul_harq_process_handle> h_ul;
-    std::optional<unsigned>               recommended_nof_bytes;
-    std::optional<unsigned>               max_nof_rbs;
-  };
-
-  struct ul_grant_params {
-    alloc_status                     status;
-    search_space_id                  ss_id;
-    uint8_t                          pusch_td_res_index;
-    crb_interval                     crb_lims;
-    dci_ul_rnti_config_type          dci_type;
-    pusch_config_params              pusch_cfg;
-    sched_helper::mcs_prbs_selection recommended_mcs_prbs;
-  };
-
-  ul_alloc_result allocate_ul_grant(const common_ue_ul_grant_request& grant);
-
-  ul_grant_params get_ul_grant_params(const common_ue_ul_grant_request& grant);
-
   std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(const sched_helper::dl_grant_sched_params&   grant_params,
                                                   const search_space_info&                     ss_info,
                                                   cell_slot_resource_allocator&                pdsch_alloc,
