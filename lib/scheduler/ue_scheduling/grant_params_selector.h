@@ -63,11 +63,13 @@ struct dl_grant_sched_params {
   uint8_t pdsch_td_res_index;
   /// Recommended MCS.
   sch_mcs_index mcs;
-  /// Recommended number of RBs.
-  unsigned nof_rbs;
   /// Recommended number of layers.
   unsigned nof_layers;
-  /// Limits in CRBs for DL grant allocation.
+  /// Recommended CRBs to allocate (allocation type 1).
+  crb_interval alloc_crbs;
+  /// Recommended number of RBs.
+  unsigned nof_rbs;
+  /// CRB boundaries where the DL grant allocation can take place.
   crb_interval crb_lims;
 };
 
@@ -75,6 +77,7 @@ struct dl_grant_sched_params {
 std::optional<dl_grant_sched_params> compute_newtx_dl_grant_sched_params(const slice_ue&                u,
                                                                          slot_point                     pdcch_slot,
                                                                          slot_point                     pdsch_slot,
+                                                                         const crb_bitmap&              used_crbs,
                                                                          unsigned                       pending_bytes,
                                                                          const std::optional<unsigned>& max_rbs);
 
@@ -82,7 +85,8 @@ std::optional<dl_grant_sched_params> compute_newtx_dl_grant_sched_params(const s
 std::optional<dl_grant_sched_params> compute_retx_dl_grant_sched_params(const slice_ue&               u,
                                                                         slot_point                    pdcch_slot,
                                                                         slot_point                    pdsch_slot,
-                                                                        const dl_harq_process_handle& h_dl);
+                                                                        const dl_harq_process_handle& h_dl,
+                                                                        const crb_bitmap&             used_crbs);
 
 /// Parameters recommended for a UL grant.
 struct ul_grant_sched_params {

@@ -77,6 +77,9 @@ protected:
     uci_alloc.slot_indication(current_slot);
     ues.slot_indication(current_slot);
 
+    // Prepare CRB bitmask that will be used to find available CRBs.
+    used_dl_crbs = res_grid[0].dl_res_grid.used_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params, {4, 5});
+
     on_each_slot();
 
     alloc.post_process_results();
@@ -133,21 +136,28 @@ protected:
                                unsigned                pending_bytes,
                                std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
-    auto params =
-        sched_helper::compute_newtx_dl_grant_sched_params(user, current_slot, current_slot, pending_bytes, max_nof_rbs);
+    auto params = sched_helper::compute_newtx_dl_grant_sched_params(
+        user, current_slot, current_slot, used_dl_crbs, pending_bytes, max_nof_rbs);
     if (not params.has_value()) {
       return;
     }
-    alloc.allocate_dl_grant(ue_dl_grant_request{current_slot, user, std::nullopt, params.value()});
+    auto result = alloc.allocate_dl_grant(ue_dl_grant_request{current_slot, user, std::nullopt, params.value()});
+    if (result.status == alloc_status::success) {
+      used_dl_crbs.fill(params.value().alloc_crbs.start(), params.value().alloc_crbs.stop());
+    }
   }
 
   void allocate_dl_retx_grant(const slice_ue& user, dl_harq_process_handle h_dl)
   {
-    auto params = sched_helper::compute_retx_dl_grant_sched_params(user, current_slot, current_slot, h_dl);
+    auto params =
+        sched_helper::compute_retx_dl_grant_sched_params(user, current_slot, current_slot, h_dl, used_dl_crbs);
     if (not params.has_value()) {
       return;
     }
-    alloc.allocate_dl_grant(ue_dl_grant_request{current_slot, user, h_dl, params.value()});
+    auto result = alloc.allocate_dl_grant(ue_dl_grant_request{current_slot, user, h_dl, params.value()});
+    if (result.status == alloc_status::success) {
+      used_dl_crbs.fill(params.value().alloc_crbs.start(), params.value().alloc_crbs.stop());
+    }
   }
 
   ul_alloc_result allocate_ul_newtx_grant(const slice_ue&         user,
@@ -203,6 +213,7 @@ protected:
   ue_cell_grid_allocator  alloc;
 
   slot_point current_slot;
+  crb_bitmap used_dl_crbs;
 };
 
 TEST_P(ue_grid_allocator_tester,
@@ -539,58 +550,6 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_ga
       nof_slot_until_pusch_is_allocated_threshold));
 }
 
-class ue_grid_allocator_remaining_rbs_alloc_tester : public ue_grid_allocator_tester
-{
-public:
-  ue_grid_allocator_remaining_rbs_alloc_tester() :
-    ue_grid_allocator_tester(([]() {
-      scheduler_expert_config sched_cfg_   = config_helpers::make_default_scheduler_expert_config();
-      sched_cfg_.ue.max_ul_grants_per_slot = 2;
-      sched_cfg_.ue.max_pucchs_per_slot    = 2;
-      return sched_cfg_;
-    }()))
-  {
-  }
-};
-
-TEST_P(ue_grid_allocator_remaining_rbs_alloc_tester, remaining_dl_rbs_are_allocated_if_max_pucch_per_slot_is_reached)
-{
-  sched_ue_creation_request_message ue_creation_req =
-      sched_config_helper::create_default_sched_ue_creation_request(this->cfg_builder_params);
-  ue_creation_req.ue_index = to_du_ue_index(0);
-  ue_creation_req.crnti    = to_rnti(0x4601);
-  const ue& u1             = add_ue(ue_creation_req);
-  ue_creation_req.ue_index = to_du_ue_index(1);
-  ue_creation_req.crnti    = to_rnti(0x4602);
-  const ue& u2             = add_ue(ue_creation_req);
-
-  static const unsigned sched_bytes = 20U;
-  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for
-  // allocation.
-  const unsigned total_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
-  ASSERT_TRUE(run_until(
-      [&]() {
-        allocate_dl_newtx_grant(slice_ues[u1.ue_index], sched_bytes);
-        allocate_dl_newtx_grant(slice_ues[u2.ue_index], sched_bytes);
-      },
-      [&]() {
-        return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr and
-               find_ue_pdsch(u2.crnti, res_grid[0].result.dl.ue_grants) != nullptr;
-      }));
-  // Successfully allocates PDSCH corresponding to the grant.
-  ASSERT_GE(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.codewords.back().tb_size_bytes,
-            sched_bytes);
-
-  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for
-  // allocation.
-  const unsigned crbs_allocated =
-      find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length();
-
-  // Allocates all remaining RBs to UE2.
-  ASSERT_EQ(find_ue_pdsch(u2.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
-            (total_crbs - crbs_allocated));
-}
-
 class ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester : public ue_grid_allocator_tester
 {
 public:
@@ -759,10 +718,6 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester, allocates_pusch_wit
 
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
                          ue_grid_allocator_tester,
-                         testing::Values(duplex_mode::FDD, duplex_mode::TDD));
-
-INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
-                         ue_grid_allocator_remaining_rbs_alloc_tester,
                          testing::Values(duplex_mode::FDD, duplex_mode::TDD));
 
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,

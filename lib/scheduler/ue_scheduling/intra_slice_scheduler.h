@@ -44,12 +44,12 @@ public:
 
 private:
   /// Determines whether a UE can be DL scheduled in a given slot.
-  bool can_allocate_pdsch(slot_point sl_pdsch, const slice_ue& u, const ue_cell& ue_cc) const;
+  bool can_allocate_pdsch(const slice_ue& u, const ue_cell& ue_cc) const;
 
   /// Determines whether a UE can be UL scheduled in a given slot.
   bool can_allocate_pusch(slot_point pusch_slot, const slice_ue& u, const ue_cell& ue_cc) const;
 
-  std::optional<ue_newtx_candidate> create_newtx_dl_candidate(slot_point pdsch_slot, const slice_ue& u) const;
+  std::optional<ue_newtx_candidate> create_newtx_dl_candidate(const slice_ue& u) const;
 
   std::optional<ue_newtx_candidate> create_newtx_ul_candidate(slot_point pusch_slot, const slice_ue& u) const;
 
@@ -73,6 +73,9 @@ private:
 
   unsigned max_puschs_to_alloc(const ul_ran_slice_candidate& slice);
 
+  // Called when bitmap of used CRBs needs to be recalculated.
+  void update_used_dl_crbs();
+
   const scheduler_ue_expert_config& expert_cfg;
   const cell_resource_allocator&    cell_alloc;
   cell_harq_manager&                cell_harqs;
@@ -89,8 +92,12 @@ private:
   unsigned dl_attempts_count = 0;
   unsigned ul_attempts_count = 0;
 
+  // UE candidates for allocation.
   std::vector<ue_newtx_candidate> dl_newtx_candidates;
   std::vector<ue_newtx_candidate> ul_newtx_candidates;
+
+  slot_point pdsch_slot;
+  crb_bitmap used_dl_crbs;
 };
 
 } // namespace srsran

@@ -15,7 +15,6 @@
 #include "srsran/ran/rnti.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/result/vrb_alloc.h"
-#include "srsran/support/error_handling.h"
 
 namespace srsran {
 namespace rb_helper {

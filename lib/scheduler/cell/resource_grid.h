@@ -20,9 +20,6 @@
 
 namespace srsran {
 
-/// Bitset of CRBs with size up to 275.
-using crb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
-
 /// Parameters of a PDSCH or PUSCH grant allocation within a BWP.
 struct bwp_sch_grant_info {
   const bwp_configuration* bwp_cfg;

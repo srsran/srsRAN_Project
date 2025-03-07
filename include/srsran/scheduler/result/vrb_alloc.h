@@ -21,6 +21,9 @@ namespace srsran {
 /// Bitset of PRBs with size up to 275.
 using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
 
+/// Bitset of CRBs with size up to 275.
+using crb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
+
 /// VRB Resource Allocation that can be of allocation type 0 (RBGs) or 1 (VRB range).
 struct vrb_alloc {
   /// Creates an empty interval.

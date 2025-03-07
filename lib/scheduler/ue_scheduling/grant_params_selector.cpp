@@ -13,6 +13,7 @@
 #include "../support/csi_report_helpers.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/prbs_calculator.h"
+#include "../support/rb_helper.h"
 #include "../ue_context/ue_cell.h"
 #include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 
@@ -183,6 +184,7 @@ mcs_prbs_selection sched_helper::compute_newtx_required_mcs_and_prbs(const pusch
 static std::optional<dl_grant_sched_params> compute_dl_grant_sched_params(const slice_ue&               u,
                                                                           slot_point                    pdcch_slot,
                                                                           slot_point                    pdsch_slot,
+                                                                          const crb_bitmap&             used_crbs,
                                                                           const dl_harq_process_handle* h_dl,
                                                                           unsigned pending_bytes = 0,
                                                                           unsigned max_rbs       = MAX_NOF_PRBS)
@@ -216,6 +218,7 @@ static std::optional<dl_grant_sched_params> compute_dl_grant_sched_params(const 
   const search_space_info&         ss        = ue_cc.cfg().search_space(ue_ded_ss);
 
   if (h_dl != nullptr) {
+    // ReTx case.
     if (slot_nof_symbols < h_dl->get_grant_params().nof_symbols) {
       // Early exit if there are not enough symbols in the slot for the retransmission.
       return std::nullopt;
@@ -276,6 +279,20 @@ static std::optional<dl_grant_sched_params> compute_dl_grant_sched_params(const 
       mcs        = h_dl->get_grant_params().mcs;
       nof_rbs    = h_dl->get_grant_params().rbs.type1().length();
     }
+    nof_rbs = std::min(nof_rbs, end_rb - start_rb);
+
+    // Compute CRB allocation interval.
+    crb_bitmap bwp_used_crbs{used_crbs};
+    bwp_used_crbs.fill(0, start_rb);
+    bwp_used_crbs.fill(end_rb, bwp_used_crbs.size());
+    crb_interval crbs = rb_helper::find_empty_interval_of_length(bwp_used_crbs, nof_rbs, start_rb);
+    if (crbs.empty()) {
+      return std::nullopt;
+    }
+    if (h_dl != nullptr and crbs.length() != h_dl->get_grant_params().rbs.type1().length()) {
+      // In case of Retx, the #CRBs need to stay the same.
+      return std::nullopt;
+    }
 
     // Successful selection of grant parameters.
     dl_grant_sched_params params;
@@ -285,6 +302,7 @@ static std::optional<dl_grant_sched_params> compute_dl_grant_sched_params(const 
     params.nof_rbs            = nof_rbs;
     params.nof_layers         = nof_layers;
     params.crb_lims           = {start_rb, end_rb};
+    params.alloc_crbs         = crbs;
     return params;
   }
 
@@ -295,20 +313,22 @@ std::optional<dl_grant_sched_params>
 sched_helper::compute_newtx_dl_grant_sched_params(const slice_ue&                u,
                                                   slot_point                     pdcch_slot,
                                                   slot_point                     pdsch_slot,
+                                                  const crb_bitmap&              used_crbs,
                                                   unsigned                       pending_bytes,
                                                   const std::optional<unsigned>& max_rbs)
 {
   return compute_dl_grant_sched_params(
-      u, pdcch_slot, pdsch_slot, nullptr, pending_bytes, max_rbs.value_or(MAX_NOF_PRBS));
+      u, pdcch_slot, pdsch_slot, used_crbs, nullptr, pending_bytes, max_rbs.value_or(MAX_NOF_PRBS));
 }
 
 std::optional<dl_grant_sched_params>
 sched_helper::compute_retx_dl_grant_sched_params(const slice_ue&               u,
                                                  slot_point                    pdcch_slot,
                                                  slot_point                    pdsch_slot,
-                                                 const dl_harq_process_handle& h_dl)
+                                                 const dl_harq_process_handle& h_dl,
+                                                 const crb_bitmap&             used_crbs)
 {
-  return compute_dl_grant_sched_params(u, pdcch_slot, pdsch_slot, &h_dl);
+  return compute_dl_grant_sched_params(u, pdcch_slot, pdsch_slot, used_crbs, &h_dl);
 }
 
 static std::optional<ul_grant_sched_params> compute_ul_grant_sched_params(const slice_ue& u,

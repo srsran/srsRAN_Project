@@ -138,6 +138,7 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_dl_grant_requ
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg       = ss_info.pdsch_time_domain_list[pdsch_td_res_index];
   const subcarrier_spacing                     scs                = ss_info.bwp->dl_common->value().generic_params.scs;
   const cell_configuration&                    cell_cfg           = ue_cell_cfg.cell_cfg_common;
+  const crb_interval&                          crbs               = request.alloc_params.alloc_crbs;
   const bool                                   is_retx            = request.h_dl.has_value();
   std::optional<dl_harq_process_handle>        h_dl               = request.h_dl;
   const auto& pdsch_cfg = ss_info.get_pdsch_config(pdsch_td_res_index, request.alloc_params.nof_layers);
@@ -151,32 +152,9 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_dl_grant_requ
                           expert_cfg.max_pdschs_per_slot,
                       "Max number of PDSCHs per slot was reached");
   srsran_sanity_check(not pdsch_alloc.result.dl.ue_grants.full(), "No space available in scheduler PDSCH outputs");
-
-  const crb_bitmap used_crbs =
-      pdsch_alloc.dl_res_grid.used_crbs(scs, request.alloc_params.crb_lims, pdsch_td_cfg.symbols);
-  if (used_crbs.all()) {
-    return {alloc_status::skip_slot};
-  }
-
-  crb_interval crbs = rb_helper::find_empty_interval_of_length(used_crbs, request.alloc_params.nof_rbs, 0);
-  if (crbs.empty()) {
-    logger.debug("ue={} rnti={}: Failed to allocate PDSCH. Cause: Cause: No more RBs available at slot={}",
-                 fmt::underlying(u.ue_index),
-                 u.crnti,
-                 pdsch_alloc.slot);
-    return {alloc_status::skip_slot};
-  }
-
-  // In case of Retx, the #CRBs need to stay the same.
-  if (is_retx and crbs.length() != h_dl->get_grant_params().rbs.type1().length()) {
-    logger.debug(
-        "ue={} rnti={}: Failed to allocate PDSCH. Cause: No more RBs available at slot={} for h_id={} retransmission",
-        fmt::underlying(u.ue_index),
-        u.crnti,
-        pdsch_alloc.slot,
-        fmt::underlying(h_dl->id()));
-    return {alloc_status::skip_ue};
-  }
+  srsran_sanity_check(not pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs),
+                      "Invalid calculation of PDSCH RBs. Used CRBs={}",
+                      pdsch_alloc.dl_res_grid.used_crbs(scs, {0, cell_cfg.nof_dl_prbs}, pdsch_td_cfg.symbols));
 
   // Allocate PDCCH.
   auto pdcch_result = alloc_dl_pdcch(ue_cc, ss_info);
@@ -194,20 +172,6 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const ue_dl_grant_requ
   uci_allocation& uci                     = uci_result.value();
   unsigned        k1                      = uci.k1;
   pdcch->ctx.context.harq_feedback_timing = k1;
-
-  // [Implementation-defined] Check whether max. PUCCHs per slot or max. UL grants per slot is reached if PDSCH
-  // allocation for current UE succeeds. If so, allocate remaining RBs to the current UE only if it's a new Tx.
-  // NOTE: At this point UCI is already allocated hence '>' is used rather than '>='.
-  cell_slot_resource_allocator& ul_alloc = cell_alloc[pdsch_td_cfg.k0 + k1];
-  if (not is_retx and ((ul_alloc.result.ul.pucchs.size() > (expert_cfg.max_pucchs_per_slot - 1)) or
-                       ((ul_alloc.result.ul.pucchs.size() + ul_alloc.result.ul.puschs.size()) >
-                        (expert_cfg.max_ul_grants_per_slot - 1)))) {
-    crbs = rb_helper::find_empty_interval_of_length(used_crbs, used_crbs.size(), 0);
-  }
-
-  // Verify there is no RB collision.
-  srsran_assert(not pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs),
-                "Invalid calculation of PDSCH RBs");
 
   std::optional<sch_mcs_tbs> mcs_tbs_info =
       calculate_dl_mcs_tbs(request.alloc_params, ss_info, pdsch_alloc, crbs, h_dl);
@@ -386,7 +350,7 @@ ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_ul_grant_requ
     return {alloc_status::skip_ue};
   }
 
-  const prb_bitmap used_crbs = pusch_alloc.ul_res_grid.used_crbs(scs, ul_crb_lims, pusch_td_cfg.symbols);
+  const crb_bitmap used_crbs = pusch_alloc.ul_res_grid.used_crbs(scs, ul_crb_lims, pusch_td_cfg.symbols);
   if (used_crbs.all()) {
     return {alloc_status::skip_slot};
   }
