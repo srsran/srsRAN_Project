@@ -19,7 +19,8 @@ using namespace sched_helper;
 std::optional<mcs_prbs_selection>
 sched_helper::compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg,
                                                   const ue_cell&             ue_cc,
-                                                  unsigned                   pending_bytes)
+                                                  unsigned                   pending_bytes,
+                                                  unsigned                   max_rbs)
 {
   const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
@@ -31,11 +32,12 @@ sched_helper::compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pds
   }
   sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs.value());
 
-  // Estimate max RBs per grant.
+  // Apply max RB grant size limits.
   const bwp_downlink_common& bwp_dl_cmn = *ue_cell_cfg.bwp(ue_cc.active_bwp_id()).dl_common.value();
-  unsigned                   max_prbs   = std::min({bwp_dl_cmn.generic_params.crbs.length(),
+  max_rbs                               = std::min({bwp_dl_cmn.generic_params.crbs.length(),
                                                     cell_cfg.expert_cfg.ue.pdsch_nof_rbs.stop(),
-                                                    ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.stop()});
+                                                    ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.stop(),
+                                                    max_rbs});
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   pdsch_cfg.symbols.length(),
@@ -43,17 +45,16 @@ sched_helper::compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pds
                                                                   pdsch_cfg.nof_oh_prb,
                                                                   mcs_config,
                                                                   pdsch_cfg.nof_layers},
-                                       max_prbs);
-  srsran_sanity_check(prbs_tbs.nof_prbs <= max_prbs, "Error in RB computation");
+                                       max_rbs);
+  srsran_sanity_check(prbs_tbs.nof_prbs <= max_rbs, "Error in RB computation");
   if (prbs_tbs.nof_prbs == 0) {
     return std::nullopt;
   }
 
-  // Apply grant size limits specified in the config.
-  prbs_tbs.nof_prbs = std::max(std::min(prbs_tbs.nof_prbs, cell_cfg.expert_cfg.ue.pdsch_nof_rbs.stop()),
-                               cell_cfg.expert_cfg.ue.pdsch_nof_rbs.start());
-  prbs_tbs.nof_prbs = std::max(std::min(prbs_tbs.nof_prbs, ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.stop()),
-                               ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.start());
+  // Apply min RB grant size limits (max was applied before).
+  prbs_tbs.nof_prbs = std::max({prbs_tbs.nof_prbs,
+                                cell_cfg.expert_cfg.ue.pdsch_nof_rbs.start(),
+                                ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.start()});
 
   return mcs_prbs_selection{mcs.value(), prbs_tbs.nof_prbs};
 }

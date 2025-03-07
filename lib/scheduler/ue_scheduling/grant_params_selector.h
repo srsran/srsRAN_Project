@@ -29,8 +29,10 @@ struct mcs_prbs_selection {
 };
 
 /// Derive recommended MCS and number of PRBs for a newTx PDSCH grant.
-std::optional<mcs_prbs_selection>
-compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg, const ue_cell& ue_cc, unsigned pending_bytes);
+std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg,
+                                                                      const ue_cell&             ue_cc,
+                                                                      unsigned                   pending_bytes,
+                                                                      unsigned max_nof_rbs = MAX_NOF_PRBS);
 
 /// Compute PUSCH grant parameters for a newTx given the UE state, DCI type and PUSCH time-domain resource.
 pusch_config_params compute_newtx_pusch_config_params(const ue_cell&                               ue_cc,

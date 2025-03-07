@@ -144,8 +144,7 @@ private:
     search_space_id                  ss_id;
     uint8_t                          pdsch_td_res_index;
     crb_interval                     crb_lims;
-    dci_dl_rnti_config_type          dci_type;
-    const pdsch_config_params*       pdsch_cfg;
+    unsigned                         nof_layers;
     sched_helper::mcs_prbs_selection recommended_mcs_prbs;
   };
 
@@ -166,6 +165,12 @@ private:
   dl_grant_params get_dl_grant_params(const common_ue_dl_grant_request& grant_params);
 
   ul_grant_params get_ul_grant_params(const common_ue_ul_grant_request& grant);
+
+  std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(const dl_grant_params&                       grant_params,
+                                                  const search_space_info&                     ss_info,
+                                                  cell_slot_resource_allocator&                pdsch_alloc,
+                                                  const crb_interval&                          crbs,
+                                                  const std::optional<dl_harq_process_handle>& h_dl);
 
   expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(const ue_cell& ue_cc, const search_space_info& ss_info);
 

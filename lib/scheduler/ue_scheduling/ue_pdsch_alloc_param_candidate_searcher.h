@@ -47,20 +47,7 @@ public:
     /// Chosen PDSCH Time Domain Resource Index.
     unsigned pdsch_td_res_index() const { return time_res; }
 
-    /// Chosen DCI DL RNTI Config Type.
-    dci_dl_rnti_config_type dci_dl_rnti_cfg_type() const
-    {
-      if (rnti_type.has_value()) {
-        return rnti_type.value();
-      }
-      return ss().get_dl_dci_format() == dci_dl_format::f1_0 ? dci_dl_rnti_config_type::c_rnti_f1_0
-                                                             : dci_dl_rnti_config_type::c_rnti_f1_1;
-    }
-
-    bool operator==(const candidate& other) const
-    {
-      return ss_it == other.ss_it and time_res == other.time_res and rnti_type == other.rnti_type;
-    }
+    bool operator==(const candidate& other) const { return ss_it == other.ss_it and time_res == other.time_res; }
     bool operator!=(const candidate& other) const { return not(*this == other); }
     /// A candidate being less than another means that the first has higher priority than the second.
     bool operator<(const candidate& other) const
@@ -75,14 +62,10 @@ public:
     friend struct iterator;
     friend class ue_pdsch_alloc_param_candidate_searcher;
 
-    candidate(ss_iter ss, unsigned time_res_, std::optional<dci_dl_rnti_config_type> rnti_type_) :
-      ss_it(ss), time_res(time_res_), rnti_type(rnti_type_)
-    {
-    }
+    candidate(ss_iter ss, unsigned time_res_) : ss_it(ss), time_res(time_res_) {}
 
-    ss_iter                                ss_it;
-    unsigned                               time_res;
-    std::optional<dci_dl_rnti_config_type> rnti_type;
+    ss_iter  ss_it;
+    unsigned time_res;
   };
 
   /// Iterator for list of candidates.
@@ -92,7 +75,7 @@ public:
     using pointer    = value_type*;
 
     iterator(ue_pdsch_alloc_param_candidate_searcher& parent_, ss_iter ss_it, unsigned time_res_) :
-      parent(&parent_), current(ss_it, time_res_, parent->preferred_rnti_type)
+      parent(&parent_), current(ss_it, time_res_)
     {
       // Cell is not part of UE configured cells.
       if (parent->ue_cc == nullptr) {

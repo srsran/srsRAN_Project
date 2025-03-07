@@ -42,10 +42,9 @@ ue_cell_grid_allocator::dl_grant_params
 ue_cell_grid_allocator::get_dl_grant_params(const common_ue_dl_grant_request& sched_params)
 {
   const slice_ue& slice_ue = *sched_params.user;
-  srsran_sanity_check(ues.contains(slice_ue.ue_index()), "Invalid UE candidate index");
-  const bool     is_retx = sched_params.h_dl.has_value();
-  ue&            u       = ues[slice_ue.ue_index()];
-  const ue_cell& ue_cc   = slice_ue.get_cc();
+  const bool      is_retx  = sched_params.h_dl.has_value();
+  const ue&       u        = ues[slice_ue.ue_index()];
+  const ue_cell&  ue_cc    = slice_ue.get_cc();
   srsran_sanity_check(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(), "Invalid UE state");
 
   const ue_cell_configuration&                 ue_cell_cfg = ue_cc.cfg();
@@ -69,7 +68,6 @@ ue_cell_grid_allocator::get_dl_grant_params(const common_ue_dl_grant_request& sc
   for (const ue_pdsch_alloc_param_candidate_searcher::candidate& param_candidate : candidates) {
     const pdsch_time_domain_resource_allocation& pdsch_td_cfg = param_candidate.pdsch_td_res();
     const search_space_info&                     ss_info      = param_candidate.ss();
-    const dci_dl_rnti_config_type                dci_type     = param_candidate.dci_dl_rnti_cfg_type();
 
     // Fetch PDSCH resource grid allocator.
     cell_slot_resource_allocator& pdsch_alloc = cell_alloc[pdsch_td_cfg.k0];
@@ -105,17 +103,20 @@ ue_cell_grid_allocator::get_dl_grant_params(const common_ue_dl_grant_request& sc
     const crb_interval dl_crb_lims = {start_rb, end_rb};
 
     // Estimate required MCS/#PRBs.
-    const pdsch_config_params*       pdsch_cfg = nullptr;
+    unsigned                         nof_layers;
     sched_helper::mcs_prbs_selection mcs_prbs;
     if (is_retx) {
-      pdsch_cfg = &ss_info.get_pdsch_config(param_candidate.pdsch_td_res_index(), h_dl->get_grant_params().nof_layers);
+      nof_layers = h_dl->get_grant_params().nof_layers;
       mcs_prbs =
           sched_helper::mcs_prbs_selection{h_dl->get_grant_params().mcs, h_dl->get_grant_params().rbs.type1().length()};
     } else {
-      pdsch_cfg   = &ss_info.get_pdsch_config(param_candidate.pdsch_td_res_index(),
-                                            ue_cc.channel_state_manager().get_nof_dl_layers());
-      auto result = sched_helper::compute_newtx_required_mcs_and_prbs(
-          *pdsch_cfg, ue_cc, sched_params.recommended_nof_bytes.value());
+      nof_layers                           = ue_cc.channel_state_manager().get_nof_dl_layers();
+      const pdsch_config_params& pdsch_cfg = ss_info.get_pdsch_config(param_candidate.pdsch_td_res_index(), nof_layers);
+      auto                       result    = sched_helper::compute_newtx_required_mcs_and_prbs(
+          pdsch_cfg,
+          ue_cc,
+          sched_params.recommended_nof_bytes.value(),
+          sched_params.max_nof_rbs.has_value() ? sched_params.max_nof_rbs.value() : MAX_NOF_PRBS);
       if (not result.has_value()) {
         return {alloc_status::skip_ue};
       }
@@ -134,8 +135,7 @@ ue_cell_grid_allocator::get_dl_grant_params(const common_ue_dl_grant_request& sc
     result.ss_id                = ss_info.cfg->get_id();
     result.pdsch_td_res_index   = param_candidate.pdsch_td_res_index();
     result.crb_lims             = dl_crb_lims;
-    result.dci_type             = dci_type;
-    result.pdsch_cfg            = pdsch_cfg;
+    result.nof_layers           = nof_layers;
     result.recommended_mcs_prbs = mcs_prbs;
     return result;
   }
@@ -293,6 +293,50 @@ ue_cell_grid_allocator::get_ul_grant_params(const common_ue_ul_grant_request& sc
   return {alloc_status::skip_ue};
 }
 
+std::optional<sch_mcs_tbs>
+ue_cell_grid_allocator::calculate_dl_mcs_tbs(const dl_grant_params&                       grant_params,
+                                             const search_space_info&                     ss_info,
+                                             cell_slot_resource_allocator&                pdsch_alloc,
+                                             const crb_interval&                          crbs,
+                                             const std::optional<dl_harq_process_handle>& h_dl)
+{
+  if (h_dl.has_value()) {
+    // It is a reTx.
+    return sch_mcs_tbs{h_dl->get_grant_params().mcs, h_dl->get_grant_params().tbs_bytes};
+  }
+
+  // Reduce estimated MCS by 1 whenever CSI-RS is sent over a particular slot to account for the overhead of CSI-RS
+  // REs.
+  const auto&   pdsch_cfg = ss_info.get_pdsch_config(grant_params.pdsch_td_res_index, grant_params.nof_layers);
+  sch_mcs_index adjusted_mcs{grant_params.recommended_mcs_prbs.mcs.value()};
+  if (not pdsch_alloc.result.dl.csi_rs.empty()) {
+    // [Implementation-defined] The max MCS values below are set empirically and should avoid the effective code rate
+    // to exceed 0.95 due to the overhead of CSI-RS REs.
+    adjusted_mcs                = adjusted_mcs == 0 ? adjusted_mcs : adjusted_mcs - 1;
+    uint8_t max_mcs_with_csi_rs = 28;
+    if (pdsch_cfg.mcs_table == pdsch_mcs_table::qam64) {
+      max_mcs_with_csi_rs = 26U;
+    } else if (pdsch_cfg.mcs_table == pdsch_mcs_table::qam256) {
+      max_mcs_with_csi_rs = 24U;
+    }
+    adjusted_mcs = static_cast<sch_mcs_index>(std::min(adjusted_mcs.to_uint(), max_mcs_with_csi_rs));
+  }
+
+  // If it's a new Tx, compute the MCS and TBS.
+  // As \c txDirectCurrentLocation, in \c SCS-SpecificCarrier, TS 38.331, "If this field (\c
+  // txDirectCurrentLocation) is absent for downlink within ServingCellConfigCommon and ServingCellConfigCommonSIB,
+  // the UE assumes the default value of 3300 (i.e. "Outside the carrier")".
+  bool                           contains_dc = false;
+  const std::optional<unsigned>& tx_dc =
+      cell_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location;
+  if (tx_dc.has_value()) {
+    contains_dc = dc_offset_helper::is_contained(tx_dc.value(), crbs);
+  }
+  auto mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, adjusted_mcs, crbs.length(), contains_dc);
+
+  return mcs_tbs_info;
+}
+
 expected<pdcch_dl_information*, alloc_status> ue_cell_grid_allocator::alloc_dl_pdcch(const ue_cell&           ue_cc,
                                                                                      const search_space_info& ss_info)
 {
@@ -372,11 +416,9 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_gra
       ss_info.pdsch_time_domain_list[grant_params.pdsch_td_res_index];
   const subcarrier_spacing              scs      = ss_info.bwp->dl_common->value().generic_params.scs;
   const cell_configuration&             cell_cfg = ue_cell_cfg.cell_cfg_common;
-  const bool                            is_retx  = grant.h_dl.has_value();
-  std::optional<dl_harq_process_handle> h_dl;
-  if (is_retx) {
-    h_dl = ue_cc.harqs.dl_harq(grant.h_dl->id());
-  }
+  std::optional<dl_harq_process_handle> h_dl     = grant.h_dl;
+  const bool                            is_retx  = h_dl.has_value();
+  const auto& pdsch_cfg = ss_info.get_pdsch_config(grant_params.pdsch_td_res_index, grant_params.nof_layers);
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = cell_alloc[0];
@@ -387,24 +429,8 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_gra
     return {alloc_status::skip_slot};
   }
 
-  // Try to limit the grant PRBs.
-  unsigned n_prbs = grant_params.recommended_mcs_prbs.nof_prbs;
-  if (not is_retx) {
-    // New Tx case.
-
-    // Limit nof. RBs to allocate to maximum RBs provided in grant.
-    if (grant.max_nof_rbs.has_value()) {
-      n_prbs = std::min(n_prbs, grant.max_nof_rbs.value());
-    }
-
-    // Re-apply nof. PDSCH RBs to allocate limits.
-    n_prbs = std::max(n_prbs, expert_cfg.pdsch_nof_rbs.start());
-    n_prbs = std::min(n_prbs, expert_cfg.pdsch_nof_rbs.stop());
-    n_prbs = std::max(n_prbs, ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.start());
-    n_prbs = std::min(n_prbs, ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.stop());
-  }
-
-  crb_interval crbs = rb_helper::find_empty_interval_of_length(used_crbs, n_prbs, 0);
+  crb_interval crbs =
+      rb_helper::find_empty_interval_of_length(used_crbs, grant_params.recommended_mcs_prbs.nof_prbs, 0);
   if (crbs.empty()) {
     logger.debug("ue={} rnti={}: Failed to allocate PDSCH. Cause: Cause: No more RBs available at slot={}",
                  fmt::underlying(u.ue_index),
@@ -455,47 +481,14 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_gra
   srsran_assert(not pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs),
                 "Invalid calculation of PDSCH RBs");
 
-  // Reduce estimated MCS by 1 whenever CSI-RS is sent over a particular slot to account for the overhead of CSI-RS
-  // REs.
-  sch_mcs_index adjusted_mcs{grant_params.recommended_mcs_prbs.mcs.value()};
-  if (not is_retx and not pdsch_alloc.result.dl.csi_rs.empty()) {
-    // [Implementation-defined] The max MCS values below are set empirically and should avoid the effective code rate
-    // to exceed 0.95 due to the overhead of CSI-RS REs.
-    adjusted_mcs                = adjusted_mcs == 0 ? adjusted_mcs : adjusted_mcs - 1;
-    uint8_t max_mcs_with_csi_rs = 28;
-    if (grant_params.pdsch_cfg->mcs_table == pdsch_mcs_table::qam64) {
-      max_mcs_with_csi_rs = 26U;
-    } else if (grant_params.pdsch_cfg->mcs_table == pdsch_mcs_table::qam256) {
-      max_mcs_with_csi_rs = 24U;
-    }
-    adjusted_mcs = static_cast<sch_mcs_index>(std::min(adjusted_mcs.to_uint(), max_mcs_with_csi_rs));
-  }
-
-  std::optional<sch_mcs_tbs> mcs_tbs_info;
-  // If it's a new Tx, compute the MCS and TBS.
-  if (not is_retx) {
-    // As \c txDirectCurrentLocation, in \c SCS-SpecificCarrier, TS 38.331, "If this field (\c
-    // txDirectCurrentLocation) is absent for downlink within ServingCellConfigCommon and ServingCellConfigCommonSIB,
-    // the UE assumes the default value of 3300 (i.e. "Outside the carrier")".
-    bool contains_dc = false;
-    if (cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location.has_value()) {
-      contains_dc = dc_offset_helper::is_contained(
-          cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location.value(), crbs);
-    }
-
-    mcs_tbs_info = compute_dl_mcs_tbs(*grant_params.pdsch_cfg, adjusted_mcs, crbs.length(), contains_dc);
-
+  std::optional<sch_mcs_tbs> mcs_tbs_info = calculate_dl_mcs_tbs(grant_params, ss_info, pdsch_alloc, crbs, h_dl);
+  if (not mcs_tbs_info.has_value()) {
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
-    if (not mcs_tbs_info.has_value()) {
-      logger.warning("ue={} rnti={}: Failed to allocate PDSCH. Cause: no MCS such that code rate <= 0.95.",
-                     fmt::underlying(u.ue_index),
-                     u.crnti);
-      pdcch_sched.cancel_last_pdcch(pdcch_alloc);
-      return {alloc_status::skip_ue};
-    }
-  } else {
-    // It is a retx.
-    mcs_tbs_info.emplace(sch_mcs_tbs{.mcs = h_dl->get_grant_params().mcs, .tbs = h_dl->get_grant_params().tbs_bytes});
+    logger.warning("ue={} rnti={}: Failed to allocate PDSCH. Cause: no MCS such that code rate <= 0.95.",
+                   fmt::underlying(u.ue_index),
+                   u.crnti);
+    pdcch_sched.cancel_last_pdcch(pdcch_alloc);
+    return {alloc_status::skip_ue};
   }
 
   // Mark resources as occupied in the ResourceGrid.
@@ -521,8 +514,8 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_gra
   uint8_t                   rv      = ue_cc.get_pdsch_rv(h_dl->nof_retxs());
   // For allocation on PUSCH, we use a PUCCH resource indicator set to 0, as it will get ignored by the UE.
   const unsigned pucch_res_indicator = uci.pucch_res_indicator.has_value() ? uci.pucch_res_indicator.value() : 0U;
-  switch (grant_params.dci_type) {
-    case dci_dl_rnti_config_type::c_rnti_f1_0:
+  switch (ss_info.get_dl_dci_format()) {
+    case dci_dl_format::f1_0:
       build_dci_f1_0_c_rnti(pdcch->dci,
                             ss_info,
                             cell_cfg.dl_cfg_common.init_dl_bwp,
@@ -535,7 +528,7 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_gra
                             rv,
                             *h_dl);
       break;
-    case dci_dl_rnti_config_type::c_rnti_f1_1:
+    case dci_dl_format::f1_1:
       build_dci_f1_1_c_rnti(pdcch->dci,
                             ue_cell_cfg,
                             grant_params.ss_id,
@@ -547,7 +540,7 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_gra
                             mcs_tbs_info.value().mcs,
                             rv,
                             *h_dl,
-                            grant_params.pdsch_cfg->nof_layers,
+                            grant_params.nof_layers,
                             tpc);
       break;
     default:
@@ -567,7 +560,7 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_gra
   switch (pdcch->dci.type) {
     case dci_dl_rnti_config_type::c_rnti_f1_0:
       build_pdsch_f1_0_c_rnti(msg.pdsch_cfg,
-                              *grant_params.pdsch_cfg,
+                              pdsch_cfg,
                               mcs_tbs_info.value().tbs,
                               u.crnti,
                               cell_cfg,
@@ -578,7 +571,7 @@ dl_alloc_result ue_cell_grid_allocator::allocate_dl_grant(const common_ue_dl_gra
       break;
     case dci_dl_rnti_config_type::c_rnti_f1_1:
       build_pdsch_f1_1_c_rnti(msg.pdsch_cfg,
-                              *grant_params.pdsch_cfg,
+                              pdsch_cfg,
                               mcs_tbs_info.value(),
                               u.crnti,
                               ue_cell_cfg,
