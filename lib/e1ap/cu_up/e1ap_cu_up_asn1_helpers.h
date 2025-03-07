@@ -281,21 +281,6 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
   if (asn1_request->ue_inactivity_timer_present) {
     request.ue_inactivity_timer = std::chrono::seconds(asn1_request->ue_inactivity_timer);
   }
-
-  // bearer context status change
-  if (asn1_request->bearer_context_status_change_present) {
-    request.bearer_context_status_change = asn1_request->bearer_context_status_change.to_string();
-  }
-
-  // ran ue id
-  if (asn1_request->ran_ue_id_present) {
-    request.ran_ue_id = uint_to_ran_ue_id(asn1_request->ran_ue_id.to_number());
-  }
-
-  // gnb du id
-  if (asn1_request->gnb_du_id_present) {
-    request.gnb_du_id = asn1_request->gnb_du_id;
-  }
 }
 
 inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_context_setup_resp_c& asn1_response,
