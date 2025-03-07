@@ -21,6 +21,8 @@
 #include "srsran/support/async/execute_on_blocking.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
 #include "srsran/support/rate_limiting/rate_limiter.h"
+#include "srsran/support/rate_limiting/token_bucket_config.h"
+#include "srsran/support/rate_limiting/token_bucket_factory.h"
 #include <map>
 #include <utility>
 
@@ -69,6 +71,7 @@ public:
                         n3_config_,
                         test_mode_config_,
                         logger,
+                        cfg.ue_dl_aggregate_maximum_bit_rate,
                         ue_inactivity_timer,
                         ue_dl_timer_factory_,
                         ue_ul_timer_factory_,
@@ -171,8 +174,6 @@ private:
   timer_factory ue_ctrl_timer_factory;
 
   unique_timer ue_inactivity_timer;
-
-  // rate_limiter& ue_ambr_limiter;
 
   /// Handle expired UE inactivity timer. This function is called from a timer that is run in UE executor,
   /// therefore it handovers the handling to control executor.

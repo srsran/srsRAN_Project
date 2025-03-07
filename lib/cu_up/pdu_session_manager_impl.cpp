@@ -15,6 +15,8 @@
 #include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/sdap/sdap_factory.h"
+#include "srsran/support/rate_limiting/token_bucket_config.h"
+#include "srsran/support/rate_limiting/token_bucket_factory.h"
 #include "srsran/support/srsran_assert.h"
 #include <utility>
 
@@ -27,6 +29,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    const n3_interface_config&                       n3_config_,
                                                    const cu_up_test_mode_config&                    test_mode_config_,
                                                    cu_up_ue_logger&                                 logger_,
+                                                   uint64_t                                         ue_dl_ambr,
                                                    unique_timer&        ue_inactivity_timer_,
                                                    timer_factory        ue_dl_timer_factory_,
                                                    timer_factory        ue_ul_timer_factory_,
@@ -62,6 +65,9 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   f1u_gw(f1u_gw_),
   ngu_session_mngr(ngu_session_mngr_)
 {
+  token_bucket_config ue_ambr_config =
+      generate_token_bucket_config(ue_dl_ambr, ue_dl_ambr, timer_duration(100), ue_dl_timer_factory);
+  ue_ambr_limiter = create_token_bucket(ue_ambr_config);
 }
 
 pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)
