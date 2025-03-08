@@ -624,8 +624,8 @@ TEST_F(scheduler_pf_test, pf_ensures_fairness_in_dl_when_ues_have_different_chan
 
   // PF scheduler ensures fairness by scheduling UE2 more than UE1 and UE3 due to having worse channel conditions when
   // compared to that of UE1 and UE3.
-  ASSERT_TRUE(ue_pdsch_scheduled_count[u2.ue_index] > ue_pdsch_scheduled_count[u1.ue_index] and
-              ue_pdsch_scheduled_count[u2.ue_index] > ue_pdsch_scheduled_count[u3.ue_index]);
+  ASSERT_GT(ue_pdsch_scheduled_count[u2.ue_index], ue_pdsch_scheduled_count[u1.ue_index]);
+  ASSERT_GT(ue_pdsch_scheduled_count[u2.ue_index], ue_pdsch_scheduled_count[u3.ue_index]);
 }
 
 TEST_F(scheduler_pf_test, pf_ensures_fairness_in_ul_when_ues_have_different_channel_conditions)

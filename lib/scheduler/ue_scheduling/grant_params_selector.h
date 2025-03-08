@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../cell/cell_harq_manager.h"
+#include "../slicing/slice_ue_repository.h"
 #include "../support/sch_pdu_builder.h"
 #include "srsran/ran/sch/sch_mcs.h"
 
@@ -28,12 +29,6 @@ struct mcs_prbs_selection {
   /// Number of recommended PRBs for the PDSCH grant given the number of pending bytes and chosen MCS.
   unsigned nof_prbs;
 };
-
-/// Derive recommended MCS and number of PRBs for a newTx PDSCH grant.
-std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg,
-                                                                      const ue_cell&             ue_cc,
-                                                                      unsigned                   pending_bytes,
-                                                                      unsigned max_nof_rbs = MAX_NOF_PRBS);
 
 /// Compute PUSCH grant parameters for a newTx given the UE state, DCI type and PUSCH time-domain resource.
 pusch_config_params compute_newtx_pusch_config_params(const ue_cell&                               ue_cc,
@@ -55,38 +50,45 @@ mcs_prbs_selection compute_newtx_required_mcs_and_prbs(const pusch_config_params
                                                        unsigned                   pending_bytes,
                                                        unsigned                   max_nof_rbs = MAX_NOF_PRBS);
 
-/// Parameters recommended for a DL grant.
-struct dl_grant_sched_params {
+/// PDCCH and PDSCH parameters recommended for a DL grant.
+struct dl_sched_context {
   /// SearchSpace to use.
   search_space_id ss_id;
   /// PDSCH time-domain resource index.
   uint8_t pdsch_td_res_index;
-  /// Recommended MCS.
-  sch_mcs_index mcs;
-  /// Recommended number of layers.
-  unsigned nof_layers;
-  /// Recommended CRBs to allocate (allocation type 1).
-  crb_interval alloc_crbs;
-  /// Recommended number of RBs.
-  unsigned nof_rbs;
-  /// CRB boundaries where the DL grant allocation can take place.
+  /// Limits on CRBs for DL grant allocation.
   crb_interval crb_lims;
+  /// Recommended MCS, considering channel state or, in case of reTx, last HARQ MCS.
+  sch_mcs_index recommended_mcs;
+  /// Recommended number of layers.
+  unsigned recommended_ri;
+  /// Expected number of RBs to allocate.
+  unsigned expected_nof_rbs;
 };
 
-/// Derive recommended parameters for a DL newTx grant.
-std::optional<dl_grant_sched_params> compute_newtx_dl_grant_sched_params(const slice_ue&                u,
-                                                                         slot_point                     pdcch_slot,
-                                                                         slot_point                     pdsch_slot,
-                                                                         const crb_bitmap&              used_crbs,
-                                                                         unsigned                       pending_bytes,
-                                                                         const std::optional<unsigned>& max_rbs);
+/// Retrieve recommended PDCCH and PDSCH parameters for a newTx DL grant.
+std::optional<dl_sched_context>
+get_newtx_dl_sched_context(const slice_ue& u, slot_point pdcch_slot, slot_point pdsch_slot, unsigned pending_bytes);
 
-/// Derive recommended parameters for a DL reTx grant.
-std::optional<dl_grant_sched_params> compute_retx_dl_grant_sched_params(const slice_ue&               u,
-                                                                        slot_point                    pdcch_slot,
-                                                                        slot_point                    pdsch_slot,
-                                                                        const dl_harq_process_handle& h_dl,
-                                                                        const crb_bitmap&             used_crbs);
+/// Select CRBs to allocate.
+crb_interval compute_newtx_dl_crbs(const dl_sched_context& decision_ctxt,
+                                   const crb_bitmap&       used_crbs,
+                                   unsigned                max_nof_rbs = MAX_NOF_PRBS);
+
+/// Selected parameters for a DL reTx grant allocation.
+struct retx_dl_grant_config {
+  /// Parameters related with the choice of searchSpace and PDSCH time-domain resource.
+  dl_sched_context decision_ctxt;
+  /// Recommended CRBs to allocate (allocation type 1).
+  crb_interval alloc_crbs;
+};
+
+/// Derive parameters for a DL reTx grant.
+std::optional<retx_dl_grant_config> select_retx_dl_grant_config(const slice_ue&               u,
+                                                                slot_point                    pdcch_slot,
+                                                                slot_point                    pdsch_slot,
+                                                                const dl_harq_process_handle& h_dl,
+                                                                const crb_bitmap&             used_crbs);
 
 /// Parameters recommended for a UL grant.
 struct ul_grant_sched_params {

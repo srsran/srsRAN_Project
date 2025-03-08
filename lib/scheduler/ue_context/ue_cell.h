@@ -65,7 +65,22 @@ public:
   {
     return active and cfg().is_dl_enabled(dl_slot) and drx_ctrl.is_pdcch_enabled();
   }
-  bool is_pdsch_enabled(slot_point dl_slot) const { return active and cfg().is_dl_enabled(dl_slot); }
+  bool is_pdsch_enabled(slot_point dl_slot) const
+  {
+    if (not active or not cfg().is_dl_enabled(dl_slot)) {
+      return false;
+    }
+
+    // Verify only one PDSCH exists for the same RNTI in the same slot, and that the PDSCHs are in the same order as
+    // PDCCHs.
+    // [TS 38.214, 5.1] "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to receive a
+    // PDSCH that overlaps in time with another PDSCH".
+    // [TS 38.214, 5.1] "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to start
+    // receiving a first PDSCH starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be
+    // scheduled to receive a PDSCH starting earlier than the end of the first PDSCH with a PDCCH that ends later
+    // than symbol i.".
+    return not harqs.last_pdsch_slot().valid() or harqs.last_pdsch_slot() < dl_slot;
+  }
   bool is_ul_enabled(slot_point ul_slot) const;
 
   struct dl_ack_info_result {

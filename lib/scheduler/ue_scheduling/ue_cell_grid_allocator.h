@@ -22,27 +22,25 @@ namespace srsran {
 struct scheduler_ue_expert_config;
 
 /// Request to reserve space for control channels of a DL grant.
-struct ue_dl_grant_builder_request {
+struct ue_newtx_dl_grant_request {
   /// UE to allocate.
   const slice_ue& user;
-  /// DL HARQ process to use, in case of HARQ reTx.
-  std::optional<dl_harq_process_handle> h_dl;
-  /// SearchSpace to use.
-  search_space_id ss_id;
-  /// PDSCH time-domain resource index.
-  uint8_t pdsch_td_res_index;
+  /// Slot at which PDSCH will take place.
+  slot_point pdsch_slot;
+  /// Pending newTx bytes to allocate.
+  unsigned pending_bytes;
 };
 
 /// Request for a DL grant allocation.
-struct ue_dl_grant_request {
+struct ue_retx_dl_grant_request {
   /// Slot at which PDSCH PDU shall be allocated.
   slot_point pdsch_slot;
   /// UE to allocate.
   const slice_ue& user;
-  /// DL HARQ process to use, in case of HARQ reTx.
-  std::optional<dl_harq_process_handle> h_dl;
-  /// Recommended allocation parameters.
-  sched_helper::dl_grant_sched_params alloc_params;
+  /// DL HARQ process to reTx.
+  dl_harq_process_handle h_dl;
+  /// Selected allocation parameters.
+  sched_helper::retx_dl_grant_config params;
 };
 
 /// Request for a UL grant allocation.
@@ -90,27 +88,48 @@ struct ul_alloc_result {
 /// UE grants.
 class ue_cell_grid_allocator
 {
+  // Information relative to a pending DL grant for this slot.
+  struct dl_grant_info {
+    const slice_ue*                user;
+    sched_helper::dl_sched_context cfg;
+    dl_harq_process_handle         h_dl;
+    pdcch_dl_information*          pdcch;
+    dl_msg_alloc*                  pdsch;
+    uci_allocation                 uci_alloc;
+    unsigned                       pending_bytes;
+  };
+
 public:
   /// Placeholder for a grant in the DL resource grid, which allows deferred setting of PDSCH parameters.
-  struct dl_grant_builder {
-    dl_grant_builder(dl_grant_builder&&) noexcept            = default;
-    dl_grant_builder& operator=(dl_grant_builder&&) noexcept = default;
-    ~dl_grant_builder() { srsran_assert(parent == nullptr, "PDSCH parameters were not set"); }
+  struct dl_newtx_grant_builder {
+    dl_newtx_grant_builder(dl_newtx_grant_builder&&) noexcept            = default;
+    dl_newtx_grant_builder& operator=(dl_newtx_grant_builder&&) noexcept = default;
+    ~dl_newtx_grant_builder() { srsran_assert(parent == nullptr, "PDSCH parameters were not set"); }
 
-    /// Sets the CRBs, MCS and number of layers for the PDSCH allocation.
-    alloc_status set_pdsch_params(crb_interval crbs, sch_mcs_index mcs, unsigned nof_layers)
+    /// Sets the final CRBs for the PDSCH allocation.
+    void set_pdsch_params(const crb_interval& alloc_crbs);
+
+    /// For a given max number of RBs and a bitmap of used CRBs, returns the recommended parameters for the PDSCH grant.
+    crb_interval recommended_crbs(const crb_bitmap& used_crbs, unsigned max_nof_rbs = MAX_NOF_PRBS) const
     {
-      // Set PDSCH parameters and set parent as nullptr to avoid further modifications.
-      return std::exchange(parent, nullptr)->set_pdsch_params(grant_index, crbs, mcs, nof_layers);
+      const dl_grant_info& grant = grant_info();
+      return sched_helper::compute_newtx_dl_crbs(grant.cfg, used_crbs, max_nof_rbs);
     }
+
+    /// Getters for grant immutable parameters.
+    const slice_ue&                       ue() const { return *grant_info().user; }
+    const sched_helper::dl_sched_context& context() const { return grant_info().cfg; }
+    unsigned                              pending_bytes() const { return grant_info().pending_bytes; }
 
   private:
     friend class ue_cell_grid_allocator;
 
-    dl_grant_builder(ue_cell_grid_allocator& parent_, unsigned grant_index_) :
+    dl_newtx_grant_builder(ue_cell_grid_allocator& parent_, unsigned grant_index_) :
       parent(&parent_), grant_index(grant_index_)
     {
     }
+
+    const dl_grant_info& grant_info() const { return parent->dl_grants[grant_index]; }
 
     std::unique_ptr<ue_cell_grid_allocator, noop_operation> parent;
     unsigned                                                grant_index;
@@ -124,10 +143,10 @@ public:
                          srslog::basic_logger&             logger_);
 
   /// Allocate PDCCH, UCI and PDSCH PDUs for a UE DL grant and return a builder to set the PDSCH parameters.
-  expected<dl_grant_builder, alloc_status> allocate_dl_grant(const ue_dl_grant_builder_request& request);
+  expected<dl_newtx_grant_builder, alloc_status> allocate_dl_grant(const ue_newtx_dl_grant_request& request);
 
-  /// Allocates DL grant for a UE.
-  alloc_status allocate_dl_grant(const ue_dl_grant_request& request);
+  /// Allocates DL grant for a UE HARQ reTx.
+  alloc_status allocate_dl_grant(const ue_retx_dl_grant_request& request);
 
   /// Allocates UL grant for a UE newTx.
   ul_alloc_result allocate_ul_grant(const ue_ul_grant_request& request);
@@ -138,17 +157,13 @@ public:
   void post_process_results();
 
 private:
-  struct dl_grant_info {
-    const slice_ue*          user;
-    const search_space_info* ss_info;
-    uint8_t                  pdsch_td_res_index;
-    dl_harq_process_handle   h_dl;
-    pdcch_dl_information*    pdcch;
-    dl_msg_alloc*            pdsch;
-    uci_allocation           uci_alloc;
-  };
+  // Setup DL grant builder.
+  expected<dl_grant_info, alloc_status> setup_dl_grant_builder(const slice_ue&                       user,
+                                                               const sched_helper::dl_sched_context& params,
+                                                               std::optional<dl_harq_process_handle> h_dl,
+                                                               unsigned                              pending_bytes);
 
-  alloc_status set_pdsch_params(unsigned grant_index, crb_interval crbs, sch_mcs_index mcs, unsigned nof_layers);
+  void set_pdsch_params(dl_grant_info& grant, const crb_interval& crbs);
 
   sch_mcs_tbs calculate_dl_mcs_tbs(cell_slot_resource_allocator& pdsch_alloc,
                                    const search_space_info&      ss_info,

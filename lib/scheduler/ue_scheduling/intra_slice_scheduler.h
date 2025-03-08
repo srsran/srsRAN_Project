@@ -98,6 +98,9 @@ private:
 
   slot_point pdsch_slot;
   crb_bitmap used_dl_crbs;
+
+  // DL grant builders + pending bytes for the current slice.
+  std::vector<ue_cell_grid_allocator::dl_newtx_grant_builder> pending_newtxs;
 };
 
 } // namespace srsran

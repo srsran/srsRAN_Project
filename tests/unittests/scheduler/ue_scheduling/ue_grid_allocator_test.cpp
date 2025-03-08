@@ -136,25 +136,24 @@ protected:
                                unsigned                pending_bytes,
                                std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
-    auto params = sched_helper::compute_newtx_dl_grant_sched_params(
-        user, current_slot, current_slot, used_dl_crbs, pending_bytes, max_nof_rbs);
-    if (not params.has_value()) {
+    auto result = alloc.allocate_dl_grant(ue_newtx_dl_grant_request{user, current_slot, pending_bytes});
+    if (not result.has_value()) {
       return;
     }
-    auto result = alloc.allocate_dl_grant(ue_dl_grant_request{current_slot, user, std::nullopt, params.value()});
-    if (result == alloc_status::success) {
-      used_dl_crbs.fill(params.value().alloc_crbs.start(), params.value().alloc_crbs.stop());
-    }
+    auto& builder = result.value();
+
+    crb_interval crbs = builder.recommended_crbs(used_dl_crbs);
+    builder.set_pdsch_params(crbs);
+    used_dl_crbs.fill(crbs.start(), crbs.stop());
   }
 
   void allocate_dl_retx_grant(const slice_ue& user, dl_harq_process_handle h_dl)
   {
-    auto params =
-        sched_helper::compute_retx_dl_grant_sched_params(user, current_slot, current_slot, h_dl, used_dl_crbs);
+    auto params = sched_helper::select_retx_dl_grant_config(user, current_slot, current_slot, h_dl, used_dl_crbs);
     if (not params.has_value()) {
       return;
     }
-    auto result = alloc.allocate_dl_grant(ue_dl_grant_request{current_slot, user, h_dl, params.value()});
+    auto result = alloc.allocate_dl_grant(ue_retx_dl_grant_request{current_slot, user, h_dl, params.value()});
     if (result == alloc_status::success) {
       used_dl_crbs.fill(params.value().alloc_crbs.start(), params.value().alloc_crbs.stop());
     }
