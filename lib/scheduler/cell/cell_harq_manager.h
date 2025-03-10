@@ -499,6 +499,9 @@ public:
   /// Deallocate UE HARQ entity.
   void reset();
 
+  /// Block new retxs of pending HARQs.
+  void cancel_retxs();
+
   std::optional<dl_harq_process_handle> dl_harq(harq_id_t h_id)
   {
     if (h_id < get_dl_ue().harqs.size() and get_dl_ue().harqs[h_id].status != harq_utils::harq_state_t::empty) {

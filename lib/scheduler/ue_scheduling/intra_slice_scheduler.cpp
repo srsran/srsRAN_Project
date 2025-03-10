@@ -99,7 +99,7 @@ template <typename SliceCandidate>
 static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const ue_newtx_candidate> ue_candidates,
                                                                       const cell_resource_allocator& cell_alloc,
                                                                       const SliceCandidate&          slice,
-                                                                      const crb_bitmap*              used_crbs,
+                                                                      const crb_bitmap&              used_crbs,
                                                                       unsigned max_ue_grants_to_alloc)
 {
   constexpr bool is_dl = std::is_same_v<dl_ran_slice_candidate, SliceCandidate>;
@@ -141,10 +141,8 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
 
   const crb_interval& bwp_crb_limits = is_dl ? ss_info->dl_crb_lims : ss_info->ul_crb_lims;
   unsigned            max_nof_rbs    = std::min(bwp_crb_limits.length(), slice.remaining_rbs());
-  if (used_crbs != nullptr) {
-    // Count how many RBs are still available for allocation.
-    max_nof_rbs = std::min(max_nof_rbs, (unsigned)(~(*used_crbs)).count());
-  }
+  // Count how many RBs are still available for allocation.
+  max_nof_rbs = std::min(max_nof_rbs, (unsigned)(~used_crbs).count());
   if (max_nof_rbs == 0) {
     return std::make_pair(0, 0);
   }
@@ -153,8 +151,8 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
   return std::make_pair(max_nof_rbs, std::max(max_nof_rbs / ues_to_alloc, MIN_RB_PER_GRANT));
 }
 
-unsigned intra_slice_scheduler::schedule_dl_retx_candidates(const dl_ran_slice_candidate& slice,
-                                                            unsigned                      max_ue_grants_to_alloc)
+unsigned intra_slice_scheduler::schedule_dl_retx_candidates(dl_ran_slice_candidate& slice,
+                                                            unsigned                max_ue_grants_to_alloc)
 {
   const slice_ue_repository& slice_ues     = slice.get_slice_ues();
   dl_harq_pending_retx_list  pending_harqs = cell_harqs.pending_dl_retxs();
@@ -184,7 +182,8 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(const dl_ran_slice_c
     if (result.has_value()) {
       crb_interval alloc_crbs = result.value();
       used_dl_crbs.fill(alloc_crbs.start(), alloc_crbs.stop());
-      if (++alloc_count >= max_ue_grants_to_alloc) {
+      slice.store_grant(alloc_crbs.length());
+      if (++alloc_count >= max_ue_grants_to_alloc or slice.remaining_rbs() == 0) {
         // Maximum number of allocations reached.
         break;
       }
@@ -200,8 +199,8 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(const dl_ran_slice_c
   return alloc_count;
 }
 
-unsigned intra_slice_scheduler::schedule_ul_retx_candidates(const ul_ran_slice_candidate& slice,
-                                                            unsigned                      max_ue_grants_to_alloc)
+unsigned intra_slice_scheduler::schedule_ul_retx_candidates(ul_ran_slice_candidate& slice,
+                                                            unsigned                max_ue_grants_to_alloc)
 {
   const slice_ue_repository& slice_ues     = slice.get_slice_ues();
   ul_harq_pending_retx_list  pending_harqs = cell_harqs.pending_ul_retxs();
@@ -230,7 +229,10 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(const ul_ran_slice_c
     }
 
     if (result.has_value()) {
-      if (++alloc_count >= max_ue_grants_to_alloc) {
+      crb_interval alloc_crbs = result.value();
+      used_ul_crbs.fill(alloc_crbs.start(), alloc_crbs.stop());
+      slice.store_grant(alloc_crbs.length());
+      if (++alloc_count >= max_ue_grants_to_alloc or slice.remaining_rbs() == 0) {
         // Maximum number of allocations reached.
         break;
       }
@@ -322,7 +324,7 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
 
   // Recompute max number of UE grants that can be scheduled in this slot and the number of RBs per grant.
   auto [rbs_to_alloc, max_rbs_per_grant] =
-      get_max_grants_and_rb_grant_size(newtx_candidates, cell_alloc, slice, &used_dl_crbs, max_ue_grants_to_alloc);
+      get_max_grants_and_rb_grant_size(newtx_candidates, cell_alloc, slice, used_dl_crbs, max_ue_grants_to_alloc);
   if (max_rbs_per_grant == 0) {
     return 0;
   }
@@ -424,7 +426,7 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
 
   // Recompute max number of UE grants that can be scheduled in this slot and the number of RBs per grant.
   auto [rbs_to_alloc, expected_rbs_per_grant] =
-      get_max_grants_and_rb_grant_size(newtx_candidates, cell_alloc, slice, nullptr, max_ue_grants_to_alloc);
+      get_max_grants_and_rb_grant_size(newtx_candidates, cell_alloc, slice, used_ul_crbs, max_ue_grants_to_alloc);
   if (expected_rbs_per_grant == 0) {
     return 0;
   }
@@ -517,15 +519,10 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
 bool intra_slice_scheduler::can_allocate_pdsch(const slice_ue& u, const ue_cell& ue_cc) const
 {
   // Check if PDCCH/PDSCH is possible for this slot (e.g. not in UL slot or measGap)
-  if (not ue_cc.is_pdsch_enabled(pdcch_slot, pdsch_slot) or ue_cc.is_in_fallback_mode()) {
+  srsran_assert(not ue_cc.is_in_fallback_mode(), "Slice UE cannot be in fallback mode");
+  if (not ue_cc.is_pdsch_enabled(pdcch_slot, pdsch_slot)) {
     return false;
   }
-
-  if (ue_cc.channel_state_manager().get_wideband_cqi() == csi_report_wideband_cqi_type{0}) {
-    // Reported CQI==0 means that the UE is out-of-reach.
-    return false;
-  }
-
   return true;
 }
 

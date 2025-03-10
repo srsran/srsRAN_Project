@@ -818,6 +818,21 @@ void unique_ue_harq_entity::reset()
   }
 }
 
+void unique_ue_harq_entity::cancel_retxs()
+{
+  for (auto& h_dl : get_dl_ue().harqs) {
+    if (h_dl.status != harq_state_t::empty) {
+      dl_harq_process_handle{cell_harq_mgr->dl, h_dl}.cancel_retxs();
+    }
+  }
+
+  for (auto& h_ul : get_ul_ue().harqs) {
+    if (h_ul.status != harq_state_t::empty) {
+      ul_harq_process_handle{cell_harq_mgr->ul, h_ul}.cancel_retxs();
+    }
+  }
+}
+
 std::optional<dl_harq_process_handle>
 unique_ue_harq_entity::alloc_dl_harq(slot_point sl_tx, unsigned k1, unsigned max_harq_nof_retxs, unsigned harq_bit_idx)
 {

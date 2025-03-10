@@ -103,18 +103,7 @@ void ue_cell::set_fallback_state(bool set_fallback)
   in_fallback_mode = set_fallback;
 
   // Cancel pending HARQs retxs of different state.
-  for (unsigned i = 0; i != harqs.nof_dl_harqs(); ++i) {
-    std::optional<dl_harq_process_handle> h_dl = harqs.dl_harq(to_harq_id(i));
-    if (h_dl.has_value() and h_dl.value().get_grant_params().is_fallback != in_fallback_mode) {
-      h_dl.value().cancel_retxs();
-    }
-  }
-  for (unsigned i = 0; i != harqs.nof_ul_harqs(); ++i) {
-    std::optional<ul_harq_process_handle> h_ul = harqs.ul_harq(to_harq_id(i));
-    if (h_ul.has_value()) {
-      h_ul->cancel_retxs();
-    }
-  }
+  harqs.cancel_retxs();
 
   logger.debug(
       "ue={} rnti={}: {} fallback mode", fmt::underlying(ue_index), rnti(), in_fallback_mode ? "Entering" : "Leaving");
@@ -188,6 +177,11 @@ void ue_cell::handle_csi_report(const csi_report_data& csi_report)
   apply_link_adaptation_procedures(csi_report);
   if (not channel_state.handle_csi_report(csi_report)) {
     logger.warning("ue={} rnti={}: Invalid CSI report received", fmt::underlying(ue_index), rnti());
+  }
+
+  if (csi_report.valid and csi_report.first_tb_wideband_cqi == csi_report_data::wideband_cqi_type{0}) {
+    // CQI==0 means that the UE is out-of-reach. We stop transmissions for this UE until its CQI becomes positive again.
+    harqs.cancel_retxs();
   }
 }
 

@@ -126,6 +126,8 @@ static sch_prbs_tbs linear_search_nof_prbs_upper_bound(const prbs_calculator_sch
 
 sch_prbs_tbs srsran::get_nof_prbs(const prbs_calculator_sch_config& sch_config, unsigned max_nof_available_rbs)
 {
+  srsran_assert(max_nof_available_rbs <= MAX_NOF_PRBS, "Invalid number of RBs provided");
+
   // Get a first estimate for the number of PRBs.
   unsigned nof_prbs_estimate = estimate_required_nof_prbs(sch_config, max_nof_available_rbs);
 

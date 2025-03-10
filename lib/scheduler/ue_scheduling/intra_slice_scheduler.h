@@ -57,9 +57,9 @@ private:
 
   void prepare_newtx_ul_candidates(const ul_ran_slice_candidate& slice, scheduler_policy& dl_policy);
 
-  unsigned schedule_dl_retx_candidates(const dl_ran_slice_candidate& slice, unsigned max_ue_grants_to_alloc);
+  unsigned schedule_dl_retx_candidates(dl_ran_slice_candidate& slice, unsigned max_ue_grants_to_alloc);
 
-  unsigned schedule_ul_retx_candidates(const ul_ran_slice_candidate& slice, unsigned max_ue_grants_to_alloc);
+  unsigned schedule_ul_retx_candidates(ul_ran_slice_candidate& slice, unsigned max_ue_grants_to_alloc);
 
   unsigned schedule_dl_newtx_candidates(dl_ran_slice_candidate& slice,
                                         scheduler_policy&       dl_policy,
