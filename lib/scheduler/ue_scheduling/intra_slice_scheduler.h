@@ -93,9 +93,8 @@ private:
   unsigned dl_attempts_count = 0;
   unsigned ul_attempts_count = 0;
 
-  // UE candidates for allocation.
-  std::vector<ue_newtx_candidate> dl_newtx_candidates;
-  std::vector<ue_newtx_candidate> ul_newtx_candidates;
+  // UE candidates for on-going scheduling.
+  std::vector<ue_newtx_candidate> newtx_candidates;
 
   slot_point pdsch_slot;
   slot_point pusch_slot;

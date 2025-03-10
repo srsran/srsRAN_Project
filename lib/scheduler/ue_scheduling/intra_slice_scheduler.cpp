@@ -26,9 +26,9 @@ intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& e
   logger(logger_),
   ue_alloc(expert_cfg, ues, pdcch_alloc, uci_alloc, cell_alloc_, logger_)
 {
-  dl_newtx_candidates.reserve(MAX_NOF_DU_UES);
-  ul_newtx_candidates.reserve(MAX_NOF_DU_UES);
+  newtx_candidates.reserve(MAX_NOF_DU_UES);
   pending_dl_newtxs.reserve(MAX_UE_PDUS_PER_SLOT);
+  pending_ul_newtxs.reserve(MAX_UE_PDUS_PER_SLOT);
 }
 
 void intra_slice_scheduler::slot_indication(slot_point sl_tx)
@@ -252,30 +252,30 @@ void intra_slice_scheduler::prepare_newtx_dl_candidates(const dl_ran_slice_candi
   const slice_ue_repository& slice_ues = slice.get_slice_ues();
 
   // Build list of UE candidates for newTx.
-  dl_newtx_candidates.clear();
+  newtx_candidates.clear();
   for (const slice_ue& u : slice_ues) {
     auto ue_candidate = create_newtx_dl_candidate(u);
     if (ue_candidate.has_value()) {
-      dl_newtx_candidates.push_back(ue_candidate.value());
+      newtx_candidates.push_back(ue_candidate.value());
     }
   }
-  if (dl_newtx_candidates.empty()) {
+  if (newtx_candidates.empty()) {
     return;
   }
 
   // Compute priorities using the provided policy.
-  dl_policy.compute_ue_dl_priorities(pdcch_slot, pdsch_slot, dl_newtx_candidates);
+  dl_policy.compute_ue_dl_priorities(pdcch_slot, pdsch_slot, newtx_candidates);
 
   // Sort candidates by priority in descending order.
-  std::sort(dl_newtx_candidates.begin(), dl_newtx_candidates.end(), [](const auto& a, const auto& b) {
+  std::sort(newtx_candidates.begin(), newtx_candidates.end(), [](const auto& a, const auto& b) {
     return a.priority > b.priority;
   });
 
   // Remove candidates with forbid priority.
-  auto rit = std::find_if(dl_newtx_candidates.rbegin(), dl_newtx_candidates.rend(), [](const auto& cand) {
+  auto rit = std::find_if(newtx_candidates.rbegin(), newtx_candidates.rend(), [](const auto& cand) {
     return cand.priority != forbid_sched_priority;
   });
-  dl_newtx_candidates.erase(rit.base(), dl_newtx_candidates.end());
+  newtx_candidates.erase(rit.base(), newtx_candidates.end());
 }
 
 void intra_slice_scheduler::prepare_newtx_ul_candidates(const ul_ran_slice_candidate& slice,
@@ -284,30 +284,30 @@ void intra_slice_scheduler::prepare_newtx_ul_candidates(const ul_ran_slice_candi
   const slice_ue_repository& slice_ues = slice.get_slice_ues();
 
   // Build list of UE candidates.
-  ul_newtx_candidates.clear();
+  newtx_candidates.clear();
   for (const slice_ue& u : slice_ues) {
     auto ue_candidate = create_newtx_ul_candidate(u);
     if (ue_candidate.has_value()) {
-      ul_newtx_candidates.push_back(ue_candidate.value());
+      newtx_candidates.push_back(ue_candidate.value());
     }
   }
-  if (ul_newtx_candidates.empty()) {
+  if (newtx_candidates.empty()) {
     return;
   }
 
   // Compute priorities using the provided policy.
-  ul_policy.compute_ue_ul_priorities(pdcch_slot, pusch_slot, ul_newtx_candidates);
+  ul_policy.compute_ue_ul_priorities(pdcch_slot, pusch_slot, newtx_candidates);
 
   // Sort candidates by priority in descending order.
-  std::sort(ul_newtx_candidates.begin(), ul_newtx_candidates.end(), [](const auto& a, const auto& b) {
+  std::sort(newtx_candidates.begin(), newtx_candidates.end(), [](const auto& a, const auto& b) {
     return a.priority > b.priority;
   });
 
   // Remove candidates with forbid priority.
-  auto rit = std::find_if(ul_newtx_candidates.rbegin(), ul_newtx_candidates.rend(), [](const auto& cand) {
+  auto rit = std::find_if(newtx_candidates.rbegin(), newtx_candidates.rend(), [](const auto& cand) {
     return cand.priority != forbid_sched_priority;
   });
-  ul_newtx_candidates.erase(rit.base(), ul_newtx_candidates.end());
+  newtx_candidates.erase(rit.base(), newtx_candidates.end());
 }
 
 unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candidate& slice,
@@ -316,20 +316,20 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
 {
   // Prepare candidate list.
   prepare_newtx_dl_candidates(slice, dl_policy);
-  if (dl_newtx_candidates.empty()) {
+  if (newtx_candidates.empty()) {
     return 0;
   }
 
   // Recompute max number of UE grants that can be scheduled in this slot and the number of RBs per grant.
   auto [rbs_to_alloc, max_rbs_per_grant] =
-      get_max_grants_and_rb_grant_size(dl_newtx_candidates, cell_alloc, slice, &used_dl_crbs, max_ue_grants_to_alloc);
+      get_max_grants_and_rb_grant_size(newtx_candidates, cell_alloc, slice, &used_dl_crbs, max_ue_grants_to_alloc);
   if (max_rbs_per_grant == 0) {
     return 0;
   }
 
   // Stage 1: Pre-select UEs with the highest priority and reserve control-plane space for their DL grants.
   unsigned rb_count = 0;
-  for (const auto& ue_candidate : dl_newtx_candidates) {
+  for (const auto& ue_candidate : newtx_candidates) {
     // Create DL grant builder.
     auto result =
         ue_alloc.allocate_dl_grant(ue_newtx_dl_grant_request{*ue_candidate.ue, pdsch_slot, ue_candidate.pending_bytes});
@@ -418,20 +418,20 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
 {
   // Prepare candidate list.
   prepare_newtx_ul_candidates(slice, ul_policy);
-  if (ul_newtx_candidates.empty()) {
+  if (newtx_candidates.empty()) {
     return 0;
   }
 
   // Recompute max number of UE grants that can be scheduled in this slot and the number of RBs per grant.
   auto [rbs_to_alloc, expected_rbs_per_grant] =
-      get_max_grants_and_rb_grant_size(ul_newtx_candidates, cell_alloc, slice, nullptr, max_ue_grants_to_alloc);
+      get_max_grants_and_rb_grant_size(newtx_candidates, cell_alloc, slice, nullptr, max_ue_grants_to_alloc);
   if (expected_rbs_per_grant == 0) {
     return 0;
   }
 
   // Stage 1: Pre-select UEs with the highest priority and reserve control-plane space for their UL grants.
   unsigned rb_count = 0;
-  for (const auto& ue_candidate : ul_newtx_candidates) {
+  for (const auto& ue_candidate : newtx_candidates) {
     // Create UL grant builder.
     auto result =
         ue_alloc.allocate_ul_grant(ue_newtx_ul_grant_request{*ue_candidate.ue, pusch_slot, ue_candidate.pending_bytes});
