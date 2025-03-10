@@ -304,10 +304,16 @@ std::optional<dl_sched_context> sched_helper::get_newtx_dl_sched_context(const s
   return get_dl_sched_context(u, pdcch_slot, pdsch_slot, nullptr, pending_bytes);
 }
 
-static crb_interval find_available_crbs(const dl_sched_context&       space_cfg,
-                                        const crb_bitmap&             used_crbs,
-                                        const dl_harq_process_handle* h_dl,
-                                        unsigned                      max_rbs = MAX_NOF_PRBS)
+std::optional<dl_sched_context> sched_helper::get_retx_dl_sched_context(const slice_ue&               u,
+                                                                        slot_point                    pdcch_slot,
+                                                                        slot_point                    pdsch_slot,
+                                                                        const dl_harq_process_handle& h_dl)
+{
+  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, &h_dl, 0);
+}
+
+static crb_interval
+find_available_crbs(const dl_sched_context& space_cfg, const crb_bitmap& used_crbs, unsigned max_rbs = MAX_NOF_PRBS)
 {
   // Compute recommended number of layers, MCS and PRBs.
   unsigned nof_rbs = std::min(space_cfg.expected_nof_rbs, max_rbs);
@@ -320,10 +326,6 @@ static crb_interval find_available_crbs(const dl_sched_context&       space_cfg,
   if (crbs.empty()) {
     return crb_interval{};
   }
-  if (h_dl != nullptr and crbs.length() != h_dl->get_grant_params().rbs.type1().length()) {
-    // In case of Retx, the #CRBs need to stay the same.
-    return crb_interval{};
-  }
 
   // Successful CRB interval derivation.
   return crbs;
@@ -333,31 +335,17 @@ crb_interval sched_helper::compute_newtx_dl_crbs(const dl_sched_context& decisio
                                                  const crb_bitmap&       used_crbs,
                                                  unsigned                max_nof_rbs)
 {
-  return find_available_crbs(decision_ctxt, used_crbs, nullptr, max_nof_rbs);
+  return find_available_crbs(decision_ctxt, used_crbs, max_nof_rbs);
 }
 
-std::optional<retx_dl_grant_config> sched_helper::select_retx_dl_grant_config(const slice_ue&               u,
-                                                                              slot_point                    pdcch_slot,
-                                                                              slot_point                    pdsch_slot,
-                                                                              const dl_harq_process_handle& h_dl,
-                                                                              const crb_bitmap&             used_crbs)
+crb_interval sched_helper::compute_retx_dl_crbs(const dl_sched_context& decision_ctxt, const crb_bitmap& used_crbs)
 {
-  auto ctrl_params = get_dl_sched_context(u, pdcch_slot, pdsch_slot, &h_dl, 0);
-  if (not ctrl_params.has_value()) {
-    // No valid PDCCH and PDSCH parameters were found.
-    return std::nullopt;
+  crb_interval crbs = find_available_crbs(decision_ctxt, used_crbs, decision_ctxt.expected_nof_rbs);
+  if (crbs.length() != decision_ctxt.expected_nof_rbs) {
+    // In case of Retx, the #CRBs need to stay the same.
+    return {};
   }
-
-  auto alloc_crbs = find_available_crbs(ctrl_params.value(), used_crbs, &h_dl);
-  if (alloc_crbs.empty()) {
-    return std::nullopt;
-  }
-
-  // Successful selection of grant parameters.
-  retx_dl_grant_config params;
-  params.decision_ctxt = *ctrl_params;
-  params.alloc_crbs    = alloc_crbs;
-  return params;
+  return crbs;
 }
 
 static std::optional<ul_grant_sched_params> compute_ul_grant_sched_params(const slice_ue& u,

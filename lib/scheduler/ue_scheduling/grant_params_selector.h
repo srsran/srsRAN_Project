@@ -70,25 +70,19 @@ struct dl_sched_context {
 std::optional<dl_sched_context>
 get_newtx_dl_sched_context(const slice_ue& u, slot_point pdcch_slot, slot_point pdsch_slot, unsigned pending_bytes);
 
-/// Select CRBs to allocate.
+/// Retrieve recommended PDCCH and PDSCH parameters for a reTx DL grant.
+std::optional<dl_sched_context> get_retx_dl_sched_context(const slice_ue&               u,
+                                                          slot_point                    pdcch_slot,
+                                                          slot_point                    pdsch_slot,
+                                                          const dl_harq_process_handle& h_dl);
+
+/// Select DL CRBs to allocate for a newTx.
 crb_interval compute_newtx_dl_crbs(const dl_sched_context& decision_ctxt,
                                    const crb_bitmap&       used_crbs,
                                    unsigned                max_nof_rbs = MAX_NOF_PRBS);
 
-/// Selected parameters for a DL reTx grant allocation.
-struct retx_dl_grant_config {
-  /// Parameters related with the choice of searchSpace and PDSCH time-domain resource.
-  dl_sched_context decision_ctxt;
-  /// Recommended CRBs to allocate (allocation type 1).
-  crb_interval alloc_crbs;
-};
-
-/// Derive parameters for a DL reTx grant.
-std::optional<retx_dl_grant_config> select_retx_dl_grant_config(const slice_ue&               u,
-                                                                slot_point                    pdcch_slot,
-                                                                slot_point                    pdsch_slot,
-                                                                const dl_harq_process_handle& h_dl,
-                                                                const crb_bitmap&             used_crbs);
+/// Select DL CRBs to allocate for a reTx.
+crb_interval compute_retx_dl_crbs(const dl_sched_context& decision_ctxt, const crb_bitmap& used_crbs);
 
 /// Parameters recommended for a UL grant.
 struct ul_grant_sched_params {

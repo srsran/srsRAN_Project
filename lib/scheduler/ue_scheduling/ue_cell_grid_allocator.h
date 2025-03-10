@@ -31,16 +31,16 @@ struct ue_newtx_dl_grant_request {
   unsigned pending_bytes;
 };
 
-/// Request for a DL grant allocation.
+/// Request for a reTx DL grant allocation.
 struct ue_retx_dl_grant_request {
-  /// Slot at which PDSCH PDU shall be allocated.
-  slot_point pdsch_slot;
   /// UE to allocate.
   const slice_ue& user;
+  /// Slot at which PDSCH PDU shall be allocated.
+  slot_point pdsch_slot;
   /// DL HARQ process to reTx.
   dl_harq_process_handle h_dl;
-  /// Selected allocation parameters.
-  sched_helper::retx_dl_grant_config params;
+  /// Used DL CRBs.
+  crb_bitmap& used_dl_crbs;
 };
 
 /// Request for a UL grant allocation.
@@ -100,7 +100,7 @@ class ue_cell_grid_allocator
   };
 
 public:
-  /// Placeholder for a grant in the DL resource grid, which allows deferred setting of PDSCH parameters.
+  /// \brief Interface for a DL grant, which allows deferred setting of PDSCH parameters.
   struct dl_newtx_grant_builder {
     dl_newtx_grant_builder(dl_newtx_grant_builder&&) noexcept            = default;
     dl_newtx_grant_builder& operator=(dl_newtx_grant_builder&&) noexcept = default;
@@ -113,7 +113,7 @@ public:
     crb_interval recommended_crbs(const crb_bitmap& used_crbs, unsigned max_nof_rbs = MAX_NOF_PRBS) const
     {
       const dl_grant_info& grant = grant_info();
-      return sched_helper::compute_newtx_dl_crbs(grant.cfg, used_crbs, max_nof_rbs);
+      return compute_newtx_dl_crbs(grant.cfg, used_crbs, max_nof_rbs);
     }
 
     /// Getters for grant immutable parameters.
@@ -146,7 +146,7 @@ public:
   expected<dl_newtx_grant_builder, alloc_status> allocate_dl_grant(const ue_newtx_dl_grant_request& request);
 
   /// Allocates DL grant for a UE HARQ reTx.
-  alloc_status allocate_dl_grant(const ue_retx_dl_grant_request& request);
+  expected<crb_interval, alloc_status> allocate_dl_grant(const ue_retx_dl_grant_request& request);
 
   /// Allocates UL grant for a UE newTx.
   ul_alloc_result allocate_ul_grant(const ue_ul_grant_request& request);

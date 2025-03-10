@@ -149,13 +149,9 @@ protected:
 
   void allocate_dl_retx_grant(const slice_ue& user, dl_harq_process_handle h_dl)
   {
-    auto params = sched_helper::select_retx_dl_grant_config(user, current_slot, current_slot, h_dl, used_dl_crbs);
-    if (not params.has_value()) {
-      return;
-    }
-    auto result = alloc.allocate_dl_grant(ue_retx_dl_grant_request{current_slot, user, h_dl, params.value()});
-    if (result == alloc_status::success) {
-      used_dl_crbs.fill(params.value().alloc_crbs.start(), params.value().alloc_crbs.stop());
+    auto result = alloc.allocate_dl_grant(ue_retx_dl_grant_request{user, current_slot, h_dl, used_dl_crbs});
+    if (result.has_value()) {
+      used_dl_crbs.fill(result.value().start(), result.value().stop());
     }
   }
 

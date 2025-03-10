@@ -101,6 +101,8 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
   constexpr bool is_dl = std::is_same_v<dl_ran_slice_candidate, SliceCandidate>;
   static_assert(is_dl or std::is_same_v<ul_ran_slice_candidate, SliceCandidate>, "Invalid slice candidate");
 
+  unsigned ues_to_alloc = max_ue_grants_to_alloc;
+
   // [Implementation-defined] We use the same searchSpace config to determine the number of RBs available.
   const ue_cell_configuration& ue_cfg  = ue_candidates[0].ue_cc->cfg();
   const search_space_id        ss_id   = ue_cfg.init_bwp().dl_ded.value()->pdcch_cfg->search_spaces.back().get_id();
@@ -113,8 +115,7 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
   // of candidates by 4 and set 8 as the maximum number of UEs to be scheduled per slot, assuming full buffer. This
   // heuristic is a result of a tradeoff between minimizing latency and ensuring we don't deplete the PDCCH resources.
   static constexpr unsigned MAX_UE_GRANT_PER_SLOT = 8;
-  unsigned                  expected_grants       = std::min(
-      max_ue_grants_to_alloc, std::min(std::max((unsigned)ue_candidates.size() / 4U, 1U), MAX_UE_GRANT_PER_SLOT));
+  ues_to_alloc = std::min({ues_to_alloc, std::max((unsigned)ue_candidates.size() / 4U, 1U), MAX_UE_GRANT_PER_SLOT});
 
   // > Compute maximum nof. PDCCH candidates allowed for each direction.
   // [Implementation-defined]
@@ -129,8 +130,8 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
   // > Ensure fairness in PDCCH allocation between DL and UL.
   // [Implementation-defined] To avoid running out of PDCCH candidates for UL allocation in multi-UE scenario and short
   // BW (e.g. TDD and 10Mhz BW), apply further limits on nof. UEs to be scheduled per slot.
-  expected_grants = std::min(max_nof_candidates, expected_grants);
-  if (expected_grants == 0) {
+  ues_to_alloc = std::min(max_nof_candidates, ues_to_alloc);
+  if (ues_to_alloc == 0) {
     return std::make_pair(0, 0);
   }
 
@@ -145,7 +146,7 @@ static std::pair<unsigned, unsigned> get_max_grants_and_rb_grant_size(span<const
   }
 
   static constexpr unsigned MIN_RB_PER_GRANT = 4;
-  return std::make_pair(max_nof_rbs, std::max(divide_ceil(max_nof_rbs, expected_grants), MIN_RB_PER_GRANT));
+  return std::make_pair(max_nof_rbs, std::max(max_nof_rbs / ues_to_alloc, MIN_RB_PER_GRANT));
 }
 
 unsigned intra_slice_scheduler::schedule_dl_retx_candidates(const dl_ran_slice_candidate& slice,
@@ -161,6 +162,7 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(const dl_ran_slice_c
     auto h       = *prev_it;
 
     if (h.get_grant_params().slice_id != slice.id()) {
+      // HARQ ReTx is for another slice.
       continue;
     }
     const slice_ue& u = slice_ues[h.ue_index()];
@@ -168,23 +170,16 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(const dl_ran_slice_c
       continue;
     }
 
-    // Derive recommended parameters for the DL reTx grant.
-    auto params = sched_helper::select_retx_dl_grant_config(u, pdcch_slot, pdsch_slot, h, used_dl_crbs);
-    if (not params.has_value()) {
-      // No valid parameters were found for this slot and UE candidate.
-      continue;
-    }
-
-    // Perform allocation of PDCCH, PDSCH and UCI.
-    alloc_status result = ue_alloc.allocate_dl_grant(ue_retx_dl_grant_request{pdsch_slot, u, h, params.value()});
-
-    if (result == alloc_status::skip_slot) {
+    // Perform DL grant allocation, including PDCCH, PDSCH and UCI.
+    auto result = ue_alloc.allocate_dl_grant(ue_retx_dl_grant_request{u, pdsch_slot, h, used_dl_crbs});
+    if (not result.has_value() and result.error() == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
       break;
     }
 
-    if (result == alloc_status::success) {
-      used_dl_crbs.fill(params.value().alloc_crbs.start(), params.value().alloc_crbs.stop());
+    if (result.has_value()) {
+      crb_interval alloc_crbs = result.value();
+      used_dl_crbs.fill(alloc_crbs.start(), alloc_crbs.stop());
       if (++alloc_count >= max_ue_grants_to_alloc) {
         // Maximum number of allocations reached.
         break;
@@ -347,8 +342,9 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
 
     if (result.has_value()) {
       // Allocation was successful. Move grant builder to list of pending newTx grants.
-      rb_count += std::min(result.value().context().expected_nof_rbs, max_rbs_per_grant);
-      pending_newtxs.push_back(std::move(result.value()));
+      auto& grant_builder = result.value();
+      rb_count += std::min(grant_builder.context().expected_nof_rbs, max_rbs_per_grant);
+      pending_newtxs.push_back(std::move(grant_builder));
       if (rb_count >= rbs_to_alloc) {
         // Enough UEs have been allocated to ensure that the grid is filled. Move to stage 2.
         break;
@@ -387,11 +383,16 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
     } else {
       max_grant_size = max_rbs_per_grant + rbs_missing;
     }
-    srsran_assert(max_grant_size > 0, "Invalid grant size");
+    srsran_assert(max_grant_size > 0, "Invalid grant size.");
 
     // Derive recommended parameters for the DL newTx grant.
     crb_interval alloc_crbs = grant_builder.recommended_crbs(used_dl_crbs, max_grant_size);
-    srsran_assert(not alloc_crbs.empty(), "Invalid grant params. NewTx cancellation not supported");
+    if (alloc_crbs.empty()) {
+      logger.error("ue={} c-rnti={}: Failed to allocate PDSCH CRBs",
+                   fmt::underlying(grant_builder.ue().ue_index()),
+                   grant_builder.ue().crnti());
+      continue;
+    }
 
     // Save CRBs, MCS and RI.
     grant_builder.set_pdsch_params(alloc_crbs);

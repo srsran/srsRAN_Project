@@ -349,18 +349,31 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info& grant, const crb_in
   u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
 }
 
-alloc_status ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& request)
+expected<crb_interval, alloc_status> ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& request)
 {
+  // Select PDCCH searchSpace and PDSCH time-domain resource config.
+  auto sched_ctxt =
+      sched_helper::get_retx_dl_sched_context(request.user, cell_alloc[0].slot, request.pdsch_slot, request.h_dl);
+  if (not sched_ctxt) {
+    return make_unexpected(alloc_status::skip_ue);
+  }
+
+  // Select DL CRBs.
+  crb_interval crbs = sched_helper::compute_retx_dl_crbs(sched_ctxt.value(), request.used_dl_crbs);
+  if (crbs.empty()) {
+    return make_unexpected(alloc_status::skip_ue);
+  }
+
   // Allocate PDCCH, PDSCH and UCI PDUs.
-  auto grant = setup_dl_grant_builder(request.user, request.params.decision_ctxt, request.h_dl, 0);
+  auto grant = setup_dl_grant_builder(request.user, sched_ctxt.value(), request.h_dl, 0);
   if (not grant.has_value()) {
-    return grant.error();
+    return make_unexpected(grant.error());
   }
 
   // Set PDSCH parameters.
-  set_pdsch_params(grant.value(), request.params.alloc_crbs);
+  set_pdsch_params(grant.value(), crbs);
 
-  return alloc_status::success;
+  return crbs;
 }
 
 ul_alloc_result ue_cell_grid_allocator::allocate_ul_grant(const ue_ul_grant_request& request)
