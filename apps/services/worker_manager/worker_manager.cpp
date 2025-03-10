@@ -79,17 +79,16 @@ void worker_manager::create_worker_pool(const std::string&                      
                                         unsigned                                              queue_size,
                                         const std::vector<execution_config_helper::executor>& execs,
                                         os_thread_realtime_priority                           prio,
-                                        span<const os_sched_affinity_bitmask>                 cpu_masks)
+                                        span<const os_sched_affinity_bitmask>                 cpu_masks,
+                                        concurrent_queue_policy                               queue_policy)
 {
   using namespace execution_config_helper;
-
-  concurrent_queue_policy queue_policy = concurrent_queue_policy::locking_mpmc;
 
   const worker_pool pool{name,
                          nof_workers,
                          {{queue_policy, queue_size}},
                          execs,
-                         std::chrono::microseconds{queue_policy == concurrent_queue_policy::locking_mpmc ? 0 : 10},
+                         std::chrono::microseconds{queue_policy == concurrent_queue_policy::locking_mpmc ? 0 : 20},
                          prio,
                          std::vector<os_sched_affinity_bitmask>{cpu_masks.begin(), cpu_masks.end()}};
   if (not exec_mng.add_execution_context(create_execution_context(pool))) {
@@ -508,7 +507,13 @@ void worker_manager::create_ofh_executors(const worker_manager_config::ru_ofh_co
       for (unsigned w = 0; w != nof_ofh_dl_workers; ++w) {
         cpu_masks.push_back(affinity_mng[i].calcute_affinity_mask(sched_affinity_mask_types::ru));
       }
-      create_worker_pool(name, nof_ofh_dl_workers, task_worker_queue_size, {{exec_name}}, prio, cpu_masks);
+      create_worker_pool(name,
+                         nof_ofh_dl_workers,
+                         task_worker_queue_size,
+                         {{exec_name}},
+                         prio,
+                         cpu_masks,
+                         concurrent_queue_policy::lockfree_mpmc);
       ru_dl_exec[i] = exec_mng.executors().at(exec_name);
     }
     // Executor for Open Fronthaul messages decoding.

@@ -110,7 +110,8 @@ private:
                           unsigned                                              queue_size,
                           const std::vector<execution_config_helper::executor>& execs,
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
-                          span<const os_sched_affinity_bitmask> cpu_masks = {});
+                          span<const os_sched_affinity_bitmask> cpu_masks = {},
+                          concurrent_queue_policy               queue_policy = concurrent_queue_policy::locking_mpmc);
 
   execution_config_helper::worker_pool create_low_prio_workers(unsigned                  nof_low_prio_threads,
                                                                unsigned int              low_prio_task_queue_size,
