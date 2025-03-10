@@ -47,11 +47,11 @@ private:
   bool can_allocate_pdsch(const slice_ue& u, const ue_cell& ue_cc) const;
 
   /// Determines whether a UE can be UL scheduled in a given slot.
-  bool can_allocate_pusch(slot_point pusch_slot, const slice_ue& u, const ue_cell& ue_cc) const;
+  bool can_allocate_pusch(const slice_ue& u, const ue_cell& ue_cc) const;
 
   std::optional<ue_newtx_candidate> create_newtx_dl_candidate(const slice_ue& u) const;
 
-  std::optional<ue_newtx_candidate> create_newtx_ul_candidate(slot_point pusch_slot, const slice_ue& u) const;
+  std::optional<ue_newtx_candidate> create_newtx_ul_candidate(const slice_ue& u) const;
 
   void prepare_newtx_dl_candidates(const dl_ran_slice_candidate& slice, scheduler_policy& dl_policy);
 
@@ -75,6 +75,7 @@ private:
 
   // Called when bitmap of used CRBs needs to be recalculated.
   void update_used_dl_crbs();
+  void update_used_ul_crbs();
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_resource_allocator&    cell_alloc;
@@ -97,10 +98,13 @@ private:
   std::vector<ue_newtx_candidate> ul_newtx_candidates;
 
   slot_point pdsch_slot;
+  slot_point pusch_slot;
   crb_bitmap used_dl_crbs;
+  crb_bitmap used_ul_crbs;
 
-  // DL grant builders + pending bytes for the current slice.
-  std::vector<ue_cell_grid_allocator::dl_newtx_grant_builder> pending_newtxs;
+  // Grants being built for the current slice.
+  std::vector<ue_cell_grid_allocator::dl_newtx_grant_builder> pending_dl_newtxs;
+  std::vector<ue_cell_grid_allocator::ul_newtx_grant_builder> pending_ul_newtxs;
 };
 
 } // namespace srsran

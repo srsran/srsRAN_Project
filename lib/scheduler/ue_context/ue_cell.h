@@ -65,12 +65,8 @@ public:
   {
     return active and cfg().is_dl_enabled(dl_slot) and drx_ctrl.is_pdcch_enabled();
   }
-  bool is_pdsch_enabled(slot_point dl_slot) const
+  bool is_pdsch_enabled(slot_point pdcch_slot, slot_point pdsch_slot) const
   {
-    if (not active or not cfg().is_dl_enabled(dl_slot)) {
-      return false;
-    }
-
     // Verify only one PDSCH exists for the same RNTI in the same slot, and that the PDSCHs are in the same order as
     // PDCCHs.
     // [TS 38.214, 5.1] "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to receive a
@@ -79,9 +75,21 @@ public:
     // receiving a first PDSCH starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be
     // scheduled to receive a PDSCH starting earlier than the end of the first PDSCH with a PDCCH that ends later
     // than symbol i.".
-    return not harqs.last_pdsch_slot().valid() or harqs.last_pdsch_slot() < dl_slot;
+    return is_pdcch_enabled(pdcch_slot) and (pdcch_slot == pdsch_slot or cfg().is_dl_enabled(pdsch_slot)) and
+           (not harqs.last_pdsch_slot().valid() or harqs.last_pdsch_slot() < pdsch_slot);
   }
-  bool is_ul_enabled(slot_point ul_slot) const;
+  bool is_pusch_enabled(slot_point pdcch_slot, slot_point pusch_slot) const
+  {
+    // Verify that the order of PUSCHs for the same UE matches the order of PDCCHs and that there is at most one PUSCH
+    // per slot.
+    // [TS 38.214, 6.1] "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to transmit a
+    // PUSCH that overlaps in time with another PUSCH".
+    // [TS 38.214, 6.1] "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to start a first
+    // PUSCH transmission starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be scheduled to
+    // transmit a PUSCH starting earlier than the end of the first PUSCH by a PDCCH that ends later than symbol i".
+    return is_pdcch_enabled(pdcch_slot) and cfg().is_ul_enabled(pusch_slot) and
+           (not harqs.last_pusch_slot().valid() or harqs.last_pusch_slot() < pusch_slot);
+  }
 
   struct dl_ack_info_result {
     dl_harq_process_handle::status_update update;

@@ -20,6 +20,14 @@
 using namespace srsran;
 using namespace sched_helper;
 
+/// Estimation of the number of PRBs and MCS to use for a given number of pending bytes and channel state.
+struct mcs_prbs_selection {
+  /// Recommended MCS to use.
+  sch_mcs_index mcs;
+  /// Number of recommended PRBs for the PDSCH grant given the number of pending bytes and chosen MCS.
+  unsigned nof_prbs;
+};
+
 static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg,
                                                                              const ue_cell&             ue_cc,
                                                                              unsigned                   pending_bytes,
@@ -69,6 +77,7 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
   return mcs_prbs_selection{mcs.value(), prbs_tbs.nof_prbs};
 }
 
+/// Compute PUSCH grant parameters for a newTx/reTx given the UE state, DCI type and PUSCH time-domain resource.
 static pusch_config_params compute_pusch_config_params(const ue_cell&                               ue_cc,
                                                        dci_ul_rnti_config_type                      dci_type,
                                                        unsigned                                     nof_layers,
@@ -99,23 +108,23 @@ static pusch_config_params compute_pusch_config_params(const ue_cell&           
   return pusch_cfg;
 }
 
-pusch_config_params
-sched_helper::compute_newtx_pusch_config_params(const ue_cell&                               ue_cc,
-                                                dci_ul_rnti_config_type                      dci_type,
-                                                const pusch_time_domain_resource_allocation& pusch_td_cfg,
-                                                unsigned                                     uci_bits,
-                                                bool                                         is_csi_report_slot)
+/// Compute PUSCH grant parameters for a newTx given the UE state, DCI type and PUSCH time-domain resource.
+static pusch_config_params compute_newtx_pusch_config_params(const ue_cell&                               ue_cc,
+                                                             dci_ul_rnti_config_type                      dci_type,
+                                                             const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                             unsigned                                     uci_bits,
+                                                             bool is_csi_report_slot)
 {
   return compute_pusch_config_params(
       ue_cc, dci_type, ue_cc.channel_state_manager().get_nof_ul_layers(), pusch_td_cfg, uci_bits, is_csi_report_slot);
 }
 
-pusch_config_params
-sched_helper::compute_retx_pusch_config_params(const ue_cell&                               ue_cc,
-                                               const ul_harq_process_handle&                h_ul,
-                                               const pusch_time_domain_resource_allocation& pusch_td_cfg,
-                                               unsigned                                     uci_bits,
-                                               bool                                         is_csi_report_slot)
+/// Compute PUSCH grant parameters for a reTx given the UE state, DCI type and PUSCH time-domain resource.
+pusch_config_params static compute_retx_pusch_config_params(const ue_cell&                               ue_cc,
+                                                            const ul_harq_process_handle&                h_ul,
+                                                            const pusch_time_domain_resource_allocation& pusch_td_cfg,
+                                                            unsigned                                     uci_bits,
+                                                            bool is_csi_report_slot)
 {
   return compute_pusch_config_params(ue_cc,
                                      h_ul.get_grant_params().dci_cfg_type,
@@ -125,25 +134,17 @@ sched_helper::compute_retx_pusch_config_params(const ue_cell&                   
                                      is_csi_report_slot);
 }
 
-mcs_prbs_selection sched_helper::compute_newtx_required_mcs_and_prbs(const pusch_config_params& pusch_cfg,
-                                                                     const ue_cell&             ue_cc,
-                                                                     unsigned                   pending_bytes,
-                                                                     unsigned                   max_nof_rbs)
+/// Derive recommended MCS and number of PRBs for a newTx PUSCH grant.
+static mcs_prbs_selection compute_newtx_required_mcs_and_prbs(const pusch_config_params& pusch_cfg,
+                                                              const ue_cell&             ue_cc,
+                                                              unsigned                   pending_bytes,
+                                                              interval<unsigned>         nof_rb_lims)
 {
-  const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
-  const cell_configuration&    cell_cfg    = ue_cc.cfg().cell_cfg_common;
-  const bwp_uplink_common&     bwp_ul_cmn  = *ue_cell_cfg.bwp(ue_cc.active_bwp_id()).ul_common.value();
-
   sch_mcs_index       mcs = ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table);
   sch_mcs_description mcs_config =
-      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, false);
+      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
 
   const auto nof_symbols = pusch_cfg.symbols.length();
-
-  // Set limit for number of UL RBs.
-  max_nof_rbs = std::min(max_nof_rbs, bwp_ul_cmn.generic_params.crbs.length());
-  max_nof_rbs = std::min(max_nof_rbs, cell_cfg.expert_cfg.ue.pusch_nof_rbs.stop());
-  max_nof_rbs = std::min(max_nof_rbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.stop());
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   nof_symbols,
@@ -151,11 +152,14 @@ mcs_prbs_selection sched_helper::compute_newtx_required_mcs_and_prbs(const pusch
                                                                   pusch_cfg.nof_oh_prb,
                                                                   mcs_config,
                                                                   pusch_cfg.nof_layers},
-                                       max_nof_rbs);
+                                       nof_rb_lims.stop());
 
   // Apply minimum grant size.
-  unsigned nof_prbs = std::max(prbs_tbs.nof_prbs, cell_cfg.expert_cfg.ue.pusch_nof_rbs.start());
-  nof_prbs          = std::max(nof_prbs, ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.start());
+  unsigned nof_prbs = std::max(prbs_tbs.nof_prbs, nof_rb_lims.start());
+
+  // If this is newTx, then we need to adjust the number of PRBs to the PHR, to prevent the UE from reducing the
+  // nominal TX power to meet the max TX power.
+  nof_prbs = ue_cc.get_pusch_power_controller().adapt_pusch_prbs_to_phr(nof_prbs);
 
   // Due to the pre-allocated UCI bits, MCS 0 and PRB 1 would not leave any space for the payload on the TBS, as
   // all the space would be taken by the UCI bits. As a result of this, the effective code rate would be 0 and the
@@ -188,24 +192,9 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
 {
   const ue_cell& ue_cc = u.get_cc();
 
-  // Verify only one PDSCH exists for the same RNTI in the same slot, and that the PDSCHs are in the same order as
-  // PDCCHs.
-  // [TS 38.214, 5.1] "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to receive a
-  // PDSCH that overlaps in time with another PDSCH".
-  // [TS 38.214, 5.1] "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to start
-  // receiving a first PDSCH starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be
-  // scheduled to receive a PDSCH starting earlier than the end of the first PDSCH with a PDCCH that ends later
-  // than symbol i.".
-  if (ue_cc.harqs.last_pdsch_slot().valid() and ue_cc.harqs.last_pdsch_slot() >= pdsch_slot) {
-    // Early exit if the PDSCH slot is not after the last PDSCH slot.
+  if (not ue_cc.is_pdsch_enabled(pdcch_slot, pdsch_slot) or ue_cc.is_in_fallback_mode()) {
     return std::nullopt;
   }
-
-  // Checks that should have been ensured at this point.
-  srsran_sanity_check(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(), "Invalid UE state");
-  srsran_sanity_check(ue_cc.is_pdcch_enabled(pdcch_slot), "DL is not active in the PDCCH slot");
-  srsran_sanity_check(ue_cc.is_pdsch_enabled(pdsch_slot), "DL is not active in the PDSCH slot");
-  srsran_sanity_check(ue_cc.channel_state_manager().get_wideband_cqi().value() > 0, "Invalid CQI");
 
   const ue_cell_configuration& ue_cell_cfg      = ue_cc.cfg();
   const cell_configuration&    cell_cfg         = ue_cell_cfg.cell_cfg_common;
@@ -348,30 +337,17 @@ crb_interval sched_helper::compute_retx_dl_crbs(const dl_sched_context& decision
   return crbs;
 }
 
-static std::optional<ul_grant_sched_params> compute_ul_grant_sched_params(const slice_ue& u,
-                                                                          slot_point      pdcch_slot,
-                                                                          slot_point      pusch_slot,
-                                                                          unsigned        uci_nof_harq_bits,
-                                                                          const ul_harq_process_handle* h_ul,
-                                                                          unsigned pending_bytes = 0,
-                                                                          unsigned max_rbs       = MAX_NOF_PRBS)
+static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&               u,
+                                                            slot_point                    pdcch_slot,
+                                                            slot_point                    pusch_slot,
+                                                            unsigned                      uci_nof_harq_bits,
+                                                            const ul_harq_process_handle* h_ul,
+                                                            unsigned                      pending_bytes)
 {
   const ue_cell& ue_cc = u.get_cc();
 
-  // Checks that should have been ensured at this point.
-  srsran_sanity_check(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(), "Invalid UE state");
-  srsran_sanity_check(ue_cc.is_pdcch_enabled(pdcch_slot), "DL is not active in the PDCCH slot");
-  srsran_sanity_check(ue_cc.is_ul_enabled(pusch_slot), "UL is not active in the PUSCH slot");
-
-  // Verify that the order of PUSCHs for the same UE matches the order of PDCCHs and that there is at most one PUSCH
-  // per slot.
-  // [TS 38.214, 6.1] "For any HARQ process ID(s) in a given scheduled cell, the UE is not expected to transmit a
-  // PUSCH that overlaps in time with another PUSCH".
-  // [TS 38.214, 6.1] "For any two HARQ process IDs in a given scheduled cell, if the UE is scheduled to start a first
-  // PUSCH transmission starting in symbol j by a PDCCH ending in symbol i, the UE is not expected to be scheduled to
-  // transmit a PUSCH starting earlier than the end of the first PUSCH by a PDCCH that ends later than symbol i".
-  slot_point last_pusch_slot = ue_cc.harqs.last_pusch_slot();
-  if (last_pusch_slot.valid() and pusch_slot <= last_pusch_slot) {
+  if (not ue_cc.is_pusch_enabled(pdcch_slot, pusch_slot) or ue_cc.is_in_fallback_mode()) {
+    // The UE cannot be schedules in the provided slots.
     return std::nullopt;
   }
 
@@ -392,13 +368,17 @@ static std::optional<ul_grant_sched_params> compute_ul_grant_sched_params(const 
                   "DCI type cannot change across reTxs");
   }
 
+  // Determine grant size bounds in RBs.
+  interval<unsigned> cfg_rb_size_lims =
+      cell_cfg.expert_cfg.ue.pusch_nof_rbs & ue_cell_cfg.rrm_cfg().pusch_grant_size_limits;
+
   const bool is_csi_report_slot = ue_cell_cfg.csi_meas_cfg() != nullptr and
                                   csi_helper::is_csi_reporting_slot(*ue_cell_cfg.csi_meas_cfg(), pusch_slot);
 
-  // Apply RB allocation limits.
-  const unsigned start_rb = std::max(cell_cfg.expert_cfg.ue.pusch_crb_limits.start(), ss.ul_crb_lims.start());
-  const unsigned end_rb   = std::min(cell_cfg.expert_cfg.ue.pusch_crb_limits.stop(), ss.ul_crb_lims.stop());
-  if (start_rb >= end_rb) {
+  // Determine RB allocation limits.
+  auto crb_lims    = crb_interval::to_crbs(cell_cfg.expert_cfg.ue.pusch_crb_limits & ss.ul_crb_lims);
+  auto nof_rb_lims = cfg_rb_size_lims & interval<unsigned>{0, crb_lims.length()};
+  if (crb_lims.empty() or nof_rb_lims.empty()) {
     // Invalid RB allocation range.
     return std::nullopt;
   }
@@ -425,9 +405,9 @@ static std::optional<ul_grant_sched_params> compute_ul_grant_sched_params(const 
     }
 
     // Compute recommended number of layers, MCS and PRBs.
-    unsigned            nof_rbs;
     sch_mcs_index       mcs;
     pusch_config_params pusch_cfg;
+    unsigned            nof_rbs;
     if (h_ul == nullptr) {
       // NewTx Case.
       dci_ul_rnti_config_type dci_type = ss.get_ul_dci_format() == dci_ul_format::f0_0
@@ -436,49 +416,80 @@ static std::optional<ul_grant_sched_params> compute_ul_grant_sched_params(const 
       // Note: We assume k2 <= k1, which means that all the HARQ bits are set at this point for this UL slot and UE.
       pusch_cfg =
           compute_newtx_pusch_config_params(ue_cc, dci_type, pusch_td_res, uci_nof_harq_bits, is_csi_report_slot);
-      auto mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pusch_cfg, ue_cc, pending_bytes, max_rbs);
+      auto mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pusch_cfg, ue_cc, pending_bytes, nof_rb_lims);
       mcs               = mcs_prbs_sel.mcs;
       nof_rbs           = mcs_prbs_sel.nof_prbs;
     } else {
       // ReTx Case.
-      mcs       = h_ul->get_grant_params().mcs;
-      nof_rbs   = h_ul->get_grant_params().rbs.type1().length();
+      mcs     = h_ul->get_grant_params().mcs;
+      nof_rbs = h_ul->get_grant_params().rbs.type1().length();
+      if (nof_rbs > nof_rb_lims.stop()) {
+        continue;
+      }
       pusch_cfg = compute_retx_pusch_config_params(ue_cc, *h_ul, pusch_td_res, uci_nof_harq_bits, is_csi_report_slot);
     }
 
     // Successful selection of grant parameters.
-    ul_grant_sched_params params;
-    params.ss_id              = ss.cfg->get_id();
-    params.pusch_td_res_index = pusch_td_index;
-    params.mcs                = mcs;
-    params.nof_rbs            = nof_rbs;
-    params.crb_lims           = {start_rb, end_rb};
-    params.pusch_cfg          = pusch_cfg;
-    return params;
+    ul_sched_context ctxt;
+    ctxt.ss_id              = ss.cfg->get_id();
+    ctxt.pusch_td_res_index = pusch_td_index;
+    ctxt.crb_lims           = crb_lims;
+    ctxt.nof_rb_lims        = nof_rb_lims;
+    ctxt.recommended_mcs    = mcs;
+    ctxt.expected_nof_rbs   = nof_rbs;
+    ctxt.pusch_cfg          = pusch_cfg;
+    return ctxt;
   }
 
   return std::nullopt;
 }
 
-std::optional<ul_grant_sched_params>
-sched_helper::compute_newtx_ul_grant_sched_params(const slice_ue&                u,
-                                                  slot_point                     pdcch_slot,
-                                                  slot_point                     pusch_slot,
-                                                  unsigned                       pending_bytes,
-                                                  unsigned                       uci_nof_harq_bits,
-                                                  const std::optional<unsigned>& max_rbs)
+std::optional<ul_sched_context> sched_helper::get_newtx_ul_sched_context(const slice_ue& u,
+                                                                         slot_point      pdcch_slot,
+                                                                         slot_point      pusch_slot,
+                                                                         unsigned        uci_nof_harq_bits,
+                                                                         unsigned        pending_bytes)
 {
-  return compute_ul_grant_sched_params(
-      u, pdcch_slot, pusch_slot, uci_nof_harq_bits, nullptr, pending_bytes, max_rbs.value_or(MAX_NOF_PRBS));
+  return get_ul_sched_context(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, nullptr, pending_bytes);
 }
 
-/// Derive recommended parameters for a DL reTx grant.
-std::optional<ul_grant_sched_params>
-sched_helper::compute_retx_ul_grant_sched_params(const slice_ue&               u,
-                                                 slot_point                    pdcch_slot,
-                                                 slot_point                    pusch_slot,
-                                                 const ul_harq_process_handle& h_ul,
-                                                 unsigned                      uci_nof_harq_bits)
+std::optional<ul_sched_context> sched_helper::get_retx_ul_sched_context(const slice_ue&               u,
+                                                                        slot_point                    pdcch_slot,
+                                                                        slot_point                    pusch_slot,
+                                                                        unsigned                      uci_nof_harq_bits,
+                                                                        const ul_harq_process_handle& h_ul)
 {
-  return compute_ul_grant_sched_params(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, &h_ul);
+  return get_ul_sched_context(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, &h_ul, 0);
+}
+
+static crb_interval
+find_available_crbs(const ul_sched_context& sched_ctxt, const crb_bitmap& used_crbs, unsigned max_rbs = MAX_NOF_PRBS)
+{
+  // Compute recommended number of layers, MCS and PRBs.
+  unsigned nof_rbs = std::min(sched_ctxt.expected_nof_rbs, max_rbs);
+  nof_rbs          = sched_ctxt.nof_rb_lims.clamp(nof_rbs);
+
+  // Compute CRB allocation interval.
+  crb_bitmap bwp_used_crbs{used_crbs};
+  bwp_used_crbs.fill(0, sched_ctxt.crb_lims.start());
+  bwp_used_crbs.fill(sched_ctxt.crb_lims.stop(), bwp_used_crbs.size());
+  crb_interval crbs = rb_helper::find_empty_interval_of_length(bwp_used_crbs, nof_rbs, sched_ctxt.crb_lims.start());
+  if (crbs.empty()) {
+    return crb_interval{};
+  }
+
+  // Successful CRB interval derivation.
+  return crbs;
+}
+
+crb_interval sched_helper::compute_newtx_ul_crbs(const ul_sched_context& decision_ctxt,
+                                                 const crb_bitmap&       used_crbs,
+                                                 unsigned                max_nof_rbs)
+{
+  return find_available_crbs(decision_ctxt, used_crbs, max_nof_rbs);
+}
+
+crb_interval sched_helper::compute_retx_ul_crbs(const ul_sched_context& decision_ctxt, const crb_bitmap& used_crbs)
+{
+  return find_available_crbs(decision_ctxt, used_crbs);
 }

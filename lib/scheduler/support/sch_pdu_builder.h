@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include "../config/cell_configuration.h"
 #include "../config/ue_configuration.h"
 #include "../ue_context/ue_channel_state_manager.h"
 #include "mcs_tbs_calculator.h"

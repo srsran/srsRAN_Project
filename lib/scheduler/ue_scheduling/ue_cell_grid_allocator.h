@@ -39,20 +39,32 @@ struct ue_retx_dl_grant_request {
   slot_point pdsch_slot;
   /// DL HARQ process to reTx.
   dl_harq_process_handle h_dl;
-  /// Used DL CRBs.
+  /// Current DL CRB occupation.
   crb_bitmap& used_dl_crbs;
 };
 
-/// Request for a UL grant allocation.
-struct ue_ul_grant_request {
-  /// Slot at which PUSCH PDU shall be allocated.
-  slot_point pusch_slot;
+/// Request to reserve space for control channels of a UL grant.
+struct ue_newtx_ul_grant_request {
   /// UE to allocate.
   const slice_ue& user;
-  /// HARQ process to be retransmitted.
-  std::optional<ul_harq_process_handle> h_ul;
-  /// Recommended allocation parameters.
-  sched_helper::ul_grant_sched_params alloc_params;
+  /// Slot at which PUSCH will take place.
+  slot_point pusch_slot;
+  /// Pending newTx bytes to allocate.
+  unsigned pending_bytes;
+};
+
+/// Request for a reTx UL grant allocation.
+struct ue_retx_ul_grant_request {
+  /// UE to allocate.
+  const slice_ue& user;
+  /// Slot at which PUSCH PDU shall be allocated.
+  slot_point pusch_slot;
+  /// UL HARQ process to reTx.
+  ul_harq_process_handle h_ul;
+  /// Current UL CRB occupation.
+  crb_bitmap& used_ul_crbs;
+  /// Number of HARQ-ACK bits pending for the given UE in the given slot.
+  unsigned uci_harq_ack_bits;
 };
 
 /// \brief Status of a UE grant allocation, and action for the scheduler policy to follow afterwards.
@@ -63,26 +75,6 @@ struct ue_ul_grant_request {
 /// - skip_ue - failure to allocate and the scheduler policy should move on to the next candidate UE.
 /// - invalid_params - failure to allocate and the scheduler policy should try a different set of grant parameters.
 enum class alloc_status { success, skip_slot, skip_ue, invalid_params };
-
-/// Allocation result of a UE DL grant allocation.
-struct dl_alloc_result {
-  alloc_status status;
-  /// Nof. of bytes allocated if allocation was successful.
-  unsigned alloc_bytes{0};
-  /// Nof. of resource blocks allocated if allocation was successful.
-  unsigned alloc_nof_rbs{0};
-  /// List of logical channels scheduled in this TB if allocation was successful.
-  dl_msg_tb_info tb_info;
-};
-
-/// Allocation result of a UE UL grant allocation.
-struct ul_alloc_result {
-  alloc_status status;
-  /// Nof. of bytes allocated if allocation was successful.
-  unsigned alloc_bytes{0};
-  /// Nof. of resource blocks allocated if allocation was successful.
-  unsigned alloc_nof_rbs{0};
-};
 
 /// \brief This class implements the methods to allocate PDCCH, UCI, PDSCH and PUSCH PDUs in the cell resource grid for
 /// UE grants.
@@ -99,9 +91,21 @@ class ue_cell_grid_allocator
     unsigned                       pending_bytes;
   };
 
+  // Information relative to a pending UL grant for this slot.
+  struct ul_grant_info {
+    const slice_ue*                user;
+    sched_helper::ul_sched_context cfg;
+    ul_harq_process_handle         h_ul;
+    pdcch_ul_information*          pdcch;
+    ul_sched_info*                 pusch;
+    unsigned                       pending_bytes;
+  };
+
 public:
   /// \brief Interface for a DL grant, which allows deferred setting of PDSCH parameters.
-  struct dl_newtx_grant_builder {
+  class dl_newtx_grant_builder
+  {
+  public:
     dl_newtx_grant_builder(dl_newtx_grant_builder&&) noexcept            = default;
     dl_newtx_grant_builder& operator=(dl_newtx_grant_builder&&) noexcept = default;
     ~dl_newtx_grant_builder() { srsran_assert(parent == nullptr, "PDSCH parameters were not set"); }
@@ -135,6 +139,43 @@ public:
     unsigned                                                grant_index;
   };
 
+  /// \brief Interface for a UL grant, which allows deferred setting of PUSCH parameters.
+  class ul_newtx_grant_builder
+  {
+  public:
+    ul_newtx_grant_builder(ul_newtx_grant_builder&&) noexcept            = default;
+    ul_newtx_grant_builder& operator=(ul_newtx_grant_builder&&) noexcept = default;
+    ~ul_newtx_grant_builder() { srsran_assert(parent == nullptr, "PUSCH parameters were not set"); }
+
+    /// Sets the final CRBs for the PUSCH allocation.
+    void set_pusch_params(const crb_interval& alloc_crbs);
+
+    /// For a given max number of RBs and a bitmap of used CRBs, returns the recommended parameters for the PUSCH grant.
+    crb_interval recommended_crbs(const crb_bitmap& used_crbs, unsigned max_nof_rbs = MAX_NOF_PRBS) const
+    {
+      const ul_grant_info& grant = grant_info();
+      return compute_newtx_ul_crbs(grant.cfg, used_crbs, max_nof_rbs);
+    }
+
+    /// Getters for grant immutable parameters.
+    const slice_ue&                       ue() const { return *grant_info().user; }
+    const sched_helper::ul_sched_context& context() const { return grant_info().cfg; }
+    unsigned                              pending_bytes() const { return grant_info().pending_bytes; }
+
+  private:
+    friend class ue_cell_grid_allocator;
+
+    ul_newtx_grant_builder(ue_cell_grid_allocator& parent_, unsigned grant_index_) :
+      parent(&parent_), grant_index(grant_index_)
+    {
+    }
+
+    const ul_grant_info& grant_info() const { return parent->ul_grants[grant_index]; }
+
+    std::unique_ptr<ue_cell_grid_allocator, noop_operation> parent;
+    unsigned                                                grant_index;
+  };
+
   ue_cell_grid_allocator(const scheduler_ue_expert_config& expert_cfg_,
                          ue_repository&                    ues_,
                          pdcch_resource_allocator&         pdcch_sched_,
@@ -148,8 +189,11 @@ public:
   /// Allocates DL grant for a UE HARQ reTx.
   expected<crb_interval, alloc_status> allocate_dl_grant(const ue_retx_dl_grant_request& request);
 
-  /// Allocates UL grant for a UE newTx.
-  ul_alloc_result allocate_ul_grant(const ue_ul_grant_request& request);
+  /// Allocate PDCCH, UCI and PUSCH PDUs for a UE UL grant and return a builder to set the PUSCH parameters.
+  expected<ul_newtx_grant_builder, alloc_status> allocate_ul_grant(const ue_newtx_ul_grant_request& request);
+
+  /// Allocates UL grant for a UE HARQ reTx.
+  expected<crb_interval, alloc_status> allocate_ul_grant(const ue_retx_ul_grant_request& request);
 
   /// \brief Called at the end of a slot to process the allocations that took place and make some final adjustments.
   ///
@@ -163,14 +207,24 @@ private:
                                                                std::optional<dl_harq_process_handle> h_dl,
                                                                unsigned                              pending_bytes);
 
+  // Setup UL grant builder.
+  expected<ul_grant_info, alloc_status> setup_ul_grant_builder(const slice_ue&                       user,
+                                                               const sched_helper::ul_sched_context& params,
+                                                               std::optional<ul_harq_process_handle> h_ul,
+                                                               unsigned                              pending_bytes);
+
+  // Set final PDSCH parameters and allocate remaining DL grant resources.
   void set_pdsch_params(dl_grant_info& grant, const crb_interval& crbs);
 
-  sch_mcs_tbs calculate_dl_mcs_tbs(cell_slot_resource_allocator& pdsch_alloc,
-                                   const search_space_info&      ss_info,
-                                   uint8_t                       pdsch_td_res_index,
-                                   const crb_interval&           crbs,
-                                   sch_mcs_index                 mcs,
-                                   unsigned                      nof_layers);
+  // Set final PUSCH parameters and allocate remaining UL grant resources.
+  void set_pusch_params(ul_grant_info& grant, const crb_interval& crbs);
+
+  std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(cell_slot_resource_allocator& pdsch_alloc,
+                                                  const search_space_info&      ss_info,
+                                                  uint8_t                       pdsch_td_res_index,
+                                                  const crb_interval&           crbs,
+                                                  sch_mcs_index                 mcs,
+                                                  unsigned                      nof_layers);
 
   expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(const ue_cell& ue_cc, const search_space_info& ss_info);
 
@@ -188,6 +242,7 @@ private:
   srslog::basic_logger&             logger;
 
   std::vector<dl_grant_info> dl_grants;
+  std::vector<ul_grant_info> ul_grants;
 };
 
 } // namespace srsran

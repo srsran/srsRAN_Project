@@ -78,7 +78,12 @@ protected:
     ues.slot_indication(current_slot);
 
     // Prepare CRB bitmask that will be used to find available CRBs.
-    used_dl_crbs = res_grid[0].dl_res_grid.used_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params, {4, 5});
+    const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
+    const auto& init_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp;
+    used_dl_crbs            = res_grid[0].dl_res_grid.used_crbs(init_dl_bwp.generic_params,
+                                                     init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols);
+    used_ul_crbs            = res_grid[0].ul_res_grid.used_crbs(init_ul_bwp.generic_params,
+                                                     init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols);
 
     on_each_slot();
 
@@ -155,27 +160,28 @@ protected:
     }
   }
 
-  ul_alloc_result allocate_ul_newtx_grant(const slice_ue&         user,
-                                          unsigned                pending_bytes,
-                                          std::optional<unsigned> max_nof_rbs = std::nullopt)
+  alloc_status allocate_ul_newtx_grant(const slice_ue&         user,
+                                       unsigned                pending_bytes,
+                                       std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
     return allocate_ul_newtx_grant(get_next_ul_slot(current_slot), user, pending_bytes, max_nof_rbs);
   }
 
-  ul_alloc_result allocate_ul_newtx_grant(slot_point              pusch_slot,
-                                          const slice_ue&         user,
-                                          unsigned                pending_bytes,
-                                          std::optional<unsigned> max_nof_rbs = std::nullopt)
+  alloc_status allocate_ul_newtx_grant(slot_point              pusch_slot,
+                                       const slice_ue&         user,
+                                       unsigned                pending_bytes,
+                                       std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
-    if (not cell_cfg.is_dl_enabled(current_slot)) {
-      return ul_alloc_result{alloc_status::invalid_params};
+    auto result = alloc.allocate_ul_grant(ue_newtx_ul_grant_request{user, pusch_slot, pending_bytes});
+    if (not result.has_value()) {
+      return result.error();
     }
-    auto params = sched_helper::compute_newtx_ul_grant_sched_params(
-        user, current_slot, pusch_slot, pending_bytes, 0, max_nof_rbs);
-    if (not params.has_value()) {
-      return ul_alloc_result{alloc_status::invalid_params};
-    }
-    return alloc.allocate_ul_grant(ue_ul_grant_request{pusch_slot, user, std::nullopt, params.value()});
+    auto& builder = result.value();
+
+    crb_interval crbs = builder.recommended_crbs(used_ul_crbs, max_nof_rbs.value_or(MAX_NOF_PRBS));
+    builder.set_pusch_params(crbs);
+    used_ul_crbs.fill(crbs.start(), crbs.stop());
+    return alloc_status::success;
   }
 
   scheduler_expert_config                 sched_cfg;
@@ -209,6 +215,7 @@ protected:
 
   slot_point current_slot;
   crb_bitmap used_dl_crbs;
+  crb_bitmap used_ul_crbs;
 };
 
 TEST_P(ue_grid_allocator_tester,
@@ -374,10 +381,10 @@ TEST_P(ue_grid_allocator_tester, consecutive_puschs_for_a_ue_are_allocated_in_in
       [&]() { return find_ue_pusch(u.crnti, res_grid[0].result.ul) != nullptr; }));
 
   // Second PUSCH grant for the UE trying to allocate PUSCH in a slot previous to grant1.
-  ul_alloc_result result = {alloc_status::invalid_params};
+  alloc_status result = alloc_status::invalid_params;
   ASSERT_FALSE(run_until(
       [&]() { result = allocate_ul_newtx_grant(pusch_slot - 1, slice_ues[u.ue_index], nof_bytes_to_schedule); },
-      [&]() { return result.status == alloc_status::success; },
+      [&]() { return result == alloc_status::success; },
       1));
 }
 
@@ -538,9 +545,7 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_ga
 
   // Second PUSCH grant for the UE.
   ASSERT_TRUE(run_until(
-      [&]() {
-        return allocate_ul_newtx_grant(slice_ues[u.ue_index], nof_bytes_to_schedule).status == alloc_status::success;
-      },
+      [&]() { return allocate_ul_newtx_grant(slice_ues[u.ue_index], nof_bytes_to_schedule) == alloc_status::success; },
       [&]() { return find_ue_pusch(u.crnti, res_grid[0].result.ul.puschs) != nullptr; },
       nof_slot_until_pusch_is_allocated_threshold));
 }

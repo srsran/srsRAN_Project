@@ -125,6 +125,9 @@ public:
     return *this;
   }
 
+  /// Returns the closest integer to \c point that is within the bounds of the interval.
+  T clamp(T point) const { return std::max(std::min(point, stop_), start_); }
+
 private:
   T start_;
   T stop_;

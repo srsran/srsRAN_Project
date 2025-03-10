@@ -17,6 +17,8 @@ namespace srsran {
 /// Struct to express a {min,...,max} range of CRB indexes within a carrier.
 struct crb_interval : public interval<unsigned> {
   using interval::interval;
+
+  static crb_interval to_crbs(interval<unsigned> lims_int) { return crb_interval{lims_int.start(), lims_int.stop()}; }
 };
 
 /// Struct to express a {min,...,max} range of PRB indexes within a BWP.

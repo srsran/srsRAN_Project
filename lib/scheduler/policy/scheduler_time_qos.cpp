@@ -263,10 +263,9 @@ void scheduler_time_qos::ue_ctxt::compute_dl_prio(const slice_ue& u,
   compute_dl_avg_rate(u, nof_slots_elapsed);
 
   const ue_cell& ue_cc = u.get_cc();
-  if (not ue_cc.is_pdcch_enabled(pdcch_slot) or not ue_cc.is_pdsch_enabled(pdsch_slot)) {
-    // Cannot allocate PDCCH/PDSCH for this UE in this slot.
-    return;
-  }
+
+  // This should be ensured at this point.
+  srsran_sanity_check(ue_cc.is_pdsch_enabled(pdcch_slot, pdsch_slot), "Invalid UE candidate state");
   if (not ue_cc.harqs.has_empty_dl_harqs() or not u.has_pending_dl_newtx_bytes()) {
     // No available HARQs or no pending data.
     return;
@@ -310,7 +309,7 @@ void scheduler_time_qos::ue_ctxt::compute_ul_prio(const slice_ue& u,
   srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
                 "Policy scheduler called for UE={} in fallback",
                 fmt::underlying(ue_cc.ue_index));
-  if (not ue_cc.is_pdcch_enabled(pdcch_slot) or not ue_cc.is_ul_enabled(pusch_slot)) {
+  if (not ue_cc.is_pusch_enabled(pdcch_slot, pusch_slot)) {
     // Cannot allocate PDCCH/PUSCH for this UE in the provided slots.
     return;
   }
