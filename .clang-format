@@ -60,7 +60,7 @@ ForEachMacros:
   - foreach
   - Q_FOREACH
   - BOOST_FOREACH
-IncludeBlocks:   Preserve
+IncludeBlocks:   Merge #Changed
 IncludeCategories: #Changed
   - Regex:           '^"(srsran|llvm|llvm-c|clang|clang-c)/'
     Priority:        2
@@ -73,6 +73,7 @@ IndentCaseLabels: true #Changed
 IndentPPDirectives: None
 IndentWidth:     2
 IndentWrappedFunctionNames: false
+InsertNewlineAtEOF: true #Changed
 JavaScriptQuotes: Leave
 JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: false
@@ -105,7 +106,7 @@ SpacesInContainerLiterals: true
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard:        c++14 #Changed
+Standard:        c++17 #Changed
 TabWidth:        8
 UseTab:          Never
 ...
