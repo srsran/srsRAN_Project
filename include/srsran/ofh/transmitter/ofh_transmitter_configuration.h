@@ -72,10 +72,6 @@ struct transmitter_config {
   bool is_downlink_static_compr_hdr_enabled;
   /// Uplink static compression header flag.
   bool is_uplink_static_compr_hdr_enabled;
-  /// \brief Downlink broadcast flag.
-  ///
-  /// If this flag is enabled the same downlink data will be send to all the configured downlink eAxCs.
-  bool downlink_broadcast;
   /// IQ samples scaling factor.
   float iq_scaling;
   /// Downlink processing time in microseconds.

@@ -10,11 +10,10 @@
 
 #pragma once
 
-#include "ofh_downlink_manager.h"
+#include "ofh_downlink_handler_impl.h"
 #include "ofh_message_transmitter_impl.h"
 #include "ofh_transmitter_ota_symbol_task_dispatcher.h"
 #include "ofh_uplink_request_handler_impl.h"
-#include "sequence_identifier_generator.h"
 #include "srsran/ofh/transmitter/ofh_transmitter.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
 
@@ -27,10 +26,12 @@ struct transmitter_impl_dependencies {
   srslog::basic_logger* logger = nullptr;
   /// Transmitter task executor.
   task_executor* executor = nullptr;
-  /// Downlink manager.
-  std::unique_ptr<downlink_manager> dl_manager;
+  /// Data flow for downlink Control-Plane.
+  std::unique_ptr<data_flow_cplane_scheduling_commands> dl_df_cplane;
+  /// Data flow for downlink User-Plane.
+  std::unique_ptr<data_flow_uplane_downlink_data> dl_df_uplane;
   /// Data flow for uplink Control-Plane scheduling commands.
-  std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow;
+  std::unique_ptr<data_flow_cplane_scheduling_commands> ul_df_cplane;
   /// Uplink slot context repository.
   std::shared_ptr<uplink_context_repository> ul_slot_repo;
   /// Uplink PRACH context repository.
@@ -59,7 +60,7 @@ public:
   void set_error_notifier(error_notifier& notifier) override;
 
 private:
-  std::unique_ptr<downlink_manager>      dl_manager;
+  downlink_handler_impl                  dl_handler;
   uplink_request_handler_impl            ul_request_handler;
   message_transmitter_impl               msg_transmitter;
   transmitter_ota_symbol_task_dispatcher ota_dispatcher;

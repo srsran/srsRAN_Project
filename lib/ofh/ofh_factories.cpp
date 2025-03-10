@@ -92,7 +92,6 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.prach_compr_params                   = sector_cfg.prach_compression_params;
   tx_config.is_downlink_static_compr_hdr_enabled = sector_cfg.is_downlink_static_compr_hdr_enabled;
   tx_config.is_uplink_static_compr_hdr_enabled   = sector_cfg.is_uplink_static_compr_hdr_enabled;
-  tx_config.downlink_broadcast                   = sector_cfg.is_downlink_broadcast_enabled;
   tx_config.iq_scaling                           = sector_cfg.iq_scaling;
   tx_config.dl_processing_time                   = sector_cfg.dl_processing_time;
   tx_config.ul_processing_time                   = sector_cfg.ul_processing_time;

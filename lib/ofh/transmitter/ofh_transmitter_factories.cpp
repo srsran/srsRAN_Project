@@ -13,9 +13,6 @@
 #include "ofh_data_flow_cplane_scheduling_commands_task_dispatcher.h"
 #include "ofh_data_flow_uplane_downlink_data_impl.h"
 #include "ofh_data_flow_uplane_downlink_task_dispatcher.h"
-#include "ofh_downlink_handler_impl.h"
-#include "ofh_downlink_manager_broadcast_impl.h"
-#include "ofh_downlink_manager_impl.h"
 #include "ofh_transmitter_impl.h"
 #include "ofh_uplane_fragment_size_calculator.h"
 #include "srsran/ofh/compression/compression_factory.h"
@@ -110,63 +107,6 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
   return std::make_unique<data_flow_uplane_downlink_data_impl>(config, std::move(dependencies));
 }
 
-static std::unique_ptr<downlink_manager>
-create_downlink_manager(const transmitter_config&                         tx_config,
-                        srslog::basic_logger&                             logger,
-                        std::shared_ptr<ether::eth_frame_pool>            frame_pool,
-                        std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
-                        std::shared_ptr<uplink_cplane_context_repository> prach_cp_context_repo,
-                        task_executor&                                    executor)
-{
-  auto data_flow_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
-      create_data_flow_cplane_sched(tx_config,
-                                    tx_config.is_downlink_static_compr_hdr_enabled,
-                                    logger,
-                                    frame_pool,
-                                    std::move(ul_cp_context_repo),
-                                    std::move(prach_cp_context_repo)),
-      executor,
-      tx_config.sector);
-  auto data_flow_uplane = std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
-      create_data_flow_uplane_data(tx_config, logger, frame_pool), executor, tx_config.sector);
-
-  if (tx_config.downlink_broadcast) {
-    downlink_handler_broadcast_impl_config dl_config;
-    dl_config.dl_eaxc            = tx_config.dl_eaxc;
-    dl_config.tdd_config         = tx_config.tdd_config;
-    dl_config.cp                 = tx_config.cp;
-    dl_config.scs                = tx_config.scs;
-    dl_config.dl_processing_time = tx_config.dl_processing_time;
-    dl_config.tx_timing_params   = tx_config.tx_timing_params;
-    dl_config.sector             = tx_config.sector;
-
-    downlink_handler_broadcast_impl_dependencies dl_dependencies;
-    dl_dependencies.logger           = &logger;
-    dl_dependencies.data_flow_cplane = std::move(data_flow_cplane);
-    dl_dependencies.data_flow_uplane = std::move(data_flow_uplane);
-    dl_dependencies.frame_pool       = frame_pool;
-
-    return std::make_unique<downlink_manager_broadcast_impl>(dl_config, std::move(dl_dependencies));
-  }
-
-  downlink_handler_impl_config dl_config;
-  dl_config.dl_eaxc            = tx_config.dl_eaxc;
-  dl_config.tdd_config         = tx_config.tdd_config;
-  dl_config.cp                 = tx_config.cp;
-  dl_config.scs                = tx_config.scs;
-  dl_config.dl_processing_time = tx_config.dl_processing_time;
-  dl_config.tx_timing_params   = tx_config.tx_timing_params;
-  dl_config.sector             = tx_config.sector;
-
-  downlink_handler_impl_dependencies dl_dependencies;
-  dl_dependencies.logger           = &logger;
-  dl_dependencies.data_flow_cplane = std::move(data_flow_cplane);
-  dl_dependencies.data_flow_uplane = std::move(data_flow_uplane);
-  dl_dependencies.frame_pool       = frame_pool;
-
-  return std::make_unique<downlink_manager_impl>(dl_config, std::move(dl_dependencies));
-}
-
 static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transmitter_config& tx_config,
                                                                     srslog::basic_logger&     logger)
 {
@@ -217,25 +157,33 @@ resolve_transmitter_dependencies(const transmitter_config&                      
 
   auto frame_pool = create_eth_frame_pool(tx_config, logger);
 
-  dependencies.dl_manager = create_downlink_manager(
-      tx_config, logger, frame_pool, ul_cp_context_repo, prach_cp_context_repo, downlink_executor);
+  dependencies.dl_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
+      create_data_flow_cplane_sched(tx_config,
+                                    tx_config.is_downlink_static_compr_hdr_enabled,
+                                    logger,
+                                    frame_pool,
+                                    ul_cp_context_repo,
+                                    prach_cp_context_repo),
+      downlink_executor,
+      tx_config.sector);
 
-  dependencies.data_flow = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
+  dependencies.dl_df_uplane = std::make_unique<data_flow_uplane_downlink_task_dispatcher>(
+      create_data_flow_uplane_data(tx_config, logger, frame_pool), downlink_executor, tx_config.sector);
+
+  dependencies.ul_df_cplane = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
       create_data_flow_cplane_sched(tx_config,
                                     tx_config.is_uplink_static_compr_hdr_enabled,
                                     logger,
                                     frame_pool,
-                                    std::move(ul_cp_context_repo),
-                                    std::move(prach_cp_context_repo)),
+                                    ul_cp_context_repo,
+                                    prach_cp_context_repo),
       downlink_executor,
       tx_config.sector);
 
   dependencies.ul_slot_repo  = std::move(ul_slot_context_repo);
   dependencies.ul_prach_repo = std::move(prach_context_repo);
-
-  dependencies.eth_gateway = std::move(eth_gateway);
-
-  dependencies.frame_pool = frame_pool;
+  dependencies.eth_gateway   = std::move(eth_gateway);
+  dependencies.frame_pool    = std::move(frame_pool);
 
   return dependencies;
 }

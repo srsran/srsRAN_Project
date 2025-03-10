@@ -37,14 +37,41 @@ resolve_uplink_request_handler_dependencies(transmitter_impl_dependencies& tx_de
   dependencies.logger        = tx_dependencies.logger;
   dependencies.ul_slot_repo  = std::move(tx_dependencies.ul_slot_repo);
   dependencies.ul_prach_repo = std::move(tx_dependencies.ul_prach_repo);
-  dependencies.data_flow     = std::move(tx_dependencies.data_flow);
+  dependencies.data_flow     = std::move(tx_dependencies.ul_df_cplane);
   dependencies.frame_pool    = tx_dependencies.frame_pool;
 
   return dependencies;
 }
 
+static downlink_handler_impl_config generate_downlink_handler_config(const transmitter_config& tx_config)
+{
+  downlink_handler_impl_config out_cfg;
+  out_cfg.sector             = tx_config.sector;
+  out_cfg.dl_eaxc            = tx_config.dl_eaxc;
+  out_cfg.tdd_config         = tx_config.tdd_config;
+  out_cfg.cp                 = tx_config.cp;
+  out_cfg.scs                = tx_config.scs;
+  out_cfg.dl_processing_time = tx_config.dl_processing_time;
+  out_cfg.tx_timing_params   = tx_config.tx_timing_params;
+
+  return out_cfg;
+}
+
+static downlink_handler_impl_dependencies
+resolve_downlink_handler_impl_dependencies(transmitter_impl_dependencies& tx_dependencies)
+{
+  downlink_handler_impl_dependencies out_dependencies;
+
+  out_dependencies.logger           = tx_dependencies.logger;
+  out_dependencies.data_flow_cplane = std::move(tx_dependencies.dl_df_cplane);
+  out_dependencies.data_flow_uplane = std::move(tx_dependencies.dl_df_uplane);
+  out_dependencies.frame_pool       = tx_dependencies.frame_pool;
+
+  return out_dependencies;
+}
+
 transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter_impl_dependencies&& dependencies) :
-  dl_manager(std::move(dependencies.dl_manager)),
+  dl_handler(generate_downlink_handler_config(config), resolve_downlink_handler_impl_dependencies(dependencies)),
   ul_request_handler(generate_uplink_request_handler_config(config),
                      resolve_uplink_request_handler_dependencies(dependencies)),
   msg_transmitter(*dependencies.logger,
@@ -52,11 +79,10 @@ transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter
                   std::move(dependencies.eth_gateway),
                   std::move(dependencies.frame_pool)),
   ota_dispatcher(*dependencies.executor,
-                 dl_manager->get_ota_symbol_boundary_notifier(),
+                 dl_handler.get_ota_symbol_boundary_notifier(),
                  ul_request_handler.get_ota_symbol_boundary_notifier(),
                  msg_transmitter)
 {
-  srsran_assert(dl_manager, "Invalid downlink manager");
 }
 
 uplink_request_handler& transmitter_impl::get_uplink_request_handler()
@@ -66,7 +92,7 @@ uplink_request_handler& transmitter_impl::get_uplink_request_handler()
 
 downlink_handler& transmitter_impl::get_downlink_handler()
 {
-  return dl_manager->get_downlink_handler();
+  return dl_handler;
 }
 
 ota_symbol_boundary_notifier& transmitter_impl::get_ota_symbol_boundary_notifier()
@@ -76,6 +102,6 @@ ota_symbol_boundary_notifier& transmitter_impl::get_ota_symbol_boundary_notifier
 
 void transmitter_impl::set_error_notifier(error_notifier& notifier)
 {
-  dl_manager->set_error_notifier(notifier);
+  dl_handler.set_error_notifier(notifier);
   ul_request_handler.set_error_notifier(notifier);
 }

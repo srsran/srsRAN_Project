@@ -40,12 +40,6 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
         sector_cfg.ru_operating_bw >= sector_cfg.bw,
         "The RU operating bandwidth should be greater than or equal to the bandwidth of the cell");
 
-    if (sector_cfg.is_downlink_broadcast_enabled) {
-      report_fatal_error_if_not(
-          sector_cfg.dl_eaxc.size() > 1,
-          "The downlink broadcast option is only available when the number of downlink ports is greater than one");
-    }
-
     // Fill the notifier in the dependencies.
     dependencies.sector_dependencies[i].notifier = ul_data_notifier;
 
@@ -55,7 +49,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
     ofh_dependencies.sectors.emplace_back(std::move(sector));
 
     fmt::println("Initializing the Open Fronthaul Interface for sector#{}: ul_compr=[{},{}], dl_compr=[{},{}], "
-                 "prach_compr=[{},{}], prach_cp_enabled={}, downlink_broadcast={}{}",
+                 "prach_compr=[{},{}], prach_cp_enabled={}{}",
                  i,
                  to_string(sector_cfg.ul_compression_params.type),
                  sector_cfg.ul_compression_params.data_width,
@@ -64,7 +58,6 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                  to_string(sector_cfg.prach_compression_params.type),
                  sector_cfg.prach_compression_params.data_width,
                  sector_cfg.is_prach_control_plane_enabled,
-                 sector_cfg.is_downlink_broadcast_enabled,
                  (sector_cfg.bw != sector_cfg.ru_operating_bw)
                      ? fmt::format(".\nOperating a {}MHz cell over a RU with instantaneous bandwidth of {}MHz",
                                    fmt::underlying(sector_cfg.bw),

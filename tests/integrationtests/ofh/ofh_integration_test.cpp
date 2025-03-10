@@ -79,7 +79,6 @@ struct test_parameters {
   srslog::basic_levels  log_level                           = srslog::basic_levels::warning;
   std::string           log_filename                        = "stdout";
   bool                  is_prach_control_plane_enabled      = true;
-  bool                  is_downlink_broadcast_enabled       = false;
   bool                  ignore_ecpri_payload_size_field     = false;
   std::string           data_compr_method                   = "bfp";
   unsigned              data_bitwidth                       = 9;
@@ -126,8 +125,6 @@ static void usage(const char* prog)
              test_params.is_downlink_static_comp_hdr_enabled);
   fmt::print("\t-a Use static compression header for UL data [Default {}]\n",
              test_params.is_uplink_static_comp_hdr_enabled);
-  fmt::print("\t-e Broadcasts the contents of a single antenna port to all downlink eAxCs [Default {}]\n",
-             test_params.is_downlink_broadcast_enabled);
   fmt::print("\t-r Enable the Control-Plane PRACH message signalling [Default {}]\n",
              test_params.is_prach_control_plane_enabled);
   fmt::print("\t-i If set to true, the payload size encoded in a eCPRI header is ignored [Default {}]\n",
@@ -168,9 +165,6 @@ static void parse_args(int argc, char** argv)
         break;
       case 'a':
         test_params.is_uplink_static_comp_hdr_enabled = true;
-        break;
-      case 'e':
-        test_params.is_downlink_broadcast_enabled = true;
         break;
       case 'r':
         test_params.is_prach_control_plane_enabled = true;
@@ -1008,8 +1002,7 @@ static void configure_ofh_sector(ofh::sector_configuration& sector_cfg)
   sector_cfg.ignore_ecpri_payload_size_field = test_params.ignore_ecpri_payload_size_field;
   sector_cfg.tx_window_timing_params         = {
       T1a_max_cp_dl, T1a_min_cp_dl, T1a_max_cp_ul, T1a_min_cp_ul, T1a_max_up, T1a_min_up};
-  sector_cfg.rx_window_timing_params       = {Ta4_min, Ta4_max};
-  sector_cfg.is_downlink_broadcast_enabled = test_params.is_downlink_broadcast_enabled;
+  sector_cfg.rx_window_timing_params = {Ta4_min, Ta4_max};
 
   // Configure compression
   ru_compression_params dl_ul_compression_params{to_compression_type(test_params.data_compr_method),
