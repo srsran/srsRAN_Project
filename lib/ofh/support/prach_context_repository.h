@@ -253,7 +253,7 @@ public:
     }
 
     auto result = context.get_context_information();
-    context           = {};
+    context     = {};
 
     return result;
   }

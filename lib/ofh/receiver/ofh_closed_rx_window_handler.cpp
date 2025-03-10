@@ -86,8 +86,8 @@ void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_poi
     return;
   }
 
-  slot_point  slot    = symbol_point.get_slot() - 1;
-  auto context = prach_repo->pop_prach_buffer(slot);
+  slot_point slot    = symbol_point.get_slot() - 1;
+  auto       context = prach_repo->pop_prach_buffer(slot);
 
   // Nothing to do.
   if (!context.has_value()) {
