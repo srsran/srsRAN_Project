@@ -255,6 +255,7 @@ def test_ru_16cell_50ue_not_crash(
         retina_data,
         gnb,
         ru_config="config_ru_16cell_50ue.yml",
+        duration=15 * 60,
         gnb_stop_timeout=150,
         warning_as_errors=False,
         fail_if_kos=False,
