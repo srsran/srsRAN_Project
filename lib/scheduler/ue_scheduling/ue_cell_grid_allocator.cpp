@@ -33,6 +33,8 @@ ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config&
   cell_alloc(cell_alloc_),
   logger(logger_)
 {
+  dl_grants.reserve(MAX_UE_PDUS_PER_SLOT);
+  ul_grants.reserve(MAX_PUSCH_PDUS_PER_SLOT);
 }
 
 std::optional<sch_mcs_tbs> ue_cell_grid_allocator::calculate_dl_mcs_tbs(cell_slot_resource_allocator& pdsch_alloc,
@@ -722,6 +724,7 @@ void ue_cell_grid_allocator::post_process_results()
   post_process_pucch_pw_ctrl_results(slot_alloc.slot);
 
   dl_grants.clear();
+  ul_grants.clear();
 }
 
 void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(slot_point slot)
