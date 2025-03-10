@@ -32,8 +32,3 @@ metrics_collector* sector_impl::get_metrics_collector()
 {
   return ofh_metrics_collector.disabled() ? nullptr : &ofh_metrics_collector;
 }
-
-void sector_impl::set_error_notifier(error_notifier& notifier)
-{
-  ofh_transmitter->set_error_notifier(notifier);
-}

@@ -33,14 +33,15 @@ static uplink_request_handler_impl_config generate_uplink_request_handler_config
 static uplink_request_handler_impl_dependencies
 resolve_uplink_request_handler_dependencies(transmitter_impl_dependencies& tx_dependencies)
 {
-  uplink_request_handler_impl_dependencies dependencies;
-  dependencies.logger        = tx_dependencies.logger;
-  dependencies.ul_slot_repo  = std::move(tx_dependencies.ul_slot_repo);
-  dependencies.ul_prach_repo = std::move(tx_dependencies.ul_prach_repo);
-  dependencies.data_flow     = std::move(tx_dependencies.ul_df_cplane);
-  dependencies.frame_pool    = tx_dependencies.frame_pool;
+  srsran_assert(tx_dependencies.err_notifier, "Invalid error notifier");
+  srsran_assert(tx_dependencies.logger, "Invalid logger");
 
-  return dependencies;
+  return {*tx_dependencies.logger,
+          *tx_dependencies.err_notifier,
+          std::move(tx_dependencies.ul_slot_repo),
+          std::move(tx_dependencies.ul_prach_repo),
+          std::move(tx_dependencies.ul_df_cplane),
+          tx_dependencies.frame_pool};
 }
 
 static downlink_handler_impl_config generate_downlink_handler_config(const transmitter_config& tx_config)
@@ -60,14 +61,14 @@ static downlink_handler_impl_config generate_downlink_handler_config(const trans
 static downlink_handler_impl_dependencies
 resolve_downlink_handler_impl_dependencies(transmitter_impl_dependencies& tx_dependencies)
 {
-  downlink_handler_impl_dependencies out_dependencies;
+  srsran_assert(tx_dependencies.err_notifier, "Invalid error notifier");
+  srsran_assert(tx_dependencies.logger, "Invalid logger");
 
-  out_dependencies.logger           = tx_dependencies.logger;
-  out_dependencies.data_flow_cplane = std::move(tx_dependencies.dl_df_cplane);
-  out_dependencies.data_flow_uplane = std::move(tx_dependencies.dl_df_uplane);
-  out_dependencies.frame_pool       = tx_dependencies.frame_pool;
-
-  return out_dependencies;
+  return {*tx_dependencies.logger,
+          *tx_dependencies.err_notifier,
+          std::move(tx_dependencies.dl_df_cplane),
+          std::move(tx_dependencies.dl_df_uplane),
+          tx_dependencies.frame_pool};
 }
 
 transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter_impl_dependencies&& dependencies) :
@@ -98,10 +99,4 @@ downlink_handler& transmitter_impl::get_downlink_handler()
 ota_symbol_boundary_notifier& transmitter_impl::get_ota_symbol_boundary_notifier()
 {
   return ota_dispatcher;
-}
-
-void transmitter_impl::set_error_notifier(error_notifier& notifier)
-{
-  dl_handler.set_error_notifier(notifier);
-  ul_request_handler.set_error_notifier(notifier);
 }

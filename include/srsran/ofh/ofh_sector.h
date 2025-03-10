@@ -38,9 +38,6 @@ public:
 
   /// Returns the Open Fronthaul metrics collector of this sector or nullptr if metrics are disabled.
   virtual metrics_collector* get_metrics_collector() = 0;
-
-  /// Sets the error notifier of this sector to the given one.
-  virtual void set_error_notifier(error_notifier& notifier) = 0;
 };
 
 } // namespace ofh

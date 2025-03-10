@@ -66,13 +66,13 @@ static tx_window_timing_parameters extract_ul_cp_timing(const tx_window_timing_p
 
 uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_handler_impl_config&  config,
                                                          uplink_request_handler_impl_dependencies&& dependencies) :
-  logger(*dependencies.logger),
+  logger(dependencies.logger),
   is_prach_cp_enabled(config.is_prach_cp_enabled),
   cp(config.cp),
   tdd_config(config.tdd_config),
   prach_eaxc(config.prach_eaxc),
   ul_eaxc(config.ul_data_eaxc),
-  window_checker(*dependencies.logger,
+  window_checker(dependencies.logger,
                  config.sector,
                  calculate_nof_symbols_before_ota(config.cp,
                                                   config.scs,
@@ -83,7 +83,7 @@ uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_ha
   ul_prach_repo(std::move(dependencies.ul_prach_repo)),
   data_flow(std::move(dependencies.data_flow)),
   frame_pool(std::move(dependencies.frame_pool)),
-  err_notifier(&dummy_err_notifier)
+  err_notifier(dependencies.err_notifier)
 {
   srsran_assert(ul_slot_repo, "Invalid uplink repository");
   srsran_assert(ul_prach_repo, "Invalid PRACH repository");
@@ -148,7 +148,7 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
   frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
 
   if (window_checker.is_late(context.slot)) {
-    err_notifier->on_late_uplink_message({context.slot, context.sector});
+    err_notifier.on_late_uplink_message({context.slot, context.sector});
 
     logger.warning(
         "Sector#{}: dropped late PRACH request in slot '{}'. No OFH data will be requested from an RU for this slot",
@@ -222,7 +222,7 @@ void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_con
   frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
 
   if (window_checker.is_late(context.slot)) {
-    err_notifier->on_late_uplink_message({context.slot, context.sector});
+    err_notifier.on_late_uplink_message({context.slot, context.sector});
 
     logger.warning(
         "Sector#{}: dropped late uplink request in slot '{}'. No OFH data will be requested from an RU for this slot",

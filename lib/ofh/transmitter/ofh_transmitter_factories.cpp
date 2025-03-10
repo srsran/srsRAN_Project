@@ -144,6 +144,7 @@ resolve_transmitter_dependencies(const transmitter_config&                      
                                  srslog::basic_logger&                             logger,
                                  task_executor&                                    tx_executor,
                                  task_executor&                                    downlink_executor,
+                                 error_notifier&                                   err_notifier,
                                  std::unique_ptr<ether::gateway>                   eth_gateway,
                                  std::shared_ptr<prach_context_repository>         prach_context_repo,
                                  std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
@@ -152,8 +153,9 @@ resolve_transmitter_dependencies(const transmitter_config&                      
 {
   transmitter_impl_dependencies dependencies;
 
-  dependencies.logger   = &logger;
-  dependencies.executor = &tx_executor;
+  dependencies.logger       = &logger;
+  dependencies.executor     = &tx_executor;
+  dependencies.err_notifier = &err_notifier;
 
   auto frame_pool = create_eth_frame_pool(tx_config, logger);
 
@@ -193,6 +195,7 @@ srsran::ofh::create_transmitter(const transmitter_config&                       
                                 srslog::basic_logger&                             logger,
                                 task_executor&                                    tx_executor,
                                 task_executor&                                    downlink_executor,
+                                error_notifier&                                   err_notifier,
                                 std::unique_ptr<ether::gateway>                   eth_gateway,
                                 std::shared_ptr<prach_context_repository>         prach_context_repo,
                                 std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
@@ -204,6 +207,7 @@ srsran::ofh::create_transmitter(const transmitter_config&                       
                                                                              logger,
                                                                              tx_executor,
                                                                              downlink_executor,
+                                                                             err_notifier,
                                                                              std::move(eth_gateway),
                                                                              std::move(prach_context_repo),
                                                                              std::move(ul_slot_context_repo),

@@ -26,9 +26,29 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
   ofh_dependencies.timing_notifier = dependencies.timing_notifier;
   ofh_dependencies.error_notifier  = dependencies.error_notifier;
 
+  // Prepare OFH controller configuration.
+  ofh::controller_config controller_cfg;
+  controller_cfg.cp        = config.sector_configs.back().cp;
+  controller_cfg.scs       = config.sector_configs.back().scs;
+  controller_cfg.gps_Alpha = config.gps_Alpha;
+  controller_cfg.gps_Beta  = config.gps_Beta;
+
+  // Create OFH timing controller.
+  ofh_dependencies.timing_mngr =
+      ofh::create_ofh_timing_manager(controller_cfg, *dependencies.logger, *dependencies.rt_timing_executor);
+  report_fatal_error_if_not(ofh_dependencies.timing_mngr, "Unable to create OFH timing manager");
+
+  ru_ofh_impl_config ru_config;
+  ru_config.nof_slot_offset_du_ru = config.sector_configs.back().max_processing_delay_slots;
+  ru_config.nof_symbols_per_slot  = get_nsymb_per_slot(config.sector_configs.back().cp);
+  ru_config.scs                   = config.sector_configs.back().scs;
+
+  auto ru_ofh = std::make_unique<ru_ofh_impl>(ru_config, std::move(ofh_dependencies));
+
   // Create UL Rx symbol notifier.
   auto ul_data_notifier = std::make_shared<ru_ofh_rx_symbol_handler_impl>(*dependencies.rx_symbol_notifier);
 
+  std::vector<std::unique_ptr<ofh::sector>> sectors;
   // Create sectors.
   for (unsigned i = 0, e = config.sector_configs.size(); i != e; ++i) {
     const auto& sector_cfg = config.sector_configs[i];
@@ -41,12 +61,13 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
         "The RU operating bandwidth should be greater than or equal to the bandwidth of the cell");
 
     // Fill the notifier in the dependencies.
-    dependencies.sector_dependencies[i].notifier = ul_data_notifier;
+    dependencies.sector_dependencies[i].notifier     = ul_data_notifier;
+    dependencies.sector_dependencies[i].err_notifier = &ru_ofh->get_error_notifier();
 
     // Create OFH sector.
     auto sector = ofh::create_ofh_sector(sector_cfg, std::move(dependencies.sector_dependencies[i]));
     report_fatal_error_if_not(sector, "Unable to create OFH sector");
-    ofh_dependencies.sectors.emplace_back(std::move(sector));
+    sectors.emplace_back(std::move(sector));
 
     fmt::println("Initializing the Open Fronthaul Interface for sector#{}: ul_compr=[{},{}], dl_compr=[{},{}], "
                  "prach_compr=[{},{}], prach_cp_enabled={}{}",
@@ -65,22 +86,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
                      : fmt::format(""));
   }
 
-  // Prepare OFH controller configuration.
-  ofh::controller_config controller_cfg;
-  controller_cfg.cp        = config.sector_configs.back().cp;
-  controller_cfg.scs       = config.sector_configs.back().scs;
-  controller_cfg.gps_Alpha = config.gps_Alpha;
-  controller_cfg.gps_Beta  = config.gps_Beta;
+  ru_ofh->set_ofh_sectors(std::move(sectors));
 
-  // Create OFH timing controller.
-  ofh_dependencies.timing_mngr =
-      ofh::create_ofh_timing_manager(controller_cfg, *dependencies.logger, *dependencies.rt_timing_executor);
-  report_fatal_error_if_not(ofh_dependencies.timing_mngr, "Unable to create OFH timing manager");
-
-  ru_ofh_impl_config ru_config;
-  ru_config.nof_slot_offset_du_ru = config.sector_configs.back().max_processing_delay_slots;
-  ru_config.nof_symbols_per_slot  = get_nsymb_per_slot(config.sector_configs.back().cp);
-  ru_config.scs                   = config.sector_configs.back().scs;
-
-  return std::make_unique<ru_ofh_impl>(ru_config, std::move(ofh_dependencies));
+  return ru_ofh;
 }

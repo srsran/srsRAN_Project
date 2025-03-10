@@ -72,9 +72,6 @@ public:
   // See interface for documentation.
   metrics_collector* get_metrics_collector() override;
 
-  // See interface for documentation.
-  void set_error_notifier(error_notifier& notifier) override;
-
 private:
   std::shared_ptr<uplink_cplane_context_repository> cp_repo;
   std::shared_ptr<uplink_cplane_context_repository> cp_prach_repo;

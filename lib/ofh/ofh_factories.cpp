@@ -188,12 +188,15 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                   cp_repo,
                                   prach_cp_repo);
 
+  srsran_assert(sector_deps.err_notifier, "Invalid error notifier");
+
   // Build the OFH transmitter.
   auto tx_config   = generate_transmitter_config(sector_cfg);
   auto transmitter = create_transmitter(tx_config,
                                         *sector_deps.logger,
                                         *sector_deps.txrx_executor,
                                         *sector_deps.downlink_executor,
+                                        *sector_deps.err_notifier,
                                         std::move(eth_txrx.first),
                                         prach_repo,
                                         slot_repo,

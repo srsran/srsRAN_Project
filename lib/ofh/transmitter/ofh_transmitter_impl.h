@@ -24,6 +24,8 @@ namespace ofh {
 struct transmitter_impl_dependencies {
   /// Log.
   srslog::basic_logger* logger = nullptr;
+  /// Error notifier.
+  error_notifier* err_notifier = nullptr;
   /// Transmitter task executor.
   task_executor* executor = nullptr;
   /// Data flow for downlink Control-Plane.
@@ -55,9 +57,6 @@ public:
 
   // See interface for documentation.
   ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() override;
-
-  // See interface for documentation.
-  void set_error_notifier(error_notifier& notifier) override;
 
 private:
   downlink_handler_impl                  dl_handler;

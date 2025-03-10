@@ -47,15 +47,17 @@ struct uplink_request_handler_impl_config {
 /// Uplink request handler implmentation dependencies.
 struct uplink_request_handler_impl_dependencies {
   /// Logger.
-  srslog::basic_logger* logger = nullptr;
+  srslog::basic_logger& logger;
+  /// Error notifier.
+  error_notifier& err_notifier;
   /// Uplink slot context repository.
   std::shared_ptr<uplink_context_repository> ul_slot_repo;
   /// Uplink PRACH context repository.
   std::shared_ptr<prach_context_repository> ul_prach_repo;
-  /// Ethernet frame pool.
-  std::shared_ptr<ether::eth_frame_pool> frame_pool;
   /// Data flow for Control-Plane scheduling commands.
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow;
+  /// Ethernet frame pool.
+  std::shared_ptr<ether::eth_frame_pool> frame_pool;
 };
 
 /// Open Fronthaul uplink request handler.
@@ -70,9 +72,6 @@ public:
 
   // See interface for documentation.
   void handle_new_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) override;
-
-  // See interface for documentation.
-  void set_error_notifier(error_notifier& notifier) override { err_notifier = &notifier; }
 
   /// Returns the OTA symbol boundary notifier of this uplink request handler implementation.
   ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() { return window_checker; }
@@ -89,7 +88,7 @@ private:
   std::shared_ptr<prach_context_repository>             ul_prach_repo;
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow;
   std::shared_ptr<ether::eth_frame_pool>                frame_pool;
-  error_notifier*                                       err_notifier;
+  error_notifier&                                       err_notifier;
 };
 
 } // namespace ofh

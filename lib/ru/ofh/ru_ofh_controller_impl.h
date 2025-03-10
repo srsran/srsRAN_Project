@@ -24,7 +24,7 @@ namespace srsran {
 class ru_ofh_controller_impl : public ru_controller, public ru_operation_controller
 {
 public:
-  ru_ofh_controller_impl(srslog::basic_logger& logger_, std::vector<ofh::controller*> sector_controllers_);
+  ru_ofh_controller_impl(srslog::basic_logger& logger_) : logger(logger_) {}
 
   // See interface for documentation.
   void start() override;
@@ -40,6 +40,9 @@ public:
 
   // See interface for documentation.
   ru_cfo_controller* get_cfo_controller() override { return nullptr; }
+
+  /// Sets the sectors controllers.
+  void set_sector_controllers(std::vector<ofh::controller*> controllers);
 
   // See interface for documentation.
   void print_metrics() override;

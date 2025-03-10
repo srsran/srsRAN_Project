@@ -12,6 +12,7 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/compression/compression_params.h"
+#include "srsran/ofh/ethernet/ethernet_gateway.h"
 #include "srsran/ofh/ethernet/ethernet_mac_address.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ofh_constants.h"
@@ -28,6 +29,8 @@ namespace srsran {
 class task_executor;
 
 namespace ofh {
+
+class error_notifier;
 
 /// Open Fronthaul sector configuration.
 struct sector_configuration {
@@ -118,8 +121,10 @@ struct sector_configuration {
 struct sector_dependencies {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
+  /// Error notifier.
+  error_notifier* err_notifier = nullptr;
   /// Downlink task executor.
-  task_executor* downlink_executor;
+  task_executor* downlink_executor = nullptr;
   /// Message transmitter and receiver task executor.
   task_executor* txrx_executor = nullptr;
   /// Uplink task executor.

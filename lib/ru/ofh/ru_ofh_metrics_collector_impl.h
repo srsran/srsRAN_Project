@@ -22,6 +22,8 @@ class ru_ofh_metrics_collector_impl : public ru_metrics_collector
   std::vector<ofh::metrics_collector*> sector_metrics_collectors;
 
 public:
+  ru_ofh_metrics_collector_impl() = default;
+
   explicit ru_ofh_metrics_collector_impl(std::vector<ofh::metrics_collector*> sector_metrics_collectors_) :
     sector_metrics_collectors(std::move(sector_metrics_collectors_))
   {
