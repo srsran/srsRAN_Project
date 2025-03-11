@@ -161,7 +161,7 @@ update private branch:
     - |
       git submodule init
       git submodule update
-      git submodule foreach "git fetch origin && git checkout ${CI_PLUGIN_COMMIT_SHA} && git pull origin ${CI_PLUGIN_COMMIT_SHA}"
+      git submodule foreach "git fetch origin && git checkout ${CI_PLUGIN_COMMIT_SHA}"
       git commit -a --amend --no-edit
     - |
       if [ "$HEADERS" = "true" ]; then
