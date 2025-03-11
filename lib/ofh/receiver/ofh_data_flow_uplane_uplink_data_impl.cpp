@@ -63,11 +63,11 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
     return true;
   }
 
-  const uplane_message_params& params = results.params;
-  expected<ul_cplane_context>  ex_cp_context =
+  const uplane_message_params&     params = results.params;
+  std::optional<ul_cplane_context> opt_cp_context =
       ul_cplane_context_repo->get(params.slot, params.symbol_id, params.filter_index, eaxc);
 
-  if (SRSRAN_UNLIKELY(!ex_cp_context)) {
+  if (SRSRAN_UNLIKELY(!opt_cp_context)) {
     logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as no data was expected for slot '{}', "
                 "symbol '{}' and eAxC '{}'",
                 sector_id,
@@ -79,10 +79,10 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
   }
 
   // Check the PRBs.
-  const ul_cplane_context& cp_context = ex_cp_context.value();
-
   return std::any_of(
-      results.sections.begin(), results.sections.end(), [&cp_context, this](const uplane_section_params& up_section) {
+      results.sections.begin(),
+      results.sections.end(),
+      [this, cp_context = *opt_cp_context](const uplane_section_params& up_section) {
         if (SRSRAN_UNLIKELY(!up_section.is_every_rb_used)) {
           logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as 'every other resource block is "
                       "used' mode is not supported",

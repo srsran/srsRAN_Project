@@ -195,7 +195,8 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
   if (direction == data_direction::uplink) {
     ul_cplane_context_repo->add(slot,
                                 eaxc,
-                                {ofh_ctrl_params.radio_hdr,
+                                {ofh_ctrl_params.radio_hdr.filter_index,
+                                 ofh_ctrl_params.radio_hdr.start_symbol,
                                  ofh_ctrl_params.section_fields.common_fields.prb_start,
                                  ofh_ctrl_params.section_fields.common_fields.nof_prb,
                                  ofh_ctrl_params.section_fields.common_fields.nof_symbols});
@@ -273,7 +274,8 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
 
   prach_cplane_context_repo->add(slot,
                                  eaxc,
-                                 {ofh_ctrl_params.radio_hdr,
+                                 {ofh_ctrl_params.radio_hdr.filter_index,
+                                  ofh_ctrl_params.radio_hdr.start_symbol,
                                   ofh_ctrl_params.section_fields.common_fields.prb_start,
                                   ofh_ctrl_params.section_fields.common_fields.nof_prb,
                                   ofh_ctrl_params.section_fields.common_fields.nof_symbols});

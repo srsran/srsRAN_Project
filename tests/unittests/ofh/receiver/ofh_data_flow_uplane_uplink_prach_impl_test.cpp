@@ -88,13 +88,11 @@ public:
     section.iq_samples.resize(MAX_NOF_PRBS * NOF_SUBCARRIERS_PER_RB);
 
     ul_cplane_context context;
-    context.prb_start              = 0;
-    context.nof_prb                = 273;
-    context.nof_symbols            = nof_symbols;
-    context.radio_hdr.start_symbol = 0;
-    context.radio_hdr.slot         = slot;
-    context.radio_hdr.filter_index = srsran::ofh::filter_index_type::ul_prach_preamble_1p25khz;
-    context.radio_hdr.direction    = data_direction::uplink;
+    context.filter_index = srsran::ofh::filter_index_type::ul_prach_preamble_1p25khz;
+    context.start_symbol = 0;
+    context.prb_start    = 0;
+    context.nof_prb      = 273;
+    context.nof_symbols  = nof_symbols;
 
     // Fill the contexts
     ul_cplane_context_repo_ptr->add(slot, eaxc, context);

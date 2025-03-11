@@ -269,16 +269,13 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
   ASSERT_TRUE(repo_context.has_value());
 
   // Check radio header.
-  const cplane_radio_application_header& radio_hdr = repo_context.value().radio_hdr;
-  ASSERT_EQ(radio_hdr.direction, context.direction);
-  ASSERT_EQ(radio_hdr.slot, context.slot);
-  ASSERT_EQ(radio_hdr.filter_index, context.filter_type);
+  ASSERT_EQ(repo_context->filter_index, context.filter_type);
   // Always start in symbol 0.
-  ASSERT_EQ(radio_hdr.start_symbol, 0);
+  ASSERT_EQ(repo_context->start_symbol, 0);
 
-  ASSERT_EQ(repo_context.value().nof_symbols, context.symbol_range.length());
-  ASSERT_EQ(repo_context.value().nof_prb, ru_nof_prbs);
-  ASSERT_EQ(repo_context.value().prb_start, 0);
+  ASSERT_EQ(repo_context->nof_symbols, context.symbol_range.length());
+  ASSERT_EQ(repo_context->nof_prb, ru_nof_prbs);
+  ASSERT_EQ(repo_context->prb_start, 0);
 
   // Check that the context can be found for all the configured symbols.
   for (unsigned i = 0, e = context.symbol_range.length(); i != e; ++i) {
@@ -401,16 +398,13 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
   ASSERT_TRUE(repo_context.has_value());
 
   // Check radio header.
-  const cplane_radio_application_header& radio_hdr = repo_context.value().radio_hdr;
-  ASSERT_EQ(radio_hdr.direction, data_direction::uplink);
-  ASSERT_EQ(radio_hdr.slot, context.slot);
-  ASSERT_EQ(radio_hdr.filter_index, context.filter_type);
+  ASSERT_EQ(repo_context->filter_index, context.filter_type);
   // Always start in symbol 0.
-  ASSERT_EQ(radio_hdr.start_symbol, context.start_symbol);
+  ASSERT_EQ(repo_context->start_symbol, context.start_symbol);
 
-  ASSERT_EQ(repo_context.value().nof_symbols, context.nof_repetitions);
-  ASSERT_EQ(repo_context.value().nof_prb, context.prach_nof_rb);
-  ASSERT_EQ(repo_context.value().prb_start, 0);
+  ASSERT_EQ(repo_context->nof_symbols, context.nof_repetitions);
+  ASSERT_EQ(repo_context->nof_prb, context.prach_nof_rb);
+  ASSERT_EQ(repo_context->prb_start, 0);
 
   // Check that the context can be found for all the configured symbols.
   for (unsigned i = 0, e = context.nof_repetitions; i != e; ++i) {
