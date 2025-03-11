@@ -1672,7 +1672,7 @@ basic tsan:
     TEST_MODE: none
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
-    BUILD_ARGS: -DEXIT_TIMEOUT=15
+    BUILD_ARGS: -DEXIT_TIMEOUT=60
   after_script:
     - *build_after_script
   artifacts:
