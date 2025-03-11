@@ -70,6 +70,9 @@ struct search_space_info {
 
   const pdsch_config_params& get_pdsch_config(unsigned pdsch_td_res_index, unsigned nof_layers) const
   {
+    srsran_assert(pdsch_cfg_list.size() > pdsch_td_res_index and
+                      pdsch_cfg_list[pdsch_td_res_index].size() >= nof_layers,
+                  "get_pdsch_config: Invalid params");
     return pdsch_cfg_list[pdsch_td_res_index][nof_layers - 1];
   }
 
