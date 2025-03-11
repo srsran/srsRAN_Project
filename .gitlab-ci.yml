@@ -13,19 +13,19 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/tools/python.yml
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/tools/test_reporter.yml
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/tools/tagger.yml
   - local: .gitlab/ci/builders/version.yml
   - local: .gitlab/ci/build.yml

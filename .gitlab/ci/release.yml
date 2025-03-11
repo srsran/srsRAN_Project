@@ -8,13 +8,13 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/tools/docker.yml
 
 stages:

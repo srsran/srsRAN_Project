@@ -1,9 +1,9 @@
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci-shared/e2e.yml
   - local: .gitlab/ci-shared/build.yml
