@@ -91,8 +91,8 @@ private:
                                                  concurrent_queue_policy::lockfree_mpmc,
                                                  concurrent_queue_wait_policy::non_blocking>;
   using crc_indication_queue  = concurrent_queue<ul_crc_indication,
-                                                concurrent_queue_policy::lockfree_mpmc,
-                                                concurrent_queue_wait_policy::non_blocking>;
+                                                 concurrent_queue_policy::lockfree_mpmc,
+                                                 concurrent_queue_wait_policy::non_blocking>;
 
   const bwp_configuration&   get_dl_bwp_cfg() const { return cell_cfg.dl_cfg_common.init_dl_bwp.generic_params; }
   const pdsch_config_common& get_pdsch_cfg() const { return cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common; }

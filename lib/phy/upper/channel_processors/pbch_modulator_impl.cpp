@@ -52,14 +52,14 @@ void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& gri
   re_mask.reset(v + 8);
 
   // Full SS/PBCH block bandwidth resource blocks.
-  bounded_bitset<MAX_RB>      rb_full_mask = ~bounded_bitset<MAX_RB>(SSB_BW_RB);
-  bounded_bitset<NRE* MAX_RB> full_mask    = rb_full_mask.kronecker_product<NRE>(re_mask);
+  bounded_bitset<MAX_RB>       rb_full_mask = ~bounded_bitset<MAX_RB>(SSB_BW_RB);
+  bounded_bitset<NRE * MAX_RB> full_mask    = rb_full_mask.kronecker_product<NRE>(re_mask);
 
   // Edges SS/PBCH block bandwidth resource blocks.
   bounded_bitset<MAX_RB> rb_edge_mask = bounded_bitset<MAX_RB>(SSB_BW_RB);
   rb_edge_mask.fill(0, 4);
   rb_edge_mask.fill(16, 20);
-  bounded_bitset<NRE* MAX_RB> edge_mask = rb_edge_mask.kronecker_product<NRE>(re_mask);
+  bounded_bitset<NRE * MAX_RB> edge_mask = rb_edge_mask.kronecker_product<NRE>(re_mask);
 
   // Map symbols for each of the ports.
   for (unsigned port : config.ports) {

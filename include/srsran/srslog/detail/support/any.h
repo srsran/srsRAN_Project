@@ -25,11 +25,9 @@ struct in_place_type_t {
 
 /// Type trait to detect if T is a in_place_type_t tag.
 template <typename T>
-struct is_in_place_type_t : std::false_type {
-};
+struct is_in_place_type_t : std::false_type {};
 template <typename T>
-struct is_in_place_type_t<in_place_type_t<T>> : std::true_type {
-};
+struct is_in_place_type_t<in_place_type_t<T>> : std::true_type {};
 
 /// This is a very minimalist and non compliant implementation of std::any which
 /// is included in C++17.

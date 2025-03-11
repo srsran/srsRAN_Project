@@ -46,8 +46,7 @@ std::ostream& operator<<(std::ostream& os, const f2_code_rate_param& value)
 } // namespace pucch_info_test
 
 template <>
-struct fmt::formatter<pucch_info_test::f2_code_rate_param> : ostream_formatter {
-};
+struct fmt::formatter<pucch_info_test::f2_code_rate_param> : ostream_formatter {};
 
 using namespace pucch_info_test;
 

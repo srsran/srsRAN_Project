@@ -31,18 +31,15 @@ namespace detail {
 /// Helper traits used by SFINAE expressions in constructors.
 
 template <typename U>
-struct is_span : std::false_type {
-};
+struct is_span : std::false_type {};
 template <typename U>
-struct is_span<span<U>> : std::true_type {
-};
+struct is_span<span<U>> : std::true_type {};
 
 template <typename U>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<U>>;
 
 template <class Container, class U, class = void>
-struct is_container_compatible : public std::false_type {
-};
+struct is_container_compatible : public std::false_type {};
 template <class Container, class U>
 struct is_container_compatible<
     Container,
@@ -60,8 +57,7 @@ struct is_container_compatible<
         // Check type compatibility between the contained type and the span type.
         std::enable_if_t<
             std::is_convertible_v<std::remove_pointer_t<decltype(std::declval<Container>().data())> (*)[], U (*)[]>,
-            int>>> : public std::true_type {
-};
+            int>>> : public std::true_type {};
 
 } // namespace detail
 
@@ -234,8 +230,7 @@ using const_span = span<const T>;
 namespace fmt {
 
 template <typename T>
-struct is_range<srsran::span<T>, char> : std::false_type {
-};
+struct is_range<srsran::span<T>, char> : std::false_type {};
 
 /// \brief Custom formatter for \c span<T>.
 ///
@@ -307,8 +302,7 @@ struct formatter<srsran::span<T>> {
 };
 
 template <typename T>
-struct is_range<std::vector<T>, char> : std::false_type {
-};
+struct is_range<std::vector<T>, char> : std::false_type {};
 
 /// Custom formatter used by the \c copy_loggable_type defined below.
 template <typename T>
@@ -326,8 +320,7 @@ struct formatter<std::vector<T>> : public formatter<srsran::span<T>> {
 };
 
 template <typename T, size_t N>
-struct is_range<srsran::static_vector<T, N>, char> : std::false_type {
-};
+struct is_range<srsran::static_vector<T, N>, char> : std::false_type {};
 
 /// Custom formatter used by the \c copy_loggable_type defined below.
 template <typename T, size_t N>

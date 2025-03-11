@@ -549,7 +549,7 @@ public:
     value = v;
     return *this;
   }
-              operator uint8_t() { return (uint8_t)value; }
+  operator uint8_t() { return (uint8_t)value; }
   std::string to_string() const
   {
     switch (value) {
@@ -634,7 +634,7 @@ public:
     value = v;
     return *this;
   }
-              operator uint8_t() { return (uint8_t)value; }
+  operator uint8_t() { return (uint8_t)value; }
   std::string to_string() const
   {
     switch (value) {

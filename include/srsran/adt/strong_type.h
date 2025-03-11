@@ -127,8 +127,7 @@ struct strong_equality_with {
 
   template <typename T>
   class strong_property : public detail::strong_equality_with_type<T, Ts>...
-  {
-  };
+  {};
 };
 
 /// Multiplication operator definitions for strong types and the list of types in the template argument pack.
@@ -138,8 +137,7 @@ struct strong_multiplication_with {
 
   template <typename T>
   class strong_property : public detail::strong_multiplication_with_type<T, Ts>...
-  {
-  };
+  {};
 };
 
 struct strong_comparison {
@@ -167,8 +165,7 @@ struct strong_comparison_with {
 
   template <typename T>
   class strong_property : public detail::strong_comparison_with_type<T, Ts>...
-  {
-  };
+  {};
 };
 
 struct strong_increment_decrement {
@@ -450,8 +447,7 @@ struct strong_conversion_to {
 
   template <typename T>
   class strong_property : public detail::strong_convertion_to_type<T, Ts>...
-  {
-  };
+  {};
 };
 
 } // namespace srsran

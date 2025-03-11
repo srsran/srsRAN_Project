@@ -116,8 +116,8 @@ private:
                                               concurrent_queue_policy::lockfree_mpmc,
                                               concurrent_queue_wait_policy::non_blocking>;
   using cell_event_queue   = concurrent_queue<cell_event_t,
-                                            concurrent_queue_policy::lockfree_mpmc,
-                                            concurrent_queue_wait_policy::non_blocking>;
+                                              concurrent_queue_policy::lockfree_mpmc,
+                                              concurrent_queue_wait_policy::non_blocking>;
 
   void process_common(slot_point sl, du_cell_index_t cell_index);
   void process_cell_specific(du_cell_index_t cell_index);

@@ -21,8 +21,7 @@ namespace detail {
 
 /// Tag struct to uniquely identify bounded integers by template types and values.
 template <typename Integer>
-struct bounded_integer_tag {
-};
+struct bounded_integer_tag {};
 
 template <typename Integer>
 using bounded_integer_base = strong_type<Integer,

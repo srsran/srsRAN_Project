@@ -163,8 +163,9 @@ TEST_F(mac_to_fapi_translator_fixture, invalid_dl_sched_results_with_no_mac_slot
   mac_dl_sched_result&                       result      = result_test.result;
   result.ssb_pdus.front().pci                            = INVALID_PCI;
 
-  ASSERT_DEATH({ translator.on_new_downlink_scheduler_results(result); },
-               "srsRAN ERROR: Dummy MAC cell slot handler cannot handle error indication");
+  ASSERT_DEATH(
+      { translator.on_new_downlink_scheduler_results(result); },
+      "srsRAN ERROR: Dummy MAC cell slot handler cannot handle error indication");
 }
 
 TEST_F(mac_to_fapi_translator_fixture, invalid_ssb_in_dl_sched_results_reports_error)

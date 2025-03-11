@@ -946,8 +946,7 @@ TEST(BoundedBitset, for_each)
   ASSERT_EQ(output, std::vector<int>({2, 4, 6, 8, 10}));
 
   output.resize(0);
-  mask.for_each(
-      0, mask.size(), [&output, &values](int n) { output.emplace_back(values[n]); }, false);
+  mask.for_each(0, mask.size(), [&output, &values](int n) { output.emplace_back(values[n]); }, false);
   ASSERT_EQ(output, std::vector<int>({1, 3, 5, 7, 9}));
 
   output.resize(0);

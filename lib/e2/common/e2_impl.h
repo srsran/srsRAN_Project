@@ -41,8 +41,8 @@ public:
           e2sm_manager&             e2sm_mngr_,
           task_executor&            task_exec_);
 
-  void start() override{};
-  void stop() override{};
+  void start() override {};
+  void stop() override {};
 
   /// E2 connection manager functions.
   bool                                  handle_e2_tnl_connection_request() override;

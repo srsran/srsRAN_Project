@@ -10,7 +10,6 @@
 
 #include "ru_ofh_timing_notifier_impl.h"
 #include "srsran/ru/ru_timing_notifier.h"
-
 #include <chrono>
 
 using namespace srsran;

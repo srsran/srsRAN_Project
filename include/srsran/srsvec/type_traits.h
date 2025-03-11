@@ -59,8 +59,7 @@ using value_type_of_t = typename value_type_of_impl<T>::type;
 
 /// Checks if T is compatible with a span of integer types.
 template <typename T, typename = void>
-struct is_integral_span_compatible : std::false_type {
-};
+struct is_integral_span_compatible : std::false_type {};
 
 template <typename T>
 struct is_integral_span_compatible<T,
@@ -70,36 +69,30 @@ struct is_integral_span_compatible<T,
 
 /// Checks if T is compatible with a span of arithmetic types.
 template <typename T, typename = void>
-struct is_arithmetic_span_compatible : std::false_type {
-};
+struct is_arithmetic_span_compatible : std::false_type {};
 
 template <typename T>
 struct is_arithmetic_span_compatible<T,
                                      std::enable_if_t<std::is_convertible_v<T, span<detail::value_type_of_t<T>>> &&
                                                       std::is_arithmetic_v<detail::value_type_of_t<T>>>>
-  : std::true_type {
-};
+  : std::true_type {};
 
 /// Checks if T is compatible with a span of complex floating points (which are not arithmetic types).
 template <typename T, typename = void>
-struct is_complex_span_compatible : std::false_type {
-};
+struct is_complex_span_compatible : std::false_type {};
 
 template <typename T>
 struct is_complex_span_compatible<T,
                                   std::enable_if_t<std::is_convertible_v<T, span<detail::value_type_of_t<T>>> &&
-                                                   is_complex<detail::value_type_of_t<T>>::value>> : std::true_type {
-};
+                                                   is_complex<detail::value_type_of_t<T>>::value>> : std::true_type {};
 
 /// Checks if T is compatible with a span.
 template <typename T, typename = void>
-struct is_span_compatible : std::false_type {
-};
+struct is_span_compatible : std::false_type {};
 
 template <typename T>
 struct is_span_compatible<T, std::enable_if_t<std::is_convertible_v<T, span<detail::value_type_of_t<T>>>>>
-  : std::true_type {
-};
+  : std::true_type {};
 
 } // namespace srsvec
 } // namespace srsran

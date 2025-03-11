@@ -36,7 +36,7 @@ void re_pattern::get_inclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
   }
 
   // Generate a RE mask for the entire bandwidth.
-  bounded_bitset<MAX_RB* NRE> pattern_re_mask = prb_mask.kronecker_product<NRE>(re_mask);
+  bounded_bitset<MAX_RB * NRE> pattern_re_mask = prb_mask.kronecker_product<NRE>(re_mask);
 
   // Append zeros or discard bits to match the input mask size.
   pattern_re_mask.resize(mask.size());
@@ -71,7 +71,7 @@ void re_pattern::get_exclusion_mask(bounded_bitset<MAX_RB * NRE>& mask, unsigned
   }
 
   // Generate a RE mask for the entire bandwidth.
-  bounded_bitset<MAX_RB* NRE> pattern_re_mask = prb_mask.kronecker_product<NRE>(re_mask);
+  bounded_bitset<MAX_RB * NRE> pattern_re_mask = prb_mask.kronecker_product<NRE>(re_mask);
 
   // Append zeros or discard bits to match the input mask size.
   pattern_re_mask.resize(mask.size());
@@ -188,8 +188,8 @@ unsigned re_pattern_list::get_inclusion_count(unsigned                      star
 
   unsigned count = 0;
 
-  re_prb_mask                 base_re_mask   = ~re_prb_mask();
-  bounded_bitset<MAX_RB* NRE> active_re_mask = rb_mask.kronecker_product<NRE>(base_re_mask);
+  re_prb_mask                  base_re_mask   = ~re_prb_mask();
+  bounded_bitset<MAX_RB * NRE> active_re_mask = rb_mask.kronecker_product<NRE>(base_re_mask);
 
   for (unsigned symbol_idx = start_symbol; symbol_idx != start_symbol + nof_symbols; ++symbol_idx) {
     bounded_bitset<MAX_RB * NRE> inclusion_mask(active_re_mask.size());

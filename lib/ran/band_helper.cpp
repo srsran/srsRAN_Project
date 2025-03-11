@@ -58,7 +58,7 @@ struct nr_band_raster {
 // NOTE: FR2 bands have two different Freq raster, we only consider raster 120kHz.
 const uint32_t                                               nof_nr_DL_bands = 84;
 static constexpr std::array<nr_band_raster, nof_nr_DL_bands> nr_band_table   = {{
-      // clang-format off
+    // clang-format off
     {nr_band::n1,    delta_freq_raster::kHz100, 384000, 20,  396000,  422000, 20,  434000},
     {nr_band::n2,    delta_freq_raster::kHz100, 370000, 20,  382000,  386000, 20,  398000},
     {nr_band::n3,    delta_freq_raster::kHz100, 342000, 20,  357000,  361000, 20,  376000},
@@ -162,7 +162,7 @@ struct nr_operating_band {
 };
 static const uint32_t                                                 nof_nr_operating_band = 68;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band> nr_operating_bands    = {{
-       // clang-format off
+    // clang-format off
     {nr_band::n1,  duplex_mode::FDD},
     {nr_band::n2,  duplex_mode::FDD},
     {nr_band::n3,  duplex_mode::FDD},

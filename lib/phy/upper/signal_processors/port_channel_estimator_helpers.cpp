@@ -37,10 +37,10 @@ static const bounded_bitset<NRE> re_pattern_pusch_1 =
 /// Ts the symbol time (recall that the CP is ~1/14 Ts).
 static constexpr unsigned                             MAX_FILTER_LENGTH = 31;
 static constexpr std::array<float, MAX_FILTER_LENGTH> RC_FILTER         = {
-            -0.0641253, -0.0660711, -0.0611526, -0.0485918, -0.0281126, 0.0000000,  0.0348830, 0.0751249,
-            0.1188406,  0.1637874,  0.2075139,  0.2475302,  0.2814857,  0.3073415,  0.3235207, 0.3290274,
-            0.3235207,  0.3073415,  0.2814857,  0.2475302,  0.2075139,  0.1637874,  0.1188406, 0.0751249,
-            0.0348830,  0.0000000,  -0.0281126, -0.0485918, -0.0611526, -0.0660711, -0.0641253};
+    -0.0641253, -0.0660711, -0.0611526, -0.0485918, -0.0281126, 0.0000000,  0.0348830, 0.0751249,
+    0.1188406,  0.1637874,  0.2075139,  0.2475302,  0.2814857,  0.3073415,  0.3235207, 0.3290274,
+    0.3235207,  0.3073415,  0.2814857,  0.2475302,  0.2075139,  0.1637874,  0.1188406, 0.0751249,
+    0.0348830,  0.0000000,  -0.0281126, -0.0485918, -0.0611526, -0.0660711, -0.0641253};
 
 /// Create an array indexing the virtual pilots.
 template <size_t N>
@@ -272,7 +272,7 @@ float srsran::estimate_time_alignment(const re_measurement<cf_t>&               
   }
 
   // Prepare RE mask, common for all symbols carrying DM-RS.
-  bounded_bitset<MAX_RB* NRE> re_mask = hop_rb_mask.kronecker_product<NRE>(pattern.re_pattern);
+  bounded_bitset<MAX_RB * NRE> re_mask = hop_rb_mask.kronecker_product<NRE>(pattern.re_pattern);
 
   srsran_assert(pilots_lse_buffer.get_slice(0).size() == re_mask.count(),
                 "Expected {} channel estimates, provided {}.",
@@ -487,8 +487,8 @@ static span<cf_t> extract_re_prb(span<cf_t> out, const bounded_bitset<NRE>& re_m
 #endif // __ARM_NEON
 
   // Generic algorithm.
-  bounded_bitset<MAX_NOF_PRBS>      prb  = ~bounded_bitset<MAX_NOF_PRBS>(nof_prb);
-  bounded_bitset<NRE* MAX_NOF_PRBS> mask = prb.kronecker_product(re_mask);
+  bounded_bitset<MAX_NOF_PRBS>       prb  = ~bounded_bitset<MAX_NOF_PRBS>(nof_prb);
+  bounded_bitset<NRE * MAX_NOF_PRBS> mask = prb.kronecker_product(re_mask);
   mask.for_each(0, mask.size(), [&out, &in](unsigned i_re) mutable {
     out.front() = to_cf(in[i_re]);
     out         = out.last(out.size() - 1);

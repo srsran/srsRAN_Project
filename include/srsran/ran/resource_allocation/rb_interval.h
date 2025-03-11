@@ -82,17 +82,14 @@ namespace fmt {
 
 /// FMT formatter for prb_intervals.
 template <>
-struct formatter<srsran::prb_interval> : public formatter<srsran::interval<uint32_t>> {
-};
+struct formatter<srsran::prb_interval> : public formatter<srsran::interval<uint32_t>> {};
 
 /// FMT formatter for crb_intervals.
 template <>
-struct formatter<srsran::crb_interval> : public formatter<srsran::interval<uint32_t>> {
-};
+struct formatter<srsran::crb_interval> : public formatter<srsran::interval<uint32_t>> {};
 
 /// FMT formatter for vrb_intervals.
 template <>
-struct formatter<srsran::vrb_interval> : public formatter<srsran::interval<uint32_t>> {
-};
+struct formatter<srsran::vrb_interval> : public formatter<srsran::interval<uint32_t>> {};
 
 } // namespace fmt

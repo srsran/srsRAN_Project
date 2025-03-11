@@ -233,7 +233,7 @@ uint32_t s3g_s1(uint32_t w)
   uint8_t srw0 = S[(uint8_t)((w >> 24) & 0xff)];
   uint8_t srw1 = S[(uint8_t)((w >> 16) & 0xff)];
   uint8_t srw2 = S[(uint8_t)((w >> 8) & 0xff)];
-  uint8_t srw3 = S[(uint8_t)((w)&0xff)];
+  uint8_t srw3 = S[(uint8_t)((w) & 0xff)];
 
   r0 = ((s3g_mul_x(srw0, 0x1b)) ^ (srw1) ^ (srw2) ^ ((s3g_mul_x(srw3, 0x1b)) ^ srw3));
 
@@ -261,7 +261,7 @@ uint32_t s3g_s2(uint32_t w)
   uint8_t sqw0 = SQ[(uint8_t)((w >> 24) & 0xff)];
   uint8_t sqw1 = SQ[(uint8_t)((w >> 16) & 0xff)];
   uint8_t sqw2 = SQ[(uint8_t)((w >> 8) & 0xff)];
-  uint8_t sqw3 = SQ[(uint8_t)((w)&0xff)];
+  uint8_t sqw3 = SQ[(uint8_t)((w) & 0xff)];
 
   r0 = ((s3g_mul_x(sqw0, 0x69)) ^ (sqw1) ^ (sqw2) ^ ((s3g_mul_x(sqw3, 0x69)) ^ sqw3));
 

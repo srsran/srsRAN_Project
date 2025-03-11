@@ -40,8 +40,7 @@ std::ostream& operator<<(std::ostream& out, const srs_params& params)
 } // namespace
 
 template <>
-struct fmt::formatter<srs_params> : ostream_formatter {
-};
+struct fmt::formatter<srs_params> : ostream_formatter {};
 
 static bool is_ul_slot(unsigned offset, const tdd_ul_dl_config_common& tdd_cfg)
 {

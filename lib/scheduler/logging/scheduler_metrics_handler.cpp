@@ -10,7 +10,6 @@
 
 #include "scheduler_metrics_handler.h"
 #include "../config/cell_configuration.h"
-
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/srslog/srslog.h"

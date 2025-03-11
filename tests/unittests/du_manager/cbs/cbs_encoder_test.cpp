@@ -257,8 +257,9 @@ TEST_F(CbsEncodingDeathTestFixture, CbsEncodingSelectionDeathTest)
     if (is_coding_scheme_valid(i_data_coding_scheme)) {
       ASSERT_NO_FATAL_FAILURE(encoder->encode_cb_data("Test message", i_data_coding_scheme));
     } else {
-      ASSERT_DEATH({ encoder->encode_cb_data("Test message", i_data_coding_scheme); },
-                   "Invalid or unsupported CBS encoding type.");
+      ASSERT_DEATH(
+          { encoder->encode_cb_data("Test message", i_data_coding_scheme); },
+          "Invalid or unsupported CBS encoding type.");
     }
   }
 }

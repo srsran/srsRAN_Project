@@ -30,14 +30,14 @@ public:
   void set_transaction_id(unsigned transaction_id_) { test_transaction_id = transaction_id_; }
 
   // RRC UE Controller
-  void stop() override{};
+  void stop() override {};
 
   // RRC UL PDU handler
-  void handle_ul_ccch_pdu(byte_buffer pdu) override{};
-  void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) override{};
+  void handle_ul_ccch_pdu(byte_buffer pdu) override {};
+  void handle_ul_dcch_pdu(const srb_id_t srb_id, byte_buffer pdu) override {};
 
   // RRC NGAP Message handler
-  void        handle_dl_nas_transport_message(byte_buffer nas_pdu) override{};
+  void        handle_dl_nas_transport_message(byte_buffer nas_pdu) override {};
   byte_buffer get_packed_ue_radio_access_cap_info() const override { return byte_buffer{}; };
   byte_buffer get_packed_handover_preparation_message() override { return byte_buffer{}; };
 
@@ -165,11 +165,11 @@ public:
   }
 
   // RRC UE Setup proc notifier
-  void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override{};
-  void on_ue_release_required(const ngap_cause_t& cause) override{};
+  void on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg) override {};
+  void on_ue_release_required(const ngap_cause_t& cause) override {};
 
   // RRC UE Security Mode Command proc notifier
-  void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) override{};
+  void on_new_dl_dcch(srb_id_t srb_id, const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg) override {};
 
   // RRC UE Reconfiguration proc notifier
 
@@ -181,7 +181,7 @@ public:
   }
 
   // RRC UE Reestablishment proc notifier
-  void on_new_as_security_context() override{};
+  void on_new_as_security_context() override {};
 
   // interface functions
   rrc_ue_controller&              get_controller() override { return *this; };

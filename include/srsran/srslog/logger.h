@@ -97,11 +97,9 @@ private:
 
 /// Type trait to detect if T is a logger.
 template <typename T>
-struct is_logger : std::false_type {
-};
+struct is_logger : std::false_type {};
 template <typename T, typename Enum>
-struct is_logger<logger_impl<T, Enum>> : std::true_type {
-};
+struct is_logger<logger_impl<T, Enum>> : std::true_type {};
 
 } // namespace detail
 

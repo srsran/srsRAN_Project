@@ -14,7 +14,6 @@
 #include "srsran/cu_cp/cu_cp_operation_controller.h"
 #include "srsran/cu_cp/o_cu_cp.h"
 #include "srsran/e2/e2.h"
-
 #include <memory>
 
 namespace srsran {

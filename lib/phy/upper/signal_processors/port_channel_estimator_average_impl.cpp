@@ -220,8 +220,8 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
 
   // Combine CFO measurement with other hop CFO measurements.
   if (cfo_hop.has_value()) {
-    cfo_normalized = evaluate_or(
-        cfo_normalized, cfo_hop.value(), [](float a, float b) { return (a + b) / 2.0F; }, cfo_hop.value());
+    cfo_normalized =
+        evaluate_or(cfo_normalized, cfo_hop.value(), [](float a, float b) { return (a + b) / 2.0F; }, cfo_hop.value());
   }
 
   // Average and apply DM-RS-to-data gain.

@@ -59,8 +59,7 @@ std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 } // namespace srsran
 
 template <>
-struct fmt::formatter<srsran::ofdm_prach_demodulator::configuration> : ostream_formatter {
-};
+struct fmt::formatter<srsran::ofdm_prach_demodulator::configuration> : ostream_formatter {};
 
 using namespace srsran;
 

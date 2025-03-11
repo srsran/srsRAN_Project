@@ -26,11 +26,9 @@ namespace {
 static_assert(std::is_trivially_copyable_v<static_circular_map<unsigned, int, 4>>);
 
 template <typename U>
-struct is_static_circular_map : std::false_type {
-};
+struct is_static_circular_map : std::false_type {};
 template <typename K, typename V, std::size_t N>
-struct is_static_circular_map<static_circular_map<K, V, N>> : std::true_type {
-};
+struct is_static_circular_map<static_circular_map<K, V, N>> : std::true_type {};
 
 template <typename T>
 class circular_map_tester_1 : public ::testing::Test

@@ -123,7 +123,7 @@ inline void security_nea2(const sec_128_key& key,
       nonce_cnt[0] = (count >> 24) & 0xff;
       nonce_cnt[1] = (count >> 16) & 0xff;
       nonce_cnt[2] = (count >> 8) & 0xff;
-      nonce_cnt[3] = (count)&0xff;
+      nonce_cnt[3] = (count) & 0xff;
       nonce_cnt[4] = ((bearer & 0x1f) << 3) | ((to_number(direction) & 0x01) << 2);
 
       // Encryption
@@ -170,7 +170,7 @@ inline void security_nea3(const sec_128_key& key,
     iv[0]  = (count >> 24) & 0xff;
     iv[1]  = (count >> 16) & 0xff;
     iv[2]  = (count >> 8) & 0xff;
-    iv[3]  = (count)&0xff;
+    iv[3]  = (count) & 0xff;
     iv[4]  = ((bearer & 0x1f) << 3) | ((to_number(direction) & 0x01) << 2);
     iv[5]  = 0;
     iv[6]  = 0;

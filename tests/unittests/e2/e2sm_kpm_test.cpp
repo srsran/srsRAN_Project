@@ -679,11 +679,11 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   };
   std::vector<uint32_t>              cond_satisfied = {1, 1, 1, 1, 1};
   std::vector<std::vector<uint32_t>> meas_values    = {
-         {1, 2, 3, 0, 5},
-         {11, 12, 13, 0, 15},
-         {21, 22, 23, 0, 25},
-         {31, 32, 33, 0, 35},
-         {41, 42, 43, 0, 45},
+      {1, 2, 3, 0, 5},
+      {11, 12, 13, 0, 15},
+      {21, 22, 23, 0, 25},
+      {31, 32, 33, 0, 35},
+      {41, 42, 43, 0, 45},
   };
   uint32_t nof_meas_data = presence.size();
   uint32_t nof_ues       = ue_ids.size();

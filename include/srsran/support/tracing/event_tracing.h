@@ -162,8 +162,7 @@ public:
 /// Specialization of file_event_tracer that does not write any events.
 template <>
 class file_event_tracer<false> : public detail::null_event_tracer
-{
-};
+{};
 
 /// Class that repurposes a log channel to write trace events.
 template <bool Enabled = true>
@@ -205,8 +204,7 @@ private:
 
 template <>
 class logger_event_tracer<false> : public detail::null_event_tracer
-{
-};
+{};
 
 /// Class that writes trace events to a vector of strings for testing purposes.
 class test_event_tracer

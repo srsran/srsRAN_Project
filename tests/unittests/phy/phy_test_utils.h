@@ -22,7 +22,10 @@
       return spy;                                                                                                      \
     }                                                                                                                  \
                                                                                                                        \
-    std::vector<COMPONENT##_spy*>& get_entries() { return entries; }                                                   \
+    std::vector<COMPONENT##_spy*>& get_entries()                                                                       \
+    {                                                                                                                  \
+      return entries;                                                                                                  \
+    }                                                                                                                  \
                                                                                                                        \
   private:                                                                                                             \
     std::vector<COMPONENT##_spy*> entries;                                                                             \
