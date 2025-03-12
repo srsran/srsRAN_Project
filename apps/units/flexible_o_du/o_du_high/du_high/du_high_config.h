@@ -481,6 +481,10 @@ struct pdcch_dedicated_unit_config {
   bool dci_format_0_1_and_1_1 = true;
   /// SearchSpace type of SearchSpace#2.
   search_space_configuration::type_t ss2_type = search_space_configuration::type_t::ue_dedicated;
+  /// Offset to apply to the CQI for PDCCH aggregation level calculation.
+  /// It can be used to fine tune the aggregation level selection in case the current approach
+  /// produces bad results in a particular setting.
+  float al_cqi_offset = 0;
 };
 
 /// PDCCH application configuration.

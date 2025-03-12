@@ -390,6 +390,8 @@ aggregation_level ue_cell::get_aggregation_level(float cqi, const search_space_i
     cqi_table = cfg().csi_meas_cfg()->csi_report_cfg_list.back().cqi_table.value();
   }
 
+  // Apply the configured offset to the CQI and make sure it is in the allowed range.
+  cqi = std::max(std::min(15.0f, cqi + expert_cfg.pdcch_al_cqi_offset), 0.0f);
   return map_cqi_to_aggregation_level(cqi, cqi_table, ss_info.cfg->get_nof_candidates(), dci_size);
 }
 

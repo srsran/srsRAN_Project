@@ -978,6 +978,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
 
   // UE parameters.
   const du_high_unit_pdsch_config&            pdsch                = cell.pdsch_cfg;
+  const du_high_unit_pdcch_config&            pdcch                = cell.pdcch_cfg;
   const du_high_unit_pusch_config&            pusch                = cell.pusch_cfg;
   const du_high_unit_scheduler_expert_config& app_sched_expert_cfg = cell.sched_expert_cfg;
   out_cfg.ue.dl_mcs                                                = {pdsch.min_ue_mcs, pdsch.max_ue_mcs};
@@ -988,6 +989,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ue.max_nof_ul_harq_retxs             = pusch.max_nof_harq_retxs;
   out_cfg.ue.max_pdschs_per_slot               = pdsch.max_pdschs_per_slot;
   out_cfg.ue.max_pdcch_alloc_attempts_per_slot = pdsch.max_pdcch_alloc_attempts_per_slot;
+  out_cfg.ue.pdcch_al_cqi_offset               = pdcch.dedicated.al_cqi_offset;
   out_cfg.ue.pdsch_nof_rbs                     = {pdsch.min_rb_size, pdsch.max_rb_size};
   out_cfg.ue.pusch_nof_rbs                     = {pusch.min_rb_size, pusch.max_rb_size};
   out_cfg.ue.olla_dl_target_bler               = pdsch.olla_target_bler;

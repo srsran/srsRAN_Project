@@ -253,6 +253,7 @@ static YAML::Node build_du_high_pdcch_section(const du_high_unit_pdcch_config& c
       dedicated_node["ss2_n_candidates"].push_back(static_cast<unsigned>(ss2));
     }
     dedicated_node["ss2_n_candidates"].SetStyle(YAML::EmitterStyle::Flow);
+    dedicated_node["al_cqi_offset"] = config.dedicated.al_cqi_offset;
 
     node["dedicated"] = dedicated_node;
   }

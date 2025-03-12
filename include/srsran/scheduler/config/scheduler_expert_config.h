@@ -152,6 +152,8 @@ struct scheduler_ue_expert_config {
   uint8_t min_k1 = 4;
   /// Maximum number of PDCCH grant allocation attempts per slot. Default: Unlimited.
   unsigned max_pdcch_alloc_attempts_per_slot = std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT);
+  /// Offset to apply to the CQI for PDCCH aggregation level calculation.
+  float pdcch_al_cqi_offset = 0;
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_cqi_inc{0.001};
   /// DL Target BLER to be achieved with OLLA.
