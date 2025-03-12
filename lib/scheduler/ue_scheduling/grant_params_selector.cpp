@@ -31,24 +31,11 @@ struct mcs_prbs_selection {
 static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg,
                                                                              const ue_cell&             ue_cc,
                                                                              unsigned                   pending_bytes,
-                                                                             unsigned                   max_rbs)
+                                                                             interval<unsigned>         nof_rb_lims)
 {
-  const ue_cell_configuration& ue_cell_cfg = ue_cc.cfg();
-  const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-
-  std::optional<sch_mcs_index> mcs = ue_cc.link_adaptation_controller().calculate_dl_mcs(pdsch_cfg.mcs_table);
-  if (not mcs.has_value()) {
-    // Channel state is not good enough to determine MCS.
-    return std::nullopt;
-  }
-  sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs.value());
-
-  // Apply max RB grant size limits.
-  const bwp_downlink_common& bwp_dl_cmn = *ue_cell_cfg.bwp(ue_cc.active_bwp_id()).dl_common.value();
-  max_rbs                               = std::min({bwp_dl_cmn.generic_params.crbs.length(),
-                                                    cell_cfg.expert_cfg.ue.pdsch_nof_rbs.stop(),
-                                                    ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.stop(),
-                                                    max_rbs});
+  // Note: At this point, CQI must be higher than 0, so MCS is valid.
+  const sch_mcs_index       mcs = ue_cc.link_adaptation_controller().calculate_dl_mcs(pdsch_cfg.mcs_table).value();
+  const sch_mcs_description mcs_config = pdsch_mcs_get_config(pdsch_cfg.mcs_table, mcs);
 
   sch_prbs_tbs prbs_tbs = get_nof_prbs(prbs_calculator_sch_config{pending_bytes,
                                                                   pdsch_cfg.symbols.length(),
@@ -56,16 +43,14 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
                                                                   pdsch_cfg.nof_oh_prb,
                                                                   mcs_config,
                                                                   pdsch_cfg.nof_layers},
-                                       max_rbs);
-  srsran_sanity_check(prbs_tbs.nof_prbs <= max_rbs, "Error in RB computation");
+                                       nof_rb_lims.stop());
+  srsran_sanity_check(prbs_tbs.nof_prbs <= nof_rb_lims.stop(), "Error in RB computation");
   if (prbs_tbs.nof_prbs == 0) {
     return std::nullopt;
   }
 
   // Apply min RB grant size limits (max was applied before).
-  prbs_tbs.nof_prbs = std::max({prbs_tbs.nof_prbs,
-                                cell_cfg.expert_cfg.ue.pdsch_nof_rbs.start(),
-                                ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.start()});
+  prbs_tbs.nof_prbs = std::max(prbs_tbs.nof_prbs, nof_rb_lims.start());
 
   // [Implementation-defined] In case of partial slots and nof. PRBs allocated equals to 1 probability of KO is
   // high due to code not being able to cope with interference. So the solution is to increase the PRB allocation
@@ -193,6 +178,7 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   const ue_cell& ue_cc = u.get_cc();
 
   if (not ue_cc.is_pdsch_enabled(pdcch_slot, pdsch_slot) or ue_cc.is_in_fallback_mode()) {
+    // The UE cannot be scheduled in the provided slots.
     return std::nullopt;
   }
 
@@ -214,10 +200,11 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
                   "DCI type cannot change across reTxs");
   }
 
-  // Apply RB allocation limits.
-  const unsigned start_rb = std::max(cell_cfg.expert_cfg.ue.pdsch_crb_limits.start(), ss.dl_crb_lims.start());
-  const unsigned end_rb   = std::min(cell_cfg.expert_cfg.ue.pdsch_crb_limits.stop(), ss.dl_crb_lims.stop());
-  if (start_rb >= end_rb) {
+  // Determine RB allocation limits.
+  interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pdsch_nof_rbs & ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits;
+  auto               crb_lims    = crb_interval::to_crbs(cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims);
+  nof_rb_lims                    = nof_rb_lims & interval<unsigned>{0, crb_lims.length()};
+  if (crb_lims.empty() or nof_rb_lims.empty()) {
     // Invalid RB allocation range.
     return std::nullopt;
   }
@@ -248,13 +235,13 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
 
     // Compute recommended number of layers, MCS and PRBs.
     unsigned      nof_layers;
-    unsigned      nof_rbs = end_rb - start_rb;
+    unsigned      nof_rbs;
     sch_mcs_index mcs;
     if (h_dl == nullptr) {
       // NewTx Case.
       nof_layers                           = ue_cc.channel_state_manager().get_nof_dl_layers();
       const pdsch_config_params& pdsch_cfg = ss.get_pdsch_config(pdsch_td_index, nof_layers);
-      auto mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pdsch_cfg, ue_cc, pending_bytes, nof_rbs);
+      auto mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pdsch_cfg, ue_cc, pending_bytes, nof_rb_lims);
       if (not mcs_prbs_sel.has_value()) {
         // Note: No point in carrying on.
         return std::nullopt;
@@ -266,16 +253,15 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
       nof_layers = h_dl->get_grant_params().nof_layers;
       mcs        = h_dl->get_grant_params().mcs;
       nof_rbs    = h_dl->get_grant_params().rbs.type1().length();
-      if (nof_rbs > end_rb - start_rb) {
+      if (nof_rbs > nof_rb_lims.length()) {
         return std::nullopt;
       }
     }
-    nof_rbs = std::min(nof_rbs, end_rb - start_rb);
 
     dl_sched_context ctxt;
     ctxt.ss_id              = ss.cfg->get_id();
     ctxt.pdsch_td_res_index = pdsch_td_index;
-    ctxt.crb_lims           = {start_rb, end_rb};
+    ctxt.crb_lims           = crb_lims;
     ctxt.recommended_mcs    = mcs;
     ctxt.recommended_ri     = nof_layers;
     ctxt.expected_nof_rbs   = nof_rbs;
@@ -347,7 +333,7 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   const ue_cell& ue_cc = u.get_cc();
 
   if (not ue_cc.is_pusch_enabled(pdcch_slot, pusch_slot) or ue_cc.is_in_fallback_mode()) {
-    // The UE cannot be schedules in the provided slots.
+    // The UE cannot be scheduled in the provided slots.
     return std::nullopt;
   }
 
@@ -360,6 +346,7 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   const search_space_info&         ss        = ue_cc.cfg().search_space(ue_ded_ss);
 
   if (h_ul != nullptr) {
+    // ReTx case.
     if (slot_nof_symbols < h_ul->get_grant_params().nof_symbols) {
       // Early exit if there are not enough symbols in the slot for the retransmission.
       return std::nullopt;
@@ -368,16 +355,10 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
                   "DCI type cannot change across reTxs");
   }
 
-  // Determine grant size bounds in RBs.
-  interval<unsigned> cfg_rb_size_lims =
-      cell_cfg.expert_cfg.ue.pusch_nof_rbs & ue_cell_cfg.rrm_cfg().pusch_grant_size_limits;
-
-  const bool is_csi_report_slot = ue_cell_cfg.csi_meas_cfg() != nullptr and
-                                  csi_helper::is_csi_reporting_slot(*ue_cell_cfg.csi_meas_cfg(), pusch_slot);
-
   // Determine RB allocation limits.
-  auto crb_lims    = crb_interval::to_crbs(cell_cfg.expert_cfg.ue.pusch_crb_limits & ss.ul_crb_lims);
-  auto nof_rb_lims = cfg_rb_size_lims & interval<unsigned>{0, crb_lims.length()};
+  interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pusch_nof_rbs & ue_cell_cfg.rrm_cfg().pusch_grant_size_limits;
+  auto               crb_lims    = crb_interval::to_crbs(cell_cfg.expert_cfg.ue.pusch_crb_limits & ss.ul_crb_lims);
+  nof_rb_lims                    = nof_rb_lims & interval<unsigned>{0, crb_lims.length()};
   if (crb_lims.empty() or nof_rb_lims.empty()) {
     // Invalid RB allocation range.
     return std::nullopt;
@@ -408,6 +389,8 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
     sch_mcs_index       mcs;
     pusch_config_params pusch_cfg;
     unsigned            nof_rbs;
+    const bool          is_csi_report_slot = ue_cell_cfg.csi_meas_cfg() != nullptr and
+                                    csi_helper::is_csi_reporting_slot(*ue_cell_cfg.csi_meas_cfg(), pusch_slot);
     if (h_ul == nullptr) {
       // NewTx Case.
       dci_ul_rnti_config_type dci_type = ss.get_ul_dci_format() == dci_ul_format::f0_0
