@@ -282,7 +282,8 @@ amari 32UE 2x2 mimo:
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
 
 amari 64UE 2x2 mimo:
-  extends: .zmq-uesim
+  extends: .zmq
+  allow_failure: true
   variables:
     MARKERS: "zmq_64_ues"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"

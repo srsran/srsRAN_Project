@@ -10,27 +10,43 @@
 Test Iperf
 """
 
-from typing import Tuple
+import logging
+from time import sleep
+from typing import Optional, Sequence, Tuple, Union
 
+import pytest
+from google.protobuf.empty_pb2 import Empty
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
-from retina.launcher.utils import param
+from retina.launcher.utils import configure_artifacts, param
+from retina.protocol.base_pb2 import Metrics, PLMN
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ric_pb2_grpc import NearRtRicStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
-from .steps.configuration import get_minimum_sample_rate_for_bandwidth
-from .steps.iperf_steps import (
-    _iperf,
+from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
+from .steps.iperf_helpers import (
+    assess_iperf_bitrate,
     get_maximum_throughput,
     LONG_DURATION,
     LOW_BITRATE,
     MEDIUM_BITRATE,
     SHORT_DURATION,
     TINY_DURATION,
+)
+from .steps.stub import (
+    INTER_UE_START_PERIOD,
+    iperf_parallel,
+    ric_validate_e2_interface,
+    start_and_attach,
+    start_kpm_mon_xapp,
+    start_rc_xapp,
+    stop,
+    stop_kpm_mon_xapp,
+    stop_rc_xapp,
 )
 
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s"
@@ -388,7 +404,6 @@ def test_zmq_64_ues(
         global_timing_advance=-1,
         time_alignment_calibration=0,
         always_download_artifacts=False,
-        gnb_post_cmd=("", "log --mac_level=info metrics --enable_log_metrics=True"),
         rx_to_tx_latency=2,
         enable_dddsu=False,
         nof_antennas_dl=2,
@@ -648,3 +663,126 @@ def test_rf(
         always_download_artifacts=False,
         warning_as_errors=False,
     )
+
+
+# pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
+def _iperf(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_array: Sequence[UEStub],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    sample_rate: Optional[int],
+    iperf_duration: int,
+    bitrate: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+    global_timing_advance: int,
+    time_alignment_calibration: Union[int, str],
+    always_download_artifacts: bool,
+    warning_as_errors: bool = True,
+    bitrate_threshold: float = 0,  # bitrate != 0
+    gnb_post_cmd: Tuple[str, ...] = tuple(),
+    plmn: Optional[PLMN] = None,
+    common_search_space_enable: bool = False,
+    prach_config_index=-1,
+    ue_stop_timeout: int = 0,
+    rx_to_tx_latency: int = -1,
+    enable_dddsu: bool = False,
+    nof_antennas_dl: int = 1,
+    nof_antennas_ul: int = 1,
+    pdsch_mcs_table: str = "qam256",
+    pusch_mcs_table: str = "qam256",
+    inter_ue_start_period=INTER_UE_START_PERIOD,
+    ric: Optional[NearRtRicStub] = None,
+    assess_bitrate: bool = False,
+):
+    wait_before_power_off = 5
+
+    logging.info("Iperf Test")
+
+    configure_test_parameters(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=sample_rate,
+        global_timing_advance=global_timing_advance,
+        time_alignment_calibration=time_alignment_calibration,
+        common_search_space_enable=common_search_space_enable,
+        prach_config_index=prach_config_index,
+        rx_to_tx_latency=rx_to_tx_latency,
+        enable_dddsu=enable_dddsu,
+        nof_antennas_dl=nof_antennas_dl,
+        nof_antennas_ul=nof_antennas_ul,
+        pdsch_mcs_table=pdsch_mcs_table,
+        pusch_mcs_table=pusch_mcs_table,
+    )
+
+    configure_artifacts(
+        retina_data=retina_data,
+        always_download_artifacts=always_download_artifacts,
+    )
+
+    ue_attach_info_dict = start_and_attach(
+        ue_array,
+        gnb,
+        fivegc,
+        gnb_post_cmd=gnb_post_cmd,
+        plmn=plmn,
+        inter_ue_start_period=inter_ue_start_period,
+        ric=ric,
+    )
+
+    if ric:
+        start_rc_xapp(ric, control_service_style=2, action_id=6)
+        start_kpm_mon_xapp(ric, report_service_style=1, metrics="DRB.UEThpDl,DRB.UEThpUl")
+
+    iperf_parallel(
+        ue_attach_info_dict,
+        fivegc,
+        protocol,
+        direction,
+        iperf_duration,
+        bitrate,
+        bitrate_threshold,
+    )
+
+    if ric:
+        stop_rc_xapp(ric)
+        stop_kpm_mon_xapp(ric)
+
+    sleep(wait_before_power_off)
+    if ric:
+        ric_validate_e2_interface(ric, kpm_expected=True, rc_expected=True)
+
+    stop(
+        ue_array,
+        gnb,
+        fivegc,
+        retina_data,
+        ue_stop_timeout=ue_stop_timeout,
+        warning_as_errors=warning_as_errors,
+        ric=ric,
+    )
+
+    metrics: Metrics = gnb.GetMetrics(Empty())
+
+    if metrics.total.dl_bitrate + metrics.total.ul_bitrate <= 0:
+        pytest.fail("No traffic detected in GNB metrics")
+
+    if assess_bitrate and protocol == IPerfProto.UDP:
+
+        assess_iperf_bitrate(
+            bw=bandwidth,
+            band=band,
+            nof_antennas_dl=nof_antennas_dl,
+            pdsch_mcs_table=pdsch_mcs_table,
+            pusch_mcs_table=pusch_mcs_table,
+            iperf_duration=iperf_duration,
+            metrics=metrics,
+        )
