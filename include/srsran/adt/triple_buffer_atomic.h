@@ -64,16 +64,16 @@ public:
   }
 
 private:
-  static constexpr std::size_t kCacheLineSize = 64;
-  static constexpr unsigned    dirty_bit      = 1;
+  static constexpr std::size_t k_cache_line_size = 64;
+  static constexpr unsigned    dirty_bit         = 1;
 
-  struct alignas(kCacheLineSize) PaddedElement {
+  struct alignas(k_cache_line_size) padded_element {
     T value;
   };
-  std::array<PaddedElement, 3> buffer;
-  std::atomic<unsigned>        dirty_middle_buffer_idx = {1 << 1};
-  unsigned                     front_buffer_idx        = 0;
-  unsigned                     back_buffer_idx         = 2;
+  std::array<padded_element, 3> buffer;
+  std::atomic<unsigned>         dirty_middle_buffer_idx = {1 << 1};
+  unsigned                      front_buffer_idx        = 0;
+  unsigned                      back_buffer_idx         = 2;
 };
 
 } // namespace srsran
