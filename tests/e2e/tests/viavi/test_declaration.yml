@@ -168,17 +168,19 @@ tests:
     expected_nof_kos: .inf
     warning_as_errors: false
 
-  - id: "32UE ideal UDP attach-detach with traffic 24h extended"
+  - id: "experimental 32UE ideal UDP bidirectional Long extended 24h"
     campaign_filename: *campaign_filename
-    test_name: "32UE ideal UDP attach-detach with traffic 24h"
+    test_name: "experimental 32UE ideal UDP bidirectional Long extended 24h"
     test_timeout: 93600
     # Configuration
     gnb_extra_config:
       log:
         all_level: error
       metrics:
-        sched_report_period: 5000
-        rlc_report_period: 5000
+        cu_up_statistics_report_period: 60000
+        pdcp_report_period: 60000
+        rlc_report_period: 60000
+        sched_report_period: 60000
       cell_cfg:
         pusch:
           max_puschs_per_slot: 2
