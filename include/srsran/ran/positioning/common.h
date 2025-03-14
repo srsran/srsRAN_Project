@@ -13,6 +13,7 @@
 #include "srsran/ran/csi_rs/csi_rs_id.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/scs_specific_carrier.h"
 #include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/ssb_properties.h"
 #include "srsran/ran/subcarrier_spacing.h"
@@ -145,12 +146,6 @@ struct spatial_relation_info_t {
   bool operator!=(const spatial_relation_info_t& rhs) const { return !(rhs == *this); }
 };
 
-struct scs_specific_carrier_t {
-  uint16_t           offset_to_carrier;
-  subcarrier_spacing scs;
-  uint16_t           carrier_bw;
-};
-
 struct active_ul_bwp_t {
   uint16_t            location_and_bw;
   subcarrier_spacing  scs;
@@ -161,10 +156,10 @@ struct active_ul_bwp_t {
 };
 
 struct srs_carrier_list_item_t {
-  uint32_t                            point_a;
-  std::vector<scs_specific_carrier_t> ul_ch_bw_per_scs_list;
-  active_ul_bwp_t                     active_ul_bwp;
-  std::optional<pci_t>                pci_nr;
+  uint32_t                          point_a;
+  std::vector<scs_specific_carrier> ul_ch_bw_per_scs_list;
+  active_ul_bwp_t                   active_ul_bwp;
+  std::optional<pci_t>              pci_nr;
 };
 
 struct srs_configuration_t {
