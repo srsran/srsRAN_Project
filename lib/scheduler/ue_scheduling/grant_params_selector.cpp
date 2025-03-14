@@ -253,7 +253,7 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
       nof_layers = h_dl->get_grant_params().nof_layers;
       mcs        = h_dl->get_grant_params().mcs;
       nof_rbs    = h_dl->get_grant_params().rbs.type1().length();
-      if (nof_rbs > nof_rb_lims.length()) {
+      if (nof_rbs > nof_rb_lims.stop()) {
         return std::nullopt;
       }
     }
