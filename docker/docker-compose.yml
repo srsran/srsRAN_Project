@@ -73,8 +73,8 @@ services:
     configs:
       - gnb_config.yml
     # Customize your desired network mode.
-    # current netowrk configuration creastes a private netwoek with both containers attached
-    # An alterantive would be `network: host"`. That would expose your host network into the container. It's the easiest to use if the 5gc is not in your PC
+    # current network configuration creates a private network with both containers attached
+    # An alternative would be `network: host"`. That would expose your host network into the container. It's the easiest to use if the 5gc is not in your PC
     networks:
       ran:
         ipv4_address: ${GNB_IP:-10.53.1.3}
