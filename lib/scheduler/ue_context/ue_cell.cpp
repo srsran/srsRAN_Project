@@ -391,7 +391,8 @@ aggregation_level ue_cell::get_aggregation_level(float cqi, const search_space_i
   }
 
   // Apply the configured offset to the CQI and make sure it is in the allowed range.
-  cqi = std::max(std::min(15.0f, cqi + expert_cfg.pdcch_al_cqi_offset), 0.0f);
+  static constexpr float MAX_CQI_VALUE = 15.0f, MIN_CQI_VALUE = 0.0f;
+  cqi = std::max(std::min(MAX_CQI_VALUE, cqi + expert_cfg.pdcch_al_cqi_offset), MIN_CQI_VALUE);
   return map_cqi_to_aggregation_level(cqi, cqi_table, ss_info.cfg->get_nof_candidates(), dci_size);
 }
 

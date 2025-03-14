@@ -32,18 +32,18 @@ static sch_mcs_description get_mcs_config(float cqi, pdsch_mcs_table mcs_table)
 }
 
 // Computes PDCCH code rate for a given aggregation level.
+// Note: This formula is not explicitly given in the TS. The code rate is computed in the standard payload / total_bits
+// form from information present in the TS.
 static float compute_pdcch_code_rate(unsigned nof_dci_bits, aggregation_level lvl)
 {
-  static constexpr unsigned pdcch_crc_bits = 24U;
-  return static_cast<float>(nof_dci_bits + pdcch_crc_bits) /
+  return static_cast<float>(nof_dci_bits + pdcch_constants::NOF_CRC_BITS) /
          static_cast<float>(pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
 }
 
 // Return whether DCI fits in given aggregation level (in turn nof. CCEs).
 static bool does_dci_bits_fit_in_cces(unsigned nof_dci_bits, aggregation_level lvl)
 {
-  static const unsigned pdcch_crc_bits = 24U;
-  return (nof_dci_bits + pdcch_crc_bits) < (pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
+  return (nof_dci_bits + pdcch_constants::NOF_CRC_BITS) < (pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
 }
 
 // Fetch MCS table to use corresponding to the CQI table provided as input.
@@ -83,7 +83,9 @@ aggregation_level srsran::map_cqi_to_aggregation_level(float               cqi,
       if (mcs_cfg.modulation > modulation_scheme::QPSK) {
         return aggr_lvl;
       }
-      // Check whether code rate is not exceeding the target code rate at effective CQI.
+      // Check whether code rate is not exceeding the target code rate for this MCS.
+      // Note: the actual effective code rate for a PDSCH with this MCS might be higher,
+      // the target code rate is only used as a reference.
       if (compute_pdcch_code_rate(nof_dci_bits, aggr_lvl) > mcs_cfg.get_normalised_target_code_rate()) {
         continue;
       }

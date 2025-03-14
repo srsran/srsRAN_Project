@@ -20,7 +20,7 @@ enum class cqi_table_t;
 
 /// \brief Computes PDCCH aggregation level to use based on the input parameters.
 ///
-/// \param[in] cqi CQI reported by the UE + OLLA adjustment.
+/// \param[in] cqi CQI value to consider for the mapping.
 /// \param[in] cqi_table CQI table to be used for the mapping.
 /// \param[in] pdcch_candidates PDCCH candidates per aggregation level, where aggregation level for the array element
 /// with index "x" is L=1U << x.

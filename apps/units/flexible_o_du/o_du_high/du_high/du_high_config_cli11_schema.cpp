@@ -205,7 +205,7 @@ static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_
   add_option(app,
              "--al_cqi_offset",
              ded_params.al_cqi_offset,
-             "Offset to apply to the CQI offset in the PDCCH aggregation level calculation.")
+             "Offset to apply to the CQI value used in the PDCCH aggregation level calculation.")
       ->capture_default_str()
       ->check(CLI::Range(-15, 15));
 }
