@@ -91,6 +91,11 @@ public:
   // See ru_downlink_plane_handler interface for documentation.
   void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
+    // Ignore request if RU is stopped.
+    if (stopped) {
+      return;
+    }
+
     std::lock_guard<std::mutex> lock(dl_request_mutex);
     request_information         info = {context, grid.copy()};
     std::swap(info, dl_request[context.slot.system_slot() % dl_request.size()]);
@@ -111,6 +116,11 @@ public:
   // See ru_uplink_plane_handler interface for documentation.
   void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override
   {
+    // Ignore request if RU is stopped.
+    if (stopped) {
+      return;
+    }
+
     std::lock_guard<std::mutex> lock(prach_request_mutex);
     prach_buffer_context        info =
         std::exchange(prach_request[context.slot.system_slot() % prach_request.size()], context);
@@ -130,6 +140,11 @@ public:
   // See ru_uplink_plane_handler interface for documentation.
   void handle_new_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
+    // Ignore request if RU is stopped.
+    if (stopped) {
+      return;
+    }
+
     std::lock_guard<std::mutex> lock(ul_request_mutex);
     request_information         info = {context, grid.copy()};
     std::swap(info, ul_request[context.slot.system_slot() % ul_request.size()]);
@@ -227,6 +242,9 @@ public:
     }
   }
 
+  /// Instruct the RU sector to discard new transmit/receive requests.
+  void stop() { stopped = true; }
+
   /// Prints in \c stdout the current gathered metrics. It does not reset the metrics.
   void print_metrics() const
   {
@@ -269,6 +287,8 @@ private:
   std::vector<request_information> dl_request;
   /// Protects the circular buffer containing the DL requests.
   std::mutex dl_request_mutex;
+  /// Stop sector from accepting new requests.
+  std::atomic<bool> stopped = false;
   /// \name  Group of event counters.
   ///
   /// These counters are informative and printed when print_metrics() is called.

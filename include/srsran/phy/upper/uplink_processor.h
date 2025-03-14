@@ -36,6 +36,9 @@ public:
 
   /// Gets the slot processing interface.
   virtual uplink_slot_processor& get_slot_processor() = 0;
+
+  /// Stops the uplink processor.
+  virtual void stop() = 0;
 };
 
 /// Pool of uplink processors.
@@ -50,5 +53,8 @@ public:
 
   /// Gets the uplink slot PDU repository pool interface.
   virtual uplink_pdu_slot_repository_pool& get_slot_pdu_repository_pool() = 0;
+
+  /// Stops all the contained uplink processors.
+  virtual void stop() = 0;
 };
 } // namespace srsran

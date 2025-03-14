@@ -76,6 +76,8 @@ public:
     unsigned nof_rx_buffers;
     /// System time-based throttling. See \ref lower_phy_configuration::system_time_throttling.
     float system_time_throttling;
+    /// Number of slots to execute before a complete stop after requesting to stop.
+    unsigned stop_nof_slots;
   };
 
   /// Constructs a baseband adaptor.
@@ -92,43 +94,32 @@ private:
   class internal_fsm
   {
   public:
+    /// Initialize the internal FSM with the number of processing slots required to close the lower PHY.
+    internal_fsm(unsigned stop_count) : state_stopped(state_wait_stop + stop_count) {}
+
     /// Default destructor - It reports a fatal error if the state is \c running or \c wait_stop.
     ~internal_fsm()
     {
-      report_fatal_error_if_not((state != states::running) && (state != states::wait_stop), "Unexpected state.");
+      uint32_t current_state = state.load();
+      report_fatal_error_if_not((current_state == state_idle) || (current_state >= state_stopped), "Unexpected state.");
     }
 
     /// \brief Notifies the start of the processing.
     /// \remark A fatal error is reported if start() is called while the processor is not in \c idle state.
     void start()
     {
-      states previous_state = state.exchange(states::running);
-      report_fatal_error_if_not(previous_state == states::idle, "Unexpected state.");
-    }
-
-    /// \brief Notifies that the asynchronous execution has stopped.
-    ///
-    /// Changes the state to \c stopped and sends the corresponding notification.
-    /// \remark A fatal error is reported if notify_stop() is called while the processor is not in \c wait_stop.
-    void notify_stop()
-    {
-      states previous_state = state.exchange(states::stopped);
-      report_fatal_error_if_not(previous_state == states::wait_stop, "Unexpected state.");
+      uint32_t expected_state = state_idle;
+      bool     success        = state.compare_exchange_strong(expected_state, state_running);
+      report_fatal_error_if_not(
+          success, "The starting expected state is 0x{:08x} (idle) but found 0x{:08x}.", state_idle, expected_state);
     }
 
     /// \brief Requests all asynchronous processing to stop.
     /// \remark A fatal error is reported if request_stop() is called more than once.
     void request_stop()
     {
-      states previous_state = state.exchange(states::wait_stop);
-
-      report_fatal_error_if_not((previous_state == states::running) || (previous_state == states::idle),
-                                "Unexpected state.");
-
-      // Transition to stop state directly if idle.
-      if (previous_state == states::idle) {
-        state = states::stopped;
-      }
+      uint32_t previous_state = state.fetch_xor(state_wait_stop);
+      report_fatal_error_if_not((previous_state & state_wait_stop) == 0, "Stopping has been requested more than once.");
     }
 
     /// \brief Waits for all asynchronous processing to stop.
@@ -136,31 +127,41 @@ private:
     /// first request_stop().
     void wait_stop()
     {
-      report_fatal_error_if_not((state == states::wait_stop) || (state == states::stopped), "Unexpected state.");
+      report_fatal_error_if_not((state.load() & state_wait_stop) != 0, "Unexpected state.");
 
-      while (state == states::wait_stop) {
+      // Wait for the state to transition to stop.
+      while (state.load() < state_stopped) {
         std::this_thread::sleep_for(std::chrono::microseconds(10));
       }
     }
 
-    /// Returns true if the asynchronous execution is running.
-    bool is_running() const { return state == states::running; }
+    /// \brief Call on the event of processing.
+    /// \return \c true if the state is running, otherwise \c false.
+    bool on_process()
+    {
+      // Detect stop mask.
+      if ((state.load() & state_wait_stop) != 0) {
+        // Increment the process count before considering stopped.
+        uint32_t current_state = state.fetch_add(1) + 1;
+        if (current_state >= state_stopped) {
+          return false;
+        }
+      }
+      return true;
+    }
 
   private:
-    /// Possible states.
-    enum class states {
-      /// The asynchronous processing has not been started.
-      idle = 0,
-      /// The asynchronous processing has started and not notify_stop.
-      running,
-      /// A stop command has been issued - waiting for the asynchronous tasks to finish.
-      wait_stop,
-      /// The asynchronous processing started, ran and it is currently notify_stop.
-      stopped
-    };
+    /// State value in idle.
+    static constexpr uint32_t state_idle = 0x7fffffff;
+    /// State value while running.
+    static constexpr uint32_t state_running = 0x00000000;
+    /// State mask while the lower PHY is stopping.
+    static constexpr uint32_t state_wait_stop = 0x80000000;
+    /// Stopped state, depends on the maximum processing delay number of slots.
+    const uint32_t state_stopped;
 
     /// Actual state.
-    std::atomic<states> state{states::idle};
+    std::atomic<uint32_t> state{state_idle};
   };
 
   /// \brief Processes downlink baseband.

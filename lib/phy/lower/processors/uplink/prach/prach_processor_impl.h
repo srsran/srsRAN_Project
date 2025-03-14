@@ -27,12 +27,18 @@ class prach_processor_impl : public prach_processor,
                              private prach_processor_request_handler
 {
 private:
+  std::atomic<bool>                                    stopped = false;
   std::vector<std::unique_ptr<prach_processor_worker>> workers;
   prach_processor_notifier*                            notifier = nullptr;
 
   // See prach_processor_request_handler for documentation.
   void handle_request(prach_buffer& buffer, const prach_buffer_context& context) override
   {
+    // Ignore request if the processor has stopped.
+    if (stopped) {
+      return;
+    }
+
     srsran_assert(notifier, "Notifier has not been connected.");
 
     // Iterate all workers...
@@ -80,6 +86,9 @@ public:
     }
     notifier = &notifier_;
   }
+
+  // See prach_processor interface for documentation.
+  void stop() override { stopped = true; }
 
   // See prach_processor for documentation.
   prach_processor_request_handler& get_request_handler() override { return *this; }

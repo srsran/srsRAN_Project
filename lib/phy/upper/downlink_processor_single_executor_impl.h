@@ -54,7 +54,8 @@ public:
 /// the gateway as soon as every enqueued PDU before finish_processing_pdus() is processed . This is controlled counting
 /// the PDUs that are processed and finished processing.
 ///  \note Thread safe class.
-class downlink_processor_single_executor_impl : public downlink_processor_controller,
+class downlink_processor_single_executor_impl : public downlink_processor_base,
+                                                private downlink_processor_controller,
                                                 private unique_downlink_processor::downlink_processor_callback,
                                                 private detail::downlink_processor_callback
 {
@@ -78,11 +79,16 @@ public:
                                           task_executor&                        executor_,
                                           srslog::basic_logger&                 logger_);
 
-  // See interface for documentation.
-  unique_downlink_processor configure_resource_grid(const resource_grid_context& context,
-                                                    shared_resource_grid         grid) override;
+  // See downlink_processor_base interface for documentation.
+  downlink_processor_controller& get_controller() override { return *this; }
+
+  // See downlink_processor_base interface for documentation.
+  void stop() override { state.stop(); }
 
 private:
+  // See downlink_processor_controller interface for documentation.
+  unique_downlink_processor configure_resource_grid(const resource_grid_context& context,
+                                                    shared_resource_grid         grid) override;
   // See interface for documentation.
   void process_pdcch(const pdcch_processor::pdu_t& pdu) override;
 
@@ -99,7 +105,7 @@ private:
   // See interface for documentation.
   void process_prs(const prs_generator_configuration& config) override;
 
-  // See interface for documentation.
+  // See unique_downlink_processor::downlink_processor_callback interface for documentation.
   void finish_processing_pdus() override;
 
   class pdsch_processor_notifier_wrapper : public pdsch_processor_notifier

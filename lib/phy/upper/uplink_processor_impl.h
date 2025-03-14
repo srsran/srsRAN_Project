@@ -181,6 +181,9 @@ public:
   // See uplink_processor interface for documentation.
   uplink_slot_processor& get_slot_processor() override;
 
+  // See uplink_processor interface for documentation.
+  void stop() override;
+
 private:
   // See uplink_slot_processor interface for documentation.
   void handle_rx_symbol(const shared_resource_grid& grid, unsigned end_symbol_index) override;

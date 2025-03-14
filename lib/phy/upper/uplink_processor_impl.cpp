@@ -65,10 +65,15 @@ uplink_slot_processor& uplink_processor_impl::get_slot_processor()
   return *this;
 }
 
+void uplink_processor_impl::stop()
+{
+  pdu_repository.stop();
+}
+
 unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository(slot_point slot)
 {
   // Try to configure a new slot.
-  if (!pdu_repository.new_slot()) {
+  if (!pdu_repository.reserve_on_new_slot()) {
     // Return an invalid repository.
     return {};
   }
@@ -132,6 +137,11 @@ void uplink_processor_impl::process_prach(const prach_buffer& buffer, const prac
 void uplink_processor_impl::process_pusch(const shared_resource_grid&                  grid,
                                           const uplink_pdu_slot_repository::pusch_pdu& pdu)
 {
+  // Notify the creation of the execution task.
+  if (!pdu_repository.on_create_pdu_task()) {
+    return;
+  }
+
   const pusch_processor::pdu_t& proc_pdu = pdu.pdu;
 
   // Temporal sanity check as PUSCH is only supported for data. Remove the check when the UCI is supported for PUSCH.
@@ -196,6 +206,11 @@ void uplink_processor_impl::process_pusch(const shared_resource_grid&           
 void uplink_processor_impl::process_pucch(const shared_resource_grid&                  grid,
                                           const uplink_pdu_slot_repository::pucch_pdu& pdu)
 {
+  // Notify the creation of the execution task.
+  if (!pdu_repository.on_create_pdu_task()) {
+    return;
+  }
+
   bool success = task_executors.pucch_executor.execute([this, grid2 = grid.copy(), &pdu]() mutable {
     trace_point tp = l1_tracer.now();
 
@@ -252,6 +267,11 @@ void uplink_processor_impl::process_pucch(const shared_resource_grid&           
 void uplink_processor_impl::process_srs(const shared_resource_grid&                grid,
                                         const uplink_pdu_slot_repository::srs_pdu& pdu)
 {
+  // Notify the creation of the execution task.
+  if (!pdu_repository.on_create_pdu_task()) {
+    return;
+  }
+
   bool success = task_executors.srs_executor.execute([this, grid2 = grid.copy(), &pdu]() {
     trace_point tp = l1_tracer.now();
 

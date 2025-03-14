@@ -78,6 +78,8 @@ public:
 
   void connect(puxch_processor_notifier& notifier_) override { notifier = &notifier_; }
 
+  void stop() override {}
+
   puxch_processor_request_handler& get_request_handler() override { return request_handler; }
 
   puxch_processor_baseband& get_baseband() override { return baseband; }

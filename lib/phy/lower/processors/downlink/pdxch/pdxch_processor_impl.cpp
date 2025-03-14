@@ -87,6 +87,11 @@ bool pdxch_processor_impl::process_symbol(baseband_gateway_buffer_writer&       
 
 void pdxch_processor_impl::handle_request(const shared_resource_grid& grid, const resource_grid_context& context)
 {
+  // Ignore request if the processor has stopped.
+  if (stopped) {
+    return;
+  }
+
   srsran_assert(notifier != nullptr, "Notifier has not been connected.");
 
   // Swap the new request by the current request in the circular array.

@@ -16,7 +16,8 @@
 namespace srsran {
 
 /// Downlink processor metric decorator.
-class phy_metrics_downlink_processor_decorator : public downlink_processor_controller,
+class phy_metrics_downlink_processor_decorator : public downlink_processor_base,
+                                                 private downlink_processor_controller,
                                                  private unique_downlink_processor::downlink_processor_callback
 {
 public:
@@ -83,20 +84,26 @@ public:
 
   /// Constructs the downlink processor metric decorator from a base processor controller and the resource grid gateway
   /// adaptor.
-  phy_metrics_downlink_processor_decorator(std::unique_ptr<downlink_processor_controller> base_,
-                                           std::unique_ptr<rg_gateway_adaptor>            adaptor_) :
+  phy_metrics_downlink_processor_decorator(std::unique_ptr<downlink_processor_base> base_,
+                                           std::unique_ptr<rg_gateway_adaptor>      adaptor_) :
     base(std::move(base_)), adaptor(std::move(adaptor_))
   {
     srsran_assert(base, "Invalid base instance.");
     srsran_assert(adaptor, "Invalid RG gateway adaptor.");
   }
 
+  // See downlink_processor_base interface for documentation.
+  downlink_processor_controller& get_controller() override { return *this; }
+
+  // See downlink_processor_base interface for documentation.
+  void stop() override { base->stop(); }
+
   // See downlink_processor_controller interface for documentation.
   unique_downlink_processor configure_resource_grid(const resource_grid_context& context,
                                                     shared_resource_grid         grid) override
   {
     // Try to configure underlying downlink processor.
-    unique_downlink_processor proc = base->configure_resource_grid(context, std::move(grid));
+    unique_downlink_processor proc = base->get_controller().configure_resource_grid(context, std::move(grid));
 
     // Ensure the resulting processor is valid.
     if (!proc.is_valid()) {
@@ -165,9 +172,9 @@ public:
   }
 
 private:
-  std::unique_ptr<downlink_processor_controller> base;
-  std::unique_ptr<rg_gateway_adaptor>            adaptor;
-  unique_downlink_processor                      base_processor;
+  std::unique_ptr<downlink_processor_base> base;
+  std::unique_ptr<rg_gateway_adaptor>      adaptor;
+  unique_downlink_processor                base_processor;
 };
 
 } // namespace srsran

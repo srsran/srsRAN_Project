@@ -145,4 +145,6 @@ const downlink_pdu_validator& upper_phy_impl::get_downlink_pdu_validator() const
 void upper_phy_impl::stop()
 {
   rx_buf_pool->stop();
+  dl_processor_pool->stop();
+  ul_processor_pool->stop();
 }

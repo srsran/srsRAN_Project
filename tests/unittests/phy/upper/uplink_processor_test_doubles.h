@@ -25,6 +25,8 @@ public:
     return unique_uplink_pdu_slot_repository(*this);
   }
 
+  void stop() override {}
+
   void finish_adding_pdus() override {}
 
   uplink_slot_processor& get_slot_processor() override { return *this; }

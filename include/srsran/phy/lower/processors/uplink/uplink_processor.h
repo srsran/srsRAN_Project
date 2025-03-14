@@ -38,6 +38,9 @@ public:
                        prach_processor_notifier&  prach_notifier,
                        puxch_processor_notifier&  puxch_notifier) = 0;
 
+  /// Stops the processor.
+  virtual void stop() = 0;
+
   /// Gets the PRACH request handler.
   virtual prach_processor_request_handler& get_prach_request_handler() = 0;
 

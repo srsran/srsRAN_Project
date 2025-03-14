@@ -41,22 +41,26 @@ public:
     srsran_assert(modulator, "Invalid modulator.");
   }
 
-  // See interface for documentation.
+  // See pdxch_processor interface for documentation.
   void connect(pdxch_processor_notifier& notifier) override;
 
-  // See interface for documentation.
+  // See pdxch_processor interface for documentation.
+  void stop() override { stopped = true; }
+
+  // See pdxch_processor interface for documentation.
   pdxch_processor_request_handler& get_request_handler() override;
 
-  // See interface for documentation.
+  // See pdxch_processor interface for documentation.
   pdxch_processor_baseband& get_baseband() override;
 
 private:
-  // See interface for documentation.
+  // See pdxch_processor_baseband interface for documentation.
   bool process_symbol(baseband_gateway_buffer_writer& samples, const symbol_context& context) override;
 
-  // See interface for documentation.
+  // See pdxch_processor_request_handler interface for documentation.
   void handle_request(const shared_resource_grid& grid, const resource_grid_context& context) override;
 
+  std::atomic<bool>                      stopped = false;
   unsigned                               nof_symbols_per_slot;
   unsigned                               nof_tx_ports;
   pdxch_processor_notifier*              notifier = nullptr;

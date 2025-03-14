@@ -12,9 +12,9 @@
 
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/upper/uplink_pdu_slot_repository.h"
-#include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include <array>
+#include <thread>
 #include <variant>
 
 namespace srsran {
@@ -56,12 +56,12 @@ public:
     increment_pending_pdu_count();
   }
 
-  /// \brief Prepares the slot repository for a new slot context.
-  /// \return \c true if the new slot is configured successfully.
-  bool new_slot()
+  /// \brief Reserves the repository for a new slot context.
+  /// \return \c true if the reservation is successful, otherwise \c false.
+  bool reserve_on_new_slot()
   {
     // Try to write the accepting PDU mask, it is expected that the number of pending PDU is zero.
-    uint64_t expected_pending_pdu_count = 0;
+    uint32_t expected_pending_pdu_count = pending_pdu_count_idle;
     if (!pending_pdu_count.compare_exchange_weak(expected_pending_pdu_count, accepting_pdu_mask)) {
       return false;
     }
@@ -78,8 +78,29 @@ public:
   // See interface for documentation.
   void finish_adding_pdus() override
   {
-    [[maybe_unused]] uint64_t prev = pending_pdu_count.fetch_xor(accepting_pdu_mask);
+    [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_xor(accepting_pdu_mask);
     srsran_assert((prev & accepting_pdu_mask) != 0, "Unexpected prev={:0x016} finishing PDUs.", prev);
+  }
+
+  /// \brief Notifies the event of creating a new asynchronous execution task. It increments the PDU being executed
+  /// count.
+  /// \return \c true if the internal state allows the creation of the task, otherwise \c false.
+  bool on_create_pdu_task()
+  {
+    // Get current state.
+    uint32_t current_state = pending_pdu_count.load();
+
+    // Try to increment the number of PDUs to execute.
+    while (!pending_pdu_count.compare_exchange_weak(current_state, current_state + pending_pdu_inc_exec)) {
+      // Return false if the execution has already stopped.
+      if (current_state == pending_pdu_count_stopped) {
+        return false;
+      }
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+
+    // The exchange was successful, indicate the task can be created.
+    return true;
   }
 
   /// \brief Notifies the completion of a PDU processing.
@@ -89,8 +110,20 @@ public:
   /// \remark An assertion is triggered if the pending PDU count contains the accepting PDU mask.
   void on_finish_processing_pdu()
   {
-    [[maybe_unused]] uint64_t prev = pending_pdu_count.fetch_sub(1);
-    srsran_assert((prev & accepting_pdu_mask) == 0, "The slot repository is the invalid state of accepting PDUs.");
+    [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_sub(pending_pdu_inc_queue + pending_pdu_inc_exec);
+    srsran_assert((prev & accepting_pdu_mask) == 0, "The slot repository is in an unexpected state 0x{:016x}.", prev);
+  }
+
+  /// Stops the uplink PDU slot repository.
+  void stop()
+  {
+    // As long as there are pending asynchronous tasks, wait for them to finish.
+    for (uint32_t current_state = pending_pdu_count.load();
+         ((current_state & 0xffff0000) != 0) ||
+         !pending_pdu_count.compare_exchange_weak(current_state, pending_pdu_count_stopped);
+         current_state = pending_pdu_count.load()) {
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
   }
 
   /// Returns a span that contains the PDUs for the given slot and symbol index.
@@ -98,20 +131,28 @@ public:
 
 private:
   /// Accepting PDU state mask in the pending PDU count.
-  static constexpr uint64_t accepting_pdu_mask = 1UL << 63U;
+  static constexpr uint32_t accepting_pdu_mask = 1UL << 31U;
+  /// Pending PDU value when the processor is idle.
+  static constexpr uint32_t pending_pdu_count_idle = 0UL;
+  /// Pending PDU value when the processor is stopped.
+  static constexpr uint32_t pending_pdu_count_stopped = std::numeric_limits<int32_t>::max();
+  /// PDU pending increment.
+  static constexpr uint32_t pending_pdu_inc_queue = 1;
+  /// PDU execution increment.
+  static constexpr uint32_t pending_pdu_inc_exec = 1UL << 12;
 
   /// \brief Increment the pending PDU count.
   /// \remark An assertion is triggered if the pending PDU count contains the accepting PDU mask.
   void increment_pending_pdu_count()
   {
-    [[maybe_unused]] uint64_t prev = pending_pdu_count.fetch_add(1);
+    [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_add(pending_pdu_inc_queue);
     srsran_assert((prev & accepting_pdu_mask) != 0, "The slot repository is the invalid state of NOT accepting PDUs.");
   }
 
   /// Repository that contains the PDUs.
   std::array<static_vector<uplink_slot_pdu_entry, MAX_UL_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> repository;
-  /// Counts the number of pending PDUs.
-  std::atomic<uint64_t> pending_pdu_count = {};
+  /// Internal state, it counts the number of pending and executing PDUs using masks.
+  std::atomic<uint32_t> pending_pdu_count = {};
 
   /// Returns a reference to the list of PDUs for the given slot and end symbol index.
   const static_vector<uplink_slot_pdu_entry, MAX_UL_PDUS_PER_SLOT>& get_entry(unsigned end_symbol_index) const

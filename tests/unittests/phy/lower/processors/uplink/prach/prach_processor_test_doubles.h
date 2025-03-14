@@ -74,6 +74,7 @@ class prach_processor_spy : public prach_processor
 {
 public:
   void                             connect(prach_processor_notifier& notifier) override {}
+  void                             stop() override {}
   prach_processor_request_handler& get_request_handler() override { return request_handler; }
   prach_processor_baseband&        get_baseband() override { return baseband; }
 

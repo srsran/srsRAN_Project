@@ -62,8 +62,14 @@ public:
   ru_metrics_collector* get_metrics_collector() override { return nullptr; }
 
 private:
-  /// Possible internal states.
-  enum class state : uint8_t { idle = 0, running, wait_stop, stopped };
+  /// State value in idle.
+  static constexpr uint32_t state_idle = 0xffffffff;
+  /// State value while running.
+  static constexpr uint32_t state_running = 0x80000000;
+  /// State value while the RU is stopping.
+  static constexpr uint32_t state_wait_stop = 0x40000000;
+  /// Stopped state, depends on the maximum processing delay number of slots.
+  const uint32_t state_stopped;
   /// Minimum loop time.
   const std::chrono::microseconds minimum_loop_time = std::chrono::microseconds(10);
 
@@ -128,7 +134,7 @@ private:
   /// Radio Unit timing notifier.
   ru_timing_notifier& timing_notifier;
   /// Internal state.
-  std::atomic<state> current_state = {state::idle};
+  std::atomic<uint32_t> internal_state = state_idle;
   /// Slot time in microseconds.
   std::chrono::microseconds slot_duration;
   /// Number of slots is notified in advance of the transmission time.

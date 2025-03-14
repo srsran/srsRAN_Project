@@ -24,5 +24,10 @@ downlink_processor_pool_impl::downlink_processor_pool_impl(downlink_processor_po
 downlink_processor_controller& downlink_processor_pool_impl::get_processor_controller(slot_point slot)
 {
   srsran_assert(slot.valid(), "Invalid slot ({}) when requesting a downlink processor", slot);
-  return processors.get_processor(slot);
+  return processors.get_processor(slot).get_controller();
+}
+
+void downlink_processor_pool_impl::stop()
+{
+  processors.stop();
 }

@@ -21,6 +21,11 @@ uplink_processor_pool_impl::uplink_processor_pool_impl(uplink_processor_pool_imp
   }
 }
 
+void uplink_processor_pool_impl::stop()
+{
+  processors.stop();
+}
+
 uplink_slot_processor& uplink_processor_pool_impl::get_slot_processor(slot_point slot)
 {
   srsran_assert(slot.valid(), "Invalid slot ({}) when requesting an uplink processor", slot);
