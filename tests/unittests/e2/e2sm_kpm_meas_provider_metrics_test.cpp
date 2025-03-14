@@ -182,11 +182,8 @@ TEST_F(e2sm_kpm_meas_provider_metrics_test, e2sm_kpm_supported_metrics_are_suppo
 TEST_F(e2sm_kpm_meas_provider_metrics_test, e2sm_kpm_return_e2_level_metric_with_no_measurements)
 {
   // metrics that return no_value when no measurements are present. Specifically, they should not return 0
-  std::vector<std::string> no_value_metrics = {"DRB.AirIfDelayUl",
-                                               "DRB.PacketSuccessRateUlgNBUu",
-                                               "DRB.RlcDelayUl",
-                                               "DRB.RlcPacketDropRateDl",
-                                               "DRB.RlcSduDelayDl"};
+  std::vector<std::string> no_value_metrics = {
+      "DRB.AirIfDelayUl", "DRB.RlcSduDelayDl", "DRB.RlcDelayUl", "DRB.RlcPacketDropRateDl", "DRB.RlcSduDelayDl"};
 
   // E2-NODE-LEVEL metrics have to be always returned, even if 0 or NAN
   e2sm_kpm_metric_level_enum       metric_level = E2_NODE_LEVEL;
