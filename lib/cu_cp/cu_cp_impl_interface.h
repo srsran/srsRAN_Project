@@ -124,7 +124,8 @@ public:
   virtual void handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index_t amf_index, const byte_buffer& nrppa_pdu) = 0;
 
   /// \brief Handle N2 AMF connection drop.
-  virtual void handle_n2_disconnection() = 0;
+  /// \param[in] amf_index The index of the dropped AMF.
+  virtual void handle_n2_disconnection(amf_index_t amf_index) = 0;
 };
 
 /// Interface for the NRPPa notifier to communicate with the CU-CP.

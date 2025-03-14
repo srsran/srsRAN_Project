@@ -47,11 +47,14 @@ class oper_table_t
 {
 public:
   constexpr oper_table_t()                         = default;
-  virtual ~oper_table_t()                          = default;
   virtual R    call(void* src, Args... args) const = 0;
   virtual void move(void* src, void* dest) const   = 0;
   virtual void dtor(void* src) const               = 0;
   virtual bool is_in_small_buffer() const          = 0;
+
+protected:
+  // Note: Using a virtual dtor causes a malloc when initiatilizing the tables in static storage.
+  ~oper_table_t() = default;
 };
 
 /// Specialization of move/call/destroy operations for when the "unique_function<R(Args...)>" is empty

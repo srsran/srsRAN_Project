@@ -98,7 +98,6 @@ struct test_bench {
   pucch_allocator_impl          pucch_alloc{cell_cfg, 31U, 32U};
   uci_allocator_impl            uci_alloc{pucch_alloc};
   ue_repository                 ue_db;
-  ue_cell_grid_allocator        ue_alloc;
   ue_fallback_scheduler         fallback_sched;
   csi_rs_scheduler              csi_rs_sched;
 
@@ -108,15 +107,12 @@ struct test_bench {
     sched_cfg{sched_cfg_},
     builder_params{builder_params_},
     cell_cfg{*[&]() { return cfg_mng.add_cell(cell_req); }()},
-    ue_alloc(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED", true)),
     fallback_sched(expert_cfg, cell_cfg, pdcch_sch, pucch_alloc, uci_alloc, ue_db),
     csi_rs_sched(cell_cfg)
   {
     srslog::fetch_basic_logger("SCHED", true).set_level(srslog::basic_levels::debug);
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
     srslog::init();
-
-    ue_alloc.add_cell(cell_cfg.cell_index, pdcch_sch, uci_alloc, res_grid);
   }
 
   bool add_ue(const sched_ue_creation_request_message& create_req)

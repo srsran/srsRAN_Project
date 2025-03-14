@@ -202,8 +202,5 @@ private:
   downlink_processor_single_executor_state state;
   /// PDSCH notifier wrapper.
   pdsch_processor_notifier_wrapper pdsch_notifier;
-  /// Protects the internal state.
-  // :TODO: remove me later
-  mutable std::mutex mutex;
 };
 } // namespace srsran

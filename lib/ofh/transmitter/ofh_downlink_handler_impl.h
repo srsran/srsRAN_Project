@@ -76,7 +76,7 @@ public:
   void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override;
 
   // See interface for documentation.
-  void set_error_notifier(error_notifier& notifier) override { err_notifier = std::ref(notifier); }
+  void set_error_notifier(error_notifier& notifier) override { err_notifier = &notifier; }
 
   /// Returns the OTA symbol boundary notifier of this downlink handler implementation.
   ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() { return window_checker; }
@@ -91,7 +91,7 @@ private:
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   std::unique_ptr<data_flow_uplane_downlink_data>       data_flow_uplane;
   std::shared_ptr<ether::eth_frame_pool>                frame_pool;
-  std::reference_wrapper<error_notifier>                err_notifier;
+  error_notifier*                                       err_notifier;
 };
 
 } // namespace ofh

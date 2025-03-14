@@ -26,23 +26,24 @@
 #include "srsran/security/security.h"
 #include "srsran/security/ssl.h"
 
-namespace srsran {
-namespace security {
+namespace srsran::security {
 
 class ciphering_engine_nea2 final : public ciphering_engine
 {
 public:
-  ciphering_engine_nea2(sec_128_key k_128_enc, uint8_t bearer_id_, security_direction direction_);
-  virtual ~ciphering_engine_nea2() = default;
+  ciphering_engine_nea2(sec_128_key k_128_enc_, uint8_t bearer_id_, security_direction direction_);
+  ~ciphering_engine_nea2() override = default;
 
   security_result apply_ciphering(byte_buffer buf, size_t offset, uint32_t count) override;
 
 private:
   uint8_t            bearer_id;
   security_direction direction;
+  sec_128_key        k_128_enc;
 
   aes_context ctx;
+
+  srslog::basic_logger& logger;
 };
 
-} // namespace security
-} // namespace srsran
+} // namespace srsran::security

@@ -24,23 +24,22 @@
 
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_repository.h"
+#include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {
-
 class downlink_pdu_validator;
 class downlink_processor_pool;
 class resource_grid_pool;
 class uplink_pdu_validator;
 class uplink_request_processor;
-class uplink_slot_pdu_repository;
+class uplink_pdu_slot_repository;
 
 namespace srs_du {
 struct du_cell_config;
 }
 
 namespace fapi_adaptor {
-
 /// PHY&ndash;FAPI sector adaptor configuration.
 struct phy_fapi_sector_adaptor_config {
   /// Base station sector identifier.
@@ -70,7 +69,7 @@ struct phy_fapi_sector_adaptor_dependencies {
   /// Uplink resource grid pool.
   resource_grid_pool* ul_rg_pool;
   /// Uplink slot PDU repository.
-  uplink_slot_pdu_repository* ul_pdu_repository;
+  uplink_pdu_slot_repository_pool* ul_pdu_repository;
   /// Uplink PDU validator.
   const uplink_pdu_validator* ul_pdu_validator;
   /// Precoding matrix repository.
@@ -88,6 +87,5 @@ struct phy_fapi_adaptor_config {
 struct phy_fapi_adaptor_dependencies {
   std::vector<phy_fapi_sector_adaptor_dependencies> sectors;
 };
-
 } // namespace fapi_adaptor
 } // namespace srsran

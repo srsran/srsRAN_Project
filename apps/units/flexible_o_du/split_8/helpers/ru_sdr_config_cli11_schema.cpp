@@ -21,7 +21,7 @@
  */
 
 #include "ru_sdr_config_cli11_schema.h"
-#include "apps/services/logger/logger_appconfig_cli11_utils.h"
+#include "apps/helpers/logger/logger_appconfig_cli11_utils.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "ru_sdr_config.h"
 #include "srsran/support/cli11_utils.h"
@@ -138,8 +138,8 @@ static void configure_cli11_ru_sdr_args(CLI::App& app, ru_sdr_unit_config& confi
 
 static void configure_cli11_log_args(CLI::App& app, ru_sdr_unit_logger_config& log_params)
 {
-  app_services::add_log_option(app, log_params.radio_level, "--radio_level", "Radio log level");
-  app_services::add_log_option(app, log_params.phy_level, "--phy_level", "PHY log level");
+  app_helpers::add_log_option(app, log_params.radio_level, "--radio_level", "Radio log level");
+  app_helpers::add_log_option(app, log_params.phy_level, "--phy_level", "PHY log level");
 }
 
 static void configure_cli11_cell_affinity_args(CLI::App& app, ru_sdr_unit_cpu_affinities_cell_config& config)

@@ -104,6 +104,13 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
 
 expected<du_ue*, std::string> ue_creation_procedure::create_du_ue_context() const
 {
+  // Fetch the DU cell configuration of the primary cell UE is connected to.
+  // TODO: Use cell manager
+  const auto& cell_cfg = du_params.ran.cells[req.pcell_index];
+  if (not cell_cfg.enabled) {
+    return make_unexpected("UE created in inactive cell");
+  }
+
   // Create a DU UE resource manager, which will be responsible for managing bearer and PUCCH resources.
   auto alloc_result =
       du_res_alloc.create_ue_resource_configurator(req.ue_index, req.pcell_index, req.tc_rnti != rnti_t::INVALID_RNTI);
@@ -112,8 +119,6 @@ expected<du_ue*, std::string> ue_creation_procedure::create_du_ue_context() cons
     return make_unexpected(alloc_result.error());
   }
 
-  // Fetch the DU cell configuration of the primary cell UE is connected to.
-  const auto& cell_cfg = du_params.ran.cells[req.pcell_index];
   // Create the DU UE context.
   return ue_mng.add_ue(du_ue_context(req.ue_index, req.pcell_index, req.tc_rnti, cell_cfg.nr_cgi),
                        std::move(alloc_result.value()));

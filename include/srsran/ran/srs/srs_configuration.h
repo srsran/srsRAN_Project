@@ -115,6 +115,13 @@ struct srs_config {
     MAX_NOF_SRS_RES_PER_SET = 16
   };
 
+  enum srs_pos_res_id : uint8_t {
+    MIN_SRS_POS_RES_ID          = 0,
+    MAX_SRS_POS_RES_ID          = 63,
+    MAX_NOF_SRS_POS_RES         = 64,
+    MAX_NOF_SRS_POS_RES_PER_SET = 16
+  };
+
   struct srs_res_id_t {
     /// Resource ID within the cell. The UE doesn't care about this value.
     unsigned cell_res_id;
@@ -429,7 +436,7 @@ struct srs_config {
   static_vector<srs_resource_set, srs_res_set_id::MAX_NOF_SRS_RES_SETS> srs_res_set_list;
   static_vector<srs_resource, srs_res_id::MAX_NOF_SRS_RES>              srs_res_list;
   static_vector<srs_resource_set, srs_res_set_id::MAX_NOF_SRS_RES_SETS> pos_srs_res_set_list;
-  static_vector<srs_pos_resource, srs_res_id::MAX_NOF_SRS_RES>          pos_srs_res_list;
+  static_vector<srs_pos_resource, srs_pos_res_id::MAX_NOF_SRS_POS_RES>  pos_srs_res_list;
   /// Mapping to NR RRC: If true, the field is present in NR RRC indicating value disabled and UE applies the TPC
   /// command without accumulation (this applies to SRS when a separate closed loop is configured for SRS). If false,
   /// the field is absent in NR RRC and UE applies TPC commands via accumulation.

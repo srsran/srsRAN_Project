@@ -93,7 +93,7 @@ public:
   }
 
   template <typename... Args>
-  void log_proc_warning(const char* event_fmt, Args&&... args)
+  void log_proc_warning(const char* event_fmt, Args&&... args) const
   {
     fmt::memory_buffer fmtbuf;
     fmt::format_to(std ::back_inserter(fmtbuf), event_fmt, std::forward<Args>(args)...);
@@ -101,7 +101,7 @@ public:
   }
 
 private:
-  void log_impl(srslog::log_channel& log_ch, const char* result_str)
+  void log_impl(srslog::log_channel& log_ch, const char* result_str) const
   {
     if (rnti == rnti_t::INVALID_RNTI) {
       log_ch("ue={} proc=\"{}\": {}.", fmt::underlying(ue_index), proc_name, result_str);

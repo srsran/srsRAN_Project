@@ -204,11 +204,11 @@ static void fill_pucch_format_0_1_context(ul_pucch_context& context, const fapi:
   ctx.is_sr_opportunity       = fapi_pdu.sr_bit_len == 1U;
 }
 
-void srsran::fapi_adaptor::convert_pucch_fapi_to_phy(uplink_processor::pucch_pdu& pdu,
-                                                     const fapi::ul_pucch_pdu&    fapi_pdu,
-                                                     uint16_t                     sfn,
-                                                     uint16_t                     slot,
-                                                     uint16_t                     num_rx_ant)
+void srsran::fapi_adaptor::convert_pucch_fapi_to_phy(uplink_pdu_slot_repository::pucch_pdu& pdu,
+                                                     const fapi::ul_pucch_pdu&              fapi_pdu,
+                                                     uint16_t                               sfn,
+                                                     uint16_t                               slot,
+                                                     uint16_t                               num_rx_ant)
 {
   // Fill main context fields.
   ul_pucch_context& context = pdu.context;

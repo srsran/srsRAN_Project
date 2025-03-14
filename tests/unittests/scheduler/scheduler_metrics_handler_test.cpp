@@ -83,10 +83,17 @@ TEST_F(scheduler_metrics_handler_tester, metrics_sent_with_defined_periodicity)
 {
   unsigned nof_reports = test_rgen::uniform_int<unsigned>(1, 10);
   ASSERT_TRUE(metrics_notif.last_report.ue_metrics.empty());
+
+  // Discard first report, as it may have not enough slots.
+  get_next_metric();
+  ASSERT_LE(metrics_notif.last_report.nof_slots, report_period.count());
+  unsigned last_slot_count = slot_count;
+
   for (unsigned i = 0; i != nof_reports; ++i) {
     get_next_metric();
     ASSERT_EQ(metrics_notif.last_report.ue_metrics.size(), 1);
-    ASSERT_EQ(slot_count, report_period.count() * (i + 1));
+    ASSERT_EQ(metrics_notif.last_report.nof_slots, report_period.count());
+    ASSERT_EQ(slot_count - last_slot_count, report_period.count() * (i + 1));
 
     ASSERT_EQ(metrics_notif.last_report.ue_metrics[0].rnti, to_rnti(0x4601));
   }
@@ -178,6 +185,10 @@ TEST_F(scheduler_metrics_handler_tester, compute_mcs)
   sch_mcs_index dl_mcs{test_rgen::uniform_int<uint8_t>(1, 28)};
   sch_mcs_index ul_mcs{test_rgen::uniform_int<uint8_t>(1, 28)};
 
+  // Discard first report, as it may have not enough slots.
+  get_next_metric();
+  metrics_notif.last_report = {};
+
   sched_result res;
   res.dl.nof_dl_symbols = 14;
   res.ul.nof_ul_symbols = 14;
@@ -187,7 +198,7 @@ TEST_F(scheduler_metrics_handler_tester, compute_mcs)
   ul_sched_info& ul_msg = res.ul.puschs.emplace_back();
   ul_msg.pusch_cfg.rnti = to_rnti(0x4601);
 
-  for (unsigned i = 0; i != report_period.count(); ++i) {
+  for (unsigned i = 0; i != report_period.count() and metrics_notif.last_report.nof_slots == 0; ++i) {
     cw.mcs_index               = dl_mcs;
     ul_msg.pusch_cfg.mcs_index = ul_mcs;
     run_slot(res);
@@ -251,6 +262,10 @@ TEST_F(scheduler_metrics_handler_tester, compute_latency_metric)
   using usecs                = std::chrono::microseconds;
   std::vector<usecs> samples = {usecs{10}, usecs{50}, usecs{150}, usecs{300}, usecs{500}};
   samples.resize(report_period.count());
+
+  // Discard first report, as it may have not enough slots.
+  get_next_metric();
+  metrics_notif.last_report = {};
 
   sched_result sched_res;
   sched_res.dl.nof_dl_symbols = 14;

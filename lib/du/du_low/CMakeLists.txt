@@ -18,16 +18,16 @@
 # and at http://www.gnu.org/licenses/.
 #
 
-add_subdirectory(metrics)
-
 set(SOURCES
         du_low_factory.cpp
         du_low_impl.cpp
+        du_low_metrics_collector_impl.cpp
         o_du_low_factory.cpp
-        o_du_low_impl.cpp)
+        o_du_low_impl.cpp
+        o_du_low_metrics_collector_impl.cpp)
 
 add_library(srsran_o_du_low STATIC ${SOURCES})
-set(DU_LOW_LIBRARIES srsran_o_du_low_metrics srsran_phy_fapi_adaptor srsran_upper_phy)
+set(DU_LOW_LIBRARIES srsran_phy_fapi_adaptor srsran_upper_phy)
 
 # Hardware acceleration for both PUSCH and PDSCH is enabled by default when using DPDK.
 if (DPDK_FOUND)

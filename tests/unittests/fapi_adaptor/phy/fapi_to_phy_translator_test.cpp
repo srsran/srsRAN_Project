@@ -29,8 +29,8 @@
 #include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"
-#include "srsran/phy/upper/uplink_processor.h"
-#include "srsran/phy/upper/uplink_slot_pdu_repository.h"
+#include "srsran/phy/upper/uplink_pdu_slot_repository.h"
+#include "srsran/phy/upper/uplink_pdu_validator.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
@@ -183,6 +183,34 @@ public:
   bool has_uplink_been_requested() const { return is_uplink_requested; }
 };
 
+class uplink_pdu_slot_repository_spy : public uplink_pdu_slot_repository_pool,
+                                       private unique_uplink_pdu_slot_repository::uplink_pdu_slot_repository_callback
+{
+public:
+  unique_uplink_pdu_slot_repository get_pdu_slot_repository(slot_point slot) override
+  {
+    srsran_assert(pusch_pdus.empty(), "PUSCH PDU list is not empty.");
+    srsran_assert(pucch_pdus.empty(), "PUCCH PDU list is not empty.");
+    srsran_assert(srs_pdus.empty(), "SRS PDU list is not empty.");
+    current_slot = slot;
+    return unique_uplink_pdu_slot_repository(*this);
+  }
+
+private:
+  void finish_adding_pdus() override {}
+
+  void add_pusch_pdu(const pusch_pdu& pdu) override { pusch_pdus.emplace_back(pdu); }
+
+  void add_pucch_pdu(const pucch_pdu& pdu) override { pucch_pdus.emplace_back(pdu); }
+
+  void add_srs_pdu(const srs_pdu& pdu) override { srs_pdus.emplace_back(pdu); }
+
+  slot_point             current_slot;
+  std::vector<pusch_pdu> pusch_pdus;
+  std::vector<pucch_pdu> pucch_pdus;
+  std::vector<srs_pdu>   srs_pdus;
+};
+
 } // namespace
 
 class fapi_to_phy_translator_fixture : public ::testing::Test
@@ -191,7 +219,7 @@ protected:
   downlink_processor_pool_dummy   dl_processor_pool;
   resource_grid_pool_dummy        rg_pool;
   uplink_request_processor_spy    ul_request_processor;
-  uplink_slot_pdu_repository      pdu_repo;
+  uplink_pdu_slot_repository_spy  pdu_repo;
   const unsigned                  sector_id         = 0;
   const unsigned                  headroom_in_slots = 2;
   const subcarrier_spacing        scs               = subcarrier_spacing::kHz15;
@@ -217,7 +245,7 @@ protected:
   fapi_to_phy_translator translator;
 
 public:
-  fapi_to_phy_translator_fixture() : pdu_repo(2), worker(1), translator(config, std::move(dependencies))
+  fapi_to_phy_translator_fixture() : worker(1), translator(config, std::move(dependencies))
   {
     translator.set_slot_error_message_notifier(error_notifier_spy);
     translator.handle_new_slot(slot);

@@ -88,3 +88,7 @@ add_test(strong_type_test strong_type_test)
 add_executable(bounded_integer_test bounded_integer_test.cpp)
 target_link_libraries(bounded_integer_test srslog gtest gtest_main)
 gtest_discover_tests(bounded_integer_test)
+
+add_executable(triple_buffer_atomic_test triple_buffer_atomic_test.cpp)
+target_link_libraries(triple_buffer_atomic_test srslog srsran_support gtest gtest_main)
+add_test(triple_buffer_atomic_test triple_buffer_atomic_test)

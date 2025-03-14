@@ -28,13 +28,13 @@ using namespace srsran;
 static bool check_compression_params(const ofh::ru_compression_params& params)
 {
   if (!(params.type == ofh::compression_type::none) && !(params.type == ofh::compression_type::BFP)) {
-    fmt::print("Compression method '{}' is not supported. Valid values are [none,bfp]\n", to_string(params.type));
+    fmt::println("Compression method '{}' is not supported. Valid values are [none,bfp]", to_string(params.type));
     return false;
   }
 
   if (params.type == ofh::compression_type::BFP && !(params.data_width == 8) && !(params.data_width == 9) &&
       !(params.data_width == 12) && !(params.data_width == 14) && !(params.data_width == 16)) {
-    fmt::print("BFP compression bit width '{}' is not supported. Valid values are [8,9,12,14,16]\n", params.data_width);
+    fmt::println("BFP compression bit width '{}' is not supported. Valid values are [8,9,12,14,16]", params.data_width);
 
     return false;
   }
@@ -46,10 +46,11 @@ static bool check_dl_eaxc_if_broadcast_is_enabled(const ofh::sector_configuratio
 {
   // When broadcast flag is enabled, two downlink eAxCs are supported.
   if (config.is_downlink_broadcast_enabled && config.dl_eaxc.size() != 2) {
-    fmt::print("Invalid downlink eAxC identifier configuration, expected 2 eAxC identifiers but broadcast flag is '{}' "
-               "and there are '{}' downlink eAxC\n",
-               (config.is_downlink_broadcast_enabled) ? "enabled" : "disabled",
-               config.dl_eaxc.size());
+    fmt::println(
+        "Invalid downlink eAxC identifier configuration, expected 2 eAxC identifiers but broadcast flag is '{}' "
+        "and there are '{}' downlink eAxC",
+        (config.is_downlink_broadcast_enabled) ? "enabled" : "disabled",
+        config.dl_eaxc.size());
     return false;
   }
 
@@ -60,9 +61,8 @@ static bool check_eaxc_id(unsigned eaxc)
 {
   bool result = eaxc < ofh::MAX_SUPPORTED_EAXC_ID_VALUE;
   if (!result) {
-    fmt::print("Configured eAxC id '{}' is out of range. Valid range is [0-{}]\n",
-               eaxc,
-               ofh::MAX_SUPPORTED_EAXC_ID_VALUE - 1U);
+    fmt::println(
+        "Configured eAxC id '{}' is out of range. Valid range is [0-{}]", eaxc, ofh::MAX_SUPPORTED_EAXC_ID_VALUE - 1U);
   }
 
   return result;

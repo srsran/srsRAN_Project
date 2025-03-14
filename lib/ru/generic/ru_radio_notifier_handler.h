@@ -73,9 +73,9 @@ private:
 class ru_radio_notification_handler_counter : public radio_notification_handler
 {
 public:
-  explicit ru_radio_notification_handler_counter(std::unique_ptr<radio_notification_handler> handler_,
-                                                 task_executor&                              executor_,
-                                                 unsigned                                    print_interval_in_slots_) :
+  ru_radio_notification_handler_counter(std::unique_ptr<radio_notification_handler> handler_,
+                                        task_executor&                              executor_,
+                                        unsigned                                    print_interval_in_slots_) :
     handler(std::move(handler_)),
     executor(executor_),
     print_interval_in_slots(print_interval_in_slots_),
@@ -132,8 +132,8 @@ private:
 
     // Print late, underflow and overflow counts since last print.
     if ((temp_late_count != 0) || (temp_underflow_count != 0) || (temp_overflow_count != 0)) {
-      fmt::print(
-          "Late: {}; Underflow: {}; Overflow: {};\n", temp_late_count, temp_underflow_count, temp_overflow_count);
+      fmt::println(
+          "Late: {}; Underflow: {}; Overflow: {};", temp_late_count, temp_underflow_count, temp_overflow_count);
     }
   }
 

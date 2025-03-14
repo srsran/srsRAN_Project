@@ -26,16 +26,13 @@
 using namespace srsran;
 
 ue_scheduler_impl::ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_) :
-  expert_cfg(expert_cfg_),
-  event_mng(ue_db),
-  intra_slice_sched(expert_cfg, ue_db, srslog::fetch_basic_logger("SCHED")),
-  logger(srslog::fetch_basic_logger("SCHED"))
+  expert_cfg(expert_cfg_), logger(srslog::fetch_basic_logger("SCHED")), event_mng(ue_db)
 {
 }
 
 void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 {
-  cells.emplace(params.cell_index, expert_cfg, params, ue_db, *params.cell_metrics);
+  cells.emplace(params.cell_index, expert_cfg, ue_db, params);
   auto& cell = cells[params.cell_index];
 
   event_mng.add_cell(cell_creation_event{*params.cell_res_alloc,
@@ -46,32 +43,23 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
                                          cell.srs_sched,
                                          *params.cell_metrics,
                                          *params.ev_logger});
-
-  intra_slice_sched.add_cell(
-      params.cell_index, *params.pdcch_sched, *params.uci_alloc, *params.cell_res_alloc, cell.cell_harqs);
 }
 
 void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx, du_cell_index_t cell_index)
 {
   auto& cell = cells[cell_index];
 
-  // Update slice context and compute slice priorities.
-  cell.slice_sched.slot_indication(slot_tx, *cell.cell_res_alloc);
-
   // Schedule DL first.
   // Note: DL should be scheduled first so that the right DAI value is picked in DCI format 0_1.
   while (auto dl_slice_candidate = cell.slice_sched.get_next_dl_candidate()) {
     scheduler_policy& policy = cell.slice_sched.get_policy(dl_slice_candidate->id());
-    intra_slice_sched.dl_sched(slot_tx, cell_index, dl_slice_candidate.value(), policy);
+    cell.intra_slice_sched.dl_sched(slot_tx, dl_slice_candidate.value(), policy);
   }
 
   while (auto ul_slice_candidate = cell.slice_sched.get_next_ul_candidate()) {
     scheduler_policy& policy = cell.slice_sched.get_policy(ul_slice_candidate->id());
-    intra_slice_sched.ul_sched(slot_tx, cell_index, ul_slice_candidate.value(), policy);
+    cell.intra_slice_sched.ul_sched(slot_tx, ul_slice_candidate.value(), policy);
   }
-
-  // The post processing is done for DL and UL slots.
-  intra_slice_sched.post_process_results();
 }
 
 void ue_scheduler_impl::update_harq_pucch_counter(cell_resource_allocator& cell_alloc)
@@ -158,9 +146,6 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx)
   }
   last_sl_ind = slot_tx;
 
-  // Mark the start of a new slot for the intra-slice scheduler.
-  intra_slice_sched.slot_indication(slot_tx);
-
   for (auto& group_cell : cells) {
     du_cell_index_t cell_index = group_cell.cell_res_alloc->cfg.cell_index;
 
@@ -177,13 +162,22 @@ void ue_scheduler_impl::run_slot(slot_point slot_tx)
     group_cell.uci_sched.run_slot(*group_cell.cell_res_alloc);
 
     // Schedule periodic SRS before any UE grants.
-    cells[cell_index].srs_sched.run_slot(*group_cell.cell_res_alloc);
+    group_cell.srs_sched.run_slot(*group_cell.cell_res_alloc);
 
     // Run cell-specific SRB0 scheduler.
     group_cell.fallback_sched.run_slot(*group_cell.cell_res_alloc);
 
+    // Update slice context and compute slice priorities.
+    group_cell.slice_sched.slot_indication(slot_tx, *group_cell.cell_res_alloc);
+
+    // Update intra-slice scheduler context.
+    group_cell.intra_slice_sched.slot_indication(slot_tx);
+
     // Run slice scheduler policies.
     run_sched_strategy(slot_tx, cell_index);
+
+    // The post processing is done for DL and UL slots.
+    group_cell.intra_slice_sched.post_process_results();
 
     // Update the PUCCH counter after the UE DL and UL scheduler.
     update_harq_pucch_counter(*group_cell.cell_res_alloc);
@@ -212,13 +206,12 @@ private:
 } // namespace
 
 ue_scheduler_impl::cell_context::cell_context(const scheduler_ue_expert_config& expert_cfg,
-                                              const ue_scheduler_cell_params&   params,
                                               ue_repository&                    ues,
-                                              cell_metrics_handler&             metrics_handler) :
+                                              const ue_scheduler_cell_params&   params) :
   cell_res_alloc(params.cell_res_alloc),
   cell_harqs(MAX_NOF_DU_UES,
              MAX_NOF_HARQS,
-             std::make_unique<harq_manager_timeout_notifier>(metrics_handler),
+             std::make_unique<harq_manager_timeout_notifier>(*params.cell_metrics),
              cell_harq_manager::DEFAULT_ACK_TIMEOUT_SLOTS,
              params.cell_res_alloc->cfg.ntn_cs_koffset),
   uci_sched(params.cell_res_alloc->cfg, *params.uci_alloc, ues),
@@ -229,6 +222,13 @@ ue_scheduler_impl::cell_context::cell_context(const scheduler_ue_expert_config& 
                  *params.uci_alloc,
                  ues),
   slice_sched(params.cell_res_alloc->cfg, ues),
+  intra_slice_sched(expert_cfg,
+                    ues,
+                    *params.pdcch_sched,
+                    *params.uci_alloc,
+                    *params.cell_res_alloc,
+                    cell_harqs,
+                    srslog::fetch_basic_logger("SCHED")),
   srs_sched(params.cell_res_alloc->cfg, ues)
 {
 }

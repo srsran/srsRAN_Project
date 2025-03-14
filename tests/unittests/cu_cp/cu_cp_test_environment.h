@@ -44,16 +44,17 @@ struct cu_cp_test_amf_config {
   std::unique_ptr<mock_amf> amf_stub;
 };
 
+static s_nssai_t               default_s_nssai{slice_service_type{1}, slice_differentiator{}};
+static plmn_item               default_plmn_item{plmn_identity::test_value(), std::vector<s_nssai_t>{default_s_nssai}};
+static supported_tracking_area default_supported_tracking_area{7, {default_plmn_item}};
+
 struct cu_cp_test_env_params {
   cu_cp_test_env_params(
       unsigned                                                 max_nof_cu_ups_      = 8,
       unsigned                                                 max_nof_dus_         = 8,
       unsigned                                                 max_nof_ues_         = 8192,
       unsigned                                                 max_nof_drbs_per_ue_ = 8,
-      const std::vector<std::vector<supported_tracking_area>>& amf_config_          = {{supported_tracking_area{
-          7,
-          {plmn_item{plmn_identity::test_value(),
-                     std::vector<s_nssai_t>{s_nssai_t{slice_service_type{1}, slice_differentiator{}}}}}}}},
+      const std::vector<std::vector<supported_tracking_area>>& amf_config_ = {{default_supported_tracking_area}},
       bool                                                     trigger_ho_from_measurements_ = true) :
     max_nof_cu_ups(max_nof_cu_ups_),
     max_nof_dus(max_nof_dus_),
@@ -101,6 +102,8 @@ public:
 
   /// Start CU-CP connection to AMF and run NG setup procedure to completion.
   void run_ng_setup();
+  /// Drop TNL connection between the AMF and the CU-CP.
+  bool drop_amf_connection(unsigned amf_idx);
 
   /// Establish a TNL connection between a DU and the CU-CP.
   std::optional<unsigned> connect_new_du();

@@ -37,6 +37,11 @@ public:
   ///
   /// \param[in] dl_msg_slot Slot of the downlink message.
   virtual void on_late_downlink_message(slot_point dl_msg_slot) = 0;
+
+  /// \brief Notifies a late uplink message.
+  ///
+  /// \param[in] ul_msg_slot Slot of the uplink message.
+  virtual void on_late_uplink_message(slot_point ul_msg_slot) = 0;
 };
 
 } // namespace srsran

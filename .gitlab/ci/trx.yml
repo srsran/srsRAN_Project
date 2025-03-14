@@ -55,7 +55,7 @@ build trx driver:
         mkdir amarisoft
         tar -zxf amarisoft*.tar.gz -C amarisoft
         for file in amarisoft/*/trx_uhd*.tar.gz; do tar -zxf "$file" -C amarisoft/; done
-        mv amarisoft/trx_uhd-linux* amarisoft/trx_uhd-linux
+        mv amarisoft/trx_uhd* amarisoft/trx_uhd-linux
       }
     - |
       build_srsran_trx() {
@@ -103,6 +103,16 @@ build uesim zmq driver:
   variables:
     OS: fedora-39
     AMARISOFT_VERSION: "2024-03-15"
+  artifacts:
+    <<: *trx_artifacts
+    expire_in: 3 days
+
+build amariue ntn zmq driver:
+  extends: build trx driver
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  variables:
+    AMARISOFT_VERSION: "2024-12-13"
   artifacts:
     <<: *trx_artifacts
     expire_in: 3 days

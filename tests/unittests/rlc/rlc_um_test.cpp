@@ -356,15 +356,15 @@ TEST_P(rlc_um_test, tx_without_segmentation)
   const uint32_t sdu_size = 3;
 
   // Push SDUs into RLC1
-  byte_buffer                           sdu_bufs[num_sdus];
-  std::chrono::system_clock::time_point t_start = std::chrono::high_resolution_clock::now();
+  byte_buffer sdu_bufs[num_sdus];
+  auto        t_start = std::chrono::steady_clock::now();
   for (uint32_t i = 0; i < num_sdus; i++) {
     sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i + 13, sdu_size, i);
 
     // write SDU into upper end
     rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
   }
-  std::chrono::system_clock::time_point t_end = std::chrono::high_resolution_clock::now();
+  auto t_end = std::chrono::steady_clock::now();
   pcell_worker.run_pending_tasks();
   rlc_buffer_state bs1 = rlc1_tx_lower->get_buffer_state();
   EXPECT_TRUE(bs1.hol_toa.has_value());
@@ -439,15 +439,15 @@ TEST_P(rlc_um_test, tx_with_segmentation)
   const uint32_t sdu_size = 100;
 
   // Push SDUs into RLC1
-  byte_buffer                           sdu_bufs[num_sdus];
-  std::chrono::system_clock::time_point t_start = std::chrono::high_resolution_clock::now();
+  byte_buffer sdu_bufs[num_sdus];
+  auto        t_start = std::chrono::steady_clock::now();
   for (uint32_t i = 0; i < num_sdus; i++) {
     sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
     // write SDU into upper end
     rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
   }
-  std::chrono::system_clock::time_point t_end = std::chrono::high_resolution_clock::now();
+  auto t_end = std::chrono::steady_clock::now();
   pcell_worker.run_pending_tasks();
   rlc_buffer_state bs1 = rlc1_tx_lower->get_buffer_state();
   EXPECT_TRUE(bs1.hol_toa.has_value());
@@ -539,16 +539,15 @@ TEST_P(rlc_um_test, sdu_discard)
   const uint32_t sdu_size = 3;
 
   // Push SDUs into RLC1
-  byte_buffer                           sdu_bufs[num_sdus];
-  std::chrono::system_clock::time_point t_start = std::chrono::high_resolution_clock::now();
+  byte_buffer sdu_bufs[num_sdus];
+  auto        t_start = std::chrono::steady_clock::now();
   for (uint32_t i = 0; i < num_sdus; i++) {
     sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
     // write SDU into upper end
     rlc1_tx_upper->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
   }
-  std::chrono::system_clock::time_point t_end = std::chrono::high_resolution_clock::now();
-
+  auto t_end        = std::chrono::steady_clock::now();
   tester1.bsr_count = 0; // reset
 
   // Discard valid SDUs

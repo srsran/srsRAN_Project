@@ -76,7 +76,7 @@ void rx_window_checker::on_new_symbol(const slot_symbol_point_context& symbol_po
   slot_symbol_point ota_symbol_point = calculate_ofh_slot_symbol_point(symbol_point_context.symbol_point);
 
   // Update the stored slot symbol point as system value.
-  slot_raw_value.store(ota_symbol_point.to_uint(), std::memory_order_release);
+  slot_raw_value.store(ota_symbol_point.to_uint(), std::memory_order_relaxed);
 }
 
 void rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_point)
@@ -87,7 +87,7 @@ void rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_poi
 
   // Store the ota symbol point to use the same value for the early and late points.
   slot_symbol_point ota_point(
-      symbol_point.get_numerology(), slot_raw_value.load(std::memory_order_acquire), symbol_point.get_nof_symbols());
+      symbol_point.get_numerology(), slot_raw_value.load(std::memory_order_relaxed), symbol_point.get_nof_symbols());
 
   // Calculate the distance between the 2 slot symbol points in symbols.
   int diff = calculate_slot_symbol_point_distance(ota_point, symbol_point);

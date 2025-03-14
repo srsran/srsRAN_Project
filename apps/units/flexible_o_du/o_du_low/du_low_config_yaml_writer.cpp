@@ -28,17 +28,17 @@ using namespace srsran;
 
 static void fill_du_low_log_section(YAML::Node node, const du_low_unit_logger_config& config)
 {
-  node["phy_level"]            = srslog::basic_level_to_string(config.phy_level);
-  node["hex_max_size"]         = config.hex_max_size;
-  node["broadcast_enabled"]    = config.broadcast_enabled;
-  node["phy_rx_symbols_prach"] = config.phy_rx_symbols_prach;
+  node["phy_level"]         = srslog::basic_level_to_string(config.phy_level);
+  node["hal_level"]         = srslog::basic_level_to_string(config.hal_level);
+  node["broadcast_enabled"] = config.broadcast_enabled;
+  node["hex_max_size"]      = config.hex_max_size;
   if (!config.phy_rx_symbols_filename.empty()) {
     node["phy_rx_symbols_filename"] = config.phy_rx_symbols_filename;
   }
-
   if (config.phy_rx_symbols_port.has_value()) {
     node["phy_rx_symbols_port"] = config.phy_rx_symbols_port.value();
   }
+  node["phy_rx_symbols_prach"] = config.phy_rx_symbols_prach;
 }
 
 static void fill_du_low_expert_execution_section(YAML::Node node, const du_low_unit_expert_execution_config& config)
@@ -47,6 +47,7 @@ static void fill_du_low_expert_execution_section(YAML::Node node, const du_low_u
     YAML::Node threads_node                 = node["threads"];
     YAML::Node upper_node                   = threads_node["upper_phy"];
     upper_node["pdsch_processor_type"]      = config.threads.pdsch_processor_type;
+    upper_node["pdsch_cb_batch_length"]     = config.threads.pdsch_cb_batch_length;
     upper_node["nof_pusch_decoder_threads"] = config.threads.nof_pusch_decoder_threads;
     upper_node["nof_ul_threads"]            = config.threads.nof_ul_threads;
     upper_node["nof_dl_threads"]            = config.threads.nof_dl_threads;
@@ -77,11 +78,16 @@ static void fill_du_low_expert_execution_section(YAML::Node node, const du_low_u
 
 static void fill_du_low_expert_section(YAML::Node node, const du_low_unit_expert_upper_phy_config& config)
 {
-  node["max_proc_delay"]              = config.max_processing_delay_slots;
-  node["pusch_dec_max_iterations"]    = config.pusch_decoder_max_iterations;
-  node["pusch_dec_enable_early_stop"] = config.pusch_decoder_early_stop;
-  node["pusch_sinr_calc_method"]      = config.pusch_sinr_calc_method;
-  node["max_request_headroom_slots"]  = config.nof_slots_request_headroom;
+  node["max_proc_delay"]                           = config.max_processing_delay_slots;
+  node["pusch_dec_max_iterations"]                 = config.pusch_decoder_max_iterations;
+  node["pusch_dec_enable_early_stop"]              = config.pusch_decoder_early_stop;
+  node["pusch_sinr_calc_method"]                   = config.pusch_sinr_calc_method;
+  node["pusch_channel_estimator_fd_strategy"]      = config.pusch_channel_estimator_fd_strategy;
+  node["pusch_channel_estimator_td_strategy"]      = config.pusch_channel_estimator_td_strategy;
+  node["pusch_channel_estimator_cfo_compensation"] = config.pusch_channel_estimator_cfo_compensation;
+  node["pusch_channel_equalizer_algorithm"]        = config.pusch_channel_equalizer_algorithm;
+  node["max_request_headroom_slots"]               = config.nof_slots_request_headroom;
+  node["allow_request_on_empty_uplink_slot"]       = config.allow_request_on_empty_uplink_slot;
 }
 
 static void fill_du_low_bbdev_pdsch_enc_section(YAML::Node node, const hwacc_pdsch_appconfig& config)

@@ -92,6 +92,8 @@ struct transmitter_config {
   float iq_scaling;
   /// Downlink processing time in microseconds.
   std::chrono::microseconds dl_processing_time;
+  /// Uplink request processing time in microseconds.
+  std::chrono::microseconds ul_processing_time;
   /// Optional TDD configuration.
   std::optional<tdd_ul_dl_config_common> tdd_config;
   /// Indicates if DPDK should be used by the underlying implementation.

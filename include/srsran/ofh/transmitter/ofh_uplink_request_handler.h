@@ -31,6 +31,8 @@ class shared_resource_grid;
 
 namespace ofh {
 
+class error_notifier;
+
 /// \brief Open Fronthaul uplink request handler.
 ///
 /// Handles PRACH and uplink data requests to capture uplink data. The uplink received data will be notified through the
@@ -56,6 +58,9 @@ public:
   /// \param[in] context Resource grid context.
   /// \param[in] buffer  Resource grid to store the processed slot.
   virtual void handle_new_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) = 0;
+
+  /// Sets the error notifier of this sector to the given one.
+  virtual void set_error_notifier(error_notifier& notifier) = 0;
 };
 
 } // namespace ofh

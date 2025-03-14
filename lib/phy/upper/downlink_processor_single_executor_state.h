@@ -33,101 +33,75 @@ namespace srsran {
 class downlink_processor_single_executor_state
 {
 public:
-  downlink_processor_single_executor_state() : state(states::idle), pending_pdus(0)
+  /// \brief Reserves the downlink processor upon the configuration of the resource grid.
+  /// \return \c true if the downlink processor is idle. Otherwise, \c false.
+  bool reserve_on_resource_grid_configure()
   {
-    // Do nothing.
+    // Transition to accepting PDUs only if the current state is idle.
+    uint32_t expected_idle = state_pending_pdus_idle;
+    return state_pending_pdus.compare_exchange_weak(expected_idle, state_pending_pdus_mask_accepting_pdus);
   }
 
-  /// Possible states of the downlink proecsosr.
-  enum class states {
-    /// The processor is ready for a new resource grid.
-    idle,
-    /// The DL PDUs are accepted and processed.
-    processing,
-    /// No new DL PDUs are accepted. The resource grid is sent when there are no ongoing processing tasks.
-    finishing
-  };
-
-  /// Resource grid configured callback. It is meant to be called when a new resource grid has been accepted.
-  void on_resource_grid_configured()
-  {
-    srsran_assert(
-        (state == states::idle), "DL processor grid was configured in an invalid state, i.e., {}.", to_string(state));
-    srsran_assert((pending_pdus == 0), "DL processor grid was configured with {} pending PDUs.", pending_pdus);
-    state = states::processing;
-  }
-
-  /// \brief Finish processing PDUs callback.
-  ///
-  /// \return \c true if the resource grid can be immediately sent, \c false otherwise.
+  /// \brief Notifies that all PDUs have already been queued and no more PDUs are accepted.
+  /// \return \c true if the there are no pending PDUs to process, \c false otherwise.
+  /// \remark An assertion is triggered if the current state does not contain the accepting PDUs mask.
   bool on_finish_requested()
   {
-    srsran_assert(
-        (state != states::idle), "DL processor finish was requested in an invalid state, i.e., {}.", to_string(state));
-    state = states::finishing;
-    return (pending_pdus == 0);
+    // Remove the accepting PDU mask.
+    uint32_t prev = state_pending_pdus.fetch_xor(state_pending_pdus_mask_accepting_pdus);
+
+    // Assert that the accepting PDUs mask was there.
+    srsran_assert((prev & state_pending_pdus_mask_accepting_pdus) != 0,
+                  "The downlink processor is in an unexpected state state 0x{:08x}.",
+                  prev);
+
+    // There are no pending PDUs if the previous value is equal to the mask.
+    return (prev == state_pending_pdus_mask_accepting_pdus);
   }
 
-  /// Resource grid sent callback.
+  /// \brief Notifies the resource grid has been sent over the resource grid gateway and the downlink processor.
+  /// \remark An assertion is triggered if the current state is not finishing PDUs.
   void on_grid_sent()
   {
-    srsran_assert((pending_pdus == 0), "Grid was sent with {} pending PDUs.", pending_pdus);
+    // Transition to idle regardless of the state and trigger an assertion if the state is not expected.
+    [[maybe_unused]] uint32_t prev = state_pending_pdus.exchange(state_pending_pdus_idle);
     srsran_assert(
-        (state == states::finishing), "DL processor grid was sent in an invalid state, i.e., {}.", to_string(state));
-    state = states::idle;
+        prev == state_pending_pdus_finishing, "The downlink processor is in an unexpected state state 0x{:08x}.", prev);
   }
 
-  /// Task creation callback. Increases the pending task counter.
+  /// \brief Notifies the queuing of a new PDU processing task.
+  /// \remark An assertion is triggered if the current state does not accept new processing PDUs.
   void on_task_creation()
   {
-    srsran_assert(
-        (state == states::processing), "DL processor task created in an invalid state, i.e., {}.", to_string(state));
-    increase_pending_pdus();
+    [[maybe_unused]] uint32_t prev = state_pending_pdus.fetch_add(1);
+    srsran_assert((prev & state_pending_pdus_mask_accepting_pdus) != 0,
+                  "The downlink processor is in an unexpected state state 0x{:08x}.",
+                  prev);
   }
 
-  /// Task completion callback. Decreases the pending task counter and checks wether the resource grid can be sent.
-  ///
+  /// \brief Notifies the completion of a PDU processing task.
   /// \return \c true if the resource grid can be immediately sent, \c false otherwise.
+  /// \remark An assertion is triggered if the current state is zero which means no task was pending.
   bool on_task_completion()
   {
-    decrease_pending_pdus();
-    return (state == states::finishing) && (pending_pdus == 0);
+    uint32_t prev = state_pending_pdus.fetch_sub(1);
+    srsran_assert((prev & state_pending_pdus_mask_count) != 0,
+                  "The downlink processor number of pending PDUs cannot be zero.");
+    return prev == 1;
   }
-
-  /// Checks wether the current state allows for a new resource grid to be configured.
-  bool is_idle() const { return state == states::idle; }
-
-  /// Checks wether the current state allows for a new task to be enqueued.
-  bool is_processing() const { return state == states::processing; }
 
 private:
-  /// Increases the pending PDU counter.
-  void increase_pending_pdus() { ++pending_pdus; }
+  /// Idle state - represents the state in which the downlink processor does not accept PDUs and does not have any
+  /// pending PDU to process.
+  static constexpr uint32_t state_pending_pdus_idle = 0x7fffffff;
+  /// The downlink processor state that accepts PDUs.
+  static constexpr uint32_t state_pending_pdus_mask_accepting_pdus = 0x80000000;
+  /// The downlink processor pending PDUs counter mask.
+  static constexpr uint32_t state_pending_pdus_mask_count = ~state_pending_pdus_mask_accepting_pdus;
+  /// The downlink does not have any-more PDUs to process, and it is waiting to send the resource grid.
+  static constexpr uint32_t state_pending_pdus_finishing = 0x00000000;
 
-  /// Decreases the pending PDU counter.
-  void decrease_pending_pdus()
-  {
-    if (pending_pdus > 0) {
-      --pending_pdus;
-    }
-  }
-
-  static std::string to_string(states state_)
-  {
-    switch (state_) {
-      case states::idle:
-        return "idle";
-      case states::processing:
-        return "processing";
-      case states::finishing:
-      default:
-        return "finishing";
-    }
-  }
-
-  /// Downlink processor current state.
-  states state;
-  /// Number of pending PDUs to process before sending the resource grid.
-  unsigned pending_pdus;
+  /// Current state and number of pending PDUs to process.
+  std::atomic<uint32_t> state_pending_pdus = state_pending_pdus_idle;
 };
 } // namespace srsran

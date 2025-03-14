@@ -39,14 +39,19 @@ public:
   void operator()(coro_context<async_task<void>>& ctx);
 
 private:
-  async_task<f1_setup_response_message> start_f1_setup_request();
-  void                                  handle_f1_setup_response(const f1_setup_response_message& resp);
+  // Handle passed DU unit config.
+  void configure_du_cells();
+
+  async_task<f1_setup_result> start_f1_setup_request();
+
+  // Handle F1 setup response with list of cells to activate.
+  async_task<void> handle_f1_setup_response(const f1_setup_result& resp);
 
   const du_manager_params& params;
   du_cell_manager&         cell_mng;
   srslog::basic_logger&    logger;
 
-  f1_setup_response_message response_msg = {};
+  f1_setup_result response_msg = {};
 };
 
 } // namespace srs_du

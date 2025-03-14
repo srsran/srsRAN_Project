@@ -675,7 +675,7 @@ inline bool is_valid_configuration(const srs_cu_cp::cu_cp_configuration& config)
 }
 
 inline std::vector<plmn_identity>
-get_supported_plmns(const std::vector<srs_cu_cp::cu_cp_configuration::ngap_params>& ngaps)
+get_supported_plmns(const std::vector<srs_cu_cp::cu_cp_configuration::ngap_config>& ngaps)
 {
   std::vector<plmn_identity> plmns;
 

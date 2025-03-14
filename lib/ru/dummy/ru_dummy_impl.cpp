@@ -43,18 +43,15 @@ static inline uint64_t get_current_system_slot(std::chrono::microseconds slot_du
 }
 
 ru_dummy_impl::ru_dummy_impl(const ru_dummy_configuration& config, ru_dummy_dependencies dependencies) noexcept :
-  logger(*dependencies.logger),
+  logger(dependencies.logger),
   executor(*dependencies.executor),
-  timing_notifier(*dependencies.timing_notifier),
+  timing_notifier(dependencies.timing_notifier),
   slot_duration(static_cast<unsigned>(config.time_scaling * 1000.0 / pow2(to_numerology_value(config.scs)))),
   max_processing_delay_slots(config.max_processing_delay_slots),
   current_slot(config.scs, config.max_processing_delay_slots)
 {
   srsran_assert(config.max_processing_delay_slots > 0, "The maximum processing delay must be greater than 0.");
-  srsran_assert(dependencies.logger != nullptr, "Invalid logger.");
   srsran_assert(dependencies.executor != nullptr, "Invalid executor.");
-  srsran_assert(dependencies.symbol_notifier != nullptr, "Invalid symbol notifier.");
-  srsran_assert(dependencies.timing_notifier != nullptr, "Invalid timing notifier.");
 
   sectors.reserve(config.nof_sectors);
   for (unsigned i_sector = 0; i_sector != config.nof_sectors; ++i_sector) {
@@ -64,7 +61,8 @@ ru_dummy_impl::ru_dummy_impl(const ru_dummy_configuration& config, ru_dummy_depe
                          config.rx_prach_nof_ports,
                          config.dl_processing_delay,
                          logger,
-                         *dependencies.symbol_notifier);
+                         dependencies.symbol_notifier,
+                         dependencies.error_notifier);
   }
 }
 
@@ -93,13 +91,13 @@ void ru_dummy_impl::stop()
 
 void ru_dummy_impl::print_metrics()
 {
-  fmt::print("| {:^11} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} |\n",
-             "DL Count",
-             "DL Late",
-             "UL Count",
-             "UL Late",
-             "PRACH Count",
-             "PRACH Late");
+  fmt::println("| {:^11} | {:^11} | {:^11} | {:^11} | {:^11} | {:^11} |",
+               "DL Count",
+               "DL Late",
+               "UL Count",
+               "UL Late",
+               "PRACH Count",
+               "PRACH Late");
   for (auto& sector : sectors) {
     sector.print_metrics();
   }

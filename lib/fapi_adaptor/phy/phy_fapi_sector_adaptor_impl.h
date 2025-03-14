@@ -73,7 +73,7 @@ struct phy_fapi_sector_adaptor_impl_dependencies {
   /// Uplink resource grid pool.
   resource_grid_pool* ul_rg_pool;
   /// Uplink slot PDU repository.
-  uplink_slot_pdu_repository* ul_pdu_repository;
+  uplink_pdu_slot_repository_pool* ul_pdu_repository;
   /// Uplink PDU validator.
   const uplink_pdu_validator* ul_pdu_validator;
   /// Precoding matrix repository.

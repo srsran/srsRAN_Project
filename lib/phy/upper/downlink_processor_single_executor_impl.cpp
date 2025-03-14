@@ -62,19 +62,8 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
 
 void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processor::pdu_t& pdu)
 {
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-
-    // Do not enqueue the task if the DL processor is not accepting PDUs.
-    if (!state.is_processing()) {
-      logger.warning(
-          pdu.slot.sfn(), pdu.slot.slot_index(), "Invalid downlink processor state. Ignoring PDCCH: {:s}", pdu);
-      return;
-    }
-
-    // Increase the pending task counter.
-    state.on_task_creation();
-  }
+  // Notify to the state the creation of a new task.
+  state.on_task_creation();
 
   // Copy the PDU and get the reference for the asynchronous processing.
   pdcch_processor::pdu_t& pdu_ref = pdcch_list.emplace_back(pdu);
@@ -107,19 +96,8 @@ void downlink_processor_single_executor_impl::process_pdsch(
     static_vector<shared_transport_block, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data_,
     const pdsch_processor::pdu_t&                                                    pdu)
 {
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-
-    // Do not enqueue the task if the DL processor is not accepting PDUs.
-    if (!state.is_processing()) {
-      logger.warning(
-          pdu.slot.sfn(), pdu.slot.slot_index(), "Invalid downlink processor state. Ignoring PDSCH: {:s}", pdu);
-      return;
-    }
-
-    // Increase the pending task counter.
-    state.on_task_creation();
-  }
+  // Notify to the state the creation of a new task.
+  state.on_task_creation();
 
   // Copy the PDU and data and get the reference for the asynchronous processing.
   pdsch_proc_args& pdsch_args = pdsch_list.emplace_back(pdu, std::move(data_));
@@ -156,19 +134,8 @@ void downlink_processor_single_executor_impl::process_pdsch(
 
 void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::pdu_t& pdu)
 {
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-
-    // Do not enqueue the task if the DL processor is not accepting PDUs.
-    if (!state.is_processing()) {
-      logger.warning(
-          pdu.slot.sfn(), pdu.slot.slot_index(), "Invalid downlink processor state. Ignoring SSB: {:s}", pdu);
-      return;
-    }
-
-    // Increase the pending task counter.
-    state.on_task_creation();
-  }
+  // Notify to the state the creation of a new task.
+  state.on_task_creation();
 
   // Copy the PDU and get the reference for the asynchronous processing.
   ssb_processor::pdu_t& pdu_ref = ssb_list.emplace_back(pdu);
@@ -199,21 +166,8 @@ void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
 
 void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_rs_generator::config_t& config)
 {
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-
-    // Do not enqueue the task if the DL processor is not accepting PDUs.
-    if (!state.is_processing()) {
-      logger.warning(config.slot.sfn(),
-                     config.slot.slot_index(),
-                     "Invalid downlink processor state. Ignoring NZP-CSI-RS: {:s}",
-                     config);
-      return;
-    }
-
-    // Increase the pending task counter.
-    state.on_task_creation();
-  }
+  // Notify to the state the creation of a new task.
+  state.on_task_creation();
 
   // Copy the configuration and get the reference for the asynchronous processing.
   nzp_csi_rs_generator::config_t& config_ref = nzp_csi_rs_list.emplace_back(config);
@@ -244,19 +198,8 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
 
 void downlink_processor_single_executor_impl::process_prs(const prs_generator_configuration& config)
 {
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-
-    // Do not enqueue the task if the DL processor is not accepting PDUs.
-    if (!state.is_processing()) {
-      logger.warning(
-          config.slot.sfn(), config.slot.slot_index(), "Invalid downlink processor state. Ignoring PRS: {:s}", config);
-      return;
-    }
-
-    // Increase the pending task counter.
-    state.on_task_creation();
-  }
+  // Notify to the state the creation of a new task.
+  state.on_task_creation();
 
   // Copy the configuration and get the reference for the asynchronous processing.
   prs_generator_configuration& config_ref = prs_list.emplace_back(config);
@@ -289,11 +232,10 @@ unique_downlink_processor
 downlink_processor_single_executor_impl::configure_resource_grid(const resource_grid_context& context,
                                                                  shared_resource_grid         grid)
 {
-  std::lock_guard<std::mutex> lock(mutex);
-
-  // Don't configure the grid if the DL processor is not available.
-  if (!state.is_idle()) {
-    return unique_downlink_processor();
+  // Try to reserve the downlink processor.
+  if (!state.reserve_on_resource_grid_configure()) {
+    // Return an invalid downlink processor if the downlink processor is not available.
+    return {};
   }
 
   report_fatal_error_if_not(!current_grid, "A previously configured resource grid is still in use.");
@@ -307,26 +249,17 @@ downlink_processor_single_executor_impl::configure_resource_grid(const resource_
   ssb_list.clear();
   nzp_csi_rs_list.clear();
 
-  // update internal state to allow processing PDUs and increase the pending task counter.
-  state.on_resource_grid_configured();
-
   l1_tracer << instant_trace_event("configure_rg", instant_trace_event::cpu_scope::global);
 
   return unique_downlink_processor(*this);
 }
 
-void srsran::downlink_processor_single_executor_impl::finish_processing_pdus()
+void downlink_processor_single_executor_impl::finish_processing_pdus()
 {
   l1_tracer << instant_trace_event("finish_processing_pdus", instant_trace_event::cpu_scope::thread);
 
-  bool can_send_grid = false;
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-    // No more PDUs will be processed. If there are no pending or running tasks, the grid will be sent right away.
-    can_send_grid = state.on_finish_requested();
-  }
-  // Send the grid if all the PDUs finished to process.
-  if (can_send_grid) {
+  // Notify that no more PDUs will be enqueued. The grid will be sent right away if the current state allows it.
+  if (state.on_finish_requested()) {
     send_resource_grid();
   }
 }
@@ -340,22 +273,14 @@ void downlink_processor_single_executor_impl::send_resource_grid()
     gateway.send(rg_context, std::move(current_grid));
   }
 
-  // Update internal state.
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-    state.on_grid_sent();
-  }
+  // Notify the resource grid sent.
+  state.on_grid_sent();
 }
 
 void downlink_processor_single_executor_impl::on_task_completion()
 {
-  // Decrement the number of pending PDUs.
-  bool can_send_grid = false;
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-    can_send_grid = state.on_task_completion();
-  }
-  if (can_send_grid) {
+  // Notify the task completion and send the resource grid if allowed.
+  if (state.on_task_completion()) {
     send_resource_grid();
   }
 }

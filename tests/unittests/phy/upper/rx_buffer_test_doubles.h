@@ -67,7 +67,11 @@ public:
     return hard_bits[codeblock_id].first(data_size);
   }
 
-  void lock() override { locked = true; }
+  bool try_lock() override
+  {
+    locked = true;
+    return true;
+  }
 
   void unlock() override { locked = false; }
 

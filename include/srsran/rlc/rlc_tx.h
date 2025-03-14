@@ -55,10 +55,20 @@ namespace srsran {
 /// can optionally be accompanied with the corresponding PDCP sequence number (SN)
 /// so that RLC AM can notify the PDCP of ACKs, and PDCP can notify RLC AM/UM to discard PDCP PDUs
 struct rlc_sdu {
-  byte_buffer                           buf     = {};    ///< SDU buffer
-  bool                                  is_retx = false; ///< Determines whether this SDU is a PDCP retransmission
-  std::optional<uint32_t>               pdcp_sn;         ///< Optional PDCP sequence number
-  std::chrono::system_clock::time_point time_of_arrival;
+  /// \brief SDU buffer.
+  byte_buffer buf = {};
+
+  /// \brief Determines whether this SDU is a PDCP retransmission.
+  bool is_retx = false;
+
+  /// \brief Optional PDCP sequence number.
+  std::optional<uint32_t> pdcp_sn;
+
+  /// \brief Time of arrival at RLC from upper layers.
+  ///
+  /// This represents the time where the SDU is put into the SDU queue.
+  std::chrono::time_point<std::chrono::steady_clock> time_of_arrival;
+
   rlc_sdu() = default;
   rlc_sdu(byte_buffer buf_, std::optional<uint32_t> pdcp_sn_) : buf(std::move(buf_)), pdcp_sn(pdcp_sn_) {}
 };

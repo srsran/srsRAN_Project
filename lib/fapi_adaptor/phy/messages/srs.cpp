@@ -25,11 +25,11 @@
 using namespace srsran;
 using namespace fapi_adaptor;
 
-void srsran::fapi_adaptor::convert_srs_fapi_to_phy(uplink_processor::srs_pdu& pdu,
-                                                   const fapi::ul_srs_pdu&    fapi_pdu,
-                                                   unsigned                   nof_rx_antennas,
-                                                   uint16_t                   sfn,
-                                                   uint16_t                   slot)
+void srsran::fapi_adaptor::convert_srs_fapi_to_phy(uplink_pdu_slot_repository::srs_pdu& pdu,
+                                                   const fapi::ul_srs_pdu&              fapi_pdu,
+                                                   unsigned                             nof_rx_antennas,
+                                                   uint16_t                             sfn,
+                                                   uint16_t                             slot)
 {
   // Fill main context fields.
   ul_srs_context& context = pdu.context;

@@ -72,6 +72,11 @@ public:
   virtual async_task<expected<positioning_information_response_t, positioning_information_failure_t>>
   on_positioning_information_request(const positioning_information_request_t& request) = 0;
 
+  /// \brief Notifies the F1AP about a positioning activation request.
+  /// \returns The outcome of the procedure.
+  virtual async_task<expected<positioning_activation_response_t, positioning_activation_failure_t>>
+  on_positioning_activation_request(const positioning_activation_request_t& request) = 0;
+
   /// \brief Notifies the F1AP about a measurement information request.
   /// \returns The outcome of the procedure.
   virtual async_task<expected<measurement_response_t, measurement_failure_t>>

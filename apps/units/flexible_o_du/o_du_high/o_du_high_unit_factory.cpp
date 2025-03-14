@@ -21,8 +21,8 @@
  */
 
 #include "o_du_high_unit_factory.h"
+#include "apps/helpers/e2/e2_metric_connector_manager.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
-#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "du_high/commands/du_high_cmdline_commands.h"
 #include "du_high/commands/du_high_remote_commands.h"
 #include "du_high/du_high_config_translators.h"

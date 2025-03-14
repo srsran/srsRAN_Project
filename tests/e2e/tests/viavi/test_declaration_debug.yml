@@ -23,6 +23,7 @@
 # test_name: name of test in Viavi campaign file
 # test_timeout: timeout for test in seconds
 # gnb_extra_config: extra GNB configuration
+# retina_params: extra Retina parameters [Optional]
 # expected_dl_bitrate: pass/fail criteria, expected downlink bitrate in bps
 # expected_ul_bitrate: pass/fail criteria, expected uplink bitrate in bps
 # expected_nof_kos: expected_nof_kos
@@ -39,10 +40,8 @@ tests:
         rlc_report_period: 1000
         enable_log_metrics: true
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 8
         pusch:
-          max_puschs_per_slot: 8
+          max_puschs_per_slot: 2
     # test/fail criteria
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6

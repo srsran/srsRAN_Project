@@ -205,10 +205,10 @@ public:
   }
 
   // See interface for documentation.
-  void lock() override
+  bool try_lock() override
   {
-    state previous_state = current_state.exchange(state::locked);
-    srsran_assert(previous_state == state::reserved, "Failed to lock. Invalid state.");
+    state expected_state = state::reserved;
+    return current_state.compare_exchange_weak(expected_state, state::locked);
   }
 
   // See interface for documentation.

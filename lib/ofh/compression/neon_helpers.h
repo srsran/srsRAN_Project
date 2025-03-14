@@ -70,7 +70,7 @@ inline uint8_t determine_bfp_exponent(int16x8x3_t vec_s16x3, unsigned data_width
   uint16x4_t lzc_u16 = vclz_u16(vdup_n_u16(max_abs));
 
   // Calculate exponent.
-  return static_cast<uint8_t>(vget_lane_u16(vsub_u16(vec_max_lzc, lzc_u16), 0));
+  return static_cast<uint8_t>(vget_lane_u16(vqsub_u16(vec_max_lzc, lzc_u16), 0));
 }
 
 } // namespace neon

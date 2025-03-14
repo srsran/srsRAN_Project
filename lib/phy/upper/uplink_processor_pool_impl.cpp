@@ -33,8 +33,14 @@ uplink_processor_pool_impl::uplink_processor_pool_impl(uplink_processor_pool_imp
   }
 }
 
-uplink_processor& uplink_processor_pool_impl::get_processor(slot_point slot)
+uplink_slot_processor& uplink_processor_pool_impl::get_slot_processor(slot_point slot)
 {
   srsran_assert(slot.valid(), "Invalid slot ({}) when requesting an uplink processor", slot);
-  return processors.get_processor(slot);
+  return processors.get_processor(slot).get_slot_processor();
+}
+
+unique_uplink_pdu_slot_repository uplink_processor_pool_impl::get_pdu_slot_repository(slot_point slot)
+{
+  srsran_assert(slot.valid(), "Invalid slot ({}) when requesting an uplink processor", slot);
+  return processors.get_processor(slot).get_pdu_slot_repository(slot);
 }

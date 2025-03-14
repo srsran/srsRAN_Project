@@ -27,20 +27,18 @@
 #include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_results_notifier_wrapper.h"
 #include "upper_phy_rx_symbol_handler_impl.h"
-#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/prach_buffer_pool.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/rx_buffer_pool.h"
 #include "srsran/phy/upper/uplink_processor.h"
 #include "srsran/phy/upper/upper_phy.h"
+#include "srsran/phy/upper/upper_phy_metrics_collector.h"
 #include "srsran/phy/upper/upper_phy_timing_handler.h"
 #include "srsran/phy/upper/upper_phy_timing_notifier.h"
-#include "srsran/support/executors/task_executor.h"
-#include <functional>
+#include "srsran/srslog/srslog.h"
 
 namespace srsran {
-
 /// Upper PHY implementation configuration.
 struct upper_phy_impl_config {
   /// Uplink bandwidth in resource blocks.
@@ -61,6 +59,8 @@ struct upper_phy_impl_config {
   std::unique_ptr<prach_buffer_pool> prach_pool;
   /// Receive buffer pool.
   std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
+  /// Upper PHY results notifier.
+  std::unique_ptr<upper_phy_rx_results_notifier_wrapper> rx_results_notifier;
   /// Symbol request notifier.
   upper_phy_rx_symbol_request_notifier* rx_symbol_request_notifier;
   /// Log level.
@@ -77,6 +77,8 @@ struct upper_phy_impl_config {
   std::unique_ptr<downlink_pdu_validator> dl_pdu_validator;
   /// Uplink PDU validator.
   std::unique_ptr<uplink_pdu_validator> ul_pdu_validator;
+  /// Metrics collector.
+  std::unique_ptr<upper_phy_metrics_collector> metrics_collector;
 };
 
 /// \brief Implementation of the upper PHY interface.
@@ -134,7 +136,10 @@ public:
   uplink_request_processor& get_uplink_request_processor() override;
 
   // See interface for documentation.
-  uplink_slot_pdu_repository& get_uplink_slot_pdu_repository() override;
+  uplink_pdu_slot_repository_pool& get_uplink_pdu_slot_repository() override;
+
+  // See interface for documentation.
+  upper_phy_metrics_collector* get_metrics_collector() override;
 
   // See interface for documentation.
   const downlink_pdu_validator& get_downlink_pdu_validator() const override;
@@ -156,14 +161,14 @@ public:
 private:
   /// Upper PHY logger.
   srslog::basic_logger& logger;
+  /// Metrics collector.
+  std::unique_ptr<upper_phy_metrics_collector> metrics_collector;
   /// Receive buffer pool.
   std::unique_ptr<rx_buffer_pool_controller> rx_buf_pool;
   /// Downlink resource grid pool.
   std::unique_ptr<resource_grid_pool> dl_rg_pool;
   /// Uplink resource grid pool.
   std::unique_ptr<resource_grid_pool> ul_rg_pool;
-  /// Uplink slot PDU registry.
-  uplink_slot_pdu_repository pdu_repository;
   /// PRACH buffer pool.
   std::unique_ptr<prach_buffer_pool> prach_pool;
   /// Downlink processor pool.
@@ -177,7 +182,7 @@ private:
   /// Uplink request processor.
   uplink_request_processor_impl ul_request_processor;
   /// Upper PHY results notifier.
-  upper_phy_rx_results_notifier_wrapper rx_results_notifier;
+  std::unique_ptr<upper_phy_rx_results_notifier_wrapper> rx_results_notifier;
   /// Received symbols handler.
   std::unique_ptr<upper_phy_rx_symbol_handler> rx_symbol_handler;
   /// Timing events handler.
@@ -185,5 +190,4 @@ private:
   /// Error events handler.
   upper_phy_error_handler_impl error_handler;
 };
-
 } // namespace srsran

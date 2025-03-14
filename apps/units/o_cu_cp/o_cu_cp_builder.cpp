@@ -105,7 +105,7 @@ o_cu_cp_unit srsran::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, o_cu_cp_
   }
 
   for (unsigned i = 0, e = n2_clients.size(); i != e; ++i) {
-    cu_cp_cfg.ngaps[i].n2_gw = n2_clients[i].get();
+    cu_cp_cfg.ngap.ngaps[i].n2_gw = n2_clients[i].get();
   }
   auto e2_metric_connectors = std::make_unique<e2_cu_metrics_connector_manager>();
 

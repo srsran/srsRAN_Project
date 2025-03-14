@@ -72,7 +72,7 @@ public:
   e2sm_rc_control_service_base(uint32_t style_id_);
   virtual ~e2sm_rc_control_service_base() = default;
 
-  bool fill_ran_function_description(asn1::e2sm::ran_function_definition_ctrl_item_s& ctrl_item);
+  asn1::e2sm::ran_function_definition_ctrl_item_s get_control_style_definition() override;
 
   /// e2sm_control_service functions.
   uint32_t get_style_type() override;

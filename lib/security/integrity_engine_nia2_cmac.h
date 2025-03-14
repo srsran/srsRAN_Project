@@ -48,6 +48,7 @@ private:
   uint8_t            bearer_id;
   security_direction direction;
 
+  srslog::basic_logger&        logger;
   const mbedtls_cipher_info_t* cipher_info;
   mbedtls_cipher_context_t     ctx;
 };

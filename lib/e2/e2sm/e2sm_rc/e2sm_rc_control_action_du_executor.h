@@ -37,7 +37,7 @@ public:
   e2sm_rc_control_action_du_executor_base(srs_du::du_configurator& du_configurator_, uint32_t action_id_);
   virtual ~e2sm_rc_control_action_du_executor_base() = default;
 
-  bool fill_ran_function_description(asn1::e2sm::ran_function_definition_ctrl_action_item_s& action_item);
+  asn1::e2sm::ran_function_definition_ctrl_action_item_s get_control_action_definition() override;
 
   /// e2sm_control_request_executor functions.
   uint32_t                              get_action_id() override;

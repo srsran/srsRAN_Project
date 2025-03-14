@@ -55,6 +55,10 @@ byte_buffer_memory_resource& get_default_byte_buffer_segment_pool();
 /// \brief Default byte buffer segment pool with fallback to the heap on failure to allocate.
 byte_buffer_memory_resource& get_default_fallback_byte_buffer_segment_pool();
 
+/// \brief Preinitialize the byte buffer segment pool thread-local storage.
+/// This method is useful to avoid the overhead of thread_local initialization in latency-critical parts of the code.
+void init_byte_buffer_segment_pool_tls();
+
 class byte_buffer_slice;
 
 /// \brief Byte sequence, which represents its data in memory via an intrusive linked list of memory chunks.

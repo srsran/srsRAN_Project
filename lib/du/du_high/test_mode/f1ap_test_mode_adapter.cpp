@@ -50,8 +50,8 @@ public:
   {
     adapted->handle_rrc_delivery_report(report);
   }
-  [[nodiscard]] bool                    connect_to_cu_cp() override { return adapted->connect_to_cu_cp(); }
-  async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override
+  [[nodiscard]] bool          connect_to_cu_cp() override { return adapted->connect_to_cu_cp(); }
+  async_task<f1_setup_result> handle_f1_setup_request(const f1_setup_request_message& request) override
   {
     return adapted->handle_f1_setup_request(request);
   }
@@ -173,6 +173,9 @@ public:
               cell_item.nr_cgi         = cell->gnb_du_served_cells_item().served_cell_info.nr_cgi;
               cell_item.nr_pci_present = true;
               cell_item.nr_pci         = cell->gnb_du_served_cells_item().served_cell_info.nr_pci;
+              f1_setup_resp->cells_to_be_activ_list.push_back({});
+              f1_setup_resp->cells_to_be_activ_list.back().load_info_obj(ASN1_F1AP_ID_CELLS_TO_BE_ACTIV_LIST_ITEM);
+              f1_setup_resp->cells_to_be_activ_list.back().value().cells_to_be_activ_list_item() = cell_item;
             }
           }
           f1_setup_resp->gnb_cu_rrc_version = f1_setup->gnb_du_rrc_version;
@@ -182,32 +185,54 @@ public:
 
         } break;
         case f1ap_elem_procs_o::init_msg_c::types_opts::init_ul_rrc_msg_transfer: {
-          const asn1::f1ap::init_ul_rrc_msg_transfer_s& ie = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
-          // In case of test mode, save gNB-DU-UE-F1AP-ID of test mode UE.
-          rnti_t rnti = to_rnti(ie->c_rnti);
-          if (parent.is_test_mode_ue(rnti)) {
-            gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(ie->gnb_du_ue_f1ap_id);
-            parent.du_ue_to_rnti.insert(std::make_pair(du_ue_id, rnti));
-          }
+          const asn1::f1ap::init_ul_rrc_msg_transfer_s& ie   = msg.pdu.init_msg().value.init_ul_rrc_msg_transfer();
+          rnti_t                                        rnti = to_rnti(ie->c_rnti);
 
           f1ap_message pdu_resp;
-          pdu_resp.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
-          asn1::f1ap::dl_rrc_msg_transfer_s& rrc_setup = pdu_resp.pdu.init_msg().value.dl_rrc_msg_transfer();
-          rrc_setup->gnb_du_ue_f1ap_id                 = ie->gnb_du_ue_f1ap_id;
-          rrc_setup->gnb_cu_ue_f1ap_id                 = next_cu_ue_id;
-          rrc_setup->srb_id                            = 0;
-          rrc_setup->rrc_container.from_string(
-              "204004094ae00580088bd76380830f0003e0102341e0400020904c0ca8000ff800000000183708420001e01650020c00000081a6"
-              "040514280038e2400040d55f21070004103081430727122858c1a3879022000010a00010016a00021910a00031916a00040090a0"
-              "0050096a00061890a00071896a00080210a0009032080280c8240b0320a0300c82c0d0320c0380c8340f0320e040588201103a0a"
-              "4092e4a9286050e23a2b3c4de4d03a41078bbf03043800000071ffa5294a529e502c0000432ec00000000000000000018ad54500"
-              "47001800082000e21005c400e0202108001c4200b8401c080441000388401708038180842000710802e18070401104000e21005c"
-              "300080000008218081018201c1a0001c71000000080100020180020240088029800008c40089c7001800");
+
+          if (ie->du_to_cu_rrc_container_present) {
+            // In case of test mode, save gNB-DU-UE-F1AP-ID of test mode UE.
+            if (parent.is_test_mode_ue(rnti)) {
+              gnb_du_ue_f1ap_id_t du_ue_id = int_to_gnb_du_ue_f1ap_id(ie->gnb_du_ue_f1ap_id);
+              parent.du_ue_to_rnti.insert(std::make_pair(du_ue_id, rnti));
+            }
+
+            pdu_resp.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_DL_RRC_MSG_TRANSFER);
+            asn1::f1ap::dl_rrc_msg_transfer_s& rrc_setup = pdu_resp.pdu.init_msg().value.dl_rrc_msg_transfer();
+            rrc_setup->gnb_du_ue_f1ap_id                 = ie->gnb_du_ue_f1ap_id;
+            rrc_setup->gnb_cu_ue_f1ap_id                 = next_cu_ue_id;
+            rrc_setup->srb_id                            = 0;
+            rrc_setup->rrc_container.from_string(
+                "204004094ae00580088bd76380830f0003e0102341e0400020904c0ca8000ff800000000183708420001e01650020c00000081"
+                "a6040514280038e2400040d55f21070004103081430727122858c1a3879022000010a00010016a00021910a00031916a000400"
+                "90a00050096a00061890a00071896a00080210a0009032080280c8240b0320a0300c82c0d0320c0380c8340f0320e040588201"
+                "103a0a4092e4a9286050e23a2b3c4de4d03a41078bbf03043800000071ffa5294a529e502c0000432ec0000000000000000001"
+                "8ad5450047001800082000e21005c400e0202108001c4200b8401c080441000388401708038180842000710802e18070401104"
+                "000e21005c300080000008218081018201c1a0001c71000000080100020180020240088029800008c40089c7001800");
+
+            parent.logger.info("Test Mode: Injected F1AP DL RRC Message (containing rrcSetup) for rnti={}", rnti);
+          } else {
+            // In case the DU failed to allocate UE resources.
+            parent.logger.warning("Test Mode: Injected F1AP UE Context Release (containing rrcReject) for rnti={}",
+                                  rnti);
+
+            pdu_resp.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
+            asn1::f1ap::ue_context_release_cmd_s& ue_context_release =
+                pdu_resp.pdu.init_msg().value.ue_context_release_cmd();
+
+            ue_context_release->gnb_du_ue_f1ap_id = ie->gnb_du_ue_f1ap_id;
+            ue_context_release->gnb_cu_ue_f1ap_id = next_cu_ue_id;
+            ue_context_release->cause.set_radio_network();
+            ue_context_release->cause.radio_network().value = cause_radio_network_opts::no_radio_res_available;
+            ue_context_release->srb_id_present              = true;
+            ue_context_release->srb_id                      = 0;
+            ue_context_release->rrc_container_present       = true;
+            ue_context_release->rrc_container.from_string("012345");
+          }
 
           // Increment next_cu_ue_id for the next test mode UE.
           next_cu_ue_id++;
 
-          parent.logger.info("Test Mode: Injected F1AP DL RRC Message (containing rrcSetup)");
           parent.handle_message(pdu_resp);
 
         } break;
@@ -222,7 +247,6 @@ public:
           parent.handle_message(pdu_resp);
 
         } break;
-
         default:
           break;
       }

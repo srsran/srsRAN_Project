@@ -28,12 +28,12 @@
 
 using namespace srsran;
 
-ru_controller_generic_impl::ru_controller_generic_impl(std::vector<lower_phy_controller*>     low_phy_crtl_,
-                                                       std::vector<phy_metrics_adapter*>      low_phy_metrics_,
-                                                       std::vector<lower_phy_cfo_controller*> tx_cfo_control,
-                                                       std::vector<lower_phy_cfo_controller*> rx_cfo_control,
-                                                       radio_session&                         radio_,
-                                                       double                                 srate_MHz_) :
+ru_controller_generic_impl::ru_controller_generic_impl(std::vector<lower_phy_controller*>       low_phy_crtl_,
+                                                       std::vector<ru_generic_metrics_printer*> low_phy_metrics_,
+                                                       std::vector<lower_phy_cfo_controller*>   tx_cfo_control,
+                                                       std::vector<lower_phy_cfo_controller*>   rx_cfo_control,
+                                                       radio_session&                           radio_,
+                                                       double                                   srate_MHz_) :
   low_phy_crtl(std::move(low_phy_crtl_)),
   low_phy_metrics(std::move(low_phy_metrics_)),
   radio(radio_),
@@ -104,8 +104,8 @@ bool ru_cfo_controller_generic_impl::set_rx_cfo(unsigned sector_id, const cfo_co
 
 void ru_controller_generic_impl::print_metrics()
 {
-  phy_metrics_adapter::print_header();
-  for (auto metrics : low_phy_metrics) {
+  ru_generic_metrics_printer::print_header();
+  for (auto* metrics : low_phy_metrics) {
     metrics->print_metrics();
   }
 }

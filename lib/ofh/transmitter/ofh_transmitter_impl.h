@@ -22,15 +22,11 @@
 
 #pragma once
 
-#include "ofh_data_flow_cplane_scheduling_commands_impl.h"
-#include "ofh_data_flow_uplane_downlink_data_impl.h"
-#include "ofh_downlink_handler_impl.h"
 #include "ofh_downlink_manager.h"
 #include "ofh_message_transmitter_impl.h"
 #include "ofh_transmitter_ota_symbol_task_dispatcher.h"
 #include "ofh_uplink_request_handler_impl.h"
 #include "sequence_identifier_generator.h"
-#include "srsran/ofh/compression/iq_compressor.h"
 #include "srsran/ofh/transmitter/ofh_transmitter.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
 
@@ -45,8 +41,12 @@ struct transmitter_impl_dependencies {
   task_executor* executor = nullptr;
   /// Downlink manager.
   std::unique_ptr<downlink_manager> dl_manager;
-  /// Uplink request handler.
-  std::unique_ptr<uplink_request_handler> ul_request_handler;
+  /// Data flow for uplink Control-Plane scheduling commands.
+  std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow;
+  /// Uplink slot context repository.
+  std::shared_ptr<uplink_context_repository> ul_slot_repo;
+  /// Uplink PRACH context repository.
+  std::shared_ptr<prach_context_repository> ul_prach_repo;
   /// Ethernet gateway.
   std::unique_ptr<ether::gateway> eth_gateway;
   /// Ethernet frame pool.
@@ -71,10 +71,10 @@ public:
   void set_error_notifier(error_notifier& notifier) override;
 
 private:
-  std::unique_ptr<downlink_manager>       dl_manager;
-  std::unique_ptr<uplink_request_handler> ul_request_handler;
-  message_transmitter_impl                msg_transmitter;
-  transmitter_ota_symbol_task_dispatcher  ota_dispatcher;
+  std::unique_ptr<downlink_manager>      dl_manager;
+  uplink_request_handler_impl            ul_request_handler;
+  message_transmitter_impl               msg_transmitter;
+  transmitter_ota_symbol_task_dispatcher ota_dispatcher;
 };
 
 } // namespace ofh

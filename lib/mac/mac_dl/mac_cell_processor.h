@@ -131,7 +131,7 @@ private:
 
   /// Represents activation cell state.
   // Note: For now, cells start active.
-  enum class cell_state { inactive, active } state = cell_state::active;
+  enum class cell_state { inactive, active } state = cell_state::inactive;
 
   mac_pcap& pcap;
 

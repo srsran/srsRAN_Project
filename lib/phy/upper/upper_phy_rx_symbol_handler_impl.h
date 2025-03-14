@@ -22,75 +22,11 @@
 
 #pragma once
 
-#include "srsran/adt/circular_array.h"
-#include "srsran/phy/support/resource_grid_writer.h"
-#include "srsran/phy/upper/rx_buffer_pool.h"
-#include "srsran/phy/upper/uplink_slot_pdu_repository.h"
+#include "srsran/phy/support/shared_resource_grid.h"
+#include "srsran/phy/upper/uplink_slot_processor.h"
 #include "srsran/phy/upper/upper_phy_rx_symbol_handler.h"
-#include "srsran/srslog/srslog.h"
-#include <vector>
 
 namespace srsran {
-
-class uplink_processor;
-class uplink_processor_pool;
-class upper_phy_rx_results_notifier;
-
-/// \brief Represents a pool of payload buffers.
-///
-/// The pool comprises a circular byte array, and this class provides functionality
-/// to assign a specified number of bytes from the pool. When the array is exhausted,
-/// the payload view is started from the beginning again.
-class rx_payload_buffer_pool
-{
-  /// Maximum number of slots to store.
-  static constexpr size_t nof_slots = 40U;
-  /// Minimum block size. It ensures that the payload offsets are selected using multiples of blocks.
-  static constexpr unsigned min_block_size = 64;
-
-public:
-  /// Create the receive transport block buffer pool from the maximum number of PRB and layers.
-  rx_payload_buffer_pool(unsigned max_nof_prb, unsigned max_nof_layers) :
-    max_buffer_size(units::bits(max_nof_prb * 156 * 8 * max_nof_layers)),
-    pool(max_buffer_size.truncate_to_bytes().value() * nof_slots)
-  {
-    srsran_assert(max_nof_prb != 0, "Invalid number of PRB.");
-    srsran_assert(max_nof_layers != 0, "Invalid number of layers.");
-  }
-
-  /// Returns the next available portion of the pool.
-  span<uint8_t> acquire_payload_buffer(units::bytes size)
-  {
-    // Convert the maximum buffer size from bits to bytes for comparison and allocation.
-    units::bytes max_buffer_size_bytes = max_buffer_size.truncate_to_bytes();
-
-    srsran_assert(
-        size <= max_buffer_size_bytes, "Buffer size (i.e., {}) exceeds maximum {}.", size, max_buffer_size_bytes);
-
-    // Round the number of consumed bytes to the next block.
-    size_t count = divide_ceil(size.value(), min_block_size) * min_block_size;
-
-    // Reset the available bytes if the pool is exhausted.
-    if (available.size() < count) {
-      available = pool;
-    }
-
-    // Select the first bytes as the payload for the transmission.
-    span<uint8_t> payload = available.first(size.value());
-
-    // Advance available bytes.
-    available = available.last(available.size() - count);
-    return payload;
-  }
-
-private:
-  /// Maximum number of bits that could potentially be allocated in a slot.
-  units::bits max_buffer_size;
-  /// Pool.
-  std::vector<uint8_t> pool;
-  /// Span that points to the unused portion of the pool.
-  span<uint8_t> available;
-};
 
 /// \brief Implementation of the upper PHY handler of receive symbols events.
 ///
@@ -101,12 +37,7 @@ private:
 class upper_phy_rx_symbol_handler_impl : public upper_phy_rx_symbol_handler
 {
 public:
-  upper_phy_rx_symbol_handler_impl(uplink_processor_pool&         ul_processor_pool_,
-                                   uplink_slot_pdu_repository&    ul_pdu_repository_,
-                                   rx_buffer_pool&                buffer_pool_,
-                                   upper_phy_rx_results_notifier& rx_results_notifier_,
-                                   unsigned                       max_nof_prb,
-                                   unsigned                       max_nof_layers);
+  upper_phy_rx_symbol_handler_impl(uplink_slot_processor_pool& ul_processor_pool_);
 
   // See interface for documentation.
   void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const shared_resource_grid& grid) override;
@@ -115,23 +46,8 @@ public:
   void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override;
 
 private:
-  /// Process the given PUSCH PDU using the given uplink processor, grid and slot.
-  void process_pusch(const uplink_processor::pusch_pdu& pdu,
-                     uplink_processor&                  ul_processor,
-                     const shared_resource_grid&        grid,
-                     slot_point                         slot);
-
-private:
   /// Uplink processor pool.
-  uplink_processor_pool& ul_processor_pool;
-  /// Uplink slot PDU registry.
-  uplink_slot_pdu_repository& ul_pdu_repository;
-  /// buffer pool.
-  rx_buffer_pool& rm_buffer_pool;
-  /// Upper PHY results notifier.
-  upper_phy_rx_results_notifier& rx_results_notifier;
-  /// Pool of containers for the payload.
-  rx_payload_buffer_pool rx_payload_pool;
+  uplink_slot_processor_pool& ul_processor_pool;
 };
 
 } // namespace srsran

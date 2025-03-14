@@ -22,9 +22,9 @@
 
 #include "lower_phy_factory.h"
 #include "ru_config_validator.h"
+#include "ru_generic_error_adapter.h"
 #include "ru_generic_impl.h"
 #include "ru_radio_notifier_handler.h"
-#include "srsran/phy/adapters/phy_error_adapter.h"
 #include "srsran/radio/radio_factory.h"
 #include "srsran/ru/generic/ru_generic_factory.h"
 
@@ -45,11 +45,11 @@ public:
 
 } // namespace
 
-/// Builds a radio session with the given parameters.
-static std::unique_ptr<radio_session> build_radio(task_executor&              executor,
-                                                  radio_notification_handler& radio_handler,
-                                                  radio_configuration::radio& config,
-                                                  const std::string&          device_driver)
+/// Creates a radio session with the given parameters.
+static std::unique_ptr<radio_session> create_radio_session(task_executor&              executor,
+                                                           radio_notification_handler& radio_handler,
+                                                           radio_configuration::radio& config,
+                                                           const std::string&          device_driver)
 {
   print_available_radio_factories();
 
@@ -59,7 +59,7 @@ static std::unique_ptr<radio_session> build_radio(task_executor&              ex
   }
 
   if (!factory->get_configuration_validator().is_configuration_valid(config)) {
-    report_error("Invalid radio configuration.\n");
+    report_error("Invalid radio configuration.");
   }
 
   return factory->create(config, executor, radio_handler);
@@ -88,7 +88,7 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
       *config.statistics_printer_executor,
       get_statistics_time_interval_in_slots(config.statistics_print_interval_s, config.lower_phy_config.front().scs));
 
-  auto radio = build_radio(*config.radio_exec, *radio_event_counter, config.radio_cfg, config.device_driver);
+  auto radio = create_radio_session(*config.radio_exec, *radio_event_counter, config.radio_cfg, config.device_driver);
   report_error_if_not(radio, "Unable to create radio session.");
 
   // Create received symbol adapter.
@@ -114,8 +114,9 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
                                std::make_unique<lower_phy_timing_notifier_dummy>()));
     low_cfg.timing_notifier = ru_cfg.ru_time_adapter.back().get();
 
-    ru_cfg.phy_err_printer.push_back(std::make_unique<phy_error_adapter>(*low_cfg.logger));
-    ru_cfg.phy_metrics_printer.push_back(std::make_unique<phy_metrics_adapter>());
+    ru_cfg.phy_err_printer.push_back(
+        std::make_unique<ru_generic_error_adapter>(*low_cfg.logger, *config.error_notifier));
+    ru_cfg.phy_metrics_printer.push_back(std::make_unique<ru_generic_metrics_printer>());
     low_cfg.error_notifier  = ru_cfg.phy_err_printer.back().get();
     low_cfg.metric_notifier = ru_cfg.phy_metrics_printer.back().get();
 

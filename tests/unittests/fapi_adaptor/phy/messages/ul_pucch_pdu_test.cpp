@@ -54,7 +54,7 @@ TEST(FAPIPPHYULPUCCHAdaptorTest, ValidFormat1PDUPass)
   unsigned slot            = 2U;
   unsigned nof_rx_antennas = 1U;
 
-  uplink_processor::pucch_pdu pdu;
+  uplink_pdu_slot_repository::pucch_pdu pdu;
   convert_pucch_fapi_to_phy(pdu, fapi_pdu, sfn, slot, nof_rx_antennas);
 
   // Format 1 custom parameters.

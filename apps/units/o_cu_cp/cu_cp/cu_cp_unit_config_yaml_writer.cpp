@@ -103,8 +103,9 @@ static YAML::Node build_cu_cp_amf_section(const cu_cp_unit_amf_config& config)
 {
   YAML::Node node;
 
-  node["no_core"] = config.no_core;
-  node["amf"]     = build_cu_cp_extra_amfs_item_section(config.amf);
+  node["no_core"]                     = config.no_core;
+  node["amf_reconnection_retry_time"] = config.amf_reconnection_retry_time;
+  node["amf"]                         = build_cu_cp_extra_amfs_item_section(config.amf);
 
   return node;
 }

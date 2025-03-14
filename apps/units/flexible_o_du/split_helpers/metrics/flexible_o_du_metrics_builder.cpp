@@ -48,13 +48,13 @@ srsran::build_flexible_o_du_metrics_config(std::vector<app_services::metrics_con
   odu_metric.callback    = flexible_o_du_metrics_callback;
 
   if (metrics_cfg.enable_log_metrics) {
-    odu_metric.consumers.push_back(
-        std::make_unique<flexible_o_du_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
+    odu_metric.consumers.push_back(std::make_unique<flexible_o_du_metrics_consumer_log>(
+        app_helpers::fetch_logger_metrics_log_channel(), pci_cell_map));
   }
 
   if (metrics_cfg.json_config.enable_json_metrics) {
     odu_metric.consumers.push_back(std::make_unique<flexible_o_du_metrics_consumer_json>(
-        app_helpers::fetch_json_metrics_log_channel(), std::move(pci_cell_map)));
+        app_helpers::fetch_json_metrics_log_channel(), pci_cell_map));
   }
 
   return out_value;

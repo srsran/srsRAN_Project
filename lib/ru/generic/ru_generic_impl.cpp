@@ -25,7 +25,7 @@
 using namespace srsran;
 
 ru_generic_impl::ru_generic_impl(ru_generic_impl_config&& config) :
-  phy_err_printer(std::move(config.phy_err_printer)),
+  phy_err_logger(std::move(config.phy_err_printer)),
   phy_metric_printer(std::move(config.phy_metrics_printer)),
   ru_rx_adapter(std::move(config.ru_rx_adapter)),
   ru_time_adapter(std::move(config.ru_time_adapter)),
@@ -40,8 +40,8 @@ ru_generic_impl::ru_generic_impl(ru_generic_impl_config&& config) :
         }
         return out;
       }(low_phy),
-      [](span<std::unique_ptr<phy_metrics_adapter>> metric_printers) {
-        std::vector<phy_metrics_adapter*> out;
+      [](span<std::unique_ptr<ru_generic_metrics_printer>> metric_printers) {
+        std::vector<ru_generic_metrics_printer*> out;
         for (auto& metric_printer : metric_printers) {
           out.push_back(metric_printer.get());
           srsran_assert(out.back(), "Invalid lower PHY metric printer");

@@ -21,7 +21,7 @@
  */
 
 #include "gnb_appconfig_validators.h"
-#include "apps/services/logger/logger_appconfig_validator.h"
+#include "apps/helpers/logger/logger_appconfig_validator.h"
 #include "apps/services/worker_manager/worker_manager_appconfig_validator.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h"

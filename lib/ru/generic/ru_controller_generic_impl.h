@@ -22,18 +22,18 @@
 
 #pragma once
 
-#include "srsran/phy/adapters/phy_metrics_adapter.h"
 #include "srsran/phy/lower/lower_phy_controller.h"
 #include "srsran/phy/lower/lower_phy_metrics_notifier.h"
+#include "srsran/ru/generic/ru_generic_metrics_printer.h"
 #include "srsran/ru/ru_controller.h"
 #include <vector>
 
 namespace srsran {
 
+class lower_phy_cfo_controller;
 class lower_phy_controller;
 class lower_phy_metrics_notifier;
 class radio_session;
-class lower_phy_cfo_controller;
 
 /// Radio Unit gain controller generic implementation.
 class ru_gain_controller_generic_impl : public ru_gain_controller
@@ -74,12 +74,12 @@ public:
 class ru_controller_generic_impl : public ru_controller, public ru_operation_controller
 {
 public:
-  ru_controller_generic_impl(std::vector<lower_phy_controller*>     low_phy_crtl_,
-                             std::vector<phy_metrics_adapter*>      low_phy_metrics_,
-                             std::vector<lower_phy_cfo_controller*> tx_cfo_control,
-                             std::vector<lower_phy_cfo_controller*> rx_cfo_control,
-                             radio_session&                         radio_,
-                             double                                 srate_MHz_);
+  ru_controller_generic_impl(std::vector<lower_phy_controller*>       low_phy_crtl_,
+                             std::vector<ru_generic_metrics_printer*> low_phy_metrics_,
+                             std::vector<lower_phy_cfo_controller*>   tx_cfo_control,
+                             std::vector<lower_phy_cfo_controller*>   rx_cfo_control,
+                             radio_session&                           radio_,
+                             double                                   srate_MHz_);
 
   // See interface for documentation.
   ru_operation_controller& get_operation_controller() override { return *this; }
@@ -100,12 +100,12 @@ public:
   void print_metrics() override;
 
 private:
-  std::vector<lower_phy_controller*> low_phy_crtl;
-  std::vector<phy_metrics_adapter*>  low_phy_metrics;
-  radio_session&                     radio;
-  const double                       srate_MHz;
-  ru_gain_controller_generic_impl    gain_controller;
-  ru_cfo_controller_generic_impl     cfo_controller;
+  std::vector<lower_phy_controller*>       low_phy_crtl;
+  std::vector<ru_generic_metrics_printer*> low_phy_metrics;
+  radio_session&                           radio;
+  const double                             srate_MHz;
+  ru_gain_controller_generic_impl          gain_controller;
+  ru_cfo_controller_generic_impl           cfo_controller;
 };
 
 } // namespace srsran

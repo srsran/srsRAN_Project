@@ -66,22 +66,22 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
     report_fatal_error_if_not(sector, "Unable to create OFH sector");
     ofh_dependencies.sectors.emplace_back(std::move(sector));
 
-    fmt::print("Initializing the Open Fronthaul Interface for sector#{}: ul_compr=[{},{}], dl_compr=[{},{}], "
-               "prach_compr=[{},{}], prach_cp_enabled={}, downlink_broadcast={}{}\n",
-               i,
-               to_string(sector_cfg.ul_compression_params.type),
-               sector_cfg.ul_compression_params.data_width,
-               to_string(sector_cfg.dl_compression_params.type),
-               sector_cfg.dl_compression_params.data_width,
-               to_string(sector_cfg.prach_compression_params.type),
-               sector_cfg.prach_compression_params.data_width,
-               sector_cfg.is_prach_control_plane_enabled,
-               sector_cfg.is_downlink_broadcast_enabled,
-               (sector_cfg.bw != sector_cfg.ru_operating_bw)
-                   ? fmt::format(".\nOperating a {}MHz cell over a RU with instantaneous bandwidth of {}MHz",
-                                 fmt::underlying(sector_cfg.bw),
-                                 fmt::underlying(sector_cfg.ru_operating_bw))
-                   : fmt::format(""));
+    fmt::println("Initializing the Open Fronthaul Interface for sector#{}: ul_compr=[{},{}], dl_compr=[{},{}], "
+                 "prach_compr=[{},{}], prach_cp_enabled={}, downlink_broadcast={}{}",
+                 i,
+                 to_string(sector_cfg.ul_compression_params.type),
+                 sector_cfg.ul_compression_params.data_width,
+                 to_string(sector_cfg.dl_compression_params.type),
+                 sector_cfg.dl_compression_params.data_width,
+                 to_string(sector_cfg.prach_compression_params.type),
+                 sector_cfg.prach_compression_params.data_width,
+                 sector_cfg.is_prach_control_plane_enabled,
+                 sector_cfg.is_downlink_broadcast_enabled,
+                 (sector_cfg.bw != sector_cfg.ru_operating_bw)
+                     ? fmt::format(".\nOperating a {}MHz cell over a RU with instantaneous bandwidth of {}MHz",
+                                   fmt::underlying(sector_cfg.bw),
+                                   fmt::underlying(sector_cfg.ru_operating_bw))
+                     : fmt::format(""));
   }
 
   // Prepare OFH controller configuration.

@@ -692,25 +692,23 @@ bool e2sm_kpm_du_meas_provider_impl::get_drb_dl_mean_throughput(const asn1::e2sm
   std::map<uint16_t, unsigned> ue_throughput;
   for (auto& ue : ue_aggr_rlc_metrics) {
     size_t num_pdu_bytes_with_segmentation;
-    switch (ue.second.front().tx.tx_low.mode) {
-      case rlc_mode::um_bidir:
-      case rlc_mode::um_unidir_dl:
-        // get average from queue
-        num_pdu_bytes_with_segmentation =
-            std::accumulate(ue.second.begin(), ue.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
-              return sum + metric.tx.tx_low.mode_specific.um.num_pdu_bytes_with_segmentation;
-            });
-        num_pdu_bytes_with_segmentation /= ue.second.size();
-        break;
-      case rlc_mode::am:
-        num_pdu_bytes_with_segmentation =
-            std::accumulate(ue.second.begin(), ue.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
-              return sum + metric.tx.tx_low.mode_specific.am.num_pdu_bytes_with_segmentation;
-            });
-        num_pdu_bytes_with_segmentation /= ue.second.size();
-        break;
-      default:
-        num_pdu_bytes_with_segmentation = 0;
+    if (std::holds_alternative<rlc_um_tx_metrics_lower>(ue.second.front().tx.tx_low.mode_specific)) {
+      // get average from queue
+      num_pdu_bytes_with_segmentation =
+          std::accumulate(ue.second.begin(), ue.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
+            auto& um = std::get<rlc_um_tx_metrics_lower>(metric.tx.tx_low.mode_specific);
+            return sum + um.num_pdu_bytes_with_segmentation;
+          });
+      num_pdu_bytes_with_segmentation /= ue.second.size();
+    } else if (std::holds_alternative<rlc_am_tx_metrics_lower>(ue.second.front().tx.tx_low.mode_specific)) {
+      num_pdu_bytes_with_segmentation =
+          std::accumulate(ue.second.begin(), ue.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {
+            auto& am = std::get<rlc_am_tx_metrics_lower>(metric.tx.tx_low.mode_specific);
+            return sum + am.num_pdu_bytes_with_segmentation;
+          });
+      num_pdu_bytes_with_segmentation /= ue.second.size();
+    } else {
+      num_pdu_bytes_with_segmentation = 0;
     }
     auto num_pdu_bytes_no_segmentation =
         std::accumulate(ue.second.begin(), ue.second.end(), 0, [](size_t sum, const rlc_metrics& metric) {

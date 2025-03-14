@@ -49,6 +49,7 @@ pdcp_entity_rx::pdcp_entity_rx(uint32_t                        ue_index,
   ue_ul_executor(ue_ul_executor_),
   crypto_executor(crypto_executor_),
   max_nof_crypto_workers(max_nof_crypto_workers_),
+  metrics(metrics_agg_.get_metrics_period().count()),
   metrics_agg(metrics_agg_)
 {
   if (metrics_agg.get_metrics_period().count()) {

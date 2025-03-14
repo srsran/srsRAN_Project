@@ -318,6 +318,18 @@ ric:
     TESTBED: "zmq_ric"
     MARKERS: "zmq_ric"
 
+ntn:
+  extends: .zmq
+  variables:
+    TESTBED: "zmq_ntn"
+    MARKERS: "zmq_ntn"
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - job: "build amariue ntn zmq driver"
+      artifacts: true
+    - *retina-needs
+
 ################################################################################
 # TEST MODE
 ################################################################################
@@ -534,7 +546,7 @@ viavi:
           [
             "ideal and 1UE and not MIMO",
             "ideal and 1UE and MIMO",
-            "ideal and 32UE and not experimental and not tdd and not extended",
+            "ideal and 32UE and not experimental and not tdd and not extended and not UM",
             "tdd",
             "fading and 1UE and not MIMO",
             "fading and 1UE and MIMO",
@@ -542,6 +554,17 @@ viavi:
             "birth-death and 1UE",
             "32UE and experimental and not extended",
           ]
+
+viavi-um:
+  extends: .viavi
+  rules:
+    - if: $CI_DESCRIPTION =~ /Weekly/
+  variables:
+    KEYWORDS: "ideal and UM"
+  needs:
+    - job: "basic avx512 dpdk"
+      artifacts: true
+    - *retina-needs
 
 viavi-extended:
   extends: .viavi

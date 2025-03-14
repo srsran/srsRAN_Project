@@ -129,7 +129,7 @@ TEST_F(gtpu_tunnel_ngu_test, entity_creation)
   msg.gtpu_pcap                        = &dummy_pcap;
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
-  msg.ue_dl_timer_factory              = timers;
+  msg.ue_ctrl_timer_factory            = timers;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
   ASSERT_NE(gtpu, nullptr);
@@ -147,7 +147,7 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   msg.gtpu_pcap                        = &dummy_pcap;
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
-  msg.ue_dl_timer_factory              = timers;
+  msg.ue_ctrl_timer_factory            = timers;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
   sockaddr_storage   orig_addr = {};
@@ -175,7 +175,7 @@ TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
   msg.gtpu_pcap                        = &dummy_pcap;
   msg.rx_lower                         = &gtpu_rx;
   msg.tx_upper                         = &gtpu_tx;
-  msg.ue_dl_timer_factory              = timers;
+  msg.ue_ctrl_timer_factory            = timers;
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
   byte_buffer sdu = byte_buffer::create(gtpu_ping_sdu).value();

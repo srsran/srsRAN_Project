@@ -22,21 +22,25 @@
 
 #include "amf_connection_manager.h"
 #include "../cu_cp_impl_interface.h"
+#include "../routines/amf_connection_loss_routine.h"
 #include "../routines/amf_connection_removal_routine.h"
 #include "../routines/amf_connection_setup_routine.h"
 #include "srsran/cu_cp/cu_cp_configuration.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ran/plmn_identity.h"
 #include "srsran/support/synchronization/baton.h"
+#include <chrono>
 #include <thread>
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
 amf_connection_manager::amf_connection_manager(ngap_repository&       ngaps_,
+                                               timer_manager&         timers_,
                                                task_executor&         cu_cp_exec_,
                                                common_task_scheduler& common_task_sched_) :
   ngaps(ngaps_),
+  timers(timers_),
   cu_cp_exec(cu_cp_exec_),
   common_task_sched(common_task_sched_),
   logger(srslog::fetch_basic_logger("CU-CP"))
@@ -73,6 +77,44 @@ async_task<void> amf_connection_manager::disconnect_amf()
   }
 
   return start_amf_connection_removal(ngaps, amfs_connected);
+}
+
+void amf_connection_manager::handle_amf_connection_loss(amf_index_t amf_index)
+{
+  amfs_connected.erase(amf_index);
+}
+
+void amf_connection_manager::reconnect_to_amf(amf_index_t               amf_index,
+                                              ue_manager*               ue_mng,
+                                              std::chrono::milliseconds amf_reconnection_retry_time)
+{
+  if (ngaps.find_ngap(amf_index) == nullptr) {
+    logger.debug("AMF index {} for reconnection not found", amf_index);
+    return;
+  }
+
+  ngaps.get_ngap_task_scheduler().handle_amf_async_task(
+      amf_index,
+      launch_async([this, amf_index, success = bool{false}, ue_mng, amf_reconnection_retry_time](
+                       coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+
+        CORO_AWAIT_VALUE(success,
+                         start_amf_reconnection(*ngaps.find_ngap(amf_index),
+                                                timer_factory{timers, cu_cp_exec},
+                                                amf_reconnection_retry_time));
+
+        if (success) {
+          // Update PLMN lookups in NGAP repository after successful reconnection.
+          ngaps.update_plmn_lookup(amf_index);
+          ue_mng->remove_blocked_plmns(ngaps.find_ngap(amf_index)->get_ngap_context().get_supported_plmns());
+          amfs_connected.emplace(amf_index, true);
+        } else {
+          logger.info("Failed to reconnect to AMF index {}", amf_index);
+        }
+
+        CORO_RETURN();
+      }));
 }
 
 void amf_connection_manager::stop()

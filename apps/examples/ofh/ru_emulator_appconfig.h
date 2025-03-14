@@ -29,6 +29,9 @@
 
 namespace srsran {
 
+/// PRACH formats supported by the RU emulator are: long format 0 and short format B4.
+enum class ru_emulator_prach_format : uint8_t { LONG_F0, SHORT_B4, NONE };
+
 /// RU emulator OFH configuration parameters.
 struct ru_emulator_ofh_appconfig {
   /// T2a maximum parameter for downlink Control-Plane in microseconds.
@@ -65,6 +68,8 @@ struct ru_emulator_ofh_appconfig {
   std::string ul_compr_method = "bfp";
   /// Uplink compression bitwidth.
   unsigned ul_compr_bitwidth = 9;
+  /// PRACH format used when sending dummy PRACH U-Plane packets.
+  ru_emulator_prach_format prach_format = ru_emulator_prach_format::LONG_F0;
 };
 
 /// RU emulator logging parameters.

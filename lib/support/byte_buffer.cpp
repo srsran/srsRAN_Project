@@ -70,6 +70,11 @@ size_t srsran::get_byte_buffer_segment_pool_current_size_approx()
   return pool.get_central_cache_approx_size() + pool.get_local_cache_size();
 }
 
+void srsran::init_byte_buffer_segment_pool_tls()
+{
+  detail::get_default_byte_buffer_segment_pool().init_worker_cache();
+}
+
 // ------ memory resource -------
 
 namespace {

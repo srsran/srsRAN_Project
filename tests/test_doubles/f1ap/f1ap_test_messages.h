@@ -69,6 +69,9 @@ f1ap_message generate_f1_setup_request(gnb_du_id_t                              
 /// \brief Generates dummy F1 SETUP RESPONSE message based on the request.
 f1ap_message generate_f1_setup_response(const f1ap_message& f1_setup_request);
 
+/// \brief Generates dummy F1 SETUP FAILURE message based on the request.
+f1ap_message generate_f1_setup_failure(const f1ap_message& f1_setup_request);
+
 /// \brief Generates dummy F1 REMOVAL REQUEST message.
 f1ap_message generate_f1_removal_request(unsigned transaction_id);
 
@@ -164,6 +167,12 @@ f1ap_message generate_positioning_information_response(gnb_du_ue_f1ap_id_t du_ue
 
 /// \brief Generates dummy F1AP Positioning INFORMATION FAILURE message.
 f1ap_message generate_positioning_information_failure(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
+/// \brief Generates dummy F1AP Positioning ACTIVATION RESPONSE message.
+f1ap_message generate_positioning_activation_response(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
+/// \brief Generates dummy F1AP Positioning ACTIVATION FAILURE message.
+f1ap_message generate_positioning_activation_failure(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
 
 } // namespace test_helpers
 } // namespace srsran

@@ -111,7 +111,7 @@ class e2_sctp_gateway_client final : public e2_connection_client
 {
 public:
   e2_sctp_gateway_client(const e2_sctp_gateway_config& params) :
-    pcap_writer(params.pcap), broker(params.broker), sctp_params(params.sctp)
+    pcap_writer(params.pcap), broker(params.broker), sctp_params(params.sctp), logger(params.logger)
   {
     // Create SCTP network adapter.
     sctp_gateway = create_sctp_network_client(sctp_network_client_config{params.sctp, broker, params.io_rx_executor});
@@ -155,7 +155,7 @@ private:
   dlt_pcap&                             pcap_writer;
   io_broker&                            broker;
   srsran::sctp_network_connector_config sctp_params;
-  srslog::basic_logger&                 logger = srslog::fetch_basic_logger("E2");
+  srslog::basic_logger&                 logger;
 
   // SCTP network gateway
   std::unique_ptr<sctp_network_client> sctp_gateway;

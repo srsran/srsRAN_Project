@@ -595,6 +595,16 @@ inline e2_message generate_e2_setup_response(unsigned transaction_id)
   setup->ran_functions_accepted.push_back(ran_func_item);
   setup->global_ric_id.plmn_id.from_number(131014);
   setup->global_ric_id.ric_id.from_number(699598);
+  // fill the required part with dummy data
+  setup->e2node_component_cfg_addition_ack.resize(1);
+  asn1::e2ap::e2node_component_cfg_addition_ack_item_s& e2node_component_cfg_addition_ack_item =
+      setup->e2node_component_cfg_addition_ack[0].value().e2node_component_cfg_addition_ack_item();
+  e2node_component_cfg_addition_ack_item.e2node_component_interface_type =
+      asn1::e2ap::e2node_component_interface_type_e::e2node_component_interface_type_opts::e1;
+  e2node_component_cfg_addition_ack_item.e2node_component_id.set_e2node_component_interface_type_e1().gnb_cu_up_id =
+      123;
+  e2node_component_cfg_addition_ack_item.e2node_component_cfg_ack.upd_outcome =
+      asn1::e2ap::e2node_component_cfg_ack_s::upd_outcome_opts::success;
   return e2_setup_response;
 }
 

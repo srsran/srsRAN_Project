@@ -43,13 +43,13 @@ public:
   void deactivate();
 
   /// Assign a RAN slice to a logical channel group.
-  void set_ran_slice(lcg_id_t lcgid, ran_slice_id_t slice_id);
+  void set_lcg_ran_slice(lcg_id_t lcgid, ran_slice_id_t slice_id);
 
   /// Detach logical channel group from previously set RAN slice.
-  void reset_ran_slice(lcg_id_t lcgid);
+  void reset_lcg_ran_slice(lcg_id_t lcgid);
 
   /// Deactivate RAN slice and detach the associated logical channel groups.
-  void deactivate(ran_slice_id_t slice_id);
+  void deregister_ran_slice(ran_slice_id_t slice_id);
 
   /// Determines whether a RAN slice has at least one bearer associated with it.
   bool has_slice(ran_slice_id_t slice_id) const

@@ -257,18 +257,20 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
   span<uint8_t> ofh_buffer      = buffer.last(buffer.size() - offset.value());
   const auto&   ofh_ctrl_params = generate_prach_control_parameters(context, prach_compr_params, ru_nof_prbs);
 
-  logger.debug("Sector#{}: generated a PRACH request for slot '{}': numSymbols={}, startSym={}, start_re={}, scs={}, "
-               "prach_scs={}, nof_rb={}, timeOffset={}, freqOffset={}",
-               sector_id,
-               slot,
-               context.nof_repetitions,
-               context.start_symbol,
-               context.prach_start_re,
-               to_string(context.scs),
-               to_string(context.prach_scs),
-               context.prach_nof_rb,
-               ofh_ctrl_params.time_offset,
-               ofh_ctrl_params.section_fields.frequency_offset);
+  logger.debug(
+      "Sector#{}: generated a PRACH request for eaxc '{}', slot '{}': numSymbols={}, startSym={}, start_re={}, "
+      "scs={}, prach_scs={}, nof_rb={}, timeOffset={}, freqOffset={}",
+      sector_id,
+      context.eaxc,
+      slot,
+      context.nof_repetitions,
+      ofh_ctrl_params.radio_hdr.start_symbol,
+      context.prach_start_re,
+      to_string(context.scs),
+      to_string(context.prach_scs),
+      ofh_ctrl_params.section_fields.common_fields.nof_prb,
+      ofh_ctrl_params.time_offset,
+      ofh_ctrl_params.section_fields.frequency_offset);
 
   unsigned bytes_written = cp_builder->build_prach_mixed_numerology_message(ofh_buffer, ofh_ctrl_params);
   unsigned eaxc          = context.eaxc;

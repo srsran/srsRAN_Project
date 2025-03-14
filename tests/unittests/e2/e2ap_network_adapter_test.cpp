@@ -92,7 +92,8 @@ protected:
     cfg.e2sm_kpm_enabled = true;
 
     pcap      = std::make_unique<dummy_e2ap_pcap>();
-    e2_client = create_e2_gateway_client(e2_sctp_gateway_config{e2agent_config, *agent_broker, rx_executor, *pcap});
+    e2_client = create_e2_gateway_client(
+        e2_sctp_gateway_config{e2agent_config, *agent_broker, rx_executor, *pcap, srslog::fetch_basic_logger("E2")});
     e2_client_wrapper = std::make_unique<e2_connection_client_wrapper>(*e2_client);
     du_metrics        = std::make_unique<dummy_e2_du_metrics>();
     du_meas_provider  = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();

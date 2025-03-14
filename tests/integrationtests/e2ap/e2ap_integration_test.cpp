@@ -203,7 +203,8 @@ protected:
     pcap              = std::make_unique<dummy_e2ap_pcap>();
     du_metrics        = std::make_unique<dummy_e2_du_metrics>();
     f1ap_ue_id_mapper = std::make_unique<dummy_f1ap_ue_id_translator>();
-    e2_client         = create_e2_gateway_client(e2_sctp_gateway_config{nw_config, *epoll_broker, rx_executor, *pcap});
+    e2_client         = create_e2_gateway_client(
+        e2_sctp_gateway_config{nw_config, *epoll_broker, rx_executor, *pcap, srslog::fetch_basic_logger("E2")});
     du_param_configurator = std::make_unique<dummy_du_configurator>();
     e2agent               = create_e2_du_agent(
         cfg, *e2_client, &(*du_metrics), &(*f1ap_ue_id_mapper), &(*du_param_configurator), factory, ctrl_worker);

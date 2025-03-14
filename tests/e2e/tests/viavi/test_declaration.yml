@@ -23,6 +23,7 @@
 # test_name: name of test in Viavi campaign file
 # test_timeout: timeout for test in seconds
 # gnb_extra_config: extra GNB configuration
+# retina_params: extra Retina parameters [Optional]
 # expected_dl_bitrate: pass/fail criteria, expected downlink bitrate in bps
 # expected_ul_bitrate: pass/fail criteria, expected uplink bitrate in bps
 # expected_nof_kos: expected_nof_kos
@@ -42,10 +43,8 @@ tests:
         rlc_report_period: 1000
         enable_log_metrics: true
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 8
         pusch:
-          max_puschs_per_slot: 8
+          max_puschs_per_slot: 2
       expert_execution:
         threads:
           non_rt:
@@ -79,10 +78,8 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 8
         pusch:
-          max_puschs_per_slot: 8
+          max_puschs_per_slot: 2
         sched_expert_cfg:
           policy_sched_cfg:
             qos_sched:
@@ -144,6 +141,21 @@ tests:
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
+  - id: "32UE ideal TCP downlink UM"
+    campaign_filename: *campaign_filename
+    test_name: "32UE ideal TCP downlink"
+    test_timeout: *test_timeout
+    # Configuration
+    gnb_extra_config: *base_config
+    retina_params:
+      enable_qos_um: true
+    # Pass / Fail Criteria
+    expected_dl_bitrate: 1.0e+9
+    expected_ul_bitrate: 1.0e+3
+    expected_nof_kos: 10
+    warning_as_errors: true
+    warning_allowlist: *base_warning_allowlist
+
   - id: "1UE fading TCP downlink"
     campaign_filename: *campaign_filename
     test_name: "1UE fading TCP downlink"
@@ -180,10 +192,8 @@ tests:
         sched_report_period: 5000
         rlc_report_period: 5000
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 8
         pusch:
-          max_puschs_per_slot: 8
+          max_puschs_per_slot: 2
       expert_execution:
         threads:
           non_rt:
@@ -215,10 +225,8 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 8
         pusch:
-          max_puschs_per_slot: 8
+          max_puschs_per_slot: 2
         pucch:
           sr_period_ms: 20
           f2_or_f3_or_f4_nof_cell_res_csi: 21
@@ -244,10 +252,8 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 8
         pusch:
-          max_puschs_per_slot: 8
+          max_puschs_per_slot: 2
         pucch:
           sr_period_ms: 40
           f0_or_f1_nof_cell_res_sr: 30
@@ -279,10 +285,8 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 8
         pusch:
-          max_puschs_per_slot: 8
+          max_puschs_per_slot: 2
         pucch:
           sr_period_ms: 40
           f0_or_f1_nof_cell_res_sr: 30
@@ -311,7 +315,12 @@ tests:
     test_name: "1UE birth-death UDP bidirectional"
     test_timeout: *test_timeout
     # Configuration
-    gnb_extra_config: *base_config
+    gnb_extra_config:
+      <<: *base_config
+      expert_execution:
+        threads:
+          upper_phy:
+            nof_pusch_decoder_threads: 3
     # Pass / Fail Criteria
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
@@ -377,10 +386,8 @@ tests:
     gnb_extra_config: &1ue_mimo_config
       <<: *base_config
       cell_cfg:
-        pdsch:
-          max_pdschs_per_slot: 8
         pusch:
-          max_puschs_per_slot: 8
+          max_puschs_per_slot: 2
         nof_antennas_ul: 2
         srs:
           srs_period_ms: 10

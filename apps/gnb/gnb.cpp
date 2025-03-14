@@ -20,6 +20,7 @@
  *
  */
 
+#include "apps/helpers/e2/e2_metric_connector_manager.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
 #include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"
@@ -27,7 +28,6 @@
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
 #include "apps/services/core_isolation_manager.h"
-#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
 #include "apps/services/periodic_metrics_report_controller.h"

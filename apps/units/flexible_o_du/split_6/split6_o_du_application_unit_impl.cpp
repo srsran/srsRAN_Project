@@ -21,7 +21,7 @@
  */
 
 #include "split6_o_du_application_unit_impl.h"
-#include "apps/services/e2/e2_metric_connector_manager.h"
+#include "apps/helpers/e2/e2_metric_connector_manager.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_config_translators.h"
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_config_yaml_writer.h"

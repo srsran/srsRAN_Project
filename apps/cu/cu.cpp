@@ -21,6 +21,7 @@
  */
 
 #include "apps/cu/cu_appconfig_cli11_schema.h"
+#include "apps/helpers/f1u/f1u_appconfig.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
 #include "apps/services/app_resource_usage/app_resource_usage.h"
 #include "apps/services/application_message_banners.h"

@@ -186,11 +186,9 @@ async_task<bool> f1ap_du_ue_context_setup_procedure::handle_rrc_container()
 expected<unsigned> f1ap_du_ue_context_setup_procedure::get_cell_index_from_nr_cgi(nr_cell_global_id_t nr_cgi) const
 {
   // Find the spCell index in the F1AP DU context.
-  if (const auto I = std::find_if(du_ctxt.served_cells.cbegin(),
-                                  du_ctxt.served_cells.cend(),
-                                  [&nr_cgi](const f1ap_du_cell_context& cell) { return nr_cgi == cell.nr_cgi; });
-      I != du_ctxt.served_cells.cend()) {
-    return std::distance(du_ctxt.served_cells.begin(), I);
+  const auto* cell = du_ctxt.find_cell(nr_cgi);
+  if (cell != nullptr) {
+    return static_cast<unsigned>(cell->cell_index);
   }
 
   return make_unexpected(default_error_t());

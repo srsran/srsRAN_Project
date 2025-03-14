@@ -21,7 +21,7 @@
  */
 
 #include "o_cu_cp_e2_config_yaml_writer.h"
-#include "apps/services/e2/e2_config_yaml_writer.h"
+#include "apps/helpers/e2/e2_config_yaml_writer.h"
 #include "o_cu_cp_e2_config.h"
 
 using namespace srsran;

@@ -36,7 +36,7 @@ ul_logical_channel_manager::ul_logical_channel_manager(subcarrier_spacing       
   configure(log_channels_configs);
 }
 
-void ul_logical_channel_manager::set_ran_slice(lcg_id_t lcgid, ran_slice_id_t slice_id)
+void ul_logical_channel_manager::set_lcg_ran_slice(lcg_id_t lcgid, ran_slice_id_t slice_id)
 {
   if (groups[lcgid].slice_id == slice_id) {
     // No-op.
@@ -44,7 +44,7 @@ void ul_logical_channel_manager::set_ran_slice(lcg_id_t lcgid, ran_slice_id_t sl
   }
 
   // Remove LCID from previous slice.
-  reset_ran_slice(lcgid);
+  reset_lcg_ran_slice(lcgid);
 
   // Add LCID to new slice.
   unsigned slice_idx = slice_id.value();
@@ -55,7 +55,7 @@ void ul_logical_channel_manager::set_ran_slice(lcg_id_t lcgid, ran_slice_id_t sl
   groups[lcgid].slice_id = slice_id;
 }
 
-void ul_logical_channel_manager::reset_ran_slice(lcg_id_t lcgid)
+void ul_logical_channel_manager::reset_lcg_ran_slice(lcg_id_t lcgid)
 {
   if (not groups[lcgid].slice_id.has_value()) {
     // LCID has no slice.
@@ -68,7 +68,7 @@ void ul_logical_channel_manager::reset_ran_slice(lcg_id_t lcgid)
   groups[lcgid].slice_id.reset();
 }
 
-void ul_logical_channel_manager::deactivate(ran_slice_id_t slice_id)
+void ul_logical_channel_manager::deregister_ran_slice(ran_slice_id_t slice_id)
 {
   if (not has_slice(slice_id)) {
     return;
@@ -114,7 +114,7 @@ void ul_logical_channel_manager::configure(logical_channel_config_list_ptr lc_ch
   }
   for (unsigned i = 0; i != groups.size(); ++i) {
     if (not groups[i].active and groups[i].slice_id.has_value() and has_slice(*groups[i].slice_id)) {
-      reset_ran_slice(uint_to_lcg_id(i));
+      reset_lcg_ran_slice(uint_to_lcg_id(i));
     }
   }
 }

@@ -35,7 +35,8 @@ security_engine_impl::security_engine_impl(security::sec_128_as_config sec_cfg,
                                            uint8_t                     bearer_id,
                                            security_direction          direction,
                                            security::integrity_enabled integrity_enabled,
-                                           security::ciphering_enabled ciphering_enabled)
+                                           security::ciphering_enabled ciphering_enabled) :
+  logger(srslog::fetch_basic_logger("SEC"))
 {
   if (integrity_enabled == security::integrity_enabled::on) {
     srsran_assert(sec_cfg.integ_algo.has_value(), "Cannot enable integrity protection: No algorithm selected");

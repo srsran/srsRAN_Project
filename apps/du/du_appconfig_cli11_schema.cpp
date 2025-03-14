@@ -21,10 +21,11 @@
  */
 
 #include "du_appconfig_cli11_schema.h"
+#include "apps/helpers/f1u/f1u_cli11_schema.h"
+#include "apps/helpers/hal/hal_cli11_schema.h"
+#include "apps/helpers/logger/logger_appconfig_cli11_schema.h"
 #include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
-#include "apps/services/hal/hal_cli11_schema.h"
-#include "apps/services/logger/logger_appconfig_cli11_schema.h"
 #include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_cli11_schema.h"
 #include "du_appconfig.h"

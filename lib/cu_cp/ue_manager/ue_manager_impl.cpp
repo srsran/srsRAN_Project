@@ -54,6 +54,11 @@ ue_index_t ue_manager::add_ue(du_index_t                     du_index,
                               std::optional<rnti_t>          rnti,
                               std::optional<du_cell_index_t> pcell_index)
 {
+  if (blocked_plmns.find(plmn) != blocked_plmns.end()) {
+    logger.warning("CU-CP UE creation Failed. Cause: UE connections for PLMN {} are currently not allowed", plmn);
+    return ue_index_t::invalid;
+  }
+
   if (du_index == du_index_t::invalid) {
     logger.warning("CU-CP UE creation Failed. Cause: Invalid DU index={}", du_index);
     return ue_index_t::invalid;
@@ -161,6 +166,36 @@ void ue_manager::remove_ue(ue_index_t ue_index)
   ues.erase(ue_index);
 
   logger.debug("ue={}: Removed", ue_index);
+}
+
+void ue_manager::add_blocked_plmns(const std::vector<plmn_identity>& plmns)
+{
+  for (const auto& plmn : plmns) {
+    if (blocked_plmns.insert(plmn).second) {
+      logger.info("Blocking new UE connections for PLMN {}", plmn);
+    }
+  }
+}
+
+void ue_manager::remove_blocked_plmns(const std::vector<plmn_identity>& plmns)
+{
+  for (const auto& plmn : plmns) {
+    if (blocked_plmns.erase(plmn)) {
+      logger.info("Re-allowing new UE connections for PLMN {}", plmn);
+    }
+  }
+}
+
+std::vector<cu_cp_ue*> ue_manager::find_ues(plmn_identity plmn)
+{
+  std::vector<cu_cp_ue*> found_ues;
+  for (auto& ue : ues) {
+    if (ue.second.get_ue_context().plmn == plmn) {
+      found_ues.push_back(&ue.second);
+    }
+  }
+
+  return found_ues;
 }
 
 ue_index_t ue_manager::get_ue_index(pci_t pci, rnti_t rnti)

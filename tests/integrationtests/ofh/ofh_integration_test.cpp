@@ -115,6 +115,7 @@ class dummy_ru_error_notifier : public ru_error_notifier
 {
 public:
   void on_late_downlink_message(const ru_error_context& context) override {}
+  void on_late_uplink_message(const ru_error_context& context) override {}
 };
 } // namespace
 

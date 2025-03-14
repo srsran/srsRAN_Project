@@ -63,9 +63,7 @@ du_served_cell_info make_f1ap_du_cell_info(const du_cell_config& du_cfg);
 gnb_du_sys_info make_f1ap_du_sys_info(const du_cell_config& du_cfg, std::string* js_str = nullptr);
 
 /// \brief Generate request message for F1AP to initiate an F1 Setup Request procedure.
-void fill_f1_setup_request(f1_setup_request_message&            req,
-                           const du_manager_params::ran_params& ran_params,
-                           std::vector<std::string>*            sib1_jsons = nullptr);
+void fill_f1_setup_request(f1_setup_request_message& req, const du_manager_params::ran_params& ran_params);
 
 } // namespace srs_du
 } // namespace srsran

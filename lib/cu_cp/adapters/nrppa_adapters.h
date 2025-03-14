@@ -115,6 +115,13 @@ public:
     return f1ap_handler->handle_positioning_information_request(request);
   }
 
+  async_task<expected<positioning_activation_response_t, positioning_activation_failure_t>>
+  on_positioning_activation_request(const positioning_activation_request_t& request) override
+  {
+    srsran_assert(f1ap_handler != nullptr, "F1AP NRPPA handler must not be nullptr");
+    return f1ap_handler->handle_positioning_activation_request(request);
+  }
+
   async_task<expected<measurement_response_t, measurement_failure_t>>
   on_measurement_information_request(const measurement_request_t& request) override
   {

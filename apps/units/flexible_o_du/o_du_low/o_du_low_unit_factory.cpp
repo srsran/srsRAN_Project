@@ -98,7 +98,6 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
                                             const o_du_low_unit_dependencies& dependencies)
 {
   srs_du::o_du_low_config o_du_low_cfg;
-  o_du_low_cfg.du_low_cfg.logger = &srslog::fetch_basic_logger("DU");
 
   // Configure the metrics.
   const app_helpers::metrics_config& metrics_cfg = params.du_low_unit_cfg.metrics_cfg.common_metrics_cfg;

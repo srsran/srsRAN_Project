@@ -19,6 +19,8 @@
 #
 
 set(SOURCES
+        consumers/o_du_low_metrics_consumers.cpp
+        consumers/ru_metrics_consumers.cpp
         flexible_o_du_metrics_builder.cpp
         flexible_o_du_metrics_consumers.cpp
         flexible_o_du_metrics_producer.cpp)

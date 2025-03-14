@@ -135,10 +135,10 @@ TEST_F(rlc_tx_tm_test, test_tx)
 
   byte_buffer sdu_buf =
       test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, count, sdu_size, count);
-  std::chrono::system_clock::time_point t_start = std::chrono::high_resolution_clock::now();
+  auto t_start = std::chrono::steady_clock::now();
   // write SDU into upper end
   rlc->handle_sdu(sdu_buf.deep_copy().value(), false); // keep local copy for later comparison
-  std::chrono::system_clock::time_point t_end = std::chrono::high_resolution_clock::now();
+  auto t_end = std::chrono::steady_clock::now();
   pcell_worker.run_pending_tasks();
   rlc_buffer_state bs = rlc->get_buffer_state();
   EXPECT_TRUE(bs.hol_toa.has_value());
@@ -187,9 +187,9 @@ TEST_F(rlc_tx_tm_test, test_tx)
   count++;
   sdu_buf = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ true, count, sdu_size, count);
 
-  t_start = std::chrono::high_resolution_clock::now();
+  t_start = std::chrono::steady_clock::now();
   rlc->handle_sdu(sdu_buf.deep_copy().value(), false); // keep local copy for later comparison
-  t_end = std::chrono::high_resolution_clock::now();
+  t_end = std::chrono::steady_clock::now();
   pcell_worker.run_pending_tasks();
   bs = rlc->get_buffer_state();
   EXPECT_TRUE(bs.hol_toa.has_value());
@@ -335,8 +335,8 @@ TEST_F(rlc_tx_tm_test, test_tx_metrics)
       byte_buffer_chain::create(byte_buffer_slice::create(span<uint8_t>(tx_pdu.data(), nwritten)).value()).value();
 
   rlc_tx_metrics m = rlc->get_metrics();
-  ASSERT_EQ(m.tx_low.mode, rlc_mode::tm);
-  ASSERT_EQ(m.tx_low.mode_specific.tm.num_small_allocs, 1);
+  ASSERT_TRUE(std::holds_alternative<rlc_tm_tx_metrics_lower>(m.tx_low.mode_specific));
+  ASSERT_EQ(std::get<rlc_tm_tx_metrics_lower>(m.tx_low.mode_specific).num_small_allocs, 1);
 }
 
 int main(int argc, char** argv)

@@ -44,7 +44,8 @@ class e2_event_manager;
 class e2_impl final : public e2_interface
 {
 public:
-  e2_impl(const e2ap_configuration& cfg_,
+  e2_impl(srslog::basic_logger&     logger_,
+          const e2ap_configuration& cfg_,
           e2ap_e2agent_notifier&    agent_notifier_,
           timer_factory             timers_,
           e2_connection_client&     e2_client_,
@@ -95,6 +96,10 @@ private:
   /// \brief Notify about the reception of an ric subscription delete request message.
   /// \param[in] msg The received ric subscription delete request message.
   void handle_ric_subscription_delete_request(const asn1::e2ap::ric_sub_delete_request_s& msg);
+
+  /// \brief Notify about the reception of a E2 Connection Update message.
+  /// \param[in] msg The received E2 Connection Update message.
+  void handle_e2_connection_update(const asn1::e2ap::e2conn_upd_s& msg);
 
   /// \brief handle e2 setup response message from the ric interface.
   /// @param[in] msg  The received e2 setup response message.

@@ -36,6 +36,9 @@ public:
   // See interface for documentation.
   void on_late_downlink_message(const ofh::error_context& context) override;
 
+  // See interface for documentation.
+  void on_late_uplink_message(const ofh::error_context& context) override;
+
 private:
   ru_error_notifier& error_notifier;
 };

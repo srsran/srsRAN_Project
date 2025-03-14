@@ -240,6 +240,7 @@ public:
   {
     return central_mem_cache.size_approx() * block_batch_size;
   }
+
   /// Get thread local cache current size in number of memory blocks.
   size_t get_local_cache_size()
   {
@@ -255,6 +256,15 @@ public:
   {
     uint8_t* ptr = static_cast<uint8_t*>(segment);
     return ptr >= allocated_memory.data() and ptr < allocated_memory.data() + allocated_memory.size();
+  }
+
+  /// \brief Initialize worker cache for caller thread.
+  /// This method is useful to avoid the overhead of thread_local initialization in critical paths.
+  void init_worker_cache()
+  {
+    if (void* p = allocate_node(mblock_size)) {
+      deallocate_node(p);
+    }
   }
 
 private:

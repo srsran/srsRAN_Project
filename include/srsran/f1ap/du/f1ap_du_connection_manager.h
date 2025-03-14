@@ -24,6 +24,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/carrier_configuration.h"
+#include "srsran/ran/du_types.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/nr_cgi.h"
@@ -57,6 +58,8 @@ struct du_served_cell_info {
 
 /// \brief Served cell configuration that will be passed to CU-CP.
 struct f1_cell_setup_params {
+  // DU-internal identifier of the cell.
+  du_cell_index_t        cell_index;
   du_served_cell_info    cell_info;
   gnb_du_sys_info        du_sys_info;
   std::vector<s_nssai_t> slices;
@@ -71,13 +74,23 @@ struct f1_setup_request_message {
   unsigned                          max_setup_retries = 5;
 };
 
-struct f1_setup_response_message {
-  enum class result_code { success, timeout, proc_failure, invalid_response, f1_setup_failure };
-  /// Possible result outcomes for F1 Setup procedure.
+/// Outcome of the F1 Setup procedure.
+struct f1_setup_success {
+  struct cell_to_activate {
+    nr_cell_global_id_t cgi;
+  };
+  std::vector<cell_to_activate> cells_to_activate;
+};
+struct f1_setup_failure {
+  /// Possible result outcomes for F1 Setup failure.
+  enum class result_code { timeout, proc_failure, invalid_response, f1_setup_failure };
+
+  /// Result outcome for F1 Setup failure.
   result_code result;
   /// Cause provided by CU-CP in case of F1 Setup Failure.
   std::string f1_setup_failure_cause;
 };
+using f1_setup_result = expected<f1_setup_success, f1_setup_failure>;
 
 /// Cell whose parameters need to be modified in the DU.
 struct f1ap_cell_to_be_modified {
@@ -110,7 +123,7 @@ public:
   /// \return Returns a f1_setup_response_message struct with the success member set to 'true' in case of a
   /// successful outcome, 'false' otherwise. \remark The DU transmits the F1SetupRequest as per TS 38.473 section 8.2.3
   /// and awaits the response. If a F1SetupFailure is received the F1AP will handle the failure.
-  virtual async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) = 0;
+  virtual async_task<f1_setup_result> handle_f1_setup_request(const f1_setup_request_message& request) = 0;
 
   /// \brief Launches the F1 Removal procedure as per TS 38.473, Section 8.2.8.
   virtual async_task<void> handle_f1_removal_request() = 0;

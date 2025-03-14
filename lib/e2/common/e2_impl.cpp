@@ -22,6 +22,7 @@
 
 #include "e2_impl.h"
 #include "e2ap_asn1_helpers.h"
+#include "procedures/e2_connection_update_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/ran/nr_cgi.h"
@@ -31,14 +32,15 @@ using namespace srsran;
 using namespace asn1::e2ap;
 using namespace asn1;
 
-e2_impl::e2_impl(const e2ap_configuration& cfg_,
+e2_impl::e2_impl(srslog::basic_logger&     logger_,
+                 const e2ap_configuration& cfg_,
                  e2ap_e2agent_notifier&    agent_notifier_,
                  timer_factory             timers_,
                  e2_connection_client&     e2_client_,
                  e2_subscription_manager&  subscription_mngr_,
                  e2sm_manager&             e2sm_mngr_,
                  task_executor&            task_exec_) :
-  logger(srslog::fetch_basic_logger("E2")),
+  logger(logger_),
   cfg(cfg_),
   timers(timers_),
   subscription_proc(subscription_mngr_),
@@ -88,7 +90,7 @@ async_task<e2_setup_response_message> e2_impl::handle_e2_setup_request(e2_setup_
 async_task<e2_setup_response_message> e2_impl::start_initial_e2_setup_routine()
 {
   e2_setup_request_message request;
-  fill_asn1_e2ap_setup_request(request.request, cfg, e2sm_mngr);
+  fill_asn1_e2ap_setup_request(logger, request.request, cfg, e2sm_mngr);
 
   for (const auto& ran_function : request.request->ran_functions_added) {
     auto&    ran_function_item = ran_function.value().ran_function_item();
@@ -163,6 +165,12 @@ void e2_impl::handle_ric_subscription_delete_request(const asn1::e2ap::ric_sub_d
       msg, *events, *tx_pdu_notifier, subscription_proc, timers, logger));
 }
 
+void e2_impl::handle_e2_connection_update(const asn1::e2ap::e2conn_upd_s& msg)
+{
+  logger.info("Received E2 Connection Update");
+  async_tasks.schedule(launch_async<e2_connection_update_procedure>(msg, *tx_pdu_notifier, timers, logger));
+}
+
 void e2_impl::handle_message(const e2_message& msg)
 {
   logger.info("Handling E2 PDU of type {}", msg.pdu.type().to_string());
@@ -205,6 +213,9 @@ void e2_impl::handle_initiating_message(const asn1::e2ap::init_msg_s& msg)
       break;
     case asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::options::ric_ctrl_request:
       handle_ric_control_request(msg.value.ric_ctrl_request());
+      break;
+    case asn1::e2ap::e2ap_elem_procs_o::init_msg_c::types_opts::options::e2conn_upd:
+      handle_e2_connection_update(msg.value.e2conn_upd());
       break;
     default:
       logger.error("Invalid E2AP initiating message type");

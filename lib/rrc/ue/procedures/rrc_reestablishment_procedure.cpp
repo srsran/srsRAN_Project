@@ -26,6 +26,7 @@
 #include "srsran/asn1/rrc_nr/nr_ue_variables.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/security/integrity.h"
+#include "srsran/support/srsran_assert.h"
 
 using namespace srsran;
 using namespace srsran::srs_cu_cp;
@@ -80,37 +81,42 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     CORO_EARLY_RETURN();
   }
 
-  // Accept RRC Reestablishment Request by sending RRC Reestablishment
+  // Accept RRC Reestablishment Request by sending RRC Reestablishment.
   // Note: From this point we should guarantee that a Reestablishment will be performed.
 
-  // transfer reestablishment context and update security keys
+  // Transfer reestablishment context and update security keys.
   transfer_reestablishment_context_and_update_keys();
 
-  // create SRB1
+  // Create SRB1.
   create_srb1();
 
-  // create new transaction for RRC Reestablishment
+  // Create new transaction for RRC Reestablishment.
   transaction =
       event_mng.transactions.create_transaction(std::chrono::milliseconds(context.cfg.rrc_procedure_timeout_ms));
 
-  // send RRC Reestablishment to UE
+  // Send RRC Reestablishment to UE.
   send_rrc_reestablishment();
 
-  // Await UE response
+  // Enable ciphering.
+  // Note: Ciphering needs to be enabled after transmitting the RRC Reestablishment message, as the
+  // ReestablishmentComplete will be ciphered.
+  enable_srb1_ciphering();
+
+  // Await UE response.
   CORO_AWAIT(transaction);
 
   if (transaction.has_response()) {
     context.state = rrc_state::connected;
 
-    // Notify DU Processor to start a Reestablishment Context Modification Routine
+    // Notify DU Processor to start a Reestablishment Context Modification Routine.
     CORO_AWAIT_VALUE(context_modification_success,
                      cu_cp_notifier.on_rrc_reestablishment_context_modification_required());
 
-    // trigger UE context release at AMF in case of failure
+    // Trigger UE context release at AMF in case of failure.
     if (not context_modification_success) {
       logger.log_debug(
           "\"{}\" for old_ue={} failed. Requesting UE context release", name(), old_ue_reest_context.ue_index);
-      // Release the old UE
+      // Release the old UE.
       ue_context_release_request.ue_index = context.ue_index;
       ue_context_release_request.cause    = ngap_cause_radio_network_t::unspecified;
       CORO_AWAIT(cu_cp_notifier.on_ue_release_required(ue_context_release_request));
@@ -126,7 +132,7 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
     logger.log_debug("\"{}\" for old_ue={} failed", name(), old_ue_reest_context.ue_index);
   }
 
-  // Notify CU-CP to remove the old UE
+  // Notify CU-CP to remove the old UE.
   cu_cp_notifier.on_rrc_reestablishment_complete(old_ue_reest_context.ue_index);
 
   // Note: From this point the UE is removed and only the stored context can be accessed.
@@ -141,7 +147,7 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
   return launch_async([this](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
-    // Reject RRC Reestablishment Request by sending RRC Setup
+    // Reject RRC Reestablishment Request by sending RRC Setup.
     CORO_AWAIT(launch_async<rrc_setup_procedure>(
         context, du_to_cu_container, rrc_ue_setup_notifier, srb_notifier, ngap_notifier, event_mng, logger));
 
@@ -194,7 +200,7 @@ bool rrc_reestablishment_procedure::is_reestablishment_accepted()
     return false;
   }
 
-  // verify security context
+  // Verify security context.
   return verify_security_context();
 }
 
@@ -202,12 +208,12 @@ bool rrc_reestablishment_procedure::verify_security_context()
 {
   bool valid = false;
 
-  // Get RX short MAC
+  // Get RX short MAC.
   security::sec_short_mac_i short_mac = {};
   uint16_t short_mac_int              = htons(reestablishment_request.rrc_reest_request.ue_id.short_mac_i.to_number());
   memcpy(short_mac.data(), &short_mac_int, 2);
 
-  // Get packed varShortMAC-Input
+  // Get packed varShortMAC-Input.
   asn1::rrc_nr::var_short_mac_input_s var_short_mac_input = {};
   var_short_mac_input.source_pci                          = reestablishment_request.rrc_reest_request.ue_id.pci;
   var_short_mac_input.target_cell_id.from_number(context.cell.cgi.nci.value());
@@ -223,7 +229,7 @@ bool rrc_reestablishment_procedure::verify_security_context()
                    var_short_mac_input.target_cell_id.to_number(),
                    to_rnti(var_short_mac_input.source_c_rnti));
 
-  // Verify ShortMAC-I
+  // Verify ShortMAC-I.
   if (old_ue_reest_context.sec_context.sel_algos.algos_selected) {
     security::sec_as_config source_as_config =
         old_ue_reest_context.sec_context.get_as_config(security::sec_domain::rrc);
@@ -238,16 +244,16 @@ bool rrc_reestablishment_procedure::verify_security_context()
 
 void rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_keys()
 {
-  // store capabilities if available
+  // Store capabilities if available.
   if (old_ue_reest_context.capabilities_list.has_value()) {
     context.capabilities_list = old_ue_reest_context.capabilities_list.value();
   }
 
-  // Transfer UP context from old UE
+  // Transfer UP context from old UE.
   cu_cp_notifier.on_up_context_setup_required(old_ue_reest_context.up_ctx);
 
-  // Update security keys
-  // freq_and_timing must be present, otherwise the RRC UE would've never been created
+  // Update security keys.
+  // freq_and_timing must be present, otherwise the RRC UE would've never been created.
   uint32_t ssb_arfcn = context.cfg.meas_timings.begin()->freq_and_timing.value().carrier_freq;
   cu_cp_ue_notifier.update_security_context(old_ue_reest_context.sec_context);
   cu_cp_ue_notifier.perform_horizontal_key_derivation(context.cell.pci, ssb_arfcn);
@@ -256,7 +262,7 @@ void rrc_reestablishment_procedure::transfer_reestablishment_context_and_update_
 
 void rrc_reestablishment_procedure::create_srb1()
 {
-  // create SRB1
+  // Create SRB1.
   srb_creation_message srb1_msg{};
   srb1_msg.ue_index     = context.ue_index;
   srb1_msg.old_ue_index = old_ue_reest_context.ue_index;
@@ -264,7 +270,7 @@ void rrc_reestablishment_procedure::create_srb1()
   srb1_msg.pdcp_cfg     = {}; // TODO: Get SRB1 PDCP config of the old UE context.
   srb_notifier.create_srb(srb1_msg);
 
-  // activate SRB1 PDCP security
+  // Activate SRB1 PDCP security.
   rrc_ue_reest_notifier.on_new_as_security_context();
 }
 
@@ -277,6 +283,20 @@ void rrc_reestablishment_procedure::send_rrc_reestablishment()
   rrc_reest.crit_exts.set_rrc_reest();
 
   rrc_ue_reest_notifier.on_new_dl_dcch(srb_id_t::srb1, dl_dcch_msg);
+}
+
+void rrc_reestablishment_procedure::enable_srb1_ciphering()
+{
+  auto srb_it = context.srbs.find(srb_id_t::srb1);
+  if (srb_it == context.srbs.end()) {
+    logger.log_error("Could not enable ciphering for SRB1. Cause: SRB1 not found in the UE context");
+    return;
+  }
+
+  srb_it->second.enable_rx_security(
+      security::integrity_enabled::on, security::ciphering_enabled::on, cu_cp_ue_notifier.get_rrc_128_as_config());
+  srb_it->second.enable_tx_security(
+      security::integrity_enabled::on, security::ciphering_enabled::on, cu_cp_ue_notifier.get_rrc_128_as_config());
 }
 
 void rrc_reestablishment_procedure::log_rejected_reestablishment(const char* cause_str)

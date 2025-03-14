@@ -25,11 +25,87 @@ Configuration related steps
 import logging
 from collections import defaultdict
 from pprint import pformat
-from typing import Optional, Tuple, Union
+from typing import List, NamedTuple, Optional, Tuple, Union
 
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.public import MetricServerInfo
+from retina.protocol.channel_emulator_pb2 import EphemerisInfoType, NtnScenarioConfig, NtnScenarioType
+
+
+def configure_ntn_parameters(retina_data: RetinaTestData, ntn_config: NtnScenarioConfig = None):
+    """
+    Configure test NTN parameters
+    """
+    retina_data.test_config["gnb"]["parameters"]["ntn_enable"] = True
+    # CU NTN parameters.
+    if ntn_config.scenario_type == NtnScenarioType.GEO:
+        retina_data.test_config["gnb"]["parameters"]["cu_cp_inactivity_timer"] = 120
+        retina_data.test_config["gnb"]["parameters"]["request_pdu_session_timeout"] = 12
+        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_timeout_ms"] = 12800
+    elif ntn_config.scenario_type == NtnScenarioType.MEO:
+        retina_data.test_config["gnb"]["parameters"]["cu_cp_inactivity_timer"] = 90
+        retina_data.test_config["gnb"]["parameters"]["request_pdu_session_timeout"] = 9
+        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_timeout_ms"] = 12800
+    else:  # LEO
+        retina_data.test_config["gnb"]["parameters"]["cu_cp_inactivity_timer"] = 60
+        retina_data.test_config["gnb"]["parameters"]["request_pdu_session_timeout"] = 6
+        retina_data.test_config["gnb"]["parameters"]["rrc_procedure_timeout_ms"] = 10000
+
+    # DU NTN parameters.
+    retina_data.test_config["gnb"]["parameters"]["sib19"] = {}
+    retina_data.test_config["gnb"]["parameters"]["sib19"][
+        "ntn_ul_sync_validity_dur"
+    ] = ntn_config.sib19_cfg.ntn_ul_sync_validity_dur
+    retina_data.test_config["gnb"]["parameters"]["sib19"][
+        "cell_specific_koffset"
+    ] = ntn_config.sib19_cfg.cell_specific_koffset
+    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common"] = int(ntn_config.sib19_cfg.ta_common)
+    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common_drift"] = int(ntn_config.sib19_cfg.ta_common_drift)
+    retina_data.test_config["gnb"]["parameters"]["sib19"]["ta_common_drift_variant"] = int(
+        ntn_config.sib19_cfg.ta_common_drift_variant
+    )
+    if ntn_config.sib19_cfg.ephemeris_info_type == EphemerisInfoType.ORBITAL:
+        retina_data.test_config["gnb"]["parameters"]["sib19"]["use_ephemeris_orbital"] = True
+        retina_data.test_config["gnb"]["parameters"]["sib19"][
+            "semi_major_axis"
+        ] = ntn_config.sib19_cfg.ephemeris_orbital.semi_major_axis
+        retina_data.test_config["gnb"]["parameters"]["sib19"][
+            "eccentricity"
+        ] = ntn_config.sib19_cfg.ephemeris_orbital.eccentricity
+        retina_data.test_config["gnb"]["parameters"]["sib19"][
+            "periapsis"
+        ] = ntn_config.sib19_cfg.ephemeris_orbital.periapsis
+        retina_data.test_config["gnb"]["parameters"]["sib19"][
+            "longitude"
+        ] = ntn_config.sib19_cfg.ephemeris_orbital.longitude
+        retina_data.test_config["gnb"]["parameters"]["sib19"][
+            "inclination"
+        ] = ntn_config.sib19_cfg.ephemeris_orbital.inclination
+        retina_data.test_config["gnb"]["parameters"]["sib19"][
+            "mean_anomaly"
+        ] = ntn_config.sib19_cfg.ephemeris_orbital.mean_anomaly
+    else:
+        retina_data.test_config["gnb"]["parameters"]["sib19"]["use_ephemeris_orbital"] = False
+        retina_data.test_config["gnb"]["parameters"]["sib19"]["pos_x"] = ntn_config.sib19_cfg.ephemeris_info_ecef.pos_x
+        retina_data.test_config["gnb"]["parameters"]["sib19"]["pos_y"] = ntn_config.sib19_cfg.ephemeris_info_ecef.pos_y
+        retina_data.test_config["gnb"]["parameters"]["sib19"]["pos_z"] = ntn_config.sib19_cfg.ephemeris_info_ecef.pos_z
+        retina_data.test_config["gnb"]["parameters"]["sib19"]["vel_x"] = ntn_config.sib19_cfg.ephemeris_info_ecef.vel_x
+        retina_data.test_config["gnb"]["parameters"]["sib19"]["vel_y"] = ntn_config.sib19_cfg.ephemeris_info_ecef.vel_y
+        retina_data.test_config["gnb"]["parameters"]["sib19"]["vel_z"] = ntn_config.sib19_cfg.ephemeris_info_ecef.vel_z
+
+    retina_data.test_config["gnb"]["parameters"]["ta_target"] = ntn_config.ta_cfg.ta_target
+    retina_data.test_config["gnb"]["parameters"][
+        "ta_meas_slot_prohibit_period"
+    ] = ntn_config.ta_cfg.slot_prohibit_period
+    retina_data.test_config["gnb"]["parameters"]["ta_meas_slot_period"] = ntn_config.ta_cfg.slot_meas_period
+    retina_data.test_config["gnb"]["parameters"]["ta_cmd_offset_threshold"] = ntn_config.ta_cfg.ta_cmd_offset_threshold
+
+    # UE NTN parameters.
+    retina_data.test_config["ue"]["parameters"]["ntn_enable"] = True
+    retina_data.test_config["ue"]["parameters"]["latitude"] = ntn_config.ue_position.latitude
+    retina_data.test_config["ue"]["parameters"]["longitude"] = ntn_config.ue_position.longitude
+    retina_data.test_config["ue"]["parameters"]["altitude"] = ntn_config.ue_position.altitude
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -63,6 +139,7 @@ def configure_test_parameters(
     cu_cp_inactivity_timer: int = -1,
     use_format_0: bool = False,
     pucch_set1_format: int = 2,
+    ntn_config: NtnScenarioConfig = None,
 ):
     """
     Configure test parameters
@@ -121,6 +198,9 @@ def configure_test_parameters(
     if is_tdd(band):
         retina_data.test_config["ue"]["parameters"]["rx_ant"] = "rx"
 
+    if ntn_config is not None:
+        configure_ntn_parameters(retina_data, ntn_config)
+
     metrics_server = None
     for node_name in retina_manager.get_testbed_info().get("generic", {}).keys():
         if "metrics-server" in node_name:
@@ -147,7 +227,14 @@ def _get_dl_arfcn(band: int) -> int:
     """
     Get dl arfcn
     """
-    return {3: 368500, 7: 536020, 41: 520002, 78: 632628}[band]
+    return {3: 368500, 7: 536020, 41: 520002, 78: 632628, 256: 437000}[band]
+
+
+def _get_ul_arfcn(band: int) -> int:
+    """
+    Get dl arfcn
+    """
+    return {3: 349500, 7: 512020, 41: 520002, 78: 632628, 256: 399000}[band]
 
 
 def _get_ssb_arfcn(band: int, bandwidth: int) -> int:
@@ -193,6 +280,12 @@ def _get_ssb_arfcn(band: int, bandwidth: int) -> int:
                 50: 631296,
             },
         ),
+        256: defaultdict(
+            lambda: 437090,
+            {
+                5: 437090,
+            },
+        ),
     }[band][bandwidth]
 
 
@@ -223,3 +316,46 @@ def configure_metric_server_for_gnb(
     logging.info("Test config: \n%s", pformat(retina_data.test_config))
     retina_manager.parse_configuration(retina_data.test_config)
     retina_manager.push_all_config()
+
+
+class NrRasterParams(NamedTuple):
+    """
+    Class to store NR-ARFCN parameters for the global frequency raster,
+    as per Table 5.4.2.1-1, TS 38.104, Rel. 17, version 17.8.0.
+    """
+
+    F_low: float  # Lower frequency in MHz
+    F_high: float  # Upper frequency in MHz
+    delta_F_kHz: int  # Frequency step in kHz
+    F_REF_Offs_MHz: float
+    N_REF_Offs: int
+    N_REF_min: int
+    N_REF_max: int
+
+
+nr_fr_params: List[NrRasterParams] = [
+    NrRasterParams(0, 3000, 5, 0.0, 0, 0, 599999),
+    NrRasterParams(3000, 24250, 15, 3000.0, 600000, 600000, 2016666),
+    NrRasterParams(24250, 100000, 60, 24250.08, 2016667, 2016667, 3279165),
+]
+
+
+def get_raster_params(nr_arfcn: int) -> Optional[NrRasterParams]:
+    """
+    Find the corresponding raster parameters for the given NR ARFCN.
+    """
+    for fr in nr_fr_params:
+        if fr.N_REF_min <= nr_arfcn <= fr.N_REF_max:
+            return fr
+    return None
+
+
+def nr_arfcn_to_freq(nr_arfcn: int) -> float:
+    """
+    Convert NR ARFCN to frequency in Hz using the raster parameters.
+    """
+    params = get_raster_params(nr_arfcn)
+    if params is None:
+        return 0.0
+
+    return int(params.F_REF_Offs_MHz * 1e6 + params.delta_F_kHz * (nr_arfcn - params.N_REF_Offs) * 1e3)

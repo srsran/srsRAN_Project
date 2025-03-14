@@ -34,6 +34,7 @@
 #include "srsran/rrc/rrc_ue_config.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/executors/task_executor.h"
+#include <chrono>
 
 namespace srsran {
 
@@ -84,10 +85,19 @@ struct cu_cp_configuration {
     timer_manager* timers         = nullptr;
   };
 
-  struct ngap_params {
+  struct ngap_config {
     n2_connection_client* n2_gw = nullptr;
     // Supported TAs for each AMF.
     std::vector<supported_tracking_area> supported_tas;
+  };
+
+  struct ngap_params {
+    /// NGAP configurations.
+    std::vector<ngap_config> ngaps;
+    /// Time to wait after a failed AMF reconnection attempt in ms.
+    std::chrono::milliseconds amf_reconnection_retry_time = std::chrono::milliseconds{1000};
+    /// Option to run CU-CP without a core.
+    bool no_core = false;
   };
 
   struct rrc_params {
@@ -117,16 +127,12 @@ struct cu_cp_configuration {
     std::chrono::seconds statistics_report_period{1};
   };
 
-  struct test_mode_config {
-    bool no_core = false;
-  };
-
   /// NG-RAN node parameters.
   ran_node_configuration node;
   /// Parameters to determine the admission of new CU-UP, DU and UE connections.
   admission_params admission;
   /// NGAP layer-specific parameters.
-  std::vector<ngap_params> ngaps;
+  ngap_params ngap;
   /// RRC layer-specific parameters.
   rrc_params rrc;
   /// F1AP layer-specific parameters.
@@ -147,8 +153,6 @@ struct cu_cp_configuration {
   service_params services;
   /// PDCP metrics notifier.
   pdcp_metrics_notifier* pdcp_metric_notifier = nullptr;
-  /// Configuration for testing purposes.
-  test_mode_config test_mode_cfg = {};
 };
 
 } // namespace srs_cu_cp

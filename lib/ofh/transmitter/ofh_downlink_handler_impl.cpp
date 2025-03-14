@@ -38,6 +38,7 @@ class error_notifier_dummy : public error_notifier
 {
 public:
   void on_late_downlink_message(const error_context& context) override {}
+  void on_late_uplink_message(const error_context& context) override {}
 };
 
 } // namespace
@@ -56,12 +57,11 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
       *dependencies.logger,
       config.sector,
       calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params),
-      get_nsymb_per_slot(config.cp),
-      to_numerology_value(config.scs)),
+      get_nsymb_per_slot(config.cp)),
   data_flow_cplane(std::move(dependencies.data_flow_cplane)),
   data_flow_uplane(std::move(dependencies.data_flow_uplane)),
   frame_pool(std::move(dependencies.frame_pool)),
-  err_notifier(dummy_err_notifier)
+  err_notifier(&dummy_err_notifier)
 {
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid User-Plane data flow");
@@ -82,13 +82,12 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   frame_pool->clear_downlink_slot(context.slot, context.sector, logger);
 
   if (window_checker.is_late(context.slot)) {
-    err_notifier.get().on_late_downlink_message({context.slot, sector_id});
+    err_notifier->on_late_downlink_message({context.slot, sector_id});
 
-    logger.warning("Sector#{}: dropped late downlink resource grid in slot '{}' and sector#{}. No OFH data will be "
-                   "transmitted for this slot",
-                   sector_id,
-                   context.slot,
-                   context.sector);
+    logger.warning(
+        "Sector#{}: dropped late downlink resource grid in slot '{}'. No OFH data will be transmitted for this slot",
+        sector_id,
+        context.slot);
     l1_tracer << instant_trace_event{"handle_dl_data_late", instant_trace_event::cpu_scope::thread};
     ofh_tracer << trace_event("ofh_handle_dl_late", tp);
     return;

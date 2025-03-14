@@ -21,14 +21,17 @@
  */
 
 #include "ofh_transmitter_factories.h"
+#include "ofh_data_flow_cplane_scheduling_commands_impl.h"
 #include "ofh_data_flow_cplane_scheduling_commands_task_dispatcher.h"
+#include "ofh_data_flow_uplane_downlink_data_impl.h"
 #include "ofh_data_flow_uplane_downlink_task_dispatcher.h"
+#include "ofh_downlink_handler_impl.h"
 #include "ofh_downlink_manager_broadcast_impl.h"
 #include "ofh_downlink_manager_impl.h"
 #include "ofh_transmitter_impl.h"
 #include "ofh_uplane_fragment_size_calculator.h"
-#include "ofh_uplink_request_handler_task_dispatcher.h"
 #include "srsran/ofh/compression/compression_factory.h"
+#include "srsran/ofh/compression/iq_compressor.h"
 #include "srsran/ofh/ecpri/ecpri_factories.h"
 #include "srsran/ofh/ethernet/ethernet_factories.h"
 #include "srsran/ofh/serdes/ofh_serdes_factories.h"
@@ -177,37 +180,6 @@ create_downlink_manager(const transmitter_config&                         tx_con
   return std::make_unique<downlink_manager_impl>(dl_config, std::move(dl_dependencies));
 }
 
-static std::unique_ptr<uplink_request_handler>
-create_uplink_request_handler(const transmitter_config&                         tx_config,
-                              srslog::basic_logger&                             logger,
-                              std::shared_ptr<ether::eth_frame_pool>            frame_pool,
-                              std::shared_ptr<prach_context_repository>         prach_context_repo,
-                              std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
-                              std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
-                              std::shared_ptr<uplink_cplane_context_repository> prach_cp_context_repo)
-{
-  uplink_request_handler_impl_config config;
-  config.is_prach_cp_enabled = tx_config.is_prach_cp_enabled;
-  config.prach_eaxc          = tx_config.prach_eaxc;
-  config.ul_data_eaxc        = tx_config.ul_eaxc;
-  config.tdd_config          = tx_config.tdd_config;
-  config.cp                  = tx_config.cp;
-
-  uplink_request_handler_impl_dependencies dependencies;
-  dependencies.logger        = &logger;
-  dependencies.ul_slot_repo  = std::move(ul_slot_context_repo);
-  dependencies.ul_prach_repo = std::move(prach_context_repo);
-  dependencies.frame_pool    = frame_pool;
-  dependencies.data_flow     = create_data_flow_cplane_sched(tx_config,
-                                                         tx_config.is_uplink_static_compr_hdr_enabled,
-                                                         logger,
-                                                         frame_pool,
-                                                         std::move(ul_cp_context_repo),
-                                                         std::move(prach_cp_context_repo));
-
-  return std::make_unique<uplink_request_handler_impl>(config, std::move(dependencies));
-}
-
 static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transmitter_config& tx_config,
                                                                     srslog::basic_logger&     logger)
 {
@@ -261,16 +233,18 @@ resolve_transmitter_dependencies(const transmitter_config&                      
   dependencies.dl_manager = create_downlink_manager(
       tx_config, logger, frame_pool, ul_cp_context_repo, prach_cp_context_repo, downlink_executor);
 
-  dependencies.ul_request_handler = std::make_unique<uplink_request_handler_task_dispatcher>(
-      create_uplink_request_handler(tx_config,
+  dependencies.data_flow = std::make_unique<data_flow_cplane_downlink_task_dispatcher>(
+      create_data_flow_cplane_sched(tx_config,
+                                    tx_config.is_uplink_static_compr_hdr_enabled,
                                     logger,
                                     frame_pool,
-                                    std::move(prach_context_repo),
-                                    std::move(ul_slot_context_repo),
                                     std::move(ul_cp_context_repo),
                                     std::move(prach_cp_context_repo)),
       downlink_executor,
       tx_config.sector);
+
+  dependencies.ul_slot_repo  = std::move(ul_slot_context_repo);
+  dependencies.ul_prach_repo = std::move(prach_context_repo);
 
   dependencies.eth_gateway = std::move(eth_gateway);
 

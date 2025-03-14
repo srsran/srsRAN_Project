@@ -51,6 +51,8 @@ private:
 
   std::array<uint8_t, sec_max_pdu_size>    msg_buf;
   static constexpr std::array<uint8_t, 16> zeros = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+  srslog::basic_logger& logger;
 };
 
 } // namespace security

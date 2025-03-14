@@ -70,12 +70,8 @@ void amf_connection_setup_routine::operator()(coro_context<async_task<bool>>& ct
     // Update PLMN lookups in NGAP repository after successful NGSetup.
     ngap_db.update_plmn_lookup(amf_index);
 
-    std::string plmn_list;
-    for (const auto& plmn : ngap->get_ngap_context().get_supported_plmns()) {
-      plmn_list += plmn.to_string() + " ";
-    }
-
-    logger.info("Connected to AMF. Supported PLMNs: {}", plmn_list);
+    logger.info("Connected to AMF. Supported PLMNs: {}",
+                fmt::format("{}", fmt::join(ngap->get_ngap_context().get_supported_plmns(), " ")));
   } else {
     logger.error("Failed to connect to AMF");
     CORO_EARLY_RETURN(false);

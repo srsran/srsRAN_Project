@@ -118,7 +118,7 @@ public:
 
   slotted_id_table<du_ue_index_t, f1ap_ue_context, MAX_NOF_DU_UES> f1ap_ues;
 
-  wait_manual_event_tester<f1_setup_response_message>            wait_f1_setup;
+  wait_manual_event_tester<f1_setup_result>                      wait_f1_setup;
   wait_manual_event_tester<void>                                 wait_f1_removal;
   std::optional<f1ap_ue_creation_request>                        last_ue_create;
   f1ap_ue_creation_response                                      next_ue_create_response;
@@ -131,7 +131,7 @@ public:
 
   bool connect_to_cu_cp() override { return true; }
 
-  async_task<f1_setup_response_message> handle_f1_setup_request(const f1_setup_request_message& request) override
+  async_task<f1_setup_result> handle_f1_setup_request(const f1_setup_request_message& request) override
   {
     return wait_f1_setup.launch();
   }

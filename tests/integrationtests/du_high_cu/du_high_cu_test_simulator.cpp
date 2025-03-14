@@ -86,7 +86,7 @@ du_high_cu_test_simulator::du_high_cu_test_simulator(const du_high_cu_cp_test_si
   srs_cu_cp::cu_cp_configuration cu_cfg = config_helpers::make_default_cu_cp_config();
   cu_cfg.services.cu_cp_executor        = workers.cu_cp_exec;
   cu_cfg.services.timers                = &timers;
-  cu_cfg.ngaps.push_back(srs_cu_cp::cu_cp_configuration::ngap_params{
+  cu_cfg.ngap.ngaps.push_back(srs_cu_cp::cu_cp_configuration::ngap_config{
       &n2_gw, {{7, {{plmn_identity::test_value(), {{slice_service_type{1}}}}}}}});
 
   // Instatiate CU-CP.

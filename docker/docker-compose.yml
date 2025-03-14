@@ -85,7 +85,7 @@ services:
       5gc:
         condition: service_healthy
     # Command to run into the final container
-    command: gnb -c /gnb_config.yml amf --addr ${OPEN5GS_IP:-10.53.1.2} --bind_addr ${GNB_IP:-10.53.1.3}
+    command: gnb -c /gnb_config.yml cu_cp amf --addr ${OPEN5GS_IP:-10.53.1.2} --bind_addr ${GNB_IP:-10.53.1.3}
 
   metrics-server:
     container_name: metrics_server

@@ -28,6 +28,32 @@
 
 using namespace srsran;
 
+/// Translates a string to the corresponding RU emulator's PRACH format.
+static ru_emulator_prach_format str_to_prach_format(std::string s)
+{
+  std::transform(s.begin(), s.end(), s.begin(), ::toupper);
+
+  if ("LONG" == s) {
+    return ru_emulator_prach_format::LONG_F0;
+  }
+  if ("SHORT" == s) {
+    return ru_emulator_prach_format::SHORT_B4;
+  }
+  return ru_emulator_prach_format::NONE;
+}
+
+/// Translates RU emulator's PRACH format to a string.
+static std::string prach_format_to_str(ru_emulator_prach_format f)
+{
+  if (f == ru_emulator_prach_format::LONG_F0) {
+    return "long";
+  }
+  if (f == ru_emulator_prach_format::SHORT_B4) {
+    return "short";
+  }
+  return "";
+}
+
 static void configure_cli11_log_args(CLI::App& app, ru_emulator_log_appconfig& log_params)
 {
   /// Function to check that the log level is correct.
@@ -118,6 +144,28 @@ static void configure_cli11_ru_emu_args(CLI::App& app, ru_emulator_ofh_appconfig
   app.add_option("--t2a_min_up", config.T2a_min_up, "T2a minimum value for User-Plane")
       ->capture_default_str()
       ->check(CLI::Range(0, 1960));
+
+  // Function to capture the PRACH format.
+  auto capture_prach_format_function = [](ru_emulator_prach_format& format) {
+    return [&format](const std::string& value) { format = str_to_prach_format(value); };
+  };
+
+  // Function to check that the log level is correct.
+  auto check_prach_format = [](const std::string& value) -> std::string {
+    if (str_to_prach_format(value) != srsran::ru_emulator_prach_format::NONE) {
+      return {};
+    }
+    return fmt::format("PRACH format '{}' not supported. Accepted values [long,short]. Set to 'long' to use format 0, "
+                       "or 'short' to use format B4",
+                       value);
+  };
+
+  add_option_function<std::string>(app,
+                                   "--prach_format",
+                                   capture_prach_format_function(config.prach_format),
+                                   "PRACH format. Set to 'long' to use format 0, or 'short' to use format B4")
+      ->default_str(prach_format_to_str(config.prach_format))
+      ->check(check_prach_format);
 }
 
 void srsran::configure_cli11_with_ru_emulator_appconfig_schema(CLI::App& app, ru_emulator_appconfig& ru_emu_parsed_cfg)

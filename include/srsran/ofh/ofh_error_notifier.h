@@ -45,6 +45,11 @@ public:
   ///
   /// \param[in] context Context of the error.
   virtual void on_late_downlink_message(const error_context& context) = 0;
+
+  /// \brief Notifies a late uplink message.
+  ///
+  /// \param[in] context Context of the error.
+  virtual void on_late_uplink_message(const error_context& context) = 0;
 };
 
 } // namespace ofh

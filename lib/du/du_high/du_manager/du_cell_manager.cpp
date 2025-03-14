@@ -30,9 +30,6 @@ using namespace srs_du;
 du_cell_manager::du_cell_manager(const du_manager_params& cfg_) :
   cfg(cfg_), logger(srslog::fetch_basic_logger("DU-MNG"))
 {
-  for (const du_cell_config& cell_cfg : cfg.ran.cells) {
-    add_cell(cell_cfg);
-  }
 }
 
 void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
@@ -43,11 +40,10 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
     report_error("ERROR: Invalid DU Cell Configuration. Cause: {}.\n", ret.error());
   }
 
+  // Save config.
   cells.emplace_back(std::make_unique<cell_t>());
-  cells.back()->cfg = cell_cfg;
-
-  // Note: For now, the start mechanism is not yet used.
-  cells.back()->active = true;
+  cells.back()->cfg    = cell_cfg;
+  cells.back()->active = false;
 }
 
 async_task<void> du_cell_manager::start(du_cell_index_t cell_index)

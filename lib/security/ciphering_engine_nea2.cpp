@@ -25,8 +25,10 @@
 using namespace srsran;
 using namespace security;
 
-ciphering_engine_nea2::ciphering_engine_nea2(sec_128_key k_128_enc, uint8_t bearer_id_, security_direction direction_) :
-  bearer_id(bearer_id_), direction(direction_)
+ciphering_engine_nea2::ciphering_engine_nea2(sec_128_key        k_128_enc_,
+                                             uint8_t            bearer_id_,
+                                             security_direction direction_) :
+  bearer_id(bearer_id_), direction(direction_), k_128_enc(k_128_enc_), logger(srslog::fetch_basic_logger("SEC"))
 {
   int ret = aes_setkey_enc(&ctx, k_128_enc.data(), 128);
   if (ret != 0) {
@@ -39,6 +41,10 @@ security_result ciphering_engine_nea2::apply_ciphering(byte_buffer buf, size_t o
 {
   security_result  result{.buf = std::move(buf), .count = count};
   byte_buffer_view msg{result.buf.value().begin() + offset, result.buf.value().end()};
+
+  logger.debug("Applying ciphering. count={}", count);
+  logger.debug("K_enc: {}", k_128_enc);
+  logger.debug(msg.begin(), msg.end(), "Ciphering input:");
 
   unsigned char stream_blk[16] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
   unsigned char nonce_cnt[16]  = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -60,6 +66,7 @@ security_result ciphering_engine_nea2::apply_ciphering(byte_buffer buf, size_t o
       return result;
     }
   }
+  logger.debug(msg.begin(), msg.end(), "Ciphering output:");
 
   return result;
 }

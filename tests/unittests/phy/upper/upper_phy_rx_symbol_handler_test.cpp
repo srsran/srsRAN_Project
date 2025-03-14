@@ -36,13 +36,9 @@ namespace {
 class UpperPhyRxSymbolHandlerFixture : public ::testing::Test
 {
 protected:
-  static constexpr unsigned                  max_nof_prb    = 1;
-  static constexpr unsigned                  max_nof_layers = 1;
   std::unique_ptr<rx_buffer_pool_controller> rm_buffer_pool;
   uplink_processor_spy*                      ul_proc_spy;
   std::unique_ptr<uplink_processor_pool>     ul_processor_pool;
-  uplink_slot_pdu_repository                 pdu_repo;
-  upper_phy_rx_results_notifier_wrapper      rx_results_wrapper;
   upper_phy_rx_symbol_handler_impl           rx_handler;
   prach_buffer_spy                           buffer_dummy;
   resource_grid_dummy                        rg;
@@ -57,62 +53,13 @@ protected:
     rx_handler.handle_rx_prach_window(prach_context, buffer_dummy);
   }
 
-  void handle_pusch_pdu()
+  void handle_grid_symbol()
   {
-    const unsigned nof_symbols = 2;
-
-    uplink_processor::pusch_pdu pdu = {};
-    pdu.pdu.start_symbol_index      = 2;
-    pdu.pdu.nof_symbols             = nof_symbols;
-    pdu.pdu.cp                      = cyclic_prefix::NORMAL;
-    pdu.pdu.codeword.emplace(pusch_processor::codeword_description{0, ldpc_base_graph_type::BG1, true});
-
-    pdu_repo.add_pusch_pdu(slot_point(0, 0, 0), pdu);
+    static constexpr unsigned start_symbol_index = 1;
+    static constexpr unsigned nof_symbols        = 2;
 
     // Uplink processor gets called on the last symbol allocated in this PDU.
-    for (unsigned i = 0, e = pdu.pdu.start_symbol_index + nof_symbols; i != e; ++i) {
-      upper_phy_rx_symbol_context ctx = {};
-      ctx.symbol                      = i;
-      ctx.slot                        = slot_point(0, 0, 0);
-      rx_handler.handle_rx_symbol(ctx, shared_rg.get_grid());
-    }
-  }
-
-  void handle_late_pusch_pdu()
-  {
-    const unsigned nof_symbols = 2;
-
-    uplink_processor::pusch_pdu pdu = {};
-    pdu.pdu.start_symbol_index      = 2;
-    pdu.pdu.nof_symbols             = nof_symbols;
-    pdu.pdu.cp                      = cyclic_prefix::NORMAL;
-    pdu.pdu.codeword.emplace(pusch_processor::codeword_description{0, ldpc_base_graph_type::BG1, true});
-
-    pdu_repo.add_pusch_pdu(slot_point(0, 0, 0), pdu);
-
-    // Uplink processor gets called for a slot that does not correspond with the PUSCH PDU.
-    for (unsigned i = 0, e = pdu.pdu.start_symbol_index + nof_symbols; i != e; ++i) {
-      upper_phy_rx_symbol_context ctx = {};
-      ctx.symbol                      = i;
-      ctx.slot                        = slot_point(0, 0, 1);
-      rx_handler.handle_rx_symbol(ctx, shared_rg.get_grid());
-    }
-  }
-
-  void handle_pucch_pdu()
-  {
-    static constexpr unsigned nof_symbols = 2;
-
-    uplink_processor::pucch_pdu pdu     = {};
-    auto&                       format0 = pdu.config.emplace<pucch_processor::format0_configuration>();
-    format0.start_symbol_index          = 2;
-    format0.nof_symbols                 = nof_symbols;
-    format0.cp                          = cyclic_prefix::NORMAL;
-
-    pdu_repo.add_pucch_pdu(slot_point(0, 0, 0), pdu);
-
-    // Uplink processor gets called on the last symbol allocated in this PDU.
-    for (unsigned i = 0, e = format0.start_symbol_index + nof_symbols; i != e; ++i) {
+    for (unsigned i = start_symbol_index, e = start_symbol_index + nof_symbols; i != e; ++i) {
       upper_phy_rx_symbol_context ctx = {};
       ctx.symbol                      = i;
       ctx.slot                        = slot_point(0, 0, 0);
@@ -123,13 +70,7 @@ protected:
   UpperPhyRxSymbolHandlerFixture() :
     rm_buffer_pool(create_rx_buffer_pool(rx_buffer_pool_config{16, 2, 2, 16})),
     ul_processor_pool(create_ul_processor_pool()),
-    pdu_repo(2),
-    rx_handler(*ul_processor_pool,
-               pdu_repo,
-               rm_buffer_pool->get_pool(),
-               rx_results_wrapper,
-               max_nof_prb,
-               max_nof_layers),
+    rx_handler(ul_processor_pool->get_slot_processor_pool()),
     shared_rg(rg)
   {
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::warning);
@@ -163,27 +104,11 @@ TEST_F(UpperPhyRxSymbolHandlerFixture, handling_valid_prach_calls_uplink_process
 
 TEST_F(UpperPhyRxSymbolHandlerFixture, handling_valid_pusch_pdu_calls_uplink_processor)
 {
-  ASSERT_FALSE(ul_proc_spy->is_process_pusch_method_called());
+  ASSERT_EQ(ul_proc_spy->get_on_rx_symbol_count(), 0);
+  ASSERT_EQ(ul_proc_spy->get_last_end_symbol_index(), std::numeric_limits<unsigned>::max());
 
-  handle_pusch_pdu();
+  handle_grid_symbol();
 
-  ASSERT_TRUE(ul_proc_spy->is_process_pusch_method_called());
-}
-
-TEST_F(UpperPhyRxSymbolHandlerFixture, handling_valid_pucch_pdu_calls_uplink_processor)
-{
-  ASSERT_FALSE(ul_proc_spy->is_process_pucch_method_called());
-
-  handle_pucch_pdu();
-
-  ASSERT_TRUE(ul_proc_spy->is_process_pucch_method_called());
-}
-
-TEST_F(UpperPhyRxSymbolHandlerFixture, handling_late_puxch_pdu_does_not_call_uplink_processor)
-{
-  ASSERT_FALSE(ul_proc_spy->is_process_pucch_method_called());
-
-  handle_late_pusch_pdu();
-
-  ASSERT_FALSE(ul_proc_spy->is_process_pucch_method_called());
+  ASSERT_EQ(ul_proc_spy->get_on_rx_symbol_count(), 2);
+  ASSERT_EQ(ul_proc_spy->get_last_end_symbol_index(), 2);
 }

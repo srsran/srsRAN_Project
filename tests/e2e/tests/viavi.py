@@ -63,6 +63,7 @@ class _ViaviConfiguration:
     test_name: str = ""
     test_timeout: int = 0
     gnb_extra_commands: str = ""
+    retina_params: dict = field(default_factory=dict)
     # test/fail criteria
     expected_ul_bitrate: float = 0
     expected_dl_bitrate: float = 0
@@ -102,6 +103,7 @@ def load_yaml_config(config_filename: str) -> List[_ViaviConfiguration]:
                 test_name=test_declaration["test_name"],
                 test_timeout=test_declaration["test_timeout"],
                 gnb_extra_commands=_convert_extra_config_into_command(test_declaration["gnb_extra_config"]),
+                retina_params=test_declaration.get("retina_params", {}),
                 expected_dl_bitrate=test_declaration["expected_dl_bitrate"],
                 expected_ul_bitrate=test_declaration["expected_ul_bitrate"],
                 expected_nof_kos=test_declaration["expected_nof_kos"],
@@ -375,6 +377,7 @@ def _test_viavi(
                     if test_declaration.warning_allowlist
                     else ""
                 ),
+                **test_declaration.retina_params,
             },
         },
     }

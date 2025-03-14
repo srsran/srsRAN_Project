@@ -23,7 +23,7 @@
 #pragma once
 
 #include "apps/helpers/metrics/metrics_config.h"
-#include "apps/services/network/udp_cli11_schema.h"
+#include "apps/helpers/network/udp_appconfig.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_pcap_config.h"
 #include "cu_up_unit_logger_config.h"
 #include "srsran/ran/gnb_cu_up_id.h"

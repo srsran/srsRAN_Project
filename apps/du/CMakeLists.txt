@@ -27,6 +27,7 @@ set(SOURCES
 
 add_library(srsdu_base STATIC ${SOURCES})
 target_link_libraries(srsdu_base PRIVATE
+        srsran_app_helpers
         srsran_app_services
         srsran_f1u_du_split_connector
         srsran_cu_cp

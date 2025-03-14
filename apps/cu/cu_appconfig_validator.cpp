@@ -21,7 +21,7 @@
  */
 
 #include "cu_appconfig_validator.h"
-#include "apps/services/logger/logger_appconfig_validator.h"
+#include "apps/helpers/logger/logger_appconfig_validator.h"
 #include "apps/services/worker_manager/worker_manager_appconfig_validator.h"
 #include "cu_appconfig.h"
 

@@ -20,10 +20,12 @@
  *
  */
 
+#include "../../../../lib/ofh/transmitter/helpers.h"
 #include "../../../../lib/ofh/transmitter/ofh_uplink_request_handler_impl.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "ofh_data_flow_cplane_scheduling_commands_test_doubles.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
+#include "srsran/ofh/transmitter/ofh_transmitter_timing_parameters.h"
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/resource_grid.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
@@ -88,8 +90,12 @@ public:
 class ofh_uplink_request_handler_impl_fixture : public ::testing::Test
 {
 protected:
-  const cyclic_prefix                        cp          = {cyclic_prefix::NORMAL};
-  const tdd_ul_dl_config_common              ttd_pattern = {subcarrier_spacing::kHz30, {10, 6, 6, 3, 3}, {}};
+  const cyclic_prefix                        cp                 = {cyclic_prefix::NORMAL};
+  subcarrier_spacing                         scs                = subcarrier_spacing::kHz30;
+  const tdd_ul_dl_config_common              ttd_pattern        = {subcarrier_spacing::kHz30, {10, 6, 6, 3, 3}, {}};
+  tx_window_timing_parameters                tx_timing_params   = {0, 0, 8, 5, 0, 0};
+  std::chrono::microseconds                  ul_processing_time = std::chrono::microseconds(30);
+  unsigned                                   nof_symbols        = get_nsymb_per_slot(cp);
   uplink_request_handler_impl_config         cfg;
   resource_grid_reader_spy                   reader_spy;
   resource_grid_writer_spy                   writer_spy;
@@ -145,11 +151,15 @@ protected:
   uplink_request_handler_impl_config get_config_prach_cp_disabled()
   {
     uplink_request_handler_impl_config config;
+    config.sector              = 0;
     config.prach_eaxc          = {};
     config.ul_data_eaxc        = eaxc;
     config.is_prach_cp_enabled = false;
     config.cp                  = cyclic_prefix::NORMAL;
+    config.scs                 = subcarrier_spacing::kHz30;
     config.tdd_config.emplace(ttd_pattern);
+    config.ul_processing_time = ul_processing_time;
+    config.tx_timing_params   = tx_timing_params;
 
     return config;
   }
@@ -157,10 +167,14 @@ protected:
   uplink_request_handler_impl_config get_config_prach_cp_enabled()
   {
     uplink_request_handler_impl_config config;
+    config.sector              = 0;
     config.prach_eaxc          = prach_eaxc;
     config.ul_data_eaxc        = {};
     config.is_prach_cp_enabled = true;
     config.cp                  = cyclic_prefix::NORMAL;
+    config.scs                 = subcarrier_spacing::kHz30;
+    config.ul_processing_time  = ul_processing_time;
+    config.tx_timing_params    = tx_timing_params;
 
     return config;
   }
@@ -178,6 +192,13 @@ TEST_F(ofh_uplink_request_handler_impl_fixture,
   context.slot             = slot_point(1, 20, 1);
   context.pusch_scs        = subcarrier_spacing::kHz30;
   prach_buffer_dummy buffer_dummy;
+
+  // Set the OTA to the same slot as the buffer context.
+  slot_symbol_point ota_time(context.slot, 0, nof_symbols);
+
+  // Delay the OTA 3 times the minimum delay requirements.
+  ota_time -= (3 * calculate_nof_symbols_before_ota(cp, scs, ul_processing_time, tx_timing_params));
+  handler.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
 
   handler.handle_prach_occasion(context, buffer_dummy);
 
@@ -197,6 +218,13 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_prach_request_generates_c
   context.start_symbol     = 0;
   prach_buffer_dummy buffer_dummy;
 
+  // Set the OTA to the same slot as the buffer context.
+  slot_symbol_point ota_time(context.slot, 0, nof_symbols);
+
+  // Delay the OTA 1 slot + the minimum delay requirements.
+  ota_time -= (calculate_nof_symbols_before_ota(cp, scs, ul_processing_time, tx_timing_params) + 1);
+  handler_prach_cp_en.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
+
   handler_prach_cp_en.handle_prach_occasion(context, buffer_dummy);
 
   // Assert data flow.
@@ -210,11 +238,44 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_prach_request_generates_c
   ASSERT_EQ(filter_index_type::ul_prach_preamble_short, info.filter_type);
 }
 
+TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_prach_request_does_not_generate_cplane_message)
+{
+  prach_buffer_context context;
+  context.nof_fd_occasions = 1;
+  context.nof_td_occasions = 1;
+  context.format           = prach_format_type::B4;
+  context.slot             = slot_point(1, 20, 1);
+  context.pusch_scs        = subcarrier_spacing::kHz30;
+  context.start_symbol     = 0;
+  prach_buffer_dummy buffer_dummy;
+
+  // Set the OTA to the same slot as the buffer context.
+  slot_symbol_point ota_time(context.slot, 0, nof_symbols);
+
+  // Delay the OTA exactly by the minimum delay requirements.
+  ota_time -= calculate_nof_symbols_before_ota(cp, scs, ul_processing_time, tx_timing_params);
+  handler_prach_cp_en.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
+
+  handler_prach_cp_en.handle_prach_occasion(context, buffer_dummy);
+
+  // Assert data flow.
+  ASSERT_FALSE(data_flow_prach->has_enqueue_section_type_1_method_been_called());
+  ASSERT_FALSE(data_flow_prach->has_enqueue_section_type_3_method_been_called());
+  ASSERT_TRUE(ul_prach_repo->get(context.slot).empty());
+}
+
 TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cplane_message)
 {
   resource_grid_context rg_context;
   rg_context.slot   = slot_point(1, 1, 7);
   rg_context.sector = 1;
+
+  // Set the OTA to the same slot as the resource grid context.
+  slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
+
+  // Delay the OTA three times the minimum delay requirements.
+  ota_time -= (3 * calculate_nof_symbols_before_ota(cp, scs, ul_processing_time, tx_timing_params));
+  handler.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
 
   handler.handle_new_uplink_slot(rg_context, shared_grid.get_grid());
 
@@ -235,6 +296,22 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cpl
   ASSERT_EQ(writer_spy.get_nof_symbols(), symbol_range.stop());
 }
 
+TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_uplink_request_does_not_generates_cplane_message)
+{
+  resource_grid_context rg_context;
+  rg_context.slot   = slot_point(1, 1, 7);
+  rg_context.sector = 1;
+
+  // Set the OTA to the same slot as the resource grid context.
+  slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
+  handler.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
+
+  handler.handle_new_uplink_slot(rg_context, shared_grid.get_grid());
+
+  // Assert data flow.
+  ASSERT_FALSE(data_flow->has_enqueue_section_type_1_method_been_called());
+}
+
 TEST_F(ofh_uplink_request_handler_impl_fixture,
        handle_uplink_in_special_slot_generates_cplane_message_with_valid_symbols)
 {
@@ -242,6 +319,13 @@ TEST_F(ofh_uplink_request_handler_impl_fixture,
   // Use special slot.
   rg_context.slot   = slot_point(1, 1, 6);
   rg_context.sector = 1;
+
+  // Set the OTA to the same slot as the resource grid context.
+  slot_symbol_point ota_time(rg_context.slot, 0, nof_symbols);
+
+  // Delay the OTA 3 slots.
+  ota_time -= (3 * calculate_nof_symbols_before_ota(cp, scs, ul_processing_time, tx_timing_params));
+  handler.get_ota_symbol_boundary_notifier().on_new_symbol({ota_time, {}});
 
   handler.handle_new_uplink_slot(rg_context, shared_grid.get_grid());
 

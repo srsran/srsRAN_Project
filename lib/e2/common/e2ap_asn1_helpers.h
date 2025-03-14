@@ -38,11 +38,12 @@
 
 namespace srsran {
 
-inline void
-fill_ran_function_item(asn1::e2ap::e2setup_request_s& setup, const std::string& ran_oid, e2sm_interface* e2_iface)
+inline void fill_ran_function_item(srslog::basic_logger&          logger,
+                                   asn1::e2ap::e2setup_request_s& setup,
+                                   const std::string&             ran_oid,
+                                   e2sm_interface*                e2_iface)
 {
   using namespace asn1::e2ap;
-  srslog::basic_logger&                                         logger = srslog::fetch_basic_logger("E2");
   asn1::protocol_ie_single_container_s<ran_function_item_ies_o> ran_func_item;
   ran_func_item.load_info_obj(ASN1_E2AP_ID_RAN_FUNCTION_ITEM);
   auto& ran_function_item = ran_func_item->ran_function_item();
@@ -60,14 +61,14 @@ fill_ran_function_item(asn1::e2ap::e2setup_request_s& setup, const std::string& 
   }
 }
 
-inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
+inline void fill_asn1_e2ap_setup_request(srslog::basic_logger&          logger,
+                                         asn1::e2ap::e2setup_request_s& setup,
                                          const e2ap_configuration&      e2ap_config,
                                          e2sm_manager&                  e2sm_mngr)
 {
   using namespace asn1::e2ap;
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("E2");
-  e2_message            e2_msg;
-  init_msg_s&           initmsg = e2_msg.pdu.set_init_msg();
+  e2_message  e2_msg;
+  init_msg_s& initmsg = e2_msg.pdu.set_init_msg();
   initmsg.load_info_obj(ASN1_E2AP_ID_E2SETUP);
   setup = initmsg.value.e2setup_request();
 
@@ -97,7 +98,7 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
     logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
     e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface) {
-      fill_ran_function_item(setup, ran_oid, e2_iface);
+      fill_ran_function_item(logger, setup, ran_oid, e2_iface);
     } else {
       logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
     }
@@ -107,7 +108,7 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
     logger.info("Generate RAN function definition for OID: {}", ran_oid.c_str());
     e2sm_interface* e2_iface = e2sm_mngr.get_e2sm_interface(ran_oid);
     if (e2_iface) {
-      fill_ran_function_item(setup, ran_oid, e2_iface);
+      fill_ran_function_item(logger, setup, ran_oid, e2_iface);
     } else {
       logger.error("No E2SM interface found for RAN OID {}", ran_oid.c_str());
     }
@@ -118,29 +119,62 @@ inline void fill_asn1_e2ap_setup_request(asn1::e2ap::e2setup_request_s& setup,
   list.resize(1);
   list[0].load_info_obj(ASN1_E2AP_ID_E2NODE_COMPONENT_CFG_ADDITION_ITEM);
   e2node_component_cfg_addition_item_s& e2node_cfg_item = list[0].value().e2node_component_cfg_addition_item();
-  e2node_cfg_item.e2node_component_interface_type       = e2node_component_interface_type_opts::ng;
-  e2node_cfg_item.e2node_component_id.set_e2node_component_interface_type_ng().amf_name.from_string("test-amf-name");
 
-  uint8_t ngap_request[] = {0x00, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x1b, 0x00, 0x08, 0x00, 0x00, 0xf1,
-                            0x10, 0x00, 0x00, 0x06, 0x6c, 0x00, 0x52, 0x40, 0x0a, 0x03, 0x80, 0x63, 0x75, 0x5f,
-                            0x63, 0x70, 0x5f, 0x30, 0x31, 0x00, 0x66, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x07,
-                            0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x15, 0x40, 0x01, 0x60};
+  byte_buffer request_buf;
+  byte_buffer response_buf;
 
-  uint8_t     ngap_resp[] = {0x20, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x01, 0x00, 0x0f, 0x06, 0x00, 0x74,
-                             0x65, 0x73, 0x74, 0x5f, 0x61, 0x6d, 0x66, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x00, 0x60,
-                             0x00, 0x08, 0x00, 0x00, 0x00, 0xf1, 0x10, 0x02, 0x00, 0x40, 0x00, 0x56, 0x40, 0x01,
-                             0xff, 0x00, 0x50, 0x00, 0x08, 0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08};
-  byte_buffer request_buf = byte_buffer::create(ngap_request, ngap_request + sizeof(ngap_request)).value();
-  byte_buffer resp_buf    = byte_buffer::create(ngap_resp, ngap_resp + sizeof(ngap_resp)).value();
+  if (e2ap_config.gnb_cu_up_id.has_value()) {
+    // CU-UP -> E1, add a dummy E1AP setup request/reply
+    e2node_cfg_item.e2node_component_interface_type = e2node_component_interface_type_opts::e1;
+    e2node_cfg_item.e2node_component_id.set_e2node_component_interface_type_e1().gnb_cu_up_id =
+        gnb_cu_up_id_to_uint(e2ap_config.gnb_cu_up_id.value());
+    uint8_t request[]  = {0x00, 0x03, 0x00, 0x2e, 0x00, 0x00, 0x05, 0x00, 0x39, 0x00, 0x02, 0x00, 0x00,
+                          0x00, 0x07, 0x00, 0x02, 0x00, 0x00, 0x00, 0x08, 0x40, 0x0d, 0x05, 0x00, 0x64,
+                          0x75, 0x6d, 0x6d, 0x79, 0x2d, 0x63, 0x75, 0x2d, 0x75, 0x70, 0x00, 0x0a, 0x00,
+                          0x01, 0x20, 0x00, 0x0b, 0x00, 0x05, 0x00, 0x00, 0x00, 0xf1, 0x10};
+    uint8_t response[] = {0x20, 0x03, 0x00, 0x09, 0x00, 0x00, 0x01, 0x00, 0x39, 0x00, 0x02, 0x00, 0x00};
+    request_buf        = byte_buffer::create(request, request + sizeof(request)).value();
+    response_buf       = byte_buffer::create(response, response + sizeof(response)).value();
+
+  } else if (e2ap_config.gnb_du_id.has_value()) {
+    // DU -> F1, add a dummy F1AP setup request/reply
+    e2node_cfg_item.e2node_component_interface_type = e2node_component_interface_type_opts::f1;
+    e2node_cfg_item.e2node_component_id.set_e2node_component_interface_type_f1().gnb_du_id =
+        gnb_du_id_to_int(e2ap_config.gnb_du_id.value());
+    uint8_t request[]  = {0x00, 0x01, 0x00, 0x22, 0x00, 0x00, 0x04, 0x00, 0x4e, 0x00, 0x02, 0x00, 0x00,
+                          0x00, 0x2a, 0x00, 0x02, 0x00, 0x00, 0x00, 0x2d, 0x40, 0x0a, 0x03, 0x80, 0x64,
+                          0x75, 0x6d, 0x6d, 0x79, 0x2d, 0x64, 0x75, 0x00, 0xab, 0x00, 0x01, 0x00};
+    uint8_t response[] = {0x40, 0x01, 0x00, 0x1c, 0x00, 0x00, 0x03, 0x00, 0x4e, 0x00, 0x02,
+                          0x00, 0x00, 0x00, 0x52, 0x40, 0x0a, 0x03, 0x80, 0x64, 0x75, 0x6d,
+                          0x6d, 0x79, 0x2d, 0x63, 0x75, 0x00, 0xaa, 0x00, 0x01, 0x00};
+    request_buf        = byte_buffer::create(request, request + sizeof(request)).value();
+    response_buf       = byte_buffer::create(response, response + sizeof(response)).value();
+  } else {
+    // CU-CP -> NG, add a dummy NGAP setup request/reply
+    e2node_cfg_item.e2node_component_interface_type = e2node_component_interface_type_opts::ng;
+    e2node_cfg_item.e2node_component_id.set_e2node_component_interface_type_ng().amf_name.from_string("dummy-amf");
+    uint8_t request[] = {0x00, 0x15, 0x00, 0x35, 0x00, 0x00, 0x04, 0x00, 0x1b, 0x00, 0x08, 0x00, 0x00, 0xf1, 0x10,
+                         0x00, 0x00, 0x06, 0x6c, 0x00, 0x52, 0x40, 0x0c, 0x04, 0x80, 0x64, 0x75, 0x6d, 0x6d, 0x79,
+                         0x2d, 0x6e, 0x61, 0x6d, 0x65, 0x00, 0x66, 0x00, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00,
+                         0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08, 0x00, 0x15, 0x40, 0x01, 0x60};
+
+    uint8_t response[] = {0x20, 0x15, 0x00, 0x33, 0x00, 0x00, 0x04, 0x00, 0x01, 0x00, 0x0f, 0x06, 0x00, 0x74,
+                          0x65, 0x73, 0x74, 0x5f, 0x61, 0x6d, 0x66, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x00, 0x60,
+                          0x00, 0x08, 0x00, 0x00, 0x00, 0xf1, 0x10, 0x02, 0x00, 0x40, 0x00, 0x56, 0x40, 0x01,
+                          0xff, 0x00, 0x50, 0x00, 0x08, 0x00, 0x00, 0xf1, 0x10, 0x00, 0x00, 0x00, 0x08};
+    request_buf        = byte_buffer::create(request, request + sizeof(request)).value();
+    response_buf       = byte_buffer::create(response, response + sizeof(response)).value();
+  }
 
   if (e2node_cfg_item.e2node_component_cfg.e2node_component_request_part.resize(request_buf.length())) {
     std::copy(request_buf.begin(),
               request_buf.end(),
               e2node_cfg_item.e2node_component_cfg.e2node_component_request_part.begin());
   }
-  if (e2node_cfg_item.e2node_component_cfg.e2node_component_resp_part.resize(resp_buf.length())) {
-    std::copy(
-        resp_buf.begin(), resp_buf.end(), e2node_cfg_item.e2node_component_cfg.e2node_component_resp_part.begin());
+  if (e2node_cfg_item.e2node_component_cfg.e2node_component_resp_part.resize(response_buf.length())) {
+    std::copy(response_buf.begin(),
+              response_buf.end(),
+              e2node_cfg_item.e2node_component_cfg.e2node_component_resp_part.begin());
   }
 }
 

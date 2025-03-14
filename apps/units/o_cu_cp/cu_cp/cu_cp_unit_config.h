@@ -76,6 +76,8 @@ struct cu_cp_unit_amf_config {
   cu_cp_unit_amf_config_item amf;
   /// Allow CU-CP to run without a core, e.g. for test mode.
   bool no_core = false;
+  /// Time to wait after a failed AMF reconnection attempt in ms.
+  unsigned amf_reconnection_retry_time = 1000;
 };
 
 /// Report configuration, for now only supporting the A3 event.

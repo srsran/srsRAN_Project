@@ -292,6 +292,7 @@ void cell_metrics_handler::report_metrics()
     next_report.ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
   }
 
+  next_report.nof_slots                 = report_period_slots;
   next_report.nof_error_indications     = data.error_indication_counter;
   next_report.average_decision_latency  = data.decision_latency_sum / report_period_slots;
   next_report.max_decision_latency      = data.max_decision_latency;
@@ -301,6 +302,8 @@ void cell_metrics_handler::report_metrics()
   next_report.nof_dl_slots              = data.nof_dl_slots;
   next_report.nof_ul_slots              = data.nof_ul_slots;
   next_report.nof_prach_preambles       = data.nof_prach_preambles;
+  next_report.dl_grants_count           = data.nof_ue_pdsch_grants;
+  next_report.ul_grants_count           = data.nof_ue_pusch_grants;
 
   // Reset cell-wide metric counters.
   data = {};
@@ -316,6 +319,7 @@ void cell_metrics_handler::report_metrics()
 void cell_metrics_handler::handle_slot_result(const sched_result&       slot_result,
                                               std::chrono::microseconds slot_decision_latency)
 {
+  data.nof_ue_pdsch_grants += slot_result.dl.ue_grants.size();
   for (const dl_msg_alloc& dl_grant : slot_result.dl.ue_grants) {
     auto it = rnti_to_ue_index_lookup.find(dl_grant.pdsch_cfg.rnti);
     if (it == rnti_to_ue_index_lookup.end()) {
@@ -338,6 +342,7 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
     u.last_dl_olla = dl_grant.context.olla_offset;
   }
 
+  data.nof_ue_pusch_grants += slot_result.ul.puschs.size();
   for (const ul_sched_info& ul_grant : slot_result.ul.puschs) {
     auto it = rnti_to_ue_index_lookup.find(ul_grant.pusch_cfg.rnti);
     if (it == rnti_to_ue_index_lookup.end()) {
@@ -377,21 +382,25 @@ void cell_metrics_handler::push_result(slot_point                sl_tx,
                                        const sched_result&       slot_result,
                                        std::chrono::microseconds slot_decision_latency)
 {
-  if (report_period_slots == 0) {
-    // The SCS common is now known.
+  if (SRSRAN_UNLIKELY(not next_report_slot.valid())) {
+    // We enter here in the first call to this function.
+    // We will make the \c next_report_slot aligned with the period.
     nof_slots_per_sf    = get_nof_slots_per_subframe(to_subcarrier_spacing(sl_tx.numerology()));
     usecs slot_dur      = usecs{1000U >> sl_tx.numerology()};
     report_period_slots = usecs{report_period} / slot_dur;
+    unsigned mod_val    = sl_tx.to_uint() % report_period_slots;
+    next_report_slot    = mod_val > 0 ? sl_tx + report_period_slots - mod_val : sl_tx;
   }
-
   last_slot_tx = sl_tx;
 
   handle_slot_result(slot_result, slot_decision_latency);
 
-  ++slot_counter;
-  if (slot_counter >= report_period_slots) {
+  if (sl_tx >= next_report_slot) {
+    // Prepare report and forward it to the notifier.
     report_metrics();
-    slot_counter = 0;
+
+    // Set next report slot.
+    next_report_slot += report_period_slots;
   }
 }
 
@@ -399,6 +408,9 @@ scheduler_ue_metrics
 cell_metrics_handler::ue_metric_context::compute_report(std::chrono::milliseconds metric_report_period,
                                                         unsigned                  slots_per_sf)
 {
+  auto convert_slots_to_ms = [slots_per_sf](unsigned slots) {
+    return static_cast<float>(slots) / static_cast<float>(slots_per_sf);
+  };
   scheduler_ue_metrics ret{};
   ret.pci                 = pci;
   ret.rnti                = rnti;
@@ -441,23 +453,22 @@ cell_metrics_handler::ue_metric_context::compute_report(std::chrono::millisecond
   ret.nof_pusch_invalid_harqs        = data.nof_pusch_invalid_harqs;
   ret.nof_pusch_invalid_csis         = data.nof_pusch_invalid_csis;
   if (data.nof_ul_ces > 0) {
-    ret.avg_ce_delay_ms = (static_cast<float>(data.sum_ul_ce_delay_slots) / (data.nof_ul_ces * slots_per_sf));
-    ret.max_ce_delay_ms = data.max_ul_ce_delay_slots;
+    ret.avg_ce_delay_ms = convert_slots_to_ms(data.sum_ul_ce_delay_slots) / static_cast<float>(data.nof_ul_ces);
+    ret.max_ce_delay_ms = convert_slots_to_ms(data.max_ul_ce_delay_slots);
   }
   if (data.count_crc_pdus > 0) {
-    ret.avg_crc_delay_ms =
-        static_cast<double>(data.sum_crc_delay_slots) / static_cast<double>(data.count_crc_pdus * slots_per_sf);
-    ret.max_crc_delay_ms = data.max_crc_delay_slots;
+    ret.avg_crc_delay_ms = convert_slots_to_ms(data.sum_crc_delay_slots) / static_cast<float>(data.count_crc_pdus);
+    ret.max_crc_delay_ms = convert_slots_to_ms(data.max_crc_delay_slots);
   }
   if (data.count_pucch_harq_pdus > 0) {
-    ret.avg_pucch_harq_delay_ms = static_cast<double>(data.sum_pucch_harq_delay_slots) /
-                                  static_cast<double>(data.count_pucch_harq_pdus * slots_per_sf);
-    ret.max_pucch_harq_delay_ms = data.max_pucch_harq_delay_slots;
+    ret.avg_pucch_harq_delay_ms =
+        convert_slots_to_ms(data.sum_pucch_harq_delay_slots) / static_cast<float>(data.count_pucch_harq_pdus);
+    ret.max_pucch_harq_delay_ms = convert_slots_to_ms(data.max_pucch_harq_delay_slots);
   }
   if (data.count_pusch_harq_pdus > 0) {
-    ret.avg_pusch_harq_delay_ms = static_cast<double>(data.sum_pusch_harq_delay_slots) /
-                                  static_cast<double>(data.count_pusch_harq_pdus * slots_per_sf);
-    ret.max_pusch_harq_delay_ms = data.max_pusch_harq_delay_slots;
+    ret.avg_pusch_harq_delay_ms =
+        convert_slots_to_ms(data.sum_pusch_harq_delay_slots) / static_cast<float>(data.count_pusch_harq_pdus);
+    ret.max_pusch_harq_delay_ms = convert_slots_to_ms(data.max_pusch_harq_delay_slots);
   }
 
   // Reset UE stats metrics on every report.

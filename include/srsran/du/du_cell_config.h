@@ -80,6 +80,10 @@ struct du_cell_config {
   subcarrier_spacing scs_common;
   ssb_configuration  ssb_cfg;
 
+  /// Whether the DU automatically attempts to activate the cell or waits for a command from the SMO.
+  /// Note: If set to false, the DU won't add this cell to the list of served cells in the F1 Setup Request.
+  bool enabled = true;
+
   dmrs_typeA_position dmrs_typeA_pos;
 
   /// CORESET#0 index of Table 13-{1, ..., 10}, TS 38.213.

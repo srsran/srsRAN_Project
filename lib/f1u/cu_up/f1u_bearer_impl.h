@@ -43,7 +43,7 @@ public:
                   f1u_tx_pdu_notifier&           tx_pdu_notifier_,
                   f1u_rx_delivery_notifier&      rx_delivery_notifier_,
                   f1u_rx_sdu_notifier&           rx_sdu_notifier_,
-                  timer_factory                  ue_dl_timer_factory,
+                  timer_factory                  ue_ctrl_timer_factory,
                   unique_timer&                  ue_inactivity_timer_,
                   task_executor&                 dl_exec_,
                   task_executor&                 ul_exec_);

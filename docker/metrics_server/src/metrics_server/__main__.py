@@ -182,7 +182,7 @@ def _publish_data(
                                     "rnti": f"{rnti:x}",
                                     "testbed": testbed,
                                 },
-                                "fields": dict(ue_container.items()),
+                                "fields": dict(convert_integers_to_floats(ue_container).items()),
                                 "time": timestamp,
                             },
                             record_time_key="time",
@@ -198,11 +198,30 @@ def _publish_data(
                             "tags": {
                                 "testbed": testbed,
                             },
-                            "fields": dict(metric["app_resource_usage"].items()),
+                            "fields": dict(convert_integers_to_floats(metric["app_resource_usage"]).items()),
                             "time": timestamp,
                         },
                         record_time_key="time",
                     )
+                elif "ru" in metric and "ofh_cells" in metric["ru"] and metric["ru"]["ofh_cells"]:
+                    timestamp = datetime.fromtimestamp(metric["timestamp"], UTC).isoformat()
+                    for cell in metric["ru"]["ofh_cells"]:
+                        cell = cell["cell"]
+                        if cell["ul"]["received_packets"]:
+                            _influx_push(
+                                write_api,
+                                bucket=bucket,
+                                record={
+                                    "measurement": "ofh_ul_received_packets",
+                                    "tags": {
+                                        "pci": cell["pci"],
+                                        "testbed": testbed,
+                                    },
+                                    "fields": dict(convert_integers_to_floats(cell["ul"]["received_packets"]).items()),
+                                    "time": timestamp,
+                                },
+                                record_time_key="time",
+                            )
             except Exception as err:  # pylint: disable=broad-exception-caught
                 logging.exception(err)
 
@@ -225,6 +244,16 @@ def _recreate_bucket(client: InfluxDBClient, bucket_name: str) -> None:
     api.delete_bucket(bucket_ref)
     api.create_bucket(bucket_ref)
     logging.info("Bucket cleaned")
+
+
+def convert_integers_to_floats(dictionary):
+    """
+    Function to convert all integers in a dictionary to floats
+    """
+    for key, value in dictionary.items():
+        if isinstance(value, int):
+            dictionary[key] = float(value)
+    return dictionary
 
 
 if __name__ == "__main__":

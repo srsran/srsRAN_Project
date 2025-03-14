@@ -24,6 +24,7 @@
 
 #include "srsran/phy/lower/lower_phy_configuration.h"
 #include "srsran/radio/radio_configuration.h"
+#include "srsran/ru/ru_error_notifier.h"
 #include "srsran/ru/ru_timing_notifier.h"
 #include "srsran/ru/ru_uplink_plane.h"
 
@@ -47,6 +48,8 @@ struct ru_generic_configuration {
   ru_uplink_plane_rx_symbol_notifier* symbol_notifier = nullptr;
   /// Radio Unit timing notifier.
   ru_timing_notifier* timing_notifier = nullptr;
+  /// Radio Unit error notifier.
+  ru_error_notifier* error_notifier = nullptr;
   /// Statistics printer executor.
   task_executor* statistics_printer_executor = nullptr;
   /// \brief Statistics print interval in seconds.

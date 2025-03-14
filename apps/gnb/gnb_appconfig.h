@@ -22,10 +22,10 @@
 
 #pragma once
 
+#include "apps/helpers/hal/hal_appconfig.h"
+#include "apps/helpers/logger/logger_appconfig.h"
 #include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
-#include "apps/services/hal/hal_appconfig.h"
-#include "apps/services/logger/logger_appconfig.h"
 #include "apps/services/remote_control/remote_control_appconfig.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
 #include "srsran/ran/gnb_id.h"

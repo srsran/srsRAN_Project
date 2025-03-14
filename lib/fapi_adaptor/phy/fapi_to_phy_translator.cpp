@@ -36,9 +36,11 @@
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_pool.h"
 #include "srsran/phy/support/shared_resource_grid.h"
+#include "srsran/phy/upper/channel_processors/prach_detector.h"
 #include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/uplink_pdu_slot_repository.h"
+#include "srsran/phy/upper/uplink_pdu_validator.h"
 #include "srsran/phy/upper/uplink_request_processor.h"
-#include "srsran/phy/upper/uplink_slot_pdu_repository.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -175,10 +177,10 @@ struct downlink_pdus {
 
 /// Helper struct to store the uplink channel PHY PDUs.
 struct uplink_pdus {
-  static_vector<uplink_processor::pucch_pdu, MAX_PUCCH_PDUS_PER_SLOT> pucch;
-  static_vector<uplink_processor::pusch_pdu, MAX_PUSCH_PDUS_PER_SLOT> pusch;
-  static_vector<prach_buffer_context, MAX_PRACH_OCCASIONS_PER_SLOT>   prach;
-  static_vector<uplink_processor::srs_pdu, MAX_SRS_PDUS_PER_SLOT>     srs;
+  static_vector<uplink_pdu_slot_repository::pucch_pdu, MAX_PUCCH_PDUS_PER_SLOT> pucch;
+  static_vector<uplink_pdu_slot_repository::pusch_pdu, MAX_PUSCH_PDUS_PER_SLOT> pusch;
+  static_vector<prach_buffer_context, MAX_PRACH_OCCASIONS_PER_SLOT>             prach;
+  static_vector<uplink_pdu_slot_repository::srs_pdu, MAX_SRS_PDUS_PER_SLOT>     srs;
 };
 
 } // namespace
@@ -414,8 +416,8 @@ void fapi_to_phy_translator::dl_tti_request(const fapi::dl_tti_request_message& 
 }
 
 /// Returns true if the given PUCCH PDU is valid, otherwise false.
-static error_type<std::string> is_pucch_pdu_valid(const uplink_pdu_validator&        ul_pdu_validator,
-                                                  const uplink_processor::pucch_pdu& ul_pdu)
+static error_type<std::string> is_pucch_pdu_valid(const uplink_pdu_validator&                  ul_pdu_validator,
+                                                  const uplink_pdu_slot_repository::pucch_pdu& ul_pdu)
 {
   return std::visit([&ul_pdu_validator](const auto& config) { return ul_pdu_validator.is_valid(config); },
                     ul_pdu.config);
@@ -474,7 +476,7 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
         break;
       }
       case fapi::ul_pdu_type::PUCCH: {
-        uplink_processor::pucch_pdu& ul_pdu = pdus.pucch.emplace_back();
+        uplink_pdu_slot_repository::pucch_pdu& ul_pdu = pdus.pucch.emplace_back();
         convert_pucch_fapi_to_phy(ul_pdu, pdu.pucch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant);
         error_type<std::string> phy_pucch_validation = is_pucch_pdu_valid(ul_pdu_validator, ul_pdu);
         if (!phy_pucch_validation.has_value()) {
@@ -489,7 +491,7 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
         break;
       }
       case fapi::ul_pdu_type::PUSCH: {
-        uplink_processor::pusch_pdu& ul_pdu = pdus.pusch.emplace_back();
+        uplink_pdu_slot_repository::pusch_pdu& ul_pdu = pdus.pusch.emplace_back();
         convert_pusch_fapi_to_phy(ul_pdu, pdu.pusch_pdu, msg.sfn, msg.slot, carrier_cfg.num_rx_ant, part2_repo);
         error_type<std::string> phy_pusch_validator = ul_pdu_validator.is_valid(ul_pdu.pdu);
         if (!phy_pusch_validator.has_value()) {
@@ -502,7 +504,7 @@ static expected<uplink_pdus> translate_ul_tti_pdus_to_phy_pdus(const fapi::ul_tt
         break;
       }
       case fapi::ul_pdu_type::SRS: {
-        uplink_processor::srs_pdu& ul_pdu = pdus.srs.emplace_back();
+        uplink_pdu_slot_repository::srs_pdu& ul_pdu = pdus.srs.emplace_back();
         convert_srs_fapi_to_phy(ul_pdu, pdu.srs_pdu, carrier_cfg.num_rx_ant, msg.sfn, msg.slot);
         error_type<std::string> srs_validation = ul_pdu_validator.is_valid(ul_pdu.config);
         if (!srs_validation.has_value()) {
@@ -532,8 +534,18 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   slot_point  current_slot = get_current_slot();
   trace_point tp           = l1_tracer.now();
 
-  // Clear the repository for the message slot.
-  ul_pdu_repository.clear_slot(slot);
+  // Obtain the PDU repository for the message slot.
+  unique_uplink_pdu_slot_repository ul_pdu_slot_repository = ul_pdu_repository.get_pdu_slot_repository(slot);
+
+  // Verify UL PDU repository is valid.
+  if (!ul_pdu_slot_repository.is_valid()) {
+    logger.warning("Sector#{}: Real-time failure in FAPI: UL processor is busy.", sector_id, msg.sfn, msg.slot);
+    // Raise out of sync error.
+    error_notifier.get().on_error_indication(
+        fapi::build_msg_slot_error_indication(msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request));
+    l2_tracer << instant_trace_event{"ul_tti_req_busy", instant_trace_event::cpu_scope::global};
+    return;
+  }
 
   // Release the controller of the previous slot in case that it has not been released before. In case that it already
   // is released, this call will do nothing.
@@ -574,13 +586,13 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
 
   // Add the PUCCH, PUSCH and SRS PDUs to the repository for later processing.
   for (const auto& pdu : pdus.value().pusch) {
-    ul_pdu_repository.add_pusch_pdu(slot, pdu);
+    ul_pdu_slot_repository->add_pusch_pdu(pdu);
   }
   for (const auto& pdu : pdus.value().pucch) {
-    ul_pdu_repository.add_pucch_pdu(slot, pdu);
+    ul_pdu_slot_repository->add_pucch_pdu(pdu);
   }
   for (const auto& pdu : pdus.value().srs) {
-    ul_pdu_repository.add_srs_pdu(slot, pdu);
+    ul_pdu_slot_repository->add_srs_pdu(pdu);
   }
 
   // Notify to capture uplink slot.

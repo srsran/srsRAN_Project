@@ -36,7 +36,18 @@ from google.protobuf.wrappers_pb2 import StringValue, UInt32Value
 from retina.client.exception import ErrorReportedByAgent
 from retina.launcher.artifacts import RetinaTestData
 from retina.protocol import RanStub
-from retina.protocol.base_pb2 import Metrics, PingRequest, PingResponse, PLMN, StartInfo, StopResponse, UEDefinition
+from retina.protocol.base_pb2 import (
+    ChannelEmulatorType,
+    Metrics,
+    PingRequest,
+    PingResponse,
+    PLMN,
+    StartInfo,
+    StopResponse,
+    UEDefinition,
+)
+from retina.protocol.channel_emulator_pb2 import ChannelEmulatorStartInfo, NtnScenarioConfig, NtnScenarioDefinition
+from retina.protocol.channel_emulator_pb2_grpc import ChannelEmulatorStub
 from retina.protocol.exit_codes import exit_code_to_message
 from retina.protocol.fivegc_pb2 import FiveGCStartInfo, IPerfResponse
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
@@ -64,6 +75,50 @@ FIVEGC_STARTUP_TIMEOUT: int = RF_MAX_TIMEOUT
 ATTACH_TIMEOUT: int = 90
 RELEASE_TIMEOUT: int = 90
 INTER_UE_START_PERIOD: int = 0
+
+
+def is_ntn_channel_emulator(channel_emulator: ChannelEmulatorStub):
+    """
+    Check if the emulator is of NTN type.
+    """
+    channel_emulator_def = channel_emulator.GetDefinition(Empty())
+    return channel_emulator_def.type == ChannelEmulatorType.NTN
+
+
+def start_ntn_channel_emulator(
+    ue_array: Sequence[UEStub],
+    gnb: GNBStub,
+    channel_emulator: ChannelEmulatorStub,
+    ntn_scenario_def: NtnScenarioDefinition,
+) -> NtnScenarioConfig:
+    """
+    Start NTN Channel Emulator and get NTN configs for gnb and UE.
+    """
+    ue_def_for_gnb = UEDefinition()
+    for ue_stub in ue_array:
+        ue_def: UEDefinition = ue_stub.GetDefinition(Empty())
+        if ue_def.zmq_ip is not None:
+            ue_def_for_gnb = ue_def
+
+    gnb_definition = gnb.GetDefinition(Empty())
+    channel_emulator_start_info = ChannelEmulatorStartInfo(
+        gnb_definition=gnb_definition,
+        ue_definition=ue_def_for_gnb,
+        ntn_scenario=ntn_scenario_def,
+        start_info=StartInfo(timeout=20),
+    )
+    channel_emulator.Start(channel_emulator_start_info)
+
+
+def get_ntn_configs(channel_emulator: ChannelEmulatorStub):
+    """
+    Get NTN configs for gnb and UE from the NTN channel emulator.
+    """
+    ntn_gnb_cfg = None
+    emulation_scenario_config = channel_emulator.GetScenarioConfigs(Empty())
+    if emulation_scenario_config.HasField("ntn_config"):
+        ntn_gnb_cfg = emulation_scenario_config.ntn_config
+    return ntn_gnb_cfg
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
@@ -127,6 +182,7 @@ def start_network(
     gnb_post_cmd: Tuple[str, ...] = tuple(),
     plmn: Optional[PLMN] = None,
     ric: Optional[NearRtRicStub] = None,
+    channel_emulator: Optional[ChannelEmulatorStub] = None,
 ):
     """
     Start Network (5GC + gNB + RIC(optional))
@@ -161,6 +217,12 @@ def start_network(
                 start_info=StartInfo(timeout=fivegc_startup_timeout),
             )
         )
+
+    if channel_emulator and ue_def_for_gnb.zmq_ip is not None:
+        # Overwrite the ZMQ IP and port, so the GNB connects to the channel emulator.
+        channel_emulator_definition = channel_emulator.GetDefinition(Empty())
+        ue_def_for_gnb.zmq_ip = channel_emulator_definition.zmq_ip
+        ue_def_for_gnb.zmq_port_array[0] = channel_emulator_definition.ul_zmq_port
 
     ric_definition = None
     if ric:
@@ -199,16 +261,24 @@ def ue_start_and_attach(
     ue_startup_timeout: int = UE_STARTUP_TIMEOUT,
     attach_timeout: int = ATTACH_TIMEOUT,
     inter_ue_start_period: int = INTER_UE_START_PERIOD,
+    channel_emulator: Optional[ChannelEmulatorStub] = None,
 ) -> Dict[UEStub, UEAttachedInfo]:
     """
     Start an array of UEs and wait until attached to already running gnb and 5gc
     """
 
+    gnb_definition = gnb.GetDefinition(Empty())
+    if channel_emulator and gnb_definition.zmq_ip is not None:
+        # Overwrite the ZMQ IP and port, so the UE connects to the channel emulator.
+        channel_emulator_definition = channel_emulator.GetDefinition(Empty())
+        gnb_definition.zmq_ip = channel_emulator_definition.zmq_ip
+        gnb_definition.zmq_port_array[0] = channel_emulator_definition.dl_zmq_port
+
     for ue_stub in ue_array:
         with handle_start_error(name=f"UE [{id(ue_stub)}]"):
             ue_stub.Start(
                 UEStartInfo(
-                    gnb_definition=gnb.GetDefinition(Empty()),
+                    gnb_definition=gnb_definition,
                     fivegc_definition=fivegc.GetDefinition(Empty()),
                     start_info=StartInfo(timeout=ue_startup_timeout),
                 )
@@ -774,6 +844,7 @@ def stop(
     warning_as_errors: bool = True,
     fail_if_kos: bool = False,
     ric: Optional[NearRtRicStub] = None,
+    channel_emulator: Optional[ChannelEmulatorStub] = None,
 ):
     """
     Stop ue(s), gnb and 5gc, ric
@@ -807,6 +878,12 @@ def stop(
 
     if ric is not None:
         error_message, _ = _stop_stub(ric, "RIC", retina_data, gnb_stop_timeout, log_search, warning_as_errors)
+        error_msg_array.append(error_message)
+
+    if channel_emulator is not None:
+        error_message, _ = _stop_stub(
+            ric, "CHANNEL_EMULATOR", retina_data, gnb_stop_timeout, log_search, warning_as_errors
+        )
         error_msg_array.append(error_message)
 
     # Fail if stop errors

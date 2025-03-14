@@ -67,6 +67,9 @@ private:
   /// \remark Send RRC Reestablishment, see section 5.3.7 in TS 36.331.
   void send_rrc_reestablishment();
 
+  /// \brief Enable ciphering for SRB1.
+  void enable_srb1_ciphering();
+
   async_task<void> handle_rrc_reestablishment_fallback();
 
   void log_rejected_reestablishment(const char* cause_str);

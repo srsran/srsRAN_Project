@@ -172,15 +172,15 @@ protected:
     uint32_t n_bsr = tester->bsr_count;
 
     // Push "n_pdus" SDUs into RLC
-    auto                                  sdu_bufs = std::vector<byte_buffer>(n_pdus);
-    std::chrono::system_clock::time_point t_start  = std::chrono::high_resolution_clock::now();
+    auto sdu_bufs = std::vector<byte_buffer>(n_pdus);
+    auto t_start  = std::chrono::steady_clock::now();
     for (uint32_t i = 0; i < n_pdus; i++) {
       sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
       // write SDU into upper end
       rlc->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
     }
-    std::chrono::system_clock::time_point t_end = std::chrono::high_resolution_clock::now();
+    auto t_end = std::chrono::steady_clock::now();
     pcell_worker.run_pending_tasks();
     EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
@@ -255,15 +255,15 @@ protected:
     EXPECT_LT(pdu_size, sdu_size + header_min_size) << "PDU size fits whole SDU; PDUs won't be segmented";
 
     // Push "n_sdus" SDUs into RLC
-    auto                                  sdu_bufs = std::vector<byte_buffer>(n_sdus);
-    std::chrono::system_clock::time_point t_start  = std::chrono::high_resolution_clock::now();
+    auto sdu_bufs = std::vector<byte_buffer>(n_sdus);
+    auto t_start  = std::chrono::steady_clock::now();
     for (uint32_t i = 0; i < n_sdus; i++) {
       sdu_bufs[i] = test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, i, sdu_size, i);
 
       // write SDU into upper end
       rlc->handle_sdu(sdu_bufs[i].deep_copy().value(), false); // keep local copy for later comparison
     }
-    std::chrono::system_clock::time_point t_end = std::chrono::high_resolution_clock::now();
+    auto t_end = std::chrono::steady_clock::now();
     pcell_worker.run_pending_tasks();
     EXPECT_EQ(tester->bsr_count, ++n_bsr);
 
@@ -1375,14 +1375,14 @@ TEST_P(rlc_tx_am_test, retx_hol_toa_has_priority)
   const uint32_t n_pdus          = 5;
 
   // Send first bunch of SDUs of which one will be ReTx'ed
-  std::chrono::system_clock::time_point t_retx_start = std::chrono::high_resolution_clock::now();
-  std::vector<std::vector<uint8_t>>     pdus         = tx_full_pdus(n_pdus, sdu_size);
-  std::chrono::system_clock::time_point t_retx_end   = std::chrono::high_resolution_clock::now();
+  auto                              t_retx_start = std::chrono::steady_clock::now();
+  std::vector<std::vector<uint8_t>> pdus         = tx_full_pdus(n_pdus, sdu_size);
+  auto                              t_retx_end   = std::chrono::steady_clock::now();
 
   // Put another SDU in SDU queue
-  std::chrono::system_clock::time_point t_tx_start = std::chrono::high_resolution_clock::now();
+  auto t_tx_start = std::chrono::steady_clock::now();
   rlc->handle_sdu(test_helpers::create_pdcp_pdu(config.pdcp_sn_len, /* is_srb = */ false, 0, sdu_size, 0), false);
-  std::chrono::system_clock::time_point t_tx_end = std::chrono::high_resolution_clock::now();
+  auto t_tx_end = std::chrono::steady_clock::now();
   pcell_worker.run_pending_tasks();
   rlc_buffer_state bs = rlc->get_buffer_state();
   EXPECT_EQ(bs.pending_bytes, pdu_size);

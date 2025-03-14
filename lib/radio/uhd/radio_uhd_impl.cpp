@@ -240,7 +240,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
   }
 
   unsigned total_tx_channel_count = 0;
-  for (const radio_configuration::stream& stream_config : radio_config.rx_streams) {
+  for (const radio_configuration::stream& stream_config : radio_config.tx_streams) {
     total_tx_channel_count += stream_config.channels.size();
   }
 

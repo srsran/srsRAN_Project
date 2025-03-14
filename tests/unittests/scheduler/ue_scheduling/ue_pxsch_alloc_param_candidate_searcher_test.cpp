@@ -95,7 +95,7 @@ TEST_F(ue_pxsch_alloc_param_candidate_searcher_test, only_searchspaces_in_ue_ded
   const auto&      ss_list = ue_cc->cfg().bwp(to_bwp_id(0)).search_spaces;
 
   ue_pdsch_alloc_param_candidate_searcher dl_searcher(
-      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.dl_harq(h_id), pdcch_slot, {});
+      *ue_ptr, to_du_cell_index(0), ue_cc->harqs.dl_harq(h_id), pdcch_slot, pdcch_slot);
   ASSERT_TRUE(not dl_searcher.is_empty());
   for (const auto& candidate : dl_searcher) {
     ASSERT_TRUE(ss_list.contains(candidate.ss().cfg->get_id()));

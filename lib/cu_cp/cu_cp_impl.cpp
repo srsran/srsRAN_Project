@@ -53,8 +53,8 @@ using namespace srs_cu_cp;
 static void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
   srsran_assert(cfg.services.cu_cp_executor != nullptr, "Invalid CU-CP executor");
-  srsran_assert(!cfg.ngaps.empty(), "No NGAPs configured");
-  for (const auto& ngap : cfg.ngaps) {
+  srsran_assert(!cfg.ngap.ngaps.empty(), "No NGAPs configured");
+  for (const auto& ngap : cfg.ngap.ngaps) {
     srsran_assert(ngap.n2_gw != nullptr, "Invalid N2 GW client handler");
   }
   srsran_assert(cfg.services.timers != nullptr, "Invalid timers");
@@ -160,7 +160,7 @@ ngap_message_handler* cu_cp_impl::get_ngap_message_handler(const plmn_identity& 
 
 bool cu_cp_impl::amfs_are_connected()
 {
-  if (cfg.test_mode_cfg.no_core) {
+  if (cfg.ngap.no_core) {
     return true;
   }
 
@@ -676,9 +676,40 @@ cu_cp_impl::handle_trp_information_request(const trp_information_request_t& requ
 
 #endif // SRSRAN_HAS_ENTERPRISE
 
-void cu_cp_impl::handle_n2_disconnection()
+void cu_cp_impl::handle_n2_disconnection(amf_index_t amf_index)
 {
-  // TODO
+  std::vector<plmn_identity> plmns = ngap_db->find_ngap(amf_index)->get_ngap_context().get_supported_plmns();
+
+  logger.warning("Handling N2 disconnection. Lost PLMNs: {}", fmt::format("{}", fmt::join(plmns, " ")));
+
+  // Notify AMF connection manager about the disconnection.
+  controller->amf_connection_handler().handle_amf_connection_loss(amf_index);
+
+  // Stop accepting new UEs for the given PLMNs.
+  ue_mng.add_blocked_plmns(plmns);
+
+  // Release all UEs with the PLMNs served by the disconnected AMF.
+  for (const auto& plmn : plmns) {
+    std::vector<cu_cp_ue*> ues = ue_mng.find_ues(plmn);
+
+    for (const auto& ue : ues) {
+      if (ue != nullptr) {
+        logger.info("ue={}: Releasing UE (PLMN {}) due to N2 disconnection", ue->get_ue_index(), plmn);
+        ue->get_task_sched().schedule_async_task(launch_async(
+            [this,
+             command = cu_cp_ue_context_release_command{ue->get_ue_index(), ngap_cause_misc_t::hardware_fail, true}](
+                coro_context<async_task<void>>& ctx) {
+              CORO_BEGIN(ctx);
+              // The outcome of the procedure is ignored, as we don't send anything to the (lost) AMF.
+              CORO_AWAIT(handle_ue_context_release_command(command));
+              CORO_RETURN();
+            }));
+      }
+    }
+  }
+
+  // Try to reconnect to AMF.
+  controller->amf_connection_handler().reconnect_to_amf(amf_index, &ue_mng, cfg.ngap.amf_reconnection_retry_time);
 }
 
 std::optional<rrc_meas_cfg>

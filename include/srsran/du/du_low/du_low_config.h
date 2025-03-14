@@ -37,16 +37,14 @@ struct du_low_cell_config {
 
 /// Parameters used to instantiate the DU-low.
 struct du_low_config {
-  /// Logger used to report state of the DU-low.
-  srslog::basic_logger* logger;
   /// Cell configuration.
   std::vector<du_low_cell_config> cells;
 };
 
 /// Dependencies necessary to instantiate a DU-low.
 struct du_low_dependencies {
-  /// Upper physical layer metric producer. Set to \c nullptr to disable PHY metrics.
-  upper_phy_metrics_notifiers* metric_notifier = nullptr;
+  /// Logger used to report state of the DU-low.
+  srslog::basic_logger* logger;
 };
 
 } // namespace srs_du

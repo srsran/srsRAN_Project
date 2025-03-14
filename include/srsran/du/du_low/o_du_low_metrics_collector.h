@@ -34,7 +34,7 @@ public:
   virtual ~o_du_low_metrics_collector() = default;
 
   /// Collects the metrics from the O-DU low and writes them into the given metrics argument.
-  virtual void collect_o_du_low_metrics(o_du_low_metrics& metrics) = 0;
+  virtual void collect_metrics(o_du_low_metrics& metrics) = 0;
 };
 
 } // namespace srs_du

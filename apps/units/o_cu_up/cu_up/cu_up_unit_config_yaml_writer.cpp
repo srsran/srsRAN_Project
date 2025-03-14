@@ -22,7 +22,7 @@
 
 #include "cu_up_unit_config_yaml_writer.h"
 #include "apps/helpers/metrics/metrics_config_yaml_writer.h"
-#include "apps/services/network/udp_config_yaml_writer.h"
+#include "apps/helpers/network/udp_config_yaml_writer.h"
 #include "cu_up_unit_config.h"
 #include "srsran/adt/span.h"
 

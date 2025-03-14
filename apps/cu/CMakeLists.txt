@@ -29,17 +29,18 @@ install(TARGETS srscu
         RUNTIME)
 
 target_link_libraries(srscu PRIVATE
-        srsran_support
-        srsran_versioning
-        srsran_o_cu_cp_app_unit
-        srsran_o_cu_up_app_unit
+        srsran_app_helpers
         srsran_app_services
-        srsran_ngap
-        srsran_f1c_gateway
         srsran_e1_gateway
         srsran_e2
+        srsran_f1c_gateway
         srsran_f1u_cu_up_split_connector
+        srsran_ngap
+        srsran_o_cu_cp_app_unit
+        srsran_o_cu_up_app_unit
         srsran_pcap
+        srsran_support
+        srsran_versioning
         ngap_asn1
 )
 

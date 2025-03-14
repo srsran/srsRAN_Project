@@ -21,8 +21,8 @@
  */
 
 #include "o_cu_up_builder.h"
+#include "apps/helpers/e2/e2_metric_connector_manager.h"
 #include "apps/helpers/metrics/metrics_helpers.h"
-#include "apps/services/e2/e2_metric_connector_manager.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "cu_up/cu_up_unit_config_translators.h"
 #include "cu_up/metrics/cu_up_pdcp_metrics_consumers.h"

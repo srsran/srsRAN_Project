@@ -21,6 +21,7 @@
  */
 
 #include "worker_manager.h"
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 
 using namespace srsran;
@@ -62,7 +63,8 @@ worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   }
 
   if (worker_cfg.du_hi_cfg) {
-    create_du_executors(worker_cfg.du_hi_cfg.value(), worker_cfg.du_low_cfg, worker_cfg.fapi_cfg);
+    create_du_executors(
+        worker_cfg.du_hi_cfg.value(), worker_cfg.du_low_cfg, worker_cfg.fapi_cfg, *worker_cfg.app_timers);
   }
 
   if (worker_cfg.ru_ofh_cfg) {
@@ -219,7 +221,8 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
 
 void worker_manager::create_du_executors(const worker_manager_config::du_high_config&        du_hi,
                                          std::optional<worker_manager_config::du_low_config> du_low,
-                                         std::optional<worker_manager_config::fapi_config>   fapi_cfg)
+                                         std::optional<worker_manager_config::fapi_config>   fapi_cfg,
+                                         timer_manager&                                      timer)
 {
   using namespace execution_config_helper;
   const auto& exec_map = exec_mng.executors();
@@ -257,6 +260,19 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
     if (not exec_mng.add_execution_context(create_execution_context(slot_workers[cell_id]))) {
       report_fatal_error("Failed to instantiate {} execution context", slot_workers[cell_id].name);
     }
+
+    // Pre-initialize TLS to avoid doing it in the critical path.
+    task_executor* exec_to_init = exec_mng.executors().at("slot_exec#" + cell_id_str);
+    bool           result       = exec_to_init->defer([&timer, exec_to_init]() {
+      // Pre-initialize byte buffer pool to avoid doing it in the critical path.
+      init_byte_buffer_segment_pool_tls();
+      // Pre-initialize timer queues to avoid doing it in the critical path.
+      timer_factory timer_f{timer, *exec_to_init};
+      auto          t = timer_f.create_timer();
+      t.set(std::chrono::milliseconds(1), [](timer_id_t tid) {}); // run noop callback.
+      t.run();
+    });
+    report_error_if_not(result, "Unexpected failure to dispatch cell task");
   }
 
   // Instantiate DU-high executor mapper.

@@ -40,6 +40,8 @@ private:
   sec_128_key        k_128_enc;
   uint8_t            bearer_id;
   security_direction direction;
+
+  srslog::basic_logger& logger;
 };
 
 } // namespace security

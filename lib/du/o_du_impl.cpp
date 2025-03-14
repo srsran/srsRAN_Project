@@ -22,7 +22,6 @@
 
 #include "o_du_impl.h"
 #include "srsran/du/du_high/o_du_high.h"
-#include "srsran/du/du_low/du_low.h"
 #include "srsran/du/du_low/o_du_low_metrics_collector.h"
 #include "srsran/du/o_du_metrics.h"
 #include "srsran/du/o_du_metrics_notifier.h"
@@ -62,8 +61,8 @@ void o_du_impl::on_new_metrics(const o_du_high_metrics& metrics)
   o_du_metrics du_metrics;
 
   // Get O-DU low metrics.
-  if (auto* du_low_collector = odu_lo->get_metrics_collector()) {
-    du_low_collector->collect_o_du_low_metrics(du_metrics.low);
+  if (auto* odu_low_collector = odu_lo->get_metrics_collector()) {
+    odu_low_collector->collect_metrics(du_metrics.low);
   }
 
   // Notify the metrics.

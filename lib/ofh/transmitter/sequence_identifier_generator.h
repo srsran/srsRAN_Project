@@ -39,8 +39,8 @@ public:
   /// Default constructor.
   explicit sequence_identifier_generator(unsigned init_value = 0)
   {
-    for (unsigned K = 0; K != MAX_SUPPORTED_EAXC_ID_VALUE; ++K) {
-      counters[K] = init_value;
+    for (unsigned i = 0; i != MAX_SUPPORTED_EAXC_ID_VALUE; ++i) {
+      counters[i] = init_value;
     }
   }
 
@@ -52,8 +52,7 @@ public:
                   eaxc,
                   MAX_SUPPORTED_EAXC_ID_VALUE);
 
-    auto& value = counters[eaxc];
-    return value++;
+    return counters[eaxc].fetch_add(1, std::memory_order_relaxed);
   }
 };
 

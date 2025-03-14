@@ -60,16 +60,16 @@ public:
   gtpu_tunnel_ngu_rx_impl(srs_cu_up::ue_index_t                             ue_index,
                           gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config cfg,
                           gtpu_tunnel_ngu_rx_lower_layer_notifier&          rx_lower_,
-                          timer_factory                                     ue_dl_timer_factory_) :
+                          timer_factory                                     ue_ctrl_timer_factory_) :
     gtpu_tunnel_base_rx(gtpu_tunnel_log_prefix{ue_index, cfg.local_teid, "DL"}, cfg.test_mode),
     psup_packer(logger.get_basic_logger()),
     lower_dn(rx_lower_),
     config(cfg),
     rx_window(logger, gtpu_rx_window_size),
-    ue_dl_timer_factory(ue_dl_timer_factory_)
+    ue_ctrl_timer_factory(ue_ctrl_timer_factory_)
   {
     if (config.t_reordering.count() != 0) {
-      reordering_timer = ue_dl_timer_factory.create_timer();
+      reordering_timer = ue_ctrl_timer_factory.create_timer();
       reordering_timer.set(config.t_reordering, reordering_callback{this});
     }
     logger.log_info("GTPU NGU Rx configured. local_teid={} t_reodering={} test_mode={}",
@@ -289,7 +289,7 @@ private:
   unique_timer reordering_timer;
 
   /// Timer factory
-  timer_factory ue_dl_timer_factory;
+  timer_factory ue_ctrl_timer_factory;
 
   /// Reordering callback (t-Reordering)
   class reordering_callback

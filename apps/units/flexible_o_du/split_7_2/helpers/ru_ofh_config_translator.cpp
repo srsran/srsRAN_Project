@@ -93,6 +93,7 @@ static void generate_config(ru_ofh_configuration&              out_cfg,
     sector_cfg.sector_id                    = i;
     sector_cfg.max_processing_delay_slots   = max_processing_delay_slots;
     sector_cfg.dl_processing_time           = std::chrono::microseconds(ru_cfg.dl_processing_time);
+    sector_cfg.ul_processing_time           = std::chrono::microseconds(ru_cfg.ul_processing_time);
     sector_cfg.uses_dpdk                    = ru_cfg.hal_config.has_value();
     sector_cfg.interface                    = cell_cfg.network_interface;
     sector_cfg.is_promiscuous_mode_enabled  = cell_cfg.enable_promiscuous_mode;

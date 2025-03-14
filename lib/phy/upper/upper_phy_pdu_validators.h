@@ -25,6 +25,7 @@
 #include "srsran/phy/upper/downlink_processor.h"
 #include "srsran/phy/upper/signal_processors/prs/prs_generator_validator.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_configuration_validator.h"
+#include "srsran/phy/upper/uplink_pdu_validator.h"
 #include "srsran/phy/upper/uplink_processor.h"
 
 namespace srsran {

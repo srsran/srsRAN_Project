@@ -21,9 +21,9 @@
  */
 
 #include "du_appconfig_yaml_writer.h"
+#include "apps/helpers/f1u/f1u_config_yaml_writer.h"
+#include "apps/helpers/logger/logger_appconfig_yaml_writer.h"
 #include "apps/helpers/metrics/metrics_config_yaml_writer.h"
-#include "apps/services/f1u/f1u_config_yaml_writer.h"
-#include "apps/services/logger/logger_appconfig_yaml_writer.h"
 #include "du_appconfig.h"
 
 using namespace srsran;

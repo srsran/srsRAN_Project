@@ -33,6 +33,7 @@
 #include "srsran/fapi_adaptor/uci_part2_correspondence_repository.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/downlink_processor.h"
+#include "srsran/phy/upper/uplink_pdu_slot_repository.h"
 #include "srsran/srslog/logger.h"
 #include <atomic>
 
@@ -44,7 +45,7 @@ class downlink_processor_pool;
 class resource_grid_pool;
 class uplink_pdu_validator;
 class uplink_request_processor;
-class uplink_slot_pdu_repository;
+class uplink_pdu_slot_repository;
 
 namespace fapi_adaptor {
 
@@ -83,7 +84,7 @@ struct fapi_to_phy_translator_dependencies {
   /// Uplink resource grid pool.
   resource_grid_pool* ul_rg_pool;
   /// Uplink slot PDU repository.
-  uplink_slot_pdu_repository* ul_pdu_repository;
+  uplink_pdu_slot_repository_pool* ul_pdu_repository;
   /// Uplink PDU validator.
   const uplink_pdu_validator* ul_pdu_validator;
   /// Precoding matrix repository.
@@ -243,14 +244,14 @@ private:
   /// Returns this adaptor current slot.
   slot_point get_current_slot() const
   {
-    return slot_point(scs, current_slot_count_val.load(std::memory_order_acquire));
+    return slot_point(scs, current_slot_count_val.load(std::memory_order_relaxed));
   }
 
   /// Updates this adaptor current slot to the given value.
   void update_current_slot(slot_point slot)
   {
     // Update the atomic variable that holds the slot point.
-    current_slot_count_val.store(slot.system_slot(), std::memory_order_release);
+    current_slot_count_val.store(slot.system_slot(), std::memory_order_relaxed);
   }
 
 private:
@@ -271,7 +272,7 @@ private:
   /// Uplink PDU validator.
   const uplink_pdu_validator& ul_pdu_validator;
   /// Uplink slot PDU repository.
-  uplink_slot_pdu_repository& ul_pdu_repository;
+  uplink_pdu_slot_repository_pool& ul_pdu_repository;
   /// Current slot count value.
   std::atomic<uint32_t> current_slot_count_val;
   /// Slot controller manager.

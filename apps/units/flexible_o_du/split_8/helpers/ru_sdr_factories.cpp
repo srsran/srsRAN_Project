@@ -39,6 +39,7 @@ std::unique_ptr<radio_unit> srsran::create_sdr_radio_unit(const ru_sdr_unit_conf
   config.statistics_printer_executor = ru_dependencies.workers.ru_printer_exec;
   config.timing_notifier             = &ru_dependencies.timing_notifier;
   config.symbol_notifier             = &ru_dependencies.symbol_notifier;
+  config.error_notifier              = &ru_dependencies.error_notifier;
 
   for (unsigned i = 0, e = config.lower_phy_config.size(); i != e; ++i) {
     lower_phy_configuration& low_phy_cfg = config.lower_phy_config[i];

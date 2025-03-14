@@ -38,6 +38,7 @@
 #include "srsran/ofh/ofh_factories.h"
 #include "srsran/ofh/serdes/ofh_message_properties.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/ran/resource_block.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/srslog/logger.h"
@@ -47,6 +48,7 @@
 #include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/signal_handling.h"
 #include "fmt/chrono.h"
+#include "fmt/color.h"
 #include <arpa/inet.h>
 #include <random>
 #ifdef DPDK_FOUND
@@ -68,6 +70,12 @@ static constexpr size_t MAX_NOF_PACKETS_PER_UPLANE_MESSAGE = 2;
 
 /// Supported values of udCmpHdr field used for UL U-Plane.
 static constexpr auto SUPPORTED_UL_CMPR_HDR = to_array<uint8_t>({0x00, 0x91});
+
+/// Number of PRBs used by IQ samples of PRACH format 0.
+static constexpr size_t PRACH_LONG_FORMAT_NOF_PRB = 72;
+
+/// Number of PRBs used by IQ samples of PRACH format B4.
+static constexpr size_t PRACH_SHORT_FORMAT_NOF_PRB = 12;
 
 namespace {
 
@@ -111,6 +119,8 @@ struct ru_emulator_config {
   std::vector<unsigned> dl_eaxc;
   std::vector<unsigned> ul_eaxc;
   std::vector<unsigned> prach_eaxc;
+  /// PRACH format.
+  ru_emulator_prach_format prach_format;
 };
 
 /// RU emulator dependencies.
@@ -134,6 +144,7 @@ struct header_parameters {
   unsigned payload_size;
   unsigned start_prb;
   unsigned nof_prbs;
+  uint8_t  filter_index;
 };
 
 /// Aggregates information received in a message from DU.
@@ -153,6 +164,9 @@ using symbol_buffer = static_vector<std::vector<uint8_t>, MAX_NOF_PACKETS_PER_UP
 
 /// Array of symbol buffers, representing symbols of one eAxC.
 using eaxc_buffers = static_vector<symbol_buffer, MAX_NOF_SYMBOLS>;
+
+/// Array of symbol buffers, representing symbols of one eAxC.
+using prach_eaxc_buffers = static_vector<std::vector<uint8_t>, MAX_NOF_SYMBOLS>;
 
 } // namespace
 
@@ -211,10 +225,13 @@ static void set_static_header_params(span<uint8_t> frame, header_parameters para
   // Set port ID.
   frame[23] = params.port;
 
+  // Set filter index.
+  frame[26] = (frame[26] | (params.filter_index & 0x0f));
+
   // Set start PRB and number of PRBs.
   frame[31] = uint8_t(params.start_prb >> 8u) & 0x3;
   frame[32] = uint8_t(params.start_prb);
-  frame[33] = uint8_t((params.nof_prbs == cfg.nof_prb) ? 0 : params.nof_prbs);
+  frame[33] = uint8_t((params.nof_prbs > std::numeric_limits<uint8_t>::max()) ? 0 : params.nof_prbs);
 
   // Set compression header.
   uint8_t octet = 0U;
@@ -274,10 +291,11 @@ static std::vector<eaxc_buffers> generate_test_data(const ru_emulator_config& cf
         // Prepare header.
         span<uint8_t>     frame_header(frame.data(), headers_size);
         header_parameters params;
-        params.port         = port;
+        params.port         = ul_eaxc[port];
         params.payload_size = data_size + ofh_header_size.value() + ecpri::ECPRI_COMMON_HEADER_SIZE.value();
         params.start_prb    = start_prb;
         params.nof_prbs     = nof_frame_prbs[j];
+        params.filter_index = to_value(filter_index_type::standard_channel_filter);
 
         set_static_header_params(frame_header, params, cfg);
 
@@ -286,6 +304,53 @@ static std::vector<eaxc_buffers> generate_test_data(const ru_emulator_config& cf
 
         start_prb += nof_frame_prbs[j];
       }
+    }
+  }
+  return test_data;
+}
+
+/// Returns pre-generated PRACH U-Plane data for each configured eAxC.
+static std::vector<prach_eaxc_buffers>
+generate_test_prach(const ru_emulator_config& cfg, span<const unsigned> prach_eaxc, unsigned nof_prach_symbols)
+{
+  // Vector of bytes for each OFDM symbol of each eAxC.
+  std::vector<prach_eaxc_buffers> test_data;
+  // Number of PRBs used by IQ samples in each U-Plane packet.
+  unsigned nof_prbs = cfg.prach_format == srsran::ru_emulator_prach_format::LONG_F0 ? PRACH_LONG_FORMAT_NOF_PRB
+                                                                                    : PRACH_SHORT_FORMAT_NOF_PRB;
+
+  const units::bytes ecpri_iq_data_header_size(8);
+  const units::bytes ofh_header_size(10);
+  const units::bytes ether_header_size(18);
+
+  unsigned headers_size = (ether_header_size + ecpri_iq_data_header_size + ofh_header_size).value();
+  // Size in bytes of one PRB using the given static compression parameters.
+  units::bytes prb_size = units::bits(cfg.compr_params.data_width * NOF_SUBCARRIERS_PER_RB * 2 +
+                                      (cfg.compr_params.type == compression_type::BFP ? 8 : 0))
+                              .round_up_to_bytes();
+  unsigned iq_data_size = nof_prbs * prb_size.value();
+
+  for (unsigned port = 0, last = prach_eaxc.size(); port != last; ++port) {
+    auto& eaxc_frames = test_data.emplace_back();
+
+    for (unsigned symbol = 0; symbol != nof_prach_symbols; ++symbol) {
+      std::vector<uint8_t>& frame = eaxc_frames.emplace_back();
+      frame.resize(headers_size + iq_data_size);
+
+      // Prepare header.
+      span<uint8_t>     frame_header(frame.data(), headers_size);
+      header_parameters params;
+      params.port         = prach_eaxc[port];
+      params.payload_size = iq_data_size + ofh_header_size.value() + ecpri::ECPRI_COMMON_HEADER_SIZE.value();
+      params.start_prb    = 0;
+      params.nof_prbs     = nof_prbs;
+      params.filter_index = to_value(cfg.prach_format == srsran::ru_emulator_prach_format::LONG_F0
+                                         ? filter_index_type::ul_prach_preamble_1p25khz
+                                         : filter_index_type::ul_prach_preamble_short);
+      set_static_header_params(frame_header, params, cfg);
+
+      // Prepare IQ data.
+      fill_random_data(span<uint8_t>(frame).last(iq_data_size), prach_eaxc[port] + symbol);
     }
   }
   return test_data;
@@ -385,18 +450,24 @@ static bool decode_rx_message(rx_message_info& message_info, span<const uint8_t>
   auto slot                 = slot_point(to_numerology_value(subcarrier_spacing::kHz30), frame, subframe, slot_id);
   message_info.symbol_point = {slot, symbol_id, MAX_NOF_SYMBOLS};
 
-  // Peek number of symbols.
-  message_info.nof_symbols = (packet[35] & 0xf);
-
   // Peek the eAxC.
   message_info.eaxc = packet[19];
 
   // Peek sequence identifier.
   message_info.seq_id = packet[20];
 
+  if (is_a_prach_message(message_info.filter_index)) {
+    // Peek number of symbols.
+    message_info.nof_symbols = (packet[39] & 0x0f);
+    // Peek compression header.
+    message_info.compr_header = packet[33];
+    return true;
+  }
+
+  // Peek number of symbols.
+  message_info.nof_symbols = (packet[35] & 0x0f);
   // Peek compression header.
   message_info.compr_header = packet[28];
-
   return true;
 }
 
@@ -421,8 +492,13 @@ class ru_emulator : public frame_notifier
 
   // Pre-generated test data for each symbol for each configured eAxC.
   std::vector<eaxc_buffers> test_data;
+  // Pre-generated PRACH data. Depending on the format it may comprise 1 or 12 symbols for each eAxC.
+  std::vector<prach_eaxc_buffers> test_prach;
+  // Number of OFDM symbols comprising PRACH U-Plane transmission.
+  unsigned nof_prach_symbols;
   // Keeps track of last used seq_id for each eAxC.
   static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
+  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> prach_seq_counters;
   // Stores the list of configured eAxC for uplink, downlink and PRACH.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
@@ -469,9 +545,18 @@ public:
     for (auto eaxc : cfg.prach_eaxc) {
       srsran_assert(eaxc <= MAX_SUPPORTED_EAXC_ID_VALUE, "Unsupported DL eAxC value requested");
       prach_eaxc.push_back(eaxc);
+      prach_seq_counters.insert(eaxc, 0);
     }
 
-    test_data = generate_test_data(cfg, ul_eaxc);
+    if (cfg.prach_format == srsran::ru_emulator_prach_format::LONG_F0) {
+      nof_prach_symbols = get_prach_preamble_long_info(prach_format_type::zero).nof_symbols;
+    } else {
+      nof_prach_symbols =
+          get_prach_preamble_short_info(prach_format_type::B4, prach_subcarrier_spacing::kHz30, true).nof_symbols;
+    }
+
+    test_data  = generate_test_data(cfg, ul_eaxc);
+    test_prach = generate_test_prach(cfg, prach_eaxc, nof_prach_symbols);
   }
 
   // See interface for documentation.
@@ -565,6 +650,8 @@ private:
     // Send uplink packets.
     if (is_ul_uplane_request(message_info)) {
       generate_ul_uplane_messages(message_info);
+    } else if (is_prach_uplane_request(message_info)) {
+      generate_prach_uplane_messages(message_info);
     }
   }
 
@@ -585,10 +672,16 @@ private:
                                                                 : *dl_up_seq_id_checker;
   }
 
-  bool is_ul_uplane_request(const rx_message_info& message_info)
+  bool is_ul_uplane_request(const rx_message_info& message_info) const
   {
     return (message_info.direction == data_direction::uplink) && (message_info.type == message_type::control_plane) &&
            !is_a_prach_message(message_info.filter_index);
+  }
+
+  bool is_prach_uplane_request(const rx_message_info& message_info) const
+  {
+    return (message_info.direction == data_direction::uplink) && (message_info.type == message_type::control_plane) &&
+           is_a_prach_message(message_info.filter_index);
   }
 
   /// Returns string containing sequence identifier errors for the given list of eAxCs collected by the specified
@@ -625,9 +718,35 @@ private:
       auto& symbol_frames = eaxc_frames[symbol];
       // Set runtime header parameters.
       for (auto& frame : symbol_frames) {
-        set_runtime_header_params(frame, message_info.symbol_point.get_slot(), symbol, message_info.eaxc);
+        uint8_t& seq_id = seq_counters[message_info.eaxc];
+        set_runtime_header_params(frame, message_info.symbol_point.get_slot(), symbol, seq_id);
         frame_burst.emplace_back(frame.data(), frame.size());
       }
+    }
+    // Send symbols.
+    transceiver.send(frame_burst);
+
+    // Increment TX_TOTAL counter.
+    tx_total_counter.increment(frame_burst.size());
+  }
+
+  /// Generates PRACH U-Plane messages with correct headers based on received C-Plane message.
+  void generate_prach_uplane_messages(const rx_message_info& message_info)
+  {
+    static_vector<span<const uint8_t>, MAX_BURST_SIZE> frame_burst;
+
+    unsigned eaxc_idx =
+        std::distance(prach_eaxc.begin(), std::find(prach_eaxc.begin(), prach_eaxc.end(), message_info.eaxc));
+    auto& eaxc_frames = test_prach[eaxc_idx];
+
+    // Set correct header parameters and send PRACH U-Plane packets for each symbol.
+    unsigned start_symbol = message_info.symbol_point.get_symbol_index();
+    for (unsigned symbol = 0, end = message_info.nof_symbols; symbol != end; ++symbol) {
+      auto& frame = eaxc_frames[symbol];
+      // Set runtime header parameters.
+      uint8_t& seq_id = prach_seq_counters[message_info.eaxc];
+      set_runtime_header_params(frame, message_info.symbol_point.get_slot(), start_symbol + symbol, seq_id);
+      frame_burst.emplace_back(frame.data(), frame.size());
     }
     // Send symbols.
     transceiver.send(frame_burst);
@@ -667,20 +786,37 @@ private:
 
     const auto& eaxc = is_a_prach_message(message_info.filter_index) ? prach_eaxc : ul_eaxc;
     if (std::find(eaxc.begin(), eaxc.end(), message_info.eaxc) == eaxc.end()) {
-      logger.warning("Packet is corrupt: received eAxC = '{}' is not configured in the RU emulator UL ports list",
+      logger.warning("Packet is corrupt: received eAxC = '{}' is not configured in the RU emulator UL/PRACH ports list",
                      message_info.eaxc);
       return false;
     }
 
-    if (message_info.nof_symbols > MAX_NOF_SYMBOLS) {
+    if (!is_a_prach_message(message_info.filter_index) && (message_info.nof_symbols > MAX_NOF_SYMBOLS)) {
       logger.warning("Packet is corrupt: incorrect number of symbols = {}", message_info.nof_symbols);
       return false;
     }
 
+    if (is_a_prach_message(message_info.filter_index)) {
+      filter_index_type valid_filter_index = (cfg.prach_format == srsran::ru_emulator_prach_format::LONG_F0)
+                                                 ? filter_index_type::ul_prach_preamble_1p25khz
+                                                 : filter_index_type::ul_prach_preamble_short;
+      if (message_info.filter_index != valid_filter_index) {
+        logger.warning("Packet is corrupt: incorrect PRACH filter index = {}, expected {}",
+                       to_value(message_info.filter_index),
+                       to_value(valid_filter_index));
+        return false;
+      }
+      if (message_info.nof_symbols > nof_prach_symbols) {
+        logger.warning("Packet is corrupt: incorrect number of PRACH symbols = {}, expected {} symbols",
+                       message_info.nof_symbols,
+                       nof_prach_symbols);
+        return false;
+      }
+    }
+
     // For UL C-Plane message check also compression parameters.
-    if (!is_a_prach_message(message_info.filter_index) &&
-        std::find(SUPPORTED_UL_CMPR_HDR.begin(), SUPPORTED_UL_CMPR_HDR.end(), message_info.compr_header) ==
-            SUPPORTED_UL_CMPR_HDR.end()) {
+    if (std::find(SUPPORTED_UL_CMPR_HDR.begin(), SUPPORTED_UL_CMPR_HDR.end(), message_info.compr_header) ==
+        SUPPORTED_UL_CMPR_HDR.end()) {
       logger.warning("Packet is corrupt: unsupported UL compression parameters = {}", message_info.compr_header);
       return false;
     }
@@ -688,7 +824,7 @@ private:
     return true;
   }
 
-  void set_runtime_header_params(span<uint8_t> frame, slot_point slot, unsigned symbol, unsigned eaxc)
+  void set_runtime_header_params(span<uint8_t> frame, slot_point slot, unsigned symbol, uint8_t& seq_id)
   {
     // Set timestamp.
     uint8_t octet = 0;
@@ -705,8 +841,7 @@ private:
     frame[29] = octet;
 
     // Set sequence index.
-    uint8_t& seq_id = seq_counters[eaxc];
-    frame[24]       = seq_id++;
+    frame[24] = seq_id++;
   }
 };
 
@@ -761,7 +896,7 @@ struct worker_manager {
       const single_worker ru_worker{name,
                                     {concurrent_queue_policy::lockfree_spsc, 4},
                                     {{exec_name}},
-                                    std::chrono::microseconds{0},
+                                    std::chrono::microseconds{1},
                                     os_thread_realtime_priority::max() - 0};
       if (!exec_mng.add_execution_context(create_execution_context(ru_worker))) {
         report_fatal_error("Failed to instantiate {} execution context", ru_worker.name);
@@ -800,8 +935,37 @@ static void cleanup_signal_handler(int signal)
   srslog::flush();
 }
 
+static void print_header()
+{
+  fmt::print(fmt::emphasis::bold,
+             "| {:^8} | {:^3} | {:^11} | {:^11} | {:^11} | {:^11} | {:^15} | {:^13} | {:^13} | {:^13} | {:^15} | "
+             "{:^14} | {:^14} | {:^14} | {:^15} | {:^15} | {:^11} | {:^11} | {:^11} |\n",
+             "TIME",
+             "ID",
+             "RX_TOTAL",
+             "RX_ON_TIME",
+             "RX_EARLY",
+             "RX_LATE",
+             "RX_SEQ_ERR",
+             "RX_ON_TIME_C",
+             "RX_EARLY_C",
+             "RX_LATE_C",
+             "RX_SEQ_ERR_C",
+             "RX_ON_TIME_C_U",
+             "RX_EARLY_C_U",
+             "RX_LATE_C_U",
+             "RX_SEQ_ERR_C_U",
+             "RX_SEQ_ERR_PRACH",
+             "RX_CORRUPT",
+             "RX_ERR_DROP",
+             "TX_TOTAL");
+}
+
 int main(int argc, char** argv)
 {
+  // Number of seconds between printing the statistics header.
+  static constexpr unsigned SECONDS_BETWEEN_HEADERS = 20;
+
   // Set interrupt and cleanup signal handlers.
   register_interrupt_signal_handler(interrupt_signal_handler);
   register_cleanup_signal_handler(cleanup_signal_handler);
@@ -897,6 +1061,7 @@ int main(int argc, char** argv)
     emu_cfg.dl_eaxc       = ru_cfg.ru_dl_port_id;
     emu_cfg.ul_eaxc       = ru_cfg.ru_ul_port_id;
     emu_cfg.prach_eaxc    = ru_cfg.ru_prach_port_id;
+    emu_cfg.prach_format  = ru_cfg.prach_format;
 
     ru_emulators.push_back(std::make_unique<ru_emulator>(
         resolve_ru_emulator_dependencies(logger, *workers.ru_emulators_exec[i], *transceivers[i]), emu_cfg));
@@ -920,30 +1085,15 @@ int main(int argc, char** argv)
   }
   fmt::print("Running. Waiting for incoming packets...\n");
 
-  fmt::print("| {:^8} | {:^3} | {:^11} | {:^11} | {:^11} | {:^11} | {:^15} | {:^13} | {:^13} | {:^13} | {:^15} | "
-             "{:^14} | {:^14} | {:^14} | {:^15} | {:^15} | {:^11} | {:^11} | {:^11} |\n",
-             "TIME",
-             "ID",
-             "RX_TOTAL",
-             "RX_ON_TIME",
-             "RX_EARLY",
-             "RX_LATE",
-             "RX_SEQ_ERR",
-             "RX_ON_TIME_C",
-             "RX_EARLY_C",
-             "RX_LATE_C",
-             "RX_SEQ_ERR_C",
-             "RX_ON_TIME_C_U",
-             "RX_EARLY_C_U",
-             "RX_LATE_C_U",
-             "RX_SEQ_ERR_C_U",
-             "RX_SEQ_ERR_PRACH",
-             "RX_CORRUPT",
-             "RX_ERR_DROP",
-             "TX_TOTAL");
-
+  unsigned wait_to_print_hdr = 0;
   while (is_app_running) {
+    if (wait_to_print_hdr == 0) {
+      wait_to_print_hdr = SECONDS_BETWEEN_HEADERS;
+      print_header();
+    }
+
     std::this_thread::sleep_for(std::chrono::seconds(1));
+    --wait_to_print_hdr;
 
     for (unsigned i = 0, e = ru_emulators.size(); i != e; ++i) {
       ru_emulators[i]->print_statistics(i);

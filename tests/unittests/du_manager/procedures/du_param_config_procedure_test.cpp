@@ -23,6 +23,7 @@
 #include "../du_manager_test_helpers.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_high/du_manager/du_manager_factory.h"
+#include "srsran/support/executors/task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -36,8 +37,32 @@ public:
     dependencies(cell_cfgs),
     du_mng(create_du_manager(dependencies.params))
   {
+    // Generate automatic responses from F1AP and MAC.
+    dependencies.f1ap.wait_f1_setup.result.value().cells_to_activate.resize(1);
+    dependencies.f1ap.wait_f1_setup.result.value().cells_to_activate[0].cgi = cell_cfgs[0].nr_cgi;
+    dependencies.f1ap.wait_f1_setup.ready_ev.set();
+    dependencies.f1ap.wait_f1_removal.ready_ev.set();
+    dependencies.mac.mac_cell.wait_start.ready_ev.set();
+    dependencies.mac.mac_cell.wait_stop.ready_ev.set();
+
+    // Start DU manager.
+    du_mng->start();
+  }
+  ~du_manager_procedure_tester()
+  {
+    std::atomic<bool> done{false};
+    worker.push_task_blocking([this, &done]() {
+      du_mng->stop();
+      done = true;
+    });
+    while (not done) {
+      dependencies.worker.run_pending_tasks();
+      std::this_thread::sleep_for(std::chrono::milliseconds{1});
+    }
+    worker.wait_pending_tasks();
   }
 
+  task_worker                           worker{"worker", 16};
   std::vector<du_cell_config>           cell_cfgs;
   du_manager_test_bench                 dependencies;
   std::unique_ptr<du_manager_interface> du_mng;

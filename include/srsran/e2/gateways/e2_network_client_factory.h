@@ -40,6 +40,8 @@ struct e2_sctp_gateway_config {
   task_executor& io_rx_executor;
   /// PCAP writer for the E2AP messages.
   dlt_pcap& pcap;
+  /// Logger.
+  srslog::basic_logger& logger;
 };
 
 /// \brief Create an E2AP gateway connector that the DU can use to connect to the Near-RT RIC.

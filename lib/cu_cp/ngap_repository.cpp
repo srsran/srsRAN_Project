@@ -29,15 +29,18 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-ngap_repository::ngap_repository(ngap_repository_config cfg_) : cfg(cfg_), logger(cfg.logger)
+ngap_repository::ngap_repository(ngap_repository_config cfg_) :
+  cfg(cfg_),
+  logger(cfg.logger),
+  amf_task_sched(*cfg.cu_cp.services.timers, *cfg.cu_cp.services.cu_cp_executor, cfg.cu_cp.ngap.ngaps.size(), logger)
 {
-  for (uint16_t amf_idx = 0; amf_idx < cfg.cu_cp.ngaps.size(); amf_idx++) {
-    auto* ngap_entity = add_ngap(uint_to_amf_index(amf_idx), cfg.cu_cp.ngaps.at(amf_idx));
+  for (uint16_t amf_idx = 0; amf_idx < cfg.cu_cp.ngap.ngaps.size(); amf_idx++) {
+    auto* ngap_entity = add_ngap(uint_to_amf_index(amf_idx), cfg.cu_cp.ngap.ngaps.at(amf_idx));
     srsran_assert(ngap_entity != nullptr, "Failed to add NGAP for gateway");
   }
 }
 
-ngap_interface* ngap_repository::add_ngap(amf_index_t amf_index, const cu_cp_configuration::ngap_params& config)
+ngap_interface* ngap_repository::add_ngap(amf_index_t amf_index, const cu_cp_configuration::ngap_config& config)
 {
   // Create NGAP object
   auto it = ngap_db.insert(std::make_pair(amf_index, ngap_context{}));

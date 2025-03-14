@@ -166,6 +166,8 @@ struct ru_ofh_unit_config {
   int gps_Beta = 0;
   /// Downlink processing time in microseconds.
   unsigned dl_processing_time = 400U;
+  /// Uplink request processing time in microseconds.
+  unsigned ul_processing_time = 30U;
   /// Loggers.
   ru_ofh_unit_logger_config loggers;
   /// \brief Individual Open Fronthaul cells configurations.

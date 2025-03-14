@@ -91,6 +91,82 @@ TEST_F(cu_cp_connectivity_test, when_ng_setup_fails_then_cu_cp_is_not_in_amf_con
   ASSERT_FALSE(get_cu_cp().get_ng_handler().amfs_are_connected());
 }
 
+TEST_F(cu_cp_connectivity_test, when_amf_connection_is_lost_then_connected_ues_are_released_and_new_ues_are_rejected)
+{
+  // Run NG setup to completion.
+  run_ng_setup();
+
+  // Setup DU.
+  auto ret = connect_new_du();
+  ASSERT_TRUE(ret.has_value());
+  unsigned du_idx = ret.value();
+  ASSERT_TRUE(this->run_f1_setup(du_idx));
+
+  // Setup CU-UP.
+  ret = connect_new_cu_up();
+  ASSERT_TRUE(ret.has_value());
+  unsigned cu_up_idx = ret.value();
+  ASSERT_TRUE(this->run_e1_setup(cu_up_idx));
+
+  // Create UE.
+  gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
+  rnti_t              crnti         = to_rnti(0x4601);
+  ASSERT_TRUE(connect_new_ue(du_idx, du_ue_f1ap_id, crnti));
+
+  ASSERT_TRUE(drop_amf_connection(0));
+
+  // TEST: Verify that connected UEs are released.
+  {
+    // Verify F1AP UE Context Release Command is sent to DU.
+    f1ap_message f1ap_pdu;
+    ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+    ASSERT_TRUE(test_helpers::is_valid_ue_context_release_command(f1ap_pdu));
+
+    // Verify RRC Reject is sent to UE.
+    const auto&                 ue_rel = f1ap_pdu.pdu.init_msg().value.ue_context_release_cmd();
+    asn1::rrc_nr::dl_ccch_msg_s ccch;
+    {
+      asn1::cbit_ref bref{ue_rel->rrc_container};
+      ASSERT_EQ(ccch.unpack(bref), asn1::SRSASN_SUCCESS);
+    }
+    ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
+
+    // DU sends F1AP UE Context Release Complete.
+    auto rel_complete =
+        generate_ue_context_release_complete(int_to_gnb_cu_ue_f1ap_id(ue_rel->gnb_cu_ue_f1ap_id), du_ue_f1ap_id);
+    get_du(du_idx).push_ul_pdu(rel_complete);
+
+    // TEST: Verify UE is removed in CU-CP.
+    auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+    ASSERT_TRUE(report.ues.empty());
+  }
+
+  // TEST: Verify that new UE connection is rejected.
+  {
+    // Send Initial UL RRC Message.
+    gnb_du_ue_f1ap_id_t du_ue_f1ap_id_2 = int_to_gnb_du_ue_f1ap_id(1);
+    rnti_t              crnti_2         = to_rnti(0x4602);
+    get_du(du_idx).push_ul_pdu(generate_init_ul_rrc_message_transfer(du_ue_f1ap_id_2, crnti_2));
+
+    // TEST: DL RRC Message Transfer is sent to DU.
+    f1ap_message f1ap_pdu;
+    ASSERT_TRUE(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu));
+    ASSERT_TRUE(test_helpers::is_valid_dl_rrc_message_transfer(f1ap_pdu));
+
+    // TEST: RRC Reject is sent to UE.
+    asn1::rrc_nr::dl_ccch_msg_s ccch;
+    {
+      asn1::cbit_ref bref{f1ap_pdu.pdu.init_msg().value.dl_rrc_msg_transfer()->rrc_container};
+      ASSERT_EQ(ccch.unpack(bref), asn1::SRSASN_SUCCESS);
+    }
+    ASSERT_EQ(ccch.msg.c1().type().value, asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::rrc_reject);
+
+    // TEST: Verify UE is removed in CU-CP.
+    auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+    ASSERT_TRUE(report.ues.empty());
+  }
+}
+
 //----------------------------------------------------------------------------------//
 // DU connection handling                                                           //
 //----------------------------------------------------------------------------------//

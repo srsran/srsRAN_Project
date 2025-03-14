@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "apps/services/e2/e2_metric_connector_manager.h"
+#include "apps/helpers/e2/e2_metric_connector_manager.h"
 #include "srsran/cu_up/cu_up_operation_controller.h"
 #include "srsran/cu_up/o_cu_up.h"
 #include "srsran/e2/e2_cu_metrics_connector.h"

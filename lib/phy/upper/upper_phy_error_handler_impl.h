@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/phy/upper/uplink_slot_processor.h"
 #include "srsran/phy/upper/upper_phy_error_handler.h"
 #include "srsran/phy/upper/upper_phy_error_notifier.h"
 #include <functional>
@@ -32,15 +33,19 @@ namespace srsran {
 class upper_phy_error_handler_impl : public upper_phy_error_handler
 {
 public:
-  upper_phy_error_handler_impl();
+  upper_phy_error_handler_impl(uplink_slot_processor_pool& ul_proc_pool_);
 
   // See interface for documentation.
   void handle_late_downlink_message(slot_point slot) override;
+
+  // See interface for documentation.
+  void handle_late_uplink_message(slot_point slot) override;
 
   /// Sets the given notifier as the error notifier of this handler.
   void set_error_notifier(upper_phy_error_notifier& notifier) { error_notifier = std::ref(notifier); }
 
 private:
+  uplink_slot_processor_pool&                      ul_proc_pool;
   std::reference_wrapper<upper_phy_error_notifier> error_notifier;
 };
 

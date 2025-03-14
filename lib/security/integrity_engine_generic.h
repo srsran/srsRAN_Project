@@ -45,6 +45,8 @@ private:
   uint8_t             bearer_id;
   security_direction  direction;
   integrity_algorithm integ_algo;
+
+  srslog::basic_logger& logger;
 };
 
 } // namespace security

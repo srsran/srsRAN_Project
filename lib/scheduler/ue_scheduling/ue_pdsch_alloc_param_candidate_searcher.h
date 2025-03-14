@@ -165,13 +165,13 @@ public:
                                           du_cell_index_t                              cell_index,
                                           const std::optional<dl_harq_process_handle>& dl_harq_,
                                           slot_point                                   pdcch_slot_,
-                                          span<const slot_point>                       slots_with_no_pdsch_space_) :
+                                          slot_point                                   pdsch_slot_) :
     ue_ref(ue_ref_),
     ue_cc(ue_ref.find_cell(cell_index)),
-    slots_with_no_pdsch_space(slots_with_no_pdsch_space_),
     dl_harq(dl_harq_),
     is_retx(dl_harq.has_value()),
-    pdcch_slot(pdcch_slot_)
+    pdcch_slot(pdcch_slot_),
+    pdsch_slot(pdsch_slot_)
   {
     // Cell is not part of UE configured cells.
     if (ue_cc == nullptr) {
@@ -235,7 +235,10 @@ private:
       return false;
     }
 
-    const slot_point pdsch_slot = pdcch_slot + current.pdsch_td_res().k0;
+    // Check that k0 matches the chosen PDSCH slot
+    if (pdcch_slot + current.pdsch_td_res().k0 != pdsch_slot) {
+      return false;
+    }
 
     // Check whether PDSCH slot is DL enabled.
     if (not ue_cc->cfg().cell_cfg_common.is_dl_enabled(pdsch_slot)) {
@@ -250,12 +253,6 @@ private:
     // Check whether PDSCH time domain resource does not overlap with CORESET.
     if (current.pdsch_td_res().symbols.start() <
         current.ss().cfg->get_first_symbol_index() + current.ss().coreset->duration) {
-      return false;
-    }
-
-    // Check whether there is any space left in PDSCH slot for allocation.
-    if (slots_with_no_pdsch_space.end() !=
-        std::find(slots_with_no_pdsch_space.begin(), slots_with_no_pdsch_space.end(), pdsch_slot)) {
       return false;
     }
 
@@ -295,9 +292,6 @@ private:
   // UE cell being allocated.
   const ue_cell* ue_cc;
 
-  // Slots with no RBs left for PDSCH allocation.
-  span<const slot_point> slots_with_no_pdsch_space;
-
   // DL HARQ considered for allocation.
   const std::optional<dl_harq_process_handle>& dl_harq;
   // Whether the current search is for a newTx or a reTx.
@@ -307,8 +301,8 @@ private:
   // RNTI type used to generate ss_candidate_list.
   std::optional<dci_dl_rnti_config_type> preferred_rnti_type;
 
-  // PDCCH slot point used to verify if the PDSCH fits a DL slot.
   slot_point pdcch_slot;
+  slot_point pdsch_slot;
 };
 
 } // namespace srsran

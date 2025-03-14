@@ -23,6 +23,7 @@
 #pragma once
 
 #include "../ngap_repository.h"
+#include "../ue_manager/ue_manager_impl.h"
 #include "srsran/cu_cp/common_task_scheduler.h"
 #include "srsran/cu_cp/cu_cp.h"
 #include "srsran/ran/plmn_identity.h"
@@ -38,6 +39,7 @@ class amf_connection_manager
 {
 public:
   amf_connection_manager(ngap_repository&       ngaps_,
+                         timer_manager&         timers_,
                          task_executor&         cu_cp_exec_,
                          common_task_scheduler& common_task_sched_);
 
@@ -48,6 +50,17 @@ public:
 
   /// \brief Initiate procedure to disconnect from the N2 interface.
   async_task<void> disconnect_amf();
+
+  /// \brief Handles the loss of connection to the AMF.
+  /// \param[in] amf_index The index of the AMF that has been disconnected.
+  void handle_amf_connection_loss(amf_index_t amf_index);
+
+  /// \brief Initiates the reconnection to the AMF.
+  /// \param[in] amf_index The index of the AMF to reconnect to.
+  /// \param[in] ue_mng The UE manager to re-enable UE connections in case the reconnection was successful.
+  /// \param[in] amf_reconnection_retry_time The time to wait before retrying the reconnection.
+  void
+  reconnect_to_amf(amf_index_t amf_index, ue_manager* ue_mng, std::chrono::milliseconds amf_reconnection_retry_time);
 
   void stop();
 
@@ -60,6 +73,7 @@ private:
   amf_index_t plmn_to_amf_index(plmn_identity plmn) const;
 
   ngap_repository&       ngaps;
+  timer_manager&         timers;
   task_executor&         cu_cp_exec;
   common_task_scheduler& common_task_sched;
   srslog::basic_logger&  logger;

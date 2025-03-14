@@ -59,30 +59,9 @@ public:
     last_pusch_alloc_slot = pusch_slot;
   }
 
-  /// Determine if at least one bearer of the given UE is currently managed by this slice.
-  bool contains(du_ue_index_t ue_idx) const
-  {
-    return slice_ues.contains(ue_idx) and slice_ues[ue_idx].has_bearers_in_slice();
-  }
-
-  /// Determine if a (UE, LCID) tuple are managed by this slice.
-  bool contains(du_ue_index_t ue_idx, lcid_t lcid) const
-  {
-    return contains(ue_idx) and slice_ues[ue_idx].contains(lcid);
-  }
-
-  /// Add a new UE to list of UEs (if not exists) and a new (UE, LCID) to the list of bearers managed by this slice.
-  void add_logical_channel(ue& u, lcid_t lcid, lcg_id_t lcg_id);
-
-  /// Remove a (UE, LCID) from the list of bearers managed by this slice.
-  /// \remark UE is removed if all LCIDs of a UE are removed.
-  void rem_logical_channel(du_ue_index_t ue_idx, lcid_t lcid);
-
-  /// Remove UE all associated LCIDs.
-  void rem_ue(du_ue_index_t ue_idx);
-
   /// Returns UEs belonging to this slice.
-  const slice_ue_repository& get_ues();
+  const slice_ue_repository& get_ues() const { return slice_ues; }
+  slice_ue_repository&       get_ues() { return slice_ues; }
 
   unsigned nof_pusch_rbs_allocated(slot_point pusch_slot) const
   {

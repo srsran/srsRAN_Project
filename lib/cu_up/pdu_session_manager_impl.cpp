@@ -140,7 +140,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &new_session->gtpu_to_udp_adapter;
   msg.gtpu_pcap                        = &gtpu_pcap;
-  msg.ue_dl_timer_factory              = ue_dl_timer_factory;
+  msg.ue_ctrl_timer_factory            = ue_ctrl_timer_factory;
   new_session->gtpu                    = create_gtpu_tunnel_ngu(msg);
 
   // Connect adapters
@@ -351,7 +351,7 @@ drb_setup_result pdu_session_manager_impl::handle_drb_to_setup_item(pdu_session&
                                               *new_drb->f1u_gw_bearer,
                                               new_drb->f1u_to_pdcp_adapter,
                                               new_drb->f1u_to_pdcp_adapter,
-                                              ue_dl_timer_factory,
+                                              ue_ctrl_timer_factory,
                                               ue_inactivity_timer,
                                               ue_dl_exec,
                                               ue_ul_exec);
@@ -466,7 +466,7 @@ pdu_session_manager_impl::modify_pdu_session(const e1ap_pdu_session_res_to_modif
                                               *drb->f1u_gw_bearer,
                                               drb->f1u_to_pdcp_adapter,
                                               drb->f1u_to_pdcp_adapter,
-                                              ue_dl_timer_factory,
+                                              ue_ctrl_timer_factory,
                                               ue_inactivity_timer,
                                               ue_dl_exec,
                                               ue_ul_exec);

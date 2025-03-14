@@ -75,7 +75,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(gnb_du_id_t                          du_id,
 void rlc_tx_um_entity::handle_sdu(byte_buffer sdu_buf, bool is_retx)
 {
   rlc_sdu sdu_;
-  sdu_.time_of_arrival = std::chrono::high_resolution_clock::now();
+  sdu_.time_of_arrival = std::chrono::steady_clock::now();
 
   sdu_.buf     = std::move(sdu_buf);
   sdu_.pdcp_sn = get_pdcp_sn(sdu_.buf, cfg.pdcp_sn_len, /* is_srb = */ false, logger.get_basic_logger());
@@ -208,8 +208,8 @@ size_t rlc_tx_um_entity::pull_pdu(span<uint8_t> mac_sdu_buf)
     sdu.buf.clear();
     next_so = 0;
     if (metrics_low.is_enabled()) {
-      auto sdu_latency = std::chrono::duration_cast<std::chrono::nanoseconds>(
-          std::chrono::high_resolution_clock::now() - sdu.time_of_arrival);
+      auto sdu_latency =
+          std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - sdu.time_of_arrival);
       metrics_low.metrics_add_sdu_latency_us(sdu_latency.count() / 1000);
       metrics_low.metrics_add_pulled_sdus(1);
     }

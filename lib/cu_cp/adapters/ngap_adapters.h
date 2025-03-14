@@ -133,10 +133,10 @@ public:
     cu_cp_handler->handle_dl_non_ue_associated_nrppa_transport_pdu(amf_index, nrppa_pdu);
   }
 
-  void on_n2_disconnection() override
+  void on_n2_disconnection(amf_index_t amf_index) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
-    cu_cp_handler->handle_n2_disconnection();
+    cu_cp_handler->handle_n2_disconnection(amf_index);
   }
 
 private:

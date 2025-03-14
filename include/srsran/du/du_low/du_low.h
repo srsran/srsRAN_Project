@@ -22,14 +22,14 @@
 
 #pragma once
 
-#include "srsran/adt/span.h"
-
 namespace srsran {
 
 class du_operation_controller;
 class upper_phy;
 
 namespace srs_du {
+
+class du_low_metrics_collector;
 
 /// DU low interface.
 class du_low
@@ -43,6 +43,9 @@ public:
 
   /// Returns the upper PHY for the given cell of this DU low.
   virtual upper_phy& get_upper_phy(unsigned cell_id) = 0;
+
+  /// Returns the metrics collector of this DU low or nullptr if metrics are disabled.
+  virtual du_low_metrics_collector* get_metrics_collector() = 0;
 };
 
 } // namespace srs_du

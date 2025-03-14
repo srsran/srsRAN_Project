@@ -22,11 +22,14 @@
 
 #pragma once
 
+#include "srsran/ran/csi_rs/csi_rs_id.h"
 #include "srsran/ran/pci.h"
+#include "srsran/ran/srs/srs_configuration.h"
 #include "srsran/ran/ssb_properties.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <cstdint>
 #include <optional>
+#include <variant>
 #include <vector>
 
 namespace srsran {
@@ -88,17 +91,17 @@ struct ssb_burst_position_t {
 // traceable to a common time reference) where binary encoding of the integer part is in the first 32 bits and binary
 // encoding of the fraction part in the last 32 bits. The fraction part is expressed with a granularity of 1 /2**32
 // second
-using sfn_initialization_time_t = uint64_t;
+using relative_time_1900_t = uint64_t;
 
 struct tf_config_t {
-  uint32_t                                 ssb_freq;
-  subcarrier_spacing                       ssb_subcarrier_spacing;
-  int8_t                                   ssb_tx_pwr;
-  ssb_periodicity                          ssb_period;
-  uint8_t                                  ssb_half_frame_offset;
-  uint8_t                                  ssb_sfn_offset;
-  std::optional<ssb_burst_position_t>      ssb_burst_position;
-  std::optional<sfn_initialization_time_t> sfn_initialization_time;
+  uint32_t                            ssb_freq;
+  subcarrier_spacing                  ssb_subcarrier_spacing;
+  int8_t                              ssb_tx_pwr;
+  ssb_periodicity                     ssb_period;
+  uint8_t                             ssb_half_frame_offset;
+  uint8_t                             ssb_sfn_offset;
+  std::optional<ssb_burst_position_t> ssb_burst_position;
+  std::optional<relative_time_1900_t> sfn_initialization_time;
 };
 
 struct ssb_info_item_t {
@@ -113,6 +116,9 @@ struct ssb_info_t {
 struct ssb_t {
   pci_t                  pci_nr;
   std::optional<uint8_t> ssb_idx;
+
+  bool operator==(const ssb_t& rhs) const { return pci_nr == rhs.pci_nr && ssb_idx == rhs.ssb_idx; }
+  bool operator!=(const ssb_t& rhs) const { return !(rhs == *this); }
 };
 
 struct time_stamp_slot_idx_t {
@@ -126,6 +132,28 @@ struct time_stamp_t {
   uint16_t                sys_frame_num;
   time_stamp_slot_idx_t   slot_idx;
   std::optional<uint64_t> meas_time;
+};
+
+struct dl_prs_t {
+  uint16_t               prs_id;
+  uint8_t                dl_prs_res_set_id;
+  std::optional<uint8_t> dl_prs_res_id;
+
+  bool operator==(const dl_prs_t& rhs) const
+  {
+    return prs_id == rhs.prs_id && dl_prs_res_set_id == rhs.dl_prs_res_set_id && dl_prs_res_id == rhs.dl_prs_res_id;
+  }
+  bool operator!=(const dl_prs_t& rhs) const { return !(rhs == *this); }
+};
+
+struct spatial_relation_info_t {
+  using reference_signal =
+      std::variant<nzp_csi_rs_res_id_t, ssb_t, srs_config::srs_res_id, srs_config::srs_pos_res_id, dl_prs_t>;
+
+  std::vector<reference_signal> reference_signals;
+
+  bool operator==(const spatial_relation_info_t& rhs) const { return reference_signals == rhs.reference_signals; }
+  bool operator!=(const spatial_relation_info_t& rhs) const { return !(rhs == *this); }
 };
 
 } // namespace srsran

@@ -49,21 +49,20 @@ static dummy_frame_notifier dummy_notifier;
 dpdk_receiver_impl::dpdk_receiver_impl(task_executor&                     executor_,
                                        std::shared_ptr<dpdk_port_context> port_ctx_,
                                        srslog::basic_logger&              logger_) :
-  logger(logger_), executor(executor_), notifier(dummy_notifier), port_ctx(std::move(port_ctx_))
+  logger(logger_), executor(executor_), notifier(&dummy_notifier), port_ctx(std::move(port_ctx_))
 {
   srsran_assert(port_ctx, "Invalid port context");
 }
 
 void dpdk_receiver_impl::start(frame_notifier& notifier_)
 {
-  notifier = std::ref(notifier_);
+  notifier = &notifier_;
 
   std::promise<void> p;
   std::future<void>  fut = p.get_future();
 
   if (!executor.defer([this, &p]() {
-        rx_status.store(receiver_status::running, std::memory_order_relaxed);
-        // Signal start() caller thread that the operation is complete.
+        // Signal to the start() caller thread that the operation is complete.
         p.set_value();
         receive_loop();
       })) {
@@ -118,7 +117,7 @@ void dpdk_receiver_impl::receive()
 
   for (auto* mbuf : span<::rte_mbuf*>(mbufs.data(), num_frames)) {
     ::rte_vlan_strip(mbuf);
-    notifier.get().on_new_frame(unique_rx_buffer(dpdk_rx_buffer_impl(mbuf)));
+    notifier->on_new_frame(unique_rx_buffer(dpdk_rx_buffer_impl(mbuf)));
   }
   ofh_tracer << trace_event("ofh_dpdk_rx", dpdk_rx_tp);
 }

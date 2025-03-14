@@ -36,7 +36,7 @@ struct rlc_buffer_state {
   /// Amount of bytes pending for transmission.
   unsigned pending_bytes = 0;
   /// Head of line (HOL) time of arrival (TOA) holds the TOA of the oldest SDU or ReTx that is queued for transmission.
-  std::optional<std::chrono::system_clock::time_point> hol_toa;
+  std::optional<std::chrono::time_point<std::chrono::steady_clock>> hol_toa;
 };
 } // namespace srsran
 
@@ -54,7 +54,13 @@ struct formatter<srsran::rlc_buffer_state> {
   template <typename FormatContext>
   auto format(const srsran::rlc_buffer_state& bs, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "pending_bytes={} hol_toa={}", bs.pending_bytes, bs.hol_toa);
+    if (bs.hol_toa) {
+      return format_to(ctx.out(),
+                       "pending_bytes={} hol_toa={}",
+                       bs.pending_bytes,
+                       std::chrono::duration_cast<std::chrono::microseconds>(bs.hol_toa->time_since_epoch()));
+    }
+    return format_to(ctx.out(), "pending_bytes={} hol_toa=none", bs.pending_bytes);
   }
 };
 } // namespace fmt

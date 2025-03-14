@@ -24,6 +24,8 @@
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/ngap/ngap_message.h"
+#include "srsran/srslog/srslog.h"
+#include <atomic>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -61,6 +63,16 @@ public:
       synchronized_mock_amf& parent;
     };
 
+    if (connection_dropped) {
+      srslog::fetch_basic_logger("TEST").warning("AMF connection already dropped");
+      return nullptr;
+    }
+
+    // Ensure any existing notifier is properly reset before assigning a new one.
+    if (rx_pdu_notifier) {
+      rx_pdu_notifier.reset();
+    }
+
     rx_pdu_notifier = std::move(cu_cp_rx_pdu_notifier);
     return std::make_unique<sync_mock_pdu_notifier>(*this);
   }
@@ -71,12 +83,22 @@ public:
 
   void enqueue_next_tx_pdu(const ngap_message& pdu) override { pending_tx_pdus.push_blocking(pdu); }
 
+  void drop_connection() override
+  {
+    connection_dropped = true;
+    if (rx_pdu_notifier) {
+      rx_pdu_notifier.reset();
+    }
+  }
+
 private:
   using ngap_pdu_queue = concurrent_queue<ngap_message,
                                           concurrent_queue_policy::locking_mpmc,
                                           concurrent_queue_wait_policy::condition_variable>;
 
   ngap_pdu_queue rx_pdus;
+
+  std::atomic<bool> connection_dropped = false;
 
   std::unique_ptr<ngap_message_notifier> rx_pdu_notifier;
 

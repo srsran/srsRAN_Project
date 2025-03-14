@@ -141,7 +141,8 @@ private:
   /// Helper method that creates the Distributed Unit executors.
   void create_du_executors(const worker_manager_config::du_high_config&        du_hi,
                            std::optional<worker_manager_config::du_low_config> du_low,
-                           std::optional<worker_manager_config::fapi_config>   fapi_cfg);
+                           std::optional<worker_manager_config::fapi_config>   fapi_cfg,
+                           timer_manager&                                      timers);
 
   /// Helper method that creates the low Distributed Unit executors.
   void create_du_low_executors(bool     is_blocking_mode_active,

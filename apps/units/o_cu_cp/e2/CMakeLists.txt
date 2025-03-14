@@ -26,4 +26,4 @@ set(SOURCES
 
 add_library(srsran_o_cu_cp_e2_app_unit STATIC ${SOURCES})
 target_include_directories(srsran_o_cu_cp_e2_app_unit PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_o_cu_cp_e2_app_unit srsran_e2_app_service)
+target_link_libraries(srsran_o_cu_cp_e2_app_unit srsran_e2_app_helpers)

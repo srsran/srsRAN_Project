@@ -30,20 +30,20 @@
 /// The application supports different working profiles, run <tt> radio_ssb -h </tt> for usage details.
 
 #include "../radio/radio_notifier_sample.h"
+#include "lower_phy_error_logger.h"
 #include "lower_phy_example_factory.h"
+#include "phy_rg_gateway_adapter.h"
+#include "phy_rx_symbol_adapter.h"
+#include "phy_rx_symbol_request_adapter.h"
+#include "phy_timing_adapter.h"
 #include "rx_symbol_handler_example.h"
 #include "upper_phy_ssb_example.h"
 #include "srsran/adt/to_array.h"
-#include "srsran/phy/adapters/phy_error_adapter.h"
-#include "srsran/phy/adapters/phy_metrics_adapter.h"
-#include "srsran/phy/adapters/phy_rg_gateway_adapter.h"
-#include "srsran/phy/adapters/phy_rx_symbol_adapter.h"
-#include "srsran/phy/adapters/phy_rx_symbol_request_adapter.h"
-#include "srsran/phy/adapters/phy_timing_adapter.h"
 #include "srsran/phy/lower/lower_phy.h"
 #include "srsran/phy/lower/lower_phy_controller.h"
 #include "srsran/phy/lower/lower_phy_rx_symbol_context.h"
 #include "srsran/radio/radio_factory.h"
+#include "srsran/ru/generic/ru_generic_metrics_printer.h"
 #include "srsran/support/executors/task_worker.h"
 #include "srsran/support/math/math_utils.h"
 #include "srsran/support/signal_handling.h"
@@ -621,8 +621,8 @@ int main(int argc, char** argv)
   logger.set_level(log_level);
 
   // Create adapters.
-  phy_error_adapter             error_adapter(logger);
-  phy_metrics_adapter           metrics_adapter;
+  lower_phy_error_logger        error_adapter(logger);
+  ru_generic_metrics_printer    metrics_adapter;
   phy_rx_symbol_adapter         rx_symbol_adapter;
   phy_rg_gateway_adapter        rg_gateway_adapter;
   phy_timing_adapter            timing_adapter;

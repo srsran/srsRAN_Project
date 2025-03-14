@@ -21,12 +21,12 @@
  */
 
 #include "f1ap_du_setup_procedure.h"
+#include "../../asn1_helpers.h"
 #include "../../f1ap_asn1_utils.h"
 #include "../f1ap_asn1_converters.h"
 #include "../f1ap_du_context.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/f1ap/f1ap_message.h"
-#include "srsran/ran/band_helper.h"
 #include "srsran/support/async/async_timer.h"
 
 using namespace srsran;
@@ -47,7 +47,7 @@ f1ap_du_setup_procedure::f1ap_du_setup_procedure(const f1_setup_request_message&
 {
 }
 
-void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_response_message>>& ctx)
+void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_result>>& ctx)
 {
   CORO_BEGIN(ctx);
 
@@ -157,52 +157,87 @@ bool f1ap_du_setup_procedure::retry_required()
   return true;
 }
 
-f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
+static bool validate_f1_response(const f1ap_transaction_response& transaction_resp)
 {
-  f1_setup_response_message res{};
+  if (transaction_resp.has_value() and transaction_resp.value().value.type().value !=
+                                           f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp) {
+    // Unexpected successful outcome type.
+    return false;
+  }
+  if (not transaction_resp.has_value() and transaction_resp.error().value.type().value !=
+                                               f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
+    // Unexpected unsuccessful outcome type.
+    return false;
+  }
 
+  return true;
+}
+
+f1_setup_result f1ap_du_setup_procedure::create_f1_setup_result()
+{
   if (not transaction.valid()) {
     // Transaction could not be allocated.
     logger.error("{}: Procedure cancelled. Cause: Failed to allocate transaction.", name());
-    res.result    = f1_setup_response_message::result_code::proc_failure;
+    f1_setup_failure fail{};
+    fail.result   = f1_setup_failure::result_code::proc_failure;
     du_ctxt.du_id = gnb_du_id_t::invalid;
-    return res;
+    return make_unexpected(fail);
   }
+
   if (transaction.aborted()) {
     // Abortion/timeout case.
     logger.error("{}: Procedure cancelled. Cause: Timeout reached.", name());
-    res.result    = f1_setup_response_message::result_code::timeout;
+    f1_setup_failure fail{};
+    fail.result   = f1_setup_failure::result_code::timeout;
     du_ctxt.du_id = gnb_du_id_t::invalid;
-    return res;
+    return make_unexpected(fail);
   }
   const f1ap_transaction_response& cu_pdu_response = transaction.response();
 
-  if (cu_pdu_response.has_value() and cu_pdu_response.value().value.type().value ==
-                                          f1ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp) {
-    res.result = f1_setup_response_message::result_code::success;
-
-    // Update F1 DU Context (taking values from request).
-    du_ctxt.du_id       = request.gnb_du_id;
-    du_ctxt.gnb_du_name = request.gnb_du_name;
-    du_ctxt.served_cells.resize(request.served_cells.size());
-    for (unsigned i = 0; i != du_ctxt.served_cells.size(); ++i) {
-      du_ctxt.served_cells[i].nr_cgi = request.served_cells[i].cell_info.nr_cgi;
-    }
-
-    logger.info("{}: Procedure completed successfully.", name());
-
-  } else if (cu_pdu_response.has_value() and cu_pdu_response.error().value.type().value !=
-                                                 f1ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
+  if (not validate_f1_response(cu_pdu_response)) {
+    // Response content is invalid.
     logger.error(
         "{}: Received PDU with unexpected PDU type {}", name(), cu_pdu_response.value().value.type().to_string());
-    res.result    = f1_setup_response_message::result_code::invalid_response;
+    f1_setup_failure fail{};
+    fail.result   = f1_setup_failure::result_code::invalid_response;
     du_ctxt.du_id = gnb_du_id_t::invalid;
-  } else {
-    const auto& fail           = *cu_pdu_response.error().value.f1_setup_fail();
-    res.result                 = f1_setup_response_message::result_code::f1_setup_failure;
-    res.f1_setup_failure_cause = get_cause_str(fail.cause);
-    logger.debug("{}: F1 Setup Failure with cause \"{}\"", name(), get_cause_str(fail.cause));
-    du_ctxt.du_id = gnb_du_id_t::invalid;
+    return make_unexpected(fail);
   }
-  return res;
+
+  if (not cu_pdu_response.has_value()) {
+    // F1 Setup Failure case.
+    const auto&      asn1_fail = *cu_pdu_response.error().value.f1_setup_fail();
+    f1_setup_failure failure{};
+    failure.result                 = f1_setup_failure::result_code::f1_setup_failure;
+    failure.f1_setup_failure_cause = get_cause_str(asn1_fail.cause);
+    logger.debug("{}: F1 Setup Failure with cause \"{}\"", name(), get_cause_str(asn1_fail.cause));
+    du_ctxt.du_id = gnb_du_id_t::invalid;
+
+    return make_unexpected(failure);
+  }
+
+  // F1 Setup Response case.
+
+  const auto&      asn1_success = *cu_pdu_response.value().value.f1_setup_resp();
+  f1_setup_success success{};
+
+  // Update F1 DU Context (taking values from request).
+  du_ctxt.du_id       = request.gnb_du_id;
+  du_ctxt.gnb_du_name = request.gnb_du_name;
+  if (asn1_success.cells_to_be_activ_list_present) {
+    success.cells_to_activate.resize(asn1_success.cells_to_be_activ_list.size());
+    for (unsigned i = 0, e = asn1_success.cells_to_be_activ_list.size(); i != e; ++i) {
+      auto&               asn1_cell    = asn1_success.cells_to_be_activ_list[i]->cells_to_be_activ_list_item();
+      nr_cell_global_id_t cgi          = cgi_from_asn1(asn1_cell.nr_cgi).value();
+      success.cells_to_activate[i].cgi = cgi;
+      auto it                          = std::find_if(request.served_cells.begin(),
+                             request.served_cells.end(),
+                             [&cgi](const f1_cell_setup_params& c) { return c.cell_info.nr_cgi == cgi; });
+      du_ctxt.served_cells.emplace(it->cell_index, f1ap_du_cell_context{it->cell_index, cgi});
+    }
+  }
+
+  logger.info("{}: Procedure completed successfully.", name());
+
+  return success;
 }

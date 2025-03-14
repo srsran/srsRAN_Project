@@ -49,46 +49,10 @@ using res_type_t = std::variant<res_type_periodic_t, res_type_semi_persistent_t,
 
 using bw_srs_t = std::variant<uint8_t, uint16_t>;
 
-struct nzp_csi_rs_t {
-  uint8_t value;
-};
-
-struct srs_t {
-  uint8_t value;
-};
-
-struct positioning_srs_t {
-  uint8_t value;
-};
-
-struct dl_prs_t {
-  uint16_t               prs_id;
-  uint8_t                dl_prs_res_set_id;
-  std::optional<uint8_t> dl_prs_res_id;
-};
-
-using ref_sig_t = std::variant<nzp_csi_rs_t, ssb_t, srs_t, positioning_srs_t, dl_prs_t>;
-
-struct spatial_relation_for_res_id_item_t {
-  ref_sig_t ref_sig;
-};
-
-struct spatial_relation_info_t {
-  std::vector<spatial_relation_for_res_id_item_t> spatial_relation_for_res_id;
-};
-
 using pathloss_ref_sig_t = std::variant<ssb_t, dl_prs_t>;
 
 struct pathloss_ref_info_t {
   pathloss_ref_sig_t pathloss_ref_sig;
-};
-
-struct spatial_relation_per_srs_res_item_t {
-  ref_sig_t ref_sig;
-};
-
-struct spatial_relation_per_srs_res_t {
-  std::vector<spatial_relation_per_srs_res_item_t> spatial_relation_per_srs_res_list;
 };
 
 struct periodicity_item_t {
@@ -136,11 +100,11 @@ struct periodicity_item_t {
 };
 
 struct srs_res_set_item_t {
-  std::optional<uint8_t>                      nof_srs_res_per_set;
-  std::vector<periodicity_item_t>             periodicity_list;
-  std::optional<spatial_relation_info_t>      spatial_relation_info;
-  std::optional<pathloss_ref_info_t>          pathloss_ref_info;
-  std::vector<spatial_relation_per_srs_res_t> spatial_relation_per_srs_res_list;
+  std::optional<uint8_t>                 nof_srs_res_per_set;
+  std::vector<periodicity_item_t>        periodicity_list;
+  std::optional<spatial_relation_info_t> spatial_relation_info;
+  std::optional<pathloss_ref_info_t>     pathloss_ref_info;
+  std::vector<spatial_relation_info_t>   spatial_relation_per_srs_res_list;
 };
 
 struct requested_srs_tx_characteristics_t {

@@ -134,14 +134,14 @@ protected:
       cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
       cucfg.services.timers         = &timers;
       cucfg.services.cu_cp_executor = &ctrl_worker;
-      cucfg.ngaps.push_back(cu_cp_configuration::ngap_params{
+      cucfg.ngap.ngaps.push_back(cu_cp_configuration::ngap_config{
           adapter.get(), {{7, {{plmn_identity::test_value(), {{slice_service_type{1}}}}}}}});
       return cucfg;
     }())
   {
     cfg.gnb_id                      = cu_cp_cfg.node.gnb_id;
     cfg.ran_node_name               = cu_cp_cfg.node.ran_node_name;
-    cfg.supported_tas               = cu_cp_cfg.ngaps.front().supported_tas;
+    cfg.supported_tas               = cu_cp_cfg.ngap.ngaps.front().supported_tas;
     cfg.request_pdu_session_timeout = cu_cp_cfg.ue.request_pdu_session_timeout;
   }
 
@@ -150,7 +150,7 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    ngap = create_ngap(cfg, cu_cp_notifier, *cu_cp_cfg.ngaps.front().n2_gw, timers, ctrl_worker);
+    ngap = create_ngap(cfg, cu_cp_notifier, *cu_cp_cfg.ngap.ngaps.front().n2_gw, timers, ctrl_worker);
   }
 
   timer_manager       timers;

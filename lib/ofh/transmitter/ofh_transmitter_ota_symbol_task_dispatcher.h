@@ -34,15 +34,20 @@ class transmitter_ota_symbol_task_dispatcher : public ota_symbol_boundary_notifi
 {
 public:
   transmitter_ota_symbol_task_dispatcher(task_executor&                executor_,
-                                         ota_symbol_boundary_notifier& window_checker_,
+                                         ota_symbol_boundary_notifier& dl_window_checker_,
+                                         ota_symbol_boundary_notifier& ul_window_checker_,
                                          ota_symbol_boundary_notifier& symbol_handler_) :
-    executor(executor_), window_checker(window_checker_), symbol_handler(symbol_handler_)
+    executor(executor_),
+    dl_window_checker(dl_window_checker_),
+    ul_window_checker(ul_window_checker_),
+    symbol_handler(symbol_handler_)
   {
   }
 
   void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override
   {
-    window_checker.on_new_symbol(symbol_point_context);
+    dl_window_checker.on_new_symbol(symbol_point_context);
+    ul_window_checker.on_new_symbol(symbol_point_context);
 
     if (!executor.execute([&, symbol_point_context]() { symbol_handler.on_new_symbol(symbol_point_context); })) {
       srslog::fetch_basic_logger("OFH").warning(
@@ -54,7 +59,8 @@ public:
 
 private:
   task_executor&                executor;
-  ota_symbol_boundary_notifier& window_checker;
+  ota_symbol_boundary_notifier& dl_window_checker;
+  ota_symbol_boundary_notifier& ul_window_checker;
   ota_symbol_boundary_notifier& symbol_handler;
 };
 

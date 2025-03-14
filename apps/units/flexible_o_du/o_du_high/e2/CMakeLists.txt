@@ -25,4 +25,4 @@ set(SOURCES
 
 add_library(srsran_o_du_high_app_unit_e2 STATIC ${SOURCES})
 target_include_directories(srsran_o_du_high_app_unit_e2 PRIVATE ${CMAKE_SOURCE_DIR})
-target_link_libraries(srsran_o_du_high_app_unit_e2 srsran_e2_app_service)
+target_link_libraries(srsran_o_du_high_app_unit_e2 srsran_e2_app_helpers)

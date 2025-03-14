@@ -41,8 +41,10 @@ public:
   class callback : public rx_buffer
   {
   public:
-    /// Locks the buffer.
-    virtual void lock() = 0;
+    /// \brief Try to lock the buffer.
+    ///
+    /// \return \c true if the lock is successful, otherwise \c false.
+    virtual bool try_lock() = 0;
 
     /// Unlocks the buffer.
     virtual void unlock() = 0;
@@ -54,11 +56,15 @@ public:
   /// Builds an invalid buffer.
   explicit unique_rx_buffer() = default;
 
-  /// Builds a unique buffer from a buffer reference. It locks the internal buffer.
+  /// \brief Builds a unique buffer from a buffer reference.
+  ///
+  /// It tries to lock the underlying instance. If the locking fails, the buffer will be invalid.
   explicit unique_rx_buffer(callback& instance_) : ptr(&instance_)
   {
     if (ptr != nullptr) {
-      ptr->lock();
+      if (!ptr->try_lock()) {
+        ptr = nullptr;
+      }
     }
   }
 

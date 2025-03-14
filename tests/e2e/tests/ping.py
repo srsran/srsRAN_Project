@@ -32,12 +32,30 @@ from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
 from retina.launcher.utils import configure_artifacts, param
 from retina.protocol.base_pb2 import PLMN
+from retina.protocol.channel_emulator_pb2 import EphemerisInfoType, NtnScenarioDefinition, NtnScenarioType
+from retina.protocol.channel_emulator_pb2_grpc import ChannelEmulatorStub
 from retina.protocol.fivegc_pb2_grpc import FiveGCStub
 from retina.protocol.gnb_pb2_grpc import GNBStub
 from retina.protocol.ue_pb2_grpc import UEStub
 
-from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
-from .steps.stub import ping, start_network, stop, ue_start_and_attach, ue_stop, validate_ue_registered_via_ims
+from .steps.configuration import (
+    _get_dl_arfcn,
+    _get_ul_arfcn,
+    configure_test_parameters,
+    get_minimum_sample_rate_for_bandwidth,
+    nr_arfcn_to_freq,
+)
+from .steps.stub import (
+    get_ntn_configs,
+    is_ntn_channel_emulator,
+    ping,
+    start_network,
+    start_ntn_channel_emulator,
+    stop,
+    ue_start_and_attach,
+    ue_stop,
+    validate_ue_registered_via_ims,
+)
 
 
 @mark.parametrize(
@@ -610,6 +628,63 @@ def test_rf_does_not_crash(
     stop(ue_4, gnb, fivegc, retina_data, log_search=False)
 
 
+@mark.parametrize(
+    "band, common_scs, bandwidth, enable_feeder_link",
+    (
+        param(256, 15, 5, False, id="band:%s-scs:%s-bandwidth:%s-fl:%s"),
+        param(256, 15, 5, True, id="band:%s-scs:%s-bandwidth:%s-fl:%s"),
+    ),
+)
+@mark.zmq_ntn
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_ntn(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: UEStub,
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    channel_emulator: ChannelEmulatorStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    enable_feeder_link: bool,
+):
+    """
+    NTN ZMQ Pings
+    """
+    ntn_scenario_def = NtnScenarioDefinition()
+    ntn_scenario_def.scenario_type = NtnScenarioType.GEO
+    ntn_scenario_def.ephemeris_info_type = EphemerisInfoType.ORBITAL
+    ntn_scenario_def.min_sat_elevation_deg = 20
+    ntn_scenario_def.pass_start_offset_s = 10
+    ntn_scenario_def.delay_offset_us = 100
+    ntn_scenario_def.sample_rate = 5760000
+    ntn_scenario_def.enable_feeder_link = enable_feeder_link
+    ntn_scenario_def.enable_doppler = True
+    ntn_scenario_def.access_link_dl_freq_hz = nr_arfcn_to_freq(_get_dl_arfcn(band))
+    ntn_scenario_def.access_link_ul_freq_hz = nr_arfcn_to_freq(_get_ul_arfcn(band))
+    ntn_scenario_def.feeder_link_dl_freq_hz = nr_arfcn_to_freq(_get_dl_arfcn(band))
+    ntn_scenario_def.feeder_link_ul_freq_hz = nr_arfcn_to_freq(_get_ul_arfcn(band))
+
+    _ping(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=[ue],
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=5760000,  # default from testbed
+        global_timing_advance=-1,
+        time_alignment_calibration="0",
+        warning_as_errors=False,
+        always_download_artifacts=True,
+        channel_emulator=channel_emulator,
+        ntn_scenario_def=ntn_scenario_def,
+    )
+
+
 # pylint: disable=too-many-arguments,too-many-positional-arguments, too-many-locals
 def _ping(
     retina_manager: RetinaTestManager,
@@ -641,8 +716,18 @@ def _ping(
     pdsch_mcs_table: str = "qam256",
     pusch_mcs_table: str = "qam256",
     ping_interval: float = 1.0,
+    channel_emulator: Optional[ChannelEmulatorStub] = None,
+    ntn_scenario_def: Optional[NtnScenarioDefinition] = None,
 ):
     logging.info("Ping Test")
+
+    ntn_config = None
+    if channel_emulator and ntn_scenario_def:
+        if not is_ntn_channel_emulator(channel_emulator):
+            logging.info("The channel emulator is not a NTN emulator.")
+            return
+        start_ntn_channel_emulator(ue_array, gnb, channel_emulator, ntn_scenario_def)
+        ntn_config = get_ntn_configs(channel_emulator)
 
     configure_test_parameters(
         retina_manager=retina_manager,
@@ -662,14 +747,23 @@ def _ping(
         prach_config_index=prach_config_index,
         pdsch_mcs_table=pdsch_mcs_table,
         pusch_mcs_table=pusch_mcs_table,
+        ntn_config=ntn_config,
     )
     configure_artifacts(
         retina_data=retina_data,
         always_download_artifacts=always_download_artifacts,
     )
 
-    start_network(ue_array, gnb, fivegc, gnb_pre_cmd=pre_command, gnb_post_cmd=post_command, plmn=plmn)
-    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc)
+    start_network(
+        ue_array,
+        gnb,
+        fivegc,
+        gnb_pre_cmd=pre_command,
+        gnb_post_cmd=post_command,
+        plmn=plmn,
+        channel_emulator=channel_emulator,
+    )
+    ue_attach_info_dict = ue_start_and_attach(ue_array, gnb, fivegc, channel_emulator=channel_emulator)
 
     try:
         ping(ue_attach_info_dict, fivegc, ping_count, ping_interval=ping_interval)

@@ -174,7 +174,6 @@ float e2sm_kpm_cu_meas_provider_impl::bytes_to_kbits(float value)
 
 void e2sm_kpm_cu_meas_provider_impl::report_metrics(const pdcp_metrics_container& metrics)
 {
-  printf("report pdcp metrics %d\n", metrics.rx.reordering_delay_us);
   ue_aggr_pdcp_metrics[metrics.ue_index].push_back(metrics);
   if (ue_aggr_pdcp_metrics[metrics.ue_index].size() > max_pdcp_metrics) {
     ue_aggr_pdcp_metrics[metrics.ue_index].pop_front();

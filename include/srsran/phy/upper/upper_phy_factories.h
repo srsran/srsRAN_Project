@@ -42,7 +42,16 @@ class upper_phy_rg_gateway;
 class upper_phy_rx_symbol_request_notifier;
 
 /// Configuration parameters for uplink processors.
-struct uplink_processor_config {};
+struct uplink_processor_config {
+  /// Uplink processor result notifier.
+  upper_phy_rx_results_notifier& notifier;
+  /// Rate Matching receive buffer pool.
+  rx_buffer_pool& rm_buffer_pool;
+  /// PUSCH allocation maximum number of PRB.
+  unsigned max_nof_rb;
+  /// PUSCH allocation maximum number of layers.
+  unsigned max_nof_layers;
+};
 
 /// Uplink processor factory.
 class uplink_processor_factory
@@ -215,6 +224,8 @@ struct upper_phy_config {
   bool enable_logging_broadcast;
   /// Logger maximum hexadecimal dump size. Set to zero for none.
   unsigned logger_max_hex_size;
+  /// Enable metrics in the upper PHY.
+  bool enable_metrics;
   /// Selects the PUSCH SINR calculation method used for choosing the modulation and coding scheme.
   channel_state_information::sinr_type pusch_sinr_calc_method;
   /// Receive symbol printer. Leave empty to disable.
@@ -355,9 +366,6 @@ public:
 };
 
 /// Creates and returns an upper PHY factory.
-std::unique_ptr<upper_phy_factory>
-create_upper_phy_factory(std::shared_ptr<downlink_processor_factory> downlink_proc_factory,
-                         std::shared_ptr<resource_grid_factory>      rg_factory,
-                         upper_phy_metrics_notifiers*                notifiers);
+std::unique_ptr<upper_phy_factory> create_upper_phy_factory(const downlink_processor_factory_sw_config& dl_fact_config);
 
 } // namespace srsran

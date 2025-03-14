@@ -201,7 +201,8 @@ public:
   virtual async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) = 0;
 
   /// \brief Notify that the TNL connection to the AMF was lost.
-  virtual void on_n2_disconnection() = 0;
+  /// \param[in] amf_index The index of the lost AMF.
+  virtual void on_n2_disconnection(amf_index_t amf_index) = 0;
 
   /// \brief Notifies the CU-CP about a Paging message.
   virtual void on_paging_message(cu_cp_paging_message& msg) = 0;

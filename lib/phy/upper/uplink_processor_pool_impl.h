@@ -23,7 +23,9 @@
 #pragma once
 
 #include "processor_pool_helpers.h"
+#include "srsran/phy/upper/uplink_pdu_slot_repository.h"
 #include "srsran/phy/upper/uplink_processor.h"
+#include "srsran/phy/upper/uplink_slot_processor.h"
 
 namespace srsran {
 
@@ -42,16 +44,28 @@ struct uplink_processor_pool_impl_config {
 };
 
 /// Uplink processor pool implementation.
-class uplink_processor_pool_impl : public uplink_processor_pool
+class uplink_processor_pool_impl : public uplink_processor_pool,
+                                   private uplink_slot_processor_pool,
+                                   private uplink_pdu_slot_repository_pool
 {
 public:
   /// \brief Constructs an uplink processor pool with the given configuration.
   explicit uplink_processor_pool_impl(uplink_processor_pool_impl_config dl_processors);
 
-  // See interface for documentation.
-  uplink_processor& get_processor(slot_point slot) override;
+  // See uplink_processor_pool interface for documentation.
+  uplink_slot_processor_pool& get_slot_processor_pool() override { return *this; }
+
+  // See uplink_processor_pool interface for documentation.
+  uplink_pdu_slot_repository_pool& get_slot_pdu_repository_pool() override { return *this; }
 
 private:
+  // See uplink_slot_processor_pool interface for documentation.
+  uplink_slot_processor& get_slot_processor(slot_point slot) override;
+
+  // See uplink_pdu_slot_repository_pool interface for documentation.
+  unique_uplink_pdu_slot_repository get_pdu_slot_repository(slot_point slot) override;
+
+  /// Repository of uplink processors.
   processor_pool_repository<uplink_processor> processors;
 };
 

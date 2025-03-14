@@ -85,10 +85,12 @@ private:
 
 } // namespace
 
-ngap_connection_handler::ngap_connection_handler(n2_connection_client& client_handler_,
+ngap_connection_handler::ngap_connection_handler(amf_index_t           amf_index_,
+                                                 n2_connection_client& client_handler_,
                                                  ngap_message_handler& rx_pdu_handler_,
                                                  ngap_cu_cp_notifier&  cu_cp_notifier_,
                                                  task_executor&        ctrl_exec_) :
+  amf_index(amf_index_),
   client_handler(client_handler_),
   rx_pdu_handler(rx_pdu_handler_),
   cu_cp_notifier(cu_cp_notifier_),
@@ -156,7 +158,7 @@ void ngap_connection_handler::handle_connection_loss_impl()
     tx_pdu_notifier.reset();
 
     // Signal to DU that the N2 connection is lost.
-    cu_cp_notifier.on_n2_disconnection();
+    cu_cp_notifier.on_n2_disconnection(amf_index);
   }
 
   // Signal back that the N2 Rx path has been successfully shutdown to any awaiting coroutine.

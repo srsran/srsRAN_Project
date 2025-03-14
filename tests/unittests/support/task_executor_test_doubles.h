@@ -41,6 +41,9 @@ public:
 
   [[nodiscard]] bool defer(unique_task task) override
   {
+    if (is_stopped()) {
+      return false;
+    }
     pending_tasks.push_blocking(std::move(task));
     return true;
   }

@@ -43,7 +43,7 @@ description = "srsRAN Metrics Server"
 name = "srs_metrics_server"
 readme = "README.md"
 requires-python = ">=3.8"
-version = "1.8.0"
+version = "1.9.3"
 
 [project.scripts]
 metrics-server = "metrics_server.__main__:main"

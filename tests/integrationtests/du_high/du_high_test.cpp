@@ -147,6 +147,11 @@ TEST_F(du_high_tester, when_ue_context_setup_release_starts_then_drb_activity_st
   ASSERT_TRUE(run_rrc_setup(rnti));
   ASSERT_TRUE(run_ue_context_setup(rnti));
 
+  // Run some slots to ensure no SRB1 RLC status PDU is pending.
+  for (unsigned i = 0, slots_guard = 100; i != slots_guard; ++i) {
+    run_slot();
+  }
+
   // CU-UP forwards many DRB PDUs.
   const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 128;
 

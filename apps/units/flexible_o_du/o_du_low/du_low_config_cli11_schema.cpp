@@ -21,8 +21,8 @@
  */
 
 #include "du_low_config_cli11_schema.h"
+#include "apps/helpers/logger/logger_appconfig_cli11_utils.h"
 #include "apps/helpers/metrics/metrics_config_cli11_schema.h"
-#include "apps/services/logger/logger_appconfig_cli11_utils.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "du_low_config.h"
 #include "srsran/adt/expected.h"
@@ -45,8 +45,8 @@ static expected<Integer, std::string> parse_int(const std::string& value)
 
 static void configure_cli11_log_args(CLI::App& app, du_low_unit_logger_config& log_params)
 {
-  app_services::add_log_option(app, log_params.phy_level, "--phy_level", "PHY log level");
-  app_services::add_log_option(app, log_params.hal_level, "--hal_level", "HAL log level");
+  app_helpers::add_log_option(app, log_params.phy_level, "--phy_level", "PHY log level");
+  app_helpers::add_log_option(app, log_params.hal_level, "--hal_level", "HAL log level");
 
   add_option(app,
              "--broadcast_enabled",

@@ -319,9 +319,11 @@ TEST_F(dl_logical_channel_tester, when_pending_bytes_are_requested_for_a_slice_t
 {
   dl_logical_channel_manager lch_mng{
       subcarrier_spacing::kHz15, false, create_lcid_config({LCID_SRB1, LCID_MIN_DRB, uint_to_lcid(LCID_MIN_DRB + 1)})};
-  lch_mng.set_ran_slice(LCID_SRB1, ran_slice_id_t{0});
-  lch_mng.set_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
-  lch_mng.set_ran_slice(uint_to_lcid(LCID_MIN_DRB + 1), ran_slice_id_t{1});
+  lch_mng.register_ran_slice(ran_slice_id_t{0});
+  lch_mng.register_ran_slice(ran_slice_id_t{1});
+  lch_mng.set_lcid_ran_slice(LCID_SRB1, ran_slice_id_t{0});
+  lch_mng.set_lcid_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
+  lch_mng.set_lcid_ran_slice(uint_to_lcid(LCID_MIN_DRB + 1), ran_slice_id_t{1});
 
   ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{0}));
   ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{1}));
@@ -337,19 +339,21 @@ TEST_F(dl_logical_channel_tester, when_pending_bytes_are_requested_for_a_slice_t
             get_mac_sdu_required_bytes(drb1_bytes) + get_mac_sdu_required_bytes(drb2_bytes));
 
   // Remove SRB1 from slice.
-  lch_mng.reset_ran_slice(LCID_SRB1);
+  lch_mng.reset_lcid_ran_slice(LCID_SRB1);
   ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{0}));
 
   // Deactivate the whole slice.
-  lch_mng.deactivate(ran_slice_id_t{1});
+  lch_mng.deregister_ran_slice(ran_slice_id_t{1});
   ASSERT_FALSE(lch_mng.has_pending_bytes(ran_slice_id_t{1}));
 }
 
 TEST_F(dl_logical_channel_tester, when_ce_is_pending_and_non_srb_slice_has_pending_bytes_then_ce_goes_in_that_slice)
 {
   dl_logical_channel_manager lch_mng{subcarrier_spacing::kHz15, false, create_lcid_config({LCID_SRB1, LCID_MIN_DRB})};
-  lch_mng.set_ran_slice(LCID_SRB1, ran_slice_id_t{0});
-  lch_mng.set_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
+  lch_mng.register_ran_slice(ran_slice_id_t{0});
+  lch_mng.register_ran_slice(ran_slice_id_t{1});
+  lch_mng.set_lcid_ran_slice(LCID_SRB1, ran_slice_id_t{0});
+  lch_mng.set_lcid_ran_slice(LCID_MIN_DRB, ran_slice_id_t{1});
 
   // CE is pending. SRB slice should be the selected slice to send it.
   const auto second_ta_cmd_ce_payload = ta_cmd_ce_payload{.tag_id = time_alignment_group::id_t{0}, .ta_cmd = 33};

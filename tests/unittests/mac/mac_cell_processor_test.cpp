@@ -100,6 +100,11 @@ protected:
       ue_grant.pdsch_cfg.codewords.resize(1);
       ue_grant.pdsch_cfg.codewords[0].tb_size_bytes = 128;
     }
+
+    auto                     t = mac_cell.start();
+    lazy_task_launcher<void> launcher{t};
+    task_worker.run_pending_tasks();
+    report_error_if_not(launcher.ready(), "Unable to start cell");
   }
 };
 

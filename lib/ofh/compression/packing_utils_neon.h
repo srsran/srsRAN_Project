@@ -104,6 +104,89 @@ inline void pack_prb_9b_big_endian(span<uint8_t> comp_prb_buffer, int16x8x3_t re
   vst1q_lane_u8(data + bytes_per_half_reg, res_packed_bytes_2_u8, bytes_per_half_reg);
 }
 
+/// \brief Reads eight 16bit IQ values from input NEON register and packs them to the first 112 bits of the output NEON
+/// register in big-endian format, thus occupying 14 output bytes.
+///
+/// \param[in] regs NEON register storing 16bit IQ samples of a resource block.
+/// \return NEON register storing 14 packed bytes.
+inline uint8x16_t pack_neon_register_14b_big_endian(int16x8_t reg)
+{
+  // We will use logical operations for 32bit words. I and Q components represented as 32bit words:
+  // |            byte3          |            byte2        |               byte1        |           byte0          |
+  // | s s q13 q12 q11 q10 q9 q8 | q7 q6 q5 q4 q3 q2 q1 q0 | s  s i13 i12 i11 i10 i9 i8 | i7 i6 i5 i4 i3 i2  i1 i0 |
+  // where s is a sign bit.
+  //
+  // The results of the following operations are written down below:
+  // - shift32 left first word by 2 and mask.
+  // - shift32 right first word by 4.
+  // - shift32 left second word by 14 and mask.
+  // - shift32 right second word by 16.
+  //
+  // | 0 0 0 0 0   0   0   0   | 0   0   0  0  0  0  0  0  |i13 i12 i11 i10 i9  i8  i7 i6 | i5 i4 i3 i2 i1 i0 0  0 |
+  // | 0 0 0 0 0   0   q13 q12 | q11 q10 q9 q8 q7 q6 q5 q4 |q3  q2  q1  q0  0   0   0  0  | 0  0  0  0  0  0  0  0 |
+  // | 0 0 0 0 i13 i12 i11 i10 | i9  i8  i7 i6 i5 i4 i3 i2 |i1  i0  0   0   0   0   0  0  | 0  0  0  0  0  0  0  0 |
+  // | 0 0 0 0 0   0   0   0   | 0   0   0  0  0  0  0  0  |0   0   q13 q12 q11 q10 q9 q8 | q7 q6 q5 q4 q3 q2 q1 q0|
+
+  int32x4_t reg_s32 = vreinterpretq_s32_s16(reg);
+  // Shift data according to the scheme described above.
+  const int32x4_t lshift_mask_s32 = vcombine_s32(vcreate_s32(0x0000000e00000002), vcreate_s32(0x0000000e00000002));
+  const int32x4_t rshift_mask_s32 =
+      vnegq_s32(vcombine_s32(vcreate_s32(0x0000001000000004), vcreate_s32(0x0000001000000004)));
+
+  int32x4_t iq_shl_s32 = vshlq_s32(reg_s32, lshift_mask_s32);
+  int32x4_t iq_shr_s32 = vshlq_s32(reg_s32, rshift_mask_s32);
+
+  // Mask 32bit words to keep only the 14 bits we are interested in.
+  const int32x4_t shl_mask_s32 = vcombine_s32(vcreate_s32(0x0fffc0000000ffff), vcreate_s32(0x0fffc0000000ffff));
+  const int32x4_t shr_mask_s32 = vcombine_s32(vcreate_s32(0x00003fff03fff000), vcreate_s32(0x00003fff03fff000));
+  iq_shl_s32                   = vandq_s32(iq_shl_s32, shl_mask_s32);
+  iq_shr_s32                   = vandq_s32(iq_shr_s32, shr_mask_s32);
+
+  // Create new vectors by shuffling left and right shifted values. Two resulting vectors can be ORed and the result
+  // will be stored in a big-endian format.
+  int8x16_t iq_shl_s8 = vreinterpretq_s8_s32(iq_shl_s32);
+  int8x16_t iq_shr_s8 = vreinterpretq_s8_s32(iq_shr_s32);
+  int8x16_t tmp_iq_0_s8 =
+      vqtbl1q_s8(iq_shl_s8, vcombine_u8(vcreate_u8(0x0904050607ff0001), vcreate_u8(0xffff0c0d0e0fff08)));
+  int8x16_t tmp_iq_1_s8 =
+      vqtbl1q_s8(iq_shr_s8, vcombine_u8(vcreate_u8(0x0804050601020300), vcreate_u8(0xffff0c0d0e090a0b)));
+
+  // Perform 'bitwise OR'.
+  return vorrq_u8(vreinterpretq_u8_s8(tmp_iq_0_s8), vreinterpretq_u8_s8(tmp_iq_1_s8));
+}
+
+/// \brief Packs 16bit IQ values of the PRB using 14 bit big-endian format.
+///
+/// \param[out] comp_prb_buffer Buffer dedicated for storing compressed packed bytes of the PRB.
+/// \param[in]  regs            NEON registers storing 16bit IQ samples of the PRB.
+///
+/// \note Each of the input registers stores four unique REs.
+inline void pack_prb_14b_big_endian(span<uint8_t> comp_prb_buffer, int16x8x3_t regs)
+{
+  /// Number of bytes used by compressed IQ samples in a single NEON register.
+  static constexpr unsigned BYTES_PER_COMPRESSED_REG = 14;
+  /// Number of bytes used by 1 packed PRB with IQ samples compressed to 14 bits.
+  static constexpr unsigned BYTES_PER_PRB_14BIT_COMPRESSION = 42;
+
+  srsran_assert(comp_prb_buffer.size() == BYTES_PER_PRB_14BIT_COMPRESSION,
+                "Output buffer has incorrect size for packing compressed samples");
+
+  // Pack input registers.
+  uint8x16_t res_packed_bytes_0_u8 = pack_neon_register_14b_big_endian(regs.val[0]);
+  uint8x16_t res_packed_bytes_1_u8 = pack_neon_register_14b_big_endian(regs.val[1]);
+  uint8x16_t res_packed_bytes_2_u8 = pack_neon_register_14b_big_endian(regs.val[2]);
+
+  uint8_t* data = comp_prb_buffer.data();
+  // Temporal storage used by vst1q_u8 intrinsics.
+  uint8_t temp_storage[48];
+  vst1q_u8(temp_storage, res_packed_bytes_0_u8);
+  vst1q_u8(temp_storage + BYTES_PER_COMPRESSED_REG, res_packed_bytes_1_u8);
+  vst1q_u8(temp_storage + 2 * BYTES_PER_COMPRESSED_REG, res_packed_bytes_2_u8);
+
+  // Store the result in the output memory.
+  std::memcpy(data, temp_storage, BYTES_PER_PRB_14BIT_COMPRESSION);
+}
+
 /// \brief Packs 16bit IQ values of the PRB using given bit width and big-endian format.
 ///
 /// \param[out] comp_prb_buffer Buffer dedicated for storing compressed packed bytes of the PRB.
@@ -141,6 +224,9 @@ inline void pack_prb_big_endian(span<uint8_t> comp_prb_buffer, int16x8x3_t regs,
 {
   if (iq_width == 9) {
     return pack_prb_9b_big_endian(comp_prb_buffer, regs);
+  }
+  if (iq_width == 14) {
+    return pack_prb_14b_big_endian(comp_prb_buffer, regs);
   }
   if (iq_width == 16) {
     return pack_prb_16b_big_endian(comp_prb_buffer, regs);
@@ -189,6 +275,82 @@ inline void unpack_prb_9b_big_endian(span<int16_t> unpacked_iq_data, span<const 
   vst1q_s16(unpacked_iq_data.data() + 16, unpacked_data_2_s16);
 }
 
+/// \brief Unpacks the first 112 bits of the input NEON register stored in big-endian format.
+///
+/// \param[in] regs NEON register storing 14 packed bytes.
+/// \return NEON register storing 8 16-bit IQ samples.
+inline int16x8_t unpack_compressed_14bit_values(uint8x16_t reg)
+{
+  // Consider input bytes represented as 64-bit words:
+  // b7 | b6 | b5 | b4 | b3 | b2 | b1 | b0
+  // As a first step we shuffle input data so that every byte is used twice.
+  // The resulting 16-bit words, except two of them, will contain all bits of either I or Q component.
+  //
+  // Let's denote shuffled b5_b6 | b3_b4 | b1_b2 | b0_b1 vector as in_shuffled_1_epi16, where
+  // b0_b1: | i13 i12 i11 i10 i9  i8  i7  i6  | i5  i4  i3 i2 i1 i0 q13 q12 |  Has all bits of I0 component.
+  // b1_b2: | i5  i4  i3  i2  i1  i0  q13 q12 | q11 q10 q9 q8 q7 q6 q5  q4  |  Missing q3 q2 q1 q0 of Q0 component (b3).
+  // b3_b4: | q3  q2  q1  q0  i13 i12 i11 i10 | i9  i8  i7 i6 i5 i4 i3  i2  |  Missing i1 i0 of I1 component (b5).
+  // b5_b6: | i1  i0  q13 q12 q11 q10 q9  q8  | q7  q6  q5 q4 q3 q2 q1  q0  |  Has all bits of Q1 component.
+  int8x16_t reg_s8 = vreinterpretq_s8_u8(reg);
+  int8x16_t reg_shuffled_1_s8 =
+      vqtbl1q_s8(reg_s8, vcombine_u8(vcreate_u8(0x0506030401020001), vcreate_u8(0x0c0d0a0b08090708)));
+
+  // Shift left to align with 16-bit boundary, then shift right to sign-extend values.
+  const int16x8_t lshift_mask_s16     = vcombine_s16(vcreate_s16(0x0002000400060000), vcreate_s16(0x0002000400060000));
+  int16x8_t       in_reg_shuffled_s16 = vreinterpretq_s16_s8(reg_shuffled_1_s8);
+  int16x8_t       out_reg_s16         = vshrq_n_s16(vshlq_s16(in_reg_shuffled_s16, lshift_mask_s16), 2);
+
+  // Create a vector of missing LSB bits,
+  // take them from input b3 and b5 of every 64-bit word:
+  //
+  // b3: | q3 q2 q1  q0  i13 i12 i11 i10 |  Right shift by 4 to put at LSB positions.
+  // b5: | i1 i0 q13 q12 q11 q10 q9  q8  |  Right shift by 6 to put at LSB positions.
+  int8x16_t reg_shuffled_2_s8 =
+      vqtbl1q_s8(reg_s8, vcombine_u8(vcreate_u8(0xffffff05ff03ffff), vcreate_u8(0xffffff0cff0affff)));
+  // Shift right permuted bytes to align with out_reg_s16.
+  const int8x16_t rshift_mask_s8 =
+      vnegq_s8(vcombine_s8(vcreate_s8(0x0000000600040000), vcreate_s8(0x0000000600040000)));
+  const int8x16_t and_mask_s8 = vcombine_s8(vcreate_s8(0x03000f0000), vcreate_s8(0x03000f0000));
+  reg_shuffled_2_s8           = vandq_s8(vshlq_s8(reg_shuffled_2_s8, rshift_mask_s8), and_mask_s8);
+
+  // Perform logical OR between the two vectors.
+  return vorrq_s16(out_reg_s16, vreinterpretq_s16_s8(reg_shuffled_2_s8));
+}
+
+/// \brief Unpacks packed 14bit IQ samples stored as bytes in big-endian format to an array of 16bit signed values.
+///
+/// \param[out] unpacked_iq_data A sequence of 24 integers, corresponding to \c NOF_CARRIERS_PER_RB unpacked IQ pairs.
+/// \param[in]  packed_data      A sequence of 42 packed bytes.
+inline void unpack_prb_14b_big_endian(span<int16_t> unpacked_iq_data, span<const uint8_t> packed_data)
+{
+  /// Number of bytes loaded in a single NEON register. They will be unpacked to eight IQ samples occupy one full NEON
+  /// register.
+  static constexpr unsigned COMPRESSED_BYTES_PER_NEON_REG = 14;
+  /// Number of bytes used by 1 packed PRB with IQ samples compressed to 14 bits.
+  static constexpr unsigned BYTES_PER_PRB_14BIT_COMPRESSION = 42;
+  /// Size in bytes of a NEON register.
+  static constexpr unsigned BYTES_IN_NEON_REG = 16;
+
+  // Load input (we need three NEON register to load 42 bytes).
+  uint8x16x3_t packed_vec_u8x3;
+  // Load 16 bytes: the first 14 bytes are used, the last two bytes are ignored.
+  packed_vec_u8x3.val[0] = vld1q_u8(packed_data.data());
+  // Load next 16 bytes starting from position 14: the first 14 bytes are used, the last two bytes are ignored.
+  packed_vec_u8x3.val[1] = vld1q_u8(packed_data.data() + COMPRESSED_BYTES_PER_NEON_REG);
+  // Finally we need to load the last 14 bytes without exceeding the input data length.
+  packed_vec_u8x3.val[2] = vld1q_u8(packed_data.data() + BYTES_PER_PRB_14BIT_COMPRESSION - BYTES_IN_NEON_REG);
+  // Discard the first 2 bytes.
+  packed_vec_u8x3.val[2] = vextq_u8(packed_vec_u8x3.val[2], vdupq_n_u8(0), 2);
+
+  int16x8_t unpacked_data_p1_s16 = unpack_compressed_14bit_values(packed_vec_u8x3.val[0]);
+  int16x8_t unpacked_data_p2_s16 = unpack_compressed_14bit_values(packed_vec_u8x3.val[1]);
+  int16x8_t unpacked_data_p3_s16 = unpack_compressed_14bit_values(packed_vec_u8x3.val[2]);
+
+  vst1q_s16(unpacked_iq_data.data(), unpacked_data_p1_s16);
+  vst1q_s16(unpacked_iq_data.data() + 8, unpacked_data_p2_s16);
+  vst1q_s16(unpacked_iq_data.data() + 16, unpacked_data_p3_s16);
+}
+
 /// \brief Unpacks packed 16bit IQ samples stored as bytes in big-endian format to an array of 16bit signed values.
 ///
 /// \param[out] unpacked_iq_data A sequence of 24 integers, corresponding to \c NOF_CARRIERS_PER_RB unpacked IQ pairs.
@@ -221,6 +383,9 @@ inline void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uin
   if (iq_width == 9) {
     return unpack_prb_9b_big_endian(unpacked_iq_data, packed_data);
   }
+  if (iq_width == 14) {
+    return unpack_prb_14b_big_endian(unpacked_iq_data, packed_data);
+  }
   if (iq_width == 16) {
     return unpack_prb_16b_big_endian(unpacked_iq_data, packed_data);
   }
@@ -233,7 +398,7 @@ inline void unpack_prb_big_endian(span<int16_t> unpacked_iq_data, span<const uin
 /// \return True in case packing/unpacking with the requested bit width is supported.
 inline bool iq_width_packing_supported(unsigned iq_width)
 {
-  return ((iq_width == 9) || (iq_width == 16));
+  return ((iq_width == 9) || (iq_width == 14) || (iq_width == 16));
 }
 
 } // namespace neon

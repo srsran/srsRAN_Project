@@ -21,8 +21,9 @@
  */
 
 #include "cu_up_unit_config_cli11_schema.h"
+#include "apps/helpers/logger/logger_appconfig_cli11_utils.h"
 #include "apps/helpers/metrics/metrics_config_cli11_schema.h"
-#include "apps/services/logger/logger_appconfig_cli11_utils.h"
+#include "apps/helpers/network/udp_cli11_schema.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_config.h"
 #include "apps/units/o_cu_up/cu_up/cu_up_unit_pcap_config.h"
 #include "srsran/support/cli11_utils.h"
@@ -106,12 +107,12 @@ static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_p
 
 static void configure_cli11_log_args(CLI::App& app, cu_up_unit_logger_config& log_params)
 {
-  app_services::add_log_option(app, log_params.pdcp_level, "--pdcp_level", "PDCP log level");
-  app_services::add_log_option(app, log_params.sdap_level, "--sdap_level", "SDAP log level");
-  app_services::add_log_option(app, log_params.gtpu_level, "--gtpu_level", "GTPU log level");
-  app_services::add_log_option(app, log_params.e1ap_level, "--e1ap_level", "E1AP log level");
-  app_services::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
-  app_services::add_log_option(app, log_params.cu_level, "--cu_level", "Log level for the CU");
+  app_helpers::add_log_option(app, log_params.pdcp_level, "--pdcp_level", "PDCP log level");
+  app_helpers::add_log_option(app, log_params.sdap_level, "--sdap_level", "SDAP log level");
+  app_helpers::add_log_option(app, log_params.gtpu_level, "--gtpu_level", "GTPU log level");
+  app_helpers::add_log_option(app, log_params.e1ap_level, "--e1ap_level", "E1AP log level");
+  app_helpers::add_log_option(app, log_params.f1u_level, "--f1u_level", "F1-U log level");
+  app_helpers::add_log_option(app, log_params.cu_level, "--cu_level", "Log level for the CU");
 
   add_option(
       app, "--hex_max_size", log_params.hex_max_size, "Maximum number of bytes to print in hex (zero for no hex dumps)")

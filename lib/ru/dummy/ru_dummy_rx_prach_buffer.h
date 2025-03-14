@@ -55,7 +55,8 @@ public:
   /// Gets the the PRACH buffer.
   prach_buffer& get_buffer(const prach_buffer_context& context)
   {
-    unsigned nof_symbols, sequence_length;
+    unsigned nof_symbols;
+    unsigned sequence_length;
 
     // Derive parameters from the PRACH format.
     if (is_long_preamble(context.format)) {

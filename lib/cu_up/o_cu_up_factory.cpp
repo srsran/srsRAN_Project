@@ -24,7 +24,7 @@
 #include "o_cu_up_impl.h"
 #include "srsran/cu_up/cu_up_factory.h"
 #include "srsran/cu_up/o_cu_up.h"
-#include "srsran/e2/e2_cu_factory.h"
+#include "srsran/e2/e2_cu_up_factory.h"
 
 using namespace srsran;
 using namespace srs_cu_up;
@@ -38,7 +38,7 @@ std::unique_ptr<o_cu_up> srs_cu_up::create_o_cu_up(const o_cu_up_config& config,
     return std::make_unique<o_cu_up_impl>(std::move(cu_up));
   }
 
-  auto e2agent = create_e2_cu_agent(
+  auto e2agent = create_e2_cu_up_agent(
       config.e2ap_cfg,
       *dependencies.e2_client,
       dependencies.e2_cu_metric_iface,

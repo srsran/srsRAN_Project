@@ -206,12 +206,11 @@ void f1ap_du_test::run_f1_setup_procedure()
   // > Launch F1 setup procedure
   f1_setup_request_message request_msg = generate_f1_setup_request_message();
   test_logger.info("Launch f1 setup request procedure...");
-  async_task<f1_setup_response_message>         t = f1ap->handle_f1_setup_request(request_msg);
-  lazy_task_launcher<f1_setup_response_message> t_launcher(t);
+  async_task<f1_setup_result>         t = f1ap->handle_f1_setup_request(request_msg);
+  lazy_task_launcher<f1_setup_result> t_launcher(t);
 
   // > F1 setup response received.
-  unsigned     transaction_id    = get_transaction_id(f1c_gw.last_tx_pdu().pdu).value();
-  f1ap_message f1_setup_response = generate_f1_setup_response_message(transaction_id);
+  f1ap_message f1_setup_response = test_helpers::generate_f1_setup_response(f1c_gw.last_tx_pdu());
   test_logger.info("Injecting F1SetupResponse");
   f1ap->handle_message(f1_setup_response);
 }

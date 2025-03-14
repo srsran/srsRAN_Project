@@ -44,7 +44,7 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
   unsigned                                nof_antenna_ports = nof_antenna_ports_dist(rgen);
   auto                                    uci_part2_tools   = fapi_adaptor::generate_uci_part2_correspondence(1);
 
-  uplink_processor::pusch_pdu pdu;
+  uplink_pdu_slot_repository::pusch_pdu pdu;
   convert_pusch_fapi_to_phy(pdu,
                             fapi_pdu,
                             sfn,

@@ -21,7 +21,7 @@
  */
 
 #include "du_appconfig_validators.h"
-#include "apps/services/logger/logger_appconfig_validator.h"
+#include "apps/helpers/logger/logger_appconfig_validator.h"
 
 using namespace srsran;
 

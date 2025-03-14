@@ -37,7 +37,7 @@ class receiver_impl : public receiver
 {
   static constexpr unsigned BUFFER_SIZE = 9600;
 
-  enum class receiver_status { idle, running, stop_requested, stopped };
+  enum class receiver_status { running, stop_requested, stopped };
 
 public:
   receiver_impl(const std::string&    interface,
@@ -62,12 +62,12 @@ private:
   void receive();
 
 private:
-  srslog::basic_logger&                  logger;
-  task_executor&                         executor;
-  std::reference_wrapper<frame_notifier> notifier;
-  int                                    socket_fd = -1;
-  std::atomic<receiver_status>           rx_status{receiver_status::idle};
-  ethernet_rx_buffer_pool                buffer_pool;
+  srslog::basic_logger&        logger;
+  task_executor&               executor;
+  frame_notifier*              notifier;
+  int                          socket_fd = -1;
+  std::atomic<receiver_status> rx_status{receiver_status::running};
+  ethernet_rx_buffer_pool      buffer_pool;
 };
 
 } // namespace ether

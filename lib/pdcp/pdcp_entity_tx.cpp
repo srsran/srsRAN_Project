@@ -36,7 +36,7 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
                                pdcp_tx_config                  cfg_,
                                pdcp_tx_lower_notifier&         lower_dn_,
                                pdcp_tx_upper_control_notifier& upper_cn_,
-                               timer_factory                   ue_dl_timer_factory_,
+                               timer_factory                   ue_ctrl_timer_factory_,
                                task_executor&                  ue_dl_executor_,
                                task_executor&                  crypto_executor_,
                                pdcp_metrics_aggregator&        metrics_agg_) :
@@ -45,14 +45,15 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
   cfg(cfg_),
   lower_dn(lower_dn_),
   upper_cn(upper_cn_),
-  ue_dl_timer_factory(ue_dl_timer_factory_),
+  ue_ctrl_timer_factory(ue_ctrl_timer_factory_),
   ue_dl_executor(ue_dl_executor_),
   crypto_executor(crypto_executor_),
   tx_window(cfg.rb_type, cfg.rlc_mode, cfg.sn_size, logger),
+  metrics(metrics_agg_.get_metrics_period().count()),
   metrics_agg(metrics_agg_)
 {
   if (metrics_agg.get_metrics_period().count()) {
-    metrics_timer = ue_dl_timer_factory.create_timer();
+    metrics_timer = ue_ctrl_timer_factory.create_timer();
     metrics_timer.set(std::chrono::milliseconds(metrics_agg.get_metrics_period().count()), [this](timer_id_t tid) {
       if (stopped) {
         return;
@@ -78,7 +79,7 @@ pdcp_entity_tx::pdcp_entity_tx(uint32_t                        ue_index,
 
   logger.log_info("PDCP configured. {}", cfg);
 
-  discard_timer = ue_dl_timer_factory.create_timer();
+  discard_timer = ue_ctrl_timer_factory.create_timer();
 
   // TODO: implement usage of crypto_executor
   (void)ue_dl_executor;

@@ -1,0 +1,94 @@
+#
+# Copyright 2013-2025 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
+- name: amarisoft-ue
+  type: ue
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_NTN_VERSION}_${RETINA_VERSION}
+  labels:
+    - ${ZMQ_HOSTLABEL_0}
+  nof_ports: 64
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 4
+      limits: 4
+    memory:
+      requests: "8G"
+      limits: "8G"
+    ephemeral-storage:
+      requests: "8G"
+      limits: "8G"
+  resources:
+    - type: zmq
+    - type: license
+      model: amarisoft-5g-ext
+  shared_files:
+    - local_path: ${AMARISOFT_TXRX_BINARY_PATH}
+      remote_path: /opt/lteue/trx_srsran.so
+      is_executable: true
+
+- name: srs-gnb
+  type: gnb
+  image: ${RETINA_REGISTRY_PREFIX}/srsgnb:${RETINA_VERSION}
+  labels:
+    - ${ZMQ_HOSTLABEL_0}
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 4
+      limits: 4
+    memory:
+      requests: "8G"
+      limits: "8G"
+    ephemeral-storage:
+      requests: "8G"
+      limits: "8G"
+  resources:
+    - type: zmq
+  environment:
+    - PATH: ${PATH}:/builds/softwareradiosystems/srsgnb/build/apps/gnb
+  shared_files:
+    - local_path: ${GNB_BUILD_PATH}/apps/gnb/gnb
+      remote_path: /usr/local/bin/gnb
+      is_executable: true
+
+- name: ntn-channel-emulator
+  type: channel-emulator
+  image: ${RETINA_REGISTRY_PREFIX}/ntn-channel-emulator:${NTN_CHANNEL_EMULATOR_VERSION}_${RETINA_VERSION}
+  labels:
+    - ${ZMQ_HOSTLABEL_0}
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 1
+      limits: 1
+    memory:
+      requests: "4G"
+      limits: "4G"
+    ephemeral-storage:
+      requests: "4G"
+      limits: "4G"
+  resources:
+    - type: zmq
+
+- name: open5gs
+  type: 5gc
+  requirements:
+    arch: amd64
+    cpu:
+      requests: 1
+      limits: 1
+    memory:
+      requests: "4G"
+      limits: "4G"
+    ephemeral-storage:
+      requests: "4G"
+      limits: "4G"
+  image: ${RETINA_REGISTRY_PREFIX}/open5gs:${OPEN5GS_VERSION}_${RETINA_VERSION}
+  labels:
+    - ${ZMQ_HOSTLABEL_0}

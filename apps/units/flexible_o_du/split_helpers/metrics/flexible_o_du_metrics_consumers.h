@@ -23,11 +23,8 @@
 #pragma once
 
 #include "apps/services/metrics/metrics_consumer.h"
-#include "srsran/adt/span.h"
-#include "srsran/ran/pci.h"
-#include "srsran/srslog/log_channel.h"
-#include "srsran/srslog/logger.h"
-#include "srsran/support/srsran_assert.h"
+#include "consumers/o_du_low_metrics_consumers.h"
+#include "consumers/ru_metrics_consumers.h"
 
 namespace srsran {
 
@@ -37,43 +34,30 @@ struct ru_metrics;
 class flexible_o_du_metrics_consumer_log : public app_services::metrics_consumer
 {
 public:
-  explicit flexible_o_du_metrics_consumer_log(srslog::log_channel& log_chan_) : log_chan(log_chan_), verbose(false)
+  flexible_o_du_metrics_consumer_log(srslog::log_channel& log_chan, std::vector<pci_t> pci_sector_map_) :
+    pci_sector_map(std::move(pci_sector_map_)),
+    odu_low_metrics_handler(log_chan, pci_sector_map),
+    ru_metrics_handler(log_chan, pci_sector_map)
   {
-    srsran_assert(log_chan.enabled(), "Logger log channel is not enabled");
   }
 
   // See interface for documentation.
   void handle_metric(const app_services::metrics_set& metric) override;
 
 private:
-  srslog::log_channel& log_chan;
-  const bool           verbose;
-};
-
-/// JSON handler for the O-RU metrics.
-class o_ru_metrics_handler_json
-{
-public:
-  o_ru_metrics_handler_json(srslog::log_channel& log_chan_, span<const pci_t> pci_sector_map_) :
-    log_chan(log_chan_), pci_sector_map(pci_sector_map_)
-  {
-    srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
-  }
-
-  // Handles the O-RU metrics.
-  void handle_metric(const ru_metrics& metric);
-
-private:
-  srslog::log_channel& log_chan;
-  span<const pci_t>    pci_sector_map;
+  const std::vector<pci_t>      pci_sector_map;
+  o_du_low_metrics_consumer_log odu_low_metrics_handler;
+  ru_metrics_consumer_log       ru_metrics_handler;
 };
 
 /// JSON consumer for the flexible O-DU metrics.
 class flexible_o_du_metrics_consumer_json : public app_services::metrics_consumer
 {
 public:
-  flexible_o_du_metrics_consumer_json(srslog::log_channel& log_chan_, std::vector<pci_t> pci_sector_map_) :
-    log_chan(log_chan_), pci_sector_map(std::move(pci_sector_map_)), oru_metrics_handler(log_chan, pci_sector_map)
+  flexible_o_du_metrics_consumer_json(srslog::log_channel& log_chan, std::vector<pci_t> pci_sector_map_) :
+    pci_sector_map(std::move(pci_sector_map_)),
+    odu_low_metrics_handler(log_chan, pci_sector_map),
+    ru_metrics_handler(log_chan, pci_sector_map)
   {
     srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
   }
@@ -82,9 +66,9 @@ public:
   void handle_metric(const app_services::metrics_set& metric) override;
 
 private:
-  srslog::log_channel&      log_chan;
-  const std::vector<pci_t>  pci_sector_map;
-  o_ru_metrics_handler_json oru_metrics_handler;
+  const std::vector<pci_t>       pci_sector_map;
+  o_du_low_metrics_consumer_json odu_low_metrics_handler;
+  ru_metrics_consumer_json       ru_metrics_handler;
 };
 
 } // namespace srsran

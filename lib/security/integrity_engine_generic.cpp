@@ -31,7 +31,11 @@ integrity_engine_generic::integrity_engine_generic(sec_128_key         k_128_int
                                                    uint8_t             bearer_id_,
                                                    security_direction  direction_,
                                                    integrity_algorithm integ_algo_) :
-  k_128_int(k_128_int_), bearer_id(bearer_id_), direction(direction_), integ_algo(integ_algo_)
+  k_128_int(k_128_int_),
+  bearer_id(bearer_id_),
+  direction(direction_),
+  integ_algo(integ_algo_),
+  logger(srslog::fetch_basic_logger("SEC"))
 {
 }
 
@@ -41,6 +45,9 @@ security_result integrity_engine_generic::protect_integrity(byte_buffer buf, uin
   security::sec_mac mac = {};
 
   byte_buffer_view v{result.buf.value().begin(), result.buf.value().end()};
+
+  logger.debug("Applying integrity protection. count={}", count);
+  logger.debug(v.begin(), v.end(), "Message input:");
 
   switch (integ_algo) {
     case security::integrity_algorithm::nia0:
@@ -65,6 +72,12 @@ security_result integrity_engine_generic::protect_integrity(byte_buffer buf, uin
   if (not result.buf->append(mac)) {
     result.buf = make_unexpected(security_error::buffer_failure);
   }
+
+  logger.debug("Integrity protection applied. count={}", count);
+  logger.debug("K_int: {}", k_128_int);
+  logger.debug("MAC: {}", mac);
+  logger.debug(result.buf.value().begin(), result.buf.value().end(), "Message output:");
+
   return result;
 }
 
@@ -104,8 +117,20 @@ security_result integrity_engine_generic::verify_integrity(byte_buffer buf, uint
   // Verify MAC
   if (!std::equal(mac.begin(), mac.end(), m.begin(), m.end())) {
     result.buf = make_unexpected(security_error::integrity_failure);
+    security::sec_mac mac_rx;
+    std::copy(m.begin(), m.end(), mac_rx.begin());
+    span m_rx{mac.data(), sec_mac_len};
+    logger.warning("Integrity check failed. count={}", count);
+    logger.warning("K_int: {}", k_128_int);
+    logger.warning("MAC received: {}", mac_rx);
+    logger.warning("MAC expected: {}", mac);
+    logger.warning(v.begin(), v.end(), "Message input:");
     return result;
   }
+  logger.debug("Integrity check passed. count={}", count);
+  logger.debug("K_int: {}", k_128_int);
+  logger.debug("MAC: {}", mac);
+  logger.debug(v.begin(), v.end(), "Message input:");
 
   // Trim MAC from PDU
   result.buf.value().trim_tail(mac.size());

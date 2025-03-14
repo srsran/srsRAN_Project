@@ -32,18 +32,36 @@
 #include "srsran/support/sdu_window.h"
 #include "srsran/support/timers.h"
 #include "fmt/format.h"
-#include <mutex>
 
 namespace srsran {
 
 /// Container to hold a SDU for transmission, the progress in case of segmentation, and associated meta data
 struct rlc_tx_am_sdu_info {
-  byte_buffer                           sdu;             ///< SDU buffer
-  bool                                  is_retx = false; ///< Determines whether this SDU is a PDCP retransmission
-  std::optional<uint32_t>               pdcp_sn;         ///< Optional PDCP sequence number
-  std::chrono::system_clock::time_point time_of_arrival;
-  uint32_t                              next_so    = 0;                      ///< Segmentation progress
-  uint32_t                              retx_count = RETX_COUNT_NOT_STARTED; ///< Retransmission counter
+  /// \brief SDU buffer.
+  byte_buffer sdu;
+
+  /// \brief Determines whether this SDU is a PDCP retransmission.
+  bool is_retx = false;
+
+  /// \brief Optional PDCP sequence number.
+  std::optional<uint32_t> pdcp_sn;
+
+  /// \brief Time of arrival at RLC from upper layers.
+  ///
+  /// This represents the time where the SDU is put into the SDU queue.
+  std::chrono::time_point<std::chrono::steady_clock> time_of_arrival;
+
+  /// \brief Time of departure from RLC towards lower layers.
+  ///
+  /// This represents the time where the SDU is pulled from SDU queue, put into the TX window, and the PDU (or the first
+  /// segment) is forwarded towards lower layers.
+  std::chrono::time_point<std::chrono::steady_clock> time_of_departure;
+
+  /// \brief Segmentation progress.
+  uint32_t next_so = 0;
+
+  /// \brief Retransmission counter.
+  uint32_t retx_count = RETX_COUNT_NOT_STARTED;
 };
 
 /// \brief TX state variables
@@ -88,6 +106,8 @@ private:
 
   // TX state variables
   rlc_tx_am_state st;
+
+  // TX helper variables
 
   // TX SDU buffers
   rlc_sdu_queue_lockfree sdu_queue;

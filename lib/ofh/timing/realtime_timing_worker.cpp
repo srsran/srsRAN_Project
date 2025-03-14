@@ -111,7 +111,6 @@ void realtime_timing_worker::start()
   std::future<void>  fut = p.get_future();
 
   if (!executor.defer([this, &p]() {
-        status.store(worker_status::running, std::memory_order_relaxed);
         // Signal start() caller thread that the operation is complete.
         p.set_value();
 
@@ -131,33 +130,31 @@ void realtime_timing_worker::start()
 void realtime_timing_worker::stop()
 {
   logger.info("Requesting stop of the realtime timing worker");
-  status.store(worker_status::stop_requested, std::memory_order_release);
+  status.store(worker_status::stop_requested, std::memory_order_relaxed);
 
-  // Wait for the timing thread to stop.
+  // Wait for the timing thread to stop - this line also introduces a happens-before relationship with the clear on
+  // ota_notifier.
   while (status.load(std::memory_order_acquire) != worker_status::stopped) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
+
+  // Clear the subscribed notifiers.
+  ota_notifiers.clear();
 
   logger.info("Stopped the realtime timing worker");
 }
 
 void realtime_timing_worker::timing_loop()
 {
-  while (true) {
-    if (SRSRAN_UNLIKELY(status.load(std::memory_order_acquire) == worker_status::stop_requested)) {
-      // Clear the subscribed notifiers.
-      ota_notifiers.clear();
-      // Release semantics - The destructor of this class accesses the ota_notifiers vector from a different thread from
-      // where we call clear() just above.
-      status.store(worker_status::stopped, std::memory_order_release);
-      return;
-    }
-
+  while (SRSRAN_LIKELY(status.load(std::memory_order_relaxed) == worker_status::running)) {
     poll();
   }
+
+  // Acquire/Release semantics - ota_notifiers is cleared and destructed by a different thread.
+  status.store(worker_status::stopped, std::memory_order_release);
 }
 
-/// Returns the difference between cur and prev taking into account wrap arounds of the values.
+/// Returns the difference between cur and prev taking into account a potential wrap around of the values.
 static unsigned circular_distance(unsigned cur, unsigned prev, unsigned size)
 {
   return (cur >= prev) ? (cur - prev) : (size + cur - prev);
@@ -228,8 +225,6 @@ void realtime_timing_worker::notify_slot_symbol_point(const slot_symbol_point_co
 
 void realtime_timing_worker::subscribe(span<ota_symbol_boundary_notifier*> notifiers)
 {
-  std::vector<ota_symbol_boundary_notifier*> notifier_list(notifiers.begin(), notifiers.end());
-  if (!executor.defer([this, n = std::move(notifier_list)]() mutable { ota_notifiers = std::move(n); })) {
-    logger.error("Could not subscribe the given OTA symbol boundary notifiers");
-  }
+  // The defer() call in start() synchronizes the contents of ota_notifiers with the worker thread.
+  ota_notifiers.assign(notifiers.begin(), notifiers.end());
 }

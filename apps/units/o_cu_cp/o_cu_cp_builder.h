@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "apps/services/e2/e2_metric_connector_manager.h"
+#include "apps/helpers/e2/e2_metric_connector_manager.h"
 #include "apps/services/metrics/metrics_config.h"
 #include "apps/units/application_unit_commands.h"
 #include "o_cu_cp_unit_impl.h"

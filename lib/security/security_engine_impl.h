@@ -27,8 +27,7 @@
 #include "srsran/security/security.h"
 #include "srsran/security/security_engine.h"
 
-namespace srsran {
-namespace security {
+namespace srsran::security {
 
 class security_engine_impl final : public security_engine_tx, public security_engine_rx
 {
@@ -38,7 +37,7 @@ public:
                        security_direction direction,
                        integrity_enabled  integrity_enabled,
                        ciphering_enabled  ciphering_enabled);
-  ~security_engine_impl() = default;
+  ~security_engine_impl() override = default;
 
   security_result encrypt_and_protect_integrity(byte_buffer buf, size_t offset, uint32_t count) override;
   security_result decrypt_and_verify_integrity(byte_buffer buf, size_t offset, uint32_t count) override;
@@ -46,7 +45,8 @@ public:
 private:
   std::unique_ptr<integrity_engine> integ_eng;
   std::unique_ptr<ciphering_engine> cipher_eng;
+
+  srslog::basic_logger& logger;
 };
 
-} // namespace security
-} // namespace srsran
+} // namespace srsran::security

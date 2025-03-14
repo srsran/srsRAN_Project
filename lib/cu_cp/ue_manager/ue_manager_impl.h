@@ -33,6 +33,7 @@
 #include "srsran/cu_cp/ue_configuration.h"
 #include "srsran/ran/plmn_identity.h"
 #include <optional>
+#include <set>
 #include <unordered_map>
 
 namespace srsran {
@@ -50,6 +51,19 @@ public:
   /// \brief Remove the UE context with the given UE index.
   /// \param[in] ue_index Index of the UE to be removed.
   void remove_ue(ue_index_t ue_index);
+
+  /// \brief Add PLMNs to block and reject new UE connections for these.
+  /// \param[in] plmns PLMN identities of UEs to be rejected.
+  void add_blocked_plmns(const std::vector<plmn_identity>& plmns);
+
+  /// \brief Remove blocked PLMNs and re-allow new UE connections for these.
+  /// \param[in] plmns PLMN identities of the UEs to be allowed again.
+  void remove_blocked_plmns(const std::vector<plmn_identity>& plmns);
+
+  /// \brief Find the UEs with the given PLMN identity.
+  /// \param[in] plmn PLMN identity of the UEs to be found.
+  /// \return Vector of pointers to the found UEs.
+  std::vector<cu_cp_ue*> find_ues(plmn_identity plmn);
 
   /// \brief Get the UE index of the UE.
   /// \param[in] pci The PCI of the cell the UE is/was connected to.
@@ -186,6 +200,8 @@ private:
 
   // ue index lookups
   std::map<std::tuple<pci_t, rnti_t>, ue_index_t> pci_rnti_to_ue_index; // ue_indexes indexed by pci and rnti
+
+  std::set<plmn_identity> blocked_plmns;
 };
 
 } // namespace srs_cu_cp

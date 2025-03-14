@@ -45,6 +45,7 @@ DECLARE_METRIC("dl_nof_ok", metric_dl_nof_ok, unsigned, "");
 DECLARE_METRIC("dl_nof_nok", metric_dl_nof_nok, unsigned, "");
 DECLARE_METRIC("dl_bs", metric_dl_bs, unsigned, "");
 DECLARE_METRIC("pusch_snr_db", metric_pusch_snr_db, float, "");
+DECLARE_METRIC("pusch_rsrp_db", metric_pusch_rsrp_db, float, "");
 DECLARE_METRIC("pucch_snr_db", metric_pucch_snr_db, float, "");
 DECLARE_METRIC("ta_ns", metric_ta_ns, std::string, "");
 DECLARE_METRIC("pusch_ta_ns", metric_pusch_ta_ns, std::string, "");
@@ -60,6 +61,7 @@ DECLARE_METRIC("nof_pucch_f2f3f4_invalid_harqs", metric_nof_pucch_f2f3f4_invalid
 DECLARE_METRIC("nof_pucch_f2f3f4_invalid_csis", metric_nof_pucch_f2f3f4_invalid_csis, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_harqs", metric_nof_pusch_invalid_harqs, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_csis", metric_nof_pusch_invalid_csis, unsigned, "");
+DECLARE_METRIC("last_phr", metric_last_phr, std::string, "");
 DECLARE_METRIC("avg_ce_delay", metric_avg_ce_delay, float, "ms");
 DECLARE_METRIC("max_ce_delay", metric_max_ce_delay, float, "ms");
 DECLARE_METRIC("avg_crc_delay", metric_avg_crc_delay, float, "ms");
@@ -81,6 +83,7 @@ DECLARE_METRIC_SET("ue_container",
                    metric_dl_nof_nok,
                    metric_dl_bs,
                    metric_pusch_snr_db,
+                   metric_pusch_rsrp_db,
                    metric_pucch_snr_db,
                    metric_ta_ns,
                    metric_pusch_ta_ns,
@@ -90,6 +93,7 @@ DECLARE_METRIC_SET("ue_container",
                    metric_ul_brate,
                    metric_ul_nof_ok,
                    metric_ul_nof_nok,
+                   metric_last_phr,
                    metric_bsr,
                    metric_nof_pucch_f0f1_invalid_harqs,
                    metric_nof_pucch_f2f3f4_invalid_harqs,
@@ -278,8 +282,7 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
   metric_context_t ctx("JSON Metrics");
 
   for (const auto& ue : metrics.ue_metrics) {
-    ctx.get<mlist_ues>().emplace_back();
-    auto& output = ctx.get<mlist_ues>().back();
+    auto& output = ctx.get<mlist_ues>().emplace_back();
 
     output.write<metric_pci>(ue.pci);
     output.write<metric_rnti>(to_value(ue.rnti));
@@ -305,6 +308,9 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
       output.write<metric_pusch_snr_db>(std::clamp(ue.pusch_snr_db, -99.9f, 99.9f));
     }
+    if (!std::isnan(ue.pusch_rsrp_db) && !iszero(ue.pusch_rsrp_db)) {
+      output.write<metric_pusch_rsrp_db>(std::clamp(ue.pusch_rsrp_db, -99.9f, 0.0f));
+    }
     if (!std::isnan(ue.pucch_snr_db) && !iszero(ue.pucch_snr_db)) {
       output.write<metric_pucch_snr_db>(std::clamp(ue.pucch_snr_db, -99.9f, 99.9f));
     }
@@ -316,6 +322,7 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
         (ue.pucch_ta_stats.get_nof_observations() > 0) ? std::to_string(ue.pucch_ta_stats.get_mean() * 1e9) : "n/a");
     output.write<metric_srs_ta_ns>(
         (ue.srs_ta_stats.get_nof_observations() > 0) ? std::to_string(ue.srs_ta_stats.get_mean() * 1e9) : "n/a");
+    output.write<metric_last_phr>(ue.last_phr ? std::to_string(ue.last_phr.value()) : "n/a");
     output.write<metric_ul_mcs>(ue.ul_mcs.to_uint());
     output.write<metric_ul_brate>(ue.ul_brate_kbps * 1e3);
     output.write<metric_ul_nof_ok>(ue.ul_nof_ok);
@@ -398,8 +405,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
   fmt::format_to(
       std::back_inserter(buffer),
       " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} error_indications={} "
-      "pdsch_rbs_per_slot={} pusch_rbs_per_slot={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
-      "latency_hist=[{}]",
+      "pdsch_rbs_per_slot={} pusch_rbs_per_slot={} pdschs_per_slot={:.3} puschs_per_slot={:.3} nof_ues={} "
+      "mean_latency={}usec max_latency={}usec max_latency_slot={} latency_hist=[{}]",
       float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
       float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
       metrics.nof_prbs,
@@ -408,6 +415,9 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
       metrics.nof_error_indications,
       sum_pdsch_rbs / metrics.nof_dl_slots,
       sum_pusch_rbs / metrics.nof_ul_slots,
+      metrics.dl_grants_count / (float)metrics.nof_dl_slots,
+      metrics.ul_grants_count / (float)metrics.nof_ul_slots,
+      metrics.ue_metrics.size(),
       metrics.average_decision_latency.count(),
       metrics.max_decision_latency.count(),
       metrics.max_decision_latency_slot,

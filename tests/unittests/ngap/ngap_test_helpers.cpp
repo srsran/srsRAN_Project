@@ -39,7 +39,7 @@ ngap_test::ngap_test() :
     cu_cp_configuration cucfg     = config_helpers::make_default_cu_cp_config();
     cucfg.services.timers         = &timers;
     cucfg.services.cu_cp_executor = &ctrl_worker;
-    cucfg.ngaps.push_back(cu_cp_configuration::ngap_params{
+    cucfg.ngap.ngaps.push_back(cu_cp_configuration::ngap_config{
         &n2_gw,
         {supported_tracking_area{
             7,
@@ -55,9 +55,9 @@ ngap_test::ngap_test() :
   ngap_configuration ngap_cfg{};
   ngap_cfg.gnb_id                      = cu_cp_cfg.node.gnb_id;
   ngap_cfg.ran_node_name               = cu_cp_cfg.node.ran_node_name;
-  ngap_cfg.supported_tas               = cu_cp_cfg.ngaps.front().supported_tas;
+  ngap_cfg.supported_tas               = cu_cp_cfg.ngap.ngaps.front().supported_tas;
   ngap_cfg.request_pdu_session_timeout = cu_cp_cfg.ue.request_pdu_session_timeout;
-  ngap = create_ngap(ngap_cfg, cu_cp_notifier, *cu_cp_cfg.ngaps.front().n2_gw, timers, ctrl_worker);
+  ngap = create_ngap(ngap_cfg, cu_cp_notifier, *cu_cp_cfg.ngap.ngaps.front().n2_gw, timers, ctrl_worker);
 
   cu_cp_notifier.connect_ngap(ngap->get_ngap_ue_context_removal_handler());
 

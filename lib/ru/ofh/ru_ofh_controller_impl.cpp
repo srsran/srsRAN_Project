@@ -55,5 +55,5 @@ void ru_ofh_controller_impl::stop()
 
 void ru_ofh_controller_impl::print_metrics()
 {
-  fmt::print("No statistics implemented.");
+  fmt::println("No statistics implemented.");
 }

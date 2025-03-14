@@ -21,7 +21,7 @@
  */
 
 #include "o_cu_up_e2_config_cli11_schema.h"
-#include "apps/services/e2/e2_cli11_schema.h"
+#include "apps/helpers/e2/e2_cli11_schema.h"
 #include "o_cu_up_e2_config.h"
 #include "srsran/support/cli11_utils.h"
 

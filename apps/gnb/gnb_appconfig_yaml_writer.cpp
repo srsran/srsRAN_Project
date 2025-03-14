@@ -21,8 +21,8 @@
  */
 
 #include "gnb_appconfig_yaml_writer.h"
+#include "apps/helpers/logger/logger_appconfig_yaml_writer.h"
 #include "apps/helpers/metrics/metrics_config_yaml_writer.h"
-#include "apps/services/logger/logger_appconfig_yaml_writer.h"
 #include "gnb_appconfig.h"
 
 using namespace srsran;

@@ -39,7 +39,8 @@ public:
     context_setup_outcome(timers),
     context_modification_outcome(timers),
     context_release_complete(timers),
-    positioning_information_outcome(timers)
+    positioning_information_outcome(timers),
+    positioning_activation_outcome(timers)
   {
   }
 
@@ -49,6 +50,7 @@ public:
     context_modification_outcome.stop();
     context_release_complete.stop();
     positioning_information_outcome.stop();
+    positioning_activation_outcome.stop();
   }
 
   /// F1AP UE Context Setup Response/Failure Event Source.
@@ -65,6 +67,11 @@ public:
   /// F1AP Positioning Information Event Source.
   protocol_transaction_event_source<asn1::f1ap::positioning_info_resp_s, asn1::f1ap::positioning_info_fail_s>
       positioning_information_outcome;
+
+  /// F1AP Positioning Activation Event Source.
+  protocol_transaction_event_source<asn1::f1ap::positioning_activation_resp_s,
+                                    asn1::f1ap::positioning_activation_fail_s>
+      positioning_activation_outcome;
 };
 
 } // namespace srs_cu_cp

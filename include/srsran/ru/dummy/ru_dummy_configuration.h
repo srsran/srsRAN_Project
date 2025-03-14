@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/ru/ru_error_notifier.h"
 #include "srsran/ru/ru_timing_notifier.h"
 #include "srsran/ru/ru_uplink_plane.h"
 #include "srsran/srslog/logger.h"
@@ -55,13 +56,15 @@ struct ru_dummy_configuration {
 /// Collects the necessary dependencies for the dummy radio unit.
 struct ru_dummy_dependencies {
   /// Logger.
-  srslog::basic_logger* logger = nullptr;
+  srslog::basic_logger& logger;
   /// Asynchronous task executor.
   task_executor* executor = nullptr;
   /// Radio Unit uplink plane received symbol notifier.
-  ru_uplink_plane_rx_symbol_notifier* symbol_notifier = nullptr;
+  ru_uplink_plane_rx_symbol_notifier& symbol_notifier;
   /// Radio Unit timing notifier.
-  ru_timing_notifier* timing_notifier = nullptr;
+  ru_timing_notifier& timing_notifier;
+  /// Radio Unit error notifier.
+  ru_error_notifier& error_notifier;
 };
 
 } // namespace srsran
