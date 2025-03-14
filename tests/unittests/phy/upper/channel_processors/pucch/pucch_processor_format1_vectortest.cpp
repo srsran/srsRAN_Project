@@ -75,7 +75,12 @@ TEST_P(PucchProcessorFormat1Fixture, FromVector)
     // Make sure configuration is valid.
     ASSERT_TRUE(validator->is_valid(entry.config));
 
-    pucch_processor_result result = processor->process(grid, entry.config);
+    // Create PUCCH Format 1 batch configuration.
+    pucch_processor::format1_batch_configuration batch_config(entry.config);
+
+    // Process.
+    const auto&                  results = processor->process(grid, batch_config);
+    const pucch_processor_result result  = results.get(entry.config.initial_cyclic_shift, entry.config.time_domain_occ);
 
     // Check channel state information.
     // Time alignment shouldn't exceed plus minus 3 us.
@@ -125,7 +130,12 @@ TEST_P(PucchProcessorFormat1Fixture, FromVectorFalseCs)
   // Make sure configuration is valid.
   ASSERT_TRUE(validator->is_valid(entry.config));
 
-  pucch_processor_result result = processor->process(grid, entry.config);
+  // Create PUCCH Format 1 batch configuration.
+  pucch_processor::format1_batch_configuration batch_config(entry.config);
+
+  // Process.
+  const auto&                  results = processor->process(grid, batch_config);
+  const pucch_processor_result result  = results.get(entry.config.initial_cyclic_shift, entry.config.time_domain_occ);
 
   // Check channel state information.
   // EPRE depends on the number of entries.
@@ -175,7 +185,12 @@ TEST_P(PucchProcessorFormat1Fixture, FalseAlarm)
     // Make sure configuration is valid.
     ASSERT_TRUE(validator->is_valid(entry.config));
 
-    pucch_processor_result result = processor->process(grid, entry.config);
+    // Create PUCCH Format 1 batch configuration.
+    pucch_processor::format1_batch_configuration batch_config(entry.config);
+
+    // Process.
+    const auto&                  results = processor->process(grid, batch_config);
+    const pucch_processor_result result  = results.get(entry.config.initial_cyclic_shift, entry.config.time_domain_occ);
 
     counter += static_cast<unsigned>(result.message.get_status() == uci_status::valid);
   }

@@ -9,6 +9,7 @@
  */
 
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
+#include "logging_pucch_processor_decorator.h"
 #include "pucch_demodulator_impl.h"
 #include "pucch_detector_format0.h"
 #include "pucch_detector_format1.h"
@@ -16,7 +17,6 @@
 #include "pucch_processor_impl.h"
 #include "pucch_processor_pool.h"
 #include "srsran/phy/generic_functions/transform_precoding/transform_precoding_factories.h"
-#include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/upper/channel_processors/pucch/formatters.h"
 
 using namespace srsran;
@@ -250,69 +250,6 @@ srsran::create_pucch_detector_factory_sw(std::shared_ptr<low_papr_sequence_colle
 {
   return std::make_shared<pucch_detector_factory_sw>(std::move(lpcf), std::move(prgf), std::move(eqzrf));
 }
-
-namespace {
-
-class logging_pucch_processor_decorator : public pucch_processor
-{
-  template <typename Config>
-  pucch_processor_result process_(const resource_grid_reader& grid, const Config& config)
-  {
-    pucch_processor_result result;
-
-    std::chrono::nanoseconds time_ns = time_execution([&]() { result = processor->process(grid, config); });
-    if (logger.debug.enabled()) {
-      // Detailed log information, including a list of all PUCCH configuration and result fields.
-      logger.debug(config.slot.sfn(),
-                   config.slot.slot_index(),
-                   "PUCCH: {:s} {:s} {}\n  {:n}\n  {:n}",
-                   config,
-                   result,
-                   time_ns,
-                   config,
-                   result);
-    } else {
-      // Single line log entry.
-      logger.info(config.slot.sfn(), config.slot.slot_index(), "PUCCH: {:s} {:s} {}", config, result, time_ns);
-    }
-
-    return result;
-  }
-
-public:
-  logging_pucch_processor_decorator(srslog::basic_logger& logger_, std::unique_ptr<pucch_processor> processor_) :
-    logger(logger_), processor(std::move(processor_))
-  {
-    srsran_assert(processor, "Invalid processor.");
-  }
-
-  pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override
-  {
-    return process_(grid, config);
-  }
-  pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) override
-  {
-    return process_(grid, config);
-  }
-  pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) override
-  {
-    return process_(grid, config);
-  }
-  pucch_processor_result process(const resource_grid_reader& grid, const format3_configuration& config) override
-  {
-    return process_(grid, config);
-  }
-  pucch_processor_result process(const resource_grid_reader& grid, const format4_configuration& config) override
-  {
-    return process_(grid, config);
-  }
-
-private:
-  srslog::basic_logger&            logger;
-  std::unique_ptr<pucch_processor> processor;
-};
-
-} // namespace
 
 std::unique_ptr<pucch_processor> pucch_processor_factory::create(srslog::basic_logger& logger)
 {

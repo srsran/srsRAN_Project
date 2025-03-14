@@ -200,6 +200,10 @@ private:
   /// Helper method for processing PUCCH.
   void process_pucch(const shared_resource_grid& grid, const uplink_pdu_slot_repository::pucch_pdu& pdu);
 
+  /// Helper method for processing PUCCH Format 1.
+  void process_pucch_f1(const shared_resource_grid&                                 grid,
+                        const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection);
+
   /// Helper method for processing SRS.
   void process_srs(const shared_resource_grid& grid, const uplink_pdu_slot_repository::srs_pdu& pdu);
 
@@ -208,6 +212,9 @@ private:
 
   /// Helper method for notifying a discarded PUCCH reception.
   void notify_discard_pucch(const uplink_pdu_slot_repository::pucch_pdu& pdu);
+
+  /// Helper method for notifying a discarded PUCCH Format 1 collection.
+  void notify_discard_pucch(const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection);
 
   /// PDU repository.
   uplink_pdu_slot_repository_impl pdu_repository;

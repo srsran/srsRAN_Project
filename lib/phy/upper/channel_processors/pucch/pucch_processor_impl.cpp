@@ -59,71 +59,108 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   return result;
 }
 
-pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&  grid,
-                                                     const format1_configuration& config)
+const pucch_format1_map<pucch_processor_result>&
+pucch_processor_impl::process(const resource_grid_reader& grid, const format1_batch_configuration& batch_config)
 {
-  [[maybe_unused]] std::string msg;
-  srsran_assert(handle_validation(msg, pdu_validator->is_valid(config)), "{}", msg);
+  // Clear all results from previous processing.
+  batch_results.clear();
 
-  // Prepare channel estimation.
-  dmrs_pucch_estimator::format1_configuration estimator_config;
-  estimator_config.slot                 = config.slot;
-  estimator_config.cp                   = config.cp;
-  estimator_config.start_symbol_index   = config.start_symbol_index;
-  estimator_config.nof_symbols          = config.nof_symbols;
-  estimator_config.starting_prb         = config.starting_prb + config.bwp_start_rb;
-  estimator_config.second_hop_prb       = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
-  estimator_config.initial_cyclic_shift = config.initial_cyclic_shift;
-  estimator_config.time_domain_occ      = config.time_domain_occ;
-  estimator_config.n_id                 = config.n_id;
-  estimator_config.ports.assign(config.ports.begin(), config.ports.end());
+  // Iterate each of the UE dedicated configuration.
+  for (unsigned initial_cyclic_shift = pucch_constants::format1_initial_cyclic_shift_range.start();
+       initial_cyclic_shift != pucch_constants::format1_initial_cyclic_shift_range.stop();
+       ++initial_cyclic_shift) {
+    for (unsigned time_domain_occ = pucch_constants::format1_time_domain_occ_range.start();
+         time_domain_occ != pucch_constants::format1_time_domain_occ_range.stop();
+         ++time_domain_occ) {
+      // Skip if it does not contain a value associated to the cyclic shift and time-domain OCC.
+      if (!batch_config.entries.has_value(initial_cyclic_shift, time_domain_occ)) {
+        continue;
+      }
 
-  // Unused channel estimator parameters for this format.
-  estimator_config.group_hopping = pucch_group_hopping::NEITHER;
+      const auto&           common_config = batch_config.common_config;
+      const auto&           ue_config     = batch_config.entries.get(initial_cyclic_shift, time_domain_occ);
+      format1_configuration config        = {.context              = ue_config.context,
+                                             .slot                 = common_config.slot,
+                                             .bwp_size_rb          = common_config.bwp_size_rb,
+                                             .bwp_start_rb         = common_config.bwp_start_rb,
+                                             .cp                   = common_config.cp,
+                                             .starting_prb         = common_config.starting_prb,
+                                             .second_hop_prb       = common_config.second_hop_prb,
+                                             .n_id                 = common_config.n_id,
+                                             .nof_harq_ack         = ue_config.nof_harq_ack,
+                                             .ports                = common_config.ports,
+                                             .initial_cyclic_shift = initial_cyclic_shift,
+                                             .nof_symbols          = common_config.nof_symbols,
+                                             .start_symbol_index   = common_config.start_symbol_index,
+                                             .time_domain_occ      = time_domain_occ};
 
-  // Prepare channel estimate.
-  channel_estimate::channel_estimate_dimensions dims;
-  dims.nof_prb       = config.bwp_start_rb + config.bwp_size_rb;
-  dims.nof_symbols   = get_nsymb_per_slot(config.cp);
-  dims.nof_rx_ports  = config.ports.size();
-  dims.nof_tx_layers = pucch_constants::MAX_LAYERS;
+      [[maybe_unused]] std::string msg;
+      srsran_assert(handle_validation(msg, pdu_validator->is_valid(config)), "{}", msg);
 
-  estimates.resize(dims);
+      // Prepare channel estimation.
+      dmrs_pucch_estimator::format1_configuration estimator_config;
+      estimator_config.slot               = config.slot;
+      estimator_config.cp                 = config.cp;
+      estimator_config.start_symbol_index = config.start_symbol_index;
+      estimator_config.nof_symbols        = config.nof_symbols;
+      estimator_config.starting_prb       = config.starting_prb + config.bwp_start_rb;
+      estimator_config.second_hop_prb     = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
+      estimator_config.initial_cyclic_shift = config.initial_cyclic_shift;
+      estimator_config.time_domain_occ      = config.time_domain_occ;
+      estimator_config.n_id                 = config.n_id;
+      estimator_config.ports.assign(config.ports.begin(), config.ports.end());
 
-  // Perform channel estimation.
-  channel_estimator->estimate(estimates, grid, estimator_config);
+      // Unused channel estimator parameters for this format.
+      estimator_config.group_hopping = pucch_group_hopping::NEITHER;
 
-  // Prepare detector configuration.
-  pucch_detector::format1_configuration detector_config;
-  detector_config.slot         = config.slot;
-  detector_config.cp           = config.cp;
-  detector_config.starting_prb = config.starting_prb + config.bwp_start_rb;
-  if (config.second_hop_prb.has_value()) {
-    detector_config.second_hop_prb.emplace(config.second_hop_prb.value() + config.bwp_start_rb);
+      // Prepare channel estimate.
+      channel_estimate::channel_estimate_dimensions dims;
+      dims.nof_prb       = config.bwp_start_rb + config.bwp_size_rb;
+      dims.nof_symbols   = get_nsymb_per_slot(config.cp);
+      dims.nof_rx_ports  = config.ports.size();
+      dims.nof_tx_layers = pucch_constants::MAX_LAYERS;
+
+      estimates.resize(dims);
+
+      // Perform channel estimation.
+      channel_estimator->estimate(estimates, grid, estimator_config);
+
+      // Prepare detector configuration.
+      pucch_detector::format1_configuration detector_config;
+      detector_config.slot         = config.slot;
+      detector_config.cp           = config.cp;
+      detector_config.starting_prb = config.starting_prb + config.bwp_start_rb;
+      if (config.second_hop_prb.has_value()) {
+        detector_config.second_hop_prb.emplace(config.second_hop_prb.value() + config.bwp_start_rb);
+      }
+      detector_config.start_symbol_index   = config.start_symbol_index;
+      detector_config.nof_symbols          = config.nof_symbols;
+      detector_config.group_hopping        = pucch_group_hopping::NEITHER;
+      detector_config.ports                = config.ports;
+      detector_config.beta_pucch           = 1.0F;
+      detector_config.time_domain_occ      = config.time_domain_occ;
+      detector_config.initial_cyclic_shift = config.initial_cyclic_shift;
+      detector_config.n_id                 = config.n_id;
+      detector_config.nof_harq_ack         = config.nof_harq_ack;
+
+      // Actual message detection.
+      pucch_detector::pucch_detection_result detection_result = detector->detect(grid, estimates, detector_config);
+
+      // Prepare result.
+      pucch_processor_result result;
+      estimates.get_channel_state_information(result.csi);
+      result.message          = detection_result.uci_message;
+      result.detection_metric = detection_result.detection_metric;
+
+      // Time alignment measurements are unreliable for PUCCH Format 1.
+      result.csi.reset_time_alignment();
+
+      // Emplace the results for the given PUCCH Format 1.
+      batch_results.emplace(initial_cyclic_shift, time_domain_occ, result);
+    }
   }
-  detector_config.start_symbol_index   = config.start_symbol_index;
-  detector_config.nof_symbols          = config.nof_symbols;
-  detector_config.group_hopping        = pucch_group_hopping::NEITHER;
-  detector_config.ports                = config.ports;
-  detector_config.beta_pucch           = 1.0F;
-  detector_config.time_domain_occ      = config.time_domain_occ;
-  detector_config.initial_cyclic_shift = config.initial_cyclic_shift;
-  detector_config.n_id                 = config.n_id;
-  detector_config.nof_harq_ack         = config.nof_harq_ack;
 
-  // Actual message detection.
-  pucch_detector::pucch_detection_result detection_result = detector->detect(grid, estimates, detector_config);
-
-  // Prepare result.
-  pucch_processor_result result;
-  estimates.get_channel_state_information(result.csi);
-  result.message          = detection_result.uci_message;
-  result.detection_metric = detection_result.detection_metric;
-
-  // Time alignment measurements are unreliable for PUCCH Format 1.
-  result.csi.reset_time_alignment();
-
-  return result;
+  return batch_results;
 }
 
 pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&  grid,

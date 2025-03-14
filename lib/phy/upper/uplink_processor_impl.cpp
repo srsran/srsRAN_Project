@@ -89,28 +89,25 @@ unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository
 
 void uplink_processor_impl::handle_rx_symbol(const shared_resource_grid& grid, unsigned end_symbol_index)
 {
-  // Extract PDUs for the given number of OFDM symbols.
-  const auto pdus = pdu_repository.get_pdus(end_symbol_index);
-
   // Run rate matching buffer pool only at the first symbol.
   if (end_symbol_index == 0) {
     rm_buffer_pool.run_slot(current_slot);
   }
 
-  // Skip if no PDUs are available.
-  if (pdus.empty()) {
-    return;
+  for (const auto& pdu : pdu_repository.get_pucch_pdus(end_symbol_index)) {
+    process_pucch(grid, pdu);
   }
 
-  // Process all the PDUs taken from the repository.
-  for (const auto& pdu : pdus) {
-    if (const auto* pusch_pdu = std::get_if<uplink_pdu_slot_repository::pusch_pdu>(&pdu)) {
-      process_pusch(grid, *pusch_pdu);
-    } else if (const auto* pucch_pdu = std::get_if<uplink_pdu_slot_repository::pucch_pdu>(&pdu)) {
-      process_pucch(grid, *pucch_pdu);
-    } else if (const auto* srs_pdu = std::get_if<uplink_pdu_slot_repository::srs_pdu>(&pdu)) {
-      process_srs(grid, *srs_pdu);
-    }
+  for (const auto& collection : pdu_repository.get_pucch_f1_repository(end_symbol_index)) {
+    process_pucch_f1(grid, collection);
+  }
+
+  for (const auto& pdu : pdu_repository.get_pusch_pdus(end_symbol_index)) {
+    process_pusch(grid, pdu);
+  }
+
+  for (const auto& pdu : pdu_repository.get_srs_pdus(end_symbol_index)) {
+    process_srs(grid, pdu);
   }
 }
 
@@ -222,11 +219,9 @@ void uplink_processor_impl::process_pucch(const shared_resource_grid&           
         proc_result         = pucch_proc->process(grid2.get_reader(), format0);
         l1_tracer << trace_event("pucch0", tp);
       } break;
-      case pucch_format::FORMAT_1: {
-        const auto& format1 = std::get<pucch_processor::format1_configuration>(pdu.config);
-        proc_result         = pucch_proc->process(grid2.get_reader(), format1);
-        l1_tracer << trace_event("pucch1", tp);
-      } break;
+      case pucch_format::FORMAT_1:
+        // Do nothing.
+        break;
       case pucch_format::FORMAT_2: {
         const auto& format2 = std::get<pucch_processor::format2_configuration>(pdu.config);
         proc_result         = pucch_proc->process(grid2.get_reader(), format2);
@@ -261,6 +256,61 @@ void uplink_processor_impl::process_pucch(const shared_resource_grid&           
     logger.warning(
         pdu.context.slot.sfn(), pdu.context.slot.slot_index(), "Failed to execute PUCCH. Ignoring processing.");
     notify_discard_pucch(pdu);
+  }
+}
+
+void uplink_processor_impl::process_pucch_f1(const shared_resource_grid&                                 grid,
+                                             const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection)
+{
+  bool success = task_executors.pucch_executor.execute([this, grid2 = grid.copy(), &collection]() mutable {
+    trace_point tp = l1_tracer.now();
+
+    // Process all PUCCH Format 1 in one go.
+    const pucch_format1_map<pucch_processor_result>& results =
+        pucch_proc->process(grid2.get_reader(), collection.config);
+
+    // Iterate each UE context.
+    for (const auto& entry : collection.ue_contexts) {
+      // Result for the given initial cyclic shift is not available.
+      if (results.has_value(entry.initial_cyclic_shift, entry.time_domain_occ)) {
+        logger.warning(collection.config.common_config.slot.sfn(),
+                       collection.config.common_config.slot.slot_index(),
+                       "Missing PUCCH F1 result for rnti={}, cs={} and occ={}.",
+                       entry.context.rnti,
+                       entry.initial_cyclic_shift,
+                       entry.time_domain_occ);
+
+        // Obtain number of HARQ-ACK.
+        unsigned nof_harq_ack =
+            collection.config.entries.get(entry.initial_cyclic_shift, entry.time_domain_occ).nof_harq_ack;
+
+        // Report control-related discarded result if HARQ-ACK feedback is present.
+        if (nof_harq_ack > 0) {
+          ul_pucch_results discarded_results = ul_pucch_results::create_discarded(entry.context, nof_harq_ack);
+          notifier.on_new_pucch_results(discarded_results);
+        }
+        pdu_repository.on_finish_processing_pdu();
+        continue;
+      }
+
+      // Write the results.
+      ul_pucch_results notifier_result;
+      notifier_result.context          = entry.context;
+      notifier_result.processor_result = results.get(entry.initial_cyclic_shift, entry.time_domain_occ);
+
+      // Notify the PUCCH results.
+      notifier.on_new_pucch_results(notifier_result);
+      pdu_repository.on_finish_processing_pdu();
+    }
+    l1_tracer << trace_event("pucch1", tp);
+  });
+
+  // Notify the discarded transmissions if the executor failed.
+  if (!success) {
+    logger.warning(collection.config.common_config.slot.sfn(),
+                   collection.config.common_config.slot.slot_index(),
+                   "Failed to execute PUCCH. Ignoring processing.");
+    notify_discard_pucch(collection);
   }
 }
 
@@ -324,21 +374,39 @@ void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repositor
   pdu_repository.on_finish_processing_pdu();
 }
 
+void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection)
+{
+  // Iterate all PUCCH Format 1 entries in the collection.
+  for (const auto& entry : collection.ue_contexts) {
+    // Obtain number of HARQ-ACK.
+    unsigned nof_harq_ack =
+        collection.config.entries.get(entry.initial_cyclic_shift, entry.time_domain_occ).nof_harq_ack;
+
+    // Report control-related discarded result if HARQ-ACK feedback is present.
+    if (nof_harq_ack > 0) {
+      ul_pucch_results discarded_results = ul_pucch_results::create_discarded(entry.context, nof_harq_ack);
+      notifier.on_new_pucch_results(discarded_results);
+    }
+    pdu_repository.on_finish_processing_pdu();
+  }
+}
+
 void uplink_processor_impl::discard_slot()
 {
   logger.warning(current_slot.sfn(), current_slot.slot_index(), "Discarded uplink slot. Ignoring processing.");
 
   // Iterate all possible symbols.
   for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
-    span<const uplink_slot_pdu_entry> pdus = pdu_repository.get_pdus(i_symbol);
+    for (const auto& pdu : pdu_repository.get_pucch_pdus(i_symbol)) {
+      notify_discard_pucch(pdu);
+    }
 
-    // Notify all the discarded PDUs.
-    for (const auto& pdu : pdus) {
-      if (const auto* pusch_pdu = std::get_if<uplink_pdu_slot_repository::pusch_pdu>(&pdu)) {
-        notify_discard_pusch(*pusch_pdu);
-      } else if (const auto* pucch_pdu = std::get_if<uplink_pdu_slot_repository::pucch_pdu>(&pdu)) {
-        notify_discard_pucch(*pucch_pdu);
-      }
+    for (const auto& collection : pdu_repository.get_pucch_f1_repository(i_symbol)) {
+      notify_discard_pucch(collection);
+    }
+
+    for (const auto& pdu : pdu_repository.get_pusch_pdus(i_symbol)) {
+      notify_discard_pusch(pdu);
     }
   }
 }

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
 #include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
 
 namespace srsran {
@@ -32,7 +33,8 @@ public:
   }
 
   // See interface for documentation.
-  pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) override
+  const pucch_format1_map<pucch_processor_result>& process(const resource_grid_reader&        grid,
+                                                           const format1_batch_configuration& config) override
   {
     pucch_processor& processor = processors.get();
     return processor.process(grid, config);

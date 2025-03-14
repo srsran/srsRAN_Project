@@ -13,6 +13,7 @@
 #include "srsran/adt/expected.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
+#include "srsran/phy/upper/channel_processors/pucch/pucch_format1_map.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_processor_result.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/pucch/pucch_context.h"
@@ -71,7 +72,7 @@ public:
     /// \brief Number of expected HARQ-ACK bits {0, 1, 2}.
     ///
     /// This parameter should be set to zero when trying to detect a positive scheduling request only.
-    unsigned nof_harq_ack;
+    uint16_t nof_harq_ack;
     /// Set to \c true if the PUCCH is used for reporting scheduling request.
     bool sr_opportunity;
     /// Port indices used for the PUCCH reception.
@@ -90,14 +91,14 @@ public:
     unsigned bwp_start_rb;
     /// Cyclic prefix configuration for the slot.
     cyclic_prefix cp;
-    /// \brief Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274}.
+    /// \brief PRB index used for the PUCCH transmission within the BWP {0, ..., 274}.
     ///
-    /// Index of the first PRB prior to frequency hopping or for no frequency hopping as per TS38.213 Section 9.2.1.
+    /// Index of the PRB prior to frequency hopping or for no frequency hopping as per TS38.213 Section 9.2.1.
     unsigned starting_prb;
-    /// \brief Index of the first PRB after frequency hopping as per TS38.213 Section 9.2.1.
+    /// \brief Index of the PRB after frequency hopping as per TS38.213 Section 9.2.1.
     ///
-    /// Lowest PRB index used for the PUCCH transmission within the BWP {0, ..., 274} if intra-slot frequency hopping is
-    /// enabled, empty otherwise.
+    /// Index of the PRB used for the second hop of the PUCCH transmission within the BWP {0, ..., 274} if intra-slot
+    /// frequency hopping is enabled, empty otherwise.
     std::optional<unsigned> second_hop_prb;
     /// \brief Parameter \f$n_{\textup{ID}}\f$ in TS38.211 Section 6.3.2.2.1 {0, ..., 1023}.
     ///
@@ -106,7 +107,7 @@ public:
     /// \f$N_{\textup{ID}}^{\textup{cell}}\f$.
     unsigned n_id;
     /// Number of expected HARQ-ACK bits {0, 1, 2} (see also \ref PUCCH_payload_size "here").
-    unsigned nof_harq_ack;
+    uint16_t nof_harq_ack;
     /// Port indices used for the PUCCH reception.
     static_vector<uint8_t, MAX_PORTS> ports;
     /// Initial cyclic shift {0, ..., 11}.
@@ -117,6 +118,93 @@ public:
     unsigned start_symbol_index;
     /// Time domain orthogonal cyclic code {0, ..., 6}.
     unsigned time_domain_occ;
+  };
+
+  /// Collects common PUCCH Format 1 parameters.
+  struct format1_common_configuration {
+    /// Slot and numerology.
+    slot_point slot;
+    /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
+    unsigned bwp_size_rb;
+    /// BWP start RB index from Point A {0, ..., 274}.
+    unsigned bwp_start_rb;
+    /// Cyclic prefix configuration for the slot.
+    cyclic_prefix cp;
+    /// \brief PRB index used for the PUCCH transmission within the BWP {0, ..., 274}.
+    ///
+    /// Index of the PRB prior to frequency hopping or for no frequency hopping as per TS38.213 Section 9.2.1.
+    unsigned starting_prb;
+    /// \brief Index of the PRB after frequency hopping as per TS38.213 Section 9.2.1.
+    ///
+    /// Index of the PRB used for the second hop of the PUCCH transmission within the BWP {0, ..., 274} if intra-slot
+    /// frequency hopping is enabled, empty otherwise.
+    std::optional<unsigned> second_hop_prb;
+    /// \brief Parameter \f$n_{\textup{ID}}\f$ in TS38.211 Section 6.3.2.2.1 {0, ..., 1023}.
+    ///
+    /// It must be set to the higher layer parameter \e hoppingID given by TS38.331 Section 6.3.2, Information Element
+    /// \e PUCCH-ConfigCommon, if it is configured. Otherwise, it must be equal to the physical cell identifier
+    /// \f$N_{\textup{ID}}^{\textup{cell}}\f$.
+    unsigned n_id;
+    /// Port indices used for the PUCCH reception.
+    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Number of symbols for the PUCCH transmission {4, ..., 14}.
+    unsigned nof_symbols;
+    /// Start symbol index {0, ..., 10}.
+    unsigned start_symbol_index;
+
+    /// Default constructor.
+    format1_common_configuration() = default;
+
+    /// Construct the configuration from a complete Format 1 configuration parameters.
+    explicit format1_common_configuration(const format1_configuration& config) :
+      slot(config.slot),
+      bwp_size_rb(config.bwp_size_rb),
+      bwp_start_rb(config.bwp_start_rb),
+      cp(config.cp),
+      starting_prb(config.starting_prb),
+      second_hop_prb(config.second_hop_prb),
+      n_id(config.n_id),
+      ports(config.ports),
+      nof_symbols(config.nof_symbols),
+      start_symbol_index(config.start_symbol_index)
+    {
+    }
+
+    /// Determines whether the Format 1 common configuration is equal to another.
+    bool operator==(const format1_common_configuration& other) const
+    {
+      return (other.slot == slot) && (other.bwp_size_rb == bwp_size_rb) && (other.bwp_start_rb == bwp_start_rb) &&
+             (cp == other.cp) && (starting_prb == other.starting_prb) && (second_hop_prb == other.second_hop_prb) &&
+             (n_id == other.n_id) && (ports == other.ports) && (nof_symbols == other.nof_symbols) &&
+             (start_symbol_index == other.start_symbol_index);
+    }
+  };
+
+  /// Collects PUCCH Format 1 batch parameters.
+  struct format1_batch_configuration {
+    /// Collects UE dedicated entries.
+    struct ue_dedicated_entry {
+      /// Context information.
+      std::optional<pucch_context> context;
+      /// Number of expected HARQ-ACK bits {0, 1, 2} (see also \ref PUCCH_payload_size "here").
+      uint16_t nof_harq_ack;
+    };
+
+    /// Default constructor.
+    format1_batch_configuration() = default;
+
+    /// Construct the configuration from a complete Format 1 configuration parameters.
+    explicit format1_batch_configuration(const format1_configuration& config) : common_config(config)
+    {
+      entries.emplace(config.initial_cyclic_shift,
+                      config.time_domain_occ,
+                      {.context = config.context, .nof_harq_ack = config.nof_harq_ack});
+    }
+
+    /// Common UE configuration.
+    format1_common_configuration common_config;
+    /// UE entry map.
+    pucch_format1_map<ue_dedicated_entry> entries;
   };
 
   /// Collects PUCCH Format 2 parameters.
@@ -164,7 +252,7 @@ public:
     /// \f$N_{\textup{ID}}^{\textup{cell}}\f$.
     unsigned n_id_0;
     /// Number of expected HARQ-ACK bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
-    unsigned nof_harq_ack;
+    uint16_t nof_harq_ack;
     /// Number of expected SR bits {0, ..., 4}.
     unsigned nof_sr;
     /// Number of expected CSI Part 1 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
@@ -219,7 +307,7 @@ public:
     /// be equal to the physical cell identifier \f$N_{\textup{ID}}^{\textup{cell}}\f$.
     unsigned n_id_scrambling;
     /// Number of expected HARQ-ACK bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
-    unsigned nof_harq_ack;
+    uint16_t nof_harq_ack;
     /// Number of expected SR bits {0, ..., 4}.
     unsigned nof_sr;
     /// Number of expected CSI Part 1 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
@@ -275,7 +363,7 @@ public:
     /// be equal to the physical cell identifier \f$N_{\textup{ID}}^{\textup{cell}}\f$.
     unsigned n_id_scrambling;
     /// Number of expected HARQ-ACK bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
-    unsigned nof_harq_ack;
+    uint16_t nof_harq_ack;
     /// Number of expected SR bits {0, ..., 4}.
     unsigned nof_sr;
     /// Number of expected CSI Part 1 bits {0, ..., 1706} (see also \ref PUCCH_payload_size "here").
@@ -305,11 +393,12 @@ public:
   /// \return The PUCCH process result.
   virtual pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) = 0;
 
-  /// \brief Processes a PUCCH Format 1 message.
-  /// \param[in] grid    Resource grid.
-  /// \param[in] config  PUCCH Format 1 configuration.
-  /// \return The PUCCH process result.
-  virtual pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) = 0;
+  /// \brief Processes a batch of PUCCH Format 1 configurations.
+  /// \param[in] grid   Resource grid.
+  /// \param[in] config PUCCH Format 1 batch configuration.
+  /// \return A map the PUCCH Format 1 detection results.
+  virtual const pucch_format1_map<pucch_processor_result>& process(const resource_grid_reader&        grid,
+                                                                   const format1_batch_configuration& config) = 0;
 
   /// \brief Processes a PUCCH Format 2 message.
   /// \param[in] grid    Resource grid.

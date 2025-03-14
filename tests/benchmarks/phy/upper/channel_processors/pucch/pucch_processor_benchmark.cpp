@@ -422,7 +422,7 @@ static void thread_process(pucch_processor& proc, const pucch_configuration& con
     if (auto pucch0 = get_config<pucch_processor::format0_configuration>(config)) {
       proc.process(grid, *pucch0);
     } else if (auto pucch1 = get_config<pucch_processor::format1_configuration>(config)) {
-      proc.process(grid, *pucch1);
+      proc.process(grid, pucch_processor::format1_batch_configuration(*pucch1));
     } else if (auto pucch2 = get_config<pucch_processor::format2_configuration>(config)) {
       proc.process(grid, *pucch2);
     } else if (auto pucch3 = get_config<pucch_processor::format3_configuration>(config)) {

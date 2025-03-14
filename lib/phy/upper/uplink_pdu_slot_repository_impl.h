@@ -18,19 +18,34 @@
 #include <variant>
 
 namespace srsran {
-/// Defines an entry of the uplink slot PDU repository.
-using uplink_slot_pdu_entry = std::variant<uplink_pdu_slot_repository::pusch_pdu,
-                                           uplink_pdu_slot_repository::pucch_pdu,
-                                           uplink_pdu_slot_repository::srs_pdu>;
 
 class uplink_pdu_slot_repository_impl : public unique_uplink_pdu_slot_repository::uplink_pdu_slot_repository_callback
 {
 public:
+  /// PUCCH Format 1 aggregated configuration.
+  struct pucch_f1_collection {
+    /// Pairs the reception context with the UE dedicated parameters.
+    struct ue_entry {
+      /// UE reception context.
+      ul_pucch_context context;
+      /// Transmission initial cyclic shift.
+      unsigned initial_cyclic_shift;
+      /// Transmission time domain OCC.
+      unsigned time_domain_occ;
+    };
+    /// Common configuration.
+    pucch_processor::format1_batch_configuration config;
+    /// UE common configurations.
+    static_vector<ue_entry, MAX_PUCCH_PDUS_PER_SLOT> ue_contexts;
+  };
+
   // See interface for documentation.
   void add_pusch_pdu(const pusch_pdu& pdu) override
   {
     unsigned end_symbol_index = pdu.pdu.start_symbol_index + pdu.pdu.nof_symbols - 1;
-    get_entry(end_symbol_index).push_back(pdu);
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+
+    pusch_repository[end_symbol_index].push_back(pdu);
     increment_pending_pdu_count();
   }
 
@@ -43,7 +58,41 @@ public:
     };
 
     unsigned end_symbol_index = fetch_end_symbol_index(pdu);
-    get_entry(end_symbol_index).push_back(pdu);
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+
+    if (!std::holds_alternative<pucch_processor::format1_configuration>(pdu.config)) {
+      pucch_repository[end_symbol_index].push_back(pdu);
+      increment_pending_pdu_count();
+      return;
+    }
+
+    const auto&                                   config = std::get<pucch_processor::format1_configuration>(pdu.config);
+    pucch_processor::format1_common_configuration common_config(config);
+    pucch_f1_collection::ue_entry                 ue_entry = {.context              = pdu.context,
+                                                              .initial_cyclic_shift = config.initial_cyclic_shift,
+                                                              .time_domain_occ      = config.time_domain_occ};
+
+    // Select Format 1 PUCCH configuration collection.
+    span<pucch_f1_collection> f1_collections = pucch_f1_repository[end_symbol_index];
+
+    // Find a compatible Format 1 common configuration.
+    auto it =
+        std::find_if(f1_collections.begin(), f1_collections.end(), [&common_config](const pucch_f1_collection& entry) {
+          return common_config == entry.config.common_config;
+        });
+
+    // If the common configuration is not yet in the list.
+    if (it == f1_collections.end()) {
+      // Push back a complete new collection.
+      auto back = pucch_f1_repository[end_symbol_index].emplace_back(pucch_f1_collection{
+          .config = pucch_processor::format1_batch_configuration(config), .ue_contexts = {ue_entry}});
+    } else {
+      // Push back the UE dedicated entry in the existing collection.
+      it->config.entries.emplace(config.initial_cyclic_shift,
+                                 config.time_domain_occ,
+                                 {.context = config.context, .nof_harq_ack = config.nof_harq_ack});
+    }
+
     increment_pending_pdu_count();
   }
 
@@ -52,7 +101,8 @@ public:
   {
     unsigned end_symbol_index =
         pdu.config.resource.start_symbol.to_uint() + static_cast<unsigned>(pdu.config.resource.nof_symbols) - 1;
-    get_entry(end_symbol_index).push_back(pdu);
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    srs_repository[end_symbol_index].push_back(pdu);
     increment_pending_pdu_count();
   }
 
@@ -67,7 +117,16 @@ public:
     }
 
     // Clear all entries.
-    for (auto& entry : repository) {
+    for (auto& entry : pusch_repository) {
+      entry.clear();
+    }
+    for (auto& entry : pucch_repository) {
+      entry.clear();
+    }
+    for (auto& entry : pucch_f1_repository) {
+      entry.clear();
+    }
+    for (auto& entry : srs_repository) {
       entry.clear();
     }
 
@@ -114,6 +173,34 @@ public:
     srsran_assert((prev & accepting_pdu_mask) == 0, "The slot repository is in an unexpected state 0x{:016x}.", prev);
   }
 
+  /// Returns a span that contains the PUSCH PDUs for the given slot and symbol index.
+  span<const pusch_pdu> get_pusch_pdus(unsigned end_symbol_index) const
+  {
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    return pusch_repository[end_symbol_index];
+  }
+
+  /// Returns a span that contains the PUCCH PDUs for the given slot and symbol index.
+  span<const pucch_pdu> get_pucch_pdus(unsigned end_symbol_index) const
+  {
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    return pucch_repository[end_symbol_index];
+  }
+
+  /// Returns a span that contains the PUCCH PDUs for the given slot and symbol index.
+  span<const pucch_f1_collection> get_pucch_f1_repository(unsigned end_symbol_index) const
+  {
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    return pucch_f1_repository[end_symbol_index];
+  }
+
+  /// Returns a span that contains the SRS PDUs for the given slot and symbol index.
+  span<const srs_pdu> get_srs_pdus(unsigned end_symbol_index) const
+  {
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    return srs_repository[end_symbol_index];
+  }
+
   /// Stops the uplink PDU slot repository.
   void stop()
   {
@@ -125,9 +212,6 @@ public:
       std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
   }
-
-  /// Returns a span that contains the PDUs for the given slot and symbol index.
-  span<const uplink_slot_pdu_entry> get_pdus(unsigned end_symbol_index) const { return get_entry(end_symbol_index); }
 
 private:
   /// Accepting PDU state mask in the pending PDU count.
@@ -149,23 +233,15 @@ private:
     srsran_assert((prev & accepting_pdu_mask) != 0, "The slot repository is the invalid state of NOT accepting PDUs.");
   }
 
-  /// Repository that contains the PDUs.
-  std::array<static_vector<uplink_slot_pdu_entry, MAX_UL_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> repository;
-  /// Internal state, it counts the number of pending and executing PDUs using masks.
+  /// Repository that contains PUSCH PDUs.
+  std::array<static_vector<pusch_pdu, MAX_PUSCH_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> pusch_repository;
+  /// Repository that contains PUCCH PDUs.
+  std::array<static_vector<pucch_pdu, MAX_PUCCH_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> pucch_repository;
+  /// Repository that contains collections of PUCCH Format 1.
+  std::array<static_vector<pucch_f1_collection, MAX_PUCCH_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> pucch_f1_repository;
+  /// Repository that contains SRS PDUs.
+  std::array<static_vector<srs_pdu, MAX_SRS_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> srs_repository;
+  /// Counts the number of pending PDUs.
   std::atomic<uint32_t> pending_pdu_count = {};
-
-  /// Returns a reference to the list of PDUs for the given slot and end symbol index.
-  const static_vector<uplink_slot_pdu_entry, MAX_UL_PDUS_PER_SLOT>& get_entry(unsigned end_symbol_index) const
-  {
-    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
-    return repository[end_symbol_index];
-  }
-
-  /// Returns a reference to the list of PDUs for the given slot and end symbol index.
-  static_vector<uplink_slot_pdu_entry, MAX_UL_PDUS_PER_SLOT>& get_entry(unsigned end_symbol_index)
-  {
-    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
-    return repository[end_symbol_index];
-  }
 };
 } // namespace srsran
