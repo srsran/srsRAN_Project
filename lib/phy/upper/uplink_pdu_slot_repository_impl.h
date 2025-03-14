@@ -81,18 +81,21 @@ public:
           return common_config == entry.config.common_config;
         });
 
-    // If the common configuration is not yet in the list.
-    if (it == f1_collections.end()) {
-      // Push back a complete new collection.
-      auto back = pucch_f1_repository[end_symbol_index].emplace_back(pucch_f1_collection{
-          .config = pucch_processor::format1_batch_configuration(config), .ue_contexts = {ue_entry}});
-    } else {
+    // If the common configuration was found.
+    if (it != f1_collections.end()) {
       // Push back the UE dedicated entry in the existing collection.
       it->config.entries.emplace(config.initial_cyclic_shift,
                                  config.time_domain_occ,
                                  {.context = config.context, .nof_harq_ack = config.nof_harq_ack});
+      it->ue_contexts.emplace_back(ue_entry);
+      return;
     }
 
+    // If the common configuration is not yet in the list, push back a complete new collection.
+    pucch_f1_repository[end_symbol_index].emplace_back(
+        pucch_f1_collection{.config = pucch_processor::format1_batch_configuration(config), .ue_contexts = {ue_entry}});
+
+    // Only increment per collection.
     increment_pending_pdu_count();
   }
 
@@ -138,7 +141,7 @@ public:
   void finish_adding_pdus() override
   {
     [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_xor(accepting_pdu_mask);
-    srsran_assert((prev & accepting_pdu_mask) != 0, "Unexpected prev={:0x016} finishing PDUs.", prev);
+    srsran_assert((prev & accepting_pdu_mask) != 0, "Unexpected prev={:08x} finishing PDUs.", prev);
   }
 
   /// \brief Notifies the event of creating a new asynchronous execution task. It increments the PDU being executed
@@ -170,7 +173,7 @@ public:
   void on_finish_processing_pdu()
   {
     [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_sub(pending_pdu_inc_queue + pending_pdu_inc_exec);
-    srsran_assert((prev & accepting_pdu_mask) == 0, "The slot repository is in an unexpected state 0x{:016x}.", prev);
+    srsran_assert((prev & accepting_pdu_mask) == 0, "The slot repository is in an unexpected state 0x{:08x}.", prev);
   }
 
   /// Returns a span that contains the PUSCH PDUs for the given slot and symbol index.
@@ -206,7 +209,7 @@ public:
   {
     // As long as there are pending asynchronous tasks, wait for them to finish.
     for (uint32_t current_state = pending_pdu_count.load();
-         ((current_state & 0xffff0000) != 0) ||
+         ((current_state & 0xfff000) != 0) ||
          !pending_pdu_count.compare_exchange_weak(current_state, pending_pdu_count_stopped);
          current_state = pending_pdu_count.load()) {
       std::this_thread::sleep_for(std::chrono::microseconds(10));
@@ -215,15 +218,15 @@ public:
 
 private:
   /// Accepting PDU state mask in the pending PDU count.
-  static constexpr uint32_t accepting_pdu_mask = 1UL << 31U;
+  static constexpr uint32_t accepting_pdu_mask = 0x80000000;
   /// Pending PDU value when the processor is idle.
-  static constexpr uint32_t pending_pdu_count_idle = 0UL;
+  static constexpr uint32_t pending_pdu_count_idle = 0x0;
   /// Pending PDU value when the processor is stopped.
-  static constexpr uint32_t pending_pdu_count_stopped = std::numeric_limits<int32_t>::max();
+  static constexpr uint32_t pending_pdu_count_stopped = 0x7fffffff;
   /// PDU pending increment.
-  static constexpr uint32_t pending_pdu_inc_queue = 1;
+  static constexpr uint32_t pending_pdu_inc_queue = 0x1;
   /// PDU execution increment.
-  static constexpr uint32_t pending_pdu_inc_exec = 1UL << 12;
+  static constexpr uint32_t pending_pdu_inc_exec = 0x1000;
 
   /// \brief Increment the pending PDU count.
   /// \remark An assertion is triggered if the pending PDU count contains the accepting PDU mask.

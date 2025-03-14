@@ -66,7 +66,7 @@ public:
   const pucch_format1_map<pucch_processor_result>& process(const resource_grid_reader&        grid,
                                                            const format1_batch_configuration& config) override
   {
-    if (!logger.debug.enabled() && !logger.debug.enabled()) {
+    if (!logger.debug.enabled() && !logger.info.enabled()) {
       return processor->process(grid, config);
     }
 
@@ -93,18 +93,20 @@ public:
         const auto& result        = results->get(initial_cyclic_shift, time_domain_occ);
 
         // Build formateable Format 1 configuraton.
-        format1_configuration all_config = {.context            = ue_config.context,
-                                            .slot               = common_config.slot,
-                                            .bwp_size_rb        = common_config.bwp_size_rb,
-                                            .bwp_start_rb       = common_config.bwp_start_rb,
-                                            .cp                 = common_config.cp,
-                                            .starting_prb       = common_config.starting_prb,
-                                            .second_hop_prb     = common_config.second_hop_prb,
-                                            .n_id               = common_config.n_id,
-                                            .nof_harq_ack       = ue_config.nof_harq_ack,
-                                            .ports              = common_config.ports,
-                                            .nof_symbols        = common_config.nof_symbols,
-                                            .start_symbol_index = common_config.start_symbol_index};
+        format1_configuration all_config = {.context              = ue_config.context,
+                                            .slot                 = common_config.slot,
+                                            .bwp_size_rb          = common_config.bwp_size_rb,
+                                            .bwp_start_rb         = common_config.bwp_start_rb,
+                                            .cp                   = common_config.cp,
+                                            .starting_prb         = common_config.starting_prb,
+                                            .second_hop_prb       = common_config.second_hop_prb,
+                                            .n_id                 = common_config.n_id,
+                                            .nof_harq_ack         = ue_config.nof_harq_ack,
+                                            .ports                = common_config.ports,
+                                            .initial_cyclic_shift = initial_cyclic_shift,
+                                            .nof_symbols          = common_config.nof_symbols,
+                                            .start_symbol_index   = common_config.start_symbol_index,
+                                            .time_domain_occ      = time_domain_occ};
 
         if (logger.debug.enabled()) {
           // Detailed log information, including a list of all PUCCH configuration and result fields.

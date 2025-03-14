@@ -113,7 +113,7 @@ void uplink_processor_impl::handle_rx_symbol(const shared_resource_grid& grid, u
 
 void uplink_processor_impl::process_prach(const prach_buffer& buffer, const prach_buffer_context& context_)
 {
-  bool success = task_executors.prach_executor.execute([this, &buffer, context_]() mutable {
+  bool success = task_executors.prach_executor.execute([this, &buffer, context_]() {
     trace_point tp = l1_tracer.now();
 
     ul_prach_results ul_results;
@@ -208,7 +208,7 @@ void uplink_processor_impl::process_pucch(const shared_resource_grid&           
     return;
   }
 
-  bool success = task_executors.pucch_executor.execute([this, grid2 = grid.copy(), &pdu]() mutable {
+  bool success = task_executors.pucch_executor.execute([this, grid2 = grid.copy(), &pdu]() {
     trace_point tp = l1_tracer.now();
 
     pucch_processor_result proc_result;
@@ -262,7 +262,12 @@ void uplink_processor_impl::process_pucch(const shared_resource_grid&           
 void uplink_processor_impl::process_pucch_f1(const shared_resource_grid&                                 grid,
                                              const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection)
 {
-  bool success = task_executors.pucch_executor.execute([this, grid2 = grid.copy(), &collection]() mutable {
+  // Notify the creation of the execution task.
+  if (!pdu_repository.on_create_pdu_task()) {
+    return;
+  }
+
+  bool success = task_executors.pucch_executor.execute([this, grid2 = grid.copy(), &collection]() {
     trace_point tp = l1_tracer.now();
 
     // Process all PUCCH Format 1 in one go.
@@ -272,7 +277,7 @@ void uplink_processor_impl::process_pucch_f1(const shared_resource_grid&        
     // Iterate each UE context.
     for (const auto& entry : collection.ue_contexts) {
       // Result for the given initial cyclic shift is not available.
-      if (results.has_value(entry.initial_cyclic_shift, entry.time_domain_occ)) {
+      if (!results.has_value(entry.initial_cyclic_shift, entry.time_domain_occ)) {
         logger.warning(collection.config.common_config.slot.sfn(),
                        collection.config.common_config.slot.slot_index(),
                        "Missing PUCCH F1 result for rnti={}, cs={} and occ={}.",
@@ -289,7 +294,6 @@ void uplink_processor_impl::process_pucch_f1(const shared_resource_grid&        
           ul_pucch_results discarded_results = ul_pucch_results::create_discarded(entry.context, nof_harq_ack);
           notifier.on_new_pucch_results(discarded_results);
         }
-        pdu_repository.on_finish_processing_pdu();
         continue;
       }
 
@@ -300,9 +304,9 @@ void uplink_processor_impl::process_pucch_f1(const shared_resource_grid&        
 
       // Notify the PUCCH results.
       notifier.on_new_pucch_results(notifier_result);
-      pdu_repository.on_finish_processing_pdu();
     }
     l1_tracer << trace_event("pucch1", tp);
+    pdu_repository.on_finish_processing_pdu();
   });
 
   // Notify the discarded transmissions if the executor failed.
@@ -387,8 +391,8 @@ void uplink_processor_impl::notify_discard_pucch(const uplink_pdu_slot_repositor
       ul_pucch_results discarded_results = ul_pucch_results::create_discarded(entry.context, nof_harq_ack);
       notifier.on_new_pucch_results(discarded_results);
     }
-    pdu_repository.on_finish_processing_pdu();
   }
+  pdu_repository.on_finish_processing_pdu();
 }
 
 void uplink_processor_impl::discard_slot()
