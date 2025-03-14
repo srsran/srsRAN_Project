@@ -72,10 +72,11 @@ async_task<void> mac_cell_processor::start()
       [this]() {
         // set cell as active.
         state = cell_state::active;
+        logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
       },
-      [this, cell_index = cell_cfg.cell_index]() {
+      [this]() {
         logger.warning("cell={}: Postponed cell start operation. Cause: Task queue is full",
-                       fmt::underlying(cell_index));
+                       fmt::underlying(cell_cfg.cell_index));
       });
 }
 

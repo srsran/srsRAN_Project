@@ -404,13 +404,13 @@ void scheduler_result_logger::log_info(const sched_result& result, std::chrono::
   }
   for (const dl_msg_alloc& ue_msg : result.dl.ue_grants) {
     fmt::format_to(std::back_inserter(fmtbuf),
-                   "{}DL: ue={} c-rnti={} rb={} h_id={} ss_id={} k1={} newtx={} rv={} tbs={}",
+                   "{}DL: ue={} c-rnti={} h_id={} ss_id={} rb={} k1={} newtx={} rv={} tbs={}",
                    fmtbuf.size() == 0 ? "" : ", ",
                    fmt::underlying(ue_msg.context.ue_index),
                    ue_msg.pdsch_cfg.rnti,
-                   ue_msg.pdsch_cfg.rbs,
                    fmt::underlying(ue_msg.pdsch_cfg.harq_id),
                    fmt::underlying(ue_msg.context.ss_id),
+                   ue_msg.pdsch_cfg.rbs,
                    ue_msg.context.k1,
                    ue_msg.pdsch_cfg.codewords[0].new_data,
                    ue_msg.pdsch_cfg.codewords[0].rv_index,
@@ -422,7 +422,7 @@ void scheduler_result_logger::log_info(const sched_result& result, std::chrono::
   }
   for (const ul_sched_info& ue_msg : result.ul.puschs) {
     fmt::format_to(std::back_inserter(fmtbuf),
-                   "{}UL: ue={} rnti={} h_id={} ss_id={} rb={} newtx={} rv={} tbs={} ",
+                   "{}UL: ue={} c-rnti={} h_id={} ss_id={} rb={} newtx={} rv={} tbs={} ",
                    fmtbuf.size() == 0 ? "" : ", ",
                    fmt::underlying(ue_msg.context.ue_index),
                    ue_msg.pusch_cfg.rnti,

@@ -473,7 +473,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     fmt::format_to(std::back_inserter(buffer), " dl_bs={}", scaled_fmt_integer(ue.dl_bs, false));
     fmt::format_to(std::back_inserter(buffer), " dl_nof_prbs={}", ue.tot_pdsch_prbs_used);
     if (ue.last_dl_olla.has_value()) {
-      fmt::format_to(std::back_inserter(buffer), " dl_olla={}", ue.last_dl_olla);
+      fmt::format_to(std::back_inserter(buffer), " dl_olla={}", ue.last_dl_olla.value());
     }
 
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {
