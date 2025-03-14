@@ -8,15 +8,15 @@
  *
  */
 
-#include "srsran/adt/triple_buffer_atomic.h"
+#include "srsran/adt/lockfree_triple_buffer.h"
 #include <gtest/gtest.h>
 #include <thread>
 
 using namespace srsran;
 
-TEST(triple_buffer_atomic, basic)
+TEST(lockfree_triple_buffer, basic)
 {
-  triple_buffer_atomic<int> trio{};
+  lockfree_triple_buffer<int> trio{};
 
   constexpr unsigned N               = 100;
   auto               producer_thread = std::thread([&]() {

@@ -20,10 +20,10 @@ namespace srsran {
 /// strategy. It is designed for scenarios with a single producer and a single consumer.
 /// \tparam T The type of data to be stored in the buffer.
 template <typename T>
-class triple_buffer_atomic
+class lockfree_triple_buffer
 {
 public:
-  triple_buffer_atomic() = default;
+  lockfree_triple_buffer() = default;
 
   /// \brief Read the latest committed data from the buffer.
   /// This function is intended to be called by the consumer thread.
