@@ -25,6 +25,8 @@ TEST_F(pdcp_rx_metrics_container_test, init)
   // Check values
   ASSERT_EQ(m.num_pdus, 0);
   ASSERT_EQ(m.num_pdu_bytes, 0);
+  ASSERT_EQ(m.num_data_pdus, 0);
+  ASSERT_EQ(m.num_data_pdu_bytes, 0);
   ASSERT_EQ(m.num_dropped_pdus, 0);
   ASSERT_EQ(m.num_sdus, 0);
   ASSERT_EQ(m.num_sdu_bytes, 0);
@@ -73,6 +75,8 @@ TEST_F(pdcp_rx_metrics_container_test, values)
 {
   pdcp_rx_metrics_container m = {.num_pdus                         = 49532,
                                  .num_pdu_bytes                    = 10000,
+                                 .num_data_pdus                    = 49121,
+                                 .num_data_pdu_bytes               = 9500,
                                  .num_dropped_pdus                 = 94925,
                                  .num_sdus                         = 59493,
                                  .num_sdu_bytes                    = 20000,
@@ -93,6 +97,8 @@ TEST_F(pdcp_rx_metrics_container_test, values)
   // Check values
   ASSERT_EQ(m.num_pdus, 49532);
   ASSERT_EQ(m.num_pdu_bytes, 10000);
+  ASSERT_EQ(m.num_data_pdus, 49121);
+  ASSERT_EQ(m.num_data_pdu_bytes, 9500);
   ASSERT_EQ(m.num_dropped_pdus, 94925);
   ASSERT_EQ(m.num_sdus, 59493);
   ASSERT_EQ(m.num_sdu_bytes, 20000);
@@ -170,6 +176,8 @@ TEST_P(pdcp_rx_metrics_test, sdu_pdu_metrics)
     auto m = metrics_notif.metrics_list.back().rx;
     ASSERT_EQ(m.num_pdus, 1);
     ASSERT_EQ(m.num_pdu_bytes, exp_pdu_size);
+    ASSERT_EQ(m.num_data_pdus, 1);
+    ASSERT_EQ(m.num_data_pdu_bytes, exp_pdu_size);
     ASSERT_EQ(m.num_sdus, 1);
     ASSERT_EQ(m.num_sdu_bytes, exp_sdu_size);
     ASSERT_EQ(m.num_integrity_verified_pdus, 1);
@@ -224,6 +232,8 @@ TEST_P(pdcp_rx_metrics_test, integrity_metrics)
     auto m = metrics_notif.metrics_list.back().rx;
     ASSERT_EQ(m.num_pdus, 1);
     ASSERT_EQ(m.num_pdu_bytes, exp_pdu_size);
+    ASSERT_EQ(m.num_data_pdus, 1);
+    ASSERT_EQ(m.num_data_pdu_bytes, exp_pdu_size);
     ASSERT_EQ(m.num_sdus, 0);
     ASSERT_EQ(m.num_sdu_bytes, 0);
     ASSERT_EQ(m.num_integrity_verified_pdus, 0);

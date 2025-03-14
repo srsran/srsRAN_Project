@@ -43,6 +43,15 @@ public:
     metrics.num_pdu_bytes += num_pdu_bytes_;
   }
 
+  void add_data_pdus(uint32_t num_pdus_, size_t num_pdu_bytes_)
+  {
+    if (not enabled) {
+      return;
+    }
+    metrics.num_data_pdus += num_pdus_;
+    metrics.num_data_pdu_bytes += num_pdu_bytes_;
+  }
+
   void add_lost_pdus(uint32_t num_pdus_)
   {
     if (not enabled) {

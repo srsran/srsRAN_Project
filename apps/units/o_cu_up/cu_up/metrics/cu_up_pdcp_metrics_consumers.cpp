@@ -109,6 +109,8 @@ void cu_up_pdcp_metrics_consumer_json::handle_metric(const app_services::metrics
 
   aggr_rx.num_pdus += rx_metric.num_pdus;
   aggr_rx.num_pdu_bytes += rx_metric.num_pdu_bytes;
+  aggr_rx.num_data_pdus += rx_metric.num_data_pdus;
+  aggr_rx.num_data_pdu_bytes += rx_metric.num_data_pdu_bytes;
   aggr_rx.num_dropped_pdus += rx_metric.num_dropped_pdus;
   aggr_rx.num_sdus += rx_metric.num_sdus;
   aggr_rx.num_sdu_bytes += rx_metric.num_sdu_bytes;

@@ -178,6 +178,9 @@ void pdcp_entity_rx::reestablish(security::sec_128_as_config sec_cfg)
 
 void pdcp_entity_rx::handle_data_pdu(byte_buffer pdu, std::chrono::system_clock::time_point time_of_arrival)
 {
+  // Count all received data PDUs.
+  metrics.add_data_pdus(1, pdu.length());
+
   // Sanity check
   if (pdu.length() <= hdr_len_bytes) {
     metrics.add_dropped_pdus(1);

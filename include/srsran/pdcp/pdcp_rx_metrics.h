@@ -29,6 +29,8 @@ namespace srsran {
 struct pdcp_rx_metrics_container {
   uint32_t num_pdus;
   uint32_t num_pdu_bytes;
+  uint32_t num_data_pdus;
+  uint32_t num_data_pdu_bytes;
   uint32_t num_dropped_pdus;
   uint32_t num_sdus;
   uint32_t num_sdu_bytes;
