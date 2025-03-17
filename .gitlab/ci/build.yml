@@ -571,22 +571,30 @@ valgrind changed tests:
     TEST_EXECUTION_TIMEOUT: 20m
   script:
     - *srs_functions
+    - REPO_PLUGIN_COMMIT_SHA=$(cat .gitlab/ci/plugin_version.txt)
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 40
     - |
       FORK_POINT=$(git merge-base origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME)
-      echo "##################################################"
-      echo "#### $FORK_POINT ####"
-      echo "##################################################"
+      echo "#############################################################################################"
+      echo "#### $FORK_POINT | $REPO_PLUGIN_COMMIT_SHA ####"
+      echo "#############################################################################################"
       git checkout $FORK_POINT
+      cd ${PLUGIN_PATH}
+      git fetch origin ${REPO_PLUGIN_COMMIT_SHA} > /dev/null
+      git checkout ${REPO_PLUGIN_COMMIT_SHA}
+      cd ${CI_PROJECT_DIR}
       OUTPUT_FINGERPRINT="${FINGERPRINT}"
       build_srsgnb
       OUTPUT_FINGERPRINT=""
     - |
-      echo "##################################################"
-      echo "#### origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME ####"
-      echo "##################################################"
+      echo "#############################################################################################"
+      echo "#### $CI_COMMIT_SHA | $CI_PLUGIN_COMMIT_SHA ####"
+      echo "#############################################################################################"
       git checkout origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
+      cd ${PLUGIN_PATH}
+      git checkout ${CI_PLUGIN_COMMIT_SHA}
+      cd ${CI_PROJECT_DIR}      
       build_srsgnb
     - echo "This test execution has a timeout of ${TEST_EXECUTION_TIMEOUT}. If the execution excess that timer, the job will be marked as allowed_to_fail. This will avoid the job to have a huge duration in a MR pipeline."
     - launch_tests
