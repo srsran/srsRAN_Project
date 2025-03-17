@@ -55,7 +55,7 @@ variables:
       optional: true
       artifacts: false
     - job: get plugin commit
-      optional: false
+      optional: true
       artifacts: true
   script:
     - &srs_functions |

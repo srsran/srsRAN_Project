@@ -273,7 +273,7 @@ full-code-format:
       optional: true
       artifacts: false
     - job: get plugin commit
-      optional: false
+      optional: true
       artifacts: true
   variables:
     ANALYZER: ""
