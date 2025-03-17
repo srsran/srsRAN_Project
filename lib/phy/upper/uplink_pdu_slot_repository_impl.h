@@ -184,7 +184,7 @@ public:
   /// \remark An assertion is triggered if:
   /// - the current state is accepting PDUs; or
   /// - the current state is stopped; or
-  /// - any of the pending counters is not zero.
+  /// - any of the pending counters are not zero.
   void on_finish_processing_pdu()
   {
     [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_sub(pending_pdu_inc_queue + pending_pdu_inc_exec);
