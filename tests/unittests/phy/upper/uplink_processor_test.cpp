@@ -307,4 +307,127 @@ TEST_F(UplinkProcessorFixture, pusch_fail_executor)
   ASSERT_TRUE(results_notifier.has_pusch_uci_result_been_notified());
 }
 
+TEST_F(UplinkProcessorFixture, pusch_discard_slot)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Add PDU to the repository.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+  }
+
+  // Discard.
+  ul_processor->get_slot_processor().discard_slot();
+
+  // Assert results.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_TRUE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_TRUE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, reserve_slot_twice_without_request)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Get the repository for the first time - it transitions to idle as there is no request.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    ASSERT_TRUE(repository.is_valid());
+  }
+
+  // Get the reporsitory for the second time - it shall return a valid repository.
+  unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+  ASSERT_TRUE(repository.is_valid());
+}
+
+TEST_F(UplinkProcessorFixture, reserve_slot_twice_with_request)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Get the repository for the first time - it has a pending PDU.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+    ASSERT_TRUE(repository.is_valid());
+  }
+
+  // Get the reporsitory for the second time - it shall return an invalid repository.
+  unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+  ASSERT_FALSE(repository.is_valid());
+}
+
+TEST_F(UplinkProcessorFixture, stop_no_pending_task)
+{
+  // Direct stop.
+  ul_processor->stop();
+
+  // Assert results.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, stop_pending_task)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Add PDU to the repository.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+  }
+
+  // Notify reception of receive symbol - an asynchronous task is expected.
+  unsigned             end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  shared_resource_grid shared_grid      = grid.get_grid();
+  ul_processor->get_slot_processor().handle_rx_symbol(shared_grid, end_symbol_index);
+  ASSERT_TRUE(pusch_executor.has_pending_tasks());
+
+  // Create asynchronous task - it will block until all tasks are completed.
+  std::thread stop_thread([this]() { ul_processor->stop(); });
+
+  // Execute PUSCH asynchronous task.
+  pusch_executor.try_run_next();
+
+  // Assert execution expectations.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_TRUE(pusch_spy->has_process_method_been_called());
+  ASSERT_TRUE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_TRUE(results_notifier.has_pusch_uci_result_been_notified());
+
+  // Synchronize stopping thread.
+  stop_thread.join();
+}
+
+TEST_F(UplinkProcessorFixture, pusch_discard_slot_after_stop)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Add PDU to the repository.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+  }
+
+  // Stop.
+  ul_processor->stop();
+
+  // Discard.
+  ul_processor->get_slot_processor().discard_slot();
+
+  // Assert results.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
 } // namespace

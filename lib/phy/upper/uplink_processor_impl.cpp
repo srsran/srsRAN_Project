@@ -402,15 +402,21 @@ void uplink_processor_impl::discard_slot()
   // Iterate all possible symbols.
   for (unsigned i_symbol = 0; i_symbol != MAX_NSYMB_PER_SLOT; ++i_symbol) {
     for (const auto& pdu : pdu_repository.get_pucch_pdus(i_symbol)) {
-      notify_discard_pucch(pdu);
+      if (pdu_repository.on_create_pdu_task()) {
+        notify_discard_pucch(pdu);
+      }
     }
 
     for (const auto& collection : pdu_repository.get_pucch_f1_repository(i_symbol)) {
-      notify_discard_pucch(collection);
+      if (pdu_repository.on_create_pdu_task()) {
+        notify_discard_pucch(collection);
+      }
     }
 
     for (const auto& pdu : pdu_repository.get_pusch_pdus(i_symbol)) {
-      notify_discard_pusch(pdu);
+      if (pdu_repository.on_create_pdu_task()) {
+        notify_discard_pusch(pdu);
+      }
     }
   }
 }

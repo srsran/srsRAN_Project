@@ -147,33 +147,52 @@ public:
   /// \brief Notifies the event of creating a new asynchronous execution task. It increments the PDU being executed
   /// count.
   /// \return \c true if the internal state allows the creation of the task, otherwise \c false.
+  /// \remark An assertion is triggered if the state is accepting PDUs or there are no pending PDUs to process.
   bool on_create_pdu_task()
   {
     // Get current state.
     uint32_t current_state = pending_pdu_count.load();
 
-    // Try to increment the number of PDUs to execute.
-    while (!pending_pdu_count.compare_exchange_weak(current_state, current_state + pending_pdu_inc_exec)) {
-      // Return false if the execution has already stopped.
+    // Stop function - returns true if the current state is stopped, and it triggers an assertion if the current state
+    // is unexpected.
+    auto stop_function = [&current_state]() {
       if (current_state == pending_pdu_count_stopped) {
-        return false;
+        return true;
       }
-      std::this_thread::sleep_for(std::chrono::microseconds(10));
+
+      srsran_assert(((current_state & accepting_pdu_mask) == 0) && ((current_state & 0xfff) != 0),
+                    "The slot repository is in an unexpected state 0x{:08x}.",
+                    current_state);
+
+      return false;
+    };
+
+    // Try to increment the number of PDUs to execute.
+    bool success = false;
+    while (!stop_function() &&
+           !(success = pending_pdu_count.compare_exchange_weak(current_state, current_state + pending_pdu_inc_exec))) {
     }
 
-    // The exchange was successful, indicate the task can be created.
-    return true;
+    // Return true if the exchange was successful.
+    return success;
   }
 
   /// \brief Notifies the completion of a PDU processing.
   ///
   /// Decrements the pending PDU counter.
   ///
-  /// \remark An assertion is triggered if the pending PDU count contains the accepting PDU mask.
+  /// \remark An assertion is triggered if:
+  /// - the current state is accepting PDUs; or
+  /// - the current state is stopped; or
+  /// - any of the pending counters is not zero.
   void on_finish_processing_pdu()
   {
     [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_sub(pending_pdu_inc_queue + pending_pdu_inc_exec);
-    srsran_assert((prev & accepting_pdu_mask) == 0, "The slot repository is in an unexpected state 0x{:08x}.", prev);
+
+    srsran_assert(((prev & accepting_pdu_mask) == 0) && (prev != pending_pdu_count_stopped) &&
+                      ((prev & 0xfff000) != 0) && ((prev & 0xfff) != 0),
+                  "The slot repository is in an unexpected state 0x{:08x}.",
+                  prev);
   }
 
   /// Returns a span that contains the PUSCH PDUs for the given slot and symbol index.
@@ -204,7 +223,9 @@ public:
     return srs_repository[end_symbol_index];
   }
 
-  /// Stops the uplink PDU slot repository.
+  /// \brief Stops the uplink PDU slot repository.
+  ///
+  /// It blocks until there are no more asynchronous tasks.
   void stop()
   {
     // As long as there are pending asynchronous tasks, wait for them to finish.
