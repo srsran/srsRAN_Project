@@ -111,11 +111,11 @@ tox python in builder:
   parallel:
     matrix:
       - os_version: "22.04"
-        uhd_version: ["4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0"] # "4.1.0.5" default
+        uhd_version: ["4.8.0.0", "4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0"] # "4.1.0.5" default
       - os_version: "24.04"
-        uhd_version: ["4.7.0.0"] # "4.6.0.0" default
-      # - os_version: "24.10"
-      #   uhd_version: [] # "4.7.0.0" default
+        uhd_version: ["4.8.0.0", "4.7.0.0"] # "4.6.0.0" default
+      - os_version: "24.10"
+        uhd_version: ["4.8.0.0"] # "4.7.0.0" default
 
 ubuntu-uhd-builder avx2:
   extends: .ubuntu-uhd-builder
@@ -205,16 +205,16 @@ ubuntu-uhd-builder arm64:
     matrix:
       - &dpdk_2204_no_isa_matrix
         os_version: "22.04"
-        dpdk_version: ["22.11.6", "23.11.1"]
+        dpdk_version: ["22.11.6", "23.11.1", "24.11.1"]
       - &dpdk_2204_matrix
         os_version: "22.04"
-        dpdk_version: ["21.08", "22.11.6", "23.11.1"]
+        dpdk_version: ["21.08", "22.11.6", "23.11.1", "24.11.1"]
       - &dpdk_2404_matrix
         os_version: "24.04"
-        dpdk_version: ["23.11.1"]
+        dpdk_version: ["23.11.1", "24.11.1"]
       - &dpdk_2410_matrix
         os_version: "24.10"
-        dpdk_version: ["23.11.1"]
+        dpdk_version: ["23.11.1", "24.11.1"]
 
 ubuntu-dpdk-builder no isa:
   extends: .ubuntu-dpdk-builder
@@ -380,22 +380,22 @@ image-build-publish [ubuntu, 22.04, amd64]:
       parallel:
         matrix:
           - os_version: "22.04"
-            uhd_version: ["4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0"]
+            uhd_version: ["4.8.0.0", "4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0"]
     - job: ubuntu-dpdk-builder no isa
       parallel:
         matrix:
           - os_version: "22.04"
-            dpdk_version: ["22.11.6", "23.11.1"]
+            dpdk_version: ["22.11.6", "23.11.1", "24.11.1"]
     - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:
           - os_version: "22.04"
-            dpdk_version: ["21.08", "22.11.6", "23.11.1"]
+            dpdk_version: ["21.08", "22.11.6", "23.11.1", "24.11.1"]
     - job: ubuntu-dpdk-builder avx512
       parallel:
         matrix:
           - os_version: "22.04"
-            dpdk_version: ["21.08", "22.11.6", "23.11.1"]
+            dpdk_version: ["21.08", "22.11.6", "23.11.1", "24.11.1"]
 
 alternative-tag [ubuntu, 22.04, amd64]:
   extends:
@@ -422,12 +422,12 @@ image-build-publish [ubuntu, 22.04, arm64]:
       parallel:
         matrix:
           - os_version: "22.04"
-            uhd_version: ["4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0"]
+            uhd_version: ["4.8.0.0", "4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0"]
     - job: ubuntu-dpdk-builder arm64
       parallel:
         matrix:
           - os_version: "22.04"
-            dpdk_version: ["21.08", "22.11.6", "23.11.1"]
+            dpdk_version: ["21.08", "22.11.6", "23.11.1", "24.11.1"]
 
 alternative-tag [ubuntu, 22.04, arm64]:
   extends:
@@ -472,17 +472,17 @@ image-build-publish [ubuntu, 24.04, amd64]:
       parallel:
         matrix:
           - os_version: "24.04"
-            uhd_version: ["4.7.0.0"] # "4.6.0.0" default
+            uhd_version: ["4.8.0.0", "4.7.0.0"] # "4.6.0.0" default
     - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:
           - os_version: "24.04"
-            dpdk_version: ["23.11.1"]
+            dpdk_version: ["23.11.1", "24.11.1"]
     - job: ubuntu-dpdk-builder avx512
       parallel:
         matrix:
           - os_version: "24.04"
-            dpdk_version: ["23.11.1"]
+            dpdk_version: ["23.11.1", "24.11.1"]
 
 alternative-tag [ubuntu, 24.04, amd64]:
   extends:
@@ -509,12 +509,12 @@ image-build-publish [ubuntu, 24.04, arm64]:
       parallel:
         matrix:
           - os_version: "24.04"
-            uhd_version: ["4.7.0.0"] # "4.6.0.0" default
+            uhd_version: ["4.8.0.0", "4.7.0.0"] # "4.6.0.0" default
     - job: ubuntu-dpdk-builder arm64
       parallel:
         matrix:
           - os_version: "24.04"
-            dpdk_version: ["23.11.1"]
+            dpdk_version: ["23.11.1", "24.11.1"]
 
 alternative-tag [ubuntu, 24.04, arm64]:
   extends:
@@ -563,17 +563,17 @@ image-build-publish [ubuntu, 24.04-rtsan, amd64]:
       parallel:
         matrix:
           - os_version: "24.04"
-            uhd_version: ["4.7.0.0"] # "4.6.0.0" default
+            uhd_version: ["4.8.0.0", "4.7.0.0"] # "4.6.0.0" default
     - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:
           - os_version: "24.04"
-            dpdk_version: ["23.11.1"]
+            dpdk_version: ["23.11.1", "24.11.1"]
     - job: ubuntu-dpdk-builder avx512
       parallel:
         matrix:
           - os_version: "24.04"
-            dpdk_version: ["23.11.1"]
+            dpdk_version: ["23.11.1", "24.11.1"]
 
 alternative-tag [ubuntu, 24.04-rtsan, amd64]:
   extends:
@@ -600,12 +600,12 @@ image-build-publish [ubuntu, 24.04-rtsan, arm64]:
       parallel:
         matrix:
           - os_version: "24.04"
-            uhd_version: ["4.7.0.0"] # "4.6.0.0" default
+            uhd_version: ["4.8.0.0", "4.7.0.0"] # "4.6.0.0" default
     - job: ubuntu-dpdk-builder arm64
       parallel:
         matrix:
           - os_version: "24.04"
-            dpdk_version: ["23.11.1"]
+            dpdk_version: ["23.11.1", "24.11.1"]
 
 alternative-tag [ubuntu, 24.04-rtsan, arm64]:
   extends:
@@ -646,16 +646,21 @@ image-build-publish [ubuntu, 24.10, amd64]:
     PLATFORM: amd64
   needs:
     - builder version
+    - job: ubuntu-uhd-builder avx2
+      parallel:
+        matrix:
+          - os_version: "24.10"
+            uhd_version: ["4.8.0.0"] # "4.7.0.0" default
     - job: ubuntu-dpdk-builder avx2
       parallel:
         matrix:
           - os_version: "24.10"
-            dpdk_version: ["23.11.1"]
+            dpdk_version: ["23.11.1", "24.11.1"]
     - job: ubuntu-dpdk-builder avx512
       parallel:
         matrix:
           - os_version: "24.10"
-            dpdk_version: ["23.11.1"]
+            dpdk_version: ["23.11.1", "24.11.1"]
 
 alternative-tag [ubuntu, 24.10, amd64]:
   extends:
@@ -678,11 +683,16 @@ image-build-publish [ubuntu, 24.10, arm64]:
     PLATFORM: arm64
   needs:
     - builder version
+    - job: ubuntu-uhd-builder arm64
+      parallel:
+        matrix:
+          - os_version: "24.10"
+            uhd_version: ["4.8.0.0"] # "4.7.0.0" default
     - job: ubuntu-dpdk-builder arm64
       parallel:
         matrix:
           - os_version: "24.10"
-            dpdk_version: ["23.11.1"]
+            dpdk_version: ["23.11.1", "24.11.1"]
 
 alternative-tag [ubuntu, 24.10, arm64]:
   extends:

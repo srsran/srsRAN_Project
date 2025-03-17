@@ -963,13 +963,13 @@ ubuntu dpdk:
     matrix:
       - OS: ubuntu-24.10
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["23.11.1_avx2"]
+        DPDK_VERSION: ["23.11.1_avx2", "24.11.1_avx2"]
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["23.11.1_avx2"]
+        DPDK_VERSION: ["23.11.1_avx2", "24.11.1_avx2"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
+        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2", "24.11.1_avx2"]
 
 # Nightly Sanitizers
 
@@ -1257,13 +1257,14 @@ build uhd alt:
     matrix:
       - OS: ubuntu-24.10
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.7.0.0"]
+        UHD_VERSION: ["4.8.0.0", "4.7.0.0"]
       - OS: ubuntu-24.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.7.0.0", "4.6.0.0"]
+        UHD_VERSION: ["4.8.0.0", "4.7.0.0", "4.6.0.0"]
       - OS: ubuntu-22.04
         COMPILER: [gcc, clang]
-        UHD_VERSION: ["4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
+        UHD_VERSION:
+          ["4.8.0.0", "4.7.0.0", "4.6.0.0", "4.4.0.0", "4.3.0.0", "4.1.0.5"]
 
 # Build + unit tests combinations
 
@@ -1535,7 +1536,7 @@ ubuntu-22.04 amd64 avx2 dpdk:
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2"]
+        DPDK_VERSION: ["22.11.6_avx2", "23.11.1_avx2", "24.11.1_avx2"]
 
 ubuntu-22.04 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1551,7 +1552,7 @@ ubuntu-22.04 amd64 avx512 dpdk:
   parallel:
     matrix:
       - <<: *basic_combinations_dpdk
-        DPDK_VERSION: ["22.11.6_avx512", "23.11.1_avx512"]
+        DPDK_VERSION: ["22.11.6_avx512", "23.11.1_avx512", "24.11.1_avx512"]
 
 ubuntu-24.04 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1570,6 +1571,12 @@ ubuntu-24.04 amd64 avx2 dpdk:
         DPDK_VERSION: "23.11.1_avx2"
       - <<: *basic_combinations
         DPDK_VERSION: "23.11.1_avx2"
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
+      - <<: *basic_combinations_dpdk
+        DPDK_VERSION: "24.11.1_avx2"
+      - <<: *basic_combinations
+        DPDK_VERSION: "24.11.1_avx2"
         ENABLE_FFTW: "False"
         ENABLE_MKL: "True"
 
@@ -1592,6 +1599,12 @@ ubuntu-24.04 amd64 avx512 dpdk:
         DPDK_VERSION: "23.11.1_avx512"
         ENABLE_FFTW: "False"
         ENABLE_MKL: "True"
+      - <<: *basic_combinations_dpdk
+        DPDK_VERSION: "24.11.1_avx512"
+      - <<: *basic_combinations
+        DPDK_VERSION: "24.11.1_avx512"
+        ENABLE_FFTW: "False"
+        ENABLE_MKL: "True"
 
 ubuntu-24.10 amd64 avx2 dpdk:
   extends: .build_and_unit
@@ -1608,6 +1621,8 @@ ubuntu-24.10 amd64 avx2 dpdk:
     matrix:
       - <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11.1_avx2"
+      - <<: *basic_combinations_dpdk
+        DPDK_VERSION: "24.11.1_avx2"
 
 ubuntu-24.10 amd64 avx512 dpdk:
   extends: .build_and_unit
@@ -1624,6 +1639,8 @@ ubuntu-24.10 amd64 avx512 dpdk:
     matrix:
       - <<: *basic_combinations_dpdk
         DPDK_VERSION: "23.11.1_avx512"
+      - <<: *basic_combinations_dpdk
+        DPDK_VERSION: "24.11.1_avx512"
 
 ###############
 # E2E Nightly #
