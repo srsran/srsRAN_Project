@@ -482,4 +482,6 @@ void scheduler_result_logger::on_scheduler_result(const sched_result&       resu
   } else {
     log_info(result, decision_latency);
   }
+
+  logger.info("Missed grant opportunities on this slot: pdcch={} uci={}", result.missed.pdcch, result.missed.uci);
 }

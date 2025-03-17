@@ -125,6 +125,10 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
     unsigned nof_ue_pdsch_grants = 0;
     // Sum of UE PUSCH grants.
     unsigned nof_ue_pusch_grants = 0;
+    // Number of missed PDCCH grant opportunities.
+    unsigned nof_missed_pdcch_grants = 0;
+    // Number of missed UCI grant opportunities.
+    unsigned nof_missed_uci_grants = 0;
   };
 
   scheduler_metrics_notifier&     notifier;

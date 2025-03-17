@@ -1115,16 +1115,16 @@ std::optional<unsigned> pucch_allocator_impl::allocate_harq_grant(cell_slot_reso
   // [Implementation-defined] We only allow a max number of PUCCH + PUSCH grants per slot.
   if (pucch_slot_alloc.result.ul.pucchs.size() >=
       get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size()))) {
-    logger.info("rnti={}: HARQ-ACK allocation on PUCCH Format1 for slot={} skipped. Cause: UL grants reached",
-                crnti,
-                pucch_slot_alloc.slot);
+    logger.debug("rnti={}: HARQ-ACK allocation on PUCCH Format1 for slot={} skipped. Cause: UL grants reached",
+                 crnti,
+                 pucch_slot_alloc.slot);
     return std::nullopt;
   }
 
   if (pucch_grants_alloc_grid[sl_tx.to_uint()].full()) {
-    logger.info("rnti={}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
-                crnti,
-                pucch_slot_alloc.slot);
+    logger.debug("rnti={}: PUCCH HARQ-ACK allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
+                 crnti,
+                 pucch_slot_alloc.slot);
     return std::nullopt;
   }
 
@@ -1180,9 +1180,9 @@ void pucch_allocator_impl::allocate_csi_grant(cell_slot_resource_allocator& pucc
   }
 
   if (pucch_grants_alloc_grid[sl_tx.to_uint()].full()) {
-    logger.info("rnti={}: PUCCH CSI allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
-                crnti,
-                pucch_slot_alloc.slot);
+    logger.debug("rnti={}: PUCCH CSI allocation for slot={} skipped. Cause: PUCCH allocator grant list is full",
+                 crnti,
+                 pucch_slot_alloc.slot);
     return;
   }
 
@@ -2226,7 +2226,7 @@ std::optional<unsigned> pucch_allocator_impl::allocate_grants(cell_slot_resource
       (pucch_slot_alloc.result.ul.pucchs.size() +
            (grants_to_tx.get_nof_grants() - existing_pdus.get_nof_unallocated_pdu()) >
        get_max_pucch_grants(static_cast<unsigned>(pucch_slot_alloc.result.ul.puschs.size())))) {
-    logger.info(
+    logger.debug(
         "rnti={}: PUCCH allocation for slot={} skipped. Cause: UL grants reached", crnti, pucch_slot_alloc.slot);
     return std::nullopt;
   }

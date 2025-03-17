@@ -107,12 +107,16 @@ DECLARE_METRIC_SET("cell_events", mset_cell_event, metric_sfn, metric_slot_index
 DECLARE_METRIC("error_indication_count", metric_error_indication_count, unsigned, "");
 DECLARE_METRIC("average_latency", metric_average_latency, unsigned, "");
 DECLARE_METRIC("max_latency", metric_max_latency, unsigned, "");
+DECLARE_METRIC("nof_missed_pdcch_grants", metric_nof_missed_pdcch_grants, unsigned, "");
+DECLARE_METRIC("nof_missed_uci_grants", metric_nof_missed_uci_grants, unsigned, "");
 DECLARE_METRIC("latency_histogram", latency_histogram, std::vector<unsigned>, "");
 DECLARE_METRIC_SET("cell_metrics",
                    cell_metrics,
                    metric_error_indication_count,
                    metric_average_latency,
                    metric_max_latency,
+                   metric_nof_missed_pdcch_grants,
+                   metric_nof_missed_uci_grants,
                    latency_histogram);
 
 /// Metrics root object.
@@ -341,6 +345,8 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
   cell_output.write<metric_error_indication_count>(metrics.nof_error_indications);
   cell_output.write<metric_average_latency>(metrics.average_decision_latency.count());
   cell_output.write<metric_max_latency>(metrics.max_decision_latency.count());
+  cell_output.write<metric_nof_missed_pdcch_grants>(metrics.nof_missed_pdcch_grants);
+  cell_output.write<metric_nof_missed_uci_grants>(metrics.nof_missed_uci_grants);
   cell_output.write<latency_histogram>(
       std::vector<unsigned>(metrics.latency_histogram.begin(), metrics.latency_histogram.end()));
 
@@ -393,8 +399,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
   fmt::format_to(
       std::back_inserter(buffer),
       " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} error_indications={} "
-      "pdsch_rbs_per_slot={} pusch_rbs_per_slot={} pdschs_per_slot={:.3} puschs_per_slot={:.3} nof_ues={} "
-      "mean_latency={}usec max_latency={}usec max_latency_slot={} latency_hist=[{}]",
+      "pdsch_rbs_per_slot={} pusch_rbs_per_slot={} pdschs_per_slot={:.3} puschs_per_slot={:.3} missed_pdcch={} "
+      "missed_uci={} nof_ues={} mean_latency={}usec max_latency={}usec max_latency_slot={} latency_hist=[{}]",
       float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
       float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
       metrics.nof_prbs,
@@ -405,6 +411,8 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
       metrics.nof_ul_slots > 0 ? sum_pusch_rbs / metrics.nof_ul_slots : 0,
       metrics.nof_dl_slots > 0 ? metrics.dl_grants_count / (float)metrics.nof_dl_slots : 0,
       metrics.nof_ul_slots > 0 ? metrics.ul_grants_count / (float)metrics.nof_ul_slots : 0,
+      metrics.nof_missed_pdcch_grants,
+      metrics.nof_missed_uci_grants,
       metrics.ue_metrics.size(),
       metrics.average_decision_latency.count(),
       metrics.max_decision_latency.count(),

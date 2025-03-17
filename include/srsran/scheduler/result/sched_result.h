@@ -54,6 +54,14 @@ struct ul_sched_result {
   static_vector<srs_info, MAX_SRS_PDUS_PER_SLOT> srss;
 };
 
+/// Missed grant opportunities in a given slot.
+struct missed_grants {
+  /// Number of missed PDCCH allocation opportunities.
+  unsigned pdcch = 0;
+  /// Number of missed UCI allocation opportunities.
+  unsigned uci = 0;
+};
+
 /// Scheduler decision made for DL and UL in a given slot.
 struct sched_result {
   /// Whether the scheduling for the given slot was successful.
@@ -62,6 +70,8 @@ struct sched_result {
   dl_sched_result dl;
   /// UL allocations for the given slot.
   ul_sched_result ul;
+  /// Information about missed grant opportunities for the given slot.
+  missed_grants missed;
 };
 
 } // namespace srsran

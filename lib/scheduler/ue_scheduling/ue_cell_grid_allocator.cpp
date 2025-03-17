@@ -176,6 +176,7 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
   // Allocate PDCCH.
   auto pdcch_result = alloc_dl_pdcch(ue_cc, ss_info);
   if (not pdcch_result.has_value()) {
+    pdcch_alloc.result.missed.pdcch++;
     return make_unexpected(pdcch_result.error());
   }
   pdcch_dl_information* pdcch = pdcch_result.value();
@@ -183,6 +184,7 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
   // Allocate UCI.
   auto uci_result = alloc_uci(ue_cc, ss_info, pdsch_td_res_index);
   if (not uci_result.has_value()) {
+    pdcch_alloc.result.missed.uci++;
     pdcch_sched.cancel_last_pdcch(pdcch_alloc);
     return make_unexpected(uci_result.error());
   }

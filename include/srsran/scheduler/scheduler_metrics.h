@@ -60,11 +60,14 @@ struct scheduler_ue_metrics {
   unsigned sr_count;
   /// Sum of the last DL buffer occupancy reports of all logical channels.
   unsigned dl_bs;
+  /// Invalid UCI reception metrics.
+  /// @{
   unsigned nof_pucch_f0f1_invalid_harqs;
   unsigned nof_pucch_f2f3f4_invalid_harqs;
   unsigned nof_pucch_f2f3f4_invalid_csis;
   unsigned nof_pusch_invalid_harqs;
   unsigned nof_pusch_invalid_csis;
+  /// @}
   /// Delay metrics.
   /// @{
   std::optional<float> avg_ce_delay_ms;
@@ -128,6 +131,10 @@ struct scheduler_cell_metrics {
   unsigned dl_grants_count = 0;
   /// Counter of UE PUSCH grants.
   unsigned ul_grants_count = 0;
+  /// Number of missed PDCCH grant opportunities.
+  unsigned nof_missed_pdcch_grants = 0;
+  /// Number of missed UCI grant opportunities.
+  unsigned nof_missed_uci_grants = 0;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};
