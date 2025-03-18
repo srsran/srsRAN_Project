@@ -27,7 +27,6 @@ target_link_libraries(f1u_cu_up_split_connector_test
 srsran_f1u_cu_up_split_connector
 srsran_f1u_cu_up
 srsran_gtpu
-srsran_network
 srsran_support
 srslog
 gtest
@@ -41,7 +40,6 @@ target_link_libraries(f1u_du_split_connector_test
 srsran_f1u_du_split_connector
 srsran_f1u_du
 srsran_gtpu
-srsran_network
 srsran_support
 srslog
 gtest
@@ -51,7 +49,7 @@ target_include_directories(f1u_du_split_connector_test PRIVATE ${CMAKE_SOURCE_DI
 gtest_discover_tests(f1u_du_split_connector_test)
 
 add_executable(f1u_session_manager_test common/f1u_session_manager_test.cpp)
-target_link_libraries(f1u_session_manager_test 
+target_link_libraries(f1u_session_manager_test
 srsran_f1u_split_connector
 srsran_support
 srslog

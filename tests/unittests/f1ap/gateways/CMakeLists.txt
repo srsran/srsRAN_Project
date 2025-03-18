@@ -13,7 +13,6 @@ target_link_libraries(f1c_gateway_test
         f1ap_test_helpers
         srsran_f1ap_common
         srsran_support
-        srsran_network
         srslog
         f1ap_asn1
         gtest

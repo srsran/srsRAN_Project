@@ -17,7 +17,6 @@ target_include_directories(gnb_base PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(gnb_base PRIVATE
         srsran_app_services
         srsran_f1u_connector
-        srsran_network
         srsran_ngap
         ngap_asn1
         srsran_e2

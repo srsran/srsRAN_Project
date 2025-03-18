@@ -7,7 +7,6 @@
 #
 
 add_subdirectory(versioning)
-add_subdirectory(network)
 
 set(SOURCES
         executors/priority_task_queue.cpp
@@ -17,6 +16,12 @@ set(SOURCES
         executors/task_worker_pool.cpp
         executors/unique_thread.cpp
         executors/execution_context_description.cpp
+        network/io_broker_epoll.cpp
+        network/io_broker_factory.cpp
+        network/io_timer_source.cpp
+        network/sctp_socket.cpp
+        network/sockets.cpp
+        network/transport_layer_address.cpp
         tracing/resource_usage.cpp
         tracing/event_tracing.cpp
         backtrace.cpp
@@ -37,7 +42,7 @@ set(SOURCES
         )
 
 add_library(srsran_support STATIC ${SOURCES})
-target_link_libraries(srsran_support PRIVATE srsran_network ${CMAKE_THREAD_LIBS_INIT} ${YAMLCPP_LIBRARY}
+target_link_libraries(srsran_support PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${YAMLCPP_LIBRARY}
                       ${NUMA_LIBRARIES} srslog)
 add_backward(srsran_support)
 
