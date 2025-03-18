@@ -32,7 +32,10 @@ void message_transmitter_impl::transmit_frame_burst(span<span<const uint8_t>> fr
   }
 
   gateway->send(frame_burst);
-  logger.debug("Sending an Ethernet frame burst of size '{}'", frame_burst.size());
+
+  if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+    logger.debug("Sending an Ethernet frame burst of size '{}'", frame_burst.size());
+  }
 }
 
 void message_transmitter_impl::enqueue_messages_into_burst(

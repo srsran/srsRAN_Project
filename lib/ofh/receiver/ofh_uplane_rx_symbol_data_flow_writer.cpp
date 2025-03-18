@@ -71,13 +71,15 @@ void uplane_rx_symbol_data_flow_writer::write_to_resource_grid(unsigned         
 
     ofh_tracer << trace_event("ofh_receiver_write_rg", write_rg_tp);
 
-    logger.debug(
-        "Sector#{}: written IQ data into UL resource grid PRB range [{},{}), for slot '{}', symbol '{}' and port '{}'",
-        sector_id,
-        section.start_prb,
-        section.start_prb + nof_prbs_to_write,
-        slot,
-        symbol,
-        rg_port);
+    if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+      logger.debug("Sector#{}: written IQ data into UL resource grid PRB range [{},{}), for slot '{}', symbol '{}' and "
+                   "port '{}'",
+                   sector_id,
+                   section.start_prb,
+                   section.start_prb + nof_prbs_to_write,
+                   slot,
+                   symbol,
+                   rg_port);
+    }
   }
 }

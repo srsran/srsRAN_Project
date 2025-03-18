@@ -73,10 +73,12 @@ void closed_rx_window_handler::handle_uplink_context(slot_symbol_point symbol_po
                    symbol_point.get_symbol_index());
   }
 
-  logger.debug("Sector#{}: notifying incomplete UL symbol in slot '{}', symbol '{}'",
-               notification_context.sector,
-               notification_context.slot,
-               notification_context.symbol);
+  if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+    logger.debug("Sector#{}: notifying incomplete UL symbol in slot '{}', symbol '{}'",
+                 notification_context.sector,
+                 notification_context.slot,
+                 notification_context.symbol);
+  }
 }
 
 void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_point)
@@ -104,5 +106,8 @@ void closed_rx_window_handler::handle_prach_context(slot_symbol_point symbol_poi
                    ctx_value.context.slot);
   }
 
-  logger.debug("Sector#{}: notifying incomplete PRACH in slot '{}'", ctx_value.context.sector, ctx_value.context.slot);
+  if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+    logger.debug(
+        "Sector#{}: notifying incomplete PRACH in slot '{}'", ctx_value.context.sector, ctx_value.context.slot);
+  }
 }

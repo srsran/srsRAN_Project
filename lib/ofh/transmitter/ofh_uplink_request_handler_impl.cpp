@@ -143,11 +143,13 @@ static unsigned get_prach_start_symbol(const prach_buffer_context& context)
 
 void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer)
 {
-  logger.debug("Registering PRACH context entry for slot '{}' and sector#{}", context.slot, context.sector);
+  if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+    logger.debug("Registering PRACH context entry for slot '{}' and sector#{}", context.slot, context.sector);
+  }
 
   frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
 
-  if (window_checker.is_late(context.slot)) {
+  if (SRSRAN_UNLIKELY(window_checker.is_late(context.slot))) {
     err_notifier.on_late_uplink_message({context.slot, context.sector});
 
     logger.warning(
@@ -217,11 +219,13 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
 void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_context& context,
                                                          const shared_resource_grid&  grid)
 {
-  logger.debug("Registering UL context entry for slot '{}' and sector#{}", context.slot, context.sector);
+  if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+    logger.debug("Registering UL context entry for slot '{}' and sector#{}", context.slot, context.sector);
+  }
 
   frame_pool->clear_uplink_slot(context.slot, context.sector, logger);
 
-  if (window_checker.is_late(context.slot)) {
+  if (SRSRAN_UNLIKELY(window_checker.is_late(context.slot))) {
     err_notifier.on_late_uplink_message({context.slot, context.sector});
 
     logger.warning(

@@ -54,13 +54,13 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
 
   ether::vlan_frame_params eth_params;
   span<const uint8_t>      ecpri_pdu = vlan_decoder->decode(payload, eth_params);
-  if (ecpri_pdu.empty() || should_ethernet_frame_be_filtered(eth_params)) {
+  if (SRSRAN_UNLIKELY(ecpri_pdu.empty() || should_ethernet_frame_be_filtered(eth_params))) {
     return;
   }
 
   ecpri::packet_parameters ecpri_params;
   span<const uint8_t>      ofh_pdu = ecpri_decoder->decode(ecpri_pdu, ecpri_params);
-  if (ofh_pdu.empty() || should_ecpri_packet_be_filtered(ecpri_params)) {
+  if (SRSRAN_UNLIKELY(ofh_pdu.empty() || should_ecpri_packet_be_filtered(ecpri_params))) {
     return;
   }
 
@@ -83,7 +83,7 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
                 eaxc);
     return;
   }
-  if (nof_skipped_seq_id > 0) {
+  if (SRSRAN_UNLIKELY(nof_skipped_seq_id > 0)) {
     logger.warning("Sector#{}: potentially lost '{}' messages sent by the RU", sector_id, nof_skipped_seq_id);
   }
 
@@ -133,7 +133,7 @@ bool message_receiver_impl::should_ecpri_packet_be_filtered(const ecpri::packet_
     return true;
   }
 
-  const ecpri::iq_data_parameters& ecpri_iq_params = std::get<ecpri::iq_data_parameters>(ecpri_params.type_params);
+  const auto& ecpri_iq_params = std::get<ecpri::iq_data_parameters>(ecpri_params.type_params);
   if (SRSRAN_UNLIKELY(
           (std::find(ul_eaxc.begin(), ul_eaxc.end(), ecpri_iq_params.pc_id) == ul_eaxc.end()) &&
           (std::find(ul_prach_eaxc.begin(), ul_prach_eaxc.end(), ecpri_iq_params.pc_id) == ul_prach_eaxc.end()))) {

@@ -147,7 +147,7 @@ bool uplane_message_decoder_impl::decode_all_sections(uplane_message_decoder_res
     decoded_section_status status = decode_section(results, deserializer);
 
     // Incomplete sections force the exit of the loop.
-    if (status == decoded_section_status::incomplete) {
+    if (SRSRAN_UNLIKELY(status == decoded_section_status::incomplete)) {
       break;
     }
 

@@ -96,7 +96,7 @@ span<const uint8_t> packet_decoder_impl::decode_header(span<const uint8_t>      
   ofh::network_order_binary_deserializer deserializer(packet);
 
   deserialize_header(deserializer, params.header);
-  if (!is_header_valid(params.header, sector, logger)) {
+  if (SRSRAN_UNLIKELY(!is_header_valid(params.header, sector, logger))) {
     return {};
   }
 

@@ -97,10 +97,12 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
     // Copy the data in the buffer.
     prach_context_repo->write_iq(slot, port, results.params.symbol_id, start_re, prach_in_data);
 
-    logger.debug("Sector#{}: handling PRACH in slot '{}', symbol '{}' and port '{}'",
-                 sector_id,
-                 slot,
-                 results.params.symbol_id,
-                 port);
+    if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+      logger.debug("Sector#{}: handling PRACH in slot '{}', symbol '{}' and port '{}'",
+                   sector_id,
+                   slot,
+                   results.params.symbol_id,
+                   port);
+    }
   }
 }
