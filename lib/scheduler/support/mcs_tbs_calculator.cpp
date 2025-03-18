@@ -164,7 +164,7 @@ static bool is_pusch_effective_rate_valid(const pusch_config_params& config,
                                           unsigned                   nof_prbs,
                                           bool                       contains_dc)
 {
-  // The maximum supported code rate is 0.95, as per TS38.214, Section 5.1.3. The maximum code rate is defined for DL,
+  // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
   static const double max_supported_code_rate = 0.95;
 
