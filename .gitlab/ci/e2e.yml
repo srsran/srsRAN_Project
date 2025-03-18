@@ -173,6 +173,7 @@ amari 1UE rtsan:
       artifacts: true
     - *txrx-lib
     - *retina-needs
+  when: manual
   allow_failure: true
 
 amari 4UE deb:
@@ -541,10 +542,6 @@ android drx:
 
 viavi:
   extends: .viavi
-  needs:
-    - job: "basic avx512 dpdk"
-      artifacts: true
-    - *retina-needs
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
   parallel:
@@ -559,10 +556,26 @@ viavi:
             "fading and 1UE and MIMO",
             "fading and 32UE",
             "birth-death and 1UE",
-            "32UE and experimental and not extended",
           ]
+  needs:
+    - job: "basic avx512 dpdk"
+      artifacts: true
+    - *retina-needs
 
-viavi-um:
+viavi 1h:
+  extends: .viavi
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      when: manual
+      allow_failure: true
+  variables:
+    KEYWORDS: "32UE and experimental and not extended"
+  needs:
+    - job: "basic avx512 dpdk"
+      artifacts: true
+    - *retina-needs
+
+viavi um:
   extends: .viavi
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
@@ -573,21 +586,21 @@ viavi-um:
       artifacts: true
     - *retina-needs
 
-viavi-extended:
+viavi 3h:
   extends: .viavi
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     KEYWORDS: "extended and not 24h"
-  timeout: 28 hours
+  timeout: 6 hours
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
 
-viavi-extended-24h:
+viavi 16h:
   extends: .viavi
-  timeout: 28 hours
+  timeout: 20 hours
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
@@ -597,28 +610,31 @@ viavi-extended-24h:
       artifacts: true
     - *retina-needs
 
-viavi-debug:
+viavi debug:
   extends: .viavi
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      when: manual
+      allow_failure: true
   variables:
     MARKERS: "viavi_debug"
-  when: manual
   needs:
     - job: "basic avx512 dpdk withassert"
       artifacts: true
     - *retina-needs
 
-viavi-rtsan:
+viavi rtsan:
   extends: .viavi
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
+      when: manual
+      allow_failure: true
+  variables:
+    KEYWORDS: "tdd and 6u3d"
   needs:
     - job: "basic avx512 dpdk rtsan"
       artifacts: true
     - *retina-needs
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
-  parallel:
-    matrix:
-      - KEYWORDS: ["tdd and 6u3d"]
-  allow_failure: true
 
 ################################################################################
 # Garbage collector
