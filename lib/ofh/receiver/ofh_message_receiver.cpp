@@ -89,7 +89,7 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
 
   expected<slot_symbol_point, std::string> slot_point =
       uplane_peeker::peek_slot_symbol_point(ofh_pdu, nof_symbols, scs);
-  if (SRSRAN_UNLIKELY(!slot_point.has_value())) {
+  if (SRSRAN_UNLIKELY(!slot_point)) {
     logger.info(
         "Sector#{}: dropped received Open Fronthaul User-Plane packet as the slot could not be peeked with error: {}",
         sector_id,
@@ -99,11 +99,11 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   }
 
   // Fill the reception window statistics.
-  window_checker.update_rx_window_statistics(slot_point.value());
+  window_checker.update_rx_window_statistics(*slot_point);
 
   // Peek the filter index and check that it is valid.
   expected<filter_index_type, const char*> filter_type = uplane_peeker::peek_filter_index(ofh_pdu);
-  if (SRSRAN_UNLIKELY(!filter_type.has_value())) {
+  if (SRSRAN_UNLIKELY(!filter_type)) {
     logger.info("Sector#{}: dropped received Open Fronthaul User-Plane message as the filter index could not be peeked "
                 "with error: {}",
                 sector_id,
@@ -113,7 +113,7 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   }
 
   trace_point decode_tp = ofh_tracer.now();
-  if (is_a_prach_message(filter_type.value())) {
+  if (is_a_prach_message(*filter_type)) {
     data_flow_prach->decode_type1_message(eaxc, ofh_pdu);
     ofh_tracer << trace_event("ofh_receiver_decode_prach", decode_tp);
     return;

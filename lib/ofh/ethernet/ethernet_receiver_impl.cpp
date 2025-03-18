@@ -153,11 +153,11 @@ void receiver_impl::receive()
   trace_point tp = ofh_tracer.now();
 
   auto exp_buffer = buffer_pool.reserve();
-  if (!exp_buffer.has_value()) {
+  if (!exp_buffer) {
     logger.warning("No buffer is available for receiving an Ethernet packet on the port bound to fd = '{}'", socket_fd);
     return;
   }
-  ethernet_rx_buffer_impl buffer    = std::move(exp_buffer.value());
+  ethernet_rx_buffer_impl buffer    = std::move(*exp_buffer);
   span<uint8_t>           data_span = buffer.storage();
   auto                    nof_bytes = ::recvfrom(socket_fd, data_span.data(), BUFFER_SIZE, 0, nullptr, nullptr);
 

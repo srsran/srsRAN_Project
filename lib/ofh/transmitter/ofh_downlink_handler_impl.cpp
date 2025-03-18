@@ -71,9 +71,8 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   cplane_context.slot         = context.slot;
   cplane_context.filter_type  = filter_index_type::standard_channel_filter;
   cplane_context.direction    = data_direction::downlink;
-  cplane_context.symbol_range = tdd_config
-                                    ? get_active_tdd_dl_symbols(tdd_config.value(), context.slot.slot_index(), cp)
-                                    : ofdm_symbol_range(0, reader.get_nof_symbols());
+  cplane_context.symbol_range = tdd_config ? get_active_tdd_dl_symbols(*tdd_config, context.slot.slot_index(), cp)
+                                           : ofdm_symbol_range(0, reader.get_nof_symbols());
 
   data_flow_uplane_resource_grid_context uplane_context;
   uplane_context.slot         = context.slot;

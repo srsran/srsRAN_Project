@@ -141,7 +141,7 @@ create_txrx(const sector_configuration&                     sector_cfg,
 {
   if (eth_gateway && eth_receiver) {
     // Do not proceed if both optionals are provided.
-    return {std::move(eth_gateway.value()), std::move(eth_receiver.value())};
+    return {std::move(*eth_gateway), std::move(*eth_receiver)};
   }
 
 #ifdef DPDK_FOUND
@@ -151,10 +151,10 @@ create_txrx(const sector_configuration&                     sector_cfg,
   auto eth_txrx = create_socket_txrx(sector_cfg, eth_rx_executor, logger);
 #endif
   if (eth_gateway) {
-    eth_txrx.first = std::move(eth_gateway.value());
+    eth_txrx.first = std::move(*eth_gateway);
   }
   if (eth_receiver) {
-    eth_txrx.second = std::move(eth_receiver.value());
+    eth_txrx.second = std::move(*eth_receiver);
   }
   return eth_txrx;
 }

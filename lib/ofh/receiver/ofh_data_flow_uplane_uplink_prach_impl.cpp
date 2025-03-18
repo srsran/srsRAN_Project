@@ -90,7 +90,7 @@ bool data_flow_uplane_uplink_prach_impl::should_uplane_packet_be_filtered(
     return true;
   }
 
-  // Check the PRBs.
+  // Check if the PRB ranges are valid.
   return !are_uplane_prb_fields_valid(results, context, sector_id, logger);
 }
 

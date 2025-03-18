@@ -53,8 +53,8 @@ create_data_flow_cplane_sched(const transmitter_config&                         
   dependencies.ul_cplane_context_repo    = std::move(ul_cplane_context_repo);
   dependencies.prach_cplane_context_repo = std::move(prach_cplane_context_repo);
   dependencies.frame_pool                = std::move(frame_pool);
-  dependencies.eth_builder   = (tx_config.tci_cp.has_value()) ? ether::create_vlan_frame_builder(ether_params)
-                                                              : ether::create_frame_builder(ether_params);
+  dependencies.eth_builder =
+      (tx_config.tci_cp) ? ether::create_vlan_frame_builder(ether_params) : ether::create_frame_builder(ether_params);
   dependencies.ecpri_builder = ecpri::create_ecpri_packet_builder();
   dependencies.cp_builder    = (static_compr_header_enabled)
                                    ? create_ofh_control_plane_static_compression_message_builder()
@@ -83,10 +83,10 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
   ether_params.mac_src_address = tx_config.mac_src_address;
 
   data_flow_uplane_downlink_data_impl_dependencies dependencies;
-  dependencies.logger        = &logger;
-  dependencies.frame_pool    = std::move(frame_pool);
-  dependencies.eth_builder   = (tx_config.tci_up.has_value()) ? ether::create_vlan_frame_builder(ether_params)
-                                                              : ether::create_frame_builder(ether_params);
+  dependencies.logger     = &logger;
+  dependencies.frame_pool = std::move(frame_pool);
+  dependencies.eth_builder =
+      (tx_config.tci_up) ? ether::create_vlan_frame_builder(ether_params) : ether::create_frame_builder(ether_params);
   dependencies.ecpri_builder = ecpri::create_ecpri_packet_builder();
 
   const unsigned nof_prbs =

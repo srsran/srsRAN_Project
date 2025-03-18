@@ -200,7 +200,7 @@ public:
     auto result = entry(slot, symbol).try_getting_complete_resource_grid();
 
     // Symbol is complete or exists. Clear the context.
-    if (result.has_value()) {
+    if (result) {
       entry(slot, symbol) = {};
     }
 

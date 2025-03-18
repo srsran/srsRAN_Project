@@ -234,7 +234,7 @@ public:
     auto result = entry(slot).try_getting_complete_prach_buffer();
 
     // Clear the entry if the pop was a success.
-    if (result.has_value()) {
+    if (result) {
       entry(slot) = {};
     }
 
