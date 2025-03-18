@@ -45,6 +45,7 @@ public:
   du_ue_index_t find_unused_du_ue_index() override;
 
   async_task<void> handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset) override;
+  async_task<void> handle_cu_context_update_request(const gnbcu_config_update_request& request) override;
 
   async_task<f1ap_ue_context_creation_response>
   handle_ue_context_creation(const f1ap_ue_context_creation_request& request) override;

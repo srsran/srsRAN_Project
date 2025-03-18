@@ -10,6 +10,7 @@
 
 #include "du_manager_impl.h"
 #include "du_positioning_handler_factory.h"
+#include "procedures/cu_context_update_procedure.h"
 #include "procedures/du_param_config_procedure.h"
 #include "procedures/du_stop_procedure.h"
 #include "procedures/du_ue_ric_configuration_procedure.h"
@@ -155,6 +156,11 @@ du_ue_index_t du_manager_impl::find_unused_du_ue_index()
 async_task<void> du_manager_impl::handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset)
 {
   return ue_mng.handle_f1_reset_request(ues_to_reset);
+}
+
+async_task<void> du_manager_impl::handle_cu_context_update_request(const gnbcu_config_update_request& request)
+{
+  return launch_async<cu_context_update_procedure>(request, cell_mng);
 }
 
 async_task<f1ap_ue_context_creation_response>

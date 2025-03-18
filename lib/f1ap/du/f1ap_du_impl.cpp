@@ -155,7 +155,7 @@ void f1ap_du_impl::handle_reset(const reset_s& msg)
 
 void f1ap_du_impl::handle_gnb_cu_configuration_update(const gnb_cu_cfg_upd_s& msg)
 {
-  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, *tx_pdu_notifier));
+  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, du_mng, *tx_pdu_notifier));
 }
 
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)

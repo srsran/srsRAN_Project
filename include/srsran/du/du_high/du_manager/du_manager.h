@@ -44,6 +44,9 @@ public:
   /// \brief Handle reset of UE contexts as per request from the F1AP.
   virtual async_task<void> handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset) = 0;
 
+  /// \brief Handle request to update context by the CU via F1AP.
+  virtual async_task<void> handle_cu_context_update_request(const gnbcu_config_update_request& request) = 0;
+
   /// \brief Create a new UE context in the DU with an assigned UE index.
   virtual async_task<f1ap_ue_context_creation_response>
   handle_ue_context_creation(const f1ap_ue_context_creation_request& request) = 0;

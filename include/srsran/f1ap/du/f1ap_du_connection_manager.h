@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../common/interface_management.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/du_types.h"
@@ -64,10 +65,7 @@ struct f1_setup_request_message {
 
 /// Outcome of the F1 Setup procedure.
 struct f1_setup_success {
-  struct cell_to_activate {
-    nr_cell_global_id_t cgi;
-  };
-  std::vector<cell_to_activate> cells_to_activate;
+  std::vector<f1ap_cell_to_activate> cells_to_activate;
 };
 struct f1_setup_failure {
   /// Possible result outcomes for F1 Setup failure.
@@ -97,6 +95,12 @@ struct gnbdu_config_update_response {
   bool result;
 };
 
+/// gNB-CU initiated Config Update as per TS 38.473, Section 8.2.5.
+/// Request sent by CU to DU via F1AP gNB-CU Configuration Update.
+struct gnbcu_config_update_request {
+  std::vector<f1ap_cell_to_activate> cells_to_activate;
+};
+
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
 class f1ap_connection_manager
 {
@@ -119,6 +123,16 @@ public:
   /// \brief Initiates F1AP gNB-DU config update procedure as per TS 38.473, Section 8.2.4.
   virtual async_task<gnbdu_config_update_response>
   handle_du_config_update(const gnbdu_config_update_request& request) = 0;
+};
+
+/// Notifier used by F1AP to signal to the DU any CU-initiated requests related with the F1AP interface management.
+class f1ap_interface_update_notifier
+{
+public:
+  virtual ~f1ap_interface_update_notifier() = default;
+
+  /// \brief Notify the DU of an update requested initiated by the CU via F1AP, as per TS 38.473, Section 8.2.5.
+  virtual async_task<void> request_cu_context_update(const gnbcu_config_update_request& request) = 0;
 };
 
 } // namespace srs_du

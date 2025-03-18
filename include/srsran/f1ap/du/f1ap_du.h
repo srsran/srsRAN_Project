@@ -153,7 +153,7 @@ public:
 
 /// The F1AP uses this interface to notify the DU of new required updates (e.g. UE config modification, etc.) and to
 /// request services such as timers, scheduling of async tasks, etc.
-class f1ap_du_configurator : public f1ap_task_scheduler
+class f1ap_du_configurator : public f1ap_interface_update_notifier, public f1ap_task_scheduler
 {
 public:
   virtual ~f1ap_du_configurator() = default;

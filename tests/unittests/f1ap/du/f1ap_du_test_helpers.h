@@ -84,6 +84,11 @@ public:
     return launch_no_op_task();
   }
 
+  async_task<void> request_cu_context_update(const gnbcu_config_update_request& request) override
+  {
+    return launch_no_op_task();
+  }
+
   du_ue_index_t find_free_ue_index() override { return next_ue_creation_req.ue_index; }
 
   async_task<f1ap_ue_context_creation_response>
