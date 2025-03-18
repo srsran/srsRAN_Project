@@ -117,6 +117,10 @@ void ru_metrics_handler_stdout::handle_metric(const ru_metrics& metric)
   if (auto* dummy_metrics = std::get_if<ru_dummy_metrics>(&metric.metrics)) {
     log_ru_dummy_metrics_in_stdout(*dummy_metrics);
   }
+
+  if (auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
+    log_ru_ofh_metrics_in_stdout(*ofh_metrics);
+  }
 }
 
 /// Return the given value if it is not a Nan or Inf, otherwise returns 0.
@@ -130,9 +134,9 @@ static double validate_fp_value(double value)
 
 void ru_metrics_handler_stdout::log_ru_sdr_metrics_in_stdout(const ru_generic_metrics& sdr_metrics)
 {
-  if (sdr_metrics.cells.size() > 10) {
+  if (sdr_metrics.cells.size() > MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER) {
     print_sdr_header();
-  } else if (++nof_lines > 10 && !sdr_metrics.cells.empty()) {
+  } else if (++nof_lines > MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER && !sdr_metrics.cells.empty()) {
     nof_lines = 0;
     print_sdr_header();
   }
@@ -169,9 +173,9 @@ static void print_dummy_header()
 
 void ru_metrics_handler_stdout::log_ru_dummy_metrics_in_stdout(const ru_dummy_metrics& dummy_metrics)
 {
-  if (dummy_metrics.sectors.size() > 10) {
+  if (dummy_metrics.sectors.size() > MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER) {
     print_dummy_header();
-  } else if (++nof_lines > 10 && !dummy_metrics.sectors.empty()) {
+  } else if (++nof_lines > MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER && !dummy_metrics.sectors.empty()) {
     nof_lines = 0;
     print_dummy_header();
   }
@@ -190,5 +194,37 @@ void ru_metrics_handler_stdout::log_ru_dummy_metrics_in_stdout(const ru_dummy_me
                  cell.late_ul_request_count,
                  cell.total_prach_request_count,
                  cell.late_prach_request_count);
+  }
+}
+
+static void print_ofh_header()
+{
+  fmt::println("     | ----------- Number of received OFH messages ----------- |");
+  fmt::println(
+      " pci | {:^11} | {:^11} | {:^13} | {:^11} |", "Total Count", "Early count", "On time count", "Late count");
+}
+
+void ru_metrics_handler_stdout::log_ru_ofh_metrics_in_stdout(const ofh::metrics& ofh_metrics)
+{
+  if (ofh_metrics.sectors.size() > MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER) {
+    print_ofh_header();
+  } else if (++nof_lines > MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER && !ofh_metrics.sectors.empty()) {
+    nof_lines = 0;
+    print_ofh_header();
+  }
+
+  for (const auto& cell : ofh_metrics.sectors) {
+    srsran_assert(cell.sector_id < pci_sector_map.size(),
+                  "Invalid sector index '{}', number of cells '{}'",
+                  cell.sector_id,
+                  pci_sector_map.size());
+
+    fmt::println(" {:^3} | {:^11} | {:^11} | {:^13} | {:^11} |",
+                 static_cast<unsigned>(pci_sector_map[cell.sector_id]),
+                 cell.rx_metrics.nof_early_messages + cell.rx_metrics.nof_late_messages +
+                     cell.rx_metrics.nof_on_time_messages,
+                 cell.rx_metrics.nof_early_messages,
+                 cell.rx_metrics.nof_on_time_messages,
+                 cell.rx_metrics.nof_late_messages);
   }
 }

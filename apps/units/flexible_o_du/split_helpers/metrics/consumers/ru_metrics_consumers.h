@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
+#include "srsran/ofh/ofh_metrics.h"
 #include "srsran/ran/pci.h"
 
 namespace srsran {
@@ -58,6 +59,10 @@ private:
 /// STDOUT handler for the O-RU metrics.
 class ru_metrics_handler_stdout
 {
+  /// Maximum number of metric lines in STDOUT without a header, ie, print header every
+  /// MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER lines.
+  static constexpr unsigned MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER = 10;
+
 public:
   explicit ru_metrics_handler_stdout(span<const pci_t> pci_sector_map_) : pci_sector_map(pci_sector_map_) {}
 
@@ -65,7 +70,7 @@ public:
   void handle_metric(const ru_metrics& metric);
 
   /// Prints the header in the next metric handle.
-  void print_header() { nof_lines = 10; }
+  void print_header() { nof_lines = MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER; }
 
 private:
   /// Log SDR RU metrics in STDOUT.
@@ -74,8 +79,11 @@ private:
   /// Log dummy RU metrics in STDOUT.
   void log_ru_dummy_metrics_in_stdout(const ru_dummy_metrics& dummy_metrics);
 
+  /// Log OFH RU metrics in STDOUT.
+  void log_ru_ofh_metrics_in_stdout(const ofh::metrics& ofh_metrics);
+
 private:
-  unsigned          nof_lines = 10;
+  unsigned          nof_lines = MAX_NOF_STDOUT_METRIC_LINES_WITHOUT_HEADER;
   span<const pci_t> pci_sector_map;
 };
 
