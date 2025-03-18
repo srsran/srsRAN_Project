@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include <optional>
+#include <string>
 
 namespace srsran {
 
