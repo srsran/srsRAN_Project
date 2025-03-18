@@ -9,6 +9,7 @@
  */
 
 #include "f1ap_test_messages.h"
+#include "../lib/f1ap/asn1_helpers.h"
 #include "../pdcp/pdcp_pdu_generator.h"
 #include "../rrc/rrc_packed_test_messages.h"
 #include "srsran/asn1/f1ap/common.h"
@@ -189,6 +190,26 @@ f1ap_message srsran::test_helpers::create_gnb_du_configuration_update_failure(co
   asn1::f1ap::gnb_du_cfg_upd_fail_s& fail = msg.pdu.unsuccessful_outcome().value.gnb_du_cfg_upd_fail();
   fail->transaction_id                    = req->transaction_id;
   fail->cause.set_misc().value            = cause_misc_opts::unspecified;
+
+  return msg;
+}
+
+f1ap_message
+srsran::test_helpers::create_gnb_cu_configuration_update_request(unsigned                        transaction_id,
+                                                                 span<const nr_cell_global_id_t> cgis_to_activate)
+{
+  f1ap_message msg;
+
+  msg.pdu.set_init_msg().load_info_obj(ASN1_F1AP_ID_GNB_CU_CFG_UPD);
+  gnb_cu_cfg_upd_s& req = msg.pdu.init_msg().value.gnb_cu_cfg_upd();
+  req->transaction_id   = transaction_id;
+
+  req->cells_to_be_activ_list_present = not cgis_to_activate.empty();
+  req->cells_to_be_activ_list.resize(cgis_to_activate.size());
+  for (unsigned i = 0, e = cgis_to_activate.size(); i != e; ++i) {
+    req->cells_to_be_activ_list[i].load_info_obj(ASN1_F1AP_ID_CELLS_TO_BE_ACTIV_LIST_ITEM);
+    req->cells_to_be_activ_list[i].value().cells_to_be_activ_list_item().nr_cgi = cgi_to_asn1(cgis_to_activate[i]);
+  }
 
   return msg;
 }

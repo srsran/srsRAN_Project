@@ -74,6 +74,10 @@ f1ap_message create_gnb_du_configuration_update_acknowledge(const f1ap_message& 
 /// TS 38.473, 8.2.4.3.
 f1ap_message create_gnb_du_configuration_update_failure(const f1ap_message& gnb_du_config_request);
 
+/// \brief Generates dummy GNB-CU CONFIGURATION UPDATE REQUEST message as per TS 38.473, 8.2.5.1.
+f1ap_message create_gnb_cu_configuration_update_request(unsigned                        transaction_id,
+                                                        span<const nr_cell_global_id_t> cgis_to_activate);
+
 /// \brief Generates dummy F1 RESET message.
 f1ap_message create_f1ap_reset_message(
     const std::vector<std::pair<std::optional<gnb_du_ue_f1ap_id_t>, std::optional<gnb_cu_ue_f1ap_id_t>>>& ues_to_reset =

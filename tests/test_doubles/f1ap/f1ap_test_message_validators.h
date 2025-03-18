@@ -29,6 +29,9 @@ namespace test_helpers {
 bool is_gnb_du_config_update_valid(const f1ap_message& msg);
 bool is_gnb_du_config_update_valid(const f1ap_message& msg, const srs_du::gnbdu_config_update_request& req);
 
+bool is_gnb_cu_config_update_acknowledge_valid(const f1ap_message& msg);
+bool is_gnb_cu_config_update_acknowledge_valid(const f1ap_message& msg, const f1ap_message& req);
+
 /// \brief Check if an F1AP message is a valid Initial UL RRC Message Transfer message.
 bool is_init_ul_rrc_msg_transfer_valid(const f1ap_message&                       msg,
                                        rnti_t                                    rnti,

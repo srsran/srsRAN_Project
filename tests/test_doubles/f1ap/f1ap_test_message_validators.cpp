@@ -58,6 +58,24 @@ bool srsran::test_helpers::is_gnb_du_config_update_valid(const f1ap_message&    
   return true;
 }
 
+bool srsran::test_helpers::is_gnb_cu_config_update_acknowledge_valid(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
+  TRUE_OR_RETURN(msg.pdu.successful_outcome().proc_code == ASN1_F1AP_ID_GNB_CU_CFG_UPD);
+  TRUE_OR_RETURN(is_packable(msg));
+  return true;
+}
+
+bool srsran::test_helpers::is_gnb_cu_config_update_acknowledge_valid(const f1ap_message& msg, const f1ap_message& req)
+{
+  TRUE_OR_RETURN(is_gnb_cu_config_update_acknowledge_valid(msg));
+  const auto& upd_req = req.pdu.init_msg().value.gnb_cu_cfg_upd();
+  const auto& upd_ack = msg.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack();
+
+  TRUE_OR_RETURN(upd_req->transaction_id == upd_ack->transaction_id);
+  return true;
+}
+
 bool srsran::test_helpers::is_init_ul_rrc_msg_transfer_valid(const f1ap_message&                       msg,
                                                              rnti_t                                    rnti,
                                                              const std::optional<nr_cell_global_id_t>& nci)
