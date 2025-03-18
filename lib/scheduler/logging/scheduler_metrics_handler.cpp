@@ -291,8 +291,8 @@ void cell_metrics_handler::report_metrics()
   next_report.nof_prach_preambles       = data.nof_prach_preambles;
   next_report.dl_grants_count           = data.nof_ue_pdsch_grants;
   next_report.ul_grants_count           = data.nof_ue_pusch_grants;
-  next_report.nof_missed_pdcch_grants   = data.nof_missed_pdcch_grants;
-  next_report.nof_missed_uci_grants     = data.nof_missed_uci_grants;
+  next_report.nof_failed_pdcch_allocs   = data.nof_failed_pdcch_allocs;
+  next_report.nof_failed_uci_allocs     = data.nof_failed_uci_allocs;
 
   // Reset cell-wide metric counters.
   data = {};
@@ -366,9 +366,9 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
   bin_idx          = std::min(bin_idx, scheduler_cell_metrics::latency_hist_bins - 1);
   ++data.decision_latency_hist[bin_idx];
 
-  // Missed grant opportunities.
-  data.nof_missed_pdcch_grants = slot_result.missed.pdcch;
-  data.nof_missed_uci_grants   = slot_result.missed.uci;
+  // Failed allocation attempts.
+  data.nof_failed_pdcch_allocs = slot_result.failed_attempts.pdcch;
+  data.nof_failed_uci_allocs   = slot_result.failed_attempts.uci;
 }
 
 void cell_metrics_handler::push_result(slot_point                sl_tx,

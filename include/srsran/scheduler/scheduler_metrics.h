@@ -131,10 +131,10 @@ struct scheduler_cell_metrics {
   unsigned dl_grants_count = 0;
   /// Counter of UE PUSCH grants.
   unsigned ul_grants_count = 0;
-  /// Number of missed PDCCH grant opportunities.
-  unsigned nof_missed_pdcch_grants = 0;
-  /// Number of missed UCI grant opportunities.
-  unsigned nof_missed_uci_grants = 0;
+  /// Number of failed PDCCH allocation attempts.
+  unsigned nof_failed_pdcch_allocs = 0;
+  /// Number of failed UCI allocation attempts.
+  unsigned nof_failed_uci_allocs = 0;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};
