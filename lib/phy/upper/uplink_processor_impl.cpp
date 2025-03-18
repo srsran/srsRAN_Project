@@ -168,9 +168,10 @@ void uplink_processor_impl::process_pusch(const shared_resource_grid&           
   if (data.empty()) {
     logger.warning(pdu.pdu.slot.sfn(),
                    pdu.pdu.slot.slot_index(),
-                   "UL rnti={} h_id={}: insufficient available payload data in the buffer pool.",
+                   "UL rnti={} h_id={}: insufficient available payload data in the buffer pool for TB of size {}",
                    pdu.pdu.rnti,
-                   pdu.harq_id);
+                   pdu.harq_id,
+                   pdu.tb_size);
     notify_discard_pusch(pdu);
     return;
   }
