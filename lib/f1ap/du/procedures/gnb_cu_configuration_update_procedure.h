@@ -34,11 +34,13 @@ public:
 private:
   gnbcu_config_update_request request_du_update();
 
-  void send_gnb_cu_configuration_update_acknowledge();
+  void send_response();
 
   const asn1::f1ap::gnb_cu_cfg_upd_s request;
   f1ap_du_configurator&              du_mng;
   f1ap_message_notifier&             cu_notif;
+
+  gnbcu_config_update_response du_resp;
 };
 
 } // namespace srs_du

@@ -34,17 +34,17 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
   cells.back()->active = false;
 }
 
-async_task<void> du_cell_manager::start(du_cell_index_t cell_index)
+async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)
 {
-  return launch_async([this, cell_index](coro_context<async_task<void>>& ctx) {
+  return launch_async([this, cell_index](coro_context<async_task<bool>>& ctx) {
     CORO_BEGIN(ctx);
     if (!has_cell(cell_index)) {
       logger.warning("cell={}: Start called for a cell that does not exist.", fmt::underlying(cell_index));
-      CORO_EARLY_RETURN();
+      CORO_EARLY_RETURN(false);
     }
     if (cells[cell_index]->active) {
       logger.warning("cell={}: Start called for an already active cell.", fmt::underlying(cell_index));
-      CORO_EARLY_RETURN();
+      CORO_EARLY_RETURN(false);
     }
 
     // Start cell in the MAC.
@@ -52,7 +52,7 @@ async_task<void> du_cell_manager::start(du_cell_index_t cell_index)
 
     cells[cell_index]->active = true;
 
-    CORO_RETURN();
+    CORO_RETURN(true);
   });
 }
 

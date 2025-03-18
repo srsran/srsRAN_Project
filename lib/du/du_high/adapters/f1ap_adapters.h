@@ -96,7 +96,8 @@ public:
     return du_mng->handle_ue_deactivation_request(ue_index);
   }
 
-  async_task<void> request_cu_context_update(const gnbcu_config_update_request& request) override
+  async_task<gnbcu_config_update_response>
+  request_cu_context_update(const gnbcu_config_update_request& request) override
   {
     return du_mng->handle_cu_context_update_request(request);
   }

@@ -24,13 +24,15 @@ class cu_context_update_procedure
 public:
   cu_context_update_procedure(const gnbcu_config_update_request& request_, du_cell_manager& cell_mng_);
 
-  void operator()(coro_context<async_task<void>>& ctx);
+  void operator()(coro_context<async_task<gnbcu_config_update_response>>& ctx);
 
 private:
   const gnbcu_config_update_request request;
   du_cell_manager&                  cell_mng;
 
   unsigned list_index = 0;
+
+  gnbcu_config_update_response resp;
 };
 
 } // namespace srs_du

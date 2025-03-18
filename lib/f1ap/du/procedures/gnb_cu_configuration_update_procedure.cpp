@@ -28,9 +28,9 @@ void gnb_cu_configuration_update_procedure::operator()(coro_context<async_task<v
 {
   CORO_BEGIN(ctx);
 
-  CORO_AWAIT(du_mng.request_cu_context_update(request_du_update()));
+  CORO_AWAIT_VALUE(du_resp, du_mng.request_cu_context_update(request_du_update()));
 
-  send_gnb_cu_configuration_update_acknowledge();
+  send_response();
 
   CORO_RETURN();
 }
@@ -52,15 +52,43 @@ gnbcu_config_update_request gnb_cu_configuration_update_procedure::request_du_up
   return du_req;
 }
 
-void gnb_cu_configuration_update_procedure::send_gnb_cu_configuration_update_acknowledge()
+void gnb_cu_configuration_update_procedure::send_response()
 {
   using namespace asn1::f1ap;
 
-  f1ap_message msg = {};
+  f1ap_message msg;
 
-  msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_GNB_CU_CFG_UPD);
-  gnb_cu_cfg_upd_ack_s& ack = msg.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack();
-  ack->transaction_id       = request->transaction_id;
+  bool is_ack = true;
+
+  if (not du_resp.cells_failed_to_activate.empty()) {
+    if (du_resp.cells_failed_to_activate.size() == request->cells_to_be_activ_list.size()) {
+      is_ack = false;
+    }
+  }
+
+  if (is_ack) {
+    msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_GNB_CU_CFG_UPD);
+    gnb_cu_cfg_upd_ack_s& ack = msg.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack();
+    ack->transaction_id       = request->transaction_id;
+
+    // Add cells failed to be activated.
+    ack->cells_failed_to_be_activ_list.resize(du_resp.cells_failed_to_activate.size());
+    for (unsigned i = 0, e = du_resp.cells_failed_to_activate.size(); i != e; ++i) {
+      ack->cells_failed_to_be_activ_list[i].load_info_obj(ASN1_F1AP_ID_CELLS_FAILED_TO_BE_ACTIV_LIST_ITEM);
+      ack->cells_failed_to_be_activ_list[i]->cells_failed_to_be_activ_list_item().nr_cgi =
+          cgi_to_asn1(du_resp.cells_failed_to_activate[i]);
+      ack->cells_failed_to_be_activ_list[i]->cells_failed_to_be_activ_list_item().cause.set_misc();
+      ack->cells_failed_to_be_activ_list[i]->cells_failed_to_be_activ_list_item().cause.misc().value =
+          cause_misc_opts::unspecified;
+    }
+    ack->cells_failed_to_be_activ_list_present = ack->cells_failed_to_be_activ_list.size() > 0;
+
+  } else {
+    msg.pdu.set_unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_GNB_CU_CFG_UPD);
+    gnb_cu_cfg_upd_fail_s& fail  = msg.pdu.unsuccessful_outcome().value.gnb_cu_cfg_upd_fail();
+    fail->transaction_id         = request->transaction_id;
+    fail->cause.set_misc().value = cause_misc_opts::unspecified;
+  }
 
   // send F1AP message.
   cu_notif.on_new_message(msg);

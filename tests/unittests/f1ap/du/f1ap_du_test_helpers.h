@@ -59,6 +59,7 @@ public:
 
   // F1AP procedures.
   std::optional<gnbcu_config_update_request>      last_cu_upd_req;
+  gnbcu_config_update_response                    next_cu_upd_resp;
   std::optional<f1ap_ue_context_creation_request> last_ue_context_creation_req;
   f1ap_ue_context_creation_response               next_ue_context_creation_response;
   std::optional<f1ap_ue_context_update_request>   last_ue_context_update_req;
@@ -85,10 +86,11 @@ public:
     return launch_no_op_task();
   }
 
-  async_task<void> request_cu_context_update(const gnbcu_config_update_request& request) override
+  async_task<gnbcu_config_update_response>
+  request_cu_context_update(const gnbcu_config_update_request& request) override
   {
     last_cu_upd_req = request;
-    return launch_no_op_task();
+    return launch_no_op_task(next_cu_upd_resp);
   }
 
   du_ue_index_t find_free_ue_index() override { return next_ue_creation_req.ue_index; }

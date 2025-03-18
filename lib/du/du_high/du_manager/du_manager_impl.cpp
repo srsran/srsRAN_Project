@@ -158,7 +158,8 @@ async_task<void> du_manager_impl::handle_f1_reset_request(const std::vector<du_u
   return ue_mng.handle_f1_reset_request(ues_to_reset);
 }
 
-async_task<void> du_manager_impl::handle_cu_context_update_request(const gnbcu_config_update_request& request)
+async_task<gnbcu_config_update_response>
+du_manager_impl::handle_cu_context_update_request(const gnbcu_config_update_request& request)
 {
   return launch_async<cu_context_update_procedure>(request, cell_mng);
 }

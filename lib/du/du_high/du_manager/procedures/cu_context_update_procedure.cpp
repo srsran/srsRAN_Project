@@ -20,14 +20,17 @@ cu_context_update_procedure::cu_context_update_procedure(const gnbcu_config_upda
 {
 }
 
-void cu_context_update_procedure::operator()(coro_context<async_task<void>>& ctx)
+void cu_context_update_procedure::operator()(coro_context<async_task<gnbcu_config_update_response>>& ctx)
 {
   CORO_BEGIN(ctx);
 
   // Activate respective cells.
   for (list_index = 0; list_index != request.cells_to_activate.size(); ++list_index) {
-    CORO_AWAIT(cell_mng.start(cell_mng.get_cell_index(request.cells_to_activate[list_index].cgi)));
+    CORO_AWAIT_VALUE(bool success, cell_mng.start(cell_mng.get_cell_index(request.cells_to_activate[list_index].cgi)));
+    if (not success) {
+      resp.cells_failed_to_activate.push_back(request.cells_to_activate[list_index].cgi);
+    }
   }
 
-  CORO_RETURN();
+  CORO_RETURN(resp);
 }

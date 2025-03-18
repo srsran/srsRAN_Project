@@ -48,7 +48,7 @@ public:
     return cells[cell_index]->cfg;
   }
 
-  async_task<void> start(du_cell_index_t cell_index);
+  async_task<bool> start(du_cell_index_t cell_index);
 
   async_task<void> stop(du_cell_index_t cell_index);
 

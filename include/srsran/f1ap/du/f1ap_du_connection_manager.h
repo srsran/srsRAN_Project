@@ -101,6 +101,11 @@ struct gnbcu_config_update_request {
   std::vector<f1ap_cell_to_activate> cells_to_activate;
 };
 
+/// Result of gNB-CU initiated Config Update as per TS 38.473, Section 8.2.5.
+struct gnbcu_config_update_response {
+  std::vector<nr_cell_global_id_t> cells_failed_to_activate;
+};
+
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
 class f1ap_connection_manager
 {
@@ -132,7 +137,8 @@ public:
   virtual ~f1ap_interface_update_notifier() = default;
 
   /// \brief Notify the DU of an update requested initiated by the CU via F1AP, as per TS 38.473, Section 8.2.5.
-  virtual async_task<void> request_cu_context_update(const gnbcu_config_update_request& request) = 0;
+  virtual async_task<gnbcu_config_update_response>
+  request_cu_context_update(const gnbcu_config_update_request& request) = 0;
 };
 
 } // namespace srs_du
