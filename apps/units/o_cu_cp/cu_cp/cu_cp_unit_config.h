@@ -255,14 +255,17 @@ struct cu_cp_unit_qos_config {
   cu_cp_unit_pdcp_config pdcp;
 };
 
+/// Configuration to enable/disable metrics per layer.
+struct cu_cp_unit_metrics_layer_config {
+  bool enable_pdcp = false;
+};
+
 /// Metrics configuration.
 struct cu_cp_unit_metrics_config {
-  /// Statistics report period in seconds
-  unsigned cu_cp_statistics_report_period = 1;
-  struct pdcp_metrics {
-    unsigned report_period = 1000; // PDCP report period in ms
-  } pdcp;
-  app_helpers::metrics_config common_metrics_cfg;
+  /// CU-CP statistics report period in milliseconds.
+  unsigned                        cu_cp_report_period = 1000;
+  app_helpers::metrics_config     common_metrics_cfg;
+  cu_cp_unit_metrics_layer_config layers_cfg;
 };
 
 /// CU-CP application unit configuration.

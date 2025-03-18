@@ -386,7 +386,7 @@ srs_cu_cp::cu_cp_configuration srsran::generate_cu_cp_config(const cu_cp_unit_co
   // Timers
   out_cfg.ue.inactivity_timer              = std::chrono::seconds{cu_cfg.inactivity_timer};
   out_cfg.ue.request_pdu_session_timeout   = std::chrono::seconds{cu_cfg.request_pdu_session_timeout};
-  out_cfg.metrics.statistics_report_period = std::chrono::seconds{cu_cfg.metrics.cu_cp_statistics_report_period};
+  out_cfg.metrics.statistics_report_period = std::chrono::seconds{cu_cfg.metrics.cu_cp_report_period};
 
   // Mobility
   out_cfg.mobility.mobility_manager_config.trigger_handover_from_measurements =

@@ -49,10 +49,17 @@ static void fill_cu_up_ngu_section(YAML::Node node, const cu_up_unit_ngu_config&
   fill_cu_up_ngu_socket_section(node, config.ngu_socket_cfg);
 }
 
+static void fill_cu_up_metrics_layers_section(YAML::Node node, const cu_up_unit_metrics_layer_config& config)
+{
+  node["enable_pdcp"] = config.enable_pdcp;
+}
+
 static void fill_cu_up_metrics_section(YAML::Node node, const cu_up_unit_metrics_config& config)
 {
-  node["cu_up_statistics_report_period"] = config.cu_up_statistics_report_period;
-  node["pdcp_report_period"]             = config.pdcp.report_period;
+  auto perdiodicity_node                   = node["periodicity"];
+  perdiodicity_node["cu_up_report_period"] = config.cu_up_report_period;
+
+  fill_cu_up_metrics_layers_section(node["layers"], config.layers_cfg);
 }
 
 static void fill_cu_up_pcap_section(YAML::Node node, const cu_up_unit_pcap_config& config)

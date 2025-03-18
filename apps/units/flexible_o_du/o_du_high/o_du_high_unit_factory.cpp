@@ -116,6 +116,13 @@ static scheduler_metrics_notifier* build_scheduler_du_metrics(
     const o_du_high_unit_config&    o_du_high_unit_cfg,
     e2_du_metrics_notifier&         e2_notifier)
 {
+  const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
+
+  // Scheduler metrics not enabled, do not add metrics configuration.
+  if (!du_hi_cfg.metrics.layers_cfg.enable_scheduler) {
+    return nullptr;
+  }
+
   // Scheduler cell metrics.
   auto sched_cell_metrics_gen                     = std::make_unique<scheduler_metrics_producer_impl>(metrics_notifier);
   scheduler_metrics_notifier*   out               = &(*sched_cell_metrics_gen);
@@ -124,7 +131,6 @@ static scheduler_metrics_notifier* build_scheduler_du_metrics(
   sched_metrics_cfg.callback                      = sched_cell_metrics_gen->get_callback();
   sched_metrics_cfg.producers.push_back(std::move(sched_cell_metrics_gen));
 
-  const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
   // Create the consumer for STDOUT. Also create the command for toggle the metrics.
   auto metrics_stdout = std::make_unique<scheduler_cell_metrics_consumer_stdout>();
   metrics_subcommands.push_back(std::make_unique<du_high_metrics_subcommand_stdout>(*metrics_stdout));
@@ -158,9 +164,8 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   rlc_metrics_notifier*      out       = nullptr;
   const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
 
-  // RLC metrics.
-  const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
-  if (!metrics_config.enabled() && !o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
+  // RLC metrics not enabled, do not add metrics configuration.
+  if (!du_hi_cfg.metrics.layers_cfg.enable_rlc) {
     return out;
   }
 
@@ -173,6 +178,7 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   out                 = &(*rlc_metric_gen);
   rlc_metrics_cfg.producers.push_back(std::move(rlc_metric_gen));
 
+  const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
   // Consumers.
   if (metrics_config.enable_log_metrics) {
     rlc_metrics_cfg.consumers.push_back(
@@ -195,14 +201,14 @@ static mac_metrics_notifier* build_mac_du_metrics(std::vector<app_services::metr
                                                   app_services::metrics_notifier&            metrics_notifier,
                                                   const o_du_high_unit_config&               o_du_high_unit_cfg)
 {
-  mac_metrics_notifier*      out       = nullptr;
   const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
 
-  // MAC metrics.
-  const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
-  if (!metrics_config.enabled()) {
-    return out;
+  // Scheduler metrics not enabled, do not add metrics configuration.
+  if (!du_hi_cfg.metrics.layers_cfg.enable_mac) {
+    return nullptr;
   }
+
+  mac_metrics_notifier* out = nullptr;
 
   app_services::metrics_config& mac_metrics_cfg = metrics.emplace_back();
   mac_metrics_cfg.metric_name                   = mac_metrics_properties_impl().name();
@@ -213,6 +219,7 @@ static mac_metrics_notifier* build_mac_du_metrics(std::vector<app_services::metr
   out                 = &(*mac_metric_gen);
   mac_metrics_cfg.producers.push_back(std::move(mac_metric_gen));
 
+  const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
   if (metrics_config.enable_log_metrics) {
     mac_metrics_cfg.consumers.push_back(
         std::make_unique<mac_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));

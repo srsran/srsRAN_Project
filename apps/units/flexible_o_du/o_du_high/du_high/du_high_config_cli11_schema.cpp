@@ -1717,18 +1717,26 @@ static void configure_cli11_srb_args(CLI::App& app, du_high_unit_srb_config& srb
   app.needs(rlc_subcmd);
 }
 
+static void configure_cli11_metrics_layers_args(CLI::App& app, du_high_unit_metrics_layer_config& metrics_params)
+{
+  add_option(app, "--enable_sched", metrics_params.enable_scheduler, "Enable DU scheduler metrics")
+      ->capture_default_str();
+  add_option(app, "--enable_rlc", metrics_params.enable_rlc, "Enable RLC metrics")->capture_default_str();
+  add_option(app, "--enable_mac", metrics_params.enable_mac, "Enable MAC metrics")->capture_default_str();
+}
+
 static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_config& metrics_params)
 {
-  add_option(
-      app, "--rlc_report_period", metrics_params.rlc.report_period, "RLC metrics report period (in milliseconds)")
-      ->capture_default_str();
-
-  add_option(app,
-             "--sched_report_period",
-             metrics_params.sched_report_period,
-             "DU statistics report period in milliseconds. This metrics sets the console output period.")
+  auto* periodicity_subcmd = add_subcommand(app, "periodicity", "Metrics periodicity configuration")->configurable();
+  add_option(*periodicity_subcmd,
+             "--du_report_period",
+             metrics_params.du_report_period,
+             "DU statistics report period in milliseconds")
       ->capture_default_str()
       ->check(CLI::Range(0, 10240));
+
+  auto* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
+  configure_cli11_metrics_layers_args(*layers_subcmd, metrics_params.layers_cfg);
 }
 
 static void configure_cli11_epoch_time(CLI::App& app, epoch_time_t& epoch_time)
@@ -2074,21 +2082,8 @@ static void derive_auto_params(du_high_unit_config& config)
   }
 }
 
-void srsran::autoderive_du_high_parameters_after_parsing(CLI::App&            app,
-                                                         du_high_unit_config& unit_cfg,
-                                                         bool                 rlc_metrics_requested)
+void srsran::autoderive_du_high_parameters_after_parsing(CLI::App& app, du_high_unit_config& unit_cfg)
 {
   manage_ntn_optional(app, unit_cfg);
   derive_auto_params(unit_cfg);
-
-  // RLC period defined in the config file. Do nothing.
-  if (auto* metrics_subcmd = app.get_subcommand("metrics");
-      metrics_subcmd && metrics_subcmd->count("--rlc_report_period")) {
-    return;
-  }
-
-  // No metrics requested, set the RLC period to 0.
-  if (!rlc_metrics_requested && !unit_cfg.metrics.common_metrics_cfg.enabled()) {
-    unit_cfg.metrics.rlc.report_period = 0;
-  }
 }

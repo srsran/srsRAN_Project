@@ -21,8 +21,6 @@ struct du_high_unit_config;
 void configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_parsed_config& parsed_cfg);
 
 /// Auto derive DU high parameters after the parsing.
-void autoderive_du_high_parameters_after_parsing(CLI::App&            app,
-                                                 du_high_unit_config& unit_cfg,
-                                                 bool                 rlc_metrics_requested);
+void autoderive_du_high_parameters_after_parsing(CLI::App& app, du_high_unit_config& unit_cfg);
 
 } // namespace srsran

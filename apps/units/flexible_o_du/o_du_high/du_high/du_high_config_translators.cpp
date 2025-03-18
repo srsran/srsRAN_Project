@@ -877,7 +877,8 @@ std::map<five_qi_t, srs_du::du_qos_config> srsran::generate_du_qos_config(const 
 {
   std::map<five_qi_t, srs_du::du_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
-    out_cfg = config_helpers::make_default_du_qos_config_list(config.warn_on_drop, config.metrics.rlc.report_period);
+    out_cfg = config_helpers::make_default_du_qos_config_list(
+        config.warn_on_drop, config.metrics.layers_cfg.enable_rlc ? config.metrics.du_report_period : 0);
     return out_cfg;
   }
 
@@ -909,7 +910,9 @@ std::map<five_qi_t, srs_du::du_qos_config> srsran::generate_du_qos_config(const 
       // AM Config
       out_rlc.am = generate_du_rlc_am_config(qos.rlc.am);
     }
-    out_rlc.metrics_period = std::chrono::milliseconds(config.metrics.rlc.report_period);
+
+    out_rlc.metrics_period =
+        std::chrono::milliseconds((config.metrics.layers_cfg.enable_rlc) ? config.metrics.du_report_period : 0);
 
     // Convert F1-U config
     auto& out_f1u = out_cfg[qos.five_qi].f1u;
@@ -1053,7 +1056,7 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   // Logging and tracing.
   out_cfg.log_broadcast_messages       = config.loggers.broadcast_enabled;
   out_cfg.log_high_latency_diagnostics = config.loggers.high_latency_diagnostics_enabled;
-  out_cfg.metrics_report_period        = std::chrono::milliseconds{config.metrics.sched_report_period};
+  out_cfg.metrics_report_period        = std::chrono::milliseconds{config.metrics.du_report_period};
 
   const error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
   if (!error) {

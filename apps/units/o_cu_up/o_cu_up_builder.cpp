@@ -31,10 +31,7 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
 {
   pdcp_metrics_notifier* out = nullptr;
 
-  const app_helpers::metrics_json_config& json_cfg = cu_up_metrics_cfg.common_metrics_cfg.json_config;
-
-  // Do not instantiate the metrics if the E2 is not enabled.
-  if (!e2_enabled && !json_cfg.enable_json_metrics) {
+  if (!cu_up_metrics_cfg.layers_cfg.enable_pdcp) {
     return out;
   }
 
@@ -45,13 +42,14 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
   metrics_cfg.callback                      = cu_up_pdcp_metrics_callback;
   metrics_cfg.producers.push_back(std::move(metrics_generator));
 
+  const app_helpers::metrics_json_config& json_cfg = cu_up_metrics_cfg.common_metrics_cfg.json_config;
   if (json_cfg.enable_json_metrics) {
     metrics_cfg.consumers.push_back(
         std::make_unique<cu_up_pdcp_metrics_consumer_json>(srslog::fetch_basic_logger("APP"),
                                                            app_helpers::fetch_json_metrics_log_channel(),
                                                            *workers.metrics_exec,
                                                            timers.create_unique_timer(*workers.non_rt_low_prio_exec),
-                                                           cu_up_metrics_cfg.pdcp.report_period));
+                                                           cu_up_metrics_cfg.cu_up_report_period));
   }
 
   if (e2_enabled) {

@@ -47,15 +47,12 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>>
       ru_metrics_subcommands;
   // Create flexible O-DU metrics configuration.
-  flexible_o_du_metrics_notifier* flexible_odu_metrics_notifier = nullptr;
-
-  if (config.ru_cfg.enable_ru_metrics) {
-    flexible_odu_metrics_notifier = build_flexible_o_du_metrics_config(o_du.metrics,
-                                                                       ru_metrics_subcommands,
-                                                                       *dependencies.metrics_notifier,
-                                                                       config.ru_cfg.config,
-                                                                       std::move(pci_cell_mapper));
-  }
+  flexible_o_du_metrics_notifier* flexible_odu_metrics_notifier =
+      build_flexible_o_du_metrics_config(o_du.metrics,
+                                         ru_metrics_subcommands,
+                                         *dependencies.metrics_notifier,
+                                         config.ru_cfg.config,
+                                         std::move(pci_cell_mapper));
 
   // Create flexible O-DU implementation.
   auto du_impl = std::make_unique<flexible_o_du_impl>(nof_cells, flexible_odu_metrics_notifier);

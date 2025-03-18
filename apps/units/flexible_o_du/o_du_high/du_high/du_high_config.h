@@ -875,15 +875,20 @@ struct du_high_unit_cell_config {
   du_high_unit_base_cell_config cell;
 };
 
+/// Configuration to enable/disable metrics per layer.
+struct du_high_unit_metrics_layer_config {
+  bool enable_scheduler = false;
+  bool enable_rlc       = false;
+  bool enable_mac       = false;
+};
+
 /// Metrics report configuration.
 struct du_high_unit_metrics_config {
-  struct rlc_metrics {
-    /// RLC report period in ms.
-    unsigned report_period = 1000;
-  } rlc;
   /// Scheduler report period in milliseconds.
-  unsigned                    sched_report_period = 1000;
-  app_helpers::metrics_config common_metrics_cfg;
+  unsigned                          du_report_period         = 1000;
+  bool                              autostart_stdout_metrics = false;
+  app_helpers::metrics_config       common_metrics_cfg;
+  du_high_unit_metrics_layer_config layers_cfg;
 };
 
 struct du_high_unit_pcap_config {

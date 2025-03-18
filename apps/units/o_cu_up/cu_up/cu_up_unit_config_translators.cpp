@@ -23,7 +23,7 @@ srs_cu_up::cu_up_config srsran::generate_cu_up_config(const cu_up_unit_config& c
   out_cfg.cu_up_id   = config.gnb_cu_up_id;
   out_cfg.cu_up_name = fmt::format("srs_cu_up_{}", fmt::underlying(config.gnb_cu_up_id));
 
-  out_cfg.statistics_report_period = std::chrono::seconds{config.metrics.cu_up_statistics_report_period};
+  out_cfg.statistics_report_period = std::chrono::seconds{config.metrics.cu_up_report_period};
 
   out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.ngu_cfg.gtpu_cfg.gtpu_reordering_timer_ms};
   out_cfg.n3_cfg.gtpu_rate_limiting_period = config.ngu_cfg.gtpu_cfg.rate_limiter_period;
@@ -42,10 +42,10 @@ srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
 {
   std::map<five_qi_t, srs_cu_up::cu_up_qos_config> out_cfg = {};
   if (cu_up_config.qos_cfg.empty()) {
-    out_cfg =
-        config_helpers::make_default_cu_up_qos_config_list(cu_up_config.warn_on_drop,
-                                                           timer_duration(cu_up_config.metrics.pdcp.report_period),
-                                                           cu_up_config.test_mode_cfg.enabled);
+    out_cfg = config_helpers::make_default_cu_up_qos_config_list(
+        cu_up_config.warn_on_drop,
+        timer_duration(cu_up_config.metrics.layers_cfg.enable_pdcp ? cu_up_config.metrics.cu_up_report_period : 0),
+        cu_up_config.test_mode_cfg.enabled);
     return out_cfg;
   }
 
@@ -56,9 +56,10 @@ srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
 
     // Convert PDCP custom config
     pdcp_custom_config& out_pdcp_custom = out_cfg[qos.five_qi].pdcp_custom_cfg;
-    out_pdcp_custom.metrics_period      = timer_duration(cu_up_config.metrics.pdcp.report_period);
-    out_pdcp_custom.tx.warn_on_drop     = cu_up_config.warn_on_drop;
-    out_pdcp_custom.tx.test_mode        = cu_up_config.test_mode_cfg.enabled;
+    out_pdcp_custom.metrics_period =
+        timer_duration(cu_up_config.metrics.layers_cfg.enable_pdcp ? cu_up_config.metrics.cu_up_report_period : 0);
+    out_pdcp_custom.tx.warn_on_drop = cu_up_config.warn_on_drop;
+    out_pdcp_custom.tx.test_mode    = cu_up_config.test_mode_cfg.enabled;
 
     // Convert F1-U config
     srs_cu_up::f1u_config& f1u_cfg = out_cfg[qos.five_qi].f1u_cfg;

@@ -379,7 +379,9 @@ static void configure_cli11_hal_args(CLI::App& app, std::optional<ru_ofh_unit_ha
 
 static void configure_cli11_metrics_args(CLI::App& app, ru_ofh_unit_metrics_config& config)
 {
-  add_option(app, "--enable_ru", config.enable_ru_metrics, "Radio Unit metrics enabled flag");
+  CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
+  add_option(*layers_subcmd, "--enable_ru", config.enable_ru_metrics, "Enable Radio Unit metrics")
+      ->capture_default_str();
 }
 
 void srsran::configure_cli11_with_ru_ofh_config_schema(CLI::App& app, ru_ofh_unit_parsed_config& parsed_cfg)

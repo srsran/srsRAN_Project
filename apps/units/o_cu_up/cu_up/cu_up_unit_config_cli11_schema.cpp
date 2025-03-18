@@ -127,17 +127,22 @@ static void configure_cli11_pcap_args(CLI::App& app, cu_up_unit_pcap_config& pca
   add_option(app, "--e1ap_enable", pcap_params.e1ap.enabled, "E1AP PCAP")->always_capture_default();
 }
 
+static void configure_cli11_metrics_layers_args(CLI::App& app, cu_up_unit_metrics_layer_config& metrics_params)
+{
+  add_option(app, "--enable_pdcp", metrics_params.enable_pdcp, "Enable PDCP metrics")->capture_default_str();
+}
+
 static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_config& metrics_params)
 {
-  add_option(app,
-             "--cu_up_statistics_report_period",
-             metrics_params.cu_up_statistics_report_period,
-             "CU-UP statistics report period in seconds. Set this value to 0 to disable this feature")
+  auto* periodicity_subcmd = add_subcommand(app, "periodicity", "Metrics periodicity configuration")->configurable();
+  add_option(*periodicity_subcmd,
+             "--cu_up_report_period",
+             metrics_params.cu_up_report_period,
+             "CU-UP metrics report period in milliseconds")
       ->capture_default_str();
 
-  add_option(
-      app, "--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period (in milliseconds)")
-      ->capture_default_str();
+  auto* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
+  configure_cli11_metrics_layers_args(*layers_subcmd, metrics_params.layers_cfg);
 }
 
 static void configure_cli11_f1u_cu_up_args(CLI::App& app, cu_cp_unit_f1u_config& f1u_cu_up_params)
@@ -198,24 +203,4 @@ void srsran::configure_cli11_with_cu_up_unit_config_schema(CLI::App& app, cu_up_
     }
   };
   add_option_cell(app, "--qos", qos_lambda, "Configures RLC and PDCP radio bearers on a per 5QI basis.");
-}
-
-void srsran::autoderive_cu_up_parameters_after_parsing(CLI::App&          app,
-                                                       cu_up_unit_config& unit_cfg,
-                                                       bool               pdpc_metrics_requested)
-{
-  // Do nothing when PDCP period if present in the config file.
-  if (auto* metrics_subcmd = app.get_subcommand("metrics");
-      metrics_subcmd && metrics_subcmd->count("--pdcp_report_period")) {
-    // Disable metrics if report period is configured to 0.
-    unit_cfg.metrics.common_metrics_cfg.enable_log_metrics              = unit_cfg.metrics.pdcp.report_period != 0;
-    unit_cfg.metrics.common_metrics_cfg.json_config.enable_json_metrics = unit_cfg.metrics.pdcp.report_period != 0;
-
-    return;
-  }
-
-  // Disable PDCP report period when the metrics and E2 are not enabled.
-  if (!pdpc_metrics_requested && !unit_cfg.metrics.common_metrics_cfg.enabled()) {
-    unit_cfg.metrics.pdcp.report_period = 0;
-  }
 }

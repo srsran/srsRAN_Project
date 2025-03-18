@@ -365,6 +365,13 @@ static void manage_hal_optional(CLI::App& app, du_low_unit_config& parsed_cfg)
   }
 }
 
+static void configure_cli11_metrics_layers_args(CLI::App& app, du_low_unit_metrics_config& parsed_cfg)
+{
+  CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
+  add_option(*layers_subcmd, "--enable_du_low", parsed_cfg.enable_du_low, "Enable DU low metrics")
+      ->capture_default_str();
+}
+
 void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_unit_config& parsed_cfg)
 {
   // Loggers section.
@@ -386,6 +393,8 @@ void srsran::configure_cli11_with_du_low_config_schema(CLI::App& app, du_low_uni
 
   // Metrics section.
   app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.metrics_cfg.common_metrics_cfg);
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
+  configure_cli11_metrics_layers_args(*metrics_subcmd, parsed_cfg.metrics_cfg);
 }
 
 void srsran::autoderive_du_low_parameters_after_parsing(CLI::App&           app,

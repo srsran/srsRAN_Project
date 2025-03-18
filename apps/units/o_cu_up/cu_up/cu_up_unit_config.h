@@ -20,14 +20,17 @@
 
 namespace srsran {
 
+/// Configuration to enable/disable metrics per layer.
+struct cu_up_unit_metrics_layer_config {
+  bool enable_pdcp = false;
+};
+
 /// Metrics configuration.
 struct cu_up_unit_metrics_config {
-  /// Statistics report period in seconds.
-  unsigned cu_up_statistics_report_period = 1;
-  struct pdcp_metrics {
-    unsigned report_period = 1000; // PDCP report period in ms
-  } pdcp;
-  app_helpers::metrics_config common_metrics_cfg;
+  /// CU-UP statistics report period in milliseconds.
+  unsigned                        cu_up_report_period = 1000;
+  app_helpers::metrics_config     common_metrics_cfg;
+  cu_up_unit_metrics_layer_config layers_cfg;
 };
 
 struct cu_up_unit_ngu_socket_config {

@@ -532,16 +532,22 @@ static void configure_cli11_qos_args(CLI::App& app, cu_cp_unit_qos_config& qos_p
   app.needs(pdcp_subcmd);
 }
 
+static void configure_cli11_metrics_layers_args(CLI::App& app, cu_cp_unit_metrics_layer_config& metrics_params)
+{
+  add_option(app, "--enable_pdcp", metrics_params.enable_pdcp, "Enable PDCP metrics")->capture_default_str();
+}
+
 static void configure_cli11_metrics_args(CLI::App& app, cu_cp_unit_metrics_config& metrics_params)
 {
-  add_option(app,
-             "--cu_cp_statistics_report_period",
-             metrics_params.cu_cp_statistics_report_period,
-             "CU-CP statistics report period in seconds. Set this value to 0 to disable this feature")
+  auto* periodicity_subcmd = add_subcommand(app, "periodicity", "Metrics periodicity configuration")->configurable();
+  add_option(*periodicity_subcmd,
+             "--cu_cp_report_period",
+             metrics_params.cu_cp_report_period,
+             "CU-CP metrics report period in milliseconds")
       ->capture_default_str();
-  add_option(
-      app, "--pdcp_report_period", metrics_params.pdcp.report_period, "PDCP metrics report period (in milliseconds)")
-      ->capture_default_str();
+
+  auto* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
+  configure_cli11_metrics_layers_args(*layers_subcmd, metrics_params.layers_cfg);
 }
 
 void srsran::configure_cli11_with_cu_cp_unit_config_schema(CLI::App& app, cu_cp_unit_config& unit_cfg)

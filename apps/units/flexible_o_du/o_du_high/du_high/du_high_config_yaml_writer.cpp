@@ -15,10 +15,19 @@
 
 using namespace srsran;
 
+static void fill_du_high_metrics_layers_section(YAML::Node node, const du_high_unit_metrics_layer_config& config)
+{
+  node["enable_sched"] = config.enable_scheduler;
+  node["enable_rlc"]   = config.enable_rlc;
+  node["enable_mac"]   = config.enable_mac;
+}
+
 static void fill_du_high_metrics_section(YAML::Node node, const du_high_unit_metrics_config& config)
 {
-  node["rlc_report_period"]   = config.rlc.report_period;
-  node["sched_report_period"] = config.sched_report_period;
+  auto perdiodicity_node                = node["periodicity"];
+  perdiodicity_node["du_report_period"] = config.du_report_period;
+
+  fill_du_high_metrics_layers_section(node["layers"], config.layers_cfg);
 }
 
 static void fill_du_high_pcap_section(YAML::Node node, const du_high_unit_pcap_config& config)

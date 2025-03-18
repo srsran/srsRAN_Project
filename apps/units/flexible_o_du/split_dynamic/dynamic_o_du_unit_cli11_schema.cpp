@@ -81,7 +81,8 @@ static void configure_cli11_expert_execution_args(CLI::App& app, ru_dummy_unit_c
 
 static void configure_cli11_metrics_args(CLI::App& app, ru_dummy_unit_metrics_config& config)
 {
-  add_option(app, "--enable_ru", config.enable_ru_metrics, "Radio Unit metrics enabled flag");
+  CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
+  add_option(*layers_subcmd, "--enable_ru", config.enable_ru_metrics, "Radio Unit metrics enabled flag");
 }
 
 void srsran::configure_cli11_with_dynamic_o_du_unit_config_schema(CLI::App& app, dynamic_o_du_unit_config& parsed_cfg)

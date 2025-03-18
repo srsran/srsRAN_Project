@@ -88,8 +88,7 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
   srs_du::o_du_low_config o_du_low_cfg;
 
   // Configure the metrics.
-  const app_helpers::metrics_config& metrics_cfg = params.du_low_unit_cfg.metrics_cfg.common_metrics_cfg;
-  o_du_low_cfg.enable_metrics                    = metrics_cfg.enabled();
+  o_du_low_cfg.enable_metrics = params.du_low_unit_cfg.metrics_cfg.enable_du_low;
 
   generate_o_du_low_config(o_du_low_cfg, params.du_low_unit_cfg, params.du_cells, params.max_puschs_per_slot);
 
