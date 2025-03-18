@@ -76,7 +76,7 @@ public:
     span<pucch_f1_collection> f1_collections = pucch_f1_repository[end_symbol_index];
 
     // Find a compatible Format 1 common configuration.
-    auto it =
+    auto* it =
         std::find_if(f1_collections.begin(), f1_collections.end(), [&common_config](const pucch_f1_collection& entry) {
           return common_config == entry.config.common_config;
         });
@@ -84,9 +84,9 @@ public:
     // If the common configuration was found.
     if (it != f1_collections.end()) {
       // Push back the UE dedicated entry in the existing collection.
-      it->config.entries.emplace(config.initial_cyclic_shift,
-                                 config.time_domain_occ,
-                                 {.context = config.context, .nof_harq_ack = config.nof_harq_ack});
+      it->config.entries.insert(config.initial_cyclic_shift,
+                                config.time_domain_occ,
+                                {.context = config.context, .nof_harq_ack = config.nof_harq_ack});
       it->ue_contexts.emplace_back(ue_entry);
       return;
     }

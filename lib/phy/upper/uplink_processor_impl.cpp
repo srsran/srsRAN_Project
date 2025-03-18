@@ -299,7 +299,7 @@ void uplink_processor_impl::process_pucch_f1(const shared_resource_grid&        
     // Iterate each UE context.
     for (const auto& entry : collection.ue_contexts) {
       // Result for the given initial cyclic shift is not available.
-      if (!results.has_value(entry.initial_cyclic_shift, entry.time_domain_occ)) {
+      if (!results.contains(entry.initial_cyclic_shift, entry.time_domain_occ)) {
         logger.warning(collection.config.common_config.slot.sfn(),
                        collection.config.common_config.slot.slot_index(),
                        "Missing PUCCH F1 result for rnti={}, cs={} and occ={}.",

@@ -73,7 +73,7 @@ pucch_processor_impl::process(const resource_grid_reader& grid, const format1_ba
          time_domain_occ != pucch_constants::format1_time_domain_occ_range.stop();
          ++time_domain_occ) {
       // Skip if it does not contain a value associated to the cyclic shift and time-domain OCC.
-      if (!batch_config.entries.has_value(initial_cyclic_shift, time_domain_occ)) {
+      if (!batch_config.entries.contains(initial_cyclic_shift, time_domain_occ)) {
         continue;
       }
 

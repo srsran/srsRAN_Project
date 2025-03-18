@@ -82,8 +82,8 @@ public:
            time_domain_occ != pucch_constants::format1_time_domain_occ_range.stop();
            ++time_domain_occ) {
         // Skip result if it is not available.
-        if (!config.entries.has_value(initial_cyclic_shift, time_domain_occ) ||
-            !results->has_value(initial_cyclic_shift, time_domain_occ)) {
+        if (!config.entries.contains(initial_cyclic_shift, time_domain_occ) ||
+            !results->contains(initial_cyclic_shift, time_domain_occ)) {
           continue;
         }
 

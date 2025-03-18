@@ -196,9 +196,9 @@ public:
     /// Construct the configuration from a complete Format 1 configuration parameters.
     explicit format1_batch_configuration(const format1_configuration& config) : common_config(config)
     {
-      entries.emplace(config.initial_cyclic_shift,
-                      config.time_domain_occ,
-                      {.context = config.context, .nof_harq_ack = config.nof_harq_ack});
+      entries.insert(config.initial_cyclic_shift,
+                     config.time_domain_occ,
+                     {.context = config.context, .nof_harq_ack = config.nof_harq_ack});
     }
 
     /// Common UE configuration.

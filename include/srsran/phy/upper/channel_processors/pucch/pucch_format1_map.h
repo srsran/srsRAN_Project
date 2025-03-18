@@ -10,98 +10,142 @@
 
 #pragma once
 
+#include "srsran/adt/circular_map.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/support/srsran_assert.h"
-#include <array>
-#include <optional>
+#include <utility>
 
 namespace srsran {
 
 /// \brief Maps elements of type \c T to the corresponding PUCCH Format 1 initial cyclic shift and time domain OCC.
 ///
-/// The values of the map are treated as optional, and are set to \c nullopt until the key is specifically mapped to a
-/// \c T value.
+/// Elements can be accessed with the \c get() methods only if previously initialized with \c emplace() or \c insert().
 template <typename T>
 class pucch_format1_map
 {
+  static constexpr unsigned nof_time_domain_occs      = pucch_constants::format1_time_domain_occ_range.stop();
+  static constexpr unsigned nof_initial_cyclic_shifts = pucch_constants::format1_initial_cyclic_shift_range.stop();
+
 public:
-  /// \brief Returns \c true if the map has an entry corresponding to the given initial cyclic shift and time domain
-  /// OCC.
+  /// \brief Read-only iterator.
+  ///
+  /// Traverses the active entries of the map, in increasing order of initial cyclic shifts, first, and of time domain
+  /// OCC indices, second.
+  class const_iterator
+    : public static_circular_map<unsigned, T, nof_time_domain_occs * nof_initial_cyclic_shifts>::const_iterator
+  {
+    using map_iterator =
+        typename static_circular_map<unsigned, T, nof_time_domain_occs * nof_initial_cyclic_shifts>::const_iterator;
+
+  public:
+    /// Return type of the indirected iterator: coordinates and reference to the content of the map.
+    struct obj_t {
+      unsigned initial_cyclic_shift;
+      unsigned time_domain_occ;
+      const T& value;
+    };
+
+    /// Indirection operator.
+    obj_t operator*() const
+    {
+      auto&    tmp = map_iterator::operator*();
+      unsigned ix  = tmp.first;
+      return {.initial_cyclic_shift = ix % nof_initial_cyclic_shifts,
+              .time_domain_occ      = ix / nof_initial_cyclic_shifts,
+              .value                = tmp.second};
+    }
+
+  protected:
+    friend const_iterator pucch_format1_map<T>::begin() const, pucch_format1_map<T>::cbegin() const,
+        pucch_format1_map<T>::end() const, pucch_format1_map<T>::cend() const;
+
+    /// Iterator constructor
+    const_iterator(const static_circular_map<unsigned, T, nof_time_domain_occs * nof_initial_cyclic_shifts>* map,
+                   size_t                                                                                    idx_) :
+      map_iterator(map, idx_)
+    {
+    }
+  };
+
+  // Default constructor.
+  pucch_format1_map() = default;
+
+  /// \brief Checks if there is an element at the given coordinates.
   /// \remark An assertion is triggered if the given initial cyclic shift or the time-domain OCC are out of their
   /// ranges.
-  bool has_value(unsigned initial_cyclic_shift, unsigned time_domain_occ) const
+  bool contains(unsigned initial_cyclic_shift, unsigned time_domain_occ) const noexcept
   {
-    srsran_assert(pucch_constants::format1_initial_cyclic_shift_range.contains(initial_cyclic_shift),
-                  "Initial cyclic shift (i.e., {}) is out of the range {}.",
-                  initial_cyclic_shift,
-                  pucch_constants::format1_initial_cyclic_shift_range);
-    srsran_assert(pucch_constants::format1_time_domain_occ_range.contains(time_domain_occ),
-                  "Time-domain OCC (i.e., {}) is out of the range {}.",
-                  time_domain_occ,
-                  pucch_constants::format1_time_domain_occ_range);
-    return map[initial_cyclic_shift][time_domain_occ].has_value();
+    return map.contains(convert_coords_to_index(initial_cyclic_shift, time_domain_occ));
+  };
+
+  /// \brief Constructs a new element of the map in-place.
+  /// \return True if no collision was detected and the object was inserted. False, otherwise.
+  /// \remark An assertion is triggered if the given initial cyclic shift or the time-domain OCC are out of their
+  /// ranges.
+  template <class... Args>
+  bool emplace(unsigned initial_cyclic_shift, unsigned time_domain_occ, Args&&... args)
+  {
+    return map.emplace(convert_coords_to_index(initial_cyclic_shift, time_domain_occ), std::forward<Args>(args)...);
   }
 
-  /// \brief Emplace an entry in the map.
+  /// \brief Inserts a new element into the map.
+  /// \return True if no collision was detected and the object was inserted. False, otherwise.
   /// \remark An assertion is triggered if the given initial cyclic shift or the time-domain OCC are out of their
   /// ranges.
-  void emplace(unsigned initial_cyclic_shift, unsigned time_domain_occ, const T& value)
+  bool insert(unsigned initial_cyclic_shift, unsigned time_domain_occ, const T& value)
   {
-    srsran_assert(pucch_constants::format1_initial_cyclic_shift_range.contains(initial_cyclic_shift),
-                  "Initial cyclic shift (i.e., {}) is out of the range {}.",
-                  initial_cyclic_shift,
-                  pucch_constants::format1_initial_cyclic_shift_range);
-    srsran_assert(pucch_constants::format1_time_domain_occ_range.contains(time_domain_occ),
-                  "Time-domain OCC (i.e., {}) is out of the range {}.",
-                  time_domain_occ,
-                  pucch_constants::format1_time_domain_occ_range);
-    map[initial_cyclic_shift][time_domain_occ].emplace(value);
+    return map.insert(convert_coords_to_index(initial_cyclic_shift, time_domain_occ), value);
   }
 
   /// \brief Gets a modifiable entry in the map.
   /// \remark An assertion is triggered if the given initial cyclic shift or the time-domain OCC are out of their
   /// ranges.
   /// \remark An assertion is triggered if the entry does not contain a value.
-  T& get(unsigned initial_cyclic_shift, unsigned time_domain_occ)
+  T& get(unsigned initial_cyclic_shift, unsigned time_domain_occ) noexcept
   {
-    srsran_assert(pucch_constants::format1_initial_cyclic_shift_range.contains(initial_cyclic_shift),
-                  "Initial cyclic shift (i.e., {}) is out of the range {}.",
-                  initial_cyclic_shift,
-                  pucch_constants::format1_initial_cyclic_shift_range);
-    srsran_assert(pucch_constants::format1_time_domain_occ_range.contains(time_domain_occ),
-                  "Time-domain OCC (i.e., {}) is out of the range {}.",
-                  time_domain_occ,
-                  pucch_constants::format1_time_domain_occ_range);
-    srsran_assert(has_value(initial_cyclic_shift, time_domain_occ), "The map does not contain the given entry.");
-    return map[initial_cyclic_shift][time_domain_occ].value();
+    return map[convert_coords_to_index(initial_cyclic_shift, time_domain_occ)];
   }
 
   /// \brief Gets a constant entry in the map.
   /// \remark An assertion is triggered if the given initial cyclic shift or the time-domain OCC are out of their
   /// ranges.
   /// \remark An assertion is triggered if the entry does not contain a value.
-  const T& get(unsigned initial_cyclic_shift, unsigned time_domain_occ) const
+  const T& get(unsigned initial_cyclic_shift, unsigned time_domain_occ) const noexcept
   {
-    srsran_assert(pucch_constants::format1_initial_cyclic_shift_range.contains(initial_cyclic_shift),
-                  "Initial cyclic shift (i.e., {}) is out of the range {}.",
-                  initial_cyclic_shift,
-                  pucch_constants::format1_initial_cyclic_shift_range);
-    srsran_assert(pucch_constants::format1_time_domain_occ_range.contains(time_domain_occ),
-                  "Time-domain OCC (i.e., {}) is out of the range {}.",
-                  time_domain_occ,
-                  pucch_constants::format1_time_domain_occ_range);
-    srsran_assert(has_value(initial_cyclic_shift, time_domain_occ), "The map does not contain the given entry.");
-    return map[initial_cyclic_shift][time_domain_occ].value();
+    return map[convert_coords_to_index(initial_cyclic_shift, time_domain_occ)];
   }
 
   /// Clears the current contents of the map.
-  void clear() { map = {}; }
+  void clear() noexcept { map.clear(); }
+
+  /// Returns the number of active elements of the map.
+  size_t size() const noexcept { return map.size(); }
+
+  /// Returns a const iterator to the beginning of the container.
+  const_iterator begin() const { return const_iterator(&map, 0); }
+  const_iterator cbegin() const { return const_iterator(&map, 0); }
+
+  /// Returns a const iterator to the end of the container.
+  const_iterator end() const { return const_iterator(&map, map.capacity()); }
+  const_iterator cend() const { return const_iterator(&map, map.capacity()); }
 
 private:
+  /// Converts 2-D coordinates into linear ones.
+  static unsigned convert_coords_to_index(unsigned initial_cyclic_shift, unsigned time_domain_occ)
+  {
+    srsran_assert(initial_cyclic_shift < nof_initial_cyclic_shifts,
+                  "The given initial cyclic shift {} exceeds the maximum acceptable value {}.",
+                  initial_cyclic_shift,
+                  nof_initial_cyclic_shifts - 1);
+    srsran_assert(time_domain_occ < nof_time_domain_occs,
+                  "The given time domain OCC index {} exceeds the maximum acceptable value {}.",
+                  time_domain_occ,
+                  nof_time_domain_occs - 1);
+    return (time_domain_occ * nof_initial_cyclic_shifts + initial_cyclic_shift);
+  }
+
   /// Internal storage.
-  std::array<std::array<std::optional<T>, pucch_constants::format1_time_domain_occ_range.stop()>,
-             pucch_constants::format1_initial_cyclic_shift_range.stop()>
-      map;
+  static_circular_map<unsigned, T, nof_time_domain_occs * nof_initial_cyclic_shifts> map;
 };
 
 } // namespace srsran
