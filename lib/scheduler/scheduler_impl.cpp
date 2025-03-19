@@ -43,6 +43,18 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
   return true;
 }
 
+void scheduler_impl::handle_cell_start_request(du_cell_index_t cell_index)
+{
+  srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
+  cells[cell_index]->start();
+}
+
+void scheduler_impl::handle_cell_stop_request(du_cell_index_t cell_index)
+{
+  srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
+  cells[cell_index]->stop();
+}
+
 void scheduler_impl::handle_sib1_update_request(const sib1_pdu_update_request& req)
 {
   srsran_assert(cells.contains(req.cell_index), "cell={} does not exist", fmt::underlying(req.cell_index));

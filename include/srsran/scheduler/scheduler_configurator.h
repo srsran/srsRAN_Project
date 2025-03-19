@@ -185,9 +185,20 @@ struct rach_indication_message {
 class scheduler_configurator
 {
 public:
-  virtual ~scheduler_configurator()                                                                   = default;
+  virtual ~scheduler_configurator() = default;
+
+  /// \brief Reconfigure cell.
+  ///
+  /// This method cannot be called for an existing cell index without first removing it.
   virtual bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) = 0;
-  virtual void handle_rach_indication(const rach_indication_message& msg)                             = 0;
+
+  virtual void handle_rach_indication(const rach_indication_message& msg) = 0;
+
+  /// \brief Activate a configured cell. This method has no effect if the cell is already active.
+  virtual void handle_cell_start_request(du_cell_index_t cell_index) = 0;
+
+  /// \brief Deactivate a configured cell. This method has no effect if the cell is already deactivated.
+  virtual void handle_cell_stop_request(du_cell_index_t cell_index) = 0;
 };
 
 class scheduler_ue_configurator

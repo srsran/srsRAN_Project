@@ -26,7 +26,6 @@
 #include "pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "uci_scheduling/uci_allocator_impl.h"
 #include "ue_scheduling/ue_scheduler.h"
-#include "srsran/scheduler/config/scheduler_config.h"
 #include "srsran/support/tracing/rusage_trace_recorder.h"
 
 namespace srsran {
@@ -45,6 +44,12 @@ public:
                           cell_metrics_handler&                           metrics);
 
   void run_slot(slot_point sl_tx);
+
+  /// Activate cell.
+  void start();
+
+  /// Deactivate cell.
+  void stop();
 
   const sched_result& last_result() const { return res_grid[0].result; }
 
@@ -65,6 +70,8 @@ public:
   ue_scheduler& ue_sched;
 
 private:
+  void reset_resource_grid(slot_point sl_tx);
+
   /// Resource grid of this cell.
   cell_resource_allocator res_grid;
 
@@ -86,8 +93,7 @@ private:
   pucch_guardbands_scheduler    pucch_guard_sch;
   paging_scheduler              pg_sch;
 
-  // Tracer of resource usage (e.g. context switches)
-  rusage_trace_recorder<logger_event_tracer<true>> res_usage_tracer;
+  std::atomic<bool> stopped = false;
 };
 
 } // namespace srsran

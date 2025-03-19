@@ -90,6 +90,8 @@ public:
   std::optional<rach_indication_message> last_rach_ind;
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
+  void handle_cell_start_request(du_cell_index_t cell_index) override {}
+  void handle_cell_stop_request(du_cell_index_t cell_index) override {}
   void handle_rach_indication(const rach_indication_message& msg) override { last_rach_ind = msg; }
   void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override {}
   void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override {}
@@ -119,6 +121,10 @@ public:
   sched_result next_sched_result = {};
 
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
+
+  void start_cell(du_cell_index_t cell_idx) override {}
+
+  void stop_cell(du_cell_index_t cell_idx) override {}
 
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override
   {

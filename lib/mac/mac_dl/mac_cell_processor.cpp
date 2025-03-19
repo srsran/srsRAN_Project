@@ -70,8 +70,17 @@ async_task<void> mac_cell_processor::start()
       ctrl_exec,
       timers,
       [this]() {
+        if (state == cell_state::active) {
+          // No-op.
+          return;
+        }
+
+        // Notify scheduler about activation.
+        sched.start_cell(cell_cfg.cell_index);
+
         // set cell as active.
         state = cell_state::active;
+
         logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
       },
       [this]() {
@@ -93,6 +102,9 @@ async_task<void> mac_cell_processor::stop()
 
         // Set cell state as inactive to stop answering to slot indications.
         state = cell_state::inactive;
+
+        // Notify scheduler about activation.
+        sched.stop_cell(cell_cfg.cell_index);
 
         logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
       },
@@ -254,11 +266,6 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
 
   // Cleans old MAC DL PDU buffers.
   pdu_pool.tick(sl_tx.to_uint());
-
-  if (state != cell_state::active) {
-    phy_cell.on_cell_results_completion(sl_tx);
-    return;
-  }
 
   // Generate DL scheduling result for provided slot and cell.
   const sched_result& sl_res = sched.slot_indication(sl_tx, cell_cfg.cell_index);
@@ -492,7 +499,7 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
     // TODO: replace sib1_pcap_dumped flag with a vector or booleans that includes other SIBs.
     if (dl_alloc.si_indicator == sib_information::sib1 and not sib1_pcap_dumped) {
       const mac_dl_data_result::dl_pdu& sib1_pdu = dl_res.si_pdus[i];
-      srsran::mac_nr_context_info       context  = {};
+      mac_nr_context_info               context  = {};
       context.radioType = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
       context.direction = PCAP_DIRECTION_DOWNLINK;
       context.rntiType  = PCAP_SI_RNTI;
@@ -508,7 +515,7 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
   for (unsigned i = 0, e = dl_res.rar_pdus.size(); i != e; ++i) {
     const mac_dl_data_result::dl_pdu& rar_pdu  = dl_res.rar_pdus[i];
     const rar_information&            dl_alloc = sl_res.dl.rar_grants[i];
-    srsran::mac_nr_context_info       context  = {};
+    mac_nr_context_info               context  = {};
     context.radioType           = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
     context.direction           = PCAP_DIRECTION_DOWNLINK;
     context.rntiType            = PCAP_RA_RNTI;

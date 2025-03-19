@@ -38,6 +38,10 @@ public:
     // TODO: Call scheduler cell remove.
   }
 
+  void start_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_start_request(cell_index); }
+
+  void stop_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_stop_request(cell_index); }
+
   async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) override;
 
   async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override;
