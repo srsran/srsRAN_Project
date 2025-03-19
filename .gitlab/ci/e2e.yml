@@ -600,8 +600,12 @@ viavi 1h:
   extends: .viavi
   variables:
     KEYWORDS: "1h"
-  when: manual
-  allow_failure: true
+  needs:
+    - job: "basic avx512 dpdk"
+      artifacts: true
+    - job: "viavi 32UE UDP"
+      artifacts: false
+    - *retina-needs
 
 viavi debug:
   extends: .viavi
