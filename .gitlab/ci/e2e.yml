@@ -343,7 +343,7 @@ ntn:
 ################################################################################
 
 test mode ue:
-  stage: zmq
+  stage: test mode
   extends: .e2e-run
   variables:
     TESTBED: "test_mode"
@@ -370,7 +370,7 @@ test mode ue memcheck:
     - *retina-needs
 
 test mode ru:
-  stage: zmq
+  stage: test mode
   extends: .e2e-run
   variables:
     GROUP: "viavi"

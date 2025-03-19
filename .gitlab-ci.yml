@@ -38,6 +38,7 @@ stages:
   - static
   - build and unit tests
   - zmq
+  - test mode
   - rf
   - manual
   - documentation
