@@ -37,7 +37,8 @@ public:
   bool is_pdsch_scheduled() const
   {
     const auto& dl_res = *phy_notifier.last_sched_res->dl_res;
-    return not dl_res.rar_grants.empty() or not dl_res.bc.sibs.empty() or not dl_res.ue_grants.empty();
+    return not dl_res.rar_grants.empty() or not dl_res.bc.sibs.empty() or not dl_res.ue_grants.empty() or
+           not dl_res.paging_grants.empty();
   }
 
   test_helpers::dummy_mac_scheduler_adapter    sched_adapter;
@@ -98,6 +99,14 @@ protected:
 
 TEST_P(mac_cell_processor_tester, when_cell_is_active_then_slot_indication_triggers_scheduling)
 {
+  async_task<void>         t = mac_cell.start();
+  lazy_task_launcher<void> launcher{t};
+  this->task_worker.run_pending_tasks();
+  ASSERT_TRUE(t.ready());
+
+  // Scheduler was notified of cell start.
+  ASSERT_TRUE(sched_adapter.active);
+
   slot_point sl_tx{0, 0};
   ASSERT_FALSE(phy_notifier.is_complete);
   mac_cell.handle_slot_indication(sl_tx);
@@ -112,7 +121,7 @@ TEST_P(mac_cell_processor_tester, when_cell_is_active_then_slot_indication_trigg
   ASSERT_EQ(phy_notifier.last_sched_res->dl_res->ue_grants.size(), test_params.nof_ue_allocated);
 }
 
-TEST_P(mac_cell_processor_tester, when_cell_is_inactive_then_slot_indication_does_not_trigger_scheduling)
+TEST_P(mac_cell_processor_tester, when_cell_is_deactiaved_then_scheduler_gets_notified)
 {
   slot_point sl_tx{0, 0};
   ASSERT_FALSE(phy_notifier.is_complete);
@@ -122,17 +131,16 @@ TEST_P(mac_cell_processor_tester, when_cell_is_inactive_then_slot_indication_doe
   this->task_worker.run_pending_tasks();
   ASSERT_TRUE(t.ready());
 
+  // Scheduler was notified of cell stop.
+  ASSERT_FALSE(sched_adapter.active);
+
+  // Cell continues to process slot indications.
   phy_notifier.is_complete = false;
   phy_notifier.last_sched_res.reset();
   phy_notifier.last_ul_res.reset();
   phy_notifier.last_dl_data_res.reset();
-
   mac_cell.handle_slot_indication(sl_tx);
-
   ASSERT_TRUE(phy_notifier.is_complete);
-  ASSERT_FALSE(phy_notifier.last_sched_res.has_value());
-  ASSERT_FALSE(phy_notifier.last_dl_data_res.has_value());
-  ASSERT_FALSE(phy_notifier.last_ul_res.has_value());
 }
 
 INSTANTIATE_TEST_SUITE_P(

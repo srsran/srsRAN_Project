@@ -118,13 +118,14 @@ public:
 class dummy_mac_scheduler_adapter : public mac_scheduler_cell_info_handler
 {
 public:
+  bool         active            = false;
   sched_result next_sched_result = {};
 
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
 
-  void start_cell(du_cell_index_t cell_idx) override {}
+  void start_cell(du_cell_index_t cell_idx) override { active = true; }
 
-  void stop_cell(du_cell_index_t cell_idx) override {}
+  void stop_cell(du_cell_index_t cell_idx) override { active = false; }
 
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override
   {
