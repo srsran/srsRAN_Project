@@ -111,13 +111,16 @@ public:
 
   /// \brief Reserves the repository for a new slot context.
   /// \return \c true if the reservation is successful, otherwise \c false.
-  bool reserve_on_new_slot()
+  bool reserve_on_new_slot(slot_point new_slot)
   {
-    // Try to write the accepting PDU mask, it is expected that the number of pending PDU is zero.
+    // Try transitioning state from idle to accepting PDU.
     uint32_t expected_pending_pdu_count = pending_pdu_count_idle;
     if (!pending_pdu_count.compare_exchange_weak(expected_pending_pdu_count, accepting_pdu_mask)) {
       return false;
     }
+
+    // Overwrite configured slot.
+    configured_slot = new_slot;
 
     // Clear all entries.
     for (auto& entry : pusch_repository) {
@@ -140,8 +143,25 @@ public:
   // See interface for documentation.
   void finish_adding_pdus() override
   {
+    // Remove accepting PDU mask and verify the previous state was accepting PDU.
     [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_xor(accepting_pdu_mask);
-    srsran_assert((prev & accepting_pdu_mask) != 0, "Unexpected prev={:08x} finishing PDUs.", prev);
+    srsran_assert(is_state_accepting_pdu(prev), "Unexpected prev={:08x} finishing PDUs.", prev);
+  }
+
+  /// \brief Returns \c true if the repository is configured with the given slot.
+  ///
+  /// The slot is considered invalid if the current state is accepting PDUs, idle, stopped or if the given slot is not
+  /// equal to the configured one.
+  bool is_slot_valid(slot_point slot) const
+  {
+    // Verify that the repository is in a valid state to process PDUs.
+    uint32_t current_state = pending_pdu_count.load();
+    if (is_state_idle(current_state) || is_state_accepting_pdu(current_state) || is_state_stopped(current_state)) {
+      return false;
+    }
+
+    // Checks the slot validity.
+    return configured_slot == slot;
   }
 
   /// \brief Notifies the event of creating a new asynchronous execution task. It increments the PDU being executed
@@ -156,11 +176,11 @@ public:
     // Stop function - returns true if the current state is stopped, and it triggers an assertion if the current state
     // is unexpected.
     auto stop_function = [&current_state]() {
-      if (current_state == pending_pdu_count_stopped) {
+      if (is_state_stopped(current_state)) {
         return true;
       }
 
-      srsran_assert(((current_state & accepting_pdu_mask) == 0) && ((current_state & 0xfff) != 0),
+      srsran_assert(!is_state_accepting_pdu(current_state) && has_state_pending_pdu_in_queue(current_state),
                     "The slot repository is in an unexpected state 0x{:08x}.",
                     current_state);
 
@@ -169,8 +189,8 @@ public:
 
     // Try to increment the number of PDUs to execute.
     bool success = false;
-    while (!stop_function() &&
-           !(success = pending_pdu_count.compare_exchange_weak(current_state, current_state + pending_pdu_inc_exec))) {
+    while (!stop_function() && !success) {
+      success = pending_pdu_count.compare_exchange_weak(current_state, current_state + pending_pdu_inc_exec);
     }
 
     // Return true if the exchange was successful.
@@ -189,8 +209,9 @@ public:
   {
     [[maybe_unused]] uint32_t prev = pending_pdu_count.fetch_sub(pending_pdu_inc_queue + pending_pdu_inc_exec);
 
-    srsran_assert(((prev & accepting_pdu_mask) == 0) && (prev != pending_pdu_count_stopped) &&
-                      ((prev & 0xfff000) != 0) && ((prev & 0xfff) != 0),
+    // Assert previous state.
+    srsran_assert(!is_state_accepting_pdu(prev) && !is_state_stopped(prev) && has_state_pending_pdu_in_exec(prev) &&
+                      has_state_pending_pdu_in_queue(prev),
                   "The slot repository is in an unexpected state 0x{:08x}.",
                   prev);
   }
@@ -198,6 +219,12 @@ public:
   /// Returns a span that contains the PUSCH PDUs for the given slot and symbol index.
   span<const pusch_pdu> get_pusch_pdus(unsigned end_symbol_index) const
   {
+    // Skip if there are no pending PDUs. It could transition to idle and queue new PDUs any time, resulting in a race
+    // condition.
+    if (!has_state_pending_pdu_in_queue(pending_pdu_count.load())) {
+      return {};
+    }
+
     srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
     return pusch_repository[end_symbol_index];
   }
@@ -205,6 +232,12 @@ public:
   /// Returns a span that contains the PUCCH PDUs for the given slot and symbol index.
   span<const pucch_pdu> get_pucch_pdus(unsigned end_symbol_index) const
   {
+    // Skip if there are no pending PDUs. It could transition to idle and queue new PDUs any time, resulting in a race
+    // condition.
+    if (!has_state_pending_pdu_in_queue(pending_pdu_count.load())) {
+      return {};
+    }
+
     srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
     return pucch_repository[end_symbol_index];
   }
@@ -212,6 +245,12 @@ public:
   /// Returns a span that contains the PUCCH PDUs for the given slot and symbol index.
   span<const pucch_f1_collection> get_pucch_f1_repository(unsigned end_symbol_index) const
   {
+    // Skip if there are no pending PDUs. It could transition to idle and queue new PDUs any time, resulting in a race
+    // condition.
+    if (!has_state_pending_pdu_in_queue(pending_pdu_count.load())) {
+      return {};
+    }
+
     srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
     return pucch_f1_repository[end_symbol_index];
   }
@@ -219,6 +258,12 @@ public:
   /// Returns a span that contains the SRS PDUs for the given slot and symbol index.
   span<const srs_pdu> get_srs_pdus(unsigned end_symbol_index) const
   {
+    // Skip if there are no pending PDUs. It could transition to idle and queue new PDUs any time, resulting in a race
+    // condition.
+    if (!has_state_pending_pdu_in_queue(pending_pdu_count.load())) {
+      return {};
+    }
+
     srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
     return srs_repository[end_symbol_index];
   }
@@ -232,7 +277,7 @@ public:
   {
     // As long as there are pending asynchronous tasks, wait for them to finish.
     for (uint32_t current_state = pending_pdu_count.load();
-         (current_state & accepting_pdu_mask) || (current_state & 0xfff000) ||
+         is_state_accepting_pdu(current_state) || has_state_pending_pdu_in_exec(current_state) ||
          !pending_pdu_count.compare_exchange_weak(current_state, pending_pdu_count_stopped);
          current_state = pending_pdu_count.load()) {
       std::this_thread::sleep_for(std::chrono::microseconds(10));
@@ -250,6 +295,21 @@ private:
   static constexpr uint32_t pending_pdu_inc_queue = 0x1;
   /// PDU execution increment.
   static constexpr uint32_t pending_pdu_inc_exec = 0x1000;
+
+  /// Returns \c true if a state is idle.
+  static constexpr bool is_state_idle(uint32_t state) { return state == pending_pdu_count_idle; }
+
+  /// Returns \c true if a state is stopped.
+  static constexpr bool is_state_stopped(uint32_t state) { return state == pending_pdu_count_stopped; }
+
+  /// Returns \c true if a state is accepting PDU.
+  static constexpr bool is_state_accepting_pdu(uint32_t state) { return state & accepting_pdu_mask; }
+
+  /// Returns \c true if a state contains pending PDUs in queues.
+  static constexpr bool has_state_pending_pdu_in_queue(uint32_t state) { return state & 0xfff; }
+
+  /// Returns \c true if a state contains pending PDUs in execution.
+  static constexpr bool has_state_pending_pdu_in_exec(uint32_t state) { return state & 0xfff000; }
 
   /// \brief Increment the pending PDU count.
   /// \remark An assertion is triggered if the pending PDU count contains the accepting PDU mask.
@@ -269,5 +329,7 @@ private:
   std::array<static_vector<srs_pdu, MAX_SRS_PDUS_PER_SLOT>, MAX_NSYMB_PER_SLOT> srs_repository;
   /// Counts the number of pending PDUs.
   std::atomic<uint32_t> pending_pdu_count = {};
+  /// Current configured slot.
+  slot_point configured_slot;
 };
 } // namespace srsran

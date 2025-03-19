@@ -49,6 +49,7 @@ uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  pr
   pucch_proc(std::move(pucch_proc_)),
   srs(std::move(srs_)),
   task_executors(task_executors_),
+  dummy(*this),
   rm_buffer_pool(rm_buffer_pool_),
   rx_payload_pool(max_nof_prb, max_nof_layers),
   logger(srslog::fetch_basic_logger("PHY", true)),
@@ -60,8 +61,13 @@ uplink_processor_impl::uplink_processor_impl(std::unique_ptr<prach_detector>  pr
   srsran_assert(srs, "A valid SRS channel estimator must be provided");
 }
 
-uplink_slot_processor& uplink_processor_impl::get_slot_processor()
+uplink_slot_processor& uplink_processor_impl::get_slot_processor(slot_point slot)
 {
+  // If the PDU repository configured slot does not match with the slot, then give the dummy instance.
+  if (!pdu_repository.is_slot_valid(slot)) {
+    return dummy;
+  }
+
   return *this;
 }
 
@@ -73,14 +79,15 @@ void uplink_processor_impl::stop()
 unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository(slot_point slot)
 {
   // Try to configure a new slot.
-  if (!pdu_repository.reserve_on_new_slot()) {
+  if (!pdu_repository.reserve_on_new_slot(slot)) {
     // Return an invalid repository.
     return {};
   }
 
   // Reset processor states.
-  current_slot         = slot;
-  count_pusch_adaptors = 0;
+  current_slot          = slot;
+  count_pusch_adaptors  = 0;
+  nof_processed_symbols = 0;
   rx_payload_pool.reset();
 
   // Create a valid unique PDU slot repository.
@@ -90,24 +97,28 @@ unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository
 void uplink_processor_impl::handle_rx_symbol(const shared_resource_grid& grid, unsigned end_symbol_index)
 {
   // Run rate matching buffer pool only at the first symbol.
-  if (end_symbol_index == 0) {
+  if (nof_processed_symbols == 0) {
     rm_buffer_pool.run_slot(current_slot);
   }
 
-  for (const auto& pdu : pdu_repository.get_pucch_pdus(end_symbol_index)) {
-    process_pucch(grid, pdu);
-  }
+  for (unsigned end_processed_symbol = std::min(end_symbol_index + 1, MAX_NSYMB_PER_SLOT);
+       nof_processed_symbols != end_processed_symbol;
+       ++nof_processed_symbols) {
+    for (const auto& pdu : pdu_repository.get_pucch_pdus(nof_processed_symbols)) {
+      process_pucch(grid, pdu);
+    }
 
-  for (const auto& collection : pdu_repository.get_pucch_f1_repository(end_symbol_index)) {
-    process_pucch_f1(grid, collection);
-  }
+    for (const auto& collection : pdu_repository.get_pucch_f1_repository(nof_processed_symbols)) {
+      process_pucch_f1(grid, collection);
+    }
 
-  for (const auto& pdu : pdu_repository.get_pusch_pdus(end_symbol_index)) {
-    process_pusch(grid, pdu);
-  }
+    for (const auto& pdu : pdu_repository.get_pusch_pdus(nof_processed_symbols)) {
+      process_pusch(grid, pdu);
+    }
 
-  for (const auto& pdu : pdu_repository.get_srs_pdus(end_symbol_index)) {
-    process_srs(grid, pdu);
+    for (const auto& pdu : pdu_repository.get_srs_pdus(nof_processed_symbols)) {
+      process_srs(grid, pdu);
+    }
   }
 }
 

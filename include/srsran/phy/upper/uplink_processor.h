@@ -34,8 +34,15 @@ public:
   /// invalid.
   virtual unique_uplink_pdu_slot_repository get_pdu_slot_repository(slot_point slot) = 0;
 
-  /// Gets the slot processing interface.
-  virtual uplink_slot_processor& get_slot_processor() = 0;
+  /// \brief Gets the slot processing interface.
+  ///
+  /// This method requires a slot for checking whether the slot for which the processor is requested matches with
+  /// the configured slot.
+  ///
+  /// \param[in] slot Corresponding slot.
+  /// \return A reference to the uplink slot processor if the slot matches with the configured one, otherwise a
+  /// reference to a dummy uplink slot processor.
+  virtual uplink_slot_processor& get_slot_processor(slot_point slot) = 0;
 
   /// Stops the uplink processor.
   virtual void stop() = 0;

@@ -29,7 +29,7 @@ public:
 
   void finish_adding_pdus() override {}
 
-  uplink_slot_processor& get_slot_processor() override { return *this; }
+  uplink_slot_processor& get_slot_processor(slot_point slot) override { return *this; }
 
   bool is_add_pusch_pdu_method_called() const { return has_add_pusch_pdu_method_called; }
 

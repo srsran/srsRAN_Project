@@ -29,7 +29,7 @@ void uplink_processor_pool_impl::stop()
 uplink_slot_processor& uplink_processor_pool_impl::get_slot_processor(slot_point slot)
 {
   srsran_assert(slot.valid(), "Invalid slot ({}) when requesting an uplink processor", slot);
-  return processors.get_processor(slot).get_slot_processor();
+  return processors.get_processor(slot).get_slot_processor(slot);
 }
 
 unique_uplink_pdu_slot_repository uplink_processor_pool_impl::get_pdu_slot_repository(slot_point slot)
