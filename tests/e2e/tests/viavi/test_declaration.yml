@@ -79,6 +79,22 @@ tests:
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
+  - id: "32UE ideal UDP bidirectional Empty Uplink Slot"
+    campaign_filename: *campaign_filename
+    test_name: "32UE ideal UDP bidirectional"
+    test_timeout: *test_timeout
+    # Configuration
+    gnb_extra_config:
+      <<: *base_config
+      expert_phy:
+        allow_request_on_empty_uplink_slot: true
+    # Pass / Fail Criteria
+    expected_dl_bitrate: 1.2e+9
+    expected_ul_bitrate: 72.0e+6
+    expected_nof_kos: 10
+    warning_as_errors: true
+    warning_allowlist: *base_warning_allowlist
+
   - id: "1UE fading UDP uplink"
     campaign_filename: *campaign_filename
     test_name: "1UE fading UDP uplink"
