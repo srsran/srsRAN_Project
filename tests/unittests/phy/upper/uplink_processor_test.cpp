@@ -373,6 +373,39 @@ TEST_F(UplinkProcessorFixture, stop_no_pending_task)
   ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
 }
 
+TEST_F(UplinkProcessorFixture, stop_accepting_tasks)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Add PDU to the repository.
+  unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+
+  // Create asynchronous task - it will block until the repository is released.
+  std::atomic<bool> stop_thread_running = false;
+  std::thread       stop_thread([this, &stop_thread_running]() {
+    stop_thread_running = true;
+    ul_processor->stop();
+  });
+
+  // Wait for the thread to start - facilitates that the stop method blocks until the state is released.
+  while (!stop_thread_running.load()) {
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
+  }
+
+  // Release repository - the stop method shall return.
+  repository.release();
+
+  // Synchronize stopping thread.
+  stop_thread.join();
+
+  // Assert execution expectations.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
 TEST_F(UplinkProcessorFixture, stop_pending_task)
 {
   // Contexted slot.

@@ -225,12 +225,14 @@ public:
 
   /// \brief Stops the uplink PDU slot repository.
   ///
-  /// It blocks until there are no more asynchronous tasks.
+  /// It waits as long as:
+  /// - the repository is active accepting PDUs; and
+  /// - there are asynchronous tasks being executed.
   void stop()
   {
     // As long as there are pending asynchronous tasks, wait for them to finish.
     for (uint32_t current_state = pending_pdu_count.load();
-         ((current_state & 0xfff000) != 0) ||
+         (current_state & accepting_pdu_mask) || (current_state & 0xfff000) ||
          !pending_pdu_count.compare_exchange_weak(current_state, pending_pdu_count_stopped);
          current_state = pending_pdu_count.load()) {
       std::this_thread::sleep_for(std::chrono::microseconds(10));
