@@ -539,39 +539,89 @@ android drx:
     KUBECONFIG_VAR_NAME_EXTRA: "RETINA_NAMESPACE_KUBECONFIG_EXTRA"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
     RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
-
-viavi:
-  extends: .viavi
   rules:
     - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
-  parallel:
-    matrix:
-      - KEYWORDS:
-          [
-            "ideal and 1UE and not MIMO",
-            "ideal and 1UE and MIMO",
-            "ideal and 32UE and not experimental and not tdd and not extended and not UM",
-            "tdd",
-            "fading and 1UE and not MIMO",
-            "fading and 1UE and MIMO",
-            "fading and 32UE",
-            "birth-death and 1UE",
-          ]
   needs:
     - job: "basic avx512 dpdk"
       artifacts: true
     - *retina-needs
 
+viavi 1UE:
+  extends: .viavi
+  variables:
+    KEYWORDS: "1UE and ideal and not MIMO"
+
+viavi 1UE MIMO:
+  extends: .viavi
+  variables:
+    KEYWORDS: "1UE and ideal and MIMO"
+
+viavi 1UE birth-death:
+  extends: .viavi
+  variables:
+    KEYWORDS: "1UE and birth-death"
+
+viavi 1UE fading:
+  extends: .viavi
+  variables:
+    KEYWORDS: "1UE and fading and not MIMO"
+
+viavi 1UE fading MIMO:
+  extends: .viavi
+  variables:
+    KEYWORDS: "1UE and fading and MIMO"
+
+viavi 32UE ping:
+  extends: .viavi
+  variables:
+    KEYWORDS: "32UE and ping"
+
+viavi 32UE UDP:
+  extends: .viavi
+  variables:
+    KEYWORDS: "32UE and ideal and not long and not tdd and not UM and udp"
+
+viavi 32UE TCP:
+  extends: .viavi
+  variables:
+    KEYWORDS: "32UE and ideal and not long and not tdd and not UM and tcp"
+
+viavi 32UE fading:
+  extends: .viavi
+  variables:
+    KEYWORDS: "32UE and fading"
+
+viavi 32UE tdd:
+  extends: .viavi
+  variables:
+    KEYWORDS: "32UE and tdd"
+
 viavi 1h:
   extends: .viavi
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
-      when: manual
-      allow_failure: true
   variables:
-    KEYWORDS: "32UE and experimental and not extended"
+    KEYWORDS: "1h"
+  when: manual
+  allow_failure: true
+
+viavi debug:
+  extends: .viavi
+  variables:
+    MARKERS: "viavi_debug"
+  when: manual
+  allow_failure: true
   needs:
-    - job: "basic avx512 dpdk"
+    - job: "basic avx512 dpdk withassert"
+      artifacts: true
+    - *retina-needs
+
+viavi rtsan:
+  extends: .viavi
+  variables:
+    KEYWORDS: "tdd and 6u3d"
+  when: manual
+  allow_failure: true
+  needs:
+    - job: "basic avx512 dpdk rtsan"
       artifacts: true
     - *retina-needs
 
@@ -581,22 +631,13 @@ viavi um:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     KEYWORDS: "ideal and UM"
-  needs:
-    - job: "basic avx512 dpdk"
-      artifacts: true
-    - *retina-needs
 
 viavi 3h:
   extends: .viavi
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
-    KEYWORDS: "extended and not 24h"
-  timeout: 6 hours
-  needs:
-    - job: "basic avx512 dpdk"
-      artifacts: true
-    - *retina-needs
+    KEYWORDS: "3h"
 
 viavi 16h:
   extends: .viavi
@@ -604,37 +645,7 @@ viavi 16h:
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
-    KEYWORDS: "extended and 24h"
-  needs:
-    - job: "basic avx512 dpdk"
-      artifacts: true
-    - *retina-needs
-
-viavi debug:
-  extends: .viavi
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
-      when: manual
-      allow_failure: true
-  variables:
-    MARKERS: "viavi_debug"
-  needs:
-    - job: "basic avx512 dpdk withassert"
-      artifacts: true
-    - *retina-needs
-
-viavi rtsan:
-  extends: .viavi
-  rules:
-    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests Plugin/
-      when: manual
-      allow_failure: true
-  variables:
-    KEYWORDS: "tdd and 6u3d"
-  needs:
-    - job: "basic avx512 dpdk rtsan"
-      artifacts: true
-    - *retina-needs
+    KEYWORDS: "16h"
 
 ################################################################################
 # Garbage collector
