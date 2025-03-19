@@ -31,13 +31,13 @@ bool pcap_file_writer::open(uint32_t dlt_, const std::string& filename_)
   filename = filename_;
 
   pcap_hdr_t file_header = {
-      0xa1b2c3d4, /// magic number
-      2,
-      4,     /// version number is 2.4
-      0,     /// timezone
-      0,     /// sigfigs - apparently all tools do this
-      65535, /// snaplen - this should be long enough
-      dlt    /// Data Link Type (DLT).  Set as unused value 147 for now
+      0xa1b2c3d4,                           // magic number
+      2,                                    // version_major is 2
+      4,                                    // version_minor is 4 (together: 2.4)
+      0,                                    // timezone
+      0,                                    // sigfigs - apparently all tools do this
+      std::numeric_limits<uint32_t>::max(), // snaplen - this should be long enough
+      dlt                                   // Data Link Type (DLT). Set as unused value 147 for now
   };
 
   pcap_fstream.open(filename.c_str(), std::ios::out | std::ios::binary);
