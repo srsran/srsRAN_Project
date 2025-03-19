@@ -80,52 +80,103 @@ auto dispatch_and_continue_on_blocking(DispatchTaskExecutor& dispatch_exec,
                                        Callable&&            callable,
                                        OnFailureToDispatch&& on_failure = noop_operation{})
 {
-  using return_type = detail::function_return_t<decltype(&Callable::operator())>;
+  if constexpr (std::is_invocable_v<Callable>) {
+    // The task is a callable object.
+    using return_type = function_return_t<decltype(&Callable::operator())>;
 
-  if constexpr (std::is_same_v<return_type, void>) {
-    // async_task<void> case.
+    if constexpr (std::is_same_v<return_type, void>) {
+      // CASE: callable has the signature void().
 
-    return launch_async([&return_exec,
-                         &dispatch_exec,
-                         task       = std::forward<Callable>(callable),
-                         on_failure = std::forward<OnFailureToDispatch>(on_failure),
-                         &timers](coro_context<async_task<void>>& ctx) mutable {
-      CORO_BEGIN(ctx);
+      return launch_async([&return_exec,
+                           &dispatch_exec,
+                           task       = std::forward<Callable>(callable),
+                           on_failure = std::forward<OnFailureToDispatch>(on_failure),
+                           &timers](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
 
-      // Dispatch execution context switch.
-      CORO_AWAIT(dispatch_on_blocking<IsExecute>(dispatch_exec, timers, on_failure));
+        // Dispatch execution context switch.
+        CORO_AWAIT(dispatch_on_blocking<IsExecute>(dispatch_exec, timers, on_failure));
 
-      // Run task.
-      task();
+        // Run task.
+        task();
 
-      // Continuation in the original executor.
-      CORO_AWAIT(dispatch_on_blocking<IsExecute>(return_exec, timers, on_failure));
+        // Continuation in the original executor.
+        CORO_AWAIT(dispatch_on_blocking<IsExecute>(return_exec, timers, on_failure));
 
-      CORO_RETURN();
-    });
+        CORO_RETURN();
+      });
 
+    } else {
+      // CASE: callable has the signature R(), where R is the non-void "return_type".
+
+      return launch_async([&return_exec,
+                           &dispatch_exec,
+                           task       = std::forward<Callable>(callable),
+                           on_failure = std::forward<OnFailureToDispatch>(on_failure),
+                           &timers,
+                           ret = return_type{}](coro_context<async_task<return_type>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+
+        // Dispatch execution context switch.
+        CORO_AWAIT(dispatch_on_blocking<IsExecute>(dispatch_exec, timers, on_failure));
+
+        // Run task.
+        ret = task();
+
+        // Continuation in the original executor.
+        CORO_AWAIT(dispatch_on_blocking<IsExecute>(return_exec, timers, on_failure));
+
+        CORO_RETURN(ret);
+      });
+    }
   } else {
-    // async_task<return_type> case.
+    // The task is an awaitable.
+    using return_type = awaitable_result_t<Callable>;
 
-    return launch_async([&return_exec,
-                         &dispatch_exec,
-                         task       = std::forward<Callable>(callable),
-                         on_failure = std::forward<OnFailureToDispatch>(on_failure),
-                         &timers,
-                         ret = return_type{}](coro_context<async_task<return_type>>& ctx) mutable {
-      CORO_BEGIN(ctx);
+    if constexpr (std::is_same_v<return_type, void>) {
+      // CASE: callback is an awaitable with "return_type" as void.
 
-      // Dispatch execution context switch.
-      CORO_AWAIT(dispatch_on_blocking<IsExecute>(dispatch_exec, timers, on_failure));
+      return launch_async([&return_exec,
+                           &dispatch_exec,
+                           task       = std::forward<Callable>(callable),
+                           on_failure = std::forward<OnFailureToDispatch>(on_failure),
+                           &timers](coro_context<async_task<void>>& ctx) mutable {
+        CORO_BEGIN(ctx);
 
-      // Run task.
-      ret = task();
+        // Dispatch execution context switch.
+        CORO_AWAIT(dispatch_on_blocking<IsExecute>(dispatch_exec, timers, on_failure));
 
-      // Continuation in the original executor.
-      CORO_AWAIT(dispatch_on_blocking<IsExecute>(return_exec, timers, on_failure));
+        // Run task.
+        CORO_AWAIT(task);
 
-      CORO_RETURN(ret);
-    });
+        // Continuation in the original executor.
+        CORO_AWAIT(dispatch_on_blocking<IsExecute>(return_exec, timers, on_failure));
+
+        CORO_RETURN();
+      });
+    } else {
+      // CASE: callback is an awaitable with "return_type" non-void.
+
+      return launch_async([&return_exec,
+                           &dispatch_exec,
+                           task       = std::forward<Callable>(callable),
+                           on_failure = std::forward<OnFailureToDispatch>(on_failure),
+                           &timers,
+                           ret = return_type{}](coro_context<async_task<return_type>>& ctx) mutable {
+        CORO_BEGIN(ctx);
+
+        // Dispatch execution context switch.
+        CORO_AWAIT(dispatch_on_blocking<IsExecute>(dispatch_exec, timers, on_failure));
+
+        // Run task.
+        CORO_AWAIT_VALUE(ret, task);
+
+        // Continuation in the original executor.
+        CORO_AWAIT(dispatch_on_blocking<IsExecute>(return_exec, timers, on_failure));
+
+        CORO_RETURN(ret);
+      });
+    }
   }
 }
 
