@@ -23,6 +23,25 @@ namespace srsran {
 class sched_config_manager;
 class scheduler_metrics_handler;
 
+/// Unique event to remove cell.
+class cell_removal_event
+{
+public:
+  cell_removal_event() = default;
+  cell_removal_event(du_cell_index_t cell_index_, sched_config_manager& parent_) :
+    cell_index(cell_index_), parent(&parent_)
+  {
+  }
+  ~cell_removal_event();
+
+  du_cell_index_t get_cell_index() const { return cell_index; }
+
+private:
+  du_cell_index_t cell_index = INVALID_DU_CELL_INDEX;
+  // We use a unique_ptr with no deleter to automatically set the ptr to null on move.
+  std::unique_ptr<sched_config_manager, noop_operation> parent;
+};
+
 /// Event to create/reconfigure a UE in the scheduler.
 class ue_config_update_event
 {
@@ -107,6 +126,8 @@ public:
 
   const cell_configuration* add_cell(const sched_cell_configuration_request_message& msg);
 
+  cell_removal_event rem_cell(du_cell_index_t cell_index);
+
   ue_config_update_event add_ue(const sched_ue_creation_request_message& cfg_req);
 
   ue_config_update_event update_ue(const sched_ue_reconfiguration_message& cfg_req);
@@ -129,11 +150,13 @@ public:
   const cell_common_configuration_list& common_cell_list() const { return added_cells; }
 
 private:
+  friend class cell_removal_event;
   friend class ue_config_update_event;
   friend class ue_config_delete_event;
 
   void flush_ues_to_rem();
 
+  void handle_cell_removal_complete(du_cell_index_t cell_index);
   void handle_ue_config_complete(du_ue_index_t ue_index, std::unique_ptr<ue_configuration> next_cfg);
   void handle_ue_delete_complete(du_ue_index_t ue_index);
 

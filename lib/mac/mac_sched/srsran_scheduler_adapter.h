@@ -33,10 +33,7 @@ public:
 
   void add_cell(const mac_cell_creation_request& msg) override;
 
-  void remove_cell(du_cell_index_t cell_index) override
-  {
-    // TODO: Call scheduler cell remove.
-  }
+  async_task<void> remove_cell(du_cell_index_t cell_index) override;
 
   void start_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_start_request(cell_index); }
 
@@ -107,6 +104,8 @@ private:
 
     std::unique_ptr<positioning_handler> pos_handler;
 
+    manual_event<bool> cell_update_ready;
+
   private:
     const du_cell_index_t     cell_idx = INVALID_DU_CELL_INDEX;
     srsran_scheduler_adapter& parent;
@@ -119,6 +118,7 @@ private:
   {
   public:
     explicit sched_config_notif_adapter(srsran_scheduler_adapter& parent_) : parent(parent_) {}
+    void on_cell_removal_complete(du_cell_index_t cell_index) override;
     void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) override;
     void on_ue_delete_response(du_ue_index_t ue_index) override;
 

@@ -18,6 +18,7 @@ namespace srsran {
 class sched_cfg_dummy_notifier : public sched_configuration_notifier
 {
 public:
+  void on_cell_removal_complete(du_cell_index_t cell_index) override {}
   void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) override {}
   void on_ue_delete_response(du_ue_index_t ue_index) override {}
 };

@@ -60,6 +60,26 @@ void srsran_scheduler_adapter::add_cell(const mac_cell_creation_request& msg)
   sched_impl->handle_cell_configuration_request(msg.sched_req);
 }
 
+async_task<void> srsran_scheduler_adapter::remove_cell(du_cell_index_t cell_index)
+{
+  return launch_async([this, cell_index](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    if (not cell_handlers.contains(cell_index)) {
+      CORO_EARLY_RETURN();
+    }
+
+    // Request cell removal from scheduler.
+    sched_impl->handle_cell_removal_request(cell_index);
+
+    // Await scheduler completion.
+    CORO_AWAIT(cell_handlers[cell_index].cell_update_ready);
+    cell_handlers[cell_index].cell_update_ready.reset();
+
+    CORO_RETURN();
+  });
+}
+
 async_task<bool> srsran_scheduler_adapter::handle_ue_creation_request(const mac_ue_create_request& msg)
 {
   return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
@@ -291,6 +311,16 @@ srsran_scheduler_adapter::handle_positioning_measurement_request(du_cell_index_t
                                                                  const mac_cell_positioning_measurement_request& req)
 {
   return cell_handlers[cell_index].pos_handler->handle_positioning_measurement_request(req);
+}
+
+void srsran_scheduler_adapter::sched_config_notif_adapter::on_cell_removal_complete(du_cell_index_t cell_index)
+{
+  // Continuation of task in ctrl executor.
+  if (not parent.ctrl_exec.defer(
+          [this, cell_index]() { parent.cell_handlers[cell_index].cell_update_ready.set(true); })) {
+    parent.logger.error("cell={}: Unable to remove cell configuration. Cause: DU task queue is full.",
+                        fmt::underlying(cell_index));
+  }
 }
 
 void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete(du_ue_index_t ue_index,

@@ -33,7 +33,7 @@ public:
   /// \brief Removes an existing cell from the scheduler.
   ///
   /// \param cell_index DU-specific index of the cell to remove.
-  virtual void remove_cell(du_cell_index_t cell_index) = 0;
+  virtual async_task<void> remove_cell(du_cell_index_t cell_index) = 0;
 
   /// \brief Adds a new UE configuration to the scheduler.
   ///

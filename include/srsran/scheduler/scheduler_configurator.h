@@ -192,6 +192,9 @@ public:
   /// This method cannot be called for an existing cell index without first removing it.
   virtual bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) = 0;
 
+  /// \brief Handle cell configuration removal.
+  virtual void handle_cell_removal_request(du_cell_index_t cell_index) = 0;
+
   virtual void handle_rach_indication(const rach_indication_message& msg) = 0;
 
   /// \brief Activate a configured cell. This method has no effect if the cell is already active.
@@ -215,9 +218,16 @@ public:
 class sched_configuration_notifier
 {
 public:
-  virtual ~sched_configuration_notifier()                                             = default;
+  virtual ~sched_configuration_notifier() = default;
+
+  /// Called by scheduler when cell removal is completed.
+  virtual void on_cell_removal_complete(du_cell_index_t cell_index) = 0;
+
+  /// Called by scheduler when UE creation/modification is completed.
   virtual void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) = 0;
-  virtual void on_ue_delete_response(du_ue_index_t ue_index)                          = 0;
+
+  /// Called by scheduler when UE removal is completed.
+  virtual void on_ue_delete_response(du_ue_index_t ue_index) = 0;
 };
 
 } // namespace srsran

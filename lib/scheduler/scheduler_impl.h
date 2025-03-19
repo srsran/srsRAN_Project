@@ -25,6 +25,7 @@ public:
   explicit scheduler_impl(const scheduler_config& sched_cfg);
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override;
+  void handle_cell_removal_request(du_cell_index_t cell_index) override;
 
   // Cell activity.
   void handle_cell_start_request(du_cell_index_t cell_index) override;
