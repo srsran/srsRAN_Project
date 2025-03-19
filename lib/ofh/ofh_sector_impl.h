@@ -49,7 +49,7 @@ public:
     ul_data_repo(std::move(dependencies.ul_data_repo)),
     ofh_receiver(std::move(dependencies.ofh_receiver)),
     ofh_transmitter(std::move(dependencies.ofh_transmitter)),
-    ofh_sector_controller(*ofh_receiver),
+    ofh_sector_controller(*ofh_receiver, ul_data_repo),
     ofh_metrics_collector(ofh_receiver->get_metrics_collector(), config.are_metrics_enabled, config.sector_id)
   {
     srsran_assert(ofh_receiver, "Invalid Open Fronthaul receiver");

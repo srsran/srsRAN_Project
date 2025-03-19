@@ -21,4 +21,5 @@ void sector_controller::start()
 void sector_controller::stop()
 {
   ofh_rx.get_controller().stop();
+  slot_repo->clear();
 }

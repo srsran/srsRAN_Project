@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include "support/uplink_context_repository.h"
 #include "srsran/ofh/ofh_controller.h"
 #include "srsran/ofh/receiver/ofh_receiver.h"
+#include <memory>
 
 namespace srsran {
 namespace ofh {
@@ -20,7 +22,10 @@ namespace ofh {
 class sector_controller : public controller
 {
 public:
-  explicit sector_controller(receiver& ofh_rx_) : ofh_rx(ofh_rx_) {}
+  sector_controller(receiver& ofh_rx_, std::shared_ptr<uplink_context_repository> slot_repo_) :
+    ofh_rx(ofh_rx_), slot_repo(std::move(slot_repo_))
+  {
+  }
 
   // See interface for documentation.
   void start() override;
@@ -29,7 +34,8 @@ public:
   void stop() override;
 
 private:
-  receiver& ofh_rx;
+  receiver&                                  ofh_rx;
+  std::shared_ptr<uplink_context_repository> slot_repo;
 };
 
 } // namespace ofh
