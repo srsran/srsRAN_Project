@@ -94,10 +94,10 @@ inline compression_type to_compression_type(const std::string& compr)
   }
 
   srsran_assert(0, "Unknown compression method={}", compr);
-  return ofh::compression_type::none;
+  return compression_type::none;
 }
 
-inline std::string to_string(ofh::compression_type c)
+inline std::string to_string(compression_type c)
 {
   switch (c) {
     case compression_type::none:

@@ -70,11 +70,11 @@ struct sector_configuration {
   bs_channel_bandwidth ru_operating_bw;
 
   /// PRACH eAxC.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// Downlink eAxC.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   /// Uplink eAxC.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
 
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = false;
@@ -89,11 +89,11 @@ struct sector_configuration {
   /// Warn of unreceived Radio Unit frames status.
   warn_unreceived_ru_frames log_unreceived_ru_frames = warn_unreceived_ru_frames::after_traffic_detection;
   /// Uplink compression parameters.
-  ofh::ru_compression_params ul_compression_params;
+  ru_compression_params ul_compression_params;
   /// Downlink compression parameters.
-  ofh::ru_compression_params dl_compression_params;
+  ru_compression_params dl_compression_params;
   /// PRACH compression parameters.
-  ofh::ru_compression_params prach_compression_params;
+  ru_compression_params prach_compression_params;
   /// Downlink static compression header flag.
   bool is_downlink_static_compr_hdr_enabled = true;
   /// Uplink static compression header flag.
@@ -130,7 +130,7 @@ struct sector_dependencies {
   /// Uplink task executor.
   task_executor* uplink_executor = nullptr;
   /// User-Plane received symbol notifier.
-  std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier;
+  std::shared_ptr<uplane_rx_symbol_notifier> notifier;
   /// Optional Ethernet gateway.
   std::optional<std::unique_ptr<ether::gateway>> eth_gateway;
   /// Optional Ethernet receiver.

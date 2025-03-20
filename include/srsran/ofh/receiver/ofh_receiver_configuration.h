@@ -47,9 +47,9 @@ struct receiver_config {
   /// Set this option when the operating bandwidth of the RU is larger than the configured bandwidth of the cell.
   bs_channel_bandwidth ru_operating_bw;
   /// Uplink compression parameters.
-  ofh::ru_compression_params ul_compression_params;
+  ru_compression_params ul_compression_params;
   /// PRACH compression parameters.
-  ofh::ru_compression_params prach_compression_params;
+  ru_compression_params prach_compression_params;
   /// Uplink static compression header flag.
   bool is_uplink_static_compr_hdr_enabled = true;
   /// Enables the Control-Plane PRACH message signalling.
