@@ -35,6 +35,7 @@ public:
   explicit ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_);
 
   void add_cell(const ue_scheduler_cell_params& params) override;
+  void rem_cell(du_cell_index_t cell_index) override;
 
   /// Schedule UE DL grants for a given {slot, cell}.
   void run_slot(slot_point slot_tx) override;

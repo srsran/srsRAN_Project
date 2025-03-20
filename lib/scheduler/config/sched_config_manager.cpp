@@ -16,13 +16,6 @@
 
 using namespace srsran;
 
-cell_removal_event::~cell_removal_event()
-{
-  if (parent != nullptr) {
-    parent->handle_cell_removal_complete(cell_index);
-  }
-}
-
 ue_config_update_event::ue_config_update_event(du_ue_index_t                     ue_index_,
                                                sched_config_manager&             parent_,
                                                std::unique_ptr<ue_configuration> next_cfg,
@@ -97,6 +90,20 @@ const cell_configuration* sched_config_manager::add_cell(const sched_cell_config
   srsran_assert(cell_metrics != nullptr, "Unable to create metrics handler");
 
   return added_cells[msg.cell_index].get();
+}
+
+void sched_config_manager::rem_cell(du_cell_index_t cell_index)
+{
+  const du_cell_group_index_t group_index = added_cells[cell_index]->cell_group_index;
+
+  // Eliminate metrics.
+  metrics_handler.rem_cell(cell_index);
+
+  // Eliminate respective cell configuration.
+  added_cells.erase(cell_index);
+
+  // Remove cell configs from the group.
+  group_cfg_pool[group_index]->rem_cell(cell_index);
 }
 
 ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_request_message& cfg_req)
@@ -210,20 +217,6 @@ ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)
 
   srsran_assert(ue_cfg_list[ue_index] != nullptr, "Invalid ue_index={}", fmt::underlying(ue_index));
   return ue_config_delete_event{ue_index, *this};
-}
-
-void sched_config_manager::handle_cell_removal_complete(du_cell_index_t cell_index)
-{
-  const du_cell_group_index_t group_index = added_cells[cell_index]->cell_group_index;
-
-  // Eliminate respective cell configuration.
-  added_cells.erase(cell_index);
-
-  // Remove cell configs from the group.
-  group_cfg_pool[group_index]->rem_cell(cell_index);
-
-  // Notifies MAC that event is complete.
-  config_notifier.on_cell_removal_complete(cell_index);
 }
 
 void sched_config_manager::handle_ue_config_complete(du_ue_index_t ue_index, std::unique_ptr<ue_configuration> next_cfg)

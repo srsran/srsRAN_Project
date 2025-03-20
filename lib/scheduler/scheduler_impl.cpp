@@ -46,8 +46,16 @@ bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configur
 void scheduler_impl::handle_cell_removal_request(du_cell_index_t cell_index)
 {
   srsran_assert(cells.contains(cell_index), "cell={} does not exist", fmt::underlying(cell_index));
+  srsran_assert(not cells[cell_index]->is_running(), "cell={} is not stopped", fmt::underlying(cell_index));
 
-  cells[cell_index]->cell_cfg.cell_group_index;
+  // Remove cell from ue scheduler.
+  groups[cells[cell_index]->cell_cfg.cell_group_index]->rem_cell(cell_index);
+
+  // Remove cell.
+  cells.erase(cell_index);
+
+  // Remove cell from config.
+  cfg_mng.rem_cell(cell_index);
 }
 
 void scheduler_impl::handle_cell_start_request(du_cell_index_t cell_index)

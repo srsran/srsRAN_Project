@@ -76,11 +76,11 @@ private:
   // Manager of configurations forwarded to the scheduler.
   sched_config_manager cfg_mng;
 
-  /// Container of DU Cell-specific resources.
-  slotted_id_table<du_cell_index_t, std::unique_ptr<cell_scheduler>, MAX_NOF_DU_CELLS> cells;
-
   /// Container of DU Cell Group-specific resources.
   slotted_id_table<du_cell_group_index_t, std::unique_ptr<ue_scheduler>, MAX_DU_CELL_GROUPS> groups;
+
+  /// Container of DU Cell-specific resources.
+  slotted_id_table<du_cell_index_t, std::unique_ptr<cell_scheduler>, MAX_NOF_DU_CELLS> cells;
 };
 
 } // namespace srsran

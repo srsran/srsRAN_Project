@@ -220,9 +220,6 @@ class sched_configuration_notifier
 public:
   virtual ~sched_configuration_notifier() = default;
 
-  /// Called by scheduler when cell removal is completed.
-  virtual void on_cell_removal_complete(du_cell_index_t cell_index) = 0;
-
   /// Called by scheduler when UE creation/modification is completed.
   virtual void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) = 0;
 

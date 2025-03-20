@@ -53,6 +53,9 @@ public:
 
   const sched_result& last_result() const { return res_grid[0].result; }
 
+  /// Check if the cell is running.
+  bool is_running() const { return not stopped.load(std::memory_order_acquire); }
+
   void handle_sib1_update_indication(const sib1_pdu_update_request& msg)
   {
     sib1_sch.handle_sib1_update_indication(msg.pdu_version, msg.payload_size);

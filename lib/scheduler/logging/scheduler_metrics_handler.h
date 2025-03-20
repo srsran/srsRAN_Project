@@ -226,6 +226,8 @@ public:
 
   cell_metrics_handler* add_cell(const cell_configuration& cell_cfg);
 
+  void rem_cell(du_cell_index_t cell_index);
+
   cell_metrics_handler& at(du_cell_index_t cell_idx) { return *cells[cell_idx]; }
 
 private:

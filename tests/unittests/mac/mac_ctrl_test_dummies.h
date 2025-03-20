@@ -159,7 +159,7 @@ public:
 
   void add_cell(const mac_cell_creation_request& msg) override {}
 
-  async_task<void> remove_cell(du_cell_index_t cell_index) override { return launch_no_op_task(); }
+  void remove_cell(du_cell_index_t cell_index) override {}
 
   async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) override;
   async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override;
@@ -168,7 +168,6 @@ public:
 
   class dummy_notifier : public sched_configuration_notifier
   {
-    void on_cell_removal_complete(du_cell_index_t cell_index) override {}
     void on_ue_config_complete(du_ue_index_t ue_index, bool success) override {}
     void on_ue_delete_response(du_ue_index_t ue_index) override {}
   } notifier;

@@ -956,6 +956,17 @@ void ue_event_manager::add_cell(const cell_creation_event& cell_ev)
   }
 }
 
+void ue_event_manager::rem_cell(du_cell_index_t cell_index)
+{
+  // Flush pending cell-specific events.
+  cell_event_t ev{INVALID_DU_UE_INDEX, [](ue_cell&) {}, "invalid", true};
+  while (cell_specific_events[cell_index].try_pop(ev)) {
+  }
+
+  // Remove cell entry.
+  du_cells[cell_index] = {};
+}
+
 bool ue_event_manager::cell_exists(du_cell_index_t cell_index) const
 {
   return cell_index < MAX_NOF_DU_CELLS and du_cells[cell_index].cfg != nullptr;

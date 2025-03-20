@@ -493,3 +493,8 @@ cell_metrics_handler* scheduler_metrics_handler::add_cell(const cell_configurati
 
   return cells[cell_cfg.cell_index].get();
 }
+
+void scheduler_metrics_handler::rem_cell(du_cell_index_t cell_index)
+{
+  cells.erase(cell_index);
+}

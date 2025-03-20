@@ -33,6 +33,15 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
                                          *params.ev_logger});
 }
 
+void ue_scheduler_impl::rem_cell(du_cell_index_t cell_index)
+{
+  // Remove cell from UE event manager.
+  event_mng.rem_cell(cell_index);
+
+  // Remove cell from UE scheduler.
+  cells.erase(cell_index);
+}
+
 void ue_scheduler_impl::run_sched_strategy(du_cell_index_t cell_index)
 {
   auto& cell = cells[cell_index];
