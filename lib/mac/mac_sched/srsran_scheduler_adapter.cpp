@@ -68,6 +68,9 @@ void srsran_scheduler_adapter::remove_cell(du_cell_index_t cell_index)
 
   // Request cell removal from scheduler.
   sched_impl->handle_cell_removal_request(cell_index);
+
+  // Remove cell from cell handlers.
+  cell_handlers.erase(cell_index);
 }
 
 async_task<bool> srsran_scheduler_adapter::handle_ue_creation_request(const mac_ue_create_request& msg)
