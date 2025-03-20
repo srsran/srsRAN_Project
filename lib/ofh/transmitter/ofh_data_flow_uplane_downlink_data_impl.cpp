@@ -210,3 +210,8 @@ unsigned data_flow_uplane_downlink_data_impl::enqueue_section_type_1_message_sym
 
   return eth_buffer.size();
 }
+
+data_flow_downlink_metrics_collector* data_flow_uplane_downlink_data_impl::get_metrics_collector()
+{
+  return nullptr;
+}

@@ -45,16 +45,17 @@ void ru_ofh_impl::set_ofh_sectors(std::vector<std::unique_ptr<ofh::sector>> ofh_
 
   sectors = std::move(ofh_sectors);
 
-  controller.set_sector_controllers([](ofh::controller* timing_ctrl, span<std::unique_ptr<ofh::sector>> elems) {
-    std::vector<ofh::controller*> controllers;
-    // Insert first the timing controller.
-    controllers.push_back(timing_ctrl);
+  controller.set_sector_controllers(
+      [](ofh::operation_controller* timing_ctrl, span<std::unique_ptr<ofh::sector>> elems) {
+        std::vector<ofh::operation_controller*> controllers;
+        // Insert first the timing controller.
+        controllers.push_back(timing_ctrl);
 
-    for (const auto& elem : elems) {
-      controllers.push_back(&elem.get()->get_controller());
-    }
-    return controllers;
-  }(&ofh_timing_mngr->get_controller(), sectors));
+        for (const auto& elem : elems) {
+          controllers.push_back(&elem.get()->get_operation_controller());
+        }
+        return controllers;
+      }(&ofh_timing_mngr->get_controller(), sectors));
 
   downlink_handler = ru_downlink_plane_handler_proxy([](span<std::unique_ptr<ofh::sector>> sectors_) {
     std::vector<ofh::downlink_handler*> out;

@@ -13,9 +13,12 @@
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/circular_map.h"
 #include "srsran/ofh/ecpri/ecpri_constants.h"
+#include "srsran/ofh/ethernet/ethernet_controller.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
+#include "srsran/ofh/ethernet/ethernet_receiver_metrics_collector.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter_metrics_collector.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/shared_resource_grid.h"
@@ -270,11 +273,13 @@ class dummy_frame_notifier : public ether::frame_notifier
 dummy_frame_notifier dummy_notifier;
 
 /// Test Ethernet receiver interface.
-class test_ether_receiver : public ether::receiver
+class test_ether_receiver : public ether::receiver, public ether::receiver_operation_controller
 {
 public:
   test_ether_receiver(srslog::basic_logger& logger_) : logger(logger_), notifier(dummy_notifier) {}
   virtual ~test_ether_receiver() = default;
+
+  receiver_operation_controller& get_operation_controller() override { return *this; }
 
   void start(ether::frame_notifier& notifier_) override
   {
@@ -290,6 +295,9 @@ public:
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
+
+  // See interface for documentation.
+  ether::receiver_metrics_collector* get_metrics_collector() override { return nullptr; };
 
   virtual void push_new_data(span<const uint8_t> frame) = 0;
 
@@ -782,6 +790,9 @@ public:
       }
     }
   }
+
+  // See interface for documentation.
+  ether::transmitter_metrics_collector* get_metrics_collector() override { return nullptr; }
 
 private:
   void check_and_update_sequence_id(span<const uint8_t> message)

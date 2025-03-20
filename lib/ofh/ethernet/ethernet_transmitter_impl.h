@@ -10,8 +10,9 @@
 
 #pragma once
 
+#include "ethernet_tx_metrics_collector_impl.h"
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
-#include "srsran/ofh/ethernet/ethernet_gw_config.h"
+#include "srsran/ofh/ethernet/ethernet_gateway_config.h"
 #include "srsran/srslog/logger.h"
 #include <linux/if_packet.h>
 
@@ -28,10 +29,14 @@ public:
   // See interface for documentation.
   void send(span<span<const uint8_t>> frames) override;
 
+  // See interface for documentation.
+  transmitter_metrics_collector* get_metrics_collector() override;
+
 private:
-  srslog::basic_logger& logger;
-  int                   socket_fd = -1;
-  ::sockaddr_ll         socket_address;
+  srslog::basic_logger&              logger;
+  int                                socket_fd = -1;
+  ::sockaddr_ll                      socket_address;
+  transmitter_metrics_collector_impl metrics_collector;
 };
 
 } // namespace ether

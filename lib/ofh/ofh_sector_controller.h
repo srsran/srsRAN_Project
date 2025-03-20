@@ -19,7 +19,7 @@ namespace srsran {
 namespace ofh {
 
 /// Open Fronthaul controller for the sector.
-class sector_controller : public controller
+class sector_controller : public operation_controller
 {
 public:
   sector_controller(receiver& ofh_rx_, std::shared_ptr<uplink_context_repository> slot_repo_) :

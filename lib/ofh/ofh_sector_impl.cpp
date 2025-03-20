@@ -23,7 +23,7 @@ transmitter& sector_impl::get_transmitter()
   return *ofh_transmitter;
 }
 
-controller& sector_impl::get_controller()
+operation_controller& sector_impl::get_operation_controller()
 {
   return ofh_sector_controller;
 }

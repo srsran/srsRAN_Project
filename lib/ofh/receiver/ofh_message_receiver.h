@@ -13,6 +13,7 @@
 #include "ofh_closed_rx_window_handler.h"
 #include "ofh_data_flow_uplane_uplink_data.h"
 #include "ofh_data_flow_uplane_uplink_prach.h"
+#include "ofh_receiver_perf_metrics_collector.h"
 #include "ofh_sequence_id_checker_impl.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/ecpri/ecpri_packet_decoder.h"
@@ -45,6 +46,8 @@ struct message_receiver_config {
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   /// Warn unreceived Open Fronthaul messages.
   warn_unreceived_ru_frames warn_unreceived_frames = warn_unreceived_ru_frames::after_traffic_detection;
+  /// If set to true, metrics are enabled in the message receiver.
+  bool are_metrics_enabled = false;
 };
 
 /// Message receiver dependencies.
@@ -81,6 +84,9 @@ public:
 
   /// Returns the Ethernet receiver of this Open Fronthaul message receiver.
   virtual ether::receiver& get_ethernet_receiver() = 0;
+
+  /// Returns the message receiver performance metrics collector.
+  virtual receiver_performance_metrics_collector& get_metrics_collector() = 0;
 };
 
 /// Open Fronthaul message receiver interface implementation.
@@ -94,6 +100,9 @@ public:
 
   // See interface for the documentation.
   ether::receiver& get_ethernet_receiver() override { return *eth_receiver; }
+
+  // See interface for the documentation.
+  receiver_performance_metrics_collector& get_metrics_collector() override { return perf_metrics_collector; }
 
 private:
   /// Processes an Ethernet frame received from the underlying Ethernet link.
@@ -114,6 +123,7 @@ private:
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_prach_eaxc;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   bool                                                  warn_unreceived_frames_on_first_rx_message;
+  receiver_performance_metrics_collector                perf_metrics_collector;
   rx_window_checker&                                    window_checker;
   closed_rx_window_handler&                             window_handler;
   std::unique_ptr<sequence_id_checker>                  seq_id_checker;

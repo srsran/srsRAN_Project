@@ -14,6 +14,7 @@
 #include "../support/uplink_context_repository.h"
 #include "ofh_data_flow_cplane_scheduling_commands.h"
 #include "ofh_tx_window_checker.h"
+#include "ofh_uplink_request_handler_metrics_collector.h"
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_timing_parameters.h"
 #include "srsran/ofh/transmitter/ofh_uplink_request_handler.h"
@@ -76,6 +77,9 @@ public:
   /// Returns the OTA symbol boundary notifier of this uplink request handler implementation.
   ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() { return window_checker; }
 
+  /// Returns the metrics collector of this uplink request handler implementation.
+  uplink_request_handler_metrics_collector& get_metrics_collector() { return metrics_collector; }
+
 private:
   srslog::basic_logger&                                 logger;
   const bool                                            is_prach_cp_enabled;
@@ -89,6 +93,7 @@ private:
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow;
   std::shared_ptr<ether::eth_frame_pool>                frame_pool;
   error_notifier&                                       err_notifier;
+  uplink_request_handler_metrics_collector              metrics_collector;
 };
 
 } // namespace ofh

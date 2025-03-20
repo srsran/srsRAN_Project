@@ -35,7 +35,8 @@ downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&
   data_flow_cplane(std::move(dependencies.data_flow_cplane)),
   data_flow_uplane(std::move(dependencies.data_flow_uplane)),
   frame_pool(std::move(dependencies.frame_pool)),
-  err_notifier(dependencies.err_notifier)
+  err_notifier(dependencies.err_notifier),
+  metrics_collector(*data_flow_cplane, *data_flow_uplane, window_checker)
 {
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid User-Plane data flow");

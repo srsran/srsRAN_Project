@@ -31,7 +31,7 @@ void ru_ofh_controller_impl::stop()
   logger.info("Stopped the operation of the Open Fronthaul interface");
 }
 
-void ru_ofh_controller_impl::set_sector_controllers(std::vector<ofh::controller*> controllers)
+void ru_ofh_controller_impl::set_sector_controllers(std::vector<ofh::operation_controller*> controllers)
 {
   srsran_assert(!controllers.empty(), "Invalid sector controllers");
 

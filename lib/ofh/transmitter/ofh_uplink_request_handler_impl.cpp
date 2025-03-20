@@ -83,7 +83,8 @@ uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_ha
   ul_prach_repo(std::move(dependencies.ul_prach_repo)),
   data_flow(std::move(dependencies.data_flow)),
   frame_pool(std::move(dependencies.frame_pool)),
-  err_notifier(dependencies.err_notifier)
+  err_notifier(dependencies.err_notifier),
+  metrics_collector(data_flow->get_metrics_collector(), window_checker)
 {
   srsran_assert(ul_slot_repo, "Invalid uplink repository");
   srsran_assert(ul_prach_repo, "Invalid PRACH repository");

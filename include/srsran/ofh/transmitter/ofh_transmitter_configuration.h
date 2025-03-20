@@ -79,6 +79,8 @@ struct transmitter_config {
   std::optional<tdd_ul_dl_config_common> tdd_config;
   /// Indicates if DPDK should be used by the underlying implementation.
   bool uses_dpdk;
+  /// If set to true, metrics are enabled in the transmitter.
+  bool are_metrics_enabled = false;
 };
 
 } // namespace ofh

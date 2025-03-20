@@ -15,7 +15,7 @@ namespace ofh {
 
 struct receiver_metrics;
 
-/// Open Fronthaul receiver metrics collector interface used to collect metrics from a receiver.
+/// Open Fronthaul metrics collector interface used to collect metrics from a receiver.
 class receiver_metrics_collector
 {
 public:

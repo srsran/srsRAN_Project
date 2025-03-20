@@ -96,12 +96,12 @@ void rx_window_checker::update_rx_window_statistics(slot_symbol_point symbol_poi
   statistics.increment_on_time_counter();
 }
 
-void rx_window_checker::collect_metrics(receiver_metrics& metrics)
+void rx_window_checker::collect_metrics(received_messages_metrics& metrics)
 {
   statistics.collect_metrics(metrics);
 }
 
-void rx_window_checker::rx_window_checker_statistics::collect_metrics(receiver_metrics& metrics)
+void rx_window_checker::rx_window_checker_statistics::collect_metrics(received_messages_metrics& metrics)
 {
   // Fetch the data.
   uint64_t current_nof_on_time = nof_on_time_messages();

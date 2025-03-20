@@ -15,6 +15,8 @@
 namespace srsran {
 namespace ether {
 
+class transmitter_metrics_collector;
+
 /// Describes an Ethernet gateway.
 class gateway
 {
@@ -24,6 +26,9 @@ public:
 
   /// Sends the given list of frames through the underlying Ethernet link.
   virtual void send(span<span<const uint8_t>> frames) = 0;
+
+  /// Returns the metrics collector of this Ethernet gateway or nullptr if metrics are disabled.
+  virtual transmitter_metrics_collector* get_metrics_collector() = 0;
 };
 
 } // namespace ether

@@ -43,6 +43,12 @@ public:
     }
   }
 
+  // See interface for documentation.
+  data_flow_downlink_metrics_collector* get_metrics_collector() override
+  {
+    return data_flow_uplane->get_metrics_collector();
+  }
+
 private:
   std::unique_ptr<data_flow_uplane_downlink_data> data_flow_uplane;
   task_executor&                                  executor;

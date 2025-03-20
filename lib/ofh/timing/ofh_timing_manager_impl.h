@@ -27,7 +27,7 @@ public:
   }
 
   // See interface for documentation.
-  controller& get_controller() override;
+  operation_controller& get_controller() override;
 
   // See interface for documentation.
   ota_symbol_boundary_notifier_manager& get_ota_symbol_boundary_notifier_manager() override;

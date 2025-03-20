@@ -55,7 +55,7 @@ log_ru_ofh_metrics_json(srslog::log_channel& log_chan, const ofh::metrics& metri
                 pci_sector_map.size());
 
   for (const auto& cell_metrics : metrics.sectors) {
-    const ofh::receiver_metrics& rx_metrics = cell_metrics.rx_metrics;
+    const ofh::received_messages_metrics& rx_metrics = cell_metrics.rx_metrics.rx_messages_metrics;
 
     auto& output = ofh_cells.emplace_back();
     output.write<metric_pci>(static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]));
@@ -84,7 +84,7 @@ static void
 log_ru_ofh_metrics(srslog::log_channel& log_chan, const ofh::metrics& metrics, span<const pci_t> pci_sector_map)
 {
   for (const auto& cell_metrics : metrics.sectors) {
-    const ofh::receiver_metrics& rx_metrics = cell_metrics.rx_metrics;
+    const ofh::received_messages_metrics& rx_metrics = cell_metrics.rx_metrics.rx_messages_metrics;
     log_chan("OFH sector#{} pci={} reception stats: rx_total={} rx_early={}, rx_on_time={}, rx_late={}",
              cell_metrics.sector_id,
              static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]),
@@ -219,12 +219,13 @@ void ru_metrics_handler_stdout::log_ru_ofh_metrics_in_stdout(const ofh::metrics&
                   cell.sector_id,
                   pci_sector_map.size());
 
+    const ofh::received_messages_metrics& rx_metrics = cell.rx_metrics.rx_messages_metrics;
+
     fmt::println(" {:^3} | {:^11} | {:^11} | {:^13} | {:^11} |",
                  static_cast<unsigned>(pci_sector_map[cell.sector_id]),
-                 cell.rx_metrics.nof_early_messages + cell.rx_metrics.nof_late_messages +
-                     cell.rx_metrics.nof_on_time_messages,
-                 cell.rx_metrics.nof_early_messages,
-                 cell.rx_metrics.nof_on_time_messages,
-                 cell.rx_metrics.nof_late_messages);
+                 rx_metrics.nof_early_messages + rx_metrics.nof_late_messages + rx_metrics.nof_on_time_messages,
+                 rx_metrics.nof_early_messages,
+                 rx_metrics.nof_on_time_messages,
+                 rx_metrics.nof_late_messages);
   }
 }

@@ -10,8 +10,10 @@
 
 #include "ofh_transmitter_factories.h"
 #include "ofh_data_flow_cplane_scheduling_commands_impl.h"
+#include "ofh_data_flow_cplane_scheduling_commands_metrics_decorator.h"
 #include "ofh_data_flow_cplane_scheduling_commands_task_dispatcher.h"
 #include "ofh_data_flow_uplane_downlink_data_impl.h"
+#include "ofh_data_flow_uplane_downlink_data_metrics_decorator.h"
 #include "ofh_data_flow_uplane_downlink_task_dispatcher.h"
 #include "ofh_transmitter_impl.h"
 #include "ofh_uplane_fragment_size_calculator.h"
@@ -60,7 +62,12 @@ create_data_flow_cplane_sched(const transmitter_config&                         
                                    ? create_ofh_control_plane_static_compression_message_builder()
                                    : create_ofh_control_plane_dynamic_compression_message_builder();
 
-  return std::make_unique<data_flow_cplane_scheduling_commands_impl>(config, std::move(dependencies));
+  auto data_flow_cplane = std::make_unique<data_flow_cplane_scheduling_commands_impl>(config, std::move(dependencies));
+  if (!tx_config.are_metrics_enabled) {
+    return data_flow_cplane;
+  }
+
+  return std::make_unique<data_flow_cplane_metrics_decorator>(std::move(data_flow_cplane));
 }
 
 static std::unique_ptr<data_flow_uplane_downlink_data>
@@ -104,7 +111,12 @@ create_data_flow_uplane_data(const transmitter_config&              tx_config,
           ? create_static_compr_method_ofh_user_plane_packet_builder(logger, *dependencies.compressor_sel)
           : create_dynamic_compr_method_ofh_user_plane_packet_builder(logger, *dependencies.compressor_sel);
 
-  return std::make_unique<data_flow_uplane_downlink_data_impl>(config, std::move(dependencies));
+  auto data_flow_uplane = std::make_unique<data_flow_uplane_downlink_data_impl>(config, std::move(dependencies));
+  if (!tx_config.are_metrics_enabled) {
+    return data_flow_uplane;
+  }
+
+  return std::make_unique<data_flow_uplane_downlink_metrics_decorator>(std::move(data_flow_uplane));
 }
 
 static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transmitter_config& tx_config,

@@ -12,7 +12,7 @@
 #include "dpdk_ethernet_receiver.h"
 #include "dpdk_ethernet_transmitter.h"
 #include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_port_context.h"
-#include "srsran/ofh/ethernet/ethernet_gw_config.h"
+#include "srsran/ofh/ethernet/ethernet_gateway_config.h"
 
 using namespace srsran;
 using namespace ether;
@@ -33,6 +33,6 @@ srsran::ether::create_dpdk_txrx(const gw_config& config, task_executor& rx_execu
 {
   auto ctx = create_dpdk_port_context(config);
 
-  return {std::make_unique<dpdk_transmitter_impl>(ctx, logger),
-          std::make_unique<dpdk_receiver_impl>(rx_executor, ctx, logger)};
+  return {std::make_unique<dpdk_transmitter_impl>(ctx, logger, config.are_metrics_enabled),
+          std::make_unique<dpdk_receiver_impl>(rx_executor, ctx, logger, config.are_metrics_enabled)};
 }

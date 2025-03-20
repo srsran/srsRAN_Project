@@ -9,40 +9,41 @@
  */
 
 #include "ofh_metrics_collector_impl.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter_metrics_collector.h"
 #include "srsran/ofh/ofh_metrics.h"
 
 using namespace srsran;
 using namespace ofh;
 
-namespace {
-
-/// Receiver metrics collector dummy.
-class receiver_metrics_collector_dummy : public receiver_metrics_collector
-{
-public:
-  // See interface for documentation.
-  void collect_metrics(receiver_metrics& metric) override {}
-};
-
-} // namespace
-
-/// Dummy receiver metrics collector.
-static receiver_metrics_collector_dummy dummy_rx_metrics_collector;
-
-metrics_collector_impl::metrics_collector_impl(receiver_metrics_collector* rx_metrics_collector_,
-                                               bool                        is_enabled_,
-                                               unsigned                    sector_id_) :
+metrics_collector_impl::metrics_collector_impl(receiver_metrics_collector*           rx_metrics_collector_,
+                                               transmitter_metrics_collector*        tx_metrics_collector_,
+                                               ether::receiver_metrics_collector*    ether_rx_metrics_collector_,
+                                               ether::transmitter_metrics_collector* ether_tx_metrics_collector_,
+                                               unsigned                              sector_id_) :
   sector_id(sector_id_),
-  is_enabled(is_enabled_),
-  rx_metrics_collector(rx_metrics_collector_ ? *rx_metrics_collector_ : dummy_rx_metrics_collector)
-
+  rx_metrics_collector(rx_metrics_collector_),
+  tx_metrics_collector(tx_metrics_collector_),
+  ether_rx_metrics_collector(ether_rx_metrics_collector_),
+  ether_tx_metrics_collector(ether_tx_metrics_collector_)
 {
+  is_enabled =
+      (ether_tx_metrics_collector && ether_tx_metrics_collector && rx_metrics_collector && tx_metrics_collector);
 }
 
 void metrics_collector_impl::collect_metrics(sector_metrics& metric)
 {
+  if (disabled()) {
+    return;
+  }
+
   metric.sector_id = sector_id;
 
   // Collect receiver metrics.
-  rx_metrics_collector.collect_metrics(metric.rx_metrics);
+  rx_metrics_collector->collect_metrics(metric.rx_metrics);
+  // Collect Ethernet receiver metrics.
+  ether_rx_metrics_collector->collect_metrics(metric.ether_rx_metrics);
+  // Collect transmitter metrics.
+  tx_metrics_collector->collect_metrics(metric.tx_metrics);
+  // Collect Ethernet transmitter metrics.
+  ether_tx_metrics_collector->collect_metrics(metric.ether_tx_metrics);
 }

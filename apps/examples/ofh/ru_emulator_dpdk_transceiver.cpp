@@ -18,7 +18,7 @@
 using namespace srsran;
 using namespace ether;
 
-void dpdk_transceiver::start(frame_notifier& notifier_)
+void ru_emu_dpdk_receiver::start(frame_notifier& notifier_)
 {
   notifier = &notifier_;
 
@@ -40,7 +40,7 @@ void dpdk_transceiver::start(frame_notifier& notifier_)
   logger.info("Started the DPDK ethernet frame receiver");
 }
 
-void dpdk_transceiver::stop()
+void ru_emu_dpdk_receiver::stop()
 {
   logger.info("Requesting stop of the DPDK ethernet frame receiver");
   trx_status.store(status::stop_requested, std::memory_order_relaxed);
@@ -53,7 +53,7 @@ void dpdk_transceiver::stop()
   logger.info("Stopped the DPDK ethernet frame receiver");
 }
 
-void dpdk_transceiver::receive_loop()
+void ru_emu_dpdk_receiver::receive_loop()
 {
   if (trx_status.load(std::memory_order_relaxed) == status::stop_requested) {
     trx_status.store(status::stopped, std::memory_order_release);
@@ -68,7 +68,7 @@ void dpdk_transceiver::receive_loop()
   }
 }
 
-void dpdk_transceiver::receive()
+void ru_emu_dpdk_receiver::receive()
 {
   std::array<::rte_mbuf*, MAX_BURST_SIZE> mbufs;
   unsigned num_frames = ::rte_eth_rx_burst(port_ctx.get_dpdk_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
@@ -84,7 +84,7 @@ void dpdk_transceiver::receive()
   }
 }
 
-void dpdk_transceiver::send(span<span<const uint8_t>> frames)
+void ru_emu_dpdk_transmitter::send(span<span<const uint8_t>> frames)
 {
   // Receiving a frame burst larger than MAX_BURST_SIZE requires making several Tx bursts.
   for (unsigned offset = 0; offset < frames.size();) {
@@ -127,4 +127,13 @@ void dpdk_transceiver::send(span<span<const uint8_t>> frames)
       }
     }
   }
+}
+
+std::unique_ptr<ru_emulator_transceiver>
+srsran::ru_emu_create_dpdk_transceiver(srslog::basic_logger&              logger,
+                                       task_executor&                     executor,
+                                       std::shared_ptr<dpdk_port_context> context)
+{
+  return std::make_unique<ru_emulator_transceiver>(std::make_unique<ru_emu_dpdk_receiver>(logger, executor, context),
+                                                   std::make_unique<ru_emu_dpdk_transmitter>(logger, context));
 }

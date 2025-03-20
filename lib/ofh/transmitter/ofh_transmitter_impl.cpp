@@ -82,7 +82,10 @@ transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter
   ota_dispatcher(*dependencies.executor,
                  dl_handler.get_ota_symbol_boundary_notifier(),
                  ul_request_handler.get_ota_symbol_boundary_notifier(),
-                 msg_transmitter)
+                 msg_transmitter),
+  metrics_collector(config.are_metrics_enabled,
+                    dl_handler.get_metrics_collector(),
+                    ul_request_handler.get_metrics_collector())
 {
 }
 
@@ -99,4 +102,9 @@ downlink_handler& transmitter_impl::get_downlink_handler()
 ota_symbol_boundary_notifier& transmitter_impl::get_ota_symbol_boundary_notifier()
 {
   return ota_dispatcher;
+}
+
+transmitter_metrics_collector* transmitter_impl::get_metrics_collector()
+{
+  return metrics_collector.disabled() ? nullptr : &metrics_collector;
 }

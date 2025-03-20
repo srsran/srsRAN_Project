@@ -11,7 +11,10 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
+#include "srsran/ofh/ethernet/ethernet_receiver_metrics.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter_metrics.h"
 #include "srsran/ofh/receiver/ofh_receiver_metrics.h"
+#include "srsran/ofh/transmitter/ofh_transmitter_metrics.h"
 #include "srsran/ran/gnb_constants.h"
 #include <chrono>
 
@@ -24,6 +27,12 @@ struct sector_metrics {
   unsigned sector_id;
   /// Receiver metrics.
   receiver_metrics rx_metrics;
+  /// Transmitter metrics.
+  transmitter_metrics tx_metrics;
+  /// Ethernet receiver metrics.
+  ether::receiver_metrics ether_rx_metrics;
+  /// Ethernet transmitter metrics.
+  ether::transmitter_metrics ether_tx_metrics;
 };
 
 /// Open Fronthaul metrics.

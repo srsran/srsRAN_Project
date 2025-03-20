@@ -15,6 +15,8 @@
 #include "support/prach_context_repository.h"
 #include "support/uplink_context_repository.h"
 #include "support/uplink_cplane_context_repository.h"
+#include "srsran/ofh/ethernet/ethernet_gateway.h"
+#include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ofh_sector.h"
 #include "srsran/ofh/receiver/ofh_receiver.h"
 #include "srsran/ofh/transmitter/ofh_transmitter.h"
@@ -36,6 +38,8 @@ struct sector_impl_dependencies {
   std::shared_ptr<uplink_cplane_context_repository> cp_prach_repo;
   std::shared_ptr<prach_context_repository>         ul_prach_repo;
   std::shared_ptr<uplink_context_repository>        ul_data_repo;
+  ether::gateway&                                   eth_gateway;
+  ether::receiver&                                  eth_receiver;
 };
 
 /// Open Fronthaul sector implementation.
@@ -50,7 +54,11 @@ public:
     ofh_receiver(std::move(dependencies.ofh_receiver)),
     ofh_transmitter(std::move(dependencies.ofh_transmitter)),
     ofh_sector_controller(*ofh_receiver, ul_data_repo),
-    ofh_metrics_collector(ofh_receiver->get_metrics_collector(), config.are_metrics_enabled, config.sector_id)
+    ofh_metrics_collector(ofh_receiver->get_metrics_collector(),
+                          ofh_transmitter->get_metrics_collector(),
+                          dependencies.eth_receiver.get_metrics_collector(),
+                          dependencies.eth_gateway.get_metrics_collector(),
+                          config.sector_id)
   {
     srsran_assert(ofh_receiver, "Invalid Open Fronthaul receiver");
     srsran_assert(ofh_transmitter, "Invalid Open Fronthaul transmitter");
@@ -67,7 +75,7 @@ public:
   transmitter& get_transmitter() override;
 
   // See interface for documentation.
-  controller& get_controller() override;
+  operation_controller& get_operation_controller() override;
 
   // See interface for documentation.
   metrics_collector* get_metrics_collector() override;

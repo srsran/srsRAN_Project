@@ -40,6 +40,9 @@ public:
     eaxc                                                  = context.eaxc;
   }
 
+  // See interface for documentation.
+  data_flow_downlink_metrics_collector* get_metrics_collector() override { return nullptr; };
+
   /// Returns true if the method enqueue section type 1 message has been called, otherwise false.
   bool has_enqueue_section_type_1_method_been_called() const
   {

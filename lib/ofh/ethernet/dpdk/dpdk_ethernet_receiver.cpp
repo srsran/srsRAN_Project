@@ -36,8 +36,13 @@ static dummy_frame_notifier dummy_notifier;
 
 dpdk_receiver_impl::dpdk_receiver_impl(task_executor&                     executor_,
                                        std::shared_ptr<dpdk_port_context> port_ctx_,
-                                       srslog::basic_logger&              logger_) :
-  logger(logger_), executor(executor_), notifier(&dummy_notifier), port_ctx(std::move(port_ctx_))
+                                       srslog::basic_logger&              logger_,
+                                       bool                               are_metrics_enabled) :
+  logger(logger_),
+  executor(executor_),
+  notifier(&dummy_notifier),
+  port_ctx(std::move(port_ctx_)),
+  metrics_collector(are_metrics_enabled)
 {
   srsran_assert(port_ctx, "Invalid port context");
 }
@@ -95,12 +100,24 @@ void dpdk_receiver_impl::receive()
 {
   std::array<::rte_mbuf*, MAX_BURST_SIZE> mbufs;
 
+  auto        meas       = metrics_collector.create_time_execution_measurer();
   trace_point dpdk_rx_tp = ofh_tracer.now();
-  unsigned    num_frames = ::rte_eth_rx_burst(port_ctx->get_dpdk_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
+
+  unsigned num_frames = ::rte_eth_rx_burst(port_ctx->get_dpdk_port_id(), 0, mbufs.data(), MAX_BURST_SIZE);
   if (num_frames == 0) {
     ofh_tracer << instant_trace_event("ofh_receiver_wait_data", instant_trace_event::cpu_scope::thread);
+    metrics_collector.update_stats(meas.stop());
+
     std::this_thread::sleep_for(std::chrono::microseconds(5));
     return;
+  }
+
+  if (!metrics_collector.disabled()) {
+    uint64_t nof_bytes_received = 0;
+    for (auto* mbuf : span<::rte_mbuf*>(mbufs.data(), num_frames)) {
+      nof_bytes_received += mbuf->data_len;
+    }
+    metrics_collector.update_stats(meas.stop(), nof_bytes_received, num_frames);
   }
 
   for (auto* mbuf : span<::rte_mbuf*>(mbufs.data(), num_frames)) {
@@ -108,4 +125,9 @@ void dpdk_receiver_impl::receive()
     notifier->on_new_frame(unique_rx_buffer(dpdk_rx_buffer_impl(mbuf)));
   }
   ofh_tracer << trace_event("ofh_dpdk_rx", dpdk_rx_tp);
+}
+
+receiver_metrics_collector* dpdk_receiver_impl::get_metrics_collector()
+{
+  return metrics_collector.disabled() ? nullptr : &metrics_collector;
 }

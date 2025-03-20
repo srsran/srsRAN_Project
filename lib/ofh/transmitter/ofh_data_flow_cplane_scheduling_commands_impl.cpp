@@ -294,3 +294,8 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_3_prach_mes
 
   frame_buffer.set_size(eth_buffer.size());
 }
+
+data_flow_downlink_metrics_collector* data_flow_cplane_scheduling_commands_impl::get_metrics_collector()
+{
+  return nullptr;
+}

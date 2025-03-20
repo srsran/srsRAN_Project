@@ -1016,17 +1016,18 @@ int main(int argc, char** argv)
     cfg.interface                   = ru_cfg.network_interface;
     cfg.mtu_size                    = units::bytes{ETHERNET_FRAME_SIZE};
     cfg.is_promiscuous_mode_enabled = ru_cfg.enable_promiscuous;
+    cfg.are_metrics_enabled         = false;
 #ifdef DPDK_FOUND
     if (uses_dpdk) {
       auto ctx = create_dpdk_port_context(cfg);
-      transceivers.push_back(std::make_unique<dpdk_transceiver>(logger, *workers.ru_rx_exec[i], ctx));
+      transceivers.push_back(ru_emu_create_dpdk_transceiver(logger, *workers.ru_rx_exec[i], ctx));
     } else
 #endif
     {
       if (!parse_mac_address(ru_cfg.du_mac_address, cfg.mac_dst_address)) {
         report_error("Invalid MAC address provided: '{}'", ru_cfg.du_mac_address);
       }
-      transceivers.push_back(std::make_unique<socket_transceiver>(logger, *workers.ru_rx_exec[i], cfg));
+      transceivers.push_back(ru_emu_create_socket_transceiver(logger, *workers.ru_rx_exec[i], cfg));
     }
 
     ru_emulator_config emu_cfg;

@@ -98,6 +98,7 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.ul_processing_time                   = sector_cfg.ul_processing_time;
   tx_config.tdd_config                           = sector_cfg.tdd_config;
   tx_config.uses_dpdk                            = sector_cfg.uses_dpdk;
+  tx_config.are_metrics_enabled                  = sector_cfg.are_metrics_enabled;
 
   return tx_config;
 }
@@ -110,6 +111,7 @@ create_dpdk_txrx(const sector_configuration& sector_cfg, task_executor& rx_execu
   eth_cfg.interface                    = sector_cfg.interface;
   eth_cfg.is_promiscuous_mode_enabled  = sector_cfg.is_promiscuous_mode_enabled;
   eth_cfg.is_link_status_check_enabled = sector_cfg.is_link_status_check_enabled;
+  eth_cfg.are_metrics_enabled          = sector_cfg.are_metrics_enabled;
   eth_cfg.mtu_size                     = sector_cfg.mtu_size;
   eth_cfg.mac_dst_address              = sector_cfg.mac_dst_address;
 
@@ -120,11 +122,15 @@ create_dpdk_txrx(const sector_configuration& sector_cfg, task_executor& rx_execu
 static std::pair<std::unique_ptr<ether::gateway>, std::unique_ptr<ether::receiver>>
 create_socket_txrx(const sector_configuration& sector_cfg, task_executor& rx_executor, srslog::basic_logger& logger)
 {
-  auto rx = ether::create_receiver(sector_cfg.interface, sector_cfg.is_promiscuous_mode_enabled, rx_executor, logger);
+  auto eth_receiver_config = ether::receiver_config{
+      sector_cfg.interface, sector_cfg.is_promiscuous_mode_enabled, sector_cfg.are_metrics_enabled};
+
+  auto rx = ether::create_receiver(eth_receiver_config, rx_executor, logger);
 
   ether::gw_config eth_cfg;
   eth_cfg.interface                   = sector_cfg.interface;
   eth_cfg.is_promiscuous_mode_enabled = sector_cfg.is_promiscuous_mode_enabled;
+  eth_cfg.are_metrics_enabled         = sector_cfg.are_metrics_enabled;
   eth_cfg.mtu_size                    = sector_cfg.mtu_size;
   eth_cfg.mac_dst_address             = sector_cfg.mac_dst_address;
   auto tx                             = ether::create_gateway(eth_cfg, logger);
@@ -176,6 +182,9 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                               *sector_deps.txrx_executor,
                               *sector_deps.logger);
 
+  ether::gateway&  eth_gateway  = *eth_txrx.first;
+  ether::receiver& eth_receiver = *eth_txrx.second;
+
   // Build the OFH receiver.
   auto rx_config = generate_receiver_config(sector_cfg);
   auto receiver  = create_receiver(rx_config,
@@ -209,5 +218,7 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                                                 std::move(cp_repo),
                                                                 std::move(prach_cp_repo),
                                                                 std::move(ul_prach_repo),
-                                                                std::move(ul_data_repo)});
+                                                                std::move(ul_data_repo),
+                                                                eth_gateway,
+                                                                eth_receiver});
 }

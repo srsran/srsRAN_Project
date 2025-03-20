@@ -13,7 +13,7 @@
 namespace srsran {
 namespace ofh {
 
-class controller;
+class operation_controller;
 class error_notifier;
 class receiver;
 class metrics_collector;
@@ -34,7 +34,7 @@ public:
   virtual transmitter& get_transmitter() = 0;
 
   /// Returns the Open Fronthaul controller of this sector.
-  virtual controller& get_controller() = 0;
+  virtual operation_controller& get_operation_controller() = 0;
 
   /// Returns the Open Fronthaul metrics collector of this sector or nullptr if metrics are disabled.
   virtual metrics_collector* get_metrics_collector() = 0;

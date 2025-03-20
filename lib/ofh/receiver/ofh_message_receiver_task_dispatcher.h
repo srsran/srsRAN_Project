@@ -37,6 +37,12 @@ public:
   // See interface for documentation.
   ether::receiver& get_ethernet_receiver() override { return msg_receiver.get_ethernet_receiver(); }
 
+  // See interface for the documentation.
+  receiver_performance_metrics_collector& get_metrics_collector() override
+  {
+    return msg_receiver.get_metrics_collector();
+  }
+
 private:
   message_receiver& msg_receiver;
   task_executor&    executor;

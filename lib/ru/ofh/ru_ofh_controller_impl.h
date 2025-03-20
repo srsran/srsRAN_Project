@@ -42,11 +42,11 @@ public:
   ru_cfo_controller* get_cfo_controller() override { return nullptr; }
 
   /// Sets the sectors controllers.
-  void set_sector_controllers(std::vector<ofh::controller*> controllers);
+  void set_sector_controllers(std::vector<ofh::operation_controller*> controllers);
 
 private:
-  srslog::basic_logger&         logger;
-  std::vector<ofh::controller*> sector_controllers;
+  srslog::basic_logger&                   logger;
+  std::vector<ofh::operation_controller*> sector_controllers;
 };
 
 } // namespace srsran

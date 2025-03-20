@@ -12,6 +12,7 @@
 
 #include "ofh_downlink_handler_impl.h"
 #include "ofh_message_transmitter_impl.h"
+#include "ofh_transmitter_metrics_collector_impl.h"
 #include "ofh_transmitter_ota_symbol_task_dispatcher.h"
 #include "ofh_uplink_request_handler_impl.h"
 #include "srsran/ofh/transmitter/ofh_transmitter.h"
@@ -58,11 +59,14 @@ public:
   // See interface for documentation.
   ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() override;
 
+  transmitter_metrics_collector* get_metrics_collector() override;
+
 private:
   downlink_handler_impl                  dl_handler;
   uplink_request_handler_impl            ul_request_handler;
   message_transmitter_impl               msg_transmitter;
   transmitter_ota_symbol_task_dispatcher ota_dispatcher;
+  transmitter_metrics_collector_impl     metrics_collector;
 };
 
 } // namespace ofh

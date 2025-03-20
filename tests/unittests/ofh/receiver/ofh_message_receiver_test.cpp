@@ -14,6 +14,8 @@
 #include "../../../../lib/ofh/receiver/ofh_sequence_id_checker_dummy_impl.h"
 #include "../../support/task_executor_test_doubles.h"
 #include "../compression/ofh_iq_decompressor_test_doubles.h"
+#include "srsran/ofh/ethernet/ethernet_controller.h"
+#include "srsran/ofh/ethernet/ethernet_receiver_metrics_collector.h"
 #include "srsran/ofh/ethernet/ethernet_unique_buffer.h"
 #include "srsran/ofh/ofh_factories.h"
 #include "srsran/phy/support/shared_resource_grid.h"
@@ -118,11 +120,19 @@ public:
 };
 
 /// Dummy Ethernet receiver class.
-class dummy_eth_receiver : public ether::receiver
+class dummy_eth_receiver : public ether::receiver, public ether::receiver_operation_controller
 {
+  // See interface for documentation.
   void start(ether::frame_notifier& notifier) override {}
 
+  // See interface for documentation.
   void stop() override {}
+
+  // See interface for documentation.
+  ether::receiver_operation_controller& get_operation_controller() override { return *this; }
+
+  // See interface for documentation.
+  ether::receiver_metrics_collector* get_metrics_collector() override { return nullptr; }
 };
 
 } // namespace

@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "ofh_data_flow_metrics_collector.h"
+#include "srsran/ofh/transmitter/ofh_transmitter_data_flow_metrics.h"
 #include "srsran/ran/resource_allocation/ofdm_symbol_range.h"
 #include "srsran/ran/slot_point.h"
 
@@ -43,6 +45,9 @@ public:
   /// Enqueues the User-Plane downlink data messages with the given context and resource grid.
   virtual void enqueue_section_type_1_message(const data_flow_uplane_resource_grid_context& context,
                                               const shared_resource_grid&                   grid) = 0;
+
+  /// Returns the performance metrics collector of this data flow.
+  virtual data_flow_downlink_metrics_collector* get_metrics_collector() = 0;
 };
 
 } // namespace ofh

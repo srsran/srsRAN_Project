@@ -10,24 +10,19 @@
 
 #pragma once
 
-#include "srsran/ofh/ethernet/ethernet_mac_address.h"
-#include "srsran/support/units.h"
+#include <string>
 
 namespace srsran {
 namespace ether {
 
-/// Configuration for the Ethernet gateway.
-struct gw_config {
+/// Configuration for the Ethernet receiver.
+struct receiver_config {
   /// Ethernet interface name or identifier.
   std::string interface;
   /// Promiscuous mode flag.
   bool is_promiscuous_mode_enabled;
-  /// Ethernet link status checking flag.
-  bool is_link_status_check_enabled;
-  /// MTU size.
-  units::bytes mtu_size;
-  /// Destination MAC address.
-  mac_address mac_dst_address;
+  /// If set to true, metrics are enabled in the Ethernet receiver.
+  bool are_metrics_enabled = false;
 };
 
 } // namespace ether

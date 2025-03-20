@@ -12,8 +12,9 @@
 
 #include "srsran/ofh/ethernet/ethernet_frame_builder.h"
 #include "srsran/ofh/ethernet/ethernet_gateway.h"
-#include "srsran/ofh/ethernet/ethernet_gw_config.h"
+#include "srsran/ofh/ethernet/ethernet_gateway_config.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
+#include "srsran/ofh/ethernet/ethernet_receiver_config.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
 #include "srsran/srslog/logger.h"
 #include <memory>
@@ -30,10 +31,8 @@ class frame_notifier;
 std::unique_ptr<gateway> create_gateway(const gw_config& config, srslog::basic_logger& logger);
 
 /// Creates an Ethernet receiver.
-std::unique_ptr<receiver> create_receiver(const std::string&    interface,
-                                          bool                  is_promiscuous_mode_enabled,
-                                          task_executor&        executor,
-                                          srslog::basic_logger& logger);
+std::unique_ptr<receiver>
+create_receiver(const receiver_config& config, task_executor& executor, srslog::basic_logger& logger);
 
 /// Creates an Ethernet frame builder with VLAN tag insertion.
 std::unique_ptr<frame_builder> create_vlan_frame_builder(const vlan_frame_params& eth_params);
