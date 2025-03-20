@@ -371,7 +371,7 @@ int main(int argc, char** argv)
       metrics_notifier_forwarder, gnb_cfg.metrics_cfg.common_metrics_cfg);
 
   // Create service for periodically polling app resource usage.
-  auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
+  auto app_metrics_timer = app_timers.create_unique_timer(*workers.metrics_exec);
   std::vector<app_services::metrics_producer*> metric_producers;
   for (auto& metric : app_resource_usage_service.metrics) {
     for (auto& producer : metric.producers)
@@ -457,8 +457,7 @@ int main(int argc, char** argv)
     metrics_configs.push_back(std::move(metric));
   }
 
-  app_services::metrics_manager metrics_mngr(
-      srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, metrics_configs);
+  app_services::metrics_manager metrics_mngr(srslog::fetch_basic_logger("GNB"), *workers.metrics_exec, metrics_configs);
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 

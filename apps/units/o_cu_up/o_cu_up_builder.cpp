@@ -49,7 +49,7 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
     metrics_cfg.consumers.push_back(
         std::make_unique<cu_up_pdcp_metrics_consumer_json>(srslog::fetch_basic_logger("APP"),
                                                            app_helpers::fetch_json_metrics_log_channel(),
-                                                           *workers.metrics_hub_exec,
+                                                           *workers.metrics_exec,
                                                            timers.create_unique_timer(*workers.non_rt_low_prio_exec),
                                                            cu_up_metrics_cfg.pdcp.report_period));
   }

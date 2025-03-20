@@ -363,7 +363,7 @@ int main(int argc, char** argv)
       app_services::build_app_resource_usage_service(metrics_notifier_forwarder, cu_cfg.metrics_cfg.common_metrics_cfg);
 
   // Create service for periodically polling app resource usage.
-  auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
+  auto app_metrics_timer = app_timers.create_unique_timer(*workers.metrics_exec);
   std::vector<app_services::metrics_producer*> metric_producers;
   for (auto& metric : app_resource_usage_service.metrics) {
     for (auto& producer : metric.producers)
@@ -436,8 +436,7 @@ int main(int argc, char** argv)
   for (auto& metric : o_cuup_unit.metrics) {
     metrics_configs.push_back(std::move(metric));
   }
-  app_services::metrics_manager metrics_mngr(
-      srslog::fetch_basic_logger("CU"), *workers.metrics_hub_exec, metrics_configs);
+  app_services::metrics_manager metrics_mngr(srslog::fetch_basic_logger("CU"), *workers.metrics_exec, metrics_configs);
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 

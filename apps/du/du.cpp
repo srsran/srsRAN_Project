@@ -341,12 +341,12 @@ int main(int argc, char** argv)
       producers.push_back(producer.get());
     }
   }
-  auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
+  auto app_metrics_timer = app_timers.create_unique_timer(*workers.metrics_exec);
   app_services::periodic_metrics_report_controller periodic_metrics_controller(
       producers, std::move(app_metrics_timer), std::chrono::milliseconds(du_cfg.metrics_cfg.rusage_report_period));
 
   // Only DU has metrics now.
-  app_services::metrics_manager metrics_mngr(srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, app_metrics);
+  app_services::metrics_manager metrics_mngr(srslog::fetch_basic_logger("GNB"), *workers.metrics_exec, app_metrics);
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 

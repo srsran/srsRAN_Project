@@ -334,6 +334,10 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
   append_pcap_strands(low_prio_strands, worker_cfg.pcap_cfg);
 
+  // Metrics strand configuration.
+  strand metrics_strand_cfg{{{"metrics_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
+  low_prio_strands.push_back(metrics_strand_cfg);
+
   // Configuration of strand for the CU-CP task handling.
   strand cu_cp_strand{{{"ctrl_exec", concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}}};
   high_prio_strands.push_back(cu_cp_strand);
@@ -345,6 +349,7 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
 
   non_rt_low_prio_exec = exec_mng.executors().at("low_prio_exec");
   non_rt_hi_prio_exec  = exec_mng.executors().at("high_prio_exec");
+  metrics_exec         = exec_mng.executors().at("metrics_exec");
 }
 
 void worker_manager::associate_low_prio_executors(const worker_manager_config& config)
@@ -353,9 +358,8 @@ void worker_manager::associate_low_prio_executors(const worker_manager_config& c
   const auto& exec_map = exec_mng.executors();
 
   // Update executor pointer mapping
-  cu_cp_exec       = exec_map.at("ctrl_exec");
-  cu_e2_exec       = exec_map.at("ctrl_exec");
-  metrics_hub_exec = exec_map.at("ctrl_exec");
+  cu_cp_exec = exec_map.at("ctrl_exec");
+  cu_e2_exec = exec_map.at("ctrl_exec");
 }
 
 void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,
