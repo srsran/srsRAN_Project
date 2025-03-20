@@ -9,6 +9,7 @@
  */
 
 #include "ofh_data_flow_uplane_uplink_data_impl.h"
+#include "../support/uplane_bound_check_helpers.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/serdes/ofh_message_decoder_properties.h"
 
@@ -63,56 +64,33 @@ bool data_flow_uplane_uplink_data_impl::should_uplane_packet_be_filtered(
     return true;
   }
 
-  const uplane_message_params&     params = results.params;
-  std::optional<ul_cplane_context> opt_cp_context =
-      ul_cplane_context_repo->get(params.slot, params.symbol_id, params.filter_index, eaxc);
+  const uplane_message_params& params  = results.params;
+  ul_cplane_context            context = ul_cplane_context_repo->get(params.slot, eaxc);
 
-  if (SRSRAN_UNLIKELY(!opt_cp_context)) {
-    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as no data was expected for slot '{}', "
-                "symbol '{}' and eAxC '{}'",
+  // Check if the filter index is valid.
+  if (SRSRAN_UNLIKELY(params.filter_index != context.filter_index)) {
+    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as the expected filter index '{}' does "
+                "not match with value '{}' for slot '{}', symbol '{}' and eAxC '{}'",
                 sector_id,
+                to_value(context.filter_index),
+                to_value(params.filter_index),
                 params.slot,
                 params.symbol_id,
                 eaxc);
-
     return true;
   }
 
-  // Check the PRBs.
-  return std::any_of(
-      results.sections.begin(),
-      results.sections.end(),
-      [this, cp_context = *opt_cp_context](const uplane_section_params& up_section) {
-        if (SRSRAN_UNLIKELY(!up_section.is_every_rb_used)) {
-          logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as 'every other resource block is "
-                      "used' mode is not supported",
-                      sector_id);
+  // Check if the symbol index is valid.
+  if (SRSRAN_UNLIKELY(!is_symbol_index_in_cplane_valid(context, params.symbol_id))) {
+    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as the symbol index '{}' is invalid for "
+                "slot '{}', and eAxC '{}'",
+                sector_id,
+                params.symbol_id,
+                params.slot,
+                eaxc);
+    return true;
+  }
 
-          return true;
-        }
-
-        if (SRSRAN_UNLIKELY(!up_section.use_current_symbol_number)) {
-          logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as 'increment the current symbol "
-                      "number and use that' mode is not supported",
-                      sector_id);
-
-          return true;
-        }
-
-        bool is_up_section_not_found_in_cp_section =
-            (up_section.start_prb < cp_context.prb_start ||
-             (up_section.start_prb + up_section.nof_prbs) > (cp_context.prb_start + cp_context.nof_prb));
-
-        if (SRSRAN_UNLIKELY(is_up_section_not_found_in_cp_section)) {
-          logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as PRB index range '{}:{}' does "
-                      "not match the expected range '{}:{}'",
-                      sector_id,
-                      up_section.start_prb,
-                      up_section.nof_prbs,
-                      cp_context.prb_start,
-                      cp_context.nof_prb);
-        }
-
-        return is_up_section_not_found_in_cp_section;
-      });
+  // Check if the PRB ranges are valid.
+  return !are_uplane_prb_fields_valid(results, context, sector_id, logger);
 }

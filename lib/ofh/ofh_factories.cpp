@@ -48,6 +48,7 @@ static receiver_config generate_receiver_config(const sector_configuration& conf
   rx_config.prach_compression_params           = config.prach_compression_params;
   rx_config.ul_compression_params              = config.ul_compression_params;
   rx_config.is_prach_control_plane_enabled     = config.is_prach_control_plane_enabled;
+  rx_config.ignore_prach_start_symbol          = config.ignore_prach_start_symbol;
   rx_config.ignore_ecpri_payload_size_field    = config.ignore_ecpri_payload_size_field;
   rx_config.ignore_ecpri_seq_id_field          = config.ignore_ecpri_seq_id_field;
   rx_config.are_metrics_enabled                = config.are_metrics_enabled;
@@ -163,11 +164,10 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
 {
   unsigned repository_size = calculate_repository_size(sector_cfg.scs, sector_cfg.max_processing_delay_slots * 4);
 
-  auto cp_repo = std::make_shared<uplink_cplane_context_repository>(repository_size);
-  auto prach_cp_repo =
-      std::make_shared<uplink_cplane_context_repository>(repository_size, sector_cfg.ignore_prach_start_symbol);
-  auto prach_repo = std::make_shared<prach_context_repository>(repository_size);
-  auto slot_repo  = std::make_shared<uplink_context_repository>(repository_size);
+  auto cp_repo       = std::make_shared<uplink_cplane_context_repository>(repository_size);
+  auto prach_cp_repo = std::make_shared<uplink_cplane_context_repository>(repository_size);
+  auto prach_repo    = std::make_shared<prach_context_repository>(repository_size);
+  auto slot_repo     = std::make_shared<uplink_context_repository>(repository_size);
 
   // Build the ethernet txrx.
   auto eth_txrx = create_txrx(sector_cfg,

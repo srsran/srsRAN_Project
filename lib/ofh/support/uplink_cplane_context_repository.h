@@ -16,7 +16,6 @@
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include <array>
 #include <atomic>
-#include <optional>
 #include <vector>
 
 namespace srsran {
@@ -43,8 +42,6 @@ class uplink_cplane_context_repository
 
   /// Repository storage.
   std::vector<repo_entry> repo;
-  /// Ignore the start symbol value received in the PRACH U-Plane packets.
-  bool ignore_prach_start_symbol;
 
   /// Returns the entry of the repository for the given slot and eAxC.
   std::atomic<uint64_t>& get_entry(slot_point slot, unsigned eaxc)
@@ -84,8 +81,7 @@ class uplink_cplane_context_repository
   }
 
 public:
-  explicit uplink_cplane_context_repository(unsigned size_, bool ignore_prach_start_symbol_ = false) :
-    repo(size_), ignore_prach_start_symbol(ignore_prach_start_symbol_)
+  explicit uplink_cplane_context_repository(unsigned size_) : repo(size_)
   {
     static_assert(MAX_PRACH_OCCASIONS_PER_SLOT == 1,
                   "Uplink Control-Plane context repository only supports one context per slot and eAxC");
@@ -98,31 +94,11 @@ public:
     entry.store(pack_context(new_context), std::memory_order_relaxed);
   }
 
-  /// Returns a context that matches the given slot, symbol, filter index and eAxC or an nullopt if it does not exist in
-  /// the repository.
-  std::optional<ul_cplane_context>
-  get(slot_point slot, unsigned symbol, filter_index_type filter_index, unsigned eaxc) const
+  /// Returns a context that matches the given slot and eAxC.
+  ul_cplane_context get(slot_point slot, unsigned eaxc) const
   {
-    const auto&       entry    = get_entry(slot, eaxc);
-    ul_cplane_context cp_param = unpack_context(entry.load(std::memory_order_relaxed));
-
-    auto is_start_symbol_valid = [this, cp_param](unsigned start_symbol) {
-      if (ignore_prach_start_symbol && (cp_param.filter_index == filter_index_type::ul_prach_preamble_1p25khz)) {
-        // Some RUs always set PRACH symbolId to 0 when long format is used ignoring the value indicated in C-Plane.
-        if (start_symbol >= cp_param.start_symbol) {
-          start_symbol -= cp_param.start_symbol;
-        }
-        return start_symbol < cp_param.nof_symbols;
-      }
-
-      return (start_symbol >= cp_param.start_symbol) && (start_symbol < (cp_param.start_symbol + cp_param.nof_symbols));
-    };
-
-    if (filter_index == cp_param.filter_index && is_start_symbol_valid(symbol)) {
-      return cp_param;
-    }
-
-    return std::nullopt;
+    const auto& entry = get_entry(slot, eaxc);
+    return unpack_context(entry.load(std::memory_order_relaxed));
   }
 };
 

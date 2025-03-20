@@ -61,9 +61,10 @@ create_uplink_prach_data_flow(const receiver_config&                            
                               std::shared_ptr<uplink_cplane_context_repository> prach_cp_context_repo)
 {
   data_flow_uplane_uplink_prach_impl_config config;
-  config.is_prach_cplane_enabled = receiver_cfg.is_prach_control_plane_enabled;
-  config.prach_eaxcs             = receiver_cfg.prach_eaxc;
-  config.sector                  = receiver_cfg.sector;
+  config.is_prach_cplane_enabled   = receiver_cfg.is_prach_control_plane_enabled;
+  config.ignore_prach_start_symbol = receiver_cfg.ignore_prach_start_symbol;
+  config.prach_eaxcs               = receiver_cfg.prach_eaxc;
+  config.sector                    = receiver_cfg.sector;
 
   data_flow_uplane_uplink_prach_impl_dependencies dependencies;
   dependencies.logger                    = &logger;
