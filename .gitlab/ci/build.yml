@@ -198,7 +198,7 @@ variables:
         echo "#########################"
         git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
         cd ${PLUGIN_PATH}
-        git fetch origin ${CI_PLUGIN_COMMIT_SHA} > /dev/null
+        git fetch --depth=1 origin ${CI_PLUGIN_COMMIT_SHA} > /dev/null
         git config advice.detachedHead false
         git checkout ${CI_PLUGIN_COMMIT_SHA}
         cd ${CI_PROJECT_DIR}

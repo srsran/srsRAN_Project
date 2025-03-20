@@ -58,11 +58,21 @@ download srsran:
       mkdir -p ${SRSRANDIR}
       cd ${SRSRANDIR}
     - |
-      git init
-      git remote add origin ${SRSRAN_REPO_URL}
-      git fetch --depth=1 origin ${SRSRAN_COMMIT}
+      git init > /dev/null
+      git remote add origin ${SRSRAN_REPO_URL} > /dev/null
+      git fetch --depth=1 origin ${SRSRAN_COMMIT} > /dev/null
       git reset --hard FETCH_HEAD
     - git config --global --add safe.directory ${SRSRANDIR}
+    - |
+      if [[ -f .gitlab/ci/plugin_version.txt ]]; then
+        CI_PLUGIN_COMMIT_SHA=$(cat .gitlab/ci/plugin_version.txt)
+        git submodule add https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
+        cd ${PLUGIN_PATH}
+        git fetch --depth=1 origin ${CI_PLUGIN_COMMIT_SHA} > /dev/null
+        git config advice.detachedHead false
+        git checkout ${CI_PLUGIN_COMMIT_SHA}
+        cd ${SRSRANDIR}
+      fi
   artifacts:
     paths:
       - $SRSRANDIR
