@@ -121,7 +121,7 @@ async_task<void> cu_configuration_procedure::stop_cell(const nr_cell_global_id_t
         }
 
         // Stop cell.
-        CORO_AWAIT(du_params.mac.cell_mng.get_cell_controller(cell_index).stop());
+        CORO_AWAIT(cell_mng.stop(cell_index));
 
         CORO_RETURN();
       });

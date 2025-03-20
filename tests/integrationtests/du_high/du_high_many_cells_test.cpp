@@ -16,6 +16,7 @@
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/f1ap_message.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -200,7 +201,7 @@ TEST_P(du_high_many_cells_tester, when_cell_stopped_then_ues_are_released)
   }
 
   // Stop one cell via F1AP gNB-CU Configuration Update.
-  const unsigned rem_cell_idx = 1;
+  const unsigned rem_cell_idx = test_rgen::uniform_int<unsigned>(0, GetParam().nof_cells - 1);
   this->cu_notifier.last_f1ap_msgs.clear();
   f1ap_message req = test_helpers::create_gnb_cu_configuration_update_request(
       0, {}, {{nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(rem_cell_idx).value()}}});
@@ -237,6 +238,49 @@ TEST_P(du_high_many_cells_tester, when_cell_stopped_then_ues_are_released)
     ASSERT_TRUE(not cell_res.last_dl_res.has_value() or (cell_res.last_dl_res.value().dl_pdcch_pdus.empty() and
                                                          cell_res.last_dl_res.value().ul_pdcch_pdus.empty()));
   }
+}
+
+TEST_P(du_high_many_cells_tester, when_cell_restarted_then_ues_can_be_created)
+{
+  // Create one UE per cell.
+  for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
+    rnti_t rnti = to_rnti(0x4601 + i);
+    ASSERT_TRUE(add_ue(rnti, to_du_cell_index(i)));
+    ASSERT_TRUE(run_rrc_setup(rnti));
+    ASSERT_TRUE(run_ue_context_setup(rnti));
+    ASSERT_TRUE(run_until_csi(to_du_cell_index(i), rnti));
+  }
+
+  // Stop one cell via F1AP gNB-CU Configuration Update.
+  const unsigned      rem_cell_idx = test_rgen::uniform_int<unsigned>(0, GetParam().nof_cells - 1);
+  nr_cell_global_id_t rem_cgi{plmn_identity::test_value(), nr_cell_identity::create(rem_cell_idx).value()};
+  f1ap_message        req = test_helpers::create_gnb_cu_configuration_update_request(0, {}, {{rem_cgi}});
+  this->du_hi->get_f1ap_du().handle_message(req);
+  const rnti_t crnti   = to_rnti(0x4601 + rem_cell_idx);
+  auto&        u       = ues.at(crnti);
+  auto         cmd_rel = test_helpers::generate_ue_context_release_command(
+      u.cu_ue_id.value(), u.du_ue_id.value(), srb_id_t::srb1, byte_buffer::create({0x1, 0x2, 0x3}).value());
+  this->du_hi->get_f1ap_du().handle_message(cmd_rel);
+  ASSERT_TRUE(this->run_until([this, &req]() {
+    return not this->cu_notifier.last_f1ap_msgs.empty() and
+           test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req);
+  }));
+
+  // Restart the cell.
+  this->cu_notifier.last_f1ap_msgs.clear();
+  f1ap_message req_restart = test_helpers::create_gnb_cu_configuration_update_request(0, {{rem_cgi}}, {});
+  this->du_hi->get_f1ap_du().handle_message(req_restart);
+  ASSERT_TRUE(this->run_until([this, &req_restart]() {
+    return not this->cu_notifier.last_f1ap_msgs.empty() and test_helpers::is_gnb_cu_config_update_acknowledge_valid(
+                                                                this->cu_notifier.last_f1ap_msgs.back(), req_restart);
+  }));
+
+  // Create UE in the restarted cell.
+  rnti_t new_crnti = to_rnti(0x4601 + GetParam().nof_cells);
+  ASSERT_TRUE(add_ue(new_crnti, to_du_cell_index(rem_cell_idx)));
+  ASSERT_TRUE(run_rrc_setup(new_crnti));
+  ASSERT_TRUE(run_ue_context_setup(new_crnti));
+  ASSERT_TRUE(run_until_csi(to_du_cell_index(rem_cell_idx), new_crnti));
 }
 
 INSTANTIATE_TEST_SUITE_P(du_high_many_cells_test_suite,
