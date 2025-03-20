@@ -20,18 +20,18 @@ static unsigned compute_max_pdschs_per_slot(const cell_configuration& cell_cfg)
       std::min(static_cast<unsigned>(MAX_PDSCH_PDUS_PER_SLOT), cell_cfg.expert_cfg.ue.max_pdschs_per_slot);
   // Note: We subtract to -1 to max_ul_grants_per_slot to always leave a grant for PUSCH which gets scheduled
   // afterwards.
-  unsigned max_pucchs_per_slot =
+  const unsigned max_pucchs_per_slot =
       std::min(cell_cfg.expert_cfg.ue.max_pucchs_per_slot, cell_cfg.expert_cfg.ue.max_ul_grants_per_slot - 1);
 
   if (cell_cfg.tdd_cfg_common.has_value()) {
-    // TDD
-    unsigned nof_dl_slots = nof_dl_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
+    // TDD.
+    const unsigned nof_dl_slots = nof_dl_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
     // Note: use all UL slots once partial UL slots are used for UCI.
-    unsigned nof_ul_slots = nof_full_ul_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
-    unsigned max_pucchs   = nof_ul_slots * max_pucchs_per_slot;
-    pdschs_per_slot       = std::min(pdschs_per_slot, max_pucchs / nof_dl_slots);
+    const unsigned nof_ul_slots = nof_full_ul_slots_per_tdd_period(cell_cfg.tdd_cfg_common.value());
+    const unsigned max_pucchs   = nof_ul_slots * max_pucchs_per_slot;
+    pdschs_per_slot             = std::min(pdschs_per_slot, max_pucchs / nof_dl_slots);
   } else {
-    // FDD
+    // FDD.
     pdschs_per_slot = std::min(max_pucchs_per_slot, pdschs_per_slot);
   }
 
