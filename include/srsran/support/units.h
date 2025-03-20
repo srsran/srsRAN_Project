@@ -106,13 +106,13 @@ constexpr bytes bits::round_up_to_bytes() const
 namespace literals {
 
 /// User defined literal for byte units.
-constexpr bytes operator"" _bytes(unsigned long long n)
+constexpr bytes operator""_bytes(unsigned long long n)
 {
   return bytes(n);
 }
 
 /// User defined literal for bit units.
-constexpr bits operator"" _bits(unsigned long long n)
+constexpr bits operator""_bits(unsigned long long n)
 {
   return bits(n);
 }
