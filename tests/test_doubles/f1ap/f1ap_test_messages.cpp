@@ -196,7 +196,8 @@ f1ap_message srsran::test_helpers::create_gnb_du_configuration_update_failure(co
 
 f1ap_message
 srsran::test_helpers::create_gnb_cu_configuration_update_request(unsigned                        transaction_id,
-                                                                 span<const nr_cell_global_id_t> cgis_to_activate)
+                                                                 span<const nr_cell_global_id_t> cgis_to_activate,
+                                                                 span<const nr_cell_global_id_t> cgis_to_deactivate)
 {
   f1ap_message msg;
 
@@ -209,6 +210,13 @@ srsran::test_helpers::create_gnb_cu_configuration_update_request(unsigned       
   for (unsigned i = 0, e = cgis_to_activate.size(); i != e; ++i) {
     req->cells_to_be_activ_list[i].load_info_obj(ASN1_F1AP_ID_CELLS_TO_BE_ACTIV_LIST_ITEM);
     req->cells_to_be_activ_list[i].value().cells_to_be_activ_list_item().nr_cgi = cgi_to_asn1(cgis_to_activate[i]);
+  }
+  req->cells_to_be_deactiv_list_present = not cgis_to_deactivate.empty();
+  req->cells_to_be_deactiv_list.resize(cgis_to_deactivate.size());
+  for (unsigned i = 0, e = cgis_to_deactivate.size(); i != e; ++i) {
+    req->cells_to_be_deactiv_list[i].load_info_obj(ASN1_F1AP_ID_CELLS_TO_BE_DEACTIV_LIST_ITEM);
+    req->cells_to_be_deactiv_list[i].value().cells_to_be_deactiv_list_item().nr_cgi =
+        cgi_to_asn1(cgis_to_deactivate[i]);
   }
 
   return msg;

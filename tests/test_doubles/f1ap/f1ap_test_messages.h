@@ -76,7 +76,8 @@ f1ap_message create_gnb_du_configuration_update_failure(const f1ap_message& gnb_
 
 /// \brief Generates dummy GNB-CU CONFIGURATION UPDATE REQUEST message as per TS 38.473, 8.2.5.1.
 f1ap_message create_gnb_cu_configuration_update_request(unsigned                        transaction_id,
-                                                        span<const nr_cell_global_id_t> cgis_to_activate);
+                                                        span<const nr_cell_global_id_t> cgis_to_activate,
+                                                        span<const nr_cell_global_id_t> cgis_to_deactivate = {});
 
 /// \brief Generates dummy F1 RESET message.
 f1ap_message create_f1ap_reset_message(

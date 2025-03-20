@@ -10,6 +10,7 @@
 
 #include "test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "srsran/asn1/f1ap/common.h"
@@ -185,6 +186,29 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
     ASSERT_EQ(largest_pdu_per_cell[c], largest_pdu_per_cell[0])
         << fmt::format("cells {} and {} cannot schedule equally large PDUs", 0, c);
   }
+}
+
+TEST_P(du_high_many_cells_tester, when_cell_stopped_then_cell_can_be_restarted)
+{
+  // Create one UE per cell.
+  for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
+    rnti_t rnti = to_rnti(0x4601 + i);
+    ASSERT_TRUE(add_ue(rnti, to_du_cell_index(i)));
+    ASSERT_TRUE(run_rrc_setup(rnti));
+    ASSERT_TRUE(run_ue_context_setup(rnti));
+    ASSERT_TRUE(run_until_csi(to_du_cell_index(i), rnti));
+  }
+
+  // Stop one cell via F1AP gNB-CU Configuration Update.
+  this->cu_notifier.last_f1ap_msgs.clear();
+  f1ap_message req = test_helpers::create_gnb_cu_configuration_update_request(
+      0, {}, {{nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(1).value()}}});
+  this->du_hi->get_f1ap_du().handle_message(req);
+  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.last_f1ap_msgs.empty(); }));
+  ASSERT_TRUE(test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req));
+
+  // Ensure the cell is stopped.
+  // TODO
 }
 
 INSTANTIATE_TEST_SUITE_P(du_high_many_cells_test_suite,
