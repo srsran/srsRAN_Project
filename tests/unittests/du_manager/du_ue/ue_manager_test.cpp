@@ -332,6 +332,13 @@ public:
   du_ue_index_t test_ue_index;
 };
 
+static f1ap_ue_context_release_request::cause_type rlf_cause_to_f1ap_cause(rlf_cause rlf_cause)
+{
+  using cause_type = f1ap_ue_context_release_request::cause_type;
+  cause_type cause = rlf_cause == rlf_cause::max_mac_kos_reached ? cause_type::rlf_mac : cause_type::rlf_rlc;
+  return cause;
+}
+
 TEST_F(du_ue_manager_rlf_tester,
        when_rlf_is_triggered_then_timer_starts_and_on_timeout_f1ap_is_notified_of_ue_context_removal_request)
 {
@@ -344,7 +351,7 @@ TEST_F(du_ue_manager_rlf_tester,
   tick_until_rlf_timeout();
   ASSERT_TRUE(f1ap_dummy.last_ue_release_req.has_value());
   ASSERT_EQ(f1ap_dummy.last_ue_release_req->ue_index, get_last_ue_index());
-  ASSERT_EQ(f1ap_dummy.last_ue_release_req->cause, cause);
+  ASSERT_EQ(f1ap_dummy.last_ue_release_req->cause, rlf_cause_to_f1ap_cause(cause));
 }
 
 TEST_F(du_ue_manager_rlf_tester, when_mac_rlf_is_triggered_and_then_crnti_ce_is_detected_then_rlf_is_aborted)
@@ -389,7 +396,7 @@ TEST_F(du_ue_manager_rlf_tester,
   // TEST: RLC RLF is reported.
   ASSERT_TRUE(f1ap_dummy.last_ue_release_req.has_value());
   ASSERT_EQ(f1ap_dummy.last_ue_release_req->ue_index, get_last_ue_index());
-  ASSERT_EQ(f1ap_dummy.last_ue_release_req->cause, cause);
+  ASSERT_EQ(f1ap_dummy.last_ue_release_req->cause, rlf_cause_to_f1ap_cause(cause));
 }
 
 TEST_F(du_ue_manager_rlf_tester, when_rlf_is_triggered_then_following_rlfs_have_no_effect)

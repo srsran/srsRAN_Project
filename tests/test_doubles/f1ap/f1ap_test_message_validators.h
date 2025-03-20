@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rb_id.h"
 #include "srsran/ran/rnti.h"
@@ -64,7 +65,13 @@ bool is_valid_ue_context_modification_response(const f1ap_message&    resp_msg,
                                                const f1ap_message&    req_msg,
                                                ue_context_mod_context context = ue_context_mod_context::default_case);
 
+bool is_valid_ue_context_release_request(const f1ap_message& msg);
+bool is_valid_ue_context_release_request(const f1ap_message& msg, gnb_du_ue_f1ap_id_t du_ue_id);
+
 bool is_valid_ue_context_release_command(const f1ap_message& msg);
+
+bool is_valid_ue_context_release_complete(const f1ap_message& msg);
+bool is_valid_ue_context_release_complete(const f1ap_message& msg, const f1ap_message& rel_cmd);
 
 bool is_valid_paging(const f1ap_message& msg);
 

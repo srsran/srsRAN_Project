@@ -172,11 +172,11 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
       if (params.pucch_cfg.has_value()) {
         cfg.ran.cells.back().pucch_cfg = params.pucch_cfg.value();
       }
+      cfg.ran.mac_cfg.configs.push_back({10000, 10000, 10000});
     }
 
     cfg.ran.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
     cfg.ran.sched_cfg = config_helpers::make_default_scheduler_expert_config();
-    cfg.ran.mac_cfg   = mac_expert_config{.configs = {{10000, 10000, 10000}}};
 
     return cfg;
   }()),

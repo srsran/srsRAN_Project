@@ -10,7 +10,7 @@
 
 #include "du_manager_impl.h"
 #include "du_positioning_handler_factory.h"
-#include "procedures/cu_context_update_procedure.h"
+#include "procedures/cu_configuration_procedure.h"
 #include "procedures/du_param_config_procedure.h"
 #include "procedures/du_stop_procedure.h"
 #include "procedures/du_ue_ric_configuration_procedure.h"
@@ -161,7 +161,7 @@ async_task<void> du_manager_impl::handle_f1_reset_request(const std::vector<du_u
 async_task<gnbcu_config_update_response>
 du_manager_impl::handle_cu_context_update_request(const gnbcu_config_update_request& request)
 {
-  return launch_async<cu_context_update_procedure>(request, cell_mng);
+  return launch_async<cu_configuration_procedure>(request, cell_mng, ue_mng, params);
 }
 
 async_task<f1ap_ue_context_creation_response>

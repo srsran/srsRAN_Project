@@ -99,6 +99,7 @@ struct gnbdu_config_update_response {
 /// Request sent by CU to DU via F1AP gNB-CU Configuration Update.
 struct gnbcu_config_update_request {
   std::vector<f1ap_cell_to_activate> cells_to_activate;
+  std::vector<nr_cell_global_id_t>   cells_to_deactivate;
 };
 
 /// Result of gNB-CU initiated Config Update as per TS 38.473, Section 8.2.5.

@@ -188,7 +188,7 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
   }
 }
 
-TEST_P(du_high_many_cells_tester, when_cell_stopped_then_cell_can_be_restarted)
+TEST_P(du_high_many_cells_tester, when_cell_stopped_then_ues_are_released)
 {
   // Create one UE per cell.
   for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
@@ -200,15 +200,43 @@ TEST_P(du_high_many_cells_tester, when_cell_stopped_then_cell_can_be_restarted)
   }
 
   // Stop one cell via F1AP gNB-CU Configuration Update.
+  const unsigned rem_cell_idx = 1;
   this->cu_notifier.last_f1ap_msgs.clear();
   f1ap_message req = test_helpers::create_gnb_cu_configuration_update_request(
-      0, {}, {{nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(1).value()}}});
+      0, {}, {{nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(rem_cell_idx).value()}}});
   this->du_hi->get_f1ap_du().handle_message(req);
+
+  // Expect release request for UE connected to the cell being stopped.
+  const rnti_t crnti = to_rnti(0x4601 + rem_cell_idx);
+  auto&        u     = ues.at(crnti);
+  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.last_f1ap_msgs.empty(); }));
+  ASSERT_TRUE(
+      test_helpers::is_valid_ue_context_release_request(this->cu_notifier.last_f1ap_msgs.back(), u.du_ue_id.value()));
+
+  // CU releases UE.
+  this->cu_notifier.last_f1ap_msgs.clear();
+  auto cmd_rel = test_helpers::generate_ue_context_release_command(
+      u.cu_ue_id.value(), u.du_ue_id.value(), srb_id_t::srb1, byte_buffer::create({0x1, 0x2, 0x3}).value());
+  this->du_hi->get_f1ap_du().handle_message(cmd_rel);
+  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.last_f1ap_msgs.empty(); }));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_complete(this->cu_notifier.last_f1ap_msgs.front(), cmd_rel));
+  this->cu_notifier.last_f1ap_msgs.erase(this->cu_notifier.last_f1ap_msgs.begin());
+
+  // gNB-CU Configuration Update Complete.
   ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.last_f1ap_msgs.empty(); }));
   ASSERT_TRUE(test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req));
+  ASSERT_EQ(this->cu_notifier.last_f1ap_msgs.size(), 1);
 
-  // Ensure the cell is stopped.
-  // TODO
+  // Ensure the cell is indeed stopped.
+  const unsigned nof_test_slots = 100;
+  for (unsigned i = 0; i != nof_test_slots; ++i) {
+    this->run_slot();
+
+    auto& cell_res = this->phy.cells[rem_cell_idx];
+    ASSERT_FALSE(cell_res.last_dl_data.has_value());
+    ASSERT_TRUE(not cell_res.last_dl_res.has_value() or (cell_res.last_dl_res.value().dl_pdcch_pdus.empty() and
+                                                         cell_res.last_dl_res.value().ul_pdcch_pdus.empty()));
+  }
 }
 
 INSTANTIATE_TEST_SUITE_P(du_high_many_cells_test_suite,

@@ -86,13 +86,12 @@ struct f1ap_ue_context_update_response {
   bool                                     full_config_present = false;
 };
 
-/// \brief Handled causes for RLF.
-enum class rlf_cause { max_mac_kos_reached, max_rlc_retxs_reached, rlc_protocol_failure };
-
 /// \brief Request Command for F1AP UE CONTEXT Release Request.
 struct f1ap_ue_context_release_request {
+  enum class cause_type { rlf_mac, rlf_rlc, other };
+
   du_ue_index_t ue_index;
-  rlf_cause     cause;
+  cause_type    cause;
 };
 
 /// \brief Request Command for F1AP UE CONTEXT Modification Required.

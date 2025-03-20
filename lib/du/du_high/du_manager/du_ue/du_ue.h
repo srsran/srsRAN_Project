@@ -38,6 +38,9 @@ struct du_ue_context {
   nr_cell_global_id_t nr_cgi;
 };
 
+/// \brief Handled causes for RLF.
+enum class rlf_cause { max_mac_kos_reached, max_rlc_retxs_reached, rlc_protocol_failure };
+
 /// The interface exposes the methods to interact with the state of a DU UE.
 class du_ue_controller
 {

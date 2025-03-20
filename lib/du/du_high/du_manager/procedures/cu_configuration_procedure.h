@@ -17,18 +17,28 @@ namespace srsran {
 namespace srs_du {
 
 class du_cell_manager;
+class du_ue_manager;
+struct du_manager_params;
 
 /// \brief Procedure to handle context update request provided by CU.
-class cu_context_update_procedure
+class cu_configuration_procedure
 {
 public:
-  cu_context_update_procedure(const gnbcu_config_update_request& request_, du_cell_manager& cell_mng_);
+  cu_configuration_procedure(const gnbcu_config_update_request& request_,
+                             du_cell_manager&                   cell_mng_,
+                             du_ue_manager&                     ue_mng_,
+                             const du_manager_params&           du_params_);
 
   void operator()(coro_context<async_task<gnbcu_config_update_response>>& ctx);
 
 private:
+  async_task<bool> start_cell(const nr_cell_global_id_t& cgi);
+  async_task<void> stop_cell(const nr_cell_global_id_t& cgi);
+
   const gnbcu_config_update_request request;
   du_cell_manager&                  cell_mng;
+  du_ue_manager&                    ue_mng;
+  const du_manager_params&          du_params;
 
   unsigned list_index = 0;
 

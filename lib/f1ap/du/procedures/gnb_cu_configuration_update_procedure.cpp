@@ -49,6 +49,16 @@ gnbcu_config_update_request gnb_cu_configuration_update_procedure::request_du_up
     }
   }
 
+  if (request->cells_to_be_deactiv_list_present) {
+    for (const auto& item : request->cells_to_be_deactiv_list) {
+      auto& asn1_cell = item->cells_to_be_deactiv_list_item();
+      auto  cgi       = cgi_from_asn1(asn1_cell.nr_cgi);
+      if (cgi.has_value()) {
+        du_req.cells_to_deactivate.push_back(cgi.value());
+      }
+    }
+  }
+
   return du_req;
 }
 

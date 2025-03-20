@@ -31,22 +31,6 @@ using namespace srsran;
 using namespace asn1::f1ap;
 using namespace srs_du;
 
-namespace {
-
-/// Adapter used to convert F1AP Rx PDUs coming from the CU-CP into F1AP messages.
-class f1ap_rx_pdu_adapter final : public f1ap_message_notifier
-{
-public:
-  f1ap_rx_pdu_adapter(f1ap_message_handler& msg_handler_) : msg_handler(msg_handler_) {}
-
-  void on_new_message(const f1ap_message& msg) override { msg_handler.handle_message(msg); }
-
-private:
-  f1ap_message_handler& msg_handler;
-};
-
-} // namespace
-
 class f1ap_du_impl::tx_pdu_notifier_with_logging final : public f1ap_message_notifier
 {
 public:
@@ -319,9 +303,15 @@ void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_relea
   rel_req->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue->context.gnb_cu_ue_f1ap_id);
 
   // Set F1AP cause.
-  rel_req->cause.set_radio_network().value = (request.cause == rlf_cause::max_rlc_retxs_reached)
-                                                 ? cause_radio_network_opts::rl_fail_rlc
-                                                 : cause_radio_network_opts::rl_fail_others;
+  using cause_type = f1ap_ue_context_release_request::cause_type;
+  if (request.cause == cause_type::rlf_mac or request.cause == cause_type::rlf_rlc) {
+    rel_req->cause.set_radio_network().value =
+        (request.cause == cause_type::rlf_rlc ? cause_radio_network_opts::rl_fail_rlc
+                                              : cause_radio_network_opts::rl_fail_others);
+  } else {
+    rel_req->cause.set_radio_network().value = cause_radio_network_opts::cell_not_available;
+  }
+
   ue->f1ap_msg_notifier.on_new_message(msg);
 }
 
