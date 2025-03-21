@@ -395,7 +395,6 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
     } else if (result.error() == dl_alloc_failure_cause::uci_alloc_failed) {
       // The scheduler likely ran out of PUCCH resources. Prioritize UEs which have a UCI already pending.
       pucch_grant_limit_exceeded = true;
-      break;
     }
 
     dl_attempts_count++;
