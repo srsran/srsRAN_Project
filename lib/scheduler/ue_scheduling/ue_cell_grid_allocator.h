@@ -76,6 +76,15 @@ struct ue_retx_ul_grant_request {
 /// - invalid_params - failure to allocate and the scheduler policy should try a different set of grant parameters.
 enum class alloc_status { success, skip_slot, skip_ue, invalid_params };
 
+/// \brief Status of a UE DL grant allocation, and action for the scheduler policy to follow afterwards.
+///
+/// The current status are:
+/// - other - failure to allocate grant for reasons other than failure to allocate PDCCH or UCI.
+/// - skip_slot - failure to allocate and the scheduler policy should terminate the current slot processing.
+/// - pdcch_alloc_failed - failure to allocate a PDCCH for the given UE.
+/// - uci_alloc_failed - failure to allocate a UCI for the given UE.
+enum class dl_alloc_failure_cause { other, skip_slot, pdcch_alloc_failed, uci_alloc_failed };
+
 /// \brief This class implements the methods to allocate PDCCH, UCI, PDSCH and PUSCH PDUs in the cell resource grid for
 /// UE grants.
 class ue_cell_grid_allocator
@@ -184,10 +193,10 @@ public:
                          srslog::basic_logger&             logger_);
 
   /// Allocate PDCCH, UCI and PDSCH PDUs for a UE DL grant and return a builder to set the PDSCH parameters.
-  expected<dl_newtx_grant_builder, alloc_status> allocate_dl_grant(const ue_newtx_dl_grant_request& request);
+  expected<dl_newtx_grant_builder, dl_alloc_failure_cause> allocate_dl_grant(const ue_newtx_dl_grant_request& request);
 
   /// Allocates DL grant for a UE HARQ reTx.
-  expected<crb_interval, alloc_status> allocate_dl_grant(const ue_retx_dl_grant_request& request);
+  expected<crb_interval, dl_alloc_failure_cause> allocate_dl_grant(const ue_retx_dl_grant_request& request);
 
   /// Allocate PDCCH, UCI and PUSCH PDUs for a UE UL grant and return a builder to set the PUSCH parameters.
   expected<ul_newtx_grant_builder, alloc_status> allocate_ul_grant(const ue_newtx_ul_grant_request& request);
@@ -202,10 +211,10 @@ public:
 
 private:
   // Setup DL grant builder.
-  expected<dl_grant_info, alloc_status> setup_dl_grant_builder(const slice_ue&                       user,
-                                                               const sched_helper::dl_sched_context& params,
-                                                               std::optional<dl_harq_process_handle> h_dl,
-                                                               unsigned                              pending_bytes);
+  expected<dl_grant_info, dl_alloc_failure_cause> setup_dl_grant_builder(const slice_ue&                       user,
+                                                                         const sched_helper::dl_sched_context& params,
+                                                                         std::optional<dl_harq_process_handle> h_dl,
+                                                                         unsigned pending_bytes);
 
   // Setup UL grant builder.
   expected<ul_grant_info, alloc_status> setup_ul_grant_builder(const slice_ue&                       user,
@@ -228,7 +237,7 @@ private:
 
   expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(const ue_cell& ue_cc, const search_space_info& ss_info);
 
-  expected<uci_allocation, alloc_status>
+  std::optional<uci_allocation>
   alloc_uci(const ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pdsch_td_res_index);
 
   // Save the PUCCH power control results for the given slot.

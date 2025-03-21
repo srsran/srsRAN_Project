@@ -205,7 +205,7 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(dl_ran_slice_candida
 
     // Perform DL grant allocation, including PDCCH, PDSCH and UCI.
     auto result = ue_alloc.allocate_dl_grant(ue_retx_dl_grant_request{u, pdsch_slot, h, used_dl_crbs});
-    if (not result.has_value() and result.error() == alloc_status::skip_slot) {
+    if (not result.has_value() and result.error() == dl_alloc_failure_cause::other) {
       // Received signal to stop allocations in the slot.
       break;
     }
@@ -361,8 +361,17 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
   }
 
   // Stage 1: Pre-select UEs with the highest priority and reserve control-plane space for their DL grants.
-  unsigned rb_count = 0;
+  unsigned rb_count                   = 0;
+  bool     pucch_grant_limit_exceeded = false;
   for (const auto& ue_candidate : newtx_candidates) {
+    if (pucch_grant_limit_exceeded) {
+      // Only select UE if it has a UCI already pending in a future slot.
+      if (not ue_candidate.ue_cc->harqs.last_ack_slot().valid() or
+          ue_candidate.ue_cc->harqs.last_ack_slot() < pdsch_slot) {
+        continue;
+      }
+    }
+
     // Create DL grant builder.
     auto result =
         ue_alloc.allocate_dl_grant(ue_newtx_dl_grant_request{*ue_candidate.ue, pdsch_slot, ue_candidate.pending_bytes});
@@ -380,8 +389,12 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
         // Maximum number of allocations reached. Move to stage 2.
         break;
       }
-    } else if (result.error() == alloc_status::skip_slot) {
+    } else if (result.error() == dl_alloc_failure_cause::skip_slot) {
       // Received signal to stop allocations in the slot. Move to stage 2.
+      break;
+    } else if (result.error() == dl_alloc_failure_cause::uci_alloc_failed) {
+      // The scheduler likely ran out of PUCCH resources. Prioritize UEs which have a UCI already pending.
+      pucch_grant_limit_exceeded = true;
       break;
     }
 

@@ -105,7 +105,7 @@ expected<pdcch_dl_information*, alloc_status> ue_cell_grid_allocator::alloc_dl_p
   return pdcch;
 }
 
-expected<uci_allocation, alloc_status>
+std::optional<uci_allocation>
 ue_cell_grid_allocator::alloc_uci(const ue_cell& ue_cc, const search_space_info& ss_info, uint8_t pdsch_td_res_index)
 {
   const pdsch_time_domain_resource_allocation& pdsch_td_cfg = ss_info.pdsch_time_domain_list[pdsch_td_res_index];
@@ -118,13 +118,11 @@ ue_cell_grid_allocator::alloc_uci(const ue_cell& ue_cc, const search_space_info&
     logger.debug("ue={} rnti={}: Failed to allocate PDSCH. Cause: UCI allocation failed.",
                  fmt::underlying(ue_cc.ue_index),
                  ue_cc.rnti());
-    return make_unexpected(alloc_status::skip_ue);
   }
-
-  return uci.value();
+  return uci;
 }
 
-expected<ue_cell_grid_allocator::dl_newtx_grant_builder, alloc_status>
+expected<ue_cell_grid_allocator::dl_newtx_grant_builder, dl_alloc_failure_cause>
 ue_cell_grid_allocator::allocate_dl_grant(const ue_newtx_dl_grant_request& request)
 {
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
@@ -132,7 +130,7 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_newtx_dl_grant_request& reque
       request.user, cell_alloc[0].slot, request.pdsch_slot, request.pending_bytes);
   if (not sched_ctxt.has_value()) {
     // No valid parameters were found for this UE.
-    return make_unexpected(alloc_status::skip_ue);
+    return make_unexpected(dl_alloc_failure_cause::other);
   }
 
   // Setup a DL grant.
@@ -146,7 +144,7 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_newtx_dl_grant_request& reque
   return dl_newtx_grant_builder{*this, (unsigned)dl_grants.size() - 1};
 }
 
-expected<ue_cell_grid_allocator::dl_grant_info, alloc_status>
+expected<ue_cell_grid_allocator::dl_grant_info, dl_alloc_failure_cause>
 ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                       user,
                                                const sched_helper::dl_sched_context& params,
                                                std::optional<dl_harq_process_handle> h_dl,
@@ -177,7 +175,7 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
   auto pdcch_result = alloc_dl_pdcch(ue_cc, ss_info);
   if (not pdcch_result.has_value()) {
     ++pdcch_alloc.result.failed_attempts.pdcch;
-    return make_unexpected(pdcch_result.error());
+    return make_unexpected(dl_alloc_failure_cause::pdcch_alloc_failed);
   }
   pdcch_dl_information* pdcch = pdcch_result.value();
 
@@ -186,7 +184,7 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
   if (not uci_result.has_value()) {
     ++pdcch_alloc.result.failed_attempts.uci;
     pdcch_sched.cancel_last_pdcch(pdcch_alloc);
-    return make_unexpected(uci_result.error());
+    return make_unexpected(dl_alloc_failure_cause::uci_alloc_failed);
   }
   uci_allocation& uci                     = uci_result.value();
   unsigned        k1                      = uci.k1;
@@ -362,19 +360,20 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info& grant, const crb_in
   u.drx_controller().on_new_pdcch_alloc(pdcch_alloc.slot);
 }
 
-expected<crb_interval, alloc_status> ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& request)
+expected<crb_interval, dl_alloc_failure_cause>
+ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& request)
 {
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
   auto sched_ctxt =
       sched_helper::get_retx_dl_sched_context(request.user, cell_alloc[0].slot, request.pdsch_slot, request.h_dl);
   if (not sched_ctxt) {
-    return make_unexpected(alloc_status::skip_ue);
+    return make_unexpected(dl_alloc_failure_cause::other);
   }
 
   // Select DL CRBs.
   crb_interval crbs = sched_helper::compute_retx_dl_crbs(sched_ctxt.value(), request.used_dl_crbs);
   if (crbs.empty()) {
-    return make_unexpected(alloc_status::skip_ue);
+    return make_unexpected(dl_alloc_failure_cause::pdcch_alloc_failed);
   }
 
   // Allocate PDCCH, PDSCH and UCI PDUs.

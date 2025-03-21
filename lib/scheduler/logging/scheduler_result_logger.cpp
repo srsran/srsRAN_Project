@@ -37,7 +37,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
       continue;
     }
     fmt::format_to(std::back_inserter(fmtbuf),
-                   "\n- DL PDCCH: rnti={} type={} cs_id={} ss_id={} format={} cce={} al={} ",
+                   "\n- DL PDCCH: rnti={} type={} cs_id={} ss_id={} format={} cce={} al={}",
                    pdcch.ctx.rnti,
                    dci_dl_rnti_config_rnti_type(pdcch.dci.type),
                    fmt::underlying(pdcch.ctx.coreset_cfg->id),
@@ -87,7 +87,7 @@ void scheduler_result_logger::log_debug(const sched_result& result, std::chrono:
   }
   for (const pdcch_ul_information& pdcch : result.dl.ul_pdcchs) {
     fmt::format_to(std::back_inserter(fmtbuf),
-                   "\n- UL PDCCH: rnti={} type={} cs_id={} ss_id={} format={} cce={} al={} ",
+                   "\n- UL PDCCH: rnti={} type={} cs_id={} ss_id={} format={} cce={} al={}",
                    pdcch.ctx.rnti,
                    dci_ul_rnti_config_rnti_type(pdcch.dci.type),
                    fmt::underlying(pdcch.ctx.coreset_cfg->id),
