@@ -524,6 +524,8 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
       out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.emplace();
     }
     out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().p0_nominal = base_cell.pucch_cfg.p0_nominal;
+    // If not provided, set a default common resource set index depending on the format used for Resource Set 0.
+    // The indices are chosen to maximize the number of symbols and minimize the number of cyclic shifts.
     if (base_cell.pucch_cfg.use_format_0) {
       out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common =
           base_cell.pucch_cfg.pucch_resource_common.value_or(0);

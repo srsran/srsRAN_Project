@@ -144,7 +144,9 @@ validator_result config_validators::validate_pdsch_cfg(const serving_cell_config
   return {};
 }
 
-validator_result config_validators::validate_pucch_cfg(const serving_cell_config& ue_cell_cfg, unsigned nof_dl_antennas)
+validator_result config_validators::validate_pucch_cfg(const serving_cell_config& ue_cell_cfg,
+                                                       const pucch_config_common& pucch_cfg_common,
+                                                       unsigned                   nof_dl_antennas)
 {
   VERIFY(ue_cell_cfg.ul_config.has_value() and ue_cell_cfg.ul_config.value().init_ul_bwp.pucch_cfg.has_value(),
          "Missing configuration for uplinkConfig or pucch-Config in spCellConfig");
@@ -219,6 +221,16 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
                  static_cast<unsigned>(has_format_4) ==
              1,
          "Only one of PUCCH Format 2, Format 3 or Format 4 can be configured in a UE configuration.");
+
+  // [Implementation defined] The scheduler expects the resources from the common resource set and Resource Set 0 to use
+  // the same format. The formats from the common resource sets are expressed in TS 38.213 Table 9.2.1-1.
+  if (has_format_0) {
+    VERIFY(pucch_cfg_common.pucch_resource_common <= 2,
+           "When using PUCCH Format 0, the valid values for pucch_resource_common are {{0, 1, 2}}.");
+  } else {
+    VERIFY(pucch_cfg_common.pucch_resource_common > 2,
+           "When using PUCCH Format 1, the valid values for pucch_resource_common are {{3, ..., 15}}.");
+  }
 
   // Verify that each PUCCH resource has a valid cell resource ID.
   for (auto res_idx : pucch_cfg.pucch_res_list) {
