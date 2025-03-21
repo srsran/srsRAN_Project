@@ -1727,7 +1727,8 @@ static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_con
              "--sched_report_period",
              metrics_params.sched_report_period,
              "DU statistics report period in milliseconds. This metrics sets the console output period.")
-      ->capture_default_str();
+      ->capture_default_str()
+      ->check(CLI::Range(0, 10240));
 }
 
 static void configure_cli11_epoch_time(CLI::App& app, epoch_time_t& epoch_time)

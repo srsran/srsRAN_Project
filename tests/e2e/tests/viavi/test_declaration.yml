@@ -399,10 +399,10 @@ tests:
       log:
         all_level: error
       metrics:
-        cu_up_statistics_report_period: 120000
-        pdcp_report_period: 120000
-        rlc_report_period: 120000
-        sched_report_period: 120000
+        cu_up_statistics_report_period: 10
+        pdcp_report_period: 10000
+        rlc_report_period: 10000
+        sched_report_period: 10000
       cell_cfg:
         pusch:
           max_puschs_per_slot: 2
