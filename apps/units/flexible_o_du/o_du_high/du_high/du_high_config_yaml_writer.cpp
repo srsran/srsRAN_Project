@@ -407,8 +407,10 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
 {
   YAML::Node node;
 
-  node["p0_nominal"]                      = config.p0_nominal;
-  node["pucch_resource_common"]           = config.pucch_resource_common;
+  node["p0_nominal"] = config.p0_nominal;
+  if (config.pucch_resource_common.has_value()) {
+    node["pucch_resource_common"] = config.pucch_resource_common.value();
+  }
   node["use_format_0"]                    = config.use_format_0;
   node["pucch_set1_format"]               = static_cast<unsigned>(config.set1_format);
   node["sr_period_ms"]                    = config.sr_period_msec;

@@ -524,8 +524,13 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
       out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.emplace();
     }
     out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().p0_nominal = base_cell.pucch_cfg.p0_nominal;
-    out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common =
-        base_cell.pucch_cfg.pucch_resource_common;
+    if (base_cell.pucch_cfg.use_format_0) {
+      out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common =
+          base_cell.pucch_cfg.pucch_resource_common.value_or(0);
+    } else {
+      out_cell.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value().pucch_resource_common =
+          base_cell.pucch_cfg.pucch_resource_common.value_or(11);
+    }
 
     // Common PDCCH config.
     search_space_configuration& ss1_cfg = out_cell.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.back();

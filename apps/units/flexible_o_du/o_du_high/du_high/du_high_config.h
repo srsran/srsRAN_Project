@@ -264,7 +264,7 @@ struct du_high_unit_pucch_config {
   /// \c p0-nominal, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
   int p0_nominal = -90;
   /// \c pucch-ResourceCommon, TS 38.331. Values: {0,...,15}. Defines the PUCCH resource set used common configuration.
-  unsigned pucch_resource_common = 11;
+  std::optional<unsigned> pucch_resource_common;
 
   /// \c PUCCH-Config parameters.
   /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
