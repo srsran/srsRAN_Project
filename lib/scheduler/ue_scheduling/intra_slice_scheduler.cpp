@@ -12,9 +12,12 @@
 
 using namespace srsran;
 
-/// \brief Helper function to determine the maximum number of PDSCHs to allocate per slot in a manner that ensures fair
-/// distribution of PDSCHs across slots.
-static unsigned compute_max_pdschs_per_slot(const cell_configuration& cell_cfg)
+/// \brief Helper function to determine the expected number of PDSCHs that can be allocated per slot in a manner that
+/// ensures fair distribution of PDSCHs across slots.
+///
+/// To ensure fair distribution of PDSCHs across slots, we need to consider the number of UL slots available and how
+/// many PUCCHs can be scheduled in each of the UL slots.
+static unsigned compute_expected_pdschs_per_slot(const cell_configuration& cell_cfg)
 {
   unsigned pdschs_per_slot =
       std::min(static_cast<unsigned>(MAX_PDSCH_PDUS_PER_SLOT), cell_cfg.expert_cfg.ue.max_pdschs_per_slot);
@@ -51,7 +54,7 @@ intra_slice_scheduler::intra_slice_scheduler(const scheduler_ue_expert_config& e
   cell_harqs(cell_harqs_),
   uci_alloc(uci_alloc_),
   logger(logger_),
-  max_pdschs_per_slot(compute_max_pdschs_per_slot(cell_alloc.cfg)),
+  expected_pdschs_per_slot(compute_expected_pdschs_per_slot(cell_alloc.cfg)),
   ue_alloc(expert_cfg, ues, pdcch_alloc, uci_alloc, cell_alloc_, logger_)
 {
   newtx_candidates.reserve(MAX_NOF_DU_UES);
@@ -351,8 +354,8 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
   }
 
   // Recompute max number of UE grants that can be scheduled in this slot and the number of RBs per grant.
-  auto [rbs_to_alloc, max_rbs_per_grant] =
-      get_max_grants_and_rb_grant_size(newtx_candidates, cell_alloc, slice, used_dl_crbs, max_ue_grants_to_alloc);
+  auto [rbs_to_alloc, max_rbs_per_grant] = get_max_grants_and_rb_grant_size(
+      newtx_candidates, cell_alloc, slice, used_dl_crbs, std::min(max_ue_grants_to_alloc, expected_pdschs_per_slot));
   if (max_rbs_per_grant == 0) {
     return 0;
   }
@@ -650,9 +653,11 @@ unsigned intra_slice_scheduler::max_pdschs_to_alloc(const dl_ran_slice_candidate
   }
 
   // Determine how many PDSCHs can be allocated in this slot.
+  const int max_pdschs =
+      std::min(static_cast<int>(MAX_PDSCH_PDUS_PER_SLOT), static_cast<int>(expert_cfg.max_pdschs_per_slot));
   int allocated_pdschs = pdsch_res.dl.ue_grants.size() + pdsch_res.dl.bc.sibs.size() + pdsch_res.dl.rar_grants.size() +
                          pdsch_res.dl.paging_grants.size();
-  pdschs_to_alloc = std::min(pdschs_to_alloc, static_cast<int>(max_pdschs_per_slot) - allocated_pdschs);
+  pdschs_to_alloc = std::min(pdschs_to_alloc, max_pdschs - allocated_pdschs);
   if (pdschs_to_alloc <= 0) {
     return 0;
   }

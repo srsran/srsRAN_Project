@@ -84,7 +84,7 @@ private:
   srslog::basic_logger&             logger;
 
   // Derived parameters.
-  const unsigned max_pdschs_per_slot;
+  const unsigned expected_pdschs_per_slot;
 
   /// Handler of grid allocations.
   ue_cell_grid_allocator ue_alloc;
