@@ -166,8 +166,8 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
 
   auto cp_repo       = std::make_shared<uplink_cplane_context_repository>(repository_size);
   auto prach_cp_repo = std::make_shared<uplink_cplane_context_repository>(repository_size);
-  auto prach_repo    = std::make_shared<prach_context_repository>(repository_size);
-  auto slot_repo     = std::make_shared<uplink_context_repository>(repository_size);
+  auto ul_prach_repo = std::make_shared<prach_context_repository>(repository_size);
+  auto ul_data_repo  = std::make_shared<uplink_context_repository>(repository_size);
 
   // Build the ethernet txrx.
   auto eth_txrx = create_txrx(sector_cfg,
@@ -183,8 +183,8 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                   *sector_deps.uplink_executor,
                                   std::move(eth_txrx.second),
                                   sector_deps.notifier,
-                                  prach_repo,
-                                  slot_repo,
+                                  ul_prach_repo,
+                                  ul_data_repo,
                                   cp_repo,
                                   prach_cp_repo);
 
@@ -198,8 +198,8 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                         *sector_deps.downlink_executor,
                                         *sector_deps.err_notifier,
                                         std::move(eth_txrx.first),
-                                        prach_repo,
-                                        slot_repo,
+                                        ul_prach_repo,
+                                        ul_data_repo,
                                         cp_repo,
                                         prach_cp_repo);
 
@@ -208,6 +208,6 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                                                 std::move(transmitter),
                                                                 std::move(cp_repo),
                                                                 std::move(prach_cp_repo),
-                                                                std::move(prach_repo),
-                                                                std::move(slot_repo)});
+                                                                std::move(ul_prach_repo),
+                                                                std::move(ul_data_repo)});
 }

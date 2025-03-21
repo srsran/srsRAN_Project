@@ -34,8 +34,8 @@ struct sector_impl_dependencies {
   std::unique_ptr<transmitter>                      ofh_transmitter;
   std::shared_ptr<uplink_cplane_context_repository> cp_repo;
   std::shared_ptr<uplink_cplane_context_repository> cp_prach_repo;
-  std::shared_ptr<prach_context_repository>         prach_repo;
-  std::shared_ptr<uplink_context_repository>        slot_repo;
+  std::shared_ptr<prach_context_repository>         ul_prach_repo;
+  std::shared_ptr<uplink_context_repository>        ul_data_repo;
 };
 
 /// Open Fronthaul sector implementation.
@@ -45,8 +45,8 @@ public:
   sector_impl(const sector_impl_config& config, sector_impl_dependencies&& dependencies) :
     cp_repo(std::move(dependencies.cp_repo)),
     cp_prach_repo(std::move(dependencies.cp_prach_repo)),
-    prach_repo(std::move(dependencies.prach_repo)),
-    slot_repo(std::move(dependencies.slot_repo)),
+    ul_prach_repo(std::move(dependencies.ul_prach_repo)),
+    ul_data_repo(std::move(dependencies.ul_data_repo)),
     ofh_receiver(std::move(dependencies.ofh_receiver)),
     ofh_transmitter(std::move(dependencies.ofh_transmitter)),
     ofh_sector_controller(*ofh_receiver),
@@ -56,8 +56,8 @@ public:
     srsran_assert(ofh_transmitter, "Invalid Open Fronthaul transmitter");
     srsran_assert(cp_repo, "Invalid Control-Plane uplink context repository");
     srsran_assert(cp_prach_repo, "Invalid Control-Plane PRACH context repository");
-    srsran_assert(prach_repo, "Invalid PRACH context repository");
-    srsran_assert(slot_repo, "Invalid UL slot context repository");
+    srsran_assert(ul_prach_repo, "Invalid PRACH context repository");
+    srsran_assert(ul_data_repo, "Invalid UL data context repository");
   }
 
   // See interface for documentation.
@@ -75,8 +75,8 @@ public:
 private:
   std::shared_ptr<uplink_cplane_context_repository> cp_repo;
   std::shared_ptr<uplink_cplane_context_repository> cp_prach_repo;
-  std::shared_ptr<prach_context_repository>         prach_repo;
-  std::shared_ptr<uplink_context_repository>        slot_repo;
+  std::shared_ptr<prach_context_repository>         ul_prach_repo;
+  std::shared_ptr<uplink_context_repository>        ul_data_repo;
   std::unique_ptr<receiver>                         ofh_receiver;
   std::unique_ptr<transmitter>                      ofh_transmitter;
   sector_controller                                 ofh_sector_controller;
