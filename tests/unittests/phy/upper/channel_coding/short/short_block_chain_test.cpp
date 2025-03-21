@@ -82,7 +82,7 @@ TEST_P(ShortBlockChainFixture, MinEncBits)
   for (unsigned message = 0, message_end = 1U << nof_payload_bits; message != message_end; ++message) {
     // Unpack message.
     static_vector<uint8_t, 32> unpacked_message(nof_payload_bits);
-    srsvec::bit_unpack(unpacked_message, nof_payload_bits, nof_payload_bits);
+    srsvec::bit_unpack(unpacked_message, message, nof_payload_bits);
 
     // Encode message.
     static_vector<uint8_t, 32> codeword(min_nof_encoded_bits);
@@ -102,6 +102,36 @@ TEST_P(ShortBlockChainFixture, MinEncBits)
     ASSERT_TRUE(detected);
     ASSERT_EQ(span<const uint8_t>(unpacked_message), span<const uint8_t>(detected_message));
   }
+}
+
+TEST_P(ShortBlockChainFixture, Validator)
+{
+  static constexpr modulation_scheme modulation = modulation_scheme::QPSK;
+
+  // Number of payload bits.
+  unsigned nof_payload_bits = GetParam();
+
+  // Minimum number of encoded bits.
+  unsigned min_nof_encoded_bits = calculate_uci_min_encoded_bits(nof_payload_bits);
+
+  // Ensure the number of bits is more than one.
+  ASSERT_GT(min_nof_encoded_bits, 1);
+
+  // Use less encoded bits.
+  unsigned nof_encoded_bits = min_nof_encoded_bits - 1;
+
+  // Generate soft bits - they are not used.
+  static_vector<log_likelihood_ratio, 32> soft_codeword(nof_encoded_bits);
+
+  // Detect block - with lesser bits than required.
+  static_vector<uint8_t, 32> detected_message(nof_payload_bits);
+  ASSERT_FALSE(detector->detect(detected_message, soft_codeword, modulation));
+
+  // Detect block - No payload.
+  ASSERT_FALSE(detector->detect({}, soft_codeword, modulation));
+
+  // Detect block - No input.
+  ASSERT_FALSE(detector->detect(detected_message, soft_codeword, modulation));
 }
 
 INSTANTIATE_TEST_SUITE_P(ShortBlockDetectorTest, ShortBlockChainFixture, ::testing::Range(1U, 12U));

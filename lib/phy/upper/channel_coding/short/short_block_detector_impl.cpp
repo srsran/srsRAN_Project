@@ -11,14 +11,11 @@
 #include "short_block_detector_impl.h"
 #include "short_block_encoder_impl.h"
 #include "srsran/adt/static_vector.h"
+#include "srsran/ran/uci/uci_info.h"
 #include "srsran/srsvec/bit.h"
 #include "srsran/srsvec/copy.h"
 #include "srsran/srsvec/dot_prod.h"
 #include "srsran/srsvec/fill.h"
-
-#if __AVX2__
-#include "../ldpc/avx2_support.h"
-#endif // __AVX2__
 
 using namespace srsran;
 
@@ -48,23 +45,28 @@ static std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> cre
 const std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> short_block_detector_impl::DETECT_TABLE =
     create_lut();
 
-static void validate_spans(span<uint8_t> output, span<const log_likelihood_ratio> input, unsigned bits_per_symbol)
+static bool validate_spans(span<uint8_t> output, span<const log_likelihood_ratio> input, unsigned bits_per_symbol)
 {
   unsigned in_size  = input.size();
   unsigned out_size = output.size();
-  srsran_assert((out_size > 0) && (out_size <= MAX_MSG_LENGTH),
-                "The output length should be between 1 and {} bits.",
-                MAX_MSG_LENGTH);
-  if (out_size > 2) {
-    srsran_assert(
-        in_size > out_size,
-        "The number of input soft bits (i.e., {}) must be larger than the number of bits to decode (i.e., {}).",
-        in_size,
-        out_size);
-  } else {
-    // Input length must be no less than the number of bits per symbol of the block modulation.
-    srsran_assert(in_size >= bits_per_symbol, "Invalid input length.");
+
+  // The output length should be between 1 and 11 bits.
+  if ((out_size == 0) || (out_size > MAX_MSG_LENGTH)) {
+    return false;
   }
+
+  // The input size must be equal to or greater than the minimum number of bits.
+  unsigned min_input_bits = calculate_uci_min_encoded_bits(out_size);
+  if (in_size < min_input_bits) {
+    return false;
+  }
+
+  // For 1 and 2 bits, the number of input bits bust be equal to or greater than the modulation order.
+  if ((out_size <= 2) && (in_size < bits_per_symbol)) {
+    return false;
+  }
+
+  return true;
 }
 
 // ML detection for 2-bit messages.
@@ -169,8 +171,12 @@ bool short_block_detector_impl::detect(span<uint8_t>                    output,
                                        span<const log_likelihood_ratio> input,
                                        modulation_scheme                mod)
 {
+  // If the spans sizes are invalid, the result is invalid.
   unsigned bits_per_symbol = get_bits_per_symbol(mod);
-  validate_spans(output, input, bits_per_symbol);
+  if (!validate_spans(output, input, bits_per_symbol)) {
+    std::fill(output.begin(), output.end(), 1);
+    return false;
+  }
 
   // If all input bits are zero, the result is invalid.
   if (std::all_of(input.begin(), input.end(), [](log_likelihood_ratio bit) { return bit == 0; })) {
