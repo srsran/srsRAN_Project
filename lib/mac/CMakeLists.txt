@@ -15,6 +15,8 @@ set(SOURCES mac_factory.cpp
         mac_ctrl/ue_creation_procedure.cpp
         mac_ctrl/ue_reconfiguration_procedure.cpp
         mac_ctrl/ue_delete_procedure.cpp
+        mac_ctrl/mac_cell_controller_impl.cpp
+        mac_ctrl/bcch_dl_sch_message_broker.cpp
         mac_dl/mac_dl_processor.cpp
         mac_dl/mac_cell_processor.cpp
         mac_dl/rar_pdu_assembler.cpp

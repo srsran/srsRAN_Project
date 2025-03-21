@@ -44,7 +44,7 @@ public:
   bool has_cell(du_cell_index_t cell_index) const;
 
   /// Adds new cell configuration to MAC DL.
-  void add_cell(const mac_cell_creation_request& cell_cfg) override;
+  mac_cell_controller& add_cell(const mac_cell_creation_request& cell_cfg) override;
 
   /// Removes cell configuration from MAC DL.
   void remove_cell(du_cell_index_t cell_index) override;

@@ -459,10 +459,10 @@ void mac_test_mode_adapter::connect(std::unique_ptr<mac_interface> mac_ptr)
   mac_adapted = std::move(mac_ptr);
 }
 
-void mac_test_mode_adapter::add_cell(const mac_cell_creation_request& cell_cfg)
+mac_cell_controller& mac_test_mode_adapter::add_cell(const mac_cell_creation_request& cell_cfg)
 {
   // Create cell in real MAC.
-  mac_adapted->get_cell_manager().add_cell(cell_cfg);
+  mac_cell_controller& cell = mac_adapted->get_cell_manager().add_cell(cell_cfg);
 
   // Create the cell in the MAC test mode.
   auto func_dl_bs_push = [this](rnti_t rnti) {
@@ -485,6 +485,8 @@ void mac_test_mode_adapter::add_cell(const mac_cell_creation_request& cell_cfg)
   cell_info_handler[cell_cfg.cell_index] = std::move(new_cell);
 
   phy_notifier->connect(cell_cfg.cell_index, *cell_info_handler[cell_cfg.cell_index]);
+
+  return cell;
 }
 
 void mac_test_mode_adapter::remove_cell(du_cell_index_t cell_index)

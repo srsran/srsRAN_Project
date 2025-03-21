@@ -271,7 +271,7 @@ public:
   wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
   bool                                                      next_ul_ccch_msg_result = true;
 
-  void                 add_cell(const mac_cell_creation_request& cell_cfg) override {}
+  mac_cell_controller& add_cell(const mac_cell_creation_request& cell_cfg) override { return mac_cell; }
   void                 remove_cell(du_cell_index_t cell_index) override {}
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return mac_cell; }
 

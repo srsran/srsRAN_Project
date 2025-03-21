@@ -70,7 +70,7 @@ public:
   virtual ~mac_cell_manager() = default;
 
   /// Add new cell configuration.
-  virtual void add_cell(const mac_cell_creation_request& cell_cfg) = 0;
+  virtual mac_cell_controller& add_cell(const mac_cell_creation_request& cell_cfg) = 0;
 
   /// Remove an existing cell configuration.
   virtual void remove_cell(du_cell_index_t cell_index) = 0;

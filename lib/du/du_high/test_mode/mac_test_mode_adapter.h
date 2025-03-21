@@ -132,7 +132,7 @@ public:
   void connect(std::unique_ptr<mac_interface> mac_ptr);
 
   // mac_cell_manager
-  void                 add_cell(const mac_cell_creation_request& cell_cfg) override;
+  mac_cell_controller& add_cell(const mac_cell_creation_request& cell_cfg) override;
   void                 remove_cell(du_cell_index_t cell_index) override;
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override;
 

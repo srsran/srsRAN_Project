@@ -84,7 +84,7 @@ public:
   async_task<bool>
   remove_bearers(du_ue_index_t ue_index, du_cell_index_t pcell_index, span<const lcid_t> lcids_to_rem) override;
 
-  void                 add_cell(const mac_cell_creation_request& cell_cfg) override {}
+  mac_cell_controller& add_cell(const mac_cell_creation_request& cell_cfg) override { return cell_ctrl; }
   void                 remove_cell(du_cell_index_t cell_index) override {}
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return cell_ctrl; }
 };
