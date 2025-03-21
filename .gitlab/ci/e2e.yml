@@ -428,6 +428,20 @@ test mode ru acc100:
     MARKERS: "test_mode_acc100"
     KEYWORDS: ""
 
+
+test mode ue many ues:
+  stage: test mode ru
+  extends: .e2e-run
+  variables:
+    TESTBED: "test_mode"
+    MARKERS: "test_mode_many_ues"
+    KEYWORDS: "test_mode_many_ues"
+    E2E_LOG_LEVEL: "warning"
+  needs:
+    - job: "basic relwithdeb"
+      artifacts: true
+    - *retina-needs
+
 ################################################################################
 # RF
 ################################################################################
