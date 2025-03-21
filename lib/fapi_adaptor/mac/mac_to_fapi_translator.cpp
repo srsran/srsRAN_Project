@@ -19,6 +19,7 @@
 #include "srsran/fapi_adaptor/mac/messages/pusch.h"
 #include "srsran/fapi_adaptor/mac/messages/srs.h"
 #include "srsran/fapi_adaptor/mac/messages/ssb.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/ran/bwp/bwp_configuration.h"
 #include "srsran/scheduler/result/sched_result.h"
 
@@ -50,7 +51,7 @@ struct pdcch_group {
 class mac_cell_slot_handler_dummy : public mac_cell_slot_handler
 {
 public:
-  void handle_slot_indication(slot_point sl_tx) override
+  void handle_slot_indication(const mac_cell_timing_context& context) override
   {
     report_error("Dummy MAC cell slot handler cannot handle slot indication");
   }

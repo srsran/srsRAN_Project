@@ -18,6 +18,7 @@
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 
@@ -95,7 +96,7 @@ class mac_cell_slot_handler_spy : public mac_cell_slot_handler
   bool        has_been_notified = false;
 
 public:
-  void handle_slot_indication(slot_point sl_tx) override {}
+  void handle_slot_indication(const mac_cell_timing_context& context) override {}
   void handle_error_indication(slot_point sl_tx, error_event event) override
   {
     error             = event;

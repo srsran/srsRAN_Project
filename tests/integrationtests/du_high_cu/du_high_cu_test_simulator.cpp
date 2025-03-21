@@ -17,6 +17,7 @@
 #include "srsran/cu_cp/cu_cp_factory.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_high/du_high_factory.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -159,7 +160,8 @@ void du_high_cu_test_simulator::run_slot()
     srs_du::du_high& du_hi = *dus[i]->du_high_inst;
 
     // Signal slot indication to l2.
-    du_hi.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(dus[i]->next_slot);
+    du_hi.get_slot_handler(to_du_cell_index(0))
+        .handle_slot_indication({dus[i]->next_slot, std::chrono::system_clock::now()});
 
     // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (in this case, the test
     // main thread).

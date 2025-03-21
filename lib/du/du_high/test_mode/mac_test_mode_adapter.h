@@ -77,7 +77,7 @@ public:
 
   void on_cell_results_completion(slot_point slot) override { result_notifier.on_cell_results_completion(slot); }
 
-  void handle_slot_indication(slot_point sl_tx) override;
+  void handle_slot_indication(const mac_cell_timing_context& context) override;
   void handle_error_indication(slot_point sl_tx, error_event event) override;
 
   void handle_crc(const mac_crc_indication_message& msg) override;

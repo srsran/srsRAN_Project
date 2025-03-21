@@ -15,6 +15,7 @@
 #include "test_mode/f1ap_test_mode_adapter.h"
 #include "srsran/du/du_high/du_manager/du_manager_factory.h"
 #include "srsran/f1ap/du/f1ap_du_factory.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/mac/mac_metrics_notifier.h"
 #include "srsran/support/executors/task_redispatcher.h"
 #include "srsran/support/timers.h"
@@ -60,18 +61,18 @@ public:
     logger(srslog::fetch_basic_logger("MAC"))
   {
   }
-  void handle_slot_indication(slot_point sl_tx) override
+  void handle_slot_indication(const mac_cell_timing_context& context) override
   {
     // Step timers by one millisecond.
-    if (sl_tx.to_uint() % get_nof_slots_per_subframe(to_subcarrier_spacing(sl_tx.numerology())) == 0) {
+    if (context.sl_tx.to_uint() % get_nof_slots_per_subframe(to_subcarrier_spacing(context.sl_tx.numerology())) == 0) {
       // The timer tick is handled in a separate execution context.
       if (not tick_exec.defer()) {
-        logger.info("Discarding timer tick={} due to full queue. Retrying later...", sl_tx);
+        logger.info("Discarding timer tick={} due to full queue. Retrying later...", context.sl_tx);
       }
     }
 
     // Handle slot indication in MAC & Scheduler.
-    mac.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(sl_tx);
+    mac.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(context);
   }
 
   void handle_error_indication(slot_point sl_tx, error_event event) override

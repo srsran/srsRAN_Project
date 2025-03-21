@@ -49,7 +49,7 @@ public:
 
   async_task<mac_cell_reconfig_response> reconfigure(const mac_cell_reconfig_request& request) override;
 
-  void handle_slot_indication(slot_point sl_tx) override;
+  void handle_slot_indication(const mac_cell_timing_context& context) override;
   void handle_error_indication(slot_point sl_tx, error_event event) override;
 
   /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.

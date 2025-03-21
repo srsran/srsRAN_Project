@@ -10,6 +10,7 @@
 
 #include "lib/du/du_high/test_mode/mac_test_mode_adapter.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
@@ -75,12 +76,12 @@ public:
     // TODO: Implement this.
   }
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
-  void handle_slot_indication(slot_point sl_tx) override
+  void handle_slot_indication(const mac_cell_timing_context& context) override
   {
     if (events.next_ul_sched_res.has_value()) {
       result_notifier.get_cell(to_du_cell_index(0)).on_new_uplink_scheduler_results(events.next_ul_sched_res.value());
     }
-    result_notifier.get_cell(to_du_cell_index(0)).on_cell_results_completion(sl_tx);
+    result_notifier.get_cell(to_du_cell_index(0)).on_cell_results_completion(context.sl_tx);
   }
   void                               handle_error_indication(slot_point sl_tx, error_event event) override {}
   mac_cell_controller&               add_cell(const mac_cell_creation_request& cell_cfg) override { return *this; }
@@ -171,7 +172,7 @@ protected:
 
   void run_slot()
   {
-    adapter.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_slot);
+    adapter.get_slot_handler(to_du_cell_index(0)).handle_slot_indication({next_slot, std::chrono::system_clock::now()});
 
     next_slot++;
 

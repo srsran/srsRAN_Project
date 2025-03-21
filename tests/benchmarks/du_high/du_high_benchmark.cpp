@@ -43,6 +43,7 @@
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/f1u/du/f1u_gateway.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/test_utils.h"
@@ -641,7 +642,7 @@ public:
     sim_phy.new_slot();
 
     // Push slot indication to DU-high.
-    du_hi->get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_sl_tx);
+    du_hi->get_slot_handler(to_du_cell_index(0)).handle_slot_indication({next_sl_tx, std::chrono::system_clock::now()});
 
     // Wait DU-high to finish handling the slot.
     sim_phy.wait_slot_complete();

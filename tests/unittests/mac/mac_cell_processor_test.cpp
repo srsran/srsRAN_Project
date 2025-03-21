@@ -11,6 +11,7 @@
 #include "lib/mac/mac_dl/mac_cell_processor.h"
 #include "lib/mac/mac_dl/mac_dl_metric_handler.h"
 #include "mac_test_helpers.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
@@ -109,8 +110,9 @@ TEST_P(mac_cell_processor_tester, when_cell_is_active_then_slot_indication_trigg
   ASSERT_TRUE(sched_adapter.active);
 
   slot_point sl_tx{0, 0};
+  auto       slot_tp = std::chrono::system_clock::now();
   ASSERT_FALSE(phy_notifier.is_complete);
-  mac_cell.handle_slot_indication(sl_tx);
+  mac_cell.handle_slot_indication({sl_tx, slot_tp});
 
   ASSERT_TRUE(phy_notifier.last_sched_res.has_value());
   ASSERT_EQ(phy_notifier.last_dl_data_res.has_value(), is_pdsch_scheduled());
@@ -125,6 +127,8 @@ TEST_P(mac_cell_processor_tester, when_cell_is_active_then_slot_indication_trigg
 TEST_P(mac_cell_processor_tester, when_cell_is_deactivated_then_scheduler_gets_notified)
 {
   slot_point sl_tx{0, 0};
+  auto       slot_tp = std::chrono::system_clock::now();
+
   ASSERT_FALSE(phy_notifier.is_complete);
 
   async_task<void>         t = mac_cell.stop();
@@ -140,7 +144,7 @@ TEST_P(mac_cell_processor_tester, when_cell_is_deactivated_then_scheduler_gets_n
   phy_notifier.last_sched_res.reset();
   phy_notifier.last_ul_res.reset();
   phy_notifier.last_dl_data_res.reset();
-  mac_cell.handle_slot_indication(sl_tx);
+  mac_cell.handle_slot_indication({sl_tx, slot_tp});
   ASSERT_TRUE(phy_notifier.is_complete);
 }
 

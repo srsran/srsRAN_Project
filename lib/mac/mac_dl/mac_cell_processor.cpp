@@ -12,6 +12,7 @@
 #include "mac_dl_metric_handler.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
@@ -150,15 +151,15 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
   });
 }
 
-void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
+void mac_cell_processor::handle_slot_indication(const mac_cell_timing_context& context)
 {
   trace_point slot_ind_enqueue_tp = metric_clock::now();
   // Change execution context to slot indication executor.
-  if (not slot_exec.execute([this, sl_tx, slot_ind_enqueue_tp]() {
+  if (not slot_exec.execute([this, context, slot_ind_enqueue_tp]() {
         l2_tracer << trace_event{"mac_slot_ind_enqueue", slot_ind_enqueue_tp};
-        handle_slot_indication_impl(sl_tx, slot_ind_enqueue_tp);
+        handle_slot_indication_impl(context.sl_tx, slot_ind_enqueue_tp);
       })) {
-    logger.warning("Skipped slot indication={}. Cause: DL task queue is full.", sl_tx);
+    logger.warning("Skipped slot indication={}. Cause: DL task queue is full.", context.sl_tx);
   }
 }
 

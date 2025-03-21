@@ -12,6 +12,7 @@
 #include "../adapters/du_high_adapter_factories.h"
 #include "mac_test_mode_helpers.h"
 #include "srsran/adt/ring_buffer.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/mac/mac_factory.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/resource_grid_util.h"
@@ -92,11 +93,11 @@ mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(
 {
 }
 
-void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
+void mac_test_mode_cell_adapter::handle_slot_indication(const mac_cell_timing_context& context)
 {
   if (test_ue_cfg.auto_ack_indication_delay.has_value()) {
     // auto-generation of CRC/UCI indication is enabled.
-    slot_point                   sl_rx = sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
+    slot_point                   sl_rx = context.sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
     const slot_decision_history& entry = sched_decision_history[get_ring_idx(sl_rx)];
     std::unique_lock<std::mutex> lock(entry.mutex);
     if (entry.slot == sl_rx) {
@@ -152,7 +153,7 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
     }
   }
 
-  slot_handler.handle_slot_indication(sl_tx);
+  slot_handler.handle_slot_indication(context);
 }
 
 void mac_test_mode_cell_adapter::handle_error_indication(slot_point sl_tx, error_event event)
