@@ -457,6 +457,17 @@ static bool validate_pucch_cell_unit_config(const du_high_unit_base_cell_config&
     return false;
   }
 
+  // [Implementation defined] The scheduler expects the resources from the common resource set and Resource Set 0 to use
+  // the same format. The formats from the common resource sets are expressed in TS 38.213 Table 9.2.1-1.
+  if (pucch_cfg.use_format_0 and pucch_cfg.pucch_resource_common > 2) {
+    fmt::print("When using PUCCH Format 0, the valid values for pucch_resource_common are {{0, 1, 2}}.\n");
+    return false;
+  }
+  if (not pucch_cfg.use_format_0 and pucch_cfg.pucch_resource_common <= 2) {
+    fmt::print("When using PUCCH Format 1, the valid values for pucch_resource_common are {{3, ..., 15}}.\n");
+    return false;
+  }
+
   // The number of symbols reserved for PUCCH depends on whether the GNB uses (periodic) Sounding Reference Signals
   // (SRS).
   const unsigned max_nof_srs_symbols =
