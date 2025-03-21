@@ -38,17 +38,19 @@ public:
 
 } // namespace
 
-class data_flow_uplane_uplink_prach_impl_fixture : public ::testing::TestWithParam<std::tuple<prach_format_type, bool>>
+class data_flow_uplane_uplink_prach_impl_fixture
+  : public ::testing::TestWithParam<std::tuple<prach_format_type, bool, bool>>
 {
 protected:
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc = {5, 1, 2, 3};
-  std::tuple<prach_format_type, bool>                   params  = GetParam();
+  std::tuple<prach_format_type, bool, bool>             params  = GetParam();
   slot_point                                            slot;
-  unsigned                                              symbol            = 0;
-  unsigned                                              sector            = 0;
-  unsigned                                              eaxc              = 5;
-  bool                                                  is_cplane_enabled = std::get<1>(params);
-  prach_format_type                                     format            = std::get<0>(params);
+  unsigned                                              symbol                    = 0;
+  unsigned                                              sector                    = 0;
+  unsigned                                              eaxc                      = 5;
+  bool                                                  is_cplane_enabled         = std::get<1>(params);
+  bool                                                  ignore_prach_start_symbol = std::get<2>(params);
+  prach_format_type                                     format                    = std::get<0>(params);
 
   prach_buffer_context                              buffer_context;
   prach_buffer_dummy                                buffer;
@@ -102,8 +104,9 @@ public:
   data_flow_uplane_uplink_prach_impl_config get_config()
   {
     data_flow_uplane_uplink_prach_impl_config config;
-    config.prach_eaxcs             = ul_eaxc;
-    config.is_prach_cplane_enabled = is_cplane_enabled;
+    config.prach_eaxcs               = ul_eaxc;
+    config.is_prach_cplane_enabled   = is_cplane_enabled;
+    config.ignore_prach_start_symbol = ignore_prach_start_symbol;
 
     return config;
   }
@@ -151,6 +154,7 @@ public:
 INSTANTIATE_TEST_SUITE_P(prach_format,
                          data_flow_uplane_uplink_prach_impl_fixture,
                          ::testing::Combine(::testing::Values(prach_format_type::zero, prach_format_type::B4),
+                                            ::testing::Values(true, false),
                                             ::testing::Values(true, false)));
 
 TEST_P(data_flow_uplane_uplink_prach_impl_fixture, valid_message_containing_all_symbols_must_be_notified)
@@ -178,7 +182,7 @@ TEST_P(data_flow_uplane_uplink_prach_impl_fixture, invalid_filter_index_does_not
   ASSERT_FALSE(notifier->has_new_prach_function_been_called());
 }
 
-TEST_P(data_flow_uplane_uplink_prach_impl_fixture, prbs_outside_prahc_range_does_not_notify)
+TEST_P(data_flow_uplane_uplink_prach_impl_fixture, prbs_outside_prach_range_does_not_notify)
 {
   for (unsigned i = 0, e = nof_symbols; i != e; ++i) {
     uplane_message_decoder_results deco_results = build_valid_decoder_results();

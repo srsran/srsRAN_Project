@@ -51,7 +51,7 @@ struct data_flow_uplane_uplink_prach_impl_dependencies {
 class data_flow_uplane_uplink_prach_impl : public data_flow_uplane_uplink_prach
 {
 public:
-  data_flow_uplane_uplink_prach_impl(const data_flow_uplane_uplink_prach_impl_config&  config_,
+  data_flow_uplane_uplink_prach_impl(const data_flow_uplane_uplink_prach_impl_config&  config,
                                      data_flow_uplane_uplink_prach_impl_dependencies&& dependencies);
 
   // See interface for documentation.

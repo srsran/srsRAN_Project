@@ -16,16 +16,16 @@ using namespace srsran;
 using namespace ofh;
 
 data_flow_uplane_uplink_prach_impl::data_flow_uplane_uplink_prach_impl(
-    const data_flow_uplane_uplink_prach_impl_config&  config_,
+    const data_flow_uplane_uplink_prach_impl_config&  config,
     data_flow_uplane_uplink_prach_impl_dependencies&& dependencies) :
   logger(*dependencies.logger),
-  is_prach_cplane_enabled(config_.is_prach_cplane_enabled),
+  is_prach_cplane_enabled(config.is_prach_cplane_enabled),
   prach_cplane_context_repo(std::move(dependencies.prach_cplane_context_repo)),
   uplane_decoder(std::move(dependencies.uplane_decoder)),
-  prach_iq_writter(config_.prach_eaxcs, config_.sector, *dependencies.logger, dependencies.prach_context_repo),
+  prach_iq_writter(config.prach_eaxcs, config.sector, *dependencies.logger, dependencies.prach_context_repo),
   notification_sender(*dependencies.logger, dependencies.prach_context_repo, dependencies.notifier),
-  sector_id(config_.sector),
-  ignore_prach_start_symbol(config_.ignore_prach_start_symbol)
+  sector_id(config.sector),
+  ignore_prach_start_symbol(config.ignore_prach_start_symbol)
 {
   srsran_assert(prach_cplane_context_repo, "Invalid PRACH Control-Plane context repository");
   srsran_assert(uplane_decoder, "Invalid User-Plane decoder");
