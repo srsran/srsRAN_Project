@@ -32,7 +32,7 @@ from .steps.configuration import configure_test_parameters, get_minimum_sample_r
     "use_format_0, pucch_set1_format, ul_noise_spd",
     (
         # PUCCH Format 0 decoder doesn't work with no noise.
-        param(True, 2, -154, id="f0_f2"),
+        param(True, 2, -134, id="f0_f2"),
         param(False, 2, 0, id="f1_f2"),
         param(False, 3, 0, id="f1_f3"),
         param(False, 4, 0, id="f1_f4"),
