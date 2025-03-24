@@ -41,6 +41,10 @@ toggle_stdout_metrics_app_command::toggle_stdout_metrics_app_command(
   description(generate_command_description(metric_subcommand_names))
 {
   srsran_assert(!metric_subcommands.empty(), "Metrics subcommand list empty");
+
+  if (is_auto_start_enabled) {
+    execute_subcommand(0);
+  }
 }
 
 void toggle_stdout_metrics_app_command::execute(span<const std::string> args)
