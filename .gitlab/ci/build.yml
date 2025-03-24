@@ -1119,6 +1119,12 @@ debian 12 amd64 avx512:
   variables:
     ASSERT_LEVEL: PARANOID
     CMAKE_BUILD_TYPE: Debug
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    when: on_failure
+    expire_in: 1 day
 
 sanitizers amd64 native:
   extends: .weekly sanitizers
