@@ -27,10 +27,11 @@ namespace srsran {
 std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 {
   fmt::print(os,
-             "{}_{}Tx_{}Rx_{}_{}",
+             "{}_{}Tx_{}Rx_{}REs_{}beta_{}nvar",
              test_case.context.equalizer_type,
              test_case.context.nof_layers,
              test_case.context.nof_rx_ports,
+             test_case.context.nof_re,
              static_cast<unsigned>(test_case.context.scaling * 1000),
              static_cast<unsigned>(test_case.context.noise_var * 1000));
   return os;
