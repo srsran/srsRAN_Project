@@ -210,7 +210,7 @@ ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)
 
     // Notifies MAC that event is complete.
     // Note: There is no failure path for the deletion of a UE.
-    config_notifier.on_ue_delete_response(ue_index);
+    config_notifier.on_ue_deletion_completed(ue_index);
 
     return ue_config_delete_event{};
   }
@@ -272,7 +272,7 @@ void sched_config_manager::handle_ue_delete_complete(du_ue_index_t ue_index)
   ue_to_cell_group_index[ue_index].store(INVALID_DU_CELL_GROUP_INDEX, std::memory_order_release);
 
   // Notifies MAC that event is complete.
-  config_notifier.on_ue_delete_response(ue_index);
+  config_notifier.on_ue_deletion_completed(ue_index);
 }
 
 void sched_config_manager::flush_ues_to_rem()

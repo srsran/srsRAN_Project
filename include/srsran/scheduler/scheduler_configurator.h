@@ -195,13 +195,14 @@ public:
   /// \brief Handle cell configuration removal.
   virtual void handle_cell_removal_request(du_cell_index_t cell_index) = 0;
 
+  /// \brief Handle RACH indication message.
   virtual void handle_rach_indication(const rach_indication_message& msg) = 0;
 
   /// \brief Activate a configured cell. This method has no effect if the cell is already active.
-  virtual void handle_cell_start_request(du_cell_index_t cell_index) = 0;
+  virtual void handle_cell_activation_request(du_cell_index_t cell_index) = 0;
 
   /// \brief Deactivate a configured cell. This method has no effect if the cell is already deactivated.
-  virtual void handle_cell_stop_request(du_cell_index_t cell_index) = 0;
+  virtual void handle_cell_deactivation_request(du_cell_index_t cell_index) = 0;
 };
 
 class scheduler_ue_configurator
@@ -224,7 +225,7 @@ public:
   virtual void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) = 0;
 
   /// Called by scheduler when UE removal is completed.
-  virtual void on_ue_delete_response(du_ue_index_t ue_index) = 0;
+  virtual void on_ue_deletion_completed(du_ue_index_t ue_index) = 0;
 };
 
 } // namespace srsran

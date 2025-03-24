@@ -121,7 +121,7 @@ TEST_P(mac_cell_processor_tester, when_cell_is_active_then_slot_indication_trigg
   ASSERT_EQ(phy_notifier.last_sched_res->dl_res->ue_grants.size(), test_params.nof_ue_allocated);
 }
 
-TEST_P(mac_cell_processor_tester, when_cell_is_deactiaved_then_scheduler_gets_notified)
+TEST_P(mac_cell_processor_tester, when_cell_is_deactivated_then_scheduler_gets_notified)
 {
   slot_point sl_tx{0, 0};
   ASSERT_FALSE(phy_notifier.is_complete);

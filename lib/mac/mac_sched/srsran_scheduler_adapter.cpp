@@ -320,7 +320,7 @@ void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete
   }
 }
 
-void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_delete_response(du_ue_index_t ue_index)
+void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_deletion_completed(du_ue_index_t ue_index)
 {
   srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
 

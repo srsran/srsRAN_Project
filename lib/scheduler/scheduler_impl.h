@@ -28,8 +28,8 @@ public:
   void handle_cell_removal_request(du_cell_index_t cell_index) override;
 
   // Cell activity.
-  void handle_cell_start_request(du_cell_index_t cell_index) override;
-  void handle_cell_stop_request(du_cell_index_t cell_index) override;
+  void handle_cell_activation_request(du_cell_index_t cell_index) override;
+  void handle_cell_deactivation_request(du_cell_index_t cell_index) override;
 
   // Sys Info handling.
   void handle_sib1_update_request(const sib1_pdu_update_request& req) override;

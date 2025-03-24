@@ -35,9 +35,9 @@ public:
 
   void remove_cell(du_cell_index_t cell_index) override;
 
-  void start_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_start_request(cell_index); }
+  void start_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_activation_request(cell_index); }
 
-  void stop_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_stop_request(cell_index); }
+  void stop_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_deactivation_request(cell_index); }
 
   async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) override;
 
@@ -117,7 +117,7 @@ private:
   public:
     explicit sched_config_notif_adapter(srsran_scheduler_adapter& parent_) : parent(parent_) {}
     void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) override;
-    void on_ue_delete_response(du_ue_index_t ue_index) override;
+    void on_ue_deletion_completed(du_ue_index_t ue_index) override;
 
   private:
     srsran_scheduler_adapter& parent;

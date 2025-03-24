@@ -91,8 +91,8 @@ public:
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
   void handle_cell_removal_request(du_cell_index_t cell_index) override {}
-  void handle_cell_start_request(du_cell_index_t cell_index) override {}
-  void handle_cell_stop_request(du_cell_index_t cell_index) override {}
+  void handle_cell_activation_request(du_cell_index_t cell_index) override {}
+  void handle_cell_deactivation_request(du_cell_index_t cell_index) override {}
   void handle_rach_indication(const rach_indication_message& msg) override { last_rach_ind = msg; }
   void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override {}
   void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override {}
