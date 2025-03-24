@@ -9,7 +9,9 @@
  */
 
 #include "scheduler_test_message_validators.h"
+#include "../lib/scheduler/support/dmrs_helpers.h"
 #include "srsran/ran/pusch/ulsch_info.h"
+#include "srsran/ran/sch/tbs_calculator.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -88,6 +90,34 @@ static ulsch_configuration get_ulsch_config(const ul_sched_info& grant)
   return ulsch_cfg;
 }
 
+static unsigned is_ulsch_tbs_valid(const ul_sched_info& grant)
+{
+  // As per TS 38.214, Section 5.1.3.2 and 6.1.4.2, and TS 38.212, Section 7.3.1.1 and 7.3.1.2, TB scaling filed is only
+  // used for DCI Format 1-0 (in the DL). Therefore, for the PUSCH this is set to 0.
+  constexpr unsigned tb_scaling_field = 0;
+
+  unsigned nof_rbs = 0;
+  if (grant.pusch_cfg.rbs.is_type1()) {
+    nof_rbs = grant.pusch_cfg.rbs.type1().length();
+  } else {
+    report_fatal_error("Allocation type 0 not supported");
+  }
+
+  const unsigned dmrs_prbs = calculate_nof_dmrs_per_rb(grant.pusch_cfg.dmrs);
+
+  unsigned tbs_bytes =
+      tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = grant.pusch_cfg.symbols.length(),
+                                                            .nof_dmrs_prb     = dmrs_prbs,
+                                                            .nof_oh_prb       = grant.context.nof_oh_prb,
+                                                            .mcs_descr        = grant.pusch_cfg.mcs_descr,
+                                                            .nof_layers       = grant.pusch_cfg.nof_layers,
+                                                            .tb_scaling_field = tb_scaling_field,
+                                                            .n_prb            = nof_rbs}) /
+      8U;
+
+  return grant.pusch_cfg.tb_size_bytes == tbs_bytes;
+}
+
 bool test_helper::is_valid_ul_sched_info(const ul_sched_info& grant)
 {
   TRUE_OR_RETURN(grant.pusch_cfg.nof_layers > 0);
@@ -102,6 +132,9 @@ bool test_helper::is_valid_ul_sched_info(const ul_sched_info& grant)
                  grant.pusch_cfg.rnti,
                  effective_code_rate,
                  max_code_rate);
+
+  // Check TBS
+  TRUE_OR_RETURN(is_ulsch_tbs_valid(grant), "rnti={}: Invalid PUSCH TBS", grant.pusch_cfg.rnti);
 
   // Check CRBs within BWP.
   if (grant.pusch_cfg.rbs.is_type1()) {

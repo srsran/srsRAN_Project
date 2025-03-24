@@ -124,6 +124,8 @@ struct ul_sched_info {
     std::optional<unsigned> msg3_delay;
     /// Offset that the OLLA algorithm applied to derive the UL MCS.
     std::optional<float> olla_offset;
+    /// Number of overhead PRBs.
+    unsigned nof_oh_prb;
   } context;
 };
 

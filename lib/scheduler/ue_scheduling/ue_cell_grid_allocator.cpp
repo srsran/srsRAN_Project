@@ -649,11 +649,12 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const crb_in
   }
 
   // Fill PUSCH PDU.
-  ul_sched_info& msg    = *grant.pusch;
-  msg.context.ue_index  = u.ue_index;
-  msg.context.ss_id     = grant.cfg.ss_id;
-  msg.context.k2        = final_k2;
-  msg.context.nof_retxs = grant.h_ul.nof_retxs();
+  ul_sched_info& msg     = *grant.pusch;
+  msg.context.ue_index   = u.ue_index;
+  msg.context.ss_id      = grant.cfg.ss_id;
+  msg.context.k2         = final_k2;
+  msg.context.nof_retxs  = grant.h_ul.nof_retxs();
+  msg.context.nof_oh_prb = pusch_cfg.nof_oh_prb;
   if (not is_retx and ue_cc.link_adaptation_controller().is_ul_olla_enabled()) {
     msg.context.olla_offset = ue_cc.link_adaptation_controller().ul_snr_offset_db();
   }
