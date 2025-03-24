@@ -55,7 +55,7 @@ public:
   std::optional<ethernet_rx_buffer_impl> reserve()
   {
     if (auto buffer_id = free_list.try_pop(); buffer_id) {
-      return std::optional<ethernet_rx_buffer_impl>(std::in_place, *this, *buffer_id);
+      return std::make_optional<ethernet_rx_buffer_impl>(*this, *buffer_id);
     }
     return std::nullopt;
   }
