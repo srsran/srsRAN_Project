@@ -474,5 +474,10 @@ crb_interval sched_helper::compute_newtx_ul_crbs(const ul_sched_context& decisio
 
 crb_interval sched_helper::compute_retx_ul_crbs(const ul_sched_context& decision_ctxt, const crb_bitmap& used_crbs)
 {
-  return find_available_crbs(decision_ctxt, used_crbs);
+  crb_interval crbs = find_available_crbs(decision_ctxt, used_crbs, decision_ctxt.expected_nof_rbs);
+  if (crbs.length() != decision_ctxt.expected_nof_rbs) {
+    // In case of Retx, the #CRBs need to stay the same.
+    return crb_interval{};
+  }
+  return crbs;
 }
