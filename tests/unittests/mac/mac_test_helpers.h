@@ -98,7 +98,7 @@ public:
   void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override {}
   void handle_ue_removal_request(du_ue_index_t ue_index) override {}
   void handle_ue_config_applied(du_ue_index_t ue_index) override {}
-  void handle_sib1_update_request(const sib1_pdu_update_request& req) override {}
+  void handle_si_update_request(const si_scheduling_update_request& req) override {}
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
   void handle_crc_indication(const ul_crc_indication& crc) override {}
   void handle_uci_indication(const uci_indication& uci) override {}
@@ -138,11 +138,7 @@ public:
   {
   }
 
-  void handle_sib1_update_indication(du_cell_index_t cell_index,
-                                     unsigned        sib_version,
-                                     units::bytes    new_payload_size) override
-  {
-  }
+  void handle_si_change_indication(du_cell_index_t cell_index, const si_change_result& si_updated) override {}
 
   async_task<mac_cell_positioning_measurement_response>
   handle_positioning_measurement_request(du_cell_index_t                                 cell_index,

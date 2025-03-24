@@ -11,10 +11,8 @@
 #pragma once
 
 #include "../mac_config_interfaces.h"
-#include "mac_cell_controller_impl.h"
 #include "mac_config.h"
 #include "mac_scheduler_configurator.h"
-#include "srsran/adt/slotted_vector.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/du_ue_list.h"
@@ -44,7 +42,10 @@ public:
   /// Removes cell configuration from MAC. The cell is also removed from the scheduler.
   void remove_cell(du_cell_index_t cell_index) override;
 
-  mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return *cell_db[cell_index]; }
+  mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override
+  {
+    return dl_unit.get_cell_controller(cell_index);
+  }
 
   /// Creates UE in MAC and scheduler.
   async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& msg) override;
@@ -84,9 +85,6 @@ private:
 
   // UE database
   du_ue_list<mac_ue_context> ue_db;
-
-  // Cell database.
-  slotted_id_vector<du_cell_index_t, std::unique_ptr<mac_cell_controller_impl>> cell_db;
 };
 
 } // namespace srsran

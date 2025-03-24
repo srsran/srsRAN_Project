@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../mac_ctrl/mac_scheduler_configurator.h"
+#include "../mac_dl/cell_sys_info_configurator.h"
 #include "../mac_dl/mac_scheduler_cell_info_handler.h"
 #include "../mac_ul/mac_scheduler_ce_info_handler.h"
 

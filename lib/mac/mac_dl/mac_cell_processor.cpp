@@ -53,7 +53,6 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
            MAX_K0_DELAY,
            get_nof_slots_per_subframe(cell_cfg.scs_common) * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME),
   ssb_helper(cell_cfg_req_),
-  sib_assembler(cell_cfg_req_.bcch_dl_sch_payloads),
   rar_assembler(pdu_pool),
   dlsch_assembler(ue_mng, dl_harq_buffers),
   paging_assembler(pdu_pool),
@@ -61,6 +60,14 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   metrics(cell_metrics),
   pcap(pcap_)
 {
+  // Update broadcast System Information.
+  si_change_request si_req{};
+  si_req.sib1 = cell_cfg.bcch_dl_sch_payloads[0].copy();
+  for (unsigned i = 1; i < cell_cfg.bcch_dl_sch_payloads.size(); i++) {
+    si_req.si_messages_to_addmod.emplace_back(i - 1, cell_cfg.bcch_dl_sch_payloads[i].copy());
+  }
+  si_change_result si_resp = bcch_assembler.handle_si_change_request(si_req);
+  sched.handle_si_change_indication(cell_cfg.cell_index, si_resp);
 }
 
 async_task<void> mac_cell_processor::start()
@@ -128,11 +135,12 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
         // SIB1 has been updated.
 
         // Forward new SIB1 PDU to SIB assembler.
-        units::bytes payload_size{(unsigned)request.new_sib1_buffer.length()};
-        unsigned     version_id = sib_assembler.handle_new_sib1_payload(request.new_sib1_buffer.copy());
+        si_change_request si_req{};
+        si_req.sib1              = request.new_sib1_buffer.copy();
+        si_change_result si_resp = bcch_assembler.handle_si_change_request(si_req);
 
         // Notify scheduler of SIB1 update.
-        sched.handle_sib1_update_indication(cell_cfg.cell_index, version_id, payload_size);
+        sched.handle_si_change_indication(cell_cfg.cell_index, si_resp);
 
         resp.sib1_updated = true;
       }
@@ -417,14 +425,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   // Assemble scheduled BCCH-DL-SCH message containing SIBs' payload.
   for (const sib_information& sib_info : dl_res.bc.sibs) {
     srsran_assert(not data_res.si_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
-    const units::bytes  tbs(sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
-    span<const uint8_t> payload;
-    if (sib_info.si_indicator == sib_information::sib1) {
-      payload = sib_assembler.encode_sib1_pdu(0, tbs);
-    } else {
-      payload = sib_assembler.encode_si_message_pdu(sib_info.si_msg_index.value(), 0, tbs);
-    }
-    data_res.si_pdus.emplace_back(0, shared_transport_block(payload));
+    data_res.si_pdus.emplace_back(0, shared_transport_block(bcch_assembler.encode_si_pdu(sl_tx, sib_info)));
   }
 
   // Assemble scheduled RARs' subheaders and payloads.

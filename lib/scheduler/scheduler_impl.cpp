@@ -70,10 +70,10 @@ void scheduler_impl::handle_cell_deactivation_request(du_cell_index_t cell_index
   cells[cell_index]->stop();
 }
 
-void scheduler_impl::handle_sib1_update_request(const sib1_pdu_update_request& req)
+void scheduler_impl::handle_si_update_request(const si_scheduling_update_request& req)
 {
   srsran_assert(cells.contains(req.cell_index), "cell={} does not exist", fmt::underlying(req.cell_index));
-  cells[req.cell_index]->handle_sib1_update_indication(req);
+  cells[req.cell_index]->handle_si_update_request(req);
 }
 
 void scheduler_impl::handle_ue_creation_request(const sched_ue_creation_request_message& ue_request)

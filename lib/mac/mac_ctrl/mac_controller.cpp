@@ -27,17 +27,20 @@ mac_controller::mac_controller(const mac_control_config&   cfg_,
 
 mac_cell_controller& mac_controller::add_cell(const mac_cell_creation_request& cell_cfg)
 {
-  srsran_assert(not cell_db.contains(cell_cfg.cell_index), "Duplicate cell index detected");
+  // > Fill sched cell configuration message and pass it to the scheduler.
+  sched_cfg.add_cell(cell_cfg);
 
-  cell_db.emplace(cell_cfg.cell_index, std::make_unique<mac_cell_controller_impl>(cell_cfg, sched_cfg, dl_unit));
-  return *cell_db[cell_cfg.cell_index];
+  // > Create MAC Cell DL Handler.
+  return dl_unit.add_cell(cell_cfg);
 }
 
 void mac_controller::remove_cell(du_cell_index_t cell_index)
 {
-  srsran_assert(cell_db.contains(cell_index), "Duplicate cell index removal");
+  // > Remove cell from MAC Cell Handler.
+  dl_unit.remove_cell(cell_index);
 
-  cell_db.erase(cell_index);
+  // > Remove cell from scheduler.
+  sched_cfg.remove_cell(cell_index);
 }
 
 async_task<mac_ue_create_response> mac_controller::handle_ue_create_request(const mac_ue_create_request& msg)

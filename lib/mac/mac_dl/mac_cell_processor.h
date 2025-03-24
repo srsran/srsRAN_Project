@@ -107,7 +107,7 @@ private:
   /// parameters are passed to the scheduler and also also to the PHY to generate the SSB PDU and PBCH payload.
   ssb_assembler ssb_helper;
 
-  sib_pdu_assembler    sib_assembler;
+  sib_pdu_assembler    bcch_assembler;
   rar_pdu_assembler    rar_assembler;
   dl_sch_pdu_assembler dlsch_assembler;
   paging_pdu_assembler paging_assembler;

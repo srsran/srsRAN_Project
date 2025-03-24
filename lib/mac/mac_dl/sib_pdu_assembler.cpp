@@ -9,12 +9,11 @@
  */
 
 #include "sib_pdu_assembler.h"
+#include "srsran/adt/lockfree_triple_buffer.h"
 #include "srsran/srslog/srslog.h"
+#include "srsran/support/units.h"
 
 using namespace srsran;
-
-// Number of padding bytes to pre-reserve. This value is implementation-defined.
-static constexpr unsigned MAX_PADDING_BYTES_LEN = 64;
 
 // Max SI Message PDU size. This value is implementation-defined.
 static constexpr unsigned MAX_BCCH_DL_SCH_PDU_SIZE = 2048;
@@ -22,103 +21,158 @@ static constexpr unsigned MAX_BCCH_DL_SCH_PDU_SIZE = 2048;
 // Payload of zeros sent to when an error occurs.
 static const std::vector<uint8_t> zeros_payload(MAX_BCCH_DL_SCH_PDU_SIZE, 0);
 
-sib_pdu_assembler::sib_pdu_assembler(const std::vector<byte_buffer>& bcch_dl_sch_payloads) :
-  logger(srslog::fetch_basic_logger("MAC"))
-{
-  bcch_payloads.resize(bcch_dl_sch_payloads.size());
-  for (unsigned i = 0, e = bcch_payloads.size(); i != e; ++i) {
-    bcch_payloads[i].info.version      = 0;
-    bcch_payloads[i].info.payload_size = units::bytes(bcch_dl_sch_payloads[i].length());
+namespace {
 
+struct bcch_message_buffer {
+  unsigned             version = 0;
+  units::bytes         length{0};
+  std::vector<uint8_t> payload;
+
+  bcch_message_buffer() = default;
+
+  void set(si_version_type version_, const byte_buffer& pdu)
+  {
+    srsran_assert(pdu.length() <= MAX_BCCH_DL_SCH_PDU_SIZE, "Invalid SI PDU length");
     // Note: Resizing the bcch_payload after this point onwards is forbidden to avoid vector memory relocations and
     // invalidation of pointers passed to the lower layers. For this reason, we pre-reserve space for any potential
     // padding bytes.
-    bcch_payloads[i].info.payload_and_padding.resize(bcch_dl_sch_payloads[i].length() + MAX_PADDING_BYTES_LEN, 0);
-    std::copy(bcch_dl_sch_payloads[i].begin(),
-              bcch_dl_sch_payloads[i].end(),
-              bcch_payloads[i].info.payload_and_padding.begin());
+    payload.resize(MAX_BCCH_DL_SCH_PDU_SIZE, 0);
+    unsigned len = copy_segments(pdu, payload);
+    if (len < length.value()) {
+      // Zero-fill previously set bytes.
+      std::fill(payload.begin() + len, payload.begin() + length.value(), 0);
+    }
+    length  = units::bytes{len};
+    version = version_;
   }
-}
+};
 
-unsigned sib_pdu_assembler::handle_new_sib1_payload(const byte_buffer& sib1_pdu)
+class versioned_bcch_dl_sch_message_encoder final : public sib_pdu_assembler::message_handler
 {
-  unsigned version_id = bcch_payloads[0].info.version + 1;
+public:
+  versioned_bcch_dl_sch_message_encoder(std::optional<si_message_index_type> si_msg_index_,
+                                        si_version_type                      si_version,
+                                        const byte_buffer&                   pdu,
+                                        srslog::basic_logger&                logger_) :
+    si_msg_index(si_msg_index_), logger(logger_)
+  {
+    current.set(si_version, pdu);
+  }
 
-  // Create new BCCH entry with a larger version.
-  bcch_info new_bcch;
-  new_bcch.version      = version_id;
-  new_bcch.payload_size = units::bytes(sib1_pdu.length());
-  // Note: Resizing the bcch_payload after this point onwards is forbidden to avoid vector memory relocations and
-  // invalidation of pointers passed to the lower layers. For this reason, we pre-reserve space for any potential
-  // padding bytes.
-  new_bcch.payload_and_padding.resize(sib1_pdu.length() + MAX_PADDING_BYTES_LEN, 0);
-  std::copy(sib1_pdu.begin(), sib1_pdu.end(), new_bcch.payload_and_padding.begin());
+  span<const uint8_t> get_pdu(slot_point sl_tx, const sib_information& si_info) override
+  {
+    unsigned tbs = si_info.pdsch_cfg.codewords[0].tb_size_bytes;
+    srsran_assert(tbs <= MAX_BCCH_DL_SCH_PDU_SIZE, "BCCH-DL-SCH is too long. Revisit constant");
 
-  // Mark old BCCH-DL-SCH message for deferred destruction and insert new BCCH-DL-SCH message in its place.
-  bcch_payloads[0].old  = std::move(bcch_payloads[0].info);
-  bcch_payloads[0].info = std::move(new_bcch);
-
-  return version_id;
-}
-
-span<const uint8_t> sib_pdu_assembler::encode_sib1_pdu(unsigned si_version, units::bytes tbs_bytes)
-{
-  return encode_si_pdu(0, si_version, tbs_bytes);
-}
-
-span<const uint8_t>
-sib_pdu_assembler::encode_si_message_pdu(unsigned si_msg_idx, unsigned si_version, units::bytes tbs_bytes)
-{
-  return encode_si_pdu(si_msg_idx + 1, si_version, tbs_bytes);
-}
-
-span<const uint8_t> sib_pdu_assembler::encode_si_pdu(unsigned idx, unsigned si_version, units::bytes tbs_bytes)
-{
-  static constexpr unsigned TX_COUNT_BEFORE_OLD_VERSION_REMOVAL = 4;
-  srsran_assert(tbs_bytes.value() <= MAX_BCCH_DL_SCH_PDU_SIZE, "Invalid TBS size for an BCCH-DL-SCH message");
-
-  auto& bcch = bcch_payloads[idx];
-
-  if (bcch.info.version == si_version) {
-    // In case there is no pending reconfig of the SI.
-
-    // In case the old version is pending for removal.
-    // Note: Given that the lower layers could use a previously sent SI message payload for a bounded but undetermined
-    // number of slots, we postpone the removal of the old BCCH-DL-SCH payload version by a fixed number of
-    // transmissions of the new version.
-    bcch.info.nof_tx++;
-    if (bcch.info.nof_tx == TX_COUNT_BEFORE_OLD_VERSION_REMOVAL and bcch.old.has_value()) {
-      // It is safe to remove old version at this point.
-      bcch.old.reset();
+    if (current.version != si_info.version) {
+      // Current SI message version is too old. Fetch new version from shared buffer.
+      bcch_message_buffer& next = pending.read();
+      if (next.version == current.version) {
+        // This SI message, in particular, has not been updated. Bump its version.
+        next.version    = si_info.version;
+        current.version = si_info.version;
+      } else {
+        // The SI message was updated. Take PDU from the shared buffer.
+        if (next.version != si_info.version) {
+          // PDU in shared buffer does not match in version requested. This should not happen.
+          logger.warning("SI message version mismatch. Expected: {}, got: {}", si_info.version, next.version);
+          next.version = si_info.version;
+        }
+        current.version = next.version;
+        current.length  = next.length;
+        std::swap(next.payload, current.payload);
+      }
     }
 
-    return encode_bcch_pdu(idx, bcch.info, tbs_bytes);
+    srsran_sanity_check(current.payload.size() >= tbs, "Invalidation of SI message buffer detected");
+    if (current.length.value() > tbs) {
+      logger.error("Failed to encode BCCH-DL-SCH Transport Block for SI{}. Cause: TBS cannot be smaller than the "
+                   "respective message payload",
+                   not si_msg_index.has_value() ? fmt::format("B1") : fmt::format("-message {}", si_msg_index.value()));
+    }
+    return span<const uint8_t>(current.payload).first(tbs);
   }
 
-  if (bcch.old.has_value() and bcch.old.value().version == si_version) {
-    // We need to send the old BCCH version instead.
-    return encode_bcch_pdu(idx, bcch.old.value(), tbs_bytes);
+  si_version_type update(si_version_type si_version, const byte_buffer& pdu) override
+  {
+    bcch_message_buffer& next = pending.write();
+    next.set(si_version, pdu);
+    pending.commit();
+    return si_version;
   }
 
-  // No SI-message with matching index and version was found. Return empty.
-  return span<const uint8_t>(zeros_payload.data(), tbs_bytes.value());
+private:
+  std::optional<si_message_index_type> si_msg_index;
+  srslog::basic_logger&                logger;
+
+  bcch_message_buffer current;
+
+  lockfree_triple_buffer<bcch_message_buffer> pending;
+};
+
+} // namespace
+
+sib_pdu_assembler::sib_pdu_assembler() : logger(srslog::fetch_basic_logger("MAC")) {}
+
+span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point sl_tx, const sib_information& si_info)
+{
+  if (si_info.si_indicator == sib_information::si_indicator_type::sib1) {
+    return sib1_encoder->get_pdu(sl_tx, si_info);
+  }
+
+  srsran_assert(si_info.si_msg_index.has_value(), "Invalid SI message index");
+  if (si_encoders[si_info.si_msg_index.value()] == nullptr) {
+    logger.error("Invalid SI message index {}", si_info.si_msg_index.value());
+    return span<const uint8_t>{zeros_payload}.first(si_info.pdsch_cfg.codewords[0].tb_size_bytes);
+  }
+  return si_encoders[si_info.si_msg_index.value()]->get_pdu(sl_tx, si_info);
 }
 
-span<const uint8_t> sib_pdu_assembler::encode_bcch_pdu(unsigned msg_idx, const bcch_info& bcch, units::bytes tbs) const
+si_change_result sib_pdu_assembler::handle_si_change_request(const si_change_request& req)
 {
-  if (tbs < bcch.payload_size) {
-    logger.error("Failed to encode BCCH-DL-SCH Transport Block for SI{}. Cause: TBS cannot be smaller than the "
-                 "respective message payload",
-                 msg_idx == 0 ? fmt::format("B1") : fmt::format("-message {}", msg_idx + 1));
-    return span<const uint8_t>(zeros_payload.data(), tbs.value());
+  // Prepare response.
+  last_resp.version++;
+  last_resp.sib1_len = units::bytes{static_cast<unsigned>(req.sib1.length())};
+  for (const auto& rem : req.si_messages_to_rem) {
+    auto it = std::find_if(
+        last_resp.si_msg_lens.begin(), last_resp.si_msg_lens.end(), [rem](const auto& s) { return s.first == rem; });
+    if (it != last_resp.si_msg_lens.end()) {
+      last_resp.si_msg_lens.erase(it);
+    }
   }
-  if (tbs.value() > bcch.payload_and_padding.size()) {
-    logger.error("Failed to encode BCCH-DL-SCH Transport Block for SI{}. Cause: Memory reallocations for payload are "
-                 "not allowed. Consider reserving more bytes for PADDING",
-                 msg_idx == 0 ? fmt::format("B1") : fmt::format("-message {}", msg_idx + 1));
-    return span<const uint8_t>(zeros_payload.data(), tbs.value());
+  for (const auto& addmod : req.si_messages_to_addmod) {
+    const units::bytes si_len{static_cast<unsigned>(addmod.second.length())};
+    auto               it = std::find_if(last_resp.si_msg_lens.begin(),
+                           last_resp.si_msg_lens.end(),
+                           [si_idx = addmod.first](const auto& s) { return s.first == si_idx; });
+    if (it != last_resp.si_msg_lens.end()) {
+      it->second = si_len;
+    } else {
+      last_resp.si_msg_lens.emplace_back(addmod.first, si_len);
+    }
+  }
+  std::sort(last_resp.si_msg_lens.begin(), last_resp.si_msg_lens.end());
+
+  // Update SIB1.
+  si_version_type version = last_resp.version;
+  if (sib1_encoder == nullptr) {
+    sib1_encoder = std::make_unique<versioned_bcch_dl_sch_message_encoder>(std::nullopt, version, req.sib1, logger);
+  } else {
+    sib1_encoder->update(version, req.sib1);
   }
 
-  // Generation of TB was successful.
-  return span<const uint8_t>(bcch.payload_and_padding.data(), tbs.value());
+  // TODO: dealloc SI messages to remove
+  // Note: This is tricky because it can only be done when the PHY has finished using the SI message.
+
+  // Update SI message contents.
+  for (const auto& si_msg : req.si_messages_to_addmod) {
+    if (si_encoders[si_msg.first] == nullptr) {
+      si_encoders[si_msg.first] =
+          std::make_unique<versioned_bcch_dl_sch_message_encoder>(si_msg.first, version, si_msg.second, logger);
+    } else {
+      si_encoders[si_msg.first]->update(version, si_msg.second);
+    }
+  }
+
+  return last_resp;
 }

@@ -10,50 +10,47 @@
 
 #pragma once
 
-#include "srsran/mac/mac_cell_manager.h"
+#include "cell_sys_info_configurator.h"
+#include "srsran/scheduler/result/pdsch_info.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {
 
-/// Class that manages the encoding of BCCH-DL-SCH messages to be fit in a Transport Block.
-class sib_pdu_assembler
+/// Entity responsible for fetching encoded SIB1 and SI messages based on scheduled SI grants.
+class sib_pdu_assembler : public cell_sys_info_configurator
 {
+  static constexpr size_t MAX_SI_MESSAGES = 32;
+
 public:
-  explicit sib_pdu_assembler(const std::vector<byte_buffer>& bcch_dl_sch_payloads);
+  class message_handler
+  {
+  public:
+    virtual ~message_handler() = default;
 
-  /// Stores a new SIB1 PDU to be broadcast.
-  /// \return Returns the version ID of the new PDU.
-  unsigned handle_new_sib1_payload(const byte_buffer& sib1_pdu);
+    virtual si_version_type update(si_version_type si_version, const byte_buffer& pdu) = 0;
 
-  span<const uint8_t> encode_sib1_pdu(unsigned si_version, units::bytes tbs_bytes);
+    /// Retrieve encoded SI bytes for a given SI scheduling opportunity.
+    virtual span<const uint8_t> get_pdu(slot_point sl_tx, const sib_information& si_info) = 0;
+  };
 
-  span<const uint8_t> encode_si_message_pdu(unsigned si_msg_idx, unsigned si_version, units::bytes tbs_bytes);
+  sib_pdu_assembler();
+
+  /// Update the SIB1 and SI messages.
+  si_change_result handle_si_change_request(const si_change_request& req) override;
+
+  /// \brief Retrieve the encoded SI message.
+  span<const uint8_t> encode_si_pdu(slot_point sl_tx, const sib_information& si_info);
 
 private:
-  struct bcch_info {
-    /// Current version of the BCCH-DL-SCH message.
-    unsigned version = 0;
-    /// Number of times this BCCH-DL-SCH message was sent to lower layers.
-    unsigned nof_tx = 0;
-    /// Length of the original BCCH-DL-SCH message, without padding, defined in the MAC cell configuration.
-    units::bytes         payload_size;
-    std::vector<uint8_t> payload_and_padding;
-  };
-  struct bcch_context {
-    /// Holds the most recent BCCH-DL-SCH message version.
-    bcch_info info;
-    /// Holds old version of the BCCH-DL-SCH message that may still being used by lower layers.
-    std::optional<bcch_info> old;
-  };
-
-  span<const uint8_t> encode_si_pdu(unsigned idx, unsigned si_version, units::bytes tbs_bytes);
-
-  span<const uint8_t> encode_bcch_pdu(unsigned msg_idx, const bcch_info& bcch, units::bytes tbs) const;
-
   srslog::basic_logger& logger;
 
-  // Holds the currently configured BCCH-DL-SCH messages.
-  std::vector<bcch_context> bcch_payloads;
+  /// SIB1 message.
+  std::unique_ptr<message_handler> sib1_encoder;
+
+  /// SI message handlers.
+  std::array<std::unique_ptr<message_handler>, MAX_SI_MESSAGES> si_encoders;
+
+  si_change_result last_resp;
 };
 
 } // namespace srsran

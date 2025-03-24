@@ -68,9 +68,7 @@ public:
                                du_cell_index_t                    cell_idx,
                                mac_cell_slot_handler::error_event event) override;
 
-  void handle_sib1_update_indication(du_cell_index_t cell_index,
-                                     unsigned        sib_version,
-                                     units::bytes    new_payload_size) override;
+  void handle_si_change_indication(du_cell_index_t cell_index, const si_change_result& si_updated) override;
 
   async_task<mac_cell_positioning_measurement_response>
   handle_positioning_measurement_request(du_cell_index_t                                 cell_index,

@@ -15,7 +15,7 @@
 #include "mac_test_helpers.h"
 #include "tests/test_doubles/mac/dummy_mac_metrics_notifier.h"
 #include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
-#include "srsran/mac/config/mac_config_helpers.h"
+#include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "srsran/support/async/eager_async_task.h"
 #include "srsran/support/executors/blocking_task_worker.h"
 #include "srsran/support/executors/manual_task_worker.h"
@@ -126,8 +126,12 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
   srsran_scheduler_adapter sched_cfg_adapter{maccfg, rnti_mng};
   mac_dl_processor         mac_dl(mac_dl_cfg, sched_cfg_adapter, rnti_mng);
 
+  auto mac_cell_req      = test_helpers::make_default_mac_cell_config();
+  mac_cell_req.sched_req = sched_config_helper::make_default_sched_cell_configuration_request();
+  sched_cfg_adapter.add_cell(mac_cell_req);
+
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
-  mac_dl.add_cell(test_helpers::make_default_mac_cell_config());
+  mac_dl.add_cell(mac_cell_req);
 
   // TEST: Thread used for resumption does not change.
   auto test_event = [&ctrl_worker](test_task_event ev) {
@@ -192,10 +196,16 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
 
   // Action: Add Cells.
   mac_cell_creation_request cell_cfg1 = test_helpers::make_default_mac_cell_config();
+  cell_cfg1.sched_req                 = sched_config_helper::make_default_sched_cell_configuration_request();
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
+  sched_cfg_adapter.add_cell(cell_cfg1);
   mac_dl.add_cell(cell_cfg1);
-  mac_cell_creation_request cell_cfg2 = test_helpers::make_default_mac_cell_config();
-  cell_cfg2.cell_index                = to_du_cell_index(1);
+  mac_cell_creation_request cell_cfg2  = test_helpers::make_default_mac_cell_config();
+  cell_cfg2.cell_index                 = to_du_cell_index(1);
+  cell_cfg2.sched_req                  = sched_config_helper::make_default_sched_cell_configuration_request();
+  cell_cfg2.sched_req.cell_index       = to_du_cell_index(1);
+  cell_cfg2.sched_req.cell_group_index = (du_cell_group_index_t)1;
+  sched_cfg_adapter.add_cell(cell_cfg2);
   mac_dl.add_cell(cell_cfg2);
 
   // TEST: Thread used for resumption does not change

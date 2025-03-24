@@ -32,7 +32,7 @@ public:
   void handle_cell_deactivation_request(du_cell_index_t cell_index) override;
 
   // Sys Info handling.
-  void handle_sib1_update_request(const sib1_pdu_update_request& req) override;
+  void handle_si_update_request(const si_scheduling_update_request& req) override;
 
   // scheduler_slot_handler interface methods.
   const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;

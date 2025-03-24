@@ -18,6 +18,7 @@
 namespace srsran {
 
 struct sched_result;
+struct si_change_result;
 
 /// \brief Interface used by MAC Cell Processor to interact with the MAC scheduler.
 class mac_scheduler_cell_info_handler : public mac_ue_control_information_handler
@@ -46,12 +47,10 @@ public:
   virtual void
   handle_error_indication(slot_point slot_tx, du_cell_index_t cell_idx, mac_cell_slot_handler::error_event event) = 0;
 
-  /// \brief Update SIB1 PDU size in the scheduler.
+  /// \brief Update SIB1 and SI scheduling information in scheduler.
   /// \param[in] cell_index Index of the cell being updated.
-  /// \param[in] sib_version SIB1 PDU version. The version should always increase for each new SIB1 PDU provided.
-  /// \param[in] new_payload_size Size of the SIB1 PDU payload.
-  virtual void
-  handle_sib1_update_indication(du_cell_index_t cell_index, unsigned sib_version, units::bytes new_payload_size) = 0;
+  /// \param[in] si_updated SI scheduling information.
+  virtual void handle_si_change_indication(du_cell_index_t cell_index, const si_change_result& si_updated) = 0;
 
   /// \brief Handle request to measure the metrics related with a UE position.
   /// \param[in] cell_index Index of the cell for which the measurement is directed.

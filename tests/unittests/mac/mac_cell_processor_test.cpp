@@ -72,6 +72,7 @@ protected:
     sched_adapter.next_sched_result.dl.nof_dl_symbols = NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
     sched_adapter.next_sched_result.dl.bc.sibs.resize(params.nof_sib_allocated);
     for (auto& sib_grant : sched_adapter.next_sched_result.dl.bc.sibs) {
+      sib_grant.version        = 1;
       sib_grant.pdsch_cfg.rnti = rnti_t::SI_RNTI;
       sib_grant.pdsch_cfg.codewords.resize(1);
       sib_grant.pdsch_cfg.codewords[0].tb_size_bytes = 128;
