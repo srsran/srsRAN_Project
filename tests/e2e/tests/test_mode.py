@@ -358,6 +358,7 @@ def _test_ru(
     reruns=2,
     only_rerun=[_POD_ERROR],
 )
+# pylint: disable=too-many-locals
 def test_mode_many_ues(
     # Retina
     retina_manager: RetinaTestManager,
@@ -470,6 +471,11 @@ def test_mode_many_ues(
         metrics.total.ul_bitrate * 1e-6,
         ul_brate_threshold * 1e-6,
     )
+    if metrics.cell.error_indication_cnt > 0:
+        logging.error("Error indication count: %d [> 0]", metrics.cell.error_indication_cnt)
+    else:
+        logging.info("Error indication count: %d", metrics.cell.error_indication_cnt)
+        
     # Assess the expected bitrate
     if metrics.total.dl_bitrate < dl_brate_threshold:
         pytest.fail(f"Low DL Bitrate: {metrics.total.dl_bitrate*1e-6}Mbps [< {dl_brate_threshold*1e-6}]Mbps")
@@ -494,3 +500,6 @@ def test_mode_many_ues(
             ue_below_threshold.append(ue_m.rnti)
     if len(ue_below_threshold) > 0:
         pytest.fail(f"UEs with RNTI:{ue_below_threshold} have bitrate below the expected threshold")
+
+    if metrics.cell.error_indication_cnt > 0:
+        pytest.fail(f"Found {metrics.cell.error_indication_cnt} error indications")

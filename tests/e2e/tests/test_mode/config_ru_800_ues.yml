@@ -23,10 +23,8 @@ cell_cfg:
   nof_antennas_dl: {{nof_antennas_dl}}
   nof_antennas_ul: {{nof_antennas_ul}}
   pdsch:
-    min_ue_mcs: 27
     mcs_table: qam256
   pusch:
-    min_ue_mcs: 27
     mcs_table: qam256
     rv_sequence: 0
   pucch:
@@ -49,13 +47,13 @@ cells:
   - pci: 1
 
 ru_dummy:
-  time_scaling: 10
 
 test_mode:
   test_ue:
     rnti: 0x4601
     pdsch_active: true
     pusch_active: true
+    cqi: 15
     ri: 4
     nof_ues: 32
 
