@@ -633,6 +633,8 @@ viavi um:
   extends: .viavi
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 1 hour
   variables:
     KEYWORDS: "ideal and UM"
 
@@ -640,6 +642,8 @@ viavi 3h:
   extends: .viavi
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
+      when: delayed
+      start_in: 1 hour
   variables:
     KEYWORDS: "3h"
 
