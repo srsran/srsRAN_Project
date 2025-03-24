@@ -55,9 +55,13 @@ static bool validate_spans(span<uint8_t> output, span<const log_likelihood_ratio
     return false;
   }
 
-  // The input size must be equal to or greater than the minimum number of bits.
+  // Count the number of input bits that are not zero.
+  unsigned non_zero_count =
+      std::count_if(input.begin(), input.end(), [](log_likelihood_ratio elem) { return elem != 0; });
+
+  // The input number of non-zero bits must be equal to or greater than the minimum number of bits.
   unsigned min_input_bits = calculate_uci_min_encoded_bits(out_size);
-  if (in_size < min_input_bits) {
+  if (non_zero_count < min_input_bits) {
     return false;
   }
 
@@ -174,12 +178,6 @@ bool short_block_detector_impl::detect(span<uint8_t>                    output,
   // If the spans sizes are invalid, the result is invalid.
   unsigned bits_per_symbol = get_bits_per_symbol(mod);
   if (!validate_spans(output, input, bits_per_symbol)) {
-    std::fill(output.begin(), output.end(), 1);
-    return false;
-  }
-
-  // If all input bits are zero, the result is invalid.
-  if (std::all_of(input.begin(), input.end(), [](log_likelihood_ratio bit) { return bit == 0; })) {
     std::fill(output.begin(), output.end(), 1);
     return false;
   }
