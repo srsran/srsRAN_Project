@@ -622,9 +622,9 @@ private:
   const unsigned              nof_prb;
   units::bytes                prb_size;
   /// Stores byte arrays for each antenna.
-  std::vector<std::vector<std::vector<uint8_t>>>                      test_data;
-  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC>                ul_eaxc;
+  std::vector<std::vector<std::vector<uint8_t>>>                     test_data;
+  static_circular_map<uint8_t, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
+  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC>               ul_eaxc;
 };
 
 /// DU emulator that pushes resource grids to the OFH RU implementation.
@@ -844,11 +844,11 @@ private:
   }
 
 private:
-  const subcarrier_spacing                                            scs;
-  const unsigned                                                      nof_symbols;
-  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
-  bounded_bitset<MAX_SUPPORTED_EAXC_ID_VALUE>                         seq_counter_initialized;
-  test_ru_emulator*                                                   ru_emulator;
+  const subcarrier_spacing                                           scs;
+  const unsigned                                                     nof_symbols;
+  static_circular_map<uint8_t, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
+  bounded_bitset<MAX_SUPPORTED_EAXC_ID_VALUE>                        seq_counter_initialized;
+  test_ru_emulator*                                                  ru_emulator;
 };
 
 /// Manages the workers of the test application and OFH RU.

@@ -485,8 +485,8 @@ class ru_emulator : public frame_notifier
   // Number of OFDM symbols comprising PRACH U-Plane transmission.
   unsigned nof_prach_symbols;
   // Keeps track of last used seq_id for each eAxC.
-  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
-  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> prach_seq_counters;
+  static_circular_map<uint8_t, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
+  static_circular_map<uint8_t, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> prach_seq_counters;
   // Stores the list of configured eAxC for uplink, downlink and PRACH.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
