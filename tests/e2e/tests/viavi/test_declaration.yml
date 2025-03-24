@@ -93,7 +93,9 @@ tests:
     expected_ul_bitrate: 72.0e+6
     expected_nof_kos: 10
     warning_as_errors: true
-    warning_allowlist: *base_warning_allowlist
+    warning_allowlist: 
+      - missed incoming User-Plane PRACH messages
+      - missed incoming User-Plane uplink messages for slot
 
   - id: "1UE fading UDP uplink"
     campaign_filename: *campaign_filename
