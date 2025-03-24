@@ -19,9 +19,7 @@ cell_cfg:
   common_scs: 15
   tac: 7
   pucch:
-    pucch_resource_common: 11 
     sr_period_ms: 80
-    use_format_0: true
     nof_ue_res_harq_per_set: 8
     f0_or_f1_nof_cell_res_sr: 2
     f0_intraslot_freq_hop: false
