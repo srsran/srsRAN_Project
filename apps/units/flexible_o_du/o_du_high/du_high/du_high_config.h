@@ -193,22 +193,62 @@ struct du_high_unit_pusch_config {
   /// \c p0-NominalWithGrant, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
   int p0_nominal_with_grant = -76;
 
-  /// \c betaOffsetACK-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_ack_idx_1 = 9;
-  /// \c betaOffsetACK-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_ack_idx_2 = 9;
-  /// \c betaOffsetACK-Index3, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_ack_idx_3 = 9;
-  /// \c betaOffsetCSI-Part1-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_csi_p1_idx_1 = 9;
-  /// \c betaOffsetCSI-Part1-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_csi_p1_idx_2 = 9;
-  /// \c betaOffsetCSI-Part2-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_csi_p2_idx_1 = 9;
-  /// \c betaOffsetCSI-Part2-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_csi_p2_idx_2 = 9;
+  /// \defgroup betaoffsets
+  /// \brief Beta offsets for uplink control information multiplexed in PUSCH.
+  ///
+  /// Default beta offset values have been derived from the formula
+  /// \f$\beta^{PUSCH}_{\text{offset}}\gt \frac{E^{O_{UCI}}_{min}+K_{OH}Q_m\nu}{O_{UCI}+L_{UCI}}R\f$ where:
+  /// - \f$E^{O_{UCI}}_{min}\f$ is the minimum number of rate matched bits that guarantee the detection of the UCI bits;
+  /// - \f$K_{OH}\f$ is the number of overhead resource elements (i.e., DC position);
+  /// - \f$Q_m\f$ is the maximum modulation order, fixed to \f$8\f$;
+  /// - \f$\nu\f$ is the maximum number of layers, fixed to \f$2\f$;
+  /// - \f$R\f$ is the maximum code rate, fixed to \f$948/1024\f$;
+  /// - \f$O_{UCI}\f$ is the number of information bits; and
+  /// - \f$L_{UCI}\f$ is the number of CRC bits.
+  ///
+  /// @{
+  /// \brief Parameter \e betaOffsetACK-Index1, in Information Element \c BetaOffsets, TS38.331. Values: {0,...,15}.
+  ///
+  /// Used for deriving \f$\beta_{\text{HARQ−ACK}}^{offset}\f$ when the PUSCH multiplexes up two HARQ-ACK information
+  /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=24\f$ and \f$K_{OH}=1\f$.
+  unsigned beta_offset_ack_idx_1 = 11;
+  /// \brief Parameter \e betaOffsetACK-Index2, in Information Element \c BetaOffsets, TS38.331. Values: {0,...,15}.
+  ///
+  /// Used for deriving \f$\beta_{\text{HARQ−ACK}}^{offset}\f$ when the PUSCH multiplexes up 11 HARQ-ACK information bits.
+  /// The default value assumes \f$E^{O_{UCI}}_{min}=32\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_ack_idx_2 = 6;
+  /// \brief Parameter \e betaOffsetACK-Index3, in Information Element \c BetaOffsets, TS38.331. Values: {0,...,15}.
+  ///
+  /// Used for deriving \f$\beta_{\text{HARQ−ACK}}^{offset}\f$ when the PUSCH multiplexes more than 11 HARQ-ACK
+  /// information bits. The default value assumes \f$E^{O_{UCI}}_{min}=40\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_ack_idx_3 = 4;
+  /// \brief Parameter \e betaOffsetCSI-Part1-Index1, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// {0,...,18}.
+  ///
+  /// Used for deriving \f$\beta_{\text{CSI−1}}^{offset}\f$ when the PUSCH multiplexes up to 11 CSI Part 1 information
+  /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=32\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_csi_p1_idx_1 = 13;
+  /// \brief Parameter \e betaOffsetCSI-Part1-Index2, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// {0,...,18}.
+  ///
+  /// Used for deriving \f$\beta_{\text{CSI−1}}^{offset}\f$ when the PUSCH multiplexes more than 11 CSI Part 1 information
+  /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=40\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_csi_p1_idx_2 = 10;
+  /// \brief Parameter \e betaOffsetCSI-Part2-Index1, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// {0,...,18}.
+  ///
+  /// Used for deriving \f$\beta_{\text{CSI−2}}^{offset}\f$ when the PUSCH multiplexes up to 11 CSI Part 2 information
+  /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=32\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_csi_p2_idx_1 = 13;
+  /// \brief Parameter \e betaOffsetCSI-Part2-Index2, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// {0,...,18}.
+  ///
+  /// Used for deriving \f$\beta_{\text{CSI−2}}^{offset}\f$ when the PUSCH multiplexes more than 11 CSI Part 2 information
+  /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=40\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_csi_p2_idx_2 = 10;
+  /// @}
 
-  /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS 38.213.
+  /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS38.213.
   /// Values {-6,...,8} and must be a multiple of 2.
   int msg3_delta_power = 8;
 
