@@ -57,7 +57,7 @@ Nightly E2E Tests Plugin:
       raw: false
 
 Weekly:
-  cron: "00 13 * * 6"
+  cron: "00 10 * * 6"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
@@ -75,7 +75,7 @@ Weekly:
       raw: false
 
 Alternative OSs:
-  cron: "00 10 * * 6"
+  cron: "00 13 * * 0"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
