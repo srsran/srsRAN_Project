@@ -55,4 +55,17 @@ std::optional<sch_mcs_tbs> compute_ul_mcs_tbs(const pusch_config_params&   pusch
                                               unsigned                     nof_prbs,
                                               bool                         contains_dc);
 
+/// \brief Determines the PUSCH TBS such that the effective code rate does not exceed 0.95.
+/// \param[in] pusch_params PUSCH parameters needed to compute the TBS.
+/// \param[in] ue_cell_cfg UE cell configuration.
+/// \param[in] mcs Value to be applied for the MCS.
+/// \param[in] nof_prbs Number of PRBs available for the PUSCH transmission.
+/// \param[in] contains_dc Set to true if the transmission overlaps with the position of the DC.
+/// \return TBS in bytes, in case the PUSCH code rate and paramters are valid; else, std::nullopt.
+std::optional<unsigned> compute_ul_tbs(const pusch_config_params&   pusch_params,
+                                       const ue_cell_configuration* ue_cell_cfg,
+                                       sch_mcs_index                mcs,
+                                       unsigned                     nof_prbs,
+                                       bool                         contains_dc);
+
 } // namespace srsran

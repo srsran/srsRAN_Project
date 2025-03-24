@@ -322,3 +322,34 @@ std::optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&
 
   return std::optional<sch_mcs_tbs>{sch_mcs_tbs{.mcs = mcs, .tbs = tbs_bytes}};
 }
+
+std::optional<unsigned> srsran::compute_ul_tbs(const pusch_config_params&   pusch_cfg,
+                                               const ue_cell_configuration* ue_cell_cfg,
+                                               sch_mcs_index                mcs,
+                                               unsigned                     nof_prbs,
+                                               bool                         contains_dc)
+{
+  const unsigned      dmrs_prbs = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
+  sch_mcs_description mcs_info =
+      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
+  unsigned nof_symbols = pusch_cfg.symbols.length();
+
+  unsigned tbs_bytes =
+      tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
+                                                            .nof_dmrs_prb     = dmrs_prbs,
+                                                            .nof_oh_prb       = pusch_cfg.nof_oh_prb,
+                                                            .mcs_descr        = mcs_info,
+                                                            .nof_layers       = pusch_cfg.nof_layers,
+                                                            .tb_scaling_field = pusch_cfg.tb_scaling_field,
+                                                            .n_prb            = nof_prbs}) /
+      NOF_BITS_PER_BYTE;
+
+  // > Compute the effective code rate.
+  ulsch_configuration ulsch_cfg = build_ulsch_info(pusch_cfg, ue_cell_cfg, tbs_bytes, mcs_info, nof_prbs, contains_dc);
+  ulsch_information   info      = get_ulsch_information(ulsch_cfg);
+
+  if (is_pusch_effective_rate_valid(pusch_cfg, info, mcs_info, nof_prbs, contains_dc)) {
+    return tbs_bytes;
+  }
+  return std::nullopt;
+}

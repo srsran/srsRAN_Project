@@ -410,6 +410,15 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
         continue;
       }
       pusch_cfg = compute_retx_pusch_config_params(ue_cc, *h_ul, pusch_td_res, uci_nof_harq_bits, is_csi_report_slot);
+
+      // Compute if effective code rate does not go over the limit for this reTx, for instance, due to presence of UCI.
+      // Note: We take the conservative approach of assuming the reTx will intersect the DC.
+      static constexpr bool contains_dc = true;
+      auto                  tbs_res     = compute_ul_tbs(pusch_cfg, &ue_cell_cfg, mcs, nof_rbs, contains_dc);
+      if (not tbs_res.has_value() or tbs_res.value() != h_ul->get_grant_params().tbs_bytes) {
+        // Unable to keep the same TBS for PUSCH reTx.
+        continue;
+      }
     }
 
     // Successful selection of grant parameters.
