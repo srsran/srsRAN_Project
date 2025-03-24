@@ -96,6 +96,16 @@ unique_uplink_pdu_slot_repository uplink_processor_impl::get_pdu_slot_repository
 
 void uplink_processor_impl::handle_rx_symbol(const shared_resource_grid& grid, unsigned end_symbol_index)
 {
+  // Verify that the symbol index is in increasing order.
+  if (end_symbol_index < nof_processed_symbols) {
+    logger.warning(current_slot.sfn(),
+                   current_slot.slot_index(),
+                   "Unexpected symbol index {} is back in time, expected {}.",
+                   end_symbol_index,
+                   nof_processed_symbols);
+    return;
+  }
+
   // Run rate matching buffer pool only at the first symbol.
   if (nof_processed_symbols == 0) {
     rm_buffer_pool.run_slot(current_slot);

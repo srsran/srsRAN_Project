@@ -43,7 +43,7 @@ public:
   void add_pusch_pdu(const pusch_pdu& pdu) override
   {
     unsigned end_symbol_index = pdu.pdu.start_symbol_index + pdu.pdu.nof_symbols - 1;
-    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
 
     pusch_repository[end_symbol_index].push_back(pdu);
     increment_pending_pdu_count();
@@ -58,7 +58,7 @@ public:
     };
 
     unsigned end_symbol_index = fetch_end_symbol_index(pdu);
-    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
 
     if (!std::holds_alternative<pucch_processor::format1_configuration>(pdu.config)) {
       pucch_repository[end_symbol_index].push_back(pdu);
@@ -104,7 +104,7 @@ public:
   {
     unsigned end_symbol_index =
         pdu.config.resource.start_symbol.to_uint() + static_cast<unsigned>(pdu.config.resource.nof_symbols) - 1;
-    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
     srs_repository[end_symbol_index].push_back(pdu);
     increment_pending_pdu_count();
   }
@@ -225,7 +225,7 @@ public:
       return {};
     }
 
-    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
     return pusch_repository[end_symbol_index];
   }
 
@@ -238,7 +238,7 @@ public:
       return {};
     }
 
-    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
     return pucch_repository[end_symbol_index];
   }
 
@@ -251,7 +251,7 @@ public:
       return {};
     }
 
-    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
     return pucch_f1_repository[end_symbol_index];
   }
 
@@ -264,7 +264,7 @@ public:
       return {};
     }
 
-    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index.");
+    srsran_assert(end_symbol_index < MAX_NSYMB_PER_SLOT, "Invalid end symbol index {}.", end_symbol_index);
     return srs_repository[end_symbol_index];
   }
 
