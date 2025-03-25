@@ -112,7 +112,11 @@ private:
 
 } // namespace
 
-sib_pdu_assembler::sib_pdu_assembler() : logger(srslog::fetch_basic_logger("MAC")) {}
+sib_pdu_assembler::sib_pdu_assembler(const mac_cell_sys_info_config& req) : logger(srslog::fetch_basic_logger("MAC"))
+{
+  update_encoders(0, req);
+  next_version++;
+}
 
 span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point sl_tx, const sib_information& si_info)
 {
@@ -128,51 +132,40 @@ span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point sl_tx, const sib
   return si_encoders[si_info.si_msg_index.value()]->get_pdu(sl_tx, si_info);
 }
 
-si_change_result sib_pdu_assembler::handle_si_change_request(const si_change_request& req)
+si_change_result sib_pdu_assembler::handle_si_change_request(const mac_cell_sys_info_config& req)
 {
-  // Prepare response.
-  last_resp.version++;
-  last_resp.sib1_len = units::bytes{static_cast<unsigned>(req.sib1.length())};
-  for (const auto& rem : req.si_messages_to_rem) {
-    auto it = std::find_if(
-        last_resp.si_msg_lens.begin(), last_resp.si_msg_lens.end(), [rem](const auto& s) { return s.first == rem; });
-    if (it != last_resp.si_msg_lens.end()) {
-      last_resp.si_msg_lens.erase(it);
-    }
-  }
-  for (const auto& addmod : req.si_messages_to_addmod) {
-    const units::bytes si_len{static_cast<unsigned>(addmod.second.length())};
-    auto               it = std::find_if(last_resp.si_msg_lens.begin(),
-                           last_resp.si_msg_lens.end(),
-                           [si_idx = addmod.first](const auto& s) { return s.first == si_idx; });
-    if (it != last_resp.si_msg_lens.end()) {
-      it->second = si_len;
-    } else {
-      last_resp.si_msg_lens.emplace_back(addmod.first, si_len);
-    }
-  }
-  std::sort(last_resp.si_msg_lens.begin(), last_resp.si_msg_lens.end());
+  // Update encoders.
+  update_encoders(next_version, req);
 
+  // Prepare response.
+  si_change_result resp;
+  resp.version  = next_version;
+  resp.sib1_len = units::bytes{static_cast<unsigned>(req.sib1.length())};
+  for (const auto& si_msg : req.si_messages) {
+    const units::bytes si_len{static_cast<unsigned>(si_msg.length())};
+    resp.si_msg_lens.emplace_back(si_len);
+  }
+
+  // Bump version.
+  ++next_version;
+  return resp;
+}
+
+void sib_pdu_assembler::update_encoders(si_version_type version, const mac_cell_sys_info_config& req)
+{
   // Update SIB1.
-  si_version_type version = last_resp.version;
   if (sib1_encoder == nullptr) {
     sib1_encoder = std::make_unique<versioned_bcch_dl_sch_message_encoder>(std::nullopt, version, req.sib1, logger);
   } else {
     sib1_encoder->update(version, req.sib1);
   }
 
-  // TODO: dealloc SI messages to remove
-  // Note: This is tricky because it can only be done when the PHY has finished using the SI message.
-
   // Update SI message contents.
-  for (const auto& si_msg : req.si_messages_to_addmod) {
-    if (si_encoders[si_msg.first] == nullptr) {
-      si_encoders[si_msg.first] =
-          std::make_unique<versioned_bcch_dl_sch_message_encoder>(si_msg.first, version, si_msg.second, logger);
+  for (unsigned i = 0, e = req.si_messages.size(); i != e; ++i) {
+    if (si_encoders[i] == nullptr) {
+      si_encoders[i] = std::make_unique<versioned_bcch_dl_sch_message_encoder>(i, version, req.si_messages[i], logger);
     } else {
-      si_encoders[si_msg.first]->update(version, si_msg.second);
+      si_encoders[i]->update(version, req.si_messages[i]);
     }
   }
-
-  return last_resp;
 }

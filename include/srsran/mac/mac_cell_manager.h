@@ -44,8 +44,8 @@ struct mac_cell_positioning_measurement_response {
 
 /// Reconfiguration of a MAC cell during its operation.
 struct mac_cell_reconfig_request {
-  /// If not empty, passes a new SIB1 payload to broadcast.
-  byte_buffer new_sib1_buffer;
+  /// If not empty, contains the new system information to broadcast.
+  std::optional<mac_cell_sys_info_config> new_sys_info;
   /// If not empty, the MAC is requested to collect a new positioning measurement.
   std::optional<mac_cell_positioning_measurement_request> positioning;
 };

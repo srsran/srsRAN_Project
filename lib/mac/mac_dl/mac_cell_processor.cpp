@@ -53,6 +53,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
            MAX_K0_DELAY,
            get_nof_slots_per_subframe(cell_cfg.scs_common) * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME),
   ssb_helper(cell_cfg_req_),
+  sib_assembler(cell_cfg_req_.sys_info),
   rar_assembler(pdu_pool),
   dlsch_assembler(ue_mng, dl_harq_buffers),
   paging_assembler(pdu_pool),
@@ -61,12 +62,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   pcap(pcap_)
 {
   // Update broadcast System Information.
-  si_change_request si_req{};
-  si_req.sib1 = cell_cfg.sys_info.sib1.copy();
-  for (unsigned i = 1; i < cell_cfg.sys_info.si_messages.size(); i++) {
-    si_req.si_messages_to_addmod.emplace_back(i - 1, cell_cfg.sys_info.si_messages[i].copy());
-  }
-  auto si_resp = sib_assembler.handle_si_change_request(si_req);
+  auto si_resp = sib_assembler.handle_si_change_request(cell_cfg.sys_info);
   sched.handle_si_change_indication(cell_cfg.cell_index, si_resp);
 }
 
@@ -127,17 +123,13 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
                           coro_context<async_task<mac_cell_reconfig_response>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
-    if (not request.new_sib1_buffer.empty()) {
+    if (request.new_sys_info.has_value()) {
       // Change to respective DL cell executor context.
       CORO_AWAIT(execute_on_blocking(cell_exec, timers));
 
       {
-        // SIB1 has been updated.
-
-        // Forward new SIB1 PDU to SIB assembler.
-        si_change_request si_req{};
-        si_req.sib1              = request.new_sib1_buffer.copy();
-        si_change_result si_resp = sib_assembler.handle_si_change_request(si_req);
+        // Forward new SI PDUs to SIB assembler.
+        si_change_result si_resp = sib_assembler.handle_si_change_request(request.new_sys_info.value());
 
         // Notify scheduler of SIB1 update.
         sched.handle_si_change_indication(cell_cfg.cell_index, si_resp);

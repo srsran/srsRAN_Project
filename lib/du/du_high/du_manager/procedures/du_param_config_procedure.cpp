@@ -85,7 +85,8 @@ async_task<mac_cell_reconfig_response> du_param_config_procedure::handle_mac_cel
   mac_cell_reconfig_request req;
 
   // Note: For now only SIB1 changes are supported.
-  req.new_sib1_buffer = du_cells.get_packed_sys_info(cell_index).sib1.copy();
+  req.new_sys_info.emplace();
+  req.new_sys_info.value().sib1 = du_cells.get_packed_sys_info(cell_index).sib1.copy();
 
   return du_params.mac.cell_mng.get_cell_controller(cell_index).reconfigure(req);
 }

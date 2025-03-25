@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cell_sys_info_configurator.h"
+#include "srsran/mac/cell_configuration.h"
 #include "srsran/scheduler/result/pdsch_info.h"
 #include "srsran/srslog/logger.h"
 
@@ -33,15 +34,17 @@ public:
     virtual span<const uint8_t> get_pdu(slot_point sl_tx, const sib_information& si_info) = 0;
   };
 
-  sib_pdu_assembler();
+  sib_pdu_assembler(const mac_cell_sys_info_config& req);
 
   /// Update the SIB1 and SI messages.
-  si_change_result handle_si_change_request(const si_change_request& req) override;
+  si_change_result handle_si_change_request(const mac_cell_sys_info_config& req) override;
 
   /// \brief Retrieve the encoded SI message.
   span<const uint8_t> encode_si_pdu(slot_point sl_tx, const sib_information& si_info);
 
 private:
+  void update_encoders(si_version_type version, const mac_cell_sys_info_config& req);
+
   srslog::basic_logger& logger;
 
   /// SIB1 message.
@@ -50,7 +53,8 @@ private:
   /// SI message handlers.
   std::array<std::unique_ptr<message_handler>, MAX_SI_MESSAGES> si_encoders;
 
-  si_change_result last_resp;
+  /// Counter of SI PDU updates.
+  si_version_type next_version = 0;
 };
 
 } // namespace srsran
