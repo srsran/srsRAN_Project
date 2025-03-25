@@ -63,8 +63,6 @@ struct ue_retx_ul_grant_request {
   ul_harq_process_handle h_ul;
   /// Current UL CRB occupation.
   crb_bitmap& used_ul_crbs;
-  /// Number of HARQ-ACK bits pending for the given UE in the given slot.
-  unsigned uci_harq_ack_bits;
 };
 
 /// \brief Status of a UE grant allocation, and action for the scheduler policy to follow afterwards.

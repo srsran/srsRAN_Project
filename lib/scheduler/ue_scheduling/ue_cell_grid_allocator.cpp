@@ -415,9 +415,12 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_newtx_ul_grant_request& reque
 
 expected<crb_interval, alloc_status> ue_cell_grid_allocator::allocate_ul_grant(const ue_retx_ul_grant_request& request)
 {
+  unsigned pending_uci_harq_bits =
+      uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(request.pusch_slot, request.user.crnti());
+
   // Select PDCCH searchSpace and PUSCH time-domain resource config.
   auto sched_ctxt = sched_helper::get_retx_ul_sched_context(
-      request.user, cell_alloc[0].slot, request.pusch_slot, request.uci_harq_ack_bits, request.h_ul);
+      request.user, cell_alloc[0].slot, request.pusch_slot, pending_uci_harq_bits, request.h_ul);
   if (not sched_ctxt) {
     return make_unexpected(alloc_status::skip_ue);
   }
