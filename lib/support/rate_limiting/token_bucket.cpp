@@ -29,7 +29,7 @@ token_bucket::token_bucket(token_bucket_config cfg) : max_tokens(cfg.max_tokens)
   refill_timer.run();
 }
 
-bool token_bucket::consume(const uint32_t tokens)
+bool token_bucket::consume(uint32_t tokens)
 {
   if (SRSRAN_UNLIKELY(stopped)) {
     return false;
@@ -44,7 +44,7 @@ bool token_bucket::consume(const uint32_t tokens)
   return true;
 }
 
-void token_bucket::refill(const uint32_t tokens)
+void token_bucket::refill(uint32_t tokens)
 {
   if (stopped) {
     return;
@@ -57,5 +57,8 @@ void token_bucket::refill(const uint32_t tokens)
 
 void token_bucket::stop()
 {
-  refill_timer.stop();
+  if (not stopped) {
+    refill_timer.stop();
+    stopped = true;
+  }
 }
