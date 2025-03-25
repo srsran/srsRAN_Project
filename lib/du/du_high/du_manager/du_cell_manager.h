@@ -16,6 +16,24 @@
 namespace srsran {
 namespace srs_du {
 
+struct du_cell_param_config_request;
+
+/// Cached packed System Information being currently sent by the cell.
+struct du_cell_packed_sys_info {
+  byte_buffer              sib1;
+  std::vector<byte_buffer> si_messages;
+};
+
+/// Current DU cell context.
+struct du_cell_context {
+  /// Current configuration.
+  du_cell_config cfg;
+  /// System Information being signalled by the cell.
+  du_cell_packed_sys_info packed_sys_info;
+  /// Whether the cell is active.
+  bool active = false;
+};
+
 class du_cell_manager
 {
 public:
@@ -25,6 +43,7 @@ public:
 
   bool has_cell(du_cell_index_t cell_index) const { return cell_index < cells.size(); }
 
+  /// Determine whether cell is activated.
   bool is_cell_active(du_cell_index_t cell_index) const
   {
     assert_cell_exists(cell_index);
@@ -48,6 +67,15 @@ public:
     return cells[cell_index]->cfg;
   }
 
+  /// Handle request to update a cell configuration.
+  bool handle_cell_reconf_request(const du_cell_param_config_request& req);
+
+  const du_cell_packed_sys_info& get_packed_sys_info(du_cell_index_t cell_index) const
+  {
+    assert_cell_exists(cell_index);
+    return cells[cell_index]->packed_sys_info;
+  }
+
   async_task<bool> start(du_cell_index_t cell_index);
 
   async_task<void> stop(du_cell_index_t cell_index);
@@ -55,11 +83,6 @@ public:
   async_task<void> stop();
 
 private:
-  struct cell_t {
-    bool           active = false;
-    du_cell_config cfg;
-  };
-
   void assert_cell_exists(du_cell_index_t cell_index) const
   {
     srsran_assert(has_cell(cell_index), "cell_index={} does not exist", fmt::underlying(cell_index));
@@ -68,7 +91,7 @@ private:
   const du_manager_params& cfg;
   srslog::basic_logger&    logger;
 
-  std::vector<std::unique_ptr<cell_t>> cells;
+  std::vector<std::unique_ptr<du_cell_context>> cells;
 };
 
 } // namespace srs_du

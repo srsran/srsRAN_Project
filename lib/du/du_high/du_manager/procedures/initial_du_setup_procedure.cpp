@@ -9,6 +9,7 @@
  */
 
 #include "initial_du_setup_procedure.h"
+#include "../converters/asn1_sys_info_packer.h"
 #include "../converters/f1ap_configuration_helpers.h"
 #include "../converters/scheduler_configuration_helpers.h"
 #include "../du_cell_manager.h"
@@ -56,7 +57,7 @@ void initial_du_setup_procedure::configure_du_cells()
     du_cell_index_t       cell_index = to_du_cell_index(idx);
     const du_cell_config& du_cfg     = cell_mng.get_cell_cfg(cell_index);
 
-    std::vector<byte_buffer>  bcch_msgs = make_asn1_rrc_cell_bcch_dl_sch_msgs(du_cfg);
+    std::vector<byte_buffer>  bcch_msgs = asn1_packer::pack_all_bcch_dl_sch_msgs(du_cfg);
     std::vector<units::bytes> bcch_msg_payload_lens(bcch_msgs.size());
     for (unsigned i = 0; i < bcch_msgs.size(); ++i) {
       bcch_msg_payload_lens[i] = units::bytes(bcch_msgs[i].length());

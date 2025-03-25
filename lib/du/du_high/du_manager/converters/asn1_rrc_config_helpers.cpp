@@ -20,11 +20,6 @@ using namespace asn1::rrc_nr;
 
 namespace {
 
-asn1::rrc_nr::subcarrier_spacing_e get_asn1_scs(subcarrier_spacing scs)
-{
-  return asn1::rrc_nr::subcarrier_spacing_e{static_cast<asn1::rrc_nr::subcarrier_spacing_opts::options>(scs)};
-}
-
 /// Helper type used to generate ASN.1 diff
 struct rlc_bearer_config {
   lcid_t                  lcid;

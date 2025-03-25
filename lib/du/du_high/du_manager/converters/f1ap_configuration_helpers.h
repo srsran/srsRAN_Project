@@ -18,25 +18,6 @@
 namespace srsran {
 namespace srs_du {
 
-/// \brief Derive packed cell MIB from DU cell configuration.
-/// \param[in] du_cfg DU Cell Configuration.
-/// \return byte buffer with packed cell MIB.
-byte_buffer make_asn1_rrc_cell_mib_buffer(const du_cell_config& du_cfg);
-
-/// \brief Derive packed cell SIB1 from DU cell configuration.
-/// \param[in] du_cfg DU Cell Configuration.
-/// \param[out] json_string String where the RRC ASN.1 SIB1 is stored in json format. If nullptr, no conversion takes
-/// place.
-/// \return byte buffer with packed cell SIB1.
-byte_buffer make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg, std::string* js_str = nullptr);
-
-byte_buffer make_asn1_rrc_cell_sib19_buffer(const sib19_info& sib19_params, std::string* js_str = nullptr);
-
-/// \brief Generate packed cell BCCH-DL-SCH messages (SIB1 + SI messages) from DU cell configuration.
-/// \param[in] du_cfg DU Cell Configuration.
-/// \return byte buffer with packed cell BCCH-DL-SCH message.
-std::vector<byte_buffer> make_asn1_rrc_cell_bcch_dl_sch_msgs(const du_cell_config& du_cfg);
-
 /// \brief Derive packed cell measurementTimingConfiguration from DU cell configuration.
 /// \param[in] du_cfg DU Cell Configuration.
 /// \return byte buffer with packed cell measurementTimingConfiguration as per TS38.331.

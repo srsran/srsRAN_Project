@@ -9,7 +9,9 @@
  */
 
 #include "du_cell_manager.h"
+#include "converters/asn1_sys_info_packer.h"
 #include "srsran/du/du_cell_config_validation.h"
+#include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -28,10 +30,43 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
     report_error("ERROR: Invalid DU Cell Configuration. Cause: {}.\n", ret.error());
   }
 
+  // Generate system information.
+  std::vector<byte_buffer> bcch_msgs = asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg);
+  du_cell_packed_sys_info  si_info;
+  si_info.sib1 = std::move(bcch_msgs[0]);
+  bcch_msgs.erase(bcch_msgs.begin());
+  si_info.si_messages = std::move(bcch_msgs);
+
   // Save config.
-  cells.emplace_back(std::make_unique<cell_t>());
-  cells.back()->cfg    = cell_cfg;
-  cells.back()->active = false;
+  cells.emplace_back(std::make_unique<du_cell_context>());
+  cells.back()->cfg             = cell_cfg;
+  cells.back()->active          = false;
+  cells.back()->packed_sys_info = std::move(si_info);
+}
+
+bool du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& req)
+{
+  du_cell_index_t cell_index = get_cell_index(req.nr_cgi);
+  if (cell_index == INVALID_DU_CELL_INDEX) {
+    logger.warning("Discarding cell {} changes. Cause: No cell with the provided CGI was found", req.nr_cgi.nci);
+    return false;
+  }
+
+  du_cell_config& cell_cfg     = cells[cell_index]->cfg;
+  bool            sib1_updated = false;
+
+  if (req.ssb_pwr_mod.has_value() and req.ssb_pwr_mod.value() != cell_cfg.ssb_cfg.ssb_block_power) {
+    // SSB power changed.
+    cell_cfg.ssb_cfg.ssb_block_power = req.ssb_pwr_mod.value();
+    sib1_updated                     = true;
+  }
+
+  if (sib1_updated) {
+    // Need to re-pack SIB1.
+    cells[cell_index]->packed_sys_info.sib1 = asn1_packer::pack_sib1(cell_cfg);
+  }
+
+  return true;
 }
 
 async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)

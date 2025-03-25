@@ -47,7 +47,7 @@ inline mac_cell_creation_request make_default_mac_cell_config(const cell_config_
   for (unsigned i = 0; i != 100; ++i) {
     report_fatal_error_if_not(dummy_sib1.append(i), "Failed to append to create dummy SIB1");
   }
-  req.bcch_dl_sch_payloads.push_back(std::move(dummy_sib1));
+  req.sys_info.sib1 = std::move(dummy_sib1);
   return req;
 }
 

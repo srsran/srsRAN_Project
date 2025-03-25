@@ -52,25 +52,15 @@ void du_param_config_procedure::operator()(coro_context<async_task<du_param_conf
 bool du_param_config_procedure::handle_cell_config_updates()
 {
   for (const du_cell_param_config_request& cell_to_update : request.cells) {
-    du_cell_index_t cell_index = du_cells.get_cell_index(cell_to_update.nr_cgi);
-    if (cell_index == INVALID_DU_CELL_INDEX) {
-      logger.warning("Discarding cell {} changes. Cause: No cell with the provided CGI was found",
-                     cell_to_update.nr_cgi.nci);
-      return false;
+    if (not du_cells.handle_cell_reconf_request(cell_to_update)) {
+      continue;
     }
 
-    du_cell_config& cell_cfg = du_cells.get_cell_cfg(cell_index);
-    if (cell_to_update.ssb_pwr_mod.has_value() and
-        cell_to_update.ssb_pwr_mod.value() != cell_cfg.ssb_cfg.ssb_block_power) {
-      // SSB power changed.
-      cell_cfg.ssb_cfg.ssb_block_power = cell_to_update.ssb_pwr_mod.value();
-
-      // Mark that cell was changed.
-      changed_cells.push_back(cell_index);
-    }
+    // Mark that cell was changed.
+    changed_cells.push_back(du_cells.get_cell_index(cell_to_update.nr_cgi));
   }
 
-  return true;
+  return not changed_cells.empty();
 }
 
 async_task<gnbdu_config_update_response> du_param_config_procedure::handle_f1_gnbdu_config_update()
@@ -90,16 +80,12 @@ async_task<gnbdu_config_update_response> du_param_config_procedure::handle_f1_gn
 
 async_task<mac_cell_reconfig_response> du_param_config_procedure::handle_mac_cell_update(unsigned changed_cell_idx)
 {
-  du_cell_index_t       cell_index = changed_cells[changed_cell_idx];
-  const du_cell_config& cell_cfg   = du_cells.get_cell_cfg(cell_index);
+  du_cell_index_t cell_index = changed_cells[changed_cell_idx];
 
   mac_cell_reconfig_request req;
 
-  // Pack new system information.
-  std::vector<byte_buffer> bcch_msgs = make_asn1_rrc_cell_bcch_dl_sch_msgs(cell_cfg);
-
   // Note: For now only SIB1 changes are supported.
-  req.new_sib1_buffer = std::move(bcch_msgs[0]);
+  req.new_sib1_buffer = du_cells.get_packed_sys_info(cell_index).sib1.copy();
 
   return du_params.mac.cell_mng.get_cell_controller(cell_index).reconfigure(req);
 }

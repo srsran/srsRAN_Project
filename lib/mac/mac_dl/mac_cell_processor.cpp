@@ -62,11 +62,11 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
 {
   // Update broadcast System Information.
   si_change_request si_req{};
-  si_req.sib1 = cell_cfg.bcch_dl_sch_payloads[0].copy();
-  for (unsigned i = 1; i < cell_cfg.bcch_dl_sch_payloads.size(); i++) {
-    si_req.si_messages_to_addmod.emplace_back(i - 1, cell_cfg.bcch_dl_sch_payloads[i].copy());
+  si_req.sib1 = cell_cfg.sys_info.sib1.copy();
+  for (unsigned i = 1; i < cell_cfg.sys_info.si_messages.size(); i++) {
+    si_req.si_messages_to_addmod.emplace_back(i - 1, cell_cfg.sys_info.si_messages[i].copy());
   }
-  si_change_result si_resp = bcch_assembler.handle_si_change_request(si_req);
+  auto si_resp = sib_assembler.handle_si_change_request(si_req);
   sched.handle_si_change_indication(cell_cfg.cell_index, si_resp);
 }
 
@@ -137,7 +137,7 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
         // Forward new SIB1 PDU to SIB assembler.
         si_change_request si_req{};
         si_req.sib1              = request.new_sib1_buffer.copy();
-        si_change_result si_resp = bcch_assembler.handle_si_change_request(si_req);
+        si_change_result si_resp = sib_assembler.handle_si_change_request(si_req);
 
         // Notify scheduler of SIB1 update.
         sched.handle_si_change_indication(cell_cfg.cell_index, si_resp);
@@ -425,7 +425,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   // Assemble scheduled BCCH-DL-SCH message containing SIBs' payload.
   for (const sib_information& sib_info : dl_res.bc.sibs) {
     srsran_assert(not data_res.si_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
-    data_res.si_pdus.emplace_back(0, shared_transport_block(bcch_assembler.encode_si_pdu(sl_tx, sib_info)));
+    data_res.si_pdus.emplace_back(0, shared_transport_block(sib_assembler.encode_si_pdu(sl_tx, sib_info)));
   }
 
   // Assemble scheduled RARs' subheaders and payloads.
