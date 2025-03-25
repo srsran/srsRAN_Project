@@ -234,21 +234,21 @@ struct formatter<srsran::pusch_processor_result_control> {
   {
     if ((!result.harq_ack.payload.empty())) {
       if (result.harq_ack.status == srsran::uci_status::valid) {
-        helper.format_always(ctx, "ack={:b}", result.harq_ack.payload);
+        helper.format_always(ctx, "ack={:br}", result.harq_ack.payload);
       } else {
         helper.format_always(ctx, "ack={:#}", srsran::detail::uci_bad_payload(result.harq_ack.payload.size()).get());
       }
     }
     if ((!result.csi_part1.payload.empty())) {
       if (result.csi_part1.status == srsran::uci_status::valid) {
-        helper.format_always(ctx, "csi1={:b}", result.csi_part1.payload);
+        helper.format_always(ctx, "csi1={:br}", result.csi_part1.payload);
       } else {
         helper.format_always(ctx, "csi1={:#}", srsran::detail::uci_bad_payload(result.csi_part1.payload.size()).get());
       }
     }
     if ((!result.csi_part2.payload.empty())) {
       if (result.csi_part2.status == srsran::uci_status::valid) {
-        helper.format_always(ctx, "csi2={:b}", result.csi_part2.payload);
+        helper.format_always(ctx, "csi2={:br}", result.csi_part2.payload);
       } else {
         helper.format_always(ctx, "csi2={:#}", srsran::detail::uci_bad_payload(result.csi_part2.payload.size()).get());
       }
