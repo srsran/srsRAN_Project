@@ -56,10 +56,7 @@ public:
   /// Check if the cell is running.
   bool is_running() const { return not stopped.load(std::memory_order_acquire); }
 
-  void handle_si_update_request(const si_scheduling_update_request& msg)
-  {
-    sib1_sch.handle_sib1_update_indication(msg.version, msg.sib1_len);
-  }
+  void handle_si_update_request(const si_scheduling_update_request& msg);
 
   void handle_rach_indication(const rach_indication_message& msg) { ra_sch.handle_rach_indication(msg); }
 

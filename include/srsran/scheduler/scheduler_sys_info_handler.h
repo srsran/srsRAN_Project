@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsran/ran/du_types.h"
+#include "srsran/scheduler/config/si_scheduling_config.h"
 #include "srsran/support/units.h"
 
 namespace srsran {
@@ -18,17 +19,16 @@ namespace srsran {
 /// Identifier for the version of the system information scheduling information.
 using si_version_type = unsigned;
 
-/// Identifier of a SI message.
-using si_message_index_type = unsigned;
-
 /// Notification that the SIB1 PDU content was updated.
 struct si_scheduling_update_request {
   /// Cell index specific to the update of the SI scheduling.
   du_cell_index_t cell_index;
-  /// SI version number. Monotocally increasing with each update.
+  /// SI epoch counter, monotonically increasing with each update.
   si_version_type version;
   /// SIB1 payload length.
   units::bytes sib1_len;
+  /// Configuration of SI message scheduling.
+  si_scheduling_config si_sched_cfg;
 };
 
 /// Interface used to notify new SIB1 or SI message updates to the scheduler.

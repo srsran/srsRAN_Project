@@ -43,6 +43,14 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
       msg.cell_index, &pdcch_sch, &pucch_alloc, &uci_alloc, &res_grid, &metrics, &event_logger});
 }
 
+void cell_scheduler::handle_si_update_request(const si_scheduling_update_request& msg)
+{
+  // Update SIB1 scheduling updates.
+  sib1_sch.handle_sib1_update_indication(msg.version, msg.sib1_len);
+
+  // TODO: Handle SI message updates.
+}
+
 void cell_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
   bool has_msg3_crcs = std::any_of(
@@ -97,7 +105,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
     csi_sch.run_slot(res_grid[0]);
 
     // > Schedule SIB1 and SI-message signalling.
-    sib1_sch.run_slot(res_grid, sl_tx);
+    sib1_sch.run_slot(res_grid);
     si_msg_sch.run_slot(res_grid[0]);
 
     // > Schedule PUCCH guardbands.

@@ -11,11 +11,13 @@
 #pragma once
 
 #include "srsran/support/units.h"
+#include <optional>
+#include <vector>
 
 namespace srsran {
 
 /// \brief Maximum number of SI messages that can be scheduled as per TS 38.331, "maxSI-Message".
-const size_t MAX_SI_MESSAGES = 32;
+constexpr size_t MAX_SI_MESSAGES = 32U;
 
 /// Scheduling parameters of the SI message.
 struct si_message_scheduling_config {

@@ -16,7 +16,6 @@
 #include "srsran/ran/meas_gap_config.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/phy_time_unit.h"
-#include "srsran/ran/qos/five_qi_qos_mapping.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/rrm.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"

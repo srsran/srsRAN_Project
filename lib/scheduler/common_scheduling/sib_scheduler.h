@@ -37,8 +37,7 @@ public:
   /// in the latest available slot of the grid.
   ///
   /// \param[out] res_alloc  Cell resource grid.
-  /// \param[in]  sl_point   Slot point carrying information about current slot.
-  void run_slot(cell_resource_allocator& res_alloc, const slot_point& sl_point);
+  void run_slot(cell_resource_allocator& res_alloc);
 
   /// \brief Update the SIB1 PDU version.
   void handle_sib1_update_indication(unsigned version, units::bytes sib1_payload_size);

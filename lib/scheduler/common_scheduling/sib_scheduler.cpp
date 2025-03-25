@@ -61,9 +61,9 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
   coreset0_bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
 };
 
-void sib1_scheduler::run_slot(cell_resource_allocator& res_alloc, const slot_point& sl_point)
+void sib1_scheduler::run_slot(cell_resource_allocator& res_alloc)
 {
-  if (first_run_slot) {
+  if (SRSRAN_UNLIKELY(first_run_slot)) {
     // First call to run_slot. Schedule SIB1s when relevant across cell resource grid.
     for (unsigned i = 0; i < res_alloc.max_dl_slot_alloc_delay + 1; ++i) {
       schedule_sib1(res_alloc[i]);

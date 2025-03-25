@@ -326,7 +326,7 @@ void test_sib1_scheduler(subcarrier_spacing                         scs_common,
   const size_t test_length_slots = 1000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
     // Run SIB1 scheduler.
-    sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+    sib1_sched.run_slot(t_bench.res_grid);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
@@ -389,7 +389,7 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
   const size_t test_length_slots = 10000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
     // Run SIB1 scheduler.
-    sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+    sib1_sched.run_slot(t_bench.res_grid);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
@@ -448,7 +448,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
     ssb_sched.schedule_ssb(t_bench.get_slot_res_grid());
 
     // Run SIB1 scheduler.
-    sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+    sib1_sched.run_slot(t_bench.res_grid);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
@@ -712,7 +712,7 @@ protected:
     const size_t test_length_slots = 10000;
     for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
       // Run SIB1 scheduler.
-      sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+      sib1_sched.run_slot(t_bench.res_grid);
 
       auto& res_slot_grid = t_bench.get_slot_res_grid();
 
