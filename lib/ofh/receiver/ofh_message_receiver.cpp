@@ -87,14 +87,10 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
     logger.warning("Sector#{}: potentially lost '{}' messages sent by the RU", sector_id, nof_skipped_seq_id);
   }
 
-  expected<slot_symbol_point, std::string> slot_point =
-      uplane_peeker::peek_slot_symbol_point(ofh_pdu, nof_symbols, scs);
+  std::optional<slot_symbol_point> slot_point = uplane_peeker::peek_slot_symbol_point(ofh_pdu, nof_symbols, scs);
   if (SRSRAN_UNLIKELY(!slot_point)) {
-    logger.info(
-        "Sector#{}: dropped received Open Fronthaul User-Plane packet as the slot could not be peeked with error: {}",
-        sector_id,
-        slot_point.error());
-
+    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane packet as the slot could not be peeked",
+                sector_id);
     return;
   }
 
@@ -102,13 +98,10 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   window_checker.update_rx_window_statistics(*slot_point);
 
   // Peek the filter index and check that it is valid.
-  expected<filter_index_type, const char*> filter_type = uplane_peeker::peek_filter_index(ofh_pdu);
+  std::optional<filter_index_type> filter_type = uplane_peeker::peek_filter_index(ofh_pdu);
   if (SRSRAN_UNLIKELY(!filter_type)) {
-    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane message as the filter index could not be peeked "
-                "with error: {}",
-                sector_id,
-                filter_type.error());
-
+    logger.info("Sector#{}: dropped received Open Fronthaul User-Plane message as the filter index could not be peeked",
+                sector_id);
     return;
   }
 

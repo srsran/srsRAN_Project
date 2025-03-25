@@ -10,28 +10,30 @@
 
 #pragma once
 
-#include "srsran/adt/expected.h"
 #include "srsran/adt/span.h"
 #include "srsran/ofh/serdes/ofh_uplane_message_decoder_properties.h"
 #include "srsran/ofh/timing/slot_symbol_point.h"
+#include <optional>
 
 namespace srsran {
 namespace ofh {
 namespace uplane_peeker {
+
 /// Peeks and returns the filter index of the given message.
 ///
 /// \param[in] message Message to peek.
-/// \return Message filter index or an error string that describes the reason it cannot be peeked.
-expected<filter_index_type, const char*> peek_filter_index(span<const uint8_t> message);
+/// \return Message filter index or nullopt if the value cannot be peeked.
+std::optional<filter_index_type> peek_filter_index(span<const uint8_t> message);
 
 /// Peeks and returns the slot symbol point of the given message.
 ///
 /// \param[in] message Message to peek.
 /// \param[in] nof_symbols Number of symbols.
 /// \param[in] scs Subcarrier spacing.
-/// \return Expected slot symbol point or an error string that describes the reason it cannot be peeked.
-expected<slot_symbol_point, std::string>
+/// \return Expected slot symbol point or nullopt if the value cannot be peeked
+std::optional<slot_symbol_point>
 peek_slot_symbol_point(span<const uint8_t> message, unsigned nof_symbols, subcarrier_spacing scs);
+
 } // namespace uplane_peeker
 
 /// Open Fronthaul User-Plane message decoder interface.
