@@ -314,8 +314,8 @@ int main(int argc, char** argv)
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
   // Create app-level resource usage service and metrics.
-  auto app_resource_usage_service =
-      app_services::build_app_resource_usage_service(metrics_notifier_forwarder, du_cfg.metrics_cfg.common_metrics_cfg);
+  auto app_resource_usage_service = app_services::build_app_resource_usage_service(
+      metrics_notifier_forwarder, du_cfg.metrics_cfg.common_metrics_cfg, srslog::fetch_basic_logger("GNB"));
 
   std::vector<app_services::metrics_config> app_metrics = std::move(app_resource_usage_service.metrics);
 

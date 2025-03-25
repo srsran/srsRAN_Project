@@ -105,14 +105,14 @@ energy_snapshot app_resource_usage::energy_usage_now()
 
 app_resource_usage_service
 app_services::build_app_resource_usage_service(app_services::metrics_notifier&    metrics_notifier,
-                                               const app_helpers::metrics_config& metrics_cfg)
+                                               const app_helpers::metrics_config& metrics_cfg,
+                                               srslog::basic_logger&              logger)
 {
   app_resource_usage_service app_res_usage;
   if (!metrics_cfg.enabled()) {
     return app_res_usage;
   }
-  app_res_usage.service =
-      std::make_unique<app_resource_usage>(build_energy_consumption_reader(srslog::fetch_basic_logger("METRICS")));
+  app_res_usage.service = std::make_unique<app_resource_usage>(build_energy_consumption_reader(logger));
 
   app_services::metrics_config& app_res_usage_metrics = app_res_usage.metrics.emplace_back();
   app_res_usage_metrics.metric_name                   = resource_usage_metrics_properties_impl().name();

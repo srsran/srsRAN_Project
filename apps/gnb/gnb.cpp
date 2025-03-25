@@ -368,7 +368,7 @@ int main(int argc, char** argv)
 
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, gnb_cfg.metrics_cfg.common_metrics_cfg);
+      metrics_notifier_forwarder, gnb_cfg.metrics_cfg.common_metrics_cfg, gnb_logger);
 
   // Create service for periodically polling app resource usage.
   auto app_metrics_timer = app_timers.create_unique_timer(*workers.metrics_exec);

@@ -64,7 +64,8 @@ struct app_resource_usage_service {
 
 /// Builds application resource usage service and related metrics.
 app_resource_usage_service build_app_resource_usage_service(app_services::metrics_notifier&    metrics_notifier,
-                                                            const app_helpers::metrics_config& metrics_cfg);
+                                                            const app_helpers::metrics_config& metrics_cfg,
+                                                            srslog::basic_logger&              logger);
 
 } // namespace app_services
 } // namespace srsran

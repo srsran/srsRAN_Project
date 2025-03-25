@@ -359,8 +359,8 @@ int main(int argc, char** argv)
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
   // Create app-level resource usage service and metrics.
-  auto app_resource_usage_service =
-      app_services::build_app_resource_usage_service(metrics_notifier_forwarder, cu_cfg.metrics_cfg.common_metrics_cfg);
+  auto app_resource_usage_service = app_services::build_app_resource_usage_service(
+      metrics_notifier_forwarder, cu_cfg.metrics_cfg.common_metrics_cfg, cu_logger);
 
   // Create service for periodically polling app resource usage.
   auto app_metrics_timer = app_timers.create_unique_timer(*workers.metrics_exec);
