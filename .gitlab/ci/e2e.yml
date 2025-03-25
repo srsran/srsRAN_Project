@@ -621,7 +621,7 @@ viavi debug:
 viavi rtsan:
   extends: .viavi
   variables:
-    KEYWORDS: "tdd and 6u3d"
+    KEYWORDS: "rtsan"
   when: manual
   allow_failure: true
   needs:
