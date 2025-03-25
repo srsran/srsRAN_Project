@@ -28,6 +28,7 @@ tests:
     # Configuration
     gnb_extra_config: &base_config
       metrics:
+        enable_ru: true
         rlc_report_period: 1000
         enable_log_metrics: true
       cell_cfg:
