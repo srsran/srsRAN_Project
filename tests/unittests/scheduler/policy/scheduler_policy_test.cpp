@@ -367,15 +367,16 @@ TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_dl_retx_first_than_ue
   if (pucch.crnti == u1.crnti) {
     ue_with_retx = u1.ue_index;
     for (unsigned harq_bit_idx = 0; harq_bit_idx < nof_ack_bits; ++harq_bit_idx) {
-      u1.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::ack, harq_bit_idx, 100);
+      u1.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::nack, harq_bit_idx, 100);
     }
   } else if (pucch.crnti == u2.crnti) {
     ue_with_retx = u2.ue_index;
     for (unsigned harq_bit_idx = 0; harq_bit_idx < nof_ack_bits; ++harq_bit_idx) {
-      u2.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::ack, harq_bit_idx, 100);
+      u2.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::nack, harq_bit_idx, 100);
     }
   }
 
+  run_slot();
   pdsch_scheduled = run_until([this]() { return not this->res_grid[0].result.dl.ue_grants.empty(); });
   ASSERT_TRUE(pdsch_scheduled);
   ASSERT_EQ(this->res_grid[0].result.dl.ue_grants[0].context.ue_index, ue_with_retx);
