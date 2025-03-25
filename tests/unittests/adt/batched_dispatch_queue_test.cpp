@@ -8,8 +8,8 @@
  *
  */
 
-#include "../../../include/srsran/adt/batched_dispatch_queue.h"
-#include "../../../include/srsran/support/executors/manual_task_worker.h"
+#include "srsran/adt/batched_dispatch_queue.h"
+#include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

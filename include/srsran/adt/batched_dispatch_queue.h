@@ -19,8 +19,10 @@
 
 namespace srsran {
 
-/// Queue that batches all the pushed values and forwards them in a batch to the wrapped executor using a callback.
+/// Queue that batches all the pushed values and forwards them in a batch to a callable dispatched via the provided
+/// task executor.
 /// \remark This queue drops enqueued values on destruction.
+/// \remark stop() and dtor needs to be called from the same execution context as the consumer side.
 template <typename ValueType>
 class batched_dispatch_queue
 {
