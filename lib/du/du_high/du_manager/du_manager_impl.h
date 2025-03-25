@@ -69,6 +69,12 @@ public:
 
   du_param_config_response handle_operator_config_request(const du_param_config_request& req) override;
 
+  std::optional<std::pair<slot_point, time_point>> get_slot_time_mapping() const override;
+
+  std::optional<time_point> get_time_point(slot_point slot) const override;
+
+  std::optional<slot_point> get_slot_point(time_point time) const override;
+
   f1ap_du_positioning_handler& get_positioning_handler() override { return *positioning_handler; }
 
 private:

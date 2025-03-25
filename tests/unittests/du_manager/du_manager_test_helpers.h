@@ -261,9 +261,12 @@ public:
   class mac_cell_dummy_time_mapper final : public mac_cell_time_mapper
   {
   public:
-    std::optional<mac_cell_slot_time_info> get_last_mapping() const override { return std::nullopt; }
-    std::optional<time_point>              get_time_point(slot_point slot) const override { return std::nullopt; }
-    std::optional<slot_point>              get_slot_point(time_point time) const override { return std::nullopt; }
+    std::optional<mac_cell_slot_time_info> get_last_mapping() const override
+    {
+      return mac_cell_slot_time_info{slot_point(1, 1), std::chrono::system_clock::now()};
+    }
+    std::optional<time_point> get_time_point(slot_point slot) const override { return std::nullopt; }
+    std::optional<slot_point> get_slot_point(time_point time) const override { return std::nullopt; }
   };
 
   mac_cell_dummy             mac_cell;

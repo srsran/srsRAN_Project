@@ -826,6 +826,10 @@ public:
   {
     return srs_du::du_param_config_response{};
   }
+
+  std::optional<std::pair<slot_point, time_point>> get_slot_time_mapping() const override { return std::nullopt; }
+  std::optional<time_point> get_time_point(slot_point slot) const override { return std::nullopt; }
+  std::optional<slot_point> get_slot_point(time_point time) const override { return std::nullopt; }
 };
 
 /// Fixture class for E2AP
