@@ -28,9 +28,10 @@ tests:
     # Configuration
     gnb_extra_config: &base_config
       metrics:
-        enable_ru: true
-        rlc_report_period: 1000
-        enable_log_metrics: true
+        enable_log: true
+        layers:
+          enable_rlc: true
+          enable_ru: true
       cell_cfg:
         pusch:
           max_puschs_per_slot: 2
@@ -402,10 +403,13 @@ tests:
       log:
         all_level: error
       metrics:
-        cu_up_statistics_report_period: 10
-        pdcp_report_period: 10000
-        rlc_report_period: 10000
-        sched_report_period: 10000
+        periodicity:
+          cu_up_report_period: 10000
+          du_report_period: 10000
+        layers:
+          enable_rlc: true
+          enable_ru: true
+          enable_pdcp: true
       cell_cfg:
         pusch:
           max_puschs_per_slot: 2
@@ -430,7 +434,7 @@ tests:
         all_level: none
         lib_level: none
       metrics:
-        enable_log_metrics: false      
+        enable_log: false
       cell_cfg:
         pusch:
           max_puschs_per_slot: 2
