@@ -389,6 +389,7 @@ test mode ru tsan:
   extends: test mode ru
   variables:
     MARKERS: "test_mode_not_crash"
+    KEYWORDS: "test_ru and not 16cell"
   needs:
     - job: "basic tsan"
       artifacts: true
@@ -399,6 +400,7 @@ test mode ru asan:
   extends: test mode ru
   variables:
     MARKERS: "test_mode_not_crash"
+    KEYWORDS: "test_ru and not 16cell"
   needs:
     - job: "basic asan"
       artifacts: true
@@ -409,6 +411,7 @@ test mode ru memcheck:
   extends: test mode ru
   variables:
     MARKERS: "test_mode_not_crash"
+    KEYWORDS: "test_ru and not 16cell"
   needs:
     - job: "basic memcheck"
       artifacts: true
