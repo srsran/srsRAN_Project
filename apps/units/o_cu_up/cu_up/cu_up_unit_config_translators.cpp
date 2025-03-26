@@ -23,9 +23,9 @@ srs_cu_up::cu_up_config srsran::generate_cu_up_config(const cu_up_unit_config& c
   out_cfg.cu_up_id   = config.gnb_cu_up_id;
   out_cfg.cu_up_name = fmt::format("srs_cu_up_{}", fmt::underlying(config.gnb_cu_up_id));
 
-  out_cfg.statistics_report_period     = std::chrono::seconds{config.metrics.cu_up_statistics_report_period};
-  out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.gtpu_reordering_timer_ms};
-  out_cfg.n3_cfg.warn_on_drop          = config.warn_on_drop;
+  out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.ngu_cfg.gtpu_cfg.gtpu_reordering_timer_ms};
+  out_cfg.n3_cfg.gtpu_rate_limiting_period = std::chrono::milliseconds{config.ngu_cfg.gtpu_cfg.rate_limiter_period_ms};
+  out_cfg.n3_cfg.warn_on_drop              = config.warn_on_drop;
 
   // E1AP-CU-UP config.
   out_cfg.e1ap.json_log_enabled = config.loggers.e1ap_json_enabled;
@@ -69,7 +69,7 @@ void srsran::fill_cu_up_worker_manager_config(worker_manager_config& config, con
 {
   config.cu_up_cfg = worker_manager_config::cu_up_config{};
 
-  config.cu_up_cfg.value().gtpu_queue_size = unit_cfg.gtpu_queue_size;
+  config.cu_up_cfg.value().gtpu_queue_size = unit_cfg.ngu_cfg.gtpu_cfg.gtpu_queue_size;
 
   auto& pcap_cfg = config.pcap_cfg;
   if (unit_cfg.pcap_cfg.e1ap.enabled) {

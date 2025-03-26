@@ -37,8 +37,9 @@ struct network_interface_config {
 };
 
 struct n3_interface_config {
-  int                       upf_port = GTPU_PORT;  // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
-  std::chrono::milliseconds gtpu_reordering_timer; // N3 reordering timer
+  int                       upf_port = GTPU_PORT;      // TS 29.281 Sec. 4.4.2.3 Encapsulated T-PDUs
+  std::chrono::milliseconds gtpu_reordering_timer;     // N3 reordering timer
+  std::chrono::milliseconds gtpu_rate_limiting_period; // N3 token bucket rate limiting period.
   bool                      warn_on_drop;
 };
 

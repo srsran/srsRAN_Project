@@ -34,9 +34,22 @@ static void configure_cli11_ngu_socket_args(CLI::App& app, cu_up_unit_ngu_socket
   configure_cli11_with_udp_config_schema(app, ngu_sock_params.udp_config);
 }
 
+static void configure_cli11_ngu_gtpu_args(CLI::App& app, cu_up_unit_ngu_gtpu_config& gtpu_cfg)
+{
+  add_option(app, "--queue_size", gtpu_cfg.gtpu_queue_size, "GTP-U queue size, in PDUs")->capture_default_str();
+  add_option(
+      app, "--reordering_timer", gtpu_cfg.gtpu_reordering_timer_ms, "GTP-U RX reordering timer (in milliseconds)");
+  add_option(
+      app, "--rate_limiter_period", gtpu_cfg.rate_limiter_period_ms, "GTP-U RX rate limiter period (in milliseconds)");
+}
+
 static void configure_cli11_ngu_args(CLI::App& app, cu_up_unit_ngu_config& ngu_params)
 {
   add_option(app, "--no_core", ngu_params.no_core, "Allow gNB to run without a core");
+
+  // Add GTP-U options
+  CLI::App* gtpu_subcmd = add_subcommand(app, "gtpu", "CU-UP NG-U GTP-U parameters")->configurable();
+  configure_cli11_ngu_gtpu_args(*gtpu_subcmd, ngu_params.gtpu_cfg);
 
   // Add option for multiple sockets, for usage with different slices, 5QIs or parallization.
   auto sock_lambda = [&ngu_params](const std::vector<std::string>& values) {
@@ -79,13 +92,6 @@ static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_p
   CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "CU-UP test mode parameters")->configurable();
   configure_cli11_test_mode_args(*test_mode_subcmd, cu_up_params.test_mode_cfg);
 
-  add_option(app, "--gtpu_queue_size", cu_up_params.gtpu_queue_size, "GTP-U queue size, in PDUs")
-      ->capture_default_str();
-  add_option(app,
-             "--gtpu_reordering_timer",
-             cu_up_params.gtpu_reordering_timer_ms,
-             "GTP-U RX reordering timer (in milliseconds)")
-      ->capture_default_str();
   add_option(app,
              "--warn_on_drop",
              cu_up_params.warn_on_drop,

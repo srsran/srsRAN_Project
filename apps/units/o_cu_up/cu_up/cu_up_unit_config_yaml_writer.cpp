@@ -16,6 +16,14 @@
 
 using namespace srsran;
 
+static void fill_cu_up_ngu_gtpu_section(YAML::Node& node, const cu_up_unit_ngu_gtpu_config& config)
+{
+  auto gtpu_node                     = node["gtpu"];
+  gtpu_node["gtpu_queue_size"]       = config.gtpu_queue_size;
+  gtpu_node["gtpu_reordering_timer"] = config.gtpu_reordering_timer_ms;
+  gtpu_node["rate_limiter_period"]   = config.rate_limiter_period_ms;
+}
+
 static void fill_cu_up_ngu_socket_entry(YAML::Node& node, const cu_up_unit_ngu_socket_config& config)
 {
   node["bind_addr"]      = config.bind_addr;
@@ -37,7 +45,7 @@ static void fill_cu_up_ngu_socket_section(YAML::Node node, const std::vector<cu_
 static void fill_cu_up_ngu_section(YAML::Node node, const cu_up_unit_ngu_config& config)
 {
   node["no_core"] = config.no_core;
-
+  fill_cu_up_ngu_gtpu_section(node, config.gtpu_cfg);
   fill_cu_up_ngu_socket_section(node, config.ngu_socket_cfg);
 }
 
@@ -69,8 +77,7 @@ static void fill_cu_up_log_section(YAML::Node node, const cu_up_unit_logger_conf
 
 static void fill_cu_up_section(YAML::Node node, const cu_up_unit_config& config)
 {
-  node["gtpu_queue_size"] = config.gtpu_queue_size;
-  node["warn_on_drop"]    = config.warn_on_drop;
+  node["warn_on_drop"] = config.warn_on_drop;
 }
 
 static void fill_cu_up_f1_qos_section(YAML::Node node, const cu_cp_unit_f1u_config& config)

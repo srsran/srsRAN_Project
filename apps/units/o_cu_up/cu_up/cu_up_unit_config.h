@@ -37,9 +37,17 @@ struct cu_up_unit_ngu_socket_config {
   udp_appconfig udp_config     = {};
 };
 
+/// GPTU parameters.
+struct cu_up_unit_ngu_gtpu_config {
+  unsigned gtpu_queue_size          = 2048;
+  unsigned gtpu_reordering_timer_ms = 0;
+  unsigned rate_limiter_period_ms   = 100;
+};
+
 struct cu_up_unit_ngu_config {
   bool                                      no_core = false;
   std::vector<cu_up_unit_ngu_socket_config> ngu_socket_cfg;
+  cu_up_unit_ngu_gtpu_config                gtpu_cfg;
 };
 
 /// F1-U configuration at CU_UP side
@@ -68,11 +76,9 @@ struct cu_up_unit_config {
   gnb_id_t gnb_id = {411, 22};
   /// CU-UP identifier.
   gnb_cu_up_id_t gnb_cu_up_id = gnb_cu_up_id_t::min;
-  /// GPTU parameters.
-  unsigned gtpu_queue_size          = 2048;
-  unsigned gtpu_reordering_timer_ms = 0;
-  bool     warn_on_drop             = false;
-  /// UPF configuration.
+  /// CU-UP warn if PDUs are dropped.
+  bool warn_on_drop = false;
+  /// NG-U configuration.
   cu_up_unit_ngu_config ngu_cfg;
   /// Metrics.
   cu_up_unit_metrics_config metrics;
