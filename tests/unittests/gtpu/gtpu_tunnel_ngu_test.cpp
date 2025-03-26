@@ -10,10 +10,12 @@
 
 #include "gtpu_test_shared.h"
 #include "lib/gtpu/gtpu_pdu.h"
+#include "lib/support/rate_limiting/token_bucket.h"
 #include "srsran/gtpu/gtpu_tunnel_common_rx.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu_tx.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/rate_limiting/token_bucket_config.h"
 #include <gtest/gtest.h>
 #include <sys/socket.h>
 
@@ -109,9 +111,16 @@ protected:
 TEST_F(gtpu_tunnel_ngu_test, entity_creation)
 {
   null_dlt_pcap dummy_pcap;
+
+  uint64_t            ue_ambr = 1000000000;
+  token_bucket_config ue_ambr_cfg =
+      generate_token_bucket_config(ue_ambr, ue_ambr, std::chrono::milliseconds(1), timers);
+  token_bucket ue_ambr_limiter(ue_ambr_cfg);
+
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
+  msg.cfg.rx.ue_ambr_limiter           = &ue_ambr_limiter;
   msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.gtpu_pcap                        = &dummy_pcap;
@@ -127,9 +136,16 @@ TEST_F(gtpu_tunnel_ngu_test, entity_creation)
 TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 {
   null_dlt_pcap dummy_pcap;
+
+  uint64_t            ue_ambr = 1000000000;
+  token_bucket_config ue_ambr_cfg =
+      generate_token_bucket_config(ue_ambr, ue_ambr, std::chrono::milliseconds(1), timers);
+  token_bucket ue_ambr_limiter(ue_ambr_cfg);
+
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x2};
+  msg.cfg.rx.ue_ambr_limiter           = &ue_ambr_limiter;
   msg.cfg.tx.peer_teid                 = gtpu_teid_t{0xbc1e3be9};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.gtpu_pcap                        = &dummy_pcap;
@@ -155,9 +171,16 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
 {
   null_dlt_pcap dummy_pcap;
+
+  uint64_t            ue_ambr = 1000000000;
+  token_bucket_config ue_ambr_cfg =
+      generate_token_bucket_config(ue_ambr, ue_ambr, std::chrono::milliseconds(1), timers);
+  token_bucket ue_ambr_limiter(ue_ambr_cfg);
+
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
+  msg.cfg.rx.ue_ambr_limiter           = &ue_ambr_limiter;
   msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.gtpu_pcap                        = &dummy_pcap;

@@ -11,8 +11,10 @@
 #include "lib/gtpu/gtpu_pdu.h"
 #include "lib/gtpu/gtpu_tunnel_ngu_rx_impl.h"
 #include "lib/gtpu/gtpu_tunnel_ngu_tx_impl.h"
+#include "lib/support/rate_limiting/token_bucket.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/rate_limiting/token_bucket_config.h"
 #include <gtest/gtest.h>
 #include <sys/socket.h>
 
@@ -152,6 +154,23 @@ protected:
     srslog::flush();
   }
 
+  void create_gtpu_rx_entity()
+  {
+    uint64_t            ue_ambr = 1000000000;
+    token_bucket_config ue_ambr_cfg =
+        generate_token_bucket_config(ue_ambr, ue_ambr, std::chrono::milliseconds(1), timers);
+    ue_ambr_limiter = std::make_unique<token_bucket>(ue_ambr_cfg);
+
+    // create Rx entity
+    gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
+    rx_cfg.local_teid                                        = local_teid;
+    rx_cfg.ue_ambr_limiter                                   = ue_ambr_limiter.get();
+    rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
+    rx_cfg.warn_on_drop                                      = false;
+
+    rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  }
+
   /// \brief Helper to advance the timers
   /// \param nof_tick Number of ticks to advance timers
   void tick_all(uint32_t nof_ticks)
@@ -177,36 +196,26 @@ protected:
   timer_factory      timers{timers_manager, worker};
 
   // GTP-U tunnel Rx entity
+  std::unique_ptr<token_bucket>            ue_ambr_limiter;
   std::unique_ptr<gtpu_tunnel_ngu_rx_impl> rx;
 
   // Surrounding tester
   gtpu_tunnel_rx_lower_dummy rx_lower = {};
+
+  gtpu_teid_t local_teid{0x1};
 };
 
 /// \brief Test correct creation of Rx entity
 TEST_F(gtpu_tunnel_ngu_rx_test, entity_creation)
 {
-  // create Rx entity
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_on_drop                                      = false;
-
-  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
-
+  create_gtpu_rx_entity();
   ASSERT_NE(rx, nullptr);
 };
 
 /// \brief Test reception of PDUs with no SN
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_no_sn)
 {
-  // create Rx entity
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_on_drop                                      = false;
-
-  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  create_gtpu_rx_entity();
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -214,7 +223,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_no_sn)
   for (unsigned i = 0; i < 3; i++) {
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x11));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, {});
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, {});
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -226,13 +235,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_no_sn)
 /// \brief Test in-order reception of PDUs
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_in_order)
 {
-  // create Rx entity
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_on_drop                                      = true;
-
-  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  create_gtpu_rx_entity();
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -240,7 +243,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_in_order)
   for (unsigned i = 0; i < 3; i++) {
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x11));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, i);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, i);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -252,13 +255,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_in_order)
 /// \brief Test out-of-order reception of PDUs
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
 {
-  // create Rx entity
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_on_drop                                      = true;
-
-  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  create_gtpu_rx_entity();
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -266,7 +263,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
   { // SN = 0
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x0));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 0);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 0);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -279,7 +276,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
   { // SN = 2
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x2));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 2);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 2);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -291,7 +288,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
   { // SN = 4
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x4));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 4);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 4);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -302,7 +299,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
   { // SN = 1
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x1));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 1);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 1);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -314,7 +311,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
   { // SN = 3
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x3));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 3);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 3);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -329,13 +326,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
 /// t-Reordering is stopped correctly
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
 {
-  // create Rx entity
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_on_drop                                      = true;
-
-  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  create_gtpu_rx_entity();
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -343,7 +334,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
   { // SN = 0
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x0));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 0);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 0);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -356,7 +347,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
   { // SN = 2
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x2));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 2);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 2);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -368,7 +359,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
   { // SN = 4
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x4));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 4);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 4);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -379,7 +370,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
   { // SN = 3
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x3));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 3);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 3);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -391,7 +382,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
   { // SN = 1
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x1));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 1);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 1);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -404,13 +395,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
 /// \brief Test t-Reordering expiration
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
 {
-  // create Rx entity
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_on_drop                                      = true;
-
-  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  create_gtpu_rx_entity();
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -418,7 +403,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
   { // SN = 0
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x0));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 0);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 0);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -431,7 +416,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
   { // SN = 2
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x2));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 2);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 2);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -442,7 +427,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
   { // SN = 4
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x4));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 4);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 4);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -463,7 +448,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
   { // SN = 1
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x1));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 1);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 1);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -477,13 +462,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
 /// t-Reordering expires, timer is not restarted.
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
 {
-  // create Rx entity
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_on_drop                                      = true;
-
-  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  create_gtpu_rx_entity();
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -491,7 +470,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
   { // SN = 0
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x0));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 0);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 0);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -504,7 +483,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
   { // SN = 2
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x2));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 2);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 2);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -515,7 +494,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
   { // SN = 4
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x4));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 4);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 4);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -526,7 +505,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
   { // SN = 3
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x3));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 3);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 3);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -543,7 +522,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
   { // SN = 1
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x1));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 1);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 1);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 
@@ -555,13 +534,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
 /// \brief Test in-order reception of PDUs
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_stop)
 {
-  // create Rx entity
-  gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
-  rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
-  rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_on_drop                                      = false;
-
-  rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
+  create_gtpu_rx_entity();
   ASSERT_NE(rx, nullptr);
 
   sockaddr_storage src_addr;
@@ -569,7 +542,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_stop)
   for (unsigned i = 0; i < 3; i++) {
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x11));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, i);
+    byte_buffer pdu = pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, i);
     gtpu_tunnel_base_rx* rx_base = rx.get();
     if (i != 1) {
       rx_base->handle_pdu(std::move(pdu), src_addr);
@@ -591,8 +564,8 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_stop)
   {
     byte_buffer sdu;
     EXPECT_TRUE(sdu.append(0x11));
-    byte_buffer pdu = pdu_generator.create_gtpu_pdu(
-        sdu.deep_copy().value(), rx_cfg.local_teid, qos_flow_id_t::min, 1); // push missing pdu
+    byte_buffer pdu =
+        pdu_generator.create_gtpu_pdu(sdu.deep_copy().value(), local_teid, qos_flow_id_t::min, 1); // push missing pdu
     gtpu_tunnel_base_rx* rx_base = rx.get();
     rx_base->handle_pdu(std::move(pdu), src_addr);
 

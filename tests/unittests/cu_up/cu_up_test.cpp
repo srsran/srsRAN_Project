@@ -112,9 +112,10 @@ protected:
 
     cfg.qos[uint_to_five_qi(9)] = {};
 
-    cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds(0);
-    cfg.n3_cfg.warn_on_drop          = false;
-    cfg.statistics_report_period     = std::chrono::seconds(1);
+    cfg.n3_cfg.gtpu_reordering_timer     = std::chrono::milliseconds(0);
+    cfg.n3_cfg.gtpu_rate_limiting_period = std::chrono::milliseconds(100);
+    cfg.n3_cfg.warn_on_drop              = false;
+    cfg.statistics_report_period         = std::chrono::seconds(1);
 
     return cfg;
   }
