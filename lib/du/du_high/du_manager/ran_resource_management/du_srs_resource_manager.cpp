@@ -67,16 +67,22 @@ static unsigned compute_freq_shift(unsigned c_srs, unsigned nof_ul_rbs)
   return (nof_ul_rbs - srs_params.value().m_srs) / 2;
 }
 
-static bool is_ul_slot(unsigned offset, const tdd_ul_dl_config_common& tdd_cfg)
+static bool is_ul_slot(unsigned offset, const std::optional<tdd_ul_dl_config_common>& tdd_cfg)
 {
-  const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
-  return has_active_tdd_ul_symbols(tdd_cfg, slot_index);
+  if (not tdd_cfg.has_value()) {
+    return true;
+  }
+  const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.value().ref_scs));
+  return has_active_tdd_ul_symbols(tdd_cfg.value(), slot_index);
 }
 
-static bool is_partially_ul_slot(unsigned offset, const tdd_ul_dl_config_common& tdd_cfg)
+static bool is_partially_ul_slot(unsigned offset, const std::optional<tdd_ul_dl_config_common>& tdd_cfg)
 {
-  const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
-  return is_tdd_partial_ul_slot(tdd_cfg, slot_index);
+  if (not tdd_cfg.has_value()) {
+    return false;
+  }
+  const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.value().ref_scs));
+  return is_tdd_partial_ul_slot(tdd_cfg.value(), slot_index);
 }
 
 // Helper that updates the starting SRS config with user-defined parameters.
@@ -121,8 +127,6 @@ du_srs_policy_max_ul_rate::cell_context::cell_context(const du_cell_config& cfg)
 du_srs_policy_max_ul_rate::du_srs_policy_max_ul_rate(span<const du_cell_config> cell_cfg_list_) :
   cells(cell_cfg_list_.begin(), cell_cfg_list_.end())
 {
-  static constexpr unsigned primary_cell_index = 0U;
-
   for (auto& cell : cells) {
     if (not cell.cell_cfg.srs_cfg.srs_period.has_value()) {
       continue;
@@ -156,18 +160,19 @@ du_srs_policy_max_ul_rate::du_srs_policy_max_ul_rate(span<const du_cell_config> 
       }
 
       // Verify whether the offset maps to a partially- or fully-UL slot.
-      if (cell_cfg_list_[primary_cell_index].tdd_ul_dl_cfg_common.has_value() and
-          not is_ul_slot(offset, cell_cfg_list_[primary_cell_index].tdd_ul_dl_cfg_common.value())) {
+
+      // We assume all the cells have the same TDD config, we take the configuration from the first cell.
+      static constexpr size_t base_cell_cfg_idx = 0U;
+      if (not is_ul_slot(offset, cell_cfg_list_[base_cell_cfg_idx].tdd_ul_dl_cfg_common)) {
         continue;
       }
 
       for (auto& res : cell.cell_srs_res_list) {
         // Handle TDD and FDD configurations separately, as we treat partially-UL slots differently from
         // fully-UL slots.
-        if (cell_cfg_list_[primary_cell_index].tdd_ul_dl_cfg_common.has_value() and
-            is_partially_ul_slot(offset, cell_cfg_list_[primary_cell_index].tdd_ul_dl_cfg_common.value())) {
+        if (is_partially_ul_slot(offset, cell_cfg_list_[base_cell_cfg_idx].tdd_ul_dl_cfg_common)) {
           // For partially-UL slots, we need to check if the SRS can be placed in the UL symbols of the slot.
-          const auto&    tdd_cfg    = cell_cfg_list_[primary_cell_index].tdd_ul_dl_cfg_common.value();
+          const auto&    tdd_cfg    = cell_cfg_list_[base_cell_cfg_idx].tdd_ul_dl_cfg_common.value();
           const unsigned slot_index = offset % (NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(tdd_cfg.ref_scs));
           // As per Section 6.4.1.4.1, TS 38.211, the SRS resources can only be placed in the last 6 symbols of the
           // slot.
@@ -192,50 +197,55 @@ du_srs_policy_max_ul_rate::du_srs_policy_max_ul_rate(span<const du_cell_config> 
 
 bool du_srs_policy_max_ul_rate::alloc_resources(cell_group_config& cell_grp_cfg)
 {
-  static constexpr unsigned primary_cell_index = 0U;
+  // This is the UE's primary_cell index in its (UE's) internal config.
+  static constexpr unsigned ue_primary_cell_index = 0U;
+
+  // This is the cell index inside the DU.
+  const auto du_cell_idx = cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.cell_index;
 
   // TODO: Adapt this to the case of UEs with multiple cells configs.
-  srsran_assert(cells[cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.cell_index]
-                        .cell_cfg.ue_ded_serv_cell_cfg.ul_config.has_value() and
-                    not cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value(),
-                "UE UL config should be non-empty but with an empty SRS config");
+  srsran_assert(
+      cells[du_cell_idx].cell_cfg.ue_ded_serv_cell_cfg.ul_config.has_value() and
+          not cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value(),
+      "UE UL config should be non-empty but with an empty SRS config");
 
-  cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.emplace(
-      cells[cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.cell_index].default_srs_cfg);
+  cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.emplace(
+      cells[du_cell_idx].default_srs_cfg);
 
   // If periodic SRS is not enabled, don't allocate anything and exit with success.
-  if (not cells[primary_cell_index].cell_cfg.srs_cfg.srs_period.has_value()) {
+  if (not cells[du_cell_idx].cell_cfg.srs_cfg.srs_period.has_value()) {
     return true;
   }
 
   // The UE SRS configuration is taken from a base configuration, saved in the GNB. The UE specific parameters will be
   // added later on in this function.
-  cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.emplace(
-      cells[cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.cell_index].default_srs_cfg);
-  srs_config& ue_srs_cfg = cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.value();
-  auto& free_srs_list = cells[cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.cell_index].srs_res_offset_free_list;
+  cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.emplace(
+      cells[du_cell_idx].default_srs_cfg);
+  srs_config& ue_srs_cfg =
+      cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.value();
+  auto& free_srs_list = cells[du_cell_idx].srs_res_offset_free_list;
 
   // Verify where there are SRS resources to allocate a new UE.
   if (free_srs_list.empty()) {
     // If the allocation failed, reset the SRS configuration.
-    cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
+    cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
     return false;
   }
 
   // Find the best resource ID and offset for this UE, according to the class policy.
-  auto srs_res_id_offset = cells[primary_cell_index].find_optimal_ue_srs_resource();
+  auto srs_res_id_offset = cells[du_cell_idx].find_optimal_ue_srs_resource();
 
   if (srs_res_id_offset == free_srs_list.end()) {
     // If the allocation failed, reset the SRS configuration.
-    cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
+    cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
     return false;
   }
 
-  const auto& du_res_it = cells[primary_cell_index].get_du_srs_res_cfg(srs_res_id_offset->first);
+  const auto& du_res_it = cells[du_cell_idx].get_du_srs_res_cfg(srs_res_id_offset->first);
 
-  if (du_res_it == cells[primary_cell_index].cell_srs_res_list.end()) {
+  if (du_res_it == cells[du_cell_idx].cell_srs_res_list.end()) {
     // If the allocation failed, reset the SRS configuration.
-    cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
+    cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
     return false;
   }
 
@@ -247,12 +257,12 @@ bool du_srs_policy_max_ul_rate::alloc_resources(cell_group_config& cell_grp_cfg)
   // NOTE: given that there is only 1 SRS resource per UE, we can assume that the SRS resource ID is 0.
   only_ue_srs_res.id.cell_res_id = du_res.cell_res_id;
   only_ue_srs_res.id.ue_res_id   = static_cast<srs_config::srs_res_id>(0U);
-  srsran_assert(cells[primary_cell_index].cell_cfg.ul_carrier.nof_ant == 1 or
-                    cells[primary_cell_index].cell_cfg.ul_carrier.nof_ant == 2 or
-                    cells[primary_cell_index].cell_cfg.ul_carrier.nof_ant == 4,
+  srsran_assert(cells[du_cell_idx].cell_cfg.ul_carrier.nof_ant == 1 or
+                    cells[du_cell_idx].cell_cfg.ul_carrier.nof_ant == 2 or
+                    cells[du_cell_idx].cell_cfg.ul_carrier.nof_ant == 4,
                 "The number of UL antenna ports is not valid");
   only_ue_srs_res.nof_ports                    = srs_config::srs_resource::nof_srs_ports::port1;
-  only_ue_srs_res.tx_comb.size                 = cells[primary_cell_index].cell_cfg.srs_cfg.tx_comb;
+  only_ue_srs_res.tx_comb.size                 = cells[du_cell_idx].cell_cfg.srs_cfg.tx_comb;
   only_ue_srs_res.tx_comb.tx_comb_offset       = du_res.tx_comb_offset.to_uint();
   only_ue_srs_res.tx_comb.tx_comb_cyclic_shift = du_res.cs;
   only_ue_srs_res.freq_domain_pos              = du_res.freq_dom_position;
@@ -261,18 +271,15 @@ bool du_srs_policy_max_ul_rate::alloc_resources(cell_group_config& cell_grp_cfg)
   only_ue_srs_res.sequence_id                  = du_res.sequence_id;
 
   // Update the SRS configuration with the parameters that are common to the cell.
-  only_ue_srs_res.freq_hop.c_srs =
-      cells[cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.cell_index].srs_common_params.c_srs;
+  only_ue_srs_res.freq_hop.c_srs = cells[du_cell_idx].srs_common_params.c_srs;
   // We assume that the frequency hopping is disabled and that the SRS occupies all possible RBs within the BWP. Refer
   // to Section 6.4.1.4.3, TS 38.211.
-  only_ue_srs_res.freq_hop.b_srs = 0U;
-  only_ue_srs_res.freq_hop.b_hop = 0U;
-  only_ue_srs_res.freq_domain_shift =
-      cells[cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.cell_index].srs_common_params.freq_shift;
+  only_ue_srs_res.freq_hop.b_srs    = 0U;
+  only_ue_srs_res.freq_hop.b_hop    = 0U;
+  only_ue_srs_res.freq_domain_shift = cells[du_cell_idx].srs_common_params.freq_shift;
 
-  only_ue_srs_res.periodicity_and_offset.emplace(
-      srs_config::srs_periodicity_and_offset{.period = cells[primary_cell_index].cell_cfg.srs_cfg.srs_period.value(),
-                                             .offset = static_cast<uint16_t>(srs_offset)});
+  only_ue_srs_res.periodicity_and_offset.emplace(srs_config::srs_periodicity_and_offset{
+      .period = cells[du_cell_idx].cell_cfg.srs_cfg.srs_period.value(), .offset = static_cast<uint16_t>(srs_offset)});
 
   // Update the SRS resource set with the SRS id.
   ue_srs_cfg.srs_res_set_list.front().srs_res_id_list.front() = only_ue_srs_res.id.ue_res_id;
@@ -281,7 +288,7 @@ bool du_srs_policy_max_ul_rate::alloc_resources(cell_group_config& cell_grp_cfg)
   free_srs_list.erase(srs_res_id_offset);
 
   // Update the SRS resource per slot counter.
-  ++cells[primary_cell_index].slot_resource_cnt[srs_offset];
+  ++cells[du_cell_idx].slot_resource_cnt[srs_offset];
 
   return true;
 }
@@ -337,27 +344,35 @@ du_srs_policy_max_ul_rate::cell_context::find_optimal_ue_srs_resource()
 
 void du_srs_policy_max_ul_rate::dealloc_resources(cell_group_config& cell_grp_cfg)
 {
-  static constexpr unsigned primary_cell_index = 0U;
+  // This is the UE's primary_cell index in its (UE's) internal config.
+  static constexpr unsigned ue_primary_cell_index = 0U;
 
-  if (not cells[primary_cell_index].cell_cfg.srs_cfg.srs_period.has_value() or
-      not cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value()) {
+  // This is the cell index inside the DU.
+  const auto du_cell_idx = cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.cell_index;
+
+  if (not cells[du_cell_idx].cell_cfg.srs_cfg.srs_period.has_value() or
+      not cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value()) {
     return;
   }
 
-  const auto& ue_srs_cfg = cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.value();
-  auto& free_srs_list = cells[cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.cell_index].srs_res_offset_free_list;
+  const auto& ue_srs_cfg =
+      cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.value();
+  auto& free_srs_list =
+      cells[cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.cell_index].srs_res_offset_free_list;
 
   for (const auto& srs_res : ue_srs_cfg.srs_res_list) {
     const unsigned offset_to_deallocate = srs_res.periodicity_and_offset.value().offset;
     free_srs_list.emplace_back(srs_res.id.cell_res_id, offset_to_deallocate);
 
-    // Update the used_not_full slot vector.
-    srsran_assert(cells[primary_cell_index].slot_resource_cnt[offset_to_deallocate] != 0,
-                  "The offset is expected to be non-zero");
-    --cells[primary_cell_index].slot_resource_cnt[offset_to_deallocate];
+    // Update the used_not_full slot vector.gnb
+    srsran_assert(cells[du_cell_idx].slot_resource_cnt[offset_to_deallocate] != 0,
+                  "The slot resource counter is expected to be non-zero");
+    srsran_assert(cells[du_cell_idx].slot_resource_cnt[offset_to_deallocate] != 0,
+                  "The slot resource counter is expected to be non-zero");
+    --cells[du_cell_idx].slot_resource_cnt[offset_to_deallocate];
   }
 
   // Reset the SRS configuration in this UE. This makes sure the DU will exit this function immediately when it gets
   // called again for the same UE (upon destructor's call).
-  cell_grp_cfg.cells[primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
+  cell_grp_cfg.cells[ue_primary_cell_index].serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.reset();
 }
