@@ -1,0 +1,134 @@
+/*
+ *
+ * Copyright 2021-2025 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "srsran/rrc/rrc_metrics.h"
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <map>
+
+namespace srsran {
+namespace srs_cu_cp {
+
+static std::chrono::milliseconds get_current_time()
+{
+  return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
+}
+
+class rrc_du_metrics_aggregator final
+{
+public:
+  rrc_du_metrics_aggregator();
+  ~rrc_du_metrics_aggregator() = default;
+
+  void handle_successful_rrc_setup();
+
+  void handle_successful_rrc_release();
+
+  rrc_du_metrics request_metrics_report();
+
+private:
+  /// Aggregator for RRC connection related metrics.
+  struct rrc_connection_metrics_aggregator {
+    rrc_connection_metrics_aggregator() = default;
+
+    void reset()
+    {
+      rrc_connections_with_time.clear();
+      rrc_connections_with_time.emplace(get_current_time(), current_rrc_connections);
+    }
+
+    void add_rrc_connection()
+    {
+      std::chrono::milliseconds now = get_current_time();
+      current_rrc_connections++;
+      rrc_connections_with_time[now] = current_rrc_connections;
+    }
+
+    void remove_rrc_connection()
+    {
+      std::chrono::milliseconds now = get_current_time();
+      current_rrc_connections--;
+      rrc_connections_with_time[now] = current_rrc_connections;
+    }
+
+    unsigned get_mean_nof_rrc_connections()
+    {
+      if (rrc_connections_with_time.size() < 2) {
+        // No need to calculate weighted mean.
+        return rrc_connections_with_time.begin()->second;
+      }
+
+      if (rrc_connections_with_time.size() == 2 && rrc_connections_with_time.begin()->second == 0) {
+        // Only one measurement has been made (the map is initialized with a zero value).
+        return rrc_connections_with_time.end()->second;
+      }
+
+      // Add current value to the map to count all actual measurements (the last value of the map will be ignored).
+      auto now                       = get_current_time();
+      rrc_connections_with_time[now] = current_rrc_connections;
+
+      long long weighted_sum = 0;
+      long long weight_sum   = 0;
+
+      auto it         = rrc_connections_with_time.begin();
+      auto prev_time  = it->first;
+      auto prev_value = it->second;
+      ++it;
+
+      for (; it != rrc_connections_with_time.end(); ++it) {
+        auto current_time  = it->first;
+        auto current_value = it->second;
+
+        // Calculate time difference (weight).
+        auto time_diff = (current_time - prev_time).count();
+
+        // Update weighted sum and total weight.
+        weighted_sum += static_cast<long long>(prev_value) * time_diff;
+        weight_sum += time_diff;
+
+        // Update previous time and value.
+        prev_time  = current_time;
+        prev_value = current_value;
+      }
+
+      // Avoid division by zero.
+      if (weight_sum == 0) {
+        return 0;
+      }
+
+      return std::floor(static_cast<double>(weighted_sum) / weight_sum);
+    }
+
+    unsigned get_max_nof_rrc_connections()
+    {
+      // If the map is empty, no RRC connections have been established.
+      if (rrc_connections_with_time.empty()) {
+        return 0;
+      }
+
+      auto max_it = std::max_element(rrc_connections_with_time.begin(),
+                                     rrc_connections_with_time.end(),
+                                     [](const auto& lhs, const auto& rhs) { return lhs.second < rhs.second; });
+
+      return max_it->second;
+    }
+
+    std::map<std::chrono::milliseconds, unsigned> rrc_connections_with_time;
+    unsigned                                      current_rrc_connections = 0;
+  };
+
+  rrc_connection_metrics_aggregator rrc_connection_metrics;
+};
+
+} // namespace srs_cu_cp
+} // namespace srsran
