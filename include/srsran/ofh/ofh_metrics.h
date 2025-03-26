@@ -29,6 +29,8 @@ struct sector_metrics {
   receiver_metrics rx_metrics;
   /// Transmitter metrics.
   transmitter_metrics tx_metrics;
+  /// Metrics period.
+  std::chrono::milliseconds metrics_period_ms;
 };
 
 /// Open Fronthaul metrics.

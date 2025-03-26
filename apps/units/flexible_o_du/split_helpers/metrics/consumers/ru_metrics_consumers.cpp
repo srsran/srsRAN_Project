@@ -11,6 +11,8 @@
 #include "ru_metrics_consumers.h"
 #include "consumer_helpers.h"
 #include "srsran/ru/ru_metrics.h"
+#include "srsran/support/format/fmt_to_c_str.h"
+#include "srsran/support/units.h"
 
 using namespace srsran;
 
@@ -22,16 +24,82 @@ DECLARE_METRIC("early", ofh_metrics_rx_early_pkts, unsigned, "");
 DECLARE_METRIC("on_time", ofh_metrics_rx_on_time_pkts, unsigned, "");
 DECLARE_METRIC("late", ofh_metrics_rx_late_pkts, unsigned, "");
 DECLARE_METRIC_SET("received_packets",
-                   mset_ofh_metrics_rx,
+                   mset_ofh_metrics_rx_kpis,
                    ofh_metrics_rx_total_pkts,
                    ofh_metrics_rx_early_pkts,
                    ofh_metrics_rx_on_time_pkts,
                    ofh_metrics_rx_late_pkts);
 
+DECLARE_METRIC("average_latency_us", metric_average_latency, float, "us");
+DECLARE_METRIC("max_latency_us", metric_max_latency, float, "us");
+DECLARE_METRIC("average_throughput_Mbps", metric_avg_throughput_mbps, float, "Mbps");
+DECLARE_METRIC("cpu_usage_percent", metric_cpu_usage, float, "");
+
+DECLARE_METRIC_SET("ethernet_receiver",
+                   mset_ofh_metrics_ether_rx,
+                   metric_avg_throughput_mbps,
+                   metric_average_latency,
+                   metric_max_latency,
+                   metric_cpu_usage);
+DECLARE_METRIC_SET("ethernet_transmitter",
+                   mset_ofh_metrics_ether_tx,
+                   metric_avg_throughput_mbps,
+                   metric_average_latency,
+                   metric_max_latency,
+                   metric_cpu_usage);
+
+DECLARE_METRIC_SET("prach",
+                   mset_ofh_metrics_prach_decoder,
+                   metric_average_latency,
+                   metric_max_latency,
+                   metric_cpu_usage);
+DECLARE_METRIC_SET("data", mset_ofh_metrics_ul_decoder, metric_average_latency, metric_max_latency, metric_cpu_usage);
+DECLARE_METRIC_SET("message_decoder",
+                   mset_ofh_metrics_message_decoder,
+                   mset_ofh_metrics_prach_decoder,
+                   mset_ofh_metrics_ul_decoder);
+
+DECLARE_METRIC_SET("dl_cp",
+                   mset_ofh_metrics_dl_cp_encoder,
+                   metric_average_latency,
+                   metric_max_latency,
+                   metric_cpu_usage);
+DECLARE_METRIC_SET("ul_cp",
+                   mset_ofh_metrics_ul_cp_encoder,
+                   metric_average_latency,
+                   metric_max_latency,
+                   metric_cpu_usage);
+DECLARE_METRIC_SET("dl_up",
+                   mset_ofh_metrics_dl_up_encoder,
+                   metric_average_latency,
+                   metric_max_latency,
+                   metric_cpu_usage);
+DECLARE_METRIC_SET("message_encoder",
+                   mset_ofh_metrics_message_encoder,
+                   mset_ofh_metrics_dl_cp_encoder,
+                   mset_ofh_metrics_ul_cp_encoder,
+                   mset_ofh_metrics_dl_up_encoder);
+
+DECLARE_METRIC("late_dl_grids", ofh_metrics_tx_late_dl_grids, unsigned, "");
+DECLARE_METRIC("late_ul_requests", ofh_metrics_tx_late_ul_req, unsigned, "");
+DECLARE_METRIC_SET("transmitter_stats",
+                   mset_ofh_metrics_tx_kpis,
+                   ofh_metrics_tx_late_dl_grids,
+                   ofh_metrics_tx_late_ul_req);
+
 DECLARE_METRIC("pci", metric_pci, pci_t, "");
 
-DECLARE_METRIC_SET("ul", ofh_metrics_ul, mset_ofh_metrics_rx);
-DECLARE_METRIC_SET("cell", ofh_metrics_cell, metric_pci, ofh_metrics_ul);
+DECLARE_METRIC_SET("ul",
+                   ofh_metrics_ul,
+                   mset_ofh_metrics_rx_kpis,
+                   mset_ofh_metrics_ether_rx,
+                   mset_ofh_metrics_message_decoder);
+DECLARE_METRIC_SET("dl",
+                   ofh_metrics_dl,
+                   mset_ofh_metrics_ether_tx,
+                   mset_ofh_metrics_message_encoder,
+                   mset_ofh_metrics_tx_kpis);
+DECLARE_METRIC_SET("cell", ofh_metrics_cell, metric_pci, ofh_metrics_ul, ofh_metrics_dl);
 DECLARE_METRIC_LIST("ofh", mlist_ofh_cells, std::vector<ofh_metrics_cell>);
 
 DECLARE_METRIC_SET("ru", mset_ofh_ru, mlist_ofh_cells);
@@ -41,6 +109,18 @@ DECLARE_METRIC("timestamp", metric_timestamp_tag, double, "");
 using ofh_metric_context_t = srslog::build_context_type<metric_timestamp_tag, mset_ofh_ru>;
 
 } // namespace
+
+/// Size in bytes of the buffer used to prepare the metrics before logging.
+static constexpr unsigned str_buffer_size = 2048;
+
+/// Return the given value if it is not a Nan or Inf, otherwise returns 0.
+static double validate_fp_value(double value)
+{
+  if (!std::isnan(value) && !std::isinf(value)) {
+    return value;
+  }
+  return 0.0;
+}
 
 static void
 log_ru_ofh_metrics_json(srslog::log_channel& log_chan, const ofh::metrics& metrics, span<const pci_t> pci_sector_map)
@@ -60,12 +140,113 @@ log_ru_ofh_metrics_json(srslog::log_channel& log_chan, const ofh::metrics& metri
     auto& output = ofh_cells.emplace_back();
     output.write<metric_pci>(static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]));
 
-    auto& ul_output = output.get<ofh_metrics_ul>().get<mset_ofh_metrics_rx>();
-    ul_output.write<ofh_metrics_rx_total_pkts>(static_cast<unsigned>(
+    // Received messages KPIs.
+    auto& ul_rx_kpis = output.get<ofh_metrics_ul>().get<mset_ofh_metrics_rx_kpis>();
+    ul_rx_kpis.write<ofh_metrics_rx_total_pkts>(static_cast<unsigned>(
         rx_metrics.nof_early_messages + rx_metrics.nof_on_time_messages + rx_metrics.nof_late_messages));
-    ul_output.write<ofh_metrics_rx_early_pkts>(static_cast<unsigned>(rx_metrics.nof_early_messages));
-    ul_output.write<ofh_metrics_rx_on_time_pkts>(static_cast<unsigned>(rx_metrics.nof_on_time_messages));
-    ul_output.write<ofh_metrics_rx_late_pkts>(static_cast<unsigned>(rx_metrics.nof_late_messages));
+    ul_rx_kpis.write<ofh_metrics_rx_early_pkts>(static_cast<unsigned>(rx_metrics.nof_early_messages));
+    ul_rx_kpis.write<ofh_metrics_rx_on_time_pkts>(static_cast<unsigned>(rx_metrics.nof_on_time_messages));
+    ul_rx_kpis.write<ofh_metrics_rx_late_pkts>(static_cast<unsigned>(rx_metrics.nof_late_messages));
+
+    // Ethernet receiver metrics.
+    float ether_rx_cpu_usage = validate_fp_value(cell_metrics.rx_metrics.eth_receiver_metrics.cpu_usage_us /
+                                                 (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f);
+
+    float ether_rx_throughput = validate_fp_value(
+        static_cast<float>(
+            units::bytes(cell_metrics.rx_metrics.eth_receiver_metrics.total_nof_bytes).to_bits().value()) /
+        static_cast<float>(cell_metrics.metrics_period_ms.count() * 1e3));
+
+    auto& ul_ether_rx = output.get<ofh_metrics_ul>().get<mset_ofh_metrics_ether_rx>();
+    ul_ether_rx.write<metric_avg_throughput_mbps>(ether_rx_throughput);
+    ul_ether_rx.write<metric_average_latency>(
+        validate_fp_value(cell_metrics.rx_metrics.eth_receiver_metrics.avg_packet_rx_latency_us));
+    ul_ether_rx.write<metric_max_latency>(
+        validate_fp_value(cell_metrics.rx_metrics.eth_receiver_metrics.max_packet_rx_latency_us));
+    ul_ether_rx.write<metric_cpu_usage>(ether_rx_cpu_usage);
+
+    // Message decoder metrics.
+    const auto& ul_prach_df_metrics = cell_metrics.rx_metrics.rx_decoding_perf_metrics.prach_processing_metrics;
+    const auto& ul_data_df_metrics  = cell_metrics.rx_metrics.rx_decoding_perf_metrics.data_processing_metrics;
+    float       prach_unpacking_cpu_usage =
+        validate_fp_value(ul_prach_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f);
+    float data_unpacking_cpu_usage =
+        validate_fp_value(ul_data_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f);
+
+    auto& ul_prach_message_decoder =
+        output.get<ofh_metrics_ul>().get<mset_ofh_metrics_message_decoder>().get<mset_ofh_metrics_prach_decoder>();
+    ul_prach_message_decoder.write<metric_average_latency>(
+        validate_fp_value(ul_prach_df_metrics.message_unpacking_avg_latency_us));
+    ul_prach_message_decoder.write<metric_max_latency>(
+        validate_fp_value(ul_prach_df_metrics.message_unpacking_max_latency_us));
+    ul_prach_message_decoder.write<metric_cpu_usage>(prach_unpacking_cpu_usage);
+
+    auto& ul_data_message_decoder =
+        output.get<ofh_metrics_ul>().get<mset_ofh_metrics_message_decoder>().get<mset_ofh_metrics_ul_decoder>();
+    ul_data_message_decoder.write<metric_average_latency>(
+        validate_fp_value(ul_data_df_metrics.message_unpacking_avg_latency_us));
+    ul_data_message_decoder.write<metric_max_latency>(
+        validate_fp_value(ul_data_df_metrics.message_unpacking_max_latency_us));
+    ul_data_message_decoder.write<metric_cpu_usage>(data_unpacking_cpu_usage);
+
+    // Ethernet transmitter metrics.
+    float ether_tx_cpu_usage = validate_fp_value(cell_metrics.tx_metrics.eth_transmitter_metrics.cpu_usage_us /
+                                                 (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f);
+
+    float ether_tx_throughput = validate_fp_value(
+        static_cast<float>(
+            units::bytes(cell_metrics.tx_metrics.eth_transmitter_metrics.total_nof_bytes).to_bits().value()) /
+        static_cast<float>(cell_metrics.metrics_period_ms.count() * 1e3));
+
+    auto& dl_ether_tx = output.get<ofh_metrics_dl>().get<mset_ofh_metrics_ether_tx>();
+    dl_ether_tx.write<metric_avg_throughput_mbps>(ether_tx_throughput);
+    dl_ether_tx.write<metric_average_latency>(
+        validate_fp_value(cell_metrics.tx_metrics.eth_transmitter_metrics.avg_packet_tx_latency_us));
+    dl_ether_tx.write<metric_max_latency>(
+        validate_fp_value(cell_metrics.tx_metrics.eth_transmitter_metrics.max_packet_tx_latency_us));
+    dl_ether_tx.write<metric_cpu_usage>(ether_tx_cpu_usage);
+
+    // Message encoder metrics.
+    // DL-CP.
+    const auto& dl_cp_df_metrics = cell_metrics.tx_metrics.dl_metrics.dl_cp_metrics;
+    float       dl_cp_cpu_usage =
+        validate_fp_value(dl_cp_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f);
+
+    auto& dl_cp_message_encoder =
+        output.get<ofh_metrics_dl>().get<mset_ofh_metrics_message_encoder>().get<mset_ofh_metrics_dl_cp_encoder>();
+    dl_cp_message_encoder.write<metric_average_latency>(
+        validate_fp_value(dl_cp_df_metrics.message_packing_avg_latency_us));
+    dl_cp_message_encoder.write<metric_max_latency>(validate_fp_value(dl_cp_df_metrics.message_packing_max_latency_us));
+    dl_cp_message_encoder.write<metric_cpu_usage>(dl_cp_cpu_usage);
+
+    // UL-CP.
+    const auto& ul_cp_df_metrics = cell_metrics.tx_metrics.ul_metrics.ul_cp_metrics;
+    float       ul_cp_cpu_usage =
+        validate_fp_value(ul_cp_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f);
+
+    auto& ul_cp_message_encoder =
+        output.get<ofh_metrics_dl>().get<mset_ofh_metrics_message_encoder>().get<mset_ofh_metrics_ul_cp_encoder>();
+    ul_cp_message_encoder.write<metric_average_latency>(
+        validate_fp_value(ul_cp_df_metrics.message_packing_avg_latency_us));
+    ul_cp_message_encoder.write<metric_max_latency>(validate_fp_value(ul_cp_df_metrics.message_packing_max_latency_us));
+    ul_cp_message_encoder.write<metric_cpu_usage>(ul_cp_cpu_usage);
+
+    // DL-UP.
+    const auto& dl_up_df_metrics = cell_metrics.tx_metrics.dl_metrics.dl_up_metrics;
+    float       dl_up_cpu_usage =
+        validate_fp_value(dl_up_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f);
+
+    auto& dl_up_message_encoder =
+        output.get<ofh_metrics_dl>().get<mset_ofh_metrics_message_encoder>().get<mset_ofh_metrics_dl_up_encoder>();
+    dl_up_message_encoder.write<metric_average_latency>(
+        validate_fp_value(dl_up_df_metrics.message_packing_avg_latency_us));
+    dl_up_message_encoder.write<metric_max_latency>(validate_fp_value(dl_up_df_metrics.message_packing_max_latency_us));
+    dl_up_message_encoder.write<metric_cpu_usage>(dl_up_cpu_usage);
+
+    // Transmitter KPIs.
+    auto& transmitter_kpis = output.get<ofh_metrics_dl>().get<mset_ofh_metrics_tx_kpis>();
+    transmitter_kpis.write<ofh_metrics_tx_late_dl_grids>(cell_metrics.tx_metrics.dl_metrics.nof_late_dl_grids);
+    transmitter_kpis.write<ofh_metrics_tx_late_ul_req>(cell_metrics.tx_metrics.ul_metrics.nof_late_ul_requests);
   }
 
   // Log the context.
@@ -80,25 +261,137 @@ void ru_metrics_consumer_json::handle_metric(const ru_metrics& metric)
   }
 }
 
-static void
-log_ru_ofh_metrics(srslog::log_channel& log_chan, const ofh::metrics& metrics, span<const pci_t> pci_sector_map)
+static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char, str_buffer_size>& buffer,
+                                                   const ofh::sector_metrics&                       cell_metrics,
+                                                   span<const pci_t>                                pci_sector_map)
+{
+  fmt::format_to(std::back_inserter(buffer),
+                 "\nOFH sector#{} pci={} performance metrics:\n",
+                 cell_metrics.sector_id,
+                 static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]));
+
+  float ether_rx_cpu_usage = cell_metrics.rx_metrics.eth_receiver_metrics.cpu_usage_us /
+                             (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
+  float ether_tx_cpu_usage = cell_metrics.tx_metrics.eth_transmitter_metrics.cpu_usage_us /
+                             (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
+  float ether_rx_throughput =
+      static_cast<float>(units::bytes(cell_metrics.rx_metrics.eth_receiver_metrics.total_nof_bytes).to_bits().value()) /
+      static_cast<float>(cell_metrics.metrics_period_ms.count() * 1e3);
+  float ether_tx_throughput =
+      static_cast<float>(
+          units::bytes(cell_metrics.tx_metrics.eth_transmitter_metrics.total_nof_bytes).to_bits().value()) /
+      static_cast<float>(cell_metrics.metrics_period_ms.count() * 1e3);
+
+  fmt::format_to(std::back_inserter(buffer),
+                 "{:<20} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us, throughput={:.2f}Mbps, "
+                 "rx_bytes={}\n",
+                 "  Ethernet RX:",
+                 validate_fp_value(ether_rx_cpu_usage),
+                 validate_fp_value(cell_metrics.rx_metrics.eth_receiver_metrics.max_packet_rx_latency_us),
+                 validate_fp_value(cell_metrics.rx_metrics.eth_receiver_metrics.avg_packet_rx_latency_us),
+                 validate_fp_value(ether_rx_throughput),
+                 cell_metrics.rx_metrics.eth_receiver_metrics.total_nof_bytes);
+  fmt::format_to(std::back_inserter(buffer),
+                 "{:<20} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us, throughput={:.2f}Mbps, "
+                 "tx_bytes={}\n",
+                 "  Ethernet TX:",
+                 validate_fp_value(ether_tx_cpu_usage),
+                 validate_fp_value(cell_metrics.tx_metrics.eth_transmitter_metrics.max_packet_tx_latency_us),
+                 validate_fp_value(cell_metrics.tx_metrics.eth_transmitter_metrics.avg_packet_tx_latency_us),
+                 validate_fp_value(ether_tx_throughput),
+                 cell_metrics.tx_metrics.eth_transmitter_metrics.total_nof_bytes);
+
+  const auto& ul_prach_df_metrics = cell_metrics.rx_metrics.rx_decoding_perf_metrics.prach_processing_metrics;
+  const auto& ul_data_df_metrics  = cell_metrics.rx_metrics.rx_decoding_perf_metrics.data_processing_metrics;
+
+  float prach_unpacking_cpu_usage =
+      ul_prach_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0;
+  float data_unpacking_cpu_usage =
+      ul_data_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0;
+
+  fmt::format_to(std::back_inserter(buffer),
+                 "{:<20} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us\n",
+                 "  Receiver, PRACH:",
+                 validate_fp_value(prach_unpacking_cpu_usage),
+                 validate_fp_value(ul_prach_df_metrics.message_unpacking_max_latency_us),
+                 validate_fp_value(ul_prach_df_metrics.message_unpacking_avg_latency_us));
+  fmt::format_to(std::back_inserter(buffer),
+                 "{:<20} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us\n",
+                 "  Receiver, UL:",
+                 validate_fp_value(data_unpacking_cpu_usage),
+                 validate_fp_value(ul_data_df_metrics.message_unpacking_max_latency_us),
+                 validate_fp_value(ul_data_df_metrics.message_unpacking_avg_latency_us));
+
+  const auto& dl_cp_df_metrics = cell_metrics.tx_metrics.dl_metrics.dl_cp_metrics;
+  const auto& dl_up_df_metrics = cell_metrics.tx_metrics.dl_metrics.dl_up_metrics;
+  const auto& ul_cp_df_metrics = cell_metrics.tx_metrics.ul_metrics.ul_cp_metrics;
+
+  float dl_cp_cpu_usage = dl_cp_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
+  float dl_up_cpu_usage = dl_up_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
+  float ul_cp_cpu_usage = ul_cp_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
+
+  fmt::format_to(std::back_inserter(buffer),
+                 "{:<20} cpu_usage={:.1f}% dl_up_max_latency={:.2f}us, dl_up_avg_latency={:.2f}us\n",
+                 "  Transmitter DL UP:",
+                 validate_fp_value(dl_up_cpu_usage),
+                 validate_fp_value(dl_up_df_metrics.message_packing_max_latency_us),
+                 validate_fp_value(dl_up_df_metrics.message_packing_avg_latency_us));
+
+  fmt::format_to(std::back_inserter(buffer),
+                 "{:<20} cpu_usage={:.1f}%, dl_cp_max_latency={:.2f}us, dl_cp_avg_latency={:.2f}us\n",
+                 "  Transmitter DL CP:",
+                 validate_fp_value(dl_cp_cpu_usage),
+                 validate_fp_value(dl_cp_df_metrics.message_packing_max_latency_us),
+                 validate_fp_value(dl_cp_df_metrics.message_packing_avg_latency_us));
+
+  fmt::format_to(std::back_inserter(buffer),
+                 "{:<20} cpu_usage={:.1f}%, ul_cp_max_latency={:.2f}us, ul_cp_avg_latency={:.2f}us\n",
+                 "  Transmitter UL CP:",
+                 validate_fp_value(ul_cp_cpu_usage),
+                 validate_fp_value(ul_cp_df_metrics.message_packing_max_latency_us),
+                 validate_fp_value(ul_cp_df_metrics.message_packing_avg_latency_us));
+
+  fmt::format_to(std::back_inserter(buffer),
+                 "{:<20} nof_late_dl_grids={}, nof_late_ul_req={}",
+                 "  Transmitter KPIs:",
+                 cell_metrics.tx_metrics.dl_metrics.nof_late_dl_grids,
+                 cell_metrics.tx_metrics.ul_metrics.nof_late_ul_requests);
+}
+
+static void log_ru_ofh_metrics(srslog::log_channel& log_chan,
+                               const ofh::metrics&  metrics,
+                               span<const pci_t>    pci_sector_map,
+                               bool                 verbose)
 {
   for (const auto& cell_metrics : metrics.sectors) {
-    const ofh::received_messages_metrics& rx_metrics = cell_metrics.rx_metrics.rx_messages_metrics;
-    log_chan("OFH sector#{} pci={} reception stats: rx_total={} rx_early={}, rx_on_time={}, rx_late={}",
-             cell_metrics.sector_id,
-             static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]),
-             rx_metrics.nof_early_messages + rx_metrics.nof_on_time_messages + rx_metrics.nof_late_messages,
-             rx_metrics.nof_early_messages,
-             rx_metrics.nof_on_time_messages,
-             rx_metrics.nof_late_messages);
+    fmt::basic_memory_buffer<char, str_buffer_size> buffer;
+
+    const ofh::received_messages_metrics& rx_ofh_metrics = cell_metrics.rx_metrics.rx_messages_metrics;
+
+    fmt::format_to(std::back_inserter(buffer),
+                   "OFH sector#{} pci={} received messages stats: rx_total={} rx_early={}, "
+                   "rx_on_time={}, rx_late={};",
+                   cell_metrics.sector_id,
+                   static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]),
+                   rx_ofh_metrics.nof_early_messages + rx_ofh_metrics.nof_on_time_messages +
+                       rx_ofh_metrics.nof_late_messages,
+                   rx_ofh_metrics.nof_early_messages,
+                   rx_ofh_metrics.nof_on_time_messages,
+                   rx_ofh_metrics.nof_late_messages);
+
+    if (verbose) {
+      log_ru_ofh_performance_metrics_verbose(buffer, cell_metrics, pci_sector_map);
+    }
+
+    // Flush buffer to the logger.
+    log_chan("{}", to_c_str(buffer));
   }
 }
 
 void ru_metrics_consumer_log::handle_metric(const ru_metrics& metric)
 {
   if (auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
-    log_ru_ofh_metrics(log_chan, *ofh_metrics, pci_sector_map);
+    log_ru_ofh_metrics(log_chan, *ofh_metrics, pci_sector_map, verbose);
   }
 }
 
@@ -121,15 +414,6 @@ void ru_metrics_handler_stdout::handle_metric(const ru_metrics& metric)
   if (auto* ofh_metrics = std::get_if<ofh::metrics>(&metric.metrics)) {
     log_ru_ofh_metrics_in_stdout(*ofh_metrics);
   }
-}
-
-/// Return the given value if it is not a Nan or Inf, otherwise returns 0.
-static double validate_fp_value(double value)
-{
-  if (!std::isnan(value) && !std::isinf(value)) {
-    return value;
-  }
-  return 0.0;
 }
 
 void ru_metrics_handler_stdout::log_ru_sdr_metrics_in_stdout(const ru_generic_metrics& sdr_metrics)

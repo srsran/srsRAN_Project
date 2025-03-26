@@ -29,10 +29,20 @@ void metrics_collector_impl::collect_metrics(sector_metrics& metric)
     return;
   }
 
+  if (last_timestamp == std::chrono::time_point<std::chrono::high_resolution_clock>()) {
+    last_timestamp = std::chrono::high_resolution_clock::now();
+    metric         = {};
+    return;
+  }
+
+  auto tp_now      = std::chrono::high_resolution_clock::now();
   metric.sector_id = sector_id;
 
   // Collect receiver metrics.
   rx_metrics_collector->collect_metrics(metric.rx_metrics);
   // Collect transmitter metrics.
   tx_metrics_collector->collect_metrics(metric.tx_metrics);
+
+  metric.metrics_period_ms = std::chrono::duration_cast<std::chrono::milliseconds>(tp_now - last_timestamp);
+  last_timestamp           = tp_now;
 }
