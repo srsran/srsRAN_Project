@@ -50,7 +50,8 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   metrics_hdlr.next_metrics.dus.emplace_back(metrics_report::du_info{
       int_to_gnb_du_id(0),
       {metrics_report::cell_info{
-          nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0x22).value()}, pci_t{2}}}});
+          nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0x22).value()}, pci_t{2}}},
+      {2, 4}});
   for (unsigned i = 0; i != period.count(); ++i) {
     ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());
     timers.tick();
@@ -62,6 +63,9 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   ASSERT_EQ(metrics_notifier.last_metrics_report->ues[0].pci, metrics_hdlr.next_metrics.ues[0].pci);
   ASSERT_EQ(metrics_notifier.last_metrics_report->ues[0].rrc_connection_state,
             metrics_hdlr.next_metrics.ues[0].rrc_connection_state);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->dus.size(), 1);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->dus[0].rrc_metrics.mean_nof_rrc_connections, 2);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->dus[0].rrc_metrics.max_nof_rrc_connections, 4);
 
   // Second report.
   metrics_notifier.last_metrics_report.reset();
