@@ -11,6 +11,8 @@
 #pragma once
 
 #include "cell_sys_info_configurator.h"
+#include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/lockfree_triple_buffer.h"
 #include "srsran/mac/cell_configuration.h"
 #include "srsran/scheduler/result/pdsch_info.h"
 #include "srsran/srslog/logger.h"
@@ -20,8 +22,6 @@ namespace srsran {
 /// Entity responsible for fetching encoded SIB1 and SI messages based on scheduled SI grants.
 class sib_pdu_assembler : public cell_sys_info_configurator
 {
-  static constexpr size_t MAX_SI_MESSAGES = 32;
-
 public:
   class message_handler
   {
@@ -43,18 +43,31 @@ public:
   span<const uint8_t> encode_si_pdu(slot_point sl_tx, const sib_information& si_info);
 
 private:
-  void update_encoders(si_version_type version, const mac_cell_sys_info_config& req);
+  using bcch_dl_sch_buffer = std::shared_ptr<const std::vector<uint8_t>>;
+
+  /// A snapshot of a SIB1 and SI messages within a given SI change window.
+  struct si_buffer_snapshot {
+    unsigned                                                 version;
+    units::bytes                                             sib1_len;
+    bcch_dl_sch_buffer                                       sib1_buffer;
+    std::vector<std::pair<units::bytes, bcch_dl_sch_buffer>> si_msg_buffers;
+  };
+
+  void save_buffers(const mac_cell_sys_info_config& req);
 
   srslog::basic_logger& logger;
 
-  /// SIB1 message.
-  std::unique_ptr<message_handler> sib1_encoder;
+  /// Last SI messages received by the assembler.
+  mac_cell_sys_info_config last_si_cfg;
 
-  /// SI message handlers.
-  std::array<std::unique_ptr<message_handler>, MAX_SI_MESSAGES> si_encoders;
+  /// SI buffers of last SI message update.
+  si_buffer_snapshot last_cfg_buffers;
 
-  /// Counter of SI PDU updates.
-  si_version_type next_version = 0;
+  /// Buffers being transferred from configuration plane to assembler RT path.
+  lockfree_triple_buffer<si_buffer_snapshot> pending;
+
+  /// SI buffers that are being currently encoded and sent to lower layers.
+  si_buffer_snapshot current_buffers;
 };
 
 } // namespace srsran

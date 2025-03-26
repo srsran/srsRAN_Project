@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/byte_buffer.h"
 #include "srsran/mac/cell_configuration.h"
 #include "srsran/support/units.h"
 

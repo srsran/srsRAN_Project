@@ -16,7 +16,6 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
-#include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
@@ -48,7 +47,7 @@ struct mac_cell_creation_request {
   bool cell_barred;
   bool intra_freq_resel;
 
-  /// Cell System Information.
+  /// Cell-specific encoded system information.
   mac_cell_sys_info_config sys_info;
 };
 
