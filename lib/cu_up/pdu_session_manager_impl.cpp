@@ -66,7 +66,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   ngu_session_mngr(ngu_session_mngr_)
 {
   token_bucket_config ue_ambr_config =
-      generate_token_bucket_config(ue_dl_ambr, ue_dl_ambr, timer_duration(100), ue_dl_timer_factory);
+      generate_token_bucket_config(ue_dl_ambr, ue_dl_ambr, timer_duration(100), ue_ctrl_timer_factory);
   ue_ambr_limiter = create_token_bucket(ue_ambr_config);
 }
 
