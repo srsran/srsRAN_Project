@@ -41,6 +41,10 @@ bool token_bucket::consume(uint32_t tokens)
   }
   tokens_in_bucket = tokens_left;
 
+  if (not refill_timer.is_running()) {
+    refill_timer.run(); // restart refill timer
+  }
+
   return true;
 }
 
@@ -51,8 +55,11 @@ void token_bucket::refill(uint32_t tokens)
   }
   uint32_t tokens_added = tokens_in_bucket + tokens;
   tokens_in_bucket      = std::min(max_tokens, tokens_added);
-
-  refill_timer.run(); // restart refill timer
+  if (tokens_in_bucket == max_tokens) {
+    refill_timer.stop(); // stop refill timer. it will be restarted on the next consume.
+  } else {
+    refill_timer.run(); // restart refill timer
+  }
 }
 
 void token_bucket::stop()
