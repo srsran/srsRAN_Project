@@ -102,9 +102,10 @@ srsran::ofh::create_iq_decompressor(compression_type type, srslog::basic_logger&
     case compression_type::none:
 #ifdef __x86_64__
     {
-      bool supports_avx2   = cpu_supports_feature(cpu_feature::avx2);
-      bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f) &&
-                             cpu_supports_feature(cpu_feature::avx512vl) && cpu_supports_feature(cpu_feature::avx512bw);
+      bool supports_avx2 = cpu_supports_feature(cpu_feature::avx2);
+      bool supports_avx512 =
+          cpu_supports_feature(cpu_feature::avx512f) && cpu_supports_feature(cpu_feature::avx512vl) &&
+          cpu_supports_feature(cpu_feature::avx512bw) && cpu_supports_feature(cpu_feature::avx512vbmi);
       if (((impl_type == "avx512") || (impl_type == "auto")) && supports_avx512) {
         return std::make_unique<iq_compression_none_avx512>(logger);
       }
@@ -122,9 +123,10 @@ srsran::ofh::create_iq_decompressor(compression_type type, srslog::basic_logger&
     case compression_type::BFP:
 #ifdef __x86_64__
     {
-      bool supports_avx2   = cpu_supports_feature(cpu_feature::avx2);
-      bool supports_avx512 = cpu_supports_feature(cpu_feature::avx512f) &&
-                             cpu_supports_feature(cpu_feature::avx512vl) && cpu_supports_feature(cpu_feature::avx512bw);
+      bool supports_avx2 = cpu_supports_feature(cpu_feature::avx2);
+      bool supports_avx512 =
+          cpu_supports_feature(cpu_feature::avx512f) && cpu_supports_feature(cpu_feature::avx512vl) &&
+          cpu_supports_feature(cpu_feature::avx512bw) && cpu_supports_feature(cpu_feature::avx512vbmi);
       if (((impl_type == "avx512") || (impl_type == "auto")) && supports_avx512) {
         return std::make_unique<iq_compression_bfp_avx512>(logger);
       }
