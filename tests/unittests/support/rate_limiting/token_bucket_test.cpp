@@ -35,8 +35,12 @@ TEST(token_bucket_test, consume_and_refill_test)
   ASSERT_FALSE(bucket.consume(60));
   ASSERT_TRUE(bucket.consume(30));
 
-  // Re-fill bucket.
-  tick_all(timers, worker, 5);
+  // Advance time just before the bucket is refilled and confirm bucket is still empty.
+  tick_all(timers, worker, 4);
+  ASSERT_FALSE(bucket.consume(1));
+
+  // Advance time until bucket is refilled
+  tick_all(timers, worker, 1);
 
   ASSERT_FALSE(bucket.consume(20));
   ASSERT_TRUE(bucket.consume(5));
