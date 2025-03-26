@@ -433,6 +433,18 @@ public:
   virtual rrc_ue_reestablishment_context_response get_context() = 0;
 };
 
+class rrc_ue_metrics_notifier
+{
+public:
+  virtual ~rrc_ue_metrics_notifier() = default;
+
+  /// \brief Notify the RRC DU about a new RRC connection.
+  virtual void on_new_rrc_connection() = 0;
+
+  /// \brief Notify the RRC DU about a successful RRC release.
+  virtual void on_successful_rrc_release() = 0;
+};
+
 /// Combined entry point for the RRC UE handling.
 /// It will contain getters for the interfaces for the various logical channels handled by RRC.
 class rrc_ue_interface : public rrc_ul_pdu_handler,

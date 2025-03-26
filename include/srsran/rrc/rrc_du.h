@@ -12,6 +12,7 @@
 
 #include "srsran/cu_cp/cell_meas_manager_config.h"
 #include "srsran/rrc/rrc_cell_context.h"
+#include "srsran/rrc/rrc_metrics.h"
 #include "srsran/rrc/rrc_ue.h"
 
 namespace srsran {
@@ -98,11 +99,27 @@ public:
   virtual size_t get_nof_ues() const = 0;
 };
 
+class rrc_du_metrics_handler
+{
+public:
+  virtual ~rrc_du_metrics_handler() = default;
+
+  /// \brief Add the successful RRC setup to the metrics.
+  virtual void handle_successful_rrc_setup() = 0;
+
+  /// \brief Add the successful RRC release to the metrics.
+  virtual void handle_successful_rrc_release() = 0;
+
+  /// \brief Request the latest metrics report.
+  virtual rrc_du_metrics get_metrics_report() = 0;
+};
+
 /// Combined entry point for the RRC DU handling.
 class rrc_du : public rrc_du_cell_manager,
                public rrc_du_ue_repository,
                public rrc_ue_handler,
-               public rrc_du_statistics_handler
+               public rrc_du_statistics_handler,
+               public rrc_du_metrics_handler
 {
 public:
   virtual ~rrc_du() = default;
@@ -111,6 +128,7 @@ public:
   virtual rrc_du_ue_repository&      get_rrc_du_ue_repository()      = 0;
   virtual rrc_ue_handler&            get_rrc_ue_handler()            = 0;
   virtual rrc_du_statistics_handler& get_rrc_du_statistics_handler() = 0;
+  virtual rrc_du_metrics_handler&    get_rrc_du_metrics_handler()    = 0;
 };
 
 } // namespace srs_cu_cp
