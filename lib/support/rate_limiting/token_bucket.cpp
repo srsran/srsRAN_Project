@@ -8,7 +8,7 @@
  *
  */
 
-#include "token_bucket.h"
+#include "srsran/support/rate_limiting/token_bucket.h"
 #include "srsran/support/compiler.h"
 #include "srsran/support/srsran_assert.h"
 #include <cstdint>

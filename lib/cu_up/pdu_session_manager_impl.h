@@ -20,7 +20,7 @@
 #include "srsran/f1u/cu_up/f1u_gateway.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
-#include "srsran/support/rate_limiting/rate_limiter.h"
+#include "srsran/support/rate_limiting/token_bucket.h"
 #include "srsran/support/timers.h"
 #include <map>
 
@@ -82,7 +82,7 @@ private:
   const n3_interface_config&                               n3_config;
   cu_up_test_mode_config                                   test_mode_config;
   cu_up_ue_logger&                                         logger;
-  std::unique_ptr<rate_limiter>                            ue_ambr_limiter;
+  std::unique_ptr<token_bucket>                            ue_ambr_limiter;
   unique_timer&                                            ue_inactivity_timer;
   timer_factory                                            ue_dl_timer_factory;
   timer_factory                                            ue_ul_timer_factory;

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/gtpu/gtpu_teid.h"
-#include "srsran/support/rate_limiting/rate_limiter.h"
+#include "srsran/support/rate_limiting/token_bucket.h"
 #include "fmt/format.h"
 #include <chrono>
 #include <cstdint>
@@ -28,7 +28,7 @@ struct gtpu_tunnel_ngu_config {
   struct gtpu_tunnel_ngu_rx_config {
     gtpu_teid_t               local_teid;
     std::chrono::milliseconds t_reordering    = {};
-    rate_limiter*             ue_ambr_limiter = nullptr;
+    token_bucket*             ue_ambr_limiter = nullptr;
     bool                      warn_on_drop    = false;
     bool                      test_mode       = false;
   } rx;

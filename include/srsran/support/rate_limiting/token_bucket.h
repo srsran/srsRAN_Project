@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/support/rate_limiting/rate_limiter.h"
 #include "srsran/support/rate_limiting/token_bucket_config.h"
 #include "srsran/support/timers.h"
 #include <cstdint>
@@ -20,16 +19,20 @@ namespace srsran {
 /// \brief Rate limiter class that implements a rate limiter
 /// based on the token bucket algorithm.
 ///
-class token_bucket final : public rate_limiter
+class token_bucket
 {
 public:
   token_bucket(token_bucket_config cfg);
 
-  bool consume(uint32_t tokens) override;
+  /// Consume tokens from the bucket.
+  /// \return False if there were not enough available tokens, true otherwise.
+  bool consume(uint32_t tokens);
 
-  void stop() override;
+  void stop();
 
 private:
+  /// Refill tokens to the bucket.
+  /// It will be called internally by the refill timer.
   void refill(uint32_t tokens);
 
   uint32_t max_tokens;
@@ -39,5 +42,4 @@ private:
 
   bool stopped = false;
 };
-
 } // namespace srsran

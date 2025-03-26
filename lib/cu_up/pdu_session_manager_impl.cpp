@@ -16,7 +16,6 @@
 #include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/sdap/sdap_factory.h"
 #include "srsran/support/rate_limiting/token_bucket_config.h"
-#include "srsran/support/rate_limiting/token_bucket_factory.h"
 #include "srsran/support/srsran_assert.h"
 #include <utility>
 
@@ -67,7 +66,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
 {
   token_bucket_config ue_ambr_config =
       generate_token_bucket_config(ue_dl_ambr, ue_dl_ambr, timer_duration(100), ue_ctrl_timer_factory);
-  ue_ambr_limiter = create_token_bucket(ue_ambr_config);
+  ue_ambr_limiter = std::make_unique<token_bucket>(ue_ambr_config);
 }
 
 pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)

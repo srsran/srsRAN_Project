@@ -20,9 +20,6 @@
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/support/async/execute_on_blocking.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
-#include "srsran/support/rate_limiting/rate_limiter.h"
-#include "srsran/support/rate_limiting/token_bucket_config.h"
-#include "srsran/support/rate_limiting/token_bucket_factory.h"
 #include <map>
 #include <utility>
 

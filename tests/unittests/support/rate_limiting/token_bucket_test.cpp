@@ -8,8 +8,8 @@
  *
  */
 
-#include "lib/support/rate_limiting/token_bucket.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/rate_limiting/token_bucket.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

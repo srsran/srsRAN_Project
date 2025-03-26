@@ -10,11 +10,11 @@
 
 #include "gtpu_test_shared.h"
 #include "lib/gtpu/gtpu_pdu.h"
-#include "lib/support/rate_limiting/token_bucket.h"
 #include "srsran/gtpu/gtpu_tunnel_common_rx.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu_tx.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/rate_limiting/token_bucket.h"
 #include "srsran/support/rate_limiting/token_bucket_config.h"
 #include <gtest/gtest.h>
 #include <sys/socket.h>

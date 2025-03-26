@@ -11,9 +11,9 @@
 #include "lib/gtpu/gtpu_pdu.h"
 #include "lib/gtpu/gtpu_tunnel_ngu_rx_impl.h"
 #include "lib/gtpu/gtpu_tunnel_ngu_tx_impl.h"
-#include "lib/support/rate_limiting/token_bucket.h"
 #include "srsran/support/bit_encoding.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/rate_limiting/token_bucket.h"
 #include "srsran/support/rate_limiting/token_bucket_config.h"
 #include <gtest/gtest.h>
 #include <sys/socket.h>
