@@ -138,6 +138,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(const rrc_ue_creation_message& msg)
                                                          *msg.rrc_ue_cu_cp_notifier,
                                                          *msg.measurement_notifier,
                                                          *msg.cu_cp_ue_notifier,
+                                                         rrc_ue_rrc_du_adapters.at(ue_index),
                                                          msg.ue_index,
                                                          msg.c_rnti,
                                                          rrc_cell,

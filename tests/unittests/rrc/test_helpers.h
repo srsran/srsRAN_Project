@@ -161,5 +161,13 @@ public:
   }
 };
 
+class dummy_rrc_ue_rrc_du_adapter : public rrc_ue_metrics_notifier
+{
+public:
+  void on_new_rrc_connection() override {}
+
+  void on_successful_rrc_release() override {}
+};
+
 } // namespace srs_cu_cp
 } // namespace srsran
