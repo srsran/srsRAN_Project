@@ -27,10 +27,10 @@ constexpr unsigned GTPU_PORT = 2152;
 struct gtpu_tunnel_ngu_config {
   struct gtpu_tunnel_ngu_rx_config {
     gtpu_teid_t               local_teid;
-    std::chrono::milliseconds t_reordering              = {};
-    rate_limiter*             ue_ambr_limiter           = nullptr;
-    bool                      warn_expired_t_reordering = false;
-    bool                      test_mode                 = false;
+    std::chrono::milliseconds t_reordering    = {};
+    rate_limiter*             ue_ambr_limiter = nullptr;
+    bool                      warn_on_drop    = false;
+    bool                      test_mode       = false;
   } rx;
   struct gtpu_tunnel_ngu_tx_config {
     gtpu_teid_t peer_teid;

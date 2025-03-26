@@ -190,7 +190,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, entity_creation)
   gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_expired_t_reordering                         = false;
+  rx_cfg.warn_on_drop                                      = false;
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
 
@@ -204,7 +204,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_no_sn)
   gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_expired_t_reordering                         = false;
+  rx_cfg.warn_on_drop                                      = false;
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
@@ -230,7 +230,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_in_order)
   gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_expired_t_reordering                         = true;
+  rx_cfg.warn_on_drop                                      = true;
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
@@ -256,7 +256,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
   gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_expired_t_reordering                         = true;
+  rx_cfg.warn_on_drop                                      = true;
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
@@ -333,7 +333,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
   gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_expired_t_reordering                         = true;
+  rx_cfg.warn_on_drop                                      = true;
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
@@ -408,7 +408,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
   gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_expired_t_reordering                         = true;
+  rx_cfg.warn_on_drop                                      = true;
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
@@ -481,7 +481,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
   gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_expired_t_reordering                         = true;
+  rx_cfg.warn_on_drop                                      = true;
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);
@@ -559,7 +559,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_stop)
   gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config rx_cfg = {};
   rx_cfg.local_teid                                        = gtpu_teid_t{0x1};
   rx_cfg.t_reordering                                      = std::chrono::milliseconds{10};
-  rx_cfg.warn_expired_t_reordering                         = false;
+  rx_cfg.warn_on_drop                                      = false;
 
   rx = std::make_unique<gtpu_tunnel_ngu_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower, timers);
   ASSERT_NE(rx, nullptr);

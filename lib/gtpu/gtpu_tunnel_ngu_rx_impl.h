@@ -93,7 +93,11 @@ protected:
 
     // Limit UE to AMBR.
     if (not config.ue_ambr_limiter->consume(pdu.buf.length())) {
-      logger.log_info("Dropped GTPU PDU. UE went over UE-AMBR");
+      if (not config.warn_on_drop) {
+        logger.log_info("Dropped GTPU PDU. UE went over UE-AMBR");
+      } else {
+        logger.log_warning("Dropped GTPU PDU. UE went over UE-AMBR");
+      }
       return;
     }
 
@@ -293,7 +297,7 @@ private:
     explicit reordering_callback(gtpu_tunnel_ngu_rx_impl* parent_) : parent(parent_) {}
     void operator()(timer_id_t timer_id)
     {
-      if (not parent->config.warn_expired_t_reordering) {
+      if (not parent->config.warn_on_drop) {
         parent->logger.log_info(
             "reordering timer expired after {}ms. {}", parent->config.t_reordering.count(), parent->st);
       } else {

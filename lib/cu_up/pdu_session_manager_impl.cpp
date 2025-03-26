@@ -130,7 +130,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.rx.local_teid                = new_session->local_teid;
   msg.cfg.rx.ue_ambr_limiter           = ue_ambr_limiter.get();
   msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
-  msg.cfg.rx.warn_expired_t_reordering = n3_config.warn_on_drop;
+  msg.cfg.rx.warn_on_drop              = n3_config.warn_on_drop;
   msg.cfg.rx.test_mode                 = test_mode_config.enabled;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &new_session->gtpu_to_udp_adapter;
