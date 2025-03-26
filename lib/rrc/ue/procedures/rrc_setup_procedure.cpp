@@ -22,6 +22,7 @@ rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&               context
                                          const byte_buffer&              du_to_cu_container_,
                                          rrc_ue_setup_proc_notifier&     rrc_ue_notifier_,
                                          rrc_ue_control_message_handler& srb_notifier_,
+                                         rrc_ue_metrics_notifier&        metrics_notifier_,
                                          rrc_ue_ngap_notifier&           ngap_notifier_,
                                          rrc_ue_event_manager&           event_mng_,
                                          rrc_ue_logger&                  logger_) :
@@ -29,6 +30,7 @@ rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&               context
   du_to_cu_container(du_to_cu_container_),
   rrc_ue(rrc_ue_notifier_),
   srb_notifier(srb_notifier_),
+  metrics_notifier(metrics_notifier_),
   ngap_notifier(ngap_notifier_),
   event_mng(event_mng_),
   logger(logger_)
@@ -64,6 +66,9 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
   }
 
   context.state = rrc_state::connected;
+
+  // Notify metrics.
+  metrics_notifier.on_new_rrc_connection();
 
   send_initial_ue_msg(transaction.response().msg.c1().rrc_setup_complete());
 
