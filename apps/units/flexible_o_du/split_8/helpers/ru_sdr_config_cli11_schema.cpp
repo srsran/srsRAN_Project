@@ -257,7 +257,7 @@ static void configure_cli11_expert_execution_args(CLI::App& app, ru_sdr_unit_exp
 static void configure_cli11_metrics_args(CLI::App& app, ru_sdr_unit_metrics_config& config)
 {
   CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
-  add_option(*layers_subcmd, "--enable_ru", config.enable_ru_metrics, "Radio Unit metrics enabled flag");
+  add_option(*layers_subcmd, "--enable_ru", config.enable_ru_metrics, "Enable Radio Unit metrics");
 }
 
 void srsran::configure_cli11_with_ru_sdr_config_schema(CLI::App& app, srsran::ru_sdr_unit_config& parsed_cfg)

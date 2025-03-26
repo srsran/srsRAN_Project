@@ -12,7 +12,7 @@
 
 #include "apps/helpers/hal/hal_appconfig.h"
 #include "apps/helpers/logger/logger_appconfig.h"
-#include "apps/helpers/metrics/metrics_config.h"
+#include "apps/services/app_resource_usage/app_resource_usage_config.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
 #include "apps/services/remote_control/remote_control_appconfig.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
@@ -29,9 +29,9 @@ struct cu_up_appconfig {
 
 /// Metrics report configuration.
 struct metrics_appconfig {
-  app_helpers::metrics_config common_metrics_cfg;
+  app_services::app_resource_usage_config rusage_config;
   /// Resource usage report period in milliseconds.
-  unsigned rusage_report_period     = 0;
+  unsigned rusage_report_period     = 1000;
   bool     autostart_stdout_metrics = false;
 };
 

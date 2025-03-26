@@ -126,7 +126,7 @@ static void register_app_logs(const du_appconfig& du_cfg, flexible_o_du_applicat
   config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   // Metrics log channels.
-  const app_helpers::metrics_config& metrics_cfg = du_cfg.metrics_cfg.common_metrics_cfg;
+  const app_helpers::metrics_config& metrics_cfg = du_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg;
   app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
 
   auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
@@ -186,6 +186,15 @@ int main(int argc, char** argv)
   // Set up logging.
   initialize_log(du_cfg.log_cfg.filename);
   register_app_logs(du_cfg, *o_du_app_unit);
+
+  // Check the metrics and metrics consumers.
+  srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
+  bool metrics_enabled = o_du_app_unit->are_metrics_enabled() || du_cfg.metrics_cfg.rusage_config.enable_app_usage;
+
+  if (!metrics_enabled && du_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enabled()) {
+    gnb_logger.warning("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+    fmt::println("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+  }
 
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
@@ -315,7 +324,7 @@ int main(int argc, char** argv)
 
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, du_cfg.metrics_cfg.common_metrics_cfg, srslog::fetch_basic_logger("GNB"));
+      metrics_notifier_forwarder, du_cfg.metrics_cfg.rusage_config, srslog::fetch_basic_logger("GNB"));
 
   std::vector<app_services::metrics_config> app_metrics = std::move(app_resource_usage_service.metrics);
 

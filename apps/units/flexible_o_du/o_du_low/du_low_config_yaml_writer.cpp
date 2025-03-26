@@ -127,9 +127,18 @@ static void fill_du_low_hal_section(YAML::Node node, const du_low_unit_hal_confi
   }
 }
 
+static void fill_du_low_metrics_section(YAML::Node node, const du_low_unit_metrics_config& config)
+{
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.common_metrics_cfg);
+
+  auto metrics_node            = node["metrics"];
+  auto layers_node             = metrics_node["layers"];
+  layers_node["enable_du_low"] = config.enable_du_low;
+}
+
 void srsran::fill_du_low_config_in_yaml_schema(YAML::Node& node, const du_low_unit_config& config)
 {
-  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg.common_metrics_cfg);
+  fill_du_low_metrics_section(node, config.metrics_cfg);
   fill_du_low_log_section(node["log"], config.loggers);
   fill_du_low_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_du_low_expert_section(node["expert_phy"], config.expert_phy_cfg);

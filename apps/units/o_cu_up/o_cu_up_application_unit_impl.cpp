@@ -50,6 +50,11 @@ void o_cu_up_application_unit_impl::on_loggers_registration()
   register_cu_up_loggers(unit_cfg.cu_up_cfg.loggers);
 }
 
+bool o_cu_up_application_unit_impl::are_metrics_enabled() const
+{
+  return unit_cfg.cu_up_cfg.metrics.layers_cfg.are_metrics_enabled();
+}
+
 o_cu_up_unit o_cu_up_application_unit_impl::create_o_cu_up_unit(const o_cu_up_unit_dependencies& dependencies)
 {
   return build_o_cu_up(unit_cfg, dependencies);

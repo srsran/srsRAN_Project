@@ -139,7 +139,7 @@ static void register_app_logs(const cu_appconfig&       cu_cfg,
   config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   // Metrics log channels.
-  const app_helpers::metrics_config& metrics_cfg = cu_cfg.metrics_cfg.common_metrics_cfg;
+  const app_helpers::metrics_config& metrics_cfg = cu_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg;
   app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
 
   // Register units logs.
@@ -210,11 +210,6 @@ int main(int argc, char** argv)
 
     autoderive_cu_up_parameters_after_parsing(
         cu_cfg, o_cu_up_app_unit->get_o_cu_up_unit_config(), o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
-
-    if (cu_cfg.metrics_cfg.common_metrics_cfg.enabled() && cu_cfg.metrics_cfg.rusage_report_period == 0) {
-      // Default report period 1 second.
-      cu_cfg.metrics_cfg.rusage_report_period = 1000;
-    }
   });
 
   // Parse arguments.
@@ -231,6 +226,16 @@ int main(int argc, char** argv)
   initialize_log(cu_cfg.log_cfg.filename);
   register_app_logs(cu_cfg, *o_cu_cp_app_unit, *o_cu_up_app_unit);
 
+  // Check the metrics and metrics consumers.
+  srslog::basic_logger& cu_logger = srslog::fetch_basic_logger("CU");
+  bool metrics_enabled = o_cu_cp_app_unit->are_metrics_enabled() || o_cu_up_app_unit->are_metrics_enabled() ||
+                         cu_cfg.metrics_cfg.rusage_config.enable_app_usage;
+
+  if (!metrics_enabled && cu_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enabled()) {
+    cu_logger.warning("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+    fmt::println("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+  }
+
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
   if (config_logger.debug.enabled()) {
@@ -243,7 +248,6 @@ int main(int argc, char** argv)
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
-  srslog::basic_logger&            cu_logger = srslog::fetch_basic_logger("CU");
   app_services::application_tracer app_tracer;
   if (not cu_cfg.log_cfg.tracing_filename.empty()) {
     app_tracer.enable_tracer(cu_cfg.log_cfg.tracing_filename, cu_logger);
@@ -360,7 +364,7 @@ int main(int argc, char** argv)
 
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, cu_cfg.metrics_cfg.common_metrics_cfg, cu_logger);
+      metrics_notifier_forwarder, cu_cfg.metrics_cfg.rusage_config, cu_logger);
 
   // Create service for periodically polling app resource usage.
   auto app_metrics_timer = app_timers.create_unique_timer(*workers.metrics_exec);

@@ -23,6 +23,9 @@ namespace srsran {
 /// Configuration to enable/disable metrics per layer.
 struct cu_up_unit_metrics_layer_config {
   bool enable_pdcp = false;
+
+  /// Returns true if one or more layers are enabled, false otherwise.
+  bool are_metrics_enabled() const { return enable_pdcp; }
 };
 
 /// Metrics configuration.

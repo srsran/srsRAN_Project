@@ -38,6 +38,9 @@ public:
 
   /// Registers the loggers of this application unit.
   virtual void on_loggers_registration() = 0;
+
+  /// Returns true if the metrics are enabled for this application unit, otherwise false.
+  virtual bool are_metrics_enabled() const = 0;
 };
 
 } // namespace srsran

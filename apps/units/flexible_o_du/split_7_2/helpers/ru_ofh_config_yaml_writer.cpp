@@ -147,8 +147,9 @@ static void fill_ru_ofh_metrics_section(YAML::Node node, const ru_ofh_unit_metri
 {
   app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg);
 
-  auto metrics_node         = node["metrics"];
-  metrics_node["enable_ru"] = config.enable_ru_metrics;
+  auto metrics_node        = node["metrics"];
+  auto layers_node         = metrics_node["layers"];
+  layers_node["enable_ru"] = config.enable_ru_metrics;
 }
 
 void srsran::fill_ru_ofh_config_in_yaml_schema(YAML::Node& node, const ru_ofh_unit_config& config)

@@ -519,7 +519,7 @@ def test_smoke(
         always_download_artifacts=False,
         bitrate_threshold=0,
         ue_stop_timeout=30,
-        gnb_post_cmd=("", "metrics --enable_log_metrics=True"),
+        gnb_post_cmd=("", "metrics --enable_log=True"),
     )
 
 

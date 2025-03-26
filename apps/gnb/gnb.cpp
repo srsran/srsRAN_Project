@@ -145,7 +145,7 @@ static void register_app_logs(const gnb_appconfig&            gnb_cfg,
   e2ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   // Metrics log channels.
-  const app_helpers::metrics_config& metrics_cfg = gnb_cfg.metrics_cfg.common_metrics_cfg;
+  const app_helpers::metrics_config& metrics_cfg = gnb_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg;
   app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
 
   // Register units logs.
@@ -259,6 +259,16 @@ int main(int argc, char** argv)
   initialize_log(gnb_cfg.log_cfg.filename);
   register_app_logs(gnb_cfg, *o_cu_cp_app_unit, *o_cu_up_app_unit, *o_du_app_unit);
 
+  // Check the metrics and metrics consumers.
+  srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
+  bool metrics_enabled = o_cu_cp_app_unit->are_metrics_enabled() || o_cu_up_app_unit->are_metrics_enabled() ||
+                         o_du_app_unit->are_metrics_enabled() || gnb_cfg.metrics_cfg.rusage_config.enable_app_usage;
+
+  if (!metrics_enabled && gnb_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enabled()) {
+    gnb_logger.warning("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+    fmt::println("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+  }
+
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
   if (config_logger.debug.enabled()) {
@@ -272,7 +282,6 @@ int main(int argc, char** argv)
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
-  srslog::basic_logger&            gnb_logger = srslog::fetch_basic_logger("GNB");
   app_services::application_tracer app_tracer;
   if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
     app_tracer.enable_tracer(gnb_cfg.log_cfg.tracing_filename, gnb_logger);
@@ -368,7 +377,7 @@ int main(int argc, char** argv)
 
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, gnb_cfg.metrics_cfg.common_metrics_cfg, gnb_logger);
+      metrics_notifier_forwarder, gnb_cfg.metrics_cfg.rusage_config, gnb_logger);
 
   // Create service for periodically polling app resource usage.
   auto app_metrics_timer = app_timers.create_unique_timer(*workers.metrics_exec);

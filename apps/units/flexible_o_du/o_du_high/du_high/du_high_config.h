@@ -880,6 +880,9 @@ struct du_high_unit_metrics_layer_config {
   bool enable_scheduler = false;
   bool enable_rlc       = false;
   bool enable_mac       = false;
+
+  /// Returns true if one or more layers are enabled, otherwise false.
+  bool are_metrics_enabled() const { return enable_scheduler || enable_rlc || enable_mac; }
 };
 
 /// Metrics report configuration.
