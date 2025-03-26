@@ -40,7 +40,7 @@ static void configure_cli11_ngu_gtpu_args(CLI::App& app, cu_up_unit_ngu_gtpu_con
   add_option(
       app, "--reordering_timer", gtpu_cfg.gtpu_reordering_timer_ms, "GTP-U RX reordering timer (in milliseconds)");
   add_option(
-      app, "--rate_limiter_period", gtpu_cfg.rate_limiter_period_ms, "GTP-U RX rate limiter period (in milliseconds)");
+      app, "--rate_limiter_period", gtpu_cfg.rate_limiter_period, "GTP-U RX rate limiter period (in milliseconds)");
 }
 
 static void configure_cli11_ngu_args(CLI::App& app, cu_up_unit_ngu_config& ngu_params)

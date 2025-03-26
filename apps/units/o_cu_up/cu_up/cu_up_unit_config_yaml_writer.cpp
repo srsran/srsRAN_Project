@@ -21,7 +21,7 @@ static void fill_cu_up_ngu_gtpu_section(YAML::Node& node, const cu_up_unit_ngu_g
   auto gtpu_node                     = node["gtpu"];
   gtpu_node["gtpu_queue_size"]       = config.gtpu_queue_size;
   gtpu_node["gtpu_reordering_timer"] = config.gtpu_reordering_timer_ms;
-  gtpu_node["rate_limiter_period"]   = config.rate_limiter_period_ms;
+  gtpu_node["rate_limiter_period"]   = config.rate_limiter_period.count();
 }
 
 static void fill_cu_up_ngu_socket_entry(YAML::Node& node, const cu_up_unit_ngu_socket_config& config)

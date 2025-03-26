@@ -24,7 +24,7 @@ srs_cu_up::cu_up_config srsran::generate_cu_up_config(const cu_up_unit_config& c
   out_cfg.cu_up_name = fmt::format("srs_cu_up_{}", fmt::underlying(config.gnb_cu_up_id));
 
   out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.ngu_cfg.gtpu_cfg.gtpu_reordering_timer_ms};
-  out_cfg.n3_cfg.gtpu_rate_limiting_period = std::chrono::milliseconds{config.ngu_cfg.gtpu_cfg.rate_limiter_period_ms};
+  out_cfg.n3_cfg.gtpu_rate_limiting_period = config.ngu_cfg.gtpu_cfg.rate_limiter_period;
   out_cfg.n3_cfg.warn_on_drop              = config.warn_on_drop;
 
   // E1AP-CU-UP config.
