@@ -324,7 +324,7 @@ static std::pair<float, cf_t> detect_symbol(span<uint8_t> bits, cf_t cross_term)
 
   // Case BPSK.
   if (nof_bits == 1) {
-    cf_t  rx_symbol    = cf_t(M_SQRT1_2f, M_SQRT1_2f);
+    cf_t  rx_symbol    = cf_t(M_SQRT1_2, M_SQRT1_2);
     float metric_cross = std::real(rx_symbol * cross_term);
     if (metric_cross > 0) {
       bits[0] = 0;
@@ -337,9 +337,9 @@ static std::pair<float, cf_t> detect_symbol(span<uint8_t> bits, cf_t cross_term)
   }
 
   // Case QPSK.
-  cf_t  d1 = cf_t(M_SQRT1_2f, M_SQRT1_2f);
+  cf_t  d1 = cf_t(M_SQRT1_2, M_SQRT1_2);
   float m1 = std::real(d1 * cross_term);
-  cf_t  d2 = cf_t(M_SQRT1_2f, -M_SQRT1_2f);
+  cf_t  d2 = cf_t(M_SQRT1_2, -M_SQRT1_2);
   float m2 = std::real(d2 * cross_term);
 
   // First decide whether the most likely symbol is in quadrants 1-3 or 2-4.

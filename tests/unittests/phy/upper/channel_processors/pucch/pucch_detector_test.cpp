@@ -74,6 +74,8 @@ protected:
     }
   }
 
+  static void TearDownTestSuite() { detector_test.reset(); }
+
   static std::unique_ptr<pucch_detector> detector_test;
   static channel_estimate                csi;
 };
