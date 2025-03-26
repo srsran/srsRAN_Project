@@ -35,7 +35,8 @@ public:
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override; // Will be run from IO executor.
 
   // gtpu_demux_ctrl
-  bool add_tunnel(gtpu_teid_t                                  teid,
+  expected<std::unique_ptr<batched_dispatch_queue<byte_buffer>>>
+       add_tunnel(gtpu_teid_t                                  teid,
                   task_executor&                               tunnel_exec,
                   gtpu_tunnel_common_rx_upper_layer_interface* tunnel) override;
   bool remove_tunnel(gtpu_teid_t teid) override;

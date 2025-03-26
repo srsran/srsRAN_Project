@@ -77,14 +77,15 @@ private:
 class dummy_gtpu_demux_ctrl final : public gtpu_demux_ctrl
 {
 public:
-  dummy_gtpu_demux_ctrl()  = default;
+  dummy_gtpu_demux_ctrl() : logger(srslog::fetch_basic_logger("GTPU")) {}
   ~dummy_gtpu_demux_ctrl() = default;
 
-  bool
+  expected<std::unique_ptr<batched_dispatch_queue<byte_buffer>>>
   add_tunnel(gtpu_teid_t teid, task_executor& tunnel_exec, gtpu_tunnel_common_rx_upper_layer_interface* tunnel) override
   {
     created_teid_list.push_back(teid);
-    return true;
+    return std::make_unique<batched_dispatch_queue<byte_buffer>>(
+        8192, tunnel_exec, logger, [](span<const byte_buffer>) {});
   }
   bool remove_tunnel(gtpu_teid_t teid) override
   {
@@ -96,6 +97,9 @@ public:
 
   std::list<gtpu_teid_t> created_teid_list = {};
   std::list<gtpu_teid_t> removed_teid_list = {};
+
+private:
+  srslog::basic_logger& logger;
 };
 
 /// Dummy GTP-U TEID pool

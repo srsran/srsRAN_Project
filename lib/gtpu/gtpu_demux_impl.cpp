@@ -24,20 +24,22 @@ void gtpu_demux_impl::stop()
 {
   stopped.store(true, std::memory_order_relaxed);
 }
-
-bool gtpu_demux_impl::add_tunnel(gtpu_teid_t                                  teid,
-                                 task_executor&                               tunnel_exec,
-                                 gtpu_tunnel_common_rx_upper_layer_interface* tunnel)
+expected<std::unique_ptr<batched_dispatch_queue<byte_buffer>>>
+gtpu_demux_impl::add_tunnel(gtpu_teid_t                                  teid,
+                            task_executor&                               tunnel_exec,
+                            gtpu_tunnel_common_rx_upper_layer_interface* tunnel)
 {
+  auto batched_queue = std::make_unique<batched_dispatch_queue<byte_buffer>>(
+      8192, tunnel_exec, logger, [](span<const byte_buffer>) { fmt::print("hazza!\n"); });
   std::lock_guard<std::mutex> guard(map_mutex);
   auto                        it = teid_to_tunnel.try_emplace(teid, gtpu_demux_tunnel_ctx_t{&tunnel_exec, tunnel});
   if (not it.second) {
     logger.error("Tunnel already exists. teid={}", teid);
-    return false;
+    return make_unexpected(default_error_t{});
   }
 
   logger.info("Tunnel added. teid={}", teid);
-  return true;
+  return batched_queue;
 }
 
 bool gtpu_demux_impl::remove_tunnel(gtpu_teid_t teid)

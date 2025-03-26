@@ -13,13 +13,13 @@
 #include "adapters/gtpu_adapters.h"
 #include "adapters/sdap_adapters.h"
 #include "drb_context.h"
+#include "srsran/adt/batched_dispatch_queue.h"
 #include "srsran/gtpu/gtpu_demux.h"
 #include "srsran/gtpu/gtpu_teid_pool.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu.h"
 #include "srsran/ran/up_transport_layer_info.h"
 
-namespace srsran {
-namespace srs_cu_up {
+namespace srsran::srs_cu_up {
 
 #define MAX_NUM_PDU_SESSIONS_PER_UE (8) /// Todo: find 3GPP spec reference
 
@@ -30,7 +30,6 @@ struct pdu_session {
               gtpu_demux_ctrl& gtpu_rx_demux_,
               gtpu_teid_pool&  n3_teid_allocator_) :
     pdu_session_id(session.pdu_session_id),
-    session_type(session.pdu_session_type),
     snssai(session.snssai),
     security_ind(session.security_ind),
     local_teid(local_teid_),
@@ -38,9 +37,6 @@ struct pdu_session {
     gtpu_rx_demux(gtpu_rx_demux_),
     n3_teid_allocator(n3_teid_allocator_)
   {
-    if (session.pdu_session_res_dl_ambr.has_value()) {
-      pdu_session_res_ambr = session.pdu_session_res_dl_ambr.value();
-    }
   }
   ~pdu_session() { stop(); }
 
@@ -69,26 +65,25 @@ struct pdu_session {
   gtpu_sdap_adapter gtpu_to_sdap_adapter;
   sdap_gtpu_adapter sdap_to_gtpu_adapter;
 
-  // Adapters between GTP-U and UDP GW
+  // Adapters between GTP-U and NG-U/F1-U
   gtpu_network_gateway_adapter gtpu_to_udp_adapter;
+  pdcp_f1u_adapter             pdcp_to_f1u_adapter;
 
-  pdcp_f1u_adapter      pdcp_to_f1u_adapter;
-  pdu_session_id_t      pdu_session_id; //< PDU session ID (0-255)
-  std::string           session_type;
-  s_nssai_t             snssai;
-  security_indication_t security_ind;
-  uint64_t              pdu_session_res_ambr = 0;
+  // PDU Session parameters
+  pdu_session_id_t        pdu_session_id;
+  s_nssai_t               snssai;
+  security_indication_t   security_ind;
+  gtpu_teid_t             local_teid;     // the local teid used by the gNB for this PDU session
+  up_transport_layer_info ul_tunnel_info; // the peer GTP-U address and TEID
 
-  // Tunneling info used by all DRBs/QoS flows in this PDU session
-  gtpu_teid_t             local_teid;        // the local teid used by the gNB for this PDU session
-  up_transport_layer_info ul_tunnel_info;    // the peer GTP-U address and TEID
-  gtpu_demux_ctrl&        gtpu_rx_demux;     // The demux entity to register/remove the tunnel.
-  gtpu_teid_pool&         n3_teid_allocator; // Pool to de-allocate TEID on release
+  // GTP-U demux parameters
+  gtpu_demux_ctrl&                                     gtpu_rx_demux; // The demux entity to register/remove the tunnel.
+  gtpu_teid_pool&                                      n3_teid_allocator; // Pool to de-allocate TEID on release
+  std::unique_ptr<batched_dispatch_queue<byte_buffer>> dispatch_queue;
 
-  drb_context* default_drb = nullptr; // non-owning pointer to default DRB, if any
-
-  std::map<drb_id_t, std::unique_ptr<drb_context>> drbs; // key is drb_id
+  // DRB contexts
+  drb_context*                                     default_drb = nullptr; // non-owning pointer to default DRB, if any
+  std::map<drb_id_t, std::unique_ptr<drb_context>> drbs;                  // key is drb_id
 };
 
-} // namespace srs_cu_up
-} // namespace srsran
+} // namespace srsran::srs_cu_up

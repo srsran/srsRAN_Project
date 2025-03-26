@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/batched_dispatch_queue.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/gtpu/gtpu_teid.h"
 #include "srsran/gtpu/gtpu_tunnel_common_rx.h"
@@ -43,7 +44,7 @@ public:
   virtual ~gtpu_demux_ctrl() = default;
 
   /// Add a new TEID to GTP-U tunnel mapping.
-  virtual bool
+  virtual expected<std::unique_ptr<batched_dispatch_queue<byte_buffer>>>
   add_tunnel(gtpu_teid_t teid, task_executor& tunnel_exec, gtpu_tunnel_common_rx_upper_layer_interface* tunnel) = 0;
 
   /// \brief Remove TEID from mapping.
