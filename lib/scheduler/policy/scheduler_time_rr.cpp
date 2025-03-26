@@ -56,7 +56,7 @@ void scheduler_time_rr::save_ul_newtx_grants(span<const ul_sched_info> ul_grants
 
   // Mark the count for the allocated UEs.
   for (const auto& grant : ul_grants) {
-    ue_last_ul_alloc_count[grant.context.ue_index] = dl_alloc_count;
+    ue_last_ul_alloc_count[grant.context.ue_index] = ul_alloc_count;
   }
   ++ul_alloc_count;
 }

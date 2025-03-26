@@ -39,11 +39,11 @@ private:
   const scheduler_ue_expert_config expert_cfg;
 
   // Tables to keep track of UE priorities.
-  std::array<uint16_t, MAX_NOF_DU_UES> ue_last_dl_alloc_count{};
-  std::array<uint16_t, MAX_NOF_DU_UES> ue_last_ul_alloc_count{};
+  std::array<unsigned, MAX_NOF_DU_UES> ue_last_dl_alloc_count{};
+  std::array<unsigned, MAX_NOF_DU_UES> ue_last_ul_alloc_count{};
 
-  uint16_t dl_alloc_count{0};
-  uint16_t ul_alloc_count{0};
+  unsigned dl_alloc_count{0};
+  unsigned ul_alloc_count{0};
 };
 
 } // namespace srsran
