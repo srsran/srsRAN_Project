@@ -548,7 +548,8 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const crb_in
     bool contains_dc =
         dc_offset_helper::is_contained(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, crbs);
 
-    mcs_tbs_info = compute_ul_mcs_tbs(pusch_cfg, &ue_cell_cfg, grant.cfg.recommended_mcs, crbs.length(), contains_dc);
+    mcs_tbs_info =
+        compute_ul_mcs_tbs(pusch_cfg, ue_cc.active_bwp(), grant.cfg.recommended_mcs, crbs.length(), contains_dc);
 
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
     if (not mcs_tbs_info.has_value()) {

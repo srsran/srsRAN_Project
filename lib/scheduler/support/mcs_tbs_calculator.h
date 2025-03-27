@@ -17,7 +17,7 @@ namespace srsran {
 
 struct pusch_config_params;
 struct pdsch_config_params;
-class ue_cell_configuration;
+struct bwp_config;
 
 /// Container for MCS and TBS results.
 struct sch_mcs_tbs {
@@ -42,31 +42,31 @@ compute_dl_mcs_tbs(const pdsch_config_params& pdsch_params, sch_mcs_index max_mc
 /// \brief Computes the PUSCH MCS and TBS such that the effective code rate does not exceed 0.95.
 ///
 /// \param[in] pusch_params PUSCH parameters needed to compute the MCS and TBS.
-/// \param[in] ue_cell_cfg UE cell configuration.
+/// \param[in] active_bwp_cfg Active BWP config.
 /// \param[in] max_mcs Initial value to be applied for the MCS; the final MCS might be lowered if the effective
 /// code rate is above 0.95.
 /// \param[in] nof_prbs Maximum number of PRBs available for the PUSCH transmission.
 /// \param[in] contains_dc Set to true if the transmission overlaps with the position of the DC.
 /// \return The MCS and TBS, if for these values the effective code rate does not exceed 0.95; else, it returns an empty
 /// optional object.
-std::optional<sch_mcs_tbs> compute_ul_mcs_tbs(const pusch_config_params&   pusch_params,
-                                              const ue_cell_configuration* ue_cell_cfg,
-                                              sch_mcs_index                max_mcs,
-                                              unsigned                     nof_prbs,
-                                              bool                         contains_dc);
+std::optional<sch_mcs_tbs> compute_ul_mcs_tbs(const pusch_config_params& pusch_params,
+                                              const bwp_config&          active_bwp_cfg,
+                                              sch_mcs_index              max_mcs,
+                                              unsigned                   nof_prbs,
+                                              bool                       contains_dc);
 
 /// \brief Determines the PUSCH TBS such that the effective code rate does not exceed 0.95.
 /// \param[in] pusch_params PUSCH parameters needed to compute the TBS.
-/// \param[in] ue_cell_cfg UE cell configuration.
+/// \param[in] active_bwp_cfg Active BWP config.
 /// \param[in] mcs Value to be applied for the MCS.
 /// \param[in] nof_prbs Number of PRBs available for the PUSCH transmission.
 /// \param[in] contains_dc Set to true if the transmission overlaps with the position of the DC.
 /// \return TBS in bytes, in case the PUSCH code rate and paramters are valid; else, std::nullopt.
-std::optional<unsigned> compute_ul_tbs(const pusch_config_params&   pusch_params,
-                                       const ue_cell_configuration* ue_cell_cfg,
-                                       sch_mcs_index                mcs,
-                                       unsigned                     nof_prbs,
-                                       bool                         contains_dc);
+std::optional<unsigned> compute_ul_tbs(const pusch_config_params& pusch_params,
+                                       const bwp_config&          active_bwp_cfg,
+                                       sch_mcs_index              mcs,
+                                       unsigned                   nof_prbs,
+                                       bool                       contains_dc);
 
 /// \brief Determines the PUSCH TBS without checking if the coderate is valid.
 /// \param[in] pusch_params PUSCH parameters needed to compute the TBS.

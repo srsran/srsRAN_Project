@@ -44,7 +44,8 @@ public:
 
   rnti_t rnti() const { return crnti_; }
 
-  bwp_id_t active_bwp_id() const { return to_bwp_id(0); }
+  bwp_id_t          active_bwp_id() const { return to_bwp_id(0); }
+  const bwp_config& active_bwp() const { return cfg().bwp(active_bwp_id()); }
 
   /// \brief Determines whether the UE cell is currently active.
   bool is_active() const { return active; }
