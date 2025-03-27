@@ -503,7 +503,7 @@ static void usage(std::string_view prog)
 {
   fmt::print("Usage: {} [-C X] [-F X] [-S X] [-N X] [-P X] [-R X] [-M X] [-m X] [-D] [-T X] [eal_args ...]\n", prog);
   fmt::print("\t-C       Channel delay profile: single-tap, TDLA, TDLB or TDLC. [Default {}]\n", channel_delay_profile);
-  fmt::print("\t-F       Channel fading distribution: uniform-phase or rayleigh. [Default {}]\n",
+  fmt::print("\t-F       Channel fading distribution: uniform-phase, rayleigh or butler. [Default {}]\n",
              channel_fading_distribution);
   fmt::print("\t-D       Toggle enable DC position. [Default {}]\n", enable_dc_position);
   fmt::print("\t-S       SINR. [Default {}]\n", sinr_dB);

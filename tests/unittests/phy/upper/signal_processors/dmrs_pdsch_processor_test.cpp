@@ -42,8 +42,7 @@ int main()
     unsigned max_ports = test_case.config.precoding.get_nof_ports();
 
     // Prepare resource grid and resource grid mapper spies.
-    resource_grid_writer_spy              grid(max_ports, max_symb, max_prb);
-    std::unique_ptr<resource_grid_mapper> mapper = rg_mapper_factory->create();
+    resource_grid_writer_spy grid(max_ports, max_symb, max_prb);
 
     // Map DMRS-PDSCH using the test case arguments.
     dmrs_pdsch->map(grid, test_case.config);

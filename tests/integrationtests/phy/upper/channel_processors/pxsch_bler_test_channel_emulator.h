@@ -112,11 +112,7 @@ private:
     std::vector<cf_t> temp_single_ofdm_symbol;
   };
 
-  enum {
-    invalid_distribution,
-    rayleigh,
-    uniform_phase,
-  } fading_distribution = invalid_distribution;
+  enum { invalid_distribution, rayleigh, uniform_phase, butler } fading_distribution = invalid_distribution;
   /// Number of OFDM symbols per slot.
   unsigned nof_ofdm_symbols;
   /// Random generator for taps phase and power.

@@ -109,6 +109,8 @@ channel_emulator::channel_emulator(std::string        delay_profile,
     fading_distribution = rayleigh;
   } else if (fading_distribution_ == "uniform-phase") {
     fading_distribution = uniform_phase;
+  } else if (fading_distribution_ == "butler") {
+    fading_distribution = butler;
   }
   report_fatal_error_if_not(
       fading_distribution != invalid_distribution, "Invalid fading distribution '{}'.", fading_distribution_);
@@ -172,6 +174,9 @@ void channel_emulator::run(resource_grid_writer& rx_grid, const resource_grid_re
             break;
           case uniform_phase:
             tap = std::polar(1.0F, dist_uniform_phase(rgen));
+            break;
+          case butler:
+            tap = std::polar(1.0F, static_cast<float>(2.0F * M_PI * i_rx_port * i_tx_port / nof_tx_ports));
             break;
           case invalid_distribution:
             tap = std::numeric_limits<float>::quiet_NaN();
