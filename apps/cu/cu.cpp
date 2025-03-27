@@ -215,6 +215,11 @@ int main(int argc, char** argv)
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
+  // Dry run mode, exit.
+  if (cu_cfg.enable_dryrun) {
+    return 0;
+  }
+
   // Check the modified configuration.
   if (!validate_cu_appconfig(cu_cfg) ||
       !o_cu_cp_app_unit->on_configuration_validation(os_sched_affinity_bitmask::available_cpus()) ||

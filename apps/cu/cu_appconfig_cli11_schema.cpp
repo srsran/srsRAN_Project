@@ -37,6 +37,8 @@ static void configure_cli11_metrics_args(CLI::App& app, srs_cu::metrics_appconfi
 
 void srsran::configure_cli11_with_cu_appconfig_schema(CLI::App& app, cu_appconfig& cu_cfg)
 {
+  app.add_flag("--dryrun", cu_cfg.enable_dryrun, "Enable application dry run mode")->capture_default_str();
+
   // Logging section.
   configure_cli11_with_logger_appconfig_schema(app, cu_cfg.log_cfg);
 

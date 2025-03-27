@@ -51,6 +51,8 @@ static void configure_cli11_f1u_args(CLI::App& app, srs_du::f1u_appconfig& f1u_p
 
 void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfig& du_cfg)
 {
+  app.add_flag("--dryrun", du_cfg.enable_dryrun, "Enable application dry run mode")->capture_default_str();
+
   // Loggers section.
   configure_cli11_with_logger_appconfig_schema(app, du_cfg.log_cfg);
 

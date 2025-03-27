@@ -175,6 +175,11 @@ int main(int argc, char** argv)
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
+  // Dry run mode, exit.
+  if (du_cfg.enable_dryrun) {
+    return 0;
+  }
+
   // Check the modified configuration.
   if (!validate_appconfig(du_cfg) ||
       !o_du_app_unit->on_configuration_validation((du_cfg.expert_execution_cfg.affinities.isolated_cpus)

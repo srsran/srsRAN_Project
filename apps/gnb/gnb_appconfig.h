@@ -55,6 +55,8 @@ struct gnb_appconfig {
   std::optional<hal_appconfig> hal_config;
   /// Remote control configuration.
   remote_control_appconfig remote_control_config;
+  /// Dry run mode enabled flag.
+  bool enable_dryrun = false;
 };
 
 } // namespace srsran

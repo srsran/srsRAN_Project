@@ -54,6 +54,8 @@ struct cu_appconfig {
   remote_control_appconfig remote_control_config;
   /// Metrics configuration.
   srs_cu::metrics_appconfig metrics_cfg;
+  /// Dryrun mode enabled flag.
+  bool enable_dryrun = false;
 };
 
 } // namespace srsran

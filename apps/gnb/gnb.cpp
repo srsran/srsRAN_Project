@@ -243,6 +243,11 @@ int main(int argc, char** argv)
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
+  // Dry run mode, exit.
+  if (gnb_cfg.enable_dryrun) {
+    return 0;
+  }
+
   auto available_cpu_mask = (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)
                                 ? gnb_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
                                 : os_sched_affinity_bitmask::available_cpus();
