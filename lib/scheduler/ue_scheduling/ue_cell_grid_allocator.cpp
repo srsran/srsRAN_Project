@@ -517,6 +517,8 @@ ue_cell_grid_allocator::setup_ul_grant_builder(const slice_ue&                  
 
 void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const crb_interval& crbs)
 {
+  srsran_assert(not crbs.empty(), "Invalid set of PUSCH CRBs");
+
   ue&      u     = ues[grant.user->ue_index()];
   ue_cell& ue_cc = *u.find_cell(cell_alloc.cell_index());
 

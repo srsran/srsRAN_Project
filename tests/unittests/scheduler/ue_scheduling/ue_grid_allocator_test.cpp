@@ -79,11 +79,8 @@ protected:
 
     // Prepare CRB bitmask that will be used to find available CRBs.
     const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
-    const auto& init_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp;
     used_dl_crbs            = res_grid[0].dl_res_grid.used_crbs(init_dl_bwp.generic_params,
                                                      init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols);
-    used_ul_crbs            = res_grid[0].ul_res_grid.used_crbs(init_ul_bwp.generic_params,
-                                                     init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols);
 
     on_each_slot();
 
@@ -178,6 +175,9 @@ protected:
     }
     auto& builder = result.value();
 
+    const auto& init_ul_bwp  = cell_cfg.ul_cfg_common.init_ul_bwp;
+    crb_bitmap  used_ul_crbs = res_grid[pusch_slot].ul_res_grid.used_crbs(
+        init_ul_bwp.generic_params, init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols);
     crb_interval crbs = builder.recommended_crbs(used_ul_crbs, max_nof_rbs.value_or(MAX_NOF_PRBS));
     builder.set_pusch_params(crbs);
     used_ul_crbs.fill(crbs.start(), crbs.stop());
@@ -215,7 +215,6 @@ protected:
 
   slot_point current_slot;
   crb_bitmap used_dl_crbs;
-  crb_bitmap used_ul_crbs;
 };
 
 TEST_P(ue_grid_allocator_tester,
