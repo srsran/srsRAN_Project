@@ -47,6 +47,15 @@ void si_message_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
   schedule_pending_si_messages(res_grid);
 }
 
+void si_message_scheduler::handle_si_message_update_indication(unsigned                    new_version,
+                                                               const si_scheduling_config& new_si_sched_cfg)
+{
+  // Update SI messages.
+  version      = new_version;
+  si_sched_cfg = new_si_sched_cfg;
+  pending_messages.resize(si_sched_cfg->si_messages.size());
+}
+
 void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
 {
   const unsigned sfn = sl_tx.sfn();
@@ -214,7 +223,7 @@ void si_message_scheduler::fill_si_grant(cell_slot_resource_allocator& res_grid,
   sib_information& si = res_grid.result.dl.bc.sibs.emplace_back();
   si.si_indicator     = sib_information::si_indicator_type::other_si;
   si.si_msg_index     = si_message;
-  si.version          = 0;
+  si.version          = version;
   si.nof_txs          = 0;
 
   // Fill PDSCH configuration.

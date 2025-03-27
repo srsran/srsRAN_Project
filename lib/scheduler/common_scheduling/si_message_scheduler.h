@@ -27,6 +27,9 @@ public:
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
   void run_slot(cell_slot_resource_allocator& res_grid);
 
+  /// \brief Update the SI messages.
+  void handle_si_message_update_indication(unsigned version, const si_scheduling_config& new_si_sched_cfg);
+
 private:
   struct message_window_context {
     interval<slot_point> window;
@@ -54,6 +57,7 @@ private:
   srslog::basic_logger&               logger;
 
   std::vector<message_window_context> pending_messages;
+  unsigned                            version = 0;
 };
 
 } // namespace srsran

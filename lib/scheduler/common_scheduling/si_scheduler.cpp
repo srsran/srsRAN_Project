@@ -80,8 +80,10 @@ void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
 
   if (slot_sched < si_change_mod_start + si_change_mod_period * slots_per_frame) {
     // We are inside the SI change window.
+
+    // Apply the SIB1 and SI message changes.
     sib1_sched.handle_sib1_update_indication(on_going_req->version, on_going_req->sib1_len);
-    // TODO: Update SI message scheduling.
+    si_msg_sched.handle_si_message_update_indication(on_going_req->version, on_going_req->si_sched_cfg);
 
     // Delete the on-going request.
     on_going_req        = std::nullopt;

@@ -35,7 +35,7 @@ struct si_message_scheduling_config {
 /// This struct will be handled by the MAC scheduler to determine the required PDCCH and PDSCH grants for SI.
 struct si_scheduling_config {
   /// List of SI-messages to schedule.
-  std::vector<si_message_scheduling_config> si_messages;
+  static_vector<si_message_scheduling_config, MAX_SI_MESSAGES> si_messages;
   /// \brief The length of the SI scheduling window, in slots.
   ///
   /// It is always shorter or equal to the period of the SI message. Values: {5, 10, 20, 40, 80, 160, 320, 640, 1280}.
