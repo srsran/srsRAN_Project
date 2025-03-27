@@ -22,12 +22,12 @@ protected:
   const std::chrono::milliseconds frame_dur{10};
   unsigned                        numerology{GetParam()}; // Get numerology value from test parameters
   mac_cell_time_mapper_impl       manager{numerology};
-  slot_point                      next_point{0, 1};
+  slot_point                      next_point{numerology, 0, 0};
 };
 
 TEST_P(slot_time_point_mapper_test, slot_time_point_mapping_not_available)
 {
-  const slot_point      report_slot       = {numerology, 1};
+  const slot_point      report_slot       = {numerology, 0, 0};
   const slot_time_point report_time_point = std::chrono::system_clock::now();
 
   ASSERT_FALSE(manager.get_last_mapping().has_value());
@@ -41,7 +41,7 @@ TEST_P(slot_time_point_mapper_test, slot_time_point_mapping_not_available)
 
 TEST_P(slot_time_point_mapper_test, when_called_with_unitialized_value)
 {
-  const slot_point      report_slot       = {numerology, 1};
+  const slot_point      report_slot       = {numerology, 0, 0};
   const slot_time_point report_time_point = std::chrono::system_clock::now();
   manager.handle_slot_indication({report_slot, report_time_point});
 
@@ -58,7 +58,7 @@ TEST_P(slot_time_point_mapper_test, when_called_with_unitialized_value)
 
 TEST_P(slot_time_point_mapper_test, when_called_with_different_numerology)
 {
-  const slot_point      report_slot       = {numerology, 1};
+  const slot_point      report_slot       = {numerology, 0, 0};
   const slot_time_point report_time_point = std::chrono::system_clock::now();
   manager.handle_slot_indication({report_slot, report_time_point});
 
@@ -70,7 +70,7 @@ TEST_P(slot_time_point_mapper_test, when_called_with_different_numerology)
 
 TEST_P(slot_time_point_mapper_test, slot_time_point_mapping_available)
 {
-  const slot_point      report_slot       = {numerology, 1};
+  const slot_point      report_slot       = {numerology, 0, 0};
   const slot_time_point report_time_point = std::chrono::system_clock::now();
   manager.handle_slot_indication({report_slot, report_time_point});
 
@@ -94,17 +94,18 @@ TEST_P(slot_time_point_mapper_test, slot_time_point_mapping_available)
 
 TEST_P(slot_time_point_mapper_test, get_last_mapping)
 {
-  slot_point      report_slot       = {numerology, 1};
-  slot_time_point report_time_point = std::chrono::system_clock::now();
-  unsigned        slots_per_frame   = get_nof_slots_per_subframe(to_subcarrier_spacing(numerology));
+  slot_point      report_slot        = {numerology, 0, 0};
+  slot_time_point report_time_point  = std::chrono::system_clock::now();
+  unsigned        slots_per_subframe = report_slot.nof_slots_per_subframe();
 
   slot_point      slot;
   slot_time_point time_point;
 
   ASSERT_FALSE(manager.get_last_mapping().has_value());
+  // Note: only SFN is stored, slot_idx = 0.
   for (unsigned i = 0; i < 10; i++) {
-    report_slot += slots_per_frame * i;
-    report_time_point += frame_dur * i;
+    report_slot += slots_per_subframe;
+    report_time_point += frame_dur;
     manager.handle_slot_indication({report_slot, report_time_point});
 
     auto mapping = manager.get_last_mapping();
@@ -116,10 +117,47 @@ TEST_P(slot_time_point_mapper_test, get_last_mapping)
   }
 }
 
+TEST_P(slot_time_point_mapper_test, get_last_mapping_only_sub_frame_stored)
+{
+  slot_point      full_subframe_slot       = {numerology, 0, 0};
+  slot_time_point full_subframe_time_point = std::chrono::system_clock::now();
+  const auto      slot_dur                 = std::chrono::microseconds{1000U >> numerology};
+
+  slot_point      slot;
+  slot_time_point time_point;
+
+  ASSERT_FALSE(manager.get_last_mapping().has_value());
+  manager.handle_slot_indication({full_subframe_slot, full_subframe_time_point});
+  ASSERT_TRUE(manager.get_last_mapping().has_value());
+
+  slot_point      report_slot       = full_subframe_slot;
+  slot_time_point report_time_point = full_subframe_time_point;
+  // Note: only subframe is stored, slot_idx = 0.
+  // Note: The following updates will not be stored.
+  for (unsigned i = 0; i < full_subframe_slot.nof_slots_per_frame(); i++) {
+    report_slot++;
+    report_time_point += slot_dur;
+    if (report_slot.subframe_slot_index() == 0) {
+      full_subframe_slot       = report_slot;
+      full_subframe_time_point = report_time_point;
+    }
+
+    manager.handle_slot_indication({report_slot, report_time_point});
+    ASSERT_TRUE(manager.get_last_mapping().has_value());
+
+    auto mapping = manager.get_last_mapping();
+    ASSERT_TRUE(mapping.has_value());
+    slot       = mapping.value().sl_tx;
+    time_point = mapping.value().time_point;
+    ASSERT_EQ(slot, full_subframe_slot);
+    ASSERT_EQ(time_point, full_subframe_time_point);
+  }
+}
+
 TEST_P(slot_time_point_mapper_test, get_slot_time_point_from_slot_point)
 {
   srslog::basic_logger& logger            = srslog::fetch_basic_logger("TEST");
-  const slot_point      report_slot       = {numerology, 1};
+  const slot_point      report_slot       = {numerology, 0, 0};
   const slot_time_point report_time_point = std::chrono::system_clock::now();
   const auto            slot_dur          = std::chrono::microseconds{1000U >> numerology};
 
@@ -152,7 +190,7 @@ TEST_P(slot_time_point_mapper_test, get_slot_time_point_from_slot_point)
 TEST_P(slot_time_point_mapper_test, get_slot_point_from_time_point)
 {
   srslog::basic_logger& logger            = srslog::fetch_basic_logger("TEST");
-  const slot_point      report_slot       = {numerology, 1};
+  const slot_point      report_slot       = {numerology, 0, 0};
   const slot_time_point report_time_point = std::chrono::system_clock::now();
   const auto            slot_dur          = std::chrono::microseconds{1000U >> numerology};
 
@@ -182,5 +220,58 @@ TEST_P(slot_time_point_mapper_test, get_slot_point_from_time_point)
   }
 }
 
+class atomic_sfn_time_mapper_test : public ::testing::TestWithParam<unsigned>
+{
+protected:
+  using time_point = std::chrono::time_point<std::chrono::system_clock>;
+
+  const std::chrono::milliseconds frame_dur{10};
+  unsigned                        numerology{GetParam()}; // Get numerology value from test parameters
+  atomic_sfn_time_mapper          atomic_mapper{numerology};
+  slot_point                      next_point{numerology, 0, 0};
+};
+
+TEST_P(atomic_sfn_time_mapper_test, store_and_load)
+{
+  const slot_point report_slot       = {numerology, 11, 0};
+  const time_point report_time_point = std::chrono::system_clock::now();
+
+  const auto no_mapping = atomic_mapper.load();
+  ASSERT_EQ(no_mapping.sl_tx.valid(), false);
+
+  atomic_mapper.store(report_slot, report_time_point);
+  const auto mapping = atomic_mapper.load();
+  ASSERT_EQ(mapping.sl_tx, report_slot);
+  ASSERT_EQ(mapping.time_point, report_time_point);
+}
+
+TEST_P(atomic_sfn_time_mapper_test, when_truncated_timestamp_wraps_around_load_computes_correct_report_time_point)
+{
+  srslog::basic_logger& logger      = srslog::fetch_basic_logger("TEST");
+  const slot_point      report_slot = {numerology, 11, 0};
+
+  uint64_t period                 = 1ULL << 50;
+  uint64_t before_period_start_ns = period - (1ULL << 20);     // roughly 1ms before wrap-around
+  uint64_t after_period_start_ns  = period + (1ULL << 32) - 1; // roughly 4s before wrap-around
+
+  logger.info("N={} Timestamps: Before Period Start={}, Period Start: {},  After Period Start={}",
+              numerology,
+              before_period_start_ns,
+              period,
+              after_period_start_ns);
+
+  time_point before_wraparound_tp =
+      std::chrono::system_clock::time_point(std::chrono::nanoseconds(before_period_start_ns));
+
+  time_point after_wraparound_tp =
+      std::chrono::system_clock::time_point(std::chrono::nanoseconds(after_period_start_ns));
+
+  atomic_mapper.store(report_slot, before_wraparound_tp);
+  const auto mapping = atomic_mapper.load(after_wraparound_tp);
+  ASSERT_EQ(mapping.sl_tx, report_slot);
+  ASSERT_EQ(mapping.time_point, before_wraparound_tp);
+}
+
 // Instantiate the test suite with different numerology values
 INSTANTIATE_TEST_SUITE_P(NumerologyTests, slot_time_point_mapper_test, ::testing::Values(0, 1, 2, 3, 4));
+INSTANTIATE_TEST_SUITE_P(NumerologyTests, atomic_sfn_time_mapper_test, ::testing::Values(0, 1, 2, 3, 4));
