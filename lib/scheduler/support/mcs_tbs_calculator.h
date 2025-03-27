@@ -68,4 +68,11 @@ std::optional<unsigned> compute_ul_tbs(const pusch_config_params&   pusch_params
                                        unsigned                     nof_prbs,
                                        bool                         contains_dc);
 
+/// \brief Determines the PUSCH TBS without checking if the coderate is valid.
+/// \param[in] pusch_params PUSCH parameters needed to compute the TBS.
+/// \param[in] mcs Value to be applied for the MCS.
+/// \param[in] nof_prbs Number of PRBs available for the PUSCH transmission.
+/// \return TBS in bytes.
+unsigned compute_ul_tbs_unsafe(const pusch_config_params& pusch_params, sch_mcs_index mcs, unsigned nof_prbs);
+
 } // namespace srsran

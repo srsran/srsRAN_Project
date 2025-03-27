@@ -354,3 +354,20 @@ std::optional<unsigned> srsran::compute_ul_tbs(const pusch_config_params&   pusc
   }
   return std::nullopt;
 }
+
+unsigned srsran::compute_ul_tbs_unsafe(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs)
+{
+  const unsigned            dmrs_prbs = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
+  const sch_mcs_description mcs_info =
+      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
+  const unsigned nof_symbols = pusch_cfg.symbols.length();
+
+  return tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
+                                                               .nof_dmrs_prb     = dmrs_prbs,
+                                                               .nof_oh_prb       = pusch_cfg.nof_oh_prb,
+                                                               .mcs_descr        = mcs_info,
+                                                               .nof_layers       = pusch_cfg.nof_layers,
+                                                               .tb_scaling_field = pusch_cfg.tb_scaling_field,
+                                                               .n_prb            = nof_prbs}) /
+         NOF_BITS_PER_BYTE;
+}

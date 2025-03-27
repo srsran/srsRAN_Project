@@ -552,8 +552,10 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const crb_in
 
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
     if (not mcs_tbs_info.has_value()) {
-      // We give up on more reTxs of this HARQ
-      grant.h_ul.cancel_retxs();
+      // We cannot cancel this allocation at this point. So, we will proceed as normal, but set an invalid coderate.
+      mcs_tbs_info.emplace();
+      mcs_tbs_info->mcs = 0;
+      mcs_tbs_info->tbs = compute_ul_tbs_unsafe(pusch_cfg, grant.cfg.recommended_mcs, crbs.length());
 
       logger.warning(
           "ue={} rnti={}: Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95 with this "
@@ -576,7 +578,6 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const crb_in
           ue_cell_cfg.init_bwp().ul_ded->pusch_cfg->pusch_mapping_type_a_dmrs.value().is_dmrs_type2 ? "yes" : "no",
           static_cast<unsigned>(
               ue_cell_cfg.init_bwp().ul_ded->pusch_cfg->pusch_mapping_type_a_dmrs.value().additional_positions));
-      return;
     }
 
   } else {
@@ -613,11 +614,8 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const crb_in
 
   // Compute TPC command before computing the nof_prbs adaptation based on PHR; this is because, when the TPC gets
   // computed, the channel state manager will update close-loop power control adjustment.
-  static constexpr uint8_t default_tpc_command = 1U;
-  const uint8_t            tpc_command =
-      dci_type != dci_ul_rnti_config_type::tc_rnti_f0_0
-                     ? ue_cc.get_pusch_power_controller().compute_tpc_command(pdcch_alloc.slot + pusch_td_cfg.k2)
-                     : default_tpc_command;
+  const uint8_t tpc_command =
+      ue_cc.get_pusch_power_controller().compute_tpc_command(pdcch_alloc.slot + pusch_td_cfg.k2);
 
   // Fill UL PDCCH DCI.
   uint8_t rv = ue_cc.get_pusch_rv(grant.h_ul.nof_retxs());
