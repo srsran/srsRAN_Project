@@ -592,6 +592,7 @@ void pdu_session_manager_impl::disconnect_pdu_session(pdu_session_id_t pdu_sessi
 void pdu_session_manager_impl::disconnect_all_pdu_sessions()
 {
   logger.log_debug("Disconnecting all PDU sessions");
+  ue_ambr_limiter->stop();
   for (const auto& pdu_session_it : pdu_sessions) {
     disconnect_pdu_session(pdu_session_it.first);
   }
