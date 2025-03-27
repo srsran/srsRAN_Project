@@ -122,6 +122,12 @@ check_e1ap_bearer_context_setup_request_valid(const asn1::e1ap::bearer_context_s
     return false;
   }
 
+  // Check UE-AMBR makes sense
+  if (asn1_request->ue_dl_aggr_max_bit_rate == 0) {
+    logger.error("Invalid UE-DL-AMBR");
+    return false;
+  }
+
   // Check activity level
   if (asn1_request->activity_notif_level.value != asn1::e1ap::activity_notif_level_e::ue) {
     logger.warning("Unsupported activity notification level: {}", asn1_request->activity_notif_level.to_string());
