@@ -94,8 +94,9 @@ private:
 
     // Maximum number of SRS resources that can be generated in a cell.
     // [Implementation-defined] We assume each UE has one and only one resource.
-    static const unsigned max_nof_srs_res = MAX_NOF_DU_UES;
-    const du_cell_config& cell_cfg;
+    static const unsigned                        max_nof_srs_res = MAX_NOF_DU_UES;
+    const du_cell_config&                        cell_cfg;
+    const std::optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
     // Default SRS configuration for the cell.
     const srs_config default_srs_cfg;
     srs_cell_common  srs_common_params;
