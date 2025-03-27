@@ -8,7 +8,7 @@
  *
  */
 
-#include "sib_scheduler.h"
+#include "sib1_scheduler.h"
 #include "../support/dci_builder.h"
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_helpers.h"
@@ -30,16 +30,15 @@ static constexpr std::chrono::milliseconds sib1_newtx_period{160};
 
 //  ------   Public methods   ------ .
 
-sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               expert_cfg_,
-                               const cell_configuration&                       cfg_,
-                               pdcch_resource_allocator&                       pdcch_sch,
-                               const sched_cell_configuration_request_message& msg) :
-  expert_cfg{expert_cfg_},
+sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
+                               pdcch_resource_allocator& pdcch_sch,
+                               units::bytes              sib1_payload_size_) :
+  expert_cfg{cfg_.expert_cfg.si},
   cell_cfg{cfg_},
   pdcch_sched{pdcch_sch},
-  coreset0{msg.coreset0},
-  searchspace0{msg.searchspace0},
-  sib1_payload_size{msg.sib1_payload_size},
+  coreset0{cell_cfg.coreset0},
+  searchspace0{cell_cfg.searchspace0},
+  sib1_payload_size{sib1_payload_size_},
   pending_update(no_update_flag)
 {
   // Compute derived SIB1 parameters.
@@ -53,7 +52,7 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
     // NOTE:
     // - [Implementation defined] Use (n0 + 1) slot to avoid collisions between SSB and SIB1.
     sib1_type0_pdcch_css_slots[i_ssb] =
-        precompute_type0_pdcch_css_n0_plus_1(searchspace0, coreset0, cell_cfg, msg.scs_common, i_ssb);
+        precompute_type0_pdcch_css_n0_plus_1(searchspace0, coreset0, cell_cfg, cell_cfg.scs_common, i_ssb);
   }
 
   // Define a BWP configuration limited by CORESET#0 RBs.

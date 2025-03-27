@@ -25,10 +25,7 @@ enum class ssb_pattern_case;
 class sib1_scheduler
 {
 public:
-  sib1_scheduler(const scheduler_si_expert_config&               expert_cfg_,
-                 const cell_configuration&                       cfg_,
-                 pdcch_resource_allocator&                       pdcch_sch,
-                 const sched_cell_configuration_request_message& msg);
+  sib1_scheduler(const cell_configuration& cfg_, pdcch_resource_allocator& pdcch_sch, units::bytes sib1_payload_size);
 
   /// \brief Schedule the SIB1 grants.
   ///

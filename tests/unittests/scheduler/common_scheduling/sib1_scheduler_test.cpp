@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/scheduler/common_scheduling/sib_scheduler.h"
+#include "lib/scheduler/common_scheduling/sib1_scheduler.h"
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/support/ssb_helpers.h"
@@ -314,7 +314,7 @@ void test_sib1_scheduler(subcarrier_spacing                         scs_common,
 {
   // Instantiate the sib_test_bench and the SIB1 scheduler.
   sib_test_bench t_bench{scs_common, pdcch_config_sib1, ssb_beam_bitmap, carrier_bw_mhz, duplx_mode};
-  sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg.sib1_payload_size};
 
   // SIB1 periodicity in slots.
   const unsigned sib1_period_slots = SIB1_PERIODICITY * t_bench.sl_tx.nof_slots_per_subframe();
@@ -368,7 +368,7 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
   // Instantiate the sib_test_bench and the SIB1 scheduler.
   sib_test_bench t_bench{
       subcarrier_spacing::kHz15, 9U, 0b10000000, 20, srsran::duplex_mode::FDD, sib1_rtx_period, ssb_period};
-  sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg.sib1_payload_size};
 
   // Determine the expected SIB1 retx periodicity.
   const unsigned expected_sib1_period_ms =
@@ -432,7 +432,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
 {
   // Instantiate the sib_test_bench and the SIB1 scheduler.
   sib_test_bench t_bench{freq_arfcn, offset_to_point_A, k_ssb, ssb_bitmap, scs, pdcch_config_sib1, carrier_bw_mhz};
-  sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg.sib1_payload_size};
   ssb_scheduler  ssb_sched{t_bench.cfg};
 
   // Run the test for 10000 slots.
@@ -690,7 +690,7 @@ protected:
 
     sib_test_bench t_bench{msg, sib1_rtx_period};
 
-    sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+    sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg.sib1_payload_size};
 
     // Determine the expected SIB1 retx periodicity.
     const unsigned expected_sib1_period_ms =

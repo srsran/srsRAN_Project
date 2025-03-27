@@ -33,8 +33,8 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   prach_sch(cell_cfg),
   pucch_alloc(cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot),
   uci_alloc(pucch_alloc),
-  sib1_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
-  si_msg_sch(sched_cfg.si, cell_cfg, pdcch_sch, msg),
+  sib1_sch(cell_cfg, pdcch_sch, msg.sib1_payload_size),
+  si_msg_sch(cell_cfg, pdcch_sch, msg.si_scheduling),
   pucch_guard_sch(cell_cfg),
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)
 {

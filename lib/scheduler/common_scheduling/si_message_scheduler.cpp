@@ -20,14 +20,13 @@
 
 using namespace srsran;
 
-si_message_scheduler::si_message_scheduler(const scheduler_si_expert_config&               expert_cfg_,
-                                           const cell_configuration&                       cfg_,
-                                           pdcch_resource_allocator&                       pdcch_sch_,
-                                           const sched_cell_configuration_request_message& msg) :
-  expert_cfg(expert_cfg_),
+si_message_scheduler::si_message_scheduler(const cell_configuration&                  cfg_,
+                                           pdcch_resource_allocator&                  pdcch_sch_,
+                                           const std::optional<si_scheduling_config>& si_sched_cfg_) :
+  expert_cfg(cfg_.expert_cfg.si),
   cell_cfg(cfg_),
   pdcch_sch(pdcch_sch_),
-  si_sched_cfg(msg.si_scheduling),
+  si_sched_cfg(si_sched_cfg_),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
   if (si_sched_cfg.has_value()) {

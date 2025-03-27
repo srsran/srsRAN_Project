@@ -16,7 +16,7 @@
 #include "common_scheduling/prach_scheduler.h"
 #include "common_scheduling/ra_scheduler.h"
 #include "common_scheduling/si_message_scheduler.h"
-#include "common_scheduling/sib_scheduler.h"
+#include "common_scheduling/sib1_scheduler.h"
 #include "common_scheduling/ssb_scheduler.h"
 #include "config/cell_configuration.h"
 #include "logging/scheduler_event_logger.h"

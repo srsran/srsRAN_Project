@@ -154,11 +154,20 @@ struct frequency_info_dl {
   std::vector<freq_band_indicator> freq_band_list;
 };
 
+/// Configuration for BCCH.
+struct bcch_config {
+  enum class modification_period_coeff : uint8_t { n2 = 2, n4 = 4, n8 = 8, n16 = 16 };
+
+  /// Modification period coefficient used to determine the modification period of the SI as per TS 38.331, 5.2.2.2.2.
+  modification_period_coeff mod_period_coeff = modification_period_coeff::n16;
+};
+
 /// \brief Downlink Configuration, common to the serving cell.
 /// \remark See TS 38.331, "DownlinkConfigCommonSIB".
 struct dl_config_common {
   frequency_info_dl   freq_info_dl;
   bwp_downlink_common init_dl_bwp;
+  bcch_config         bcch_cfg;
   pcch_config         pcch_cfg;
 };
 

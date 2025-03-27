@@ -8,7 +8,8 @@
 
 set(SOURCES
         ra_scheduler.cpp
-        sib_scheduler.cpp
+        si_scheduler.cpp
+        sib1_scheduler.cpp
         ssb_scheduler.cpp
         prach_scheduler.cpp
         paging_scheduler.cpp
