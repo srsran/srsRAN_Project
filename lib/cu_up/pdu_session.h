@@ -46,6 +46,9 @@ struct pdu_session {
       gtpu_rx_demux.remove_tunnel(local_teid);
       (void)n3_teid_allocator.release_teid(local_teid);
 
+      if (dispatch_queue != nullptr) {
+        dispatch_queue->stop();
+      }
       gtpu->stop();
 
       // Stop DRBs
