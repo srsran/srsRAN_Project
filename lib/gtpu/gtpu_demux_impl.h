@@ -21,8 +21,14 @@
 namespace srsran {
 
 struct gtpu_demux_tunnel_ctx_t {
-  task_executor*                               tunnel_exec;
+  batched_dispatch_queue<byte_buffer>&         batched_queue;
   gtpu_tunnel_common_rx_upper_layer_interface* tunnel;
+};
+
+struct gtpu_demux_pdu_ctx_t {
+  gtpu_teid_t             teid;
+  byte_buffer             pdu;
+  const sockaddr_storage& src_addr;
 };
 
 class gtpu_demux_impl final : public gtpu_demux
@@ -45,7 +51,7 @@ public:
 
 private:
   // Actual demuxing, to be run in CU-UP executor.
-  void handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const sockaddr_storage& src_addr);
+  void handle_pdu_impl(gtpu_demux_pdu_ctx_t pdu_ctx);
 
   const gtpu_demux_cfg_t cfg;
   dlt_pcap&              gtpu_pcap;

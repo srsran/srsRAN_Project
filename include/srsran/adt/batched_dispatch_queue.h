@@ -29,10 +29,10 @@ class batched_dispatch_queue
 public:
   using value_type = ValueType;
 
-  batched_dispatch_queue(unsigned                                          queue_size,
-                         task_executor&                                    serialized_exec_,
-                         srslog::basic_logger&                             logger_,
-                         const std::function<void(span<const ValueType>)>& callback_) :
+  batched_dispatch_queue(unsigned                                    queue_size,
+                         task_executor&                              serialized_exec_,
+                         srslog::basic_logger&                       logger_,
+                         const std::function<void(span<ValueType>)>& callback_) :
     exec(serialized_exec_),
     logger(logger_),
     callback(callback_),
@@ -157,9 +157,9 @@ private:
     return false;
   }
 
-  task_executor&                             exec;
-  srslog::basic_logger&                      logger;
-  std::function<void(span<const ValueType>)> callback;
+  task_executor&                       exec;
+  srslog::basic_logger&                logger;
+  std::function<void(span<ValueType>)> callback;
 
   // Queue where the values get batched.
   queue_type queue;

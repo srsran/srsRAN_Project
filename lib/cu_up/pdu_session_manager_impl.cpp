@@ -144,12 +144,14 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   new_session->gtpu_to_udp_adapter.connect_network_gateway(n3_gw);
 
   // Register tunnel at demux
-  if (!gtpu_rx_demux.add_tunnel(
-          new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface())) {
+  expected<std::unique_ptr<batched_dispatch_queue<byte_buffer>>> expected_dispatch_queue =
+      gtpu_rx_demux.add_tunnel(new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface());
+  if (!expected_dispatch_queue) {
     logger.log_error(
         "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);
     return pdu_session_result;
   }
+  new_session->dispatch_queue = std::move(expected_dispatch_queue.value());
 
   // Handle DRB setup
   for (const e1ap_drb_to_setup_item_ng_ran& drb_to_setup : session.drb_to_setup_list_ng_ran) {
