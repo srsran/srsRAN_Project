@@ -4,6 +4,7 @@
 #include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1ap/du/f1ap_du_positioning_handler.h"
+#include "srsran/mac/mac_cell_manager.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/support/async/async_task.h"
 
@@ -77,6 +78,8 @@ class du_manager_interface_query
 public:
   virtual ~du_manager_interface_query() = default;
   virtual size_t nof_ues()              = 0;
+  /// Fetch MAC cell time-slot mapper.
+  virtual mac_cell_time_mapper& get_time_mapper() = 0;
 };
 
 class du_manager_controller

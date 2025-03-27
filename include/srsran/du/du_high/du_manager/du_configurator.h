@@ -12,7 +12,6 @@
 
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/rrm.h"
-#include "srsran/ran/slot_point.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
@@ -65,9 +64,6 @@ struct du_param_config_response {
 class du_configurator
 {
 public:
-  using time_point = std::chrono::time_point<std::chrono::system_clock>;
-
-public:
   virtual ~du_configurator() = default;
 
   virtual async_task<du_mac_sched_control_config_response>
@@ -75,15 +71,6 @@ public:
 
   /// Apply new config updates requested from outside the DU.
   virtual du_param_config_response handle_operator_config_request(const du_param_config_request& req) = 0;
-
-  /// Get last known slot_point-time_point mapping.
-  virtual std::optional<std::pair<slot_point, time_point>> get_slot_time_mapping() const = 0;
-
-  /// Get time-point for the given slot-point.
-  virtual std::optional<time_point> get_time_point(slot_point slot) const = 0;
-
-  /// Get slot-point for the given time-point.
-  virtual std::optional<slot_point> get_slot_point(time_point time) const = 0;
 };
 
 } // namespace srs_du

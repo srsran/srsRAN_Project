@@ -62,18 +62,13 @@ public:
 
   void handle_ue_config_applied(du_ue_index_t ue_index) override;
 
-  size_t nof_ues() override;
+  size_t                nof_ues() override;
+  mac_cell_time_mapper& get_time_mapper() override;
 
   async_task<du_mac_sched_control_config_response>
   configure_ue_mac_scheduler(du_mac_sched_control_config reconf) override;
 
   du_param_config_response handle_operator_config_request(const du_param_config_request& req) override;
-
-  std::optional<std::pair<slot_point, time_point>> get_slot_time_mapping() const override;
-
-  std::optional<time_point> get_time_point(slot_point slot) const override;
-
-  std::optional<slot_point> get_slot_point(time_point time) const override;
 
   f1ap_du_positioning_handler& get_positioning_handler() override { return *positioning_handler; }
 

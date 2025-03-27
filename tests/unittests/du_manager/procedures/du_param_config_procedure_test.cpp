@@ -85,7 +85,8 @@ TEST_F(du_manager_du_config_update_test, when_sib1_change_required_then_mac_is_r
 
 TEST_F(du_manager_du_config_update_test, check_if_slot_time_mapping_is_available)
 {
-  auto resp = du_mng->get_slot_time_mapping();
+  mac_cell_time_mapper& mapper = du_mng->get_time_mapper();
+  auto                  resp   = mapper.get_last_mapping();
   ASSERT_TRUE(resp.has_value());
-  ASSERT_EQ(resp.value().first, slot_point(1, 1));
+  ASSERT_EQ(resp.value().sl_tx, slot_point(1, 1));
 }

@@ -208,6 +208,11 @@ size_t du_manager_impl::nof_ues()
   return fut.get();
 }
 
+mac_cell_time_mapper& du_manager_impl::get_time_mapper()
+{
+  return params.mac.cell_mng.get_time_mapper(to_du_cell_index(0));
+}
+
 async_task<du_mac_sched_control_config_response>
 du_manager_impl::configure_ue_mac_scheduler(du_mac_sched_control_config reconf)
 {
@@ -235,56 +240,5 @@ du_param_config_response du_manager_impl::handle_operator_config_request(const d
     }));
   });
 
-  return fut.get();
-}
-
-std::optional<std::pair<slot_point, du_configurator::time_point>> du_manager_impl::get_slot_time_mapping() const
-{
-  std::promise<std::pair<slot_point, time_point>> p;
-  std::future<std::pair<slot_point, time_point>>  fut = p.get_future();
-
-  if (not params.services.du_mng_exec.execute([this, &p]() {
-        auto resp = params.mac.cell_mng.get_time_mapper(to_du_cell_index(0)).get_last_mapping();
-        if (resp.has_value()) {
-          p.set_value({resp.value().sl_tx, resp.value().time_point});
-        }
-      })) {
-    logger.warning("Unable to derive the time_point for the given slot_point.");
-    return std::nullopt;
-  }
-  return fut.get();
-}
-
-std::optional<du_configurator::time_point> du_manager_impl::get_time_point(slot_point slot) const
-{
-  std::promise<time_point> p;
-  std::future<time_point>  fut = p.get_future();
-
-  if (not params.services.du_mng_exec.execute([this, &p, slot]() {
-        auto resp = params.mac.cell_mng.get_time_mapper(to_du_cell_index(0)).get_time_point(slot);
-        if (resp.has_value()) {
-          p.set_value(resp.value());
-        }
-      })) {
-    logger.warning("Unable to derive the time_point for the given slot_point.");
-    return std::nullopt;
-  }
-  return fut.get();
-}
-
-std::optional<slot_point> du_manager_impl::get_slot_point(time_point time) const
-{
-  std::promise<slot_point> p;
-  std::future<slot_point>  fut = p.get_future();
-
-  if (not params.services.du_mng_exec.execute([this, &p, time]() {
-        auto resp = params.mac.cell_mng.get_time_mapper(to_du_cell_index(0)).get_slot_point(time);
-        if (resp.has_value()) {
-          p.set_value(resp.value());
-        }
-      })) {
-    logger.warning("Unable to derive the slot_point for the given time_point.");
-    return std::nullopt;
-  }
   return fut.get();
 }
