@@ -109,6 +109,9 @@ void f1u_split_gateway_cu_bearer::stop()
 {
   if (not stopped) {
     disconnector.disconnect_cu_bearer(ul_tnl_info);
+    if (dispatch_queue != nullptr) {
+      dispatch_queue->stop();
+    }
   }
   stopped = true;
 }
@@ -192,9 +195,13 @@ f1u_split_connector::create_cu_bearer(uint32_t                              ue_i
   cu_bearer->attach_tunnel_rx(std::move(tunnel_rx));
 
   // attach tunnel rx to DEMUX
-  if (!demux.add_tunnel(ul_up_tnl_info.gtp_teid, cu_bearer->ul_exec, cu_bearer->get_tunnel_rx_interface())) {
+  expected<std::unique_ptr<batched_dispatch_queue<byte_buffer>>> expected_dispatch_queue =
+      demux.add_tunnel(ul_up_tnl_info.gtp_teid, cu_bearer->ul_exec, cu_bearer->get_tunnel_rx_interface());
+  if (not expected_dispatch_queue) {
     logger_cu.error("Could not attach UL-TEID to demux RX. TEID {} already exists", ul_up_tnl_info.gtp_teid);
     // continue here; but the new tunnel won't be able to rx any data because the TEID was already registered at demux
+  } else {
+    cu_bearer->dispatch_queue = std::move(expected_dispatch_queue.value());
   }
 
   return cu_bearer;
