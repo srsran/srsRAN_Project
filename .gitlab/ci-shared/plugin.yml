@@ -64,7 +64,7 @@ download srsran:
       git reset --hard FETCH_HEAD
     - git config --global --add safe.directory ${SRSRANDIR}
     - |
-      if [[ -f .gitlab/ci/plugin_version.txt ]]; then
+      if [[ -f .gitlab/ci/plugin_version.txt ]] && [[ -n "${PLUGIN_REPO}" ]]; then
         CI_PLUGIN_COMMIT_SHA=$(cat .gitlab/ci/plugin_version.txt)
         git submodule add https://${CODEBOT_USERNAME}:${CODEBOT_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
         cd ${PLUGIN_PATH}
