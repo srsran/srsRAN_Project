@@ -51,6 +51,10 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
                                                            timers.create_unique_timer(*workers.non_rt_low_prio_exec),
                                                            cu_up_metrics_cfg.cu_up_report_period));
   }
+  if (cu_up_metrics_cfg.common_metrics_cfg.enable_log_metrics) {
+    metrics_cfg.consumers.push_back(
+        std::make_unique<cu_up_pdcp_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
+  }
 
   if (e2_enabled) {
     metrics_cfg.consumers.push_back(std::make_unique<cu_up_pdcp_metrics_consumer_e2>(e2_notifier));

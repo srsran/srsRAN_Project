@@ -220,3 +220,13 @@ void cu_up_pdcp_metrics_consumer_json::initialize_timer()
   });
   timer.run();
 }
+
+void cu_up_pdcp_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
+{
+  // Implement aggregation.
+  const pdcp_metrics_container& pdcp_metric = static_cast<const cu_up_pdcp_metrics_impl&>(metric).get_metrics();
+
+  fmt::memory_buffer buffer;
+  fmt::format_to(std::back_inserter(buffer), "PDCP Metrics: {}", pdcp_metric);
+  log_chan("{}", to_c_str(buffer));
+}
