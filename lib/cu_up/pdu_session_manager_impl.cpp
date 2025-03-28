@@ -127,6 +127,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
   msg.cfg.tx.peer_port                 = n3_config.upf_port;
   msg.cfg.rx.local_teid                = new_session->local_teid;
+  msg.cfg.rx.ignore_ue_ambr            = n3_config.gtpu_ignore_ue_ambr;
   msg.cfg.rx.ue_ambr_limiter           = ue_ambr_limiter.get();
   msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
   msg.cfg.rx.warn_on_drop              = n3_config.warn_on_drop;

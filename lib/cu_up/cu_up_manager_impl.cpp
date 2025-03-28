@@ -222,7 +222,7 @@ async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable
       make_byte_buffer("0001020304050607080910111213141516171819202122232425262728293031").value();
   bearer_context_setup.ue_inactivity_timer = std::chrono::seconds(3600);
 
-  bearer_context_setup.ue_dl_aggregate_maximum_bit_rate = 40000000000; // Limit at 40 Gbps.
+  bearer_context_setup.ue_dl_aggregate_maximum_bit_rate = test_mode_cfg.ue_ambr;
 
   /// Setup test PDU session
   pdu_session_id_t                   psi{1};

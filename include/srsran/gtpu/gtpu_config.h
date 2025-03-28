@@ -30,6 +30,7 @@ struct gtpu_tunnel_ngu_config {
     std::chrono::milliseconds t_reordering    = {};
     token_bucket*             ue_ambr_limiter = nullptr;
     bool                      warn_on_drop    = false;
+    bool                      ignore_ue_ambr  = false;
     bool                      test_mode       = false;
   } rx;
   struct gtpu_tunnel_ngu_tx_config {
@@ -73,7 +74,12 @@ struct formatter<srsran::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config> {
   template <typename FormatContext>
   auto format(const srsran::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config& cfg, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "local_teid={} t_reordering={}", cfg.local_teid, cfg.t_reordering);
+    return format_to(ctx.out(),
+                     "node=ngu local_teid={} t_reordering={} warn_on_drop={} ignore_ue_ambr={}",
+                     cfg.local_teid,
+                     cfg.t_reordering,
+                     cfg.warn_on_drop,
+                     cfg.ignore_ue_ambr);
   }
 };
 

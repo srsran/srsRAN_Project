@@ -48,6 +48,7 @@ struct cu_up_unit_ngu_gtpu_config {
   unsigned                  gtpu_queue_size          = 2048;
   unsigned                  gtpu_reordering_timer_ms = 0;
   std::chrono::milliseconds rate_limiter_period{100};
+  bool                      ignore_ue_ambr = false;
 };
 
 struct cu_up_unit_ngu_config {
@@ -74,6 +75,7 @@ struct cu_up_unit_test_mode_config {
   bool     ciphering_enabled = true;
   uint16_t nea_algo          = 2;
   uint16_t nia_algo          = 2;
+  uint64_t ue_ambr           = 40000000000; // 40 gbps
 };
 
 /// CU-UP application unit configuration.

@@ -41,6 +41,7 @@ static void configure_cli11_ngu_gtpu_args(CLI::App& app, cu_up_unit_ngu_gtpu_con
       app, "--reordering_timer", gtpu_cfg.gtpu_reordering_timer_ms, "GTP-U RX reordering timer (in milliseconds)");
   add_option(
       app, "--rate_limiter_period", gtpu_cfg.rate_limiter_period, "GTP-U RX rate limiter period (in milliseconds)");
+  add_option(app, "--ignore_ue_ambr", gtpu_cfg.ignore_ue_ambr, "Ignore GTP-U DL UE-AMBR rate limiter");
 }
 
 static void configure_cli11_ngu_args(CLI::App& app, cu_up_unit_ngu_config& ngu_params)
@@ -80,6 +81,7 @@ static void configure_cli11_test_mode_args(CLI::App& app, cu_up_unit_test_mode_c
   add_option(app, "--nia_algo", test_mode_params.nea_algo, "NIA algo to use for testing. Valid values {1, 2, 3}.")
       ->capture_default_str()
       ->check(CLI::Range(1, 3));
+  add_option(app, "--ue_ambr", test_mode_params.ue_ambr, "DL UE-AMBR used for testing in bps");
 }
 
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_params)

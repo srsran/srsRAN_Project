@@ -61,10 +61,7 @@ public:
       reordering_timer = ue_ctrl_timer_factory.create_timer();
       reordering_timer.set(config.t_reordering, reordering_callback{this});
     }
-    logger.log_info("GTPU NGU Rx configured. local_teid={} t_reodering={} test_mode={}",
-                    config.local_teid,
-                    config.t_reordering.count(),
-                    config.test_mode);
+    logger.log_info("GTPU NGU Rx configured. {}", config);
   }
   ~gtpu_tunnel_ngu_rx_impl() override = default;
 
@@ -92,7 +89,7 @@ protected:
     }
 
     // Limit UE to AMBR.
-    if (not config.ue_ambr_limiter->consume(pdu.buf.length())) {
+    if (not config.ignore_ue_ambr && not config.ue_ambr_limiter->consume(pdu.buf.length())) {
       if (not config.warn_on_drop) {
         logger.log_info("Dropped GTPU PDU. UE went over UE-AMBR");
       } else {
