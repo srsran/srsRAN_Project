@@ -175,6 +175,7 @@ update private branch:
         cd ${PLUGIN_PATH}
         git checkout ${CI_PLUGIN_COMMIT_SHA}
         cd ${CI_PROJECT_DIR}
+      fi
     - |
       git commit -a --amend --no-edit
     - |
