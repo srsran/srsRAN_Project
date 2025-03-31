@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "rrc_du_metrics_aggregator.h"
+#include "metrics/rrc_du_metrics_aggregator.h"
 #include "ue/rrc_ue_impl.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/rrc/rrc_config.h"

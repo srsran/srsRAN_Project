@@ -12,7 +12,7 @@
 
 namespace srsran {
 
-/// \brief RRC metrics for all UEs connected to a DU.
+/// \brief RRC connection metrics, see TS 28.552 section 5.1.1.4.
 struct rrc_du_metrics {
   unsigned mean_nof_rrc_connections;
   unsigned max_nof_rrc_connections;
