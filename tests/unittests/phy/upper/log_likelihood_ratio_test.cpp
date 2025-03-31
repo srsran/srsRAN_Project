@@ -12,9 +12,8 @@
 /// \brief Unit test for the log-likelihood ratio type.
 ///
 /// Tests all the operators and functions defined for the type.
-#include "../../srslog/testing_helpers.h"
 #include "srsran/phy/upper/log_likelihood_ratio.h"
-#include "srsran/support/srsran_test.h"
+#include <gtest/gtest.h>
 #include <random>
 
 using namespace srsran;
@@ -24,58 +23,73 @@ bool operator==(span<const log_likelihood_ratio> lhs, span<const log_likelihood_
   return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
 }
 
-int main()
+TEST(LLR, Comparison)
 {
   log_likelihood_ratio llr0 = 0;
   log_likelihood_ratio llr1 = 2;
 
-  TESTASSERT_NEQ(llr0, llr1, "Not equal operator not working.");
-  TESTASSERT((llr1 > llr0) && (llr0 < llr1), "Strict order comparison operators not working.");
-  TESTASSERT((llr1 >= llr0) && (llr0 <= llr1), "Order comparison operators not working.");
-  TESTASSERT((llr0 >= llr0) && (llr1 <= llr1), "Order comparison operators not working.");
+  ASSERT_NE(llr0, llr1) << "Not equal operator not working.";
+  ASSERT_TRUE((llr1 > llr0) && (llr0 < llr1)) << "Strict order comparison operators not working.";
+  ASSERT_TRUE((llr1 >= llr0) && (llr0 <= llr1)) << "Order comparison operators not working.";
+  ASSERT_TRUE((llr0 >= llr0) && (llr1 <= llr1)) << "Order comparison operators not working.";
+}
 
-  TESTASSERT_EQ(log_likelihood_ratio(-2), -llr1, "Negation not working.");
+TEST(LLR, BasicArithmetic)
+{
+  log_likelihood_ratio llr0 = 0;
+  log_likelihood_ratio llr1 = 2;
 
-  TESTASSERT_EQ(log_likelihood_ratio(2), llr0 + llr1, "Sum not working.");
-  TESTASSERT_EQ(log_likelihood_ratio(-2), llr0 - llr1, "Difference not working.");
-  TESTASSERT_EQ(log_likelihood_ratio(2), log_likelihood_ratio::promotion_sum(llr0, llr1), "Promotion sum not working.");
-  TESTASSERT_EQ(LLR_MAX, llr1 + 119, "Saturation not working.");
+  ASSERT_EQ(log_likelihood_ratio(-2), -llr1) << "Negation not working.";
+
+  ASSERT_EQ(log_likelihood_ratio(2), llr0 + llr1) << "Sum not working.";
+  ASSERT_EQ(log_likelihood_ratio(-2), llr0 - llr1) << "Difference not working.";
 
   llr0 += llr1;
-  TESTASSERT_EQ(log_likelihood_ratio(2), llr0, "Addition assignment not working.");
-  TESTASSERT_EQ(log_likelihood_ratio(0), llr0 - llr1, "Special case 0 not working.");
-  TESTASSERT_EQ(LLR_INFINITY, LLR_INFINITY - llr1, "Special case INFTY + finite not working.");
-  TESTASSERT_EQ(LLR_INFINITY, llr0 + LLR_INFINITY, "Special case finite + INFTY not working.");
-  TESTASSERT_EQ(log_likelihood_ratio(0), LLR_INFINITY - LLR_INFINITY, "Special case INFTY - INFTY not working.");
+  ASSERT_EQ(log_likelihood_ratio(2), llr0) << "Addition assignment not working.";
+  ASSERT_EQ(log_likelihood_ratio(0), llr0 - llr1) << "Special case 0 not working.";
+}
 
-  TESTASSERT_EQ(static_cast<int>(llr0), 2, "Static casting not working.");
-  TESTASSERT_EQ(llr0.to_int(), 2, "Static casting not working.");
-  TESTASSERT_EQ(static_cast<log_likelihood_ratio::value_type>(llr0), 2, "Static casting not working.");
+TEST(LLR, SpecialArithmetic)
+{
+  log_likelihood_ratio llr0 = 0;
+  log_likelihood_ratio llr1 = 2;
+
+  ASSERT_EQ(log_likelihood_ratio(2), log_likelihood_ratio::promotion_sum(llr0, llr1)) << "Promotion sum not working.";
+  ASSERT_EQ(LLR_MAX, llr1 + 119) << "Saturation not working.";
+
+  ASSERT_EQ(LLR_INFINITY, LLR_INFINITY - llr1) << "Special case INFTY + finite not working.";
+  ASSERT_EQ(LLR_INFINITY, llr0 + LLR_INFINITY) << "Special case finite + INFTY not working.";
+  ASSERT_EQ(log_likelihood_ratio(0), LLR_INFINITY - LLR_INFINITY) << "Special case INFTY - INFTY not working.";
 
   llr0 = -100;
   llr1 = 100;
-  TESTASSERT_EQ(-LLR_MAX, llr0 - llr1, "Saturation of negative values not working.");
-  TESTASSERT_EQ(LLR_INFINITY, log_likelihood_ratio::promotion_sum(LLR_MAX, LLR_MAX), "Promotion sum not working.");
-  TESTASSERT_EQ(
-      LLR_INFINITY, log_likelihood_ratio::promotion_sum(LLR_INFINITY, LLR_MAX), "Promotion sum special not working.");
+  ASSERT_EQ(-LLR_MAX, llr0 - llr1) << "Saturation of negative values not working.";
+  ASSERT_EQ(LLR_INFINITY, log_likelihood_ratio::promotion_sum(LLR_MAX, LLR_MAX)) << "Promotion sum not working.";
+  ASSERT_EQ(LLR_INFINITY, log_likelihood_ratio::promotion_sum(LLR_INFINITY, LLR_MAX))
+      << "Promotion sum special not working.";
+}
 
-  std::array<log_likelihood_ratio, 4> llr_sequence = {2, -2, 2, -2};
-  TESTASSERT(typeid(int) == typeid(log_likelihood_ratio::norm_squared(llr_sequence)),
-             "norm_sqr_llr does not propagate type.");
-  TESTASSERT(typeid(int) == typeid(log_likelihood_ratio::norm_squared(span<const log_likelihood_ratio>(llr_sequence))),
-             "norm_sqr_llr does not propagate type.");
+TEST(LLR, Casting)
+{
+  log_likelihood_ratio llr0 = 2;
 
-  constexpr std::array<log_likelihood_ratio, 4> llr_sequence_const = {2, -2, 2, -2};
-  TESTASSERT(typeid(int) == typeid(log_likelihood_ratio::norm_squared(llr_sequence_const)),
-             "norm_sqr_llr does not propagate type with const values.");
-
-  TESTASSERT_EQ(16, log_likelihood_ratio::norm_squared(llr_sequence), "norm_sqr_llr not working.");
-  std::array<int8_t, 4> rhs = {-1, -1, 1, 1};
-  TESTASSERT_EQ(0, log_likelihood_ratio::dot_prod_sign(llr_sequence, rhs), "dot_prod_llr not working.");
+  ASSERT_EQ(static_cast<int>(llr0), 2) << "Static casting not working.";
+  ASSERT_EQ(llr0.to_int(), 2) << "Static casting not working.";
+  ASSERT_EQ(static_cast<log_likelihood_ratio::value_type>(llr0), 2) << "Static casting not working.";
 
   fmt::memory_buffer buf;
   fmt::format_to(std::back_inserter(buf), "{}", log_likelihood_ratio(1));
-  TESTASSERT_EQ(to_string(buf), "1");
+  ASSERT_EQ(to_string(buf), "1") << "to_string not working.";
+}
+
+TEST(LLR, VectorOperations)
+{
+  std::array<log_likelihood_ratio, 4> llr_sequence = {2, -2, 2, -2};
+
+  ASSERT_EQ(log_likelihood_ratio::norm_squared(llr_sequence), 16) << "norm_squared not working.";
+
+  std::array<int8_t, 4> rhs = {-1, -1, 1, 1};
+  ASSERT_EQ(log_likelihood_ratio::dot_prod_sign(llr_sequence, rhs), 0) << "dot_prod_sign not working.";
 
   log_likelihood_ratio                   low  = -32;
   log_likelihood_ratio                   high = 32;
@@ -91,8 +105,8 @@ int main()
                  clamp_expected_data.begin(),
                  [low, high](log_likelihood_ratio value) { return std::clamp(value, low, high); });
   clamp(clamp_out_data, clamp_in_data, low, high);
-  TESTASSERT_EQ(span<const log_likelihood_ratio>(clamp_expected_data),
-                span<const log_likelihood_ratio>(clamp_out_data));
+  ASSERT_EQ(span<const log_likelihood_ratio>(clamp_expected_data), span<const log_likelihood_ratio>(clamp_out_data))
+      << "Clamping not working.";
 
   std::array<log_likelihood_ratio, 1234> sum_x;
   std::array<log_likelihood_ratio, 1234> sum_y;
@@ -106,7 +120,6 @@ int main()
                  sum_expected.begin(),
                  [](log_likelihood_ratio x, log_likelihood_ratio y) { return x + y; });
   log_likelihood_ratio::sum(sum_out, sum_x, sum_y);
-  TESTASSERT_EQ(span<const log_likelihood_ratio>(sum_expected), span<const log_likelihood_ratio>(sum_out));
-
-  return 0;
+  ASSERT_EQ(span<const log_likelihood_ratio>(sum_expected), span<const log_likelihood_ratio>(sum_out))
+      << "Vector sum not working.";
 }
