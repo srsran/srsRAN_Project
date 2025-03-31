@@ -21,27 +21,21 @@
 namespace srsran {
 
 struct gtpu_demux_tunnel_ctx_t {
-  batched_dispatch_queue<byte_buffer>&         batched_queue;
+  gtpu_demux_dispatch_queue&                   batched_queue;
   gtpu_tunnel_common_rx_upper_layer_interface* tunnel;
-};
-
-struct gtpu_demux_pdu_ctx_t {
-  gtpu_teid_t             teid;
-  byte_buffer             pdu;
-  const sockaddr_storage& src_addr;
 };
 
 class gtpu_demux_impl final : public gtpu_demux
 {
 public:
   explicit gtpu_demux_impl(gtpu_demux_cfg_t cfg_, dlt_pcap& gtpu_pcap_);
-  ~gtpu_demux_impl() = default;
+  ~gtpu_demux_impl() override = default;
 
   // gtpu_demux_rx_upper_layer_interface
   void handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr) override; // Will be run from IO executor.
 
   // gtpu_demux_ctrl
-  expected<std::unique_ptr<batched_dispatch_queue<byte_buffer>>>
+  expected<std::unique_ptr<gtpu_demux_dispatch_queue>>
        add_tunnel(gtpu_teid_t                                  teid,
                   task_executor&                               tunnel_exec,
                   gtpu_tunnel_common_rx_upper_layer_interface* tunnel) override;
@@ -51,7 +45,7 @@ public:
 
 private:
   // Actual demuxing, to be run in CU-UP executor.
-  void handle_pdu_impl(gtpu_demux_pdu_ctx_t pdu_ctx);
+  void handle_pdu_impl(gtpu_teid_t teid, gtpu_demux_pdu_ctx_t pdu_ctx);
 
   const gtpu_demux_cfg_t cfg;
   dlt_pcap&              gtpu_pcap;

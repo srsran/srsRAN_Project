@@ -80,12 +80,11 @@ public:
   dummy_gtpu_demux_ctrl() : logger(srslog::fetch_basic_logger("GTPU")) {}
   ~dummy_gtpu_demux_ctrl() = default;
 
-  expected<std::unique_ptr<batched_dispatch_queue<byte_buffer>>>
+  expected<std::unique_ptr<gtpu_demux_dispatch_queue>>
   add_tunnel(gtpu_teid_t teid, task_executor& tunnel_exec, gtpu_tunnel_common_rx_upper_layer_interface* tunnel) override
   {
     created_teid_list.push_back(teid);
-    return std::make_unique<batched_dispatch_queue<byte_buffer>>(
-        8192, tunnel_exec, logger, [](span<const byte_buffer>) {});
+    return std::make_unique<gtpu_demux_dispatch_queue>(8192, tunnel_exec, logger, [](span<gtpu_demux_pdu_ctx_t>) {});
   }
   bool remove_tunnel(gtpu_teid_t teid) override
   {

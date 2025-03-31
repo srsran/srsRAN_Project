@@ -90,7 +90,7 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
   }
 
   // attach RX to DEMUX
-  expected<std::unique_ptr<batched_dispatch_queue<byte_buffer>>> expected_dispatch_queue =
+  expected<std::unique_ptr<gtpu_demux_dispatch_queue>> expected_dispatch_queue =
       demux->add_tunnel(dl_up_tnl_info.gtp_teid, ue_executor, du_bearer->get_tunnel_rx_interface());
   if (not expected_dispatch_queue) {
     logger_du.error("Could not attach UL-TEID to demux RX. TEID {} already exists", ul_up_tnl_info.gtp_teid);

@@ -80,9 +80,9 @@ struct pdu_session {
   up_transport_layer_info ul_tunnel_info; // the peer GTP-U address and TEID
 
   // GTP-U demux parameters
-  gtpu_demux_ctrl&                                     gtpu_rx_demux; // The demux entity to register/remove the tunnel.
-  gtpu_teid_pool&                                      n3_teid_allocator; // Pool to de-allocate TEID on release
-  std::unique_ptr<batched_dispatch_queue<byte_buffer>> dispatch_queue;
+  gtpu_demux_ctrl&                           gtpu_rx_demux;     // The demux entity to register/remove the tunnel.
+  gtpu_teid_pool&                            n3_teid_allocator; // Pool to de-allocate TEID on release
+  std::unique_ptr<gtpu_demux_dispatch_queue> dispatch_queue;
 
   // DRB contexts
   drb_context*                                     default_drb = nullptr; // non-owning pointer to default DRB, if any

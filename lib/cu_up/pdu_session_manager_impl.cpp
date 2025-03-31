@@ -144,7 +144,7 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   new_session->gtpu_to_udp_adapter.connect_network_gateway(n3_gw);
 
   // Register tunnel at demux
-  expected<std::unique_ptr<batched_dispatch_queue<byte_buffer>>> expected_dispatch_queue =
+  expected<std::unique_ptr<gtpu_demux_dispatch_queue>> expected_dispatch_queue =
       gtpu_rx_demux.add_tunnel(new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface());
   if (!expected_dispatch_queue) {
     logger.log_error(

@@ -75,7 +75,7 @@ public:
   std::unique_ptr<gtpu_tx_udp_gw_adapter> gtpu_to_network_adapter;
   std::unique_ptr<gtpu_rx_f1u_adapter>    gtpu_to_f1u_adapter;
 
-  std::unique_ptr<batched_dispatch_queue<byte_buffer>> dispatch_queue;
+  std::unique_ptr<gtpu_demux_dispatch_queue> dispatch_queue;
 
   gtpu_tunnel_common_rx_upper_layer_interface* get_tunnel_rx_interface() { return tunnel_rx.get(); }
 
