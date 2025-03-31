@@ -14,9 +14,10 @@
 using namespace srsran;
 
 /// Derives MAC Cell Configuration from DU Cell Configuration.
-mac_cell_creation_request srsran::make_mac_cell_config(du_cell_index_t               cell_index,
-                                                       const srs_du::du_cell_config& du_cfg,
-                                                       std::vector<byte_buffer>      bcch_dl_sch_payloads,
+mac_cell_creation_request srsran::make_mac_cell_config(du_cell_index_t                                 cell_index,
+                                                       const srs_du::du_cell_config&                   du_cfg,
+                                                       const byte_buffer&                              sib1,
+                                                       span<const byte_buffer>                         si_messages,
                                                        const sched_cell_configuration_request_message& sched_cell_cfg)
 {
   mac_cell_creation_request mac_cfg{};
@@ -28,9 +29,9 @@ mac_cell_creation_request srsran::make_mac_cell_config(du_cell_index_t          
   mac_cfg.ul_carrier       = du_cfg.ul_carrier;
   mac_cfg.cell_barred      = du_cfg.cell_barred;
   mac_cfg.intra_freq_resel = du_cfg.intra_freq_resel;
-  mac_cfg.sys_info.sib1    = std::move(bcch_dl_sch_payloads[0]);
-  for (unsigned i = 1, e = bcch_dl_sch_payloads.size(); i != e; ++i) {
-    mac_cfg.sys_info.si_messages.push_back(std::move(bcch_dl_sch_payloads[i]));
+  mac_cfg.sys_info.sib1    = sib1.copy();
+  for (unsigned i = 0, e = si_messages.size(); i != e; ++i) {
+    mac_cfg.sys_info.si_messages.push_back(si_messages[i].copy());
   }
   mac_cfg.sched_req = sched_cell_cfg;
 

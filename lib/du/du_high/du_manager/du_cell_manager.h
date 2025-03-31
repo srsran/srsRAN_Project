@@ -19,20 +19,12 @@ namespace srs_du {
 
 struct du_cell_param_config_request;
 
-/// Cached packed System Information being currently sent by the cell.
-struct du_cell_packed_sys_info {
-  byte_buffer              sib1;
-  std::vector<byte_buffer> si_messages;
-};
-
 /// Current DU cell context.
 struct du_cell_context {
   /// Current configuration.
   du_cell_config cfg;
-  /// System Information being signalled by the cell.
-  du_cell_packed_sys_info packed_sys_info;
-  /// Last SI scheduling update request.
-  si_scheduling_update_request last_si_sched_req;
+  /// Encoded System Information being currently sent by the DU cell.
+  mac_cell_sys_info_config si_cfg;
   /// Whether the cell is active.
   bool active = false;
 };
@@ -84,16 +76,11 @@ public:
   /// \return true if a change was detected and applied.
   expected<du_cell_reconfig_result> handle_cell_reconf_request(const du_cell_param_config_request& req);
 
-  const du_cell_packed_sys_info& get_packed_sys_info(du_cell_index_t cell_index) const
+  /// Retrieve current cell system information configuration.
+  const mac_cell_sys_info_config& get_sys_info(du_cell_index_t cell_index) const
   {
     assert_cell_exists(cell_index);
-    return cells[cell_index]->packed_sys_info;
-  }
-
-  si_scheduling_update_request get_si_sched_req(du_cell_index_t cell_index) const
-  {
-    assert_cell_exists(cell_index);
-    return cells[cell_index]->last_si_sched_req;
+    return cells[cell_index]->si_cfg;
   }
 
   async_task<bool> start(du_cell_index_t cell_index);

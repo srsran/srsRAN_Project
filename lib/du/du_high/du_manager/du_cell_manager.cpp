@@ -25,12 +25,12 @@ du_cell_manager::du_cell_manager(const du_manager_params& cfg_) :
 
 static void fill_si_scheduler_config(si_scheduling_update_request& req,
                                      const du_cell_config&         cell_cfg,
-                                     du_cell_packed_sys_info&      si_info)
+                                     const byte_buffer&            sib1,
+                                     span<const byte_buffer>       si_messages)
 {
-  req.sib1_len = units::bytes{static_cast<unsigned>(si_info.sib1.length())};
+  req.sib1_len = units::bytes{static_cast<unsigned>(sib1.length())};
   static_vector<units::bytes, MAX_SI_MESSAGES> si_payload_sizes;
-  si_payload_sizes.emplace_back(req.sib1_len);
-  for (const auto& si_msg : si_info.si_messages) {
+  for (const auto& si_msg : si_messages) {
     si_payload_sizes.emplace_back(units::bytes{static_cast<unsigned>(si_msg.length())});
   }
   req.si_sched_cfg = make_si_scheduling_info_config(cell_cfg, si_payload_sizes);
@@ -45,26 +45,23 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
   }
 
   // Generate system information.
-  std::vector<byte_buffer> bcch_msgs = asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg);
-
-  // Save SIB1 and SI messages.
-  du_cell_packed_sys_info si_info;
-  si_info.sib1 = std::move(bcch_msgs[0]);
-  bcch_msgs.erase(bcch_msgs.begin());
-  si_info.si_messages = std::move(bcch_msgs);
+  std::vector<byte_buffer> bcch_msgs   = asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg);
+  const byte_buffer&       sib1        = bcch_msgs[0];
+  span<const byte_buffer>  si_messages = span<const byte_buffer>(bcch_msgs).last(bcch_msgs.size() - 1);
 
   // Generate Scheduler SI scheduling config.
   si_scheduling_update_request si_sched_req;
   si_sched_req.cell_index = to_du_cell_index(cells.size());
   si_sched_req.version    = 0;
-  fill_si_scheduler_config(si_sched_req, cell_cfg, si_info);
+  fill_si_scheduler_config(si_sched_req, cell_cfg, sib1, si_messages);
 
   // Save config.
-  auto& cell             = *cells.emplace_back(std::make_unique<du_cell_context>());
-  cell.cfg               = cell_cfg;
-  cell.active            = false;
-  cell.packed_sys_info   = std::move(si_info);
-  cell.last_si_sched_req = std::move(si_sched_req);
+  auto& cell       = *cells.emplace_back(std::make_unique<du_cell_context>());
+  cell.cfg         = cell_cfg;
+  cell.active      = false;
+  cell.si_cfg.sib1 = sib1.copy();
+  cell.si_cfg.si_messages.assign(si_messages.begin(), si_messages.end());
+  cell.si_cfg.si_sched_cfg = std::move(si_sched_req);
 }
 
 expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& req)
@@ -87,11 +84,11 @@ expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(co
 
   if (si_updated) {
     // Need to re-pack SIB1.
-    cell.packed_sys_info.sib1 = asn1_packer::pack_sib1(cell_cfg);
+    cell.si_cfg.sib1 = asn1_packer::pack_sib1(cell_cfg);
 
     // Bump SI version and update SI messages.
-    fill_si_scheduler_config(cell.last_si_sched_req, cell_cfg, cell.packed_sys_info);
-    cell.last_si_sched_req.version++;
+    fill_si_scheduler_config(cell.si_cfg.si_sched_cfg, cell_cfg, cell.si_cfg.sib1, cell.si_cfg.si_messages);
+    cell.si_cfg.si_sched_cfg.version++;
   }
 
   return du_cell_reconfig_result{cell_index, si_updated, si_updated};

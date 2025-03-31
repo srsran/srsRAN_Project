@@ -93,15 +93,7 @@ du_param_config_procedure::handle_mac_cell_update(const du_cell_reconfig_result&
   mac_cell_reconfig_request req;
 
   // Update SIB1 and SI message content.
-  req.new_sys_info.emplace();
-  const auto& sys_info   = du_cells.get_packed_sys_info(changed_cell.cell_index);
-  req.new_sys_info->sib1 = sys_info.sib1.copy();
-  for (const auto& si_msg : sys_info.si_messages) {
-    req.new_sys_info->si_messages.emplace_back(si_msg.copy());
-  }
-
-  // Provide new SI scheduling config.
-  req.new_sys_info->si_sched_cfg = du_cells.get_si_sched_req(changed_cell.cell_index);
+  req.new_sys_info = du_cells.get_sys_info(changed_cell.cell_index);
 
   return du_params.mac.cell_mng.get_cell_controller(changed_cell.cell_index).reconfigure(req);
 }

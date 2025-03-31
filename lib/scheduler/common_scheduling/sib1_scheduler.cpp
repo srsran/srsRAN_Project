@@ -22,8 +22,6 @@
 
 using namespace srsran;
 
-static constexpr uint64_t no_update_flag = std::numeric_limits<uint64_t>::max();
-
 /// SIB1 new transmission period in milliseconds, as per TS 38.331, 5.2.1.
 static constexpr std::chrono::milliseconds sib1_newtx_period{160};
 

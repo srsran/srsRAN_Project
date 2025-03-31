@@ -24,7 +24,10 @@ class lockfree_triple_buffer
 {
 public:
   lockfree_triple_buffer() = default;
-  explicit lockfree_triple_buffer(const T& default_init) : buffer{{default_init, default_init, default_init}} {}
+  explicit lockfree_triple_buffer(const T& default_init) :
+    buffer{{padded_element{default_init}, padded_element{default_init}, padded_element{default_init}}}
+  {
+  }
 
   /// \brief Read the latest committed data from the buffer.
   /// This function is intended to be called by the consumer thread.
@@ -70,6 +73,9 @@ private:
 
   struct alignas(k_cache_line_size) padded_element {
     T value;
+
+    padded_element() = default;
+    padded_element(const T& value_) : value(value_) {}
   };
   std::array<padded_element, 3> buffer;
   std::atomic<unsigned>         dirty_middle_buffer_idx = {1 << 1};

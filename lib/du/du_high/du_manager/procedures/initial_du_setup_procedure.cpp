@@ -54,15 +54,14 @@ void initial_du_setup_procedure::configure_du_cells()
 
   // Configure MAC Cells (without activating them).
   for (unsigned idx = 0, e = cell_mng.nof_cells(); idx != e; ++idx) {
-    du_cell_index_t       cell_index = to_du_cell_index(idx);
-    const du_cell_config& du_cfg     = cell_mng.get_cell_cfg(cell_index);
+    du_cell_index_t                 cell_index = to_du_cell_index(idx);
+    const du_cell_config&           du_cfg     = cell_mng.get_cell_cfg(cell_index);
+    const mac_cell_sys_info_config& sys_info   = cell_mng.get_sys_info(cell_index);
 
-    std::vector<byte_buffer>  bcch_msgs = asn1_packer::pack_all_bcch_dl_sch_msgs(du_cfg);
-    std::vector<units::bytes> bcch_msg_payload_lens(bcch_msgs.size());
-    for (unsigned i = 0; i < bcch_msgs.size(); ++i) {
-      bcch_msg_payload_lens[i] = units::bytes(bcch_msgs[i].length());
-    }
-    auto                    sched_cfg = make_sched_cell_config_req(cell_index, du_cfg, bcch_msg_payload_lens);
+    auto                    sched_cfg = make_sched_cell_config_req(cell_index,
+                                                du_cfg,
+                                                units::bytes{static_cast<unsigned>(sys_info.sib1.length())},
+                                                sys_info.si_sched_cfg.si_sched_cfg);
     error_type<std::string> result =
         config_validators::validate_sched_cell_configuration_request_message(sched_cfg, params.mac.sched_cfg);
     if (not result.has_value()) {
@@ -70,7 +69,8 @@ void initial_du_setup_procedure::configure_du_cells()
     }
 
     // Forward config to MAC.
-    params.mac.cell_mng.add_cell(make_mac_cell_config(cell_index, du_cfg, std::move(bcch_msgs), sched_cfg));
+    params.mac.cell_mng.add_cell(
+        make_mac_cell_config(cell_index, du_cfg, sys_info.sib1, sys_info.si_messages, sched_cfg));
   }
 }
 
