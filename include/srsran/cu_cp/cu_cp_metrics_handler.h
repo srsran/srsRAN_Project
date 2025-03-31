@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ngap/ngap_metrics.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/ran/pci.h"
@@ -47,8 +48,15 @@ struct metrics_report {
     rrc_du_metrics rrc_metrics;
   };
 
-  std::vector<ue_info> ues;
-  std::vector<du_info> dus;
+  struct ngap_info {
+    /// Name of the AMF connected to the CU-CP.
+    std::string  amf_name;
+    ngap_metrics metrics;
+  };
+
+  std::vector<ue_info>   ues;
+  std::vector<du_info>   dus;
+  std::vector<ngap_info> ngaps;
 };
 
 /// Interface used by the CU-CP to report metrics.

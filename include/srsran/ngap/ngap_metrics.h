@@ -1,0 +1,31 @@
+/*
+ *
+ * Copyright 2021-2025 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include "srsran/ran/cause/ngap_cause.h"
+#include "srsran/ran/s_nssai.h"
+#include <map>
+
+namespace srsran {
+
+// PDU session management metrics, see TS 28.552 section 5.1.1.5.
+struct pdu_session_metrics_t {
+  unsigned                         nof_pdu_sessions_requested_to_setup;
+  unsigned                         nof_pdu_sessions_successfully_setup;
+  std::map<ngap_cause_t, unsigned> nof_pdu_sessions_failed_to_setup;
+};
+
+/// \brief NGAP metrics for all UEs connected to an AMF.
+struct ngap_metrics {
+  std::map<s_nssai_t, pdu_session_metrics_t> pdu_session_metrics;
+};
+
+} // namespace srsran
