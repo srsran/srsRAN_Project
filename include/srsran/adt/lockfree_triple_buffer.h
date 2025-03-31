@@ -24,6 +24,7 @@ class lockfree_triple_buffer
 {
 public:
   lockfree_triple_buffer() = default;
+  explicit lockfree_triple_buffer(const T& default_init) : buffer({default_init, default_init, default_init}) {}
 
   /// \brief Read the latest committed data from the buffer.
   /// This function is intended to be called by the consumer thread.

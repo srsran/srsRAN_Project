@@ -9,6 +9,7 @@
 add_executable(common_scheduler_test
         ssb_scheduler_test.cpp
         sib1_scheduler_test.cpp
+        si_scheduler_test.cpp
         prach_scheduler_test.cpp
         ra_scheduler_test.cpp
         paging_scheduler_test.cpp)

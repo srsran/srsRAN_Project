@@ -216,7 +216,14 @@ void srsran::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span
     ASSERT_EQ(sib.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
     ASSERT_TRUE(sib.pdsch_cfg.rbs.is_type1());
     ASSERT_EQ(sib.pdsch_cfg.coreset_cfg->id, to_coreset_id(0));
-    ASSERT_EQ(sib.pdsch_cfg.ss_set_type, search_space_set_type::type0);
+    if (sib.si_indicator == sib_information::sib1) {
+      ASSERT_EQ(sib.pdsch_cfg.ss_set_type, search_space_set_type::type0);
+      ASSERT_FALSE(sib.si_msg_index.has_value());
+    } else {
+      ASSERT_TRUE(sib.pdsch_cfg.ss_set_type == search_space_set_type::type0 or
+                  sib.pdsch_cfg.ss_set_type == search_space_set_type::type0A);
+      ASSERT_TRUE(sib.si_msg_index.has_value());
+    }
     ASSERT_EQ(sib.pdsch_cfg.codewords.size(), 1);
     ASSERT_EQ(sib.pdsch_cfg.codewords[0].mcs_table, pdsch_mcs_table::qam64);
     vrb_interval vrbs = sib.pdsch_cfg.rbs.type1();

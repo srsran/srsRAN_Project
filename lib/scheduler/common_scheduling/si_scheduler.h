@@ -39,15 +39,20 @@ private:
   const subcarrier_spacing  scs_common;
   const unsigned            default_paging_cycle;
   const unsigned            si_change_mod_period;
+  srslog::basic_logger&     logger;
 
   sib1_scheduler       sib1_sched;
   si_message_scheduler si_msg_sched;
 
+  si_version_type                                      last_version = 0;
   lockfree_triple_buffer<si_scheduling_update_request> pending_req;
 
   std::optional<si_scheduling_update_request> on_going_req;
-  slot_point                                  si_change_mod_start;
-  unsigned                                    last_version = 0;
+  unsigned                                    si_change_start_count = 0;
+
+  // Note: We use counts instead of slot_points because SI periods can be longer that 1024 * 10 msec.
+  unsigned   slot_count = 0;
+  slot_point last_sl_tx;
 };
 
 } // namespace srsran

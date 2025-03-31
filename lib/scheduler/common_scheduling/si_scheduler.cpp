@@ -20,13 +20,24 @@ si_scheduler::si_scheduler(const cell_configuration&                  cfg_,
   scs_common(cell_cfg.scs_common),
   default_paging_cycle(static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.default_paging_cycle)),
   si_change_mod_period(default_paging_cycle * static_cast<unsigned>(cell_cfg.dl_cfg_common.bcch_cfg.mod_period_coeff)),
+  logger(srslog::fetch_basic_logger("SCHED")),
   sib1_sched(cell_cfg, pdcch_sch, sib1_payload_size),
-  si_msg_sched(cell_cfg, pdcch_sch, si_sched_cfg)
+  si_msg_sched(cell_cfg, pdcch_sch, si_sched_cfg),
+  pending_req(si_scheduling_update_request{INVALID_DU_CELL_INDEX, last_version, units::bytes{0U}, {}})
 {
 }
 
 void si_scheduler::run_slot(cell_resource_allocator& res_alloc)
 {
+  if (SRSRAN_UNLIKELY(not last_sl_tx.valid())) {
+    slot_count = 0;
+  } else {
+    // Note: Detect slot skips.
+    unsigned nof_slots_elapsed = res_alloc[0].slot - last_sl_tx;
+    slot_count += nof_slots_elapsed;
+  }
+  last_sl_tx = res_alloc[0].slot;
+
   // If no on-going request is being handled, try to fetch a new request.
   handle_pending_request(res_alloc);
 
@@ -40,24 +51,25 @@ void si_scheduler::run_slot(cell_resource_allocator& res_alloc)
 void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
 {
   // The SI is scheduled ahead of time.
-  slot_point     slot_sched      = res_alloc.slot_tx() + res_alloc.max_dl_slot_alloc_delay;
-  const unsigned slots_per_frame = get_nof_slots_per_subframe(scs_common);
+  slot_point     slot_sched       = res_alloc.slot_tx() + res_alloc.max_dl_slot_alloc_delay;
+  unsigned       slot_count_sched = slot_count + res_alloc.max_dl_slot_alloc_delay;
+  const unsigned slots_per_frame  = get_nof_slots_per_subframe(scs_common);
 
   if (not on_going_req.has_value()) {
     // Check if there is any pending SI change request to handle.
     auto& next = pending_req.read();
     if (next.version != last_version) {
       // New pushed request. Save request to be handled in the following slots.
-      on_going_req = std::move(next);
+      on_going_req = next;
       last_version = on_going_req->version;
 
       // Determine the start of SI change modification window.
       const unsigned nof_sfns_until_mod_window = si_change_mod_period - (slot_sched.sfn() % si_change_mod_period);
-      si_change_mod_start                      = slot_sched + nof_sfns_until_mod_window * slots_per_frame;
+      si_change_start_count                    = slot_count_sched + nof_sfns_until_mod_window * slots_per_frame;
       if (nof_sfns_until_mod_window < default_paging_cycle) {
         // The next modification period is too close to the current slot to leave enough time to broadcast short
         // messages to all UEs.
-        si_change_mod_start += si_change_mod_period * slots_per_frame;
+        si_change_start_count += si_change_mod_period * slots_per_frame;
       }
     }
   }
@@ -67,27 +79,31 @@ void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
     return;
   }
 
-  if (slot_sched < si_change_mod_start - default_paging_cycle * slots_per_frame) {
+  if (slot_count_sched < si_change_start_count - default_paging_cycle * slots_per_frame) {
     // The SI change indication (short message) signalling window has not started yet.
     return;
   }
 
-  if (slot_sched < si_change_mod_start) {
+  if (slot_count_sched < si_change_start_count) {
     // We are inside the SI change indication signalling window.
     // TODO
     return;
   }
 
-  if (slot_sched < si_change_mod_start + si_change_mod_period * slots_per_frame) {
+  if (slot_count_sched < si_change_start_count + si_change_mod_period * slots_per_frame) {
     // We are inside the SI change window.
+
+    logger.debug("SI change with version {} and window [{}, {}) starting...",
+                 on_going_req->version,
+                 last_sl_tx - (slot_count - si_change_start_count),
+                 last_sl_tx - (slot_count - si_change_start_count) + si_change_mod_period * slots_per_frame);
 
     // Apply the SIB1 and SI message changes.
     sib1_sched.handle_sib1_update_indication(on_going_req->version, on_going_req->sib1_len);
     si_msg_sched.handle_si_message_update_indication(on_going_req->version, on_going_req->si_sched_cfg);
 
     // Delete the on-going request.
-    on_going_req        = std::nullopt;
-    si_change_mod_start = {};
+    on_going_req = std::nullopt;
   }
 }
 

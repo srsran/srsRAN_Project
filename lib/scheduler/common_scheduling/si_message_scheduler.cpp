@@ -119,7 +119,8 @@ void si_message_scheduler::schedule_pending_si_messages(cell_slot_resource_alloc
     }
 
     // Check if the searchSpaceOtherSystemInformation has monitored PDCCH candidates.
-    const search_space_id ss_id = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id.value();
+    const search_space_id ss_id = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id.value_or(
+        cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id);
     const search_space_configuration& ss = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[ss_id];
     if (not pdcch_helper::is_pdcch_monitoring_active(res_grid.slot, ss)) {
       continue;
@@ -163,14 +164,13 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
                                                                            nof_layers});
 
   // > Find available RBs in PDSCH for SI message BCCH grant.
-  const search_space_id other_si_ss_id =
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id.value();
+  const search_space_id ss_id = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.other_si_search_space_id.value_or(
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id);
   crb_interval si_crbs;
   {
-    const crb_interval crb_lims =
-        pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, other_si_ss_id);
-    const unsigned    nof_si_rbs = si_prbs_tbs.nof_prbs;
-    const prb_bitmap& used_crbs  = res_grid.dl_res_grid.used_crbs(
+    const crb_interval crb_lims   = pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_id);
+    const unsigned     nof_si_rbs = si_prbs_tbs.nof_prbs;
+    const prb_bitmap&  used_crbs  = res_grid.dl_res_grid.used_crbs(
         cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, crb_lims, si_ofdm_symbols);
     si_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_si_rbs, 0);
     if (si_crbs.length() < nof_si_rbs) {
@@ -182,7 +182,7 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
 
   // > Allocate DCI_1_0 for SI message on PDCCH.
   pdcch_dl_information* pdcch =
-      pdcch_sch.alloc_dl_pdcch_common(res_grid, rnti_t::SI_RNTI, other_si_ss_id, expert_cfg.si_message_dci_aggr_lev);
+      pdcch_sch.alloc_dl_pdcch_common(res_grid, rnti_t::SI_RNTI, ss_id, expert_cfg.si_message_dci_aggr_lev);
   if (pdcch == nullptr) {
     logger.info("Skipping SI message scheduling. Cause: Not enough PDCCH space for SI Message {}", si_message);
     return false;

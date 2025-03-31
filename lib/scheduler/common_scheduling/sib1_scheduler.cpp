@@ -109,6 +109,11 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid)
   // - [Implementation defined] We assume the SIB1 is (re)transmitted every 20ms if the SSB periodicity <= 20ms.
   //   Else, we set the (re)transmission periodicity as the SSB's.
 
+  if (sib1_payload_size.value() == 0) {
+    // No SIB1 configured.
+    return;
+  }
+
   // The sib1_rtx_period_slots is expressed in unit of slots.
   slot_point     sl_point                = res_grid.slot;
   const unsigned sib1_rtx_period_slots   = sib1_rtx_period.count() * sl_point.nof_slots_per_subframe();
