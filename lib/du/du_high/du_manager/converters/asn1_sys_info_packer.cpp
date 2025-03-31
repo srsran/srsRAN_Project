@@ -63,7 +63,7 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_cfg_common_sib(const d
   using namespace asn1::rrc_nr;
 
   dl_cfg_common_sib_s out;
-  // > frequencyInfoDL FrequencyInfoDL-SIB
+  // > frequencyInfoDL FrequencyInfoDL-SIB.
   for (const auto& dl_band : cfg.freq_info_dl.freq_band_list) {
     nr_multi_band_info_s asn1_band;
     asn1_band.freq_band_ind_nr_present = true;
@@ -74,13 +74,13 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_cfg_common_sib(const d
   out.freq_info_dl.scs_specific_carrier_list =
       srs_du::make_asn1_rrc_scs_specific_carrier_list(cfg.freq_info_dl.scs_carrier_list);
 
-  // > initialDownlinkBWP BWP-DownlinkCommon
+  // > initialDownlinkBWP BWP-DownlinkCommon.
   out.init_dl_bwp = srs_du::make_asn1_init_dl_bwp(cfg);
 
-  // BCCH-Config
+  // BCCH-Config.
   out.bcch_cfg.mod_period_coeff.value = bcch_cfg_s::mod_period_coeff_opts::n4;
 
-  // PCCH-Config
+  // PCCH-Config.
   switch (cfg.pcch_cfg.default_paging_cycle) {
     case paging_cycle::rf32:
       out.pcch_cfg.default_paging_cycle.value = paging_cycle_opts::rf32;
@@ -210,7 +210,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   using namespace asn1::rrc_nr;
   ul_cfg_common_sib_s out;
 
-  // > frequencyInfoUL FrequencyInfoUL-SIB
+  // > frequencyInfoUL FrequencyInfoUL-SIB.
   for (const auto& ul_band : cfg.freq_info_ul.freq_band_list) {
     nr_multi_band_info_s asn1_band;
     asn1_band.freq_band_ind_nr_present = true;
@@ -226,10 +226,10 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   out.freq_info_ul.scs_specific_carrier_list =
       srs_du::make_asn1_rrc_scs_specific_carrier_list(cfg.freq_info_ul.scs_carrier_list);
 
-  // > initialUplinkBWP BWP-UplinkCommon
+  // > initialUplinkBWP BWP-UplinkCommon.
   out.init_ul_bwp = srs_du::make_asn1_rrc_initial_up_bwp(cfg);
 
-  // > timeAlignmentTimerCommon TimeAlignmentTimer
+  // > timeAlignmentTimerCommon TimeAlignmentTimer.
   out.time_align_timer_common.value = time_align_timer_opts::infinity;
 
   return out;
@@ -252,17 +252,24 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
 
   n_ta_offset ta_offset                = band_helper::get_ta_offset(du_cfg.dl_carrier.band);
   cell.n_timing_advance_offset_present = true;
-  if (ta_offset == n_ta_offset::n0) {
-    cell.n_timing_advance_offset.value = asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n0;
-  } else if (ta_offset == n_ta_offset::n25600) {
-    cell.n_timing_advance_offset.value =
-        asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n25600;
-  } else if (ta_offset == n_ta_offset::n39936) {
-    cell.n_timing_advance_offset.value =
-        asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n39936;
+  switch (ta_offset) {
+    case n_ta_offset::n0:
+      cell.n_timing_advance_offset.value =
+          asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n0;
+      break;
+    case n_ta_offset::n25600:
+      cell.n_timing_advance_offset.value =
+          asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n25600;
+      break;
+    case n_ta_offset::n39936:
+      cell.n_timing_advance_offset.value =
+          asn1::rrc_nr::serving_cell_cfg_common_sib_s::n_timing_advance_offset_opts::n39936;
+      break;
+    default:
+      report_fatal_error("Invalid timing advance offset");
   }
 
-  // TDD config
+  // TDD config.
   if (du_cfg.tdd_ul_dl_cfg_common.has_value()) {
     cell.tdd_ul_dl_cfg_common_present = true;
     cell.tdd_ul_dl_cfg_common         = srs_du::make_asn1_rrc_tdd_ul_dl_cfg_common(du_cfg.tdd_ul_dl_cfg_common.value());
@@ -290,7 +297,7 @@ static asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg
   plmn.mcc                      = du_cfg.nr_cgi.plmn_id.mcc().to_bytes();
   static_vector<uint8_t, 3> mnc = du_cfg.nr_cgi.plmn_id.mnc().to_bytes();
   plmn.mnc.resize(mnc.size());
-  for (unsigned i = 0; i < mnc.size(); ++i) {
+  for (unsigned i = 0, sz = mnc.size(); i != sz; ++i) {
     plmn.mnc[i] = mnc[i];
   }
   sib1.cell_access_related_info.plmn_id_info_list[0].tac_present = true;

@@ -14,6 +14,9 @@
 #include "srsran/du/du_cell_config.h"
 
 namespace srsran {
+
+struct sib19_info;
+
 namespace srs_du {
 namespace asn1_packer {
 

@@ -34,7 +34,7 @@ si_change_result sib_pdu_assembler::handle_si_change_request(const mac_cell_sys_
   save_buffers(req);
 
   // Update version.
-  last_cfg_buffers.version++;
+  ++last_cfg_buffers.version;
 
   // Forward new version and buffers to SIB assembler RT path.
   pending.write_and_commit(last_cfg_buffers);
