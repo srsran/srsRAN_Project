@@ -157,7 +157,7 @@ resolve_transmitter_dependencies(const transmitter_config&                      
                                  task_executor&                                    tx_executor,
                                  task_executor&                                    downlink_executor,
                                  error_notifier&                                   err_notifier,
-                                 std::unique_ptr<ether::gateway>                   eth_gateway,
+                                 std::unique_ptr<ether::transmitter>               eth_transmitter,
                                  std::shared_ptr<prach_context_repository>         prach_context_repo,
                                  std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
                                  std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
@@ -194,10 +194,10 @@ resolve_transmitter_dependencies(const transmitter_config&                      
       downlink_executor,
       tx_config.sector);
 
-  dependencies.ul_slot_repo  = std::move(ul_slot_context_repo);
-  dependencies.ul_prach_repo = std::move(prach_context_repo);
-  dependencies.eth_gateway   = std::move(eth_gateway);
-  dependencies.frame_pool    = std::move(frame_pool);
+  dependencies.ul_slot_repo    = std::move(ul_slot_context_repo);
+  dependencies.ul_prach_repo   = std::move(prach_context_repo);
+  dependencies.eth_transmitter = std::move(eth_transmitter);
+  dependencies.frame_pool      = std::move(frame_pool);
 
   return dependencies;
 }
@@ -208,7 +208,7 @@ srsran::ofh::create_transmitter(const transmitter_config&                       
                                 task_executor&                                    tx_executor,
                                 task_executor&                                    downlink_executor,
                                 error_notifier&                                   err_notifier,
-                                std::unique_ptr<ether::gateway>                   eth_gateway,
+                                std::unique_ptr<ether::transmitter>               eth_transmitter,
                                 std::shared_ptr<prach_context_repository>         prach_context_repo,
                                 std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
                                 std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
@@ -220,7 +220,7 @@ srsran::ofh::create_transmitter(const transmitter_config&                       
                                                                              tx_executor,
                                                                              downlink_executor,
                                                                              err_notifier,
-                                                                             std::move(eth_gateway),
+                                                                             std::move(eth_transmitter),
                                                                              std::move(prach_context_repo),
                                                                              std::move(ul_slot_context_repo),
                                                                              std::move(ul_cp_context_repo),

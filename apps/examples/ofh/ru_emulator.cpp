@@ -25,6 +25,7 @@
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/ofh_factories.h"
 #include "srsran/ofh/serdes/ofh_message_properties.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/ran/resource_block.h"
@@ -1012,7 +1013,7 @@ int main(int argc, char** argv)
   for (unsigned i = 0, e = ru_emulator_parsed_cfg.ru_cfg.size(); i != e; ++i) {
     ru_emulator_ofh_appconfig ru_cfg = ru_emulator_parsed_cfg.ru_cfg[i];
 
-    gw_config cfg;
+    ether::transmitter_config cfg;
     cfg.interface                   = ru_cfg.network_interface;
     cfg.mtu_size                    = units::bytes{ETHERNET_FRAME_SIZE};
     cfg.is_promiscuous_mode_enabled = ru_cfg.enable_promiscuous;

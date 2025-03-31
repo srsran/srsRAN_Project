@@ -12,12 +12,12 @@
 #include "dpdk_ethernet_receiver.h"
 #include "dpdk_ethernet_transmitter.h"
 #include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_port_context.h"
-#include "srsran/ofh/ethernet/ethernet_gateway_config.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter_config.h"
 
 using namespace srsran;
 using namespace ether;
 
-std::shared_ptr<dpdk_port_context> srsran::ether::create_dpdk_port_context(const gw_config& config)
+std::shared_ptr<dpdk_port_context> srsran::ether::create_dpdk_port_context(const transmitter_config& config)
 {
   dpdk_port_config port_cfg;
   port_cfg.id                           = config.interface;
@@ -28,8 +28,10 @@ std::shared_ptr<dpdk_port_context> srsran::ether::create_dpdk_port_context(const
   return dpdk_port_context::create(port_cfg);
 }
 
-std::pair<std::unique_ptr<gateway>, std::unique_ptr<receiver>>
-srsran::ether::create_dpdk_txrx(const gw_config& config, task_executor& rx_executor, srslog::basic_logger& logger)
+std::pair<std::unique_ptr<transmitter>, std::unique_ptr<receiver>>
+srsran::ether::create_dpdk_txrx(const transmitter_config& config,
+                                task_executor&            rx_executor,
+                                srslog::basic_logger&     logger)
 {
   auto ctx = create_dpdk_port_context(config);
 

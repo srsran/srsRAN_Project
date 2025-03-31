@@ -11,14 +11,14 @@
 #pragma once
 
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
-#include "srsran/ofh/ethernet/ethernet_gateway.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_timing_parameters.h"
 
 namespace srsran {
 namespace ofh {
 
-/// \brief Transmits enqueued Open Fronthaul messages through an Ethernet gateway.
+/// \brief Transmits enqueued Open Fronthaul messages through an Ethernet transmitter.
 ///
 /// Message transmission is managed according the given transmission window.
 class message_transmitter_impl : public ota_symbol_boundary_notifier
@@ -30,19 +30,22 @@ class message_transmitter_impl : public ota_symbol_boundary_notifier
   srslog::basic_logger& logger;
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> pool;
-  /// Gateway handling message transmission.
-  std::unique_ptr<ether::gateway> gateway;
+  /// Ethernet transmitter.
+  std::unique_ptr<ether::transmitter> eth_transmitter;
   /// Internal representation of timing parameters.
   const tx_window_timing_parameters timing_params;
 
 public:
   message_transmitter_impl(srslog::basic_logger&                  logger_,
                            const tx_window_timing_parameters&     timing_params_,
-                           std::unique_ptr<ether::gateway>        gw,
+                           std::unique_ptr<ether::transmitter>    eth_transmitter,
                            std::shared_ptr<ether::eth_frame_pool> frame_pool);
 
   // See interface for documentation.
   void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override;
+
+  /// Returns the Ethernet transmitter of this Open Fronthaul message transmitter.
+  ether::transmitter& get_ethernet_transmitter();
 
 private:
   /// Transmits the given frame burst.

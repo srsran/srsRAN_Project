@@ -12,16 +12,16 @@
 
 #include "../ethernet_tx_metrics_collector_impl.h"
 #include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_port_context.h"
-#include "srsran/ofh/ethernet/ethernet_gateway.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter.h"
 #include "srsran/srslog/logger.h"
 
 namespace srsran {
 namespace ether {
 
-struct gw_config;
+struct transmitter_config;
 
 /// DPDK Ethernet transmitter implementation.
-class dpdk_transmitter_impl : public gateway
+class dpdk_transmitter_impl : public transmitter
 {
 public:
   dpdk_transmitter_impl(std::shared_ptr<dpdk_port_context> port_ctx_,

@@ -10,7 +10,7 @@
 
 #include "dpdk_ethernet_transmitter.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/ofh/ethernet/ethernet_gateway_config.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter_config.h"
 #include <rte_ethdev.h>
 
 using namespace srsran;

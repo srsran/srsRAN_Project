@@ -21,7 +21,7 @@
 using namespace srsran;
 using namespace ether;
 
-transmitter_impl::transmitter_impl(const gw_config& config, srslog::basic_logger& logger_) :
+transmitter_impl::transmitter_impl(const transmitter_config& config, srslog::basic_logger& logger_) :
   logger(logger_), metrics_collector(config.are_metrics_enabled)
 {
   socket_fd = ::socket(AF_PACKET, SOCK_RAW | SOCK_NONBLOCK, IPPROTO_RAW);

@@ -18,7 +18,8 @@
 using namespace srsran;
 using namespace ether;
 
-std::unique_ptr<gateway> srsran::ether::create_gateway(const gw_config& config, srslog::basic_logger& logger)
+std::unique_ptr<transmitter> srsran::ether::create_transmitter(const transmitter_config& config,
+                                                               srslog::basic_logger&     logger)
 {
   return std::make_unique<transmitter_impl>(config, logger);
 }

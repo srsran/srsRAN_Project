@@ -8,8 +8,7 @@
  *
  */
 
-#include "ofh_message_receiver.h"
-#include "ofh_receiver_perf_metrics_collector.h"
+#include "ofh_message_receiver_impl.h"
 #include "ofh_rx_window_checker.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
 
@@ -27,7 +26,6 @@ message_receiver_impl::message_receiver_impl(const message_receiver_config&  con
   ul_eaxc(config.ul_eaxc),
   warn_unreceived_frames_on_first_rx_message(config.warn_unreceived_frames ==
                                              warn_unreceived_ru_frames::after_traffic_detection),
-  perf_metrics_collector(config.are_metrics_enabled),
   window_checker(*dependencies.window_checker),
   window_handler(*dependencies.window_handler),
   seq_id_checker(std::move(dependencies.seq_id_checker)),
@@ -35,7 +33,8 @@ message_receiver_impl::message_receiver_impl(const message_receiver_config&  con
   ecpri_decoder(std::move(dependencies.ecpri_decoder)),
   data_flow_uplink(std::move(dependencies.data_flow_uplink)),
   data_flow_prach(std::move(dependencies.data_flow_prach)),
-  eth_receiver(std::move(dependencies.eth_receiver))
+  eth_receiver(std::move(dependencies.eth_receiver)),
+  metrics_collector(config.are_metrics_enabled)
 {
   srsran_assert(vlan_decoder, "Invalid VLAN decoder");
   srsran_assert(ecpri_decoder, "Invalid eCPRI decoder");
@@ -55,7 +54,7 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   span<const uint8_t> payload = buffer.data();
 
   // Creates and starts the execution time measurer.
-  auto meas = perf_metrics_collector.create_time_execution_measurer();
+  time_execution_measurer meas(metrics_collector.enabled());
 
   ether::vlan_frame_params eth_params;
   span<const uint8_t>      ecpri_pdu = vlan_decoder->decode(payload, eth_params);
@@ -113,13 +112,13 @@ void message_receiver_impl::process_new_frame(ether::unique_rx_buffer buffer)
   trace_point decode_tp = ofh_tracer.now();
   if (is_a_prach_message(*filter_type)) {
     data_flow_prach->decode_type1_message(eaxc, ofh_pdu);
-    perf_metrics_collector.update_receiver_stats(meas.stop(), true);
+    metrics_collector.update_prach_stats(meas.stop());
     ofh_tracer << trace_event("ofh_receiver_decode_prach", decode_tp);
     return;
   }
 
   data_flow_uplink->decode_type1_message(eaxc, ofh_pdu);
-  perf_metrics_collector.update_receiver_stats(meas.stop());
+  metrics_collector.update_uplink_stats(meas.stop());
   ofh_tracer << trace_event("ofh_receiver_decode_data", decode_tp);
 }
 

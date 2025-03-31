@@ -16,8 +16,8 @@
 namespace srsran {
 namespace ether {
 
-/// Configuration for the Ethernet gateway.
-struct gw_config {
+/// Configuration for the Ethernet transmitter.
+struct transmitter_config {
   /// Ethernet interface name or identifier.
   std::string interface;
   /// Promiscuous mode flag.

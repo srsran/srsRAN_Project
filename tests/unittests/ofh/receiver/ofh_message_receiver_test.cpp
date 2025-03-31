@@ -9,7 +9,7 @@
  */
 
 #include "../../../../lib/ofh/receiver/ofh_closed_rx_window_handler.h"
-#include "../../../../lib/ofh/receiver/ofh_message_receiver.h"
+#include "../../../../lib/ofh/receiver/ofh_message_receiver_impl.h"
 #include "../../../../lib/ofh/receiver/ofh_rx_window_checker.h"
 #include "../../../../lib/ofh/receiver/ofh_sequence_id_checker_dummy_impl.h"
 #include "../../support/task_executor_test_doubles.h"

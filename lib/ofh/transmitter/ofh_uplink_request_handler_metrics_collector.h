@@ -21,8 +21,8 @@ namespace ofh {
 class uplink_request_handler_metrics_collector
 {
 public:
-  uplink_request_handler_metrics_collector(data_flow_downlink_metrics_collector* df_metrics_collector_,
-                                           tx_window_checker&                    window_checker_) :
+  uplink_request_handler_metrics_collector(data_flow_message_encoding_metrics_collector* df_metrics_collector_,
+                                           tx_window_checker&                            window_checker_) :
     df_metrics_collector(df_metrics_collector_), window_checker(window_checker_)
   {
   }
@@ -37,8 +37,8 @@ public:
   }
 
 private:
-  data_flow_downlink_metrics_collector* df_metrics_collector;
-  tx_window_checker&                    window_checker;
+  data_flow_message_encoding_metrics_collector* df_metrics_collector;
+  tx_window_checker&                            window_checker;
 };
 
 } // namespace ofh

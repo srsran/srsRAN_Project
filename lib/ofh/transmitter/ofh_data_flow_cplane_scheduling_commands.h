@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ofh_data_flow_metrics_collector.h"
+#include "ofh_data_flow_cuplane_encoding_metrics_collector.h"
 #include "srsran/ofh/serdes/ofh_message_properties.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_data_flow_metrics.h"
 #include "srsran/ran/prach/prach_subcarrier_spacing.h"
@@ -72,7 +72,7 @@ public:
   virtual void enqueue_section_type_3_prach_message(const data_flow_cplane_scheduling_prach_context& context) = 0;
 
   /// Returns the performance metrics collector of this data flow.
-  virtual data_flow_downlink_metrics_collector* get_metrics_collector() = 0;
+  virtual data_flow_message_encoding_metrics_collector* get_metrics_collector() = 0;
 };
 
 } // namespace ofh

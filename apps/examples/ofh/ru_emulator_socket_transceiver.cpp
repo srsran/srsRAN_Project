@@ -15,17 +15,17 @@
 using namespace srsran;
 using namespace ether;
 
-ru_emu_socket_receiver::ru_emu_socket_receiver(srslog::basic_logger&  logger_,
-                                               srsran::task_executor& executor_,
-                                               const gw_config&       config)
+ru_emu_socket_receiver::ru_emu_socket_receiver(srslog::basic_logger&     logger_,
+                                               srsran::task_executor&    executor_,
+                                               const transmitter_config& config)
 {
   receiver = create_receiver({config.interface, config.is_promiscuous_mode_enabled, false}, executor_, logger_);
   srsran_assert(receiver, "RU emulator failed to initialize Ethernet receiver");
 }
 
-ru_emu_socket_transmitter::ru_emu_socket_transmitter(srslog::basic_logger& logger_, const gw_config& config)
+ru_emu_socket_transmitter::ru_emu_socket_transmitter(srslog::basic_logger& logger_, const transmitter_config& config)
 {
-  transmitter = create_gateway(config, logger_);
+  transmitter = create_transmitter(config, logger_);
   srsran_assert(transmitter, "RU emulator failed to initialize Ethernet transmitter");
 }
 
@@ -44,8 +44,9 @@ void ru_emu_socket_transmitter::send(span<span<const uint8_t>> frames)
   transmitter->send(frames);
 }
 
-std::unique_ptr<ru_emulator_transceiver>
-srsran::ru_emu_create_socket_transceiver(srslog::basic_logger& logger, task_executor& executor, const gw_config& config)
+std::unique_ptr<ru_emulator_transceiver> srsran::ru_emu_create_socket_transceiver(srslog::basic_logger&     logger,
+                                                                                  task_executor&            executor,
+                                                                                  const transmitter_config& config)
 {
   return std::make_unique<ru_emulator_transceiver>(std::make_unique<ru_emu_socket_receiver>(logger, executor, config),
                                                    std::make_unique<ru_emu_socket_transmitter>(logger, config));

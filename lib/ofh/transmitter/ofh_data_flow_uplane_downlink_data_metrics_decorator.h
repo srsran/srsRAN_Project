@@ -20,7 +20,7 @@ namespace ofh {
 
 /// Open Fronthaul User-Plane downlink data flow metrics decorator.
 class data_flow_uplane_downlink_metrics_decorator : public data_flow_uplane_downlink_data,
-                                                    public data_flow_downlink_metrics_collector
+                                                    public data_flow_message_encoding_metrics_collector
 {
 public:
   explicit data_flow_uplane_downlink_metrics_decorator(
@@ -46,10 +46,10 @@ public:
   }
 
   // See interface for documentation.
-  data_flow_downlink_metrics_collector* get_metrics_collector() override { return this; }
+  data_flow_message_encoding_metrics_collector* get_metrics_collector() override { return this; }
 
   // See interface for documentation.
-  void collect_metrics(data_flow_perf_metrics& metrics) override
+  void collect_metrics(tx_data_flow_perf_metrics& metrics) override
   {
     uint32_t total_count = count.load(std::memory_order_relaxed);
     uint32_t min_latency = min_latency_ns.load(std::memory_order_relaxed);

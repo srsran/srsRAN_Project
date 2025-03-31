@@ -15,9 +15,9 @@
 #include "srsran/ofh/ecpri/ecpri_constants.h"
 #include "srsran/ofh/ethernet/ethernet_controller.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
-#include "srsran/ofh/ethernet/ethernet_gateway.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ethernet/ethernet_receiver_metrics_collector.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter.h"
 #include "srsran/ofh/ethernet/ethernet_transmitter_metrics_collector.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_writer.h"
@@ -754,7 +754,7 @@ private:
 
 /// Ethernet transmitter gateway that analyzes incoming packets and checks integrity of the DL packets, as well as asks
 /// RU emulator for UL traffic generation.
-class test_gateway : public ether::gateway
+class test_gateway : public ether::transmitter
 {
 public:
   test_gateway() :
@@ -1071,9 +1071,9 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
   sector_deps.txrx_executor     = workers.ru_tx_exec;
 
   // Configure Ethernet gateway.
-  auto gateway            = std::make_unique<test_gateway>();
-  tx_gateway              = gateway.get();
-  sector_deps.eth_gateway = std::move(gateway);
+  auto gateway                = std::make_unique<test_gateway>();
+  tx_gateway                  = gateway.get();
+  sector_deps.eth_transmitter = std::move(gateway);
 
   // Configure Ethernet receiver.
   auto dummy_receiver      = std::make_unique<dummy_eth_receiver>(logger, buffer_pool);

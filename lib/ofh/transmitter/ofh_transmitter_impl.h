@@ -39,8 +39,8 @@ struct transmitter_impl_dependencies {
   std::shared_ptr<uplink_context_repository> ul_slot_repo;
   /// Uplink PRACH context repository.
   std::shared_ptr<prach_context_repository> ul_prach_repo;
-  /// Ethernet gateway.
-  std::unique_ptr<ether::gateway> eth_gateway;
+  /// Ethernet transmitter.
+  std::unique_ptr<ether::transmitter> eth_transmitter;
   /// Ethernet frame pool.
   std::shared_ptr<ether::eth_frame_pool> frame_pool;
 };

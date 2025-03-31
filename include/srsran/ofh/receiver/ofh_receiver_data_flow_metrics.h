@@ -13,14 +13,14 @@
 namespace srsran {
 namespace ofh {
 
-/// Open Fronthaul transmitter message processing metrics.
-struct tx_data_flow_perf_metrics {
-  /// Message packing statistics.
-  float message_packing_min_latency_us;
-  float message_packing_max_latency_us;
-  float message_packing_avg_latency_us;
+/// Open Fronthaul receiver message processing metrics.
+struct rx_data_flow_perf_metrics {
+  /// Received message unpacking statistics.
+  float message_unpacking_min_latency_us;
+  float message_unpacking_max_latency_us;
+  float message_unpacking_avg_latency_us;
 
-  /// CPU usage in microseconds of the message processing in the transmitter.
+  /// CPU usage in microseconds of the message processing in the receiver.
   float cpu_usage_us;
 };
 

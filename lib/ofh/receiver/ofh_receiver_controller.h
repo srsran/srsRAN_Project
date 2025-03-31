@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ofh_message_receiver.h"
+#include "ofh_message_receiver_impl.h"
 #include "srsran/ofh/ofh_controller.h"
 
 namespace srsran {

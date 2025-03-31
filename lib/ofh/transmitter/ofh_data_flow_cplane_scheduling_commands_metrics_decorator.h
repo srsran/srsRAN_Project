@@ -20,7 +20,7 @@ namespace ofh {
 
 /// Metrics decorator class for the Open Fronthaul Control-Plane scheduling and beamforming commands data flow.
 class data_flow_cplane_metrics_decorator : public data_flow_cplane_scheduling_commands,
-                                           public data_flow_downlink_metrics_collector
+                                           public data_flow_message_encoding_metrics_collector
 {
 public:
   explicit data_flow_cplane_metrics_decorator(std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane_) :
@@ -58,10 +58,10 @@ public:
   }
 
   // See interface for documentation.
-  data_flow_downlink_metrics_collector* get_metrics_collector() override { return this; }
+  data_flow_message_encoding_metrics_collector* get_metrics_collector() override { return this; }
 
   // See interface for documentation.
-  void collect_metrics(data_flow_perf_metrics& metrics) override
+  void collect_metrics(tx_data_flow_perf_metrics& metrics) override
   {
     uint32_t total_count = count.load(std::memory_order_relaxed);
     uint32_t min_latency = min_latency_ns.load(std::memory_order_relaxed);

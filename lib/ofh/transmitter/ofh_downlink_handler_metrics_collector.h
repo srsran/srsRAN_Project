@@ -44,9 +44,9 @@ public:
   }
 
 private:
-  data_flow_downlink_metrics_collector* df_cplane_collector;
-  data_flow_downlink_metrics_collector* df_uplane_collector;
-  tx_window_checker&                    window_checker;
+  data_flow_message_encoding_metrics_collector* df_cplane_collector;
+  data_flow_message_encoding_metrics_collector* df_uplane_collector;
+  tx_window_checker&                            window_checker;
 };
 
 } // namespace ofh

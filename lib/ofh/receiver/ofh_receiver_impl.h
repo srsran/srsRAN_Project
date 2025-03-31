@@ -12,7 +12,7 @@
 
 #include "../support/uplink_context_repository.h"
 #include "ofh_closed_rx_window_handler.h"
-#include "ofh_message_receiver.h"
+#include "ofh_message_receiver_impl.h"
 #include "ofh_message_receiver_task_dispatcher.h"
 #include "ofh_receiver_controller.h"
 #include "ofh_receiver_metrics_collector_impl.h"

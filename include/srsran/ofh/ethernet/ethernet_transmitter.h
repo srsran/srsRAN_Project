@@ -17,17 +17,17 @@ namespace ether {
 
 class transmitter_metrics_collector;
 
-/// Describes an Ethernet gateway.
-class gateway
+/// Describes an Ethernet transmitter.
+class transmitter
 {
 public:
   /// Default destructor.
-  virtual ~gateway() = default;
+  virtual ~transmitter() = default;
 
   /// Sends the given list of frames through the underlying Ethernet link.
   virtual void send(span<span<const uint8_t>> frames) = 0;
 
-  /// Returns the metrics collector of this Ethernet gateway or nullptr if metrics are disabled.
+  /// Returns the metrics collector of this Ethernet transmitter or nullptr if metrics are disabled.
   virtual transmitter_metrics_collector* get_metrics_collector() = 0;
 };
 

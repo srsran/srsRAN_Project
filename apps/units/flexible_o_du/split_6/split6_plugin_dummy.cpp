@@ -11,7 +11,6 @@
 #include "split6_plugin_dummy.h"
 #include "srsran/fapi/slot_last_message_notifier.h"
 #include "srsran/fapi/slot_message_gateway.h"
-#include "srsran/ofh/ethernet/ethernet_gateway.h"
 
 namespace srsran::fapi {
 struct dl_tti_request_message;

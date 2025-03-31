@@ -11,10 +11,10 @@
 #pragma once
 
 #include "srsran/ofh/ethernet/ethernet_frame_builder.h"
-#include "srsran/ofh/ethernet/ethernet_gateway.h"
-#include "srsran/ofh/ethernet/ethernet_gateway_config.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ethernet/ethernet_receiver_config.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter_config.h"
 #include "srsran/ofh/ethernet/vlan_ethernet_frame_decoder.h"
 #include "srsran/srslog/logger.h"
 #include <memory>
@@ -27,8 +27,8 @@ namespace ether {
 
 class frame_notifier;
 
-/// Creates an Ethernet gateway.
-std::unique_ptr<gateway> create_gateway(const gw_config& config, srslog::basic_logger& logger);
+/// Creates an Ethernet transmitter.
+std::unique_ptr<transmitter> create_transmitter(const transmitter_config& config, srslog::basic_logger& logger);
 
 /// Creates an Ethernet receiver.
 std::unique_ptr<receiver>

@@ -13,11 +13,11 @@
 #include "srsran/ofh/ethernet/dpdk/dpdk_ethernet_port_context.h"
 #include "srsran/ofh/ethernet/ethernet_controller.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
-#include "srsran/ofh/ethernet/ethernet_gateway.h"
-#include "srsran/ofh/ethernet/ethernet_gateway_config.h"
 #include "srsran/ofh/ethernet/ethernet_properties.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
 #include "srsran/ofh/ethernet/ethernet_receiver_metrics_collector.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter_config.h"
 #include "srsran/ofh/ethernet/ethernet_transmitter_metrics_collector.h"
 #include "srsran/srslog/logger.h"
 #include "srsran/support/executors/task_executor.h"
@@ -28,7 +28,8 @@ namespace srsran {
 class ru_emulator_transceiver
 {
 public:
-  ru_emulator_transceiver(std::unique_ptr<ether::receiver> receiver_, std::unique_ptr<ether::gateway> transmitter_) :
+  ru_emulator_transceiver(std::unique_ptr<ether::receiver>    receiver_,
+                          std::unique_ptr<ether::transmitter> transmitter_) :
     receiver(std::move(receiver_)), transmitter(std::move(transmitter_))
   {
     srsran_assert(receiver, "Invalid Ethernet receiver passed to RU emulator");
@@ -45,8 +46,8 @@ public:
   void send(span<span<const uint8_t>> frames) { transmitter->send(frames); }
 
 private:
-  std::unique_ptr<ether::receiver> receiver;
-  std::unique_ptr<ether::gateway>  transmitter;
+  std::unique_ptr<ether::receiver>    receiver;
+  std::unique_ptr<ether::transmitter> transmitter;
 };
 
 /// Ethernet receiver implementation based on DPDK library.
@@ -92,7 +93,7 @@ private:
 };
 
 /// Ethernet transmitter implementation based on DPDK library.
-class ru_emu_dpdk_transmitter : public ether::gateway
+class ru_emu_dpdk_transmitter : public ether::transmitter
 {
 public:
   ru_emu_dpdk_transmitter(srslog::basic_logger& logger_, std::shared_ptr<ether::dpdk_port_context> port_ctx_ptr_) :
@@ -117,7 +118,7 @@ private:
 class ru_emu_socket_receiver : public ether::receiver, public ether::receiver_operation_controller
 {
 public:
-  ru_emu_socket_receiver(srslog::basic_logger& logger_, task_executor& executor_, const ether::gw_config& cfg);
+  ru_emu_socket_receiver(srslog::basic_logger& logger_, task_executor& executor_, const ether::transmitter_config& cfg);
 
   // See interface for documentation.
   ether::receiver_operation_controller& get_operation_controller() override { return *this; }
@@ -136,10 +137,10 @@ private:
 };
 
 /// Ethernet transmitter implementation based on regular UNIX sockets.
-class ru_emu_socket_transmitter : public ether::gateway
+class ru_emu_socket_transmitter : public ether::transmitter
 {
 public:
-  ru_emu_socket_transmitter(srslog::basic_logger& logger_, const ether::gw_config& cfg);
+  ru_emu_socket_transmitter(srslog::basic_logger& logger_, const ether::transmitter_config& cfg);
 
   // See interface for documentation.
   ether::transmitter_metrics_collector* get_metrics_collector() override { return nullptr; }
@@ -148,7 +149,7 @@ public:
   void send(span<span<const uint8_t>> frames) override;
 
 private:
-  std::unique_ptr<ether::gateway> transmitter;
+  std::unique_ptr<ether::transmitter> transmitter;
 };
 
 /// Creates RU emulator transceiver based on DPDK library.
@@ -158,7 +159,8 @@ ru_emu_create_dpdk_transceiver(srslog::basic_logger&                     logger,
                                std::shared_ptr<ether::dpdk_port_context> context);
 
 /// Creates RU emulator transceiver based on regular UNIX sockets.
-std::unique_ptr<ru_emulator_transceiver>
-ru_emu_create_socket_transceiver(srslog::basic_logger& logger, task_executor& executor, const ether::gw_config& config);
+std::unique_ptr<ru_emulator_transceiver> ru_emu_create_socket_transceiver(srslog::basic_logger&            logger,
+                                                                          task_executor&                   executor,
+                                                                          const ether::transmitter_config& config);
 
 } // namespace srsran

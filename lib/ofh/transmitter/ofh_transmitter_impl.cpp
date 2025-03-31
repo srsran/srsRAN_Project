@@ -77,7 +77,7 @@ transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter
                      resolve_uplink_request_handler_dependencies(dependencies)),
   msg_transmitter(*dependencies.logger,
                   config.tx_timing_params,
-                  std::move(dependencies.eth_gateway),
+                  std::move(dependencies.eth_transmitter),
                   std::move(dependencies.frame_pool)),
   ota_dispatcher(*dependencies.executor,
                  dl_handler.get_ota_symbol_boundary_notifier(),
@@ -85,7 +85,8 @@ transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter
                  msg_transmitter),
   metrics_collector(config.are_metrics_enabled,
                     dl_handler.get_metrics_collector(),
-                    ul_request_handler.get_metrics_collector())
+                    ul_request_handler.get_metrics_collector(),
+                    msg_transmitter.get_ethernet_transmitter().get_metrics_collector())
 {
 }
 

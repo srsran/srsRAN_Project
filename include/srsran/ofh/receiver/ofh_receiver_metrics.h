@@ -10,6 +10,9 @@
 
 #pragma once
 
+#include "ofh_receiver_data_flow_metrics.h"
+#include "srsran/ofh/ethernet/ethernet_receiver_metrics.h"
+
 namespace srsran {
 namespace ofh {
 
@@ -23,27 +26,17 @@ struct received_messages_metrics {
   unsigned nof_late_messages;
 };
 
-/// Open Fronthaul receiver performance metrics.
-struct receiver_performance_metrics {
-  /// Receiver message processing metrics.
-  struct unpacking_perf_metrics {
-    /// Open Fronthaul message unpacking statistics.
-    float message_unpacking_min_latency_us;
-    float message_unpacking_max_latency_us;
-    float message_unpacking_avg_latency_us;
-
-    /// CPU usage in microseconds of the message processing in the receiver.
-    float cpu_usage_us;
-  };
-
-  unpacking_perf_metrics data_processing_metrics;
-  unpacking_perf_metrics prach_processing_metrics;
+/// Open Fronthaul received messages decoding performance metrics.
+struct message_decoding_performance_metrics {
+  rx_data_flow_perf_metrics data_processing_metrics;
+  rx_data_flow_perf_metrics prach_processing_metrics;
 };
 
 /// Open Fronthaul receiver metrics.
 struct receiver_metrics {
-  received_messages_metrics    rx_messages_metrics;
-  receiver_performance_metrics rx_perf_metrics;
+  received_messages_metrics            rx_messages_metrics;
+  message_decoding_performance_metrics rx_decoding_perf_metrics;
+  ether::receiver_metrics              eth_receiver_metrics;
 };
 
 } // namespace ofh
