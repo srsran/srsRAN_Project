@@ -233,9 +233,10 @@ async_task<void> cu_up::handle_stop_command()
   // Stop statistics report timer.
   statistics_report_timer.stop();
 
-  gw_data_gtpu_demux_adapter.disconnect();
   gtpu_gw_adapter.disconnect();
   e1ap_cu_up_mng_adapter.disconnect();
+  // Do not disconnect GTP-U Demux as it is being concurrently accessed from the thread pool.
+  // It will be safely stopped from inside the CU-UP manager.
 
   return launch_async([this](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);

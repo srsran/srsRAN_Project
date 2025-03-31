@@ -37,6 +37,9 @@ ue_manager::ue_manager(const ue_manager_config& config, const ue_manager_depende
 
 async_task<void> ue_manager::stop()
 {
+  // Stopping all UE's. Stop GTP-U demux first.
+  gtpu_rx_demux.stop();
+
   // Routine to stop all UEs
   auto ue_it = ue_db.begin();
   return launch_async([this, ue_it](coro_context<async_task<void>>& ctx) mutable {

@@ -40,12 +40,15 @@ public:
                   gtpu_tunnel_common_rx_upper_layer_interface* tunnel) override;
   bool remove_tunnel(gtpu_teid_t teid) override;
 
+  void stop() override;
+
 private:
   // Actual demuxing, to be run in CU-UP executor.
   void handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const sockaddr_storage& src_addr);
 
   const gtpu_demux_cfg_t cfg;
   dlt_pcap&              gtpu_pcap;
+  std::atomic<bool>      stopped = false;
 
   // The map is modified by accessed the io_broker (to get the right executor)
   // and the modified by UE executors when setting up/tearing down.

@@ -20,6 +20,11 @@ gtpu_demux_impl::gtpu_demux_impl(gtpu_demux_cfg_t cfg_, dlt_pcap& gtpu_pcap_) :
   logger.info("GTP-U demux. {}", cfg);
 }
 
+void gtpu_demux_impl::stop()
+{
+  stopped.store(true, std::memory_order_relaxed);
+}
+
 bool gtpu_demux_impl::add_tunnel(gtpu_teid_t                                  teid,
                                  task_executor&                               tunnel_exec,
                                  gtpu_tunnel_common_rx_upper_layer_interface* tunnel)
@@ -51,6 +56,10 @@ bool gtpu_demux_impl::remove_tunnel(gtpu_teid_t teid)
 
 void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr)
 {
+  if (stopped.load(std::memory_order_relaxed)) {
+    return;
+  }
+
   uint32_t read_teid = 0x01; // default to test DRB
   if (not cfg.test_mode) {
     if (not gtpu_read_teid(read_teid, pdu, logger)) {
@@ -80,6 +89,10 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_ad
 
 void gtpu_demux_impl::handle_pdu_impl(gtpu_teid_t teid, byte_buffer pdu, const sockaddr_storage& src_addr)
 {
+  if (stopped.load(std::memory_order_relaxed)) {
+    return;
+  }
+
   if (gtpu_pcap.is_write_enabled()) {
     auto pdu_copy = pdu.deep_copy();
     if (not pdu_copy.has_value()) {

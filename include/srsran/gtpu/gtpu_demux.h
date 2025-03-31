@@ -48,6 +48,9 @@ public:
 
   /// \brief Remove TEID from mapping.
   virtual bool remove_tunnel(gtpu_teid_t teid) = 0;
+
+  /// \brief Mark GTP-U demux as stopped.
+  virtual void stop() = 0;
 };
 
 /// Combined entry point for the GTPU-demux object.

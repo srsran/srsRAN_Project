@@ -92,6 +92,8 @@ public:
     return true;
   }
 
+  void stop() override {}
+
   std::list<gtpu_teid_t> created_teid_list = {};
   std::list<gtpu_teid_t> removed_teid_list = {};
 };
