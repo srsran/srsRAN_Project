@@ -47,13 +47,18 @@ void si_message_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
   schedule_pending_si_messages(res_grid);
 }
 
-void si_message_scheduler::handle_si_message_update_indication(unsigned                    new_version,
-                                                               const si_scheduling_config& new_si_sched_cfg)
+void si_message_scheduler::handle_si_message_update_indication(
+    unsigned                                   new_version,
+    const std::optional<si_scheduling_config>& new_si_sched_cfg)
 {
   // Update SI messages.
   version      = new_version;
   si_sched_cfg = new_si_sched_cfg;
-  pending_messages.resize(si_sched_cfg->si_messages.size());
+  if (si_sched_cfg.has_value()) {
+    pending_messages.resize(si_sched_cfg->si_messages.size());
+  } else {
+    pending_messages.clear();
+  }
 }
 
 void si_message_scheduler::update_si_message_windows(slot_point sl_tx)

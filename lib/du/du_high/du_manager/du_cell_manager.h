@@ -12,6 +12,7 @@
 
 #include "srsran/du/du_high/du_manager/du_manager_params.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/scheduler/scheduler_sys_info_handler.h"
 
 namespace srsran {
 namespace srs_du {
@@ -30,8 +31,20 @@ struct du_cell_context {
   du_cell_config cfg;
   /// System Information being signalled by the cell.
   du_cell_packed_sys_info packed_sys_info;
+  /// Last SI scheduling update request.
+  si_scheduling_update_request last_si_sched_req;
   /// Whether the cell is active.
   bool active = false;
+};
+
+/// Result of the reconfiguration of a DU cell.
+struct du_cell_reconfig_result {
+  /// Cell configured.
+  du_cell_index_t cell_index;
+  /// Whether the CU needs to be notified of the gNB-DU cell configuration update.
+  bool cu_notif_required;
+  /// Whether the Scheduler needs to be notified about an update in the SI scheduling.
+  bool sched_notif_required;
 };
 
 class du_cell_manager
@@ -68,12 +81,19 @@ public:
   }
 
   /// Handle request to update a cell configuration.
-  bool handle_cell_reconf_request(const du_cell_param_config_request& req);
+  /// \return true if a change was detected and applied.
+  expected<du_cell_reconfig_result> handle_cell_reconf_request(const du_cell_param_config_request& req);
 
   const du_cell_packed_sys_info& get_packed_sys_info(du_cell_index_t cell_index) const
   {
     assert_cell_exists(cell_index);
     return cells[cell_index]->packed_sys_info;
+  }
+
+  si_scheduling_update_request get_si_sched_req(du_cell_index_t cell_index) const
+  {
+    assert_cell_exists(cell_index);
+    return cells[cell_index]->last_si_sched_req;
   }
 
   async_task<bool> start(du_cell_index_t cell_index);

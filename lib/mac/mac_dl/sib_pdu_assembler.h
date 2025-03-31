@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "cell_sys_info_configurator.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/lockfree_triple_buffer.h"
 #include "srsran/mac/cell_configuration.h"
@@ -20,7 +19,7 @@
 namespace srsran {
 
 /// Entity responsible for fetching encoded SIB1 and SI messages based on scheduled SI grants.
-class sib_pdu_assembler : public cell_sys_info_configurator
+class sib_pdu_assembler
 {
 public:
   class message_handler
@@ -37,7 +36,7 @@ public:
   sib_pdu_assembler(const mac_cell_sys_info_config& req);
 
   /// Update the SIB1 and SI messages.
-  si_change_result handle_si_change_request(const mac_cell_sys_info_config& req) override;
+  void handle_si_change_request(const mac_cell_sys_info_config& req);
 
   /// \brief Retrieve the encoded SI message.
   span<const uint8_t> encode_si_pdu(slot_point sl_tx, const sib_information& si_info);
@@ -53,7 +52,7 @@ private:
     std::vector<std::pair<units::bytes, bcch_dl_sch_buffer>> si_msg_buffers;
   };
 
-  void save_buffers(const mac_cell_sys_info_config& req);
+  void save_buffers(si_version_type si_version, const mac_cell_sys_info_config& req);
 
   srslog::basic_logger& logger;
 

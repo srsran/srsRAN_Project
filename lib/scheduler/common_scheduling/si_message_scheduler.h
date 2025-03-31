@@ -28,7 +28,8 @@ public:
   void run_slot(cell_slot_resource_allocator& res_grid);
 
   /// \brief Update the SI messages.
-  void handle_si_message_update_indication(unsigned version, const si_scheduling_config& new_si_sched_cfg);
+  void handle_si_message_update_indication(unsigned                                   version,
+                                           const std::optional<si_scheduling_config>& new_si_sched_cfg);
 
 private:
   struct message_window_context {

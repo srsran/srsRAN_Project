@@ -51,8 +51,8 @@ struct mac_cell_reconfig_request {
 };
 
 struct mac_cell_reconfig_response {
-  /// Whether a pending SIB1 reconfiguration was successful.
-  bool                                                     sib1_updated = false;
+  /// Whether a pending SI reconfiguration was successful.
+  bool                                                     si_updated = false;
   std::optional<mac_cell_positioning_measurement_response> positioning;
 };
 

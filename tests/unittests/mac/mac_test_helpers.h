@@ -138,7 +138,7 @@ public:
   {
   }
 
-  void handle_si_change_indication(du_cell_index_t cell_index, const si_change_result& si_updated) override {}
+  void handle_si_change_indication(const si_scheduling_update_request& request) override {}
 
   async_task<mac_cell_positioning_measurement_response>
   handle_positioning_measurement_request(du_cell_index_t                                 cell_index,

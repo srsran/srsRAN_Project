@@ -12,7 +12,6 @@
 
 #include "srsran/support/units.h"
 #include <optional>
-#include <vector>
 
 namespace srsran {
 

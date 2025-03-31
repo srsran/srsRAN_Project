@@ -63,9 +63,6 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   pcap(pcap_),
   slot_time_mapper(to_numerology_value(cell_cfg_req_.scs_common))
 {
-  // Update broadcast System Information.
-  auto si_resp = sib_assembler.handle_si_change_request(cell_cfg.sys_info);
-  sched.handle_si_change_indication(cell_cfg.cell_index, si_resp);
 }
 
 async_task<void> mac_cell_processor::start()
@@ -129,14 +126,14 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
       // Change to respective DL cell executor context.
       CORO_AWAIT(execute_on_blocking(cell_exec, timers));
 
-      {
-        // Forward new SI PDUs to SIB assembler.
-        si_change_result si_resp = sib_assembler.handle_si_change_request(request.new_sys_info.value());
+      if (request.new_sys_info.has_value()) {
+        // Forward new SIB1/SI message PDUs to SIB assembler and update version.
+        sib_assembler.handle_si_change_request(*request.new_sys_info);
 
-        // Notify scheduler of SIB1 update.
-        sched.handle_si_change_indication(cell_cfg.cell_index, si_resp);
+        // Notify scheduler of SIB1/SI message scheduling update.
+        sched.handle_si_change_indication(request.new_sys_info->si_sched_cfg);
 
-        resp.sib1_updated = true;
+        resp.si_updated = true;
       }
 
       // Change back to CTRL executor context.

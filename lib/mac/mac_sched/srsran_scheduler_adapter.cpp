@@ -292,11 +292,9 @@ void srsran_scheduler_adapter::handle_error_indication(slot_point               
   sched_impl->handle_error_indication(slot_tx, cell_idx, sched_err);
 }
 
-void srsran_scheduler_adapter::handle_si_change_indication(du_cell_index_t         cell_index,
-                                                           const si_change_result& si_updated)
+void srsran_scheduler_adapter::handle_si_change_indication(const si_scheduling_update_request& request)
 {
-  sched_impl->handle_si_update_request(
-      si_scheduling_update_request{cell_index, si_updated.version, si_updated.sib1_len});
+  sched_impl->handle_si_update_request(request);
 }
 
 async_task<mac_cell_positioning_measurement_response>

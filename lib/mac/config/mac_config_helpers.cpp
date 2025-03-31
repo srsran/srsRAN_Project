@@ -29,9 +29,10 @@ mac_cell_creation_request srsran::make_mac_cell_config(du_cell_index_t          
   mac_cfg.cell_barred      = du_cfg.cell_barred;
   mac_cfg.intra_freq_resel = du_cfg.intra_freq_resel;
   mac_cfg.sys_info.sib1    = std::move(bcch_dl_sch_payloads[0]);
-  bcch_dl_sch_payloads.erase(bcch_dl_sch_payloads.begin());
-  mac_cfg.sys_info.si_messages = std::move(bcch_dl_sch_payloads);
-  mac_cfg.sched_req            = sched_cell_cfg;
+  for (unsigned i = 1, e = bcch_dl_sch_payloads.size(); i != e; ++i) {
+    mac_cfg.sys_info.si_messages.push_back(std::move(bcch_dl_sch_payloads[i]));
+  }
+  mac_cfg.sched_req = sched_cell_cfg;
 
   return mac_cfg;
 }

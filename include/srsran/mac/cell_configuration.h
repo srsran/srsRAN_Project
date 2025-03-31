@@ -17,6 +17,7 @@
 #include "srsran/ran/ssb_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/scheduler_configurator.h"
+#include "srsran/scheduler/scheduler_sys_info_handler.h"
 
 namespace srsran {
 
@@ -25,7 +26,9 @@ struct mac_cell_sys_info_config {
   /// SIB1 payload.
   byte_buffer sib1;
   /// SI messages provided by the cell and which are part of the SIB1 SI-SchedConfig.
-  std::vector<byte_buffer> si_messages;
+  static_vector<byte_buffer, MAX_SI_MESSAGES> si_messages;
+  /// SI scheduling configuration to provide to MAC scheduler.
+  si_scheduling_update_request si_sched_cfg;
 };
 
 /// Request to create Cell in MAC and Scheduler.

@@ -27,8 +27,7 @@ byte_buffer make_pdu_with_padding(const byte_buffer& payload, units::bytes tbs)
   return result;
 }
 
-static sib_information
-make_sib_pdu(std::optional<si_message_index_type> si_msg_index, si_version_type si_version, units::bytes tbs)
+static sib_information make_sib_pdu(std::optional<unsigned> si_msg_index, si_version_type si_version, units::bytes tbs)
 {
   sib_information result{};
   result.si_indicator = si_msg_index.has_value() ? sib_information::other_si : sib_information::sib1;
@@ -50,13 +49,16 @@ public:
     auto                     old_pdu = std::move(sys_info_cfg.sib1);
     sys_info_cfg.sib1                = pdu.copy();
     req.sib1                         = pdu.copy();
-    last_resp                        = assembler.handle_si_change_request(req);
+    last_version                     = next_version++;
+    req.si_sched_cfg.version         = last_version.value();
+    assembler.handle_si_change_request(req);
     return old_pdu;
   }
 
-  mac_cell_sys_info_config        sys_info_cfg;
-  sib_pdu_assembler               assembler;
-  std::optional<si_change_result> last_resp;
+  mac_cell_sys_info_config       sys_info_cfg;
+  sib_pdu_assembler              assembler;
+  si_version_type                next_version = 1;
+  std::optional<si_version_type> last_version;
 
   slot_point current_slot{1, 0};
 };
@@ -89,7 +91,7 @@ TEST_F(sib_pdu_assembler_test, when_sib1_is_updated_and_old_version_is_scheduled
 {
   auto new_msg = make_random_pdu();
   auto old_msg = this->update_sib1_pdu(new_msg);
-  ASSERT_EQ(last_resp.value().version, 1);
+  ASSERT_EQ(last_version, 1);
 
   const unsigned nof_tries = 4;
   for (unsigned i = 0; i != nof_tries; ++i) {
@@ -111,7 +113,7 @@ TEST_F(sib_pdu_assembler_test, when_sib1_is_updated_then_encoding_accounts_for_n
 {
   auto new_msg = make_random_pdu();
   this->update_sib1_pdu(new_msg);
-  ASSERT_EQ(last_resp.value().version, 1);
+  ASSERT_EQ(last_version, 1);
 
   const unsigned nof_tries = 4;
   for (unsigned i = 0; i != nof_tries; ++i) {

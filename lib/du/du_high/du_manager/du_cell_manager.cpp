@@ -10,6 +10,7 @@
 
 #include "du_cell_manager.h"
 #include "converters/asn1_sys_info_packer.h"
+#include "converters/scheduler_configuration_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
 #include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/srslog/srslog.h"
@@ -22,6 +23,19 @@ du_cell_manager::du_cell_manager(const du_manager_params& cfg_) :
 {
 }
 
+static void fill_si_scheduler_config(si_scheduling_update_request& req,
+                                     const du_cell_config&         cell_cfg,
+                                     du_cell_packed_sys_info&      si_info)
+{
+  req.sib1_len = units::bytes{static_cast<unsigned>(si_info.sib1.length())};
+  static_vector<units::bytes, MAX_SI_MESSAGES> si_payload_sizes;
+  si_payload_sizes.emplace_back(req.sib1_len);
+  for (const auto& si_msg : si_info.si_messages) {
+    si_payload_sizes.emplace_back(units::bytes{static_cast<unsigned>(si_msg.length())});
+  }
+  req.si_sched_cfg = make_si_scheduling_info_config(cell_cfg, si_payload_sizes);
+}
+
 void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
 {
   // Verify that DU cell configuration is valid. Abort application otherwise.
@@ -32,41 +46,55 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
 
   // Generate system information.
   std::vector<byte_buffer> bcch_msgs = asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg);
-  du_cell_packed_sys_info  si_info;
+
+  // Save SIB1 and SI messages.
+  du_cell_packed_sys_info si_info;
   si_info.sib1 = std::move(bcch_msgs[0]);
   bcch_msgs.erase(bcch_msgs.begin());
   si_info.si_messages = std::move(bcch_msgs);
 
+  // Generate Scheduler SI scheduling config.
+  si_scheduling_update_request si_sched_req;
+  si_sched_req.cell_index = to_du_cell_index(cells.size());
+  si_sched_req.version    = 0;
+  fill_si_scheduler_config(si_sched_req, cell_cfg, si_info);
+
   // Save config.
-  cells.emplace_back(std::make_unique<du_cell_context>());
-  cells.back()->cfg             = cell_cfg;
-  cells.back()->active          = false;
-  cells.back()->packed_sys_info = std::move(si_info);
+  auto& cell             = *cells.emplace_back(std::make_unique<du_cell_context>());
+  cell.cfg               = cell_cfg;
+  cell.active            = false;
+  cell.packed_sys_info   = std::move(si_info);
+  cell.last_si_sched_req = std::move(si_sched_req);
 }
 
-bool du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& req)
+expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& req)
 {
   du_cell_index_t cell_index = get_cell_index(req.nr_cgi);
   if (cell_index == INVALID_DU_CELL_INDEX) {
     logger.warning("Discarding cell {} changes. Cause: No cell with the provided CGI was found", req.nr_cgi.nci);
-    return false;
+    return make_unexpected(default_error_t{});
   }
+  auto& cell = *cells[cell_index];
 
-  du_cell_config& cell_cfg     = cells[cell_index]->cfg;
-  bool            sib1_updated = false;
+  du_cell_config& cell_cfg   = cell.cfg;
+  bool            si_updated = false;
 
   if (req.ssb_pwr_mod.has_value() and req.ssb_pwr_mod.value() != cell_cfg.ssb_cfg.ssb_block_power) {
     // SSB power changed.
     cell_cfg.ssb_cfg.ssb_block_power = req.ssb_pwr_mod.value();
-    sib1_updated                     = true;
+    si_updated                       = true;
   }
 
-  if (sib1_updated) {
+  if (si_updated) {
     // Need to re-pack SIB1.
-    cells[cell_index]->packed_sys_info.sib1 = asn1_packer::pack_sib1(cell_cfg);
+    cell.packed_sys_info.sib1 = asn1_packer::pack_sib1(cell_cfg);
+
+    // Bump SI version and update SI messages.
+    fill_si_scheduler_config(cell.last_si_sched_req, cell_cfg, cell.packed_sys_info);
+    cell.last_si_sched_req.version++;
   }
 
-  return true;
+  return du_cell_reconfig_result{cell_index, si_updated, si_updated};
 }
 
 async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)

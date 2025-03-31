@@ -17,6 +17,25 @@
 using namespace srsran;
 using namespace srs_du;
 
+std::optional<si_scheduling_config>
+srsran::srs_du::make_si_scheduling_info_config(const du_cell_config& du_cfg, span<const units::bytes> si_payload_sizes)
+{
+  std::optional<si_scheduling_config> sched_req;
+
+  if (du_cfg.si_config.has_value()) {
+    sched_req.emplace();
+    sched_req->si_window_len_slots = du_cfg.si_config->si_window_len_slots;
+    sched_req->si_messages.resize(du_cfg.si_config->si_sched_info.size());
+    for (unsigned i = 0; i != du_cfg.si_config->si_sched_info.size(); ++i) {
+      sched_req->si_messages[i].period_radio_frames = du_cfg.si_config->si_sched_info[i].si_period_radio_frames;
+      sched_req->si_messages[i].msg_len             = si_payload_sizes[i + 1];
+      sched_req->si_messages[i].si_window_position  = du_cfg.si_config->si_sched_info[i].si_window_position;
+    }
+  }
+
+  return sched_req;
+}
+
 /// Derives Scheduler Cell Configuration from DU Cell Configuration.
 sched_cell_configuration_request_message
 srsran::srs_du::make_sched_cell_config_req(du_cell_index_t               cell_index,
@@ -48,18 +67,7 @@ srsran::srs_du::make_sched_cell_config_req(du_cell_index_t               cell_in
 
   // Convert SIB1 and SI message info scheduling config.
   sched_req.sib1_payload_size = si_payload_sizes[0];
-  if (du_cfg.si_config.has_value()) {
-    sched_req.si_scheduling.emplace();
-    sched_req.si_scheduling->si_window_len_slots = du_cfg.si_config->si_window_len_slots;
-    sched_req.si_scheduling->si_messages.resize(du_cfg.si_config->si_sched_info.size());
-    for (unsigned i = 0; i != du_cfg.si_config->si_sched_info.size(); ++i) {
-      sched_req.si_scheduling->si_messages[i].period_radio_frames =
-          du_cfg.si_config->si_sched_info[i].si_period_radio_frames;
-      sched_req.si_scheduling->si_messages[i].msg_len = si_payload_sizes[i + 1];
-      sched_req.si_scheduling->si_messages[i].si_window_position =
-          du_cfg.si_config->si_sched_info[i].si_window_position;
-    }
-  }
+  sched_req.si_scheduling     = make_si_scheduling_info_config(du_cfg, si_payload_sizes);
 
   sched_req.pucch_guardbands = config_helpers::build_pucch_guardbands_list(
       du_cfg.pucch_cfg, du_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length());

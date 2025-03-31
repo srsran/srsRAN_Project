@@ -25,30 +25,19 @@ sib_pdu_assembler::sib_pdu_assembler(const mac_cell_sys_info_config& req) : logg
   // Version starts at 0.
   last_cfg_buffers.version  = 0;
   last_cfg_buffers.sib1_len = units::bytes{0};
-  save_buffers(req);
+  save_buffers(0, req);
   current_buffers = last_cfg_buffers;
 }
 
-si_change_result sib_pdu_assembler::handle_si_change_request(const mac_cell_sys_info_config& req)
+void sib_pdu_assembler::handle_si_change_request(const mac_cell_sys_info_config& req)
 {
   // Save new buffers that have changed.
-  save_buffers(req);
-
-  // Update version.
-  ++last_cfg_buffers.version;
+  srsran_assert(last_cfg_buffers.version != req.si_sched_cfg.version,
+                "Version of the last SI message update is the same as the new one");
+  save_buffers(req.si_sched_cfg.version, req);
 
   // Forward new version and buffers to SIB assembler RT path.
   pending.write_and_commit(last_cfg_buffers);
-
-  // Prepare response.
-  si_change_result resp;
-  resp.version  = last_cfg_buffers.version;
-  resp.sib1_len = last_cfg_buffers.sib1_len;
-  for (const auto& si_msg : last_cfg_buffers.si_msg_buffers) {
-    resp.si_msg_lens.emplace_back(si_msg.first);
-  }
-
-  return resp;
 }
 
 static std::shared_ptr<const std::vector<uint8_t>> make_linear_buffer(const byte_buffer& pdu)
@@ -61,7 +50,7 @@ static std::shared_ptr<const std::vector<uint8_t>> make_linear_buffer(const byte
   return vec;
 }
 
-void sib_pdu_assembler::save_buffers(const mac_cell_sys_info_config& req)
+void sib_pdu_assembler::save_buffers(si_version_type si_version, const mac_cell_sys_info_config& req)
 {
   // Note: In case the SIB1/SI message does not change, the comparison between the respective byte_buffers should be
   // fast (as they will point to the same memory location). Avoid at all costs the operator== for the stored vectors
@@ -83,6 +72,8 @@ void sib_pdu_assembler::save_buffers(const mac_cell_sys_info_config& req)
       last_cfg_buffers.si_msg_buffers[i].second = make_linear_buffer(req.si_messages[i]);
     }
   }
+
+  last_cfg_buffers.version = si_version;
 }
 
 span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point sl_tx, const sib_information& si_info)

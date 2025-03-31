@@ -10,6 +10,7 @@
 
 #include "du_param_config_procedure.h"
 #include "../converters/f1ap_configuration_helpers.h"
+#include "../converters/scheduler_configuration_helpers.h"
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/async/async_no_op_task.h"
 
@@ -35,8 +36,8 @@ void du_param_config_procedure::operator()(coro_context<async_task<du_param_conf
 
   for (; next_cell_idx != changed_cells.size(); ++next_cell_idx) {
     // Reconfigure cell in the MAC.
-    CORO_AWAIT_VALUE(mac_cell_reconfig_response macresp, handle_mac_cell_update(next_cell_idx));
-    if (not macresp.sib1_updated) {
+    CORO_AWAIT_VALUE(mac_cell_reconfig_response macresp, handle_mac_cell_update(changed_cells[next_cell_idx]));
+    if (not macresp.si_updated) {
       resp.success = false;
       CORO_EARLY_RETURN(resp);
     }
@@ -52,12 +53,13 @@ void du_param_config_procedure::operator()(coro_context<async_task<du_param_conf
 bool du_param_config_procedure::handle_cell_config_updates()
 {
   for (const du_cell_param_config_request& cell_to_update : request.cells) {
-    if (not du_cells.handle_cell_reconf_request(cell_to_update)) {
+    auto result = du_cells.handle_cell_reconf_request(cell_to_update);
+    if (not result.has_value()) {
       continue;
     }
 
     // Mark that cell was changed.
-    changed_cells.push_back(du_cells.get_cell_index(cell_to_update.nr_cgi));
+    changed_cells.push_back(result.value());
   }
 
   return not changed_cells.empty();
@@ -69,24 +71,37 @@ async_task<gnbdu_config_update_response> du_param_config_procedure::handle_f1_gn
 
   f1_req.cells_to_mod.resize(changed_cells.size());
   for (unsigned i = 0, e = changed_cells.size(); i != e; ++i) {
-    const du_cell_config& cell_cfg = du_cells.get_cell_cfg(changed_cells[i]);
+    if (changed_cells[i].cu_notif_required) {
+      const du_cell_config& cell_cfg = du_cells.get_cell_cfg(changed_cells[i].cell_index);
 
-    f1_req.cells_to_mod[i].cell_info   = make_f1ap_du_cell_info(cell_cfg);
-    f1_req.cells_to_mod[i].du_sys_info = make_f1ap_du_sys_info(cell_cfg);
+      f1_req.cells_to_mod[i].cell_info   = make_f1ap_du_cell_info(cell_cfg);
+      f1_req.cells_to_mod[i].du_sys_info = make_f1ap_du_sys_info(cell_cfg);
+    }
   }
 
   return du_params.f1ap.conn_mng.handle_du_config_update(f1_req);
 }
 
-async_task<mac_cell_reconfig_response> du_param_config_procedure::handle_mac_cell_update(unsigned changed_cell_idx)
+async_task<mac_cell_reconfig_response>
+du_param_config_procedure::handle_mac_cell_update(const du_cell_reconfig_result& changed_cell)
 {
-  du_cell_index_t cell_index = changed_cells[changed_cell_idx];
+  if (not changed_cell.sched_notif_required) {
+    // TODO: Support changes that do not require SI scheduling config update.
+    return launch_no_op_task(mac_cell_reconfig_response{});
+  }
 
   mac_cell_reconfig_request req;
 
-  // Note: For now only SIB1 changes are supported.
+  // Update SIB1 and SI message content.
   req.new_sys_info.emplace();
-  req.new_sys_info.value().sib1 = du_cells.get_packed_sys_info(cell_index).sib1.copy();
+  const auto& sys_info   = du_cells.get_packed_sys_info(changed_cell.cell_index);
+  req.new_sys_info->sib1 = sys_info.sib1.copy();
+  for (const auto& si_msg : sys_info.si_messages) {
+    req.new_sys_info->si_messages.emplace_back(si_msg.copy());
+  }
 
-  return du_params.mac.cell_mng.get_cell_controller(cell_index).reconfigure(req);
+  // Provide new SI scheduling config.
+  req.new_sys_info->si_sched_cfg = du_cells.get_si_sched_req(changed_cell.cell_index);
+
+  return du_params.mac.cell_mng.get_cell_controller(changed_cell.cell_index).reconfigure(req);
 }

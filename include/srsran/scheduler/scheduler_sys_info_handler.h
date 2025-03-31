@@ -19,7 +19,7 @@ namespace srsran {
 /// Identifier for the version of the system information scheduling information.
 using si_version_type = unsigned;
 
-/// Notification that the SIB1 PDU content was updated.
+/// Information relative to the update of a cell SIB1 or SI messages.
 struct si_scheduling_update_request {
   /// Cell index specific to the update of the SI scheduling.
   du_cell_index_t cell_index;
@@ -28,7 +28,7 @@ struct si_scheduling_update_request {
   /// SIB1 payload length.
   units::bytes sib1_len;
   /// Configuration of SI message scheduling.
-  si_scheduling_config si_sched_cfg;
+  std::optional<si_scheduling_config> si_sched_cfg;
 };
 
 /// Interface used to notify new SIB1 or SI message updates to the scheduler.

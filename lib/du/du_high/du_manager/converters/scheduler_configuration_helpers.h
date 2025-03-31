@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/ran/plmn_identity.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 
 namespace srsran {
@@ -19,6 +18,10 @@ namespace srs_du {
 struct du_cell_config;
 struct du_ue_context;
 struct du_ue_resource_config;
+
+/// Derive Scheduler SI Scheduling Configuration from DU Cell Configuration.
+std::optional<si_scheduling_config> make_si_scheduling_info_config(const du_cell_config&    du_cfg,
+                                                                   span<const units::bytes> si_payload_sizes);
 
 /// Derives Scheduler Cell Configuration from DU Cell Configuration.
 sched_cell_configuration_request_message make_sched_cell_config_req(du_cell_index_t               cell_index,
