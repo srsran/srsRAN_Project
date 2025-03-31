@@ -23,7 +23,8 @@ static const std::vector<uint8_t> zeros_payload(MAX_BCCH_DL_SCH_PDU_SIZE, 0);
 sib_pdu_assembler::sib_pdu_assembler(const mac_cell_sys_info_config& req) : logger(srslog::fetch_basic_logger("MAC"))
 {
   // Version starts at 0.
-  last_cfg_buffers.version = 0;
+  last_cfg_buffers.version  = 0;
+  last_cfg_buffers.sib1_len = units::bytes{0};
   save_buffers(req);
   current_buffers = last_cfg_buffers;
 }

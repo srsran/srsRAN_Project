@@ -18,7 +18,6 @@
 #include "../support/sch_pdu_builder.h"
 #include "../support/ssb_helpers.h"
 #include "srsran/ran/band_helper.h"
-#include "srsran/ran/pdcch/pdcch_type0_css_occasions.h"
 #include "srsran/ran/sib/sib_configuration.h"
 
 using namespace srsran;
@@ -38,8 +37,7 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
   pdcch_sched{pdcch_sch},
   coreset0{cell_cfg.coreset0},
   searchspace0{cell_cfg.searchspace0},
-  sib1_payload_size{sib1_payload_size_},
-  pending_update(no_update_flag)
+  sib1_payload_size{sib1_payload_size_}
 {
   // Compute derived SIB1 parameters.
   sib1_rtx_period = std::chrono::milliseconds{std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period),
@@ -60,46 +58,14 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
   coreset0_bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
 }
 
-void sib1_scheduler::run_slot(cell_resource_allocator& res_alloc)
-{
-  if (SRSRAN_UNLIKELY(first_run_slot)) {
-    // First call to run_slot. Schedule SIB1s when relevant across cell resource grid.
-    for (unsigned i = 0; i < res_alloc.max_dl_slot_alloc_delay + 1; ++i) {
-      schedule_sib1(res_alloc[i]);
-    }
-    first_run_slot = false;
-  } else {
-    // Schedule SIB1 in last scheduled slot + 1 slot if relevant.
-    schedule_sib1(res_alloc[res_alloc.max_dl_slot_alloc_delay]);
-  }
-}
-
-static uint64_t sib1_update_to_uint64(unsigned version, units::bytes new_sib1_payload_size)
-{
-  // return will be composed by two uint32_t concatenated and stored in a uint64_t.
-  uint64_t new_info = version & std::numeric_limits<uint32_t>::max();
-  new_info <<= 32U;
-  new_info += new_sib1_payload_size.value() & std::numeric_limits<uint32_t>::max();
-  return new_info;
-}
-
-static std::pair<unsigned, units::bytes> uint64_to_sib1_update(uint64_t val)
-{
-  std::pair<unsigned, units::bytes> result;
-  // Retrieve version.
-  result.first = val >> 32U;
-  // Retrieve size.
-  result.second = units::bytes(val & std::numeric_limits<uint32_t>::max());
-  return result;
-}
-
 void sib1_scheduler::handle_sib1_update_indication(unsigned version, units::bytes new_sib1_payload_size)
 {
   // Enqueue new SIB1 version and size.
-  pending_update.store(sib1_update_to_uint64(version, new_sib1_payload_size), std::memory_order_release);
+  pending_version  = version;
+  pending_sib1_len = new_sib1_payload_size;
 }
 
-void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid)
+void sib1_scheduler::run_slot(cell_slot_resource_allocator& res_grid)
 {
   // NOTE:
   // - [Implementation defined]
@@ -108,6 +74,8 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid)
   //   in n0 if channel BW > 10 Mhz. Otherwise, in (n0 + 1) slot to make space for SSB.
   // - [Implementation defined] We assume the SIB1 is (re)transmitted every 20ms if the SSB periodicity <= 20ms.
   //   Else, we set the (re)transmission periodicity as the SSB's.
+
+  handle_pending_sib1_update();
 
   if (sib1_payload_size.value() == 0) {
     // No SIB1 configured.
@@ -273,15 +241,9 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
 
 void sib1_scheduler::handle_pending_sib1_update()
 {
-  uint64_t upd_val = pending_update.exchange(no_update_flag, std::memory_order_acquire);
-  if (upd_val == no_update_flag) {
-    // No update detected.
+  if (current_version == pending_version) {
     return;
   }
-
-  auto [version, new_payload_size] = uint64_to_sib1_update(upd_val);
-  srsran_assert(version > current_version or (version == current_version and sib1_payload_size == new_payload_size),
-                "Invalid SIB1 version set");
-  current_version   = version;
-  sib1_payload_size = new_payload_size;
+  current_version   = pending_version;
+  sib1_payload_size = pending_sib1_len;
 }

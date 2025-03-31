@@ -27,25 +27,14 @@ class sib1_scheduler
 public:
   sib1_scheduler(const cell_configuration& cfg_, pdcch_resource_allocator& pdcch_sch, units::bytes sib1_payload_size);
 
-  /// \brief Schedule the SIB1 grants.
-  ///
-  /// The first time this function gets called, it allocates the SIB1 grants all over the grid, according to the
-  /// periodicity and according to each beam's slot. From the second time on, it only allocates the SIB1 grants (if any)
-  /// in the latest available slot of the grid.
-  ///
-  /// \param[out] res_alloc  Cell resource grid.
-  void run_slot(cell_resource_allocator& res_alloc);
+  /// \brief Schedules SIB1 grants (if any) for the provided slot.
+  /// \param[out] res_grid Slot at which the SIB1 may be scheduled.
+  void run_slot(cell_slot_resource_allocator& res_grid);
 
   /// \brief Update the SIB1 PDU version.
   void handle_sib1_update_indication(unsigned version, units::bytes sib1_payload_size);
 
 private:
-  /// \brief Performs beams' SIB1s (if any) scheduling for the current slot.
-  ///
-  /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
-  /// \param[in] sl_point Slot for which the SIB1 scheduler is called.
-  void schedule_sib1(cell_slot_resource_allocator& res_grid);
-
   /// \brief Searches in PDSCH and PDCCH for space to allocate SIB1 and SIB1's DCI, respectively.
   ///
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
@@ -76,7 +65,6 @@ private:
   const scheduler_si_expert_config& expert_cfg;
   const cell_configuration&         cell_cfg;
   pdcch_resource_allocator&         pdcch_sched;
-  bool                              first_run_slot = true;
 
   /// Parameters for SIB1 scheduling.
   uint8_t coreset0;
@@ -95,7 +83,8 @@ private:
   std::array<slot_point, MAX_NUM_BEAMS> sib1_type0_pdcch_css_slots;
 
   /// Pending new SIB1 PDU to be applied.
-  std::atomic<uint64_t> pending_update;
+  unsigned     pending_version = 0;
+  units::bytes pending_sib1_len;
 };
 
 } // end of namespace srsran

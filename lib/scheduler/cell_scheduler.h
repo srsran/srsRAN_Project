@@ -15,8 +15,7 @@
 #include "common_scheduling/paging_scheduler.h"
 #include "common_scheduling/prach_scheduler.h"
 #include "common_scheduling/ra_scheduler.h"
-#include "common_scheduling/si_message_scheduler.h"
-#include "common_scheduling/sib1_scheduler.h"
+#include "common_scheduling/si_scheduler.h"
 #include "common_scheduling/ssb_scheduler.h"
 #include "config/cell_configuration.h"
 #include "logging/scheduler_event_logger.h"
@@ -26,7 +25,6 @@
 #include "pucch_scheduling/pucch_guardbands_scheduler.h"
 #include "uci_scheduling/uci_allocator_impl.h"
 #include "ue_scheduling/ue_scheduler.h"
-#include "srsran/support/tracing/rusage_trace_recorder.h"
 
 namespace srsran {
 
@@ -83,13 +81,12 @@ private:
 
   ssb_scheduler                 ssb_sch;
   pdcch_resource_allocator_impl pdcch_sch;
+  si_scheduler                  si_sch;
   csi_rs_scheduler              csi_sch;
   ra_scheduler                  ra_sch;
   prach_scheduler               prach_sch;
   pucch_allocator_impl          pucch_alloc;
   uci_allocator_impl            uci_alloc;
-  sib1_scheduler                sib1_sch;
-  si_message_scheduler          si_msg_sch;
   pucch_guardbands_scheduler    pucch_guard_sch;
   paging_scheduler              pg_sch;
 

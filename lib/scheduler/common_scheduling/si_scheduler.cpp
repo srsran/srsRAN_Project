@@ -30,7 +30,14 @@ si_scheduler::si_scheduler(const cell_configuration&                  cfg_,
 void si_scheduler::run_slot(cell_resource_allocator& res_alloc)
 {
   if (SRSRAN_UNLIKELY(not last_sl_tx.valid())) {
+    // First call to run_slot.
     slot_count = 0;
+
+    // Fill resource grid up to max_dl_slot_alloc_delay - 1, which corresponds to the grid DL size.
+    for (unsigned i = 0, e = res_alloc.max_dl_slot_alloc_delay; i != e; ++i) {
+      sib1_sched.run_slot(res_alloc[i]);
+      si_msg_sched.run_slot(res_alloc[i]);
+    }
   } else {
     // Note: Detect slot skips.
     unsigned nof_slots_elapsed = res_alloc[0].slot - last_sl_tx;
@@ -41,11 +48,13 @@ void si_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // If no on-going request is being handled, try to fetch a new request.
   handle_pending_request(res_alloc);
 
+  auto& slot_res_alloc = res_alloc[res_alloc.max_dl_slot_alloc_delay];
+
   // Run SIB1 scheduling
-  sib1_sched.run_slot(res_alloc);
+  sib1_sched.run_slot(slot_res_alloc);
 
   // Run SI-message scheduling.
-  si_msg_sched.run_slot(res_alloc[0]);
+  si_msg_sched.run_slot(slot_res_alloc);
 }
 
 void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
@@ -53,7 +62,7 @@ void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
   // The SI is scheduled ahead of time.
   slot_point     slot_sched       = res_alloc.slot_tx() + res_alloc.max_dl_slot_alloc_delay;
   unsigned       slot_count_sched = slot_count + res_alloc.max_dl_slot_alloc_delay;
-  const unsigned slots_per_frame  = get_nof_slots_per_subframe(scs_common);
+  const unsigned slots_per_frame  = get_nof_slots_per_subframe(scs_common) * NOF_SUBFRAMES_PER_FRAME;
 
   if (not on_going_req.has_value()) {
     // Check if there is any pending SI change request to handle.
@@ -65,7 +74,7 @@ void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
 
       // Determine the start of SI change modification window.
       const unsigned nof_sfns_until_mod_window = si_change_mod_period - (slot_sched.sfn() % si_change_mod_period);
-      si_change_start_count                    = slot_count_sched + nof_sfns_until_mod_window * slots_per_frame;
+      si_change_start_count = slot_count_sched + nof_sfns_until_mod_window * slots_per_frame - slot_sched.slot_index();
       if (nof_sfns_until_mod_window < default_paging_cycle) {
         // The next modification period is too close to the current slot to leave enough time to broadcast short
         // messages to all UEs.
@@ -90,21 +99,15 @@ void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
     return;
   }
 
-  if (slot_count_sched < si_change_start_count + si_change_mod_period * slots_per_frame) {
-    // We are inside the SI change window.
+  // We are inside the SI change window.
+  logger.debug("SI change with version {} starting after slot {}", on_going_req->version, slot_sched);
 
-    logger.debug("SI change with version {} and window [{}, {}) starting...",
-                 on_going_req->version,
-                 last_sl_tx - (slot_count - si_change_start_count),
-                 last_sl_tx - (slot_count - si_change_start_count) + si_change_mod_period * slots_per_frame);
+  // Apply the SIB1 and SI message changes.
+  sib1_sched.handle_sib1_update_indication(on_going_req->version, on_going_req->sib1_len);
+  si_msg_sched.handle_si_message_update_indication(on_going_req->version, on_going_req->si_sched_cfg);
 
-    // Apply the SIB1 and SI message changes.
-    sib1_sched.handle_sib1_update_indication(on_going_req->version, on_going_req->sib1_len);
-    si_msg_sched.handle_si_message_update_indication(on_going_req->version, on_going_req->si_sched_cfg);
-
-    // Delete the on-going request.
-    on_going_req = std::nullopt;
-  }
+  // Delete the on-going request.
+  on_going_req = std::nullopt;
 }
 
 void si_scheduler::handle_si_update_request(const si_scheduling_update_request& req)

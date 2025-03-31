@@ -28,13 +28,12 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   logger(srslog::fetch_basic_logger("SCHED")),
   ssb_sch(cell_cfg),
   pdcch_sch(cell_cfg),
+  si_sch(cell_cfg, pdcch_sch, msg.sib1_payload_size, msg.si_scheduling),
   csi_sch(cell_cfg),
   ra_sch(sched_cfg.ra, cell_cfg, pdcch_sch, event_logger, metrics),
   prach_sch(cell_cfg),
   pucch_alloc(cell_cfg, sched_cfg.ue.max_pucchs_per_slot, sched_cfg.ue.max_ul_grants_per_slot),
   uci_alloc(pucch_alloc),
-  sib1_sch(cell_cfg, pdcch_sch, msg.sib1_payload_size),
-  si_msg_sch(cell_cfg, pdcch_sch, msg.si_scheduling),
   pucch_guard_sch(cell_cfg),
   pg_sch(sched_cfg, cell_cfg, pdcch_sch, msg)
 {
@@ -45,10 +44,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
 
 void cell_scheduler::handle_si_update_request(const si_scheduling_update_request& msg)
 {
-  // Update SIB1 scheduling updates.
-  sib1_sch.handle_sib1_update_indication(msg.version, msg.sib1_len);
-
-  // TODO: Handle SI message updates.
+  si_sch.handle_si_update_request(msg);
 }
 
 void cell_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
@@ -105,8 +101,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
     csi_sch.run_slot(res_grid[0]);
 
     // > Schedule SIB1 and SI-message signalling.
-    sib1_sch.run_slot(res_grid);
-    si_msg_sch.run_slot(res_grid[0]);
+    si_sch.run_slot(res_grid);
 
     // > Schedule PUCCH guardbands.
     pucch_guard_sch.run_slot(res_grid);

@@ -115,7 +115,7 @@ TEST_F(si_scheduler_test, when_sib1_is_cfg_then_sib1_gets_scheduled)
   ASSERT_EQ(si_scheduled, expected);
 }
 
-TEST_F(si_scheduler_test, when_si_is_updated_then_new_version_is_applied_at_si_change_window)
+TEST_F(si_scheduler_test, when_si_is_updated_then_new_version_is_applied_at_si_change_window_boundary)
 {
   const units::bytes   new_sib1_len     = DEFAULT_SIB1_PAYLOAD_SIZE + units::bytes{64U};
   si_scheduling_config new_si_sched_cfg = DEFAULT_SI_SCHED_CFG;
@@ -127,26 +127,43 @@ TEST_F(si_scheduler_test, when_si_is_updated_then_new_version_is_applied_at_si_c
 
   const unsigned si_ch_wind_len_rfs = static_cast<unsigned>(cell_cfg.dl_cfg_common.bcch_cfg.mod_period_coeff) *
                                       static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.default_paging_cycle);
-  const unsigned sfn_mod              = next_slot.sfn() % si_ch_wind_len_rfs;
-  const unsigned si_change_slot_count = (si_ch_wind_len_rfs - sfn_mod) * next_slot.nof_slots_per_frame();
+  const unsigned sfn_mod = (next_slot + res_grid.max_dl_slot_alloc_delay).sfn() % si_ch_wind_len_rfs;
+  const unsigned si_change_min_count =
+      (si_ch_wind_len_rfs - sfn_mod) * next_slot.nof_slots_per_frame() - next_slot.slot_index();
 
-  const unsigned nof_test_slots      = 2 * si_ch_wind_len_rfs * next_slot.nof_slots_per_frame();
-  bool           new_version_applied = false;
+  const unsigned          nof_test_slots = 2 * si_ch_wind_len_rfs * next_slot.nof_slots_per_frame();
+  unsigned                last_version   = 0;
+  std::optional<unsigned> window_version;
   for (unsigned i = 0; i != nof_test_slots; ++i) {
+    slot_point current_slot = next_slot;
     run_slot();
 
+    if (current_slot.sfn() % si_ch_wind_len_rfs == 0 and current_slot.slot_index() == 0) {
+      // Detected SI change window start.
+      window_version = std::nullopt;
+      logger.info("TEST: New window starting at {}", current_slot);
+    }
+
     for (const auto& sib : res_grid[0].result.dl.bc.sibs) {
-      if (sib.version == 1 and not new_version_applied) {
-        new_version_applied = true;
-        ASSERT_GE(i, si_change_slot_count) << "SI change applied too soon";
+      if (window_version.has_value()) {
+        ASSERT_EQ(sib.version, window_version.value())
+            << "SI version cannot change in the middle of a SI change window";
+      } else {
+        window_version = sib.version;
+        ASSERT_GE(sib.version, last_version) << "SI version cannot decrease";
+        last_version = sib.version;
+
+        if (sib.version == 1) {
+          ASSERT_GE(i, si_change_min_count) << "SI change applied too soon";
+        }
       }
 
       unsigned tbs = sib.pdsch_cfg.codewords[0].tb_size_bytes;
-      if (new_version_applied) {
-        ASSERT_EQ(sib.version, 1);
+      if (sib.version == 1) {
         ASSERT_GE(tbs,
                   sib.si_indicator == sib_information::sib1 ? new_sib1_len.value()
-                                                            : new_si_sched_cfg.si_messages[0].msg_len.value());
+                                                            : new_si_sched_cfg.si_messages[0].msg_len.value())
+            << "New SI payload length not applied";
       } else {
         ASSERT_EQ(sib.version, 0);
         ASSERT_GE(tbs,
@@ -156,5 +173,5 @@ TEST_F(si_scheduler_test, when_si_is_updated_then_new_version_is_applied_at_si_c
     }
   }
 
-  ASSERT_TRUE(new_version_applied);
+  ASSERT_EQ(last_version, 1);
 }
