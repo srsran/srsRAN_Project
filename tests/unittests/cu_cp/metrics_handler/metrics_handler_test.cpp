@@ -9,13 +9,17 @@
  */
 
 #include "lib/cu_cp/metrics_handler/metrics_handler_impl.h"
+#include "lib/cu_cp/ngap_repository.h"
+#include "srsran/ran/cause/ngap_cause.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 using namespace srs_cu_cp;
 
-class dummy_ue_metrics_handler : public ue_metrics_handler, public du_repository_metrics_handler
+class dummy_ue_metrics_handler : public ue_metrics_handler,
+                                 public du_repository_metrics_handler,
+                                 public ngap_repository_metrics_handler
 {
 public:
   metrics_report next_metrics;
@@ -23,6 +27,11 @@ public:
   std::vector<metrics_report::ue_info> handle_ue_metrics_report_request() const override { return next_metrics.ues; }
 
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override { return next_metrics.dus; }
+
+  std::vector<metrics_report::ngap_info> handle_ngap_metrics_report_request() const override
+  {
+    return next_metrics.ngaps;
+  }
 };
 
 class dummy_metrics_notifier : public metrics_report_notifier
@@ -38,7 +47,7 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   manual_task_worker       worker{16};
   timer_manager            timers{2};
   dummy_ue_metrics_handler metrics_hdlr;
-  metrics_handler_impl     metrics{worker, timers, metrics_hdlr, metrics_hdlr};
+  metrics_handler_impl     metrics{worker, timers, metrics_hdlr, metrics_hdlr, metrics_hdlr};
 
   std::chrono::milliseconds period{5};
   dummy_metrics_notifier    metrics_notifier;
@@ -52,6 +61,7 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
       {metrics_report::cell_info{
           nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0x22).value()}, pci_t{2}}},
       {2, 4}});
+
   for (unsigned i = 0; i != period.count(); ++i) {
     ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());
     timers.tick();

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../du_processor/du_metrics_handler.h"
+#include "../ngap_repository.h"
 #include "../ue_manager/ue_metrics_handler.h"
 #include "srsran/cu_cp/cu_cp_f1c_handler.h"
 #include "srsran/cu_cp/cu_cp_metrics_handler.h"
@@ -25,10 +26,11 @@ namespace srs_cu_cp {
 class metrics_handler_impl final : public metrics_handler
 {
 public:
-  metrics_handler_impl(task_executor&                 cu_cp_exec_,
-                       timer_manager&                 timers,
-                       ue_metrics_handler&            ue_handler_,
-                       du_repository_metrics_handler& du_handler_);
+  metrics_handler_impl(task_executor&                   cu_cp_exec_,
+                       timer_manager&                   timers,
+                       ue_metrics_handler&              ue_handler_,
+                       du_repository_metrics_handler&   du_handler_,
+                       ngap_repository_metrics_handler& ngap_handler_);
 
   std::unique_ptr<metrics_report_session>
   create_periodic_report_session(const periodic_metric_report_request& request) override;
@@ -49,11 +51,12 @@ private:
   void     request_session_reconfiguration(unsigned session_id, const periodic_metric_report_request& request);
   void     request_session_deletion(unsigned session_id);
 
-  task_executor&                 cu_cp_exec;
-  timer_manager&                 timers;
-  ue_metrics_handler&            ue_handler;
-  du_repository_metrics_handler& du_handler;
-  srslog::basic_logger&          logger;
+  task_executor&                   cu_cp_exec;
+  timer_manager&                   timers;
+  ue_metrics_handler&              ue_handler;
+  du_repository_metrics_handler&   du_handler;
+  ngap_repository_metrics_handler& ngap_handler;
+  srslog::basic_logger&            logger;
 
   // Member variables to manage pool of sessions.
   std::mutex                           mutex;

@@ -1046,6 +1046,14 @@ async_task<void> ngap_impl::handle_ul_non_ue_associated_nrppa_transport(const by
 
 #endif // SRSRAN_HAS_ENTERPRISE
 
+metrics_report::ngap_info ngap_impl::handle_ngap_metrics_report_request() const
+{
+  metrics_report::ngap_info ngap_info;
+  ngap_info.amf_name = context.amf_name;
+  ngap_info.metrics  = metrics_handler.request_metrics_report();
+  return ngap_info;
+}
+
 void ngap_impl::remove_ue_context(ue_index_t ue_index)
 {
   if (!ue_ctxt_list.contains(ue_index)) {

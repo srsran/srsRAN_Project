@@ -21,6 +21,16 @@
 namespace srsran {
 namespace srs_cu_cp {
 
+/// Interface used to capture the NGAP metrics from all the connected AMFs to the CU-CP.
+class ngap_repository_metrics_handler
+{
+public:
+  virtual ~ngap_repository_metrics_handler() = default;
+
+  /// \brief Handle new metrics request for all the AMF nodes connected to the CU-CP.
+  virtual std::vector<metrics_report::ngap_info> handle_ngap_metrics_report_request() const = 0;
+};
+
 struct cu_cp_configuration;
 
 struct ngap_repository_config {
@@ -30,7 +40,7 @@ struct ngap_repository_config {
   srslog::basic_logger&      logger;
 };
 
-class ngap_repository
+class ngap_repository : public ngap_repository_metrics_handler
 {
 public:
   explicit ngap_repository(ngap_repository_config cfg_);
@@ -60,6 +70,8 @@ public:
 
   /// Number of NGAPs managed by the CU-CP.
   size_t get_nof_ngaps() const { return ngap_db.size(); }
+
+  std::vector<metrics_report::ngap_info> handle_ngap_metrics_report_request() const override;
 
   /// Number of UEs managed by the CU-CP.
   size_t get_nof_ngap_ues();
