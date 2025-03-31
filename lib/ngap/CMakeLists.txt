@@ -15,6 +15,7 @@ set(SOURCES
         ngap_connection_handler.cpp
         ngap_validators/ngap_validators.cpp
         gateways/n2_connection_client_factory.cpp
+        metrics/ngap_metrics_aggregator.cpp
         procedures/ng_setup_procedure.cpp
         procedures/ng_reset_procedure.cpp
         procedures/ngap_initial_context_setup_procedure.cpp
