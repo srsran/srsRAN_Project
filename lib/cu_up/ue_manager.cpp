@@ -159,12 +159,9 @@ async_task<bool> ue_manager::schedule_and_wait_ue_removal(ue_index_t ue_index)
     });
   }
 
-  std::unique_ptr<std::chrono::steady_clock::time_point> tp = std::make_unique<std::chrono::steady_clock::time_point>();
-  auto fn = [this, ue_index, tp = std::move(tp)](coro_context<async_task<void>>& ctx) mutable {
+  auto fn = [this, ue_index](coro_context<async_task<void>>& ctx) mutable {
     CORO_BEGIN(ctx);
-    *tp = std::chrono::steady_clock::now();
     CORO_AWAIT(remove_ue(ue_index));
-    fmt::print("Removing the UE took {}", (std::chrono::steady_clock::now() - *tp));
     CORO_RETURN();
   };
 
