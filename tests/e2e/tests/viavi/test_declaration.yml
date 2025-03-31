@@ -401,7 +401,8 @@ tests:
     # Configuration
     gnb_extra_config:
       log:
-        all_level: error
+        all_level: warning
+        lib_level: warning
       metrics:
         periodicity:
           cu_up_report_period: 10000
