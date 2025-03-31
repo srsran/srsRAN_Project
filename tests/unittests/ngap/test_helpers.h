@@ -237,11 +237,13 @@ public:
 
       if (last_request.pdu_session_res_setup_items.empty()) {
         cu_cp_pdu_session_res_setup_failed_item failed_item;
-        failed_item.pdu_session_id              = uint_to_pdu_session_id(1);
-        failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
-        res.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
+        for (const auto& pdu_session : last_request.pdu_session_res_setup_items) {
+          failed_item.pdu_session_id              = pdu_session.pdu_session_id;
+          failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
+          res.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
+        }
       } else {
-        res = generate_cu_cp_pdu_session_resource_setup_response(uint_to_pdu_session_id(1));
+        res = generate_cu_cp_pdu_session_resource_setup_response(last_request);
       }
 
       CORO_RETURN(res);

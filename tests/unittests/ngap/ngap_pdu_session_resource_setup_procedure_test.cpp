@@ -21,6 +21,10 @@ class ngap_pdu_session_resource_setup_procedure_test : public ngap_test
 protected:
   ue_index_t start_procedure(bool enable_security = true)
   {
+    if (!run_ng_setup()) {
+      return ue_index_t::invalid;
+    }
+
     ue_index_t ue_index = create_ue();
 
     // Inject DL NAS transport message from AMF.

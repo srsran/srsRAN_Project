@@ -59,6 +59,26 @@ ngap_test::~ngap_test()
   srslog::flush();
 }
 
+bool ngap_test::run_ng_setup()
+{
+  // Launch NG setup procedure
+  test_logger.info("Launch ng setup request procedure...");
+  async_task<ngap_ng_setup_result>         t = ngap->handle_ng_setup_request(1);
+  lazy_task_launcher<ngap_ng_setup_result> t_launcher(t);
+
+  // Inject NG setup response message.
+  ngap_message ng_setup_response = generate_ng_setup_response();
+  test_logger.info("Injecting NGSetupResponse");
+  ngap->handle_message(ng_setup_response);
+
+  if (!std::holds_alternative<ngap_ng_setup_response>(t.get())) {
+    test_logger.error("NG Setup procedure failed");
+    return false;
+  }
+
+  return true;
+}
+
 ue_index_t ngap_test::create_ue(rnti_t rnti)
 {
   // Create UE in UE manager
