@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../ue_context/ngap_ue_context.h"
+#include "metrics/ngap_metrics_aggregator.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
 #include "srsran/support/async/async_task.h"
@@ -24,6 +25,7 @@ public:
   ngap_initial_context_setup_procedure(const ngap_init_context_setup_request& request_,
                                        const ngap_ue_ids&                     ue_ids_,
                                        ngap_cu_cp_notifier&                   cu_cp_notifier_,
+                                       ngap_metrics_aggregator&               metrics_handler_,
                                        ngap_message_notifier&                 amf_notifier_,
                                        ngap_ue_logger&                        logger_);
 
@@ -43,8 +45,12 @@ private:
   ngap_init_context_setup_request request;
   const ngap_ue_ids&              ue_ids;
   ngap_cu_cp_notifier&            cu_cp_notifier;
+  ngap_metrics_aggregator&        metrics_handler;
   ngap_message_notifier&          amf_notifier;
   ngap_ue_logger&                 logger;
+
+  // Maps PDU session ID to S-NSSAI for metrics.
+  std::map<pdu_session_id_t, s_nssai_t> pdu_session_id_to_snssai;
 
   // routine result
   expected<ngap_init_context_setup_response, ngap_init_context_setup_failure> init_ctxt_setup_routine_outcome;

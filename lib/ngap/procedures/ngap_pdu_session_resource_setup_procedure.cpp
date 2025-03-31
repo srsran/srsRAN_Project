@@ -23,15 +23,21 @@ ngap_pdu_session_resource_setup_procedure::ngap_pdu_session_resource_setup_proce
     const asn1::ngap::pdu_session_res_setup_request_s& asn1_request_,
     const ngap_ue_ids&                                 ue_ids_,
     ngap_cu_cp_notifier&                               cu_cp_notifier_,
+    ngap_metrics_aggregator&                           metrics_handler_,
     ngap_message_notifier&                             amf_notif_,
     ngap_ue_logger&                                    logger_) :
   request(request_),
   asn1_request(asn1_request_),
   ue_ids(ue_ids_),
   cu_cp_notifier(cu_cp_notifier_),
+  metrics_handler(metrics_handler_),
   amf_notifier(amf_notif_),
   logger(logger_)
 {
+  // Map PDU session ID to S-NSSAI for metrics.
+  for (const auto& pdu_session : request.pdu_session_res_setup_items) {
+    pdu_session_id_to_snssai[pdu_session.pdu_session_id] = pdu_session.s_nssai;
+  }
 }
 
 void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
@@ -96,6 +102,16 @@ void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_
   auto& pdu_session_res_setup_resp           = ngap_msg.pdu.successful_outcome().value.pdu_session_res_setup_resp();
   pdu_session_res_setup_resp->amf_ue_ngap_id = amf_ue_id_to_uint(ue_ids.amf_ue_id);
   pdu_session_res_setup_resp->ran_ue_ngap_id = ran_ue_id_to_uint(ue_ids.ran_ue_id);
+
+  // Notify metrics handler about successful PDU sessions.
+  for (const auto& pdu_session : response.pdu_session_res_setup_response_items) {
+    metrics_handler.handle_successful_pdu_session_setup(pdu_session_id_to_snssai.at(pdu_session.pdu_session_id));
+  }
+  // Notify metrics handler about failed PDU sessions.
+  for (const auto& pdu_session : response.pdu_session_res_failed_to_setup_items) {
+    metrics_handler.handle_failed_pdu_session_setup(pdu_session_id_to_snssai.at(pdu_session.pdu_session_id),
+                                                    pdu_session.unsuccessful_transfer.cause);
+  }
 
   amf_notifier.on_new_message(ngap_msg);
 }

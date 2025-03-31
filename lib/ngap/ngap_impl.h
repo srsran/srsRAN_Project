@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "metrics/ngap_metrics_aggregator.h"
 #include "ngap_connection_handler.h"
 #include "ngap_error_indication_helper.h"
 #include "procedures/ngap_transaction_manager.h"
@@ -179,6 +180,9 @@ private:
   ngap_cu_cp_notifier& cu_cp_notifier;
   timer_manager&       timers;
   task_executor&       ctrl_exec;
+
+  // Metrics aggregator.
+  ngap_metrics_aggregator metrics_handler;
 
   ngap_transaction_manager ev_mng;
 

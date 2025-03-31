@@ -408,6 +408,13 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
 
 void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_context_setup_request_s& request)
 {
+  // Notify metrics handler about requested PDU sessions.
+  if (request->pdu_session_res_setup_list_cxt_req_present) {
+    for (const auto& pdu_session : request->pdu_session_res_setup_list_cxt_req) {
+      metrics_handler.handle_requested_pdu_session(ngap_asn1_to_s_nssai(pdu_session.s_nssai));
+    }
+  }
+
   if (!ue_ctxt_list.contains(uint_to_ran_ue_id(request->ran_ue_ngap_id))) {
     logger.warning("ran_ue={} amf_ue={}: Dropping InitialContextSetupRequest. UE context does not exist",
                    request->ran_ue_ngap_id,
@@ -477,11 +484,16 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
 
   // Start routine.
   ue->schedule_async_task(launch_async<ngap_initial_context_setup_procedure>(
-      init_ctxt_setup_req, ue_ctxt.ue_ids, cu_cp_notifier, *tx_pdu_notifier, ue_ctxt.logger));
+      init_ctxt_setup_req, ue_ctxt.ue_ids, cu_cp_notifier, metrics_handler, *tx_pdu_notifier, ue_ctxt.logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_session_res_setup_request_s& request)
 {
+  // Notify metrics handler about requested PDU sessions.
+  for (const auto& pdu_session : request->pdu_session_res_setup_list_su_req) {
+    metrics_handler.handle_requested_pdu_session(ngap_asn1_to_s_nssai(pdu_session.s_nssai));
+  }
+
   if (!ue_ctxt_list.contains(uint_to_ran_ue_id(request->ran_ue_ngap_id))) {
     logger.warning("ran_ue={} amf_ue={}: Dropping PduSessionResourceSetupRequest. UE context does not exist",
                    request->ran_ue_ngap_id,
@@ -537,7 +549,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
 
   // Start routine.
   ue->schedule_async_task(launch_async<ngap_pdu_session_resource_setup_procedure>(
-      msg, request, ue_ctxt.ue_ids, cu_cp_notifier, *tx_pdu_notifier, ue_ctxt.logger));
+      msg, request, ue_ctxt.ue_ids, cu_cp_notifier, metrics_handler, *tx_pdu_notifier, ue_ctxt.logger));
 }
 
 void ngap_impl::handle_pdu_session_resource_modify_request(const asn1::ngap::pdu_session_res_modify_request_s& request)
