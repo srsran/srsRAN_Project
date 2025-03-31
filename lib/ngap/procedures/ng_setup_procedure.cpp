@@ -124,9 +124,11 @@ ngap_ng_setup_result ng_setup_procedure::create_ng_setup_result()
 
     fill_ngap_ng_setup_result(res, transaction_sink.response());
 
-    for (const auto& guami_item : std::get<ngap_ng_setup_response>(res).served_guami_list) {
+    auto& ng_setup_response = std::get<ngap_ng_setup_response>(res);
+    for (const auto& guami_item : ng_setup_response.served_guami_list) {
       context.served_guami_list.push_back(guami_item.guami);
     }
+    context.amf_name = ng_setup_response.amf_name;
   } else if (transaction_sink.failed()) {
     fill_ngap_ng_setup_result(res, transaction_sink.failure());
   } else {

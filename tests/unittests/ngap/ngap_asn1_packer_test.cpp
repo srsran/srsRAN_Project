@@ -67,6 +67,7 @@ TEST_F(ngap_asn1_packer_test, when_packing_successful_then_pdu_matches_tv)
   // Populate message
   ngap_context_t ngap_ctxt = {{411, 22},
                               "srsgnb01",
+                              "AMF",
                               amf_index_t::min,
                               {{7, {{plmn_identity::test_value(), {{slice_service_type{1}}}}}}},
                               {},
