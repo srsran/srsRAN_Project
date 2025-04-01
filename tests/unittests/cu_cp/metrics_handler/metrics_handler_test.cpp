@@ -62,6 +62,13 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
           nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0x22).value()}, pci_t{2}}},
       {2, 4}});
 
+  ngap_cause_t          cause{ngap_cause_radio_network_t::multiple_pdu_session_id_instances};
+  pdu_session_metrics_t pdu_session_metrics{2, 1, {{cause, 1}}};
+  ngap_metrics          next_ngap_metrics;
+  s_nssai_t             snssai{slice_service_type{1}, slice_differentiator{}};
+  next_ngap_metrics.pdu_session_metrics.emplace(snssai, pdu_session_metrics);
+  metrics_hdlr.next_metrics.ngaps.emplace_back(metrics_report::ngap_info{"open5gs-amf0", next_ngap_metrics});
+
   for (unsigned i = 0; i != period.count(); ++i) {
     ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());
     timers.tick();
@@ -76,6 +83,31 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   ASSERT_EQ(metrics_notifier.last_metrics_report->dus.size(), 1);
   ASSERT_EQ(metrics_notifier.last_metrics_report->dus[0].rrc_metrics.mean_nof_rrc_connections, 2);
   ASSERT_EQ(metrics_notifier.last_metrics_report->dus[0].rrc_metrics.max_nof_rrc_connections, 4);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].amf_name, "open5gs-amf0");
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].metrics.pdu_session_metrics.size(), 1);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].metrics.pdu_session_metrics.begin()->first, snssai);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0]
+                .metrics.pdu_session_metrics.begin()
+                ->second.nof_pdu_sessions_requested_to_setup,
+            2);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0]
+                .metrics.pdu_session_metrics.begin()
+                ->second.nof_pdu_sessions_successfully_setup,
+            1);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0]
+                .metrics.pdu_session_metrics.begin()
+                ->second.nof_pdu_sessions_failed_to_setup.size(),
+            1);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0]
+                .metrics.pdu_session_metrics.begin()
+                ->second.nof_pdu_sessions_failed_to_setup.begin()
+                ->first,
+            cause);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0]
+                .metrics.pdu_session_metrics.begin()
+                ->second.nof_pdu_sessions_failed_to_setup.begin()
+                ->second,
+            1);
 
   // Second report.
   metrics_notifier.last_metrics_report.reset();
