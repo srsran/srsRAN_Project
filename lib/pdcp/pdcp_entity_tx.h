@@ -119,9 +119,9 @@ public:
   {
     reset();
     st = st_;
-  };
+  }
 
-  const pdcp_tx_state& get_state() const { return st; };
+  const pdcp_tx_state& get_state() const { return st; }
 
   uint32_t nof_pdus_in_window() const { return st.tx_next - st.tx_next_ack; }
 

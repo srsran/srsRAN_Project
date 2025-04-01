@@ -65,7 +65,7 @@ public:
   void                  handle_inter_cu_ho_rrc_recfg_complete(const ue_index_t           ue_index,
                                                               const nr_cell_global_id_t& cgi,
                                                               const unsigned             tac) override;
-  const ngap_context_t& get_ngap_context() const override { return context; };
+  const ngap_context_t& get_ngap_context() const override { return context; }
   void             handle_ul_ue_associated_nrppa_transport(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;
   async_task<void> handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu) override;
 

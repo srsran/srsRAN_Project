@@ -252,4 +252,4 @@ void ldpc_decoder_avx512::compute_soft_bits(span<log_likelihood_ratio>       thi
     soft_epi8        = _mm512_mask_blend_epi8(mask_epi8, soft_epi8, LLR_NEG_INFINITY_epi8());
     this_soft_bits_avx512.set_at(i_block, soft_epi8);
   }
-};
+}

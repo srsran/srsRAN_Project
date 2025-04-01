@@ -28,7 +28,7 @@ static const re_prb_mask& get_re_mask_type_1(unsigned cdm_group_id)
        {false, true, false, true, false, true, false, true, false, true, false, true}}};
 
   return re_mask_type1[cdm_group_id];
-};
+}
 
 // Optimized mapping for PDSCH DM-RS Type 1 mapped on contiguous RBs. It derives the CDM group ID of the input symbols
 // from the RE allocation pattern.

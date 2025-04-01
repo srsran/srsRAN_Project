@@ -27,7 +27,7 @@ public:
   // E2 Agent interface.
   void          start() override;
   void          stop() override;
-  e2_interface& get_e2_interface() override { return *e2ap; };
+  e2_interface& get_e2_interface() override { return *e2ap; }
 
   void on_e2_disconnection() override;
 

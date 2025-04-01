@@ -66,7 +66,7 @@ public:
 
   /// \brief Handles a signal that was dispatched by the signal_dispatcher.
   /// \param signal The signal that occured.
-  void handle_signal(int signal) { callback(); };
+  void handle_signal(int signal) { callback(); }
 
 private:
   /// The signal dispatcher to which this observer is attached.

@@ -342,7 +342,7 @@ static const auto* get_pucch_resource_with_id(const pucch_config& pucch_cfg, uns
   return std::find_if(pucch_cfg.pucch_res_list.begin(),
                       pucch_cfg.pucch_res_list.end(),
                       [res_id](const pucch_resource& res) { return res.res_id.cell_res_id == res_id; });
-};
+}
 
 class du_ran_res_mng_multiple_cfg_tester : public du_ran_resource_manager_tester_base,
                                            public ::testing::TestWithParam<pucch_cfg_builder_params>

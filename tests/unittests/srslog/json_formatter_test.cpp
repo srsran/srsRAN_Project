@@ -251,7 +251,7 @@ DECLARE_METRIC_LIST("metrics_list", metrics_list, std::vector<metric_list_set>);
 DECLARE_METRIC("list_metric3", list_metric3, unsigned, "");
 DECLARE_METRIC("list_metric4", list_metric4, unsigned, "");
 using list_ctx_t = srslog::build_context_type<list_metric3, list_metric4, metrics_list>;
-}; // namespace
+} // namespace
 
 static bool when_context_with_empty_list_is_passed_then_list_object_is_empty()
 {

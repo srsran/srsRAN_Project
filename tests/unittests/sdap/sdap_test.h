@@ -26,7 +26,7 @@ public:
   std::queue<byte_buffer> sdu_queue;
 
   // sdap_rx_sdu_notifier interface
-  void on_new_sdu(byte_buffer pdu, qos_flow_id_t qfi) override { sdu_queue.push(std::move(pdu)); };
+  void on_new_sdu(byte_buffer pdu, qos_flow_id_t qfi) override { sdu_queue.push(std::move(pdu)); }
 };
 
 /// Mocking class of the lower layers invoked by the SDAP entity.
@@ -36,7 +36,7 @@ public:
   std::queue<byte_buffer> pdu_queue;
 
   // sdap_tx_pdu_notifier interface
-  void on_new_pdu(byte_buffer pdu) override { pdu_queue.push(std::move(pdu)); };
+  void on_new_pdu(byte_buffer pdu) override { pdu_queue.push(std::move(pdu)); }
 };
 
 /// Fixture class for SDAP tests

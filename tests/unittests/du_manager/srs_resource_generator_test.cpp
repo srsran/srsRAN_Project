@@ -74,7 +74,7 @@ protected:
       nof_symbols_srs_area = std::min(nof_symbols_srs_area, 6U);
     }
     nof_symbol_intervals = nof_symbols_srs_area / static_cast<unsigned>(du_cell_cfg.srs_cfg.nof_symbols);
-  };
+  }
 
   unsigned compute_expected_srs_list_size() const
   {

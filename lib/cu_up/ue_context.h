@@ -152,9 +152,9 @@ public:
   }
   size_t get_nof_pdu_sessions() override { return pdu_session_manager.get_nof_pdu_sessions(); }
 
-  [[nodiscard]] ue_index_t get_index() const { return index; };
+  [[nodiscard]] ue_index_t get_index() const { return index; }
 
-  [[nodiscard]] const cu_up_ue_logger& get_logger() const { return logger; };
+  [[nodiscard]] const cu_up_ue_logger& get_logger() const { return logger; }
 
   fifo_async_task_scheduler& task_sched;
 

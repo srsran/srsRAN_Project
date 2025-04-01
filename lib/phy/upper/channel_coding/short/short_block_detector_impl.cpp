@@ -40,7 +40,7 @@ static std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> cre
     std::transform(cdwd.cbegin(), cdwd.cend(), table[idx].begin(), [](uint8_t a) { return (1 - 2 * a); });
   }
   return table;
-};
+}
 
 const std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> short_block_detector_impl::DETECT_TABLE =
     create_lut();
@@ -169,7 +169,7 @@ static void rate_dematch(span<log_likelihood_ratio> output, span<const log_likel
     // Advance input.
     input = input.last(input.size() - block_size);
   }
-};
+}
 
 bool short_block_detector_impl::detect(span<uint8_t>                    output,
                                        span<const log_likelihood_ratio> input,
@@ -208,4 +208,4 @@ bool short_block_detector_impl::detect(span<uint8_t>                    output,
   // TODO(david): Thresholds for the 1- and 2-bit cases are not meaningful.
   constexpr std::array<double, MAX_MSG_LENGTH> THRESHOLDS = {0, 0, 12, 14, 16, 18, 20, 22, 24, 26, 29};
   return (max_metric > THRESHOLDS[out_size - 1]);
-};
+}

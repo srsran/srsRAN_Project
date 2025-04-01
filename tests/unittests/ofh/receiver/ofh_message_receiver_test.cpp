@@ -41,7 +41,7 @@ class dummy_eth_rx_buffer : public ether::rx_buffer
 public:
   explicit dummy_eth_rx_buffer(std::vector<uint8_t>&& init_values) { buffer = init_values; }
 
-  span<const uint8_t> data() const override { return buffer; };
+  span<const uint8_t> data() const override { return buffer; }
 
 private:
   std::vector<uint8_t> buffer;

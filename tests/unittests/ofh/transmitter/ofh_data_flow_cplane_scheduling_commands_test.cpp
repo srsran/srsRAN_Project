@@ -66,10 +66,10 @@ public:
   }
 
   /// Returns the type 1 parameters.
-  const cplane_section_type1_parameters& get_type1_param() const { return type1_params; };
+  const cplane_section_type1_parameters& get_type1_param() const { return type1_params; }
 
   /// Returns the type 3 parameters.
-  const cplane_section_type3_parameters& get_type3_param() const { return type3_params; };
+  const cplane_section_type3_parameters& get_type3_param() const { return type3_params; }
 };
 
 } // namespace

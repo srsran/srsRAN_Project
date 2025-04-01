@@ -99,7 +99,7 @@ TEST_F(gtpu_tunnel_ngu_tx_test, entity_creation)
   tx = std::make_unique<gtpu_tunnel_ngu_tx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, tx_cfg, dummy_pcap, tx_upper);
 
   ASSERT_NE(tx, nullptr);
-};
+}
 
 /// \brief Test reception of PDUs with no SN
 TEST_F(gtpu_tunnel_ngu_tx_test, tx_sdus)
@@ -119,7 +119,7 @@ TEST_F(gtpu_tunnel_ngu_tx_test, tx_sdus)
     tx->handle_sdu(std::move(sdu), uint_to_qos_flow_id(1));
     ASSERT_EQ(pdu, tx_upper.tx_ul_pdus[i]);
   }
-};
+}
 
 /// \brief Test in-order reception of PDUs
 TEST_F(gtpu_tunnel_ngu_tx_test, tx_stop)
@@ -148,7 +148,7 @@ TEST_F(gtpu_tunnel_ngu_tx_test, tx_stop)
     tx->handle_sdu(std::move(sdu), uint_to_qos_flow_id(1));
     ASSERT_TRUE(tx_upper.tx_ul_pdus.empty());
   }
-};
+}
 
 int main(int argc, char** argv)
 {

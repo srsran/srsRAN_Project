@@ -67,28 +67,28 @@ private:
   codeblock_metadata get_cb_metadata(unsigned cb_index) const override;
 
   // See ldpc_segmenter_buffer interface for documentation.
-  unsigned get_nof_codeblocks() const override { return params.nof_segments; };
+  unsigned get_nof_codeblocks() const override { return params.nof_segments; }
 
   // See ldpc_segmenter_buffer interface for documentation.
   units::bits get_cb_info_bits(unsigned cb_index) const override;
 
   // See ldpc_segmenter_buffer interface for documentation.
-  units::bits get_segment_length() const override { return params.segment_length; };
+  units::bits get_segment_length() const override { return params.segment_length; }
 
   // See ldpc_segmenter_buffer interface for documentation.
-  units::bits get_cw_length() const override { return params.cw_length; };
+  units::bits get_cw_length() const override { return params.cw_length; }
 
   // See ldpc_segmenter_buffer interface for documentation.
-  units::bits get_zero_pad() const override { return params.zero_pad; };
+  units::bits get_zero_pad() const override { return params.zero_pad; }
 
   // See ldpc_segmenter_buffer interface for documentation.
-  units::bits get_tb_crc_bits() const override { return params.nof_tb_crc_bits; };
+  units::bits get_tb_crc_bits() const override { return params.nof_tb_crc_bits; }
 
   // See ldpc_segmenter_buffer interface for documentation.
-  units::bits get_nof_filler_bits() const override { return params.nof_filler_bits; };
+  units::bits get_nof_filler_bits() const override { return params.nof_filler_bits; }
 
   // See ldpc_segmenter_buffer interface for documentation.
-  unsigned get_nof_short_segments() const override { return params.nof_short_segments; };
+  unsigned get_nof_short_segments() const override { return params.nof_short_segments; }
 
   // See ldpc_segmenter_buffer interface for documentation.
   unsigned get_rm_length(unsigned cb_index) const override;

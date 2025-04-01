@@ -268,7 +268,7 @@ TEST_P(validate_uci_pucch_format01_pdu_field, WithValue)
                validate_uci_pucch_format01_pdu,
                srsran::fapi::message_type_id::uci_indication,
                uci_pdu_type::PUCCH_format_0_1);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(RNTI,
                          validate_uci_pucch_format01_pdu_field,
@@ -440,7 +440,7 @@ TEST_P(validate_uci_pucch_format234_pdu_field, WithValue)
                validate_uci_pucch_format234_pdu,
                srsran::fapi::message_type_id::uci_indication,
                uci_pdu_type::PUCCH_format_2_3_4);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(RNTI,
                          validate_uci_pucch_format234_pdu_field,
@@ -654,7 +654,7 @@ TEST_P(validate_uci_indication_field, WithValue)
                build_valid_uci_indication,
                validate_uci_indication,
                srsran::fapi::message_type_id::uci_indication);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(SFN,
                          validate_uci_indication_field,

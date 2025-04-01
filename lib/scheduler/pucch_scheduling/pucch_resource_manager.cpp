@@ -92,7 +92,7 @@ pucch_resource_manager::reserve_next_set_0_harq_res_available(slot_point        
                                                               const pucch_config& pucch_cfg)
 {
   return reserve_next_harq_res_available(slot_harq, crnti, pucch_cfg, pucch_res_set_idx::set_0);
-};
+}
 
 pucch_harq_resource_alloc_record
 pucch_resource_manager::reserve_next_set_1_harq_res_available(slot_point          slot_harq,
@@ -100,7 +100,7 @@ pucch_resource_manager::reserve_next_set_1_harq_res_available(slot_point        
                                                               const pucch_config& pucch_cfg)
 {
   return reserve_next_harq_res_available(slot_harq, crnti, pucch_cfg, pucch_res_set_idx::set_1);
-};
+}
 
 const pucch_resource* pucch_resource_manager::reserve_set_0_res_by_res_indicator(slot_point          slot_harq,
                                                                                  rnti_t              crnti,
@@ -159,7 +159,7 @@ const pucch_resource* pucch_resource_manager::reserve_csi_resource(slot_point   
   }
 
   return res_cfg;
-};
+}
 
 const pucch_resource*
 pucch_resource_manager::reserve_sr_res_available(slot_point slot_sr, rnti_t crnti, const pucch_config& pucch_cfg)
@@ -197,7 +197,7 @@ pucch_resource_manager::reserve_sr_res_available(slot_point slot_sr, rnti_t crnt
   }
 
   return res_cfg;
-};
+}
 
 bool pucch_resource_manager::release_harq_set_0_resource(slot_point          slot_harq,
                                                          rnti_t              crnti,
@@ -416,7 +416,7 @@ pucch_harq_resource_alloc_record pucch_resource_manager::reserve_next_harq_res_a
     }
   }
   return pucch_harq_resource_alloc_record{.pucch_res = nullptr};
-};
+}
 
 const pucch_resource* pucch_resource_manager::reserve_harq_res_by_res_indicator(slot_point          slot_harq,
                                                                                 rnti_t              crnti,

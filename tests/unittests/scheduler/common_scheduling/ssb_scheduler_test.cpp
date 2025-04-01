@@ -83,7 +83,7 @@ struct ssb_test_bench {
   }
 
   cell_slot_resource_allocator& get_slot_allocator() { return cell_res_grid; }
-  const cell_configuration&     get_cell_sched_config() { return cfg; };
+  const cell_configuration&     get_cell_sched_config() { return cfg; }
 
   slot_point slot_tx() { return t; }
 

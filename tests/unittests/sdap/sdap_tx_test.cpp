@@ -23,7 +23,7 @@ public:
   std::queue<byte_buffer> pdu_queue;
 
   // sdap_tx_pdu_notifier interface
-  void on_new_pdu(byte_buffer pdu) override { pdu_queue.push(std::move(pdu)); };
+  void on_new_pdu(byte_buffer pdu) override { pdu_queue.push(std::move(pdu)); }
 };
 
 /// Fixture class for SDAP TX tests

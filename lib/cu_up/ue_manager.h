@@ -56,7 +56,7 @@ public:
   ue_context*      add_ue(const ue_context_cfg& cfg) override;
   async_task<void> remove_ue(ue_index_t ue_index) override;
   ue_context*      find_ue(ue_index_t ue_index) override;
-  size_t           get_nof_ues() const override { return ue_db.size(); };
+  size_t           get_nof_ues() const override { return ue_db.size(); }
 
   void schedule_ue_async_task(ue_index_t ue_index, async_task<void> task);
 

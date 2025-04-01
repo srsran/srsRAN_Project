@@ -174,7 +174,7 @@ public:
       low_metrics_timer.stop();
       stopped = true;
     }
-  };
+  }
 
   // TX/RX interconnect
   void set_status_provider(rlc_rx_am_status_provider* status_provider_) { status_provider = status_provider_; }

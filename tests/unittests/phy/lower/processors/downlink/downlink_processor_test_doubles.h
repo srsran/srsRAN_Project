@@ -101,7 +101,7 @@ public:
     pdxch_notifier = &pdxch_notifier_;
   }
 
-  void stop() override {};
+  void stop() override {}
 
   pdxch_processor_request_handler& get_downlink_request_handler() override { return pdxch_proc_request_handler_spy; }
 

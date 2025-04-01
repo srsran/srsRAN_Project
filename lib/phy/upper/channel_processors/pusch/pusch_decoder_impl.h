@@ -84,7 +84,7 @@ public:
                     "The number of PUSCH code block decoder in the pool (i.e., {}) must be greater than one.",
                     decoder_pool->capacity());
     }
-  };
+  }
 
   // See interface for the documentation.
   pusch_decoder_buffer& new_data(span<uint8_t>           transport_block,

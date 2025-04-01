@@ -59,7 +59,7 @@ sib1_scheduler::sib1_scheduler(const scheduler_si_expert_config&               e
   // Define a BWP configuration limited by CORESET#0 RBs.
   coreset0_bwp_cfg      = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
   coreset0_bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
-};
+}
 
 void sib1_scheduler::run_slot(cell_resource_allocator& res_alloc)
 {

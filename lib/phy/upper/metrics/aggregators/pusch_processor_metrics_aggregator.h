@@ -85,10 +85,10 @@ public:
   double get_cpu_usage_us() const { return static_cast<double>(sum_used_cpu_time_ns) / 1000.0; }
 
   /// Gets SINR in decibels as a result of channel estimation.
-  float get_ch_est_sinr() const { return ch_est_sinr_db; };
+  float get_ch_est_sinr() const { return ch_est_sinr_db; }
 
   /// Gets EVM as a result of channel estimation.
-  float get_ch_est_evm() const { return ch_est_evm; };
+  float get_ch_est_evm() const { return ch_est_evm; }
 
   double get_decoding_bler() const
   {

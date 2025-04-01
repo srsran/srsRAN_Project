@@ -76,7 +76,7 @@ public:
   bool contains(unsigned initial_cyclic_shift, unsigned time_domain_occ) const noexcept
   {
     return map.contains(convert_coords_to_index(initial_cyclic_shift, time_domain_occ));
-  };
+  }
 
   /// \brief Constructs a new element of the map in-place.
   /// \return True if no collision was detected and the object was inserted. False, otherwise.

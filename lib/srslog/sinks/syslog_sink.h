@@ -86,7 +86,7 @@ private:
         return LOG_LOCAL0;
         break;
     }
-  };
+  }
 };
 
 } // namespace srslog

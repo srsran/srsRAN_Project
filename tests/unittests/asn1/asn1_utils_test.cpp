@@ -657,7 +657,7 @@ TEST(asn1_enumerated, bool_to_enum_test)
   TESTASSERT(enum_to_bool(e2));
   e2 = EnumBoolTest::options::nulltype;
   TESTASSERT(!enum_to_bool(e2));
-};
+}
 
 void test_json_writer()
 {

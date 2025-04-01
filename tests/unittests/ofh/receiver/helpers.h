@@ -76,9 +76,9 @@ public:
     }
   }
 
-  unsigned get_nof_ports() const override { return 1; };
-  unsigned get_nof_subc() const override { return grid_data.size(); };
-  unsigned get_nof_symbols() const override { return MAX_NSYMB_PER_SLOT; };
+  unsigned get_nof_ports() const override { return 1; }
+  unsigned get_nof_subc() const override { return grid_data.size(); }
+  unsigned get_nof_symbols() const override { return MAX_NSYMB_PER_SLOT; }
 
   span<const cf_t> put(unsigned                                               port,
                        unsigned                                               l,

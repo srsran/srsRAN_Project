@@ -709,7 +709,7 @@ void existing_pucch_pdus_handler::remove_unused_pdus(static_vector<pucch_info, M
       ++it;
     }
   }
-};
+}
 
 void existing_pucch_pdus_handler::update_sr_pdu_bits(sr_nof_bits sr_bits, unsigned harq_ack_bits)
 {

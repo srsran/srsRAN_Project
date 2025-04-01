@@ -60,7 +60,7 @@ public:
   void handle_message(const f1ap_message& msg) override;
 
   // f1ap_statistics_handler functions.
-  size_t get_nof_ues() const override { return ue_ctxt_list.size(); };
+  size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
 
   // f1ap_ue_context_removal_handler functions.
   void remove_ue_context(ue_index_t ue_index) override;

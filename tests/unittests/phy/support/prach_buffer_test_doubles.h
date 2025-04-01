@@ -113,8 +113,8 @@ public:
            get_symbol_const_entries.size();
   }
 
-  const std::vector<entry_t>& get_get_symbol_entries() { return get_symbol_entries; };
-  const std::vector<entry_t>& get_get_symbol_const_entries() { return get_symbol_const_entries; };
+  const std::vector<entry_t>& get_get_symbol_entries() { return get_symbol_entries; }
+  const std::vector<entry_t>& get_get_symbol_const_entries() { return get_symbol_const_entries; }
 
   void clear()
   {

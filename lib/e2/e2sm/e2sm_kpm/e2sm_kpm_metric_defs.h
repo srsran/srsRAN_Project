@@ -1690,7 +1690,7 @@ inline span<const e2sm_kpm_metric_t> get_e2sm_kpm_28_552_metrics()
   {"VR.VDiskUsageMean", ANY, OM, INTEGER, "%", NO_LABEL, E2_NODE_LEVEL}}};
   // clang-format on
   return metrics;
-};
+}
 
 // E2SM_KPM O-RAN specific Measurements defined in O-RAN.WG3.E2SM-KPM-R003-v3.00
 inline span<const e2sm_kpm_metric_t> get_e2sm_kpm_oran_metrics()

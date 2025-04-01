@@ -85,7 +85,7 @@ struct rrc_periodicity_and_offset {
 inline bool operator==(const rrc_periodicity_and_offset& lhs, const rrc_periodicity_and_offset& rhs)
 {
   return lhs.periodicity == rhs.periodicity && lhs.offset == rhs.offset;
-};
+}
 
 struct rrc_ssb_mtc {
   rrc_periodicity_and_offset periodicity_and_offset;
@@ -95,7 +95,7 @@ struct rrc_ssb_mtc {
 inline bool operator==(const rrc_ssb_mtc& lhs, const rrc_ssb_mtc& rhs)
 {
   return lhs.periodicity_and_offset == rhs.periodicity_and_offset && lhs.dur == rhs.dur;
-};
+}
 
 struct rrc_ss_rssi_meas {
   uint64_t meas_slots;
@@ -121,7 +121,7 @@ struct rrc_ssb_mtc2 {
 inline bool operator==(const rrc_ssb_mtc2& lhs, const rrc_ssb_mtc2& rhs)
 {
   return lhs.periodicity == rhs.periodicity && lhs.pci_list == rhs.pci_list;
-};
+}
 
 struct rrc_ssb_to_measure {
   enum class bitmap_type_t : uint8_t { /* uint8_t */ short_bitmap,

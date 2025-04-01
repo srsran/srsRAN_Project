@@ -59,7 +59,7 @@ public:
 
   /// \brief Gets the resource grid bandwidth in resource elements.
   /// \return The number of resource elements in the grid.
-  unsigned get_rg_size() const { return rg_size; };
+  unsigned get_rg_size() const { return rg_size; }
 
   /// \brief Gets the offset in samples to the start of (the cyclic prefix of) a given symbol.
   /// \param[in] symbol_index Indicates the symbol index within the subframe.

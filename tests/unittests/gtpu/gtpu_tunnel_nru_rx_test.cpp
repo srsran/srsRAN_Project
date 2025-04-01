@@ -194,7 +194,7 @@ TEST_F(gtpu_tunnel_nru_rx_test, entity_creation)
   rx = std::make_unique<gtpu_tunnel_nru_rx_impl>(srs_cu_up::ue_index_t::MIN_UE_INDEX, rx_cfg, rx_lower);
 
   ASSERT_NE(rx, nullptr);
-};
+}
 
 /// \brief Test reception of PDUs with no SN
 TEST_F(gtpu_tunnel_nru_rx_test, rx_no_sn)
@@ -219,7 +219,7 @@ TEST_F(gtpu_tunnel_nru_rx_test, rx_no_sn)
     ASSERT_EQ(rx_lower.rx_dl_sdus.size(), i + 1);
     EXPECT_EQ(rx_lower.rx_dl_sdus[i], sdu);
   }
-};
+}
 
 int main(int argc, char** argv)
 {

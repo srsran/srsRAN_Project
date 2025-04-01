@@ -85,7 +85,7 @@ public:
 
   /// Returns a non-owning list of segments that compose the byte_buffer.
   /// The segments are not const, so that the callee can modify the bytes, but not layout of the buffer.
-  byte_buffer_segment_span_range modifiable_segments() { return {it, length()}; };
+  byte_buffer_segment_span_range modifiable_segments() { return {it, length()}; }
 
   /// \brief Equality comparison between byte buffer view and another range.
   template <typename T>

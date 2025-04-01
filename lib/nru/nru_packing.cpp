@@ -136,7 +136,7 @@ bool nru_packing::unpack(nru_dl_user_data& dl_user_data, byte_buffer_view contai
   }
 
   return true;
-};
+}
 
 bool nru_packing::pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_data) const
 {
@@ -208,7 +208,7 @@ bool nru_packing::pack(byte_buffer& out_buf, const nru_dl_user_data& dl_user_dat
   }
 
   return true;
-};
+}
 
 bool nru_packing::unpack(nru_dl_data_delivery_status& dl_data_delivery_status, byte_buffer_view container) const
 {
@@ -340,7 +340,7 @@ bool nru_packing::unpack(nru_dl_data_delivery_status& dl_data_delivery_status, b
   }
 
   return true;
-};
+}
 
 bool nru_packing::pack(byte_buffer& out_buf, const nru_dl_data_delivery_status& dl_data_delivery_status) const
 {
@@ -428,6 +428,6 @@ bool nru_packing::pack(byte_buffer& out_buf, const nru_dl_data_delivery_status& 
   }
 
   return true;
-};
+}
 
 } // namespace srsran

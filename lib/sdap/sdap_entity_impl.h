@@ -35,8 +35,8 @@ public:
     auto rx_it = rx_map.find(drb_id);
     srsran_assert(rx_it != rx_map.end(), "Cannot find QFI mapping for {}", drb_id);
     return *rx_it->second;
-  };
-  sdap_tx_sdu_handler& get_sdap_tx_sdu_handler() final { return *this; };
+  }
+  sdap_tx_sdu_handler& get_sdap_tx_sdu_handler() final { return *this; }
 
   /// Handle the incoming SDU and redirect to mapped DRB.
   void handle_sdu(byte_buffer sdu, qos_flow_id_t qos_flow_id) final

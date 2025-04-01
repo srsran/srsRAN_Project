@@ -42,7 +42,7 @@ struct dummy_cu_cp_measurement_handler : public cu_cp_measurement_handler {
                                     std::optional<rrc_meas_cfg> current_meas_config = std::nullopt) override
   {
     return std::nullopt;
-  };
+  }
   void handle_measurement_report(const ue_index_t ue_index, const rrc_meas_results& meas_results) override {}
 };
 

@@ -67,7 +67,7 @@ public:
   ue_index_t get_ue_index() const override { return ue_index; }
 
   /// \brief Get the PCI of the UE.
-  [[nodiscard]] pci_t get_pci() const { return pci; };
+  [[nodiscard]] pci_t get_pci() const { return pci; }
 
   /// \brief Get the C-RNTI of the UE.
   [[nodiscard]] rnti_t get_c_rnti() const { return ue_ctxt.crnti; }

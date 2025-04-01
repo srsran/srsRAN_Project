@@ -25,7 +25,7 @@ struct qos_flow_context {
     five_qi                = qos_params.get_5qi();
     srsran_assert(not qos_params.is_dyn_5qi(), "Dynamic 5QI not supported.");
     srsran_assert(five_qi != five_qi_t::invalid, "FiveQI must be set.");
-  };
+  }
 
   qos_flow_id_t qos_flow_id = qos_flow_id_t::invalid; // The QoS flow ID.
   five_qi_t     five_qi     = five_qi_t::invalid;     // The FiveQI assigned to this flow.

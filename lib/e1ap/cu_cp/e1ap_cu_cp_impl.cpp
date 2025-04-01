@@ -299,7 +299,7 @@ void e1ap_cu_cp_impl::handle_bearer_context_inactivity_notification(
           }))) {
     logger.warning("ue={}: Dropping InactivityNotification. UE does not exist", ue_ctxt.ue_ids.ue_index);
   }
-};
+}
 
 void e1ap_cu_cp_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)
 {

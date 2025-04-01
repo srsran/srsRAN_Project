@@ -48,7 +48,7 @@ public:
     srsran_assert(crc6->get_generator_poly() == crc_generator_poly::CRC6, "Invalid CRC6 calculator.");
     srsran_assert(crc11, "Invalid CRC11 calculator.");
     srsran_assert(crc11->get_generator_poly() == crc_generator_poly::CRC11, "Invalid CRC11 calculator.");
-  };
+  }
 
   // See interface for the documentation.
   uci_status decode(span<uint8_t> message, span<const log_likelihood_ratio> llr, const configuration& config) override;

@@ -68,11 +68,11 @@ public:
     rx->set_status_handler(tx.get());
   }
   ~pdcp_entity_impl() override { stop(); }
-  pdcp_tx_upper_control_interface& get_tx_upper_control_interface() final { return (*tx); };
-  pdcp_tx_upper_data_interface&    get_tx_upper_data_interface() final { return (*tx); };
-  pdcp_tx_lower_interface&         get_tx_lower_interface() final { return (*tx); };
-  pdcp_rx_upper_control_interface& get_rx_upper_control_interface() final { return (*rx); };
-  pdcp_rx_lower_interface&         get_rx_lower_interface() final { return (*rx); };
+  pdcp_tx_upper_control_interface& get_tx_upper_control_interface() final { return (*tx); }
+  pdcp_tx_upper_data_interface&    get_tx_upper_data_interface() final { return (*tx); }
+  pdcp_tx_lower_interface&         get_tx_lower_interface() final { return (*tx); }
+  pdcp_rx_upper_control_interface& get_rx_upper_control_interface() final { return (*rx); }
+  pdcp_rx_lower_interface&         get_rx_lower_interface() final { return (*rx); }
 
   void stop() override
   {

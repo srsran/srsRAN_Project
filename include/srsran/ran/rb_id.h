@@ -100,7 +100,7 @@ class rb_id_t
 public:
   rb_id_t() = default;
   rb_id_t(srb_id_t srb_id_) : rb_type(rb_type_t::srb), srb_id(srb_id_) {}
-  rb_id_t(drb_id_t drb_id_) : rb_type(rb_type_t::drb), drb_id(drb_id_){};
+  rb_id_t(drb_id_t drb_id_) : rb_type(rb_type_t::drb), drb_id(drb_id_) {}
 
   bool is_srb() { return rb_type == rb_type_t::srb; }
   bool is_drb() { return rb_type == rb_type_t::drb; }

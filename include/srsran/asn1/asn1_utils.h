@@ -1571,9 +1571,9 @@ class real_s
 public:
   float value;
   real_s() = default;
-  SRSASN_CODE pack(bit_ref& bref) const { return pack_unconstrained_real(bref, value, true); };
-  SRSASN_CODE unpack(cbit_ref& bref) { return unpack_unconstrained_real(value, bref, true); };
-  void        to_json(json_writer& j) const { j.write_float(value); };
+  SRSASN_CODE pack(bit_ref& bref) const { return pack_unconstrained_real(bref, value, true); }
+  SRSASN_CODE unpack(cbit_ref& bref) { return unpack_unconstrained_real(value, bref, true); }
+  void        to_json(json_writer& j) const { j.write_float(value); }
 };
 
 /*******************

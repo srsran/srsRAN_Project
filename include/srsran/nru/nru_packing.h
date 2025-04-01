@@ -79,6 +79,6 @@ struct formatter<srsran::nru_pdu_type> {
       format_to(ctx.out(), "{}", options[nru_pdu_type_to_uint(pdu_type)]);
     }
     return format_to(ctx.out(), "reserved ({})", nru_pdu_type_to_uint(pdu_type));
-  };
+  }
 };
 } // namespace fmt

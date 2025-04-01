@@ -40,7 +40,7 @@ csi_offset_colliding_with_sr(unsigned sr_offset, unsigned csi_offset, unsigned s
   }
 
   return false;
-};
+}
 
 validator_result config_validators::validate_pdcch_cfg(const serving_cell_config& ue_cell_cfg,
                                                        const dl_config_common&    dl_cfg_common)

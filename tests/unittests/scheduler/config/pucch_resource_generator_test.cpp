@@ -595,7 +595,7 @@ private:
 class test_pucch_res_generator : public ::testing::Test
 {
 public:
-  test_pucch_res_generator() : grid(bwp_size, nof_symbols_per_slot){};
+  test_pucch_res_generator() : grid(bwp_size, nof_symbols_per_slot) {}
 
 protected:
   // Parameters that are passed by the routing to run the tests.
@@ -607,7 +607,7 @@ protected:
 class test_pucch_res_generator_params : public ::testing::TestWithParam<pucch_gen_params>
 {
 public:
-  test_pucch_res_generator_params() : grid(bwp_size, nof_symbols_per_slot){};
+  test_pucch_res_generator_params() : grid(bwp_size, nof_symbols_per_slot) {}
 
 protected:
   // Parameters that are passed by the routing to run the tests.

@@ -34,7 +34,7 @@ public:
   {
     mbuf       = other.mbuf;
     other.mbuf = nullptr;
-  };
+  }
 
   /// Move assignment operator.
   dpdk_rx_buffer_impl& operator=(dpdk_rx_buffer_impl&& other) noexcept

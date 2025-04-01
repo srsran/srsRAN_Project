@@ -37,9 +37,9 @@ public:
   void handle_cu_up_e1_setup_request(const cu_up_e1_setup_request& msg) override;
 
   // getter functions
-  cu_up_index_t                        get_cu_up_index() override { return context.cu_up_index; };
-  cu_up_processor_context&             get_context() override { return context; };
-  e1ap_message_handler&                get_e1ap_message_handler() override { return *e1ap; };
+  cu_up_index_t                        get_cu_up_index() override { return context.cu_up_index; }
+  cu_up_processor_context&             get_context() override { return context; }
+  e1ap_message_handler&                get_e1ap_message_handler() override { return *e1ap; }
   e1ap_bearer_context_manager&         get_e1ap_bearer_context_manager() override { return *e1ap; }
   e1ap_bearer_context_removal_handler& get_e1ap_bearer_context_removal_handler() override { return *e1ap; }
   e1ap_statistics_handler&             get_e1ap_statistics_handler() override { return *e1ap; }

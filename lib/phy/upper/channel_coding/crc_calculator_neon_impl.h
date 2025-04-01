@@ -38,7 +38,7 @@ public:
   crc_calculator_checksum_t calculate(const bit_buffer& data) const override;
 
   // See interface for documentation.
-  crc_generator_poly get_generator_poly() const override { return poly; };
+  crc_generator_poly get_generator_poly() const override { return poly; }
 
 private:
   /// Polynomial selection.

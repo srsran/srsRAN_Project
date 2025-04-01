@@ -297,7 +297,7 @@ public:
   }
 
   // See interface for documentation.
-  ether::receiver_metrics_collector* get_metrics_collector() override { return nullptr; };
+  ether::receiver_metrics_collector* get_metrics_collector() override { return nullptr; }
 
   virtual void push_new_data(span<const uint8_t> frame) = 0;
 

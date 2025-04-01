@@ -114,7 +114,7 @@ struct sib_test_bench {
     test_logger.set_context(0, 0);
     sched_logger.set_context(0, 0);
     res_grid.slot_indication(sl_tx);
-  };
+  }
 
   // Test bench ctor for SIB1 scheduler test use in case of partial slot TDD configuration.
   sib_test_bench(sched_cell_configuration_request_message msg,
@@ -126,7 +126,7 @@ struct sib_test_bench {
     test_logger.set_context(0, 0);
     sched_logger.set_context(0, 0);
     res_grid.slot_indication(sl_tx);
-  };
+  }
 
   // Test bench ctor for SSB/SIB1 scheduler collision test.
   sib_test_bench(uint32_t           freq_arfcn,
@@ -155,7 +155,7 @@ struct sib_test_bench {
   // Delete the default constructor to force usage of defined constructors.
   sib_test_bench() = delete;
 
-  cell_slot_resource_allocator& get_slot_res_grid() { return res_grid[0]; };
+  cell_slot_resource_allocator& get_slot_res_grid() { return res_grid[0]; }
 
   static scheduler_expert_config make_scheduler_expert_cfg(const scheduler_si_expert_config& si_cfg)
   {

@@ -37,7 +37,7 @@ static unsigned get_tb_and_crc_size(unsigned tb_size, unsigned nof_cbs)
   }
 
   return tb_and_crc_size;
-};
+}
 
 // Returns, in order, the codeblock length, the message length and the number of data bits.
 // The message length is the number of systematic bits of the codeblock. This includes data and, if applicable, CRC,

@@ -88,7 +88,7 @@ public:
     return nullptr;
   }
 
-  std::vector<ofdm_symbol_modulator_spy*>& get_modulators() { return modulators; };
+  std::vector<ofdm_symbol_modulator_spy*>& get_modulators() { return modulators; }
 };
 
 } // namespace srsran

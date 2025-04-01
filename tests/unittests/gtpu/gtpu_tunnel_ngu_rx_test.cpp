@@ -210,7 +210,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, entity_creation)
 {
   create_gtpu_rx_entity();
   ASSERT_NE(rx, nullptr);
-};
+}
 
 /// \brief Test reception of PDUs with no SN
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_no_sn)
@@ -230,7 +230,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_no_sn)
     EXPECT_EQ(rx_lower.rx_qfis[i], qos_flow_id_t::min);
     EXPECT_EQ(rx_lower.rx_sdus[i], sdu);
   }
-};
+}
 
 /// \brief Test in-order reception of PDUs
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_in_order)
@@ -250,7 +250,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_in_order)
     EXPECT_EQ(rx_lower.rx_qfis[i], qos_flow_id_t::min);
     EXPECT_EQ(rx_lower.rx_sdus[i], sdu);
   }
-};
+}
 
 /// \brief Test out-of-order reception of PDUs
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
@@ -319,7 +319,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order)
     EXPECT_EQ(rx_lower.rx_sdus.size(), 5);
     EXPECT_EQ(rx_lower.rx_qfis.size(), 5); // all was received
   }
-};
+}
 
 /// \brief Test out-of-order reception of PDUs
 /// When there are two holes and they gets filled out-of-order
@@ -390,7 +390,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_out_of_order_two_holes)
     EXPECT_EQ(rx_lower.rx_sdus.size(), 5);
     EXPECT_EQ(rx_lower.rx_qfis.size(), 5); // all PDUs were delivered.
   }
-};
+}
 
 /// \brief Test t-Reordering expiration
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
@@ -455,7 +455,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_expiration)
     EXPECT_EQ(rx_lower.rx_sdus.size(), 4);
     EXPECT_EQ(rx_lower.rx_qfis.size(), 4); // all was received
   }
-};
+}
 
 /// \brief Test t-Reordering expiration
 /// When there are two holes and the second one gets filled before
@@ -529,7 +529,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_t_reordering_two_holes)
     EXPECT_EQ(rx_lower.rx_sdus.size(), 5);
     EXPECT_EQ(rx_lower.rx_qfis.size(), 5); // all was received
   }
-};
+}
 
 /// \brief Test in-order reception of PDUs
 TEST_F(gtpu_tunnel_ngu_rx_test, rx_stop)
@@ -572,7 +572,7 @@ TEST_F(gtpu_tunnel_ngu_rx_test, rx_stop)
     EXPECT_TRUE(rx_lower.rx_qfis.empty());
     EXPECT_TRUE(rx_lower.rx_sdus.empty());
   }
-};
+}
 
 int main(int argc, char** argv)
 {

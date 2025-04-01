@@ -41,7 +41,7 @@ struct pdu_session {
     if (session.pdu_session_res_dl_ambr.has_value()) {
       pdu_session_res_ambr = session.pdu_session_res_dl_ambr.value();
     }
-  };
+  }
   ~pdu_session() { stop(); }
 
   void stop()

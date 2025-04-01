@@ -488,7 +488,7 @@ void pdcp_entity_tx::configure_security(security::sec_128_as_config sec_cfg,
     logger.log_info("128 K_int: {}", sec_cfg.k_128_int.value());
   }
   logger.log_info("128 K_enc: {}", sec_cfg.k_128_enc);
-};
+}
 
 /*
  * Status report and data recovery

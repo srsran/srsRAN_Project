@@ -113,7 +113,7 @@ public:
 
   [[nodiscard]] bool release_teid(gtpu_teid_t teid) override { return true; }
 
-  [[nodiscard]] bool full() const override { return true; };
+  [[nodiscard]] bool full() const override { return true; }
 
   uint32_t get_max_nof_teids() override { return UINT32_MAX; }
 
@@ -286,7 +286,7 @@ private:
 class dummy_ngu_session_manager final : public srs_cu_up::ngu_session_manager
 {
 public:
-  gtpu_tnl_pdu_session& get_next_ngu_gateway() override { return ngu_gw; };
+  gtpu_tnl_pdu_session& get_next_ngu_gateway() override { return ngu_gw; }
 
 private:
   dummy_gtpu_gateway ngu_gw;

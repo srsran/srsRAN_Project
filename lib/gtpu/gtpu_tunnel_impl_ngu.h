@@ -41,7 +41,7 @@ public:
     rx->stop();
   }
   gtpu_tunnel_common_rx_upper_layer_interface* get_rx_upper_layer_interface() final { return rx.get(); }
-  gtpu_tunnel_ngu_tx_lower_layer_interface*    get_tx_lower_layer_interface() final { return tx.get(); };
+  gtpu_tunnel_ngu_tx_lower_layer_interface*    get_tx_lower_layer_interface() final { return tx.get(); }
 
 private:
   srslog::basic_logger& logger;

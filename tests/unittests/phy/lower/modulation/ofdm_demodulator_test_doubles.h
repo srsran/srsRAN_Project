@@ -85,7 +85,7 @@ public:
     return nullptr;
   }
 
-  std::vector<ofdm_symbol_demodulator_spy*>& get_demodulators() { return demodulators; };
+  std::vector<ofdm_symbol_demodulator_spy*>& get_demodulators() { return demodulators; }
 
 private:
   std::vector<ofdm_symbol_demodulator_spy*> demodulators;

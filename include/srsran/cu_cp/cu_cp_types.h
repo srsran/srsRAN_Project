@@ -168,19 +168,19 @@ struct cu_cp_five_g_s_tmsi {
   {
     srsran_assert(five_g_s_tmsi.has_value(), "five_g_s_tmsi is not set");
     return five_g_s_tmsi.value().to_uint64() >> 38U;
-  };
+  }
 
   uint8_t get_amf_pointer() const
   {
     srsran_assert(five_g_s_tmsi.has_value(), "five_g_s_tmsi is not set");
     return (five_g_s_tmsi.value().to_uint64() & 0x3f00000000) >> 32U;
-  };
+  }
 
   uint32_t get_five_g_tmsi() const
   {
     srsran_assert(five_g_s_tmsi.has_value(), "five_g_s_tmsi is not set");
     return (five_g_s_tmsi.value().to_uint64() & 0xffffffff);
-  };
+  }
 
   uint64_t to_number() const { return five_g_s_tmsi->to_uint64(); }
 

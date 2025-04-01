@@ -26,7 +26,7 @@ static log_likelihood_ratio demod_BPSK_symbol(cf_t z, float noise_var, float ran
   }
   float l_value = 2.0F * M_SQRT2f32 * (std::real(z) + std::imag(z)) / noise_var;
   return log_likelihood_ratio::quantize(l_value, range_limit);
-};
+}
 
 static void
 demodulate_soft_BPSK(span<log_likelihood_ratio> llrs, span<const cf_t> symbols, span<const float> noise_vars)

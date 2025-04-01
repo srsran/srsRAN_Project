@@ -77,7 +77,7 @@ public:
   bool has_pending_sr() const { return u.has_pending_sr(); }
 
   /// Get QoS information of DRBs configured for the UE.
-  logical_channel_config_list_ptr logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); };
+  logical_channel_config_list_ptr logical_channels() const { return u.ue_cfg_dedicated()->logical_channels(); }
 
   /// Average DL bit rate, in bps, for a given UE logical channel.
   double dl_avg_bit_rate(lcid_t lcid) const

@@ -79,7 +79,7 @@ public:
   constexpr unique_rx_buffer() noexcept : storage_ptr(&empty_object), buffer_ptr(nullptr) {}
 
   /// Default destructor.
-  ~unique_rx_buffer() { storage_ptr->destroy(&buffer); };
+  ~unique_rx_buffer() { storage_ptr->destroy(&buffer); }
 
   /// Copy constructor and copy assignment are deleted.
   unique_rx_buffer(const unique_rx_buffer& other)      = delete;
