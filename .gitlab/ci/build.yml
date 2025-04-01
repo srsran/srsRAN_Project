@@ -8,7 +8,7 @@
 
 include:
   - project: softwareradiosystems/ci/srsran_project_packaging
-    ref: "7"
+    ref: "8"
     file: .gitlab/ci-shared/package.yml
   - local: .gitlab/ci-shared/build.yml
 
