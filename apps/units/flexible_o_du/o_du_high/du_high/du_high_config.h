@@ -768,7 +768,7 @@ struct du_high_unit_cell_slice_config {
   /// Slice/Service Type.
   uint8_t sst;
   /// Slice Differentiator.
-  uint32_t sd;
+  uint32_t sd = 0xffffffU;
   /// Slice scheduling configuration.
   du_high_unit_cell_slice_sched_config sched_cfg;
 };
