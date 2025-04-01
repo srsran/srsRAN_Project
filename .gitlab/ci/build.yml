@@ -600,7 +600,7 @@ valgrind changed tests:
     - launch_tests
   cache:
     - *cache_build_get
-  artifacts:
+  artifacts: &valgrind_artifacts
     when: on_failure
     paths:
       - build/Testing/Temporary
@@ -1119,12 +1119,8 @@ debian 12 amd64 avx512:
   variables:
     ASSERT_LEVEL: PARANOID
     CMAKE_BUILD_TYPE: Debug
-  after_script:
-    - *build_after_script
   artifacts:
-    <<: *build_artifacts
-    when: on_failure
-    expire_in: 1 day
+    <<: *valgrind_artifacts
 
 sanitizers amd64 native:
   extends: .weekly sanitizers
