@@ -43,14 +43,10 @@ public:
 
     // Setup times.
     time_start        = std::chrono::steady_clock::now();
-    time_data         = 0;
-    time_uci          = 0;
-    time_return       = 0;
+    elapsed_data_ns   = 0;
+    elapsed_uci_ns    = 0;
+    elapsed_return_ns = 0;
     cpu_time_usage_ns = 0;
-
-    // Clear processor results.
-    sch_result.reset();
-    uci_result.reset();
 
     resource_usage_utils::measurements measurements;
     {
@@ -59,7 +55,7 @@ public:
       processor->process(data, std::move(rm_buffer), *this, grid, pdu);
     }
     cpu_time_usage_ns = measurements.duration.count();
-    time_return       = std::chrono::steady_clock::now().time_since_epoch().count();
+    elapsed_return_ns = std::chrono::nanoseconds(std::chrono::steady_clock::now() - time_start).count();
 
     // Notify metrics.
     notify_metrics();
@@ -72,13 +68,10 @@ private:
     srsran_assert(notifier, "Invalid notifier");
 
     // Save UCI reporting time.
-    time_uci = std::chrono::steady_clock::now().time_since_epoch().count();
+    elapsed_uci_ns = std::chrono::nanoseconds(std::chrono::steady_clock::now() - time_start).count();
 
     // Notify higher layers.
     notifier->on_uci(uci);
-
-    // Save results.
-    uci_result = uci;
   }
 
   // See pusch_processor_result_notifier for documentation.
@@ -86,11 +79,11 @@ private:
   {
     srsran_assert(notifier, "Invalid notifier");
 
-    // Save data reporting time.
-    time_data = std::chrono::steady_clock::now().time_since_epoch().count();
-
     // Save SCH results.
     sch_result = sch;
+
+    // Save data reporting time.
+    elapsed_data_ns = std::chrono::nanoseconds(std::chrono::steady_clock::now() - time_start).count();
 
     // Notify metrics.
     notify_metrics();
@@ -106,65 +99,60 @@ private:
   /// Notifies the gathered metrics through the given notifier.
   void notify_metrics()
   {
-    // Check if the processing function returned.
-    std::chrono::time_point<std::chrono::steady_clock> time_return_local =
-        std::chrono::time_point<std::chrono::steady_clock>(std::chrono::steady_clock::duration(time_return));
-    if (time_return_local == std::chrono::time_point<std::chrono::steady_clock>()) {
-      // Skip notification if return did not happen.
+    static float invalid_sinr_and_evm = std::numeric_limits<float>::quiet_NaN();
+    uint64_t     local_elapsed_return_ns(elapsed_return_ns);
+    uint64_t     local_elapsed_data_ns(elapsed_data_ns);
+
+    // Make sure that the processor returned and notified the completion of data.
+    if ((local_elapsed_return_ns == 0) || (local_elapsed_data_ns == 0)) {
       return;
     }
 
-    // Check if data was notified.
-    std::chrono::time_point<std::chrono::steady_clock> time_data_local =
-        std::chrono::time_point<std::chrono::steady_clock>(std::chrono::steady_clock::duration(time_data));
-    if (time_data_local == std::chrono::time_point<std::chrono::steady_clock>()) {
-      // Skip notification if data decode did not happen.
+    // If there is thread contention, ensure only one thread reaches this point.
+    bool success = elapsed_return_ns.compare_exchange_weak(local_elapsed_return_ns, 0);
+    if (!success) {
       return;
     }
 
+    // Load the elapsed time to deliver UCI. It is present only if it is not zero.
+    uint64_t                                local_elapsed_uci_ns = elapsed_uci_ns.load();
     std::optional<std::chrono::nanoseconds> elapsed_uci;
-    if (uci_result.has_value()) {
-      std::chrono::time_point<std::chrono::steady_clock> time_uci_local =
-          std::chrono::time_point<std::chrono::steady_clock>(std::chrono::steady_clock::duration(time_uci));
-
-      elapsed_uci = time_uci_local - time_start;
+    if (local_elapsed_uci_ns != 0) {
+      elapsed_uci.emplace(local_elapsed_uci_ns);
     }
 
-    float sinr_dB = std::numeric_limits<float>::quiet_NaN();
-    float evm     = std::numeric_limits<float>::quiet_NaN();
-    if (sch_result.has_value()) {
-      sinr_dB = sch_result.value().csi.get_sinr_dB().value_or(0.0);
-      evm     = sch_result.value().csi.get_evm().value_or(0.0);
-    }
+    float sinr_dB = sch_result.csi.get_sinr_dB().value_or(invalid_sinr_and_evm);
+    float evm     = sch_result.csi.get_evm().value_or(invalid_sinr_and_evm);
+    bool  crc_ok  = sch_result.data.tb_crc_ok;
 
     metric_notifier.on_new_metric({.slot              = pdu.slot,
                                    .tbs               = units::bytes(data.size()),
-                                   .crc_ok            = sch_result.value().data.tb_crc_ok,
-                                   .elapsed_return    = time_return_local - time_start,
-                                   .elapsed_data      = time_data_local - time_start,
+                                   .crc_ok            = crc_ok,
+                                   .elapsed_return    = std::chrono::nanoseconds(local_elapsed_return_ns),
+                                   .elapsed_data      = std::chrono::nanoseconds(local_elapsed_data_ns),
                                    .elapsed_uci       = elapsed_uci,
                                    .cpu_time_usage_ns = cpu_time_usage_ns,
                                    .sinr_dB           = sinr_dB,
                                    .evm               = evm});
   }
 
-  std::unique_ptr<pusch_processor>                      processor;
-  span<uint8_t>                                         data;
-  pdu_t                                                 pdu;
-  pusch_processor_result_notifier*                      notifier;
-  std::chrono::steady_clock::time_point                 time_start;
-  std::atomic<uint64_t>                                 time_uci;
-  std::atomic<uint64_t>                                 time_data;
-  std::atomic<uint64_t>                                 time_return;
-  std::atomic<uint64_t>                                 cpu_time_usage_ns;
-  pusch_processor_metric_notifier&                      metric_notifier;
-  std::optional<srsran::pusch_processor_result_control> uci_result;
-  std::optional<srsran::pusch_processor_result_data>    sch_result;
+  std::unique_ptr<pusch_processor>      processor;
+  span<uint8_t>                         data;
+  pdu_t                                 pdu;
+  pusch_processor_result_notifier*      notifier;
+  std::chrono::steady_clock::time_point time_start;
+  std::atomic<uint64_t>                 elapsed_uci_ns;
+  std::atomic<uint64_t>                 elapsed_data_ns;
+  std::atomic<uint64_t>                 elapsed_return_ns;
+  std::atomic<uint64_t>                 cpu_time_usage_ns;
+  pusch_processor_metric_notifier&      metric_notifier;
+  pusch_processor_result_control        uci_result;
+  pusch_processor_result_data           sch_result;
 
   // Makes sure atomics are lock free.
-  static_assert(std::atomic<decltype(time_uci)>::is_always_lock_free);
-  static_assert(std::atomic<decltype(time_data)>::is_always_lock_free);
-  static_assert(std::atomic<decltype(time_return)>::is_always_lock_free);
+  static_assert(std::atomic<decltype(elapsed_uci_ns)>::is_always_lock_free);
+  static_assert(std::atomic<decltype(elapsed_data_ns)>::is_always_lock_free);
+  static_assert(std::atomic<decltype(elapsed_return_ns)>::is_always_lock_free);
   static_assert(std::atomic<decltype(cpu_time_usage_ns)>::is_always_lock_free);
 };
 
