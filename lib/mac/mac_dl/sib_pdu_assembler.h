@@ -56,16 +56,18 @@ private:
 
   srslog::basic_logger& logger;
 
-  /// Last SI messages received by the assembler.
+  // Last SI messages received by the assembler.
   mac_cell_sys_info_config last_si_cfg;
 
-  /// SI buffers of last SI message update.
+  // SI buffers of last SI message update request.
+  // Note: This member is only accessed from the control executor.
   si_buffer_snapshot last_cfg_buffers;
 
-  /// Buffers being transferred from configuration plane to assembler RT path.
+  // Buffers being transferred from configuration plane to assembler RT path.
   lockfree_triple_buffer<si_buffer_snapshot> pending;
 
-  /// SI buffers that are being currently encoded and sent to lower layers.
+  // SI buffers that are being currently encoded and sent to lower layers.
+  // Note: This member is only accessed from the RT path.
   si_buffer_snapshot current_buffers;
 };
 

@@ -83,7 +83,7 @@ span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point sl_tx, const sib
 
   if (si_info.version != current_buffers.version) {
     // Current SI message version is too old. Fetch new version from shared buffer.
-    current_buffers = std::move(pending.read());
+    current_buffers = pending.read();
     if (current_buffers.version != si_info.version) {
       // Versions do not match.
       logger.error("SI message version mismatch. Expected: {}, got: {}", si_info.version, current_buffers.version);

@@ -76,8 +76,9 @@ void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
       const unsigned nof_sfns_until_mod_window = si_change_mod_period - (slot_sched.sfn() % si_change_mod_period);
       si_change_start_count = slot_count_sched + nof_sfns_until_mod_window * slots_per_frame - slot_sched.slot_index();
       if (nof_sfns_until_mod_window < default_paging_cycle) {
-        // The next modification period is too close to the current slot to leave enough time to broadcast short
-        // messages to all UEs.
+        // The next modification window is too close to the current slot to leave enough time to broadcast short
+        // messages to all UEs (assuming that we need at least one full default paging cycle to notify all UEs). Thus,
+        // we delay the SI change by one full SI change period.
         si_change_start_count += si_change_mod_period * slots_per_frame;
       }
     }

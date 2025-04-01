@@ -29,7 +29,7 @@ srsran::srs_du::make_si_scheduling_info_config(const du_cell_config& du_cfg, spa
     sched_req.emplace();
     sched_req->si_window_len_slots = du_cfg.si_config->si_window_len_slots;
     sched_req->si_messages.resize(du_cfg.si_config->si_sched_info.size());
-    for (unsigned i = 0; i != du_cfg.si_config->si_sched_info.size(); ++i) {
+    for (unsigned i = 0, sz = du_cfg.si_config->si_sched_info.size(); i != sz; ++i) {
       sched_req->si_messages[i].period_radio_frames = du_cfg.si_config->si_sched_info[i].si_period_radio_frames;
       sched_req->si_messages[i].msg_len             = si_message_lens[i];
       sched_req->si_messages[i].si_window_position  = du_cfg.si_config->si_sched_info[i].si_window_position;
