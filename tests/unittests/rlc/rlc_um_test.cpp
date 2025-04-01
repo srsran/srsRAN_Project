@@ -10,6 +10,7 @@
 
 #include "lib/rlc/rlc_um_entity.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
+#include "srsran/ran/pdsch/pdsch_constants.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <fmt/ostream.h>
 #include <gtest/gtest.h>
@@ -1271,6 +1272,66 @@ TEST_P(rlc_um_test, out_of_order_segments_across_SDUs)
   EXPECT_TRUE(rlc2_metrics.rx.num_lost_pdus == 0);
 
   EXPECT_EQ(0, timers.nof_running_timers());
+}
+
+TEST_P(rlc_um_test, tx_huge_bursts_report_buffer_state_correctly)
+{
+  const uint32_t sdu_size = 1500;
+  const uint32_t num_sdus = 2 * (MAX_DL_PDU_LENGTH / sdu_size);
+  const uint32_t num_pdus = num_sdus;
+
+  // Push many SDUs into RLC1 above MAX_DL_PDU_LENGTH to limit excessive buffer state reports
+  for (uint32_t i = 0; i < num_sdus; i++) {
+    byte_buffer sdu = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i + 13, sdu_size, i);
+
+    // write SDU into upper end
+    rlc1_tx_upper->handle_sdu(std::move(sdu), false);
+  }
+  pcell_worker.run_pending_tasks();
+  // Queried buffer state should be up to date
+  rlc_buffer_state bs1 = rlc1_tx_lower->get_buffer_state();
+  EXPECT_EQ(bs1.pending_bytes, num_sdus * (sdu_size + 1));
+  // Notified buffer state should be up to date
+  EXPECT_EQ(tester1.bsr.pending_bytes, num_sdus * (sdu_size + 1));
+  EXPECT_EQ(tester1.bsr_count, 1);
+
+  // Read all PDUs from RLC1 (so that buffer state is below MAX_DL_PDU_LENGTH)
+  const int            payload_len = 1 + sdu_size; // 1 bytes for header + payload
+  std::vector<uint8_t> tx_pdu(payload_len);
+  for (uint32_t i = 0; i < num_pdus; i++) {
+    unsigned nwritten = rlc1_tx_lower->pull_pdu(tx_pdu);
+    EXPECT_EQ(payload_len, nwritten);
+
+    // Verify transmit notification
+    EXPECT_EQ(1, tester1.transmitted_pdcp_sn_list.size());
+    EXPECT_EQ(1, tester1.desired_buf_size_list.size());
+    EXPECT_EQ(i + 13, tester1.transmitted_pdcp_sn_list.front());
+    EXPECT_EQ(config.tx.queue_size_bytes, tester1.desired_buf_size_list.front());
+    tester1.transmitted_pdcp_sn_list.pop_front();
+    tester1.desired_buf_size_list.pop_front();
+  }
+  pcell_worker.run_pending_tasks();
+  // Queried buffer state should be up to date
+  bs1 = rlc1_tx_lower->get_buffer_state();
+  EXPECT_EQ(bs1.pending_bytes, 0);
+  // No buffer state notifications expected on pull
+  EXPECT_EQ(tester1.bsr.pending_bytes, num_sdus * (sdu_size + 1));
+  EXPECT_EQ(tester1.bsr_count, 1);
+
+  // Push again many SDUs into RLC1 above MAX_DL_PDU_LENGTH; expect one new buffer status report
+  for (uint32_t i = 0; i < num_sdus; i++) {
+    byte_buffer sdu = test_helpers::create_pdcp_pdu(config.tx.pdcp_sn_len, /* is_srb = */ false, i + 13, sdu_size, i);
+
+    // write SDU into upper end
+    rlc1_tx_upper->handle_sdu(std::move(sdu), false);
+  }
+  pcell_worker.run_pending_tasks();
+  // Queried buffer state should be up to date
+  bs1 = rlc1_tx_lower->get_buffer_state();
+  EXPECT_EQ(bs1.pending_bytes, num_sdus * (sdu_size + 1));
+  // Notified buffer state should be up to date
+  EXPECT_EQ(tester1.bsr.pending_bytes, num_sdus * (sdu_size + 1));
+  EXPECT_EQ(tester1.bsr_count, 2);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
