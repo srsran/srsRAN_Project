@@ -997,6 +997,7 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
                                          *tx_pdu_notifier,
                                          ue->get_ngap_rrc_ue_notifier(),
                                          cu_cp_notifier,
+                                         metrics_handler,
                                          ev_mng,
                                          timer_factory{timers, ctrl_exec},
                                          ue_ctxt.logger);

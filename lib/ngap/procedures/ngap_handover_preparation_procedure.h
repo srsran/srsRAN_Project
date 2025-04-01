@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "procedures/ngap_transaction_manager.h"
+#include "../metrics/ngap_metrics_aggregator.h"
+#include "ngap_transaction_manager.h"
 #include "ue_context/ngap_ue_context.h"
 #include "srsran/ngap/ngap.h"
 #include "srsran/ngap/ngap_handover.h"
@@ -25,6 +26,7 @@ start_ngap_handover_preparation(const ngap_handover_preparation_request& req,
                                 ngap_message_notifier&                   amf_notifier,
                                 ngap_rrc_ue_notifier&                    rrc_ue_notifier,
                                 ngap_cu_cp_notifier&                     cu_cp_notifier,
+                                ngap_metrics_aggregator&                 metrics_handler,
                                 ngap_transaction_manager&                ev_mng,
                                 timer_factory                            timers,
                                 ngap_ue_logger&                          logger);

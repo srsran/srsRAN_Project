@@ -23,9 +23,16 @@ struct pdu_session_metrics_t {
   std::map<ngap_cause_t, unsigned> nof_pdu_sessions_failed_to_setup;
 };
 
+// Mobility Management metrics, see TS 28.552 section 5.1.1.6.
+struct mobility_metrics_t {
+  unsigned nof_handover_preparations_requested;
+  unsigned nof_successful_handover_preparations;
+};
+
 /// \brief NGAP metrics for all UEs connected to an AMF.
 struct ngap_metrics {
   std::map<s_nssai_t, pdu_session_metrics_t> pdu_session_metrics;
+  mobility_metrics_t                         mobility_metrics;
 };
 
 struct ngap_info {
