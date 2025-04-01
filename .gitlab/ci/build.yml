@@ -1008,8 +1008,8 @@ ubsan avx2:
     TEST_MODE: default
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2-docker
-    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
-    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
+    KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "60G"
+    KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "60G"
   timeout: 2 hours
 
 ###################
@@ -1151,8 +1151,8 @@ sanitizers amd64 native:
         ENABLE_UBSAN: "True"
         TEST_MODE: default
         INFRASTRUCTURE_TAG: amd64-docker
-        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
-        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
+        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "60G"
+        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "60G"
 
 sanitizers amd64 avx2:
   extends: .weekly sanitizers
@@ -1187,8 +1187,8 @@ sanitizers amd64 avx2:
         ENABLE_UBSAN: "True"
         TEST_MODE: default
         INFRASTRUCTURE_TAG: amd64-avx2-docker
-        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
-        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
+        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "60G"
+        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "60G"
 
 sanitizers amd64 avx512:
   extends: .weekly sanitizers
@@ -1220,8 +1220,8 @@ sanitizers amd64 avx512:
         ENABLE_UBSAN: "True"
         TEST_MODE: default
         INFRASTRUCTURE_TAG: amd64-avx2-avx512-docker
-        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
-        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
+        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "60G"
+        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "60G"
 
 sanitizers arm native:
   extends: .weekly sanitizers
@@ -1255,8 +1255,8 @@ sanitizers arm native:
         ENABLE_UBSAN: "True"
         TEST_MODE: default
         INFRASTRUCTURE_TAG: arm64-docker
-        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "50G"
-        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "50G"
+        KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "60G"
+        KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "60G"
 
 sanitizers arm neon:
   extends: sanitizers arm native
