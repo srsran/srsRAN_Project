@@ -101,10 +101,10 @@ void pucch_demodulator_format2::demodulate(span<log_likelihood_ratio>           
                 grid.get_nof_subc() / NRE);
 
   srsran_assert(!config.second_hop_prb.has_value() ||
-                    ((config.second_hop_prb.value() + config.nof_prb) * NRE <= grid.get_nof_subc()),
+                    ((*config.second_hop_prb + config.nof_prb) * NRE <= grid.get_nof_subc()),
                 "PUCCH Format 2: PRB allocation outside grid (second hop). Requested [{}, {}), grid has {} PRBs.",
-                config.second_hop_prb.value(),
-                config.second_hop_prb.value() + config.nof_prb,
+                *config.second_hop_prb,
+                *config.second_hop_prb + config.nof_prb,
                 grid.get_nof_subc() / NRE);
 
   srsran_assert(config.nof_symbols && config.nof_symbols <= pucch_constants::FORMAT2_MAX_NSYMB,
@@ -165,7 +165,7 @@ void pucch_demodulator_format2::get_data_re_ests(const resource_grid_reader&    
          i_symbol != i_symbol_end;
          ++i_symbol) {
       if ((i_symbol > config.start_symbol_index) && config.second_hop_prb.has_value()) {
-        first_subc = config.second_hop_prb.value() * NRE;
+        first_subc = *config.second_hop_prb * NRE;
       }
 
       // Extract data RE view from the resource grid.

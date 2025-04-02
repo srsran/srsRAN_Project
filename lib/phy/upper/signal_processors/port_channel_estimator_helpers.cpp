@@ -150,11 +150,10 @@ unsigned srsran::extract_layer_hop_rx_pilots(dmrs_symbol_list&                  
   unsigned nof_prb       = hop_rb_mask.count();
   bool     is_contiguous = (i_prb_end - i_prb_begin == nof_prb);
 
-  unsigned symbol_index      = ((hop == 1) && pattern.hopping_symbol_index.has_value())
-                                   ? pattern.hopping_symbol_index.value()
-                                   : cfg.first_symbol;
+  unsigned symbol_index =
+      ((hop == 1) && pattern.hopping_symbol_index.has_value()) ? *pattern.hopping_symbol_index : cfg.first_symbol;
   unsigned symbol_index_end  = ((hop == 0) && pattern.hopping_symbol_index.has_value())
-                                   ? pattern.hopping_symbol_index.value()
+                                   ? *pattern.hopping_symbol_index
                                    : cfg.first_symbol + cfg.nof_symbols;
   unsigned dmrs_symbol_index = 0;
   // For each OFDM symbol in the transmission...

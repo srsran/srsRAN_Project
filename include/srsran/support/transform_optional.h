@@ -42,7 +42,7 @@ transform_optional(const std::optional<T>& in, F&& fn, Args&&... args)
     return std::nullopt;
   }
 
-  return std::invoke(fn, in.value(), std::forward<Args>(args)...);
+  return std::invoke(fn, *in, std::forward<Args>(args)...);
 }
 
 /// \brief Applies a function to the value of an std::optional.
@@ -73,6 +73,6 @@ std::invoke_result_t<F, T, Args&&...> evaluate_or(const std::optional<T>& in, co
     return d_out;
   }
 
-  return std::invoke(fn, in.value(), std::forward<Args>(args)...);
+  return std::invoke(fn, *in, std::forward<Args>(args)...);
 }
 } // namespace srsran

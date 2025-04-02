@@ -105,8 +105,8 @@ dmrs_pucch_estimator_format1::generate_dmrs_pattern(const dmrs_pucch_estimator::
 
   if (config.second_hop_prb.has_value()) {
     // Set second hop PRB allocation.
-    mask.rb_mask2.resize(config.second_hop_prb.value() + 1);
-    mask.rb_mask2.set(config.second_hop_prb.value());
+    mask.rb_mask2.resize(*config.second_hop_prb + 1);
+    mask.rb_mask2.set(*config.second_hop_prb);
 
     // Set the hopping symbol index, indicating the start of the second hop. In case of a PUCCH allocation with an odd
     // number of symbols, the second hop is one symbol larger than the first one. See TS38.211 Table 6.3.2.4.1-1.

@@ -59,10 +59,10 @@ static void validate_config(const pucch_detector::format1_configuration& config)
                 "Setting {} as the time-domain OCC index, but only values between 0 and 6 are valid.",
                 config.time_domain_occ);
   if (config.second_hop_prb.has_value()) {
-    srsran_assert(config.second_hop_prb.value() <= 274,
+    srsran_assert(*config.second_hop_prb <= 274,
                   "Setting {} as the PRB allocated to PUCCH after frequency hopping, but only values between 0 and 274 "
                   "are valid.",
-                  config.second_hop_prb.value());
+                  *config.second_hop_prb);
     srsran_assert(config.time_domain_occ < config.nof_symbols / 4U,
                   "Cannot have OCCI {} with {} allocated OFDM symbols and frequency hopping enabled.",
                   config.time_domain_occ,
@@ -222,7 +222,7 @@ void pucch_detector_format1::extract_data_and_estimates(const resource_grid_read
     for (; i_symbol != nof_data_symbols; ++i_symbol, skip += NRE, symbol_index += 2) {
       // Index of the first subcarrier assigned to PUCCH, after hopping. Note that we only enter this loop if
       // second_prb.has_value().
-      unsigned      k_init         = NRE * second_prb.value();
+      unsigned      k_init         = NRE * *second_prb;
       span<cbf16_t> sequence_chunk = sequence_slice.subspan(skip, NRE);
       grid.get(sequence_chunk, port, symbol_index, k_init);
 
@@ -732,7 +732,7 @@ std::pair<float, unsigned> pucch_detector_format1::process_hop(
       nof_dmrs_symbols_hop     = nof_symbols_hop - nof_data_symbols_hop;
     } else {
       start_symbol     = start_symbol + config.nof_symbols / 2U;
-      first_subcarrier = NRE * config.second_hop_prb.value();
+      first_subcarrier = NRE * *config.second_hop_prb;
 
       unsigned nof_symbols_hop = nof_dmrs_symbols_hop;
       nof_data_symbols_hop     = divide_ceil(config.nof_symbols - 1U, 4U);

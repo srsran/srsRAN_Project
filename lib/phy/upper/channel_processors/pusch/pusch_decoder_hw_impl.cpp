@@ -385,7 +385,7 @@ void pusch_decoder_hw_impl::copy_tb_and_notify(hal::hw_accelerator_pusch_dec& de
   // Calculate statistics.
   std::optional<unsigned> cb_nof_iter = cb_stats.try_pop();
   while (cb_nof_iter.has_value()) {
-    stats.ldpc_decoder_stats.update(cb_nof_iter.value());
+    stats.ldpc_decoder_stats.update(*cb_nof_iter);
     cb_nof_iter = cb_stats.try_pop();
   }
 

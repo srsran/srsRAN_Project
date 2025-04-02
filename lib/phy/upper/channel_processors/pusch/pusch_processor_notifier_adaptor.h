@@ -141,11 +141,11 @@ private:
     void update_csi(const demodulation_stats& stats)
     {
       if (stats.sinr_dB.has_value()) {
-        csi.set_sinr_dB(channel_state_information::sinr_type::post_equalization, stats.sinr_dB.value());
+        csi.set_sinr_dB(channel_state_information::sinr_type::post_equalization, *stats.sinr_dB);
       }
       if (stats.evm.has_value()) {
-        csi.set_evm(stats.evm.value());
-        csi.set_sinr_dB(channel_state_information::sinr_type::evm, -20.0F * log10f(stats.evm.value()) - 3.7F);
+        csi.set_evm(*stats.evm);
+        csi.set_sinr_dB(channel_state_information::sinr_type::evm, -20.0F * log10f(*stats.evm) - 3.7F);
       }
     }
 

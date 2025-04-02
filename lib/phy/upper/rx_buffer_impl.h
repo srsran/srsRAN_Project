@@ -124,7 +124,7 @@ public:
       }
 
       // Append the codeblock identifier to the list.
-      codeblock_ids.push_back(cb_id.value());
+      codeblock_ids.push_back(*cb_id);
     }
 
     // Resize CRCs.

@@ -115,7 +115,7 @@ void port_channel_estimator_average_impl::do_compute(channel_estimate&          
   // Report stats.
   if (compensate_cfo && cfo_normalized.has_value()) {
     // Apply CFO to the estimated channel.
-    float cfo = cfo_normalized.value();
+    float cfo = *cfo_normalized;
     for (unsigned i_symbol = cfg.first_symbol, last_symbol = cfg.first_symbol + cfg.nof_symbols;
          i_symbol != last_symbol;
          ++i_symbol) {
@@ -128,9 +128,8 @@ void port_channel_estimator_average_impl::do_compute(channel_estimate&          
   estimate.set_rsrp(rsrp, port, layer0);
   estimate.set_epre(epre, port);
   estimate.set_time_alignment(phy_time_unit::from_seconds(time_alignment_s), port, layer0);
-  estimate.set_cfo_Hz(cfo_normalized.has_value()
-                          ? std::optional<float>(cfo_normalized.value() * scs_to_khz(cfg.scs) * 1000)
-                          : std::nullopt,
+  estimate.set_cfo_Hz(cfo_normalized.has_value() ? std::optional<float>(*cfo_normalized * scs_to_khz(cfg.scs) * 1000)
+                                                 : std::nullopt,
                       port,
                       layer0);
 
@@ -159,10 +158,9 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
   unsigned nof_dmrs_symbols = extract_layer_hop_rx_pilots(rx_pilots, grid, port, cfg, hop);
   srsran_assert(nof_dmrs_symbols != 0, "No DM-RS symbols were found for layer {}.", layer0);
 
-  unsigned first_symbol = ((hop == 1) && pattern.hopping_symbol_index.has_value())
-                              ? pattern.hopping_symbol_index.value()
-                              : cfg.first_symbol;
-  unsigned last_symbol = ((hop == 0) && pattern.hopping_symbol_index.has_value()) ? pattern.hopping_symbol_index.value()
+  unsigned first_symbol =
+      ((hop == 1) && pattern.hopping_symbol_index.has_value()) ? *pattern.hopping_symbol_index : cfg.first_symbol;
+  unsigned last_symbol = ((hop == 0) && pattern.hopping_symbol_index.has_value()) ? *pattern.hopping_symbol_index
                                                                                   : cfg.first_symbol + cfg.nof_symbols;
 
   for (unsigned i_dmrs = 0; i_dmrs != nof_dmrs_symbols; ++i_dmrs) {
@@ -220,8 +218,7 @@ void port_channel_estimator_average_impl::compute_hop(srsran::channel_estimate& 
 
   // Combine CFO measurement with other hop CFO measurements.
   if (cfo_hop.has_value()) {
-    cfo_normalized =
-        evaluate_or(cfo_normalized, cfo_hop.value(), [](float a, float b) { return (a + b) / 2.0F; }, cfo_hop.value());
+    cfo_normalized = evaluate_or(cfo_normalized, *cfo_hop, [](float a, float b) { return (a + b) / 2.0F; }, *cfo_hop);
   }
 
   // Average and apply DM-RS-to-data gain.
@@ -464,8 +461,7 @@ static float estimate_noise(const dmrs_symbol_list&                   pilots,
 
     // Compensate for CFO only if present.
     if (compensate_cfo && cfo.has_value()) {
-      srsvec::sc_prod(
-          predicted_obs, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * cfo.value()), predicted_obs);
+      srsvec::sc_prod(predicted_obs, std::polar(1.0F, TWOPI * symbol_start_epochs[i_symbol] * *cfo), predicted_obs);
     }
 
     // Estimate receiver error as the subtraction of the regenerated symbols to the received pilots.

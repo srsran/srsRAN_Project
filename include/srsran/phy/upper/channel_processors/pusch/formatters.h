@@ -53,11 +53,11 @@ struct formatter<srsran::pusch_processor::codeword_description> {
   }
 
   template <typename FormatContext>
-  auto format(const std::optional<srsran::pusch_processor::codeword_description>& codeword, FormatContext& ctx) const
+  auto format(const srsran::pusch_processor::codeword_description& codeword, FormatContext& ctx) const
   {
-    helper.format_always(ctx, "rv={}", codeword.value().rv);
-    helper.format_if_verbose(ctx, "bg={}", fmt::underlying(codeword.value().ldpc_base_graph));
-    helper.format_if_verbose(ctx, "new_data={}", codeword.value().new_data);
+    helper.format_always(ctx, "rv={}", codeword.rv);
+    helper.format_if_verbose(ctx, "bg={}", fmt::underlying(codeword.ldpc_base_graph));
+    helper.format_if_verbose(ctx, "new_data={}", codeword.new_data);
 
     return ctx.out();
   }
@@ -118,7 +118,7 @@ struct formatter<srsran::pusch_processor::pdu_t> {
   auto format(const srsran::pusch_processor::pdu_t& pdu, FormatContext& ctx) const
   {
     if (pdu.context.has_value()) {
-      helper.format_always(ctx, pdu.context.value());
+      helper.format_always(ctx, *pdu.context);
     } else {
       helper.format_always(ctx, "rnti=0x{:04x}", pdu.rnti);
     }
@@ -135,7 +135,7 @@ struct formatter<srsran::pusch_processor::pdu_t> {
 
     // PUSCH data codeword if available.
     if (pdu.codeword.has_value()) {
-      helper.format_always(ctx, pdu.codeword.value());
+      helper.format_always(ctx, *pdu.codeword);
     }
 
     helper.format_if_verbose(ctx, "n_id={}", pdu.n_id);

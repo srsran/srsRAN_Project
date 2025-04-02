@@ -54,10 +54,10 @@ update_metadata(baseband_gateway_transmitter_metadata& metadata, bool could_proc
   srsran_assert(metadata.is_empty || (curr_writing_index != 0), "Buffer state is non-empty before writing.");
   srsran_assert(!metadata.is_empty || (!metadata.tx_start.has_value() && !metadata.tx_end.has_value()),
                 "TX window cannot be defined for an empty buffer.");
-  srsran_assert(!metadata.tx_start.has_value() || (curr_writing_index >= metadata.tx_start.value()),
+  srsran_assert(!metadata.tx_start.has_value() || (curr_writing_index >= *metadata.tx_start),
                 "Writing index, i.e., {}, is lower than the buffer TX window start, i.e., {}.",
                 curr_writing_index,
-                metadata.tx_start.value());
+                *metadata.tx_start);
   srsran_assert(!metadata.tx_end.has_value(),
                 "Updating buffer metadata after the transmission window is fully specified.");
 
@@ -91,12 +91,12 @@ static void fill_zeros(baseband_gateway_buffer_writer& buffer, const baseband_ga
   } else {
     if (md.tx_start.has_value()) {
       for (unsigned i_channel = 0, i_channel_end = buffer.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
-        srsvec::zero(buffer.get_channel_buffer(i_channel).first(md.tx_start.value()));
+        srsvec::zero(buffer.get_channel_buffer(i_channel).first(*md.tx_start));
       }
     }
     if (md.tx_end.has_value()) {
       for (unsigned i_channel = 0, i_channel_end = buffer.get_nof_channels(); i_channel != i_channel_end; ++i_channel) {
-        srsvec::zero(buffer.get_channel_buffer(i_channel).last(buffer.get_nof_samples() - md.tx_end.value()));
+        srsvec::zero(buffer.get_channel_buffer(i_channel).last(buffer.get_nof_samples() - *md.tx_end));
       }
     }
   }
@@ -151,7 +151,7 @@ baseband_gateway_transmitter_metadata downlink_processor_baseband_impl::process(
       slot_point slot(to_numerology_value(scs), i_slot);
 
       // Detect slot boundary.
-      if ((!last_notified_slot.has_value() || (slot > last_notified_slot.value())) && (i_symbol == 0)) {
+      if ((!last_notified_slot.has_value() || (slot > *last_notified_slot)) && (i_symbol == 0)) {
         // Notify slot boundary.
         lower_phy_timing_context context;
         context.slot       = slot + nof_slot_tti_in_advance;

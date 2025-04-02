@@ -154,7 +154,7 @@ public:
     }
 
     // Process pusch.
-    processors[index.value()].process(data, std::move(rm_buffer), notifier, grid, pdu);
+    processors[*index].process(data, std::move(rm_buffer), notifier, grid, pdu);
   }
 
 private:

@@ -36,7 +36,7 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
   // Calculate actual PRB.
   std::optional<unsigned> second_hop_prb;
   if (config.second_hop_prb.has_value()) {
-    second_hop_prb.emplace(config.second_hop_prb.value() + config.bwp_start_rb);
+    second_hop_prb.emplace(*config.second_hop_prb + config.bwp_start_rb);
   }
 
   pucch_detector::format0_configuration detector_config;
@@ -131,7 +131,7 @@ pucch_processor_impl::process(const resource_grid_reader& grid, const format1_ba
       detector_config.cp           = config.cp;
       detector_config.starting_prb = config.starting_prb + config.bwp_start_rb;
       if (config.second_hop_prb.has_value()) {
-        detector_config.second_hop_prb.emplace(config.second_hop_prb.value() + config.bwp_start_rb);
+        detector_config.second_hop_prb.emplace(*config.second_hop_prb + config.bwp_start_rb);
       }
       detector_config.start_symbol_index   = config.start_symbol_index;
       detector_config.nof_symbols          = config.nof_symbols;
@@ -441,10 +441,10 @@ error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor
 
   // Second hop PRB allocation goes beyond the BWP.
   if (config.second_hop_prb.has_value()) {
-    if (config.second_hop_prb.value() >= config.bwp_size_rb) {
+    if (config.second_hop_prb >= config.bwp_size_rb) {
       return make_unexpected(
           fmt::format("Second hop PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
-                      config.second_hop_prb.value() + 1,
+                      *config.second_hop_prb + 1,
                       config.bwp_size_rb));
     }
   }
@@ -519,10 +519,10 @@ error_type<std::string> pucch_pdu_validator_impl::is_valid(const pucch_processor
 
   // Second hop PRB allocation goes beyond the BWP.
   if (config.second_hop_prb.has_value()) {
-    if (config.second_hop_prb.value() >= config.bwp_size_rb) {
+    if (config.second_hop_prb >= config.bwp_size_rb) {
       return make_unexpected(
           fmt::format("Second hop PRB allocation within the BWP goes up to PRB {}, exceeding BWP size, i.e., {}.",
-                      config.second_hop_prb.value() + 1,
+                      *config.second_hop_prb + 1,
                       config.bwp_size_rb));
     }
   }

@@ -117,10 +117,10 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
   // Throttling mechanism to slow down the baseband processing.
   if ((cpu_throttling_time.count() > 0) && (last_tx_time.has_value())) {
     std::chrono::time_point<std::chrono::high_resolution_clock> now     = std::chrono::high_resolution_clock::now();
-    std::chrono::nanoseconds                                    elapsed = now - last_tx_time.value();
+    std::chrono::nanoseconds                                    elapsed = now - *last_tx_time;
 
     if (elapsed < cpu_throttling_time) {
-      std::this_thread::sleep_until(last_tx_time.value() + cpu_throttling_time);
+      std::this_thread::sleep_until(*last_tx_time + cpu_throttling_time);
     }
   }
   last_tx_time.emplace(std::chrono::high_resolution_clock::now());

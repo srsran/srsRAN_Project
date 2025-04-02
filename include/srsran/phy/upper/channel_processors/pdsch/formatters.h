@@ -60,7 +60,7 @@ struct formatter<srsran::pdsch_processor::pdu_t> {
   {
     helper.format_always(ctx, "rnti=0x{:04x}", pdu.rnti);
     if (pdu.context.has_value()) {
-      helper.format_always(ctx, pdu.context.value());
+      helper.format_always(ctx, *pdu.context);
     }
     helper.format_if_verbose(ctx, "bwp=[{}, {})", pdu.bwp_start_rb, pdu.bwp_start_rb + pdu.bwp_size_rb);
     helper.format_always(ctx, "prb={}", pdu.freq_alloc);

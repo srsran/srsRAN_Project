@@ -519,7 +519,7 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
     decoder_config.crc_factory               = pusch_crc_calc_factory;
     decoder_config.hw_decoder_factory        = nullptr;
     decoder_config.nof_pusch_decoder_threads = config.nof_pusch_decoder_threads;
-    decoder_config.hw_decoder_factory        = config.hw_decoder_factory.value();
+    decoder_config.hw_decoder_factory        = *config.hw_decoder_factory;
     decoder_config.executor                  = config.pusch_decoder_executor;
     pusch_config.decoder_factory             = create_pusch_decoder_factory_hw(decoder_config);
   }
@@ -918,7 +918,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
     pdsch_encoder_factory_hw_configuration encoder_config;
     encoder_config.crc_factory        = pdsch_crc_calc_factory;
     encoder_config.segmenter_factory  = ldpc_seg_tx_factory;
-    encoder_config.hw_encoder_factory = config.hw_encoder_factory.value();
+    encoder_config.hw_encoder_factory = *config.hw_encoder_factory;
     pdsch_enc_factory                 = create_pdsch_encoder_factory_hw(encoder_config);
   }
   report_fatal_error_if_not(pdsch_enc_factory, "Invalid PDSCH encoder factory.");
@@ -978,13 +978,13 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   // Create PDSCH block processor factory (if needed).
   std::shared_ptr<pdsch_block_processor_factory> block_processor_factory;
   if (!std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
-    if (!config.hw_encoder_factory) {
+    if (!config.hw_encoder_factory.has_value()) {
       block_processor_factory = create_pdsch_block_processor_factory_sw(
           ldpc_enc_factory, ldpc_rm_factory, pdsch_scrambling_factory, pdsch_mod_mapper_factory);
       report_fatal_error_if_not(block_processor_factory, "Invalid SW PDSCH block processor factory.");
     } else {
       block_processor_factory = create_pdsch_block_processor_factory_hw(
-          config.hw_encoder_factory.value(), pdsch_scrambling_factory, pdsch_mod_mapper_factory);
+          *config.hw_encoder_factory, pdsch_scrambling_factory, pdsch_mod_mapper_factory);
       report_fatal_error_if_not(block_processor_factory, "Invalid HW PDSCH block processor factory.");
     }
   }

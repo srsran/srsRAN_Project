@@ -67,7 +67,7 @@ rb_allocation srsran::rb_allocation::make_type0(const bounded_bitset<MAX_RB>&   
   result.vrb_mask = vrb_bitmap;
 
   if (vrb_to_prb_map_.has_value()) {
-    result.vrb_to_prb_map = vrb_to_prb_map_.value();
+    result.vrb_to_prb_map = *vrb_to_prb_map_;
   }
 
   return result;
@@ -83,7 +83,7 @@ rb_allocation srsran::rb_allocation::make_type1(unsigned                        
   result.vrb_mask.fill(rb_start, rb_start + rb_count);
 
   if (vrb_to_prb_map_.has_value()) {
-    result.vrb_to_prb_map = vrb_to_prb_map_.value();
+    result.vrb_to_prb_map = *vrb_to_prb_map_;
   }
 
   return result;
@@ -104,7 +104,7 @@ rb_allocation srsran::rb_allocation::make_custom(std::initializer_list<const uns
   }
 
   if (vrb_to_prb_map_.has_value()) {
-    result.vrb_to_prb_map = vrb_to_prb_map_.value();
+    result.vrb_to_prb_map = *vrb_to_prb_map_;
   }
 
   return result;

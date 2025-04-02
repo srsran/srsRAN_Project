@@ -136,7 +136,7 @@ private:
     update_slotmax(metrics.slot, metrics.elapsed_data.count(), packed_max_data_latency_ns);
     update_slotmin(metrics.slot, metrics.elapsed_data.count(), packed_min_data_latency_ns);
     if (metrics.elapsed_uci.has_value()) {
-      sum_uci_elapsed_ns += metrics.elapsed_uci.value().count();
+      sum_uci_elapsed_ns += metrics.elapsed_uci->count();
       update_minmax(metrics.elapsed_uci->count(), max_uci_latency_ns, min_uci_latency_ns);
       ++uci_count;
     }

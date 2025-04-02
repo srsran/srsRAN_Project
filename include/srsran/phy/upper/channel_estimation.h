@@ -255,7 +255,7 @@ public:
     // Use the CFO of the channel path with best SNR.
     std::optional<float> cfo_help = get_cfo_Hz(best_rx_port, 0);
     if (cfo_help.has_value()) {
-      csi.set_cfo(cfo_help.value());
+      csi.set_cfo(*cfo_help);
     }
 
     // SINR is reported by averaging the signal and noise power contributions of all Rx ports.
