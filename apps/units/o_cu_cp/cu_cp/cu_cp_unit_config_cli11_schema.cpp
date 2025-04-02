@@ -130,10 +130,17 @@ static void configure_cli11_amf_item_args(CLI::App& app, cu_cp_unit_amf_config_i
              config.sctp_nodelay,
              "Send SCTP messages as soon as possible without any Nagle-like algorithm");
 
-  // supported tracking areas configuration parameters.
+  // Supported tracking areas configuration parameters.
   app.add_option_function<std::vector<std::string>>(
       "--supported_tracking_areas",
       [&config](const std::vector<std::string>& values) {
+        // Only configure if values are set, else default configuration is used.
+        if (values.empty()) {
+          return;
+        }
+
+        // If supported tracking areas are configured clear default values.
+        config.supported_tas.clear();
         config.supported_tas.resize(values.size());
 
         for (unsigned i = 0, e = values.size(); i != e; ++i) {

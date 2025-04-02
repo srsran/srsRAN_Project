@@ -39,12 +39,6 @@ struct cu_cp_unit_supported_ta_item {
   std::vector<cu_cp_unit_plmn_item> plmn_list;
 };
 
-/// All tracking area related configuration parameters.
-struct cu_cp_unit_ta_config {
-  /// List of all tracking areas supported by the CU-CP.
-  std::vector<cu_cp_unit_supported_ta_item> supported_tas;
-};
-
 struct cu_cp_unit_amf_config_item {
   std::string ip_addr                = "127.0.0.1";
   uint16_t    port                   = 38412;
@@ -57,7 +51,7 @@ struct cu_cp_unit_amf_config_item {
   int         sctp_max_init_timeo    = 500;
   bool        sctp_nodelay           = false;
   /// List of all tracking areas supported by the AMF.
-  std::vector<cu_cp_unit_supported_ta_item> supported_tas;
+  std::vector<cu_cp_unit_supported_ta_item> supported_tas = {{7, {{"00101", {cu_cp_unit_plmn_item::tai_slice_t{1}}}}}};
 };
 
 struct cu_cp_unit_amf_config {
