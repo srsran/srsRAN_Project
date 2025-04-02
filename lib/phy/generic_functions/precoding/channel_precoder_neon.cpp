@@ -145,7 +145,7 @@ static inline void from_ci8_to_ci16(int16x8x2_t& out0, int16x8x2_t& out1, int8x1
 
   out1.val[0] = vmovl_high_s8(in.val[0]);
   out1.val[1] = vmovl_high_s8(in.val[1]);
-};
+}
 
 static inline void from_ci16_to_ci32(int32x4x2_t& out0, int32x4x2_t& out1, int16x8x2_t in)
 {
@@ -154,13 +154,13 @@ static inline void from_ci16_to_ci32(int32x4x2_t& out0, int32x4x2_t& out1, int16
 
   out1.val[0] = vmovl_high_s16(in.val[0]);
   out1.val[1] = vmovl_high_s16(in.val[1]);
-};
+}
 
 static inline void from_ci32_to_cf(float32x4x2_t& out, int32x4x2_t in)
 {
   out.val[0] = vcvtq_f32_s32(in.val[0]);
   out.val[1] = vcvtq_f32_s32(in.val[1]);
-};
+}
 
 // Converts ci8_t symbols into cf_t and stores them on four NEON registers.
 static inline void from_ci8_to_cf(simd_cf_interleaved& out0,
