@@ -146,7 +146,6 @@ private:
   std::atomic<uint64_t>                 elapsed_return_ns;
   std::atomic<uint64_t>                 cpu_time_usage_ns;
   pusch_processor_metric_notifier&      metric_notifier;
-  pusch_processor_result_control        uci_result;
   pusch_processor_result_data           sch_result;
 
   // Makes sure atomics are lock free.
