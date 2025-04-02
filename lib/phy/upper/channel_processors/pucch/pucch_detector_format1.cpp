@@ -314,10 +314,9 @@ static constexpr unsigned NSHIFTS = pucch_constants::format1_initial_cyclic_shif
 /// signal components.
 /// \param[out] bits        The bits corresponding to the detected symbol.
 /// \param[in]  cross_term  The cross term between DM-RS and signal components of the PUCCH transmission.
-/// \returns The real part of the cross term between DM-RS and signal components assuming the detected symbol, and the
-/// detected symbol.
+/// \returns The real part of the cross term between DM-RS and signal components assuming the detected symbol.
 /// \remark The order of the modulation is inferred from the length of \c bits.
-static std::pair<float, cf_t> detect_symbol(span<uint8_t> bits, cf_t cross_term)
+static float detect_symbol(span<uint8_t> bits, cf_t cross_term)
 {
   unsigned nof_bits = bits.size();
   srsran_assert(nof_bits <= 2, "PUCCH Format 1 supports max 2 bits, requested {}.", nof_bits);
@@ -333,7 +332,7 @@ static std::pair<float, cf_t> detect_symbol(span<uint8_t> bits, cf_t cross_term)
       metric_cross = -metric_cross;
       bits[0]      = 1;
     }
-    return {metric_cross, rx_symbol};
+    return metric_cross;
   }
 
   // Case QPSK.
@@ -362,7 +361,7 @@ static std::pair<float, cf_t> detect_symbol(span<uint8_t> bits, cf_t cross_term)
     }
   }
 
-  return {metric_cross, rx_symbol};
+  return metric_cross;
 }
 
 const pucch_format1_map<pucch_detector::pucch_detection_result>&
@@ -458,8 +457,8 @@ pucch_detector_format1::detect(const resource_grid_reader&                  grid
       bits = span<uint8_t>(bit_sr);
     }
 
-    auto [detected_contribution, rx_symbol] = detect_symbol(bits, cross_contribution);
-    float detection_metric                  = (main_contribution + 2 * detected_contribution) / noise_var;
+    float detected_contribution = detect_symbol(bits, cross_contribution);
+    float detection_metric      = (main_contribution + 2 * detected_contribution) / noise_var;
 
     bool is_detected = (detection_metric > detection_threshold);
 
