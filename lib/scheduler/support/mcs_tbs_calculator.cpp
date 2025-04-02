@@ -149,8 +149,7 @@ static unsigned calculate_min_uci_bits(unsigned          nof_payload_bits,
 static bool is_pusch_effective_rate_valid(const pusch_config_params& config,
                                           const ulsch_information&   ulsch_info,
                                           const sch_mcs_description& mcs_info,
-                                          unsigned                   nof_prbs,
-                                          bool                       contains_dc)
+                                          unsigned                   nof_prbs)
 {
   // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
   // but we consider the same value for UL.
@@ -164,7 +163,7 @@ static bool is_pusch_effective_rate_valid(const pusch_config_params& config,
   // Check the number of HARQ-ACK feedback number of rate-matched bits reaches the minimum.
   if (config.nof_harq_ack_bits != 0) {
     unsigned min_nof_encoded_bits = calculate_min_uci_bits(config.nof_harq_ack_bits,
-                                                           contains_dc,
+                                                           ulsch_info.nof_dc_overlap_bits.value() > 0,
                                                            ulsch_info.nof_harq_ack_re,
                                                            nof_prbs,
                                                            mcs_info.modulation,
@@ -177,7 +176,7 @@ static bool is_pusch_effective_rate_valid(const pusch_config_params& config,
   // Check the number of CSI Part 1 report number of rate-matched bits reaches the minimum.
   if (config.nof_csi_part1_bits != 0) {
     unsigned min_nof_encoded_bits = calculate_min_uci_bits(config.nof_csi_part1_bits,
-                                                           contains_dc,
+                                                           ulsch_info.nof_dc_overlap_bits.value() > 0,
                                                            ulsch_info.nof_csi_part1_re,
                                                            nof_prbs,
                                                            mcs_info.modulation,
@@ -283,7 +282,7 @@ std::optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&
   // > Decrease the MCS and recompute TBS until the effective code rate is not above the 0.95 threshold.
   sch_mcs_index mcs     = max_mcs;
   bool          success = false;
-  while (!(success = is_pusch_effective_rate_valid(pusch_cfg, info, mcs_info, nof_prbs, contains_dc)) and mcs > 0) {
+  while (!(success = ::is_pusch_effective_rate_valid(pusch_cfg, info, mcs_info, nof_prbs)) and mcs > 0) {
     --mcs;
     mcs_info  = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, false);
     tbs_bytes = tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
@@ -338,10 +337,35 @@ std::optional<unsigned> srsran::compute_ul_tbs(const pusch_config_params& pusch_
       build_ulsch_info(pusch_cfg, active_bwp_cfg, tbs_bytes, mcs_info, nof_prbs, contains_dc);
   const ulsch_information info = get_ulsch_information(ulsch_cfg);
 
-  if (is_pusch_effective_rate_valid(pusch_cfg, info, mcs_info, nof_prbs, contains_dc)) {
+  if (::is_pusch_effective_rate_valid(pusch_cfg, info, mcs_info, nof_prbs)) {
     return tbs_bytes;
   }
   return std::nullopt;
+}
+
+bool srsran::is_pusch_effective_rate_valid(const pusch_config_params& pusch_cfg,
+                                           const bwp_config&          active_bwp_cfg,
+                                           sch_mcs_index              mcs,
+                                           unsigned                   nof_prbs,
+                                           bool                       contains_dc)
+{
+  const unsigned            dmrs_prbs = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
+  const sch_mcs_description mcs_info =
+      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
+  unsigned tbs_bytes =
+      tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = pusch_cfg.symbols.length(),
+                                                            .nof_dmrs_prb     = dmrs_prbs,
+                                                            .nof_oh_prb       = pusch_cfg.nof_oh_prb,
+                                                            .mcs_descr        = mcs_info,
+                                                            .nof_layers       = pusch_cfg.nof_layers,
+                                                            .tb_scaling_field = pusch_cfg.tb_scaling_field,
+                                                            .n_prb            = nof_prbs}) /
+      NOF_BITS_PER_BYTE;
+
+  const ulsch_configuration ulsch_cfg =
+      build_ulsch_info(pusch_cfg, active_bwp_cfg, tbs_bytes, mcs_info, nof_prbs, contains_dc);
+  const ulsch_information info = get_ulsch_information(ulsch_cfg);
+  return ::is_pusch_effective_rate_valid(pusch_cfg, info, mcs_info, nof_prbs);
 }
 
 unsigned srsran::compute_ul_tbs_unsafe(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs)

@@ -75,4 +75,11 @@ std::optional<unsigned> compute_ul_tbs(const pusch_config_params& pusch_params,
 /// \return TBS in bytes.
 unsigned compute_ul_tbs_unsafe(const pusch_config_params& pusch_params, sch_mcs_index mcs, unsigned nof_prbs);
 
+/// \brief Determines if the selected MCS, TBS and number of PRBs leads to a valid effective code rate and UCI.
+bool is_pusch_effective_rate_valid(const pusch_config_params& pusch_cfg,
+                                   const bwp_config&          active_bwp_cfg,
+                                   sch_mcs_index              mcs,
+                                   unsigned                   nof_prbs,
+                                   bool                       contains_dc);
+
 } // namespace srsran

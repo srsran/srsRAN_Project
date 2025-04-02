@@ -205,7 +205,7 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(dl_ran_slice_candida
 
     // Perform DL grant allocation, including PDCCH, PDSCH and UCI.
     auto result = ue_alloc.allocate_dl_grant(ue_retx_dl_grant_request{u, pdsch_slot, h, used_dl_crbs});
-    if (not result.has_value() and result.error() == dl_alloc_failure_cause::other) {
+    if (not result.has_value() and result.error() == dl_alloc_failure_cause::skip_slot) {
       // Received signal to stop allocations in the slot.
       break;
     }
@@ -253,7 +253,6 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(ul_ran_slice_candida
 
     // Allocate PDCCH and PUSCH.
     auto result = ue_alloc.allocate_ul_grant(ue_retx_ul_grant_request{u, pusch_slot, h, used_ul_crbs});
-
     if (not result.has_value() and result.error() == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
       break;

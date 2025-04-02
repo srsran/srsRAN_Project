@@ -142,19 +142,22 @@ static mcs_prbs_selection compute_newtx_required_mcs_and_prbs(const pusch_config
   // Apply minimum grant size.
   unsigned nof_prbs = std::max(prbs_tbs.nof_prbs, nof_rb_lims.start());
 
-  // If this is newTx, then we need to adjust the number of PRBs to the PHR, to prevent the UE from reducing the
-  // nominal TX power to meet the max TX power.
+  // We need to adjust the number of PRBs to the PHR, to prevent the UE from reducing the nominal TX power to meet the
+  // max TX power.
   nof_prbs = ue_cc.get_pusch_power_controller().adapt_pusch_prbs_to_phr(nof_prbs);
 
-  // Due to the pre-allocated UCI bits, MCS 0 and PRB 1 would not leave any space for the payload on the TBS, as
-  // all the space would be taken by the UCI bits. As a result of this, the effective code rate would be 0 and the
-  // allocation would fail and be postponed to the next slot.
-  // [Implementation-defined] In our tests, we have seen that MCS 5 with 1 PRB can lead (depending on the
-  // configuration) to a non-valid MCS-PRB allocation; therefore, we set 6 as minimum value for 1 PRB.
-  // TODO: Remove this part and handle the problem with a loop that is general for any configuration.
-  const sch_mcs_index min_mcs_for_1_prb{6U};
-  const unsigned      min_allocable_prbs = 1U;
-  if (mcs < min_mcs_for_1_prb and nof_prbs <= min_allocable_prbs) {
+  // Ensure code rate and UCI is valid. If not, increase the number of PRBs.
+  // Note: We make the pessimistic assumption that the DC intersects the newTx grant.
+  static constexpr bool contains_dc = true;
+  while (nof_prbs < nof_rb_lims.stop() and
+         not is_pusch_effective_rate_valid(pusch_cfg, ue_cc.active_bwp(), mcs, nof_prbs, contains_dc)) {
+    ++nof_prbs;
+  }
+
+  if (mcs == 5U and nof_prbs == 1U and nof_prbs < nof_rb_lims.stop()) {
+    // [Implementation-defined] In our tests, we have seen that MCS 5 with 1 PRB can lead (depending on the
+    // configuration) to a non-valid MCS-PRB allocation; therefore, we increase the number of 1 PRBs.
+    // TODO: Remove this part and handle the problem with a loop that is general for any configuration.
     ++nof_prbs;
   }
 
