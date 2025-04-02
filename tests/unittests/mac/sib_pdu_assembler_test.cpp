@@ -43,14 +43,18 @@ class sib_pdu_assembler_test : public ::testing::Test
 public:
   sib_pdu_assembler_test() : sys_info_cfg({make_random_pdu()}), assembler(sys_info_cfg) {}
 
-  byte_buffer update_sib1_pdu(const byte_buffer& pdu)
+  byte_buffer update_si_pdus(const byte_buffer& sib1, span<const byte_buffer> si_msgs = {})
   {
     mac_cell_sys_info_config req;
     auto                     old_pdu = std::move(sys_info_cfg.sib1);
-    sys_info_cfg.sib1                = pdu.copy();
-    req.sib1                         = pdu.copy();
-    last_version                     = next_version++;
-    req.si_sched_cfg.version         = last_version.value();
+    sys_info_cfg.sib1                = sib1.copy();
+    req.sib1                         = sib1.copy();
+    req.si_messages.clear();
+    for (auto& si_msg : si_msgs) {
+      req.si_messages.push_back(si_msg.copy());
+    }
+    last_version             = next_version++;
+    req.si_sched_cfg.version = last_version.value();
     assembler.handle_si_change_request(req);
     return old_pdu;
   }
@@ -90,7 +94,7 @@ TEST_F(sib_pdu_assembler_test, when_invalid_si_msg_index_is_scheduled_then_a_pdu
 TEST_F(sib_pdu_assembler_test, when_sib1_is_updated_and_old_version_is_scheduled_then_encoding_returns_old_version)
 {
   auto new_msg = make_random_pdu();
-  auto old_msg = this->update_sib1_pdu(new_msg);
+  auto old_msg = this->update_si_pdus(new_msg);
   ASSERT_EQ(last_version, 1);
 
   const unsigned nof_tries = 4;
@@ -112,7 +116,7 @@ TEST_F(sib_pdu_assembler_test, when_sib1_is_updated_and_old_version_is_scheduled
 TEST_F(sib_pdu_assembler_test, when_sib1_is_updated_then_encoding_accounts_for_new_version)
 {
   auto new_msg = make_random_pdu();
-  this->update_sib1_pdu(new_msg);
+  this->update_si_pdus(new_msg);
   ASSERT_EQ(last_version, 1);
 
   const unsigned nof_tries = 4;
@@ -131,4 +135,21 @@ TEST_F(sib_pdu_assembler_test, when_sib1_is_updated_then_encoding_accounts_for_n
                                             expected,
                                             byte_buffer::create(pdu).value());
   }
+}
+
+TEST_F(sib_pdu_assembler_test, when_si_message_is_added_then_encoding_matched_added_si_message)
+{
+  auto new_msg = make_random_pdu();
+  this->update_si_pdus(sys_info_cfg.sib1, std::vector<byte_buffer>{{new_msg.copy()}});
+  ASSERT_EQ(last_version, 1);
+
+  units::bytes        padding_len{test_rgen::uniform_int<unsigned>(0, 20)};
+  units::bytes        tbs         = units::bytes{(unsigned)new_msg.length()} + padding_len;
+  sib_information     new_si_info = make_sib_pdu(0, 1, tbs);
+  span<const uint8_t> pdu         = assembler.encode_si_pdu(current_slot, new_si_info);
+
+  auto expected = make_pdu_with_padding(new_msg, tbs);
+  ASSERT_EQ(expected, pdu) << fmt::format("Incorrect SI-message payload returned.\n> expected=[{}]\n> result = [{}])",
+                                          expected,
+                                          byte_buffer::create(pdu).value());
 }

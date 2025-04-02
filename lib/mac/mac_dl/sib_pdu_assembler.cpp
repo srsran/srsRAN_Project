@@ -66,6 +66,9 @@ void sib_pdu_assembler::save_buffers(si_version_type si_version, const mac_cell_
   // Check if SI messages have changed.
   last_cfg_buffers.si_msg_buffers.resize(req.si_messages.size());
   for (unsigned i = 0, e = req.si_messages.size(); i != e; ++i) {
+    if (last_si_cfg.si_messages.size() <= i) {
+      last_si_cfg.si_messages.resize(i + 1);
+    }
     if (req.si_messages[i] != last_si_cfg.si_messages[i]) {
       last_si_cfg.si_messages[i]                = req.si_messages[i].copy();
       last_cfg_buffers.si_msg_buffers[i].first  = units::bytes{static_cast<unsigned>(req.sib1.length())};
