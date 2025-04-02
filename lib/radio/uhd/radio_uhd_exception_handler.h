@@ -17,6 +17,7 @@
 #pragma GCC diagnostic push
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wextra-semi"
 #else // __clang__
 #pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif // __clang__
