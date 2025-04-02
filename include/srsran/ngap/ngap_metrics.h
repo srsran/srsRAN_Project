@@ -18,15 +18,15 @@ namespace srsran {
 
 // PDU session management metrics, see TS 28.552 section 5.1.1.5.
 struct pdu_session_metrics_t {
-  unsigned                         nof_pdu_sessions_requested_to_setup;
-  unsigned                         nof_pdu_sessions_successfully_setup;
+  unsigned                         nof_pdu_sessions_requested_to_setup = 0;
+  unsigned                         nof_pdu_sessions_successfully_setup = 0;
   std::map<ngap_cause_t, unsigned> nof_pdu_sessions_failed_to_setup;
 };
 
 // Mobility Management metrics, see TS 28.552 section 5.1.1.6.
 struct mobility_metrics_t {
-  unsigned nof_handover_preparations_requested;
-  unsigned nof_successful_handover_preparations;
+  unsigned nof_handover_preparations_requested  = 0;
+  unsigned nof_successful_handover_preparations = 0;
 };
 
 /// \brief NGAP metrics for all UEs connected to an AMF.
