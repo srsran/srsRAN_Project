@@ -88,8 +88,10 @@ public:
   /// \brief Update UL BSR for a given LCG-ID.
   void handle_bsr_indication(const ul_bsr_indication_message& msg)
   {
+    // We apply this limit to avoid potential overflows.
+    static constexpr unsigned max_buffer_status = 1U << 24U;
     for (const auto& lcg_report : msg.reported_lcgs) {
-      groups[lcg_report.lcg_id].buf_st            = lcg_report.nof_bytes;
+      groups[lcg_report.lcg_id].buf_st            = std::min(lcg_report.nof_bytes, max_buffer_status);
       groups[lcg_report.lcg_id].sched_bytes_accum = 0;
     }
   }
