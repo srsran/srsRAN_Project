@@ -165,7 +165,7 @@ update private branch:
     - cd ${CI_PROJECT_DIR}
     - git fetch -q origin ${CI_COMMIT_SHA} && git checkout ${CI_COMMIT_SHA}
     - .gitlab/ci/release/auto_merge.sh ${CI_COMMIT_SHA} ${PRIVATE_BRANCH}
-    - git rm -f .gitlab/ci/plugin_version.txt > /dev/null
+    - git rm -f .gitlab/ci/plugin_version.txt > /dev/null || true
     - |
       git submodule init
       git submodule update
