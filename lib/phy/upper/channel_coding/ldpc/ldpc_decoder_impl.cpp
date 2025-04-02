@@ -73,8 +73,13 @@ std::optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                   
   // Find the last soft bit in the buffer and trim the output.
   const log_likelihood_ratio* last =
       std::find_if(input.rbegin(), input.rend(), [](const log_likelihood_ratio& in) { return in != 0; }).base();
-  if (last == input.begin()) {
-    // If all input LLRs are zero, we won't be able to decode: set all bits to one (so that the CRC will fail).
+
+  // Determine input length.
+  unsigned input_size = std::distance(input.begin(), last);
+
+  // The input meaningful number of bits must contain the message length number of bits.
+  if (input_size < message_length) {
+    // If the codeblock CRC check is external, set all bits to one (so that the CRC will fail).
     if (crc == nullptr) {
       output.one();
     }
@@ -83,8 +88,6 @@ std::optional<unsigned> ldpc_decoder_impl::decode(bit_buffer&                   
 
   // Ensure check-to-variable messages are not initialized.
   std::fill(is_check_to_var_initialized.begin(), is_check_to_var_initialized.end(), false);
-
-  unsigned input_size = static_cast<unsigned>(last - input.begin());
 
   load_soft_bits(input, input_size);
 
