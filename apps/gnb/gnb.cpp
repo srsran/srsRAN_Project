@@ -223,21 +223,27 @@ int main(int argc, char** argv)
   // Set the callback for the app calling all the autoderivation functions.
   app.callback([&app, &gnb_cfg, &o_du_app_unit, &o_cu_cp_app_unit, &o_cu_up_app_unit]() {
     autoderive_gnb_parameters_after_parsing(app, gnb_cfg);
-    autoderive_slicing_args(o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config,
-                            o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
+
+    cu_cp_unit_config& cu_cp_cfg = o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg;
+
+    autoderive_slicing_args(o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config, cu_cp_cfg);
     o_du_app_unit->on_configuration_parameters_autoderivation(app);
 
     // If test mode is enabled, we auto-enable "no_core" option and generate a amf config with no core.
     if (o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.is_testmode_enabled()) {
-      o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg.amf_config.no_core           = true;
-      o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg.amf_config.amf.supported_tas = {
-          {7, {{"00101", {cu_cp_unit_plmn_item::tai_slice_t{1}}}}}};
+      cu_cp_cfg.amf_config.no_core = true;
+    } else {
+      // If no-core or the default supported tas are configured and we are not using testmode, this will set the
+      // supported TAs from the DU cell configuration.
+      if (cu_cp_cfg.amf_config.no_core || cu_cp_cfg.amf_config.amf.is_default_supported_tas) {
+        autoderive_supported_tas_for_amf_from_du_cells(o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config,
+                                                       cu_cp_cfg);
+      }
     }
 
     o_cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
     o_cu_up_app_unit->on_configuration_parameters_autoderivation(app);
-    autoderive_cu_up_parameters_after_parsing(o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg,
-                                              o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
+    autoderive_cu_up_parameters_after_parsing(o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg, cu_cp_cfg);
   });
 
   // Parse arguments.

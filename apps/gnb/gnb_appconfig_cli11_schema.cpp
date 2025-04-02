@@ -15,6 +15,8 @@
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
 #include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_cli11_schema.h"
+#include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
+#include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h"
 #include "gnb_appconfig.h"
 #include "srsran/support/cli11_utils.h"
 #include "CLI/CLI11.hpp"
@@ -78,4 +80,30 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
 void srsran::autoderive_gnb_parameters_after_parsing(CLI::App& app, gnb_appconfig& config)
 {
   manage_hal_optional(app, config);
+}
+
+void srsran::autoderive_supported_tas_for_amf_from_du_cells(const du_high_unit_config& du_hi_cfg,
+                                                            cu_cp_unit_config&         cu_cp_cfg)
+{
+  // If no cells are found in DU configuration.
+  if (du_hi_cfg.cells_cfg.empty()) {
+    fmt::print("No cells found in DU configuration. Supported TAs will not be derived\n");
+    return;
+  }
+
+  // Clear supported TAs.
+  fmt::print("{} supported TAs will be derived from DU cell config\n",
+             cu_cp_cfg.amf_config.amf.is_default_supported_tas ? "No supported TAs configured,"
+                                                               : "--no-core configured,");
+  cu_cp_cfg.amf_config.amf.supported_tas.clear();
+  cu_cp_cfg.amf_config.amf.is_default_supported_tas = false;
+  cu_cp_cfg.amf_config.amf.supported_tas.resize(du_hi_cfg.cells_cfg.size());
+
+  // Derive supported TAs from DU cell configuration.
+  for (const auto& cell : du_hi_cfg.cells_cfg) {
+    cu_cp_unit_supported_ta_item supported_ta;
+    supported_ta.tac = cell.cell.tac;
+    supported_ta.plmn_list.push_back({cell.cell.plmn, {cu_cp_unit_plmn_item::tai_slice_t{1}}});
+    cu_cp_cfg.amf_config.amf.supported_tas.push_back(supported_ta);
+  }
 }

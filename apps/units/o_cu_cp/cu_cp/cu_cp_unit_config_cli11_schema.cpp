@@ -134,13 +134,9 @@ static void configure_cli11_amf_item_args(CLI::App& app, cu_cp_unit_amf_config_i
   app.add_option_function<std::vector<std::string>>(
       "--supported_tracking_areas",
       [&config](const std::vector<std::string>& values) {
-        // Only configure if values are set, else default configuration is used.
-        if (values.empty()) {
-          return;
-        }
-
         // If supported tracking areas are configured clear default values.
         config.supported_tas.clear();
+        config.is_default_supported_tas = false;
         config.supported_tas.resize(values.size());
 
         for (unsigned i = 0, e = values.size(); i != e; ++i) {

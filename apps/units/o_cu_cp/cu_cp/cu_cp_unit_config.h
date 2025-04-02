@@ -50,8 +50,10 @@ struct cu_cp_unit_amf_config_item {
   int         sctp_init_max_attempts = 3;
   int         sctp_max_init_timeo    = 500;
   bool        sctp_nodelay           = false;
+
   /// List of all tracking areas supported by the AMF.
   std::vector<cu_cp_unit_supported_ta_item> supported_tas = {{7, {{"00101", {cu_cp_unit_plmn_item::tai_slice_t{1}}}}}};
+  bool                                      is_default_supported_tas = true;
 };
 
 struct cu_cp_unit_amf_config {
