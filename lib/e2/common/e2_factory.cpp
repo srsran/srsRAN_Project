@@ -178,10 +178,3 @@ std::unique_ptr<e2_agent> srsran::create_e2_cu_cp_agent(const e2ap_configuration
   auto e2_ext = std::make_unique<e2_entity>(std::move(dependencies));
   return e2_ext;
 }
-
-std::unique_ptr<e2ap_packer>
-srsran::create_e2ap_asn1_packer(sctp_network_gateway_data_handler& gw_, e2_message_handler& e2_, dlt_pcap& pcap_)
-{
-  auto packer = std::make_unique<e2ap_asn1_packer>(gw_, e2_, pcap_);
-  return packer;
-}
