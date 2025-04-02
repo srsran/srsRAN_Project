@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-add_executable(slice_scheduler_test slice_scheduler_test.cpp)
+add_executable(slice_scheduler_test slice_scheduler_test.cpp slice_ue_repository_test.cpp)
 target_link_libraries(slice_scheduler_test
         srsran_sched
         scheduler_test_utils
