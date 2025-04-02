@@ -35,7 +35,7 @@ gtpu_demux_impl::add_tunnel(gtpu_teid_t                                  teid,
       handle_pdu_impl(teid, pdu_ctx);
     }
   };
-  auto batched_queue = std::make_unique<gtpu_demux_dispatch_queue>(8192, tunnel_exec, logger, dispacth_fn);
+  auto batched_queue = std::make_unique<gtpu_demux_dispatch_queue>(cfg.queue_size, tunnel_exec, logger, dispacth_fn);
 
   std::lock_guard<std::mutex> guard(map_mutex);
   auto                        it = teid_to_tunnel.try_emplace(teid, gtpu_demux_tunnel_ctx_t{*batched_queue, tunnel});

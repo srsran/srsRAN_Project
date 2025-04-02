@@ -70,6 +70,7 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
   // Create GTP-U demux
   gtpu_demux_creation_request demux_msg = {};
   demux_msg.cfg.warn_on_drop            = cfg.n3_cfg.warn_on_drop;
+  demux_msg.cfg.queue_size              = cfg.n3_cfg.gtpu_queue_size;
   demux_msg.cfg.test_mode               = cfg.test_mode_cfg.enabled;
   demux_msg.gtpu_pcap                   = dependencies.gtpu_pcap;
   ngu_demux                             = create_gtpu_demux(demux_msg);

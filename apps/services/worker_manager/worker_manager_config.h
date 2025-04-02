@@ -78,9 +78,12 @@ struct worker_manager_config {
   // CU-UP worker configuration
   struct cu_up_config {
     unsigned max_nof_ue_strands = 16;
-    /// GTPU queue size.
-    unsigned gtpu_queue_size        = 2048;
-    bool     dedicated_io_ul_strand = true;
+    /// UE task queue size.
+    uint32_t dl_ue_executor_queue_size   = 2048;
+    uint32_t ul_ue_executor_queue_size   = 2048;
+    uint32_t ctrl_ue_executor_queue_size = 2048;
+    /// Wether to offload socket TX to a dedicated strand.
+    bool dedicated_io_ul_strand = true;
   };
 
   /// PCAP worker configuration.

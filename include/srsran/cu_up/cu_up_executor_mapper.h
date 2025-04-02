@@ -77,8 +77,12 @@ struct strand_based_executor_config {
   unsigned max_nof_ue_strands;
   /// \brief Default size for the task queues of the strands created in the CU-UP.
   unsigned default_task_queue_size;
-  /// \brief Size for the task queues of the strands created in the CU-UP and that are connected to the GTPU.
-  unsigned gtpu_task_queue_size;
+  /// \brief Size for the task queues of the strands created in the CU-UP for UE DL PDU processing.
+  unsigned dl_ue_task_queue_size;
+  /// \brief Size for the task queues of the strands created in the CU-UP for UE UL PDU processing.
+  unsigned ul_ue_task_queue_size;
+  /// \brief Size for the task queues of the strands created in the CU-UP for UE control tasks.
+  unsigned ctrl_ue_task_queue_size;
   /// \brief Executor to which strands will be associated.
   task_executor& worker_pool_executor;
   /// \brief Whether to instantiate a dedicated strand for sending UL PDUs to the IO.

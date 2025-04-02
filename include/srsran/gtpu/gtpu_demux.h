@@ -20,8 +20,9 @@
 namespace srsran {
 
 struct gtpu_demux_cfg_t {
-  bool warn_on_drop;
-  bool test_mode = false;
+  bool     warn_on_drop;
+  bool     test_mode  = false;
+  uint32_t queue_size = 8192;
 };
 
 struct gtpu_demux_pdu_ctx_t {

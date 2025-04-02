@@ -200,7 +200,9 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
   cu_up_exec_mapper =
       srs_cu_up::make_cu_up_executor_mapper(srs_cu_up::strand_based_executor_config{config.max_nof_ue_strands,
                                                                                     task_worker_queue_size,
-                                                                                    config.gtpu_queue_size,
+                                                                                    config.dl_ue_executor_queue_size,
+                                                                                    config.ul_ue_executor_queue_size,
+                                                                                    config.ctrl_ue_executor_queue_size,
                                                                                     *exec_map.at("low_prio_exec"),
                                                                                     config.dedicated_io_ul_strand,
                                                                                     &timers});

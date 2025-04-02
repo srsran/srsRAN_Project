@@ -47,6 +47,19 @@ static void configure_cli11_ngu_gtpu_args(CLI::App& app, cu_up_unit_ngu_gtpu_con
       ->capture_default_str();
 }
 
+static void configure_cli11_execution_args(CLI::App& app, cu_up_unit_execution_config& exec_cfg)
+{
+  add_option(
+      app, "--dl_ue_executor_queue_size", exec_cfg.dl_ue_executor_queue_size, "CU-UP's DL UE executor queue size")
+      ->capture_default_str();
+  add_option(
+      app, "--ul_ue_executor_queue_size", exec_cfg.ul_ue_executor_queue_size, "CU-UP's UL UE executor queue size");
+  add_option(app,
+             "--ctrl_ue_executor_queue_size",
+             exec_cfg.ctrl_ue_executor_queue_size,
+             "CU-UP's CTRL UE executor queue size");
+}
+
 static void configure_cli11_ngu_args(CLI::App& app, cu_up_unit_ngu_config& ngu_params)
 {
   add_option(app, "--no_core", ngu_params.no_core, "Allow gNB to run without a core");
@@ -92,6 +105,10 @@ static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_p
   // UPF section.
   CLI::App* ngu_subcmd = add_subcommand(app, "ngu", "NG-U parameters")->configurable();
   configure_cli11_ngu_args(*ngu_subcmd, cu_up_params.ngu_cfg);
+
+  // Execution section.
+  CLI::App* exec_subcmd = add_subcommand(app, "execution", "Execution parameters")->configurable();
+  configure_cli11_execution_args(*exec_subcmd, cu_up_params.exec_cfg);
 
   // Test mode section.
   CLI::App* test_mode_subcmd = add_subcommand(app, "test_mode", "CU-UP test mode parameters")->configurable();

@@ -79,6 +79,12 @@ struct cu_up_unit_test_mode_config {
   uint64_t ue_ambr           = 40000000000; // 40 gbps
 };
 
+struct cu_up_unit_execution_config {
+  uint32_t dl_ue_executor_queue_size;
+  uint32_t ul_ue_executor_queue_size;
+  uint32_t ctrl_ue_executor_queue_size;
+};
+
 /// CU-UP application unit configuration.
 struct cu_up_unit_config {
   /// gNB identifier.
@@ -89,6 +95,8 @@ struct cu_up_unit_config {
   bool warn_on_drop = false;
   /// NG-U configuration.
   cu_up_unit_ngu_config ngu_cfg;
+  /// Execution configuration
+  cu_up_unit_execution_config exec_cfg;
   /// Metrics.
   cu_up_unit_metrics_config metrics;
   /// Loggers.

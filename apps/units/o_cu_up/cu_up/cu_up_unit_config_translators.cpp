@@ -12,7 +12,6 @@
 #include "apps/services/worker_manager/worker_manager_config.h"
 #include "cu_up_unit_config.h"
 #include "srsran/cu_up/cu_up_configuration_helpers.h"
-#include "srsran/rlc/rlc_config.h"
 
 using namespace srsran;
 
@@ -28,6 +27,7 @@ srs_cu_up::cu_up_config srsran::generate_cu_up_config(const cu_up_unit_config& c
   out_cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds{config.ngu_cfg.gtpu_cfg.gtpu_reordering_timer_ms};
   out_cfg.n3_cfg.gtpu_rate_limiting_period = config.ngu_cfg.gtpu_cfg.rate_limiter_period;
   out_cfg.n3_cfg.gtpu_ignore_ue_ambr       = config.ngu_cfg.gtpu_cfg.ignore_ue_ambr;
+  out_cfg.n3_cfg.gtpu_queue_size           = config.ngu_cfg.gtpu_cfg.gtpu_queue_size;
   out_cfg.n3_cfg.warn_on_drop              = config.warn_on_drop;
 
   // E1AP-CU-UP config.
@@ -82,7 +82,9 @@ void srsran::fill_cu_up_worker_manager_config(worker_manager_config& config, con
 {
   config.cu_up_cfg = worker_manager_config::cu_up_config{};
 
-  config.cu_up_cfg.value().gtpu_queue_size = unit_cfg.ngu_cfg.gtpu_cfg.gtpu_queue_size;
+  config.cu_up_cfg.value().dl_ue_executor_queue_size   = unit_cfg.exec_cfg.dl_ue_executor_queue_size;
+  config.cu_up_cfg.value().ul_ue_executor_queue_size   = unit_cfg.exec_cfg.ul_ue_executor_queue_size;
+  config.cu_up_cfg.value().ctrl_ue_executor_queue_size = unit_cfg.exec_cfg.ctrl_ue_executor_queue_size;
 
   auto& pcap_cfg = config.pcap_cfg;
   if (unit_cfg.pcap_cfg.e1ap.enabled) {
