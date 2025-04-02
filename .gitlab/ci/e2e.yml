@@ -429,11 +429,15 @@ test mode ru acc100:
     KEYWORDS: ""
 
 test mode ue many ues:
-  extends: test mode ue
+  extends: test mode ru
+  allow_failure: true
   variables:
+    GROUP: "viavi"
+    TESTBED: "viavi"
     MARKERS: "test_mode_many_ues"
     KEYWORDS: "test_mode_many_ues"
     E2E_LOG_LEVEL: "warning"
+    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
 
 ################################################################################
 # RF

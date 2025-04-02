@@ -55,9 +55,23 @@ test_mode:
     pusch_active: true
     cqi: 15
     ri: 4
-    nof_ues: 32
+    nof_ues: 800
+
+metrics:
+  enable_json: true
+  enable_log: true
+  periodicity:
+    du_report_period: 1000
+  layers:
+    enable_sched: true
+    enable_mac: true
 
 expert_phy:
-  max_request_headroom_slots: 3
+  max_request_headroom_slots: 0
   max_proc_delay: 4
   pusch_dec_max_iterations: 2
+
+expert_execution:
+  threads:
+    upper_phy:
+      nof_ul_threads: 4
