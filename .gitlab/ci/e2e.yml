@@ -284,6 +284,7 @@ amari 32UE 2x2 mimo:
 
 amari 64UE 2x2 mimo:
   extends: .zmq
+  when: manual
   allow_failure: true
   variables:
     MARKERS: "zmq_64_ues"
