@@ -20,13 +20,4 @@
 
 namespace srsran {
 
-/// Creates an instance of an E2 interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<e2_interface> create_e2(e2ap_configuration&      e2ap_cfg_,
-                                        e2ap_e2agent_notifier&   agent_notifier_,
-                                        timer_factory            timers_,
-                                        e2_connection_client&    e2_client_,
-                                        e2_subscription_manager& e2_subscriber_,
-                                        e2sm_manager&            e2sm_manager_,
-                                        task_executor&           task_exec_);
-
 } // namespace srsran

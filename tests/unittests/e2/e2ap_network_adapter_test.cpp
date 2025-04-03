@@ -10,6 +10,7 @@
 
 #include "common/e2ap_asn1_packer.h"
 #include "dummy_ric.h"
+#include "lib/e2/common/e2_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/e2/e2_factory.h"
@@ -91,7 +92,14 @@ protected:
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     factory              = timer_factory{timers, task_exec};
     e2agent_notifier     = std::make_unique<dummy_e2_agent_mng>();
-    e2ap = create_e2(cfg, *e2agent_notifier, factory, *e2_client_wrapper, *e2_subscription_mngr, *e2sm_mngr, task_exec);
+    e2ap                 = std::make_unique<e2_impl>(srslog::fetch_basic_logger("E2"),
+                                     cfg,
+                                     *e2agent_notifier,
+                                     factory,
+                                     *e2_client_wrapper,
+                                     *e2_subscription_mngr,
+                                     *e2sm_mngr,
+                                     task_exec);
   }
 
   void TearDown() override
