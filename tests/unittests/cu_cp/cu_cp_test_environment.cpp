@@ -157,6 +157,8 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
         periodical_cfg.report_quant_cell.rsrq = true;
         periodical_cfg.report_quant_cell.sinr = true;
         periodical_cfg.max_report_cells       = 4;
+        periodical_cfg.include_beam_meass     = true;
+        periodical_cfg.use_allowed_cell_list  = false;
 
         meas_mng_cfg.report_config_ids.emplace(uint_to_report_cfg_id(1), rrc_report_cfg_nr{periodical_cfg});
       }
@@ -165,15 +167,13 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
       {
         rrc_event_trigger_cfg event_trigger_cfg = {};
 
-        rrc_event_id event_a3;
-        event_a3.id = rrc_event_id::event_id_t::a3;
+        rrc_event_id& event_a3 = event_trigger_cfg.event_id;
+        event_a3.id            = rrc_event_id::event_id_t::a3;
         event_a3.meas_trigger_quant_thres_or_offset.emplace();
         event_a3.meas_trigger_quant_thres_or_offset.value().rsrp.emplace() = 6;
         event_a3.hysteresis                                                = 0;
         event_a3.time_to_trigger                                           = 100;
         event_a3.use_allowed_cell_list                                     = false;
-
-        event_trigger_cfg.event_id = event_a3;
 
         event_trigger_cfg.rs_type                = srs_cu_cp::rrc_nr_rs_type::ssb;
         event_trigger_cfg.report_interv          = 1024;
@@ -182,6 +182,7 @@ cu_cp_test_environment::cu_cp_test_environment(cu_cp_test_env_params params_) :
         event_trigger_cfg.report_quant_cell.rsrq = true;
         event_trigger_cfg.report_quant_cell.sinr = true;
         event_trigger_cfg.max_report_cells       = 4;
+        event_trigger_cfg.include_beam_meass     = true;
 
         rrc_meas_report_quant report_quant_rs_idxes;
         report_quant_rs_idxes.rsrp              = true;
