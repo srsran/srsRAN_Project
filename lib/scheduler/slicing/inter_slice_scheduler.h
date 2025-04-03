@@ -95,6 +95,8 @@ private:
       this->c.clear();
     }
 
+    void reserve(size_t capacity) { c.reserve(capacity); }
+
     // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
     void push(const slice_candidate_context& elem)
     {

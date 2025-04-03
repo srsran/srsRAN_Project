@@ -23,7 +23,10 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
 {
   // Create a number of slices equal to the number of configured RRM Policy members + 1 (default SRB slice) + 1 (default
   // DRB slice).
-  slices.reserve(cell_cfg.rrm_policy_members.size() + 2);
+  unsigned capacity = cell_cfg.rrm_policy_members.size() + 2;
+  dl_prio_queue.reserve(capacity);
+  ul_prio_queue.reserve(capacity);
+  slices.reserve(capacity);
 
   // NOTE: We assume nof. CRBs in a cell for both DL and UL are same.
   const unsigned cell_max_rbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
