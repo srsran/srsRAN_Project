@@ -73,7 +73,7 @@ variables:
     - |
       MR_JSON=$(
         curl -s -H "PRIVATE-TOKEN: $CODEBOT_TOKEN" \
-          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/blockees" | \
+          "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/blockees?state=opened" | \
         jq --argjson PLUGIN_PROJECT_ID "$PLUGIN_PROJECT_ID" -r '
           .[] 
           | select(.blocked_merge_request.project_id == $PLUGIN_PROJECT_ID) 
@@ -120,6 +120,24 @@ validate blocked MRs:
   rules:
     - if: $ON_MR
   script:
+    # Validate the last pipeline is green
+    - |
+      CI_PLUGIN_MERGE_REQUEST_IID=$(echo $MR_JSON | jq -r '.iid')
+    - |
+      if [[ -z $CI_PLUGIN_MERGE_REQUEST_IID ]]; then
+        LATEST_PIPELINE_STATUS="success"
+      else
+        LATEST_PIPELINE_STATUS=$(
+          curl -s -H "PRIVATE-TOKEN: $CODEBOT_TOKEN" \
+            "${CI_API_V4_URL}/projects/${PLUGIN_PROJECT_ID}/merge_requests/${CI_PLUGIN_MERGE_REQUEST_IID}/pipelines" | \
+          jq -r '
+            [.[] | select(.source == "merge_request_event")]
+            | first
+            | .status'
+        )
+      fi
+    - test "$LATEST_PIPELINE_STATUS" = "success"
+    # Validate the plugin commit is the same as the one in the MR
     - |
       TO_VALIDATE_PLUGIN_COMMIT_SHA=$(
         echo $MR_JSON | jq -r '
