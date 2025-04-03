@@ -64,12 +64,21 @@ public:
     metrics.nof_successful_bearer_context_modification++;
   }
 
-  void add_context_release()
+  void add_context_release(std::chrono::microseconds proc_dur)
   {
     if (not enabled) {
       return;
     }
     metrics.nof_bearer_context_release++;
+
+    metrics.sum_release_latency += proc_dur;
+
+    unsigned bin_idx = proc_dur.count() / (1000 * e1ap_cu_up_metrics_container::nof_msec_per_bin);
+
+    bin_idx = std::min(bin_idx, e1ap_cu_up_metrics_container::latency_hist_bins - 1);
+    metrics.release_latency_hist[bin_idx]++;
+
+    metrics.max_release_latency = std::max(proc_dur, metrics.max_release_latency);
   }
 };
 } // namespace srsran::srs_cu_up

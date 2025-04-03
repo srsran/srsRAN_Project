@@ -50,6 +50,8 @@ private:
   // local variables
   e1ap_message                        e1ap_msg                   = {};
   e1ap_bearer_context_release_command bearer_context_release_cmd = {};
+
+  std::chrono::steady_clock::time_point proc_start_tp;
 };
 
 } // namespace srsran::srs_cu_up

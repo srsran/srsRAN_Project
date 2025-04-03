@@ -29,11 +29,13 @@ bearer_context_release_procedure::bearer_context_release_procedure(ue_index_t ue
   metrics(metrics_),
   logger(logger_)
 {
+  proc_start_tp = std::chrono::steady_clock::now();
 }
 
 bearer_context_release_procedure::~bearer_context_release_procedure()
 {
-  metrics.add_context_release();
+  auto proc_stop_tp = std::chrono::steady_clock::now();
+  metrics.add_context_release(std::chrono::duration_cast<std::chrono::microseconds>(proc_stop_tp - proc_start_tp));
 }
 
 void bearer_context_release_procedure::operator()(coro_context<async_task<void>>& ctx)
