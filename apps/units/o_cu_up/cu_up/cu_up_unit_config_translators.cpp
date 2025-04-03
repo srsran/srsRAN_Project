@@ -32,6 +32,8 @@ srs_cu_up::cu_up_config srsran::generate_cu_up_config(const cu_up_unit_config& c
 
   // E1AP-CU-UP config.
   out_cfg.e1ap.json_log_enabled = config.loggers.e1ap_json_enabled;
+  out_cfg.e1ap.metrics_period =
+      timer_duration{config.metrics.layers_cfg.enable_pdcp ? config.metrics.cu_up_report_period : 0};
 
   out_cfg.test_mode_cfg.enabled           = config.test_mode_cfg.enabled;
   out_cfg.test_mode_cfg.integrity_enabled = config.test_mode_cfg.integrity_enabled;

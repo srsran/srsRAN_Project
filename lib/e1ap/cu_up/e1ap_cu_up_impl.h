@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "cu_up/metrics/e1ap_cu_up_metrics_impl.h"
 #include "e1ap_cu_up_connection_handler.h"
 #include "ue_context/e1ap_cu_up_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
@@ -110,6 +111,10 @@ private:
   e1ap_ue_context_list ue_ctxt_list;
 
   std::unique_ptr<e1ap_event_manager> ev_mng;
+
+  unique_timer metrics_timer;
+
+  e1ap_cu_up_metrics metrics;
 };
 
 } // namespace srsran::srs_cu_up

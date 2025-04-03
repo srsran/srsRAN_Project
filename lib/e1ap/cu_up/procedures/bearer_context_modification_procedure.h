@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "cu_up/metrics/e1ap_cu_up_metrics_impl.h"
 #include "cu_up/ue_context/e1ap_cu_up_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
@@ -27,7 +28,10 @@ public:
   bearer_context_modification_procedure(const e1ap_ue_context&                          ue_ctxt_,
                                         const asn1::e1ap::bearer_context_mod_request_s& request_,
                                         e1ap_message_notifier&                          pdu_notifier_,
-                                        e1ap_cu_up_manager_notifier&                    cu_up_notifier_);
+                                        e1ap_cu_up_manager_notifier&                    cu_up_notifier_,
+                                        e1ap_cu_up_metrics&                             metrics_);
+
+  ~bearer_context_modification_procedure();
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -38,6 +42,7 @@ private:
   const asn1::e1ap::bearer_context_mod_request_s request;
   e1ap_message_notifier&                         pdu_notifier;
   e1ap_cu_up_manager_notifier&                   cu_up_notifier;
+  e1ap_cu_up_metrics&                            metrics;
 
   // local variables
   e1ap_message                              e1ap_msg                        = {};
