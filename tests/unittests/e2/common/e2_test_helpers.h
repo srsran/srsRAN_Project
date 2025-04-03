@@ -29,7 +29,6 @@
 #include "srsran/e2/e2_factory.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/e2/e2sm/e2sm.h"
-#include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/manual_task_worker.h"

@@ -18,7 +18,7 @@
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2ap_configuration.h"
-#include "srsran/e2/e2sm/e2sm_factory.h"
+#include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
