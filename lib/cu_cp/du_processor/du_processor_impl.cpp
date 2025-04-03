@@ -305,7 +305,7 @@ metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() co
     }
   }
   // Get RRC metrics.
-  report.rrc_metrics = rrc->get_metrics_report();
+  rrc->collect_metrics(report.rrc_metrics);
 
   return report;
 }

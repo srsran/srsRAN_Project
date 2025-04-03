@@ -24,7 +24,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifie
                          rrc_ue_context_update_notifier&        cu_cp_notifier_,
                          rrc_ue_measurement_notifier&           measurement_notifier_,
                          rrc_ue_cu_cp_ue_notifier&              cu_cp_ue_notifier_,
-                         rrc_ue_metrics_notifier&               metrics_notifier_,
+                         rrc_ue_event_notifier&                 metrics_notifier_,
                          const ue_index_t                       ue_index_,
                          const rnti_t                           c_rnti_,
                          const rrc_cell_context                 cell_,

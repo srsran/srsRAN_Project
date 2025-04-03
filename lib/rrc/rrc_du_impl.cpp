@@ -130,7 +130,7 @@ rrc_ue_interface* rrc_du_impl::add_ue(const rrc_ue_creation_message& msg)
   rrc_cell.ssb_arfcn        = ue_cfg.meas_timings.front().freq_and_timing.value().carrier_freq;
 
   // Add RRC UE to RRC DU adapter.
-  rrc_ue_rrc_du_adapters.emplace(ue_index, rrc_ue_rrc_du_adapter{get_rrc_du_metrics_handler()});
+  rrc_ue_rrc_du_adapters.emplace(ue_index, rrc_ue_rrc_du_adapter{get_rrc_du_connection_event_handler()});
 
   auto res = ue_db.emplace(ue_index,
                            std::make_unique<rrc_ue_impl>(*msg.f1ap_pdu_notifier,
@@ -165,7 +165,7 @@ void rrc_du_impl::remove_ue(ue_index_t ue_index)
   rrc_ue_rrc_du_adapters.erase(ue_index);
 
   // Notify metrics.
-  metrics_handler.handle_successful_rrc_release();
+  metrics_aggregator.handle_successful_rrc_release();
 
   // Delete RRC UE.
   ue_db.erase(ue_it);

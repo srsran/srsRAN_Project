@@ -22,7 +22,7 @@ rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&               context
                                          const byte_buffer&              du_to_cu_container_,
                                          rrc_ue_setup_proc_notifier&     rrc_ue_notifier_,
                                          rrc_ue_control_message_handler& srb_notifier_,
-                                         rrc_ue_metrics_notifier&        metrics_notifier_,
+                                         rrc_ue_event_notifier&          metrics_notifier_,
                                          rrc_ue_ngap_notifier&           ngap_notifier_,
                                          rrc_ue_event_manager&           event_mng_,
                                          rrc_ue_logger&                  logger_) :

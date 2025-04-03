@@ -9,7 +9,6 @@
  */
 
 #include "rrc_du_metrics_aggregator.h"
-#include <thread>
 
 using namespace srsran;
 using namespace srs_cu_cp;
@@ -29,13 +28,9 @@ void rrc_du_metrics_aggregator::handle_successful_rrc_release()
   rrc_connection_metrics.remove_rrc_connection();
 }
 
-rrc_du_metrics rrc_du_metrics_aggregator::request_metrics_report()
+void rrc_du_metrics_aggregator::collect_metrics(rrc_du_metrics& metrics)
 {
-  rrc_du_metrics report;
-
-  report.mean_nof_rrc_connections = rrc_connection_metrics.get_mean_nof_rrc_connections();
-  report.max_nof_rrc_connections  = rrc_connection_metrics.get_max_nof_rrc_connections();
+  metrics.mean_nof_rrc_connections = rrc_connection_metrics.get_mean_nof_rrc_connections();
+  metrics.max_nof_rrc_connections  = rrc_connection_metrics.get_max_nof_rrc_connections();
   rrc_connection_metrics.reset();
-
-  return report;
 }

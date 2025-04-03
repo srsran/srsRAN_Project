@@ -99,19 +99,26 @@ public:
   virtual size_t get_nof_ues() const = 0;
 };
 
-class rrc_du_metrics_handler
+class rrc_du_connection_event_handler
 {
 public:
-  virtual ~rrc_du_metrics_handler() = default;
+  virtual ~rrc_du_connection_event_handler() = default;
 
   /// \brief Add the successful RRC setup to the metrics.
   virtual void handle_successful_rrc_setup() = 0;
 
   /// \brief Add the successful RRC release to the metrics.
   virtual void handle_successful_rrc_release() = 0;
+};
 
-  /// \brief Request the latest metrics report.
-  virtual rrc_du_metrics get_metrics_report() = 0;
+class rrc_du_metrics_collector
+{
+public:
+  virtual ~rrc_du_metrics_collector() = default;
+
+  /// \brief Collect the metrics of this RRC DU.
+  /// \param[out] metrics The metrics to collect.
+  virtual void collect_metrics(rrc_du_metrics& metrics) = 0;
 };
 
 /// Combined entry point for the RRC DU handling.
@@ -119,16 +126,18 @@ class rrc_du : public rrc_du_cell_manager,
                public rrc_du_ue_repository,
                public rrc_ue_handler,
                public rrc_du_statistics_handler,
-               public rrc_du_metrics_handler
+               public rrc_du_connection_event_handler,
+               public rrc_du_metrics_collector
 {
 public:
   virtual ~rrc_du() = default;
 
-  virtual rrc_du_cell_manager&       get_rrc_du_cell_manager()       = 0;
-  virtual rrc_du_ue_repository&      get_rrc_du_ue_repository()      = 0;
-  virtual rrc_ue_handler&            get_rrc_ue_handler()            = 0;
-  virtual rrc_du_statistics_handler& get_rrc_du_statistics_handler() = 0;
-  virtual rrc_du_metrics_handler&    get_rrc_du_metrics_handler()    = 0;
+  virtual rrc_du_cell_manager&             get_rrc_du_cell_manager()             = 0;
+  virtual rrc_du_ue_repository&            get_rrc_du_ue_repository()            = 0;
+  virtual rrc_ue_handler&                  get_rrc_ue_handler()                  = 0;
+  virtual rrc_du_statistics_handler&       get_rrc_du_statistics_handler()       = 0;
+  virtual rrc_du_connection_event_handler& get_rrc_du_connection_event_handler() = 0;
+  virtual rrc_du_metrics_collector&        get_rrc_du_metrics_collector()        = 0;
 };
 
 } // namespace srs_cu_cp

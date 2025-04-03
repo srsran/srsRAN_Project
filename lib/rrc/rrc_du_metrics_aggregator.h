@@ -34,7 +34,7 @@ public:
 
   void handle_successful_rrc_release();
 
-  rrc_du_metrics request_metrics_report();
+  void collect_metrics(rrc_du_metrics& metrics);
 
 private:
   /// Aggregator for RRC connection related metrics.

@@ -29,7 +29,7 @@ public:
               rrc_ue_context_update_notifier&        cu_cp_notifier_,
               rrc_ue_measurement_notifier&           measurement_notifier_,
               rrc_ue_cu_cp_ue_notifier&              cu_cp_ue_notifier_,
-              rrc_ue_metrics_notifier&               metrics_notifier_,
+              rrc_ue_event_notifier&                 metrics_notifier_,
               const ue_index_t                       ue_index_,
               const rnti_t                           c_rnti_,
               const rrc_cell_context                 cell_,
@@ -112,7 +112,7 @@ private:
   rrc_ue_context_update_notifier& cu_cp_notifier;       // notifier to the CU-CP
   rrc_ue_measurement_notifier&    measurement_notifier; // cell measurement notifier
   rrc_ue_cu_cp_ue_notifier&       cu_cp_ue_notifier;    // cu-cp ue notifier
-  rrc_ue_metrics_notifier&        metrics_notifier;     // metrics notifier
+  rrc_ue_event_notifier&          metrics_notifier;     // metrics notifier
   byte_buffer                     du_to_cu_container;   // initial RRC message from DU to CU
   rrc_ue_logger                   logger;
 

@@ -22,17 +22,19 @@ namespace srsran {
 namespace srs_cu_cp {
 
 /// Adapter between RRC UE and RRC DU.
-class rrc_ue_rrc_du_adapter : public rrc_ue_metrics_notifier
+class rrc_ue_rrc_du_adapter : public rrc_ue_event_notifier
 {
 public:
-  explicit rrc_ue_rrc_du_adapter(rrc_du_metrics_handler& metrics_handler_) : metrics_handler(metrics_handler_) {}
+  explicit rrc_ue_rrc_du_adapter(rrc_du_connection_event_handler& metrics_handler_) : metrics_handler(metrics_handler_)
+  {
+  }
 
   void on_new_rrc_connection() override { metrics_handler.handle_successful_rrc_setup(); }
 
   void on_successful_rrc_release() override { metrics_handler.handle_successful_rrc_release(); }
 
 private:
-  rrc_du_metrics_handler& metrics_handler;
+  rrc_du_connection_event_handler& metrics_handler;
 };
 
 /// Main RRC representation with the DU.
@@ -63,16 +65,18 @@ public:
   // rrc_du_statistics_handler.
   size_t get_nof_ues() const override { return ue_db.size(); }
 
-  // rrc_du_metrics_handler.
-  void           handle_successful_rrc_setup() override { metrics_handler.handle_successful_rrc_setup(); }
-  void           handle_successful_rrc_release() override { metrics_handler.handle_successful_rrc_release(); }
-  rrc_du_metrics get_metrics_report() override { return metrics_handler.request_metrics_report(); }
+  // rrc_du_connection_event_handler.
+  void handle_successful_rrc_setup() override { metrics_aggregator.handle_successful_rrc_setup(); }
+  void handle_successful_rrc_release() override { metrics_aggregator.handle_successful_rrc_release(); }
+  // rrc_du_metrics_collector.
+  void collect_metrics(rrc_du_metrics& metrics) override { metrics_aggregator.collect_metrics(metrics); }
 
-  rrc_du_cell_manager&       get_rrc_du_cell_manager() override { return *this; }
-  rrc_du_ue_repository&      get_rrc_du_ue_repository() override { return *this; }
-  rrc_ue_handler&            get_rrc_ue_handler() override { return *this; }
-  rrc_du_statistics_handler& get_rrc_du_statistics_handler() override { return *this; }
-  rrc_du_metrics_handler&    get_rrc_du_metrics_handler() override { return *this; }
+  rrc_du_cell_manager&             get_rrc_du_cell_manager() override { return *this; }
+  rrc_du_ue_repository&            get_rrc_du_ue_repository() override { return *this; }
+  rrc_ue_handler&                  get_rrc_ue_handler() override { return *this; }
+  rrc_du_statistics_handler&       get_rrc_du_statistics_handler() override { return *this; }
+  rrc_du_connection_event_handler& get_rrc_du_connection_event_handler() override { return *this; }
+  rrc_du_metrics_collector&        get_rrc_du_metrics_collector() override { return *this; }
 
 private:
   // Helpers.
@@ -91,7 +95,7 @@ private:
   std::map<nr_cell_identity, rrc_cell_info> cell_info_db;
 
   // Metrics aggregator.
-  rrc_du_metrics_aggregator metrics_handler;
+  rrc_du_metrics_aggregator metrics_aggregator;
 };
 
 } // namespace srs_cu_cp

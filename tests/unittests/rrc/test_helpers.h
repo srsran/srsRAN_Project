@@ -161,7 +161,7 @@ public:
   }
 };
 
-class dummy_rrc_ue_rrc_du_adapter : public rrc_ue_metrics_notifier
+class dummy_rrc_ue_rrc_du_adapter : public rrc_ue_event_notifier
 {
 public:
   void on_new_rrc_connection() override {}

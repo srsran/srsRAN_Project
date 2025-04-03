@@ -433,10 +433,10 @@ public:
   virtual rrc_ue_reestablishment_context_response get_context() = 0;
 };
 
-class rrc_ue_metrics_notifier
+class rrc_ue_event_notifier
 {
 public:
-  virtual ~rrc_ue_metrics_notifier() = default;
+  virtual ~rrc_ue_event_notifier() = default;
 
   /// \brief Notify the RRC DU about a new RRC connection.
   virtual void on_new_rrc_connection() = 0;
