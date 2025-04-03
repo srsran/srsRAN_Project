@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include "../procedures/e2_ric_control_procedure.h"
+#include "../procedures/e2_setup_procedure.h"
+#include "../procedures/e2_subscription_delete_procedure.h"
+#include "../procedures/e2_subscription_setup_procedure.h"
 #include "e2_connection_handler.h"
-#include "procedures/e2_ric_control_procedure.h"
-#include "procedures/e2_setup_procedure.h"
-#include "procedures/e2_subscription_delete_procedure.h"
-#include "procedures/e2_subscription_setup_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2ap_configuration.h"
