@@ -20,9 +20,20 @@ bearer_context_release_procedure::bearer_context_release_procedure(ue_index_t ue
                                                                    const asn1::e1ap::bearer_context_release_cmd_s& cmd_,
                                                                    e1ap_message_notifier&       pdu_notifier_,
                                                                    e1ap_cu_up_manager_notifier& cu_up_notifier_,
+                                                                   e1ap_cu_up_metrics&          metrics_,
                                                                    srslog::basic_logger&        logger_) :
-  ue_index(ue_index_), cmd(cmd_), pdu_notifier(pdu_notifier_), cu_up_notifier(cu_up_notifier_), logger(logger_)
+  ue_index(ue_index_),
+  cmd(cmd_),
+  pdu_notifier(pdu_notifier_),
+  cu_up_notifier(cu_up_notifier_),
+  metrics(metrics_),
+  logger(logger_)
 {
+}
+
+bearer_context_release_procedure::~bearer_context_release_procedure()
+{
+  metrics.add_context_release();
 }
 
 void bearer_context_release_procedure::operator()(coro_context<async_task<void>>& ctx)

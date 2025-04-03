@@ -64,12 +64,12 @@ public:
     metrics.nof_successful_bearer_context_modification++;
   }
 
-  void add_successful_context_release()
+  void add_context_release()
   {
     if (not enabled) {
       return;
     }
-    metrics.nof_successful_bearer_context_modification++;
+    metrics.nof_bearer_context_release++;
   }
 };
 } // namespace srsran::srs_cu_up

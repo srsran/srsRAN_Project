@@ -61,7 +61,7 @@ e1ap_cu_up_impl::e1ap_cu_up_impl(const e1ap_configuration&    e1ap_cfg_,
     metrics_timer.set(std::chrono::milliseconds(e1ap_cfg.metrics_period), [this](timer_id_t tid) {
       // TODO push metrics to notifier.
       auto m = metrics.get_metrics_and_reset();
-      logger.debug("CU-UP E1AP metrics: {}", format_e1ap_cu_up_metrics(e1ap_cfg.metrics_period, m));
+      logger.warning("CU-UP E1AP metrics: {}", format_e1ap_cu_up_metrics(e1ap_cfg.metrics_period, m));
       metrics_timer.run();
     });
     metrics_timer.run();
@@ -294,7 +294,8 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
 
   // Handle the release procedure
   cu_up_notifier.on_schedule_ue_async_task(
-      ue_index, launch_async<bearer_context_release_procedure>(ue_index, msg, *pdu_notifier, cu_up_notifier, logger));
+      ue_index,
+      launch_async<bearer_context_release_procedure>(ue_index, msg, *pdu_notifier, cu_up_notifier, metrics, logger));
 }
 
 void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)

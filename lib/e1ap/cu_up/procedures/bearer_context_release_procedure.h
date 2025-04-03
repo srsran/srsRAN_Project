@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "cu_up/metrics/e1ap_cu_up_metrics_impl.h"
 #include "cu_up/ue_context/e1ap_cu_up_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
@@ -29,7 +30,10 @@ public:
                                    const asn1::e1ap::bearer_context_release_cmd_s& cmd_,
                                    e1ap_message_notifier&                          pdu_notifier_,
                                    e1ap_cu_up_manager_notifier&                    cu_up_notifier_,
+                                   e1ap_cu_up_metrics&                             metrics_,
                                    srslog::basic_logger&                           logger_);
+
+  ~bearer_context_release_procedure();
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -40,6 +44,7 @@ private:
   const asn1::e1ap::bearer_context_release_cmd_s cmd;
   e1ap_message_notifier&                         pdu_notifier;
   e1ap_cu_up_manager_notifier&                   cu_up_notifier;
+  e1ap_cu_up_metrics&                            metrics;
   srslog::basic_logger&                          logger;
 
   // local variables
