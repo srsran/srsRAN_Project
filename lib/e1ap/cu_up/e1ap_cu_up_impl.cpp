@@ -60,8 +60,9 @@ e1ap_cu_up_impl::e1ap_cu_up_impl(const e1ap_configuration&    e1ap_cfg_,
     metrics_timer = timers.create_unique_timer(cu_up_exec);
     metrics_timer.set(std::chrono::milliseconds(e1ap_cfg.metrics_period), [this](timer_id_t tid) {
       // TODO push metrics to notifier.
-      auto m = metrics.get_metrics_and_reset();
-      logger.warning("CU-UP E1AP metrics: {}", format_e1ap_cu_up_metrics(e1ap_cfg.metrics_period, m));
+      auto  m        = metrics.get_metrics_and_reset();
+      auto& m_logger = srslog::fetch_basic_logger("METRICS");
+      m_logger.info("CU-UP E1AP metrics: {}", format_e1ap_cu_up_metrics(e1ap_cfg.metrics_period, m));
       metrics_timer.run();
     });
     metrics_timer.run();

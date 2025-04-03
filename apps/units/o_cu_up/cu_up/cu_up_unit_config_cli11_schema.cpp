@@ -134,6 +134,8 @@ static void configure_cli11_pcap_args(CLI::App& app, cu_up_unit_pcap_config& pca
 
 static void configure_cli11_metrics_layers_args(CLI::App& app, cu_up_unit_metrics_layer_config& metrics_params)
 {
+  add_option(app, "--enable_cu_up_e1ap", metrics_params.enable_e1ap, "Enable E1AP metrics at CU-UP")
+      ->capture_default_str();
   add_option(app, "--enable_pdcp", metrics_params.enable_pdcp, "Enable PDCP metrics")->capture_default_str();
 }
 

@@ -43,11 +43,16 @@ inline std::string format_e1ap_cu_up_metrics(timer_duration metrics_period, cons
                  m.nof_successful_bearer_context_modification,
                  m.nof_bearer_context_release);
 
+  fmt::format_to(
+      std::back_inserter(buffer),
+      " release_latency_avg={}",
+      float_to_eng_string(
+          static_cast<float>(m.sum_release_latency.count() * 1e-6) / m.nof_bearer_context_release, 1, false));
   fmt::format_to(std::back_inserter(buffer), " release_latency_hist=[");
   for (unsigned i = 0; i < e1ap_cu_up_metrics_container::latency_hist_bins; i++) {
     fmt::format_to(std::back_inserter(buffer), " {}", float_to_eng_string(m.release_latency_hist[i], 1, false));
   }
-  fmt::format_to(std::back_inserter(buffer), "] max_pull_latency={}", m.max_release_latency);
+  fmt::format_to(std::back_inserter(buffer), "] max_release_latency={}", m.max_release_latency);
   return to_c_str(buffer);
 }
 

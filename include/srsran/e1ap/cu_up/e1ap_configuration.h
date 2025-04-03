@@ -17,7 +17,7 @@ namespace srsran::srs_cu_up {
 struct e1ap_configuration {
   /// Whether to enable JSON logging of E1AP Tx and Rx messages.
   bool           json_log_enabled = false;
-  timer_duration metrics_period;
+  timer_duration metrics_period{0};
 };
 
 } // namespace srsran::srs_cu_up
