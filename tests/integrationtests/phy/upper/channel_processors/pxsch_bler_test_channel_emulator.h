@@ -14,6 +14,7 @@
 #include "srsran/adt/tensor.h"
 #include "srsran/phy/support/resource_grid_reader.h"
 #include "srsran/phy/support/resource_grid_writer.h"
+#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/complex_normal_random.h"
 #include "srsran/support/executors/task_executor.h"
@@ -42,6 +43,7 @@ public:
   /// \param[in] fading_distribution         Fading distribution - The valid distributions are rayleigh and
   ///                                        uniform-phase.
   /// \param[in] sinr_dB                     Signal-to-Interference-plus-Noise Ratio.
+  /// \param[in] cfo_Hz                      Carrier frequency offset in Herz.
   /// \param[in] nof_corrupted_re_per_symbol Number of corrupted RE per OFDM symbol. Set to zero for no corrupted RE.
   /// \param[in] nof_tx_ports                Number of transmit ports.
   /// \param[in] nof_rx_ports                Number of receive ports.
@@ -53,6 +55,7 @@ public:
   channel_emulator(std::string        delay_profile,
                    std::string        fading_distribution,
                    float              sinr_dB,
+                   float              cfo_Hz,
                    unsigned           nof_corrupted_re_per_symbol,
                    unsigned           nof_tx_ports,
                    unsigned           nof_rx_ports,
@@ -87,11 +90,13 @@ private:
     /// \param[out] rx_grid       Received resource grid.
     /// \param[in]  tx_grid       Transmit resource grid.
     /// \param[in]  freq_response Frequency domain response.
+    /// \param[in]  time_coeff    Time domain coefficient.
     /// \param[in]  i_port        Receive port index.
     /// \param[in]  i_symbol      OFDM symbol index within the slot.
     void run(resource_grid_writer&       rx_grid,
              const resource_grid_reader& tx_grid,
              const tensor<3, cf_t>&      freq_response,
+             cf_t                        time_coeff,
              unsigned                    i_port,
              unsigned                    i_symbol);
 
@@ -121,6 +126,8 @@ private:
   complex_normal_distribution<cf_t> dist_rayleigh;
   /// Uniform real distribution for phase.
   std::uniform_real_distribution<float> dist_uniform_phase = std::uniform_real_distribution<float>(-M_PI, M_PI);
+  /// CFO coefficients.
+  std::array<cf_t, MAX_NSYMB_PER_SLOT> cfo_coeffs;
   /// Temporary channel sum.
   dynamic_tensor<3, cf_t> freq_domain_channel;
   /// Temporary channel.

@@ -53,6 +53,7 @@ static unsigned                     nof_repetitions                  = 1000;
 static std::string                  channel_delay_profile            = "single-tap";
 static std::string                  channel_fading_distribution      = "uniform-phase";
 static float                        sinr_dB                          = 60.0F;
+static float                        cfo_Hz                           = 0.0F;
 static unsigned                     nof_corrupted_re_per_ofdm_symbol = 0;
 static unsigned                     nof_rx_ports                     = 2;
 static unsigned                     nof_layers                       = 1;
@@ -335,6 +336,7 @@ private:
     emulator = std::make_unique<channel_emulator>(channel_delay_profile,
                                                   channel_fading_distribution,
                                                   sinr_dB,
+                                                  cfo_Hz,
                                                   nof_corrupted_re_per_ofdm_symbol,
                                                   nof_layers,
                                                   nof_rx_ports,
@@ -351,18 +353,43 @@ private:
     srslog::flush();
   }
 
+  void print_stats(double completion_percent)
+  {
+    double crc_bler        = static_cast<double>(crc_error_count) / static_cast<double>(count);
+    double data_bler       = static_cast<double>(data_error_count) / static_cast<double>(count);
+    double mean_iterations = static_cast<double>(count_iterations) / static_cast<double>(count * nof_codeblocks);
+
+    fmt::print("[{:>5.1f}%] "
+               "Iterations={{{:<2} {:<2} {:<3.1f}}}; "
+               "BLER={:.10f}/{:.10f}; "
+               "SINR={{{:+.2f} {:+.2f} {:+.2f}}}; "
+               "EVM={{{:.3f} {:.3f} {:.3f}}}; "
+               "TA={{{:.2f} {:.2f} {:.2f}}}us; "
+               "CFO={{{:.2f} {:.2f} {:.2f}}}Hz; "
+               "pxsch={}\r",
+               completion_percent,
+               min_iterations,
+               max_iterations,
+               mean_iterations,
+               crc_bler,
+               data_bler,
+               sinr_stats.get_min(),
+               sinr_stats.get_max(),
+               sinr_stats.get_mean(),
+               evm_stats.get_min(),
+               evm_stats.get_max(),
+               evm_stats.get_mean(),
+               ta_stats_us.get_min(),
+               ta_stats_us.get_max(),
+               ta_stats_us.get_mean(),
+               cfo_stats_Hz.get_min(),
+               cfo_stats_Hz.get_max(),
+               cfo_stats_Hz.get_mean(),
+               pxsch_type);
+  }
+
   void loop()
   {
-    uint64_t                 count            = 0;
-    uint64_t                 crc_error_count  = 0;
-    uint64_t                 data_error_count = 0;
-    unsigned                 max_iterations   = std::numeric_limits<unsigned>::min();
-    unsigned                 min_iterations   = std::numeric_limits<unsigned>::max();
-    uint64_t                 count_iterations = 0;
-    sample_statistics<float> sinr_stats;
-    sample_statistics<float> evm_stats;
-    sample_statistics<float> ta_stats_us;
-
     std::mt19937 rgen(0);
 
     // Iterate different seeds.
@@ -410,6 +437,9 @@ private:
       if (sch_result.csi.get_time_alignment().has_value()) {
         ta_stats_us.update(sch_result.csi.get_time_alignment()->to_seconds() * 1e6);
       }
+      if (sch_result.csi.get_cfo_Hz().has_value()) {
+        cfo_stats_Hz.update(*sch_result.csi.get_cfo_Hz());
+      }
 
       // Increment slots.
       ++pdsch_config.slot;
@@ -417,68 +447,25 @@ private:
 
       // Set following line to 1 for printing partial results.
       if (show_stats && (n % 100 == 0)) {
-        // Calculate resultant metrics.
-        double crc_bler        = static_cast<double>(crc_error_count) / static_cast<double>(count);
-        double data_bler       = static_cast<double>(data_error_count) / static_cast<double>(count);
-        double mean_iterations = static_cast<double>(count_iterations) / static_cast<double>(count * nof_codeblocks);
-
-        fmt::print("[{:>5.1f}%] "
-                   "Iterations={{{:<2} {:<2} {:<3.1f}}}; "
-                   "BLER={:.10f}/{:.10f}; "
-                   "SINR={{{:+.2f} {:+.2f} {:+.2f}}}; "
-                   "EVM={{{:.3f} {:.3f} {:.3f}}}; "
-                   "TA={{{:.2f} {:.2f} {:.2f}}}us; "
-                   "pxsch={}\r",
-                   static_cast<double>(n) / static_cast<double>(nof_repetitions) * 100.0,
-                   min_iterations,
-                   max_iterations,
-                   mean_iterations,
-                   crc_bler,
-                   data_bler,
-                   sinr_stats.get_min(),
-                   sinr_stats.get_max(),
-                   sinr_stats.get_mean(),
-                   sinr_stats.get_std(),
-                   evm_stats.get_min(),
-                   evm_stats.get_max(),
-                   evm_stats.get_mean(),
-                   ta_stats_us.get_min(),
-                   ta_stats_us.get_max(),
-                   ta_stats_us.get_mean(),
-                   pxsch_type);
+        print_stats(static_cast<double>(n) / static_cast<double>(nof_repetitions) * 100.0);
       }
     }
 
-    // Calculate resultant metrics.
-    double crc_bler        = static_cast<double>(crc_error_count) / static_cast<double>(count);
-    double data_bler       = static_cast<double>(data_error_count) / static_cast<double>(count);
-    double mean_iterations = static_cast<double>(count_iterations) / static_cast<double>(count * nof_codeblocks);
-
-    // Print results.
-    fmt::print("Iterations={{{:<2} {:<2} {:<3.1f}}}; "
-               "BLER={:.10f}/{:.10f}; "
-               "SINR={{{:+.2f} {:+.2f} {:+.2f}}}; "
-               "EVM={{{:.3f} {:.3f} {:.3f}}}; "
-               "TA={{{:.2f} {:.2f} {:.2f}}}us;"
-               "pxsch={}\n",
-               min_iterations,
-               max_iterations,
-               mean_iterations,
-               crc_bler,
-               data_bler,
-               sinr_stats.get_min(),
-               sinr_stats.get_max(),
-               sinr_stats.get_mean(),
-               evm_stats.get_min(),
-               evm_stats.get_max(),
-               evm_stats.get_mean(),
-               ta_stats_us.get_min(),
-               ta_stats_us.get_max(),
-               ta_stats_us.get_mean(),
-               pxsch_type);
+    // Print final results.
+    print_stats(100.0);
   }
 
-  unsigned nof_codeblocks;
+  unsigned                 nof_codeblocks;
+  uint64_t                 count            = 0;
+  uint64_t                 crc_error_count  = 0;
+  uint64_t                 data_error_count = 0;
+  unsigned                 max_iterations   = std::numeric_limits<unsigned>::min();
+  unsigned                 min_iterations   = std::numeric_limits<unsigned>::max();
+  uint64_t                 count_iterations = 0;
+  sample_statistics<float> sinr_stats;
+  sample_statistics<float> evm_stats;
+  sample_statistics<float> ta_stats_us;
+  sample_statistics<float> cfo_stats_Hz;
 
   std::unique_ptr<pdsch_processor>           transmitter;
   std::unique_ptr<pusch_processor>           receiver;
