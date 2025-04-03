@@ -12,6 +12,7 @@
 #pragma once
 
 #include "cu_up/metrics/e1ap_cu_up_metrics.h"
+#include "srsran/support/srsran_assert.h"
 
 namespace srsran::srs_cu_up {
 
@@ -24,6 +25,28 @@ public:
   e1ap_cu_up_metrics(bool enabled_) : enabled(enabled_) {}
 
   bool is_enabled() const { return enabled; }
+
+  void reset_metrics() { metrics = {}; }
+
+  e1ap_cu_up_metrics_container get_metrics() const
+  {
+    srsran_assert(enabled, "Trying to get metrics, but metrics are disabled.");
+    if (not enabled) {
+      return {};
+    }
+    return metrics;
+  }
+
+  e1ap_cu_up_metrics_container get_metrics_and_reset()
+  {
+    srsran_assert(enabled, "Trying to get metrics, but metrics are disabled.");
+    if (not enabled) {
+      return {};
+    }
+    e1ap_cu_up_metrics_container ret = get_metrics();
+    reset_metrics();
+    return ret;
+  }
 
   void add_successful_context_setup()
   {
