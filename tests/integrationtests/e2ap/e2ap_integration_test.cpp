@@ -160,7 +160,6 @@ protected:
     srslog::init();
 
     cfg                  = config_helpers::make_default_e2ap_config();
-    cfg.e2_type          = e2_type_t::DU;
     cfg.gnb_du_id        = int_to_gnb_du_id(1);
     cfg.e2sm_kpm_enabled = true;
 
@@ -248,7 +247,6 @@ protected:
     srslog::init();
 
     cfg                  = config_helpers::make_default_e2ap_config();
-    cfg.e2_type          = e2_type_t::DU;
     cfg.gnb_id           = {123, 22};
     cfg.gnb_du_id        = int_to_gnb_du_id(1);
     cfg.e2sm_kpm_enabled = true;
