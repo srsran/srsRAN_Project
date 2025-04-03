@@ -31,7 +31,6 @@
 #include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
-#include "srsran/gateways/network_gateway.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/timers.h"
@@ -718,11 +717,15 @@ private:
 };
 
 /// Dummy PDU handler
-class dummy_network_gateway_data_handler : public srsran::sctp_network_gateway_data_handler
+class dummy_sctp_association_sdu_notifier : public sctp_association_sdu_notifier
 {
 public:
-  dummy_network_gateway_data_handler() {}
-  void        handle_pdu(const byte_buffer& pdu) override { last_pdu = pdu.copy(); }
+  dummy_sctp_association_sdu_notifier() = default;
+  bool on_new_sdu(byte_buffer pdu) override
+  {
+    last_pdu = pdu.copy();
+    return true;
+  }
   byte_buffer last_pdu;
 };
 
@@ -841,7 +844,7 @@ protected:
   timer_factory                                               factory;
   timer_manager                                               timers;
   std::unique_ptr<e2ap_e2agent_notifier>                      agent_notifier;
-  std::unique_ptr<dummy_network_gateway_data_handler>         gw;
+  std::unique_ptr<dummy_sctp_association_sdu_notifier>        gw;
   std::unique_ptr<dummy_e2ap_pcap>                            pcap;
   std::unique_ptr<e2ap_asn1_packer>                           packer;
   std::unique_ptr<e2sm_interface>                             e2sm_kpm_iface;
@@ -889,7 +892,7 @@ class e2_test : public e2_test_base
     agent_notifier       = std::make_unique<dummy_e2_agent_mng>();
     e2 = create_e2(cfg, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
-    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
     packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
   }
@@ -919,7 +922,7 @@ class e2_entity_test : public e2_test_base
     e2agent                  = create_e2_du_agent(
         cfg, *e2_client, &(*du_metrics), &(*f1ap_ue_id_mapper), &(*du_rc_param_configurator), factory, task_worker);
     // Packer allows to inject packed message into E2 interface.
-    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
     packer = std::make_unique<e2ap_asn1_packer>(*gw, e2agent->get_e2_interface(), *pcap);
   }
@@ -955,7 +958,7 @@ class e2_test_subscriber : public e2_test_base
     agent_notifier = std::make_unique<dummy_e2_agent_mng>();
     e2 = create_e2(cfg, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
-    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
     packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
 
@@ -1007,7 +1010,7 @@ class e2_test_setup : public e2_test_base
     agent_notifier       = std::make_unique<dummy_e2_agent_mng>();
     e2 = create_e2(cfg, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
-    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
     packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
   }

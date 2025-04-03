@@ -80,7 +80,7 @@ protected:
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    gw   = std::make_unique<dummy_network_gateway_data_handler>();
+    gw   = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap = std::make_unique<dummy_e2ap_pcap>();
     if (external_pcap_writer) {
       packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
@@ -123,7 +123,7 @@ protected:
 
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
-    gw                   = std::make_unique<dummy_network_gateway_data_handler>();
+    gw                   = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap                 = std::make_unique<dummy_e2ap_pcap>();
     if (external_pcap_writer) {
       packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
@@ -144,20 +144,20 @@ protected:
     timers.tick();
     task_worker.run_pending_tasks();
   }
-  e2ap_configuration                                  cfg = {};
-  timer_factory                                       factory;
-  timer_manager                                       timers;
-  std::unique_ptr<dummy_network_gateway_data_handler> gw;
-  std::unique_ptr<e2_interface>                       e2;
-  std::unique_ptr<dummy_e2ap_pcap>                    pcap;
-  std::unique_ptr<e2ap_asn1_packer>                   packer;
-  std::unique_ptr<e2sm_interface>                     e2sm_iface;
-  std::unique_ptr<e2sm_handler>                       e2sm_packer;
-  std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
-  manual_task_worker                                  task_worker{64};
-  std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
-  std::unique_ptr<dummy_e2_connection_client>         e2_client;
-  srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
+  e2ap_configuration                                   cfg = {};
+  timer_factory                                        factory;
+  timer_manager                                        timers;
+  std::unique_ptr<dummy_sctp_association_sdu_notifier> gw;
+  std::unique_ptr<e2_interface>                        e2;
+  std::unique_ptr<dummy_e2ap_pcap>                     pcap;
+  std::unique_ptr<e2ap_asn1_packer>                    packer;
+  std::unique_ptr<e2sm_interface>                      e2sm_iface;
+  std::unique_ptr<e2sm_handler>                        e2sm_packer;
+  std::unique_ptr<e2_subscription_manager>             e2_subscription_mngr;
+  manual_task_worker                                   task_worker{64};
+  std::unique_ptr<dummy_e2_pdu_notifier>               msg_notifier;
+  std::unique_ptr<dummy_e2_connection_client>          e2_client;
+  srslog::basic_logger&                                test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 class e2sm_kpm_du_meas_provider_test : public e2sm_kpm_meas_provider_test

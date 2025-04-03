@@ -13,9 +13,9 @@
 
 using namespace srsran;
 
-e2ap_asn1_packer::e2ap_asn1_packer(sctp_network_gateway_data_handler& gw_,
-                                   e2_message_handler&                e2_handler,
-                                   dlt_pcap&                          pcap_) :
+e2ap_asn1_packer::e2ap_asn1_packer(sctp_association_sdu_notifier& gw_,
+                                   e2_message_handler&            e2_handler,
+                                   dlt_pcap&                      pcap_) :
   logger(srslog::fetch_basic_logger("E2-ASN1-PCK")), gw(gw_), e2(e2_handler), pcap(pcap_)
 {
 }
@@ -53,5 +53,5 @@ void e2ap_asn1_packer::handle_message(const e2_message& msg)
     pcap.push_pdu(tx_pdu.copy());
   }
 
-  gw.handle_pdu(tx_pdu);
+  gw.on_new_sdu(std::move(tx_pdu));
 }

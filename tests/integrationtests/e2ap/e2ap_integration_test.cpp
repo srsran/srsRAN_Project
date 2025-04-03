@@ -28,10 +28,10 @@ using namespace srsran;
 /// * SCTP network client
 /// * IO broker
 /// It runs with an external nearRT-RIC.
-class dummy_sctp_association_sdu_notifier : public sctp_association_sdu_notifier
+class my_dummy_sctp_association_sdu_notifier : public sctp_association_sdu_notifier
 {
 public:
-  dummy_sctp_association_sdu_notifier(sctp_association_sdu_notifier& parent_) : parent(parent_) {}
+  my_dummy_sctp_association_sdu_notifier(sctp_association_sdu_notifier& parent_) : parent(parent_) {}
   bool on_new_sdu(byte_buffer pdu) override { return parent.on_new_sdu(std::move(pdu)); }
 
 private:
@@ -51,7 +51,7 @@ public:
     sctp_sender = gw->connect_to("RIC",
                                  nw_config.connect_address,
                                  nw_config.connect_port,
-                                 std::make_unique<dummy_sctp_association_sdu_notifier>(*this));
+                                 std::make_unique<my_dummy_sctp_association_sdu_notifier>(*this));
     if (sctp_sender == nullptr) {
       test_logger.error("Failed to establish E2 connection to Near-RT RIC on {}:{}.\n",
                         nw_config.connect_address,

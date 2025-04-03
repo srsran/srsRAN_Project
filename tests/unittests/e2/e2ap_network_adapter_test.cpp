@@ -16,7 +16,6 @@
 #include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/e2/gateways/e2_network_client_factory.h"
-#include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/gateways/sctp_network_server_factory.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/inline_task_executor.h"

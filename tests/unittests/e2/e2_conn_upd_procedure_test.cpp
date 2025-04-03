@@ -37,7 +37,7 @@ protected:
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    gw   = std::make_unique<dummy_network_gateway_data_handler>();
+    gw   = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap = std::make_unique<dummy_e2ap_pcap>();
     if (external_pcap_writer) {
       packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
