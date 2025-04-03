@@ -196,7 +196,7 @@ double compute_ul_qos_weights(const slice_ue&                         u,
 {
   if (u.has_pending_sr() or avg_ul_rate == 0) {
     // Highest priority to SRs and UEs that have not yet received any allocation.
-    return std::numeric_limits<double>::max();
+    return max_sched_priority;
   }
 
   uint8_t min_prio_level = qos_prio_level_t::max();
@@ -265,11 +265,9 @@ void scheduler_time_qos::ue_ctxt::compute_dl_prio(const slice_ue& u,
   const ue_cell& ue_cc = u.get_cc();
 
   // This should be ensured at this point.
-  srsran_sanity_check(ue_cc.is_pdsch_enabled(pdcch_slot, pdsch_slot), "Invalid UE candidate state");
-  if (not ue_cc.harqs.has_empty_dl_harqs() or not u.has_pending_dl_newtx_bytes()) {
-    // No available HARQs or no pending data.
-    return;
-  }
+  srsran_sanity_check(ue_cc.is_pdsch_enabled(pdcch_slot, pdsch_slot) and ue_cc.harqs.has_empty_dl_harqs() and
+                          u.has_pending_dl_newtx_bytes(),
+                      "Invalid DL UE candidate state");
 
   // [Implementation-defined] We consider only the SearchSpace defined in UE dedicated configuration.
   const search_space_id ue_ded_ss_id = to_search_space_id(2);
@@ -306,22 +304,9 @@ void scheduler_time_qos::ue_ctxt::compute_ul_prio(const slice_ue& u,
   compute_ul_avg_rate(u, nof_slots_elapsed);
 
   const ue_cell& ue_cc = u.get_cc();
-  srsran_assert(ue_cc.is_active() and not ue_cc.is_in_fallback_mode(),
-                "Policy scheduler called for UE={} in fallback",
-                fmt::underlying(ue_cc.ue_index));
-  if (not ue_cc.is_pusch_enabled(pdcch_slot, pusch_slot)) {
-    // Cannot allocate PDCCH/PUSCH for this UE in the provided slots.
-    return;
-  }
-  if (not ue_cc.harqs.has_empty_ul_harqs()) {
-    // No HARQs for newTxs.
-    return;
-  }
-
-  if (u.pending_ul_newtx_bytes() == 0) {
-    // No new bytes to allocate.
-    return;
-  }
+  srsran_sanity_check(not ue_cc.is_in_fallback_mode() and ue_cc.is_pusch_enabled(pdcch_slot, pusch_slot) and
+                          ue_cc.harqs.has_empty_ul_harqs() and u.pending_ul_newtx_bytes() > 0,
+                      "UE UL candidate in invalid state");
 
   // [Implementation-defined] We consider only the SearchSpace defined in UE dedicated configuration.
   const search_space_id ue_ded_ss_id = to_search_space_id(2);

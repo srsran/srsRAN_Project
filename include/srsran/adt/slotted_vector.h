@@ -310,6 +310,10 @@ public:
   const_iterator begin() const { return sl_vec.begin(); }
   const_iterator end() const { return sl_vec.end(); }
 
+  /// Increase capacity of slotted_id_vector to avoid reallocations.
+  /// \param[in] sz New capacity.
+  void reserve(size_t sz) { sl_vec.reserve(sz); }
+
   /// Insert element into the container if an element with the same ID does not exist yet.
   /// \param id ID the constructed element in the table.
   /// \param u object to insert.

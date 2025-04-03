@@ -141,6 +141,8 @@ public:
   auto end() { return ue_map.end(); }
   auto end() const { return ue_map.end(); }
 
+  auto lower_bound(du_ue_index_t ue_index) const { return ue_map.lower_bound(ue_index); }
+
 private:
   /// Add new UE to the RAN slice.
   bool add_ue(ue& u);

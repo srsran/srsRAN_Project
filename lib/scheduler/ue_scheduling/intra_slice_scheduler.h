@@ -43,6 +43,14 @@ public:
   void ul_sched(ul_ran_slice_candidate slice, scheduler_policy& dl_policy);
 
 private:
+  /// Context for a given slice scheduling.
+  struct slice_sched_context {
+    du_ue_index_t dl_next_rr_group_offset = to_du_ue_index(0);
+    unsigned      dl_rr_count             = 0;
+    du_ue_index_t ul_next_rr_group_offset = to_du_ue_index(0);
+    unsigned      ul_rr_count             = 0;
+  };
+
   /// Determines whether a UE can be DL scheduled in a given slot.
   bool can_allocate_pdsch(const slice_ue& u, const ue_cell& ue_cc) const;
 
@@ -95,6 +103,9 @@ private:
   // Number of allocation attempts for DL in the given slot.
   unsigned dl_attempts_count = 0;
   unsigned ul_attempts_count = 0;
+
+  // Information related with the scheduling of each slice that needs to be stored and retrieved across different slots.
+  slotted_id_vector<ran_slice_id_t, slice_sched_context> slice_ctxt_list;
 
   // UE candidates for on-going scheduling.
   std::vector<ue_newtx_candidate> newtx_candidates;
