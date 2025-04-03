@@ -7,6 +7,6 @@
 #
 
 add_executable(e2ap_integration_test e2ap_integration_test.cpp)
-target_link_libraries(e2ap_integration_test srslog srsran_e2 e2ap_asn1 srsran_gateway srsran_support gtest gtest_main)
+target_link_libraries(e2ap_integration_test srslog srsran_e2 e2ap_asn1 e2_test_helpers srsran_gateway srsran_support gtest gtest_main)
 target_include_directories(e2ap_integration_test PRIVATE ${CMAKE_SOURCE_DIR})
 #gtest_discover_tests(e2ap_integration_test)

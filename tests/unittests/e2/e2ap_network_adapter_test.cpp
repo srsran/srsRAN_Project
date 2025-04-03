@@ -8,8 +8,8 @@
  *
  */
 
+#include "common/e2ap_asn1_packer.h"
 #include "dummy_ric.h"
-#include "lib/e2/common/e2ap_asn1_packer.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/e2/e2_factory.h"

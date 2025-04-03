@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "lib/e2/common/e2ap_asn1_packer.h"
+#include "common/e2ap_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "srsran/gateways/sctp_network_server_factory.h"
 #include "srsran/pcap/dlt_pcap.h"

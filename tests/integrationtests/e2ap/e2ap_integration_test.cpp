@@ -9,8 +9,8 @@
  */
 
 #include "lib/e2/common/e2_impl.h"
-#include "lib/e2/common/e2ap_asn1_packer.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
+#include "tests/unittests/e2/common/e2ap_asn1_packer.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/e2/gateways/e2_network_client_factory.h"

@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "e2ap_asn1_packer.h"
 #include "lib/e2/common/e2_subscription_manager_impl.h"
-#include "lib/e2/common/e2ap_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
@@ -843,7 +843,7 @@ protected:
   std::unique_ptr<e2ap_e2agent_notifier>                      agent_notifier;
   std::unique_ptr<dummy_network_gateway_data_handler>         gw;
   std::unique_ptr<dummy_e2ap_pcap>                            pcap;
-  std::unique_ptr<srsran::e2ap_asn1_packer>                   packer;
+  std::unique_ptr<e2ap_asn1_packer>                           packer;
   std::unique_ptr<e2sm_interface>                             e2sm_kpm_iface;
   std::unique_ptr<e2sm_interface>                             e2sm_rc_iface;
   std::unique_ptr<e2sm_control_service>                       e2sm_rc_control_service_style2;
@@ -891,7 +891,7 @@ class e2_test : public e2_test_base
     // Packer allows to inject packed message into E2 interface.
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
   }
 
   void TearDown() override
@@ -921,7 +921,7 @@ class e2_entity_test : public e2_test_base
     // Packer allows to inject packed message into E2 interface.
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, e2agent->get_e2_interface(), *pcap);
+    packer = std::make_unique<e2ap_asn1_packer>(*gw, e2agent->get_e2_interface(), *pcap);
   }
 
   void TearDown() override
@@ -957,7 +957,7 @@ class e2_test_subscriber : public e2_test_base
     // Packer allows to inject packed message into E2 interface.
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
 
     report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to create dummy SCTP connection");
   }
@@ -1009,7 +1009,7 @@ class e2_test_setup : public e2_test_base
     // Packer allows to inject packed message into E2 interface.
     gw     = std::make_unique<dummy_network_gateway_data_handler>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
   }
   void TearDown() override
   {

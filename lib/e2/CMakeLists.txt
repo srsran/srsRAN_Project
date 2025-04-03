@@ -14,7 +14,6 @@ set(SOURCES
     procedures/e2_ric_control_procedure.cpp
     procedures/e2_connection_update_procedure.cpp
     common/e2_connection_handler.cpp
-    common/e2ap_asn1_packer.cpp
     common/e2_factory.cpp
     common/e2_impl.cpp
     common/e2_entity.cpp

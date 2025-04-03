@@ -11,7 +11,6 @@
 #include "srsran/e2/e2_factory.h"
 #include "e2_entity.h"
 #include "e2_impl.h"
-#include "e2ap_asn1_packer.h"
 #include "e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h"
 #include "e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
