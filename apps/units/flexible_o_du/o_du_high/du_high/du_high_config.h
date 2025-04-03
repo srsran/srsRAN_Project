@@ -148,6 +148,14 @@ struct du_high_unit_pdsch_config {
   unsigned max_pdschs_per_slot = MAX_PDSCH_PDUS_PER_SLOT;
   /// Maximum number of DL or UL PDCCH allocation attempts per slot.
   unsigned max_pdcch_alloc_attempts_per_slot = std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT);
+  /// Number of UEs pre-selected for PDSCH newTx scheduling in each slot.
+  unsigned nof_preselected_newtx_ues = 32;
+  /// \brief Period in slots at which the pre-selected newTx UE candidates are recomputed.
+  ///
+  /// Increasing this value will mean that the same list of UE candidates is used for more slots. Reducing this value
+  /// may improve latency but it will reduce the efficiency of UCI multiplexing, as there will be less HARQ-ACK bits
+  /// per slot.
+  unsigned newtx_ues_selection_period = 3;
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_cqi_inc{0.001};
   /// DL Target BLER to be achieved with OLLA.
@@ -256,6 +264,10 @@ struct du_high_unit_pusch_config {
   unsigned min_k2 = 4;
   /// Maximum number of PUSCH grants per slot.
   unsigned max_puschs_per_slot = MAX_PUSCH_PDUS_PER_SLOT;
+  /// Number of UEs pre-selected for PUSCH newTx scheduling in each slot.
+  unsigned nof_preselected_newtx_ues = 32;
+  /// \brief Period in slots at which the pre-selected newTx UE candidates are recomputed.
+  unsigned newtx_ues_selection_period = 1;
   /// \brief Direct Current (DC) offset, in number of subcarriers, used in PUSCH.
   ///
   /// The numerology of the active UL BWP is used as a reference to determine the number of subcarriers.

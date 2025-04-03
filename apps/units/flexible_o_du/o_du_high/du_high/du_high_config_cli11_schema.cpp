@@ -294,6 +294,18 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT)));
   add_option(app,
+             "--nof_preselected_newtx_ues",
+             pdsch_params.nof_preselected_newtx_ues,
+             "Number of UEs pre-selected for a potential DL newTx allocation in a slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
+  add_option(app,
+             "--newtx_ues_selection_period",
+             pdsch_params.newtx_ues_selection_period,
+             "Number of slots between each computation of newTx UE candidates for potential allocation in a slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
+  add_option(app,
              "--olla_cqi_inc_step",
              pdsch_params.olla_cqi_inc,
              "Outer-loop link adaptation (OLLA) increment value. The value 0 means that OLLA is disabled")
@@ -770,6 +782,18 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   add_option(app, "--max_puschs_per_slot", pusch_params.max_puschs_per_slot, "Maximum number of PUSCH grants per slot")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_PUSCH_PDUS_PER_SLOT));
+  add_option(app,
+             "--nof_preselected_newtx_ues",
+             pusch_params.nof_preselected_newtx_ues,
+             "Number of UEs pre-selected for a potential UL newTx allocation in a slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
+  add_option(app,
+             "--newtx_ues_selection_period",
+             pusch_params.newtx_ues_selection_period,
+             "Number of slots between each computation of newTx UE candidates for potential allocation in a slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
   add_option(
       app, "--beta_offset_ack_idx_1", pusch_params.beta_offset_ack_idx_1, "betaOffsetACK-Index1 part of UCI-OnPUSCH")
       ->capture_default_str()

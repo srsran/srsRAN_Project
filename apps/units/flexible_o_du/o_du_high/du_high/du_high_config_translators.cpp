@@ -998,6 +998,8 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ue.max_nof_dl_harq_retxs             = pdsch.max_nof_harq_retxs;
   out_cfg.ue.max_nof_ul_harq_retxs             = pusch.max_nof_harq_retxs;
   out_cfg.ue.max_pdschs_per_slot               = pdsch.max_pdschs_per_slot;
+  out_cfg.ue.pre_policy_rr_dl_ue_group_size    = pdsch.nof_preselected_newtx_ues;
+  out_cfg.ue.pre_policy_rr_dl_ue_group_period  = pdsch.newtx_ues_selection_period;
   out_cfg.ue.max_pdcch_alloc_attempts_per_slot = pdsch.max_pdcch_alloc_attempts_per_slot;
   out_cfg.ue.pdcch_al_cqi_offset               = pdcch.dedicated.al_cqi_offset;
   out_cfg.ue.pdsch_nof_rbs                     = {pdsch.min_rb_size, pdsch.max_rb_size};
@@ -1010,13 +1012,15 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   }
   out_cfg.ue.ul_mcs = {pusch.min_ue_mcs, pusch.max_ue_mcs};
   out_cfg.ue.pusch_rv_sequence.assign(pusch.rv_sequence.begin(), pusch.rv_sequence.end());
-  out_cfg.ue.initial_ul_dc_offset   = pusch.dc_offset;
-  out_cfg.ue.max_puschs_per_slot    = pusch.max_puschs_per_slot;
-  out_cfg.ue.olla_ul_target_bler    = pusch.olla_target_bler;
-  out_cfg.ue.olla_ul_snr_inc        = pusch.olla_snr_inc;
-  out_cfg.ue.olla_max_ul_snr_offset = pusch.olla_max_snr_offset;
-  out_cfg.ue.pdsch_crb_limits       = {pdsch.start_rb, pdsch.end_rb};
-  out_cfg.ue.pusch_crb_limits       = {pusch.start_rb, pusch.end_rb};
+  out_cfg.ue.initial_ul_dc_offset             = pusch.dc_offset;
+  out_cfg.ue.max_puschs_per_slot              = pusch.max_puschs_per_slot;
+  out_cfg.ue.pre_policy_rr_ul_ue_group_size   = pusch.nof_preselected_newtx_ues;
+  out_cfg.ue.pre_policy_rr_ul_ue_group_period = pusch.newtx_ues_selection_period;
+  out_cfg.ue.olla_ul_target_bler              = pusch.olla_target_bler;
+  out_cfg.ue.olla_ul_snr_inc                  = pusch.olla_snr_inc;
+  out_cfg.ue.olla_max_ul_snr_offset           = pusch.olla_max_snr_offset;
+  out_cfg.ue.pdsch_crb_limits                 = {pdsch.start_rb, pdsch.end_rb};
+  out_cfg.ue.pusch_crb_limits                 = {pusch.start_rb, pusch.end_rb};
   if (std::holds_alternative<time_qos_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
     out_cfg.ue.strategy_cfg = app_sched_expert_cfg.policy_sched_expert_cfg;
   }
