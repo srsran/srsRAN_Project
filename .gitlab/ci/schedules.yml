@@ -7,7 +7,7 @@
 #
 
 Rebaser:
-  cron: "*/10 6-21 * * 1-5"
+  cron: "*/10 6-20 * * 1-5"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
@@ -21,7 +21,7 @@ Rebaser:
       raw: false
 
 Nightly Build Unit Tests Plugin:
-  cron: "45 23 * * 1-5"
+  cron: "00 23 * * 1-5"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
@@ -39,7 +39,7 @@ Nightly Build Unit Tests Plugin:
       raw: false
 
 Nightly E2E Tests Plugin:
-  cron: "00 22 * * 1-5"
+  cron: "00 21 * * 1-5"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
@@ -93,7 +93,7 @@ Alternative OSs:
       raw: false
 
 Nightly Build Unit Tests OpenSource:
-  cron: "45 23 * * 0"
+  cron: "00 23 * * 0"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
@@ -115,7 +115,7 @@ Nightly Build Unit Tests OpenSource:
       raw: false
 
 Nightly E2E Tests OpenSource:
-  cron: "00 22 * * 0"
+  cron: "00 21 * * 0"
   cron_timezone: "Europe/Madrid"
   ref: refs/heads/dev
   variables:
