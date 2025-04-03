@@ -43,7 +43,10 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   cs_cfg(cell_cfg.get_common_coreset(ss_cfg.get_coreset_id())),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
+  // Pre-reserve memory to avoid allocations in RT.
+  pending_dl_ues_new_tx.reserve(MAX_NOF_DU_UES);
   ongoing_ues_ack_retxs.reserve(MAX_NOF_DU_UES);
+
   // NOTE 1: We use a std::vector instead of a std::array because we can later on initialize the vector with the minimum
   // value of k1, passed through the expert config.
   // NOTE 2: Although the TS 38.213, Section 9.2.3 specifies that the k1 possible values are {1, ..., 8}, some UE
