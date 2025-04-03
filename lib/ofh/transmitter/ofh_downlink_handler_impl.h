@@ -14,7 +14,6 @@
 #include "ofh_data_flow_uplane_downlink_data.h"
 #include "ofh_downlink_handler_metrics_collector.h"
 #include "ofh_tx_window_checker.h"
-#include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/ethernet/ethernet_frame_pool.h"
 #include "srsran/ofh/ofh_constants.h"

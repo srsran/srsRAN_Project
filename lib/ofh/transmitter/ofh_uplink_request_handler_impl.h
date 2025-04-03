@@ -12,6 +12,7 @@
 
 #include "../support/prach_context_repository.h"
 #include "../support/uplink_context_repository.h"
+#include "../support/uplink_notified_grid_symbol_repository.h"
 #include "ofh_data_flow_cplane_scheduling_commands.h"
 #include "ofh_tx_window_checker.h"
 #include "ofh_uplink_request_handler_metrics_collector.h"
@@ -55,6 +56,8 @@ struct uplink_request_handler_impl_dependencies {
   std::shared_ptr<uplink_context_repository> ul_slot_repo;
   /// Uplink PRACH context repository.
   std::shared_ptr<prach_context_repository> ul_prach_repo;
+  /// Notified uplink grid symbol repository.
+  std::shared_ptr<uplink_notified_grid_symbol_repository> notifier_symbol_repo;
   /// Data flow for Control-Plane scheduling commands.
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow;
   /// Ethernet frame pool.
@@ -65,8 +68,8 @@ struct uplink_request_handler_impl_dependencies {
 class uplink_request_handler_impl : public uplink_request_handler
 {
 public:
-  explicit uplink_request_handler_impl(const uplink_request_handler_impl_config&  config,
-                                       uplink_request_handler_impl_dependencies&& dependencies);
+  uplink_request_handler_impl(const uplink_request_handler_impl_config&  config,
+                              uplink_request_handler_impl_dependencies&& dependencies);
 
   // See interface for documentation.
   void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override;
@@ -81,19 +84,20 @@ public:
   uplink_request_handler_metrics_collector& get_metrics_collector() { return metrics_collector; }
 
 private:
-  srslog::basic_logger&                                 logger;
-  const bool                                            is_prach_cp_enabled;
-  const cyclic_prefix                                   cp;
-  const std::optional<tdd_ul_dl_config_common>          tdd_config;
-  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
-  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
-  tx_window_checker                                     window_checker;
-  std::shared_ptr<uplink_context_repository>            ul_slot_repo;
-  std::shared_ptr<prach_context_repository>             ul_prach_repo;
-  std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow;
-  std::shared_ptr<ether::eth_frame_pool>                frame_pool;
-  error_notifier&                                       err_notifier;
-  uplink_request_handler_metrics_collector              metrics_collector;
+  srslog::basic_logger&                                   logger;
+  const bool                                              is_prach_cp_enabled;
+  const cyclic_prefix                                     cp;
+  const std::optional<tdd_ul_dl_config_common>            tdd_config;
+  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>   prach_eaxc;
+  const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>   ul_eaxc;
+  tx_window_checker                                       window_checker;
+  std::shared_ptr<uplink_context_repository>              ul_slot_repo;
+  std::shared_ptr<prach_context_repository>               ul_prach_repo;
+  std::shared_ptr<uplink_notified_grid_symbol_repository> notifier_symbol_repo;
+  std::unique_ptr<data_flow_cplane_scheduling_commands>   data_flow;
+  std::shared_ptr<ether::eth_frame_pool>                  frame_pool;
+  error_notifier&                                         err_notifier;
+  uplink_request_handler_metrics_collector                metrics_collector;
 };
 
 } // namespace ofh

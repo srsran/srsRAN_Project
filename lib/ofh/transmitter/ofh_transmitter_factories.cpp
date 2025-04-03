@@ -152,16 +152,17 @@ static std::shared_ptr<ether::eth_frame_pool> create_eth_frame_pool(const transm
 }
 
 static transmitter_impl_dependencies
-resolve_transmitter_dependencies(const transmitter_config&                         tx_config,
-                                 srslog::basic_logger&                             logger,
-                                 task_executor&                                    tx_executor,
-                                 task_executor&                                    downlink_executor,
-                                 error_notifier&                                   err_notifier,
-                                 std::unique_ptr<ether::transmitter>               eth_transmitter,
-                                 std::shared_ptr<prach_context_repository>         prach_context_repo,
-                                 std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
-                                 std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
-                                 std::shared_ptr<uplink_cplane_context_repository> prach_cp_context_repo)
+resolve_transmitter_dependencies(const transmitter_config&                               tx_config,
+                                 srslog::basic_logger&                                   logger,
+                                 task_executor&                                          tx_executor,
+                                 task_executor&                                          downlink_executor,
+                                 error_notifier&                                         err_notifier,
+                                 std::unique_ptr<ether::transmitter>                     eth_transmitter,
+                                 std::shared_ptr<prach_context_repository>               prach_context_repo,
+                                 std::shared_ptr<uplink_context_repository>              ul_slot_context_repo,
+                                 std::shared_ptr<uplink_cplane_context_repository>       ul_cp_context_repo,
+                                 std::shared_ptr<uplink_cplane_context_repository>       prach_cp_context_repo,
+                                 std::shared_ptr<uplink_notified_grid_symbol_repository> notifier_symbol_repo)
 {
   transmitter_impl_dependencies dependencies;
 
@@ -194,25 +195,27 @@ resolve_transmitter_dependencies(const transmitter_config&                      
       downlink_executor,
       tx_config.sector);
 
-  dependencies.ul_slot_repo    = std::move(ul_slot_context_repo);
-  dependencies.ul_prach_repo   = std::move(prach_context_repo);
-  dependencies.eth_transmitter = std::move(eth_transmitter);
-  dependencies.frame_pool      = std::move(frame_pool);
+  dependencies.ul_slot_repo         = std::move(ul_slot_context_repo);
+  dependencies.ul_prach_repo        = std::move(prach_context_repo);
+  dependencies.eth_transmitter      = std::move(eth_transmitter);
+  dependencies.frame_pool           = std::move(frame_pool);
+  dependencies.notifier_symbol_repo = std::move(notifier_symbol_repo);
 
   return dependencies;
 }
 
 std::unique_ptr<transmitter>
-srsran::ofh::create_transmitter(const transmitter_config&                         transmitter_cfg,
-                                srslog::basic_logger&                             logger,
-                                task_executor&                                    tx_executor,
-                                task_executor&                                    downlink_executor,
-                                error_notifier&                                   err_notifier,
-                                std::unique_ptr<ether::transmitter>               eth_transmitter,
-                                std::shared_ptr<prach_context_repository>         prach_context_repo,
-                                std::shared_ptr<uplink_context_repository>        ul_slot_context_repo,
-                                std::shared_ptr<uplink_cplane_context_repository> ul_cp_context_repo,
-                                std::shared_ptr<uplink_cplane_context_repository> prach_cp_context_repo)
+srsran::ofh::create_transmitter(const transmitter_config&                               transmitter_cfg,
+                                srslog::basic_logger&                                   logger,
+                                task_executor&                                          tx_executor,
+                                task_executor&                                          downlink_executor,
+                                error_notifier&                                         err_notifier,
+                                std::unique_ptr<ether::transmitter>                     eth_transmitter,
+                                std::shared_ptr<prach_context_repository>               prach_context_repo,
+                                std::shared_ptr<uplink_context_repository>              ul_slot_context_repo,
+                                std::shared_ptr<uplink_cplane_context_repository>       ul_cp_context_repo,
+                                std::shared_ptr<uplink_cplane_context_repository>       prach_cp_context_repo,
+                                std::shared_ptr<uplink_notified_grid_symbol_repository> notifier_symbol_repo)
 {
   return std::make_unique<transmitter_impl>(transmitter_cfg,
                                             resolve_transmitter_dependencies(transmitter_cfg,
@@ -224,5 +227,6 @@ srsran::ofh::create_transmitter(const transmitter_config&                       
                                                                              std::move(prach_context_repo),
                                                                              std::move(ul_slot_context_repo),
                                                                              std::move(ul_cp_context_repo),
-                                                                             std::move(prach_cp_context_repo)));
+                                                                             std::move(prach_cp_context_repo),
+                                                                             std::move(notifier_symbol_repo)));
 }

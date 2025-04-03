@@ -130,7 +130,7 @@ struct sector_dependencies {
   /// Uplink task executor.
   task_executor* uplink_executor = nullptr;
   /// User-Plane received symbol notifier.
-  std::shared_ptr<uplane_rx_symbol_notifier> notifier;
+  uplane_rx_symbol_notifier* notifier = nullptr;
   /// Optional Ethernet transmitter.
   std::optional<std::unique_ptr<ether::transmitter>> eth_transmitter;
   /// Optional Ethernet receiver.

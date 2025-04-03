@@ -95,6 +95,7 @@ void ota_symbol_boundary_dispatcher::on_new_symbol(const slot_symbol_point_conte
 }
 
 receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_dependencies&& dependencies) :
+  symbol_reorderer(std::move(dependencies.symbol_reorderer)),
   closed_window_handler(get_closed_rx_window_handler_config(config),
                         generate_closed_rx_window_dependencies(std::move(dependencies.window_handler_dependencies),
                                                                *dependencies.logger,

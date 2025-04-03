@@ -170,10 +170,11 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
 {
   unsigned repository_size = calculate_repository_size(sector_cfg.scs, sector_cfg.max_processing_delay_slots * 4);
 
-  auto cp_repo       = std::make_shared<uplink_cplane_context_repository>(repository_size);
-  auto prach_cp_repo = std::make_shared<uplink_cplane_context_repository>(repository_size);
-  auto ul_prach_repo = std::make_shared<prach_context_repository>(repository_size);
-  auto ul_data_repo  = std::make_shared<uplink_context_repository>(repository_size);
+  auto cp_repo                      = std::make_shared<uplink_cplane_context_repository>(repository_size);
+  auto prach_cp_repo                = std::make_shared<uplink_cplane_context_repository>(repository_size);
+  auto ul_prach_repo                = std::make_shared<prach_context_repository>(repository_size);
+  auto ul_data_repo                 = std::make_shared<uplink_context_repository>(repository_size);
+  auto ul_grid_symbol_notified_repo = std::make_shared<uplink_notified_grid_symbol_repository>(repository_size);
 
   // Build the ethernet txrx.
   auto eth_txrx = create_txrx(sector_cfg,
@@ -195,7 +196,8 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                   ul_prach_repo,
                                   ul_data_repo,
                                   cp_repo,
-                                  prach_cp_repo);
+                                  prach_cp_repo,
+                                  ul_grid_symbol_notified_repo);
 
   srsran_assert(sector_deps.err_notifier, "Invalid error notifier");
 
@@ -210,15 +212,11 @@ std::unique_ptr<sector> srsran::ofh::create_ofh_sector(const sector_configuratio
                                         ul_prach_repo,
                                         ul_data_repo,
                                         cp_repo,
-                                        prach_cp_repo);
+                                        prach_cp_repo,
+                                        ul_grid_symbol_notified_repo);
 
-  return std::make_unique<sector_impl>(sector_impl_config{sector_cfg.sector_id, sector_cfg.are_metrics_enabled},
-                                       sector_impl_dependencies{std::move(receiver),
-                                                                std::move(transmitter),
-                                                                std::move(cp_repo),
-                                                                std::move(prach_cp_repo),
-                                                                std::move(ul_prach_repo),
-                                                                std::move(ul_data_repo),
-                                                                eth_transmitter,
-                                                                eth_receiver});
+  return std::make_unique<sector_impl>(
+      sector_impl_config{sector_cfg.sector_id, sector_cfg.are_metrics_enabled},
+      sector_impl_dependencies{
+          std::move(receiver), std::move(transmitter), std::move(ul_data_repo), eth_transmitter, eth_receiver});
 }

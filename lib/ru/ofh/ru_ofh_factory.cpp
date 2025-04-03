@@ -22,9 +22,10 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
   report_fatal_error_if_not(dependencies.timing_notifier, "Invalid timing notifier");
 
   ru_ofh_impl_dependencies ofh_dependencies;
-  ofh_dependencies.logger          = dependencies.logger;
-  ofh_dependencies.timing_notifier = dependencies.timing_notifier;
-  ofh_dependencies.error_notifier  = dependencies.error_notifier;
+  ofh_dependencies.logger             = dependencies.logger;
+  ofh_dependencies.timing_notifier    = dependencies.timing_notifier;
+  ofh_dependencies.error_notifier     = dependencies.error_notifier;
+  ofh_dependencies.rx_symbol_notifier = dependencies.rx_symbol_notifier;
 
   // Prepare OFH controller configuration.
   ofh::controller_config controller_cfg;
@@ -45,9 +46,6 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
 
   auto ru_ofh = std::make_unique<ru_ofh_impl>(ru_config, std::move(ofh_dependencies));
 
-  // Create UL Rx symbol notifier.
-  auto ul_data_notifier = std::make_shared<ru_ofh_rx_symbol_handler_impl>(*dependencies.rx_symbol_notifier);
-
   std::vector<std::unique_ptr<ofh::sector>> sectors;
   // Create sectors.
   for (unsigned i = 0, e = config.sector_configs.size(); i != e; ++i) {
@@ -61,7 +59,7 @@ std::unique_ptr<radio_unit> srsran::create_ofh_ru(const ru_ofh_configuration& co
         "The RU operating bandwidth should be greater than or equal to the bandwidth of the cell");
 
     // Fill the notifier in the dependencies.
-    dependencies.sector_dependencies[i].notifier     = ul_data_notifier;
+    dependencies.sector_dependencies[i].notifier     = &ru_ofh->get_uplane_rx_symbol_notifier();
     dependencies.sector_dependencies[i].err_notifier = &ru_ofh->get_error_notifier();
 
     // Create OFH sector.

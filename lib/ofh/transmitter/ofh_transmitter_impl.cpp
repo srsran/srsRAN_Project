@@ -40,6 +40,7 @@ resolve_uplink_request_handler_dependencies(transmitter_impl_dependencies& tx_de
           *tx_dependencies.err_notifier,
           std::move(tx_dependencies.ul_slot_repo),
           std::move(tx_dependencies.ul_prach_repo),
+          std::move(tx_dependencies.notifier_symbol_repo),
           std::move(tx_dependencies.ul_df_cplane),
           tx_dependencies.frame_pool};
 }

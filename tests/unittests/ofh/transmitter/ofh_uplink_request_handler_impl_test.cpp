@@ -110,10 +110,11 @@ protected:
   shared_resource_grid_spy                   shared_grid;
   std::shared_ptr<uplink_context_repository> ul_slot_repo;
   std::shared_ptr<prach_context_repository>  ul_prach_repo;
-  data_flow_cplane_scheduling_commands_spy*  data_flow;
-  data_flow_cplane_scheduling_commands_spy*  data_flow_prach;
-  uplink_request_handler_impl                handler;
-  uplink_request_handler_impl                handler_prach_cp_en;
+  std::shared_ptr<uplink_notified_grid_symbol_repository> notified_symbol_repo;
+  data_flow_cplane_scheduling_commands_spy*               data_flow;
+  data_flow_cplane_scheduling_commands_spy*               data_flow_prach;
+  uplink_request_handler_impl                             handler;
+  uplink_request_handler_impl                             handler_prach_cp_en;
 
   explicit ofh_uplink_request_handler_impl_fixture() :
     reader_spy(1, 14, 1),
@@ -122,6 +123,7 @@ protected:
     shared_grid(grid),
     ul_slot_repo(std::make_shared<uplink_context_repository>(REPOSITORY_SIZE)),
     ul_prach_repo(std::make_shared<prach_context_repository>(REPOSITORY_SIZE)),
+    notified_symbol_repo(std::make_unique<uplink_notified_grid_symbol_repository>(REPOSITORY_SIZE)),
     handler(get_config_prach_cp_disabled(), get_dependencies_prach_cp_disabled()),
     handler_prach_cp_en(get_config_prach_cp_enabled(), get_dependencies_prach_cp_enabled())
   {
@@ -136,6 +138,7 @@ protected:
             notifier_spy,
             ul_slot_repo,
             ul_prach_repo,
+            notified_symbol_repo,
             std::move(temp),
             std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
   }
@@ -149,6 +152,7 @@ protected:
             notifier_spy,
             ul_slot_repo,
             ul_prach_repo,
+            notified_symbol_repo,
             std::move(temp),
             std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
   }

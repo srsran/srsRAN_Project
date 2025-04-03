@@ -18,6 +18,7 @@ using namespace srsran;
 ru_ofh_impl::ru_ofh_impl(const ru_ofh_impl_config& config, ru_ofh_impl_dependencies&& dependencies) :
   timing_notifier(config.nof_slot_offset_du_ru, config.nof_symbols_per_slot, config.scs, *dependencies.timing_notifier),
   error_handler(*dependencies.error_notifier),
+  rx_symbol_handler(*dependencies.rx_symbol_notifier),
   ofh_timing_mngr(std::move(dependencies.timing_mngr)),
   controller(*dependencies.logger)
 {

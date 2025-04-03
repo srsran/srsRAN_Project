@@ -81,6 +81,7 @@ uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_ha
                  get_nsymb_per_slot(config.cp)),
   ul_slot_repo(std::move(dependencies.ul_slot_repo)),
   ul_prach_repo(std::move(dependencies.ul_prach_repo)),
+  notifier_symbol_repo(std::move(dependencies.notifier_symbol_repo)),
   data_flow(std::move(dependencies.data_flow)),
   frame_pool(std::move(dependencies.frame_pool)),
   err_notifier(dependencies.err_notifier),
@@ -88,6 +89,7 @@ uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_ha
 {
   srsran_assert(ul_slot_repo, "Invalid uplink repository");
   srsran_assert(ul_prach_repo, "Invalid PRACH repository");
+  srsran_assert(notifier_symbol_repo, "Invalid notified uplink grid symbol repository");
   srsran_assert(data_flow, "Invalid data flow");
   srsran_assert(frame_pool, "Invalid frame pool");
 }
@@ -245,6 +247,9 @@ void uplink_request_handler_impl::handle_new_uplink_slot(const resource_grid_con
 
   // Store the context in the repository.
   ul_slot_repo->add(context, grid, df_context.symbol_range);
+
+  // Add entry to the notified symbol repository.
+  notifier_symbol_repo->add(context.slot, df_context.symbol_range.start(), cp);
 
   for (auto eaxc : ul_eaxc) {
     df_context.eaxc = eaxc;
