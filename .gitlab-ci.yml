@@ -123,6 +123,7 @@ validate blocked MRs:
     # Validate the last pipeline is green
     - |
       CI_PLUGIN_MERGE_REQUEST_IID=$(echo $MR_JSON | jq -r '.iid')
+      PLUGIN_PROJECT_ID=$(echo $MR_JSON | jq -r '.project_id')
     - |
       if [[ -z $CI_PLUGIN_MERGE_REQUEST_IID ]]; then
         LATEST_PIPELINE_STATUS="success"
@@ -317,14 +318,6 @@ full-code-format:
       -*lib/asn1
       -*lib/phy/generic_functions/fftx/lib_fftx_dftbat_srcs
       -*lib/phy/generic_functions/fftx/lib_fftx_idftbat_srcs" >/tmp/codechecker_skip
-    - |
-      if [[ -n $CI_PLUGIN_COMMIT_SHA ]]; then
-        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH} >/dev/null 2>&1
-        cd ${PLUGIN_PATH}
-        git fetch origin ${CI_PLUGIN_COMMIT_SHA} >/dev/null 2>&1
-        git checkout ${CI_PLUGIN_COMMIT_SHA} >/dev/null 2>&1
-        cd ${CI_PROJECT_DIR}
-      fi
     - |
       export CC=/usr/bin/clang
       export CXX=/usr/bin/clang++

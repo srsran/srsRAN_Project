@@ -192,16 +192,37 @@ variables:
 
         exit $ret
       }
-      if [[ -n $CI_PLUGIN_COMMIT_SHA ]] && [[ $CI_DISABLE_PLUGINS != "True" ]]; then
-        echo "#########################"
-        echo "#### Plugin checkout ####"
-        echo "#########################"
-        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
-        cd ${PLUGIN_PATH}
-        git fetch --depth=1 origin ${CI_PLUGIN_COMMIT_SHA} > /dev/null
-        git config advice.detachedHead false
-        git checkout ${CI_PLUGIN_COMMIT_SHA}
-        cd ${CI_PROJECT_DIR}
+
+      if [[ $CI_DISABLE_PLUGINS != "True" ]]; then
+        PLUGIN_PATH_ARRAY=()
+        PLUGIN_REPO_ARRAY=()
+        PLUGIN_REF_ARRAY=()
+        while IFS='|' read -r path repo ref; do
+            PLUGIN_PATH_ARRAY+=("$path")
+            PLUGIN_REPO_ARRAY+=("$repo")
+            PLUGIN_REF_ARRAY+=("$ref")
+        done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
+
+        if [[ -z $PLUGIN_INDEX_ARRAY ]]; then
+          PLUGIN_INDEX_ARRAY=("0")
+        fi
+
+        for index in "${PLUGIN_INDEX_ARRAY[@]}"; do
+            PLUGIN_PATH="${PLUGIN_PATH_ARRAY[$index]}"
+            PLUGIN_REPO="${PLUGIN_REPO_ARRAY[$index]}"
+            PLUGIN_REF="${PLUGIN_REF_ARRAY[$index]}"
+            PLUGIN_REF=$(eval echo $PLUGIN_REF)
+            
+            echo "#############################"
+            echo "#### $PLUGIN_PATH checkout ####"
+            echo "#############################"
+            git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git plugins/${PLUGIN_PATH}
+            cd plugins/${PLUGIN_PATH}
+            git fetch --depth=1 origin ${PLUGIN_REF} > /dev/null
+            git config advice.detachedHead false
+            git checkout ${PLUGIN_REF}
+            cd ${CI_PROJECT_DIR}
+        done
       fi
     - build_srsgnb "${SRS_TARGET}"
     - launch_tests
@@ -571,7 +592,11 @@ valgrind changed tests:
     TEST_EXECUTION_TIMEOUT: 20m
   script:
     - *srs_functions
-    - REPO_PLUGIN_COMMIT_SHA=$(cat .gitlab/ci/plugin_version.txt)
+    - |
+      PLUGIN_PATH="${PLUGIN_PATH_ARRAY[0]}"
+      PLUGIN_REF="${PLUGIN_REF_ARRAY[0]}"
+      PLUGIN_REF=$(eval echo $PLUGIN_REF)
+      REPO_PLUGIN_COMMIT_SHA=$(cat .gitlab/ci/plugin_version.txt)
     - git config advice.detachedHead false
     - git fetch origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME --depth 40
     - |
@@ -580,7 +605,7 @@ valgrind changed tests:
       echo "#### $FORK_POINT | $REPO_PLUGIN_COMMIT_SHA ####"
       echo "#############################################################################################"
       git checkout $FORK_POINT
-      cd ${PLUGIN_PATH}
+      cd plugins/${PLUGIN_PATH}
       git fetch origin ${REPO_PLUGIN_COMMIT_SHA} > /dev/null
       git checkout ${REPO_PLUGIN_COMMIT_SHA}
       cd ${CI_PROJECT_DIR}
@@ -589,11 +614,11 @@ valgrind changed tests:
       OUTPUT_FINGERPRINT=""
     - |
       echo "#############################################################################################"
-      echo "#### $CI_COMMIT_SHA | $CI_PLUGIN_COMMIT_SHA ####"
+      echo "#### $CI_COMMIT_SHA | $PLUGIN_REF ####"
       echo "#############################################################################################"
       git checkout origin/$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
-      cd ${PLUGIN_PATH}
-      git checkout ${CI_PLUGIN_COMMIT_SHA}
+      cd plugins/${PLUGIN_PATH}
+      git checkout ${PLUGIN_REF}
       cd ${CI_PROJECT_DIR}      
       build_srsgnb
     - echo "This test execution has a timeout of ${TEST_EXECUTION_TIMEOUT}. If the execution excess that timer, the job will be marked as allowed_to_fail. This will avoid the job to have a huge duration in a MR pipeline."
