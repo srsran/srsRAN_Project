@@ -938,6 +938,11 @@ struct du_high_unit_pcap_config {
   }
 };
 
+/// Configuration of the task executors queues.
+struct du_high_unit_execution_queues_config {
+  uint32_t ue_data_executor_queue_size = 2048;
+};
+
 /// CPU affinities configuration for the cell.
 struct du_high_unit_cpu_affinities_cell_config {
   os_sched_affinity_config l2_cell_cpu_cfg = {sched_affinity_mask_types::l2_cell, {}, sched_affinity_mask_policy::mask};
@@ -945,6 +950,9 @@ struct du_high_unit_cpu_affinities_cell_config {
 
 /// Expert configuration of the DU high.
 struct du_high_unit_expert_execution_config {
+  /// \brief Task executor configuration for the DU.
+  du_high_unit_execution_queues_config du_queue_cfg;
+
   /// \brief CPU affinities per cell of the gNB app.
   ///
   /// \note Add one cell by default.

@@ -276,7 +276,7 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   cfg.ue_executors.policy            = srs_du::du_high_executor_config::ue_executor_config::map_policy::per_cell;
   cfg.ue_executors.max_nof_strands   = 1;
   cfg.ue_executors.ctrl_queue_size   = task_worker_queue_size;
-  cfg.ue_executors.pdu_queue_size    = du_hi.pdu_queue_size;
+  cfg.ue_executors.pdu_queue_size    = du_hi.ue_data_tasks_queue_size;
   cfg.ue_executors.pool_executor     = exec_map.at("low_prio_exec");
   cfg.ctrl_executors.task_queue_size = task_worker_queue_size;
   cfg.ctrl_executors.pool_executor   = exec_map.at("high_prio_exec");

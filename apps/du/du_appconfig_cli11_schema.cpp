@@ -18,7 +18,6 @@
 #include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_cli11_schema.h"
 #include "du_appconfig.h"
-#include "srsran/adt/interval.h"
 #include "srsran/support/cli11_utils.h"
 
 using namespace srsran;

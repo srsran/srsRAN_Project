@@ -67,8 +67,8 @@ struct worker_manager_config {
 
   /// DU high worker configuration.
   struct du_high_config {
-    /// DU-high PDU queue size.
-    unsigned pdu_queue_size;
+    /// DU-high UE data related tasks queue size.
+    unsigned ue_data_tasks_queue_size;
     /// DU high number of cells.
     unsigned nof_cells;
     /// Real-time mode enabled flag.

@@ -292,6 +292,7 @@ int main(int argc, char** argv)
   // > Create GTP-U Demux.
   gtpu_demux_creation_request du_f1u_gtpu_msg   = {};
   du_f1u_gtpu_msg.cfg.warn_on_drop              = true;
+  du_f1u_gtpu_msg.cfg.queue_size                = du_cfg.f1u_cfg.pdu_queue_size;
   du_f1u_gtpu_msg.gtpu_pcap                     = du_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux = create_gtpu_demux(du_f1u_gtpu_msg);
 
