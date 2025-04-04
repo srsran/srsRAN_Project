@@ -30,6 +30,7 @@ struct ngap_ue_context {
   ngap_cu_cp_ue_notifier* ue = nullptr;
   guami_t                 serving_guami;
   uint64_t                aggregate_maximum_bit_rate_dl = 0;
+  uint64_t                aggregate_maximum_bit_rate_ul = 0;
   unique_timer            request_pdu_session_timer     = {};
   bool                    release_requested             = false;
   bool                    release_scheduled             = false;

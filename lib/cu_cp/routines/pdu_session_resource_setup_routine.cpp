@@ -155,6 +155,7 @@ void pdu_session_resource_setup_routine::operator()(
     ue_context_mod_request.cu_to_du_rrc_info.value().ue_cap_rat_container_list =
         rrc_ue->get_packed_ue_capability_rat_container_list();
     ue_context_mod_request.cu_to_du_rrc_info.value().meas_cfg = rrc_ue->get_packed_meas_config();
+    ue_context_mod_request.gnb_du_ue_ambr_ul                  = setup_msg.ue_aggregate_maximum_bit_rate_ul;
 
     // DRB setup have already added above.
     CORO_AWAIT_VALUE(ue_context_modification_response,

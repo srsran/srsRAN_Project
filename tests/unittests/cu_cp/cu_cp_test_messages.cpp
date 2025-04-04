@@ -37,6 +37,7 @@ srsran::srs_cu_cp::generate_pdu_session_resource_setup(ue_index_t ue_index,
   req.ue_index = ue_index;
 
   req.ue_aggregate_maximum_bit_rate_dl = 1000;
+  req.ue_aggregate_maximum_bit_rate_ul = 1000;
 
   for (unsigned i = 0; i < num_pdu_sessions; ++i) {
     pdu_session_id_t pdu_session_id = uint_to_pdu_session_id(i + 1);

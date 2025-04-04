@@ -382,6 +382,7 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
   // Store UE Aggregate Maximum Bitrate.
   if (msg->ue_aggr_max_bit_rate_present) {
     ue_ctxt.aggregate_maximum_bit_rate_dl = msg->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl;
+    ue_ctxt.aggregate_maximum_bit_rate_ul = msg->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul;
   }
 
   auto* ue = ue_ctxt.get_cu_cp_ue();
@@ -458,6 +459,13 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   // Store UE Aggregate Maximum Bitrate if it is set.
   if (init_ctxt_setup_req.ue_aggr_max_bit_rate.has_value()) {
     ue_ctxt.aggregate_maximum_bit_rate_dl = init_ctxt_setup_req.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_dl;
+    ue_ctxt.aggregate_maximum_bit_rate_ul = init_ctxt_setup_req.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_ul;
+  } else {
+    // Add stored UE Aggregate Maximum Bitrate to request.
+    if (ue_ctxt.aggregate_maximum_bit_rate_dl > 0 && ue_ctxt.aggregate_maximum_bit_rate_ul > 0) {
+      init_ctxt_setup_req.ue_aggr_max_bit_rate = {ue_ctxt.aggregate_maximum_bit_rate_dl,
+                                                  ue_ctxt.aggregate_maximum_bit_rate_ul};
+    }
   }
 
   // Log security context.
@@ -512,6 +520,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
   // Store information in UE context.
   if (request->ue_aggr_max_bit_rate_present) {
     ue_ctxt.aggregate_maximum_bit_rate_dl = request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl;
+    ue_ctxt.aggregate_maximum_bit_rate_ul = request->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_ul;
   }
 
   // Convert to common type.
@@ -524,6 +533,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
     return;
   }
   msg.ue_aggregate_maximum_bit_rate_dl = ue_ctxt.aggregate_maximum_bit_rate_dl;
+  msg.ue_aggregate_maximum_bit_rate_ul = ue_ctxt.aggregate_maximum_bit_rate_ul;
 
   // Start routine.
   ue->schedule_async_task(launch_async<ngap_pdu_session_resource_setup_procedure>(

@@ -67,6 +67,9 @@ void initial_context_setup_routine::operator()(
     ue_context_setup_request.sp_cell_id    = rrc_smc_ctxt.sp_cell_id;
     ue_context_setup_request.serv_cell_idx = 0; // TODO: Remove hardcoded value
     ue_context_setup_request.rrc_container = rrc_smc_ctxt.rrc_ue_security_mode_command_pdu.copy();
+    if (request.ue_aggr_max_bit_rate.has_value()) {
+      ue_context_setup_request.gnb_du_ue_ambr_ul = request.ue_aggr_max_bit_rate.value().ue_aggr_max_bit_rate_ul;
+    }
 
     // Call F1AP procedure.
     CORO_AWAIT_VALUE(ue_context_setup_response,
