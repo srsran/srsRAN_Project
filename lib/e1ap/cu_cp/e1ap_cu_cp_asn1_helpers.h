@@ -12,6 +12,7 @@
 
 #include "../common/e1ap_asn1_converters.h"
 #include "srsran/asn1/asn1_utils.h"
+#include "srsran/asn1/e1ap/e1ap_ies.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/qos/qos_prio_level.h"
@@ -142,7 +143,8 @@ inline void fill_asn1_qos_flow_info_item(asn1::e1ap::qos_flow_qos_param_item_s& 
   // Fill QoS flow map indication.
   if (qos_flow_info_item.qos_flow_map_ind.has_value()) {
     asn1_qos_flow_info_item.qos_flow_map_ind_present = true;
-    asn1::string_to_enum(asn1_qos_flow_info_item.qos_flow_map_ind, qos_flow_info_item.qos_flow_map_ind.value());
+    asn1_qos_flow_info_item.qos_flow_map_ind =
+        static_cast<asn1::e1ap::qos_flow_map_ind_opts::options>((int)qos_flow_info_item.qos_flow_map_ind.value());
   }
 }
 
@@ -165,17 +167,20 @@ inline void fill_asn1_drb_to_setup_item(asn1::e1ap::drb_to_setup_item_ng_ran_s& 
 
     if (cell_group_info_item.ul_cfg.has_value()) {
       asn1_cell_group_info_item.ul_cfg_present = true;
-      asn1::string_to_enum(asn1_cell_group_info_item.ul_cfg, cell_group_info_item.ul_cfg.value());
+      asn1_cell_group_info_item.ul_cfg =
+          static_cast<asn1::e1ap::ul_cfg_opts::options>((int)cell_group_info_item.ul_cfg.value());
     }
 
     if (cell_group_info_item.dl_tx_stop.has_value()) {
       asn1_cell_group_info_item.dl_tx_stop_present = true;
-      asn1::string_to_enum(asn1_cell_group_info_item.dl_tx_stop, cell_group_info_item.dl_tx_stop.value());
+      asn1_cell_group_info_item.dl_tx_stop =
+          static_cast<asn1::e1ap::dl_tx_stop_opts::options>((int)cell_group_info_item.dl_tx_stop.value());
     }
 
     if (cell_group_info_item.rat_type.has_value()) {
       asn1_cell_group_info_item.rat_type_present = true;
-      asn1::string_to_enum(asn1_cell_group_info_item.rat_type, cell_group_info_item.rat_type.value());
+      asn1_cell_group_info_item.rat_type =
+          static_cast<asn1::e1ap::rat_type_opts::options>((int)cell_group_info_item.rat_type.value());
     }
 
     asn1_drb_to_setup_item.cell_group_info.push_back(asn1_cell_group_info_item);
@@ -199,7 +204,8 @@ inline void fill_asn1_drb_to_setup_item(asn1::e1ap::drb_to_setup_item_ng_ran_s& 
       asn1_qos_flow_map_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_map_item.qos_flow_id);
       if (qos_flow_map_item.qos_flow_map_ind.has_value()) {
         asn1_qos_flow_map_item.qos_flow_map_ind_present = true;
-        asn1::string_to_enum(asn1_qos_flow_map_item.qos_flow_map_ind, qos_flow_map_item.qos_flow_map_ind.value());
+        asn1_qos_flow_map_item.qos_flow_map_ind =
+            static_cast<asn1::e1ap::qos_flow_map_ind_opts::options>((int)qos_flow_map_item.qos_flow_map_ind.value());
       }
 
       asn1_drb_to_setup_item.drb_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels.push_back(
@@ -312,7 +318,8 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
         asn1_qos_flow_map_item.qos_flow_id = qos_flow_id_to_uint(qos_flow_map_item.qos_flow_id);
         if (qos_flow_map_item.qos_flow_map_ind.has_value()) {
           asn1_qos_flow_map_item.qos_flow_map_ind_present = true;
-          asn1::string_to_enum(asn1_qos_flow_map_item.qos_flow_map_ind, qos_flow_map_item.qos_flow_map_ind.value());
+          asn1_qos_flow_map_item.qos_flow_map_ind =
+              static_cast<asn1::e1ap::qos_flow_map_ind_opts::options>((int)qos_flow_map_item.qos_flow_map_ind.value());
         }
 
         asn1_pdu_session_res_item.pdu_session_data_forwarding_info_request.qos_flows_forwarded_on_fwd_tunnels.push_back(
@@ -360,7 +367,8 @@ inline void fill_asn1_bearer_context_setup_request(asn1::e1ap::bearer_context_se
   // Fill bearer context status change.
   if (request.bearer_context_status_change.has_value()) {
     asn1_request->bearer_context_status_change_present = true;
-    asn1::string_to_enum(asn1_request->bearer_context_status_change, request.bearer_context_status_change.value());
+    asn1_request->bearer_context_status_change = static_cast<asn1::e1ap::bearer_context_status_change_opts::options>(
+        (int)request.bearer_context_status_change.value());
   }
 
   // Fill RAN UE ID.
@@ -620,17 +628,20 @@ inline void fill_asn1_bearer_context_modification_request(asn1::e1ap::bearer_con
 
             if (cell_group_info_item.ul_cfg.has_value()) {
               asn1_cell_group_info_item.ul_cfg_present = true;
-              asn1::string_to_enum(asn1_cell_group_info_item.ul_cfg, cell_group_info_item.ul_cfg.value());
+              asn1_cell_group_info_item.ul_cfg =
+                  static_cast<asn1::e1ap::ul_cfg_opts::options>((int)cell_group_info_item.ul_cfg.value());
             }
 
             if (cell_group_info_item.dl_tx_stop.has_value()) {
               asn1_cell_group_info_item.dl_tx_stop_present = true;
-              asn1::string_to_enum(asn1_cell_group_info_item.dl_tx_stop, cell_group_info_item.dl_tx_stop.value());
+              asn1_cell_group_info_item.dl_tx_stop =
+                  static_cast<asn1::e1ap::dl_tx_stop_opts::options>((int)cell_group_info_item.dl_tx_stop.value());
             }
 
             if (cell_group_info_item.rat_type.has_value()) {
               asn1_cell_group_info_item.rat_type_present = true;
-              asn1::string_to_enum(asn1_cell_group_info_item.rat_type, cell_group_info_item.rat_type.value());
+              asn1_cell_group_info_item.rat_type =
+                  static_cast<asn1::e1ap::rat_type_opts::options>((int)cell_group_info_item.rat_type.value());
             }
 
             asn1_drb_to_setup_mod_item.cell_group_info.push_back(asn1_cell_group_info_item);

@@ -142,7 +142,7 @@ cu_up_manager_impl::handle_bearer_context_modification_request_impl(ue_context& 
   response.ue_index                                  = ue_ctxt.get_index();
   response.success                                   = true;
 
-  bool new_ul_tnl_info_required = msg.new_ul_tnl_info_required == std::string("required");
+  bool new_ul_tnl_info_required = (msg.new_ul_tnl_info_required.has_value() && msg.new_ul_tnl_info_required.value());
 
   if (msg.security_info.has_value()) {
     security::sec_as_config security_info;
