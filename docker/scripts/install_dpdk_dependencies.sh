@@ -33,7 +33,7 @@ main() {
         fi
         if [[ "$mode" == "all" || "$mode" == "run" ]]; then
             DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends \
-                python3-pip libnuma-dev pciutils libfdt-dev libatomic1
+                python3-pip libnuma-dev pciutils libfdt-dev libatomic1 iproute2
             pip3 install pyelftools || pip3 install --break-system-packages pyelftools
         fi
     else
