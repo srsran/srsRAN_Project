@@ -15,8 +15,10 @@
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config_translators.h"
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_factory.h"
 #include "apps/units/flexible_o_du/o_du_low/o_du_low_unit_factory.h"
+#include "commands/ntn_config_update_remote_command_factory.h"
 #include "flexible_o_du_impl.h"
 #include "metrics/flexible_o_du_metrics_builder.h"
+#include "srsran/du/du_high/du_high.h"
 #include "srsran/du/o_du_factory.h"
 #include "srsran/e2/e2_du_metrics_connector.h"
 #include "srsran/fapi_adaptor/mac/mac_fapi_adaptor.h"
@@ -244,6 +246,17 @@ o_du_unit flexible_o_du_factory::create_flexible_o_du(const o_du_unit_dependenci
   // Create the RU CFO command.
   if (auto* controller = ru->get_controller().get_cfo_controller()) {
     o_du.commands.cmdline.commands.push_back(std::make_unique<cfo_app_command>(*controller));
+  }
+
+  // Add NTN-Config update remote command.
+  auto& ntn_cfg = config.odu_high_cfg.du_high_cfg.config.ntn_cfg;
+  if (ntn_cfg.has_value()) {
+    add_ntn_config_update_remote_command(
+        o_du.commands,
+        ntn_cfg.value(),
+        odu_instance->get_o_du_high().get_du_high().get_du_configurator(),
+        odu_instance->get_o_du_high().get_du_high().get_du_manager_time_mapper_accessor(),
+        ru->get_controller());
   }
 
   // Configure the RU and DU in the dynamic DU.
