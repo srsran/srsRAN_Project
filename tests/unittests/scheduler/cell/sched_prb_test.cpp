@@ -103,7 +103,7 @@ TEST(bwp_rb_bitmap, search)
 {
   bwp_rb_bitmap rb_bitmap(275, 0, true);
 
-  crb_interval prbs = rb_helper::find_empty_interval_of_length(rb_bitmap.prbs(), 5);
+  prb_interval prbs = rb_helper::find_empty_interval_of_length(rb_bitmap.prbs(), 5);
   TESTASSERT(prbs == prb_interval(0, 5));
   prbs = rb_helper::find_empty_interval_of_length(rb_bitmap.prbs(), rb_bitmap.prbs().size());
   TESTASSERT(prbs == prb_interval(0, rb_bitmap.prbs().size()));

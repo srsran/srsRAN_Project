@@ -175,9 +175,9 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
   {
     const crb_interval crb_lims   = pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_id);
     const unsigned     nof_si_rbs = si_prbs_tbs.nof_prbs;
-    const prb_bitmap&  used_crbs  = res_grid.dl_res_grid.used_crbs(
+    const crb_bitmap&  used_crbs  = res_grid.dl_res_grid.used_crbs(
         cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, crb_lims, si_ofdm_symbols);
-    si_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_si_rbs, 0);
+    si_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_si_rbs);
     if (si_crbs.length() < nof_si_rbs) {
       // early exit
       logger.info("Skipping SI message scheduling. Cause: Not enough PDSCH space for SI Message {}", si_message);

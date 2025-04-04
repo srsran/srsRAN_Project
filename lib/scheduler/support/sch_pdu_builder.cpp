@@ -326,7 +326,7 @@ void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
                                       rnti_t                               rnti,
                                       const cell_configuration&            cell_cfg,
                                       const dci_1_0_tc_rnti_configuration& dci_cfg,
-                                      const crb_interval&                  crbs,
+                                      const vrb_interval&                  vrbs,
                                       bool                                 is_new_data)
 {
   const bwp_downlink_common& bwp_dl = cell_cfg.dl_cfg_common.init_dl_bwp;
@@ -342,11 +342,8 @@ void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
   } else {
     pdsch.coreset_cfg = &*bwp_dl.pdcch_common.common_coreset;
   }
-  // See 3GPP TS 38.211, clause 7.3.1.6 - VRBs are shifted from PRBs by an offset equal to the coreset start.
-  const vrb_interval vrbs = {crbs.start() - pdsch.coreset_cfg->get_coreset_start_crb(),
-                             crbs.stop() - pdsch.coreset_cfg->get_coreset_start_crb()};
-  pdsch.rbs               = vrbs;
-  pdsch.symbols           = pdsch_cfg.symbols;
+  pdsch.rbs     = vrbs;
+  pdsch.symbols = pdsch_cfg.symbols;
 
   pdsch.dmrs = pdsch_cfg.dmrs;
   // See TS 38.211, 7.3.1.1. - Scrambling.
@@ -385,7 +382,7 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                                      const cell_configuration&           cell_cfg,
                                      const search_space_info&            ss_info,
                                      const dci_1_0_c_rnti_configuration& dci_cfg,
-                                     const crb_interval&                 crbs,
+                                     const vrb_interval&                 vrbs,
                                      bool                                is_new_data)
 {
   const coreset_configuration& cs_cfg     = *ss_info.coreset;
@@ -396,14 +393,7 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.bwp_cfg     = &bwp_dl.generic_params;
   pdsch.coreset_cfg = &cs_cfg;
 
-  // See 3GPP TS 38.211, clause 7.3.1.6 - VRBs are shifted from PRBs by an offset equal to the coreset start.
-  if (ss_info.cfg->is_common_search_space()) {
-    pdsch.rbs =
-        vrb_interval{crbs.start() - cs_cfg.get_coreset_start_crb(), crbs.stop() - cs_cfg.get_coreset_start_crb()};
-  } else {
-    const prb_interval prbs = crb_to_prb(bwp_dl.generic_params.crbs, crbs);
-    pdsch.rbs               = vrb_interval{prbs.start(), prbs.stop()};
-  }
+  pdsch.rbs            = vrbs;
   pdsch.symbols        = pdsch_cfg.symbols;
   pdsch.dmrs           = pdsch_cfg.dmrs;
   pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
@@ -444,7 +434,7 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
                                      const ue_cell_configuration&    ue_cell_cfg,
                                      search_space_id                 ss_id,
                                      const dci_1_1_configuration&    dci_cfg,
-                                     const crb_interval&             crbs,
+                                     const vrb_interval&             vrbs,
                                      bool                            is_new_data,
                                      const ue_channel_state_manager& cs_mgr)
 {
@@ -453,13 +443,12 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   const coreset_configuration& cs_cfg         = *ss_info.coreset;
   const bwp_config&            active_bwp     = *ss_info.bwp;
   const bwp_configuration&     active_bwp_cfg = active_bwp.dl_common.value()->generic_params;
-  const prb_interval           prbs           = crb_to_prb(active_bwp_cfg.crbs, crbs);
 
   pdsch.rnti        = rnti;
   pdsch.bwp_cfg     = &active_bwp_cfg;
   pdsch.coreset_cfg = &cs_cfg;
 
-  pdsch.rbs            = vrb_interval{prbs.start(), prbs.stop()};
+  pdsch.rbs            = vrbs;
   pdsch.symbols        = pdsch_cfg.symbols;
   pdsch.dmrs           = pdsch_cfg.dmrs;
   pdsch.is_interleaved = dci_cfg.vrb_prb_mapping.has_value();
@@ -485,7 +474,7 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   cw.tb_size_bytes   = mcs_tbs_info.tbs;
 
   // Beamforming and precoding.
-  pdsch.precoding = cs_mgr.get_precoding(pdsch_cfg.nof_layers, prbs);
+  pdsch.precoding = cs_mgr.get_precoding(pdsch_cfg.nof_layers, vrbs.length());
 
   // Populate power offsets.
   if (not cell_cfg.nzp_csi_rs_list.empty()) {
@@ -504,7 +493,7 @@ void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
                                       rnti_t                               rnti,
                                       const cell_configuration&            cell_cfg,
                                       const dci_0_0_tc_rnti_configuration& dci_cfg,
-                                      const crb_interval&                  crbs,
+                                      const vrb_interval&                  vrbs,
                                       bool                                 is_new_data)
 {
   // TODO.
@@ -518,10 +507,9 @@ void srsran::build_pusch_f0_0_tc_rnti(pusch_information&                   pusch
   pusch.rnti = rnti;
 
   // PUSCH resources.
-  pusch.bwp_cfg           = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
-  const prb_interval prbs = crb_to_prb(pusch.bwp_cfg->crbs, crbs);
-  pusch.rbs               = vrb_interval{prbs.start(), prbs.stop()};
-  pusch.symbols           = pusch_cfg.symbols;
+  pusch.bwp_cfg = &cell_cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  pusch.rbs     = vrbs;
+  pusch.symbols = pusch_cfg.symbols;
 
   // Determine transform precoding.
   pusch.transform_precoding = cell_cfg.use_msg3_transform_precoder();
@@ -554,7 +542,7 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
                                      const cell_configuration&           cell_cfg,
                                      const bwp_uplink_common&            ul_bwp,
                                      const dci_0_0_c_rnti_configuration& dci_cfg,
-                                     const crb_interval&                 crbs,
+                                     const vrb_interval&                 vrbs,
                                      bool                                is_new_data)
 {
   // TODO.
@@ -568,10 +556,9 @@ void srsran::build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
   pusch.rnti = rnti;
 
   // PUSCH resources.
-  pusch.bwp_cfg           = &ul_bwp.generic_params;
-  const prb_interval prbs = crb_to_prb(ul_bwp.generic_params.crbs, crbs);
-  pusch.rbs               = vrb_interval{prbs.start(), prbs.stop()};
-  pusch.symbols           = pusch_cfg.symbols;
+  pusch.bwp_cfg = &ul_bwp.generic_params;
+  pusch.rbs     = vrbs;
+  pusch.symbols = pusch_cfg.symbols;
 
   // The use of the transform precoder for PUSCH scheduled via DCI Format 0_0 is determined by the parameter
   // msg3-transformPrecoder.
@@ -605,7 +592,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
                                      const ue_cell_configuration& ue_cell_cfg,
                                      search_space_id              ss_id,
                                      const dci_0_1_configuration& dci_cfg,
-                                     const crb_interval&          crbs,
+                                     const vrb_interval&          vrbs,
                                      bool                         is_new_data)
 {
   const cell_configuration&   cell_cfg   = ue_cell_cfg.cell_cfg_common;
@@ -615,7 +602,6 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
   const bwp_uplink_common&    bwp_ul_cmn = *bwp_info.ul_common.value();
   const std::optional<rach_config_common>& opt_rach_cfg  = bwp_ul_cmn.rach_cfg_common;
   const std::optional<pusch_config>&       pusch_cfg_ded = bwp_ul_ded->pusch_cfg;
-  const prb_interval                       prbs          = crb_to_prb(bwp_ul_cmn.generic_params.crbs, crbs);
 
   // TODO: Populate based on config.
   pusch.intra_slot_freq_hopping = false;
@@ -629,7 +615,7 @@ void srsran::build_pusch_f0_1_c_rnti(pusch_information&           pusch,
 
   // PUSCH resources.
   pusch.bwp_cfg = &bwp_info.ul_common->value().generic_params;
-  pusch.rbs     = vrb_interval{prbs.start(), prbs.stop()};
+  pusch.rbs     = vrbs;
   pusch.symbols = pusch_cfg.symbols;
 
   // MCS.

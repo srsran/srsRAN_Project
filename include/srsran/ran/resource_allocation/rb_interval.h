@@ -18,17 +18,21 @@ namespace srsran {
 struct crb_interval : public interval<unsigned> {
   using interval::interval;
 
-  static crb_interval to_crbs(interval<unsigned> lims_int) { return crb_interval{lims_int.start(), lims_int.stop()}; }
+  explicit crb_interval(interval<unsigned> lims) : interval(lims) {}
 };
 
 /// Struct to express a {min,...,max} range of PRB indexes within a BWP.
 struct prb_interval : public interval<unsigned> {
   using interval::interval;
+
+  explicit prb_interval(interval<unsigned> lims) : interval(lims) {}
 };
 
 /// Struct to express a {min,...,max} range of VRB indexes.
 struct vrb_interval : public interval<unsigned> {
   using interval::interval;
+
+  explicit vrb_interval(interval<unsigned> lims) : interval(lims) {}
 };
 
 /// \brief Convert CRB into PRB given the CRB assignment limits.

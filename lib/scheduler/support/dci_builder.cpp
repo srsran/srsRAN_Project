@@ -113,7 +113,7 @@ void srsran::build_dci_f1_0_ra_rnti(dci_dl_info&               dci,
 
 void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&                  dci,
                                     const bwp_downlink_common&    init_dl_bwp,
-                                    crb_interval                  crbs,
+                                    vrb_interval                  vrbs,
                                     unsigned                      time_resource,
                                     unsigned                      k1,
                                     unsigned                      pucch_res_indicator,
@@ -133,7 +133,6 @@ void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&                  dci,
   const crb_interval cs0_crbs = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs();
   f1_0.N_rb_dl_bwp            = cs0_crbs.length();
   // See TS38.211 7.3.1.6 - Mapping from VRBs to PRBs.
-  const vrb_interval vrbs = crb_to_vrb_f1_0_common_ss_non_interleaved(crbs, cs0_crbs.start());
   f1_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{f1_0.N_rb_dl_bwp, vrbs.start(), vrbs.length()});
   f1_0.time_resource = time_resource;
@@ -153,7 +152,7 @@ void srsran::build_dci_f1_0_tc_rnti(dci_dl_info&                  dci,
 void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                  dci,
                                    const search_space_info&      ss_info,
                                    const bwp_downlink_common&    init_dl_bwp,
-                                   crb_interval                  crbs,
+                                   vrb_interval                  vrbs,
                                    unsigned                      time_resource,
                                    unsigned                      k1,
                                    unsigned                      pucch_res_indicator,
@@ -162,9 +161,8 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                  dci,
                                    uint8_t                       rv,
                                    const dl_harq_process_handle& h_dl)
 {
-  const coreset_configuration& cs_cfg            = *ss_info.coreset;
-  const bwp_downlink_common&   active_dl_bwp_cmn = *ss_info.bwp->dl_common.value();
-  const bwp_configuration&     active_dl_bwp     = active_dl_bwp_cmn.generic_params;
+  const bwp_downlink_common& active_dl_bwp_cmn = *ss_info.bwp->dl_common.value();
+  const bwp_configuration&   active_dl_bwp     = active_dl_bwp_cmn.generic_params;
 
   dci.type                           = dci_dl_rnti_config_type::c_rnti_f1_0;
   dci.c_rnti_f1_0                    = {};
@@ -179,12 +177,6 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                  dci,
   if (ss_info.cfg->is_common_search_space() and init_dl_bwp.pdcch_common.coreset0.has_value()) {
     N_rb_dl_bwp = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
   }
-  // See TS38.211 7.3.1.6 - Mapping from VRBs to PRBs.
-  const vrb_interval vrbs = rb_helper::crb_to_vrb_dl_non_interleaved(crbs,
-                                                                     active_dl_bwp.crbs.start(),
-                                                                     cs_cfg.get_coreset_start_crb(),
-                                                                     dci_dl_format::f1_0,
-                                                                     ss_info.cfg->is_common_search_space());
   f1_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_dl_bwp, vrbs.start(), vrbs.length()});
   f1_0.time_resource = time_resource;
@@ -211,7 +203,7 @@ void srsran::build_dci_f1_0_c_rnti(dci_dl_info&                  dci,
 void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
                                    const ue_cell_configuration&  ue_cell_cfg,
                                    search_space_id               ss_id,
-                                   prb_interval                  prbs,
+                                   vrb_interval                  vrbs,
                                    unsigned                      time_resource,
                                    unsigned                      k1,
                                    unsigned                      pucch_res_indicator,
@@ -252,7 +244,7 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
 
   // See 38.212, clause 7.3.1.2.2 - N^{DL,BWP}_RB for C-RNTI.
   f1_1.frequency_resource = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{active_dl_bwp.crbs.length(), prbs.start(), prbs.length()});
+      ra_frequency_type1_configuration{active_dl_bwp.crbs.length(), vrbs.start(), vrbs.length()});
   f1_1.time_resource = time_resource;
 
   const dci_size_config& dci_sz_cfg = ss_info.dci_sz_cfg;
@@ -331,7 +323,7 @@ void srsran::build_dci_f0_0_tc_rnti(dci_ul_info&               dci,
 void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                  dci,
                                    const search_space_info&      ss_info,
                                    const bwp_uplink_common&      init_ul_bwp,
-                                   const crb_interval&           crbs,
+                                   const vrb_interval&           vrbs,
                                    unsigned                      time_resource,
                                    sch_mcs_index                 mcs_index,
                                    uint8_t                       rv,
@@ -361,7 +353,6 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                  dci,
   // See 38.212, clause 7.3.1.1.1 - N^{UL,BWP}_RB for C-RNTI.
   const unsigned N_ul_bwp_rb =
       ss_info.cfg->is_common_search_space() ? init_ul_bwp.generic_params.crbs.length() : active_ul_bwp.crbs.length();
-  const vrb_interval vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_ul_bwp.crbs.start());
   f0_0.frequency_resource =
       ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_ul_bwp_rb, vrbs.start(), vrbs.length()});
 
@@ -378,7 +369,7 @@ void srsran::build_dci_f0_0_c_rnti(dci_ul_info&                  dci,
 void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
                                    const ue_cell_configuration&  ue_cell_cfg,
                                    search_space_id               ss_id,
-                                   const crb_interval&           crbs,
+                                   const vrb_interval&           vrbs,
                                    unsigned                      time_resource,
                                    sch_mcs_index                 mcs_index,
                                    uint8_t                       rv,
@@ -418,7 +409,6 @@ void srsran::build_dci_f0_1_c_rnti(dci_ul_info&                  dci,
       tpmi);
 
   // See 38.212, clause 7.3.1.1.2 - N^{UL,BWP}_RB for C-RNTI.
-  const vrb_interval vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(crbs, active_ul_bwp.crbs.start());
   f0_1.frequency_resource = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{active_ul_bwp.crbs.length(), vrbs.start(), vrbs.length()});
   f0_1.time_resource = time_resource;

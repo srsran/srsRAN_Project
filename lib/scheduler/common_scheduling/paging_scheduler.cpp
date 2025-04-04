@@ -367,8 +367,8 @@ bool paging_scheduler::is_there_space_available_for_paging(cell_resource_allocat
   crb_interval paging_crbs;
   {
     const unsigned    nof_paging_rbs = paging_prbs_tbs.nof_prbs;
-    const prb_bitmap& used_crbs      = res_grid[pdsch_td_cfg.k0].dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
-    paging_crbs                      = rb_helper::find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
+    const crb_bitmap& used_crbs      = res_grid[pdsch_td_cfg.k0].dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
+    paging_crbs                      = rb_helper::find_empty_interval_of_length(used_crbs, nof_paging_rbs);
     if (paging_crbs.length() < nof_paging_rbs) {
       return false;
     }
@@ -414,8 +414,8 @@ bool paging_scheduler::allocate_paging(cell_resource_allocator&              res
   crb_interval paging_crbs;
   {
     const unsigned    nof_paging_rbs = paging_prbs_tbs.nof_prbs;
-    const prb_bitmap& used_crbs      = res_grid[pdsch_td_cfg.k0].dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
-    paging_crbs                      = rb_helper::find_empty_interval_of_length(used_crbs, nof_paging_rbs, 0);
+    const crb_bitmap& used_crbs      = res_grid[pdsch_td_cfg.k0].dl_res_grid.used_crbs(bwp_cfg, pdsch_td_cfg.symbols);
+    paging_crbs                      = rb_helper::find_empty_interval_of_length(used_crbs, nof_paging_rbs);
     if (paging_crbs.length() < nof_paging_rbs) {
       logger.warning("Not enough PDSCH space for Paging");
       return false;

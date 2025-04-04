@@ -28,8 +28,8 @@ struct dl_sched_context {
   search_space_id ss_id;
   /// PDSCH time-domain resource index.
   uint8_t pdsch_td_res_index;
-  /// Limits on CRBs for DL grant allocation.
-  crb_interval crb_lims;
+  /// Limits on VRBs for DL grant allocation.
+  vrb_interval vrb_lims;
   /// Recommended MCS, considering channel state or, in case of reTx, last HARQ MCS.
   sch_mcs_index recommended_mcs;
   /// Recommended number of layers.
@@ -39,22 +39,26 @@ struct dl_sched_context {
 };
 
 /// Retrieve recommended PDCCH and PDSCH parameters for a newTx DL grant.
-std::optional<dl_sched_context>
-get_newtx_dl_sched_context(const slice_ue& u, slot_point pdcch_slot, slot_point pdsch_slot, unsigned pending_bytes);
+std::optional<dl_sched_context> get_newtx_dl_sched_context(const slice_ue& u,
+                                                           slot_point      pdcch_slot,
+                                                           slot_point      pdsch_slot,
+                                                           crb_interval    dl_bwp_crb_limits,
+                                                           unsigned        pending_bytes);
 
 /// Retrieve recommended PDCCH and PDSCH parameters for a reTx DL grant.
 std::optional<dl_sched_context> get_retx_dl_sched_context(const slice_ue&               u,
                                                           slot_point                    pdcch_slot,
                                                           slot_point                    pdsch_slot,
+                                                          crb_interval                  dl_bwp_crb_limits,
                                                           const dl_harq_process_handle& h_dl);
 
-/// Select DL CRBs to allocate for a newTx.
-crb_interval compute_newtx_dl_crbs(const dl_sched_context& decision_ctxt,
-                                   const crb_bitmap&       used_crbs,
+/// Select DL VRBs to allocate for a newTx.
+vrb_interval compute_newtx_dl_vrbs(const dl_sched_context& decision_ctxt,
+                                   const vrb_bitmap&       used_vrbs,
                                    unsigned                max_nof_rbs = MAX_NOF_PRBS);
 
-/// Select DL CRBs to allocate for a reTx.
-crb_interval compute_retx_dl_crbs(const dl_sched_context& decision_ctxt, const crb_bitmap& used_crbs);
+/// Select DL VRBs to allocate for a reTx.
+vrb_interval compute_retx_dl_vrbs(const dl_sched_context& decision_ctxt, const vrb_bitmap& used_vrbs);
 
 /// PDCCH and PUSCH parameters recommended for a UL grant.
 struct ul_sched_context {
@@ -62,8 +66,8 @@ struct ul_sched_context {
   search_space_id ss_id;
   /// PUSCH time-domain resource index.
   uint8_t pusch_td_res_index;
-  /// Limits on CRBs for UL grant allocation.
-  crb_interval crb_lims;
+  /// Limits on VRBs for UL grant allocation.
+  vrb_interval vrb_lims;
   /// Limits for grant size in RBs.
   interval<unsigned> nof_rb_lims;
   /// Recommended MCS, considering channel state or, in case of reTx, last HARQ MCS.
@@ -78,6 +82,7 @@ struct ul_sched_context {
 std::optional<ul_sched_context> get_newtx_ul_sched_context(const slice_ue& u,
                                                            slot_point      pdcch_slot,
                                                            slot_point      pusch_slot,
+                                                           crb_interval    ul_bwp_crb_limits,
                                                            unsigned        uci_nof_harq_bits,
                                                            unsigned        pending_bytes);
 
@@ -85,16 +90,17 @@ std::optional<ul_sched_context> get_newtx_ul_sched_context(const slice_ue& u,
 std::optional<ul_sched_context> get_retx_ul_sched_context(const slice_ue&               u,
                                                           slot_point                    pdcch_slot,
                                                           slot_point                    pusch_slot,
+                                                          crb_interval                  ul_bwp_crb_limits,
                                                           unsigned                      uci_nof_harq_bits,
                                                           const ul_harq_process_handle& h_ul);
 
-/// Select UL CRBs to allocate for a newTx.
-crb_interval compute_newtx_ul_crbs(const ul_sched_context& decision_ctxt,
-                                   const crb_bitmap&       used_crbs,
+/// Select UL VRBs to allocate for a newTx.
+vrb_interval compute_newtx_ul_vrbs(const ul_sched_context& decision_ctxt,
+                                   const vrb_bitmap&       used_vrbs,
                                    unsigned                max_nof_rbs = MAX_NOF_PRBS);
 
-/// Select UL CRBs to allocate for a reTx.
-crb_interval compute_retx_ul_crbs(const ul_sched_context& decision_ctxt, const crb_bitmap& used_crbs);
+/// Select UL VRBs to allocate for a reTx.
+vrb_interval compute_retx_ul_vrbs(const ul_sched_context& decision_ctxt, const vrb_bitmap& used_vrbs);
 
 } // namespace sched_helper
 } // namespace srsran

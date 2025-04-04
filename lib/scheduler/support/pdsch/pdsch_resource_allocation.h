@@ -24,7 +24,7 @@ namespace pdsch_helper {
 /// \param init_dl_bwp Initial DL BWP configuration.
 /// \param active_dl_bwp Active DL BWP configuration.
 /// \param ss_cfg SearchSpace configuration.
-/// \param cs_cfg CORESET configuration corresponding to SerachSpace.
+/// \param cs_cfg CORESET configuration corresponding to SearchSpace.
 /// \return Calculated CRB limits.
 inline crb_interval get_ra_crb_limits(dci_dl_format                     dci_fmt,
                                       const bwp_downlink_common&        init_dl_bwp,

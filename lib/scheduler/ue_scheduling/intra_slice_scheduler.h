@@ -85,9 +85,9 @@ private:
 
   unsigned max_puschs_to_alloc(const ul_ran_slice_candidate& slice);
 
-  // Called when bitmap of used CRBs needs to be recalculated.
-  void update_used_dl_crbs();
-  void update_used_ul_crbs();
+  // Called when bitmap of used PRBs needs to be recalculated.
+  void update_used_dl_vrbs();
+  void update_used_ul_vrbs();
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_resource_allocator&    cell_alloc;
@@ -114,10 +114,12 @@ private:
   // UE candidates for on-going scheduling.
   std::vector<ue_newtx_candidate> newtx_candidates;
 
-  slot_point pdsch_slot;
-  slot_point pusch_slot;
-  crb_bitmap used_dl_crbs;
-  crb_bitmap used_ul_crbs;
+  slot_point   pdsch_slot;
+  slot_point   pusch_slot;
+  vrb_bitmap   used_dl_vrbs;
+  crb_interval dl_bwp_crb_limits;
+  vrb_bitmap   used_ul_vrbs;
+  crb_interval ul_bwp_crb_limits;
 
   // Grants being built for the current slice.
   std::vector<ue_cell_grid_allocator::dl_newtx_grant_builder> pending_dl_newtxs;

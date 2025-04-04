@@ -108,10 +108,19 @@ crb_bitmap carrier_subslot_resource_grid::used_crbs(crb_interval bwp_crb_lims, o
 {
   srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
   slot_rb_bitmap slot_rbs_selected_symbols = slot_rbs.slice(symbols.start() * nof_rbs(), symbols.stop() * nof_rbs());
-  crb_bitmap     crb_bits                  = fold_and_accumulate<MAX_NOF_PRBS>(slot_rbs_selected_symbols, nof_rbs());
+  auto crb_bits = static_cast<crb_bitmap>(fold_and_accumulate<MAX_NOF_PRBS>(slot_rbs_selected_symbols, nof_rbs()));
   crb_bits.fill(0, bwp_crb_lims.start());
   crb_bits.fill(bwp_crb_lims.stop(), crb_bits.size());
   return crb_bits;
+}
+
+prb_bitmap carrier_subslot_resource_grid::used_prbs(crb_interval bwp_crb_lims, ofdm_symbol_range symbols) const
+{
+  srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
+  slot_rb_bitmap slot_rbs_selected_symbols = slot_rbs.slice(symbols.start() * nof_rbs(), symbols.stop() * nof_rbs());
+  auto           prb_bits                  = static_cast<prb_bitmap>(fold_and_accumulate<MAX_NOF_PRBS>(
+      slot_rbs_selected_symbols, nof_rbs(), bwp_crb_lims.start(), bwp_crb_lims.length()));
+  return prb_bits;
 }
 
 bool carrier_subslot_resource_grid::all_set(ofdm_symbol_range symbols, crb_interval crbs) const
@@ -216,6 +225,13 @@ cell_slot_resource_grid::used_crbs(subcarrier_spacing scs, crb_interval crb_lims
 {
   const carrier_resource_grid& carrier = get_carrier(scs);
   return carrier.subslot_rbs.used_crbs(crb_lims, symbols);
+}
+
+prb_bitmap
+cell_slot_resource_grid::used_prbs(subcarrier_spacing scs, crb_interval crb_lims, ofdm_symbol_range symbols) const
+{
+  const carrier_resource_grid& carrier = get_carrier(scs);
+  return carrier.subslot_rbs.used_prbs(crb_lims, symbols);
 }
 
 bool cell_slot_resource_grid::all_set(grant_info grant) const

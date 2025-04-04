@@ -175,6 +175,7 @@ static mcs_prbs_selection compute_newtx_required_mcs_and_prbs(const pusch_config
 static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&               u,
                                                             slot_point                    pdcch_slot,
                                                             slot_point                    pdsch_slot,
+                                                            crb_interval                  dl_bwp_crb_limits,
                                                             const dl_harq_process_handle* h_dl,
                                                             unsigned                      pending_bytes)
 {
@@ -205,9 +206,13 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
 
   // Determine RB allocation limits.
   interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pdsch_nof_rbs & ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits;
-  auto               crb_lims    = crb_interval::to_crbs(cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims);
-  nof_rb_lims                    = nof_rb_lims & interval<unsigned>{0, crb_lims.length()};
-  if (crb_lims.empty() or nof_rb_lims.empty()) {
+  const auto         crb_lims =
+      static_cast<crb_interval>(cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims & dl_bwp_crb_limits);
+  const auto prb_lims = crb_to_prb(dl_bwp_crb_limits, crb_lims);
+  // TODO: support interleaving.
+  const auto vrb_lims = static_cast<vrb_interval>(prb_lims);
+  nof_rb_lims         = nof_rb_lims & interval<unsigned>{0, vrb_lims.length()};
+  if (vrb_lims.empty() or nof_rb_lims.empty()) {
     // Invalid RB allocation range.
     return std::nullopt;
   }
@@ -264,7 +269,7 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
     dl_sched_context ctxt;
     ctxt.ss_id              = ss.cfg->get_id();
     ctxt.pdsch_td_res_index = pdsch_td_index;
-    ctxt.crb_lims           = crb_lims;
+    ctxt.vrb_lims           = vrb_lims;
     ctxt.recommended_mcs    = mcs;
     ctxt.recommended_ri     = nof_layers;
     ctxt.expected_nof_rbs   = nof_rbs;
@@ -277,58 +282,58 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
 std::optional<dl_sched_context> sched_helper::get_newtx_dl_sched_context(const slice_ue& u,
                                                                          slot_point      pdcch_slot,
                                                                          slot_point      pdsch_slot,
+                                                                         crb_interval    dl_bwp_crb_limits,
                                                                          unsigned        pending_bytes)
 {
-  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, nullptr, pending_bytes);
+  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, dl_bwp_crb_limits, nullptr, pending_bytes);
 }
 
 std::optional<dl_sched_context> sched_helper::get_retx_dl_sched_context(const slice_ue&               u,
                                                                         slot_point                    pdcch_slot,
                                                                         slot_point                    pdsch_slot,
+                                                                        crb_interval                  dl_bwp_crb_limits,
                                                                         const dl_harq_process_handle& h_dl)
 {
-  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, &h_dl, 0);
+  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, dl_bwp_crb_limits, &h_dl, 0);
 }
 
-static crb_interval
-find_available_crbs(const dl_sched_context& space_cfg, const crb_bitmap& used_crbs, unsigned max_rbs = MAX_NOF_PRBS)
+static vrb_interval
+find_available_vrbs(const dl_sched_context& space_cfg, const vrb_bitmap& used_vrbs, unsigned max_rbs = MAX_NOF_PRBS)
 {
   // Compute recommended number of layers, MCS and PRBs.
   unsigned nof_rbs = std::min(space_cfg.expected_nof_rbs, max_rbs);
 
-  // Compute CRB allocation interval.
-  crb_bitmap bwp_used_crbs{used_crbs};
-  bwp_used_crbs.fill(0, space_cfg.crb_lims.start());
-  bwp_used_crbs.fill(space_cfg.crb_lims.stop(), bwp_used_crbs.size());
-  crb_interval crbs = rb_helper::find_empty_interval_of_length(bwp_used_crbs, nof_rbs, space_cfg.crb_lims.start());
-  if (crbs.empty()) {
-    return crb_interval{};
+  // Compute PRB allocation interval.
+  vrb_interval vrbs = rb_helper::find_empty_interval_of_length(used_vrbs, nof_rbs, space_cfg.vrb_lims);
+  if (vrbs.empty()) {
+    return vrb_interval{};
   }
 
   // Successful CRB interval derivation.
-  return crbs;
+  return vrbs;
 }
 
-crb_interval sched_helper::compute_newtx_dl_crbs(const dl_sched_context& decision_ctxt,
-                                                 const crb_bitmap&       used_crbs,
+vrb_interval sched_helper::compute_newtx_dl_vrbs(const dl_sched_context& decision_ctxt,
+                                                 const vrb_bitmap&       used_vrbs,
                                                  unsigned                max_nof_rbs)
 {
-  return find_available_crbs(decision_ctxt, used_crbs, max_nof_rbs);
+  return find_available_vrbs(decision_ctxt, used_vrbs, max_nof_rbs);
 }
 
-crb_interval sched_helper::compute_retx_dl_crbs(const dl_sched_context& decision_ctxt, const crb_bitmap& used_crbs)
+vrb_interval sched_helper::compute_retx_dl_vrbs(const dl_sched_context& decision_ctxt, const vrb_bitmap& used_vrbs)
 {
-  crb_interval crbs = find_available_crbs(decision_ctxt, used_crbs, decision_ctxt.expected_nof_rbs);
-  if (crbs.length() != decision_ctxt.expected_nof_rbs) {
+  vrb_interval vrbs = find_available_vrbs(decision_ctxt, used_vrbs, decision_ctxt.expected_nof_rbs);
+  if (vrbs.length() != decision_ctxt.expected_nof_rbs) {
     // In case of Retx, the #CRBs need to stay the same.
     return {};
   }
-  return crbs;
+  return vrbs;
 }
 
 static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&               u,
                                                             slot_point                    pdcch_slot,
                                                             slot_point                    pusch_slot,
+                                                            crb_interval                  ul_bwp_crb_limits,
                                                             unsigned                      uci_nof_harq_bits,
                                                             const ul_harq_process_handle* h_ul,
                                                             unsigned                      pending_bytes)
@@ -360,9 +365,13 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
 
   // Determine RB allocation limits.
   interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pusch_nof_rbs & ue_cell_cfg.rrm_cfg().pusch_grant_size_limits;
-  auto               crb_lims    = crb_interval::to_crbs(cell_cfg.expert_cfg.ue.pusch_crb_limits & ss.ul_crb_lims);
-  nof_rb_lims                    = nof_rb_lims & interval<unsigned>{0, crb_lims.length()};
-  if (crb_lims.empty() or nof_rb_lims.empty()) {
+  const auto         crb_lims =
+      static_cast<crb_interval>(cell_cfg.expert_cfg.ue.pusch_crb_limits & ss.ul_crb_lims & ul_bwp_crb_limits);
+  const auto prb_lims = crb_to_prb(ul_bwp_crb_limits, crb_lims);
+  // TODO: support interleaving.
+  const auto vrb_lims = static_cast<vrb_interval>(prb_lims);
+  nof_rb_lims         = nof_rb_lims & interval<unsigned>{0, vrb_lims.length()};
+  if (vrb_lims.empty() or nof_rb_lims.empty()) {
     // Invalid RB allocation range.
     return std::nullopt;
   }
@@ -428,7 +437,7 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
     ul_sched_context ctxt;
     ctxt.ss_id              = ss.cfg->get_id();
     ctxt.pusch_td_res_index = pusch_td_index;
-    ctxt.crb_lims           = crb_lims;
+    ctxt.vrb_lims           = vrb_lims;
     ctxt.nof_rb_lims        = nof_rb_lims;
     ctxt.recommended_mcs    = mcs;
     ctxt.expected_nof_rbs   = nof_rbs;
@@ -442,54 +451,53 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
 std::optional<ul_sched_context> sched_helper::get_newtx_ul_sched_context(const slice_ue& u,
                                                                          slot_point      pdcch_slot,
                                                                          slot_point      pusch_slot,
+                                                                         crb_interval    ul_bwp_crb_limits,
                                                                          unsigned        uci_nof_harq_bits,
                                                                          unsigned        pending_bytes)
 {
-  return get_ul_sched_context(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, nullptr, pending_bytes);
+  return get_ul_sched_context(u, pdcch_slot, pusch_slot, ul_bwp_crb_limits, uci_nof_harq_bits, nullptr, pending_bytes);
 }
 
 std::optional<ul_sched_context> sched_helper::get_retx_ul_sched_context(const slice_ue&               u,
                                                                         slot_point                    pdcch_slot,
                                                                         slot_point                    pusch_slot,
+                                                                        crb_interval                  ul_bwp_crb_limits,
                                                                         unsigned                      uci_nof_harq_bits,
                                                                         const ul_harq_process_handle& h_ul)
 {
-  return get_ul_sched_context(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, &h_ul, 0);
+  return get_ul_sched_context(u, pdcch_slot, pusch_slot, ul_bwp_crb_limits, uci_nof_harq_bits, &h_ul, 0);
 }
 
-static crb_interval
-find_available_crbs(const ul_sched_context& sched_ctxt, const crb_bitmap& used_crbs, unsigned max_rbs = MAX_NOF_PRBS)
+static vrb_interval
+find_available_vrbs(const ul_sched_context& sched_ctxt, const vrb_bitmap& used_vrbs, unsigned max_rbs = MAX_NOF_PRBS)
 {
-  // Compute recommended number of layers, MCS and PRBs.
+  // Compute recommended number of layers, MCS and VRBs.
   unsigned nof_rbs = std::min(sched_ctxt.expected_nof_rbs, max_rbs);
   nof_rbs          = sched_ctxt.nof_rb_lims.clamp(nof_rbs);
 
   // Compute CRB allocation interval.
-  crb_bitmap bwp_used_crbs{used_crbs};
-  bwp_used_crbs.fill(0, sched_ctxt.crb_lims.start());
-  bwp_used_crbs.fill(sched_ctxt.crb_lims.stop(), bwp_used_crbs.size());
-  crb_interval crbs = rb_helper::find_empty_interval_of_length(bwp_used_crbs, nof_rbs, sched_ctxt.crb_lims.start());
-  if (crbs.empty()) {
-    return crb_interval{};
+  vrb_interval vrbs = rb_helper::find_empty_interval_of_length(used_vrbs, nof_rbs, sched_ctxt.vrb_lims);
+  if (vrbs.empty()) {
+    return vrb_interval{};
   }
 
   // Successful CRB interval derivation.
-  return crbs;
+  return vrbs;
 }
 
-crb_interval sched_helper::compute_newtx_ul_crbs(const ul_sched_context& decision_ctxt,
-                                                 const crb_bitmap&       used_crbs,
+vrb_interval sched_helper::compute_newtx_ul_vrbs(const ul_sched_context& decision_ctxt,
+                                                 const vrb_bitmap&       used_vrbs,
                                                  unsigned                max_nof_rbs)
 {
-  return find_available_crbs(decision_ctxt, used_crbs, max_nof_rbs);
+  return find_available_vrbs(decision_ctxt, used_vrbs, max_nof_rbs);
 }
 
-crb_interval sched_helper::compute_retx_ul_crbs(const ul_sched_context& decision_ctxt, const crb_bitmap& used_crbs)
+vrb_interval sched_helper::compute_retx_ul_vrbs(const ul_sched_context& decision_ctxt, const vrb_bitmap& used_vrbs)
 {
-  crb_interval crbs = find_available_crbs(decision_ctxt, used_crbs, decision_ctxt.expected_nof_rbs);
-  if (crbs.length() != decision_ctxt.expected_nof_rbs) {
+  vrb_interval vrbs = find_available_vrbs(decision_ctxt, used_vrbs, decision_ctxt.expected_nof_rbs);
+  if (vrbs.length() != decision_ctxt.expected_nof_rbs) {
     // In case of Retx, the #CRBs need to stay the same.
-    return crb_interval{};
+    return vrb_interval{};
   }
-  return crbs;
+  return vrbs;
 }

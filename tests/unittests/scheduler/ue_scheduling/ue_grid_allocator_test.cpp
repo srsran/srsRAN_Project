@@ -79,8 +79,11 @@ protected:
 
     // Prepare CRB bitmask that will be used to find available CRBs.
     const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
-    used_dl_crbs            = res_grid[0].dl_res_grid.used_crbs(init_dl_bwp.generic_params,
-                                                     init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols);
+    // TODO: enable interleaving.
+    used_dl_vrbs = static_cast<vrb_bitmap>(
+        res_grid[0].dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs,
+                                          init_dl_bwp.generic_params.crbs,
+                                          init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols));
 
     on_each_slot();
 
@@ -138,22 +141,24 @@ protected:
                                unsigned                pending_bytes,
                                std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
-    auto result = alloc.allocate_dl_grant(ue_newtx_dl_grant_request{user, current_slot, pending_bytes});
+    const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
+    auto        result      = alloc.allocate_dl_grant(
+        ue_newtx_dl_grant_request{user, current_slot, init_dl_bwp.generic_params.crbs, pending_bytes});
     if (not result.has_value()) {
       return;
     }
     auto& builder = result.value();
 
-    crb_interval crbs = builder.recommended_crbs(used_dl_crbs);
-    builder.set_pdsch_params(crbs);
-    used_dl_crbs.fill(crbs.start(), crbs.stop());
+    vrb_interval vrbs = builder.recommended_vrbs(used_dl_vrbs);
+    builder.set_pdsch_params(vrbs, init_dl_bwp.generic_params.crbs);
+    used_dl_vrbs.fill(vrbs.start(), vrbs.stop());
   }
 
   void allocate_dl_retx_grant(const slice_ue& user, dl_harq_process_handle h_dl)
   {
-    auto result = alloc.allocate_dl_grant(ue_retx_dl_grant_request{user, current_slot, h_dl, used_dl_crbs});
+    auto result = alloc.allocate_dl_grant(ue_retx_dl_grant_request{user, current_slot, h_dl, used_dl_vrbs});
     if (result.has_value()) {
-      used_dl_crbs.fill(result.value().start(), result.value().stop());
+      used_dl_vrbs.fill(result.value().start(), result.value().stop());
     }
   }
 
@@ -169,18 +174,22 @@ protected:
                                        unsigned                pending_bytes,
                                        std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
-    auto result = alloc.allocate_ul_grant(ue_newtx_ul_grant_request{user, pusch_slot, pending_bytes});
+    const auto& init_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp;
+    auto        result      = alloc.allocate_ul_grant(
+        ue_newtx_ul_grant_request{user, pusch_slot, init_ul_bwp.generic_params.crbs, pending_bytes});
     if (not result.has_value()) {
       return result.error();
     }
     auto& builder = result.value();
 
-    const auto& init_ul_bwp  = cell_cfg.ul_cfg_common.init_ul_bwp;
-    crb_bitmap  used_ul_crbs = res_grid[pusch_slot].ul_res_grid.used_crbs(
-        init_ul_bwp.generic_params, init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols);
-    crb_interval crbs = builder.recommended_crbs(used_ul_crbs, max_nof_rbs.value_or(MAX_NOF_PRBS));
-    builder.set_pusch_params(crbs);
-    used_ul_crbs.fill(crbs.start(), crbs.stop());
+    // TODO: perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
+    vrb_bitmap used_ul_vrbs = static_cast<vrb_bitmap>(
+        res_grid[pusch_slot].ul_res_grid.used_prbs(init_ul_bwp.generic_params.scs,
+                                                   init_ul_bwp.generic_params.crbs,
+                                                   init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols));
+    vrb_interval vrbs = builder.recommended_vrbs(used_ul_vrbs, max_nof_rbs.value_or(MAX_NOF_PRBS));
+    builder.set_pusch_params(vrbs, init_ul_bwp.generic_params.crbs);
+    used_ul_vrbs.fill(vrbs.start(), vrbs.stop());
     return alloc_status::success;
   }
 
@@ -214,7 +223,7 @@ protected:
   ue_cell_grid_allocator  alloc;
 
   slot_point current_slot;
-  crb_bitmap used_dl_crbs;
+  vrb_bitmap used_dl_vrbs;
 };
 
 TEST_P(ue_grid_allocator_tester,

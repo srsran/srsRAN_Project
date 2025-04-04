@@ -163,9 +163,9 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
     const crb_interval crb_lims =
         pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, to_search_space_id(0));
     const unsigned    nof_sib1_rbs = sib1_prbs_tbs.nof_prbs;
-    const prb_bitmap& used_crbs    = res_grid.dl_res_grid.used_crbs(
+    const crb_bitmap& used_crbs    = res_grid.dl_res_grid.used_crbs(
         cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, crb_lims, sib1_ofdm_symbols);
-    sib1_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
+    sib1_crbs = rb_helper::find_empty_interval_of_length(used_crbs, nof_sib1_rbs);
     if (sib1_crbs.length() < nof_sib1_rbs) {
       // early exit
       logger.error("Not enough PDSCH space for SIB1 in beam idx: {}", beam_idx);
