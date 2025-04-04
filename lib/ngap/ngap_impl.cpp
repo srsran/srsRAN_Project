@@ -379,6 +379,11 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
     return;
   }
 
+  // Store UE Aggregate Maximum Bitrate.
+  if (msg->ue_aggr_max_bit_rate_present) {
+    ue_ctxt.aggregate_maximum_bit_rate_dl = msg->ue_aggr_max_bit_rate.ue_aggr_max_bit_rate_dl;
+  }
+
   auto* ue = ue_ctxt.get_cu_cp_ue();
   srsran_assert(ue != nullptr,
                 "ue={} ran_ue={} amf_ue={}: UE for UE context doesn't exist",
