@@ -35,10 +35,10 @@ DECLARE_METRIC("dl_bs", metric_dl_bs, unsigned, "");
 DECLARE_METRIC("pusch_snr_db", metric_pusch_snr_db, float, "");
 DECLARE_METRIC("pusch_rsrp_db", metric_pusch_rsrp_db, float, "");
 DECLARE_METRIC("pucch_snr_db", metric_pucch_snr_db, float, "");
-DECLARE_METRIC("ta_ns", metric_ta_ns, std::string, "");
-DECLARE_METRIC("pusch_ta_ns", metric_pusch_ta_ns, std::string, "");
-DECLARE_METRIC("pucch_ta_ns", metric_pucch_ta_ns, std::string, "");
-DECLARE_METRIC("srs_ta_ns", metric_srs_ta_ns, std::string, "");
+DECLARE_METRIC("ta_ns", metric_ta_ns, std::optional<float>, "");
+DECLARE_METRIC("pusch_ta_ns", metric_pusch_ta_ns, std::optional<float>, "");
+DECLARE_METRIC("pucch_ta_ns", metric_pucch_ta_ns, std::optional<float>, "");
+DECLARE_METRIC("srs_ta_ns", metric_srs_ta_ns, std::optional<float>, "");
 DECLARE_METRIC("ul_mcs", metric_ul_mcs, uint8_t, "");
 DECLARE_METRIC("ul_brate", metric_ul_brate, double, "");
 DECLARE_METRIC("ul_nof_ok", metric_ul_nof_ok, unsigned, "");
@@ -49,7 +49,7 @@ DECLARE_METRIC("nof_pucch_f2f3f4_invalid_harqs", metric_nof_pucch_f2f3f4_invalid
 DECLARE_METRIC("nof_pucch_f2f3f4_invalid_csis", metric_nof_pucch_f2f3f4_invalid_csis, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_harqs", metric_nof_pusch_invalid_harqs, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_csis", metric_nof_pusch_invalid_csis, unsigned, "");
-DECLARE_METRIC("last_phr", metric_last_phr, std::string, "");
+DECLARE_METRIC("last_phr", metric_last_phr, std::optional<int>, "");
 DECLARE_METRIC("avg_ce_delay", metric_avg_ce_delay, float, "ms");
 DECLARE_METRIC("max_ce_delay", metric_max_ce_delay, float, "ms");
 DECLARE_METRIC("avg_crc_delay", metric_avg_crc_delay, float, "ms");
@@ -306,15 +306,17 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
     if (!std::isnan(ue.pucch_snr_db) && !iszero(ue.pucch_snr_db)) {
       output.write<metric_pucch_snr_db>(std::clamp(ue.pucch_snr_db, -99.9f, 99.9f));
     }
-    output.write<metric_ta_ns>((ue.ta_stats.get_nof_observations() > 0) ? std::to_string(ue.ta_stats.get_mean() * 1e9)
-                                                                        : "n/a");
-    output.write<metric_pusch_ta_ns>(
-        (ue.pusch_ta_stats.get_nof_observations() > 0) ? std::to_string(ue.pusch_ta_stats.get_mean() * 1e9) : "n/a");
-    output.write<metric_pucch_ta_ns>(
-        (ue.pucch_ta_stats.get_nof_observations() > 0) ? std::to_string(ue.pucch_ta_stats.get_mean() * 1e9) : "n/a");
+    output.write<metric_ta_ns>((ue.ta_stats.get_nof_observations() > 0) ? std::optional{ue.ta_stats.get_mean() * 1e9}
+                                                                        : std::nullopt);
+    output.write<metric_pusch_ta_ns>((ue.pusch_ta_stats.get_nof_observations() > 0)
+                                         ? std::optional{ue.pusch_ta_stats.get_mean() * 1e9}
+                                         : std::nullopt);
+    output.write<metric_pucch_ta_ns>((ue.pucch_ta_stats.get_nof_observations() > 0)
+                                         ? std::optional{ue.pucch_ta_stats.get_mean() * 1e9}
+                                         : std::nullopt);
     output.write<metric_srs_ta_ns>(
-        (ue.srs_ta_stats.get_nof_observations() > 0) ? std::to_string(ue.srs_ta_stats.get_mean() * 1e9) : "n/a");
-    output.write<metric_last_phr>(ue.last_phr ? std::to_string(ue.last_phr.value()) : "n/a");
+        (ue.srs_ta_stats.get_nof_observations() > 0) ? std::optional{ue.srs_ta_stats.get_mean() * 1e9} : std::nullopt);
+    output.write<metric_last_phr>(ue.last_phr);
     output.write<metric_ul_mcs>(ue.ul_mcs.to_uint());
     output.write<metric_ul_brate>(ue.ul_brate_kbps * 1e3);
     output.write<metric_ul_nof_ok>(ue.ul_nof_ok);

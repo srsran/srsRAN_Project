@@ -12,6 +12,7 @@
 
 #include "srsran/srslog/detail/support/tmpl_utils.h"
 #include <cassert>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -136,6 +137,13 @@ struct metric_kind_selector<metric<Ty, Name, Units>, std::enable_if_t<std::is_ar
 /// and floating point) as numeric.
 template <typename Ty, typename Name, typename Units>
 struct metric_kind_selector<metric<std::vector<Ty>, Name, Units>, std::enable_if_t<std::is_arithmetic_v<Ty>>> {
+  static const metric_kind kind = metric_kind::numeric;
+};
+
+/// Template specialization that tags optional metrics with arithmetic values (integers
+/// and floating point) as numeric.
+template <typename Ty, typename Name, typename Units>
+struct metric_kind_selector<metric<std::optional<Ty>, Name, Units>, std::enable_if_t<std::is_arithmetic_v<Ty>>> {
   static const metric_kind kind = metric_kind::numeric;
 };
 
