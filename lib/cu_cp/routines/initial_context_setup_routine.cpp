@@ -45,13 +45,13 @@ void initial_context_setup_routine::operator()(
 
   logger.info("ue={}: \"{}\" initialized", request.ue_index, name());
 
-  // Initialize security context
+  // Initialize security context.
   if (!security_mng.init_security_context(request.security_context)) {
     handle_failure(ngap_cause_radio_network_t::unspecified);
     CORO_EARLY_RETURN(make_unexpected(fail_msg));
   }
 
-  // Get Security Mode Command from RRC UE
+  // Get Security Mode Command from RRC UE.
   {
     rrc_smc_ctxt = rrc_ue.get_security_mode_command_context();
     if (rrc_smc_ctxt.rrc_ue_security_mode_command_pdu.empty()) {
@@ -60,18 +60,18 @@ void initial_context_setup_routine::operator()(
     }
   }
 
-  // Prepare F1AP UE Context Setup Request and call F1AP notifier
+  // Prepare F1AP UE Context Setup Request and call F1AP notifier.
   {
-    // Add remaining fields to UE Context Setup Request
+    // Add remaining fields to UE Context Setup Request.
     ue_context_setup_request.ue_index      = request.ue_index;
     ue_context_setup_request.sp_cell_id    = rrc_smc_ctxt.sp_cell_id;
     ue_context_setup_request.serv_cell_idx = 0; // TODO: Remove hardcoded value
     ue_context_setup_request.rrc_container = rrc_smc_ctxt.rrc_ue_security_mode_command_pdu.copy();
 
-    // Call F1AP procedure
+    // Call F1AP procedure.
     CORO_AWAIT_VALUE(ue_context_setup_response,
                      f1ap_ue_ctxt_mng.handle_ue_context_setup_request(ue_context_setup_request, std::nullopt));
-    // Handle UE Context Setup Response
+    // Handle UE Context Setup Response.
     if (!ue_context_setup_response.success) {
       if (ue_context_setup_response.cause.has_value()) {
         handle_failure(f1ap_to_ngap_cause(ue_context_setup_response.cause.value()));
@@ -82,7 +82,7 @@ void initial_context_setup_routine::operator()(
     }
   }
 
-  // Await Security Mode Complete from RRC UE
+  // Await Security Mode Complete from RRC UE.
   {
     CORO_AWAIT_VALUE(security_mode_command_result,
                      rrc_ue.handle_security_mode_complete_expected(rrc_smc_ctxt.transaction_id));
@@ -92,7 +92,7 @@ void initial_context_setup_routine::operator()(
     }
   }
 
-  // Start UE Capability Enquiry Procedure
+  // Start UE Capability Enquiry Procedure.
   if (request.ue_radio_cap.has_value()) {
     if (!rrc_ue.store_ue_capabilities(std::move(request.ue_radio_cap.value()))) {
       handle_failure(cause_protocol_t::abstract_syntax_error_falsely_constructed_msg);
@@ -102,7 +102,7 @@ void initial_context_setup_routine::operator()(
     CORO_AWAIT_VALUE(ue_capability_transfer_result,
                      rrc_ue.handle_rrc_ue_capability_transfer_request(ue_capability_transfer_request));
 
-    // Handle UE Capability Transfer result
+    // Handle UE Capability Transfer result.
     if (not ue_capability_transfer_result) {
       logger.warning("ue={}: \"{}\" UE capability transfer failed", request.ue_index, name());
       handle_failure(ngap_cause_radio_network_t::radio_conn_with_ue_lost);
@@ -110,10 +110,10 @@ void initial_context_setup_routine::operator()(
     }
   }
 
-  // Handle optional IEs
+  // Handle optional IEs.
 
-  // Handle PDU Session Resource Setup List Context Request
-  /// NOTE: The handling of this includes the RRC Reconfiguration procedure
+  // Handle PDU Session Resource Setup List Context Request.
+  /// NOTE: The handling of this includes the RRC Reconfiguration procedure.
   if (request.pdu_session_res_setup_list_cxt_req.has_value()) {
     request.pdu_session_res_setup_list_cxt_req.value().ue_index     = request.ue_index;
     request.pdu_session_res_setup_list_cxt_req.value().serving_plmn = request.guami.plmn;
@@ -124,7 +124,7 @@ void initial_context_setup_routine::operator()(
       request.pdu_session_res_setup_list_cxt_req.value().ue_aggregate_maximum_bit_rate_dl = 0;
     }
 
-    // Handle NAS PDUs from Initial Context Setup Request
+    // Handle NAS PDUs from Initial Context Setup Request.
     if (request.nas_pdu.has_value()) {
       request.pdu_session_res_setup_list_cxt_req.value().nas_pdu = request.nas_pdu.value().copy();
     }
@@ -136,13 +136,13 @@ void initial_context_setup_routine::operator()(
     resp_msg.pdu_session_res_setup_response_items  = pdu_session_setup_response.pdu_session_res_setup_response_items;
     resp_msg.pdu_session_res_failed_to_setup_items = pdu_session_setup_response.pdu_session_res_failed_to_setup_items;
   } else {
-    // Handle NAS PDUs from Initial Context Setup Request
+    // Handle NAS PDUs from Initial Context Setup Request.
     if (request.nas_pdu.has_value()) {
       handle_nas_pdu(request.nas_pdu.value().copy());
     }
   }
 
-  // Schedule transmission of UE Radio Capability Info Indication
+  // Schedule transmission of UE Radio Capability Info Indication.
   if (!request.ue_radio_cap.has_value()) {
     send_ue_radio_capability_info_indication();
   }
@@ -154,7 +154,7 @@ void initial_context_setup_routine::operator()(
 void initial_context_setup_routine::handle_failure(ngap_cause_t cause)
 {
   fail_msg.cause = cause_protocol_t::unspecified;
-  // Add failed PDU Sessions
+  // Add failed PDU Sessions.
   if (request.pdu_session_res_setup_list_cxt_req.has_value()) {
     for (const auto& pdu_session_item :
          request.pdu_session_res_setup_list_cxt_req.value().pdu_session_res_setup_items) {
