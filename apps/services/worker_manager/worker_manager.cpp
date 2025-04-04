@@ -265,12 +265,10 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   // Instantiate DU-high executor mapper.
   srs_du::du_high_executor_config cfg;
   // Create one executor mapper as one DU supports multiple cells.
-  du_high_executors.resize(1);
-  auto&                                                       du_item = du_high_executors[0];
   srs_du::du_high_executor_config::dedicated_cell_worker_list cell_workers;
   for (unsigned i = 0; i != du_hi.nof_cells; ++i) {
     const std::string cell_id_str = std::to_string(i);
-    cell_workers.push_back({*exec_map.at("slot_exec#" + cell_id_str), *exec_map.at("cell_exec#" + cell_id_str)});
+    cell_workers.push_back({exec_map.at("slot_exec#" + cell_id_str), exec_map.at("cell_exec#" + cell_id_str)});
   }
   cfg.cell_executors.emplace<srs_du::du_high_executor_config::dedicated_cell_worker_list>(std::move(cell_workers));
   cfg.ue_executors.policy            = srs_du::du_high_executor_config::ue_executor_config::map_policy::per_cell;
@@ -283,7 +281,7 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   cfg.is_rt_mode_enabled             = du_hi.is_rt_mode_enabled;
   cfg.trace_exec_tasks               = false;
 
-  du_item.du_high_exec_mapper = srs_du::create_du_high_executor_mapper(cfg);
+  du_high_exec_mapper = create_du_high_executor_mapper(cfg);
 
   if (du_low) {
     create_du_low_executors(du_low.value().is_blocking_mode_active,
@@ -712,12 +710,6 @@ void worker_manager::create_ru_dummy_executors()
                      affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru),
                      os_thread_realtime_priority::max());
   radio_exec = exec_mng.executors().at("ru_dummy");
-}
-
-srs_du::du_high_executor_mapper& worker_manager::get_du_high_executor_mapper(unsigned du_index)
-{
-  srsran_assert(du_index < du_high_executors.size(), "Invalid DU index");
-  return *du_high_executors[du_index].du_high_exec_mapper;
 }
 
 void worker_manager::get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const
