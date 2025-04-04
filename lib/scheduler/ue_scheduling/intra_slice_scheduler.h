@@ -45,10 +45,14 @@ public:
 private:
   /// Context for a given slice scheduling.
   struct slice_sched_context {
+    // UE index offset of the next UE group to be scheduled in DL.
     du_ue_index_t dl_next_rr_group_offset = to_du_ue_index(0);
-    unsigned      dl_rr_count             = 0;
+    // How many slots have elapsed using the same dl_next_rr_group_offset.
+    unsigned dl_rr_count = 0;
+    // UE index offset of the next UE group to be scheduled in UL.
     du_ue_index_t ul_next_rr_group_offset = to_du_ue_index(0);
-    unsigned      ul_rr_count             = 0;
+    // How many slots have elapsed using the same ul_next_rr_group_offset.
+    unsigned ul_rr_count = 0;
   };
 
   /// Determines whether a UE can be DL scheduled in a given slot.

@@ -13,6 +13,7 @@
 using namespace srsran;
 
 /// Helper function to form groups of UE candidates in a round-robin fashion.
+/// \return The next \c next_ue_index_offset and \c group_rr_count to be used.
 template <typename UECandidateFactory>
 static std::pair<du_ue_index_t, unsigned> round_robin_ue_candidate_groups(std::vector<ue_newtx_candidate>& candidates,
                                                                           const slice_ue_repository&       slice_ues,
