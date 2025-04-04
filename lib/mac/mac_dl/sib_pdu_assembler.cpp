@@ -71,7 +71,7 @@ void sib_pdu_assembler::save_buffers(si_version_type si_version, const mac_cell_
     }
     if (req.si_messages[i] != last_si_cfg.si_messages[i]) {
       last_si_cfg.si_messages[i]                = req.si_messages[i].copy();
-      last_cfg_buffers.si_msg_buffers[i].first  = units::bytes{static_cast<unsigned>(req.sib1.length())};
+      last_cfg_buffers.si_msg_buffers[i].first  = units::bytes{static_cast<unsigned>(req.si_messages[i].length())};
       last_cfg_buffers.si_msg_buffers[i].second = make_linear_buffer(req.si_messages[i]);
     }
   }
