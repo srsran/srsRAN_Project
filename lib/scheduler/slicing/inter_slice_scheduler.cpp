@@ -269,6 +269,14 @@ inter_slice_scheduler::get_next_candidate()
       priority_type prio    = chosen_slice.get_prio(IsDownlink, current_slot, pxsch_slot, true);
       unsigned      min_rbs = rb_count > 0 ? rb_count : cfg.min_prb;
       prio_queue.push(slice_candidate_context{chosen_slice.inst.id, prio, {min_rbs, cfg.max_prb}, pxsch_slot});
+
+      if (prio_queue.top().id == chosen_slice.inst.id and pxsch_slot == prio_queue.top().slot_tx) {
+        // The candidate just inserted the queue is the same as the current candidate. We merge both as one single
+        // candidate.
+        const auto new_rb_max = std::max(rb_lims.stop(), prio_queue.top().rb_lims.stop());
+        prio_queue.pop();
+        return candidate_type{chosen_slice.inst, pxsch_slot, new_rb_max};
+      }
     }
 
     // Return the candidate.
