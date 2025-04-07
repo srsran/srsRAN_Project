@@ -591,13 +591,6 @@ void worker_manager::create_lower_phy_executors(const worker_manager_config::ru_
                      affinity_mng.front().calcute_affinity_mask(sched_affinity_mask_types::ru));
   radio_exec = exec_mng.executors().at("radio_exec");
 
-  // Radio Unit statistics worker and executor.
-  create_prio_worker("ru_stats_worker",
-                     1,
-                     {{"ru_printer_exec"}},
-                     low_prio_affinity_mng.calcute_affinity_mask(sched_affinity_mask_types::low_priority));
-  ru_printer_exec = exec_mng.executors().at("ru_printer_exec");
-
   for (unsigned cell_id = 0; cell_id != config.nof_cells; ++cell_id) {
     switch (config.profile) {
       case worker_manager_config::ru_sdr_config::lower_phy_thread_profile::blocking: {

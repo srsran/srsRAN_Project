@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "srsran/adt/static_vector.h"
 #include "srsran/ran/gnb_constants.h"
+#include <limits>
 
 namespace srsran {
 
@@ -27,9 +29,17 @@ struct ru_generic_sector_metrics {
   double   rx_clipping_prob = std::numeric_limits<double>::quiet_NaN();
 };
 
+/// Radio metrics.
+struct radio_metrics {
+  unsigned late_count      = 0;
+  unsigned underflow_count = 0;
+  unsigned overflow_count  = 0;
+};
+
 /// Generic Radio Unit metrics.
 struct ru_generic_metrics {
   static_vector<ru_generic_sector_metrics, MAX_CELLS_PER_DU> cells;
+  radio_metrics                                              radio;
 };
 
 } // namespace srsran

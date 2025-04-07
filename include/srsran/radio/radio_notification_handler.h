@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsran/radio/radio_base.h"
+#include <cstdint>
+#include <optional>
 
 namespace srsran {
 

@@ -40,12 +40,6 @@ struct ru_generic_configuration {
   ru_timing_notifier* timing_notifier = nullptr;
   /// Radio Unit error notifier.
   ru_error_notifier* error_notifier = nullptr;
-  /// Statistics printer executor.
-  task_executor* statistics_printer_executor = nullptr;
-  /// \brief Statistics print interval in seconds.
-  ///
-  /// The statistics of the generic Radio Unit implementation will be printed every statistics_print_interval_s seconds.
-  unsigned statistics_print_interval_s = 1;
 };
 
 } // namespace srsran

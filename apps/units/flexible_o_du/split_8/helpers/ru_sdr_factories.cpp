@@ -22,12 +22,11 @@ std::unique_ptr<radio_unit> srsran::create_sdr_radio_unit(const ru_sdr_unit_conf
 {
   ru_generic_configuration config = generate_ru_sdr_config(ru_cfg, ru_config.du_cells, ru_config.max_processing_delay);
 
-  config.rf_logger                   = &srslog::fetch_basic_logger("RF");
-  config.radio_exec                  = ru_dependencies.workers.radio_exec;
-  config.statistics_printer_executor = ru_dependencies.workers.ru_printer_exec;
-  config.timing_notifier             = &ru_dependencies.timing_notifier;
-  config.symbol_notifier             = &ru_dependencies.symbol_notifier;
-  config.error_notifier              = &ru_dependencies.error_notifier;
+  config.rf_logger       = &srslog::fetch_basic_logger("RF");
+  config.radio_exec      = ru_dependencies.workers.radio_exec;
+  config.timing_notifier = &ru_dependencies.timing_notifier;
+  config.symbol_notifier = &ru_dependencies.symbol_notifier;
+  config.error_notifier  = &ru_dependencies.error_notifier;
 
   for (unsigned i = 0, e = config.lower_phy_config.size(); i != e; ++i) {
     lower_phy_configuration& low_phy_cfg = config.lower_phy_config[i];

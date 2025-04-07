@@ -15,6 +15,7 @@
 #include "ru_downlink_handler_generic_impl.h"
 #include "ru_generic_error_adapter.h"
 #include "ru_metrics_collector_generic_impl.h"
+#include "ru_radio_metrics_collector.h"
 #include "ru_timing_adapter.h"
 #include "ru_uplink_request_handler_generic_impl.h"
 #include "rx_symbol_adapter.h"
@@ -32,12 +33,11 @@ struct ru_generic_impl_config {
 
 /// Radio Unit generic implementation dependencies.
 struct ru_generic_impl_dependencies {
-  ru_uplink_plane_rx_symbol_notifier&                    rx_symbol_handler;
-  ru_timing_notifier&                                    timing_handler;
-  srslog::basic_logger&                                  logger;
-  ru_error_notifier&                                     error_notifier;
-  std::unique_ptr<ru_radio_notification_handler_counter> radio_event_counter;
-  std::unique_ptr<radio_session>                         radio;
+  ru_uplink_plane_rx_symbol_notifier& rx_symbol_handler;
+  ru_timing_notifier&                 timing_handler;
+  srslog::basic_logger&               logger;
+  srslog::basic_logger&               radio_logger;
+  ru_error_notifier&                  error_notifier;
 };
 
 /// Radio Unit generic implementation.
@@ -64,8 +64,19 @@ public:
   /// Returns the lower PHY timing notifier of this RU.
   lower_phy_timing_notifier& get_timing_notifier() { return timing_adapter; }
 
-  /// Returns the lowwer PHY error notifier of this RU.
+  /// Returns the lower PHY error notifier of this RU.
   lower_phy_error_notifier& get_error_notifier() { return error_adapter; }
+
+  /// Returns the radio notification handler of this RU.
+  radio_notification_handler& get_radio_notification_handler() { return radio_event_dispatcher; }
+
+  /// Sets the radio to the given one for this RU.
+  void set_radio(std::unique_ptr<radio_session>&& radio_ptr)
+  {
+    radio = std::move(radio_ptr);
+    srsran_assert(radio, "Invalid radio");
+    ru_ctrl.set_radio(*radio);
+  }
 
   /// Sets the RU lower PHY sectors.
   void set_lower_phy_sectors(std::vector<std::unique_ptr<lower_phy_sector>> sectors);
@@ -75,6 +86,9 @@ public:
 
 private:
   const bool                                     are_metrics_enabled;
+  ru_radio_metrics_collector                     radio_metrics_collector;
+  ru_radio_notification_handler_logger           radio_event_logger;
+  ru_radio_notification_dispatcher               radio_event_dispatcher;
   ru_generic_error_adapter                       error_adapter;
   ru_rx_symbol_adapter                           rx_adapter;
   ru_timing_adapter                              timing_adapter;

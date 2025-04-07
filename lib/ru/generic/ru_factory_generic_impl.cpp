@@ -38,11 +38,6 @@ static std::unique_ptr<radio_session> create_radio_session(task_executor&       
   return factory->create(config, executor, radio_handler);
 }
 
-static unsigned get_statistics_time_interval_in_slots(unsigned interval_seconds, subcarrier_spacing scs)
-{
-  return get_nof_slots_per_subframe(scs) * SUBFRAME_DURATION_MSEC * 1000 * interval_seconds;
-}
-
 std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& config)
 {
   // Check the pointers inside the config.
@@ -50,29 +45,20 @@ std::unique_ptr<radio_unit> srsran::create_generic_ru(ru_generic_configuration& 
     return nullptr;
   }
 
-  std::unique_ptr<radio_notification_handler> radio_event_logger;
-  if (config.rf_logger->warning.enabled()) {
-    radio_event_logger = std::make_unique<ru_radio_notification_handler_logger>(nullptr, *config.rf_logger);
-  }
-
-  // Create radio.
-  auto radio_event_counter = std::make_unique<ru_radio_notification_handler_counter>(
-      std::move(radio_event_logger),
-      *config.statistics_printer_executor,
-      get_statistics_time_interval_in_slots(config.statistics_print_interval_s, config.lower_phy_config.front().scs));
-
-  auto radio = create_radio_session(*config.radio_exec, *radio_event_counter, config.radio_cfg, config.device_driver);
-  report_error_if_not(radio, "Unable to create radio session.");
-
   ru_generic_impl_config       ru_config = {config.lower_phy_config.front().srate.to_MHz(), config.are_metrics_enabled};
   ru_generic_impl_dependencies ru_dependencies = {*config.symbol_notifier,
                                                   *config.timing_notifier,
                                                   *config.lower_phy_config.front().logger,
-                                                  *config.error_notifier,
-                                                  std::move(radio_event_counter),
-                                                  std::move(radio)};
+                                                  *config.rf_logger,
+                                                  *config.error_notifier};
 
   auto ru = std::make_unique<ru_generic_impl>(ru_config, std::move(ru_dependencies));
+
+  auto radio = create_radio_session(
+      *config.radio_exec, ru->get_radio_notification_handler(), config.radio_cfg, config.device_driver);
+  report_error_if_not(radio, "Unable to create radio session.");
+
+  ru->set_radio(std::move(radio));
 
   std::vector<std::unique_ptr<lower_phy_sector>> phy_sectors;
   for (unsigned sector_id = 0, sector_end = config.lower_phy_config.size(); sector_id != sector_end; ++sector_id) {

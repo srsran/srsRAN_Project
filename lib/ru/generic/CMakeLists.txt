@@ -16,6 +16,7 @@ set(SOURCES
         ru_factory_generic_impl.cpp
         ru_generic_impl.cpp
         ru_metrics_collector_generic_impl.cpp
+        ru_radio_metrics_collector.cpp
         ru_uplink_request_handler_generic_impl.cpp)
 
 add_library(srsran_ru_generic STATIC ${SOURCES})

@@ -9,6 +9,7 @@
  */
 
 #include "ru_metrics_collector_generic_impl.h"
+#include "ru_radio_metrics_collector.h"
 #include "srsran/ru/ru_metrics.h"
 
 using namespace srsran;
@@ -16,6 +17,11 @@ using namespace srsran;
 void ru_metrics_collector_generic_impl::collect_metrics(ru_metrics& metrics)
 {
   auto& ru_metrics = metrics.metrics.emplace<ru_generic_metrics>();
+
+  // Radio metrics.
+  radio.collect_metrics(ru_metrics.radio);
+
+  // Low phy metrics.
   ru_metrics.cells.resize(sectors.size());
 
   unsigned sector_id = 0;

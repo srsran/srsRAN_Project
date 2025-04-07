@@ -20,18 +20,12 @@ namespace srsran {
 class ru_timing_adapter : public lower_phy_timing_notifier
 {
 public:
-  ru_timing_adapter(ru_timing_notifier&                                    timing_handler_,
-                    std::unique_ptr<ru_radio_notification_handler_counter> radio_event_counter_) :
-    timing_handler(timing_handler_), radio_event_counter(std::move(radio_event_counter_))
-  {
-    srsran_assert(radio_event_counter, "Invalid radio event counter");
-  }
+  explicit ru_timing_adapter(ru_timing_notifier& timing_handler_) : timing_handler(timing_handler_) {}
 
   // See interface for documentation.
   void on_tti_boundary(const lower_phy_timing_context& context) override
   {
     timing_handler.on_tti_boundary({context.slot, context.time_point});
-    radio_event_counter->print();
   }
 
   // See interface for documentation.
@@ -47,8 +41,7 @@ public:
   }
 
 private:
-  ru_timing_notifier&                                    timing_handler;
-  std::unique_ptr<ru_radio_notification_handler_counter> radio_event_counter;
+  ru_timing_notifier& timing_handler;
 };
 
 } // namespace srsran

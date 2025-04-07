@@ -25,10 +25,10 @@ class radio_session;
 /// Radio Unit gain controller generic implementation.
 class ru_gain_controller_generic_impl : public ru_gain_controller
 {
-  radio_session& radio;
+  radio_session* radio;
 
 public:
-  explicit ru_gain_controller_generic_impl(radio_session& radio_) : radio(radio_) {}
+  explicit ru_gain_controller_generic_impl(radio_session* radio_) : radio(radio_) {}
 
   // See interface for documentation.
   bool set_tx_gain(unsigned port_id, double gain_dB) override;
@@ -58,7 +58,7 @@ public:
 class ru_controller_generic_impl : public ru_controller, public ru_operation_controller
 {
 public:
-  ru_controller_generic_impl(radio_session& radio_, double srate_MHz_);
+  explicit ru_controller_generic_impl(double srate_MHz_);
 
   // See interface for documentation.
   ru_operation_controller& get_operation_controller() override { return *this; }
@@ -75,12 +75,15 @@ public:
   // See interface for documentation.
   void stop() override;
 
+  /// Sets the radio session of this controller.
+  void set_radio(radio_session& session) { radio = &session; }
+
   /// Set low phy sectors.
   void set_lower_phy_sectors(std::vector<lower_phy_sector*> sectors);
 
 private:
   double                          srate_MHz;
-  radio_session&                  radio;
+  radio_session*                  radio;
   ru_gain_controller_generic_impl gain_controller;
   std::vector<lower_phy_sector*>  low_phy_crtl;
   ru_cfo_controller_generic_impl  cfo_controller;

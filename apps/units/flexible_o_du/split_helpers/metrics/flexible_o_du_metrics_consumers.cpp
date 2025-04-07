@@ -31,12 +31,34 @@ void flexible_o_du_metrics_consumer_log::handle_metric(const app_services::metri
   ru_metrics_handler.handle_metric(odu_metrics.ru);
 }
 
+/// Radio metrics are independent of the enabled flag. Print them.
+static void print_radio_metrics(const ru_metrics& metrics)
+{
+  const auto* sdr_metrics = std::get_if<ru_generic_metrics>(&metrics.metrics);
+
+  // Only valid for SDR metrics.
+  if (!sdr_metrics) {
+    return;
+  }
+
+  // Print late, underflow and overflow counts since last print.
+  const radio_metrics& radio = sdr_metrics->radio;
+  if ((radio.late_count != 0) || (radio.underflow_count != 0) || (radio.overflow_count != 0)) {
+    fmt::println(
+        "Late: {}; Underflow: {}; Overflow: {};", radio.late_count, radio.underflow_count, radio.overflow_count);
+  }
+}
+
 void ru_metrics_consumer_stdout::handle_metric(const app_services::metrics_set& metric)
 {
+  const ru_metrics& metrics = static_cast<const flexible_o_du_app_service_metrics_impl&>(metric).get_metrics().ru;
+
+  // Radio metrics always printed.
+  print_radio_metrics(metrics);
+
   if (!print_metrics) {
     return;
   }
 
-  const ru_metrics& metrics = static_cast<const flexible_o_du_app_service_metrics_impl&>(metric).get_metrics().ru;
   handler.handle_metric(metrics);
 }

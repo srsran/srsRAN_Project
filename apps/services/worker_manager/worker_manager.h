@@ -48,9 +48,8 @@ struct worker_manager : public worker_manager_executor_getter {
   std::vector<task_executor*> upper_prach_exec;
   std::vector<task_executor*> upper_srs_exec;
   std::vector<task_executor*> upper_pdsch_exec;
-  task_executor*              radio_exec      = nullptr;
-  task_executor*              ru_printer_exec = nullptr;
-  task_executor*              ru_timing_exec  = nullptr;
+  task_executor*              radio_exec     = nullptr;
+  task_executor*              ru_timing_exec = nullptr;
   std::vector<task_executor*> ru_txrx_exec;
   std::vector<task_executor*> fapi_exec;
   std::vector<task_executor*> ru_dl_exec;
