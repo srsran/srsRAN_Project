@@ -18,6 +18,7 @@
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
 #include "apps/units/o_cu_cp/cu_cp/cu_cp_unit_config.h"
 #include "gnb_appconfig.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/cli11_utils.h"
 #include "CLI/CLI11.hpp"
 
@@ -87,14 +88,13 @@ void srsran::autoderive_supported_tas_for_amf_from_du_cells(const du_high_unit_c
 {
   // If no cells are found in DU configuration.
   if (du_hi_cfg.cells_cfg.empty()) {
-    fmt::print("No cells found in DU configuration. Supported TAs will not be derived\n");
     return;
   }
 
   // Clear supported TAs.
-  fmt::print("{} supported TAs will be derived from DU cell config\n",
-             cu_cp_cfg.amf_config.amf.is_default_supported_tas ? "No supported TAs configured,"
-                                                               : "--no-core configured,");
+  srslog::fetch_basic_logger("CONFIG").debug(
+      "{} supported TAs will be derived from DU cell config\n",
+      cu_cp_cfg.amf_config.amf.is_default_supported_tas ? "No supported TAs configured," : "--no-core configured,");
   cu_cp_cfg.amf_config.amf.supported_tas.clear();
   cu_cp_cfg.amf_config.amf.is_default_supported_tas = false;
   cu_cp_cfg.amf_config.amf.supported_tas.resize(du_hi_cfg.cells_cfg.size());
