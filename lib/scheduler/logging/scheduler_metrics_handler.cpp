@@ -23,6 +23,7 @@ cell_metrics_handler::cell_metrics_handler(msecs                       metrics_r
 {
   next_report.ue_metrics.reserve(MAX_NOF_DU_UES);
   next_report.events.reserve(MAX_NOF_DU_UES);
+  ues.reserve(MAX_NOF_DU_UES);
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
 }
 

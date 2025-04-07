@@ -12,6 +12,7 @@
 
 #include "scheduler_metrics_ue_configurator.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/adt/slotted_vector.h"
 #include "srsran/scheduler/scheduler_dl_buffer_state_indication_handler.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"
@@ -142,8 +143,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   slot_point last_slot_tx;
   slot_point next_report_slot;
 
-  slotted_id_table<du_ue_index_t, ue_metric_context, MAX_NOF_DU_UES> ues;
-  std::unordered_map<rnti_t, du_ue_index_t>                          rnti_to_ue_index_lookup;
+  slotted_id_vector<du_ue_index_t, ue_metric_context> ues;
+  std::unordered_map<rnti_t, du_ue_index_t>           rnti_to_ue_index_lookup;
 
   /// Metrics tracked that are reset on every report.
   non_persistent_data data;
