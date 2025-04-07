@@ -61,8 +61,7 @@ private:
     }
 
     /// Determines the slice candidate priority.
-    priority_type
-    get_prio(bool is_dl, slot_point pdcch_slot, slot_point pxsch_slot, unsigned nof_slices, bool slice_resched) const;
+    priority_type get_prio(bool is_dl, slot_point pdcch_slot, slot_point pxsch_slot, bool slice_resched) const;
   };
 
   struct slice_candidate_context {

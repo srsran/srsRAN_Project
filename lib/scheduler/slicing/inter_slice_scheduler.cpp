@@ -95,10 +95,8 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
       max_rbs = slice.inst.pdsch_rb_count <= slice.inst.cfg.min_prb and slice.inst.cfg.min_prb > 0
                     ? slice.inst.cfg.min_prb
                     : slice.inst.cfg.max_prb;
-      dl_prio_queue.push(slice_candidate_context{slice.inst.id,
-                                                 slice.get_prio(true, slot_tx, slot_tx, slices.size(), false),
-                                                 {slice.inst.pdsch_rb_count, max_rbs},
-                                                 slot_tx});
+      dl_prio_queue.push(slice_candidate_context{
+          slice.inst.id, slice.get_prio(true, slot_tx, slot_tx, false), {slice.inst.pdsch_rb_count, max_rbs}, slot_tx});
     }
 
     // TODO: Revisit when PUSCH time domain resource list is also defined in UE dedicated configuration.
@@ -126,10 +124,8 @@ void inter_slice_scheduler::slot_indication(slot_point slot_tx, const cell_resou
 
       max_rbs = pusch_rb_count <= slice.inst.cfg.min_prb and slice.inst.cfg.min_prb > 0 ? slice.inst.cfg.min_prb
                                                                                         : slice.inst.cfg.max_prb;
-      ul_prio_queue.push(slice_candidate_context{slice.inst.id,
-                                                 slice.get_prio(false, slot_tx, pusch_slot, slices.size(), false),
-                                                 {pusch_rb_count, max_rbs},
-                                                 pusch_slot});
+      ul_prio_queue.push(slice_candidate_context{
+          slice.inst.id, slice.get_prio(false, slot_tx, pusch_slot, false), {pusch_rb_count, max_rbs}, pusch_slot});
     }
   }
 }
@@ -268,7 +264,7 @@ inter_slice_scheduler::get_next_candidate()
         rb_lims.stop() != cfg.max_prb) {
       // For the special case when minRB ratio>0, the first candidate for this slice was bounded between {RBLimsMin,
       // RBLimsMax}. We re-add the slice as a candidate, this time, with RB bounds {RBLimsMax, maxRB}.
-      priority_type prio    = chosen_slice.get_prio(IsDownlink, current_slot, pxsch_slot, slices.size(), true);
+      priority_type prio    = chosen_slice.get_prio(IsDownlink, current_slot, pxsch_slot, true);
       unsigned      min_rbs = rb_count > 0 ? rb_count : cfg.min_prb;
       prio_queue.push(slice_candidate_context{chosen_slice.inst.id, prio, {min_rbs, cfg.max_prb}, pxsch_slot});
     }
@@ -292,7 +288,6 @@ std::optional<ul_ran_slice_candidate> inter_slice_scheduler::get_next_ul_candida
 inter_slice_scheduler::priority_type inter_slice_scheduler::ran_slice_sched_context::get_prio(bool       is_dl,
                                                                                               slot_point pdcch_slot,
                                                                                               slot_point pxsch_slot,
-                                                                                              unsigned   nof_slices,
                                                                                               bool slice_resched) const
 {
   // Note: The positive integer representing the priority of a slice consists of a concatenation of three priority
