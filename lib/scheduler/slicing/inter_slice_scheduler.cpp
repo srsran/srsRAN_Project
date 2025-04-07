@@ -35,10 +35,11 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
   // Default SRB slice.
   // NOTE: We set \c min_prb for default SRB slice to maximum nof. PRBs of a UE carrier to give maximum priority to this
   // slice.
-  slices.emplace_back(SRB_RAN_SLICE_ID,
-                      cell_cfg,
-                      slice_rrm_policy_config{.min_prb = cell_max_rbs, .max_prb = cell_max_rbs},
-                      create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index));
+  slices.emplace_back(
+      SRB_RAN_SLICE_ID,
+      cell_cfg,
+      slice_rrm_policy_config{.min_prb = 0, .max_prb = cell_max_rbs, .priority = slice_rrm_policy_config::max_priority},
+      create_scheduler_strategy(cell_cfg.expert_cfg.ue, cell_cfg.cell_index));
   // Default DRB slice.
   slices.emplace_back(DEFAULT_DRB_RAN_SLICE_ID,
                       cell_cfg,
@@ -49,8 +50,9 @@ inter_slice_scheduler::inter_slice_scheduler(const cell_configuration& cell_cfg_
   // Configured RRM policy members.
   for (const slice_rrm_policy_config& rrm : cell_cfg.rrm_policy_members) {
     // Adjust maximum PRBs per slice based on the number of PRBs in a cell.
-    auto rrm_adjusted    = rrm;
-    rrm_adjusted.max_prb = std::min(rrm.max_prb, cell_max_rbs);
+    auto rrm_adjusted     = rrm;
+    rrm_adjusted.max_prb  = std::min(rrm.max_prb, cell_max_rbs);
+    rrm_adjusted.priority = std::min(rrm.priority, slice_rrm_policy_config::max_priority);
     // Set policy scheduler based on slice configuration.
     scheduler_ue_expert_config slice_scheduler_ue_expert_cfg{cell_cfg.expert_cfg.ue};
     slice_scheduler_ue_expert_cfg.strategy_cfg = rrm.policy_sched_cfg;
@@ -290,22 +292,26 @@ inter_slice_scheduler::priority_type inter_slice_scheduler::ran_slice_sched_cont
                                                                                               slot_point pxsch_slot,
                                                                                               bool slice_resched) const
 {
-  // Note: The positive integer representing the priority of a slice consists of a concatenation of three priority
+  // Note: The positive integer representing the priority of a slice consists of a concatenation of several priority
   // values:
-  // 1. slice traffic priority (16 most significant bits). It differentiates slices based on whether they have
-  // minimum required traffic agreements (e.g. minRB ratio).
-  // 2. delay priority (8 bits), which attributes the highest priority to slices that have not been scheduled for a
+  // 1. slice slot distance (7 most significant bits). It prioritizes slices whose PXSCH slot is closer to the PDCCH
+  // slot. This is to avoid scheduling PDSCHs/PUSCHs out-of-order for the same UE.
+  // 2. slice traffic priority (8 bits). It differentiates slices based on their configured priority value.
+  // 3. slice min/max RB priority (1 bit). It prioritizes slices that have not yet achieved their minRB ratio.
+  // 4. delay priority (8 bits), which attributes the highest priority to slices that have not been scheduled for a
   // long time.
-  // 3. round-robin based on slot indication count (8 least significant bits).
+  // 5. round-robin based on slot indication count (7 least significant bits).
+  // 6. one bit set to 1 to differentiate from "skip" priority.
 
-  // Priority when slice has already reached its minimum RB ratio agreement.
-  static constexpr priority_type default_prio = 0x1U;
-  // Priority when slice still needs to reach its minimum RB ratio agreement.
-  static constexpr priority_type high_prio          = 0x2U;
-  static constexpr priority_type slice_prio_bitsize = 4U;
-  static constexpr priority_type delay_prio_bitsize = 8U;
-  static constexpr priority_type delay_prio_bitmask = (1U << delay_prio_bitsize) - 1U;
-  static constexpr priority_type rr_bitsize         = 8U;
+  static constexpr priority_type slice_dist_bitsize       = 7U;
+  static constexpr priority_type slice_dist_bitmask       = (1U << slice_dist_bitsize) - 1U;
+  static constexpr priority_type slice_prio_bitsize       = 8U;
+  static constexpr priority_type slice_prio_bitmask       = (1U << slice_prio_bitsize) - 1U;
+  static constexpr priority_type slice_minrb_prio_bitsize = 1U;
+  static constexpr priority_type delay_prio_bitsize       = 8U;
+  static constexpr priority_type delay_prio_bitmask       = (1U << delay_prio_bitsize) - 1U;
+  static constexpr priority_type rr_bitsize               = 7U;
+  static constexpr priority_type rr_bitmask               = (1U << rr_bitsize) - 1U;
 
   unsigned rb_count = is_dl ? inst.pdsch_rb_count : inst.nof_pusch_rbs_allocated(pxsch_slot);
   if (not inst.active() or rb_count >= inst.cfg.max_prb) {
@@ -313,23 +319,31 @@ inter_slice_scheduler::priority_type inter_slice_scheduler::ran_slice_sched_cont
     return skip_prio;
   }
 
-  // Prioritize closer slots over slots further away into the future. This is relevant for UL-heavy cases.
-  unsigned slot_dist = 0xfU - std::min(static_cast<unsigned>(pxsch_slot - pdcch_slot), 0xfU);
+  // (most significant bits) Prioritize closer slots over slots further away into the future.
+  // Note: This is relevant for UL-heavy cases, to avoid scheduling PUSCHs out-of-order for the same UE.
+  const priority_type slot_dist =
+      slice_dist_bitmask - std::min(static_cast<unsigned>(pxsch_slot - pdcch_slot), slice_dist_bitmask);
+  priority_type prio = slot_dist;
+
+  // Prioritize slices with higher priority.
+  prio = (prio << slice_prio_bitsize) + std::min(inst.cfg.priority, slice_prio_bitmask);
 
   // In case minRB > 0 and minimum RB ratio agreement is not yet reached, we give it a higher priority.
-  priority_type slice_prio =
-      not slice_resched and inst.cfg.min_prb > 0 and rb_count < inst.cfg.min_prb ? high_prio : default_prio;
+  const priority_type slice_minrb_prio =
+      not slice_resched and inst.cfg.min_prb > 0 and rb_count < inst.cfg.min_prb ? 1U : 0U;
+  prio = (prio << slice_minrb_prio_bitsize) + slice_minrb_prio;
 
   // Increase priorities of slices that have not been scheduled for a long time.
-  priority_type delay_prio =
-      is_dl ? inst.nof_slots_since_last_pdsch(pxsch_slot) : inst.nof_slots_since_last_pusch(pxsch_slot);
-  delay_prio = std::min(delay_prio, delay_prio_bitmask);
+  const priority_type delay_prio =
+      std::min(is_dl ? inst.nof_slots_since_last_pdsch(pxsch_slot) : inst.nof_slots_since_last_pusch(pxsch_slot),
+               delay_prio_bitmask);
+  prio = (prio << delay_prio_bitsize) + delay_prio;
 
   // Round-robin across slices with the same slice and delay priorities.
-  float          rbs_per_slot = is_dl ? inst.average_pdsch_rbs_per_slot() : inst.average_pusch_rbs_per_slot();
-  const unsigned rr_prio_max  = (1U << rr_bitsize) - 1U;
-  priority_type  rr_prio      = rr_prio_max - std::min((unsigned)std::round(rbs_per_slot), rr_prio_max);
+  float               rbs_per_slot = is_dl ? inst.average_pdsch_rbs_per_slot() : inst.average_pusch_rbs_per_slot();
+  const priority_type rr_prio      = rr_bitmask - std::min((unsigned)std::round(rbs_per_slot), rr_bitmask);
+  prio                             = (prio << rr_bitsize) + rr_prio;
 
-  return (slot_dist << (delay_prio_bitsize + rr_bitsize + slice_prio_bitsize)) +
-         (slice_prio << (delay_prio_bitsize + rr_bitsize)) + (delay_prio << rr_bitsize) + rr_prio;
+  // Add one bit to differentiate from skip priority.
+  return (prio << 1U) + 1U;
 }

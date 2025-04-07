@@ -116,12 +116,12 @@ TEST_F(default_slice_scheduler_test, when_lcid_is_part_of_default_slice_then_def
 
     if (is_dl_active) {
       ASSERT_TRUE(next_dl_slice.has_value());
-      ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
+      ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
       ASSERT_TRUE(next_dl_slice->is_candidate(to_du_ue_index(0)));
       ASSERT_TRUE(next_dl_slice->is_candidate(to_du_ue_index(0), lcid_t::LCID_SRB1));
 
       ASSERT_TRUE(next_ul_slice.has_value());
-      ASSERT_EQ(next_ul_slice->id(), ran_slice_id_t{0});
+      ASSERT_EQ(next_ul_slice->id(), SRB_RAN_SLICE_ID);
       ASSERT_TRUE(next_ul_slice->is_candidate(to_du_ue_index(0)));
       ASSERT_TRUE(next_ul_slice->is_candidate(to_du_ue_index(0), lcid_t::LCID_SRB1));
     } else {
@@ -139,11 +139,13 @@ TEST_F(default_slice_scheduler_test,
 
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_TRUE(next_dl_slice.has_value());
-  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
+  ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
+  ASSERT_EQ(next_dl_slice->remaining_rbs(), cell_cfg.nof_dl_prbs);
 
   next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_TRUE(next_dl_slice.has_value());
-  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{1});
+  ASSERT_EQ(next_dl_slice->id(), DEFAULT_DRB_RAN_SLICE_ID);
+  ASSERT_EQ(next_dl_slice->remaining_rbs(), cell_cfg.nof_dl_prbs);
 
   next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_FALSE(next_dl_slice.has_value());
@@ -156,11 +158,12 @@ TEST_F(default_slice_scheduler_test, when_candidate_instance_goes_out_of_scope_t
   run_slot();
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_TRUE(next_dl_slice.has_value());
+  ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
 
   run_slot();
   next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_TRUE(next_dl_slice.has_value());
-  ASSERT_EQ(next_dl_slice->id(), ran_slice_id_t{0});
+  ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
 }
 
 TEST_F(default_slice_scheduler_test, when_grant_gets_allocated_then_number_of_available_rbs_decreases)
@@ -212,9 +215,6 @@ TEST_F(default_slice_scheduler_test, returns_only_ul_pending_bytes_of_bearers_be
   // Estimate of the number of bytes required for the upper layer header.
   static constexpr unsigned RLC_HEADER_SIZE_ESTIMATE = 3U;
 
-  static constexpr ran_slice_id_t default_srb_slice_id{0};
-  static constexpr ran_slice_id_t default_drb_slice_id{1};
-
   static constexpr unsigned srb_pending_bytes{200};
   static constexpr unsigned drb_pending_bytes{5000};
 
@@ -240,13 +240,13 @@ TEST_F(default_slice_scheduler_test, returns_only_ul_pending_bytes_of_bearers_be
     auto next_ul_slice = slice_sched.get_next_ul_candidate();
     if (next_ul_slice.has_value()) {
       // Default SRB slice has very high priority.
-      ASSERT_EQ(next_ul_slice->id(), default_srb_slice_id);
+      ASSERT_EQ(next_ul_slice->id(), SRB_RAN_SLICE_ID);
       const slice_ue_repository& srb_slice_ues = next_ul_slice->get_slice_ues();
       ASSERT_EQ(srb_slice_ues[ue_idx].pending_ul_newtx_bytes(), get_mac_sdu_required_bytes(srb_pending_bytes));
 
       // Default DRB slice is next candidate.
       next_ul_slice = slice_sched.get_next_ul_candidate();
-      ASSERT_EQ(next_ul_slice->id(), default_drb_slice_id);
+      ASSERT_EQ(next_ul_slice->id(), DEFAULT_DRB_RAN_SLICE_ID);
       const slice_ue_repository& drb_slice_ues = next_ul_slice->get_slice_ues();
       ASSERT_EQ(drb_slice_ues[ue_idx].pending_ul_newtx_bytes(),
                 get_mac_sdu_required_bytes(drb_pending_bytes + RLC_HEADER_SIZE_ESTIMATE));
@@ -262,8 +262,6 @@ protected:
   static constexpr unsigned MIN_SLICE_RB = 10;
   static constexpr unsigned MAX_SLICE_RB = 20;
 
-  static constexpr ran_slice_id_t default_srb_slice_id{0};
-  static constexpr ran_slice_id_t default_drb_slice_id{1};
   static constexpr ran_slice_id_t drb1_slice_id{2};
   static constexpr ran_slice_id_t drb2_slice_id{3};
 
@@ -300,9 +298,8 @@ TEST_F(rb_ratio_slice_scheduler_test, when_slice_with_min_rb_has_ues_then_it_is_
   // Default SRB slice has very high priority.
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
   // Default SRB slice has very high priority. We ignore it as candidate for this test.
-  if (next_dl_slice->id() == default_srb_slice_id) {
-    next_dl_slice = slice_sched.get_next_dl_candidate();
-  }
+  ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
+  next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_EQ(next_dl_slice->id(), drb1_slice_id);
   ASSERT_TRUE(next_dl_slice->is_candidate(to_du_ue_index(0), lcid_t::LCID_MIN_DRB));
 }
@@ -314,9 +311,8 @@ TEST_F(rb_ratio_slice_scheduler_test, when_slice_rb_ratios_are_min_bounded_then_
 
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
   // Default SRB slice has very high priority. We ignore it as candidate for this test.
-  if (next_dl_slice->id() == default_srb_slice_id) {
-    next_dl_slice = slice_sched.get_next_dl_candidate();
-  }
+  ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
+  next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_EQ(next_dl_slice->id(), drb1_slice_id);
   ASSERT_EQ(next_dl_slice->remaining_rbs(), MIN_SLICE_RB);
 }
@@ -330,9 +326,8 @@ TEST_F(rb_ratio_slice_scheduler_test,
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_TRUE(next_dl_slice.has_value());
   // Default SRB slice has very high priority. We ignore it as candidate for this test.
-  if (next_dl_slice->id() == default_srb_slice_id) {
-    next_dl_slice = slice_sched.get_next_dl_candidate();
-  }
+  ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
+  next_dl_slice = slice_sched.get_next_dl_candidate();
 
   ASSERT_EQ(next_dl_slice->id(), drb1_slice_id);
   next_dl_slice->store_grant(MIN_SLICE_RB - 1); // we leave one RB empty (MIN_SLICE_RB - 1).
@@ -352,18 +347,14 @@ TEST_F(rb_ratio_slice_scheduler_test,
   // Default SRB slice has very high priority.
   auto next_dl_slice = slice_sched.get_next_dl_candidate();
   // Default SRB slice has very high priority. We ignore it as candidate for this test.
-  if (next_dl_slice->id() == default_srb_slice_id) {
-    next_dl_slice = slice_sched.get_next_dl_candidate();
-  }
+  ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
+  next_dl_slice = slice_sched.get_next_dl_candidate();
 
   ASSERT_EQ(next_dl_slice->id(), drb1_slice_id);
   next_dl_slice->store_grant(MIN_SLICE_RB);
   ASSERT_EQ(next_dl_slice->remaining_rbs(), 0);
 
   next_dl_slice = slice_sched.get_next_dl_candidate();
-  if (next_dl_slice->id() == default_srb_slice_id) {
-    next_dl_slice = slice_sched.get_next_dl_candidate();
-  }
   // Original slice is selected again, now using maxRB ratio as the remaining RBs.
   ASSERT_EQ(next_dl_slice->id(), drb1_slice_id);
   ASSERT_EQ(next_dl_slice->remaining_rbs(), MAX_SLICE_RB - MIN_SLICE_RB);
@@ -383,7 +374,7 @@ TEST_F(rb_ratio_slice_scheduler_test,
   std::optional<dl_ran_slice_candidate> next_dl_slice;
   for (unsigned i = 0; i != 2; ++i) {
     next_dl_slice = slice_sched.get_next_dl_candidate();
-    ASSERT_TRUE(next_dl_slice->id() == drb1_slice_id or next_dl_slice->id() == default_srb_slice_id);
+    ASSERT_TRUE(next_dl_slice->id() == drb1_slice_id or next_dl_slice->id() == SRB_RAN_SLICE_ID);
     if (next_dl_slice->id() == drb1_slice_id) {
       next_dl_slice->store_grant(MIN_SLICE_RB);
     }
@@ -397,7 +388,7 @@ TEST_F(rb_ratio_slice_scheduler_test,
   // New slot and priorities are reestablished.
   run_slot();
   next_dl_slice = slice_sched.get_next_dl_candidate();
-  ASSERT_EQ(next_dl_slice->id(), default_srb_slice_id);
+  ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
   next_dl_slice = slice_sched.get_next_dl_candidate();
   ASSERT_EQ(next_dl_slice->id(), drb1_slice_id);
   ASSERT_EQ(next_dl_slice->remaining_rbs(), MIN_SLICE_RB);
@@ -434,7 +425,7 @@ TEST_F(rb_ratio_slice_scheduler_test,
     if (next_dl_slice->id() == drb1_slice_id or next_dl_slice->id() == drb2_slice_id) {
       next_dl_slice->store_grant(MIN_SLICE_RB);
     } else {
-      ASSERT_EQ(next_dl_slice->id(), default_srb_slice_id);
+      ASSERT_EQ(next_dl_slice->id(), SRB_RAN_SLICE_ID);
     }
 
     // Either Slice 0 or 2 or 3 are then selected.
