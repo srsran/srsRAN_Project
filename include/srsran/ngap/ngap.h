@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "srsran/cu_cp/cu_cp_metrics_handler.h"
 #include "srsran/cu_cp/cu_cp_types.h"
 #include "srsran/ngap/ngap_context.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
+#include "srsran/ngap/ngap_metrics.h"
 #include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
@@ -290,7 +290,7 @@ public:
   virtual ~ngap_metrics_handler() = default;
 
   /// \brief Handle new request for metrics relative to a connected AMF.
-  virtual metrics_report::ngap_info handle_ngap_metrics_report_request() const = 0;
+  virtual ngap_info handle_ngap_metrics_report_request() const = 0;
 };
 
 /// \brief Interface to query statistics from the NGAP interface.

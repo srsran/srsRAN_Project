@@ -28,10 +28,7 @@ public:
 
   std::vector<metrics_report::du_info> handle_du_metrics_report_request() const override { return next_metrics.dus; }
 
-  std::vector<metrics_report::ngap_info> handle_ngap_metrics_report_request() const override
-  {
-    return next_metrics.ngaps;
-  }
+  std::vector<ngap_info> handle_ngap_metrics_report_request() const override { return next_metrics.ngaps; }
 };
 
 class dummy_metrics_notifier : public metrics_report_notifier
@@ -67,7 +64,7 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   ngap_metrics          next_ngap_metrics;
   s_nssai_t             snssai{slice_service_type{1}, slice_differentiator{}};
   next_ngap_metrics.pdu_session_metrics.emplace(snssai, pdu_session_metrics);
-  metrics_hdlr.next_metrics.ngaps.emplace_back(metrics_report::ngap_info{"open5gs-amf0", next_ngap_metrics});
+  metrics_hdlr.next_metrics.ngaps.emplace_back(ngap_info{"open5gs-amf0", next_ngap_metrics});
 
   for (unsigned i = 0; i != period.count(); ++i) {
     ASSERT_FALSE(metrics_notifier.last_metrics_report.has_value());

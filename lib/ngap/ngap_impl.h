@@ -71,7 +71,7 @@ public:
   async_task<void> handle_ul_non_ue_associated_nrppa_transport(const byte_buffer& nrppa_pdu) override;
 
   // ngap_metrics_handler
-  metrics_report::ngap_info handle_ngap_metrics_report_request() const override;
+  ngap_info handle_ngap_metrics_report_request() const override;
 
   // ngap_statistics_handler
   size_t get_nof_ues() const override { return ue_ctxt_list.size(); }

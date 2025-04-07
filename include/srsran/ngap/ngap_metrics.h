@@ -28,4 +28,10 @@ struct ngap_metrics {
   std::map<s_nssai_t, pdu_session_metrics_t> pdu_session_metrics;
 };
 
+struct ngap_info {
+  /// Name of the AMF connected to the CU-CP.
+  std::string  amf_name;
+  ngap_metrics metrics;
+};
+
 } // namespace srsran

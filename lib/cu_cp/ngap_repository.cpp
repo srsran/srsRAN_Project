@@ -98,9 +98,9 @@ std::map<amf_index_t, ngap_interface*> ngap_repository::get_ngaps()
   return ngaps;
 }
 
-std::vector<metrics_report::ngap_info> ngap_repository::handle_ngap_metrics_report_request() const
+std::vector<ngap_info> ngap_repository::handle_ngap_metrics_report_request() const
 {
-  std::vector<metrics_report::ngap_info> ngap_reports;
+  std::vector<ngap_info> ngap_reports;
   ngap_reports.reserve(ngap_db.size());
   for (const auto& ngap : ngap_db) {
     ngap_reports.emplace_back(ngap.second.ngap->get_metrics_handler().handle_ngap_metrics_report_request());

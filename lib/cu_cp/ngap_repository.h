@@ -28,7 +28,7 @@ public:
   virtual ~ngap_repository_metrics_handler() = default;
 
   /// \brief Handle new metrics request for all the AMF nodes connected to the CU-CP.
-  virtual std::vector<metrics_report::ngap_info> handle_ngap_metrics_report_request() const = 0;
+  virtual std::vector<ngap_info> handle_ngap_metrics_report_request() const = 0;
 };
 
 struct cu_cp_configuration;
@@ -71,7 +71,7 @@ public:
   /// Number of NGAPs managed by the CU-CP.
   size_t get_nof_ngaps() const { return ngap_db.size(); }
 
-  std::vector<metrics_report::ngap_info> handle_ngap_metrics_report_request() const override;
+  std::vector<ngap_info> handle_ngap_metrics_report_request() const override;
 
   /// Number of UEs managed by the CU-CP.
   size_t get_nof_ngap_ues();

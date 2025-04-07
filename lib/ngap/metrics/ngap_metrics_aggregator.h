@@ -20,9 +20,6 @@ namespace srs_cu_cp {
 class ngap_metrics_aggregator final
 {
 public:
-  ngap_metrics_aggregator()  = default;
-  ~ngap_metrics_aggregator() = default;
-
   void handle_requested_pdu_session(s_nssai_t s_nssai);
 
   void handle_successful_pdu_session_setup(s_nssai_t s_nssai);

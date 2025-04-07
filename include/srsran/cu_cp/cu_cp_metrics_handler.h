@@ -48,12 +48,6 @@ struct metrics_report {
     rrc_du_metrics rrc_metrics;
   };
 
-  struct ngap_info {
-    /// Name of the AMF connected to the CU-CP.
-    std::string  amf_name;
-    ngap_metrics metrics;
-  };
-
   std::vector<ue_info>   ues;
   std::vector<du_info>   dus;
   std::vector<ngap_info> ngaps;

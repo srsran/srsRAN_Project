@@ -101,7 +101,7 @@ protected:
   bool check_metrics_report(const std::string&                                amf_name,
                             const std::map<s_nssai_t, pdu_session_metrics_t>& pdu_session_metrics)
   {
-    const metrics_report::ngap_info& metrics_report = ngap->get_metrics_handler().handle_ngap_metrics_report_request();
+    const ngap_info& metrics_report = ngap->get_metrics_handler().handle_ngap_metrics_report_request();
 
     // Check that metrics contain the successful PDU session setup.
     if (metrics_report.amf_name != amf_name) {
