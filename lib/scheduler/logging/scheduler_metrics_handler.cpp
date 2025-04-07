@@ -22,7 +22,9 @@ cell_metrics_handler::cell_metrics_handler(msecs                       metrics_r
   notifier(notifier_), report_period(metrics_report_period), cell_cfg(cell_cfg_)
 {
   next_report.ue_metrics.reserve(MAX_NOF_DU_UES);
-  next_report.events.reserve(MAX_NOF_DU_UES);
+  // Note: there can be more than one event per UE.
+  constexpr unsigned prereserved_events_per_ue = 3;
+  next_report.events.reserve(MAX_NOF_DU_UES * prereserved_events_per_ue);
   ues.reserve(MAX_NOF_DU_UES);
   rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
 }
