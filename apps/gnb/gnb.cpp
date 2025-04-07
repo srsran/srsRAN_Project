@@ -124,7 +124,7 @@ static void register_app_logs(const gnb_appconfig&            gnb_cfg,
 {
   const logger_appconfig& log_cfg = gnb_cfg.log_cfg;
   // Set log-level of app and all non-layer specific components to app level.
-  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
+  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP", "ASN1"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
     logger.set_level(log_cfg.lib_level);
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);

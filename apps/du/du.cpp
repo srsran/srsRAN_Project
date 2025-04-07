@@ -109,7 +109,7 @@ static void register_app_logs(const du_appconfig& du_cfg, flexible_o_du_applicat
 {
   const logger_appconfig& log_cfg = du_cfg.log_cfg;
   // Set log-level of app and all non-layer specific components to app level.
-  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
+  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP", "ASN1"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
     logger.set_level(log_cfg.lib_level);
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);
