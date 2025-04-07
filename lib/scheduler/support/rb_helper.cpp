@@ -13,8 +13,8 @@
 using namespace srsran;
 
 template <size_t N, bool LowestInfoBitIsMSB>
-static interval<unsigned> do_find_next_empty_interval(const bounded_bitset<N, LowestInfoBitIsMSB>& used_rb_bitmap,
-                                                      interval<unsigned>                           search_limits)
+static interval<unsigned> find_next_empty_interval_impl(const bounded_bitset<N, LowestInfoBitIsMSB>& used_rb_bitmap,
+                                                        interval<unsigned>                           search_limits)
 {
   // Restrict the search to the bitmap dimensions.
   const interval<unsigned> bitset_limits = {0, used_rb_bitmap.size()};
@@ -29,9 +29,10 @@ static interval<unsigned> do_find_next_empty_interval(const bounded_bitset<N, Lo
 }
 
 template <size_t N, bool LowestInfoBitIsMSB>
-static interval<unsigned> do_find_empty_interval_of_length(const bounded_bitset<N, LowestInfoBitIsMSB>& used_rb_bitmap,
-                                                           unsigned                                     nof_rbs,
-                                                           interval<unsigned>                           search_limits)
+static interval<unsigned>
+find_empty_interval_of_length_impl(const bounded_bitset<N, LowestInfoBitIsMSB>& used_rb_bitmap,
+                                   unsigned                                     nof_rbs,
+                                   interval<unsigned>                           search_limits)
 {
   // Restrict the search to the bitmap dimensions.
   const interval<unsigned> bitset_limits = {0, used_rb_bitmap.size()};
@@ -39,7 +40,7 @@ static interval<unsigned> do_find_empty_interval_of_length(const bounded_bitset<
 
   interval<unsigned> max_interv;
   do {
-    interval<unsigned> interv = do_find_next_empty_interval(used_rb_bitmap, search_limits);
+    interval<unsigned> interv = find_next_empty_interval_impl(used_rb_bitmap, search_limits);
     if (interv.empty()) {
       break;
     }
@@ -55,39 +56,38 @@ static interval<unsigned> do_find_empty_interval_of_length(const bounded_bitset<
   return max_interv;
 }
 
-crb_interval rb_helper::find_next_empty_interval(const crb_bitmap&        used_crb_bitmap,
-                                                 const interval<unsigned> search_limits)
+crb_interval rb_helper::find_next_empty_interval(const crb_bitmap& used_crb_bitmap, crb_interval search_limits)
 {
-  return static_cast<crb_interval>(do_find_next_empty_interval(used_crb_bitmap, search_limits));
+  return static_cast<crb_interval>(find_next_empty_interval_impl(used_crb_bitmap, search_limits));
 }
 
-crb_interval rb_helper::find_empty_interval_of_length(const crb_bitmap&  used_crb_bitmap,
-                                                      unsigned           nof_crbs,
-                                                      interval<unsigned> search_limits)
+crb_interval rb_helper::find_empty_interval_of_length(const crb_bitmap& used_crb_bitmap,
+                                                      unsigned          nof_crbs,
+                                                      crb_interval      search_limits)
 {
-  return static_cast<crb_interval>(do_find_empty_interval_of_length(used_crb_bitmap, nof_crbs, search_limits));
+  return static_cast<crb_interval>(find_empty_interval_of_length_impl(used_crb_bitmap, nof_crbs, search_limits));
 }
 
-prb_interval rb_helper::find_next_empty_interval(const prb_bitmap& used_prb_bitmap, interval<unsigned> search_limits)
+prb_interval rb_helper::find_next_empty_interval(const prb_bitmap& used_prb_bitmap, prb_interval search_limits)
 {
-  return static_cast<prb_interval>(do_find_next_empty_interval(used_prb_bitmap, search_limits));
+  return static_cast<prb_interval>(find_next_empty_interval_impl(used_prb_bitmap, search_limits));
 }
 
-prb_interval rb_helper::find_empty_interval_of_length(const prb_bitmap&  used_prb_bitmap,
-                                                      unsigned           nof_prbs,
-                                                      interval<unsigned> search_limits)
+prb_interval rb_helper::find_empty_interval_of_length(const prb_bitmap& used_prb_bitmap,
+                                                      unsigned          nof_prbs,
+                                                      prb_interval      search_limits)
 {
-  return static_cast<prb_interval>(do_find_empty_interval_of_length(used_prb_bitmap, nof_prbs, search_limits));
+  return static_cast<prb_interval>(find_empty_interval_of_length_impl(used_prb_bitmap, nof_prbs, search_limits));
 }
 
-vrb_interval rb_helper::find_next_empty_interval(const vrb_bitmap& used_vrb_bitmap, interval<unsigned> search_limits)
+vrb_interval rb_helper::find_next_empty_interval(const vrb_bitmap& used_vrb_bitmap, vrb_interval search_limits)
 {
-  return static_cast<vrb_interval>(do_find_next_empty_interval(used_vrb_bitmap, search_limits));
+  return static_cast<vrb_interval>(find_next_empty_interval_impl(used_vrb_bitmap, search_limits));
 }
 
-vrb_interval rb_helper::find_empty_interval_of_length(const vrb_bitmap&  used_vrb_bitmap,
-                                                      unsigned           nof_vrbs,
-                                                      interval<unsigned> search_limits)
+vrb_interval rb_helper::find_empty_interval_of_length(const vrb_bitmap& used_vrb_bitmap,
+                                                      unsigned          nof_vrbs,
+                                                      vrb_interval      search_limits)
 {
-  return static_cast<vrb_interval>(do_find_empty_interval_of_length(used_vrb_bitmap, nof_vrbs, search_limits));
+  return static_cast<vrb_interval>(find_empty_interval_of_length_impl(used_vrb_bitmap, nof_vrbs, search_limits));
 }

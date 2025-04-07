@@ -503,11 +503,16 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
       continue;
     }
 
-    // Save CRBs, MCS and RI.
-    grant_builder.set_pdsch_params(alloc_vrbs, dl_bwp_crb_limits);
+    // Compute the corresponding CRBs.
+    // TODO: support interleaving.
+    const std::pair<crb_interval, crb_interval> alloc_crbs = {
+        prb_to_crb(dl_bwp_crb_limits, static_cast<prb_interval>(alloc_vrbs)), {}};
 
-    // Fill used CRBs.
-    unsigned nof_rbs_alloc = alloc_vrbs.length();
+    // Save CRBs, MCS and RI.
+    grant_builder.set_pdsch_params(alloc_vrbs, alloc_crbs);
+
+    // Fill used VRBs.
+    const unsigned nof_rbs_alloc = alloc_vrbs.length();
     used_dl_vrbs.fill(alloc_vrbs.start(), alloc_vrbs.stop());
 
     // Update slice state.
@@ -517,7 +522,7 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
   }
 
   // Clear grant builders.
-  unsigned alloc_count = pending_dl_newtxs.size();
+  const unsigned alloc_count = pending_dl_newtxs.size();
   pending_dl_newtxs.clear();
 
   // Update policy with final allocation results.

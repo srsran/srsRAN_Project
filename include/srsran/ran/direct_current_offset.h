@@ -88,21 +88,6 @@ inline bool is_contained(unsigned dc_position, crb_interval rbs)
   return rbs.contains(dc_position / NOF_SUBCARRIERS_PER_RB);
 }
 
-/// \brief Checks if the DC position is contained in a CRB index list.
-/// \param[in] dc_position     DC position in subcarriers within the grid relative to PointA.
-/// \param[in] crbs             Resource block allocation.
-/// \return \c true if the DC position is contained within the allocated CRBs. Otherwise \c false.
-inline bool is_contained(unsigned dc_position, span<const uint16_t> crbs)
-{
-  const unsigned dc_rb = dc_position / NOF_SUBCARRIERS_PER_RB;
-  for (unsigned rb : crbs) {
-    if (rb == dc_rb) {
-      return true;
-    }
-  }
-  return false;
-}
-
 } // namespace dc_offset_helper
 
 } // namespace srsran

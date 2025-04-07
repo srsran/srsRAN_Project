@@ -85,7 +85,7 @@ private:
 
   unsigned max_puschs_to_alloc(const ul_ran_slice_candidate& slice);
 
-  // Called when bitmap of used PRBs needs to be recalculated.
+  // Called when bitmap of used VRBs needs to be recalculated.
   void update_used_dl_vrbs();
   void update_used_ul_vrbs();
 

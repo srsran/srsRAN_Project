@@ -125,8 +125,8 @@ public:
     dl_newtx_grant_builder& operator=(dl_newtx_grant_builder&&) noexcept = default;
     ~dl_newtx_grant_builder() { srsran_assert(parent == nullptr, "PDSCH parameters were not set"); }
 
-    /// Sets the final CRBs for the PDSCH allocation.
-    void set_pdsch_params(vrb_interval alloc_vrbs, const crb_interval& dl_bwp_crb_limits);
+    /// Sets the final VRBs for the PDSCH allocation.
+    void set_pdsch_params(vrb_interval alloc_vrbs, std::pair<crb_interval, crb_interval> alloc_crbs);
 
     /// For a given max number of RBs and a bitmap of used VRBs, returns the recommended parameters for the PDSCH grant.
     vrb_interval recommended_vrbs(const vrb_bitmap& used_vrbs, unsigned max_nof_rbs = MAX_NOF_PRBS) const
@@ -162,7 +162,7 @@ public:
     ul_newtx_grant_builder& operator=(ul_newtx_grant_builder&&) noexcept = default;
     ~ul_newtx_grant_builder() { srsran_assert(parent == nullptr, "PUSCH parameters were not set"); }
 
-    /// Sets the final CRBs for the PUSCH allocation.
+    /// Sets the final VRBs for the PUSCH allocation.
     void set_pusch_params(const vrb_interval& alloc_vrbs, const crb_interval& ul_bwp_crb_limits);
 
     /// For a given max number of RBs and a bitmap of used VRBs, returns the recommended parameters for the PUSCH grant.
@@ -229,17 +229,17 @@ private:
                                                                unsigned                              pending_bytes);
 
   // Set final PDSCH parameters and allocate remaining DL grant resources.
-  void set_pdsch_params(dl_grant_info& grant, vrb_interval vrbs, const crb_interval& dl_bwp_crb_limits);
+  void set_pdsch_params(dl_grant_info& grant, vrb_interval vrbs, std::pair<crb_interval, crb_interval> crbs);
 
   // Set final PUSCH parameters and allocate remaining UL grant resources.
   void set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs, const crb_interval& ul_bwp_crb_limits);
 
-  std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(cell_slot_resource_allocator& pdsch_alloc,
-                                                  const search_space_info&      ss_info,
-                                                  uint8_t                       pdsch_td_res_index,
-                                                  span<const uint16_t>          crbs,
-                                                  sch_mcs_index                 mcs,
-                                                  unsigned                      nof_layers);
+  std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(cell_slot_resource_allocator&         pdsch_alloc,
+                                                  const search_space_info&              ss_info,
+                                                  uint8_t                               pdsch_td_res_index,
+                                                  std::pair<crb_interval, crb_interval> crbs,
+                                                  sch_mcs_index                         mcs,
+                                                  unsigned                              nof_layers);
 
   expected<pdcch_dl_information*, alloc_status> alloc_dl_pdcch(const ue_cell& ue_cc, const search_space_info& ss_info);
 

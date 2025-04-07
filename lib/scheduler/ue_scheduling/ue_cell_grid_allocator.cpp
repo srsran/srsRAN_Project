@@ -39,10 +39,10 @@ ue_cell_grid_allocator::ue_cell_grid_allocator(const scheduler_ue_expert_config&
 
 std::optional<sch_mcs_tbs> ue_cell_grid_allocator::calculate_dl_mcs_tbs(cell_slot_resource_allocator& pdsch_alloc,
                                                                         const search_space_info&      ss_info,
-                                                                        uint8_t              pdsch_td_res_index,
-                                                                        span<const uint16_t> crbs,
-                                                                        sch_mcs_index        mcs,
-                                                                        unsigned             nof_layers)
+                                                                        uint8_t pdsch_td_res_index,
+                                                                        std::pair<crb_interval, crb_interval> crbs,
+                                                                        sch_mcs_index                         mcs,
+                                                                        unsigned nof_layers)
 {
   // Reduce estimated MCS by 1 whenever CSI-RS is sent over a particular slot to account for the overhead of CSI-RS
   // REs.
@@ -69,9 +69,11 @@ std::optional<sch_mcs_tbs> ue_cell_grid_allocator::calculate_dl_mcs_tbs(cell_slo
   const std::optional<unsigned>& tx_dc =
       cell_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().tx_direct_current_location;
   if (tx_dc.has_value()) {
-    contains_dc = dc_offset_helper::is_contained(tx_dc.value(), crbs);
+    contains_dc = dc_offset_helper::is_contained(tx_dc.value(), crbs.first) ||
+                  dc_offset_helper::is_contained(tx_dc.value(), crbs.second);
   }
-  auto mcs_tbs_info = compute_dl_mcs_tbs(pdsch_cfg, adjusted_mcs, crbs.size(), contains_dc);
+  auto mcs_tbs_info =
+      compute_dl_mcs_tbs(pdsch_cfg, adjusted_mcs, crbs.first.length() + crbs.second.length(), contains_dc);
 
   return mcs_tbs_info;
 }
@@ -208,9 +210,9 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
   return dl_grant_info{&user, params, h_dl.value(), pdcch, &msg, uci, pending_bytes};
 }
 
-void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&      grant,
-                                              vrb_interval        vrbs,
-                                              const crb_interval& dl_bwp_crb_limits)
+void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                        grant,
+                                              vrb_interval                          vrbs,
+                                              std::pair<crb_interval, crb_interval> crbs)
 {
   // Derive remaining parameters from \c dl_grant_params.
   ue&                                          u                  = ues[grant.user->ue_index()];
@@ -228,16 +230,12 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&      grant,
   const unsigned                               k1        = grant.uci_alloc.k1;
 
   // Fetch PDCCH and PDSCH resource grid allocators.
-  // TODO: support interleaving.
-  // TODO: move all resource grid writing to the end?
-  static_vector<uint16_t, MAX_NOF_PRBS> crbs;
-  for (unsigned i = vrbs.start(); i < vrbs.stop(); ++i) {
-    crbs.push_back(i + dl_bwp_crb_limits.start());
-  }
 
   cell_slot_resource_allocator& pdcch_alloc = cell_alloc[0];
   cell_slot_resource_allocator& pdsch_alloc = cell_alloc[pdsch_td_cfg.k0];
-  srsran_sanity_check(not pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs),
+
+  srsran_sanity_check(not(pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs.first) or
+                          pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs.second)),
                       "Invalid calculation of PDSCH RBs. Used CRBs={}",
                       pdsch_alloc.dl_res_grid.used_crbs(scs, {0, cell_cfg.nof_dl_prbs}, pdsch_td_cfg.symbols));
 
@@ -261,7 +259,10 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&      grant,
   }
 
   // Mark resources as occupied in the ResourceGrid.
-  pdsch_alloc.dl_res_grid.fill(scs, pdsch_td_cfg.symbols, crbs);
+  pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, crbs.first});
+  if (not crbs.second.empty()) {
+    pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, crbs.second});
+  }
 
   // Compute TPC for PUCCH.
   uint8_t tpc = ue_cc.get_pucch_power_controller().compute_tpc_command(pdsch_alloc.slot + k1);
@@ -274,13 +275,23 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&      grant,
   const unsigned pucch_res_indicator = grant.uci_alloc.pucch_res_indicator.value_or(0);
   switch (ss_info.get_dl_dci_format()) {
     case dci_dl_format::f1_0: {
-      // Very ugly fix. Convert BWP VRBs to CORESET VRBs, if applicable.
-      const coreset_configuration& cs_cfg = *ss_info.coreset;
-      vrbs = rb_helper::crb_to_vrb_dl_non_interleaved(prb_to_crb(dl_bwp_crb_limits, static_cast<prb_interval>(vrbs)),
-                                                      dl_bwp_crb_limits.start(),
-                                                      cs_cfg.get_coreset_start_crb(),
-                                                      dci_dl_format::f1_0,
-                                                      ss_info.cfg->is_common_search_space());
+      // The VRBs provided by the scheduler are defined from the start of the BWP, but in the case of PDSCH
+      // transmissions scheduled with DCI format 1_0 in any common search space, VRBs are defined from the start of the
+      // CORESET. Therefore, if this is the case, we need to recompute the VRBs relative to the CORESET.
+      if (ss_info.cfg->is_common_search_space()) {
+        // [Implementation defined] We never use interleaved mapping for this case.
+        srsran_assert(crbs.second.empty(),
+                      "Interleaving is not supported for PDSCH transmissions scheduled with DCI format 1_0 in any "
+                      "common search space");
+        const coreset_configuration& cs_cfg            = *ss_info.coreset;
+        const bwp_downlink_common&   active_dl_bwp_cmn = *ss_info.bwp->dl_common.value();
+        const bwp_configuration&     active_dl_bwp     = active_dl_bwp_cmn.generic_params;
+        vrbs                                           = rb_helper::crb_to_vrb_dl_non_interleaved(crbs.first,
+                                                        active_dl_bwp.crbs.start(),
+                                                        cs_cfg.get_coreset_start_crb(),
+                                                        dci_dl_format::f1_0,
+                                                        ss_info.cfg->is_common_search_space());
+      }
       build_dci_f1_0_c_rnti(grant.pdcch->dci,
                             ss_info,
                             cell_cfg.dl_cfg_common.init_dl_bwp,
@@ -398,9 +409,13 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& reques
     return make_unexpected(grant.error());
   }
 
-  // Set PDSCH parameters.
-  set_pdsch_params(grant.value(), vrbs, request.dl_bwp_crb_limits);
+  // Compute the corresponding CRBs.
+  // TODO: support interleaving.
+  std::pair<crb_interval, crb_interval> crbs = {prb_to_crb(request.dl_bwp_crb_limits, static_cast<prb_interval>(vrbs)),
+                                                {}};
 
+  // Set PDSCH parameters.
+  set_pdsch_params(grant.value(), vrbs, crbs);
   return vrbs;
 }
 
@@ -820,11 +835,11 @@ void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(slot_point slot)
   }
 }
 
-void ue_cell_grid_allocator::dl_newtx_grant_builder::set_pdsch_params(vrb_interval        alloc_vrbs,
-                                                                      const crb_interval& dl_bwp_crb_limits)
+void ue_cell_grid_allocator::dl_newtx_grant_builder::set_pdsch_params(vrb_interval                          alloc_vrbs,
+                                                                      std::pair<crb_interval, crb_interval> alloc_crbs)
 {
   // Transfer the PDSCH parameters to the parent DL grant.
-  parent->set_pdsch_params(parent->dl_grants[grant_index], alloc_vrbs, dl_bwp_crb_limits);
+  parent->set_pdsch_params(parent->dl_grants[grant_index], alloc_vrbs, alloc_crbs);
 
   // Set PDSCH parameters and set parent as nullptr to avoid further modifications.
   parent = nullptr;

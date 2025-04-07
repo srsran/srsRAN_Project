@@ -56,11 +56,11 @@ inline crb_interval vrb_to_crb_ul_non_interleaved(vrb_interval vrbs, unsigned bw
 /// \brief Finds the next contiguous range of CRBs whose respective bit in provided CRB bitmap is set to zero.
 ///
 /// \param used_crb_bitmap Bitmap of RBs, where 1's represent used RBs and 0's empty RBs.
-/// \param search_limits Minimum and maximum RB indeces where the search is carried out.
+/// \param search_limits Minimum and maximum RB indices where the search is carried out.
 /// \return An interval of contiguous CRBs where the respective bits are set to zero. If no interval was found, an empty
 ///         interval is returned.
-crb_interval find_next_empty_interval(const crb_bitmap&  used_crb_bitmap,
-                                      interval<unsigned> search_limits = {0, MAX_NOF_PRBS});
+crb_interval find_next_empty_interval(const crb_bitmap& used_crb_bitmap,
+                                      crb_interval      search_limits = {0, MAX_NOF_PRBS});
 
 /// \brief Finds a range of contiguous CRBs, whose value in the provided CRB bitmap is set to zero. The returned range
 /// length should be at most "nof_crbs" CRBs. If no range with length "nof_crbs" is found, the longest valid range of
@@ -68,20 +68,20 @@ crb_interval find_next_empty_interval(const crb_bitmap&  used_crb_bitmap,
 ///
 /// \param used_crb_bitmap Bitmap of RBs, where 1's represent used RBs and 0's empty RBs.
 /// \param nof_crbs Maximum range of RBs.
-/// \param search_limits Minimum and maximum RB indeces where the search is carried out.
+/// \param search_limits Minimum and maximum RB indices where the search is carried out.
 /// \return An interval of CRBs with maximum length equal to "nof_crbs".
-crb_interval find_empty_interval_of_length(const crb_bitmap&  used_crb_bitmap,
-                                           unsigned           nof_crbs,
-                                           interval<unsigned> search_limits = {0, MAX_NOF_PRBS});
+crb_interval find_empty_interval_of_length(const crb_bitmap& used_crb_bitmap,
+                                           unsigned          nof_crbs,
+                                           crb_interval      search_limits = {0, MAX_NOF_PRBS});
 
 /// \brief Finds the next contiguous range of PRBs whose respective bit in provided PRB bitmap is set to zero.
 ///
 /// \param used_prb_bitmap Bitmap of RBs, where 1's represent used RBs and 0's empty RBs.
-/// \param search_limits Minimum and maximum RB indeces where the search is carried out.
+/// \param search_limits Minimum and maximum RB indices where the search is carried out.
 /// \return An interval of contiguous PRBs where the respective bits are set to zero. If no interval was found, an empty
 ///         interval is returned.
-prb_interval find_next_empty_interval(const prb_bitmap&  used_prb_bitmap,
-                                      interval<unsigned> search_limits = {0, MAX_NOF_PRBS});
+prb_interval find_next_empty_interval(const prb_bitmap& used_prb_bitmap,
+                                      prb_interval      search_limits = {0, MAX_NOF_PRBS});
 
 /// \brief Finds a range of contiguous PRBs, whose value in the provided PRB bitmap is set to zero. The returned range
 /// length should be at most "nof_prbs" PRBs. If no range with length "nof_prbs" is found, the longest valid range of
@@ -89,20 +89,20 @@ prb_interval find_next_empty_interval(const prb_bitmap&  used_prb_bitmap,
 ///
 /// \param used_prb_bitmap Bitmap of RBs, where 1's represent used RBs and 0's empty RBs.
 /// \param nof_prbs Maximum range of RBs.
-/// \param search_limits Minimum and maximum RB indeces where the search is carried out.
+/// \param search_limits Minimum and maximum RB indices where the search is carried out.
 /// \return An interval of PRBs with maximum length equal to "nof_prbs".
-prb_interval find_empty_interval_of_length(const prb_bitmap&  used_prb_bitmap,
-                                           unsigned           nof_prbs,
-                                           interval<unsigned> search_limits = {0, MAX_NOF_PRBS});
+prb_interval find_empty_interval_of_length(const prb_bitmap& used_prb_bitmap,
+                                           unsigned          nof_prbs,
+                                           prb_interval      search_limits = {0, MAX_NOF_PRBS});
 
 /// \brief Finds the next contiguous range of VRBs whose respective bit in provided VRB bitmap is set to zero.
 ///
 /// \param used_vrb_bitmap Bitmap of RBs, where 1's represent used RBs and 0's empty RBs.
-/// \param search_limits Minimum and maximum RB indeces where the search is carried out.
+/// \param search_limits Minimum and maximum RB indices where the search is carried out.
 /// \return An interval of contiguous VRBs where the respective bits are set to zero. If no interval was found, an empty
 ///         interval is returned.
-vrb_interval find_next_empty_interval(const vrb_bitmap&  used_vrb_bitmap,
-                                      interval<unsigned> search_limits = {0, MAX_NOF_PRBS});
+vrb_interval find_next_empty_interval(const vrb_bitmap& used_vrb_bitmap,
+                                      vrb_interval      search_limits = {0, MAX_NOF_PRBS});
 
 /// \brief Finds a range of contiguous VRBs, whose value in the provided PRB bitmap is set to zero. The returned range
 /// length should be at most "nof_vrbs" VRBs. If no range with length "nof_vrbs" is found, the longest valid range of
@@ -110,10 +110,10 @@ vrb_interval find_next_empty_interval(const vrb_bitmap&  used_vrb_bitmap,
 ///
 /// \param used_vrb_bitmap Bitmap of RBs, where 1's represent used RBs and 0's empty RBs.
 /// \param nof_vrbs Maximum range of RBs.
-/// \param search_limits Minimum and maximum RB indeces where the search is carried out.
+/// \param search_limits Minimum and maximum RB indices where the search is carried out.
 /// \return An interval of VRBs with maximum length equal to "nof_vrbs".
-vrb_interval find_empty_interval_of_length(const vrb_bitmap&  used_vrb_bitmap,
-                                           unsigned           nof_vrbs,
-                                           interval<unsigned> search_limits = {0, MAX_NOF_PRBS});
+vrb_interval find_empty_interval_of_length(const vrb_bitmap& used_vrb_bitmap,
+                                           unsigned          nof_vrbs,
+                                           vrb_interval      search_limits = {0, MAX_NOF_PRBS});
 } // namespace rb_helper
 } // namespace srsran

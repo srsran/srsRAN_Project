@@ -150,7 +150,13 @@ protected:
     auto& builder = result.value();
 
     vrb_interval vrbs = builder.recommended_vrbs(used_dl_vrbs);
-    builder.set_pdsch_params(vrbs, init_dl_bwp.generic_params.crbs);
+
+    // Compute the corresponding CRBs.
+    // TODO: support interleaving.
+    std::pair<crb_interval, crb_interval> crbs = {
+        prb_to_crb(init_dl_bwp.generic_params.crbs, static_cast<prb_interval>(vrbs)), {}};
+
+    builder.set_pdsch_params(vrbs, crbs);
     used_dl_vrbs.fill(vrbs.start(), vrbs.stop());
   }
 
