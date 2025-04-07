@@ -756,8 +756,17 @@ unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate
   // The max PUSCHs-per-slot limit cannot be exceeded.
   auto& pusch_res = cell_alloc[pusch_slot].result;
   // Note: We use signed integer to avoid unsigned overflow.
-  const int max_puschs = std::min(static_cast<unsigned>(MAX_PUSCH_PDUS_PER_SLOT), expert_cfg.max_puschs_per_slot);
-  puschs_to_alloc      = max_puschs - (int)pusch_res.ul.puschs.size();
+  const int max_puschs = std::min(
+      (int)std::min(static_cast<unsigned>(MAX_PUSCH_PDUS_PER_SLOT), expert_cfg.max_puschs_per_slot), puschs_to_alloc);
+  puschs_to_alloc = max_puschs - (int)pusch_res.ul.puschs.size();
+  if (puschs_to_alloc <= 0) {
+    return 0;
+  }
+
+  // The max UL grants-per-slot limit cannot be exceeded.
+  puschs_to_alloc = std::min(
+      puschs_to_alloc,
+      static_cast<int>(expert_cfg.max_ul_grants_per_slot - pusch_res.ul.puschs.size() - pusch_res.ul.pucchs.size()));
   if (puschs_to_alloc <= 0) {
     return 0;
   }
