@@ -45,6 +45,7 @@ add_executable(scheduler_test
         multi_cell_scheduler_test.cpp
         multi_slice_scheduler_test.cpp
         scheduler_qos_test.cpp
+        scheduler_multi_grants_test.cpp
 )
 target_link_libraries(scheduler_test
         srsran_sched

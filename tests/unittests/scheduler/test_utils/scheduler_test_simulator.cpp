@@ -22,9 +22,9 @@ scheduler_expert_config srsran::make_custom_scheduler_expert_config(bool enable_
   return exp_cfg;
 }
 
-scheduler_test_simulator::scheduler_test_simulator(unsigned           tx_rx_delay_,
-                                                   subcarrier_spacing max_scs,
-                                                   bool               enable_csi_rs_pdsch_multiplexing) :
+scheduler_test_simulator::scheduler_test_simulator(const scheduler_expert_config& sched_cfg_,
+                                                   unsigned                       tx_rx_delay_,
+                                                   subcarrier_spacing             max_scs) :
   tx_rx_delay(tx_rx_delay_),
   logger([]() -> srslog::basic_logger& {
     srslog::init();
@@ -33,16 +33,21 @@ scheduler_test_simulator::scheduler_test_simulator(unsigned           tx_rx_dela
     return l;
   }()),
   test_logger(srslog::fetch_basic_logger("TEST", true)),
-  sched_cfg(make_custom_scheduler_expert_config(enable_csi_rs_pdsch_multiplexing)),
+  sched_cfg(sched_cfg_),
   sched(create_scheduler(scheduler_config{sched_cfg, notif, metric_notif})),
   next_slot(test_helper::generate_random_slot_point(max_scs))
 {
   test_logger.set_level(srslog::basic_levels::debug);
-
   logger.set_context(next_slot.sfn(), next_slot.slot_index());
   test_logger.set_context(next_slot.sfn(), next_slot.slot_index());
-
   srslog::flush();
+}
+
+scheduler_test_simulator::scheduler_test_simulator(unsigned           tx_rx_delay_,
+                                                   subcarrier_spacing max_scs,
+                                                   bool               enable_csi_rs_pdsch_multiplexing) :
+  scheduler_test_simulator(make_custom_scheduler_expert_config(enable_csi_rs_pdsch_multiplexing), tx_rx_delay_, max_scs)
+{
 }
 
 scheduler_test_simulator::~scheduler_test_simulator()
