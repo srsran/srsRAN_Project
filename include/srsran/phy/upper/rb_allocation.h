@@ -12,8 +12,7 @@
 
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/constants.h"
-#include "srsran/phy/upper/vrb_to_prb_mapper.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb_mapper.h"
 #include <optional>
 
 namespace srsran {
@@ -46,7 +45,7 @@ class rb_allocation
 {
 private:
   /// Indicates, with a mask, the VRBs selected for the transmission.
-  bounded_bitset<MAX_RB> vrb_mask;
+  bounded_bitset<MAX_NOF_PRBS> vrb_mask;
   /// VRB-to-PRB mapper.
   vrb_to_prb_mapper vrb_to_prb_map;
 
@@ -54,13 +53,13 @@ private:
   ///
   /// \param[in] bwp_start_rb Indicates the BWP start PRB index relative to CRB0 (PointA).
   /// \param[in] bwp_size_rb Indicates the BWP size in PRB units.
-  bounded_bitset<MAX_RB> get_contiguous_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
+  bounded_bitset<MAX_NOF_PRBS> get_contiguous_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
 
   /// \brief Computes the PRB allocation mask for the cases not covered by get_contiguous_prb_mask().
   ///
   /// \param[in] bwp_start_rb Indicates the BWP start PRB index relative to CRB0 (PointA).
   /// \param[in] bwp_size_rb Indicates the BWP size in PRB units.
-  bounded_bitset<MAX_RB> get_other_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
+  bounded_bitset<MAX_NOF_PRBS> get_other_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
 
 public:
   /// \brief Default constructor.
@@ -75,7 +74,7 @@ public:
   /// \param[in] vrb_bitmap VRB allocation bitmap in which each entry represents an active RB.
   /// \param[in] vrb_to_prb_map_ Optional VRB-to-PRB mapping (for PDSCH only).
   /// \return An RB allocation instance.
-  static rb_allocation make_type0(const bounded_bitset<MAX_RB>&           vrb_bitmap,
+  static rb_allocation make_type0(const bounded_bitset<MAX_NOF_PRBS>&     vrb_bitmap,
                                   const std::optional<vrb_to_prb_mapper>& vrb_to_prb_map_ = {});
 
   /// \brief Creates a Type 1 RB allocation object.
@@ -153,7 +152,7 @@ public:
   /// \brief Determines whether the resource block allocation is valid for a given bandwidth part.
   ///
   /// The resource block allocation combined with the BWP parameters are valid if:
-  /// - the sum of the BWP start and size does not exceed \ref MAX_RB; and
+  /// - the sum of the BWP start and size does not exceed \ref MAX_NOF_PRBS; and
   /// - the size of the virtual resource block allocation does not exceed the size of the available physical resources.
   ///
   /// For PDSCH transmissions scheduled by DCI in a common SS, the PRBs used for VRB to PRB mapping start from the
@@ -165,7 +164,7 @@ public:
   /// \return True if the combination of BWP and resource block is valid, false otherwise.
   bool is_bwp_valid(unsigned bwp_start_rb, unsigned bwp_size_rb) const
   {
-    return ((bwp_start_rb + bwp_size_rb <= MAX_RB) &&
+    return ((bwp_start_rb + bwp_size_rb <= MAX_NOF_PRBS) &&
             (vrb_mask.size() + vrb_to_prb_map.get_coreset_start() <= bwp_size_rb));
   }
 
@@ -174,20 +173,21 @@ public:
   /// Calculates the PRB allocation mask considering the BWP frequency allocation, the VRB mask and the VRB-to-PRB
   /// mapping.
   ///
-  /// The resultant mask is represented in a \c bounded_bitset<MAX_RB> of size \f$N_{BWP,i}^{start}+N_{BWP,i}^{size}\f$
-  /// in which every set bit represents an active PRB. The first bit of the mask belongs to CRB0 (PointA).
+  /// The resultant mask is represented in a \c bounded_bitset<MAX_NOF_PRBS> of size
+  /// \f$N_{BWP,i}^{start}+N_{BWP,i}^{size}\f$ in which every set bit represents an active PRB. The first bit of the
+  /// mask belongs to CRB0 (PointA).
   ///
   /// \param[in] bwp_start_rb Indicates the BWP lowest PRB index relative to CRB0 (PointA) as \f$N_{BWP,i}^{start}\f$.
   /// \param[in] bwp_size_rb Indicates the BWP size in PRB as \f$N_{BWP,i}^{size}\f$.
   /// \return The PRB allocation mask represented as a bounded bitset.
-  bounded_bitset<MAX_RB> get_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
+  bounded_bitset<MAX_NOF_PRBS> get_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
 
   /// \brief Generates the PRB allocation indexes for the frequency domain allocation.
   ///
   /// Calculates the PRB allocation indexes considering the BWP frequency allocation, the VRB mask and the VRB-to-PRB
   /// mapping.
   ///
-  /// The resultant indices are represented in a \c static_vector<uint16_t,MAX_RB> of size
+  /// The resultant indices are represented in a \c static_vector<uint16_t,MAX_NOF_PRBS> of size
   /// \f$N_{BWP,i}^{start}+N_{BWP,i}^{size}\f$. The indices are relative to CRB0 (PointA) and they are indexed in VRB
   /// increasing order. In other words, the first index indicates the PRB index of the lowest active VRB.
   /// Correspondingly, the last index corresponds to the highest active VRB.
@@ -198,7 +198,7 @@ public:
   /// \param[in] bwp_start_rb Indicates the BWP lowest PRB index relative to CRB0 (PointA) as \f$N_{BWP,i}^{start}\f$.
   /// \param[in] bwp_size_rb Indicates the BWP size in PRB as \f$N_{BWP,i}^{size}\f$.
   /// \return The resultant PRB allocation indices represented as a static vector.
-  static_vector<uint16_t, MAX_RB> get_prb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
+  static_vector<uint16_t, MAX_NOF_PRBS> get_prb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
 };
 
 } // namespace srsran

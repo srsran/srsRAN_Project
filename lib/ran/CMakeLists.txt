@@ -44,6 +44,7 @@ add_library(srsran_ran
         band_helper.cpp
         sch/tbs_calculator.cpp
         resource_allocation/resource_allocation_frequency.cpp
+        resource_allocation/vrb_to_prb_mapper.cpp
         sch/sch_segmentation.cpp
         srs/srs_bandwidth_configuration.cpp
         srs/srs_information.cpp

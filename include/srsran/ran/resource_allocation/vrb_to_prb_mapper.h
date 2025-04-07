@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/constants.h"
+#include "srsran/ran/resource_block.h"
 #include <cstdint>
 
 namespace srsran {
@@ -132,7 +132,7 @@ public:
   ///
   /// \param[in] bwp_size Indicates the BWP size.
   /// \return Return the PRB indices relative to the lowest PRB of the BWP.
-  static_vector<uint16_t, MAX_RB> get_allocation_indices(unsigned bwp_size) const;
+  static_vector<uint16_t, MAX_NOF_PRBS> get_allocation_indices(unsigned bwp_size) const;
 
   /// \brief Equal comparison between two VRB-to-PRB mappers.
   ///

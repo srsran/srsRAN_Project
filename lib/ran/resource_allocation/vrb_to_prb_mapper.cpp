@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/phy/upper/vrb_to_prb_mapper.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb_mapper.h"
 #include "srsran/adt/span.h"
 #include "srsran/support/math/math_utils.h"
 #include <numeric>
@@ -153,9 +153,9 @@ vrb_to_prb_mapper::create_interleaved_other(unsigned N_bwp_i_start, unsigned N_b
   return mapper;
 }
 
-static_vector<uint16_t, MAX_RB> vrb_to_prb_mapper::get_allocation_indices(unsigned bwp_size) const
+static_vector<uint16_t, MAX_NOF_PRBS> vrb_to_prb_mapper::get_allocation_indices(unsigned bwp_size) const
 {
-  static_vector<uint16_t, MAX_RB> result(bwp_size);
+  static_vector<uint16_t, MAX_NOF_PRBS> result(bwp_size);
   if (!is_interleaved()) {
     vrb_to_prb_mapper_get_non_interleaved_prb(result, coreset_start);
   } else {

@@ -12,7 +12,7 @@
 
 using namespace srsran;
 
-bounded_bitset<MAX_RB> rb_allocation::get_contiguous_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
+bounded_bitset<MAX_NOF_PRBS> rb_allocation::get_contiguous_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
   unsigned offset = vrb_to_prb_map.get_coreset_start();
 
@@ -24,7 +24,7 @@ bounded_bitset<MAX_RB> rb_allocation::get_contiguous_prb_mask(unsigned bwp_start
                 offset,
                 bwp_size_rb);
 
-  bounded_bitset<MAX_RB> prb_mask(bwp_start_rb + bwp_size_rb);
+  bounded_bitset<MAX_NOF_PRBS> prb_mask(bwp_start_rb + bwp_size_rb);
 
   int lowest_vrb_index = vrb_mask.find_lowest();
   if (lowest_vrb_index == -1) {
@@ -41,10 +41,10 @@ bounded_bitset<MAX_RB> rb_allocation::get_contiguous_prb_mask(unsigned bwp_start
   return prb_mask;
 }
 
-bounded_bitset<MAX_RB> rb_allocation::get_other_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
+bounded_bitset<MAX_NOF_PRBS> rb_allocation::get_other_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
-  bounded_bitset<MAX_RB>          result(bwp_start_rb + bwp_size_rb);
-  static_vector<uint16_t, MAX_RB> vrb_to_prb_indices = vrb_to_prb_map.get_allocation_indices(bwp_size_rb);
+  bounded_bitset<MAX_NOF_PRBS>          result(bwp_start_rb + bwp_size_rb);
+  static_vector<uint16_t, MAX_NOF_PRBS> vrb_to_prb_indices = vrb_to_prb_map.get_allocation_indices(bwp_size_rb);
 
   for (unsigned vrb_index = 0; vrb_index != vrb_mask.size(); ++vrb_index) {
     // Skip if VRB is not used.
@@ -59,7 +59,7 @@ bounded_bitset<MAX_RB> rb_allocation::get_other_prb_mask(unsigned bwp_start_rb, 
   return result;
 }
 
-rb_allocation srsran::rb_allocation::make_type0(const bounded_bitset<MAX_RB>&           vrb_bitmap,
+rb_allocation srsran::rb_allocation::make_type0(const bounded_bitset<MAX_NOF_PRBS>&     vrb_bitmap,
                                                 const std::optional<vrb_to_prb_mapper>& vrb_to_prb_map_)
 {
   rb_allocation result;
@@ -79,7 +79,7 @@ rb_allocation srsran::rb_allocation::make_type1(unsigned                        
 {
   rb_allocation result;
 
-  result.vrb_mask = bounded_bitset<MAX_RB>(rb_start + rb_count);
+  result.vrb_mask = bounded_bitset<MAX_NOF_PRBS>(rb_start + rb_count);
   result.vrb_mask.fill(rb_start, rb_start + rb_count);
 
   if (vrb_to_prb_map_.has_value()) {
@@ -98,7 +98,7 @@ rb_allocation srsran::rb_allocation::make_custom(std::initializer_list<const uns
   unsigned rb_end = *std::max_element(vrb_indexes.begin(), vrb_indexes.end());
 
   // Allocate the VRB mask so the maximum index fits.
-  result.vrb_mask = bounded_bitset<MAX_RB>(rb_end + 1);
+  result.vrb_mask = bounded_bitset<MAX_NOF_PRBS>(rb_end + 1);
   for (unsigned vrb_index : vrb_indexes) {
     result.vrb_mask.set(vrb_index, true);
   }
@@ -110,7 +110,7 @@ rb_allocation srsran::rb_allocation::make_custom(std::initializer_list<const uns
   return result;
 }
 
-bounded_bitset<MAX_RB> rb_allocation::get_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
+bounded_bitset<MAX_NOF_PRBS> rb_allocation::get_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
   srsran_assert(is_bwp_valid(bwp_start_rb, bwp_size_rb),
                 "Invalid BWP configuration {}:{} for a VRB mask of size {}.",
@@ -125,7 +125,7 @@ bounded_bitset<MAX_RB> rb_allocation::get_prb_mask(unsigned bwp_start_rb, unsign
   return get_other_prb_mask(bwp_start_rb, bwp_size_rb);
 }
 
-static_vector<uint16_t, MAX_RB> rb_allocation::get_prb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const
+static_vector<uint16_t, MAX_NOF_PRBS> rb_allocation::get_prb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
   srsran_assert(is_bwp_valid(bwp_start_rb, bwp_size_rb),
                 "Invalid BWP configuration {}:{} for a VRB mask of size {}.",
@@ -133,8 +133,8 @@ static_vector<uint16_t, MAX_RB> rb_allocation::get_prb_indices(unsigned bwp_star
                 bwp_size_rb,
                 vrb_mask.size());
 
-  static_vector<uint16_t, MAX_RB> result;
-  static_vector<uint16_t, MAX_RB> vrb_to_prb_indices = vrb_to_prb_map.get_allocation_indices(bwp_size_rb);
+  static_vector<uint16_t, MAX_NOF_PRBS> result;
+  static_vector<uint16_t, MAX_NOF_PRBS> vrb_to_prb_indices = vrb_to_prb_map.get_allocation_indices(bwp_size_rb);
 
   for (unsigned vrb_index = 0; vrb_index != vrb_mask.size(); ++vrb_index) {
     // Skip unused VRB

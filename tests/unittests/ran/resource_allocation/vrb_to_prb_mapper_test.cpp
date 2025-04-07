@@ -10,10 +10,9 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/constants.h"
-#include "srsran/phy/upper/vrb_to_prb_mapper.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb_mapper.h"
+#include "srsran/ran/resource_block.h"
 #include "srsran/support/srsran_test.h"
-#include <array>
 
 using namespace srsran;
 
@@ -25,9 +24,9 @@ static void test_case1_non_interleaved_common_ss()
   TESTASSERT_EQ(mapper.is_interleaved(), false);
   TESTASSERT_EQ(mapper.get_coreset_start(), N_start_coreset);
 
-  static_vector<uint16_t, MAX_RB> vrb_to_prb_indices = mapper.get_allocation_indices(N_bwp_size);
+  static_vector<uint16_t, MAX_NOF_PRBS> vrb_to_prb_indices = mapper.get_allocation_indices(N_bwp_size);
 
-  static_vector<uint16_t, MAX_RB> gold_vrb_to_prb_indices(N_bwp_size);
+  static_vector<uint16_t, MAX_NOF_PRBS> gold_vrb_to_prb_indices(N_bwp_size);
   for (unsigned vrb_index = 0; vrb_index != N_bwp_size; ++vrb_index) {
     gold_vrb_to_prb_indices[vrb_index] = N_start_coreset + vrb_index;
   }
@@ -42,9 +41,9 @@ static void test_case2_non_interleaved_other()
   TESTASSERT_EQ(mapper.is_interleaved(), false);
   TESTASSERT_EQ(mapper.get_coreset_start(), 0);
 
-  static_vector<uint16_t, MAX_RB> vrb_to_prb_indices = mapper.get_allocation_indices(N_bwp_size);
+  static_vector<uint16_t, MAX_NOF_PRBS> vrb_to_prb_indices = mapper.get_allocation_indices(N_bwp_size);
 
-  static_vector<uint16_t, MAX_RB> gold_vrb_to_prb_indices(N_bwp_size);
+  static_vector<uint16_t, MAX_NOF_PRBS> gold_vrb_to_prb_indices(N_bwp_size);
   for (unsigned vrb_index = 0; vrb_index != N_bwp_size; ++vrb_index) {
     gold_vrb_to_prb_indices[vrb_index] = vrb_index;
   }
