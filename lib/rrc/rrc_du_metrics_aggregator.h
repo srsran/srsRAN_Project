@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/rrc/rrc_du.h"
 #include "srsran/rrc/rrc_metrics.h"
 #include <algorithm>
 #include <chrono>
@@ -24,7 +25,7 @@ static std::chrono::milliseconds get_current_time()
   return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
 }
 
-class rrc_du_metrics_aggregator final
+class rrc_du_metrics_aggregator : public rrc_du_metrics_collector
 {
 public:
   rrc_du_metrics_aggregator();
@@ -34,7 +35,7 @@ public:
 
   void handle_successful_rrc_release();
 
-  void collect_metrics(rrc_du_metrics& metrics);
+  void collect_metrics(rrc_du_metrics& metrics) override;
 
 private:
   /// Aggregator for RRC connection related metrics.

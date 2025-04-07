@@ -51,6 +51,7 @@ public:
   byte_buffer       get_rrc_reject() override;
   rrc_ue_interface* add_ue(const rrc_ue_creation_message& msg) override;
   void              release_ues() override;
+  size_t            get_nof_ues() const override { return ue_db.size(); }
 
   // rrc_ue_handler.
   rrc_ue_interface* find_ue(ue_index_t ue_index) override
@@ -62,21 +63,15 @@ public:
   }
   void remove_ue(ue_index_t ue_index) override;
 
-  // rrc_du_statistics_handler.
-  size_t get_nof_ues() const override { return ue_db.size(); }
-
   // rrc_du_connection_event_handler.
   void handle_successful_rrc_setup() override { metrics_aggregator.handle_successful_rrc_setup(); }
   void handle_successful_rrc_release() override { metrics_aggregator.handle_successful_rrc_release(); }
-  // rrc_du_metrics_collector.
-  void collect_metrics(rrc_du_metrics& metrics) override { metrics_aggregator.collect_metrics(metrics); }
 
   rrc_du_cell_manager&             get_rrc_du_cell_manager() override { return *this; }
   rrc_du_ue_repository&            get_rrc_du_ue_repository() override { return *this; }
   rrc_ue_handler&                  get_rrc_ue_handler() override { return *this; }
-  rrc_du_statistics_handler&       get_rrc_du_statistics_handler() override { return *this; }
   rrc_du_connection_event_handler& get_rrc_du_connection_event_handler() override { return *this; }
-  rrc_du_metrics_collector&        get_rrc_du_metrics_collector() override { return *this; }
+  rrc_du_metrics_collector&        get_rrc_du_metrics_collector() override { return metrics_aggregator; }
 
 private:
   // Helpers.

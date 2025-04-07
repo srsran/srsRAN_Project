@@ -61,6 +61,10 @@ public:
 
   /// Send RRC Release to all UEs connected to this DU.
   virtual void release_ues() = 0;
+
+  /// \brief Get the number of UEs registered at the RRC DU.
+  /// \return The number of UEs.
+  virtual size_t get_nof_ues() const = 0;
 };
 
 /// Interface to notify about measurement config updates
@@ -86,17 +90,6 @@ public:
   /// Remove a RRC UE object.
   /// \param[in] ue_index The index of the UE object to remove.
   virtual void remove_ue(ue_index_t ue_index) = 0;
-};
-
-/// \brief Interface to query statistics from the RRC DU interface.
-class rrc_du_statistics_handler
-{
-public:
-  virtual ~rrc_du_statistics_handler() = default;
-
-  /// \brief Get the number of UEs registered at the RRC DU.
-  /// \return The number of UEs.
-  virtual size_t get_nof_ues() const = 0;
 };
 
 class rrc_du_connection_event_handler
@@ -125,9 +118,7 @@ public:
 class rrc_du : public rrc_du_cell_manager,
                public rrc_du_ue_repository,
                public rrc_ue_handler,
-               public rrc_du_statistics_handler,
-               public rrc_du_connection_event_handler,
-               public rrc_du_metrics_collector
+               public rrc_du_connection_event_handler
 {
 public:
   virtual ~rrc_du() = default;
@@ -135,7 +126,6 @@ public:
   virtual rrc_du_cell_manager&             get_rrc_du_cell_manager()             = 0;
   virtual rrc_du_ue_repository&            get_rrc_du_ue_repository()            = 0;
   virtual rrc_ue_handler&                  get_rrc_ue_handler()                  = 0;
-  virtual rrc_du_statistics_handler&       get_rrc_du_statistics_handler()       = 0;
   virtual rrc_du_connection_event_handler& get_rrc_du_connection_event_handler() = 0;
   virtual rrc_du_metrics_collector&        get_rrc_du_metrics_collector()        = 0;
 };
