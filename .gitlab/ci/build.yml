@@ -19,6 +19,7 @@ variables:
       - "default"
       - "coverage"
       - "tsan"
+      - "rtsan"
       - "valgrind"
       - "none"
     value: "default"
@@ -115,6 +116,9 @@ variables:
             ;;
           tsan)
             ctest_extra="-L tsan"
+            ;;
+          rtsan)
+            ctest_extra="-L rtsan"
             ;;
           valgrind)
             G_DEBUG=gc-friendly G_SLICE=always-malloc
@@ -770,8 +774,6 @@ smoke asan:
     - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
       when: delayed
       start_in: 45 minutes
-  retry: 2
-  interruptible: false
   variables:
     OS: ubuntu-24.04
     COMPILER: clang
@@ -779,6 +781,23 @@ smoke asan:
     ASSERT_LEVEL: PARANOID
     ENABLE_ASAN: "True"
     TEST_MODE: asan
+    MARCH: x86-64-v3
+    INFRASTRUCTURE_TAG: amd64-avx2
+
+smoke rtsan:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests/
+      when: delayed
+      start_in: 45 minutes
+  variables:
+    OS: ubuntu-24.04-rtsan
+    COMPILER: clang
+    CMAKE_BUILD_TYPE: Debug
+    ASSERT_LEVEL: PARANOID
+    ENABLE_RTSAN: "True"
+    ENABLE_WERROR: "False"
+    TEST_MODE: rtsan
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
 
