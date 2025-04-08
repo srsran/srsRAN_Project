@@ -163,14 +163,13 @@ TEST_P(scheduler_ul_tdd_tester, all_ul_slots_are_scheduled)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    scheduler_tdd_test,
-    scheduler_dl_tdd_tester,
-    testing::Values(
-        // clang-format off
+INSTANTIATE_TEST_SUITE_P(scheduler_tdd_test,
+                         scheduler_dl_tdd_tester,
+                         testing::Values(
+                             // clang-format off
 // csi_enabled, {ref_scs, pattern1={slot_period, DL_slots, DL_symbols, UL_slots, UL_symbols}, pattern2={...}, min_k}
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}},
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}},
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 5, 3, 4}}}, // DDDDDDSUUU
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}}, // DDDDDDDSUU
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 7, 5, 2, 4}}, 1},
   tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 0, 1, 0}}},
   tdd_test_params{false, {subcarrier_spacing::kHz30, {10, 8, 0, 1, 0}}, 1},
@@ -178,7 +177,8 @@ INSTANTIATE_TEST_SUITE_P(
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {5,  3, 9, 1, 0}}},
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {5,  3, 9, 1, 0}}, 1},
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}},
-  tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}, 1}
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}, 1},
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 13, 3, 0}}, 4} // DDDDDDSUUU, with 13 DL symbols in special slot
   // TODO: Support more TDD patterns.
 // Note: The params below lead to a failure due to "Not enough space in PUCCH". However, I don't think there is no valid
 // k1 candidate list that accommodates all DL slots.
@@ -197,7 +197,8 @@ INSTANTIATE_TEST_SUITE_P(
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 8, 5, 1, 4}}}, // DDDDDDDDSU
   tdd_test_params{false, {subcarrier_spacing::kHz30, {6,  3, 5, 2, 0}, tdd_ul_dl_pattern{4, 4, 0, 0, 0}}},
   tdd_test_params{true,  {subcarrier_spacing::kHz30, {4,  2, 9, 1, 0}}},  // DDSU
-  tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 4, 5, 5, 0}}, 5}, // DDDDSUUUUU
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 4, 5, 5, 0}}, 5}, // DDDDSUUUUU
+  tdd_test_params{true,  {subcarrier_spacing::kHz30, {10, 6, 13, 3, 0}}, 4}, // DDDDDDSUUU, with 13 DL symbols in special slot
   // UL heavy
   tdd_test_params{true, {subcarrier_spacing::kHz30, {10, 3,  5, 6, 0}}},
   tdd_test_params{true, {subcarrier_spacing::kHz30, {5,  1, 10, 3, 0}, tdd_ul_dl_pattern{5, 1, 10, 3, 0}}, 2},
