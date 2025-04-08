@@ -231,8 +231,8 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
       continue;
     }
 
-    // Check whether PDSCH time domain resource fits in DL symbols of the slot.
-    if (slot_nof_symbols < pdsch_td_res.symbols.length()) {
+    // Check whether PDSCH time domain resource last symbol is lower than the total number of DL symbols of the slot.
+    if (slot_nof_symbols < pdsch_td_res.symbols.stop()) {
       continue;
     }
 
