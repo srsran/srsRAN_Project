@@ -20,8 +20,14 @@ namespace srsran {
 class srs_validator_generic_impl : public srs_estimator_configuration_validator
 {
 public:
+  /// Constructs an SRS estimator configuration validator with the maximum number of PRB.
+  srs_validator_generic_impl(unsigned max_nof_prb_) : max_nof_prb(max_nof_prb_) {}
+
   // See interface for documentation.
   error_type<std::string> is_valid(const srs_estimator_configuration& config) const override;
+
+private:
+  unsigned max_nof_prb;
 };
 
 } // namespace srsran

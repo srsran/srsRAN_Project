@@ -367,7 +367,7 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
   report_fatal_error_if_not(prach_factory, "Invalid PRACH detector factory.");
 
   std::shared_ptr<srs_estimator_factory> srs_factory =
-      create_srs_estimator_generic_factory(sequence_factory, ta_est_factory);
+      create_srs_estimator_generic_factory(sequence_factory, ta_est_factory, config.ul_bw_rb);
   report_fatal_error_if_not(srs_factory, "Invalid SRS estimator factory.");
 
   // Create PRACH detector pool factory if more than one thread is used.

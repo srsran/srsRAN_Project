@@ -39,6 +39,7 @@ public:
 /// Create a generic SRS propagation channel estimator factory.
 std::shared_ptr<srs_estimator_factory>
 create_srs_estimator_generic_factory(std::shared_ptr<low_papr_sequence_generator_factory> sequence_generator_factory,
-                                     std::shared_ptr<time_alignment_estimator_factory>    ta_estimator_factory);
+                                     std::shared_ptr<time_alignment_estimator_factory>    ta_estimator_factory,
+                                     unsigned                                             max_nof_prb);
 
 } // namespace srsran

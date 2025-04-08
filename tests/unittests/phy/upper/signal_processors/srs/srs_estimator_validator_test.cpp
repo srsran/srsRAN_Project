@@ -20,22 +20,23 @@ using namespace srsran;
 namespace {
 
 // Valid SRS configuration used as a base for the test case.
-const srs_estimator_configuration base_config = {{0, 130, 8, 0},
-                                                 {srs_resource_configuration::one_two_four_enum(2),
-                                                  srs_resource_configuration::one_two_four_enum(1),
-                                                  12,
-                                                  17,
-                                                  647,
-                                                  2,
-                                                  srs_resource_configuration::comb_size_enum(2),
-                                                  1,
-                                                  1,
-                                                  66,
-                                                  1,
-                                                  3,
-                                                  srs_resource_configuration::group_or_sequence_hopping_enum::neither,
-                                                  {}},
-                                                 {0}};
+const srs_estimator_configuration base_config = {
+    .slot     = {0, 130, 8, 0},
+    .resource = {.nof_antenna_ports   = srs_resource_configuration::one_two_four_enum(2),
+                 .nof_symbols         = srs_resource_configuration::one_two_four_enum(1),
+                 .start_symbol        = 12,
+                 .configuration_index = 17,
+                 .sequence_id         = 647,
+                 .bandwidth_index     = 2,
+                 .comb_size           = srs_resource_configuration::comb_size_enum(2),
+                 .comb_offset         = 1,
+                 .cyclic_shift        = 1,
+                 .freq_position       = 66,
+                 .freq_shift          = 1,
+                 .freq_hopping        = 3,
+                 .hopping             = srs_resource_configuration::group_or_sequence_hopping_enum::neither,
+                 .periodicity         = std::nullopt},
+    .ports    = {0}};
 
 struct test_case_t {
   std::function<srs_estimator_configuration()> get_config;
@@ -55,26 +56,32 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        config.resource.comb_offset        = 2;
        return config;
      },
-     R"(Invalid SRS resource\.)"},
+     R"(Invalid SRS resource configuration\.)"},
     {[] {
        srs_estimator_configuration config = base_config;
        config.resource.bandwidth_index    = 1;
        config.resource.freq_hopping       = 0;
        return config;
      },
-     R"(Frequency hopping is not supported\.)"},
+     R"(The SRS estimator does not support frequency hopping\.)"},
     {[] {
        srs_estimator_configuration config = base_config;
        config.resource.hopping            = srs_resource_configuration::group_or_sequence_hopping_enum::group_hopping;
        return config;
      },
-     R"(No sequence nor group hopping supported\.)"},
+     R"(The SRS estimator does not support group or sequence hopping\.)"},
     {[] {
        srs_estimator_configuration config = base_config;
        config.ports.clear();
        return config;
      },
-     R"(Receive port list is empty\.)"},
+     R"(Empty list of Rx ports for the SRS estimator\.)"},
+    {[] {
+       srs_estimator_configuration config = base_config;
+       config.resource.bandwidth_index    = 0;
+       return config;
+     },
+     R"(SRS resource exceeds maximum bandwidth\.)"},
 };
 
 class srsEstimatorValidatorFixture : public ::testing::TestWithParam<test_case_t>
@@ -97,7 +104,7 @@ protected:
     report_fatal_error_if_not(ta_est_factory, "Invalid TA estimator factory.");
 
     std::shared_ptr<srs_estimator_factory> srs_est_factory =
-        create_srs_estimator_generic_factory(sequence_generator_factory, ta_est_factory);
+        create_srs_estimator_generic_factory(sequence_generator_factory, ta_est_factory, 25);
     ASSERT_NE(srs_est_factory, nullptr);
 
     estimator = srs_est_factory->create();

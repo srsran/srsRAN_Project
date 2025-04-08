@@ -99,7 +99,7 @@ int main(int argc, char** argv)
   TESTASSERT(low_papr_seq_gen_factory);
 
   std::shared_ptr<srs_estimator_factory> srs_est_factory =
-      create_srs_estimator_generic_factory(low_papr_seq_gen_factory, ta_est_factory);
+      create_srs_estimator_generic_factory(low_papr_seq_gen_factory, ta_est_factory, MAX_RB);
 
   std::unique_ptr<srs_estimator> estimator = srs_est_factory->create();
   TESTASSERT(estimator);
