@@ -8,7 +8,6 @@
  *
  */
 
-#include "pdsch_processor_test_doubles.h"
 #include "srsran/phy/support/support_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pdsch/factories.h"
@@ -167,7 +166,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
 
        // Create RE pattern that collides with DM-RS.
        re_pattern reserved_pattern;
-       reserved_pattern.prb_mask = ~bounded_bitset<MAX_RB>(MAX_RB);
+       reserved_pattern.prb_mask = ~prb_bitmap(MAX_RB);
        reserved_pattern.prb_mask.fill(0, MAX_RB);
        reserved_pattern.symbols = pdu.dmrs_symbol_mask;
        reserved_pattern.re_mask = ~bounded_bitset<NRE>(NRE);

@@ -10,10 +10,8 @@
 
 #pragma once
 
-#include "srsran/adt/static_vector.h"
 #include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
-#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
@@ -41,7 +39,7 @@ public:
     /// DM-RS position mask. Indicates the OFDM symbols carrying DM-RS within the slot.
     symbol_slot_mask symbols_mask;
     /// Allocation RB list, the entries set to true are used for transmission.
-    bounded_bitset<MAX_RB> rb_mask;
+    prb_bitmap rb_mask;
     /// Precoding configuration.
     precoding_configuration precoding;
   };

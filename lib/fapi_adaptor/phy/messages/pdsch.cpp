@@ -10,7 +10,6 @@
 
 #include "srsran/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
-#include "srsran/ran/precoding/precoding_codebooks.h"
 #include "srsran/ran/sch/sch_dmrs_power.h"
 
 using namespace srsran;
@@ -125,7 +124,7 @@ static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_
   }
 
   // Unpack the VRB bitmap. LSB of byte 0 of the bitmap represents the VRB 0.
-  bounded_bitset<MAX_RB> vrb_bitmap(fapi_pdu.bwp_size);
+  vrb_bitmap vrb_bitmap(fapi_pdu.bwp_size);
   for (unsigned vrb_index = 0, vrb_index_end = fapi_pdu.bwp_size; vrb_index != vrb_index_end; ++vrb_index) {
     unsigned byte = vrb_index / 8;
     unsigned bit  = vrb_index % 8;

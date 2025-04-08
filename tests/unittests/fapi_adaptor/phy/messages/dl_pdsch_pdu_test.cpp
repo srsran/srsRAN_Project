@@ -86,7 +86,7 @@ static rb_allocation make_freq_allocation(fapi::pdsch_trans_type         trasn_t
   rb_allocation result;
   if (resource_alloc == fapi::resource_allocation_type::type_0) {
     // Unpack the VRB bitmap. LSB of byte 0 of the bitmap represents the VRB 0.
-    bounded_bitset<MAX_RB> vrb_bitmap(bwp_size);
+    vrb_bitmap vrb_bitmap(bwp_size);
     for (unsigned vrb_index = 0, vrb_index_end = bwp_size; vrb_index != vrb_index_end; ++vrb_index) {
       unsigned byte = vrb_index / 8;
       unsigned bit  = vrb_index % 8;

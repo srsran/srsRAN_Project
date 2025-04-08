@@ -10,12 +10,9 @@
 
 #pragma once
 
-#include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/span.h"
-#include "srsran/adt/static_vector.h"
-#include "srsran/phy/constants.h"
-#include "srsran/phy/support/mask_types.h"
 #include "srsran/phy/support/precoding_configuration.h"
+#include "srsran/ran/resource_allocation/rb_bitmap.h"
 
 namespace srsran {
 
@@ -31,7 +28,7 @@ public:
   /// Describes the necessary parameters to modulate a PDCCH transmission.
   struct config_t {
     /// Indicates the RBs used for the PDCCH transmission.
-    bounded_bitset<MAX_RB> rb_mask;
+    prb_bitmap rb_mask;
     /// CORESET start symbol index.
     unsigned start_symbol_index;
     /// CORESET duration in symbols.

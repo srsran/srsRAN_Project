@@ -41,7 +41,7 @@ static void fill_rb_allocation(pusch_processor::pdu_t& proc_pdu, const fapi::ul_
   }
 
   // Unpack the VRB bitmap. LSB of byte 0 of the bitmap represents the VRB 0.
-  bounded_bitset<MAX_RB> vrb_bitmap(fapi_pdu.bwp_size);
+  vrb_bitmap vrb_bitmap(fapi_pdu.bwp_size);
   for (unsigned vrb_index = 0, vrb_index_end = fapi_pdu.bwp_size; vrb_index != vrb_index_end; ++vrb_index) {
     unsigned byte = vrb_index / 8;
     unsigned bit  = vrb_index % 8;

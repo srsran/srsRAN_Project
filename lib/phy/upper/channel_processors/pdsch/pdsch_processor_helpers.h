@@ -31,7 +31,7 @@ pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const
 {
   trace_point process_dmrs_tp = l1_tracer.now();
 
-  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  prb_bitmap rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Select the DM-RS reference point.
   unsigned dmrs_reference_point_k_rb = 0;
@@ -69,7 +69,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
   // Extract PT-RS configuration parameters.
   const pdsch_processor::ptrs_configuration& ptrs = *pdu.ptrs;
 
-  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  prb_bitmap rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Select the DM-RS reference point.
   unsigned ptrs_reference_point_k_rb = 0;
@@ -113,7 +113,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
 inline unsigned pdsch_compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
 {
   // Get PRB mask.
-  bounded_bitset<MAX_RB> prb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  prb_bitmap prb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Get number of PRB.
   unsigned nof_prb = prb_mask.count();

@@ -181,8 +181,7 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
   }
 
   // Get the PRB allocation mask.
-  const bounded_bitset<MAX_RB> prb_allocation_mask =
-      config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
+  const prb_bitmap prb_allocation_mask = config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
 
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;

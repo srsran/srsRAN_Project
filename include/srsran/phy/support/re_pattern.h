@@ -15,14 +15,14 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/mask_types.h"
-#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/resource_allocation/rb_bitmap.h"
 
 namespace srsran {
 
 /// Describes a resource element pattern within a resource grid.
 struct re_pattern {
   /// Physical resource block mask.
-  bounded_bitset<MAX_RB> prb_mask;
+  prb_bitmap prb_mask;
   /// Resource element mask per resource block. True entries indicate the resource elements affected by the pattern.
   re_prb_mask re_mask{};
   /// Symbol mask. True entries indicate the symbols affected by the pattern.

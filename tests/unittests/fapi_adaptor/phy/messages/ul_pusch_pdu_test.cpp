@@ -79,7 +79,7 @@ TEST(fapi_phy_ul_pusch_adaptor_test, valid_pdu_pass)
   ASSERT_EQ(fapi_pdu.pusch_maintenance_v3.tb_size_lbrm_bytes, phy_pdu.tbs_lbrm);
 
   // RB allocation.
-  bounded_bitset<MAX_RB> vrb_bitmap(fapi_pdu.bwp_size);
+  vrb_bitmap vrb_bitmap(fapi_pdu.bwp_size);
   for (unsigned vrb_index = 0, vrb_index_end = fapi_pdu.bwp_size; vrb_index != vrb_index_end; ++vrb_index) {
     unsigned byte = vrb_index / 8;
     unsigned bit  = vrb_index % 8;

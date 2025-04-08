@@ -11,32 +11,11 @@
 #pragma once
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/ran/resource_allocation/rb_bitmap.h"
 #include "srsran/ran/resource_allocation/rb_interval.h"
-#include "srsran/ran/resource_block.h"
 #include "srsran/scheduler/result/resource_block_group.h"
 
 namespace srsran {
-
-/// Struct to express a bitset of CRBs within a carrier.
-struct crb_bitmap : bounded_bitset<MAX_NOF_PRBS, true> {
-  using bounded_bitset::bounded_bitset;
-
-  explicit crb_bitmap(const bounded_bitset& bitset) : bounded_bitset(bitset) {}
-};
-
-/// Struct to express a bitset of PRBs within a BWP.
-struct prb_bitmap : bounded_bitset<MAX_NOF_PRBS, true> {
-  using bounded_bitset::bounded_bitset;
-
-  explicit prb_bitmap(const bounded_bitset& bitset) : bounded_bitset(bitset) {}
-};
-
-/// Struct to express a bitset of VRBs.
-struct vrb_bitmap : bounded_bitset<MAX_NOF_PRBS, true> {
-  using bounded_bitset::bounded_bitset;
-
-  explicit vrb_bitmap(const bounded_bitset& bitset) : bounded_bitset(bitset) {}
-};
 
 /// VRB Resource Allocation that can be of allocation type 0 (RBGs) or 1 (VRB range).
 struct vrb_alloc {
@@ -152,12 +131,6 @@ private:
   } alloc;
 };
 
-inline prb_bitmap& operator|=(prb_bitmap& prb_bits, const prb_interval& grant)
-{
-  prb_bits.fill(grant.start(), grant.stop());
-  return prb_bits;
-}
-
 /// Converts RBG bitmap to PRB bitmap given a BWP PRB dimensions and the nominal RBG-size.
 /// \remark See TS 38.214, Sections 5.1.2.2.1 and 6.1.2.2.1.
 prb_bitmap convert_rbgs_to_prbs(const rbg_bitmap& rbgs, crb_interval bwp_rbs, nominal_rbg_size P);
@@ -180,17 +153,5 @@ struct formatter<srsran::vrb_alloc> : public formatter<srsran::rbg_bitmap> {
     return format_to(ctx.out(), "{}", grant.type1());
   }
 };
-
-/// FMT formatter for crb_bitmaps.
-template <>
-struct formatter<srsran::crb_bitmap> : public formatter<srsran::bounded_bitset<srsran::MAX_NOF_PRBS, true>> {};
-
-/// FMT formatter for prb_bitmaps.
-template <>
-struct formatter<srsran::prb_bitmap> : public formatter<srsran::bounded_bitset<srsran::MAX_NOF_PRBS, true>> {};
-
-/// FMT formatter for vrb_bitmaps.
-template <>
-struct formatter<srsran::vrb_bitmap> : public formatter<srsran::bounded_bitset<srsran::MAX_NOF_PRBS, true>> {};
 
 } // namespace fmt

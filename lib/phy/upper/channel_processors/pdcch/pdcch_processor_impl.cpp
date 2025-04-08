@@ -11,6 +11,7 @@
 #include "pdcch_processor_impl.h"
 #include "pdcch_processor_validator_impl.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
+#include "srsran/ran/resource_allocation/rb_bitmap.h"
 #include "srsran/support/math/math_utils.h"
 
 using namespace srsran;
@@ -28,8 +29,7 @@ using namespace pdcch_constants;
   return is_success;
 }
 
-bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_description& coreset,
-                                                             const dci_description&     dci)
+prb_bitmap pdcch_processor_impl::compute_rb_mask(const coreset_description& coreset, const dci_description& dci)
 {
   prb_index_list prb_indexes;
   switch (coreset.cce_to_reg_mapping) {
@@ -57,7 +57,7 @@ bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_descr
       break;
   }
 
-  bounded_bitset<MAX_RB> result(coreset.bwp_start_rb + coreset.bwp_size_rb);
+  prb_bitmap result(coreset.bwp_start_rb + coreset.bwp_size_rb);
   for (uint16_t prb_index : prb_indexes) {
     result.set(prb_index, true);
   }
@@ -74,7 +74,7 @@ void pdcch_processor_impl::process(resource_grid_writer& grid, const pdcch_proce
   srsran_assert(handle_validation(msg, pdcch_processor_validator_impl().is_valid(pdu)), "{}", msg);
 
   // Generate RB mask.
-  bounded_bitset<MAX_RB> rb_mask = compute_rb_mask(coreset, dci);
+  prb_bitmap rb_mask = compute_rb_mask(coreset, dci);
 
   // Populate PDCCH encoder configuration.
   pdcch_encoder::config_t encoder_config;
