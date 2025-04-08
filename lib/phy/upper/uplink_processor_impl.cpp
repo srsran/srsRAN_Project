@@ -440,5 +440,11 @@ void uplink_processor_impl::discard_slot()
         notify_discard_pusch(pdu);
       }
     }
+
+    for ([[maybe_unused]] const auto& pdu : pdu_repository.get_srs_pdus(i_symbol)) {
+      if (pdu_repository.on_create_pdu_task()) {
+        pdu_repository.on_finish_processing_pdu();
+      }
+    }
   }
 }
