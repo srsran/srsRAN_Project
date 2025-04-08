@@ -18,7 +18,6 @@
 #include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
-#include "apps/services/periodic_metrics_report_controller.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
@@ -348,19 +347,14 @@ int main(int argc, char** argv)
   // Move app-units metrics to the application metrics.
   std::move(du_inst_and_cmds.metrics.begin(), du_inst_and_cmds.metrics.end(), std::back_inserter(app_metrics));
 
-  // Create periodic metrics report controller.
-  std::vector<app_services::metrics_producer*> producers;
-  for (auto& metric_cfg : app_metrics) {
-    for (auto& producer : metric_cfg.producers) {
-      producers.push_back(producer.get());
-    }
-  }
-  auto app_metrics_timer = app_timers.create_unique_timer(*workers.metrics_exec);
-  app_services::periodic_metrics_report_controller periodic_metrics_controller(
-      producers, std::move(app_metrics_timer), std::chrono::milliseconds(du_cfg.metrics_cfg.rusage_report_period));
-
   // Only DU has metrics now.
-  app_services::metrics_manager metrics_mngr(srslog::fetch_basic_logger("GNB"), *workers.metrics_exec, app_metrics);
+  app_services::metrics_manager metrics_mngr(
+      srslog::fetch_basic_logger("GNB"),
+      *workers.metrics_exec,
+      app_metrics,
+      app_timers,
+      std::chrono::milliseconds(du_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
+
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
@@ -382,7 +376,7 @@ int main(int argc, char** argv)
   std::unique_ptr<app_services::remote_server> remote_control_server =
       app_services::create_remote_server(du_cfg.remote_control_config, du_inst_and_cmds.commands.remote);
 
-  periodic_metrics_controller.start();
+  metrics_mngr.start();
   {
     app_services::application_message_banners app_banner(app_name);
 
@@ -390,7 +384,7 @@ int main(int argc, char** argv)
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
   }
-  periodic_metrics_controller.stop();
+  metrics_mngr.stop();
 
   if (remote_control_server) {
     remote_control_server->stop();

@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "apps/services/metrics/metrics_config.h"
-#include "srsran/support/srsran_assert.h"
-#include "srsran/support/timers.h"
+#include "include/srsran/support/srsran_assert.h"
+#include "include/srsran/support/timers.h"
+#include "metrics_producer.h"
 
 namespace srsran {
 namespace app_services {
@@ -23,16 +23,13 @@ class periodic_metrics_report_controller
 {
 public:
   /// Constructor receives timer object, report period and application metric configs.
-  periodic_metrics_report_controller(const std::vector<metrics_producer*>& producers_,
-                                     unique_timer                          timer_,
-                                     std::chrono::milliseconds             report_period_) :
-    timer(std::move(timer_)), report_period(report_period_)
+  periodic_metrics_report_controller(std::vector<metrics_producer*> producers_,
+                                     unique_timer                   timer_,
+                                     std::chrono::milliseconds      report_period_) :
+    timer(std::move(timer_)), report_period(report_period_), producers(std::move(producers_))
   {
     srsran_assert(timer.is_valid(), "Invalid timer passed to metrics controller");
     timer.set(report_period, [this](timer_id_t tid) { report_metrics(); });
-
-    // Save pointers to the given metrics producers.
-    producers.assign(producers_.begin(), producers_.end());
   }
 
   /// Starts the metrics report timer.

@@ -18,7 +18,6 @@
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
-#include "apps/services/periodic_metrics_report_controller.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
@@ -371,18 +370,6 @@ int main(int argc, char** argv)
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
       metrics_notifier_forwarder, cu_cfg.metrics_cfg.rusage_config, cu_logger);
 
-  // Create service for periodically polling app resource usage.
-  auto app_metrics_timer = app_timers.create_unique_timer(*workers.metrics_exec);
-  std::vector<app_services::metrics_producer*> metric_producers;
-  for (auto& metric : app_resource_usage_service.metrics) {
-    for (auto& producer : metric.producers)
-      metric_producers.push_back(producer.get());
-  }
-  app_services::periodic_metrics_report_controller periodic_metrics_controller(
-      metric_producers,
-      std::move(app_metrics_timer),
-      std::chrono::milliseconds(cu_cfg.metrics_cfg.rusage_report_period));
-
   std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
 
   // Create O-CU-CP dependencies.
@@ -445,13 +432,19 @@ int main(int argc, char** argv)
   for (auto& metric : o_cuup_unit.metrics) {
     metrics_configs.push_back(std::move(metric));
   }
-  app_services::metrics_manager metrics_mngr(srslog::fetch_basic_logger("CU"), *workers.metrics_exec, metrics_configs);
+  app_services::metrics_manager metrics_mngr(
+      srslog::fetch_basic_logger("CU"),
+      *workers.metrics_exec,
+      metrics_configs,
+      app_timers,
+      std::chrono::milliseconds(cu_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
+
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
   o_cuup_unit.unit->get_operation_controller().start();
 
-  periodic_metrics_controller.start();
+  metrics_mngr.start();
 
   std::unique_ptr<app_services::remote_server> remote_control_server =
       app_services::create_remote_server(cu_cfg.remote_control_config, {});
@@ -464,7 +457,7 @@ int main(int argc, char** argv)
     }
   }
 
-  periodic_metrics_controller.stop();
+  metrics_mngr.stop();
 
   if (remote_control_server) {
     remote_control_server->stop();

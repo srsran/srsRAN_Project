@@ -14,6 +14,7 @@
 #include "apps/helpers/logger/logger_appconfig.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
+#include "apps/services/metrics/metrics_appconfig.h"
 #include "apps/services/remote_control/remote_control_appconfig.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
 #include <string>
@@ -30,8 +31,7 @@ struct cu_f1ap_appconfig {
 /// Metrics report configuration.
 struct metrics_appconfig {
   app_services::app_resource_usage_config rusage_config;
-  /// Resource usage report period in milliseconds.
-  unsigned rusage_report_period = 1000;
+  app_services::metrics_appconfig         metrics_service_cfg;
 };
 
 } // namespace srs_cu

@@ -13,6 +13,7 @@
 #include "apps/services/metrics/metrics_config.h"
 #include "apps/services/metrics/metrics_notifier.h"
 #include "apps/services/metrics/metrics_set.h"
+#include "apps/services/metrics/periodic_metrics_report_controller.h"
 #include "metrics_properties.h"
 #include "srsran/support/executors/task_executor.h"
 
@@ -39,8 +40,25 @@ class metrics_manager : public metrics_notifier
   };
 
 public:
-  metrics_manager(srslog::basic_logger& logger_, task_executor& executor_, span<metrics_config> metrics_info) :
-    logger(logger_), executor(executor_)
+  metrics_manager(srslog::basic_logger&     logger_,
+                  task_executor&            executor_,
+                  span<metrics_config>      metrics_info,
+                  timer_manager&            timers,
+                  std::chrono::milliseconds report_period) :
+    logger(logger_),
+    executor(executor_),
+    periodic_controller(([](span<metrics_config> metrics_info_cfg) {
+                          std::vector<metrics_producer*> producers;
+                          for (auto& metric : metrics_info_cfg) {
+                            for (auto& producer : metric.producers) {
+                              srsran_assert(producer, "Invalid metrics producer");
+                              producers.push_back(producer.get());
+                            }
+                          }
+                          return producers;
+                        }(metrics_info)),
+                        timers.create_unique_timer(executor_),
+                        report_period)
   {
     for (auto& info : metrics_info) {
       metrics_entry entry;
@@ -71,10 +89,17 @@ public:
     }
   }
 
+  /// Starts the periodic metrics report controller.
+  void start() { periodic_controller.start(); }
+
+  /// Stops the periodic metrics report controller.
+  void stop() { periodic_controller.stop(); }
+
 private:
-  srslog::basic_logger&      logger;
-  task_executor&             executor;
-  std::vector<metrics_entry> supported_metrics;
+  srslog::basic_logger&              logger;
+  task_executor&                     executor;
+  std::vector<metrics_entry>         supported_metrics;
+  periodic_metrics_report_controller periodic_controller;
 };
 
 } // namespace app_services

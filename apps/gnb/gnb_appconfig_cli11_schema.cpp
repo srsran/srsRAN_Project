@@ -13,6 +13,7 @@
 #include "apps/helpers/logger/logger_appconfig_cli11_schema.h"
 #include "apps/services/app_resource_usage/app_resource_usage_config_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
+#include "apps/services/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_cli11_schema.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/du_high_config.h"
@@ -26,13 +27,6 @@ using namespace srsran;
 
 static void configure_cli11_metrics_args(CLI::App& app, metrics_appconfig& metrics_params)
 {
-  auto* periodicity_subcmd = add_subcommand(app, "periodicity", "Metrics periodicity configuration")->configurable();
-  add_option(*periodicity_subcmd,
-             "--app_usage_report_period",
-             metrics_params.rusage_report_period,
-             "Resource usage metrics report period (in milliseconds)")
-      ->capture_default_str();
-
   add_option(
       app, "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
       ->capture_default_str();
@@ -69,6 +63,7 @@ void srsran::configure_cli11_with_gnb_appconfig_schema(CLI::App& app, gnb_appcon
   CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, gnb_cfg.metrics_cfg);
   app_services::configure_cli11_with_app_resource_usage_config_schema(app, gnb_cfg.metrics_cfg.rusage_config);
+  app_services::configure_cli11_with_metrics_appconfig_schema(app, gnb_cfg.metrics_cfg.metrics_service_cfg);
 
   // HAL section.
   gnb_cfg.hal_config.emplace();
