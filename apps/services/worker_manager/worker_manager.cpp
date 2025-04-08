@@ -432,17 +432,12 @@ void worker_manager::create_du_low_executors(bool     is_blocking_mode_active,
       const std::string exec_name = "du_low_dl_exec#" + cell_id_str;
 
       // Instantiate dedicated PHY DL workers.
-      const worker_pool pool{name_dl,
-                             nof_dl_workers,
-                             {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-                             {{exec_name}},
-                             std::chrono::microseconds{10},
-                             os_thread_realtime_priority::max() - 10,
-                             dl_cpu_masks};
-
-      if (not exec_mng.add_execution_context(create_execution_context(pool))) {
-        report_fatal_error("Failed to instantiate {} execution context", pool.name);
-      }
+      create_worker_pool(name_dl,
+                         nof_dl_workers,
+                         task_worker_queue_size,
+                         {{exec_name}},
+                         os_thread_realtime_priority::max() - 10,
+                         dl_cpu_masks);
 
       for (unsigned w = 0; w != nof_dl_workers; ++w) {
         du_low_dl_executors[cell_id].emplace_back(exec_mng.executors().at(exec_name));
