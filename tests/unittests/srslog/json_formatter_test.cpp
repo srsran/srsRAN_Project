@@ -12,6 +12,7 @@
 #include "testing_helpers.h"
 #include "srsran/srslog/detail/log_entry_metadata.h"
 #include <numeric>
+#include <optional>
 
 using namespace srslog;
 
@@ -73,7 +74,8 @@ DECLARE_METRIC_SET("RF", myset1, snr_t, pwr_t, cfreq_t);
 DECLARE_METRIC("Throughput", thr_t, float, "MB/s");
 DECLARE_METRIC("Address", ip_addr_t, std::string, "");
 DECLARE_METRIC("Value_Array", valarray_t, std::vector<unsigned>, "");
-DECLARE_METRIC_SET("Network", myset2, thr_t, ip_addr_t, valarray_t);
+DECLARE_METRIC("Value_Optional", valopt_t, std::optional<unsigned>, "");
+DECLARE_METRIC_SET("Network", myset2, thr_t, ip_addr_t, valarray_t, valopt_t);
 
 using basic_ctx_t = srslog::build_context_type<myset1, myset2>;
 } // namespace
@@ -90,6 +92,7 @@ static bool when_log_entry_with_only_basic_context_is_passed_then_context_is_for
   ctx.get<myset2>().write<thr_t>(150.01);
   ctx.get<myset2>().write<ip_addr_t>("192.168.1.0");
   ctx.get<myset2>().write<valarray_t>(std::vector<unsigned>{1, 2, 3, 4});
+  ctx.get<myset2>().write<valopt_t>(3);
 
   fmt::memory_buffer buffer;
   json_formatter{}.format_ctx(ctx, std::move(entry), buffer);
@@ -103,7 +106,8 @@ static bool when_log_entry_with_only_basic_context_is_passed_then_context_is_for
                          "  \"Network\": {\n"
                          "    \"Throughput\": 150.01,\n"
                          "    \"Address\": \"192.168.1.0\",\n"
-                         "    \"Value_Array\": [1, 2, 3, 4]\n"
+                         "    \"Value_Array\": [1, 2, 3, 4],\n"
+                         "    \"Value_Optional\": 3\n"
                          "  }\n"
                          "}\n";
 
@@ -138,7 +142,8 @@ static bool when_log_entry_with_message_and_basic_context_is_passed_then_context
                          "  \"Network\": {\n"
                          "    \"Throughput\": 150.01,\n"
                          "    \"Address\": \"192.168.1.0\",\n"
-                         "    \"Value_Array\": [1, 2, 3, 4]\n"
+                         "    \"Value_Array\": [1, 2, 3, 4],\n"
+                         "    \"Value_Optional\": null\n"
                          "  }\n"
                          "}\n";
 
