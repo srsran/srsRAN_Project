@@ -149,8 +149,8 @@ struct du_low_unit_expert_threads_config {
   unsigned nof_pusch_decoder_threads = 0;
   /// Number of threads for processing PUSCH and PUCCH.
   unsigned nof_ul_threads = 1;
-  /// Number of threads for processing DU-high cell, PDSCH, PDCCH, NZP CSI-RS and SSB.
-  unsigned nof_dl_threads = 2;
+  /// Number of threads for processing PDSCH, PDCCH, NZP CSI-RS and SSB. It is set to 1 by default.
+  unsigned nof_dl_threads = 1;
 };
 
 /// Expert configuration of the gNB app.
