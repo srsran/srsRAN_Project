@@ -9,20 +9,23 @@
  */
 
 #include "si_scheduler.h"
+#include "../support/dci_builder.h"
+#include "srsran/ran/pdcch/dci_packing.h"
 
 using namespace srsran;
 
-si_scheduler::si_scheduler(const cell_configuration&                  cfg_,
-                           pdcch_resource_allocator&                  pdcch_sch,
-                           units::bytes                               sib1_payload_size,
-                           const std::optional<si_scheduling_config>& si_sched_cfg) :
+si_scheduler::si_scheduler(const cell_configuration&                       cfg_,
+                           pdcch_resource_allocator&                       pdcch_sch_,
+                           const sched_cell_configuration_request_message& msg) :
   cell_cfg(cfg_),
   scs_common(cell_cfg.scs_common),
+  paging_helper(cfg_, msg),
   default_paging_cycle(static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.default_paging_cycle)),
   si_change_mod_period(default_paging_cycle * static_cast<unsigned>(cell_cfg.dl_cfg_common.bcch_cfg.mod_period_coeff)),
+  pdcch_sch(pdcch_sch_),
   logger(srslog::fetch_basic_logger("SCHED")),
-  sib1_sched(cell_cfg, pdcch_sch, sib1_payload_size),
-  si_msg_sched(cell_cfg, pdcch_sch, si_sched_cfg),
+  sib1_sched(cell_cfg, pdcch_sch, msg.sib1_payload_size),
+  si_msg_sched(cell_cfg, pdcch_sch, msg.si_scheduling),
   pending_req(si_scheduling_update_request{INVALID_DU_CELL_INDEX, last_version, units::bytes{0U}, {}})
 {
 }
@@ -66,7 +69,7 @@ void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
 
   if (not on_going_req.has_value()) {
     // Check if there is any pending SI change request to handle.
-    auto& next = pending_req.read();
+    const auto& next = pending_req.read();
     if (next.version != last_version) {
       // New pushed request. Save request to be handled in the following slots.
       on_going_req = next;
@@ -96,7 +99,7 @@ void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
 
   if (slot_count_sched < si_change_start_count) {
     // We are inside the SI change indication signalling window.
-    // TODO
+    try_schedule_short_message(res_alloc[slot_sched]);
     return;
   }
 
@@ -114,4 +117,72 @@ void si_scheduler::handle_pending_request(cell_resource_allocator& res_alloc)
 void si_scheduler::handle_si_update_request(const si_scheduling_update_request& req)
 {
   pending_req.write_and_commit(req);
+}
+
+void si_scheduler::try_schedule_short_message(cell_slot_resource_allocator& slot_alloc)
+{
+  slot_point pdcch_slot = slot_alloc.slot;
+  if (not cell_cfg.is_dl_enabled(pdcch_slot)) {
+    // Skip UL slots.
+    return;
+  }
+  // Verify there is space in PDSCH and PDCCH result lists for new allocations.
+  if (slot_alloc.result.dl.dl_pdcchs.full()) {
+    return;
+  }
+
+  // Check if this is a paging frame. Paging frames are computed according to the following formula:
+  // (SFN + PF_offset) mod T = (T div N)*(UE_ID mod N). See TS 38.304, clause 7.1.
+  // Note: We need to notify all UEs. Since we don't know the UE ID of UEs in RRC_IDLE, we send the change notification
+  // in all paging occasions.
+  // DRX cycle in radio frames.
+  const unsigned drx_cycle            = default_paging_cycle;
+  const unsigned nof_pf_per_drx_cycle = static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.nof_pf);
+  const unsigned paging_frame_offset  = cell_cfg.dl_cfg_common.pcch_cfg.paging_frame_offset;
+  // Number of total paging frames in a drx_cycle.
+  const unsigned N = drx_cycle / nof_pf_per_drx_cycle;
+
+  // If t_div_n doesn't evenly divide paging_offset_mod, there is no integer solution for UE_ID, so this is not a PF.
+  const unsigned paging_offset_mod = (pdcch_slot.sfn() + paging_frame_offset) % drx_cycle;
+  const unsigned t_div_n           = drx_cycle / N;
+  if (paging_offset_mod % t_div_n != 0) {
+    return;
+  }
+
+  // Number of paging occasions in a paging frame.
+  const unsigned Ns = static_cast<unsigned>(cell_cfg.dl_cfg_common.pcch_cfg.ns);
+
+  // Traverse all possible PO indices (i_s).
+  // i_s = floor (UE_ID/N) mod Ns.
+  // NOTE:
+  //   - UE_ID [0, 1024).
+  //   - Since T {32, 64, 128, 256} and nof_pf_per_drx_cycle {1, 2, 4, 8, 16}: N <= 256.
+  //   => There will be *at least* 4 possible UE IDs (UE_ID mod N) with paging occasions on each PF.
+  // Since Ns is at most 4, it is always guaranteed that all PO indices correspond to a valid UE_ID on each PF.
+  for (unsigned i_s = 0; i_s != Ns; ++i_s) {
+    // Determine if this slot is used by any PO index.
+    if (paging_helper.is_paging_slot(pdcch_slot, i_s)) {
+      logger.debug("Scheduling SI change notification Short Message at slot {}", slot_alloc.slot);
+      allocate_short_message(slot_alloc);
+      break;
+    }
+  }
+}
+
+void si_scheduler::allocate_short_message(cell_slot_resource_allocator& slot_alloc)
+{
+  const auto ss_id = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.paging_search_space_id.value();
+
+  // > Allocate DCI_1_0 for Paging on PDCCH.
+  pdcch_dl_information* pdcch =
+      pdcch_sch.alloc_dl_pdcch_common(slot_alloc, rnti_t::P_RNTI, ss_id, cell_cfg.expert_cfg.pg.paging_dci_aggr_lev);
+  if (pdcch == nullptr) {
+    logger.warning("Could not allocate SI change notification Short Message in PDCCH");
+    return;
+  }
+
+  // Fill Paging DCI.
+  // Set the systemInfoModification bit, as per TS 38.331 Table 6.5-1.
+  static constexpr unsigned si_modification_short_message = 0b10000000;
+  build_dci_f1_0_p_rnti(pdcch->dci, cell_cfg.dl_cfg_common.init_dl_bwp, si_modification_short_message);
 }

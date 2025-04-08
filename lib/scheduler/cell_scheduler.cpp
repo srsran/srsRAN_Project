@@ -28,7 +28,7 @@ cell_scheduler::cell_scheduler(const scheduler_expert_config&                  s
   logger(srslog::fetch_basic_logger("SCHED")),
   ssb_sch(cell_cfg),
   pdcch_sch(cell_cfg),
-  si_sch(cell_cfg, pdcch_sch, msg.sib1_payload_size, msg.si_scheduling),
+  si_sch(cell_cfg, pdcch_sch, msg),
   csi_sch(cell_cfg),
   ra_sch(sched_cfg.ra, cell_cfg, pdcch_sch, event_logger, metrics),
   prach_sch(cell_cfg),

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../support/paging_helpers.h"
 #include "si_message_scheduler.h"
 #include "sib1_scheduler.h"
 #include "srsran/adt/lockfree_triple_buffer.h"
@@ -23,10 +24,9 @@ struct si_scheduling_update_request;
 class si_scheduler
 {
 public:
-  si_scheduler(const cell_configuration&                  cfg_,
-               pdcch_resource_allocator&                  pdcch_sch,
-               units::bytes                               sib1_payload_size,
-               const std::optional<si_scheduling_config>& si_sched_cfg);
+  si_scheduler(const cell_configuration&                       cfg_,
+               pdcch_resource_allocator&                       pdcch_sch,
+               const sched_cell_configuration_request_message& msg);
 
   void run_slot(cell_resource_allocator& res_alloc);
 
@@ -35,10 +35,15 @@ public:
 private:
   void handle_pending_request(cell_resource_allocator& res_alloc);
 
+  void try_schedule_short_message(cell_slot_resource_allocator& slot_alloc);
+  void allocate_short_message(cell_slot_resource_allocator& slot_alloc);
+
   const cell_configuration& cell_cfg;
   const subcarrier_spacing  scs_common;
+  const paging_slot_helper  paging_helper;
   const unsigned            default_paging_cycle;
   const unsigned            si_change_mod_period;
+  pdcch_resource_allocator& pdcch_sch;
   srslog::basic_logger&     logger;
 
   sib1_scheduler       sib1_sched;

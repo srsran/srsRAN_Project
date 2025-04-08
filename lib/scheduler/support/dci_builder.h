@@ -35,6 +35,9 @@ void build_dci_f1_0_p_rnti(dci_dl_info&               dci,
                            unsigned                   time_resource,
                            sch_mcs_index              mcs_index);
 
+/// Builds DCI f1_0 with only short messages for P-RNTI used in PCCHs.
+void build_dci_f1_0_p_rnti(dci_dl_info& dci, const bwp_downlink_common& init_dl_bwp, unsigned short_messages);
+
 /// Builds DCI f1_0 for RA-RNTI used in RAR.
 void build_dci_f1_0_ra_rnti(dci_dl_info&               dci,
                             const bwp_downlink_common& init_dl_bwp,

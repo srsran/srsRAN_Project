@@ -15,21 +15,32 @@
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "srsran/asn1/rrc_nr/ue_cap.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
+#include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 
+static sched_cell_configuration_request_message
+make_sched_configuration_request(units::bytes                               sib1_payload_size,
+                                 const std::optional<si_scheduling_config>& si_sched_cfg)
+{
+  sched_cell_configuration_request_message msg = sched_config_helper::make_default_sched_cell_configuration_request();
+  msg.sib1_payload_size                        = sib1_payload_size;
+  msg.si_scheduling                            = si_sched_cfg;
+  return msg;
+}
+
 class si_scheduler_setup
 {
 public:
-  si_scheduler_setup(units::bytes sib1_payload_size, const std::optional<si_scheduling_config>& si_sched_cfg) :
+  si_scheduler_setup(const sched_cell_configuration_request_message& msg) :
     expert_cfg(config_helpers::make_default_scheduler_expert_config()),
     cell_cfg(expert_cfg,
              sched_config_helper::make_default_sched_cell_configuration_request(cell_config_builder_profiles::tdd())),
     pdcch_sch(cell_cfg),
     res_grid(cell_cfg),
-    si_sched(cell_cfg, pdcch_sch, sib1_payload_size, si_sched_cfg),
+    si_sched(cell_cfg, pdcch_sch, msg),
     logger(srslog::fetch_basic_logger("SCHED"))
   {
     logger.set_level(srslog::basic_levels::debug);
@@ -64,7 +75,7 @@ public:
 
 TEST(no_si_scheduler_test, when_no_si_is_provided_then_nothing_is_scheduled)
 {
-  si_scheduler_setup setup{units::bytes{0}, std::nullopt};
+  si_scheduler_setup setup{make_sched_configuration_request(units::bytes{0}, std::nullopt)};
 
   const unsigned nof_slots = 100;
 
@@ -79,7 +90,10 @@ TEST(no_si_scheduler_test, when_no_si_is_provided_then_nothing_is_scheduled)
 class si_scheduler_test : public si_scheduler_setup, public testing::Test
 {
 protected:
-  si_scheduler_test() : si_scheduler_setup(DEFAULT_SIB1_PAYLOAD_SIZE, DEFAULT_SI_SCHED_CFG) {}
+  si_scheduler_test() :
+    si_scheduler_setup(make_sched_configuration_request(DEFAULT_SIB1_PAYLOAD_SIZE, DEFAULT_SI_SCHED_CFG))
+  {
+  }
 
   static constexpr units::bytes     DEFAULT_SIB1_PAYLOAD_SIZE{128};
   static const si_scheduling_config DEFAULT_SI_SCHED_CFG;

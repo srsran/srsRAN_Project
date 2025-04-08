@@ -88,6 +88,17 @@ void srsran::build_dci_f1_0_p_rnti(dci_dl_info&               dci,
   p_dci.modulation_coding_scheme = mcs_index.to_uint();
 }
 
+void srsran::build_dci_f1_0_p_rnti(dci_dl_info& dci, const bwp_downlink_common& init_dl_bwp, unsigned short_messages)
+{
+  dci.type        = dci_dl_rnti_config_type::p_rnti_f1_0;
+  dci.p_rnti_f1_0 = {};
+  auto& p_dci     = dci.p_rnti_f1_0;
+  // See 38.212, clause 7.3.1.2.1 - N^{DL,BWP}_RB for P-RNTI.
+  p_dci.N_rb_dl_bwp              = init_dl_bwp.pdcch_common.coreset0->coreset0_crbs().length();
+  p_dci.short_messages_indicator = dci_1_0_p_rnti_configuration::payload_info::short_messages;
+  p_dci.short_messages           = short_messages;
+}
+
 void srsran::build_dci_f1_0_ra_rnti(dci_dl_info&               dci,
                                     const bwp_downlink_common& init_dl_bwp,
                                     crb_interval               crbs,

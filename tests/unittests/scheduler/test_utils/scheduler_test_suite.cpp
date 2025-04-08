@@ -15,6 +15,7 @@
 #include "lib/scheduler/support/pdsch/pdsch_default_time_allocation.h"
 #include "scheduler_output_test_helpers.h"
 #include "tests/test_doubles/scheduler/scheduler_test_message_validators.h"
+#include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/support/error_handling.h"
@@ -184,6 +185,11 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
         linked_pdsch = &it->pdsch_cfg;
       } break;
       case dci_dl_rnti_config_type::p_rnti_f1_0: {
+        // No corresponding PDSCH.
+        if (pdcch.dci.p_rnti_f1_0.short_messages_indicator ==
+            dci_1_0_p_rnti_configuration::payload_info::short_messages) {
+          break;
+        }
         uint8_t k0 =
             cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdcch.dci.p_rnti_f1_0.time_resource].k0;
         const auto& pg_grants = cell_res_grid[k0].result.dl.paging_grants;
@@ -196,7 +202,9 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
       default:
         srsran_terminate("DCI type not supported");
     }
-    assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, *linked_pdsch);
+    if (linked_pdsch) {
+      assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, *linked_pdsch);
+    }
   }
 }
 
