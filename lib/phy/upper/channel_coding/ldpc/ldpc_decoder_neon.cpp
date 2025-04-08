@@ -44,6 +44,8 @@ static __always_inline int8x16_t LLR_NEG_INFINITY_s8()
 /// Maximum number of NEON vectors needed to represent a BG node.
 static constexpr unsigned MAX_NODE_SIZE_NEON = divide_ceil(ldpc::MAX_LIFTING_SIZE, NEON_SIZE_BYTE);
 
+ldpc_decoder_neon::ldpc_decoder_neon() : help_check_to_var(MAX_NODE_SIZE_NEON * NEON_SIZE_BYTE) {}
+
 void ldpc_decoder_neon::specific_init()
 {
   // Each BG node contains LS bits, which are stored in node_size_neon NEON vectors.
@@ -160,9 +162,7 @@ void ldpc_decoder_neon::compute_check_to_var_msgs(span<log_likelihood_ratio> thi
   neon::neon_const_span min_var_to_check_index_neon(min_var_to_check_index, node_size_neon);
   neon::neon_const_span sign_prod_var_to_check_neon(sign_prod_var_to_check, node_size_neon);
   neon::neon_const_span rotated_node_neon(rotated_node, node_size_neon);
-
-  std::array<log_likelihood_ratio, MAX_NODE_SIZE_NEON * NEON_SIZE_BYTE> help_check_to_var;
-  neon::neon_span help_check_to_var_neon(help_check_to_var, node_size_neon);
+  neon::neon_span       help_check_to_var_neon(help_check_to_var, node_size_neon);
 
   int8x16_t this_var_index_s8 = vdupq_n_s8(static_cast<int8_t>(var_node));
   for (unsigned i_block = 0; i_block != node_size_neon; ++i_block) {

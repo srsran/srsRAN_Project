@@ -59,7 +59,7 @@ inline __m256i scale_epi8(__m256i a, float sf, uint8_t max)
     return a;
   }
 
-  static const __m256i mask_even_epi8 = _mm256_set1_epi16(0x00ff);
+  const __m256i mask_even_epi8 = _mm256_set1_epi16(0x00ff);
   // FLOAT2INT = 2^16 = 65536
   static constexpr unsigned FLOAT2INT = 1U << 16U;
   const __m256i             MAX_epi8  = _mm256_set1_epi8(max);

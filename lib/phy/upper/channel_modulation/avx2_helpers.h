@@ -246,7 +246,7 @@ inline __m256 interval_function(__m256       value,
 /// \return <tt>dividend / divisor</tt> if \c divisor is greater than zero, \c 0 otherwise.
 inline __m256 safe_div(__m256 dividend, __m256 divisor)
 {
-  static const __m256 all_zero = _mm256_setzero_ps();
+  const __m256 all_zero = _mm256_setzero_ps();
   // _CMP_GT_OQ: compare greater than, ordered (nan is false) and quiet (no exceptions raised).
 #if defined(__AVX512F__) && defined(__AVX512VL__)
   __mmask8 mask = _mm256_cmp_ps_mask(divisor, all_zero, _CMP_GT_OQ);

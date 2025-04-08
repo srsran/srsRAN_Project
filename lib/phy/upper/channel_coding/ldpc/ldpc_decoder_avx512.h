@@ -20,6 +20,9 @@ namespace srsran {
 /// LDPC decoder implementation based on AVX512 intrinsics.
 class ldpc_decoder_avx512 : public ldpc_decoder_impl
 {
+public:
+  ldpc_decoder_avx512();
+
 private:
   // See ldpc_decoder_impl for the documentation.
   void specific_init() override;
@@ -51,8 +54,8 @@ private:
                                  unsigned                         shift,
                                  unsigned                         var_node) override;
 
-  /// Auxiliary buffer to store the rotated variable-to-check messages.
-  std::array<log_likelihood_ratio, ldpc::MAX_LIFTING_SIZE * MAX_CHECK_NODE_DEGREE> rotated_var_to_check;
+  /// Auxiliary buffer to store the rotated check-to-variable messages.
+  std::vector<log_likelihood_ratio> help_check_to_var;
 
   /// Number of AVX512 vectors needed to cover a lifted node.
   unsigned node_size_avx512 = 0;

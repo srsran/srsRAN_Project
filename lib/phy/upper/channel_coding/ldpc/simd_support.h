@@ -19,6 +19,7 @@
 #include "srsran/adt/span.h"
 #include "srsran/support/srsran_assert.h"
 #include <array>
+#include <vector>
 
 namespace srsran {
 /// Number of bytes in an AVX2 register.
@@ -78,6 +79,31 @@ public:
   /// \param[in] length  Number of elements spanned by the view (as a number of SIMD registers).
   template <typename IntType, size_t N>
   simd_span(std::array<IntType, N>& arr, size_t length) : simd_span(arr, 0, length)
+  {
+  }
+
+  /// \brief Constructs a span from a standard vector.
+  ///
+  /// \tparam IntType    Type of the standard array - must be an integer type of 8 bits.
+  /// \param[in] vec     Vector the span is a view of.
+  /// \param[in] offset  Offset from the beginning of the array (as a number of SIMD registers).
+  /// \param[in] length  Number of elements spanned by the view (as a number of SIMD registers).
+  template <typename IntType>
+  simd_span(std::vector<IntType>& vec, size_t offset, size_t length) :
+    array_ptr(reinterpret_cast<pointer>(vec.data()) + offset * SIMD_SIZE_BYTE), view_length(length)
+  {
+    static_assert(sizeof(IntType) == sizeof(storageType),
+                  "simd_span can only be created from arrays of 1-byte integer types.");
+    srsran_assert((offset + view_length) * SIMD_SIZE_BYTE <= vec.size(), "Cannot take a span longer than the array.");
+  }
+
+  /// \brief Constructs a span from a standard vector.
+  ///
+  /// \tparam IntType    Type of the standard array - must be an integer type of 8 bits.
+  /// \param[in] vec     Vector the span is a view of.
+  /// \param[in] length  Number of elements spanned by the view (as a number of SIMD registers).
+  template <typename IntType>
+  simd_span(std::vector<IntType>& vec, size_t length) : simd_span(vec, 0, length)
   {
   }
 

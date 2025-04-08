@@ -45,6 +45,8 @@ static __always_inline __m256i LLR_NEG_INFINITY_epi8()
 /// Maximum number of AVX2 vectors needed to represent a BG node.
 static constexpr unsigned MAX_NODE_SIZE_AVX2 = divide_ceil(ldpc::MAX_LIFTING_SIZE, AVX2_SIZE_BYTE);
 
+ldpc_decoder_avx2::ldpc_decoder_avx2() : help_check_to_var(MAX_NODE_SIZE_AVX2 * AVX2_SIZE_BYTE) {}
+
 void ldpc_decoder_avx2::specific_init()
 {
   // Each BG node contains LS bits, which are stored in node_size_avx2 AVX2 vectors.
@@ -163,9 +165,7 @@ void ldpc_decoder_avx2::compute_check_to_var_msgs(span<log_likelihood_ratio> thi
   mm256::avx2_const_span min_var_to_check_index_avx2(min_var_to_check_index, node_size_avx2);
   mm256::avx2_const_span sign_prod_var_to_check_avx2(sign_prod_var_to_check, node_size_avx2);
   mm256::avx2_const_span rotated_node_avx2(rotated_node, node_size_avx2);
-
-  std::array<log_likelihood_ratio, MAX_NODE_SIZE_AVX2 * AVX2_SIZE_BYTE> help_check_to_var;
-  mm256::avx2_span help_check_to_var_avx2(help_check_to_var, node_size_avx2);
+  mm256::avx2_span       help_check_to_var_avx2(help_check_to_var, node_size_avx2);
 
   __m256i this_var_index_epi8 = _mm256_set1_epi8(static_cast<int8_t>(var_node));
   for (unsigned i_block = 0; i_block != node_size_avx2; ++i_block) {
