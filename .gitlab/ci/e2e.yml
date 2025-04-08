@@ -662,13 +662,13 @@ viavi 3h:
   variables:
     KEYWORDS: "3h"
 
-viavi 16h:
+viavi 24h:
   extends: .viavi
-  timeout: 20 hours
+  timeout: 26 hours
   rules:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
-    KEYWORDS: "16h"
+    KEYWORDS: "24h"
 
 ################################################################################
 # Garbage collector

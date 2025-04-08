@@ -394,10 +394,10 @@ tests:
     expected_nof_kos: 10
     warning_as_errors: false
 
-  - id: "32UE ideal UDP bidirectional Long 16h"
+  - id: "32UE ideal UDP bidirectional Long 24h"
     campaign_filename: *campaign_filename
     test_name: "experimental 32UE ideal UDP bidirectional Long extended 24h"
-    test_timeout: 64800
+    test_timeout: 90000
     # Configuration
     gnb_extra_config:
       log:
