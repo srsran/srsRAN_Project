@@ -136,7 +136,7 @@ void intra_slice_scheduler::dl_sched(dl_ran_slice_candidate slice, scheduler_pol
   srsran_sanity_check(slice.remaining_rbs() > 0, "Invalid slice slice");
   if (slice.get_slot_tx() != pdsch_slot) {
     pdsch_slot = slice.get_slot_tx();
-    update_used_dl_vrbs();
+    update_used_dl_vrbs(slice);
   }
 
   // Determine max number of UE grants that can be scheduled in this slot.
@@ -793,16 +793,42 @@ unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate
   return std::max(puschs_to_alloc, 0);
 }
 
-void intra_slice_scheduler::update_used_dl_vrbs()
+static crb_interval compute_dl_crb_limits(const bwp_downlink_common& init_dl_bwp, const search_space_info& ss_info)
 {
-  // (Implementation-defined) We use the common PDSCH TD resources as a reference for the computation of RBs
+  const bool is_common_ss_with_dci1_0 =
+      ss_info.get_dl_dci_format() == dci_dl_format::f1_0 and ss_info.cfg->is_common_search_space();
+  const unsigned coreset_start_crb = ss_info.coreset->get_coreset_start_crb();
+  if (is_common_ss_with_dci1_0) {
+    const auto& coreset0_ptr = ss_info.bwp->coresets[to_coreset_id(0)];
+    if (coreset0_ptr.has_value()) {
+      // Cell configured with CORESET0.
+      return {coreset_start_crb, coreset_start_crb + coreset0_ptr.value().coreset0_crbs().length()};
+    }
+    return {coreset_start_crb, coreset_start_crb + init_dl_bwp.generic_params.crbs.length()};
+  }
+
+  return init_dl_bwp.generic_params.crbs;
+}
+
+void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& slice)
+{
+  // The mapping from CRBs to VRBs is different for UEs configured with a common SearchSpace that uses DCI 1_0.
+  // [Implementation defined] We assume all the UEs of this cell are configured the same way in that regard.
+  const slice_ue_repository& slice_ues = slice.get_slice_ues();
+  search_space_info          ss_info;
+  if (not slice_ues.empty()) {
+    const auto& ue = *slice_ues.begin();
+    ss_info        = ue.get_cc().cfg().search_space(to_search_space_id(2));
+  }
+
+  const auto& init_dl_bwp = cell_alloc.cfg.dl_cfg_common.init_dl_bwp;
+  // [Implementation defined] We use the common PDSCH TD resources as a reference for the computation of RBs
   // unavailable for PDSCH. This assumes that these resources are not colliding with PDCCH.
-  const auto&              init_dl_bwp      = cell_alloc.cfg.dl_cfg_common.init_dl_bwp;
   const ofdm_symbol_range& symbols_to_check = init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols;
+  dl_bwp_crb_limits                         = compute_dl_crb_limits(init_dl_bwp, ss_info);
   // TODO: perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
-  used_dl_vrbs      = static_cast<vrb_bitmap>(cell_alloc[pdsch_slot].dl_res_grid.used_prbs(
-      init_dl_bwp.generic_params.scs, init_dl_bwp.generic_params.crbs, symbols_to_check));
-  dl_bwp_crb_limits = init_dl_bwp.generic_params.crbs;
+  used_dl_vrbs = static_cast<vrb_bitmap>(cell_alloc[pdsch_slot].dl_res_grid.used_prbs(
+      init_dl_bwp.generic_params.scs, dl_bwp_crb_limits, symbols_to_check));
 }
 
 void intra_slice_scheduler::update_used_ul_vrbs()

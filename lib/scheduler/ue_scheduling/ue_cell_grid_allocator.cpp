@@ -275,23 +275,6 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
   const unsigned pucch_res_indicator = grant.uci_alloc.pucch_res_indicator.value_or(0);
   switch (ss_info.get_dl_dci_format()) {
     case dci_dl_format::f1_0: {
-      // The VRBs provided by the scheduler are defined from the start of the BWP, but in the case of PDSCH
-      // transmissions scheduled with DCI format 1_0 in any common search space, VRBs are defined from the start of the
-      // CORESET. Therefore, if this is the case, we need to recompute the VRBs relative to the CORESET.
-      if (ss_info.cfg->is_common_search_space()) {
-        // [Implementation defined] We never use interleaved mapping for this case.
-        srsran_assert(crbs.second.empty(),
-                      "Interleaving is not supported for PDSCH transmissions scheduled with DCI format 1_0 in any "
-                      "common search space");
-        const coreset_configuration& cs_cfg            = *ss_info.coreset;
-        const bwp_downlink_common&   active_dl_bwp_cmn = *ss_info.bwp->dl_common.value();
-        const bwp_configuration&     active_dl_bwp     = active_dl_bwp_cmn.generic_params;
-        vrbs                                           = rb_helper::crb_to_vrb_dl_non_interleaved(crbs.first,
-                                                        active_dl_bwp.crbs.start(),
-                                                        cs_cfg.get_coreset_start_crb(),
-                                                        dci_dl_format::f1_0,
-                                                        ss_info.cfg->is_common_search_space());
-      }
       build_dci_f1_0_c_rnti(grant.pdcch->dci,
                             ss_info,
                             cell_cfg.dl_cfg_common.init_dl_bwp,

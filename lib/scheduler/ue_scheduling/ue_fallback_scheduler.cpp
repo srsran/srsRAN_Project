@@ -782,9 +782,11 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
       vrbs                        = crb_to_vrb_f1_0_common_ss_non_interleaved(ue_grant_crbs, cs0_crbs.start());
     } break;
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
-      const search_space_info& ss_info = u.get_pcell().cfg().search_space(pdcch.ctx.context.ss_id);
-      vrbs                             = rb_helper::crb_to_vrb_dl_non_interleaved(ue_grant_crbs,
-                                                      cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.start(),
+      const search_space_info&   ss_info           = u.get_pcell().cfg().search_space(pdcch.ctx.context.ss_id);
+      const bwp_downlink_common& active_dl_bwp_cmn = *ss_info.bwp->dl_common.value();
+      const bwp_configuration&   active_dl_bwp     = active_dl_bwp_cmn.generic_params;
+      vrbs                                         = rb_helper::crb_to_vrb_dl_non_interleaved(ue_grant_crbs,
+                                                      active_dl_bwp.crbs.start(),
                                                       cs_cfg.get_coreset_start_crb(),
                                                       dci_dl_format::f1_0,
                                                       ss_info.cfg->is_common_search_space());
