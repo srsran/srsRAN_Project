@@ -12,6 +12,9 @@
 #include "../lib/scheduler/support/dmrs_helpers.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/sch/tbs_calculator.h"
+#include "srsran/ran/uci/uci_mapping.h"
+#include "srsran/scheduler/result/pdsch_info.h"
+#include "srsran/scheduler/result/pusch_info.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -31,18 +34,61 @@ void print_if_present(Args... args)
     return false;                                                                                                      \
   }
 
-bool test_helper::is_valid_dl_msg_alloc(const dl_msg_alloc& grant)
+/// Check that the CRBs are within the allowed BWP/CORESET boundaries.
+static bool are_crbs_valid(const pdsch_information& pdsch, std::optional<coreset_configuration> coreset0)
 {
-  TRUE_OR_RETURN(grant.pdsch_cfg.codewords[0].tb_size_bytes > 0);
-  TRUE_OR_RETURN(grant.pdsch_cfg.nof_layers > 0);
+  const vrb_interval vrbs = pdsch.rbs.type1();
 
-  if (grant.pdsch_cfg.dci_fmt == dci_dl_format::f1_1) {
-    TRUE_OR_RETURN(grant.pdsch_cfg.coreset_cfg->id != to_coreset_id(0));
+  crb_interval crb_lims;
+  if (pdsch.dci_fmt == dci_dl_format::f1_0 and pdsch.ss_set_type != search_space_set_type::ue_specific) {
+    const unsigned coreset_start_crb = pdsch.coreset_cfg->get_coreset_start_crb();
+    if (coreset0.has_value()) {
+      crb_lims = crb_interval{coreset_start_crb, coreset_start_crb + coreset0.value().coreset0_crbs().length()};
+    }
+    crb_lims = crb_interval{coreset_start_crb, coreset_start_crb + pdsch.bwp_cfg->crbs.length()};
+  } else {
+    crb_lims = pdsch.bwp_cfg->crbs;
+  }
 
-    // Check CRBs within BWP.
-    const vrb_interval vrbs = grant.pdsch_cfg.rbs.type1();
-    const crb_interval crbs = prb_to_crb(grant.pdsch_cfg.bwp_cfg->crbs, prb_interval{vrbs.start(), vrbs.stop()});
-    TRUE_OR_RETURN(grant.pdsch_cfg.bwp_cfg->crbs.contains(crbs));
+  // TODO: support interleaving.
+  const crb_interval crbs = prb_to_crb(crb_lims, prb_interval{vrbs.start(), vrbs.stop()});
+  TRUE_OR_RETURN(crb_lims.contains(crbs));
+  return true;
+}
+
+static bool is_pdsch_info_valid(const pdsch_information& pdsch, std::optional<coreset_configuration> coreset0)
+{
+  TRUE_OR_RETURN(pdsch.coreset_cfg != nullptr);
+  TRUE_OR_RETURN(pdsch.bwp_cfg != nullptr);
+  TRUE_OR_RETURN(not pdsch.codewords.empty());
+  TRUE_OR_RETURN(pdsch.nof_layers > 0);
+  TRUE_OR_RETURN(pdsch.codewords[0].tb_size_bytes > 0);
+  TRUE_OR_RETURN(are_crbs_valid(pdsch, coreset0));
+
+  switch (pdsch.dci_fmt) {
+    case dci_dl_format::f1_0: {
+      TRUE_OR_RETURN(pdsch.nof_layers == 1);
+      TRUE_OR_RETURN(pdsch.codewords.size() == 1);
+      TRUE_OR_RETURN(pdsch.codewords[0].mcs_table == pdsch_mcs_table::qam64);
+    } break;
+    case dci_dl_format::f1_1: {
+      TRUE_OR_RETURN(pdsch.coreset_cfg->id != to_coreset_id(0));
+    } break;
+    default:
+      report_fatal_error("DCI format not supported");
+  }
+
+  return true;
+}
+
+bool test_helper::is_valid_dl_msg_alloc(const dl_msg_alloc& grant, std::optional<coreset_configuration> coreset0)
+{
+  TRUE_OR_RETURN(is_pdsch_info_valid(grant.pdsch_cfg, coreset0));
+  TRUE_OR_RETURN(grant.pdsch_cfg.codewords[0].new_data == not grant.tb_list.empty());
+  TRUE_OR_RETURN(grant.tb_list.size() <= 2);
+
+  if (grant.pdsch_cfg.dci_fmt == dci_dl_format::f1_0) {
+    TRUE_OR_RETURN(grant.tb_list.size() <= 1);
   }
 
   return true;
@@ -133,7 +179,7 @@ bool test_helper::is_valid_ul_sched_info(const ul_sched_info& grant)
                  effective_code_rate,
                  max_code_rate);
 
-  // Check TBS
+  // Check TBS.
   TRUE_OR_RETURN(is_ulsch_tbs_valid(grant), "rnti={}: Invalid PUSCH TBS", grant.pusch_cfg.rnti);
 
   // Check CRBs within BWP.
@@ -147,15 +193,19 @@ bool test_helper::is_valid_ul_sched_info(const ul_sched_info& grant)
   return true;
 }
 
-bool test_helper::is_valid_dl_msg_alloc_list(span<const dl_msg_alloc> grants)
+bool test_helper::is_valid_dl_msg_alloc_list(span<const dl_msg_alloc>             grants,
+                                             std::optional<coreset_configuration> coreset0)
 {
   static_vector<rnti_t, MAX_UE_PDUS_PER_SLOT> rntis;
   for (const auto& grant : grants) {
+    TRUE_OR_RETURN(is_valid_dl_msg_alloc(grant, coreset0));
+
     // Ensure uniqueness of RNTI.
     TRUE_OR_RETURN(std::count(rntis.begin(), rntis.end(), grant.pdsch_cfg.rnti) == 0,
                    "Duplicate RNTI in list of PDSCHs",
                    grant.pdsch_cfg.rnti);
     rntis.push_back(grant.pdsch_cfg.rnti);
   }
+
   return true;
 }

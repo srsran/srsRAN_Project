@@ -272,7 +272,8 @@ void srsran::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span
 
 void srsran::test_pdsch_ue_consistency(const cell_configuration& cell_cfg, span<const dl_msg_alloc> grants)
 {
-  ASSERT_TRUE(test_helper::is_valid_dl_msg_alloc_list(grants));
+  ASSERT_TRUE(
+      test_helper::is_valid_dl_msg_alloc_list(grants, cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0));
 }
 
 void srsran::test_pusch_ue_consistency(const cell_configuration& cell_cfg, span<const ul_sched_info> grants)
