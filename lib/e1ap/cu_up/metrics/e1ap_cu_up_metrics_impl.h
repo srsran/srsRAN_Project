@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "cu_up/metrics/e1ap_cu_up_metrics.h"
+#include "srsran/e1ap/cu_up/e1ap_cu_up_metrics.h"
 #include "srsran/support/srsran_assert.h"
 
 namespace srsran::srs_cu_up {
