@@ -15,6 +15,7 @@ set(SOURCES
         pdu_session_manager_impl.cpp
         ngu_session_manager_impl.cpp
         routines/initial_cu_up_setup_routine.cpp
+        routines/bearer_context_modification_routine.cpp
 )
 
 add_library(srsran_cu_up STATIC ${SOURCES})
