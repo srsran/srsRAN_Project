@@ -120,10 +120,10 @@ pusch_config_params static compute_retx_pusch_config_params(const ue_cell&      
 }
 
 /// Derive recommended MCS and number of PRBs for a newTx PUSCH grant.
-static mcs_prbs_selection compute_newtx_required_mcs_and_prbs(const pusch_config_params& pusch_cfg,
-                                                              const ue_cell&             ue_cc,
-                                                              unsigned                   pending_bytes,
-                                                              interval<unsigned>         nof_rb_lims)
+static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(const pusch_config_params& pusch_cfg,
+                                                                             const ue_cell&             ue_cc,
+                                                                             unsigned                   pending_bytes,
+                                                                             interval<unsigned>         nof_rb_lims)
 {
   sch_mcs_index       mcs = ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table);
   sch_mcs_description mcs_config =
@@ -149,9 +149,13 @@ static mcs_prbs_selection compute_newtx_required_mcs_and_prbs(const pusch_config
   // Ensure code rate and UCI is valid. If not, increase the number of PRBs.
   // Note: We make the pessimistic assumption that the DC intersects the newTx grant.
   static constexpr bool contains_dc = true;
-  while (nof_prbs < nof_rb_lims.stop() and
+  while (nof_prbs <= nof_rb_lims.stop() and
          not is_pusch_effective_rate_valid(pusch_cfg, ue_cc.active_bwp(), mcs, nof_prbs, contains_dc)) {
     ++nof_prbs;
+  }
+  if (nof_prbs > nof_rb_lims.stop()) {
+    // No valid MCS-PRB allocation.
+    return std::nullopt;
   }
 
   if (mcs == 5U and nof_prbs == 1U and nof_prbs < nof_rb_lims.stop()) {
@@ -168,7 +172,10 @@ static mcs_prbs_selection compute_newtx_required_mcs_and_prbs(const pusch_config
     nof_prbs = get_transform_precoding_nearest_lower_nof_prb_valid(nof_prbs).value_or(nof_prbs);
   }
 
-  srsran_sanity_check(nof_prbs > 0, "Invalid solution");
+  if (nof_prbs == 0) {
+    // No valid MCS-PRB allocation.
+    return std::nullopt;
+  }
   return mcs_prbs_selection{mcs, nof_prbs};
 }
 
@@ -412,8 +419,11 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
       pusch_cfg =
           compute_newtx_pusch_config_params(ue_cc, dci_type, pusch_td_res, uci_nof_harq_bits, is_csi_report_slot);
       auto mcs_prbs_sel = compute_newtx_required_mcs_and_prbs(pusch_cfg, ue_cc, pending_bytes, nof_rb_lims);
-      mcs               = mcs_prbs_sel.mcs;
-      nof_rbs           = mcs_prbs_sel.nof_prbs;
+      if (not mcs_prbs_sel.has_value()) {
+        return std::nullopt;
+      }
+      mcs     = mcs_prbs_sel->mcs;
+      nof_rbs = mcs_prbs_sel->nof_prbs;
     } else {
       // ReTx Case.
       mcs     = h_ul->get_grant_params().mcs;
