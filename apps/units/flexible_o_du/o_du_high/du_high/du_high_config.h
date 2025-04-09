@@ -957,6 +957,8 @@ struct du_high_unit_expert_execution_config {
   ///
   /// \note Add one cell by default.
   std::vector<du_high_unit_cpu_affinities_cell_config> cell_affinities = {{}};
+  /// Whether to report metrics for the DU-high real-time executors.
+  std::optional<std::chrono::milliseconds> executor_metrics_period;
 };
 
 /// RLC UM TX configuration

@@ -36,14 +36,14 @@ TEST(metrics_executor_test, report_logged_within_given_period)
   while (std::chrono::steady_clock::now() - test_start_tp < period) {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
-  ASSERT_TRUE(metrics_exec->execute([]() {}));
+  ASSERT_TRUE(metrics_exec.execute([]() {}));
   worker.run_pending_tasks();
 
   ASSERT_EQ(logger.reports.size(), 1);
   std::string result = logger.reports[0];
   fmt::print("Result: {}\n", result);
 
-  ASSERT_EQ(result.find("\"test\" executor metrics: "), 0);
+  ASSERT_EQ(result.find("Executor metrics \"test\": "), 0);
   ASSERT_GT(result.find("nof_executes=1 "), 0);
   ASSERT_GT(result.find("nof_defers=0 "), 0);
 }

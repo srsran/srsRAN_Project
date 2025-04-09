@@ -123,6 +123,11 @@ static void configure_cli11_expert_execution_args(CLI::App& app, du_high_unit_ex
         }
       },
       "Sets the cell CPU affinities configuration on a per cell basis");
+  add_option(app,
+             "--executor_metrics_period",
+             config.executor_metrics_period,
+             "Period of DU-high executor metrics reports, if enabled")
+      ->capture_default_str();
 }
 
 static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_unit_config& common_params)

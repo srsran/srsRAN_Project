@@ -68,7 +68,9 @@ private:
                       time_point                                     start_tp,
                       const expected<resource_usage::snapshot, int>& start_rusg)
   {
-    auto end_tp          = std::chrono::steady_clock::now();
+    using namespace std::chrono;
+
+    auto end_tp          = steady_clock::now();
     auto end_rusg        = resource_usage::now();
     auto enqueue_latency = start_tp - enqueue_tp;
     auto task_latency    = end_tp - start_tp;
@@ -89,15 +91,15 @@ private:
 
     if (end_tp - last_tp >= period) {
       // Report metrics.
-      logger.info("\"{}\" executor metrics: nof_executes={} nof_defers={} enqueue_avg={}nsec "
-                  "enqueue_max={}nsec task_avg={}nsec task_max={}nsec {}",
+      logger.info("Executor metrics \"{}\": nof_executes={} nof_defers={} enqueue_avg={}usec "
+                  "enqueue_max={}usec task_avg={}usec task_max={}usec {}",
                   name,
                   counters.dispatch_count - counters.defer_count,
                   counters.defer_count,
-                  counters.enqueue_sum_latency.count() / counters.dispatch_count,
-                  counters.enqueue_max_latency.count(),
-                  counters.task_sum_latency.count() / counters.dispatch_count,
-                  counters.task_max_latency.count(),
+                  duration_cast<microseconds>(counters.enqueue_sum_latency / counters.dispatch_count).count(),
+                  duration_cast<microseconds>(counters.enqueue_max_latency).count(),
+                  duration_cast<microseconds>(counters.task_sum_latency / counters.dispatch_count).count(),
+                  duration_cast<microseconds>(counters.task_max_latency).count(),
                   counters.sum_rusg);
 
       counters = {};
@@ -115,8 +117,15 @@ private:
 };
 
 template <typename ExecType, typename Logger>
-std::unique_ptr<task_executor>
+metrics_executor<ExecType, Logger>
 make_metrics_executor(std::string exec_name, ExecType&& exec, Logger& logger, std::chrono::milliseconds period)
+{
+  return metrics_executor<ExecType, Logger>(std::move(exec_name), std::forward<ExecType>(exec), logger, period);
+}
+
+template <typename ExecType, typename Logger>
+std::unique_ptr<task_executor>
+make_metrics_executor_ptr(std::string exec_name, ExecType&& exec, Logger& logger, std::chrono::milliseconds period)
 {
   return std::make_unique<metrics_executor<ExecType, Logger>>(
       std::move(exec_name), std::forward<ExecType>(exec), logger, period);
