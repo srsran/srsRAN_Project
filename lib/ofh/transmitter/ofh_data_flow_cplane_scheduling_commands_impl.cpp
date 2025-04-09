@@ -157,7 +157,7 @@ void data_flow_cplane_scheduling_commands_impl::enqueue_section_type_1_message(
 {
   data_direction    direction = context.direction;
   slot_point        slot      = context.slot;
-  slot_symbol_point symbol_point(slot, 0, nof_symbols_per_slot);
+  slot_symbol_point symbol_point(slot, context.symbol_range.start(), nof_symbols_per_slot);
 
   if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
     logger.debug("Sector#{}: packing a {} type 1 Control-Plane message for slot '{}' and eAxC '{}'",
