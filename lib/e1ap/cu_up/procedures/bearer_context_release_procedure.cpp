@@ -18,10 +18,10 @@ using namespace srsran::srs_cu_up;
 
 bearer_context_release_procedure::bearer_context_release_procedure(ue_index_t ue_index_,
                                                                    const asn1::e1ap::bearer_context_release_cmd_s& cmd_,
-                                                                   e1ap_message_notifier&       pdu_notifier_,
-                                                                   e1ap_cu_up_manager_notifier& cu_up_notifier_,
-                                                                   e1ap_cu_up_metrics&          metrics_,
-                                                                   srslog::basic_logger&        logger_) :
+                                                                   e1ap_message_notifier&        pdu_notifier_,
+                                                                   e1ap_cu_up_manager_notifier&  cu_up_notifier_,
+                                                                   e1ap_cu_up_metrics_collector& metrics_,
+                                                                   srslog::basic_logger&         logger_) :
   ue_index(ue_index_),
   cmd(cmd_),
   pdu_notifier(pdu_notifier_),

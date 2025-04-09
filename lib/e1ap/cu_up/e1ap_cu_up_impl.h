@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "cu_up/metrics/e1ap_cu_up_metrics_impl.h"
+#include "cu_up/e1ap_cu_up_metrics_collector.h"
 #include "e1ap_cu_up_connection_handler.h"
 #include "ue_context/e1ap_cu_up_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
@@ -114,7 +114,7 @@ private:
 
   unique_timer metrics_timer;
 
-  e1ap_cu_up_metrics metrics;
+  e1ap_cu_up_metrics_collector metrics;
 };
 
 } // namespace srsran::srs_cu_up

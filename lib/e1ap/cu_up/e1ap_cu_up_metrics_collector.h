@@ -17,13 +17,13 @@
 namespace srsran::srs_cu_up {
 
 /// Container to hold TX/RX metrics
-class e1ap_cu_up_metrics
+class e1ap_cu_up_metrics_collector
 {
   e1ap_cu_up_metrics_container metrics = {};
   bool                         enabled = false;
 
 public:
-  e1ap_cu_up_metrics(bool enabled_) : enabled(enabled_) {}
+  e1ap_cu_up_metrics_collector(bool enabled_) : enabled(enabled_) {}
 
   bool is_enabled() const { return enabled; }
 
