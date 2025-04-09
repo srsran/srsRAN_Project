@@ -80,6 +80,7 @@ pdcp_entity_rx::~pdcp_entity_rx()
 void pdcp_entity_rx::stop()
 {
   if (not stopped) {
+    fmt::print(stderr, "stop1!!!\n");
     stopped = true;
     reordering_timer.stop();
     token_mngr.stop();
