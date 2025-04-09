@@ -27,6 +27,15 @@ struct diff {
   std::chrono::microseconds user_time{0};
   /// Time spent in kernel mode between two snapshots.
   std::chrono::microseconds sys_time{0};
+
+  diff& operator+=(const diff& rhs)
+  {
+    vol_ctxt_switch_count += rhs.vol_ctxt_switch_count;
+    invol_ctxt_switch_count += rhs.invol_ctxt_switch_count;
+    user_time += rhs.user_time;
+    sys_time += rhs.sys_time;
+    return *this;
+  }
 };
 
 /// Snapshot of the resource usage statistics of a specific thread at given point in time.
