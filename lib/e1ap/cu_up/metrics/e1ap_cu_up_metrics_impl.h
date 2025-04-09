@@ -17,7 +17,8 @@
 namespace srsran::srs_cu_up {
 
 /// Container to hold TX/RX metrics
-struct e1ap_cu_up_metrics {
+class e1ap_cu_up_metrics
+{
   e1ap_cu_up_metrics_container metrics = {};
   bool                         enabled = false;
 
