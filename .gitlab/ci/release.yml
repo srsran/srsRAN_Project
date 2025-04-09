@@ -56,8 +56,27 @@ load release variables:
         TOKEN_VAR_NAME="PUBLIC_${KEY}_TOKEN"
         echo "PUBLIC_PUSH_TOKEN=${!TOKEN_VAR_NAME}" >> repo.env
         echo "CI_PLUGIN_COMMIT_SHA=$(cat .gitlab/ci/plugin_version.txt)" >> repo.env
-        
-        # Generate update_plugin pipeline
+      else
+        echo "PRIVATE_BRANCH=agpl_main" >> repo.env
+        echo "PUBLIC_NAME=srsRAN Project" >> repo.env
+        echo "PUBLIC_REPO=srsran/srsRAN_Project" >> repo.env
+        echo "HEADERS=true" >> repo.env
+        echo "PUBLIC_PUSH_TOKEN=$PUBLIC_TOKEN" >> repo.env
+      fi
+    - cat repo.env
+  artifacts:
+    reports:
+      dotenv: repo.env
+
+generate plugin pipeline:
+  stage: ci
+  image: ubuntu:24.04
+  rules:
+    - if: *on_custom_push
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - |
         echo """
         include:
           - project: softwareradiosystems/ci/tools
@@ -84,18 +103,8 @@ load release variables:
             strategy: depend
         """ >> update_plugin.yml
         done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
-
-      else
-        echo "PRIVATE_BRANCH=agpl_main" >> repo.env
-        echo "PUBLIC_NAME=srsRAN Project" >> repo.env
-        echo "PUBLIC_REPO=srsran/srsRAN_Project" >> repo.env
-        echo "HEADERS=true" >> repo.env
-        echo "PUBLIC_PUSH_TOKEN=$PUBLIC_TOKEN" >> repo.env
-      fi
-    - cat repo.env
+    - cat update_plugin.yml
   artifacts:
-    reports:
-      dotenv: repo.env
     paths:
       - update_plugin.yml
     expire_in: 1 day
@@ -154,10 +163,10 @@ update plugin:
   trigger:
     include:
       - artifact: update_plugin.yml
-        job: load release variables
+        job: generate plugin pipeline
     strategy: depend
   needs:
-    - job: load release variables
+    - job: generate plugin pipeline
       artifacts: true
 
 update private branch:
@@ -188,7 +197,6 @@ update private branch:
     - cd ${CI_PROJECT_DIR}
     - git fetch -q origin ${CI_COMMIT_SHA} && git checkout ${CI_COMMIT_SHA}
     - .gitlab/ci/release/auto_merge.sh ${CI_COMMIT_SHA} ${PRIVATE_BRANCH}
-    - git rm -f .gitlab/ci/plugin_version.txt > /dev/null || true
     - |
       git submodule init
       git submodule update
@@ -263,6 +271,7 @@ basic build final branch:
     COMPILER: gcc
     ENABLE_MKL: # default
     ENABLE_ARMPL: # default
+    PLUGIN_INDEX_ARRAY: ""
   tags: ["amd64-avx2"]
   needs:
     - job: download final branch

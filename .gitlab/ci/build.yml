@@ -58,6 +58,8 @@ variables:
     - job: get plugin commit
       optional: true
       artifacts: true
+  variables:
+    PLUGIN_INDEX_ARRAY: "0" # Space separated list of indexes of plugins to build. f.e. "0 1 2"
   script:
     - &srs_functions |
       CMAKE_FLAGS_CMD=""
@@ -207,25 +209,23 @@ variables:
             PLUGIN_REF_ARRAY+=("$ref")
         done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
 
-        if [[ -z $PLUGIN_INDEX_ARRAY ]]; then
-          PLUGIN_INDEX_ARRAY=("0")
-        fi
-
-        for index in "${PLUGIN_INDEX_ARRAY[@]}"; do
+        for index in $PLUGIN_INDEX_ARRAY; do
             PLUGIN_PATH="${PLUGIN_PATH_ARRAY[$index]}"
             PLUGIN_REPO="${PLUGIN_REPO_ARRAY[$index]}"
             PLUGIN_REF="${PLUGIN_REF_ARRAY[$index]}"
             PLUGIN_REF=$(eval echo $PLUGIN_REF)
             
-            echo "#############################"
-            echo "#### $PLUGIN_PATH checkout ####"
-            echo "#############################"
-            git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git plugins/${PLUGIN_PATH}
-            cd plugins/${PLUGIN_PATH}
-            git fetch --depth=1 origin ${PLUGIN_REF} > /dev/null
-            git config advice.detachedHead false
-            git checkout ${PLUGIN_REF}
-            cd ${CI_PROJECT_DIR}
+            if [[ ! -f "$PLUGIN_PATH" ]]; then
+              echo "#############################"
+              echo "#### $PLUGIN_PATH checkout ####"
+              echo "#############################"
+              git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git plugins/${PLUGIN_PATH}
+              cd plugins/${PLUGIN_PATH}
+              git fetch --depth=1 origin ${PLUGIN_REF} > /dev/null
+              git config advice.detachedHead false
+              git checkout ${PLUGIN_REF}
+              cd ${CI_PROJECT_DIR}
+            fi
         done
       fi
     - build_srsgnb "${SRS_TARGET}"
