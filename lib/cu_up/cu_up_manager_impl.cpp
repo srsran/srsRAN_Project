@@ -127,9 +127,13 @@ cu_up_manager_impl::handle_bearer_context_modification_request(const e1ap_bearer
     });
   }
   return execute_and_continue_on_blocking(
-      ue_ctxt->ue_exec_mapper->ctrl_executor(), exec_mapper.ctrl_executor(), timers, [this, ue_ctxt, msg]() {
-        return handle_bearer_context_modification_request_impl(*ue_ctxt, msg);
-      });
+      ue_ctxt->ue_exec_mapper->ctrl_executor(),
+      exec_mapper.ctrl_executor(),
+      timers,
+      launch_async([this, ue_ctxt, msg](coro_context<async_task<e1ap_bearer_context_modification_response>>& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_RETURN(handle_bearer_context_modification_request_impl(*ue_ctxt, msg));
+      }));
 }
 
 e1ap_bearer_context_modification_response
