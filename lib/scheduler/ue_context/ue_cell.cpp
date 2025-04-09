@@ -285,7 +285,7 @@ ue_cell::get_active_dl_search_spaces(slot_point                             pdcc
       return false;
     }
     if (required_dci_rnti_type.has_value() and
-        not pdcch_helper::search_space_supports_dci_dl_format(*ss.cfg, get_dci_dl_format(*required_dci_rnti_type))) {
+        not pdcch_helper::search_space_supports_dci_dl_format(*ss.cfg, get_dci_format(*required_dci_rnti_type))) {
       return false;
     }
     return true;

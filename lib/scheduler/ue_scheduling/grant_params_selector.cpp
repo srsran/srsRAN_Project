@@ -200,7 +200,7 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
       // Early exit if there are not enough symbols in the slot for the retransmission.
       return std::nullopt;
     }
-    srsran_assert(ss.get_dl_dci_format() == get_dci_dl_format(h_dl->get_grant_params().dci_cfg_type),
+    srsran_assert(ss.get_dl_dci_format() == get_dci_format(h_dl->get_grant_params().dci_cfg_type),
                   "DCI type cannot change across reTxs");
   }
 
@@ -359,7 +359,7 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
       // Early exit if there are not enough symbols in the slot for the retransmission.
       return std::nullopt;
     }
-    srsran_assert(ss.get_ul_dci_format() == get_dci_ul_format(h_ul->get_grant_params().dci_cfg_type),
+    srsran_assert(ss.get_ul_dci_format() == get_dci_format(h_ul->get_grant_params().dci_cfg_type),
                   "DCI type cannot change across reTxs");
   }
 
