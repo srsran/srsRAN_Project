@@ -8,7 +8,7 @@
  *
  */
 
-#include "bearer_context_modification_routine.h"
+#include "cu_up_bearer_context_modification_routine.h"
 #include "../cu_up_manager_helpers.h"
 
 using namespace srsran;

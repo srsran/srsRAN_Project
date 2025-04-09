@@ -10,7 +10,7 @@
 
 #include "cu_up_manager_impl.h"
 #include "cu_up_manager_helpers.h"
-#include "routines/bearer_context_modification_routine.h"
+#include "routines/cu_up_bearer_context_modification_routine.h"
 #include "srsran/support/async/execute_on_blocking.h"
 
 using namespace srsran;
