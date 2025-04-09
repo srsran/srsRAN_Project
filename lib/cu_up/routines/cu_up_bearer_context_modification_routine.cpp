@@ -28,15 +28,20 @@ void cu_up_bearer_context_modification_routine::operator()(
 
   ue_ctxt.get_logger().log_debug("Handling BearerContextModificationRequest");
 
-  e1ap_bearer_context_modification_response response = {};
-  response.ue_index                                  = ue_ctxt.get_index();
-  response.success                                   = true;
+  response.ue_index = ue_ctxt.get_index();
+  response.success  = true;
 
-  bool new_ul_tnl_info_required = (msg.new_ul_tnl_info_required.has_value() && msg.new_ul_tnl_info_required.value());
+  new_ul_tnl_info_required = (msg.new_ul_tnl_info_required.has_value() && msg.new_ul_tnl_info_required.value());
 
   if (msg.security_info.has_value()) {
-    security::sec_as_config security_info;
     fill_sec_as_config(security_info, msg.security_info.value());
+
+    // Await pending crypto processing to be finished, so that keys
+    // can be safely replaced. No more PDUs will arrive at the PDCP as this procedure will
+    // block the process of further PDUs to this UE.
+    CORO_AWAIT(ue_ctxt.await_rx_crypto_tasks());
+
+    // Safely update the keys now.
     ue_ctxt.set_security_config(security_info);
   }
 
