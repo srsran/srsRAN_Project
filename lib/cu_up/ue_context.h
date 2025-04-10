@@ -139,6 +139,9 @@ public:
     cfg.security_info = security_info;
     pdu_session_manager.update_security_config(security_info);
   }
+  void stop_pdcp_pdu_processing() { pdu_session_manager.stop_pdcp_pdu_processing(); }
+  void start_pdcp_pdu_processing() { pdu_session_manager.start_pdcp_pdu_processing(); }
+
   async_task<void> await_rx_crypto_tasks() { return pdu_session_manager.await_crypto_rx_all_pdu_sessions(); }
 
   // pdu_session_manager_ctrl

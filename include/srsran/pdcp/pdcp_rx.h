@@ -106,5 +106,8 @@ public:
 
   /// Trigger re-establishment
   virtual void reestablish(security::sec_128_as_config sec_cfg) = 0;
+
+  virtual void stop_pdu_processing()  = 0;
+  virtual void start_pdu_processing() = 0;
 };
 } // namespace srsran

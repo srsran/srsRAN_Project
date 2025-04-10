@@ -84,6 +84,9 @@ public:
 
   ~pdcp_entity_rx() override;
 
+  void stop_pdu_processing() override;
+  void start_pdu_processing() override;
+
   /// \brief Stop handling PDUs and stops timers
   void stop();
 

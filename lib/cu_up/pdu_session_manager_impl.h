@@ -61,6 +61,8 @@ public:
   void disconnect_all_pdu_sessions();
   void update_security_config(const security::sec_as_config& security_info);
 
+  void             stop_pdcp_pdu_processing();
+  void             start_pdcp_pdu_processing();
   async_task<void> await_crypto_rx_all_pdu_sessions();
   async_task<void> await_crypto_rx_all_drbs(const std::unique_ptr<pdu_session>& pdu_session);
   async_task<void> await_crypto_drb(const std::unique_ptr<drb_context>& drb);

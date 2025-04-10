@@ -80,12 +80,27 @@ pdcp_entity_rx::~pdcp_entity_rx()
 void pdcp_entity_rx::stop()
 {
   if (not stopped) {
-    fmt::print(stderr, "stop1!!!\n");
     stopped = true;
     reordering_timer.stop();
     token_mngr.stop();
     metrics_timer.stop();
     logger.log_debug("Stopped PDCP entity");
+  }
+}
+
+void pdcp_entity_rx::stop_pdu_processing()
+{
+  if (not stopped) {
+    token_mngr.stop();
+    logger.log_debug("Stopped PDCP entity PDU processing");
+  }
+}
+
+void pdcp_entity_rx::start_pdu_processing()
+{
+  if (not stopped) {
+    token_mngr.start();
+    logger.log_debug("Started PDCP entity PDU processing");
   }
 }
 

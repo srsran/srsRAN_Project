@@ -39,10 +39,12 @@ void cu_up_bearer_context_modification_routine::operator()(
     // Await pending crypto processing to be finished, so that keys
     // can be safely replaced. No more PDUs will arrive at the PDCP as this procedure will
     // block the process of further PDUs to this UE.
+    ue_ctxt.stop_pdcp_pdu_processing();
     CORO_AWAIT(ue_ctxt.await_rx_crypto_tasks());
 
-    // Safely update the keys now.
+    // PDU processing is finished, safely update the keys now.
     ue_ctxt.set_security_config(security_info);
+    ue_ctxt.start_pdcp_pdu_processing();
   }
 
   if (not msg.ng_ran_bearer_context_mod_request.has_value()) {

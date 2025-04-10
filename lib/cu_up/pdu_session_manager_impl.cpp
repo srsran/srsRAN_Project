@@ -629,6 +629,32 @@ void pdu_session_manager_impl::update_security_config(const security::sec_as_con
   }
 }
 
+void pdu_session_manager_impl::stop_pdcp_pdu_processing()
+{
+  logger.log_debug("Awaiting all crypto tasks to finish in UE");
+
+  for (const auto& [psi, pdu_session] : pdu_sessions) {
+    for (const auto& [drb_id, drb] : pdu_session->drbs) {
+      // reestablish rx and configure rx security
+      auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
+      pdcp_rx_ctrl.stop_pdu_processing();
+    }
+  }
+}
+
+void pdu_session_manager_impl::start_pdcp_pdu_processing()
+{
+  logger.log_debug("Awaiting all crypto tasks to finish in UE");
+
+  for (const auto& [psi, pdu_session] : pdu_sessions) {
+    for (const auto& [drb_id, drb] : pdu_session->drbs) {
+      // reestablish rx and configure rx security
+      auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
+      pdcp_rx_ctrl.start_pdu_processing();
+    }
+  }
+}
+
 async_task<void> pdu_session_manager_impl::await_crypto_rx_all_pdu_sessions()
 {
   logger.log_debug("Awaiting all crypto tasks to finish in UE");
