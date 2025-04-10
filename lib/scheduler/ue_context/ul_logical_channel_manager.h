@@ -88,11 +88,20 @@ public:
   /// \brief Update UL BSR for a given LCG-ID.
   void handle_bsr_indication(const ul_bsr_indication_message& msg)
   {
+    // This is the maximum bounded value that can be reported by the BSR, as per TS 38.321, Table 6.1.3.1-1.
+    static constexpr unsigned max_short_bsr = 150000;
     // We apply this limit to avoid potential overflows.
     static constexpr unsigned max_buffer_status = 1U << 24U;
     for (const auto& lcg_report : msg.reported_lcgs) {
-      groups[lcg_report.lcg_id].buf_st            = std::min(lcg_report.nof_bytes, max_buffer_status);
-      groups[lcg_report.lcg_id].sched_bytes_accum = 0;
+      // In the scheduler, we use 300000 to indicate the max (unbounded) S-BSR value; therefore, if the short or short
+      // truncated BSRs report a value that is > 150000 and the current status of the lcg_id is > 150000, we can't
+      // update buf_st, as the actual UE BSR (buf_st) could be much bigger than the max (unbounded) S-BSR reported
+      // value.
+      if (msg.type == bsr_format::LONG_BSR or msg.type == bsr_format::LONG_TRUNC_BSR or
+          groups[lcg_report.lcg_id].buf_st <= max_short_bsr or lcg_report.nof_bytes <= max_short_bsr) {
+        groups[lcg_report.lcg_id].buf_st            = std::min(lcg_report.nof_bytes, max_buffer_status);
+        groups[lcg_report.lcg_id].sched_bytes_accum = 0;
+      }
     }
   }
 
