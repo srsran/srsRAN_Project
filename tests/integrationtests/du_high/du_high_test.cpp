@@ -389,3 +389,42 @@ TEST_F(du_high_tester,
       },
       100));
 }
+
+TEST_F(du_high_tester, when_reestablishment_takes_place_then_previous_ue_capabilities_are_considered_in_config)
+{
+  // Create UE1.
+  rnti_t rnti1 = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti1));
+  ASSERT_TRUE(run_rrc_setup(rnti1));
+  ASSERT_TRUE(run_ue_context_setup(rnti1));
+
+  // CU-UP forwards many DRB PDUs.
+  const unsigned nof_pdcp_pdus = 100, pdcp_pdu_size = 32;
+  for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+    nru_dl_message f1u_pdu{
+        .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
+    cu_up_sim.bearers.begin()->second.rx_notifier->on_new_pdu(f1u_pdu);
+  }
+
+  // Check QAM256 MCS table is used.
+  const unsigned nof_slots_test = 1000;
+  ASSERT_TRUE(this->run_until(
+      [this, rnti1]() {
+        auto* pdsch = find_ue_pdsch_with_lcid(rnti1, LCID_MIN_DRB, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
+        return pdsch != nullptr and pdsch->pdsch_cfg.codewords[0].mcs_table == pdsch_mcs_table::qam256;
+      },
+      nof_slots_test));
+
+  // Run Reestablishment
+  rnti_t rnti2 = to_rnti(0x4602);
+  ASSERT_TRUE(add_ue(rnti2));
+  ASSERT_TRUE(run_rrc_reestablishment(rnti2, rnti1));
+
+  // Check QAM256 MCS table is used after RRC Reestablishment (the UE capabilities were not forgotten).
+  ASSERT_TRUE(this->run_until(
+      [this, rnti2]() {
+        auto* pdsch = find_ue_pdsch_with_lcid(rnti2, LCID_MIN_DRB, phy.cells[0].last_dl_res.value().dl_res->ue_grants);
+        return pdsch != nullptr and pdsch->pdsch_cfg.codewords[0].mcs_table == pdsch_mcs_table::qam256;
+      },
+      nof_slots_test));
+}
