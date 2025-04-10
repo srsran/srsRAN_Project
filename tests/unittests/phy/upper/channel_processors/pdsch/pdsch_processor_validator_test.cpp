@@ -139,7 +139,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.bwp_start_rb           = 0;
        pdu.bwp_size_rb            = 52;
        pdu.freq_alloc             = rb_allocation::make_type1(0, 52);
-       pdu.freq_alloc = rb_allocation::make_type1(0, 52, vrb_to_prb_mapper::create_non_interleaved_common_ss(1));
+       pdu.freq_alloc             = rb_allocation::make_type1(0, 52, vrb_to_prb::create_non_interleaved_common_ss(1));
        return pdu;
      },
      R"(Invalid BWP configuration, i\.e\., \[0, 52\) for the given RB allocation, i\.e\., \[1, 53\)\.)"},
@@ -148,7 +148,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.bwp_start_rb           = 0;
        pdu.bwp_size_rb            = 52;
        pdu.freq_alloc             = rb_allocation::make_type1(0, 52);
-       pdu.freq_alloc = rb_allocation::make_type1(0, 52, vrb_to_prb_mapper::create_interleaved_common(1, 0, 52));
+       pdu.freq_alloc = rb_allocation::make_type1(0, 52, vrb_to_prb::create_interleaved_common_ss(1, 0, 52));
        return pdu;
      },
      R"(Invalid BWP configuration, i\.e\., \[0, 52\) for the given RB allocation, i\.e\., non-contiguous\.)"},
@@ -157,7 +157,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.bwp_start_rb           = 0;
        pdu.bwp_size_rb            = 52;
        pdu.freq_alloc             = rb_allocation::make_type1(0, 52);
-       pdu.freq_alloc = rb_allocation::make_type1(0, 52, vrb_to_prb_mapper::create_interleaved_coreset0(1, 52));
+       pdu.freq_alloc             = rb_allocation::make_type1(0, 52, vrb_to_prb::create_interleaved_coreset0(1, 52));
        return pdu;
      },
      R"(Invalid BWP configuration, i\.e\., \[0, 52\) for the given RB allocation, i\.e\., non-contiguous\.)"},

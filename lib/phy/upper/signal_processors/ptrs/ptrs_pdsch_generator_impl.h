@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "srsran/phy/support/re_buffer.h"
 #include "srsran/phy/support/resource_grid_mapper.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
+#include "srsran/ran/ptrs/ptrs_constants.h"
 
 namespace srsran {
 

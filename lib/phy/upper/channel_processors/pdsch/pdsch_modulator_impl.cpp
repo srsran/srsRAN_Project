@@ -43,7 +43,7 @@ void pdsch_modulator_impl::map(resource_grid_writer& grid,
                                const config_t&       config)
 {
   // Get the PRB allocation mask.
-  const prb_bitmap prb_allocation_mask = config.freq_allocation.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
+  const crb_bitmap prb_allocation_mask = config.freq_allocation.get_crb_mask(config.bwp_start_rb, config.bwp_size_rb);
 
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;
@@ -75,7 +75,7 @@ void pdsch_modulator_impl::map(resource_grid_writer& grid,
   reserved.merge(dmrs_pattern);
 
   // Set PDSCH allocation pattern.
-  pdsch_pattern.prb_mask = prb_allocation_mask;
+  pdsch_pattern.prb_mask = static_cast<prb_bitmap>(prb_allocation_mask);
   pdsch_pattern.re_mask  = ~re_prb_mask();
   pdsch_pattern.symbols  = symbols;
   allocation.merge(pdsch_pattern);

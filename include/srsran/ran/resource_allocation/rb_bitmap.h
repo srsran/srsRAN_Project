@@ -76,6 +76,12 @@ inline vrb_bitmap& operator|=(vrb_bitmap& vrb_bits, const vrb_interval& grant)
   return vrb_bits;
 }
 
+inline crb_bitmap prb_to_crb(const crb_interval bwp_crb_lims, const prb_bitmap& prb_bits)
+{
+  // TODO.
+  return static_cast<crb_bitmap>(prb_bits);
+}
+
 } // namespace srsran
 
 namespace fmt {

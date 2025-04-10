@@ -10,13 +10,10 @@
 
 #pragma once
 
-#include "srsran/adt/static_vector.h"
 #include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/phy/support/re_pattern.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
-#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/ptrs/ptrs.h"
-#include "srsran/ran/ptrs/ptrs_constants.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/slot_point.h"
 

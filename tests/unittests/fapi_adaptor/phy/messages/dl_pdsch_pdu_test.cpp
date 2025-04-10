@@ -60,25 +60,27 @@ static rb_allocation make_freq_allocation(fapi::pdsch_trans_type         trasn_t
                                           unsigned                       rb_size)
 {
   // Make VRB-to-PRB mapping.
-  vrb_to_prb_mapper mapper;
+  vrb_to_prb::configuration vrb_to_prb_configuration;
   switch (trasn_type) {
     case fapi::pdsch_trans_type::non_interleaved_common_ss:
-      mapper = vrb_to_prb_mapper::create_non_interleaved_common_ss(coreset_start - bwp_start);
+      vrb_to_prb_configuration = vrb_to_prb::create_non_interleaved_common_ss(coreset_start - bwp_start);
       break;
     case fapi::pdsch_trans_type::non_interleaved_other:
-      mapper = vrb_to_prb_mapper::create_non_interleaved_other();
+      vrb_to_prb_configuration = vrb_to_prb::create_non_interleaved_other();
       break;
     case fapi::pdsch_trans_type::interleaved_common_type0_coreset0:
-      mapper = vrb_to_prb_mapper::create_interleaved_coreset0(coreset_start - bwp_start, initial_bwp_size);
+      vrb_to_prb_configuration = vrb_to_prb::create_interleaved_coreset0(coreset_start - bwp_start, initial_bwp_size);
       break;
     case fapi::pdsch_trans_type::interleaved_common_any_coreset0_present:
-      mapper = vrb_to_prb_mapper::create_interleaved_common(coreset_start - bwp_start, bwp_start, initial_bwp_size);
+      vrb_to_prb_configuration =
+          vrb_to_prb::create_interleaved_common_ss(coreset_start - bwp_start, bwp_start, initial_bwp_size);
       break;
     case fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present:
-      mapper = vrb_to_prb_mapper::create_interleaved_common(coreset_start - bwp_start, bwp_start, bwp_size);
+      vrb_to_prb_configuration =
+          vrb_to_prb::create_interleaved_common_ss(coreset_start - bwp_start, bwp_start, bwp_size);
       break;
     case fapi::pdsch_trans_type::interleaved_other:
-      mapper = vrb_to_prb_mapper::create_interleaved_other(
+      vrb_to_prb_configuration = vrb_to_prb::create_interleaved_other(
           bwp_start, bwp_size, vrb_prb_mapping == fapi::vrb_to_prb_mapping_type::interleaved_rb_size2 ? 2 : 4);
       break;
   }
@@ -95,9 +97,9 @@ static rb_allocation make_freq_allocation(fapi::pdsch_trans_type         trasn_t
       }
     }
 
-    result = rb_allocation::make_type0(vrb_bitmap, mapper);
+    result = rb_allocation::make_type0(vrb_bitmap, vrb_to_prb_configuration);
   } else {
-    result = rb_allocation::make_type1(rb_start, rb_size, mapper);
+    result = rb_allocation::make_type1(rb_start, rb_size, vrb_to_prb_configuration);
   }
 
   return result;

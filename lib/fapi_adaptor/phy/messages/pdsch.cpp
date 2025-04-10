@@ -10,6 +10,7 @@
 
 #include "srsran/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsran/fapi_adaptor/precoding_matrix_repository.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb.h"
 #include "srsran/ran/sch/sch_dmrs_power.h"
 
 using namespace srsran;
@@ -81,8 +82,8 @@ static unsigned get_interleaver_size(fapi::vrb_to_prb_mapping_type vrb_to_prb_ma
   return 0;
 }
 
-/// Constructs the VRB-to-PRB mapper in function of the transmission type parameter of the PDSCH PDU.
-static vrb_to_prb_mapper make_vrb_to_prb_mapper(const fapi::dl_pdsch_pdu& fapi_pdu)
+/// Constructs the VRB-to-PRB configuration in function of the transmission type parameter of the PDSCH PDU.
+static vrb_to_prb::configuration make_vrb_to_prb_config(const fapi::dl_pdsch_pdu& fapi_pdu)
 {
   // BWP i start.
   unsigned N_bwp_i_start = fapi_pdu.bwp_start;
@@ -97,29 +98,29 @@ static vrb_to_prb_mapper make_vrb_to_prb_mapper(const fapi::dl_pdsch_pdu& fapi_p
 
   switch (fapi_pdu.pdsch_maintenance_v3.trans_type) {
     case fapi::pdsch_trans_type::non_interleaved_common_ss:
-      return vrb_to_prb_mapper::create_non_interleaved_common_ss(N_start_coreset);
+      return vrb_to_prb::create_non_interleaved_common_ss(N_start_coreset);
     case fapi::pdsch_trans_type::interleaved_common_type0_coreset0:
-      return vrb_to_prb_mapper::create_interleaved_coreset0(N_start_coreset, N_bwp_init_size);
+      return vrb_to_prb::create_interleaved_coreset0(N_start_coreset, N_bwp_init_size);
     case fapi::pdsch_trans_type::interleaved_common_any_coreset0_present:
-      return vrb_to_prb_mapper::create_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_init_size);
+      return vrb_to_prb::create_interleaved_common_ss(N_start_coreset, N_bwp_i_start, N_bwp_init_size);
     case fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present:
-      return vrb_to_prb_mapper::create_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_i_size);
+      return vrb_to_prb::create_interleaved_common_ss(N_start_coreset, N_bwp_i_start, N_bwp_i_size);
     case fapi::pdsch_trans_type::interleaved_other:
-      return vrb_to_prb_mapper::create_interleaved_other(N_bwp_i_start, N_bwp_i_size, L_i);
+      return vrb_to_prb::create_interleaved_other(N_bwp_i_start, N_bwp_i_size, L_i);
     default:
     case fapi::pdsch_trans_type::non_interleaved_other:
       break;
   }
-  return vrb_to_prb_mapper::create_non_interleaved_other();
+  return vrb_to_prb::create_non_interleaved_other();
 }
 
 /// Fills the rb_allocation parameter of the PDSCH PDU.
 static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_pdsch_pdu& fapi_pdu)
 {
-  vrb_to_prb_mapper mapper = make_vrb_to_prb_mapper(fapi_pdu);
+  vrb_to_prb::configuration vrb_to_prb_config = make_vrb_to_prb_config(fapi_pdu);
 
   if (fapi_pdu.resource_alloc == fapi::resource_allocation_type::type_1) {
-    proc_pdu.freq_alloc = rb_allocation::make_type1(fapi_pdu.rb_start, fapi_pdu.rb_size, mapper);
+    proc_pdu.freq_alloc = rb_allocation::make_type1(fapi_pdu.rb_start, fapi_pdu.rb_size, vrb_to_prb_config);
     return;
   }
 
@@ -133,7 +134,7 @@ static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const fapi::dl_
     }
   }
 
-  proc_pdu.freq_alloc = rb_allocation::make_type0(vrb_bitmap, mapper);
+  proc_pdu.freq_alloc = rb_allocation::make_type0(vrb_bitmap, vrb_to_prb_config);
 }
 
 void srsran::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t&            proc_pdu,

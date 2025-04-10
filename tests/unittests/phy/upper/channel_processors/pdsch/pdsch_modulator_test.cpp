@@ -40,7 +40,7 @@ int main()
 
   for (const test_case_t& test_case : pdsch_modulator_test_data) {
     bounded_bitset<MAX_RB> prb_mask =
-        test_case.config.freq_allocation.get_prb_mask(test_case.config.bwp_start_rb, test_case.config.bwp_size_rb);
+        test_case.config.freq_allocation.get_crb_mask(test_case.config.bwp_start_rb, test_case.config.bwp_size_rb);
     int prb_idx_high = prb_mask.find_highest();
     TESTASSERT(prb_idx_high > 1);
     unsigned max_prb   = static_cast<unsigned>(prb_idx_high + 1);

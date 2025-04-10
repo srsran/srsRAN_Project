@@ -13,6 +13,7 @@
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/shared_resource_grid.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
 

@@ -14,6 +14,7 @@
 #pragma once
 
 #include "srsran/instrumentation/traces/du_traces.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
 #include "srsran/ran/dmrs.h"
@@ -31,7 +32,7 @@ pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const
 {
   trace_point process_dmrs_tp = l1_tracer.now();
 
-  prb_bitmap rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  crb_bitmap rb_mask_bitset = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Select the DM-RS reference point.
   unsigned dmrs_reference_point_k_rb = 0;
@@ -48,7 +49,7 @@ pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const
   dmrs_config.n_scid               = pdu.n_scid;
   dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
   dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
-  dmrs_config.rb_mask              = rb_mask_bitset;
+  dmrs_config.rb_mask              = static_cast<prb_bitmap>(rb_mask_bitset);
   dmrs_config.precoding            = pdu.precoding;
 
   // Put DM-RS.
@@ -69,7 +70,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
   // Extract PT-RS configuration parameters.
   const pdsch_processor::ptrs_configuration& ptrs = *pdu.ptrs;
 
-  prb_bitmap rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  crb_bitmap rb_mask_bitset = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Select the DM-RS reference point.
   unsigned ptrs_reference_point_k_rb = 0;
@@ -113,7 +114,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
 inline unsigned pdsch_compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
 {
   // Get PRB mask.
-  prb_bitmap prb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  crb_bitmap prb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Get number of PRB.
   unsigned nof_prb = prb_mask.count();
