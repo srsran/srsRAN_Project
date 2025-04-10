@@ -595,7 +595,8 @@ static void configure_cli11_qos_scheduler_expert_args(CLI::App& app, time_qos_sc
       ->capture_default_str();
 }
 
-static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_scheduler_expert_config& expert_params)
+static void configure_cli11_policy_scheduler_expert_args(CLI::App&                                      app,
+                                                         std::optional<policy_scheduler_expert_config>& expert_params)
 {
   static time_qos_scheduler_expert_config qos_sched_expert_cfg;
   CLI::App*                               qos_sched_cfg_subcmd =
@@ -608,6 +609,15 @@ static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_s
     }
   };
   qos_sched_cfg_subcmd->parse_complete_callback(qos_sched_verify_callback);
+
+  CLI::App* rr_sched_cfg_subcmd =
+      add_subcommand(app, "rr_sched", "Round-robin policy scheduler expert configuration")->configurable();
+  rr_sched_cfg_subcmd->parse_complete_callback([&]() {
+    CLI::App* rr_sched_sub_cmd = app.get_subcommand("rr_sched");
+    if (rr_sched_sub_cmd->count() != 0) {
+      expert_params = time_rr_scheduler_expert_config{};
+    }
+  });
 }
 
 static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit_ta_sched_expert_config& ta_params)
@@ -643,7 +653,10 @@ static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit
 static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_scheduler_expert_config& expert_params)
 {
   CLI::App* policy_sched_cfg_subcmd =
-      add_subcommand(app, "policy_sched_cfg", "Policy scheduler expert configuration")->configurable();
+      add_subcommand(app,
+                     "policy_sched_cfg",
+                     "Policy scheduler expert configuration. By default, time-domain round-robin is used.")
+          ->configurable();
   configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params.policy_sched_expert_cfg);
   CLI::App* ta_sched_cfg_subcmd =
       add_subcommand(app, "ta_sched_cfg", "Timing Advance MAC CE scheduling expert configuration")->configurable();
@@ -1431,7 +1444,11 @@ static void configure_cli11_slicing_scheduling_args(CLI::App&                   
 
   // Policy scheduler configuration.
   CLI::App* policy_sched_cfg_subcmd =
-      add_subcommand(app, "policy_sched_cfg", "Policy scheduler configuration for the slice")->configurable();
+      add_subcommand(
+          app,
+          "policy_sched_cfg",
+          "Policy scheduler configuration for the slice. If not specified, the general scheduler policy is used")
+          ->configurable();
   configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, slice_sched_params.slice_policy_sched_cfg);
 }
 

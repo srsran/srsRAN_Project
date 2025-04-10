@@ -78,7 +78,7 @@ struct du_high_unit_ta_sched_expert_config {
 /// Scheduler expert configuration.
 struct du_high_unit_scheduler_expert_config {
   /// Policy scheduler expert parameters.
-  policy_scheduler_expert_config policy_sched_expert_cfg = time_rr_scheduler_expert_config{};
+  std::optional<policy_scheduler_expert_config> policy_sched_expert_cfg;
   /// Timing Advance MAC CE scheduling expert configuration.
   du_high_unit_ta_sched_expert_config ta_sched_cfg;
 };
@@ -773,8 +773,8 @@ struct du_high_unit_cell_slice_sched_config {
   unsigned max_prb_policy_ratio = 100;
   /// Sets the slice priority. Values: {0,...,254}. 255 is reserved for the SRBs.
   unsigned priority = 0;
-  /// Policy scheduler parameters for the slice.
-  policy_scheduler_expert_config slice_policy_sched_cfg = time_rr_scheduler_expert_config{};
+  /// Policy scheduler parameters for the slice. Default: Time-domain round robin.
+  std::optional<policy_scheduler_expert_config> slice_policy_sched_cfg;
 };
 
 /// Slice configuration for a cell.

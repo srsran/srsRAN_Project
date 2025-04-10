@@ -280,6 +280,29 @@ static void fill_csi_resources(serving_cell_config& out_cell, const du_high_unit
   out_cell.init_dl_bwp.pdsch_cfg->p_zp_csi_rs_res    = csi_helper::make_periodic_zp_csi_rs_resource_set(csi_params);
 }
 
+/// Converts and returns the given gnb application configuration to a DU slice RRM policy configuration list.
+static std::vector<slice_rrm_policy_config>
+generate_du_slicing_rrm_policy_config(span<const std::string>                    plmns,
+                                      span<const du_high_unit_cell_slice_config> slice_cfg,
+                                      unsigned                                   nof_cell_crbs,
+                                      const policy_scheduler_expert_config&      default_policy_sched_cfg)
+{
+  std::vector<slice_rrm_policy_config> rrm_policy_cfgs;
+  for (const auto& plmn : plmns) {
+    for (const auto& cfg : slice_cfg) {
+      rrm_policy_cfgs.emplace_back();
+      rrm_policy_cfgs.back().rrc_member.s_nssai =
+          s_nssai_t{slice_service_type{cfg.sst}, slice_differentiator::create(cfg.sd).value()};
+      rrm_policy_cfgs.back().rrc_member.plmn_id = plmn_identity::parse(plmn).value();
+      rrm_policy_cfgs.back().min_prb            = (nof_cell_crbs * cfg.sched_cfg.min_prb_policy_ratio) / 100;
+      rrm_policy_cfgs.back().max_prb            = (nof_cell_crbs * cfg.sched_cfg.max_prb_policy_ratio) / 100;
+      rrm_policy_cfgs.back().priority           = cfg.sched_cfg.priority;
+      rrm_policy_cfgs.back().policy_sched_cfg = cfg.sched_cfg.slice_policy_sched_cfg.value_or(default_policy_sched_cfg);
+    }
+  }
+  return rrm_policy_cfgs;
+}
+
 std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_high_unit_config& config)
 {
   std::vector<srs_du::du_cell_config> out_cfg;
@@ -815,7 +838,8 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
 
     // Slicing configuration.
     std::vector<std::string> cell_plmns{base_cell.plmn};
-    out_cell.rrm_policy_members = generate_du_slicing_rrm_policy_config(cell_plmns, base_cell.slice_cfg, nof_crbs);
+    out_cell.rrm_policy_members = generate_du_slicing_rrm_policy_config(
+        cell_plmns, base_cell.slice_cfg, nof_crbs, *cell.cell.sched_expert_cfg.policy_sched_expert_cfg);
 
     error_type<std::string> error = is_du_cell_config_valid(out_cfg.back());
     if (!error) {
@@ -851,27 +875,6 @@ static rlc_am_config generate_du_rlc_am_config(const du_high_unit_rlc_am_config&
     out_rlc.rx.max_sn_per_status = in_cfg.rx.max_sn_per_status;
   }
   return out_rlc;
-}
-
-std::vector<slice_rrm_policy_config>
-srsran::generate_du_slicing_rrm_policy_config(span<const std::string>                    plmns,
-                                              span<const du_high_unit_cell_slice_config> slice_cfg,
-                                              unsigned                                   nof_cell_crbs)
-{
-  std::vector<slice_rrm_policy_config> rrm_policy_cfgs;
-  for (const auto& plmn : plmns) {
-    for (const auto& cfg : slice_cfg) {
-      rrm_policy_cfgs.emplace_back();
-      rrm_policy_cfgs.back().rrc_member.s_nssai =
-          s_nssai_t{slice_service_type{cfg.sst}, slice_differentiator::create(cfg.sd).value()};
-      rrm_policy_cfgs.back().rrc_member.plmn_id = plmn_identity::parse(plmn).value();
-      rrm_policy_cfgs.back().min_prb            = (nof_cell_crbs * cfg.sched_cfg.min_prb_policy_ratio) / 100;
-      rrm_policy_cfgs.back().max_prb            = (nof_cell_crbs * cfg.sched_cfg.max_prb_policy_ratio) / 100;
-      rrm_policy_cfgs.back().priority           = cfg.sched_cfg.priority;
-      rrm_policy_cfgs.back().policy_sched_cfg   = cfg.sched_cfg.slice_policy_sched_cfg;
-    }
-  }
-  return rrm_policy_cfgs;
 }
 
 std::map<five_qi_t, srs_du::du_qos_config> srsran::generate_du_qos_config(const du_high_unit_config& config)
@@ -1022,8 +1025,9 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   out_cfg.ue.olla_max_ul_snr_offset           = pusch.olla_max_snr_offset;
   out_cfg.ue.pdsch_crb_limits                 = {pdsch.start_rb, pdsch.end_rb};
   out_cfg.ue.pusch_crb_limits                 = {pusch.start_rb, pusch.end_rb};
-  if (std::holds_alternative<time_qos_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg)) {
-    out_cfg.ue.strategy_cfg = app_sched_expert_cfg.policy_sched_expert_cfg;
+  if (app_sched_expert_cfg.policy_sched_expert_cfg.has_value() and
+      std::holds_alternative<time_qos_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg.value())) {
+    out_cfg.ue.strategy_cfg = *app_sched_expert_cfg.policy_sched_expert_cfg;
   }
   out_cfg.ue.ul_power_ctrl.enable_pusch_cl_pw_control      = pusch.enable_closed_loop_pw_control;
   out_cfg.ue.ul_power_ctrl.enable_phr_bw_adaptation        = pusch.enable_phr_bw_adaptation;
