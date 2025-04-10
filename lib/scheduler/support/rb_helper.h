@@ -11,13 +11,9 @@
 #pragma once
 
 #include "srsran/ran/pdcch/dci_format.h"
-#include "srsran/ran/pdcch/search_space.h"
-#include "srsran/ran/rnti.h"
-#include "srsran/scheduler/config/bwp_configuration.h"
 #include "srsran/scheduler/result/vrb_alloc.h"
 
-namespace srsran {
-namespace rb_helper {
+namespace srsran::rb_helper {
 
 /// \brief Conversion of CRBs to VRBs as per TS38.211, clause 7.3.1.6.
 /// \param crbs CRB interval to be converted to VRB interval.
@@ -115,5 +111,4 @@ vrb_interval find_next_empty_interval(const vrb_bitmap& used_vrb_bitmap,
 vrb_interval find_empty_interval_of_length(const vrb_bitmap& used_vrb_bitmap,
                                            unsigned          nof_vrbs,
                                            vrb_interval      search_limits = {0, MAX_NOF_PRBS});
-} // namespace rb_helper
-} // namespace srsran
+} // namespace srsran::rb_helper

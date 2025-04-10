@@ -9,7 +9,7 @@
  */
 
 #include "intra_slice_scheduler.h"
-#include "../support/pdsch/pdsch_resource_allocation.h"
+#include "srsran/ran/pdcch/search_space.h"
 
 using namespace srsran;
 
@@ -164,9 +164,13 @@ void intra_slice_scheduler::dl_sched(dl_ran_slice_candidate slice, scheduler_pol
 void intra_slice_scheduler::ul_sched(ul_ran_slice_candidate slice, scheduler_policy& ul_policy)
 {
   srsran_sanity_check(slice.remaining_rbs() > 0, "Invalid slice slice");
+  if (slice.get_slice_ues().empty()) {
+    return;
+  }
+
   if (slice.get_slot_tx() != pusch_slot) {
     pusch_slot = slice.get_slot_tx();
-    update_used_ul_vrbs();
+    update_used_ul_vrbs(slice);
   }
 
   // Determine max number of UE grants that can be scheduled in this slot.
@@ -267,8 +271,7 @@ unsigned intra_slice_scheduler::schedule_dl_retx_candidates(dl_ran_slice_candida
     }
 
     // Perform DL grant allocation, including PDCCH, PDSCH and UCI.
-    auto result =
-        ue_alloc.allocate_dl_grant(ue_retx_dl_grant_request{u, pdsch_slot, h, used_dl_vrbs, dl_bwp_crb_limits});
+    auto result = ue_alloc.allocate_dl_grant(ue_retx_dl_grant_request{u, pdsch_slot, h, used_dl_vrbs});
     if (not result.has_value() and result.error() == dl_alloc_failure_cause::skip_slot) {
       // Received signal to stop allocations in the slot.
       break;
@@ -316,8 +319,7 @@ unsigned intra_slice_scheduler::schedule_ul_retx_candidates(ul_ran_slice_candida
     }
 
     // Allocate PDCCH and PUSCH.
-    auto result =
-        ue_alloc.allocate_ul_grant(ue_retx_ul_grant_request{u, pusch_slot, h, used_ul_vrbs, ul_bwp_crb_limits});
+    auto result = ue_alloc.allocate_ul_grant(ue_retx_ul_grant_request{u, pusch_slot, h, used_ul_vrbs});
     if (not result.has_value() and result.error() == alloc_status::skip_slot) {
       // Received signal to stop allocations in the slot.
       break;
@@ -449,8 +451,8 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
     }
 
     // Create DL grant builder.
-    auto result = ue_alloc.allocate_dl_grant(
-        ue_newtx_dl_grant_request{*ue_candidate.ue, pdsch_slot, dl_bwp_crb_limits, ue_candidate.pending_bytes});
+    auto result =
+        ue_alloc.allocate_dl_grant(ue_newtx_dl_grant_request{*ue_candidate.ue, pdsch_slot, ue_candidate.pending_bytes});
 
     if (result.has_value()) {
       // Allocation was successful. Move grant builder to list of pending newTx grants.
@@ -511,8 +513,10 @@ unsigned intra_slice_scheduler::schedule_dl_newtx_candidates(dl_ran_slice_candid
 
     // Compute the corresponding CRBs.
     // TODO: support interleaving.
+    constexpr static search_space_id            ue_ded_ss_id = to_search_space_id(2);
+    const auto&                                 ss_info = grant_builder.ue().get_cc().cfg().search_space(ue_ded_ss_id);
     const std::pair<crb_interval, crb_interval> alloc_crbs = {
-        prb_to_crb(dl_bwp_crb_limits, static_cast<prb_interval>(alloc_vrbs)), {}};
+        prb_to_crb(ss_info.dl_crb_lims, static_cast<prb_interval>(alloc_vrbs)), {}};
 
     // Save CRBs, MCS and RI.
     grant_builder.set_pdsch_params(alloc_vrbs, alloc_crbs);
@@ -559,8 +563,8 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
   unsigned rb_count = 0;
   for (const auto& ue_candidate : newtx_candidates) {
     // Create UL grant builder.
-    auto result = ue_alloc.allocate_ul_grant(
-        ue_newtx_ul_grant_request{*ue_candidate.ue, pusch_slot, ul_bwp_crb_limits, ue_candidate.pending_bytes});
+    auto result =
+        ue_alloc.allocate_ul_grant(ue_newtx_ul_grant_request{*ue_candidate.ue, pusch_slot, ue_candidate.pending_bytes});
 
     if (result.has_value()) {
       // Allocation was successful. Move grant builder to list of pending newTx grants.
@@ -617,7 +621,7 @@ unsigned intra_slice_scheduler::schedule_ul_newtx_candidates(ul_ran_slice_candid
     }
 
     // Save CRBs, MCS and RI.
-    grant_builder.set_pusch_params(alloc_vrbs, ul_bwp_crb_limits);
+    grant_builder.set_pusch_params(alloc_vrbs);
 
     // Fill used CRBs.
     unsigned nof_rbs_alloc = alloc_vrbs.length();
@@ -644,20 +648,13 @@ bool intra_slice_scheduler::can_allocate_pdsch(const slice_ue& u, const ue_cell&
 {
   // Check if PDCCH/PDSCH is possible for this slot (e.g. not in UL slot or measGap)
   srsran_assert(not ue_cc.is_in_fallback_mode(), "Slice UE cannot be in fallback mode");
-  if (not ue_cc.is_pdsch_enabled(pdcch_slot, pdsch_slot)) {
-    return false;
-  }
-  return true;
+  return ue_cc.is_pdsch_enabled(pdcch_slot, pdsch_slot);
 }
 
 bool intra_slice_scheduler::can_allocate_pusch(const slice_ue& u, const ue_cell& ue_cc) const
 {
   // Check if PDCCH/PUSCH are possible for the provided slots (e.g. not in UL slot or measGap)
-  if (not ue_cc.is_pusch_enabled(pdcch_slot, pusch_slot)) {
-    return false;
-  }
-
-  return true;
+  return ue_cc.is_pusch_enabled(pdcch_slot, pusch_slot);
 }
 
 std::optional<ue_newtx_candidate> intra_slice_scheduler::create_newtx_dl_candidate(const slice_ue& u) const
@@ -730,17 +727,17 @@ unsigned intra_slice_scheduler::max_pdschs_to_alloc(const dl_ran_slice_candidate
   int pdschs_to_alloc = slice.get_slice_ues().size();
 
   // Determine how many UE DL PDUs can be allocated in this slot.
-  auto& pdsch_res = cell_alloc[pdsch_slot].result;
+  const auto& pdsch_res = cell_alloc[pdsch_slot].result;
   pdschs_to_alloc = std::min(pdschs_to_alloc, static_cast<int>(MAX_UE_PDUS_PER_SLOT - pdsch_res.dl.ue_grants.size()));
   if (pdschs_to_alloc <= 0) {
     return 0;
   }
 
   // Determine how many PDCCHs can be allocated in this slot.
-  auto& pdcch_res = cell_alloc[pdcch_slot].result;
-  pdschs_to_alloc = std::min({pdschs_to_alloc,
-                              static_cast<int>(MAX_DL_PDCCH_PDUS_PER_SLOT - pdcch_res.dl.dl_pdcchs.size()),
-                              static_cast<int>(expert_cfg.max_pdcch_alloc_attempts_per_slot - dl_attempts_count)});
+  const auto& pdcch_res = cell_alloc[pdcch_slot].result;
+  pdschs_to_alloc       = std::min({pdschs_to_alloc,
+                                    static_cast<int>(MAX_DL_PDCCH_PDUS_PER_SLOT - pdcch_res.dl.dl_pdcchs.size()),
+                                    static_cast<int>(expert_cfg.max_pdcch_alloc_attempts_per_slot - dl_attempts_count)});
   if (pdschs_to_alloc <= 0) {
     return 0;
   }
@@ -801,33 +798,37 @@ unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate
 
 void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& slice)
 {
-  const slice_ue_repository& slice_ues = slice.get_slice_ues();
-
   // The mapping from CRBs to VRBs is different for UEs configured with a common SearchSpace that uses DCI 1_0.
   // [Implementation defined] We assume all the UEs of this cell are configured the same way in that regard.
-  const search_space_info& ss_info       = slice_ues.begin()->get_cc().cfg().search_space(to_search_space_id(2));
-  const auto&              init_dl_bwp   = cell_alloc.cfg.dl_cfg_common.init_dl_bwp;
-  const auto&              active_dl_bwp = ss_info.bwp.value().dl_common.value().value();
-  const auto&              ss_cfg        = *ss_info.cfg;
-  const auto&              cs_cfg        = *ss_info.coreset;
-  dl_bwp_crb_limits =
-      pdsch_helper::get_ra_crb_limits(ss_info.get_dl_dci_format(), init_dl_bwp, active_dl_bwp, ss_cfg, cs_cfg);
+  const slice_ue_repository&       slice_ues    = slice.get_slice_ues();
+  static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
+  const search_space_info&         ss_info      = slice_ues.begin()->get_cc().cfg().search_space(ue_ded_ss_id);
+  const auto&                      dl_crb_lims  = ss_info.dl_crb_lims;
 
   // [Implementation defined] We use the common PDSCH TD resources as a reference for the computation of RBs
   // unavailable for PDSCH. This assumes that these resources are not colliding with PDCCH.
+  const auto&              init_dl_bwp      = cell_alloc.cfg.dl_cfg_common.init_dl_bwp;
   const ofdm_symbol_range& symbols_to_check = init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols;
+
   // TODO: perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
-  used_dl_vrbs = static_cast<vrb_bitmap>(cell_alloc[pdsch_slot].dl_res_grid.used_prbs(
-      init_dl_bwp.generic_params.scs, dl_bwp_crb_limits, symbols_to_check));
+  used_dl_vrbs = static_cast<vrb_bitmap>(
+      cell_alloc[pdsch_slot].dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs, dl_crb_lims, symbols_to_check));
 }
 
-void intra_slice_scheduler::update_used_ul_vrbs()
+void intra_slice_scheduler::update_used_ul_vrbs(const ul_ran_slice_candidate& slice)
 {
+  // The mapping from CRBs to VRBs is different for UEs configured with a common SearchSpace that uses DCI 1_0.
+  // [Implementation defined] We assume all the UEs of this cell are configured the same way in that regard.
+  const slice_ue_repository&       slice_ues   = slice.get_slice_ues();
+  static constexpr search_space_id ue_ded_ss   = to_search_space_id(2);
+  const search_space_info&         ss_info     = slice_ues.begin()->get_cc().cfg().search_space(ue_ded_ss);
+  const auto&                      ul_crb_lims = ss_info.ul_crb_lims;
+
   // (Implementation-defined) We use the common PUSCH TD resources as a reference for the computation of RBs unavailable
   // for PDSCH. This assumes that these resources are not colliding with SRS.
   const auto&              init_ul_bwp      = cell_alloc.cfg.ul_cfg_common.init_ul_bwp;
   const ofdm_symbol_range& symbols_to_check = init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols;
-  used_ul_vrbs                              = static_cast<vrb_bitmap>(cell_alloc[pusch_slot].ul_res_grid.used_prbs(
-      init_ul_bwp.generic_params.scs, init_ul_bwp.generic_params.crbs, symbols_to_check));
-  ul_bwp_crb_limits                         = init_ul_bwp.generic_params.crbs;
+
+  used_ul_vrbs = static_cast<vrb_bitmap>(
+      cell_alloc[pusch_slot].ul_res_grid.used_prbs(init_ul_bwp.generic_params.scs, ul_crb_lims, symbols_to_check));
 }

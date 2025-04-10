@@ -14,6 +14,7 @@
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
+#include "lib/scheduler/slicing/ran_slice_instance.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
@@ -142,8 +143,7 @@ protected:
                                std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
     const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
-    auto        result      = alloc.allocate_dl_grant(
-        ue_newtx_dl_grant_request{user, current_slot, init_dl_bwp.generic_params.crbs, pending_bytes});
+    auto        result      = alloc.allocate_dl_grant(ue_newtx_dl_grant_request{user, current_slot, pending_bytes});
     if (not result.has_value()) {
       return;
     }
@@ -181,8 +181,7 @@ protected:
                                        std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
     const auto& init_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp;
-    auto        result      = alloc.allocate_ul_grant(
-        ue_newtx_ul_grant_request{user, pusch_slot, init_ul_bwp.generic_params.crbs, pending_bytes});
+    auto        result      = alloc.allocate_ul_grant(ue_newtx_ul_grant_request{user, pusch_slot, pending_bytes});
     if (not result.has_value()) {
       return result.error();
     }
@@ -194,7 +193,7 @@ protected:
                                                    init_ul_bwp.generic_params.crbs,
                                                    init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols));
     vrb_interval vrbs = builder.recommended_vrbs(used_ul_vrbs, max_nof_rbs.value_or(MAX_NOF_PRBS));
-    builder.set_pusch_params(vrbs, init_ul_bwp.generic_params.crbs);
+    builder.set_pusch_params(vrbs);
     used_ul_vrbs.fill(vrbs.start(), vrbs.stop());
     return alloc_status::success;
   }

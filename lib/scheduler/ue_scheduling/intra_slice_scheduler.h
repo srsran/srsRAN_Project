@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../policy/scheduler_policy.h"
+#include "../slicing/ran_slice_candidate.h"
 #include "ue_cell_grid_allocator.h"
 
 namespace srsran {
@@ -40,7 +41,7 @@ public:
   void dl_sched(dl_ran_slice_candidate slice, scheduler_policy& dl_policy);
 
   /// Schedule UL grants for a given slice candidate.
-  void ul_sched(ul_ran_slice_candidate slice, scheduler_policy& dl_policy);
+  void ul_sched(ul_ran_slice_candidate slice, scheduler_policy& ul_policy);
 
 private:
   /// Context for a given slice scheduling.
@@ -67,7 +68,7 @@ private:
 
   void prepare_newtx_dl_candidates(const dl_ran_slice_candidate& slice, scheduler_policy& dl_policy);
 
-  void prepare_newtx_ul_candidates(const ul_ran_slice_candidate& slice, scheduler_policy& dl_policy);
+  void prepare_newtx_ul_candidates(const ul_ran_slice_candidate& slice, scheduler_policy& ul_policy);
 
   unsigned schedule_dl_retx_candidates(dl_ran_slice_candidate& slice, unsigned max_ue_grants_to_alloc);
 
@@ -87,7 +88,7 @@ private:
 
   // Called when bitmap of used VRBs needs to be recalculated.
   void update_used_dl_vrbs(const dl_ran_slice_candidate& slice);
-  void update_used_ul_vrbs();
+  void update_used_ul_vrbs(const ul_ran_slice_candidate& slice);
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_resource_allocator&    cell_alloc;
@@ -114,12 +115,10 @@ private:
   // UE candidates for on-going scheduling.
   std::vector<ue_newtx_candidate> newtx_candidates;
 
-  slot_point   pdsch_slot;
-  slot_point   pusch_slot;
-  vrb_bitmap   used_dl_vrbs;
-  crb_interval dl_bwp_crb_limits;
-  vrb_bitmap   used_ul_vrbs;
-  crb_interval ul_bwp_crb_limits;
+  slot_point pdsch_slot;
+  slot_point pusch_slot;
+  vrb_bitmap used_dl_vrbs;
+  vrb_bitmap used_ul_vrbs;
 
   // Grants being built for the current slice.
   std::vector<ue_cell_grid_allocator::dl_newtx_grant_builder> pending_dl_newtxs;
