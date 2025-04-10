@@ -456,21 +456,23 @@ public:
     // Lock before changing the pool entries.
     std::lock_guard<std::mutex> lock(mutex);
 
-    pool_entry& cp_entry = get_pool_entry(slot_point, 0);
-    // Clear buffers with UL Control-Plane messages.
-    ofh_pool_message_type msg_type{ofh::message_type::control_plane, ofh::data_direction::uplink};
+    for (unsigned symbol = 0; symbol != NOF_OFDM_SYM_PER_SLOT_NORMAL_CP; ++symbol) {
+      pool_entry& cp_entry = get_pool_entry(slot_point, symbol);
+      // Clear buffers with UL Control-Plane messages.
+      ofh_pool_message_type msg_type{ofh::message_type::control_plane, ofh::data_direction::uplink};
 
-    auto ul_cp_buffers = cp_entry.get_prepared_buffers(msg_type);
-    for (const auto& used_buf : ul_cp_buffers) {
-      if (used_buf.timestamp.get_slot() == slot_point) {
-        continue;
+      auto ul_cp_buffers = cp_entry.get_prepared_buffers(msg_type);
+      for (const auto& used_buf : ul_cp_buffers) {
+        if (used_buf.timestamp.get_slot() == slot_point) {
+          continue;
+        }
+        logger.warning("Sector #{}: Detected '{}' late uplink C-Plane messages in the transmitter queue for slot '{}'",
+                       sector,
+                       ul_cp_buffers.size(),
+                       used_buf.timestamp.get_slot());
+        cp_entry.reset_buffers(msg_type);
+        break;
       }
-      logger.warning("Sector #{}: Detected '{}' late uplink C-Plane messages in the transmitter queue for slot '{}'",
-                     sector,
-                     ul_cp_buffers.size(),
-                     used_buf.timestamp.get_slot());
-      cp_entry.reset_buffers(msg_type);
-      break;
     }
   }
 
