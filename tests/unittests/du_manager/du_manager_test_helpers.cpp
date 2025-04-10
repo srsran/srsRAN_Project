@@ -46,7 +46,8 @@ dummy_ue_resource_configurator_factory::dummy_resource_updater::~dummy_resource_
 du_ue_resource_update_response dummy_ue_resource_configurator_factory::dummy_resource_updater::update(
     du_cell_index_t                       pcell_index,
     const f1ap_ue_context_update_request& upd_req,
-    const du_ue_resource_config*          reestablished_context)
+    const du_ue_resource_config*          reestablished_context,
+    const ue_capability_summary*          reestablished_ue_caps)
 {
   parent.ue_resource_pool[ue_index] = parent.next_context_update_result;
   return parent.next_config_resp;
@@ -55,6 +56,12 @@ du_ue_resource_update_response dummy_ue_resource_configurator_factory::dummy_res
 const du_ue_resource_config& dummy_ue_resource_configurator_factory::dummy_resource_updater::get()
 {
   return parent.ue_resource_pool[ue_index];
+}
+
+const std::optional<ue_capability_summary>&
+dummy_ue_resource_configurator_factory::dummy_resource_updater::ue_capabilities() const
+{
+  return parent.next_ue_caps;
 }
 
 expected<ue_ran_resource_configurator, std::string>

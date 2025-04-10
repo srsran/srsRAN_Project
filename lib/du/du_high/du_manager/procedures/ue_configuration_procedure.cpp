@@ -42,7 +42,8 @@ void ue_configuration_procedure::operator()(coro_context<async_task<f1ap_ue_cont
   }
 
   prev_ue_res_cfg = ue->resources.value();
-  ue_res_cfg_resp = ue->resources.update(ue->pcell_index, request, ue->reestablished_cfg_pending.get());
+  ue_res_cfg_resp = ue->resources.update(
+      ue->pcell_index, request, ue->reestablished_cfg_pending.get(), ue->reestablished_ue_caps_summary.get());
   if (ue_res_cfg_resp.failed()) {
     proc_logger.log_proc_failure("Failed to allocate DU UE resources");
     CORO_EARLY_RETURN(make_ue_config_failure());
@@ -303,6 +304,7 @@ f1ap_ue_context_update_response ue_configuration_procedure::make_ue_config_respo
   }
 
   // > Calculate ASN.1 CellGroupConfig to be sent in DU-to-CU container.
+  ue->reestablished_ue_caps_summary = nullptr;
   asn1::rrc_nr::cell_group_cfg_s asn1_cell_group;
   if (ue->reestablished_cfg_pending != nullptr) {
     // In case of reestablishment, we send the full configuration to the UE but without an SRB1 and with SRB2 and DRBs

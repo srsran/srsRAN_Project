@@ -12,6 +12,7 @@
 
 #include "du_drx_resource_manager.h"
 #include "du_ue_resource_config.h"
+#include "ue_capability_summary.h"
 
 namespace asn1 {
 namespace rrc_nr {
@@ -26,48 +27,6 @@ namespace srsran {
 struct scheduler_expert_config;
 
 namespace srs_du {
-
-/// Flat structure summarizing the decoded ASN.1 UE capabilities.
-struct ue_capability_summary {
-  /// \defgroup default_caps Default parameters.
-  /// @{
-  /// Default PUSCH transmit coherence.
-  static constexpr tx_scheme_codebook_subset default_pusch_tx_coherence = tx_scheme_codebook_subset::non_coherent;
-  /// Default PUSCH maximum number of layers.
-  static constexpr unsigned default_pusch_max_rank = 1;
-  /// Default SRS number of transmit ports.
-  static constexpr unsigned default_nof_srs_tx_ports = 1;
-  /// @}
-
-  /// Contains band specific parameters.
-  struct supported_band {
-    /// Set to true if QAM-256 is supported for PUSCH transmissions.
-    bool pusch_qam256_supported = false;
-    /// \brief PUSCH transmit coherence.
-    ///
-    /// It is given by field \e pusch-TransCoherence in Information Element \e MIMO-ParametersPerBand.
-    ///
-    /// The most limiting transmit codebook subset is selected by default.
-    tx_scheme_codebook_subset pusch_tx_coherence = default_pusch_tx_coherence;
-    /// Maximum PUSCH number of layers.
-    unsigned pusch_max_rank = default_pusch_max_rank;
-    /// Maximum number of ports that can be simultaneously used for transmiting Sounding Reference Signals.
-    uint8_t nof_srs_tx_ports = default_nof_srs_tx_ports;
-  };
-
-  /// Set to true if QAM-256 MCS table are supported for PDSCH transmissions.
-  bool pdsch_qam256_supported = false;
-  /// Set to true if QAM-64 LowSe MCS table are supported for PDSCH transmissions.
-  bool pdsch_qam64lowse_supported = false;
-  /// Set to true if QAM-64 LowSe MCS table are supported for PUSCH transmissions.
-  bool pusch_qam64lowse_supported = false;
-  /// Contains specific bands capabilities.
-  std::unordered_map<nr_band, supported_band> bands;
-  /// Set to true if Long DRX cycle is supported.
-  bool long_drx_cycle_supported = false;
-  /// Set to true if Short DRX cycle is supported.
-  bool short_drx_cycle_supported = false;
-};
 
 /// Helper function to extract a summary of the UE capabilities based on a packed ASN.1 container.
 expected<ue_capability_summary, std::string> decode_ue_nr_cap_container(const byte_buffer& ue_cap_container);
@@ -98,13 +57,24 @@ public:
   /// \param[in] ue_cap_rat_list packed UE capability RAT list container.
   void update(du_ue_resource_config& ue_res_cfg, const byte_buffer& ue_cap_rat_list);
 
+  /// \brief Stores a previously decoded UE capability RAT list container and updates the UE DU-specific resources.
+  /// \param[in/out] ue_res_cfg current UE resource configuration, which will be updated inplace, depending on the UE
+  /// capabilities received.
+  /// \param[in] summary unpacked UE capability RAT list container.
+  void update(du_ue_resource_config& ue_res_cfg, const ue_capability_summary& summary);
+
   /// \brief Called on UE removal, to release its resources.
   void release(du_ue_resource_config& ue_res_cfg);
+
+  /// Retrieve a summary of the UE capabilities.
+  const std::optional<ue_capability_summary>& summary() const { return ue_caps; }
 
 private:
   // Helper function to decode a packed UE capability RAT list. Returns true, if the packed container was successfully
   // decoded and processed.
   bool decode_ue_capability_list(const byte_buffer& ue_cap_rat_list);
+
+  void update_impl(du_ue_resource_config& ue_res_cfg);
 
   pdsch_mcs_table select_pdsch_mcs_table(du_cell_index_t cell_idx) const;
   pusch_mcs_table select_pusch_mcs_table(du_cell_index_t cell_idx) const;

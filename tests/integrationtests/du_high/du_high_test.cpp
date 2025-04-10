@@ -420,6 +420,12 @@ TEST_F(du_high_tester, when_reestablishment_takes_place_then_previous_ue_capabil
   ASSERT_TRUE(add_ue(rnti2));
   ASSERT_TRUE(run_rrc_reestablishment(rnti2, rnti1));
 
+  for (unsigned i = 0; i < nof_pdcp_pdus; ++i) {
+    nru_dl_message f1u_pdu{
+        .t_pdu = test_helpers::create_pdcp_pdu(pdcp_sn_size::size12bits, /* is_srb = */ false, i, pdcp_pdu_size, i)};
+    cu_up_sim.bearers.at(std::make_pair(1, drb_id_t::drb1)).rx_notifier->on_new_pdu(f1u_pdu);
+  }
+
   // Check QAM256 MCS table is used after RRC Reestablishment (the UE capabilities were not forgotten).
   ASSERT_TRUE(this->run_until(
       [this, rnti2]() {

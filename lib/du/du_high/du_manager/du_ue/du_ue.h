@@ -96,6 +96,7 @@ public:
   /// \brief Determines whether this UE is running the RRC Reestablishment procedure and which context was retrieved
   /// from the old UE.
   std::unique_ptr<du_ue_resource_config> reestablished_cfg_pending;
+  std::unique_ptr<ue_capability_summary> reestablished_ue_caps_summary;
 };
 
 } // namespace srs_du

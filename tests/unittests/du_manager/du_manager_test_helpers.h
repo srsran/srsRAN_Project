@@ -327,11 +327,13 @@ public:
   public:
     dummy_resource_updater(dummy_ue_resource_configurator_factory& parent_, du_ue_index_t ue_index_);
     ~dummy_resource_updater();
-    du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
-                                          const f1ap_ue_context_update_request& upd_req,
-                                          const du_ue_resource_config*          reestablished_context) override;
-    void                           config_applied() override {}
-    const du_ue_resource_config&   get() override;
+    du_ue_resource_update_response              update(du_cell_index_t                       pcell_index,
+                                                       const f1ap_ue_context_update_request& upd_req,
+                                                       const du_ue_resource_config*          reestablished_context,
+                                                       const ue_capability_summary*          reestablished_ue_caps) override;
+    void                                        config_applied() override {}
+    const du_ue_resource_config&                get() override;
+    const std::optional<ue_capability_summary>& ue_capabilities() const override;
 
     du_ue_index_t                           ue_index;
     dummy_ue_resource_configurator_factory& parent;
@@ -340,6 +342,7 @@ public:
   std::optional<du_ue_index_t>                   last_ue_index;
   std::optional<du_cell_index_t>                 last_ue_pcell;
   f1ap_ue_context_update_request                 last_ue_ctx_upd;
+  std::optional<ue_capability_summary>           next_ue_caps;
   std::map<du_ue_index_t, du_ue_resource_config> ue_resource_pool;
   du_ue_resource_config                          next_context_update_result;
   du_ue_resource_update_response                 next_config_resp;
