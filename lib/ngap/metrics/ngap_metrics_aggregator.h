@@ -14,10 +14,9 @@
 #include "srsran/ran/s_nssai.h"
 #include <cmath>
 
-namespace srsran {
-namespace srs_cu_cp {
+namespace srsran::srs_cu_cp {
 
-class ngap_metrics_aggregator final
+class ngap_metrics_aggregator
 {
 public:
   void handle_requested_pdu_session(s_nssai_t s_nssai);
@@ -36,5 +35,4 @@ private:
   ngap_metrics aggregated_ngap_metrics;
 };
 
-} // namespace srs_cu_cp
-} // namespace srsran
+} // namespace srsran::srs_cu_cp
