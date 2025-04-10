@@ -64,7 +64,7 @@ struct formatter<srsran::symbol_slot_mask> {
   template <typename FormatContext>
   auto format(const srsran::symbol_slot_mask& mask, FormatContext& ctx) const
   {
-    fmt::format_to(ctx.out(), "{:br}", static_cast<srsran::bounded_bitset<srsran::MAX_NSYMB_PER_SLOT>>(mask));
+    fmt::format_to(ctx.out(), "{:i}", static_cast<srsran::bounded_bitset<srsran::MAX_NSYMB_PER_SLOT>>(mask));
     return ctx.out();
   }
 };
@@ -81,7 +81,7 @@ struct formatter<srsran::re_prb_mask> {
   template <typename FormatContext>
   auto format(const srsran::re_prb_mask& mask, FormatContext& ctx) const
   {
-    fmt::format_to(ctx.out(), "{:br}", static_cast<srsran::bounded_bitset<srsran::NRE>>(mask));
+    fmt::format_to(ctx.out(), "{:i}", static_cast<srsran::bounded_bitset<srsran::NRE>>(mask));
     return ctx.out();
   }
 };

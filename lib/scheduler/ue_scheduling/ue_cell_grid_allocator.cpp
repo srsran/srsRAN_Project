@@ -236,8 +236,10 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
 
   srsran_sanity_check(not(pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs.first) or
                           pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, crbs.second)),
-                      "Invalid calculation of PDSCH RBs. Used CRBs={}",
-                      pdsch_alloc.dl_res_grid.used_crbs(scs, {0, cell_cfg.nof_dl_prbs}, pdsch_td_cfg.symbols));
+                      "Invalid calculation of PDSCH RBs. Used CRBs={:i}. Allocated CRBs={}{}.",
+                      pdsch_alloc.dl_res_grid.used_crbs(scs, {0, cell_cfg.nof_dl_prbs}, pdsch_td_cfg.symbols),
+                      crbs.first,
+                      crbs.second);
 
   sch_mcs_tbs mcs_tbs_info;
   if (is_retx) {
@@ -617,8 +619,9 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info&      grant,
   }
 
   srsran_sanity_check(not pusch_alloc.ul_res_grid.collides(scs, pusch_td_cfg.symbols, crbs),
-                      "Invalid calculation of PDSCH RBs. Used CRBs={}",
-                      pusch_alloc.ul_res_grid.used_crbs(scs, {0, cell_cfg.nof_dl_prbs}, pusch_td_cfg.symbols));
+                      "Invalid calculation of PUSCH RBs. Used CRBs={:i}. Allocated CRBs={}.",
+                      pusch_alloc.ul_res_grid.used_crbs(scs, {0, cell_cfg.nof_ul_prbs}, pusch_td_cfg.symbols),
+                      crbs);
 
   // Mark resources as occupied in the ResourceGrid.
   pusch_alloc.ul_res_grid.fill(grant_info{scs, pusch_td_cfg.symbols, crbs});
