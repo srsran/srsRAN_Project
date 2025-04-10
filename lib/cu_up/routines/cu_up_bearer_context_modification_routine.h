@@ -34,7 +34,6 @@ private:
   // Helper variables
   e1ap_bearer_context_modification_response response = {};
   security::sec_as_config                   security_info;
-  bool                                      new_ul_tnl_info_required;
 };
 
 } // namespace srs_cu_up

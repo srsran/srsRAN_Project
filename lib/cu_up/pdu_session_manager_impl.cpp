@@ -618,18 +618,18 @@ void pdu_session_manager_impl::update_security_config(const security::sec_as_con
             ? security::ciphering_enabled::off
             : security::ciphering_enabled::on;
     for (const auto& [drb_id, drb] : pdu_session->drbs) {
-      // reestablish tx and configure tx security
+      // Configure tx security.
       auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
       pdcp_tx_ctrl.configure_security(sec_128, integrity_enabled, ciphering_enabled);
 
-      // reestablish rx and configure rx security
+      // Configure rx security.
       auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
       pdcp_rx_ctrl.configure_security(sec_128, integrity_enabled, ciphering_enabled);
     }
   }
 }
 
-void pdu_session_manager_impl::stop_pdcp_pdu_processing()
+void pdu_session_manager_impl::notify_pdcp_pdu_processing_stopped()
 {
   logger.log_debug("Awaiting all crypto tasks to finish in UE");
 
@@ -637,20 +637,20 @@ void pdu_session_manager_impl::stop_pdcp_pdu_processing()
     for (const auto& [drb_id, drb] : pdu_session->drbs) {
       // reestablish rx and configure rx security
       auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
-      pdcp_rx_ctrl.stop_pdu_processing();
+      pdcp_rx_ctrl.notify_pdu_processing_stopped();
     }
   }
 }
 
-void pdu_session_manager_impl::start_pdcp_pdu_processing()
+void pdu_session_manager_impl::restart_pdcp_pdu_processing()
 {
-  logger.log_debug("Awaiting all crypto tasks to finish in UE");
+  logger.log_debug("Restarting PDCP PDU processing");
 
   for (const auto& [psi, pdu_session] : pdu_sessions) {
     for (const auto& [drb_id, drb] : pdu_session->drbs) {
       // reestablish rx and configure rx security
       auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
-      pdcp_rx_ctrl.start_pdu_processing();
+      pdcp_rx_ctrl.restart_pdu_processing();
     }
   }
 }

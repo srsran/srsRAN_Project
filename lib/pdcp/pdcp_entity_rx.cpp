@@ -88,7 +88,7 @@ void pdcp_entity_rx::stop()
   }
 }
 
-void pdcp_entity_rx::stop_pdu_processing()
+void pdcp_entity_rx::notify_pdu_processing_stopped()
 {
   if (not stopped) {
     token_mngr.stop();
@@ -96,7 +96,7 @@ void pdcp_entity_rx::stop_pdu_processing()
   }
 }
 
-void pdcp_entity_rx::start_pdu_processing()
+void pdcp_entity_rx::restart_pdu_processing()
 {
   if (not stopped) {
     token_mngr.start();

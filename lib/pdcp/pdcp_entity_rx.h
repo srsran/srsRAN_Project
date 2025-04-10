@@ -84,20 +84,20 @@ public:
 
   ~pdcp_entity_rx() override;
 
-  void stop_pdu_processing() override;
-  void start_pdu_processing() override;
-
   /// \brief Stop handling PDUs and stops timers
   void stop();
-
-  /// \brief Retrun awaitable to wait for cripto tasks to be
-  /// finished.
-  manual_event_flag& crypto_awaitable();
 
   void handle_pdu(byte_buffer_chain buf) override;
 
   /// \brief Triggers re-establishment as specified in TS 38.323, section 5.1.2
   void reestablish(security::sec_128_as_config sec_cfg) override;
+
+  /// \brief Retrun awaitable to wait for cripto tasks to be
+  /// finished.
+  manual_event_flag& crypto_awaitable();
+
+  void notify_pdu_processing_stopped() override;
+  void restart_pdu_processing() override;
 
   // Rx/Tx interconnect
   void set_status_handler(pdcp_tx_status_handler* status_handler_) { status_handler = status_handler_; }

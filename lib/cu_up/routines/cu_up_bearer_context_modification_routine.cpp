@@ -31,20 +31,18 @@ void cu_up_bearer_context_modification_routine::operator()(
   response.ue_index = ue_ctxt.get_index();
   response.success  = true;
 
-  new_ul_tnl_info_required = (msg.new_ul_tnl_info_required.has_value() && msg.new_ul_tnl_info_required.value());
-
   if (msg.security_info.has_value()) {
     fill_sec_as_config(security_info, msg.security_info.value());
 
     // Await pending crypto processing to be finished, so that keys
-    // can be safely replaced. No more PDUs will arrive at the PDCP as this procedure will
-    // block the process of further PDUs to this UE.
-    ue_ctxt.stop_pdcp_pdu_processing();
+    // can be safely replaced. No more SDUs/PDUs will arrive at the PDCP as this procedure will
+    // block the process of further packets to this UE.
+    ue_ctxt.notify_pdcp_pdu_processing_stopped();
     CORO_AWAIT(ue_ctxt.await_rx_crypto_tasks());
 
-    // PDU processing is finished, safely update the keys now.
+    // SDU/PDU processing is finished, safely update the keys now.
     ue_ctxt.set_security_config(security_info);
-    ue_ctxt.start_pdcp_pdu_processing();
+    ue_ctxt.restart_pdcp_pdu_processing();
   }
 
   if (not msg.ng_ran_bearer_context_mod_request.has_value()) {
@@ -63,8 +61,8 @@ void cu_up_bearer_context_modification_routine::operator()(
   // Traverse list of PDU sessions to be modified.
   for (const auto& pdu_session_item : msg.ng_ran_bearer_context_mod_request.value().pdu_session_res_to_modify_list) {
     ue_ctxt.get_logger().log_debug("Modifying {}", pdu_session_item.pdu_session_id);
-    pdu_session_modification_result session_result =
-        ue_ctxt.modify_pdu_session(pdu_session_item, new_ul_tnl_info_required);
+    pdu_session_modification_result session_result = ue_ctxt.modify_pdu_session(
+        pdu_session_item, msg.new_ul_tnl_info_required.has_value() && msg.new_ul_tnl_info_required.value());
     process_successful_pdu_resource_modification_outcome(response.pdu_session_resource_modified_list,
                                                          response.pdu_session_resource_failed_to_modify_list,
                                                          session_result,
