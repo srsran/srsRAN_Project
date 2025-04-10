@@ -265,6 +265,7 @@ variables:
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
     TEST_MODE: coverage
     ENABLE_GCOV: "True"
     MARCH: x86-64-v3
@@ -285,6 +286,7 @@ variables:
     COMPILER: clang
     CMAKE_BUILD_TYPE: RelWithDebInfo
     ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
@@ -296,6 +298,7 @@ variables:
     COMPILER: clang
     CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
     ENABLE_TSAN: "True"
     TEST_MODE: tsan
     MARCH: x86-64-v3
@@ -309,6 +312,7 @@ variables:
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
@@ -323,6 +327,7 @@ variables:
     ENABLE_ZEROMQ: "False"
     ENABLE_DPDK: "True"
     ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
     DPDK_VERSION: "23.11.1_avx2"
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
@@ -334,6 +339,7 @@ variables:
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
     TEST_MODE: valgrind
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
@@ -345,6 +351,7 @@ variables:
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: x86-64-v4
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
@@ -356,6 +363,7 @@ variables:
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: armv8-a
     INFRASTRUCTURE_TAG: arm64
@@ -367,6 +375,7 @@ variables:
     COMPILER: gcc
     CMAKE_BUILD_TYPE: Release
     ASSERT_LEVEL: PARANOID
+    ENABLE_FFTW: "True"
     TEST_MODE: default
     MARCH: armv8.2-a+crypto+fp16+dotprod
     INFRASTRUCTURE_TAG: arm64
