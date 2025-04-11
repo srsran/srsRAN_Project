@@ -25,7 +25,7 @@ class du_high_impl final : public du_high
 {
 public:
   explicit du_high_impl(const du_high_configuration& cfg_, const du_high_dependencies& dependencies);
-  ~du_high_impl();
+  ~du_high_impl() override;
 
   void start() override;
 
@@ -59,7 +59,6 @@ private:
 
   std::unique_ptr<scheduler_metrics_notifier> hub_metrics;
   std::unique_ptr<scheduler_metrics_notifier> sched_metrics_notifier;
-  std::unique_ptr<mac_metrics_notifier>       mac_metrics_notif;
 
   // DU-high Layers.
   std::unique_ptr<du_manager_interface> du_manager;

@@ -39,7 +39,15 @@ struct du_high_ran_config {
 
 /// Configuration passed to DU-High.
 struct du_high_configuration {
+  struct metrics_config {
+    bool                      enable_sched = false;
+    bool                      enable_mac   = false;
+    bool                      enable_rlc   = false;
+    std::chrono::milliseconds period{1000};
+  };
+
   srs_du::du_high_ran_config ran;
+  metrics_config             metrics;
   du_test_mode_config        test_cfg;
 };
 

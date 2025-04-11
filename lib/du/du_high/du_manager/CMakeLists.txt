@@ -17,6 +17,7 @@ set(SOURCES
         du_manager_factory.cpp
         du_manager_impl.cpp
         du_positioning_handler_factory.cpp
+        du_metrics_handler_impl.cpp
 )
 
 add_library(srsran_du_manager STATIC ${SOURCES})
