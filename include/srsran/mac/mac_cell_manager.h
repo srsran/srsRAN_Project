@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/byte_buffer.h"
 #include "srsran/mac/cell_configuration.h"
 #include "srsran/mac/mac_ue_configurator.h"
 #include "srsran/ran/du_types.h"
@@ -42,18 +43,36 @@ struct mac_cell_positioning_measurement_response {
   std::vector<phy_time_unit> ul_rtoas;
 };
 
+/// Structure used to update SI PDU messages, without SI change notifications nor in a modification of valueTag in SIB1.
+struct mac_cell_sys_info_pdu_update {
+  /// SI message index.
+  unsigned si_msg_idx;
+  /// SIB index (e.g., sib2 => value 2).
+  uint8_t sib_idx;
+  /// Slot at which the new SI is transmitted.
+  slot_point slot;
+  /// SI period in nof slots, required if more than one are SI PDU passed.
+  std::optional<unsigned> si_slot_period;
+  /// Packed content of SIB messages.
+  span<byte_buffer> si_messages;
+};
+
 /// Reconfiguration of a MAC cell during its operation.
 struct mac_cell_reconfig_request {
   /// If not empty, contains the new system information to broadcast.
   std::optional<mac_cell_sys_info_config> new_sys_info;
   /// If not empty, the MAC is requested to collect a new positioning measurement.
   std::optional<mac_cell_positioning_measurement_request> positioning;
+  /// If not empty, contains the new SI PDU to be updated.
+  std::optional<mac_cell_sys_info_pdu_update> new_si_pdu_info;
 };
 
 struct mac_cell_reconfig_response {
   /// Whether a pending SI reconfiguration was successful.
   bool                                                     si_updated = false;
   std::optional<mac_cell_positioning_measurement_response> positioning;
+  /// Whether a SI PDUs were successfully enqueued.
+  bool si_pdus_enqueued = false;
 };
 
 /// Interface used to handle a MAC cell activation/reconfiguration/deactivation.

@@ -11,6 +11,7 @@
 #include "du_manager_impl.h"
 #include "du_positioning_handler_factory.h"
 #include "procedures/cu_configuration_procedure.h"
+#include "procedures/du_mac_si_pdu_update_procedure.h"
 #include "procedures/du_param_config_procedure.h"
 #include "procedures/du_stop_procedure.h"
 #include "procedures/du_ue_ric_configuration_procedure.h"
@@ -239,6 +240,30 @@ du_param_config_response du_manager_impl::handle_operator_config_request(const d
       CORO_AWAIT_VALUE(auto resp, launch_async<du_param_config_procedure>(req, params, cell_mng));
 
       // signal back to caller.
+      p.set_value(resp);
+
+      CORO_RETURN();
+    }));
+  });
+
+  return fut.get();
+}
+
+du_si_pdu_update_response du_manager_impl::handle_si_pdu_update(const du_si_pdu_update_request& req)
+{
+  std::promise<du_si_pdu_update_response> p;
+  std::future<du_si_pdu_update_response>  fut = p.get_future();
+
+  // Switch to DU manager execution context.
+  execute_until_success(params.services.du_mng_exec, params.services.timers, [this, req, &p]() {
+    // Dispatch common task.
+    schedule_async_task(launch_async([&](coro_context<async_task<void>>& ctx) {
+      CORO_BEGIN(ctx);
+
+      // Launch procedure to update SI PDU.
+      CORO_AWAIT_VALUE(auto resp, start_du_mac_si_pdu_update(req, params, cell_mng));
+
+      // Signal back to caller.
       p.set_value(resp);
 
       CORO_RETURN();
