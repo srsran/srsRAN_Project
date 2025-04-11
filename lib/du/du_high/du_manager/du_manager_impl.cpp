@@ -30,7 +30,12 @@ du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   cell_res_alloc(params.ran.cells, params.mac.sched_cfg, params.ran.srbs, params.ran.qos, params.test_cfg),
   ue_mng(params, cell_res_alloc),
   positioning_handler(create_du_positioning_handler(params, cell_mng, ue_mng, logger)),
-  metrics(params.mac.mac_metrics_notif, params.mac.sched_metrics_notif),
+  metrics(params.metrics,
+          params.services.du_mng_exec,
+          params.services.timers,
+          params.f1ap.metrics,
+          params.mac.mac_metrics_notif,
+          params.mac.sched_metrics_notif),
   main_ctrl_loop(128)
 {
 }

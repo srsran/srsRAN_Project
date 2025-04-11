@@ -13,6 +13,7 @@
 #include "du/ue_context/f1ap_du_ue_manager.h"
 #include "f1ap_du_connection_handler.h"
 #include "f1ap_du_context.h"
+#include "f1ap_du_metrics_collector_impl.h"
 #include "srsran/asn1/f1ap/f1ap.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include <memory>
@@ -66,6 +67,8 @@ public:
   gnb_du_ue_f1ap_id_t get_gnb_du_ue_f1ap_id(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override;
   du_ue_index_t       get_ue_index(const gnb_du_ue_f1ap_id_t& gnb_du_ue_f1ap_id) override;
   du_ue_index_t       get_ue_index(const gnb_cu_ue_f1ap_id_t& gnb_cu_ue_f1ap_id) override;
+
+  f1ap_metrics_collector& get_metrics_collector() override { return metrics; }
 
 private:
   class tx_pdu_notifier_with_logging;
@@ -136,6 +139,8 @@ private:
   std::unique_ptr<f1ap_event_manager> events;
 
   std::unique_ptr<f1ap_message_notifier> tx_pdu_notifier;
+
+  f1ap_du_metrics_collector_impl metrics;
 };
 
 } // namespace srs_du

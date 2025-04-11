@@ -121,7 +121,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
        dependencies.exec_mapper->du_control_executor(),
        dependencies.exec_mapper->ue_mapper(),
        dependencies.exec_mapper->cell_mapper()},
-      {*f1ap, *f1ap},
+      {*f1ap, *f1ap, f1ap->get_metrics_collector()},
       {*dependencies.f1u_gw},
       {mac->get_ue_control_info_handler(), *f1ap, *f1ap, *dependencies.rlc_p, dependencies.rlc_metrics_notif},
       {mac->get_cell_manager(),
@@ -129,6 +129,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
        cfg.ran.sched_cfg,
        dependencies.mac_metrics_notif,
        dependencies.sched_metrics_notifier},
+      {cfg.metrics.period, cfg.metrics.du_notifier, cfg.metrics.enable_f1ap},
       cfg.test_cfg});
 
   // Connect Layer<->DU manager adapters.

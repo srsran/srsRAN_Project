@@ -11,51 +11,62 @@
 #include "du_metrics_collector_impl.h"
 #include "srsran/mac/mac_metrics_notifier.h"
 #include "srsran/scheduler/scheduler_metrics.h"
+#include "srsran/support/executors/execute_until_success.h"
 
 using namespace srsran;
 using namespace srs_du;
 
-namespace {
-
-class mac_metrics_null_notifier final : public mac_metrics_notifier
-{
-public:
-  void on_new_metrics_report(const mac_metric_report& metrics) override
-  {
-    // do nothing.
-  }
-};
-
-class scheduler_ue_metrics_null_notifier final : public scheduler_metrics_notifier
-{
-public:
-  void report_metrics(const scheduler_cell_metrics& report) override
-  {
-    // do nothing.
-  }
-};
-
-// Null notifier for mac metrics, used in case no mac metrics notifier is provided in the config.
-mac_metrics_null_notifier null_mac_notifier;
-
-// Null notifier for scheduler metrics, used in case no scheduler metrics notifier is provided in the config.
-scheduler_ue_metrics_null_notifier null_sched_notifier;
-
-} // namespace
-
-du_manager_metrics_collector_impl::du_manager_metrics_collector_impl(mac_metrics_notifier*       mac_notifier_,
-                                                                     scheduler_metrics_notifier* sched_notifier_) :
-  mac_notifier(mac_notifier_ != nullptr ? *mac_notifier_ : null_mac_notifier),
-  sched_notifier(sched_notifier_ != nullptr ? *sched_notifier_ : null_sched_notifier)
+du_manager_metrics_collector_impl::du_manager_metrics_collector_impl(
+    const du_manager_params::metrics_config_params& params_,
+    task_executor&                                  du_mng_exec_,
+    timer_manager&                                  timers_,
+    f1ap_metrics_collector&                         f1ap_collector_,
+    mac_metrics_notifier*                           mac_notifier_,
+    scheduler_metrics_notifier*                     sched_notifier_) :
+  params(params_),
+  du_mng_exec(du_mng_exec_),
+  timers(timers_),
+  mac_notifier(mac_notifier_),
+  sched_notifier(sched_notifier_),
+  f1ap_collector(f1ap_collector_)
 {
 }
 
 void du_manager_metrics_collector_impl::handle_mac_metrics_report(const mac_metric_report& report)
 {
-  mac_notifier.on_new_metrics_report(report);
+  // Forward the MAC report to notifier.
+  if (mac_notifier != nullptr) {
+    mac_notifier->on_new_metrics_report(report);
+  }
+
+  // In case the DU metrics notifier was specified, report the DU metrics.
+  if (params.du_metrics != nullptr) {
+    execute_until_success(du_mng_exec, timers, [this]() { trigger_report(); });
+  }
 }
 
 void du_manager_metrics_collector_impl::handle_scheduler_metrics_report(const scheduler_cell_metrics& report)
 {
-  sched_notifier.report_metrics(report);
+  if (sched_notifier != nullptr) {
+    sched_notifier->report_metrics(report);
+  }
+}
+
+void du_manager_metrics_collector_impl::trigger_report()
+{
+  next_report.start_time = std::chrono::steady_clock::now() - params.period;
+  next_report.period     = params.period;
+  next_report.version    = next_version++;
+
+  if (params.f1ap_enabled) {
+    // Generate F1AP metrics report.
+    next_report.f1ap.emplace();
+    f1ap_collector.handle_metrics_report_request(*next_report.f1ap);
+  }
+
+  // Forward new report.
+  params.du_metrics->on_new_metric_report(next_report);
+
+  // Reset report.
+  next_report.f1ap.reset();
 }

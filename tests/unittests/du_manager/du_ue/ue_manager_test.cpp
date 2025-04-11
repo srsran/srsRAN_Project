@@ -98,7 +98,7 @@ protected:
 
   du_manager_params params{{"srsgnb", (gnb_du_id_t)1, 1, cells},
                            {timers, worker, ue_execs, cell_execs},
-                           {f1ap_dummy, f1ap_dummy},
+                           {f1ap_dummy, f1ap_dummy, f1ap_dummy},
                            {f1u_dummy},
                            {mac_dummy, f1ap_dummy, f1ap_dummy, rlc_pcap},
                            {mac_dummy, mac_dummy}};

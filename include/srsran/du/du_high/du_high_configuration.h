@@ -25,6 +25,7 @@ class timer_manager;
 namespace srs_du {
 
 class f1u_du_gateway;
+class du_metrics_notifier;
 
 /// RAN-specific parameters of the DU-high.
 struct du_high_ran_config {
@@ -43,7 +44,9 @@ struct du_high_configuration {
     bool                      enable_sched = false;
     bool                      enable_mac   = false;
     bool                      enable_rlc   = false;
+    bool                      enable_f1ap  = false;
     std::chrono::milliseconds period{1000};
+    du_metrics_notifier*      du_notifier = nullptr;
   };
 
   du_high_ran_config  ran;

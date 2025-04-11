@@ -92,12 +92,15 @@ public:
 class f1ap_test_dummy : public f1ap_connection_manager,
                         public f1ap_ue_context_manager,
                         public f1ap_message_handler,
-                        public f1ap_rrc_message_transfer_procedure_handler
+                        public f1ap_rrc_message_transfer_procedure_handler,
+                        public f1ap_metrics_collector
 {
   struct drb_to_idx {
     size_t   get_index(drb_id_t i) const { return static_cast<size_t>(i) - 1; }
     drb_id_t get_id(size_t i) const { return static_cast<drb_id_t>(i + 1); }
   };
+
+  void handle_metrics_report_request(f1ap_metrics_report& report) override { report = {}; }
 
 public:
   struct f1ap_ue_context {
