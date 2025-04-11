@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsran/phy/support/precoding_formatters.h"
+#include "srsran/phy/support/re_pattern_formatters.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/ran/pdsch/pdsch_context_formatter.h"
 

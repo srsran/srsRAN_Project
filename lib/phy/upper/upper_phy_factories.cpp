@@ -27,6 +27,7 @@
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
+#include "srsran/phy/upper/channel_processors/ssb/factories.h"
 #include "srsran/phy/upper/signal_processors/prs/factories.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_factory.h"
 #include "srsran/support/error_handling.h"

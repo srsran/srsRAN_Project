@@ -25,11 +25,13 @@ if (USE_PHY_TESTVECTORS)
 
     add_executable(pdcch_modulator_test pdcch_modulator_test.cpp)
     target_link_libraries(pdcch_modulator_test
-            srsran_channel_processors
-            srsran_channel_precoder
-            srslog
+            srsran_channel_coding
             srsran_channel_modulation
-            srsran_sequence_generators)
+            srsran_channel_precoder
+            srsran_channel_processors
+            srsran_sequence_generators
+            srsran_signal_processors
+            srslog)
     add_test_vector(pdcch_modulator_test pdcch_modulator_test_data.tar.gz "")
     target_include_directories(pdcch_modulator_test PRIVATE ${CMAKE_SOURCE_DIR}/tests/unittests/phy/support)
 

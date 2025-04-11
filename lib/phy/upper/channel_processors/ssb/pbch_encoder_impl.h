@@ -16,7 +16,7 @@
 #include "srsran/phy/upper/channel_coding/polar/polar_encoder.h"
 #include "srsran/phy/upper/channel_coding/polar/polar_interleaver.h"
 #include "srsran/phy/upper/channel_coding/polar/polar_rate_matcher.h"
-#include "srsran/phy/upper/channel_processors/pbch_encoder.h"
+#include "srsran/phy/upper/channel_processors/ssb/pbch_encoder.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsran/support/error_handling.h"
 

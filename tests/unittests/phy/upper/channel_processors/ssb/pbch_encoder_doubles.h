@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "../../phy_test_utils.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
+#include "../../../phy_test_utils.h"
+#include "srsran/phy/upper/channel_processors/ssb/factories.h"
 #include "srsran/support/test_utils.h"
 #include <vector>
 

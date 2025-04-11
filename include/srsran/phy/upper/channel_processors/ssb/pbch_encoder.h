@@ -14,7 +14,6 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/ssb_properties.h"
 #include <array>
-#include <memory>
 
 namespace srsran {
 

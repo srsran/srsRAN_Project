@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsran/phy/upper/channel_processors/pbch_encoder.h"
-#include "srsran/phy/upper/channel_processors/pbch_modulator.h"
-#include "srsran/phy/upper/channel_processors/ssb_processor.h"
+#include "srsran/phy/upper/channel_processors/ssb/pbch_encoder.h"
+#include "srsran/phy/upper/channel_processors/ssb/pbch_modulator.h"
+#include "srsran/phy/upper/channel_processors/ssb/ssb_processor.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pbch_processor.h"
 #include "srsran/phy/upper/signal_processors/pss_processor.h"
 #include "srsran/phy/upper/signal_processors/sss_processor.h"

@@ -13,7 +13,7 @@
 #include "../support/resource_grid_test_doubles.h"
 #include "channel_processors/pdcch/pdcch_processor_test_doubles.h"
 #include "channel_processors/pdsch/pdsch_processor_test_doubles.h"
-#include "channel_processors/ssb_processor_test_doubles.h"
+#include "channel_processors/ssb/ssb_processor_test_doubles.h"
 #include "signal_processors/nzp_csi_rs_generator_test_doubles.h"
 #include "signal_processors/prs/prs_generator_test_doubles.h"
 #include "upper_phy_rg_gateway_test_doubles.h"

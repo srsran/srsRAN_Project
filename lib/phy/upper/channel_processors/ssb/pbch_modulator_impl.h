@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/phy/upper/channel_modulation/modulation_mapper.h"
-#include "srsran/phy/upper/channel_processors/pbch_modulator.h"
+#include "srsran/phy/upper/channel_processors/ssb/pbch_modulator.h"
 #include "srsran/phy/upper/sequence_generators/pseudo_random_generator.h"
 
 namespace srsran {

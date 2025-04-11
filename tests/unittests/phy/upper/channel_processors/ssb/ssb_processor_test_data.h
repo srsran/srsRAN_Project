@@ -10,11 +10,11 @@
 
 #pragma once
 
-// This file was generated using the following MATLAB class on 14-12-2023 (seed 0):
+// This file was generated using the following MATLAB class on 11-04-2025 (seed 0):
 //   + "srsSSBProcessorUnittest.m"
 
-#include "../../support/resource_grid_test_doubles.h"
-#include "srsran/phy/upper/channel_processors/ssb_processor.h"
+#include "../../../support/resource_grid_test_doubles.h"
+#include "srsran/phy/upper/channel_processors/ssb/ssb_processor.h"
 #include "srsran/support/file_vector.h"
 
 namespace srsran {

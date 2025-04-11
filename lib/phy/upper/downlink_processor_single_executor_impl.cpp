@@ -10,9 +10,9 @@
 
 #include "downlink_processor_single_executor_impl.h"
 #include "srsran/instrumentation/traces/du_traces.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pdcch/formatters.h"
 #include "srsran/phy/upper/channel_processors/pdsch/formatters.h"
+#include "srsran/phy/upper/channel_processors/ssb/formatters.h"
 #include "srsran/phy/upper/signal_processors/prs/formatters.h"
 #include "srsran/phy/upper/signal_processors/signal_processor_formatters.h"
 #include "srsran/phy/upper/upper_phy_rg_gateway.h"

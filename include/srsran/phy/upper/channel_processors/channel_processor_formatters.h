@@ -10,13 +10,8 @@
 
 #pragma once
 
-#include "srsran/phy/support/precoding_formatters.h"
-#include "srsran/phy/support/re_pattern_formatters.h"
-#include "srsran/phy/upper/channel_processors/pdcch/pdcch_processor.h"
 #include "srsran/phy/upper/channel_processors/prach_detector.h"
-#include "srsran/phy/upper/channel_processors/ssb_processor.h"
-#include "srsran/phy/upper/channel_state_information_formatters.h"
-#include "srsran/srsvec/copy.h"
+#include "srsran/support/format/delimited_formatter.h"
 
 namespace fmt {
 
@@ -98,40 +93,6 @@ struct formatter<srsran::prach_detection_result> {
     helper.format_always(ctx,
                          "detected_preambles=[{:,}]",
                          srsran::span<const srsran::prach_detection_result::preamble_indication>(result.preambles));
-
-    return ctx.out();
-  }
-};
-
-/// \brief Custom formatter for \c ssb_processor::pdu_t.
-template <>
-struct formatter<srsran::ssb_processor::pdu_t> {
-  /// Helper used to parse formatting options and format fields.
-  srsran::delimited_formatter helper;
-
-  /// Default constructor.
-  formatter() = default;
-
-  template <typename ParseContext>
-  auto parse(ParseContext& ctx)
-  {
-    return helper.parse(ctx);
-  }
-
-  template <typename FormatContext>
-  auto format(const srsran::ssb_processor::pdu_t& pdu, FormatContext& ctx) const
-  {
-    helper.format_always(ctx, "pci={}", pdu.phys_cell_id);
-    helper.format_always(ctx, "ssb_idx={}", pdu.ssb_idx);
-    helper.format_always(ctx, "L_max={}", pdu.L_max);
-    helper.format_always(ctx, "common_scs={}", scs_to_khz(pdu.common_scs));
-    helper.format_always(ctx, "sc_offset={}", pdu.subcarrier_offset.value());
-    helper.format_always(ctx, "offset_PointA={}", pdu.offset_to_pointA.value());
-    helper.format_always(ctx, "pattern={}", to_string(pdu.pattern_case));
-
-    helper.format_if_verbose(ctx, "beta_pss={:+.1f}dB", pdu.beta_pss);
-    helper.format_if_verbose(ctx, "slot={}", pdu.slot);
-    helper.format_if_verbose(ctx, "ports={}", srsran::span<const uint8_t>(pdu.ports));
 
     return ctx.out();
   }

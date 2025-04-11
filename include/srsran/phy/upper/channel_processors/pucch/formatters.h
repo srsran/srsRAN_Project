@@ -12,7 +12,7 @@
 
 #include "srsran/phy/support/precoding_formatters.h"
 #include "srsran/phy/support/re_pattern_formatters.h"
-#include "srsran/phy/upper/channel_processors/ssb_processor.h"
+#include "srsran/phy/upper/channel_processors/ssb/ssb_processor.h"
 #include "srsran/phy/upper/channel_state_information_formatters.h"
 #include "srsran/ran/pucch/pucch_context_formatter.h"
 #include "srsran/support/format/delimited_formatter.h"
