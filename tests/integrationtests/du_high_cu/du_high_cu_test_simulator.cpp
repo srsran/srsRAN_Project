@@ -144,7 +144,7 @@ void du_high_cu_test_simulator::start_dus()
     du_dependencies.f1u_gw                    = nullptr;
     du_dependencies.phy_adapter               = &du_ctxt.phy;
     du_dependencies.timers                    = &timers;
-    du_dependencies.sched_ue_metrics_notifier = &du_ctxt.ue_metrics_notifier;
+    du_dependencies.sched_metrics_notifier    = &du_ctxt.ue_metrics_notifier;
     du_dependencies.mac_p                     = &du_ctxt.mac_pcap;
     du_dependencies.rlc_p                     = &du_ctxt.rlc_pcap;
 

@@ -28,6 +28,7 @@ namespace srsran {
 
 class timer_manager;
 class mac_metrics_notifier;
+class scheduler_metrics_notifier;
 
 namespace srs_du {
 
@@ -66,10 +67,11 @@ struct du_manager_params {
   };
 
   struct mac_config_params {
-    mac_cell_manager&       cell_mng;
-    mac_ue_configurator&    ue_cfg;
-    scheduler_expert_config sched_cfg;
-    mac_metrics_notifier*   mac_metrics_notif = nullptr;
+    mac_cell_manager&           cell_mng;
+    mac_ue_configurator&        ue_cfg;
+    scheduler_expert_config     sched_cfg;
+    mac_metrics_notifier*       mac_metrics_notif   = nullptr;
+    scheduler_metrics_notifier* sched_metrics_notif = nullptr;
   };
 
   ran_params          ran;

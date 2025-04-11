@@ -58,7 +58,6 @@ private:
   std::unique_ptr<layer_connector> adapters;
 
   std::unique_ptr<scheduler_metrics_notifier> hub_metrics;
-  std::unique_ptr<scheduler_metrics_notifier> sched_metrics_notifier;
 
   // DU-high Layers.
   std::unique_ptr<du_manager_interface> du_manager;

@@ -87,22 +87,11 @@ private:
   srslog::basic_logger&             logger;
 };
 
-class scheduler_ue_metrics_null_notifier final : public scheduler_metrics_notifier
-{
-public:
-  void report_metrics(const scheduler_cell_metrics& metrics) override
-  {
-    // do nothing.
-  }
-};
-
 du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_dependencies& dependencies) :
   cfg(config_),
   logger(srslog::fetch_basic_logger("DU")),
   timers(*dependencies.timers),
-  adapters(std::make_unique<layer_connector>(*dependencies.timers, dependencies.exec_mapper->du_control_executor())),
-  sched_metrics_notifier(
-      dependencies.sched_ue_metrics_notifier ? nullptr : std::make_unique<scheduler_ue_metrics_null_notifier>())
+  adapters(std::make_unique<layer_connector>(*dependencies.timers, dependencies.exec_mapper->du_control_executor()))
 {
   // Create layers
   mac  = create_du_high_mac(mac_config{adapters->mac_ev_notifier,
@@ -115,8 +104,7 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
                                       timers,
                                       adapters->mac_ev_notifier,
                                       cfg.ran.sched_cfg,
-                                      dependencies.sched_ue_metrics_notifier ? *dependencies.sched_ue_metrics_notifier
-                                                                              : *sched_metrics_notifier},
+                                      adapters->mac_ev_notifier},
                            cfg.test_cfg,
                            cfg.ran.cells.size());
   f1ap = create_du_high_f1ap(*dependencies.f1c_client,
@@ -136,7 +124,11 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
       {*f1ap, *f1ap},
       {*dependencies.f1u_gw},
       {mac->get_ue_control_info_handler(), *f1ap, *f1ap, *dependencies.rlc_p, dependencies.rlc_metrics_notif},
-      {mac->get_cell_manager(), mac->get_ue_configurator(), cfg.ran.sched_cfg, dependencies.mac_metrics_notif},
+      {mac->get_cell_manager(),
+       mac->get_ue_configurator(),
+       cfg.ran.sched_cfg,
+       dependencies.mac_metrics_notif,
+       dependencies.sched_metrics_notifier},
       cfg.test_cfg});
 
   // Connect Layer<->DU manager adapters.

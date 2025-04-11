@@ -12,6 +12,7 @@ namespace srsran {
 
 struct ul_ccch_indication_message;
 struct mac_metric_report;
+struct scheduler_cell_metrics;
 
 namespace srs_du {
 
@@ -26,13 +27,16 @@ public:
 };
 
 /// Interface used to handle metric reports from the DU-high remaining layers.
-class du_manager_metrics_handler
+class du_manager_metrics_collector
 {
 public:
-  virtual ~du_manager_metrics_handler() = default;
+  virtual ~du_manager_metrics_collector() = default;
 
   /// \brief Handle the metrics report from the MAC.
   virtual void handle_mac_metrics_report(const mac_metric_report& report) = 0;
+
+  /// \brief Handle the metrics report from the Scheduler.
+  virtual void handle_scheduler_metrics_report(const scheduler_cell_metrics& report) = 0;
 };
 
 /// This class handles updates in cell and UE configurations. TODO: Better naming needed.
@@ -113,7 +117,7 @@ public:
   virtual ~du_manager_interface() = default;
 
   /// Get DU metrics handler.
-  virtual du_manager_metrics_handler& get_metrics_handler() = 0;
+  virtual du_manager_metrics_collector& get_metrics_handler() = 0;
 };
 
 } // namespace srs_du

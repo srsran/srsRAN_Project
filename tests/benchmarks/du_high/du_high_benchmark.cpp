@@ -591,7 +591,7 @@ public:
     dependencies.timers                    = &timers;
     dependencies.mac_p                     = &mac_pcap;
     dependencies.rlc_p                     = &rlc_pcap;
-    dependencies.sched_ue_metrics_notifier = &metrics_handler;
+    dependencies.sched_metrics_notifier    = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
     cfg.ran.cells[0].pucch_cfg.nof_sr_resources                     = 30;

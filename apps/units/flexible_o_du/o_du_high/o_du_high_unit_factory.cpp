@@ -275,7 +275,7 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
   // DU high metrics.
   o_du_high_unit odu_unit;
 
-  du_hi_deps.sched_ue_metrics_notifier =
+  du_hi_deps.sched_metrics_notifier =
       build_scheduler_du_metrics(odu_unit.metrics,
                                  odu_unit.commands.cmdline.metrics_subcommands,
                                  dependencies.metrics_notifier,

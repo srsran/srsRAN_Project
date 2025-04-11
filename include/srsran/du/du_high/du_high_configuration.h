@@ -46,23 +46,23 @@ struct du_high_configuration {
     std::chrono::milliseconds period{1000};
   };
 
-  srs_du::du_high_ran_config ran;
-  metrics_config             metrics;
-  du_test_mode_config        test_cfg;
+  du_high_ran_config  ran;
+  metrics_config      metrics;
+  du_test_mode_config test_cfg;
 };
 
 /// DU high dependencies
 struct du_high_dependencies {
-  srs_du::du_high_executor_mapper* exec_mapper               = nullptr;
-  f1c_connection_client*           f1c_client                = nullptr;
-  f1u_du_gateway*                  f1u_gw                    = nullptr;
-  mac_result_notifier*             phy_adapter               = nullptr;
-  timer_manager*                   timers                    = nullptr;
-  scheduler_metrics_notifier*      sched_ue_metrics_notifier = nullptr;
-  rlc_metrics_notifier*            rlc_metrics_notif         = nullptr;
-  mac_metrics_notifier*            mac_metrics_notif         = nullptr;
-  mac_pcap*                        mac_p                     = nullptr;
-  rlc_pcap*                        rlc_p                     = nullptr;
+  du_high_executor_mapper*    exec_mapper            = nullptr;
+  f1c_connection_client*      f1c_client             = nullptr;
+  f1u_du_gateway*             f1u_gw                 = nullptr;
+  mac_result_notifier*        phy_adapter            = nullptr;
+  timer_manager*              timers                 = nullptr;
+  scheduler_metrics_notifier* sched_metrics_notifier = nullptr;
+  rlc_metrics_notifier*       rlc_metrics_notif      = nullptr;
+  mac_metrics_notifier*       mac_metrics_notif      = nullptr;
+  mac_pcap*                   mac_p                  = nullptr;
+  rlc_pcap*                   rlc_p                  = nullptr;
 };
 
 } // namespace srs_du
