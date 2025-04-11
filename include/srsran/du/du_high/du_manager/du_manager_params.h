@@ -79,8 +79,10 @@ struct du_manager_params {
 
   struct metrics_config_params {
     std::chrono::milliseconds period{1000};
-    du_metrics_notifier*      du_metrics   = nullptr;
-    bool                      f1ap_enabled = false;
+    du_metrics_notifier*      du_metrics    = nullptr;
+    bool                      f1ap_enabled  = false;
+    bool                      mac_enabled   = false;
+    bool                      sched_enabled = false;
   };
 
   ran_params            ran;

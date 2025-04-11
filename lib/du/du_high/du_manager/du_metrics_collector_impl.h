@@ -18,6 +18,7 @@ namespace srsran {
 
 class mac_metrics_notifier;
 class scheduler_metrics_notifier;
+struct scheduler_metrics_report;
 
 namespace srs_du {
 
@@ -30,12 +31,20 @@ public:
                                     f1ap_metrics_collector&                         f1ap_collector_,
                                     mac_metrics_notifier*                           mac_notifier_,
                                     scheduler_metrics_notifier*                     sched_notifier_);
+  ~du_manager_metrics_collector_impl() override;
 
+  // DU metrics collector interface
   void handle_mac_metrics_report(const mac_metric_report& report) override;
-
   void handle_scheduler_metrics_report(const scheduler_cell_metrics& report) override;
 
+  void handle_cell_start(du_cell_index_t cell_index);
+  void handle_cell_stop(du_cell_index_t cell_index);
+
 private:
+  class sched_metrics_aggregator;
+
+  void handle_scheduler_metrics_report(const scheduler_metrics_report& report);
+
   void trigger_report();
 
   const du_manager_params::metrics_config_params params;
@@ -44,6 +53,8 @@ private:
   mac_metrics_notifier*                          mac_notifier   = nullptr;
   scheduler_metrics_notifier*                    sched_notifier = nullptr;
   f1ap_metrics_collector&                        f1ap_collector;
+
+  std::unique_ptr<sched_metrics_aggregator> sched_aggregator;
 
   unsigned          next_version = 0;
   du_metrics_report next_report{};

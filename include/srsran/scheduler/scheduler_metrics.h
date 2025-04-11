@@ -117,8 +117,10 @@ struct scheduler_cell_metrics {
   /// Distance between histogram bins.
   static constexpr unsigned nof_usec_per_bin = 50;
 
-  /// Counter version of the report.
-  unsigned version = 0;
+  /// Cell PCI for which the metrics are reported.
+  pci_t pci;
+  /// Slot at which the metrics started being tracked for this report.
+  slot_point slot;
   /// Number of slots accounted for in this report.
   unsigned nof_slots = 0;
   /// Number of cell PRBs.
@@ -145,6 +147,11 @@ struct scheduler_cell_metrics {
   std::array<unsigned, latency_hist_bins> latency_histogram{0};
   std::vector<scheduler_cell_event>       events;
   std::vector<scheduler_ue_metrics>       ue_metrics;
+};
+
+/// Scheduler metrics report for all active cells of the DU.
+struct scheduler_metrics_report {
+  std::vector<scheduler_cell_metrics> cells;
 };
 
 /// \brief Notifier interface used by scheduler to report metrics.

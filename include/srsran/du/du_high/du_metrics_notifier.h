@@ -11,6 +11,8 @@
 #pragma once
 
 #include "srsran/f1ap/du/f1ap_du_metrics_collector.h"
+#include "srsran/mac/mac_metrics.h"
+#include "srsran/scheduler/scheduler_metrics.h"
 #include <chrono>
 
 namespace srsran {
@@ -22,6 +24,8 @@ struct du_metrics_report {
   std::chrono::time_point<std::chrono::steady_clock> start_time;
   std::chrono::milliseconds                          period;
   std::optional<f1ap_metrics_report>                 f1ap;
+  std::optional<mac_metric_report>                   mac;
+  std::optional<scheduler_metrics_report>            scheduler;
 };
 
 /// \brief Interface used to push new DU metrics reports.
