@@ -333,7 +333,8 @@ static bool validate_pdsch_cell_unit_config(const du_high_unit_pdsch_config& con
 }
 
 /// Validates the given PUSCH cell application configuration. Returns true on success, otherwise false.
-static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config, unsigned cell_crbs)
+static bool
+validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config, unsigned cell_crbs, unsigned min_k1)
 {
   if (config.min_ue_mcs > config.max_ue_mcs) {
     fmt::print("Invalid UE MCS range (i.e., [{}, {}]). The min UE MCS must be less than or equal to the max UE MCS.\n",
@@ -387,6 +388,12 @@ static bool validate_pusch_cell_unit_config(const du_high_unit_pusch_config& con
 
   if (config.start_rb >= cell_crbs) {
     fmt::print("Invalid start RB {} for UE PUSCHs. The start_rb must be less than the cell BW.\n", config.start_rb);
+    return false;
+  }
+
+  if (min_k1 < config.min_k2) {
+    fmt::print("The value min_k2 {} set for PUSCH cannot be greater than the min_k1 {} set for PUCCH config.\n",
+               config.start_rb);
     return false;
   }
 
@@ -1030,7 +1037,7 @@ static bool validate_base_cell_unit_config(const du_high_unit_base_cell_config& 
     return false;
   }
 
-  if (!validate_pusch_cell_unit_config(config.pusch_cfg, nof_crbs)) {
+  if (!validate_pusch_cell_unit_config(config.pusch_cfg, nof_crbs, config.pucch_cfg.min_k1)) {
     return false;
   }
 
