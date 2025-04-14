@@ -122,6 +122,7 @@ private:
     };
 
     unsigned     nof_slots = 0;
+    slot_point   start_slot;
     latency_data wall;
     latency_data user;
     latency_data sys;
@@ -130,6 +131,7 @@ private:
     latency_data tx_data_req;
     unsigned     count_vol_context_switches{0};
     unsigned     count_invol_context_switches{0};
+    bool         deactivated = false;
   };
 
   void handle_slot_completion(const slot_measurement& meas);
@@ -143,6 +145,9 @@ private:
   slot_point               next_report_slot;
   std::chrono::nanoseconds slot_duration{0};
 
+  // Slot at which the report aggregating all cells is triggered.
+  slot_point trigger_report_slot;
+
   // Metrics tracked
   non_persistent_data data;
 };
@@ -150,6 +155,9 @@ private:
 class mac_dl_metric_handler
 {
 public:
+  /// Timeout for generating a MAC report combining all cell metrics.
+  constexpr static unsigned REPORT_GENERATION_TIMEOUT_SLOTS = 8;
+
   mac_dl_metric_handler(std::chrono::milliseconds period_,
                         mac_metrics_notifier&     notifier_,
                         timer_manager&            timers_,
@@ -164,11 +172,9 @@ public:
 private:
   friend class mac_dl_cell_metric_handler;
 
-  struct cell_start_event_type {};
-  struct cell_stop_event_type {};
-  using event_type = std::variant<mac_dl_cell_metric_report, cell_start_event_type, cell_stop_event_type>;
-  using report_queue_type =
-      concurrent_queue<event_type, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>;
+  using report_queue_type           = concurrent_queue<mac_dl_cell_metric_report,
+                                                       concurrent_queue_policy::lockfree_spsc,
+                                                       concurrent_queue_wait_policy::non_blocking>;
   using cell_activation_bitmap_type = uint64_t;
 
   static_assert(sizeof(cell_activation_bitmap_type) * 8U >= MAX_NOF_DU_CELLS, "Invalid cell activation bitmap size");
@@ -177,16 +183,22 @@ private:
     du_cell_index_t            cell_index;
     report_queue_type          queue;
     mac_dl_cell_metric_handler handler;
+    bool                       active = false;
 
     cell_context(mac_dl_metric_handler& parent, du_cell_index_t cell_index_, pci_t pci, unsigned period_slots);
   };
 
-  void handle_cell_activation(du_cell_index_t cell_index);
-  void handle_cell_deactivation(du_cell_index_t cell_index);
+  bool handle_cell_report(du_cell_index_t cell_index, const mac_dl_cell_metric_report& cell_report);
 
-  void handle_cell_report(du_cell_index_t cell_index, const mac_dl_cell_metric_report& cell_report);
+  void trigger_full_report();
 
-  void prepare_full_report();
+  void handle_pending_cell_reports();
+
+  void consume_cell_report(du_cell_index_t cell_index, const mac_dl_cell_metric_report& cell_report);
+
+  bool pop_report(cell_context& cell, mac_dl_cell_metric_report& report);
+
+  void send_full_report();
 
   std::chrono::milliseconds period;
   mac_metrics_notifier&     notifier;
@@ -195,11 +207,14 @@ private:
   srslog::basic_logger&     logger;
 
   slotted_array<std::unique_ptr<cell_context>, MAX_NOF_DU_CELLS> cells;
-  bounded_bitset<MAX_NOF_DU_CELLS>                               active_cells_bitmap;
 
-  // Bitmask of cells for which the report is still pending.
-  std::atomic<cell_activation_bitmap_type> cell_left_bitmap{0};
+  // Number of reports enqueued and not yet processed.
+  std::atomic<uint32_t> report_count{0};
 
+  // Expected start slot for the next report.
+  slot_point next_report_start_slot;
+
+  // Next report to be sent.
   mac_metric_report next_report;
 };
 

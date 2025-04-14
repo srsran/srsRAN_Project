@@ -28,6 +28,8 @@ struct mac_dl_cell_metric_report {
 
   /// Physical cell id.
   pci_t pci;
+  /// First slot of the report.
+  slot_point start_slot;
   /// Number of slots considered in this report.
   unsigned nof_slots;
   /// Slot duration.
@@ -50,6 +52,8 @@ struct mac_dl_cell_metric_report {
   unsigned count_voluntary_context_switches;
   /// Number of involuntary context switches.
   unsigned count_involuntary_context_switches;
+  /// Whether the cell was marked for deactivation.
+  bool cell_deactivated;
 };
 
 struct mac_dl_metric_report {
