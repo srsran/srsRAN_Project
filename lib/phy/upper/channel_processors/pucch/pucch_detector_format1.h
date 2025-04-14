@@ -81,18 +81,32 @@ public:
                                                 const pucch_detector::format1_configuration& config);
 
   /// Detects multiplexed PUCCH Format 1 transmissions. See \ref pucch_detector for more details.
-  const pucch_format1_map<pucch_detector::pucch_detection_result>&
+  const pucch_format1_map<pucch_detector::pucch_detection_result_csi>&
   detect(const resource_grid_reader&                  grid,
          const pucch_detector::format1_configuration& config,
          const pucch_format1_map<unsigned>&           mux_nof_harq_ack);
 
 private:
-  /// Components for metric computations and corresponding PUCCH identifiers.
-  struct metric_contributions {
+  /// Hop contributions for EPRE and noise variance computations, common to all multiplexed PUCCH transmissions.
+  struct hop_contribution_common {
+    /// Contribution to the estimated EPRE.
+    float epre_contribution;
+    /// Number of samples the EPRE contribution is based on.
+    unsigned nof_epre_samples;
+    /// Contribution to the estimated noise variance.
+    float noise_var_contribution;
+    /// Number of samples the noise variance contribution is based on.
+    unsigned nof_noise_samples;
+  };
+
+  /// Hop contributions for metric and RSRP computations, specific for each multiplexed PUCCH transmsission.
+  struct hop_contribution_mux {
     /// Contribution to the detection metric obtained from the power of signal and DM-RS.
     float main_contribution;
     /// Contribution to the detection metric obtained from the cross product between signal and DM-RS.
     cf_t cross_contribution;
+    /// Constribution to the estimated RSRP.
+    float rsrp_contribution;
   };
 
   /// \brief Extracts PUCCH data and channel coefficients.
@@ -126,10 +140,10 @@ private:
   ///                               transmissions, identified by initial cyclic shift and time-domain orthogonal cover
   ///                               code.
   /// \param[in]  i_hop             Hop index (either 0 or 1).
-  /// \return The estimated noise variance (without normalizing by the number of samples) and the number of samples used
-  /// for the estimation.
-  std::pair<float, unsigned>
-  process_hop(static_vector<metric_contributions, nof_initial_cyclic_shifts * nof_time_domain_occs>& hop_metrics,
+  /// \return The estimated EPRE and noise variance (without normalizing by the number of samples) and the number of
+  /// samples used for the estimations.
+  hop_contribution_common
+  process_hop(static_vector<hop_contribution_mux, nof_initial_cyclic_shifts * nof_time_domain_occs>& hop_metrics,
               const resource_grid_reader&                                                            grid,
               const pucch_detector::format1_configuration&                                           config,
               const pucch_format1_map<unsigned>&                                                     mux_nof_harq_ack,
@@ -193,7 +207,7 @@ private:
   /// Boolean mask identifying OFDM symbols carrying PUCCH DM-RS (marked as \c true).
   bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_mask;
   /// Storage of detection results for multiplexed PUCCH transmissions.
-  pucch_format1_map<pucch_detector::pucch_detection_result> mux_results;
+  pucch_format1_map<pucch_detector::pucch_detection_result_csi> mux_results;
 };
 
 } // namespace srsran

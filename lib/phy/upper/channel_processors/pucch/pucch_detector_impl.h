@@ -50,9 +50,9 @@ public:
   }
 
   // See interface for documentation.
-  const pucch_format1_map<pucch_detection_result>& detect(const resource_grid_reader&        grid,
-                                                          const format1_configuration&       config,
-                                                          const pucch_format1_map<unsigned>& mux_map) override
+  const pucch_format1_map<pucch_detection_result_csi>& detect(const resource_grid_reader&        grid,
+                                                              const format1_configuration&       config,
+                                                              const pucch_format1_map<unsigned>& mux_map) override
   {
     return detector_format1->detect(grid, config, mux_map);
   }

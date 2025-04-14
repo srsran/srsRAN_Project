@@ -13,8 +13,15 @@
 #include "pucch_processor_test_fixture.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pucch/formatters.h"
+#include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
+#include "srsran/phy/upper/channel_processors/pucch/pucch_processor_result.h"
+#include "srsran/phy/upper/channel_processors/uci/uci_status.h"
+#include "srsran/phy/upper/channel_state_information.h"
 #include "srsran/ran/pucch/pucch_constants.h"
+#include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/complex_normal_random.h"
+#include "fmt/format.h"
+#include <cstdint>
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -28,16 +35,14 @@ std::unique_ptr<pucch_pdu_validator> PucchProcessorFormat1Fixture::validator = n
 
 namespace srsran {
 
-std::ostream& operator<<(std::ostream& os, const pucch_processor::format1_configuration& config)
-{
-  return os << fmt::format("{:s}", config);
-}
-
 std::ostream& operator<<(std::ostream& os, const test_case_t& tc)
 {
-  for (const pucch_entry& entry : tc.entries) {
-    os << entry.config << "; ";
-  }
+  os << fmt::format("{:s} n_ports={} scs={} tx_mode={} n_mux_pucch={}",
+                    tc.common_config,
+                    tc.common_config.ports.size(),
+                    to_string(to_subcarrier_spacing(tc.common_config.slot.numerology())),
+                    tc.tx_mode,
+                    tc.payloads.size());
   return os;
 }
 
@@ -66,143 +71,103 @@ namespace {
 TEST_P(PucchProcessorFormat1Fixture, FromVector)
 {
   // Prepare resource grid.
-  resource_grid_reader_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
+  resource_grid_reader_spy grid(0, 0, 0);
   grid.write(GetParam().grid.read());
 
   const PucchProcessorFormat1Param& param = GetParam();
 
-  for (const pucch_entry& entry : param.entries) {
-    // Make sure configuration is valid.
-    ASSERT_TRUE(validator->is_valid(entry.config));
+  pucch_processor::format1_configuration tmp_conf = param.common_config;
 
-    // Create PUCCH Format 1 batch configuration.
-    pucch_processor::format1_batch_configuration batch_config(entry.config);
+  ASSERT_EQ(grid.get_nof_ports(), tmp_conf.ports.size())
+      << fmt::format("The number of ports of the resource grid {} and the number of configured ports {} do not match.",
+                     grid.get_nof_ports(),
+                     tmp_conf.ports.size());
+  pucch_processor::format1_batch_configuration batch_config(tmp_conf);
+  batch_config.entries.clear();
 
-    // Process.
-    const auto&                  results = processor->process(grid, batch_config);
-    const pucch_processor_result result  = results.get(entry.config.initial_cyclic_shift, entry.config.time_domain_occ);
-
-    // Check channel state information.
-    // Time alignment shouldn't exceed plus minus 3 us.
-    std::optional<phy_time_unit> time_aligment = result.csi.get_time_alignment();
-    ASSERT_FALSE(time_aligment.has_value());
-    // EPRE depends on the number of entries.
-    std::optional<float> epre_dB = result.csi.get_epre_dB();
-    ASSERT_TRUE(epre_dB.has_value());
-    ASSERT_NEAR(epre_dB.value(), convert_power_to_dB(param.entries.size()), 0.09);
-    // SINR should be larger than -5 dB.
-    std::optional<float> sinr_dB = result.csi.get_sinr_dB();
-    ASSERT_TRUE(sinr_dB.has_value());
-    ASSERT_GT(sinr_dB.value(), -5.0) << "Entry configuration: " << entry.config;
-
-    // The message shall be valid.
-    ASSERT_EQ(result.message.get_status(), uci_status::valid);
-    ASSERT_EQ(result.message.get_full_payload().size(), entry.ack_bits.size());
-    ASSERT_EQ(result.message.get_harq_ack_bits().size(), entry.ack_bits.size());
-    if (!entry.ack_bits.empty()) {
-      ASSERT_EQ(span<const uint8_t>(result.message.get_full_payload()), span<const uint8_t>(entry.ack_bits));
-      ASSERT_EQ(span<const uint8_t>(result.message.get_harq_ack_bits()), span<const uint8_t>(entry.ack_bits));
-    }
-    ASSERT_EQ(result.message.get_sr_bits().size(), 0);
-    ASSERT_EQ(result.message.get_csi_part1_bits().size(), 0);
-    ASSERT_EQ(result.message.get_csi_part2_bits().size(), 0);
-  }
-}
-
-TEST_P(PucchProcessorFormat1Fixture, FromVectorFalseCs)
-{
-  // Prepare resource grid.
-  resource_grid_reader_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
-  grid.write(GetParam().grid.read());
-
-  // Get original parameters and change the initial cyclic shift.
-  PucchProcessorFormat1Param param = GetParam();
-
-  pucch_entry entry = param.entries.front();
-
-  // Select a different initial cyclic shift that it is not in the entries.
-  do {
-    entry.config.initial_cyclic_shift = (entry.config.initial_cyclic_shift + 1) % 12;
-  } while (std::any_of(param.entries.begin(), param.entries.end(), [&entry](const pucch_entry& value) {
-    return entry.config.initial_cyclic_shift == value.config.initial_cyclic_shift;
-  }));
-
-  // Make sure configuration is valid.
-  ASSERT_TRUE(validator->is_valid(entry.config));
-
-  // Create PUCCH Format 1 batch configuration.
-  pucch_processor::format1_batch_configuration batch_config(entry.config);
-
-  // Process.
-  const auto&                  results = processor->process(grid, batch_config);
-  const pucch_processor_result result  = results.get(entry.config.initial_cyclic_shift, entry.config.time_domain_occ);
-
-  // Check channel state information.
-  // EPRE depends on the number of entries.
-  std::optional<float> epre_dB = result.csi.get_epre_dB();
-  ASSERT_TRUE(epre_dB.has_value());
-  ASSERT_NEAR(epre_dB.value(), convert_power_to_dB(param.entries.size()), 0.09);
-  // SINR should be less than -25 dB.
-  std::optional<float> sinr_dB = result.csi.get_sinr_dB();
-  ASSERT_TRUE(sinr_dB.has_value());
-  ASSERT_LT(sinr_dB.value(), -25.0);
-
-  // The message shall be valid.
-  ASSERT_EQ(result.message.get_status(), uci_status::invalid);
-  ASSERT_EQ(result.message.get_full_payload().size(), entry.ack_bits.size());
-  ASSERT_EQ(result.message.get_harq_ack_bits().size(), entry.ack_bits.size());
-  ASSERT_EQ(result.message.get_sr_bits().size(), 0);
-  ASSERT_EQ(result.message.get_csi_part1_bits().size(), 0);
-  ASSERT_EQ(result.message.get_csi_part2_bits().size(), 0);
-}
-
-TEST_P(PucchProcessorFormat1Fixture, FalseAlarm)
-{
-  std::vector<resource_grid_reader_spy::expected_entry_t> res = GetParam().grid.read();
-
-  complex_normal_distribution<cf_t> noise = {};
-  std::mt19937                      rgen(12345);
-
-  unsigned nof_trials = 200;
-  // Acceptable probability of false alarm. The value is higher than the 1% given by the PUCCH requirements in TS38.104
-  // Section 8.3.
-  // Important: This is just a quick test, longer simulations are needed to properly estimate the PFA.
-  float acceptable_pfa = 0.1;
-
-  // Prepare resource grid.
-  resource_grid_reader_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_NOF_PRBS);
-  unsigned                 counter = 0;
-  for (unsigned i = 0; i != nof_trials; ++i) {
-    grid.reset();
-    for (auto& entry : res) {
-      entry.value = noise(rgen);
-    }
-    grid.write(res);
-
-    const PucchProcessorFormat1Param& param = GetParam();
-    const pucch_entry&                entry = param.entries.front();
+  for (const auto& mux_pucch : param.payloads) {
+    tmp_conf.initial_cyclic_shift = mux_pucch.initial_cyclic_shift;
+    tmp_conf.time_domain_occ      = mux_pucch.time_domain_occ;
+    tmp_conf.nof_harq_ack         = mux_pucch.nof_harq_ack;
 
     // Make sure configuration is valid.
-    ASSERT_TRUE(validator->is_valid(entry.config));
+    ASSERT_TRUE(validator->is_valid(tmp_conf));
 
-    // Create PUCCH Format 1 batch configuration.
-    pucch_processor::format1_batch_configuration batch_config(entry.config);
-
-    // Process.
-    const auto&                  results = processor->process(grid, batch_config);
-    const pucch_processor_result result  = results.get(entry.config.initial_cyclic_shift, entry.config.time_domain_occ);
-
-    counter += static_cast<unsigned>(result.message.get_status() == uci_status::valid);
+    batch_config.entries.insert(
+        tmp_conf.initial_cyclic_shift, tmp_conf.time_domain_occ, {std::nullopt, tmp_conf.nof_harq_ack});
   }
 
-  // Assert that the probability of false alarm doesn't exceed the acceptable value.
-  float pfa = static_cast<float>(counter) / nof_trials;
-  ASSERT_TRUE(pfa <= acceptable_pfa) << fmt::format(
-      "Probability of false alarms too high: {} while max is {} ({} hits out of {} trials).",
-      pfa,
-      acceptable_pfa,
-      counter,
-      nof_trials);
+  const pucch_format1_map<pucch_processor_result>& results = processor->process(grid, batch_config);
+
+  ASSERT_EQ(results.size(), batch_config.entries.size())
+      << "The number of configured and processed PUCCHs does not match.";
+
+  unsigned nof_false_alarms = 0;
+  for (const auto& mux_pucch : param.payloads) {
+    unsigned initial_cyclic_shift = mux_pucch.initial_cyclic_shift;
+    unsigned time_domain_occ      = mux_pucch.time_domain_occ;
+
+    ASSERT_TRUE(results.contains(initial_cyclic_shift, time_domain_occ)) << fmt::format(
+        "PUCCH with ICS {} and OCCI {} is missing from the results.", initial_cyclic_shift, time_domain_occ);
+
+    const pucch_processor_result& this_result = results.get(initial_cyclic_shift, time_domain_occ);
+
+    std::optional<float> epre_dB = this_result.csi.get_epre_dB();
+    ASSERT_TRUE(epre_dB.has_value()) << fmt::format(
+        "PUCCH with ICS {} and OCCI {} has an invalid EPRE.", initial_cyclic_shift, time_domain_occ);
+    ASSERT_NEAR(convert_dB_to_power(*epre_dB), param.epre, param.epre * 0.01)
+        << fmt::format("PUCCH with ICS {} and OCCI {} has a wrong EPRE value.", initial_cyclic_shift, time_domain_occ);
+
+    std::optional<float> rsrp_dB = this_result.csi.get_rsrp_dB();
+    ASSERT_TRUE(rsrp_dB.has_value()) << fmt::format(
+        "PUCCH with ICS {} and OCCI {} has an invalid RSRP.", initial_cyclic_shift, time_domain_occ);
+    ASSERT_NEAR(convert_dB_to_power(*rsrp_dB), mux_pucch.rsrp, mux_pucch.rsrp * 0.01)
+        << fmt::format("PUCCH with ICS {} and OCCI {} has a wrong RSRP value.", initial_cyclic_shift, time_domain_occ);
+
+    ASSERT_TRUE(this_result.csi.get_sinr_dB().has_value())
+        << fmt::format("PUCCH with ICS {} and OCCI {} has an invalid SNR.", initial_cyclic_shift, time_domain_occ);
+
+    ASSERT_FALSE(this_result.csi.get_time_alignment()) << fmt::format(
+        "PUCCH with ICS {} and OCCI {} has a non-null time alignment.", initial_cyclic_shift, time_domain_occ);
+
+    ASSERT_TRUE(this_result.detection_metric.has_value()) << fmt::format(
+        "PUCCH with ICS {} and OCCI {} has an invalid detection metric.", initial_cyclic_shift, time_domain_occ);
+    EXPECT_NEAR(this_result.detection_metric.value(), mux_pucch.detection_metric, mux_pucch.detection_metric * 0.01)
+        << fmt::format("PUCCH ({}, {}): the detection metric {} and the expected metric {} do not match.",
+                       initial_cyclic_shift,
+                       time_domain_occ,
+                       this_result.detection_metric.value(),
+                       mux_pucch.detection_metric);
+
+    span<const uint8_t> expected_bits(mux_pucch.payload);
+    span<const uint8_t> actual_bits = this_result.message.get_harq_ack_bits();
+    if (expected_bits.empty()) {
+      nof_false_alarms += (this_result.message.get_status() == uci_status::valid);
+    } else {
+      ASSERT_EQ(this_result.message.get_status(), uci_status::valid)
+          << fmt::format("PUCCH ({}, {}) should be valid, actual status is {}",
+                         initial_cyclic_shift,
+                         time_domain_occ,
+                         fmt::underlying(this_result.message.get_status()));
+      ASSERT_EQ(this_result.message.get_csi_part1_bits().size(), 0) << "There should not be CSI Part 1.";
+      ASSERT_EQ(this_result.message.get_csi_part2_bits().size(), 0) << "There should not be CSI Part 2.";
+      if (param.tx_mode == "ACK") {
+        ASSERT_EQ(actual_bits.size(), expected_bits.size())
+            << fmt::format("PUCCH ({}, {}): expected {} bits, received {}.",
+                           initial_cyclic_shift,
+                           time_domain_occ,
+                           expected_bits.size(),
+                           actual_bits.size());
+        ASSERT_EQ(actual_bits, expected_bits);
+      } else {
+        ASSERT_EQ(actual_bits.size(), 0) << fmt::format("SR PUCCH ({}, {}): expected 0 bits, received {}.",
+                                                        initial_cyclic_shift,
+                                                        time_domain_occ,
+                                                        actual_bits.size());
+      }
+    }
+  }
+  ASSERT_LE(nof_false_alarms, 1) << "Too many false alarms.";
 }
 
 INSTANTIATE_TEST_SUITE_P(PucchProcessorFormat1,

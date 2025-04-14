@@ -30,7 +30,7 @@ public:
   std::pair<pucch_uci_message, channel_state_information> detect(const resource_grid_reader&  grid,
                                                                  const format0_configuration& config) override
   {
-    return std::pair<pucch_uci_message, channel_state_information>();
+    return {};
   }
 
   pucch_detection_result detect(const resource_grid_reader&  grid,
@@ -48,14 +48,12 @@ public:
     return {.uci_message = entry.msg, .detection_metric = 1};
   }
 
-  const pucch_format1_map<pucch_detector::pucch_detection_result>&
+  const pucch_format1_map<pucch_detector::pucch_detection_result_csi>&
   detect(const resource_grid_reader&                  grid,
          const pucch_detector::format1_configuration& config,
          const pucch_format1_map<unsigned>&           mux_nof_harq_ack) override
   {
     mux_results.clear();
-    // for (auto this_pucch_nof_harq_ack = mux_map.begin(); this_pucch_nof_harq_ack != mux_map.end();
-    //      ++this_pucch_nof_harq_ack) {
     for (const auto& this_pucch_nof_harq_ack : mux_nof_harq_ack) {
       entries_format1.emplace_back();
       entry_format1& entry              = entries_format1.back();
@@ -65,10 +63,18 @@ public:
       unsigned occi                     = this_pucch_nof_harq_ack.time_domain_occ;
       entry.config.initial_cyclic_shift = ics;
       entry.config.time_domain_occ      = occi;
-      entry.msg                         = pucch_uci_message({0, config.nof_harq_ack, 0, 0});
+      entry.config.nof_harq_ack         = this_pucch_nof_harq_ack.value;
+      entry.msg                         = pucch_uci_message({0, this_pucch_nof_harq_ack.value, 0, 0});
       span<uint8_t> harq_ack_bits       = entry.msg.get_harq_ack_bits();
       std::generate(harq_ack_bits.begin(), harq_ack_bits.end(), [this]() { return rgen() & 1; });
-      mux_results.insert(ics, occi, {.uci_message = entry.msg, .detection_metric = 1});
+
+      channel_state_information csi;
+      csi.set_epre(0);
+      csi.set_rsrp(0);
+      csi.set_sinr_dB(channel_state_information::sinr_type::channel_estimator, 0);
+      csi.reset_time_alignment();
+
+      mux_results.insert(ics, occi, {{.uci_message = entry.msg, .detection_metric = 1}, csi});
     }
     return mux_results;
   }
@@ -78,9 +84,9 @@ public:
   void clear() { entries_format1.clear(); }
 
 private:
-  std::mt19937                                              rgen;
-  std::vector<entry_format1>                                entries_format1;
-  pucch_format1_map<pucch_detector::pucch_detection_result> mux_results;
+  std::mt19937                                                  rgen;
+  std::vector<entry_format1>                                    entries_format1;
+  pucch_format1_map<pucch_detector::pucch_detection_result_csi> mux_results;
 };
 
 PHY_SPY_FACTORY_TEMPLATE(pucch_detector);
