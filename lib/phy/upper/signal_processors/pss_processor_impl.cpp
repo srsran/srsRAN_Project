@@ -14,46 +14,7 @@
 
 using namespace srsran;
 
-pss_processor_impl::pregen_signal_s::pregen_signal_s()
-{
-  // Initialize M sequence x.
-  std::array<uint32_t, SEQUENCE_LEN + 7> x;
-  x[6] = 1;
-  x[5] = 1;
-  x[4] = 1;
-  x[3] = 0;
-  x[2] = 1;
-  x[1] = 1;
-  x[0] = 0;
-
-  // Generate M sequence x
-  for (uint32_t i = 0; i != SEQUENCE_LEN; ++i) {
-    x[i + 7] = (x[i + 4] + x[i]) % 2;
-  }
-
-  // Modulate M sequence d
-  for (uint32_t i = 0; i != SEQUENCE_LEN; ++i) {
-    (*this)[i] = 1.0F - 2.0F * (float)x[i];
-  }
-}
-
-const pss_processor_impl::pregen_signal_s pss_processor_impl::signal = pss_processor_impl::pregen_signal_s();
-
-void srsran::pss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& config) const
-{
-  // Calculate generation parameters
-  unsigned m = M(phys_cell_id::NID_2(config.phys_cell_id));
-
-  // Temporal sequence
-  span<cf_t>       tmp    = sequence;
-  span<const cf_t> pregen = signal;
-
-  // Copy sequence from offset to the end
-  srsvec::sc_prod(pregen.last(SEQUENCE_LEN - m), config.amplitude, tmp.first(SEQUENCE_LEN - m));
-
-  // Copy sequence from 0 to offset
-  srsvec::sc_prod(pregen.first(m), config.amplitude, tmp.last(m));
-}
+const pss_sequence_generator pss_processor_impl::sequence_generator;
 
 void srsran::pss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence,
                                          resource_grid_writer&                 grid,
@@ -74,7 +35,7 @@ void srsran::pss_processor_impl::map(resource_grid_writer& grid, const config_t&
 {
   // Generate sequence
   std::array<cf_t, SEQUENCE_LEN> sequence;
-  generation(sequence, config);
+  sequence_generator.generate(sequence, config.phys_cell_id, config.amplitude);
 
   // Mapping to physical resources
   mapping(sequence, grid, config);

@@ -12,31 +12,22 @@
 
 #include "srsran/adt/complex.h"
 #include "srsran/phy/constants.h"
+#include "srsran/phy/upper/sequence_generators/pss_sequence_generator.h"
 #include "srsran/phy/upper/signal_processors/pss_processor.h"
 
 namespace srsran {
 class pss_processor_impl : public pss_processor
 {
 private:
-  /// First subcarrier in the SS/PBCH block
+  /// First subcarrier in the SS/PBCH block.
   static const unsigned SSB_K_BEGIN = 56;
-  /// Symbol index in the SSB where the PSS is mapped
+  /// Symbol index in the SSB where the PSS is mapped.
   static const unsigned SSB_L = 0;
-  /// PSS Sequence length in the SSB
-  static const unsigned SEQUENCE_LEN = 127;
+  /// Actual sequence length in the PSS.
+  static constexpr unsigned SEQUENCE_LEN = pss_sequence_generator::sequence_length;
 
-  static inline unsigned M(unsigned N_id_2) { return ((43U * (N_id_2)) % SEQUENCE_LEN); }
-
-  struct pregen_signal_s : public std::array<cf_t, SEQUENCE_LEN> {
-    pregen_signal_s();
-  };
-
-  static const pregen_signal_s signal;
-
-  /// \brief Implements TS 38.211 section 7.4.2.2.1 Sequence generation
-  /// \param [out] sequence provides the destination of the sequence
-  /// \param [in] config provides the necessary parameters to generate the sequence
-  void generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& config) const;
+  /// Internal PSS sequence generator.
+  static const pss_sequence_generator sequence_generator;
 
   /// \brief Implements TS 38.211 section 7.4.2.2.2 Mapping to physical resources
   /// \param [in] sequence provides the source of the sequence
