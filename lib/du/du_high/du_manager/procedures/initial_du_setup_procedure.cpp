@@ -19,9 +19,9 @@
 using namespace srsran;
 using namespace srs_du;
 
-initial_du_setup_procedure::initial_du_setup_procedure(const du_manager_params&           params_,
-                                                       du_cell_manager&                   cell_mng_,
-                                                       du_manager_metrics_collector_impl& metrics_) :
+initial_du_setup_procedure::initial_du_setup_procedure(const du_manager_params&            params_,
+                                                       du_cell_manager&                    cell_mng_,
+                                                       du_manager_metrics_aggregator_impl& metrics_) :
   params(params_), cell_mng(cell_mng_), metrics(metrics_), logger(srslog::fetch_basic_logger("DU-MNG"))
 {
 }

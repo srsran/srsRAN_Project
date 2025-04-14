@@ -22,20 +22,20 @@ struct scheduler_metrics_report;
 
 namespace srs_du {
 
-class du_manager_metrics_collector_impl final : public du_manager_metrics_collector
+class du_manager_metrics_aggregator_impl final : public du_manager_metrics_aggregator
 {
 public:
-  du_manager_metrics_collector_impl(const du_manager_params::metrics_config_params& params_,
-                                    task_executor&                                  du_mng_exec_,
-                                    timer_manager&                                  timers_,
-                                    f1ap_metrics_collector&                         f1ap_collector_,
-                                    mac_metrics_notifier*                           mac_notifier_,
-                                    scheduler_metrics_notifier*                     sched_notifier_);
-  ~du_manager_metrics_collector_impl() override;
+  du_manager_metrics_aggregator_impl(const du_manager_params::metrics_config_params& params_,
+                                     task_executor&                                  du_mng_exec_,
+                                     timer_manager&                                  timers_,
+                                     f1ap_metrics_collector&                         f1ap_collector_,
+                                     mac_metrics_notifier*                           mac_notifier_,
+                                     scheduler_metrics_notifier*                     sched_notifier_);
+  ~du_manager_metrics_aggregator_impl() override;
 
   // DU metrics collector interface
-  void handle_mac_metrics_report(const mac_metric_report& report) override;
-  void handle_scheduler_metrics_report(const scheduler_cell_metrics& report) override;
+  void aggregate_mac_metrics_report(const mac_metric_report& report) override;
+  void aggregate_scheduler_metrics_report(const scheduler_cell_metrics& report) override;
 
   void handle_cell_start(du_cell_index_t cell_index);
   void handle_cell_stop(du_cell_index_t cell_index);

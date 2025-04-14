@@ -35,7 +35,7 @@ public:
   /// Connect layers of the DU-high.
   void connect(du_manager_interface& du_mng, mac_interface& mac_inst)
   {
-    mac_ev_notifier.connect(du_mng, du_mng.get_metrics_handler());
+    mac_ev_notifier.connect(du_mng, du_mng.get_metrics_aggregator());
     f1_to_du_notifier.connect(du_mng);
     f1ap_paging_notifier.connect(mac_inst.get_cell_paging_info_handler());
   }

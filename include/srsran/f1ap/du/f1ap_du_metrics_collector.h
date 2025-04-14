@@ -10,26 +10,12 @@
 
 #pragma once
 
-#include "srsran/adt/static_vector.h"
-#include "srsran/f1ap/f1ap_ue_id_types.h"
-#include "srsran/ran/du_types.h"
+#include "srsran/f1ap/du/f1ap_du_metrics_report.h"
 
 namespace srsran {
 namespace srs_du {
 
-struct f1ap_metrics_report {
-  struct ue_metrics {
-    du_ue_index_t       ue_index;
-    gnb_du_ue_f1ap_id_t ue_id;
-  };
-
-  /// Number of PDUs received by the F1AP-DU.
-  unsigned nof_rx_pdus = 0;
-  /// List of UE metrics.
-  static_vector<ue_metrics, MAX_NOF_DU_UES> ues;
-};
-
-/// \brief Class used to retrieve F1AP metrics.
+/// \brief Class used to collect F1AP metrics.
 class f1ap_metrics_collector
 {
 public:
@@ -37,7 +23,7 @@ public:
 
   /// \brief Generate an F1AP metrics report.
   /// \param report Report to fill.
-  virtual void handle_metrics_report_request(f1ap_metrics_report& report) = 0;
+  virtual void collect_metrics_report(f1ap_metrics_report& report) = 0;
 };
 
 } // namespace srs_du

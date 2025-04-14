@@ -15,7 +15,7 @@ using namespace srs_du;
 
 f1ap_metrics_collector_impl::f1ap_metrics_collector_impl(bool enabled) : enabled_flag(enabled) {}
 
-void f1ap_metrics_collector_impl::handle_metrics_report_request(f1ap_metrics_report& report)
+void f1ap_metrics_collector_impl::collect_metrics_report(f1ap_metrics_report& report)
 {
   report = {};
   if (not enabled_flag) {

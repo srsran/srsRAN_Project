@@ -11,7 +11,7 @@
 #pragma once
 
 #include "du_cell_manager.h"
-#include "du_metrics_collector_impl.h"
+#include "du_metrics_aggregator_impl.h"
 #include "du_ue/du_ue_manager.h"
 #include "ran_resource_management/du_ran_resource_manager_impl.h"
 #include "srsran/du/du_high/du_manager/du_manager.h"
@@ -73,7 +73,7 @@ public:
 
   f1ap_du_positioning_handler& get_positioning_handler() override { return *positioning_handler; }
 
-  du_manager_metrics_collector& get_metrics_handler() override { return metrics; }
+  du_manager_metrics_aggregator& get_metrics_aggregator() override { return metrics; }
 
 private:
   // DU manager configuration that will be visible to all running procedures
@@ -85,7 +85,7 @@ private:
   du_ran_resource_manager_impl                 cell_res_alloc;
   du_ue_manager                                ue_mng;
   std::unique_ptr<f1ap_du_positioning_handler> positioning_handler;
-  du_manager_metrics_collector_impl            metrics;
+  du_manager_metrics_aggregator_impl           metrics;
 
   std::mutex              mutex;
   std::condition_variable cvar;

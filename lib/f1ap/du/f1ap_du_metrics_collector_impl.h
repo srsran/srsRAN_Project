@@ -25,7 +25,7 @@ class f1ap_metrics_collector_impl final : public f1ap_metrics_collector
 public:
   f1ap_metrics_collector_impl(bool enabled);
 
-  void handle_metrics_report_request(f1ap_metrics_report& report) override;
+  void collect_metrics_report(f1ap_metrics_report& report) override;
 
   /// Called on every UE creation in the F1AP.
   void on_ue_creation(du_ue_index_t ue_index, gnb_du_ue_f1ap_id_t du_ue_id);

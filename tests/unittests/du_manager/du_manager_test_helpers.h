@@ -100,7 +100,7 @@ class f1ap_test_dummy : public f1ap_connection_manager,
     drb_id_t get_id(size_t i) const { return static_cast<drb_id_t>(i + 1); }
   };
 
-  void handle_metrics_report_request(f1ap_metrics_report& report) override { report = {}; }
+  void collect_metrics_report(f1ap_metrics_report& report) override { report = {}; }
 
 public:
   struct f1ap_ue_context {

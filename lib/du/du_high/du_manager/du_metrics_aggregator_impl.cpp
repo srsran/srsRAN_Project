@@ -8,7 +8,7 @@
  *
  */
 
-#include "du_metrics_collector_impl.h"
+#include "du_metrics_aggregator_impl.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/mac/mac_metrics.h"
@@ -21,17 +21,17 @@
 using namespace srsran;
 using namespace srs_du;
 
-// class du_manager_metrics_collector_impl::sched_metrics_aggregator
+// class du_manager_metrics_aggregator_impl::sched_metrics_aggregator
 
-class du_manager_metrics_collector_impl::sched_metrics_aggregator
+class du_manager_metrics_aggregator_impl::sched_metrics_aggregator
 {
   static constexpr unsigned capacity = MAX_NOF_DU_CELLS * 4;
 
 public:
-  sched_metrics_aggregator(du_manager_metrics_collector_impl& parent_,
-                           task_executor&                     du_mng_exec_,
-                           timer_manager&                     timers_,
-                           srslog::basic_logger&              logger_) :
+  sched_metrics_aggregator(du_manager_metrics_aggregator_impl& parent_,
+                           task_executor&                      du_mng_exec_,
+                           timer_manager&                      timers_,
+                           srslog::basic_logger&               logger_) :
     parent(parent_),
     du_mng_exec(du_mng_exec_),
     timers(timers_),
@@ -133,7 +133,7 @@ private:
     }
   }
 
-  du_manager_metrics_collector_impl& parent;
+  du_manager_metrics_aggregator_impl& parent;
   task_executor&                     du_mng_exec;
   timer_manager&                     timers;
   srslog::basic_logger&              logger;
@@ -148,9 +148,9 @@ private:
   std::atomic<unsigned> report_count{0};
 };
 
-// class du_manager_metrics_collector_impl
+// class du_manager_metrics_aggregator_impl
 
-du_manager_metrics_collector_impl::du_manager_metrics_collector_impl(
+du_manager_metrics_aggregator_impl::du_manager_metrics_aggregator_impl(
     const du_manager_params::metrics_config_params& params_,
     task_executor&                                  du_mng_exec_,
     timer_manager&                                  timers_,
@@ -183,9 +183,9 @@ du_manager_metrics_collector_impl::du_manager_metrics_collector_impl(
   }
 }
 
-du_manager_metrics_collector_impl::~du_manager_metrics_collector_impl() {}
+du_manager_metrics_aggregator_impl::~du_manager_metrics_aggregator_impl() {}
 
-void du_manager_metrics_collector_impl::handle_mac_metrics_report(const mac_metric_report& report)
+void du_manager_metrics_aggregator_impl::aggregate_mac_metrics_report(const mac_metric_report& report)
 {
   // Forward the MAC report to notifier.
   if (mac_notifier != nullptr) {
@@ -201,7 +201,7 @@ void du_manager_metrics_collector_impl::handle_mac_metrics_report(const mac_metr
   }
 }
 
-void du_manager_metrics_collector_impl::handle_scheduler_metrics_report(const scheduler_cell_metrics& report)
+void du_manager_metrics_aggregator_impl::aggregate_scheduler_metrics_report(const scheduler_cell_metrics& report)
 {
   if (sched_notifier != nullptr) {
     sched_notifier->report_metrics(report);
@@ -213,7 +213,7 @@ void du_manager_metrics_collector_impl::handle_scheduler_metrics_report(const sc
   }
 }
 
-void du_manager_metrics_collector_impl::trigger_report()
+void du_manager_metrics_aggregator_impl::trigger_report()
 {
   if (next_report.scheduler.has_value() and next_report.scheduler->cells.empty()) {
     // Aggregated scheduler metric report not received yet.
@@ -230,7 +230,7 @@ void du_manager_metrics_collector_impl::trigger_report()
 
   if (next_report.f1ap.has_value()) {
     // Generate F1AP metrics report.
-    f1ap_collector.handle_metrics_report_request(*next_report.f1ap);
+    f1ap_collector.collect_metrics_report(*next_report.f1ap);
   }
 
   // TODO: Generate RLC report.
@@ -251,7 +251,7 @@ void du_manager_metrics_collector_impl::trigger_report()
   }
 }
 
-void du_manager_metrics_collector_impl::handle_scheduler_metrics_report(const scheduler_metrics_report& report)
+void du_manager_metrics_aggregator_impl::handle_scheduler_metrics_report(const scheduler_metrics_report& report)
 {
   // The scheduler metrics report for all active cells is now ready.
   next_report.scheduler = report;
@@ -260,14 +260,14 @@ void du_manager_metrics_collector_impl::handle_scheduler_metrics_report(const sc
   trigger_report();
 }
 
-void du_manager_metrics_collector_impl::handle_cell_start(du_cell_index_t cell_index)
+void du_manager_metrics_aggregator_impl::handle_cell_start(du_cell_index_t cell_index)
 {
   if (sched_aggregator != nullptr) {
     sched_aggregator->add_cell();
   }
 }
 
-void du_manager_metrics_collector_impl::handle_cell_stop(du_cell_index_t cell_index)
+void du_manager_metrics_aggregator_impl::handle_cell_stop(du_cell_index_t cell_index)
 {
   if (sched_aggregator != nullptr) {
     sched_aggregator->rem_cell();

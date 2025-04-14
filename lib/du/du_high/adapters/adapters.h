@@ -23,7 +23,7 @@ class du_manager_mac_event_indicator : public mac_ul_ccch_notifier,
                                        public scheduler_metrics_notifier
 {
 public:
-  void connect(du_manager_mac_event_handler& du_mng_, du_manager_metrics_collector& metrics_handler_)
+  void connect(du_manager_mac_event_handler& du_mng_, du_manager_metrics_aggregator& metrics_handler_)
   {
     du_mng          = &du_mng_;
     metrics_handler = &metrics_handler_;
@@ -36,17 +36,17 @@ public:
 
   void on_new_metrics_report(const mac_metric_report& report) override
   {
-    metrics_handler->handle_mac_metrics_report(report);
+    metrics_handler->aggregate_mac_metrics_report(report);
   }
 
   void report_metrics(const scheduler_cell_metrics& report) override
   {
-    metrics_handler->handle_scheduler_metrics_report(report);
+    metrics_handler->aggregate_scheduler_metrics_report(report);
   }
 
 private:
   du_manager_mac_event_handler* du_mng          = nullptr;
-  du_manager_metrics_collector* metrics_handler = nullptr;
+  du_manager_metrics_aggregator* metrics_handler = nullptr;
 };
 
 class mac_f1ap_paging_handler : public f1ap_du_paging_notifier

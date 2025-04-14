@@ -27,16 +27,16 @@ public:
 };
 
 /// Interface used to handle metric reports from the DU-high remaining layers.
-class du_manager_metrics_collector
+class du_manager_metrics_aggregator
 {
 public:
-  virtual ~du_manager_metrics_collector() = default;
+  virtual ~du_manager_metrics_aggregator() = default;
 
   /// \brief Handle the metrics report from the MAC.
-  virtual void handle_mac_metrics_report(const mac_metric_report& report) = 0;
+  virtual void aggregate_mac_metrics_report(const mac_metric_report& report) = 0;
 
   /// \brief Handle the metrics report from the Scheduler.
-  virtual void handle_scheduler_metrics_report(const scheduler_cell_metrics& report) = 0;
+  virtual void aggregate_scheduler_metrics_report(const scheduler_cell_metrics& report) = 0;
 };
 
 /// This class handles updates in cell and UE configurations. TODO: Better naming needed.
@@ -116,8 +116,8 @@ class du_manager_interface : public du_manager_interface_query,
 public:
   virtual ~du_manager_interface() = default;
 
-  /// Get DU metrics handler.
-  virtual du_manager_metrics_collector& get_metrics_handler() = 0;
+  /// Get entity responsibly for aggregating metrics from all DU layers.
+  virtual du_manager_metrics_aggregator& get_metrics_aggregator() = 0;
 };
 
 } // namespace srs_du
