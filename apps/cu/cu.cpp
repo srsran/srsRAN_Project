@@ -130,8 +130,14 @@ static void register_app_logs(const cu_appconfig&       cu_cfg,
   auto& app_logger = srslog::fetch_basic_logger("CU", false);
   app_logger.set_level(srslog::basic_levels::info);
   app_services::application_message_banners::log_build_info(app_logger);
-  app_logger.set_level(log_cfg.config_level);
+  app_logger.set_level(log_cfg.all_level);
   app_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
+  {
+    auto& logger = srslog::fetch_basic_logger("APP", false);
+    logger.set_level(log_cfg.all_level);
+    logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+  }
 
   auto& config_logger = srslog::fetch_basic_logger("CONFIG", false);
   config_logger.set_level(log_cfg.config_level);
