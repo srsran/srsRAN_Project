@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/phy/support/precoding_configuration_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"phy"
+		],
+		"name" : "precoding_configuration_test"
+	}
+}

@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/fapi/builders/ul_pucch_pdu_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"fapi"
+		],
+		"name" : "ul_pucch_builder_test"
+	}
+}

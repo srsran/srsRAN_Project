@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/rlc/rlc_metrics_aggregator_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/rlc/rlc_metrics_aggregator_test[1]_tests.cmake")
+else()
+  add_test(rlc_metrics_aggregator_test_NOT_BUILT rlc_metrics_aggregator_test_NOT_BUILT)
+endif()

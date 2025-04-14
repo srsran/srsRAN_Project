@@ -1,0 +1,4 @@
+# Directory labels
+ du_manager
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/du_manager/sib_test.cpp

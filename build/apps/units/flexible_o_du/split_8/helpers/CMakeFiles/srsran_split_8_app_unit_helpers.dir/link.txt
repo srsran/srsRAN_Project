@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_split_8_app_unit_helpers.a CMakeFiles/srsran_split_8_app_unit_helpers.dir/ru_sdr_config_cli11_schema.cpp.o CMakeFiles/srsran_split_8_app_unit_helpers.dir/ru_sdr_config_translator.cpp.o CMakeFiles/srsran_split_8_app_unit_helpers.dir/ru_sdr_config_validator.cpp.o CMakeFiles/srsran_split_8_app_unit_helpers.dir/ru_sdr_config_yaml_writer.cpp.o CMakeFiles/srsran_split_8_app_unit_helpers.dir/ru_sdr_factories.cpp.o
+/usr/bin/ranlib libsrsran_split_8_app_unit_helpers.a

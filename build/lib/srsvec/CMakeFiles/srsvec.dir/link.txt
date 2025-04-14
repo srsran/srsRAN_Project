@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsvec.a CMakeFiles/srsvec.dir/accumulate.cpp.o CMakeFiles/srsvec.dir/add.cpp.o CMakeFiles/srsvec.dir/bit.cpp.o CMakeFiles/srsvec.dir/clip.cpp.o CMakeFiles/srsvec.dir/compare.cpp.o CMakeFiles/srsvec.dir/conversion.cpp.o CMakeFiles/srsvec.dir/convolution.cpp.o CMakeFiles/srsvec.dir/division.cpp.o CMakeFiles/srsvec.dir/dot_prod.cpp.o CMakeFiles/srsvec.dir/modulus_square.cpp.o CMakeFiles/srsvec.dir/prod.cpp.o CMakeFiles/srsvec.dir/sc_prod.cpp.o CMakeFiles/srsvec.dir/subtract.cpp.o CMakeFiles/srsvec.dir/unwrap.cpp.o
+/usr/bin/ranlib libsrsvec.a

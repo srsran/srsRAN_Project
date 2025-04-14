@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/fapi/validators/ul_tti_request_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"fapi"
+		],
+		"name" : "ul_tti_request_validator_test"
+	}
+}

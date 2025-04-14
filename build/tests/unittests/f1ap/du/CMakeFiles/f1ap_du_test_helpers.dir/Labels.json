@@ -1,0 +1,20 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/du/f1ap_du_test_helpers.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/du/f1ap_du_reset_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"f1ap",
+			"f1ap_du"
+		],
+		"name" : "f1ap_du_test_helpers"
+	}
+}

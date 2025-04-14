@@ -1,0 +1,4 @@
+# Directory labels
+ du_manager
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/du_manager/srs_resource_generator_test.cpp

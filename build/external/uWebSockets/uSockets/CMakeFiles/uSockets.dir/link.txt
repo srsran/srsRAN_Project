@@ -1,0 +1,2 @@
+/usr/bin/ar qc libuSockets.a CMakeFiles/uSockets.dir/eventing/epoll_kqueue.c.o CMakeFiles/uSockets.dir/bsd.c.o CMakeFiles/uSockets.dir/context.c.o CMakeFiles/uSockets.dir/loop.c.o CMakeFiles/uSockets.dir/socket.c.o CMakeFiles/uSockets.dir/udp.c.o
+/usr/bin/ranlib libuSockets.a

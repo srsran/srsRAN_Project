@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_o_du.a CMakeFiles/srsran_o_du.dir/o_du_impl.cpp.o CMakeFiles/srsran_o_du.dir/o_du_factory.cpp.o
+/usr/bin/ranlib libsrsran_o_du.a

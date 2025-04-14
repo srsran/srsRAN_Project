@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/adt/circular_map_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"adt"
+		],
+		"name" : "circular_map_test"
+	}
+}

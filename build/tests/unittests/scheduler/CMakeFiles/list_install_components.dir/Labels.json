@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"sched"
+		],
+		"name" : "list_install_components"
+	}
+}

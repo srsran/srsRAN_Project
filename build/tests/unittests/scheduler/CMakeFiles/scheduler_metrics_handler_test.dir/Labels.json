@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/scheduler_metrics_handler_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"sched"
+		],
+		"name" : "scheduler_metrics_handler_test"
+	}
+}

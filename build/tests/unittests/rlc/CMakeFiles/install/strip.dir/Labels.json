@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"rlc"
+		],
+		"name" : "install/strip"
+	}
+}

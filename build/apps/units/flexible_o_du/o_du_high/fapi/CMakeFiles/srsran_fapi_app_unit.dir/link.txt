@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_fapi_app_unit.a CMakeFiles/srsran_fapi_app_unit.dir/fapi_config_cli11_schema.cpp.o CMakeFiles/srsran_fapi_app_unit.dir/fapi_config_translator.cpp.o CMakeFiles/srsran_fapi_app_unit.dir/fapi_config_yaml_writer.cpp.o
+/usr/bin/ranlib libsrsran_fapi_app_unit.a

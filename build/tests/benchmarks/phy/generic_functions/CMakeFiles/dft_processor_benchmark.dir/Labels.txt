@@ -1,0 +1,4 @@
+# Directory labels
+ phy
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/benchmarks/phy/generic_functions/dft_processor_benchmark.cpp

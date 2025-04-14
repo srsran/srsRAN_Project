@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/du_manager/procedures/ue_creation_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"du_manager"
+		],
+		"name" : "du_manager_ue_creation_test"
+	}
+}

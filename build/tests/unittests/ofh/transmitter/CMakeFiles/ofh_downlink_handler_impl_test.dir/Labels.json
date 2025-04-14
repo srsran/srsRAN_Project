@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/ofh/transmitter/ofh_downlink_handler_impl_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"transmitter"
+		],
+		"name" : "ofh_downlink_handler_impl_test"
+	}
+}

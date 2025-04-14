@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/pcap/ngap_pcap_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"pcap"
+		],
+		"name" : "pcap_ngap_test"
+	}
+}

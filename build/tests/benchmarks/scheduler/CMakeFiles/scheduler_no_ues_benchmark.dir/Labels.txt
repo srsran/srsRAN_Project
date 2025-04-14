@@ -1,0 +1,4 @@
+# Directory labels
+ sched
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/benchmarks/scheduler/scheduler_no_ues_benchmark.cpp

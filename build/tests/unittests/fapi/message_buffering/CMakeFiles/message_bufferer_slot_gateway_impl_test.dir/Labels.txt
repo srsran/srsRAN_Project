@@ -1,0 +1,4 @@
+# Directory labels
+ fapi
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/fapi/message_buffering/message_bufferer_slot_gateway_impl_test.cpp

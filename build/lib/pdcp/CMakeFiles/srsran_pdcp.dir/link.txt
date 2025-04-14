@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_pdcp.a CMakeFiles/srsran_pdcp.dir/pdcp_factory.cpp.o CMakeFiles/srsran_pdcp.dir/pdcp_entity_tx.cpp.o CMakeFiles/srsran_pdcp.dir/pdcp_entity_rx.cpp.o CMakeFiles/srsran_pdcp.dir/pdcp_tx_window.cpp.o CMakeFiles/srsran_pdcp.dir/pdcp_pdu.cpp.o CMakeFiles/srsran_pdcp.dir/pdcp_metrics_aggregator.cpp.o
+/usr/bin/ranlib libsrsran_pdcp.a

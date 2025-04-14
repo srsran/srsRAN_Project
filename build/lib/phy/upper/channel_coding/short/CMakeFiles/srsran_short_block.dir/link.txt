@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_short_block.a CMakeFiles/srsran_short_block.dir/short_block_encoder_impl.cpp.o CMakeFiles/srsran_short_block.dir/short_block_detector_impl.cpp.o
+/usr/bin/ranlib libsrsran_short_block.a

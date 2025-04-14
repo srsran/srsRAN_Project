@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/fapi_adaptor/mac/messages/ul_prach_pdu_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"fapi_adaptor"
+		],
+		"name" : "mac_fapi_prach_adaptor_test"
+	}
+}

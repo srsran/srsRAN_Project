@@ -1,0 +1,37 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/scheduler_retx_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/scheduler_ue_removal_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/scheduler_tdd_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/scheduler_ue_fallback_mode_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/scheduler_ta_cmd_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/multi_cell_scheduler_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/multi_slice_scheduler_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/scheduler_qos_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"sched"
+		],
+		"name" : "scheduler_test"
+	}
+}

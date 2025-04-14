@@ -1,0 +1,5 @@
+add_test( rlc_metrics_aggregator_test.check_basic_aggregation /home/shovon/srsRAN_Project/build/tests/unittests/rlc/rlc_metrics_aggregator_test [==[--gtest_filter=rlc_metrics_aggregator_test.check_basic_aggregation]==] --gtest_also_run_disabled_tests)
+set_tests_properties( rlc_metrics_aggregator_test.check_basic_aggregation PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/rlc SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( rlc_metrics_aggregator_test.drop_one_report /home/shovon/srsRAN_Project/build/tests/unittests/rlc/rlc_metrics_aggregator_test [==[--gtest_filter=rlc_metrics_aggregator_test.drop_one_report]==] --gtest_also_run_disabled_tests)
+set_tests_properties( rlc_metrics_aggregator_test.drop_one_report PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/rlc SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( rlc_metrics_aggregator_test_TESTS rlc_metrics_aggregator_test.check_basic_aggregation rlc_metrics_aggregator_test.drop_one_report)

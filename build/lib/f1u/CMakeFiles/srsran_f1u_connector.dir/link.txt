@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_f1u_connector.a CMakeFiles/srsran_f1u_connector.dir/local_connector/f1u_local_connector.cpp.o
+/usr/bin/ranlib libsrsran_f1u_connector.a

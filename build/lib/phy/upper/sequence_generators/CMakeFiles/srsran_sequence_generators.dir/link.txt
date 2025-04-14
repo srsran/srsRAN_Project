@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_sequence_generators.a CMakeFiles/srsran_sequence_generators.dir/low_papr_sequence_collection_impl.cpp.o CMakeFiles/srsran_sequence_generators.dir/low_papr_sequence_generator_impl.cpp.o CMakeFiles/srsran_sequence_generators.dir/pseudo_random_generator_impl.cpp.o CMakeFiles/srsran_sequence_generators.dir/sequence_generator_factories.cpp.o
+/usr/bin/ranlib libsrsran_sequence_generators.a

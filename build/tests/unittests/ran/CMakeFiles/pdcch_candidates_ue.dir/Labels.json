@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/ran/pdcch/pdcch_candidates_ue_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ran"
+		],
+		"name" : "pdcch_candidates_ue"
+	}
+}

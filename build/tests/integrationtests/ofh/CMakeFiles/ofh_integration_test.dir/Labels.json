@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/ofh/ofh_integration_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ofh"
+		],
+		"name" : "ofh_integration_test"
+	}
+}

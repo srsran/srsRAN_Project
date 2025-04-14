@@ -1,0 +1,2 @@
+/usr/bin/ar qc libe1ap_asn1.a CMakeFiles/e1ap_asn1.dir/e1ap/e1ap.cpp.o CMakeFiles/e1ap_asn1.dir/e1ap/e1ap_ies.cpp.o CMakeFiles/e1ap_asn1.dir/e1ap/e1ap_pdu_contents.cpp.o
+/usr/bin/ranlib libe1ap_asn1.a

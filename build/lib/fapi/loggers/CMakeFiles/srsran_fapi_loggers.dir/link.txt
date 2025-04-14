@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_fapi_loggers.a CMakeFiles/srsran_fapi_loggers.dir/logging_decorator_impl.cpp.o CMakeFiles/srsran_fapi_loggers.dir/logging_slot_data_notifier_decorator.cpp.o CMakeFiles/srsran_fapi_loggers.dir/logging_slot_error_notifier_decorator.cpp.o CMakeFiles/srsran_fapi_loggers.dir/logging_slot_gateway_decorator.cpp.o CMakeFiles/srsran_fapi_loggers.dir/logging_slot_time_notifier_decorator.cpp.o CMakeFiles/srsran_fapi_loggers.dir/message_loggers.cpp.o
+/usr/bin/ranlib libsrsran_fapi_loggers.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_lower_phy.a CMakeFiles/srsran_lower_phy.dir/lower_phy_baseband_processor.cpp.o CMakeFiles/srsran_lower_phy.dir/lower_phy_factory.cpp.o CMakeFiles/srsran_lower_phy.dir/lower_phy_impl.cpp.o
+/usr/bin/ranlib libsrsran_lower_phy.a

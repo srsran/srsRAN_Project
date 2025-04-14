@@ -1,0 +1,4 @@
+# Directory labels
+ fapi_adaptor
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/fapi_adaptor/uci_part2_correspondence_test.cpp

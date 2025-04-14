@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"e2ap"
+		],
+		"name" : "rebuild_cache"
+	}
+}

@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/ran/pdcch/pdcch_type0_css_coreset_config_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ran"
+		],
+		"name" : "pdcch_type0_css_coreset_config_test"
+	}
+}

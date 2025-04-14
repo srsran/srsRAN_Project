@@ -1,0 +1,31 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_setup_procedure_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_modification_procedure_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/cu_cp/f1ap_cu_ue_context_release_procedure_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/cu_cp/f1ap_cu_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/cu_cp/f1ap_cu_paging_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"f1ap"
+		],
+		"name" : "f1ap_cu_test"
+	}
+}

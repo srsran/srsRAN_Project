@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_f1ap_common.a CMakeFiles/srsran_f1ap_common.dir/f1ap_common_messages.cpp.o CMakeFiles/srsran_f1ap_common.dir/asn1_helpers.cpp.o CMakeFiles/srsran_f1ap_common.dir/f1ap_asn1_packer.cpp.o CMakeFiles/srsran_f1ap_common.dir/log_helpers.cpp.o
+/usr/bin/ranlib libsrsran_f1ap_common.a

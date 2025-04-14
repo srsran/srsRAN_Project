@@ -1,0 +1,4 @@
+# Directory labels
+ gateways
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/gateways/udp_network_gateway_test.cpp

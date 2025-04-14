@@ -1,0 +1,4 @@
+# Directory labels
+ ecpri
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/ofh/ecpri/ecpri_packet_decoder_impl_test.cpp

@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"du_manager"
+		],
+		"name" : "list_install_components"
+	}
+}

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_nru.a CMakeFiles/srsran_nru.dir/nru_packing.cpp.o
+/usr/bin/ranlib libsrsran_nru.a

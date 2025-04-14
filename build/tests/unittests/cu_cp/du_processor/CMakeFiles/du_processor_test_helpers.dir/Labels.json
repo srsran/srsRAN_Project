@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/du_processor/du_processor_test_helpers.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cu_cp"
+		],
+		"name" : "du_processor_test_helpers"
+	}
+}

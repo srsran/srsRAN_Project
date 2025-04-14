@@ -1,0 +1,5 @@
+add_test( ngu_session_manager_test.mngr_creation /home/shovon/srsRAN_Project/build/tests/unittests/cu_up/ngu_session_manager_test [==[--gtest_filter=ngu_session_manager_test.mngr_creation]==] --gtest_also_run_disabled_tests)
+set_tests_properties( ngu_session_manager_test.mngr_creation PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/cu_up SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( ngu_session_manager_test.rr_session_selection /home/shovon/srsRAN_Project/build/tests/unittests/cu_up/ngu_session_manager_test [==[--gtest_filter=ngu_session_manager_test.rr_session_selection]==] --gtest_also_run_disabled_tests)
+set_tests_properties( ngu_session_manager_test.rr_session_selection PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/cu_up SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( ngu_session_manager_test_TESTS ngu_session_manager_test.mngr_creation ngu_session_manager_test.rr_session_selection)

@@ -1,0 +1,19 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/e2/e2ap_network_adapter_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/e2/dummy_ric.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"e2ap"
+		],
+		"name" : "e2ap_network_adapter_test"
+	}
+}

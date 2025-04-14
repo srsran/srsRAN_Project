@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_phy_metrics.a CMakeFiles/srsran_phy_metrics.dir/phy_metrics_factories.cpp.o
+/usr/bin/ranlib libsrsran_phy_metrics.a

@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/fapi_adaptor/phy/messages/ul_pucch_pdu_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"fapi_adaptor"
+		],
+		"name" : "fapi_phy_pucch_adaptor_test"
+	}
+}

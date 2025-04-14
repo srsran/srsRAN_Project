@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/adt/filter_view_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"adt"
+		],
+		"name" : "filter_view_test"
+	}
+}

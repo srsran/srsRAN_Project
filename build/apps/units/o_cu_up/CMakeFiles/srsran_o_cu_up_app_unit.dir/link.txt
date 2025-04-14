@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_o_cu_up_app_unit.a CMakeFiles/srsran_o_cu_up_app_unit.dir/o_cu_up_application_unit_impl.cpp.o CMakeFiles/srsran_o_cu_up_app_unit.dir/o_cu_up_builder.cpp.o CMakeFiles/srsran_o_cu_up_app_unit.dir/o_cu_up_unit_impl.cpp.o
+/usr/bin/ranlib libsrsran_o_cu_up_app_unit.a

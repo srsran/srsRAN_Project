@@ -1,0 +1,28 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/apps/examples/ofh/ru_emulator_cli11_schema.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/apps/examples/ofh/ru_emulator.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/apps/examples/ofh/ru_emulator_rx_window_checker.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/apps/examples/ofh/ru_emulator_socket_transceiver.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/apps/examples/ofh/ru_emulator_timing_notifier.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ofh"
+		],
+		"name" : "ru_emulator"
+	}
+}

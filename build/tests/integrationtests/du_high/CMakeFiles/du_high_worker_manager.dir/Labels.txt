@@ -1,0 +1,6 @@
+# Directory labels
+ du_high
+ integrationtest
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/integrationtests/du_high/test_utils/du_high_worker_manager.cpp
+/home/shovon/srsRAN_Project/tests/integrationtests/du_high/test_utils/du_high_env_simulator.cpp

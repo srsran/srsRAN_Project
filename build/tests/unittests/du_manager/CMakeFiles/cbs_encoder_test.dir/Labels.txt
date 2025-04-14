@@ -1,0 +1,4 @@
+# Directory labels
+ du_manager
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/du_manager/cbs/cbs_encoder_test.cpp

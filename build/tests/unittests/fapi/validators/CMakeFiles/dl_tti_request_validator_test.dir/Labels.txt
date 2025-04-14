@@ -1,0 +1,4 @@
+# Directory labels
+ fapi
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/fapi/validators/dl_tti_request_test.cpp

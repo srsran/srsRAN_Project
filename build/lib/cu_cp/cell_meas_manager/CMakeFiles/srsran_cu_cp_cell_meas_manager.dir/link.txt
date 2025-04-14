@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_cu_cp_cell_meas_manager.a CMakeFiles/srsran_cu_cp_cell_meas_manager.dir/cell_meas_manager_impl.cpp.o CMakeFiles/srsran_cu_cp_cell_meas_manager.dir/cell_meas_manager_helpers.cpp.o
+/usr/bin/ranlib libsrsran_cu_cp_cell_meas_manager.a

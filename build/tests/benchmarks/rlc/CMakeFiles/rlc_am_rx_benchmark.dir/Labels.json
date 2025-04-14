@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/benchmarks/rlc/rlc_am_rx_benchmark.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"rlc"
+		],
+		"name" : "rlc_am_rx_benchmark"
+	}
+}

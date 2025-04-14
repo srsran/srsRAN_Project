@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_du_config_validators.a CMakeFiles/srsran_du_config_validators.dir/du_cell_config_validation.cpp.o CMakeFiles/srsran_du_config_validators.dir/du_update_config_helpers.cpp.o
+/usr/bin/ranlib libsrsran_du_config_validators.a

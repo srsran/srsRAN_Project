@@ -1,0 +1,4 @@
+# Directory labels
+ du_high|tsan
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/benchmarks/du_high/du_high_benchmark.cpp

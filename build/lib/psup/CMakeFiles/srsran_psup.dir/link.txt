@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_psup.a CMakeFiles/srsran_psup.dir/psup_packing.cpp.o
+/usr/bin/ranlib libsrsran_psup.a

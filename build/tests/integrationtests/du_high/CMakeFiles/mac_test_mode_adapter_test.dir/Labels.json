@@ -1,0 +1,17 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/du_high/mac_test_mode_adapter_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"du_high",
+			"integrationtest"
+		],
+		"name" : "mac_test_mode_adapter_test"
+	}
+}

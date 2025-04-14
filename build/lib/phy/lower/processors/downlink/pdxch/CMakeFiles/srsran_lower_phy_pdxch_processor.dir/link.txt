@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_lower_phy_pdxch_processor.a CMakeFiles/srsran_lower_phy_pdxch_processor.dir/pdxch_processor_factories.cpp.o CMakeFiles/srsran_lower_phy_pdxch_processor.dir/pdxch_processor_impl.cpp.o
+/usr/bin/ranlib libsrsran_lower_phy_pdxch_processor.a

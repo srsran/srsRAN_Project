@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/support/memory_block_list_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"support"
+		],
+		"name" : "memory_block_list_test"
+	}
+}

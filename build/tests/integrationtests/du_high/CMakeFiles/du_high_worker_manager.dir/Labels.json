@@ -1,0 +1,20 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/du_high/test_utils/du_high_worker_manager.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/du_high/test_utils/du_high_env_simulator.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"du_high",
+			"integrationtest"
+		],
+		"name" : "du_high_worker_manager"
+	}
+}

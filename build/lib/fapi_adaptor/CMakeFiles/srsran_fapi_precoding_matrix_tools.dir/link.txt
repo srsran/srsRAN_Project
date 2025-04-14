@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_fapi_precoding_matrix_tools.a CMakeFiles/srsran_fapi_precoding_matrix_tools.dir/precoding_matrix_mapper.cpp.o CMakeFiles/srsran_fapi_precoding_matrix_tools.dir/precoding_matrix_repository.cpp.o CMakeFiles/srsran_fapi_precoding_matrix_tools.dir/precoding_matrix_table_generator.cpp.o
+/usr/bin/ranlib libsrsran_fapi_precoding_matrix_tools.a

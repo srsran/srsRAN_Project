@@ -1,0 +1,2 @@
+/usr/bin/ar qc libuci_test_utils.a CMakeFiles/uci_test_utils.dir/__/uci_and_pucch/uci_test_utils.cpp.o
+/usr/bin/ranlib libuci_test_utils.a

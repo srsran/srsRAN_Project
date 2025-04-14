@@ -1,0 +1,2 @@
+/usr/bin/ar qc libf1ap_test_doubles.a CMakeFiles/f1ap_test_doubles.dir/Unity/unity_0_cxx.cxx.o
+/usr/bin/ranlib libf1ap_test_doubles.a

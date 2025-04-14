@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/phy/generic_functions/dft_processor_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"phy"
+		],
+		"name" : "dft_processor_test"
+	}
+}

@@ -1,0 +1,3 @@
+add_test( ofh_uplane_packet_builder_dynamic_impl_test.non_compressed_packet_should_pass /home/shovon/srsRAN_Project/build/tests/unittests/ofh/serdes/ofh_uplane_packet_builder_dynamic_impl_test [==[--gtest_filter=ofh_uplane_packet_builder_dynamic_impl_test.non_compressed_packet_should_pass]==] --gtest_also_run_disabled_tests)
+set_tests_properties( ofh_uplane_packet_builder_dynamic_impl_test.non_compressed_packet_should_pass PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/ofh/serdes SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( ofh_uplane_packet_builder_dynamic_impl_test_TESTS ofh_uplane_packet_builder_dynamic_impl_test.non_compressed_packet_should_pass)

@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/support/timer_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"support"
+		],
+		"name" : "timer_test"
+	}
+}

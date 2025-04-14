@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_f1c_gateway.a CMakeFiles/srsran_f1c_gateway.dir/f1c_network_client_factory.cpp.o CMakeFiles/srsran_f1c_gateway.dir/f1c_network_server_factory.cpp.o CMakeFiles/srsran_f1c_gateway.dir/f1c_local_connector_factory.cpp.o
+/usr/bin/ranlib libsrsran_f1c_gateway.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_channel_processors.a CMakeFiles/srsran_channel_processors.dir/channel_processor_factories.cpp.o
+/usr/bin/ranlib libsrsran_channel_processors.a

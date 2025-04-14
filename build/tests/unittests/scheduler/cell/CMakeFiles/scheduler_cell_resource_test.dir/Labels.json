@@ -1,0 +1,22 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/cell/sched_prb_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/cell/cell_resource_grid_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/cell/cell_harq_manager_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"sched"
+		],
+		"name" : "scheduler_cell_resource_test"
+	}
+}

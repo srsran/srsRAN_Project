@@ -1,0 +1,4 @@
+# Directory labels
+ security
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/security/k_gnb_star_gen_helper.cpp

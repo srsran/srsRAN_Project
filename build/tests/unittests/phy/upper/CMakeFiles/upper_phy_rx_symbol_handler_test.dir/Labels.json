@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/phy/upper/upper_phy_rx_symbol_handler_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"phy"
+		],
+		"name" : "upper_phy_rx_symbol_handler_test"
+	}
+}

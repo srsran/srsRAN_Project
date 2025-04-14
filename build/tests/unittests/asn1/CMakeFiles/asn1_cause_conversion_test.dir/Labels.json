@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/asn1/asn1_cause_conversion_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"asn1"
+		],
+		"name" : "asn1_cause_conversion_test"
+	}
+}

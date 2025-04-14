@@ -1,0 +1,4 @@
+# Directory labels
+ serdes
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/ofh/serdes/ofh_uplane_packet_builder_static_impl_test.cpp

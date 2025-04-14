@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/ofh/receiver/ofh_message_receiver_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/ofh/receiver/ofh_message_receiver_test[1]_tests.cmake")
+else()
+  add_test(ofh_message_receiver_test_NOT_BUILT ofh_message_receiver_test_NOT_BUILT)
+endif()

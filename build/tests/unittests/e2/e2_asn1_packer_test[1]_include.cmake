@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/e2/e2_asn1_packer_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/e2/e2_asn1_packer_test[1]_tests.cmake")
+else()
+  add_test(e2_asn1_packer_test_NOT_BUILT e2_asn1_packer_test_NOT_BUILT)
+endif()

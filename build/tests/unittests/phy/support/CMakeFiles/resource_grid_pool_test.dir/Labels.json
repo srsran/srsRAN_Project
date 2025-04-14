@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/phy/support/resource_grid_pool_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"phy"
+		],
+		"name" : "resource_grid_pool_test"
+	}
+}

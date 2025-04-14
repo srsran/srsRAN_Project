@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/ran/pdcch/dci_packing_validator_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ran"
+		],
+		"name" : "dci_packing_validator_test"
+	}
+}

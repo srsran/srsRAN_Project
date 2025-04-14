@@ -1,0 +1,19 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/common/f1ap_cu_test_messages.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/common/f1ap_du_test_messages.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"f1ap"
+		],
+		"name" : "f1ap_test_helpers"
+	}
+}

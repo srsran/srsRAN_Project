@@ -1,0 +1,10 @@
+# Directory labels
+ cu_cp
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/test_doubles/mock_cu_up.cpp
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/test_doubles/mock_amf.cpp
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/test_doubles/mock_du.cpp
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_test_environment.cpp
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_test_messages.cpp
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/du_processor_test_messages.cpp
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/test_helpers.cpp

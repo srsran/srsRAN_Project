@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/support/fixed_size_memory_pool_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"support"
+		],
+		"name" : "fixed_size_memory_pool_test"
+	}
+}

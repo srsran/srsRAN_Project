@@ -1,0 +1,4 @@
+# Directory labels
+ sched
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/scheduler/support/pusch/pusch_dmrs_symbol_mask_test.cpp

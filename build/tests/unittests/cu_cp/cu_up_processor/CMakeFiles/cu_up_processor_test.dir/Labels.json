@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_up_processor/cu_up_processor_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cu_cp"
+		],
+		"name" : "cu_up_processor_test"
+	}
+}

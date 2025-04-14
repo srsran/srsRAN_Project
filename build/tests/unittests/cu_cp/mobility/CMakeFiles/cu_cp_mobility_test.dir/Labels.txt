@@ -1,0 +1,4 @@
+# Directory labels
+ cu_cp
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/mobility/handover_reconfiguration_routine_test.cpp

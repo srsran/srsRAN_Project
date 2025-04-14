@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/sdap/sdap_tx_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"pdcp"
+		],
+		"name" : "sdap_tx_test"
+	}
+}

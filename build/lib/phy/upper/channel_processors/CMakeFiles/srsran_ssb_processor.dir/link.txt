@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_ssb_processor.a CMakeFiles/srsran_ssb_processor.dir/ssb_processor_impl.cpp.o
+/usr/bin/ranlib libsrsran_ssb_processor.a

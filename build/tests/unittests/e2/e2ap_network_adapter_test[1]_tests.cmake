@@ -1,0 +1,3 @@
+add_test( e2ap_network_adapter_test.when_e2_setup_response_received_then_ric_connected /home/shovon/srsRAN_Project/build/tests/unittests/e2/e2ap_network_adapter_test [==[--gtest_filter=e2ap_network_adapter_test.when_e2_setup_response_received_then_ric_connected]==] --gtest_also_run_disabled_tests)
+set_tests_properties( e2ap_network_adapter_test.when_e2_setup_response_received_then_ric_connected PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/e2 SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( e2ap_network_adapter_test_TESTS e2ap_network_adapter_test.when_e2_setup_response_received_then_ric_connected)

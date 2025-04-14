@@ -1,0 +1,25 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/support/executors/sync_task_executor_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/support/executors/task_worker_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/support/executors/strand_executor_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/support/executors/task_execution_manager_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"support"
+		],
+		"name" : "task_worker_test"
+	}
+}

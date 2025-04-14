@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_uci_decoder.a CMakeFiles/srsran_uci_decoder.dir/factories.cpp.o CMakeFiles/srsran_uci_decoder.dir/uci_decoder_impl.cpp.o
+/usr/bin/ranlib libsrsran_uci_decoder.a

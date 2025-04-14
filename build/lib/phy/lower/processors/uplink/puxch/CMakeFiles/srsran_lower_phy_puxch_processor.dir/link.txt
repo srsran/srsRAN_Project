@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_lower_phy_puxch_processor.a CMakeFiles/srsran_lower_phy_puxch_processor.dir/puxch_processor_factories.cpp.o CMakeFiles/srsran_lower_phy_puxch_processor.dir/puxch_processor_impl.cpp.o
+/usr/bin/ranlib libsrsran_lower_phy_puxch_processor.a

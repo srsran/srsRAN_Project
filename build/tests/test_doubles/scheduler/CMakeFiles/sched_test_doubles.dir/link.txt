@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsched_test_doubles.a CMakeFiles/sched_test_doubles.dir/Unity/unity_0_cxx.cxx.o
+/usr/bin/ranlib libsched_test_doubles.a

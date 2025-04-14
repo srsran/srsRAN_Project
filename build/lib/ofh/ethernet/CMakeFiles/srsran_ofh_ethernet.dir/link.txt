@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_ofh_ethernet.a CMakeFiles/srsran_ofh_ethernet.dir/ethernet_factories.cpp.o CMakeFiles/srsran_ofh_ethernet.dir/ethernet_frame_builder_impl.cpp.o CMakeFiles/srsran_ofh_ethernet.dir/ethernet_transmitter_impl.cpp.o CMakeFiles/srsran_ofh_ethernet.dir/ethernet_receiver_impl.cpp.o CMakeFiles/srsran_ofh_ethernet.dir/ethernet_rx_buffer_impl.cpp.o CMakeFiles/srsran_ofh_ethernet.dir/vlan_ethernet_frame_builder_impl.cpp.o CMakeFiles/srsran_ofh_ethernet.dir/vlan_ethernet_frame_decoder_impl.cpp.o
+/usr/bin/ranlib libsrsran_ofh_ethernet.a

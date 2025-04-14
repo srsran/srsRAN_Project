@@ -1,0 +1,4 @@
+# Directory labels
+ sched
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/scheduler/pdcch/pdcch_resource_allocator_test.cpp

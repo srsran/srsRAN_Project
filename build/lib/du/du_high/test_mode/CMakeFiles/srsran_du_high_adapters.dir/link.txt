@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_du_high_adapters.a CMakeFiles/srsran_du_high_adapters.dir/mac_test_mode_adapter.cpp.o CMakeFiles/srsran_du_high_adapters.dir/f1ap_test_mode_adapter.cpp.o CMakeFiles/srsran_du_high_adapters.dir/mac_test_mode_helpers.cpp.o CMakeFiles/srsran_du_high_adapters.dir/mac_test_mode_ue_repository.cpp.o
+/usr/bin/ranlib libsrsran_du_high_adapters.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_f1u_cu_up.a CMakeFiles/srsran_f1u_cu_up.dir/cu_up/f1u_bearer_impl.cpp.o CMakeFiles/srsran_f1u_cu_up.dir/cu_up/f1u_bearer_factory.cpp.o
+/usr/bin/ranlib libsrsran_f1u_cu_up.a

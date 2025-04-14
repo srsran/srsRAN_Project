@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/pdcp/pdcp_tx_empty_pool_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/pdcp/pdcp_tx_empty_pool_test[1]_tests.cmake")
+else()
+  add_test(pdcp_tx_empty_pool_test_NOT_BUILT pdcp_tx_empty_pool_test_NOT_BUILT)
+endif()

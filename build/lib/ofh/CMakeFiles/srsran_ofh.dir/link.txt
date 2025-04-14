@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_ofh.a CMakeFiles/srsran_ofh.dir/ofh_factories.cpp.o CMakeFiles/srsran_ofh.dir/ofh_metrics_collector_impl.cpp.o CMakeFiles/srsran_ofh.dir/ofh_sector_impl.cpp.o CMakeFiles/srsran_ofh.dir/ofh_sector_controller.cpp.o
+/usr/bin/ranlib libsrsran_ofh.a

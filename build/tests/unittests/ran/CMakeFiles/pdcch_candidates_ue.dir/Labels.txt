@@ -1,0 +1,4 @@
+# Directory labels
+ ran
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/ran/pdcch/pdcch_candidates_ue_test.cpp

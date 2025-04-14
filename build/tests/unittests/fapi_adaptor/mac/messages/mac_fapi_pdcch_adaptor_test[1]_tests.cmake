@@ -1,0 +1,3 @@
+add_test( mac_fapi_pdcch_pdu_conversor_test.mac_to_fapi_conversion_is_valid /home/shovon/srsRAN_Project/build/tests/unittests/fapi_adaptor/mac/messages/mac_fapi_pdcch_adaptor_test [==[--gtest_filter=mac_fapi_pdcch_pdu_conversor_test.mac_to_fapi_conversion_is_valid]==] --gtest_also_run_disabled_tests)
+set_tests_properties( mac_fapi_pdcch_pdu_conversor_test.mac_to_fapi_conversion_is_valid PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/fapi_adaptor/mac/messages SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( mac_fapi_pdcch_adaptor_test_TESTS mac_fapi_pdcch_pdu_conversor_test.mac_to_fapi_conversion_is_valid)

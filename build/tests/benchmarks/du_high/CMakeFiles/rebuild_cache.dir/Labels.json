@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"du_high|tsan"
+		],
+		"name" : "rebuild_cache"
+	}
+}

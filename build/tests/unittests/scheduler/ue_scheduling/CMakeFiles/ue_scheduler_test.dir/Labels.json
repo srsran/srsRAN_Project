@@ -1,0 +1,43 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/ue_scheduling/dl_logical_channel_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/ue_scheduling/fallback_scheduler_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/ue_scheduling/ue_cell_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/ue_scheduling/ue_configuration_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/ue_scheduling/ue_grid_allocator_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/ue_scheduling/ul_logical_channel_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/ue_scheduling/ue_pxsch_alloc_param_candidate_searcher_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/ue_scheduling/ue_link_adaptation_controller_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/ue_scheduling/ta_manager_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/ue_scheduling/ue_harq_link_adaptation_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"sched"
+		],
+		"name" : "ue_scheduler_test"
+	}
+}

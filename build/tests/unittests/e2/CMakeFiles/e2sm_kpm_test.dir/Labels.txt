@@ -1,0 +1,4 @@
+# Directory labels
+ e2ap
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/e2/e2sm_kpm_test.cpp

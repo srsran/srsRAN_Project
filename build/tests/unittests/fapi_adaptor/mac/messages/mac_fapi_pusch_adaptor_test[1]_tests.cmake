@@ -1,0 +1,3 @@
+add_test( mac_to_fapi_pusch_pdu_test.valid_pusch_pdu_should_pass /home/shovon/srsRAN_Project/build/tests/unittests/fapi_adaptor/mac/messages/mac_fapi_pusch_adaptor_test [==[--gtest_filter=mac_to_fapi_pusch_pdu_test.valid_pusch_pdu_should_pass]==] --gtest_also_run_disabled_tests)
+set_tests_properties( mac_to_fapi_pusch_pdu_test.valid_pusch_pdu_should_pass PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/fapi_adaptor/mac/messages SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( mac_fapi_pusch_adaptor_test_TESTS mac_to_fapi_pusch_pdu_test.valid_pusch_pdu_should_pass)

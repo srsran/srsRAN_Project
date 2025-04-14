@@ -1,0 +1,5 @@
+add_test( rlc_rx_am_test.create_new_entity /home/shovon/srsRAN_Project/build/tests/unittests/rlc/rlc_rx_tm_test [==[--gtest_filter=rlc_rx_am_test.create_new_entity]==] --gtest_also_run_disabled_tests)
+set_tests_properties( rlc_rx_am_test.create_new_entity PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/rlc SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( rlc_rx_am_test.test_rx /home/shovon/srsRAN_Project/build/tests/unittests/rlc/rlc_rx_tm_test [==[--gtest_filter=rlc_rx_am_test.test_rx]==] --gtest_also_run_disabled_tests)
+set_tests_properties( rlc_rx_am_test.test_rx PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/rlc SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( rlc_rx_tm_test_TESTS rlc_rx_am_test.create_new_entity rlc_rx_am_test.test_rx)

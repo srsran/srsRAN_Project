@@ -1,0 +1,7 @@
+add_test( gtpu_tunnel_ngu_tx_test.entity_creation /home/shovon/srsRAN_Project/build/tests/unittests/gtpu/gtpu_tunnel_ngu_tx_test [==[--gtest_filter=gtpu_tunnel_ngu_tx_test.entity_creation]==] --gtest_also_run_disabled_tests)
+set_tests_properties( gtpu_tunnel_ngu_tx_test.entity_creation PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/gtpu SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( gtpu_tunnel_ngu_tx_test.tx_sdus /home/shovon/srsRAN_Project/build/tests/unittests/gtpu/gtpu_tunnel_ngu_tx_test [==[--gtest_filter=gtpu_tunnel_ngu_tx_test.tx_sdus]==] --gtest_also_run_disabled_tests)
+set_tests_properties( gtpu_tunnel_ngu_tx_test.tx_sdus PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/gtpu SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( gtpu_tunnel_ngu_tx_test.tx_stop /home/shovon/srsRAN_Project/build/tests/unittests/gtpu/gtpu_tunnel_ngu_tx_test [==[--gtest_filter=gtpu_tunnel_ngu_tx_test.tx_stop]==] --gtest_also_run_disabled_tests)
+set_tests_properties( gtpu_tunnel_ngu_tx_test.tx_stop PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/gtpu SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( gtpu_tunnel_ngu_tx_test_TESTS gtpu_tunnel_ngu_tx_test.entity_creation gtpu_tunnel_ngu_tx_test.tx_sdus gtpu_tunnel_ngu_tx_test.tx_stop)

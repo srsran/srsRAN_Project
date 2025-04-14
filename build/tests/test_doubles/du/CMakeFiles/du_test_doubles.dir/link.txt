@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdu_test_doubles.a CMakeFiles/du_test_doubles.dir/test_du_high_worker_manager.cpp.o
+/usr/bin/ranlib libdu_test_doubles.a

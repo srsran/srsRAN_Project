@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_ofh_timing.a CMakeFiles/srsran_ofh_timing.dir/ofh_timing_manager_impl.cpp.o CMakeFiles/srsran_ofh_timing.dir/realtime_timing_worker.cpp.o
+/usr/bin/ranlib libsrsran_ofh_timing.a

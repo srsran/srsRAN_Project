@@ -1,0 +1,22 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/e1ap/common/e1ap_cu_up_test_messages.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/e1ap/common/test_helpers.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"e1ap"
+		],
+		"name" : "e1ap_test_helpers"
+	}
+}

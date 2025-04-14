@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_fapi_uci_part2_tools.a CMakeFiles/srsran_fapi_uci_part2_tools.dir/uci_part2_correspondence_generator.cpp.o CMakeFiles/srsran_fapi_uci_part2_tools.dir/uci_part2_correspondence_mapper.cpp.o CMakeFiles/srsran_fapi_uci_part2_tools.dir/uci_part2_correspondence_repository.cpp.o
+/usr/bin/ranlib libsrsran_fapi_uci_part2_tools.a

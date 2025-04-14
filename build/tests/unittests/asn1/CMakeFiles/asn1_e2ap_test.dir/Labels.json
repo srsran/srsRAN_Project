@@ -1,0 +1,19 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/asn1/asn1_e2ap_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/asn1/asn1_e2sm_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"asn1"
+		],
+		"name" : "asn1_e2ap_test"
+	}
+}

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_generic_funcs.a CMakeFiles/srsran_generic_funcs.dir/generic_functions_factories.cpp.o
+/usr/bin/ranlib libsrsran_generic_funcs.a

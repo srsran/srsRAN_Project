@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcu_up_processor_test_helpers.a CMakeFiles/cu_up_processor_test_helpers.dir/cu_up_processor_test_helpers.cpp.o
+/usr/bin/ranlib libcu_up_processor_test_helpers.a

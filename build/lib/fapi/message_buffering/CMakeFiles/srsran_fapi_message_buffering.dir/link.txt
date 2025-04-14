@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_fapi_message_buffering.a CMakeFiles/srsran_fapi_message_buffering.dir/message_bufferer_decorator_impl.cpp.o CMakeFiles/srsran_fapi_message_buffering.dir/message_bufferer_slot_gateway_impl.cpp.o CMakeFiles/srsran_fapi_message_buffering.dir/message_bufferer_slot_gateway_task_dispatcher.cpp.o CMakeFiles/srsran_fapi_message_buffering.dir/message_bufferer_slot_time_notifier_decorator.cpp.o
+/usr/bin/ranlib libsrsran_fapi_message_buffering.a

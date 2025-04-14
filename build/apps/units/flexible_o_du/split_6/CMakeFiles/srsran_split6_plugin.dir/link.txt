@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_split6_plugin.a CMakeFiles/srsran_split6_plugin.dir/split6_plugin_dummy.cpp.o
+/usr/bin/ranlib libsrsran_split6_plugin.a

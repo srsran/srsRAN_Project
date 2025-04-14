@@ -1,0 +1,26 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/du_high/du_high_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/du_high/du_high_many_ues_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/du_high/du_high_many_cells_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/du_high/paging_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"du_high",
+			"integrationtest"
+		],
+		"name" : "du_high_test"
+	}
+}

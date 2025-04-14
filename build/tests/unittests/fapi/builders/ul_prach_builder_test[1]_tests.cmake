@@ -1,0 +1,5 @@
+add_test( ul_prach_pdu_builder.valid_basic_parameters_passes /home/shovon/srsRAN_Project/build/tests/unittests/fapi/builders/ul_prach_builder_test [==[--gtest_filter=ul_prach_pdu_builder.valid_basic_parameters_passes]==] --gtest_also_run_disabled_tests)
+set_tests_properties( ul_prach_pdu_builder.valid_basic_parameters_passes PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/fapi/builders SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( ul_prach_pdu_builder.valid_maintenance_v3_basic_parameters_passes /home/shovon/srsRAN_Project/build/tests/unittests/fapi/builders/ul_prach_builder_test [==[--gtest_filter=ul_prach_pdu_builder.valid_maintenance_v3_basic_parameters_passes]==] --gtest_also_run_disabled_tests)
+set_tests_properties( ul_prach_pdu_builder.valid_maintenance_v3_basic_parameters_passes PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/fapi/builders SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( ul_prach_builder_test_TESTS ul_prach_pdu_builder.valid_basic_parameters_passes ul_prach_pdu_builder.valid_maintenance_v3_basic_parameters_passes)

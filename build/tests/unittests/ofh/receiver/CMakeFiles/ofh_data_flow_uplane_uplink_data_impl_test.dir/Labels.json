@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/ofh/receiver/ofh_data_flow_uplane_uplink_data_impl_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"receiver"
+		],
+		"name" : "ofh_data_flow_uplane_uplink_data_impl_test"
+	}
+}

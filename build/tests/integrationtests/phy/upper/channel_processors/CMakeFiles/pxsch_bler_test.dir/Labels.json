@@ -1,0 +1,24 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/phy/upper/channel_processors/pxsch_bler_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/phy/upper/channel_processors/pxsch_bler_test_channel_emulator.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/phy/upper/channel_processors/pxsch_bler_test_factories.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"phy",
+			"tsan",
+			"NO_MEMCHECK"
+		],
+		"name" : "pxsch_bler_test"
+	}
+}

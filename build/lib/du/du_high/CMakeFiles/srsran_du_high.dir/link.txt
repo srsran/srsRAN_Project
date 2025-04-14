@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_du_high.a CMakeFiles/srsran_du_high.dir/du_high_impl.cpp.o CMakeFiles/srsran_du_high.dir/du_high_factory.cpp.o CMakeFiles/srsran_du_high.dir/du_high_executor_mapper.cpp.o
+/usr/bin/ranlib libsrsran_du_high.a

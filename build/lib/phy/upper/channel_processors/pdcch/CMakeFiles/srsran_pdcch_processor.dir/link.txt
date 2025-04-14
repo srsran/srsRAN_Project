@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_pdcch_processor.a CMakeFiles/srsran_pdcch_processor.dir/factories.cpp.o CMakeFiles/srsran_pdcch_processor.dir/pdcch_encoder_impl.cpp.o CMakeFiles/srsran_pdcch_processor.dir/pdcch_modulator_impl.cpp.o CMakeFiles/srsran_pdcch_processor.dir/pdcch_processor_impl.cpp.o CMakeFiles/srsran_pdcch_processor.dir/pdcch_processor_validator_impl.cpp.o
+/usr/bin/ranlib libsrsran_pdcch_processor.a

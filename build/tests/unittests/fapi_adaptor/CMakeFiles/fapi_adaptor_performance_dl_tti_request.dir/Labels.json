@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/fapi_adaptor/adaptor_performance_dl_tti_request.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"fapi_adaptor"
+		],
+		"name" : "fapi_adaptor_performance_dl_tti_request"
+	}
+}

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_o_cu_cp.a CMakeFiles/srsran_o_cu_cp.dir/o_cu_cp_factory.cpp.o CMakeFiles/srsran_o_cu_cp.dir/o_cu_cp_impl.cpp.o
+/usr/bin/ranlib libsrsran_o_cu_cp.a

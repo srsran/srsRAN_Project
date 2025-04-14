@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"nru"
+		],
+		"name" : "edit_cache"
+	}
+}

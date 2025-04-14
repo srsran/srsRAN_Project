@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/adt/triple_buffer_atomic_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"adt"
+		],
+		"name" : "triple_buffer_atomic_test"
+	}
+}

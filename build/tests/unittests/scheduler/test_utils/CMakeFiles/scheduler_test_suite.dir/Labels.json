@@ -1,0 +1,22 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/test_utils/scheduler_test_suite.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/test_utils/scheduler_output_test_helpers.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/test_utils/scheduler_test_simulator.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"sched"
+		],
+		"name" : "scheduler_test_suite"
+	}
+}

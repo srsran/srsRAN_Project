@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/gateways/udp_network_gateway_pool_depletion_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"gateways"
+		],
+		"name" : "udp_network_gateway_pool_depletion_test"
+	}
+}

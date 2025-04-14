@@ -1,0 +1,2 @@
+/usr/bin/ar qc libscheduler_logger.a CMakeFiles/scheduler_logger.dir/scheduler_result_logger.cpp.o CMakeFiles/scheduler_logger.dir/scheduler_metrics_handler.cpp.o CMakeFiles/scheduler_logger.dir/scheduler_event_logger.cpp.o
+/usr/bin/ranlib libscheduler_logger.a

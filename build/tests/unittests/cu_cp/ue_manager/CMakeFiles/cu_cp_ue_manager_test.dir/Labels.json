@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/ue_manager/ue_manager_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cu_cp"
+		],
+		"name" : "cu_cp_ue_manager_test"
+	}
+}

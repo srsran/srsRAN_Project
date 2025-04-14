@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_fapi_message_builder_test_helpers.a CMakeFiles/srsran_fapi_message_builder_test_helpers.dir/message_builder_helpers.cpp.o
+/usr/bin/ranlib libsrsran_fapi_message_builder_test_helpers.a

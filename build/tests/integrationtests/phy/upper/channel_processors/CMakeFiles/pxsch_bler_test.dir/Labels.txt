@@ -1,0 +1,8 @@
+# Directory labels
+ phy
+ tsan
+ NO_MEMCHECK
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/integrationtests/phy/upper/channel_processors/pxsch_bler_test.cpp
+/home/shovon/srsRAN_Project/tests/integrationtests/phy/upper/channel_processors/pxsch_bler_test_channel_emulator.cpp
+/home/shovon/srsRAN_Project/tests/integrationtests/phy/upper/channel_processors/pxsch_bler_test_factories.cpp

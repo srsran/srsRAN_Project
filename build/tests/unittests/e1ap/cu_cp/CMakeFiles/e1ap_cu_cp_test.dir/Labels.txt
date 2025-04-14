@@ -1,0 +1,10 @@
+# Directory labels
+ e1ap
+# Source files and their labels
+/home/shovon/srsRAN_Project/build/tests/unittests/e1ap/cu_cp/CMakeFiles/e1ap_cu_cp_test.dir/Unity/unity_0_cxx.cxx
+/home/shovon/srsRAN_Project/tests/unittests/e1ap/cu_cp/e1ap_cu_cp_ue_context_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/e1ap/cu_cp/e1ap_cu_cp_setup_procedure_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/e1ap/cu_cp/e1ap_cu_cp_bearer_context_setup_procedure_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/e1ap/cu_cp/e1ap_cu_cp_bearer_context_modification_procedure_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/e1ap/cu_cp/e1ap_cu_cp_bearer_context_release_procedure_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/e1ap/cu_cp/e1ap_cu_cp_test.cpp

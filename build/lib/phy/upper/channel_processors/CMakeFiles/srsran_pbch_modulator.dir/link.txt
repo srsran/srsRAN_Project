@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_pbch_modulator.a CMakeFiles/srsran_pbch_modulator.dir/pbch_modulator_impl.cpp.o
+/usr/bin/ranlib libsrsran_pbch_modulator.a

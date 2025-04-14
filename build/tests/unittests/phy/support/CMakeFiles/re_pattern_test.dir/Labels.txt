@@ -1,0 +1,4 @@
+# Directory labels
+ phy
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/phy/support/re_pattern_test.cpp

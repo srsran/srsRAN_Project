@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_mac_fapi_adaptors.a CMakeFiles/srsran_mac_fapi_adaptors.dir/pdcch.cpp.o CMakeFiles/srsran_mac_fapi_adaptors.dir/pdsch.cpp.o CMakeFiles/srsran_mac_fapi_adaptors.dir/prach.cpp.o CMakeFiles/srsran_mac_fapi_adaptors.dir/pucch.cpp.o CMakeFiles/srsran_mac_fapi_adaptors.dir/pusch.cpp.o CMakeFiles/srsran_mac_fapi_adaptors.dir/srs.cpp.o CMakeFiles/srsran_mac_fapi_adaptors.dir/ssb.cpp.o
+/usr/bin/ranlib libsrsran_mac_fapi_adaptors.a

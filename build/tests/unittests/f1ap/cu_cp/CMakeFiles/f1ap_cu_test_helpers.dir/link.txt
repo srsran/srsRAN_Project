@@ -1,0 +1,2 @@
+/usr/bin/ar qc libf1ap_cu_test_helpers.a CMakeFiles/f1ap_cu_test_helpers.dir/f1ap_cu_test_helpers.cpp.o
+/usr/bin/ranlib libf1ap_cu_test_helpers.a

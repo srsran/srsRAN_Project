@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_ru_dummy.a CMakeFiles/srsran_ru_dummy.dir/ru_dummy_factory.cpp.o CMakeFiles/srsran_ru_dummy.dir/ru_dummy_impl.cpp.o
+/usr/bin/ranlib libsrsran_ru_dummy.a

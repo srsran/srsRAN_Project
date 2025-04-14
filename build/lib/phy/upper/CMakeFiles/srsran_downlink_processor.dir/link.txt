@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_downlink_processor.a CMakeFiles/srsran_downlink_processor.dir/downlink_processor_single_executor_impl.cpp.o CMakeFiles/srsran_downlink_processor.dir/downlink_processor_pool_impl.cpp.o
+/usr/bin/ranlib libsrsran_downlink_processor.a

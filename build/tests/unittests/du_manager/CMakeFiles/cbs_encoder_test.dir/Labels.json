@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/du_manager/cbs/cbs_encoder_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"du_manager"
+		],
+		"name" : "cbs_encoder_test"
+	}
+}

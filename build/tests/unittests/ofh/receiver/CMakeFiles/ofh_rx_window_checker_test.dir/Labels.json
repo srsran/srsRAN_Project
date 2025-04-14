@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/ofh/receiver/ofh_rx_window_checker_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"receiver"
+		],
+		"name" : "ofh_rx_window_checker_test"
+	}
+}

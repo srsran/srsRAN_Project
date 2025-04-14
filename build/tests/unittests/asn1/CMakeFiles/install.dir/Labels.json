@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"asn1"
+		],
+		"name" : "install"
+	}
+}

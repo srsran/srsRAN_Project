@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"support"
+		],
+		"name" : "list_install_components"
+	}
+}

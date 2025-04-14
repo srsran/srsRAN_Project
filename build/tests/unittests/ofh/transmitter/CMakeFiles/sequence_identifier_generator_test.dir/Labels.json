@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/ofh/transmitter/sequence_identifier_generator_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"transmitter"
+		],
+		"name" : "sequence_identifier_generator_test"
+	}
+}

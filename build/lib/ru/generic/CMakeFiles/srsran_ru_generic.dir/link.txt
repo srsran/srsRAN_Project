@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_ru_generic.a CMakeFiles/srsran_ru_generic.dir/ru_controller_generic_impl.cpp.o CMakeFiles/srsran_ru_generic.dir/ru_downlink_handler_generic_impl.cpp.o CMakeFiles/srsran_ru_generic.dir/ru_factory_generic_impl.cpp.o CMakeFiles/srsran_ru_generic.dir/ru_generic_impl.cpp.o CMakeFiles/srsran_ru_generic.dir/ru_uplink_request_handler_generic_impl.cpp.o
+/usr/bin/ranlib libsrsran_ru_generic.a

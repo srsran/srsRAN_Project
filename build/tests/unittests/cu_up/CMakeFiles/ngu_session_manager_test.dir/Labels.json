@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_up/ngu_session_manager_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cu_up"
+		],
+		"name" : "ngu_session_manager_test"
+	}
+}

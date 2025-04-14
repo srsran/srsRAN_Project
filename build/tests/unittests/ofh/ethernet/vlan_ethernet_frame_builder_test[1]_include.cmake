@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/ofh/ethernet/vlan_ethernet_frame_builder_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/ofh/ethernet/vlan_ethernet_frame_builder_test[1]_tests.cmake")
+else()
+  add_test(vlan_ethernet_frame_builder_test_NOT_BUILT vlan_ethernet_frame_builder_test_NOT_BUILT)
+endif()

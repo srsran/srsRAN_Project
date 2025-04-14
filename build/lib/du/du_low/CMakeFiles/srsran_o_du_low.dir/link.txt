@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_o_du_low.a CMakeFiles/srsran_o_du_low.dir/du_low_factory.cpp.o CMakeFiles/srsran_o_du_low.dir/du_low_impl.cpp.o CMakeFiles/srsran_o_du_low.dir/du_low_metrics_collector_impl.cpp.o CMakeFiles/srsran_o_du_low.dir/o_du_low_factory.cpp.o CMakeFiles/srsran_o_du_low.dir/o_du_low_impl.cpp.o CMakeFiles/srsran_o_du_low.dir/o_du_low_metrics_collector_impl.cpp.o
+/usr/bin/ranlib libsrsran_o_du_low.a

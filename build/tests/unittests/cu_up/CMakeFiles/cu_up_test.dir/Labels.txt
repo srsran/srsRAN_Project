@@ -1,0 +1,4 @@
+# Directory labels
+ cu_up
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/cu_up/cu_up_test.cpp

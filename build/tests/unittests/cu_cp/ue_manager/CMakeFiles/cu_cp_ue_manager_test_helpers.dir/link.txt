@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcu_cp_ue_manager_test_helpers.a CMakeFiles/cu_cp_ue_manager_test_helpers.dir/ue_manager_test_helpers.cpp.o
+/usr/bin/ranlib libcu_cp_ue_manager_test_helpers.a

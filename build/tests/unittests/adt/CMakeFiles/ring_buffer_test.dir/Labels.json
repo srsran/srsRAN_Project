@@ -1,0 +1,22 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/adt/ring_buffer_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/adt/blocking_queue_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/adt/concurrent_queue_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"adt"
+		],
+		"name" : "ring_buffer_test"
+	}
+}

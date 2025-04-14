@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsched_config.a CMakeFiles/sched_config.dir/serving_cell_config_factory.cpp.o CMakeFiles/sched_config.dir/sched_cell_config_helpers.cpp.o CMakeFiles/sched_config.dir/scheduler_cell_config_validator.cpp.o CMakeFiles/sched_config.dir/scheduler_ue_config_validator.cpp.o CMakeFiles/sched_config.dir/serving_cell_config_validator.cpp.o CMakeFiles/sched_config.dir/csi_helper.cpp.o CMakeFiles/sched_config.dir/pucch_resource_generator.cpp.o
+/usr/bin/ranlib libsched_config.a

@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"f1ap"
+		],
+		"name" : "test"
+	}
+}

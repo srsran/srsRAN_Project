@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdu_processor_test_helpers.a CMakeFiles/du_processor_test_helpers.dir/du_processor_test_helpers.cpp.o
+/usr/bin/ranlib libdu_processor_test_helpers.a

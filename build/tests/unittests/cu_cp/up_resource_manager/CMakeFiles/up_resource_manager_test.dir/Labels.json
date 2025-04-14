@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/up_resource_manager/up_resource_manager_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cu_cp"
+		],
+		"name" : "up_resource_manager_test"
+	}
+}

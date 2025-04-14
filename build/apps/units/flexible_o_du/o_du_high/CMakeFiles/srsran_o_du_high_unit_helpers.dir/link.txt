@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_o_du_high_unit_helpers.a CMakeFiles/srsran_o_du_high_unit_helpers.dir/o_du_high_unit_factory.cpp.o
+/usr/bin/ranlib libsrsran_o_du_high_unit_helpers.a

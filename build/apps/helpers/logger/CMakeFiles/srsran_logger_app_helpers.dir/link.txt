@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_logger_app_helpers.a CMakeFiles/srsran_logger_app_helpers.dir/logger_appconfig_cli11_schema.cpp.o CMakeFiles/srsran_logger_app_helpers.dir/logger_appconfig_validator.cpp.o CMakeFiles/srsran_logger_app_helpers.dir/logger_appconfig_yaml_writer.cpp.o
+/usr/bin/ranlib libsrsran_logger_app_helpers.a

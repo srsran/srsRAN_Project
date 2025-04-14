@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/ofh/ethernet/ethernet_frame_pool_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ethernet"
+		],
+		"name" : "ethernet_frame_pool_test"
+	}
+}

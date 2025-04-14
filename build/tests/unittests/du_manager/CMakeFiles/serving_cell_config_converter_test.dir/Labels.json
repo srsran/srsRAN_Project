@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/du_manager/serving_cell_config_converter_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"du_manager"
+		],
+		"name" : "serving_cell_config_converter_test"
+	}
+}

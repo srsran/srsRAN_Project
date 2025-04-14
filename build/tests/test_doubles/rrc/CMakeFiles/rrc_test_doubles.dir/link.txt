@@ -1,0 +1,2 @@
+/usr/bin/ar qc librrc_test_doubles.a CMakeFiles/rrc_test_doubles.dir/Unity/unity_0_cxx.cxx.o
+/usr/bin/ranlib librrc_test_doubles.a

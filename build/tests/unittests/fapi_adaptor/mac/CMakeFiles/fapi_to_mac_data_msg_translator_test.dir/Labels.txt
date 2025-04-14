@@ -1,0 +1,4 @@
+# Directory labels
+ fapi_adaptor
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/fapi_adaptor/mac/fapi_to_mac_data_msg_translator_test.cpp

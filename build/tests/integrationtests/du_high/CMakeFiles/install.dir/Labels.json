@@ -1,0 +1,12 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"du_high",
+			"integrationtest"
+		],
+		"name" : "install"
+	}
+}

@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/ofh/transmitter/ofh_data_flow_cplane_scheduling_commands_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"transmitter"
+		],
+		"name" : "ofh_data_flow_cplane_scheduling_commands_test"
+	}
+}

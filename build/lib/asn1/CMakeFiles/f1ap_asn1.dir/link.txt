@@ -1,0 +1,2 @@
+/usr/bin/ar qc libf1ap_asn1.a CMakeFiles/f1ap_asn1.dir/f1ap/common.cpp.o CMakeFiles/f1ap_asn1.dir/f1ap/f1ap_ies.cpp.o CMakeFiles/f1ap_asn1.dir/f1ap/f1ap_pdu_items.cpp.o CMakeFiles/f1ap_asn1.dir/f1ap/f1ap_pdu_contents_ue.cpp.o CMakeFiles/f1ap_asn1.dir/f1ap/f1ap_pdu_contents.cpp.o CMakeFiles/f1ap_asn1.dir/f1ap/f1ap.cpp.o
+/usr/bin/ranlib libf1ap_asn1.a

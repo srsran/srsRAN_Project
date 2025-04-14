@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/fapi_adaptor/phy/messages/dl_prs_pdu_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"fapi_adaptor"
+		],
+		"name" : "fapi_phy_prs_adaptor_test"
+	}
+}

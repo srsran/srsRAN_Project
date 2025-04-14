@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_buffer_pool_app_service.a CMakeFiles/srsran_buffer_pool_app_service.dir/buffer_pool_appconfig_cli11_schema.cpp.o
+/usr/bin/ranlib libsrsran_buffer_pool_app_service.a

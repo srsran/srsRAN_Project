@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmac_test_doubles.a CMakeFiles/mac_test_doubles.dir/dummy_mac_result_notifier.cpp.o CMakeFiles/mac_test_doubles.dir/mac_test_messages.cpp.o
+/usr/bin/ranlib libmac_test_doubles.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_up_resource_manager.a CMakeFiles/srsran_up_resource_manager.dir/up_resource_manager_impl.cpp.o CMakeFiles/srsran_up_resource_manager.dir/up_resource_manager_helpers.cpp.o
+/usr/bin/ranlib libsrsran_up_resource_manager.a

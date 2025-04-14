@@ -1,0 +1,47 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/build/tests/unittests/f1ap/du/CMakeFiles/f1ap_du_test.dir/Unity/unity_1_cxx.cxx"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/build/tests/unittests/f1ap/du/CMakeFiles/f1ap_du_test.dir/Unity/unity_0_cxx.cxx"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/du/f1ap_du_setup_procedure_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/du/f1ap_du_dl_rrc_message_transfer_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/du/f1ap_du_ue_config_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/du/f1ap_du_ue_context_setup_procedure_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/du/f1ap_du_ue_context_release_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/du/f1ap_du_ue_context_modification_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/du/f1ap_du_reset_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/du/f1ap_du_ul_rrc_message_transfer_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/du/f1ap_du_gnbdu_config_update_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"f1ap",
+			"f1ap_du"
+		],
+		"name" : "f1ap_du_test"
+	}
+}

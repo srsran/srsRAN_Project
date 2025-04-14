@@ -1,0 +1,8 @@
+# Directory labels
+ cu
+ du
+ integrationtest
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/integrationtests/du_high_cu/cu_du_test.cpp
+/home/shovon/srsRAN_Project/tests/integrationtests/du_high_cu/du_high_cu_test_simulator.cpp
+/home/shovon/srsRAN_Project/tests/integrationtests/du_high_cu/cu_multi_du_test.cpp

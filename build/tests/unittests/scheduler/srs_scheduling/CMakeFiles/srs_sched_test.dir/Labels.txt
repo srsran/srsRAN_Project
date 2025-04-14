@@ -1,0 +1,4 @@
+# Directory labels
+ sched
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/scheduler/srs_scheduling/srs_scheduler_test.cpp

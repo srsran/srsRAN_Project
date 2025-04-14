@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_channel_precoder.a CMakeFiles/srsran_channel_precoder.dir/channel_precoder_impl.cpp.o CMakeFiles/srsran_channel_precoder.dir/channel_precoder_generic.cpp.o CMakeFiles/srsran_channel_precoder.dir/precoding_factories.cpp.o CMakeFiles/srsran_channel_precoder.dir/channel_precoder_avx2.cpp.o CMakeFiles/srsran_channel_precoder.dir/channel_precoder_avx512.cpp.o
+/usr/bin/ranlib libsrsran_channel_precoder.a

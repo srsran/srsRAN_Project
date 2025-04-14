@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/benchmarks/ofh/ofh_compression_benchmark.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ofh"
+		],
+		"name" : "ofh_compression_benchmark"
+	}
+}

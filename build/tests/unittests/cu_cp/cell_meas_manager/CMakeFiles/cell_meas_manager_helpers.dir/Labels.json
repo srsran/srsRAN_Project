@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cell_meas_manager/cell_meas_manager_test_helpers.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cu_cp"
+		],
+		"name" : "cell_meas_manager_helpers"
+	}
+}

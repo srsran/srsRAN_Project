@@ -1,0 +1,4 @@
+# Directory labels
+ cu_cp
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cell_meas_manager/cell_meas_manager_test.cpp

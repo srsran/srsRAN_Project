@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdu_manager_converters.a CMakeFiles/du_manager_converters.dir/asn1_csi_meas_config_helpers.cpp.o CMakeFiles/du_manager_converters.dir/asn1_rrc_config_helpers.cpp.o CMakeFiles/du_manager_converters.dir/f1ap_configuration_helpers.cpp.o CMakeFiles/du_manager_converters.dir/rlc_config_helpers.cpp.o CMakeFiles/du_manager_converters.dir/scheduler_configuration_helpers.cpp.o
+/usr/bin/ranlib libdu_manager_converters.a

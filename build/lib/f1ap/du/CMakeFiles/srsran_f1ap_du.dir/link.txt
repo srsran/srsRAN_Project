@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_f1ap_du.a CMakeFiles/srsran_f1ap_du.dir/f1ap_du_impl.cpp.o CMakeFiles/srsran_f1ap_du.dir/f1ap_du_factory.cpp.o CMakeFiles/srsran_f1ap_du.dir/f1ap_du_connection_handler.cpp.o CMakeFiles/srsran_f1ap_du.dir/ue_context/f1ap_du_ue.cpp.o CMakeFiles/srsran_f1ap_du.dir/ue_context/ue_bearer_manager.cpp.o CMakeFiles/srsran_f1ap_du.dir/ue_context/f1c_du_bearer_impl.cpp.o CMakeFiles/srsran_f1ap_du.dir/ue_context/f1ap_du_ue_config_update.cpp.o
+/usr/bin/ranlib libsrsran_f1ap_du.a

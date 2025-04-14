@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdu_high_worker_manager.a CMakeFiles/du_high_worker_manager.dir/test_utils/du_high_worker_manager.cpp.o CMakeFiles/du_high_worker_manager.dir/test_utils/du_high_env_simulator.cpp.o
+/usr/bin/ranlib libdu_high_worker_manager.a

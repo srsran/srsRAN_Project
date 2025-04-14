@@ -1,0 +1,4 @@
+# Directory labels
+ gtpu
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/gtpu/gtpu_tunnel_ngu_test.cpp

@@ -1,0 +1,2 @@
+/usr/bin/ar qc librlc_stress_test_mac.a CMakeFiles/rlc_stress_test_mac.dir/rlc_stress_test_mac.cpp.o
+/usr/bin/ranlib librlc_stress_test_mac.a

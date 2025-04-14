@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/benchmarks/pdcp/pdcp_tx_benchmark.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"pdcp"
+		],
+		"name" : "pdcp_tx_benchmark"
+	}
+}

@@ -1,0 +1,49 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/pucch_alloc_common_harq_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/pucch_alloc_ded_resources_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/pucch_alloc_format_0_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/pucch_alloc_format_3_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/pucch_alloc_format_4_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/pucch_alloc_harq_sr_csi_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/pucch_guardbands_sched_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/pucch_res_manager_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/uci_allocator_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/uci_scheduling_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/uci_test_utils.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/scheduler/uci_and_pucch/scheduler_uci_indication_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"sched"
+		],
+		"name" : "uci_pucch_sched_test"
+	}
+}

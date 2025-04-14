@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_cu_up_app_unit.a CMakeFiles/srsran_cu_up_app_unit.dir/cu_up_unit_config_cli11_schema.cpp.o CMakeFiles/srsran_cu_up_app_unit.dir/cu_up_unit_config_translators.cpp.o CMakeFiles/srsran_cu_up_app_unit.dir/cu_up_unit_config_validator.cpp.o CMakeFiles/srsran_cu_up_app_unit.dir/cu_up_unit_config_yaml_writer.cpp.o
+/usr/bin/ranlib libsrsran_cu_up_app_unit.a

@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"rrc"
+		],
+		"name" : "install"
+	}
+}

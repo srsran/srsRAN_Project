@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_sdap.a CMakeFiles/srsran_sdap.dir/sdap_factory.cpp.o
+/usr/bin/ranlib libsrsran_sdap.a

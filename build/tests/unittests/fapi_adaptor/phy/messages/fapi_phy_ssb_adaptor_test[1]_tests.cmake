@@ -1,0 +1,3 @@
+add_test( fapi_to_phy_ssb_conversion_test.valid_pdu_conversion_success /home/shovon/srsRAN_Project/build/tests/unittests/fapi_adaptor/phy/messages/fapi_phy_ssb_adaptor_test [==[--gtest_filter=fapi_to_phy_ssb_conversion_test.valid_pdu_conversion_success]==] --gtest_also_run_disabled_tests)
+set_tests_properties( fapi_to_phy_ssb_conversion_test.valid_pdu_conversion_success PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/fapi_adaptor/phy/messages SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( fapi_phy_ssb_adaptor_test_TESTS fapi_to_phy_ssb_conversion_test.valid_pdu_conversion_success)

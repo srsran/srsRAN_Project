@@ -1,0 +1,4 @@
+# Directory labels
+ ran
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/ran/srs/srs_bandwidth_configuration_test.cpp

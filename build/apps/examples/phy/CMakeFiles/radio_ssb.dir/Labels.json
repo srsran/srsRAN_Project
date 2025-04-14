@@ -1,0 +1,22 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/apps/examples/phy/radio_ssb.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/apps/examples/phy/lower_phy_example_factory.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/apps/examples/phy/upper_phy_ssb_example.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"phy"
+		],
+		"name" : "radio_ssb"
+	}
+}

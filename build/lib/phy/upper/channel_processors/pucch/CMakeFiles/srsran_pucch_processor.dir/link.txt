@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_pucch_processor.a CMakeFiles/srsran_pucch_processor.dir/factories.cpp.o CMakeFiles/srsran_pucch_processor.dir/pucch_processor_impl.cpp.o
+/usr/bin/ranlib libsrsran_pucch_processor.a

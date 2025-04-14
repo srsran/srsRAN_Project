@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ethernet"
+		],
+		"name" : "edit_cache"
+	}
+}

@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/e1ap/cu_up/e1ap_cu_up_test_helpers.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"e1ap"
+		],
+		"name" : "e1ap_cu_up_test_helpers"
+	}
+}

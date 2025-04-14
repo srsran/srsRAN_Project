@@ -1,0 +1,13 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cu",
+			"du",
+			"integrationtest"
+		],
+		"name" : "test"
+	}
+}

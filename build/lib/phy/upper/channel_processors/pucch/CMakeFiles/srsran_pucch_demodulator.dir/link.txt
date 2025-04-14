@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_pucch_demodulator.a CMakeFiles/srsran_pucch_demodulator.dir/factories.cpp.o CMakeFiles/srsran_pucch_demodulator.dir/pucch_demodulator_format2.cpp.o CMakeFiles/srsran_pucch_demodulator.dir/pucch_demodulator_format3.cpp.o CMakeFiles/srsran_pucch_demodulator.dir/pucch_demodulator_format4.cpp.o
+/usr/bin/ranlib libsrsran_pucch_demodulator.a

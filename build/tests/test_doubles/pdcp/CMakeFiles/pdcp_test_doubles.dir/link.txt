@@ -1,0 +1,2 @@
+/usr/bin/ar qc libpdcp_test_doubles.a CMakeFiles/pdcp_test_doubles.dir/Unity/unity_0_cxx.cxx.o
+/usr/bin/ranlib libpdcp_test_doubles.a

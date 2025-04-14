@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/rlc/rlc_retx_queue_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"rlc"
+		],
+		"name" : "rlc_retx_queue_test"
+	}
+}

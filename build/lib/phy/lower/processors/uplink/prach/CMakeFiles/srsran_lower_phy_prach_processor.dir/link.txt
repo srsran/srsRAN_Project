@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_lower_phy_prach_processor.a CMakeFiles/srsran_lower_phy_prach_processor.dir/prach_processor_factories.cpp.o CMakeFiles/srsran_lower_phy_prach_processor.dir/prach_processor_worker.cpp.o
+/usr/bin/ranlib libsrsran_lower_phy_prach_processor.a

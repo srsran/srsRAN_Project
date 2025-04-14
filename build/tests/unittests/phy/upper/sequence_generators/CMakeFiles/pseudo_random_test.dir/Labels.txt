@@ -1,0 +1,4 @@
+# Directory labels
+ phy
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/phy/upper/sequence_generators/pseudo_random_generator_test.cpp

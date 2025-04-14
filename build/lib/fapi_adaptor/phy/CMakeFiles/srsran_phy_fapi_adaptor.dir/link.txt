@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_phy_fapi_adaptor.a CMakeFiles/srsran_phy_fapi_adaptor.dir/phy_fapi_sector_adaptor_impl.cpp.o CMakeFiles/srsran_phy_fapi_adaptor.dir/phy_fapi_adaptor_impl.cpp.o CMakeFiles/srsran_phy_fapi_adaptor.dir/phy_fapi_adaptor_factory_impl.cpp.o
+/usr/bin/ranlib libsrsran_phy_fapi_adaptor.a

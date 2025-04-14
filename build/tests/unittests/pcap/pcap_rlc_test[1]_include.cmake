@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/pcap/pcap_rlc_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/pcap/pcap_rlc_test[1]_tests.cmake")
+else()
+  add_test(pcap_rlc_test_NOT_BUILT pcap_rlc_test_NOT_BUILT)
+endif()

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdu_manager_test_helpers.a CMakeFiles/du_manager_test_helpers.dir/du_manager_test_helpers.cpp.o CMakeFiles/du_manager_test_helpers.dir/procedures/du_manager_procedure_test_helpers.cpp.o
+/usr/bin/ranlib libdu_manager_test_helpers.a

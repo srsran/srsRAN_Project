@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/asn1/asn1_cause_conversion_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/asn1/asn1_cause_conversion_test[1]_tests.cmake")
+else()
+  add_test(asn1_cause_conversion_test_NOT_BUILT asn1_cause_conversion_test_NOT_BUILT)
+endif()

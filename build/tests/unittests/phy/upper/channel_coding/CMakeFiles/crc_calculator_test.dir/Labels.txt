@@ -1,0 +1,4 @@
+# Directory labels
+ phy
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/phy/upper/channel_coding/crc_calculator_test.cpp

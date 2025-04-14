@@ -1,0 +1,5 @@
+# Directory labels
+ f1ap
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/f1ap/common/f1ap_cu_test_messages.cpp
+/home/shovon/srsRAN_Project/tests/unittests/f1ap/common/f1ap_du_test_messages.cpp

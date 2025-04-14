@@ -1,0 +1,4 @@
+# Directory labels
+ ran
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/ran/pdsch/pdsch_mcs_table_test.cpp

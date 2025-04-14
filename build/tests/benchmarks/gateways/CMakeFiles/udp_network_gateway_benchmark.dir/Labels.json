@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/benchmarks/gateways/udp_network_gateway_benchmark.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"gateways"
+		],
+		"name" : "udp_network_gateway_benchmark"
+	}
+}

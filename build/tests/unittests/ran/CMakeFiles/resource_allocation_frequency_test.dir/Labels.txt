@@ -1,0 +1,4 @@
+# Directory labels
+ ran
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/ran/resource_allocation/resource_allocation_frequency_test.cpp

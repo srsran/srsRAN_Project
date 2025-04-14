@@ -1,0 +1,22 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/mobility/mobility_test_helpers.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/du_processor_test_messages.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/test_helpers.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cu_cp"
+		],
+		"name" : "mobility_test_helpers"
+	}
+}

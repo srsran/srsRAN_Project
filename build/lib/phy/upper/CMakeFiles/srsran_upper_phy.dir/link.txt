@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_upper_phy.a CMakeFiles/srsran_upper_phy.dir/upper_phy_factories.cpp.o CMakeFiles/srsran_upper_phy.dir/upper_phy_impl.cpp.o CMakeFiles/srsran_upper_phy.dir/upper_phy_rx_symbol_handler_impl.cpp.o CMakeFiles/srsran_upper_phy.dir/upper_phy_rx_results_notifier_wrapper.cpp.o CMakeFiles/srsran_upper_phy.dir/upper_phy_error_handler_impl.cpp.o
+/usr/bin/ranlib libsrsran_upper_phy.a

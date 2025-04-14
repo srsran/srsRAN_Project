@@ -1,0 +1,5 @@
+# Directory labels
+ sched
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/scheduler/test_utils/config_generators.cpp
+/home/shovon/srsRAN_Project/tests/unittests/scheduler/test_utils/indication_generators.cpp

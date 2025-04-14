@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_upper_phy_metrics.a CMakeFiles/srsran_upper_phy_metrics.dir/upper_phy_ldpc_metrics_collector.cpp.o CMakeFiles/srsran_upper_phy_metrics.dir/upper_phy_pdsch_metrics_collector.cpp.o CMakeFiles/srsran_upper_phy_metrics.dir/upper_phy_pusch_metrics_collector.cpp.o CMakeFiles/srsran_upper_phy_metrics.dir/upper_phy_metrics_collector_impl.cpp.o
+/usr/bin/ranlib libsrsran_upper_phy_metrics.a

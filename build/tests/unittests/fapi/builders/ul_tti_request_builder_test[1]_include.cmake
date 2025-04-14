@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/fapi/builders/ul_tti_request_builder_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/fapi/builders/ul_tti_request_builder_test[1]_tests.cmake")
+else()
+  add_test(ul_tti_request_builder_test_NOT_BUILT ul_tti_request_builder_test_NOT_BUILT)
+endif()

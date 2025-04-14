@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/security/k_gnb_star_gen_helper.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"security"
+		],
+		"name" : "k_gnb_star_gen_helper"
+	}
+}

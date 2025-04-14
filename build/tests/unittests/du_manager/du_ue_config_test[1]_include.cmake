@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/du_manager/du_ue_config_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/du_manager/du_ue_config_test[1]_tests.cmake")
+else()
+  add_test(du_ue_config_test_NOT_BUILT du_ue_config_test_NOT_BUILT)
+endif()

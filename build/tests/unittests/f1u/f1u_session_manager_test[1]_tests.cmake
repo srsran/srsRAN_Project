@@ -1,0 +1,7 @@
+add_test( f1u_session_manager_test.mngr_creation /home/shovon/srsRAN_Project/build/tests/unittests/f1u/f1u_session_manager_test [==[--gtest_filter=f1u_session_manager_test.mngr_creation]==] --gtest_also_run_disabled_tests)
+set_tests_properties( f1u_session_manager_test.mngr_creation PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/f1u SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( f1u_session_manager_test.rr_session_selection /home/shovon/srsRAN_Project/build/tests/unittests/f1u/f1u_session_manager_test [==[--gtest_filter=f1u_session_manager_test.rr_session_selection]==] --gtest_also_run_disabled_tests)
+set_tests_properties( f1u_session_manager_test.rr_session_selection PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/f1u SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( f1u_session_manager_test.five_qi_specific_session_selection /home/shovon/srsRAN_Project/build/tests/unittests/f1u/f1u_session_manager_test [==[--gtest_filter=f1u_session_manager_test.five_qi_specific_session_selection]==] --gtest_also_run_disabled_tests)
+set_tests_properties( f1u_session_manager_test.five_qi_specific_session_selection PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/f1u SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( f1u_session_manager_test_TESTS f1u_session_manager_test.mngr_creation f1u_session_manager_test.rr_session_selection f1u_session_manager_test.five_qi_specific_session_selection)

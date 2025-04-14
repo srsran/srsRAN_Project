@@ -1,0 +1,13 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"phy",
+			"tsan",
+			"NO_MEMCHECK"
+		],
+		"name" : "rebuild_cache"
+	}
+}

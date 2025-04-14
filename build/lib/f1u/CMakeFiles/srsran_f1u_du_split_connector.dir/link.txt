@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_f1u_du_split_connector.a CMakeFiles/srsran_f1u_du_split_connector.dir/du/split_connector/f1u_split_connector.cpp.o CMakeFiles/srsran_f1u_du_split_connector.dir/du/split_connector/f1u_split_connector_factory.cpp.o
+/usr/bin/ranlib libsrsran_f1u_du_split_connector.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_prach_detector.a CMakeFiles/srsran_prach_detector.dir/prach_detector_generic_impl.cpp.o CMakeFiles/srsran_prach_detector.dir/prach_detector_generic_thresholds.cpp.o CMakeFiles/srsran_prach_detector.dir/prach_generator_impl.cpp.o CMakeFiles/srsran_prach_detector.dir/prach_detector_phy_validator_impl.cpp.o
+/usr/bin/ranlib libsrsran_prach_detector.a

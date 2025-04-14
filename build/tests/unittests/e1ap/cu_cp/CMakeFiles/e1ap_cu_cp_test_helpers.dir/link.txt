@@ -1,0 +1,2 @@
+/usr/bin/ar qc libe1ap_cu_cp_test_helpers.a CMakeFiles/e1ap_cu_cp_test_helpers.dir/e1ap_cu_cp_test_helpers.cpp.o
+/usr/bin/ranlib libe1ap_cu_cp_test_helpers.a

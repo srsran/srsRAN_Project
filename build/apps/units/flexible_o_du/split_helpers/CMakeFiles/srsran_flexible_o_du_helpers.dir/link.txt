@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_flexible_o_du_helpers.a CMakeFiles/srsran_flexible_o_du_helpers.dir/flexible_o_du_factory.cpp.o CMakeFiles/srsran_flexible_o_du_helpers.dir/flexible_o_du_impl.cpp.o CMakeFiles/srsran_flexible_o_du_helpers.dir/flexible_o_du_metrics_aggregator.cpp.o
+/usr/bin/ranlib libsrsran_flexible_o_du_helpers.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libngap_asn1.a CMakeFiles/ngap_asn1.dir/ngap/common.cpp.o CMakeFiles/ngap_asn1.dir/ngap/ngap_ies.cpp.o CMakeFiles/ngap_asn1.dir/ngap/ngap_pdu_contents.cpp.o CMakeFiles/ngap_asn1.dir/ngap/ngap.cpp.o
+/usr/bin/ranlib libngap_asn1.a

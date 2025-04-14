@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdu_test_suite.a CMakeFiles/du_test_suite.dir/ssb_coreset0_freq_pos_checker.cpp.o
+/usr/bin/ranlib libdu_test_suite.a

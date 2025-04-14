@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/e2/e2_setup_procedure_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"e2ap"
+		],
+		"name" : "e2_setup_procedure_test"
+	}
+}

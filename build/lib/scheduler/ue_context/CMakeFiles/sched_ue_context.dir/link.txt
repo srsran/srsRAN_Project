@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsched_ue_context.a CMakeFiles/sched_ue_context.dir/dl_logical_channel_manager.cpp.o CMakeFiles/sched_ue_context.dir/ul_logical_channel_manager.cpp.o CMakeFiles/sched_ue_context.dir/ta_manager.cpp.o CMakeFiles/sched_ue_context.dir/ue_channel_state_manager.cpp.o CMakeFiles/sched_ue_context.dir/ue_link_adaptation_controller.cpp.o CMakeFiles/sched_ue_context.dir/ue_drx_controller.cpp.o CMakeFiles/sched_ue_context.dir/ue.cpp.o CMakeFiles/sched_ue_context.dir/ue_cell.cpp.o
+/usr/bin/ranlib libsched_ue_context.a

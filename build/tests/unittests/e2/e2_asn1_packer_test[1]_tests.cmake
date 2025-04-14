@@ -1,0 +1,3 @@
+add_test( e2_asn1_packer_test.when_packing_successful_then_unpacking_successful /home/shovon/srsRAN_Project/build/tests/unittests/e2/e2_asn1_packer_test [==[--gtest_filter=e2_asn1_packer_test.when_packing_successful_then_unpacking_successful]==] --gtest_also_run_disabled_tests)
+set_tests_properties( e2_asn1_packer_test.when_packing_successful_then_unpacking_successful PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/e2 SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( e2_asn1_packer_test_TESTS e2_asn1_packer_test.when_packing_successful_then_unpacking_successful)

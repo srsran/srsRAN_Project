@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_lower_phy_modulation.a CMakeFiles/srsran_lower_phy_modulation.dir/modulation_factories.cpp.o CMakeFiles/srsran_lower_phy_modulation.dir/ofdm_modulator_impl.cpp.o CMakeFiles/srsran_lower_phy_modulation.dir/ofdm_demodulator_impl.cpp.o CMakeFiles/srsran_lower_phy_modulation.dir/ofdm_prach_demodulator_impl.cpp.o
+/usr/bin/ranlib libsrsran_lower_phy_modulation.a

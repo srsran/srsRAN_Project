@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/ofh/support/context_repository_helpers_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/ofh/support/context_repository_helpers_test[1]_tests.cmake")
+else()
+  add_test(context_repository_helpers_test_NOT_BUILT context_repository_helpers_test_NOT_BUILT)
+endif()

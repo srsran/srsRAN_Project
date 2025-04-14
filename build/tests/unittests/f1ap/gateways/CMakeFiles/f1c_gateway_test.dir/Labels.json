@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/f1ap/gateways/f1c_gateway_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"f1ap"
+		],
+		"name" : "f1c_gateway_test"
+	}
+}

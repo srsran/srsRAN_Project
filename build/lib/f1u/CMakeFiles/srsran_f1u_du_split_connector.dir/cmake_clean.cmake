@@ -1,0 +1,13 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/srsran_f1u_du_split_connector.dir/du/split_connector/f1u_split_connector.cpp.o"
+  "CMakeFiles/srsran_f1u_du_split_connector.dir/du/split_connector/f1u_split_connector.cpp.o.d"
+  "CMakeFiles/srsran_f1u_du_split_connector.dir/du/split_connector/f1u_split_connector_factory.cpp.o"
+  "CMakeFiles/srsran_f1u_du_split_connector.dir/du/split_connector/f1u_split_connector_factory.cpp.o.d"
+  "libsrsran_f1u_du_split_connector.a"
+  "libsrsran_f1u_du_split_connector.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/srsran_f1u_du_split_connector.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

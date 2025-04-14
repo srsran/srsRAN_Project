@@ -1,0 +1,18 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/phy/upper/channel_processors/pxsch_chain_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"phy",
+			"tsan",
+			"NO_MEMCHECK"
+		],
+		"name" : "pxsch_chain_test"
+	}
+}

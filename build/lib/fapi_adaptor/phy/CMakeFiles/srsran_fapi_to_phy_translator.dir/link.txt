@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_fapi_to_phy_translator.a CMakeFiles/srsran_fapi_to_phy_translator.dir/fapi_to_phy_translator.cpp.o
+/usr/bin/ranlib libsrsran_fapi_to_phy_translator.a

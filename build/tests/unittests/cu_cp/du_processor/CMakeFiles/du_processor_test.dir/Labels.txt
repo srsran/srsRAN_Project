@@ -1,0 +1,5 @@
+# Directory labels
+ cu_cp
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/du_processor/du_configuration_manager_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/du_processor/du_processor_test.cpp

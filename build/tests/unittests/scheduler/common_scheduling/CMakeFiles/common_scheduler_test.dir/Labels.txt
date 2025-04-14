@@ -1,0 +1,12 @@
+# Directory labels
+ sched
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/scheduler/common_scheduling/ssb_scheduler_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/scheduler/common_scheduling/sib1_scheduler_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/scheduler/common_scheduling/prach_scheduler_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/scheduler/common_scheduling/ra_scheduler_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/scheduler/common_scheduling/paging_scheduler_test.cpp
+/home/shovon/srsRAN_Project/build/lib/scheduler/config/CMakeFiles/sched_config_manager.dir/cell_configuration.cpp.o
+/home/shovon/srsRAN_Project/build/lib/scheduler/config/CMakeFiles/sched_config_manager.dir/ue_configuration.cpp.o
+/home/shovon/srsRAN_Project/build/lib/scheduler/config/CMakeFiles/sched_config_manager.dir/sched_config_manager.cpp.o
+/home/shovon/srsRAN_Project/build/lib/scheduler/config/CMakeFiles/sched_config_manager.dir/du_cell_group_config_pool.cpp.o

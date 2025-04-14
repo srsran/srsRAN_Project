@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_ofh_ecpri.a CMakeFiles/srsran_ofh_ecpri.dir/ecpri_factories.cpp.o CMakeFiles/srsran_ofh_ecpri.dir/ecpri_packet_builder_impl.cpp.o CMakeFiles/srsran_ofh_ecpri.dir/ecpri_packet_decoder_impl.cpp.o
+/usr/bin/ranlib libsrsran_ofh_ecpri.a

@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/ofh/serdes/ofh_cplane_packet_builder_dynamic_compression_impl_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/ofh/serdes/ofh_cplane_packet_builder_dynamic_compression_impl_test[1]_tests.cmake")
+else()
+  add_test(ofh_cplane_packet_builder_dynamic_compression_impl_test_NOT_BUILT ofh_cplane_packet_builder_dynamic_compression_impl_test_NOT_BUILT)
+endif()

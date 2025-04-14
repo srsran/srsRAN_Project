@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/fapi_adaptor/mac/messages/mac_fapi_prach_adaptor_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/fapi_adaptor/mac/messages/mac_fapi_prach_adaptor_test[1]_tests.cmake")
+else()
+  add_test(mac_fapi_prach_adaptor_test_NOT_BUILT mac_fapi_prach_adaptor_test_NOT_BUILT)
+endif()

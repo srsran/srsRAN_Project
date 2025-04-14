@@ -1,0 +1,2 @@
+/usr/bin/ar qc libmobility_test_helpers.a CMakeFiles/mobility_test_helpers.dir/mobility_test_helpers.cpp.o CMakeFiles/mobility_test_helpers.dir/__/du_processor_test_messages.cpp.o CMakeFiles/mobility_test_helpers.dir/__/test_helpers.cpp.o
+/usr/bin/ranlib libmobility_test_helpers.a

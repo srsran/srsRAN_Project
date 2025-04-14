@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_upper_phy_support.a CMakeFiles/srsran_upper_phy_support.dir/rb_allocation.cpp.o CMakeFiles/srsran_upper_phy_support.dir/rx_buffer_pool_impl.cpp.o CMakeFiles/srsran_upper_phy_support.dir/vrb_to_prb_mapper.cpp.o
+/usr/bin/ranlib libsrsran_upper_phy_support.a

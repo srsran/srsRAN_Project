@@ -1,0 +1,7 @@
+# Directory labels
+ gateways
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/gateways/sctp_network_server_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/gateways/sctp_network_client_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/gateways/sctp_network_gateway_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/gateways/sctp_network_link_test.cpp

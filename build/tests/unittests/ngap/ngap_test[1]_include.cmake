@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/ngap/ngap_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/ngap/ngap_test[1]_tests.cmake")
+else()
+  add_test(ngap_test_NOT_BUILT ngap_test_NOT_BUILT)
+endif()

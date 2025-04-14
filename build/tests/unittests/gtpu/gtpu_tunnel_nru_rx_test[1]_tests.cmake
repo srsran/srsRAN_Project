@@ -1,0 +1,5 @@
+add_test( gtpu_tunnel_nru_rx_test.entity_creation /home/shovon/srsRAN_Project/build/tests/unittests/gtpu/gtpu_tunnel_nru_rx_test [==[--gtest_filter=gtpu_tunnel_nru_rx_test.entity_creation]==] --gtest_also_run_disabled_tests)
+set_tests_properties( gtpu_tunnel_nru_rx_test.entity_creation PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/gtpu SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( gtpu_tunnel_nru_rx_test.rx_no_sn /home/shovon/srsRAN_Project/build/tests/unittests/gtpu/gtpu_tunnel_nru_rx_test [==[--gtest_filter=gtpu_tunnel_nru_rx_test.rx_no_sn]==] --gtest_also_run_disabled_tests)
+set_tests_properties( gtpu_tunnel_nru_rx_test.rx_no_sn PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/gtpu SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( gtpu_tunnel_nru_rx_test_TESTS gtpu_tunnel_nru_rx_test.entity_creation gtpu_tunnel_nru_rx_test.rx_no_sn)

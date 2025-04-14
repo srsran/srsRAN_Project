@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/rrc/rrc_ue_test_messages.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"rrc"
+		],
+		"name" : "rrc_ue_test_helpers"
+	}
+}

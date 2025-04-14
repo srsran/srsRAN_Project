@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"serdes"
+		],
+		"name" : "list_install_components"
+	}
+}

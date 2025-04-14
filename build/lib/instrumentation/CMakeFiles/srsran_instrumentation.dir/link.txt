@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_instrumentation.a CMakeFiles/srsran_instrumentation.dir/traces/du_traces.cpp.o CMakeFiles/srsran_instrumentation.dir/traces/ru_traces.cpp.o CMakeFiles/srsran_instrumentation.dir/traces/up_traces.cpp.o CMakeFiles/srsran_instrumentation.dir/traces/ofh_traces.cpp.o
+/usr/bin/ranlib libsrsran_instrumentation.a

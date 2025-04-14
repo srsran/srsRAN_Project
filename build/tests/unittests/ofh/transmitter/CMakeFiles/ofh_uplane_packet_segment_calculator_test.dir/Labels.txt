@@ -1,0 +1,4 @@
+# Directory labels
+ transmitter
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/ofh/transmitter/ofh_uplane_packet_segment_calculator_test.cpp

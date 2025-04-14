@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_nrppa.a CMakeFiles/srsran_nrppa.dir/nrppa_dummy_factory.cpp.o CMakeFiles/srsran_nrppa.dir/nrppa_dummy_impl.cpp.o
+/usr/bin/ranlib libsrsran_nrppa.a

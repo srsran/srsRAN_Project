@@ -1,0 +1,5 @@
+# Directory labels
+ e2ap
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/e2/e2ap_network_adapter_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/e2/dummy_ric.cpp

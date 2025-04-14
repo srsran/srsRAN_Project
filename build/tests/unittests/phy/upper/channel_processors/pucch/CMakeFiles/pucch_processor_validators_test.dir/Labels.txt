@@ -1,0 +1,8 @@
+# Directory labels
+ phy
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/phy/upper/channel_processors/pucch/pucch_processor_validator_format0_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/phy/upper/channel_processors/pucch/pucch_processor_validator_format1_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/phy/upper/channel_processors/pucch/pucch_processor_validator_format2_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/phy/upper/channel_processors/pucch/pucch_processor_validator_format3_test.cpp
+/home/shovon/srsRAN_Project/tests/unittests/phy/upper/channel_processors/pucch/pucch_processor_validator_format4_test.cpp

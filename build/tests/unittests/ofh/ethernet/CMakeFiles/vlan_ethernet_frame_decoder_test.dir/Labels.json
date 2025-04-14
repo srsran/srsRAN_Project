@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/ofh/ethernet/vlan_ethernet_frame_decoder_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ethernet"
+		],
+		"name" : "vlan_ethernet_frame_decoder_test"
+	}
+}

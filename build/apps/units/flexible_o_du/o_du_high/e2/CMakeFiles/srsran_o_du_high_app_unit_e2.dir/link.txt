@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_o_du_high_app_unit_e2.a CMakeFiles/srsran_o_du_high_app_unit_e2.dir/o_du_high_e2_config_cli11_schema.cpp.o CMakeFiles/srsran_o_du_high_app_unit_e2.dir/o_du_high_e2_config_translators.cpp.o CMakeFiles/srsran_o_du_high_app_unit_e2.dir/o_du_high_e2_config_yaml_writer.cpp.o
+/usr/bin/ranlib libsrsran_o_du_high_app_unit_e2.a

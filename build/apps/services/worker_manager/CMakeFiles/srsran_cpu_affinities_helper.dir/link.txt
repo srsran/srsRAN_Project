@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_cpu_affinities_helper.a CMakeFiles/srsran_cpu_affinities_helper.dir/cli11_cpu_affinities_parser_helper.cpp.o
+/usr/bin/ranlib libsrsran_cpu_affinities_helper.a

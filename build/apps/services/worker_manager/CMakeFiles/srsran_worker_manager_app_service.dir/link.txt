@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_worker_manager_app_service.a CMakeFiles/srsran_worker_manager_app_service.dir/worker_manager.cpp.o CMakeFiles/srsran_worker_manager_app_service.dir/worker_manager_cli11_schema.cpp.o CMakeFiles/srsran_worker_manager_app_service.dir/worker_manager_appconfig_validator.cpp.o
+/usr/bin/ranlib libsrsran_worker_manager_app_service.a

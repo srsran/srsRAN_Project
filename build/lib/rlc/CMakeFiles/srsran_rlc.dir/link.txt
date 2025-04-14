@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_rlc.a CMakeFiles/srsran_rlc.dir/rlc_am_pdu.cpp.o CMakeFiles/srsran_rlc.dir/rlc_factory.cpp.o CMakeFiles/srsran_rlc.dir/rlc_tx_am_entity.cpp.o CMakeFiles/srsran_rlc.dir/rlc_tx_tm_entity.cpp.o CMakeFiles/srsran_rlc.dir/rlc_tx_um_entity.cpp.o CMakeFiles/srsran_rlc.dir/rlc_rx_am_entity.cpp.o CMakeFiles/srsran_rlc.dir/rlc_rx_tm_entity.cpp.o CMakeFiles/srsran_rlc.dir/rlc_rx_um_entity.cpp.o CMakeFiles/srsran_rlc.dir/rlc_metrics_aggregator.cpp.o
+/usr/bin/ranlib libsrsran_rlc.a

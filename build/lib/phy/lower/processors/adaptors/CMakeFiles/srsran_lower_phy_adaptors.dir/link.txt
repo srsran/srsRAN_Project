@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_lower_phy_adaptors.a CMakeFiles/srsran_lower_phy_adaptors.dir/processor_handler_adaptor.cpp.o CMakeFiles/srsran_lower_phy_adaptors.dir/processor_notifier_adaptor.cpp.o
+/usr/bin/ranlib libsrsran_lower_phy_adaptors.a

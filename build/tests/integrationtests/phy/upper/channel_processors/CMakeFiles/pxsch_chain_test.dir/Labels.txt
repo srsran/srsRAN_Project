@@ -1,0 +1,6 @@
+# Directory labels
+ phy
+ tsan
+ NO_MEMCHECK
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/integrationtests/phy/upper/channel_processors/pxsch_chain_test.cpp

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_channel_coding.a CMakeFiles/srsran_channel_coding.dir/channel_coding_factories.cpp.o
+/usr/bin/ranlib libsrsran_channel_coding.a

@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/nru/nru_packing_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"nru"
+		],
+		"name" : "nru_packing_test"
+	}
+}

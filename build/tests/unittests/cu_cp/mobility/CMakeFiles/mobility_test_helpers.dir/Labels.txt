@@ -1,0 +1,6 @@
+# Directory labels
+ cu_cp
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/mobility/mobility_test_helpers.cpp
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/du_processor_test_messages.cpp
+/home/shovon/srsRAN_Project/tests/unittests/cu_cp/test_helpers.cpp

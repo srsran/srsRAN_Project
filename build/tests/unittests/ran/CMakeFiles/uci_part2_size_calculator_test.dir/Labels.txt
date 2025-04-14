@@ -1,0 +1,4 @@
+# Directory labels
+ ran
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/ran/uci/uci_part2_size_calculator_test.cpp

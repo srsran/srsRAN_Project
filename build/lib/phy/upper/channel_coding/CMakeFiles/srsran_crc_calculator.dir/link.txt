@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_crc_calculator.a CMakeFiles/srsran_crc_calculator.dir/crc_calculator_generic_impl.cpp.o CMakeFiles/srsran_crc_calculator.dir/crc_calculator_lut_impl.cpp.o CMakeFiles/srsran_crc_calculator.dir/crc_calculator_clmul_impl.cpp.o
+/usr/bin/ranlib libsrsran_crc_calculator.a

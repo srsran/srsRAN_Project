@@ -1,0 +1,42 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/mac_test.dir/dl_sch_pdu_assembler_test.cpp.o"
+  "CMakeFiles/mac_test.dir/dl_sch_pdu_assembler_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_cell_processor_test.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_cell_processor_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_config_helpers_test.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_config_helpers_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_ctrl_test.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_ctrl_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_ctrl_test_dummies.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_ctrl_test_dummies.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_dl_cfg_test.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_dl_cfg_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_dl_metrics_test.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_dl_metrics_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_rach_handler_test.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_rach_handler_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_rar_pdu_assembler_test.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_rar_pdu_assembler_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_rlf_detector_test.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_rlf_detector_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_test_helpers.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_test_helpers.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_ue_create_test.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_ue_create_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_ul_pdu_test.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_ul_pdu_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/mac_ul_processor_test.cpp.o"
+  "CMakeFiles/mac_test.dir/mac_ul_processor_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/rnti_manager_test.cpp.o"
+  "CMakeFiles/mac_test.dir/rnti_manager_test.cpp.o.d"
+  "CMakeFiles/mac_test.dir/sib_pdu_assembler_test.cpp.o"
+  "CMakeFiles/mac_test.dir/sib_pdu_assembler_test.cpp.o.d"
+  "mac_test"
+  "mac_test.pdb"
+  "mac_test[1]_tests.cmake"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/mac_test.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

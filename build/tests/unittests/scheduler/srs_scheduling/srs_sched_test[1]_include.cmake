@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/scheduler/srs_scheduling/srs_sched_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/scheduler/srs_scheduling/srs_sched_test[1]_tests.cmake")
+else()
+  add_test(srs_sched_test_NOT_BUILT srs_sched_test_NOT_BUILT)
+endif()

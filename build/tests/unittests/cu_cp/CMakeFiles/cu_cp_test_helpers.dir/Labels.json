@@ -1,0 +1,34 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/test_doubles/mock_cu_up.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/test_doubles/mock_amf.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/test_doubles/mock_du.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_test_environment.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_test_messages.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/du_processor_test_messages.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/test_helpers.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cu_cp"
+		],
+		"name" : "cu_cp_test_helpers"
+	}
+}

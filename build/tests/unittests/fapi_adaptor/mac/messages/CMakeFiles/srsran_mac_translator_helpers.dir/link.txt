@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_mac_translator_helpers.a CMakeFiles/srsran_mac_translator_helpers.dir/helpers.cpp.o
+/usr/bin/ranlib libsrsran_mac_translator_helpers.a

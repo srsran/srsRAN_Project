@@ -1,0 +1,7 @@
+add_test( gtpu_echo_test.entity_creation /home/shovon/srsRAN_Project/build/tests/unittests/gtpu/gtpu_echo_test [==[--gtest_filter=gtpu_echo_test.entity_creation]==] --gtest_also_run_disabled_tests)
+set_tests_properties( gtpu_echo_test.entity_creation PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/gtpu SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( gtpu_echo_test.rx_echo_req_tx_echo_rep /home/shovon/srsRAN_Project/build/tests/unittests/gtpu/gtpu_echo_test [==[--gtest_filter=gtpu_echo_test.rx_echo_req_tx_echo_rep]==] --gtest_also_run_disabled_tests)
+set_tests_properties( gtpu_echo_test.rx_echo_req_tx_echo_rep PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/gtpu SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test( gtpu_echo_test.rx_error_indication /home/shovon/srsRAN_Project/build/tests/unittests/gtpu/gtpu_echo_test [==[--gtest_filter=gtpu_echo_test.rx_error_indication]==] --gtest_also_run_disabled_tests)
+set_tests_properties( gtpu_echo_test.rx_error_indication PROPERTIES WORKING_DIRECTORY /home/shovon/srsRAN_Project/build/tests/unittests/gtpu SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set( gtpu_echo_test_TESTS gtpu_echo_test.entity_creation gtpu_echo_test.rx_echo_req_tx_echo_rep gtpu_echo_test.rx_error_indication)

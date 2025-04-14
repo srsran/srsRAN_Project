@@ -1,0 +1,55 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/build/tests/unittests/cu_cp/CMakeFiles/cu_cp_test.dir/Unity/unity_1_cxx.cxx"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/build/tests/unittests/cu_cp/CMakeFiles/cu_cp_test.dir/Unity/unity_0_cxx.cxx"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_connectivity_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_setup_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_reestablishment_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_initial_context_setup_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_ue_context_release_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_pdu_session_resource_setup_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_pdu_session_resource_release_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_pdu_session_resource_modify_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_paging_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_inactivity_notification_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_inter_du_handover_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/cu_cp/cu_cp_intra_du_handover_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cu_cp"
+		],
+		"name" : "cu_cp_test"
+	}
+}

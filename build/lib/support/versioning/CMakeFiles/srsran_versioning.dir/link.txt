@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_versioning.a CMakeFiles/srsran_versioning.dir/build_info.cpp.o CMakeFiles/srsran_versioning.dir/version.cpp.o
+/usr/bin/ranlib libsrsran_versioning.a

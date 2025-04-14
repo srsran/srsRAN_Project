@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_cu_up_unit_metrics_helpers.a CMakeFiles/srsran_cu_up_unit_metrics_helpers.dir/cu_up_pdcp_metrics_producer.cpp.o CMakeFiles/srsran_cu_up_unit_metrics_helpers.dir/cu_up_pdcp_metrics_consumers.cpp.o
+/usr/bin/ranlib libsrsran_cu_up_unit_metrics_helpers.a

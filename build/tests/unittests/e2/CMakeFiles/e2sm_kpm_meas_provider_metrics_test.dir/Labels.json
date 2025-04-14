@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/e2/e2sm_kpm_meas_provider_metrics_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"e2ap"
+		],
+		"name" : "e2sm_kpm_meas_provider_metrics_test"
+	}
+}

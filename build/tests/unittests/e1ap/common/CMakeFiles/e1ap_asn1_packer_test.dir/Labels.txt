@@ -1,0 +1,4 @@
+# Directory labels
+ e1ap
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/e1ap/common/e1ap_asn1_packer_test.cpp

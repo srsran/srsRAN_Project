@@ -1,0 +1,4 @@
+# Directory labels
+ fapi_adaptor
+# Source files and their labels
+/home/shovon/srsRAN_Project/tests/unittests/fapi_adaptor/phy/messages/dl_pdcch_pdu_test.cpp

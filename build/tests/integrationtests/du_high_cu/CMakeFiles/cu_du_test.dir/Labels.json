@@ -1,0 +1,24 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/du_high_cu/cu_du_test.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/du_high_cu/du_high_cu_test_simulator.cpp"
+		},
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/integrationtests/du_high_cu/cu_multi_du_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"cu",
+			"du",
+			"integrationtest"
+		],
+		"name" : "cu_du_test"
+	}
+}

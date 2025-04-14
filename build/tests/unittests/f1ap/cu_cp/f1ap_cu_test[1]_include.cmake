@@ -1,0 +1,5 @@
+if(EXISTS "/home/shovon/srsRAN_Project/build/tests/unittests/f1ap/cu_cp/f1ap_cu_test[1]_tests.cmake")
+  include("/home/shovon/srsRAN_Project/build/tests/unittests/f1ap/cu_cp/f1ap_cu_test[1]_tests.cmake")
+else()
+  add_test(f1ap_cu_test_NOT_BUILT f1ap_cu_test_NOT_BUILT)
+endif()

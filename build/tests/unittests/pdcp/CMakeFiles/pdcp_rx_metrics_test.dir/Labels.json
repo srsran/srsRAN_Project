@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/pdcp/pdcp_rx_metrics_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"pdcp"
+		],
+		"name" : "pdcp_rx_metrics_test"
+	}
+}

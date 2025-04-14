@@ -1,0 +1,11 @@
+{
+	"sources" : [],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"nru"
+		],
+		"name" : "list_install_components"
+	}
+}

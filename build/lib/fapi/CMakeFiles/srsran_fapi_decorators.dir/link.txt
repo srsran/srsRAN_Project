@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_fapi_decorators.a CMakeFiles/srsran_fapi_decorators.dir/decorator_factory.cpp.o
+/usr/bin/ranlib libsrsran_fapi_decorators.a

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_remote_control_app_service.a CMakeFiles/srsran_remote_control_app_service.dir/remote_control_appconfig_cli11_schema.cpp.o CMakeFiles/srsran_remote_control_app_service.dir/remote_server.cpp.o
+/usr/bin/ranlib libsrsran_remote_control_app_service.a

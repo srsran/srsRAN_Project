@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_split_7_2_app_unit_helpers.a CMakeFiles/srsran_split_7_2_app_unit_helpers.dir/ru_ofh_config_cli11_schema.cpp.o CMakeFiles/srsran_split_7_2_app_unit_helpers.dir/ru_ofh_factories.cpp.o CMakeFiles/srsran_split_7_2_app_unit_helpers.dir/ru_ofh_config_translator.cpp.o CMakeFiles/srsran_split_7_2_app_unit_helpers.dir/ru_ofh_config_validator.cpp.o CMakeFiles/srsran_split_7_2_app_unit_helpers.dir/ru_ofh_config_yaml_writer.cpp.o
+/usr/bin/ranlib libsrsran_split_7_2_app_unit_helpers.a

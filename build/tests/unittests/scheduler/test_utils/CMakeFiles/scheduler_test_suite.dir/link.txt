@@ -1,0 +1,2 @@
+/usr/bin/ar qc libscheduler_test_suite.a CMakeFiles/scheduler_test_suite.dir/scheduler_test_suite.cpp.o CMakeFiles/scheduler_test_suite.dir/scheduler_output_test_helpers.cpp.o CMakeFiles/scheduler_test_suite.dir/scheduler_test_simulator.cpp.o
+/usr/bin/ranlib libscheduler_test_suite.a

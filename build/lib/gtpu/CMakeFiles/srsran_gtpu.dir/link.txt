@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsrsran_gtpu.a CMakeFiles/srsran_gtpu.dir/gtpu_tunnel_ngu_factory.cpp.o CMakeFiles/srsran_gtpu.dir/gtpu_tunnel_nru_factory.cpp.o CMakeFiles/srsran_gtpu.dir/gtpu_pdu.cpp.o CMakeFiles/srsran_gtpu.dir/gtpu_demux_factory.cpp.o CMakeFiles/srsran_gtpu.dir/gtpu_echo_factory.cpp.o CMakeFiles/srsran_gtpu.dir/gtpu_teid_pool_factory.cpp.o CMakeFiles/srsran_gtpu.dir/gtpu_demux_impl.cpp.o CMakeFiles/srsran_gtpu.dir/gtpu_gateway.cpp.o
+/usr/bin/ranlib libsrsran_gtpu.a

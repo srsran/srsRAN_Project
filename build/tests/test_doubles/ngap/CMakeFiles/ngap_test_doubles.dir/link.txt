@@ -1,0 +1,2 @@
+/usr/bin/ar qc libngap_test_doubles.a CMakeFiles/ngap_test_doubles.dir/ngap_test_message_validators.cpp.o
+/usr/bin/ranlib libngap_test_doubles.a

@@ -1,0 +1,16 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/shovon/srsRAN_Project/tests/unittests/ofh/ecpri/ecpri_packet_decoder_impl_test.cpp"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ecpri"
+		],
+		"name" : "ecpri_packet_decoder_impl_test"
+	}
+}
