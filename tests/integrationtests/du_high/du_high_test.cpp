@@ -14,12 +14,14 @@
 #include "tests/integrationtests/du_high/test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/asn1/rrc_nr/cell_group_config.h"
+#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/test_utils.h"
 
 using namespace srsran;

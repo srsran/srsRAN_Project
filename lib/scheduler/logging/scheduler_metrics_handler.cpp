@@ -283,6 +283,8 @@ void cell_metrics_handler::report_metrics()
     next_report.ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
   }
 
+  next_report.pci                       = cell_cfg.pci;
+  next_report.slot                      = last_slot_tx - report_period_slots;
   next_report.nof_slots                 = report_period_slots;
   next_report.nof_error_indications     = data.error_indication_counter;
   next_report.average_decision_latency  = data.decision_latency_sum / report_period_slots;

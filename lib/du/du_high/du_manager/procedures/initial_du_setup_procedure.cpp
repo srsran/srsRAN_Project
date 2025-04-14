@@ -19,8 +19,10 @@
 using namespace srsran;
 using namespace srs_du;
 
-initial_du_setup_procedure::initial_du_setup_procedure(const du_manager_params& params_, du_cell_manager& cell_mng_) :
-  params(params_), cell_mng(cell_mng_), logger(srslog::fetch_basic_logger("DU-MNG"))
+initial_du_setup_procedure::initial_du_setup_procedure(const du_manager_params&           params_,
+                                                       du_cell_manager&                   cell_mng_,
+                                                       du_manager_metrics_collector_impl& metrics_) :
+  params(params_), cell_mng(cell_mng_), metrics(metrics_), logger(srslog::fetch_basic_logger("DU-MNG"))
 {
 }
 
@@ -154,6 +156,9 @@ async_task<void> initial_du_setup_procedure::handle_f1_setup_response(const f1_s
         for (; i != cells_to_activ.size(); ++i) {
           // Start MAC cell.
           CORO_AWAIT(cell_mng.start(cell_mng.get_cell_index(cells_to_activ[i].cgi)));
+
+          // Add cell to metrics.
+          metrics.handle_cell_start(cell_mng.get_cell_index(cells_to_activ[i].cgi));
         }
 
         CORO_RETURN();

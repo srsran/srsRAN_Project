@@ -151,42 +151,55 @@ static void init_loggers()
   srslog::init();
 }
 
-du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
-  cu_notifier(workers.test_worker),
-  du_high_cfg([params]() {
-    init_loggers();
-
-    du_high_configuration cfg{};
-    cfg.ran.sched_cfg.log_broadcast_messages = false;
-    cfg.ran.cells.reserve(params.nof_cells);
-    auto builder_params =
-        params.builder_params.has_value() ? params.builder_params.value() : cell_config_builder_params{};
-    for (unsigned i = 0; i < params.nof_cells; ++i) {
-      builder_params.pci = (pci_t)i;
-      auto du_cell_cfg   = config_helpers::make_default_du_cell_config(builder_params);
-      if (params.prach_frequency_start.has_value()) {
-        du_cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_frequency_start =
-            params.prach_frequency_start.value();
-      }
-      du_cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = pdsch_mcs_table::qam256;
-      cfg.ran.cells.push_back(du_cell_cfg);
-      cfg.ran.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
-      if (params.pucch_cfg.has_value()) {
-        cfg.ran.cells.back().pucch_cfg = params.pucch_cfg.value();
-      }
-      cfg.ran.mac_cfg.configs.push_back({10000, 10000, 10000});
+du_high_configuration srs_du::create_du_high_configuration(const du_high_env_sim_params& params)
+{
+  du_high_configuration cfg{};
+  cfg.ran.sched_cfg.log_broadcast_messages = false;
+  cfg.ran.cells.reserve(params.nof_cells);
+  auto builder_params =
+      params.builder_params.has_value() ? params.builder_params.value() : cell_config_builder_params{};
+  for (unsigned i = 0; i < params.nof_cells; ++i) {
+    builder_params.pci = (pci_t)i;
+    auto du_cell_cfg   = config_helpers::make_default_du_cell_config(builder_params);
+    if (params.prach_frequency_start.has_value()) {
+      du_cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_frequency_start =
+          params.prach_frequency_start.value();
     }
+    du_cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = pdsch_mcs_table::qam256;
+    cfg.ran.cells.push_back(du_cell_cfg);
+    cfg.ran.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
+    if (params.pucch_cfg.has_value()) {
+      cfg.ran.cells.back().pucch_cfg = params.pucch_cfg.value();
+    }
+    cfg.ran.mac_cfg.configs.push_back({10000, 10000, 10000});
+  }
 
-    cfg.ran.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
-    cfg.ran.sched_cfg = config_helpers::make_default_scheduler_expert_config();
+  cfg.ran.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
+  cfg.ran.sched_cfg = config_helpers::make_default_scheduler_expert_config();
 
-    return cfg;
-  }()),
+  cfg.metrics.enable_f1ap  = true;
+  cfg.metrics.enable_mac   = true;
+  cfg.metrics.enable_rlc   = true;
+  cfg.metrics.enable_sched = true;
+
+  return cfg;
+}
+
+du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
+  du_high_env_simulator(create_du_high_configuration(params))
+{
+}
+
+du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_cfg_) :
+  cu_notifier(workers.test_worker),
+  du_high_cfg(du_hi_cfg_),
   du_hi_dependencies([this]() {
+    init_loggers();
     du_high_dependencies dependencies;
     dependencies.exec_mapper = workers.exec_mapper.get();
     dependencies.f1c_client  = &cu_notifier;
     dependencies.f1u_gw      = &cu_up_sim;
+    dependencies.du_notifier = &du_metrics;
     dependencies.phy_adapter = &phy;
     dependencies.timers      = &timers;
     dependencies.mac_p       = &mac_pcap;
@@ -194,7 +207,7 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     return dependencies;
   }()),
   du_hi(make_du_high(du_high_cfg, du_hi_dependencies)),
-  phy(params.nof_cells, workers.test_worker),
+  phy(du_high_cfg.ran.cells.size(), workers.test_worker),
   next_slot(to_numerology_value(du_high_cfg.ran.cells[0].scs_common),
             test_rgen::uniform_int<unsigned>(0, 10239) *
                 get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common))

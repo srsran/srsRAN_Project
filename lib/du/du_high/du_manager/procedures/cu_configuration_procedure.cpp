@@ -10,6 +10,7 @@
 
 #include "cu_configuration_procedure.h"
 #include "../du_cell_manager.h"
+#include "../du_metrics_collector_impl.h"
 #include "../du_ue/du_ue_manager.h"
 #include "srsran/support/async/async_no_op_task.h"
 #include "srsran/support/async/async_timer.h"
@@ -20,8 +21,9 @@ using namespace srs_du;
 cu_configuration_procedure::cu_configuration_procedure(const gnbcu_config_update_request& request_,
                                                        du_cell_manager&                   cell_mng_,
                                                        du_ue_manager&                     ue_mng_,
-                                                       const du_manager_params&           du_params_) :
-  request(request_), cell_mng(cell_mng_), ue_mng(ue_mng_), du_params(du_params_)
+                                                       const du_manager_params&           du_params_,
+                                                       du_manager_metrics_collector_impl& metrics_) :
+  request(request_), cell_mng(cell_mng_), ue_mng(ue_mng_), du_params(du_params_), metrics(metrics_)
 {
 }
 
@@ -41,6 +43,9 @@ void cu_configuration_procedure::operator()(coro_context<async_task<gnbcu_config
       // Failed to start cell.
       resp.cells_failed_to_activate.push_back(request.cells_to_activate[list_index].cgi);
     }
+
+    // Add cell to metrics.
+    metrics.handle_cell_start(cell_mng.get_cell_index(request.cells_to_activate[list_index].cgi));
   }
 
   CORO_RETURN(resp);

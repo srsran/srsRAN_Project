@@ -36,7 +36,7 @@ public:
 
   /// \brief Called when a new DU metrics report is generated.
   /// \param report Generated report.
-  virtual void on_new_metric_report(du_metrics_report& report) = 0;
+  virtual void on_new_metric_report(const du_metrics_report& report) = 0;
 };
 
 } // namespace srs_du

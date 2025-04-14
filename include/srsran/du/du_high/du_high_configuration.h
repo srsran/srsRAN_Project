@@ -46,7 +46,6 @@ struct du_high_configuration {
     bool                      enable_rlc   = false;
     bool                      enable_f1ap  = false;
     std::chrono::milliseconds period{1000};
-    du_metrics_notifier*      du_notifier = nullptr;
   };
 
   du_high_ran_config  ran;
@@ -61,6 +60,7 @@ struct du_high_dependencies {
   f1u_du_gateway*             f1u_gw                 = nullptr;
   mac_result_notifier*        phy_adapter            = nullptr;
   timer_manager*              timers                 = nullptr;
+  du_metrics_notifier*        du_notifier            = nullptr;
   scheduler_metrics_notifier* sched_metrics_notifier = nullptr;
   rlc_metrics_notifier*       rlc_metrics_notif      = nullptr;
   mac_metrics_notifier*       mac_metrics_notif      = nullptr;

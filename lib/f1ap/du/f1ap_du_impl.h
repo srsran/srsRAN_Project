@@ -140,7 +140,7 @@ private:
 
   std::unique_ptr<f1ap_message_notifier> tx_pdu_notifier;
 
-  f1ap_du_metrics_collector_impl metrics;
+  f1ap_metrics_collector_impl metrics;
 };
 
 } // namespace srs_du

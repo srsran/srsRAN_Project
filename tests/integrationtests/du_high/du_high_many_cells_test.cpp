@@ -11,6 +11,7 @@
 #include "test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
 #include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "srsran/asn1/f1ap/common.h"
@@ -286,3 +287,59 @@ TEST_P(du_high_many_cells_tester, when_cell_restarted_then_ues_can_be_created)
 INSTANTIATE_TEST_SUITE_P(du_high_many_cells_test_suite,
                          du_high_many_cells_tester,
                          ::testing::Values(test_params{2}, test_params{4}));
+
+class du_high_many_cells_metrics_test : public du_high_env_simulator, public testing::Test
+{
+protected:
+  constexpr static std::chrono::milliseconds METRICS_PERIOD{100};
+  constexpr static unsigned                  nof_cells = 4;
+
+  du_high_many_cells_metrics_test() :
+    du_high_env_simulator([this]() {
+      du_high_env_sim_params params;
+      params.nof_cells   = nof_cells;
+      auto cfg           = create_du_high_configuration(params);
+      cfg.metrics.period = METRICS_PERIOD;
+      // TODO: Remove these extra parameters.
+      cfg.ran.sched_cfg.metrics_report_period = METRICS_PERIOD;
+      return cfg;
+    }())
+  {
+  }
+};
+
+TEST_F(du_high_many_cells_metrics_test, when_du_metrics_are_configured_then_metrics_are_collected_periodically)
+{
+  // Create UEs.
+  rnti_t rnti1 = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti1));
+  ASSERT_TRUE(run_rrc_setup(rnti1));
+  ASSERT_TRUE(run_ue_context_setup(rnti1));
+  rnti_t rnti2 = to_rnti(0x4602);
+  ASSERT_TRUE(add_ue(rnti2, to_du_cell_index(1)));
+  ASSERT_TRUE(run_rrc_setup(rnti2));
+  ASSERT_TRUE(run_ue_context_setup(rnti2));
+
+  const unsigned nof_test_slots =
+      METRICS_PERIOD.count() * get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common) * 1.1;
+  ASSERT_TRUE(this->run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots));
+  // Metrics received.
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells.size(), nof_cells);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[0].ue_metrics.size(), 1);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[1].ue_metrics.size(), 1);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[2].ue_metrics.size(), 0);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[3].ue_metrics.size(), 0);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[0].ue_metrics[0].rnti, rnti1);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[1].ue_metrics[0].rnti, rnti2);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().dl.cells.size(), nof_cells);
+  ASSERT_EQ(du_metrics.last_report.value().f1ap.value().ues.size(), 2);
+  ASSERT_GT(du_metrics.last_report.value().f1ap.value().nof_rx_pdus, 0);
+
+  // After one metric period elapses, we should receive a new report.
+  du_metrics.last_report.reset();
+  ASSERT_TRUE(this->run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots));
+  // Metrics received.
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells.size(), nof_cells);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().dl.cells.size(), nof_cells);
+  ASSERT_EQ(du_metrics.last_report.value().f1ap.value().ues.size(), 2);
+}

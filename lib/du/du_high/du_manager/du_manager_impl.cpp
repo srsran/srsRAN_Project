@@ -62,7 +62,7 @@ void du_manager_impl::start()
           CORO_BEGIN(ctx);
 
           // Connect to CU-CP and send F1 Setup Request and await for F1 setup response.
-          CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng));
+          CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng, metrics));
 
           // Signal start() caller thread that the operation is complete.
           std::lock_guard<std::mutex> lock(mutex);
@@ -167,7 +167,7 @@ async_task<void> du_manager_impl::handle_f1_reset_request(const std::vector<du_u
 async_task<gnbcu_config_update_response>
 du_manager_impl::handle_cu_context_update_request(const gnbcu_config_update_request& request)
 {
-  return launch_async<cu_configuration_procedure>(request, cell_mng, ue_mng, params);
+  return launch_async<cu_configuration_procedure>(request, cell_mng, ue_mng, params, metrics);
 }
 
 async_task<f1ap_ue_context_creation_response>

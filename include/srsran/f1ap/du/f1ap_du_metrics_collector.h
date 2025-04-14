@@ -19,9 +19,12 @@ namespace srs_du {
 
 struct f1ap_metrics_report {
   struct ue_metrics {
+    du_ue_index_t       ue_index;
     gnb_du_ue_f1ap_id_t ue_id;
   };
 
+  /// Number of PDUs received by the F1AP-DU.
+  unsigned nof_rx_pdus = 0;
   /// List of UE metrics.
   static_vector<ue_metrics, MAX_NOF_DU_UES> ues;
 };

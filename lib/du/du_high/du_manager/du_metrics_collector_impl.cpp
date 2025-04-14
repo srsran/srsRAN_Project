@@ -101,7 +101,9 @@ private:
   {
     srsran_assert(metrics.pci != INVALID_PCI, "Invalid PCI in scheduler metrics report.");
 
-    if (not next_sched_report.cells.empty() and next_sched_report.cells[0].slot != metrics.slot) {
+    if (not next_sched_report.cells.empty() and
+        std::abs(metrics.slot - next_sched_report.cells[0].slot) >
+            parent.params.period.count() * metrics.slot.nof_slots_per_subframe() / 2) {
       // A new report has been detected before expected.
       logger.warning("New scheduler metric report detected before expected ({} != {})",
                      metrics.slot,
@@ -168,14 +170,16 @@ du_manager_metrics_collector_impl::du_manager_metrics_collector_impl(
                                                                     srslog::fetch_basic_logger("DU-MNG"))
                        : nullptr)
 {
-  if (params.f1ap_enabled) {
-    next_report.f1ap.emplace();
-  }
-  if (params.sched_enabled) {
-    next_report.scheduler.emplace();
-  }
-  if (params.mac_enabled) {
-    next_report.mac.emplace();
+  if (params.du_metrics != nullptr) {
+    if (params.f1ap_enabled) {
+      next_report.f1ap.emplace();
+    }
+    if (params.sched_enabled) {
+      next_report.scheduler.emplace();
+    }
+    if (params.mac_enabled) {
+      next_report.mac.emplace();
+    }
   }
 }
 
@@ -190,7 +194,10 @@ void du_manager_metrics_collector_impl::handle_mac_metrics_report(const mac_metr
 
   // In case the DU metrics notifier was specified, report the DU metrics.
   if (params.du_metrics != nullptr) {
-    defer_until_success(du_mng_exec, timers, [this]() { trigger_report(); });
+    defer_until_success(du_mng_exec, timers, [this, report]() {
+      next_report.mac = report;
+      trigger_report();
+    });
   }
 }
 
@@ -255,10 +262,14 @@ void du_manager_metrics_collector_impl::handle_scheduler_metrics_report(const sc
 
 void du_manager_metrics_collector_impl::handle_cell_start(du_cell_index_t cell_index)
 {
-  sched_aggregator->add_cell();
+  if (sched_aggregator != nullptr) {
+    sched_aggregator->add_cell();
+  }
 }
 
 void du_manager_metrics_collector_impl::handle_cell_stop(du_cell_index_t cell_index)
 {
-  sched_aggregator->rem_cell();
+  if (sched_aggregator != nullptr) {
+    sched_aggregator->rem_cell();
+  }
 }

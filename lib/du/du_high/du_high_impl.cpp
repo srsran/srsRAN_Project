@@ -129,7 +129,11 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
        cfg.ran.sched_cfg,
        dependencies.mac_metrics_notif,
        dependencies.sched_metrics_notifier},
-      {cfg.metrics.period, cfg.metrics.du_notifier, cfg.metrics.enable_f1ap},
+      {cfg.metrics.period,
+       dependencies.du_notifier,
+       cfg.metrics.enable_f1ap,
+       cfg.metrics.enable_mac,
+       cfg.metrics.enable_sched},
       cfg.test_cfg});
 
   // Connect Layer<->DU manager adapters.
