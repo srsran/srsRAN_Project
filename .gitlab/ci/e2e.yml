@@ -430,7 +430,6 @@ test mode ru acc100:
 
 test mode ue many ues:
   extends: test mode ru
-  allow_failure: true
   variables:
     GROUP: "viavi"
     TESTBED: "viavi"

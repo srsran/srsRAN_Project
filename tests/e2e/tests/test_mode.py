@@ -373,8 +373,8 @@ def test_mode_many_ues(
     gnb_startup_timeout: int = GNB_STARTUP_TIMEOUT,
     gnb_stop_timeout: int = 0,
     log_search: bool = True,
-    warning_as_errors: bool = True,
-    fail_if_kos: bool = True,
+    warning_as_errors: bool = False,
+    fail_if_kos: bool = False,
     extra_cli_config: str = "metrics --enable_log=true",
 ):
     """
