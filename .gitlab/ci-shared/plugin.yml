@@ -1,210 +1,41 @@
 include:
-  - project: softwareradiosystems/ci/tools
-    ref: "21"
-    file: .gitlab/ci-shared/setup/all.yml
-  - project: softwareradiosystems/ci/tools
-    ref: "21"
-    file: .gitlab/ci-shared/features/all.yml
-  - local: .gitlab/ci-shared/e2e.yml
-  - local: .gitlab/ci-shared/build.yml
-  - local: .gitlab/ci/builders/version.yml
+  - local: .gitlab/ci-shared/template.yml
 
-variables:
-  # CI
-  SLACK_CHANNEL_OK: "#ci_gnb"
-  SLACK_CHANNEL_FAIL: "#ci_gnb"
-  SLACK_CHANNEL_INFO_MSG: "#ci_gnb_verbose"
-  # srsRAN references
-  SRSRANDIR: &srsran_dir ${CI_PROJECT_DIR}/srsgnb
-  SRSRAN_REPO_URL: https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/softwareradiosystems/srsgnb.git
-
-######
-# CI #
-######
-.is using latest:
-  image: ubuntu:24.04
-  stage: ci
+#############
+# Static    #
+#############
+code-format:
+  extends: .full-code-format
   rules:
     - if: $ON_MR
-  script:
-    - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs apt-transport-https ca-certificates && git lfs install
-    - mkdir -p ${SRSRANDIR}
-    - git clone --depth 1 ${SRSRAN_REPO_URL} ${SRSRANDIR}
-    - cd ${SRSRANDIR}
-    - SRSRAN_LATEST_COMMIT=$(git rev-parse HEAD)
-    - COMMIT_USED_IN_PIPELINE=$(git rev-parse $SRSRAN_COMMIT)
-    - |
-      if [[ $COMMIT_USED_IN_PIPELINE != $SRSRAN_LATEST_COMMIT ]]; then
-        echo "Please update to latest srsRAN commit: $SRSRAN_LATEST_COMMIT"
-        exit 1
-      fi
-
-is using latest:
-  extends: .is using latest
-  allow_failure: true
-
-download srsran:
-  image: ubuntu:22.04
-  stage: ci
-  rules:
-    - if: $ON_MR
-    - if: $ON_WEB
-    - if: $ON_API
-    - if: $ON_SCHEDULE
-    - if: $CI_DESCRIPTION
-  script:
-    - DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y --no-install-recommends git git-lfs apt-transport-https ca-certificates && git lfs install
-    - |
-      mkdir -p ${SRSRANDIR}
-      cd ${SRSRANDIR}
-    - |
-      git init > /dev/null
-      git remote add origin ${SRSRAN_REPO_URL} > /dev/null
-      git fetch --depth=1 origin ${SRSRAN_COMMIT} > /dev/null
-      git reset --hard FETCH_HEAD
-    - git config --global --add safe.directory ${SRSRANDIR}
-    - |
-      if [[ -f $PLUGINS_DATA_FILE ]] && [[ $CI_DISABLE_PLUGINS != "True" ]]; then
-        CI_PLUGIN_COMMIT_SHA=$(cat .gitlab/ci/plugin_version.txt)
-        while IFS='|' read -r PLUGIN_PATH PLUGIN_REPO PLUGIN_REF; do
-          PLUGIN_REF=$(eval echo $PLUGIN_REF)    
-          echo "#########################"
-          echo "#### $PLUGIN_PATH checkout ####"
-          echo "#########################"
-          git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git plugins/${PLUGIN_PATH}
-          cd plugins/${PLUGIN_PATH}
-          git fetch --depth=1 origin ${PLUGIN_REF} > /dev/null
-          git config advice.detachedHead false
-          git checkout ${PLUGIN_REF}
-          cd ${SRSRANDIR}
-        done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
-      fi
-  artifacts:
-    paths:
-      - $SRSRANDIR
-  needs: []
-
-builder version:
-  extends: .builder version
-  rules:
-    - if: $ON_MR
-    - if: $ON_WEB
-    - if: $ON_API
-    - if: $ON_SCHEDULE
-    - if: $CI_DESCRIPTION =~ /Release/
-      when: never
-    - if: $CI_DESCRIPTION
-  variables:
-    SRSRANDIR: *srsran_dir
   needs:
     - job: download srsran
+  script:
+    - &setup_folders mkdir -p ${SRSRANDIR}/plugins && ln -s ${CI_PROJECT_DIR} ${SRSRANDIR}/plugins/${CI_PROJECT_NAME}
+    - cd ${SRSRANDIR}/plugins/${CI_PROJECT_NAME}
+    - full_code_format
 
-##################
-# Build template #
-##################
-.cache_set:
-  cache:
-    - key: ${OS}-${COMPILER}-${CMAKE_BUILD_TYPE}-${MARCH}
-      paths:
-        - ${CI_PROJECT_DIR}/ccache
-        - ${SRSRANDIR}/ccache
-      policy: push
+include-guards:
+  extends: .include-guards
+  needs:
+    - job: download srsran
+  script:
+    - *setup_folders
+    - cd ${SRSRANDIR}/plugins/${CI_PROJECT_NAME}
+    - include-guards-check
 
-.cache_get:
-  cache:
-    - key: ${OS}-${COMPILER}-${CMAKE_BUILD_TYPE}-${MARCH}
-      paths:
-        - ${CI_PROJECT_DIR}/ccache
-        - ${SRSRANDIR}/ccache
-      policy: pull-push
-
-.build_and_unit:
-  extends: .build_and_unit_template
-  after_script:
-    - mv ${CI_PROJECT_DIR}/build/coverage.xml      ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml            || true
-    - |
-      mv ${SRSRANDIR}/build/apps/gnb/gnb  /tmp/gnb
-      mv ${SRSRANDIR}/build/apps/cu/srscu /tmp/srscu
-      mv ${SRSRANDIR}/build/apps/du/srsdu /tmp/srsdu
-      cd ${SRSRANDIR}/build
-      make clean
-      mv /tmp/gnb   ${SRSRANDIR}/build/apps/gnb/gnb
-      mv /tmp/srscu ${SRSRANDIR}/build/apps/cu/srscu
-      mv /tmp/srsdu ${SRSRANDIR}/build/apps/du/srsdu
-  artifacts:
-    when: always
-    reports:
-      coverage_report:
-        coverage_format: cobertura
-        path: ${CI_JOB_ID}_coverage.xml
-    paths:
-      - ${CI_JOB_ID}_coverage.xml
-      - ${SRSRANDIR}/build/
-  timeout: 1h
+#########
+# Build #
+#########
+.build_with_plugin:
+  extends: .build_and_unit
+  stage: build
+  variables:
+    ENABLE_PLUGINS: "True"
+  script:
+    - *setup_folders
+    - build_srsran
+    - launch_tests_srsran
   needs:
     - job: download srsran
     - job: builder version
-
-########################
-# Codechecker template #
-########################
-.codechecker:
-  extends: .build_and_unit
-  image: ${CR_REGISTRY_URI}/srsgnb/codechecker:${DOCKER_BUILDER_VERSION}
-  stage: static
-  variables:
-    ANALYZER: ""
-    ANALYZER_ARGS: ""
-    ARTIFACT_EXTRA_PATH: ""
-    CHECK_PER_FILE_TIMEOUT: 600
-    COMPILER: clang
-  before_script:
-    - |
-      export CC=/usr/bin/clang
-      export CXX=/usr/bin/clang++
-    - |
-      cd ${SRSRANDIR}
-      mkdir -p build
-      cd build || exit
-    - cmake -DENABLE_EXPORT=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=False ..
-    - make -j${KUBERNETES_CPU_LIMIT} srsran_exported_libs
-    - |
-      echo "
-      -/usr/lib
-      -*tests/unittests
-      -*tests/integrationtests
-      -*tests/benchmarks
-      -*benchmarks
-      -*apps/examples
-      -*external" >/tmp/codechecker_skip
-    - |
-      cd ${CI_PROJECT_DIR}
-      mkdir -p build
-      cd build || exit
-    - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBUILD_TESTS=False -DSRSRAN_PATH=${SRSRANDIR} ..
-    - |
-      monitor_child_process() {
-          while true; do
-              ps -eo comm,pid,etimes | grep ${ANALYZER} | while read comm pid etimes; do
-                  if [ $etimes -gt $CHECK_PER_FILE_TIMEOUT ]; then
-                      echo "Killing child analysis process"
-                      kill $pid
-                  fi
-              done
-              sleep 30
-          done
-      }
-      export -f monitor_child_process
-  script:
-    - nohup bash -c monitor_child_process &
-    - static-analyzer.sh -i /tmp/codechecker_skip --jobs ${KUBERNETES_CPU_REQUEST} --analyzers ${ANALYZER} ${ANALYZER_ARGS} $CI_PROJECT_DIR
-  after_script:
-    - mv codechecker_html codechecker-${ANALYZER}-html
-  artifacts:
-    reports:
-      codequality: code-quality-report.json
-    paths:
-      - codechecker-${ANALYZER}-html${ARTIFACT_EXTRA_PATH}
-    when: always
-    expire_in: 1 day
-  cache: []
