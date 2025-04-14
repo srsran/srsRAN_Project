@@ -20,7 +20,7 @@
 #include "sib_pdu_assembler.h"
 #include "ssb_assembler.h"
 #include "srsran/mac/mac.h"
-#include "srsran/scheduler/mac_scheduler.h"
+#include "srsran/support/async/manual_event.h"
 #include "srsran/support/memory_pool/ring_buffer_pool.h"
 
 namespace srsran {
@@ -120,9 +120,8 @@ private:
   // Handler of cell metrics
   mac_dl_cell_metric_handler& metrics;
 
-  /// Represents activation cell state.
-  // Note: For now, cells start active.
-  enum class cell_state { inactive, active } state = cell_state::inactive;
+  // Represents cell activation state.
+  enum class cell_state { inactive, activating, active } state = cell_state::inactive;
 
   mac_pcap& pcap;
 

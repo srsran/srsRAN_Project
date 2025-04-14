@@ -25,6 +25,7 @@ struct mac_dl_cell_metric_report {
     std::chrono::nanoseconds average;
     slot_point               max_slot;
   };
+
   /// Physical cell id.
   pci_t pci;
   /// Number of slots considered in this report.

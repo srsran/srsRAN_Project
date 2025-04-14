@@ -71,7 +71,9 @@ async_task<void> mac_cell_processor::start()
       cell_exec,
       ctrl_exec,
       timers,
-      [this]() {
+      launch_async([this](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+
         if (state == cell_state::active) {
           // No-op.
           return;
@@ -80,11 +82,15 @@ async_task<void> mac_cell_processor::start()
         // Notify scheduler about activation.
         sched.start_cell(cell_cfg.cell_index);
 
-        // set cell as active.
+        // Initiate retrieval of metrics for this cell.
+        metrics.on_cell_activation();
+
         state = cell_state::active;
 
         logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
-      },
+
+        CORO_RETURN();
+      }),
       [this]() {
         logger.warning("cell={}: Postponed cell start operation. Cause: Task queue is full",
                        fmt::underlying(cell_cfg.cell_index));
@@ -107,6 +113,9 @@ async_task<void> mac_cell_processor::stop()
 
         // Notify scheduler about activation.
         sched.stop_cell(cell_cfg.cell_index);
+
+        // Notify that cell metrics stopped being collected.
+        metrics.on_cell_deactivation();
 
         logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
       },

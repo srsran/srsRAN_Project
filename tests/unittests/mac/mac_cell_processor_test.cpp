@@ -15,14 +15,28 @@
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
+#include <srsran/mac/mac_metrics_notifier.h>
 
 using namespace srsran;
+
+namespace {
+
+class dummy_mac_metrics_notifier : public mac_metrics_notifier
+{
+public:
+  void on_new_metrics_report(const mac_metric_report& report) override
+  {
+    // do nothing.
+  }
+};
+
+} // namespace
 
 class base_mac_cell_processor_test
 {
 public:
   base_mac_cell_processor_test() :
-    mac_cell(test_helpers::make_default_mac_cell_config(),
+    mac_cell(test_helpers::make_default_mac_cell_config(builder_params),
              sched_adapter,
              rnti_table,
              phy_notifier,
@@ -33,6 +47,7 @@ public:
              timers,
              cell_metrics)
   {
+    next_slot = {to_numerology_value(builder_params.scs_common), 0};
   }
 
   bool is_pdsch_scheduled() const
@@ -43,16 +58,19 @@ public:
   }
 
   test_helpers::dummy_mac_scheduler_adapter    sched_adapter;
+  dummy_mac_metrics_notifier                   metrics_notifier;
   du_rnti_table                                rnti_table;
   test_helpers::dummy_mac_cell_result_notifier phy_notifier;
   manual_task_worker                           task_worker{128};
   null_mac_pcap                                pcap;
   timer_manager                                timers;
-  mac_dl_cell_metric_handler                   cell_metrics{to_du_cell_index(0),
-                                          1,
-                                          1,
-                                          [](du_cell_index_t, const mac_dl_cell_metric_report&) {}};
-  mac_cell_processor                           mac_cell;
+  cell_config_builder_params                   builder_params;
+  mac_dl_metric_handler       metrics{std::chrono::milliseconds{1}, metrics_notifier, timers, task_worker};
+  mac_dl_cell_metric_handler& cell_metrics{
+      metrics.add_cell(to_du_cell_index(0), builder_params.pci, builder_params.scs_common)};
+  mac_cell_processor mac_cell;
+
+  slot_point next_slot;
 };
 
 struct test_params {
@@ -92,27 +110,24 @@ protected:
       ue_grant.pdsch_cfg.codewords[0].tb_size_bytes = 128;
     }
 
+    // Start cell.
     auto                     t = mac_cell.start();
     lazy_task_launcher<void> launcher{t};
+    this->mac_cell.handle_slot_indication(mac_cell_timing_context{next_slot++});
     task_worker.run_pending_tasks();
     report_error_if_not(launcher.ready(), "Unable to start cell");
+    phy_notifier = {};
   }
 };
 
 TEST_P(mac_cell_processor_tester, when_cell_is_active_then_slot_indication_triggers_scheduling)
 {
-  async_task<void>         t = mac_cell.start();
-  lazy_task_launcher<void> launcher{t};
-  this->task_worker.run_pending_tasks();
-  ASSERT_TRUE(t.ready());
-
   // Scheduler was notified of cell start.
   ASSERT_TRUE(sched_adapter.active);
 
-  slot_point sl_tx{0, 0};
-  auto       slot_tp = std::chrono::system_clock::now();
+  auto slot_tp = std::chrono::system_clock::now();
   ASSERT_FALSE(phy_notifier.is_complete);
-  mac_cell.handle_slot_indication({sl_tx, slot_tp});
+  mac_cell.handle_slot_indication({next_slot++, slot_tp});
 
   ASSERT_TRUE(phy_notifier.last_sched_res.has_value());
   ASSERT_EQ(phy_notifier.last_dl_data_res.has_value(), is_pdsch_scheduled());
@@ -126,8 +141,7 @@ TEST_P(mac_cell_processor_tester, when_cell_is_active_then_slot_indication_trigg
 
 TEST_P(mac_cell_processor_tester, when_cell_is_deactivated_then_scheduler_gets_notified)
 {
-  slot_point sl_tx{0, 0};
-  auto       slot_tp = std::chrono::system_clock::now();
+  auto slot_tp = std::chrono::system_clock::now();
 
   ASSERT_FALSE(phy_notifier.is_complete);
 
@@ -144,7 +158,7 @@ TEST_P(mac_cell_processor_tester, when_cell_is_deactivated_then_scheduler_gets_n
   phy_notifier.last_sched_res.reset();
   phy_notifier.last_ul_res.reset();
   phy_notifier.last_dl_data_res.reset();
-  mac_cell.handle_slot_indication({sl_tx, slot_tp});
+  mac_cell.handle_slot_indication({next_slot++, slot_tp});
   ASSERT_TRUE(phy_notifier.is_complete);
 }
 

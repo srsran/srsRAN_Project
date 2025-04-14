@@ -9,7 +9,9 @@
  */
 
 #include "mac_dl_metric_handler.h"
+#include "srsran/adt/bounded_bitset.h"
 #include "srsran/mac/mac_metrics_notifier.h"
+#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/execute_until_success.h"
 
 using namespace srsran;
@@ -36,16 +38,22 @@ void mac_dl_cell_metric_handler::non_persistent_data::latency_data::save_sample(
   }
 }
 
-mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(
-    du_cell_index_t                                                        cell_index_,
-    pci_t                                                                  cell_pci_,
-    unsigned                                                               period_slots_,
-    std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report_) :
-  cell_index(cell_index_),
-  cell_pci(cell_pci_),
-  on_new_cell_report(std::move(on_new_cell_report_)),
-  period_slots(period_slots_)
+mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(mac_dl_metric_handler& parent_,
+                                                       du_cell_index_t        cell_index_,
+                                                       pci_t                  cell_pci_,
+                                                       unsigned               period_slots_) :
+  cell_index(cell_index_), cell_pci(cell_pci_), parent(parent_), period_slots(period_slots_)
 {
+}
+
+void mac_dl_cell_metric_handler::on_cell_activation()
+{
+  parent.handle_cell_activation(cell_index);
+}
+
+void mac_dl_cell_metric_handler::on_cell_deactivation()
+{
+  parent.handle_cell_deactivation(cell_index);
 }
 
 void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& meas)
@@ -116,15 +124,34 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
     next_report_slot += period_slots;
 
     // Forward cell report.
-    on_new_cell_report(cell_index, report);
+    parent.handle_cell_report(cell_index, report);
   }
 }
+
+// Size of each cell queue. Should be large enough to account for the details in waking up the mac_dl_metric_handler
+// to aggregate all cells separate reports.
+static constexpr unsigned cell_report_queue_size = 16;
+
+mac_dl_metric_handler::cell_context::cell_context(mac_dl_metric_handler& parent,
+                                                  du_cell_index_t        cell_index_,
+                                                  pci_t                  pci,
+                                                  unsigned               period_slots) :
+  cell_index(cell_index_), queue(cell_report_queue_size), handler(parent, cell_index, pci, period_slots)
+{
+}
+
+// class mac_dl_metric_handler
 
 mac_dl_metric_handler::mac_dl_metric_handler(std::chrono::milliseconds period_,
                                              mac_metrics_notifier&     notifier_,
                                              timer_manager&            timers_,
                                              task_executor&            ctrl_exec_) :
-  period(period_), notifier(notifier_), timers(timers_), ctrl_exec(ctrl_exec_)
+  period(period_),
+  notifier(notifier_),
+  timers(timers_),
+  ctrl_exec(ctrl_exec_),
+  logger(srslog::fetch_basic_logger("MAC")),
+  active_cells_bitmap(MAX_NOF_DU_CELLS)
 {
 }
 
@@ -133,12 +160,8 @@ mac_dl_metric_handler::add_cell(du_cell_index_t cell_index, pci_t pci, subcarrie
 {
   if (not cells.contains(cell_index)) {
     unsigned period_slots = period.count() * get_nof_slots_per_subframe(scs);
-    cells.emplace(
-        cell_index,
-        std::make_unique<cell_context>(
-            cell_index, pci, period_slots, [this](du_cell_index_t cidx, const mac_dl_cell_metric_report& rep) {
-              handle_cell_report(cidx, rep);
-            }));
+    cells.emplace(cell_index, std::make_unique<cell_context>(*this, cell_index, pci, period_slots));
+
     cell_left_bitmap.fetch_add((1U << static_cast<unsigned>(cell_index)), std::memory_order_acq_rel);
   }
   return cells[cell_index]->handler;
@@ -146,13 +169,30 @@ mac_dl_metric_handler::add_cell(du_cell_index_t cell_index, pci_t pci, subcarrie
 
 void mac_dl_metric_handler::remove_cell(du_cell_index_t cell_index)
 {
-  // TODO
+  cells.erase(cell_index);
+}
+
+void mac_dl_metric_handler::handle_cell_activation(du_cell_index_t cell_index)
+{
+  // Enqueue cell start event.
+  if (not cells[cell_index]->queue.try_push(cell_start_event_type{})) {
+    logger.error("Failed to enqueue metric cell start event. Cause: Task queue is full.");
+  }
+}
+
+void mac_dl_metric_handler::handle_cell_deactivation(du_cell_index_t cell_index)
+{
+  if (not cells[cell_index]->queue.try_push(cell_stop_event_type{})) {
+    logger.error("Failed to enqueue metric cell stop event. Cause: Task queue is full.");
+  }
 }
 
 void mac_dl_metric_handler::handle_cell_report(du_cell_index_t cell_index, const mac_dl_cell_metric_report& cell_report)
 {
   // Note: Function called from the cell execution context. Use thread-safe queue to forward result.
-  cells[cell_index]->queue.try_push(cell_report);
+  if (not cells[cell_index]->queue.try_push(cell_report)) {
+    logger.error("Failed to enqueue metric cell stop event. Cause: Task queue is full.");
+  }
 
   unsigned cell_bit = 1U << static_cast<unsigned>(cell_index);
   if (cell_left_bitmap.fetch_and(~cell_bit, std::memory_order_acq_rel) == cell_bit) {
@@ -164,20 +204,38 @@ void mac_dl_metric_handler::handle_cell_report(du_cell_index_t cell_index, const
 
 void mac_dl_metric_handler::prepare_full_report()
 {
-  next_report.dl.cells.resize(cells.size());
+  // Traverse all configured cells and pop pending events.
+  next_report.dl.cells.reserve(cells.size());
+  event_type ev;
+  for (const auto& cell : cells) {
+    const du_cell_index_t cell_index = cell->cell_index;
 
-  for (unsigned i = 0, e = cells.size(); i != e; ++i) {
-    auto& cell = cells[i];
+    while (cell->queue.try_pop(ev)) {
+      // Handle popped event.
 
-    if (not cell->queue.try_pop(next_report.dl.cells[i])) {
-      // Failed to pack result.
-      next_report.dl.cells[i] = {};
+      if (std::get_if<cell_start_event_type>(&ev) != nullptr) {
+        // Cell start event.
+        active_cells_bitmap.set(cell_index);
+      } else if (std::get_if<cell_stop_event_type>(&ev) != nullptr) {
+        // Cell stop event.
+        active_cells_bitmap.reset(cell_index);
+      } else if (const mac_dl_cell_metric_report* cell_report = std::get_if<mac_dl_cell_metric_report>(&ev)) {
+        // Cell report event.
+        if (active_cells_bitmap.test(cell_index)) {
+          next_report.dl.cells.push_back(*cell_report);
+        } else {
+          logger.error("Received report for inactive cell. Cell index: {}", fmt::underlying(cell_index));
+        }
+      } else {
+        report_fatal_error("Invalid event type in cell report queue.");
+      }
     }
   }
 
   // Set bitmap to signal to cell executors to prepare the next cell report.
-  cell_left_bitmap.store((1U << cells.size()) - 1U, std::memory_order_release);
+  cell_left_bitmap.store(active_cells_bitmap.to_uint64(), std::memory_order_release);
 
   // Forward the full report.
   notifier.on_new_metrics_report(next_report);
+  next_report.dl.cells.clear();
 }

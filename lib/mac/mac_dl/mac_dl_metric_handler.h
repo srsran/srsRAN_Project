@@ -10,17 +10,20 @@
 
 #pragma once
 
+#include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/concurrent_queue.h"
-#include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/noop_functor.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/adt/spsc_queue.h"
 #include "srsran/mac/mac_metrics.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/tracing/resource_usage.h"
 #include <memory>
+#include <variant>
 
 namespace srsran {
 
@@ -84,10 +87,16 @@ public:
     expected<resource_usage::snapshot, int>                     start_rusg;
   };
 
-  mac_dl_cell_metric_handler(du_cell_index_t                                                        cell_index,
-                             pci_t                                                                  cell_pci,
-                             unsigned                                                               period_slots_,
-                             std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report);
+  mac_dl_cell_metric_handler(mac_dl_metric_handler& parent_,
+                             du_cell_index_t        cell_index,
+                             pci_t                  cell_pci,
+                             unsigned               period_slots_);
+
+  /// Called when the MAC cell is activated.
+  void on_cell_activation();
+
+  /// Called when the MAC cell is deactivated.
+  void on_cell_deactivation();
 
   /// Initiate new slot measurements.
   /// \param[in] sl_tx Tx slot.
@@ -125,10 +134,10 @@ private:
 
   void handle_slot_completion(const slot_measurement& meas);
 
-  const du_cell_index_t                                                  cell_index;
-  const pci_t                                                            cell_pci;
-  std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report;
-  const unsigned                                                         period_slots;
+  const du_cell_index_t  cell_index;
+  const pci_t            cell_pci;
+  mac_dl_metric_handler& parent;
+  const unsigned         period_slots;
 
   // Slot at which the next report is generated.
   slot_point               next_report_slot;
@@ -153,24 +162,27 @@ public:
   void remove_cell(du_cell_index_t cell_index);
 
 private:
-  using report_queue_type           = concurrent_queue<mac_dl_cell_metric_report,
-                                                       concurrent_queue_policy::lockfree_mpmc,
-                                                       concurrent_queue_wait_policy::non_blocking>;
-  using cell_activation_bitmap_type = unsigned;
-  static_assert(sizeof(cell_activation_bitmap_type) * 8U <= MAX_NOF_DU_CELLS, "Invalid cell activation bitmap size");
+  friend class mac_dl_cell_metric_handler;
+
+  struct cell_start_event_type {};
+  struct cell_stop_event_type {};
+  using event_type = std::variant<mac_dl_cell_metric_report, cell_start_event_type, cell_stop_event_type>;
+  using report_queue_type =
+      concurrent_queue<event_type, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>;
+  using cell_activation_bitmap_type = uint64_t;
+
+  static_assert(sizeof(cell_activation_bitmap_type) * 8U >= MAX_NOF_DU_CELLS, "Invalid cell activation bitmap size");
 
   struct cell_context {
+    du_cell_index_t            cell_index;
     report_queue_type          queue;
     mac_dl_cell_metric_handler handler;
 
-    cell_context(du_cell_index_t                                                        cell_index,
-                 pci_t                                                                  pci,
-                 unsigned                                                               period_slots,
-                 std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report) :
-      queue(2), handler(cell_index, pci, period_slots, std::move(on_new_cell_report))
-    {
-    }
+    cell_context(mac_dl_metric_handler& parent, du_cell_index_t cell_index_, pci_t pci, unsigned period_slots);
   };
+
+  void handle_cell_activation(du_cell_index_t cell_index);
+  void handle_cell_deactivation(du_cell_index_t cell_index);
 
   void handle_cell_report(du_cell_index_t cell_index, const mac_dl_cell_metric_report& cell_report);
 
@@ -180,9 +192,12 @@ private:
   mac_metrics_notifier&     notifier;
   timer_manager&            timers;
   task_executor&            ctrl_exec;
+  srslog::basic_logger&     logger;
 
   slotted_array<std::unique_ptr<cell_context>, MAX_NOF_DU_CELLS> cells;
+  bounded_bitset<MAX_NOF_DU_CELLS>                               active_cells_bitmap;
 
+  // Bitmask of cells for which the report is still pending.
   std::atomic<cell_activation_bitmap_type> cell_left_bitmap{0};
 
   mac_metric_report next_report;
