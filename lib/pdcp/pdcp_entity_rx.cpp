@@ -664,6 +664,10 @@ void pdcp_entity_rx::handle_t_reordering_expire()
 // Reordering Timer Callback (t-reordering)
 void pdcp_entity_rx::reordering_callback::operator()(timer_id_t /*timer_id*/)
 {
+  if (parent->stopped) {
+    parent->logger.log_debug("Re-ordering timer expired after bearer was stopped.");
+    return;
+  }
   parent->logger.log_info("Reordering timer expired. {}", parent->st);
   parent->handle_t_reordering_expire();
 }

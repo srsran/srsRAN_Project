@@ -902,6 +902,10 @@ void pdcp_entity_tx::discard_pdu(uint32_t count)
 // Discard Timer Callback (discardTimer)
 void pdcp_entity_tx::discard_callback()
 {
+  if (stopped) {
+    logger.log_debug("Discard timer expired after bearer was stopped. st={}", st);
+    return;
+  }
   logger.log_debug("Discard timer expired. st={}", st);
 
   // Add discard to metrics.
