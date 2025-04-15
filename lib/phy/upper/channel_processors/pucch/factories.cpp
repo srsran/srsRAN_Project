@@ -214,16 +214,6 @@ private:
 
 } // namespace
 
-template <typename Func>
-static std::chrono::nanoseconds time_execution(Func&& func)
-{
-  auto start = std::chrono::steady_clock::now();
-  func();
-  auto end = std::chrono::steady_clock::now();
-
-  return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-}
-
 std::shared_ptr<pucch_processor_factory> srsran::create_pucch_processor_factory_sw(
     std::shared_ptr<dmrs_pucch_estimator_factory>        dmrs_factory,
     std::shared_ptr<pucch_detector_factory>              detector_factory,

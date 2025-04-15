@@ -133,20 +133,20 @@ std::shared_ptr<prach_generator_factory> srsran::create_prach_generator_factory_
   return std::make_shared<prach_generator_factory_sw>();
 }
 
-template <typename Func>
-static std::chrono::nanoseconds time_execution(Func&& func)
-{
-  auto start = std::chrono::steady_clock::now();
-  func();
-  auto end = std::chrono::steady_clock::now();
-
-  return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-}
-
 namespace {
 
 class logging_prach_detector_decorator : public prach_detector
 {
+  template <typename Func>
+  static std::chrono::nanoseconds time_execution(Func&& func)
+  {
+    auto start = std::chrono::steady_clock::now();
+    func();
+    auto end = std::chrono::steady_clock::now();
+
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+  }
+
 public:
   logging_prach_detector_decorator(srslog::basic_logger&           logger_,
                                    bool                            log_all_opportunities_,

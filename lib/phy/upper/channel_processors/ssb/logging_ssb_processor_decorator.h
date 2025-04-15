@@ -16,20 +16,20 @@
 #include "srsran/srslog/srslog.h"
 #include "srsran/srsvec/bit.h"
 
-template <typename Func>
-static std::chrono::nanoseconds time_execution(Func&& func)
-{
-  auto start = std::chrono::steady_clock::now();
-  func();
-  auto end = std::chrono::steady_clock::now();
-
-  return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-}
-
 namespace srsran {
 
 class logging_ssb_processor_decorator : public ssb_processor
 {
+  template <typename Func>
+  static std::chrono::nanoseconds time_execution(Func&& func)
+  {
+    auto start = std::chrono::steady_clock::now();
+    func();
+    auto end = std::chrono::steady_clock::now();
+
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+  }
+
 public:
   logging_ssb_processor_decorator(srslog::basic_logger& logger_, std::unique_ptr<ssb_processor> processor_) :
     logger(logger_), processor(std::move(processor_))
