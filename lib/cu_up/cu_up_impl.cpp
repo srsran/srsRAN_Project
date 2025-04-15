@@ -75,16 +75,18 @@ cu_up::cu_up(const cu_up_config& config_, const cu_up_dependencies& dependencies
   demux_msg.gtpu_pcap                   = dependencies.gtpu_pcap;
   ngu_demux                             = create_gtpu_demux(demux_msg);
 
-  ctrl_exec_mapper = dependencies.exec_mapper->create_ue_executor_mapper();
-  report_error_if_not(ctrl_exec_mapper != nullptr, "Could not create CU-UP executor for control TEID");
+  echo_exec_mapper = dependencies.exec_mapper->create_ue_executor_mapper();
+  report_error_if_not(echo_exec_mapper != nullptr, "Could not create CU-UP executor for control TEID");
 
   // Create GTP-U echo and register it at demux
-  gtpu_echo_creation_message ngu_echo_msg = {};
-  ngu_echo_msg.gtpu_pcap                  = dependencies.gtpu_pcap;
-  ngu_echo_msg.tx_upper                   = &gtpu_gw_adapter;
-  ngu_echo                                = create_gtpu_echo(ngu_echo_msg);
-  ngu_demux->add_tunnel(
-      GTPU_PATH_MANAGEMENT_TEID, ctrl_exec_mapper->dl_pdu_executor(), ngu_echo->get_rx_upper_layer_interface());
+  gtpu_echo_creation_message ngu_echo_msg                      = {};
+  ngu_echo_msg.gtpu_pcap                                       = dependencies.gtpu_pcap;
+  ngu_echo_msg.tx_upper                                        = &gtpu_gw_adapter;
+  ngu_echo                                                     = create_gtpu_echo(ngu_echo_msg);
+  expected<std::unique_ptr<gtpu_demux_dispatch_queue>> batch_q = ngu_demux->add_tunnel(
+      GTPU_PATH_MANAGEMENT_TEID, echo_exec_mapper->dl_pdu_executor(), ngu_echo->get_rx_upper_layer_interface());
+  report_error_if_not(batch_q.has_value(), "Could not create GTP-U echo tunnel.");
+  echo_batched_queue = std::move(batch_q.value());
 
   // Connect GTP-U DEMUX to adapter.
   gw_data_gtpu_demux_adapter.connect_gtpu_demux(*ngu_demux);
@@ -244,8 +246,8 @@ async_task<void> cu_up::handle_stop_command()
     CORO_BEGIN(ctx);
 
     // Stop dedicated executor for control TEID.
-    CORO_AWAIT(ctrl_exec_mapper->stop());
-    ctrl_exec_mapper = nullptr;
+    CORO_AWAIT(echo_exec_mapper->stop());
+    echo_exec_mapper = nullptr;
 
     // Stop CU-UP manager and remove all UEs.
     CORO_AWAIT(cu_up_mng->stop());

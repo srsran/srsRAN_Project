@@ -53,7 +53,7 @@ public:
   virtual ~gtpu_demux_ctrl() = default;
 
   /// Add a new TEID to GTP-U tunnel mapping.
-  virtual expected<std::unique_ptr<gtpu_demux_dispatch_queue>>
+  [[nodiscard]] virtual expected<std::unique_ptr<gtpu_demux_dispatch_queue>>
   add_tunnel(gtpu_teid_t teid, task_executor& tunnel_exec, gtpu_tunnel_common_rx_upper_layer_interface* tunnel) = 0;
 
   /// \brief Remove TEID from mapping.
