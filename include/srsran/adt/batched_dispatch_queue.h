@@ -46,7 +46,7 @@ public:
   /// Must be called from the same task execution context as the consumer side, where the batch of values is handled.
   void stop()
   {
-    if (not stopped->exchange(true, std::memory_order_relaxed)) {
+    if (stopped != nullptr && not stopped->exchange(true, std::memory_order_relaxed)) {
       drain_queue();
     }
   }
