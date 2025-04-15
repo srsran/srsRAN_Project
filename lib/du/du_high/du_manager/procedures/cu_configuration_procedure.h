@@ -37,10 +37,10 @@ private:
   async_task<bool> start_cell(const nr_cell_global_id_t& cgi);
   async_task<void> stop_cell(const nr_cell_global_id_t& cgi);
 
-  const gnbcu_config_update_request  request;
-  du_cell_manager&                   cell_mng;
-  du_ue_manager&                     ue_mng;
-  const du_manager_params&           du_params;
+  const gnbcu_config_update_request   request;
+  du_cell_manager&                    cell_mng;
+  du_ue_manager&                      ue_mng;
+  const du_manager_params&            du_params;
   du_manager_metrics_aggregator_impl& metrics;
 
   unsigned list_index = 0;

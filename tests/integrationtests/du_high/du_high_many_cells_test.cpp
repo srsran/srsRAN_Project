@@ -295,7 +295,7 @@ protected:
   constexpr static unsigned                  nof_cells = 4;
 
   du_high_many_cells_metrics_test() :
-    du_high_env_simulator([this]() {
+    du_high_env_simulator([]() {
       du_high_env_sim_params params;
       params.nof_cells   = nof_cells;
       auto cfg           = create_du_high_configuration(params);

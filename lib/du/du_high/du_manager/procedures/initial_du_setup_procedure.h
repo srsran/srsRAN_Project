@@ -38,10 +38,10 @@ private:
   // Handle F1 setup response with list of cells to activate.
   async_task<void> handle_f1_setup_response(const f1_setup_result& resp);
 
-  const du_manager_params&           params;
-  du_cell_manager&                   cell_mng;
+  const du_manager_params&            params;
+  du_cell_manager&                    cell_mng;
   du_manager_metrics_aggregator_impl& metrics;
-  srslog::basic_logger&              logger;
+  srslog::basic_logger&               logger;
 
   f1_setup_result response_msg = {};
 };

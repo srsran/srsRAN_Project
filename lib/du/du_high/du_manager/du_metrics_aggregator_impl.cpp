@@ -134,9 +134,9 @@ private:
   }
 
   du_manager_metrics_aggregator_impl& parent;
-  task_executor&                     du_mng_exec;
-  timer_manager&                     timers;
-  srslog::basic_logger&              logger;
+  task_executor&                      du_mng_exec;
+  timer_manager&                      timers;
+  srslog::basic_logger&               logger;
 
   unsigned nof_active_cells = 0;
 
@@ -183,7 +183,7 @@ du_manager_metrics_aggregator_impl::du_manager_metrics_aggregator_impl(
   }
 }
 
-du_manager_metrics_aggregator_impl::~du_manager_metrics_aggregator_impl() {}
+du_manager_metrics_aggregator_impl::~du_manager_metrics_aggregator_impl() = default;
 
 void du_manager_metrics_aggregator_impl::aggregate_mac_metrics_report(const mac_metric_report& report)
 {

@@ -17,6 +17,7 @@
 namespace srsran {
 namespace srs_du {
 
+/// Metrics report of the DU F1AP.
 struct f1ap_metrics_report {
   struct ue_metrics {
     du_ue_index_t       ue_index;

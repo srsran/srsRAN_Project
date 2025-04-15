@@ -584,14 +584,14 @@ public:
     cfg.ran.mac_cfg                                = mac_expert_config{.configs = {{10000, 10000, 10000}}};
     cfg.ran.qos = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
 
-    dependencies.exec_mapper               = &workers->get_exec_mapper();
-    dependencies.f1c_client                = &sim_cu_cp;
-    dependencies.f1u_gw                    = &sim_cu_up;
-    dependencies.phy_adapter               = &sim_phy;
-    dependencies.timers                    = &timers;
-    dependencies.mac_p                     = &mac_pcap;
-    dependencies.rlc_p                     = &rlc_pcap;
-    dependencies.sched_metrics_notifier    = &metrics_handler;
+    dependencies.exec_mapper            = &workers->get_exec_mapper();
+    dependencies.f1c_client             = &sim_cu_cp;
+    dependencies.f1u_gw                 = &sim_cu_up;
+    dependencies.phy_adapter            = &sim_phy;
+    dependencies.timers                 = &timers;
+    dependencies.mac_p                  = &mac_pcap;
+    dependencies.rlc_p                  = &rlc_pcap;
+    dependencies.sched_metrics_notifier = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
     cfg.ran.cells[0].pucch_cfg.nof_sr_resources                     = 30;

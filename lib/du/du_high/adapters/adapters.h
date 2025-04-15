@@ -45,7 +45,7 @@ public:
   }
 
 private:
-  du_manager_mac_event_handler* du_mng          = nullptr;
+  du_manager_mac_event_handler*  du_mng          = nullptr;
   du_manager_metrics_aggregator* metrics_handler = nullptr;
 };
 
