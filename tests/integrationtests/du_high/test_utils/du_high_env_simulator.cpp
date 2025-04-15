@@ -192,6 +192,7 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
 
 du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_cfg_) :
   cu_notifier(workers.test_worker),
+  du_metrics(workers.test_worker),
   du_high_cfg(du_hi_cfg_),
   du_hi_dependencies([this]() {
     init_loggers();

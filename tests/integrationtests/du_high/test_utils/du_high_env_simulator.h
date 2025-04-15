@@ -42,7 +42,16 @@ class dummy_du_metrics_notifier : public du_metrics_notifier
 public:
   std::optional<du_metrics_report> last_report;
 
-  void on_new_metric_report(const du_metrics_report& report) override { last_report = report; }
+  dummy_du_metrics_notifier(task_executor& exec_) : exec(exec_) {}
+
+  void on_new_metric_report(const du_metrics_report& report) override
+  {
+    bool result = exec.defer([this, report]() { last_report = report; });
+    report_fatal_error_if_not(result, "Failed to defer metric report to test thread");
+  }
+
+private:
+  task_executor& exec;
 };
 
 bool is_ue_context_release_complete_valid(const f1ap_message& msg,
