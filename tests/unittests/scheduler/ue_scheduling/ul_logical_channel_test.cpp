@@ -36,6 +36,21 @@ ul_bsr_indication_message make_sbsr(lcg_id_t lcgid, unsigned bsr)
   return msg;
 }
 
+ul_bsr_indication_message make_lbsr(lcg_id_t lcgid, unsigned bsr)
+{
+  ul_bsr_indication_message msg;
+  msg.crnti      = to_rnti(0x4601);
+  msg.cell_index = to_du_cell_index(0);
+  msg.ue_index   = to_du_ue_index(0);
+  msg.type       = bsr_format::LONG_BSR;
+  for (unsigned n = 0; n != MAX_NOF_LCGS; ++n) {
+    msg.reported_lcgs.push_back(
+        ul_bsr_lcg_report{static_cast<lcg_id_t>(n), static_cast<lcg_id_t>(n) == lcgid ? bsr : 0});
+  }
+
+  return msg;
+}
+
 unsigned add_header_bytes(lcg_id_t lcgid, unsigned payload_bytes)
 {
   // Estimate of the number of bytes required for the upper layer header.
@@ -114,6 +129,40 @@ TEST_F(ul_logical_channel_tester, bsr_updates_tx_pending_bytes)
   ASSERT_EQ(lch_mng.pending_bytes(), add_header_bytes(lcgid, bsr));
   ASSERT_EQ(lch_mng.pending_bytes(lcgid), add_header_bytes(lcgid, bsr));
   ASSERT_EQ(lch_mng.has_pending_bytes(), bsr > 0);
+}
+
+TEST_F(ul_logical_channel_tester,
+       when_sbsr_has_max_value_and_buf_status_greater_than_150kB_then_buf_status_doesnt_get_updated)
+{
+  const lcg_id_t             lcgid = uint_to_lcg_id(get_random_uint(0, MAX_LCG_ID));
+  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15, create_lcid_config(lcgid)};
+
+  // With the first BSR, the number of UL pending bytes is greater than 150kB.
+  const unsigned bsr = get_random_uint(150001, 700000);
+  lch_mng.handle_bsr_indication(make_sbsr(lcgid, bsr));
+  const unsigned pending_bytes = lch_mng.pending_bytes();
+
+  // After receiving the LSBR, the pending bytes will remain unchanged.
+  const unsigned new_bsr = get_random_uint(150001, 700000);
+  lch_mng.handle_bsr_indication(make_sbsr(lcgid, new_bsr));
+  const unsigned new_pending_bytes = lch_mng.pending_bytes();
+  ASSERT_EQ(pending_bytes, new_pending_bytes);
+}
+
+TEST_F(ul_logical_channel_tester,
+       when_lbsr_reports_more_than_150kB_and_buf_status_greater_than_150kB_then_buf_status_gets_updated)
+{
+  const lcg_id_t             lcgid = uint_to_lcg_id(get_random_uint(0, MAX_LCG_ID));
+  ul_logical_channel_manager lch_mng{subcarrier_spacing::kHz15, create_lcid_config(lcgid)};
+
+  // With the first BSR, the number of UL pending bytes is greater than 150kB.
+  const unsigned bsr = get_random_uint(150001, 700000);
+  lch_mng.handle_bsr_indication(make_lbsr(lcgid, bsr));
+
+  // After receiving the LSBR, the pending bytes will be updated based on this new BSR.
+  const unsigned new_bsr = get_random_uint(150001, 700000);
+  lch_mng.handle_bsr_indication(make_lbsr(lcgid, new_bsr));
+  ASSERT_EQ(lch_mng.pending_bytes(lcgid), add_header_bytes(lcgid, new_bsr));
 }
 
 TEST_F(ul_logical_channel_tester, total_pending_bytes_equal_sum_of_logical_channel_pending_bytes)
