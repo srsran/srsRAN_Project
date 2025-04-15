@@ -394,6 +394,47 @@ TEST_F(cu_up_test, ul_data_flow)
   close(upf_info.sock_fd);
 }
 
+TEST_F(cu_up_test, echo_data_flow)
+{
+  cu_up_config cfg = get_default_cu_up_config();
+
+  //> Test preamble: listen on a free port
+  upf_info_t upf_info = init_upf();
+  cfg.n3_cfg.upf_port = ntohs(upf_info.upf_addr.sin_port);
+
+  //> Test main part: create CU-UP and transmit data
+  cu_up_dependencies dependencies = get_default_cu_up_dependencies();
+  init(cfg, std::move(dependencies));
+
+  // Now that the disered buffer size is updated, we push DL PDUs
+  sockaddr_in cu_up_addr;
+  cu_up_addr.sin_family      = AF_INET;
+  cu_up_addr.sin_port        = htons(cu_up->get_n3_bind_port().value());
+  cu_up_addr.sin_addr.s_addr = inet_addr(cu_up_udp_cfg.bind_address.c_str());
+
+  // Send GTP-U echo request test message.
+  const uint8_t gtpu_echo_req_vec[] = {0x32, 0x01, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2a, 0x00, 0x00};
+
+  int ret;
+  ret = sendto(
+      upf_info.sock_fd, gtpu_echo_req_vec, sizeof(gtpu_echo_req_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
+  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
+                    << cu_up_udp_cfg.bind_address << ":" << cu_up->get_n3_bind_port().value() << "` - "
+                    << strerror(errno);
+
+  // Receive GTP-U echo response message and check result.
+  constexpr uint16_t           exp_len            = 14;
+  std::array<uint8_t, exp_len> gtpu_echo_resp_vec = {
+      0x32, 0x02, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2a, 0x00, 0x00, 0x0e, 0x00};
+
+  std::array<uint8_t, 128> rx_buf;
+  ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
+  ASSERT_EQ(ret, exp_len);
+  EXPECT_TRUE(std::equal(gtpu_echo_resp_vec.begin(), gtpu_echo_resp_vec.end(), rx_buf.begin()));
+
+  close(upf_info.sock_fd);
+}
+
 int main(int argc, char** argv)
 {
   ::testing::InitGoogleTest(&argc, argv);
