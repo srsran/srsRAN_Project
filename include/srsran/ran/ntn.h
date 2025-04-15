@@ -46,6 +46,18 @@ struct epoch_time_t {
   unsigned subframe_number;
 };
 
+struct feeder_link_info_t {
+  bool   enable_doppler_compensation;
+  double dl_freq;
+  double ul_freq;
+};
+
+struct geodetic_coordinates_t {
+  double latitude;
+  double longitude;
+  double altitude;
+};
+
 struct ntn_config {
   /// SIB 19 values
   /// Reference location of the serving cell provided via NTN quasi-Earth fixed system. (TS 38.304)
@@ -70,6 +82,10 @@ struct ntn_config {
   /// Network-controlled common timing advanced value and it may include any timing offset considered necessary by the
   /// network.
   std::optional<ta_info_t> ta_info;
+  /// Parameters of the feeder link used to compute the doppler shifts.
+  std::optional<feeder_link_info_t> feeder_link_info;
+  /// Geodetic coordinates (in degrees) of the NTN Gateway location.
+  std::optional<geodetic_coordinates_t> ntn_gateway_location;
   /// SIB19 scheduling information.
   unsigned                si_msg_idx;
   unsigned                si_period_rf;
