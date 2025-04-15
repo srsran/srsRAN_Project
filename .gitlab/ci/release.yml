@@ -555,15 +555,22 @@ srsran image:
   tags:
     - ${TAG}-docker
   before_script:
-    # Include plugins
+    # Include only plugin with array 0
     - |
-      git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
-      cd ${PLUGIN_PATH}
-      git fetch origin ${CI_PLUGIN_COMMIT_SHA} > /dev/null
-      git config advice.detachedHead false
-      git checkout ${CI_PLUGIN_COMMIT_SHA}
-      PLUGIN_COMMIT=$(echo $CI_PLUGIN_COMMIT_SHA | head -c8)
-      cd ${CI_PROJECT_DIR}
+      while IFS='|' read -r PLUGIN_PATH PLUGIN_REPO PLUGIN_REF; do
+        PLUGIN_REF=$(eval echo $PLUGIN_REF)
+        echo "#########################"
+        echo "#### $PLUGIN_PATH checkout ####"
+        echo "#########################"
+        git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git plugins/${PLUGIN_PATH}
+        cd plugins/${PLUGIN_PATH}
+        git fetch --depth=1 origin ${PLUGIN_REF} > /dev/null
+        git config advice.detachedHead false
+        git checkout ${PLUGIN_REF}
+        cd ${CI_PROJECT_DIR}
+        break
+      done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
+      PLUGIN_COMMIT=$(echo $PLUGIN_REF | head -c8)
     # Set variables
     - |
       export NAME="srsran_${SUFFIX}"
