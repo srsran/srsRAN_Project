@@ -23,6 +23,7 @@ namespace srsran {
 class mac_metrics_notifier;
 class timer_manager;
 
+/// Config for MAC controller.
 struct mac_control_config {
   struct metrics_config {
     std::chrono::milliseconds period{1000};

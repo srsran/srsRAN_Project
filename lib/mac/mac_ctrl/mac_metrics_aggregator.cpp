@@ -197,5 +197,4 @@ void mac_metrics_aggregator::send_new_report()
 
   // Reset report.
   next_report.dl.cells.clear();
-  next_report.dl.cells.reserve(cells.size());
 }

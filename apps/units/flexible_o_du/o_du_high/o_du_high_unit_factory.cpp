@@ -241,9 +241,13 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
   const du_high_unit_config&     du_high_unit_cfg = o_du_high_unit_cfg.du_high_cfg.config;
 
   // DU-high configuration.
-  du_hi_cfg.ran.gnb_du_id   = du_high_unit_cfg.gnb_du_id;
-  du_hi_cfg.ran.gnb_du_name = fmt::format("srsdu{}", fmt::underlying(du_hi_cfg.ran.gnb_du_id));
-  du_hi_cfg.ran.cells       = generate_du_cell_config(du_high_unit_cfg);
+  du_hi_cfg.ran.gnb_du_id        = du_high_unit_cfg.gnb_du_id;
+  du_hi_cfg.ran.gnb_du_name      = fmt::format("srsdu{}", fmt::underlying(du_hi_cfg.ran.gnb_du_id));
+  du_hi_cfg.ran.cells            = generate_du_cell_config(du_high_unit_cfg);
+  du_hi_cfg.metrics.enable_mac   = o_du_high_unit_cfg.du_high_cfg.config.metrics.layers_cfg.enable_mac;
+  du_hi_cfg.metrics.enable_rlc   = o_du_high_unit_cfg.du_high_cfg.config.metrics.layers_cfg.enable_rlc;
+  du_hi_cfg.metrics.enable_sched = o_du_high_unit_cfg.du_high_cfg.config.metrics.layers_cfg.enable_scheduler;
+  du_hi_cfg.metrics.period = std::chrono::milliseconds{o_du_high_unit_cfg.du_high_cfg.config.metrics.du_report_period};
   // Validates the derived parameters.
   validates_derived_du_params(du_hi_cfg.ran.cells);
   du_hi_cfg.ran.srbs                  = generate_du_srb_config(du_high_unit_cfg);
