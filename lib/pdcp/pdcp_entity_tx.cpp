@@ -822,8 +822,11 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
     logger.log_debug("Cannot stop discard timers. No discard timer configured. highest_count={}", highest_count);
     return;
   }
+
+  // Transmission or delivery notification arrived for a COUNT that is outside of the TX_WINDOW.
+  // This can happen if the notification arrived after the discard timer has expired.
   if (highest_count < st.tx_next_ack || highest_count >= st.tx_next) {
-    logger.log_warning("Cannot stop discard timers. highest_count={} is outside tx_window. {}", highest_count, st);
+    logger.log_debug("Cannot stop discard timers. highest_count={} is outside tx_window. {}", highest_count, st);
     return;
   }
   logger.log_debug("Stopping discard timers. highest_count={}", highest_count);
