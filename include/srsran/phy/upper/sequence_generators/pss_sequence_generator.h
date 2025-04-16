@@ -17,8 +17,7 @@
 
 namespace srsran {
 
-/// \brief Primary Synchronization Signal (PSS) sequence generator.
-///
+/// Primary Synchronization Signal (PSS) sequence generator.
 class pss_sequence_generator
 {
 public:
