@@ -41,6 +41,11 @@ struct mac_expert_config {
 
 /// \brief Configuration passed to MAC during its instantiation.
 struct mac_config {
+  struct metrics_config {
+    std::chrono::milliseconds period{1000};
+    mac_metrics_notifier&     notifier;
+  };
+
   mac_ul_ccch_notifier&                 ul_ccch_notifier;
   srs_du::du_high_ue_executor_mapper&   ue_exec_mapper;
   srs_du::du_high_cell_executor_mapper& cell_exec_mapper;
@@ -49,7 +54,7 @@ struct mac_config {
   mac_expert_config                     mac_cfg;
   mac_pcap&                             pcap;
   timer_manager&                        timers;
-  mac_metrics_notifier&                 metrics_notifier;
+  std::optional<metrics_config>         metrics;
   // Parameters passed to MAC scheduler.
   scheduler_expert_config     sched_cfg;
   scheduler_metrics_notifier& sched_metric_notifier;

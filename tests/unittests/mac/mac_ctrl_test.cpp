@@ -36,7 +36,8 @@ protected:
   dummy_ue_executor_mapper    ul_exec_mapper{worker};
   dummy_dl_executor_mapper    dl_exec_mapper{&worker};
   dummy_mac_event_indicator   du_mng_notifier;
-  mac_control_config          maccfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, worker};
+  timer_manager               timers;
+  mac_control_config          maccfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, worker, timers, std::nullopt};
   mac_ul_dummy_configurer     ul_unit;
   mac_dl_dummy_configurer     dl_unit;
   mac_scheduler_dummy_adapter sched_cfg_adapter;

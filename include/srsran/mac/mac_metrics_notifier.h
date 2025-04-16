@@ -20,6 +20,8 @@ class mac_metrics_notifier
 public:
   virtual ~mac_metrics_notifier() = default;
 
+  /// \brief Called on every new MAC metrics report.
+  /// \param report Metric report.
   virtual void on_new_metrics_report(const mac_metric_report& report) = 0;
 };
 

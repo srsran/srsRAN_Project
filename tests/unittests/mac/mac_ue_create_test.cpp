@@ -69,9 +69,10 @@ protected:
   dummy_mac_event_indicator du_mng_notif;
   dummy_mac_result_notifier phy_notifier;
   null_mac_pcap             pcap;
+  timer_manager             timers;
 
   // Create a MAC config object.
-  mac_control_config          mac_cfg{du_mng_notif, ul_exec_mapper, dl_exec_mapper, worker};
+  mac_control_config          mac_cfg{du_mng_notif, ul_exec_mapper, dl_exec_mapper, worker, timers};
   mac_ctrl_dummy_configurer   mac_ctrl;
   mac_ul_dummy_configurer     mac_ul;
   mac_dl_dummy_configurer     mac_dl;

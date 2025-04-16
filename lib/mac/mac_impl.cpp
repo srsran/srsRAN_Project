@@ -22,8 +22,8 @@ mac_impl::mac_impl(const mac_config& params) :
                         params.phy_notifier,
                         params.pcap,
                         params.timers,
-                        params.sched_cfg.metrics_report_period,
-                        params.metrics_notifier},
+                        params.metrics->period,
+                        params.metrics->notifier},
           *mac_sched,
           rnti_table),
   ul_unit(mac_ul_config{params.ctrl_exec,
@@ -34,7 +34,15 @@ mac_impl::mac_impl(const mac_config& params) :
                         params.pcap,
                         params.timers}),
   ctrl_unit(
-      mac_control_config{params.ul_ccch_notifier, params.ue_exec_mapper, params.cell_exec_mapper, params.ctrl_exec},
+      mac_control_config{params.ul_ccch_notifier,
+                         params.ue_exec_mapper,
+                         params.cell_exec_mapper,
+                         params.ctrl_exec,
+                         params.timers,
+                         params.metrics.has_value()
+                             ? std::optional<mac_control_config::metrics_config>(
+                                   mac_control_config::metrics_config{params.metrics->period, params.metrics->notifier})
+                             : std::nullopt},
       ul_unit,
       dl_unit,
       rnti_table,

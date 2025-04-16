@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "mac_dl/mac_dl_configurator.h"
 #include "srsran/mac/mac.h"
 #include "srsran/support/async/async_task.h"
 
@@ -30,7 +31,7 @@ public:
   virtual void handle_ue_config_applied(du_ue_index_t ue_index) = 0;
 };
 
-class mac_dl_configurator : public mac_cell_manager
+class mac_dl_configurator : public mac_dl_cell_manager
 {
 public:
   virtual ~mac_dl_configurator() = default;
@@ -49,6 +50,9 @@ public:
 
   /// \brief Remove an existing UE in the MAC DL processor.
   virtual async_task<void> remove_ue(const mac_ue_delete_request& msg) = 0;
+
+  /// Fetch MAC cell time-slot mapper.
+  virtual mac_cell_time_mapper& get_time_mapper(du_cell_index_t cell_index) = 0;
 };
 
 class mac_ctrl_configurator

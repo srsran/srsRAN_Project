@@ -9,28 +9,13 @@
  */
 
 #include "lib/mac/mac_dl/mac_cell_processor.h"
-#include "lib/mac/mac_dl/mac_dl_metric_handler.h"
 #include "mac_test_helpers.h"
 #include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include <gtest/gtest.h>
-#include <srsran/mac/mac_metrics_notifier.h>
 
 using namespace srsran;
-
-namespace {
-
-class dummy_mac_metrics_notifier : public mac_metrics_notifier
-{
-public:
-  void on_new_metrics_report(const mac_metric_report& report) override
-  {
-    // do nothing.
-  }
-};
-
-} // namespace
 
 class base_mac_cell_processor_test
 {
@@ -45,7 +30,7 @@ public:
              task_worker,
              pcap,
              timers,
-             cell_metrics)
+             std::nullopt)
   {
     next_slot = {to_numerology_value(builder_params.scs_common), 0};
   }
@@ -58,17 +43,13 @@ public:
   }
 
   test_helpers::dummy_mac_scheduler_adapter    sched_adapter;
-  dummy_mac_metrics_notifier                   metrics_notifier;
   du_rnti_table                                rnti_table;
   test_helpers::dummy_mac_cell_result_notifier phy_notifier;
   manual_task_worker                           task_worker{128};
   null_mac_pcap                                pcap;
   timer_manager                                timers;
   cell_config_builder_params                   builder_params;
-  mac_dl_metric_handler       metrics{std::chrono::milliseconds{1}, metrics_notifier, timers, task_worker};
-  mac_dl_cell_metric_handler& cell_metrics{
-      metrics.add_cell(to_du_cell_index(0), builder_params.pci, builder_params.scs_common)};
-  mac_cell_processor mac_cell;
+  mac_cell_processor                           mac_cell;
 
   slot_point next_slot;
 };

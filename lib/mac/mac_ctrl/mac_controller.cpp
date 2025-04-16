@@ -23,15 +23,24 @@ mac_controller::mac_controller(const mac_control_config&   cfg_,
                                mac_scheduler_configurator& sched_cfg_) :
   cfg(cfg_), logger(cfg.logger), ul_unit(ul_unit_), dl_unit(dl_unit_), rnti_table(rnti_table_), sched_cfg(sched_cfg_)
 {
+  if (cfg.metrics.has_value()) {
+    metrics.emplace(cfg.metrics->period, cfg.metrics->notifier, cfg.ctrl_exec, cfg.timers, logger);
+  }
 }
 
 mac_cell_controller& mac_controller::add_cell(const mac_cell_creation_request& cell_cfg)
 {
+  // Add cell to metrics reports.
+  std::optional<mac_cell_metric_report_config> cell_metrics_cfg;
+  if (metrics.has_value()) {
+    cell_metrics_cfg = metrics->add_cell(cell_cfg.cell_index, cell_cfg.scs_common);
+  }
+
   // > Fill sched cell configuration message and pass it to the scheduler.
   sched_cfg.add_cell(cell_cfg);
 
   // > Create MAC Cell DL Handler.
-  return dl_unit.add_cell(cell_cfg);
+  return dl_unit.add_cell(cell_cfg, cell_metrics_cfg);
 }
 
 void mac_controller::remove_cell(du_cell_index_t cell_index)
@@ -41,6 +50,11 @@ void mac_controller::remove_cell(du_cell_index_t cell_index)
 
   // > Remove cell from scheduler.
   sched_cfg.remove_cell(cell_index);
+
+  // > Remove cell from metrics reports.
+  if (metrics.has_value()) {
+    metrics->rem_cell(cell_index);
+  }
 }
 
 mac_cell_time_mapper& mac_controller::get_time_mapper(du_cell_index_t cell_index)

@@ -16,10 +16,7 @@ using namespace srsran;
 mac_dl_processor::mac_dl_processor(const mac_dl_config&             mac_cfg,
                                    mac_scheduler_cell_info_handler& sched_,
                                    du_rnti_table&                   rnti_table_) :
-  cfg(mac_cfg),
-  rnti_table(rnti_table_),
-  sched(sched_),
-  metrics(mac_cfg.metrics_report_period, mac_cfg.metrics_notifier, mac_cfg.timers, mac_cfg.ctrl_exec)
+  cfg(mac_cfg), rnti_table(rnti_table_), sched(sched_)
 {
 }
 
@@ -28,13 +25,10 @@ bool mac_dl_processor::has_cell(du_cell_index_t cell_index) const
   return cell_index < MAX_NOF_DU_CELLS and cells[cell_index] != nullptr;
 }
 
-mac_cell_controller& mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req)
+mac_cell_controller& mac_dl_processor::add_cell(const mac_cell_creation_request&                    cell_cfg_req,
+                                                const std::optional<mac_cell_metric_report_config>& metrics_cfg)
 {
   srsran_assert(not has_cell(cell_cfg_req.cell_index), "Overwriting existing cell is invalid.");
-
-  // Add cell in metric reports.
-  mac_dl_cell_metric_handler& cell_metrics =
-      metrics.add_cell(cell_cfg_req.cell_index, cell_cfg_req.pci, cell_cfg_req.scs_common);
 
   // Create MAC cell and add it to list.
   cells[cell_cfg_req.cell_index] =
@@ -47,7 +41,7 @@ mac_cell_controller& mac_dl_processor::add_cell(const mac_cell_creation_request&
                                            cfg.ctrl_exec,
                                            cfg.pcap,
                                            cfg.timers,
-                                           cell_metrics);
+                                           metrics_cfg);
 
   return *cells[cell_cfg_req.cell_index];
 }
@@ -58,9 +52,6 @@ void mac_dl_processor::remove_cell(du_cell_index_t cell_index)
 
   // Remove cell from cell manager.
   cells[cell_index].reset();
-
-  // Remove cell from metric reports.
-  metrics.remove_cell(cell_index);
 }
 
 async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request& request)

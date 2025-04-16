@@ -94,19 +94,22 @@ du_high_impl::du_high_impl(const du_high_configuration& config_, const du_high_d
   adapters(std::make_unique<layer_connector>(*dependencies.timers, dependencies.exec_mapper->du_control_executor()))
 {
   // Create layers
-  mac  = create_du_high_mac(mac_config{adapters->mac_ev_notifier,
-                                      dependencies.exec_mapper->ue_mapper(),
-                                      dependencies.exec_mapper->cell_mapper(),
-                                      dependencies.exec_mapper->du_control_executor(),
-                                      *dependencies.phy_adapter,
-                                      cfg.ran.mac_cfg,
-                                      *dependencies.mac_p,
-                                      timers,
-                                      adapters->mac_ev_notifier,
-                                      cfg.ran.sched_cfg,
-                                      adapters->mac_ev_notifier},
-                           cfg.test_cfg,
-                           cfg.ran.cells.size());
+  mac = create_du_high_mac(
+      mac_config{adapters->mac_ev_notifier,
+                 dependencies.exec_mapper->ue_mapper(),
+                 dependencies.exec_mapper->cell_mapper(),
+                 dependencies.exec_mapper->du_control_executor(),
+                 *dependencies.phy_adapter,
+                 cfg.ran.mac_cfg,
+                 *dependencies.mac_p,
+                 timers,
+                 cfg.metrics.enable_mac ? std::optional<mac_config::metrics_config>(
+                                              mac_config::metrics_config{cfg.metrics.period, adapters->mac_ev_notifier})
+                                        : std::nullopt,
+                 cfg.ran.sched_cfg,
+                 adapters->mac_ev_notifier},
+      cfg.test_cfg,
+      cfg.ran.cells.size());
   f1ap = create_du_high_f1ap(*dependencies.f1c_client,
                              adapters->f1_to_du_notifier,
                              dependencies.exec_mapper->du_control_executor(),

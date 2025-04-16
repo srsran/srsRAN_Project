@@ -20,24 +20,22 @@
 
 namespace srsran {
 
+class mac_metrics_notifier;
+class timer_manager;
+
 struct mac_control_config {
-  srslog::basic_logger&                 logger;
+  struct metrics_config {
+    std::chrono::milliseconds period{1000};
+    mac_metrics_notifier&     notifier;
+  };
+
   mac_ul_ccch_notifier&                 event_notifier;
   srs_du::du_high_ue_executor_mapper&   ue_exec_mapper;
   srs_du::du_high_cell_executor_mapper& cell_exec_mapper;
   task_executor&                        ctrl_exec;
-
-  mac_control_config(mac_ul_ccch_notifier&                 event_notifier_,
-                     srs_du::du_high_ue_executor_mapper&   ul_exec_,
-                     srs_du::du_high_cell_executor_mapper& dl_exec_,
-                     task_executor&                        ctrl_exec_) :
-    logger(srslog::fetch_basic_logger("MAC", true)),
-    event_notifier(event_notifier_),
-    ue_exec_mapper(ul_exec_),
-    cell_exec_mapper(dl_exec_),
-    ctrl_exec(ctrl_exec_)
-  {
-  }
+  timer_manager&                        timers;
+  std::optional<metrics_config>         metrics;
+  srslog::basic_logger&                 logger = srslog::fetch_basic_logger("MAC", true);
 };
 
 } // namespace srsran

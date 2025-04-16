@@ -118,7 +118,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
                     mac_expert_config{.configs = {{10000, 10000, 10000}}},
                     pcap,
                     timers,
-                    mac_metrics_notif,
+                    mac_config::metrics_config{.notifier = mac_metrics_notif},
                     scheduler_expert_config{},
                     sched_metrics_notif};
   rnti_manager                        rnti_mng;
@@ -186,7 +186,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
                     mac_expert_config{.configs = {{10000, 10000, 10000}}},
                     pcap,
                     timers,
-                    mac_metrics_notif,
+                    mac_config::metrics_config{.notifier = mac_metrics_notif},
                     scheduler_expert_config{},
                     sched_metrics_notif};
   rnti_manager                        rnti_mng;

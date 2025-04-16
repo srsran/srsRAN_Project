@@ -12,7 +12,6 @@
 
 #include "../mac_config_interfaces.h"
 #include "mac_cell_processor.h"
-#include "mac_dl_metric_handler.h"
 #include "mac_dl_ue_repository.h"
 #include "mac_scheduler_cell_info_handler.h"
 #include "srsran/mac/mac.h"
@@ -44,7 +43,9 @@ public:
   bool has_cell(du_cell_index_t cell_index) const;
 
   /// Adds new cell configuration to MAC DL.
-  mac_cell_controller& add_cell(const mac_cell_creation_request& cell_cfg) override;
+  mac_cell_controller&
+  add_cell(const mac_cell_creation_request&                    cell_cfg,
+           const std::optional<mac_cell_metric_report_config>& metrics_cfg = std::nullopt) override;
 
   /// Removes cell configuration from MAC DL.
   void remove_cell(du_cell_index_t cell_index) override;
@@ -81,9 +82,6 @@ private:
 
   /// \brief Reference to MAC scheduler interface used by the MAC DL processor.
   mac_scheduler_cell_info_handler& sched;
-
-  /// Handler of MAC DL metrics.
-  mac_dl_metric_handler metrics;
 };
 
 } // namespace srsran
