@@ -890,6 +890,116 @@ TEST_P(multiple_ue_sched_tester, not_scheduled_when_buffer_status_zero)
   }
 }
 
+TEST_P(multiple_ue_sched_tester, dl_dci_format_1_0_test)
+{
+  // Used to track BSR 0.
+  std::map<unsigned, bool>                      is_bsr_zero_sent;
+  std::map<unsigned, std::optional<slot_point>> pdsch_scheduled_slot_in_future;
+
+  const lcid_t lcid = LCID_MIN_DRB;
+
+  // Vector to keep track of ACKs to send.
+  std::vector<uci_indication> uci_ind_to_send;
+
+  // Pre-populate common UE creation request parameters.
+  const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(params.duplx_mode);
+  auto        ue_creation_req = sched_config_helper::create_default_sched_ue_creation_request(cell_cfg_params);
+
+  auto it = std::find_if(ue_creation_req.cfg.lc_config_list->begin(),
+                         ue_creation_req.cfg.lc_config_list->end(),
+                         [](const auto& l) { return l.lcid == lcid; });
+  if (it == ue_creation_req.cfg.lc_config_list->end()) {
+    ue_creation_req.cfg.lc_config_list->push_back(config_helpers::create_default_logical_channel_config(lcid));
+    it = ue_creation_req.cfg.lc_config_list->end() - 1;
+  }
+  it->lc_group = static_cast<lcg_id_t>(0);
+
+  auto& ss_list = (*ue_creation_req.cfg.cells)[0].serv_cell_cfg.init_dl_bwp.pdcch_cfg->search_spaces;
+  ss_list.clear();
+  ss_list.push_back(config_helpers::make_default_common_search_space_config());
+  ss_list.back().set_non_ss0_id(to_search_space_id(2));
+  // Note: We use Aggregation Level 2 to avoid collisions with CORESET#0 PDCCH candidates.
+  ss_list.back().set_non_ss0_nof_candidates({0, 2, 0, 0, 0});
+
+  // Setup scheduler and add UEs.
+  setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
+  // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
+  // Assumption: LCID is DRB1.
+  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    // Initialize.
+    is_bsr_zero_sent[idx] = false;
+
+    ue_creation_req.ue_index = to_du_ue_index(idx);
+    ue_creation_req.crnti    = to_rnti(allocate_rnti());
+
+    add_ue(ue_creation_req);
+
+    push_buffer_state_to_dl_ue(
+        to_du_ue_index(idx),
+        test_rgen::uniform_int<unsigned>(params.min_buffer_size_in_bytes, params.max_buffer_size_in_bytes),
+        LCID_MIN_DRB);
+  }
+
+  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       ++i) {
+    run_slot();
+
+    std::vector<uci_indication> uci_ind_not_for_current_slot;
+    // Send ACKs if there are any to send.
+    for (const auto& ind : uci_ind_to_send) {
+      if (current_slot == ind.slot_rx) {
+        bench->sch.handle_uci_indication(ind);
+      } else {
+        uci_ind_not_for_current_slot.push_back(ind);
+      }
+    }
+    swap(uci_ind_to_send, uci_ind_not_for_current_slot);
+
+    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+      sched_test_ue& test_ue = get_ue(to_du_ue_index(idx));
+
+      // Perform task related to sending ACK back for scheduled PDSCH.
+      const auto& pdsch_slot = get_pdsch_scheduled_slot(test_ue);
+      if (pdsch_slot.has_value()) {
+        pdsch_scheduled_slot_in_future[idx] = pdsch_slot;
+      }
+      const auto& ack_nack_slot = get_pdsch_ack_nack_scheduled_slot(test_ue);
+      if (ack_nack_slot.has_value()) {
+        uci_ind_to_send.push_back(build_harq_ack_pucch_f0_f1_uci_ind(to_du_ue_index(idx), ack_nack_slot.value()));
+      }
+
+      // Wait until last PDSCH scheduled slot has passed to send Buffer status 0.
+      const auto* grant = find_ue_pdsch(test_ue);
+      if (is_bsr_zero_sent[idx] && pdsch_scheduled_slot_in_future[idx].has_value() &&
+          current_slot > pdsch_scheduled_slot_in_future[idx].value()) {
+        ASSERT_TRUE(grant == nullptr or not grant->pdsch_cfg.codewords[0].new_data)
+            << fmt::format("Condition failed for UE with c-rnti={}", test_ue.crnti);
+        continue;
+      }
+
+      // Send Buffer status 0 upon receiving grants for all requested bytes.
+      const unsigned tbs_sched_bytes = pdsch_tbs_scheduled_bytes_per_lc(test_ue, lcid);
+      if (tbs_sched_bytes == 0 && test_ue.dl_bsr_list.at(lcid).bs == 0 &&
+          pdsch_scheduled_slot_in_future[idx].has_value() &&
+          current_slot > pdsch_scheduled_slot_in_future[idx].value() && not is_bsr_zero_sent[idx]) {
+        is_bsr_zero_sent[idx] = true;
+        // Notify buffer status of 0 to ensure scheduler does not schedule further for this UE.
+        push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, lcid);
+      }
+
+      // Update Buffer status maintained in test UE.
+      if (grant != nullptr && grant->pdsch_cfg.codewords[0].new_data) {
+        if (tbs_sched_bytes > test_ue.dl_bsr_list.at(lcid).bs) {
+          // Accounting for MAC headers.
+          test_ue.dl_bsr_list.at(lcid).bs = 0;
+        } else {
+          test_ue.dl_bsr_list.at(lcid).bs -= tbs_sched_bytes;
+        }
+      }
+    }
+  }
+}
+
 TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
 {
   // Used to track BSR 0.

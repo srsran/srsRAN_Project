@@ -44,8 +44,9 @@ static bool are_crbs_valid(const pdsch_information& pdsch, std::optional<coreset
     const unsigned coreset_start_crb = pdsch.coreset_cfg->get_coreset_start_crb();
     if (coreset0.has_value()) {
       crb_lims = crb_interval{coreset_start_crb, coreset_start_crb + coreset0.value().coreset0_crbs().length()};
+    } else {
+      crb_lims = crb_interval{coreset_start_crb, coreset_start_crb + pdsch.bwp_cfg->crbs.length()};
     }
-    crb_lims = crb_interval{coreset_start_crb, coreset_start_crb + pdsch.bwp_cfg->crbs.length()};
   } else {
     crb_lims = pdsch.bwp_cfg->crbs;
   }

@@ -34,14 +34,14 @@ class ue_grid_allocator_tester : public ::testing::TestWithParam<duplex_mode>
 protected:
   ue_grid_allocator_tester(
       scheduler_expert_config sched_cfg_ = config_helpers::make_default_scheduler_expert_config()) :
-    sched_cfg(sched_cfg_),
+    sched_cfg(std::move(sched_cfg_)),
     cell_cfg(*[this]() {
       cfg_builder_params.dl_f_ref_arfcn = GetParam() == duplex_mode::FDD ? 530000 : 520002;
       cfg_builder_params.scs_common =
           GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
       cfg_builder_params.band           = band_helper::get_band_from_dl_arfcn(cfg_builder_params.dl_f_ref_arfcn);
       cfg_builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
-      auto* cfg =
+      const auto* cfg =
           cfg_mng.add_cell(sched_config_helper::make_default_sched_cell_configuration_request(cfg_builder_params));
       srsran_assert(cfg != nullptr, "Cell configuration failed");
       return cfg;
