@@ -36,7 +36,9 @@ private:
     /// SI message window.
     interval<slot_point> window;
     /// Number of SI message transmissions within the current window.
-    unsigned nof_tx = 0;
+    unsigned nof_tx_in_current_window = 0;
+    /// Total number of SI message transmissions.
+    unsigned long total_nof_tx = 0;
   };
 
   void update_si_message_windows(slot_point sl_tx);
@@ -51,7 +53,7 @@ private:
                      uint8_t                       time_resource,
                      const dmrs_information&       dmrs_info,
                      unsigned                      tbs,
-                     bool                          is_repetition);
+                     const message_window_context& message_context);
 
   // Configuration of the broadcast SI messages.
   const scheduler_si_expert_config&   expert_cfg;

@@ -487,7 +487,7 @@ static static_vector<span<const uint8_t>, max_nof_sib_segments> segment_warning_
   return segment_views;
 }
 
-std::vector<asn1::rrc_nr::sib7_s> make_asn1_rrc_cell_sib7(const sib7_info& sib7_params)
+static std::vector<asn1::rrc_nr::sib7_s> make_asn1_rrc_cell_sib7(const sib7_info& sib7_params)
 {
   using namespace asn1::rrc_nr;
 
@@ -541,8 +541,7 @@ std::vector<asn1::rrc_nr::sib7_s> make_asn1_rrc_cell_sib7(const sib7_info& sib7_
   return sib_segments;
 }
 
-// TODO(joaquim): this function is from my previous commits and was not here in current dev.
-std::vector<asn1::rrc_nr::sib8_s> make_asn1_rrc_cell_sib8(const sib8_info& sib8_params)
+static std::vector<asn1::rrc_nr::sib8_s> make_asn1_rrc_cell_sib8(const sib8_info& sib8_params)
 {
   using namespace asn1::rrc_nr;
   sib8_s sib8;
@@ -836,7 +835,7 @@ static void pack_si_message(byte_buffer& buffer, const asn1::rrc_nr::bcch_dl_sch
 }
 
 // Packs an SI message into a segmented SIB buffer.
-static void pack_si_message(segmented_sib_buffer<byte_buffer>& buffer, const asn1::rrc_nr::bcch_dl_sch_msg_s& msg)
+static void pack_si_message(segmented_sib_list<byte_buffer>& buffer, const asn1::rrc_nr::bcch_dl_sch_msg_s& msg)
 {
   // Pack into the buffer.
   byte_buffer       buf;
@@ -856,8 +855,8 @@ static void pack_si_message(bcch_dl_sch_payload_type&                           
   asn1::rrc_nr::sys_info_ies_s&   si_ies = msg.msg.set_c1().set_sys_info().crit_exts.set_sys_info();
   si_ies.sib_type_and_info.push_back(sib);
 
-  if (std::holds_alternative<segmented_sib_buffer<byte_buffer>>(buffer)) {
-    pack_si_message(std::get<segmented_sib_buffer<byte_buffer>>(buffer), msg);
+  if (std::holds_alternative<segmented_sib_list<byte_buffer>>(buffer)) {
+    pack_si_message(std::get<segmented_sib_list<byte_buffer>>(buffer), msg);
   } else {
     pack_si_message(std::get<byte_buffer>(buffer), msg);
   }
@@ -922,7 +921,7 @@ std::vector<bcch_dl_sch_payload_type> asn1_packer::pack_all_bcch_dl_sch_msgs(con
         auto sib_list = make_asn1_rrc_sib_item(*it);
         // If the SIB holds multiple segments, pack each of them in a distinct SI message.
         if (std::holds_alternative<sib_segment_list>(sib_list)) {
-          packed_sib.emplace<segmented_sib_buffer<byte_buffer>>();
+          packed_sib.emplace<segmented_sib_list<byte_buffer>>();
           for (auto& sib : std::get<sib_segment_list>(sib_list)) {
             pack_si_message(packed_sib, sib);
           }

@@ -12,7 +12,6 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/du/du_cell_config.h"
-// TODO(joaquim): evaluate if this dependency is acceptable.
 #include "srsran/mac/cell_configuration.h"
 
 namespace srsran {

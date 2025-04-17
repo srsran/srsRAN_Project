@@ -179,7 +179,10 @@ struct sib_information {
   /// \brief Version of the SIB1/SI message payload. This counter should be incremented every time the content of the
   /// respective SIB1/SI message changes.
   unsigned version;
-  unsigned nof_txs;
+  /// \brief Number of times the SIB has been transmitted.
+  ///
+  /// If the SI message is segmented, all transmission events are counted, regardless of the transmitted segment.
+  unsigned long nof_txs;
   /// Set to \c true if the SIB allocation is for an SIB retransmission, \c false otherwise.
   bool              is_repetition;
   pdsch_information pdsch_cfg;

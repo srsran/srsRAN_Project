@@ -32,9 +32,9 @@ static void fill_si_scheduler_config(si_scheduling_update_request&        req,
   static_vector<units::bytes, MAX_SI_MESSAGES> si_payload_sizes;
   for (const auto& si_msg : si_messages) {
     // If the SI message is segmented, use the size of segment 0.
-    if (std::holds_alternative<segmented_sib_buffer<byte_buffer>>(si_msg)) {
-      si_payload_sizes.emplace_back(units::bytes{
-          static_cast<unsigned>(std::get<segmented_sib_buffer<byte_buffer>>(si_msg).get_segment_length(0))});
+    if (std::holds_alternative<segmented_sib_list<byte_buffer>>(si_msg)) {
+      si_payload_sizes.emplace_back(
+          units::bytes{static_cast<unsigned>(std::get<segmented_sib_list<byte_buffer>>(si_msg).get_segment_length(0))});
     } else {
       si_payload_sizes.emplace_back(units::bytes{static_cast<unsigned>(std::get<byte_buffer>(si_msg).length())});
     }

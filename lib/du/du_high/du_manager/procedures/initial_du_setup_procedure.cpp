@@ -14,7 +14,6 @@
 #include "../converters/scheduler_configuration_helpers.h"
 #include "../du_cell_manager.h"
 #include "srsran/mac/config/mac_config_helpers.h"
-#include "srsran/mac/segmented_sib_buffer.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
 
 using namespace srsran;

@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsran/adt/byte_buffer.h"
-#include "srsran/mac/segmented_sib_buffer.h"
+#include "srsran/mac/segmented_sib_list.h"
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/pci.h"
@@ -23,7 +23,7 @@
 namespace srsran {
 
 /// Variant that can either hold a single BCCH payload, or multiple versions of such payload for segmented messages.
-using bcch_dl_sch_payload_type = std::variant<byte_buffer, segmented_sib_buffer<byte_buffer>>;
+using bcch_dl_sch_payload_type = std::variant<byte_buffer, segmented_sib_list<byte_buffer>>;
 
 /// System Information signalled by the cell.
 struct mac_cell_sys_info_config {

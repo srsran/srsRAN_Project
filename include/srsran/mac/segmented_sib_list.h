@@ -10,45 +10,43 @@
 
 #pragma once
 
-#include "srsran/adt/byte_buffer.h"
 #include "srsran/support/error_handling.h"
 
 namespace srsran {
 
-/// \brief Buffer that holds SIBs in packed form.
+/// \brief Class that holds multiple SIB messages in packed form.
 ///
-/// Different versions of the same SIB can be stored in the buffer in the form of segments. This is useful for SIBs
-/// which have its content split across different segments that are broadcast in sequence, such as SIBs 7 and 8.
-template <typename T = byte_buffer>
-class segmented_sib_buffer
+/// Different versions of the same SIB can be stored in the form of segments. This is useful for SIBs  which have its
+/// content split across different segments that are broadcast in sequence, such as SIBs 7 and 8.
+template <typename T>
+class segmented_sib_list
 {
 public:
   /// Default constructor.
-  segmented_sib_buffer() noexcept : buffers(0), current_segment(0) {}
+  segmented_sib_list() noexcept : buffers(0), current_segment(0) {}
 
   /// Constructor that takes ownership of a buffer holding a single SIB segment.
-  explicit segmented_sib_buffer(T&& buffer) noexcept(std::is_nothrow_move_constructible<T>::value) : current_segment(0)
+  explicit segmented_sib_list(T&& buffer) noexcept(std::is_nothrow_move_constructible_v<T>) : current_segment(0)
   {
     buffers.emplace_back(std::move(buffer));
   }
 
   /// Constructor that takes ownership of a vector holding the SIB segments.
-  segmented_sib_buffer(const std::vector<T>&& segments) noexcept(std::is_nothrow_move_constructible<T>::value) :
+  segmented_sib_list(const std::vector<T>&& segments) noexcept(std::is_nothrow_move_constructible_v<T>) :
     buffers(std::move(segments)), current_segment(0)
   {
   }
 
   /// Explicit copy constructor.
-  explicit segmented_sib_buffer(const segmented_sib_buffer<T>& other) noexcept(
+  explicit segmented_sib_list(const segmented_sib_list<T>& other) noexcept(
       std::is_nothrow_copy_constructible<T>::value) = default;
 
   /// Move constructor.
-  segmented_sib_buffer(segmented_sib_buffer<T>&& other) noexcept(std::is_nothrow_move_constructible<T>::value) =
-      default;
+  segmented_sib_list(segmented_sib_list<T>&& other) noexcept(std::is_nothrow_move_constructible<T>::value) = default;
 
-  /// \brief Gets the contents of the SIB.
+  /// \brief Gets the SIB message holding the current SI information segment.
   /// \return A reference to the SIB buffer holding the current segment.
-  const T& get() const
+  const T& get_current_segment() const
   {
     srsran_assert(current_segment < buffers.size(), "SIB segment reading index overflow.");
     return buffers[current_segment];
@@ -57,11 +55,9 @@ public:
   /// \brief Gets the contents of an SIB segment.
   /// \param[in] i_segment Segment index.
   /// \return A read-only reference to the SIB segment buffer.
-  /// \remark An assertion is thrown if the SIB is not segmented, or if the segment index exceeds the available
-  /// segments.
+  /// \remark An assertion is thrown if the segment index exceeds the available segments.
   const T& get_segment(unsigned i_segment) const
   {
-    srsran_assert(is_segmented(), "SIB message is not segmented.");
     srsran_assert(i_segment < buffers.size(), "SIB segment reading index overflow.");
     return buffers[i_segment];
   }
@@ -69,17 +65,15 @@ public:
   /// \brief Gets the contents of an SIB segment.
   /// \param[in] i_segment Segment index.
   /// \return A reference to the SIB segment buffer.
-  /// \remark An assertion is thrown if the SIB is not segmented, or if the segment index exceeds the available
-  /// segments.
+  /// \remark An assertion is thrown if the segment index exceeds the available segments.
   T& get_segment(unsigned i_segment)
   {
-    srsran_assert(is_segmented(), "SIB message is not segmented.");
     srsran_assert(i_segment < buffers.size(), "SIB segment reading index overflow.");
     return buffers[i_segment];
   }
 
-  /// \brief Advances the current segment, available by calling \ref get().
-  /// \remark An assertion is thrown if the SIB is not segmented.
+  /// \brief Advances the current segment, available by calling \ref get_current_segment().
+  /// \remark An assertion is thrown if the list does not hold multiple segments.
   void advance_current_segment()
   {
     srsran_assert(is_segmented(), "SIB message is not segmented.");
@@ -93,11 +87,9 @@ public:
   /// \brief Gets the SIB segment length.
   /// \param[in] i_segment Segment index.
   /// \return The SIB segment length
-  /// \remark An assertion is thrown if the SIB is not segmented, or if the segment index exceeds the available
-  /// segments.
+  /// \remark An assertion is thrown if the segment index exceeds the available segments.
   size_t get_segment_length(unsigned i_segment) const
   {
-    srsran_assert(is_segmented(), "SIB message is not segmented.");
     srsran_assert(i_segment < buffers.size(), "SIB segment reading index overflow.");
     return buffers[i_segment].length();
   }
@@ -110,10 +102,10 @@ public:
   unsigned get_nof_segments() const { return buffers.size(); }
 
   /// Performs a shallow copy.
-  segmented_sib_buffer<T> copy() const { return segmented_sib_buffer<T>{*this}; }
+  segmented_sib_list<T> copy() const { return segmented_sib_list<T>{*this}; }
 
   /// Copy assignment operator. Performs a shallow copy.
-  segmented_sib_buffer<T>& operator=(const segmented_sib_buffer<T>& other)
+  segmented_sib_list<T>& operator=(const segmented_sib_list<T>& other)
   {
     if (this != &other) {
       *this = other.copy();
@@ -122,15 +114,15 @@ public:
   }
 
   /// Move assignment operator.
-  segmented_sib_buffer<T>& operator=(segmented_sib_buffer<T>&& other) = default;
+  segmented_sib_list<T>& operator=(segmented_sib_list<T>&& other) = default;
 
   /// Equality operator
-  bool operator==(const segmented_sib_buffer<T>& other) const
+  bool operator==(const segmented_sib_list<T>& other) const
   {
     return (current_segment == other.current_segment) && (buffers == other.buffers);
   }
 
-  bool operator!=(const segmented_sib_buffer<T>& other) const { return !(operator==(other)); }
+  bool operator!=(const segmented_sib_list<T>& other) const { return !(operator==(other)); }
 
 private:
   /// Returns \c true if the SIB has more than one segment, \c false otherwise.

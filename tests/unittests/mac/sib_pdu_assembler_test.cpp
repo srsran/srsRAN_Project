@@ -19,11 +19,11 @@ byte_buffer make_random_pdu(unsigned size = test_rgen::uniform_int<unsigned>(10,
   return byte_buffer::create(test_rgen::random_vector<uint8_t>(size)).value();
 }
 
-segmented_sib_buffer<byte_buffer>
+segmented_sib_list<byte_buffer>
 make_random_segmented_pdu(unsigned segment_size = test_rgen::uniform_int<unsigned>(10, 200),
                           unsigned nof_segments = test_rgen::uniform_int<unsigned>(2, 3))
 {
-  segmented_sib_buffer<byte_buffer> segmented_pdu;
+  segmented_sib_list<byte_buffer> segmented_pdu;
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
     segmented_pdu.append_segment(make_random_pdu(segment_size));
   }
@@ -64,7 +64,8 @@ public:
     req.sib1                         = sib1.copy();
     req.si_messages.clear();
     for (const auto& si_msg : si_msgs) {
-      req.si_messages.push_back(std::visit([](const auto& msg) { return bcch_dl_sch_payload_type{msg.copy()}; }, si_msg));
+      req.si_messages.push_back(
+          std::visit([](const auto& msg) { return bcch_dl_sch_payload_type{msg.copy()}; }, si_msg));
     }
     last_version             = next_version++;
     req.si_sched_cfg.version = last_version.value();
