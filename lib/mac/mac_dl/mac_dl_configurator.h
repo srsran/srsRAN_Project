@@ -27,8 +27,8 @@ public:
 
 /// \brief Configuration of a MAC cell metric reporting.
 struct mac_cell_metric_report_config {
-  /// \brief Period of the report in number of slots.
-  unsigned period_slots = 2000;
+  /// \brief Period of the metric reporting.
+  std::chrono::milliseconds report_period{0};
   /// \brief Pointer to the MAC cell metric notifier.
   mac_cell_metric_notifier* notifier = nullptr;
 };
@@ -40,8 +40,8 @@ public:
   virtual ~mac_dl_cell_manager() = default;
 
   /// Add new cell and set its configuration.
-  virtual mac_cell_controller& add_cell(const mac_cell_creation_request&                    cell_cfg,
-                                        const std::optional<mac_cell_metric_report_config>& metrics) = 0;
+  virtual mac_cell_controller& add_cell(const mac_cell_creation_request&     cell_cfg,
+                                        const mac_cell_metric_report_config& metrics) = 0;
 
   /// Remove an existing cell configuration.
   virtual void remove_cell(du_cell_index_t cell_index) = 0;

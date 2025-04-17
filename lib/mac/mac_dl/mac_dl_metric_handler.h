@@ -88,7 +88,7 @@ public:
     expected<resource_usage::snapshot, int>                     start_rusg;
   };
 
-  mac_dl_cell_metric_handler(pci_t cell_pci, const mac_cell_metric_report_config& metrics_cfg);
+  mac_dl_cell_metric_handler(pci_t cell_pci, subcarrier_spacing scs, const mac_cell_metric_report_config& metrics_cfg);
 
   /// Called when the MAC cell is activated.
   void on_cell_activation();
@@ -101,10 +101,15 @@ public:
   /// \param[in] slot_ind_trigger_tp Time point when the slot_indication was signalled by the lower layers.
   auto start_slot(slot_point sl_tx, metric_clock::time_point slot_ind_trigger_tp)
   {
+    if (not enabled()) {
+      return slot_measurement{};
+    }
     return slot_measurement{*this, sl_tx, slot_ind_trigger_tp};
   }
 
 private:
+  bool enabled() const { return notifier != nullptr; }
+
   struct non_persistent_data {
     struct latency_data {
       std::chrono::nanoseconds min{std::chrono::nanoseconds::max()};
@@ -134,7 +139,7 @@ private:
 
   const pci_t               cell_pci;
   const unsigned            period_slots;
-  mac_cell_metric_notifier& notifier;
+  mac_cell_metric_notifier* notifier;
 
   // Slot at which the next report is generated.
   slot_point               next_report_slot;

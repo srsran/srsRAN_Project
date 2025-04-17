@@ -141,11 +141,15 @@ void mac_metrics_aggregator::trigger_report_creation()
 {
   // Aggregate all cell reports.
   mac_dl_cell_metric_report cell_report;
+  scheduler_cell_metrics    sched_report;
   uint32_t                  nof_reports = report_count.load(std::memory_order_acquire);
   while (nof_reports > 0) {
     unsigned pop_count = 0;
     for (auto& cell : cells) {
-      while (pop_report(*cell, cell_report)) {
+      while (pop_sched_report(*cell, sched_report)) {
+        next_report.sched.cells.push_back(sched_report);
+      }
+      while (pop_mac_report(*cell, cell_report)) {
         ++pop_count;
 
         // Consume the report.
@@ -169,14 +173,40 @@ void mac_metrics_aggregator::trigger_report_creation()
   }
 }
 
-bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell, mac_dl_cell_metric_report& report)
+bool mac_metrics_aggregator::pop_sched_report(cell_metric_handler& cell, scheduler_cell_metrics& report)
 {
-  scheduler_cell_metrics sched_report;
-  if (cell.sched_report_queue.try_pop(sched_report)) {
-    // Cell report from the scheduler received. Save it.
-    next_report.sched.cells.push_back(sched_report);
+  // Peek next report.
+  const auto* next_ev = cell.sched_report_queue.front();
+  if (next_ev == nullptr) {
+    // No report to pop.
+    return false;
   }
 
+  if (SRSRAN_UNLIKELY(not next_report_start_slot.valid())) {
+    // This is the first report ever. Compute window start slot.
+    next_report_start_slot = next_ev->slot - (next_ev->slot.to_uint() % cell.period_slots);
+    return cell.sched_report_queue.try_pop(report);
+  }
+
+  if (next_ev->slot >= next_report_start_slot and next_ev->slot < next_report_start_slot + cell.period_slots) {
+    // Report is within expected window.
+    return cell.sched_report_queue.try_pop(report);
+  }
+
+  if (next_ev->slot >= next_report_start_slot + cell.period_slots and
+      next_ev->slot < next_report_start_slot + 2 * cell.period_slots) {
+    // This is the report for the next window. Leave it in the queue to be processed later.
+    return false;
+  }
+
+  // Report falls in invalid window. Discard it.
+  cell.sched_report_queue.try_pop(report);
+  logger.info("cell={}: Discarding old metric report for slot {}", fmt::underlying(cell.cell_index), report.slot);
+  return false;
+}
+
+bool mac_metrics_aggregator::pop_mac_report(cell_metric_handler& cell, mac_dl_cell_metric_report& report)
+{
   // Peek next report.
   const auto* next_ev = cell.report_queue.front();
 
@@ -185,29 +215,27 @@ bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell, mac_dl_cell_m
     return false;
   }
 
-  const unsigned& period_slots = cell.period_slots;
-
   if (SRSRAN_UNLIKELY(not next_report_start_slot.valid())) {
     // This is the first report ever. Compute window start slot.
-    next_report_start_slot = next_ev->start_slot - (next_ev->start_slot.to_uint() % period_slots);
+    next_report_start_slot = next_ev->start_slot - (next_ev->start_slot.to_uint() % cell.period_slots);
     return cell.report_queue.try_pop(report);
   }
 
-  if (next_ev->start_slot >= next_report_start_slot and next_ev->start_slot < next_report_start_slot + period_slots) {
+  if (next_ev->start_slot >= next_report_start_slot and
+      next_ev->start_slot < next_report_start_slot + cell.period_slots) {
     // Report is within expected window.
     return cell.report_queue.try_pop(report);
   }
 
-  if (next_ev->start_slot >= next_report_start_slot + period_slots and
-      next_ev->start_slot < next_report_start_slot + 2 * period_slots) {
+  if (next_ev->start_slot >= next_report_start_slot + cell.period_slots and
+      next_ev->start_slot < next_report_start_slot + 2 * cell.period_slots) {
     // This is the report for the next window. Leave it in the queue to be processed later.
     return false;
   }
 
   // Report falls in invalid window. Discard it.
   cell.report_queue.try_pop(report);
-  logger.info(
-      "cell={}: Discarding old metric report for slot {}", fmt::underlying(cell.cell_index), next_ev->start_slot);
+  logger.info("cell={}: Discarding old metric report for slot {}", fmt::underlying(cell.cell_index), report.start_slot);
   return false;
 }
 

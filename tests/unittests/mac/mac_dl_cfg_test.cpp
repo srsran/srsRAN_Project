@@ -124,7 +124,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_execution_contexts)
       mac_scheduler_cell_creation_request{mac_cell_req, std::chrono::milliseconds{1000}, &sched_metrics_notif});
 
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
-  mac_dl.add_cell(mac_cell_req);
+  mac_dl.add_cell(mac_cell_req, {});
 
   // TEST: Thread used for resumption does not change.
   auto test_event = [&ctrl_worker](test_task_event ev) {
@@ -185,7 +185,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
   sched_cfg_adapter.add_cell(
       mac_scheduler_cell_creation_request{cell_cfg1, std::chrono::milliseconds{1000}, &sched_metrics_notif});
-  mac_dl.add_cell(cell_cfg1);
+  mac_dl.add_cell(cell_cfg1, {});
   mac_cell_creation_request cell_cfg2  = test_helpers::make_default_mac_cell_config();
   cell_cfg2.cell_index                 = to_du_cell_index(1);
   cell_cfg2.sched_req                  = sched_config_helper::make_default_sched_cell_configuration_request();
@@ -193,7 +193,7 @@ TEST(test_mac_dl_cfg, test_dl_ue_procedure_tsan)
   cell_cfg2.sched_req.cell_group_index = (du_cell_group_index_t)1;
   sched_cfg_adapter.add_cell(
       mac_scheduler_cell_creation_request{cell_cfg2, std::chrono::milliseconds{1000}, &sched_metrics_notif});
-  mac_dl.add_cell(cell_cfg2);
+  mac_dl.add_cell(cell_cfg2, {});
 
   // TEST: Thread used for resumption does not change
   std::thread::id tid        = std::this_thread::get_id();

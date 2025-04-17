@@ -53,7 +53,8 @@ private:
   // Called when a new report should be forwarded.
   void trigger_report_creation();
 
-  bool pop_report(cell_metric_handler& cell, mac_dl_cell_metric_report& report);
+  bool pop_sched_report(cell_metric_handler& cell, scheduler_cell_metrics& report);
+  bool pop_mac_report(cell_metric_handler& cell, mac_dl_cell_metric_report& report);
 
   void send_new_report();
 

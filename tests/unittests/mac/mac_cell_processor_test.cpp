@@ -30,7 +30,7 @@ public:
              task_worker,
              pcap,
              timers,
-             std::nullopt)
+             {})
   {
     next_slot = {to_numerology_value(builder_params.scs_common), 0};
   }

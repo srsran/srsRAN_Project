@@ -66,11 +66,8 @@ protected:
   {
     pci_t pci         = static_cast<unsigned>(cell_index);
     auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs);
-    cells.emplace(cell_index,
-                  pci,
-                  mac_cell_metric_report_config{
-                      static_cast<unsigned>(metrics_cfg.report_period.count() * get_nof_slots_per_subframe(scs)),
-                      metrics_cfg.mac_notifier});
+    cells.emplace(
+        cell_index, pci, scs, mac_cell_metric_report_config{metrics_cfg.report_period, metrics_cfg.mac_notifier});
     return cells[cell_index];
   }
 

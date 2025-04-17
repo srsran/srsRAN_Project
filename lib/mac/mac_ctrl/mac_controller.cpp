@@ -41,11 +41,8 @@ mac_cell_controller& mac_controller::add_cell(const mac_cell_creation_request& c
       cell_add_req, cell_metrics_cfg.report_period, cell_metrics_cfg.sched_notifier});
 
   // > Create MAC Cell DL Handler.
-  return dl_unit.add_cell(
-      cell_add_req,
-      mac_cell_metric_report_config{static_cast<unsigned>(cell_metrics_cfg.report_period.count() *
-                                                          get_nof_slots_per_subframe(cell_add_req.scs_common)),
-                                    cell_metrics_cfg.mac_notifier});
+  return dl_unit.add_cell(cell_add_req,
+                          mac_cell_metric_report_config{cell_metrics_cfg.report_period, cell_metrics_cfg.mac_notifier});
 }
 
 void mac_controller::remove_cell(du_cell_index_t cell_index)

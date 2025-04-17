@@ -30,16 +30,16 @@ class timer_manager;
 class mac_cell_processor final : public mac_cell_slot_handler, public mac_cell_controller
 {
 public:
-  mac_cell_processor(const mac_cell_creation_request&                    cell_cfg_req,
-                     mac_scheduler_cell_info_handler&                    sched,
-                     du_rnti_table&                                      rnti_table,
-                     mac_cell_result_notifier&                           phy_notifier,
-                     task_executor&                                      cell_exec,
-                     task_executor&                                      slot_exec,
-                     task_executor&                                      ctrl_exec,
-                     mac_pcap&                                           pcap,
-                     timer_manager&                                      timers,
-                     const std::optional<mac_cell_metric_report_config>& metrics_cfg);
+  mac_cell_processor(const mac_cell_creation_request&     cell_cfg_req,
+                     mac_scheduler_cell_info_handler&     sched,
+                     du_rnti_table&                       rnti_table,
+                     mac_cell_result_notifier&            phy_notifier,
+                     task_executor&                       cell_exec,
+                     task_executor&                       slot_exec,
+                     task_executor&                       ctrl_exec,
+                     mac_pcap&                            pcap,
+                     timer_manager&                       timers,
+                     const mac_cell_metric_report_config& metrics_cfg);
 
   /// Starts configured cell.
   async_task<void> start() override;
@@ -117,7 +117,7 @@ private:
   mac_scheduler_cell_info_handler& sched;
 
   // Handler of cell metrics
-  std::optional<mac_dl_cell_metric_handler> metrics;
+  mac_dl_cell_metric_handler metrics;
 
   // Represents cell activation state.
   enum class cell_state { inactive, activating, active } state = cell_state::inactive;

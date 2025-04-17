@@ -39,8 +39,11 @@ void mac_dl_cell_metric_handler::non_persistent_data::latency_data::save_sample(
 }
 
 mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(pci_t                                cell_pci_,
+                                                       subcarrier_spacing                   scs,
                                                        const mac_cell_metric_report_config& metrics_cfg) :
-  cell_pci(cell_pci_), period_slots(metrics_cfg.period_slots), notifier(*metrics_cfg.notifier)
+  cell_pci(cell_pci_),
+  period_slots(metrics_cfg.report_period.count() * get_nof_slots_per_subframe(scs)),
+  notifier(metrics_cfg.notifier)
 {
 }
 
@@ -56,6 +59,10 @@ void mac_dl_cell_metric_handler::on_cell_deactivation()
 
 void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& meas)
 {
+  if (not enabled()) {
+    return;
+  }
+
   // Time difference
   const auto                     stop_tp           = metric_clock::now();
   const std::chrono::nanoseconds enqueue_time_diff = meas.start_tp - meas.slot_ind_enqueue_tp;
@@ -107,6 +114,7 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
     // Prepare cell report.
     mac_dl_cell_metric_report report;
     report.pci                                = cell_pci;
+    report.start_slot                         = meas.sl_tx - data.nof_slots;
     report.slot_duration                      = slot_duration;
     report.nof_slots                          = data.nof_slots;
     report.wall_clock_latency                 = data.wall.get_report(data.nof_slots);
@@ -126,6 +134,6 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
     next_report_slot += period_slots;
 
     // Forward cell report.
-    notifier.on_cell_metric_report(report);
+    notifier->on_cell_metric_report(report);
   }
 }
