@@ -22,7 +22,7 @@ struct scheduler_metrics_report;
 
 namespace srs_du {
 
-class du_manager_metrics_aggregator_impl final : public du_manager_metrics_aggregator
+class du_manager_metrics_aggregator_impl final : public du_manager_mac_metric_collector
 {
 public:
   du_manager_metrics_aggregator_impl(const du_manager_params::metrics_config_params& params_,
@@ -35,16 +35,11 @@ public:
 
   // DU metrics collector interface
   void aggregate_mac_metrics_report(const mac_metric_report& report) override;
-  void aggregate_scheduler_metrics_report(const scheduler_cell_metrics& report) override;
 
   void handle_cell_start(du_cell_index_t cell_index);
   void handle_cell_stop(du_cell_index_t cell_index);
 
 private:
-  class sched_metrics_aggregator;
-
-  void handle_scheduler_metrics_report(const scheduler_metrics_report& report);
-
   void trigger_report();
 
   const du_manager_params::metrics_config_params params;
@@ -53,8 +48,6 @@ private:
   mac_metrics_notifier*                          mac_notifier   = nullptr;
   scheduler_metrics_notifier*                    sched_notifier = nullptr;
   f1ap_metrics_collector&                        f1ap_collector;
-
-  std::unique_ptr<sched_metrics_aggregator> sched_aggregator;
 
   unsigned          next_version = 0;
   du_metrics_report next_report{};

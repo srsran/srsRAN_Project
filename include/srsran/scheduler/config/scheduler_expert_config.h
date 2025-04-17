@@ -232,7 +232,6 @@ struct scheduler_expert_config {
   scheduler_ue_expert_config     ue;
   bool                           log_broadcast_messages       = false;
   bool                           log_high_latency_diagnostics = false;
-  std::chrono::milliseconds      metrics_report_period{1000};
 };
 
 } // namespace srsran

@@ -21,7 +21,6 @@
 #include "sib_pdu_assembler.h"
 #include "ssb_assembler.h"
 #include "srsran/mac/mac.h"
-#include "srsran/support/async/manual_event.h"
 #include "srsran/support/memory_pool/ring_buffer_pool.h"
 
 namespace srsran {

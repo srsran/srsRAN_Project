@@ -26,7 +26,7 @@ using namespace srsran;
 class uci_sched_tester : public ::testing::Test
 {
 protected:
-  uci_sched_tester() : sched(create_scheduler(scheduler_config{sched_cfg, notif, metric_notif}))
+  uci_sched_tester() : sched(create_scheduler(scheduler_config{sched_cfg, notif}))
   {
     add_cell();
     add_ue();

@@ -18,12 +18,10 @@
 namespace srsran {
 namespace srs_du {
 
-class du_manager_mac_event_indicator : public mac_ul_ccch_notifier,
-                                       public mac_metrics_notifier,
-                                       public scheduler_metrics_notifier
+class du_manager_mac_event_indicator : public mac_ul_ccch_notifier, public mac_metrics_notifier
 {
 public:
-  void connect(du_manager_mac_event_handler& du_mng_, du_manager_metrics_aggregator& metrics_handler_)
+  void connect(du_manager_mac_event_handler& du_mng_, du_manager_mac_metric_collector& metrics_handler_)
   {
     du_mng          = &du_mng_;
     metrics_handler = &metrics_handler_;
@@ -39,14 +37,9 @@ public:
     metrics_handler->aggregate_mac_metrics_report(report);
   }
 
-  void report_metrics(const scheduler_cell_metrics& report) override
-  {
-    metrics_handler->aggregate_scheduler_metrics_report(report);
-  }
-
 private:
   du_manager_mac_event_handler*  du_mng          = nullptr;
-  du_manager_metrics_aggregator* metrics_handler = nullptr;
+  du_manager_mac_metric_collector* metrics_handler = nullptr;
 };
 
 class mac_f1ap_paging_handler : public f1ap_du_paging_notifier

@@ -73,9 +73,9 @@ struct test_bench {
   scheduler_ue_metrics_dummy_notifier     metrics_notif;
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
   cell_config_builder_params              builder_params;
-  scheduler_metrics_handler               metrics{std::chrono::milliseconds{0}, metrics_notif};
+  scheduler_metrics_handler               metrics;
 
-  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif, metrics_notif}, metrics};
+  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif}, metrics};
   const cell_configuration& cell_cfg;
 
   cell_resource_allocator       res_grid{cell_cfg};

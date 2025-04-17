@@ -25,7 +25,6 @@ struct du_metrics_report {
   std::chrono::milliseconds                          period;
   std::optional<f1ap_metrics_report>                 f1ap;
   std::optional<mac_metric_report>                   mac;
-  std::optional<scheduler_metrics_report>            scheduler;
 };
 
 } // namespace srs_du

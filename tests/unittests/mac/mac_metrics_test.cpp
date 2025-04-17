@@ -11,6 +11,7 @@
 #include "lib/mac/mac_ctrl/mac_metrics_aggregator.h"
 #include "lib/mac/mac_dl/mac_dl_metric_handler.h"
 #include "tests/test_doubles/mac/dummy_mac_metrics_notifier.h"
+#include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
@@ -49,7 +50,13 @@ protected:
   timer_manager                   timers{2};
   manual_task_worker              task_worker{16};
   dummy_mac_metrics_notifier      metric_notifier;
-  mac_metrics_aggregator metrics{period, metric_notifier, task_worker, timers, srslog::fetch_basic_logger("MAC", true)};
+  dummy_scheduler_ue_metrics_notifier sched_notifier;
+  mac_metrics_aggregator              metrics{period,
+                                 metric_notifier,
+                                 &sched_notifier,
+                                 task_worker,
+                                 timers,
+                                 srslog::fetch_basic_logger("MAC", true)};
 
   slotted_id_table<du_cell_index_t, mac_dl_cell_metric_handler, MAX_CELLS_PER_DU> cells;
 
@@ -57,8 +64,13 @@ protected:
 
   mac_dl_cell_metric_handler& add_cell(du_cell_index_t cell_index)
   {
-    pci_t pci = static_cast<unsigned>(cell_index);
-    cells.emplace(cell_index, pci, metrics.add_cell(to_du_cell_index(cell_index), scs));
+    pci_t pci         = static_cast<unsigned>(cell_index);
+    auto  metrics_cfg = metrics.add_cell(to_du_cell_index(cell_index), scs);
+    cells.emplace(cell_index,
+                  pci,
+                  mac_cell_metric_report_config{
+                      static_cast<unsigned>(metrics_cfg.report_period.count() * get_nof_slots_per_subframe(scs)),
+                      metrics_cfg.mac_notifier});
     return cells[cell_index];
   }
 

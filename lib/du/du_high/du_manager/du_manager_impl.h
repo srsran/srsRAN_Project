@@ -73,7 +73,7 @@ public:
 
   f1ap_du_positioning_handler& get_positioning_handler() override { return *positioning_handler; }
 
-  du_manager_metrics_aggregator& get_metrics_aggregator() override { return metrics; }
+  du_manager_mac_metric_collector& get_metrics_aggregator() override { return metrics; }
 
 private:
   // DU manager configuration that will be visible to all running procedures

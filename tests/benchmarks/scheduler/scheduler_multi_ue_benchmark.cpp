@@ -77,7 +77,7 @@ public:
     expert_cfg(expert_cfg_),
     builder_params(builder_params_),
     logger(srslog::fetch_basic_logger("SCHED")),
-    sch(create_scheduler(scheduler_config{expert_cfg, cfg_notif, metric_notif})),
+    sch(create_scheduler(scheduler_config{expert_cfg, cfg_notif})),
     next_sl_tx(builder_params.scs_common, 0)
   {
     du_cell_cfgs = {config_helpers::make_default_du_cell_config(builder_params)};

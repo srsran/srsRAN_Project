@@ -12,6 +12,7 @@
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/spsc_queue.h"
 #include "srsran/mac/mac_metrics_notifier.h"
+#include "srsran/scheduler/scheduler_metrics.h"
 
 using namespace srsran;
 
@@ -19,19 +20,23 @@ using namespace srsran;
 // to aggregate all cells separate reports.
 static constexpr unsigned cell_report_queue_size = 16;
 
-class mac_metrics_aggregator::cell_metric_handler : public mac_cell_metric_notifier
+class mac_metrics_aggregator::cell_metric_handler final : public mac_cell_metric_notifier,
+                                                          public scheduler_metrics_notifier
 {
 public:
-  cell_metric_handler(mac_metrics_aggregator& parent_,
-                      du_cell_index_t         cell_index_,
-                      subcarrier_spacing      scs_common_,
-                      srslog::basic_logger&   logger_) :
+  cell_metric_handler(mac_metrics_aggregator&     parent_,
+                      du_cell_index_t             cell_index_,
+                      subcarrier_spacing          scs_common_,
+                      scheduler_metrics_notifier* sched_notifier_,
+                      srslog::basic_logger&       logger_) :
     parent(parent_),
     cell_index(cell_index_),
     scs_common(scs_common_),
     period_slots(get_nof_slots_per_subframe(scs_common) * parent.period.count()),
+    sched_notifier(sched_notifier_),
     logger(logger_),
-    report_queue(cell_report_queue_size)
+    report_queue(cell_report_queue_size),
+    sched_report_queue(cell_report_queue_size)
   {
   }
 
@@ -39,7 +44,7 @@ public:
   {
     // Note: Function called from the cell execution context.
     if (not report_queue.try_push(report)) {
-      logger.error("Failed to enqueue metric cell stop event. Cause: Task queue is full.");
+      logger.error("Failed to enqueue MAC metric event. Cause: Task queue is full.");
       return;
     }
 
@@ -54,6 +59,20 @@ public:
     parent.aggr_timer.run();
   }
 
+  void report_metrics(const scheduler_cell_metrics& report) override
+  {
+    // Note: Function called from the cell execution context.
+
+    if (sched_notifier != nullptr) {
+      sched_notifier->report_metrics(report);
+    }
+
+    if (not sched_report_queue.try_push(report)) {
+      logger.error("Failed to enqueue scheduler metric event. Cause: Task queue is full.");
+      return;
+    }
+  }
+
 private:
   friend class mac_metrics_aggregator;
 
@@ -61,24 +80,33 @@ private:
                                              concurrent_queue_policy::lockfree_spsc,
                                              concurrent_queue_wait_policy::non_blocking>;
 
-  mac_metrics_aggregator&  parent;
-  const du_cell_index_t    cell_index;
-  const subcarrier_spacing scs_common;
-  const unsigned           period_slots;
-  srslog::basic_logger&    logger;
+  using sched_report_queue_type = concurrent_queue<scheduler_cell_metrics,
+                                                   concurrent_queue_policy::lockfree_spsc,
+                                                   concurrent_queue_wait_policy::non_blocking>;
+
+  mac_metrics_aggregator&     parent;
+  const du_cell_index_t       cell_index;
+  const subcarrier_spacing    scs_common;
+  const unsigned              period_slots;
+  scheduler_metrics_notifier* sched_notifier;
+  srslog::basic_logger&       logger;
 
   // Reports from a given MAC cell.
   report_queue_type report_queue;
+
+  // Reports from the scheduler.
+  sched_report_queue_type sched_report_queue;
 };
 
 // class mac_metrics_aggregator
 
-mac_metrics_aggregator::mac_metrics_aggregator(std::chrono::milliseconds period_,
-                                               mac_metrics_notifier&     notifier_,
-                                               task_executor&            ctrl_exec_,
-                                               timer_manager&            timers_,
-                                               srslog::basic_logger&     logger_) :
-  period(period_), notifier(notifier_), ctrl_exec(ctrl_exec_), logger(logger_)
+mac_metrics_aggregator::mac_metrics_aggregator(std::chrono::milliseconds   period_,
+                                               mac_metrics_notifier&       mac_notifier_,
+                                               scheduler_metrics_notifier* sched_notifier_,
+                                               task_executor&              ctrl_exec_,
+                                               timer_manager&              timers_,
+                                               srslog::basic_logger&       logger_) :
+  period(period_), notifier(mac_notifier_), sched_notifier(sched_notifier_), ctrl_exec(ctrl_exec_), logger(logger_)
 {
   aggr_timer = timers_.create_unique_timer(ctrl_exec);
   aggr_timer.set(aggregation_timeout, [this](timer_id_t /* unused */) { trigger_report_creation(); });
@@ -86,33 +114,27 @@ mac_metrics_aggregator::mac_metrics_aggregator(std::chrono::milliseconds period_
 
 mac_metrics_aggregator::~mac_metrics_aggregator() {}
 
-mac_cell_metric_report_config mac_metrics_aggregator::add_cell(du_cell_index_t    cell_index,
-                                                               subcarrier_spacing scs_common)
+cell_metric_report_config mac_metrics_aggregator::add_cell(du_cell_index_t cell_index, subcarrier_spacing scs_common)
 {
   srsran_assert(not cells.contains(cell_index), "Duplicate cell creation");
 
   // Reserve space in reports for new cell.
   next_report.dl.cells.reserve(cells.size());
+  next_report.sched.cells.reserve(cells.size());
 
   // Create a handler for the new cell.
-  auto  cell_handler = std::make_unique<cell_metric_handler>(*this, cell_index, scs_common, logger);
+  auto  cell_handler = std::make_unique<cell_metric_handler>(*this, cell_index, scs_common, sched_notifier, logger);
   auto& cell_ref     = *cell_handler;
   cells.emplace(cell_index, std::move(cell_handler));
 
   // Return the cell report configuration.
-  return mac_cell_metric_report_config{static_cast<unsigned>(period.count() * get_nof_slots_per_subframe(scs_common)),
-                                       &cell_ref};
+  return cell_metric_report_config{period, &cell_ref, &cell_ref};
 }
 
 void mac_metrics_aggregator::rem_cell(du_cell_index_t cell_index)
 {
   srsran_assert(cells.contains(cell_index), "Cell not found");
   cells.erase(cell_index);
-}
-
-void mac_metrics_aggregator::handle_cell_metrics_report(du_cell_index_t                  cell_index,
-                                                        const mac_dl_cell_metric_report& report)
-{
 }
 
 void mac_metrics_aggregator::trigger_report_creation()
@@ -149,6 +171,12 @@ void mac_metrics_aggregator::trigger_report_creation()
 
 bool mac_metrics_aggregator::pop_report(cell_metric_handler& cell, mac_dl_cell_metric_report& report)
 {
+  scheduler_cell_metrics sched_report;
+  if (cell.sched_report_queue.try_pop(sched_report)) {
+    // Cell report from the scheduler received. Save it.
+    next_report.sched.cells.push_back(sched_report);
+  }
+
   // Peek next report.
   const auto* next_ev = cell.report_queue.front();
 
@@ -197,4 +225,5 @@ void mac_metrics_aggregator::send_new_report()
 
   // Reset report.
   next_report.dl.cells.clear();
+  next_report.sched.cells.clear();
 }

@@ -47,8 +47,7 @@ test_sched_config_manager::test_sched_config_manager(const cell_config_builder_p
   cfg_notifier(std::make_unique<dummy_sched_configuration_notifier>()),
   metric_notifier(std::make_unique<dummy_scheduler_ue_metrics_notifier>()),
   ue_metrics_configurator(std::make_unique<dummy_sched_metrics_ue_configurator>()),
-  metrics_handler(std::chrono::milliseconds{1000}, *metric_notifier),
-  cfg_mng(scheduler_config{expert_cfg, *cfg_notifier, *metric_notifier}, metrics_handler)
+  cfg_mng(scheduler_config{expert_cfg, *cfg_notifier}, metrics_handler)
 {
   default_cell_req = sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
   default_ue_req =

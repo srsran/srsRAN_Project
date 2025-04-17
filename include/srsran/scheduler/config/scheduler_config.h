@@ -12,7 +12,6 @@
 
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/scheduler_configurator.h"
-#include "srsran/scheduler/scheduler_metrics.h"
 
 namespace srsran {
 
@@ -20,7 +19,6 @@ namespace srsran {
 struct scheduler_config {
   const scheduler_expert_config& expert_params;
   sched_configuration_notifier&  config_notifier;
-  scheduler_metrics_notifier&    metrics_notifier;
 };
 
 } // namespace srsran

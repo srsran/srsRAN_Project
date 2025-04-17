@@ -615,7 +615,6 @@ std::unique_ptr<mac_interface> srsran::srs_du::create_du_high_mac(const mac_conf
                                               mac_cfg.pcap,
                                               mac_cfg.timers,
                                               mac_cfg.metrics,
-                                              mac_cfg.sched_cfg,
-                                              mac_cfg.sched_metric_notifier}));
+                                              mac_cfg.sched_cfg}));
   return mac_testmode;
 }

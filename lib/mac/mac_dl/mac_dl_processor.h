@@ -29,8 +29,6 @@ struct mac_dl_config {
   mac_result_notifier&                  phy_notifier;
   mac_pcap&                             pcap;
   timer_manager&                        timers;
-  std::chrono::milliseconds             metrics_report_period;
-  mac_metrics_notifier&                 metrics_notifier;
 };
 
 class mac_dl_processor final : public mac_dl_configurator

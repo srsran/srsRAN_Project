@@ -12,6 +12,7 @@
 
 #include "srsran/ran/pci.h"
 #include "srsran/ran/slot_point.h"
+#include "srsran/scheduler/scheduler_metrics.h"
 #include <chrono>
 #include <vector>
 
@@ -64,6 +65,8 @@ struct mac_dl_metric_report {
 struct mac_metric_report {
   /// Metrics of the MAC DL.
   mac_dl_metric_report dl;
+  /// Metrics of the MAC scheduler.
+  scheduler_metrics_report sched;
 };
 
 } // namespace srsran

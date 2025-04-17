@@ -53,7 +53,7 @@ struct test_bench {
 
   explicit test_bench(const scheduler_expert_config&                  expert_cfg_,
                       const sched_cell_configuration_request_message& cell_req) :
-    expert_cfg{expert_cfg_}, cell_cfg{expert_cfg, cell_req}, sch{scheduler_config{expert_cfg, cfg_notif, metric_notif}}
+    expert_cfg{expert_cfg_}, cell_cfg{expert_cfg, cell_req}, sch{scheduler_config{expert_cfg, cfg_notif}}
   {
     sch.handle_cell_configuration_request(cell_req);
   }

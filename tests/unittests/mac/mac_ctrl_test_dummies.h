@@ -171,7 +171,7 @@ public:
   manual_event<bool>                   ue_created_ev;
   std::optional<mac_ue_create_request> last_ue_create_request;
 
-  void add_cell(const mac_cell_creation_request& msg) override {}
+  void add_cell(const mac_scheduler_cell_creation_request& msg) override {}
 
   void remove_cell(du_cell_index_t cell_index) override {}
 

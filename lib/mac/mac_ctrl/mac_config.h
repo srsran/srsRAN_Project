@@ -26,8 +26,9 @@ class timer_manager;
 /// Config for MAC controller.
 struct mac_control_config {
   struct metrics_config {
-    std::chrono::milliseconds period{1000};
-    mac_metrics_notifier&     notifier;
+    std::chrono::milliseconds   period{1000};
+    mac_metrics_notifier&       mac_notifier;
+    scheduler_metrics_notifier* sched_notifier = nullptr;
   };
 
   mac_ul_ccch_notifier&                 event_notifier;
@@ -35,7 +36,7 @@ struct mac_control_config {
   srs_du::du_high_cell_executor_mapper& cell_exec_mapper;
   task_executor&                        ctrl_exec;
   timer_manager&                        timers;
-  std::optional<metrics_config>         metrics;
+  metrics_config                        metrics;
   srslog::basic_logger&                 logger = srslog::fetch_basic_logger("MAC", true);
 };
 

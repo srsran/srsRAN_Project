@@ -87,7 +87,7 @@ private:
   mac_scheduler_configurator& sched_cfg;
 
   // Metrics aggregator.
-  std::optional<mac_metrics_aggregator> metrics;
+  mac_metrics_aggregator metrics;
 
   // UE database
   du_ue_list<mac_ue_context> ue_db;

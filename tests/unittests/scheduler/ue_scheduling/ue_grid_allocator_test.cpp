@@ -203,10 +203,10 @@ protected:
   sched_cfg_dummy_notifier                mac_notif;
   scheduler_ue_metrics_dummy_notifier     metrics_notif;
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
-  scheduler_metrics_handler               metrics{std::chrono::milliseconds{0}, metrics_notif};
+  scheduler_metrics_handler               metrics;
 
   cell_config_builder_params cfg_builder_params;
-  sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}, metrics};
+  sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif}, metrics};
   const cell_configuration&  cell_cfg;
 
   cell_harq_manager       cell_harqs{MAX_NOF_DU_UES,
