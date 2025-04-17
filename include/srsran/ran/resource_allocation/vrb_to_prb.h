@@ -21,7 +21,7 @@ namespace srsran::vrb_to_prb {
 struct configuration {
   /// Indicates the number of RB bundles \f$N_{bundle}\f$. It is set to zero for non-interleaved mapping.
   unsigned nof_bundles = 0;
-  /// Indicates VRB index of the lowest VRB in the CORESET used for the DCI transmission.
+  /// Indicates PRB index of the lowest PRB in the CORESET used for the DCI transmission.
   unsigned coreset_start = 0;
   /// Indicates the size of the set of VRBs defined in the mapping. Only applicable to interleaved mapping.
   unsigned nof_rbs = 0;
@@ -58,7 +58,7 @@ struct configuration {
 /// in CORESET 0, the BWP start and size must match with the CORESET0 start and size. Consequently,
 /// \f$N_{start}^{CORESET}\f$ must be zero.
 ///
-/// \param[in] N_start_coreset VRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
+/// \param[in] N_start_coreset PRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
 /// \f$N_{start}^{CORESET}\f$.
 /// \return A non-interleaved VRB-to-PRB configuration object.
 inline configuration create_non_interleaved_common_ss(unsigned N_start_coreset)
@@ -88,7 +88,7 @@ inline configuration create_non_interleaved_other()
 /// - the bundle size is \f$L=2\f$.
 ///
 ///
-/// \param[in] N_start_coreset VRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
+/// \param[in] N_start_coreset PRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
 /// \f$N_{start}^{CORESET}\f$.
 /// \param[in] N_bwp_init_size The size in RBs of CORESET0 as \f$N_{BWP,init}^{size}\f$.
 /// \return An interleaved VRB-to-PRB configuration object.
@@ -120,7 +120,7 @@ inline configuration create_interleaved_coreset0(unsigned N_start_coreset, unsig
 /// if \f$(N_{BWP,init}^{size} + N_{BWP,i}^{start} + N_{start}^{CORESET}) \bmod L > 0\f$ and \f$L\f$ RB otherwise, and
 /// - all other resource block bundles consist of \f$L\f$ RBs.
 ///
-/// \param[in] N_start_coreset VRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
+/// \param[in] N_start_coreset PRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
 /// \f$N_{start}^{CORESET}\f$.
 /// \param[in] N_bwp_i_start BWP \f$i\f$ starting position \f$N_{BWP,i}^{start}\f$.
 /// \param[in] N_bwp_init_size The size in RBs of CORESET0 if available, otherwise the initial bandwidth part size as
@@ -180,17 +180,29 @@ private:
 public:
   non_interleaved_mapping(const configuration& config_) : config(config_) {}
 
+  /// \brief Converts a VRB to its corresponding PRB.
+  ///
+  /// \param[in] vrb VRB to be converted.
+  /// \return A PRB.
+  unsigned vrb_to_prb(unsigned vrb) const;
+
+  /// \brief Converts a PRB to its corresponding VRB.
+  ///
+  /// \param[in] prb PRB to be converted.
+  /// \return A VRB.
+  unsigned prb_to_vrb(unsigned prb) const;
+
   /// \brief Converts a VRB interval to its corresponding PRB interval.
   ///
   /// \param[in] vrbs VRB interval to be converted.
   /// \return A PRB interval.
   prb_interval vrb_to_prb(const vrb_interval& vrbs) const;
 
-  /// \brief Converts a PRB bitmap to a VRB bitmap.
+  /// \brief Converts a PRB interval to its corresponding VRB interval.
   ///
-  /// \param[in] prbs PRB bitmap to be converted.
-  /// \return A VRB bitmap.
-  vrb_bitmap prb_to_vrb(const prb_bitmap& prbs) const;
+  /// \param[in] prbs PRB interval to be converted.
+  /// \return A VRB interval.
+  prb_interval prb_to_vrb(const prb_interval& prbs) const;
 
   /// \brief Converts a VRB bitmap to a PRB bitmap.
   ///
@@ -198,6 +210,12 @@ public:
   /// \param[in] vrbs VRB bitmap to be converted.
   /// \return A PRB bitmap.
   prb_bitmap vrb_to_prb(unsigned bwp_size, const vrb_bitmap& vrbs) const;
+
+  /// \brief Converts a PRB bitmap to a VRB bitmap.
+  ///
+  /// \param[in] prbs PRB bitmap to be converted.
+  /// \return A VRB bitmap.
+  vrb_bitmap prb_to_vrb(const prb_bitmap& prbs) const;
 
   /// \brief Converts a VRB bitmap to a CRB bitmap.
   ///
@@ -223,17 +241,23 @@ private:
 public:
   interleaved_mapping(const configuration& config_);
 
+  /// \brief Converts a VRB to its corresponding PRB.
+  ///
+  /// \param[in] vrb VRB to be converted.
+  /// \return A PRB.
+  unsigned vrb_to_prb(unsigned vrb) const;
+
+  /// \brief Converts a PRB to its corresponding VRB.
+  ///
+  /// \param[in] prb PRB to be converted.
+  /// \return A VRB.
+  unsigned prb_to_vrb(unsigned prb) const;
+
   /// \brief Converts a VRB interval to its corresponding PRB intervals.
   ///
   /// \param[in] vrbs VRB interval to be converted.
   /// \return A pair of PRB intervals.
   std::pair<prb_interval, prb_interval> vrb_to_prb(const vrb_interval& vrbs) const;
-
-  /// \brief Converts a PRB bitmap to a VRB bitmap.
-  ///
-  /// \param[in] prbs PRB bitmap to be converted.
-  /// \return A VRB bitmap.
-  vrb_bitmap prb_to_vrb(const prb_bitmap& prbs) const;
 
   /// \brief Converts a VRB bitmap to a PRB bitmap.
   ///
@@ -241,6 +265,12 @@ public:
   /// \param[in] vrbs VRB bitmap to be converted.
   /// \return A PRB bitmap.
   prb_bitmap vrb_to_prb(unsigned bwp_size, const vrb_bitmap& vrbs) const;
+
+  /// \brief Converts a PRB bitmap to a VRB bitmap.
+  ///
+  /// \param[in] prbs PRB bitmap to be converted.
+  /// \return A VRB bitmap.
+  vrb_bitmap prb_to_vrb(const prb_bitmap& prbs) const;
 
   /// \brief Converts a VRB bitmap to a CRB bitmap.
   ///

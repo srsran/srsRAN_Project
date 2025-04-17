@@ -89,8 +89,8 @@ static vrb_to_prb::configuration make_vrb_to_prb_config(const fapi::dl_pdsch_pdu
   unsigned N_bwp_i_start = fapi_pdu.bwp_start;
   // BWP i size.
   unsigned N_bwp_i_size = fapi_pdu.bwp_size;
-  // CORESET first VRB index.
-  unsigned N_start_coreset = fapi_pdu.pdsch_maintenance_v3.coreset_start_point - N_bwp_i_start;
+  // CORESET first PRB index.
+  unsigned N_start_coreset = fapi_pdu.pdsch_maintenance_v3.coreset_start_point;
   // Initial BWP size.
   unsigned N_bwp_init_size = fapi_pdu.pdsch_maintenance_v3.initial_dl_bwp_size;
   // Bundle i size.
