@@ -100,6 +100,11 @@ static void configure_cli11_test_mode_args(CLI::App& app, cu_up_unit_test_mode_c
       ->capture_default_str()
       ->check(CLI::Range(1, 3));
   add_option(app, "--ue_ambr", test_mode_params.ue_ambr, "DL UE-AMBR used for testing in bps");
+  add_option(app,
+             "--attach_detach_period",
+             test_mode_params.attach_detach_period,
+             "Attach/detach period for test mode. 0 means always attached.")
+      ->capture_default_str();
 }
 
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_params)

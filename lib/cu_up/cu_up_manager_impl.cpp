@@ -157,13 +157,15 @@ async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable
   e1ap_bearer_context_modification_request bearer_modify =
       fill_test_mode_bearer_context_modification_request(setup_resp);
 
-  test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
-  e1ap_bearer_context_release_command release_command;
-  release_command.ue_index = setup_resp.ue_index;
-  test_mode_ue_timer.set(timer_duration(5000), [this, release_command](timer_id_t /**/) {
-    cu_up_task_scheduler.schedule(test_mode_release_bearer_command(release_command));
-  });
-  test_mode_ue_timer.run();
+  if (test_mode_cfg.attach_detach_period.count() != 0) {
+    test_mode_ue_timer = timers.create_unique_timer(exec_mapper.ctrl_executor());
+    e1ap_bearer_context_release_command release_command;
+    release_command.ue_index = setup_resp.ue_index;
+    test_mode_ue_timer.set(test_mode_cfg.attach_detach_period, [this, release_command](timer_id_t /**/) {
+      cu_up_task_scheduler.schedule(test_mode_release_bearer_command(release_command));
+    });
+    test_mode_ue_timer.run();
+  }
 
   return handle_bearer_context_modification_request(bearer_modify);
 }
@@ -171,7 +173,7 @@ async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable
 async_task<void>
 cu_up_manager_impl::test_mode_release_bearer_command(e1ap_bearer_context_release_command release_command)
 {
-  test_mode_ue_timer.set(timer_duration(5000), [this](timer_id_t timer_id) {
+  test_mode_ue_timer.set(test_mode_cfg.attach_detach_period, [this](timer_id_t timer_id) {
     cu_up_task_scheduler.schedule([this](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT(enable_test_mode());

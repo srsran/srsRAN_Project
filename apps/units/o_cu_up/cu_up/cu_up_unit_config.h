@@ -71,12 +71,13 @@ struct cu_up_unit_qos_config {
 };
 
 struct cu_up_unit_test_mode_config {
-  bool     enabled           = false;
-  bool     integrity_enabled = true;
-  bool     ciphering_enabled = true;
-  uint16_t nea_algo          = 2;
-  uint16_t nia_algo          = 2;
-  uint64_t ue_ambr           = 40000000000; // 40 gbps
+  bool                      enabled           = false;
+  bool                      integrity_enabled = true;
+  bool                      ciphering_enabled = true;
+  uint16_t                  nea_algo          = 2;
+  uint16_t                  nia_algo          = 2;
+  uint64_t                  ue_ambr           = 40000000000; // 40 gbps
+  std::chrono::milliseconds attach_detach_period{0}; // Period for attaching detaching tests. 0 means always attached.
 };
 
 struct cu_up_unit_execution_config {

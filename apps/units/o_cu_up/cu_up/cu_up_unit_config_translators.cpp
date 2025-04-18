@@ -38,12 +38,13 @@ srs_cu_up::cu_up_config srsran::generate_cu_up_config(const cu_up_unit_config& c
                          ? config.metrics.cu_up_report_period
                          : 0};
 
-  out_cfg.test_mode_cfg.enabled           = config.test_mode_cfg.enabled;
-  out_cfg.test_mode_cfg.integrity_enabled = config.test_mode_cfg.integrity_enabled;
-  out_cfg.test_mode_cfg.ciphering_enabled = config.test_mode_cfg.ciphering_enabled;
-  out_cfg.test_mode_cfg.nea_algo          = config.test_mode_cfg.nea_algo;
-  out_cfg.test_mode_cfg.nia_algo          = config.test_mode_cfg.nia_algo;
-  out_cfg.test_mode_cfg.ue_ambr           = config.test_mode_cfg.ue_ambr;
+  out_cfg.test_mode_cfg.enabled              = config.test_mode_cfg.enabled;
+  out_cfg.test_mode_cfg.integrity_enabled    = config.test_mode_cfg.integrity_enabled;
+  out_cfg.test_mode_cfg.ciphering_enabled    = config.test_mode_cfg.ciphering_enabled;
+  out_cfg.test_mode_cfg.nea_algo             = config.test_mode_cfg.nea_algo;
+  out_cfg.test_mode_cfg.nia_algo             = config.test_mode_cfg.nia_algo;
+  out_cfg.test_mode_cfg.ue_ambr              = config.test_mode_cfg.ue_ambr;
+  out_cfg.test_mode_cfg.attach_detach_period = config.test_mode_cfg.attach_detach_period;
   return out_cfg;
 }
 
