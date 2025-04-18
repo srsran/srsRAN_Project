@@ -30,15 +30,16 @@ struct cu_up_manager_impl_config {
 
 /// CU-UP manager implementation dependencies.
 struct cu_up_manager_impl_dependencies {
-  e1ap_interface&        e1ap;
-  gtpu_demux&            ngu_demux;
-  ngu_session_manager&   ngu_session_mngr;
-  gtpu_teid_pool&        n3_teid_allocator;
-  gtpu_teid_pool&        f1u_teid_allocator;
-  cu_up_executor_mapper& exec_mapper;
-  f1u_cu_up_gateway&     f1u_gateway;
-  timer_manager&         timers;
-  dlt_pcap&              gtpu_pcap;
+  e1ap_interface&            e1ap;
+  gtpu_demux&                ngu_demux;
+  ngu_session_manager&       ngu_session_mngr;
+  gtpu_teid_pool&            n3_teid_allocator;
+  gtpu_teid_pool&            f1u_teid_allocator;
+  cu_up_executor_mapper&     exec_mapper;
+  f1u_cu_up_gateway&         f1u_gateway;
+  timer_manager&             timers;
+  dlt_pcap&                  gtpu_pcap;
+  fifo_async_task_scheduler& cu_up_task_scheduler;
 };
 
 class cu_up_manager_impl final : public cu_up_manager
@@ -68,6 +69,7 @@ private:
   void on_statistics_report_timer_expired();
 
   async_task<e1ap_bearer_context_modification_response> enable_test_mode() override;
+  async_task<void> test_mode_release_bearer_command(e1ap_bearer_context_release_command release_command);
 
   std::map<five_qi_t, cu_up_qos_config> qos;
   const network_interface_config        net_cfg;
@@ -76,7 +78,7 @@ private:
   cu_up_executor_mapper&                exec_mapper;
   timer_manager&                        timers;
 
-  // logger
+  // Logger
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-UP", false);
 
   // Components
@@ -84,6 +86,11 @@ private:
   std::unique_ptr<ue_manager> ue_mng;
 
   unique_timer statistics_report_timer;
+
+  // Test mode
+  unique_timer test_mode_ue_timer;
+
+  fifo_async_task_scheduler& cu_up_task_scheduler;
 };
 
 } // namespace srsran::srs_cu_up
