@@ -62,13 +62,19 @@ bool gtpu_demux_impl::remove_tunnel(gtpu_teid_t teid)
   return true;
 }
 
+void gtpu_demux_impl::apply_test_teid(gtpu_teid_t teid)
+{
+  std::lock_guard<std::mutex> guard(map_mutex);
+  test_teid = teid;
+}
+
 void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_addr)
 {
   if (stopped.load(std::memory_order_relaxed)) {
     return;
   }
 
-  uint32_t read_teid = 0x01; // default to test DRB
+  uint32_t read_teid = 0;
   if (not cfg.test_mode) {
     if (not gtpu_read_teid(read_teid, pdu, logger)) {
       logger.error("Failed to read TEID from GTP-U PDU. pdu_len={}", pdu.length());
@@ -79,7 +85,12 @@ void gtpu_demux_impl::handle_pdu(byte_buffer pdu, const sockaddr_storage& src_ad
   std::lock_guard<std::mutex> guard(map_mutex);
 
   gtpu_teid_t teid{read_teid};
-  auto        it = teid_to_tunnel.find(teid);
+
+  if (cfg.test_mode) {
+    teid = test_teid;
+  }
+
+  auto it = teid_to_tunnel.find(teid);
   if (it == teid_to_tunnel.end()) {
     logger.info("Dropped GTP-U PDU, tunnel not found. teid={}", teid);
     return;

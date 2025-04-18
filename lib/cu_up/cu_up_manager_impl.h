@@ -75,6 +75,7 @@ private:
   const network_interface_config        net_cfg;
   const n3_interface_config             n3_cfg;
   const cu_up_test_mode_config          test_mode_cfg;
+  gtpu_demux&                           ngu_demux;
   cu_up_executor_mapper&                exec_mapper;
   timer_manager&                        timers;
 

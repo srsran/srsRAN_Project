@@ -43,6 +43,7 @@ cu_up_manager_impl::cu_up_manager_impl(const cu_up_manager_impl_config&       co
   qos(config.qos),
   n3_cfg(config.n3_cfg),
   test_mode_cfg(config.test_mode_cfg),
+  ngu_demux(dependencies.ngu_demux),
   exec_mapper(dependencies.exec_mapper),
   timers(dependencies.timers),
   cu_up_task_scheduler(dependencies.cu_up_task_scheduler)
@@ -143,13 +144,16 @@ cu_up_manager_impl::handle_bearer_context_release_command(const e1ap_bearer_cont
 
 async_task<e1ap_bearer_context_modification_response> cu_up_manager_impl::enable_test_mode()
 {
-  // Convert to common type
   e1ap_bearer_context_setup_request bearer_context_setup = fill_test_mode_bearer_context_setup_request(test_mode_cfg);
 
-  // Setup bearer
+  // Setup bearer context and PDU session.
   e1ap_bearer_context_setup_response setup_resp = handle_bearer_context_setup_request(bearer_context_setup);
 
-  // Modifiy bearer
+  // Apply test TEID to demux.
+  gtpu_teid_t teid = setup_resp.pdu_session_resource_setup_list.begin()->ng_dl_up_tnl_info.gtp_teid;
+  ngu_demux.apply_test_teid(teid);
+
+  //  Modifiy bearer
   e1ap_bearer_context_modification_request bearer_modify =
       fill_test_mode_bearer_context_modification_request(setup_resp);
 

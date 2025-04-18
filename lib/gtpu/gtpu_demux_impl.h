@@ -41,6 +41,8 @@ public:
                   gtpu_tunnel_common_rx_upper_layer_interface* tunnel) override;
   bool remove_tunnel(gtpu_teid_t teid) override;
 
+  void apply_test_teid(gtpu_teid_t teid) override;
+
   void stop() override;
 
 private:
@@ -55,6 +57,9 @@ private:
   // and the modified by UE executors when setting up/tearing down.
   std::mutex                                                                   map_mutex;
   std::unordered_map<gtpu_teid_t, gtpu_demux_tunnel_ctx_t, gtpu_teid_hasher_t> teid_to_tunnel;
+
+  // TEID used for test mode operation.
+  gtpu_teid_t test_teid{0x01};
 
   srslog::basic_logger& logger;
 };

@@ -59,6 +59,9 @@ public:
   /// \brief Remove TEID from mapping.
   virtual bool remove_tunnel(gtpu_teid_t teid) = 0;
 
+  /// \brief Apply a new TEID when in test mode.
+  virtual void apply_test_teid(gtpu_teid_t teid) = 0;
+
   /// \brief Mark GTP-U demux as stopped.
   virtual void stop() = 0;
 };
