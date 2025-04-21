@@ -60,6 +60,7 @@ public:
       pcap_writer.push_pdu(sdu.copy());
     }
 
+    logger.info("n2_connection_client_factory -> sctp_to_n2_pdu_notifier -> on_new_sdu");
     // Forward unpacked Rx PDU to the DU.
     du_rx_pdu_notifier->on_new_message(msg);
 
@@ -99,6 +100,7 @@ public:
       pcap_writer.push_pdu(tx_sdu.copy());
     }
 
+    logger.info("n2_connection_client_factory -> on_new_message");
     // Forward packed Tx PDU to SCTP gateway.
     sctp_rx_pdu_notifier->on_new_sdu(std::move(tx_sdu));
   }
