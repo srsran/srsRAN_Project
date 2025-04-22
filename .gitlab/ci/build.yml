@@ -746,7 +746,6 @@ smoke asan:
     CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     ENABLE_ASAN: "True"
-    TEST_MODE: asan
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
 

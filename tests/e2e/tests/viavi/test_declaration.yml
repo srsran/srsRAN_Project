@@ -413,7 +413,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
-    warning_as_errors: false
+    warning_as_errors: true
 
   - id: "32UE ideal UDP bidirectional Long 3h"
     campaign_filename: *campaign_filename
@@ -425,7 +425,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
-    warning_as_errors: false
+    warning_as_errors: true
 
   - id: "32UE ideal UDP bidirectional Long 24h"
     campaign_filename: *campaign_filename
@@ -455,7 +455,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
-    warning_as_errors: false
+    warning_as_errors: true
 
   - id: "RTSAN"
     campaign_filename: *campaign_filename
