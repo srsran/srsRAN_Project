@@ -13,7 +13,7 @@
 #include "tests/test_doubles/scheduler/scheduler_config_helper.h"
 #include "tests/unittests/scheduler/test_utils/config_generators.h"
 #include "srsran/ran/frame_types.h"
-#include "srsran/ran/ssb_mapping.h"
+#include "srsran/ran/ssb/ssb_mapping.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>

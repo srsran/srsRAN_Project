@@ -11,7 +11,7 @@
 #include "ssb_freq_position_generator.h"
 #include "srsran/adt/span.h"
 #include "srsran/ran/band_helper_constants.h"
-#include "srsran/ran/ssb_gscn.h"
+#include "srsran/ran/ssb/ssb_gscn.h"
 
 using namespace srsran;
 

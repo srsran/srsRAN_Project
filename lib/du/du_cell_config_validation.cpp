@@ -18,7 +18,7 @@
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/prach/prach_frequency_mapping.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
-#include "srsran/ran/ssb_mapping.h"
+#include "srsran/ran/ssb/ssb_mapping.h"
 #include "srsran/scheduler/config/pucch_resource_generator.h"
 #include "srsran/scheduler/config/sched_cell_config_helpers.h"
 #include "srsran/scheduler/config/serving_cell_config_validator.h"

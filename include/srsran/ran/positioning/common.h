@@ -15,7 +15,7 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/scs_specific_carrier.h"
 #include "srsran/ran/srs/srs_configuration.h"
-#include "srsran/ran/ssb_properties.h"
+#include "srsran/ran/ssb/ssb_properties.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include <cstdint>
 #include <optional>

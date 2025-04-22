@@ -14,7 +14,7 @@
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/pci.h"
-#include "srsran/ran/ssb_configuration.h"
+#include "srsran/ran/ssb/ssb_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/scheduler/scheduler_sys_info_handler.h"

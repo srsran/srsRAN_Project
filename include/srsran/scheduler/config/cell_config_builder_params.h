@@ -13,7 +13,7 @@
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/pci.h"
-#include "srsran/ran/ssb_properties.h"
+#include "srsran/ran/ssb/ssb_properties.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 
 namespace srsran {

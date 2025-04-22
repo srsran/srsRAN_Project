@@ -12,7 +12,7 @@
 
 #include "srsran/adt/span.h"
 #include "srsran/ran/pci.h"
-#include "srsran/ran/ssb_properties.h"
+#include "srsran/ran/ssb/ssb_properties.h"
 #include <array>
 
 namespace srsran {

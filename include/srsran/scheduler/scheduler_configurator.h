@@ -21,7 +21,7 @@
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/sr_configuration.h"
-#include "srsran/ran/ssb_configuration.h"
+#include "srsran/ran/ssb/ssb_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/ran/time_alignment_config.h"

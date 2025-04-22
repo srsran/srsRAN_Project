@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace srsran {
 
 /// \brief Position of first DM-RS for Downlink (see TS 38.211, clause 7.4.1.1.1) and Uplink (see TS 38.211,

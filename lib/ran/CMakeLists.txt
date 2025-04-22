@@ -47,9 +47,10 @@ add_library(srsran_ran
         sch/sch_segmentation.cpp
         srs/srs_bandwidth_configuration.cpp
         srs/srs_information.cpp
-        ssb_freq_position_generator.cpp
-        ssb_gscn.cpp
-        ssb_mapping.cpp
+        ssb/pbch_mib_pack.cpp
+        ssb/ssb_freq_position_generator.cpp
+        ssb/ssb_gscn.cpp
+        ssb/ssb_mapping.cpp
         tdd_ul_dl_config.cpp
         drx_config.cpp)
 target_link_libraries(srsran_ran srslog)

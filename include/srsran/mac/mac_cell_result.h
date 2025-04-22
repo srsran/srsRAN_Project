@@ -8,7 +8,7 @@
 #include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/ran/ssb_properties.h"
+#include "srsran/ran/ssb/ssb_properties.h"
 #include "srsran/support/shared_transport_block.h"
 
 namespace srsran {

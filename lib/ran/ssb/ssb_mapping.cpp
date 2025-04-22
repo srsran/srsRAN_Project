@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsran/ran/ssb_mapping.h"
+#include "srsran/ran/ssb/ssb_mapping.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/scheduler/sched_consts.h"
 #include "srsran/support/error_handling.h"

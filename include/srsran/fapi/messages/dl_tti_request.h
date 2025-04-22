@@ -20,7 +20,7 @@
 #include "srsran/ran/pdsch/pdsch_context.h"
 #include "srsran/ran/prs/prs.h"
 #include "srsran/ran/sch/ldpc_base_graph.h"
-#include "srsran/ran/ssb_properties.h"
+#include "srsran/ran/ssb/ssb_properties.h"
 #include "srsran/support/units.h"
 #include <array>
 #include <bitset>
