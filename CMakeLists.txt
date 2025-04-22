@@ -189,12 +189,6 @@ if(ENABLE_GPROF)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
 endif(ENABLE_GPROF)
 
-if (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-  if (HAVE_SSE)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -funroll-loops")
-  endif (HAVE_SSE)
-endif (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-
 if (ENABLE_ASAN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
     # Note: When using ASAN, we need to ensure the use of RPATH instead of RUNPATH via "-Wl,--disable-new-dtags"
