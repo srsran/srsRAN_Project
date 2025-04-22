@@ -1115,7 +1115,9 @@ void srsran::fill_du_high_worker_manager_config(worker_manager_config&     confi
   for (unsigned i = 0; i != du_hi_cfg.nof_cells; ++i) {
     config.config_affinities[i].push_back(unit_cfg.expert_execution_cfg.cell_affinities[i].l2_cell_cpu_cfg);
   }
-  du_hi_cfg.metrics_period = unit_cfg.expert_execution_cfg.executor_metrics_period;
+  if (unit_cfg.metrics.layers_cfg.enable_executor_log_metrics) {
+    du_hi_cfg.metrics_period = std::chrono::milliseconds{unit_cfg.metrics.du_report_period};
+  }
 
   auto& pcap_cfg = config.pcap_cfg;
   if (unit_cfg.pcaps.f1ap.enabled) {

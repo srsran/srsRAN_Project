@@ -894,6 +894,8 @@ struct du_high_unit_metrics_layer_config {
   bool enable_scheduler = true;
   bool enable_rlc       = false;
   bool enable_mac       = false;
+  /// Whether to log performace metrics of the DU-high executors.
+  bool enable_executor_log_metrics = false;
 
   /// Returns true if one or more layers are enabled, otherwise false.
   bool are_metrics_enabled() const { return enable_scheduler || enable_rlc || enable_mac; }
@@ -957,8 +959,6 @@ struct du_high_unit_expert_execution_config {
   ///
   /// \note Add one cell by default.
   std::vector<du_high_unit_cpu_affinities_cell_config> cell_affinities = {{}};
-  /// Whether to report metrics for the DU-high real-time executors.
-  std::optional<std::chrono::milliseconds> executor_metrics_period;
 };
 
 /// RLC UM TX configuration

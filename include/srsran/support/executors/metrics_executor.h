@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "detail/task_executor_utils.h"
+#include "srsran/support/executors/detail/task_executor_utils.h"
 #include "srsran/support/executors/task_executor.h"
 #include "srsran/support/tracing/resource_usage.h"
 #include <chrono>
@@ -23,7 +23,7 @@ class metrics_executor : public task_executor
 
 public:
   template <typename U>
-  explicit metrics_executor(std::string name_, U&& exec_, Logger& logger_, std::chrono::milliseconds period_) :
+  metrics_executor(std::string name_, U&& exec_, Logger& logger_, std::chrono::milliseconds period_) :
     name(std::move(name_)), exec(std::forward<U>(exec_)), logger(logger_), period(period_)
   {
     last_tp = std::chrono::steady_clock::now();

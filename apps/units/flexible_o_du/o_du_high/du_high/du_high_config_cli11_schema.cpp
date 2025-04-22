@@ -123,11 +123,6 @@ static void configure_cli11_expert_execution_args(CLI::App& app, du_high_unit_ex
         }
       },
       "Sets the cell CPU affinities configuration on a per cell basis");
-  add_option(app,
-             "--executor_metrics_period",
-             config.executor_metrics_period,
-             "Period of DU-high executor metrics reports, if enabled")
-      ->capture_default_str();
 }
 
 static void configure_cli11_pdcch_common_args(CLI::App& app, pdcch_common_unit_config& common_params)
@@ -1772,6 +1767,9 @@ static void configure_cli11_metrics_layers_args(CLI::App& app, du_high_unit_metr
       ->capture_default_str();
   add_option(app, "--enable_rlc", metrics_params.enable_rlc, "Enable RLC metrics")->capture_default_str();
   add_option(app, "--enable_mac", metrics_params.enable_mac, "Enable MAC metrics")->capture_default_str();
+  add_option(
+      app, "--enable_executor", metrics_params.enable_executor_log_metrics, "Whether to log DU-high executor metrics")
+      ->capture_default_str();
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_config& metrics_params)
