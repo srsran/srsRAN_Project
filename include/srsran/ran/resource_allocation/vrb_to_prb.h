@@ -14,10 +14,12 @@
 #include "srsran/ran/resource_allocation/rb_bitmap.h"
 #include "srsran/ran/resource_allocation/rb_interval.h"
 #include "srsran/ran/resource_block.h"
+#include "srsran/support/srsran_assert.h"
 #include <cstdint>
 
 namespace srsran::vrb_to_prb {
 
+/// PDSCH VRB-to-PRB mapping configuration.
 struct configuration {
   /// Indicates the number of RB bundles \f$N_{bundle}\f$. It is set to zero for non-interleaved mapping.
   unsigned nof_bundles = 0;
@@ -27,7 +29,7 @@ struct configuration {
   unsigned nof_rbs = 0;
   /// Indicates the first RB bundle size. Only applicable to interleaved mapping.
   unsigned first_bundle_size = 0;
-  /// Indicates the other RB bundle sizes. Only applicable to interleaved mapping.
+  /// Indicates the other RB bundle sizes. Only applicable to interleaved mapping. Possible values: {2, 4}.
   unsigned other_bundle_size = 0;
   /// Indicates the last RB bundle size. Only applicable to interleaved mapping.
   unsigned last_bundle_size = 0;
@@ -160,6 +162,7 @@ create_interleaved_common_ss(unsigned N_start_coreset, unsigned N_bwp_i_start, u
 /// \return An interleaved VRB-to-PRB configuration object.
 inline configuration create_interleaved_other(unsigned N_bwp_i_start, unsigned N_bwp_i_size, unsigned L_i)
 {
+  srsran_assert(L_i == 2 || L_i == 4, "Invalid bundle size {}. Valid values are 2 or 4.", L_i);
   const unsigned nof_bundles       = divide_ceil(N_bwp_i_size + (N_bwp_i_start % L_i), L_i);
   const unsigned coreset_start     = 0;
   const unsigned nof_rbs           = N_bwp_i_size;
@@ -178,7 +181,10 @@ private:
   configuration config;
 
 public:
-  non_interleaved_mapping(const configuration& config_) : config(config_) {}
+  non_interleaved_mapping(const configuration& config_) : config(config_)
+  {
+    srsran_assert(not config.is_interleaved(), "Invalid configuration for non-interleaved mapping.");
+  }
 
   /// \brief Converts a VRB to its corresponding PRB.
   ///

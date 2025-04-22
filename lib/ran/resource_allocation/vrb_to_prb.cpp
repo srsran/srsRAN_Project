@@ -125,6 +125,8 @@ static void vrb_to_prb_mapper_get_interleaved_prb(span<uint16_t> prb_indices,
 interleaved_mapping::interleaved_mapping(const configuration& config_) :
   config(config_), vrb_to_prb_indices(config.nof_rbs), prb_to_vrb_indices(config.coreset_start + config.nof_rbs)
 {
+  srsran_assert(config.is_interleaved(), "Invalid configuration for interleaved mapping.");
+
   vrb_to_prb_mapper_get_interleaved_prb(vrb_to_prb_indices,
                                         config.coreset_start,
                                         config.nof_bundles,
@@ -132,7 +134,7 @@ interleaved_mapping::interleaved_mapping(const configuration& config_) :
                                         config.other_bundle_size,
                                         config.last_bundle_size);
 
-  for (size_t vrb = 0; vrb < config.nof_rbs; ++vrb) {
+  for (size_t vrb = 0; vrb != config.nof_rbs; ++vrb) {
     prb_to_vrb_indices[vrb_to_prb_indices[vrb]] = vrb;
   }
 }
