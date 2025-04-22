@@ -65,7 +65,7 @@ void ru_dummy_impl::start()
   current_slot                 = slot_point(current_slot.numerology(), initial_system_slot);
 
   uint32_t              expected_state = state_idle;
-  [[maybe_unused]] bool success        = internal_state.compare_exchange_weak(expected_state, state_running);
+  [[maybe_unused]] bool success        = internal_state.compare_exchange_strong(expected_state, state_running);
   srsran_assert(success, "Invalid state 0x{:08x}.", expected_state);
   report_fatal_error_if_not(executor.execute([this]() { loop(); }), "Failed to execute loop method.");
 }
@@ -79,11 +79,11 @@ void ru_dummy_impl::stop()
 
   // Signal stop to asynchronous thread.
   uint32_t              expected_state = state_running;
-  [[maybe_unused]] bool success        = internal_state.compare_exchange_weak(expected_state, state_wait_stop);
+  [[maybe_unused]] bool success        = internal_state.compare_exchange_strong(expected_state, state_wait_stop);
   srsran_assert(success, "Invalid state 0x{:08x}.", expected_state);
 
   // Wait for the state to transition to stop.
-  while (internal_state.load() < state_stopped) {
+  while (internal_state.load(std::memory_order_relaxed) < state_stopped) {
     std::this_thread::sleep_for(std::chrono::microseconds(10));
   }
 }
@@ -101,8 +101,8 @@ void ru_dummy_impl::loop()
   // Advance the current slot until it is equal to the slot given by the system time.
   while (slot_count != current_slot.system_slot()) {
     // Detect stop mask.
-    if ((internal_state.load() & state_wait_stop) != 0) {
-      uint32_t current_state = internal_state.fetch_add(1) + 1;
+    if ((internal_state.load(std::memory_order_relaxed) & state_wait_stop) != 0) {
+      uint32_t current_state = internal_state.fetch_add(1, std::memory_order_relaxed) + 1;
       if (current_state >= state_stopped) {
         return;
       }

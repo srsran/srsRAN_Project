@@ -93,14 +93,14 @@ public:
   void handle_dl_data(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
     // Ignore request if RU is stopped.
-    if (stopped) {
+    if (stopped.load(std::memory_order_relaxed)) {
       return;
     }
 
     // Set the current slot information.
     std::optional<resource_grid_context> late_context =
         dl_request[context.slot.system_slot() % dl_request.size()].new_request(context, grid.copy());
-    ++total_dl_request_count;
+    total_dl_request_count.fetch_add(1, std::memory_order_relaxed);
 
     // If the previous slot is valid, it is a late.
     if (late_context.has_value()) {
@@ -110,7 +110,7 @@ public:
                      "Real-time failure in RU: received late DL request from slot {} in sector {}.",
                      late_context->slot,
                      late_context->sector);
-      ++late_dl_request_count;
+      late_dl_request_count.fetch_add(1, std::memory_order_relaxed);
     }
   }
 
@@ -118,13 +118,13 @@ public:
   void handle_prach_occasion(const prach_buffer_context& context, prach_buffer& buffer) override
   {
     // Ignore request if RU is stopped.
-    if (stopped) {
+    if (stopped.load(std::memory_order_relaxed)) {
       return;
     }
 
     std::optional<prach_buffer_context> late_context =
         prach_request[context.slot.system_slot() % prach_request.size()].new_request(context, {});
-    ++total_prach_request_count;
+    total_prach_request_count.fetch_add(1, std::memory_order_relaxed);
 
     // Detect if there is an unhandled request from a different slot.
     if (late_context.has_value()) {
@@ -133,7 +133,7 @@ public:
                      "Real-time failure in RU: received late PRACH request from slot {} in sector {}.",
                      late_context->slot,
                      late_context->sector);
-      ++late_prach_request_count;
+      late_prach_request_count.fetch_add(1, std::memory_order_relaxed);
     }
   }
 
@@ -141,13 +141,13 @@ public:
   void handle_new_uplink_slot(const resource_grid_context& context, const shared_resource_grid& grid) override
   {
     // Ignore request if RU is stopped.
-    if (stopped) {
+    if (stopped.load(std::memory_order_relaxed)) {
       return;
     }
 
     std::optional<resource_grid_context> late_context =
         ul_request[context.slot.system_slot() % ul_request.size()].new_request(context, grid.copy());
-    ++total_ul_request_count;
+    total_ul_request_count.fetch_add(1, std::memory_order_relaxed);
 
     // Detect if there is an unhandled request from a different slot.
     if (late_context.has_value()) {
@@ -157,7 +157,7 @@ public:
                      "Real-time failure in RU: received late UL request from slot {} in sector {}.",
                      late_context->slot,
                      late_context->sector);
-      ++late_ul_request_count;
+      late_ul_request_count.fetch_add(1, std::memory_order_relaxed);
     }
   }
 
@@ -181,7 +181,7 @@ public:
                      "Real-time failure in RU: detected late DL request from slot {} in sector {}.",
                      dl_context.slot,
                      dl_context.sector);
-      ++late_dl_request_count;
+      late_dl_request_count.fetch_add(1, std::memory_order_relaxed);
     }
 
     // Process UL request for this slot.
@@ -211,7 +211,7 @@ public:
                        "Real-time failure in RU: detected late UL request from slot {} in sector {}.",
                        ul_context.slot,
                        ul_context.sector);
-        ++late_ul_request_count;
+        late_ul_request_count.fetch_add(1, std::memory_order_relaxed);
       }
     }
 
@@ -230,7 +230,7 @@ public:
                        "Real-time failure in RU: detected late PRACH request from slot {} in sector {}.",
                        prach_context.slot,
                        prach_context.sector);
-        ++late_prach_request_count;
+        late_prach_request_count.fetch_add(1, std::memory_order_relaxed);
       }
     }
   }
@@ -241,12 +241,12 @@ public:
   /// Collects the RU dummy sector metrics. It does not reset the metrics.
   void collect_metrics(ru_dummy_sector_metrics& metrics) const
   {
-    metrics.total_dl_request_count    = total_dl_request_count.load();
-    metrics.late_dl_request_count     = late_dl_request_count.load();
-    metrics.total_ul_request_count    = total_ul_request_count.load();
-    metrics.late_ul_request_count     = late_ul_request_count.load();
-    metrics.total_prach_request_count = total_prach_request_count.load();
-    metrics.late_prach_request_count  = late_prach_request_count.load();
+    metrics.total_dl_request_count    = total_dl_request_count.load(std::memory_order_relaxed);
+    metrics.late_dl_request_count     = late_dl_request_count.load(std::memory_order_relaxed);
+    metrics.total_ul_request_count    = total_ul_request_count.load(std::memory_order_relaxed);
+    metrics.late_ul_request_count     = late_ul_request_count.load(std::memory_order_relaxed);
+    metrics.total_prach_request_count = total_prach_request_count.load(std::memory_order_relaxed);
+    metrics.late_prach_request_count  = late_prach_request_count.load(std::memory_order_relaxed);
   }
 
 private:
@@ -292,7 +292,7 @@ private:
       // Exchange the current internal state.
       internal_states previous_state = internal_state.exchange(internal_states::locked);
 
-      // If the previous state is locked, then consier as there is no request.
+      // If the previous state is locked, then consider as there is no request.
       if (previous_state == internal_states::locked) {
         return {};
       }
