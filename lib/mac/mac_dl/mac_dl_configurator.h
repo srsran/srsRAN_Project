@@ -21,6 +21,12 @@ class mac_cell_metric_notifier
 public:
   virtual ~mac_cell_metric_notifier() = default;
 
+  /// \brief Called when a new cell is activated.
+  virtual void on_cell_activation(slot_point first_report_slot) = 0;
+
+  /// \brief Called when a cell is deactivated and provides the last report.
+  virtual void on_cell_deactivation(const mac_dl_cell_metric_report& report) = 0;
+
   /// \brief Called when a new cell metric report is ready.
   virtual void on_cell_metric_report(const mac_dl_cell_metric_report& report) = 0;
 };

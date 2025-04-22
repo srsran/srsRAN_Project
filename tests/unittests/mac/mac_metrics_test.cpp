@@ -13,6 +13,7 @@
 #include "tests/test_doubles/mac/dummy_mac_metrics_notifier.h"
 #include "tests/test_doubles/mac/dummy_scheduler_ue_metric_notifier.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/test_utils.h"
 #include "srsran/support/timers.h"
 #include <gtest/gtest.h>
 
@@ -93,8 +94,8 @@ TEST_F(mac_metric_handler_test, for_single_cell_on_period_elapsed_then_report_is
   auto& cellgen = add_cell(to_du_cell_index(0));
   cellgen.on_cell_activation();
 
-  // Number of slots equal to period + timeout has elapsed.
-  for (unsigned i = 0; i != (period + mac_metrics_aggregator::aggregation_timeout).count() - 1; ++i) {
+  // Number of slots equal to period has elapsed.
+  for (unsigned i = 0; i != period_slots; ++i) {
     ASSERT_FALSE(metric_notifier.last_report.has_value());
     run_slot();
   }
@@ -112,8 +113,8 @@ TEST_F(mac_metric_handler_test, when_multi_cell_then_mac_report_generated_when_a
   cellgen1.on_cell_activation();
   cellgen2.on_cell_activation();
 
-  // No report is ready until timeout is reached.
-  for (unsigned i = 0; i != (period + mac_metrics_aggregator::aggregation_timeout).count() - 1; ++i) {
+  // No report is ready until report period is reached.
+  for (unsigned i = 0; i != period_slots; ++i) {
     ASSERT_FALSE(metric_notifier.last_report.has_value());
     run_slot();
   }
@@ -137,18 +138,16 @@ TEST_F(mac_metric_handler_test, when_multi_cell_creation_staggered_then_reports_
   cellgen1.on_cell_activation();
 
   // Number of slots lower than period has elapsed.
-  const unsigned count_until_cell2 = period.count() - 5;
+  const unsigned count_until_cell2 = test_rgen::uniform_int<unsigned>(0, period_slots - 1);
   for (unsigned i = 0; i != count_until_cell2; ++i) {
     ASSERT_FALSE(metric_notifier.last_report.has_value());
     run_slot();
   }
 
-  // Cell 2 is created and we run the remaining slots of the period window + timeout.
+  // Cell 2 is created and we run the remaining slots of the period window.
   auto& cellgen2 = add_cell(to_du_cell_index(1));
   cellgen2.on_cell_activation();
-  for (unsigned i = 0, e = (period + mac_metrics_aggregator::aggregation_timeout).count() - count_until_cell2 - 1;
-       i != e;
-       ++i) {
+  for (unsigned i = 0, e = period_slots - count_until_cell2; i != e; ++i) {
     ASSERT_FALSE(metric_notifier.last_report.has_value());
     run_slot();
   }
@@ -156,8 +155,78 @@ TEST_F(mac_metric_handler_test, when_multi_cell_creation_staggered_then_reports_
   ASSERT_TRUE(metric_notifier.last_report.has_value());
   ASSERT_EQ(metric_notifier.last_report.value().dl.cells.size(), 2);
   auto& rep_cells = metric_notifier.last_report.value().dl.cells;
-  ASSERT_EQ(rep_cells[0].nof_slots, period.count());
-  ASSERT_EQ(rep_cells[1].nof_slots, period.count() - count_until_cell2);
+  ASSERT_EQ(rep_cells[0].nof_slots, period_slots);
+  ASSERT_EQ(rep_cells[1].nof_slots, period_slots - count_until_cell2);
 
   print_report(metric_notifier.last_report.value().dl);
+}
+
+TEST_F(mac_metric_handler_test, when_one_cell_gets_removed_then_last_report_still_contains_its_report)
+{
+  auto& cellgen1 = add_cell(to_du_cell_index(0));
+  auto& cellgen2 = add_cell(to_du_cell_index(1));
+  cellgen1.on_cell_activation();
+  cellgen2.on_cell_activation();
+
+  const unsigned count_until_cell_rem = test_rgen::uniform_int<unsigned>(0, period_slots - 1);
+  for (unsigned i = 0; i != count_until_cell_rem; ++i) {
+    ASSERT_FALSE(metric_notifier.last_report.has_value());
+    run_slot();
+  }
+
+  // Cell1 is deactivated.
+  cellgen1.on_cell_deactivation();
+  for (unsigned i = 0, e = period_slots - count_until_cell_rem; i != e; ++i) {
+    ASSERT_FALSE(metric_notifier.last_report.has_value());
+    run_slot();
+  }
+
+  // Report contains two cells, the deactivated one having a lower number of slots.
+  ASSERT_TRUE(metric_notifier.last_report.has_value());
+  ASSERT_EQ(metric_notifier.last_report.value().dl.cells.size(), 2);
+  auto& rep_cells = metric_notifier.last_report.value().dl.cells;
+  ASSERT_EQ(rep_cells[0].nof_slots, count_until_cell_rem);
+  ASSERT_EQ(rep_cells[1].nof_slots, period_slots);
+}
+
+TEST_F(mac_metric_handler_test, when_second_cell_created_right_after_first_report_then_its_first_report_is_discarded)
+{
+  auto& cellgen1 = add_cell(to_du_cell_index(0));
+  auto& cellgen2 = add_cell(to_du_cell_index(1));
+  cellgen1.on_cell_activation();
+
+  for (unsigned i = 0, e = period_slots - 1; i != e; ++i) {
+    ASSERT_FALSE(metric_notifier.last_report.has_value());
+    run_slot();
+  }
+
+  // Slot when report takes place.
+  // Cell 1 triggers report.
+  {
+    auto meas = cellgen1.start_slot(next_point, metric_clock::now());
+  }
+  task_worker.run_pending_tasks();
+  ASSERT_TRUE(metric_notifier.last_report.has_value());
+  ASSERT_EQ(metric_notifier.last_report.value().dl.cells.size(), 1);
+  auto& rep_cells = metric_notifier.last_report.value().dl.cells;
+  ASSERT_EQ(rep_cells[0].nof_slots, period_slots);
+  metric_notifier.last_report.reset();
+
+  // Cell 2 starts, but it is too late to make it part of the first report.
+  {
+    cellgen2.on_cell_activation();
+    auto meas = cellgen2.start_slot(next_point, metric_clock::now());
+  }
+  timers.tick();
+  task_worker.run_pending_tasks();
+  ++next_point;
+  ASSERT_FALSE(metric_notifier.last_report.has_value());
+
+  // Another period passes and now two cells are taken into account in the report.
+  for (unsigned i = 0, e = period_slots; i != e; ++i) {
+    ASSERT_FALSE(metric_notifier.last_report.has_value());
+    run_slot();
+  }
+  ASSERT_TRUE(metric_notifier.last_report.has_value());
+  ASSERT_EQ(metric_notifier.last_report.value().dl.cells.size(), 2);
 }

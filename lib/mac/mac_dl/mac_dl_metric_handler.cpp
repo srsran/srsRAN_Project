@@ -9,10 +9,7 @@
  */
 
 #include "mac_dl_metric_handler.h"
-#include "srsran/adt/bounded_bitset.h"
-#include "srsran/mac/mac_metrics_notifier.h"
 #include "srsran/srslog/srslog.h"
-#include "srsran/support/executors/execute_until_success.h"
 
 using namespace srsran;
 
@@ -49,18 +46,40 @@ mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(pci_t                    
 
 void mac_dl_cell_metric_handler::on_cell_activation()
 {
-  data.deactivated = false;
+  if (not enabled()) {
+    return;
+  }
+  data.last_report = false;
+  cell_activated   = true;
 }
 
 void mac_dl_cell_metric_handler::on_cell_deactivation()
 {
-  data.deactivated = true;
+  if (not enabled()) {
+    return;
+  }
+  data.last_report = true;
+  cell_activated   = false;
+
+  // Report the remainder metrics.
+  send_new_report(last_sl_tx + 1);
 }
 
 void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& meas)
 {
-  if (not enabled()) {
+  last_sl_tx = meas.sl_tx;
+  if (not enabled() or not cell_activated) {
     return;
+  }
+
+  if (not next_report_slot.valid() and cell_activated) {
+    // First slot after cell activation.
+    // We will make the \c next_report_slot aligned with the period.
+    unsigned mod_val = meas.sl_tx.to_uint() % period_slots;
+    next_report_slot = mod_val > 0 ? meas.sl_tx + period_slots - mod_val : meas.sl_tx;
+    slot_duration    = std::chrono::nanoseconds(unsigned(1e6 / meas.sl_tx.nof_slots_per_subframe()));
+    // Notify cell creation and next slot on which the report will be generated.
+    notifier->on_cell_activation(next_report_slot);
   }
 
   // Time difference
@@ -111,29 +130,41 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
   }
 
   if (meas.sl_tx >= next_report_slot) {
-    // Prepare cell report.
-    mac_dl_cell_metric_report report;
-    report.pci                                = cell_pci;
-    report.start_slot                         = meas.sl_tx - data.nof_slots;
-    report.slot_duration                      = slot_duration;
-    report.nof_slots                          = data.nof_slots;
-    report.wall_clock_latency                 = data.wall.get_report(data.nof_slots);
-    report.user_time                          = data.user.get_report(data.nof_slots);
-    report.sys_time                           = data.sys.get_report(data.nof_slots);
-    report.slot_ind_handle_latency            = data.slot_enqueue.get_report(data.nof_slots);
-    report.dl_tti_req_latency                 = data.dl_tti_req.get_report(data.nof_slots);
-    report.tx_data_req_latency                = data.tx_data_req.get_report(data.nof_slots);
-    report.count_voluntary_context_switches   = data.count_vol_context_switches;
-    report.count_involuntary_context_switches = data.count_invol_context_switches;
-    report.cell_deactivated                   = data.deactivated;
+    send_new_report(meas.sl_tx);
+  }
+}
 
-    // Reset counters.
-    data = {};
+void mac_dl_cell_metric_handler::send_new_report(slot_point sl_tx)
+{
+  // Prepare cell report.
+  mac_dl_cell_metric_report report;
+  report.pci           = cell_pci;
+  report.start_slot    = sl_tx - data.nof_slots;
+  report.slot_duration = slot_duration;
+  report.nof_slots     = data.nof_slots;
+  if (data.nof_slots > 0) {
+    report.wall_clock_latency      = data.wall.get_report(data.nof_slots);
+    report.user_time               = data.user.get_report(data.nof_slots);
+    report.sys_time                = data.sys.get_report(data.nof_slots);
+    report.slot_ind_handle_latency = data.slot_enqueue.get_report(data.nof_slots);
+    report.dl_tti_req_latency      = data.dl_tti_req.get_report(data.nof_slots);
+    report.tx_data_req_latency     = data.tx_data_req.get_report(data.nof_slots);
+  }
+  report.count_voluntary_context_switches   = data.count_vol_context_switches;
+  report.count_involuntary_context_switches = data.count_invol_context_switches;
+  report.cell_deactivated                   = data.last_report;
 
-    // Set next report slot.
-    next_report_slot += period_slots;
+  // Set next report slot.
+  next_report_slot += period_slots;
 
-    // Forward cell report.
+  // Reset counters.
+  data = {};
+
+  if (not report.cell_deactivated) {
+    // Forward normal cell report.
     notifier->on_cell_metric_report(report);
+  } else {
+    notifier->on_cell_deactivation(report);
+    next_report_slot = {};
   }
 }

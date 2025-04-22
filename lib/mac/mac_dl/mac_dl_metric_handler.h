@@ -132,14 +132,20 @@ private:
     latency_data tx_data_req;
     unsigned     count_vol_context_switches{0};
     unsigned     count_invol_context_switches{0};
-    bool         deactivated = false;
+    /// \brief Whether the cell was marked for deactivation and this is the last report.
+    bool last_report = false;
   };
 
   void handle_slot_completion(const slot_measurement& meas);
 
+  void send_new_report(slot_point sl_tx);
+
   const pci_t               cell_pci;
   const unsigned            period_slots;
   mac_cell_metric_notifier* notifier;
+
+  slot_point last_sl_tx;
+  bool       cell_activated = false;
 
   // Slot at which the next report is generated.
   slot_point               next_report_slot;

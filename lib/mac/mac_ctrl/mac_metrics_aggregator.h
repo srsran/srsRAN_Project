@@ -33,9 +33,6 @@ struct cell_metric_report_config {
 class mac_metrics_aggregator
 {
 public:
-  /// \brief Maximum delay between the first and last report in the aggregation period.
-  constexpr static std::chrono::milliseconds aggregation_timeout{8};
-
   mac_metrics_aggregator(std::chrono::milliseconds   period_,
                          mac_metrics_notifier&       mac_notifier_,
                          scheduler_metrics_notifier* sched_notifier_,
@@ -50,18 +47,22 @@ public:
 private:
   class cell_metric_handler;
 
-  // Called when a new report should be forwarded.
-  void trigger_report_creation();
+  // Called when pending reports should be handled.
+  void handle_pending_reports();
 
-  bool pop_sched_report(cell_metric_handler& cell, scheduler_cell_metrics& report);
-  bool pop_mac_report(cell_metric_handler& cell, mac_dl_cell_metric_report& report);
+  enum class pop_result { pop_and_discarded, no_op, cell_activated, cell_deactivated, report };
 
+  bool       pop_sched_report(cell_metric_handler& cell, scheduler_cell_metrics& report);
+  pop_result pop_mac_report(cell_metric_handler& cell, mac_dl_cell_metric_report& report);
+
+  // Create a new report.
   void send_new_report();
 
   std::chrono::milliseconds   period;
   mac_metrics_notifier&       notifier;
   scheduler_metrics_notifier* sched_notifier;
   task_executor&              ctrl_exec;
+  timer_manager&              timers;
   srslog::basic_logger&       logger;
 
   // Metric handles for configured cells.
@@ -69,15 +70,15 @@ private:
 
   // Expected start slot for the next report.
   slot_point next_report_start_slot;
+  unsigned   nof_cell_active = 0;
 
   // Next report to be sent.
   mac_metric_report next_report;
 
-  // Number of cell reports pending to be processed.
-  std::atomic<unsigned> report_count{0};
-
-  // Timer that when triggered aggregates all existing cell reports.
-  unique_timer aggr_timer;
+  // Number of events expected before a dispatch task is triggered.
+  // Note: We use this counter to avoid dispatching more tasks than required when not all cell reports have been
+  // enqueued.
+  std::atomic<int> events_until_trigger{0};
 };
 
 } // namespace srsran
