@@ -36,7 +36,7 @@ public:
     period_slots(get_nof_slots_per_subframe(scs_common) * parent.period.count()),
     sched_notifier(sched_notifier_),
     logger(logger_),
-    report_queue(cell_report_queue_size),
+    mac_report_queue(cell_report_queue_size),
     sched_report_queue(cell_report_queue_size)
   {
   }
@@ -60,7 +60,7 @@ public:
   void on_cell_metric_report(const mac_dl_cell_metric_report& report) override
   {
     // Note: Function called from the cell execution context.
-    if (not report_queue.try_push(report)) {
+    if (not mac_report_queue.try_push(report)) {
       logger.error("Failed to enqueue MAC metric event. Cause: Task queue is full.");
       return;
     }
@@ -93,10 +93,12 @@ public:
 private:
   friend class mac_metrics_aggregator;
 
-  using report_queue_type = concurrent_queue<mac_dl_cell_metric_report,
-                                             concurrent_queue_policy::lockfree_spsc,
-                                             concurrent_queue_wait_policy::non_blocking>;
+  /// Queue type used to push new MAC cell reports.
+  using mac_report_queue_type = concurrent_queue<mac_dl_cell_metric_report,
+                                                 concurrent_queue_policy::lockfree_spsc,
+                                                 concurrent_queue_wait_policy::non_blocking>;
 
+  /// Queue type used to push new SCHED cell reports.
   using sched_report_queue_type = concurrent_queue<scheduler_cell_metrics,
                                                    concurrent_queue_policy::lockfree_spsc,
                                                    concurrent_queue_wait_policy::non_blocking>;
@@ -109,14 +111,15 @@ private:
   srslog::basic_logger&       logger;
 
   // Reports from a given MAC cell.
-  report_queue_type report_queue;
+  mac_report_queue_type mac_report_queue;
 
   // Reports from the scheduler.
   sched_report_queue_type sched_report_queue;
 
-  // Whether the cell has started.
+  // Stateful flags access from the control executor.
   bool       active_flag = false;
   slot_point next_report_slot;
+  bool       report_ready = false;
 };
 
 // class mac_metrics_aggregator
@@ -167,7 +170,8 @@ void mac_metrics_aggregator::handle_pending_reports()
   scheduler_cell_metrics    sched_report;
   int                       current_count = events_until_trigger.load(std::memory_order_acquire);
   while (current_count <= 0) {
-    int pop_count = 0;
+    int  pop_count    = 0;
+    bool popped_event = false;
     for (auto& cell : cells) {
       while (pop_sched_report(*cell, sched_report)) {
         // Consume the SCHED report.
@@ -177,12 +181,14 @@ void mac_metrics_aggregator::handle_pending_reports()
       for (auto result = pop_mac_report(*cell, cell_report); result != pop_result::no_op;
            result      = pop_mac_report(*cell, cell_report)) {
         pop_count++;
+        popped_event = true;
         switch (result) {
           case pop_result::cell_activated:
             // Increase the number of events needed until the next trigger, as now we expect one more cell to report.
             pop_count++;
             break;
           case pop_result::cell_deactivated:
+            // Decrease the number of events needed until the next trigger.
             pop_count--;
             next_report.dl.cells.push_back(cell_report);
             break;
@@ -197,22 +203,16 @@ void mac_metrics_aggregator::handle_pending_reports()
       }
     }
 
-    // Update trigger count.
+    // Update number of events needed until next trigger.
     current_count = events_until_trigger.fetch_add(pop_count, std::memory_order_acq_rel) + pop_count;
 
-    if (current_count <= 0 and pop_count == 0) {
-      logger.error("Unable to pop MAC cell metric reports");
-      int new_val = 0;
-      for (const auto& c : cells) {
-        new_val += c->active_flag ? 1 : 0;
-      }
-      next_report_start_slot = {};
-      events_until_trigger.store(new_val, std::memory_order_release);
+    if (current_count <= 0 and not popped_event) {
+      logger.error("Unable to dequeue any MAC cell metric report");
       break;
     }
 
     // Send an aggregated report if ready.
-    send_new_report();
+    try_send_new_report();
   }
 }
 
@@ -252,7 +252,7 @@ mac_metrics_aggregator::pop_result mac_metrics_aggregator::pop_mac_report(cell_m
                                                                           mac_dl_cell_metric_report& report)
 {
   // Peek next report.
-  const auto* next_ev = cell.report_queue.front();
+  const auto* next_ev = cell.mac_report_queue.front();
 
   if (next_ev == nullptr) {
     // No report to pop.
@@ -261,7 +261,7 @@ mac_metrics_aggregator::pop_result mac_metrics_aggregator::pop_mac_report(cell_m
 
   if (next_ev->nof_slots == 0 or next_ev->cell_deactivated) {
     // We are either starting or stopping a cell.
-    if (not cell.report_queue.try_pop(report)) {
+    if (not cell.mac_report_queue.try_pop(report)) {
       logger.warning("cell={}: Unable to pop metric report event", fmt::underlying(cell.cell_index));
       return pop_result::no_op;
     }
@@ -293,13 +293,14 @@ mac_metrics_aggregator::pop_result mac_metrics_aggregator::pop_mac_report(cell_m
     return pop_result::no_op;
   }
 
-  if (not cell.report_queue.try_pop(report)) {
+  if (not cell.mac_report_queue.try_pop(report)) {
     logger.warning("cell={}: Unable to pop metric report event", fmt::underlying(cell.cell_index));
     return pop_result::no_op;
   }
 
   if (report.start_slot >= next_report_start_slot and report.start_slot < next_report_start_slot + cell.period_slots) {
     // Report is within expected window.
+    cell.report_ready = true;
     return pop_result::report;
   }
 
@@ -308,20 +309,21 @@ mac_metrics_aggregator::pop_result mac_metrics_aggregator::pop_mac_report(cell_m
   return pop_result::pop_and_discarded;
 }
 
-void mac_metrics_aggregator::send_new_report()
+void mac_metrics_aggregator::try_send_new_report()
 {
   if (next_report.dl.cells.empty()) {
     return;
   }
-  unsigned expected_cells = 0;
   for (const auto& c : cells) {
-    if (c->active_flag and next_report_start_slot - c->next_report_slot < static_cast<int>(c->period_slots / 2)) {
-      expected_cells++;
+    if (c->active_flag and next_report_start_slot + c->period_slots == c->next_report_slot and not c->report_ready) {
+      // Metric report missing for this cell.
+      return;
     }
   }
-  if (expected_cells > next_report.dl.cells.size()) {
-    // Not all cells have reported yet. Wait for the next report.
-    return;
+  if (not next_report.sched.cells.empty() and next_report.sched.cells.size() != next_report.dl.cells.size()) {
+    logger.warning("Mismatch in number of cell metrics reported by the MAC and scheduler ({} != {})",
+                   next_report.dl.cells.size(),
+                   next_report.sched.cells.size());
   }
 
   // Forward the full report.
@@ -334,6 +336,7 @@ void mac_metrics_aggregator::send_new_report()
   for (auto& c : cells) {
     if (c->active_flag) {
       c->next_report_slot = next_report_start_slot;
+      c->report_ready     = false;
     }
   }
 

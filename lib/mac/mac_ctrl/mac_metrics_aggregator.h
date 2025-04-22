@@ -47,7 +47,7 @@ public:
 private:
   class cell_metric_handler;
 
-  // Called when pending reports should be handled.
+  /// Called when pending reports should be handled.
   void handle_pending_reports();
 
   enum class pop_result { pop_and_discarded, no_op, cell_activated, cell_deactivated, report };
@@ -55,8 +55,8 @@ private:
   bool       pop_sched_report(cell_metric_handler& cell, scheduler_cell_metrics& report);
   pop_result pop_mac_report(cell_metric_handler& cell, mac_dl_cell_metric_report& report);
 
-  // Create a new report.
-  void send_new_report();
+  /// Creates a new aggregated metric report if the right conditions are met.
+  void try_send_new_report();
 
   std::chrono::milliseconds   period;
   mac_metrics_notifier&       notifier;
@@ -65,19 +65,21 @@ private:
   timer_manager&              timers;
   srslog::basic_logger&       logger;
 
-  // Metric handles for configured cells.
+  /// Metric handlers for configured cells.
   slotted_id_table<du_cell_index_t, std::unique_ptr<cell_metric_handler>, MAX_CELLS_PER_DU> cells;
 
-  // Expected start slot for the next report.
+  /// Expected start slot for the next report.
   slot_point next_report_start_slot;
-  unsigned   nof_cell_active = 0;
 
-  // Next report to be sent.
+  /// Number of cells currently active.
+  unsigned nof_cell_active = 0;
+
+  /// Next report to be sent.
   mac_metric_report next_report;
 
-  // Number of events expected before a dispatch task is triggered.
-  // Note: We use this counter to avoid dispatching more tasks than required when not all cell reports have been
-  // enqueued.
+  /// \brief Number of events expected before a dispatch task is triggered.
+  /// Note: We use this counter to avoid dispatching more tasks than required when not all cell reports have been
+  /// enqueued.
   std::atomic<int> events_until_trigger{0};
 };
 

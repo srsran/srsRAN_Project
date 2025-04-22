@@ -27,10 +27,10 @@ public:
 };
 
 /// Interface used to handle metric reports from the DU-high remaining layers.
-class du_manager_mac_metric_collector
+class du_manager_mac_metric_aggregator
 {
 public:
-  virtual ~du_manager_mac_metric_collector() = default;
+  virtual ~du_manager_mac_metric_aggregator() = default;
 
   /// \brief Handle the metrics report from the MAC.
   virtual void aggregate_mac_metrics_report(const mac_metric_report& report) = 0;
@@ -114,7 +114,7 @@ public:
   virtual ~du_manager_interface() = default;
 
   /// Get entity responsibly for aggregating metrics from all DU layers.
-  virtual du_manager_mac_metric_collector& get_metrics_aggregator() = 0;
+  virtual du_manager_mac_metric_aggregator& get_metrics_aggregator() = 0;
 };
 
 } // namespace srs_du

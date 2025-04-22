@@ -10,11 +10,9 @@
 
 #include "du_metrics_aggregator_impl.h"
 #include "srsran/adt/concurrent_queue.h"
-#include "srsran/adt/mpmc_queue.h"
 #include "srsran/mac/mac_metrics.h"
 #include "srsran/mac/mac_metrics_notifier.h"
 #include "srsran/scheduler/scheduler_metrics.h"
-#include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/execute_until_success.h"
 #include "srsran/support/memory_pool/unbounded_object_pool.h"
 
@@ -28,15 +26,16 @@ du_manager_metrics_aggregator_impl::du_manager_metrics_aggregator_impl(
     task_executor&                                  du_mng_exec_,
     timer_manager&                                  timers_,
     f1ap_metrics_collector&                         f1ap_collector_,
-    mac_metrics_notifier*                           mac_notifier_,
-    scheduler_metrics_notifier*                     sched_notifier_) :
+    mac_metrics_notifier*                           mac_notifier_) :
   params(params_),
   du_mng_exec(du_mng_exec_),
   timers(timers_),
   mac_notifier(mac_notifier_),
-  sched_notifier(sched_notifier_),
   f1ap_collector(f1ap_collector_)
 {
+  (void)du_mng_exec;
+  (void)timers;
+
   if (params.du_metrics != nullptr) {
     if (params.f1ap_enabled) {
       next_report.f1ap.emplace();

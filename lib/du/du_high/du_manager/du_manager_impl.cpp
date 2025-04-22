@@ -34,8 +34,7 @@ du_manager_impl::du_manager_impl(const du_manager_params& params_) :
           params.services.du_mng_exec,
           params.services.timers,
           params.f1ap.metrics,
-          params.mac.mac_metrics_notif,
-          params.mac.sched_metrics_notif),
+          params.mac.mac_metrics_notif),
   main_ctrl_loop(128)
 {
 }
