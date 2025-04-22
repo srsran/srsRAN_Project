@@ -126,7 +126,7 @@ protected:
 
   void run_slot()
   {
-    current_slot++;
+    ++current_slot;
 
     mac_logger.set_context(current_slot.sfn(), current_slot.slot_index());
     test_logger.set_context(current_slot.sfn(), current_slot.slot_index());
@@ -570,7 +570,7 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
   setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
-  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+  for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
     // Initialize.
     is_bsr_zero_sent[idx] = false;
 
@@ -582,7 +582,10 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
         LCID_MIN_DRB);
   }
 
-  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+  for (unsigned
+           i              = 0,
+           nof_iterations = params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       i != nof_iterations;
        ++i) {
     run_slot();
 
@@ -597,7 +600,7 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
     }
     swap(uci_ind_to_send, uci_ind_not_for_current_slot);
 
-    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
       // Update the PDSCH scheduled slot in the future.
       const auto& pdsch_slot = get_pdsch_scheduled_slot(test_ue);
@@ -637,7 +640,7 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
     }
   }
 
-  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+  for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
     const auto& test_ue = get_ue(to_du_ue_index(idx));
     ASSERT_EQ(test_ue.dl_bsr_list.at(lcid).bs, 0)
         << fmt::format("Condition failed for UE with c-rnti={}", test_ue.crnti);
@@ -655,7 +658,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
   setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
   // Add UE(s) and notify UL BSR from UE of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
-  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+  for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
     // Initialize.
     is_bsr_zero_sent[idx]               = false;
     pusch_scheduled_slot_in_future[idx] = {};
@@ -668,7 +671,10 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
         static_cast<lcg_id_t>(0));
   }
 
-  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+  for (unsigned
+           i              = 0,
+           nof_iterations = params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       i != nof_iterations;
        ++i) {
     run_slot();
 
@@ -677,7 +683,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
     crc_ind.cell_index = to_du_cell_index(0);
     crc_ind.sl_rx      = current_slot;
 
-    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
       // Update the PUSCH scheduled slot in the future.
       const auto& pusch_slot = get_pusch_scheduled_slot(test_ue);
@@ -718,7 +724,7 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
     }
   }
 
-  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+  for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
     const auto& test_ue = get_ue(to_du_ue_index(idx));
     ASSERT_EQ(test_ue.ul_bsr_list.at(lcgid).nof_bytes, 0)
         << fmt::format("Condition failed for UE with c-rnti={}", test_ue.crnti);
@@ -769,7 +775,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
 
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in
   // params. Assumption: LCID is DRB1.
-  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+  for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
     add_ue(to_du_ue_index(idx), lcid, lcgid, extended_params);
     push_buffer_state_to_dl_ue(to_du_ue_index(idx), dl_buffer_size, lcid);
     notify_ul_bsr_from_ue(to_du_ue_index(idx), ul_buffer_size, lcgid);
@@ -842,7 +848,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
       }
     }
 
-    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
       // Kep pushing buffer status and UL BSR to ensure scheduler keeps scheduling UE.
       push_buffer_state_to_dl_ue(
@@ -872,17 +878,20 @@ TEST_P(multiple_ue_sched_tester, not_scheduled_when_buffer_status_zero)
   setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
   // Add UE(s) and notify UL BSR + DL Buffer status with zero value.
   // Assumption: LCID is DRB1.
-  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+  for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
     add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0), params.duplx_mode);
 
     notify_ul_bsr_from_ue(to_du_ue_index(idx), 0, static_cast<lcg_id_t>(0));
     push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
   }
 
-  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+  for (unsigned
+           i              = 0,
+           nof_iterations = params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       i != nof_iterations;
        ++i) {
     run_slot();
-    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
       ASSERT_FALSE(ue_is_allocated_pusch(test_ue));
       ASSERT_FALSE(ue_is_allocated_pdsch(test_ue));
@@ -925,7 +934,7 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_0_test)
   setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
-  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+  for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
     // Initialize.
     is_bsr_zero_sent[idx] = false;
 
@@ -940,7 +949,10 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_0_test)
         LCID_MIN_DRB);
   }
 
-  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+  for (unsigned
+           i              = 0,
+           nof_iterations = params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       i != nof_iterations;
        ++i) {
     run_slot();
 
@@ -955,7 +967,7 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_0_test)
     }
     swap(uci_ind_to_send, uci_ind_not_for_current_slot);
 
-    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
       sched_test_ue& test_ue = get_ue(to_du_ue_index(idx));
 
       // Perform task related to sending ACK back for scheduled PDSCH.
@@ -1034,7 +1046,7 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
   setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
-  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+  for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
     // Initialize.
     is_bsr_zero_sent[idx] = false;
 
@@ -1049,7 +1061,10 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
         LCID_MIN_DRB);
   }
 
-  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+  for (unsigned
+           i              = 0,
+           nof_iterations = params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       i != nof_iterations;
        ++i) {
     run_slot();
 
@@ -1064,7 +1079,7 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
     }
     swap(uci_ind_to_send, uci_ind_not_for_current_slot);
 
-    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
       sched_test_ue& test_ue = get_ue(to_du_ue_index(idx));
 
       // Check whether DCI formats match the SearchSpace configuration and uses DCI format 1_1 for SS#2.
@@ -1171,7 +1186,7 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
   setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
   // Add UE(s) and notify UL BSR from UE of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
-  for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+  for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
     // Initialize.
     is_bsr_zero_sent[idx]               = false;
     pusch_scheduled_slot_in_future[idx] = {};
@@ -1187,7 +1202,10 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
         static_cast<lcg_id_t>(0));
   }
 
-  for (unsigned i = 0; i != params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+  for (unsigned
+           i              = 0,
+           nof_iterations = params.nof_ues * test_bench::max_test_run_slots_per_ue * (1U << current_slot.numerology());
+       i != nof_iterations;
        ++i) {
     run_slot();
 
@@ -1196,7 +1214,7 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
     crc_ind.cell_index = to_du_cell_index(0);
     crc_ind.sl_rx      = current_slot;
 
-    for (unsigned idx = 0; idx < params.nof_ues; idx++) {
+    for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
       auto& test_ue = get_ue(to_du_ue_index(idx));
 
       // Check whether DCI formats match the SearchSpace configuration and uses DCI format 1_1 for SS#2.

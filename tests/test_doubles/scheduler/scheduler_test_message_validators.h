@@ -17,6 +17,7 @@
 #pragma once
 
 #include "srsran/adt/span.h"
+#include "srsran/ran/pdcch/coreset.h"
 
 namespace srsran {
 
@@ -26,13 +27,13 @@ struct ul_sched_info;
 namespace test_helper {
 
 /// \brief Determine if the PDSCH grant for a given UE has valid content.
-bool is_valid_dl_msg_alloc(const dl_msg_alloc& grant, std::optional<coreset_configuration> coreset0);
+bool is_valid_dl_msg_alloc(const dl_msg_alloc& grant, const std::optional<coreset_configuration>& coreset0);
 
 /// \brief Determine if the PUSCH grant for a given UE has valid content.
 bool is_valid_ul_sched_info(const ul_sched_info& grant);
 
 /// \brief Determine if the UE PDSCH grants for a given slot are valid.
-bool is_valid_dl_msg_alloc_list(span<const dl_msg_alloc> grants, std::optional<coreset_configuration> coreset0);
+bool is_valid_dl_msg_alloc_list(span<const dl_msg_alloc> grants, const std::optional<coreset_configuration>& coreset0);
 
 } // namespace test_helper
 } // namespace srsran

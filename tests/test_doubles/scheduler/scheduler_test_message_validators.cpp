@@ -35,7 +35,7 @@ void print_if_present(Args... args)
   }
 
 /// Check that the CRBs are within the allowed BWP/CORESET boundaries.
-static bool are_crbs_valid(const pdsch_information& pdsch, std::optional<coreset_configuration> coreset0)
+static bool are_crbs_valid(const pdsch_information& pdsch, const std::optional<coreset_configuration>& coreset0)
 {
   const vrb_interval vrbs = pdsch.rbs.type1();
 
@@ -57,7 +57,7 @@ static bool are_crbs_valid(const pdsch_information& pdsch, std::optional<coreset
   return true;
 }
 
-static bool is_pdsch_info_valid(const pdsch_information& pdsch, std::optional<coreset_configuration> coreset0)
+static bool is_pdsch_info_valid(const pdsch_information& pdsch, const std::optional<coreset_configuration>& coreset0)
 {
   TRUE_OR_RETURN(pdsch.coreset_cfg != nullptr);
   TRUE_OR_RETURN(pdsch.bwp_cfg != nullptr);
@@ -82,7 +82,7 @@ static bool is_pdsch_info_valid(const pdsch_information& pdsch, std::optional<co
   return true;
 }
 
-bool test_helper::is_valid_dl_msg_alloc(const dl_msg_alloc& grant, std::optional<coreset_configuration> coreset0)
+bool test_helper::is_valid_dl_msg_alloc(const dl_msg_alloc& grant, const std::optional<coreset_configuration>& coreset0)
 {
   TRUE_OR_RETURN(is_pdsch_info_valid(grant.pdsch_cfg, coreset0));
   TRUE_OR_RETURN(grant.pdsch_cfg.codewords[0].new_data == not grant.tb_list.empty());
@@ -194,8 +194,8 @@ bool test_helper::is_valid_ul_sched_info(const ul_sched_info& grant)
   return true;
 }
 
-bool test_helper::is_valid_dl_msg_alloc_list(span<const dl_msg_alloc>             grants,
-                                             std::optional<coreset_configuration> coreset0)
+bool test_helper::is_valid_dl_msg_alloc_list(span<const dl_msg_alloc>                    grants,
+                                             const std::optional<coreset_configuration>& coreset0)
 {
   static_vector<rnti_t, MAX_UE_PDUS_PER_SLOT> rntis;
   for (const auto& grant : grants) {
