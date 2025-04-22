@@ -434,6 +434,17 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
     return;
   }
 
+  // Check wether another context doesn't exist already for the same AMF UE ID with mismatched RAN UE ID.
+  if (not validate_consistent_ue_id_pair(uint_to_ran_ue_id(request->ran_ue_ngap_id),
+                                         uint_to_amf_ue_id(request->amf_ue_ngap_id))) {
+    send_error_indication(*tx_pdu_notifier,
+                          logger,
+                          uint_to_ran_ue_id(request->ran_ue_ngap_id),
+                          uint_to_amf_ue_id(request->amf_ue_ngap_id),
+                          ngap_cause_radio_network_t::inconsistent_remote_ue_ngap_id);
+    return;
+  }
+
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(request->ran_ue_ngap_id)];
 
   if (ue_ctxt.release_scheduled) {
