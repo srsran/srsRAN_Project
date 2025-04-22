@@ -169,6 +169,13 @@ private:
   /// \brief Callback for the PDU Session Request Timer expiration. Triggers the release of the UE.
   void on_request_pdu_session_timer_expired(ue_index_t ue_index);
 
+  /// \brief Validates consistent UE id pair. It checks if an existing context already exists
+  /// for the received AMF-UE-NGAP-ID and checks if it matches the received RAN-UE-NGAP-ID.
+  /// \param[in] ran_ue_ngap_id The received RAN-UE-NGAP-ID.
+  /// \param[in] amf_ue_ngap_id The received AMF-UE-NGAP-ID.
+  /// \return True if the pair is consistent, false otherwise.
+  [[nodiscard]] bool validate_consistent_ue_id_pair(ran_ue_id_t ran_ue_ngap_id, amf_ue_id_t amf_ue_ngap_id);
+
   /// \brief Log NGAP RX PDU.
   void log_rx_pdu(const ngap_message& msg);
 

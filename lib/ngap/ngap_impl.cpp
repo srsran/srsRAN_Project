@@ -368,6 +368,16 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
     return;
   }
 
+  // Check wether another context doesn't exist already for the same AMF UE ID with mismatched RAN UE ID.
+  if (validate_consistent_ue_id_pair(uint_to_ran_ue_id(msg->ran_ue_ngap_id), uint_to_amf_ue_id(msg->amf_ue_ngap_id))) {
+    send_error_indication(*tx_pdu_notifier,
+                          logger,
+                          uint_to_ran_ue_id(msg->ran_ue_ngap_id),
+                          uint_to_amf_ue_id(msg->amf_ue_ngap_id),
+                          ngap_cause_radio_network_t::inconsistent_remote_ue_ngap_id);
+    return;
+  }
+
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(msg->ran_ue_ngap_id)];
 
   if (ue_ctxt.release_scheduled) {
@@ -1121,6 +1131,23 @@ void ngap_impl::on_request_pdu_session_timer_expired(ue_index_t ue_index)
     logger.debug("ue={}: Ignoring expired PDU session setup timer. UE context not found", ue_index);
     return;
   }
+}
+
+bool ngap_impl::validate_consistent_ue_id_pair(ran_ue_id_t ran_ue_ngap_id, amf_ue_id_t amf_ue_ngap_id)
+{
+  if (ue_ctxt_list.contains(amf_ue_ngap_id)) {
+    ngap_ue_context& ue_ctxt = ue_ctxt_list[amf_ue_ngap_id];
+    if (ue_ctxt.ue_ids.ran_ue_id != ran_ue_ngap_id) {
+      logger.warning("Inconsistency detected in UE id pair. ue={} ran_ue={} amf_ue={} rx_ran_ue={} rx_amf_ue={} ",
+                     ue_ctxt.ue_ids.ue_index,
+                     fmt::underlying(ue_ctxt.ue_ids.ran_ue_id),
+                     fmt::underlying(ue_ctxt.ue_ids.amf_ue_id),
+                     fmt::underlying(ran_ue_ngap_id),
+                     fmt::underlying(amf_ue_ngap_id));
+      return false;
+    }
+  }
+  return true;
 }
 
 static auto log_pdu_helper(srslog::basic_logger&         logger,
