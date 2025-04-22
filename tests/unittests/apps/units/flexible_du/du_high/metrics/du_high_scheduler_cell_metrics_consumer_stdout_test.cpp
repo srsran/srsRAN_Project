@@ -8,7 +8,7 @@
  *
  */
 
-#include "apps/units/flexible_o_du/o_du_high/du_high/metrics/du_high_scheduler_cell_metrics_consumers.h"
+#include "apps/units/flexible_o_du/o_du_high/du_high/metrics/consumers/scheduler_metrics_consumers.h"
 
 using namespace srsran;
 
@@ -18,7 +18,7 @@ using namespace srsran;
 /// This is meant to visually and (currently still) manually verify the correct
 /// metrics formatting and plotting.
 
-static scheduler_cell_metrics reports;
+static scheduler_metrics_report reports;
 
 void fill_metrics_single_ue()
 {
@@ -41,7 +41,8 @@ void fill_metrics_single_ue()
   ue.ul_nof_nok    = 1;
   ue.bsr           = 8192;
   ue.dl_bs         = 100000;
-  reports.ue_metrics.push_back(ue);
+  auto& cell       = reports.cells.emplace_back();
+  cell.ue_metrics.push_back(ue);
 }
 
 int main()
@@ -50,7 +51,7 @@ int main()
 
   fill_metrics_single_ue();
 
-  plotter.handle_metric(scheduler_cell_metrics_impl(reports));
+  plotter.handle_metric(reports);
 
   return 0;
 }

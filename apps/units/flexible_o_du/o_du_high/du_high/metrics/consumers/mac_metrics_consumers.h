@@ -10,32 +10,32 @@
 
 #pragma once
 
-#include "du_high_mac_metrics.h"
+#include "srsran/mac/mac_metrics.h"
 #include "srsran/srslog/log_channel.h"
 
 namespace srsran {
 
-/// Consumer for the json MAC metrics.
-class mac_metrics_consumer_json : public app_services::metrics_consumer
+/// JSON consumer for the MAC metrics.
+class mac_metrics_consumer_json
 {
 public:
   explicit mac_metrics_consumer_json(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
 
-  // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  /// Handle the given DU high MAC metrics.
+  void handle_metric(const mac_dl_metric_report& report);
 
 private:
   srslog::log_channel& log_chan;
 };
 
-/// Consumer for the logger MAC metrics.
-class mac_metrics_consumer_log : public app_services::metrics_consumer
+/// Logger consumer for the MAC metrics.
+class mac_metrics_consumer_log
 {
 public:
   explicit mac_metrics_consumer_log(srslog::log_channel& log_chan_) : log_chan(log_chan_) {}
 
-  // See interface for documentation.
-  void handle_metric(const app_services::metrics_set& metric) override;
+  /// Handle the given DU high MAC metrics.
+  void handle_metric(const mac_dl_metric_report& report);
 
 private:
   srslog::log_channel& log_chan;

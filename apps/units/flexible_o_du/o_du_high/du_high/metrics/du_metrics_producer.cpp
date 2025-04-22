@@ -8,12 +8,12 @@
  *
  */
 
-#include "du_high_mac_metrics_producer.h"
-#include "du_high_mac_metrics.h"
+#include "du_metrics_producer.h"
+#include "du_metrics.h"
 
 using namespace srsran;
 
-void mac_metrics_producer_impl::on_new_metrics_report(const mac_metric_report& report)
+void du_metrics_producer_impl::on_new_metric_report(const srs_du::du_metrics_report& report)
 {
-  notifier.on_new_metric(mac_metrics_impl(report));
+  notifier.on_new_metric(du_metrics_impl(report));
 }

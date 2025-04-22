@@ -14,15 +14,12 @@
 #include "du_high/commands/du_high_cmdline_commands.h"
 #include "du_high/commands/du_high_remote_commands.h"
 #include "du_high/du_high_config_translators.h"
-#include "du_high/metrics/du_high_mac_metrics.h"
-#include "du_high/metrics/du_high_mac_metrics_consumers.h"
-#include "du_high/metrics/du_high_mac_metrics_producer.h"
 #include "du_high/metrics/du_high_rlc_metrics.h"
 #include "du_high/metrics/du_high_rlc_metrics_consumers.h"
 #include "du_high/metrics/du_high_rlc_metrics_producer.h"
-#include "du_high/metrics/du_high_scheduler_cell_metrics.h"
-#include "du_high/metrics/du_high_scheduler_cell_metrics_consumers.h"
-#include "du_high/metrics/du_high_scheduler_cell_metrics_producer.h"
+#include "du_high/metrics/du_metrics.h"
+#include "du_high/metrics/du_metrics_consumers.h"
+#include "du_high/metrics/du_metrics_producer.h"
 #include "e2/o_du_high_e2_config_translators.h"
 #include "o_du_high_unit_config.h"
 #include "srsran/du/du_high/du_high.h"
@@ -108,54 +105,6 @@ static void validates_derived_du_params(span<const srs_du::du_cell_config> cells
   }
 }
 
-static scheduler_metrics_notifier* build_scheduler_du_metrics(
-    std::vector<app_services::metrics_config>& unit_metrics,
-    std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>>&
-                                    metrics_subcommands,
-    app_services::metrics_notifier& metrics_notifier,
-    const o_du_high_unit_config&    o_du_high_unit_cfg,
-    e2_du_metrics_notifier&         e2_notifier)
-{
-  const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
-
-  // Scheduler metrics not enabled, do not add metrics configuration.
-  if (!du_hi_cfg.metrics.layers_cfg.enable_scheduler) {
-    return nullptr;
-  }
-
-  // Scheduler cell metrics.
-  auto sched_cell_metrics_gen                     = std::make_unique<scheduler_metrics_producer_impl>(metrics_notifier);
-  scheduler_metrics_notifier*   out               = &(*sched_cell_metrics_gen);
-  app_services::metrics_config& sched_metrics_cfg = unit_metrics.emplace_back();
-  sched_metrics_cfg.metric_name                   = scheduler_cell_metrics_property_impl().name();
-  sched_metrics_cfg.callback                      = sched_cell_metrics_gen->get_callback();
-  sched_metrics_cfg.producers.push_back(std::move(sched_cell_metrics_gen));
-
-  // Create the consumer for STDOUT. Also create the command for toggle the metrics.
-  auto metrics_stdout = std::make_unique<scheduler_cell_metrics_consumer_stdout>();
-  metrics_subcommands.push_back(std::make_unique<du_high_metrics_subcommand_stdout>(*metrics_stdout));
-  sched_metrics_cfg.consumers.push_back(std::move(metrics_stdout));
-
-  const app_helpers::metrics_config& metrics_cfg = du_hi_cfg.metrics.common_metrics_cfg;
-  if (metrics_cfg.enable_log_metrics) {
-    sched_metrics_cfg.consumers.push_back(
-        std::make_unique<scheduler_cell_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
-  }
-
-  // Connect JSON metrics reporter to DU Scheduler UE metrics.
-  if (metrics_cfg.json_config.enable_json_metrics) {
-    sched_metrics_cfg.consumers.push_back(
-        std::make_unique<scheduler_cell_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
-  }
-
-  // Connect E2 agent to DU Scheduler UE metrics.
-  if (o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
-    sched_metrics_cfg.consumers.push_back(std::make_unique<scheduler_cell_metrics_consumer_e2>(e2_notifier));
-  }
-
-  return out;
-}
-
 static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metrics_config>& metrics,
                                                   app_services::metrics_notifier&            metrics_notifier,
                                                   const o_du_high_unit_config&               o_du_high_unit_cfg,
@@ -197,37 +146,51 @@ static rlc_metrics_notifier* build_rlc_du_metrics(std::vector<app_services::metr
   return out;
 }
 
-static mac_metrics_notifier* build_mac_du_metrics(std::vector<app_services::metrics_config>& metrics,
-                                                  app_services::metrics_notifier&            metrics_notifier,
-                                                  const o_du_high_unit_config&               o_du_high_unit_cfg)
+static srs_du::du_metrics_notifier*
+build_du_metrics(std::vector<app_services::metrics_config>& metrics,
+                 std::vector<std::unique_ptr<app_services::toggle_stdout_metrics_app_command::metrics_subcommand>>&
+                                                 metrics_subcommands,
+                 app_services::metrics_notifier& metrics_notifier,
+                 const o_du_high_unit_config&    o_du_high_unit_cfg,
+                 e2_du_metrics_notifier&         e2_notifier)
 {
   const du_high_unit_config& du_hi_cfg = o_du_high_unit_cfg.du_high_cfg.config;
 
-  // Scheduler metrics not enabled, do not add metrics configuration.
-  if (!du_hi_cfg.metrics.layers_cfg.enable_mac) {
+  // Scheduler or MAC metrics not enabled, do not create consumers and producers.
+  if (!du_hi_cfg.metrics.layers_cfg.enable_mac && !du_hi_cfg.metrics.layers_cfg.enable_scheduler) {
     return nullptr;
   }
 
-  mac_metrics_notifier* out = nullptr;
+  srs_du::du_metrics_notifier* out = nullptr;
 
-  app_services::metrics_config& mac_metrics_cfg = metrics.emplace_back();
-  mac_metrics_cfg.metric_name                   = mac_metrics_properties_impl().name();
-  mac_metrics_cfg.callback                      = mac_metrics_callback;
+  app_services::metrics_config& du_metrics_cfg = metrics.emplace_back();
+  du_metrics_cfg.metric_name                   = du_metrics_properties_impl().name();
+  du_metrics_cfg.callback                      = du_metrics_callback;
 
   // Fill the generator.
-  auto mac_metric_gen = std::make_unique<mac_metrics_producer_impl>(metrics_notifier);
-  out                 = &(*mac_metric_gen);
-  mac_metrics_cfg.producers.push_back(std::move(mac_metric_gen));
+  auto du_metric_gen = std::make_unique<du_metrics_producer_impl>(metrics_notifier);
+  out                = &(*du_metric_gen);
+  du_metrics_cfg.producers.push_back(std::move(du_metric_gen));
+
+  // Create the consumer for STDOUT. Also create the command for toggle the metrics.
+  auto metrics_stdout = std::make_unique<du_metrics_consumer_stdout>();
+  metrics_subcommands.push_back(std::make_unique<du_high_metrics_subcommand_stdout>(*metrics_stdout));
+  du_metrics_cfg.consumers.push_back(std::move(metrics_stdout));
 
   const app_helpers::metrics_config& metrics_config = du_hi_cfg.metrics.common_metrics_cfg;
   if (metrics_config.enable_log_metrics) {
-    mac_metrics_cfg.consumers.push_back(
-        std::make_unique<mac_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
+    du_metrics_cfg.consumers.push_back(
+        std::make_unique<du_metrics_consumer_log>(app_helpers::fetch_logger_metrics_log_channel()));
   }
 
   if (metrics_config.json_config.enable_json_metrics) {
-    mac_metrics_cfg.consumers.push_back(
-        std::make_unique<mac_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
+    du_metrics_cfg.consumers.push_back(
+        std::make_unique<du_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
+  }
+
+  // Connect E2 agent to DU Scheduler UE metrics.
+  if (o_du_high_unit_cfg.e2_cfg.base_cfg.enable_unit_e2) {
+    du_metrics_cfg.consumers.push_back(std::make_unique<du_metrics_consumer_e2>(e2_notifier));
   }
 
   return out;
@@ -240,21 +203,11 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
   srs_du::du_high_configuration& du_hi_cfg        = o_du_high_cfg.du_hi;
   const du_high_unit_config&     du_high_unit_cfg = o_du_high_unit_cfg.du_high_cfg.config;
 
-  // DU-high configuration.
-  du_hi_cfg.ran.gnb_du_id        = du_high_unit_cfg.gnb_du_id;
-  du_hi_cfg.ran.gnb_du_name      = fmt::format("srsdu{}", fmt::underlying(du_hi_cfg.ran.gnb_du_id));
-  du_hi_cfg.ran.cells            = generate_du_cell_config(du_high_unit_cfg);
-  du_hi_cfg.metrics.enable_mac   = o_du_high_unit_cfg.du_high_cfg.config.metrics.layers_cfg.enable_mac;
-  du_hi_cfg.metrics.enable_rlc   = o_du_high_unit_cfg.du_high_cfg.config.metrics.layers_cfg.enable_rlc;
-  du_hi_cfg.metrics.enable_sched = o_du_high_unit_cfg.du_high_cfg.config.metrics.layers_cfg.enable_scheduler;
-  du_hi_cfg.metrics.period = std::chrono::milliseconds{o_du_high_unit_cfg.du_high_cfg.config.metrics.du_report_period};
+  // Generate DU high config from the unit config.
+  generate_du_high_config(du_hi_cfg, du_high_unit_cfg);
+
   // Validates the derived parameters.
   validates_derived_du_params(du_hi_cfg.ran.cells);
-  du_hi_cfg.ran.srbs                  = generate_du_srb_config(du_high_unit_cfg);
-  du_hi_cfg.ran.qos                   = generate_du_qos_config(du_high_unit_cfg);
-  du_hi_cfg.ran.mac_cfg               = generate_mac_expert_config(du_high_unit_cfg);
-  du_hi_cfg.ran.mac_cfg.initial_crnti = to_rnti(0x4601);
-  du_hi_cfg.ran.sched_cfg             = generate_scheduler_expert_config(du_high_unit_cfg);
 
   srs_du::du_high_dependencies& du_hi_deps = dependencies.o_du_hi_dependencies.du_hi;
   du_hi_deps.exec_mapper                   = &dependencies.execution_mapper;
@@ -279,20 +232,16 @@ o_du_high_unit srsran::make_o_du_high_unit(const o_du_high_unit_config&  o_du_hi
   // DU high metrics.
   o_du_high_unit odu_unit;
 
-  du_hi_deps.sched_metrics_notifier =
-      build_scheduler_du_metrics(odu_unit.metrics,
-                                 odu_unit.commands.cmdline.metrics_subcommands,
-                                 dependencies.metrics_notifier,
-                                 o_du_high_unit_cfg,
-                                 dependencies.e2_metric_connectors.get_e2_metric_notifier(0));
+  du_hi_deps.du_notifier = build_du_metrics(odu_unit.metrics,
+                                            odu_unit.commands.cmdline.metrics_subcommands,
+                                            dependencies.metrics_notifier,
+                                            o_du_high_unit_cfg,
+                                            dependencies.e2_metric_connectors.get_e2_metric_notifier(0));
 
   du_hi_deps.rlc_metrics_notif = build_rlc_du_metrics(odu_unit.metrics,
                                                       dependencies.metrics_notifier,
                                                       o_du_high_unit_cfg,
                                                       dependencies.e2_metric_connectors.get_e2_metric_notifier(0));
-
-  du_hi_deps.mac_metrics_notif =
-      build_mac_du_metrics(odu_unit.metrics, dependencies.metrics_notifier, o_du_high_unit_cfg);
 
   // Configure test mode
   if (du_high_unit_cfg.test_mode_cfg.test_ue.rnti != rnti_t::INVALID_RNTI) {

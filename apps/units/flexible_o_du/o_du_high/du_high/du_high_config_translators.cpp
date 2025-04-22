@@ -13,6 +13,7 @@
 #include "du_high_config.h"
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
+#include "srsran/du/du_high/du_high_configuration.h"
 #include "srsran/du/du_high/du_manager/cbs/cbs_encoder.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/du/du_update_config_helpers.h"
@@ -882,7 +883,7 @@ static rlc_am_config generate_du_rlc_am_config(const du_high_unit_rlc_am_config&
   return out_rlc;
 }
 
-std::map<five_qi_t, srs_du::du_qos_config> srsran::generate_du_qos_config(const du_high_unit_config& config)
+static std::map<five_qi_t, srs_du::du_qos_config> generate_du_qos_config(const du_high_unit_config& config)
 {
   std::map<five_qi_t, srs_du::du_qos_config> out_cfg = {};
   if (config.qos_cfg.empty()) {
@@ -934,7 +935,7 @@ std::map<five_qi_t, srs_du::du_qos_config> srsran::generate_du_qos_config(const 
   return out_cfg;
 }
 
-std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const du_high_unit_config& config)
+static std::map<srb_id_t, srs_du::du_srb_config> generate_du_srb_config(const du_high_unit_config& config)
 {
   std::map<srb_id_t, srs_du::du_srb_config> srb_cfg;
 
@@ -977,7 +978,7 @@ std::map<srb_id_t, srs_du::du_srb_config> srsran::generate_du_srb_config(const d
   return srb_cfg;
 }
 
-mac_expert_config srsran::generate_mac_expert_config(const du_high_unit_config& config)
+static mac_expert_config generate_mac_expert_config(const du_high_unit_config& config)
 {
   mac_expert_config out_cfg = {};
   for (const auto& cell : config.cells_cfg) {
@@ -989,7 +990,7 @@ mac_expert_config srsran::generate_mac_expert_config(const du_high_unit_config& 
   return out_cfg;
 }
 
-scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_unit_config& config)
+static scheduler_expert_config generate_scheduler_expert_config(const du_high_unit_config& config)
 {
   scheduler_expert_config out_cfg = config_helpers::make_default_scheduler_expert_config();
 
@@ -1077,6 +1078,26 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   }
 
   return out_cfg;
+}
+
+void srsran::generate_du_high_config(srs_du::du_high_configuration& du_hi_cfg,
+                                     const du_high_unit_config&     du_high_unit_cfg)
+{
+  // DU-high configuration.
+  du_hi_cfg.ran.gnb_du_id        = du_high_unit_cfg.gnb_du_id;
+  du_hi_cfg.ran.gnb_du_name      = fmt::format("srsdu{}", fmt::underlying(du_hi_cfg.ran.gnb_du_id));
+  du_hi_cfg.ran.cells            = generate_du_cell_config(du_high_unit_cfg);
+  du_hi_cfg.metrics.enable_mac   = du_high_unit_cfg.metrics.layers_cfg.enable_mac;
+  du_hi_cfg.metrics.enable_rlc   = du_high_unit_cfg.metrics.layers_cfg.enable_rlc;
+  du_hi_cfg.metrics.enable_sched = du_high_unit_cfg.metrics.layers_cfg.enable_scheduler;
+  du_hi_cfg.metrics.period       = std::chrono::milliseconds{du_high_unit_cfg.metrics.du_report_period};
+
+  // Validates the derived parameters.
+  du_hi_cfg.ran.srbs                  = generate_du_srb_config(du_high_unit_cfg);
+  du_hi_cfg.ran.qos                   = generate_du_qos_config(du_high_unit_cfg);
+  du_hi_cfg.ran.mac_cfg               = generate_mac_expert_config(du_high_unit_cfg);
+  du_hi_cfg.ran.mac_cfg.initial_crnti = to_rnti(0x4601);
+  du_hi_cfg.ran.sched_cfg             = generate_scheduler_expert_config(du_high_unit_cfg);
 }
 
 void srsran::ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, srs_du::du_srb_config>& srb_cfgs)
