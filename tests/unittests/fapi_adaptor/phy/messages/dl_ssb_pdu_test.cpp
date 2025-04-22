@@ -163,7 +163,7 @@ TEST(fapi_to_phy_ssb_conversion_test, valid_pdu_conversion_success)
                 ASSERT_EQ(pdu.bch_payload[31], (ssb_idx >> 3U) & 1U);
               } else {
                 // 3rd LSB set to MSB of SSB subcarrier offset. 2nd and 1st bits reserved.
-                ASSERT_EQ(pdu.bch_payload[29], (ssb_subcarrier_offset >> 5U) & 1U);
+                ASSERT_EQ(pdu.bch_payload[29], (ssb_subcarrier_offset >> 4U) & 1U);
                 ASSERT_EQ(pdu.bch_payload[30], 0);
                 ASSERT_EQ(pdu.bch_payload[31], 0);
               }

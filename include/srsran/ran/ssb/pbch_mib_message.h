@@ -37,8 +37,6 @@ struct pbch_mib_message {
   bool cell_barred;
   /// Field \e intraFreqReselection.
   bool intrafreq_reselection;
-  /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS38.213 Section 4.1.
-  uint8_t L_max;
   /// SSB opportunity index in a 5ms burst.
   uint8_t ssb_block_index;
 };

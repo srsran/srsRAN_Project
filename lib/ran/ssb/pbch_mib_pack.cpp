@@ -12,7 +12,7 @@
 
 using namespace srsran;
 
-uint32_t srsran::pbch_mib_pack(const pbch_mib_message& msg)
+uint32_t srsran::pbch_mib_pack(const pbch_mib_message& msg, unsigned L_max)
 {
   uint32_t payload = 0;
 
@@ -52,12 +52,12 @@ uint32_t srsran::pbch_mib_pack(const pbch_mib_message& msg)
   // Half radio frame bit.
   payload |= (msg.hrf << 3U);
 
-  if (msg.L_max == 64) {
+  if (L_max == 64) {
     // Pack the 6th, 5th and 4th bits of SS/PBCH block index.
     payload |= ((msg.ssb_block_index >> 3U) & 7U);
   } else {
     // 3rd LSB set to MSB of the SSB subcarrier offset. 2nd and 1st bits are reserved.
-    payload |= (((msg.subcarrier_offset.value() >> 7U) & 1U) << 2U);
+    payload |= (((msg.subcarrier_offset.value() >> 4U) & 1U) << 2U);
   }
 
   return payload;

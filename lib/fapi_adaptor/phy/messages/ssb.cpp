@@ -58,11 +58,10 @@ generate_bch_payload(const fapi::dl_ssb_pdu& fapi_pdu, uint32_t sfn, bool hrf, s
                           .pdcch_config_sib1     = mib.pdcch_config_sib1,
                           .cell_barred           = mib.cell_barred,
                           .intrafreq_reselection = mib.intrafreq_reselection,
-                          .L_max                 = fapi_pdu.ssb_maintenance_v3.L_max,
                           .ssb_block_index       = fapi_pdu.ssb_block_index};
 
   // Generate payload.
-  return pbch_mib_pack(msg);
+  return pbch_mib_pack(msg, fapi_pdu.ssb_maintenance_v3.L_max);
 }
 
 /// \brief Fills the contents of the BCH payload.
