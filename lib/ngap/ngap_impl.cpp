@@ -369,7 +369,8 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
   }
 
   // Check wether another context doesn't exist already for the same AMF UE ID with mismatched RAN UE ID.
-  if (validate_consistent_ue_id_pair(uint_to_ran_ue_id(msg->ran_ue_ngap_id), uint_to_amf_ue_id(msg->amf_ue_ngap_id))) {
+  if (not validate_consistent_ue_id_pair(uint_to_ran_ue_id(msg->ran_ue_ngap_id),
+                                         uint_to_amf_ue_id(msg->amf_ue_ngap_id))) {
     send_error_indication(*tx_pdu_notifier,
                           logger,
                           uint_to_ran_ue_id(msg->ran_ue_ngap_id),

@@ -193,3 +193,35 @@ TEST_F(ngap_nas_message_routine_test, when_amf_ue_id_is_max_size_then_its_not_cr
   ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.ul_nas_transport()->amf_ue_ngap_id,
             amf_ue_id_to_uint(amf_ue_id_t::max));
 }
+
+/// Test UE ID pair consistency
+TEST_F(ngap_nas_message_routine_test, when_amf_ue_id_pair_is_incosistent)
+{
+  // Test preamble
+  ue_index_t ue_index1 = this->start_procedure();
+  ue_index_t ue_index2 = this->start_procedure();
+
+  auto&    ue1 = test_ues.at(ue_index1);
+  auto&    ue2 = test_ues.at(ue_index2);
+  unsigned amf_id{};
+
+  // Inject DL NAS transport message from AMF on UE 1
+  ngap_message dl_nas_transport =
+      generate_downlink_nas_transport_message(uint_to_amf_ue_id(amf_id), ue1.ran_ue_id.value());
+  ngap->handle_message(dl_nas_transport);
+
+  // Check that RRC notifier was called
+  ASSERT_TRUE(was_dl_nas_transport_forwarded(ue1));
+
+  // Inject DL NAS transport message with valid RAN UE ID, but wrong AMF UE ID
+  ngap_message inconsistent_dl_nas_transport =
+      generate_downlink_nas_transport_message(uint_to_amf_ue_id(amf_id), ue2.ran_ue_id.value());
+  ngap->handle_message(inconsistent_dl_nas_transport);
+
+  // Check that RRC notifier was called
+  ASSERT_FALSE(was_dl_nas_transport_forwarded(ue2));
+
+  ASSERT_TRUE(was_error_indication_sent());
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.error_ind()->cause.radio_network(),
+            asn1::ngap::cause_radio_network_e::options::inconsistent_remote_ue_ngap_id);
+}
