@@ -122,6 +122,8 @@ async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(unsigned max
   auto& ng_setup_request = ngap_msg.pdu.init_msg().value.ng_setup_request();
   fill_asn1_ng_setup_request(ng_setup_request, context);
 
+  logger.info("ngap_impl -> handle_ng_setup_request");
+  
   return launch_async<ng_setup_procedure>(
       context, ngap_msg, max_setup_retries, *tx_pdu_notifier, ev_mng, timer_factory{timers, ctrl_exec}, logger);
 }
