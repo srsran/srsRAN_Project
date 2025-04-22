@@ -9,44 +9,49 @@
 """
 Write RAM usage to a file until the process is killed
 """
-import time
 import os
 import sys
+import time
+
 import psutil
 
-def get_cgroup_memory_path():
+
+def _get_cgroup_memory_path():
     try:
-        with open('/proc/self/cgroup', 'r') as f:
+        with open("/proc/self/cgroup", "r", encoding="utf-8") as f:
             lines = f.readlines()
         for line in lines:
-            parts = line.strip().split(':')
+            parts = line.strip().split(":")
             if len(parts) == 3:
                 cgroup_path = parts[2].strip()
                 memory_path = f"/sys/fs/cgroup{cgroup_path}/memory.current"
                 if os.path.exists(memory_path):
                     return memory_path
         return None
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(f"Error to read /proc/self/cgroup: {e}")
         return None
 
-def get_memory_usage(memory_path):
+
+def _get_memory_usage(memory_path):
     try:
-        with open(memory_path, 'r') as f:
+        with open(memory_path, "r", encoding="utf-8") as f:
             memory_usage = int(f.read().strip())
         return memory_usage
     except FileNotFoundError:
         print(f"The file {memory_path} not found. Make sure that you use cgroups v2.")
         return None
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         print(f"Error to read {memory_path}: {e}")
         return None
+
 
 def _bytes_to_gb(size_in_bytes):
     gb = size_in_bytes / (1024**3)
     return gb
 
-def write_mem_baremetal():
+
+def _write_mem_baremetal():
     filename = sys.argv[1]
     peak_ram_usage = 0
 
@@ -69,8 +74,9 @@ def write_mem_baremetal():
 
         time.sleep(0.5)
 
-def write_mem_kubernetes():
-    memory_path = get_cgroup_memory_path()
+
+def _write_mem_kubernetes():
+    memory_path = _get_cgroup_memory_path()
     if not memory_path:
         print("Not cgroup memory path.")
         return
@@ -87,7 +93,7 @@ def write_mem_kubernetes():
         peak_ram_usage = 0
 
     while True:
-        current_ram_usage = get_memory_usage(memory_path)
+        current_ram_usage = _get_memory_usage(memory_path)
         if current_ram_usage is not None:
             peak_ram_usage = max(peak_ram_usage, current_ram_usage)
 
@@ -101,8 +107,8 @@ def write_mem_kubernetes():
 if __name__ == "__main__":
     try:
         if len(sys.argv) == 3 and sys.argv[2] == "baremetal":
-            write_mem_baremetal()
+            _write_mem_baremetal()
         else:
-            write_mem_kubernetes()
-    except Exception as e:
+            _write_mem_kubernetes()
+    except Exception as e:  # pylint: disable=broad-except
         print(f"Error: {e}")
