@@ -39,7 +39,11 @@ using namespace srsran;
 // Pre-generated orthogonal cover code.
 static const pucch_orthogonal_sequence_format1 occ;
 
-static void validate_config(const pucch_detector::format1_configuration& config)
+// The number of available initial cyclic shifts is the same as the number of RE per PRB, i.e., 12.
+static constexpr unsigned NSHIFTS = pucch_constants::format1_initial_cyclic_shift_range.stop();
+
+static void validate_config(const pucch_detector::format1_configuration& config,
+                            const pucch_format1_map<unsigned>&           mux_nof_harq_ack)
 {
   srsran_assert(config.start_symbol_index <= 10,
                 "Setting {} as the first PUCCH symbol index, but only values between 0 and 10 are valid.",
@@ -55,32 +59,31 @@ static void validate_config(const pucch_detector::format1_configuration& config)
   srsran_assert(config.starting_prb <= 274,
                 "Setting {} as the PRB allocated to PUCCH, but only values between 0 and 274 are valid.",
                 config.starting_prb);
-  srsran_assert(config.time_domain_occ <= 6,
-                "Setting {} as the time-domain OCC index, but only values between 0 and 6 are valid.",
-                config.time_domain_occ);
+  srsran_assert(config.n_id <= 1023,
+                "Initializing the pseudorandom generator with {}, but only values between 0 and 1023 are valid.",
+                config.n_id);
   if (config.second_hop_prb.has_value()) {
     srsran_assert(*config.second_hop_prb <= 274,
                   "Setting {} as the PRB allocated to PUCCH after frequency hopping, but only values between 0 and 274 "
                   "are valid.",
                   *config.second_hop_prb);
-    srsran_assert(config.time_domain_occ < config.nof_symbols / 4U,
-                  "Cannot have OCCI {} with {} allocated OFDM symbols and frequency hopping enabled.",
-                  config.time_domain_occ,
-                  config.nof_symbols);
-  } else {
-    srsran_assert(config.time_domain_occ < config.nof_symbols / 2U,
-                  "Cannot have OCCI {} with {} allocated OFDM symbols.",
-                  config.time_domain_occ,
-                  config.nof_symbols);
   }
-  srsran_assert(config.n_id <= 1023,
-                "Initializing the pseudorandom generator with {}, but only values between 0 and 1023 are valid.",
-                config.n_id);
-  srsran_assert(config.nof_harq_ack <= 2, "At most two ACK bits - requested {}.", config.nof_harq_ack);
+  unsigned symbol_occ_ratio = (config.second_hop_prb.has_value() ? 4U : 2U);
+  for (const auto& this_pucch : mux_nof_harq_ack) {
+    srsran_assert(this_pucch.initial_cyclic_shift <= 11,
+                  "Setting {} as the initial cyclic shift, but only values between 0 and 11 are valid.",
+                  this_pucch.initial_cyclic_shift);
+    srsran_assert(this_pucch.time_domain_occ <= 6,
+                  "Setting {} as the time-domain OCC index, but only values between 0 and 6 are valid.",
+                  this_pucch.time_domain_occ);
+    srsran_assert(config.time_domain_occ < config.nof_symbols / symbol_occ_ratio,
+                  "Cannot have OCCI {} with {} allocated OFDM symbols and frequency hopping {}.",
+                  config.time_domain_occ,
+                  config.nof_symbols,
+                  (config.second_hop_prb.has_value() ? "enabled" : "disabled"));
+    srsran_assert(this_pucch.value <= 2, "At most two ACK bits - requested {}.", this_pucch.value);
+  }
 }
-
-// The number of available initial cyclic shifts is the same as the number of RE per PRB, i.e., 12.
-static constexpr unsigned NSHIFTS = pucch_constants::format1_initial_cyclic_shift_range.stop();
 
 /// \brief Detects the transmitted symbol.
 ///
@@ -144,17 +147,7 @@ pucch_detector_format1::detect(const resource_grid_reader&                  grid
                                const pucch_format1_map<unsigned>&           mux_nof_harq_ack)
 {
   // Validate the configuration of all multiplexed transmissions.
-  pucch_detector::format1_configuration conf_tmp = config;
-
-  // for (auto this_pucch_nof_harq_ack = mux_nof_harq_ack.begin(), end_pucch_nof_harq_ack = mux_nof_harq_ack.end();
-  //      this_pucch_nof_harq_ack != end_pucch_nof_harq_ack;
-  //      ++this_pucch_nof_harq_ack) {
-  for (const auto& this_pucch_nof_harq_ack : mux_nof_harq_ack) {
-    conf_tmp.initial_cyclic_shift = this_pucch_nof_harq_ack.initial_cyclic_shift;
-    conf_tmp.time_domain_occ      = this_pucch_nof_harq_ack.time_domain_occ;
-    conf_tmp.nof_harq_ack         = this_pucch_nof_harq_ack.value;
-    validate_config(conf_tmp);
-  }
+  validate_config(config, mux_nof_harq_ack);
 
   // Set the boolean mask of OFDM symbols carrying DM-RS (every other allocated symbol starting from the first).
   dmrs_mask.reset();
