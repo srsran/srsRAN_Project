@@ -75,8 +75,8 @@ variables:
     RUNNER_AFTER_SCRIPT_TIMEOUT: 20m
     KUBERNETES_CPU_REQUEST: 1
     KUBERNETES_CPU_LIMIT: 2
-    KUBERNETES_MEMORY_REQUEST: 2Gi
-    KUBERNETES_MEMORY_LIMIT: 2Gi
+    KUBERNETES_MEMORY_REQUEST: 3Gi
+    KUBERNETES_MEMORY_LIMIT: 3Gi
     KUBERNETES_EPHEMERAL_STORAGE_REQUEST: "20G"
     KUBERNETES_EPHEMERAL_STORAGE_LIMIT: "20G"
     <<: *setup_kube_variables
@@ -118,7 +118,7 @@ variables:
     # Modify request to shared the complete folder with the gnb container
     - |
       if [ "$CI_JOB_NAME_SLUG" != "smoke-zmq" ] && [ "$TESTBED" != "zmq_deb" ]; then
-        yq -i '(.[] | select(.type == "gnb") | .shared_files) = [{"local_path": "../../", "remote_path": env(SRSRANDIR), "is_executable": false}]' ${SRSRANDIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml
+        yq -i '(.[] | select(.type == "gnb") | .shared_files) = [{"local_path": "../../", "remote_path": env(SRSRANDIR), "is_executable": false}]' ${SRSRANDIR}/.gitlab/ci/e2e/${TESTBED}.yml
       fi
     # Set username for retina
     - |
@@ -126,7 +126,7 @@ variables:
       export LOGNAME=ci_${GROUP}
     # Run Retina
     - |
-      E2E_CMD="retina-launcher ${RETINA_LAUNCHER_ARGS} --retina-request=${SRSRANDIR}/.gitlab/ci/e2e/retina_request_${TESTBED}.yml ${PYTEST_ARGS} -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_PARAM_ARGS}"
+      E2E_CMD="retina-launcher ${RETINA_LAUNCHER_ARGS} --retina-request=${SRSRANDIR}/.gitlab/ci/e2e/${TESTBED}.yml ${PYTEST_ARGS} -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_PARAM_ARGS}"
       echo "${E2E_CMD}"
       eval $E2E_CMD
   after_script:

@@ -39,6 +39,8 @@ class uplink_request_handler;
 class ru_uplink_plane_handler_proxy : public ru_uplink_plane_handler
 {
 public:
+  ru_uplink_plane_handler_proxy() = default;
+
   explicit ru_uplink_plane_handler_proxy(std::vector<ofh::uplink_request_handler*> sectors_) :
     sectors(std::move(sectors_))
   {

@@ -27,6 +27,7 @@
 /// and compares the resulting bits (SR or HARQ-ACK) with the expected ones.
 
 #include "pucch_detector_test_data.h"
+#include "srsran/phy/generic_functions/generic_functions_factories.h"
 #include "srsran/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/phy/upper/equalization/equalization_factories.h"
@@ -67,8 +68,9 @@ protected:
           create_low_papr_sequence_collection_sw_factory(low_papr_gen);
       std::shared_ptr<pseudo_random_generator_factory> pseudorandom = create_pseudo_random_generator_sw_factory();
       std::shared_ptr<channel_equalizer_factory>       equalizer    = create_channel_equalizer_generic_factory();
+      std::shared_ptr<dft_processor_factory>           dft          = create_dft_processor_factory_fftw_slow();
       std::shared_ptr<pucch_detector_factory>          detector_factory =
-          create_pucch_detector_factory_sw(low_papr_col, pseudorandom, equalizer);
+          create_pucch_detector_factory_sw(low_papr_col, pseudorandom, equalizer, dft);
       report_fatal_error_if_not(detector_factory, "Failed to create factory.");
 
       detector_test = detector_factory->create();
@@ -83,6 +85,8 @@ protected:
       csi.resize(ch_dims);
     }
   }
+
+  static void TearDownTestSuite() { detector_test.reset(); }
 
   static std::unique_ptr<pucch_detector> detector_test;
   static channel_estimate                csi;

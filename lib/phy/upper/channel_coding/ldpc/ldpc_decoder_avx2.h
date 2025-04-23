@@ -32,6 +32,9 @@ namespace srsran {
 /// LDPC decoder implementation based on AVX2 intrinsics.
 class ldpc_decoder_avx2 : public ldpc_decoder_impl
 {
+public:
+  ldpc_decoder_avx2();
+
 private:
   // See ldpc_decoder_impl for the documentation.
   void specific_init() override;
@@ -62,6 +65,9 @@ private:
                                  span<const uint8_t>              sign_prod_var_to_check,
                                  unsigned                         shift,
                                  unsigned                         var_node) override;
+
+  /// Auxiliary buffer to store the rotated check-to-variable messages.
+  std::vector<log_likelihood_ratio> help_check_to_var;
 
   /// Number of AVX2 vectors needed to cover a lifted node.
   unsigned node_size_avx2 = 0;

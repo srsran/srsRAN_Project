@@ -70,7 +70,7 @@ public:
   unsigned get_recommended_pusch_tpmi(unsigned nof_layers) const;
 
   /// \brief Fetches the precoding codebook to be used in DL based on reported PMI and the chosen nof layers.
-  std::optional<pdsch_precoding_info> get_precoding(unsigned chosen_nof_layers, prb_interval pdsch_prbs) const
+  std::optional<pdsch_precoding_info> get_precoding(unsigned chosen_nof_layers, unsigned nof_rbs) const
   {
     srsran_assert(chosen_nof_layers <= nof_dl_ports, "Invalid number of layers chosen");
     std::optional<pdsch_precoding_info> precoding_info;
@@ -79,7 +79,7 @@ public:
       return precoding_info;
     }
     precoding_info.emplace();
-    precoding_info->nof_rbs_per_prg = pdsch_prbs.length();
+    precoding_info->nof_rbs_per_prg = nof_rbs;
     precoding_info->prg_infos.emplace_back(recommended_prg_info[nof_layers_to_index(chosen_nof_layers)]);
     return precoding_info;
   }

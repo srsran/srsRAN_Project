@@ -747,7 +747,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
   auto builder_params           = create_custom_cell_cfg_builder_params(params.duplx_mode);
   builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz5;
   if (params.duplx_mode == duplex_mode::TDD) {
-    builder_params.channel_bw_mhz = srsran::bs_channel_bandwidth::MHz10;
+    builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz10;
   }
   builder_params.band = band_helper::get_band_from_dl_arfcn(builder_params.dl_f_ref_arfcn);
 
@@ -787,9 +787,11 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
     notify_ul_bsr_from_ue(to_du_ue_index(idx), ul_buffer_size, lcgid);
   }
 
-  bool     first_pdsch_scheduled = false;
-  bool     first_pusch_scheduled = false;
-  unsigned nof_cqi_reported      = 0;
+  bool           first_pdsch_scheduled    = false;
+  bool           first_pusch_scheduled    = false;
+  unsigned       nof_cqi_reported         = 0;
+  unsigned       all_ues_rx_csi_run_index = max_test_run_slots;
+  const unsigned expected_k               = 4;
 
   for (unsigned i = 0; i != max_test_run_slots; ++i) {
     run_slot();
@@ -811,6 +813,9 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
       if (pucch.format() == pucch_format::FORMAT_2 and pucch.csi_rep_cfg.has_value()) {
         // For now CSI report is only sent in PUCCH format 2.
         ++nof_cqi_reported;
+        if (nof_cqi_reported == params.nof_ues) {
+          all_ues_rx_csi_run_index = i + expected_k;
+        }
       }
     }
     for (const auto& pusch : bench->sched_res->ul.puschs) {
@@ -818,6 +823,9 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
         uci_ind.ucis.push_back(build_pusch_uci_pdu(pusch));
         if (pusch.uci->csi.has_value()) {
           ++nof_cqi_reported;
+          if (nof_cqi_reported == params.nof_ues) {
+            all_ues_rx_csi_run_index = i + expected_k;
+          }
         }
       }
       crc_ind.crcs.push_back(
@@ -855,7 +863,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
     }
 
     // Ensure there is at least one PDSCH scheduled in each DL slot and one PUSCH scheduled in each UL slot.
-    if (first_pusch_scheduled and first_pdsch_scheduled and nof_cqi_reported >= params.nof_ues) {
+    if (first_pusch_scheduled and first_pdsch_scheduled and i >= all_ues_rx_csi_run_index) {
       if (bench->cell_cfg.tdd_cfg_common.has_value()) {
         if (has_active_tdd_dl_symbols(bench->cell_cfg.tdd_cfg_common.value(), current_slot.slot_index())) {
           ASSERT_GE(bench->sched_res->dl.ue_grants.size(), 1) << fmt::format("Failed at slot: {}", current_slot);

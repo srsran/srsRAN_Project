@@ -381,7 +381,8 @@ cf_t det_channel_matrix<1>(const cf_t in[1][1])
 
 // Calculate the mean layer SINR based on the channel matrix and noise variance.
 template <unsigned NofLayers>
-float calculate_mean_layer_sinr(const precoding_weight_matrix& channel_weights, float noise_variance)
+std::array<float, NofLayers> calculate_mean_layer_sinr(const precoding_weight_matrix& channel_weights,
+                                                       float                          noise_variance)
 {
   // Calculate Gram Matrix.
   cf_t gram_matrix[NofLayers][NofLayers];
@@ -409,7 +410,7 @@ float calculate_mean_layer_sinr(const precoding_weight_matrix& channel_weights, 
     layer_sinr[i_layer] = 1.0F / (inv_diagonal[i_layer] * noise_variance) - 1.0F;
   }
 
-  return srsvec::mean(layer_sinr);
+  return layer_sinr;
 }
 
 static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_1layer(const srs_channel_matrix& channel,
@@ -481,7 +482,8 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_1layer(const srs_c
     }
   }
 
-  return {best_tpmi, convert_power_to_dB(best_sinr)};
+  float sinr_dB = convert_power_to_dB(best_sinr);
+  return {.tpmi = best_tpmi, .avg_sinr_dB = sinr_dB, .sinr_dB_layer = {sinr_dB}};
 }
 
 static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_2layer(const srs_channel_matrix& channel,
@@ -520,8 +522,9 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_2layer(const srs_c
     }
   }
 
-  float    best_sinr = -std::numeric_limits<float>::infinity();
-  unsigned best_tpmi = 0;
+  static_vector<float, pusch_constants::MAX_NOF_LAYERS> best_sinr_layer;
+  float                                                 best_sinr = -std::numeric_limits<float>::infinity();
+  unsigned                                              best_tpmi = 0;
 
   // Iterate possible TPMIs.
   for (unsigned tpmi = 0; tpmi != tpmi_end; ++tpmi) {
@@ -532,14 +535,21 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_2layer(const srs_c
     precoding_weight_matrix channel_weights = product_channel_weight(channel, weights);
 
     // Calculate the average SINR.
-    float sinr = calculate_mean_layer_sinr<nof_layers>(channel_weights, noise_variance);
-    if (sinr > best_sinr) {
-      best_sinr = sinr;
-      best_tpmi = tpmi;
+    auto  layer_sinr = calculate_mean_layer_sinr<nof_layers>(channel_weights, noise_variance);
+    float avg_sinr   = srsvec::mean(layer_sinr);
+    if (avg_sinr > best_sinr) {
+      best_sinr_layer = {layer_sinr.begin(), layer_sinr.end()};
+      best_sinr       = avg_sinr;
+      best_tpmi       = tpmi;
     }
   }
 
-  return {best_tpmi, convert_power_to_dB(best_sinr)};
+  // Convert SINR to dB.
+  std::transform(best_sinr_layer.begin(), best_sinr_layer.end(), best_sinr_layer.begin(), [](float sinr) {
+    return convert_power_to_dB(sinr);
+  });
+
+  return {.tpmi = best_tpmi, .avg_sinr_dB = convert_power_to_dB(best_sinr), .sinr_dB_layer = best_sinr_layer};
 }
 
 static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_3layer(const srs_channel_matrix& channel,
@@ -565,8 +575,9 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_3layer(const srs_c
       break;
   }
 
-  float    best_sinr = -std::numeric_limits<float>::infinity();
-  unsigned best_tpmi = 0;
+  static_vector<float, pusch_constants::MAX_NOF_LAYERS> best_sinr_layer;
+  float                                                 best_sinr = -std::numeric_limits<float>::infinity();
+  unsigned                                              best_tpmi = 0;
 
   // Iterate possible TPMIs.
   for (unsigned tpmi = 0; tpmi != tpmi_end; ++tpmi) {
@@ -576,15 +587,22 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_3layer(const srs_c
     // Calculate the product of the channel matrix and the precoding weights.
     precoding_weight_matrix channel_weights = product_channel_weight(channel, weights);
 
-    // Calculate average layer SINR.
-    float sinr = calculate_mean_layer_sinr<nof_layers>(channel_weights, noise_variance);
-    if (sinr > best_sinr) {
-      best_sinr = sinr;
-      best_tpmi = tpmi;
+    // Calculate the average SINR.
+    auto  layer_sinr = calculate_mean_layer_sinr<nof_layers>(channel_weights, noise_variance);
+    float avg_sinr   = srsvec::mean(layer_sinr);
+    if (avg_sinr > best_sinr) {
+      best_sinr_layer = {layer_sinr.begin(), layer_sinr.end()};
+      best_sinr       = avg_sinr;
+      best_tpmi       = tpmi;
     }
   }
 
-  return {best_tpmi, convert_power_to_dB(best_sinr)};
+  // Convert SINR to dB.
+  std::transform(best_sinr_layer.begin(), best_sinr_layer.end(), best_sinr_layer.begin(), [](float sinr) {
+    return convert_power_to_dB(sinr);
+  });
+
+  return {.tpmi = best_tpmi, .avg_sinr_dB = convert_power_to_dB(best_sinr), .sinr_dB_layer = best_sinr_layer};
 }
 
 static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_4layer(const srs_channel_matrix& channel,
@@ -610,8 +628,9 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_4layer(const srs_c
       break;
   }
 
-  float    best_sinr = -std::numeric_limits<float>::infinity();
-  unsigned best_tpmi = 0;
+  static_vector<float, pusch_constants::MAX_NOF_LAYERS> best_sinr_layer;
+  float                                                 best_sinr = -std::numeric_limits<float>::infinity();
+  unsigned                                              best_tpmi = 0;
 
   // Iterate possible TPMIs.
   for (unsigned tpmi = 0; tpmi != tpmi_end; ++tpmi) {
@@ -621,15 +640,22 @@ static pusch_tpmi_select_info::tpmi_info get_tpmi_select_info_4layer(const srs_c
     // Calculate the product of the channel matrix and the precoding weights.
     precoding_weight_matrix channel_weights = product_channel_weight(channel, weights);
 
-    // Calculate average layer SINR.
-    float sinr = calculate_mean_layer_sinr<nof_layers>(channel_weights, noise_variance);
-    if (sinr > best_sinr) {
-      best_sinr = sinr;
-      best_tpmi = tpmi;
+    // Calculate the average SINR.
+    auto  layer_sinr = calculate_mean_layer_sinr<nof_layers>(channel_weights, noise_variance);
+    float avg_sinr   = srsvec::mean(layer_sinr);
+    if (avg_sinr > best_sinr) {
+      best_sinr_layer = {layer_sinr.begin(), layer_sinr.end()};
+      best_sinr       = avg_sinr;
+      best_tpmi       = tpmi;
     }
   }
 
-  return {best_tpmi, convert_power_to_dB(best_sinr)};
+  // Convert SINR to dB.
+  std::transform(best_sinr_layer.begin(), best_sinr_layer.end(), best_sinr_layer.begin(), [](float sinr) {
+    return convert_power_to_dB(sinr);
+  });
+
+  return {.tpmi = best_tpmi, .avg_sinr_dB = convert_power_to_dB(best_sinr), .sinr_dB_layer = best_sinr_layer};
 }
 
 pusch_tpmi_select_info srsran::get_tpmi_select_info(const srs_channel_matrix& channel,

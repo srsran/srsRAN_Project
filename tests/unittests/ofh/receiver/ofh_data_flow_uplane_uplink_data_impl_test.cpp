@@ -77,17 +77,15 @@ public:
     data_flow(get_config(), get_dependencies())
   {
     ul_cplane_context context;
-    context.prb_start              = 0;
-    context.nof_prb                = nof_prbs;
-    context.nof_symbols            = 14;
-    context.radio_hdr.start_symbol = 0;
-    context.radio_hdr.slot         = slot;
-    context.radio_hdr.filter_index = srsran::ofh::filter_index_type::standard_channel_filter;
-    context.radio_hdr.direction    = data_direction::uplink;
+    context.filter_index = srsran::ofh::filter_index_type::standard_channel_filter;
+    context.start_symbol = 0;
+    context.prb_start    = 0;
+    context.nof_prb      = nof_prbs;
+    context.nof_symbols  = 14;
 
     // Fill the contexts
     ul_cplane_context_repo_ptr->add(slot, eaxc, context);
-    ul_context_repo->add({slot, sector}, shared_grid.get_grid(), {context.radio_hdr.start_symbol, context.nof_symbols});
+    ul_context_repo->add({slot, sector}, shared_grid.get_grid(), {context.start_symbol, context.nof_symbols});
   }
 
   data_flow_uplane_uplink_data_impl_config get_config()

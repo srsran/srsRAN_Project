@@ -40,6 +40,9 @@ public:
   explicit scheduler_test_simulator(unsigned           tx_rx_delay_                     = 4,
                                     subcarrier_spacing max_scs                          = subcarrier_spacing::kHz15,
                                     bool               enable_csi_rs_pdsch_multiplexing = true);
+  explicit scheduler_test_simulator(const scheduler_expert_config& sched_cfg_,
+                                    unsigned                       tx_rx_delay_ = 4,
+                                    subcarrier_spacing             max_scs      = subcarrier_spacing::kHz15);
   ~scheduler_test_simulator();
 
   slot_point next_slot_rx() const { return next_slot - tx_rx_delay; }

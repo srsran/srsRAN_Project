@@ -66,11 +66,17 @@ constexpr gnb_cu_up_ue_e1ap_id_t int_to_gnb_cu_up_ue_e1ap_id(uint64_t idx)
   return static_cast<gnb_cu_up_ue_e1ap_id_t>(idx);
 }
 
+enum class e1ap_ul_cfg { no_data = 0, shared, only };
+
+enum class e1ap_dl_tx_stop { stop = 0, resume };
+
+enum class e1ap_rat_type { e_utra = 0, nr };
+
 struct e1ap_cell_group_info_item {
-  uint8_t                    cell_group_id = 0;
-  std::optional<std::string> ul_cfg;
-  std::optional<std::string> dl_tx_stop;
-  std::optional<std::string> rat_type;
+  uint8_t                        cell_group_id = 0;
+  std::optional<e1ap_ul_cfg>     ul_cfg;
+  std::optional<e1ap_dl_tx_stop> dl_tx_stop;
+  std::optional<e1ap_rat_type>   rat_type;
 };
 
 struct e1ap_qos_flow_level_qos_params {
@@ -83,15 +89,17 @@ struct e1ap_qos_flow_level_qos_params {
   std::optional<bool>                     reflective_qos_ind;
 };
 
+enum class e1ap_qos_flow_map_ind { ul = 0, dl };
+
 struct e1ap_qos_flow_qos_param_item {
-  qos_flow_id_t                  qos_flow_id = qos_flow_id_t::invalid;
-  e1ap_qos_flow_level_qos_params qos_flow_level_qos_params;
-  std::optional<std::string>     qos_flow_map_ind;
+  qos_flow_id_t                        qos_flow_id = qos_flow_id_t::invalid;
+  e1ap_qos_flow_level_qos_params       qos_flow_level_qos_params;
+  std::optional<e1ap_qos_flow_map_ind> qos_flow_map_ind;
 };
 
 struct e1ap_qos_flow_map_item {
-  qos_flow_id_t              qos_flow_id = qos_flow_id_t::invalid;
-  std::optional<std::string> qos_flow_map_ind;
+  qos_flow_id_t                        qos_flow_id = qos_flow_id_t::invalid;
+  std::optional<e1ap_qos_flow_map_ind> qos_flow_map_ind;
 };
 
 struct e1ap_data_forwarding_info_request {
@@ -125,19 +133,21 @@ struct e1ap_rohc_params {
   std::optional<e1ap_rohc> ul_only_rohc;
 };
 
+enum class e1ap_dupl_activation { active = 0, inactive };
+
 struct e1ap_pdcp_config {
-  pdcp_sn_size                      pdcp_sn_size_ul;
-  pdcp_sn_size                      pdcp_sn_size_dl;
-  srsran::pdcp_rlc_mode             rlc_mod;
-  std::optional<e1ap_rohc_params>   rohc_params;
-  std::optional<pdcp_t_reordering>  t_reordering_timer;
-  std::optional<pdcp_discard_timer> discard_timer;
-  std::optional<int32_t>            ul_data_split_thres;
-  std::optional<bool>               pdcp_dupl;
-  std::optional<bool>               pdcp_reest;
-  std::optional<bool>               pdcp_data_recovery;
-  std::optional<std::string>        dupl_activation;
-  std::optional<bool>               out_of_order_delivery;
+  pdcp_sn_size                        pdcp_sn_size_ul;
+  pdcp_sn_size                        pdcp_sn_size_dl;
+  srsran::pdcp_rlc_mode               rlc_mod;
+  std::optional<e1ap_rohc_params>     rohc_params;
+  std::optional<pdcp_t_reordering>    t_reordering_timer;
+  std::optional<pdcp_discard_timer>   discard_timer;
+  std::optional<int32_t>              ul_data_split_thres;
+  std::optional<bool>                 pdcp_dupl;
+  std::optional<bool>                 pdcp_reest;
+  std::optional<bool>                 pdcp_data_recovery;
+  std::optional<e1ap_dupl_activation> dupl_activation;
+  std::optional<bool>                 out_of_order_delivery;
 };
 
 struct e1ap_drb_to_setup_item_ng_ran {
@@ -188,6 +198,10 @@ struct e1ap_security_info {
   e1ap_security_algorithm security_algorithm;
   e1ap_up_security_key    up_security_key;
 };
+
+enum class e1ap_bearer_context_status_change { suspend = 0, resume };
+
+enum class e1ap_activity_notif_level { drb = 0, pdu_session, ue };
 
 struct e1ap_up_params_item {
   up_transport_layer_info up_tnl_info;
@@ -242,11 +256,15 @@ struct e1ap_crit_diagnostics_item {
   std::string type_of_error;
 };
 
+enum class e1ap_trigger_msg { init_msg = 0, successful_outcome, unsuccessful_outcome };
+
+enum class e1ap_proc_crit { reject = 0, ignore, notify };
+
 struct e1ap_crit_diagnostics {
   std::vector<e1ap_crit_diagnostics_item> ies_crit_diagnostics;
   std::optional<uint16_t>                 proc_code;
-  std::optional<std::string>              trigger_msg;
-  std::optional<std::string>              proc_crit;
+  std::optional<e1ap_trigger_msg>         trigger_msg;
+  std::optional<e1ap_proc_crit>           proc_crit;
   std::optional<uint16_t>                 transaction_id;
 };
 

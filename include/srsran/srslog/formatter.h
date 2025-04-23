@@ -25,6 +25,7 @@
 #include "srsran/srslog/context.h"
 #include "fmt/ranges.h"
 #include <memory>
+#include <optional>
 
 namespace srslog {
 
@@ -42,7 +43,7 @@ struct metric_value_formatter {
 };
 
 /// Default metric value formatter. Users that want to override this behaviour
-/// should add an specialization of the metric they want to customize.
+/// should add a specialization of the metric they want to customize.
 template <typename Ty, typename Name, typename Units>
 struct metric_value_formatter<metric<Ty, Name, Units>> {
   template <typename T>
@@ -52,12 +53,23 @@ struct metric_value_formatter<metric<Ty, Name, Units>> {
   }
 };
 
+/// Metric value formatter specialization for vector types.
 template <typename Ty, typename Name, typename Units>
 struct metric_value_formatter<metric<std::vector<Ty>, Name, Units>> {
   template <typename T>
   void format(const T& v, fmt::memory_buffer& buffer)
   {
     fmt::format_to(std::back_inserter(buffer), "[{}]", fmt::join(v.cbegin(), v.cend(), ", "));
+  }
+};
+
+/// Metric value formatter specialization for optional types.
+template <typename Ty, typename Name, typename Units>
+struct metric_value_formatter<metric<std::optional<Ty>, Name, Units>> {
+  template <typename T>
+  void format(const T& v, fmt::memory_buffer& buffer)
+  {
+    fmt::format_to(std::back_inserter(buffer), "{}", v.has_value() ? std::to_string(v.value()) : "null");
   }
 };
 
@@ -126,7 +138,7 @@ private:
   void process_element(const metric<Ty, Name, Units>& t, unsigned level, fmt::memory_buffer& buffer)
   {
     fmt::memory_buffer value;
-    metric_value_formatter<typename std::decay<decltype(t)>::type>{}.format(t.value, value);
+    metric_value_formatter<std::decay_t<decltype(t)>>{}.format(t.value, value);
     value.push_back('\0');
 
     format_metric(t.name(), value.data(), t.units(), t.kind(), level, buffer);

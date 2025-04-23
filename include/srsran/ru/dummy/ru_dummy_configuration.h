@@ -33,6 +33,8 @@ namespace srsran {
 
 /// Collects the necessary parameters for the dummy radio unit.
 struct ru_dummy_configuration {
+  /// Flag that enables (or not) metrics.
+  bool are_metrics_enabled;
   /// Subcarrier spacing - Determines the slot timing.
   subcarrier_spacing scs;
   /// Number of sectors.

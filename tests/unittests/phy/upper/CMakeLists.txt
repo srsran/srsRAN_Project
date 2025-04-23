@@ -47,8 +47,8 @@ target_link_libraries(hard_decision_test log_likelihood_ratio srslog gtest gtest
 gtest_discover_tests(hard_decision_test)
 
 add_executable(log_likelihood_ratio_test log_likelihood_ratio_test.cpp)
-target_link_libraries(log_likelihood_ratio_test log_likelihood_ratio srslog)
-add_test(log_likelihood_ratio_test log_likelihood_ratio_test)
+target_link_libraries(log_likelihood_ratio_test log_likelihood_ratio srslog gtest gtest_main)
+gtest_discover_tests(log_likelihood_ratio_test)
 
 add_executable(rx_buffer_pool_test rx_buffer_pool_test.cpp)
 target_link_libraries(rx_buffer_pool_test srsran_upper_phy_support srslog gtest srsran_support)

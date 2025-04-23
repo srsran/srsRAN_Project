@@ -47,10 +47,10 @@ DECLARE_METRIC("dl_bs", metric_dl_bs, unsigned, "");
 DECLARE_METRIC("pusch_snr_db", metric_pusch_snr_db, float, "");
 DECLARE_METRIC("pusch_rsrp_db", metric_pusch_rsrp_db, float, "");
 DECLARE_METRIC("pucch_snr_db", metric_pucch_snr_db, float, "");
-DECLARE_METRIC("ta_ns", metric_ta_ns, std::string, "");
-DECLARE_METRIC("pusch_ta_ns", metric_pusch_ta_ns, std::string, "");
-DECLARE_METRIC("pucch_ta_ns", metric_pucch_ta_ns, std::string, "");
-DECLARE_METRIC("srs_ta_ns", metric_srs_ta_ns, std::string, "");
+DECLARE_METRIC("ta_ns", metric_ta_ns, std::optional<float>, "");
+DECLARE_METRIC("pusch_ta_ns", metric_pusch_ta_ns, std::optional<float>, "");
+DECLARE_METRIC("pucch_ta_ns", metric_pucch_ta_ns, std::optional<float>, "");
+DECLARE_METRIC("srs_ta_ns", metric_srs_ta_ns, std::optional<float>, "");
 DECLARE_METRIC("ul_mcs", metric_ul_mcs, uint8_t, "");
 DECLARE_METRIC("ul_brate", metric_ul_brate, double, "");
 DECLARE_METRIC("ul_nof_ok", metric_ul_nof_ok, unsigned, "");
@@ -61,7 +61,7 @@ DECLARE_METRIC("nof_pucch_f2f3f4_invalid_harqs", metric_nof_pucch_f2f3f4_invalid
 DECLARE_METRIC("nof_pucch_f2f3f4_invalid_csis", metric_nof_pucch_f2f3f4_invalid_csis, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_harqs", metric_nof_pusch_invalid_harqs, unsigned, "");
 DECLARE_METRIC("nof_pusch_invalid_csis", metric_nof_pusch_invalid_csis, unsigned, "");
-DECLARE_METRIC("last_phr", metric_last_phr, std::string, "");
+DECLARE_METRIC("last_phr", metric_last_phr, std::optional<int>, "");
 DECLARE_METRIC("avg_ce_delay", metric_avg_ce_delay, float, "ms");
 DECLARE_METRIC("max_ce_delay", metric_max_ce_delay, float, "ms");
 DECLARE_METRIC("avg_crc_delay", metric_avg_crc_delay, float, "ms");
@@ -119,12 +119,16 @@ DECLARE_METRIC_SET("cell_events", mset_cell_event, metric_sfn, metric_slot_index
 DECLARE_METRIC("error_indication_count", metric_error_indication_count, unsigned, "");
 DECLARE_METRIC("average_latency", metric_average_latency, unsigned, "");
 DECLARE_METRIC("max_latency", metric_max_latency, unsigned, "");
+DECLARE_METRIC("nof_failed_pdcch_allocs", metric_nof_failed_pdcch_allocs, unsigned, "");
+DECLARE_METRIC("nof_failed_uci_allocs", metric_nof_failed_uci_allocs, unsigned, "");
 DECLARE_METRIC("latency_histogram", latency_histogram, std::vector<unsigned>, "");
 DECLARE_METRIC_SET("cell_metrics",
                    cell_metrics,
                    metric_error_indication_count,
                    metric_average_latency,
                    metric_max_latency,
+                   metric_nof_failed_pdcch_allocs,
+                   metric_nof_failed_uci_allocs,
                    latency_histogram);
 
 /// Metrics root object.
@@ -137,7 +141,7 @@ using metric_context_t = srslog::build_context_type<metric_timestamp_tag, cell_m
 
 } // namespace
 
-static void print_header()
+static void print_sched_header()
 {
   fmt::print("\n");
   fmt::print(
@@ -171,10 +175,10 @@ void scheduler_cell_metrics_consumer_stdout::handle_metric(const app_services::m
   const scheduler_cell_metrics& metrics = static_cast<const scheduler_cell_metrics_impl&>(metric).get_metrics();
 
   if (metrics.ue_metrics.size() > 10) {
-    print_header();
+    print_sched_header();
   } else if (++nof_lines > 10 && !metrics.ue_metrics.empty()) {
     nof_lines = 0;
-    print_header();
+    print_sched_header();
   }
 
   for (const auto& ue : metrics.ue_metrics) {
@@ -314,15 +318,17 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
     if (!std::isnan(ue.pucch_snr_db) && !iszero(ue.pucch_snr_db)) {
       output.write<metric_pucch_snr_db>(std::clamp(ue.pucch_snr_db, -99.9f, 99.9f));
     }
-    output.write<metric_ta_ns>((ue.ta_stats.get_nof_observations() > 0) ? std::to_string(ue.ta_stats.get_mean() * 1e9)
-                                                                        : "n/a");
-    output.write<metric_pusch_ta_ns>(
-        (ue.pusch_ta_stats.get_nof_observations() > 0) ? std::to_string(ue.pusch_ta_stats.get_mean() * 1e9) : "n/a");
-    output.write<metric_pucch_ta_ns>(
-        (ue.pucch_ta_stats.get_nof_observations() > 0) ? std::to_string(ue.pucch_ta_stats.get_mean() * 1e9) : "n/a");
+    output.write<metric_ta_ns>((ue.ta_stats.get_nof_observations() > 0) ? std::optional{ue.ta_stats.get_mean() * 1e9}
+                                                                        : std::nullopt);
+    output.write<metric_pusch_ta_ns>((ue.pusch_ta_stats.get_nof_observations() > 0)
+                                         ? std::optional{ue.pusch_ta_stats.get_mean() * 1e9}
+                                         : std::nullopt);
+    output.write<metric_pucch_ta_ns>((ue.pucch_ta_stats.get_nof_observations() > 0)
+                                         ? std::optional{ue.pucch_ta_stats.get_mean() * 1e9}
+                                         : std::nullopt);
     output.write<metric_srs_ta_ns>(
-        (ue.srs_ta_stats.get_nof_observations() > 0) ? std::to_string(ue.srs_ta_stats.get_mean() * 1e9) : "n/a");
-    output.write<metric_last_phr>(ue.last_phr ? std::to_string(ue.last_phr.value()) : "n/a");
+        (ue.srs_ta_stats.get_nof_observations() > 0) ? std::optional{ue.srs_ta_stats.get_mean() * 1e9} : std::nullopt);
+    output.write<metric_last_phr>(ue.last_phr);
     output.write<metric_ul_mcs>(ue.ul_mcs.to_uint());
     output.write<metric_ul_brate>(ue.ul_brate_kbps * 1e3);
     output.write<metric_ul_nof_ok>(ue.ul_nof_ok);
@@ -353,6 +359,8 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
   cell_output.write<metric_error_indication_count>(metrics.nof_error_indications);
   cell_output.write<metric_average_latency>(metrics.average_decision_latency.count());
   cell_output.write<metric_max_latency>(metrics.max_decision_latency.count());
+  cell_output.write<metric_nof_failed_pdcch_allocs>(metrics.nof_failed_pdcch_allocs);
+  cell_output.write<metric_nof_failed_uci_allocs>(metrics.nof_failed_uci_allocs);
   cell_output.write<latency_histogram>(
       std::vector<unsigned>(metrics.latency_histogram.begin(), metrics.latency_histogram.end()));
 
@@ -404,19 +412,23 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
   fmt::format_to(std::back_inserter(buffer), "Cell Scheduler Metrics:");
   fmt::format_to(
       std::back_inserter(buffer),
-      " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} error_indications={} "
-      "pdsch_rbs_per_slot={} pusch_rbs_per_slot={} pdschs_per_slot={:.3} puschs_per_slot={:.3} nof_ues={} "
-      "mean_latency={}usec max_latency={}usec max_latency_slot={} latency_hist=[{}]",
+      " total_dl_brate={}bps total_ul_brate={}bps nof_prbs={} nof_dl_slots={} nof_ul_slots={} nof_prach_preambles={} "
+      "error_indications={} pdsch_rbs_per_slot={} pusch_rbs_per_slot={} pdschs_per_slot={:.3} puschs_per_slot={:.3} "
+      "failed_pdcch={} failed_uci={} nof_ues={} mean_latency={}usec max_latency={}usec max_latency_slot={} "
+      "latency_hist=[{}]",
       float_to_eng_string(sum_dl_bitrate_kbps * 1e3, 1, false),
       float_to_eng_string(sum_ul_bitrate_kbps * 1e3, 1, false),
       metrics.nof_prbs,
       metrics.nof_dl_slots,
       metrics.nof_ul_slots,
+      metrics.nof_prach_preambles,
       metrics.nof_error_indications,
-      sum_pdsch_rbs / metrics.nof_dl_slots,
-      sum_pusch_rbs / metrics.nof_ul_slots,
-      metrics.dl_grants_count / (float)metrics.nof_dl_slots,
-      metrics.ul_grants_count / (float)metrics.nof_ul_slots,
+      metrics.nof_dl_slots > 0 ? sum_pdsch_rbs / metrics.nof_dl_slots : 0,
+      metrics.nof_ul_slots > 0 ? sum_pusch_rbs / metrics.nof_ul_slots : 0,
+      metrics.nof_dl_slots > 0 ? metrics.dl_grants_count / (float)metrics.nof_dl_slots : 0,
+      metrics.nof_ul_slots > 0 ? metrics.ul_grants_count / (float)metrics.nof_ul_slots : 0,
+      metrics.nof_failed_pdcch_allocs,
+      metrics.nof_failed_uci_allocs,
       metrics.ue_metrics.size(),
       metrics.average_decision_latency.count(),
       metrics.max_decision_latency.count(),
@@ -485,7 +497,7 @@ void scheduler_cell_metrics_consumer_log::handle_metric(const app_services::metr
     fmt::format_to(std::back_inserter(buffer), " dl_bs={}", scaled_fmt_integer(ue.dl_bs, false));
     fmt::format_to(std::back_inserter(buffer), " dl_nof_prbs={}", ue.tot_pdsch_prbs_used);
     if (ue.last_dl_olla.has_value()) {
-      fmt::format_to(std::back_inserter(buffer), " dl_olla={}", ue.last_dl_olla);
+      fmt::format_to(std::back_inserter(buffer), " dl_olla={}", ue.last_dl_olla.value());
     }
 
     if (!std::isnan(ue.pusch_snr_db) && !iszero(ue.pusch_snr_db)) {

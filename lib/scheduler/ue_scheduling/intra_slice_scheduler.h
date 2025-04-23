@@ -49,31 +49,41 @@ public:
   void post_process_results();
 
   /// Schedule DL grants for a given slice candidate.
-  void dl_sched(slot_point pdcch_slot, dl_ran_slice_candidate slice, scheduler_policy& dl_policy);
+  void dl_sched(dl_ran_slice_candidate slice, scheduler_policy& dl_policy);
 
   /// Schedule UL grants for a given slice candidate.
-  void ul_sched(slot_point pdcch_slot, ul_ran_slice_candidate slice, scheduler_policy& dl_policy);
+  void ul_sched(ul_ran_slice_candidate slice, scheduler_policy& dl_policy);
 
 private:
+  /// Context for a given slice scheduling.
+  struct slice_sched_context {
+    // UE index offset of the next UE group to be scheduled in DL.
+    du_ue_index_t dl_next_rr_group_offset = to_du_ue_index(0);
+    // How many slots have elapsed using the same dl_next_rr_group_offset.
+    unsigned dl_rr_count = 0;
+    // UE index offset of the next UE group to be scheduled in UL.
+    du_ue_index_t ul_next_rr_group_offset = to_du_ue_index(0);
+    // How many slots have elapsed using the same ul_next_rr_group_offset.
+    unsigned ul_rr_count = 0;
+  };
+
   /// Determines whether a UE can be DL scheduled in a given slot.
-  bool can_allocate_pdsch(slot_point sl_tx, slot_point sl_pdsch, const slice_ue& u, const ue_cell& ue_cc) const;
+  bool can_allocate_pdsch(const slice_ue& u, const ue_cell& ue_cc) const;
 
   /// Determines whether a UE can be UL scheduled in a given slot.
-  bool can_allocate_pusch(slot_point pdcch_slot, slot_point pusch_slot, const slice_ue& u, const ue_cell& ue_cc) const;
+  bool can_allocate_pusch(const slice_ue& u, const ue_cell& ue_cc) const;
 
-  std::optional<ue_newtx_candidate>
-  create_newtx_dl_candidate(slot_point pdcch_slot, slot_point pdsch_slot, const slice_ue& u) const;
+  std::optional<ue_newtx_candidate> create_newtx_dl_candidate(const slice_ue& u) const;
 
-  std::optional<ue_newtx_candidate>
-  create_newtx_ul_candidate(slot_point pdcch_slot, slot_point pusch_slot, const slice_ue& u) const;
+  std::optional<ue_newtx_candidate> create_newtx_ul_candidate(const slice_ue& u) const;
 
   void prepare_newtx_dl_candidates(const dl_ran_slice_candidate& slice, scheduler_policy& dl_policy);
 
   void prepare_newtx_ul_candidates(const ul_ran_slice_candidate& slice, scheduler_policy& dl_policy);
 
-  unsigned schedule_dl_retx_candidates(const dl_ran_slice_candidate& slice, unsigned max_ue_grants_to_alloc);
+  unsigned schedule_dl_retx_candidates(dl_ran_slice_candidate& slice, unsigned max_ue_grants_to_alloc);
 
-  unsigned schedule_ul_retx_candidates(const ul_ran_slice_candidate& slice, unsigned max_ue_grants_to_alloc);
+  unsigned schedule_ul_retx_candidates(ul_ran_slice_candidate& slice, unsigned max_ue_grants_to_alloc);
 
   unsigned schedule_dl_newtx_candidates(dl_ran_slice_candidate& slice,
                                         scheduler_policy&       dl_policy,
@@ -83,26 +93,49 @@ private:
                                         scheduler_policy&       ul_policy,
                                         unsigned                max_ue_grants_to_alloc);
 
-  unsigned max_pdschs_to_alloc(slot_point pdcch_slot, const dl_ran_slice_candidate& slice);
+  unsigned max_pdschs_to_alloc(const dl_ran_slice_candidate& slice);
 
-  unsigned max_puschs_to_alloc(slot_point pdcch_slot, const ul_ran_slice_candidate& slice);
+  unsigned max_puschs_to_alloc(const ul_ran_slice_candidate& slice);
+
+  // Called when bitmap of used VRBs needs to be recalculated.
+  void update_used_dl_vrbs(const dl_ran_slice_candidate& slice);
+  void update_used_ul_vrbs();
 
   const scheduler_ue_expert_config& expert_cfg;
   const cell_resource_allocator&    cell_alloc;
   cell_harq_manager&                cell_harqs;
+  uci_allocator&                    uci_alloc;
   srslog::basic_logger&             logger;
+
+  // Derived parameters.
+  const unsigned expected_pdschs_per_slot;
 
   /// Handler of grid allocations.
   ue_cell_grid_allocator ue_alloc;
 
-  slot_point last_sl_tx;
+  // Slot at which PDCCH is scheduled.
+  slot_point pdcch_slot;
 
   // Number of allocation attempts for DL in the given slot.
   unsigned dl_attempts_count = 0;
   unsigned ul_attempts_count = 0;
 
-  std::vector<ue_newtx_candidate> dl_newtx_candidates;
-  std::vector<ue_newtx_candidate> ul_newtx_candidates;
+  // Information related with the scheduling of each slice that needs to be stored and retrieved across different slots.
+  slotted_id_vector<ran_slice_id_t, slice_sched_context> slice_ctxt_list;
+
+  // UE candidates for on-going scheduling.
+  std::vector<ue_newtx_candidate> newtx_candidates;
+
+  slot_point   pdsch_slot;
+  slot_point   pusch_slot;
+  vrb_bitmap   used_dl_vrbs;
+  crb_interval dl_bwp_crb_limits;
+  vrb_bitmap   used_ul_vrbs;
+  crb_interval ul_bwp_crb_limits;
+
+  // Grants being built for the current slice.
+  std::vector<ue_cell_grid_allocator::dl_newtx_grant_builder> pending_dl_newtxs;
+  std::vector<ue_cell_grid_allocator::ul_newtx_grant_builder> pending_ul_newtxs;
 };
 
 } // namespace srsran

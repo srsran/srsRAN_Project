@@ -105,8 +105,7 @@ TYPED_TEST_SUITE(ring_buffer_test, test_value_types);
 
 template <typename CircBuffer>
 class copyable_ring_tester : public ring_buffer_test<CircBuffer>
-{
-};
+{};
 using copyable_test_value_types =
     ::testing::Types<static_ring_buffer<int, 10>, static_ring_buffer<int, 200>, ring_buffer<int>>;
 TYPED_TEST_SUITE(copyable_ring_tester, copyable_test_value_types);

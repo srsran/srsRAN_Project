@@ -72,11 +72,14 @@ struct scheduler_ue_metrics {
   unsigned sr_count;
   /// Sum of the last DL buffer occupancy reports of all logical channels.
   unsigned dl_bs;
+  /// Invalid UCI reception metrics.
+  /// @{
   unsigned nof_pucch_f0f1_invalid_harqs;
   unsigned nof_pucch_f2f3f4_invalid_harqs;
   unsigned nof_pucch_f2f3f4_invalid_csis;
   unsigned nof_pusch_invalid_harqs;
   unsigned nof_pusch_invalid_csis;
+  /// @}
   /// Delay metrics.
   /// @{
   std::optional<float> avg_ce_delay_ms;
@@ -126,6 +129,10 @@ struct scheduler_cell_metrics {
   /// Distance between histogram bins.
   static constexpr unsigned nof_usec_per_bin = 50;
 
+  /// Cell PCI for which the metrics are reported.
+  pci_t pci;
+  /// Slot at which the metrics started being tracked for this report.
+  slot_point slot;
   /// Number of slots accounted for in this report.
   unsigned nof_slots = 0;
   /// Number of cell PRBs.
@@ -140,6 +147,10 @@ struct scheduler_cell_metrics {
   unsigned dl_grants_count = 0;
   /// Counter of UE PUSCH grants.
   unsigned ul_grants_count = 0;
+  /// Number of failed PDCCH allocation attempts.
+  unsigned nof_failed_pdcch_allocs = 0;
+  /// Number of failed UCI allocation attempts.
+  unsigned nof_failed_uci_allocs = 0;
 
   unsigned                                nof_error_indications = 0;
   std::chrono::microseconds               average_decision_latency{0};
@@ -148,6 +159,11 @@ struct scheduler_cell_metrics {
   std::array<unsigned, latency_hist_bins> latency_histogram{0};
   std::vector<scheduler_cell_event>       events;
   std::vector<scheduler_ue_metrics>       ue_metrics;
+};
+
+/// Scheduler metrics report for all active cells of the DU.
+struct scheduler_metrics_report {
+  std::vector<scheduler_cell_metrics> cells;
 };
 
 /// \brief Notifier interface used by scheduler to report metrics.

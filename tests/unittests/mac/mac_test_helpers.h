@@ -59,7 +59,7 @@ inline mac_cell_creation_request make_default_mac_cell_config(const cell_config_
   for (unsigned i = 0; i != 100; ++i) {
     report_fatal_error_if_not(dummy_sib1.append(i), "Failed to append to create dummy SIB1");
   }
-  req.bcch_dl_sch_payloads.push_back(std::move(dummy_sib1));
+  req.sys_info.sib1 = std::move(dummy_sib1);
   return req;
 }
 
@@ -102,12 +102,15 @@ public:
   std::optional<rach_indication_message> last_rach_ind;
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
+  void handle_cell_removal_request(du_cell_index_t cell_index) override {}
+  void handle_cell_activation_request(du_cell_index_t cell_index) override {}
+  void handle_cell_deactivation_request(du_cell_index_t cell_index) override {}
   void handle_rach_indication(const rach_indication_message& msg) override { last_rach_ind = msg; }
   void handle_ue_creation_request(const sched_ue_creation_request_message& ue_request) override {}
   void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override {}
   void handle_ue_removal_request(du_ue_index_t ue_index) override {}
   void handle_ue_config_applied(du_ue_index_t ue_index) override {}
-  void handle_sib1_update_request(const sib1_pdu_update_request& req) override {}
+  void handle_si_update_request(const si_scheduling_update_request& req) override {}
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
   void handle_crc_indication(const ul_crc_indication& crc) override {}
   void handle_uci_indication(const uci_indication& uci) override {}
@@ -128,9 +131,14 @@ public:
 class dummy_mac_scheduler_adapter : public mac_scheduler_cell_info_handler
 {
 public:
+  bool         active            = false;
   sched_result next_sched_result = {};
 
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
+
+  void start_cell(du_cell_index_t cell_idx) override { active = true; }
+
+  void stop_cell(du_cell_index_t cell_idx) override { active = false; }
 
   const sched_result& slot_indication(slot_point slot_tx, du_cell_index_t cell_idx) override
   {
@@ -142,11 +150,7 @@ public:
   {
   }
 
-  void handle_sib1_update_indication(du_cell_index_t cell_index,
-                                     unsigned        sib_version,
-                                     units::bytes    new_payload_size) override
-  {
-  }
+  void handle_si_change_indication(const si_scheduling_update_request& request) override {}
 
   async_task<mac_cell_positioning_measurement_response>
   handle_positioning_measurement_request(du_cell_index_t                                 cell_index,

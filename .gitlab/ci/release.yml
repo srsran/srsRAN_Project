@@ -8,13 +8,13 @@
 
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/features/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/tools/docker.yml
 
 stages:
@@ -43,7 +43,7 @@ load release variables:
     - if: *on_public_release
     - if: *on_custom_push
   variables:
-    GIT_STRATEGY: none
+    GIT_LFS_SKIP_SMUDGE: 1
   script:
     - |
       if [[ $CI_COMMIT_TAG =~ ^([a-zA-Z0-9_]+)_([0-9]{4})\.([0-9]{2})\.([0-9]{2})$ ]]; then
@@ -55,6 +55,7 @@ load release variables:
         echo "PUBLIC_BRANCH=main" >> repo.env
         TOKEN_VAR_NAME="PUBLIC_${KEY}_TOKEN"
         echo "PUBLIC_PUSH_TOKEN=${!TOKEN_VAR_NAME}" >> repo.env
+        echo "CI_PLUGIN_COMMIT_SHA=$(cat .gitlab/ci/plugin_version.txt)" >> repo.env
       else
         echo "PRIVATE_BRANCH=agpl_main" >> repo.env
         echo "PUBLIC_NAME=srsRAN Project" >> repo.env
@@ -66,6 +67,47 @@ load release variables:
   artifacts:
     reports:
       dotenv: repo.env
+
+generate plugin pipeline:
+  stage: ci
+  image: ubuntu:24.04
+  rules:
+    - if: *on_custom_push
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - |
+        echo """
+        include:
+          - project: softwareradiosystems/ci/tools
+            ref: \"21\"
+            file: .gitlab/ci-shared/setup/all.yml
+
+        stages:
+          - private
+        """ >> update_plugin.yml
+
+        while IFS='|' read -r PLUGIN_PATH PLUGIN_REPO PLUGIN_REF; do
+            echo """
+        update ${PLUGIN_PATH}:
+          stage: private
+          interruptible: false
+          variables:
+            ON_SCHEDULE: "true"
+            CI_DESCRIPTION: Release
+          inherit:
+            variables: false
+          trigger:
+            project: ${PLUGIN_REPO}
+            branch: main
+            strategy: depend
+        """ >> update_plugin.yml
+        done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
+    - cat update_plugin.yml
+  artifacts:
+    paths:
+      - update_plugin.yml
+    expire_in: 1 day
 
 ################################################################################
 # Release checks and extras
@@ -111,23 +153,21 @@ generate testvector tar:
 ################################################################################
 # Update private branches
 ################################################################################
-update plugins:
+update plugin:
   stage: private
   interruptible: false
   rules:
     - if: *on_custom_push
-      variables:
-        ON_SCHEDULE: "true"
-        CI_DESCRIPTION: Release
   inherit:
     variables: false
   trigger:
-    project: ${PLUGIN_REPO}
-    branch: main
+    include:
+      - artifact: update_plugin.yml
+        job: generate plugin pipeline
     strategy: depend
   needs:
-    - job: load release variables
-      artifacts: false
+    - job: generate plugin pipeline
+      artifacts: true
 
 update private branch:
   stage: private
@@ -160,7 +200,17 @@ update private branch:
     - |
       git submodule init
       git submodule update
-      git submodule foreach 'git fetch origin && git checkout $(git remote show origin | sed -n "/HEAD branch/s/.*: //p") && git pull origin $(git remote show origin | sed -n "/HEAD branch/s/.*: //p")'
+      git submodule foreach "git fetch origin && git checkout main"
+    - |
+      while IFS='|' read -r PLUGIN_PATH PLUGIN_REPO PLUGIN_REF; do
+          PLUGIN_REF=$(eval echo $PLUGIN_REF)
+          if [ -d "plugins/${PLUGIN_PATH}" ]; then
+            cd plugins/${PLUGIN_PATH}
+            git checkout ${PLUGIN_REF}
+            cd ${CI_PROJECT_DIR}
+          fi
+      done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
+    - |
       git commit -a --amend --no-edit
     - |
       if [ "$HEADERS" = "true" ]; then
@@ -176,7 +226,7 @@ update private branch:
       artifacts: true
     - job: check version updated
       optional: true
-    - job: update plugins
+    - job: update plugin
       optional: true
 
 ################################################################################
@@ -221,6 +271,7 @@ basic build final branch:
     COMPILER: gcc
     ENABLE_MKL: # default
     ENABLE_ARMPL: # default
+    PLUGIN_INDEX_ARRAY: ""
   tags: ["amd64-avx2"]
   needs:
     - job: download final branch
@@ -296,19 +347,15 @@ publish matlab:
         ON_SCHEDULE: "true"
         CI_DESCRIPTION: Release
         NOTIFY_SLACK: "false"
-        SRSRAN_REPO_URL: https://${PUBLIC_PUSH_TOKEN}@github.com/${PUBLIC_REPO}.git
+        SRSRAN_REPO_URL: https://github.com/srsran/srsRAN_Project.git
         SRSRAN_COMMIT: main
-        DOCKER_BUILDER_VERSION: $DOCKER_BUILDER_VERSION
+        DOCKER_BUILDER_VERSION: latest
+        CI_DISABLE_PLUGINS: "True"
     - if: *on_public_release
       variables:
         <<: *matlab_release_var
   needs:
     - job: publish main
-    - job: builder version
-  inherit:
-    variables:
-      - PUBLIC_PUSH_TOKEN
-      - PUBLIC_REPO
   trigger:
     project: softwareradiosystems/srsgnb_matlab
     branch: master
@@ -511,9 +558,11 @@ srsran image:
     # Include plugins
     - |
       git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git ${PLUGIN_PATH}
-      git submodule set-branch --branch ${MR_PLUGIN_REF} ${PLUGIN_PATH}
       cd ${PLUGIN_PATH}
-      PLUGIN_COMMIT=$(git rev-parse --short=8 HEAD)
+      git fetch origin ${CI_PLUGIN_COMMIT_SHA} > /dev/null
+      git config advice.detachedHead false
+      git checkout ${CI_PLUGIN_COMMIT_SHA}
+      PLUGIN_COMMIT=$(echo $CI_PLUGIN_COMMIT_SHA | head -c8)
       cd ${CI_PROJECT_DIR}
     # Set variables
     - |
@@ -553,6 +602,8 @@ srsran image:
         TAG: arm64
         PLATFORM: arm64
   needs:
+    - job: load release variables
+      artifacts: true
     - job: basic build final branch
       optional: false
       artifacts: true

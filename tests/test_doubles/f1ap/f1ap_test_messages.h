@@ -86,6 +86,11 @@ f1ap_message create_gnb_du_configuration_update_acknowledge(const f1ap_message& 
 /// TS 38.473, 8.2.4.3.
 f1ap_message create_gnb_du_configuration_update_failure(const f1ap_message& gnb_du_config_request);
 
+/// \brief Generates dummy GNB-CU CONFIGURATION UPDATE REQUEST message as per TS 38.473, 8.2.5.1.
+f1ap_message create_gnb_cu_configuration_update_request(unsigned                        transaction_id,
+                                                        span<const nr_cell_global_id_t> cgis_to_activate,
+                                                        span<const nr_cell_global_id_t> cgis_to_deactivate = {});
+
 /// \brief Generates dummy F1 RESET message.
 f1ap_message create_f1ap_reset_message(
     const std::vector<std::pair<std::optional<gnb_du_ue_f1ap_id_t>, std::optional<gnb_cu_ue_f1ap_id_t>>>& ues_to_reset =
@@ -160,19 +165,26 @@ byte_buffer extract_dl_dcch_msg(const byte_buffer& rrc_container);
 f1ap_message generate_trp_information_response(const trp_id_t& trp_id);
 
 /// \brief Generates dummy F1AP TRP INFORMATION FAILURE message.
-f1ap_message generate_trp_information_failure(const trp_id_t& trp_id);
+f1ap_message generate_trp_information_failure();
 
-/// \brief Generates dummy F1AP Positioning INFORMATION RESPONSE message.
+/// \brief Generates dummy F1AP POSITIONING INFORMATION RESPONSE message.
 f1ap_message generate_positioning_information_response(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
 
-/// \brief Generates dummy F1AP Positioning INFORMATION FAILURE message.
+/// \brief Generates dummy F1AP POSITIONING INFORMATION FAILURE message.
 f1ap_message generate_positioning_information_failure(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
 
-/// \brief Generates dummy F1AP Positioning ACTIVATION RESPONSE message.
+/// \brief Generates dummy F1AP POSITIONING ACTIVATION RESPONSE message.
 f1ap_message generate_positioning_activation_response(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
 
-/// \brief Generates dummy F1AP Positioning ACTIVATION FAILURE message.
+/// \brief Generates dummy F1AP POSITIONING ACTIVATION FAILURE message.
 f1ap_message generate_positioning_activation_failure(gnb_du_ue_f1ap_id_t du_ue_id, gnb_cu_ue_f1ap_id_t cu_ue_id);
+
+/// \brief Generates dummy F1AP POSITIONING MEASUREMENT RESPONSE message.
+f1ap_message
+generate_positioning_measurement_response(trp_id_t trp_id, lmf_meas_id_t lmf_meas_id, ran_meas_id_t ran_meas_id);
+
+/// \brief Generates dummy F1AP POSITIONING MEASUREMENT FAILURE message.
+f1ap_message generate_positioning_measurement_failure(lmf_meas_id_t lmf_meas_id, ran_meas_id_t ran_meas_id);
 
 } // namespace test_helpers
 } // namespace srsran

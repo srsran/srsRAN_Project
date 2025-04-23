@@ -172,7 +172,9 @@ private:
 };
 
 e2_agent_connection_manager::e2_agent_connection_manager(e2_agent_repository& e2_agents_) :
-  logger(srslog::fetch_basic_logger("E2-RIC")), e2_agents(e2_agents_){};
+  logger(srslog::fetch_basic_logger("E2-RIC")), e2_agents(e2_agents_)
+{
+}
 
 unsigned e2_agent_connection_manager::get_next_e2_agent_index()
 {
@@ -201,7 +203,7 @@ e2_agent_connection_manager::handle_new_du_connection(std::unique_ptr<e2_message
   return std::make_unique<e2_gw_to_ric_pdu_adapter>(*this, agent_idx);
 }
 
-near_rt_ric::near_rt_ric() : logger(srslog::fetch_basic_logger("E2-RIC")), e2_agent_mng(e2_agents){};
+near_rt_ric::near_rt_ric() : logger(srslog::fetch_basic_logger("E2-RIC")), e2_agent_mng(e2_agents) {}
 
 void near_rt_ric::send_msg(unsigned e2_agent_idx, const e2_message& msg)
 {
@@ -212,4 +214,4 @@ void near_rt_ric::send_msg(unsigned e2_agent_idx, const e2_message& msg)
 
   logger.info("RIC sends msg.");
   it->second->on_new_message(msg);
-};
+}

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/ofh/receiver/ofh_receiver_metrics.h"
 #include "srsran/ofh/receiver/ofh_receiver_metrics_collector.h"
 #include "srsran/ofh/receiver/ofh_receiver_timing_parameters.h"
 #include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
@@ -35,7 +36,7 @@ namespace ofh {
 ///
 /// Checks if the given slot and symbol is within the reception window or not. The window checker also collects
 /// statistics and prints them every second.
-class rx_window_checker : public ota_symbol_boundary_notifier, public receiver_metrics_collector
+class rx_window_checker : public ota_symbol_boundary_notifier
 {
   /// Helper class that represents the reception window statistics.
   class rx_window_checker_statistics
@@ -50,8 +51,8 @@ class rx_window_checker : public ota_symbol_boundary_notifier, public receiver_m
     uint64_t              last_late_value_printed    = 0U;
 
   public:
-    /// Prints the statistics.
-    void collect_metrics(receiver_metrics& metrics);
+    /// Collect the statistics.
+    void collect_metrics(received_messages_metrics& metrics);
 
     /// Functions to increment the counters.
     void increment_on_time_counter() { on_time_counter.fetch_add(1, std::memory_order_relaxed); }
@@ -76,7 +77,7 @@ public:
   void on_new_symbol(const slot_symbol_point_context& symbol_point_context) override;
 
   // See interface for documentation.
-  void collect_metrics(receiver_metrics& metrics) override;
+  void collect_metrics(received_messages_metrics& metrics);
 
   /// Returns true if the Rx window checker is disabled, otherwise returns false.
   bool disabled() const { return is_disabled; }

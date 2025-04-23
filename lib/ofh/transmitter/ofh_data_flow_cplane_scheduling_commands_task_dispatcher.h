@@ -60,6 +60,12 @@ public:
     }
   }
 
+  // See interface for documentation.
+  data_flow_message_encoding_metrics_collector* get_metrics_collector() override
+  {
+    return data_flow_cplane->get_metrics_collector();
+  }
+
 private:
   std::unique_ptr<data_flow_cplane_scheduling_commands> data_flow_cplane;
   task_executor&                                        executor;

@@ -46,6 +46,9 @@ public:
   void on_loggers_registration() override;
 
   // See interface for documentation.
+  bool are_metrics_enabled() const override;
+
+  // See interface for documentation.
   o_cu_cp_unit create_o_cu_cp(o_cu_cp_unit_dependencies& dependencies) override;
 
   // See interface for documentation.

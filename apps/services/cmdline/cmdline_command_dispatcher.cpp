@@ -22,6 +22,7 @@
 
 #include "cmdline_command_dispatcher.h"
 #include "cmdline_command_dispatcher_utils.h"
+#include "stdout_metrics_command.h"
 #include "srsran/srslog/srslog.h"
 #include <csignal>
 #include <fcntl.h>

@@ -24,6 +24,7 @@
 
 #include "srsran/srslog/detail/support/tmpl_utils.h"
 #include <cassert>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -151,6 +152,13 @@ struct metric_kind_selector<metric<std::vector<Ty>, Name, Units>, std::enable_if
   static const metric_kind kind = metric_kind::numeric;
 };
 
+/// Template specialization that tags optional metrics with arithmetic values (integers
+/// and floating point) as numeric.
+template <typename Ty, typename Name, typename Units>
+struct metric_kind_selector<metric<std::optional<Ty>, Name, Units>, std::enable_if_t<std::is_arithmetic_v<Ty>>> {
+  static const metric_kind kind = metric_kind::numeric;
+};
+
 /// A metric set is a group of metrics that share a logical relation. Allows
 /// storing and mixing other metric sets and metrics for building complex
 /// structures.
@@ -205,10 +213,16 @@ using build_context_type = context<std::decay_t<Ts>...>;
 #define DECLARE_METRIC(_name_rep, _type, _value_type, _units)                                                          \
   namespace metric_info {                                                                                              \
   struct _type##__units {                                                                                              \
-    static const char* units() { return _units; }                                                                      \
+    static const char* units()                                                                                         \
+    {                                                                                                                  \
+      return _units;                                                                                                   \
+    }                                                                                                                  \
   };                                                                                                                   \
   struct _type##__name_rep {                                                                                           \
-    static const char* name() { return _name_rep; }                                                                    \
+    static const char* name()                                                                                          \
+    {                                                                                                                  \
+      return _name_rep;                                                                                                \
+    }                                                                                                                  \
   };                                                                                                                   \
   }                                                                                                                    \
   using _type = srslog::                                                                                               \
@@ -229,7 +243,10 @@ using build_context_type = context<std::decay_t<Ts>...>;
 #define DECLARE_METRIC_SET(_name_rep, _type, ...)                                                                      \
   namespace metric_set_info {                                                                                          \
   struct _type##__name_rep {                                                                                           \
-    static const char* name() { return _name_rep; }                                                                    \
+    static const char* name()                                                                                          \
+    {                                                                                                                  \
+      return _name_rep;                                                                                                \
+    }                                                                                                                  \
   };                                                                                                                   \
   }                                                                                                                    \
   using _type = srslog::detail::build_metric_set_type<metric_set_info::_type##__name_rep, __VA_ARGS__>
@@ -248,7 +265,10 @@ using build_context_type = context<std::decay_t<Ts>...>;
 #define DECLARE_METRIC_LIST(_name_rep, _type, _list_type)                                                              \
   namespace list_info {                                                                                                \
   struct _type##__name_rep {                                                                                           \
-    static const char* name() { return _name_rep; }                                                                    \
+    static const char* name()                                                                                          \
+    {                                                                                                                  \
+      return _name_rep;                                                                                                \
+    }                                                                                                                  \
   };                                                                                                                   \
   }                                                                                                                    \
   using _type = srslog::metric_list<list_info::_type##__name_rep, typename std::decay<_list_type>::type>

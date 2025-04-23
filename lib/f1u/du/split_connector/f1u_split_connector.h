@@ -165,6 +165,8 @@ public:
   gtpu_tx_udp_gw_adapter gtpu_to_network_adapter;
   gtpu_rx_f1u_adapter    gtpu_to_f1u_adapter;
 
+  std::unique_ptr<gtpu_demux_dispatch_queue> dispatch_queue;
+
 private:
   f1u_bearer_logger                logger;
   f1u_bearer_disconnector&         disconnector;

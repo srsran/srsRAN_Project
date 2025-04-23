@@ -42,8 +42,10 @@ srsran::config_validators::validate_sched_ue_creation_request_message(const sche
 
     if (cell.serv_cell_cfg.ul_config.has_value()) {
       if (cell.serv_cell_cfg.ul_config->init_ul_bwp.pucch_cfg.has_value() and
-          cell.serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value()) {
-        HANDLE_ERROR(validate_pucch_cfg(cell.serv_cell_cfg, cell_cfg.dl_carrier.nof_ant));
+          cell.serv_cell_cfg.ul_config->init_ul_bwp.srs_cfg.has_value() and
+          cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.has_value()) {
+        const pucch_config_common& pucch_cfg_common = cell_cfg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.value();
+        HANDLE_ERROR(validate_pucch_cfg(cell.serv_cell_cfg, pucch_cfg_common, cell_cfg.dl_carrier.nof_ant));
         HANDLE_ERROR(validate_srs_cfg(cell.serv_cell_cfg));
       }
 

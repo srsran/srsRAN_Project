@@ -81,7 +81,7 @@ public:
     format2_sr_csi.max_code_rate     = max_pucch_code_rate::dot_25;
     format2_sr_csi.n_id_scambling    = t_bench.cell_cfg.pci;
     format2_sr_csi.n_id_0_scrambling = t_bench.cell_cfg.pci;
-  };
+  }
 
 protected:
   // Parametrized variables.
@@ -189,7 +189,7 @@ public:
     format2_csi.max_code_rate     = max_pucch_code_rate::dot_25;
     format2_csi.n_id_scambling    = t_bench.cell_cfg.pci;
     format2_csi.n_id_0_scrambling = t_bench.cell_cfg.pci;
-  };
+  }
 
 protected:
   // Parametrized variables.

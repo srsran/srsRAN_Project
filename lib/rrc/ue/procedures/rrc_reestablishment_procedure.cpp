@@ -40,6 +40,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
     rrc_ue_control_message_handler&          srb_notifier_,
     rrc_ue_context_update_notifier&          cu_cp_notifier_,
     rrc_ue_cu_cp_ue_notifier&                cu_cp_ue_notifier_,
+    rrc_ue_event_notifier&                   metrics_notifier_,
     rrc_ue_ngap_notifier&                    ngap_notifier_,
     rrc_ue_event_manager&                    event_mng_,
     rrc_ue_logger&                           logger_) :
@@ -51,6 +52,7 @@ rrc_reestablishment_procedure::rrc_reestablishment_procedure(
   srb_notifier(srb_notifier_),
   cu_cp_notifier(cu_cp_notifier_),
   cu_cp_ue_notifier(cu_cp_ue_notifier_),
+  metrics_notifier(metrics_notifier_),
   ngap_notifier(ngap_notifier_),
   event_mng(event_mng_),
   logger(logger_)
@@ -108,6 +110,9 @@ void rrc_reestablishment_procedure::operator()(coro_context<async_task<void>>& c
   if (transaction.has_response()) {
     context.state = rrc_state::connected;
 
+    // Notify metrics.
+    metrics_notifier.on_new_rrc_connection();
+
     // Notify DU Processor to start a Reestablishment Context Modification Routine.
     CORO_AWAIT_VALUE(context_modification_success,
                      cu_cp_notifier.on_rrc_reestablishment_context_modification_required());
@@ -148,8 +153,14 @@ async_task<void> rrc_reestablishment_procedure::handle_rrc_reestablishment_fallb
     CORO_BEGIN(ctx);
 
     // Reject RRC Reestablishment Request by sending RRC Setup.
-    CORO_AWAIT(launch_async<rrc_setup_procedure>(
-        context, du_to_cu_container, rrc_ue_setup_notifier, srb_notifier, ngap_notifier, event_mng, logger));
+    CORO_AWAIT(launch_async<rrc_setup_procedure>(context,
+                                                 du_to_cu_container,
+                                                 rrc_ue_setup_notifier,
+                                                 srb_notifier,
+                                                 metrics_notifier,
+                                                 ngap_notifier,
+                                                 event_mng,
+                                                 logger));
 
     if (old_ue_reest_context.ue_index != ue_index_t::invalid and !old_ue_reest_context.old_ue_fully_attached) {
       // The UE exists but still has not established an SRB2 and DRB. Request the release of the old UE.

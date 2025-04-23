@@ -88,7 +88,7 @@ e2sm_rc_control_action_2_6_du_executor::e2sm_rc_control_action_2_6_du_executor(
   action_params.insert({11, "Min PRB Policy Ratio"});
   action_params.insert({12, "Max PRB Policy Ratio"});
   action_params.insert({13, "Dedicated PRB Policy Ratio"});
-};
+}
 
 void e2sm_rc_control_action_2_6_du_executor::parse_action_ran_parameter_value(
     const ran_param_value_type_c&        ran_param,
@@ -205,7 +205,7 @@ bool e2sm_rc_control_action_2_6_du_executor::ric_control_action_supported(const 
     }
   };
   return true;
-};
+}
 
 async_task<e2sm_ric_control_response>
 e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ric_control_request& req)
@@ -222,7 +222,7 @@ e2sm_rc_control_action_2_6_du_executor::execute_ric_control_action(const e2sm_ri
         e2sm_ric_control_response e2_resp = convert_to_e2sm_response(ctrl_config, ctrl_response);
         CORO_RETURN(e2_resp);
       });
-};
+}
 
 srs_du::du_mac_sched_control_config
 e2sm_rc_control_action_2_6_du_executor::convert_to_du_config_request(const e2sm_ric_control_request& e2sm_req_)

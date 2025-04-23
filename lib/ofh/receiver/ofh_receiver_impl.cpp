@@ -39,6 +39,7 @@ static message_receiver_config get_message_receiver_configuration(const receiver
   config.vlan_params.tci             = rx_config.tci;
   config.vlan_params.eth_type        = ether::ECPRI_ETH_TYPE;
   config.warn_unreceived_frames      = rx_config.log_unreceived_ru_frames;
+  config.are_metrics_enabled         = rx_config.are_metrics_enabled;
 
   config.prach_eaxc = rx_config.prach_eaxc;
   config.ul_eaxc    = rx_config.ul_eaxc;
@@ -106,6 +107,7 @@ void ota_symbol_boundary_dispatcher::on_new_symbol(const slot_symbol_point_conte
 }
 
 receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_dependencies&& dependencies) :
+  symbol_reorderer(std::move(dependencies.symbol_reorderer)),
   closed_window_handler(get_closed_rx_window_handler_config(config),
                         generate_closed_rx_window_dependencies(std::move(dependencies.window_handler_dependencies),
                                                                *dependencies.logger,
@@ -124,6 +126,10 @@ receiver_impl::receiver_impl(const receiver_config& config, receiver_impl_depend
                get_message_receiver_dependencies(std::move(dependencies.msg_rx_dependencies),
                                                  window_checker,
                                                  closed_window_handler)),
+  metrics_collector(config.are_metrics_enabled,
+                    window_checker,
+                    msg_receiver.get_metrics_collector(),
+                    msg_receiver.get_ethernet_receiver().get_metrics_collector()),
   rcv_task_dispatcher(msg_receiver, *dependencies.executor, config.sector),
   ctrl(rcv_task_dispatcher)
 {
@@ -134,12 +140,12 @@ ota_symbol_boundary_notifier* receiver_impl::get_ota_symbol_boundary_notifier()
   return &symbol_boundary_dispatcher;
 }
 
-controller& receiver_impl::get_controller()
+operation_controller& receiver_impl::get_operation_controller()
 {
   return ctrl;
 }
 
 receiver_metrics_collector* receiver_impl::get_metrics_collector()
 {
-  return window_checker.disabled() ? nullptr : &window_checker;
+  return metrics_collector.disabled() ? nullptr : &metrics_collector;
 }

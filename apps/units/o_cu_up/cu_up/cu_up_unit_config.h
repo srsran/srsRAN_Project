@@ -32,14 +32,21 @@
 
 namespace srsran {
 
+/// Configuration to enable/disable metrics per layer.
+struct cu_up_unit_metrics_layer_config {
+  bool enable_pdcp = false;
+  bool enable_e1ap = false;
+
+  /// Returns true if one or more layers are enabled, false otherwise.
+  bool are_metrics_enabled() const { return enable_pdcp || enable_e1ap; }
+};
+
 /// Metrics configuration.
 struct cu_up_unit_metrics_config {
-  /// Statistics report period in seconds.
-  unsigned cu_up_statistics_report_period = 1;
-  struct pdcp_metrics {
-    unsigned report_period = 1000; // PDCP report period in ms
-  } pdcp;
-  app_helpers::metrics_config common_metrics_cfg;
+  /// CU-UP statistics report period in milliseconds.
+  unsigned                        cu_up_report_period = 1000;
+  app_helpers::metrics_config     common_metrics_cfg;
+  cu_up_unit_metrics_layer_config layers_cfg;
 };
 
 struct cu_up_unit_ngu_socket_config {
@@ -49,9 +56,18 @@ struct cu_up_unit_ngu_socket_config {
   udp_appconfig udp_config     = {};
 };
 
+/// GPTU parameters.
+struct cu_up_unit_ngu_gtpu_config {
+  unsigned                  gtpu_queue_size          = 2048;
+  unsigned                  gtpu_reordering_timer_ms = 0;
+  std::chrono::milliseconds rate_limiter_period{100};
+  bool                      ignore_ue_ambr = true;
+};
+
 struct cu_up_unit_ngu_config {
   bool                                      no_core = false;
   std::vector<cu_up_unit_ngu_socket_config> ngu_socket_cfg;
+  cu_up_unit_ngu_gtpu_config                gtpu_cfg;
 };
 
 /// F1-U configuration at CU_UP side
@@ -72,6 +88,13 @@ struct cu_up_unit_test_mode_config {
   bool     ciphering_enabled = true;
   uint16_t nea_algo          = 2;
   uint16_t nia_algo          = 2;
+  uint64_t ue_ambr           = 40000000000; // 40 gbps
+};
+
+struct cu_up_unit_execution_config {
+  uint32_t dl_ue_executor_queue_size   = 8192;
+  uint32_t ul_ue_executor_queue_size   = 8192;
+  uint32_t ctrl_ue_executor_queue_size = 8192;
 };
 
 /// CU-UP application unit configuration.
@@ -80,12 +103,12 @@ struct cu_up_unit_config {
   gnb_id_t gnb_id = {411, 22};
   /// CU-UP identifier.
   gnb_cu_up_id_t gnb_cu_up_id = gnb_cu_up_id_t::min;
-  /// GPTU parameters.
-  unsigned gtpu_queue_size          = 2048;
-  unsigned gtpu_reordering_timer_ms = 0;
-  bool     warn_on_drop             = false;
-  /// UPF configuration.
+  /// CU-UP warn if PDUs are dropped.
+  bool warn_on_drop = false;
+  /// NG-U configuration.
   cu_up_unit_ngu_config ngu_cfg;
+  /// Execution configuration
+  cu_up_unit_execution_config exec_cfg;
   /// Metrics.
   cu_up_unit_metrics_config metrics;
   /// Loggers.

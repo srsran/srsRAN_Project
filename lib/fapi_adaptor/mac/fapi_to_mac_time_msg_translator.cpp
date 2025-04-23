@@ -23,6 +23,7 @@
 #include "fapi_to_mac_time_msg_translator.h"
 #include "srsran/fapi/messages/slot_indication.h"
 #include "srsran/mac/mac_cell_slot_handler.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;
@@ -32,7 +33,7 @@ namespace {
 class mac_cell_slot_handler_dummy : public mac_cell_slot_handler
 {
 public:
-  void handle_slot_indication(slot_point sl_tx) override {}
+  void handle_slot_indication(const mac_cell_timing_context& context) override {}
   void handle_error_indication(slot_point sl_tx, error_event event) override {}
 };
 
@@ -49,5 +50,6 @@ fapi_to_mac_time_msg_translator::fapi_to_mac_time_msg_translator(subcarrier_spac
 
 void fapi_to_mac_time_msg_translator::on_slot_indication(const fapi::slot_indication_message& msg)
 {
-  mac_slot_handler.get().handle_slot_indication(slot_point(to_numerology_value(scs), msg.sfn, msg.slot));
+  mac_slot_handler.get().handle_slot_indication(
+      {slot_point(to_numerology_value(scs), msg.sfn, msg.slot), msg.time_point});
 }

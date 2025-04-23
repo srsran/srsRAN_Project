@@ -29,16 +29,22 @@ namespace srsran {
 /// Struct to express a {min,...,max} range of CRB indexes within a carrier.
 struct crb_interval : public interval<unsigned> {
   using interval::interval;
+
+  explicit crb_interval(interval<unsigned> lims) : interval(lims) {}
 };
 
 /// Struct to express a {min,...,max} range of PRB indexes within a BWP.
 struct prb_interval : public interval<unsigned> {
   using interval::interval;
+
+  explicit prb_interval(interval<unsigned> lims) : interval(lims) {}
 };
 
 /// Struct to express a {min,...,max} range of VRB indexes.
 struct vrb_interval : public interval<unsigned> {
   using interval::interval;
+
+  explicit vrb_interval(interval<unsigned> lims) : interval(lims) {}
 };
 
 /// \brief Convert CRB into PRB given the CRB assignment limits.
@@ -94,17 +100,14 @@ namespace fmt {
 
 /// FMT formatter for prb_intervals.
 template <>
-struct formatter<srsran::prb_interval> : public formatter<srsran::interval<uint32_t>> {
-};
+struct formatter<srsran::prb_interval> : public formatter<srsran::interval<uint32_t>> {};
 
 /// FMT formatter for crb_intervals.
 template <>
-struct formatter<srsran::crb_interval> : public formatter<srsran::interval<uint32_t>> {
-};
+struct formatter<srsran::crb_interval> : public formatter<srsran::interval<uint32_t>> {};
 
 /// FMT formatter for vrb_intervals.
 template <>
-struct formatter<srsran::vrb_interval> : public formatter<srsran::interval<uint32_t>> {
-};
+struct formatter<srsran::vrb_interval> : public formatter<srsran::interval<uint32_t>> {};
 
 } // namespace fmt

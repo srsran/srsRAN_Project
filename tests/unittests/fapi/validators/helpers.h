@@ -41,7 +41,7 @@ std::ostream& operator<<(std::ostream& os, const pdu_field_data<T>& arg)
 {
   os << arg.property;
   return os;
-};
+}
 
 struct test_case_data {
   unsigned value;
@@ -56,7 +56,7 @@ inline std::ostream& operator<<(std::ostream& os, const test_case_data& arg)
 {
   os << "Value = " << std::to_string(arg.value) << ", Result = " << std::to_string(arg.result);
   return os;
-};
+}
 
 template <typename T, typename F>
 class validate_fapi_field
@@ -89,11 +89,11 @@ private:
     T pdu = builder();
     property.fun(pdu, params.value);
     return pdu;
-  };
+  }
 
-  virtual bool when_executing_the_validation(T pdu, F validator) { return true; };
+  virtual bool when_executing_the_validation(T pdu, F validator) { return true; }
 
-  virtual bool when_executing_the_validation(T pdu, F validator, srsran::fapi::dl_pdu_type pdu_type) { return true; };
+  virtual bool when_executing_the_validation(T pdu, F validator, srsran::fapi::dl_pdu_type pdu_type) { return true; }
 
   void then_check_the_report(bool result, const std::string& property, bool expected_result)
   {
@@ -105,7 +105,7 @@ private:
     } else {
       EXPECT_TRUE(report.reports.empty());
     }
-  };
+  }
 
 protected:
   validator_report report = {0, 0};
@@ -139,7 +139,7 @@ private:
     }
 
     return error.has_value();
-  };
+  }
 
   void check_message_params(bool result, message_type_id msg_type_id) const
   {
@@ -176,7 +176,7 @@ private:
   bool when_executing_the_validation(T pdu, std::function<bool(T& pdu, validator_report& report)> validator) override
   {
     return validator(pdu, base::report);
-  };
+  }
 
   void check_pdu_params(bool result, message_type_id msg_type_id, U pdu_type) const
   {
@@ -217,7 +217,7 @@ private:
                                 srsran::fapi::dl_pdu_type                                         pdu_type) override
   {
     return validator(pdu, base::report, pdu_type);
-  };
+  }
 
   void check_pdu_params(bool result, message_type_id msg_type_id, U pdu_type) const
   {

@@ -111,7 +111,7 @@ int main(int argc, char** argv)
   TESTASSERT(low_papr_seq_gen_factory);
 
   std::shared_ptr<srs_estimator_factory> srs_est_factory =
-      create_srs_estimator_generic_factory(low_papr_seq_gen_factory, ta_est_factory);
+      create_srs_estimator_generic_factory(low_papr_seq_gen_factory, ta_est_factory, MAX_RB);
 
   std::unique_ptr<srs_estimator> estimator = srs_est_factory->create();
   TESTASSERT(estimator);
@@ -150,7 +150,7 @@ int main(int argc, char** argv)
   std::generate(random_re.begin(), random_re.end(), [&rgen, &c_normal_dist]() { return c_normal_dist(rgen); });
 
   // Generate a RE mask and set all elements to true.
-  bounded_bitset<NRE* MAX_RB> re_mask = ~bounded_bitset<NRE * MAX_RB>(grid_nof_subcs);
+  bounded_bitset<NRE * MAX_RB> re_mask = ~bounded_bitset<NRE * MAX_RB>(grid_nof_subcs);
 
   // Fill the grid with the random RE.
   span<const cf_t> re_view(random_re);

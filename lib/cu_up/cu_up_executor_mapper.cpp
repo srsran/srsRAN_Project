@@ -253,12 +253,13 @@ private:
 
   base_cu_up_executor_pool_config create_strands(const strand_based_executor_config& config)
   {
-    concurrent_queue_params qparams{concurrent_queue_policy::lockfree_mpmc, config.default_task_queue_size};
-    concurrent_queue_params data_qparams{concurrent_queue_policy::lockfree_mpmc, config.gtpu_task_queue_size};
+    concurrent_queue_params dl_ue_qparams{concurrent_queue_policy::lockfree_mpmc, config.dl_ue_task_queue_size};
+    concurrent_queue_params ul_ue_qparams{concurrent_queue_policy::lockfree_mpmc, config.ul_ue_task_queue_size};
+    concurrent_queue_params ctrl_ue_qparams{concurrent_queue_policy::lockfree_mpmc, config.ctrl_ue_task_queue_size};
 
     // Create IO executor that can be either inlined with CU-UP strand or its own strand.
     if (config.dedicated_io_strand) {
-      io_ul_exec.emplace<io_dedicated_strand_type>(&config.worker_pool_executor, config.gtpu_task_queue_size);
+      io_ul_exec.emplace<io_dedicated_strand_type>(&config.worker_pool_executor, config.ul_ue_task_queue_size);
       io_ul_exec_ptr = &std::get<io_dedicated_strand_type>(io_ul_exec);
     } else {
       io_ul_exec.emplace<inline_task_executor>();
@@ -270,7 +271,7 @@ private:
     ue_ctrl_execs.resize(config.max_nof_ue_strands);
     ue_ul_execs.resize(config.max_nof_ue_strands);
     ue_dl_execs.resize(config.max_nof_ue_strands);
-    std::array<concurrent_queue_params, 3> ue_queue_params = {qparams, data_qparams, data_qparams};
+    std::array<concurrent_queue_params, 3> ue_queue_params = {ctrl_ue_qparams, ul_ue_qparams, dl_ue_qparams};
     for (unsigned i = 0; i != config.max_nof_ue_strands; ++i) {
       ue_strands[i] = std::make_unique<ue_strand_type>(cu_up_strand.get_executors()[1], ue_queue_params);
       span<ue_strand_type::executor_type> execs = ue_strands[i]->get_executors();

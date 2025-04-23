@@ -27,6 +27,7 @@
 #include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/pdcp/pdcp_factory.h"
 #include "srsran/sdap/sdap_factory.h"
+#include "srsran/support/rate_limiting/token_bucket_config.h"
 #include "srsran/support/srsran_assert.h"
 #include <utility>
 
@@ -39,6 +40,7 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
                                                    const n3_interface_config&                       n3_config_,
                                                    const cu_up_test_mode_config&                    test_mode_config_,
                                                    cu_up_ue_logger&                                 logger_,
+                                                   uint64_t                                         ue_dl_ambr,
                                                    unique_timer&        ue_inactivity_timer_,
                                                    timer_factory        ue_dl_timer_factory_,
                                                    timer_factory        ue_ul_timer_factory_,
@@ -74,6 +76,9 @@ pdu_session_manager_impl::pdu_session_manager_impl(ue_index_t                   
   f1u_gw(f1u_gw_),
   ngu_session_mngr(ngu_session_mngr_)
 {
+  token_bucket_config ue_ambr_config =
+      generate_token_bucket_config(ue_dl_ambr, ue_dl_ambr, timer_duration(100), ue_ctrl_timer_factory);
+  ue_ambr_limiter = std::make_unique<token_bucket>(ue_ambr_config);
 }
 
 pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session)
@@ -134,8 +139,10 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   msg.cfg.tx.peer_addr                 = ul_tunnel_info.tp_address.to_string();
   msg.cfg.tx.peer_port                 = n3_config.upf_port;
   msg.cfg.rx.local_teid                = new_session->local_teid;
+  msg.cfg.rx.ignore_ue_ambr            = n3_config.gtpu_ignore_ue_ambr;
+  msg.cfg.rx.ue_ambr_limiter           = ue_ambr_limiter.get();
   msg.cfg.rx.t_reordering              = n3_config.gtpu_reordering_timer;
-  msg.cfg.rx.warn_expired_t_reordering = n3_config.warn_on_drop;
+  msg.cfg.rx.warn_on_drop              = n3_config.warn_on_drop;
   msg.cfg.rx.test_mode                 = test_mode_config.enabled;
   msg.rx_lower                         = &new_session->gtpu_to_sdap_adapter;
   msg.tx_upper                         = &new_session->gtpu_to_udp_adapter;
@@ -149,12 +156,14 @@ pdu_session_setup_result pdu_session_manager_impl::setup_pdu_session(const e1ap_
   new_session->gtpu_to_udp_adapter.connect_network_gateway(n3_gw);
 
   // Register tunnel at demux
-  if (!gtpu_rx_demux.add_tunnel(
-          new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface())) {
+  expected<std::unique_ptr<gtpu_demux_dispatch_queue>> expected_dispatch_queue =
+      gtpu_rx_demux.add_tunnel(new_session->local_teid, ue_dl_exec, new_session->gtpu->get_rx_upper_layer_interface());
+  if (!expected_dispatch_queue) {
     logger.log_error(
         "PDU Session {} cannot be created. TEID {} already exists", session.pdu_session_id, new_session->local_teid);
     return pdu_session_result;
   }
+  new_session->dispatch_queue = std::move(expected_dispatch_queue.value());
 
   // Handle DRB setup
   for (const e1ap_drb_to_setup_item_ng_ran& drb_to_setup : session.drb_to_setup_list_ng_ran) {
@@ -598,6 +607,7 @@ void pdu_session_manager_impl::disconnect_pdu_session(pdu_session_id_t pdu_sessi
 void pdu_session_manager_impl::disconnect_all_pdu_sessions()
 {
   logger.log_debug("Disconnecting all PDU sessions");
+  ue_ambr_limiter->stop();
   for (const auto& pdu_session_it : pdu_sessions) {
     disconnect_pdu_session(pdu_session_it.first);
   }

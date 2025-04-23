@@ -73,8 +73,7 @@ private:
     }
 
     /// Determines the slice candidate priority.
-    priority_type
-    get_prio(bool is_dl, slot_point pdcch_slot, slot_point pxsch_slot, unsigned nof_slices, bool slice_resched) const;
+    priority_type get_prio(bool is_dl, slot_point pdcch_slot, slot_point pxsch_slot, bool slice_resched) const;
   };
 
   struct slice_candidate_context {
@@ -106,6 +105,8 @@ private:
       // Access to underlying vector.
       this->c.clear();
     }
+
+    void reserve(size_t capacity) { c.reserve(capacity); }
 
     // Adapter of the priority_queue push method to avoid adding candidates with skip priority level.
     void push(const slice_candidate_context& elem)

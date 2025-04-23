@@ -30,15 +30,18 @@ namespace srsran {
 class si_message_scheduler
 {
 public:
-  si_message_scheduler(const scheduler_si_expert_config&               expert_cfg_,
-                       const cell_configuration&                       cfg_,
-                       pdcch_resource_allocator&                       pdcch_sch,
-                       const sched_cell_configuration_request_message& msg);
+  si_message_scheduler(const cell_configuration&                  cfg_,
+                       pdcch_resource_allocator&                  pdcch_sch,
+                       const std::optional<si_scheduling_config>& si_sched_cfg_);
 
   /// \brief Performs broadcast SI message scheduling.
   ///
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
   void run_slot(cell_slot_resource_allocator& res_grid);
+
+  /// \brief Update the SI messages.
+  void handle_si_message_update_indication(unsigned                                   version,
+                                           const std::optional<si_scheduling_config>& new_si_sched_cfg);
 
 private:
   struct message_window_context {
@@ -67,6 +70,7 @@ private:
   srslog::basic_logger&               logger;
 
   std::vector<message_window_context> pending_messages;
+  unsigned                            version = 0;
 };
 
 } // namespace srsran

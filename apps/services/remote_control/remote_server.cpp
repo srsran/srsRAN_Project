@@ -24,7 +24,14 @@
 #include "apps/services/remote_control/remote_command.h"
 #include "apps/services/remote_control/remote_control_appconfig.h"
 #include "nlohmann/json.hpp"
+#ifndef __clang__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
 #include "uWebSockets/App.h"
+#ifndef __clang__
+#pragma GCC diagnostic pop
+#endif
 #include "srsran/support/executors/unique_thread.h"
 #include <csignal>
 

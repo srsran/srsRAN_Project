@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
 #include "srsran/adt/strong_type.h"
 #include "srsran/ran/resource_allocation/rb_interval.h"
 #include "srsran/ran/resource_block.h"

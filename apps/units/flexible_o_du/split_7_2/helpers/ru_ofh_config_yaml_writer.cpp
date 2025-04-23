@@ -103,7 +103,6 @@ static YAML::Node build_ru_ofh_cell_section(const ru_ofh_unit_cell_config& confi
   node["ta4_max"]                    = config.cell.Ta4_max.count();
   node["ta4_min"]                    = config.cell.Ta4_min.count();
   node["is_prach_cp_enabled"]        = config.cell.is_prach_control_plane_enabled;
-  node["is_dl_broadcast_enabled"]    = config.cell.is_downlink_broadcast_enabled;
   node["ignore_prach_start_symbol"]  = config.cell.ignore_prach_start_symbol;
   node["ignore_ecpri_seq_id"]        = config.cell.ignore_ecpri_seq_id_field;
   node["ignore_ecpri_payload_size"]  = config.cell.ignore_ecpri_payload_size_field;
@@ -156,9 +155,18 @@ static void fill_ru_ofh_section(YAML::Node node, const ru_ofh_unit_config& confi
   }
 }
 
-void srsran::fill_ru_ofh_config_in_yaml_schema(YAML::Node& node, const ru_ofh_unit_config& config)
+static void fill_ru_ofh_metrics_section(YAML::Node node, const ru_ofh_unit_metrics_config& config)
 {
   app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg);
+
+  auto metrics_node        = node["metrics"];
+  auto layers_node         = metrics_node["layers"];
+  layers_node["enable_ru"] = config.enable_ru_metrics;
+}
+
+void srsran::fill_ru_ofh_config_in_yaml_schema(YAML::Node& node, const ru_ofh_unit_config& config)
+{
+  fill_ru_ofh_metrics_section(node, config.metrics_cfg);
   fill_ru_ofh_log_section(node["log"], config.loggers);
   fill_ru_ofh_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
   fill_ru_ofh_section(node["ru_ofh"], config);

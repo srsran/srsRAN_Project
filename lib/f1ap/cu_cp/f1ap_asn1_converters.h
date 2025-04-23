@@ -98,7 +98,7 @@ inline void cu_to_du_rrc_info_to_asn1(asn1::f1ap::cu_to_du_rrc_info_s& asn1_cu_t
     // need for gap ncsg info eutra
     // cfg restrict info daps
   }
-};
+}
 
 /// \brief Convert scell to be setup/setup mod item to F1AP ASN.1.
 /// \param[out] asn1_scell_to_be_setup_mod_item The ASN.1 struct to store the result.

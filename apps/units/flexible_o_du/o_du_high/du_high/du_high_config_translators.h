@@ -54,12 +54,6 @@ scheduler_expert_config generate_scheduler_expert_config(const du_high_unit_conf
 /// Augments RLC parameters based on NTN configuration.
 void ntn_augment_rlc_parameters(const ntn_config& ntn_cfg, std::map<srb_id_t, srs_du::du_srb_config>& srb_cfgs);
 
-/// Converts and returns the given gnb application configuration to a DU slice RRM policy configuration list.
-std::vector<slice_rrm_policy_config>
-generate_du_slicing_rrm_policy_config(span<const std::string>                    plmns,
-                                      span<const du_high_unit_cell_slice_config> slice_cfg,
-                                      unsigned                                   nof_cell_crbs);
-
 /// Fills the DU high worker manager parameters of the given worker manager configuration.
 void fill_du_high_worker_manager_config(worker_manager_config&     config,
                                         const du_high_unit_config& unit_cfg,

@@ -29,7 +29,7 @@
 namespace srsran {
 namespace ofh {
 
-class error_notifier;
+class transmitter_metrics_collector;
 
 /// Open Fronthaul transmitter interface.
 class transmitter
@@ -47,8 +47,8 @@ public:
   /// Returns the OTA symbol boundary notifier of this Open Fronthaul transmitter.
   virtual ota_symbol_boundary_notifier& get_ota_symbol_boundary_notifier() = 0;
 
-  /// Sets the error notifier of this sector to the given one.
-  virtual void set_error_notifier(error_notifier& notifier) = 0;
+  /// Returns the metrics collector of this Open Fronthaul transmitter or nullptr if metrics are disabled.
+  virtual transmitter_metrics_collector* get_metrics_collector() = 0;
 };
 
 } // namespace ofh

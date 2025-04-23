@@ -107,6 +107,7 @@ pdu_session_resource_setup_validation_outcome srsran::srs_cu_cp::verify_pdu_sess
   }
   verification_outcome.request.ue_index                         = request.ue_index;
   verification_outcome.request.ue_aggregate_maximum_bit_rate_dl = request.ue_aggregate_maximum_bit_rate_dl;
+  verification_outcome.request.ue_aggregate_maximum_bit_rate_ul = request.ue_aggregate_maximum_bit_rate_ul;
   verification_outcome.request.serving_plmn                     = request.serving_plmn;
 
   return verification_outcome;

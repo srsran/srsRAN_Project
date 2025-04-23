@@ -44,7 +44,7 @@ public:
 
   void push_rx_metrics(pdcp_rx_metrics_container m_rx_);
 
-  const timer_duration& get_metrics_period() const { return metrics_period; };
+  const timer_duration& get_metrics_period() const { return metrics_period; }
 
 private:
   void push_report();

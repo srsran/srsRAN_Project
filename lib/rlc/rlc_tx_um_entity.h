@@ -71,6 +71,10 @@ private:
   // Storage for previous buffer state
   rlc_buffer_state prev_buffer_state = {};
 
+  /// This flag is used to temporarily disable barring of huge buffer state notifications after seeing a small buffer
+  /// state (<= MAX_DL_PDU_LENGTH) until sending at least one notification towards lower layer.
+  bool suspend_bs_notif_barring = true;
+
   /// This atomic_flag indicates whether a buffer state update task has been queued but not yet run by pcell_executor.
   /// It helps to avoid queuing of redundant notification tasks in case of frequent changes of the buffer status.
   /// If the flag is set, no further notification needs to be scheduled, because the already queued task will pick the

@@ -135,7 +135,7 @@ public:
     }
 
     // Process PDSCH.
-    processors[index.value()].process(grid, notifier, std::move(data), pdu);
+    processors[*index].process(grid, notifier, std::move(data), pdu);
   }
 
 private:

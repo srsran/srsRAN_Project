@@ -180,19 +180,19 @@ struct cu_cp_five_g_s_tmsi {
   {
     srsran_assert(five_g_s_tmsi.has_value(), "five_g_s_tmsi is not set");
     return five_g_s_tmsi.value().to_uint64() >> 38U;
-  };
+  }
 
   uint8_t get_amf_pointer() const
   {
     srsran_assert(five_g_s_tmsi.has_value(), "five_g_s_tmsi is not set");
     return (five_g_s_tmsi.value().to_uint64() & 0x3f00000000) >> 32U;
-  };
+  }
 
   uint32_t get_five_g_tmsi() const
   {
     srsran_assert(five_g_s_tmsi.has_value(), "five_g_s_tmsi is not set");
     return (five_g_s_tmsi.value().to_uint64() & 0xffffffff);
-  };
+  }
 
   uint64_t to_number() const { return five_g_s_tmsi->to_uint64(); }
 
@@ -336,6 +336,7 @@ struct cu_cp_pdu_session_resource_setup_request {
   ue_index_t                                                            ue_index = ue_index_t::invalid;
   slotted_id_vector<pdu_session_id_t, cu_cp_pdu_session_res_setup_item> pdu_session_res_setup_items;
   uint64_t                                                              ue_aggregate_maximum_bit_rate_dl;
+  uint64_t                                                              ue_aggregate_maximum_bit_rate_ul;
   plmn_identity                                                         serving_plmn = plmn_identity::test_value();
   byte_buffer                                                           nas_pdu; ///< optional NAS PDU
 };

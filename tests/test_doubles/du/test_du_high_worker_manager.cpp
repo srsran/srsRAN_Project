@@ -89,7 +89,7 @@ public:
     srs_du::du_high_executor_config exec_cfg;
     auto& cells = exec_cfg.cell_executors.emplace<srs_du::du_high_executor_config::dedicated_cell_worker_list>();
     for (unsigned i = 0; i != slot_execs.size(); ++i) {
-      cells.push_back(srs_du::du_high_executor_config::dedicated_cell_worker{slot_execs[i], cell_execs[i]});
+      cells.push_back(srs_du::du_high_executor_config::dedicated_cell_worker{&slot_execs[i], &cell_execs[i]});
     }
     exec_cfg.ue_executors   = {srs_du::du_high_executor_config::ue_executor_config::map_policy::per_cell,
                                cfg.nof_cell_workers,

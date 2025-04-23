@@ -78,10 +78,10 @@ public:
   }
 
   /// Returns the type 1 parameters.
-  const cplane_section_type1_parameters& get_type1_param() const { return type1_params; };
+  const cplane_section_type1_parameters& get_type1_param() const { return type1_params; }
 
   /// Returns the type 3 parameters.
-  const cplane_section_type3_parameters& get_type3_param() const { return type3_params; };
+  const cplane_section_type3_parameters& get_type3_param() const { return type3_params; }
 };
 
 } // namespace
@@ -277,26 +277,21 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
   data_flow.enqueue_section_type_1_message(context);
 
   // Assert that an entry was created for the uplink Control-Plane message.
-  auto repo_context = ul_cplane_context_repo->get(context.slot, 0, context.filter_type, context.eaxc);
-  ASSERT_TRUE(repo_context.has_value());
+  auto repo_context = ul_cplane_context_repo->get(context.slot, context.eaxc);
 
   // Check radio header.
-  const cplane_radio_application_header& radio_hdr = repo_context.value().radio_hdr;
-  ASSERT_EQ(radio_hdr.direction, context.direction);
-  ASSERT_EQ(radio_hdr.slot, context.slot);
-  ASSERT_EQ(radio_hdr.filter_index, context.filter_type);
+  ASSERT_EQ(repo_context.filter_index, context.filter_type);
   // Always start in symbol 0.
-  ASSERT_EQ(radio_hdr.start_symbol, 0);
+  ASSERT_EQ(repo_context.start_symbol, 0);
 
-  ASSERT_EQ(repo_context.value().nof_symbols, context.symbol_range.length());
-  ASSERT_EQ(repo_context.value().nof_prb, ru_nof_prbs);
-  ASSERT_EQ(repo_context.value().prb_start, 0);
+  ASSERT_EQ(repo_context.nof_symbols, context.symbol_range.length());
+  ASSERT_EQ(repo_context.nof_prb, ru_nof_prbs);
+  ASSERT_EQ(repo_context.prb_start, 0);
 
-  // Check that the context can be found for all the configured symbols.
+  // Check that the context is valid for all the configured symbols.
+  auto up_repo_context = ul_cplane_context_repo->get(context.slot, context.eaxc);
   for (unsigned i = 0, e = context.symbol_range.length(); i != e; ++i) {
-    auto up_repo_context = ul_cplane_context_repo->get(context.slot, i, context.filter_type, context.eaxc);
-
-    ASSERT_TRUE(up_repo_context.has_value());
+    ASSERT_TRUE(i < up_repo_context.start_symbol + up_repo_context.nof_symbols);
   }
 }
 
@@ -409,25 +404,21 @@ TEST_F(data_flow_cplane_scheduling_commands_impl_fixture,
   data_flow.enqueue_section_type_3_prach_message(context);
 
   // Assert that an entry was created for the uplink Control-Plane message.
-  auto repo_context = prach_cplane_context_repo->get(context.slot, 0, context.filter_type, context.eaxc);
-  ASSERT_TRUE(repo_context.has_value());
+  auto repo_context = prach_cplane_context_repo->get(context.slot, context.eaxc);
 
   // Check radio header.
-  const cplane_radio_application_header& radio_hdr = repo_context.value().radio_hdr;
-  ASSERT_EQ(radio_hdr.direction, data_direction::uplink);
-  ASSERT_EQ(radio_hdr.slot, context.slot);
-  ASSERT_EQ(radio_hdr.filter_index, context.filter_type);
+  ASSERT_EQ(repo_context.filter_index, context.filter_type);
   // Always start in symbol 0.
-  ASSERT_EQ(radio_hdr.start_symbol, context.start_symbol);
+  ASSERT_EQ(repo_context.start_symbol, context.start_symbol);
 
-  ASSERT_EQ(repo_context.value().nof_symbols, context.nof_repetitions);
-  ASSERT_EQ(repo_context.value().nof_prb, context.prach_nof_rb);
-  ASSERT_EQ(repo_context.value().prb_start, 0);
+  ASSERT_EQ(repo_context.nof_symbols, context.nof_repetitions);
+  ASSERT_EQ(repo_context.nof_prb, context.prach_nof_rb);
+  ASSERT_EQ(repo_context.prb_start, 0);
 
   // Check that the context can be found for all the configured symbols.
   for (unsigned i = 0, e = context.nof_repetitions; i != e; ++i) {
-    auto ctxt = prach_cplane_context_repo->get(context.slot, i, context.filter_type, context.eaxc);
+    auto ctxt = prach_cplane_context_repo->get(context.slot, context.eaxc);
 
-    ASSERT_TRUE(ctxt.has_value());
+    ASSERT_TRUE(i < ctxt.start_symbol + ctxt.nof_symbols);
   }
 }

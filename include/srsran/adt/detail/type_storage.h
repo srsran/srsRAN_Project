@@ -42,27 +42,12 @@ struct type_storage {
   }
 
   /// Get created object handle. UB if object is not created
-  T& get() noexcept
-  {
-    return *std::launder(reinterpret_cast<T*>(buffer));
-  }
-  const T& get() const noexcept
-  {
-    return *std::launder(reinterpret_cast<const T*>(buffer));
-  }
+  T&       get() noexcept { return *std::launder(reinterpret_cast<T*>(buffer)); }
+  const T& get() const noexcept { return *std::launder(reinterpret_cast<const T*>(buffer)); }
 
-  void* addr() noexcept
-  {
-    return static_cast<void*>(&buffer);
-  }
-  const void* addr() const noexcept
-  {
-    return static_cast<void*>(&buffer);
-  }
-  explicit operator void*() noexcept
-  {
-    return addr();
-  }
+  void*       addr() noexcept { return static_cast<void*>(&buffer); }
+  const void* addr() const noexcept { return static_cast<void*>(&buffer); }
+  explicit    operator void*() noexcept { return addr(); }
 
   static constexpr size_t obj_size   = sizeof(T) > MinSize ? sizeof(T) : MinSize;
   static constexpr size_t align_size = alignof(T) > AlignSize ? alignof(T) : AlignSize;
@@ -72,11 +57,11 @@ struct type_storage {
 
 /// Helper method to copy optional object from rhs to lhs
 template <typename T, size_t MinSize, size_t AlignSize>
-void copy_if_present_helper(
-    type_storage<T, MinSize, AlignSize>&       lhs,
-    const type_storage<T, MinSize, AlignSize>& rhs,
-    bool                                       lhs_present,
-    bool rhs_present) noexcept(std::is_nothrow_copy_constructible<T>::value&& std::is_nothrow_copy_assignable<T>::value)
+void copy_if_present_helper(type_storage<T, MinSize, AlignSize>&       lhs,
+                            const type_storage<T, MinSize, AlignSize>& rhs,
+                            bool                                       lhs_present,
+                            bool rhs_present) noexcept(std::is_nothrow_copy_constructible<T>::value &&
+                                                       std::is_nothrow_copy_assignable<T>::value)
 {
   if (lhs_present and rhs_present) {
     lhs.get() = rhs.get();
@@ -89,11 +74,11 @@ void copy_if_present_helper(
 
 /// Helper method to move optional object from rhs to lhs
 template <typename T, size_t MinSize, size_t AlignSize>
-void move_if_present_helper(
-    type_storage<T, MinSize, AlignSize>& lhs,
-    type_storage<T, MinSize, AlignSize>& rhs,
-    bool                                 lhs_present,
-    bool rhs_present) noexcept(std::is_nothrow_move_constructible<T>::value&& std::is_nothrow_move_assignable<T>::value)
+void move_if_present_helper(type_storage<T, MinSize, AlignSize>& lhs,
+                            type_storage<T, MinSize, AlignSize>& rhs,
+                            bool                                 lhs_present,
+                            bool rhs_present) noexcept(std::is_nothrow_move_constructible<T>::value &&
+                                                       std::is_nothrow_move_assignable<T>::value)
 {
   if (lhs_present and rhs_present) {
     lhs.get() = std::move(rhs.get());

@@ -260,6 +260,9 @@ void pdsch_processor_flexible_impl::sync_pdsch_cb_processing()
   // Process DM-RS.
   pdsch_process_dmrs(*grid, dmrs_generator_pool->get(), config);
 
+  // No more code block tasks pending to execute, it is now safe to discard the TB buffer.
+  data.release();
+
   // Notify end of the processing.
   notifier->on_finish_processing();
 }

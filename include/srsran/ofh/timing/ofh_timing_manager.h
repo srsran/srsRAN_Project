@@ -36,7 +36,7 @@ public:
   virtual ~timing_manager() = default;
 
   /// Returns the controller of this timing manager.
-  virtual controller& get_controller() = 0;
+  virtual operation_controller& get_controller() = 0;
 
   /// Returns the OTA symbol boundary notifier manager of this timing manager.
   virtual ota_symbol_boundary_notifier_manager& get_ota_symbol_boundary_notifier_manager() = 0;

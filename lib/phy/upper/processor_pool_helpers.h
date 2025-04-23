@@ -75,6 +75,16 @@ public:
 
     numerologies[numerology] = std::move(obj);
   }
+
+  /// Stops all the instances.
+  void stop()
+  {
+    for (auto& procs : numerologies) {
+      for (auto& proc : procs) {
+        proc->stop();
+      }
+    }
+  }
 };
 
 } // namespace srsran

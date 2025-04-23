@@ -24,8 +24,10 @@
 
 #include "../common/e1ap_asn1_converters.h"
 #include "srsran/asn1/e1ap/e1ap.h"
+#include "srsran/asn1/e1ap/e1ap_ies.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
 #include "srsran/e1ap/common/e1_setup_messages.h"
+#include "srsran/e1ap/common/e1ap_types.h"
 #include "srsran/e1ap/cu_up/e1ap_cu_up_bearer_context_update.h"
 #include "srsran/ran/bcd_helper.h"
 #include "srsran/ran/qos/five_qi.h"
@@ -131,6 +133,12 @@ check_e1ap_bearer_context_setup_request_valid(const asn1::e1ap::bearer_context_s
   if (asn1_request->sys_bearer_context_setup_request.type() !=
       asn1::e1ap::sys_bearer_context_setup_request_c::types::ng_ran_bearer_context_setup_request) {
     logger.error("Not handling E-UTRAN Bearers");
+    return false;
+  }
+
+  // Check UE-AMBR makes sense
+  if (asn1_request->ue_dl_aggr_max_bit_rate == 0) {
+    logger.error("Invalid UE-DL-AMBR");
     return false;
   }
 
@@ -293,21 +301,6 @@ inline void fill_e1ap_bearer_context_setup_request(e1ap_bearer_context_setup_req
   if (asn1_request->ue_inactivity_timer_present) {
     request.ue_inactivity_timer = std::chrono::seconds(asn1_request->ue_inactivity_timer);
   }
-
-  // bearer context status change
-  if (asn1_request->bearer_context_status_change_present) {
-    request.bearer_context_status_change = asn1_request->bearer_context_status_change.to_string();
-  }
-
-  // ran ue id
-  if (asn1_request->ran_ue_id_present) {
-    request.ran_ue_id = uint_to_ran_ue_id(asn1_request->ran_ue_id.to_number());
-  }
-
-  // gnb du id
-  if (asn1_request->gnb_du_id_present) {
-    request.gnb_du_id = asn1_request->gnb_du_id;
-  }
 }
 
 inline void fill_asn1_bearer_context_setup_response(asn1::e1ap::sys_bearer_context_setup_resp_c& asn1_response,
@@ -412,12 +405,14 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
 
   // bearer context status change
   if (asn1_request->bearer_context_status_change_present) {
-    request.bearer_context_status_change = asn1_request->bearer_context_status_change.to_string();
+    request.bearer_context_status_change =
+        static_cast<e1ap_bearer_context_status_change>((int)asn1_request->bearer_context_status_change);
   }
 
   // new ul tnl info required
   if (asn1_request->new_ul_tnl_info_required_present) {
-    request.new_ul_tnl_info_required = asn1_request->new_ul_tnl_info_required.to_string();
+    request.new_ul_tnl_info_required =
+        asn1_request->new_ul_tnl_info_required.value == asn1::e1ap::new_ul_tnl_info_required_opts::options::required;
   }
 
   // ue inactivity timer
@@ -427,7 +422,8 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
 
   // data discard required
   if (asn1_request->data_discard_required_present) {
-    request.data_discard_required = asn1_request->data_discard_required.to_string();
+    request.data_discard_required =
+        asn1_request->data_discard_required.value == asn1::e1ap::data_discard_required_opts::required;
   }
 
   // ng ran bearer context mod
@@ -591,13 +587,14 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
             e1ap_cell_group_info_item cell_group_item_to_add;
             cell_group_item_to_add.cell_group_id = asn1_cell_group_item_to_add.cell_group_id;
             if (asn1_cell_group_item_to_add.ul_cfg_present) {
-              cell_group_item_to_add.ul_cfg = asn1_cell_group_item_to_add.ul_cfg.to_string();
+              cell_group_item_to_add.ul_cfg = static_cast<e1ap_ul_cfg>((int)asn1_cell_group_item_to_add.ul_cfg);
             }
             if (asn1_cell_group_item_to_add.dl_tx_stop_present) {
-              cell_group_item_to_add.dl_tx_stop = asn1_cell_group_item_to_add.dl_tx_stop.to_string();
+              cell_group_item_to_add.dl_tx_stop =
+                  static_cast<e1ap_dl_tx_stop>((int)asn1_cell_group_item_to_add.dl_tx_stop);
             }
             if (asn1_cell_group_item_to_add.rat_type_present) {
-              cell_group_item_to_add.rat_type = asn1_cell_group_item_to_add.rat_type.to_string();
+              cell_group_item_to_add.rat_type = static_cast<e1ap_rat_type>((int)asn1_cell_group_item_to_add.rat_type);
             }
             drb_to_mod_item.cell_group_to_add.push_back(cell_group_item_to_add);
           }
@@ -606,13 +603,14 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
             e1ap_cell_group_info_item cell_group_item_to_mod;
             cell_group_item_to_mod.cell_group_id = asn1_cell_group_item_to_mod.cell_group_id;
             if (asn1_cell_group_item_to_mod.ul_cfg_present) {
-              cell_group_item_to_mod.ul_cfg = asn1_cell_group_item_to_mod.ul_cfg.to_string();
+              cell_group_item_to_mod.ul_cfg = static_cast<e1ap_ul_cfg>((int)asn1_cell_group_item_to_mod.ul_cfg);
             }
             if (asn1_cell_group_item_to_mod.dl_tx_stop_present) {
-              cell_group_item_to_mod.dl_tx_stop = asn1_cell_group_item_to_mod.dl_tx_stop.to_string();
+              cell_group_item_to_mod.dl_tx_stop =
+                  static_cast<e1ap_dl_tx_stop>((int)asn1_cell_group_item_to_mod.dl_tx_stop);
             }
             if (asn1_cell_group_item_to_mod.rat_type_present) {
-              cell_group_item_to_mod.rat_type = asn1_cell_group_item_to_mod.rat_type.to_string();
+              cell_group_item_to_mod.rat_type = static_cast<e1ap_rat_type>((int)asn1_cell_group_item_to_mod.rat_type);
             }
             drb_to_mod_item.cell_group_to_modify.push_back(cell_group_item_to_mod);
           }
@@ -621,13 +619,14 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
             e1ap_cell_group_info_item cell_group_item_to_rem;
             cell_group_item_to_rem.cell_group_id = asn1_cell_group_item_to_rem.cell_group_id;
             if (asn1_cell_group_item_to_rem.ul_cfg_present) {
-              cell_group_item_to_rem.ul_cfg = asn1_cell_group_item_to_rem.ul_cfg.to_string();
+              cell_group_item_to_rem.ul_cfg = static_cast<e1ap_ul_cfg>((int)asn1_cell_group_item_to_rem.ul_cfg);
             }
             if (asn1_cell_group_item_to_rem.dl_tx_stop_present) {
-              cell_group_item_to_rem.dl_tx_stop = asn1_cell_group_item_to_rem.dl_tx_stop.to_string();
+              cell_group_item_to_rem.dl_tx_stop =
+                  static_cast<e1ap_dl_tx_stop>((int)asn1_cell_group_item_to_rem.dl_tx_stop);
             }
             if (asn1_cell_group_item_to_rem.rat_type_present) {
-              cell_group_item_to_rem.rat_type = asn1_cell_group_item_to_rem.rat_type.to_string();
+              cell_group_item_to_rem.rat_type = static_cast<e1ap_rat_type>((int)asn1_cell_group_item_to_rem.rat_type);
             }
             drb_to_mod_item.cell_group_to_rem.push_back(cell_group_item_to_rem);
           }
@@ -676,7 +675,7 @@ inline void fill_e1ap_bearer_context_modification_request(e1ap_bearer_context_mo
 
   // activity notif level
   if (asn1_request->activity_notif_level_present) {
-    request.activity_notif_level = asn1_request->activity_notif_level.to_string();
+    request.activity_notif_level = static_cast<e1ap_activity_notif_level>((int)asn1_request->activity_notif_level);
   }
 }
 

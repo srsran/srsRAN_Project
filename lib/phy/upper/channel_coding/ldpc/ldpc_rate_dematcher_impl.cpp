@@ -111,7 +111,7 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
     deinterleave_llrs(aux, input);
     allot_llrs(output, aux);
   }
-};
+}
 
 void ldpc_rate_dematcher_impl::combine_softbits(span<log_likelihood_ratio>       out,
                                                 span<const log_likelihood_ratio> in0,

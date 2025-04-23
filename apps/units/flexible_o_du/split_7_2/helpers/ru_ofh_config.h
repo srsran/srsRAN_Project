@@ -59,10 +59,6 @@ struct ru_ofh_unit_base_cell_config {
   bool is_prach_control_plane_enabled = true;
   /// Ignore the start symbol value received in the PRACH U-Plane packets.
   bool ignore_prach_start_symbol = false;
-  /// \brief Downlink broadcast flag.
-  ///
-  /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAxCs.
-  bool is_downlink_broadcast_enabled = false;
   /// If set to true, the payload size encoded in a eCPRI header is ignored.
   bool ignore_ecpri_payload_size_field = false;
   /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
@@ -158,6 +154,14 @@ struct ru_ofh_unit_hal_config {
   std::string eal_args;
 };
 
+/// Metrics configuration.
+struct ru_ofh_unit_metrics_config {
+  /// Metrics configuration.
+  app_helpers::metrics_config metrics_cfg;
+  /// Flag that control RU metrics.
+  bool enable_ru_metrics = false;
+};
+
 /// gNB app Open Fronthaul Radio Unit configuration.
 struct ru_ofh_unit_config {
   /// GPS Alpha - Valid value range: [0, 1.2288e7].
@@ -181,7 +185,7 @@ struct ru_ofh_unit_config {
   /// HAL configuration.
   std::optional<ru_ofh_unit_hal_config> hal_config;
   /// Metrics configuration.
-  app_helpers::metrics_config metrics_cfg;
+  ru_ofh_unit_metrics_config metrics_cfg;
 };
 
 /// gNB app Open Fronthaul Radio Unit configuration.

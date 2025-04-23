@@ -993,8 +993,9 @@ void rlc_tx_am_entity::update_mac_buffer_state(bool force_notify)
   pending_buffer_state.clear(std::memory_order_seq_cst);
   rlc_buffer_state bs = get_buffer_state();
   if (force_notify || bs.pending_bytes <= MAX_DL_PDU_LENGTH || prev_buffer_state.pending_bytes <= MAX_DL_PDU_LENGTH ||
-      bs.hol_toa < prev_buffer_state.hol_toa) {
+      suspend_bs_notif_barring || bs.hol_toa < prev_buffer_state.hol_toa) {
     logger.log_debug("Sending buffer state update to lower layer. bs={}", bs);
+    suspend_bs_notif_barring = false;
     lower_dn.on_buffer_state_update(bs);
   } else {
     logger.log_debug(
@@ -1052,6 +1053,9 @@ rlc_buffer_state rlc_tx_am_entity::get_buffer_state()
   }
 
   bs.pending_bytes = queue_bytes + segment_bytes + retx_bytes + status_bytes;
+  if (bs.pending_bytes <= MAX_DL_PDU_LENGTH) {
+    suspend_bs_notif_barring = true;
+  }
   return bs;
 }
 

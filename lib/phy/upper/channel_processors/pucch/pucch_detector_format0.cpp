@@ -148,7 +148,7 @@ pucch_detector_format0::detect(const srsran::resource_grid_reader&          grid
     // Calculate the initial subcarrier position.
     unsigned i_subc = config.starting_prb * NRE;
     if ((i_symbol != 0) && config.second_hop_prb.has_value()) {
-      i_subc = config.second_hop_prb.value() * NRE;
+      i_subc = *config.second_hop_prb * NRE;
     }
 
     // Iterate ports.

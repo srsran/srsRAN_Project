@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "srsran/phy/upper/channel_processors/pdsch/formatters.h"
 #include "srsran/support/srsran_assert.h"
+#include <thread>
 
 namespace srsran {
 
@@ -90,6 +90,17 @@ public:
     return prev == 1;
   }
 
+  /// Stops the finite state machine.
+  void stop()
+  {
+    // Try transitioning to the stopped state from idle until it is successful.
+    for (uint32_t expected_state = state_pending_pdus_idle;
+         !state_pending_pdus.compare_exchange_weak(expected_state, state_pending_pdus_mask_stopped);
+         expected_state = state_pending_pdus_idle) {
+      std::this_thread::sleep_for(std::chrono::microseconds(10));
+    }
+  }
+
 private:
   /// Idle state - represents the state in which the downlink processor does not accept PDUs and does not have any
   /// pending PDU to process.
@@ -100,6 +111,8 @@ private:
   static constexpr uint32_t state_pending_pdus_mask_count = ~state_pending_pdus_mask_accepting_pdus;
   /// The downlink does not have any-more PDUs to process, and it is waiting to send the resource grid.
   static constexpr uint32_t state_pending_pdus_finishing = 0x00000000;
+  /// The downlink processor state that is stopping.
+  static constexpr uint32_t state_pending_pdus_mask_stopped = 0x40000000;
 
   /// Current state and number of pending PDUs to process.
   std::atomic<uint32_t> state_pending_pdus = state_pending_pdus_idle;

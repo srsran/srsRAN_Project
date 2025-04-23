@@ -113,7 +113,7 @@ protected:
     config.compr_params = compr_params;
 
     return config;
-  };
+  }
 
   data_flow_uplane_downlink_data_impl_dependencies generate_data_flow_dependencies()
   {

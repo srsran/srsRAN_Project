@@ -1,9 +1,9 @@
 include:
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/setup/all.yml
   - project: softwareradiosystems/ci/tools
-    ref: "20"
+    ref: "21"
     file: .gitlab/ci-shared/features/all.yml
   - local: .gitlab/ci-shared/e2e.yml
   - local: .gitlab/ci-shared/build.yml
@@ -58,11 +58,27 @@ download srsran:
       mkdir -p ${SRSRANDIR}
       cd ${SRSRANDIR}
     - |
-      git init
-      git remote add origin ${SRSRAN_REPO_URL}
-      git fetch --depth=1 origin ${SRSRAN_COMMIT}
+      git init > /dev/null
+      git remote add origin ${SRSRAN_REPO_URL} > /dev/null
+      git fetch --depth=1 origin ${SRSRAN_COMMIT} > /dev/null
       git reset --hard FETCH_HEAD
     - git config --global --add safe.directory ${SRSRANDIR}
+    - |
+      if [[ -f $PLUGINS_DATA_FILE ]] && [[ $CI_DISABLE_PLUGINS != "True" ]]; then
+        CI_PLUGIN_COMMIT_SHA=$(cat .gitlab/ci/plugin_version.txt)
+        while IFS='|' read -r PLUGIN_PATH PLUGIN_REPO PLUGIN_REF; do
+          PLUGIN_REF=$(eval echo $PLUGIN_REF)    
+          echo "#########################"
+          echo "#### $PLUGIN_PATH checkout ####"
+          echo "#########################"
+          git submodule add https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_SHELL_SSH_HOST}/${PLUGIN_REPO}.git plugins/${PLUGIN_PATH}
+          cd plugins/${PLUGIN_PATH}
+          git fetch --depth=1 origin ${PLUGIN_REF} > /dev/null
+          git config advice.detachedHead false
+          git checkout ${PLUGIN_REF}
+          cd ${SRSRANDIR}
+        done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
+      fi
   artifacts:
     paths:
       - $SRSRANDIR
@@ -77,19 +93,6 @@ builder version:
     - if: $ON_SCHEDULE
     - if: $CI_DESCRIPTION =~ /Release/
       when: never
-    - if: $CI_DESCRIPTION
-  variables:
-    SRSRANDIR: *srsran_dir
-  needs:
-    - job: download srsran
-
-load retina variables:
-  extends: .load retina variables
-  rules:
-    - if: $ON_MR
-    - if: $ON_WEB
-    - if: $ON_API
-    - if: $ON_SCHEDULE
     - if: $CI_DESCRIPTION
   variables:
     SRSRANDIR: *srsran_dir
@@ -205,15 +208,3 @@ load retina variables:
     when: always
     expire_in: 1 day
   cache: []
-
-################
-# E2E template #
-################
-.e2e-run:
-  extends: .e2e-run-template
-  stage: e2e
-  variables:
-    SRSRANDIR: *srsran_dir
-  needs:
-    - job: download srsran
-    - job: load retina variables

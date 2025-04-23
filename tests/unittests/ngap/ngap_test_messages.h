@@ -176,7 +176,7 @@ ngap_message generate_pdu_session_resource_setup_request_with_pdu_session_type_i
 
 /// \brief Generate a dummy PDU Session Resource Setup Response.
 cu_cp_pdu_session_resource_setup_response
-generate_cu_cp_pdu_session_resource_setup_response(pdu_session_id_t pdu_session_id);
+generate_cu_cp_pdu_session_resource_setup_response(cu_cp_pdu_session_resource_setup_request& request);
 
 /// \brief Generate a dummy PDU Session Resource Release Command base.
 ngap_message generate_pdu_session_resource_release_command_base(amf_ue_id_t amf_ue_id, ran_ue_id_t ran_ue_id);

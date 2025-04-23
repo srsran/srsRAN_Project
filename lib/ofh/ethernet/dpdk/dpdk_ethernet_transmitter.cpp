@@ -22,7 +22,7 @@
 
 #include "dpdk_ethernet_transmitter.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/ofh/ethernet/ethernet_gw_config.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter_config.h"
 #include <rte_ethdev.h>
 
 using namespace srsran;
@@ -35,15 +35,19 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
     auto frame_burst = frames.subspan(offset, std::min<unsigned>(MAX_BURST_SIZE, frames.size() - offset));
     offset += frame_burst.size();
 
+    auto meas = metrics_collector.create_time_execution_measurer();
+
     static_vector<::rte_mbuf*, MAX_BURST_SIZE> mbufs(frame_burst.size());
     if (::rte_pktmbuf_alloc_bulk(port_ctx->get_mempool(), mbufs.data(), frame_burst.size()) < 0) {
       logger.warning("Not enough entries in the mempool to send '{}' frames to the NIC port '{}' in the DPDK Ethernet "
                      "transmitter ",
                      frame_burst.size(),
                      port_ctx->get_port_id());
+      metrics_collector.update_stats(meas.stop());
       return;
     }
 
+    uint64_t nof_bytes_in_burst = 0;
     for (unsigned idx = 0, end = frame_burst.size(); idx != end; ++idx) {
       const auto  frame = frame_burst[idx];
       ::rte_mbuf* mbuf  = mbufs[idx];
@@ -55,10 +59,12 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
                        frame.size(),
                        port_ctx->get_port_id());
         ::rte_pktmbuf_free_bulk(mbufs.data(), mbufs.size());
+        metrics_collector.update_stats(meas.stop());
         return;
       }
       mbuf->data_len = frame.size();
       mbuf->pkt_len  = frame.size();
+      nof_bytes_in_burst += frame.size();
 
       uint8_t* data = rte_pktmbuf_mtod(mbuf, uint8_t*);
       std::memcpy(data, frame.data(), frame.size());
@@ -72,9 +78,23 @@ void dpdk_transmitter_impl::send(span<span<const uint8_t>> frames)
           mbufs.size() - nof_sent_packets,
           mbufs.size(),
           port_ctx->get_port_id());
+
+      // Recalculate actual number of bytes transmitted.
+      if (!metrics_collector.disabled()) {
+        nof_bytes_in_burst = 0;
+        for (unsigned i = 0; i != nof_sent_packets; ++i) {
+          nof_bytes_in_burst += frame_burst[i].size();
+        }
+      }
       for (unsigned buf_idx = nof_sent_packets, last_idx = mbufs.size(); buf_idx != last_idx; ++buf_idx) {
         ::rte_pktmbuf_free(mbufs[buf_idx]);
       }
     }
+    metrics_collector.update_stats(meas.stop(), nof_bytes_in_burst, nof_sent_packets);
   }
+}
+
+transmitter_metrics_collector* dpdk_transmitter_impl::get_metrics_collector()
+{
+  return metrics_collector.disabled() ? nullptr : &metrics_collector;
 }

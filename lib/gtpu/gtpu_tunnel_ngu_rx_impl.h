@@ -68,14 +68,12 @@ public:
     rx_window(logger, gtpu_rx_window_size),
     ue_ctrl_timer_factory(ue_ctrl_timer_factory_)
   {
+    srsran_assert(cfg.ue_ambr_limiter != nullptr, "No UE-AMBR limiter provided");
     if (config.t_reordering.count() != 0) {
       reordering_timer = ue_ctrl_timer_factory.create_timer();
       reordering_timer.set(config.t_reordering, reordering_callback{this});
     }
-    logger.log_info("GTPU NGU Rx configured. local_teid={} t_reodering={} test_mode={}",
-                    config.local_teid,
-                    config.t_reordering.count(),
-                    config.test_mode);
+    logger.log_info("GTPU NGU Rx configured. {}", config);
   }
   ~gtpu_tunnel_ngu_rx_impl() override = default;
 
@@ -99,6 +97,16 @@ protected:
   void handle_pdu(gtpu_dissected_pdu&& pdu, const sockaddr_storage& src_addr) final
   {
     if (stopped) {
+      return;
+    }
+
+    // Limit UE to AMBR.
+    if (not config.ignore_ue_ambr && not config.ue_ambr_limiter->consume(pdu.buf.length())) {
+      if (not config.warn_on_drop) {
+        logger.log_info("Dropped GTPU PDU. UE went over UE-AMBR");
+      } else {
+        logger.log_warning("Dropped GTPU PDU. UE went over UE-AMBR");
+      }
       return;
     }
 
@@ -298,7 +306,7 @@ private:
     explicit reordering_callback(gtpu_tunnel_ngu_rx_impl* parent_) : parent(parent_) {}
     void operator()(timer_id_t timer_id)
     {
-      if (not parent->config.warn_expired_t_reordering) {
+      if (not parent->config.warn_on_drop) {
         parent->logger.log_info(
             "reordering timer expired after {}ms. {}", parent->config.t_reordering.count(), parent->st);
       } else {

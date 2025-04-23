@@ -82,7 +82,7 @@ void ue_channel_state_manager::update_srs_channel_matrix(const srs_channel_matri
 {
   // [Implementation-defined] Assume noise variance is 30dB below the average received power.
   float norm      = channel_matrix.frobenius_norm();
-  float noise_var = norm * norm / 1000;
+  float noise_var = norm * norm / (1000 * channel_matrix.get_nof_tx_ports());
 
   // Calculate TPMI information.
   last_pusch_tpmi_select_info =

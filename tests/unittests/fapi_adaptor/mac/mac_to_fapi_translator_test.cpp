@@ -30,6 +30,7 @@
 #include "srsran/fapi/slot_message_gateway.h"
 #include "srsran/fapi_adaptor/precoding_matrix_table_generator.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/srslog/srslog.h"
 #include <gtest/gtest.h>
 
@@ -107,7 +108,7 @@ class mac_cell_slot_handler_spy : public mac_cell_slot_handler
   bool        has_been_notified = false;
 
 public:
-  void handle_slot_indication(slot_point sl_tx) override {}
+  void handle_slot_indication(const mac_cell_timing_context& context) override {}
   void handle_error_indication(slot_point sl_tx, error_event event) override
   {
     error             = event;
@@ -175,8 +176,9 @@ TEST_F(mac_to_fapi_translator_fixture, invalid_dl_sched_results_with_no_mac_slot
   mac_dl_sched_result&                       result      = result_test.result;
   result.ssb_pdus.front().pci                            = INVALID_PCI;
 
-  ASSERT_DEATH({ translator.on_new_downlink_scheduler_results(result); },
-               "srsRAN ERROR: Dummy MAC cell slot handler cannot handle error indication");
+  ASSERT_DEATH(
+      { translator.on_new_downlink_scheduler_results(result); },
+      "srsRAN ERROR: Dummy MAC cell slot handler cannot handle error indication");
 }
 
 TEST_F(mac_to_fapi_translator_fixture, invalid_ssb_in_dl_sched_results_reports_error)

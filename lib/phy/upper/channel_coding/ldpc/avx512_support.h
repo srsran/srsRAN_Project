@@ -71,9 +71,9 @@ inline __m512i scale_epi8(__m512i a, float sf, uint8_t max)
     return a;
   }
 
-  static const __m512i mask_even_epi8 = _mm512_set1_epi16(0x00ff);
-  const __m512i        MAX_epi8       = _mm512_set1_epi8(max);
-  const __m512i        MIN_epi8       = _mm512_set1_epi8(-max);
+  const __m512i mask_even_epi8 = _mm512_set1_epi16(0x00ff);
+  const __m512i MAX_epi8       = _mm512_set1_epi8(max);
+  const __m512i MIN_epi8       = _mm512_set1_epi8(-max);
   // FLOAT2INT = 2^16 = 65536
   static constexpr unsigned FLOAT2INT = 1U << 16U;
 

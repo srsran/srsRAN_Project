@@ -38,7 +38,7 @@ static const re_prb_mask& get_re_mask_type_1(unsigned cdm_group_id)
        {false, true, false, true, false, true, false, true, false, true, false, true}}};
 
   return re_mask_type1[cdm_group_id];
-};
+}
 
 // Resource element allocation patterns within a resource block for PDSCH DM-RS type 2.
 static const re_prb_mask& get_re_mask_type_2(unsigned cdm_group_id)
@@ -51,7 +51,7 @@ static const re_prb_mask& get_re_mask_type_2(unsigned cdm_group_id)
        {false, false, false, false, true, true, false, false, false, false, true, true}}};
 
   return re_mask_type2[cdm_group_id];
-};
+}
 
 const std::array<dmrs_pdsch_processor_impl::params_t, dmrs_type::DMRS_MAX_PORTS_TYPE1>
     dmrs_pdsch_processor_impl::params_type1 = {{

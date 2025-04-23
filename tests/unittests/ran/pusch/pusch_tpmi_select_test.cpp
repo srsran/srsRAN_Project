@@ -54,7 +54,7 @@ struct formatter<srsran::pusch_tpmi_select_info> {
 
       auto layer_info = info.get_tpmi_select(nof_layers);
 
-      format_to(ctx.out(), "{{{}, {:+.1f}dB}}", layer_info.tpmi, layer_info.sinr_dB);
+      format_to(ctx.out(), "{{{}, {:+.1f}dB}}", layer_info.tpmi, layer_info.avg_sinr_dB);
     }
 
     format_to(ctx.out(), "]");
@@ -100,7 +100,7 @@ bool operator==(const pusch_tpmi_select_info& left, const pusch_tpmi_select_info
       return false;
     }
 
-    if (std::abs(layer_info_left.sinr_dB - layer_info_right.sinr_dB) > 1.0F) {
+    if (std::abs(layer_info_left.avg_sinr_dB - layer_info_right.avg_sinr_dB) > 1.0F) {
       return false;
     }
   }

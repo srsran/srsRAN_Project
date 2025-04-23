@@ -30,7 +30,6 @@
 #include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
-#include "apps/services/periodic_metrics_report_controller.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
@@ -121,7 +120,7 @@ static void register_app_logs(const du_appconfig& du_cfg, flexible_o_du_applicat
 {
   const logger_appconfig& log_cfg = du_cfg.log_cfg;
   // Set log-level of app and all non-layer specific components to app level.
-  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
+  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP", "ASN1"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
     logger.set_level(log_cfg.lib_level);
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);
@@ -130,15 +129,21 @@ static void register_app_logs(const du_appconfig& du_cfg, flexible_o_du_applicat
   auto& app_logger = srslog::fetch_basic_logger("GNB", false);
   app_logger.set_level(srslog::basic_levels::info);
   app_services::application_message_banners::log_build_info(app_logger);
-  app_logger.set_level(log_cfg.config_level);
+  app_logger.set_level(log_cfg.all_level);
   app_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
+  {
+    auto& logger = srslog::fetch_basic_logger("APP", false);
+    logger.set_level(log_cfg.all_level);
+    logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+  }
 
   auto& config_logger = srslog::fetch_basic_logger("CONFIG", false);
   config_logger.set_level(log_cfg.config_level);
   config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   // Metrics log channels.
-  const app_helpers::metrics_config& metrics_cfg = du_cfg.metrics_cfg.common_metrics_cfg;
+  const app_helpers::metrics_config& metrics_cfg = du_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg;
   app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
 
   auto& e2ap_logger = srslog::fetch_basic_logger("E2AP", false);
@@ -187,6 +192,11 @@ int main(int argc, char** argv)
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
 
+  // Dry run mode, exit.
+  if (du_cfg.enable_dryrun) {
+    return 0;
+  }
+
   // Check the modified configuration.
   if (!validate_appconfig(du_cfg) ||
       !o_du_app_unit->on_configuration_validation((du_cfg.expert_execution_cfg.affinities.isolated_cpus)
@@ -198,6 +208,15 @@ int main(int argc, char** argv)
   // Set up logging.
   initialize_log(du_cfg.log_cfg.filename);
   register_app_logs(du_cfg, *o_du_app_unit);
+
+  // Check the metrics and metrics consumers.
+  srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
+  bool metrics_enabled = o_du_app_unit->are_metrics_enabled() || du_cfg.metrics_cfg.rusage_config.enable_app_usage;
+
+  if (!metrics_enabled && du_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enabled()) {
+    gnb_logger.warning("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+    fmt::println("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+  }
 
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
@@ -285,6 +304,7 @@ int main(int argc, char** argv)
   // > Create GTP-U Demux.
   gtpu_demux_creation_request du_f1u_gtpu_msg   = {};
   du_f1u_gtpu_msg.cfg.warn_on_drop              = true;
+  du_f1u_gtpu_msg.cfg.queue_size                = du_cfg.f1u_cfg.pdu_queue_size;
   du_f1u_gtpu_msg.gtpu_pcap                     = du_pcaps.f1u.get();
   std::unique_ptr<gtpu_demux> du_f1u_gtpu_demux = create_gtpu_demux(du_f1u_gtpu_msg);
 
@@ -302,7 +322,7 @@ int main(int argc, char** argv)
     std::unique_ptr<gtpu_gateway> f1u_gw     = create_udp_gtpu_gateway(
         f1u_gw_config,
         *epoll_broker,
-        workers.get_du_high_executor_mapper(0).ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
+        workers.get_du_high_executor_mapper().ue_mapper().mac_ul_pdu_executor(to_du_ue_index(0)),
         *workers.non_rt_low_prio_exec);
     if (not sock_cfg.five_qi.has_value()) {
       f1u_gw_maps.default_gws.push_back(std::move(f1u_gw));
@@ -326,8 +346,8 @@ int main(int argc, char** argv)
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
   // Create app-level resource usage service and metrics.
-  auto app_resource_usage_service =
-      app_services::build_app_resource_usage_service(metrics_notifier_forwarder, du_cfg.metrics_cfg.common_metrics_cfg);
+  auto app_resource_usage_service = app_services::build_app_resource_usage_service(
+      metrics_notifier_forwarder, du_cfg.metrics_cfg.rusage_config, srslog::fetch_basic_logger("GNB"));
 
   std::vector<app_services::metrics_config> app_metrics = std::move(app_resource_usage_service.metrics);
 
@@ -346,27 +366,28 @@ int main(int argc, char** argv)
   // Move app-units metrics to the application metrics.
   std::move(du_inst_and_cmds.metrics.begin(), du_inst_and_cmds.metrics.end(), std::back_inserter(app_metrics));
 
-  // Create periodic metrics report controller.
-  std::vector<app_services::metrics_producer*> producers;
-  for (auto& metric_cfg : app_metrics) {
-    for (auto& producer : metric_cfg.producers) {
-      producers.push_back(producer.get());
-    }
-  }
-  auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
-  app_services::periodic_metrics_report_controller periodic_metrics_controller(
-      producers, std::move(app_metrics_timer), std::chrono::milliseconds(du_cfg.metrics_cfg.rusage_report_period));
-
   // Only DU has metrics now.
-  app_services::metrics_manager metrics_mngr(srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, app_metrics);
+  app_services::metrics_manager metrics_mngr(
+      srslog::fetch_basic_logger("GNB"),
+      *workers.metrics_exec,
+      app_metrics,
+      app_timers,
+      std::chrono::milliseconds(du_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
+
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
   srs_du::du& du_inst = *du_inst_and_cmds.unit;
 
+  // Add the metrics STDOUT command.
+  if (std::unique_ptr<app_services::cmdline_command> cmd = app_services::create_stdout_metrics_app_command(
+          {{du_inst_and_cmds.commands.cmdline.metrics_subcommands}}, du_cfg.metrics_cfg.autostart_stdout_metrics)) {
+    du_inst_and_cmds.commands.cmdline.commands.push_back(std::move(cmd));
+  }
+
   // Register the commands.
   app_services::cmdline_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_low_prio_exec, du_inst_and_cmds.commands.cmdline);
+      *epoll_broker, *workers.non_rt_low_prio_exec, du_inst_and_cmds.commands.cmdline.commands);
 
   // Start processing.
   du_inst.get_operation_controller().start();
@@ -374,7 +395,7 @@ int main(int argc, char** argv)
   std::unique_ptr<app_services::remote_server> remote_control_server =
       app_services::create_remote_server(du_cfg.remote_control_config, du_inst_and_cmds.commands.remote);
 
-  periodic_metrics_controller.start();
+  metrics_mngr.start();
   {
     app_services::application_message_banners app_banner(app_name);
 
@@ -382,7 +403,7 @@ int main(int argc, char** argv)
       std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
   }
-  periodic_metrics_controller.stop();
+  metrics_mngr.stop();
 
   if (remote_control_server) {
     remote_control_server->stop();

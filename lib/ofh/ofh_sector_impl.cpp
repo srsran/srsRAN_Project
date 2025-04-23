@@ -35,7 +35,7 @@ transmitter& sector_impl::get_transmitter()
   return *ofh_transmitter;
 }
 
-controller& sector_impl::get_controller()
+operation_controller& sector_impl::get_operation_controller()
 {
   return ofh_sector_controller;
 }
@@ -43,9 +43,4 @@ controller& sector_impl::get_controller()
 metrics_collector* sector_impl::get_metrics_collector()
 {
   return ofh_metrics_collector.disabled() ? nullptr : &ofh_metrics_collector;
-}
-
-void sector_impl::set_error_notifier(error_notifier& notifier)
-{
-  ofh_transmitter->set_error_notifier(notifier);
 }

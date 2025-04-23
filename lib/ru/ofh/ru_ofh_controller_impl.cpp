@@ -25,16 +25,6 @@
 
 using namespace srsran;
 
-ru_ofh_controller_impl::ru_ofh_controller_impl(srslog::basic_logger&         logger_,
-                                               std::vector<ofh::controller*> sector_controllers_) :
-  logger(logger_), sector_controllers(std::move(sector_controllers_))
-{
-  srsran_assert(std::all_of(sector_controllers.begin(),
-                            sector_controllers.end(),
-                            [](const auto& elem) { return elem != nullptr; }),
-                "Invalid sector controller");
-}
-
 void ru_ofh_controller_impl::start()
 {
   logger.info("Starting the operation of the Open Fronthaul interface");
@@ -53,7 +43,14 @@ void ru_ofh_controller_impl::stop()
   logger.info("Stopped the operation of the Open Fronthaul interface");
 }
 
-void ru_ofh_controller_impl::print_metrics()
+void ru_ofh_controller_impl::set_sector_controllers(std::vector<ofh::operation_controller*> controllers)
 {
-  fmt::println("No statistics implemented.");
+  srsran_assert(!controllers.empty(), "Invalid sector controllers");
+
+  sector_controllers = std::move(controllers);
+
+  srsran_assert(std::all_of(sector_controllers.begin(),
+                            sector_controllers.end(),
+                            [](const auto& elem) { return elem != nullptr; }),
+                "Invalid sector controller");
 }

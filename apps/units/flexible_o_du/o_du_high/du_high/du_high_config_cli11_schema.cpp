@@ -214,6 +214,12 @@ static void configure_cli11_pdcch_dedicated_args(CLI::App& app, pdcch_dedicated_
       "SearchSpace type for UE dedicated SearchSpace#2")
       ->default_str("ue_dedicated")
       ->check(CLI::IsMember({"common", "ue_dedicated"}, CLI::ignore_case));
+  add_option(app,
+             "--al_cqi_offset",
+             ded_params.al_cqi_offset,
+             "Offset to apply to the CQI value used in the PDCCH aggregation level calculation.")
+      ->capture_default_str()
+      ->check(CLI::Range(-15, 15));
 }
 
 static void configure_cli11_pdcch_args(CLI::App& app, du_high_unit_pdcch_config& pdcch_params)
@@ -299,6 +305,18 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
              "Maximum number of DL or UL PDCCH grant allocation attempts per slot before scheduler skips the slot")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT)));
+  add_option(app,
+             "--nof_preselected_newtx_ues",
+             pdsch_params.nof_preselected_newtx_ues,
+             "Number of UEs pre-selected for a potential DL newTx allocation in a slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
+  add_option(app,
+             "--newtx_ues_selection_period",
+             pdsch_params.newtx_ues_selection_period,
+             "Number of slots between each computation of newTx UE candidates for potential allocation in a slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
   add_option(app,
              "--olla_cqi_inc_step",
              pdsch_params.olla_cqi_inc,
@@ -589,7 +607,8 @@ static void configure_cli11_qos_scheduler_expert_args(CLI::App& app, time_qos_sc
       ->capture_default_str();
 }
 
-static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_scheduler_expert_config& expert_params)
+static void configure_cli11_policy_scheduler_expert_args(CLI::App&                                      app,
+                                                         std::optional<policy_scheduler_expert_config>& expert_params)
 {
   static time_qos_scheduler_expert_config qos_sched_expert_cfg;
   CLI::App*                               qos_sched_cfg_subcmd =
@@ -602,6 +621,15 @@ static void configure_cli11_policy_scheduler_expert_args(CLI::App& app, policy_s
     }
   };
   qos_sched_cfg_subcmd->parse_complete_callback(qos_sched_verify_callback);
+
+  CLI::App* rr_sched_cfg_subcmd =
+      add_subcommand(app, "rr_sched", "Round-robin policy scheduler expert configuration")->configurable();
+  rr_sched_cfg_subcmd->parse_complete_callback([&]() {
+    CLI::App* rr_sched_sub_cmd = app.get_subcommand("rr_sched");
+    if (rr_sched_sub_cmd->count() != 0) {
+      expert_params = time_rr_scheduler_expert_config{};
+    }
+  });
 }
 
 static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit_ta_sched_expert_config& ta_params)
@@ -637,7 +665,10 @@ static void configure_cli11_ta_scheduler_expert_args(CLI::App& app, du_high_unit
 static void configure_cli11_scheduler_expert_args(CLI::App& app, du_high_unit_scheduler_expert_config& expert_params)
 {
   CLI::App* policy_sched_cfg_subcmd =
-      add_subcommand(app, "policy_sched_cfg", "Policy scheduler expert configuration")->configurable();
+      add_subcommand(app,
+                     "policy_sched_cfg",
+                     "Policy scheduler expert configuration. By default, time-domain round-robin is used.")
+          ->configurable();
   configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, expert_params.policy_sched_expert_cfg);
   CLI::App* ta_sched_cfg_subcmd =
       add_subcommand(app, "ta_sched_cfg", "Timing Advance MAC CE scheduling expert configuration")->configurable();
@@ -776,6 +807,18 @@ static void configure_cli11_pusch_args(CLI::App& app, du_high_unit_pusch_config&
   add_option(app, "--max_puschs_per_slot", pusch_params.max_puschs_per_slot, "Maximum number of PUSCH grants per slot")
       ->capture_default_str()
       ->check(CLI::Range(1U, (unsigned)MAX_PUSCH_PDUS_PER_SLOT));
+  add_option(app,
+             "--nof_preselected_newtx_ues",
+             pusch_params.nof_preselected_newtx_ues,
+             "Number of UEs pre-selected for a potential UL newTx allocation in a slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
+  add_option(app,
+             "--newtx_ues_selection_period",
+             pusch_params.newtx_ues_selection_period,
+             "Number of slots between each computation of newTx UE candidates for potential allocation in a slot")
+      ->capture_default_str()
+      ->check(CLI::Range(1U, (unsigned)MAX_NOF_DU_UES));
   add_option(
       app, "--beta_offset_ack_idx_1", pusch_params.beta_offset_ack_idx_1, "betaOffsetACK-Index1 part of UCI-OnPUSCH")
       ->capture_default_str()
@@ -1407,10 +1450,17 @@ static void configure_cli11_slicing_scheduling_args(CLI::App&                   
              "Maximum percentage of PRBs to be allocated to the slice")
       ->capture_default_str()
       ->check(CLI::Range(1U, 100U));
+  add_option(app, "--priority", slice_sched_params.priority, "Slice priority")
+      ->capture_default_str()
+      ->check(CLI::Range(0U, 254U));
 
   // Policy scheduler configuration.
   CLI::App* policy_sched_cfg_subcmd =
-      add_subcommand(app, "policy_sched_cfg", "Policy scheduler configuration for the slice")->configurable();
+      add_subcommand(
+          app,
+          "policy_sched_cfg",
+          "Policy scheduler configuration for the slice. If not specified, the general scheduler policy is used")
+          ->configurable();
   configure_cli11_policy_scheduler_expert_args(*policy_sched_cfg_subcmd, slice_sched_params.slice_policy_sched_cfg);
 }
 
@@ -1723,21 +1773,26 @@ static void configure_cli11_srb_args(CLI::App& app, du_high_unit_srb_config& srb
   app.needs(rlc_subcmd);
 }
 
+static void configure_cli11_metrics_layers_args(CLI::App& app, du_high_unit_metrics_layer_config& metrics_params)
+{
+  add_option(app, "--enable_sched", metrics_params.enable_scheduler, "Enable DU scheduler metrics")
+      ->capture_default_str();
+  add_option(app, "--enable_rlc", metrics_params.enable_rlc, "Enable RLC metrics")->capture_default_str();
+  add_option(app, "--enable_mac", metrics_params.enable_mac, "Enable MAC metrics")->capture_default_str();
+}
+
 static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_config& metrics_params)
 {
-  add_option(
-      app, "--rlc_report_period", metrics_params.rlc.report_period, "RLC metrics report period (in milliseconds)")
-      ->capture_default_str();
+  auto* periodicity_subcmd = add_subcommand(app, "periodicity", "Metrics periodicity configuration")->configurable();
+  add_option(*periodicity_subcmd,
+             "--du_report_period",
+             metrics_params.du_report_period,
+             "DU statistics report period in milliseconds")
+      ->capture_default_str()
+      ->check(CLI::Range(0, 10240));
 
-  add_option(
-      app, "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
-      ->capture_default_str();
-
-  add_option(app,
-             "--sched_report_period",
-             metrics_params.sched_report_period,
-             "DU statistics report period in milliseconds. This metrics sets the console output period.")
-      ->capture_default_str();
+  auto* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
+  configure_cli11_metrics_layers_args(*layers_subcmd, metrics_params.layers_cfg);
 }
 
 static void configure_cli11_epoch_time(CLI::App& app, epoch_time_t& epoch_time)
@@ -1887,6 +1942,15 @@ static void configure_cli11_qos_args(CLI::App& app, du_high_unit_qos_config& qos
   app.needs(f1u_du_subcmd);
 }
 
+static void configure_cli11_execution_args(CLI::App& app, du_high_unit_execution_queues_config& exec_cfg)
+{
+  add_option(app,
+             "--du_ue_data_executor_queue_size",
+             exec_cfg.ue_data_executor_queue_size,
+             "DU's UE executor task queue size for PDU processing")
+      ->capture_default_str();
+}
+
 void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_parsed_config& parsed_cfg)
 {
   add_option(app, "--gnb_id", parsed_cfg.config.gnb_id.id, "gNodeB identifier")->capture_default_str();
@@ -1911,6 +1975,11 @@ void srsran::configure_cli11_with_du_high_config_schema(CLI::App& app, du_high_p
   // PCAP section.
   CLI::App* pcap_subcmd = add_subcommand(app, "pcap", "PCAP configuration")->configurable();
   configure_cli11_pcap_args(*pcap_subcmd, parsed_cfg.config.pcaps);
+
+  // Execution section.
+  CLI::App* exec_subcmd   = add_subcommand(app, "expert_execution", "Execution parameters")->configurable();
+  CLI::App* queues_subcmd = add_subcommand(*exec_subcmd, "queues", "Task executor queue parameters")->configurable();
+  configure_cli11_execution_args(*queues_subcmd, parsed_cfg.config.expert_execution_cfg.du_queue_cfg);
 
   // Common cell section.
   CLI::App* common_cell_subcmd = add_subcommand(app, "cell_cfg", "Default cell configuration")->configurable();
@@ -2083,21 +2152,8 @@ static void derive_auto_params(du_high_unit_config& config)
   }
 }
 
-void srsran::autoderive_du_high_parameters_after_parsing(CLI::App&            app,
-                                                         du_high_unit_config& unit_cfg,
-                                                         bool                 rlc_metrics_requested)
+void srsran::autoderive_du_high_parameters_after_parsing(CLI::App& app, du_high_unit_config& unit_cfg)
 {
   manage_ntn_optional(app, unit_cfg);
   derive_auto_params(unit_cfg);
-
-  // RLC period defined in the config file. Do nothing.
-  if (auto* metrics_subcmd = app.get_subcommand("metrics");
-      metrics_subcmd && metrics_subcmd->count("--rlc_report_period")) {
-    return;
-  }
-
-  // No metrics requested, set the RLC period to 0.
-  if (!rlc_metrics_requested && !unit_cfg.metrics.common_metrics_cfg.enabled()) {
-    unit_cfg.metrics.rlc.report_period = 0;
-  }
 }

@@ -24,9 +24,11 @@
 
 #include "../support/uplink_context_repository.h"
 #include "ofh_closed_rx_window_handler.h"
-#include "ofh_message_receiver.h"
+#include "ofh_message_receiver_impl.h"
 #include "ofh_message_receiver_task_dispatcher.h"
 #include "ofh_receiver_controller.h"
+#include "ofh_receiver_metrics_collector_impl.h"
+#include "ofh_rx_symbol_reorderer.h"
 #include "ofh_rx_window_checker.h"
 #include "srsran/ofh/receiver/ofh_receiver.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
@@ -71,6 +73,8 @@ struct receiver_impl_dependencies {
   message_rx_dependencies msg_rx_dependencies;
   /// Closed reception window handler dependencies.
   close_rx_window_dependencies window_handler_dependencies;
+  /// Received symbol reorderer.
+  std::shared_ptr<rx_symbol_reorderer> symbol_reorderer;
 };
 
 /// OTA symbol boundary dispatcher for the receiver.
@@ -99,16 +103,18 @@ public:
   ota_symbol_boundary_notifier* get_ota_symbol_boundary_notifier() override;
 
   // See interface for documentation.
-  controller& get_controller() override;
+  operation_controller& get_operation_controller() override;
 
   // See interface for documentation.
   receiver_metrics_collector* get_metrics_collector() override;
 
 private:
+  std::shared_ptr<rx_symbol_reorderer> symbol_reorderer;
   closed_rx_window_handler             closed_window_handler;
   rx_window_checker                    window_checker;
   ota_symbol_boundary_dispatcher       symbol_boundary_dispatcher;
   message_receiver_impl                msg_receiver;
+  receiver_metrics_collector_impl      metrics_collector;
   ofh_message_receiver_task_dispatcher rcv_task_dispatcher;
   receiver_controller                  ctrl;
 };

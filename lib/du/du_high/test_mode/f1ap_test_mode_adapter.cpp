@@ -111,6 +111,8 @@ public:
     return adapted->get_ue_index(gnb_cu_ue_f1ap_id);
   }
 
+  f1ap_metrics_collector& get_metrics_collector() override { return adapted->get_metrics_collector(); }
+
   // F1-C client interface.
   std::unique_ptr<f1ap_message_notifier>
   handle_du_connection_request(std::unique_ptr<f1ap_message_notifier> du_rx_pdu_notifier) override;

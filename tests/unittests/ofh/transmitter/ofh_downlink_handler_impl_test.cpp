@@ -25,6 +25,7 @@
 #include "../../../../lib/ofh/transmitter/ofh_downlink_handler_impl.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "ofh_data_flow_cplane_scheduling_commands_test_doubles.h"
+#include "srsran/ofh/ofh_error_notifier.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 #include <gtest/gtest.h>
@@ -51,6 +52,9 @@ public:
     eaxc                                                  = context.eaxc;
   }
 
+  // See interface for documentation.
+  data_flow_message_encoding_metrics_collector* get_metrics_collector() override { return nullptr; }
+
   /// Returns true if the method enqueue section type 1 message has been called, otherwise false.
   bool has_enqueue_section_type_1_method_been_called() const
   {
@@ -59,6 +63,23 @@ public:
 
   /// Returns the configured eAxC.
   unsigned get_eaxc() const { return eaxc; }
+};
+
+/// Error notifier spy implementation.
+class error_notifier_spy : public error_notifier
+{
+  bool dl_late = false;
+  bool ul_late = false;
+
+public:
+  // See interface for documentation.
+  void on_late_downlink_message(const error_context& context) override { dl_late = true; }
+
+  // See interface for documentation.
+  void on_late_uplink_message(const error_context& context) override { ul_late = true; }
+
+  bool is_downlink_late() const { return dl_late; }
+  bool is_uplink_late() const { return ul_late; }
 };
 
 } // namespace
@@ -86,16 +107,17 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
   downlink_handler_impl_config config      = generate_default_config();
   unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
 
-  downlink_handler_impl_dependencies dependencies;
-  dependencies.logger = &srslog::fetch_basic_logger("TEST");
+  error_notifier_spy                                        notifier_spy;
   std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
       std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-  const auto& cplane_spy                                     = *cplane;
-  dependencies.data_flow_cplane                              = std::move(cplane);
+  const auto&                                         cplane_spy = *cplane;
   std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
-  const auto&                                         uplane_spy = *uplane;
-  dependencies.data_flow_uplane                                  = std::move(uplane);
-  dependencies.frame_pool                                        = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
+  const auto&                                         uplane_spy   = *uplane;
+  downlink_handler_impl_dependencies                  dependencies = {srslog::fetch_basic_logger("TEST"),
+                                                                      notifier_spy,
+                                                                      std::move(cplane),
+                                                                      std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
@@ -117,6 +139,9 @@ TEST(ofh_downlink_handler_impl, handling_downlink_data_use_control_and_user_plan
 
   handler.handle_dl_data(rg_context, rg.get_grid());
 
+  ASSERT_FALSE(notifier_spy.is_downlink_late());
+  ASSERT_FALSE(notifier_spy.is_uplink_late());
+
   // Assert Control-Plane.
   ASSERT_TRUE(cplane_spy.has_enqueue_section_type_1_method_been_called());
   const data_flow_cplane_scheduling_commands_spy::spy_info& info = cplane_spy.get_spy_info();
@@ -135,16 +160,17 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
   downlink_handler_impl_config config      = generate_default_config();
   unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
 
-  downlink_handler_impl_dependencies dependencies;
-  dependencies.logger = &srslog::fetch_basic_logger("TEST");
+  error_notifier_spy                                        notifier_spy;
   std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
       std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-  const auto& cplane_spy                                     = *cplane;
-  dependencies.data_flow_cplane                              = std::move(cplane);
+  const auto&                                         cplane_spy = *cplane;
   std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
-  const auto&                                         uplane_spy = *uplane;
-  dependencies.data_flow_uplane                                  = std::move(uplane);
-  dependencies.frame_pool                                        = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
+  const auto&                                         uplane_spy   = *uplane;
+  downlink_handler_impl_dependencies                  dependencies = {srslog::fetch_basic_logger("TEST"),
+                                                                      notifier_spy,
+                                                                      std::move(cplane),
+                                                                      std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
@@ -171,6 +197,7 @@ TEST(ofh_downlink_handler_impl, late_rg_is_not_handled)
   // Assert Control-Plane.
   ASSERT_FALSE(cplane_spy.has_enqueue_section_type_1_method_been_called());
   ASSERT_FALSE(uplane_spy.has_enqueue_section_type_1_method_been_called());
+  ASSERT_TRUE(notifier_spy.is_downlink_late());
 }
 
 TEST(ofh_downlink_handler_impl, same_slot_fails)
@@ -178,16 +205,17 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
   downlink_handler_impl_config config      = generate_default_config();
   unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
 
-  downlink_handler_impl_dependencies dependencies;
-  dependencies.logger = &srslog::fetch_basic_logger("TEST");
+  error_notifier_spy                                        notifier_spy;
   std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
       std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-  const auto& cplane_spy                                     = *cplane;
-  dependencies.data_flow_cplane                              = std::move(cplane);
+  const auto&                                         cplane_spy = *cplane;
   std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
-  const auto&                                         uplane_spy = *uplane;
-  dependencies.data_flow_uplane                                  = std::move(uplane);
-  dependencies.frame_pool                                        = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
+  const auto&                                         uplane_spy   = *uplane;
+  downlink_handler_impl_dependencies                  dependencies = {srslog::fetch_basic_logger("TEST"),
+                                                                      notifier_spy,
+                                                                      std::move(cplane),
+                                                                      std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
@@ -210,6 +238,7 @@ TEST(ofh_downlink_handler_impl, same_slot_fails)
   // Assert Control-Plane.
   ASSERT_FALSE(cplane_spy.has_enqueue_section_type_1_method_been_called());
   ASSERT_FALSE(uplane_spy.has_enqueue_section_type_1_method_been_called());
+  ASSERT_TRUE(notifier_spy.is_downlink_late());
 }
 
 TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
@@ -217,16 +246,17 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
   downlink_handler_impl_config config      = generate_default_config();
   unsigned                     nof_symbols = get_nsymb_per_slot(config.cp);
 
-  downlink_handler_impl_dependencies dependencies;
-  dependencies.logger = &srslog::fetch_basic_logger("TEST");
+  error_notifier_spy                                        notifier_spy;
   std::unique_ptr<data_flow_cplane_scheduling_commands_spy> cplane =
       std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-  const auto& cplane_spy                                     = *cplane;
-  dependencies.data_flow_cplane                              = std::move(cplane);
+  const auto&                                         cplane_spy = *cplane;
   std::unique_ptr<data_flow_uplane_downlink_data_spy> uplane = std::make_unique<data_flow_uplane_downlink_data_spy>();
-  const auto&                                         uplane_spy = *uplane;
-  dependencies.data_flow_uplane                                  = std::move(uplane);
-  dependencies.frame_pool                                        = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
+  const auto&                                         uplane_spy   = *uplane;
+  downlink_handler_impl_dependencies                  dependencies = {srslog::fetch_basic_logger("TEST"),
+                                                                      notifier_spy,
+                                                                      std::move(cplane),
+                                                                      std::move(uplane),
+                                                                      std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
 
   downlink_handler_impl handler(config, std::move(dependencies));
 
@@ -253,4 +283,5 @@ TEST(ofh_downlink_handler_impl, rg_in_the_frontier_is_handled)
   // Assert Control-Plane.
   ASSERT_TRUE(cplane_spy.has_enqueue_section_type_1_method_been_called());
   ASSERT_TRUE(uplane_spy.has_enqueue_section_type_1_method_been_called());
+  ASSERT_FALSE(notifier_spy.is_downlink_late());
 }

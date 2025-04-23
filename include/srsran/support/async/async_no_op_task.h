@@ -30,7 +30,7 @@ namespace srsran {
 template <typename Resp>
 async_task<std::decay_t<Resp>> launch_no_op_task(Resp&& r)
 {
-  return launch_async([r = std::forward<Resp>(r)](coro_context<async_task<Resp>>& ctx) {
+  return launch_async([r = std::forward<Resp>(r)](coro_context<async_task<std::decay_t<Resp>>>& ctx) {
     CORO_BEGIN(ctx);
     CORO_RETURN(r);
   });

@@ -32,7 +32,7 @@ class sequence_id_checker_dummy_impl : public sequence_id_checker
 {
 public:
   // See interface for documentation.
-  int update_and_compare_seq_id(unsigned eaxc, uint8_t seq_id) override { return 0; };
+  int update_and_compare_seq_id(unsigned eaxc, uint8_t seq_id) override { return 0; }
 };
 
 } // namespace ofh

@@ -49,7 +49,6 @@ void o_cu_up_application_unit_impl::on_parsing_configuration_registration(CLI::A
 
 void o_cu_up_application_unit_impl::on_configuration_parameters_autoderivation(CLI::App& app)
 {
-  autoderive_cu_up_parameters_after_parsing(app, unit_cfg.cu_up_cfg, unit_cfg.e2_cfg.base_config.enable_unit_e2);
   autoderive_o_cu_up_e2_parameters_after_parsing(unit_cfg.e2_cfg);
 }
 
@@ -61,6 +60,11 @@ bool o_cu_up_application_unit_impl::on_configuration_validation(const os_sched_a
 void o_cu_up_application_unit_impl::on_loggers_registration()
 {
   register_cu_up_loggers(unit_cfg.cu_up_cfg.loggers);
+}
+
+bool o_cu_up_application_unit_impl::are_metrics_enabled() const
+{
+  return unit_cfg.cu_up_cfg.metrics.layers_cfg.are_metrics_enabled();
 }
 
 o_cu_up_unit o_cu_up_application_unit_impl::create_o_cu_up_unit(const o_cu_up_unit_dependencies& dependencies)

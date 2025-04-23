@@ -73,6 +73,7 @@ public:
                       const byte_buffer&              du_to_cu_container_,
                       rrc_ue_setup_proc_notifier&     rrc_ue_notifier_,
                       rrc_ue_control_message_handler& srb_notifier_,
+                      rrc_ue_event_notifier&          metrics_notifier_,
                       rrc_ue_ngap_notifier&           ngap_notifier_,
                       rrc_ue_event_manager&           event_mng_,
                       rrc_ue_logger&                  logger_);
@@ -94,10 +95,11 @@ private:
   rrc_ue_context_t&  context;
   const byte_buffer& du_to_cu_container;
 
-  rrc_ue_setup_proc_notifier&     rrc_ue;        // handler to the parent RRC UE object
-  rrc_ue_control_message_handler& srb_notifier;  // for creation of SRBs
-  rrc_ue_ngap_notifier&           ngap_notifier; // notifier to the NGAP
-  rrc_ue_event_manager&           event_mng;     // event manager for the RRC UE entity
+  rrc_ue_setup_proc_notifier&     rrc_ue;           // handler to the parent RRC UE object
+  rrc_ue_control_message_handler& srb_notifier;     // for creation of SRBs
+  rrc_ue_event_notifier&          metrics_notifier; // notifier to the metrics
+  rrc_ue_ngap_notifier&           ngap_notifier;    // notifier to the NGAP
+  rrc_ue_event_manager&           event_mng;        // event manager for the RRC UE entity
   rrc_ue_logger&                  logger;
 
   rrc_transaction               transaction;

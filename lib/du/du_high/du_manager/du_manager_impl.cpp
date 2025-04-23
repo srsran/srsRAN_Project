@@ -22,6 +22,7 @@
 
 #include "du_manager_impl.h"
 #include "du_positioning_handler_factory.h"
+#include "procedures/cu_configuration_procedure.h"
 #include "procedures/du_param_config_procedure.h"
 #include "procedures/du_stop_procedure.h"
 #include "procedures/du_ue_ric_configuration_procedure.h"
@@ -41,6 +42,12 @@ du_manager_impl::du_manager_impl(const du_manager_params& params_) :
   cell_res_alloc(params.ran.cells, params.mac.sched_cfg, params.ran.srbs, params.ran.qos, params.test_cfg),
   ue_mng(params, cell_res_alloc),
   positioning_handler(create_du_positioning_handler(params, cell_mng, ue_mng, logger)),
+  metrics(params.metrics,
+          params.services.du_mng_exec,
+          params.services.timers,
+          params.f1ap.metrics,
+          params.mac.mac_metrics_notif,
+          params.mac.sched_metrics_notif),
   main_ctrl_loop(128)
 {
 }
@@ -67,7 +74,7 @@ void du_manager_impl::start()
           CORO_BEGIN(ctx);
 
           // Connect to CU-CP and send F1 Setup Request and await for F1 setup response.
-          CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng));
+          CORO_AWAIT(launch_async<initial_du_setup_procedure>(params, cell_mng, metrics));
 
           // Signal start() caller thread that the operation is complete.
           std::lock_guard<std::mutex> lock(mutex);
@@ -169,6 +176,12 @@ async_task<void> du_manager_impl::handle_f1_reset_request(const std::vector<du_u
   return ue_mng.handle_f1_reset_request(ues_to_reset);
 }
 
+async_task<gnbcu_config_update_response>
+du_manager_impl::handle_cu_context_update_request(const gnbcu_config_update_request& request)
+{
+  return launch_async<cu_configuration_procedure>(request, cell_mng, ue_mng, params, metrics);
+}
+
 async_task<f1ap_ue_context_creation_response>
 du_manager_impl::handle_ue_context_creation(const f1ap_ue_context_creation_request& request)
 {
@@ -211,6 +224,11 @@ size_t du_manager_impl::nof_ues()
     return std::numeric_limits<size_t>::max();
   }
   return fut.get();
+}
+
+mac_cell_time_mapper& du_manager_impl::get_time_mapper()
+{
+  return params.mac.cell_mng.get_time_mapper(to_du_cell_index(0));
 }
 
 async_task<du_mac_sched_control_config_response>

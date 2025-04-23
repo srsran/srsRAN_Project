@@ -22,12 +22,11 @@
 
 #pragma once
 
+#include "srsran/ran/pdcch/dci_format.h"
 #include "srsran/ran/pdcch/search_space.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
-#include "srsran/scheduler/result/dci_info.h"
 
-namespace srsran {
-namespace pdsch_helper {
+namespace srsran::pdsch_helper {
 
 /// \brief Determine CRB limits for PDSCH grant, based on BWP config, SearchSpace type and DCI format as per
 /// TS38.214, 5.1.2.2.2. and TS 38.211, 7.3.1.6.
@@ -36,7 +35,7 @@ namespace pdsch_helper {
 /// \param init_dl_bwp Initial DL BWP configuration.
 /// \param active_dl_bwp Active DL BWP configuration.
 /// \param ss_cfg SearchSpace configuration.
-/// \param cs_cfg CORESET configuration corresponding to SerachSpace.
+/// \param cs_cfg CORESET configuration corresponding to SearchSpace.
 /// \return Calculated CRB limits.
 inline crb_interval get_ra_crb_limits(dci_dl_format                     dci_fmt,
                                       const bwp_downlink_common&        init_dl_bwp,
@@ -81,5 +80,4 @@ inline crb_interval get_ra_crb_limits_common(const bwp_downlink_common& init_dl_
   return get_ra_crb_limits(dci_dl_format::f1_0, init_dl_bwp, init_dl_bwp, ss_cfg, cs_cfg);
 }
 
-} // namespace pdsch_helper
-} // namespace srsran
+} // namespace srsran::pdsch_helper

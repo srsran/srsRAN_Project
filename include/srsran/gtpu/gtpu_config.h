@@ -23,6 +23,7 @@
 #pragma once
 
 #include "srsran/gtpu/gtpu_teid.h"
+#include "srsran/support/rate_limiting/token_bucket.h"
 #include "fmt/format.h"
 #include <chrono>
 #include <cstdint>
@@ -38,9 +39,11 @@ constexpr unsigned GTPU_PORT = 2152;
 struct gtpu_tunnel_ngu_config {
   struct gtpu_tunnel_ngu_rx_config {
     gtpu_teid_t               local_teid;
-    std::chrono::milliseconds t_reordering              = {};
-    bool                      warn_expired_t_reordering = false;
-    bool                      test_mode                 = false;
+    std::chrono::milliseconds t_reordering    = {};
+    token_bucket*             ue_ambr_limiter = nullptr;
+    bool                      warn_on_drop    = false;
+    bool                      ignore_ue_ambr  = false;
+    bool                      test_mode       = false;
   } rx;
   struct gtpu_tunnel_ngu_tx_config {
     gtpu_teid_t peer_teid;
@@ -83,7 +86,12 @@ struct formatter<srsran::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config> {
   template <typename FormatContext>
   auto format(const srsran::gtpu_tunnel_ngu_config::gtpu_tunnel_ngu_rx_config& cfg, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "local_teid={} t_reordering={}", cfg.local_teid, cfg.t_reordering);
+    return format_to(ctx.out(),
+                     "node=ngu local_teid={} t_reordering={} warn_on_drop={} ignore_ue_ambr={}",
+                     cfg.local_teid,
+                     cfg.t_reordering,
+                     cfg.warn_on_drop,
+                     cfg.ignore_ue_ambr);
   }
 };
 

@@ -210,9 +210,9 @@ public:
 class dummy_e1ap_pdu_notifier : public e1ap_message_notifier
 {
 public:
-  dummy_e1ap_pdu_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_e1ap_pdu_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void attach_handler(e1ap_message_handler* handler_) { handler = handler_; };
+  void attach_handler(e1ap_message_handler* handler_) { handler = handler_; }
   void on_new_message(const e1ap_message& msg) override
   {
     logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
@@ -237,13 +237,16 @@ class dummy_cu_cp_e1ap_pdu_notifier : public e1ap_message_notifier
 {
 public:
   dummy_cu_cp_e1ap_pdu_notifier(srs_cu_cp::cu_cp* cu_cp_, e1ap_message_handler* handler_) :
-    logger(srslog::fetch_basic_logger("TEST")), cu_cp(cu_cp_), handler(handler_){};
+    logger(srslog::fetch_basic_logger("TEST")), cu_cp(cu_cp_), handler(handler_)
+  {
+  }
 
   void attach_handler(srs_cu_cp::cu_cp* cu_cp_, e1ap_message_handler* handler_)
   {
     cu_cp   = cu_cp_;
     handler = handler_;
-  };
+  }
+
   void on_new_message(const e1ap_message& msg) override
   {
     logger.info("Received a PDU of type {}", msg.pdu.type().to_string());
@@ -266,7 +269,7 @@ private:
 class dummy_e1ap_message_handler : public e1ap_message_handler
 {
 public:
-  dummy_e1ap_message_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_e1ap_message_handler() : logger(srslog::fetch_basic_logger("TEST")) {}
   void handle_message(const e1ap_message& msg) override
   {
     last_msg = msg;
@@ -283,7 +286,7 @@ private:
 class dummy_e1ap_message_notifier : public e1ap_message_notifier
 {
 public:
-  dummy_e1ap_message_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_e1ap_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
   void on_new_message(const e1ap_message& msg) override
   {
     last_msg = msg;

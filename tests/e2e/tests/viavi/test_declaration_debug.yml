@@ -37,8 +37,10 @@ tests:
     # Configuration
     gnb_extra_config:
       metrics:
-        rlc_report_period: 1000
-        enable_log_metrics: true
+        enable_log: true
+        layers:
+          enable_rlc: true
+          enable_ru: true
       cell_cfg:
         pusch:
           max_puschs_per_slot: 2

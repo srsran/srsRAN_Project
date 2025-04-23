@@ -22,8 +22,9 @@
 
 #pragma once
 
-#include "apps/services/cmdline/cmdline_command.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher_utils.h"
+#include "apps/services/cmdline/stdout_metrics_command.h"
+#include "split_helpers/metrics/flexible_o_du_metrics_consumers.h"
 #include "srsran/adt/expected.h"
 #include "srsran/adt/to_array.h"
 #include "srsran/ru/ru_controller.h"
@@ -115,24 +116,6 @@ public:
   }
 };
 
-/// Application command to change display the Radio Unit metrics.
-class ru_metrics_app_command : public app_services::cmdline_command
-{
-  ru_controller& controller;
-
-public:
-  explicit ru_metrics_app_command(ru_controller& controller_) : controller(controller_) {}
-
-  // See interface for documentation.
-  std::string_view get_name() const override { return "ru_metrics"; }
-
-  // See interface for documentation.
-  std::string_view get_description() const override { return ":                           prints RU metrics once"; }
-
-  // See interface for documentation.
-  void execute(span<const std::string> args) override { controller.print_metrics(); }
-};
-
 /// Application command to change the DU log level.
 class change_log_level_app_command : public app_services::cmdline_command
 {
@@ -212,7 +195,7 @@ public:
   std::string_view get_name() const override { return "cfo"; }
 
   // See interface for documentation.
-  std::string_view get_description() const override { return " <sector_id> <cfo>:           set CFO"; }
+  std::string_view get_description() const override { return " <sector_id> <cfo>:                set CFO"; }
 
   // See interface for documentation.
   void execute(span<const std::string> args) override
@@ -247,6 +230,27 @@ public:
 
     fmt::print("CFO set to {}Hz for sector {}.\n", cfo.value(), sector_id.value());
   }
+};
+
+/// STDOUT metrics subcommand to print RU metrics.
+class ru_metrics_subcommand_stdout : public app_services::toggle_stdout_metrics_app_command::metrics_subcommand
+{
+  ru_metrics_consumer_stdout& printer;
+
+public:
+  explicit ru_metrics_subcommand_stdout(ru_metrics_consumer_stdout& printer_) : printer(printer_) {}
+
+  // See interface for documentation.
+  std::string_view get_name() const override { return "ru"; }
+
+  // See interface for documentation.
+  void print_header() override { printer.print_header(); }
+
+  // See interface for documentation.
+  void enable() override { printer.enable(); }
+
+  // See interface for documentation.
+  void disable() override { printer.disable(); }
 };
 
 } // namespace srsran

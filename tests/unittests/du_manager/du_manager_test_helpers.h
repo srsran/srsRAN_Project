@@ -104,12 +104,15 @@ public:
 class f1ap_test_dummy : public f1ap_connection_manager,
                         public f1ap_ue_context_manager,
                         public f1ap_message_handler,
-                        public f1ap_rrc_message_transfer_procedure_handler
+                        public f1ap_rrc_message_transfer_procedure_handler,
+                        public f1ap_metrics_collector
 {
   struct drb_to_idx {
     size_t   get_index(drb_id_t i) const { return static_cast<size_t>(i) - 1; }
     drb_id_t get_id(size_t i) const { return static_cast<drb_id_t>(i + 1); }
   };
+
+  void collect_metrics_report(f1ap_metrics_report& report) override { report = {}; }
 
 public:
   struct f1ap_ue_context {
@@ -270,7 +273,19 @@ public:
     }
   };
 
-  mac_cell_dummy mac_cell;
+  class mac_cell_dummy_time_mapper final : public mac_cell_time_mapper
+  {
+  public:
+    std::optional<mac_cell_slot_time_info> get_last_mapping() const override
+    {
+      return mac_cell_slot_time_info{slot_point(1, 1), std::chrono::system_clock::now()};
+    }
+    std::optional<time_point> get_time_point(slot_point slot) const override { return std::nullopt; }
+    std::optional<slot_point> get_slot_point(time_point time) const override { return std::nullopt; }
+  };
+
+  mac_cell_dummy             mac_cell;
+  mac_cell_dummy_time_mapper time_mapper;
 
   std::optional<mac_ue_create_request>                      last_ue_create_msg{};
   std::optional<mac_ue_reconfiguration_request>             last_ue_reconf_msg{};
@@ -283,9 +298,10 @@ public:
   wait_manual_event_tester<mac_ue_delete_response>          wait_ue_delete;
   bool                                                      next_ul_ccch_msg_result = true;
 
-  void                 add_cell(const mac_cell_creation_request& cell_cfg) override {}
-  void                 remove_cell(du_cell_index_t cell_index) override {}
-  mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return mac_cell; }
+  mac_cell_controller&  add_cell(const mac_cell_creation_request& cell_cfg) override { return mac_cell; }
+  void                  remove_cell(du_cell_index_t cell_index) override {}
+  mac_cell_controller&  get_cell_controller(du_cell_index_t cell_index) override { return mac_cell; }
+  mac_cell_time_mapper& get_time_mapper(du_cell_index_t cell_index) override { return time_mapper; }
 
   async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& msg) override
   {
@@ -326,11 +342,13 @@ public:
   public:
     dummy_resource_updater(dummy_ue_resource_configurator_factory& parent_, du_ue_index_t ue_index_);
     ~dummy_resource_updater();
-    du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
-                                          const f1ap_ue_context_update_request& upd_req,
-                                          const du_ue_resource_config*          reestablished_context) override;
-    void                           config_applied() override {}
-    const du_ue_resource_config&   get() override;
+    du_ue_resource_update_response              update(du_cell_index_t                       pcell_index,
+                                                       const f1ap_ue_context_update_request& upd_req,
+                                                       const du_ue_resource_config*          reestablished_context,
+                                                       const ue_capability_summary*          reestablished_ue_caps) override;
+    void                                        config_applied() override {}
+    const du_ue_resource_config&                get() override;
+    const std::optional<ue_capability_summary>& ue_capabilities() const override;
 
     du_ue_index_t                           ue_index;
     dummy_ue_resource_configurator_factory& parent;
@@ -339,6 +357,7 @@ public:
   std::optional<du_ue_index_t>                   last_ue_index;
   std::optional<du_cell_index_t>                 last_ue_pcell;
   f1ap_ue_context_update_request                 last_ue_ctx_upd;
+  std::optional<ue_capability_summary>           next_ue_caps;
   std::map<du_ue_index_t, du_ue_resource_config> ue_resource_pool;
   du_ue_resource_config                          next_context_update_result;
   du_ue_resource_update_response                 next_config_resp;

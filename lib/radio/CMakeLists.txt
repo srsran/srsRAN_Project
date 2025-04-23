@@ -26,6 +26,8 @@ set(SRSGNB_RADIO_DEFINITIONS "")
 set(SRSGNB_RADIO_LIBRARIES "")
 
 if (UHD_FOUND AND ENABLE_UHD)
+    # The UHD library uses RTTI
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -frtti")
     add_subdirectory(uhd)
     list(APPEND SRSGNB_RADIO_DEFINITIONS -DENABLE_UHD)
     list(APPEND SRSGNB_RADIO_LIBRARIES srsran_radio_uhd)

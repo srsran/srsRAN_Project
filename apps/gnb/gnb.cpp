@@ -27,10 +27,10 @@
 #include "apps/services/application_tracer.h"
 #include "apps/services/buffer_pool/buffer_pool_manager.h"
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
+#include "apps/services/cmdline/stdout_metrics_command.h"
 #include "apps/services/core_isolation_manager.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
-#include "apps/services/periodic_metrics_report_controller.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/units/flexible_o_du/flexible_o_du_application_unit.h"
@@ -135,7 +135,7 @@ static void register_app_logs(const gnb_appconfig&            gnb_cfg,
 {
   const logger_appconfig& log_cfg = gnb_cfg.log_cfg;
   // Set log-level of app and all non-layer specific components to app level.
-  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
+  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP", "ASN1"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
     logger.set_level(log_cfg.lib_level);
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);
@@ -144,8 +144,14 @@ static void register_app_logs(const gnb_appconfig&            gnb_cfg,
   auto& app_logger = srslog::fetch_basic_logger("GNB", false);
   app_logger.set_level(srslog::basic_levels::info);
   app_services::application_message_banners::log_build_info(app_logger);
-  app_logger.set_level(log_cfg.config_level);
+  app_logger.set_level(log_cfg.all_level);
   app_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
+  {
+    auto& logger = srslog::fetch_basic_logger("APP", false);
+    logger.set_level(log_cfg.all_level);
+    logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+  }
 
   auto& config_logger = srslog::fetch_basic_logger("CONFIG", false);
   config_logger.set_level(log_cfg.config_level);
@@ -156,7 +162,7 @@ static void register_app_logs(const gnb_appconfig&            gnb_cfg,
   e2ap_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   // Metrics log channels.
-  const app_helpers::metrics_config& metrics_cfg = gnb_cfg.metrics_cfg.common_metrics_cfg;
+  const app_helpers::metrics_config& metrics_cfg = gnb_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg;
   app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
 
   // Register units logs.
@@ -234,25 +240,36 @@ int main(int argc, char** argv)
   // Set the callback for the app calling all the autoderivation functions.
   app.callback([&app, &gnb_cfg, &o_du_app_unit, &o_cu_cp_app_unit, &o_cu_up_app_unit]() {
     autoderive_gnb_parameters_after_parsing(app, gnb_cfg);
-    autoderive_slicing_args(o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config,
-                            o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
+
+    cu_cp_unit_config& cu_cp_cfg = o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg;
+
+    autoderive_slicing_args(o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config, cu_cp_cfg);
     o_du_app_unit->on_configuration_parameters_autoderivation(app);
 
     // If test mode is enabled, we auto-enable "no_core" option and generate a amf config with no core.
     if (o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config.is_testmode_enabled()) {
-      o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg.amf_config.no_core           = true;
-      o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg.amf_config.amf.supported_tas = {
-          {7, {{"00101", {cu_cp_unit_plmn_item::tai_slice_t{1}}}}}};
+      cu_cp_cfg.amf_config.no_core = true;
+    } else {
+      // If no-core or the default supported tas are configured and we are not using testmode, this will set the
+      // supported TAs from the DU cell configuration.
+      if (cu_cp_cfg.amf_config.no_core || cu_cp_cfg.amf_config.amf.is_default_supported_tas) {
+        autoderive_supported_tas_for_amf_from_du_cells(o_du_app_unit->get_o_du_high_unit_config().du_high_cfg.config,
+                                                       cu_cp_cfg);
+      }
     }
 
     o_cu_cp_app_unit->on_configuration_parameters_autoderivation(app);
     o_cu_up_app_unit->on_configuration_parameters_autoderivation(app);
-    autoderive_cu_up_parameters_after_parsing(o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg,
-                                              o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
+    autoderive_cu_up_parameters_after_parsing(o_cu_up_app_unit->get_o_cu_up_unit_config().cu_up_cfg, cu_cp_cfg);
   });
 
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
+
+  // Dry run mode, exit.
+  if (gnb_cfg.enable_dryrun) {
+    return 0;
+  }
 
   auto available_cpu_mask = (gnb_cfg.expert_execution_cfg.affinities.isolated_cpus)
                                 ? gnb_cfg.expert_execution_cfg.affinities.isolated_cpus.value()
@@ -270,6 +287,16 @@ int main(int argc, char** argv)
   initialize_log(gnb_cfg.log_cfg.filename);
   register_app_logs(gnb_cfg, *o_cu_cp_app_unit, *o_cu_up_app_unit, *o_du_app_unit);
 
+  // Check the metrics and metrics consumers.
+  srslog::basic_logger& gnb_logger = srslog::fetch_basic_logger("GNB");
+  bool metrics_enabled = o_cu_cp_app_unit->are_metrics_enabled() || o_cu_up_app_unit->are_metrics_enabled() ||
+                         o_du_app_unit->are_metrics_enabled() || gnb_cfg.metrics_cfg.rusage_config.enable_app_usage;
+
+  if (!metrics_enabled && gnb_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enabled()) {
+    gnb_logger.warning("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+    fmt::println("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+  }
+
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
   if (config_logger.debug.enabled()) {
@@ -283,7 +310,6 @@ int main(int argc, char** argv)
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
-  srslog::basic_logger&            gnb_logger = srslog::fetch_basic_logger("GNB");
   app_services::application_tracer app_tracer;
   if (not gnb_cfg.log_cfg.tracing_filename.empty()) {
     app_tracer.enable_tracer(gnb_cfg.log_cfg.tracing_filename, gnb_logger);
@@ -379,19 +405,7 @@ int main(int argc, char** argv)
 
   // Create app-level resource usage service and metrics.
   auto app_resource_usage_service = app_services::build_app_resource_usage_service(
-      metrics_notifier_forwarder, gnb_cfg.metrics_cfg.common_metrics_cfg);
-
-  // Create service for periodically polling app resource usage.
-  auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
-  std::vector<app_services::metrics_producer*> metric_producers;
-  for (auto& metric : app_resource_usage_service.metrics) {
-    for (auto& producer : metric.producers)
-      metric_producers.push_back(producer.get());
-  }
-  app_services::periodic_metrics_report_controller periodic_metrics_controller(
-      metric_producers,
-      std::move(app_metrics_timer),
-      std::chrono::milliseconds(gnb_cfg.metrics_cfg.rusage_report_period));
+      metrics_notifier_forwarder, gnb_cfg.metrics_cfg.rusage_config, gnb_logger);
 
   std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
 
@@ -469,15 +483,27 @@ int main(int argc, char** argv)
   }
 
   app_services::metrics_manager metrics_mngr(
-      srslog::fetch_basic_logger("GNB"), *workers.metrics_hub_exec, metrics_configs);
+      srslog::fetch_basic_logger("GNB"),
+      *workers.metrics_exec,
+      metrics_configs,
+      app_timers,
+      std::chrono::milliseconds(gnb_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
+
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
   std::vector<std::unique_ptr<app_services::cmdline_command>> commands;
-  for (auto& cmd : o_cucp_unit.commands.cmdline) {
+  for (auto& cmd : o_cucp_unit.commands.cmdline.commands) {
     commands.push_back(std::move(cmd));
   }
-  for (auto& cmd : du_inst_and_cmds.commands.cmdline) {
+  for (auto& cmd : du_inst_and_cmds.commands.cmdline.commands) {
+    commands.push_back(std::move(cmd));
+  }
+
+  // Add the metrics STDOUT command.
+  if (std::unique_ptr<app_services::cmdline_command> cmd = app_services::create_stdout_metrics_app_command(
+          {{du_inst_and_cmds.commands.cmdline.metrics_subcommands}, {o_cucp_unit.commands.cmdline.metrics_subcommands}},
+          gnb_cfg.metrics_cfg.autostart_stdout_metrics)) {
     commands.push_back(std::move(cmd));
   }
 
@@ -502,7 +528,7 @@ int main(int argc, char** argv)
 
   // Start processing.
   du_inst.get_operation_controller().start();
-  periodic_metrics_controller.start();
+  metrics_mngr.start();
 
   std::unique_ptr<app_services::remote_server> remote_control_server =
       app_services::create_remote_server(gnb_cfg.remote_control_config, du_inst_and_cmds.commands.remote);
@@ -515,7 +541,7 @@ int main(int argc, char** argv)
     }
   }
 
-  periodic_metrics_controller.stop();
+  metrics_mngr.stop();
 
   if (remote_control_server) {
     remote_control_server->stop();

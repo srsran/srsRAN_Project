@@ -30,7 +30,6 @@
 #include "apps/services/cmdline/cmdline_command_dispatcher.h"
 #include "apps/services/metrics/metrics_manager.h"
 #include "apps/services/metrics/metrics_notifier_proxy.h"
-#include "apps/services/periodic_metrics_report_controller.h"
 #include "apps/services/remote_control/remote_server.h"
 #include "apps/services/worker_manager/worker_manager.h"
 #include "apps/services/worker_manager/worker_manager_config.h"
@@ -134,7 +133,7 @@ static void register_app_logs(const cu_appconfig&       cu_cfg,
 {
   const logger_appconfig& log_cfg = cu_cfg.log_cfg;
   // Set log-level of app and all non-layer specific components to app level.
-  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP"}) {
+  for (const auto& id : {"ALL", "SCTP-GW", "IO-EPOLL", "UDP-GW", "PCAP", "ASN1"}) {
     auto& logger = srslog::fetch_basic_logger(id, false);
     logger.set_level(log_cfg.lib_level);
     logger.set_hex_dump_max_size(log_cfg.hex_max_size);
@@ -143,15 +142,21 @@ static void register_app_logs(const cu_appconfig&       cu_cfg,
   auto& app_logger = srslog::fetch_basic_logger("CU", false);
   app_logger.set_level(srslog::basic_levels::info);
   app_services::application_message_banners::log_build_info(app_logger);
-  app_logger.set_level(log_cfg.config_level);
+  app_logger.set_level(log_cfg.all_level);
   app_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+
+  {
+    auto& logger = srslog::fetch_basic_logger("APP", false);
+    logger.set_level(log_cfg.all_level);
+    logger.set_hex_dump_max_size(log_cfg.hex_max_size);
+  }
 
   auto& config_logger = srslog::fetch_basic_logger("CONFIG", false);
   config_logger.set_level(log_cfg.config_level);
   config_logger.set_hex_dump_max_size(log_cfg.hex_max_size);
 
   // Metrics log channels.
-  const app_helpers::metrics_config& metrics_cfg = cu_cfg.metrics_cfg.common_metrics_cfg;
+  const app_helpers::metrics_config& metrics_cfg = cu_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg;
   app_helpers::initialize_metrics_log_channels(metrics_cfg, log_cfg.hex_max_size);
 
   // Register units logs.
@@ -222,15 +227,15 @@ int main(int argc, char** argv)
 
     autoderive_cu_up_parameters_after_parsing(
         cu_cfg, o_cu_up_app_unit->get_o_cu_up_unit_config(), o_cu_cp_app_unit->get_o_cu_cp_unit_config().cucp_cfg);
-
-    if (cu_cfg.metrics_cfg.common_metrics_cfg.enabled() && cu_cfg.metrics_cfg.rusage_report_period == 0) {
-      // Default report period 1 second.
-      cu_cfg.metrics_cfg.rusage_report_period = 1000;
-    }
   });
 
   // Parse arguments.
   CLI11_PARSE(app, argc, argv);
+
+  // Dry run mode, exit.
+  if (cu_cfg.enable_dryrun) {
+    return 0;
+  }
 
   // Check the modified configuration.
   if (!validate_cu_appconfig(cu_cfg) ||
@@ -242,6 +247,16 @@ int main(int argc, char** argv)
   // Set up logging.
   initialize_log(cu_cfg.log_cfg.filename);
   register_app_logs(cu_cfg, *o_cu_cp_app_unit, *o_cu_up_app_unit);
+
+  // Check the metrics and metrics consumers.
+  srslog::basic_logger& cu_logger = srslog::fetch_basic_logger("CU");
+  bool metrics_enabled = o_cu_cp_app_unit->are_metrics_enabled() || o_cu_up_app_unit->are_metrics_enabled() ||
+                         cu_cfg.metrics_cfg.rusage_config.enable_app_usage;
+
+  if (!metrics_enabled && cu_cfg.metrics_cfg.rusage_config.metrics_consumers_cfg.enabled()) {
+    cu_logger.warning("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+    fmt::println("Logger or JSON metrics output enabled but no metrics will be reported as no layer was enabled");
+  }
 
   // Log input configuration.
   srslog::basic_logger& config_logger = srslog::fetch_basic_logger("CONFIG");
@@ -255,7 +270,6 @@ int main(int argc, char** argv)
     config_logger.info("Input configuration (only non-default values): \n{}", app.config_to_str(false, false));
   }
 
-  srslog::basic_logger&            cu_logger = srslog::fetch_basic_logger("CU");
   app_services::application_tracer app_tracer;
   if (not cu_cfg.log_cfg.tracing_filename.empty()) {
     app_tracer.enable_tracer(cu_cfg.log_cfg.tracing_filename, cu_logger);
@@ -371,20 +385,8 @@ int main(int argc, char** argv)
   app_services::metrics_notifier_proxy_impl metrics_notifier_forwarder;
 
   // Create app-level resource usage service and metrics.
-  auto app_resource_usage_service =
-      app_services::build_app_resource_usage_service(metrics_notifier_forwarder, cu_cfg.metrics_cfg.common_metrics_cfg);
-
-  // Create service for periodically polling app resource usage.
-  auto app_metrics_timer = app_timers.create_unique_timer(*workers.non_rt_low_prio_exec);
-  std::vector<app_services::metrics_producer*> metric_producers;
-  for (auto& metric : app_resource_usage_service.metrics) {
-    for (auto& producer : metric.producers)
-      metric_producers.push_back(producer.get());
-  }
-  app_services::periodic_metrics_report_controller periodic_metrics_controller(
-      metric_producers,
-      std::move(app_metrics_timer),
-      std::chrono::milliseconds(cu_cfg.metrics_cfg.rusage_report_period));
+  auto app_resource_usage_service = app_services::build_app_resource_usage_service(
+      metrics_notifier_forwarder, cu_cfg.metrics_cfg.rusage_config, cu_logger);
 
   std::vector<app_services::metrics_config> metrics_configs = std::move(app_resource_usage_service.metrics);
 
@@ -403,9 +405,14 @@ int main(int argc, char** argv)
   auto                o_cucp_unit = o_cu_cp_app_unit->create_o_cu_cp(o_cucp_deps);
   srs_cu_cp::o_cu_cp& o_cucp_obj  = *o_cucp_unit.unit;
 
+  if (std::unique_ptr<app_services::cmdline_command> cmd = app_services::create_stdout_metrics_app_command(
+          {{o_cucp_unit.commands.cmdline.metrics_subcommands}}, false)) {
+    o_cucp_unit.commands.cmdline.commands.push_back(std::move(cmd));
+  }
+
   // Create console helper object for commands and metrics printing.
   app_services::cmdline_command_dispatcher command_parser(
-      *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands.cmdline);
+      *epoll_broker, *workers.non_rt_low_prio_exec, o_cucp_unit.commands.cmdline.commands);
 
   for (auto& metric : o_cucp_unit.metrics) {
     metrics_configs.push_back(std::move(metric));
@@ -444,13 +451,18 @@ int main(int argc, char** argv)
     metrics_configs.push_back(std::move(metric));
   }
   app_services::metrics_manager metrics_mngr(
-      srslog::fetch_basic_logger("CU"), *workers.metrics_hub_exec, metrics_configs);
+      srslog::fetch_basic_logger("CU"),
+      *workers.metrics_exec,
+      metrics_configs,
+      app_timers,
+      std::chrono::milliseconds(cu_cfg.metrics_cfg.metrics_service_cfg.app_usage_report_period));
+
   // Connect the forwarder to the metrics manager.
   metrics_notifier_forwarder.connect(metrics_mngr);
 
   o_cuup_unit.unit->get_operation_controller().start();
 
-  periodic_metrics_controller.start();
+  metrics_mngr.start();
 
   std::unique_ptr<app_services::remote_server> remote_control_server =
       app_services::create_remote_server(cu_cfg.remote_control_config, {});
@@ -463,7 +475,7 @@ int main(int argc, char** argv)
     }
   }
 
-  periodic_metrics_controller.stop();
+  metrics_mngr.stop();
 
   if (remote_control_server) {
     remote_control_server->stop();

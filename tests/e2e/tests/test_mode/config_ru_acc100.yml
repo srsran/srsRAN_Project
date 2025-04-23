@@ -35,26 +35,19 @@ cell_cfg:
   nof_antennas_dl: {{nof_antennas_dl}}
   nof_antennas_ul: {{nof_antennas_ul}}
   pdsch:
+    min_ue_mcs: 27
     mcs_table: qam256
   pusch:
     min_ue_mcs: 27
     mcs_table: qam256
     rv_sequence: 0
-  tdd_ul_dl_cfg:
-    dl_ul_tx_period: 10
-    nof_dl_slots: 7
-    nof_ul_slots: 2
-  csi:
-    csi_rs_period: 40
-  ul_common:
-    max_ul_grants_per_slot: 64
-    max_pucchs_per_slot: 63
 
 cells:
   - pci: 1
   - pci: 2
 
 ru_dummy:
+  time_scaling: 10
 
 test_mode:
   test_ue:
@@ -62,8 +55,7 @@ test_mode:
     pdsch_active: true
     pusch_active: true
     ri: 4
-    cqi: 15
-    nof_ues: 1
+    nof_ues: 16
 
 hal:
   bbdev_hwacc:
@@ -72,22 +64,15 @@ hal:
     pdsch_enc:
       nof_hwacc: {{ accelerator_pdsch_enc_nof_hwacc }}
       cb_mode: {{ accelerator_cb_mode }}
+      dedicated_queue: true
     pusch_dec:
       nof_hwacc: {{ accelerator_pusch_dec_nof_hwacc }}
       force_local_harq: False
+      dedicated_queue: true
       harq_context_size: {{ accelerator_harq_context_size }}
   eal_args: "--lcores {{ lcores_eal_args }} {{ accelerator_extra_eal_args }}"
 
 expert_phy:
+  max_request_headroom_slots: 3
   max_proc_delay: 4
   pusch_dec_max_iterations: 2
-
-expert_execution:
-  threads:
-    upper_phy:
-      pdsch_processor_type: generic
-      nof_dl_threads: 4
-      nof_ul_threads: 1
-      nof_pusch_decoder_threads: 3
-    ofh:
-      enable_dl_parallelization: false

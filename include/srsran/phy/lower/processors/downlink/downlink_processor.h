@@ -47,6 +47,9 @@ public:
   /// Connects the downlink processor with notifiers.
   virtual void connect(downlink_processor_notifier& notifier, pdxch_processor_notifier& pdxch_notifier) = 0;
 
+  /// Stops the processor.
+  virtual void stop() = 0;
+
   /// Gets the carrier frequency offset processor interface.
   virtual lower_phy_cfo_controller& get_cfo_handler() = 0;
 

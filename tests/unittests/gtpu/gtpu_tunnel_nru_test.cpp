@@ -185,7 +185,7 @@ TEST_F(gtpu_tunnel_nru_test, entity_creation)
   gtpu                                 = create_gtpu_tunnel_nru(msg);
 
   ASSERT_NE(gtpu, nullptr);
-};
+}
 
 /// \brief Test correct reception and transmission of a NR-U DL message
 TEST_F(gtpu_tunnel_nru_test, rx_tx_nru_dl_msg)
@@ -222,7 +222,7 @@ TEST_F(gtpu_tunnel_nru_test, rx_tx_nru_dl_msg)
   tx->handle_sdu(std::move(gtpu_rx.last_dl_msg));
 
   ASSERT_EQ(gtpu_tx.last_tx, orig_pdu);
-};
+}
 
 /// \brief Test correct transmission and reception of a NR-U DL message (with T-PDU)
 TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_dl_msg_with_t_pdu)
@@ -258,7 +258,7 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_dl_msg_with_t_pdu)
   gtpu_tunnel_common_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
   rx->handle_pdu(std::move(gtpu_tx.last_tx), orig_addr);
   ASSERT_EQ(gtpu_rx.last_dl_msg, tx_msg);
-};
+}
 
 /// \brief Test correct transmission and reception of a NR-U UL message (no T-PDU)
 TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_ul_msg)
@@ -294,7 +294,7 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_ul_msg)
   gtpu_tunnel_common_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
   rx->handle_pdu(std::move(gtpu_tx.last_tx), orig_addr);
   ASSERT_EQ(gtpu_rx.last_ul_msg, tx_msg);
-};
+}
 
 /// \brief Test correct transmission and reception of a NR-U UL message (with T-PDU)
 TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_ul_msg_with_t_pdu)
@@ -331,7 +331,7 @@ TEST_F(gtpu_tunnel_nru_test, tx_rx_nru_ul_msg_with_t_pdu)
   gtpu_tunnel_common_rx_upper_layer_interface* rx = gtpu->get_rx_upper_layer_interface();
   rx->handle_pdu(std::move(gtpu_tx.last_tx), orig_addr);
   ASSERT_EQ(gtpu_rx.last_ul_msg, tx_msg);
-};
+}
 
 void usage(const char* prog)
 {

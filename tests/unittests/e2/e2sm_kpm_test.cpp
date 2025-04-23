@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/e2/common/e2ap_asn1_packer.h"
+#include "common/e2ap_asn1_packer.h"
 #include "lib/e2/common/e2ap_asn1_utils.h"
 #include "lib/pcap/dlt_pcap_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
@@ -52,12 +52,12 @@ protected:
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    gw   = std::make_unique<dummy_network_gateway_data_handler>();
+    gw   = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap = std::make_unique<dummy_e2ap_pcap>();
     if (external_pcap_writer) {
-      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
+      packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
     } else {
-      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+      packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
     }
     e2_client                = std::make_unique<dummy_e2_connection_client>();
     du_metrics               = std::make_unique<dummy_e2_du_metrics>();
@@ -95,12 +95,12 @@ protected:
     du_meas_provider = std::make_unique<dummy_e2sm_kpm_du_meas_provider>();
     e2sm_kpm_packer  = std::make_unique<e2sm_kpm_asn1_packer>(*du_meas_provider);
     e2sm_kpm_iface   = std::make_unique<e2sm_kpm_impl>(test_logger, *e2sm_kpm_packer, *du_meas_provider);
-    gw               = std::make_unique<dummy_network_gateway_data_handler>();
+    gw               = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap             = std::make_unique<dummy_e2ap_pcap>();
     if (external_pcap_writer) {
-      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
+      packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
     } else {
-      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+      packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
     }
   }
 
@@ -691,11 +691,11 @@ TEST_P(e2sm_kpm_indication, e2sm_kpm_generates_ric_indication_style5)
   };
   std::vector<uint32_t>              cond_satisfied = {1, 1, 1, 1, 1};
   std::vector<std::vector<uint32_t>> meas_values    = {
-         {1, 2, 3, 0, 5},
-         {11, 12, 13, 0, 15},
-         {21, 22, 23, 0, 25},
-         {31, 32, 33, 0, 35},
-         {41, 42, 43, 0, 45},
+      {1, 2, 3, 0, 5},
+      {11, 12, 13, 0, 15},
+      {21, 22, 23, 0, 25},
+      {31, 32, 33, 0, 35},
+      {41, 42, 43, 0, 45},
   };
   uint32_t nof_meas_data = presence.size();
   uint32_t nof_ues       = ue_ids.size();

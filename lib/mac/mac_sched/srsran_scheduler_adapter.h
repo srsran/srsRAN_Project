@@ -45,10 +45,11 @@ public:
 
   void add_cell(const mac_cell_creation_request& msg) override;
 
-  void remove_cell(du_cell_index_t cell_index) override
-  {
-    // TODO: Call scheduler cell remove.
-  }
+  void remove_cell(du_cell_index_t cell_index) override;
+
+  void start_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_activation_request(cell_index); }
+
+  void stop_cell(du_cell_index_t cell_index) override { sched_impl->handle_cell_deactivation_request(cell_index); }
 
   async_task<bool> handle_ue_creation_request(const mac_ue_create_request& msg) override;
 
@@ -79,9 +80,7 @@ public:
                                du_cell_index_t                    cell_idx,
                                mac_cell_slot_handler::error_event event) override;
 
-  void handle_sib1_update_indication(du_cell_index_t cell_index,
-                                     unsigned        sib_version,
-                                     units::bytes    new_payload_size) override;
+  void handle_si_change_indication(const si_scheduling_update_request& request) override;
 
   async_task<mac_cell_positioning_measurement_response>
   handle_positioning_measurement_request(du_cell_index_t                                 cell_index,
@@ -128,7 +127,7 @@ private:
   public:
     explicit sched_config_notif_adapter(srsran_scheduler_adapter& parent_) : parent(parent_) {}
     void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) override;
-    void on_ue_delete_response(du_ue_index_t ue_index) override;
+    void on_ue_deletion_completed(du_ue_index_t ue_index) override;
 
   private:
     srsran_scheduler_adapter& parent;

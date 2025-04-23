@@ -22,15 +22,15 @@
 
 #pragma once
 
+#include "../procedures/e2_ric_control_procedure.h"
+#include "../procedures/e2_setup_procedure.h"
+#include "../procedures/e2_subscription_delete_procedure.h"
+#include "../procedures/e2_subscription_setup_procedure.h"
 #include "e2_connection_handler.h"
-#include "procedures/e2_ric_control_procedure.h"
-#include "procedures/e2_setup_procedure.h"
-#include "procedures/e2_subscription_delete_procedure.h"
-#include "procedures/e2_subscription_setup_procedure.h"
 #include "srsran/asn1/e2ap/e2ap.h"
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2ap_configuration.h"
-#include "srsran/e2/e2sm/e2sm_factory.h"
+#include "srsran/e2/e2sm/e2sm.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/support/async/fifo_async_task_scheduler.h"
@@ -53,8 +53,8 @@ public:
           e2sm_manager&             e2sm_mngr_,
           task_executor&            task_exec_);
 
-  void start() override{};
-  void stop() override{};
+  void start() override {}
+  void stop() override {}
 
   /// E2 connection manager functions.
   bool                                  handle_e2_tnl_connection_request() override;

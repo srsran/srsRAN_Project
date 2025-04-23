@@ -161,7 +161,7 @@ static bool is_f1_pucch(const pucch_info& pucch, bool is_common, bool has_sr)
 {
   return pucch.format() == pucch_format::FORMAT_1 and ((pucch.uci_bits.sr_bits != sr_nof_bits::no_sr) == has_sr) and
          pucch.uci_bits.harq_ack_nof_bits > 0 and (pucch.resources.second_hop_prbs.empty() != is_common);
-};
+}
 
 TEST_P(scheduler_con_res_msg4_test, while_ue_is_in_fallback_then_common_pucch_is_used)
 {

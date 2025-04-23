@@ -57,8 +57,10 @@ struct du_cell_param_config_request {
   {
   }
 
+  /// NR Cell Global ID of the cell being configured.
   nr_cell_global_id_t nr_cgi;
-  std::optional<int>  ssb_pwr_mod;
+  /// SSB power modification to be applied to the cell. If absent, no modification is applied.
+  std::optional<int> ssb_pwr_mod;
 };
 
 /// Parameters of the DU that need to be configured during operation.

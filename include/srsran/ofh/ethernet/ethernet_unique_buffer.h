@@ -90,13 +90,16 @@ public:
   /// Default constructor initializes internal storage with an empty object.
   constexpr unique_rx_buffer() noexcept : storage_ptr(&empty_object), buffer_ptr(nullptr) {}
 
+  /// Default destructor.
+  ~unique_rx_buffer() { storage_ptr->destroy(&buffer); }
+
   /// Copy constructor and copy assignment are deleted.
   unique_rx_buffer(const unique_rx_buffer& other)      = delete;
   unique_rx_buffer& operator=(unique_rx_buffer& other) = delete;
 
   /// Constructor receives an R-value reference to an object implementing rx_buffer interface.
   template <typename T>
-  unique_rx_buffer(T&& rx_buffer_wrapper) noexcept(std::is_nothrow_move_constructible<T>::value)
+  unique_rx_buffer(T&& rx_buffer_wrapper) noexcept(std::is_nothrow_move_constructible_v<T>)
   {
     static_assert(sizeof(rx_buffer_wrapper) <= storage_capacity.value(),
                   "Pre-allocated storage does not have enough space to store passed rx buffer");
@@ -121,9 +124,6 @@ public:
     }
     return static_cast<const rx_buffer*>(static_cast<void*>(&buffer))->data();
   }
-
-  /// Default destructor.
-  ~unique_rx_buffer() { storage_ptr->destroy(&buffer); };
 
 private:
   const detail::storage_helper* storage_ptr;

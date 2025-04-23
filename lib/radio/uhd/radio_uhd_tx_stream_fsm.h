@@ -31,6 +31,7 @@
 #else // __clang__
 #pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif // __clang__
+#pragma GCC diagnostic ignored "-Wextra-semi"
 #include <uhd/types/metadata.hpp>
 #include <uhd/types/time_spec.hpp>
 #pragma GCC diagnostic pop

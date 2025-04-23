@@ -539,7 +539,8 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
 
   // Verify UL PDU repository is valid.
   if (!ul_pdu_slot_repository.is_valid()) {
-    logger.warning("Sector#{}: Real-time failure in FAPI: UL processor is busy.", sector_id, msg.sfn, msg.slot);
+    logger.warning(
+        "Sector#{}: Real-time failure in FAPI: UL processor is busy for slot {}.{}.", sector_id, msg.sfn, msg.slot);
     // Raise out of sync error.
     error_notifier.get().on_error_indication(
         fapi::build_msg_slot_error_indication(msg.sfn, msg.slot, fapi::message_type_id::ul_tti_request));
@@ -594,6 +595,9 @@ void fapi_to_phy_translator::ul_tti_request(const fapi::ul_tti_request_message& 
   for (const auto& pdu : pdus.value().srs) {
     ul_pdu_slot_repository->add_srs_pdu(pdu);
   }
+
+  // Release repository - it ensures the repository is available when the UL request reaches the RU.
+  ul_pdu_slot_repository.release();
 
   // Notify to capture uplink slot.
   resource_grid_context rg_context;

@@ -25,11 +25,8 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/ofh/compression/iq_compressor.h"
 #include "srsran/ofh/ecpri/ecpri_packet_builder.h"
-#include "srsran/ofh/ethernet/ethernet_frame_builder.h"
-#include "srsran/ofh/ethernet/ethernet_gateway.h"
+#include "srsran/ofh/ethernet/ethernet_mac_address.h"
 #include "srsran/ofh/ofh_constants.h"
-#include "srsran/ofh/serdes/ofh_cplane_message_builder.h"
-#include "srsran/ofh/serdes/ofh_uplane_message_builder.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_timing_parameters.h"
 #include "srsran/ran/bs_channel_bandwidth.h"
 #include "srsran/ran/cyclic_prefix.h"
@@ -84,10 +81,6 @@ struct transmitter_config {
   bool is_downlink_static_compr_hdr_enabled;
   /// Uplink static compression header flag.
   bool is_uplink_static_compr_hdr_enabled;
-  /// \brief Downlink broadcast flag.
-  ///
-  /// If this flag is enabled the same downlink data will be send to all the configured downlink eAxCs.
-  bool downlink_broadcast;
   /// IQ samples scaling factor.
   float iq_scaling;
   /// Downlink processing time in microseconds.
@@ -98,6 +91,8 @@ struct transmitter_config {
   std::optional<tdd_ul_dl_config_common> tdd_config;
   /// Indicates if DPDK should be used by the underlying implementation.
   bool uses_dpdk;
+  /// If set to true, metrics are enabled in the transmitter.
+  bool are_metrics_enabled = false;
 };
 
 } // namespace ofh

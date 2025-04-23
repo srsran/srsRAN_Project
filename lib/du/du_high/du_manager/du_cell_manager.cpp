@@ -21,7 +21,10 @@
  */
 
 #include "du_cell_manager.h"
+#include "converters/asn1_sys_info_packer.h"
+#include "converters/scheduler_configuration_helpers.h"
 #include "srsran/du/du_cell_config_validation.h"
+#include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/srslog/srslog.h"
 
 using namespace srsran;
@@ -32,6 +35,19 @@ du_cell_manager::du_cell_manager(const du_manager_params& cfg_) :
 {
 }
 
+static void fill_si_scheduler_config(si_scheduling_update_request& req,
+                                     const du_cell_config&         cell_cfg,
+                                     const byte_buffer&            sib1,
+                                     span<const byte_buffer>       si_messages)
+{
+  req.sib1_len = units::bytes{static_cast<unsigned>(sib1.length())};
+  static_vector<units::bytes, MAX_SI_MESSAGES> si_payload_sizes;
+  for (const auto& si_msg : si_messages) {
+    si_payload_sizes.emplace_back(units::bytes{static_cast<unsigned>(si_msg.length())});
+  }
+  req.si_sched_cfg = make_si_scheduling_info_config(cell_cfg, si_payload_sizes);
+}
+
 void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
 {
   // Verify that DU cell configuration is valid. Abort application otherwise.
@@ -40,23 +56,67 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
     report_error("ERROR: Invalid DU Cell Configuration. Cause: {}.\n", ret.error());
   }
 
+  // Generate system information.
+  std::vector<byte_buffer> bcch_msgs   = asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg);
+  const byte_buffer&       sib1        = bcch_msgs[0];
+  span<const byte_buffer>  si_messages = span<const byte_buffer>(bcch_msgs).last(bcch_msgs.size() - 1);
+
+  // Generate Scheduler SI scheduling config.
+  si_scheduling_update_request si_sched_req;
+  si_sched_req.cell_index = to_du_cell_index(cells.size());
+  si_sched_req.version    = 0;
+  fill_si_scheduler_config(si_sched_req, cell_cfg, sib1, si_messages);
+
   // Save config.
-  cells.emplace_back(std::make_unique<cell_t>());
-  cells.back()->cfg    = cell_cfg;
-  cells.back()->active = false;
+  auto& cell       = *cells.emplace_back(std::make_unique<du_cell_context>());
+  cell.cfg         = cell_cfg;
+  cell.active      = false;
+  cell.si_cfg.sib1 = sib1.copy();
+  cell.si_cfg.si_messages.assign(si_messages.begin(), si_messages.end());
+  cell.si_cfg.si_sched_cfg = std::move(si_sched_req);
 }
 
-async_task<void> du_cell_manager::start(du_cell_index_t cell_index)
+expected<du_cell_reconfig_result> du_cell_manager::handle_cell_reconf_request(const du_cell_param_config_request& req)
 {
-  return launch_async([this, cell_index](coro_context<async_task<void>>& ctx) {
+  du_cell_index_t cell_index = get_cell_index(req.nr_cgi);
+  if (cell_index == INVALID_DU_CELL_INDEX) {
+    logger.warning("Discarding cell {} changes. Cause: No cell with the provided CGI was found", req.nr_cgi.nci);
+    return make_unexpected(default_error_t{});
+  }
+  auto& cell = *cells[cell_index];
+
+  du_cell_config& cell_cfg   = cell.cfg;
+  bool            si_updated = false;
+
+  if (req.ssb_pwr_mod.has_value() and req.ssb_pwr_mod.value() != cell_cfg.ssb_cfg.ssb_block_power) {
+    // SSB power changed.
+    cell_cfg.ssb_cfg.ssb_block_power = req.ssb_pwr_mod.value();
+    si_updated                       = true;
+  }
+
+  if (si_updated) {
+    // Need to re-pack SIB1.
+    cell.si_cfg.sib1 = asn1_packer::pack_sib1(cell_cfg);
+
+    // Bump SI version and update SI messages.
+    fill_si_scheduler_config(cell.si_cfg.si_sched_cfg, cell_cfg, cell.si_cfg.sib1, cell.si_cfg.si_messages);
+    cell.si_cfg.si_sched_cfg.version++;
+  }
+
+  return du_cell_reconfig_result{cell_index, si_updated, si_updated};
+}
+
+async_task<bool> du_cell_manager::start(du_cell_index_t cell_index)
+{
+  return launch_async([this, cell_index](coro_context<async_task<bool>>& ctx) {
     CORO_BEGIN(ctx);
     if (!has_cell(cell_index)) {
       logger.warning("cell={}: Start called for a cell that does not exist.", fmt::underlying(cell_index));
-      CORO_EARLY_RETURN();
+      CORO_EARLY_RETURN(false);
     }
     if (cells[cell_index]->active) {
       logger.warning("cell={}: Start called for an already active cell.", fmt::underlying(cell_index));
-      CORO_EARLY_RETURN();
+      CORO_EARLY_RETURN(false);
     }
 
     // Start cell in the MAC.
@@ -64,7 +124,7 @@ async_task<void> du_cell_manager::start(du_cell_index_t cell_index)
 
     cells[cell_index]->active = true;
 
-    CORO_RETURN();
+    CORO_RETURN(true);
   });
 }
 

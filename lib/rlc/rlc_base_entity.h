@@ -74,9 +74,9 @@ public:
     }
   }
 
-  rlc_tx_upper_layer_data_interface* get_tx_upper_layer_data_interface() final { return tx.get(); };
-  rlc_tx_lower_layer_interface*      get_tx_lower_layer_interface() final { return tx.get(); };
-  rlc_rx_lower_layer_interface*      get_rx_lower_layer_interface() final { return rx.get(); };
+  rlc_tx_upper_layer_data_interface* get_tx_upper_layer_data_interface() final { return tx.get(); }
+  rlc_tx_lower_layer_interface*      get_tx_lower_layer_interface() final { return tx.get(); }
+  rlc_rx_lower_layer_interface*      get_rx_lower_layer_interface() final { return rx.get(); }
 
   rlc_metrics get_metrics() final
   {

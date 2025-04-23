@@ -23,6 +23,7 @@
 #pragma once
 
 #include "du_ue_resource_config.h"
+#include "ue_capability_summary.h"
 #include "srsran/f1ap/du/f1ap_du_ue_context_update.h"
 
 namespace srsran {
@@ -53,17 +54,24 @@ public:
     /// Called when a new UE configuration is requested.
     virtual du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
                                                   const f1ap_ue_context_update_request& upd_req,
-                                                  const du_ue_resource_config*          reestablished_context) = 0;
+                                                  const du_ue_resource_config*          reestablished_context,
+                                                  const ue_capability_summary*          reestablished_ue_caps) = 0;
 
     /// Called when the UE confirms the configuration is applied.
     virtual void config_applied() = 0;
 
     /// Called to fetch the UE resources.
     virtual const du_ue_resource_config& get() = 0;
+
+    /// Called to fetch the UE capabilities.
+    virtual const std::optional<ue_capability_summary>& ue_capabilities() const = 0;
   };
 
   explicit ue_ran_resource_configurator(std::unique_ptr<resource_updater> ue_res_, std::string error = {}) :
-    ue_res_impl(std::move(ue_res_)), cached_res(&ue_res_impl->get()), configurator_error(std::move(error))
+    ue_res_impl(std::move(ue_res_)),
+    cached_res(&ue_res_impl->get()),
+    cached_ue_caps(&ue_res_impl->ue_capabilities()),
+    configurator_error(std::move(error))
   {
   }
 
@@ -73,12 +81,15 @@ public:
   /// \param upd_req UE Context Update Request for a given UE.
   /// \param reestablished_context Optional parameter to provide the previous context of the UE, in case of an
   /// RRC Reestablishment.
+  /// \param reestablished_ue_caps Optional parameter to provide the previous capabilities of the UE, in case of an
+  /// RRC Reestablishment.
   /// \return Outcome of the configuration.
   du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
                                         const f1ap_ue_context_update_request& upd_req,
-                                        const du_ue_resource_config*          reestablished_context = nullptr)
+                                        const du_ue_resource_config*          reestablished_context = nullptr,
+                                        const ue_capability_summary*          reestablished_ue_caps = nullptr)
   {
-    return ue_res_impl->update(pcell_index, upd_req, reestablished_context);
+    return ue_res_impl->update(pcell_index, upd_req, reestablished_context, reestablished_ue_caps);
   }
 
   /// \brief Checks whether the allocation of resources to the UE failed, due to lack of resources.
@@ -94,10 +105,14 @@ public:
   const du_ue_resource_config& operator*() const { return *cached_res; }
   const du_ue_resource_config* operator->() const { return cached_res; }
 
+  /// Retrieve UE capabilities.
+  const std::optional<ue_capability_summary>& get_ue_capabilities() const { return *cached_ue_caps; }
+
 private:
-  std::unique_ptr<resource_updater> ue_res_impl;
-  const du_ue_resource_config*      cached_res;
-  std::string                       configurator_error;
+  std::unique_ptr<resource_updater>           ue_res_impl;
+  const du_ue_resource_config*                cached_res;
+  const std::optional<ue_capability_summary>* cached_ue_caps;
+  std::string                                 configurator_error;
 };
 
 /// \brief This class creates new UE resource configs (PHY, MAC and RLC), using a specific pool of DU resources.

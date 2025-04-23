@@ -99,16 +99,13 @@ inline cf_t to_cf(ci16_t value)
 
 /// Checks if T is compatible with a complex floating point.
 template <typename T>
-struct is_complex : std::false_type {
-};
+struct is_complex : std::false_type {};
 
 template <typename T>
-struct is_complex<std::complex<T>> : std::true_type {
-};
+struct is_complex<std::complex<T>> : std::true_type {};
 
 template <typename T>
-struct is_complex<const std::complex<T>> : std::true_type {
-};
+struct is_complex<const std::complex<T>> : std::true_type {};
 
 } // namespace srsran
 
@@ -165,14 +162,11 @@ struct formatter_template {
 };
 
 template <>
-struct formatter<srsran::cf_t> : public formatter_template<srsran::cf_t> {
-};
+struct formatter<srsran::cf_t> : public formatter_template<srsran::cf_t> {};
 template <>
-struct formatter<srsran::ci8_t> : public formatter_template<srsran::ci8_t> {
-};
+struct formatter<srsran::ci8_t> : public formatter_template<srsran::ci8_t> {};
 template <>
-struct formatter<srsran::ci16_t> : public formatter_template<srsran::ci16_t> {
-};
+struct formatter<srsran::ci16_t> : public formatter_template<srsran::ci16_t> {};
 
 /// FMT formatter of cbf16_t type.
 template <>

@@ -572,6 +572,18 @@ public:
     return test_(pos);
   }
 
+  /// \brief Toggle the value at position pos. Assertion is triggered if pos >= N.
+  /// \param[in] pos Position in bitset.
+  void flip(size_t pos)
+  {
+    assert_within_bounds_(pos, true);
+    if (test(pos)) {
+      reset_(pos);
+    } else {
+      set_(pos);
+    }
+  }
+
   /// \brief Toggle values of bits in bitset.
   /// \return Returns this object.
   bounded_bitset<N, LowestInfoBitIsMSB>& flip() noexcept
@@ -1461,8 +1473,8 @@ namespace fmt {
 /// \brief Custom formatter for bounded_bitset<N, LowestInfoBitIsMSB>
 template <size_t N, bool LowestInfoBitIsMSB>
 struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
-  enum { hexadecimal, binary, bit_positions } mode = binary;
-  enum { forward, reverse } order                  = forward;
+  enum { hexadecimal, binary, bit_positions, intervals } mode = binary;
+  enum { forward, reverse } order                             = forward;
   template <typename ParseContext>
   auto parse(ParseContext& ctx)
   {
@@ -1477,6 +1489,9 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
       if (*it == 'n') {
         mode = bit_positions;
       }
+      if (*it == 'i') {
+        mode = intervals;
+      }
       ++it;
     }
 
@@ -1488,6 +1503,38 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
   {
     if (mode == hexadecimal) {
       return s.template to_string_of_hex<decltype(std::declval<FormatContext>().out())>(ctx.out(), order == reverse);
+    }
+
+    if (mode == intervals) {
+      fmt::format_to(ctx.out(), "{{");
+      bool first = true;
+      for (int start_interval = s.find_lowest(); start_interval != (-1);
+           start_interval     = s.find_lowest(start_interval, s.size(), true)) {
+        // Find the end of the current interval.
+        int end_interval = s.find_lowest(start_interval, s.size(), false);
+        if (end_interval == -1) {
+          end_interval = s.size();
+        }
+
+        // Append a comma if the interval is not the first.
+        if (first) {
+          first = false;
+        } else {
+          fmt::format_to(ctx.out(), ", ");
+        }
+
+        // Print interval if it is more than one bit, otherwise a single value.
+        if (end_interval - start_interval > 1) {
+          fmt::format_to(ctx.out(), "[{}, {})", start_interval, end_interval);
+        } else {
+          fmt::format_to(ctx.out(), "{}", start_interval);
+        }
+
+        // Advance interval.
+        start_interval = end_interval;
+      }
+      fmt::format_to(ctx.out(), "}}");
+      return ctx.out();
     }
 
     if (mode == bit_positions) {

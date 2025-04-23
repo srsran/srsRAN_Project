@@ -72,7 +72,7 @@ public:
   void handle_message(const f1ap_message& msg) override;
 
   // f1ap_statistics_handler functions.
-  size_t get_nof_ues() const override { return ue_ctxt_list.size(); };
+  size_t get_nof_ues() const override { return ue_ctxt_list.size(); }
 
   // f1ap_ue_context_removal_handler functions.
   void remove_ue_context(ue_index_t ue_index) override;
@@ -85,7 +85,7 @@ public:
   async_task<expected<positioning_activation_response_t, positioning_activation_failure_t>>
   handle_positioning_activation_request(const positioning_activation_request_t& request) override;
   async_task<expected<measurement_response_t, measurement_failure_t>>
-  handle_measurement_information_request(const measurement_request_t& request) override;
+  handle_positioning_measurement_request(const measurement_request_t& request) override;
 
   // f1ap_cu_interface
   f1ap_message_handler&            get_f1ap_message_handler() override { return *this; }

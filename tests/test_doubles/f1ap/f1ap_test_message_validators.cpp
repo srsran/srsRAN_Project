@@ -70,6 +70,41 @@ bool srsran::test_helpers::is_gnb_du_config_update_valid(const f1ap_message&    
   return true;
 }
 
+bool srsran::test_helpers::is_gnb_cu_config_update_acknowledge_valid(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
+  TRUE_OR_RETURN(msg.pdu.successful_outcome().proc_code == ASN1_F1AP_ID_GNB_CU_CFG_UPD);
+  TRUE_OR_RETURN(is_packable(msg));
+  return true;
+}
+
+bool srsran::test_helpers::is_gnb_cu_config_update_acknowledge_valid(const f1ap_message& msg, const f1ap_message& req)
+{
+  TRUE_OR_RETURN(is_gnb_cu_config_update_acknowledge_valid(msg));
+  const auto& upd_req = req.pdu.init_msg().value.gnb_cu_cfg_upd();
+  const auto& upd_ack = msg.pdu.successful_outcome().value.gnb_cu_cfg_upd_ack();
+
+  TRUE_OR_RETURN(upd_req->transaction_id == upd_ack->transaction_id);
+  return true;
+}
+
+bool srsran::test_helpers::is_gnb_cu_config_update_failure_valid(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::unsuccessful_outcome);
+  TRUE_OR_RETURN(msg.pdu.unsuccessful_outcome().proc_code == ASN1_F1AP_ID_GNB_CU_CFG_UPD);
+  TRUE_OR_RETURN(is_packable(msg));
+  return true;
+}
+
+bool srsran::test_helpers::is_gnb_cu_config_update_failure_valid(const f1ap_message& msg, const f1ap_message& req)
+{
+  TRUE_OR_RETURN(is_gnb_cu_config_update_failure_valid(msg));
+  const auto& upd_req  = req.pdu.init_msg().value.gnb_cu_cfg_upd();
+  const auto& upd_fail = msg.pdu.unsuccessful_outcome().value.gnb_cu_cfg_upd_fail();
+  TRUE_OR_RETURN(upd_req->transaction_id == upd_fail->transaction_id);
+  return true;
+}
+
 bool srsran::test_helpers::is_init_ul_rrc_msg_transfer_valid(const f1ap_message&                       msg,
                                                              rnti_t                                    rnti,
                                                              const std::optional<nr_cell_global_id_t>& nci)
@@ -250,12 +285,45 @@ bool srsran::test_helpers::is_valid_ue_context_modification_response(const f1ap_
   return true;
 }
 
+bool srsran::test_helpers::is_valid_ue_context_release_request(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
+  TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_UE_CONTEXT_RELEASE_REQUEST);
+  TRUE_OR_RETURN(is_packable(msg));
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_ue_context_release_request(const f1ap_message& msg, gnb_du_ue_f1ap_id_t du_ue_id)
+{
+  TRUE_OR_RETURN(is_valid_ue_context_release_request(msg));
+  TRUE_OR_RETURN(msg.pdu.init_msg().value.ue_context_release_request()->gnb_du_ue_f1ap_id ==
+                 gnb_du_ue_f1ap_id_to_uint(du_ue_id));
+  return true;
+}
+
 bool srsran::test_helpers::is_valid_ue_context_release_command(const f1ap_message& msg)
 {
   TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::init_msg);
   TRUE_OR_RETURN(msg.pdu.init_msg().proc_code == ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
   TRUE_OR_RETURN(is_packable(msg));
+  return true;
+}
 
+bool srsran::test_helpers::is_valid_ue_context_release_complete(const f1ap_message& msg)
+{
+  TRUE_OR_RETURN(msg.pdu.type() == asn1::f1ap::f1ap_pdu_c::types_opts::successful_outcome);
+  TRUE_OR_RETURN(msg.pdu.successful_outcome().proc_code == ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
+  TRUE_OR_RETURN(is_packable(msg));
+  return true;
+}
+
+bool srsran::test_helpers::is_valid_ue_context_release_complete(const f1ap_message& msg, const f1ap_message& rel_cmd)
+{
+  TRUE_OR_RETURN(is_valid_ue_context_release_complete(msg));
+  const auto& rel_cmd_msg = rel_cmd.pdu.init_msg().value.ue_context_release_cmd();
+  const auto& resp        = msg.pdu.successful_outcome().value.ue_context_release_complete();
+  TRUE_OR_RETURN(resp->gnb_cu_ue_f1ap_id == rel_cmd_msg->gnb_cu_ue_f1ap_id);
+  TRUE_OR_RETURN(resp->gnb_du_ue_f1ap_id == rel_cmd_msg->gnb_du_ue_f1ap_id);
   return true;
 }
 
@@ -311,6 +379,11 @@ bool test_helpers::is_valid_f1ap_positioning_information_request(const f1ap_mess
 }
 
 bool test_helpers::is_valid_f1ap_positioning_activation_request(const f1ap_message& msg)
+{
+  return true;
+}
+
+bool test_helpers::is_valid_f1ap_positioning_measurement_request(const f1ap_message& msg)
 {
   return true;
 }

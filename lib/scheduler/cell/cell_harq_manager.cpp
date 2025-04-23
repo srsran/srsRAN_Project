@@ -221,12 +221,17 @@ void cell_harq_repository<IsDl>::slot_indication(slot_point sl_tx)
     }
 
     // HARQ retransmission is trapped. Deallocate HARQ process.
-    logger.warning(
-        "rnti={} h_id={}: Discarding {} HARQ. Cause: Too much time has passed since the last HARQ "
-        "transmission. The scheduler policy is likely not prioritizing retransmissions of old HARQ processes.",
-        h.rnti,
-        fmt::underlying(h.h_id),
-        IsDl ? "DL" : "UL");
+    logger.warning("rnti={} h_id={}: Discarding {} HARQ. Cause: Too much time has passed since the last HARQ "
+                   "transmission. The scheduler policy is likely not prioritizing retransmissions of old HARQ "
+                   "processes. Parameters: dci={} rbs={} mcs={} nof_symbols={} nof_layers={}",
+                   h.rnti,
+                   fmt::underlying(h.h_id),
+                   IsDl ? "DL" : "UL",
+                   dci_format_to_string(get_dci_format(h.prev_tx_params.dci_cfg_type)),
+                   h.prev_tx_params.rbs,
+                   h.prev_tx_params.mcs,
+                   h.prev_tx_params.nof_symbols,
+                   h.prev_tx_params.nof_layers);
     dealloc_harq(h);
 
     // Report timeout after the HARQ gets deleted to avoid reentrancy.
@@ -827,6 +832,21 @@ void unique_ue_harq_entity::reset()
   if (cell_harq_mgr != nullptr) {
     cell_harq_mgr->destroy_ue(ue_index);
     cell_harq_mgr = nullptr;
+  }
+}
+
+void unique_ue_harq_entity::cancel_retxs()
+{
+  for (auto& h_dl : get_dl_ue().harqs) {
+    if (h_dl.status != harq_state_t::empty) {
+      dl_harq_process_handle{cell_harq_mgr->dl, h_dl}.cancel_retxs();
+    }
+  }
+
+  for (auto& h_ul : get_ul_ue().harqs) {
+    if (h_ul.status != harq_state_t::empty) {
+      ul_harq_process_handle{cell_harq_mgr->ul, h_ul}.cancel_retxs();
+    }
   }
 }
 

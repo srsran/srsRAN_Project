@@ -27,28 +27,39 @@
 using namespace srsran;
 using namespace ether;
 
-socket_transceiver::socket_transceiver(srslog::basic_logger&   logger_,
-                                       srsran::task_executor&  executor_,
-                                       const ether::gw_config& config)
+ru_emu_socket_receiver::ru_emu_socket_receiver(srslog::basic_logger&     logger_,
+                                               srsran::task_executor&    executor_,
+                                               const transmitter_config& config)
 {
-  transmitter = create_gateway(config, logger_);
-  srsran_assert(transmitter, "RU emulator failed to initialize Ethernet transmitter");
-
-  receiver = create_receiver(config.interface, config.is_promiscuous_mode_enabled, executor_, logger_);
+  receiver = create_receiver({config.interface, config.is_promiscuous_mode_enabled, false}, executor_, logger_);
   srsran_assert(receiver, "RU emulator failed to initialize Ethernet receiver");
 }
 
-void socket_transceiver::start(ether::frame_notifier& notifier_)
+ru_emu_socket_transmitter::ru_emu_socket_transmitter(srslog::basic_logger& logger_, const transmitter_config& config)
 {
-  receiver->start(notifier_);
+  transmitter = create_transmitter(config, logger_);
+  srsran_assert(transmitter, "RU emulator failed to initialize Ethernet transmitter");
 }
 
-void socket_transceiver::stop()
+void ru_emu_socket_receiver::start(ether::frame_notifier& notifier_)
 {
-  receiver->stop();
+  receiver->get_operation_controller().start(notifier_);
 }
 
-void socket_transceiver::send(span<span<const uint8_t>> frames)
+void ru_emu_socket_receiver::stop()
+{
+  receiver->get_operation_controller().stop();
+}
+
+void ru_emu_socket_transmitter::send(span<span<const uint8_t>> frames)
 {
   transmitter->send(frames);
+}
+
+std::unique_ptr<ru_emulator_transceiver> srsran::ru_emu_create_socket_transceiver(srslog::basic_logger&     logger,
+                                                                                  task_executor&            executor,
+                                                                                  const transmitter_config& config)
+{
+  return std::make_unique<ru_emulator_transceiver>(std::make_unique<ru_emu_socket_receiver>(logger, executor, config),
+                                                   std::make_unique<ru_emu_socket_transmitter>(logger, config));
 }

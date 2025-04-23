@@ -23,6 +23,8 @@
 #pragma once
 
 #include "srsran/adt/expected.h"
+#include "fmt/format.h"
+#include <cstdint>
 #include <optional>
 
 namespace srsran {
@@ -42,6 +44,7 @@ public:
 
   bool operator==(const slice_service_type& rhs) const { return val == rhs.val; }
   bool operator!=(const slice_service_type& rhs) const { return not(val != rhs.val); }
+  bool operator<(const slice_service_type& rhs) const { return val < rhs.val; }
 
 private:
   uint8_t val = 0;
@@ -62,6 +65,16 @@ public:
 
   bool operator==(const slice_differentiator& rhs) const { return val == rhs.val; }
   bool operator!=(const slice_differentiator& rhs) const { return not(val != rhs.val); }
+  bool operator<(const slice_differentiator& rhs) const
+  {
+    if (val == default_val && rhs.val != default_val) {
+      return true;
+    } else if (val != default_val && rhs.val == default_val) {
+      return false;
+    } else {
+      return val < rhs.val;
+    }
+  }
 
   static expected<slice_differentiator> create(uint32_t new_val)
   {
@@ -86,6 +99,29 @@ struct s_nssai_t {
 
   bool operator==(const s_nssai_t& other) const { return sst == other.sst && sd == other.sd; }
   bool operator!=(const s_nssai_t& other) const { return not(*this == other); }
+  bool operator<(const s_nssai_t& other) const { return sst < other.sst || (sst == other.sst && sd < other.sd); }
 };
 
 } // namespace srsran
+
+// Formatters
+namespace fmt {
+template <>
+struct formatter<srsran::s_nssai_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::s_nssai_t s_nssai, FormatContext& ctx) const
+  {
+    return format_to(ctx.out(),
+                     "sst: {}{}",
+                     s_nssai.sst.value(),
+                     s_nssai.sd.is_set() ? fmt::format(", sd: {:#x}", s_nssai.sd.value()) : "");
+  }
+};
+
+} // namespace fmt

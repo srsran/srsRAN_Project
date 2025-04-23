@@ -121,6 +121,8 @@ void cu_up_pdcp_metrics_consumer_json::handle_metric(const app_services::metrics
 
   aggr_rx.num_pdus += rx_metric.num_pdus;
   aggr_rx.num_pdu_bytes += rx_metric.num_pdu_bytes;
+  aggr_rx.num_data_pdus += rx_metric.num_data_pdus;
+  aggr_rx.num_data_pdu_bytes += rx_metric.num_data_pdu_bytes;
   aggr_rx.num_dropped_pdus += rx_metric.num_dropped_pdus;
   aggr_rx.num_sdus += rx_metric.num_sdus;
   aggr_rx.num_sdu_bytes += rx_metric.num_sdu_bytes;
@@ -231,4 +233,14 @@ void cu_up_pdcp_metrics_consumer_json::initialize_timer()
     }
   });
   timer.run();
+}
+
+void cu_up_pdcp_metrics_consumer_log::handle_metric(const app_services::metrics_set& metric)
+{
+  // Implement aggregation.
+  const pdcp_metrics_container& pdcp_metric = static_cast<const cu_up_pdcp_metrics_impl&>(metric).get_metrics();
+
+  fmt::memory_buffer buffer;
+  fmt::format_to(std::back_inserter(buffer), "PDCP Metrics: {}", pdcp_metric);
+  log_chan("{}", to_c_str(buffer));
 }

@@ -45,7 +45,7 @@ protected:
   {
     ngap_logger.set_level(srslog::basic_levels::debug);
     srslog::init();
-  };
+  }
   ~ngap_ue_context_test()
   {
     // flush logger after each test

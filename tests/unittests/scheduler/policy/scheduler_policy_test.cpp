@@ -86,17 +86,14 @@ protected:
     pucch_alloc.slot_indication(next_slot);
     uci_alloc.slot_indication(next_slot);
     intra_slice_sched.slot_indication(next_slot);
-
     slice_sched.slot_indication(next_slot, res_grid);
 
     if (cell_cfg.is_dl_enabled(next_slot)) {
       while (auto dl_slice_candidate = slice_sched.get_next_dl_candidate()) {
-        intra_slice_sched.dl_sched(
-            next_slot, dl_slice_candidate.value(), slice_sched.get_policy(dl_slice_candidate->id()));
+        intra_slice_sched.dl_sched(dl_slice_candidate.value(), slice_sched.get_policy(dl_slice_candidate->id()));
       }
       while (auto ul_slice_candidate = slice_sched.get_next_ul_candidate()) {
-        intra_slice_sched.ul_sched(
-            next_slot, ul_slice_candidate.value(), slice_sched.get_policy(ul_slice_candidate->id()));
+        intra_slice_sched.ul_sched(ul_slice_candidate.value(), slice_sched.get_policy(ul_slice_candidate->id()));
       }
     }
 
@@ -382,15 +379,16 @@ TEST_P(scheduler_policy_test, scheduler_allocates_ues_with_dl_retx_first_than_ue
   if (pucch.crnti == u1.crnti) {
     ue_with_retx = u1.ue_index;
     for (unsigned harq_bit_idx = 0; harq_bit_idx < nof_ack_bits; ++harq_bit_idx) {
-      u1.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::ack, harq_bit_idx, 100);
+      u1.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::nack, harq_bit_idx, 100);
     }
   } else if (pucch.crnti == u2.crnti) {
     ue_with_retx = u2.ue_index;
     for (unsigned harq_bit_idx = 0; harq_bit_idx < nof_ack_bits; ++harq_bit_idx) {
-      u2.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::ack, harq_bit_idx, 100);
+      u2.get_pcell().handle_dl_ack_info(current_slot, mac_harq_ack_report_status::nack, harq_bit_idx, 100);
     }
   }
 
+  run_slot();
   pdsch_scheduled = run_until([this]() { return not this->res_grid[0].result.dl.ue_grants.empty(); });
   ASSERT_TRUE(pdsch_scheduled);
   ASSERT_EQ(this->res_grid[0].result.dl.ue_grants[0].context.ue_index, ue_with_retx);
@@ -639,8 +637,8 @@ TEST_F(scheduler_pf_test, pf_ensures_fairness_in_dl_when_ues_have_different_chan
 
   // PF scheduler ensures fairness by scheduling UE2 more than UE1 and UE3 due to having worse channel conditions when
   // compared to that of UE1 and UE3.
-  ASSERT_TRUE(ue_pdsch_scheduled_count[u2.ue_index] > ue_pdsch_scheduled_count[u1.ue_index] and
-              ue_pdsch_scheduled_count[u2.ue_index] > ue_pdsch_scheduled_count[u3.ue_index]);
+  ASSERT_GT(ue_pdsch_scheduled_count[u2.ue_index], ue_pdsch_scheduled_count[u1.ue_index]);
+  ASSERT_GT(ue_pdsch_scheduled_count[u2.ue_index], ue_pdsch_scheduled_count[u3.ue_index]);
 }
 
 TEST_F(scheduler_pf_test, pf_ensures_fairness_in_ul_when_ues_have_different_channel_conditions)

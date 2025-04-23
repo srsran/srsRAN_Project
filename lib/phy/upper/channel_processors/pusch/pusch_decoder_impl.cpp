@@ -238,24 +238,24 @@ void pusch_decoder_impl::on_new_softbits(span<const log_likelihood_ratio> softbi
 void pusch_decoder_impl::on_end_softbits()
 {
   // Verify the number of bits match with the configured one.
-  srsran_assert(!nof_ulsch_softbits.has_value() || (nof_ulsch_softbits.value() == units::bits(softbits_count)),
+  srsran_assert(!nof_ulsch_softbits.has_value() || (*nof_ulsch_softbits == units::bits(softbits_count)),
                 "The number of UL-SCH softbits, i.e., {}, does not match the expected value, i.e., {}.",
-                softbits_count,
-                nof_ulsch_softbits.value());
+                units::bits(softbits_count),
+                *nof_ulsch_softbits);
 
   unsigned modulation_order = get_bits_per_symbol(current_config.mod);
   srsran_assert(softbits_count % modulation_order == 0,
                 "The number of soft bits (i.e., {}) must be multiple of the modulation order (i.e., {}).",
-                softbits_count,
+                units::bits(softbits_count),
                 modulation_order);
 
   // Skip processing if all codeblock decoding tasks have already been dispatched. This should be the case if the
   // number of CW softbits has been provided by calling set_nof_sofbits.
   if (available_cb_counter == nof_codeblocks) {
     srsran_assert(nof_ulsch_softbits->value() == softbits_count,
-                  "The number of provided softbits (i.e. {}), does not match the expected number (i.e. {}).",
-                  softbits_count,
-                  nof_ulsch_softbits->value());
+                  "The number of provided softbits (i.e., {}), does not match the expected number (i.e. {}).",
+                  units::bits(softbits_count),
+                  *nof_ulsch_softbits);
 
     // Try to transition from collecting to decoding.
     internal_states expected_state = internal_states::collecting;
@@ -356,10 +356,10 @@ void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
 
     if (nof_iters.has_value()) {
       // If successful decoding, flag the CRC, record number of iterations and copy bits to the TB buffer.
-      cb_crcs[cb_id] = true;
-      cb_stats.push_blocking(nof_iters.value());
+      cb_crcs[cb_id]  = true;
+      cb_stats[cb_id] = *nof_iters;
     } else {
-      cb_stats.push_blocking(current_config.nof_ldpc_iterations);
+      cb_stats[cb_id] = current_config.nof_ldpc_iterations;
     }
 
     if (cb_task_counter.fetch_sub(1) == 1) {
@@ -399,11 +399,7 @@ void pusch_decoder_impl::join_and_notify()
   stats.ldpc_decoder_stats.reset();
 
   // Calculate statistics.
-  std::optional<unsigned> cb_nof_iter = cb_stats.try_pop();
-  while (cb_nof_iter.has_value()) {
-    stats.ldpc_decoder_stats.update(cb_nof_iter.value());
-    cb_nof_iter = cb_stats.try_pop();
-  }
+  std::for_each_n(cb_stats.begin(), nof_cbs, [&stats](unsigned element) { stats.ldpc_decoder_stats.update(element); });
 
   if (nof_cbs == 1) {
     // When only one codeblock, the CRC of codeblock and transport block are the same.

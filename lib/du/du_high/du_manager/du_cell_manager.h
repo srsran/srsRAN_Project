@@ -24,9 +24,32 @@
 
 #include "srsran/du/du_high/du_manager/du_manager_params.h"
 #include "srsran/ran/du_types.h"
+#include "srsran/scheduler/scheduler_sys_info_handler.h"
 
 namespace srsran {
 namespace srs_du {
+
+struct du_cell_param_config_request;
+
+/// Current DU cell context.
+struct du_cell_context {
+  /// Current configuration.
+  du_cell_config cfg;
+  /// Encoded System Information being currently sent by the DU cell.
+  mac_cell_sys_info_config si_cfg;
+  /// Whether the cell is active.
+  bool active = false;
+};
+
+/// Result of the reconfiguration of a DU cell.
+struct du_cell_reconfig_result {
+  /// Cell configured.
+  du_cell_index_t cell_index;
+  /// Whether the CU needs to be notified of the gNB-DU cell configuration update.
+  bool cu_notif_required;
+  /// Whether the Scheduler needs to be notified about an update in the SI scheduling.
+  bool sched_notif_required;
+};
 
 class du_cell_manager
 {
@@ -37,6 +60,7 @@ public:
 
   bool has_cell(du_cell_index_t cell_index) const { return cell_index < cells.size(); }
 
+  /// Determine whether cell is activated.
   bool is_cell_active(du_cell_index_t cell_index) const
   {
     assert_cell_exists(cell_index);
@@ -60,18 +84,24 @@ public:
     return cells[cell_index]->cfg;
   }
 
-  async_task<void> start(du_cell_index_t cell_index);
+  /// Handle request to update a cell configuration.
+  /// \return true if a change was detected and applied.
+  expected<du_cell_reconfig_result> handle_cell_reconf_request(const du_cell_param_config_request& req);
+
+  /// Retrieve current cell system information configuration.
+  const mac_cell_sys_info_config& get_sys_info(du_cell_index_t cell_index) const
+  {
+    assert_cell_exists(cell_index);
+    return cells[cell_index]->si_cfg;
+  }
+
+  async_task<bool> start(du_cell_index_t cell_index);
 
   async_task<void> stop(du_cell_index_t cell_index);
 
   async_task<void> stop();
 
 private:
-  struct cell_t {
-    bool           active = false;
-    du_cell_config cfg;
-  };
-
   void assert_cell_exists(du_cell_index_t cell_index) const
   {
     srsran_assert(has_cell(cell_index), "cell_index={} does not exist", fmt::underlying(cell_index));
@@ -80,7 +110,7 @@ private:
   const du_manager_params& cfg;
   srslog::basic_logger&    logger;
 
-  std::vector<std::unique_ptr<cell_t>> cells;
+  std::vector<std::unique_ptr<du_cell_context>> cells;
 };
 
 } // namespace srs_du

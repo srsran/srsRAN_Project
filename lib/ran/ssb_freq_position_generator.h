@@ -56,8 +56,8 @@ public:
   /// Return the next viable position of the SSB on the raster, so that the SSB falls within the band CRBs and the SSB
   /// subcarriers are aligned with those of the CRBs.
   ssb_freq_location get_next_ssb_location();
-  unsigned          get_ssb_first_symbol() const { return ssb_first_symbol; };
-  unsigned          get_max_ss0_idx() const { return max_ss0_idx; };
+  unsigned          get_ssb_first_symbol() const { return ssb_first_symbol; }
+  unsigned          get_max_ss0_idx() const { return max_ss0_idx; }
 
 private:
   /// Finds the \f$M\f$ parameter of the sync raster so that the SSB subcarriers are aligned to those of the CRBs.

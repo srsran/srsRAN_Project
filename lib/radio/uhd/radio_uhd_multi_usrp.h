@@ -28,5 +28,6 @@
 #else // __clang__
 #pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif // __clang__
+#pragma GCC diagnostic ignored "-Wextra-semi"
 #include <uhd/usrp/multi_usrp.hpp>
 #pragma GCC diagnostic pop

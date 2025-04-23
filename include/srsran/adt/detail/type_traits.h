@@ -29,11 +29,9 @@ namespace srsran {
 namespace detail {
 
 template <typename U>
-struct is_std_array : std::false_type {
-};
+struct is_std_array : std::false_type {};
 template <typename U, std::size_t N>
-struct is_std_array<std::array<U, N>> : std::true_type {
-};
+struct is_std_array<std::array<U, N>> : std::true_type {};
 
 } // namespace detail
 } // namespace srsran

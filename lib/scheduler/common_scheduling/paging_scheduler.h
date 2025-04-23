@@ -24,6 +24,7 @@
 
 #include "../config/cell_configuration.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
+#include "../support/paging_helpers.h"
 #include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
@@ -130,11 +131,6 @@ private:
                          const dmrs_information&               dmrs_info,
                          unsigned                              tbs);
 
-  /// \brief Helper function to precompute Type2-PDCCH Monitoring slots when pagingSearchSpace > 0.
-  ///
-  /// \param[in] scs_common SCS of PDCCH.
-  void precompute_type2_pdcch_slots(subcarrier_spacing scs_common);
-
   // Args.
   const scheduler_expert_config& expert_cfg;
   const cell_configuration&      cell_cfg;
@@ -152,15 +148,8 @@ private:
   /// Number of paging occasions per paging frame. Value of Ns in the equation in clause 7.1 of TS 38.304.
   uint8_t nof_po_per_pf;
 
-  /// Array of Type0-PDCCH CSS monitoring slots (1 per beam) that will be used for Paging scheduling if
-  /// pagingSearchSpace is 0 [TS 38.213, Section 13].
-  std::array<slot_point, MAX_NUM_BEAMS> type0_pdcch_css_slots;
+  paging_slot_helper slot_helper;
 
-  /// Array of Type2-PDCCH CSS monitoring slots that will be used for Paging scheduling if pagingSearchSpace > 0.
-  /// NOTE1: nrofPDCCH-MonitoringOccasionPerSSB-InPO is always 1. See \c
-  /// pcch_config::NR_OF_PDCCH_MONITORING_OCCASION_PER_SSB_IN_PO.
-  /// NOTE2: Row number corresponds to SSB beam index and column number corresponds to Paging Occasion index (i_s).
-  std::array<static_vector<slot_point, pcch_config::MAX_PO_PER_PF>, MAX_NUM_BEAMS> type2_pdcch_css_slots;
   /// Search Space configuration when pagingSearchSpace > 0, if configured.
   const search_space_configuration* ss_cfg = nullptr;
 

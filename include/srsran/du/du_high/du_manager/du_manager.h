@@ -4,12 +4,15 @@
 #include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/f1ap/du/f1ap_du.h"
 #include "srsran/f1ap/du/f1ap_du_positioning_handler.h"
+#include "srsran/mac/mac_cell_manager.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/support/async/async_task.h"
 
 namespace srsran {
 
 struct ul_ccch_indication_message;
+struct mac_metric_report;
+struct scheduler_cell_metrics;
 
 namespace srs_du {
 
@@ -21,6 +24,19 @@ public:
 
   /// \brief Handle UL CCCH message arrival.
   virtual void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) = 0;
+};
+
+/// Interface used to handle metric reports from the DU-high remaining layers.
+class du_manager_metrics_aggregator
+{
+public:
+  virtual ~du_manager_metrics_aggregator() = default;
+
+  /// \brief Handle the metrics report from the MAC.
+  virtual void aggregate_mac_metrics_report(const mac_metric_report& report) = 0;
+
+  /// \brief Handle the metrics report from the Scheduler.
+  virtual void aggregate_scheduler_metrics_report(const scheduler_cell_metrics& report) = 0;
 };
 
 /// This class handles updates in cell and UE configurations. TODO: Better naming needed.
@@ -43,6 +59,10 @@ public:
 
   /// \brief Handle reset of UE contexts as per request from the F1AP.
   virtual async_task<void> handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset) = 0;
+
+  /// \brief Handle request to update context by the CU via F1AP.
+  virtual async_task<gnbcu_config_update_response>
+  handle_cu_context_update_request(const gnbcu_config_update_request& request) = 0;
 
   /// \brief Create a new UE context in the DU with an assigned UE index.
   virtual async_task<f1ap_ue_context_creation_response>
@@ -73,6 +93,8 @@ class du_manager_interface_query
 public:
   virtual ~du_manager_interface_query() = default;
   virtual size_t nof_ues()              = 0;
+  /// Fetch MAC cell time-slot mapper.
+  virtual mac_cell_time_mapper& get_time_mapper() = 0;
 };
 
 class du_manager_controller
@@ -93,6 +115,9 @@ class du_manager_interface : public du_manager_interface_query,
 {
 public:
   virtual ~du_manager_interface() = default;
+
+  /// Get entity responsibly for aggregating metrics from all DU layers.
+  virtual du_manager_metrics_aggregator& get_metrics_aggregator() = 0;
 };
 
 } // namespace srs_du

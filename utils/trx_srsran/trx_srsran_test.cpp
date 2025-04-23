@@ -31,8 +31,8 @@ extern "C" {
 #define TESTASSERT(COND)                                                                                               \
   do {                                                                                                                 \
     if (!(COND)) {                                                                                                     \
-      std::cerr << "Error in " << __FILE__ << ":" << __LINE__ << ":"                                                   \
-                << ": unmet condition '" << #COND << "'" << std::endl;                                                 \
+      std::cerr << "Error in " << __FILE__ << ":" << __LINE__ << ":" << ": unmet condition '" << #COND << "'"          \
+                << std::endl;                                                                                          \
       std::abort();                                                                                                    \
     }                                                                                                                  \
   } while (false)
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 {
   void* handle;
   char* error;
-  int (*driver_init)(TRXState * s);
+  int (*driver_init)(TRXState* s);
 
   // Check number of inputs
   if (argc != 2) {

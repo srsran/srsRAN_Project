@@ -44,8 +44,7 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
   // NOTE: do not report CU-CP metrics for now. Remove this when CU-CP metrics are needed.
   return nullptr;
 
-  const app_helpers::metrics_config& unit_metrics_cfg = cu_cp_metrics_cfg.common_metrics_cfg;
-  if (!unit_metrics_cfg.json_config.enable_json_metrics) {
+  if (!cu_cp_metrics_cfg.layers_cfg.enable_pdcp) {
     return nullptr;
   }
 
@@ -58,8 +57,11 @@ static pdcp_metrics_notifier* build_pdcp_metrics_config(std::vector<app_services
   metrics_service_cfg.callback                      = cu_cp_pdcp_metrics_callback;
   metrics_service_cfg.producers.push_back(std::move(metrics_generator));
 
-  metrics_service_cfg.consumers.push_back(
-      std::make_unique<cu_cp_pdcp_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
+  const app_helpers::metrics_config& unit_metrics_cfg = cu_cp_metrics_cfg.common_metrics_cfg;
+  if (unit_metrics_cfg.json_config.enable_json_metrics) {
+    metrics_service_cfg.consumers.push_back(
+        std::make_unique<cu_cp_pdcp_metrics_consumer_json>(app_helpers::fetch_json_metrics_log_channel()));
+  }
 
   return out;
 }
@@ -120,7 +122,7 @@ o_cu_cp_unit srsran::build_o_cu_cp(const o_cu_cp_unit_config& unit_cfg, o_cu_cp_
       std::move(n2_clients), std::move(e2_metric_connectors), srs_cu_cp::create_o_cu_cp(o_cu_cp_cfg, ocu_dependencies));
 
   // Add the commands;
-  ocucp.commands.cmdline.push_back(
+  ocucp.commands.cmdline.commands.push_back(
       std::make_unique<handover_app_command>(ocucp.unit->get_cu_cp().get_command_handler()));
 
   return ocucp;

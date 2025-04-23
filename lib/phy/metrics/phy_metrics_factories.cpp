@@ -156,7 +156,7 @@ public:
   }
 
   // See interface for documentation.
-  std::unique_ptr<downlink_processor_controller> create(const downlink_processor_config& config) override
+  std::unique_ptr<downlink_processor_base> create(const downlink_processor_config& config) override
   {
     // Create RG gateway adaptor.
     auto gateway_adaptor =
@@ -171,7 +171,7 @@ public:
   }
 
   // See interface for documentation.
-  std::unique_ptr<downlink_processor_controller>
+  std::unique_ptr<downlink_processor_base>
   create(const downlink_processor_config& config, srslog::basic_logger& logger, bool enable_broadcast) override
   {
     // Create RG gateway adaptor.

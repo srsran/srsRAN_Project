@@ -23,44 +23,96 @@
 #pragma once
 
 #include "../cell/cell_harq_manager.h"
+#include "../slicing/slice_ue_repository.h"
 #include "../support/sch_pdu_builder.h"
 #include "srsran/ran/sch/sch_mcs.h"
 
 namespace srsran {
 
 class ue_cell;
+class slice_ue;
 
 namespace sched_helper {
 
-/// Estimation of the number of PRBs and MCS to use for a given number of pending bytes and channel state.
-struct mcs_prbs_selection {
-  /// Recommended MCS to use.
-  sch_mcs_index mcs;
-  /// Number of recommended PRBs for the PDSCH grant given the number of pending bytes and chosen MCS.
-  unsigned nof_prbs;
+/// PDCCH and PDSCH parameters recommended for a DL grant.
+struct dl_sched_context {
+  /// SearchSpace to use.
+  search_space_id ss_id;
+  /// PDSCH time-domain resource index.
+  uint8_t pdsch_td_res_index;
+  /// Limits on VRBs for DL grant allocation.
+  vrb_interval vrb_lims;
+  /// Recommended MCS, considering channel state or, in case of reTx, last HARQ MCS.
+  sch_mcs_index recommended_mcs;
+  /// Recommended number of layers.
+  unsigned recommended_ri;
+  /// Expected number of RBs to allocate.
+  unsigned expected_nof_rbs;
 };
 
-/// Derive recommended MCS and number of PRBs for a newTx PDSCH grant.
-std::optional<mcs_prbs_selection>
-compute_newtx_required_mcs_and_prbs(const pdsch_config_params& pdsch_cfg, const ue_cell& ue_cc, unsigned pending_bytes);
+/// Retrieve recommended PDCCH and PDSCH parameters for a newTx DL grant.
+std::optional<dl_sched_context> get_newtx_dl_sched_context(const slice_ue& u,
+                                                           slot_point      pdcch_slot,
+                                                           slot_point      pdsch_slot,
+                                                           crb_interval    dl_bwp_crb_limits,
+                                                           unsigned        pending_bytes);
 
-/// Compute PUSCH grant parameters for a newTx given the UE state, DCI type and PUSCH time-domain resource.
-pusch_config_params compute_newtx_pusch_config_params(const ue_cell&                               ue_cc,
-                                                      dci_ul_rnti_config_type                      dci_type,
-                                                      const pusch_time_domain_resource_allocation& pusch_td_cfg,
-                                                      unsigned                                     uci_bits,
-                                                      bool                                         is_csi_report_slot);
+/// Retrieve recommended PDCCH and PDSCH parameters for a reTx DL grant.
+std::optional<dl_sched_context> get_retx_dl_sched_context(const slice_ue&               u,
+                                                          slot_point                    pdcch_slot,
+                                                          slot_point                    pdsch_slot,
+                                                          crb_interval                  dl_bwp_crb_limits,
+                                                          const dl_harq_process_handle& h_dl);
 
-/// Compute PUSCH grant parameters for a reTx given the UE state, DCI type and PUSCH time-domain resource.
-pusch_config_params compute_retx_pusch_config_params(const ue_cell&                               ue_cc,
-                                                     const ul_harq_process_handle&                h_ul,
-                                                     const pusch_time_domain_resource_allocation& pusch_td_cfg,
-                                                     unsigned                                     uci_bits,
-                                                     bool                                         is_csi_report_slot);
+/// Select DL VRBs to allocate for a newTx.
+vrb_interval compute_newtx_dl_vrbs(const dl_sched_context& decision_ctxt,
+                                   const vrb_bitmap&       used_vrbs,
+                                   unsigned                max_nof_rbs = MAX_NOF_PRBS);
 
-/// Derive recommended MCS and number of PRBs for a newTx PUSCH grant.
-mcs_prbs_selection
-compute_newtx_required_mcs_and_prbs(const pusch_config_params& pusch_cfg, const ue_cell& ue_cc, unsigned pending_bytes);
+/// Select DL VRBs to allocate for a reTx.
+vrb_interval compute_retx_dl_vrbs(const dl_sched_context& decision_ctxt, const vrb_bitmap& used_vrbs);
+
+/// PDCCH and PUSCH parameters recommended for a UL grant.
+struct ul_sched_context {
+  /// SearchSpace to use.
+  search_space_id ss_id;
+  /// PUSCH time-domain resource index.
+  uint8_t pusch_td_res_index;
+  /// Limits on VRBs for UL grant allocation.
+  vrb_interval vrb_lims;
+  /// Limits for grant size in RBs.
+  interval<unsigned> nof_rb_lims;
+  /// Recommended MCS, considering channel state or, in case of reTx, last HARQ MCS.
+  sch_mcs_index recommended_mcs;
+  /// Expected number of RBs to allocate.
+  unsigned expected_nof_rbs;
+  /// PUSCH config params.
+  pusch_config_params pusch_cfg;
+};
+
+/// Retrieve recommended PDCCH and PUSCH parameters for a newTx UL grant.
+std::optional<ul_sched_context> get_newtx_ul_sched_context(const slice_ue& u,
+                                                           slot_point      pdcch_slot,
+                                                           slot_point      pusch_slot,
+                                                           crb_interval    ul_bwp_crb_limits,
+                                                           unsigned        uci_nof_harq_bits,
+                                                           unsigned        pending_bytes);
+
+/// Retrieve recommended PDCCH and PUSCH parameters for a reTx UL grant.
+std::optional<ul_sched_context> get_retx_ul_sched_context(const slice_ue&               u,
+                                                          slot_point                    pdcch_slot,
+                                                          slot_point                    pusch_slot,
+                                                          crb_interval                  ul_bwp_crb_limits,
+                                                          unsigned                      uci_nof_harq_bits,
+                                                          const ul_harq_process_handle& h_ul);
+
+/// Select UL VRBs to allocate for a newTx.
+vrb_interval compute_newtx_ul_vrbs(const ul_sched_context& decision_ctxt,
+                                   const vrb_bitmap&       used_vrbs,
+                                   unsigned                max_nof_rbs = MAX_NOF_PRBS);
+
+/// Select UL VRBs to allocate for a reTx.
+vrb_interval compute_retx_ul_vrbs(const ul_sched_context& decision_ctxt, const vrb_bitmap& used_vrbs);
 
 } // namespace sched_helper
 } // namespace srsran

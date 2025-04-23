@@ -43,7 +43,11 @@ public:
     unsigned max_nof_layers = context.get_max_nof_layers();
     for (unsigned i_nof_layers = 1; i_nof_layers <= max_nof_layers; ++i_nof_layers) {
       const auto& info = context.get_tpmi_select(i_nof_layers);
-      helper.format_always(ctx, "{}_layer: tpmi={} sinr={:+.1f}dB", i_nof_layers, info.tpmi, info.sinr_dB);
+      helper.format_always(ctx,
+                           "{}_layer: tpmi={} sinr=({:+.1f})dB",
+                           i_nof_layers,
+                           info.tpmi,
+                           srsran::span<const float>(info.sinr_dB_layer));
     }
 
     return ctx.out();

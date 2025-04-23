@@ -52,7 +52,7 @@ public:
     ul_cfg.init_ul_bwp.pucch_cfg.value().sr_res_list.front().pucch_res_id = pucch_res_id_t{10, 10};
     pucch_cfg_ue_2                                                        = ul_cfg.init_ul_bwp.pucch_cfg.value();
     res_manager.slot_indication(sl_tx);
-  };
+  }
 
 protected:
   const scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
@@ -83,7 +83,7 @@ protected:
         res_manager.reserve_next_set_1_harq_res_available(sl_tx, rnti, pucch_cfg);
       }
     }
-  };
+  }
 };
 
 TEST_F(test_pucch_resource_manager, common_res_available_intialization)
@@ -537,10 +537,9 @@ public:
 protected:
   struct dummy_ue {
     dummy_ue(rnti_t rnti, const cell_configuration& cell_cfg_common_, ue_cell_config_ptr ue_cell_cfg_) :
-      cnrti{rnti},
-      ue_cell_cfg{rnti, cell_cfg_common_, ue_cell_cfg_} {
-
-      };
+      cnrti{rnti}, ue_cell_cfg{rnti, cell_cfg_common_, ue_cell_cfg_}
+    {
+    }
 
     [[nodiscard]] const pucch_config& get_pucch_cfg() const { return ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value(); }
 

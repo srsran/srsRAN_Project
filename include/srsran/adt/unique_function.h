@@ -107,11 +107,9 @@ public:
 
 /// Metafunction to check if a type is an instantiation of unique_function<R(Args...)>
 template <class>
-struct is_unique_function : std::false_type {
-};
+struct is_unique_function : std::false_type {};
 template <class Sig, size_t Capacity, bool ForbidAlloc>
-struct is_unique_function<unique_function<Sig, Capacity, ForbidAlloc>> : std::true_type {
-};
+struct is_unique_function<unique_function<Sig, Capacity, ForbidAlloc>> : std::true_type {};
 
 template <typename FunT, typename R, typename... Args>
 const auto& get_unique_heap_oper_ptr()

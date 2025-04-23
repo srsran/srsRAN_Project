@@ -155,7 +155,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   // Determine if the PUSCH allocation overlaps with the position of the DC.
   bool overlap_dc = false;
   if (pdu.dc_position.has_value()) {
-    unsigned dc_position_prb = pdu.dc_position.value() / NRE;
+    unsigned dc_position_prb = *pdu.dc_position / NRE;
     overlap_dc               = rb_mask.test(dc_position_prb);
   }
 
@@ -218,7 +218,6 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
   // Handles the direct current if it is present.
   if (pdu.dc_position.has_value()) {
-    unsigned dc_position = pdu.dc_position.value();
     for (unsigned i_port = 0, i_port_end = pdu.rx_ports.size(); i_port != i_port_end; ++i_port) {
       for (unsigned i_layer = 0, i_layer_end = pdu.nof_tx_layers; i_layer != i_layer_end; ++i_layer) {
         for (unsigned i_symbol = pdu.start_symbol_index, i_symbol_end = pdu.start_symbol_index + pdu.nof_symbols;
@@ -228,7 +227,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
           span<cbf16_t> ce = ch_estimate.get_symbol_ch_estimate(i_symbol, i_port, i_layer);
 
           // Set DC to zero.
-          ce[dc_position] = 0;
+          ce[*pdu.dc_position] = 0;
         }
       }
     }
@@ -275,19 +274,19 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
 
   if (has_sch_data) {
     units::bits tbs            = units::bytes(data.size()).to_bits();
-    unsigned    nof_codeblocks = ldpc::compute_nof_codeblocks(tbs, pdu.codeword.value().ldpc_base_graph);
+    unsigned    nof_codeblocks = ldpc::compute_nof_codeblocks(tbs, pdu.codeword->ldpc_base_graph);
     units::bits Nref           = ldpc::compute_N_ref(pdu.tbs_lbrm, nof_codeblocks);
 
     // Prepare decoder configuration.
     pusch_decoder::configuration decoder_config;
-    decoder_config.base_graph          = pdu.codeword.value().ldpc_base_graph;
-    decoder_config.rv                  = pdu.codeword.value().rv;
+    decoder_config.base_graph          = pdu.codeword->ldpc_base_graph;
+    decoder_config.rv                  = pdu.codeword->rv;
     decoder_config.mod                 = pdu.mcs_descr.modulation;
     decoder_config.Nref                = Nref.value();
     decoder_config.nof_layers          = pdu.nof_tx_layers;
     decoder_config.nof_ldpc_iterations = dec_nof_iterations;
     decoder_config.use_early_stop      = dec_enable_early_stop;
-    decoder_config.new_data            = pdu.codeword.value().new_data;
+    decoder_config.new_data            = pdu.codeword->new_data;
 
     // Setup decoder.
     decoder_buffer =

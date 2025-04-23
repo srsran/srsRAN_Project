@@ -29,11 +29,11 @@ using namespace ofh;
 
 message_transmitter_impl::message_transmitter_impl(srslog::basic_logger&                  logger_,
                                                    const tx_window_timing_parameters&     timing_params_,
-                                                   std::unique_ptr<ether::gateway>        gw,
+                                                   std::unique_ptr<ether::transmitter>    transmitter,
                                                    std::shared_ptr<ether::eth_frame_pool> frame_pool) :
-  logger(logger_), pool(std::move(frame_pool)), gateway(std::move(gw)), timing_params(timing_params_)
+  logger(logger_), pool(std::move(frame_pool)), eth_transmitter(std::move(transmitter)), timing_params(timing_params_)
 {
-  srsran_assert(gateway, "Invalid Ethernet gateway");
+  srsran_assert(eth_transmitter, "Invalid Ethernet transmitter");
   srsran_assert(pool, "Invalid frame pool");
 }
 
@@ -43,8 +43,11 @@ void message_transmitter_impl::transmit_frame_burst(span<span<const uint8_t>> fr
     return;
   }
 
-  gateway->send(frame_burst);
-  logger.debug("Sending an Ethernet frame burst of size '{}'", frame_burst.size());
+  eth_transmitter->send(frame_burst);
+
+  if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+    logger.debug("Sending an Ethernet frame burst of size '{}'", frame_burst.size());
+  }
 }
 
 void message_transmitter_impl::enqueue_messages_into_burst(
@@ -65,14 +68,16 @@ void message_transmitter_impl::enqueue_messages_into_burst(
     frame_burst.emplace_back(frame->data());
   }
 
-  logger.debug("Enqueueing '{}' frame(s) of type '{}-{}' in interval '{}_{}':{}_{} for tx burst",
-               frame_buffers.size(),
-               (interval.type.type == message_type::control_plane) ? "control-plane" : "user-plane",
-               (interval.type.direction == ofh::data_direction::downlink) ? "downlink" : "uplink",
-               interval.start.get_slot(),
-               interval.start.get_symbol_index(),
-               interval.end.get_slot(),
-               interval.end.get_symbol_index());
+  if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+    logger.debug("Enqueueing '{}' frame(s) of type '{}-{}' in interval '{}_{}':{}_{} for tx burst",
+                 frame_buffers.size(),
+                 (interval.type.type == message_type::control_plane) ? "control-plane" : "user-plane",
+                 (interval.type.direction == data_direction::downlink) ? "downlink" : "uplink",
+                 interval.start.get_slot(),
+                 interval.start.get_symbol_index(),
+                 interval.end.get_slot(),
+                 interval.end.get_symbol_index());
+  }
 }
 
 void message_transmitter_impl::on_new_symbol(const slot_symbol_point_context& symbol_point_context)
@@ -110,4 +115,9 @@ void message_transmitter_impl::on_new_symbol(const slot_symbol_point_context& sy
   pool->clear_sent_frame_buffers(interval_up);
 
   ofh_tracer << trace_event("ofh_message_transmitter", tp);
+}
+
+ether::transmitter& message_transmitter_impl::get_ethernet_transmitter()
+{
+  return *eth_transmitter;
 }

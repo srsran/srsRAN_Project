@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "apps/helpers/metrics/metrics_config.h"
 #include "apps/services/worker_manager/os_sched_affinity_manager.h"
 #include <string>
 
@@ -140,6 +141,14 @@ struct ru_sdr_unit_expert_execution_config {
   std::vector<ru_sdr_unit_cpu_affinities_cell_config> cell_affinities = {{}};
 };
 
+/// Metrics configuration.
+struct ru_sdr_unit_metrics_config {
+  /// Metrics configuration.
+  app_helpers::metrics_config metrics_cfg;
+  /// Flag that control RU metrics.
+  bool enable_ru_metrics = false;
+};
+
 /// SDR Radio Unit configuration.
 struct ru_sdr_unit_config {
   /// Sampling frequency in MHz.
@@ -181,6 +190,8 @@ struct ru_sdr_unit_config {
   amplitude_control_unit_config amplitude_cfg;
   /// Expert execution parameters for the SDR Radio Unit.
   ru_sdr_unit_expert_execution_config expert_execution_cfg;
+  /// Metrics configuration.
+  ru_sdr_unit_metrics_config metrics_cfg;
 };
 
 } // namespace srsran

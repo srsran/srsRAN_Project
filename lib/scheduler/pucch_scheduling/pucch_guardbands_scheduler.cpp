@@ -27,7 +27,9 @@
 using namespace srsran;
 
 pucch_guardbands_scheduler::pucch_guardbands_scheduler(const cell_configuration& cell_cfg_) :
-  cell_cfg{cell_cfg_}, logger(srslog::fetch_basic_logger("SCHED")){};
+  cell_cfg{cell_cfg_}, logger(srslog::fetch_basic_logger("SCHED"))
+{
+}
 
 void pucch_guardbands_scheduler::allocate_pucch_guardbands(cell_slot_resource_allocator& slot_alloc)
 {

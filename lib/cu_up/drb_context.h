@@ -36,7 +36,7 @@ namespace srs_cu_up {
 
 /// \brief DRB context with map to all QoS flows.
 struct drb_context {
-  drb_context(const drb_id_t& drb_id_) : drb_id(drb_id_){};
+  drb_context(const drb_id_t& drb_id_) : drb_id(drb_id_) {}
 
   void stop()
   {

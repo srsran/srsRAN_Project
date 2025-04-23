@@ -42,9 +42,12 @@ validator_result validate_pdsch_cfg(const serving_cell_config& ue_cell_cfg);
 
 /// \brief Validates PUCCH Config in \c sched_ue_creation_request_message used to create a UE.
 /// \param[in] ue_cell_cfg UE serving cell configuration to be validated.
+/// \param[in] pucch_cfg_common PUCCH commmon configuration.
 /// \param[in] nof_dl_antennas Number of antennas used for DL tx.
 /// \return In case an invalid parameter is detected, returns a string containing an error message.
-validator_result validate_pucch_cfg(const serving_cell_config& ue_cell_cfg, unsigned nof_dl_antennas);
+validator_result validate_pucch_cfg(const serving_cell_config& ue_cell_cfg,
+                                    const pucch_config_common& pucch_cfg_common,
+                                    unsigned                   nof_dl_antennas);
 
 /// \brief Validates PUSCH Config in \c sched_ue_creation_request_message used to create a UE.
 /// \param[in] uplink_config Uplink configuration to be validated.

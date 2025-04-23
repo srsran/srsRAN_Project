@@ -30,11 +30,24 @@ using namespace srsran::srs_cu_up;
 
 bearer_context_release_procedure::bearer_context_release_procedure(ue_index_t ue_index_,
                                                                    const asn1::e1ap::bearer_context_release_cmd_s& cmd_,
-                                                                   e1ap_message_notifier&       pdu_notifier_,
-                                                                   e1ap_cu_up_manager_notifier& cu_up_notifier_,
-                                                                   srslog::basic_logger&        logger_) :
-  ue_index(ue_index_), cmd(cmd_), pdu_notifier(pdu_notifier_), cu_up_notifier(cu_up_notifier_), logger(logger_)
+                                                                   e1ap_message_notifier&        pdu_notifier_,
+                                                                   e1ap_cu_up_manager_notifier&  cu_up_notifier_,
+                                                                   e1ap_cu_up_metrics_collector& metrics_,
+                                                                   srslog::basic_logger&         logger_) :
+  ue_index(ue_index_),
+  cmd(cmd_),
+  pdu_notifier(pdu_notifier_),
+  cu_up_notifier(cu_up_notifier_),
+  metrics(metrics_),
+  logger(logger_)
 {
+  proc_start_tp = std::chrono::steady_clock::now();
+}
+
+bearer_context_release_procedure::~bearer_context_release_procedure()
+{
+  auto proc_stop_tp = std::chrono::steady_clock::now();
+  metrics.add_context_release(std::chrono::duration_cast<std::chrono::microseconds>(proc_stop_tp - proc_start_tp));
 }
 
 void bearer_context_release_procedure::operator()(coro_context<async_task<void>>& ctx)

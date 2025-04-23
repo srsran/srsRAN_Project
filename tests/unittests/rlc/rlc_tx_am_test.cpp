@@ -1329,6 +1329,34 @@ TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
   EXPECT_EQ(tester->highest_delivered_pdcp_sn_list.front(), 2);
 }
 
+TEST_P(rlc_tx_am_test, tx_huge_bursts_report_buffer_state_correctly)
+{
+  const uint32_t sdu_size        = 1500;
+  const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t num_sdus        = 2 * (MAX_DL_PDU_LENGTH / sdu_size);
+  const uint32_t num_pdus        = num_sdus;
+
+  // Push many SDUs into RLC above MAX_DL_PDU_LENGTH to limit excessive buffer state reports
+  tx_full_pdus(num_pdus, sdu_size);
+
+  // Queried buffer state should be up to date
+  rlc_buffer_state bs1 = rlc->get_buffer_state();
+  EXPECT_EQ(bs1.pending_bytes, 0);
+  // Notified buffer state should reflect the filled RLC before pulling any PDUs
+  EXPECT_EQ(tester->bsr.pending_bytes, num_pdus * (sdu_size + header_min_size));
+  EXPECT_EQ(tester->bsr_count, 1);
+
+  // Push again many SDUs into RLC1 above MAX_DL_PDU_LENGTH; expect one new buffer status report
+  tx_full_pdus(num_pdus, sdu_size);
+
+  // Queried buffer state should be up to date
+  bs1 = rlc->get_buffer_state();
+  EXPECT_EQ(bs1.pending_bytes, 0);
+  // Notified buffer state should reflect the re-filled RLC before pulling any PDUs
+  EXPECT_EQ(tester->bsr.pending_bytes, num_pdus * (sdu_size + header_min_size));
+  EXPECT_EQ(tester->bsr_count, 2);
+}
+
 TEST_P(rlc_tx_am_test, retx_many_pdus_and_notify_mac)
 {
   const uint32_t sdu_size        = 1500;

@@ -39,6 +39,8 @@ struct data_flow_uplane_uplink_prach_impl_config {
   unsigned sector;
   /// PRACH Control-Plane enabled flag.
   bool is_prach_cplane_enabled;
+  /// Ignore the start symbol value received in the PRACH U-Plane packets.
+  bool ignore_prach_start_symbol;
   /// Uplink PRACH eAxCs.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxcs;
 };
@@ -61,7 +63,7 @@ struct data_flow_uplane_uplink_prach_impl_dependencies {
 class data_flow_uplane_uplink_prach_impl : public data_flow_uplane_uplink_prach
 {
 public:
-  data_flow_uplane_uplink_prach_impl(const data_flow_uplane_uplink_prach_impl_config&  config_,
+  data_flow_uplane_uplink_prach_impl(const data_flow_uplane_uplink_prach_impl_config&  config,
                                      data_flow_uplane_uplink_prach_impl_dependencies&& dependencies);
 
   // See interface for documentation.
@@ -80,6 +82,7 @@ private:
   uplane_prach_symbol_data_flow_writer              prach_iq_writter;
   uplane_prach_data_flow_notifier                   notification_sender;
   const unsigned                                    sector_id;
+  const bool                                        ignore_prach_start_symbol;
 };
 
 } // namespace ofh

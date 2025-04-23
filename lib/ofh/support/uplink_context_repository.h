@@ -145,6 +145,11 @@ class uplink_context_repository
   //: TODO: make this lock free
   mutable std::mutex mutex;
 
+  // :TODO: temporal solution to not allow adding more entries when the repo is not running. This mechanism should be
+  // changed when the start/stop procedure is implemented (probably not needed in that case as no grid will arrive after
+  // commanding the stop).
+  bool is_running = true;
+
   /// Returns the entry of the repository for the given slot and symbol.
   uplink_context& entry(slot_point slot, unsigned symbol)
   {
@@ -171,6 +176,10 @@ public:
   add(const resource_grid_context& context, const shared_resource_grid& grid, const ofdm_symbol_range& symbol_range)
   {
     std::lock_guard<std::mutex> lock(mutex);
+    // Do not add entry if repo is not running.
+    if (!is_running) {
+      return;
+    }
 
     for (unsigned symbol_id = symbol_range.start(), symbol_end = symbol_range.stop(); symbol_id != symbol_end;
          ++symbol_id) {
@@ -203,7 +212,7 @@ public:
     auto result = entry(slot, symbol).try_getting_complete_resource_grid();
 
     // Symbol is complete or exists. Clear the context.
-    if (result.has_value()) {
+    if (result) {
       entry(slot, symbol) = {};
     }
 
@@ -217,7 +226,7 @@ public:
 
     auto& result = entry(slot, symbol);
 
-    // Symbol does not exists. Do nothing.
+    // Symbol does not exist. Do nothing.
     if (result.empty()) {
       return make_unexpected(default_error_t{});
     }
@@ -232,6 +241,18 @@ public:
   {
     std::lock_guard<std::mutex> lock(mutex);
     entry(slot, symbol) = {};
+  }
+
+  /// \brief Clears the whole repository.
+  void clear()
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    is_running = false;
+    for (auto& elem : buffer) {
+      for (auto& symbol : elem) {
+        symbol = {};
+      }
+    }
   }
 };
 

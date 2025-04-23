@@ -89,6 +89,14 @@ protected:
     uci_alloc.slot_indication(current_slot);
     ues.slot_indication(current_slot);
 
+    // Prepare CRB bitmask that will be used to find available CRBs.
+    const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
+    // TODO: enable interleaving.
+    used_dl_vrbs = static_cast<vrb_bitmap>(
+        res_grid[0].dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs,
+                                          init_dl_bwp.generic_params.crbs,
+                                          init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols));
+
     on_each_slot();
 
     alloc.post_process_results();
@@ -145,30 +153,62 @@ protected:
                                unsigned                pending_bytes,
                                std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
-    alloc.allocate_newtx_dl_grant(ue_dl_newtx_grant_request{current_slot, user, pending_bytes, max_nof_rbs});
+    const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
+    auto        result      = alloc.allocate_dl_grant(
+        ue_newtx_dl_grant_request{user, current_slot, init_dl_bwp.generic_params.crbs, pending_bytes});
+    if (not result.has_value()) {
+      return;
+    }
+    auto& builder = result.value();
+
+    vrb_interval vrbs = builder.recommended_vrbs(used_dl_vrbs);
+
+    // Compute the corresponding CRBs.
+    // TODO: support interleaving.
+    std::pair<crb_interval, crb_interval> crbs = {
+        prb_to_crb(init_dl_bwp.generic_params.crbs, static_cast<prb_interval>(vrbs)), {}};
+
+    builder.set_pdsch_params(vrbs, crbs);
+    used_dl_vrbs.fill(vrbs.start(), vrbs.stop());
   }
 
   void allocate_dl_retx_grant(const slice_ue& user, dl_harq_process_handle h_dl)
   {
-    alloc.allocate_retx_dl_grant(ue_dl_retx_grant_request{current_slot, user, h_dl});
+    auto result = alloc.allocate_dl_grant(ue_retx_dl_grant_request{user, current_slot, h_dl, used_dl_vrbs});
+    if (result.has_value()) {
+      used_dl_vrbs.fill(result.value().start(), result.value().stop());
+    }
   }
 
-  ul_alloc_result allocate_ul_newtx_grant(const slice_ue&         user,
-                                          unsigned                pending_bytes,
-                                          std::optional<unsigned> max_nof_rbs = std::nullopt)
+  alloc_status allocate_ul_newtx_grant(const slice_ue&         user,
+                                       unsigned                pending_bytes,
+                                       std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
     return allocate_ul_newtx_grant(get_next_ul_slot(current_slot), user, pending_bytes, max_nof_rbs);
   }
 
-  ul_alloc_result allocate_ul_newtx_grant(slot_point              pusch_slot,
-                                          const slice_ue&         user,
-                                          unsigned                pending_bytes,
-                                          std::optional<unsigned> max_nof_rbs = std::nullopt)
+  alloc_status allocate_ul_newtx_grant(slot_point              pusch_slot,
+                                       const slice_ue&         user,
+                                       unsigned                pending_bytes,
+                                       std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
-    if (not cell_cfg.is_dl_enabled(current_slot)) {
-      return ul_alloc_result{alloc_status::invalid_params};
+    const auto& init_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp;
+    auto        result      = alloc.allocate_ul_grant(
+        ue_newtx_ul_grant_request{user, pusch_slot, init_ul_bwp.generic_params.crbs, pending_bytes});
+    if (not result.has_value()) {
+      return result.error();
     }
-    return alloc.allocate_newtx_ul_grant(ue_ul_newtx_grant_request{pusch_slot, user, pending_bytes, max_nof_rbs});
+    auto& builder = result.value();
+
+    // TODO: perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
+    vrb_bitmap used_ul_vrbs = static_cast<vrb_bitmap>(
+        res_grid[pusch_slot].ul_res_grid.used_prbs(init_ul_bwp.generic_params.scs,
+                                                   init_ul_bwp.generic_params.crbs,
+                                                   init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols));
+    vrb_interval vrbs = builder.recommended_vrbs(used_ul_vrbs, max_nof_rbs.value_or(MAX_NOF_PRBS));
+    builder.set_pusch_params(vrbs, init_ul_bwp.generic_params.crbs);
+    used_ul_vrbs.fill(vrbs.start(), vrbs.stop());
+    return alloc_status::success;
   }
 
   scheduler_expert_config                 sched_cfg;
@@ -201,6 +241,7 @@ protected:
   ue_cell_grid_allocator  alloc;
 
   slot_point current_slot;
+  vrb_bitmap used_dl_vrbs;
 };
 
 TEST_P(ue_grid_allocator_tester,
@@ -366,10 +407,10 @@ TEST_P(ue_grid_allocator_tester, consecutive_puschs_for_a_ue_are_allocated_in_in
       [&]() { return find_ue_pusch(u.crnti, res_grid[0].result.ul) != nullptr; }));
 
   // Second PUSCH grant for the UE trying to allocate PUSCH in a slot previous to grant1.
-  ul_alloc_result result = {alloc_status::invalid_params};
+  alloc_status result = alloc_status::invalid_params;
   ASSERT_FALSE(run_until(
       [&]() { result = allocate_ul_newtx_grant(pusch_slot - 1, slice_ues[u.ue_index], nof_bytes_to_schedule); },
-      [&]() { return result.status == alloc_status::success; },
+      [&]() { return result == alloc_status::success; },
       1));
 }
 
@@ -530,63 +571,9 @@ TEST_P(ue_grid_allocator_tester, successfully_allocated_pusch_even_with_large_ga
 
   // Second PUSCH grant for the UE.
   ASSERT_TRUE(run_until(
-      [&]() {
-        return allocate_ul_newtx_grant(slice_ues[u.ue_index], nof_bytes_to_schedule).status == alloc_status::success;
-      },
+      [&]() { return allocate_ul_newtx_grant(slice_ues[u.ue_index], nof_bytes_to_schedule) == alloc_status::success; },
       [&]() { return find_ue_pusch(u.crnti, res_grid[0].result.ul.puschs) != nullptr; },
       nof_slot_until_pusch_is_allocated_threshold));
-}
-
-class ue_grid_allocator_remaining_rbs_alloc_tester : public ue_grid_allocator_tester
-{
-public:
-  ue_grid_allocator_remaining_rbs_alloc_tester() :
-    ue_grid_allocator_tester(([]() {
-      scheduler_expert_config sched_cfg_   = config_helpers::make_default_scheduler_expert_config();
-      sched_cfg_.ue.max_ul_grants_per_slot = 2;
-      sched_cfg_.ue.max_pucchs_per_slot    = 2;
-      return sched_cfg_;
-    }()))
-  {
-  }
-};
-
-TEST_P(ue_grid_allocator_remaining_rbs_alloc_tester, remaining_dl_rbs_are_allocated_if_max_pucch_per_slot_is_reached)
-{
-  sched_ue_creation_request_message ue_creation_req =
-      sched_config_helper::create_default_sched_ue_creation_request(this->cfg_builder_params);
-  ue_creation_req.ue_index = to_du_ue_index(0);
-  ue_creation_req.crnti    = to_rnti(0x4601);
-  const ue& u1             = add_ue(ue_creation_req);
-  ue_creation_req.ue_index = to_du_ue_index(1);
-  ue_creation_req.crnti    = to_rnti(0x4602);
-  const ue& u2             = add_ue(ue_creation_req);
-
-  static const unsigned sched_bytes = 20U;
-  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for
-  // allocation.
-  const unsigned total_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
-  ASSERT_TRUE(run_until(
-      [&]() {
-        allocate_dl_newtx_grant(slice_ues[u1.ue_index], sched_bytes);
-        allocate_dl_newtx_grant(slice_ues[u2.ue_index], sched_bytes);
-      },
-      [&]() {
-        return find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants) != nullptr and
-               find_ue_pdsch(u2.crnti, res_grid[0].result.dl.ue_grants) != nullptr;
-      }));
-  // Successfully allocates PDSCH corresponding to the grant.
-  ASSERT_GE(find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.codewords.back().tb_size_bytes,
-            sched_bytes);
-
-  // Since UE dedicated SearchSpace is a UE specific SearchSpace (Not CSS). Entire BWP CRBs can be used for
-  // allocation.
-  const unsigned crbs_allocated =
-      find_ue_pdsch(u1.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length();
-
-  // Allocates all remaining RBs to UE2.
-  ASSERT_EQ(find_ue_pdsch(u2.crnti, res_grid[0].result.dl.ue_grants)->pdsch_cfg.rbs.type1().length(),
-            (total_crbs - crbs_allocated));
 }
 
 class ue_grid_allocator_expert_cfg_pxsch_nof_rbs_limits_tester : public ue_grid_allocator_tester
@@ -757,10 +744,6 @@ TEST_P(ue_grid_allocator_expert_cfg_pxsch_crb_limits_tester, allocates_pusch_wit
 
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
                          ue_grid_allocator_tester,
-                         testing::Values(duplex_mode::FDD, duplex_mode::TDD));
-
-INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,
-                         ue_grid_allocator_remaining_rbs_alloc_tester,
                          testing::Values(duplex_mode::FDD, duplex_mode::TDD));
 
 INSTANTIATE_TEST_SUITE_P(ue_grid_allocator_test,

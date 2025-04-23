@@ -41,12 +41,13 @@ from .steps.configuration import configure_test_parameters, get_minimum_sample_r
 
 @mark.zmq
 @mark.parametrize(
-    "use_format_0, pucch_set1_format",
+    "use_format_0, pucch_set1_format, ul_noise_spd",
     (
-        param(True, 2, id="f0_f2"),
-        param(False, 2, id="f1_f2"),
-        param(False, 3, id="f1_f3"),
-        param(False, 4, id="f1_f4"),
+        # PUCCH Format 0 decoder doesn't work with no noise.
+        param(True, 2, -134, id="f0_f2"),
+        param(False, 2, 0, id="f1_f2"),
+        param(False, 3, 0, id="f1_f3"),
+        param(False, 4, 0, id="f1_f4"),
     ),
 )
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals
@@ -58,6 +59,7 @@ def test_pucch(
     gnb: GNBStub,
     use_format_0: bool,
     pucch_set1_format: int,
+    ul_noise_spd: int,
 ):
     """
     Test PUCCH (Amarisoft, ZMQ)
@@ -81,6 +83,7 @@ def test_pucch(
         global_timing_advance=0,
         time_alignment_calibration=0,
         use_format_0=use_format_0,
+        ul_noise_spd=ul_noise_spd,
         pucch_set1_format=pucch_set1_format,
     )
 

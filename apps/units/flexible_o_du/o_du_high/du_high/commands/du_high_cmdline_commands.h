@@ -22,30 +22,30 @@
 
 #pragma once
 
-#include "apps/services/cmdline/cmdline_command.h"
+#include "apps/services/cmdline/stdout_metrics_command.h"
 #include "apps/units/flexible_o_du/o_du_high/du_high/metrics/du_high_scheduler_cell_metrics_consumers.h"
 
 namespace srsran {
 
-/// Application command to display/hide the DU high metrics in STDOUT.
-class toggle_stdout_metrics_app_command : public app_services::cmdline_command
+/// Application subccommand to display/hide the DU high metrics in STDOUT.
+class du_high_metrics_subcommand_stdout : public app_services::toggle_stdout_metrics_app_command::metrics_subcommand
 {
   scheduler_cell_metrics_consumer_stdout& printer;
 
 public:
-  explicit toggle_stdout_metrics_app_command(scheduler_cell_metrics_consumer_stdout& printer_) : printer(printer_) {}
+  explicit du_high_metrics_subcommand_stdout(scheduler_cell_metrics_consumer_stdout& printer_) : printer(printer_) {}
 
   // See interface for documentation.
-  std::string_view get_name() const override { return "t"; }
+  std::string_view get_name() const override { return "ue"; }
 
   // See interface for documentation.
-  std::string_view get_description() const override
-  {
-    return ":                                    start/stop console trace";
-  }
+  void print_header() override { printer.print_header(); }
 
   // See interface for documentation.
-  void execute(span<const std::string> args) override { printer.toggle_print(); }
+  void enable() override { printer.enable(); }
+
+  // See interface for documentation.
+  void disable() override { printer.disable(); }
 };
 
 } // namespace srsran

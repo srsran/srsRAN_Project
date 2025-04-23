@@ -145,10 +145,7 @@ public:
   {
   }
 
-  uint8_t get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) override
-  {
-    return 0;
-  }
+  uint8_t get_scheduled_pdsch_counter_in_ue_uci(slot_point uci_slot, rnti_t crnti) override { return 0; }
 
   bool has_uci_harq_on_common_pucch_res(rnti_t crnti, slot_point sl_tx) override { return false; }
 };
@@ -156,11 +153,12 @@ public:
 class sched_cfg_dummy_notifier : public sched_configuration_notifier
 {
 public:
-  std::optional<du_ue_index_t> last_ue_index_cfg;
-  std::optional<du_ue_index_t> last_ue_index_deleted;
+  std::optional<du_cell_index_t> last_rem_cell;
+  std::optional<du_ue_index_t>   last_ue_index_cfg;
+  std::optional<du_ue_index_t>   last_ue_index_deleted;
 
   void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) override { last_ue_index_cfg = ue_index; }
-  void on_ue_delete_response(du_ue_index_t ue_index) override { last_ue_index_deleted = ue_index; }
+  void on_ue_deletion_completed(du_ue_index_t ue_index) override { last_ue_index_deleted = ue_index; }
 };
 
 class scheduler_ue_metrics_dummy_notifier : public scheduler_metrics_notifier

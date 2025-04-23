@@ -55,7 +55,10 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   cs_cfg(cell_cfg.get_common_coreset(ss_cfg.get_coreset_id())),
   logger(srslog::fetch_basic_logger("SCHED"))
 {
+  // Pre-reserve memory to avoid allocations in RT.
+  pending_dl_ues_new_tx.reserve(MAX_NOF_DU_UES);
   ongoing_ues_ack_retxs.reserve(MAX_NOF_DU_UES);
+
   // NOTE 1: We use a std::vector instead of a std::array because we can later on initialize the vector with the minimum
   // value of k1, passed through the expert config.
   // NOTE 2: Although the TS 38.213, Section 9.2.3 specifies that the k1 possible values are {1, ..., 8}, some UE
@@ -510,11 +513,10 @@ ue_fallback_scheduler::alloc_grant(ue&                                   u,
   // BWP.
   cell_slot_resource_allocator& pdsch_alloc = res_alloc[slot_offset + pdsch_td_cfg.k0];
   auto cset0_crbs_lim = pdsch_helper::get_ra_crb_limits_common(cell_cfg.dl_cfg_common.init_dl_bwp, ss_cfg.get_id());
-  prb_bitmap used_crbs =
+  crb_bitmap used_crbs =
       pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp.scs, cset0_crbs_lim, pdsch_cfg.symbols);
 
-  crb_interval unused_crbs =
-      rb_helper::find_next_empty_interval(used_crbs, cset0_crbs_lim.start(), cset0_crbs_lim.stop());
+  crb_interval unused_crbs = rb_helper::find_next_empty_interval(used_crbs, cset0_crbs_lim);
   if (unused_crbs.empty()) {
     logger.debug("rnti={}: Postponed PDU scheduling for slot={}. Cause: No space in PDSCH.", u.crnti, pdsch_alloc.slot);
     // If there is no free PRBs left on this slot for this UE, then this slot should be avoided by the other UEs too.
@@ -784,11 +786,32 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
 
   // Fill DL PDCCH DCI.
   static const uint8_t msg4_rv = 0;
+
+  vrb_interval vrbs;
+  switch (dci_type) {
+    case dci_dl_rnti_config_type::tc_rnti_f1_0: {
+      const crb_interval cs0_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->coreset0_crbs();
+      vrbs                        = crb_to_vrb_f1_0_common_ss_non_interleaved(ue_grant_crbs, cs0_crbs.start());
+    } break;
+    case dci_dl_rnti_config_type::c_rnti_f1_0: {
+      const search_space_info&   ss_info           = u.get_pcell().cfg().search_space(pdcch.ctx.context.ss_id);
+      const bwp_downlink_common& active_dl_bwp_cmn = *ss_info.bwp->dl_common.value();
+      const bwp_configuration&   active_dl_bwp     = active_dl_bwp_cmn.generic_params;
+      vrbs                                         = rb_helper::crb_to_vrb_dl_non_interleaved(ue_grant_crbs,
+                                                      active_dl_bwp.crbs.start(),
+                                                      cs_cfg.get_coreset_start_crb(),
+                                                      dci_dl_format::f1_0,
+                                                      ss_info.cfg->is_common_search_space());
+    } break;
+    default:
+      srsran_assert(false, "Invalid DCI type for SRB1");
+  }
+
   switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0: {
       build_dci_f1_0_tc_rnti(pdcch.dci,
                              cell_cfg.dl_cfg_common.init_dl_bwp,
-                             ue_grant_crbs,
+                             vrbs,
                              pdsch_time_res,
                              uci.k1,
                              uci.pucch_res_indicator.value(),
@@ -802,7 +825,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
       build_dci_f1_0_c_rnti(pdcch.dci,
                             u.get_pcell().cfg().search_space(pdcch.ctx.context.ss_id),
                             cell_cfg.dl_cfg_common.init_dl_bwp,
-                            ue_grant_crbs,
+                            vrbs,
                             pdsch_time_res,
                             uci.k1,
                             uci.pucch_res_indicator.value(),
@@ -826,14 +849,8 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
 
   switch (dci_type) {
     case dci_dl_rnti_config_type::tc_rnti_f1_0: {
-      build_pdsch_f1_0_tc_rnti(msg.pdsch_cfg,
-                               pdsch_params,
-                               tbs_bytes,
-                               u.crnti,
-                               cell_cfg,
-                               pdcch.dci.tc_rnti_f1_0,
-                               ue_grant_crbs,
-                               not is_retx);
+      build_pdsch_f1_0_tc_rnti(
+          msg.pdsch_cfg, pdsch_params, tbs_bytes, u.crnti, cell_cfg, pdcch.dci.tc_rnti_f1_0, vrbs, not is_retx);
       break;
     }
     case dci_dl_rnti_config_type::c_rnti_f1_0: {
@@ -844,7 +861,7 @@ dl_harq_process_handle ue_fallback_scheduler::fill_dl_srb_grant(ue&             
                               cell_cfg,
                               u.get_pcell().cfg().search_space(pdcch.ctx.context.ss_id),
                               pdcch.dci.c_rnti_f1_0,
-                              ue_grant_crbs,
+                              vrbs,
                               not is_retx);
       break;
     }
@@ -1005,7 +1022,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
 
   const crb_interval init_ul_bwp_crbs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs;
 
-  const prb_bitmap used_crbs = pusch_alloc.ul_res_grid.used_crbs(
+  const crb_bitmap used_crbs = pusch_alloc.ul_res_grid.used_crbs(
       cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, init_ul_bwp_crbs, pusch_td.symbols);
 
   const bool is_retx = h_ul_retx.has_value();
@@ -1036,7 +1053,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     final_mcs_tbs.mcs             = h_ul_retx->get_grant_params().mcs;
     final_mcs_tbs.tbs             = h_ul_retx->get_grant_params().tbs_bytes;
 
-    ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, final_nof_prbs, 0);
+    ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, final_nof_prbs);
     if (ue_grant_crbs.empty() or ue_grant_crbs.length() < final_nof_prbs) {
       logger.debug("ue={} rnti={} PUSCH SRB allocation for re-tx skipped. Cause: available RBs {} < required RBs {}",
                    fmt::underlying(u.ue_index),
@@ -1091,7 +1108,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
       prbs_tbs.nof_prbs = corrected_nof_prbs.value();
     }
 
-    ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs, 0);
+    ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs);
 
     if (ue_grant_crbs.empty()) {
       logger.debug("ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: no PRBs available",
@@ -1114,7 +1131,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
         cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, ue_grant_crbs);
 
     std::optional<sch_mcs_tbs> mcs_tbs_info =
-        compute_ul_mcs_tbs(pusch_cfg, nullptr, mcs, ue_grant_crbs.length(), contains_dc);
+        compute_ul_mcs_tbs(pusch_cfg, ue_pcell.active_bwp(), mcs, ue_grant_crbs.length(), contains_dc);
 
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.
     if (not mcs_tbs_info.has_value()) {
@@ -1192,10 +1209,13 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                               
 
   uint8_t                  rv                  = u.get_pcell().get_pusch_rv(h_ul->nof_retxs());
   static constexpr uint8_t default_tpc_command = 1U;
+  const vrb_interval       vrbs                = rb_helper::crb_to_vrb_ul_non_interleaved(
+      ue_grant_crbs,
+      u.get_pcell().cfg().search_space(pdcch.ctx.context.ss_id).bwp->ul_common->value().generic_params.crbs.start());
   build_dci_f0_0_c_rnti(pdcch.dci,
                         u.get_pcell().cfg().search_space(pdcch.ctx.context.ss_id),
                         cell_cfg.ul_cfg_common.init_ul_bwp,
-                        ue_grant_crbs,
+                        vrbs,
                         pusch_time_res,
                         mcs_idx,
                         rv,
@@ -1217,7 +1237,7 @@ void ue_fallback_scheduler::fill_ul_srb_grant(ue&                               
                           cell_cfg,
                           cell_cfg.ul_cfg_common.init_ul_bwp,
                           pdcch.dci.c_rnti_f0_0,
-                          ue_grant_crbs,
+                          vrbs,
                           not is_retx);
 
   // Save set PDCCH and PUSCH PDU parameters in HARQ process.

@@ -59,6 +59,9 @@ public:
   void connect(puxch_processor_notifier& notifier_) override { notifier = &notifier_; }
 
   // See interface for documentation.
+  void stop() override { stopped = true; }
+
+  // See interface for documentation.
   puxch_processor_request_handler& get_request_handler() override { return *this; }
 
   // See interface for documentation.
@@ -72,6 +75,7 @@ private:
   // See interface for documentation.
   void handle_request(const shared_resource_grid& grid, const resource_grid_context& context) override;
 
+  std::atomic<bool>                        stopped = false;
   unsigned                                 nof_symbols_per_slot;
   unsigned                                 nof_rx_ports;
   puxch_processor_notifier*                notifier = nullptr;

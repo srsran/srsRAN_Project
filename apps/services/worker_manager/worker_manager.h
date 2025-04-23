@@ -60,22 +60,21 @@ struct worker_manager : public worker_manager_executor_getter {
   std::vector<task_executor*> upper_prach_exec;
   std::vector<task_executor*> upper_srs_exec;
   std::vector<task_executor*> upper_pdsch_exec;
-  task_executor*              radio_exec      = nullptr;
-  task_executor*              ru_printer_exec = nullptr;
-  task_executor*              ru_timing_exec  = nullptr;
+  task_executor*              radio_exec     = nullptr;
+  task_executor*              ru_timing_exec = nullptr;
   std::vector<task_executor*> ru_txrx_exec;
   std::vector<task_executor*> fapi_exec;
   std::vector<task_executor*> ru_dl_exec;
   std::vector<task_executor*> ru_rx_exec;
   task_executor*              cu_e2_exec           = nullptr;
-  task_executor*              metrics_hub_exec     = nullptr;
   task_executor*              non_rt_low_prio_exec = nullptr;
   task_executor*              non_rt_hi_prio_exec  = nullptr;
   task_executor*              split6_exec          = nullptr;
+  task_executor*              metrics_exec         = nullptr;
 
   std::unique_ptr<srs_cu_up::cu_up_executor_mapper> cu_up_exec_mapper;
 
-  srs_du::du_high_executor_mapper& get_du_high_executor_mapper(unsigned du_index);
+  srs_du::du_high_executor_mapper& get_du_high_executor_mapper() { return *du_high_exec_mapper; }
 
   // Gets the DU-low downlink executors.
   void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
@@ -92,11 +91,8 @@ struct worker_manager : public worker_manager_executor_getter {
   worker_manager_executor_getter* get_executor_getter() { return this; }
 
 private:
-  struct du_high_executor_storage {
-    std::unique_ptr<srs_du::du_high_executor_mapper> du_high_exec_mapper;
-  };
-  std::vector<du_high_executor_storage>    du_high_executors;
-  std::vector<std::vector<task_executor*>> du_low_dl_executors;
+  std::unique_ptr<srs_du::du_high_executor_mapper> du_high_exec_mapper;
+  std::vector<std::vector<task_executor*>>         du_low_dl_executors;
 
   /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;
@@ -122,7 +118,8 @@ private:
                           unsigned                                              queue_size,
                           const std::vector<execution_config_helper::executor>& execs,
                           os_thread_realtime_priority           prio      = os_thread_realtime_priority::no_realtime(),
-                          span<const os_sched_affinity_bitmask> cpu_masks = {});
+                          span<const os_sched_affinity_bitmask> cpu_masks = {},
+                          concurrent_queue_policy               queue_policy = concurrent_queue_policy::locking_mpmc);
 
   execution_config_helper::worker_pool create_low_prio_workers(unsigned                  nof_low_prio_threads,
                                                                unsigned int              low_prio_task_queue_size,

@@ -43,8 +43,8 @@ public:
     std::unique_ptr<time_alignment_estimator> ta_estimator;
   };
 
-  srs_estimator_generic_impl(dependencies deps_) :
-    cexp_table(cexp_table_size, cexp_table_amplitude), deps(std::move(deps_))
+  srs_estimator_generic_impl(dependencies deps_, unsigned max_nof_prb_) :
+    cexp_table(cexp_table_size, cexp_table_amplitude), deps(std::move(deps_)), max_nof_prb(max_nof_prb_)
   {
     srsran_assert(deps.sequence_generator, "Invalid sequence generator.");
     srsran_assert(deps.ta_estimator, "Invalid TA estimator.");
@@ -89,6 +89,8 @@ private:
 
   /// Dependencies collection.
   dependencies deps;
+  /// Maximum number of PRB.
+  unsigned max_nof_prb;
 
   /// Phase correction temporary vector - table indices.
   std::array<unsigned, max_symbol_size> temp_phase;

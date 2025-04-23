@@ -35,7 +35,9 @@ public:
   pucch_allocator_base_tester(test_bench_params params_ = test_bench_params{.pucch_res_common = 11, .n_cces = 1},
                               unsigned          max_pucchs_per_slot_    = 32U,
                               unsigned          max_ul_grants_per_slot_ = 32U) :
-    t_bench(params_, max_pucchs_per_slot_, max_ul_grants_per_slot_){};
+    t_bench(params_, max_pucchs_per_slot_, max_ul_grants_per_slot_)
+  {
+  }
 
 protected:
   // Parameters that are passed by the routine to run the tests.

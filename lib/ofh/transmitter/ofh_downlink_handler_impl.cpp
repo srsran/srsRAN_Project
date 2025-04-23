@@ -32,36 +32,23 @@
 using namespace srsran;
 using namespace ofh;
 
-namespace {
-/// Open Fronthaul error notifier dummy implementation.
-class error_notifier_dummy : public error_notifier
-{
-public:
-  void on_late_downlink_message(const error_context& context) override {}
-  void on_late_uplink_message(const error_context& context) override {}
-};
-
-} // namespace
-
-/// Dummy error notifier for the downlink handler construction.
-static error_notifier_dummy dummy_err_notifier;
-
 downlink_handler_impl::downlink_handler_impl(const downlink_handler_impl_config&  config,
                                              downlink_handler_impl_dependencies&& dependencies) :
   sector_id(config.sector),
-  logger(*dependencies.logger),
+  logger(dependencies.logger),
   cp(config.cp),
   tdd_config(config.tdd_config),
   dl_eaxc(config.dl_eaxc),
   window_checker(
-      *dependencies.logger,
+      dependencies.logger,
       config.sector,
       calculate_nof_symbols_before_ota(config.cp, config.scs, config.dl_processing_time, config.tx_timing_params),
       get_nsymb_per_slot(config.cp)),
   data_flow_cplane(std::move(dependencies.data_flow_cplane)),
   data_flow_uplane(std::move(dependencies.data_flow_uplane)),
   frame_pool(std::move(dependencies.frame_pool)),
-  err_notifier(&dummy_err_notifier)
+  err_notifier(dependencies.err_notifier),
+  metrics_collector(*data_flow_cplane, *data_flow_uplane, window_checker)
 {
   srsran_assert(data_flow_cplane, "Invalid Control-Plane data flow");
   srsran_assert(data_flow_uplane, "Invalid User-Plane data flow");
@@ -82,7 +69,7 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   frame_pool->clear_downlink_slot(context.slot, context.sector, logger);
 
   if (window_checker.is_late(context.slot)) {
-    err_notifier->on_late_downlink_message({context.slot, sector_id});
+    err_notifier.on_late_downlink_message({context.slot, sector_id});
 
     logger.warning(
         "Sector#{}: dropped late downlink resource grid in slot '{}'. No OFH data will be transmitted for this slot",
@@ -97,9 +84,8 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
   cplane_context.slot         = context.slot;
   cplane_context.filter_type  = filter_index_type::standard_channel_filter;
   cplane_context.direction    = data_direction::downlink;
-  cplane_context.symbol_range = tdd_config
-                                    ? get_active_tdd_dl_symbols(tdd_config.value(), context.slot.slot_index(), cp)
-                                    : ofdm_symbol_range(0, reader.get_nof_symbols());
+  cplane_context.symbol_range = tdd_config ? get_active_tdd_dl_symbols(*tdd_config, context.slot.slot_index(), cp)
+                                           : ofdm_symbol_range(0, reader.get_nof_symbols());
 
   data_flow_uplane_resource_grid_context uplane_context;
   uplane_context.slot         = context.slot;

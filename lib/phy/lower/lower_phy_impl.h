@@ -46,7 +46,7 @@
 namespace srsran {
 
 /// Lower physical layer implementation.
-class lower_phy_impl : public lower_phy
+class lower_phy_impl : public lower_phy, private lower_phy_controller
 {
 public:
   /// Collects the injected dependencies of the lower physical layer.
@@ -71,7 +71,7 @@ public:
   lower_phy_impl(configuration& config);
 
   // See interface for documentation.
-  lower_phy_controller& get_controller() override { return *controller; }
+  lower_phy_controller& get_controller() override { return *this; }
 
   // See interface for documentation.
   lower_phy_request_handler& get_request_handler() override { return handler_adaptor.get_request_handler(); }
@@ -85,6 +85,18 @@ public:
   // See interface for documentation.
   lower_phy_cfo_controller& get_rx_cfo_control() override;
 
+  // See lower_phy_controller interface for documentation.
+  void start(baseband_gateway_timestamp init_time) override { controller->start(init_time); }
+
+  // See lower_phy_controller interface for documentation.
+  void stop() override
+  {
+    downlink_proc->stop();
+    uplink_proc->stop();
+    controller->stop();
+  }
+
+private:
   /// Downlink processor.
   std::unique_ptr<lower_phy_downlink_processor> downlink_proc;
   /// Uplink processor.

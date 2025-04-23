@@ -25,9 +25,12 @@
 #include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/circular_map.h"
 #include "srsran/ofh/ecpri/ecpri_constants.h"
+#include "srsran/ofh/ethernet/ethernet_controller.h"
 #include "srsran/ofh/ethernet/ethernet_frame_notifier.h"
-#include "srsran/ofh/ethernet/ethernet_gateway.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
+#include "srsran/ofh/ethernet/ethernet_receiver_metrics_collector.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter_metrics_collector.h"
 #include "srsran/phy/support/resource_grid_context.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/phy/support/shared_resource_grid.h"
@@ -91,7 +94,6 @@ struct test_parameters {
   srslog::basic_levels  log_level                           = srslog::basic_levels::warning;
   std::string           log_filename                        = "stdout";
   bool                  is_prach_control_plane_enabled      = true;
-  bool                  is_downlink_broadcast_enabled       = false;
   bool                  ignore_ecpri_payload_size_field     = false;
   std::string           data_compr_method                   = "bfp";
   unsigned              data_bitwidth                       = 9;
@@ -138,8 +140,6 @@ static void usage(const char* prog)
              test_params.is_downlink_static_comp_hdr_enabled);
   fmt::print("\t-a Use static compression header for UL data [Default {}]\n",
              test_params.is_uplink_static_comp_hdr_enabled);
-  fmt::print("\t-e Broadcasts the contents of a single antenna port to all downlink eAxCs [Default {}]\n",
-             test_params.is_downlink_broadcast_enabled);
   fmt::print("\t-r Enable the Control-Plane PRACH message signalling [Default {}]\n",
              test_params.is_prach_control_plane_enabled);
   fmt::print("\t-i If set to true, the payload size encoded in a eCPRI header is ignored [Default {}]\n",
@@ -180,9 +180,6 @@ static void parse_args(int argc, char** argv)
         break;
       case 'a':
         test_params.is_uplink_static_comp_hdr_enabled = true;
-        break;
-      case 'e':
-        test_params.is_downlink_broadcast_enabled = true;
         break;
       case 'r':
         test_params.is_prach_control_plane_enabled = true;
@@ -288,11 +285,13 @@ class dummy_frame_notifier : public ether::frame_notifier
 dummy_frame_notifier dummy_notifier;
 
 /// Test Ethernet receiver interface.
-class test_ether_receiver : public ether::receiver
+class test_ether_receiver : public ether::receiver, public ether::receiver_operation_controller
 {
 public:
   test_ether_receiver(srslog::basic_logger& logger_) : logger(logger_), notifier(dummy_notifier) {}
   virtual ~test_ether_receiver() = default;
+
+  receiver_operation_controller& get_operation_controller() override { return *this; }
 
   void start(ether::frame_notifier& notifier_) override
   {
@@ -308,6 +307,9 @@ public:
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
+
+  // See interface for documentation.
+  ether::receiver_metrics_collector* get_metrics_collector() override { return nullptr; }
 
   virtual void push_new_data(span<const uint8_t> frame) = 0;
 
@@ -640,9 +642,9 @@ private:
   const unsigned              nof_prb;
   units::bytes                prb_size;
   /// Stores byte arrays for each antenna.
-  std::vector<std::vector<std::vector<uint8_t>>>                      test_data;
-  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC>                ul_eaxc;
+  std::vector<std::vector<std::vector<uint8_t>>>                     test_data;
+  static_circular_map<uint8_t, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
+  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC>               ul_eaxc;
 };
 
 /// DU emulator that pushes resource grids to the OFH RU implementation.
@@ -764,7 +766,7 @@ private:
 
 /// Ethernet transmitter gateway that analyzes incoming packets and checks integrity of the DL packets, as well as asks
 /// RU emulator for UL traffic generation.
-class test_gateway : public ether::gateway
+class test_gateway : public ether::transmitter
 {
 public:
   test_gateway() :
@@ -800,6 +802,9 @@ public:
       }
     }
   }
+
+  // See interface for documentation.
+  ether::transmitter_metrics_collector* get_metrics_collector() override { return nullptr; }
 
 private:
   void check_and_update_sequence_id(span<const uint8_t> message)
@@ -862,11 +867,11 @@ private:
   }
 
 private:
-  const subcarrier_spacing                                            scs;
-  const unsigned                                                      nof_symbols;
-  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
-  bounded_bitset<MAX_SUPPORTED_EAXC_ID_VALUE>                         seq_counter_initialized;
-  test_ru_emulator*                                                   ru_emulator;
+  const subcarrier_spacing                                           scs;
+  const unsigned                                                     nof_symbols;
+  static_circular_map<uint8_t, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
+  bounded_bitset<MAX_SUPPORTED_EAXC_ID_VALUE>                        seq_counter_initialized;
+  test_ru_emulator*                                                  ru_emulator;
 };
 
 /// Manages the workers of the test application and OFH RU.
@@ -1019,9 +1024,8 @@ static void configure_ofh_sector(ofh::sector_configuration& sector_cfg)
   sector_cfg.is_prach_control_plane_enabled  = test_params.is_prach_control_plane_enabled;
   sector_cfg.ignore_ecpri_payload_size_field = test_params.ignore_ecpri_payload_size_field;
   sector_cfg.tx_window_timing_params         = {
-              T1a_max_cp_dl, T1a_min_cp_dl, T1a_max_cp_ul, T1a_min_cp_ul, T1a_max_up, T1a_min_up};
-  sector_cfg.rx_window_timing_params       = {Ta4_min, Ta4_max};
-  sector_cfg.is_downlink_broadcast_enabled = test_params.is_downlink_broadcast_enabled;
+      T1a_max_cp_dl, T1a_min_cp_dl, T1a_max_cp_ul, T1a_min_cp_ul, T1a_max_up, T1a_min_up};
+  sector_cfg.rx_window_timing_params = {Ta4_min, Ta4_max};
 
   // Configure compression
   ru_compression_params dl_ul_compression_params{to_compression_type(test_params.data_compr_method),
@@ -1079,9 +1083,9 @@ static ru_ofh_dependencies generate_ru_dependencies(srslog::basic_logger&       
   sector_deps.txrx_executor     = workers.ru_tx_exec;
 
   // Configure Ethernet gateway.
-  auto gateway            = std::make_unique<test_gateway>();
-  tx_gateway              = gateway.get();
-  sector_deps.eth_gateway = std::move(gateway);
+  auto gateway                = std::make_unique<test_gateway>();
+  tx_gateway                  = gateway.get();
+  sector_deps.eth_transmitter = std::move(gateway);
 
   // Configure Ethernet receiver.
   auto dummy_receiver      = std::make_unique<dummy_eth_receiver>(logger, buffer_pool);

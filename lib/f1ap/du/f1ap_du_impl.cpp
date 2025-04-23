@@ -43,22 +43,6 @@ using namespace srsran;
 using namespace asn1::f1ap;
 using namespace srs_du;
 
-namespace {
-
-/// Adapter used to convert F1AP Rx PDUs coming from the CU-CP into F1AP messages.
-class f1ap_rx_pdu_adapter final : public f1ap_message_notifier
-{
-public:
-  f1ap_rx_pdu_adapter(f1ap_message_handler& msg_handler_) : msg_handler(msg_handler_) {}
-
-  void on_new_message(const f1ap_message& msg) override { msg_handler.handle_message(msg); }
-
-private:
-  f1ap_message_handler& msg_handler;
-};
-
-} // namespace
-
 class f1ap_du_impl::tx_pdu_notifier_with_logging final : public f1ap_message_notifier
 {
 public:
@@ -93,7 +77,8 @@ f1ap_du_impl::f1ap_du_impl(f1c_connection_client&      f1c_client_handler_,
   paging_notifier(paging_notifier_),
   connection_handler(f1c_client_handler_, *this, du_mng, ctrl_exec),
   ues(du_mng, ctrl_exec, ue_exec_mapper_, timers_),
-  events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory()))
+  events(std::make_unique<f1ap_event_manager>(du_mng.get_timer_factory())),
+  metrics(true)
 {
 }
 
@@ -138,7 +123,7 @@ f1ap_du_impl::handle_du_config_update(const gnbdu_config_update_request& request
 
 f1ap_ue_creation_response f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_creation_request& msg)
 {
-  f1ap_ue_creation_response resp = create_f1ap_ue(msg, ues, ctxt, *events);
+  f1ap_ue_creation_response resp = create_f1ap_ue(msg, ues, ctxt, *events, metrics);
   if (resp.result) {
     logger.info("{}: F1 UE context created successfully.", ues[msg.ue_index].context);
   } else {
@@ -158,6 +143,7 @@ void f1ap_du_impl::handle_ue_deletion_request(du_ue_index_t ue_index)
     logger.info("{}: F1 UE context removed.", ues[ue_index].context);
   }
   ues.remove_ue(ue_index);
+  metrics.on_ue_removal(ue_index);
 }
 
 void f1ap_du_impl::handle_reset(const reset_s& msg)
@@ -167,7 +153,7 @@ void f1ap_du_impl::handle_reset(const reset_s& msg)
 
 void f1ap_du_impl::handle_gnb_cu_configuration_update(const gnb_cu_cfg_upd_s& msg)
 {
-  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, *tx_pdu_notifier));
+  du_mng.schedule_async_task(launch_async<gnb_cu_configuration_update_procedure>(msg, du_mng, *tx_pdu_notifier));
 }
 
 void f1ap_du_impl::handle_ue_context_setup_request(const asn1::f1ap::ue_context_setup_request_s& msg)
@@ -331,9 +317,15 @@ void f1ap_du_impl::handle_ue_context_release_request(const f1ap_ue_context_relea
   rel_req->gnb_cu_ue_f1ap_id = gnb_cu_ue_f1ap_id_to_uint(ue->context.gnb_cu_ue_f1ap_id);
 
   // Set F1AP cause.
-  rel_req->cause.set_radio_network().value = (request.cause == rlf_cause::max_rlc_retxs_reached)
-                                                 ? cause_radio_network_opts::rl_fail_rlc
-                                                 : cause_radio_network_opts::rl_fail_others;
+  using cause_type = f1ap_ue_context_release_request::cause_type;
+  if (request.cause == cause_type::rlf_mac or request.cause == cause_type::rlf_rlc) {
+    rel_req->cause.set_radio_network().value =
+        (request.cause == cause_type::rlf_rlc ? cause_radio_network_opts::rl_fail_rlc
+                                              : cause_radio_network_opts::rl_fail_others);
+  } else {
+    rel_req->cause.set_radio_network().value = cause_radio_network_opts::cell_not_available;
+  }
+
   ue->f1ap_msg_notifier.on_new_message(msg);
 }
 
@@ -370,6 +362,9 @@ void f1ap_du_impl::handle_message(const f1ap_message& msg)
   if (not ctrl_exec.execute([this, msg]() {
         // Log message.
         log_pdu(true, msg);
+
+        // Record metric.
+        metrics.on_rx_pdu(msg);
 
         switch (msg.pdu.type().value) {
           case pdu_types::init_msg:

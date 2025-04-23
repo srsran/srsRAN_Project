@@ -62,6 +62,12 @@ static constexpr unsigned FORMAT2_MIN_UCI_NBITS = 3;
 /// Number of control data subcarriers per Resource Block for PUCCH Format 2, as per TS38.213 Section 9.1.5.2.
 static constexpr unsigned FORMAT2_NOF_DATA_SC = 8;
 
+/// PUCCH Format 1 initial cyclic shift range.
+static constexpr interval<unsigned, false> format1_initial_cyclic_shift_range(0, 12);
+
+/// PUCCH Format 1 initial OCC range.
+static constexpr interval<unsigned, false> format1_time_domain_occ_range(0, 7);
+
 /// Minimum number of symbols that PUCCH Format 3 can transmit.
 static constexpr unsigned FORMAT3_MIN_NSYMB = 4;
 

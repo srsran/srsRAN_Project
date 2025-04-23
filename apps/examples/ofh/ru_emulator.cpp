@@ -37,6 +37,7 @@
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/ofh_factories.h"
 #include "srsran/ofh/serdes/ofh_message_properties.h"
+#include "srsran/ofh/timing/ofh_ota_symbol_boundary_notifier.h"
 #include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/prach/prach_preamble_information.h"
 #include "srsran/ran/resource_block.h"
@@ -497,8 +498,8 @@ class ru_emulator : public frame_notifier
   // Number of OFDM symbols comprising PRACH U-Plane transmission.
   unsigned nof_prach_symbols;
   // Keeps track of last used seq_id for each eAxC.
-  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
-  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> prach_seq_counters;
+  static_circular_map<uint8_t, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> seq_counters;
+  static_circular_map<uint8_t, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> prach_seq_counters;
   // Stores the list of configured eAxC for uplink, downlink and PRACH.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
@@ -1024,21 +1025,22 @@ int main(int argc, char** argv)
   for (unsigned i = 0, e = ru_emulator_parsed_cfg.ru_cfg.size(); i != e; ++i) {
     ru_emulator_ofh_appconfig ru_cfg = ru_emulator_parsed_cfg.ru_cfg[i];
 
-    gw_config cfg;
+    ether::transmitter_config cfg;
     cfg.interface                   = ru_cfg.network_interface;
     cfg.mtu_size                    = units::bytes{ETHERNET_FRAME_SIZE};
     cfg.is_promiscuous_mode_enabled = ru_cfg.enable_promiscuous;
+    cfg.are_metrics_enabled         = false;
 #ifdef DPDK_FOUND
     if (uses_dpdk) {
       auto ctx = create_dpdk_port_context(cfg);
-      transceivers.push_back(std::make_unique<dpdk_transceiver>(logger, *workers.ru_rx_exec[i], ctx));
+      transceivers.push_back(ru_emu_create_dpdk_transceiver(logger, *workers.ru_rx_exec[i], ctx));
     } else
 #endif
     {
       if (!parse_mac_address(ru_cfg.du_mac_address, cfg.mac_dst_address)) {
         report_error("Invalid MAC address provided: '{}'", ru_cfg.du_mac_address);
       }
-      transceivers.push_back(std::make_unique<socket_transceiver>(logger, *workers.ru_rx_exec[i], cfg));
+      transceivers.push_back(ru_emu_create_socket_transceiver(logger, *workers.ru_rx_exec[i], cfg));
     }
 
     ru_emulator_config emu_cfg;

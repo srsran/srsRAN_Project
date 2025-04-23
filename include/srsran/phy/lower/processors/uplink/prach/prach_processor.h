@@ -44,6 +44,9 @@ public:
   /// Connects the PRACH processor with a notifier.
   virtual void connect(prach_processor_notifier& notifier) = 0;
 
+  /// Stops the processor.
+  virtual void stop() = 0;
+
   /// \brief Gets the PRACH processor request handler.
   /// \return A reference to the internal PRACH processor request handler.
   virtual prach_processor_request_handler& get_request_handler() = 0;

@@ -107,7 +107,9 @@ public:
                                     params.output_params.initial_cyclic_shift,
                                     params.output_params.sr_bits,
                                     params.output_params.harq_ack_nof_bits,
-                                    params.output_params.time_domain_occ)){};
+                                    params.output_params.time_domain_occ))
+  {
+  }
 
 protected:
   // Parametrized variables.
@@ -254,7 +256,7 @@ INSTANTIATE_TEST_SUITE_P(
 class test_pucch_harq_common_multiple_allocation : public ::testing::Test
 {
 public:
-  test_pucch_harq_common_multiple_allocation() : t_bench(test_bench_params{.pucch_res_common = 0, .n_cces = 1}){};
+  test_pucch_harq_common_multiple_allocation() : t_bench(test_bench_params{.pucch_res_common = 0, .n_cces = 1}) {}
 
 protected:
   // Parameters that are passed by the routing to run the tests.

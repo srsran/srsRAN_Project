@@ -80,6 +80,9 @@ public:
   // See interface for documentation.
   void enqueue_section_type_3_prach_message(const data_flow_cplane_scheduling_prach_context& context) override;
 
+  // See interface for documentation.
+  data_flow_message_encoding_metrics_collector* get_metrics_collector() override;
+
 private:
   srslog::basic_logger&                             logger;
   const unsigned                                    nof_symbols_per_slot;

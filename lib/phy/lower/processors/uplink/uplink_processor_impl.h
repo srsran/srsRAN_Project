@@ -69,6 +69,13 @@ public:
                puxch_processor_notifier&  puxch_notifier) override;
 
   // See interface for documentation.
+  void stop() override
+  {
+    prach_proc->stop();
+    puxch_proc->stop();
+  }
+
+  // See interface for documentation.
   prach_processor_request_handler& get_prach_request_handler() override;
 
   // See interface for documentation.

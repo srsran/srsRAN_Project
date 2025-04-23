@@ -1,0 +1,89 @@
+#
+# Copyright 2021-2025 Software Radio Systems Limited
+#
+# This file is part of srsRAN
+#
+# srsRAN is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation, either version 3 of
+# the License, or (at your option) any later version.
+#
+# srsRAN is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+# A copy of the GNU Affero General Public License can be found in
+# the LICENSE file in the top-level directory of this distribution
+# and at http://www.gnu.org/licenses/.
+#
+
+cu_up:
+  warn_on_drop: False
+
+buffer_pool:
+  nof_segments: 1048576
+
+cell_cfg:
+  dl_arfcn: 625000
+  band: 78
+  channel_bandwidth_MHz: 100
+  common_scs: 30
+  plmn: "00101"
+  tac: 7
+  pci: 1
+  nof_antennas_dl: {{nof_antennas_dl}}
+  nof_antennas_ul: {{nof_antennas_ul}}
+  pdsch:
+    mcs_table: qam256
+  pusch:
+    mcs_table: qam256
+    rv_sequence: 0
+  pucch:
+    sr_period_ms: 20
+    nof_ue_res_harq_per_set: 8
+    nof_cell_harq_pucch_res_sets: 2
+    f0_or_f1_nof_cell_res_sr: 80
+    f2_or_f3_or_f4_nof_cell_res_csi: 80
+  csi:
+    csi_rs_period: 40
+  ul_common:
+    max_ul_grants_per_slot: 128
+    max_pucchs_per_slot: 120
+  tdd_ul_dl_cfg:
+    nof_dl_slots: 6
+    nof_dl_symbols: 10
+    nof_ul_slots: 3  
+
+cells:
+  - pci: 1
+
+ru_dummy:
+
+test_mode:
+  test_ue:
+    rnti: 0x4601
+    pdsch_active: true
+    pusch_active: true
+    cqi: 15
+    ri: 4
+    nof_ues: 800
+
+metrics:
+  enable_json: true
+  enable_log: true
+  periodicity:
+    du_report_period: 1000
+  layers:
+    enable_sched: true
+    enable_mac: true
+
+expert_phy:
+  max_request_headroom_slots: 0
+  max_proc_delay: 4
+  pusch_dec_max_iterations: 2
+
+expert_execution:
+  threads:
+    upper_phy:
+      nof_ul_threads: 4

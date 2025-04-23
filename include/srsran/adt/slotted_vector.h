@@ -39,8 +39,8 @@ class slotted_vector_iter_impl
 {
   using iterator_type = slotted_vector_iter_impl<VectorData>;
   using elem_type     = std::conditional_t<std::is_const_v<VectorData>,
-                                       const typename VectorData::value_type,
-                                       typename VectorData::value_type>;
+                                           const typename VectorData::value_type,
+                                           typename VectorData::value_type>;
 
 public:
   using iterator_category = std::forward_iterator_tag;
@@ -321,6 +321,10 @@ public:
   iterator       end() { return sl_vec.end(); }
   const_iterator begin() const { return sl_vec.begin(); }
   const_iterator end() const { return sl_vec.end(); }
+
+  /// Increase capacity of slotted_id_vector to avoid reallocations.
+  /// \param[in] sz New capacity.
+  void reserve(size_t sz) { sl_vec.reserve(sz); }
 
   /// Insert element into the container if an element with the same ID does not exist yet.
   /// \param id ID the constructed element in the table.

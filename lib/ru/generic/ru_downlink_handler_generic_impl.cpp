@@ -21,6 +21,7 @@
  */
 
 #include "ru_downlink_handler_generic_impl.h"
+#include "lower_phy/lower_phy_sector.h"
 #include "srsran/phy/lower/lower_phy_rg_handler.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 
@@ -31,5 +32,5 @@ void ru_downlink_handler_generic_impl::handle_dl_data(const resource_grid_contex
 {
   srsran_assert(context.sector < handler.size(), "Invalid sector {}", context.sector);
 
-  handler[context.sector]->handle_resource_grid(context, grid);
+  handler[context.sector]->get_rg_handler().handle_resource_grid(context, grid);
 }

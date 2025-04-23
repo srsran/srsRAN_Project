@@ -26,6 +26,7 @@
 #include "srsran/ofh/compression/compression_params.h"
 #include "srsran/ofh/ethernet/ethernet_mac_address.h"
 #include "srsran/ofh/ethernet/ethernet_receiver.h"
+#include "srsran/ofh/ethernet/ethernet_transmitter.h"
 #include "srsran/ofh/ofh_constants.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/ofh/receiver/ofh_receiver_configuration.h"
@@ -40,6 +41,8 @@ namespace srsran {
 class task_executor;
 
 namespace ofh {
+
+class error_notifier;
 
 /// Open Fronthaul sector configuration.
 struct sector_configuration {
@@ -79,20 +82,16 @@ struct sector_configuration {
   bs_channel_bandwidth ru_operating_bw;
 
   /// PRACH eAxC.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// Downlink eAxC.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> dl_eaxc;
   /// Uplink eAxC.
-  static_vector<unsigned, ofh::MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
+  static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> ul_eaxc;
 
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = false;
   /// Ignore the start symbol value received in the PRACH U-Plane packets.
   bool ignore_prach_start_symbol = false;
-  /// \brief Downlink broadcast flag.
-  ///
-  /// If enabled, broadcasts the contents of a single antenna port to all downlink RU eAxCs.
-  bool is_downlink_broadcast_enabled = false;
   /// If set to true, the payload size encoded in a eCPRI header is ignored.
   bool ignore_ecpri_payload_size_field = false;
   /// If set to true, the sequence id encoded in a eCPRI packet is ignored.
@@ -102,11 +101,11 @@ struct sector_configuration {
   /// Warn of unreceived Radio Unit frames status.
   warn_unreceived_ru_frames log_unreceived_ru_frames = warn_unreceived_ru_frames::after_traffic_detection;
   /// Uplink compression parameters.
-  ofh::ru_compression_params ul_compression_params;
+  ru_compression_params ul_compression_params;
   /// Downlink compression parameters.
-  ofh::ru_compression_params dl_compression_params;
+  ru_compression_params dl_compression_params;
   /// PRACH compression parameters.
-  ofh::ru_compression_params prach_compression_params;
+  ru_compression_params prach_compression_params;
   /// Downlink static compression header flag.
   bool is_downlink_static_compr_hdr_enabled = true;
   /// Uplink static compression header flag.
@@ -134,16 +133,18 @@ struct sector_configuration {
 struct sector_dependencies {
   /// Logger.
   srslog::basic_logger* logger = nullptr;
+  /// Error notifier.
+  error_notifier* err_notifier = nullptr;
   /// Downlink task executor.
-  task_executor* downlink_executor;
+  task_executor* downlink_executor = nullptr;
   /// Message transmitter and receiver task executor.
   task_executor* txrx_executor = nullptr;
   /// Uplink task executor.
   task_executor* uplink_executor = nullptr;
   /// User-Plane received symbol notifier.
-  std::shared_ptr<ofh::uplane_rx_symbol_notifier> notifier;
-  /// Optional Ethernet gateway.
-  std::optional<std::unique_ptr<ether::gateway>> eth_gateway;
+  uplane_rx_symbol_notifier* notifier = nullptr;
+  /// Optional Ethernet transmitter.
+  std::optional<std::unique_ptr<ether::transmitter>> eth_transmitter;
   /// Optional Ethernet receiver.
   std::optional<std::unique_ptr<ether::receiver>> eth_receiver;
 };

@@ -39,7 +39,7 @@ constexpr size_t MAX_NOF_SEARCH_SPACE_PER_BWP = 10;
 /// "maxNrofSearchSpaces=40" Search Spaces configured. The ID space is used across BWPs of a serving cell.
 enum search_space_id : uint8_t { MIN_SEARCH_SPACE_ID = 0, MAX_SEARCH_SPACE_ID = 39, MAX_NOF_SEARCH_SPACES = 40 };
 
-inline search_space_id to_search_space_id(unsigned ss_id)
+constexpr search_space_id to_search_space_id(unsigned ss_id)
 {
   return static_cast<search_space_id>(ss_id);
 }

@@ -77,6 +77,14 @@ public:
   }
 };
 
+class mac_cell_dummy_time_mapper final : public mac_cell_time_mapper
+{
+public:
+  std::optional<mac_cell_slot_time_info> get_last_mapping() const override { return std::nullopt; }
+  std::optional<time_point>              get_time_point(slot_point slot) const override { return std::nullopt; }
+  std::optional<slot_point>              get_slot_point(time_point time) const override { return std::nullopt; }
+};
+
 class mac_dl_dummy_configurer final : public mac_dl_configurator
 {
 public:
@@ -87,6 +95,7 @@ public:
   std::optional<std::pair<du_ue_index_t, std::vector<mac_logical_channel_config>>> last_ue_bearers_added;
   std::optional<std::pair<du_ue_index_t, std::vector<lcid_t>>>                     last_ue_bearers_rem;
   mac_cell_dummy_controller                                                        cell_ctrl;
+  mac_cell_dummy_time_mapper                                                       time_mapper;
 
   async_task<bool> add_ue(const mac_ue_create_request& msg) override;
   async_task<void> remove_ue(const mac_ue_delete_request& msg) override;
@@ -96,9 +105,10 @@ public:
   async_task<bool>
   remove_bearers(du_ue_index_t ue_index, du_cell_index_t pcell_index, span<const lcid_t> lcids_to_rem) override;
 
-  void                 add_cell(const mac_cell_creation_request& cell_cfg) override {}
-  void                 remove_cell(du_cell_index_t cell_index) override {}
-  mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return cell_ctrl; }
+  mac_cell_controller&  add_cell(const mac_cell_creation_request& cell_cfg) override { return cell_ctrl; }
+  void                  remove_cell(du_cell_index_t cell_index) override {}
+  mac_cell_controller&  get_cell_controller(du_cell_index_t cell_index) override { return cell_ctrl; }
+  mac_cell_time_mapper& get_time_mapper(du_cell_index_t cell_index) override { return time_mapper; }
 };
 
 class dummy_ue_executor_mapper : public srs_du::du_high_ue_executor_mapper
@@ -181,7 +191,7 @@ public:
   class dummy_notifier : public sched_configuration_notifier
   {
     void on_ue_config_complete(du_ue_index_t ue_index, bool success) override {}
-    void on_ue_delete_response(du_ue_index_t ue_index) override {}
+    void on_ue_deletion_completed(du_ue_index_t ue_index) override {}
   } notifier;
 };
 

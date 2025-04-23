@@ -22,7 +22,11 @@
 
 #pragma once
 
+#include "srsran/adt/interval.h"
+#include "srsran/ran/uci/uci_constants.h"
 #include "srsran/support/math/math_utils.h"
+#include "srsran/support/srsran_assert.h"
+#include <array>
 
 namespace srsran {
 
@@ -70,6 +74,35 @@ constexpr unsigned get_uci_nof_crc_bits(unsigned message_length, unsigned codewo
   unsigned nof_crc_bits = get_uci_crc_size(message_length);
 
   return nof_codeblocks * nof_crc_bits;
+}
+
+/// \brief Calculates the minimum number of rate-matched bits required for decoding correctly a UCI payload.
+/// \remark An assertion is triggered if the payload number of bits is out of the range [1, 1706].
+inline unsigned calculate_uci_min_encoded_bits(unsigned nof_payload_bits)
+{
+  // [Implementation-defined] min_small_block_rm_size[i] represents the minimum number of rate-matched bits needed for
+  // detecting (i+1) UCI bits.
+  static constexpr std::array<unsigned, 11> min_small_block_rm_size = {2, 3, 9, 10, 11, 12, 13, 14, 14, 15, 17};
+
+  // [Implementation-defined] Assume the maximum polar code rate.
+  static constexpr float polar_max_code_rate = 0.95;
+
+  // Assert number of payload bits.
+  [[maybe_unused]] static constexpr interval<unsigned, true> nof_payload_bits_range(
+      1, uci_constants::MAX_NOF_PAYLOAD_BITS);
+  srsran_assert(nof_payload_bits_range.contains(nof_payload_bits),
+                "Number of payload bits (i.e., {}) is out of the range {}.",
+                nof_payload_bits,
+                nof_payload_bits_range);
+
+  // For small blocks.
+  if (nof_payload_bits < 12) {
+    return min_small_block_rm_size[nof_payload_bits - 1];
+  }
+
+  // For polar-based FEC.
+  return static_cast<unsigned>(polar_max_code_rate *
+                               static_cast<float>(nof_payload_bits + get_uci_nof_crc_bits(nof_payload_bits, 0)));
 }
 
 } // namespace srsran

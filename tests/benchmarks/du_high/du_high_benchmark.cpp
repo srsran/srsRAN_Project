@@ -55,6 +55,7 @@
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
 #include "srsran/f1u/du/f1u_gateway.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/benchmark_utils.h"
 #include "srsran/support/test_utils.h"
@@ -595,14 +596,14 @@ public:
     cfg.ran.mac_cfg                                = mac_expert_config{.configs = {{10000, 10000, 10000}}};
     cfg.ran.qos = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 1000);
 
-    dependencies.exec_mapper               = &workers->get_exec_mapper();
-    dependencies.f1c_client                = &sim_cu_cp;
-    dependencies.f1u_gw                    = &sim_cu_up;
-    dependencies.phy_adapter               = &sim_phy;
-    dependencies.timers                    = &timers;
-    dependencies.mac_p                     = &mac_pcap;
-    dependencies.rlc_p                     = &rlc_pcap;
-    dependencies.sched_ue_metrics_notifier = &metrics_handler;
+    dependencies.exec_mapper            = &workers->get_exec_mapper();
+    dependencies.f1c_client             = &sim_cu_cp;
+    dependencies.f1u_gw                 = &sim_cu_up;
+    dependencies.phy_adapter            = &sim_phy;
+    dependencies.timers                 = &timers;
+    dependencies.mac_p                  = &mac_pcap;
+    dependencies.rlc_p                  = &rlc_pcap;
+    dependencies.sched_metrics_notifier = &metrics_handler;
 
     // Increase nof. PUCCH resources to accommodate more UEs.
     cfg.ran.cells[0].pucch_cfg.nof_sr_resources                     = 30;
@@ -653,7 +654,7 @@ public:
     sim_phy.new_slot();
 
     // Push slot indication to DU-high.
-    du_hi->get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_sl_tx);
+    du_hi->get_slot_handler(to_du_cell_index(0)).handle_slot_indication({next_sl_tx, std::chrono::system_clock::now()});
 
     // Wait DU-high to finish handling the slot.
     sim_phy.wait_slot_complete();

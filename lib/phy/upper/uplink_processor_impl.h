@@ -165,6 +165,30 @@ public:
     task_executor& executor;
   };
 
+  /// Uplink processor dummy instance - it only processes PRACH and ignores the rest.
+  class dummy_instance : public uplink_slot_processor
+  {
+  public:
+    dummy_instance(uplink_slot_processor& base_) : base(base_) {}
+
+    void handle_rx_symbol(const shared_resource_grid& grid, unsigned end_symbol_index) override
+    {
+      // Ignore symbol.
+    }
+    void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) override
+    {
+      base.process_prach(buffer, context);
+    }
+
+    void discard_slot() override
+    {
+      // Ignore.
+    }
+
+  private:
+    uplink_slot_processor& base;
+  };
+
   /// Collects task executors.
   struct task_executor_collection {
     /// Executor for the PUCCH tasks generated within this uplink processor.
@@ -191,7 +215,10 @@ public:
   unique_uplink_pdu_slot_repository get_pdu_slot_repository(slot_point slot) override;
 
   // See uplink_processor interface for documentation.
-  uplink_slot_processor& get_slot_processor() override;
+  uplink_slot_processor& get_slot_processor(slot_point slot) override;
+
+  // See uplink_processor interface for documentation.
+  void stop() override;
 
 private:
   // See uplink_slot_processor interface for documentation.
@@ -209,6 +236,10 @@ private:
   /// Helper method for processing PUCCH.
   void process_pucch(const shared_resource_grid& grid, const uplink_pdu_slot_repository::pucch_pdu& pdu);
 
+  /// Helper method for processing PUCCH Format 1.
+  void process_pucch_f1(const shared_resource_grid&                                 grid,
+                        const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection);
+
   /// Helper method for processing SRS.
   void process_srs(const shared_resource_grid& grid, const uplink_pdu_slot_repository::srs_pdu& pdu);
 
@@ -217,6 +248,9 @@ private:
 
   /// Helper method for notifying a discarded PUCCH reception.
   void notify_discard_pucch(const uplink_pdu_slot_repository::pucch_pdu& pdu);
+
+  /// Helper method for notifying a discarded PUCCH Format 1 collection.
+  void notify_discard_pucch(const uplink_pdu_slot_repository_impl::pucch_f1_collection& collection);
 
   /// PDU repository.
   uplink_pdu_slot_repository_impl pdu_repository;
@@ -234,6 +268,9 @@ private:
   std::unique_ptr<srs_estimator> srs;
   /// Task executors.
   task_executor_collection task_executors;
+  /// Internal dummy instance to avoid exposing \c handle_rx_symbol() and \c discard_slot() in slots that do not match
+  /// the configured slot.
+  dummy_instance dummy;
   /// Receive buffer pool.
   rx_buffer_pool& rm_buffer_pool;
   /// Pool of containers for the payload.
@@ -244,5 +281,7 @@ private:
   slot_point current_slot;
   /// Upper physical layer receive results notifier reference.
   upper_phy_rx_results_notifier& notifier;
+  /// Counts the number of processed symbols. It is used to avoid skipping symbols.
+  unsigned nof_processed_symbols;
 };
 } // namespace srsran

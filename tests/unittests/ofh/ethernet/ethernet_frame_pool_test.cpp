@@ -479,13 +479,47 @@ TEST_P(EthFramePoolFixture, clearing_full_pool_should_allow_adding_more_data)
     for (unsigned symbol = 0; symbol < nof_symbols; ++symbol) {
       ofh::slot_symbol_point symbol_point(slot, symbol, nof_symbols);
 
+      // UL C-Plane can be requested in any symbol depending on TDD pattern.
+      if (ofh_type == ofh::message_type::control_plane) {
+        // We may need to write Type 1 and Type 3 C-Plane messages in the same slot and symbol.
+        unsigned                  nof_requested_buffers = ofh::MAX_NOF_SUPPORTED_EAXC * 2;
+        ether::frame_pool_context ctx                   = {{ofh_type, ofh::data_direction::uplink}, symbol_point};
+        bool                      pool_has_space        = true;
+        while (pool_has_space) {
+          span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
+          pool_has_space                   = !frame_buffers.empty();
+          for (auto& buffer : frame_buffers) {
+            buffer.set_size(64);
+          }
+          pool.push_frame_buffers(ctx, frame_buffers);
+        }
+
+        // Increase slot by pool size and clear stale buffers in the pool.
+        auto wrapped_slot = slot + pool_size_slots;
+        pool.clear_uplink_slot(wrapped_slot, 0, logger);
+
+        // Verify the pool is empty in the given slot.
+        auto rd_buffers = pool.read_frame_buffers(ctx);
+        ASSERT_TRUE(rd_buffers.empty()) << "No buffers are expected to be read from the pool after clearing it";
+
+        // Try to get buffers again and make sure they are available.
+        for (unsigned i = 0; i != nof_requested_buffers; ++i) {
+          span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
+          ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
+          pool.push_frame_buffers(ctx, frame_buffers);
+        }
+        pool.read_frame_buffers(ctx);
+        pool.clear_sent_frame_buffers(ctx);
+      }
+
+      // Fot DL C-Plane we only write and clear buffers in slot 0.
       if (ofh_type == ofh::message_type::control_plane && symbol != 0) {
         continue;
       }
 
-      // DL C-Plane and U-Plane
-      bool                      pool_has_space = true;
-      ether::frame_pool_context ctx{{ofh_type, ofh::data_direction::downlink}, symbol_point};
+      // DL C-Plane and U-Plane.
+      bool                      pool_has_space        = true;
+      ether::frame_pool_context ctx                   = {{ofh_type, ofh::data_direction::downlink}, symbol_point};
       unsigned                  nof_requested_buffers = ofh::MAX_NOF_SUPPORTED_EAXC;
       while (pool_has_space) {
         span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
@@ -501,39 +535,6 @@ TEST_P(EthFramePoolFixture, clearing_full_pool_should_allow_adding_more_data)
 
       // Verify the pool is empty in the given slot.
       auto rd_buffers = pool.read_frame_buffers(ctx);
-      ASSERT_TRUE(rd_buffers.empty()) << "No buffers are expected to be read from the pool after clearing it";
-
-      // Try to get buffers again and make sure they are available.
-      for (unsigned i = 0; i != nof_requested_buffers; ++i) {
-        span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
-        ASSERT_TRUE(!frame_buffers.empty()) << "Non-empty span of buffers expected";
-        pool.push_frame_buffers(ctx, frame_buffers);
-      }
-      pool.read_frame_buffers(ctx);
-      pool.clear_sent_frame_buffers(ctx);
-
-      if (ofh_type == ofh::message_type::user_plane) {
-        continue;
-      }
-
-      // UL C-Plane
-      // We may need to write Type 1 and Type 3 C-Plane messages in the same slot and symbol.
-      nof_requested_buffers *= 2;
-      ctx            = {{ofh_type, ofh::data_direction::uplink}, symbol_point};
-      pool_has_space = true;
-      while (pool_has_space) {
-        span<frame_buffer> frame_buffers = pool.get_frame_buffers(ctx);
-        pool_has_space                   = !frame_buffers.empty();
-        for (auto& buffer : frame_buffers) {
-          buffer.set_size(64);
-        }
-        pool.push_frame_buffers(ctx, frame_buffers);
-      }
-      // Clear full slot in the pool.
-      pool.clear_uplink_slot(wrapped_slot, 0, logger);
-
-      // Verify the pool is empty in the given slot.
-      rd_buffers = pool.read_frame_buffers(ctx);
       ASSERT_TRUE(rd_buffers.empty()) << "No buffers are expected to be read from the pool after clearing it";
 
       // Try to get buffers again and make sure they are available.

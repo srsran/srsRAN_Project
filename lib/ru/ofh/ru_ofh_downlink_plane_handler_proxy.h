@@ -39,6 +39,8 @@ class downlink_handler;
 class ru_downlink_plane_handler_proxy : public ru_downlink_plane_handler
 {
 public:
+  ru_downlink_plane_handler_proxy() = default;
+
   explicit ru_downlink_plane_handler_proxy(std::vector<ofh::downlink_handler*> sectors_) : sectors(std::move(sectors_))
   {
     srsran_assert(std::all_of(sectors.begin(), sectors.end(), [](const auto& elem) { return elem != nullptr; }),

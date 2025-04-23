@@ -23,6 +23,7 @@
 #pragma once
 
 #include "du_cell_manager.h"
+#include "du_metrics_aggregator_impl.h"
 #include "du_ue/du_ue_manager.h"
 #include "ran_resource_management/du_ran_resource_manager_impl.h"
 #include "srsran/du/du_high/du_manager/du_manager.h"
@@ -57,6 +58,8 @@ public:
   du_ue_index_t find_unused_du_ue_index() override;
 
   async_task<void> handle_f1_reset_request(const std::vector<du_ue_index_t>& ues_to_reset) override;
+  async_task<gnbcu_config_update_response>
+  handle_cu_context_update_request(const gnbcu_config_update_request& request) override;
 
   async_task<f1ap_ue_context_creation_response>
   handle_ue_context_creation(const f1ap_ue_context_creation_request& request) override;
@@ -72,7 +75,8 @@ public:
 
   void handle_ue_config_applied(du_ue_index_t ue_index) override;
 
-  size_t nof_ues() override;
+  size_t                nof_ues() override;
+  mac_cell_time_mapper& get_time_mapper() override;
 
   async_task<du_mac_sched_control_config_response>
   configure_ue_mac_scheduler(du_mac_sched_control_config reconf) override;
@@ -80,6 +84,8 @@ public:
   du_param_config_response handle_operator_config_request(const du_param_config_request& req) override;
 
   f1ap_du_positioning_handler& get_positioning_handler() override { return *positioning_handler; }
+
+  du_manager_metrics_aggregator& get_metrics_aggregator() override { return metrics; }
 
 private:
   // DU manager configuration that will be visible to all running procedures
@@ -91,6 +97,7 @@ private:
   du_ran_resource_manager_impl                 cell_res_alloc;
   du_ue_manager                                ue_mng;
   std::unique_ptr<f1ap_du_positioning_handler> positioning_handler;
+  du_manager_metrics_aggregator_impl           metrics;
 
   std::mutex              mutex;
   std::condition_variable cvar;

@@ -22,6 +22,7 @@
 
 #include "ru_sdr_config_cli11_schema.h"
 #include "apps/helpers/logger/logger_appconfig_cli11_utils.h"
+#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/worker_manager/cli11_cpu_affinities_parser_helper.h"
 #include "ru_sdr_config.h"
 #include "srsran/support/cli11_utils.h"
@@ -265,6 +266,12 @@ static void configure_cli11_expert_execution_args(CLI::App& app, ru_sdr_unit_exp
       "Sets the cell CPU affinities configuration on a per cell basis");
 }
 
+static void configure_cli11_metrics_args(CLI::App& app, ru_sdr_unit_metrics_config& config)
+{
+  CLI::App* layers_subcmd = add_subcommand(app, "layers", "Layer basis metrics configuration")->configurable();
+  add_option(*layers_subcmd, "--enable_ru", config.enable_ru_metrics, "Enable Radio Unit metrics");
+}
+
 void srsran::configure_cli11_with_ru_sdr_config_schema(CLI::App& app, srsran::ru_sdr_unit_config& parsed_cfg)
 {
   /// RU SDR section.
@@ -278,6 +285,11 @@ void srsran::configure_cli11_with_ru_sdr_config_schema(CLI::App& app, srsran::ru
   // Expert execution section.
   CLI::App* expert_subcmd = add_subcommand(app, "expert_execution", "Expert execution configuration")->configurable();
   configure_cli11_expert_execution_args(*expert_subcmd, parsed_cfg.expert_execution_cfg);
+
+  // Metrics section.
+  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, parsed_cfg.metrics_cfg.metrics_cfg);
+  CLI::App* metrics_subcmd = add_subcommand(app, "metrics", "Metrics configuration")->configurable();
+  configure_cli11_metrics_args(*metrics_subcmd, parsed_cfg.metrics_cfg);
 }
 
 void srsran::autoderive_ru_sdr_parameters_after_parsing(CLI::App&           app,

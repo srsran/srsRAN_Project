@@ -95,8 +95,8 @@ float ue_link_adaptation_controller::get_effective_cqi() const
 {
   float eff_cqi = static_cast<float>(ue_ch_st.get_wideband_cqi().value());
   if (eff_cqi == 0.0F) {
-    // CQI==0 is a special case, where the channel is not considered in a valid state.
-    return eff_cqi;
+    // Reported CQI==0 is a special case, where the channel is not considered in a valid state.
+    return -1;
   }
 
   if (dl_olla.has_value()) {
@@ -122,7 +122,7 @@ std::optional<sch_mcs_index> ue_link_adaptation_controller::calculate_dl_mcs(pds
 
   // Derive MCS using the combination of CQI + outer loop link adaptation.
   const float eff_cqi = get_effective_cqi();
-  if (eff_cqi == 0.0F) {
+  if (eff_cqi <= 0.0F) {
     // Special case, where reported CQI==0.
     return std::nullopt;
   }

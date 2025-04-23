@@ -22,14 +22,14 @@
 
 #pragma once
 
-#include "ofh_message_receiver.h"
+#include "ofh_message_receiver_impl.h"
 #include "srsran/ofh/ofh_controller.h"
 
 namespace srsran {
 namespace ofh {
 
 /// Open Fronthaul receiver controller.
-class receiver_controller : public controller
+class receiver_controller : public operation_controller
 {
   message_receiver& msg_receiver;
 

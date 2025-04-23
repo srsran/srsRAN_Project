@@ -102,6 +102,8 @@ public:
     puxch_notifier = &puxch_notifier_;
   }
 
+  void stop() override {}
+
   lower_phy_cfo_controller& get_cfo_handler() override { return cfo_processor_spy; }
 
   const uplink_processor_configuration& get_config() const { return config; }

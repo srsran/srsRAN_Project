@@ -23,7 +23,6 @@ Test Iperf
 """
 
 import logging
-from collections import defaultdict
 from time import sleep
 from typing import Optional, Sequence, Tuple, Union
 
@@ -40,7 +39,16 @@ from retina.protocol.ric_pb2_grpc import NearRtRicStub
 from retina.protocol.ue_pb2 import IPerfDir, IPerfProto
 from retina.protocol.ue_pb2_grpc import UEStub
 
-from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth, is_tdd
+from .steps.configuration import configure_test_parameters, get_minimum_sample_rate_for_bandwidth
+from .steps.iperf_helpers import (
+    assess_iperf_bitrate,
+    get_maximum_throughput,
+    LONG_DURATION,
+    LOW_BITRATE,
+    MEDIUM_BITRATE,
+    SHORT_DURATION,
+    TINY_DURATION,
+)
 from .steps.stub import (
     INTER_UE_START_PERIOD,
     iperf_parallel,
@@ -53,122 +61,7 @@ from .steps.stub import (
     stop_rc_xapp,
 )
 
-TINY_DURATION = 10
-SHORT_DURATION = 20
-LONG_DURATION = 2 * 60
-LOW_BITRATE = int(1e6)
-MEDIUM_BITRATE = int(15e6)
-HIGH_BITRATE = int(50e6)
-MAX_BITRATE = int(600e6)
-
 ZMQ_ID = "band:%s-scs:%s-bandwidth:%s-bitrate:%s"
-
-# TDD throughput (empirical measurements, might become outdated if RF conditions change)
-tdd_ul_udp = defaultdict(
-    lambda: MAX_BITRATE,
-    {
-        20: int(16e6),
-        50: int(33e6),
-        90: int(58e6),
-    },
-)
-tdd_dl_udp = defaultdict(
-    lambda: MAX_BITRATE,
-    {
-        20: int(45e6),
-        50: int(156e6),
-        90: int(247e6),
-    },
-)
-tdd_ul_tcp = defaultdict(
-    lambda: MAX_BITRATE,
-    {
-        20: int(16e6),
-        50: int(29e6),
-        90: int(56e6),
-    },
-)
-tdd_dl_tcp = defaultdict(
-    lambda: MAX_BITRATE,
-    {
-        20: int(43e6),
-        50: int(153e6),
-        90: int(124e6),
-    },
-)
-
-# FDD throughput (empirical measurements, might become outdated if RF conditions change)
-fdd_ul_udp = defaultdict(
-    lambda: MAX_BITRATE,
-    {
-        10: int(32e6),
-        20: int(71e6),
-    },
-)
-fdd_dl_udp = defaultdict(
-    lambda: MAX_BITRATE,
-    {
-        10: int(35e6),
-        20: int(97e6),
-    },
-)
-fdd_ul_tcp = defaultdict(
-    lambda: MAX_BITRATE,
-    {
-        10: int(30e6),
-        20: int(69e6),
-    },
-)
-fdd_dl_tcp = defaultdict(
-    lambda: MAX_BITRATE,
-    {
-        10: int(35e6),
-        20: int(96e6),
-    },
-)
-
-
-def get_maximum_throughput_tdd(bandwidth: int, direction: IPerfDir, protocol: IPerfProto) -> int:
-    """
-    Get the maximum E2E TDD throughput for bandwidth, direction and transport protocol
-    """
-    if direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
-        if protocol == IPerfProto.UDP:
-            return tdd_ul_udp[bandwidth]
-        if protocol == IPerfProto.TCP:
-            return tdd_ul_tcp[bandwidth]
-    elif direction == IPerfDir.DOWNLINK:
-        if protocol == IPerfProto.UDP:
-            return tdd_dl_udp[bandwidth]
-        if protocol == IPerfProto.TCP:
-            return tdd_dl_tcp[bandwidth]
-    return 0
-
-
-def get_maximum_throughput_fdd(bandwidth: int, direction: IPerfDir, protocol: IPerfProto) -> int:
-    """
-    Get the maximum E2E FDD throughput for bandwidth, direction and transport protocol
-    """
-    if direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
-        if protocol == IPerfProto.UDP:
-            return fdd_ul_udp[bandwidth]
-        if protocol == IPerfProto.TCP:
-            return fdd_ul_tcp[bandwidth]
-    elif direction == IPerfDir.DOWNLINK:
-        if protocol == IPerfProto.UDP:
-            return fdd_dl_udp[bandwidth]
-        if protocol == IPerfProto.TCP:
-            return fdd_dl_tcp[bandwidth]
-    return 0
-
-
-def get_maximum_throughput(bandwidth: int, band: int, direction: IPerfDir, protocol: IPerfProto) -> int:
-    """
-    Get the maximum E2E throughput for bandwidth, duplex-type, direction and transport protocol
-    """
-    if is_tdd(band):
-        return get_maximum_throughput_tdd(bandwidth, direction, protocol)
-    return get_maximum_throughput_fdd(bandwidth, direction, protocol)
 
 
 @mark.parametrize(
@@ -471,6 +364,64 @@ def test_zmq_2x2_mimo(
         nof_antennas_dl=2,
         nof_antennas_ul=2,
         inter_ue_start_period=1.5,  # Due to uesim
+        assess_bitrate=False,
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth",
+    (param(41, 30, 50, id="band:%s-scs:%s-bandwidth:%s"),),
+)
+@mark.zmq_64_ues
+@mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_zmq_64_ues(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_64: Tuple[UEStub, ...],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ 2x2 mimo IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_64,
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,
+        iperf_duration=SHORT_DURATION,
+        protocol=protocol,
+        bitrate=MEDIUM_BITRATE,
+        direction=direction,
+        global_timing_advance=-1,
+        time_alignment_calibration=0,
+        always_download_artifacts=False,
+        rx_to_tx_latency=2,
+        enable_dddsu=False,
+        nof_antennas_dl=2,
+        nof_antennas_ul=2,
+        inter_ue_start_period=1.5,  # Due to uesim
+        assess_bitrate=True,
     )
 
 
@@ -580,7 +531,7 @@ def test_smoke(
         always_download_artifacts=False,
         bitrate_threshold=0,
         ue_stop_timeout=30,
-        gnb_post_cmd=("", "metrics --enable_log_metrics=True"),
+        gnb_post_cmd=("", "metrics --enable_log=True"),
     )
 
 
@@ -759,6 +710,7 @@ def _iperf(
     pusch_mcs_table: str = "qam256",
     inter_ue_start_period=INTER_UE_START_PERIOD,
     ric: Optional[NearRtRicStub] = None,
+    assess_bitrate: bool = False,
 ):
     wait_before_power_off = 5
 
@@ -782,6 +734,7 @@ def _iperf(
         pdsch_mcs_table=pdsch_mcs_table,
         pusch_mcs_table=pusch_mcs_table,
     )
+
     configure_artifacts(
         retina_data=retina_data,
         always_download_artifacts=always_download_artifacts,
@@ -818,6 +771,7 @@ def _iperf(
     sleep(wait_before_power_off)
     if ric:
         ric_validate_e2_interface(ric, kpm_expected=True, rc_expected=True)
+
     stop(
         ue_array,
         gnb,
@@ -829,5 +783,18 @@ def _iperf(
     )
 
     metrics: Metrics = gnb.GetMetrics(Empty())
+
     if metrics.total.dl_bitrate + metrics.total.ul_bitrate <= 0:
         pytest.fail("No traffic detected in GNB metrics")
+
+    if assess_bitrate and protocol == IPerfProto.UDP:
+
+        assess_iperf_bitrate(
+            bw=bandwidth,
+            band=band,
+            nof_antennas_dl=nof_antennas_dl,
+            pdsch_mcs_table=pdsch_mcs_table,
+            pusch_mcs_table=pusch_mcs_table,
+            iperf_duration=iperf_duration,
+            metrics=metrics,
+        )

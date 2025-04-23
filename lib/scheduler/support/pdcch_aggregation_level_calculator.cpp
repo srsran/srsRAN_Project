@@ -28,61 +28,6 @@
 
 using namespace srsran;
 
-// [Implementation-defined] Fetch minimum modulation scheme in order to use a PDCCH candidate at a particular
-// aggregation level.
-// For example: For the input Aggregation level 2 and MCS table 1, the corresponding output is a minimum modulation
-// scheme of QAM16. This means that  PDCCH candidates of aggregation level 2 can only be used if MCS is 10 or above.
-static modulation_scheme get_min_modulation_scheme_per_aggr_lvl(aggregation_level lvl, pdsch_mcs_table mcs_table)
-{
-  // NOTE: The minimum modulation scheme for a particular aggregation level is chosen based on the tests using SNR ramp
-  // script and tables 5.1.3.1-[1-3] in TS 38.214.
-  switch (mcs_table) {
-    case pdsch_mcs_table::qam64: {
-      switch (lvl) {
-        case aggregation_level::n1:
-          return modulation_scheme::QAM64;
-        case aggregation_level::n2:
-          return modulation_scheme::QAM16;
-        case aggregation_level::n4:
-        case aggregation_level::n8:
-        case aggregation_level::n16:
-          return modulation_scheme::QPSK;
-        default:
-          report_fatal_error("Invalid aggregation level={}", to_nof_cces(lvl));
-      }
-    }
-    case pdsch_mcs_table::qam256: {
-      switch (lvl) {
-        case aggregation_level::n1:
-          return modulation_scheme::QAM256;
-        case aggregation_level::n2:
-          return modulation_scheme::QAM64;
-        case aggregation_level::n4:
-          return modulation_scheme::QAM16;
-        case aggregation_level::n8:
-        case aggregation_level::n16:
-          return modulation_scheme::QPSK;
-        default:
-          report_fatal_error("Invalid aggregation level={}", to_nof_cces(lvl));
-      }
-    }
-    case pdsch_mcs_table::qam64LowSe: {
-      switch (lvl) {
-        case aggregation_level::n1:
-        case aggregation_level::n2:
-          return modulation_scheme::QAM16;
-        case aggregation_level::n4:
-        case aggregation_level::n8:
-        case aggregation_level::n16:
-          return modulation_scheme::QPSK;
-        default:
-          report_fatal_error("Invalid aggregation level={}", to_nof_cces(lvl));
-      }
-    }
-  }
-  report_fatal_error("Invalid MCS table={}", fmt::underlying(mcs_table));
-}
-
 // Returns Modulation and Coding scheme corresponding to effective CQI.
 // \remark Effective CQI = CQI reported by UE + OLLA offset.
 static sch_mcs_description get_mcs_config(float cqi, pdsch_mcs_table mcs_table)
@@ -99,17 +44,18 @@ static sch_mcs_description get_mcs_config(float cqi, pdsch_mcs_table mcs_table)
 }
 
 // Computes PDCCH code rate for a given aggregation level.
-static double compute_pdcch_code_rate(unsigned nof_dci_bits, aggregation_level lvl)
+// Note: This formula is not explicitly given in the TS. The code rate is computed in the standard payload / total_bits
+// form from information present in the TS.
+static float compute_pdcch_code_rate(unsigned nof_dci_bits, aggregation_level lvl)
 {
-  static const unsigned pdcch_crc_bits = 24U;
-  return ((double)nof_dci_bits + pdcch_crc_bits) / (double)(pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
+  return static_cast<float>(nof_dci_bits + pdcch_constants::NOF_CRC_BITS) /
+         static_cast<float>(pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
 }
 
 // Return whether DCI fits in given aggregation level (in turn nof. CCEs).
 static bool does_dci_bits_fit_in_cces(unsigned nof_dci_bits, aggregation_level lvl)
 {
-  static const unsigned pdcch_crc_bits = 24U;
-  return (nof_dci_bits + pdcch_crc_bits) < (pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
+  return (nof_dci_bits + pdcch_constants::NOF_CRC_BITS) < (pdcch_constants::NOF_BITS_PER_CCE * to_nof_cces(lvl));
 }
 
 // Fetch MCS table to use corresponding to the CQI table provided as input.
@@ -145,14 +91,17 @@ aggregation_level srsran::map_cqi_to_aggregation_level(float               cqi,
       if (not does_dci_bits_fit_in_cces(nof_dci_bits, aggr_lvl)) {
         continue;
       }
-      // Check whether code rate is not exceeding the target code rate at effective CQI.
+      // There is no point in comparing code rate for higher modulation schemes.
+      if (mcs_cfg.modulation > modulation_scheme::QPSK) {
+        return aggr_lvl;
+      }
+      // Check whether code rate is not exceeding the target code rate for this MCS.
+      // Note: the actual effective code rate for a PDSCH with this MCS might be higher,
+      // the target code rate is only used as a reference.
       if (compute_pdcch_code_rate(nof_dci_bits, aggr_lvl) > mcs_cfg.get_normalised_target_code_rate()) {
         continue;
       }
-      // Check whether aggregation level can be at derived MCS.
-      if (mcs_cfg.modulation >= get_min_modulation_scheme_per_aggr_lvl(aggr_lvl, mcs_table)) {
-        return aggr_lvl;
-      }
+      return aggr_lvl;
     }
   }
 

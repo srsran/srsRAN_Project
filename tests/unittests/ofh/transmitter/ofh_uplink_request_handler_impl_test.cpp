@@ -24,6 +24,7 @@
 #include "../../../../lib/ofh/transmitter/ofh_uplink_request_handler_impl.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "ofh_data_flow_cplane_scheduling_commands_test_doubles.h"
+#include "srsran/ofh/ofh_error_notifier.h"
 #include "srsran/ofh/ofh_uplane_rx_symbol_notifier.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_timing_parameters.h"
 #include "srsran/phy/support/prach_buffer.h"
@@ -87,6 +88,23 @@ public:
   }
 };
 
+/// Error notifier spy implementation.
+class error_notifier_spy : public error_notifier
+{
+  bool dl_late = false;
+  bool ul_late = false;
+
+public:
+  // See interface for documentation.
+  void on_late_downlink_message(const error_context& context) override { dl_late = true; }
+
+  // See interface for documentation.
+  void on_late_uplink_message(const error_context& context) override { ul_late = true; }
+
+  bool is_downlink_late() const { return dl_late; }
+  bool is_uplink_late() const { return ul_late; }
+};
+
 class ofh_uplink_request_handler_impl_fixture : public ::testing::Test
 {
 protected:
@@ -96,6 +114,7 @@ protected:
   tx_window_timing_parameters                tx_timing_params   = {0, 0, 8, 5, 0, 0};
   std::chrono::microseconds                  ul_processing_time = std::chrono::microseconds(30);
   unsigned                                   nof_symbols        = get_nsymb_per_slot(cp);
+  error_notifier_spy                         notifier_spy;
   uplink_request_handler_impl_config         cfg;
   resource_grid_reader_spy                   reader_spy;
   resource_grid_writer_spy                   writer_spy;
@@ -103,10 +122,11 @@ protected:
   shared_resource_grid_spy                   shared_grid;
   std::shared_ptr<uplink_context_repository> ul_slot_repo;
   std::shared_ptr<prach_context_repository>  ul_prach_repo;
-  data_flow_cplane_scheduling_commands_spy*  data_flow;
-  data_flow_cplane_scheduling_commands_spy*  data_flow_prach;
-  uplink_request_handler_impl                handler;
-  uplink_request_handler_impl                handler_prach_cp_en;
+  std::shared_ptr<uplink_notified_grid_symbol_repository> notified_symbol_repo;
+  data_flow_cplane_scheduling_commands_spy*               data_flow;
+  data_flow_cplane_scheduling_commands_spy*               data_flow_prach;
+  uplink_request_handler_impl                             handler;
+  uplink_request_handler_impl                             handler_prach_cp_en;
 
   explicit ofh_uplink_request_handler_impl_fixture() :
     reader_spy(1, 14, 1),
@@ -115,6 +135,7 @@ protected:
     shared_grid(grid),
     ul_slot_repo(std::make_shared<uplink_context_repository>(REPOSITORY_SIZE)),
     ul_prach_repo(std::make_shared<prach_context_repository>(REPOSITORY_SIZE)),
+    notified_symbol_repo(std::make_unique<uplink_notified_grid_symbol_repository>(REPOSITORY_SIZE)),
     handler(get_config_prach_cp_disabled(), get_dependencies_prach_cp_disabled()),
     handler_prach_cp_en(get_config_prach_cp_enabled(), get_dependencies_prach_cp_enabled())
   {
@@ -122,30 +143,30 @@ protected:
 
   uplink_request_handler_impl_dependencies get_dependencies_prach_cp_disabled()
   {
-    uplink_request_handler_impl_dependencies dependencies;
-    dependencies.logger        = &srslog::fetch_basic_logger("TEST");
-    dependencies.ul_slot_repo  = ul_slot_repo;
-    dependencies.ul_prach_repo = ul_prach_repo;
-    dependencies.frame_pool    = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
-    auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-    data_flow                  = temp.get();
-    dependencies.data_flow     = std::move(temp);
+    auto temp = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+    data_flow = temp.get();
 
-    return dependencies;
+    return {srslog::fetch_basic_logger("TEST"),
+            notifier_spy,
+            ul_slot_repo,
+            ul_prach_repo,
+            notified_symbol_repo,
+            std::move(temp),
+            std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
   }
 
   uplink_request_handler_impl_dependencies get_dependencies_prach_cp_enabled()
   {
-    uplink_request_handler_impl_dependencies dependencies;
-    dependencies.logger        = &srslog::fetch_basic_logger("TEST");
-    dependencies.ul_slot_repo  = ul_slot_repo;
-    dependencies.ul_prach_repo = ul_prach_repo;
-    dependencies.frame_pool    = std::make_shared<ether::eth_frame_pool>(mtu_size, 2);
-    auto temp                  = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
-    data_flow_prach            = temp.get();
-    dependencies.data_flow     = std::move(temp);
+    auto temp       = std::make_unique<data_flow_cplane_scheduling_commands_spy>();
+    data_flow_prach = temp.get();
 
-    return dependencies;
+    return {srslog::fetch_basic_logger("TEST"),
+            notifier_spy,
+            ul_slot_repo,
+            ul_prach_repo,
+            notified_symbol_repo,
+            std::move(temp),
+            std::make_shared<ether::eth_frame_pool>(mtu_size, 2)};
   }
 
   uplink_request_handler_impl_config get_config_prach_cp_disabled()
@@ -205,6 +226,8 @@ TEST_F(ofh_uplink_request_handler_impl_fixture,
   // Assert data flow.
   ASSERT_FALSE(data_flow->has_enqueue_section_type_1_method_been_called());
   ASSERT_FALSE(data_flow->has_enqueue_section_type_3_method_been_called());
+  ASSERT_FALSE(notifier_spy.is_downlink_late());
+  ASSERT_FALSE(notifier_spy.is_uplink_late());
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture, handle_prach_request_generates_cplane_message)
@@ -236,6 +259,8 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_prach_request_generates_c
   ASSERT_EQ(prach_eaxc[0], info.eaxc);
   ASSERT_EQ(data_direction::uplink, info.direction);
   ASSERT_EQ(filter_index_type::ul_prach_preamble_short, info.filter_type);
+  ASSERT_FALSE(notifier_spy.is_downlink_late());
+  ASSERT_FALSE(notifier_spy.is_uplink_late());
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_prach_request_does_not_generate_cplane_message)
@@ -262,6 +287,8 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_prach_request_does_n
   ASSERT_FALSE(data_flow_prach->has_enqueue_section_type_1_method_been_called());
   ASSERT_FALSE(data_flow_prach->has_enqueue_section_type_3_method_been_called());
   ASSERT_TRUE(ul_prach_repo->get(context.slot).empty());
+  ASSERT_FALSE(notifier_spy.is_downlink_late());
+  ASSERT_TRUE(notifier_spy.is_uplink_late());
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cplane_message)
@@ -294,6 +321,8 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_uplink_slot_generates_cpl
   // Assert that the symbol range equals the number of symbols of the grid.
   ASSERT_EQ(0, symbol_range.start());
   ASSERT_EQ(writer_spy.get_nof_symbols(), symbol_range.stop());
+  ASSERT_FALSE(notifier_spy.is_downlink_late());
+  ASSERT_FALSE(notifier_spy.is_uplink_late());
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_uplink_request_does_not_generates_cplane_message)
@@ -310,6 +339,8 @@ TEST_F(ofh_uplink_request_handler_impl_fixture, handle_late_uplink_request_does_
 
   // Assert data flow.
   ASSERT_FALSE(data_flow->has_enqueue_section_type_1_method_been_called());
+  ASSERT_FALSE(notifier_spy.is_downlink_late());
+  ASSERT_TRUE(notifier_spy.is_uplink_late());
 }
 
 TEST_F(ofh_uplink_request_handler_impl_fixture,

@@ -113,32 +113,42 @@ void slice_ue_repository::rem_ue(du_ue_index_t ue_index)
   ue_map.erase(ue_index);
 }
 
+static unsigned sum_allocated_ul_harq_bytes(const ue& u)
+{
+  unsigned bytes_in_harqs = 0;
+  for (unsigned cell_idx = 0, e = u.nof_cells(); cell_idx != e; ++cell_idx) {
+    const ue_cell& cc = u.get_cell(to_ue_cell_index(cell_idx));
+    bytes_in_harqs += cc.harqs.total_ul_bytes_waiting_ack();
+  }
+  return bytes_in_harqs;
+}
+
 unsigned slice_ue::pending_ul_newtx_bytes() const
 {
   static constexpr unsigned SR_GRANT_BYTES = 512;
 
-  unsigned pending_bytes = u.ul_logical_channels().pending_bytes(slice_id);
+  int pending_bytes  = u.ul_logical_channels().pending_bytes(slice_id);
+  int harqs_in_bytes = -1;
 
-  // Subtract the bytes already allocated in UL HARQs.
-  unsigned bytes_in_harqs = 0;
-  for (unsigned cell_idx = 0, e = u.nof_cells(); cell_idx != e; ++cell_idx) {
-    const ue_cell& cc = u.get_cell(to_ue_cell_index(cell_idx));
-    if (pending_bytes <= bytes_in_harqs) {
-      break;
-    }
-    bytes_in_harqs += cc.harqs.total_ul_bytes_waiting_ack();
-  }
-  pending_bytes -= std::min(pending_bytes, bytes_in_harqs);
   if (pending_bytes > 0) {
-    return pending_bytes;
+    // Subtract the bytes already allocated in UL HARQs.
+    harqs_in_bytes = sum_allocated_ul_harq_bytes(u);
+    pending_bytes -= harqs_in_bytes;
+    if (pending_bytes > 0) {
+      return std::max(pending_bytes, 0);
+    }
   }
 
   // In case a SR is pending and this is the SRB slice, we return a minimum SR grant size if no other bearers have
   // pending data.
   if (slice_id == SRB_RAN_SLICE_ID and has_pending_sr()) {
     pending_bytes = u.ul_logical_channels().pending_bytes();
-    pending_bytes -= std::min(pending_bytes, bytes_in_harqs);
-    return pending_bytes == 0 ? SR_GRANT_BYTES : 0;
+    if (harqs_in_bytes < 0) {
+      // In case harq_in_bytes has not been computed earlier.
+      harqs_in_bytes = sum_allocated_ul_harq_bytes(u);
+    }
+    pending_bytes -= harqs_in_bytes;
+    return pending_bytes <= 0 ? SR_GRANT_BYTES : 0;
   }
 
   return 0;

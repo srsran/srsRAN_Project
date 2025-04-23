@@ -58,3 +58,25 @@ public:
 };
 
 } // namespace srsran
+
+namespace fmt {
+template <>
+struct formatter<srsran::pdcp_metrics_container> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::pdcp_metrics_container m, FormatContext& ctx) const
+  {
+    return format_to(ctx.out(),
+                     "ue={} rb={} tx=[{}] rx=[{}]",
+                     m.ue_index,
+                     m.rb_id,
+                     format_pdcp_tx_metrics(m.metrics_period, m.tx),
+                     format_pdcp_rx_metrics(m.metrics_period, m.rx));
+  }
+};
+} // namespace fmt

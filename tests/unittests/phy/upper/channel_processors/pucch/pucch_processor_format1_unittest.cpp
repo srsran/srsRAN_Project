@@ -177,8 +177,12 @@ TEST_P(PucchProcessorFormat1Fixture, UnitTest)
   // Make sure configuration is valid.
   ASSERT_TRUE(validator->is_valid(config));
 
+  // Create PUCCH Format 1 batch configuration.
+  pucch_processor::format1_batch_configuration batch_config(config);
+
   // Process.
-  const pucch_processor_result result = processor->process(grid, config);
+  const auto&                  results = processor->process(grid, batch_config);
+  const pucch_processor_result result  = results.get(config.initial_cyclic_shift, config.time_domain_occ);
 
   // Verify channel estimator configuration.
   ASSERT_EQ(dmrs_spy->get_format1_entries().size(), 1);

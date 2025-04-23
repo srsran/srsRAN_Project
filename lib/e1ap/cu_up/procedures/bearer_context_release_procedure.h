@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "cu_up/e1ap_cu_up_metrics_collector.h"
 #include "cu_up/ue_context/e1ap_cu_up_ue_context.h"
 #include "srsran/asn1/e1ap/e1ap.h"
 #include "srsran/asn1/e1ap/e1ap_pdu_contents.h"
@@ -41,7 +42,10 @@ public:
                                    const asn1::e1ap::bearer_context_release_cmd_s& cmd_,
                                    e1ap_message_notifier&                          pdu_notifier_,
                                    e1ap_cu_up_manager_notifier&                    cu_up_notifier_,
+                                   e1ap_cu_up_metrics_collector&                   metrics_,
                                    srslog::basic_logger&                           logger_);
+
+  ~bearer_context_release_procedure();
 
   void operator()(coro_context<async_task<void>>& ctx);
 
@@ -52,11 +56,14 @@ private:
   const asn1::e1ap::bearer_context_release_cmd_s cmd;
   e1ap_message_notifier&                         pdu_notifier;
   e1ap_cu_up_manager_notifier&                   cu_up_notifier;
+  e1ap_cu_up_metrics_collector&                  metrics;
   srslog::basic_logger&                          logger;
 
   // local variables
   e1ap_message                        e1ap_msg                   = {};
   e1ap_bearer_context_release_command bearer_context_release_cmd = {};
+
+  std::chrono::steady_clock::time_point proc_start_tp;
 };
 
 } // namespace srsran::srs_cu_up

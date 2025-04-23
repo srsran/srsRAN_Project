@@ -316,5 +316,8 @@ metrics_report::du_info du_processor_impl::handle_du_metrics_report_request() co
       report.cells.back().pci = cell.pci;
     }
   }
+  // Get RRC metrics.
+  rrc->get_rrc_du_metrics_collector().collect_metrics(report.rrc_metrics);
+
   return report;
 }

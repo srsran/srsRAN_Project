@@ -25,7 +25,6 @@ target_link_libraries(e1_gateway_test
         e1ap_test_helpers
         srsran_e1ap_common
         srsran_support
-        srsran_network
         srslog
         e1ap_asn1
         gtest

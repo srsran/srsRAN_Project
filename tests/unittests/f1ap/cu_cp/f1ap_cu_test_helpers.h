@@ -120,7 +120,7 @@ public:
   {
     logger.info("Received UL DCCH RRC message");
     last_ul_dcch_pdu = std::move(pdu);
-  };
+  }
 
   byte_buffer last_ul_dcch_pdu;
 

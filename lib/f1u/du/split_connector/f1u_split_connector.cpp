@@ -101,9 +101,13 @@ f1u_split_connector::create_du_bearer(uint32_t                                  
   }
 
   // attach RX to DEMUX
-  if (!demux->add_tunnel(dl_up_tnl_info.gtp_teid, ue_executor, du_bearer->get_tunnel_rx_interface())) {
+  expected<std::unique_ptr<gtpu_demux_dispatch_queue>> expected_dispatch_queue =
+      demux->add_tunnel(dl_up_tnl_info.gtp_teid, ue_executor, du_bearer->get_tunnel_rx_interface());
+  if (not expected_dispatch_queue) {
     logger_du.error("Could not attach UL-TEID to demux RX. TEID {} already exists", ul_up_tnl_info.gtp_teid);
     return nullptr;
+  } else {
+    du_bearer->dispatch_queue = std::move(expected_dispatch_queue.value());
   }
 
   return du_bearer;
@@ -127,6 +131,9 @@ void f1u_split_connector::remove_du_bearer(const up_transport_layer_info& dl_up_
   // Remove UL from GTP-U demux
   demux->remove_tunnel(dl_up_tnl_info.gtp_teid);
 
+  if (du_bearer->dispatch_queue != nullptr) {
+    du_bearer->dispatch_queue->stop();
+  }
   // Remove DL path
   {
     std::unique_lock<std::mutex> lock(map_mutex);

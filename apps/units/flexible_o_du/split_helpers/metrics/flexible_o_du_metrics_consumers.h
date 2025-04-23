@@ -71,4 +71,31 @@ private:
   ru_metrics_consumer_json       ru_metrics_handler;
 };
 
+/// Consumer for the STDOUT RU metrics.
+class ru_metrics_consumer_stdout : public app_services::metrics_consumer
+{
+public:
+  ru_metrics_consumer_stdout(std::vector<pci_t> pci_sector_map_) :
+    pci_sector_map(std::move(pci_sector_map_)), handler(pci_sector_map)
+  {
+  }
+
+  // See interface for documentation.
+  void handle_metric(const app_services::metrics_set& metric) override;
+
+  /// This can be called from another execution context to enable the metrics.
+  void enable() { print_metrics = true; }
+
+  /// This can be called from another execution context to disable the metrics.
+  void disable() { print_metrics = false; }
+
+  /// Prints the header in the next metric handle.
+  void print_header() { handler.print_header(); }
+
+private:
+  const std::vector<pci_t>  pci_sector_map;
+  ru_metrics_handler_stdout handler;
+  std::atomic<bool>         print_metrics = {false};
+};
+
 } // namespace srsran

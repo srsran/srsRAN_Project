@@ -22,6 +22,7 @@ set_directory_properties(PROPERTIES LABELS "support")
 
 add_subdirectory(network)
 add_subdirectory(executors)
+add_subdirectory(rate_limiting)
 
 add_executable(timer_test timer_test.cpp)
 target_link_libraries(timer_test srslog srsran_support gtest gtest_main)

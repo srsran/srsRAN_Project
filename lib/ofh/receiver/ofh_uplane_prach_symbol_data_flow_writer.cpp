@@ -33,7 +33,7 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
   slot_point slot = results.params.slot;
 
   prach_context prach_context = prach_context_repo->get(slot);
-  if (prach_context.empty()) {
+  if (SRSRAN_UNLIKELY(prach_context.empty())) {
     logger.info("Sector#{}: dropped received Open Fronthaul message as no uplink PRACH context was found for slot '{}' "
                 "and eAxC '{}'",
                 sector_id,
@@ -44,7 +44,7 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
 
   // Find resource grid port with eAxC.
   unsigned port = std::distance(prach_eaxc.begin(), std::find(prach_eaxc.begin(), prach_eaxc.end(), eaxc));
-  if (port >= prach_context.get_max_nof_ports()) {
+  if (SRSRAN_UNLIKELY(port >= prach_context.get_max_nof_ports())) {
     logger.info("Sector#{}: skipping eAxC value '{}' as the stored PRACH buffer only supports up to '{}' ports",
                 sector_id,
                 eaxc,
@@ -109,10 +109,12 @@ void uplane_prach_symbol_data_flow_writer::write_to_prach_buffer(unsigned       
     // Copy the data in the buffer.
     prach_context_repo->write_iq(slot, port, results.params.symbol_id, start_re, prach_in_data);
 
-    logger.debug("Sector#{}: handling PRACH in slot '{}', symbol '{}' and port '{}'",
-                 sector_id,
-                 slot,
-                 results.params.symbol_id,
-                 port);
+    if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+      logger.debug("Sector#{}: handling PRACH in slot '{}', symbol '{}' and port '{}'",
+                   sector_id,
+                   slot,
+                   results.params.symbol_id,
+                   port);
+    }
   }
 }

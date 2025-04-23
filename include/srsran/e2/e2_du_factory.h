@@ -24,10 +24,13 @@
 
 #include "srsran/du/du_high/du_manager/du_configurator.h"
 #include "srsran/e2/e2_du.h"
-#include "srsran/e2/e2_factory.h"
+#include "srsran/e2/e2ap_configuration.h"
+#include "srsran/e2/gateways/e2_connection_client.h"
 #include "srsran/f1ap/du/f1ap_du.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
+
 /// Creates a instance of an E2 interface (with subscription manager)
 std::unique_ptr<e2_agent> create_e2_du_agent(const e2ap_configuration&      e2ap_cfg_,
                                              e2_connection_client&          e2_client_,

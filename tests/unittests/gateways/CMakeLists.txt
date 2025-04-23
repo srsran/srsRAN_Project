@@ -25,7 +25,7 @@ add_executable(sctp_network_gateway_test
         sctp_network_client_test.cpp
         sctp_network_gateway_test.cpp
         sctp_network_link_test.cpp)
-target_link_libraries(sctp_network_gateway_test srsran_network srsran_gateway srsran_support srslog gtest gtest_main)
+target_link_libraries(sctp_network_gateway_test srsran_gateway srsran_support srslog gtest gtest_main)
 add_test(sctp_network_gateway_test sctp_network_gateway_test)
 set_tests_properties(sctp_network_gateway_test PROPERTIES LABELS "tsan")
 

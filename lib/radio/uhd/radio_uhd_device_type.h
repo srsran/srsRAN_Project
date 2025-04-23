@@ -90,7 +90,7 @@ public:
   }
   bool operator==(const radio_uhd_device_type& other) const { return type == other.type; }
   bool operator==(const types& other) const { return type == other; }
-       operator const types&() { return type; }
+  operator const types&() { return type; }
 
 private:
   types type = types::UNKNOWN;

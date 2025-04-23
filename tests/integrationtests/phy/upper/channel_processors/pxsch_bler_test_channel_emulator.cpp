@@ -90,6 +90,7 @@ static constexpr std::array<tdl_tap, 12> taps_tdlc = {{{0, -6.9},
 channel_emulator::channel_emulator(std::string        delay_profile,
                                    std::string        fading_distribution_,
                                    float              sinr_dB,
+                                   float              cfo_Hz,
                                    unsigned           nof_corrupted_re_per_symbol,
                                    unsigned           nof_tx_ports,
                                    unsigned           nof_rx_ports,
@@ -115,15 +116,21 @@ channel_emulator::channel_emulator(std::string        delay_profile,
   } else if (delay_profile == "TDLC") {
     taps = taps_tdlc;
   }
-  report_fatal_error_if_not(!taps.empty(), "Invalid delay profile '{}'.", delay_profile);
+  report_fatal_error_if_not(!taps.empty(),
+                            "Invalid delay profile '{}'. Valid delay profiles are single-tap, TDLA, TDLB, and TDLC.",
+                            delay_profile);
 
   if (fading_distribution_ == "rayleigh") {
     fading_distribution = rayleigh;
   } else if (fading_distribution_ == "uniform-phase") {
     fading_distribution = uniform_phase;
+  } else if (fading_distribution_ == "butler") {
+    fading_distribution = butler;
   }
   report_fatal_error_if_not(
-      fading_distribution != invalid_distribution, "Invalid fading distribution '{}'.", fading_distribution_);
+      fading_distribution != invalid_distribution,
+      "Invalid fading distribution '{}'. Valid distributions are rayleigh, uniform-phase, and butler.",
+      fading_distribution_);
 
   // Estimate taps power.
   float taps_power = std::accumulate(taps.begin(), taps.end(), 0.0F, [](float acc, const tdl_tap& tap) {
@@ -151,6 +158,20 @@ channel_emulator::channel_emulator(std::string        delay_profile,
         freq_response_tap.begin(), freq_response_tap.end(), [n = 0, amplitude, subcarrier_phase_shift]() mutable {
           return std::polar(amplitude, -TWOPI * static_cast<float>(++n) * subcarrier_phase_shift);
         });
+  }
+
+  // Generate CFO coefficients.
+  double symbol_duration_s   = 1.0 / (1000.0 * scs_to_khz(scs));
+  double symbol_start_time_s = 0.0;
+  for (unsigned i_symb = 0; i_symb != MAX_NSYMB_PER_SLOT; ++i_symb) {
+    // Calculate cyclic prefix duration and add it to the start time.
+    symbol_start_time_s += cyclic_prefix(cyclic_prefix::NORMAL).get_length(i_symb, scs).to_seconds();
+
+    // Calculate CFO coefficient for the OFDM symbol.
+    cfo_coeffs[i_symb] = std::polar(1.0, TWOPI * symbol_start_time_s * cfo_Hz);
+
+    // Advance symbol duration.
+    symbol_start_time_s += symbol_duration_s;
   }
 }
 
@@ -185,6 +206,9 @@ void channel_emulator::run(resource_grid_writer& rx_grid, const resource_grid_re
           case uniform_phase:
             tap = std::polar(1.0F, dist_uniform_phase(rgen));
             break;
+          case butler:
+            tap = std::polar(1.0F, static_cast<float>(2.0F * M_PI * i_rx_port * i_tx_port / nof_tx_ports));
+            break;
           case invalid_distribution:
             tap = std::numeric_limits<float>::quiet_NaN();
             break;
@@ -203,7 +227,7 @@ void channel_emulator::run(resource_grid_writer& rx_grid, const resource_grid_re
     // Run channel for each symbol with the same frequency response.
     for (unsigned i_symbol = 0; i_symbol != nof_ofdm_symbols; ++i_symbol) {
       bool success = executor.execute([this, &rx_grid, &tx_grid, i_rx_port, i_symbol, &completed]() {
-        emulators.get().run(rx_grid, tx_grid, freq_domain_channel, i_rx_port, i_symbol);
+        emulators.get().run(rx_grid, tx_grid, freq_domain_channel, cfo_coeffs[i_symbol], i_rx_port, i_symbol);
         ++completed;
       });
       report_fatal_error_if_not(success, "Failed to enqueue concurrent channel emulate.");
@@ -220,6 +244,7 @@ void channel_emulator::run(resource_grid_writer& rx_grid, const resource_grid_re
 void channel_emulator::concurrent_channel_emulator::run(resource_grid_writer&       rx_grid,
                                                         const resource_grid_reader& tx_grid,
                                                         const tensor<3, cf_t>&      freq_response,
+                                                        cf_t                        time_coeff,
                                                         unsigned                    i_rx_port,
                                                         unsigned                    i_symbol)
 {
@@ -245,6 +270,9 @@ void channel_emulator::concurrent_channel_emulator::run(resource_grid_writer&   
       srsvec::add(temp_ofdm_symbol, single_ofdm_symbol, temp_ofdm_symbol);
     }
   }
+
+  // Apply time-domain coefficient.
+  srsvec::sc_prod(temp_ofdm_symbol, time_coeff, temp_ofdm_symbol);
 
   // Apply AWGN.
   std::generate(temp_single_ofdm_symbol.begin(), temp_single_ofdm_symbol.end(), [this]() { return dist_awgn(rgen); });

@@ -22,6 +22,7 @@
 
 #include "lib/du/du_high/test_mode/mac_test_mode_adapter.h"
 #include "tests/unittests/mac/mac_test_helpers.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/support/async/async_test_utils.h"
@@ -59,7 +60,8 @@ class mac_dummy : public mac_interface,
                   public mac_ue_configurator,
                   public mac_pdu_handler,
                   public mac_paging_information_handler,
-                  public mac_cell_controller
+                  public mac_cell_controller,
+                  public mac_cell_time_mapper
 {
 public:
   mac_event_interceptor& events;
@@ -87,17 +89,18 @@ public:
     // TODO: Implement this.
   }
   void handle_dl_buffer_state_update(const mac_dl_buffer_state_indication_message& dl_bs) override {}
-  void handle_slot_indication(slot_point sl_tx) override
+  void handle_slot_indication(const mac_cell_timing_context& context) override
   {
     if (events.next_ul_sched_res.has_value()) {
       result_notifier.get_cell(to_du_cell_index(0)).on_new_uplink_scheduler_results(events.next_ul_sched_res.value());
     }
-    result_notifier.get_cell(to_du_cell_index(0)).on_cell_results_completion(sl_tx);
+    result_notifier.get_cell(to_du_cell_index(0)).on_cell_results_completion(context.sl_tx);
   }
   void                               handle_error_indication(slot_point sl_tx, error_event event) override {}
-  void                               add_cell(const mac_cell_creation_request& cell_cfg) override {}
+  mac_cell_controller&               add_cell(const mac_cell_creation_request& cell_cfg) override { return *this; }
   void                               remove_cell(du_cell_index_t cell_index) override {}
   mac_cell_controller&               get_cell_controller(du_cell_index_t cell_index) override { return *this; }
+  mac_cell_time_mapper&              get_time_mapper(du_cell_index_t cell_index) override { return *this; }
   async_task<mac_ue_create_response> handle_ue_create_request(const mac_ue_create_request& cfg) override
   {
     events.last_ue_created = cfg;
@@ -123,6 +126,10 @@ public:
   {
     return launch_no_op_task(mac_cell_reconfig_response{true});
   }
+
+  std::optional<mac_cell_slot_time_info> get_last_mapping() const override { return std::nullopt; }
+  std::optional<time_point>              get_time_point(slot_point slot) const override { return std::nullopt; }
+  std::optional<slot_point>              get_slot_point(time_point time) const override { return std::nullopt; }
 };
 
 struct test_params {
@@ -183,7 +190,7 @@ protected:
 
   void run_slot()
   {
-    adapter.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(next_slot);
+    adapter.get_slot_handler(to_du_cell_index(0)).handle_slot_indication({next_slot, std::chrono::system_clock::now()});
 
     next_slot++;
 

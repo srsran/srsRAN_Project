@@ -24,6 +24,7 @@
 #include "../adapters/du_high_adapter_factories.h"
 #include "mac_test_mode_helpers.h"
 #include "srsran/adt/ring_buffer.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/mac/mac_factory.h"
 #include "srsran/scheduler/harq_id.h"
 #include "srsran/scheduler/resource_grid_util.h"
@@ -104,11 +105,11 @@ mac_test_mode_cell_adapter::mac_test_mode_cell_adapter(
 {
 }
 
-void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
+void mac_test_mode_cell_adapter::handle_slot_indication(const mac_cell_timing_context& context)
 {
   if (test_ue_cfg.auto_ack_indication_delay.has_value()) {
     // auto-generation of CRC/UCI indication is enabled.
-    slot_point                   sl_rx = sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
+    slot_point                   sl_rx = context.sl_tx - test_ue_cfg.auto_ack_indication_delay.value();
     const slot_decision_history& entry = sched_decision_history[get_ring_idx(sl_rx)];
     std::unique_lock<std::mutex> lock(entry.mutex);
     if (entry.slot == sl_rx) {
@@ -164,7 +165,7 @@ void mac_test_mode_cell_adapter::handle_slot_indication(slot_point sl_tx)
     }
   }
 
-  slot_handler.handle_slot_indication(sl_tx);
+  slot_handler.handle_slot_indication(context);
 }
 
 void mac_test_mode_cell_adapter::handle_error_indication(slot_point sl_tx, error_event event)
@@ -471,10 +472,10 @@ void mac_test_mode_adapter::connect(std::unique_ptr<mac_interface> mac_ptr)
   mac_adapted = std::move(mac_ptr);
 }
 
-void mac_test_mode_adapter::add_cell(const mac_cell_creation_request& cell_cfg)
+mac_cell_controller& mac_test_mode_adapter::add_cell(const mac_cell_creation_request& cell_cfg)
 {
   // Create cell in real MAC.
-  mac_adapted->get_cell_manager().add_cell(cell_cfg);
+  mac_cell_controller& cell = mac_adapted->get_cell_manager().add_cell(cell_cfg);
 
   // Create the cell in the MAC test mode.
   auto func_dl_bs_push = [this](rnti_t rnti) {
@@ -497,6 +498,8 @@ void mac_test_mode_adapter::add_cell(const mac_cell_creation_request& cell_cfg)
   cell_info_handler[cell_cfg.cell_index] = std::move(new_cell);
 
   phy_notifier->connect(cell_cfg.cell_index, *cell_info_handler[cell_cfg.cell_index]);
+
+  return cell;
 }
 
 void mac_test_mode_adapter::remove_cell(du_cell_index_t cell_index)
@@ -513,6 +516,11 @@ void mac_test_mode_adapter::remove_cell(du_cell_index_t cell_index)
 mac_cell_controller& mac_test_mode_adapter::get_cell_controller(du_cell_index_t cell_index)
 {
   return mac_adapted->get_cell_manager().get_cell_controller(cell_index);
+}
+
+mac_cell_time_mapper& mac_test_mode_adapter::get_time_mapper(du_cell_index_t cell_index)
+{
+  return mac_adapted->get_cell_manager().get_time_mapper(cell_index);
 }
 
 mac_cell_control_information_handler& mac_test_mode_adapter::get_control_info_handler(du_cell_index_t cell_index)

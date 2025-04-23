@@ -28,7 +28,6 @@
 #include "srsran/ran/meas_gap_config.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/phy_time_unit.h"
-#include "srsran/ran/qos/five_qi_qos_mapping.h"
 #include "srsran/ran/rnti.h"
 #include "srsran/ran/rrm.h"
 #include "srsran/ran/slot_pdu_capacity_constants.h"
@@ -197,9 +196,24 @@ struct rach_indication_message {
 class scheduler_configurator
 {
 public:
-  virtual ~scheduler_configurator()                                                                   = default;
+  virtual ~scheduler_configurator() = default;
+
+  /// \brief Reconfigure cell.
+  ///
+  /// This method cannot be called for an existing cell index without first removing it.
   virtual bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) = 0;
-  virtual void handle_rach_indication(const rach_indication_message& msg)                             = 0;
+
+  /// \brief Handle cell configuration removal.
+  virtual void handle_cell_removal_request(du_cell_index_t cell_index) = 0;
+
+  /// \brief Handle RACH indication message.
+  virtual void handle_rach_indication(const rach_indication_message& msg) = 0;
+
+  /// \brief Activate a configured cell. This method has no effect if the cell is already active.
+  virtual void handle_cell_activation_request(du_cell_index_t cell_index) = 0;
+
+  /// \brief Deactivate a configured cell. This method has no effect if the cell is already deactivated.
+  virtual void handle_cell_deactivation_request(du_cell_index_t cell_index) = 0;
 };
 
 class scheduler_ue_configurator
@@ -216,9 +230,13 @@ public:
 class sched_configuration_notifier
 {
 public:
-  virtual ~sched_configuration_notifier()                                             = default;
+  virtual ~sched_configuration_notifier() = default;
+
+  /// Called by scheduler when UE creation/modification is completed.
   virtual void on_ue_config_complete(du_ue_index_t ue_index, bool ue_creation_result) = 0;
-  virtual void on_ue_delete_response(du_ue_index_t ue_index)                          = 0;
+
+  /// Called by scheduler when UE removal is completed.
+  virtual void on_ue_deletion_completed(du_ue_index_t ue_index) = 0;
 };
 
 } // namespace srsran

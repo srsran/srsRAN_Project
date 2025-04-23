@@ -409,7 +409,6 @@ TEST(ofh_uplane_packet_decoder_static_impl, peek_filter_index_returns_reserved_o
   auto value = uplane_peeker::peek_filter_index(packet);
 
   ASSERT_FALSE(value.has_value());
-  ASSERT_STREQ("Message is empty", value.error());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, peek_prach_filter_index)
@@ -423,7 +422,7 @@ TEST(ofh_uplane_packet_decoder_static_impl, peek_prach_filter_index)
   auto value = uplane_peeker::peek_filter_index(packet);
 
   ASSERT_TRUE(value.has_value());
-  ASSERT_EQ(filter_index_type::ul_prach_preamble_1p25khz, value.value<>());
+  ASSERT_EQ(filter_index_type::ul_prach_preamble_1p25khz, value.value());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, peek_slot_symbol_point)
@@ -452,11 +451,8 @@ TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_packet_
   const unsigned           nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   const subcarrier_spacing scs         = subcarrier_spacing::kHz30;
 
-  auto               slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
-  const std::string& err  = slot.error();
-
+  auto slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
   ASSERT_FALSE(slot.has_value());
-  ASSERT_STREQ("Message number of bytes '3' is smaller than the required size '4'", err.c_str());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid_subframe)
@@ -470,11 +466,8 @@ TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid
   const unsigned           nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   const subcarrier_spacing scs         = subcarrier_spacing::kHz30;
 
-  auto               slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
-  const std::string& err  = slot.error();
-
+  auto slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
   ASSERT_FALSE(slot.has_value());
-  ASSERT_STREQ("Decoded subframe id '10' is bigger than the maximum number of subframes per frame '10'", err.c_str());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid_slot)
@@ -488,11 +481,8 @@ TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid
   const unsigned           nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   const subcarrier_spacing scs         = subcarrier_spacing::kHz30;
 
-  auto               slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
-  const std::string& err  = slot.error();
-
+  auto slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
   ASSERT_FALSE(slot.has_value());
-  ASSERT_STREQ("Decoded slot id '3' is bigger than the maximum number of slots per subframe '2'", err.c_str());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid_symbol_high_byte)
@@ -506,11 +496,8 @@ TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid
   const unsigned           nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   const subcarrier_spacing scs         = subcarrier_spacing::kHz30;
 
-  auto               slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
-  const std::string& err  = slot.error();
-
+  auto slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
   ASSERT_FALSE(slot.has_value());
-  ASSERT_STREQ("Decoded slot id '5' is bigger than the maximum number of slots per subframe '2'", err.c_str());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid_symbol)
@@ -524,11 +511,8 @@ TEST(ofh_uplane_packet_decoder_static_impl, return_invalid_slot_point_on_invalid
   const unsigned           nof_symbols = get_nsymb_per_slot(cyclic_prefix::NORMAL);
   const subcarrier_spacing scs         = subcarrier_spacing::kHz30;
 
-  auto               slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
-  const std::string& err  = slot.error();
-
+  auto slot = uplane_peeker::peek_slot_symbol_point(packet, nof_symbols, scs);
   ASSERT_FALSE(slot.has_value());
-  ASSERT_STREQ("Decoded symbol id '15' is bigger than the maximum number of symbols '14'", err.c_str());
 }
 
 TEST(ofh_uplane_packet_decoder_static_impl, message_containing_more_than_one_section_should_fail_to_decode)

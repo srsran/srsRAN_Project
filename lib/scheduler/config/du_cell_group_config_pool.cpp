@@ -121,6 +121,12 @@ void du_cell_group_config_pool::add_cell(const sched_cell_configuration_request_
   cells.emplace(cell_cfg.cell_index, cell_cfg);
 }
 
+void du_cell_group_config_pool::rem_cell(du_cell_index_t cell_index)
+{
+  // Note: This function assumes that all the UEs have been removed from this cell.
+  cells.erase(cell_index);
+}
+
 ue_creation_params du_cell_group_config_pool::add_ue(const sched_ue_creation_request_message& cfg_req)
 {
   // Create logical channel config.

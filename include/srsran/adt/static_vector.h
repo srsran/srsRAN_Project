@@ -37,8 +37,8 @@ struct trivial_storage {
   static_assert(std::is_trivial<T>::value, "Implementation only works for trivial types");
 
   using array_type     = std::conditional_t<std::is_const<T>::value,
-                                        const std::array<std::remove_const_t<T>, Capacity>,
-                                        std::array<T, Capacity>>;
+                                            const std::array<std::remove_const_t<T>, Capacity>,
+                                            std::array<T, Capacity>>;
   using iterator       = T*;
   using const_iterator = const T*;
 
@@ -111,8 +111,8 @@ struct non_trivial_storage {
 
   using element_storage_t = std::aligned_storage_t<sizeof(T), alignof(T)>;
   using array_type        = std::conditional_t<std::is_const<T>::value,
-                                        const std::array<element_storage_t, Capacity>,
-                                        std::array<element_storage_t, Capacity>>;
+                                               const std::array<element_storage_t, Capacity>,
+                                               std::array<element_storage_t, Capacity>>;
   using iterator          = T*;
   using const_iterator    = const T*;
 

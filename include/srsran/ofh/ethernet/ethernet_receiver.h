@@ -25,7 +25,8 @@
 namespace srsran {
 namespace ether {
 
-class frame_notifier;
+class receiver_metrics_collector;
+class receiver_operation_controller;
 
 /// \brief Describes an Ethernet receiver.
 ///
@@ -36,15 +37,11 @@ public:
   /// Default destructor.
   virtual ~receiver() = default;
 
-  /// \brief Starts the Ethernet receiver operation.
-  ///
-  /// \param[in] notifier Ethernet frames reception notifier.
-  /// \note Caller will be blocked until the receiver is fully started.
-  virtual void start(frame_notifier& notifier) = 0;
+  /// Returns the operation controller of this Ethernet receiver.
+  virtual receiver_operation_controller& get_operation_controller() = 0;
 
-  /// \brief Stops the Ethernet receiver operation.
-  /// \note Caller will be blocked until the receiver is fully stopped.
-  virtual void stop() = 0;
+  /// Returns the metrics collector of this Ethernet receiver or nullptr if metrics are disabled.
+  virtual receiver_metrics_collector* get_metrics_collector() = 0;
 };
 
 } // namespace ether

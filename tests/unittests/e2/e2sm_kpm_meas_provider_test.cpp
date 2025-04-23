@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/e2/common/e2ap_asn1_packer.h"
+#include "common/e2ap_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
@@ -92,12 +92,12 @@ protected:
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    gw   = std::make_unique<dummy_network_gateway_data_handler>();
+    gw   = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap = std::make_unique<dummy_e2ap_pcap>();
     if (external_pcap_writer) {
-      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
+      packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
     } else {
-      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+      packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
     }
     e2_client                = std::make_unique<dummy_e2_connection_client>();
     du_metrics               = std::make_unique<dummy_e2_du_metrics>();
@@ -135,12 +135,12 @@ protected:
 
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
-    gw                   = std::make_unique<dummy_network_gateway_data_handler>();
+    gw                   = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap                 = std::make_unique<dummy_e2ap_pcap>();
     if (external_pcap_writer) {
-      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
+      packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
     } else {
-      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+      packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
     }
   }
 
@@ -156,20 +156,20 @@ protected:
     timers.tick();
     task_worker.run_pending_tasks();
   }
-  e2ap_configuration                                  cfg = {};
-  timer_factory                                       factory;
-  timer_manager                                       timers;
-  std::unique_ptr<dummy_network_gateway_data_handler> gw;
-  std::unique_ptr<e2_interface>                       e2;
-  std::unique_ptr<dummy_e2ap_pcap>                    pcap;
-  std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
-  std::unique_ptr<e2sm_interface>                     e2sm_iface;
-  std::unique_ptr<e2sm_handler>                       e2sm_packer;
-  std::unique_ptr<e2_subscription_manager>            e2_subscription_mngr;
-  manual_task_worker                                  task_worker{64};
-  std::unique_ptr<dummy_e2_pdu_notifier>              msg_notifier;
-  std::unique_ptr<dummy_e2_connection_client>         e2_client;
-  srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
+  e2ap_configuration                                   cfg = {};
+  timer_factory                                        factory;
+  timer_manager                                        timers;
+  std::unique_ptr<dummy_sctp_association_sdu_notifier> gw;
+  std::unique_ptr<e2_interface>                        e2;
+  std::unique_ptr<dummy_e2ap_pcap>                     pcap;
+  std::unique_ptr<e2ap_asn1_packer>                    packer;
+  std::unique_ptr<e2sm_interface>                      e2sm_iface;
+  std::unique_ptr<e2sm_handler>                        e2sm_packer;
+  std::unique_ptr<e2_subscription_manager>             e2_subscription_mngr;
+  manual_task_worker                                   task_worker{64};
+  std::unique_ptr<dummy_e2_pdu_notifier>               msg_notifier;
+  std::unique_ptr<dummy_e2_connection_client>          e2_client;
+  srslog::basic_logger&                                test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 class e2sm_kpm_du_meas_provider_test : public e2sm_kpm_meas_provider_test
@@ -300,10 +300,9 @@ TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
   uint32_t              nof_meas_data = 5;
   uint32_t              nof_records   = 1;
 
-  uint32_t              expected_drop_rate       = 10;
-  uint32_t              expected_ul_success_rate = 80;
-  float                 expected_dl_throughput   = 10000 / 1e3 * 8;
-  float                 expected_ul_throughput   = 5000 / 1e3 * 8;
+  uint32_t              expected_drop_rate     = 10;
+  float                 expected_dl_throughput = 10000 / 1e3 * 8;
+  float                 expected_ul_throughput = 5000 / 1e3 * 8;
   std::vector<uint32_t> expected_dl_vol;
   std::vector<uint32_t> expected_ul_vol;
 
@@ -338,8 +337,6 @@ TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
   meas_info_item.meas_type.set_meas_name().from_string("DRB.RlcSduTransmittedVolumeDL");
   subscript_info.meas_info_list.push_back(meas_info_item);
   meas_info_item.meas_type.set_meas_name().from_string("DRB.RlcSduTransmittedVolumeUL");
-  subscript_info.meas_info_list.push_back(meas_info_item);
-  meas_info_item.meas_type.set_meas_name().from_string("DRB.PacketSuccessRateUlgNBUu");
   subscript_info.meas_info_list.push_back(meas_info_item);
   meas_info_item.meas_type.set_meas_name().from_string("DRB.UEThpDl");
   subscript_info.meas_info_list.push_back(meas_info_item);
@@ -405,13 +402,10 @@ TEST_P(e2sm_kpm_du_meas_provider_test, e2sm_kpm_ind_three_drb_rlc_metrics)
         TESTASSERT_EQ((i + 1) * expected_ul_vol[ue_idx], meas_record[2].integer());
       }
       if (nof_records >= 4) {
-        TESTASSERT_EQ(expected_ul_success_rate, meas_record[3].integer());
+        TESTASSERT_EQ(expected_dl_throughput, meas_record[3].real().value);
       }
       if (nof_records >= 5) {
-        TESTASSERT_EQ(expected_dl_throughput, meas_record[4].real().value);
-      }
-      if (nof_records >= 6) {
-        TESTASSERT_EQ(expected_ul_throughput, meas_record[5].real().value);
+        TESTASSERT_EQ(expected_ul_throughput, meas_record[4].real().value);
       }
     }
   }

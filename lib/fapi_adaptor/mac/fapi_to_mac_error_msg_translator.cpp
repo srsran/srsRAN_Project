@@ -23,6 +23,7 @@
 #include "fapi_to_mac_error_msg_translator.h"
 #include "srsran/fapi/messages/error_indication.h"
 #include "srsran/mac/mac_cell_slot_handler.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 
 using namespace srsran;
 using namespace fapi_adaptor;
@@ -32,7 +33,7 @@ namespace {
 class mac_cell_slot_handler_dummy : public mac_cell_slot_handler
 {
 public:
-  void handle_slot_indication(slot_point sl_tx) override {}
+  void handle_slot_indication(const mac_cell_timing_context& context) override {}
   void handle_error_indication(slot_point sl_tx, error_event event) override {}
 };
 

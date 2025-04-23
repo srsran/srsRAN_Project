@@ -203,6 +203,13 @@ TEST_F(cu_cp_setup_test, when_rrc_setup_completes_then_initial_message_sent_to_a
   test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
   get_du(du_idx).push_ul_pdu(ul_rrc_msg);
 
+  // Check that the UE is in the RRC connections of the metrics report.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_FALSE(report.dus.empty());
+  ASSERT_FALSE(report.ues.empty());
+  ASSERT_EQ(report.dus[0].rrc_metrics.mean_nof_rrc_connections, 1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.max_nof_rrc_connections, 1);
+
   // Verify AMF is notified of UE attach.
   ASSERT_TRUE(this->wait_for_ngap_tx_pdu(ngap_pdu));
   ASSERT_TRUE(is_pdu_type(ngap_pdu, asn1::ngap::ngap_elem_procs_o::init_msg_c::types::types_opts::init_ue_msg));

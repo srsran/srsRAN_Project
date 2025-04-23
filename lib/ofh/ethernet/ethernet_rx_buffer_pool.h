@@ -23,12 +23,12 @@
 #pragma once
 
 #include "ethernet_rx_buffer_impl.h"
-#include "srsran/adt/expected.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/span.h"
 #include "srsran/support/math/math_utils.h"
 #include "srsran/support/srsran_assert.h"
 #include "srsran/support/units.h"
+#include <optional>
 #include <vector>
 
 namespace srsran {
@@ -38,7 +38,7 @@ namespace ether {
 class ethernet_rx_buffer_pool
 {
   /// Allocate 4MB of storage, evenly divided between Ethernet receive buffers.
-  static inline constexpr units::bytes ETH_BUFFER_POOL_SIZE{4096000};
+  static constexpr units::bytes ETH_BUFFER_POOL_SIZE{4096000};
 
   using rx_buffer_id_list =
       concurrent_queue<unsigned, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
@@ -64,13 +64,12 @@ public:
   }
 
   /// Tries to get an ID of a free buffer from the pre-allocated storage.
-  expected<ethernet_rx_buffer_impl> reserve()
+  std::optional<ethernet_rx_buffer_impl> reserve()
   {
-    auto buffer_id = free_list.try_pop();
-    if (!buffer_id.has_value()) {
-      return make_unexpected(default_error_t{});
+    if (auto buffer_id = free_list.try_pop()) {
+      return std::make_optional<ethernet_rx_buffer_impl>(*this, *buffer_id);
     }
-    return {{*this, buffer_id.value()}};
+    return std::nullopt;
   }
 
   /// Marks the buffer with given ID as free.

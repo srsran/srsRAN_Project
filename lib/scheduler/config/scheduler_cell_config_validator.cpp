@@ -165,6 +165,8 @@ static error_type<std::string> validate_pusch_cfg_common(const sched_cell_config
 
 static error_type<std::string> validate_pucch_cfg_common(const sched_cell_configuration_request_message& msg)
 {
+  VERIFY(msg.ul_cfg_common.init_ul_bwp.pucch_cfg_common.has_value(),
+         "Cells without PUCCH-ConfigCommon are not supported");
   for (const auto& pucch_guard : msg.pucch_guardbands) {
     VERIFY(msg.ul_cfg_common.init_ul_bwp.generic_params.crbs.contains(pucch_guard.prbs),
            "PUCCH guardbands={} fall outside of the initial BWP RBs={}",

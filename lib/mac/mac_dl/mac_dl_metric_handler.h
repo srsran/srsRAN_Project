@@ -166,8 +166,8 @@ public:
 
 private:
   using report_queue_type           = concurrent_queue<mac_dl_cell_metric_report,
-                                             concurrent_queue_policy::lockfree_mpmc,
-                                             concurrent_queue_wait_policy::non_blocking>;
+                                                       concurrent_queue_policy::lockfree_mpmc,
+                                                       concurrent_queue_wait_policy::non_blocking>;
   using cell_activation_bitmap_type = unsigned;
   static_assert(sizeof(cell_activation_bitmap_type) * 8U <= MAX_NOF_DU_CELLS, "Invalid cell activation bitmap size");
 

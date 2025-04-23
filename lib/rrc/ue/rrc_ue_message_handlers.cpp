@@ -105,8 +105,14 @@ void rrc_ue_impl::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request
   context.connection_cause.value = request_ies.establishment_cause.value;
 
   // Launch RRC setup procedure.
-  cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_setup_procedure>(
-      context, du_to_cu_container, *this, get_rrc_ue_control_message_handler(), ngap_notifier, *event_mng, logger));
+  cu_cp_ue_notifier.schedule_async_task(launch_async<rrc_setup_procedure>(context,
+                                                                          du_to_cu_container,
+                                                                          *this,
+                                                                          get_rrc_ue_control_message_handler(),
+                                                                          metrics_notifier,
+                                                                          ngap_notifier,
+                                                                          *event_mng,
+                                                                          logger));
 }
 
 void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
@@ -121,6 +127,7 @@ void rrc_ue_impl::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request
                                                   get_rrc_ue_control_message_handler(),
                                                   cu_cp_notifier,
                                                   cu_cp_ue_notifier,
+                                                  metrics_notifier,
                                                   ngap_notifier,
                                                   *event_mng,
                                                   logger));
@@ -472,6 +479,9 @@ async_task<bool> rrc_ue_impl::handle_handover_reconfiguration_complete_expected(
 
       // The UE in the target cell is in connected state on RRCReconfigurationComplete reception.
       context.state = rrc_state::connected;
+
+      // Notify metrics.
+      metrics_notifier.on_new_rrc_connection();
 
     } else {
       logger.log_debug("Did not receive RRC Reconfiguration Complete after HO. Cause: {}. Requesting target UE release",

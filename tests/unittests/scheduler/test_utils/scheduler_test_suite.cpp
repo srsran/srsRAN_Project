@@ -27,6 +27,7 @@
 #include "lib/scheduler/support/pdsch/pdsch_default_time_allocation.h"
 #include "scheduler_output_test_helpers.h"
 #include "tests/test_doubles/scheduler/scheduler_test_message_validators.h"
+#include "srsran/ran/pdcch/dci_packing.h"
 #include "srsran/ran/prach/prach_configuration.h"
 #include "srsran/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsran/support/error_handling.h"
@@ -196,6 +197,11 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
         linked_pdsch = &it->pdsch_cfg;
       } break;
       case dci_dl_rnti_config_type::p_rnti_f1_0: {
+        // No corresponding PDSCH.
+        if (pdcch.dci.p_rnti_f1_0.short_messages_indicator ==
+            dci_1_0_p_rnti_configuration::payload_info::short_messages) {
+          break;
+        }
         uint8_t k0 =
             cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdcch.dci.p_rnti_f1_0.time_resource].k0;
         const auto& pg_grants = cell_res_grid[k0].result.dl.paging_grants;
@@ -208,7 +214,9 @@ void srsran::assert_pdcch_pdsch_common_consistency(const cell_configuration&    
       default:
         srsran_terminate("DCI type not supported");
     }
-    assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, *linked_pdsch);
+    if (linked_pdsch) {
+      assert_pdcch_pdsch_common_consistency(cell_cfg, pdcch, *linked_pdsch);
+    }
   }
 }
 
@@ -228,7 +236,14 @@ void srsran::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span
     ASSERT_EQ(sib.pdsch_cfg.dci_fmt, dci_dl_format::f1_0);
     ASSERT_TRUE(sib.pdsch_cfg.rbs.is_type1());
     ASSERT_EQ(sib.pdsch_cfg.coreset_cfg->id, to_coreset_id(0));
-    ASSERT_EQ(sib.pdsch_cfg.ss_set_type, search_space_set_type::type0);
+    if (sib.si_indicator == sib_information::sib1) {
+      ASSERT_EQ(sib.pdsch_cfg.ss_set_type, search_space_set_type::type0);
+      ASSERT_FALSE(sib.si_msg_index.has_value());
+    } else {
+      ASSERT_TRUE(sib.pdsch_cfg.ss_set_type == search_space_set_type::type0 or
+                  sib.pdsch_cfg.ss_set_type == search_space_set_type::type0A);
+      ASSERT_TRUE(sib.si_msg_index.has_value());
+    }
     ASSERT_EQ(sib.pdsch_cfg.codewords.size(), 1);
     ASSERT_EQ(sib.pdsch_cfg.codewords[0].mcs_table, pdsch_mcs_table::qam64);
     vrb_interval vrbs = sib.pdsch_cfg.rbs.type1();

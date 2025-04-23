@@ -24,11 +24,9 @@
 
 #include "srsran/phy/support/precoding_formatters.h"
 #include "srsran/phy/support/re_pattern_formatters.h"
-#include "srsran/phy/upper/channel_processors/prach_detector.h"
-#include "srsran/phy/upper/channel_processors/ssb_processor.h"
+#include "srsran/phy/upper/channel_processors/ssb/ssb_processor.h"
 #include "srsran/phy/upper/channel_state_information_formatters.h"
 #include "srsran/ran/pucch/pucch_context_formatter.h"
-#include "srsran/srsvec/copy.h"
 #include "srsran/support/format/delimited_formatter.h"
 
 namespace fmt {
@@ -52,14 +50,14 @@ struct formatter<srsran::pucch_processor::format0_configuration> {
   auto format(const srsran::pucch_processor::format0_configuration& config, FormatContext& ctx) const
   {
     if (config.context.has_value()) {
-      helper.format_always(ctx, config.context.value());
+      helper.format_always(ctx, *config.context);
     }
     helper.format_always(ctx, "format=0");
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_if_verbose(ctx, "slot={}", config.slot);
     helper.format_always(ctx, "prb1={}", config.starting_prb);
     helper.format_always(
-        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na");
+        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(*config.second_hop_prb) : "na");
     helper.format_always(
         ctx, "symb=[{}, {})", config.start_symbol_index, config.start_symbol_index + config.nof_symbols);
     helper.format_always(ctx, "cs={}", config.initial_cyclic_shift);
@@ -90,13 +88,13 @@ struct formatter<srsran::pucch_processor::format1_configuration> {
   auto format(const srsran::pucch_processor::format1_configuration& config, FormatContext& ctx) const
   {
     if (config.context.has_value()) {
-      helper.format_always(ctx, config.context.value());
+      helper.format_always(ctx, *config.context);
     }
     helper.format_always(ctx, "format=1");
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_always(ctx, "prb1={}", config.starting_prb);
     helper.format_always(
-        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na");
+        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(*config.second_hop_prb) : "na");
     helper.format_always(
         ctx, "symb=[{}, {})", config.start_symbol_index, config.start_symbol_index + config.nof_symbols);
     helper.format_if_verbose(ctx, "n_id={}", config.n_id);
@@ -129,7 +127,7 @@ struct formatter<srsran::pucch_processor::format2_configuration> {
   auto format(const srsran::pucch_processor::format2_configuration& config, FormatContext& ctx) const
   {
     if (config.context.has_value()) {
-      helper.format_always(ctx, config.context.value());
+      helper.format_always(ctx, *config.context);
     } else {
       helper.format_always(ctx, "rnti=0x{:04x}", config.rnti);
     }
@@ -137,7 +135,7 @@ struct formatter<srsran::pucch_processor::format2_configuration> {
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_always(ctx, "prb=[{}, {})", config.starting_prb, config.starting_prb + config.nof_prb);
     helper.format_always(
-        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na");
+        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(*config.second_hop_prb) : "na");
     helper.format_always(
         ctx, "symb=[{}, {})", config.start_symbol_index, config.start_symbol_index + config.nof_symbols);
 
@@ -170,7 +168,7 @@ struct formatter<srsran::pucch_processor::format3_configuration> {
   auto format(const srsran::pucch_processor::format3_configuration& config, FormatContext& ctx) const
   {
     if (config.context.has_value()) {
-      helper.format_always(ctx, config.context.value());
+      helper.format_always(ctx, *config.context);
     } else {
       helper.format_always(ctx, "rnti=0x{:04x}", config.rnti);
     }
@@ -178,7 +176,7 @@ struct formatter<srsran::pucch_processor::format3_configuration> {
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_always(ctx, "prb=[{}, {})", config.starting_prb, config.starting_prb + config.nof_prb);
     helper.format_always(
-        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na");
+        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(*config.second_hop_prb) : "na");
     helper.format_always(
         ctx, "symb=[{}, {})", config.start_symbol_index, config.start_symbol_index + config.nof_symbols);
 
@@ -213,7 +211,7 @@ struct formatter<srsran::pucch_processor::format4_configuration> {
   auto format(const srsran::pucch_processor::format4_configuration& config, FormatContext& ctx) const
   {
     if (config.context.has_value()) {
-      helper.format_always(ctx, config.context.value());
+      helper.format_always(ctx, *config.context);
     } else {
       helper.format_always(ctx, "rnti=0x{:04x}", config.rnti);
     }
@@ -221,7 +219,7 @@ struct formatter<srsran::pucch_processor::format4_configuration> {
     helper.format_if_verbose(ctx, "bwp=[{}, {})", config.bwp_start_rb, config.bwp_start_rb + config.bwp_size_rb);
     helper.format_always(ctx, "prb=[{}, {})", config.starting_prb, config.starting_prb + 1);
     helper.format_always(
-        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(config.second_hop_prb.value()) : "na");
+        ctx, "prb2={}", config.second_hop_prb.has_value() ? std::to_string(*config.second_hop_prb) : "na");
     helper.format_always(
         ctx, "symb=[{}, {})", config.start_symbol_index, config.start_symbol_index + config.nof_symbols);
 
@@ -307,7 +305,7 @@ struct formatter<srsran::pucch_processor_result> {
     }
 
     if (result.detection_metric.has_value()) {
-      helper.format_always(ctx, "metric={:.1f}", result.detection_metric.value());
+      helper.format_always(ctx, "metric={:.1f}", *result.detection_metric);
     }
 
     helper.format_always(ctx, result.csi);

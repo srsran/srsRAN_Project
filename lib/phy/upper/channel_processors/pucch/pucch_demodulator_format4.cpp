@@ -56,9 +56,9 @@ void pucch_demodulator_format4::demodulate(span<log_likelihood_ratio>           
                 config.first_prb,
                 grid.get_nof_subc() / NRE);
 
-  srsran_assert(!config.second_hop_prb.has_value() || (config.second_hop_prb.value() * NRE <= grid.get_nof_subc()),
+  srsran_assert(!config.second_hop_prb.has_value() || (*config.second_hop_prb * NRE <= grid.get_nof_subc()),
                 "PUCCH Format 4: PRB allocation outside grid (second hop). Requested {}, grid has {} PRBs.",
-                config.second_hop_prb.value(),
+                *config.second_hop_prb,
                 grid.get_nof_subc() / NRE);
 
   interval<unsigned, true> nof_symbols_range(pucch_constants::FORMAT4_MIN_NSYMB, pucch_constants::FORMAT4_MAX_NSYMB);

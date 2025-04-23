@@ -43,8 +43,9 @@ TEST_P(pdcch_type0_css_occasions_fixture, fr1)
 
   if (ss0_index > 15) {
 #if ASSERTS_ENABLED
-    ASSERT_DEATH({ pdcch_type0_css_occasions_get_pattern1(config); },
-                 R"(SearchSpaceZero \([0-9]{1,}\) must be \[0\.\.15\] for FR1.)");
+    ASSERT_DEATH(
+        { pdcch_type0_css_occasions_get_pattern1(config); },
+        R"(SearchSpaceZero \([0-9]{1,}\) must be \[0\.\.15\] for FR1.)");
 #endif // ASSERTS_ENABLED
     return;
   }
@@ -98,8 +99,9 @@ TEST_P(pdcch_type0_css_occasions_fixture, fr2)
 
   if (ss0_index > 13) {
 #if ASSERTS_ENABLED
-    ASSERT_DEATH({ pdcch_type0_css_occasions_get_pattern1(config); },
-                 R"(SearchSpaceZero \([0-9]{1,}\) must be \[0\.\.13\] for FR2.)");
+    ASSERT_DEATH(
+        { pdcch_type0_css_occasions_get_pattern1(config); },
+        R"(SearchSpaceZero \([0-9]{1,}\) must be \[0\.\.13\] for FR2.)");
 #endif // ASSERTS_ENABLED
     return;
   }

@@ -45,30 +45,62 @@ static uplink_request_handler_impl_config generate_uplink_request_handler_config
 static uplink_request_handler_impl_dependencies
 resolve_uplink_request_handler_dependencies(transmitter_impl_dependencies& tx_dependencies)
 {
-  uplink_request_handler_impl_dependencies dependencies;
-  dependencies.logger        = tx_dependencies.logger;
-  dependencies.ul_slot_repo  = std::move(tx_dependencies.ul_slot_repo);
-  dependencies.ul_prach_repo = std::move(tx_dependencies.ul_prach_repo);
-  dependencies.data_flow     = std::move(tx_dependencies.data_flow);
-  dependencies.frame_pool    = tx_dependencies.frame_pool;
+  srsran_assert(tx_dependencies.err_notifier, "Invalid error notifier");
+  srsran_assert(tx_dependencies.logger, "Invalid logger");
 
-  return dependencies;
+  return {*tx_dependencies.logger,
+          *tx_dependencies.err_notifier,
+          std::move(tx_dependencies.ul_slot_repo),
+          std::move(tx_dependencies.ul_prach_repo),
+          std::move(tx_dependencies.notifier_symbol_repo),
+          std::move(tx_dependencies.ul_df_cplane),
+          tx_dependencies.frame_pool};
+}
+
+static downlink_handler_impl_config generate_downlink_handler_config(const transmitter_config& tx_config)
+{
+  downlink_handler_impl_config out_cfg;
+  out_cfg.sector             = tx_config.sector;
+  out_cfg.dl_eaxc            = tx_config.dl_eaxc;
+  out_cfg.tdd_config         = tx_config.tdd_config;
+  out_cfg.cp                 = tx_config.cp;
+  out_cfg.scs                = tx_config.scs;
+  out_cfg.dl_processing_time = tx_config.dl_processing_time;
+  out_cfg.tx_timing_params   = tx_config.tx_timing_params;
+
+  return out_cfg;
+}
+
+static downlink_handler_impl_dependencies
+resolve_downlink_handler_impl_dependencies(transmitter_impl_dependencies& tx_dependencies)
+{
+  srsran_assert(tx_dependencies.err_notifier, "Invalid error notifier");
+  srsran_assert(tx_dependencies.logger, "Invalid logger");
+
+  return {*tx_dependencies.logger,
+          *tx_dependencies.err_notifier,
+          std::move(tx_dependencies.dl_df_cplane),
+          std::move(tx_dependencies.dl_df_uplane),
+          tx_dependencies.frame_pool};
 }
 
 transmitter_impl::transmitter_impl(const transmitter_config& config, transmitter_impl_dependencies&& dependencies) :
-  dl_manager(std::move(dependencies.dl_manager)),
+  dl_handler(generate_downlink_handler_config(config), resolve_downlink_handler_impl_dependencies(dependencies)),
   ul_request_handler(generate_uplink_request_handler_config(config),
                      resolve_uplink_request_handler_dependencies(dependencies)),
   msg_transmitter(*dependencies.logger,
                   config.tx_timing_params,
-                  std::move(dependencies.eth_gateway),
+                  std::move(dependencies.eth_transmitter),
                   std::move(dependencies.frame_pool)),
   ota_dispatcher(*dependencies.executor,
-                 dl_manager->get_ota_symbol_boundary_notifier(),
+                 dl_handler.get_ota_symbol_boundary_notifier(),
                  ul_request_handler.get_ota_symbol_boundary_notifier(),
-                 msg_transmitter)
+                 msg_transmitter),
+  metrics_collector(config.are_metrics_enabled,
+                    dl_handler.get_metrics_collector(),
+                    ul_request_handler.get_metrics_collector(),
+                    msg_transmitter.get_ethernet_transmitter().get_metrics_collector())
 {
-  srsran_assert(dl_manager, "Invalid downlink manager");
 }
 
 uplink_request_handler& transmitter_impl::get_uplink_request_handler()
@@ -78,7 +110,7 @@ uplink_request_handler& transmitter_impl::get_uplink_request_handler()
 
 downlink_handler& transmitter_impl::get_downlink_handler()
 {
-  return dl_manager->get_downlink_handler();
+  return dl_handler;
 }
 
 ota_symbol_boundary_notifier& transmitter_impl::get_ota_symbol_boundary_notifier()
@@ -86,8 +118,7 @@ ota_symbol_boundary_notifier& transmitter_impl::get_ota_symbol_boundary_notifier
   return ota_dispatcher;
 }
 
-void transmitter_impl::set_error_notifier(error_notifier& notifier)
+transmitter_metrics_collector* transmitter_impl::get_metrics_collector()
 {
-  dl_manager->set_error_notifier(notifier);
-  ul_request_handler.set_error_notifier(notifier);
+  return metrics_collector.disabled() ? nullptr : &metrics_collector;
 }

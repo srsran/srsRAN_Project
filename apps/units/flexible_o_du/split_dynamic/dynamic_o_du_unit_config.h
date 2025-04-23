@@ -36,6 +36,14 @@ struct ru_dummy_cpu_affinities_cell_unit_config {
   os_sched_affinity_config ru_cpu_cfg = {sched_affinity_mask_types::ru, {}, sched_affinity_mask_policy::mask};
 };
 
+/// Metrics configuration.
+struct ru_dummy_unit_metrics_config {
+  /// Metrics configuration.
+  app_helpers::metrics_config metrics_cfg;
+  /// Flag that control RU metrics.
+  bool enable_ru_metrics = false;
+};
+
 /// gNB app dummy Radio Unit configuration.
 struct ru_dummy_unit_config {
   /// \brief DL processing delay in slots.
@@ -57,6 +65,8 @@ struct ru_dummy_unit_config {
   ///
   /// \note Add one cell by default.
   std::vector<ru_dummy_cpu_affinities_cell_unit_config> cell_affinities = {{}};
+  /// Metrics configuration.
+  ru_dummy_unit_metrics_config metrics_cfg;
 };
 
 /// Dynamic O-RAN DU unit configuration.

@@ -91,7 +91,7 @@ static uint8_t encode_re_mask_and_nof_symbols(const cplane_common_section_0_1_3_
 }
 
 /// Serializes the fields common to section types 0, 1, 3 and 5 using the serializer.
-static void serialize_section_0_1_3_5_fields(ofh::network_order_binary_serializer&       serializer,
+static void serialize_section_0_1_3_5_fields(network_order_binary_serializer&            serializer,
                                              const cplane_common_section_0_1_3_5_fields& section)
 {
   // 8 MSB section identifier (1 Byte).
@@ -114,7 +114,7 @@ static void serialize_section_0_1_3_5_fields(ofh::network_order_binary_serialize
 }
 
 /// Serializes section type 1 extensions (not supported currently).
-static void serialize_section1_extensions(ofh::network_order_binary_serializer& serializer)
+static void serialize_section1_extensions(network_order_binary_serializer& serializer)
 {
   // EF and beam identifier (1 Byte). Not supporting extensions and beams.
   static constexpr uint8_t ext_beam_byte = 0;
@@ -125,7 +125,7 @@ static void serialize_section1_extensions(ofh::network_order_binary_serializer& 
 }
 
 /// Serializes the given section type 1 using the serializer.
-static void serialize_section_1(ofh::network_order_binary_serializer&            serializer,
+static void serialize_section_1(network_order_binary_serializer&                 serializer,
                                 const cplane_dl_ul_radio_channel_section_fields& section)
 {
   // Write the common fields.
@@ -139,7 +139,7 @@ unsigned
 cplane_message_builder_impl::build_dl_ul_radio_channel_message(span<uint8_t>                          buffer,
                                                                const cplane_section_type1_parameters& msg_params)
 {
-  ofh::network_order_binary_serializer serializer(buffer.data());
+  network_order_binary_serializer serializer(buffer.data());
 
   // Data direction + payload version + filter index (1 Byte).
   serializer.write(encode_data_direction(msg_params.radio_hdr));
@@ -198,7 +198,7 @@ static uint16_t encode_cp_length(subcarrier_spacing scs, cyclic_prefix cp)
 }
 
 /// Serializes section type 0 extensions (not supported currently).
-static void serialize_section0_extensions(ofh::network_order_binary_serializer& serializer)
+static void serialize_section0_extensions(network_order_binary_serializer& serializer)
 {
   // EF and reserved field (1 Byte). Not supporting extensions.
   static constexpr uint8_t ext_byte = 0;
@@ -209,7 +209,7 @@ static void serialize_section0_extensions(ofh::network_order_binary_serializer& 
 }
 
 /// Serializes the given section type 0 using the serializer.
-static void serialize_section_0(ofh::network_order_binary_serializer&          serializer,
+static void serialize_section_0(network_order_binary_serializer&               serializer,
                                 const cplane_idle_guard_period_section_fields& section)
 {
   // Write the common fields.
@@ -222,7 +222,7 @@ static void serialize_section_0(ofh::network_order_binary_serializer&          s
 unsigned cplane_message_builder_impl::build_idle_guard_period_message(span<uint8_t>                          buffer,
                                                                       const cplane_section_type0_parameters& msg_params)
 {
-  ofh::network_order_binary_serializer serializer(buffer.data());
+  network_order_binary_serializer serializer(buffer.data());
 
   // Data direction + payload version + filter index (1 Byte).
   serializer.write(encode_data_direction(msg_params.radio_hdr));
@@ -262,7 +262,7 @@ unsigned cplane_message_builder_impl::build_idle_guard_period_message(span<uint8
 }
 
 /// Serializes the given section type 3 using the serializer.
-static void serialize_section_3(ofh::network_order_binary_serializer&        serializer,
+static void serialize_section_3(network_order_binary_serializer&             serializer,
                                 const cplane_prach_mixed_num_section_fields& section)
 {
   // Write the common fields.
@@ -284,7 +284,7 @@ unsigned
 cplane_message_builder_impl::build_prach_mixed_numerology_message(span<uint8_t>                          buffer,
                                                                   const cplane_section_type3_parameters& msg_params)
 {
-  ofh::network_order_binary_serializer serializer(buffer.data());
+  network_order_binary_serializer serializer(buffer.data());
 
   // Data direction + payload version + filter index (1 Byte).
   serializer.write(encode_data_direction(msg_params.radio_hdr));

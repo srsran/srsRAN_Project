@@ -22,8 +22,9 @@
 
 #pragma once
 
+#include "e2ap_asn1_packer.h"
+#include "lib/e2/common/e2_impl.h"
 #include "lib/e2/common/e2_subscription_manager_impl.h"
-#include "lib/e2/common/e2ap_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_impl.h"
 #include "lib/e2/e2sm/e2sm_rc/e2sm_rc_asn1_packer.h"
@@ -38,12 +39,10 @@
 #include "srsran/e2/e2.h"
 #include "srsran/e2/e2_cu.h"
 #include "srsran/e2/e2_du_factory.h"
-#include "srsran/e2/e2_factory.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/e2/e2sm/e2sm.h"
-#include "srsran/e2/e2sm/e2sm_factory.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
-#include "srsran/gateways/network_gateway.h"
+#include "srsran/e2/gateways/e2_connection_client.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/support/executors/manual_task_worker.h"
 #include "srsran/support/timers.h"
@@ -73,9 +72,9 @@ public:
 class dummy_e2_pdu_notifier : public e2_message_notifier
 {
 public:
-  dummy_e2_pdu_notifier(e2_message_handler* handler_) : logger(srslog::fetch_basic_logger("TEST")), handler(handler_){};
+  dummy_e2_pdu_notifier(e2_message_handler* handler_) : logger(srslog::fetch_basic_logger("TEST")), handler(handler_) {}
 
-  void attach_handler(e2_message_handler* handler_) { handler = handler_; };
+  void attach_handler(e2_message_handler* handler_) { handler = handler_; }
   void on_new_message(const e2_message& msg) override
   {
     switch (msg.pdu.type().value) {
@@ -354,27 +353,27 @@ public:
 class dummy_e2sm_kpm_du_meas_provider : public e2sm_kpm_meas_provider
 {
 public:
-  dummy_e2sm_kpm_du_meas_provider(){};
+  dummy_e2sm_kpm_du_meas_provider() {}
   std::vector<std::string> get_supported_metric_names(e2sm_kpm_metric_level_enum level) override
   {
     return supported_metrics;
-  };
-  virtual bool is_cell_supported(const asn1::e2sm::cgi_c& cell_global_id) override { return true; };
-  virtual bool is_ue_supported(const asn1::e2sm::ue_id_c& ueid) override { return true; };
-  virtual bool is_test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type) override { return true; };
+  }
+  virtual bool is_cell_supported(const asn1::e2sm::cgi_c& cell_global_id) override { return true; }
+  virtual bool is_ue_supported(const asn1::e2sm::ue_id_c& ueid) override { return true; }
+  virtual bool is_test_cond_supported(const asn1::e2sm::test_cond_type_c& test_cond_type) override { return true; }
 
   virtual bool get_ues_matching_test_conditions(const asn1::e2sm::matching_cond_list_l& matching_cond_list,
                                                 std::vector<asn1::e2sm::ue_id_c>&       ues) override
   {
     return get_ues_matching_cond(ues);
-  };
+  }
 
   virtual bool
   get_ues_matching_test_conditions(const asn1::e2sm::matching_ue_cond_per_sub_list_l& matching_ue_cond_list,
                                    std::vector<asn1::e2sm::ue_id_c>&                  ues) override
   {
     return get_ues_matching_cond(ues);
-  };
+  }
 
   virtual bool is_metric_supported(const asn1::e2sm::meas_type_c&   meas_type,
                                    const asn1::e2sm::meas_label_s&  label,
@@ -387,7 +386,7 @@ public:
     } else {
       return false;
     }
-  };
+  }
   /// \return Returns True if measurement collection was successful
   virtual bool get_meas_data(const asn1::e2sm::meas_type_c&               meas_type,
                              const asn1::e2sm::label_info_list_l          label_info_list,
@@ -455,7 +454,7 @@ public:
     }
 
     return false;
-  };
+  }
 
   void push_measurements_int(std::vector<uint32_t> presence_,
                              std::vector<uint32_t> cond_satisfied_,
@@ -464,7 +463,7 @@ public:
     presence        = presence_;
     cond_satisfied  = cond_satisfied_;
     meas_values_int = meas_values_int_;
-  };
+  }
 
   void push_measurements_float(std::vector<uint32_t> presence_,
                                std::vector<uint32_t> cond_satisfied_,
@@ -473,9 +472,9 @@ public:
     presence          = presence_;
     cond_satisfied    = cond_satisfied_;
     meas_values_float = meas_values_float_;
-  };
+  }
 
-  void set_ue_ids(std::vector<uint32_t> ue_ids_) { ue_ids = ue_ids_; };
+  void set_ue_ids(std::vector<uint32_t> ue_ids_) { ue_ids = ue_ids_; }
 
 private:
   bool get_ues_matching_cond(std::vector<asn1::e2sm::ue_id_c>& ues)
@@ -494,7 +493,7 @@ private:
       return true;
     }
     return false;
-  };
+  }
 
   std::vector<std::string> supported_metrics =
       {"CQI", "RSRP", "RSRQ", "DRB.UEThpDl", "DRB.UEThpUl", "DRB.RlcSduDelayDl"};
@@ -508,7 +507,7 @@ private:
 class dummy_e2_subscription_mngr : public e2_subscription_manager
 {
 public:
-  dummy_e2_subscription_mngr() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_e2_subscription_mngr() : logger(srslog::fetch_basic_logger("TEST")) {}
   e2_subscribe_reponse_message handle_subscription_setup(const asn1::e2ap::ric_sub_request_s& request) override
   {
     last_subscription = request;
@@ -524,7 +523,7 @@ public:
   {
     e2_subscribe_delete_response_message outcome;
     return outcome;
-  };
+  }
 
   void start_subscription(const asn1::e2ap::ric_request_id_s& ric_request_id,
                           uint16_t                            ran_func_id,
@@ -705,7 +704,7 @@ inline e2_message generate_e2_ind_msg(byte_buffer& ind_hdr_bytes, byte_buffer& i
 class dummy_e2_message_handler : public e2_message_handler
 {
 public:
-  dummy_e2_message_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_e2_message_handler() : logger(srslog::fetch_basic_logger("TEST")) {}
   void handle_message(const e2_message& msg) override
   {
     last_msg = msg;
@@ -722,7 +721,7 @@ private:
 class dummy_e2_agent_mng : public e2ap_e2agent_notifier
 {
 public:
-  dummy_e2_agent_mng() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_e2_agent_mng() : logger(srslog::fetch_basic_logger("TEST")) {}
   void on_e2_disconnection() override { logger.info("E2 connection closed."); }
 
 private:
@@ -730,22 +729,26 @@ private:
 };
 
 /// Dummy PDU handler
-class dummy_network_gateway_data_handler : public srsran::sctp_network_gateway_data_handler
+class dummy_sctp_association_sdu_notifier : public sctp_association_sdu_notifier
 {
 public:
-  dummy_network_gateway_data_handler(){};
-  void        handle_pdu(const byte_buffer& pdu) override { last_pdu = pdu.copy(); }
+  dummy_sctp_association_sdu_notifier() = default;
+  bool on_new_sdu(byte_buffer pdu) override
+  {
+    last_pdu = pdu.copy();
+    return true;
+  }
   byte_buffer last_pdu;
 };
 
 class dummy_e2_adapter : public e2_message_handler, public e2_event_handler
 {
 public:
-  dummy_e2_adapter() : logger(srslog::fetch_basic_logger("E2")){};
+  dummy_e2_adapter() : logger(srslog::fetch_basic_logger("E2")) {}
 
   void connect_e2ap(e2_interface* e2ap_) { e2ap = e2ap_; }
-  void handle_message(const e2_message& msg) override { e2ap->handle_message(msg); };
-  void handle_connection_loss() override { e2ap->handle_connection_loss(); };
+  void handle_message(const e2_message& msg) override { e2ap->handle_message(msg); }
+  void handle_connection_loss() override { e2ap->handle_connection_loss(); }
 
 private:
   srslog::basic_logger& logger;
@@ -786,7 +789,7 @@ class dummy_e2sm_handler : public e2sm_handler
     e2sm_event_trigger_def.report_period = 10;
     return e2sm_event_trigger_def;
   }
-  asn1::unbounded_octstring<true> pack_ran_function_description() override { return {}; };
+  asn1::unbounded_octstring<true> pack_ran_function_description() override { return {}; }
 };
 
 class dummy_e2_connection_client final : public e2_connection_client
@@ -823,7 +826,7 @@ public:
 class dummy_du_configurator : public srs_du::du_configurator
 {
 public:
-  dummy_du_configurator(){};
+  dummy_du_configurator() {}
   async_task<srs_du::du_mac_sched_control_config_response>
   configure_ue_mac_scheduler(srs_du::du_mac_sched_control_config reconf) override
   {
@@ -853,9 +856,9 @@ protected:
   timer_factory                                               factory;
   timer_manager                                               timers;
   std::unique_ptr<e2ap_e2agent_notifier>                      agent_notifier;
-  std::unique_ptr<dummy_network_gateway_data_handler>         gw;
+  std::unique_ptr<dummy_sctp_association_sdu_notifier>        gw;
   std::unique_ptr<dummy_e2ap_pcap>                            pcap;
-  std::unique_ptr<srsran::e2ap_asn1_packer>                   packer;
+  std::unique_ptr<e2ap_asn1_packer>                           packer;
   std::unique_ptr<e2sm_interface>                             e2sm_kpm_iface;
   std::unique_ptr<e2sm_interface>                             e2sm_rc_iface;
   std::unique_ptr<e2sm_control_service>                       e2sm_rc_control_service_style2;
@@ -899,11 +902,12 @@ class e2_test : public e2_test_base
     factory              = timer_factory{timers, task_worker};
     e2sm_mngr            = std::make_unique<e2sm_manager>(test_logger);
     agent_notifier       = std::make_unique<dummy_e2_agent_mng>();
-    e2 = create_e2(cfg, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
+    e2                   = std::make_unique<e2_impl>(
+        test_logger, cfg, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
-    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
   }
 
   void TearDown() override
@@ -931,9 +935,9 @@ class e2_entity_test : public e2_test_base
     e2agent                  = create_e2_du_agent(
         cfg, *e2_client, &(*du_metrics), &(*f1ap_ue_id_mapper), &(*du_rc_param_configurator), factory, task_worker);
     // Packer allows to inject packed message into E2 interface.
-    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, e2agent->get_e2_interface(), *pcap);
+    packer = std::make_unique<e2ap_asn1_packer>(*gw, e2agent->get_e2_interface(), *pcap);
   }
 
   void TearDown() override
@@ -965,11 +969,12 @@ class e2_test_subscriber : public e2_test_base
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     e2_subscription_mngr->add_ran_function_oid(1, "1.3.6.1.4.1.53148.1.2.2.2");
     agent_notifier = std::make_unique<dummy_e2_agent_mng>();
-    e2 = create_e2(cfg, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
+    e2             = std::make_unique<e2_impl>(
+        test_logger, cfg, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
-    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
 
     report_fatal_error_if_not(e2->handle_e2_tnl_connection_request(), "Unable to create dummy SCTP connection");
   }
@@ -1017,11 +1022,12 @@ class e2_test_setup : public e2_test_base
     e2sm_mngr->add_supported_ran_function(3, "1.3.6.1.4.1.53148.1.1.2.3");
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     agent_notifier       = std::make_unique<dummy_e2_agent_mng>();
-    e2 = create_e2(cfg, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
+    e2                   = std::make_unique<e2_impl>(
+        test_logger, cfg, *agent_notifier, factory, *e2_client, *e2_subscription_mngr, *e2sm_mngr, task_worker);
     // Packer allows to inject packed message into E2 interface.
-    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
   }
   void TearDown() override
   {

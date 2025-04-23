@@ -98,7 +98,8 @@ struct scheduler_ue_expert_config {
   interval<sch_mcs_index, true> ul_mcs;
   /// Sequence of redundancy versions used for PUSCH scheduling. Possible values: {0, 1, 2, 3}.
   std::vector<uint8_t> pusch_rv_sequence;
-  unsigned             initial_cqi;
+  /// CQI used to derived the MCS for DL scheduling, when no CSI has been reported yet.
+  unsigned initial_cqi;
   /// Maximum number of DL HARQ retxs.
   unsigned max_nof_dl_harq_retxs = 4;
   /// Maximum number of UL HARQ retxs.
@@ -159,11 +160,13 @@ struct scheduler_ue_expert_config {
   /// Maximum number of PUSCH + PUCCH grants per slot.
   unsigned max_ul_grants_per_slot{32U};
   /// Possible values: {1, ..., 7}.
-  // [Implementation-defined] As min_k1 is used for both common and dedicated PUCCH configuration, and in the UE
-  // fallback scheduler only allow max k1 = 7, we restrict min_k1 to 7.
+  /// [Implementation-defined] As min_k1 is used for both common and dedicated PUCCH configuration, and in the UE
+  /// fallback scheduler only allow max k1 = 7, we restrict min_k1 to 7.
   uint8_t min_k1 = 4;
   /// Maximum number of PDCCH grant allocation attempts per slot. Default: Unlimited.
   unsigned max_pdcch_alloc_attempts_per_slot = std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT);
+  /// Offset to apply to the CQI for PDCCH aggregation level calculation.
+  float pdcch_al_cqi_offset = 0;
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_cqi_inc{0.001};
   /// DL Target BLER to be achieved with OLLA.
@@ -188,6 +191,18 @@ struct scheduler_ue_expert_config {
   crb_interval pusch_crb_limits{0, MAX_NOF_PRBS};
   /// Expert parameters to be passed to the policy scheduler.
   policy_scheduler_expert_config strategy_cfg = time_rr_scheduler_expert_config{};
+  /// \brief Size of the group of UEs that is considered for newTx DL allocation in a given slot. The groups of UEs
+  /// will rotate in a round-robin fashion.
+  /// To minimize computation load, a lower group size can be used. If the QoS scheduler policy is used, this will
+  /// mean that the QoS priority is only computed to a subset of UEs and the scheduler will operate like a hybrid of
+  /// round-robin and QoS.
+  unsigned pre_policy_rr_dl_ue_group_size = 32;
+  /// \brief Size of the group of UEs that is considered for newTx UL allocation in a given slot.
+  unsigned pre_policy_rr_ul_ue_group_size = 32;
+  /// \brief Periodicity in slots of the round-robin UE group rotation for DL.
+  unsigned pre_policy_rr_dl_ue_group_period = 3;
+  /// \brief Periodicity in slots of the round-robin UE group rotation for UL.
+  unsigned pre_policy_rr_ul_ue_group_period = 1;
   /// Expert PUCCH/PUSCH power control parameters.
   ul_power_control ul_power_ctrl = ul_power_control{};
 };

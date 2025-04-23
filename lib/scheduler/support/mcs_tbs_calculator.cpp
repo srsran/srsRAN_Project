@@ -27,6 +27,7 @@
 #include "srsran/ran/pusch/pusch_mcs.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/sch/tbs_calculator.h"
+#include "srsran/ran/uci/uci_info.h"
 #include "srsran/ran/uci/uci_mapping.h"
 
 using namespace srsran;
@@ -34,12 +35,12 @@ using namespace srsran;
 static constexpr unsigned NOF_BITS_PER_BYTE = 8U;
 
 // Helper that generates the ulsch_configuration object necessary to compute the Effective Code Rate.
-static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_cfg,
-                                            const ue_cell_configuration* ue_cell_cfg,
-                                            unsigned                     tbs_bytes,
-                                            sch_mcs_description          mcs_info,
-                                            unsigned                     nof_prbs,
-                                            bool                         contains_dc)
+static ulsch_configuration build_ulsch_info(const pusch_config_params& pusch_cfg,
+                                            const bwp_config&          active_bwp_cfg,
+                                            unsigned                   tbs_bytes,
+                                            sch_mcs_description        mcs_info,
+                                            unsigned                   nof_prbs,
+                                            bool                       contains_dc)
 {
   ulsch_configuration ulsch_info{.tbs                = static_cast<units::bits>(tbs_bytes * NOF_BITS_PER_BYTE),
                                  .mcs_descr          = mcs_info,
@@ -48,7 +49,7 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
                                  .nof_csi_part2_bits = static_cast<units::bits>(pusch_cfg.max_nof_csi_part2_bits),
                                  .nof_rb             = nof_prbs,
                                  .start_symbol_index = pusch_cfg.symbols.start(),
-                                 .nof_symbols        = static_cast<unsigned>(pusch_cfg.symbols.length()),
+                                 .nof_symbols        = pusch_cfg.symbols.length(),
                                  .dmrs_type          = pusch_cfg.dmrs.config_type,
                                  .dmrs_symbol_mask   = pusch_cfg.dmrs.dmrs_symb_pos,
                                  .nof_cdm_groups_without_data =
@@ -56,44 +57,38 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
                                  .nof_layers  = pusch_cfg.nof_layers,
                                  .contains_dc = contains_dc};
 
-  if (ue_cell_cfg == nullptr) {
-    srsran_sanity_check(pusch_cfg.nof_harq_ack_bits == 0 and pusch_cfg.nof_csi_part1_bits == 0 and
-                            pusch_cfg.max_nof_csi_part2_bits == 0,
-                        "No UCI bits should be present for fallback UEs.");
-  }
+  const uci_on_pusch* uci_cfg =
+      active_bwp_cfg.ul_ded.has_value() and active_bwp_cfg.ul_ded->pusch_cfg->uci_cfg.has_value()
+          ? &active_bwp_cfg.ul_ded->pusch_cfg->uci_cfg.value()
+          : nullptr;
+  srsran_assert(uci_cfg != nullptr or (pusch_cfg.nof_harq_ack_bits == 0 and pusch_cfg.nof_csi_part1_bits == 0 and
+                                       pusch_cfg.max_nof_csi_part2_bits == 0),
+                "No UCI bits should be present for fallback UEs.");
 
-  // For fallback UEs, \ref ue_cell_cfg is not given; in that case, we set this to a default value of
+  // For fallback UEs, no dedicated PUSCH config exists; in that case, we set this to a default value of
   // alpha_scaling_opt::f1, as this is not used.
-  const auto* init_ul_bwp  = ue_cell_cfg != nullptr ? &ue_cell_cfg->init_bwp() : nullptr;
-  ulsch_info.alpha_scaling = alpha_scaling_to_float(
-      init_ul_bwp != nullptr ? init_ul_bwp->ul_ded->pusch_cfg.value().uci_cfg.value().scaling : alpha_scaling_opt::f1);
+  ulsch_info.alpha_scaling = alpha_scaling_to_float(uci_cfg != nullptr ? uci_cfg->scaling : alpha_scaling_opt::f1);
 
   // HARQ-ACK beta offset. Which of the beta_offset to be used among the indices 1, 2, 3 is determined as per TS38.213,
   // Section 9.3 and TS38.331, \c BetaOffsets.
   // If no HARQ-ACK reporting, this value won't be used.
   if (pusch_cfg.nof_harq_ack_bits == 0) {
     ulsch_info.beta_offset_harq_ack = 0;
-  }
-  // Use \c betaOffsetACK-Index1 for up to 2 bits HARQ-ACK reporting.
-  else if (pusch_cfg.nof_harq_ack_bits < 3) {
-    ulsch_info.beta_offset_harq_ack =
-        beta_harq_ack_to_float(std::get<uci_on_pusch::beta_offsets_semi_static>(
-                                   init_ul_bwp->ul_ded->pusch_cfg.value().uci_cfg.value().beta_offsets_cfg.value())
-                                   .beta_offset_ack_idx_1.value());
-  }
-  // Use \c betaOffsetACK-Index1 for up to 11 bits HARQ-ACK reporting.
-  else if (pusch_cfg.nof_harq_ack_bits < 12) {
-    ulsch_info.beta_offset_harq_ack =
-        beta_harq_ack_to_float(std::get<uci_on_pusch::beta_offsets_semi_static>(
-                                   init_ul_bwp->ul_ded->pusch_cfg.value().uci_cfg.value().beta_offsets_cfg.value())
-                                   .beta_offset_ack_idx_2.value());
-  }
-  // Use \c betaOffsetACK-Index1 for more than 11 bits HARQ-ACK reporting.
-  else {
-    ulsch_info.beta_offset_harq_ack =
-        beta_harq_ack_to_float(std::get<uci_on_pusch::beta_offsets_semi_static>(
-                                   init_ul_bwp->ul_ded->pusch_cfg.value().uci_cfg.value().beta_offsets_cfg.value())
-                                   .beta_offset_ack_idx_3.value());
+  } else {
+    const auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg->beta_offsets_cfg.value());
+
+    // Use \c betaOffsetACK-Index1 for up to 2 bits HARQ-ACK reporting.
+    if (pusch_cfg.nof_harq_ack_bits < 3) {
+      ulsch_info.beta_offset_harq_ack = beta_harq_ack_to_float(beta_offsets.beta_offset_ack_idx_1.value());
+    }
+    // Use \c betaOffsetACK-Index1 for up to 11 bits HARQ-ACK reporting.
+    else if (pusch_cfg.nof_harq_ack_bits < 12) {
+      ulsch_info.beta_offset_harq_ack = beta_harq_ack_to_float(beta_offsets.beta_offset_ack_idx_2.value());
+    }
+    // Use \c betaOffsetACK-Index1 for more than 11 bits HARQ-ACK reporting.
+    else {
+      ulsch_info.beta_offset_harq_ack = beta_harq_ack_to_float(beta_offsets.beta_offset_ack_idx_3.value());
+    }
   }
 
   // CSI Part 1 beta offset. Which of the beta_offset to be used among the indices 1, 2 is determined as per TS38.213,
@@ -101,20 +96,17 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
   // If no CSI Part 1 reporting, this value won't be used.
   if (pusch_cfg.nof_csi_part1_bits == 0) {
     ulsch_info.beta_offset_csi_part1 = 0;
-  }
-  // Use \c betaOffsetCSI-Part1-Index1 for up to 11 bits CSI Part 1 reporting.
-  else if (pusch_cfg.nof_csi_part1_bits < 12) {
-    ulsch_info.beta_offset_csi_part1 =
-        beta_csi_to_float(std::get<uci_on_pusch::beta_offsets_semi_static>(
-                              init_ul_bwp->ul_ded->pusch_cfg.value().uci_cfg.value().beta_offsets_cfg.value())
-                              .beta_offset_csi_p1_idx_1.value());
-  }
-  // Use \c betaOffsetCSI-Part1-Index2 for more than 11 bits CSI Part 1 reporting.
-  else {
-    ulsch_info.beta_offset_csi_part1 =
-        beta_csi_to_float(std::get<uci_on_pusch::beta_offsets_semi_static>(
-                              init_ul_bwp->ul_ded->pusch_cfg.value().uci_cfg.value().beta_offsets_cfg.value())
-                              .beta_offset_csi_p1_idx_2.value());
+  } else {
+    const auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg->beta_offsets_cfg.value());
+
+    // Use \c betaOffsetCSI-Part1-Index1 for up to 11 bits CSI Part 1 reporting.
+    if (pusch_cfg.nof_csi_part1_bits < 12) {
+      ulsch_info.beta_offset_csi_part1 = beta_csi_to_float(beta_offsets.beta_offset_csi_p1_idx_1.value());
+    }
+    // Use \c betaOffsetCSI-Part1-Index2 for more than 11 bits CSI Part 1 reporting.
+    else {
+      ulsch_info.beta_offset_csi_part1 = beta_csi_to_float(beta_offsets.beta_offset_csi_p1_idx_2.value());
+    }
   }
 
   // CSI Part 2 beta offset. The beta_offset to be used among the indices 1, 2 is determined as per TS38.213, Section
@@ -122,20 +114,17 @@ static ulsch_configuration build_ulsch_info(const pusch_config_params&   pusch_c
   // If no CSI Part 2 reporting, this value won't be used.
   if (pusch_cfg.max_nof_csi_part2_bits == 0) {
     ulsch_info.beta_offset_csi_part2 = 0;
-  }
-  // Use \c betaOffsetCSI-Part2-Index1 for up to 11 bits CSI Part 2 reporting.
-  else if (pusch_cfg.max_nof_csi_part2_bits < 12) {
-    ulsch_info.beta_offset_csi_part2 =
-        beta_csi_to_float(std::get<uci_on_pusch::beta_offsets_semi_static>(
-                              init_ul_bwp->ul_ded->pusch_cfg.value().uci_cfg.value().beta_offsets_cfg.value())
-                              .beta_offset_csi_p2_idx_1.value());
-  }
-  // Use \c betaOffsetCSI-Part2-Index2 for more than 11 bits CSI Part 2 reporting.
-  else {
-    ulsch_info.beta_offset_csi_part2 =
-        beta_csi_to_float(std::get<uci_on_pusch::beta_offsets_semi_static>(
-                              init_ul_bwp->ul_ded->pusch_cfg.value().uci_cfg.value().beta_offsets_cfg.value())
-                              .beta_offset_csi_p2_idx_2.value());
+  } else {
+    const auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(uci_cfg->beta_offsets_cfg.value());
+
+    // Use \c betaOffsetCSI-Part2-Index1 for up to 11 bits CSI Part 2 reporting.
+    if (pusch_cfg.max_nof_csi_part2_bits < 12) {
+      ulsch_info.beta_offset_csi_part2 = beta_csi_to_float(beta_offsets.beta_offset_csi_p2_idx_1.value());
+    }
+    // Use \c betaOffsetCSI-Part2-Index2 for more than 11 bits CSI Part 2 reporting.
+    else {
+      ulsch_info.beta_offset_csi_part2 = beta_csi_to_float(beta_offsets.beta_offset_csi_p2_idx_2.value());
+    }
   }
 
   return ulsch_info;
@@ -146,6 +135,70 @@ static void update_ulsch_info(ulsch_configuration& ulsch_cfg, unsigned tbs_bytes
 {
   ulsch_cfg.tbs       = static_cast<units::bits>(tbs_bytes * NOF_BITS_PER_BYTE);
   ulsch_cfg.mcs_descr = mcs_info;
+}
+
+// Helper that determines the minimum of rate-matched bits for a certain UCI message multiplexed in PUSCH.
+static unsigned calculate_min_uci_bits(unsigned          nof_payload_bits,
+                                       bool              contains_dc,
+                                       unsigned          nof_uci_re,
+                                       unsigned          nof_prbs,
+                                       modulation_scheme modulation,
+                                       unsigned          nof_layers)
+{
+  // Number of rate-matched bits required for the physical layer to detect or decode correctly a UCI field.
+  unsigned min_encoded_bits = calculate_uci_min_encoded_bits(nof_payload_bits);
+
+  // Account the number of bits that could be potentially used by the DC.
+  if (contains_dc) {
+    unsigned nof_ofdm_symbols = divide_ceil(nof_uci_re, nof_prbs * NOF_SUBCARRIERS_PER_RB);
+    min_encoded_bits += nof_ofdm_symbols * get_bits_per_symbol(modulation) * nof_layers;
+  }
+
+  return min_encoded_bits;
+}
+
+// Helper that determines if the effective code rate for data and UCI is valid.
+static bool is_pusch_effective_rate_valid(const pusch_config_params& config,
+                                          const ulsch_information&   ulsch_info,
+                                          const sch_mcs_description& mcs_info,
+                                          unsigned                   nof_prbs)
+{
+  // The maximum supported code rate is 0.95, as per TS 38.214, Section 5.1.3. The maximum code rate is defined for DL,
+  // but we consider the same value for UL.
+  static const double max_supported_code_rate = 0.95;
+
+  // Check the effective code rate for data does not exceed the maximum.
+  if (ulsch_info.get_effective_code_rate() > max_supported_code_rate) {
+    return false;
+  }
+
+  // Check the number of HARQ-ACK feedback number of rate-matched bits reaches the minimum.
+  if (config.nof_harq_ack_bits != 0) {
+    unsigned min_nof_encoded_bits = calculate_min_uci_bits(config.nof_harq_ack_bits,
+                                                           ulsch_info.nof_dc_overlap_bits.value() > 0,
+                                                           ulsch_info.nof_harq_ack_re,
+                                                           nof_prbs,
+                                                           mcs_info.modulation,
+                                                           config.nof_layers);
+    if (min_nof_encoded_bits > ulsch_info.nof_harq_ack_bits.value()) {
+      return false;
+    }
+  }
+
+  // Check the number of CSI Part 1 report number of rate-matched bits reaches the minimum.
+  if (config.nof_csi_part1_bits != 0) {
+    unsigned min_nof_encoded_bits = calculate_min_uci_bits(config.nof_csi_part1_bits,
+                                                           ulsch_info.nof_dc_overlap_bits.value() > 0,
+                                                           ulsch_info.nof_csi_part1_re,
+                                                           nof_prbs,
+                                                           mcs_info.modulation,
+                                                           config.nof_layers);
+    if (min_nof_encoded_bits > ulsch_info.nof_csi_part1_bits.value()) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 std::optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params& pdsch_params,
@@ -174,7 +227,7 @@ std::optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params&
                                  .mcs_descr          = mcs_info,
                                  .nof_rb             = nof_prbs,
                                  .start_symbol_index = pdsch_params.symbols.start(),
-                                 .nof_symbols        = static_cast<unsigned>(pdsch_params.symbols.length()),
+                                 .nof_symbols        = pdsch_params.symbols.length(),
                                  .dmrs_type          = pdsch_params.dmrs.config_type,
                                  .dmrs_symbol_mask   = pdsch_params.dmrs.dmrs_symb_pos,
                                  .nof_cdm_groups_without_data =
@@ -212,19 +265,16 @@ std::optional<sch_mcs_tbs> srsran::compute_dl_mcs_tbs(const pdsch_config_params&
   return std::optional<sch_mcs_tbs>{sch_mcs_tbs{.mcs = mcs, .tbs = tbs_bytes}};
 }
 
-std::optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&   pusch_cfg,
-                                                      const ue_cell_configuration* ue_cell_cfg,
-                                                      sch_mcs_index                max_mcs,
-                                                      unsigned                     nof_prbs,
-                                                      bool                         contains_dc)
+std::optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params& pusch_cfg,
+                                                      const bwp_config&          active_bwp_cfg,
+                                                      sch_mcs_index              max_mcs,
+                                                      unsigned                   nof_prbs,
+                                                      bool                       contains_dc)
 {
-  // The maximum supported code rate is 0.95, as per TS38.214, Section 5.1.3. The maximum code rate is defined for DL,
-  // but we consider the same value for UL.
-  static const double max_supported_code_rate = 0.95;
-  const unsigned      dmrs_prbs               = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
-  sch_mcs_description mcs_info                = pusch_mcs_get_config(
+  const unsigned      dmrs_prbs = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
+  sch_mcs_description mcs_info  = pusch_mcs_get_config(
       pusch_cfg.mcs_table, max_mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
-  unsigned nof_symbols = pusch_cfg.symbols.length();
+  const unsigned nof_symbols = pusch_cfg.symbols.length();
 
   unsigned tbs_bytes =
       tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
@@ -237,12 +287,14 @@ std::optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&
       NOF_BITS_PER_BYTE;
 
   // > Compute the effective code rate.
-  ulsch_configuration ulsch_cfg = build_ulsch_info(pusch_cfg, ue_cell_cfg, tbs_bytes, mcs_info, nof_prbs, contains_dc);
-  float               effective_code_rate = get_ulsch_information(ulsch_cfg).get_effective_code_rate();
+  ulsch_configuration ulsch_cfg =
+      build_ulsch_info(pusch_cfg, active_bwp_cfg, tbs_bytes, mcs_info, nof_prbs, contains_dc);
+  ulsch_information info = get_ulsch_information(ulsch_cfg);
 
   // > Decrease the MCS and recompute TBS until the effective code rate is not above the 0.95 threshold.
-  sch_mcs_index mcs = max_mcs;
-  while (effective_code_rate > max_supported_code_rate and mcs > 0) {
+  sch_mcs_index mcs     = max_mcs;
+  bool          success = false;
+  while (!(success = ::is_pusch_effective_rate_valid(pusch_cfg, info, mcs_info, nof_prbs)) and mcs > 0) {
     --mcs;
     mcs_info  = pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, false);
     tbs_bytes = tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
@@ -255,18 +307,92 @@ std::optional<sch_mcs_tbs> srsran::compute_ul_mcs_tbs(const pusch_config_params&
                 NOF_BITS_PER_BYTE;
 
     update_ulsch_info(ulsch_cfg, tbs_bytes, mcs_info);
-    effective_code_rate = get_ulsch_information(ulsch_cfg).get_effective_code_rate();
+    info = get_ulsch_information(ulsch_cfg);
   }
 
   // If no MCS such that effective code rate <= 0.95, return an empty optional object.
-  if (effective_code_rate > max_supported_code_rate and mcs == 0) {
+  if (!success and mcs == 0) {
     return std::nullopt;
   }
 
   // If no MCS such that nof bits for PUSCH > 0, return an empty optional object.
-  if (effective_code_rate == 0) {
+  if (info.get_effective_code_rate() == 0) {
     return std::nullopt;
   }
 
   return std::optional<sch_mcs_tbs>{sch_mcs_tbs{.mcs = mcs, .tbs = tbs_bytes}};
+}
+
+std::optional<unsigned> srsran::compute_ul_tbs(const pusch_config_params& pusch_cfg,
+                                               const bwp_config&          active_bwp_cfg,
+                                               sch_mcs_index              mcs,
+                                               unsigned                   nof_prbs,
+                                               bool                       contains_dc)
+{
+  const unsigned            dmrs_prbs = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
+  const sch_mcs_description mcs_info =
+      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
+  const unsigned nof_symbols = pusch_cfg.symbols.length();
+
+  unsigned tbs_bytes =
+      tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
+                                                            .nof_dmrs_prb     = dmrs_prbs,
+                                                            .nof_oh_prb       = pusch_cfg.nof_oh_prb,
+                                                            .mcs_descr        = mcs_info,
+                                                            .nof_layers       = pusch_cfg.nof_layers,
+                                                            .tb_scaling_field = pusch_cfg.tb_scaling_field,
+                                                            .n_prb            = nof_prbs}) /
+      NOF_BITS_PER_BYTE;
+
+  // > Compute the effective code rate.
+  const ulsch_configuration ulsch_cfg =
+      build_ulsch_info(pusch_cfg, active_bwp_cfg, tbs_bytes, mcs_info, nof_prbs, contains_dc);
+  const ulsch_information info = get_ulsch_information(ulsch_cfg);
+
+  if (::is_pusch_effective_rate_valid(pusch_cfg, info, mcs_info, nof_prbs)) {
+    return tbs_bytes;
+  }
+  return std::nullopt;
+}
+
+bool srsran::is_pusch_effective_rate_valid(const pusch_config_params& pusch_cfg,
+                                           const bwp_config&          active_bwp_cfg,
+                                           sch_mcs_index              mcs,
+                                           unsigned                   nof_prbs,
+                                           bool                       contains_dc)
+{
+  const unsigned            dmrs_prbs = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
+  const sch_mcs_description mcs_info =
+      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
+  unsigned tbs_bytes =
+      tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = pusch_cfg.symbols.length(),
+                                                            .nof_dmrs_prb     = dmrs_prbs,
+                                                            .nof_oh_prb       = pusch_cfg.nof_oh_prb,
+                                                            .mcs_descr        = mcs_info,
+                                                            .nof_layers       = pusch_cfg.nof_layers,
+                                                            .tb_scaling_field = pusch_cfg.tb_scaling_field,
+                                                            .n_prb            = nof_prbs}) /
+      NOF_BITS_PER_BYTE;
+
+  const ulsch_configuration ulsch_cfg =
+      build_ulsch_info(pusch_cfg, active_bwp_cfg, tbs_bytes, mcs_info, nof_prbs, contains_dc);
+  const ulsch_information info = get_ulsch_information(ulsch_cfg);
+  return ::is_pusch_effective_rate_valid(pusch_cfg, info, mcs_info, nof_prbs);
+}
+
+unsigned srsran::compute_ul_tbs_unsafe(const pusch_config_params& pusch_cfg, sch_mcs_index mcs, unsigned nof_prbs)
+{
+  const unsigned            dmrs_prbs = calculate_nof_dmrs_per_rb(pusch_cfg.dmrs);
+  const sch_mcs_description mcs_info =
+      pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
+  const unsigned nof_symbols = pusch_cfg.symbols.length();
+
+  return tbs_calculator_calculate(tbs_calculator_configuration{.nof_symb_sh      = nof_symbols,
+                                                               .nof_dmrs_prb     = dmrs_prbs,
+                                                               .nof_oh_prb       = pusch_cfg.nof_oh_prb,
+                                                               .mcs_descr        = mcs_info,
+                                                               .nof_layers       = pusch_cfg.nof_layers,
+                                                               .tb_scaling_field = pusch_cfg.tb_scaling_field,
+                                                               .n_prb            = nof_prbs}) /
+         NOF_BITS_PER_BYTE;
 }

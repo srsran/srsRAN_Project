@@ -24,8 +24,9 @@
 
 #include "apps/helpers/f1u/f1u_appconfig.h"
 #include "apps/helpers/logger/logger_appconfig.h"
-#include "apps/helpers/metrics/metrics_config.h"
+#include "apps/services/app_resource_usage/app_resource_usage_config.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig.h"
+#include "apps/services/metrics/metrics_appconfig.h"
 #include "apps/services/remote_control/remote_control_appconfig.h"
 #include "apps/services/worker_manager/worker_manager_appconfig.h"
 #include <string>
@@ -41,9 +42,8 @@ struct cu_f1ap_appconfig {
 
 /// Metrics report configuration.
 struct metrics_appconfig {
-  app_helpers::metrics_config common_metrics_cfg;
-  /// Resource usage report period in milliseconds.
-  unsigned rusage_report_period = 0;
+  app_services::app_resource_usage_config rusage_config;
+  app_services::metrics_appconfig         metrics_service_cfg;
 };
 
 } // namespace srs_cu
@@ -66,6 +66,8 @@ struct cu_appconfig {
   remote_control_appconfig remote_control_config;
   /// Metrics configuration.
   srs_cu::metrics_appconfig metrics_cfg;
+  /// Dryrun mode enabled flag.
+  bool enable_dryrun = false;
 };
 
 } // namespace srsran

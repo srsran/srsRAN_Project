@@ -58,6 +58,9 @@ public:
   // See uplink_processor_pool interface for documentation.
   uplink_pdu_slot_repository_pool& get_slot_pdu_repository_pool() override { return *this; }
 
+  // See uplink_pdu_slot_repository_pool interface for documentation.
+  void stop() override;
+
 private:
   // See uplink_slot_processor_pool interface for documentation.
   uplink_slot_processor& get_slot_processor(slot_point slot) override;

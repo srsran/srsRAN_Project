@@ -74,7 +74,7 @@ protected:
     ASSERT_NE(sequence_generator_factory, nullptr);
 
     std::shared_ptr<srs_estimator_factory> srs_est_factory =
-        create_srs_estimator_generic_factory(sequence_generator_factory, ta_estimator_factory);
+        create_srs_estimator_generic_factory(sequence_generator_factory, ta_estimator_factory, MAX_RB);
     ASSERT_NE(srs_est_factory, nullptr);
 
     estimator = srs_est_factory->create();

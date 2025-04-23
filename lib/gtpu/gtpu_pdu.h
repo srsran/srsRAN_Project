@@ -117,7 +117,7 @@ inline const char* to_string(gtpu_extension_header_type type)
     default:
       return "invalid";
   }
-};
+}
 
 // 00 Comprehension of this extension header is not required. An Intermediate Node shall forward it to any Receiver
 // Endpoint
@@ -159,7 +159,7 @@ inline const char* to_string(gtpu_information_element_type type)
     default:
       return "Reserved";
   }
-};
+}
 
 /// Base class for GTP-U extension headers
 struct gtpu_extension_header {

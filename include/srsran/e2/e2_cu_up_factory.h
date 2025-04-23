@@ -24,7 +24,9 @@
 
 #include "srsran/cu_cp/cu_configurator.h"
 #include "srsran/e2/e2_cu.h"
-#include "srsran/e2/e2_factory.h"
+#include "srsran/e2/e2ap_configuration.h"
+#include "srsran/e2/gateways/e2_connection_client.h"
+#include "srsran/support/timers.h"
 
 namespace srsran {
 

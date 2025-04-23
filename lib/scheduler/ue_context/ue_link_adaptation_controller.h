@@ -68,6 +68,9 @@ public:
   /// \brief Get the effective CQI, accounting CQI and OLLA offset, to be used for MCS derivation.
   float get_effective_cqi() const;
 
+  /// \brief Get the wideband CQI.
+  unsigned get_wideband_cqi() const { return ue_ch_st.get_wideband_cqi().value(); }
+
 private:
   /// \brief Get the value of UL SNR after applying the link adaptation SNR offset.
   float get_effective_snr() const;

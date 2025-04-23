@@ -72,7 +72,7 @@ upper_phy_impl::upper_phy_impl(upper_phy_impl_config&& config) :
   if (!config.rx_symbol_printer_filename.empty()) {
     interval<unsigned> ul_ports(0, config.nof_rx_ports);
     if (config.rx_symbol_printer_port.has_value()) {
-      ul_ports.set(config.rx_symbol_printer_port.value(), config.rx_symbol_printer_port.value() + 1);
+      ul_ports.set(*config.rx_symbol_printer_port, *config.rx_symbol_printer_port + 1);
     }
     rx_symbol_handler =
         std::make_unique<upper_phy_rx_symbol_handler_printer_decorator>(std::move(rx_symbol_handler),
@@ -157,4 +157,6 @@ const downlink_pdu_validator& upper_phy_impl::get_downlink_pdu_validator() const
 void upper_phy_impl::stop()
 {
   rx_buf_pool->stop();
+  dl_processor_pool->stop();
+  ul_processor_pool->stop();
 }

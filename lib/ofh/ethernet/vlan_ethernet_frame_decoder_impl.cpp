@@ -32,7 +32,7 @@ static constexpr unsigned MIN_ETH_LEN = 64;
 span<const uint8_t> vlan_frame_decoder_impl::decode(span<const uint8_t> frame, vlan_frame_params& eth_params)
 {
   // Ethernet frames should include padding bytes up to the minimum length.
-  if (frame.size() < MIN_ETH_LEN) {
+  if (SRSRAN_UNLIKELY(frame.size() < MIN_ETH_LEN)) {
     logger.debug("Sector #{}: Dropped received Ethernet frame of size '{}' bytes as it is below the minimum allowed "
                  "size of '{}' bytes",
                  sector_id,

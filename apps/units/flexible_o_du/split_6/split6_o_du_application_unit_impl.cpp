@@ -51,6 +51,11 @@ void split6_o_du_application_unit_impl::on_loggers_registration()
   plugin->on_loggers_registration();
 }
 
+bool split6_o_du_application_unit_impl::are_metrics_enabled() const
+{
+  return unit_cfg.odu_high_cfg.du_high_cfg.config.metrics.layers_cfg.are_metrics_enabled();
+}
+
 void split6_o_du_application_unit_impl::on_configuration_parameters_autoderivation(CLI::App& app)
 {
   autoderive_split6_o_du_parameters_after_parsing(app, unit_cfg);

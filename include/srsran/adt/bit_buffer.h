@@ -417,7 +417,7 @@ public:
 
   static_bit_buffer(static_bit_buffer& other) = delete;
 
-  static_bit_buffer(static_bit_buffer&& other) : bit_buffer(buffer, other.size()){};
+  static_bit_buffer(static_bit_buffer&& other) : bit_buffer(buffer, other.size()) {}
 
   /// Resizes the bit buffer.
   void resize(unsigned new_size)

@@ -34,7 +34,11 @@ class split_7_2_o_du_factory : public flexible_o_du_factory
 
 public:
   explicit split_7_2_o_du_factory(const split_7_2_o_du_unit_config& config_) :
-    flexible_o_du_factory({config_.odu_high_cfg, config_.du_low_cfg}), unit_config(config_)
+    flexible_o_du_factory(
+        {config_.odu_high_cfg,
+         config_.du_low_cfg,
+         {config_.ru_cfg.config.metrics_cfg.metrics_cfg, config_.ru_cfg.config.metrics_cfg.enable_ru_metrics}}),
+    unit_config(config_)
   {
   }
 

@@ -171,6 +171,19 @@ void ue_capability_manager::update(du_ue_resource_config& ue_res_cfg, const byte
     return;
   }
 
+  update_impl(ue_res_cfg);
+}
+
+void ue_capability_manager::update(du_ue_resource_config& ue_res_cfg, const ue_capability_summary& summary)
+{
+  // Store injected UE capabilities.
+  ue_caps = summary;
+
+  update_impl(ue_res_cfg);
+}
+
+void ue_capability_manager::update_impl(du_ue_resource_config& ue_res_cfg)
+{
   du_cell_index_t      cell_idx  = to_du_cell_index(0);
   serving_cell_config& pcell_cfg = ue_res_cfg.cell_group.cells[cell_idx].serv_cell_cfg;
 

@@ -200,7 +200,7 @@ public:
   slot_point operator++(int)
   {
     slot_point ret{*this};
-    this->     operator++();
+    this->operator++();
     return ret;
   }
 

@@ -230,7 +230,7 @@ TEST_P(validate_pucch_f0_pdu_field, WithValue)
                validate_ul_pucch_pdu,
                srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(duration,
                          validate_pucch_f0_pdu_field,
@@ -305,7 +305,7 @@ TEST_P(validate_pucch_f1_pdu_field, WithValue)
                validate_ul_pucch_pdu,
                srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(duration,
                          validate_pucch_f1_pdu_field,
@@ -389,7 +389,7 @@ TEST_P(validate_pucch_f2_pdu_field, WithValue)
                validate_ul_pucch_pdu,
                srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(duration,
                          validate_pucch_f2_pdu_field,
@@ -467,7 +467,7 @@ TEST_P(validate_pucch_f3_pdu_field, WithValue)
                validate_ul_pucch_pdu,
                srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(duration,
                          validate_pucch_f3_pdu_field,
@@ -588,7 +588,7 @@ TEST_P(validate_pucch_f4_pdu_field, WithValue)
                validate_ul_pucch_pdu,
                srsran::fapi::message_type_id::ul_tti_request,
                ul_pdu_type::PUCCH);
-};
+}
 
 INSTANTIATE_TEST_SUITE_P(duration,
                          validate_pucch_f4_pdu_field,

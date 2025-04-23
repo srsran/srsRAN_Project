@@ -75,7 +75,7 @@ prach_detector_generic_impl::prach_detector_generic_impl(std::unique_ptr<dft_pro
                 "IDFT size for short preambles (i.e., {}) must be in range {}.",
                 idft_short->get_size(),
                 idft_long_sz_range);
-};
+}
 
 prach_detection_result prach_detector_generic_impl::detect(const prach_buffer& input, const configuration& config)
 {

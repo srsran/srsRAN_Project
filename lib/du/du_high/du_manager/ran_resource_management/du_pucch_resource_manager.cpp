@@ -44,7 +44,7 @@ static bool csi_offset_exceeds_grant_cnt(unsigned                     offset_can
   }
 
   return false;
-};
+}
 
 // Helper that updates the starting PUCCH config with user-defined parameters.
 static pucch_config build_default_pucch_cfg(const pucch_config& pucch_cfg, const pucch_builder_params& user_params)

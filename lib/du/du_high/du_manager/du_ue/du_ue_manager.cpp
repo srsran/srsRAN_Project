@@ -138,6 +138,10 @@ void du_ue_manager::handle_reestablishment_request(du_ue_index_t new_ue_index, d
   // Retrieve the old UE context for the RRC connection reestablishment procedure, as defined in TS 48.473, 8.4.2.2 and
   // TS 38.401.
   new_ue.reestablished_cfg_pending = std::make_unique<du_ue_resource_config>(old_ue_it->resources.value());
+  if (old_ue_it->resources.get_ue_capabilities().has_value()) {
+    new_ue.reestablished_ue_caps_summary =
+        std::make_unique<ue_capability_summary>(*old_ue_it->resources.get_ue_capabilities());
+  }
 
   // Delete the old UE context.
   schedule_async_task(old_ue_index, handle_ue_delete_request(f1ap_ue_delete_request{old_ue_index}));

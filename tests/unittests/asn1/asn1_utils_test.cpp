@@ -561,7 +561,7 @@ public:
     value = v;
     return *this;
   }
-              operator uint8_t() { return (uint8_t)value; }
+  operator uint8_t() { return (uint8_t)value; }
   std::string to_string() const
   {
     switch (value) {
@@ -646,7 +646,7 @@ public:
     value = v;
     return *this;
   }
-              operator uint8_t() { return (uint8_t)value; }
+  operator uint8_t() { return (uint8_t)value; }
   std::string to_string() const
   {
     switch (value) {
@@ -669,7 +669,7 @@ TEST(asn1_enumerated, bool_to_enum_test)
   TESTASSERT(enum_to_bool(e2));
   e2 = EnumBoolTest::options::nulltype;
   TESTASSERT(!enum_to_bool(e2));
-};
+}
 
 void test_json_writer()
 {

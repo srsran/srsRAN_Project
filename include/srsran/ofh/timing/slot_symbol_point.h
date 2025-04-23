@@ -44,21 +44,6 @@ public:
     srsran_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", unsigned(numerology));
   }
 
-  slot_symbol_point(const slot_symbol_point& symbol_point) :
-    nof_symbols(symbol_point.get_nof_symbols()),
-    numerology(symbol_point.get_numerology()),
-    count_val(symbol_point.to_uint())
-  {
-  }
-  slot_symbol_point& operator=(const slot_symbol_point& symbol_point)
-  {
-    nof_symbols = symbol_point.get_nof_symbols();
-    numerology  = symbol_point.get_numerology();
-    count_val   = symbol_point.to_uint();
-
-    return *this;
-  }
-
   /// Slot point.
   slot_point get_slot() const
   {

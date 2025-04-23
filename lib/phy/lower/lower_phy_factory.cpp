@@ -183,6 +183,7 @@ public:
     proc_bb_adaptor_config.tx_buffer_size         = tx_buffer_size;
     proc_bb_adaptor_config.nof_tx_buffers         = std::max(4U, rx_to_tx_max_delay / tx_buffer_size);
     proc_bb_adaptor_config.system_time_throttling = config.system_time_throttling;
+    proc_bb_adaptor_config.stop_nof_slots         = 2 * config.max_processing_delay_slots;
 
     // Create lower PHY controller from the processor baseband adaptor.
     std::unique_ptr<lower_phy_controller> controller =

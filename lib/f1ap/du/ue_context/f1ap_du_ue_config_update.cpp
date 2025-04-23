@@ -21,6 +21,7 @@
  */
 
 #include "f1ap_du_ue_config_update.h"
+#include "../f1ap_du_metrics_collector_impl.h"
 
 using namespace srsran;
 using namespace srs_du;
@@ -28,7 +29,8 @@ using namespace srs_du;
 f1ap_ue_creation_response srsran::srs_du::create_f1ap_ue(const f1ap_ue_creation_request& req,
                                                          f1ap_du_ue_manager&             ues,
                                                          const f1ap_du_context&          du_ctx,
-                                                         f1ap_event_manager&             ev_mng)
+                                                         f1ap_event_manager&             ev_mng,
+                                                         f1ap_metrics_collector_impl&    metrics)
 {
   f1ap_du_ue& u                        = ues.add_ue(req.ue_index);
   u.context.rnti                       = req.c_rnti;
@@ -42,6 +44,9 @@ f1ap_ue_creation_response srsran::srs_du::create_f1ap_ue(const f1ap_ue_creation_
       u.bearers.add_f1c_bearer(srb.srb_id, *srb.rx_sdu_notifier);
     }
   }
+
+  // Update metrics.
+  metrics.on_ue_creation(req.ue_index, u.context.gnb_du_ue_f1ap_id);
 
   // Prepare response.
   f1ap_ue_creation_response resp{};

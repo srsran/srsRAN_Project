@@ -67,7 +67,7 @@ static void configure_cli11_log_args(CLI::App& app, logger_appconfig& log_params
     const auto options = app.get_options();
     for (auto* option : options) {
       // Skip all_level option and unrelated options to log level.
-      if (option->check_name("--all_level") || option->get_name().find("level") == std::string::npos) {
+      if (option->check_name("--all_level") || option->get_single_name().find("level") == std::string::npos) {
         continue;
       }
 

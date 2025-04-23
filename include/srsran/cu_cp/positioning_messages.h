@@ -47,46 +47,6 @@ struct trp_information_failure_t {
   nrppa_cause_t cause;
 };
 
-struct measurement_request_t {
-  lmf_meas_id_t                                lmf_meas_id;
-  std::vector<trp_meas_request_item_t>         trp_meas_request_list;
-  report_characteristics_t                     report_characteristics;
-  std::optional<meas_periodicity_t>            meas_periodicity;
-  std::vector<trp_meas_quantities_list_item_t> trp_meas_quantities;
-
-  // TODO: Add missing optional values.
-};
-
-struct measurement_response_t {
-  lmf_meas_id_t                                lmf_meas_id;
-  ran_meas_id_t                                ran_meas_id;
-  std::vector<trp_measurement_response_item_t> trp_meas_resp_list;
-};
-
-struct measurement_failure_t {
-  lmf_meas_id_t lmf_meas_id;
-  nrppa_cause_t cause;
-};
-
-struct measurement_report_t {
-  lmf_meas_id_t                                lmf_meas_id;
-  ran_meas_id_t                                ran_meas_id;
-  std::vector<trp_measurement_response_item_t> trp_meas_report_list;
-};
-
-struct measurement_update_t {
-  lmf_meas_id_t lmf_meas_id;
-  ran_meas_id_t ran_meas_id;
-  // Optional values:
-  std::vector<trp_measurement_update_item_t> trp_meas_upd_list;
-  // TODO: Add missing optional values.
-};
-
-struct measurement_abort_t {
-  lmf_meas_id_t lmf_meas_id;
-  ran_meas_id_t ran_meas_id;
-};
-
 struct positioning_information_request_t {
   ue_index_t ue_index;
 
@@ -120,6 +80,37 @@ struct positioning_activation_response_t {
 };
 
 struct positioning_activation_failure_t {
+  nrppa_cause_t cause;
+};
+
+struct measurement_request_t {
+  lmf_meas_id_t                                lmf_meas_id;
+  ran_meas_id_t                                ran_meas_id;
+  std::vector<trp_meas_request_item_t>         trp_meas_request_list;
+  report_characteristics_t                     report_characteristics;
+  std::optional<meas_periodicity_t>            meas_periodicity;
+  std::vector<trp_meas_quantities_list_item_t> trp_meas_quantities;
+  std::optional<uint64_t>                      sfn_initialization_time;
+
+  std::optional<srs_configuration_t> srs_config;
+  std::optional<bool>                meas_beam_info_request;
+  std::optional<uint16_t>            sys_frame_num;
+  std::optional<uint8_t>             slot_num;
+  std::optional<uint32_t>            meas_periodicity_extended;
+  std::optional<response_time_t>     resp_time;
+  std::optional<uint16_t>            meas_characteristics_request_ind;
+  std::optional<uint8_t>             meas_time_occasion;
+  std::optional<uint8_t>             meas_amount;
+};
+
+struct measurement_response_t {
+  lmf_meas_id_t                                lmf_meas_id;
+  ran_meas_id_t                                ran_meas_id;
+  std::vector<trp_measurement_response_item_t> trp_meas_resp_list;
+};
+
+struct measurement_failure_t {
+  lmf_meas_id_t lmf_meas_id;
   nrppa_cause_t cause;
 };
 

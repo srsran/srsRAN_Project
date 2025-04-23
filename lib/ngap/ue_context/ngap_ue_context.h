@@ -42,6 +42,7 @@ struct ngap_ue_context {
   ngap_cu_cp_ue_notifier* ue = nullptr;
   guami_t                 serving_guami;
   uint64_t                aggregate_maximum_bit_rate_dl = 0;
+  uint64_t                aggregate_maximum_bit_rate_ul = 0;
   unique_timer            request_pdu_session_timer     = {};
   bool                    release_requested             = false;
   bool                    release_scheduled             = false;
@@ -172,12 +173,12 @@ public:
       // If the AMF-UE-ID is already set, we don't want to change it.
       return;
     } else if (ue.ue_ids.amf_ue_id == amf_ue_id_t::invalid) {
-      // If it was not set before, we add it
+      // If it was not set before, we add it.
       ue.logger.log_debug("Setting AMF-UE-NGAP-ID={}", fmt::underlying(amf_ue_id));
       ue.ue_ids.amf_ue_id = amf_ue_id;
       amf_ue_id_to_ran_ue_id.emplace(amf_ue_id, ran_ue_id);
     } else if (ue.ue_ids.amf_ue_id != amf_ue_id) {
-      // If it was set before, we update it
+      // If it was set before, we update it.
       amf_ue_id_t old_amf_ue_id = ue.ue_ids.amf_ue_id;
       ue.logger.log_info("Updating AMF-UE-NGAP-ID={}", fmt::underlying(amf_ue_id));
       ue.ue_ids.amf_ue_id = amf_ue_id;
@@ -200,11 +201,11 @@ public:
 
     srsran_assert(ues.find(ran_ue_id) != ues.end(), "ran_ue={}: NGAP UE context not found", fmt::underlying(ran_ue_id));
 
-    // Update UE context
+    // Update UE context.
     ues.at(ran_ue_id).ue_ids.ue_index = new_ue_index;
     ues.at(ran_ue_id).ue              = &new_ue_notifier;
 
-    // Update lookups
+    // Update lookups.
     ue_index_to_ran_ue_id.emplace(new_ue_index, ran_ue_id);
     ue_index_to_ran_ue_id.erase(old_ue_index);
 
@@ -223,7 +224,7 @@ public:
       return;
     }
 
-    // Remove UE from lookup
+    // Remove UE from lookup.
     ran_ue_id_t ran_ue_id = ue_index_to_ran_ue_id.at(ue_index);
     ue_index_to_ran_ue_id.erase(ue_index);
 
@@ -245,35 +246,35 @@ public:
   /// \brief Get the next available RAN-UE-ID.
   ran_ue_id_t allocate_ran_ue_id()
   {
-    // return invalid when no RAN-UE-ID is available
+    // Return invalid when no RAN-UE-ID is available.
     if (ue_index_to_ran_ue_id.size() == MAX_NOF_RAN_UES) {
       return ran_ue_id_t::invalid;
     }
 
-    // Check if the next_ran_ue_id is available
+    // Check if the next_ran_ue_id is available.
     if (ues.find(next_ran_ue_id) == ues.end()) {
       ran_ue_id_t ret = next_ran_ue_id;
-      // increase the next cu ue f1ap id
+      // Increase the next CU UE F1AP ID.
       increase_next_ran_ue_id();
       return ret;
     }
 
-    // iterate over all ids starting with the next_ran_ue_id to find the available id
+    // Iterate over all ids starting with the next_ran_ue_id to find the available id.
     while (true) {
-      // Iterate over ue_index_to_ran_ue_id
+      // Iterate over ue_index_to_ran_ue_id.
       auto it = std::find_if(ue_index_to_ran_ue_id.begin(), ue_index_to_ran_ue_id.end(), [this](auto& u) {
         return u.second == next_ran_ue_id;
       });
 
-      // return the id if it is not already used
+      // Return the ID if it is not already used.
       if (it == ue_index_to_ran_ue_id.end()) {
         ran_ue_id_t ret = next_ran_ue_id;
-        // increase the next cu ue f1ap id
+        // Increase the next CU-UE-F1AP-ID.
         increase_next_ran_ue_id();
         return ret;
       }
 
-      // increase the next cu ue f1ap id and try again
+      // Increase the next CU-UE-F1AP-ID and try again.
       increase_next_ran_ue_id();
     }
 
@@ -289,10 +290,10 @@ private:
   inline void increase_next_ran_ue_id()
   {
     if (next_ran_ue_id == ran_ue_id_t::max) {
-      // reset ran ue id counter
+      // Reset RAN-UE-ID counter.
       next_ran_ue_id = ran_ue_id_t::min;
     } else {
-      // increase ran ue id counter
+      // Increase RAN-UE-ID counter.
       next_ran_ue_id = uint_to_ran_ue_id(ran_ue_id_to_uint(next_ran_ue_id) + 1);
     }
   }

@@ -725,7 +725,7 @@ inline simd_cf_t srsran_simd_cfi_load(const cf_t* ptr)
   ret.im    = _mm_shuffle_ps(i1, i2, _MM_SHUFFLE(3, 1, 3, 1));
 #else
 #ifdef __ARM_NEON
-  ret        = vld2q_f32(reinterpret_cast<const float*>(ptr));
+  ret = vld2q_f32(reinterpret_cast<const float*>(ptr));
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -749,10 +749,10 @@ inline simd_cf_t srsran_simd_cfi_loadu(const cf_t* ptr)
       in2);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  __m256 in1        = _mm256_permute_ps(_mm256_loadu_ps(reinterpret_cast<const float*>(ptr)), 0b11011000);
-  __m256 in2        = _mm256_permute_ps(_mm256_loadu_ps(reinterpret_cast<const float*>(ptr + 4)), 0b11011000);
-  ret.re            = _mm256_unpacklo_ps(in1, in2);
-  ret.im            = _mm256_unpackhi_ps(in1, in2);
+  __m256 in1 = _mm256_permute_ps(_mm256_loadu_ps(reinterpret_cast<const float*>(ptr)), 0b11011000);
+  __m256 in2 = _mm256_permute_ps(_mm256_loadu_ps(reinterpret_cast<const float*>(ptr + 4)), 0b11011000);
+  ret.re     = _mm256_unpacklo_ps(in1, in2);
+  ret.im     = _mm256_unpackhi_ps(in1, in2);
 
   // Permute for AVX registers (reorders data across 128-bit registers).
   const __m256i idx = _mm256_setr_epi32(0, 2, 4, 6, 1, 3, 5, 7);
@@ -766,7 +766,7 @@ inline simd_cf_t srsran_simd_cfi_loadu(const cf_t* ptr)
   ret.im    = _mm_shuffle_ps(i1, i2, _MM_SHUFFLE(3, 1, 3, 1));
 #else
 #ifdef __ARM_NEON
-  ret        = vld2q_f32(reinterpret_cast<const float*>(ptr));
+  ret = vld2q_f32(reinterpret_cast<const float*>(ptr));
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -782,12 +782,12 @@ inline simd_cf_t srsran_simd_cf_load(const float* re, const float* im)
   ret.im = _mm512_load_ps(im);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  ret.re            = _mm256_load_ps(re);
-  ret.im            = _mm256_load_ps(im);
+  ret.re = _mm256_load_ps(re);
+  ret.im = _mm256_load_ps(im);
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
-  ret.re    = _mm_load_ps(re);
-  ret.im    = _mm_load_ps(im);
+  ret.re = _mm_load_ps(re);
+  ret.im = _mm_load_ps(im);
 #else /* __ARM_NEON */
 #ifdef __ARM_NEON
   ret.val[0] = vld1q_f32(re);
@@ -807,12 +807,12 @@ inline simd_cf_t srsran_simd_cf_loadu(const float* re, const float* im)
   ret.im = _mm512_loadu_ps(im);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  ret.re            = _mm256_loadu_ps(re);
-  ret.im            = _mm256_loadu_ps(im);
+  ret.re = _mm256_loadu_ps(re);
+  ret.im = _mm256_loadu_ps(im);
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
-  ret.re    = _mm_loadu_ps(re);
-  ret.im    = _mm_loadu_ps(im);
+  ret.re = _mm_loadu_ps(re);
+  ret.im = _mm_loadu_ps(im);
 #else /* __ARM_NEON */
 #ifdef __ARM_NEON
   ret.val[0] = vld1q_f32(re);
@@ -949,7 +949,7 @@ inline simd_f_t srsran_simd_cf_re(simd_cf_t in)
 #ifdef __ARM_NEON
   simd_f_t out = in.val[0];
 #else
-  simd_f_t out      = in.re;
+  simd_f_t out = in.re;
 #endif /* __ARM_NEON */
   return out;
 }
@@ -959,7 +959,7 @@ inline simd_f_t srsran_simd_cf_im(simd_cf_t in)
 #ifdef __ARM_NEON
   simd_f_t out = in.val[1];
 #else
-  simd_f_t out      = in.im;
+  simd_f_t out = in.im;
 #endif /* __ARM_NEON */
   return out;
 }
@@ -972,16 +972,16 @@ inline simd_cf_t srsran_simd_cf_set1(cf_t x)
   ret.im = _mm512_set1_ps(x.imag());
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  ret.re            = _mm256_set1_ps(x.real());
-  ret.im            = _mm256_set1_ps(x.imag());
+  ret.re = _mm256_set1_ps(x.real());
+  ret.im = _mm256_set1_ps(x.imag());
 #else
 #ifdef __SSE4_1__
-  ret.re            = _mm_set1_ps(x.real());
-  ret.im            = _mm_set1_ps(x.imag());
+  ret.re = _mm_set1_ps(x.real());
+  ret.im = _mm_set1_ps(x.imag());
 #else /* __ARM_NEON */
 #ifdef __ARM_NEON
-  ret.val[0]        = vdupq_n_f32(x.real());
-  ret.val[1]        = vdupq_n_f32(x.imag());
+  ret.val[0] = vdupq_n_f32(x.real());
+  ret.val[1] = vdupq_n_f32(x.imag());
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -998,20 +998,20 @@ inline simd_cf_t srsran_simd_cf_prod(simd_cf_t a, simd_cf_t b)
 #else /* __AVX512F__ */
 #ifdef __AVX2__
 #ifdef __FMA__
-  ret.re            = _mm256_fmsub_ps(a.re, b.re, _mm256_mul_ps(a.im, b.im));
-  ret.im            = _mm256_fmadd_ps(a.re, b.im, _mm256_mul_ps(a.im, b.re));
+  ret.re = _mm256_fmsub_ps(a.re, b.re, _mm256_mul_ps(a.im, b.im));
+  ret.im = _mm256_fmadd_ps(a.re, b.im, _mm256_mul_ps(a.im, b.re));
 #else  /* __FMA__ */
   ret.re = _mm256_sub_ps(_mm256_mul_ps(a.re, b.re), _mm256_mul_ps(a.im, b.im));
   ret.im = _mm256_add_ps(_mm256_mul_ps(a.re, b.im), _mm256_mul_ps(a.im, b.re));
 #endif /* __FMA__ */
 #else
 #ifdef __SSE4_1__
-  ret.re            = _mm_sub_ps(_mm_mul_ps(a.re, b.re), _mm_mul_ps(a.im, b.im));
-  ret.im            = _mm_add_ps(_mm_mul_ps(a.re, b.im), _mm_mul_ps(a.im, b.re));
+  ret.re = _mm_sub_ps(_mm_mul_ps(a.re, b.re), _mm_mul_ps(a.im, b.im));
+  ret.im = _mm_add_ps(_mm_mul_ps(a.re, b.im), _mm_mul_ps(a.im, b.re));
 #else
 #ifdef __ARM_NEON
-  ret.val[0]        = vsubq_f32(vmulq_f32(a.val[0], b.val[0]), vmulq_f32(a.val[1], b.val[1]));
-  ret.val[1]        = vaddq_f32(vmulq_f32(a.val[0], b.val[1]), vmulq_f32(a.val[1], b.val[0]));
+  ret.val[0] = vsubq_f32(vmulq_f32(a.val[0], b.val[0]), vmulq_f32(a.val[1], b.val[1]));
+  ret.val[1] = vaddq_f32(vmulq_f32(a.val[0], b.val[1]), vmulq_f32(a.val[1], b.val[0]));
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -1027,16 +1027,16 @@ inline simd_cf_t srsran_simd_cf_conjprod(simd_cf_t a, simd_cf_t b)
   ret.im = _mm512_sub_ps(_mm512_mul_ps(a.im, b.re), _mm512_mul_ps(a.re, b.im));
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  ret.re            = _mm256_add_ps(_mm256_mul_ps(a.re, b.re), _mm256_mul_ps(a.im, b.im));
-  ret.im            = _mm256_sub_ps(_mm256_mul_ps(a.im, b.re), _mm256_mul_ps(a.re, b.im));
+  ret.re = _mm256_add_ps(_mm256_mul_ps(a.re, b.re), _mm256_mul_ps(a.im, b.im));
+  ret.im = _mm256_sub_ps(_mm256_mul_ps(a.im, b.re), _mm256_mul_ps(a.re, b.im));
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
-  ret.re            = _mm_add_ps(_mm_mul_ps(a.re, b.re), _mm_mul_ps(a.im, b.im));
-  ret.im            = _mm_sub_ps(_mm_mul_ps(a.im, b.re), _mm_mul_ps(a.re, b.im));
+  ret.re = _mm_add_ps(_mm_mul_ps(a.re, b.re), _mm_mul_ps(a.im, b.im));
+  ret.im = _mm_sub_ps(_mm_mul_ps(a.im, b.re), _mm_mul_ps(a.re, b.im));
 #else
 #ifdef __ARM_NEON
-  ret.val[0]        = vaddq_f32(vmulq_f32(a.val[0], b.val[0]), vmulq_f32(a.val[1], b.val[1]));
-  ret.val[1]        = vsubq_f32(vmulq_f32(a.val[1], b.val[0]), vmulq_f32(a.val[0], b.val[1]));
+  ret.val[0] = vaddq_f32(vmulq_f32(a.val[0], b.val[0]), vmulq_f32(a.val[1], b.val[1]));
+  ret.val[1] = vsubq_f32(vmulq_f32(a.val[1], b.val[0]), vmulq_f32(a.val[0], b.val[1]));
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -1052,16 +1052,16 @@ inline simd_cf_t srsran_simd_cf_add(simd_cf_t a, simd_cf_t b)
   ret.im = _mm512_add_ps(a.im, b.im);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  ret.re            = _mm256_add_ps(a.re, b.re);
-  ret.im            = _mm256_add_ps(a.im, b.im);
+  ret.re = _mm256_add_ps(a.re, b.re);
+  ret.im = _mm256_add_ps(a.im, b.im);
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
-  ret.re            = _mm_add_ps(a.re, b.re);
-  ret.im            = _mm_add_ps(a.im, b.im);
+  ret.re = _mm_add_ps(a.re, b.re);
+  ret.im = _mm_add_ps(a.im, b.im);
 #else /* __SSE4_1__ */
 #ifdef __ARM_NEON
-  ret.val[0]        = vaddq_f32(a.val[0], b.val[0]);
-  ret.val[1]        = vaddq_f32(a.val[1], b.val[1]);
+  ret.val[0] = vaddq_f32(a.val[0], b.val[0]);
+  ret.val[1] = vaddq_f32(a.val[1], b.val[1]);
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -1077,16 +1077,16 @@ inline simd_cf_t srsran_simd_cf_sub(simd_cf_t a, simd_cf_t b)
   ret.im = _mm512_sub_ps(a.im, b.im);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  ret.re            = _mm256_sub_ps(a.re, b.re);
-  ret.im            = _mm256_sub_ps(a.im, b.im);
+  ret.re = _mm256_sub_ps(a.re, b.re);
+  ret.im = _mm256_sub_ps(a.im, b.im);
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
-  ret.re            = _mm_sub_ps(a.re, b.re);
-  ret.im            = _mm_sub_ps(a.im, b.im);
+  ret.re = _mm_sub_ps(a.re, b.re);
+  ret.im = _mm_sub_ps(a.im, b.im);
 #else /* __SSE4_1__ */
 #ifdef __ARM_NEON
-  ret.val[0]        = vsubq_f32(a.val[0], b.val[0]);
-  ret.val[1]        = vsubq_f32(a.val[1], b.val[1]);
+  ret.val[0] = vsubq_f32(a.val[0], b.val[0]);
+  ret.val[1] = vsubq_f32(a.val[1], b.val[1]);
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -1108,16 +1108,16 @@ inline simd_cf_t srsran_simd_cf_mul(simd_cf_t a, simd_f_t b)
   ret.im = _mm512_mul_ps(a.im, b);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  ret.re            = _mm256_mul_ps(a.re, b);
-  ret.im            = _mm256_mul_ps(a.im, b);
+  ret.re = _mm256_mul_ps(a.re, b);
+  ret.im = _mm256_mul_ps(a.im, b);
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
-  ret.re            = _mm_mul_ps(a.re, b);
-  ret.im            = _mm_mul_ps(a.im, b);
+  ret.re = _mm_mul_ps(a.re, b);
+  ret.im = _mm_mul_ps(a.im, b);
 #else /* __SSE4_1__ */
 #ifdef __ARM_NEON
-  ret.val[0]        = vmulq_f32(a.val[0], b);
-  ret.val[1]        = vmulq_f32(a.val[1], b);
+  ret.val[0] = vmulq_f32(a.val[0], b);
+  ret.val[1] = vmulq_f32(a.val[1], b);
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -1177,8 +1177,8 @@ inline simd_cf_t srsran_simd_cf_neg(simd_cf_t a)
   ret.val[0] = srsran_simd_f_neg(a.val[0]);
   ret.val[1] = srsran_simd_f_neg(a.val[1]);
 #else  /* __ARM_NEON */
-  ret.re            = srsran_simd_f_neg(a.re);
-  ret.im            = srsran_simd_f_neg(a.im);
+  ret.re = srsran_simd_f_neg(a.re);
+  ret.im = srsran_simd_f_neg(a.im);
 #endif /* __ARM_NEON */
   return ret;
 }
@@ -1190,8 +1190,8 @@ inline simd_cf_t srsran_simd_cf_neg_mask(simd_cf_t a, simd_f_t mask)
   ret.val[0] = srsran_simd_f_neg_mask(a.val[0], mask);
   ret.val[1] = srsran_simd_f_neg_mask(a.val[1], mask);
 #else  /* __ARM_NEON */
-  ret.re            = srsran_simd_f_neg_mask(a.re, mask);
-  ret.im            = srsran_simd_f_neg_mask(a.im, mask);
+  ret.re = srsran_simd_f_neg_mask(a.re, mask);
+  ret.im = srsran_simd_f_neg_mask(a.im, mask);
 #endif /* __ARM_NEON */
   return ret;
 }
@@ -1203,8 +1203,8 @@ inline simd_cf_t srsran_simd_cf_conj(simd_cf_t a)
   ret.val[0] = a.val[0];
   ret.val[1] = srsran_simd_f_neg(a.val[1]);
 #else  /* __ARM_NEON */
-  ret.re            = a.re;
-  ret.im            = srsran_simd_f_neg(a.im);
+  ret.re = a.re;
+  ret.im = srsran_simd_f_neg(a.im);
 #endif /* __ARM_NEON */
   return ret;
 }
@@ -1216,8 +1216,8 @@ inline simd_cf_t srsran_simd_cf_mulj(simd_cf_t a)
   ret.val[0] = srsran_simd_f_neg(a.val[1]);
   ret.val[1] = a.val[0];
 #else  /* __ARM_NEON */
-  ret.re            = srsran_simd_f_neg(a.im);
-  ret.im            = a.re;
+  ret.re = srsran_simd_f_neg(a.im);
+  ret.im = a.re;
 #endif /* __ARM_NEON */
   return ret;
 }
@@ -1230,16 +1230,16 @@ inline simd_cf_t srsran_simd_cf_zero()
   ret.im = _mm512_setzero_ps();
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  ret.re            = _mm256_setzero_ps();
-  ret.im            = _mm256_setzero_ps();
+  ret.re = _mm256_setzero_ps();
+  ret.im = _mm256_setzero_ps();
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
-  ret.re            = _mm_setzero_ps();
-  ret.im            = _mm_setzero_ps();
+  ret.re = _mm_setzero_ps();
+  ret.im = _mm_setzero_ps();
 #else /* __SSE4_1__ */
 #ifdef __ARM_NEON
-  ret.val[0]        = vdupq_n_f32(0);
-  ret.val[1]        = vdupq_n_f32(0);
+  ret.val[0] = vdupq_n_f32(0);
+  ret.val[1] = vdupq_n_f32(0);
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -1261,8 +1261,8 @@ inline simd_cf_t srsran_simd_cf_interleave_low(simd_cf_t a, simd_cf_t b)
       b.im);
 #else /* __AVX512F__ */
 #ifdef __AVX2__
-  __m128 a_re       = _mm256_extractf128_ps(a.re, 0);
-  __m128 b_re       = _mm256_extractf128_ps(b.re, 0);
+  __m128 a_re = _mm256_extractf128_ps(a.re, 0);
+  __m128 b_re = _mm256_extractf128_ps(b.re, 0);
 
   __m128 a_im = _mm256_extractf128_ps(a.im, 0);
   __m128 b_im = _mm256_extractf128_ps(b.im, 0);
@@ -1273,8 +1273,8 @@ inline simd_cf_t srsran_simd_cf_interleave_low(simd_cf_t a, simd_cf_t b)
   __m128 hi_im = _mm_unpackhi_ps(a_im, b_im);
   __m128 lo_im = _mm_unpacklo_ps(a_im, b_im);
 
-  ret.re      = _mm256_set_m128(hi_re, lo_re);
-  ret.im      = _mm256_set_m128(hi_im, lo_im);
+  ret.re = _mm256_set_m128(hi_re, lo_re);
+  ret.im = _mm256_set_m128(hi_im, lo_im);
 #else  /* __AVX2__ */
   cf_t reg_a[SRSRAN_SIMD_CF_SIZE], reg_b[SRSRAN_SIMD_CF_SIZE], reg_ret[SRSRAN_SIMD_CF_SIZE];
   srsran_simd_cfi_storeu(reg_a, a);
@@ -2015,7 +2015,7 @@ inline simd_c16_t srsran_simd_c16i_load(const c16_t* ptr)
   ret.im      = _mm_blend_epi16(_mm_shufflelo_epi16(_mm_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2, 0b10101010);
 #else /* __SSE4_1__*/
 #ifdef __ARM_NEON
-  ret.m128     = vld2q_s16(reinterpret_cast<const int16_t*>(ptr));
+  ret.m128 = vld2q_s16(reinterpret_cast<const int16_t*>(ptr));
 #endif /* __ARM_NEON */
 #endif /* __SSE4_1__ */
 #endif /* __AVX2__ */
@@ -2031,8 +2031,8 @@ inline simd_c16_t srsran_simd_c16_load(const int16_t* re, const int16_t* im)
   ret.im = _mm256_load_si256(reinterpret_cast<const __m256i*>(im));
 #else
 #ifdef __SSE4_1__
-  ret.re        = _mm_load_si128(reinterpret_cast<const __m128i*>(re));
-  ret.im        = _mm_load_si128(reinterpret_cast<const __m128i*>(im));
+  ret.re = _mm_load_si128(reinterpret_cast<const __m128i*>(re));
+  ret.im = _mm_load_si128(reinterpret_cast<const __m128i*>(im));
 #else /* __SSE4_1__*/
 #ifdef __ARM_NEON
   ret.m128.val[0] = vld1q_s16(re);
@@ -2051,8 +2051,8 @@ inline simd_c16_t srsran_simd_c16_loadu(const int16_t* re, const int16_t* im)
   ret.im = _mm256_loadu_si256(reinterpret_cast<const__m256i*>(im));
 #else
 #ifdef __SSE4_1__
-  ret.re        = _mm_loadu_si128(reinterpret_cast<const __m128i*>(re));
-  ret.im        = _mm_loadu_si128(reinterpret_cast<const __m128i*>(im));
+  ret.re = _mm_loadu_si128(reinterpret_cast<const __m128i*>(re));
+  ret.im = _mm_loadu_si128(reinterpret_cast<const __m128i*>(im));
 #else /* __SSE4_1__*/
 #ifdef __ARM_NEON
   ret.m128.val[0] = vld1q_s16(re);
@@ -2168,8 +2168,8 @@ inline simd_c16_t srsran_simd_c16_add(simd_c16_t a, simd_c16_t b)
   ret.im = _mm256_add_epi16(a.im, b.im);
 #else
 #ifdef __SSE4_1__
-  ret.re     = _mm_add_epi16(a.re, b.re);
-  ret.im     = _mm_add_epi16(a.im, b.im);
+  ret.re = _mm_add_epi16(a.re, b.re);
+  ret.im = _mm_add_epi16(a.im, b.im);
 #else
 #ifdef __ARM_NEON
   ret.m128.val[0] = vaddq_s16(a.m128.val[0], a.m128.val[0]);
@@ -2188,8 +2188,8 @@ inline simd_c16_t srsran_simd_c16_zero()
   ret.im = _mm256_setzero_si256();
 #else
 #ifdef __SSE4_1__
-  ret.re     = _mm_setzero_si128();
-  ret.im     = _mm_setzero_si128();
+  ret.re = _mm_setzero_si128();
+  ret.im = _mm_setzero_si128();
 #else
 #ifdef __ARM_NEON
   ret.m128.val[0] = vdupq_n_s16(0);
@@ -2227,10 +2227,10 @@ inline simd_s_t srsran_simd_convert_2f_s(simd_f_t a, simd_f_t b)
   return _mm256_packs_epi32(ai, bi);
 #else
 #ifdef __SSE4_1__
-  __m128  aa      = _mm_round_ps(a, _MM_FROUND_NINT);
-  __m128  bb      = _mm_round_ps(b, _MM_FROUND_NINT);
-  __m128i ai      = _mm_cvtps_epi32(aa);
-  __m128i bi      = _mm_cvtps_epi32(bb);
+  __m128  aa = _mm_round_ps(a, _MM_FROUND_NINT);
+  __m128  bb = _mm_round_ps(b, _MM_FROUND_NINT);
+  __m128i ai = _mm_cvtps_epi32(aa);
+  __m128i bi = _mm_cvtps_epi32(bb);
   return _mm_packs_epi32(ai, bi);
 #else
 #ifdef __ARM_NEON
@@ -2413,8 +2413,8 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
   b_i32 = _mm256_srai_epi32(b_i32, 16);
 
   // Pack results into an output vector.
-  ret                = _mm256_packs_epi32(a_i32, b_i32);
-  ret                = _mm256_permutevar8x32_epi32(ret, _mm256_setr_epi32(0x0, 0x1, 0x4, 0x5, 0x2, 0x3, 0x6, 0x7));
+  ret = _mm256_packs_epi32(a_i32, b_i32);
+  ret = _mm256_permutevar8x32_epi32(ret, _mm256_setr_epi32(0x0, 0x1, 0x4, 0x5, 0x2, 0x3, 0x6, 0x7));
 #else /* __AVX2__ */
 #ifdef __SSE4_1__
   const __m128i bias = _mm_set1_epi32(0x7fff);
@@ -2432,13 +2432,13 @@ static inline simd_s_t srsran_simd_convert_2f_bf16(simd_f_t a, simd_f_t b)
   b_i32 = _mm_srai_epi32(b_i32, 16);
 
   // Pack results into an output vector.
-  ret                = _mm_packs_epi32(a_i32, b_i32);
+  ret = _mm_packs_epi32(a_i32, b_i32);
 #else /* __ARM_NEON */
 #ifdef __ARM_NEON
 #ifdef __ARM_FEATURE_BF16_VECTOR_ARITHMETIC
-  bfloat16x4_t tmp1     = vcvt_bf16_f32(a);
-  bfloat16x4_t tmp2     = vcvt_bf16_f32(b);
-  ret                   = vreinterpretq_s16_bf16(vcombine_bf16(tmp1, tmp2));
+  bfloat16x4_t tmp1 = vcvt_bf16_f32(a);
+  bfloat16x4_t tmp2 = vcvt_bf16_f32(b);
+  ret               = vreinterpretq_s16_bf16(vcombine_bf16(tmp1, tmp2));
 #else  // __ARM_FEATURE_BF16_VECTOR_ARITHMETIC
   const uint32x4_t bias = vdupq_n_u32(0x7fff);
   const uint32x4_t one  = vdupq_n_u32(0x1);

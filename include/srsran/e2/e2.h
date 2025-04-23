@@ -88,16 +88,6 @@ public:
   virtual async_task<e2_setup_response_message> start_initial_e2_setup_routine() = 0;
 };
 
-/// This interface is used to pack outgoing and unpack incoming E2 messages.
-class e2ap_packer : public e2_message_handler
-{
-public:
-  virtual ~e2ap_packer() = default;
-
-  /// Handle packed E2AP PDU that needs to be unpacked and forwarded.
-  virtual void handle_packed_pdu(const byte_buffer& pdu) = 0;
-};
-
 /// Combined entry point for E2 handling.
 class e2_interface : public e2_message_handler, public e2_event_handler, public e2_connection_manager
 {

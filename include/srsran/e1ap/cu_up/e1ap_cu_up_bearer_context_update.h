@@ -32,14 +32,11 @@ namespace srs_cu_up {
 struct e1ap_bearer_context_setup_request {
   e1ap_security_info                                                      security_info;
   uint64_t                                                                ue_dl_aggregate_maximum_bit_rate;
+  std::optional<uint64_t>                                                 ue_dl_maximum_integrity_protected_data_rate;
   std::string                                                             serving_plmn;
   slotted_id_vector<pdu_session_id_t, e1ap_pdu_session_res_to_setup_item> pdu_session_res_to_setup_list;
-  std::optional<uint64_t>                                                 ue_dl_maximum_integrity_protected_data_rate;
   activity_notification_level_t                                           activity_notif_level;
   std::optional<std::chrono::seconds>                                     ue_inactivity_timer;
-  std::optional<std::string>                                              bearer_context_status_change;
-  std::optional<ran_ue_id_t>                                              ran_ue_id;
-  std::optional<uint64_t>                                                 gnb_du_id;
 };
 
 /// \brief Response to a bearer context setup request including UE index for E1AP map.
@@ -64,14 +61,14 @@ struct e1ap_bearer_context_modification_request {
   std::optional<e1ap_security_info>                     security_info;
   std::optional<uint64_t>                               ue_dl_aggr_max_bit_rate;
   std::optional<uint64_t>                               ue_dl_max_integrity_protected_data_rate;
-  std::optional<std::string>                            bearer_context_status_change;
-  std::optional<std::string>                            new_ul_tnl_info_required;
+  std::optional<e1ap_bearer_context_status_change>      bearer_context_status_change;
+  std::optional<bool>                                   new_ul_tnl_info_required;
   std::optional<std::chrono::seconds>                   ue_inactivity_timer;
-  std::optional<std::string>                            data_discard_required;
+  std::optional<bool>                                   data_discard_required;
   std::optional<e1ap_ng_ran_bearer_context_mod_request> ng_ran_bearer_context_mod_request;
   std::optional<ran_ue_id_t>                            ran_ue_id;
   std::optional<uint64_t>                               gnb_du_id;
-  std::optional<std::string>                            activity_notif_level;
+  std::optional<e1ap_activity_notif_level>              activity_notif_level;
 };
 
 /// \brief Response to a bearer context modification request including UE index for E1AP map.

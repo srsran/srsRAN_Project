@@ -38,19 +38,19 @@ public:
   ethernet_rx_buffer_impl(ethernet_rx_buffer_pool& pool_, unsigned id);
 
   /// Destructor frees this buffer in the pool.
-  ~ethernet_rx_buffer_impl();
+  ~ethernet_rx_buffer_impl() override;
 
   /// Copy constructor is deleted.
-  ethernet_rx_buffer_impl(ethernet_rx_buffer_impl& /**/) = delete;
+  ethernet_rx_buffer_impl(const ethernet_rx_buffer_impl& other) = delete;
 
   /// Copy assignment operator is deleted.
   ethernet_rx_buffer_impl& operator=(const ethernet_rx_buffer_impl& other) = delete;
 
-  /// Move assignment operator.
-  ethernet_rx_buffer_impl& operator=(ethernet_rx_buffer_impl&& other) noexcept;
-
   /// Move constructor.
   ethernet_rx_buffer_impl(ethernet_rx_buffer_impl&& other) noexcept;
+
+  /// Move assignment operator.
+  ethernet_rx_buffer_impl& operator=(ethernet_rx_buffer_impl&& other) noexcept;
 
   // See interface for documentation.
   span<const uint8_t> data() const override;

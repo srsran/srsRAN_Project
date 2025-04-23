@@ -64,7 +64,7 @@ pdsch_block_processor_impl::configure_new_transmission(span<const uint8_t>      
 void pdsch_block_processor_impl::new_codeblock()
 {
   // Prepare codeblock data.
-  cb_data.resize(cb_size.value());
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_SIZE> cb_data(cb_size.value());
 
   // Retrieve segment description.
   const codeblock_metadata cb_metadata = segment_buffer->get_cb_metadata(next_i_cb);
@@ -82,7 +82,7 @@ void pdsch_block_processor_impl::new_codeblock()
   const ldpc_encoder_buffer& rm_buffer = encoder->encode(cb_data, cb_metadata.tb_common);
 
   // Rate match the codeblock.
-  temp_codeblock.resize(rm_length);
+  static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock(rm_length);
   rate_matcher->rate_match(temp_codeblock, rm_buffer, cb_metadata);
 
   // Apply scrambling sequence in-place.

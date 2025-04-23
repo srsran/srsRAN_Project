@@ -60,18 +60,18 @@ manual_event<du_mac_sched_control_config_response>& du_ue_ric_configuration_proc
   }
 
   // Dispatch UE configuration to UE task loop inside the UE manager.
-  ue_mng.schedule_async_task(
-      ue->ue_index, launch_async([this](coro_context<async_task<void>>& ctx) {
-        CORO_BEGIN(ctx);
+  ue_mng.schedule_async_task(ue->ue_index, launch_async([this](coro_context<async_task<void>>& ctx) {
+                               CORO_BEGIN(ctx);
 
-        // Await for UE configuration completion.
-        CORO_AWAIT_VALUE(const mac_ue_reconfiguration_response result, handle_mac_config());
+                               // Await for UE configuration completion.
+                               CORO_AWAIT_VALUE(const mac_ue_reconfiguration_response result, handle_mac_config());
 
-        // Signal completion of UE configuration to external coroutine.
-        ue_config_completed.set(du_mac_sched_control_config_response{result.result, result.result, result.result});
+                               // Signal completion of UE configuration to external coroutine.
+                               ue_config_completed.set(
+                                   du_mac_sched_control_config_response{result.result, result.result, result.result});
 
-        CORO_RETURN();
-      }));
+                               CORO_RETURN();
+                             }));
 
   return ue_config_completed;
 }

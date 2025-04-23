@@ -22,7 +22,6 @@
 
 #include "sched_config_manager.h"
 #include "../logging/scheduler_metrics_handler.h"
-#include "../logging/scheduler_metrics_ue_configurator.h"
 #include "srsran/scheduler/config/scheduler_cell_config_validator.h"
 #include "srsran/scheduler/config/scheduler_ue_config_validator.h"
 #include "srsran/srslog/srslog.h"
@@ -103,6 +102,20 @@ const cell_configuration* sched_config_manager::add_cell(const sched_cell_config
   srsran_assert(cell_metrics != nullptr, "Unable to create metrics handler");
 
   return added_cells[msg.cell_index].get();
+}
+
+void sched_config_manager::rem_cell(du_cell_index_t cell_index)
+{
+  const du_cell_group_index_t group_index = added_cells[cell_index]->cell_group_index;
+
+  // Eliminate metrics.
+  metrics_handler.rem_cell(cell_index);
+
+  // Eliminate respective cell configuration.
+  added_cells.erase(cell_index);
+
+  // Remove cell configs from the group.
+  group_cfg_pool[group_index]->rem_cell(cell_index);
 }
 
 ue_config_update_event sched_config_manager::add_ue(const sched_ue_creation_request_message& cfg_req)
@@ -209,7 +222,7 @@ ue_config_delete_event sched_config_manager::remove_ue(du_ue_index_t ue_index)
 
     // Notifies MAC that event is complete.
     // Note: There is no failure path for the deletion of a UE.
-    config_notifier.on_ue_delete_response(ue_index);
+    config_notifier.on_ue_deletion_completed(ue_index);
 
     return ue_config_delete_event{};
   }
@@ -271,7 +284,7 @@ void sched_config_manager::handle_ue_delete_complete(du_ue_index_t ue_index)
   ue_to_cell_group_index[ue_index].store(INVALID_DU_CELL_GROUP_INDEX, std::memory_order_release);
 
   // Notifies MAC that event is complete.
-  config_notifier.on_ue_delete_response(ue_index);
+  config_notifier.on_ue_deletion_completed(ue_index);
 }
 
 void sched_config_manager::flush_ues_to_rem()

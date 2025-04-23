@@ -78,8 +78,7 @@ bool has_unique_ids(const Range& r, IdType ValueType::*id_field)
 template <typename Range>
 bool are_all_unique(const Range& r)
 {
-  return has_unique_ids(
-      r, [](const auto& e) -> const auto& { return e; });
+  return has_unique_ids(r, [](const auto& e) -> const auto& { return e; });
 }
 
 /// \brief Find an ID in \c id_set_list of \c set that is not present in range \c r.

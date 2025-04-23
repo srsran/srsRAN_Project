@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "metrics/rrc_du_metrics_aggregator.h"
 #include "ue/rrc_ue_impl.h"
 #include "srsran/ran/nr_cgi.h"
 #include "srsran/rrc/rrc_config.h"
@@ -32,22 +33,39 @@ namespace srsran {
 
 namespace srs_cu_cp {
 
-/// Main RRC representation with the DU
+/// Adapter between RRC UE and RRC DU.
+class rrc_ue_rrc_du_adapter : public rrc_ue_event_notifier
+{
+public:
+  explicit rrc_ue_rrc_du_adapter(rrc_du_connection_event_handler& metrics_handler_) : metrics_handler(metrics_handler_)
+  {
+  }
+
+  void on_new_rrc_connection() override { metrics_handler.handle_successful_rrc_setup(); }
+
+  void on_successful_rrc_release() override { metrics_handler.handle_successful_rrc_release(); }
+
+private:
+  rrc_du_connection_event_handler& metrics_handler;
+};
+
+/// Main RRC representation with the DU.
 class rrc_du_impl : public rrc_du
 {
 public:
   rrc_du_impl(const rrc_cfg_t& cfg_, rrc_du_measurement_config_notifier& meas_config_notifier_);
   ~rrc_du_impl() = default;
 
-  // rrc_du_cell_manager
+  // rrc_du_cell_manager.
   bool handle_served_cell_list(const std::vector<cu_cp_du_served_cells_item>& served_cell_list) override;
 
-  // rrc_du_ue_repository
+  // rrc_du_ue_repository.
   byte_buffer       get_rrc_reject() override;
   rrc_ue_interface* add_ue(const rrc_ue_creation_message& msg) override;
   void              release_ues() override;
+  size_t            get_nof_ues() const override { return ue_db.size(); }
 
-  // rrc_ue_handler
+  // rrc_ue_handler.
   rrc_ue_interface* find_ue(ue_index_t ue_index) override
   {
     if (ue_db.find(ue_index) == ue_db.end()) {
@@ -57,25 +75,34 @@ public:
   }
   void remove_ue(ue_index_t ue_index) override;
 
-  // rrc_du_statistics_handler
-  size_t get_nof_ues() const override { return ue_db.size(); }
+  // rrc_du_connection_event_handler.
+  void handle_successful_rrc_setup() override { metrics_aggregator.handle_successful_rrc_setup(); }
+  void handle_successful_rrc_release() override { metrics_aggregator.handle_successful_rrc_release(); }
 
-  rrc_du_cell_manager&       get_rrc_du_cell_manager() override { return *this; }
-  rrc_du_ue_repository&      get_rrc_du_ue_repository() override { return *this; }
-  rrc_ue_handler&            get_rrc_ue_handler() override { return *this; }
-  rrc_du_statistics_handler& get_rrc_du_statistics_handler() override { return *this; }
+  rrc_du_cell_manager&             get_rrc_du_cell_manager() override { return *this; }
+  rrc_du_ue_repository&            get_rrc_du_ue_repository() override { return *this; }
+  rrc_ue_handler&                  get_rrc_ue_handler() override { return *this; }
+  rrc_du_connection_event_handler& get_rrc_du_connection_event_handler() override { return *this; }
+  rrc_du_metrics_collector&        get_rrc_du_metrics_collector() override { return metrics_aggregator; }
 
 private:
-  // helpers
+  // Helpers.
   const rrc_cfg_t cfg;
 
-  rrc_du_measurement_config_notifier& meas_config_notifier; // notifier to the CU-CP
+  // Notifier to the CU-CP.
+  rrc_du_measurement_config_notifier& meas_config_notifier;
   srslog::basic_logger&               logger;
 
-  // RRC-internal user database indexed by ue_index
+  // RRC UE to RRC DU adapters.
+  std::unordered_map<ue_index_t, rrc_ue_rrc_du_adapter> rrc_ue_rrc_du_adapters;
+
+  // RRC-internal user database indexed by ue_index.
   std::unordered_map<ue_index_t, std::unique_ptr<rrc_ue_impl>> ue_db;
-  // Cell database to store cell information from the DU
+  // Cell database to store cell information from the DU.
   std::map<nr_cell_identity, rrc_cell_info> cell_info_db;
+
+  // Metrics aggregator.
+  rrc_du_metrics_aggregator metrics_aggregator;
 };
 
 } // namespace srs_cu_cp

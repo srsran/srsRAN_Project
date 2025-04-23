@@ -36,6 +36,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifie
                          rrc_ue_context_update_notifier&        cu_cp_notifier_,
                          rrc_ue_measurement_notifier&           measurement_notifier_,
                          rrc_ue_cu_cp_ue_notifier&              cu_cp_ue_notifier_,
+                         rrc_ue_event_notifier&                 metrics_notifier_,
                          const ue_index_t                       ue_index_,
                          const rnti_t                           c_rnti_,
                          const rrc_cell_context                 cell_,
@@ -48,6 +49,7 @@ rrc_ue_impl::rrc_ue_impl(rrc_pdu_f1ap_notifier&                 f1ap_pdu_notifie
   cu_cp_notifier(cu_cp_notifier_),
   measurement_notifier(measurement_notifier_),
   cu_cp_ue_notifier(cu_cp_ue_notifier_),
+  metrics_notifier(metrics_notifier_),
   du_to_cu_container(du_to_cu_container_),
   logger("RRC", {ue_index_, c_rnti_}),
   event_mng(std::make_unique<rrc_ue_event_manager>(cu_cp_ue_notifier.get_timer_factory()))

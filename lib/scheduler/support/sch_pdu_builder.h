@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "../config/cell_configuration.h"
 #include "../config/ue_configuration.h"
 #include "../ue_context/ue_channel_state_manager.h"
 #include "mcs_tbs_calculator.h"
@@ -42,9 +41,10 @@ struct pusch_config_params {
   bool              tp_pi2bpsk_present;
   bool              use_transform_precoder;
   dmrs_information  dmrs;
-  unsigned          nof_harq_ack_bits{0};
-  unsigned          nof_csi_part1_bits{0};
-  unsigned          max_nof_csi_part2_bits{0};
+  /// Number of HARQ-ACK bits allocated as part of PUCCH in the UL slot where the PUSCH is going to be allocated.
+  unsigned nof_harq_ack_bits{0};
+  unsigned nof_csi_part1_bits{0};
+  unsigned max_nof_csi_part2_bits{0};
 };
 
 /// \brief Fetches the PUSCH parameters needed for PUSCH PDU for DCI format 0_0, scrambled by TC-RNTI.
@@ -106,7 +106,7 @@ void build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch,
                               rnti_t                               rnti,
                               const cell_configuration&            cell_cfg,
                               const dci_1_0_tc_rnti_configuration& dci_cfg,
-                              const crb_interval&                  crbs,
+                              const vrb_interval&                  vrbs,
                               bool                                 is_new_data);
 
 /// \brief Builds PDSCH PDU for DCI format 1_0, scrambled by C-RNTI.
@@ -117,7 +117,7 @@ void build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
                              const cell_configuration&           cell_cfg,
                              const search_space_info&            ss_info,
                              const dci_1_0_c_rnti_configuration& dci_cfg,
-                             const crb_interval&                 crbs,
+                             const vrb_interval&                 vrbs,
                              bool                                is_new_data);
 
 /// \brief Builds PDSCH PDU for DCI format 1_1, scrambled by C-RNTI.
@@ -128,7 +128,7 @@ void build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
                              const ue_cell_configuration&    ue_cell_cfg,
                              search_space_id                 ss_id,
                              const dci_1_1_configuration&    dci_cfg,
-                             const crb_interval&             crbs,
+                             const vrb_interval&             vrbs,
                              bool                            is_new_data,
                              const ue_channel_state_manager& cs_mgr);
 
@@ -139,7 +139,7 @@ void build_pusch_f0_0_tc_rnti(pusch_information&                   pusch,
                               rnti_t                               rnti,
                               const cell_configuration&            cell_cfg,
                               const dci_0_0_tc_rnti_configuration& dci_cfg,
-                              const crb_interval&                  crbs,
+                              const vrb_interval&                  vrbs,
                               bool                                 is_new_data);
 
 /// \brief Builds PUSCH PDU for DCI format 0_0, scrambled by C-RNTI.
@@ -150,7 +150,7 @@ void build_pusch_f0_0_c_rnti(pusch_information&                  pusch,
                              const cell_configuration&           cell_cfg,
                              const bwp_uplink_common&            ul_bwp,
                              const dci_0_0_c_rnti_configuration& dci_cfg,
-                             const crb_interval&                 crbs,
+                             const vrb_interval&                 vrbs,
                              bool                                is_new_data);
 
 /// \brief Builds PUSCH PDU for DCI format 0_1, scrambled by C-RNTI.
@@ -161,7 +161,7 @@ void build_pusch_f0_1_c_rnti(pusch_information&           pusch,
                              const ue_cell_configuration& ue_cell_cfg,
                              search_space_id              ss_id,
                              const dci_0_1_configuration& dci_cfg,
-                             const crb_interval&          crbs,
+                             const vrb_interval&          vrbs,
                              bool                         is_new_data);
 
 } // namespace srsran

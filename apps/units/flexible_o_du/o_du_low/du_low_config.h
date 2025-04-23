@@ -241,6 +241,7 @@ struct du_low_unit_hal_config {
 /// Metrics configuration of the DU low.
 struct du_low_unit_metrics_config {
   app_helpers::metrics_config common_metrics_cfg;
+  bool                        enable_du_low = false;
 };
 
 /// DU low configuration.

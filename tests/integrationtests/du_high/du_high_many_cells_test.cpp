@@ -22,11 +22,14 @@
 
 #include "test_utils/du_high_env_simulator.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/f1ap/f1ap_test_messages.h"
+#include "tests/test_doubles/mac/mac_test_messages.h"
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "srsran/asn1/f1ap/common.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents.h"
 #include "srsran/f1ap/f1ap_message.h"
+#include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -199,6 +202,156 @@ TEST_P(du_high_many_cells_tester, when_ue_created_in_multiple_cells_then_traffic
   }
 }
 
+TEST_P(du_high_many_cells_tester, when_cell_stopped_then_ues_are_released)
+{
+  // Create one UE per cell.
+  for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
+    rnti_t rnti = to_rnti(0x4601 + i);
+    ASSERT_TRUE(add_ue(rnti, to_du_cell_index(i)));
+    ASSERT_TRUE(run_rrc_setup(rnti));
+    ASSERT_TRUE(run_ue_context_setup(rnti));
+    ASSERT_TRUE(run_until_csi(to_du_cell_index(i), rnti));
+  }
+
+  // Stop one cell via F1AP gNB-CU Configuration Update.
+  const unsigned rem_cell_idx = test_rgen::uniform_int<unsigned>(0, GetParam().nof_cells - 1);
+  this->cu_notifier.last_f1ap_msgs.clear();
+  f1ap_message req = test_helpers::create_gnb_cu_configuration_update_request(
+      0, {}, {{nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(rem_cell_idx).value()}}});
+  this->du_hi->get_f1ap_du().handle_message(req);
+
+  // Expect release request for UE connected to the cell being stopped.
+  const rnti_t crnti = to_rnti(0x4601 + rem_cell_idx);
+  auto&        u     = ues.at(crnti);
+  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.last_f1ap_msgs.empty(); }));
+  ASSERT_TRUE(
+      test_helpers::is_valid_ue_context_release_request(this->cu_notifier.last_f1ap_msgs.back(), u.du_ue_id.value()));
+
+  // CU releases UE.
+  this->cu_notifier.last_f1ap_msgs.clear();
+  auto cmd_rel = test_helpers::generate_ue_context_release_command(
+      u.cu_ue_id.value(), u.du_ue_id.value(), srb_id_t::srb1, byte_buffer::create({0x1, 0x2, 0x3}).value());
+  this->du_hi->get_f1ap_du().handle_message(cmd_rel);
+  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.last_f1ap_msgs.empty(); }));
+  ASSERT_TRUE(test_helpers::is_valid_ue_context_release_complete(this->cu_notifier.last_f1ap_msgs.front(), cmd_rel));
+  this->cu_notifier.last_f1ap_msgs.erase(this->cu_notifier.last_f1ap_msgs.begin());
+
+  // gNB-CU Configuration Update Complete.
+  ASSERT_TRUE(this->run_until([this]() { return not this->cu_notifier.last_f1ap_msgs.empty(); }));
+  ASSERT_TRUE(test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req));
+  ASSERT_EQ(this->cu_notifier.last_f1ap_msgs.size(), 1);
+
+  // Ensure the cell is indeed stopped.
+  const unsigned nof_test_slots = 100;
+  for (unsigned i = 0; i != nof_test_slots; ++i) {
+    this->run_slot();
+
+    auto& cell_res = this->phy.cells[rem_cell_idx];
+    ASSERT_FALSE(cell_res.last_dl_data.has_value());
+    ASSERT_TRUE(not cell_res.last_dl_res.has_value() or (cell_res.last_dl_res.value().dl_pdcch_pdus.empty() and
+                                                         cell_res.last_dl_res.value().ul_pdcch_pdus.empty()));
+  }
+}
+
+TEST_P(du_high_many_cells_tester, when_cell_restarted_then_ues_can_be_created)
+{
+  // Create one UE per cell.
+  for (unsigned i = 0; i != GetParam().nof_cells; ++i) {
+    rnti_t rnti = to_rnti(0x4601 + i);
+    ASSERT_TRUE(add_ue(rnti, to_du_cell_index(i)));
+    ASSERT_TRUE(run_rrc_setup(rnti));
+    ASSERT_TRUE(run_ue_context_setup(rnti));
+    ASSERT_TRUE(run_until_csi(to_du_cell_index(i), rnti));
+  }
+
+  // Stop one cell via F1AP gNB-CU Configuration Update.
+  const unsigned      rem_cell_idx = test_rgen::uniform_int<unsigned>(0, GetParam().nof_cells - 1);
+  nr_cell_global_id_t rem_cgi{plmn_identity::test_value(), nr_cell_identity::create(rem_cell_idx).value()};
+  f1ap_message        req = test_helpers::create_gnb_cu_configuration_update_request(0, {}, {{rem_cgi}});
+  this->du_hi->get_f1ap_du().handle_message(req);
+  const rnti_t crnti   = to_rnti(0x4601 + rem_cell_idx);
+  auto&        u       = ues.at(crnti);
+  auto         cmd_rel = test_helpers::generate_ue_context_release_command(
+      u.cu_ue_id.value(), u.du_ue_id.value(), srb_id_t::srb1, byte_buffer::create({0x1, 0x2, 0x3}).value());
+  this->du_hi->get_f1ap_du().handle_message(cmd_rel);
+  ASSERT_TRUE(this->run_until([this, &req]() {
+    return not this->cu_notifier.last_f1ap_msgs.empty() and
+           test_helpers::is_gnb_cu_config_update_acknowledge_valid(this->cu_notifier.last_f1ap_msgs.back(), req);
+  }));
+
+  // Restart the cell.
+  this->cu_notifier.last_f1ap_msgs.clear();
+  f1ap_message req_restart = test_helpers::create_gnb_cu_configuration_update_request(0, {{rem_cgi}}, {});
+  this->du_hi->get_f1ap_du().handle_message(req_restart);
+  ASSERT_TRUE(this->run_until([this, &req_restart]() {
+    return not this->cu_notifier.last_f1ap_msgs.empty() and test_helpers::is_gnb_cu_config_update_acknowledge_valid(
+                                                                this->cu_notifier.last_f1ap_msgs.back(), req_restart);
+  }));
+
+  // Create UE in the restarted cell.
+  rnti_t new_crnti = to_rnti(0x4601 + GetParam().nof_cells);
+  ASSERT_TRUE(add_ue(new_crnti, to_du_cell_index(rem_cell_idx)));
+  ASSERT_TRUE(run_rrc_setup(new_crnti));
+  ASSERT_TRUE(run_ue_context_setup(new_crnti));
+  ASSERT_TRUE(run_until_csi(to_du_cell_index(rem_cell_idx), new_crnti));
+}
+
 INSTANTIATE_TEST_SUITE_P(du_high_many_cells_test_suite,
                          du_high_many_cells_tester,
                          ::testing::Values(test_params{2}, test_params{4}));
+
+class du_high_many_cells_metrics_test : public du_high_env_simulator, public testing::Test
+{
+protected:
+  constexpr static std::chrono::milliseconds METRICS_PERIOD{100};
+  constexpr static unsigned                  nof_cells = 4;
+
+  du_high_many_cells_metrics_test() :
+    du_high_env_simulator([]() {
+      du_high_env_sim_params params;
+      params.nof_cells   = nof_cells;
+      auto cfg           = create_du_high_configuration(params);
+      cfg.metrics.period = METRICS_PERIOD;
+      // TODO: Remove these extra parameters.
+      cfg.ran.sched_cfg.metrics_report_period = METRICS_PERIOD;
+      return cfg;
+    }())
+  {
+  }
+};
+
+TEST_F(du_high_many_cells_metrics_test, when_du_metrics_are_configured_then_metrics_are_collected_periodically)
+{
+  // Create UEs.
+  rnti_t rnti1 = to_rnti(0x4601);
+  ASSERT_TRUE(add_ue(rnti1));
+  ASSERT_TRUE(run_rrc_setup(rnti1));
+  ASSERT_TRUE(run_ue_context_setup(rnti1));
+  rnti_t rnti2 = to_rnti(0x4602);
+  ASSERT_TRUE(add_ue(rnti2, to_du_cell_index(1)));
+  ASSERT_TRUE(run_rrc_setup(rnti2));
+  ASSERT_TRUE(run_ue_context_setup(rnti2));
+
+  const unsigned nof_test_slots =
+      METRICS_PERIOD.count() * get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common) * 1.1;
+  ASSERT_TRUE(this->run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots));
+  // Metrics received.
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells.size(), nof_cells);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[0].ue_metrics.size(), 1);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[1].ue_metrics.size(), 1);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[2].ue_metrics.size(), 0);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[3].ue_metrics.size(), 0);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[0].ue_metrics[0].rnti, rnti1);
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[1].ue_metrics[0].rnti, rnti2);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().dl.cells.size(), nof_cells);
+  ASSERT_EQ(du_metrics.last_report.value().f1ap.value().ues.size(), 2);
+  ASSERT_GT(du_metrics.last_report.value().f1ap.value().nof_rx_pdus, 0);
+
+  // After one metric period elapses, we should receive a new report.
+  du_metrics.last_report.reset();
+  ASSERT_TRUE(this->run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots));
+  // Metrics received.
+  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells.size(), nof_cells);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().dl.cells.size(), nof_cells);
+  ASSERT_EQ(du_metrics.last_report.value().f1ap.value().ues.size(), 2);
+}

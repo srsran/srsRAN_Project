@@ -58,7 +58,7 @@ public:
                                     rnti_t                        crnti,
                                     const ue_cell_configuration&  ue_cell_cfg) override;
 
-  uint8_t get_scheduled_pdsch_counter_in_ue_uci(cell_slot_resource_allocator& slot_alloc, rnti_t crnti) override;
+  uint8_t get_scheduled_pdsch_counter_in_ue_uci(slot_point uci_slot, rnti_t crnti) override;
 
   bool has_uci_harq_on_common_pucch_res(rnti_t rnti, slot_point sl_tx) override;
 

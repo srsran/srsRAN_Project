@@ -196,7 +196,7 @@ inline void pucch_3_4_extract_and_equalize(span<cf_t>                  eq_re,
     unsigned first_subc = first_prb * NRE;
     if (second_hop_prb.has_value() && (i_symbol >= second_hop_start)) {
       // Intra-slot frequency hopping.
-      first_subc = second_hop_prb.value() * NRE;
+      first_subc = *second_hop_prb * NRE;
     }
 
     // Create modular buffers to hold the spans for this symbol.

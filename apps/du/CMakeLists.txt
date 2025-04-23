@@ -31,7 +31,6 @@ target_link_libraries(srsdu_base PRIVATE
         srsran_app_services
         srsran_f1u_du_split_connector
         srsran_cu_cp
-        srsran_network
         srsran_e2
         e2ap_asn1
         srsran_pcap

@@ -21,7 +21,7 @@
  */
 
 #include "e2_test_helpers.h"
-#include "lib/e2/common/e2ap_asn1_packer.h"
+#include "e2ap_asn1_packer.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -36,10 +36,10 @@ protected:
     srslog::fetch_basic_logger("E2-ASN1-PCK").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    gw     = std::make_unique<dummy_network_gateway_data_handler>();
+    gw     = std::make_unique<dummy_sctp_association_sdu_notifier>();
     e2     = std::make_unique<dummy_e2_message_handler>();
     pcap   = std::make_unique<dummy_e2ap_pcap>();
-    packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+    packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
   }
 
   void TearDown() override
@@ -48,11 +48,11 @@ protected:
     srslog::flush();
   }
 
-  std::unique_ptr<dummy_network_gateway_data_handler> gw;
-  std::unique_ptr<dummy_e2_message_handler>           e2;
-  std::unique_ptr<dummy_e2ap_pcap>                    pcap;
-  std::unique_ptr<srsran::e2ap_asn1_packer>           packer;
-  srslog::basic_logger&                               test_logger = srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<dummy_sctp_association_sdu_notifier> gw;
+  std::unique_ptr<dummy_e2_message_handler>            e2;
+  std::unique_ptr<dummy_e2ap_pcap>                     pcap;
+  std::unique_ptr<e2ap_asn1_packer>                    packer;
+  srslog::basic_logger&                                test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 /// Test successful packing and unpacking

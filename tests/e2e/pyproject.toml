@@ -47,6 +47,7 @@ markers = [
   "rf_not_crash",
   "reattach",
   "zmq_2x2_mimo",
+  "zmq_64_ues",
   "zmq_4x4_mimo",
   "zmq_srsue",
   "zmq_ric",
@@ -54,6 +55,7 @@ markers = [
   "test_mode",
   "test_mode_acc100",
   "test_mode_not_crash",
+  "test_mode_many_ues",
   "viavi",
   "viavi_manual",
   "viavi_debug",
@@ -95,7 +97,7 @@ max-line-length = 120
 legacy_tox_ini = """
 [tox]
 minversion = 4.4.0
-envlist = 
+envlist =
   format
   lint
   type
@@ -127,8 +129,8 @@ commands =
 
 [testenv:type]
 skip_install = true
-deps = 
+deps =
   mypy
-commands = 
+commands =
   mypy tests
 """

@@ -33,13 +33,17 @@ namespace srsran {
 class scheduler_cell_metrics_consumer_stdout : public app_services::metrics_consumer
 {
 public:
-  explicit scheduler_cell_metrics_consumer_stdout(bool print_metrics_) : print_metrics(print_metrics_) {}
-
   // See interface for documentation.
   void handle_metric(const app_services::metrics_set& metric) override;
 
-  /// This can be called from another execution context to turn on/off the actual plotting.
-  void toggle_print() { print_metrics = !print_metrics; }
+  /// This can be called from another execution context to turn on the actual plotting.
+  void enable() { print_metrics = true; }
+
+  /// This can be called from another execution context to turn off the actual plotting.
+  void disable() { print_metrics = false; }
+
+  /// Prints the header in the next metric handle.
+  void print_header() { nof_lines = 10; }
 
 private:
   unsigned          nof_lines     = 10;

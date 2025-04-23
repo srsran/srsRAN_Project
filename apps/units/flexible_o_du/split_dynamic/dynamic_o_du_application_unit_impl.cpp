@@ -35,6 +35,28 @@ void dynamic_o_du_application_unit_impl::on_loggers_registration()
   register_dynamic_o_du_loggers(unit_cfg);
 }
 
+bool dynamic_o_du_application_unit_impl::are_metrics_enabled() const
+{
+  if (unit_cfg.odu_high_cfg.du_high_cfg.config.metrics.layers_cfg.are_metrics_enabled() ||
+      unit_cfg.du_low_cfg.metrics_cfg.enable_du_low) {
+    return true;
+  }
+
+  if (auto* ru = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
+    return ru->metrics_cfg.enable_ru_metrics;
+  }
+
+  if (auto* ru = std::get_if<ru_ofh_unit_parsed_config>(&unit_cfg.ru_cfg)) {
+    return ru->config.metrics_cfg.enable_ru_metrics;
+  }
+
+  if (auto* ru = std::get_if<ru_dummy_unit_config>(&unit_cfg.ru_cfg)) {
+    return ru->metrics_cfg.enable_ru_metrics;
+  }
+
+  return false;
+}
+
 void dynamic_o_du_application_unit_impl::on_configuration_parameters_autoderivation(CLI::App& app)
 {
   autoderive_dynamic_o_du_parameters_after_parsing(app, unit_cfg);

@@ -65,8 +65,20 @@ e1ap_cu_up_impl::e1ap_cu_up_impl(const e1ap_configuration&    e1ap_cfg_,
   cu_up_exec(cu_up_exec_),
   connection_handler(e1_client_handler_, *this),
   ue_ctxt_list(logger),
-  ev_mng(std::make_unique<e1ap_event_manager>(timer_factory{timers, cu_up_exec}))
+  ev_mng(std::make_unique<e1ap_event_manager>(timer_factory{timers, cu_up_exec})),
+  metrics(e1ap_cfg.metrics_period.count())
 {
+  if (e1ap_cfg.metrics_period.count()) {
+    metrics_timer = timers.create_unique_timer(cu_up_exec);
+    metrics_timer.set(std::chrono::milliseconds(e1ap_cfg.metrics_period), [this](timer_id_t tid) {
+      // TODO push metrics to notifier.
+      auto  m        = metrics.get_metrics_and_reset();
+      auto& m_logger = srslog::fetch_basic_logger("METRICS");
+      m_logger.info("CU-UP E1AP metrics: {}", format_e1ap_cu_up_metrics(e1ap_cfg.metrics_period, m));
+      metrics_timer.run();
+    });
+    metrics_timer.run();
+  }
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -239,6 +251,8 @@ void e1ap_cu_up_impl::handle_bearer_context_setup_request(const asn1::e1ap::bear
 
     // send response
     pdu_notifier->on_new_message(e1ap_msg);
+
+    metrics.add_successful_context_setup();
   } else {
     e1ap_msg.pdu.unsuccessful_outcome().value.bearer_context_setup_fail()->cause =
         cause_to_asn1(bearer_context_setup_response_msg.cause.value());
@@ -268,7 +282,7 @@ void e1ap_cu_up_impl::handle_bearer_context_modification_request(const asn1::e1a
 
   cu_up_notifier.on_schedule_ue_async_task(
       ue_ctxt.ue_ids.ue_index,
-      launch_async<bearer_context_modification_procedure>(ue_ctxt, msg, *pdu_notifier, cu_up_notifier));
+      launch_async<bearer_context_modification_procedure>(ue_ctxt, msg, *pdu_notifier, cu_up_notifier, metrics));
 }
 
 void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::bearer_context_release_cmd_s& msg)
@@ -293,7 +307,8 @@ void e1ap_cu_up_impl::handle_bearer_context_release_command(const asn1::e1ap::be
 
   // Handle the release procedure
   cu_up_notifier.on_schedule_ue_async_task(
-      ue_index, launch_async<bearer_context_release_procedure>(ue_index, msg, *pdu_notifier, cu_up_notifier, logger));
+      ue_index,
+      launch_async<bearer_context_release_procedure>(ue_index, msg, *pdu_notifier, cu_up_notifier, metrics, logger));
 }
 
 void e1ap_cu_up_impl::handle_successful_outcome(const asn1::e1ap::successful_outcome_s& outcome)

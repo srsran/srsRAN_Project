@@ -49,7 +49,7 @@ static unsigned get_tb_and_crc_size(unsigned tb_size, unsigned nof_cbs)
   }
 
   return tb_and_crc_size;
-};
+}
 
 // Returns, in order, the codeblock length, the message length and the number of data bits.
 // The message length is the number of systematic bits of the codeblock. This includes data and, if applicable, CRC,
@@ -397,7 +397,7 @@ void pusch_decoder_hw_impl::copy_tb_and_notify(hal::hw_accelerator_pusch_dec& de
   // Calculate statistics.
   std::optional<unsigned> cb_nof_iter = cb_stats.try_pop();
   while (cb_nof_iter.has_value()) {
-    stats.ldpc_decoder_stats.update(cb_nof_iter.value());
+    stats.ldpc_decoder_stats.update(*cb_nof_iter);
     cb_nof_iter = cb_stats.try_pop();
   }
 

@@ -22,14 +22,13 @@
 
 #pragma once
 
-#include "srsran/phy/lower/lower_phy_controller.h"
-#include "srsran/phy/lower/lower_phy_metrics_notifier.h"
-#include "srsran/ru/generic/ru_generic_metrics_printer.h"
+#include "srsran/adt/span.h"
 #include "srsran/ru/ru_controller.h"
 #include <vector>
 
 namespace srsran {
 
+class lower_phy_sector;
 class lower_phy_cfo_controller;
 class lower_phy_controller;
 class lower_phy_metrics_notifier;
@@ -38,10 +37,10 @@ class radio_session;
 /// Radio Unit gain controller generic implementation.
 class ru_gain_controller_generic_impl : public ru_gain_controller
 {
-  radio_session& radio;
+  radio_session* radio;
 
 public:
-  explicit ru_gain_controller_generic_impl(radio_session& radio_) : radio(radio_) {}
+  explicit ru_gain_controller_generic_impl(radio_session* radio_) : radio(radio_) {}
 
   // See interface for documentation.
   bool set_tx_gain(unsigned port_id, double gain_dB) override;
@@ -53,15 +52,12 @@ public:
 /// Radio Unit carrier frequency offset controller generic implementation.
 class ru_cfo_controller_generic_impl : public ru_cfo_controller
 {
-  std::vector<lower_phy_cfo_controller*> tx_cfo_control;
-  std::vector<lower_phy_cfo_controller*> rx_cfo_control;
+  std::vector<lower_phy_sector*> phy_sectors;
 
 public:
-  ru_cfo_controller_generic_impl(std::vector<lower_phy_cfo_controller*> tx_cfo_control_,
-                                 std::vector<lower_phy_cfo_controller*> rx_cfo_control_) :
-    tx_cfo_control(std::move(tx_cfo_control_)), rx_cfo_control(std::move(rx_cfo_control_))
-  {
-  }
+  ru_cfo_controller_generic_impl() = default;
+
+  ru_cfo_controller_generic_impl(std::vector<lower_phy_sector*> phy_sectors_) : phy_sectors(std::move(phy_sectors_)) {}
 
   // See interface for documentation.
   bool set_tx_cfo(unsigned port_id, const cfo_compensation_request& cfo_request) override;
@@ -74,12 +70,7 @@ public:
 class ru_controller_generic_impl : public ru_controller, public ru_operation_controller
 {
 public:
-  ru_controller_generic_impl(std::vector<lower_phy_controller*>       low_phy_crtl_,
-                             std::vector<ru_generic_metrics_printer*> low_phy_metrics_,
-                             std::vector<lower_phy_cfo_controller*>   tx_cfo_control,
-                             std::vector<lower_phy_cfo_controller*>   rx_cfo_control,
-                             radio_session&                           radio_,
-                             double                                   srate_MHz_);
+  explicit ru_controller_generic_impl(double srate_MHz_);
 
   // See interface for documentation.
   ru_operation_controller& get_operation_controller() override { return *this; }
@@ -96,16 +87,18 @@ public:
   // See interface for documentation.
   void stop() override;
 
-  // See interface for documentation.
-  void print_metrics() override;
+  /// Sets the radio session of this controller.
+  void set_radio(radio_session& session) { radio = &session; }
+
+  /// Set low phy sectors.
+  void set_lower_phy_sectors(std::vector<lower_phy_sector*> sectors);
 
 private:
-  std::vector<lower_phy_controller*>       low_phy_crtl;
-  std::vector<ru_generic_metrics_printer*> low_phy_metrics;
-  radio_session&                           radio;
-  const double                             srate_MHz;
-  ru_gain_controller_generic_impl          gain_controller;
-  ru_cfo_controller_generic_impl           cfo_controller;
+  double                          srate_MHz;
+  radio_session*                  radio;
+  ru_gain_controller_generic_impl gain_controller;
+  std::vector<lower_phy_sector*>  low_phy_crtl;
+  ru_cfo_controller_generic_impl  cfo_controller;
 };
 
 } // namespace srsran

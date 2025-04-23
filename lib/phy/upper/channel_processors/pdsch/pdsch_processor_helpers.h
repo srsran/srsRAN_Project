@@ -79,7 +79,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
   trace_point process_ptrs_tp = l1_tracer.now();
 
   // Extract PT-RS configuration parameters.
-  const pdsch_processor::ptrs_configuration& ptrs = pdu.ptrs.value();
+  const pdsch_processor::ptrs_configuration& ptrs = *pdu.ptrs;
 
   bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
@@ -144,9 +144,9 @@ inline unsigned pdsch_compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
   re_pattern_list reserved = pdu.reserved;
 
   // If the pattern contains PT-RS, append the reserved elements to the list.
-  if (pdu.ptrs) {
+  if (pdu.ptrs.has_value()) {
     // Extract specific PT-RS configuration.
-    const pdsch_processor::ptrs_configuration& ptrs_config = pdu.ptrs.value();
+    const pdsch_processor::ptrs_configuration& ptrs_config = *pdu.ptrs;
 
     // Create PT-RS pattern configuration.
     ptrs_pattern_configuration ptrs_pattern_config = {

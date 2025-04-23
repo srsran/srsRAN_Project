@@ -92,7 +92,7 @@ struct formatter<srsran::pdcch_processor::pdu_t> {
   {
     helper.format_always(ctx, "rnti=0x{:04x}", pdu.dci.rnti);
     if (pdu.context.has_value()) {
-      helper.format_always(ctx, pdu.context.value());
+      helper.format_always(ctx, *pdu.context);
     }
     helper.format_if_verbose(ctx, "slot={}", pdu.slot);
     helper.format_if_verbose(ctx, "cp={}", pdu.cp.to_string());

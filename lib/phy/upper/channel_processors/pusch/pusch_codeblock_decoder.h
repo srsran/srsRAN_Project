@@ -68,7 +68,7 @@ public:
     srsran_assert(crc_set.crc16->get_generator_poly() == crc_generator_poly::CRC16, "Wrong TB CRC calculator.");
     srsran_assert(crc_set.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Wrong TB CRC calculator.");
     srsran_assert(crc_set.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Wrong TB CRC calculator.");
-  };
+  }
 
   /// Selects the CRC calculator from a CRC polynomial.
   crc_calculator* select_crc(crc_generator_poly poly)

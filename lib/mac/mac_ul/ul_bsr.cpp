@@ -170,10 +170,14 @@ expected<long_bsr_report> srsran::decode_lbsr(bsr_format format, byte_buffer_vie
 /// \return The actual buffer size level in Bytes.
 uint32_t srsran::buff_size_field_to_bytes(size_t buff_size_index, bsr_format format)
 {
-  // Difference between the 2nd largest and the largest UL buffer size in bytes (Implementation-defined).
-  static constexpr uint32_t max_offset = 150000;
+  // [Implementation-defined] Difference between the 2nd largest and the largest UL buffer size in bytes.
+  // The resulting value of largest UL buffer (700kB) is approx. the amount of UL data that can be transmitted during 1
+  // frame, assuming (i) 1 UE; (ii) 2 layers-UL MIMO; (iii) 2D1S7U TDD pattern. This value is enough to guarantee that
+  // the scheduler UL pending data never reach 0 in between 2 consecutive BSRs, which we observed to be reported every
+  // frame during UL-UDP full buffer (this value depends on the configuration).
+  static constexpr uint32_t max_offset = 550000;
 
-  // early exit
+  // Early exit
   if (buff_size_index == 0) {
     return 0;
   }

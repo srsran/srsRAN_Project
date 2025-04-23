@@ -42,21 +42,6 @@ static bool check_compression_params(const ofh::ru_compression_params& params)
   return true;
 }
 
-static bool check_dl_eaxc_if_broadcast_is_enabled(const ofh::sector_configuration& config)
-{
-  // When broadcast flag is enabled, two downlink eAxCs are supported.
-  if (config.is_downlink_broadcast_enabled && config.dl_eaxc.size() != 2) {
-    fmt::println(
-        "Invalid downlink eAxC identifier configuration, expected 2 eAxC identifiers but broadcast flag is '{}' "
-        "and there are '{}' downlink eAxC",
-        (config.is_downlink_broadcast_enabled) ? "enabled" : "disabled",
-        config.dl_eaxc.size());
-    return false;
-  }
-
-  return true;
-}
-
 static bool check_eaxc_id(unsigned eaxc)
 {
   bool result = eaxc < ofh::MAX_SUPPORTED_EAXC_ID_VALUE;
@@ -106,10 +91,6 @@ bool srsran::is_valid_ru_ofh_config(const ru_ofh_configuration& config)
     }
 
     if (!check_compression_params(sector.prach_compression_params)) {
-      return false;
-    }
-
-    if (!check_dl_eaxc_if_broadcast_is_enabled(sector)) {
       return false;
     }
 

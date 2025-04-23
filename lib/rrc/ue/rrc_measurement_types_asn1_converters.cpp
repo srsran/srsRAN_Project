@@ -614,7 +614,7 @@ void srsran::srs_cu_cp::srs_periodicity_and_offset_to_rrc_asn1(
   if (srs_period_and_offset.period == rrc_srs_periodicity_and_offset::period_t::ms2560) {
     asn1_srs_period_and_offset.set_sl2560() = srs_period_and_offset.offset;
   }
-};
+}
 
 asn1::rrc_nr::srs_res_s srsran::srs_cu_cp::srs_res_to_rrc_asn1(const rrc_srs_res& srs_res)
 {
@@ -1135,7 +1135,7 @@ srsran::srs_cu_cp::asn1_to_meas_quant_results(const asn1::rrc_nr::meas_quant_res
   }
 
   return meas_quant_results;
-};
+}
 
 rrc_meas_result_nr srsran::srs_cu_cp::asn1_to_meas_result_nr(const asn1::rrc_nr::meas_result_nr_s& asn1_meas_result_nr)
 {
@@ -1187,7 +1187,7 @@ rrc_meas_result_nr srsran::srs_cu_cp::asn1_to_meas_result_nr(const asn1::rrc_nr:
   }
 
   return meas_result_nr;
-};
+}
 
 rrc_meas_results srsran::srs_cu_cp::asn1_to_measurement_results(const asn1::rrc_nr::meas_results_s& asn1_meas_results,
                                                                 srslog::basic_logger&               logger)

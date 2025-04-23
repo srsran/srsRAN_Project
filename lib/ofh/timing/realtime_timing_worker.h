@@ -50,7 +50,7 @@ struct realtime_worker_cfg {
 };
 
 /// Realtime worker that generates OTA symbol notifications.
-class realtime_timing_worker : public controller, public ota_symbol_boundary_notifier_manager
+class realtime_timing_worker : public operation_controller, public ota_symbol_boundary_notifier_manager
 {
   enum class worker_status { running, stop_requested, stopped };
 

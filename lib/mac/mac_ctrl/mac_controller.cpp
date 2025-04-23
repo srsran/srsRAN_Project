@@ -37,13 +37,13 @@ mac_controller::mac_controller(const mac_control_config&   cfg_,
 {
 }
 
-void mac_controller::add_cell(const mac_cell_creation_request& cell_cfg)
+mac_cell_controller& mac_controller::add_cell(const mac_cell_creation_request& cell_cfg)
 {
   // > Fill sched cell configuration message and pass it to the scheduler.
   sched_cfg.add_cell(cell_cfg);
 
   // > Create MAC Cell DL Handler.
-  dl_unit.add_cell(cell_cfg);
+  return dl_unit.add_cell(cell_cfg);
 }
 
 void mac_controller::remove_cell(du_cell_index_t cell_index)
@@ -55,9 +55,9 @@ void mac_controller::remove_cell(du_cell_index_t cell_index)
   sched_cfg.remove_cell(cell_index);
 }
 
-mac_cell_controller& mac_controller::get_cell_controller(du_cell_index_t cell_index)
+mac_cell_time_mapper& mac_controller::get_time_mapper(du_cell_index_t cell_index)
 {
-  return dl_unit.get_cell_controller(cell_index);
+  return dl_unit.get_time_mapper(cell_index);
 }
 
 async_task<mac_ue_create_response> mac_controller::handle_ue_create_request(const mac_ue_create_request& msg)

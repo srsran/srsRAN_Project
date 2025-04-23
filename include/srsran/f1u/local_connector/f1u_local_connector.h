@@ -167,7 +167,7 @@ public:
       return;
     }
     notifier->on_new_pdu(std::move(msg));
-  };
+  }
   bool                                       stopped = false;
   srs_du::f1u_du_gateway_bearer_rx_notifier* f1u_rx  = nullptr;
 

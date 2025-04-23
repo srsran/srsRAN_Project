@@ -22,6 +22,8 @@
 
 #include "srs_validator_generic_impl.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_configuration.h"
+#include "srsran/ran/resource_block.h"
+#include "srsran/ran/srs/srs_information.h"
 
 using namespace srsran;
 
@@ -45,6 +47,14 @@ error_type<std::string> srs_validator_generic_impl::is_valid(const srs_estimator
   // Invalid receive port list.
   if (config.ports.empty()) {
     return make_unexpected("Empty list of Rx ports for the SRS estimator.");
+  }
+
+  for (unsigned i_port = 0, i_port_end = config.ports.size(); i_port != i_port_end; ++i_port) {
+    srs_information info = get_srs_information(config.resource, i_port);
+    if (info.mapping_initial_subcarrier + info.sequence_length * info.comb_size >
+        max_nof_prb * NOF_SUBCARRIERS_PER_RB) {
+      return make_unexpected("SRS resource exceeds maximum bandwidth.");
+    }
   }
 
   return default_success_t();

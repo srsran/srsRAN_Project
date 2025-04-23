@@ -35,7 +35,7 @@ public:
   std::queue<byte_buffer> sdu_queue;
 
   // sdap_rx_sdu_notifier interface
-  void on_new_sdu(byte_buffer pdu, qos_flow_id_t qfi) override { sdu_queue.push(std::move(pdu)); };
+  void on_new_sdu(byte_buffer pdu, qos_flow_id_t qfi) override { sdu_queue.push(std::move(pdu)); }
 };
 
 /// Fixture class for SDAP RX tests

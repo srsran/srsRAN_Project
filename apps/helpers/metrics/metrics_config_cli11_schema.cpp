@@ -30,16 +30,16 @@ using namespace app_helpers;
 static void configure_cli11_metrics_args(CLI::App& app, metrics_config& metrics_params)
 {
   // JSON metrics configuration.
-  add_option(app, "--addr", metrics_params.json_config.addr, "Metrics address.")->capture_default_str();
-  add_option(app, "--port", metrics_params.json_config.port, "Metrics UDP port.")
+  add_option(app, "--addr", metrics_params.json_config.addr, "IP address JSON metrics will be reported to")
+      ->capture_default_str();
+  add_option(app, "--port", metrics_params.json_config.port, "UDP port JSON metrics will be reported to")
       ->capture_default_str()
       ->check(CLI::Range(0, 65535));
-  add_option(
-      app, "--enable_json_metrics", metrics_params.json_config.enable_json_metrics, "Enable JSON metrics reporting")
+  add_option(app, "--enable_json", metrics_params.json_config.enable_json_metrics, "Enable JSON metrics reporting")
       ->always_capture_default();
 
   // Log metrics configuration.
-  add_option(app, "--enable_log_metrics", metrics_params.enable_log_metrics, "Enable log metrics reporting")
+  add_option(app, "--enable_log", metrics_params.enable_log_metrics, "Enable log metrics reporting")
       ->always_capture_default();
 }
 

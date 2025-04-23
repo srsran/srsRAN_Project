@@ -37,9 +37,14 @@ public:
   explicit scheduler_impl(const scheduler_config& sched_cfg);
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override;
+  void handle_cell_removal_request(du_cell_index_t cell_index) override;
+
+  // Cell activity.
+  void handle_cell_activation_request(du_cell_index_t cell_index) override;
+  void handle_cell_deactivation_request(du_cell_index_t cell_index) override;
 
   // Sys Info handling.
-  void handle_sib1_update_request(const sib1_pdu_update_request& req) override;
+  void handle_si_update_request(const si_scheduling_update_request& req) override;
 
   // scheduler_slot_handler interface methods.
   const sched_result& slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
@@ -83,11 +88,11 @@ private:
   // Manager of configurations forwarded to the scheduler.
   sched_config_manager cfg_mng;
 
-  /// Container of DU Cell-specific resources.
-  slotted_id_table<du_cell_index_t, std::unique_ptr<cell_scheduler>, MAX_NOF_DU_CELLS> cells;
-
   /// Container of DU Cell Group-specific resources.
   slotted_id_table<du_cell_group_index_t, std::unique_ptr<ue_scheduler>, MAX_DU_CELL_GROUPS> groups;
+
+  /// Container of DU Cell-specific resources.
+  slotted_id_table<du_cell_index_t, std::unique_ptr<cell_scheduler>, MAX_NOF_DU_CELLS> cells;
 };
 
 } // namespace srsran

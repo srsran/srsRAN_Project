@@ -29,6 +29,7 @@
 #include "srsran/phy/upper/channel_processors/uci/uci_decoder.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pucch_estimator.h"
 #include "srsran/ran/pucch/pucch_constants.h"
+#include "srsran/ran/slot_pdu_capacity_constants.h"
 
 namespace srsran {
 
@@ -63,19 +64,20 @@ private:
 class pucch_processor_impl : public pucch_processor
 {
 public:
-  // See interface for documentation.
+  // See pucch_processor interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format0_configuration& config) override;
 
-  // See interface for documentation.
-  pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) override;
+  // See pucch_processor interface for documentation.
+  const pucch_format1_map<pucch_processor_result>& process(const resource_grid_reader&        grid,
+                                                           const format1_batch_configuration& config) override;
 
-  // See interface for documentation.
+  // See pucch_processor interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) override;
 
-  // See interface for documentation.
+  // See pucch_processor interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format3_configuration& config) override;
 
-  // See interface for documentation.
+  // See pucch_processor interface for documentation.
   pucch_processor_result process(const resource_grid_reader& grid, const format4_configuration& config) override;
 
   /// PUCCH processor constructor.
@@ -113,6 +115,8 @@ private:
   channel_estimate estimates;
   /// Temporal LLR storage.
   std::array<log_likelihood_ratio, pucch_constants::MAX_NOF_LLR> temp_llr;
+  /// PUCCH batch results.
+  pucch_format1_map<pucch_processor_result> batch_results;
 };
 
 } // namespace srsran

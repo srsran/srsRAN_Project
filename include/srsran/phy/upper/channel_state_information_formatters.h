@@ -52,23 +52,23 @@ struct formatter<srsran::channel_state_information> {
       if (csi.sinr_ch_estimator_dB.has_value()) {
         const char* selected =
             (csi.sinr_report_type == srsran::channel_state_information::sinr_type::channel_estimator) ? "[sel]" : "";
-        helper.format_if_verbose(ctx, "sinr_ch_est{}={:.1f}dB", selected, csi.sinr_ch_estimator_dB.value());
+        helper.format_if_verbose(ctx, "sinr_ch_est{}={:.1f}dB", selected, *csi.sinr_ch_estimator_dB);
       }
 
       if (csi.sinr_post_eq_dB.has_value()) {
         const char* selected =
             (csi.sinr_report_type == srsran::channel_state_information::sinr_type::post_equalization) ? "[sel]" : "";
-        helper.format_if_verbose(ctx, "sinr_eq{}={:.1f}dB", selected, csi.sinr_post_eq_dB.value());
+        helper.format_if_verbose(ctx, "sinr_eq{}={:.1f}dB", selected, *csi.sinr_post_eq_dB);
       }
 
       if (csi.sinr_evm_dB.has_value()) {
         const char* selected =
             (csi.sinr_report_type == srsran::channel_state_information::sinr_type::evm) ? "[sel]" : "";
-        helper.format_if_verbose(ctx, "sinr_evm{}={:.1f}dB", selected, csi.sinr_evm_dB.value());
+        helper.format_if_verbose(ctx, "sinr_evm{}={:.1f}dB", selected, *csi.sinr_evm_dB);
       }
 
       if (csi.evm.has_value()) {
-        helper.format_if_verbose(ctx, "evm={:.2f}", csi.evm.value());
+        helper.format_if_verbose(ctx, "evm={:.2f}", *csi.evm);
       }
 
       // Extract CSI measurements. It could be some of them are not available.
@@ -80,27 +80,27 @@ struct formatter<srsran::channel_state_information> {
 
       // Print the measurements that are present.
       if (epre_dB.has_value()) {
-        helper.format_always(ctx, "epre={:+.1f}dB", epre_dB.value());
+        helper.format_always(ctx, "epre={:+.1f}dB", *epre_dB);
       } else {
         helper.format_always(ctx, "epre=na");
       }
       if (rsrp_dB.has_value()) {
-        helper.format_always(ctx, "rsrp={:+.1f}dB", rsrp_dB.value());
+        helper.format_always(ctx, "rsrp={:+.1f}dB", *rsrp_dB);
       } else {
         helper.format_always(ctx, "rsrp=na");
       }
       if (sinr_dB.has_value()) {
-        helper.format_if_verbose(ctx, "sinr={:+.1f}dB", sinr_dB.value());
+        helper.format_if_verbose(ctx, "sinr={:+.1f}dB", *sinr_dB);
       } else {
         helper.format_if_verbose(ctx, "sinr=na");
       }
       if (time_aligment.has_value()) {
-        helper.format_if_verbose(ctx, "t_align={:.2f}us", time_aligment.value().to_seconds() * 1e6);
+        helper.format_if_verbose(ctx, "t_align={:.2f}us", time_aligment->to_seconds() * 1e6);
       } else {
         helper.format_if_verbose(ctx, "t_align=na");
       }
       if (cfo_Hz.has_value()) {
-        helper.format_if_verbose(ctx, "cfo={:+.1f}Hz", cfo_Hz.value());
+        helper.format_if_verbose(ctx, "cfo={:+.1f}Hz", *cfo_Hz);
       } else {
         helper.format_if_verbose(ctx, "cfo=na");
       }
@@ -108,7 +108,7 @@ struct formatter<srsran::channel_state_information> {
       // Short representation only prints the SINR selected for CSI reporting to higher layers.
       std::optional<float> sinr_dB = csi.get_sinr_dB();
       if (sinr_dB.has_value()) {
-        helper.format_always(ctx, "sinr={:.1f}dB", sinr_dB.value());
+        helper.format_always(ctx, "sinr={:.1f}dB", *sinr_dB);
       } else {
         // SINR is not available.
         helper.format_always(ctx, "sinr=na");

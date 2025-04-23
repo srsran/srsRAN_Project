@@ -33,7 +33,6 @@ e2ap_configuration srsran::generate_e2_config(const e2_config&              conf
                                               std::optional<gnb_cu_up_id_t> gnb_cu_up_id)
 {
   e2ap_configuration out_cfg = srsran::config_helpers::make_default_e2ap_config();
-  out_cfg.e2_type            = e2_type_t::CU_UP;
   out_cfg.gnb_id             = gnb_id;
   out_cfg.plmn               = plmn;
   out_cfg.gnb_cu_up_id       = gnb_cu_up_id;

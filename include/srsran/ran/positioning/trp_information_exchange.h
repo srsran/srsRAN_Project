@@ -241,11 +241,6 @@ struct on_demand_prs_info_t {
   std::optional<uint8_t>  allowed_comb_size_values;
 };
 
-struct trp_tx_teg_info_t {
-  uint8_t trp_tx_teg_id;
-  uint8_t trp_tx_timing_error_margin;
-};
-
 struct dl_prs_res_id_item_t {
   uint8_t dl_prs_res_id;
 };

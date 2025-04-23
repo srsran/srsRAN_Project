@@ -22,7 +22,6 @@
 
 #include "scheduler_metrics_handler.h"
 #include "../config/cell_configuration.h"
-
 #include "srsran/scheduler/result/sched_result.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/srslog/srslog.h"
@@ -35,7 +34,11 @@ cell_metrics_handler::cell_metrics_handler(msecs                       metrics_r
   notifier(notifier_), report_period(metrics_report_period), cell_cfg(cell_cfg_)
 {
   next_report.ue_metrics.reserve(MAX_NOF_DU_UES);
-  next_report.events.reserve(MAX_NOF_DU_UES);
+  // Note: there can be more than one event per UE.
+  constexpr unsigned prereserved_events_per_ue = 3;
+  next_report.events.reserve(MAX_NOF_DU_UES * prereserved_events_per_ue);
+  ues.reserve(MAX_NOF_DU_UES);
+  rnti_to_ue_index_lookup.reserve(MAX_NOF_DU_UES);
 }
 
 void cell_metrics_handler::handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci)
@@ -292,6 +295,8 @@ void cell_metrics_handler::report_metrics()
     next_report.ue_metrics.push_back(ue.compute_report(report_period, nof_slots_per_sf));
   }
 
+  next_report.pci                       = cell_cfg.pci;
+  next_report.slot                      = last_slot_tx - report_period_slots;
   next_report.nof_slots                 = report_period_slots;
   next_report.nof_error_indications     = data.error_indication_counter;
   next_report.average_decision_latency  = data.decision_latency_sum / report_period_slots;
@@ -304,6 +309,8 @@ void cell_metrics_handler::report_metrics()
   next_report.nof_prach_preambles       = data.nof_prach_preambles;
   next_report.dl_grants_count           = data.nof_ue_pdsch_grants;
   next_report.ul_grants_count           = data.nof_ue_pusch_grants;
+  next_report.nof_failed_pdcch_allocs   = data.nof_failed_pdcch_allocs;
+  next_report.nof_failed_uci_allocs     = data.nof_failed_uci_allocs;
 
   // Reset cell-wide metric counters.
   data = {};
@@ -376,6 +383,10 @@ void cell_metrics_handler::handle_slot_result(const sched_result&       slot_res
   unsigned bin_idx = slot_decision_latency.count() / scheduler_cell_metrics::nof_usec_per_bin;
   bin_idx          = std::min(bin_idx, scheduler_cell_metrics::latency_hist_bins - 1);
   ++data.decision_latency_hist[bin_idx];
+
+  // Failed allocation attempts.
+  data.nof_failed_pdcch_allocs = slot_result.failed_attempts.pdcch;
+  data.nof_failed_uci_allocs   = slot_result.failed_attempts.uci;
 }
 
 void cell_metrics_handler::push_result(slot_point                sl_tx,
@@ -499,4 +510,9 @@ cell_metrics_handler* scheduler_metrics_handler::add_cell(const cell_configurati
   cells.emplace(cell_cfg.cell_index, std::make_unique<cell_metrics_handler>(report_period, notifier, cell_cfg));
 
   return cells[cell_cfg.cell_index].get();
+}
+
+void scheduler_metrics_handler::rem_cell(du_cell_index_t cell_index)
+{
+  cells.erase(cell_index);
 }

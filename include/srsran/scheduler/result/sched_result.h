@@ -66,6 +66,14 @@ struct ul_sched_result {
   static_vector<srs_info, MAX_SRS_PDUS_PER_SLOT> srss;
 };
 
+/// Failed allocation attempts in a given slot.
+struct failed_alloc_attempts {
+  /// Number of failed PDCCH allocation attempts.
+  unsigned pdcch = 0;
+  /// Number of failed UCI allocation attempts.
+  unsigned uci = 0;
+};
+
 /// Scheduler decision made for DL and UL in a given slot.
 struct sched_result {
   /// Whether the scheduling for the given slot was successful.
@@ -74,6 +82,8 @@ struct sched_result {
   dl_sched_result dl;
   /// UL allocations for the given slot.
   ul_sched_result ul;
+  /// Information about failed allocation attempts for the given slot.
+  failed_alloc_attempts failed_attempts;
 };
 
 } // namespace srsran

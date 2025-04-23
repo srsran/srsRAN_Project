@@ -76,6 +76,9 @@ public:
   /// Creates handles to the resources associated with common cell configuration.
   void add_cell(const sched_cell_configuration_request_message& cell_cfg);
 
+  /// Remove cell and respective resources.
+  void rem_cell(du_cell_index_t cell_index);
+
   /// Creates handles to the resources associated with a specific UE during its creation.
   ue_creation_params add_ue(const sched_ue_creation_request_message& creation_req);
 

@@ -26,6 +26,7 @@
 #include "srsran/ngap/ngap_context.h"
 #include "srsran/ngap/ngap_handover.h"
 #include "srsran/ngap/ngap_init_context_setup.h"
+#include "srsran/ngap/ngap_metrics.h"
 #include "srsran/ngap/ngap_reset.h"
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
@@ -294,6 +295,16 @@ public:
   update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_cu_cp_ue_notifier& new_ue_notifier) = 0;
 };
 
+/// Interface used to capture the NGAP metrics from a single CU-CP NGAP.
+class ngap_metrics_handler
+{
+public:
+  virtual ~ngap_metrics_handler() = default;
+
+  /// \brief Handle new request for metrics relative to a connected AMF.
+  virtual ngap_info handle_ngap_metrics_report_request() const = 0;
+};
+
 /// \brief Interface to query statistics from the NGAP interface.
 class ngap_statistics_handler
 {
@@ -314,7 +325,8 @@ class ngap_interface : public ngap_message_handler,
                        public ngap_control_message_handler,
                        public ngap_ue_control_manager,
                        public ngap_statistics_handler,
-                       public ngap_ue_context_removal_handler
+                       public ngap_ue_context_removal_handler,
+                       public ngap_metrics_handler
 {
 public:
   virtual ~ngap_interface() = default;
@@ -326,6 +338,7 @@ public:
   virtual ngap_ue_radio_capability_management_handler& get_ngap_ue_radio_cap_management_handler() = 0;
   virtual ngap_control_message_handler&                get_ngap_control_message_handler()         = 0;
   virtual ngap_ue_control_manager&                     get_ngap_ue_control_manager()              = 0;
+  virtual ngap_metrics_handler&                        get_metrics_handler()                      = 0;
   virtual ngap_statistics_handler&                     get_ngap_statistics_handler()              = 0;
   virtual ngap_ue_context_removal_handler&             get_ngap_ue_context_removal_handler()      = 0;
 };

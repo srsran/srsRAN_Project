@@ -26,6 +26,7 @@ add_library(sched_support STATIC
         pucch/pucch_default_resource.cpp
         pusch/pusch_default_time_allocation.cpp
         pusch/pusch_dmrs_symbol_mask.cpp
+	paging_helpers.cpp
         mcs_tbs_calculator.cpp
         prbs_calculator.cpp
         mcs_calculator.cpp

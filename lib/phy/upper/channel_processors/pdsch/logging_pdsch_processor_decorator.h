@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/phy/support/precoding_formatters.h"
 #include "srsran/phy/support/support_formatters.h"
 #include "srsran/phy/upper/channel_processors/pdsch/formatters.h"
 

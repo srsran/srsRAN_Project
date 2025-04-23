@@ -107,9 +107,9 @@ struct du_high_executor_config {
   /// Dedicated serialized worker for a given cell.
   struct dedicated_cell_worker {
     /// Serialized executor used to pass slot indications to a cell in the MAC.
-    task_executor& high_prio_executor;
+    task_executor* high_prio_executor;
     /// Serialized executor used to pass other tasks to a cell in the MAC.
-    task_executor& low_prio_executor;
+    task_executor* low_prio_executor;
   };
   using dedicated_cell_worker_list = std::vector<dedicated_cell_worker>;
   /// Worker pool which will be used for the DU-high cell real-time tasks.
@@ -118,8 +118,8 @@ struct du_high_executor_config {
     unsigned nof_cells;
     /// Default queue size for tasks other than slot indications.
     unsigned default_task_queue_size;
-    /// Worker pool executor.
-    task_executor* pool_executor;
+    /// Worker pool executors.
+    std::vector<task_executor*> pool_executors;
   };
   /// \brief Configuration of the DU-high cell executors. Two options:
   /// - list of dedicated workers, one per cell, and indexed by cell index.

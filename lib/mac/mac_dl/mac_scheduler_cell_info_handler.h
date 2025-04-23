@@ -37,6 +37,14 @@ class mac_scheduler_cell_info_handler : public mac_ue_control_information_handle
 public:
   virtual ~mac_scheduler_cell_info_handler() = default;
 
+  /// \brief Start scheduling for a given cell. If cell was already activated, this operation has no effect.
+  /// \param cell_idx DU-specific index of the cell for which the slot is being processed.
+  virtual void start_cell(du_cell_index_t cell_idx) = 0;
+
+  /// \brief Stop running cell. If cell was already deactivated, this operation has no effect.
+  /// \param cell_idx DU-specific index of the cell for which the slot is being processed.
+  virtual void stop_cell(du_cell_index_t cell_idx) = 0;
+
   /// \brief Processes a new slot for a specific cell in the MAC scheduler.
   /// \param slot_tx SFN + slot index of the Transmit slot to be processed.
   /// \param cell_idx DU-specific index of the cell for which the slot is being processed.
@@ -50,12 +58,9 @@ public:
   virtual void
   handle_error_indication(slot_point slot_tx, du_cell_index_t cell_idx, mac_cell_slot_handler::error_event event) = 0;
 
-  /// \brief Update SIB1 PDU size in the scheduler.
-  /// \param[in] cell_index Index of the cell being updated.
-  /// \param[in] sib_version SIB1 PDU version. The version should always increase for each new SIB1 PDU provided.
-  /// \param[in] new_payload_size Size of the SIB1 PDU payload.
-  virtual void
-  handle_sib1_update_indication(du_cell_index_t cell_index, unsigned sib_version, units::bytes new_payload_size) = 0;
+  /// \brief Update SIB1 and SI scheduling information in scheduler.
+  /// \param[in] request Request to change SI sched info and messages.
+  virtual void handle_si_change_indication(const si_scheduling_update_request& request) = 0;
 
   /// \brief Handle request to measure the metrics related with a UE position.
   /// \param[in] cell_index Index of the cell for which the measurement is directed.

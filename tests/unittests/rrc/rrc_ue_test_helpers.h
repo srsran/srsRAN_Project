@@ -123,6 +123,7 @@ protected:
                                            *rrc_ue_create_msg.rrc_ue_cu_cp_notifier,
                                            *rrc_ue_create_msg.measurement_notifier,
                                            *rrc_ue_create_msg.cu_cp_ue_notifier,
+                                           rrc_ue_rrc_du_notifier,
                                            rrc_ue_create_msg.ue_index,
                                            rrc_ue_create_msg.c_rnti,
                                            rrc_ue_create_msg.cell,
@@ -436,6 +437,7 @@ protected:
   dummy_rrc_f1ap_pdu_notifier rrc_ue_f1ap_notifier;
   dummy_rrc_ue_ngap_adapter   rrc_ue_ngap_notifier;
   dummy_rrc_ue_cu_cp_adapter  rrc_ue_cu_cp_notifier;
+  dummy_rrc_ue_rrc_du_adapter rrc_ue_rrc_du_notifier;
   cu_cp_configuration         cu_cp_cfg;
 
   ue_manager ue_mng{cu_cp_cfg};

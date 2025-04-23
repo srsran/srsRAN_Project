@@ -54,7 +54,7 @@ protected:
   {
     f1ap_logger.set_level(srslog::basic_levels::debug);
     srslog::init();
-  };
+  }
   ~f1ap_cu_ue_context_test()
   {
     // flush logger after each test

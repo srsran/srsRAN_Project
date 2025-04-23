@@ -32,9 +32,6 @@
 
 namespace srsran {
 
-/// Bitset of CRBs with size up to 275.
-using crb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
-
 /// Parameters of a PDSCH or PUSCH grant allocation within a BWP.
 struct bwp_sch_grant_info {
   const bwp_configuration* bwp_cfg;
@@ -125,6 +122,14 @@ public:
   /// \return an CRB bitmap with bits set to one for unavailable CRBs.
   crb_bitmap used_crbs(crb_interval bwp_crb_lims, ofdm_symbol_range symbols) const;
 
+  /// \brief Calculates a bitmap where each bit set one represents a PRB that is occupied or unavailable.
+  /// A PRB is considered occupied if it is already allocated in at least one OFDM symbol of the provided symbol range.
+  /// \param[in] bwp_crb_lims CRB range where the BWP is located in the frequency domain, and used for the CRB to PRB
+  /// conversion.
+  /// \param[in] symbols Range of OFDM symbols, where the search for available PRBs is carrier out.
+  /// \return an PRB bitmap of the BWP with bits set to one for unavailable PRBs.
+  prb_bitmap used_prbs(crb_interval bwp_crb_lims, ofdm_symbol_range symbols) const;
+
   /// Checks whether the provided symbol x CRB range in the carrier resource grid is set.
   /// \param symbols OFDM symbol interval of the allocation. Interval must fall within [0, 14).
   /// \param crbs CRB interval, where CRB=0 corresponds to the CRB closest to pointA.
@@ -191,6 +196,14 @@ public:
   /// \param[in] symbols Range of OFDM symbols, where the search for available CRBs is carrier out.
   /// \return a CRB bitmap with bits set to one for unavailable CRBs.
   crb_bitmap used_crbs(subcarrier_spacing scs, crb_interval crb_lims, ofdm_symbol_range symbols) const;
+
+  /// \brief Calculates a bitmap where each bit set to one represents a PRB that is occupied or unavailable.
+  /// A PRB is considered occupied if it is already allocated in at least one OFDM symbol of the provided symbol range.
+  /// \param[in] scs Subcarrier spacing of interest.
+  /// \param[in] crb_lims CRB limits used for the allocation.
+  /// \param[in] symbols Range of OFDM symbols, where the search for available CRBs is carrier out.
+  /// \return a PRB bitmap of the BWP with bits set to one for unavailable PRBs.
+  prb_bitmap used_prbs(subcarrier_spacing scs, crb_interval crb_lims, ofdm_symbol_range symbols) const;
 
   /// Checks whether all the provided symbol x RB range in the cell resource grid are set.
   /// \param grant contains the symbol x RB range to be tested.

@@ -25,6 +25,7 @@ import logging
 from contextlib import contextmanager
 from typing import Dict, Generator, Optional, Sequence, Tuple, Union
 
+import pytest
 from pytest import mark
 from retina.client.manager import RetinaTestManager
 from retina.launcher.artifacts import RetinaTestData
@@ -39,6 +40,7 @@ from .steps.configuration import configure_test_parameters
 from .steps.kpis import get_kpis
 from .steps.stub import (
     iperf_parallel,
+    iperf_sequentially,
     iperf_start,
     iperf_wait_until_finish,
     ping_start,
@@ -247,6 +249,95 @@ def test_zmq_reestablishment_sequentially_full_rate(
         # Wait for reestablished UEs
         for ue_attached_info, task, iperf_request in iperf_dict:
             iperf_wait_until_finish(ue_attached_info, fivegc, task, iperf_request)
+
+
+@mark.zmq
+@mark.flaky(reruns=2, only_rerun=_ONLY_RERUN)
+def test_zmq_reestablishment_sequentially_full_rate_verify_bitrate(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue: Tuple[UEStub, ...],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    metrics_summary: MetricsSummary,
+):
+    """
+    ZMQ IPerf + Reestablishment + Check Bitrate
+    """
+
+    protocol = IPerfProto.UDP
+    direction = IPerfDir.UPLINK
+    bitrate = int(45e6)
+    bitrate_threshold = 0.8
+    traffic_duration = 15
+    reestablishment_interval = 5
+
+    with _test_reestablishments(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=[ue],
+        fivegc=fivegc,
+        metrics_summary=metrics_summary,
+        gnb=gnb,
+        band=3,
+        common_scs=15,
+        bandwidth=50,
+        sample_rate=None,
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        always_download_artifacts=True,
+        noise_spd=0,
+        log_ip_level="",
+        warning_as_errors=True,
+    ) as ue_attach_info_dict:
+
+        # Iperf before reestablishment
+        _, result_before = iperf_sequentially(
+            ue_stub=ue,
+            ue_attached_info=ue_attach_info_dict[ue],
+            fivegc=fivegc,
+            protocol=protocol,
+            direction=direction,
+            iperf_duration=traffic_duration,
+            bitrate=bitrate,
+        )
+
+        # Reestablishment
+        for _ in range(int(traffic_duration / reestablishment_interval)):
+            ue_reestablishment(ue, reestablishment_interval)
+
+        # Iperf after reestablishment
+        _, result_after = iperf_sequentially(
+            ue_stub=ue,
+            ue_attached_info=ue_attach_info_dict[ue],
+            fivegc=fivegc,
+            protocol=protocol,
+            direction=direction,
+            iperf_duration=traffic_duration,
+            bitrate=bitrate,
+        )
+
+        # Validate bitrate
+        bitrate_criteria = True
+        if direction in (IPerfDir.DOWNLINK, IPerfDir.BIDIRECTIONAL):
+            if result_after.downlink.bits_per_second / result_before.downlink.bits_per_second < bitrate_threshold:
+                bitrate_criteria = False
+                logging.error(
+                    "DL Bitrate after reestablishment is too low: %s < %s",
+                    result_after.downlink.bits_per_second,
+                    result_before.downlink.bits_per_second,
+                )
+        if direction in (IPerfDir.UPLINK, IPerfDir.BIDIRECTIONAL):
+            if result_after.uplink.bits_per_second / result_before.uplink.bits_per_second < bitrate_threshold:
+                bitrate_criteria = False
+                logging.error(
+                    "UL Bitrate after reestablishment is too low: %s < %s",
+                    result_after.uplink.bits_per_second,
+                    result_before.uplink.bits_per_second,
+                )
+
+        if not bitrate_criteria:
+            pytest.fail("Bitrate criteria not met after reestablishment.")
 
 
 @mark.parametrize(

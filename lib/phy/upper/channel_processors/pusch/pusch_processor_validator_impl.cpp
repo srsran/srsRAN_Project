@@ -176,9 +176,9 @@ error_type<std::string> pusch_processor_validator_impl::is_valid(const pusch_pro
 
   // DC position is outside the channel estimate dimensions.
   interval<unsigned> dc_position_range(0, ce_dims.nof_prb * NRE);
-  if (pdu.dc_position.has_value() && !dc_position_range.contains(pdu.dc_position.value())) {
+  if (pdu.dc_position.has_value() && !dc_position_range.contains(*pdu.dc_position)) {
     return make_unexpected(
-        fmt::format("DC position (i.e., {}) is out of range {}.", pdu.dc_position.value(), dc_position_range));
+        fmt::format("DC position (i.e., {}) is out of range {}.", *pdu.dc_position, dc_position_range));
   }
 
   return default_success_t();

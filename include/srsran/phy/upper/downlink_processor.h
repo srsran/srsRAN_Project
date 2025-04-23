@@ -39,7 +39,7 @@
 
 #include "srsran/phy/upper/channel_processors/pdcch/pdcch_processor.h"
 #include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
-#include "srsran/phy/upper/channel_processors/ssb_processor.h"
+#include "srsran/phy/upper/channel_processors/ssb/ssb_processor.h"
 #include "srsran/phy/upper/signal_processors/nzp_csi_rs_generator.h"
 #include "srsran/phy/upper/signal_processors/prs/prs_generator_configuration.h"
 
@@ -215,14 +215,32 @@ public:
   virtual error_type<std::string> is_valid(const prs_generator_configuration& config) const = 0;
 };
 
+/// Downlink processor base.
+class downlink_processor_base
+{
+public:
+  /// Default destructor.
+  virtual ~downlink_processor_base() = default;
+
+  /// Gets the downlink processor controller interface.
+  virtual downlink_processor_controller& get_controller() = 0;
+
+  /// Indicates the downlink processor to stop receiving
+  virtual void stop() = 0;
+};
+
 /// Pool to access a downlink processor.
 class downlink_processor_pool
 {
 public:
+  /// Default destructor.
   virtual ~downlink_processor_pool() = default;
 
   /// Gets the downlink processor controller associated with the given slot.
   virtual downlink_processor_controller& get_processor_controller(slot_point slot) = 0;
+
+  /// Stops the operation of all the downlink processors contained in the pool.
+  virtual void stop() = 0;
 };
 
 } // namespace srsran

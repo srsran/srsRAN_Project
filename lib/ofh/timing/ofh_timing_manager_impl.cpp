@@ -30,7 +30,7 @@ ota_symbol_boundary_notifier_manager& timing_manager_impl::get_ota_symbol_bounda
   return worker;
 }
 
-controller& timing_manager_impl::get_controller()
+operation_controller& timing_manager_impl::get_controller()
 {
   return worker;
 }

@@ -21,7 +21,9 @@
  */
 
 #include "srs_estimator_generic_impl.h"
+#include "srs_validator_generic_impl.h"
 #include "srsran/adt/complex.h"
+#include "srsran/adt/expected.h"
 #include "srsran/adt/static_vector.h"
 #include "srsran/adt/tensor.h"
 #include "srsran/phy/support/resource_grid_reader.h"
@@ -38,6 +40,18 @@
 #include "srsran/srsvec/subtract.h"
 
 using namespace srsran;
+
+/// \brief Looks at the output of the validator and, if unsuccessful, fills \c msg with the error message.
+///
+/// This is used to call the validator inside the process methods only if asserts are active.
+[[maybe_unused]] static bool handle_validation(std::string& msg, const error_type<std::string>& err)
+{
+  bool is_success = err.has_value();
+  if (!is_success) {
+    msg = err.error();
+  }
+  return is_success;
+}
 
 void srs_estimator_generic_impl::compensate_phase_shift(span<cf_t> mean_lse,
                                                         float      phase_shift_subcarrier,
@@ -65,9 +79,9 @@ void srs_estimator_generic_impl::compensate_phase_shift(span<cf_t> mean_lse,
 srs_estimator_result srs_estimator_generic_impl::estimate(const resource_grid_reader&        grid,
                                                           const srs_estimator_configuration& config)
 {
-  srsran_assert(!config.resource.has_frequency_hopping(), "Frequency hopping is not supported.");
-  srsran_assert(config.resource.is_valid(), "Invalid SRS resource.");
-  srsran_assert(!config.ports.empty(), "Receive port list is empty.");
+  // Makes sure the PDU is valid.
+  [[maybe_unused]] std::string msg;
+  srsran_assert(handle_validation(msg, srs_validator_generic_impl(max_nof_prb).is_valid(config)), "{}", msg);
 
   unsigned nof_rx_ports         = config.ports.size();
   auto     nof_antenna_ports    = static_cast<unsigned>(config.resource.nof_antenna_ports);

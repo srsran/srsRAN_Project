@@ -138,6 +138,7 @@ public:
   void                             connect(pdxch_processor_notifier& notifier_) override { notifier = &notifier_; }
   pdxch_processor_request_handler& get_request_handler() override { return request_handler; }
   pdxch_processor_baseband&        get_baseband() override { return baseband; }
+  void                             stop() override {}
 
   const pdxch_processor_configuration& get_configuration() const { return config; }
 

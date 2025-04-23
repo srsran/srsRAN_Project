@@ -30,7 +30,7 @@
 # warning_as_errors: treat warnings as errors
 
 campaign_filename: &campaign_filename "C:\\ci\\CI 4x4 ORAN-FH-complete.xml"
-test_timeout: &test_timeout 2400
+test_timeout: &test_timeout 1500 # 25 minutes
 
 tests:
   - id: "1UE ideal UDP bidirectional"
@@ -40,8 +40,10 @@ tests:
     # Configuration
     gnb_extra_config: &base_config
       metrics:
-        rlc_report_period: 1000
-        enable_log_metrics: true
+        enable_log: true
+        layers:
+          enable_rlc: true
+          enable_ru: true
       cell_cfg:
         pusch:
           max_puschs_per_slot: 2
@@ -90,6 +92,24 @@ tests:
     expected_nof_kos: 10
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
+
+  - id: "32UE ideal UDP bidirectional Empty Uplink Slot"
+    campaign_filename: *campaign_filename
+    test_name: "32UE ideal UDP bidirectional"
+    test_timeout: *test_timeout
+    # Configuration
+    gnb_extra_config:
+      <<: *base_config
+      expert_phy:
+        allow_request_on_empty_uplink_slot: true
+    # Pass / Fail Criteria
+    expected_dl_bitrate: 1.2e+9
+    expected_ul_bitrate: 72.0e+6
+    expected_nof_kos: 10
+    warning_as_errors: true
+    warning_allowlist:
+      - missed incoming User-Plane PRACH messages
+      - missed incoming User-Plane uplink messages for slot
 
   - id: "1UE fading UDP uplink"
     campaign_filename: *campaign_filename
@@ -180,33 +200,9 @@ tests:
     expected_nof_kos: .inf
     warning_as_errors: false
 
-  - id: "32UE ideal UDP attach-detach with traffic 24h extended"
-    campaign_filename: *campaign_filename
-    test_name: "32UE ideal UDP attach-detach with traffic 24h"
-    test_timeout: 93600
-    # Configuration
-    gnb_extra_config:
-      log:
-        all_level: error
-      metrics:
-        sched_report_period: 5000
-        rlc_report_period: 5000
-      cell_cfg:
-        pusch:
-          max_puschs_per_slot: 2
-      expert_execution:
-        threads:
-          non_rt:
-            non_rt_task_queue_size: 8192
-    # Pass / Fail Criteria
-    expected_dl_bitrate: 14.0e+3
-    expected_ul_bitrate: 1.0e+3
-    expected_nof_kos: .inf
-    warning_as_errors: false
-
   - id: "32UE ideal UDP attach-detach with traffic"
     campaign_filename: *campaign_filename
-    test_name: "32UE ideal UDP attach-detach with traffic"
+    test_name: "32UE ideal UDP attach-detach with traffic conservative"
     test_timeout: *test_timeout
     # Configuration
     gnb_extra_config: *base_config
@@ -219,7 +215,7 @@ tests:
 
   - id: "32UE ideal UDP attach-detach with traffic tdd DDDSU"
     campaign_filename: *campaign_filename
-    test_name: "32UE ideal UDP attach-detach with traffic High brate"
+    test_name: "32UE ideal UDP attach-detach with traffic conservative"
     test_timeout: *test_timeout
     # Configuration
     gnb_extra_config:
@@ -244,9 +240,9 @@ tests:
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
-  - id: "32UE ideal UDP attach-detach with traffic tdd UL Heavy 7u2d"
+  - id: "32UE ideal UDP attach-detach with traffic tdd 7u2d"
     campaign_filename: *campaign_filename
-    test_name: "32UE ideal UDP attach-detach with traffic High brate"
+    test_name: "32UE ideal UDP attach-detach with traffic conservative"
     test_timeout: *test_timeout
     # Configuration
     gnb_extra_config:
@@ -277,9 +273,9 @@ tests:
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
-  - id: "32UE ideal UDP attach-detach with traffic tdd UL Heavy 6u3d"
+  - id: "32UE ideal UDP attach-detach with traffic tdd 6u3d"
     campaign_filename: *campaign_filename
-    test_name: "32UE ideal UDP attach-detach with traffic High brate"
+    test_name: "32UE ideal UDP attach-detach with traffic conservative"
     test_timeout: *test_timeout
     # Configuration
     gnb_extra_config:
@@ -295,6 +291,39 @@ tests:
           nof_dl_slots: 3
           nof_dl_symbols: 10
           nof_ul_slots: 6
+          nof_ul_symbols: 0
+      expert_execution:
+        threads:
+          upper_phy:
+            nof_ul_threads: 3
+            nof_pusch_decoder_threads: 3
+          non_rt:
+            non_rt_task_queue_size: 8192
+    # Pass / Fail Criteria
+    expected_dl_bitrate: 14.0e+3
+    expected_ul_bitrate: 1.0e+3
+    expected_nof_kos: 10
+    warning_as_errors: true
+    warning_allowlist: *base_warning_allowlist
+
+  - id: "32UE ideal UDP attach-detach with traffic tdd 6d3u"
+    campaign_filename: *campaign_filename
+    test_name: "32UE ideal UDP attach-detach with traffic conservative"
+    test_timeout: *test_timeout
+    # Configuration
+    gnb_extra_config:
+      <<: *base_config
+      cell_cfg:
+        pusch:
+          max_puschs_per_slot: 2
+        pucch:
+          sr_period_ms: 40
+          f0_or_f1_nof_cell_res_sr: 30
+        tdd_ul_dl_cfg:
+          dl_ul_tx_period: 10
+          nof_dl_slots: 6
+          nof_dl_symbols: 13
+          nof_ul_slots: 3
           nof_ul_symbols: 0
       expert_execution:
         threads:
@@ -354,30 +383,6 @@ tests:
     warning_as_errors: true
     warning_allowlist: *base_warning_allowlist
 
-  - id: "experimental 32UE ideal UDP bidirectional Long"
-    campaign_filename: *campaign_filename
-    test_name: "experimental 32UE ideal UDP bidirectional Long"
-    test_timeout: 21600 # 6 hours
-    # Configuration
-    gnb_extra_config: *base_config
-    # Pass / Fail Criteria
-    expected_dl_bitrate: 1.2e+9
-    expected_ul_bitrate: 75.0e+6
-    expected_nof_kos: 10
-    warning_as_errors: false
-
-  - id: "experimental 32UE ideal UDP bidirectional Long extended"
-    campaign_filename: *campaign_filename
-    test_name: "experimental 32UE ideal UDP bidirectional Long extended"
-    test_timeout: 21600 # 6 hours
-    # Configuration
-    gnb_extra_config: *base_config
-    # Pass / Fail Criteria
-    expected_dl_bitrate: 1.2e+9
-    expected_ul_bitrate: 75.0e+6
-    expected_nof_kos: 10
-    warning_as_errors: false
-
   - id: "1UE ideal UDP bidirectional MIMO"
     campaign_filename: *campaign_filename
     test_name: "1UE ideal UDP bidirectional"
@@ -409,3 +414,95 @@ tests:
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
     warning_as_errors: false
+
+  - id: "32UE ideal UDP bidirectional Long 1h"
+    campaign_filename: *campaign_filename
+    test_name: "experimental 32UE ideal UDP bidirectional Long"
+    test_timeout: 5400
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
+    expected_dl_bitrate: 1.2e+9
+    expected_ul_bitrate: 75.0e+6
+    expected_nof_kos: 10
+    warning_as_errors: false
+
+  - id: "32UE ideal UDP bidirectional Long 3h"
+    campaign_filename: *campaign_filename
+    test_name: "experimental 32UE ideal UDP bidirectional Long extended"
+    test_timeout: 14400
+    # Configuration
+    gnb_extra_config: *base_config
+    # Pass / Fail Criteria
+    expected_dl_bitrate: 1.2e+9
+    expected_ul_bitrate: 75.0e+6
+    expected_nof_kos: 10
+    warning_as_errors: false
+
+  - id: "32UE ideal UDP bidirectional Long 24h"
+    campaign_filename: *campaign_filename
+    test_name: "experimental 32UE ideal UDP bidirectional Long extended 24h"
+    test_timeout: 90000
+    # Configuration
+    gnb_extra_config:
+      log:
+        all_level: warning
+        lib_level: warning
+      metrics:
+        periodicity:
+          cu_up_report_period: 10000
+          du_report_period: 10000
+        layers:
+          enable_rlc: true
+          enable_ru: true
+          enable_pdcp: true
+      cell_cfg:
+        pusch:
+          max_puschs_per_slot: 2
+      expert_execution:
+        threads:
+          non_rt:
+            non_rt_task_queue_size: 8192
+    # Pass / Fail Criteria
+    expected_dl_bitrate: 14.0e+3
+    expected_ul_bitrate: 1.0e+3
+    expected_nof_kos: .inf
+    warning_as_errors: false
+
+  - id: "RTSAN"
+    campaign_filename: *campaign_filename
+    test_name: "32UE ideal UDP attach-detach with traffic conservative"
+    test_timeout: *test_timeout
+    # Configuration
+    gnb_extra_config:
+      <<: *base_config
+      log:
+        all_level: none
+        lib_level: none
+      metrics:
+        enable_log: false
+      cell_cfg:
+        pusch:
+          max_puschs_per_slot: 2
+        pucch:
+          sr_period_ms: 40
+          f0_or_f1_nof_cell_res_sr: 30
+        tdd_ul_dl_cfg:
+          dl_ul_tx_period: 10
+          nof_dl_slots: 3
+          nof_dl_symbols: 10
+          nof_ul_slots: 6
+          nof_ul_symbols: 0
+      expert_execution:
+        threads:
+          upper_phy:
+            nof_ul_threads: 3
+            nof_pusch_decoder_threads: 3
+          non_rt:
+            non_rt_task_queue_size: 8192
+    # Pass / Fail Criteria
+    expected_dl_bitrate: 14.0e+3
+    expected_ul_bitrate: 1.0e+3
+    expected_nof_kos: .inf
+    warning_as_errors: true
+    warning_allowlist: *base_warning_allowlist

@@ -51,8 +51,12 @@ public:
 private:
   const scheduler_ue_expert_config expert_cfg;
 
-  /// Indices of the UEs to be allocated first in the next slot.
-  du_ue_index_t next_dl_ue_index = MAX_NOF_DU_UES, next_ul_ue_index = MAX_NOF_DU_UES;
+  // Tables to keep track of UE priorities.
+  std::array<unsigned, MAX_NOF_DU_UES> ue_last_dl_alloc_count{};
+  std::array<unsigned, MAX_NOF_DU_UES> ue_last_ul_alloc_count{};
+
+  unsigned dl_alloc_count{0};
+  unsigned ul_alloc_count{0};
 };
 
 } // namespace srsran

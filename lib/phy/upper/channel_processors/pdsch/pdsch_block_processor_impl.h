@@ -96,26 +96,20 @@ private:
   std::unique_ptr<modulation_mapper> modulator;
   /// Pointer to an LDPC segmenter output buffer interface.
   const ldpc_segmenter_buffer* segment_buffer;
-  /// \brief Temporary codeblock message.
-  ///
-  /// It contains codeblock information bits, codeblock CRC (if applicable) and filler bits.
-  static_bit_buffer<ldpc::MAX_CODEBLOCK_SIZE> cb_data;
-  /// Temporary packed bits.
-  static_bit_buffer<ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock;
   /// Current transmission modulation.
   modulation_scheme modulation;
   /// Current codeblock index.
   unsigned next_i_cb = 0;
   /// Last codeblock index.
   unsigned last_i_cb = 0;
-  /// Temporary storage of codeblock symbols.
-  std::array<ci8_t, ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock_symbols;
   /// Current view of the codeblock modulated symbols.
   span<ci8_t> codeblock_symbols;
   /// Codeblock size. It includes information, CRC, and filler bits.
   units::bits cb_size;
   /// Local pointer to the input data.
   span<const uint8_t> transport_block;
+  /// Temporary storage of codeblock symbols.
+  std::array<ci8_t, ldpc::MAX_CODEBLOCK_RM_SIZE> temp_codeblock_symbols;
 
   /// Processes a new codeblock and writes the new data in \ref temp_codeblock_symbols.
   void new_codeblock();

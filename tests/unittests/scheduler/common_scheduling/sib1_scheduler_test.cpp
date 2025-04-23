@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/scheduler/common_scheduling/sib_scheduler.h"
+#include "lib/scheduler/common_scheduling/sib1_scheduler.h"
 #include "lib/scheduler/common_scheduling/ssb_scheduler.h"
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/support/ssb_helpers.h"
@@ -126,7 +126,7 @@ struct sib_test_bench {
     test_logger.set_context(0, 0);
     sched_logger.set_context(0, 0);
     res_grid.slot_indication(sl_tx);
-  };
+  }
 
   // Test bench ctor for SIB1 scheduler test use in case of partial slot TDD configuration.
   sib_test_bench(sched_cell_configuration_request_message msg,
@@ -138,7 +138,7 @@ struct sib_test_bench {
     test_logger.set_context(0, 0);
     sched_logger.set_context(0, 0);
     res_grid.slot_indication(sl_tx);
-  };
+  }
 
   // Test bench ctor for SSB/SIB1 scheduler collision test.
   sib_test_bench(uint32_t           freq_arfcn,
@@ -167,7 +167,7 @@ struct sib_test_bench {
   // Delete the default constructor to force usage of defined constructors.
   sib_test_bench() = delete;
 
-  cell_slot_resource_allocator& get_slot_res_grid() { return res_grid[0]; };
+  cell_slot_resource_allocator& get_slot_res_grid() { return res_grid[0]; }
 
   static scheduler_expert_config make_scheduler_expert_cfg(const scheduler_si_expert_config& si_cfg)
   {
@@ -326,7 +326,7 @@ void test_sib1_scheduler(subcarrier_spacing                         scs_common,
 {
   // Instantiate the sib_test_bench and the SIB1 scheduler.
   sib_test_bench t_bench{scs_common, pdcch_config_sib1, ssb_beam_bitmap, carrier_bw_mhz, duplx_mode};
-  sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg.sib1_payload_size};
 
   // SIB1 periodicity in slots.
   const unsigned sib1_period_slots = SIB1_PERIODICITY * t_bench.sl_tx.nof_slots_per_subframe();
@@ -338,7 +338,7 @@ void test_sib1_scheduler(subcarrier_spacing                         scs_common,
   const size_t test_length_slots = 1000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
     // Run SIB1 scheduler.
-    sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+    sib1_sched.run_slot(t_bench.res_grid[0]);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
@@ -380,7 +380,7 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
   // Instantiate the sib_test_bench and the SIB1 scheduler.
   sib_test_bench t_bench{
       subcarrier_spacing::kHz15, 9U, 0b10000000, 20, srsran::duplex_mode::FDD, sib1_rtx_period, ssb_period};
-  sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg.sib1_payload_size};
 
   // Determine the expected SIB1 retx periodicity.
   const unsigned expected_sib1_period_ms =
@@ -401,7 +401,7 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
   const size_t test_length_slots = 10000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
     // Run SIB1 scheduler.
-    sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+    sib1_sched.run_slot(t_bench.res_grid[0]);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
@@ -444,7 +444,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
 {
   // Instantiate the sib_test_bench and the SIB1 scheduler.
   sib_test_bench t_bench{freq_arfcn, offset_to_point_A, k_ssb, ssb_bitmap, scs, pdcch_config_sib1, carrier_bw_mhz};
-  sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg.sib1_payload_size};
   ssb_scheduler  ssb_sched{t_bench.cfg};
 
   // Run the test for 10000 slots.
@@ -460,7 +460,7 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
     ssb_sched.schedule_ssb(t_bench.get_slot_res_grid());
 
     // Run SIB1 scheduler.
-    sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+    sib1_sched.run_slot(t_bench.res_grid[0]);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
 
@@ -702,7 +702,7 @@ protected:
 
     sib_test_bench t_bench{msg, sib1_rtx_period};
 
-    sib1_scheduler sib1_sched{t_bench.si_cfg, t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+    sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg.sib1_payload_size};
 
     // Determine the expected SIB1 retx periodicity.
     const unsigned expected_sib1_period_ms =
@@ -724,7 +724,7 @@ protected:
     const size_t test_length_slots = 10000;
     for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
       // Run SIB1 scheduler.
-      sib1_sched.run_slot(t_bench.res_grid, t_bench.sl_tx);
+      sib1_sched.run_slot(t_bench.res_grid[0]);
 
       auto& res_slot_grid = t_bench.get_slot_res_grid();
 

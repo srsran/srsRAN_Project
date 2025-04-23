@@ -34,9 +34,11 @@ public:
     return {};
   }
 
-  pucch_processor_result process(const resource_grid_reader& grid, const format1_configuration& config) override
+  const pucch_format1_map<pucch_processor_result>& process(const resource_grid_reader&        grid,
+                                                           const format1_batch_configuration& config) override
   {
-    return {};
+    static pucch_format1_map<pucch_processor_result> result;
+    return result;
   }
 
   pucch_processor_result process(const resource_grid_reader& grid, const format2_configuration& config) override

@@ -31,14 +31,10 @@ void scheduler_time_rr::compute_ue_dl_priorities(slot_point               pdcch_
                                                  slot_point               pdsch_slot,
                                                  span<ue_newtx_candidate> ue_candidates)
 {
-  // We perform round-robin by assigning priorities based on the distance between each UE index and the next UE index
-  // to be allocated. The distance is computed as -((MAX_NOF_DU_UES + ue_index - next_ue_index) % MAX_NOF_DU_UES). That
-  // means that if ue_index==next_ue_index, it has the highest priority of 0, and if ue_index==next_ue_index-1, the UE
-  // has the lowest priority of -(MAX_NOF_DU_UES - 1). We avoid the mod operation.
+  // We perform round-robin by assigning priorities based on the difference between the current slot and the last slot
+  // the UE has been allocated.
   for (ue_newtx_candidate& candidate : ue_candidates) {
-    int index_diff     = candidate.ue->ue_index() - next_dl_ue_index;
-    index_diff         = (index_diff < 0) ? (MAX_NOF_DU_UES + index_diff) : index_diff;
-    candidate.priority = static_cast<double>(-index_diff);
+    candidate.priority = dl_alloc_count - ue_last_dl_alloc_count[candidate.ue->ue_index()];
   }
 }
 
@@ -48,9 +44,7 @@ void scheduler_time_rr::compute_ue_ul_priorities(slot_point               pdcch_
 {
   // \ref compute_ue_dl_priorities
   for (ue_newtx_candidate& candidate : ue_candidates) {
-    int index_diff     = candidate.ue->ue_index() - next_ul_ue_index;
-    index_diff         = (index_diff < 0) ? (MAX_NOF_DU_UES + index_diff) : index_diff;
-    candidate.priority = static_cast<double>(-index_diff);
+    candidate.priority = ul_alloc_count - ue_last_ul_alloc_count[candidate.ue->ue_index()];
   }
 }
 
@@ -60,12 +54,11 @@ void scheduler_time_rr::save_dl_newtx_grants(span<const dl_msg_alloc> dl_grants)
     return;
   }
 
-  // Mark the UE after the second last allocation to be the first UE to get allocated in the following slot. For
-  // example, if {1,...,M,N} UEs are allocated, then the next UE should be M+1. We do this because the last UE might
-  // have been allocated with a smaller grant size and we want to give it a chance to get a bigger grant size in the
-  // next slot.
-  auto& prev_full_grant_ue = dl_grants.size() > 1 ? dl_grants[dl_grants.size() - 2] : dl_grants[0];
-  next_dl_ue_index         = to_du_ue_index(prev_full_grant_ue.context.ue_index + 1);
+  // Mark the count for the allocated UEs.
+  for (const auto& grant : dl_grants) {
+    ue_last_dl_alloc_count[grant.context.ue_index] = dl_alloc_count;
+  }
+  ++dl_alloc_count;
 }
 
 void scheduler_time_rr::save_ul_newtx_grants(span<const ul_sched_info> ul_grants)
@@ -73,7 +66,10 @@ void scheduler_time_rr::save_ul_newtx_grants(span<const ul_sched_info> ul_grants
   if (ul_grants.empty()) {
     return;
   }
-  // \ref save_dl_newtx_grants
-  auto& prev_full_grant_ue = ul_grants.size() > 1 ? ul_grants[ul_grants.size() - 2] : ul_grants[0];
-  next_ul_ue_index         = to_du_ue_index(prev_full_grant_ue.context.ue_index + 1);
+
+  // Mark the count for the allocated UEs.
+  for (const auto& grant : ul_grants) {
+    ue_last_ul_alloc_count[grant.context.ue_index] = ul_alloc_count;
+  }
+  ++ul_alloc_count;
 }

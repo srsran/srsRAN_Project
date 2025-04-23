@@ -140,16 +140,16 @@ TEST(PrachConfiguration, Fr1Paired)
     // Assert subframe number.
     static const std::set<unsigned> config_subframe_4_9 = {87, 89, 91, 92, 94, 100, 198, 200, 202, 204, 205, 214};
     static const std::set<unsigned> config_subframe_4   = {
-          88,
-          90,
-          93,
-          96,
-          98,
-          199,
-          201,
-          203,
-          207,
-          210,
+        88,
+        90,
+        93,
+        96,
+        98,
+        199,
+        201,
+        203,
+        207,
+        210,
     };
     static const std::set<unsigned> config_subframe_1     = {95, 101, 206, 209};
     static const std::set<unsigned> config_subframe_7     = {97, 102, 208, 211};

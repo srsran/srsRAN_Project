@@ -33,6 +33,7 @@
 #include "srsran/support/executors/task_worker_pool.h"
 #include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/math/math_utils.h"
+#include "srsran/support/rtsan.h"
 #include "srsran/support/srsran_test.h"
 #ifdef HWACC_PUSCH_ENABLED
 #include "srsran/hal/dpdk/bbdev/bbdev_acc.h"
@@ -111,6 +112,9 @@ benchmark_modes to_benchmark_mode(const char* string)
 // Maximum number of threads given the CPU hardware.
 static const unsigned max_nof_threads = std::thread::hardware_concurrency();
 
+// Executor queue type.
+static constexpr concurrent_queue_policy queue_policy = concurrent_queue_policy::lockfree_mpmc;
+
 // General test configuration parameters.
 static uint64_t                           nof_repetitions             = 10;
 static uint64_t                           nof_threads                 = max_nof_threads;
@@ -132,10 +136,10 @@ static constexpr port_channel_estimator_fd_smoothing_strategy fd_smoothing_strat
     port_channel_estimator_fd_smoothing_strategy::filter;
 static constexpr port_channel_estimator_td_interpolation_strategy td_interpolation_strategy =
     port_channel_estimator_td_interpolation_strategy::interpolate;
-static constexpr bool                                                                    compensate_cfo = true;
-static unsigned                                                                          nof_pusch_decoder_threads = 0;
-static std::unique_ptr<task_worker_pool<concurrent_queue_policy::locking_mpmc>>          worker_pool = nullptr;
-static std::unique_ptr<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>> executor    = nullptr;
+static constexpr bool                                           compensate_cfo            = true;
+static unsigned                                                 nof_pusch_decoder_threads = 0;
+static std::unique_ptr<task_worker_pool<queue_policy>>          worker_pool               = nullptr;
+static std::unique_ptr<task_worker_pool_executor<queue_policy>> executor                  = nullptr;
 
 // Thread shared variables.
 static std::atomic<bool>     thread_quit   = {};
@@ -597,9 +601,8 @@ static std::shared_ptr<pusch_processor_factory> create_pusch_processor_factory()
   // Create worker pool and exectuors for concurrent PUSCH processor implementations.
   // Note that currently hardware-acceleration is limited to "generic" processor types.
   if (nof_pusch_decoder_threads != 0) {
-    worker_pool = std::make_unique<task_worker_pool<concurrent_queue_policy::locking_mpmc>>(
-        "decoder", nof_pusch_decoder_threads, 1024);
-    executor = std::make_unique<task_worker_pool_executor<concurrent_queue_policy::locking_mpmc>>(*worker_pool);
+    worker_pool = std::make_unique<task_worker_pool<queue_policy>>("decoder", nof_pusch_decoder_threads, 1024);
+    executor    = std::make_unique<task_worker_pool_executor<queue_policy>>(*worker_pool);
   }
 
   // Create PUSCH decoder factory.
@@ -717,7 +720,7 @@ static void thread_process(pusch_processor&              proc,
     unique_rx_buffer rm_buffer = buffer_pool->get_pool().reserve(config.slot, buffer_id, nof_codeblocks, true);
 
     // Process PDU.
-    proc.process(data, std::move(rm_buffer), result_notifier, grid, config);
+    [&]() SRSRAN_RTSAN_NONBLOCKING { proc.process(data, std::move(rm_buffer), result_notifier, grid, config); }();
 
     // Wait for finish the task.
     result_notifier.wait_for_completion();
@@ -808,7 +811,7 @@ int main(int argc, char** argv)
   std::generate(random_re.begin(), random_re.end(), [&rgen, &c_normal_dist]() { return c_normal_dist(rgen); });
 
   // Generate a RE mask and set all elements to true.
-  bounded_bitset<NRE* MAX_RB> re_mask = ~bounded_bitset<NRE * MAX_RB>(grid_nof_subcs);
+  bounded_bitset<NRE * MAX_RB> re_mask = ~bounded_bitset<NRE * MAX_RB>(grid_nof_subcs);
 
   // Fill the grid with the random RE.
   span<const cf_t> re_view(random_re);

@@ -24,6 +24,7 @@
 #include "mac_dl_metric_handler.h"
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/mac/mac_cell_result.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/pcap/dlt_pcap.h"
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/pdsch/pdsch_constants.h"
@@ -65,13 +66,14 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
            MAX_K0_DELAY,
            get_nof_slots_per_subframe(cell_cfg.scs_common) * NOF_SFNS * NOF_SUBFRAMES_PER_FRAME),
   ssb_helper(cell_cfg_req_),
-  sib_assembler(cell_cfg_req_.bcch_dl_sch_payloads),
+  sib_assembler(cell_cfg_req_.sys_info),
   rar_assembler(pdu_pool),
   dlsch_assembler(ue_mng, dl_harq_buffers),
   paging_assembler(pdu_pool),
   sched(sched_),
   metrics(cell_metrics),
-  pcap(pcap_)
+  pcap(pcap_),
+  slot_time_mapper(to_numerology_value(cell_cfg_req_.scs_common))
 {
 }
 
@@ -82,12 +84,22 @@ async_task<void> mac_cell_processor::start()
       ctrl_exec,
       timers,
       [this]() {
+        if (state == cell_state::active) {
+          // No-op.
+          return;
+        }
+
+        // Notify scheduler about activation.
+        sched.start_cell(cell_cfg.cell_index);
+
         // set cell as active.
         state = cell_state::active;
+
+        logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
       },
-      [this, cell_index = cell_cfg.cell_index]() {
+      [this]() {
         logger.warning("cell={}: Postponed cell start operation. Cause: Task queue is full",
-                       fmt::underlying(cell_index));
+                       fmt::underlying(cell_cfg.cell_index));
       });
 }
 
@@ -105,6 +117,9 @@ async_task<void> mac_cell_processor::stop()
         // Set cell state as inactive to stop answering to slot indications.
         state = cell_state::inactive;
 
+        // Notify scheduler about activation.
+        sched.stop_cell(cell_cfg.cell_index);
+
         logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
       },
       [this, cell_index = cell_cfg.cell_index]() {
@@ -119,21 +134,18 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
                           coro_context<async_task<mac_cell_reconfig_response>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
-    if (not request.new_sib1_buffer.empty()) {
+    if (request.new_sys_info.has_value()) {
       // Change to respective DL cell executor context.
       CORO_AWAIT(execute_on_blocking(cell_exec, timers));
 
-      {
-        // SIB1 has been updated.
+      if (request.new_sys_info.has_value()) {
+        // Forward new SIB1/SI message PDUs to SIB assembler and update version.
+        sib_assembler.handle_si_change_request(*request.new_sys_info);
 
-        // Forward new SIB1 PDU to SIB assembler.
-        units::bytes payload_size{(unsigned)request.new_sib1_buffer.length()};
-        unsigned     version_id = sib_assembler.handle_new_sib1_payload(request.new_sib1_buffer.copy());
+        // Notify scheduler of SIB1/SI message scheduling update.
+        sched.handle_si_change_indication(request.new_sys_info->si_sched_cfg);
 
-        // Notify scheduler of SIB1 update.
-        sched.handle_sib1_update_indication(cell_cfg.cell_index, version_id, payload_size);
-
-        resp.sib1_updated = true;
+        resp.si_updated = true;
       }
 
       // Change back to CTRL executor context.
@@ -149,15 +161,16 @@ async_task<mac_cell_reconfig_response> mac_cell_processor::reconfigure(const mac
   });
 }
 
-void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
+void mac_cell_processor::handle_slot_indication(const mac_cell_timing_context& context)
 {
+  slot_time_mapper.handle_slot_indication(context);
   trace_point slot_ind_enqueue_tp = metric_clock::now();
   // Change execution context to slot indication executor.
-  if (not slot_exec.execute([this, sl_tx, slot_ind_enqueue_tp]() {
+  if (not slot_exec.execute([this, context, slot_ind_enqueue_tp]() {
         l2_tracer << trace_event{"mac_slot_ind_enqueue", slot_ind_enqueue_tp};
-        handle_slot_indication_impl(sl_tx, slot_ind_enqueue_tp);
+        handle_slot_indication_impl(context.sl_tx, slot_ind_enqueue_tp);
       })) {
-    logger.warning("Skipped slot indication={}. Cause: DL task queue is full.", sl_tx);
+    logger.warning("Skipped slot indication={}. Cause: DL task queue is full.", context.sl_tx);
   }
 }
 
@@ -265,11 +278,6 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
 
   // Cleans old MAC DL PDU buffers.
   pdu_pool.tick(sl_tx.to_uint());
-
-  if (state != cell_state::active) {
-    phy_cell.on_cell_results_completion(sl_tx);
-    return;
-  }
 
   // Generate DL scheduling result for provided slot and cell.
   const sched_result& sl_res = sched.slot_indication(sl_tx, cell_cfg.cell_index);
@@ -421,14 +429,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   // Assemble scheduled BCCH-DL-SCH message containing SIBs' payload.
   for (const sib_information& sib_info : dl_res.bc.sibs) {
     srsran_assert(not data_res.si_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
-    const units::bytes  tbs(sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
-    span<const uint8_t> payload;
-    if (sib_info.si_indicator == sib_information::sib1) {
-      payload = sib_assembler.encode_sib1_pdu(0, tbs);
-    } else {
-      payload = sib_assembler.encode_si_message_pdu(sib_info.si_msg_index.value(), 0, tbs);
-    }
-    data_res.si_pdus.emplace_back(0, shared_transport_block(payload));
+    data_res.si_pdus.emplace_back(0, shared_transport_block(sib_assembler.encode_si_pdu(sl_tx, sib_info)));
   }
 
   // Assemble scheduled RARs' subheaders and payloads.
@@ -503,7 +504,7 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
     // TODO: replace sib1_pcap_dumped flag with a vector or booleans that includes other SIBs.
     if (dl_alloc.si_indicator == sib_information::sib1 and not sib1_pcap_dumped) {
       const mac_dl_data_result::dl_pdu& sib1_pdu = dl_res.si_pdus[i];
-      srsran::mac_nr_context_info       context  = {};
+      mac_nr_context_info               context  = {};
       context.radioType = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
       context.direction = PCAP_DIRECTION_DOWNLINK;
       context.rntiType  = PCAP_SI_RNTI;
@@ -519,7 +520,7 @@ void mac_cell_processor::write_tx_pdu_pcap(const slot_point&         sl_tx,
   for (unsigned i = 0, e = dl_res.rar_pdus.size(); i != e; ++i) {
     const mac_dl_data_result::dl_pdu& rar_pdu  = dl_res.rar_pdus[i];
     const rar_information&            dl_alloc = sl_res.dl.rar_grants[i];
-    srsran::mac_nr_context_info       context  = {};
+    mac_nr_context_info               context  = {};
     context.radioType           = cell_cfg.sched_req.tdd_ul_dl_cfg_common.has_value() ? PCAP_TDD_RADIO : PCAP_FDD_RADIO;
     context.direction           = PCAP_DIRECTION_DOWNLINK;
     context.rntiType            = PCAP_RA_RNTI;

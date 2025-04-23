@@ -188,7 +188,7 @@ TEST_F(UplinkProcessorFixture, prach_workflow)
   ul_processor->get_pdu_slot_repository(slot);
 
   prach_buffer_spy buffer;
-  ul_processor->get_slot_processor().process_prach(buffer, {});
+  ul_processor->get_slot_processor(slot).process_prach(buffer, {});
 
   // Check PRACH detection has been enqueued and the detector was not called.
   ASSERT_TRUE(prach_executor.has_pending_tasks());
@@ -204,8 +204,8 @@ TEST_F(UplinkProcessorFixture, prach_workflow)
 
 TEST_F(UplinkProcessorFixture, pusch_normal_workflow)
 {
+  slot_point slot;
   {
-    slot_point                        slot;
     unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
     repository->add_pusch_pdu(pusch_pdu);
   }
@@ -215,7 +215,7 @@ TEST_F(UplinkProcessorFixture, pusch_normal_workflow)
   shared_resource_grid shared_grid = grid.get_grid();
 
   // Notify reception of the previous reception symbol.
-  ul_processor->get_slot_processor().handle_rx_symbol(shared_grid, end_symbol_index - 1);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(shared_grid, end_symbol_index - 1);
 
   // Check that nothing happened.
   ASSERT_FALSE(pusch_executor.has_pending_tasks());
@@ -224,7 +224,88 @@ TEST_F(UplinkProcessorFixture, pusch_normal_workflow)
   ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
 
   // Notify reception of receive symbol.
-  ul_processor->get_slot_processor().handle_rx_symbol(shared_grid, end_symbol_index);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(shared_grid, end_symbol_index);
+
+  // Check PUSCH processing has been enqueued and the processor was not called.
+  ASSERT_TRUE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
+
+  // Execute tasks.
+  pusch_executor.run_pending_tasks();
+
+  // Check the processor has been called and the result notified.
+  ASSERT_TRUE(pusch_spy->has_process_method_been_called());
+  ASSERT_TRUE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_TRUE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, rx_symbol_bad_order)
+{
+  slot_point slot;
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+  }
+
+  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+
+  shared_resource_grid shared_grid = grid.get_grid();
+
+  // Notify reception of the previous reception symbol.
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(shared_grid, end_symbol_index - 1);
+
+  // Notify reception of the symbol before the previous.
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(shared_grid, end_symbol_index - 2);
+
+  // Check that nothing happened.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(buffer_pool_spy.is_locked());
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
+
+  // Notify reception of receive symbol.
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(shared_grid, end_symbol_index);
+
+  // Check PUSCH processing has been enqueued and the processor was not called.
+  ASSERT_TRUE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
+
+  // Execute tasks.
+  pusch_executor.run_pending_tasks();
+
+  // Check the processor has been called and the result notified.
+  ASSERT_TRUE(pusch_spy->has_process_method_been_called());
+  ASSERT_TRUE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_TRUE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, pusch_wrong_slot)
+{
+  slot_point slot;
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+  }
+
+  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+
+  shared_resource_grid shared_grid = grid.get_grid();
+
+  // Notify reception of receive symbol for the wrong slot.
+  ul_processor->get_slot_processor(slot - 1).handle_rx_symbol(shared_grid, end_symbol_index);
+
+  // Check PUSCH processing has NOT been enqueued and the processor was not called.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
+
+  // Notify reception of receive symbol for the right slot.
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(shared_grid, end_symbol_index);
 
   // Check PUSCH processing has been enqueued and the processor was not called.
   ASSERT_TRUE(pusch_executor.has_pending_tasks());
@@ -247,8 +328,8 @@ TEST_F(UplinkProcessorFixture, pusch_exceed_tb_size)
   uplink_pdu_slot_repository::pusch_pdu pusch_pdu_large = pusch_pdu;
   pusch_pdu_large.tb_size                               = units::bytes(2 * max_nof_layers * 156 * max_nof_prb);
 
+  slot_point slot;
   {
-    slot_point                        slot;
     unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
     repository->add_pusch_pdu(pusch_pdu_large);
   }
@@ -258,7 +339,7 @@ TEST_F(UplinkProcessorFixture, pusch_exceed_tb_size)
   shared_resource_grid shared_grid = grid.get_grid();
 
   // Notify reception of receive symbol.
-  ul_processor->get_slot_processor().handle_rx_symbol(shared_grid, end_symbol_index);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(shared_grid, end_symbol_index);
 
   // Execute tasks.
   pusch_executor.run_pending_tasks();
@@ -271,8 +352,8 @@ TEST_F(UplinkProcessorFixture, pusch_exceed_tb_size)
 
 TEST_F(UplinkProcessorFixture, pusch_locked_rx_buffer)
 {
+  slot_point slot;
   {
-    slot_point                        slot;
     unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
     repository->add_pusch_pdu(pusch_pdu);
   }
@@ -285,7 +366,7 @@ TEST_F(UplinkProcessorFixture, pusch_locked_rx_buffer)
   ASSERT_TRUE(buffer_pool_spy.try_lock());
 
   // Notify reception of receive symbol.
-  ul_processor->get_slot_processor().handle_rx_symbol(shared_grid, end_symbol_index);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(shared_grid, end_symbol_index);
 
   // Check PUSCH processing has been enqueued and the processor was not called.
   ASSERT_FALSE(pusch_executor.has_pending_tasks());
@@ -296,8 +377,8 @@ TEST_F(UplinkProcessorFixture, pusch_locked_rx_buffer)
 
 TEST_F(UplinkProcessorFixture, pusch_fail_executor)
 {
+  slot_point slot;
   {
-    slot_point                        slot;
     unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
     repository->add_pusch_pdu(pusch_pdu);
   }
@@ -310,13 +391,197 @@ TEST_F(UplinkProcessorFixture, pusch_fail_executor)
   shared_resource_grid shared_grid = grid.get_grid();
 
   // Notify reception of receive symbol.
-  ul_processor->get_slot_processor().handle_rx_symbol(shared_grid, end_symbol_index);
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(shared_grid, end_symbol_index);
 
   // Check PUSCH processing has been enqueued and the processor was not called.
   ASSERT_FALSE(pusch_executor.has_pending_tasks());
   ASSERT_FALSE(pusch_spy->has_process_method_been_called());
   ASSERT_TRUE(results_notifier.has_pusch_data_result_been_notified());
   ASSERT_TRUE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, pusch_discard_slot)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Add PDU to the repository.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+  }
+
+  // Discard.
+  ul_processor->get_slot_processor(slot).discard_slot();
+
+  // Assert results.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_TRUE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_TRUE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, pusch_execute_after_stop)
+{
+  slot_point slot;
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+  }
+
+  unsigned end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+
+  shared_resource_grid shared_grid = grid.get_grid();
+
+  // Get processor before stopping. Otherwise, the processor will not be available.
+  uplink_slot_processor& processor = ul_processor->get_slot_processor(slot);
+
+  // Stop processor.
+  ul_processor->stop();
+
+  // Notify reception of receive symbol.
+  processor.handle_rx_symbol(shared_grid, end_symbol_index);
+
+  // Check PUSCH processing has been enqueued and the processor was not called.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, reserve_slot_twice_without_request)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Get the repository for the first time - it transitions to idle as there is no request.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    ASSERT_TRUE(repository.is_valid());
+  }
+
+  // Get the reporsitory for the second time - it shall return a valid repository.
+  unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+  ASSERT_TRUE(repository.is_valid());
+}
+
+TEST_F(UplinkProcessorFixture, reserve_slot_twice_with_request)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Get the repository for the first time - it has a pending PDU.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+    ASSERT_TRUE(repository.is_valid());
+  }
+
+  // Get the reporsitory for the second time - it shall return an invalid repository.
+  unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+  ASSERT_FALSE(repository.is_valid());
+}
+
+TEST_F(UplinkProcessorFixture, stop_no_pending_task)
+{
+  // Direct stop.
+  ul_processor->stop();
+
+  // Assert results.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, stop_accepting_tasks)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Add PDU to the repository.
+  unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+
+  // Create asynchronous task - it will block until the repository is released.
+  std::atomic<bool> stop_thread_running = false;
+  std::thread       stop_thread([this, &stop_thread_running]() {
+    stop_thread_running = true;
+    ul_processor->stop();
+  });
+
+  // Wait for the thread to start - facilitates that the stop method blocks until the state is released.
+  while (!stop_thread_running.load()) {
+    std::this_thread::sleep_for(std::chrono::microseconds(10));
+  }
+
+  // Release repository - the stop method shall return.
+  repository.release();
+
+  // Synchronize stopping thread.
+  stop_thread.join();
+
+  // Assert execution expectations.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
+}
+
+TEST_F(UplinkProcessorFixture, stop_pending_task)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Add PDU to the repository.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+  }
+
+  // Notify reception of receive symbol - an asynchronous task is expected.
+  unsigned             end_symbol_index = pusch_pdu.pdu.start_symbol_index + pusch_pdu.pdu.nof_symbols - 1;
+  shared_resource_grid shared_grid      = grid.get_grid();
+  ul_processor->get_slot_processor(slot).handle_rx_symbol(shared_grid, end_symbol_index);
+  ASSERT_TRUE(pusch_executor.has_pending_tasks());
+
+  // Create asynchronous task - it will block until all tasks are completed.
+  std::thread stop_thread([this]() { ul_processor->stop(); });
+
+  // Execute PUSCH asynchronous task.
+  pusch_executor.try_run_next();
+
+  // Assert execution expectations.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_TRUE(pusch_spy->has_process_method_been_called());
+  ASSERT_TRUE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_TRUE(results_notifier.has_pusch_uci_result_been_notified());
+
+  // Synchronize stopping thread.
+  stop_thread.join();
+}
+
+TEST_F(UplinkProcessorFixture, pusch_discard_slot_after_stop)
+{
+  // Contexted slot.
+  slot_point slot = pusch_pdu.pdu.slot;
+
+  // Add PDU to the repository.
+  {
+    unique_uplink_pdu_slot_repository repository = ul_processor->get_pdu_slot_repository(slot);
+    repository->add_pusch_pdu(pusch_pdu);
+  }
+
+  // Stop.
+  ul_processor->stop();
+
+  // Discard.
+  ul_processor->get_slot_processor(slot).discard_slot();
+
+  // Assert results.
+  ASSERT_FALSE(pusch_executor.has_pending_tasks());
+  ASSERT_FALSE(pusch_spy->has_process_method_been_called());
+  ASSERT_FALSE(results_notifier.has_pusch_data_result_been_notified());
+  ASSERT_FALSE(results_notifier.has_pusch_uci_result_been_notified());
 }
 
 } // namespace

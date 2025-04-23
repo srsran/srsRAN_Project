@@ -104,18 +104,15 @@ struct base_ie_field : public IEItem {
 
 // ProtocolIE-Field{LAYER-PROTOCOL-IES : IEsSetParam} ::= SEQUENCE{{IEsSetParam}}
 template <class IEsSetParam>
-struct protocol_ie_field_s : public detail::base_ie_field<detail::ie_field_value_item<IEsSetParam>> {
-};
+struct protocol_ie_field_s : public detail::base_ie_field<detail::ie_field_value_item<IEsSetParam>> {};
 
 // ProtocolIE-SingleContainer{LAYER-PROTOCOL-IES : IEsSetParam} ::= SEQUENCE{{IEsSetParam}}
 template <class ies_set_paramT_>
-struct protocol_ie_single_container_s : public protocol_ie_field_s<ies_set_paramT_> {
-};
+struct protocol_ie_single_container_s : public protocol_ie_field_s<ies_set_paramT_> {};
 
 // ProtocolExtensionField{LAYER-PROTOCOL-EXTENSION : ExtensionSetParam} ::= SEQUENCE{{LAYER-PROTOCOL-EXTENSION}}
 template <class ExtensionSetParam>
-struct protocol_ext_field_s : public detail::base_ie_field<detail::ie_field_ext_item<ExtensionSetParam>> {
-};
+struct protocol_ext_field_s : public detail::base_ie_field<detail::ie_field_ext_item<ExtensionSetParam>> {};
 
 template <typename IEValue>
 SRSASN_CODE pack_ie_container_item(bit_ref& bref, uint32_t id, crit_e crit, const IEValue& value)

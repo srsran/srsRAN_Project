@@ -21,7 +21,6 @@
  */
 
 #include "pdcp_entity_tx.h"
-
 #include "../security/security_engine_impl.h"
 #include "srsran/instrumentation/traces/up_traces.h"
 #include "srsran/support/bit_encoding.h"
@@ -501,7 +500,7 @@ void pdcp_entity_tx::configure_security(security::sec_128_as_config sec_cfg,
     logger.log_info("128 K_int: {}", sec_cfg.k_128_int.value());
   }
   logger.log_info("128 K_enc: {}", sec_cfg.k_128_enc);
-};
+}
 
 /*
  * Status report and data recovery
@@ -835,8 +834,11 @@ void pdcp_entity_tx::stop_discard_timer(uint32_t highest_count)
     logger.log_debug("Cannot stop discard timers. No discard timer configured. highest_count={}", highest_count);
     return;
   }
+
+  // Transmission or delivery notification arrived for a COUNT that is outside of the TX_WINDOW.
+  // This can happen if the notification arrived after the discard timer has expired.
   if (highest_count < st.tx_next_ack || highest_count >= st.tx_next) {
-    logger.log_warning("Cannot stop discard timers. highest_count={} is outside tx_window. {}", highest_count, st);
+    logger.log_debug("Cannot stop discard timers. highest_count={} is outside tx_window. {}", highest_count, st);
     return;
   }
   logger.log_debug("Stopping discard timers. highest_count={}", highest_count);
@@ -915,6 +917,10 @@ void pdcp_entity_tx::discard_pdu(uint32_t count)
 // Discard Timer Callback (discardTimer)
 void pdcp_entity_tx::discard_callback()
 {
+  if (stopped) {
+    logger.log_debug("Discard timer expired after bearer was stopped. st={}", st);
+    return;
+  }
   logger.log_debug("Discard timer expired. st={}", st);
 
   // Add discard to metrics.

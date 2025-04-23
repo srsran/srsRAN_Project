@@ -32,6 +32,7 @@
 #else // __clang__
 #pragma GCC diagnostic ignored "-Wsuggest-override"
 #endif // __clang__
+#pragma GCC diagnostic ignored "-Wextra-semi"
 #include <uhd/error.h>
 #include <uhd/exception.hpp>
 #pragma GCC diagnostic pop

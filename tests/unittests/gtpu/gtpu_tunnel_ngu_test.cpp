@@ -26,6 +26,8 @@
 #include "srsran/gtpu/gtpu_tunnel_ngu_factory.h"
 #include "srsran/gtpu/gtpu_tunnel_ngu_tx.h"
 #include "srsran/support/executors/manual_task_worker.h"
+#include "srsran/support/rate_limiting/token_bucket.h"
+#include "srsran/support/rate_limiting/token_bucket_config.h"
 #include <gtest/gtest.h>
 #include <sys/socket.h>
 
@@ -121,9 +123,16 @@ protected:
 TEST_F(gtpu_tunnel_ngu_test, entity_creation)
 {
   null_dlt_pcap dummy_pcap;
+
+  uint64_t            ue_ambr = 1000000000;
+  token_bucket_config ue_ambr_cfg =
+      generate_token_bucket_config(ue_ambr, ue_ambr, std::chrono::milliseconds(1), timers);
+  token_bucket ue_ambr_limiter(ue_ambr_cfg);
+
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
+  msg.cfg.rx.ue_ambr_limiter           = &ue_ambr_limiter;
   msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.gtpu_pcap                        = &dummy_pcap;
@@ -133,15 +142,22 @@ TEST_F(gtpu_tunnel_ngu_test, entity_creation)
   gtpu                                 = create_gtpu_tunnel_ngu(msg);
 
   ASSERT_NE(gtpu, nullptr);
-};
+}
 
 /// \brief Test correct reception of GTP-U packet with PDU Session Container
 TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
 {
   null_dlt_pcap dummy_pcap;
+
+  uint64_t            ue_ambr = 1000000000;
+  token_bucket_config ue_ambr_cfg =
+      generate_token_bucket_config(ue_ambr, ue_ambr, std::chrono::milliseconds(1), timers);
+  token_bucket ue_ambr_limiter(ue_ambr_cfg);
+
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x2};
+  msg.cfg.rx.ue_ambr_limiter           = &ue_ambr_limiter;
   msg.cfg.tx.peer_teid                 = gtpu_teid_t{0xbc1e3be9};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.gtpu_pcap                        = &dummy_pcap;
@@ -161,15 +177,22 @@ TEST_F(gtpu_tunnel_ngu_test, rx_sdu)
   rx->handle_pdu(std::move(orig_vec), orig_addr);
   ASSERT_EQ(gtpu_extract_msg(std::move(dissected_pdu)), gtpu_rx.last_rx);
   ASSERT_EQ(uint_to_qos_flow_id(1), gtpu_rx.last_rx_qos_flow_id);
-};
+}
 
 /// \brief Test correct transmission of GTP-U packet
 TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
 {
   null_dlt_pcap dummy_pcap;
+
+  uint64_t            ue_ambr = 1000000000;
+  token_bucket_config ue_ambr_cfg =
+      generate_token_bucket_config(ue_ambr, ue_ambr, std::chrono::milliseconds(1), timers);
+  token_bucket ue_ambr_limiter(ue_ambr_cfg);
+
   // init GTP-U entity
   gtpu_tunnel_ngu_creation_message msg = {};
   msg.cfg.rx.local_teid                = gtpu_teid_t{0x1};
+  msg.cfg.rx.ue_ambr_limiter           = &ue_ambr_limiter;
   msg.cfg.tx.peer_teid                 = gtpu_teid_t{0x2};
   msg.cfg.tx.peer_addr                 = "127.0.0.1";
   msg.gtpu_pcap                        = &dummy_pcap;
@@ -184,7 +207,7 @@ TEST_F(gtpu_tunnel_ngu_test, tx_pdu)
   gtpu_tunnel_ngu_tx_lower_layer_interface* tx = gtpu->get_tx_lower_layer_interface();
   tx->handle_sdu(std::move(sdu), uint_to_qos_flow_id(1));
   ASSERT_EQ(pdu, gtpu_tx.last_tx);
-};
+}
 
 int main(int argc, char** argv)
 {

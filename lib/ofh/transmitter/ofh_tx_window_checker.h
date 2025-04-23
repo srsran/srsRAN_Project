@@ -49,7 +49,7 @@ public:
   }
 
   /// Returns true if the given slot is already late compared to the current OTA time, otherwise false.
-  bool is_late(slot_point slot) const
+  bool is_late(slot_point slot)
   {
     slot_symbol_point ota_symbol_point(
         slot.numerology(), count_val.load(std::memory_order::memory_order_relaxed), nof_symbols);
@@ -62,17 +62,22 @@ public:
       return false;
     }
 
-    logger.debug("Sector#{}: a late upper-PHY downlink request arrived to OFH in slot '{}_{}' with current "
-                 "ota_slot='{}_{}', OFH processing time requires a minimum of '{}' symbols",
-                 sector_id,
-                 slot,
-                 0,
-                 ota_symbol_point.get_slot(),
-                 ota_symbol_point.get_symbol_index(),
-                 advance_time_in_symbols);
+    if (SRSRAN_UNLIKELY(logger.debug.enabled())) {
+      logger.debug("Sector#{}: a late upper-PHY downlink request arrived to OFH in slot '{}_{}' with current "
+                   "ota_slot='{}_{}', OFH processing time requires a minimum of '{}' symbols",
+                   sector_id,
+                   slot,
+                   0,
+                   ota_symbol_point.get_slot(),
+                   ota_symbol_point.get_symbol_index(),
+                   advance_time_in_symbols);
+    }
 
+    late_counter.fetch_add(1, std::memory_order_relaxed);
     return true;
   }
+
+  uint32_t get_nof_lates_and_reset() { return late_counter.exchange(0, std::memory_order_relaxed); }
 
 private:
   srslog::basic_logger& logger;
@@ -80,6 +85,7 @@ private:
   const uint32_t        advance_time_in_symbols;
   const uint32_t        nof_symbols;
   std::atomic<uint32_t> count_val;
+  std::atomic<uint32_t> late_counter{0};
 };
 
 } // namespace ofh

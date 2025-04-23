@@ -89,20 +89,15 @@ std::ostream& operator<<(std::ostream& os, const test_case_t& test_case)
 } // namespace srsran
 
 template <>
-struct fmt::formatter<srsran::dmrs_pucch_estimator::common_configuration> : ostream_formatter {
-};
+struct fmt::formatter<srsran::dmrs_pucch_estimator::common_configuration> : ostream_formatter {};
 template <>
-struct fmt::formatter<srsran::dmrs_pucch_estimator::format1_configuration> : ostream_formatter {
-};
+struct fmt::formatter<srsran::dmrs_pucch_estimator::format1_configuration> : ostream_formatter {};
 template <>
-struct fmt::formatter<srsran::dmrs_pucch_estimator::format2_configuration> : ostream_formatter {
-};
+struct fmt::formatter<srsran::dmrs_pucch_estimator::format2_configuration> : ostream_formatter {};
 template <>
-struct fmt::formatter<srsran::dmrs_pucch_estimator::format3_configuration> : ostream_formatter {
-};
+struct fmt::formatter<srsran::dmrs_pucch_estimator::format3_configuration> : ostream_formatter {};
 template <>
-struct fmt::formatter<srsran::dmrs_pucch_estimator::format4_configuration> : ostream_formatter {
-};
+struct fmt::formatter<srsran::dmrs_pucch_estimator::format4_configuration> : ostream_formatter {};
 
 namespace {
 

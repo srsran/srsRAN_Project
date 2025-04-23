@@ -69,8 +69,8 @@ dmrs_pucch_estimator_format2::generate_dmrs_pattern(const dmrs_pucch_estimator::
 
   if (config.second_hop_prb.has_value()) {
     // Set second hop PRB allocation.
-    mask.rb_mask2.resize(config.second_hop_prb.value() + config.nof_prb);
-    mask.rb_mask2.fill(config.second_hop_prb.value(), config.second_hop_prb.value() + config.nof_prb, true);
+    mask.rb_mask2.resize(*config.second_hop_prb + config.nof_prb);
+    mask.rb_mask2.fill(*config.second_hop_prb, *config.second_hop_prb + config.nof_prb, true);
 
     // Set the hopping symbol index, indicating the start of the second hop. Recall that PUCCH Format 2 occupies a
     // maximum of 2 OFDM symbols.
@@ -108,9 +108,8 @@ void dmrs_pucch_estimator_format2::estimate(channel_estimate&                   
   // For each symbol carrying DM-RS (up to 2 symbols maximum).
   for (unsigned i_symb = i_symb_start, i_dmrs_symb = 0; i_symb != i_symb_end; ++i_symb, ++i_dmrs_symb) {
     // Generate sequence.
-    unsigned prb_start = ((i_symb != i_symb_start) && (config.second_hop_prb.has_value()))
-                             ? config.second_hop_prb.value()
-                             : config.starting_prb;
+    unsigned prb_start = ((i_symb != i_symb_start) && (config.second_hop_prb.has_value())) ? *config.second_hop_prb
+                                                                                           : config.starting_prb;
     generate_sequence(temp_symbols.get_symbol(i_dmrs_symb, 0), i_symb, prb_start, config);
   }
 

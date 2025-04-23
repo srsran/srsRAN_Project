@@ -73,8 +73,8 @@ inline int8x16_t scale_s8(int8x16_t a, float sf, uint8_t max)
   static constexpr unsigned FLOAT2INT       = 1U << 8U;
   const int8x16_t           MAX_s8          = vdupq_n_s8(max);
   const int8x16_t           MIN_s8          = vdupq_n_s8(-max);
-  static const uint16x8_t   mask_even_bytes = vdupq_n_u16(0x00ff);
-  static const uint16x8_t   mask_odd_bytes  = vdupq_n_u16(0xff00);
+  const uint16x8_t          mask_even_bytes = vdupq_n_u16(0x00ff);
+  const uint16x8_t          mask_odd_bytes  = vdupq_n_u16(0xff00);
 
   // Scaling factor times FLOAT2INT. Note that the upper bound on sf implies
   // that (sf * FLOAT2INT) can be represented over 8 bits.

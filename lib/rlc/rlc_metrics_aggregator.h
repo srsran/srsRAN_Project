@@ -49,7 +49,7 @@ public:
   void push_rx_high_metrics(rlc_rx_metrics m_rx_high_);
 
   // \brief get metrics report period from the aggregator.
-  const timer_duration& get_metrics_period() const { return metrics_period; };
+  const timer_duration& get_metrics_period() const { return metrics_period; }
 
 private:
   // \brief build and push metrics report to the metrics notifier.

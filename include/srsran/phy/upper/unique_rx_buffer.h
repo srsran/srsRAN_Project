@@ -85,7 +85,7 @@ public:
   {
     ptr       = other.ptr;
     other.ptr = nullptr;
-  };
+  }
 
   /// Move assignment operator.
   unique_rx_buffer& operator=(unique_rx_buffer&& other) noexcept

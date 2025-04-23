@@ -22,10 +22,8 @@
 
 #pragma once
 
-#include "srsran/adt/static_vector.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/executors/task_worker.h"
 #include "srsran/support/executors/task_worker_pool.h"
 #include <array>
 

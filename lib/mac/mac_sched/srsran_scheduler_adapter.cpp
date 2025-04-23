@@ -72,6 +72,19 @@ void srsran_scheduler_adapter::add_cell(const mac_cell_creation_request& msg)
   sched_impl->handle_cell_configuration_request(msg.sched_req);
 }
 
+void srsran_scheduler_adapter::remove_cell(du_cell_index_t cell_index)
+{
+  if (not cell_handlers.contains(cell_index)) {
+    return;
+  }
+
+  // Request cell removal from scheduler.
+  sched_impl->handle_cell_removal_request(cell_index);
+
+  // Remove cell from cell handlers.
+  cell_handlers.erase(cell_index);
+}
+
 async_task<bool> srsran_scheduler_adapter::handle_ue_creation_request(const mac_ue_create_request& msg)
 {
   return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
@@ -291,11 +304,9 @@ void srsran_scheduler_adapter::handle_error_indication(slot_point               
   sched_impl->handle_error_indication(slot_tx, cell_idx, sched_err);
 }
 
-void srsran_scheduler_adapter::handle_sib1_update_indication(du_cell_index_t cell_index,
-                                                             unsigned        sib_version,
-                                                             units::bytes    new_payload_size)
+void srsran_scheduler_adapter::handle_si_change_indication(const si_scheduling_update_request& request)
 {
-  sched_impl->handle_sib1_update_request(sib1_pdu_update_request{cell_index, sib_version, new_payload_size});
+  sched_impl->handle_si_update_request(request);
 }
 
 async_task<mac_cell_positioning_measurement_response>
@@ -319,7 +330,7 @@ void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_config_complete
   }
 }
 
-void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_delete_response(du_ue_index_t ue_index)
+void srsran_scheduler_adapter::sched_config_notif_adapter::on_ue_deletion_completed(du_ue_index_t ue_index)
 {
   srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ue index={}", fmt::underlying(ue_index));
 

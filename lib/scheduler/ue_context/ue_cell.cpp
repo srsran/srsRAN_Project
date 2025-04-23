@@ -115,29 +115,10 @@ void ue_cell::set_fallback_state(bool set_fallback)
   in_fallback_mode = set_fallback;
 
   // Cancel pending HARQs retxs of different state.
-  for (unsigned i = 0; i != harqs.nof_dl_harqs(); ++i) {
-    std::optional<dl_harq_process_handle> h_dl = harqs.dl_harq(to_harq_id(i));
-    if (h_dl.has_value() and h_dl.value().get_grant_params().is_fallback != in_fallback_mode) {
-      h_dl.value().cancel_retxs();
-    }
-  }
-  for (unsigned i = 0; i != harqs.nof_ul_harqs(); ++i) {
-    std::optional<ul_harq_process_handle> h_ul = harqs.ul_harq(to_harq_id(i));
-    if (h_ul.has_value()) {
-      h_ul->cancel_retxs();
-    }
-  }
+  harqs.cancel_retxs();
 
   logger.debug(
       "ue={} rnti={}: {} fallback mode", fmt::underlying(ue_index), rnti(), in_fallback_mode ? "Entering" : "Leaving");
-}
-
-bool ue_cell::is_ul_enabled(slot_point ul_slot) const
-{
-  if (not active) {
-    return false;
-  }
-  return cfg().is_ul_enabled(ul_slot);
 }
 
 std::optional<ue_cell::dl_ack_info_result> ue_cell::handle_dl_ack_info(slot_point                 uci_slot,
@@ -208,6 +189,11 @@ void ue_cell::handle_csi_report(const csi_report_data& csi_report)
   apply_link_adaptation_procedures(csi_report);
   if (not channel_state.handle_csi_report(csi_report)) {
     logger.warning("ue={} rnti={}: Invalid CSI report received", fmt::underlying(ue_index), rnti());
+  }
+
+  if (csi_report.valid and csi_report.first_tb_wideband_cqi == csi_report_data::wideband_cqi_type{0}) {
+    // CQI==0 means that the UE is out-of-reach. We stop transmissions for this UE until its CQI becomes positive again.
+    harqs.cancel_retxs();
   }
 }
 
@@ -311,7 +297,7 @@ ue_cell::get_active_dl_search_spaces(slot_point                             pdcc
       return false;
     }
     if (required_dci_rnti_type.has_value() and
-        not pdcch_helper::search_space_supports_dci_dl_format(*ss.cfg, get_dci_dl_format(*required_dci_rnti_type))) {
+        not pdcch_helper::search_space_supports_dci_dl_format(*ss.cfg, get_dci_format(*required_dci_rnti_type))) {
       return false;
     }
     return true;
@@ -416,6 +402,9 @@ aggregation_level ue_cell::get_aggregation_level(float cqi, const search_space_i
     cqi_table = cfg().csi_meas_cfg()->csi_report_cfg_list.back().cqi_table.value();
   }
 
+  // Apply the configured offset to the CQI and make sure it is in the allowed range.
+  static constexpr float MAX_CQI_VALUE = 15.0f, MIN_CQI_VALUE = 0.0f;
+  cqi = std::max(std::min(MAX_CQI_VALUE, cqi + expert_cfg.pdcch_al_cqi_offset), MIN_CQI_VALUE);
   return map_cqi_to_aggregation_level(cqi, cqi_table, ss_info.cfg->get_nof_candidates(), dci_size);
 }
 

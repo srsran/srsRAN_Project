@@ -36,8 +36,8 @@ class sequence_id_checker_impl : public sequence_id_checker
   static constexpr int NOF_SEQUENCES_IDENTIFIERS      = 1u << 8;
   static constexpr int HALF_NOF_SEQUENCES_IDENTIFIERS = NOF_SEQUENCES_IDENTIFIERS / 2;
 
-  bounded_bitset<MAX_SUPPORTED_EAXC_ID_VALUE>                         initialized;
-  static_circular_map<unsigned, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> counters;
+  bounded_bitset<MAX_SUPPORTED_EAXC_ID_VALUE>                        initialized;
+  static_circular_map<uint8_t, uint8_t, MAX_SUPPORTED_EAXC_ID_VALUE> counters;
 
 public:
   /// Default constructor.

@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/e2/common/e2ap_asn1_packer.h"
+#include "common/e2ap_asn1_packer.h"
 #include "lib/e2/common/e2ap_asn1_utils.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "srsran/support/async/async_test_utils.h"

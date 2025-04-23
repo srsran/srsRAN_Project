@@ -29,6 +29,11 @@
 namespace srsran {
 namespace srs_du {
 
+inline asn1::rrc_nr::subcarrier_spacing_e get_asn1_scs(subcarrier_spacing scs)
+{
+  return asn1::rrc_nr::subcarrier_spacing_e{static_cast<asn1::rrc_nr::subcarrier_spacing_opts::options>(scs)};
+}
+
 asn1::rrc_nr::coreset_s make_asn1_rrc_coreset(const coreset_configuration& cfg);
 
 asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_space_configuration& cfg);

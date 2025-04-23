@@ -175,8 +175,7 @@ public:
   [[nodiscard]] bool timeout_rrc_reconfiguration_and_await_f1ap_ue_context_release_command()
   {
     // Fail RRC Reconfiguration (UE doesn't respond) and wait for F1AP UE Context Release Command.
-    if (tick_until(
-            std::chrono::milliseconds(3000), [&]() { return false; }, false)) {
+    if (tick_until(std::chrono::milliseconds(3000), [&]() { return false; }, false)) {
       return false;
     }
     report_fatal_error_if_not(this->wait_for_f1ap_tx_pdu(du_idx, f1ap_pdu),
@@ -204,8 +203,7 @@ public:
   [[nodiscard]] bool timeout_handover_ue_release_timer_and_await_ngap_ue_context_release_request()
   {
     // Fail RRC Reconfiguration (UE doesn't respond) and wait for NGAP UE Context Release Request.
-    if (tick_until(
-            std::chrono::milliseconds(6400), [&]() { return false; }, false)) {
+    if (tick_until(std::chrono::milliseconds(6400), [&]() { return false; }, false)) {
       return false;
     }
     report_fatal_error_if_not(this->wait_for_ngap_tx_pdu(ngap_pdu),

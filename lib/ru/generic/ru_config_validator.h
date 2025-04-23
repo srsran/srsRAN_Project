@@ -49,10 +49,6 @@ inline bool is_valid(const ru_generic_configuration& config)
     return false;
   }
 
-  if (!config.statistics_printer_executor) {
-    return false;
-  }
-
   for (const auto& low_cfg : config.lower_phy_config) {
     if (!low_cfg.rx_task_executor) {
       return false;

@@ -71,14 +71,14 @@ public:
   ///@{
 
   /// Converts the LLR to a plain \c value_type value.
-  explicit constexpr operator value_type() const { return value; };
+  explicit constexpr operator value_type() const { return value; }
   /// Converts the LLR to a plain \c value_type value.
-  constexpr value_type to_value_type() const { return value; };
+  constexpr value_type to_value_type() const { return value; }
 
   /// Converts the LLR to a plain \c int value.
-  explicit constexpr operator int() const { return value; };
+  explicit constexpr operator int() const { return value; }
   /// Converts the LLR to a plain \c int value.
-  constexpr int to_int() const { return value; };
+  constexpr int to_int() const { return value; }
 
   /// \brief Converts the LLR to a hard bit.
   /// \note By convention, the null LLR indeterminate case returns a 1 bit.

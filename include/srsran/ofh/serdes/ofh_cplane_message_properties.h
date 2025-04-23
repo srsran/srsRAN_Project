@@ -37,7 +37,7 @@ struct cplane_common_section_0_1_3_5_fields {
   /// Starting PRB of data section.
   uint16_t prb_start;
   /// Number of contiguous PRBs per data section.
-  unsigned nof_prb;
+  uint16_t nof_prb;
   /// Resource element mask.
   uint16_t re_mask;
   /// Number of symbols.

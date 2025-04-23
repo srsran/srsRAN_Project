@@ -589,4 +589,4 @@ srsran::byte_buffer e2sm_kpm_report_service_style5::get_indication_message()
   clear_collect_measurements();
 
   return ind_msg_bytes;
-};
+}

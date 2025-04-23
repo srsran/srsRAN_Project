@@ -20,7 +20,7 @@
  *
  */
 
-#include "lib/e2/common/e2ap_asn1_packer.h"
+#include "common/e2ap_asn1_packer.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_cu_meas_provider_impl.h"
 #include "lib/e2/e2sm/e2sm_kpm/e2sm_kpm_du_meas_provider_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
@@ -49,12 +49,12 @@ protected:
     cfg                  = config_helpers::make_default_e2ap_config();
     cfg.e2sm_kpm_enabled = true;
 
-    gw   = std::make_unique<dummy_network_gateway_data_handler>();
+    gw   = std::make_unique<dummy_sctp_association_sdu_notifier>();
     pcap = std::make_unique<dummy_e2ap_pcap>();
     if (external_pcap_writer) {
-      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
+      packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *external_pcap_writer);
     } else {
-      packer = std::make_unique<srsran::e2ap_asn1_packer>(*gw, *e2, *pcap);
+      packer = std::make_unique<e2ap_asn1_packer>(*gw, *e2, *pcap);
     }
     e2_client                = std::make_unique<dummy_e2_connection_client>();
     du_metrics               = std::make_unique<dummy_e2_du_metrics>();

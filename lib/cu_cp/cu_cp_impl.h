@@ -242,7 +242,7 @@ private:
   paging_message_handler paging_handler;
 
   // AMF connections beeing managed by the CU-CP.
-  std::unique_ptr<ngap_repository> ngap_db;
+  ngap_repository ngap_db;
 
   // Handler of the CU-CP connections to other remote nodes (e.g. AMF, CU-UPs, DUs).
   std::unique_ptr<cu_cp_controller> controller;

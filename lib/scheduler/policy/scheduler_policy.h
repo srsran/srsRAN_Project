@@ -34,7 +34,13 @@ class ue_cell;
 using ue_sched_priority = double;
 
 /// Priority value used to represent that the UE must not be scheduled.
-const ue_sched_priority forbid_sched_priority = std::numeric_limits<ue_sched_priority>::min();
+const ue_sched_priority forbid_sched_priority = std::numeric_limits<ue_sched_priority>::lowest();
+
+/// Lowest priority possible
+const ue_sched_priority lowest_sched_priority = forbid_sched_priority + std::numeric_limits<ue_sched_priority>::min();
+
+/// Maximum priority possible
+const ue_sched_priority max_sched_priority = std::numeric_limits<ue_sched_priority>::max();
 
 /// UE candidate for DL or UL scheduling.
 struct ue_newtx_candidate {

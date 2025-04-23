@@ -21,6 +21,7 @@
  */
 
 #include "ru_uplink_request_handler_generic_impl.h"
+#include "lower_phy/lower_phy_sector.h"
 #include "srsran/phy/lower/lower_phy_request_handler.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/resource_grid_context.h"
@@ -33,7 +34,7 @@ void ru_uplink_request_handler_generic_impl::handle_prach_occasion(const prach_b
 {
   srsran_assert(context.sector < low_phy_handler.size(), "Invalid sector {}", context.sector);
 
-  low_phy_handler[context.sector]->request_prach_window(context, buffer);
+  low_phy_handler[context.sector]->get_request_handler().request_prach_window(context, buffer);
 }
 
 void ru_uplink_request_handler_generic_impl::handle_new_uplink_slot(const resource_grid_context& context,
@@ -41,5 +42,5 @@ void ru_uplink_request_handler_generic_impl::handle_new_uplink_slot(const resour
 {
   srsran_assert(context.sector < low_phy_handler.size(), "Invalid sector {}", context.sector);
 
-  low_phy_handler[context.sector]->request_uplink_slot(context, grid);
+  low_phy_handler[context.sector]->get_request_handler().request_uplink_slot(context, grid);
 }

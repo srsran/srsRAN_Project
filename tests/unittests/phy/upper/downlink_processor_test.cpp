@@ -25,7 +25,7 @@
 #include "../support/resource_grid_test_doubles.h"
 #include "channel_processors/pdcch/pdcch_processor_test_doubles.h"
 #include "channel_processors/pdsch/pdsch_processor_test_doubles.h"
-#include "channel_processors/ssb_processor_test_doubles.h"
+#include "channel_processors/ssb/ssb_processor_test_doubles.h"
 #include "signal_processors/nzp_csi_rs_generator_test_doubles.h"
 #include "signal_processors/prs/prs_generator_test_doubles.h"
 #include "upper_phy_rg_gateway_test_doubles.h"
@@ -63,7 +63,7 @@ TEST(downlinkProcessorTest, worksInOrder)
   csi_rs_processor_spy& csi_rs_ref  = *csi_rs_processor;
   prs_processor_spy&    prs_gen_ref = *prs_generator;
 
-  std::unique_ptr<downlink_processor_controller> dl_proc_control =
+  std::unique_ptr<downlink_processor_base> dl_proc_base =
       std::make_unique<downlink_processor_single_executor_impl>(gw,
                                                                 std::move(pdcch_processor),
                                                                 std::move(pdsch_processor),
@@ -75,7 +75,8 @@ TEST(downlinkProcessorTest, worksInOrder)
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  unique_downlink_processor dl_processor = dl_proc_control->configure_resource_grid({slot, sector}, get_dummy_grid());
+  downlink_processor_controller& dl_proc_control = dl_proc_base->get_controller();
+  unique_downlink_processor dl_processor = dl_proc_control.configure_resource_grid({slot, sector}, get_dummy_grid());
   ASSERT_TRUE(dl_processor.is_valid());
 
   ASSERT_FALSE(pdcch_ref.is_process_called());
@@ -124,7 +125,7 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
   csi_rs_processor_spy& csi_rs_ref  = *csi_rs_processor;
   prs_processor_spy&    prs_gen_ref = *prs_generator;
 
-  std::unique_ptr<downlink_processor_controller> dl_proc_control =
+  std::unique_ptr<downlink_processor_base> dl_proc_base =
       std::make_unique<downlink_processor_single_executor_impl>(gw,
                                                                 std::move(pdcch_processor),
                                                                 std::move(pdsch_processor),
@@ -137,7 +138,8 @@ TEST(downlinkProcessorTest, finishIsCalledBeforeProcessingPdus)
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  unique_downlink_processor dl_processor = dl_proc_control->configure_resource_grid({slot, sector}, get_dummy_grid());
+  downlink_processor_controller& dl_proc_control = dl_proc_base->get_controller();
+  unique_downlink_processor dl_processor = dl_proc_control.configure_resource_grid({slot, sector}, get_dummy_grid());
   ASSERT_TRUE(dl_processor.is_valid());
 
   dl_processor->process_ssb({});
@@ -176,7 +178,7 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
   upper_phy_rg_gateway_fto gw;
   manual_task_worker       executor(10);
 
-  std::unique_ptr<downlink_processor_controller> dl_proc_control =
+  std::unique_ptr<downlink_processor_base> dl_proc_base =
       std::make_unique<downlink_processor_single_executor_impl>(gw,
                                                                 std::make_unique<pdcch_processor_spy>(),
                                                                 std::make_unique<pdsch_processor_spy>(),
@@ -189,8 +191,9 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  resource_grid_dummy       grid;
-  unique_downlink_processor dl_processor = dl_proc_control->configure_resource_grid({slot, sector}, get_dummy_grid());
+  resource_grid_dummy            grid;
+  downlink_processor_controller& dl_proc_control = dl_proc_base->get_controller();
+  unique_downlink_processor dl_processor = dl_proc_control.configure_resource_grid({slot, sector}, get_dummy_grid());
   ASSERT_TRUE(dl_processor.is_valid());
 
   dl_processor->process_ssb({});
@@ -207,7 +210,7 @@ TEST(downlinkProcessorTest, twoConsecutiveSlots)
 
   slot_point slot2(1, 2, 2);
   gw.clear_sent();
-  dl_processor = dl_proc_control->configure_resource_grid({slot2, sector}, get_dummy_grid());
+  dl_processor = dl_proc_control.configure_resource_grid({slot2, sector}, get_dummy_grid());
   ASSERT_TRUE(dl_processor.is_valid());
 
   dl_processor->process_ssb({});
@@ -226,7 +229,7 @@ TEST(downlinkProcessorTest, finishWithoutProcessingPdusSendsTheGrid)
   upper_phy_rg_gateway_fto                gw;
   manual_task_worker_always_enqueue_tasks executor(10);
 
-  std::unique_ptr<downlink_processor_controller> dl_proc_control =
+  std::unique_ptr<downlink_processor_base> dl_proc_base =
       std::make_unique<downlink_processor_single_executor_impl>(gw,
                                                                 std::make_unique<pdcch_processor_spy>(),
                                                                 std::make_unique<pdsch_processor_spy>(),
@@ -238,8 +241,9 @@ TEST(downlinkProcessorTest, finishWithoutProcessingPdusSendsTheGrid)
   slot_point slot(1, 2, 1);
   unsigned   sector = 0;
 
-  resource_grid_dummy       grid;
-  unique_downlink_processor dl_processor = dl_proc_control->configure_resource_grid({slot, sector}, get_dummy_grid());
+  resource_grid_dummy            grid;
+  downlink_processor_controller& dl_proc_control = dl_proc_base->get_controller();
+  unique_downlink_processor dl_processor = dl_proc_control.configure_resource_grid({slot, sector}, get_dummy_grid());
   ASSERT_TRUE(dl_processor.is_valid());
 
   // By finishing PDUs, the resource grid should be sent.

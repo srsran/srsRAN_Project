@@ -71,6 +71,8 @@ static __always_inline __m512i ZERO_epi8()
 /// Maximum number of AVX512 vectors needed to represent a BG node.
 static constexpr unsigned MAX_NODE_SIZE_AVX512 = divide_ceil(ldpc::MAX_LIFTING_SIZE, AVX512_SIZE_BYTE);
 
+ldpc_decoder_avx512::ldpc_decoder_avx512() : help_check_to_var(MAX_NODE_SIZE_AVX512 * AVX512_SIZE_BYTE) {}
+
 void ldpc_decoder_avx512::specific_init()
 {
   // Each BG node contains LS bits, which are stored in node_size_avx512 AVX512 vectors.
@@ -190,9 +192,7 @@ void ldpc_decoder_avx512::compute_check_to_var_msgs(span<log_likelihood_ratio> t
   mm512::avx512_const_span min_var_to_check_index_avx512(min_var_to_check_index, node_size_avx512);
   mm512::avx512_const_span sign_prod_var_to_check_avx512(sign_prod_var_to_check, node_size_avx512);
   mm512::avx512_const_span rotated_node_avx512(rotated_node, node_size_avx512);
-
-  std::array<log_likelihood_ratio, MAX_NODE_SIZE_AVX512 * AVX512_SIZE_BYTE> help_check_to_var;
-  mm512::avx512_span help_check_to_var_avx512(help_check_to_var, node_size_avx512);
+  mm512::avx512_span       help_check_to_var_avx512(help_check_to_var, node_size_avx512);
 
   __m512i this_var_index_epi8 = _mm512_set1_epi8(static_cast<int8_t>(var_node));
   for (unsigned i_block = 0; i_block != node_size_avx512; ++i_block) {
@@ -264,4 +264,4 @@ void ldpc_decoder_avx512::compute_soft_bits(span<log_likelihood_ratio>       thi
     soft_epi8        = _mm512_mask_blend_epi8(mask_epi8, soft_epi8, LLR_NEG_INFINITY_epi8());
     this_soft_bits_avx512.set_at(i_block, soft_epi8);
   }
-};
+}

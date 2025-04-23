@@ -89,7 +89,7 @@ public:
 
   void on_cell_results_completion(slot_point slot) override { result_notifier.on_cell_results_completion(slot); }
 
-  void handle_slot_indication(slot_point sl_tx) override;
+  void handle_slot_indication(const mac_cell_timing_context& context) override;
   void handle_error_indication(slot_point sl_tx, error_event event) override;
 
   void handle_crc(const mac_crc_indication_message& msg) override;
@@ -144,9 +144,11 @@ public:
   void connect(std::unique_ptr<mac_interface> mac_ptr);
 
   // mac_cell_manager
-  void                 add_cell(const mac_cell_creation_request& cell_cfg) override;
+  mac_cell_controller& add_cell(const mac_cell_creation_request& cell_cfg) override;
   void                 remove_cell(du_cell_index_t cell_index) override;
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override;
+
+  mac_cell_time_mapper& get_time_mapper(du_cell_index_t cell_index) override;
 
   mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) override
   {

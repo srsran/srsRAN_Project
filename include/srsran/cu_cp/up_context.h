@@ -57,7 +57,7 @@ struct up_drb_context {
 };
 
 struct up_pdu_session_context {
-  up_pdu_session_context(pdu_session_id_t id_) : id(id_){};
+  up_pdu_session_context(pdu_session_id_t id_) : id(id_) {}
   pdu_session_id_t                   id = pdu_session_id_t::invalid;
   std::map<drb_id_t, up_drb_context> drbs;
 };

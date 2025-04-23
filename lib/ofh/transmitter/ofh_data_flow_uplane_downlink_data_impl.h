@@ -120,6 +120,9 @@ private:
                                                  unsigned                     eaxc,
                                                  span<uint8_t>                buffer);
 
+  // See interface for documentation.
+  data_flow_message_encoding_metrics_collector* get_metrics_collector() override;
+
 private:
   srslog::basic_logger&                     logger;
   const unsigned                            nof_symbols_per_slot;

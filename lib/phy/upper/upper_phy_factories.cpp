@@ -29,7 +29,6 @@
 #include "upper_phy_impl.h"
 #include "upper_phy_pdu_validators.h"
 #include "upper_phy_rx_symbol_handler_printer_decorator.h"
-
 #include "srsran/fapi/messages/config_request_tlvs.h"
 #include "srsran/phy/metrics/phy_metrics_factories.h"
 #include "srsran/phy/support/support_factories.h"
@@ -40,6 +39,7 @@
 #include "srsran/phy/upper/channel_processors/pucch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/factories.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_processor_phy_capabilities.h"
+#include "srsran/phy/upper/channel_processors/ssb/factories.h"
 #include "srsran/phy/upper/signal_processors/prs/factories.h"
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_factory.h"
 #include "srsran/support/error_handling.h"
@@ -159,7 +159,7 @@ public:
   }
 
   // See interface for documentation.
-  std::unique_ptr<downlink_processor_controller> create(const downlink_processor_config& config) override
+  std::unique_ptr<downlink_processor_base> create(const downlink_processor_config& config) override
   {
     std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create();
     report_fatal_error_if_not(pdcch, "Invalid PDCCH processor.");
@@ -187,7 +187,7 @@ public:
   }
 
   // See interface for documentation.
-  std::unique_ptr<downlink_processor_controller>
+  std::unique_ptr<downlink_processor_base>
   create(const downlink_processor_config& config, srslog::basic_logger& logger, bool enable_broadcast) override
   {
     std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create(logger, enable_broadcast);
@@ -220,17 +220,14 @@ public:
     }
     report_fatal_error_if_not(prs_gen, "Invalid PRS generator.");
 
-    std::unique_ptr<downlink_processor_controller> downlink_proc =
-        std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
-                                                                  std::move(pdcch),
-                                                                  std::move(pdsch),
-                                                                  std::move(ssb),
-                                                                  std::move(nzp_csi),
-                                                                  std::move(prs_gen),
-                                                                  *config.executor,
-                                                                  srslog::fetch_basic_logger("PHY"));
-
-    return downlink_proc;
+    return std::make_unique<downlink_processor_single_executor_impl>(*config.gateway,
+                                                                     std::move(pdcch),
+                                                                     std::move(pdsch),
+                                                                     std::move(ssb),
+                                                                     std::move(nzp_csi),
+                                                                     std::move(prs_gen),
+                                                                     *config.executor,
+                                                                     srslog::fetch_basic_logger("PHY"));
   }
 
   std::unique_ptr<downlink_pdu_validator> create_pdu_validator() override
@@ -277,7 +274,7 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
       // Assign an executor to each DL processor from the list in round-robin fashion.
       processor_config.executor = config.dl_executors[i_proc % config.dl_executors.size()];
 
-      std::unique_ptr<downlink_processor_controller> dl_proc;
+      std::unique_ptr<downlink_processor_base> dl_proc;
       if (config.log_level == srslog::basic_levels::none) {
         dl_proc = factory->create(processor_config);
       } else {
@@ -383,7 +380,7 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
   report_fatal_error_if_not(prach_factory, "Invalid PRACH detector factory.");
 
   std::shared_ptr<srs_estimator_factory> srs_factory =
-      create_srs_estimator_generic_factory(sequence_factory, ta_est_factory);
+      create_srs_estimator_generic_factory(sequence_factory, ta_est_factory, config.ul_bw_rb);
   report_fatal_error_if_not(srs_factory, "Invalid SRS estimator factory.");
 
   // Create PRACH detector pool factory if more than one thread is used.
@@ -535,7 +532,7 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
     decoder_config.crc_factory               = pusch_crc_calc_factory;
     decoder_config.hw_decoder_factory        = nullptr;
     decoder_config.nof_pusch_decoder_threads = config.nof_pusch_decoder_threads;
-    decoder_config.hw_decoder_factory        = config.hw_decoder_factory.value();
+    decoder_config.hw_decoder_factory        = *config.hw_decoder_factory;
     decoder_config.executor                  = config.pusch_decoder_executor;
     pusch_config.decoder_factory             = create_pusch_decoder_factory_hw(decoder_config);
   }
@@ -643,7 +640,7 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
 
   std::shared_ptr<pseudo_random_generator_factory> pseudorandom = create_pseudo_random_generator_sw_factory();
   std::shared_ptr<pucch_detector_factory>          pucch_detector_fact =
-      create_pucch_detector_factory_sw(lpc_factory, pseudorandom, pucch_equalizer_factory);
+      create_pucch_detector_factory_sw(lpc_factory, pseudorandom, pucch_equalizer_factory, dft_factory);
   report_fatal_error_if_not(pucch_detector_fact, "Invalid PUCCH detector factory.");
 
   // Create PUCCH demodulator factory.
@@ -934,7 +931,7 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
     pdsch_encoder_factory_hw_configuration encoder_config;
     encoder_config.crc_factory        = pdsch_crc_calc_factory;
     encoder_config.segmenter_factory  = ldpc_seg_tx_factory;
-    encoder_config.hw_encoder_factory = config.hw_encoder_factory.value();
+    encoder_config.hw_encoder_factory = *config.hw_encoder_factory;
     pdsch_enc_factory                 = create_pdsch_encoder_factory_hw(encoder_config);
   }
   report_fatal_error_if_not(pdsch_enc_factory, "Invalid PDSCH encoder factory.");
@@ -994,13 +991,13 @@ srsran::create_downlink_processor_factory_sw(const downlink_processor_factory_sw
   // Create PDSCH block processor factory (if needed).
   std::shared_ptr<pdsch_block_processor_factory> block_processor_factory;
   if (!std::holds_alternative<pdsch_processor_generic_configuration>(config.pdsch_processor)) {
-    if (!config.hw_encoder_factory) {
+    if (!config.hw_encoder_factory.has_value()) {
       block_processor_factory = create_pdsch_block_processor_factory_sw(
           ldpc_enc_factory, ldpc_rm_factory, pdsch_scrambling_factory, pdsch_mod_mapper_factory);
       report_fatal_error_if_not(block_processor_factory, "Invalid SW PDSCH block processor factory.");
     } else {
       block_processor_factory = create_pdsch_block_processor_factory_hw(
-          config.hw_encoder_factory.value(), pdsch_scrambling_factory, pdsch_mod_mapper_factory);
+          *config.hw_encoder_factory, pdsch_scrambling_factory, pdsch_mod_mapper_factory);
       report_fatal_error_if_not(block_processor_factory, "Invalid HW PDSCH block processor factory.");
     }
   }

@@ -25,9 +25,9 @@
 #include "du_high_worker_manager.h"
 #include "tests/test_doubles/f1u/dummy_f1u_du_gateway.h"
 #include "tests/test_doubles/mac/dummy_mac_result_notifier.h"
-#include "tests/test_doubles/mac/mac_test_messages.h"
 #include "srsran/du/du_high/du_high.h"
 #include "srsran/du/du_high/du_high_configuration.h"
+#include "srsran/du/du_high/du_metrics_notifier.h"
 #include "srsran/f1ap/f1ap_ue_id_types.h"
 #include "srsran/scheduler/config/cell_config_builder_params.h"
 
@@ -49,6 +49,23 @@ private:
   task_executor& test_exec;
 };
 
+class dummy_du_metrics_notifier : public du_metrics_notifier
+{
+public:
+  std::optional<du_metrics_report> last_report;
+
+  dummy_du_metrics_notifier(task_executor& exec_) : exec(exec_) {}
+
+  void on_new_metric_report(const du_metrics_report& report) override
+  {
+    bool result = exec.defer([this, report]() { last_report = report; });
+    report_fatal_error_if_not(result, "Failed to defer metric report to test thread");
+  }
+
+private:
+  task_executor& exec;
+};
+
 bool is_ue_context_release_complete_valid(const f1ap_message& msg,
                                           gnb_du_ue_f1ap_id_t du_ue_id,
                                           gnb_cu_ue_f1ap_id_t cu_ue_id);
@@ -61,10 +78,13 @@ struct du_high_env_sim_params {
   std::optional<unsigned>                   prach_frequency_start;
 };
 
+du_high_configuration create_du_high_configuration(const du_high_env_sim_params& params = {});
+
 class du_high_env_simulator
 {
 public:
   du_high_env_simulator(du_high_env_sim_params params = du_high_env_sim_params{});
+  du_high_env_simulator(const du_high_configuration& du_hi_cfg);
   virtual ~du_high_env_simulator();
 
   bool add_ue(rnti_t rnti, du_cell_index_t cell_index = to_du_cell_index(0));
@@ -94,10 +114,11 @@ public:
 
   virtual void handle_slot_results(du_cell_index_t cell_index);
 
-  du_high_worker_manager  workers;
-  timer_manager           timers;
-  dummy_f1c_test_client   cu_notifier;
-  srs_du::cu_up_simulator cu_up_sim;
+  du_high_worker_manager    workers;
+  timer_manager             timers;
+  dummy_f1c_test_client     cu_notifier;
+  cu_up_simulator           cu_up_sim;
+  dummy_du_metrics_notifier du_metrics;
 
   du_high_configuration    du_high_cfg;
   du_high_dependencies     du_hi_dependencies;

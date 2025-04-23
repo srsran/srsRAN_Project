@@ -20,15 +20,15 @@
  *
  */
 
+#include "common/e2ap_asn1_packer.h"
 #include "dummy_ric.h"
-#include "lib/e2/common/e2ap_asn1_packer.h"
+#include "lib/e2/common/e2_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
 #include "srsran/adt/concurrent_queue.h"
-#include "srsran/e2/e2_factory.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
+#include "srsran/e2/gateways/e2_connection_client.h"
 #include "srsran/e2/gateways/e2_network_client_factory.h"
-#include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/gateways/sctp_network_server_factory.h"
 #include "srsran/support/async/async_test_utils.h"
 #include "srsran/support/executors/inline_task_executor.h"
@@ -104,7 +104,14 @@ protected:
     e2_subscription_mngr = std::make_unique<e2_subscription_manager_impl>(*e2sm_mngr);
     factory              = timer_factory{timers, task_exec};
     e2agent_notifier     = std::make_unique<dummy_e2_agent_mng>();
-    e2ap = create_e2(cfg, *e2agent_notifier, factory, *e2_client_wrapper, *e2_subscription_mngr, *e2sm_mngr, task_exec);
+    e2ap                 = std::make_unique<e2_impl>(srslog::fetch_basic_logger("E2"),
+                                     cfg,
+                                     *e2agent_notifier,
+                                     factory,
+                                     *e2_client_wrapper,
+                                     *e2_subscription_mngr,
+                                     *e2sm_mngr,
+                                     task_exec);
   }
 
   void TearDown() override

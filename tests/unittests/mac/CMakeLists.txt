@@ -38,7 +38,8 @@ add_executable(mac_test
         mac_rach_handler_test.cpp
         mac_dl_cfg_test.cpp
         mac_dl_metrics_test.cpp
-        mac_config_helpers_test.cpp)
+        mac_config_helpers_test.cpp
+        slot_point_time_mapper_test.cpp)
 target_link_libraries(mac_test
         srsran_pcap
         srsran_support

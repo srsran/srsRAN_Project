@@ -124,9 +124,12 @@ protected:
 
     cfg.qos[uint_to_five_qi(9)] = {};
 
-    cfg.n3_cfg.gtpu_reordering_timer = std::chrono::milliseconds(0);
-    cfg.n3_cfg.warn_on_drop          = false;
-    cfg.statistics_report_period     = std::chrono::seconds(1);
+    cfg.n3_cfg.gtpu_reordering_timer     = std::chrono::milliseconds(0);
+    cfg.n3_cfg.gtpu_rate_limiting_period = std::chrono::milliseconds(100);
+    cfg.n3_cfg.gtpu_queue_size           = 8192;
+    cfg.n3_cfg.gtpu_ignore_ue_ambr       = false;
+    cfg.n3_cfg.warn_on_drop              = false;
+    cfg.statistics_report_period         = std::chrono::seconds(1);
 
     return cfg;
   }
@@ -271,11 +274,11 @@ TEST_F(cu_up_test, dl_data_flow)
   // UL message 1
   nru_ul_message nru_msg1     = {};
   const uint8_t  t_pdu_arr1[] = {
-       0x80, 0x00, 0x00, 0x45, 0x00, 0x00, 0x54, 0xe8, 0x83, 0x40, 0x00, 0x40, 0x01, 0xfa, 0x00, 0xac, 0x10, 0x00,
-       0x03, 0xac, 0x10, 0x00, 0x01, 0x08, 0x00, 0x2c, 0xbe, 0xb4, 0xa4, 0x00, 0x01, 0xd3, 0x45, 0x61, 0x63, 0x00,
-       0x00, 0x00, 0x00, 0x1a, 0x20, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
-       0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
-       0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
+      0x80, 0x00, 0x00, 0x45, 0x00, 0x00, 0x54, 0xe8, 0x83, 0x40, 0x00, 0x40, 0x01, 0xfa, 0x00, 0xac, 0x10, 0x00,
+      0x03, 0xac, 0x10, 0x00, 0x01, 0x08, 0x00, 0x2c, 0xbe, 0xb4, 0xa4, 0x00, 0x01, 0xd3, 0x45, 0x61, 0x63, 0x00,
+      0x00, 0x00, 0x00, 0x1a, 0x20, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
+      0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+      0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37};
   span<const uint8_t> t_pdu_span1  = {t_pdu_arr1};
   byte_buffer         t_pdu_buf1   = byte_buffer::create(t_pdu_span1).value();
   nru_msg1.t_pdu                   = byte_buffer_chain::create(std::move(t_pdu_buf1)).value();
@@ -399,6 +402,47 @@ TEST_F(cu_up_test, ul_data_flow)
   ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
   ASSERT_EQ(ret, exp_len);
   EXPECT_TRUE(std::equal(t_pdu_span2.begin() + f1u_hdr_len, t_pdu_span2.end(), rx_buf.begin() + gtpu_hdr_len));
+
+  close(upf_info.sock_fd);
+}
+
+TEST_F(cu_up_test, echo_data_flow)
+{
+  cu_up_config cfg = get_default_cu_up_config();
+
+  //> Test preamble: listen on a free port
+  upf_info_t upf_info = init_upf();
+  cfg.n3_cfg.upf_port = ntohs(upf_info.upf_addr.sin_port);
+
+  //> Test main part: create CU-UP and transmit data
+  cu_up_dependencies dependencies = get_default_cu_up_dependencies();
+  init(cfg, std::move(dependencies));
+
+  // Now that the disered buffer size is updated, we push DL PDUs
+  sockaddr_in cu_up_addr;
+  cu_up_addr.sin_family      = AF_INET;
+  cu_up_addr.sin_port        = htons(cu_up->get_n3_bind_port().value());
+  cu_up_addr.sin_addr.s_addr = inet_addr(cu_up_udp_cfg.bind_address.c_str());
+
+  // Send GTP-U echo request test message.
+  const uint8_t gtpu_echo_req_vec[] = {0x32, 0x01, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2a, 0x00, 0x00};
+
+  int ret;
+  ret = sendto(
+      upf_info.sock_fd, gtpu_echo_req_vec, sizeof(gtpu_echo_req_vec), 0, (sockaddr*)&cu_up_addr, sizeof(cu_up_addr));
+  ASSERT_GE(ret, 0) << "Failed to send message via sock_fd=" << upf_info.sock_fd << " to `"
+                    << cu_up_udp_cfg.bind_address << ":" << cu_up->get_n3_bind_port().value() << "` - "
+                    << strerror(errno);
+
+  // Receive GTP-U echo response message and check result.
+  constexpr uint16_t           exp_len            = 14;
+  std::array<uint8_t, exp_len> gtpu_echo_resp_vec = {
+      0x32, 0x02, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2a, 0x00, 0x00, 0x0e, 0x00};
+
+  std::array<uint8_t, 128> rx_buf;
+  ret = recv(upf_info.sock_fd, rx_buf.data(), rx_buf.size(), 0);
+  ASSERT_EQ(ret, exp_len);
+  EXPECT_TRUE(std::equal(gtpu_echo_resp_vec.begin(), gtpu_echo_resp_vec.end(), rx_buf.begin()));
 
   close(upf_info.sock_fd);
 }

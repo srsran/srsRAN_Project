@@ -196,7 +196,7 @@ class dummy_network_gateway_notifier : public sctp_network_gateway_control_notif
                                        public network_gateway_data_notifier
 {
 public:
-  dummy_network_gateway_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_network_gateway_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
   void on_connection_loss() override { logger.info("Connection loss"); }
   void on_connection_established() override { logger.info("Connection established"); }
@@ -210,7 +210,7 @@ private:
 class dummy_network_gateway_data_handler : public sctp_network_gateway_data_handler
 {
 public:
-  dummy_network_gateway_data_handler(){};
+  dummy_network_gateway_data_handler() {}
   void handle_pdu(const byte_buffer& pdu) override { last_pdu = pdu.copy(); }
 
   byte_buffer last_pdu;

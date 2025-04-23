@@ -44,6 +44,7 @@ public:
   const du_cell_index_t                        cell_index;
   const du_cell_group_index_t                  cell_group_index;
   const pci_t                                  pci;
+  const subcarrier_spacing                     scs_common;
   const unsigned                               nof_dl_prbs;
   const unsigned                               nof_ul_prbs;
   const unsigned                               nof_slots_per_frame;
@@ -56,6 +57,8 @@ public:
   const ssb_configuration ssb_cfg;
   dmrs_typeA_position     dmrs_typeA_pos;
   carrier_configuration   ul_carrier;
+  const uint8_t           coreset0;
+  const uint8_t           searchspace0;
 
   /// List of PUCCH guardbands.
   const std::vector<sched_grid_resource> pucch_guardbands;

@@ -24,22 +24,20 @@
 #include "apps/helpers/f1u/f1u_cli11_schema.h"
 #include "apps/helpers/hal/hal_cli11_schema.h"
 #include "apps/helpers/logger/logger_appconfig_cli11_schema.h"
-#include "apps/helpers/metrics/metrics_config_cli11_schema.h"
+#include "apps/services/app_resource_usage/app_resource_usage_config_cli11_schema.h"
 #include "apps/services/buffer_pool/buffer_pool_appconfig_cli11_schema.h"
+#include "apps/services/metrics/metrics_config_cli11_schema.h"
 #include "apps/services/remote_control/remote_control_appconfig_cli11_schema.h"
 #include "apps/services/worker_manager/worker_manager_cli11_schema.h"
 #include "du_appconfig.h"
-#include "srsran/adt/interval.h"
 #include "srsran/support/cli11_utils.h"
 
 using namespace srsran;
 
 static void configure_cli11_metrics_args(CLI::App& app, srs_du::metrics_appconfig& metrics_params)
 {
-  add_option(app,
-             "--resource_usage_report_period",
-             metrics_params.rusage_report_period,
-             "Resource usage metrics report period (in milliseconds)")
+  add_option(
+      app, "--autostart_stdout_metrics", metrics_params.autostart_stdout_metrics, "Autostart stdout metrics reporting")
       ->capture_default_str();
 }
 
@@ -59,6 +57,8 @@ static void configure_cli11_f1u_args(CLI::App& app, srs_du::f1u_appconfig& f1u_p
 
 void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfig& du_cfg)
 {
+  app.add_flag("--dryrun", du_cfg.enable_dryrun, "Enable application dry run mode")->capture_default_str();
+
   // Loggers section.
   configure_cli11_with_logger_appconfig_schema(app, du_cfg.log_cfg);
 
@@ -79,7 +79,8 @@ void srsran::configure_cli11_with_du_appconfig_schema(CLI::App& app, du_appconfi
   // Metrics section.
   CLI::App* metrics_subcmd = app.add_subcommand("metrics", "Metrics configuration")->configurable();
   configure_cli11_metrics_args(*metrics_subcmd, du_cfg.metrics_cfg);
-  app_helpers::configure_cli11_with_metrics_appconfig_schema(app, du_cfg.metrics_cfg.common_metrics_cfg);
+  app_services::configure_cli11_with_app_resource_usage_config_schema(app, du_cfg.metrics_cfg.rusage_config);
+  app_services::configure_cli11_with_metrics_appconfig_schema(app, du_cfg.metrics_cfg.metrics_service_cfg);
 
   // HAL section.
   du_cfg.hal_config.emplace();
@@ -109,9 +110,4 @@ void srsran::autoderive_du_parameters_after_parsing(CLI::App& app, du_appconfig&
 {
   manage_hal_optional(app, du_cfg);
   configure_default_f1u(du_cfg);
-
-  if (du_cfg.metrics_cfg.common_metrics_cfg.enabled() && du_cfg.metrics_cfg.rusage_report_period == 0) {
-    // Default report period 1 second.
-    du_cfg.metrics_cfg.rusage_report_period = 1000;
-  }
 }

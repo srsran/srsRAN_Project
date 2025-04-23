@@ -110,7 +110,7 @@ private:
 class dummy_ngap_message_handler : public ngap_message_handler
 {
 public:
-  dummy_ngap_message_handler() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_message_handler() : logger(srslog::fetch_basic_logger("TEST")) {}
   void handle_message(const ngap_message& msg) override
   {
     last_msg = msg;
@@ -126,7 +126,7 @@ private:
 class dummy_ngap_rrc_ue_notifier : public ngap_rrc_ue_notifier
 {
 public:
-  dummy_ngap_rrc_ue_notifier() : logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_rrc_ue_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
   void on_new_pdu(byte_buffer nas_pdu) override
   {
@@ -154,7 +154,7 @@ private:
 class dummy_ngap_cu_cp_notifier : public ngap_cu_cp_notifier
 {
 public:
-  dummy_ngap_cu_cp_notifier(ue_manager& ue_mng_) : ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_ngap_cu_cp_notifier(ue_manager& ue_mng_) : ue_mng(ue_mng_), logger(srslog::fetch_basic_logger("TEST")) {}
 
   void connect_ngap(ngap_ue_context_removal_handler& ngap_handler_) { ngap_handler = &ngap_handler_; }
 
@@ -249,11 +249,13 @@ public:
 
       if (last_request.pdu_session_res_setup_items.empty()) {
         cu_cp_pdu_session_res_setup_failed_item failed_item;
-        failed_item.pdu_session_id              = uint_to_pdu_session_id(1);
-        failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
-        res.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
+        for (const auto& pdu_session : last_request.pdu_session_res_setup_items) {
+          failed_item.pdu_session_id              = pdu_session.pdu_session_id;
+          failed_item.unsuccessful_transfer.cause = ngap_cause_radio_network_t::unspecified;
+          res.pdu_session_res_failed_to_setup_items.emplace(failed_item.pdu_session_id, failed_item);
+        }
       } else {
-        res = generate_cu_cp_pdu_session_resource_setup_response(uint_to_pdu_session_id(1));
+        res = generate_cu_cp_pdu_session_resource_setup_response(last_request);
       }
 
       CORO_RETURN(res);
@@ -396,8 +398,9 @@ private:
 class dummy_rrc_ngap_message_handler : public rrc_ngap_message_handler
 {
 public:
-  dummy_rrc_ngap_message_handler(ue_index_t ue_index_) :
-    ue_index(ue_index_), logger(srslog::fetch_basic_logger("TEST")){};
+  dummy_rrc_ngap_message_handler(ue_index_t ue_index_) : ue_index(ue_index_), logger(srslog::fetch_basic_logger("TEST"))
+  {
+  }
 
   void handle_dl_nas_transport_message(byte_buffer nas_pdu) override
   {
@@ -431,25 +434,25 @@ public:
   void set_rrc_ue_notifier(dummy_ngap_rrc_ue_notifier& rrc_ue_notifier_) { rrc_ue_notifier = &rrc_ue_notifier_; }
 
   /// \brief Get the UE index of the UE.
-  ue_index_t get_ue_index() override { return ue_index.value(); };
+  ue_index_t get_ue_index() override { return ue_index.value(); }
 
   /// \brief Schedule an async task for the UE.
-  bool schedule_async_task(async_task<void> task) override { return true; };
+  bool schedule_async_task(async_task<void> task) override { return true; }
 
   /// \brief Get the RRC UE notifier of the UE.
   ngap_rrc_ue_notifier& get_ngap_rrc_ue_notifier() override
   {
     srsran_assert(rrc_ue_notifier != nullptr, "RRC UE notifier must not be nullptr");
     return *rrc_ue_notifier;
-  };
+  }
 
   /// \brief Notify the CU-CP about a security context
   /// \param[in] sec_ctxt The received security context
   /// \return True if the security context was successfully initialized, false otherwise
-  bool init_security_context(security::security_context sec_ctxt) override { return true; };
+  bool init_security_context(security::security_context sec_ctxt) override { return true; }
 
   /// \brief Check if security is enabled
-  [[nodiscard]] bool is_security_enabled() const override { return true; };
+  [[nodiscard]] bool is_security_enabled() const override { return true; }
 
   std::optional<ue_index_t>   ue_index;
   dummy_ngap_rrc_ue_notifier* rrc_ue_notifier = nullptr;

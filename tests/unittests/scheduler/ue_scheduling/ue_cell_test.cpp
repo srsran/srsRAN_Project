@@ -106,7 +106,7 @@ protected:
                                    cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->ra_con_res_timer,
                                    std::nullopt,
                                    ul_lc_ch_mng,
-                                   {},
+                                                          {},
                                    logger};
 };
 

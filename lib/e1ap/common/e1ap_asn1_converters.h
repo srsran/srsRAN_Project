@@ -844,7 +844,8 @@ inline asn1::e1ap::pdcp_cfg_s pdcp_config_to_e1ap_asn1(e1ap_pdcp_config pdcp_cfg
   // Fill dupl activation.
   if (pdcp_cfg.dupl_activation.has_value()) {
     asn1_pdcp_cfg.dupl_activation_present = true;
-    asn1::string_to_enum(asn1_pdcp_cfg.dupl_activation, pdcp_cfg.dupl_activation.value());
+    asn1_pdcp_cfg.dupl_activation =
+        static_cast<asn1::e1ap::dupl_activation_opts::options>((int)pdcp_cfg.dupl_activation.value());
   }
 
   // Fill out of order delivery.
@@ -960,7 +961,7 @@ inline e1ap_pdcp_config e1ap_asn1_to_pdcp_config(asn1::e1ap::pdcp_cfg_s asn1_pdc
 
   // Fill dupl activation.
   if (asn1_pdcp_cfg.dupl_activation_present) {
-    pdcp_cfg.dupl_activation = asn1_pdcp_cfg.dupl_activation.to_string();
+    pdcp_cfg.dupl_activation = static_cast<e1ap_dupl_activation>((int)asn1_pdcp_cfg.dupl_activation);
   }
 
   // Fill out of order delivery.
@@ -1068,7 +1069,8 @@ asn1_e1ap_to_qos_flow_map_item(const asn1::e1ap::qos_flow_map_item_s& asn1_qos_f
   qos_flow_map_item.qos_flow_id = uint_to_qos_flow_id(asn1_qos_flow_map_item.qos_flow_id);
 
   if (asn1_qos_flow_map_item.qos_flow_map_ind_present) {
-    qos_flow_map_item.qos_flow_map_ind = asn1_qos_flow_map_item.qos_flow_map_ind.to_string();
+    qos_flow_map_item.qos_flow_map_ind =
+        static_cast<e1ap_qos_flow_map_ind>((int)asn1_qos_flow_map_item.qos_flow_map_ind);
   }
 
   return qos_flow_map_item;
@@ -1083,15 +1085,15 @@ inline void e1ap_asn1_to_cell_group_info(std::vector<e1ap_cell_group_info_item>&
     cell_group_info_item.cell_group_id = asn1_cell_group_info_item.cell_group_id;
 
     if (asn1_cell_group_info_item.ul_cfg_present) {
-      cell_group_info_item.ul_cfg = asn1_cell_group_info_item.ul_cfg.to_string();
+      cell_group_info_item.ul_cfg = static_cast<e1ap_ul_cfg>((int)asn1_cell_group_info_item.ul_cfg);
     }
 
     if (asn1_cell_group_info_item.dl_tx_stop_present) {
-      cell_group_info_item.dl_tx_stop = asn1_cell_group_info_item.dl_tx_stop.to_string();
+      cell_group_info_item.dl_tx_stop = static_cast<e1ap_dl_tx_stop>((int)asn1_cell_group_info_item.dl_tx_stop);
     }
 
     if (asn1_cell_group_info_item.rat_type_present) {
-      cell_group_info_item.rat_type = asn1_cell_group_info_item.rat_type.to_string();
+      cell_group_info_item.rat_type = static_cast<e1ap_rat_type>((int)asn1_cell_group_info_item.rat_type);
     }
 
     cell_group_info.push_back(cell_group_info_item);
@@ -1209,7 +1211,7 @@ inline void e1ap_asn1_to_flow_map_info(slotted_id_vector<qos_flow_id_t, e1ap_qos
 
     // Fill QoS flow map indication.
     if (asn1_flow_map_item.qos_flow_map_ind_present) {
-      flow_map_item.qos_flow_map_ind = asn1_flow_map_item.qos_flow_map_ind.to_string();
+      flow_map_item.qos_flow_map_ind = static_cast<e1ap_qos_flow_map_ind>((int)asn1_flow_map_item.qos_flow_map_ind);
     }
     flow_map_info.emplace(uint_to_qos_flow_id(asn1_flow_map_item.qos_flow_id), flow_map_item);
   }

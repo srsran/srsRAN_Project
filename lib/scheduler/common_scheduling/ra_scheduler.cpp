@@ -214,13 +214,15 @@ void ra_scheduler::precompute_msg3_pdus()
                            msg3_rv);
 
     // Note: RNTI will be overwritten later.
+    const vrb_interval vrbs = rb_helper::crb_to_vrb_ul_non_interleaved(
+        crb_interval{0, prbs_tbs.nof_prbs}, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.start());
     build_pusch_f0_0_tc_rnti(msg3_data[i].pusch,
                              pusch_cfg,
                              prbs_tbs.tbs_bytes,
                              to_rnti(0x4601),
                              cell_cfg,
                              msg3_data[i].dci.tc_rnti_f0_0,
-                             crb_interval{0, prbs_tbs.nof_prbs},
+                             vrbs,
                              true);
   }
 }
@@ -591,13 +593,13 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     const unsigned          nof_rar_rbs = get_nof_pdsch_prbs_required(time_resource, rar.tc_rntis.size()).nof_prbs;
     const ofdm_symbol_range symbols     = pdsch_td_res.symbols;
     const crb_bitmap        used_crbs   = pdsch_alloc.dl_res_grid.used_crbs(get_dl_bwp_cfg().scs, ra_crb_lims, symbols);
-    const unsigned          nof_allocs  = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0).length() /
+    const unsigned          nof_allocs  = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs).length() /
                                 get_nof_pdsch_prbs_required(time_resource, 1).nof_prbs;
 
     // > Pick the TD resource that leads to the maximum allocations possible.
     if (nof_allocs > max_nof_allocs) {
       max_nof_allocs       = nof_allocs;
-      rar_crbs             = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0);
+      rar_crbs             = rb_helper::find_empty_interval_of_length(used_crbs, nof_rar_rbs);
       pdsch_time_res_index = time_resource;
     }
   }
@@ -640,8 +642,8 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     // >> Check CRBs available in PUSCH for Msg3.
     const unsigned nof_rbs_per_msg3 = msg3_data[puschidx].pusch.rbs.type1().length();
     unsigned       nof_msg3_rbs     = nof_rbs_per_msg3 * pusch_res_max_allocs;
-    prb_bitmap     used_ul_crbs     = msg3_alloc.ul_res_grid.used_crbs(get_ul_bwp_cfg(), pusch_list[puschidx].symbols);
-    crb_interval   msg3_crbs        = rb_helper::find_empty_interval_of_length(used_ul_crbs, nof_msg3_rbs, 0);
+    crb_bitmap     used_ul_crbs     = msg3_alloc.ul_res_grid.used_crbs(get_ul_bwp_cfg(), pusch_list[puschidx].symbols);
+    crb_interval   msg3_crbs        = rb_helper::find_empty_interval_of_length(used_ul_crbs, nof_msg3_rbs);
     pusch_res_max_allocs            = msg3_crbs.length() / nof_rbs_per_msg3;
     if (pusch_res_max_allocs == 0) {
       continue;

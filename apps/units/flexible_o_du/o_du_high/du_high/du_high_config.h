@@ -90,7 +90,7 @@ struct du_high_unit_ta_sched_expert_config {
 /// Scheduler expert configuration.
 struct du_high_unit_scheduler_expert_config {
   /// Policy scheduler expert parameters.
-  policy_scheduler_expert_config policy_sched_expert_cfg = time_rr_scheduler_expert_config{};
+  std::optional<policy_scheduler_expert_config> policy_sched_expert_cfg;
   /// Timing Advance MAC CE scheduling expert configuration.
   du_high_unit_ta_sched_expert_config ta_sched_cfg;
 };
@@ -160,6 +160,14 @@ struct du_high_unit_pdsch_config {
   unsigned max_pdschs_per_slot = MAX_PDSCH_PDUS_PER_SLOT;
   /// Maximum number of DL or UL PDCCH allocation attempts per slot.
   unsigned max_pdcch_alloc_attempts_per_slot = std::max(MAX_DL_PDCCH_PDUS_PER_SLOT, MAX_UL_PDCCH_PDUS_PER_SLOT);
+  /// Number of UEs pre-selected for PDSCH newTx scheduling in each slot.
+  unsigned nof_preselected_newtx_ues = 32;
+  /// \brief Period in slots at which the pre-selected newTx UE candidates are recomputed.
+  ///
+  /// Increasing this value will mean that the same list of UE candidates is used for more slots. Reducing this value
+  /// may improve latency but it will reduce the efficiency of UCI multiplexing, as there will be less HARQ-ACK bits
+  /// per slot.
+  unsigned newtx_ues_selection_period = 3;
   /// CQI offset increment used in outer loop link adaptation (OLLA) algorithm. If set to zero, OLLA is disabled.
   float olla_cqi_inc{0.001};
   /// DL Target BLER to be achieved with OLLA.
@@ -205,22 +213,62 @@ struct du_high_unit_pusch_config {
   /// \c p0-NominalWithGrant, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
   int p0_nominal_with_grant = -76;
 
-  /// \c betaOffsetACK-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_ack_idx_1 = 9;
-  /// \c betaOffsetACK-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_ack_idx_2 = 9;
-  /// \c betaOffsetACK-Index3, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_ack_idx_3 = 9;
-  /// \c betaOffsetCSI-Part1-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_csi_p1_idx_1 = 9;
-  /// \c betaOffsetCSI-Part1-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_csi_p1_idx_2 = 9;
-  /// \c betaOffsetCSI-Part2-Index1, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_csi_p2_idx_1 = 9;
-  /// \c betaOffsetCSI-Part2-Index2, \c BetaOffsets, TS 38.331. Values: {0,...,31}.
-  unsigned beta_offset_csi_p2_idx_2 = 9;
+  /// \defgroup betaoffsets
+  /// \brief Beta offsets for uplink control information multiplexed in PUSCH.
+  ///
+  /// Default beta offset values have been derived from the formula
+  /// \f$\beta^{PUSCH}_{\text{offset}}\gt \frac{E^{O_{UCI}}_{min}+K_{OH}Q_m\nu}{O_{UCI}+L_{UCI}}R\f$ where:
+  /// - \f$E^{O_{UCI}}_{min}\f$ is the minimum number of rate matched bits that guarantee the detection of the UCI bits;
+  /// - \f$K_{OH}\f$ is the number of overhead resource elements (i.e., DC position);
+  /// - \f$Q_m\f$ is the maximum modulation order, fixed to \f$8\f$;
+  /// - \f$\nu\f$ is the maximum number of layers, fixed to \f$2\f$;
+  /// - \f$R\f$ is the maximum code rate, fixed to \f$948/1024\f$;
+  /// - \f$O_{UCI}\f$ is the number of information bits; and
+  /// - \f$L_{UCI}\f$ is the number of CRC bits.
+  ///
+  /// @{
+  /// \brief Parameter \e betaOffsetACK-Index1, in Information Element \c BetaOffsets, TS38.331. Values: {0,...,15}.
+  ///
+  /// Used for deriving \f$\beta_{\text{HARQ−ACK}}^{offset}\f$ when the PUSCH multiplexes up two HARQ-ACK information
+  /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=24\f$ and \f$K_{OH}=1\f$.
+  unsigned beta_offset_ack_idx_1 = 11;
+  /// \brief Parameter \e betaOffsetACK-Index2, in Information Element \c BetaOffsets, TS38.331. Values: {0,...,15}.
+  ///
+  /// Used for deriving \f$\beta_{\text{HARQ−ACK}}^{offset}\f$ when the PUSCH multiplexes up 11 HARQ-ACK information
+  /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=32\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_ack_idx_2 = 6;
+  /// \brief Parameter \e betaOffsetACK-Index3, in Information Element \c BetaOffsets, TS38.331. Values: {0,...,15}.
+  ///
+  /// Used for deriving \f$\beta_{\text{HARQ−ACK}}^{offset}\f$ when the PUSCH multiplexes more than 11 HARQ-ACK
+  /// information bits. The default value assumes \f$E^{O_{UCI}}_{min}=40\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_ack_idx_3 = 4;
+  /// \brief Parameter \e betaOffsetCSI-Part1-Index1, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// {0,...,18}.
+  ///
+  /// Used for deriving \f$\beta_{\text{CSI−1}}^{offset}\f$ when the PUSCH multiplexes up to 11 CSI Part 1 information
+  /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=32\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_csi_p1_idx_1 = 13;
+  /// \brief Parameter \e betaOffsetCSI-Part1-Index2, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// {0,...,18}.
+  ///
+  /// Used for deriving \f$\beta_{\text{CSI−1}}^{offset}\f$ when the PUSCH multiplexes more than 11 CSI Part 1
+  /// information bits. The default value assumes \f$E^{O_{UCI}}_{min}=40\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_csi_p1_idx_2 = 10;
+  /// \brief Parameter \e betaOffsetCSI-Part2-Index1, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// {0,...,18}.
+  ///
+  /// Used for deriving \f$\beta_{\text{CSI−2}}^{offset}\f$ when the PUSCH multiplexes up to 11 CSI Part 2 information
+  /// bits. The default value assumes \f$E^{O_{UCI}}_{min}=32\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_csi_p2_idx_1 = 13;
+  /// \brief Parameter \e betaOffsetCSI-Part2-Index2, in Information Element \c BetaOffsets, TS38.331. Values:
+  /// {0,...,18}.
+  ///
+  /// Used for deriving \f$\beta_{\text{CSI−2}}^{offset}\f$ when the PUSCH multiplexes more than 11 CSI Part 2
+  /// information bits. The default value assumes \f$E^{O_{UCI}}_{min}=40\f$ and \f$K_{OH}=2\f$.
+  unsigned beta_offset_csi_p2_idx_2 = 10;
+  /// @}
 
-  /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS 38.213.
+  /// \brief Power level corresponding to MSG-3 TPC command in dB, as per Table 8.2-2, TS38.213.
   /// Values {-6,...,8} and must be a multiple of 2.
   int msg3_delta_power = 8;
 
@@ -228,6 +276,10 @@ struct du_high_unit_pusch_config {
   unsigned min_k2 = 4;
   /// Maximum number of PUSCH grants per slot.
   unsigned max_puschs_per_slot = MAX_PUSCH_PDUS_PER_SLOT;
+  /// Number of UEs pre-selected for PUSCH newTx scheduling in each slot.
+  unsigned nof_preselected_newtx_ues = 32;
+  /// \brief Period in slots at which the pre-selected newTx UE candidates are recomputed.
+  unsigned newtx_ues_selection_period = 1;
   /// \brief Direct Current (DC) offset, in number of subcarriers, used in PUSCH.
   ///
   /// The numerology of the active UL BWP is used as a reference to determine the number of subcarriers.
@@ -276,7 +328,7 @@ struct du_high_unit_pucch_config {
   /// \c p0-nominal, TS 38.331. Value in dBm. Only even values allowed within {-202,...,24}.
   int p0_nominal = -90;
   /// \c pucch-ResourceCommon, TS 38.331. Values: {0,...,15}. Defines the PUCCH resource set used common configuration.
-  unsigned pucch_resource_common = 11;
+  std::optional<unsigned> pucch_resource_common;
 
   /// \c PUCCH-Config parameters.
   /// Force Format 0 for the PUCCH resources belonging to PUCCH resource set 0.
@@ -493,6 +545,11 @@ struct pdcch_dedicated_unit_config {
   bool dci_format_0_1_and_1_1 = true;
   /// SearchSpace type of SearchSpace#2.
   search_space_configuration::type_t ss2_type = search_space_configuration::type_t::ue_dedicated;
+  /// Offset applied to the CQI for PDCCH aggregation level calculation.
+  /// This allows fine-tuning of the aggregation level selection:
+  ///  - A positive offset leads to a lower AL, resulting in a higher code rate and increased BLER.
+  ///  - A positive offset leads to a higher AL, resulting in a lower code rate and reduced BLER.
+  float al_cqi_offset = 0;
 };
 
 /// PDCCH application configuration.
@@ -726,8 +783,10 @@ struct du_high_unit_cell_slice_sched_config {
   unsigned min_prb_policy_ratio = 0;
   /// Sets the maximum percentage of PRBs to be allocated to this group.
   unsigned max_prb_policy_ratio = 100;
-  /// Policy scheduler parameters for the slice.
-  policy_scheduler_expert_config slice_policy_sched_cfg = time_rr_scheduler_expert_config{};
+  /// Sets the slice priority. Values: {0,...,254}. 255 is reserved for the SRBs.
+  unsigned priority = 0;
+  /// Policy scheduler parameters for the slice. Default: Time-domain round robin.
+  std::optional<policy_scheduler_expert_config> slice_policy_sched_cfg;
 };
 
 /// Slice configuration for a cell.
@@ -735,7 +794,7 @@ struct du_high_unit_cell_slice_config {
   /// Slice/Service Type.
   uint8_t sst;
   /// Slice Differentiator.
-  uint32_t sd;
+  uint32_t sd = 0xffffffU;
   /// Slice scheduling configuration.
   du_high_unit_cell_slice_sched_config sched_cfg;
 };
@@ -842,16 +901,23 @@ struct du_high_unit_cell_config {
   du_high_unit_base_cell_config cell;
 };
 
+/// Configuration to enable/disable metrics per layer.
+struct du_high_unit_metrics_layer_config {
+  bool enable_scheduler = true;
+  bool enable_rlc       = false;
+  bool enable_mac       = false;
+
+  /// Returns true if one or more layers are enabled, otherwise false.
+  bool are_metrics_enabled() const { return enable_scheduler || enable_rlc || enable_mac; }
+};
+
 /// Metrics report configuration.
 struct du_high_unit_metrics_config {
-  struct rlc_metrics {
-    /// RLC report period in ms.
-    unsigned report_period = 1000;
-  } rlc;
   /// Scheduler report period in milliseconds.
-  unsigned                    sched_report_period      = 1000;
-  bool                        autostart_stdout_metrics = false;
-  app_helpers::metrics_config common_metrics_cfg;
+  unsigned                          du_report_period         = 1000;
+  bool                              autostart_stdout_metrics = false;
+  app_helpers::metrics_config       common_metrics_cfg;
+  du_high_unit_metrics_layer_config layers_cfg;
 };
 
 struct du_high_unit_pcap_config {
@@ -884,6 +950,11 @@ struct du_high_unit_pcap_config {
   }
 };
 
+/// Configuration of the task executors queues.
+struct du_high_unit_execution_queues_config {
+  uint32_t ue_data_executor_queue_size = 2048;
+};
+
 /// CPU affinities configuration for the cell.
 struct du_high_unit_cpu_affinities_cell_config {
   os_sched_affinity_config l2_cell_cpu_cfg = {sched_affinity_mask_types::l2_cell, {}, sched_affinity_mask_policy::mask};
@@ -891,6 +962,9 @@ struct du_high_unit_cpu_affinities_cell_config {
 
 /// Expert configuration of the DU high.
 struct du_high_unit_expert_execution_config {
+  /// \brief Task executor configuration for the DU.
+  du_high_unit_execution_queues_config du_queue_cfg;
+
   /// \brief CPU affinities per cell of the gNB app.
   ///
   /// \note Add one cell by default.

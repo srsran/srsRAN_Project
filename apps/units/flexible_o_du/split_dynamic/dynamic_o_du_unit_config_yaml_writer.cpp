@@ -21,6 +21,7 @@
  */
 
 #include "dynamic_o_du_unit_config_yaml_writer.h"
+#include "apps/helpers/metrics/metrics_config_yaml_writer.h"
 #include "apps/units/flexible_o_du/o_du_high/o_du_high_unit_config_yaml_writer.h"
 #include "apps/units/flexible_o_du/o_du_low/du_low_config_yaml_writer.h"
 #include "apps/units/flexible_o_du/split_7_2/helpers/ru_ofh_config_yaml_writer.h"
@@ -29,8 +30,19 @@
 
 using namespace srsran;
 
+static void fill_ru_dummy_metrics_section(YAML::Node node, const ru_dummy_unit_metrics_config& config)
+{
+  app_helpers::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg);
+
+  auto metrics_node        = node["metrics"];
+  auto layers_node         = metrics_node["layers"];
+  layers_node["enable_ru"] = config.enable_ru_metrics;
+}
+
 static void fill_ru_dummy_config(YAML::Node node, const ru_dummy_unit_config& config)
 {
+  fill_ru_dummy_metrics_section(node, config.metrics_cfg);
+
   auto ru_dummy_node                   = node["ru_dummy"];
   ru_dummy_node["dl_processing_delay"] = config.dl_processing_delay;
   ru_dummy_node["time_scaling"]        = config.time_scaling;

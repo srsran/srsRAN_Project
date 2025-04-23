@@ -31,6 +31,7 @@
 #include "srsran/du/du_cell_config_helpers.h"
 #include "srsran/du/du_high/du_high_factory.h"
 #include "srsran/du/du_high/du_qos_config_helpers.h"
+#include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/error_handling.h"
 #include "srsran/support/test_utils.h"
@@ -162,41 +163,56 @@ static void init_loggers()
   srslog::init();
 }
 
-du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
-  cu_notifier(workers.test_worker),
-  du_high_cfg([params]() {
-    init_loggers();
-
-    du_high_configuration cfg{};
-    cfg.ran.sched_cfg.log_broadcast_messages = false;
-    cfg.ran.cells.reserve(params.nof_cells);
-    auto builder_params =
-        params.builder_params.has_value() ? params.builder_params.value() : cell_config_builder_params{};
-    for (unsigned i = 0; i < params.nof_cells; ++i) {
-      builder_params.pci = (pci_t)i;
-      auto du_cell_cfg   = config_helpers::make_default_du_cell_config(builder_params);
-      if (params.prach_frequency_start.has_value()) {
-        du_cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_frequency_start =
-            params.prach_frequency_start.value();
-      }
-      cfg.ran.cells.push_back(du_cell_cfg);
-      cfg.ran.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
-      if (params.pucch_cfg.has_value()) {
-        cfg.ran.cells.back().pucch_cfg = params.pucch_cfg.value();
-      }
+du_high_configuration srs_du::create_du_high_configuration(const du_high_env_sim_params& params)
+{
+  du_high_configuration cfg{};
+  cfg.ran.sched_cfg.log_broadcast_messages = false;
+  cfg.ran.cells.reserve(params.nof_cells);
+  auto builder_params =
+      params.builder_params.has_value() ? params.builder_params.value() : cell_config_builder_params{};
+  for (unsigned i = 0; i < params.nof_cells; ++i) {
+    builder_params.pci = (pci_t)i;
+    auto du_cell_cfg   = config_helpers::make_default_du_cell_config(builder_params);
+    if (params.prach_frequency_start.has_value()) {
+      du_cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.value().rach_cfg_generic.msg1_frequency_start =
+          params.prach_frequency_start.value();
     }
+    du_cell_cfg.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->mcs_table = pdsch_mcs_table::qam256;
+    cfg.ran.cells.push_back(du_cell_cfg);
+    cfg.ran.cells.back().nr_cgi.nci = nr_cell_identity::create(i).value();
+    if (params.pucch_cfg.has_value()) {
+      cfg.ran.cells.back().pucch_cfg = params.pucch_cfg.value();
+    }
+    cfg.ran.mac_cfg.configs.push_back({10000, 10000, 10000});
+  }
 
-    cfg.ran.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
-    cfg.ran.sched_cfg = config_helpers::make_default_scheduler_expert_config();
-    cfg.ran.mac_cfg   = mac_expert_config{.configs = {{10000, 10000, 10000}}};
+  cfg.ran.qos       = config_helpers::make_default_du_qos_config_list(/* warn_on_drop */ true, 0);
+  cfg.ran.sched_cfg = config_helpers::make_default_scheduler_expert_config();
 
-    return cfg;
-  }()),
+  cfg.metrics.enable_f1ap  = true;
+  cfg.metrics.enable_mac   = true;
+  cfg.metrics.enable_rlc   = true;
+  cfg.metrics.enable_sched = true;
+
+  return cfg;
+}
+
+du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
+  du_high_env_simulator(create_du_high_configuration(params))
+{
+}
+
+du_high_env_simulator::du_high_env_simulator(const du_high_configuration& du_hi_cfg_) :
+  cu_notifier(workers.test_worker),
+  du_metrics(workers.test_worker),
+  du_high_cfg(du_hi_cfg_),
   du_hi_dependencies([this]() {
+    init_loggers();
     du_high_dependencies dependencies;
     dependencies.exec_mapper = workers.exec_mapper.get();
     dependencies.f1c_client  = &cu_notifier;
     dependencies.f1u_gw      = &cu_up_sim;
+    dependencies.du_notifier = &du_metrics;
     dependencies.phy_adapter = &phy;
     dependencies.timers      = &timers;
     dependencies.mac_p       = &mac_pcap;
@@ -204,7 +220,7 @@ du_high_env_simulator::du_high_env_simulator(du_high_env_sim_params params) :
     return dependencies;
   }()),
   du_hi(make_du_high(du_high_cfg, du_hi_dependencies)),
-  phy(params.nof_cells, workers.test_worker),
+  phy(du_high_cfg.ran.cells.size(), workers.test_worker),
   next_slot(to_numerology_value(du_high_cfg.ran.cells[0].scs_common),
             test_rgen::uniform_int<unsigned>(0, 10239) *
                 get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common))
@@ -458,6 +474,16 @@ bool du_high_env_simulator::run_ue_context_setup(rnti_t rnti)
       .five_qi = 7U;
   cmd->drbs_to_be_setup_list[0].value().drbs_to_be_setup_item().rlc_mode.value =
       asn1::f1ap::rlc_mode_opts::rlc_um_bidirectional;
+  // UE supports 256QAM.
+  cmd->cu_to_du_rrc_info.ue_cap_rat_container_list =
+      byte_buffer::create({0x10, 0xc9, 0x83, 0x40, 0x67, 0x40, 0x8e, 0x8c, 0xb4, 0x04, 0xbf, 0x1b, 0x07, 0x0a, 0x40,
+                           0x00, 0x2c, 0x12, 0x62, 0xe0, 0x00, 0x30, 0x7e, 0x16, 0x00, 0x31, 0xbf, 0xf0, 0x01, 0x70,
+                           0x00, 0x98, 0xa0, 0x51, 0x00, 0x00, 0x00, 0x04, 0x40, 0x02, 0xc6, 0x80, 0x30, 0x03, 0xd0,
+                           0x38, 0xf2, 0x1c, 0xf8, 0x00, 0x01, 0x20, 0x20, 0x07, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x08,
+                           0x05, 0x03, 0x60, 0x00, 0x03, 0x80, 0x40, 0x4a, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                           0x39, 0x51, 0x40, 0x00, 0x40, 0x00, 0x02, 0x59, 0x65, 0x40, 0x0d, 0x2a, 0xaa, 0x1e, 0x00,
+                           0x0e, 0x00, 0x1e, 0x00, 0x00, 0x00, 0x08, 0x01, 0x00, 0x20, 0x48, 0x14})
+          .value();
   this->du_hi->get_f1ap_du().handle_message(msg);
 
   // Wait until DU sends UE Context Setup Response and the whole RRC container is scheduled.
@@ -553,7 +579,7 @@ void du_high_env_simulator::run_slot()
 {
   // Dispatch a slot indication to all cells in the L2 (fork work across cells).
   for (unsigned i = 0; i != du_high_cfg.ran.cells.size(); ++i) {
-    du_hi->get_slot_handler(to_du_cell_index(i)).handle_slot_indication(next_slot);
+    du_hi->get_slot_handler(to_du_cell_index(i)).handle_slot_indication({next_slot, std::chrono::system_clock::now()});
   }
 
   // Wait for slot indication to be processed and the l2 results to be sent back to the l1 (join cell results, in this

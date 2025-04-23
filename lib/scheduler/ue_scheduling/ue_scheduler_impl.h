@@ -47,6 +47,7 @@ public:
   explicit ue_scheduler_impl(const scheduler_ue_expert_config& expert_cfg_);
 
   void add_cell(const ue_scheduler_cell_params& params) override;
+  void rem_cell(du_cell_index_t cell_index) override;
 
   /// Schedule UE DL grants for a given {slot, cell}.
   void run_slot(slot_point slot_tx) override;
@@ -67,7 +68,7 @@ public:
   scheduler_positioning_handler& get_positioning_handler() override { return event_mng; }
 
 private:
-  void run_sched_strategy(slot_point sl_tx, du_cell_index_t cell_index);
+  void run_sched_strategy(du_cell_index_t cell_index);
 
   /// Counts the number of PUCCH grants that are allocated for a given user at a specific slot.
   void update_harq_pucch_counter(cell_resource_allocator& cell_alloc);

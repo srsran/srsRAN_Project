@@ -109,7 +109,7 @@ TEST_F(gtpu_echo_test, entity_creation)
   echo                           = create_gtpu_echo(msg);
 
   ASSERT_NE(echo, nullptr);
-};
+}
 
 /// \brief Test correct reception of an echo message and check for the response
 TEST_F(gtpu_echo_test, rx_echo_req_tx_echo_rep)
@@ -130,7 +130,7 @@ TEST_F(gtpu_echo_test, rx_echo_req_tx_echo_rep)
   ASSERT_FALSE(gtpu_tx.last_tx.empty());
   byte_buffer echo_rep = byte_buffer::create(gtpu_echo_response_sn_65535).value();
   ASSERT_EQ(gtpu_tx.last_tx, echo_rep);
-};
+}
 
 /// \brief Test correct reception of an error indication message
 TEST_F(gtpu_echo_test, rx_error_indication)
@@ -149,7 +149,7 @@ TEST_F(gtpu_echo_test, rx_error_indication)
   rx->handle_pdu(std::move(error_indication), orig_addr);
 
   ASSERT_TRUE(gtpu_tx.last_tx.empty());
-};
+}
 
 int main(int argc, char** argv)
 {

@@ -43,7 +43,9 @@ lower_phy_baseband_processor::lower_phy_baseband_processor(const lower_phy_baseb
   rx_buffers(config.nof_rx_buffers),
   tx_buffers(config.nof_tx_buffers),
   tx_time_offset(config.tx_time_offset),
-  rx_to_tx_max_delay(config.rx_to_tx_max_delay)
+  rx_to_tx_max_delay(config.rx_to_tx_max_delay),
+  tx_state(config.stop_nof_slots),
+  rx_state(config.stop_nof_slots)
 {
   static constexpr interval<float> system_time_throttling_range(0, 1);
 
@@ -99,8 +101,7 @@ void lower_phy_baseband_processor::stop()
 void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timestamp)
 {
   // Check if it is running, notify stop and return without enqueueing more tasks.
-  if (!tx_state.is_running()) {
-    tx_state.notify_stop();
+  if (!tx_state.on_process()) {
     return;
   }
 
@@ -120,7 +121,7 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
     // - The system time reaches the maximum waiting time; or
     // - The lower PHY was stopped.
     while ((timestamp > (last_rx_timestamp.load(std::memory_order_acquire) + rx_to_tx_max_delay)) &&
-           (std::chrono::steady_clock::now() < wait_until_tp) && tx_state.is_running()) {
+           (std::chrono::steady_clock::now() < wait_until_tp)) {
       std::this_thread::sleep_for(std::chrono::microseconds(10));
     }
   }
@@ -128,10 +129,10 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
   // Throttling mechanism to slow down the baseband processing.
   if ((cpu_throttling_time.count() > 0) && (last_tx_time.has_value())) {
     std::chrono::time_point<std::chrono::high_resolution_clock> now     = std::chrono::high_resolution_clock::now();
-    std::chrono::nanoseconds                                    elapsed = now - last_tx_time.value();
+    std::chrono::nanoseconds                                    elapsed = now - *last_tx_time;
 
     if (elapsed < cpu_throttling_time) {
-      std::this_thread::sleep_until(last_tx_time.value() + cpu_throttling_time);
+      std::this_thread::sleep_until(*last_tx_time + cpu_throttling_time);
     }
   }
   last_tx_time.emplace(std::chrono::high_resolution_clock::now());
@@ -166,8 +167,7 @@ void lower_phy_baseband_processor::dl_process(baseband_gateway_timestamp timesta
 void lower_phy_baseband_processor::ul_process()
 {
   // Check if it is running, notify stop and return without enqueueing more tasks.
-  if (!rx_state.is_running()) {
-    rx_state.notify_stop();
+  if (!rx_state.on_process()) {
     return;
   }
 

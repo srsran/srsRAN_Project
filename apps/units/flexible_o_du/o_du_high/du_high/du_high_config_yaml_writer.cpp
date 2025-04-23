@@ -27,10 +27,19 @@
 
 using namespace srsran;
 
+static void fill_du_high_metrics_layers_section(YAML::Node node, const du_high_unit_metrics_layer_config& config)
+{
+  node["enable_sched"] = config.enable_scheduler;
+  node["enable_rlc"]   = config.enable_rlc;
+  node["enable_mac"]   = config.enable_mac;
+}
+
 static void fill_du_high_metrics_section(YAML::Node node, const du_high_unit_metrics_config& config)
 {
-  node["rlc_report_period"]   = config.rlc.report_period;
-  node["sched_report_period"] = config.sched_report_period;
+  auto perdiodicity_node                = node["periodicity"];
+  perdiodicity_node["du_report_period"] = config.du_report_period;
+
+  fill_du_high_metrics_layers_section(node["layers"], config.layers_cfg);
 }
 
 static void fill_du_high_pcap_section(YAML::Node node, const du_high_unit_pcap_config& config)
@@ -265,6 +274,7 @@ static YAML::Node build_du_high_pdcch_section(const du_high_unit_pdcch_config& c
       dedicated_node["ss2_n_candidates"].push_back(static_cast<unsigned>(ss2));
     }
     dedicated_node["ss2_n_candidates"].SetStyle(YAML::EmitterStyle::Flow);
+    dedicated_node["al_cqi_offset"] = config.dedicated.al_cqi_offset;
 
     node["dedicated"] = dedicated_node;
   }
@@ -418,8 +428,10 @@ static YAML::Node build_du_high_pucch_section(const du_high_unit_pucch_config& c
 {
   YAML::Node node;
 
-  node["p0_nominal"]                      = config.p0_nominal;
-  node["pucch_resource_common"]           = config.pucch_resource_common;
+  node["p0_nominal"] = config.p0_nominal;
+  if (config.pucch_resource_common.has_value()) {
+    node["pucch_resource_common"] = config.pucch_resource_common.value();
+  }
   node["use_format_0"]                    = config.use_format_0;
   node["pucch_set1_format"]               = static_cast<unsigned>(config.set1_format);
   node["sr_period_ms"]                    = config.sr_period_msec;
@@ -568,14 +580,15 @@ static YAML::Node build_du_high_csi_section(const du_high_unit_csi_config& confi
 
 static void fill_du_high_sched_expert_section(YAML::Node& node, const du_high_unit_scheduler_expert_config& config)
 {
-  if (std::holds_alternative<time_qos_scheduler_expert_config>(config.policy_sched_expert_cfg)) {
+  if (config.policy_sched_expert_cfg.has_value() and
+      std::holds_alternative<time_qos_scheduler_expert_config>(*config.policy_sched_expert_cfg)) {
     YAML::Node sched_node;
     YAML::Node policy_node;
     YAML::Node policy_pf_node;
     policy_pf_node["pf_fairness_coeff"] =
-        std::get<time_qos_scheduler_expert_config>(config.policy_sched_expert_cfg).pf_fairness_coeff;
+        std::get<time_qos_scheduler_expert_config>(*config.policy_sched_expert_cfg).pf_fairness_coeff;
     policy_pf_node["prio_enabled"] =
-        std::get<time_qos_scheduler_expert_config>(config.policy_sched_expert_cfg).priority_enabled;
+        std::get<time_qos_scheduler_expert_config>(*config.policy_sched_expert_cfg).priority_enabled;
 
     policy_node["qos_sched"]       = policy_pf_node;
     sched_node["policy_sched_cfg"] = policy_node;

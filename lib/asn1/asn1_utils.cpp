@@ -1768,7 +1768,7 @@ SRSASN_CODE pack_unconstrained_real(bit_ref& bref, float n, bool aligned)
     bref.pack(octet, 8);
   }
   return SRSASN_SUCCESS;
-};
+}
 
 SRSASN_CODE unpack_unconstrained_real(float& n, cbit_ref& bref, bool aligned)
 {
@@ -1840,6 +1840,6 @@ SRSASN_CODE unpack_unconstrained_real(float& n, cbit_ref& bref, bool aligned)
   float*   bits_ptr  = (float*)&ieee_bits;
   n                  = *bits_ptr;
   return SRSASN_SUCCESS;
-};
+}
 
 } // namespace asn1

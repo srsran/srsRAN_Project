@@ -79,10 +79,6 @@ public:
 private:
   void on_statistics_report_timer_expired();
 
-  e1ap_bearer_context_modification_response
-  handle_bearer_context_modification_request_impl(ue_context&                                     ue_ctxt,
-                                                  const e1ap_bearer_context_modification_request& msg);
-
   async_task<e1ap_bearer_context_modification_response> enable_test_mode() override;
 
   std::map<five_qi_t, cu_up_qos_config> qos;

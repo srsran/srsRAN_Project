@@ -179,7 +179,7 @@ public:
       }
     }
     return false;
-  };
+  }
 
   /// Checks if the queue contains an element with a given SN and also includes a specified segment interval given by a
   /// segment offset and segment length.
@@ -200,7 +200,7 @@ public:
       }
     }
     return false;
-  };
+  }
 
   /// \brief Removes all elements with a given SN from queue and removes any invalid elements at the front.
   ///

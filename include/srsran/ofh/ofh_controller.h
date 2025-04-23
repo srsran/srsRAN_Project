@@ -26,10 +26,10 @@ namespace srsran {
 namespace ofh {
 
 /// Open Fronthaul control interface.
-class controller
+class operation_controller
 {
 public:
-  virtual ~controller() = default;
+  virtual ~operation_controller() = default;
 
   /// \brief Starts the Open Fronthaul operation.
   /// \note Caller will be blocked until the controller is fully started.

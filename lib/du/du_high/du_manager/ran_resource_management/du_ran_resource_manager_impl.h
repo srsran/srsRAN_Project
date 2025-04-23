@@ -40,9 +40,10 @@ class du_ran_resource_manager_impl;
 class du_ue_ran_resource_updater_impl final : public ue_ran_resource_configurator::resource_updater
 {
 public:
-  du_ue_ran_resource_updater_impl(du_ue_resource_config*        cell_cfg_,
-                                  du_ran_resource_manager_impl& parent_,
-                                  du_ue_index_t                 ue_index_);
+  du_ue_ran_resource_updater_impl(du_ue_resource_config*                      cell_cfg_,
+                                  const std::optional<ue_capability_summary>& ue_caps_,
+                                  du_ran_resource_manager_impl&               parent_,
+                                  du_ue_index_t                               ue_index_);
   du_ue_ran_resource_updater_impl(const du_ue_ran_resource_updater_impl&)            = delete;
   du_ue_ran_resource_updater_impl(const du_ue_ran_resource_updater_impl&&)           = delete;
   du_ue_ran_resource_updater_impl& operator=(const du_ue_ran_resource_updater_impl&) = delete;
@@ -51,16 +52,20 @@ public:
 
   du_ue_resource_update_response update(du_cell_index_t                       pcell_index,
                                         const f1ap_ue_context_update_request& upd_req,
-                                        const du_ue_resource_config*          reestablished_context) override;
+                                        const du_ue_resource_config*          reestablished_context,
+                                        const ue_capability_summary*          reestablished_ue_caps) override;
 
   void config_applied() override;
 
   const du_ue_resource_config& get() override { return *cell_grp; }
 
+  const std::optional<ue_capability_summary>& ue_capabilities() const override { return *ue_caps; }
+
 private:
-  du_ue_resource_config*        cell_grp;
-  du_ran_resource_manager_impl* parent;
-  du_ue_index_t                 ue_index;
+  du_ue_resource_config*                      cell_grp;
+  const std::optional<ue_capability_summary>* ue_caps;
+  du_ran_resource_manager_impl*               parent;
+  du_ue_index_t                               ue_index;
 };
 
 class du_ran_resource_manager_impl : public du_ran_resource_manager
@@ -92,7 +97,8 @@ public:
   du_ue_resource_update_response update_context(du_ue_index_t                         ue_index,
                                                 du_cell_index_t                       pcell_idx,
                                                 const f1ap_ue_context_update_request& upd_req,
-                                                const du_ue_resource_config*          reestablished_context);
+                                                const du_ue_resource_config*          reestablished_context,
+                                                const ue_capability_summary*          reestablished_ue_caps);
 
   /// \brief Deallocates the RAN resources taken by the UE, so that they can be used by future UEs.
   ///

@@ -98,7 +98,7 @@ static void generate_config(ru_ofh_configuration&              out_cfg,
     sector_cfg.interface                    = cell_cfg.network_interface;
     sector_cfg.is_promiscuous_mode_enabled  = cell_cfg.enable_promiscuous_mode;
     sector_cfg.is_link_status_check_enabled = cell_cfg.check_link_status;
-    sector_cfg.are_metrics_enabled          = ru_cfg.metrics_cfg.enabled();
+    sector_cfg.are_metrics_enabled          = ru_cfg.metrics_cfg.enable_ru_metrics;
     sector_cfg.mtu_size                     = cell_cfg.mtu_size;
     if (!parse_mac_address(cell_cfg.du_mac_address, sector_cfg.mac_src_address)) {
       srsran_terminate("Invalid Distributed Unit MAC address");
@@ -129,10 +129,8 @@ static void generate_config(ru_ofh_configuration&              out_cfg,
         rx_timing_window_params_us_to_symbols(cell_cfg.cell.Ta4_max, cell_cfg.cell.Ta4_min, symbol_duration);
     sector_cfg.is_prach_control_plane_enabled  = cell_cfg.cell.is_prach_control_plane_enabled;
     sector_cfg.ignore_prach_start_symbol       = cell_cfg.cell.ignore_prach_start_symbol;
-    sector_cfg.is_downlink_broadcast_enabled   = cell_cfg.cell.is_downlink_broadcast_enabled;
     sector_cfg.ignore_ecpri_payload_size_field = cell_cfg.cell.ignore_ecpri_payload_size_field;
     sector_cfg.ignore_ecpri_seq_id_field       = cell_cfg.cell.ignore_ecpri_seq_id_field;
-    sector_cfg.are_metrics_enabled             = ru_cfg.metrics_cfg.enabled();
     sector_cfg.log_unreceived_ru_frames        = cell_cfg.cell.log_unreceived_ru_frames;
     sector_cfg.ul_compression_params           = {ofh::to_compression_type(cell_cfg.cell.compression_method_ul),
                                                   cell_cfg.cell.compression_bitwidth_ul};

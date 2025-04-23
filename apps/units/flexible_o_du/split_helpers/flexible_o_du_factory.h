@@ -28,6 +28,8 @@
 
 namespace srsran {
 
+class flexible_o_du_metrics_notifier;
+
 /// Flexible O-RAN DU factory interface.
 class flexible_o_du_factory
 {
