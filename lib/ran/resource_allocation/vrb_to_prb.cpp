@@ -32,7 +32,7 @@ prb_interval non_interleaved_mapping::vrb_to_prb(const vrb_interval& vrbs) const
   return {vrb_to_prb(vrbs.start()), vrb_to_prb(vrbs.stop())};
 }
 
-prb_interval non_interleaved_mapping::prb_to_vrb(const prb_interval& prbs) const
+vrb_interval non_interleaved_mapping::prb_to_vrb(const prb_interval& prbs) const
 {
   return {prb_to_vrb(prbs.start()), prb_to_vrb(prbs.stop())};
 }
@@ -197,8 +197,8 @@ std::pair<prb_interval, prb_interval> interleaved_mapping::vrb_to_prb(const vrb_
 
 prb_bitmap interleaved_mapping::vrb_to_prb(unsigned bwp_size, const vrb_bitmap& vrbs) const
 {
-  srsran_assert(vrbs.size() == config.nof_rbs,
-                "The VRB bitmap size (i.e., {}) doesn't match the size of the interleaving (i.e., {}).",
+  srsran_assert(vrbs.size() <= config.nof_rbs,
+                "The VRB bitmap size (i.e., {}) is greater than the size of the interleaving (i.e., {}).",
                 vrbs.size(),
                 config.nof_rbs);
   srsran_assert(config.coreset_start + config.nof_rbs <= bwp_size,
@@ -230,8 +230,8 @@ vrb_bitmap interleaved_mapping::prb_to_vrb(const prb_bitmap& prbs) const
 
 crb_bitmap interleaved_mapping::vrb_to_crb(unsigned bwp_start, unsigned bwp_size, const vrb_bitmap& vrbs) const
 {
-  srsran_assert(vrbs.size() == config.nof_rbs,
-                "The VRB bitmap size (i.e., {}) doesn't match the size of the interleaving (i.e., {}).",
+  srsran_assert(vrbs.size() <= config.nof_rbs,
+                "The VRB bitmap size (i.e., {}) is greater than the size of the interleaving (i.e., {}).",
                 vrbs.size(),
                 config.nof_rbs);
   srsran_assert(config.coreset_start + config.nof_rbs <= bwp_size,

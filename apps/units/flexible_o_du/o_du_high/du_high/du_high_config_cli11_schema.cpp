@@ -363,6 +363,12 @@ static void configure_cli11_pdsch_args(CLI::App& app, du_high_unit_pdsch_config&
   add_option(app, "--dmrs_additional_position", pdsch_params.dmrs_add_pos, "PDSCH DMRS additional position")
       ->capture_default_str()
       ->check(CLI::Range(0, 3));
+  add_option(app,
+             "--interleaving_bundle_size",
+             pdsch_params.interleaving_bundle_size,
+             "PDSCH interleaving bundle size. Valid values: [0, 2, 4]")
+      ->capture_default_str()
+      ->check(CLI::IsMember({0, 2, 4}));
 }
 
 static void configure_cli11_du_args(CLI::App& app, bool& warn_on_drop)

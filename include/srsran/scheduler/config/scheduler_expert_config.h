@@ -175,6 +175,8 @@ struct scheduler_ue_expert_config {
   bool auto_ack_harq{false};
   /// Boundaries in RB interval for resource allocation of UE PDSCHs.
   crb_interval pdsch_crb_limits{0, MAX_NOF_PRBS};
+  /// Bundle size used for interleaving. Possible values: {0, 2, 4}. When set to 0, interleaving is disabled.
+  unsigned pdsch_interleaving_bundle_size{0};
   /// Boundaries in RB interval for resource allocation of UE PUSCHs.
   crb_interval pusch_crb_limits{0, MAX_NOF_PRBS};
   /// Expert parameters to be passed to the policy scheduler.

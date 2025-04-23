@@ -663,6 +663,11 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
     // Set DMRS additional position.
     out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->pdsch_mapping_type_a_dmrs->additional_positions =
         uint_to_dmrs_additional_positions(base_cell.pdsch_cfg.dmrs_add_pos);
+    if (config.cells_cfg.front().cell.pdsch_cfg.interleaving_bundle_size != 0) {
+      out_cell.ue_ded_serv_cell_cfg.init_dl_bwp.pdsch_cfg->vrb_to_prb_itlvr =
+          static_cast<pdsch_config::vrb_to_prb_interleaver>(
+              config.cells_cfg.front().cell.pdsch_cfg.interleaving_bundle_size);
+    }
 
     // Parameters for csiMeasConfig.
     if (param.csi_rs_enabled) {
@@ -1030,6 +1035,7 @@ static scheduler_expert_config generate_scheduler_expert_config(const du_high_un
   out_cfg.ue.olla_ul_snr_inc                  = pusch.olla_snr_inc;
   out_cfg.ue.olla_max_ul_snr_offset           = pusch.olla_max_snr_offset;
   out_cfg.ue.pdsch_crb_limits                 = {pdsch.start_rb, pdsch.end_rb};
+  out_cfg.ue.pdsch_interleaving_bundle_size   = pdsch.interleaving_bundle_size;
   out_cfg.ue.pusch_crb_limits                 = {pusch.start_rb, pusch.end_rb};
   if (app_sched_expert_cfg.policy_sched_expert_cfg.has_value() and
       std::holds_alternative<time_qos_scheduler_expert_config>(app_sched_expert_cfg.policy_sched_expert_cfg.value())) {

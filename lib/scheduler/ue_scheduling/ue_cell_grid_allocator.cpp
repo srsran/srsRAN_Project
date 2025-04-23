@@ -125,7 +125,7 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_newtx_dl_grant_request& reque
 {
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
   auto sched_ctxt = sched_helper::get_newtx_dl_sched_context(
-      request.user, cell_alloc[0].slot, request.pdsch_slot, request.pending_bytes);
+      request.user, cell_alloc[0].slot, request.pdsch_slot, request.interleaving_enabled, request.pending_bytes);
   if (not sched_ctxt.has_value()) {
     // No valid parameters were found for this UE.
     return make_unexpected(dl_alloc_failure_cause::other);
@@ -208,7 +208,8 @@ ue_cell_grid_allocator::setup_dl_grant_builder(const slice_ue&                  
 
 void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                        grant,
                                               vrb_interval                          vrbs,
-                                              std::pair<crb_interval, crb_interval> crbs)
+                                              std::pair<crb_interval, crb_interval> crbs,
+                                              bool                                  enable_interleaving)
 {
   // Derive remaining parameters from \c dl_grant_params.
   ue&                                          u                  = ues[grant.user->ue_index()];
@@ -298,7 +299,8 @@ void ue_cell_grid_allocator::set_pdsch_params(dl_grant_info&                    
                             rv,
                             grant.h_dl,
                             nof_layers,
-                            tpc);
+                            tpc,
+                            enable_interleaving);
       break;
     default:
       report_fatal_error("Unsupported RNTI type for PDSCH allocation");
@@ -372,8 +374,8 @@ expected<vrb_interval, dl_alloc_failure_cause>
 ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& request)
 {
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
-  auto sched_ctxt =
-      sched_helper::get_retx_dl_sched_context(request.user, cell_alloc[0].slot, request.pdsch_slot, request.h_dl);
+  auto sched_ctxt = sched_helper::get_retx_dl_sched_context(
+      request.user, cell_alloc[0].slot, request.pdsch_slot, request.interleaving_enabled, request.h_dl);
   if (not sched_ctxt) {
     return make_unexpected(dl_alloc_failure_cause::other);
   }
@@ -391,13 +393,18 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& reques
   }
 
   // Compute the corresponding CRBs.
-  // TODO: support interleaving.
-  static constexpr search_space_id      ue_ded_ss_id = to_search_space_id(2);
+  constexpr static search_space_id      ue_ded_ss_id = to_search_space_id(2);
   const auto&                           ss_info      = request.user.get_cc().cfg().search_space(ue_ded_ss_id);
-  std::pair<crb_interval, crb_interval> crbs = {prb_to_crb(ss_info.dl_crb_lims, vrbs.convert_to<prb_interval>()), {}};
+  std::pair<crb_interval, crb_interval> crbs;
+  if (request.interleaving_enabled) {
+    const auto prbs = ss_info.interleaved_mapping.value().vrb_to_prb(vrbs);
+    crbs            = {prb_to_crb(ss_info.dl_crb_lims, prbs.first), prb_to_crb(ss_info.dl_crb_lims, prbs.second)};
+  } else {
+    crbs = {prb_to_crb(ss_info.dl_crb_lims, vrbs.convert_to<prb_interval>()), {}};
+  }
 
   // Set PDSCH parameters.
-  set_pdsch_params(grant.value(), vrbs, crbs);
+  set_pdsch_params(grant.value(), vrbs, crbs, request.interleaving_enabled);
   return vrbs;
 }
 
@@ -814,10 +821,11 @@ void ue_cell_grid_allocator::post_process_pucch_pw_ctrl_results(slot_point slot)
 }
 
 void ue_cell_grid_allocator::dl_newtx_grant_builder::set_pdsch_params(vrb_interval                          alloc_vrbs,
-                                                                      std::pair<crb_interval, crb_interval> alloc_crbs)
+                                                                      std::pair<crb_interval, crb_interval> alloc_crbs,
+                                                                      bool enable_interleaving)
 {
   // Transfer the PDSCH parameters to the parent DL grant.
-  parent->set_pdsch_params(parent->dl_grants[grant_index], alloc_vrbs, alloc_crbs);
+  parent->set_pdsch_params(parent->dl_grants[grant_index], alloc_vrbs, alloc_crbs, enable_interleaving);
 
   // Set PDSCH parameters and set parent as nullptr to avoid further modifications.
   parent = nullptr;

@@ -1359,7 +1359,7 @@ dci_payload srsran::dci_1_1_pack(const dci_1_1_configuration& config)
 
   // VRB-to-PRB mapping - 0 or 1 bit.
   if (config.vrb_prb_mapping.has_value()) {
-    payload.push_back(config.vrb_prb_mapping.value(), config.payload_size.vrb_prb_mapping.value());
+    payload.push_back(config.vrb_prb_mapping.value() != 0 ? 1U : 0U, config.payload_size.vrb_prb_mapping.value());
   }
 
   // PRB bundling size indicator - 0 or 1 bit.

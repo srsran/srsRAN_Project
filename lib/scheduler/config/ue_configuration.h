@@ -20,7 +20,9 @@
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsran/ran/pdcch/pdcch_candidates.h"
+#include "srsran/ran/resource_allocation/vrb_to_prb.h"
 #include "srsran/scheduler/config/bwp_configuration.h"
+#include <optional>
 
 namespace srsran {
 
@@ -35,11 +37,13 @@ using crb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH
 
 /// \brief Grouping of common and UE-dedicated information associated with a given search space.
 struct search_space_info {
-  const search_space_configuration*                 cfg     = nullptr;
-  const coreset_configuration*                      coreset = nullptr;
-  bwp_config_ptr                                    bwp;
-  crb_interval                                      dl_crb_lims;
-  crb_interval                                      ul_crb_lims;
+  const search_space_configuration*              cfg                     = nullptr;
+  const coreset_configuration*                   coreset                 = nullptr;
+  vrb_to_prb::non_interleaved_mapping            non_interleaved_mapping = vrb_to_prb::create_non_interleaved_other();
+  std::optional<vrb_to_prb::interleaved_mapping> interleaved_mapping     = std::nullopt;
+  bwp_config_ptr                                 bwp;
+  crb_interval                                   dl_crb_lims;
+  crb_interval                                   ul_crb_lims;
   span<const pdsch_time_domain_resource_allocation> pdsch_time_domain_list;
   span<const pusch_time_domain_resource_allocation> pusch_time_domain_list;
   dci_size_config                                   dci_sz_cfg;
@@ -81,6 +85,8 @@ struct search_space_info {
                                pci_t                                                                        pci);
 
   void update_pdsch_time_domain_list(const ue_cell_configuration& ue_cell_cfg);
+
+  void update_pdsch_mappings(unsigned interleaving_bundle_size);
 
 private:
   // PDCCH candidates of the SearchSpace for different slot offsets and aggregation levels. Indexed by

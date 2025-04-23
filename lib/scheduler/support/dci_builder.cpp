@@ -223,7 +223,8 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
                                    uint8_t                       rv,
                                    const dl_harq_process_handle& h_dl,
                                    unsigned                      nof_layers,
-                                   uint8_t                       tpc)
+                                   uint8_t                       tpc,
+                                   bool                          enable_interleaving)
 {
   const search_space_info& ss_info = ue_cell_cfg.search_space(ss_id);
   srsran_assert(not ss_info.cfg->is_common_search_space(), "SearchSpace must be of type UE-Specific SearchSpace");
@@ -266,7 +267,8 @@ void srsran::build_dci_f1_1_c_rnti(dci_dl_info&                  dci,
 
   if (dci_sz_cfg.interleaved_vrb_prb_mapping.has_value() and dci_sz_cfg.interleaved_vrb_prb_mapping.value()) {
     if (opt_pdsch_cfg.value().vrb_to_prb_itlvr.has_value()) {
-      f1_1.vrb_prb_mapping = static_cast<unsigned>(opt_pdsch_cfg.value().vrb_to_prb_itlvr.value());
+      f1_1.vrb_prb_mapping =
+          enable_interleaving ? static_cast<unsigned>(opt_pdsch_cfg.value().vrb_to_prb_itlvr.value()) : 0;
     }
   }
 

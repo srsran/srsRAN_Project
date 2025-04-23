@@ -183,6 +183,7 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
 static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&               u,
                                                             slot_point                    pdcch_slot,
                                                             slot_point                    pdsch_slot,
+                                                            bool                          interleaving_enabled,
                                                             const dl_harq_process_handle* h_dl,
                                                             unsigned                      pending_bytes)
 {
@@ -214,11 +215,19 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   // Determine RB allocation limits.
   interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pdsch_nof_rbs &
                                    ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.convert_to<interval<unsigned>>();
-  const auto crb_lims = cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims;
-  const auto prb_lims = crb_to_prb(ss.dl_crb_lims, crb_lims);
-  // TODO: support interleaving.
-  const auto vrb_lims = prb_lims.convert_to<vrb_interval>();
-  nof_rb_lims         = nof_rb_lims & interval<unsigned>{0, vrb_lims.length()};
+  const auto crb_lims = (cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims).convert_to<crb_interval>();
+
+  const auto   prb_lims = crb_to_prb(ss.dl_crb_lims, crb_lims);
+  vrb_interval vrb_lims;
+  if (interleaving_enabled and ss.interleaved_mapping.has_value()) {
+    const auto& interleaved_mapping = ss.interleaved_mapping.value();
+    vrb_lims                        = {interleaved_mapping.prb_to_vrb(prb_lims.start()),
+                                       interleaved_mapping.prb_to_vrb(prb_lims.stop() - 1) + 1};
+  } else {
+    vrb_lims = prb_lims.convert_to<vrb_interval>();
+  }
+
+  nof_rb_lims = nof_rb_lims & interval<unsigned>{0, vrb_lims.length()};
   if (vrb_lims.empty() or nof_rb_lims.empty()) {
     // Invalid RB allocation range.
     return std::nullopt;
@@ -289,17 +298,19 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
 std::optional<dl_sched_context> sched_helper::get_newtx_dl_sched_context(const slice_ue& u,
                                                                          slot_point      pdcch_slot,
                                                                          slot_point      pdsch_slot,
+                                                                         bool            interleaving_enabled,
                                                                          unsigned        pending_bytes)
 {
-  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, nullptr, pending_bytes);
+  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, interleaving_enabled, nullptr, pending_bytes);
 }
 
-std::optional<dl_sched_context> sched_helper::get_retx_dl_sched_context(const slice_ue&               u,
-                                                                        slot_point                    pdcch_slot,
-                                                                        slot_point                    pdsch_slot,
+std::optional<dl_sched_context> sched_helper::get_retx_dl_sched_context(const slice_ue& u,
+                                                                        slot_point      pdcch_slot,
+                                                                        slot_point      pdsch_slot,
+                                                                        bool            interleaving_enabled,
                                                                         const dl_harq_process_handle& h_dl)
 {
-  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, &h_dl, 0);
+  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, interleaving_enabled, &h_dl, 0);
 }
 
 static vrb_interval
@@ -372,7 +383,6 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
                                    ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.convert_to<interval<unsigned>>();
   const auto crb_lims = cell_cfg.expert_cfg.ue.pusch_crb_limits & ss.ul_crb_lims;
   const auto prb_lims = crb_to_prb(ss.ul_crb_lims, crb_lims);
-  // TODO: support interleaving.
   const auto vrb_lims = prb_lims.convert_to<vrb_interval>();
   nof_rb_lims         = nof_rb_lims & interval<unsigned>{0, vrb_lims.length()};
   if (vrb_lims.empty() or nof_rb_lims.empty()) {

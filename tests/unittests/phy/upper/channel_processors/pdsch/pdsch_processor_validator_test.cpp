@@ -121,7 +121,7 @@ const std::vector<test_case_t> pdsch_processor_validator_test_data = {
        pdu.freq_alloc             = rb_allocation::make_type0({1, 0, 1, 0, 1, 0});
        return pdu;
      },
-     R"(Only contiguous allocation is currently supported\.)"},
+     R"(Only contiguous VRB mask allocation is currently supported\.)"},
     {[] {
        pdsch_processor::pdu_t pdu = base_pdu;
        pdu.tbs_lbrm               = units::bytes(0);

@@ -176,6 +176,11 @@ struct du_high_unit_pdsch_config {
   uint8_t harq_la_ri_drop_threshold{1};
   /// Position for additional DM-RS in DL, see Tables 7.4.1.1.2-3 and 7.4.1.1.2-4 in TS 38.211.
   unsigned dmrs_add_pos{2};
+  /// \brief Bundle size used for interleaving. Possible values: {0, 2, 4}.
+  ///
+  /// Controls the bundle size used for interleaving for PDSCH transmissions scheduled on dedicated search spaces. If
+  /// set to zero, interleaving will be disabled. All other PDSCH transmissions will be always non-interleaved.
+  unsigned interleaving_bundle_size{0};
 };
 
 /// PUSCH application configuration.

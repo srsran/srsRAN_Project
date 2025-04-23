@@ -451,7 +451,7 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   pdsch.rbs            = vrbs;
   pdsch.symbols        = pdsch_cfg.symbols;
   pdsch.dmrs           = pdsch_cfg.dmrs;
-  pdsch.is_interleaved = dci_cfg.vrb_prb_mapping.has_value();
+  pdsch.is_interleaved = dci_cfg.vrb_prb_mapping.has_value() and dci_cfg.vrb_prb_mapping.value() != 0;
   // See TS38.213, 10.1.
   pdsch.ss_set_type = search_space_set_type::ue_specific;
   pdsch.dci_fmt     = dci_dl_format::f1_1;

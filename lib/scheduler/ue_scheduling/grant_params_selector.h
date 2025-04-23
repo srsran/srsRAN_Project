@@ -39,13 +39,17 @@ struct dl_sched_context {
 };
 
 /// Retrieve recommended PDCCH and PDSCH parameters for a newTx DL grant.
-std::optional<dl_sched_context>
-get_newtx_dl_sched_context(const slice_ue& u, slot_point pdcch_slot, slot_point pdsch_slot, unsigned pending_bytes);
+std::optional<dl_sched_context> get_newtx_dl_sched_context(const slice_ue& u,
+                                                           slot_point      pdcch_slot,
+                                                           slot_point      pdsch_slot,
+                                                           bool            interleaving_enabled,
+                                                           unsigned        pending_bytes);
 
 /// Retrieve recommended PDCCH and PDSCH parameters for a reTx DL grant.
 std::optional<dl_sched_context> get_retx_dl_sched_context(const slice_ue&               u,
                                                           slot_point                    pdcch_slot,
                                                           slot_point                    pdsch_slot,
+                                                          bool                          interleaving_enabled,
                                                           const dl_harq_process_handle& h_dl);
 
 /// Select DL VRBs to allocate for a newTx.

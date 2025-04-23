@@ -208,7 +208,7 @@ public:
   ///
   /// \param[in] prbs PRB interval to be converted.
   /// \return A VRB interval.
-  prb_interval prb_to_vrb(const prb_interval& prbs) const;
+  vrb_interval prb_to_vrb(const prb_interval& prbs) const;
 
   /// \brief Converts a VRB bitmap to a PRB bitmap.
   ///

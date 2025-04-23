@@ -118,6 +118,7 @@ private:
   slot_point pdsch_slot;
   slot_point pusch_slot;
   vrb_bitmap used_dl_vrbs;
+  bool       enable_pdsch_interleaving;
   vrb_bitmap used_ul_vrbs;
 
   // Grants being built for the current slice.
