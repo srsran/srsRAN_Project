@@ -262,7 +262,7 @@ private:
       // Exchange the current internal state.
       internal_states previous_state = internal_state.exchange(internal_states::locked);
 
-      // If the precious state is locked, then this request is late and returns this context.
+      // If the previous state is locked, then this request is late and returns this context.
       if (previous_state == internal_states::locked) {
         return new_context;
       }
@@ -275,7 +275,7 @@ private:
       resource = new_resource.copy();
 
       // Transition to in-use.
-      internal_state = internal_states::in_use;
+      internal_state.store(internal_states::in_use);
 
       // If the previous state did not contain a context, then return nullopt.
       if (previous_state == internal_states::available) {
@@ -308,7 +308,7 @@ private:
       }
 
       // Transition to available.
-      internal_state = internal_states::available;
+      internal_state.store(internal_states::available);
 
       // Return the context and resource.
       return {current_context, std::move(current_resource)};
