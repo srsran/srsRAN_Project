@@ -145,19 +145,6 @@ public:
   virtual std::pair<pucch_uci_message, channel_state_information> detect(const resource_grid_reader&  grid,
                                                                          const format0_configuration& config) = 0;
 
-  /// \brief Detects a PUCCH Format 1 transmission.
-  ///
-  /// Reverts the operations described in TS38.211 Section 6.3.2.4. See also TS38.213 Section 9.2 for more information
-  /// about the configuration parameters and the format of the output UCI message. In particular, note that no SR bit is
-  /// transmitted if HARQ-ACK bits are and that the UE does not transmit anything (DTX) if the UCI message only consists
-  /// of a 0-valued SR bit.
-  /// \param[in]  grid      Input resource grid.
-  /// \param[in]  estimates Estimated channel.
-  /// \param[in]  config    PUCCH Format 1 configuration parameters.
-  /// \return The detected PUCCH message.
-  virtual pucch_detection_result
-  detect(const resource_grid_reader& grid, const channel_estimate& estimates, const format1_configuration& config) = 0;
-
   /// \brief Detects multiplexed PUCCH Format 1 transmissions.
   ///
   /// All multiplexed PUCCH transmissions share the configuration parameters in \c config, except for the initial cyclic

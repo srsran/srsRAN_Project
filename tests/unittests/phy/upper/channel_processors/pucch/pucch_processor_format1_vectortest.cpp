@@ -8,18 +8,14 @@
  *
  */
 
-#include "pucch_detector_test_doubles.h"
 #include "pucch_processor_format1_test_data.h"
 #include "pucch_processor_test_fixture.h"
-#include "srsran/phy/upper/channel_processors/channel_processor_formatters.h"
 #include "srsran/phy/upper/channel_processors/pucch/formatters.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_processor_result.h"
 #include "srsran/phy/upper/channel_processors/uci/uci_status.h"
 #include "srsran/phy/upper/channel_state_information.h"
-#include "srsran/ran/pucch/pucch_constants.h"
 #include "srsran/ran/subcarrier_spacing.h"
-#include "srsran/support/complex_normal_random.h"
 #include "fmt/format.h"
 #include <cstdint>
 #include <gtest/gtest.h>

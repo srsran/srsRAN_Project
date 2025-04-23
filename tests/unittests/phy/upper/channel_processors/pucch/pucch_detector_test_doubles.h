@@ -33,21 +33,6 @@ public:
     return {};
   }
 
-  pucch_detection_result detect(const resource_grid_reader&  grid,
-                                const channel_estimate&      estimates,
-                                const format1_configuration& config) override
-  {
-    entries_format1.emplace_back();
-    entry_format1& entry        = entries_format1.back();
-    entry.grid                  = &grid;
-    entry.estimate              = &estimates;
-    entry.config                = config;
-    entry.msg                   = pucch_uci_message({0, config.nof_harq_ack, 0, 0});
-    span<uint8_t> harq_ack_bits = entry.msg.get_harq_ack_bits();
-    std::generate(harq_ack_bits.begin(), harq_ack_bits.end(), [this]() { return rgen() & 1; });
-    return {.uci_message = entry.msg, .detection_metric = 1};
-  }
-
   const pucch_format1_map<pucch_detector::pucch_detection_result_csi>&
   detect(const resource_grid_reader&                  grid,
          const pucch_detector::format1_configuration& config,

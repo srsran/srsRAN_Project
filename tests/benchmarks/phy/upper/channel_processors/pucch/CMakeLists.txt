@@ -7,7 +7,7 @@
 #
 
 add_executable(pucch_processor_benchmark pucch_processor_benchmark.cpp)
-set(pucch_PROCESSOR_LIBRARIES srsran_phy_support
+set(PUCCH_PROCESSOR_LIBRARIES
         srsran_pucch_processor
         srsran_channel_equalizer
         srsran_channel_processors
@@ -15,11 +15,5 @@ set(pucch_PROCESSOR_LIBRARIES srsran_phy_support
         srslog
         srsvec)
 
-target_link_libraries(pucch_processor_benchmark
-        srsran_channel_equalizer
-        srsran_channel_processors
-        srsran_pucch_processor
-        srsran_transform_precoding
-        srslog
-        srsvec)
+target_link_libraries(pucch_processor_benchmark ${PUCCH_PROCESSOR_LIBRARIES})
 add_test(pucch_processor_benchmark pucch_processor_benchmark -m silent -R 1 -B 1 -T 2)
