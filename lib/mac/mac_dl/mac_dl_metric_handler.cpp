@@ -58,6 +58,11 @@ void mac_dl_cell_metric_handler::on_cell_deactivation()
   if (not enabled()) {
     return;
   }
+  if (not cell_activated or not next_report_slot.valid()) {
+    // Activation hasn't started or hasn't completed.
+    return;
+  }
+
   data.last_report = true;
   cell_activated   = false;
 

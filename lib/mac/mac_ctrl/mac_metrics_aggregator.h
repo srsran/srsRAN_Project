@@ -33,6 +33,9 @@ struct cell_metric_report_config {
 class mac_metrics_aggregator
 {
 public:
+  /// \brief Maximum delay between the first and last report in the aggregation period.
+  constexpr static std::chrono::milliseconds aggregation_timeout{5};
+
   mac_metrics_aggregator(std::chrono::milliseconds   period_,
                          mac_metrics_notifier&       mac_notifier_,
                          scheduler_metrics_notifier* sched_notifier_,
@@ -50,7 +53,11 @@ private:
   /// Called when pending reports should be handled.
   void handle_pending_reports();
 
-  enum class pop_result { pop_and_discarded, no_op, cell_activated, cell_deactivated, report };
+  void handle_cell_activation(du_cell_index_t cell_index, slot_point first_report_slot);
+
+  void handle_cell_deactivation(du_cell_index_t cell_index, const mac_dl_cell_metric_report& last_report);
+
+  enum class pop_result { no_op, report, pop_and_discarded };
 
   bool       pop_sched_report(cell_metric_handler& cell, scheduler_cell_metrics& report);
   pop_result pop_mac_report(cell_metric_handler& cell, mac_dl_cell_metric_report& report);
@@ -72,15 +79,16 @@ private:
   slot_point next_report_start_slot;
 
   /// Number of cells currently active.
-  unsigned nof_cell_active = 0;
+  unsigned nof_active_cells = 0;
 
   /// Next report to be sent.
   mac_metric_report next_report;
 
-  /// \brief Number of events expected before a dispatch task is triggered.
-  /// Note: We use this counter to avoid dispatching more tasks than required when not all cell reports have been
-  /// enqueued.
-  std::atomic<int> events_until_trigger{0};
+  // Number of cell reports pending to be processed.
+  std::atomic<unsigned> report_count{0};
+
+  // Timer that when triggered aggregates all existing cell reports.
+  unique_timer aggr_timer;
 };
 
 } // namespace srsran

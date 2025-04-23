@@ -43,18 +43,15 @@ public:
 
   void on_cell_activation(slot_point first_report_slot) override
   {
-    // We use a report with zero slots to represent a start cell event.
-    mac_dl_cell_metric_report report{};
-    report.start_slot       = first_report_slot;
-    report.nof_slots        = 0;
-    report.cell_deactivated = false;
-    on_cell_metric_report(report);
+    defer_until_success(parent.ctrl_exec, parent.timers, [this, first_report_slot]() {
+      parent.handle_cell_activation(cell_index, first_report_slot);
+    });
   }
 
   void on_cell_deactivation(const mac_dl_cell_metric_report& report) override
   {
-    srsran_assert(report.cell_deactivated, "Expected cell deactivated flag being set");
-    on_cell_metric_report(report);
+    defer_until_success(
+        parent.ctrl_exec, parent.timers, [this, report]() { parent.handle_cell_deactivation(cell_index, report); });
   }
 
   void on_cell_metric_report(const mac_dl_cell_metric_report& report) override
@@ -66,14 +63,14 @@ public:
     }
 
     // If the token is acquired, it means that it is this thread's job to dispatch a job to handle pending reports.
-    bool token_acquired = parent.events_until_trigger.fetch_sub(1U, std::memory_order_acq_rel) - 1 <= 0;
+    bool token_acquired = parent.report_count.fetch_add(1U, std::memory_order_acq_rel) == 0;
     if (not token_acquired) {
       // Another thread is already handling the reports.
       return;
     }
 
-    // Dispatch a job to handle the pending reports.
-    defer_until_success(parent.ctrl_exec, parent.timers, [this]() { parent.handle_pending_reports(); });
+    // Defer the report handling to the control executor.
+    parent.aggr_timer.run();
   }
 
   void report_metrics(const scheduler_cell_metrics& report) override
@@ -137,6 +134,8 @@ mac_metrics_aggregator::mac_metrics_aggregator(std::chrono::milliseconds   perio
   timers(timers_),
   logger(logger_)
 {
+  aggr_timer = timers_.create_unique_timer(ctrl_exec);
+  aggr_timer.set(aggregation_timeout, [this](timer_id_t /* unused */) { handle_pending_reports(); });
 }
 
 mac_metrics_aggregator::~mac_metrics_aggregator() {}
@@ -168,48 +167,30 @@ void mac_metrics_aggregator::handle_pending_reports()
 {
   mac_dl_cell_metric_report cell_report;
   scheduler_cell_metrics    sched_report;
-  int                       current_count = events_until_trigger.load(std::memory_order_acquire);
-  while (current_count <= 0) {
-    int  pop_count    = 0;
-    bool popped_event = false;
+  uint32_t                  nof_reports = report_count.load(std::memory_order_acquire);
+  while (nof_reports > 0) {
+    unsigned pop_count = 0;
     for (auto& cell : cells) {
       while (pop_sched_report(*cell, sched_report)) {
         // Consume the SCHED report.
         next_report.sched.cells.push_back(sched_report);
       }
-
-      for (auto result = pop_mac_report(*cell, cell_report); result != pop_result::no_op;
+      for (auto result = pop_mac_report(*cell, cell_report); result != pop_result::no_op and pop_count != nof_reports;
            result      = pop_mac_report(*cell, cell_report)) {
-        pop_count++;
-        popped_event = true;
-        switch (result) {
-          case pop_result::cell_activated:
-            // Increase the number of events needed until the next trigger, as now we expect one more cell to report.
-            pop_count++;
-            break;
-          case pop_result::cell_deactivated:
-            // Decrease the number of events needed until the next trigger.
-            pop_count--;
-            next_report.dl.cells.push_back(cell_report);
-            break;
-          case pop_result::report:
-            next_report.dl.cells.push_back(cell_report);
-            break;
-          case pop_result::pop_and_discarded:
-            break;
-          default:
-            report_fatal_error("Unsupported case");
+        ++pop_count;
+
+        // Consume the report.
+        if (result == pop_result::report) {
+          next_report.dl.cells.push_back(cell_report);
         }
       }
     }
-
-    // Update number of events needed until next trigger.
-    current_count = events_until_trigger.fetch_add(pop_count, std::memory_order_acq_rel) + pop_count;
-
-    if (current_count <= 0 and not popped_event) {
-      logger.error("Unable to dequeue any MAC cell metric report");
-      break;
+    if (pop_count != nof_reports) {
+      // Not all reports have been processed. Wait for more reports.
+      logger.warning("Not all reports have been processed");
+      pop_count = nof_reports;
     }
+    nof_reports = report_count.fetch_sub(pop_count, std::memory_order_acq_rel) - pop_count;
 
     // Send an aggregated report if ready.
     try_send_new_report();
@@ -257,34 +238,6 @@ mac_metrics_aggregator::pop_result mac_metrics_aggregator::pop_mac_report(cell_m
   if (next_ev == nullptr) {
     // No report to pop.
     return pop_result::no_op;
-  }
-
-  if (next_ev->nof_slots == 0 or next_ev->cell_deactivated) {
-    // We are either starting or stopping a cell.
-    if (not cell.mac_report_queue.try_pop(report)) {
-      logger.warning("cell={}: Unable to pop metric report event", fmt::underlying(cell.cell_index));
-      return pop_result::no_op;
-    }
-    if (report.cell_deactivated) {
-      // Cell Stop signal.
-      cell.active_flag      = false;
-      cell.next_report_slot = {};
-      nof_cell_active--;
-      if (nof_cell_active == 0) {
-        // No cells are active. Reset the next aggregated report start slot.
-        next_report_start_slot = {};
-      }
-      return pop_result::cell_deactivated;
-    }
-    // Cell Start signal.
-    cell.active_flag      = true;
-    cell.next_report_slot = next_ev->start_slot;
-    if (not next_report_start_slot.valid()) {
-      // This is the first report ever. Compute window start slot.
-      next_report_start_slot = next_ev->start_slot - cell.period_slots;
-    }
-    nof_cell_active++;
-    return pop_result::cell_activated;
   }
 
   if (next_ev->start_slot >= next_report_start_slot + cell.period_slots and
@@ -343,4 +296,42 @@ void mac_metrics_aggregator::try_send_new_report()
   // Reset report.
   next_report.dl.cells.clear();
   next_report.sched.cells.clear();
+}
+
+void mac_metrics_aggregator::handle_cell_activation(du_cell_index_t cell_index, slot_point first_report_slot)
+{
+  srsran_assert(cells.contains(cell_index), "MAC cell activated but not configured");
+  auto& cell = *cells[cell_index];
+  srsran_assert(not cell.active_flag, "Reactivation of cell not supported");
+
+  cell.active_flag      = true;
+  cell.report_ready     = false;
+  cell.next_report_slot = first_report_slot;
+  if (not next_report_start_slot.valid()) {
+    // This is the first report ever. Compute window start slot.
+    next_report_start_slot = first_report_slot - cell.period_slots;
+  }
+  ++nof_active_cells;
+}
+
+void mac_metrics_aggregator::handle_cell_deactivation(du_cell_index_t                  cell_index,
+                                                      const mac_dl_cell_metric_report& last_report)
+{
+  srsran_assert(cells.contains(cell_index), "MAC cell activated but not configured");
+  auto& cell = *cells[cell_index];
+  srsran_assert(cell.active_flag, "Deactivation of already deactivated cell not supported");
+  srsran_assert(last_report.cell_deactivated, "Expected cell deactivated flag to be set");
+
+  // Save last report before deactivating cell.
+  if (last_report.start_slot >= next_report_start_slot and
+      last_report.start_slot < next_report_start_slot + cell.period_slots) {
+    next_report.dl.cells.push_back(last_report);
+    cell.report_ready = true;
+  }
+  cell.active_flag      = false;
+  cell.next_report_slot = {};
+  if (--nof_active_cells == 0) {
+    // No cells are active. Reset the next aggregated report start slot.
+    next_report_start_slot = {};
+  }
 }
