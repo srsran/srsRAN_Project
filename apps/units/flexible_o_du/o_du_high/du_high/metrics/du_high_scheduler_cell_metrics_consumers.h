@@ -25,10 +25,10 @@ public:
   void handle_metric(const app_services::metrics_set& metric) override;
 
   /// This can be called from another execution context to turn on the actual plotting.
-  void enable() { print_metrics = true; }
+  void enable() { print_metrics.store(true, std::memory_order_relaxed); }
 
   /// This can be called from another execution context to turn off the actual plotting.
-  void disable() { print_metrics = false; }
+  void disable() { print_metrics.store(false, std::memory_order_relaxed); }
 
   /// Prints the header in the next metric handle.
   void print_header() { nof_lines = 10; }

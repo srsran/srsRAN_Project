@@ -156,7 +156,7 @@ static const char* event_to_string(scheduler_cell_event::event_type ev)
 
 void scheduler_cell_metrics_consumer_stdout::handle_metric(const app_services::metrics_set& metric)
 {
-  if (!print_metrics) {
+  if (!print_metrics.load(std::memory_order_relaxed)) {
     return;
   }
 
