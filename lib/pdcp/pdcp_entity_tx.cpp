@@ -112,41 +112,27 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   std::chrono::system_clock::time_point time_of_arrival = std::chrono::high_resolution_clock::now();
 
   if (is_drb()) {
-    if (desired_buffer_size == 0) {
-      if (not cfg.custom.warn_on_drop) {
-        logger.log_info("Dropping SDU. Desired buffer size is 0");
-      } else {
-        logger.log_warning("Dropping SDU. Desired buffer size is 0");
+    auto drop_reason = check_early_drop(buf);
+    if (drop_reason != early_drop_reason::no_drop) {
+      if (warn_on_drop_count == 0) {
+        // Log only at the start of a drop burst.
+        if (cfg.custom.warn_on_drop) {
+          logger.log_warning("Dropping SDU. Cause: {}", drop_reason);
+        } else {
+          logger.log_info("Dropping SDU. Cause: {}", drop_reason);
+        }
       }
+      warn_on_drop_count++;
       return;
     }
-    uint32_t pdu_size            = get_pdu_size(buf);
-    uint32_t updated_buffer_size = tx_window.get_pdu_bytes(integrity_enabled) + pdu_size;
-    if (updated_buffer_size > desired_buffer_size) {
-      if (not cfg.custom.warn_on_drop) {
-        logger.log_info(
-            "Dropping SDU to avoid overloading RLC queue. desired_buffer_size={} pdcp_tx_window_bytes={} {}",
-            desired_buffer_size,
-            tx_window.get_pdu_bytes(integrity_enabled),
-            st);
+    if (warn_on_drop_count != 0) {
+      if (cfg.custom.warn_on_drop) {
+        logger.log_warning("Drop burst finished. nof_sdus={}", warn_on_drop_count);
       } else {
-        logger.log_warning(
-            "Dropping SDU to avoid overloading RLC queue. desired_buffer_size={} pdcp_tx_window_bytes={} {}",
-            desired_buffer_size,
-            tx_window.get_pdu_bytes(integrity_enabled),
-            st);
+        logger.log_info("Drop burst finished. nof_sdus={}", warn_on_drop_count);
       }
-      return;
+      warn_on_drop_count = 0;
     }
-  }
-
-  if ((st.tx_next - st.tx_trans) >= (window_size - 1)) {
-    if (not cfg.custom.warn_on_drop) {
-      logger.log_info("Dropping SDU to avoid going over the TX window size. {}", st);
-    } else {
-      logger.log_warning("Dropping SDU to avoid going over the TX window size. {}", st);
-    }
-    return;
   }
 
   metrics.add_sdus(1, buf.length());
@@ -947,4 +933,20 @@ void pdcp_entity_tx::discard_callback()
       break;
     }
   } while (st.tx_next_ack != st.tx_next);
+}
+
+pdcp_entity_tx::early_drop_reason pdcp_entity_tx::check_early_drop(const byte_buffer& buf)
+{
+  if (desired_buffer_size == 0) {
+    return early_drop_reason::zero_dbs;
+  }
+  uint32_t pdu_size            = get_pdu_size(buf);
+  uint32_t updated_buffer_size = tx_window.get_pdu_bytes(integrity_enabled) + pdu_size;
+  if (updated_buffer_size > desired_buffer_size) {
+    return early_drop_reason::full_rlc_queue;
+  }
+  if ((st.tx_next - st.tx_trans) >= (window_size - 1)) {
+    return early_drop_reason::full_window;
+  }
+  return early_drop_reason::no_drop;
 }
