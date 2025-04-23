@@ -12,6 +12,31 @@
 
 using namespace srsran;
 
+uint8_t srsran::pbch_timing_pack(uint32_t                      sfn,
+                                 bool                          hrf,
+                                 uint8_t                       ssb_block_index,
+                                 srsran::ssb_subcarrier_offset subcarrier_offset,
+                                 unsigned                      L_max)
+{
+  uint8_t payload = 0;
+
+  // Add the SFN. - 4 bit LSB.
+  payload |= ((sfn & 0xfU) << 4U);
+
+  // Half-radio frame bit.
+  payload |= (hrf << 3U);
+
+  if (L_max == 64) {
+    // Pack the 6th, 5th and 4th bits of SS/PBCH block index.
+    payload |= ((ssb_block_index >> 3U) & 7U);
+  } else {
+    // 3rd LSB set to MSB of the SSB subcarrier offset. 2nd and 1st bits are reserved.
+    payload |= (((subcarrier_offset.value() >> 4U) & 1U) << 2U);
+  }
+
+  return payload;
+}
+
 uint32_t srsran::pbch_mib_pack(const pbch_mib_message& msg, unsigned L_max)
 {
   uint32_t payload = 0;
@@ -46,19 +71,8 @@ uint32_t srsran::pbch_mib_pack(const pbch_mib_message& msg, unsigned L_max)
   // Spare - 1 bit.
   // Leave to zero.
 
-  // Add the SFN. - 4 bit LSB.
-  payload |= ((msg.sfn & 0xfU) << 4U);
-
-  // Half radio frame bit.
-  payload |= (msg.hrf << 3U);
-
-  if (L_max == 64) {
-    // Pack the 6th, 5th and 4th bits of SS/PBCH block index.
-    payload |= ((msg.ssb_block_index >> 3U) & 7U);
-  } else {
-    // 3rd LSB set to MSB of the SSB subcarrier offset. 2nd and 1st bits are reserved.
-    payload |= (((msg.subcarrier_offset.value() >> 4U) & 1U) << 2U);
-  }
+  // Add packed timing parameters.
+  payload |= pbch_timing_pack(msg.sfn, msg.hrf, msg.ssb_block_index, msg.subcarrier_offset, L_max);
 
   return payload;
 }

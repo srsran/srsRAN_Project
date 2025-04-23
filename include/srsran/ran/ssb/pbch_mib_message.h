@@ -21,7 +21,7 @@ namespace srsran {
 ///
 /// The MIB is defined by Information Element \e MIB in TS38.331 Section 6.2.2.
 struct pbch_mib_message {
-  /// System frame number (0..1023). Parameter \e systemFrameNumber.
+  /// System Frame Number (0..1023). Parameter \e systemFrameNumber.
   uint32_t sfn;
   /// \c true if the SS/PBCH block transmission is in an odd half frame, \c false otherwise.
   bool hrf;

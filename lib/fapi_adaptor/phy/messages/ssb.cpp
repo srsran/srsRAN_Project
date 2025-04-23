@@ -22,19 +22,9 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const fapi::dl_ssb_pdu& fapi
   // Move the BCH payload to the MSB.
   uint32_t payload = fapi_pdu.bch_payload.bch_payload << 8U;
 
-  // Add the SFN.
-  payload |= ((sfn & 0xfU) << 4U);
-
-  // Add the half radio frame bit.
-  payload |= (hrf << 3U);
-
-  if (fapi_pdu.ssb_maintenance_v3.L_max == 64) {
-    // Pack the 6th, 5th and 4th bits of SS/PBCH block index.
-    payload |= ((fapi_pdu.ssb_block_index >> 3U) & 7U);
-  } else {
-    // 3rd LSB set to MSB of the SSB subcarrier offset. 2nd and 1st bits are reserved.
-    payload |= (((fapi_pdu.ssb_subcarrier_offset >> 7U) & 1U) << 2U);
-  }
+  // Pack timing parameters in the 8 LSB.
+  payload |= pbch_timing_pack(
+      sfn, hrf, fapi_pdu.ssb_block_index, fapi_pdu.ssb_subcarrier_offset, fapi_pdu.ssb_maintenance_v3.L_max);
 
   return payload;
 }

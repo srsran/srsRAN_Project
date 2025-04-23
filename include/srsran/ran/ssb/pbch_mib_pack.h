@@ -15,6 +15,19 @@
 
 namespace srsran {
 
+/// \brief Packs the PBCH timing parameters in 8 bits.
+///
+/// \param sfn               System Frame Number (0..1023).
+/// \param hrf               \c true if the SS/PBCH block transmission is in an odd half frame, \c false otherwise.
+/// \param ssb_block_index   SS/PBCH block opportunity index in a 5ms burst.
+/// \param subcarrier_offset Parameter \e ssb-SubcarrierOffset.
+/// \return The packed PBCH parameters.
+uint8_t pbch_timing_pack(uint32_t              sfn,
+                         bool                  hrf,
+                         uint8_t               ssb_block_idx,
+                         ssb_subcarrier_offset subcarrier_offset,
+                         unsigned              L_max);
+
 /// \brief Packs the PBCH payload including the Master Information Block (MIB).
 ///
 /// The PBCH payload generation is described in TS38.212 Section 7.1.1. The MIB contents are described by the
