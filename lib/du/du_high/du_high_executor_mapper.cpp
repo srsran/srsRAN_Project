@@ -313,12 +313,12 @@ public:
   }
 
 private:
-  task_executor&                                  pool_exec;
-  const unsigned                                  max_strands;
-  const unsigned                                  ctrl_queue_size;
-  const unsigned                                  pdu_queue_size;
-  const bool                                      trace_enabled;
-  const std::optional<std::chrono::milliseconds>& metrics_period;
+  task_executor&                                 pool_exec;
+  const unsigned                                 max_strands;
+  const unsigned                                 ctrl_queue_size;
+  const unsigned                                 pdu_queue_size;
+  const bool                                     trace_enabled;
+  const std::optional<std::chrono::milliseconds> metrics_period;
 
   /// Map of ue indexes to executors. The last position is used when the UE has no ue_index yet assigned.
   std::array<unsigned, MAX_NOF_DU_UES> ue_idx_to_exec_index;
