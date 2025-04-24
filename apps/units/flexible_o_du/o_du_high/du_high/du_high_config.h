@@ -942,7 +942,7 @@ struct du_high_unit_pcap_config {
 
 /// Configuration of the task executors queues.
 struct du_high_unit_execution_queues_config {
-  uint32_t ue_data_executor_queue_size = 8192;
+  uint32_t ue_data_executor_queue_size = 16384;
 };
 
 /// CPU affinities configuration for the cell.
