@@ -49,6 +49,11 @@ public:
             task_executor&            ctrl_exec_);
   ~ngap_impl();
 
+  std::shared_ptr<n2_connection_client> get_n2_client()
+  {
+      return std::shared_ptr<n2_connection_client>(&conn_handler.get_client_handler(), [](auto) {});
+  }
+  
   bool
   update_ue_index(ue_index_t new_ue_index, ue_index_t old_ue_index, ngap_cu_cp_ue_notifier& new_ue_notifier) override;
 

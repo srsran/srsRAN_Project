@@ -64,6 +64,10 @@
 #include "srsran/support/tracing/event_tracing.h"
 #include "srsran/support/versioning/build_info.h"
 #include "srsran/support/versioning/version.h"
+#include <thread>
+#include <iostream>
+#include <string>
+#include "srsran/adt/byte_buffer.h"
 #include <atomic>
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
@@ -194,6 +198,36 @@ static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_c
     sock_cfg.bind_addr = cu_cp_cfg.amf_config.amf.bind_addr;
     cu_up_cfg.ngu_cfg.ngu_socket_cfg.push_back(sock_cfg);
   }
+}
+
+void launch_injection_shell(std::shared_ptr<srsran::srs_cu_cp::n2_connection_client> n2_client)
+{
+  std::thread([n2_client]() {
+    std::string cmd;
+    fmt::print("[Injector] Type 'inject' to send custom NGAP packet\n");
+    while (true) {
+      std::getline(std::cin, cmd);
+      if (cmd == "inject") {
+        fmt::print("[Injector] Injecting NGAP packet...\n");
+
+        // 🔧 Replace this with your actual ASN.1 PER encoded packet
+        uint8_t custom_data[] = {
+            0x00, 0x10, 0x40, 0x01, 0x02, 0x03, 0x04
+        };
+
+        auto tx_sdu = srsran::byte_buffer::create(custom_data, sizeof(custom_data));
+        if (!tx_sdu) {
+          fmt::print("[Injector] Failed to create byte_buffer\n");
+          continue;
+        }
+
+        n2_client->on_new_sdu(std::move(tx_sdu));
+        fmt::print("[Injector] Packet sent!\n");
+      } else {
+        fmt::print("[Injector] Unknown command '{}'. Type 'inject'\n", cmd);
+      }
+    }
+  }).detach();
 }
 
 int main(int argc, char** argv)
@@ -494,6 +528,12 @@ int main(int argc, char** argv)
   if (not o_cucp_obj.get_cu_cp().get_ng_handler().amfs_are_connected()) {
     report_error("CU-CP failed to connect to AMF");
   }
+
+  launch_injection_shell(o_cucp_obj.get_cu_cp().get_ng_handler().get_n2_client());
+
+  //auto* raw_ptr = o_cucp_obj.get_cu_cp().get_ng_handler().get_n2_client();
+  //std::shared_ptr<srsran::srs_cu_cp::n2_connection_client> n2_client(raw_ptr, [](auto) {});
+  //launch_injection_shell(n2_client);
 
   // Connect F1-C to O-CU-CP and start listening for new F1-C connection requests.
   f1c_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_f1c_handler());

@@ -129,7 +129,7 @@ std::unique_ptr<ngap_message_notifier> ngap_connection_handler::connect_to_amf()
 
   // Connection successful.
   connected_flag = true;
-  
+
   logger.info("ngap_connection_handler -> connect_to_amf");
 
   return std::make_unique<n2_tx_channel>(tx_pdu_notifier, logger);
