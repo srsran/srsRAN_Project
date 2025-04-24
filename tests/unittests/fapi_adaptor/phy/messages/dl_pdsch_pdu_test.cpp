@@ -63,19 +63,21 @@ static rb_allocation make_freq_allocation(fapi::pdsch_trans_type         trasn_t
   vrb_to_prb::configuration vrb_to_prb_configuration;
   switch (trasn_type) {
     case fapi::pdsch_trans_type::non_interleaved_common_ss:
-      vrb_to_prb_configuration = vrb_to_prb::create_non_interleaved_common_ss(coreset_start);
+      vrb_to_prb_configuration = vrb_to_prb::create_non_interleaved_common_ss(coreset_start - bwp_start);
       break;
     case fapi::pdsch_trans_type::non_interleaved_other:
       vrb_to_prb_configuration = vrb_to_prb::create_non_interleaved_other();
       break;
     case fapi::pdsch_trans_type::interleaved_common_type0_coreset0:
-      vrb_to_prb_configuration = vrb_to_prb::create_interleaved_coreset0(coreset_start, initial_bwp_size);
+      vrb_to_prb_configuration = vrb_to_prb::create_interleaved_coreset0(coreset_start - bwp_start, initial_bwp_size);
       break;
     case fapi::pdsch_trans_type::interleaved_common_any_coreset0_present:
-      vrb_to_prb_configuration = vrb_to_prb::create_interleaved_common_ss(coreset_start, bwp_start, initial_bwp_size);
+      vrb_to_prb_configuration =
+          vrb_to_prb::create_interleaved_common_ss(coreset_start - bwp_start, bwp_start, initial_bwp_size);
       break;
     case fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present:
-      vrb_to_prb_configuration = vrb_to_prb::create_interleaved_common_ss(coreset_start, bwp_start, bwp_size);
+      vrb_to_prb_configuration =
+          vrb_to_prb::create_interleaved_common_ss(coreset_start - bwp_start, bwp_start, bwp_size);
       break;
     case fapi::pdsch_trans_type::interleaved_other:
       vrb_to_prb_configuration = vrb_to_prb::create_interleaved_other(
