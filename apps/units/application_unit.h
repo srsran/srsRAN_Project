@@ -10,11 +10,17 @@
 
 #pragma once
 
+namespace YAML {
+class Node;
+}
+
 namespace CLI {
 class App;
 } // namespace CLI
 
 namespace srsran {
+
+struct worker_manager_config;
 struct os_sched_affinity_bitmask;
 
 /// \brief Application unit interface.
@@ -41,6 +47,12 @@ public:
 
   /// Returns true if the metrics are enabled for this application unit, otherwise false.
   virtual bool are_metrics_enabled() const = 0;
+
+  /// Dumps the application unit configuration into the given YAML node.
+  virtual void dump_config(YAML::Node& node) const = 0;
+
+  /// Fills the given worker manager configuration with the application unit parameters.
+  virtual void fill_worker_manager_config(worker_manager_config& config) = 0;
 };
 
 } // namespace srsran

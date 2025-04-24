@@ -69,16 +69,12 @@ void srsran::fill_dynamic_du_worker_manager_config(worker_manager_config&       
   fill_o_du_high_worker_manager_config(config, unit_cfg.odu_high_cfg, is_blocking_mode_enable);
   fill_du_low_worker_manager_config(config, unit_cfg.du_low_cfg, is_blocking_mode_enable, nof_cells);
 
-  if (std::holds_alternative<ru_sdr_unit_config>(unit_cfg.ru_cfg)) {
-    fill_sdr_worker_manager_config(config, std::get<ru_sdr_unit_config>(unit_cfg.ru_cfg));
-  }
-
-  if (std::holds_alternative<ru_ofh_unit_parsed_config>(unit_cfg.ru_cfg)) {
+  if (auto* ru_sdr = std::get_if<ru_sdr_unit_config>(&unit_cfg.ru_cfg)) {
+    fill_sdr_worker_manager_config(config, *ru_sdr);
+  } else if (auto* ru_ofh = std::get_if<ru_ofh_unit_parsed_config>(&unit_cfg.ru_cfg)) {
     auto cells = generate_du_cell_config(unit_cfg.odu_high_cfg.du_high_cfg.config);
-    fill_ofh_worker_manager_config(config, std::get<ru_ofh_unit_parsed_config>(unit_cfg.ru_cfg).config, cells);
-  }
-
-  if (std::holds_alternative<ru_dummy_unit_config>(unit_cfg.ru_cfg)) {
-    fill_dummy_worker_manager_config(config, std::get<ru_dummy_unit_config>(unit_cfg.ru_cfg));
+    fill_ofh_worker_manager_config(config, ru_ofh->config, cells);
+  } else if (auto* ru_dummy = std::get_if<ru_dummy_unit_config>(&unit_cfg.ru_cfg)) {
+    fill_dummy_worker_manager_config(config, *ru_dummy);
   }
 }
