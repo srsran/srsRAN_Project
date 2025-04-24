@@ -1,0 +1,58 @@
+/*
+ *
+ * Copyright 2021-2025 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "du_low_appconfig_yaml_writer.h"
+#include "apps/helpers/logger/logger_appconfig_yaml_writer.h"
+#include "apps/services/app_resource_usage/app_resource_usage_config_yaml_writer.h"
+#include "apps/services/metrics/metrics_config_yaml_writer.h"
+#include "du_low_appconfig.h"
+
+using namespace srsran;
+
+static void fill_du_appconfig_expert_execution_section(YAML::Node node, const expert_execution_appconfig& config)
+{
+  {
+    YAML::Node affinities_node = node["affinities"];
+
+    if (config.affinities.isolated_cpus.has_value()) {
+      affinities_node["isolated_cpus"] =
+          fmt::format("{:,}", span<const size_t>(config.affinities.isolated_cpus.value().get_cpu_ids()));
+    }
+
+    if (config.affinities.low_priority_cpu_cfg.mask.any()) {
+      affinities_node["low_priority_cpus"] =
+          fmt::format("{:,}", span<const size_t>(config.affinities.low_priority_cpu_cfg.mask.get_cpu_ids()));
+    }
+    affinities_node["low_priority_pinning"] = to_string(config.affinities.low_priority_cpu_cfg.pinning_policy);
+  }
+
+  {
+    YAML::Node threads_node               = node["threads"];
+    YAML::Node non_rt_node                = threads_node["non_rt"];
+    non_rt_node["nof_non_rt_threads"]     = config.threads.non_rt_threads.nof_non_rt_threads;
+    non_rt_node["non_rt_task_queue_size"] = config.threads.non_rt_threads.non_rt_task_queue_size;
+  }
+}
+
+static void fill_du_appconfig_remote_control_section(YAML::Node node, const remote_control_appconfig& config)
+{
+  node["enabled"]      = config.enabled;
+  node["bind_address"] = config.bind_addr;
+  node["port"]         = config.port;
+}
+
+void srsran::fill_du_low_appconfig_in_yaml_schema(YAML::Node& node, const du_low_appconfig& config)
+{
+  app_services::fill_app_resource_usage_config_in_yaml_schema(node, config.metrics_cfg.rusage_config);
+  app_services::fill_metrics_appconfig_in_yaml_schema(node, config.metrics_cfg.metrics_service_cfg);
+  fill_logger_appconfig_in_yaml_schema(node, config.log_cfg);
+  fill_du_appconfig_expert_execution_section(node["expert_execution"], config.expert_execution_cfg);
+  fill_du_appconfig_remote_control_section(node["remote_control"], config.remote_control_config);
+}
