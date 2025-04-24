@@ -42,7 +42,7 @@ create_srs_estimator_generic_factory(std::shared_ptr<low_papr_sequence_generator
                                      std::shared_ptr<time_alignment_estimator_factory>    ta_estimator_factory,
                                      unsigned                                             max_nof_prb);
 
-/// \brief Creates a Sounding Reference Signal propagation channel estimator pool.
+/// Creates a Sounding Reference Signal propagation channel estimator pool.
 std::shared_ptr<srs_estimator_factory> create_srs_estimator_pool(std::shared_ptr<srs_estimator_factory> base_factory,
                                                                  unsigned max_nof_threads);
 
