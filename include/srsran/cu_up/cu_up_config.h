@@ -42,6 +42,7 @@ struct n3_interface_config {
   std::chrono::milliseconds gtpu_rate_limiting_period; // N3 token bucket rate limiting period.
   bool                      gtpu_ignore_ue_ambr;       // Ignore DL UE-AMBR.
   uint32_t                  gtpu_queue_size;           // GTP-U queue size in PDUs.
+  uint32_t                  gtpu_batch_size;           // Maximum number of GTP-U PDUs processed in a batch.
   bool                      warn_on_drop;
 };
 

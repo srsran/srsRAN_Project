@@ -37,6 +37,8 @@ static void configure_cli11_ngu_socket_args(CLI::App& app, cu_up_unit_ngu_socket
 static void configure_cli11_ngu_gtpu_args(CLI::App& app, cu_up_unit_ngu_gtpu_config& gtpu_cfg)
 {
   add_option(app, "--queue_size", gtpu_cfg.gtpu_queue_size, "GTP-U queue size, in PDUs")->capture_default_str();
+  add_option(app, "--batch_size", gtpu_cfg.gtpu_batch_size, "Maximum number of GTP-U PDUs processed in a batch")
+      ->capture_default_str();
   add_option(
       app, "--reordering_timer", gtpu_cfg.gtpu_reordering_timer_ms, "GTP-U RX reordering timer (in milliseconds)")
       ->capture_default_str();

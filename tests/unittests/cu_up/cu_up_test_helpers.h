@@ -84,7 +84,8 @@ public:
   add_tunnel(gtpu_teid_t teid, task_executor& tunnel_exec, gtpu_tunnel_common_rx_upper_layer_interface* tunnel) override
   {
     created_teid_list.push_back(teid);
-    return std::make_unique<gtpu_demux_dispatch_queue>(8192, tunnel_exec, logger, [](span<gtpu_demux_pdu_ctx_t>) {});
+    return std::make_unique<gtpu_demux_dispatch_queue>(
+        8192, tunnel_exec, logger, [](span<gtpu_demux_pdu_ctx_t>) {}, 256);
   }
 
   bool remove_tunnel(gtpu_teid_t teid) override
