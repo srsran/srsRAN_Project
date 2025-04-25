@@ -265,7 +265,8 @@ amari 32UE:
             "iperf and udp and band:3",
             "iperf and udp and not band:3",
             "iperf and tcp and band:3",
-            "iperf and tcp and not band:3",
+            "iperf and tcp and not band:3 and not precoding",
+            "iperf and tcp and not band:3 and precoding",
             "pucch",
           ]
 
