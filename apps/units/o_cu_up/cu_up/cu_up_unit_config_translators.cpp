@@ -61,7 +61,7 @@ srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
     return out_cfg;
   }
 
-  for (const auto& qos : cu_up_config.qos_cfg) {
+  for (const cu_up_unit_qos_config& qos : cu_up_config.qos_cfg) {
     if (out_cfg.find(qos.five_qi) != out_cfg.end()) {
       report_error("Duplicate 5QI configuration: {}\n", qos.five_qi);
     }
@@ -76,6 +76,9 @@ srsran::generate_cu_up_qos_config(const cu_up_unit_config& cu_up_config)
     // Convert F1-U config
     srs_cu_up::f1u_config& f1u_cfg = out_cfg[qos.five_qi].f1u_cfg;
     f1u_cfg.warn_on_drop           = cu_up_config.warn_on_drop;
+    f1u_cfg.dl_t_notif_timer       = std::chrono::milliseconds(qos.f1u_cu_up.t_notify);
+    f1u_cfg.queue_size             = qos.f1u_cu_up.queue_size;
+    f1u_cfg.batch_size             = qos.f1u_cu_up.batch_size;
   }
   return out_cfg;
 }

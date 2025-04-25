@@ -36,15 +36,23 @@ f1u_bearer_impl::f1u_bearer_impl(uint32_t                       ue_index,
   dl_notif_timer(ue_dl_timer_factory.create_timer()),
   ue_inactivity_timer(ue_inactivity_timer_)
 {
-  dl_notif_timer.set(std::chrono::milliseconds(f1u_dl_notif_time_ms),
+  dl_notif_timer.set(std::chrono::milliseconds(config.dl_t_notif_timer),
                      [this](timer_id_t tid) { on_expired_dl_notif_timer(); });
+
+  auto dispatch_fn = [this](span<nru_ul_message> msg_span) {
+    for (nru_ul_message& msg : msg_span) {
+      handle_pdu_impl(std::move(msg));
+    }
+  };
+  ul_batched_queue = std::make_unique<nru_ul_batched_queue>(
+      config.queue_size, ul_exec, logger.get_basic_logger(), dispatch_fn, config.batch_size);
+
+  logger.log_info("F1-U bearer configured. {}", cfg);
 }
 
 void f1u_bearer_impl::handle_pdu(nru_ul_message msg)
 {
-  auto fn = [this, m = std::move(msg)]() mutable { handle_pdu_impl(std::move(m)); };
-
-  if (not ul_exec.defer(std::move(fn))) {
+  if (not ul_batched_queue->try_push(std::move(msg))) {
     if (!cfg.warn_on_drop) {
       logger.log_info("Dropped F1-U PDU, queue is full.");
     } else {

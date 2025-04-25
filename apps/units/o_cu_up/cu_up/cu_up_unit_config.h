@@ -61,7 +61,9 @@ struct cu_up_unit_ngu_config {
 
 /// F1-U configuration at CU_UP side
 struct cu_cp_unit_f1u_config {
-  int32_t t_notify; ///< Maximum backoff time for discard notifications from CU_UP to DU (ms)
+  uint32_t queue_size = 8192; ///< Queue size for F1-U PDUs
+  uint32_t batch_size = 256;  ///< Batch size for F1-U PDUs
+  int32_t  t_notify   = 10;   ///< Maximum backoff time for discard notifications from CU_UP to DU (ms)
 };
 
 /// QoS configuration.

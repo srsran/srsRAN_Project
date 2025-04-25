@@ -111,7 +111,7 @@ static void configure_cli11_test_mode_args(CLI::App& app, cu_up_unit_test_mode_c
 
 static void configure_cli11_cu_up_args(CLI::App& app, cu_up_unit_config& cu_up_params)
 {
-  // UPF section.
+  // NG-U section.
   CLI::App* ngu_subcmd = add_subcommand(app, "ngu", "NG-U parameters")->configurable();
   configure_cli11_ngu_args(*ngu_subcmd, cu_up_params.ngu_cfg);
 
@@ -176,6 +176,8 @@ static void configure_cli11_metrics_args(CLI::App& app, cu_up_unit_metrics_confi
 static void configure_cli11_f1u_cu_up_args(CLI::App& app, cu_cp_unit_f1u_config& f1u_cu_up_params)
 {
   app.add_option("--backoff_timer", f1u_cu_up_params.t_notify, "F1-U backoff timer (ms)")->capture_default_str();
+  app.add_option("--queue_size", f1u_cu_up_params.queue_size, "F1-U backoff timer (ms)")->capture_default_str();
+  app.add_option("--batch_size", f1u_cu_up_params.batch_size, "F1-U backoff timer (ms)")->capture_default_str();
 }
 
 static void configure_cli11_qos_args(CLI::App& app, cu_up_unit_qos_config& qos_params)

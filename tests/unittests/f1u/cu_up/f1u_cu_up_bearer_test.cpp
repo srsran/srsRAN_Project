@@ -167,6 +167,7 @@ TEST_F(f1u_cu_up_test, tx_discard)
 
   f1u->discard_sdu(pdcp_sn);
   // advance time just before the timer-based DL notification is triggered
+  uint32_t f1u_dl_notif_time_ms = 10; // default notif timer
   for (uint32_t t = 0; t < f1u_dl_notif_time_ms - 1; t++) {
     EXPECT_TRUE(tester->tx_msg_list.empty());
     tick();
