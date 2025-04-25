@@ -22,7 +22,12 @@ public:
 
   manual_event_flag& get_awaitable() { return pending_crypto; }
 
-  void start() { increment_token(); }
+  void start()
+  {
+    was_set = false;
+    pending_crypto.reset();
+    increment_token();
+  }
   void stop() { return_token(); }
 
 private:
