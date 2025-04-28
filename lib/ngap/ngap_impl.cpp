@@ -40,6 +40,7 @@
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_types.h"
 #include "srsran/ran/cause/ngap_cause.h"
+#include "srsran/adt/byte_buffer.h"
 
 using namespace srsran;
 using namespace asn1::ngap;
@@ -123,7 +124,7 @@ async_task<ngap_ng_setup_result> ngap_impl::handle_ng_setup_request(unsigned max
   fill_asn1_ng_setup_request(ng_setup_request, context);
 
   logger.info("ngap_impl -> handle_ng_setup_request");
-  
+
   return launch_async<ng_setup_procedure>(
       context, ngap_msg, max_setup_retries, *tx_pdu_notifier, ev_mng, timer_factory{timers, ctrl_exec}, logger);
 }
@@ -1132,4 +1133,11 @@ void ngap_impl::tx_pdu_notifier_with_logging::on_new_message(const ngap_message&
   log_pdu_helper(parent.logger, parent.logger.debug.enabled(), false, parent.ue_ctxt_list, msg.pdu);
 
   decorated->on_new_message(msg);
+}
+
+bool ngap_impl::tx_pdu_notifier_with_logging::send_custom_pdu(byte_buffer pdu)
+{
+  log_pdu_helper(parent.logger, parent.logger.debug.enabled(), false, parent.ue_ctxt_list, msg.pdu);
+
+  return decorated->send_custom_pdu(pdu);
 }

@@ -30,6 +30,7 @@
 #include "srsran/ngap/ngap_setup.h"
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
 #include "srsran/support/async/async_task.h"
+#include "srsran/adt/byte_buffer.h"
 
 namespace srsran {
 namespace srs_cu_cp {
@@ -63,6 +64,8 @@ public:
 
   /// This callback is invoked on each received NGAP message.
   virtual void on_new_message(const ngap_message& msg) = 0;
+  
+  virtual bool send_custom_pdu(byte_buffer pdu) { return false; }
 };
 
 /// Handle NGAP interface management procedures as defined in TS 38.413 section 8.7.

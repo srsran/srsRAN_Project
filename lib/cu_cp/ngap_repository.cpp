@@ -110,6 +110,20 @@ std::map<amf_index_t, ngap_interface*> ngap_repository::get_ngaps()
   return ngaps;
 }
 
+ngap_message_notifier* ngap_repository::get_ngap_tx_pdu_notifier(const plmn_identity& plmn)
+{
+  auto it = plmn_to_amf_index.find(plmn);
+  if (it == plmn_to_amf_index.end()) {
+    return nullptr;
+  }
+  amf_index_t amf_idx = it->second;
+  auto ngap_it = ngap_db.find(amf_idx);
+  if (ngap_it == ngap_db.end()) {
+    return nullptr;
+  }
+  return ngap_it->second.ngap_tx_pdu_notifier.get();
+}
+
 size_t ngap_repository::get_nof_ngap_ues()
 {
   size_t nof_ues = 0;

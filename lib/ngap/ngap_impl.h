@@ -33,6 +33,7 @@
 #include "srsran/ngap/ngap_ue_radio_capability_management.h"
 #include "srsran/support/compiler.h"
 #include "srsran/support/executors/task_executor.h"
+#include "srsran/adt/byte_buffer.h"
 #include <memory>
 
 namespace srsran {
@@ -107,6 +108,7 @@ private:
     }
 
     void on_new_message(const ngap_message& msg) override;
+    bool send_custom_pdu(byte_buffer pdu) override;
 
   private:
     ngap_impl&                             parent;

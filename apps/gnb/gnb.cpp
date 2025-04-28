@@ -499,6 +499,18 @@ int main(int argc, char** argv)
     report_error("CU-CP failed to connect to AMF");
   }
 
+  // Get NGAP notifier
+  //auto notifier = o_cucp_obj.get_cu_cp().get_ngap_tx_pdu_notifier(my_plmn);
+
+  /*
+  // Send custom packet
+  if (notifier != nullptr) {
+    notifier->send_custom_pdu(std::move(my_custom_packet));
+  } else {
+    report_error("NGAP notifier not available");
+  }
+  */
+
   // Connect F1-C to O-CU-CP and start listening for new F1-C connection requests.
   f1c_gw->attach_cu_cp(o_cucp_obj.get_cu_cp().get_f1c_handler());
 
