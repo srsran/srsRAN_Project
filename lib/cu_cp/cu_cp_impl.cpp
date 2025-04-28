@@ -170,6 +170,9 @@ bool cu_cp_impl::amfs_are_connected()
     return true;
   }
 
+  size_t amf_count = ngap_db->get_ngaps().size();
+  logger.info("cu_cp_impl -> number of AMFs configured = {}", amf_count);
+
   for (const auto& [amf_index, ngap] : ngap_db->get_ngaps()) {
     if (not controller->amf_connection_handler().is_amf_connected(amf_index)) {
       return false;
