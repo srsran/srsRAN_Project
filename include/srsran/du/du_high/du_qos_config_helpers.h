@@ -40,11 +40,11 @@ namespace srsran::config_helpers {
 ///               F1-U messages. Large values may trigger unnecessary discard notifications due to expiration of the
 ///               PDCP discard timer.
 
-///  Default value for RLC SDU queue limit in bytes are chosen such that it allows for 16384 PDCP pdus of 1500 of
-///  payload and 7 bytes of PDCP overhead. The SDU limit should be much larger then this, so that the limit is the
-///  number of bytes in the queue, not the number of SDUs, even in the case of small PDUs.
-const uint32_t default_rlc_queue_size_sdus  = 65536;
-const uint32_t default_rlc_queue_size_bytes = 16384 * (1500 + 7);
+///  Default value for RLC SDU queue limit in bytes are chosen such that it allows for 4096 PDCP pdus of 1500 of payload
+///  and 7 bytes of PDCP overhead. The SDU limit should be much larger then this, so that the limit is the number of
+///  bytes in the queue, not the number of SDUs, even in the case of small PDUs
+const uint32_t default_rlc_queue_size_sdus  = 16384;
+const uint32_t default_rlc_queue_size_bytes = 4096 * (1500 + 7);
 
 inline std::map<five_qi_t, srs_du::du_qos_config> make_default_du_qos_config_list(bool warn_on_drop,
                                                                                   int  rlc_metrics_report)
