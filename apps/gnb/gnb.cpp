@@ -499,18 +499,20 @@ int main(int argc, char** argv)
     report_error("CU-CP failed to connect to AMF");
   }
 
-  plmn_identity my_plmn;
-  my_plmn.mcc = 1;       // 001
-  my_plmn.mnc = 1;       // 01
-  my_plmn.mnc_digit_len = 2;  // 2-digit MNC
+  auto my_plmn_expected = srsran::plmn_identity::parse("00101");
 
-  // Get NGAP notifier
-  auto notifier = o_cucp_obj.get_cu_cp().get_ngap_tx_pdu_notifier(my_plmn);
+  if (my_plmn_expected.has_value()) {
+    plmn_identity my_plmn = my_plmn_expected.value();
+      // Get NGAP notifier
+    auto notifier = o_cucp_obj.get_cu_cp().get_ngap_tx_pdu_notifier(my_plmn);
 
-  if (notifier != nullptr) {
+    if (notifier != nullptr) {
       //notifier->send_custom_pdu(std::move(my_custom_ngap_buffer));
+    } else {
+      logger.warning("NGAP Tx notifier not available for {}", my_plmn.to_string());
+    }
   } else {
-      logger.warning("NGAP Tx notifier not available for PLMN MCC={} MNC={}", my_plmn.mcc, my_plmn.mnc);
+    logger.error("Failed to parse PLMN identity");
   }
 
   // Connect F1-C to O-CU-CP and start listening for new F1-C connection requests.
