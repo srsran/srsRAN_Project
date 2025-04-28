@@ -509,10 +509,10 @@ int main(int argc, char** argv)
     if (notifier != nullptr) {
       //notifier->send_custom_pdu(std::move(my_custom_ngap_buffer));
     } else {
-      logger.warning("NGAP Tx notifier not available for {}", my_plmn.to_string());
+      gnb_logger.info("NGAP Tx notifier not available for {}", my_plmn.to_string());
     }
   } else {
-    logger.error("Failed to parse PLMN identity");
+    gnb_logger.info("Failed to parse PLMN identity");
   }
 
   // Connect F1-C to O-CU-CP and start listening for new F1-C connection requests.
