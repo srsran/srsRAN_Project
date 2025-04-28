@@ -90,7 +90,7 @@ public:
   }
 
   bool send_custom_pdu(byte_buffer pdu) override {
-    return sctp_rx_pdu_notifier->on_new_sdu(std::move(sdu));
+    return sctp_rx_pdu_notifier->on_new_sdu(std::move(pdu));
   }
 
   void on_new_message(const ngap_message& msg) override
