@@ -161,6 +161,7 @@ ngap_message_handler* cu_cp_impl::get_ngap_message_handler(const plmn_identity& 
 
 ngap_message_notifier* cu_cp_impl::get_ngap_tx_pdu_notifier(const plmn_identity& plmn)
 {
+  logger.info("cu_cp_impl -> get_ngap_tx_pdu_notifier");
   return ngap_db->get_ngap_tx_pdu_notifier(plmn);
 }
 
