@@ -51,11 +51,6 @@ public:
 
   async_task<void> handle_tnl_association_removal();
 
-  n2_connection_client& get_client_handler()
-  {
-      return client_handler;
-  }
-  
   /// \brief Check if the connection is active.
   [[nodiscard]] bool is_connected() const { return connected_flag; }
 
