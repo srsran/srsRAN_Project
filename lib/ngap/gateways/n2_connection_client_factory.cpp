@@ -85,10 +85,10 @@ public:
   {
   }
 
-  void send_custom_sdu(byte_buffer&& sdu) {
+  void send_custom_sdu(byte_buffer&& sdu) override {
     sctp_rx_pdu_notifier->on_new_sdu(std::move(sdu));
   }
-  
+
   void on_new_message(const ngap_message& msg) override
   {
     // pack NGAP PDU into SCTP SDU.

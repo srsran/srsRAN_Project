@@ -55,6 +55,10 @@ public:
       parent.association_destroyed = true;
     }
 
+    bool send_custom_pdu(byte_buffer pdu) override {
+      return false;
+    }
+    
     bool on_new_sdu(byte_buffer sdu) override
     {
       parent.last_sdu = std::move(sdu);
