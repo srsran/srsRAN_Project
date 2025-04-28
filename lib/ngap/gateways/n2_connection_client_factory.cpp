@@ -89,7 +89,7 @@ public:
   {
   }
 
-  bool send_custom_pdu(byte_buffer pdu) override {
+  bool send_custom_pdu(byte_buffer pdu) {
     return sctp_rx_pdu_notifier->on_new_sdu(std::move(pdu));
   }
 
