@@ -1134,10 +1134,3 @@ void ngap_impl::tx_pdu_notifier_with_logging::on_new_message(const ngap_message&
 
   decorated->on_new_message(msg);
 }
-
-bool ngap_impl::tx_pdu_notifier_with_logging::send_custom_pdu(byte_buffer pdu)
-{
-  log_pdu_helper(parent.logger, parent.logger.debug.enabled(), false, parent.ue_ctxt_list, pdu);
-
-  return decorated->send_custom_pdu(pdu);
-}
