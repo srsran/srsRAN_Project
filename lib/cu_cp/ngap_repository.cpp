@@ -114,11 +114,13 @@ ngap_message_notifier* ngap_repository::get_ngap_tx_pdu_notifier(const plmn_iden
 {
   auto it = plmn_to_amf_index.find(plmn);
   if (it == plmn_to_amf_index.end()) {
+    logger.info("ngap_repository -> get_ngap_tx_pdu_notifier -> plmn not found");
     return nullptr;
   }
   amf_index_t amf_idx = it->second;
   auto ngap_it = ngap_db.find(amf_idx);
   if (ngap_it == ngap_db.end()) {
+    logger.error("ngap_repository -> get_ngap_tx_pdu_notifier. NGAP not found for AMF index {}", fmt::underlying(amf_idx));
     return nullptr;
   }
   return ngap_it->second.ngap_tx_pdu_notifier.get();
