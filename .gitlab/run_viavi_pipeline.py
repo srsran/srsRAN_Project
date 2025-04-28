@@ -136,9 +136,9 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
     TESTBED = "viavi"
     MARKERS = "viavi_manual"
 
-    PYARGS = f'--viavi-manual-campaign-filename "{test_definition.campaign_filename}" --viavi-manual-test-name "{test_definition.id}" --viavi-manual-test-timeout {timeout} --retina-pod-timeout 900'
+    RETINA_LAUNCHER_ARGS = f'--viavi-manual-campaign-filename "{test_definition.campaign_filename}" --viavi-manual-test-name "{test_definition.id}" --viavi-manual-test-timeout {timeout} --retina-pod-timeout 900'
     if args_definition.gnb_cli:
-        PYARGS += f' --viavi-manual-gnb-arguments "{args_definition.gnb_cli}"'
+        RETINA_LAUNCHER_ARGS += f' --viavi-manual-gnb-arguments "{args_definition.gnb_cli}"'
         print("")
         print(
             "⚠️  Using srsgnb-cli overwrites the configuration defined in the test_declaration.yml for the test. Please review your new config carefully!!"
@@ -151,7 +151,7 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
             sys.exit(0)
         print("")
 
-    RETINA_ARGS = "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
+    RETINA_PARAM_ARGS = "gnb.all.pcap=True gnb.all.rlc_enable=True gnb.all.rlc_rb_type=srb"
 
     variables = [
         {"key": "INFRASTRUCTURE_TAG", "value": INFRASTRUCTURE_TAG},
@@ -165,8 +165,8 @@ def run_test(args_definition: _ArgsDefinition, test_definition: _TestDefinition)
         {"key": "TESTBED", "value": TESTBED},
         {"key": "MARKERS", "value": MARKERS},
         {"key": "KEYWORDS", "value": ""},
-        {"key": "PYTEST_ARGS", "value": PYARGS},
-        {"key": "RETINA_ARGS", "value": RETINA_ARGS},
+        {"key": "RETINA_LAUNCHER_ARGS", "value": RETINA_LAUNCHER_ARGS},
+        {"key": "RETINA_PARAM_ARGS", "value": RETINA_PARAM_ARGS},
         {"key": "E2E_LOG_LEVEL", "value": retina_log_level},
         {"key": "GROUP", "value": "viavi"},
         {"key": "PIPELINE_DESCRIPTION", "value": "Viavi manual test"},

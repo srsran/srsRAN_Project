@@ -112,7 +112,7 @@ def _create_pipeline(project: Project, branch: str, variables: Dict[str, str], t
     variable_array = []
     if test and variables.get("TESTBED", "none") != "none":
         print(f"  - Requested test: {test}")
-        variables["RETINA_LAUNCHER_ARGS"] = f'"{test}" ' + variables.get("RETINA_LAUNCHER_ARGS", "")
+        variables["E2E_FILE_OR_DIR"] = test
     print("⏩ Creating pipeline with variables:")
     for key, value in variables.items():
         if value:

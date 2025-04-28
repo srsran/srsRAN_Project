@@ -356,19 +356,7 @@ def test_zmq_2x2_mimo(
     )
 
 
-@mark.parametrize(
-    "direction",
-    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
-)
-@mark.parametrize(
-    "protocol",
-    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
-)
-@mark.parametrize(
-    "band, common_scs, bandwidth",
-    (param(41, 30, 50, id="band:%s-scs:%s-bandwidth:%s"),),
-)
-@mark.zmq_64_ues
+@mark.zmq
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_64_ues(
@@ -377,11 +365,6 @@ def test_zmq_64_ues(
     ue_64: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-    protocol: IPerfProto,
-    direction: IPerfDir,
 ):
     """
     ZMQ 2x2 mimo IPerfs
@@ -393,14 +376,14 @@ def test_zmq_64_ues(
         ue_array=ue_64,
         gnb=gnb,
         fivegc=fivegc,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
+        band=41,
+        common_scs=30,
+        bandwidth=50,
         sample_rate=None,
         iperf_duration=SHORT_DURATION,
-        protocol=protocol,
+        protocol=IPerfProto.UDP,
         bitrate=MEDIUM_BITRATE,
-        direction=direction,
+        direction=IPerfDir.BIDIRECTIONAL,
         global_timing_advance=-1,
         time_alignment_calibration=0,
         always_download_artifacts=False,
@@ -625,17 +608,6 @@ def test_zmq(
     ),
 )
 @mark.zmq
-@mark.flaky(
-    reruns=2,
-    only_rerun=[
-        "failed to start",
-        "Attach timeout reached",
-        "iperf did not achieve the expected data rate",
-        "socket is already closed",
-        "failed to connect to all addresses",
-        "5GC crashed",
-    ],
-)
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_transform_precoding(
     retina_manager: RetinaTestManager,
