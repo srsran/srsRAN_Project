@@ -44,11 +44,11 @@ public:
   }
   ~sctp_send_notifier() override { close(); }
 
-  bool send_custom_pdu(byte_buffer pdu) override {
+  bool send_custom_pdu(byte_buffer sdu) override {
     return false;
   }
-  
-  bool send_custom_pdu(byte_buffer& sdu) override
+
+  bool send_custom_pdu(byte_buffer sdu) override
   {
       return on_new_sdu(sdu.copy());
   }
