@@ -155,6 +155,7 @@ void cu_cp_impl::stop()
 
 ngap_message_handler* cu_cp_impl::get_ngap_message_handler(const plmn_identity& plmn)
 {
+  logger.info("cu_cp_impl -> get_ngap_message_handler");
   return ngap_db->find_ngap(plmn);
 };
 
