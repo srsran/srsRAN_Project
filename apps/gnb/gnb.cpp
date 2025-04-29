@@ -201,7 +201,7 @@ static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_c
   }
 }
 
-void start_user_input_thread(srsran::srs_cu_cp::ngap_interface* ngap)
+void start_user_input_thread(srsran::srs_cu_cp::ngap_interface* nga, srslog::basic_logger& gnb_logger)
 {
   std::thread input_thread([=]() {
     std::string line;
@@ -558,7 +558,7 @@ int main(int argc, char** argv)
     if (ngap != nullptr) {
       gnb_logger.info("Connected to AMF. Ready to send packets.");
 
-      start_user_input_thread(ngap);
+      start_user_input_thread(ngap, gnb_logger);
 
       /*
       // Example fake NGAP packet (not real ASN.1, just for testing transmission)
