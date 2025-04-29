@@ -505,7 +505,7 @@ int main(int argc, char** argv)
     plmn_identity my_plmn = my_plmn_expected.value();
 
     // Get NGAP notifier
-    srsran::srs_cu_cp::ngap_interface* ngap = o_cucp_obj.get_cu_cp().find_ngap(my_plmn);
+    srsran::srs_cu_cp::ngap_interface* ngap = o_cucp_obj.get_cu_cp().find_ngap_by_plmn(my_plmn);
 
     if (ngap != nullptr) {
       //ngap->send_custom_pdu(std::move(my_custom_ngap_buffer));
