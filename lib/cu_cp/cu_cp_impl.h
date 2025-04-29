@@ -78,8 +78,8 @@ public:
   // NGAP interface.
   ngap_message_handler* get_ngap_message_handler(const plmn_identity& plmn) override;
 
-  ngap_interface* find_ngap(const plmn_identity& plmn) override;
-  
+  ngap_interface* find_ngap_by_plmn(const plmn_identity& plmn) override;
+
   bool amfs_are_connected() override;
 
   // NRPPA interface.
