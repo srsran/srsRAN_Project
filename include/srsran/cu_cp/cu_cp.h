@@ -47,7 +47,7 @@ public:
   /// \brief Get handler of the NG interface of the CU-CP.
   virtual cu_cp_ng_handler& get_ng_handler() = 0;
 
-  virtual ngap_interface* find_ngap(const plmn_identity& plmn) = 0;
+  virtual ngap_interface* find_ngap_by_plmn(const plmn_identity& plmn) = 0;
 
   /// \brief Get the handler of external commands/events to the CU-CP.
   virtual cu_cp_command_handler& get_command_handler() = 0;
