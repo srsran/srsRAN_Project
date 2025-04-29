@@ -68,6 +68,7 @@
 #include <iostream>
 #include <string>
 #include "srsran/adt/byte_buffer.h"
+#include "srsran/adt/span.h"
 #include <atomic>
 #ifdef DPDK_FOUND
 #include "srsran/hal/dpdk/dpdk_eal_factory.h"
@@ -517,10 +518,11 @@ int main(int argc, char** argv)
         0x03, 0x04  // Some other field (fake)
       };
 
+      span<const uint8_t> bytes_view(my_raw_bytes.data(), my_raw_bytes.size());
       byte_buffer my_custom_buffer;
-
-      if (not my_custom_buffer.append(my_raw_bytes.data(), my_raw_bytes.size())) {
-          gnb_logger.error("Failed to build byte_buffer from custom raw bytes");
+      
+      if (not my_custom_buffer.append(bytes_view)) {
+        gnb_logger.error("Failed to build byte_buffer from custom raw bytes");
       }
 
       bool success = ngap->send_custom_pdu(std::move(my_custom_buffer));
