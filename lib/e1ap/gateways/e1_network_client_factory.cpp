@@ -43,10 +43,6 @@ public:
   {
   }
 
-  bool send_custom_pdu(byte_buffer pdu) override {
-    return false;
-  }
-
   bool on_new_sdu(byte_buffer sdu) override
   {
     // Unpack E1AP PDU.

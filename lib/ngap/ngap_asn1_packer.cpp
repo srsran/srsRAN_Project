@@ -49,7 +49,6 @@ void ngap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
     return;
   }
 
-  logger.info("ngap_asn1_packer -> handled_packed_pdu");
   // call packet handler
   ngap.handle_message(msg);
 }
@@ -69,6 +68,5 @@ void ngap_asn1_packer::handle_message(const srs_cu_cp::ngap_message& msg)
     pcap.push_pdu(tx_pdu.copy());
   }
 
-  logger.info("ngap_asn1_packer -> handle_message");
   gw.handle_pdu(tx_pdu);
 }

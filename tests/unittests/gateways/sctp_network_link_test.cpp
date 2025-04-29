@@ -101,10 +101,6 @@ protected:
       public:
         server_recv_notifier(sctp_server_association_context& parent_) : parent(parent_) {}
 
-        bool send_custom_pdu(byte_buffer pdu) override {
-          return false;
-        }
-
         bool on_new_sdu(byte_buffer sdu) override { return parent.recv_data.try_push(std::move(sdu)); }
 
       private:
@@ -159,9 +155,6 @@ protected:
     public:
       client_recv_notifier(sctp_client_association_context& parent_) : parent(parent_) {}
 
-      bool send_custom_pdu(byte_buffer pdu) override {
-        return false;
-      }
       bool on_new_sdu(byte_buffer sdu) override { return parent.recv_data.try_push(std::move(sdu)); }
 
     private:

@@ -44,11 +44,6 @@ public:
   }
   ~sctp_send_notifier() override { close(); }
 
-  bool send_custom_pdu(byte_buffer sdu) override
-  {
-      return on_new_sdu(sdu.copy());
-  }
-
   bool on_new_sdu(byte_buffer sdu) override
   {
     if (closed_flag->load(std::memory_order_relaxed)) {

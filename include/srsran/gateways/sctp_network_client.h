@@ -36,8 +36,6 @@ public:
   /// \return True if the SDU was successfully forwarded, false otherwise.
   virtual bool on_new_sdu(byte_buffer pdu) = 0;
 
-  virtual bool send_custom_pdu(byte_buffer pdu) = 0;
-
 };
 
 class sctp_network_gateway_info

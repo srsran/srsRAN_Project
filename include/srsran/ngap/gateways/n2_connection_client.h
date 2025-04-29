@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/ngap/ngap.h"
-#include "srsran/adt/byte_buffer.h"
 
 namespace srsran {
 namespace srs_cu_cp {

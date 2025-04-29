@@ -48,10 +48,6 @@ public:
 
   ~sctp_send_notifier() override { close(); }
 
-  bool send_custom_pdu(byte_buffer pdu) override {
-    return false;
-  }
-  
   bool on_new_sdu(byte_buffer sdu) override
   {
     if (assoc_shutdown_flag->load(std::memory_order_relaxed)) {
