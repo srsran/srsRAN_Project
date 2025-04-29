@@ -284,9 +284,9 @@ void scheduler_cell_metrics_consumer_json::handle_metric(const app_services::met
     if (ue.dl_ri_stats.get_nof_observations() > 0) {
       output.write<metric_dl_ri>(ue.dl_ri_stats.get_mean());
     }
-    if (ue.ul_ri_stats.get_nof_observations() > 0) {
-      output.write<metric_ul_ri>(ue.ul_ri_stats.get_mean());
-    }
+    ue.ul_ri_stats.get_nof_observations() > 0 ? output.write<metric_ul_ri>(ue.ul_ri_stats.get_mean())
+                                              : output.write<metric_ul_ri>(1.0F);
+
     output.write<metric_dl_mcs>(ue.dl_mcs.to_uint());
     output.write<metric_dl_brate>(ue.dl_brate_kbps * 1e3);
     output.write<metric_dl_nof_ok>(ue.dl_nof_ok);
