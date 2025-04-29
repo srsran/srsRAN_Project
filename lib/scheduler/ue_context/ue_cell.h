@@ -121,7 +121,10 @@ public:
   /// Update UE with the latest CSI report for a given cell.
   void handle_csi_report(const csi_report_data& csi_report);
 
-  sch_mcs_index get_ul_mcs(pusch_mcs_table mcs_table) const { return ue_mcs_calculator.calculate_ul_mcs(mcs_table); }
+  sch_mcs_index get_ul_mcs(pusch_mcs_table mcs_table, bool use_transform_precoder) const
+  {
+    return ue_mcs_calculator.calculate_ul_mcs(mcs_table, use_transform_precoder);
+  }
 
   /// \brief Get recommended aggregation level for PDCCH at a given CQI.
   aggregation_level get_aggregation_level(float cqi, const search_space_info& ss_info, bool is_dl) const;

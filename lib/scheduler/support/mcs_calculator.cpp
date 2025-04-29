@@ -117,7 +117,7 @@ std::optional<sch_mcs_index> srsran::map_cqi_to_mcs(unsigned cqi, pdsch_mcs_tabl
   return mcs;
 }
 
-sch_mcs_index srsran::map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table)
+sch_mcs_index srsran::map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table, bool use_transform_precoder)
 {
   // The objective of this function is to find the maximum MCS that can be used for a given SNR. A possible approach to
   // this problem would be to get the iterator to the biggest element of the SNR vector not greater than the target SNR.
@@ -131,6 +131,13 @@ sch_mcs_index srsran::map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table)
     selected_mcs_table = ul_snr_qam64_lowse_mcs_table;
   }
   const unsigned MIN_MCS = 0;
+
+  // Prevent selecting a reserved MCS entry when TP is enabled.
+  // The PUSCH MCS tables used when TP is enabled (TS38.214 Table 6.1.4.1-1/2, see \c srsran::pusch_mcs_get_config) only
+  // have 28 valid (non-reserved) entries, while the regular qam64 and qam64LowSe tables have 29 valid entries.
+  if (use_transform_precoder and mcs_table != pusch_mcs_table::qam256) {
+    selected_mcs_table = selected_mcs_table.first(28);
+  }
 
   // Check of the SNR is lower than the minimum, or greater than the maximum. If so, return the min or max MCS.
   if (snr <= selected_mcs_table.front()) {

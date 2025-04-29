@@ -1052,7 +1052,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     }
   } else {
     pusch_mcs_table     fallback_mcs_table = pusch_mcs_table::qam64;
-    sch_mcs_index       mcs                = ue_pcell.get_ul_mcs(fallback_mcs_table);
+    sch_mcs_index       mcs                = ue_pcell.get_ul_mcs(fallback_mcs_table, pusch_cfg.use_transform_precoder);
     sch_mcs_description ul_mcs_cfg =
         pusch_mcs_get_config(fallback_mcs_table, mcs, cell_cfg.use_msg3_transform_precoder(), false);
 
@@ -1083,6 +1083,10 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
       std::optional<unsigned> corrected_nof_prbs =
           get_transform_precoding_nearest_higher_nof_prb_valid(prbs_tbs.nof_prbs);
 
+      if (!corrected_nof_prbs) {
+        corrected_nof_prbs = get_transform_precoding_nearest_lower_nof_prb_valid(prbs_tbs.nof_prbs);
+      }
+
       // If no suggestion is available, skip the slot.
       if (!corrected_nof_prbs) {
         logger.debug(
@@ -1097,6 +1101,18 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     }
 
     ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs);
+    if (cell_cfg.use_msg3_transform_precoder()) {
+      // At this point we need to ensure a valid number of RBs is selected to be used with transform precoding.
+      auto valid_nof_rbs = get_transform_precoding_nearest_lower_nof_prb_valid(ue_grant_crbs.length());
+      if (not valid_nof_rbs.has_value()) {
+        logger.debug(
+            "ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: not possible to select a valid number of PRBs",
+            fmt::underlying(u.ue_index),
+            u.crnti);
+        return ul_srb_sched_outcome::next_slot;
+      }
+      ue_grant_crbs.resize(valid_nof_rbs.value());
+    }
 
     if (ue_grant_crbs.empty()) {
       logger.debug("ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: no PRBs available",

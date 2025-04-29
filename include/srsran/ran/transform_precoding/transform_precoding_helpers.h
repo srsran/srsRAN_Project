@@ -57,7 +57,7 @@ inline bool is_transform_precoding_nof_prb_valid(unsigned nof_prb)
   return valid_nof_prb[nof_prb];
 }
 
-/// \brief Gets the nearest valid of PRB for transform precoding.
+/// \brief Gets the nearest valid number of PRB for transform precoding.
 /// \return A number of PRB equal to or higher than the given number of PRB.
 inline std::optional<unsigned> get_transform_precoding_nearest_higher_nof_prb_valid(unsigned nof_prb)
 {
@@ -74,7 +74,7 @@ inline std::optional<unsigned> get_transform_precoding_nearest_higher_nof_prb_va
   return std::distance(valid_nof_prb.begin(), nearest);
 }
 
-/// \brief Gets the nearest valid of PRB for transform precoding.
+/// \brief Gets the nearest valid number of PRB for transform precoding.
 /// \return A number of PRB equal to or lower than the given number of PRB.
 inline std::optional<unsigned> get_transform_precoding_nearest_lower_nof_prb_valid(unsigned nof_prb)
 {
@@ -84,7 +84,7 @@ inline std::optional<unsigned> get_transform_precoding_nearest_lower_nof_prb_val
   }
 
   // Limit search to the first PRB.
-  valid_nof_prb = valid_nof_prb.first(nof_prb);
+  valid_nof_prb = valid_nof_prb.first(nof_prb + 1);
 
   auto nearest = std::find(valid_nof_prb.rbegin(), valid_nof_prb.rend(), true);
   if (nearest == valid_nof_prb.rend()) {

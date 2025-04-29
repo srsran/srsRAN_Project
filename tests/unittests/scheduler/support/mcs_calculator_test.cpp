@@ -43,7 +43,7 @@ class snr_to_ul_mcs_tester : public ::testing::TestWithParam<snr_to_ul_mcs_test_
 
 TEST_P(snr_to_ul_mcs_tester, compare_bin_search_with_linear)
 {
-  ASSERT_EQ(GetParam().expected_mcs, map_snr_to_mcs_ul(GetParam().snr, GetParam().mcs_table).to_uint());
+  ASSERT_EQ(GetParam().expected_mcs, map_snr_to_mcs_ul(GetParam().snr, GetParam().mcs_table, false).to_uint());
 }
 
 // Compare the binary search with linear search for a given interval.

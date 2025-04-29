@@ -12,6 +12,7 @@
 #include "../lib/scheduler/support/dmrs_helpers.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/sch/tbs_calculator.h"
+#include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/ran/uci/uci_mapping.h"
 #include "srsran/scheduler/result/pdsch_info.h"
 #include "srsran/scheduler/result/pusch_info.h"
@@ -187,6 +188,10 @@ bool test_helper::is_valid_ul_sched_info(const ul_sched_info& grant)
   if (grant.pusch_cfg.rbs.is_type1()) {
     const vrb_interval vrbs = grant.pusch_cfg.rbs.type1();
     TRUE_OR_RETURN(vrbs.length() > 0);
+    if (grant.pusch_cfg.transform_precoding) {
+      const bool valid = is_transform_precoding_nof_prb_valid(vrbs.length());
+      TRUE_OR_RETURN(valid, "Invalid number of RBs for transform precoding");
+    }
     const crb_interval crbs = prb_to_crb(grant.pusch_cfg.bwp_cfg->crbs, prb_interval{vrbs.start(), vrbs.stop()});
     TRUE_OR_RETURN(grant.pusch_cfg.bwp_cfg->crbs.contains(crbs), "PUSCH outside of BWP boundaries");
   }

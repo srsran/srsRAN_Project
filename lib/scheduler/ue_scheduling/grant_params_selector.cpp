@@ -125,7 +125,8 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
                                                                              unsigned                   pending_bytes,
                                                                              interval<unsigned>         nof_rb_lims)
 {
-  sch_mcs_index       mcs = ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table);
+  sch_mcs_index mcs =
+      ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table, pusch_cfg.use_transform_precoder);
   sch_mcs_description mcs_config =
       pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
 
@@ -481,6 +482,15 @@ find_available_vrbs(const ul_sched_context& sched_ctxt, const vrb_bitmap& used_v
   vrb_interval vrbs = rb_helper::find_empty_interval_of_length(used_vrbs, nof_rbs, sched_ctxt.vrb_lims);
   if (vrbs.empty()) {
     return vrb_interval{};
+  }
+
+  if (sched_ctxt.pusch_cfg.use_transform_precoder) {
+    // At this point we need to ensure a valid number of RBs is selected to be used with transform precoding.
+    auto valid_nof_rbs = get_transform_precoding_nearest_lower_nof_prb_valid(vrbs.length());
+    if (not valid_nof_rbs.has_value()) {
+      return vrb_interval{};
+    }
+    vrbs.resize(valid_nof_rbs.value());
   }
 
   // Successful CRB interval derivation.

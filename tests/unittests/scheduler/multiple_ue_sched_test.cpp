@@ -16,6 +16,7 @@
 #include "tests/unittests/scheduler/test_utils/scheduler_test_suite.h"
 #include "srsran/ran/duplex_mode.h"
 #include "srsran/ran/pdcch/search_space.h"
+#include "srsran/ran/pusch/pusch_configuration.h"
 #include "srsran/scheduler/config/logical_channel_config_factory.h"
 #include "srsran/scheduler/result/dci_info.h"
 #include "srsran/support/test_utils.h"
@@ -146,10 +147,13 @@ protected:
     return cfg;
   }
 
-  sched_cell_configuration_request_message create_custom_cell_config_request(duplex_mode mode) const
+  sched_cell_configuration_request_message
+  create_custom_cell_config_request(duplex_mode mode, bool enable_pusch_transform_precoding) const
   {
-    return sched_config_helper::make_default_sched_cell_configuration_request(
-        create_custom_cell_cfg_builder_params(mode));
+    auto msg =
+        sched_config_helper::make_default_sched_cell_configuration_request(create_custom_cell_cfg_builder_params(mode));
+    msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder = enable_pusch_transform_precoding;
+    return msg;
   }
 
   unsigned pdsch_tbs_scheduled_bytes_per_lc(const sched_test_ue& u, lcid_t lcid)
@@ -213,16 +217,22 @@ protected:
     return cell_cfg;
   }
 
-  void add_ue(du_ue_index_t ue_index, lcid_t lcid_, lcg_id_t lcgid_, duplex_mode mode, bool is_fallback = false)
+  void add_ue(du_ue_index_t ue_index,
+              lcid_t        lcid_,
+              lcg_id_t      lcgid_,
+              duplex_mode   mode,
+              bool          enable_pusch_transform_precoding,
+              bool          is_fallback = false)
   {
     const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(mode);
-    add_ue(ue_index, lcid_, lcgid_, cell_cfg_params, is_fallback);
+    add_ue(ue_index, lcid_, lcgid_, cell_cfg_params, enable_pusch_transform_precoding, is_fallback);
   }
 
   void add_ue(du_ue_index_t                     ue_index,
               lcid_t                            lcid_,
               lcg_id_t                          lcgid_,
               const cell_config_builder_params& params,
+              bool                              enable_pusch_transform_precoding,
               bool                              is_fallback = false)
   {
     auto ue_creation_req               = sched_config_helper::create_default_sched_ue_creation_request(params);
@@ -241,14 +251,24 @@ protected:
     it->lc_group = lcgid_;
 
     pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_creation_req.cfg.cells.value()[0].serv_cell_cfg);
+    if (enable_pusch_transform_precoding) {
+      ue_creation_req.cfg.cells.value()[0]
+          .serv_cell_cfg.ul_config.value()
+          .init_ul_bwp.pusch_cfg.value()
+          .trans_precoder = srsran::pusch_config::transform_precoder::enabled;
+    }
     bench->sch.handle_ue_creation_request(ue_creation_req);
 
     bench->ues[ue_index] = sched_test_ue{ue_creation_req.crnti, {}, {}, ue_creation_req};
   }
 
-  void add_ue(sched_ue_creation_request_message& ue_create_req)
+  void add_ue(sched_ue_creation_request_message& ue_create_req, bool enable_pusch_transform_precoding)
   {
     pucch_cfg_builder.add_build_new_ue_pucch_cfg(ue_create_req.cfg.cells.value()[0].serv_cell_cfg);
+    if (enable_pusch_transform_precoding) {
+      ue_create_req.cfg.cells.value()[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().trans_precoder =
+          pusch_config::transform_precoder::enabled;
+    }
     bench->sch.handle_ue_creation_request(ue_create_req);
 
     bench->ues[ue_create_req.ue_index] = sched_test_ue{ue_create_req.crnti, {}, {}, ue_create_req};
@@ -545,6 +565,7 @@ struct multiple_ue_test_params {
   uint16_t    min_buffer_size_in_bytes;
   uint16_t    max_buffer_size_in_bytes;
   duplex_mode duplx_mode;
+  bool        enable_pusch_transform_precoding;
 };
 
 class multiple_ue_sched_tester : public scheduler_impl_tester, public ::testing::TestWithParam<multiple_ue_test_params>
@@ -567,14 +588,19 @@ TEST_P(multiple_ue_sched_tester, dl_buffer_state_indication_test)
   // Vector to keep track of ACKs to send.
   std::vector<uci_indication> uci_ind_to_send;
 
-  setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(10),
+              create_custom_cell_config_request(params.duplx_mode, params.enable_pusch_transform_precoding));
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
     // Initialize.
     is_bsr_zero_sent[idx] = false;
 
-    add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0), params.duplx_mode);
+    add_ue(to_du_ue_index(idx),
+           LCID_MIN_DRB,
+           static_cast<lcg_id_t>(0),
+           params.duplx_mode,
+           params.enable_pusch_transform_precoding);
 
     push_buffer_state_to_dl_ue(
         to_du_ue_index(idx),
@@ -655,7 +681,8 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
 
   const lcg_id_t lcgid = uint_to_lcg_id(0);
 
-  setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(10),
+              create_custom_cell_config_request(params.duplx_mode, params.enable_pusch_transform_precoding));
   // Add UE(s) and notify UL BSR from UE of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
@@ -663,7 +690,11 @@ TEST_P(multiple_ue_sched_tester, ul_buffer_state_indication_test)
     is_bsr_zero_sent[idx]               = false;
     pusch_scheduled_slot_in_future[idx] = {};
 
-    add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0), params.duplx_mode);
+    add_ue(to_du_ue_index(idx),
+           LCID_MIN_DRB,
+           static_cast<lcg_id_t>(0),
+           params.duplx_mode,
+           params.enable_pusch_transform_precoding);
 
     notify_ul_bsr_from_ue(
         to_du_ue_index(idx),
@@ -776,7 +807,7 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in
   // params. Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
-    add_ue(to_du_ue_index(idx), lcid, lcgid, extended_params);
+    add_ue(to_du_ue_index(idx), lcid, lcgid, extended_params, params.enable_pusch_transform_precoding);
     push_buffer_state_to_dl_ue(to_du_ue_index(idx), dl_buffer_size, lcid);
     notify_ul_bsr_from_ue(to_du_ue_index(idx), ul_buffer_size, lcgid);
   }
@@ -875,11 +906,16 @@ TEST_P(multiple_ue_sched_tester, when_scheduling_multiple_ue_in_small_bw_neither
 
 TEST_P(multiple_ue_sched_tester, not_scheduled_when_buffer_status_zero)
 {
-  setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(10),
+              create_custom_cell_config_request(params.duplx_mode, params.enable_pusch_transform_precoding));
   // Add UE(s) and notify UL BSR + DL Buffer status with zero value.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
-    add_ue(to_du_ue_index(idx), LCID_MIN_DRB, static_cast<lcg_id_t>(0), params.duplx_mode);
+    add_ue(to_du_ue_index(idx),
+           LCID_MIN_DRB,
+           static_cast<lcg_id_t>(0),
+           params.duplx_mode,
+           params.enable_pusch_transform_precoding);
 
     notify_ul_bsr_from_ue(to_du_ue_index(idx), 0, static_cast<lcg_id_t>(0));
     push_buffer_state_to_dl_ue(to_du_ue_index(idx), 0, LCID_MIN_DRB);
@@ -931,7 +967,8 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_0_test)
   ss_list.back().set_non_ss0_nof_candidates({0, 2, 0, 0, 0});
 
   // Setup scheduler and add UEs.
-  setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(10),
+              create_custom_cell_config_request(params.duplx_mode, params.enable_pusch_transform_precoding));
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
@@ -941,7 +978,7 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_0_test)
     ue_creation_req.ue_index = to_du_ue_index(idx);
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
 
-    add_ue(ue_creation_req);
+    add_ue(ue_creation_req, params.enable_pusch_transform_precoding);
 
     push_buffer_state_to_dl_ue(
         to_du_ue_index(idx),
@@ -1043,7 +1080,8 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
       .set_non_ss0_monitored_dci_formats(srsran::search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
 
   // Setup scheduler and add UEs.
-  setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(10),
+              create_custom_cell_config_request(params.duplx_mode, params.enable_pusch_transform_precoding));
   // Add UE(s) and notify to each UE a DL buffer status indication of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
@@ -1053,7 +1091,7 @@ TEST_P(multiple_ue_sched_tester, dl_dci_format_1_1_test)
     ue_creation_req.ue_index = to_du_ue_index(idx);
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
 
-    add_ue(ue_creation_req);
+    add_ue(ue_creation_req, params.enable_pusch_transform_precoding);
 
     push_buffer_state_to_dl_ue(
         to_du_ue_index(idx),
@@ -1183,7 +1221,8 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
       .set_non_ss0_monitored_dci_formats(srsran::search_space_configuration::ue_specific_dci_format::f0_1_and_1_1);
 
   // Setup scheduler and add UEs.
-  setup_sched(create_expert_config(10), create_custom_cell_config_request(params.duplx_mode));
+  setup_sched(create_expert_config(10),
+              create_custom_cell_config_request(params.duplx_mode, params.enable_pusch_transform_precoding));
   // Add UE(s) and notify UL BSR from UE of random size between min and max defined in params.
   // Assumption: LCID is DRB1.
   for (unsigned idx = 0; idx != params.nof_ues; ++idx) {
@@ -1194,7 +1233,7 @@ TEST_P(multiple_ue_sched_tester, ul_dci_format_0_1_test)
     ue_creation_req.ue_index = to_du_ue_index(idx);
     ue_creation_req.crnti    = to_rnti(allocate_rnti());
 
-    add_ue(ue_creation_req);
+    add_ue(ue_creation_req, params.enable_pusch_transform_precoding);
 
     notify_ul_bsr_from_ue(
         to_du_ue_index(idx),
@@ -1296,7 +1335,7 @@ class single_ue_sched_tester : public scheduler_impl_tester, public ::testing::T
 
 TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
 {
-  setup_sched(create_expert_config(6), create_custom_cell_config_request(duplex_mode::FDD));
+  setup_sched(create_expert_config(6), create_custom_cell_config_request(duplex_mode::FDD, false));
 
   // Keep track of ACKs to send.
   std::optional<uci_indication> uci_ind_to_send;
@@ -1304,7 +1343,7 @@ TEST_F(single_ue_sched_tester, successfully_schedule_srb0_retransmission_fdd)
   // Add UE(s) and notify UL BSR + DL Buffer status with 110 value.
   // Assumption: LCID is SRB0.
   const bool is_fallback = true;
-  add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), duplex_mode::FDD, is_fallback);
+  add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), duplex_mode::FDD, false, is_fallback);
 
   // Enqueue ConRes CE.
   bench->sch.handle_dl_mac_ce_indication(dl_mac_ce_indication{to_du_ue_index(0), lcid_dl_sch_t::UE_CON_RES_ID});
@@ -1351,9 +1390,9 @@ TEST_F(single_ue_sched_tester, srb0_retransmission_not_scheduled_if_csi_rs_is_pr
   // Keep track of ACKs to send.
   std::optional<uci_indication> uci_ind_to_send;
 
-  setup_sched(create_expert_config(10), create_custom_cell_config_request(srsran::duplex_mode::FDD));
+  setup_sched(create_expert_config(10), create_custom_cell_config_request(srsran::duplex_mode::FDD, false));
   // Add UE.
-  add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), srsran::duplex_mode::FDD);
+  add_ue(to_du_ue_index(0), LCID_SRB0, static_cast<lcg_id_t>(0), srsran::duplex_mode::FDD, false);
 
   if (not bench->cell_cfg.nzp_csi_rs_list.empty()) {
     const unsigned csi_rs_periodicity =
@@ -1409,7 +1448,7 @@ TEST_F(single_ue_sched_tester, srb0_retransmission_not_scheduled_if_csi_rs_is_pr
 
 TEST_F(single_ue_sched_tester, test_ue_scheduling_with_empty_spcell_cfg)
 {
-  setup_sched(create_expert_config(10), create_custom_cell_config_request(srsran::duplex_mode::TDD));
+  setup_sched(create_expert_config(10), create_custom_cell_config_request(srsran::duplex_mode::TDD, false));
   // Add UE.
   const auto& cell_cfg_params = create_custom_cell_cfg_builder_params(srsran::duplex_mode::TDD);
   auto        ue_creation_req = sched_config_helper::create_empty_spcell_cfg_sched_ue_creation_request(cell_cfg_params);
@@ -1446,33 +1485,64 @@ void PrintTo(const multiple_ue_test_params&, ::std::ostream*) {}
 
 INSTANTIATE_TEST_SUITE_P(multiple_ue_sched_tester,
                          multiple_ue_sched_tester,
-                         testing::Values(multiple_ue_test_params{.nof_ues                  = 3,
-                                                                 .min_buffer_size_in_bytes = 1000,
-                                                                 .max_buffer_size_in_bytes = 3000,
-                                                                 .duplx_mode               = duplex_mode::FDD},
-                                         multiple_ue_test_params{.nof_ues                  = 32,
-                                                                 .min_buffer_size_in_bytes = 100,
-                                                                 .max_buffer_size_in_bytes = 300,
-                                                                 .duplx_mode               = duplex_mode::FDD},
-                                         multiple_ue_test_params{.nof_ues                  = 3,
-                                                                 .min_buffer_size_in_bytes = 2000,
-                                                                 .max_buffer_size_in_bytes = 3000,
-                                                                 .duplx_mode               = duplex_mode::TDD},
-                                         multiple_ue_test_params{.nof_ues                  = 2,
-                                                                 .min_buffer_size_in_bytes = 1000,
-                                                                 .max_buffer_size_in_bytes = 3000,
-                                                                 .duplx_mode               = duplex_mode::TDD},
-                                         multiple_ue_test_params{.nof_ues                  = 32,
-                                                                 .min_buffer_size_in_bytes = 100,
-                                                                 .max_buffer_size_in_bytes = 300,
-                                                                 .duplx_mode               = duplex_mode::TDD}),
+                         testing::Values(multiple_ue_test_params{.nof_ues                          = 3,
+                                                                 .min_buffer_size_in_bytes         = 1000,
+                                                                 .max_buffer_size_in_bytes         = 3000,
+                                                                 .duplx_mode                       = duplex_mode::FDD,
+                                                                 .enable_pusch_transform_precoding = false},
+                                         multiple_ue_test_params{.nof_ues                          = 32,
+                                                                 .min_buffer_size_in_bytes         = 100,
+                                                                 .max_buffer_size_in_bytes         = 300,
+                                                                 .duplx_mode                       = duplex_mode::FDD,
+                                                                 .enable_pusch_transform_precoding = false},
+                                         multiple_ue_test_params{.nof_ues                          = 3,
+                                                                 .min_buffer_size_in_bytes         = 2000,
+                                                                 .max_buffer_size_in_bytes         = 3000,
+                                                                 .duplx_mode                       = duplex_mode::TDD,
+                                                                 .enable_pusch_transform_precoding = false},
+                                         multiple_ue_test_params{.nof_ues                          = 2,
+                                                                 .min_buffer_size_in_bytes         = 1000,
+                                                                 .max_buffer_size_in_bytes         = 3000,
+                                                                 .duplx_mode                       = duplex_mode::TDD,
+                                                                 .enable_pusch_transform_precoding = false},
+                                         multiple_ue_test_params{.nof_ues                          = 32,
+                                                                 .min_buffer_size_in_bytes         = 100,
+                                                                 .max_buffer_size_in_bytes         = 300,
+                                                                 .duplx_mode                       = duplex_mode::TDD,
+                                                                 .enable_pusch_transform_precoding = false},
+                                         multiple_ue_test_params{.nof_ues                          = 3,
+                                                                 .min_buffer_size_in_bytes         = 1000,
+                                                                 .max_buffer_size_in_bytes         = 3000,
+                                                                 .duplx_mode                       = duplex_mode::FDD,
+                                                                 .enable_pusch_transform_precoding = true},
+                                         multiple_ue_test_params{.nof_ues                          = 32,
+                                                                 .min_buffer_size_in_bytes         = 100,
+                                                                 .max_buffer_size_in_bytes         = 300,
+                                                                 .duplx_mode                       = duplex_mode::FDD,
+                                                                 .enable_pusch_transform_precoding = true},
+                                         multiple_ue_test_params{.nof_ues                          = 3,
+                                                                 .min_buffer_size_in_bytes         = 2000,
+                                                                 .max_buffer_size_in_bytes         = 3000,
+                                                                 .duplx_mode                       = duplex_mode::TDD,
+                                                                 .enable_pusch_transform_precoding = true},
+                                         multiple_ue_test_params{.nof_ues                          = 2,
+                                                                 .min_buffer_size_in_bytes         = 1000,
+                                                                 .max_buffer_size_in_bytes         = 3000,
+                                                                 .duplx_mode                       = duplex_mode::TDD,
+                                                                 .enable_pusch_transform_precoding = true},
+                                         multiple_ue_test_params{.nof_ues                          = 32,
+                                                                 .min_buffer_size_in_bytes         = 100,
+                                                                 .max_buffer_size_in_bytes         = 300,
+                                                                 .duplx_mode                       = duplex_mode::TDD,
+                                                                 .enable_pusch_transform_precoding = true}),
                          [](const testing::TestParamInfo<multiple_ue_sched_tester::ParamType>& params) -> std::string {
                            const auto& p = params.param;
-                           return fmt::format("nof_ues_{}_buffer_size_{}_{}_mode_{}",
+                           return fmt::format("nof_ues_{}_buffer_size_{}_{}_mode_{}_tp_{}",
                                               p.nof_ues,
                                               p.min_buffer_size_in_bytes,
                                               p.max_buffer_size_in_bytes,
-                                              to_string(p.duplx_mode));
+                                              to_string(p.duplx_mode),
+                                              p.enable_pusch_transform_precoding ? "on" : "off");
                          });
 
 int main(int argc, char** argv)

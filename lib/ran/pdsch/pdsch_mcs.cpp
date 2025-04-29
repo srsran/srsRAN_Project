@@ -9,7 +9,7 @@
  */
 
 #include "srsran/ran/pdsch/pdsch_mcs.h"
-#include "srsran/adt/span.h"
+#include <array>
 
 using namespace srsran;
 

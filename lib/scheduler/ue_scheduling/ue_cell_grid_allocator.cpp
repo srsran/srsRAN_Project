@@ -722,7 +722,8 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
   ul_harq_alloc_context pusch_sched_ctx;
   pusch_sched_ctx.dci_cfg_type = grant.pdcch->dci.type;
   if (not is_retx) {
-    pusch_sched_ctx.olla_mcs = ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table);
+    pusch_sched_ctx.olla_mcs =
+        ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table, pusch_cfg.use_transform_precoder);
     pusch_sched_ctx.slice_id = grant.user->ran_slice_id();
   }
 

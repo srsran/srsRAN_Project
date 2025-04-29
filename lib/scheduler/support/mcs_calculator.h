@@ -30,7 +30,7 @@ std::optional<sch_mcs_index> map_cqi_to_mcs(unsigned cqi, pdsch_mcs_table mcs_ta
 ///
 /// The objective of this function is to find the maximum MCS that can be used for a given SNR.
 /// TODO: revise this function once the SNR to BLER curves will have been prepared.
-sch_mcs_index map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table);
+sch_mcs_index map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table, bool use_transform_precoder);
 
 /// \brief Retrieves the maximum MCS value for a given MCS table.
 ///

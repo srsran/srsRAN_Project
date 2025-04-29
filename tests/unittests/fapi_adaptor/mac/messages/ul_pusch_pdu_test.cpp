@@ -11,7 +11,6 @@
 #include "helpers.h"
 #include "srsran/fapi_adaptor/mac/messages/pusch.h"
 #include "srsran/fapi_adaptor/uci_part2_correspondence_generator.h"
-#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
