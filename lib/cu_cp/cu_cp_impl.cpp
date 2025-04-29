@@ -11,7 +11,6 @@
 #include "cu_cp_impl.h"
 #include "du_processor/du_processor_repository.h"
 #include "metrics_handler/metrics_handler_impl.h"
-#include "mobility_manager/mobility_manager_factory.h"
 #include "routines/initial_context_setup_routine.h"
 #include "routines/mobility/inter_cu_handover_target_routine.h"
 #include "routines/mobility/intra_cu_handover_routine.h"
@@ -67,6 +66,7 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
   cu_up_db(cu_up_repository_config{cfg, e1ap_ev_notifier, srslog::fetch_basic_logger("CU-CP")}),
   paging_handler(du_db),
   ngap_db(ngap_repository_config{cfg, get_cu_cp_ngap_handler(), paging_handler, srslog::fetch_basic_logger("CU-CP")}),
+  mobility_mng(cfg.mobility.mobility_manager_config, mobility_manager_ev_notifier, ngap_db, du_db, ue_mng),
   metrics_hdlr(std::make_unique<metrics_handler_impl>(*cfg.services.cu_cp_executor,
                                                       *cfg.services.timers,
                                                       ue_mng,
@@ -78,22 +78,19 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
 
   nrppa_entity = create_nrppa_entity(cfg, nrppa_cu_cp_ev_notifier, common_task_sched);
 
-  // connect event notifiers to layers
+  // Connect event notifiers to layers.
   ngap_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_ngap_handler(), paging_handler);
   nrppa_cu_cp_ev_notifier.connect_cu_cp(get_cu_cp_nrppa_handler());
   mobility_manager_ev_notifier.connect_cu_cp(get_cu_cp_mobility_manager_handler());
   e1ap_ev_notifier.connect_cu_cp(get_cu_cp_e1ap_handler());
   rrc_du_cu_cp_notifier.connect_cu_cp(get_cu_cp_measurement_config_handler());
+  cell_meas_mobility_notifier.connect_mobility_manager(mobility_mng);
 
   controller = std::make_unique<cu_cp_controller>(
       cfg, common_task_sched, ngap_db, cu_up_db, du_db, *cfg.services.cu_cp_executor);
   conn_notifier.connect_node_connection_handler(*controller);
 
-  mobility_mng = create_mobility_manager(
-      cfg.mobility.mobility_manager_config, mobility_manager_ev_notifier, ngap_db, du_db, ue_mng);
-  cell_meas_mobility_notifier.connect_mobility_manager(*mobility_mng);
-
-  // Start statistics report timer
+  // Start statistics report timer.
   statistics_report_timer = cfg.services.timers->create_unique_timer(*cfg.services.cu_cp_executor);
   statistics_report_timer.set(cfg.metrics.statistics_report_period,
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
@@ -111,7 +108,7 @@ bool cu_cp_impl::start()
   std::future<bool>  fut = p.get_future();
 
   if (not cfg.services.cu_cp_executor->execute([this, &p]() {
-        // start AMF connection procedure.
+        // Start AMF connection procedure.
         controller->amf_connection_handler().connect_to_amf(&p);
       })) {
     report_fatal_error("Failed to initiate CU-CP setup");
@@ -189,7 +186,7 @@ void cu_cp_impl::handle_bearer_context_inactivity_notification(const cu_cp_inact
     req.ue_index = msg.ue_index;
     req.cause    = ngap_cause_radio_network_t::user_inactivity;
 
-    // Add PDU Session IDs
+    // Add PDU Session IDs.
     auto& up_resource_manager            = ue->get_up_resource_manager();
     req.pdu_session_res_list_cxt_rel_req = up_resource_manager.get_pdu_sessions();
 
@@ -346,12 +343,12 @@ async_task<bool> cu_cp_impl::handle_ue_context_transfer(ue_index_t ue_index, ue_
       return false;
     }
 
-    // Transfer NGAP UE Context to new UE and remove the old context
+    // Transfer NGAP UE Context to new UE and remove the old context.
     if (not ngap->update_ue_index(ue_index, old_ue_index, ue_mng.find_ue(ue_index)->get_ngap_cu_cp_ue_notifier())) {
       return false;
     }
 
-    // Transfer E1AP UE Context to new UE and remove old context
+    // Transfer E1AP UE Context to new UE and remove old context.
     cu_up_db.find_cu_up_processor(uint_to_cu_up_index(0))->update_ue_index(ue_index, old_ue_index);
 
     return true;
