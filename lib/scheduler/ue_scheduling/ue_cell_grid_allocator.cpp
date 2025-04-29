@@ -557,7 +557,7 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
   cell_slot_resource_allocator& pusch_alloc = cell_alloc[final_k2];
 
   // Compute exact MCS and TBS for this transmission.
-  std::optional<sch_mcs_tbs> mcs_tbs_info;
+  expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> mcs_tbs_info;
   // TODO: find TS reference for -> Since, PUSCH always uses non interleaved mapping, prbs = vrbs.
   const auto crbs = prb_to_crb(ss_info.ul_crb_lims, static_cast<prb_interval>(vrbs));
   if (not is_retx) {
@@ -576,11 +576,12 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
       mcs_tbs_info->tbs = compute_ul_tbs_unsafe(pusch_cfg, grant.cfg.recommended_mcs, vrbs.length());
 
       logger.warning(
-          "ue={} rnti={}: Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95 with this "
+          "ue={} rnti={}: Failed to allocate PUSCH. Cause: {} with this "
           "configuration: mcs={} vrbs={} symbols={} nof_oh={} tb-sc-field={} layers={} pi2bpsk={} "
           "harq_bits={} csi1_bits={} csi2_bits={} mcs_table_idx={} dmrs_A_pos={} is_dmrs_type2={} dmrs_add_pos_idx={}",
           fmt::underlying(u.ue_index),
           u.crnti,
+          to_string(mcs_tbs_info.error()),
           grant.cfg.recommended_mcs,
           vrbs,
           pusch_cfg.symbols,

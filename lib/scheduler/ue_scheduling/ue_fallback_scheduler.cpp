@@ -1116,7 +1116,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     bool contains_dc = dc_offset_helper::is_contained(
         cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, ue_grant_crbs);
 
-    std::optional<sch_mcs_tbs> mcs_tbs_info =
+    expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> mcs_tbs_info =
         compute_ul_mcs_tbs(pusch_cfg, ue_pcell.active_bwp(), mcs, ue_grant_crbs.length(), contains_dc);
 
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.

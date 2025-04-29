@@ -115,7 +115,7 @@ TEST_P(ul_mcs_tbs_prbs_calculator_test_bench, test_values)
   mcs_test_entry test_entry{.max_mcs = GetParam().max_mcs, .nof_prbs = GetParam().nof_prbs};
 
   // Run test function.
-  std::optional<sch_mcs_tbs> test = compute_ul_mcs_tbs(
+  expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> test = compute_ul_mcs_tbs(
       pusch_cfg, ue_cell_cfg.init_bwp(), sch_mcs_index(test_entry.max_mcs), test_entry.nof_prbs, false);
 
   ASSERT_TRUE(test.has_value());
@@ -163,7 +163,7 @@ TEST_P(ul_mcs_tbs_prbs_calculator_dci_0_1_test_bench, test_values_with_uci)
   mcs_test_entry test_entry{.max_mcs = GetParam().max_mcs, .nof_prbs = GetParam().nof_prbs};
 
   // Run test function.
-  std::optional<sch_mcs_tbs> test = compute_ul_mcs_tbs(
+  expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> test = compute_ul_mcs_tbs(
       pusch_cfg, ue_cell_cfg.init_bwp(), sch_mcs_index(test_entry.max_mcs), test_entry.nof_prbs, false);
 
   ASSERT_TRUE(test.has_value());
@@ -214,10 +214,10 @@ TEST_F(ul_mcs_tbs_prbs_calculator_low_mcs_test_bench, test_values_with_uci)
   mcs_test_entry test_1_prb{.final_mcs = 5, .tbs_bytes = 12, .max_mcs = 5, .nof_prbs = 1};
 
   // Run test function.
-  std::optional<sch_mcs_tbs> test = compute_ul_mcs_tbs(
+  expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> test = compute_ul_mcs_tbs(
       pusch_cfg, ue_cell_cfg.init_bwp(), sch_mcs_index(test_1_prb.max_mcs), test_1_prb.nof_prbs, false);
 
-  ASSERT_TRUE(test.has_value());
+  ASSERT_TRUE(test.has_value()) << to_string(test.error());
   ASSERT_EQ(test_1_prb.final_mcs, test.value().mcs);
   ASSERT_EQ(test_1_prb.tbs_bytes, test.value().tbs);
 
@@ -274,10 +274,75 @@ TEST_F(ul_mcs_tbs_prbs_calculator_with_harq_ack, test_values_with_2_harq_bits)
   mcs_test_entry test_1_prb{.final_mcs = 27, .tbs_bytes = 88, .max_mcs = 28, .nof_prbs = 1};
 
   // Run test function.
-  std::optional<sch_mcs_tbs> test = compute_ul_mcs_tbs(
+  expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> test = compute_ul_mcs_tbs(
       pusch_cfg, ue_cell_cfg.init_bwp(), sch_mcs_index(test_1_prb.max_mcs), test_1_prb.nof_prbs, false);
 
   ASSERT_TRUE(test.has_value());
   ASSERT_EQ(test_1_prb.final_mcs, test.value().mcs);
   ASSERT_EQ(test_1_prb.tbs_bytes, test.value().tbs);
+}
+
+class ul_mcs_tbs_prbs_calculator_error : public common_mcs_tbs_calculator_test, public ::testing::Test
+{
+public:
+  ul_mcs_tbs_prbs_calculator_error() :
+    pusch_cfg(get_pusch_config_f0_1_c_rnti(
+        ue_cell_cfg,
+        cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().pusch_td_alloc_list[time_resource],
+        1,
+        0,
+        false))
+  {
+  }
+
+protected:
+  static constexpr unsigned nof_prbs    = 1;
+  static constexpr unsigned max_mcs     = 0;
+  static constexpr bool     contains_dc = true;
+  static constexpr unsigned time_resource{0};
+  pusch_config_params       pusch_cfg;
+};
+
+TEST_F(ul_mcs_tbs_prbs_calculator_error, effective_code_rate_exceeds_maximum)
+{
+  pusch_cfg.nof_csi_part1_bits = 11;
+  pusch_cfg.nof_harq_ack_bits  = 2;
+
+  // Run test function.
+  expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> test =
+      compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg.init_bwp(), max_mcs, nof_prbs, contains_dc);
+
+  ASSERT_FALSE(test.has_value());
+  ASSERT_EQ(test.error(), compute_ul_mcs_tbs_error::effective_code_rate_exceeds_maximum) << to_string(test.error());
+}
+
+TEST_F(ul_mcs_tbs_prbs_calculator_error, two_bit_harq_ack_and_dc_overhead)
+{
+  bwp_config active_bwp_cfg = ue_cell_cfg.init_bwp();
+  std::get<uci_on_pusch::beta_offsets_semi_static>(
+      active_bwp_cfg.ul_ded.value().pusch_cfg.value().uci_cfg.value().beta_offsets_cfg.value())
+      .beta_offset_ack_idx_1 = 15;
+
+  pusch_cfg.nof_csi_part1_bits = 11;
+  pusch_cfg.nof_harq_ack_bits  = 2;
+
+  // Run test function.
+  expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> test =
+      compute_ul_mcs_tbs(pusch_cfg, active_bwp_cfg, max_mcs, nof_prbs, contains_dc);
+
+  ASSERT_FALSE(test.has_value());
+  ASSERT_EQ(test.error(), compute_ul_mcs_tbs_error::two_bit_harq_ack_and_dc_overhead) << to_string(test.error());
+}
+
+TEST_F(ul_mcs_tbs_prbs_calculator_error, invalid_ulsch_information)
+{
+  pusch_cfg.nof_csi_part1_bits = 8;
+  pusch_cfg.nof_harq_ack_bits  = 4;
+
+  // Run test function.
+  expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> test =
+      compute_ul_mcs_tbs(pusch_cfg, ue_cell_cfg.init_bwp(), max_mcs, nof_prbs, false);
+
+  ASSERT_FALSE(test.has_value());
+  ASSERT_EQ(test.error(), compute_ul_mcs_tbs_error::invalid_ulsch_information) << to_string(test.error());
 }
