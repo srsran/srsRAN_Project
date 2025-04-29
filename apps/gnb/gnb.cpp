@@ -508,7 +508,27 @@ int main(int argc, char** argv)
     srsran::srs_cu_cp::ngap_interface* ngap = o_cucp_obj.get_cu_cp().find_ngap_by_plmn(my_plmn);
 
     if (ngap != nullptr) {
-      //ngap->send_custom_pdu(std::move(my_custom_ngap_buffer));
+      // Example fake NGAP packet (not real ASN.1, just for testing transmission)
+      std::vector<uint8_t> my_raw_bytes = {
+        0x00, 0x08, // Message Length (fake)
+        0x00, 0x01, // NGAP Procedure Code (fake)
+        0x01, 0x00, // Criticality (fake)
+        0x02, 0x00, // Some Information Element (fake)
+        0x03, 0x04  // Some other field (fake)
+      };
+
+      byte_buffer my_custom_buffer;
+
+      if (not my_custom_buffer.append(my_raw_bytes.data(), my_raw_bytes.size())) {
+          gnb_logger.error("Failed to build byte_buffer from custom raw bytes");
+      }
+
+      bool success = ngap->send_custom_pdu(std::move(my_custom_buffer));
+      if (success) {
+          gnb_logger.info("Successfully sent custom NGAP PDU");
+      } else {
+          gnb_logger.error("Failed to send custom NGAP PDU");
+      }
     } else {
       gnb_logger.info("ngap interface is null");
     }
