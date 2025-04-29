@@ -1137,14 +1137,10 @@ void ngap_impl::tx_pdu_notifier_with_logging::on_new_message(const ngap_message&
 
 bool ngap_impl::send_custom_pdu(byte_buffer pdu)
 {
-  if (conn_handler == nullptr) {
-    logger.error("send_custom_pdu failed: connection_handler is nullptr");
+  auto tx_notifier = conn_handler.get_tx_pdu_notifier();
+  if (tx_notifier == nullptr) {
+    logger.info("send_custom_pdu failed: tx_pdu_notifier is nullptr");
     return false;
   }
-  auto tx_pdu = conn_handler->get_tx_pdu_notifier();
-  if (tx_pdu == nullptr) {
-    logger.error("send_custom_pdu failed: tx_pdu_notifier is nullptr");
-    return false;
-  }
-  return tx_pdu->send_custon_pdu(pdu);
+  return tx_notifier->send_custom_pdu(std::move(pdu));
 }

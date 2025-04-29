@@ -503,13 +503,14 @@ int main(int argc, char** argv)
 
   if (my_plmn_expected.has_value()) {
     plmn_identity my_plmn = my_plmn_expected.value();
-      // Get NGAP notifier
-    auto notifier = o_cucp_obj.get_cu_cp().get_ngap_tx_pdu_notifier(my_plmn);
 
-    if (notifier != nullptr) {
-      //notifier->send_custom_pdu(std::move(my_custom_ngap_buffer));
+    // Get NGAP notifier
+    ngap_interface* ngap = o_cucp_obj.get_cu_cp().find_ngap(my_plmn);
+
+    if (ngap != nullptr) {
+      //ngap->send_custom_pdu(std::move(my_custom_ngap_buffer));
     } else {
-      gnb_logger.info("NGAP Tx notifier not available for {}", my_plmn.to_string());
+      gnb_logger.info("ngap interface is null");
     }
   } else {
     gnb_logger.info("Failed to parse PLMN identity");

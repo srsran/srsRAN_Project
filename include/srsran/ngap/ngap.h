@@ -64,7 +64,6 @@ public:
 
   /// This callback is invoked on each received NGAP message.
   virtual void on_new_message(const ngap_message& msg) = 0;
-  
   virtual bool send_custom_pdu(byte_buffer pdu) { return false; }
 };
 
