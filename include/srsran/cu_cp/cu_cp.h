@@ -47,8 +47,7 @@ public:
   /// \brief Get handler of the NG interface of the CU-CP.
   virtual cu_cp_ng_handler& get_ng_handler() = 0;
 
-  /// Get the NGAP Tx PDU notifier for a given PLMN
-  virtual ngap_message_notifier* get_ngap_tx_pdu_notifier(const plmn_identity& plmn) { return nullptr; }
+  virtual ngap_interface* find_ngap(const plmn_identity& plmn) = 0;
 
   /// \brief Get the handler of external commands/events to the CU-CP.
   virtual cu_cp_command_handler& get_command_handler() = 0;

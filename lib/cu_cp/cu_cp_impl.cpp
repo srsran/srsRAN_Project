@@ -919,3 +919,12 @@ void cu_cp_impl::on_statistics_report_timer_expired()
                               [this](timer_id_t /*tid*/) { on_statistics_report_timer_expired(); });
   statistics_report_timer.run();
 }
+
+ngap_interface* cu_cp_impl::find_ngap(const plmn_identity& plmn)
+{
+    auto it = ngap_db->get_ngaps().find(plmn_to_amf_index[plmn]);
+    if (it == ngap_db->get_ngaps().end()) {
+        return nullptr;
+    }
+    return it->second.ngap.get();
+}
