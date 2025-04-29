@@ -124,6 +124,8 @@ ngap_message_notifier* ngap_repository::get_ngap_tx_pdu_notifier(const plmn_iden
     logger.error("ngap_repository -> get_ngap_tx_pdu_notifier. NGAP not found for AMF index {}", fmt::underlying(amf_idx));
     return nullptr;
   }
+  logger.info("get_ngap_tx_pdu_notifier -> {}", ngap_it->second.ngap_tx_pdu_notifier.get());
+
   return ngap_it->second.ngap_tx_pdu_notifier.get();
 }
 

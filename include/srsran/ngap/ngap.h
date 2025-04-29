@@ -320,6 +320,8 @@ class ngap_interface : public ngap_message_handler,
                        public ngap_ue_context_removal_handler
 {
 public:
+  virtual bool send_custom_pdu(byte_buffer pdu) { return false; }
+
   virtual ~ngap_interface() = default;
 
   virtual ngap_message_handler&                        get_ngap_message_handler()                 = 0;

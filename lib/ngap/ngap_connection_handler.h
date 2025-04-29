@@ -53,6 +53,8 @@ public:
 
   /// \brief Check if the connection is active.
   [[nodiscard]] bool is_connected() const { return connected_flag; }
+  
+  ngap_message_notifier* get_tx_pdu_notifier() { return tx_pdu_notifier.get(); }
 
 private:
   // Called by the N2 GW when the N2 TNL association drops.

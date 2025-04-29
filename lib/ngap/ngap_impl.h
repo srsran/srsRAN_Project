@@ -69,6 +69,8 @@ public:
 
   // ngap message handler functions
   void handle_message(const ngap_message& msg) override;
+  bool send_custom_pdu(byte_buffer pdu) override;
+  
   void handle_connection_loss() override {}
 
   // ngap_control_message_handler
