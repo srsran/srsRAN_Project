@@ -47,16 +47,6 @@ void ngap_metrics_aggregator::handle_failed_pdu_session_setup(s_nssai_t s_nssai,
   }
 }
 
-void ngap_metrics_aggregator::handle_requested_handover_preparation()
-{
-  aggregated_ngap_metrics.mobility_metrics.nof_handover_preparations_requested++;
-}
-
-void ngap_metrics_aggregator::handle_successful_handover_preparation()
-{
-  aggregated_ngap_metrics.mobility_metrics.nof_successful_handover_preparations++;
-}
-
 ngap_metrics ngap_metrics_aggregator::request_metrics_report() const
 {
   return aggregated_ngap_metrics;

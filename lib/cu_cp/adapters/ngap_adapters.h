@@ -97,6 +97,12 @@ public:
     return cu_cp_handler->handle_ue_context_release_command(command);
   }
 
+  void on_transmission_of_handover_required() override
+  {
+    srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");
+    cu_cp_handler->handle_transmission_of_handover_required();
+  }
+
   async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) override
   {
     srsran_assert(cu_cp_handler != nullptr, "CU-CP NGAP handler must not be nullptr");

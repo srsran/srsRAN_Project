@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "mobility_management_metrics.h"
 #include "srsran/ngap/ngap_metrics.h"
 #include "srsran/ran/gnb_du_id.h"
 #include "srsran/ran/nr_cgi.h"
@@ -48,9 +49,10 @@ struct metrics_report {
     rrc_du_metrics rrc_metrics;
   };
 
-  std::vector<ue_info>   ues;
-  std::vector<du_info>   dus;
-  std::vector<ngap_info> ngaps;
+  std::vector<ue_info>        ues;
+  std::vector<du_info>        dus;
+  std::vector<ngap_info>      ngaps;
+  mobility_management_metrics mobility;
 };
 
 /// Interface used by the CU-CP to report metrics.

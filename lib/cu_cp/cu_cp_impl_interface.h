@@ -94,6 +94,9 @@ public:
   virtual async_task<ngap_handover_resource_allocation_response>
   handle_ngap_handover_request(const ngap_handover_request& request) = 0;
 
+  /// \brief Handle the transmission of a handover required message to the AMF.
+  virtual void handle_transmission_of_handover_required() = 0;
+
   /// \brief Handle the reception of a new Handover Command.
   /// \param[in] ue_index The index of the UE that received the Handover Command.
   /// \param[in] command The received Handover Command.

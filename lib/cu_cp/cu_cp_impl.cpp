@@ -71,7 +71,8 @@ cu_cp_impl::cu_cp_impl(const cu_cp_configuration& config_) :
                                                       *cfg.services.timers,
                                                       ue_mng,
                                                       du_db,
-                                                      ngap_db)),
+                                                      ngap_db,
+                                                      mobility_mng)),
   cu_cp_cfgtr(mobility_manager_ev_notifier)
 {
   assert_cu_cp_configuration_valid(cfg);
@@ -582,8 +583,17 @@ cu_cp_impl::handle_ngap_handover_request(const ngap_handover_request& request)
       logger);
 }
 
+void cu_cp_impl::handle_transmission_of_handover_required()
+{
+  // Notify mobility manager metrics handler about the requested handover preparation.
+  mobility_mng.get_metrics_handler().handle_requested_handover_preparation();
+}
+
 async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, byte_buffer command)
 {
+  // Notify mobility manager metrics handler about the successful handover preparation.
+  mobility_mng.get_metrics_handler().handle_successful_handover_preparation();
+
   return launch_async([this,
                        ue_index,
                        command,

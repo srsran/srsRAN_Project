@@ -183,6 +183,9 @@ public:
   virtual async_task<cu_cp_ue_context_release_complete>
   on_new_ue_context_release_command(const cu_cp_ue_context_release_command& command) = 0;
 
+  /// \brief Notifiy about the transmission of a handover required message to the AMF.
+  virtual void on_transmission_of_handover_required() = 0;
+
   /// \brief Notify about the reception of a new Handover Command.
   /// \param[in] ue_index The index of the UE.
   /// \param[in] command The Handover Command.

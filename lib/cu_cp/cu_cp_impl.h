@@ -108,6 +108,7 @@ public:
   handle_ue_context_release_command(const cu_cp_ue_context_release_command& command) override;
   async_task<ngap_handover_resource_allocation_response>
                    handle_ngap_handover_request(const ngap_handover_request& request) override;
+  void             handle_transmission_of_handover_required() override;
   async_task<bool> handle_new_handover_command(ue_index_t ue_index, byte_buffer command) override;
   ue_index_t       handle_ue_index_allocation_request(const nr_cell_global_id_t& cgi) override;
   void handle_dl_ue_associated_nrppa_transport_pdu(ue_index_t ue_index, const byte_buffer& nrppa_pdu) override;

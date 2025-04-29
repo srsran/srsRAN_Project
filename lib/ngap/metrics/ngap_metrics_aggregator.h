@@ -25,10 +25,6 @@ public:
 
   void handle_failed_pdu_session_setup(s_nssai_t s_nssai, ngap_cause_t cause);
 
-  void handle_requested_handover_preparation();
-
-  void handle_successful_handover_preparation();
-
   ngap_metrics request_metrics_report() const;
 
 private:
