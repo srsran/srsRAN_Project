@@ -201,9 +201,9 @@ static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_c
   }
 }
 
-void start_user_input_thread(srsran::srs_cu_cp::ngap_interface* nga, srslog::basic_logger& gnb_logger)
+void start_user_input_thread(srsran::srs_cu_cp::ngap_interface* ngap, srslog::basic_logger& gnb_logger)
 {
-  std::thread input_thread([=]() {
+  std::thread input_thread([ngap, &gnb_logger]() {
     std::string line;
     gnb_logger.info("Type: send <hex bytes>");
     while (true) {
