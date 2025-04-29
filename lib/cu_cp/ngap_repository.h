@@ -76,8 +76,6 @@ public:
   /// Number of UEs managed by the CU-CP.
   size_t get_nof_ngap_ues();
 
-  ngap_message_notifier* get_ngap_tx_pdu_notifier(const plmn_identity& plmn);
-
 private:
   struct ngap_context {
     // CU-CP handler of NGAP events.

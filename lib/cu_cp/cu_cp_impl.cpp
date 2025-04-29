@@ -159,12 +159,6 @@ ngap_message_handler* cu_cp_impl::get_ngap_message_handler(const plmn_identity& 
   return ngap_db->find_ngap(plmn);
 };
 
-ngap_message_notifier* cu_cp_impl::get_ngap_tx_pdu_notifier(const plmn_identity& plmn)
-{
-  logger.info("cu_cp_impl -> get_ngap_tx_pdu_notifier");
-  return ngap_db->get_ngap_tx_pdu_notifier(plmn);
-}
-
 bool cu_cp_impl::amfs_are_connected()
 {
   if (cfg.ngap.no_core) {

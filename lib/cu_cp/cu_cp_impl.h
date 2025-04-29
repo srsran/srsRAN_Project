@@ -78,8 +78,6 @@ public:
   // NGAP interface.
   ngap_message_handler* get_ngap_message_handler(const plmn_identity& plmn) override;
 
-  ngap_message_notifier* get_ngap_tx_pdu_notifier(const plmn_identity& plmn) override;
-
   bool amfs_are_connected() override;
 
   // NRPPA interface.
