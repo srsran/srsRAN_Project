@@ -201,6 +201,53 @@ static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_c
   }
 }
 
+void start_user_input_thread(srsran::srs_cu_cp::ngap_interface* ngap)
+{
+  std::thread input_thread([=]() {
+    std::string line;
+    gnb_logger.info("Type: send <hex bytes>");
+    while (true) {
+      if (std::cin.rdbuf()->in_avail() > 0) {
+        std::getline(std::cin, line);
+        if (line.rfind("send ", 0) == 0) {
+          std::vector<uint8_t> bytes;
+          std::istringstream iss(line.substr(5));
+          std::string byte_str;
+          while (iss >> byte_str) {
+            try {
+              uint8_t byte = static_cast<uint8_t>(std::stoul(byte_str, nullptr, 16));
+              bytes.push_back(byte);
+            } catch (const std::exception& e) {
+              gnb_logger.error("Parse error '{}': {}", byte_str, e.what());
+            }
+          }
+          
+          if (bytes.empty()) {
+            gnb_logger.error("No valid bytes to send!");
+            continue;
+          }
+          
+          srsran::byte_buffer buf;
+          span<const uint8_t> bytes_view(bytes.data(), bytes.size());
+          if (not buf.append(bytes_view)) {
+            gnb_logger.error("Failed to build byte_buffer");
+            continue;
+          }
+          
+          if (ngap->send_custom_pdu(std::move(buf))) {
+            gnb_logger.info("Sent dynamic NGAP packet ({} bytes)", bytes.size());
+          } else {
+            gnb_logger.error("Failed to send dynamic packet");
+          }
+        }
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+  });
+  input_thread.detach();
+}
+
+
 int main(int argc, char** argv)
 {
   // Set the application error handler.
@@ -509,6 +556,11 @@ int main(int argc, char** argv)
     srsran::srs_cu_cp::ngap_interface* ngap = o_cucp_obj.get_cu_cp().find_ngap_by_plmn(my_plmn);
 
     if (ngap != nullptr) {
+      gnb_logger.info("Connected to AMF. Ready to send packets.");
+
+      start_user_input_thread(ngap);
+
+      /*
       // Example fake NGAP packet (not real ASN.1, just for testing transmission)
       std::vector<uint8_t> my_raw_bytes = {
         0x00, 0x08, // Message Length (fake)
@@ -520,7 +572,7 @@ int main(int argc, char** argv)
 
       span<const uint8_t> bytes_view(my_raw_bytes.data(), my_raw_bytes.size());
       byte_buffer my_custom_buffer;
-      
+
       if (not my_custom_buffer.append(bytes_view)) {
         gnb_logger.error("Failed to build byte_buffer from custom raw bytes");
       }
@@ -530,9 +582,9 @@ int main(int argc, char** argv)
           gnb_logger.info("Successfully sent custom NGAP PDU");
       } else {
           gnb_logger.error("Failed to send custom NGAP PDU");
-      }
+      }*/
     } else {
-      gnb_logger.info("ngap interface is null");
+      gnb_logger.info("NGAP interface is not ready");
     }
   } else {
     gnb_logger.info("Failed to parse PLMN identity");
