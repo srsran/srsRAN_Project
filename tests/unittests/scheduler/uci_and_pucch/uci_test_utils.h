@@ -266,6 +266,7 @@ struct test_bench_params {
   bool                   cfg_for_mimo_4x4      = false;
   bool                   use_format_0          = false;
   pucch_format           set1_format           = pucch_format::FORMAT_2;
+  bool                   no_csi                = false;
 };
 
 // Test bench with all that is needed for the PUCCH.

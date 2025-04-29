@@ -170,6 +170,9 @@ test_bench::test_bench(const test_bench_params& params,
   uci_sched{cell_cfg, uci_alloc, ues},
   sl_tx{to_numerology_value(cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
 {
+  srsran_assert(not(params.cfg_for_mimo_4x4 and params.no_csi),
+                "The configuration with no CSI is not supported for 4x4 MIMO.");
+
   cell_config_builder_params cfg_params{};
   cfg_params.csi_rs_enabled                = true;
   cfg_params.scs_common                    = params.is_tdd ? subcarrier_spacing::kHz30 : subcarrier_spacing::kHz15;
@@ -192,10 +195,14 @@ test_bench::test_bench(const test_bench_params& params,
   ul_cfg.init_ul_bwp.pucch_cfg->sr_res_list[0].period = params.period;
   ul_cfg.init_ul_bwp.pucch_cfg->sr_res_list[0].offset = params.offset;
 
-  auto& csi_report = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
-      ue_req.cfg.cells.value().back().serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
-  csi_report.report_slot_period = params.csi_period;
-  csi_report.report_slot_offset = params.csi_offset;
+  if (params.no_csi) {
+    ue_req.cfg.cells->back().serv_cell_cfg.csi_meas_cfg.reset();
+  } else {
+    auto& csi_report = std::get<csi_report_config::periodic_or_semi_persistent_report_on_pucch>(
+        ue_req.cfg.cells.value().back().serv_cell_cfg.csi_meas_cfg.value().csi_report_cfg_list[0].report_cfg_type);
+    csi_report.report_slot_period = params.csi_period;
+    csi_report.report_slot_offset = params.csi_offset;
+  }
 
   if (set1_format != pucch_format::FORMAT_2 || use_format_0) {
     pucch_builder_params pucch_params{};
