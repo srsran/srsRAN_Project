@@ -14,6 +14,7 @@
 #include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/format/custom_formattable.h"
 #include "srsran/support/format/fmt_basic_parser.h"
+#include "srsran/support/format/fmt_to_c_str.h"
 #include "srsran/support/tracing/rusage_trace_recorder.h"
 #include "fmt/chrono.h"
 #include <sched.h>
@@ -26,14 +27,18 @@ namespace {
 /// Helper class to write trace events to a file.
 class event_trace_writer
 {
+  static constexpr unsigned MAX_LINES_PER_FILE = 1e6;
+
 public:
-  explicit event_trace_writer(const char* trace_file) :
-    fptr(::fopen(trace_file, "w")), trace_worker("tracer_worker", 2048, std::chrono::microseconds{200})
+  explicit event_trace_writer(const char* trace_file_) :
+    trace_worker("tracer_worker", 4096, std::chrono::microseconds{200})
   {
-    if (fptr == nullptr) {
-      report_fatal_error("ERROR: Failed to open trace file {}", trace_file);
-    }
-    fmt::print(fptr, "[");
+    std::string fname   = trace_file_;
+    size_t      pos_ext = fname.find_last_of(".");
+    report_fatal_error_if_not(pos_ext != std::string::npos, "Unable to derive extension of filename {}", fname);
+    base_fname = fname.substr(0, pos_ext);
+    ext_fname  = fname.substr(pos_ext);
+    create_new_file();
   }
   event_trace_writer(event_trace_writer&& other) noexcept                 = delete;
   event_trace_writer(const event_trace_writer& other) noexcept            = delete;
@@ -52,11 +57,14 @@ public:
   void write_trace(const EventType& ev)
   {
     if (not trace_worker.push_task([this, ev]() {
-          if (SRSRAN_LIKELY(not first_entry)) {
+          if (SRSRAN_LIKELY(nof_lines > 0)) {
             fmt::print(fptr, ",\n{}", ev);
           } else {
             fmt::print(fptr, "\n{}", ev);
-            first_entry = false;
+          }
+          ++nof_lines;
+          if (nof_lines >= MAX_LINES_PER_FILE) {
+            create_new_file();
           }
         })) {
       if (not warn_logged.exchange(true, std::memory_order_relaxed)) {
@@ -68,10 +76,39 @@ public:
   }
 
 private:
-  FILE* fptr;
+  std::pair<std::string, std::string> create_filename_desc(const std::string& trace_filename)
+  {
+    size_t pos_ext = trace_filename.find_last_of(".");
+    report_fatal_error_if_not(pos_ext != std::string::npos, "File name extension not found.");
+    return std::make_pair(trace_filename.substr(0, pos_ext), trace_filename.substr(pos_ext));
+  }
+
+  void create_new_file()
+  {
+    if (fptr != nullptr) {
+      // If another file is already opened, close it.
+      fmt::print(fptr, "\n]");
+      ::fclose(fptr);
+      fptr = nullptr;
+    }
+    fmt::memory_buffer fmtbuf;
+    fmt::format_to(std::back_inserter(fmtbuf), "{}{}{}", base_fname, next_file, ext_fname);
+    ++next_file;
+    fptr = ::fopen(to_c_str(fmtbuf), "w");
+    report_fatal_error_if_not(fptr != nullptr, "ERROR: Failed to open trace file {}", to_c_str(fmtbuf));
+    nof_lines = 0;
+    fmt::print(fptr, "[");
+  }
+
+  std::string base_fname;
+  std::string ext_fname;
+
+  unsigned next_file = 0;
+  unsigned nof_lines = 0;
+
+  FILE* fptr = nullptr;
   /// Task worker to process events.
   general_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep> trace_worker;
-  bool                                                                                             first_entry = true;
   std::atomic<bool>                                                                                warn_logged{false};
 };
 
