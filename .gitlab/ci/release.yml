@@ -257,6 +257,25 @@ download final branch:
     - job: update private branch
       artifacts: false
 
+download final build env:
+  stage: post private
+  image: ubuntu:24.04
+  rules:
+    - if: *on_public_push
+    - if: *on_public_release
+    - if: *on_custom_push
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - cat .gitlab/ci/release_build.env
+  artifacts:
+    reports:
+      dotenv: .gitlab/ci/release_build.env
+  needs:
+    - job: download final branch
+      optional: false
+      artifacts: true
+
 basic build final branch:
   extends: .build_and_unit
   stage: post private
@@ -267,13 +286,13 @@ basic build final branch:
     - if: *on_custom_push
   variables:
     GIT_STRATEGY: none
-    OS: ubuntu-24.04
-    COMPILER: gcc
     ENABLE_MKL: # default
     ENABLE_ARMPL: # default
     PLUGIN_INDEX_ARRAY: ""
   tags: ["amd64-avx2"]
   needs:
+    - job: download final build env
+      artifacts: true  
     - job: download final branch
       optional: false
       artifacts: true
