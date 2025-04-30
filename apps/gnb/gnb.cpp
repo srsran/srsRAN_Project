@@ -225,7 +225,7 @@ void start_tcp_control_server(srsran::srs_cu_cp::ngap_interface* ngap, srslog::b
 
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(9999);
+    address.sin_port = htons(8899);
 
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
       gnb_logger.error("TCP server: Bind failed");
@@ -239,7 +239,7 @@ void start_tcp_control_server(srsran::srs_cu_cp::ngap_interface* ngap, srslog::b
       return;
     }
 
-    gnb_logger.info("TCP server started on port 9999. Use 'telnet 127.0.0.1 9999' to send commands.");
+    gnb_logger.info("TCP server started on port 8899. Use 'telnet 127.0.0.1 8899' to send commands.");
 
     while (true) {
       new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
@@ -633,7 +633,7 @@ int main(int argc, char** argv)
       gnb_logger.info("Connected to AMF. Ready to send packets.");
 
       start_tcp_control_server(ngap, gnb_logger);
-      
+
       /*
       // Example fake NGAP packet (not real ASN.1, just for testing transmission)
       std::vector<uint8_t> my_raw_bytes = {
