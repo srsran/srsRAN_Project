@@ -201,6 +201,17 @@ private:
   /// a discard timer, it is responsible to restart the discard timer with the correct timeout.
   void discard_callback();
 
+  /// \brief handle_transmit_notification_impl Common implementation for transmit and retransmit notifications
+  ///
+  /// \param notif_sn Notified (re)transmitted PDCP PDU sequence number.
+  /// \param is_retx Flags whether this is a notification of a ReTx or not
+  void handle_transmit_notification_impl(uint32_t notif_sn, bool is_retx);
+
+  /// \brief handle_delivery_notification_impl Common implementation for deliv and deliv retransmitted notifications.
+  /// \param notif_sn Notified delivered or retransmitted delivered PDCP PDU sequence number.
+  /// \param is_retx Flags whether this is a notification of a ReTx or not
+  void handle_delivery_notification_impl(uint32_t notif_sn, bool is_retx);
+
   pdcp_tx_metrics          metrics;
   pdcp_metrics_aggregator& metrics_agg;
 };

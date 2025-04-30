@@ -591,20 +591,32 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
     return;
   }
 
-  logger.log_debug("Handling transmit notification for notif_sn={}", notif_sn);
+  handle_transmit_notification_impl(notif_sn, false);
+}
+
+void pdcp_entity_tx::handle_transmit_notification_impl(uint32_t notif_sn, bool is_retx)
+{
+  logger.log_debug("Handling transmit notification for notif_sn={} is_retx={}", notif_sn, is_retx);
   if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-    logger.log_error("Invalid transmit notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
+    logger.log_error(
+        "Invalid transmit notification for notif_sn={} exceeds sn_size={}. is_retx={}", notif_sn, cfg.sn_size, is_retx);
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
   if (notif_count < st.tx_trans) {
-    logger.log_info(
-        "Invalid notification SN, notif_count is too low. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
+    logger.log_info("Invalid notification SN, notif_count is too low. notif_sn={} notif_count={} is_retx={} {}",
+                    notif_sn,
+                    notif_count,
+                    is_retx,
+                    st);
     return;
   }
   if (notif_count >= st.tx_next) {
-    logger.log_error(
-        "Invalid notification SN, notif_count is too high. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
+    logger.log_error("Invalid notification SN, notif_count is too high. notif_sn={} notif_count={} is_retx={} {}",
+                     notif_sn,
+                     notif_count,
+                     is_retx,
+                     st);
     return;
   }
   st.tx_trans = notif_count + 1;
@@ -627,14 +639,20 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
     return;
   }
 
-  logger.log_debug("Handling delivery notification for notif_sn={}", notif_sn);
+  handle_delivery_notification_impl(notif_sn, false);
+}
+
+void pdcp_entity_tx::handle_delivery_notification_impl(uint32_t notif_sn, bool is_retx)
+{
+  logger.log_debug("Handling delivery notification for notif_sn={} is_retx={}", notif_sn, is_retx);
   if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-    logger.log_error("Invalid delivery notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
+    logger.log_error(
+        "Invalid delivery notification for notif_sn={} exceeds sn_size={}. is_retx={}", notif_sn, cfg.sn_size, is_retx);
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
   if (notif_count >= st.tx_next) {
-    logger.log_error("Got notification for invalid COUNT. notif_count={} {}", notif_count, st);
+    logger.log_error("Got notification for invalid COUNT. notif_count={} is_retx={} {}", notif_count, is_retx, st);
     return;
   }
 
@@ -646,7 +664,8 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
   if (is_am()) {
     stop_discard_timer(notif_count);
   } else {
-    logger.log_error("Ignored unexpected PDU delivery notification in UM bearer. notif_sn={}", notif_sn);
+    logger.log_error(
+        "Ignored unexpected PDU delivery notification in UM bearer. notif_sn={} is_retx={}", notif_sn, is_retx);
   }
 }
 
@@ -666,8 +685,7 @@ void pdcp_entity_tx::handle_retransmit_notification(uint32_t notif_sn)
     return;
   }
 
-  // Nothing to do here
-  logger.log_debug("Ignored handling PDU retransmit notification for notif_sn={}", notif_sn);
+  handle_transmit_notification_impl(notif_sn, true);
 }
 
 void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_sn)
@@ -686,10 +704,7 @@ void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_s
     return;
   }
 
-  // TODO: Here we can stop discard timers of successfully retransmitted PDUs once they can be distinguished from
-  // origianls (e.g. if they are moved into a separate container upon retransmission).
-  // For now those retransmitted PDUs will be cleaned when handling delivery notification for following originals.
-  logger.log_debug("Ignored handling PDU delivery retransmitted notification for notif_sn={}", notif_sn);
+  handle_delivery_notification_impl(notif_sn, true);
 }
 
 void pdcp_entity_tx::handle_desired_buffer_size_notification(uint32_t desired_bs)
