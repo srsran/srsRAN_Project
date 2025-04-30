@@ -1918,6 +1918,33 @@ basic ru dummy:
     <<: *build_artifacts
     expire_in: 3 days
 
+basic avx2 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    SRS_TARGET: gnb_split_7_2
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: Release
+    TEST_MODE: none
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    DPDK_VERSION: "23.11.1_avx2"
+    MARCH: x86-64-v3
+    FORCE_DEBUG_INFO: "True"
+    ASSERT_LEVEL: AUTO
+    INFRASTRUCTURE_TAG: amd64-avx2
+    BUILD_ARGS: -DEXIT_TIMEOUT=30
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 days
+
 basic avx512 dpdk:
   extends: .build_and_unit
   rules:

@@ -240,15 +240,6 @@ amari 8UE:
         KEYWORDS: "sequentially"
       - E2E_FILE_OR_DIR: tests/attach_detach.py
 
-amari 2UE s72x:
-  extends: .zmq-uesim
-  variables:
-    TESTBED: "s72_uesim"
-    MARKERS: "s72"
-    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  timeout: 4h
-  allow_failure: true
-
 amari 8UE beta:
   extends: amari 8UE
   parallel:
@@ -317,7 +308,7 @@ cudu amari 32UE:
   variables:
     TESTBED: zmq_cudu
     E2E_FILE_OR_DIR: tests/iperf.py
-    KEYWORDS: "tcp and not band:3 and bandwidth:50 and not precoding"    
+    KEYWORDS: "tcp and not band:3 and bandwidth:50 and not precoding"
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
 
@@ -678,6 +669,31 @@ viavi 24h:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     KEYWORDS: "24h"
+
+################################################################################
+# Amari S72
+################################################################################
+
+.s72:
+  stage: rf
+  extends: .e2e-run
+  variables:
+    GROUP: uesim
+    TESTBED: "s72_uesim"
+    E2E_LOG_LEVEL: "info"
+    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
+  allow_failure: true
+  needs:
+    - job: "basic avx2 dpdk"
+      artifacts: true
+    - *retina-needs
+
+amari 2UE s72x:
+  extends: .s72
+  variables:
+    MARKERS: "s72"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  timeout: 4h
 
 ################################################################################
 # Garbage collector
