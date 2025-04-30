@@ -46,6 +46,43 @@ cf_t srsran::srsvec::dot_prod(span<const cf_t> x, span<const cf_t> y)
   return result;
 }
 
+cf_t srsran::srsvec::dot_prod(span<const cbf16_t> x, span<const cf_t> y)
+{
+  srsran_srsvec_assert_size(x, y);
+
+  cf_t     result = 0;
+  unsigned i      = 0;
+  unsigned len    = x.size();
+
+#if SRSRAN_SIMD_CF_SIZE
+  if (len >= SRSRAN_SIMD_CF_SIZE) {
+    simd_cf_t simd_result = srsran_simd_cf_zero();
+    for (unsigned simd_end = SRSRAN_SIMD_CF_SIZE * (len / SRSRAN_SIMD_CF_SIZE); i != simd_end;
+         i += SRSRAN_SIMD_CF_SIZE) {
+      simd_cf_t simd_x = srsran_simd_cbf16_loadu(x.data() + i);
+      simd_cf_t simd_y = srsran_simd_cfi_loadu(y.data() + i);
+
+      simd_result = srsran_simd_cf_add(srsran_simd_cf_conjprod(simd_x, simd_y), simd_result);
+    }
+
+    alignas(SIMD_BYTE_ALIGN) std::array<cf_t, SRSRAN_SIMD_CF_SIZE> simd_vector_sum;
+    srsran_simd_cfi_store(simd_vector_sum.data(), simd_result);
+    result = std::accumulate(simd_vector_sum.begin(), simd_vector_sum.end(), cf_t());
+  }
+#endif // SRSRAN_SIMD_CF_SIZE
+
+  for (; i != len; ++i) {
+    result += to_cf(x[i]) * std::conj(y[i]);
+  }
+
+  return result;
+}
+
+cf_t srsran::srsvec::dot_prod(span<const cf_t> x, span<const cbf16_t> y)
+{
+  return std::conj(dot_prod(y, x));
+}
+
 float srsran::srsvec::average_power(span<const cf_t> x)
 {
   float    result = 0;

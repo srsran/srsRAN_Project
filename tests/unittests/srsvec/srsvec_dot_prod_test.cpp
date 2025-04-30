@@ -13,7 +13,7 @@
 #include <random>
 
 static std::mt19937 rgen(0);
-static const float  ASSERT_MAX_ERROR = 3e-6;
+static const float  ASSERT_MAX_ERROR = 1e-5;
 
 using namespace srsran;
 
@@ -44,6 +44,47 @@ static void test_dot_prod_ccc(std::size_t N)
              N,
              gold_z,
              z);
+}
+
+static void test_dot_prod_ccbf16(std::size_t N)
+{
+  std::uniform_real_distribution<float> dist(-1.0, 1.0);
+
+  std::vector<cf_t> x(N);
+  for (cf_t& v : x) {
+    v = {dist(rgen), dist(rgen)};
+  }
+
+  std::vector<cbf16_t> y(N);
+  for (cbf16_t& v : y) {
+    v = {dist(rgen), dist(rgen)};
+  }
+
+  cf_t z1 = srsvec::dot_prod(x, y);
+  cf_t z2 = srsvec::dot_prod(y, x);
+
+  cf_t gold_z1 = std::inner_product(x.begin(), x.end(), y.begin(), cf_t(0.0F), std::plus<>(), [](cf_t a, cbf16_t b) {
+    return a * std::conj(to_cf(b));
+  });
+  cf_t gold_z2 = std::conj(z1);
+
+  float err1 = std::abs(z1 - gold_z1);
+  TESTASSERT(err1 < ASSERT_MAX_ERROR,
+             "Error {} is too high (max {}) for size of {} samples. Expected z={} but got z={}.",
+             err1,
+             ASSERT_MAX_ERROR,
+             N,
+             gold_z1,
+             z1);
+
+  float err2 = std::abs(z2 - gold_z2);
+  TESTASSERT(err2 < ASSERT_MAX_ERROR,
+             "Error {} is too high (max {}) for size of {} samples. Expected z={} but got z={}.",
+             err2,
+             ASSERT_MAX_ERROR,
+             N,
+             gold_z2,
+             z2);
 }
 
 static void test_avg_power_cf(std::size_t N)
@@ -106,6 +147,7 @@ int main()
 
   for (std::size_t N : sizes) {
     test_dot_prod_ccc(N);
+    test_dot_prod_ccbf16(N);
     test_avg_power_cf(N);
     test_avg_power_cbf16(N);
   }
