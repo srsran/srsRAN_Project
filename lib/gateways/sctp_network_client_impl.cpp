@@ -329,8 +329,10 @@ void sctp_network_client_impl::handle_connection_close(const char* cause)
   }
 }
 
-void sctp_network_client_impl::handle_sctp_shutdown_comp()
+void sctp_network_client_impl::handle_sctp_shutdown(const std::string& cause)
 {
+  logger.info("{}: {}. Notifying connection drop to upper layers", node_cfg.if_name, cause);
+
   // Notify SCTP sender that there is no need to send EOF.
   shutdown_received->store(true);
 
@@ -362,7 +364,7 @@ void sctp_network_client_impl::handle_notification(span<const uint8_t>          
 {
   if (not validate_and_log_sctp_notification(payload)) {
     // Handle error.
-    handle_connection_close("The received message is invalid");
+    handle_sctp_shutdown("Received invalid message");
     return;
   }
 
@@ -374,13 +376,13 @@ void sctp_network_client_impl::handle_notification(span<const uint8_t>          
         case SCTP_COMM_UP:
           break;
         case SCTP_COMM_LOST:
-          handle_connection_close("Communication to the server was lost");
+          handle_sctp_shutdown("Communication to the server was lost");
           break;
         case SCTP_SHUTDOWN_COMP:
-          handle_sctp_shutdown_comp();
+          handle_sctp_shutdown("Received SCTP shutdown completed");
           break;
         case SCTP_CANT_STR_ASSOC:
-          handle_connection_close("Can't start association");
+          handle_sctp_shutdown("Can't start association");
           break;
         default:
           break;
