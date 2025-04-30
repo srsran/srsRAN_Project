@@ -197,7 +197,7 @@ private:
   /// \brief Get estimated size of a PDU from an SDU
   uint32_t get_pdu_size(const byte_buffer& sdu) const;
 
-  /// \breif Callback ran upon discard timer expiration. If there are still PDUs in the TX window that require
+  /// \brief Callback ran upon discard timer expiration. If there are still PDUs in the TX window that require
   /// a discard timer, it is responsible to restart the discard timer with the correct timeout.
   void discard_callback();
 
