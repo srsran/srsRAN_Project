@@ -85,6 +85,8 @@ struct strand_based_executor_config {
   unsigned ctrl_ue_task_queue_size;
   /// \brief Executor to which strands will be associated.
   task_executor& worker_pool_executor;
+  /// \brief Executor which will be used to receive external data.
+  task_executor& external_data_executor;
   /// \brief Whether to instantiate a dedicated strand for sending UL PDUs to the IO.
   bool dedicated_io_strand;
   /// \brief Timers used by the application.

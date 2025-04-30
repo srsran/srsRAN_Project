@@ -253,6 +253,7 @@ void worker_manager::create_cu_up_executors(const worker_manager_config::cu_up_c
                                                                                     config.ul_ue_executor_queue_size,
                                                                                     config.ctrl_ue_executor_queue_size,
                                                                                     *exec_map.at("low_prio_exec"),
+                                                                                    *exec_map.at("external_data_exec"),
                                                                                     config.dedicated_io_ul_strand,
                                                                                     &timers});
 }
@@ -315,7 +316,8 @@ execution_config_helper::worker_pool worker_manager::create_low_prio_workers(uns
   worker_pool non_rt_pool{
       "non_rt_pool",
       nof_low_prio_threads,
-      {{concurrent_queue_policy::lockfree_mpmc, low_prio_task_queue_size}, // two task priority levels.
+      {{concurrent_queue_policy::lockfree_mpmc, low_prio_task_queue_size}, // three task priority levels.
+       {concurrent_queue_policy::lockfree_mpmc, low_prio_task_queue_size},
        {concurrent_queue_policy::lockfree_mpmc, low_prio_task_queue_size}},
       // Left empty, is filled later.
       {},
@@ -334,13 +336,15 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
       worker_cfg.nof_low_prio_threads, worker_cfg.low_prio_task_queue_size, worker_cfg.low_prio_sched_config.mask);
 
   // Associate executors to the worker pool.
+  // Used for receiving data from external nodes.
+  non_rt_pool.executors.emplace_back("external_data_exec", task_priority::max - 2);
   // Used for PCAP writing and CU-UP.
   non_rt_pool.executors.emplace_back("low_prio_exec", task_priority::max - 1);
   // Used for control plane and timer management.
   non_rt_pool.executors.emplace_back("high_prio_exec", task_priority::max);
 
-  std::vector<strand>& low_prio_strands  = non_rt_pool.executors[0].strands;
-  std::vector<strand>& high_prio_strands = non_rt_pool.executors[1].strands;
+  std::vector<strand>& low_prio_strands  = non_rt_pool.executors[1].strands;
+  std::vector<strand>& high_prio_strands = non_rt_pool.executors[2].strands;
 
   // Configuration of strands for PCAP writing. These strands will use the low priority executor.
   append_pcap_strands(low_prio_strands, worker_cfg.pcap_cfg);
@@ -358,9 +362,10 @@ void worker_manager::create_low_prio_executors(const worker_manager_config& work
     report_fatal_error("Failed to instantiate {} execution context", non_rt_pool.name);
   }
 
-  non_rt_low_prio_exec = exec_mng.executors().at("low_prio_exec");
-  non_rt_hi_prio_exec  = exec_mng.executors().at("high_prio_exec");
-  metrics_exec         = exec_mng.executors().at("metrics_exec");
+  non_rt_external_data_exec = exec_mng.executors().at("external_data_exec");
+  non_rt_low_prio_exec      = exec_mng.executors().at("low_prio_exec");
+  non_rt_hi_prio_exec       = exec_mng.executors().at("high_prio_exec");
+  metrics_exec              = exec_mng.executors().at("metrics_exec");
 }
 
 void worker_manager::associate_low_prio_executors(const worker_manager_config& config)

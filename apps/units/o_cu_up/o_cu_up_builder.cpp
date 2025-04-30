@@ -95,7 +95,7 @@ o_cu_up_unit srsran::build_o_cu_up(const o_cu_up_unit_config& unit_cfg, const o_
           create_udp_gtpu_gateway(n3_udp_cfg,
                                   *dependencies.io_brk,
                                   dependencies.workers->cu_up_exec_mapper->io_ul_executor(),
-                                  *dependencies.workers->non_rt_low_prio_exec);
+                                  *dependencies.workers->non_rt_external_data_exec);
       ngu_gws.push_back(std::move(ngu_gw));
     }
   } else {
