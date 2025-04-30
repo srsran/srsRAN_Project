@@ -67,6 +67,11 @@
 #include <thread>
 #include <iostream>
 #include <string>
+#include <sstream>
+#include <fstream>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/span.h"
 #include <atomic>
@@ -201,17 +206,57 @@ static void autoderive_cu_up_parameters_after_parsing(cu_up_unit_config& cu_up_c
   }
 }
 
-void start_user_input_thread(srsran::srs_cu_cp::ngap_interface* ngap, srslog::basic_logger& gnb_logger)
+void start_tcp_control_server(srsran::srs_cu_cp::ngap_interface* ngap, srslog::basic_logger& gnb_logger)
 {
-  std::thread input_thread([ngap, &gnb_logger]() {
-    std::string line;
-    gnb_logger.info("Type: send <hex bytes>");
+  std::thread server_thread([=, &gnb_logger]() {
+    int server_fd, new_socket;
+    struct sockaddr_in address;
+    int addrlen = sizeof(address);
+    char buffer[4096] = {0};
+
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == 0) {
+      gnb_logger.error("TCP server: Failed to create socket");
+      return;
+    }
+
+    int opt = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(9999);
+
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+      gnb_logger.error("TCP server: Bind failed");
+      close(server_fd);
+      return;
+    }
+
+    if (listen(server_fd, 3) < 0) {
+      gnb_logger.error("TCP server: Listen failed");
+      close(server_fd);
+      return;
+    }
+
+    gnb_logger.info("TCP server started on port 9999. Use 'telnet 127.0.0.1 9999' to send commands.");
+
     while (true) {
-      if (std::cin.rdbuf()->in_avail() > 0) {
-        std::getline(std::cin, line);
-        if (line.rfind("send ", 0) == 0) {
+      new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
+      if (new_socket < 0) {
+        gnb_logger.error("TCP server: Accept failed");
+        continue;
+      }
+
+      ssize_t read_size;
+      while ((read_size = read(new_socket, buffer, sizeof(buffer) - 1)) > 0) {
+        buffer[read_size] = '\0';
+        std::string line(buffer);
+        std::istringstream iss(line);
+        std::string command;
+        iss >> command;
+        if (command == "send") {
           std::vector<uint8_t> bytes;
-          std::istringstream iss(line.substr(5));
           std::string byte_str;
           while (iss >> byte_str) {
             try {
@@ -221,30 +266,59 @@ void start_user_input_thread(srsran::srs_cu_cp::ngap_interface* ngap, srslog::ba
               gnb_logger.error("Parse error '{}': {}", byte_str, e.what());
             }
           }
-          
+
           if (bytes.empty()) {
-            gnb_logger.error("No valid bytes to send!");
+            gnb_logger.error("No valid bytes received for send");
             continue;
           }
-          
+
           srsran::byte_buffer buf;
           span<const uint8_t> bytes_view(bytes.data(), bytes.size());
           if (not buf.append(bytes_view)) {
             gnb_logger.error("Failed to build byte_buffer");
             continue;
           }
-          
+
           if (ngap->send_custom_pdu(std::move(buf))) {
             gnb_logger.info("Sent dynamic NGAP packet ({} bytes)", bytes.size());
           } else {
-            gnb_logger.error("Failed to send dynamic packet");
+            gnb_logger.error("Failed to send dynamic NGAP packet");
           }
+        } else if (command == "sendfile") {
+          std::string filepath;
+          iss >> filepath;
+          if (filepath.empty()) {
+            gnb_logger.error("No filepath provided");
+            continue;
+          }
+          std::ifstream file(filepath, std::ios::binary);
+          if (!file.is_open()) {
+            gnb_logger.error("Failed to open file '{}'", filepath);
+            continue;
+          }
+          std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(file)),
+                                      std::istreambuf_iterator<char>());
+
+          srsran::byte_buffer buf;
+          span<const uint8_t> bytes_view(bytes.data(), bytes.size());
+          if (not buf.append(bytes_view)) {
+            gnb_logger.error("Failed to build byte_buffer from file");
+            continue;
+          }
+
+          if (ngap->send_custom_pdu(std::move(buf))) {
+            gnb_logger.info("Sent NGAP packet from file '{}' ({} bytes)", filepath, bytes.size());
+          } else {
+            gnb_logger.error("Failed to send NGAP packet from file");
+          }
+        } else {
+          gnb_logger.error("Unknown command '{}'", command);
         }
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      close(new_socket);
     }
   });
-  input_thread.detach();
+  server_thread.detach();
 }
 
 
@@ -558,8 +632,8 @@ int main(int argc, char** argv)
     if (ngap != nullptr) {
       gnb_logger.info("Connected to AMF. Ready to send packets.");
 
-      start_user_input_thread(ngap, gnb_logger);
-
+      start_tcp_control_server(ngap, gnb_logger);
+      
       /*
       // Example fake NGAP packet (not real ASN.1, just for testing transmission)
       std::vector<uint8_t> my_raw_bytes = {
