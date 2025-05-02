@@ -12,7 +12,6 @@
 
 #include "mac_dl_configurator.h"
 #include "srsran/adt/bounded_bitset.h"
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/noop_functor.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/adt/spsc_queue.h"

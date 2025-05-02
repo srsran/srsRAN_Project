@@ -62,7 +62,8 @@ private:
     trace_point clear_tp   = up_tracer.now();
     uint32_t    queue_size = recycle_bin->size();
     for (uint32_t i = 0; i < queue_size; ++i) {
-      recycle_bin->try_pop();
+      auto discard = recycle_bin->try_pop();
+      (void)discard;
     }
 
     up_tracer << trace_event{"rlc_clear_pdus", clear_tp};

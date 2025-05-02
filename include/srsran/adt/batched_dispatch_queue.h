@@ -12,7 +12,6 @@
 
 #include "../srslog/srslog.h"
 #include "../support/executors/task_executor.h"
-#include "concurrent_queue.h"
 #include "mpmc_queue.h"
 #include "span.h"
 #include <vector>

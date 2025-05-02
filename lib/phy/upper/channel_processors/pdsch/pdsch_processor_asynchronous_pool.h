@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/span.h"
 #include "srsran/phy/upper/channel_processors/pdsch/formatters.h"

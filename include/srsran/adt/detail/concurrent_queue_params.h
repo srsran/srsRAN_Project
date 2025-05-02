@@ -58,4 +58,16 @@ constexpr enqueue_priority operator-(enqueue_priority lhs, std::size_t dec)
   return static_cast<enqueue_priority>(static_cast<std::size_t>(lhs) - dec);
 }
 
+/// \brief A concurrent queue that can be used to pass objects between threads. Different policies are supported:
+/// - lockfree_spsc: a lock-free single-producer single-consumer queue. This is the fastest option.
+/// - lockfree_mpmc: a lock-free multi-producer multi-consumer queue.
+/// - locking_mpmc: a multi-producer multi-consumer queue that uses a mutex to protect the queue. This is the most
+/// general queue, but has the highest overhead. The producers and consumers will contend on the access to the mutex.
+/// - locking_mpsc: a multi-producer single-consumer queue that uses a mutex to protect the queue. This queue pops
+/// all elements in a batch to minimize the contention on the mutex from the consumer side.
+/// - moodycamel_lockfree_mpmc: Lock-free MPMC queue with unbounded capacity and that does not ensure elements
+/// enqueued by independent producers come out in the same order (not linearizable).
+template <typename T, concurrent_queue_policy Policy, concurrent_queue_wait_policy BlockingPolicy>
+class concurrent_queue;
+
 } // namespace srsran

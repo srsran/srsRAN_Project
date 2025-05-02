@@ -11,7 +11,8 @@
 #pragma once
 
 #include "cameron314/concurrentqueue.h"
-#include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/detail/concurrent_queue_helper.h"
+#include "srsran/adt/detail/concurrent_queue_params.h"
 #include "srsran/adt/span.h"
 
 namespace srsran {

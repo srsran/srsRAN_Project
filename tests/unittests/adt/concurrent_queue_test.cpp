@@ -8,7 +8,6 @@
  *
  */
 
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/moodycamel_mpmc_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"

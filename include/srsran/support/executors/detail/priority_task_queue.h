@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran/adt/concurrent_queue.h"
+#include "srsran/adt/detail/concurrent_queue_params.h"
 #include "srsran/adt/span.h"
 #include "srsran/support/executors/task_executor.h"
 

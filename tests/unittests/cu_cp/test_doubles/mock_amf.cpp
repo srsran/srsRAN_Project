@@ -9,7 +9,6 @@
  */
 
 #include "mock_amf.h"
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/ngap/ngap_message.h"
 #include "srsran/srslog/srslog.h"
@@ -39,7 +38,8 @@ public:
         // If a PDU response has been previously enqueued, we send it now.
         if (not parent.pending_tx_pdus.empty()) {
           ngap_message tx_pdu;
-          parent.pending_tx_pdus.try_pop(tx_pdu);
+          bool         discard = parent.pending_tx_pdus.try_pop(tx_pdu);
+          (void)discard;
           parent.push_tx_pdu(tx_pdu);
         }
 

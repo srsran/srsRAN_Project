@@ -35,7 +35,6 @@
 #include "tests/test_doubles/pdcp/pdcp_pdu_generator.h"
 #include "tests/test_doubles/scheduler/scheduler_result_test.h"
 #include "tests/unittests/f1ap/du/f1ap_du_test_helpers.h"
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/asn1/f1ap/f1ap_pdu_contents_ue.h"
 #include "srsran/du/du_cell_config_helpers.h"
@@ -242,7 +241,10 @@ public:
 
     if (logger.info.enabled()) {
       auto metrics_copy = metrics;
-      pending_metrics.try_push(std::move(metrics_copy));
+      bool ret          = pending_metrics.try_push(std::move(metrics_copy));
+      if (not ret) {
+        logger.error("Unable to push metrics");
+      }
     }
   }
 

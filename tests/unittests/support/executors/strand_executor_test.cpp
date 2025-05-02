@@ -139,7 +139,7 @@ TEST(strand_executor_test, multi_priorities_in_strand)
       order_of_tasks(10);
 
   ASSERT_TRUE(strand_execs[0]->execute([&]() {
-    order_of_tasks.try_push(enqueue_priority::max);
+    ASSERT_TRUE(order_of_tasks.try_push(enqueue_priority::max));
 
     // Strand tasks are being pushed from within worker pool, but strand is already locked.
     // So, they will run right after this lambda returns, respecting the strand task priorities.

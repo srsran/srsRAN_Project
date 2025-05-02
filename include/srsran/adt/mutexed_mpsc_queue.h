@@ -10,22 +10,21 @@
 
 #pragma once
 
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/detail/concurrent_queue_barrier.h"
+#include "srsran/adt/detail/concurrent_queue_helper.h"
+#include "srsran/adt/detail/concurrent_queue_params.h"
 #include "srsran/adt/ring_buffer.h"
 
 namespace srsran {
 
-namespace detail {
-
 /// Specialization for lock-based MPSC, using a condition variable or sleep as blocking mechanism. The dequeues are done
 /// in a batch to minimize mutex contention.
 template <typename T, concurrent_queue_wait_policy BlockingPolicy>
-class queue_impl<T, concurrent_queue_policy::locking_mpsc, BlockingPolicy>
+class concurrent_queue<T, concurrent_queue_policy::locking_mpsc, BlockingPolicy>
 {
   using queue_barrier = std::conditional_t<BlockingPolicy == concurrent_queue_wait_policy::condition_variable,
-                                           queue_cond_var_barrier,
-                                           queue_sleep_barrier>;
+                                           detail::queue_cond_var_barrier,
+                                           detail::queue_sleep_barrier>;
 
   const size_t                        cap;
   std::atomic<unsigned>               count_local_objs{0};
@@ -35,14 +34,19 @@ class queue_impl<T, concurrent_queue_policy::locking_mpsc, BlockingPolicy>
   queue_barrier                       barrier;
 
 public:
+  using value_type                                       = T;
+  static const concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpsc;
+  static const concurrent_queue_wait_policy wait_policy  = BlockingPolicy;
+
   template <typename... Args>
-  explicit queue_impl(size_t qsize, Args&&... args) :
+  explicit concurrent_queue(size_t qsize, Args&&... args) :
     cap(qsize),
     queues({ring_buffer<T, true>{(unsigned)qsize}, ring_buffer<T, true>{(unsigned)qsize}}),
     barrier(std::forward<Args>(args)...)
   {
   }
 
+  /// \brief Request any blocking function to be interrupted.
   void request_stop()
   {
     std::lock_guard<std::mutex> lock(mutex);
@@ -50,8 +54,10 @@ public:
     barrier.request_stop();
   }
 
+  /// Pushes a new element into the queue in a non-blocking fashion. If the queue is full, the element is not pushed.
+  /// \return true if the element was pushed, false otherwise.
   template <typename U>
-  bool try_push(U&& elem)
+  [[nodiscard]] bool try_push(U&& elem)
   {
     std::unique_lock<std::mutex> lock(mutex);
     if (barrier.is_running() and not pushing_queue().full()) {
@@ -62,6 +68,9 @@ public:
     return false;
   }
 
+  /// Pushes a new element into the queue. If the queue is full, the call blocks, waiting for a new slot to become
+  /// emptied.
+  /// \return true if the element was pushed, false if the queue was closed.
   template <typename U>
   bool push_blocking(U&& elem)
   {
@@ -75,7 +84,10 @@ public:
     return false;
   }
 
-  bool try_pop(T& elem)
+  /// \brief Pops an element from the queue in a non-blocking fashion.
+  ///
+  /// If the queue is empty, the call returns false.
+  [[nodiscard]] bool try_pop(T& elem)
   {
     T* f = front<false>();
     if (f != nullptr) {
@@ -86,6 +98,20 @@ public:
     return false;
   }
 
+  /// \brief Pops an element from the queue in a non-blocking fashion.
+  ///
+  /// If the queue is empty, the call returns an empty optional.
+  std::optional<T> try_pop()
+  {
+    std::optional<T> ret;
+    ret.emplace();
+    if (not try_pop(ret.value())) {
+      ret.reset();
+    }
+    return ret;
+  }
+
+  /// Pops an element from the queue. If the queue is empty, the call blocks, waiting for a new element to be pushed.
   bool pop_blocking(T& elem) noexcept
   {
     T* f = front<true>();
@@ -95,6 +121,17 @@ public:
       return true;
     }
     return false;
+  }
+
+  /// Pops an element from the queue. If the queue is empty, the call blocks, waiting for a new element to be pushed.
+  std::optional<T> pop_blocking() noexcept
+  {
+    std::optional<T> ret;
+    ret.emplace();
+    if (not pop_blocking(ret.value())) {
+      ret.reset();
+    }
+    return ret;
   }
 
   template <typename PoppingFunc>
@@ -109,13 +146,15 @@ public:
     return false;
   }
 
-  size_t size() const
+  /// \brief Current size of the queue.
+  [[nodiscard]] size_t size() const
   {
     std::lock_guard<std::mutex> lock(mutex);
     return pushing_queue().size() + count_local_objs.load(std::memory_order_relaxed);
   }
 
-  bool empty() const
+  /// \brief Determines whether the queue is empty.
+  [[nodiscard]] bool empty() const
   {
     if (count_local_objs.load(std::memory_order_relaxed) > 0) {
       return false;
@@ -124,7 +163,8 @@ public:
     return pushing_queue().empty();
   }
 
-  size_t capacity() const { return cap; }
+  /// \brief Maximum capacity of the queue.
+  [[nodiscard]] size_t capacity() const { return cap; }
 
 private:
   template <bool Blocking>
@@ -167,7 +207,5 @@ private:
 
   const ring_buffer<T, true>& pushing_queue() const { return queues[1 - index_queue_for_pop]; }
 };
-
-} // namespace detail
 
 } // namespace srsran

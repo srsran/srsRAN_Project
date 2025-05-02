@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/adt/mutexed_mpsc_queue.h"

@@ -11,25 +11,27 @@
 #pragma once
 
 #include "srsran/adt/blocking_queue.h"
-#include "srsran/adt/concurrent_queue.h"
-#include "srsran/adt/detail/concurrent_queue_barrier.h"
+#include "srsran/adt/detail/concurrent_queue_params.h"
 
 namespace srsran {
-namespace detail {
 
-/// Specialization for lock-based MPMC without a blocking mechanism..
+/// Specialization for lock-based MPMC without a blocking mechanism.
 template <typename T>
-class queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::non_blocking>
+class concurrent_queue<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
 public:
-  explicit queue_impl(size_t qsize) : queue(qsize) {}
+  using value_type                                           = T;
+  constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
+  constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
 
-  void request_stop() { queue.stop(); }
+  explicit concurrent_queue(size_t qsize) : queue(qsize) {}
 
-  bool try_push(const T& elem) { return queue.try_push(elem); }
-  bool try_push(T&& elem) { return queue.try_push(std::move(elem)).has_value(); }
+  /// Pushes a new element into the queue in a non-blocking fashion. If the queue is full, the element is not pushed.
+  /// \return true if the element was pushed, false otherwise.
+  [[nodiscard]] bool try_push(const T& elem) { return queue.try_push(elem); }
+  [[nodiscard]] bool try_push(T&& elem) { return queue.try_push(std::move(elem)).has_value(); }
 
-  std::optional<T> try_pop()
+  [[nodiscard]] std::optional<T> try_pop()
   {
     std::optional<T> t;
     t.emplace();
@@ -39,15 +41,15 @@ public:
     return t;
   }
 
-  bool try_pop(T& elem) { return queue.try_pop(elem); }
+  [[nodiscard]] bool try_pop(T& elem) { return queue.try_pop(elem); }
 
   void clear() { queue.clear(); }
 
-  size_t size() const { return queue.size(); }
+  [[nodiscard]] size_t size() const { return queue.size(); }
 
-  bool empty() const { return queue.empty(); }
+  [[nodiscard]] bool empty() const { return queue.empty(); }
 
-  size_t capacity() const { return queue.max_size(); }
+  [[nodiscard]] size_t capacity() const { return queue.max_size(); }
 
 protected:
   blocking_queue<T> queue;
@@ -55,13 +57,28 @@ protected:
 
 /// Specialization for lock-based MPMC, using a condition variable as the blocking mechanism.
 template <typename T>
-class queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>
-  : public queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::non_blocking>
+class concurrent_queue<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>
+  : private concurrent_queue<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
-  using base_type = queue_impl<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::non_blocking>;
+  using non_blocking_base_type =
+      concurrent_queue<T, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::non_blocking>;
 
 public:
-  explicit queue_impl(size_t qsize) : base_type(qsize) {}
+  using value_type                                           = T;
+  constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::locking_mpmc;
+  constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::condition_variable;
+
+  // Inherited methods.
+  using non_blocking_base_type::capacity;
+  using non_blocking_base_type::clear;
+  using non_blocking_base_type::empty;
+  using non_blocking_base_type::non_blocking_base_type;
+  using non_blocking_base_type::size;
+  using non_blocking_base_type::try_pop;
+  using non_blocking_base_type::try_push;
+
+  /// \brief Request any blocking function to be interrupted.
+  void request_stop() { this->queue.stop(); }
 
   bool push_blocking(const T& elem) { return this->queue.push_blocking(elem); }
   bool push_blocking(T&& elem) { return this->queue.push_blocking(std::move(elem)).has_value(); }
@@ -72,7 +89,17 @@ public:
     elem         = this->queue.pop_blocking(&success);
     return success;
   }
+
+  /// Pops an element from the queue. If the queue is empty, the call blocks, waiting for a new element to be pushed.
+  std::optional<T> pop_blocking() noexcept
+  {
+    std::optional<T> ret;
+    ret.emplace();
+    if (not pop_blocking(ret.value())) {
+      ret.reset();
+    }
+    return ret;
+  }
 };
 
-} // namespace detail
 } // namespace srsran

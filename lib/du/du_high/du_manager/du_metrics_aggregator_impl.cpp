@@ -9,7 +9,6 @@
  */
 
 #include "du_metrics_aggregator_impl.h"
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/mac/mac_metrics.h"
 #include "srsran/mac/mac_metrics_notifier.h"
 #include "srsran/scheduler/scheduler_metrics.h"

@@ -9,7 +9,6 @@
  */
 
 #include "mac_metrics_aggregator.h"
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/spsc_queue.h"
 #include "srsran/mac/mac_metrics_notifier.h"
 #include "srsran/scheduler/scheduler_metrics.h"
@@ -224,7 +223,8 @@ bool mac_metrics_aggregator::pop_sched_report(cell_metric_handler& cell, schedul
   }
 
   // Report falls in invalid window. Discard it.
-  cell.sched_report_queue.try_pop(report);
+  bool discard = cell.sched_report_queue.try_pop(report);
+  (void)discard;
   logger.info("cell={}: Discarding old metric report for slot {}", fmt::underlying(cell.cell_index), report.slot);
   return false;
 }
