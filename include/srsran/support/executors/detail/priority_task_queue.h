@@ -17,7 +17,8 @@
 namespace srsran {
 namespace detail {
 
-static constexpr size_t enqueue_priority_to_queue_index(enqueue_priority prio, size_t nof_priority_levels)
+/// Convert enqueue priority into queue index in the priority_task_queue.
+constexpr size_t enqueue_priority_to_queue_index(enqueue_priority prio, size_t nof_priority_levels)
 {
   if (nof_priority_levels == 0) {
     return 0;
@@ -26,7 +27,8 @@ static constexpr size_t enqueue_priority_to_queue_index(enqueue_priority prio, s
   return queue_idx < nof_priority_levels ? queue_idx : nof_priority_levels - 1;
 }
 
-static constexpr enqueue_priority queue_index_to_enqueue_priority(size_t queue_idx, size_t nof_priority_levels)
+/// Convert queue index in the priority_task_queue into enqueue priority.
+constexpr enqueue_priority queue_index_to_enqueue_priority(size_t queue_idx, size_t nof_priority_levels)
 {
   return static_cast<enqueue_priority>(std::numeric_limits<size_t>::max() - queue_idx);
 }
@@ -36,39 +38,9 @@ static constexpr enqueue_priority queue_index_to_enqueue_priority(size_t queue_i
 using task_priority = enqueue_priority;
 
 /// \brief Concurrent queue for any policy and wait policy.
-class any_task_concurrent_queue
-{
-public:
-  template <typename... Args>
-  void emplace(const concurrent_queue_params& params, Args&&... other_params);
-
-  void   request_stop() { q->request_stop(); }
-  bool   push_blocking(unique_task t) { return q->push_blocking(std::move(t)); }
-  bool   try_push(unique_task t) { return q->try_push(std::move(t)); }
-  bool   try_pop(unique_task& t) { return q->try_pop(t); }
-  size_t size() const { return q->size(); }
-
-  size_t capacity() const { return cap; }
-
-private:
-  class base_queue
-  {
-  public:
-    virtual ~base_queue()                          = default;
-    virtual void   request_stop()                  = 0;
-    virtual bool   push_blocking(unique_task task) = 0;
-    virtual bool   try_push(unique_task task)      = 0;
-    virtual bool   try_pop(unique_task& t)         = 0;
-    virtual size_t size() const                    = 0;
-  };
-
-  template <typename QueueType>
-  class queue_impl;
-
-  size_t cap = 0;
-
-  std::unique_ptr<base_queue> q;
-};
+///
+/// This class performs type erasure of the concurrent_queue<> template.
+class any_task_queue;
 
 /// \brief Concurrent task queue, where the caller specifies the task priority while pushing it to the queue.
 ///
@@ -78,6 +50,7 @@ class priority_task_queue
 {
 public:
   priority_task_queue(span<const concurrent_queue_params> queues, std::chrono::microseconds wait_if_empty);
+  ~priority_task_queue();
 
   /// Interrupt all blocking popping/pushing operations for this queue.
   void request_stop();
@@ -97,7 +70,7 @@ public:
   /// If the queues are stopped, this function returns false.
   bool pop_blocking(unique_task& t);
 
-  [[nodiscard]] size_t queue_capacity(task_priority prio) const { return queues[get_queue_idx(prio)].capacity(); }
+  [[nodiscard]] size_t queue_capacity(task_priority prio) const;
 
   size_t nof_priority_levels() const { return queues.size(); }
 
@@ -112,7 +85,7 @@ private:
 
   std::chrono::microseconds wait_on_empty;
 
-  std::vector<any_task_concurrent_queue> queues;
+  std::vector<std::unique_ptr<detail::any_task_queue>> queues;
 
   std::atomic<bool> running{true};
 };

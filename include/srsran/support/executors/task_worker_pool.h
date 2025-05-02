@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/adt/moodycamel_mpmc_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/srslog/srslog.h"
@@ -88,6 +89,20 @@ protected:
 
   // Queue of pending tasks.
   concurrent_queue<unique_task, concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>
+      queue;
+};
+
+template <>
+class base_task_queue<concurrent_queue_policy::moodycamel_lockfree_mpmc>
+{
+protected:
+  base_task_queue(size_t qsize, std::chrono::microseconds wait_sleep_time = std::chrono::microseconds{0}) :
+    queue(qsize, wait_sleep_time)
+  {
+  }
+
+  // Queue of pending tasks.
+  concurrent_queue<unique_task, concurrent_queue_policy::moodycamel_lockfree_mpmc, concurrent_queue_wait_policy::sleep>
       queue;
 };
 
@@ -191,6 +206,7 @@ public:
 
 extern template class task_worker_pool<concurrent_queue_policy::lockfree_mpmc>;
 extern template class task_worker_pool<concurrent_queue_policy::locking_mpmc>;
+extern template class task_worker_pool<concurrent_queue_policy::moodycamel_lockfree_mpmc>;
 
 template <concurrent_queue_policy QueuePolicy>
 class task_worker_pool_executor final : public task_executor

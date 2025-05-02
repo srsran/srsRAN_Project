@@ -48,6 +48,9 @@ public:
   /// Returns an estimate on whether the queue is empty.
   bool empty() const { return size() == 0; }
 
+  /// This queue is unbounded. It allocates when current capacity is reached.
+  size_t capacity() const { return std::numeric_limits<size_t>::max(); }
+
 protected:
   moodycamel::ConcurrentQueue<T> queue;
 };
@@ -73,6 +76,7 @@ public:
   static constexpr concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::sleep;
 
   // Inherited non-blocking API methods.
+  using non_block_queue_base::capacity;
   using non_block_queue_base::empty;
   using non_block_queue_base::size;
   using non_block_queue_base::try_pop;
