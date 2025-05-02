@@ -27,17 +27,14 @@ namespace {
 /// Helper class to write trace events to a file.
 class event_trace_writer
 {
-  static constexpr unsigned MAX_LINES_PER_FILE = 1e6;
-
 public:
-  explicit event_trace_writer(const char* trace_file_) :
-    trace_worker("tracer_worker", 4096, std::chrono::microseconds{200})
+  explicit event_trace_writer(std::string_view trace_fname, unsigned split_after_n_) :
+    split_after_n(split_after_n_), trace_worker("tracer_worker", 4096, microseconds{200})
   {
-    std::string fname   = trace_file_;
-    size_t      pos_ext = fname.find_last_of(".");
-    report_fatal_error_if_not(pos_ext != std::string::npos, "Unable to derive extension of filename {}", fname);
-    base_fname = fname.substr(0, pos_ext);
-    ext_fname  = fname.substr(pos_ext);
+    size_t pos_ext = trace_fname.find_last_of(".");
+    report_fatal_error_if_not(pos_ext != std::string::npos, "Unable to derive extension of filename {}", trace_fname);
+    base_fname = trace_fname.substr(0, pos_ext);
+    ext_fname  = trace_fname.substr(pos_ext);
     create_new_file();
   }
   event_trace_writer(event_trace_writer&& other) noexcept                 = delete;
@@ -63,7 +60,8 @@ public:
             fmt::print(fptr, "\n{}", ev);
           }
           ++nof_lines;
-          if (nof_lines >= MAX_LINES_PER_FILE) {
+          if (split_after_n > 0 and nof_lines >= split_after_n) {
+            // In case splitting is enabled and we reached the end of the current file, we open a new one.
             create_new_file();
           }
         })) {
@@ -76,13 +74,6 @@ public:
   }
 
 private:
-  std::pair<std::string, std::string> create_filename_desc(const std::string& trace_filename)
-  {
-    size_t pos_ext = trace_filename.find_last_of(".");
-    report_fatal_error_if_not(pos_ext != std::string::npos, "File name extension not found.");
-    return std::make_pair(trace_filename.substr(0, pos_ext), trace_filename.substr(pos_ext));
-  }
-
   void create_new_file()
   {
     if (fptr != nullptr) {
@@ -91,22 +82,38 @@ private:
       ::fclose(fptr);
       fptr = nullptr;
     }
+
     fmt::memory_buffer fmtbuf;
-    fmt::format_to(std::back_inserter(fmtbuf), "{}{}{}", base_fname, next_file, ext_fname);
-    ++next_file;
+    if (split_after_n > 0) {
+      fmt::format_to(std::back_inserter(fmtbuf), "{}{}{}", base_fname, next_file, ext_fname);
+      ++next_file;
+    } else {
+      fmt::format_to(std::back_inserter(fmtbuf), "{}{}", base_fname, ext_fname);
+    }
     fptr = ::fopen(to_c_str(fmtbuf), "w");
     report_fatal_error_if_not(fptr != nullptr, "ERROR: Failed to open trace file {}", to_c_str(fmtbuf));
     nof_lines = 0;
     fmt::print(fptr, "[");
   }
 
-  std::string base_fname;
-  std::string ext_fname;
+  /// Number of events, after which a new trace file is created.
+  const unsigned split_after_n;
 
+  /// Represents the filename before the extension (e.g. '.json').
+  std::string_view base_fname;
+
+  /// File extension (e.g. '.json').
+  std::string_view ext_fname;
+
+  /// Number of the next file, in case splitting is enabled.
   unsigned next_file = 0;
-  unsigned nof_lines = 0;
 
+  /// Number of events processed for the current file.
+  long unsigned nof_lines = 0;
+
+  /// Currently opened filed to which events are being written into.
   FILE* fptr = nullptr;
+
   /// Task worker to process events.
   general_task_worker<concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep> trace_worker;
   std::atomic<bool>                                                                                warn_logged{false};
@@ -149,12 +156,12 @@ static trace_point run_epoch = trace_clock::now();
 /// Unique event trace file writer.
 static std::unique_ptr<event_trace_writer> trace_file_writer;
 
-void srsran::open_trace_file(std::string_view trace_file_name)
+void srsran::open_trace_file(std::string_view trace_file_name, unsigned split_after_n)
 {
   if (trace_file_writer != nullptr) {
     report_fatal_error("Trace file '{}' already open", trace_file_name);
   }
-  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name.data());
+  trace_file_writer = std::make_unique<event_trace_writer>(trace_file_name, split_after_n);
 }
 
 void srsran::close_trace_file()

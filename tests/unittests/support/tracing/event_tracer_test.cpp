@@ -143,7 +143,7 @@ TEST(event_tracing_test, recorder_test)
 
 TEST(event_tracing_test, file_event_tracer)
 {
-  open_trace_file("/tmp/event_tracing_test.json");
+  open_trace_file("/tmp/event_tracing_test.json", 0);
 
   file_event_tracer<> tracer;
 
@@ -190,7 +190,7 @@ TEST(event_tracing_test, file_event_tracer)
 
 TEST(event_tracing_test, deactivated_file_event_tracer)
 {
-  open_trace_file("/tmp/event_tracing_test2.json");
+  open_trace_file("/tmp/event_tracing_test2.json", 0);
 
   file_event_tracer<false> tracer;
 
@@ -211,6 +211,42 @@ TEST(event_tracing_test, deactivated_file_event_tracer)
   ASSERT_EQ(line, "[");
   ASSERT_TRUE(std::getline(fptr, line));
   ASSERT_EQ(line, "]");
+}
+
+TEST(event_tracing_test, file_event_trace_splitting)
+{
+  open_trace_file("/tmp/event_tracing_split_test.json", 2);
+
+  file_event_tracer<> tracer;
+  trace_point         tp = tracer.now();
+
+  tracer << trace_event("test_event1", tp);
+  tracer << trace_event("test_event2", tp);
+  tracer << trace_event("test_event3", tp);
+  tracer << trace_event("test_event4", tp);
+  tracer << trace_event("test_event5", tp);
+
+  close_trace_file();
+
+  std::string line;
+
+  for (unsigned i = 0; i <= 2; ++i) {
+    std::ifstream fptr(fmt::format("/tmp/event_tracing_split_test{}.json", i));
+    ASSERT_TRUE(fptr.is_open());
+
+    ASSERT_TRUE(std::getline(fptr, line));
+    ASSERT_EQ(line, "[");
+    ASSERT_TRUE(std::getline(fptr, line));
+    ASSERT_EQ(line[0], '{');
+    ASSERT_NE(line.find(fmt::format("test_event{}", i * 2 + 1)), std::string::npos);
+    if (i != 2) {
+      ASSERT_TRUE(std::getline(fptr, line));
+      ASSERT_EQ(line[0], '{');
+      ASSERT_NE(line.find("test_event"), std::string::npos);
+    }
+    ASSERT_TRUE(std::getline(fptr, line));
+    ASSERT_EQ(line, "]");
+  }
 }
 
 TEST(trace_executor_test, enqueue_and_run_traces)
