@@ -20,11 +20,13 @@ intra_cu_handover_target_routine::intra_cu_handover_target_routine(
     cu_cp_ue_context_release_handler&             ue_context_release_handler_,
     cu_cp_ue_context_manipulation_handler&        cu_cp_handler_,
     ue_manager&                                   ue_mng_,
+    mobility_manager&                             mobility_mng_,
     srslog::basic_logger&                         logger_) :
   request(request_),
   ue_context_release_handler(ue_context_release_handler_),
   cu_cp_handler(cu_cp_handler_),
   ue_mng(ue_mng_),
+  mobility_mng(mobility_mng_),
   logger(logger_)
 {
 }
@@ -50,6 +52,8 @@ void intra_cu_handover_target_routine::operator()(coro_context<async_task<void>>
     logger.warning("ue={}: \"{}\" failed", request.target_ue_index, name());
     CORO_EARLY_RETURN();
   }
+  // Notify mobility manager about successful handover execution.
+  mobility_mng.get_metrics_handler().aggregate_successful_handover_execution();
 
   {
     // Transfer old UE context (NGAP and E1AP) to new UE context and remove old UE context.
@@ -57,7 +61,6 @@ void intra_cu_handover_target_routine::operator()(coro_context<async_task<void>>
   }
 
   // Remove source UE context.
-
   if (ue_mng.find_du_ue(request.source_ue_index) == nullptr) {
     logger.warning("Source UE={} already got removed", request.source_ue_index);
   } else {

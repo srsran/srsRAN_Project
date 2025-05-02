@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../../cu_cp_impl_interface.h"
+#include "../../mobility_manager/mobility_manager_impl.h"
 #include "../../ue_manager/ue_manager_impl.h"
 #include "srsran/support/async/async_task.h"
 #include "srsran/support/async/eager_async_task.h"
@@ -32,6 +33,7 @@ public:
                             cu_cp_ue_removal_handler&              ue_removal_handler_,
                             cu_cp_ue_context_manipulation_handler& cu_cp_handler_,
                             ue_manager&                            ue_mng_,
+                            mobility_manager&                      mobility_mng_,
                             srslog::basic_logger&                  logger_);
 
   void operator()(coro_context<async_task<cu_cp_intra_cu_handover_response>>& ctx);
@@ -61,6 +63,7 @@ private:
   cu_cp_ue_removal_handler&              ue_removal_handler;         // to trigger UE removal (if setup fails)
   cu_cp_ue_context_manipulation_handler& cu_cp_handler;              // to trigger UE context transfer (if sucessful)
   ue_manager&                            ue_mng;                     // to remove UE context from source DU processor
+  mobility_manager&                      mobility_mng;               // to notify metrics about handover execution
   up_config_update                       next_config;
   srslog::basic_logger&                  logger;
 

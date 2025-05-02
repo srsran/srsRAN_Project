@@ -54,6 +54,7 @@ intra_cu_handover_routine::intra_cu_handover_routine(const cu_cp_intra_cu_handov
                                                      cu_cp_ue_removal_handler&              ue_removal_handler_,
                                                      cu_cp_ue_context_manipulation_handler& cu_cp_handler_,
                                                      ue_manager&                            ue_mng_,
+                                                     mobility_manager&                      mobility_mng_,
                                                      srslog::basic_logger&                  logger_) :
   request(request_),
   target_cell_sib1(target_cell_sib1_),
@@ -64,6 +65,7 @@ intra_cu_handover_routine::intra_cu_handover_routine(const cu_cp_intra_cu_handov
   ue_removal_handler(ue_removal_handler_),
   cu_cp_handler(cu_cp_handler_),
   ue_mng(ue_mng_),
+  mobility_mng(mobility_mng_),
   logger(logger_)
 {
 }
@@ -218,6 +220,9 @@ void intra_cu_handover_routine::operator()(coro_context<async_task<cu_cp_intra_c
       logger.debug("ue={}: \"{}\" failed", request.source_ue_index, name());
       CORO_EARLY_RETURN(response_msg);
     }
+
+    // Notify mobility manager about requested handover execution.
+    mobility_mng.get_metrics_handler().aggregate_requested_handover_execution();
   }
 
   {
