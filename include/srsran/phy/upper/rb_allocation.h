@@ -50,10 +50,10 @@ public:
   ///
   /// Type 0 allocation is described in TS38.214 Section 5.1.2.2.1 for PDSCH and Section 6.1.2.2.1 for PUSCH.
   ///
-  /// \param[in] vrb_bitmap VRB allocation bitmap in which each entry represents an active RB.
+  /// \param[in] vrbs VRB allocation bitmap in which each entry represents an active RB.
   /// \param[in] vrb_to_prb_config VRB-to-PRB configuration.
   /// \return An RB allocation instance.
-  static rb_allocation make_type0(const vrb_bitmap&                               vrb_bitmap,
+  static rb_allocation make_type0(const vrb_bitmap&                               vrbs,
                                   const std::optional<vrb_to_prb::configuration>& vrb_to_prb_config = std::nullopt);
 
   /// \brief Creates a Type 1 RB allocation object.

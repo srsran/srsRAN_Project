@@ -213,7 +213,7 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
   reserved.merge(dmrs_pattern);
 
   // Set PDSCH allocation pattern.
-  pdsch_pattern.prb_mask = static_cast<prb_bitmap>(prb_allocation_mask);
+  pdsch_pattern.prb_mask = prb_allocation_mask.convert_to<prb_bitmap>();
   pdsch_pattern.re_mask  = ~re_prb_mask();
   pdsch_pattern.symbols  = symbols;
   allocation.merge(pdsch_pattern);

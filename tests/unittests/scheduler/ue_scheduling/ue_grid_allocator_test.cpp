@@ -81,10 +81,12 @@ protected:
     // Prepare CRB bitmask that will be used to find available CRBs.
     const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
     // TODO: enable interleaving.
-    used_dl_vrbs = static_cast<vrb_bitmap>(
-        res_grid[0].dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs,
-                                          init_dl_bwp.generic_params.crbs,
-                                          init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols));
+    used_dl_vrbs = res_grid[0]
+                       .dl_res_grid
+                       .used_prbs(init_dl_bwp.generic_params.scs,
+                                  init_dl_bwp.generic_params.crbs,
+                                  init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols)
+                       .convert_to<vrb_bitmap>();
 
     on_each_slot();
 
@@ -188,10 +190,12 @@ protected:
     auto& builder = result.value();
 
     // TODO: perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
-    vrb_bitmap used_ul_vrbs = static_cast<vrb_bitmap>(
-        res_grid[pusch_slot].ul_res_grid.used_prbs(init_ul_bwp.generic_params.scs,
-                                                   init_ul_bwp.generic_params.crbs,
-                                                   init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols));
+    vrb_bitmap used_ul_vrbs = res_grid[pusch_slot]
+                                  .ul_res_grid
+                                  .used_prbs(init_ul_bwp.generic_params.scs,
+                                             init_ul_bwp.generic_params.crbs,
+                                             init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols)
+                                  .convert_to<vrb_bitmap>();
     vrb_interval vrbs = builder.recommended_vrbs(used_ul_vrbs, max_nof_rbs.value_or(MAX_NOF_PRBS));
     builder.set_pusch_params(vrbs);
     used_ul_vrbs.fill(vrbs.start(), vrbs.stop());

@@ -220,8 +220,7 @@ public:
   /// \param[in] nof_symbols  Indicates the number of symbols within the slot.
   /// \param[in] prb_mask     Selection of PRB to count.
   /// \return The number of included elements.
-  unsigned
-  get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, const bounded_bitset<MAX_RB>& prb_mask) const;
+  unsigned get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, const prb_bitmap& prb_mask) const;
 
   /// \brief Excludes the described resource element pattern list in a resource grid symbol mask.
   ///

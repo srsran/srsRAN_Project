@@ -233,6 +233,12 @@ int count_ones(Integer value)
   return detail::bitset_builtin_helper<Integer>::count_ones(value);
 }
 
+namespace detail {
+
+struct default_bounded_bitset_tag {};
+
+} // namespace detail
+
 /// \brief Represents a dynamically-sized bitset with an upper bound capacity of N bits.
 ///
 /// The bounded_bitset is represented internally via an array of uint64_t, with each integer storing a bitmap.
@@ -263,7 +269,7 @@ int count_ones(Integer value)
 /// \tparam LowestInfoBitIsMSB Bit index order in memory. If set to (false / true), the bit index 0 (Lowest Information
 /// Bit) corresponds to either the LSB or MSB of the bitset. Note that this argument has an effect on the underlying
 /// bitset memory layout.
-template <size_t N, bool LowestInfoBitIsMSB = false>
+template <size_t N, bool LowestInfoBitIsMSB = false, typename Tag = detail::default_bounded_bitset_tag>
 class bounded_bitset
 {
   using word_t                      = uint64_t;
@@ -326,7 +332,7 @@ public:
     });
   }
 
-  constexpr bounded_bitset<N, LowestInfoBitIsMSB>& operator=(const bounded_bitset& other) noexcept
+  constexpr bounded_bitset& operator=(const bounded_bitset& other) noexcept
   {
     if (this != &other) {
       // In case of shrink, reset erased bits.
@@ -337,6 +343,17 @@ public:
       std::copy(other.buffer.begin(), other.buffer.begin() + nof_words_(), buffer.begin());
     }
     return *this;
+  }
+
+  template <typename BoundedBitSet>
+  BoundedBitSet convert_to() const
+  {
+    static_assert(BoundedBitSet::max_size() == max_size() and BoundedBitSet::bit_order() == bit_order(),
+                  "Conversion only supported for same N and LowestInfoBitIsMSB");
+    // Just the tag changes.
+    BoundedBitSet ret(size());
+    ret.buffer = buffer;
+    return ret;
   }
 
   static constexpr bool bit_order() noexcept { return LowestInfoBitIsMSB; }
@@ -574,7 +591,7 @@ public:
 
   /// \brief Toggle values of bits in bitset.
   /// \return Returns this object.
-  bounded_bitset<N, LowestInfoBitIsMSB>& flip() noexcept
+  bounded_bitset& flip() noexcept
   {
     for (size_t i = 0; i < nof_words_(); ++i) {
       buffer[i] = ~buffer[i];
@@ -588,7 +605,7 @@ public:
   /// \param[in] endpos End bit index (excluding) where the bits stop being set.
   /// \param[in] value Set bit range values to either true or false.
   /// \return Returns a reference to this object.
-  bounded_bitset<N, LowestInfoBitIsMSB>& fill(size_t startpos, size_t endpos, bool value = true)
+  bounded_bitset& fill(size_t startpos, size_t endpos, bool value = true)
   {
     find_first_word_(startpos, endpos, [this, value](size_t word_idx, const word_t& mask) {
       if (value) {
@@ -606,8 +623,8 @@ public:
   ///
   /// \param[in] startpos The bit index where the subview starts.
   /// \param[in] endpos The bit index where the subview stops.
-  template <size_t N2 = N>
-  bounded_bitset<N2, LowestInfoBitIsMSB> slice(size_t startpos, size_t endpos) const
+  template <size_t N2 = N, typename NewTag = Tag>
+  bounded_bitset<N2, LowestInfoBitIsMSB, NewTag> slice(size_t startpos, size_t endpos) const
   {
     bounded_bitset<N2, LowestInfoBitIsMSB> sliced(endpos - startpos);
     if (LowestInfoBitIsMSB) {
@@ -917,7 +934,7 @@ public:
 
   /// \brief Compares two bitsets.
   /// \return Returns true if both bitsets are equal in size and values of bits.
-  bool operator==(const bounded_bitset<N, LowestInfoBitIsMSB>& other) const noexcept
+  bool operator==(const bounded_bitset& other) const noexcept
   {
     if (size() != other.size()) {
       return false;
@@ -930,12 +947,12 @@ public:
     return true;
   }
 
-  bool operator!=(const bounded_bitset<N, LowestInfoBitIsMSB>& other) const noexcept { return not(*this == other); }
+  bool operator!=(const bounded_bitset& other) const noexcept { return not(*this == other); }
 
   /// \brief Applies bitwise OR operation lhs |= rhs.
   /// \param[in] other Bitset which corresponds to the rhs of the operation.
   /// \return This object updated after the bitwise OR operation.
-  bounded_bitset<N, LowestInfoBitIsMSB>& operator|=(const bounded_bitset<N, LowestInfoBitIsMSB>& other)
+  bounded_bitset& operator|=(const bounded_bitset& other)
   {
     srsran_assert(other.size() == size(),
                   "ERROR: operator|= called for bitsets of different sizes ('{}'!='{}')",
@@ -950,7 +967,7 @@ public:
   /// \brief Applies bitwise AND operation lhs &= rhs.
   /// \param[in] other Bitset which corresponds to the rhs of the operation.
   /// \return This object updated after the bitwise AND operation.
-  bounded_bitset<N, LowestInfoBitIsMSB>& operator&=(const bounded_bitset<N, LowestInfoBitIsMSB>& other)
+  bounded_bitset& operator&=(const bounded_bitset& other)
   {
     srsran_assert(other.size() == size(),
                   "ERROR: operator&= called for bitsets of different sizes ('{}'!='{}')",
@@ -964,9 +981,9 @@ public:
 
   /// \brief Flips values of bits in the bitset.
   /// \return Returns reference to this object, updated after the flip operation.
-  bounded_bitset<N, LowestInfoBitIsMSB> operator~() const noexcept
+  bounded_bitset operator~() const noexcept
   {
-    bounded_bitset<N, LowestInfoBitIsMSB> ret(*this);
+    bounded_bitset ret(*this);
     ret.flip();
     return ret;
   }
@@ -1090,9 +1107,9 @@ public:
   }
 
 private:
-  template <size_t N2, bool reversed2>
+  template <size_t N2, bool reversed2, typename Tag2>
   friend class bounded_bitset;
-  friend struct fmt::formatter<bounded_bitset<N, LowestInfoBitIsMSB>>;
+  friend struct fmt::formatter<bounded_bitset<N, LowestInfoBitIsMSB, Tag>>;
 
   // Capacity of the underlying array in number of words.
   static constexpr size_t max_nof_words_() noexcept { return (N + bits_per_word - 1) / bits_per_word; }
@@ -1458,9 +1475,10 @@ inline bounded_bitset<N2, LowestInfoBitIsMSB> fold_and_accumulate(const bounded_
 } // namespace srsran
 
 namespace fmt {
-/// \brief Custom formatter for bounded_bitset<N, LowestInfoBitIsMSB>
-template <size_t N, bool LowestInfoBitIsMSB>
-struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
+
+/// \brief Custom formatter for bounded_bitset<N, LowestInfoBitIsMSB, Tag>
+template <size_t N, bool LowestInfoBitIsMSB, typename Tag>
+struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB, Tag>> {
   enum { hexadecimal, binary, bit_positions, intervals } mode = binary;
   enum { forward, reverse } order                             = forward;
   template <typename ParseContext>
@@ -1487,7 +1505,7 @@ struct formatter<srsran::bounded_bitset<N, LowestInfoBitIsMSB>> {
   }
 
   template <typename FormatContext>
-  auto format(const srsran::bounded_bitset<N, LowestInfoBitIsMSB>& s, FormatContext& ctx) const
+  auto format(const srsran::bounded_bitset<N, LowestInfoBitIsMSB, Tag>& s, FormatContext& ctx) const
   {
     if (mode == hexadecimal) {
       return s.template to_string_of_hex<decltype(std::declval<FormatContext>().out())>(ctx.out(), order == reverse);

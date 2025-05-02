@@ -16,19 +16,20 @@
 
 namespace srsran {
 
-/// Struct to express a bitset of CRBs within a carrier.
-struct crb_bitmap : bounded_bitset<MAX_NOF_PRBS> {
-  using bounded_bitset::bounded_bitset;
+// Tags used to differentiate RB types.
+struct crb_bitmap_tag {};
+struct prb_bitmap_tag {};
+struct vrb_bitmap_tag {};
 
-  explicit crb_bitmap(const bounded_bitset& bitset) : bounded_bitset(bitset) {}
-
-  crb_bitmap operator~() const noexcept
-  {
-    crb_bitmap ret(*this);
-    ret.flip();
-    return ret;
-  }
-};
+/// \brief Common Resource Block (CRB) bitmap.
+///
+/// Describes a frequency allocation mask applied to the entire channel bandwidth. The lowest
+/// information bit represents the lowest resource block in the channel, which contains the
+/// PointA in the lowest subcarrier.
+///
+/// A CRB bitmap size must be lower than or equal to the channel bandwidth to avoid allocating
+/// resources outside of the physical resource grid.
+using crb_bitmap = bounded_bitset<MAX_NOF_PRBS, false, crb_bitmap_tag>;
 
 inline crb_bitmap& operator|=(crb_bitmap& crb_bits, const crb_interval& grant)
 {
@@ -36,19 +37,14 @@ inline crb_bitmap& operator|=(crb_bitmap& crb_bits, const crb_interval& grant)
   return crb_bits;
 }
 
-/// Struct to express a bitset of PRBs within a BWP.
-struct prb_bitmap : bounded_bitset<MAX_NOF_PRBS> {
-  using bounded_bitset::bounded_bitset;
-
-  explicit prb_bitmap(const bounded_bitset& bitset) : bounded_bitset(bitset) {}
-
-  prb_bitmap operator~() const noexcept
-  {
-    prb_bitmap ret(*this);
-    ret.flip();
-    return ret;
-  }
-};
+/// \brief Physical Resource Block (PRB) bitmap.
+///
+/// Describes a frequency allocation mask applied to a certain bandwidth part (BWP). The
+/// size of the map must be lower than or equal to the BWP size. The lowest information bit
+/// represents the lowest PRB contained within the BWP.
+///
+/// The conversion from a PRB bitmap to a CRB bitmap requires the BWP description.
+using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, false, prb_bitmap_tag>;
 
 inline prb_bitmap& operator|=(prb_bitmap& prb_bits, const prb_interval& grant)
 {
@@ -56,19 +52,14 @@ inline prb_bitmap& operator|=(prb_bitmap& prb_bits, const prb_interval& grant)
   return prb_bits;
 }
 
-/// Struct to express a bitset of VRBs.
-struct vrb_bitmap : bounded_bitset<MAX_NOF_PRBS> {
-  using bounded_bitset::bounded_bitset;
-
-  explicit vrb_bitmap(const bounded_bitset& bitset) : bounded_bitset(bitset) {}
-
-  vrb_bitmap operator~() const noexcept
-  {
-    vrb_bitmap ret(*this);
-    ret.flip();
-    return ret;
-  }
-};
+/// \brief Virtual Resource Block (VRB) bitmap.
+///
+/// Describes a frequency allocation mask of scheduled VRBs, to later be mapped to Physical Resource Blocks (PRBs) using
+/// VRB-to-PRB mapping rules (either interleaved or non-interleaved), as defined in TS 38.214. The lowest information
+/// bit corresponds to the lowest indexed VRB defined in the mapping, i.e., VRB 0.
+///
+/// A VRB bitmap size must be lower than or equal to the BWP where the mapping is defined.
+using vrb_bitmap = bounded_bitset<MAX_NOF_PRBS, false, vrb_bitmap_tag>;
 
 inline vrb_bitmap& operator|=(vrb_bitmap& vrb_bits, const vrb_interval& grant)
 {
@@ -79,23 +70,7 @@ inline vrb_bitmap& operator|=(vrb_bitmap& vrb_bits, const vrb_interval& grant)
 inline crb_bitmap prb_to_crb(const crb_interval bwp_crb_lims, const prb_bitmap& prb_bits)
 {
   // TODO.
-  return static_cast<crb_bitmap>(prb_bits);
+  return prb_bits.convert_to<crb_bitmap>();
 }
 
 } // namespace srsran
-
-namespace fmt {
-
-/// FMT formatter for crb_bitmaps.
-template <>
-struct formatter<srsran::crb_bitmap> : public formatter<srsran::bounded_bitset<srsran::MAX_NOF_PRBS>> {};
-
-/// FMT formatter for prb_bitmaps.
-template <>
-struct formatter<srsran::prb_bitmap> : public formatter<srsran::bounded_bitset<srsran::MAX_NOF_PRBS>> {};
-
-/// FMT formatter for vrb_bitmaps.
-template <>
-struct formatter<srsran::vrb_bitmap> : public formatter<srsran::bounded_bitset<srsran::MAX_NOF_PRBS>> {};
-
-} // namespace fmt

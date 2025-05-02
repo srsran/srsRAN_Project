@@ -49,7 +49,7 @@ pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const
   dmrs_config.n_scid               = pdu.n_scid;
   dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
   dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
-  dmrs_config.rb_mask              = static_cast<prb_bitmap>(rb_mask_bitset);
+  dmrs_config.rb_mask              = rb_mask_bitset.convert_to<prb_bitmap>();
   dmrs_config.precoding            = pdu.precoding;
 
   // Put DM-RS.
@@ -70,7 +70,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
   // Extract PT-RS configuration parameters.
   const pdsch_processor::ptrs_configuration& ptrs = *pdu.ptrs;
 
-  crb_bitmap rb_mask_bitset = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  prb_bitmap rb_mask_bitset = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb).convert_to<prb_bitmap>();
 
   // Select the DM-RS reference point.
   unsigned ptrs_reference_point_k_rb = 0;
@@ -114,7 +114,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
 inline unsigned pdsch_compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
 {
   // Get PRB mask.
-  crb_bitmap prb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  prb_bitmap prb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb).convert_to<prb_bitmap>();
 
   // Get number of PRB.
   unsigned nof_prb = prb_mask.count();

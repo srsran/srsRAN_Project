@@ -811,8 +811,9 @@ void intra_slice_scheduler::update_used_dl_vrbs(const dl_ran_slice_candidate& sl
   const ofdm_symbol_range& symbols_to_check = init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols;
 
   // TODO: perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
-  used_dl_vrbs = static_cast<vrb_bitmap>(
-      cell_alloc[pdsch_slot].dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs, dl_crb_lims, symbols_to_check));
+  used_dl_vrbs = cell_alloc[pdsch_slot]
+                     .dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs, dl_crb_lims, symbols_to_check)
+                     .convert_to<vrb_bitmap>();
 }
 
 void intra_slice_scheduler::update_used_ul_vrbs(const ul_ran_slice_candidate& slice)
@@ -829,6 +830,7 @@ void intra_slice_scheduler::update_used_ul_vrbs(const ul_ran_slice_candidate& sl
   const auto&              init_ul_bwp      = cell_alloc.cfg.ul_cfg_common.init_ul_bwp;
   const ofdm_symbol_range& symbols_to_check = init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols;
 
-  used_ul_vrbs = static_cast<vrb_bitmap>(
-      cell_alloc[pusch_slot].ul_res_grid.used_prbs(init_ul_bwp.generic_params.scs, ul_crb_lims, symbols_to_check));
+  used_ul_vrbs = cell_alloc[pusch_slot]
+                     .ul_res_grid.used_prbs(init_ul_bwp.generic_params.scs, ul_crb_lims, symbols_to_check)
+                     .convert_to<vrb_bitmap>();
 }
