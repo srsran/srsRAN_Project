@@ -682,17 +682,25 @@ viavi 24h:
     TESTBED: "s72_uesim"
     E2E_LOG_LEVEL: "info"
     RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
-  allow_failure: true
   needs:
     - job: "basic avx2 dpdk"
       artifacts: true
     - *retina-needs
 
-amari 2UE s72x:
+amari 2UE s72x handover:
+  extends: .s72
+  variables:
+    MARKERS: "s72"
+    KEYWORDS: "sequentially"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  timeout: 4h
+
+amari 1UE s72x iperf:
   extends: .s72
   variables:
     MARKERS: "s72"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+    E2E_FILE_OR_DIR: tests/iperf.py
   timeout: 4h
 
 ################################################################################

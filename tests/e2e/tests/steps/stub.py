@@ -499,6 +499,7 @@ def iperf_parallel(
     direction: IPerfDir,
     iperf_duration: int,
     bitrate: int,
+    packet_length: int = 0,
     bitrate_threshold_ratio: float = 0,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
     parallel_iperfs: int = 8,
 ) -> List[IPerfResponse]:
@@ -519,6 +520,7 @@ def iperf_parallel(
                 direction,
                 iperf_duration,
                 bitrate,
+                packet_length,
                 bitrate_threshold_ratio,
             )
             for ue_stub, ue_attached_info in ue_attach_info_dict.items()
@@ -544,6 +546,7 @@ def iperf_sequentially(
     direction: IPerfDir,
     iperf_duration: int,
     bitrate: int,
+    packet_length: int = 0,
     bitrate_threshold_ratio: float = 0,  # real_bitrate > (bitrate_threshold_ratio * ideal_bitrate)
     max_retries: int = 5,
     sleep_between_retries: int = 3,
@@ -562,6 +565,7 @@ def iperf_sequentially(
                 direction,
                 iperf_duration,
                 bitrate,
+                packet_length,
             )
             sleep(iperf_duration)
             iperf_success, iperf_data = iperf_wait_until_finish(
@@ -590,6 +594,7 @@ def iperf_start(
     direction: IPerfDir,
     duration: int,
     bitrate: int,
+    packet_length: int = 0,
 ) -> Tuple[grpc.Future, IPerfRequest]:
     """
     Start a Iperf and keep it running
@@ -601,6 +606,7 @@ def iperf_start(
         direction=direction,
         proto=protocol,
         bitrate=bitrate,
+        packet_length=packet_length,
     )
 
     # Run iperf
