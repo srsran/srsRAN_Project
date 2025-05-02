@@ -49,6 +49,8 @@ struct cu_cp_unit_amf_config_item {
   int         sctp_rto_max           = 500;
   int         sctp_init_max_attempts = 3;
   int         sctp_max_init_timeo    = 500;
+  int         sctp_hb_interval_s     = 30;
+  int         sctp_assoc_max_retx    = 10;
   bool        sctp_nodelay           = false;
 
   /// List of all tracking areas supported by the AMF.

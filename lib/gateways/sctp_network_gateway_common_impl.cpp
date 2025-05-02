@@ -86,6 +86,8 @@ expected<sctp_socket> sctp_network_gateway_common_impl::create_socket(int ai_fam
   params.rto_max           = node_cfg.rto_max;
   params.init_max_attempts = node_cfg.init_max_attempts;
   params.max_init_timeo    = node_cfg.max_init_timeo;
+  params.hb_interval       = node_cfg.hb_interval;
+  params.assoc_max_rxt     = node_cfg.assoc_max_rxt;
   params.nodelay           = node_cfg.nodelay;
   return sctp_socket::create(params);
 }

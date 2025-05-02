@@ -33,6 +33,8 @@ struct sctp_socket_params {
   std::optional<int32_t> rto_max;
   std::optional<int32_t> init_max_attempts;
   std::optional<int32_t> max_init_timeo;
+  std::optional<int32_t> hb_interval;
+  std::optional<int32_t> assoc_max_rxt;
   std::optional<bool>    nodelay;
 };
 
@@ -92,21 +94,24 @@ struct formatter<srsran::sctp_socket_params> {
   template <typename FormatContext>
   auto format(const srsran::sctp_socket_params& cfg, FormatContext& ctx) const
   {
-    return format_to(ctx.out(),
-                     "if_name={} ai_family={} ai_socktype={} reuse_addr={} non_blockin_mode={} rx_timeout={} "
-                     "rto_initial={} rto_min={} rto_max={} init_max_attempts={} max_init_timeo={} no_delay={}",
-                     cfg.if_name,
-                     cfg.ai_family,
-                     cfg.ai_socktype,
-                     cfg.reuse_addr,
-                     cfg.non_blocking_mode,
-                     cfg.rx_timeout.count(),
-                     cfg.rto_initial,
-                     cfg.rto_min,
-                     cfg.rto_max,
-                     cfg.init_max_attempts,
-                     cfg.max_init_timeo,
-                     cfg.nodelay);
+    return format_to(
+        ctx.out(),
+        "if_name={} ai_family={} ai_socktype={} reuse_addr={} non_blockin_mode={} rx_timeout={} "
+        "rto_initial={} rto_min={} rto_max={} init_max_attempts={} max_init_timeo={} assoc_max_rtx={} no_delay={}",
+        cfg.if_name,
+        cfg.ai_family,
+        cfg.ai_socktype,
+        cfg.reuse_addr,
+        cfg.non_blocking_mode,
+        cfg.rx_timeout.count(),
+        cfg.rto_initial,
+        cfg.rto_min,
+        cfg.rto_max,
+        cfg.init_max_attempts,
+        cfg.max_init_timeo,
+        cfg.hb_interval,
+        cfg.assoc_max_rxt,
+        cfg.nodelay);
   }
 };
 } // namespace fmt

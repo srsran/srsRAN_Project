@@ -66,6 +66,8 @@ static YAML::Node build_cu_cp_extra_amfs_item_section(const cu_cp_unit_amf_confi
   node["sctp_rto_max"]           = config.sctp_rto_max;
   node["sctp_init_max_attempts"] = config.sctp_init_max_attempts;
   node["sctp_max_init_timeo"]    = config.sctp_max_init_timeo;
+  node["sctp_hb_interval"]       = config.sctp_hb_interval_s;
+  node["sctp_assoc_max_retx"]    = config.sctp_assoc_max_retx;
   node["sctp_nodelay"]           = config.sctp_nodelay;
 
   auto sta_node = node["supported_tracking_areas"];

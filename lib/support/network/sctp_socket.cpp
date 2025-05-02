@@ -126,6 +126,82 @@ bool sctp_set_init_msg_opts(const unique_fd&      fd,
   return true;
 }
 
+/// \brief Modify SCTP default Peer Address parameters for quicker detection of broken links.
+/// Changes to the heartbeat interval.
+bool sctp_set_paddr_opts(const unique_fd&      fd,
+                         std::optional<int>    hb_interval,
+                         const std::string&    if_name,
+                         srslog::basic_logger& logger)
+{
+  srsran_sanity_check(fd.is_open(), "Invalid FD");
+
+  if (not hb_interval.has_value()) {
+    // no need to set heartbeat interval
+    return true;
+  }
+
+  // Set SCTP_PEER_ADDR_PARAMS to quickly detect broken links.
+  sctp_paddrparams paddr_opts = {};
+  socklen_t        paddr_sz   = sizeof(sctp_paddrparams);
+  paddr_opts.spp_assoc_id     = 0;
+  if (getsockopt(fd.value(), SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &paddr_opts, &paddr_sz) < 0) {
+    logger.error("{}: Error getting SCTP_PEER_ADDR_PARAMS sockopts. errno={}", if_name, strerror(errno));
+    return false; // Responsibility of closing the socket is on the caller
+  }
+
+  if (hb_interval.has_value()) {
+    paddr_opts.spp_hbinterval = hb_interval.value();
+  }
+
+  logger.debug("{}: Setting SCTP_PEER_ADDR_PARAMS options on SCTP socket. Heartbeat Interval={}",
+               if_name,
+               (unsigned)paddr_opts.spp_hbinterval);
+
+  if (::setsockopt(fd.value(), SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &paddr_opts, paddr_sz) < 0) {
+    logger.error("{}: Error setting SCTP_PEER_ADDR_PARAMS sockopts. errno={}", if_name, strerror(errno));
+    return false;
+  }
+  return true;
+}
+
+/// \brief Modify SCTP default Assocination parameters for quicker detection of broken links.
+/// Changes to the maximum number of re-transmission sent before a address is considered unreachable.
+bool sctp_set_assoc_opts(const unique_fd&      fd,
+                         std::optional<int>    assoc_max_rxt,
+                         const std::string&    if_name,
+                         srslog::basic_logger& logger)
+{
+  srsran_sanity_check(fd.is_open(), "Invalid FD");
+
+  if (not assoc_max_rxt.has_value()) {
+    // no need to set assoc max rxt
+    return true;
+  }
+
+  // Set SCTP_ASSOCINFO to quickly detect broken links.
+  sctp_assocparams assoc_opts = {};
+  socklen_t        assoc_sz   = sizeof(sctp_assocparams);
+  assoc_opts.sasoc_assoc_id   = 0;
+  if (getsockopt(fd.value(), SOL_SCTP, SCTP_ASSOCINFO, &assoc_opts, &assoc_sz) < 0) {
+    logger.error("{}: Error getting SCTP_ASSOCINFO sockopts. errno={}", if_name, strerror(errno));
+    return false; // Responsibility of closing the socket is on the caller
+  }
+
+  if (assoc_max_rxt.has_value()) {
+    assoc_opts.sasoc_asocmaxrxt = assoc_max_rxt.value();
+  }
+
+  logger.debug("{}: Setting SCTP_ASSOCINFO options on SCTP socket. Maximum Retransmissions {}",
+               if_name,
+               assoc_opts.sasoc_asocmaxrxt);
+
+  if (::setsockopt(fd.value(), SOL_SCTP, SCTP_ASSOCINFO, &assoc_opts, assoc_sz) < 0) {
+    logger.error("{}: Error setting SCTP_ASSOCINFO sockopts. errno={}", if_name, strerror(errno));
+    return false;
+  }
+  return true;
+}
+
 /// Set or unset SCTP_NODELAY. With NODELAY enabled, SCTP messages are sent as soon as possible with no unnecessary
 /// delay, at the cost of transmitting more packets over the network. Otherwise their transmission might be delayed and
 /// concatenated with subsequent messages in order to transmit them in one big PDU.
@@ -307,6 +383,16 @@ bool sctp_socket::set_sockopts(const sctp_socket_params& params)
 
   // Set SCTP init options
   if (not sctp_set_init_msg_opts(sock_fd, params.init_max_attempts, params.max_init_timeo, if_name, logger)) {
+    return false;
+  }
+
+  // Set SCTP association options
+  if (not sctp_set_assoc_opts(sock_fd, params.assoc_max_rxt, if_name, logger)) {
+    return false;
+  }
+
+  // Set SCTP peer address options
+  if (not sctp_set_paddr_opts(sock_fd, params.hb_interval, if_name, logger)) {
     return false;
   }
 

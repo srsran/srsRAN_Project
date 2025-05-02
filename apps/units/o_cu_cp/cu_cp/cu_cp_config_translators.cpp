@@ -493,6 +493,12 @@ srs_cu_cp::n2_connection_client_config srsran::generate_n2_client_config(bool   
     if (amf_cfg.sctp_max_init_timeo >= 0) {
       nw_mode.max_init_timeo = amf_cfg.sctp_max_init_timeo;
     }
+    if (amf_cfg.sctp_hb_interval_s >= 0) {
+      nw_mode.hb_interval = amf_cfg.sctp_hb_interval_s;
+    }
+    if (amf_cfg.sctp_assoc_max_retx >= 0) {
+      nw_mode.assoc_max_rxt = amf_cfg.sctp_assoc_max_retx;
+    }
     nw_mode.nodelay = amf_cfg.sctp_nodelay;
   }
 
