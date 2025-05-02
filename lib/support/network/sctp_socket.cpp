@@ -53,7 +53,7 @@ bool sctp_set_rto_opts(const unique_fd&      fd,
   // Set RTO_MAX to quickly detect broken links.
   sctp_rtoinfo rto_opts  = {};
   socklen_t    rto_sz    = sizeof(sctp_rtoinfo);
-  rto_opts.srto_assoc_id = 0;
+  rto_opts.srto_assoc_id = SCTP_FUTURE_ASSOC;
   if (getsockopt(fd.value(), SOL_SCTP, SCTP_RTOINFO, &rto_opts, &rto_sz) < 0) {
     logger.error("{}: Error getting RTO_INFO sockopts. errno={}", if_name, strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
@@ -143,7 +143,7 @@ bool sctp_set_paddr_opts(const unique_fd&      fd,
   // Set SCTP_PEER_ADDR_PARAMS to quickly detect broken links.
   sctp_paddrparams paddr_opts = {};
   socklen_t        paddr_sz   = sizeof(sctp_paddrparams);
-  paddr_opts.spp_assoc_id     = 0;
+  paddr_opts.spp_assoc_id     = SCTP_FUTURE_ASSOC;
   if (getsockopt(fd.value(), SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &paddr_opts, &paddr_sz) < 0) {
     logger.error("{}: Error getting SCTP_PEER_ADDR_PARAMS sockopts. errno={}", if_name, strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
@@ -181,7 +181,7 @@ bool sctp_set_assoc_opts(const unique_fd&      fd,
   // Set SCTP_ASSOCINFO to quickly detect broken links.
   sctp_assocparams assoc_opts = {};
   socklen_t        assoc_sz   = sizeof(sctp_assocparams);
-  assoc_opts.sasoc_assoc_id   = 0;
+  assoc_opts.sasoc_assoc_id   = SCTP_FUTURE_ASSOC;
   if (getsockopt(fd.value(), SOL_SCTP, SCTP_ASSOCINFO, &assoc_opts, &assoc_sz) < 0) {
     logger.error("{}: Error getting SCTP_ASSOCINFO sockopts. errno={}", if_name, strerror(errno));
     return false; // Responsibility of closing the socket is on the caller
