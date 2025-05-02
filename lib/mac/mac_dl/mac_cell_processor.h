@@ -106,7 +106,7 @@ private:
   ticking_ring_buffer_pool pdu_pool;
 
   /// ssb_helper: contains the SSB-specific parameters that are derived from those passed by the DU interface. These
-  /// parameters are passed to the scheduler and also also to the PHY to generate the SSB PDU and PBCH payload.
+  /// parameters are passed to the scheduler and also to the PHY to generate the SSB PDU and PBCH payload.
   ssb_assembler ssb_helper;
 
   sib_pdu_assembler    sib_assembler;

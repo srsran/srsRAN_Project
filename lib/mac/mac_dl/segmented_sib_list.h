@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "srsran/support/error_handling.h"
+#include "srsran/support/srsran_assert.h"
+#include <vector>
 
 namespace srsran {
 
@@ -29,12 +30,6 @@ public:
   explicit segmented_sib_list(T&& buffer) noexcept(std::is_nothrow_move_constructible_v<T>) : current_segment(0)
   {
     buffers.emplace_back(std::move(buffer));
-  }
-
-  /// Constructor that takes ownership of a vector holding the SIB segments.
-  segmented_sib_list(const std::vector<T>&& segments) noexcept(std::is_nothrow_move_constructible_v<T>) :
-    buffers(std::move(segments)), current_segment(0)
-  {
   }
 
   /// Explicit copy constructor.
@@ -101,17 +96,8 @@ public:
   /// Returns the number of currently stored SIB segments.
   unsigned get_nof_segments() const { return buffers.size(); }
 
-  /// Performs a shallow copy.
-  segmented_sib_list<T> copy() const { return segmented_sib_list<T>{*this}; }
-
   /// Copy assignment operator. Performs a shallow copy.
-  segmented_sib_list<T>& operator=(const segmented_sib_list<T>& other)
-  {
-    if (this != &other) {
-      *this = other.copy();
-    }
-    return *this;
-  }
+  segmented_sib_list<T>& operator=(const segmented_sib_list<T>& other) = default;
 
   /// Move assignment operator.
   segmented_sib_list<T>& operator=(segmented_sib_list<T>&& other) = default;

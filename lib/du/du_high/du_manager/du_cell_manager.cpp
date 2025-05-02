@@ -31,13 +31,16 @@ static void fill_si_scheduler_config(si_scheduling_update_request&        req,
   req.sib1_len = units::bytes{static_cast<unsigned>(sib1.length())};
   static_vector<units::bytes, MAX_SI_MESSAGES> si_payload_sizes;
   for (const auto& si_msg : si_messages) {
-    // If the SI message is segmented, use the size of segment 0.
-    if (std::holds_alternative<segmented_sib_list<byte_buffer>>(si_msg)) {
-      si_payload_sizes.emplace_back(
-          units::bytes{static_cast<unsigned>(std::get<segmented_sib_list<byte_buffer>>(si_msg).get_segment_length(0))});
-    } else {
-      si_payload_sizes.emplace_back(units::bytes{static_cast<unsigned>(std::get<byte_buffer>(si_msg).length())});
+    size_t si_msg_len = si_msg.front().length();
+    // If the SI message has multiple segments, check that all segments have the same length.
+    if (si_msg.size() > 1) {
+      if (!std::all_of(si_msg.begin(), si_msg.end(), [si_msg_len](const byte_buffer& si_msg_) {
+            return si_msg_.length() == si_msg_len;
+          })) {
+        report_error("All segments of an SI message must have the same length.");
+      }
     }
+    si_payload_sizes.emplace_back(units::bytes{static_cast<unsigned>(si_msg_len)});
   }
   req.si_sched_cfg = make_si_scheduling_info_config(cell_cfg, si_payload_sizes);
 }
@@ -53,8 +56,8 @@ void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
   // Generate system information.
   std::vector<bcch_dl_sch_payload_type> bcch_msgs = asn1_packer::pack_all_bcch_dl_sch_msgs(cell_cfg);
 
-  srsran_assert(std::holds_alternative<byte_buffer>(bcch_msgs[0]), "SIB-1 cannot be segmented");
-  const byte_buffer& sib1 = std::get<byte_buffer>(bcch_msgs[0]);
+  srsran_assert(bcch_msgs[0].size() == 1, "SIB-1 cannot be segmented");
+  const byte_buffer& sib1 = bcch_msgs[0].front();
 
   span<const bcch_dl_sch_payload_type> si_messages =
       span<const bcch_dl_sch_payload_type>(bcch_msgs).last(bcch_msgs.size() - 1);

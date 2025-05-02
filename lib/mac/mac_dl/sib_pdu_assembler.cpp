@@ -70,34 +70,38 @@ void sib_pdu_assembler::save_buffers(si_version_type si_version, const mac_cell_
       last_si_cfg.si_messages.resize(i + 1);
     }
     if (req.si_messages[i] != last_si_cfg.si_messages[i]) {
+      // Resize according to the number of message segments in the new SI message.
+      last_si_cfg.si_messages[i].resize(req.si_messages[i].size());
       // Check if the request contains a segmented SI message.
-      bool is_segmented = std::holds_alternative<segmented_sib_list<byte_buffer>>(req.si_messages[i]);
-      if (is_segmented) {
-        const auto& new_si_cfg = std::get<segmented_sib_list<byte_buffer>>(req.si_messages[i]);
+      if (req.si_messages[i].size() > 1) {
+        const auto& new_si_cfg = req.si_messages[i];
 
         // Copy the last configuration request (perform a shallow copy of each segment).
-        auto& last_si_cfg_buf = last_si_cfg.si_messages[i].emplace<segmented_sib_list<byte_buffer>>();
-        for (unsigned i_segment = 0, nof_segments = new_si_cfg.get_nof_segments(); i_segment != nof_segments;
-             ++i_segment) {
-          last_si_cfg_buf.append_segment(new_si_cfg.get_segment(i_segment).copy());
+        auto& last_si_cfg_buf = last_si_cfg.si_messages[i];
+        last_si_cfg_buf.resize(new_si_cfg.size());
+        for (unsigned i_segment = 0, nof_segments = new_si_cfg.size(); i_segment != nof_segments; ++i_segment) {
+          last_si_cfg_buf[i_segment] = new_si_cfg[i_segment].copy();
         }
+
+        // Set the SI message size.
+        size_t si_msg_len = new_si_cfg.front().length();
+        srsran_assert(std::all_of(last_si_cfg_buf.begin(),
+                                  last_si_cfg_buf.end(),
+                                  [si_msg_len](const byte_buffer& si_msg) { return si_msg.length() == si_msg_len; }),
+                      "All segments of an SI message must have the same length.");
+        last_cfg_buffers.si_msg_buffers[i].first = units::bytes{static_cast<unsigned>(si_msg_len)};
 
         // Copy the contents of the request into a linear buffer (deep copy each segment).
         auto& si_messsage_buf =
             last_cfg_buffers.si_msg_buffers[i].second.emplace<segmented_sib_list<bcch_dl_sch_buffer>>();
-        for (unsigned i_segment = 0, nof_segments = new_si_cfg.get_nof_segments(); i_segment != nof_segments;
-             ++i_segment) {
-          si_messsage_buf.append_segment(make_linear_buffer(new_si_cfg.get_segment(i_segment)));
+        for (unsigned i_segment = 0, nof_segments = new_si_cfg.size(); i_segment != nof_segments; ++i_segment) {
+          si_messsage_buf.append_segment(make_linear_buffer(new_si_cfg[i_segment]));
         }
-
-        // Set the SI message size according to the first segment size.
-        last_cfg_buffers.si_msg_buffers[i].first =
-            units::bytes{static_cast<unsigned>(new_si_cfg.get_segment_length(0))};
 
       } else {
         // Do the same for a configuration request carrying a single SI message segment.
-        auto&       last_si_cfg_buf               = last_si_cfg.si_messages[i].emplace<byte_buffer>();
-        const auto& new_si_cfg                    = std::get<byte_buffer>(req.si_messages[i]);
+        auto&       last_si_cfg_buf               = last_si_cfg.si_messages[i].front();
+        const auto& new_si_cfg                    = req.si_messages[i].front();
         last_si_cfg_buf                           = new_si_cfg.copy();
         last_cfg_buffers.si_msg_buffers[i].first  = units::bytes{static_cast<unsigned>(new_si_cfg.length())};
         last_cfg_buffers.si_msg_buffers[i].second = make_linear_buffer(new_si_cfg);
@@ -151,14 +155,14 @@ span<const uint8_t> sib_pdu_assembler::encode_si_pdu(slot_point sl_tx, const sib
   }
 
   // If the message is segmented, return the current segment.
-  if (std::holds_alternative<segmented_sib_list<bcch_dl_sch_buffer>>(current_buffers.si_msg_buffers[idx].second)) {
-    auto& segmented_msg = std::get<segmented_sib_list<bcch_dl_sch_buffer>>(current_buffers.si_msg_buffers[idx].second);
+  if (auto* segmented_msg =
+          std::get_if<segmented_sib_list<bcch_dl_sch_buffer>>(&current_buffers.si_msg_buffers[idx].second)) {
     // If the SI message has not been scheduled previously within the repetition period, and has been previously
     // transmitted, advance to the next message segment.
     if (!si_info.is_repetition && (si_info.nof_txs > 0)) {
-      segmented_msg.advance_current_segment();
+      segmented_msg->advance_current_segment();
     }
-    return span<const uint8_t>(segmented_msg.get_current_segment()->data(), tbs);
+    return span<const uint8_t>(segmented_msg->get_current_segment()->data(), tbs);
   }
 
   return span<const uint8_t>(std::get<bcch_dl_sch_buffer>(current_buffers.si_msg_buffers[idx].second)->data(), tbs);

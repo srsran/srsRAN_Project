@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "segmented_sib_list.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/lockfree_triple_buffer.h"
 #include "srsran/mac/cell_configuration.h"

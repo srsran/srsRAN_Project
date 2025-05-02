@@ -19,13 +19,12 @@ byte_buffer make_random_pdu(unsigned size = test_rgen::uniform_int<unsigned>(10,
   return byte_buffer::create(test_rgen::random_vector<uint8_t>(size)).value();
 }
 
-segmented_sib_list<byte_buffer>
-make_random_segmented_pdu(unsigned segment_size = test_rgen::uniform_int<unsigned>(10, 200),
-                          unsigned nof_segments = test_rgen::uniform_int<unsigned>(2, 3))
+std::vector<byte_buffer> make_random_segmented_pdu(unsigned segment_size = test_rgen::uniform_int<unsigned>(10, 200),
+                                                   unsigned nof_segments = test_rgen::uniform_int<unsigned>(2, 3))
 {
-  segmented_sib_list<byte_buffer> segmented_pdu;
+  std::vector<byte_buffer> segmented_pdu;
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
-    segmented_pdu.append_segment(make_random_pdu(segment_size));
+    segmented_pdu.emplace_back(make_random_pdu(segment_size));
   }
 
   return segmented_pdu;
@@ -64,8 +63,7 @@ public:
     req.sib1                         = sib1.copy();
     req.si_messages.clear();
     for (const auto& si_msg : si_msgs) {
-      req.si_messages.push_back(
-          std::visit([](const auto& msg) { return bcch_dl_sch_payload_type{msg.copy()}; }, si_msg));
+      req.si_messages.push_back(si_msg);
     }
     last_version             = next_version++;
     req.si_sched_cfg.version = last_version.value();
@@ -173,14 +171,14 @@ TEST_F(sib_pdu_assembler_test, when_segmented_si_message_is_added_then_encoding_
   // Generate a PDU with multiple segments.
   auto new_msg = make_random_segmented_pdu();
 
-  this->update_si_pdus(sys_info_cfg.sib1, std::vector<bcch_dl_sch_payload_type>{{new_msg.copy()}});
+  this->update_si_pdus(sys_info_cfg.sib1, std::vector<bcch_dl_sch_payload_type>{{new_msg}});
   ASSERT_EQ(last_version, 1);
 
   units::bytes padding_len{test_rgen::uniform_int<unsigned>(0, 20)};
-  units::bytes tbs = units::bytes{(unsigned)new_msg.get_segment_length(0)} + padding_len;
+  units::bytes tbs = units::bytes{static_cast<unsigned>(new_msg[0].length())} + padding_len;
 
   sib_information new_si_info = make_sib_pdu(0, 1, tbs);
-  for (unsigned i_segment = 0, nof_segments = new_msg.get_nof_segments(); i_segment != nof_segments; ++i_segment) {
+  for (unsigned i_segment = 0, nof_segments = new_msg.size(); i_segment != nof_segments; ++i_segment) {
     // Encode the PDU. If it has been transmitted before, and it is the first time it is transmitted within the
     // repetition period, the next SI message segment will be selected.
     new_si_info.is_repetition = false;
@@ -190,7 +188,7 @@ TEST_F(sib_pdu_assembler_test, when_segmented_si_message_is_added_then_encoding_
     new_si_info.is_repetition          = true;
     span<const uint8_t> pdu_repetition = assembler.encode_si_pdu(current_slot, new_si_info);
 
-    auto expected = make_pdu_with_padding(new_msg.get_segment(i_segment), tbs);
+    auto expected = make_pdu_with_padding(new_msg[i_segment], tbs);
     ASSERT_EQ(expected, pdu) << fmt::format("Incorrect SI-message payload returned.\n> expected=[{}]\n> result = [{}])",
                                             expected,
                                             byte_buffer::create(pdu).value());
