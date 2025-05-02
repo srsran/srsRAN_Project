@@ -15,6 +15,7 @@
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
 #include "lib/scheduler/slicing/ran_slice_instance.h"
+#include "lib/scheduler/support/bwp_helpers.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
@@ -156,7 +157,7 @@ protected:
     // Compute the corresponding CRBs.
     // TODO: support interleaving.
     std::pair<crb_interval, crb_interval> crbs = {
-        prb_to_crb(init_dl_bwp.generic_params.crbs, static_cast<prb_interval>(vrbs)), {}};
+        prb_to_crb(init_dl_bwp.generic_params.crbs, vrbs.convert_to<prb_interval>()), {}};
 
     builder.set_pdsch_params(vrbs, crbs);
     used_dl_vrbs.fill(vrbs.start(), vrbs.stop());
@@ -258,7 +259,9 @@ TEST_P(ue_grid_allocator_tester,
 
   ASSERT_TRUE(run_until([&]() { allocate_dl_newtx_grant(slice_ues[u.ue_index], nof_bytes_to_schedule); },
                         [&]() { return find_ue_pdsch(u.crnti, res_grid[0].result.dl.ue_grants) != nullptr; }));
-  ASSERT_TRUE(crb_lims.contains(res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1()));
+  const auto& prb_alloc = res_grid[0].result.dl.ue_grants.back().pdsch_cfg.rbs.type1().convert_to<prb_interval>();
+  const auto  crb_alloc = prb_to_crb(crbs, prb_alloc);
+  ASSERT_TRUE(crb_lims.contains(crb_alloc));
 }
 
 TEST_P(ue_grid_allocator_tester, when_using_non_fallback_dci_format_use_mcs_table_set_in_pdsch_cfg)

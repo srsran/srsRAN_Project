@@ -394,7 +394,7 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& reques
   // TODO: support interleaving.
   static constexpr search_space_id      ue_ded_ss_id = to_search_space_id(2);
   const auto&                           ss_info      = request.user.get_cc().cfg().search_space(ue_ded_ss_id);
-  std::pair<crb_interval, crb_interval> crbs = {prb_to_crb(ss_info.dl_crb_lims, static_cast<prb_interval>(vrbs)), {}};
+  std::pair<crb_interval, crb_interval> crbs = {prb_to_crb(ss_info.dl_crb_lims, vrbs.convert_to<prb_interval>()), {}};
 
   // Set PDSCH parameters.
   set_pdsch_params(grant.value(), vrbs, crbs);
@@ -559,7 +559,7 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
   // Compute exact MCS and TBS for this transmission.
   expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> mcs_tbs_info;
   // TODO: find TS reference for -> Since, PUSCH always uses non interleaved mapping, prbs = vrbs.
-  const auto crbs = prb_to_crb(ss_info.ul_crb_lims, static_cast<prb_interval>(vrbs));
+  const auto crbs = prb_to_crb(ss_info.ul_crb_lims, vrbs.convert_to<prb_interval>());
   if (not is_retx) {
     // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
     bool contains_dc =

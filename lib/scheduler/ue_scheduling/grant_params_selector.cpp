@@ -212,11 +212,12 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   }
 
   // Determine RB allocation limits.
-  interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pdsch_nof_rbs & ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits;
-  const auto         crb_lims    = static_cast<crb_interval>(cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims);
-  const auto         prb_lims    = crb_to_prb(ss.dl_crb_lims, crb_lims);
+  interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pdsch_nof_rbs &
+                                   ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits.convert_to<interval<unsigned>>();
+  const auto crb_lims = cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims;
+  const auto prb_lims = crb_to_prb(ss.dl_crb_lims, crb_lims);
   // TODO: support interleaving.
-  const auto vrb_lims = static_cast<vrb_interval>(prb_lims);
+  const auto vrb_lims = prb_lims.convert_to<vrb_interval>();
   nof_rb_lims         = nof_rb_lims & interval<unsigned>{0, vrb_lims.length()};
   if (vrb_lims.empty() or nof_rb_lims.empty()) {
     // Invalid RB allocation range.
@@ -367,11 +368,12 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   }
 
   // Determine RB allocation limits.
-  interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pusch_nof_rbs & ue_cell_cfg.rrm_cfg().pusch_grant_size_limits;
-  const auto         crb_lims    = static_cast<crb_interval>(cell_cfg.expert_cfg.ue.pusch_crb_limits & ss.ul_crb_lims);
-  const auto         prb_lims    = crb_to_prb(ss.ul_crb_lims, crb_lims);
+  interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pusch_nof_rbs &
+                                   ue_cell_cfg.rrm_cfg().pusch_grant_size_limits.convert_to<interval<unsigned>>();
+  const auto crb_lims = cell_cfg.expert_cfg.ue.pusch_crb_limits & ss.ul_crb_lims;
+  const auto prb_lims = crb_to_prb(ss.ul_crb_lims, crb_lims);
   // TODO: support interleaving.
-  const auto vrb_lims = static_cast<vrb_interval>(prb_lims);
+  const auto vrb_lims = prb_lims.convert_to<vrb_interval>();
   nof_rb_lims         = nof_rb_lims & interval<unsigned>{0, vrb_lims.length()};
   if (vrb_lims.empty() or nof_rb_lims.empty()) {
     // Invalid RB allocation range.

@@ -14,26 +14,25 @@
 
 namespace srsran {
 
-/// Struct to express a {min,...,max} range of CRB indexes within a carrier.
-struct crb_interval : public interval<unsigned> {
-  using interval::interval;
+// Tags used to differentiate RB types.
+struct crb_interval_tag {};
+struct prb_interval_tag {};
+struct vrb_interval_tag {};
 
-  explicit crb_interval(interval<unsigned> lims) : interval(lims) {}
-};
+/// \brief Common Resource Block (CRB) interval.
+///
+/// Describes a {min,...,max} range of CRB indices within a carrier.
+using crb_interval = interval<unsigned, false, crb_interval_tag>;
 
-/// Struct to express a {min,...,max} range of PRB indexes within a BWP.
-struct prb_interval : public interval<unsigned> {
-  using interval::interval;
+/// \brief Physical Resource Block (PRB) bitmap.
+///
+/// Describes a {min,...,max} range of CRB indices within a BWP.
+using prb_interval = interval<unsigned, false, prb_interval_tag>;
 
-  explicit prb_interval(interval<unsigned> lims) : interval(lims) {}
-};
-
-/// Struct to express a {min,...,max} range of VRB indexes.
-struct vrb_interval : public interval<unsigned> {
-  using interval::interval;
-
-  explicit vrb_interval(interval<unsigned> lims) : interval(lims) {}
-};
+/// \brief Virtual Resource Block (VRB) bitmap.
+///
+/// Describes a {min,...,max} range of VRB indices within a VRB-to-PRB mapping.
+using vrb_interval = interval<unsigned, false, vrb_interval_tag>;
 
 /// \brief Convert CRB into PRB given the CRB assignment limits.
 /// The CRB and PRB are assumed to use the same numerology as reference.
@@ -83,19 +82,3 @@ inline vrb_interval crb_to_vrb_f1_0_common_ss_non_interleaved(crb_interval crbs,
 }
 
 } // namespace srsran
-
-namespace fmt {
-
-/// FMT formatter for prb_intervals.
-template <>
-struct formatter<srsran::prb_interval> : public formatter<srsran::interval<uint32_t>> {};
-
-/// FMT formatter for crb_intervals.
-template <>
-struct formatter<srsran::crb_interval> : public formatter<srsran::interval<uint32_t>> {};
-
-/// FMT formatter for vrb_intervals.
-template <>
-struct formatter<srsran::vrb_interval> : public formatter<srsran::interval<uint32_t>> {};
-
-} // namespace fmt
