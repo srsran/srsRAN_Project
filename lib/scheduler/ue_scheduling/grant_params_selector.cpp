@@ -170,7 +170,7 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
   // transform precoder is defined in TS 38.211 Section 6.1.3.
   // The number of PRB must be lower than or equal to current number of PRB.
   if (pusch_cfg.use_transform_precoder) {
-    nof_prbs = get_transform_precoding_nearest_lower_nof_prb_valid(nof_prbs).value_or(nof_prbs);
+    nof_prbs = transform_precoding::get_nof_prbs_lower_bound(nof_prbs).value_or(nof_prbs);
   }
 
   if (nof_prbs == 0) {
@@ -486,7 +486,7 @@ find_available_vrbs(const ul_sched_context& sched_ctxt, const vrb_bitmap& used_v
 
   if (sched_ctxt.pusch_cfg.use_transform_precoder) {
     // At this point we need to ensure a valid number of RBs is selected to be used with transform precoding.
-    auto valid_nof_rbs = get_transform_precoding_nearest_lower_nof_prb_valid(vrbs.length());
+    auto valid_nof_rbs = transform_precoding::get_nof_prbs_lower_bound(vrbs.length());
     if (not valid_nof_rbs.has_value()) {
       return vrb_interval{};
     }

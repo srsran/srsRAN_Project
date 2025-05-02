@@ -12,7 +12,6 @@
 
 #include "srsran/ran/subcarrier_spacing.h"
 #include <array>
-#include <cstdint>
 #include <limits>
 
 namespace srsran {

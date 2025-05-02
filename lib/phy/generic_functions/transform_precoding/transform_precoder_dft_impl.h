@@ -34,7 +34,7 @@ public:
       unsigned M_sc     = M_rb * NRE;
       unsigned dft_size = entry.second->get_size();
       srsran_assert(
-          is_transform_precoding_nof_prb_valid(M_rb), "Invalid number of resource elements (i.e., {}).", M_rb);
+          transform_precoding::is_nof_prbs_valid(M_rb), "Invalid number of resource elements (i.e., {}).", M_rb);
       srsran_assert(M_sc == dft_size,
                     "The DFT size (i.e., {}) is not consistent with the number of subcarriers (i.e., {}).",
                     dft_size,

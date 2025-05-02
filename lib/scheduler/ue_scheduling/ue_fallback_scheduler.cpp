@@ -1077,33 +1077,15 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
       ++prbs_tbs.nof_prbs;
     }
 
-    // Checks if the grant size is correct if transform precoding is enabled.
     if (cell_cfg.use_msg3_transform_precoder()) {
-      // Obtain a valid suggestion of a valid number of PRB.
-      std::optional<unsigned> corrected_nof_prbs =
-          get_transform_precoding_nearest_higher_nof_prb_valid(prbs_tbs.nof_prbs);
-
-      if (!corrected_nof_prbs) {
-        corrected_nof_prbs = get_transform_precoding_nearest_lower_nof_prb_valid(prbs_tbs.nof_prbs);
-      }
-
-      // If no suggestion is available, skip the slot.
-      if (!corrected_nof_prbs) {
-        logger.debug(
-            "ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: not possible to select a valid number of PRBs",
-            fmt::underlying(u.ue_index),
-            u.crnti);
-        return ul_srb_sched_outcome::next_slot;
-      }
-
-      // Overwrite the number of PRBs with the valid number of PRB.
-      prbs_tbs.nof_prbs = corrected_nof_prbs.value();
+      // Obtain a higher valid suggestion for the number of PRBs (if available).
+      prbs_tbs.nof_prbs = transform_precoding::get_nof_prbs_upper_bound(prbs_tbs.nof_prbs).value_or(prbs_tbs.nof_prbs);
     }
 
     ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs);
     if (cell_cfg.use_msg3_transform_precoder()) {
-      // At this point we need to ensure a valid number of RBs is selected to be used with transform precoding.
-      auto valid_nof_rbs = get_transform_precoding_nearest_lower_nof_prb_valid(ue_grant_crbs.length());
+      // Checks if the grant size is correct if transform precoding is enabled.
+      auto valid_nof_rbs = transform_precoding::get_nof_prbs_lower_bound(ue_grant_crbs.length());
       if (not valid_nof_rbs.has_value()) {
         logger.debug(
             "ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: not possible to select a valid number of PRBs",

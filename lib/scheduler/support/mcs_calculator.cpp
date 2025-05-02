@@ -133,8 +133,8 @@ sch_mcs_index srsran::map_snr_to_mcs_ul(double snr, pusch_mcs_table mcs_table, b
   const unsigned MIN_MCS = 0;
 
   // Prevent selecting a reserved MCS entry when TP is enabled.
-  // The PUSCH MCS tables used when TP is enabled (TS38.214 Table 6.1.4.1-1/2, see \c srsran::pusch_mcs_get_config) only
-  // have 28 valid (non-reserved) entries, while the regular qam64 and qam64LowSe tables have 29 valid entries.
+  // The PUSCH MCS tables used when TP is enabled (TS 38.214 Table 6.1.4.1-1/2, see \ref srsran::pusch_mcs_get_config)
+  // only have 28 valid (non-reserved) entries, while the regular qam64 and qam64LowSe tables have 29 valid entries.
   if (use_transform_precoder and mcs_table != pusch_mcs_table::qam256) {
     selected_mcs_table = selected_mcs_table.first(28);
   }

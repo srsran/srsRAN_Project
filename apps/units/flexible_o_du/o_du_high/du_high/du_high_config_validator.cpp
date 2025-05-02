@@ -369,12 +369,12 @@ validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config, unsigne
     return false;
   }
 
-  if (config.enable_transform_precoding && !is_transform_precoding_nof_prb_valid(config.min_rb_size)) {
+  if (config.enable_transform_precoding && !transform_precoding::is_nof_prbs_valid(config.min_rb_size)) {
     fmt::print("Invalid minimum UE PUSCH RB (i.e., {}) with transform precoding. The nearest lower number of PRB is {} "
                "and the higher is {}.\n",
                config.min_rb_size,
-               get_transform_precoding_nearest_lower_nof_prb_valid(config.min_rb_size),
-               get_transform_precoding_nearest_higher_nof_prb_valid(config.min_rb_size));
+               transform_precoding::get_nof_prbs_lower_bound(config.min_rb_size),
+               transform_precoding::get_nof_prbs_upper_bound(config.min_rb_size));
     return false;
   }
 

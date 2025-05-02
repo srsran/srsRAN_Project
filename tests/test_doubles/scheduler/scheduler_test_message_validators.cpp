@@ -189,7 +189,7 @@ bool test_helper::is_valid_ul_sched_info(const ul_sched_info& grant)
     const vrb_interval vrbs = grant.pusch_cfg.rbs.type1();
     TRUE_OR_RETURN(vrbs.length() > 0);
     if (grant.pusch_cfg.transform_precoding) {
-      const bool valid = is_transform_precoding_nof_prb_valid(vrbs.length());
+      const bool valid = transform_precoding::is_nof_prbs_valid(vrbs.length());
       TRUE_OR_RETURN(valid, "Invalid number of RBs for transform precoding");
     }
     const crb_interval crbs = prb_to_crb(grant.pusch_cfg.bwp_cfg->crbs, prb_interval{vrbs.start(), vrbs.stop()});
