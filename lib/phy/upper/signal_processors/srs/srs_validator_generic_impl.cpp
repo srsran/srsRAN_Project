@@ -39,7 +39,8 @@ error_type<std::string> srs_validator_generic_impl::is_valid(const srs_estimator
 
   for (unsigned i_port = 0, i_port_end = config.ports.size(); i_port != i_port_end; ++i_port) {
     srs_information info = get_srs_information(config.resource, i_port);
-    if (info.mapping_initial_subcarrier + info.sequence_length * info.comb_size >
+
+    if (info.mapping_initial_subcarrier + (info.sequence_length - 1) * info.comb_size >=
         max_nof_prb * NOF_SUBCARRIERS_PER_RB) {
       return make_unexpected("SRS resource exceeds maximum bandwidth.");
     }
