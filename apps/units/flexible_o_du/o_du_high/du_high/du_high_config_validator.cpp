@@ -779,6 +779,18 @@ static bool validate_tdd_ul_dl_pattern_unit_config(const tdd_ul_dl_pattern_unit_
     return false;
   }
 
+  // NOTE: 1 of the slots in the TDD pattern is the special slot.
+  if (config.nof_dl_slots + config.nof_ul_slots > config.dl_ul_period_slots - 1) {
+    fmt::print("Invalid TDD pattern: the sum of DL and UL slots is not compatible with TDD period.\n");
+    return false;
+  }
+
+  // Extended CP not currently supported: assume 14 symbols per slot; 2 symbols for DL-to-UL switching.
+  if (config.nof_dl_symbols + config.nof_ul_symbols > NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - 2U) {
+    fmt::print("Invalid TDD pattern: the sum of DL and UL symbols in the special slot should not exceed 12.\n");
+    return false;
+  }
+
   const unsigned period_msec = config.dl_ul_period_slots / get_nof_slots_per_subframe(common_scs);
 
   static constexpr std::array<float, 10> valid_periods = {0.5F, 0.625, 1.0, 1.25, 2.0, 2.5, 3.0, 4.0, 5.0, 10.0};
