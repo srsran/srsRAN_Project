@@ -98,6 +98,8 @@ def test_s72_sequentially(
         always_download_artifacts=False,
         nof_antennas_dl=4,
         prach_config_index=159,
+        warning_as_errors=False,
+        stop_gnb_first=True,
     )
 
 
@@ -159,6 +161,8 @@ def _handover_sequentially(
     always_download_artifacts: bool = True,
     nof_antennas_dl: int = 1,
     prach_config_index: int = -1,
+    warning_as_errors: bool = True,
+    stop_gnb_first: bool = False,
 ):
     with _handover_multi_ues(
         retina_manager=retina_manager,
@@ -176,9 +180,10 @@ def _handover_sequentially(
         always_download_artifacts=always_download_artifacts,
         noise_spd=noise_spd,
         sleep_between_movement_steps=sleep_between_movement_steps,
-        warning_as_errors=True,
+        warning_as_errors=warning_as_errors,
         nof_antennas_dl=nof_antennas_dl,
         prach_config_index=prach_config_index,
+        stop_gnb_first=stop_gnb_first,
     ) as (ue_attach_info_dict, movements, traffic_seconds):
 
         for ue_stub, ue_attach_info in ue_attach_info_dict.items():
@@ -280,6 +285,7 @@ def _handover_multi_ues(
     movement_steps: int = 10,
     sleep_between_movement_steps: int = 2,
     cell_position_offset: Tuple[float, float, float] = (1000, 0, 0),
+    stop_gnb_first: bool = False,
 ) -> Generator[
     Tuple[
         Dict[UEStub, UEAttachedInfo],
@@ -339,7 +345,15 @@ def _handover_multi_ues(
         for ue_stub in ue_array:
             ue_validate_no_reattaches(ue_stub)
 
-        stop(ue_array, gnb, fivegc, retina_data, ue_stop_timeout=16, warning_as_errors=warning_as_errors)
+        stop(
+            ue_array,
+            gnb,
+            fivegc,
+            retina_data,
+            ue_stop_timeout=16,
+            warning_as_errors=warning_as_errors,
+            stop_gnb_first=stop_gnb_first,
+        )
     finally:
         get_kpis(gnb, ue_array=ue_array, metrics_summary=metrics_summary)
 

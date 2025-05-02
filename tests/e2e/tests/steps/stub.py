@@ -833,12 +833,17 @@ def stop(
     fail_if_kos: bool = False,
     ric: Optional[NearRtRicStub] = None,
     channel_emulator: Optional[ChannelEmulatorStub] = None,
+    stop_gnb_first: bool = False,
 ):
     """
     Stop ue(s), gnb and 5gc, ric
     """
     # Stop
     error_msg_array = []
+    if (stop_gnb_first is True) and (gnb is not None):
+        error_message, _ = _stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors)
+        error_msg_array.append(error_message)
+
     for index, ue_stub in enumerate(ue_array):
         error_message, _ = _stop_stub(
             ue_stub,
@@ -850,9 +855,10 @@ def stop(
         )
         error_msg_array.append(error_message)
 
-    if gnb is not None:
+    if (stop_gnb_first is False) and (gnb is not None):
         error_message, _ = _stop_stub(gnb, "GNB", retina_data, gnb_stop_timeout, log_search, warning_as_errors)
         error_msg_array.append(error_message)
+
     if fivegc is not None:
         error_message, _ = _stop_stub(
             fivegc,

@@ -48,6 +48,7 @@ markers = [
   "viavi_debug",
   "example",
   "example_srsue",
+  "s72",
 ]
 minversion = "6.0"
 python_files = [
