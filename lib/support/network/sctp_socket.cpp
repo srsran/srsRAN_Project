@@ -36,12 +36,12 @@ bool sctp_subscribe_to_events(const unique_fd& fd)
 
 /// \brief Modify SCTP default parameters for quicker detection of broken links.
 /// Changes to the maximum re-transmission timeout (rto_max).
-bool sctp_set_rto_opts(const unique_fd&      fd,
-                       std::optional<int>    rto_initial,
-                       std::optional<int>    rto_min,
-                       std::optional<int>    rto_max,
-                       const std::string&    if_name,
-                       srslog::basic_logger& logger)
+bool sctp_set_rto_opts(const unique_fd&                         fd,
+                       std::optional<std::chrono::milliseconds> rto_initial,
+                       std::optional<std::chrono::milliseconds> rto_min,
+                       std::optional<std::chrono::milliseconds> rto_max,
+                       const std::string&                       if_name,
+                       srslog::basic_logger&                    logger)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
 
@@ -60,13 +60,13 @@ bool sctp_set_rto_opts(const unique_fd&      fd,
   }
 
   if (rto_initial.has_value()) {
-    rto_opts.srto_initial = rto_initial.value();
+    rto_opts.srto_initial = rto_initial.value().count();
   }
   if (rto_min.has_value()) {
-    rto_opts.srto_min = rto_min.value();
+    rto_opts.srto_min = rto_min.value().count();
   }
   if (rto_max.has_value()) {
-    rto_opts.srto_max = rto_max.value();
+    rto_opts.srto_max = rto_max.value().count();
   }
 
   logger.debug(
@@ -86,11 +86,11 @@ bool sctp_set_rto_opts(const unique_fd&      fd,
 
 /// \brief Modify SCTP default parameters for quicker detection of broken links.
 /// Changes to the SCTP_INITMSG parameters (to control the timeout of the connect() syscall)
-bool sctp_set_init_msg_opts(const unique_fd&      fd,
-                            std::optional<int>    init_max_attempts,
-                            std::optional<int>    max_init_timeo,
-                            const std::string&    if_name,
-                            srslog::basic_logger& logger)
+bool sctp_set_init_msg_opts(const unique_fd&                         fd,
+                            std::optional<int>                       init_max_attempts,
+                            std::optional<std::chrono::milliseconds> max_init_timeo,
+                            const std::string&                       if_name,
+                            srslog::basic_logger&                    logger)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
 
@@ -112,7 +112,7 @@ bool sctp_set_init_msg_opts(const unique_fd&      fd,
     init_opts.sinit_max_attempts = init_max_attempts.value();
   }
   if (max_init_timeo.has_value()) {
-    init_opts.sinit_max_init_timeo = max_init_timeo.value();
+    init_opts.sinit_max_init_timeo = max_init_timeo.value().count();
   }
 
   logger.debug("{}: Setting SCTP_INITMSG options on SCTP socket. Max attempts {}, Max init attempts timeout {}",
@@ -128,10 +128,10 @@ bool sctp_set_init_msg_opts(const unique_fd&      fd,
 
 /// \brief Modify SCTP default Peer Address parameters for quicker detection of broken links.
 /// Changes to the heartbeat interval.
-bool sctp_set_paddr_opts(const unique_fd&      fd,
-                         std::optional<int>    hb_interval,
-                         const std::string&    if_name,
-                         srslog::basic_logger& logger)
+bool sctp_set_paddr_opts(const unique_fd&                    fd,
+                         std::optional<std::chrono::seconds> hb_interval,
+                         const std::string&                  if_name,
+                         srslog::basic_logger&               logger)
 {
   srsran_sanity_check(fd.is_open(), "Invalid FD");
 
@@ -150,7 +150,7 @@ bool sctp_set_paddr_opts(const unique_fd&      fd,
   }
 
   if (hb_interval.has_value()) {
-    paddr_opts.spp_hbinterval = hb_interval.value();
+    paddr_opts.spp_hbinterval = hb_interval.value().count();
   }
 
   logger.debug("{}: Setting SCTP_PEER_ADDR_PARAMS options on SCTP socket. Heartbeat Interval={}",

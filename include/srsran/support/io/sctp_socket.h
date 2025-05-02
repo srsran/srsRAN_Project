@@ -22,20 +22,20 @@ namespace srsran {
 
 struct sctp_socket_params {
   /// Name of the interface for logging purposes.
-  std::string            if_name;
-  int                    ai_family;
-  int                    ai_socktype;
-  bool                   reuse_addr        = false;
-  bool                   non_blocking_mode = false;
-  std::chrono::seconds   rx_timeout{0};
-  std::optional<int32_t> rto_initial;
-  std::optional<int32_t> rto_min;
-  std::optional<int32_t> rto_max;
-  std::optional<int32_t> init_max_attempts;
-  std::optional<int32_t> max_init_timeo;
-  std::optional<int32_t> hb_interval;
-  std::optional<int32_t> assoc_max_rxt;
-  std::optional<bool>    nodelay;
+  std::string                              if_name;
+  int                                      ai_family;
+  int                                      ai_socktype;
+  bool                                     reuse_addr        = false;
+  bool                                     non_blocking_mode = false;
+  std::chrono::seconds                     rx_timeout{0};
+  std::optional<std::chrono::milliseconds> rto_initial;
+  std::optional<std::chrono::milliseconds> rto_min;
+  std::optional<std::chrono::milliseconds> rto_max;
+  std::optional<int32_t>                   init_max_attempts;
+  std::optional<std::chrono::milliseconds> max_init_timeo;
+  std::optional<std::chrono::seconds>      hb_interval;
+  std::optional<int32_t>                   assoc_max_rxt;
+  std::optional<bool>                      nodelay;
 };
 
 /// SCTP socket instance.

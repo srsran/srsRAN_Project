@@ -12,6 +12,7 @@
 
 #include "srsran/gateways/sctp_network_gateway.h"
 #include "srsran/ngap/gateways/n2_connection_client.h"
+#include <chrono>
 #include <variant>
 
 namespace srsran {
@@ -28,20 +29,20 @@ struct n2_connection_client_config {
 
   /// Parameters specific to an SCTP network gateway.
   struct network {
-    io_broker&             broker;
-    task_executor&         io_rx_executor;
-    std::string            bind_address;
-    std::string            bind_interface;
-    std::string            amf_address;
-    int                    amf_port = NGAP_PORT;
-    std::optional<int32_t> rto_initial;
-    std::optional<int32_t> rto_min;
-    std::optional<int32_t> rto_max;
-    std::optional<int32_t> init_max_attempts;
-    std::optional<int32_t> max_init_timeo;
-    std::optional<int32_t> hb_interval;
-    std::optional<int32_t> assoc_max_rxt;
-    std::optional<bool>    nodelay;
+    io_broker&                               broker;
+    task_executor&                           io_rx_executor;
+    std::string                              bind_address;
+    std::string                              bind_interface;
+    std::string                              amf_address;
+    int                                      amf_port = NGAP_PORT;
+    std::optional<std::chrono::milliseconds> rto_initial;
+    std::optional<std::chrono::milliseconds> rto_min;
+    std::optional<std::chrono::milliseconds> rto_max;
+    std::optional<int32_t>                   init_max_attempts;
+    std::optional<std::chrono::milliseconds> max_init_timeo;
+    std::optional<std::chrono::seconds>      hb_interval;
+    std::optional<int32_t>                   assoc_max_rxt;
+    std::optional<bool>                      nodelay;
   };
 
   /// PCAP writer for the NGAP messages.

@@ -120,11 +120,11 @@ static void configure_cli11_amf_item_args(CLI::App& app, cu_cp_unit_amf_config_i
   add_option(app, "--bind_addr", config.bind_addr, "Local IP address to bind for N2 interface")->check(CLI::ValidIPV4);
   add_option(app, "--bind_interface", config.bind_interface, "Network device to bind for N2 interface")
       ->capture_default_str();
-  add_option(app, "--sctp_rto_initial", config.sctp_rto_initial, "SCTP initial RTO value");
-  add_option(app, "--sctp_rto_min", config.sctp_rto_min, "SCTP RTO min");
-  add_option(app, "--sctp_rto_max", config.sctp_rto_max, "SCTP RTO max");
+  add_option(app, "--sctp_rto_initial", config.sctp_rto_initial_ms, "SCTP initial RTO value in milliseconds");
+  add_option(app, "--sctp_rto_min", config.sctp_rto_min_ms, "SCTP RTO min in milliseconds");
+  add_option(app, "--sctp_rto_max", config.sctp_rto_max_ms, "SCTP RTO max in milliseconds");
   add_option(app, "--sctp_init_max_attempts", config.sctp_init_max_attempts, "SCTP init max attempts");
-  add_option(app, "--sctp_max_init_timeo", config.sctp_max_init_timeo, "SCTP max init timeout");
+  add_option(app, "--sctp_max_init_timeo", config.sctp_max_init_timeo_ms, "SCTP max init timeout in milliseconds");
   add_option(app, "--sctp_hb_interval", config.sctp_hb_interval_s, "SCTP heartbeat interval in seconds")
       ->capture_default_str();
   add_option(app, "--sctp_assoc_max_retx", config.sctp_assoc_max_retx, "SCTP assocination max retransmissions")

@@ -478,23 +478,23 @@ srs_cu_cp::n2_connection_client_config srsran::generate_n2_client_config(bool   
     nw_mode.amf_port        = amf_cfg.port;
     nw_mode.bind_address    = amf_cfg.bind_addr;
     nw_mode.bind_interface  = amf_cfg.bind_interface;
-    if (amf_cfg.sctp_rto_initial >= 0) {
-      nw_mode.rto_initial = amf_cfg.sctp_rto_initial;
+    if (amf_cfg.sctp_rto_initial_ms >= 0) {
+      nw_mode.rto_initial = std::chrono::milliseconds{amf_cfg.sctp_rto_initial_ms};
     }
-    if (amf_cfg.sctp_rto_min >= 0) {
-      nw_mode.rto_min = amf_cfg.sctp_rto_min;
+    if (amf_cfg.sctp_rto_min_ms >= 0) {
+      nw_mode.rto_min = std::chrono::milliseconds{amf_cfg.sctp_rto_min_ms};
     }
-    if (amf_cfg.sctp_rto_max >= 0) {
-      nw_mode.rto_max = amf_cfg.sctp_rto_max;
+    if (amf_cfg.sctp_rto_max_ms >= 0) {
+      nw_mode.rto_max = std::chrono::milliseconds{amf_cfg.sctp_rto_max_ms};
     }
     if (amf_cfg.sctp_init_max_attempts >= 0) {
       nw_mode.init_max_attempts = amf_cfg.sctp_init_max_attempts;
     }
-    if (amf_cfg.sctp_max_init_timeo >= 0) {
-      nw_mode.max_init_timeo = amf_cfg.sctp_max_init_timeo;
+    if (amf_cfg.sctp_max_init_timeo_ms >= 0) {
+      nw_mode.max_init_timeo = std::chrono::milliseconds{amf_cfg.sctp_max_init_timeo_ms};
     }
     if (amf_cfg.sctp_hb_interval_s >= 0) {
-      nw_mode.hb_interval = amf_cfg.sctp_hb_interval_s;
+      nw_mode.hb_interval = std::chrono::seconds{amf_cfg.sctp_hb_interval_s};
     }
     if (amf_cfg.sctp_assoc_max_retx >= 0) {
       nw_mode.assoc_max_rxt = amf_cfg.sctp_assoc_max_retx;
