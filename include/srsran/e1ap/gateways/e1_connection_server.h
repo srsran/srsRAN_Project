@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <optional>
 
 namespace srsran {
