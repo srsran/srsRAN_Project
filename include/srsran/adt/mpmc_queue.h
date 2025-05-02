@@ -24,10 +24,7 @@ template <typename T>
 class queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
 public:
-  template <typename... Args>
-  explicit queue_impl(size_t qsize) : queue(qsize)
-  {
-  }
+  explicit queue_impl(size_t qsize) : queue(qsize) {}
 
   bool try_push(const T& elem) { return queue.try_push(elem); }
 

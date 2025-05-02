@@ -10,42 +10,69 @@
 
 #pragma once
 
-#include <limits>
+#include "srsran/adt/detail/concurrent_queue_params.h"
+#include <atomic>
 #include <optional>
+#include <thread>
 
 namespace srsran {
-
-/// \brief Types of concurrent queues. They differ in type of synchronization mechanism and number of
-/// producers/consumers supported. Supported types are:
-/// - lockfree_spsc: lockfree single producer single consumer queue (SPSC).
-/// - lockfree_mpmc: lockfree multiple producer multiple consumer queue (MPMC).
-/// - locking_mpmc: multiple producer multiple consumer (MPMC) queue that uses a mutex for synchronization. It is the
-/// most generic type of queue, but it is also the slowest. It relies on a condition variable to wake up producers and
-/// consumers.
-/// - locking_mpsc: similar to the locking_mpmc, but it leverages batch popping on the consumer side, to reduce
-/// mutex contention.
-enum class concurrent_queue_policy { lockfree_spsc, lockfree_mpmc, locking_mpmc, locking_mpsc };
-
-/// \brief Types of barriers used for blocking pushes/pops of elements. Three types:
-/// - condition_variable: uses a condition variable to wake up producers and consumers.
-/// - sleep: spins on a sleep if the queue is full, in case of blocking push, and if the queue is empty in case of
-/// blocking pop.
-/// - non_blocking: no blocking mechanism is exposed.
-enum class concurrent_queue_wait_policy { condition_variable, sleep, non_blocking };
-
-/// \brief Parameters used to construct a concurrent queue.
-struct concurrent_queue_params {
-  /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, MPMC, etc.
-  concurrent_queue_policy policy;
-  /// Task queue size.
-  unsigned size;
-};
 
 namespace detail {
 
 /// Implementation of the concurrent queue with the provided policies.
 template <typename T, concurrent_queue_policy Policy, concurrent_queue_wait_policy BlockingPolicy>
 class queue_impl;
+
+/// Extension of queues with blocking api based on sleeps.
+template <typename Derived>
+class queue_sleep_crtp
+{
+public:
+  explicit queue_sleep_crtp(std::chrono::microseconds sleep_time_) : sleep_time(sleep_time_) {}
+
+  void request_stop() { running.store(false, std::memory_order_relaxed); }
+
+  template <typename U>
+  bool push_blocking(U&& elem)
+  {
+    while (running.load(std::memory_order_relaxed)) {
+      if (derived()->try_push(std::forward<U>(elem))) {
+        return true;
+      }
+      std::this_thread::sleep_for(sleep_time);
+    }
+    return false;
+  }
+
+  template <typename U>
+  bool pop_blocking(U& elem)
+  {
+    while (running.load(std::memory_order_relaxed)) {
+      if (derived()->try_pop(elem)) {
+        return true;
+      }
+      std::this_thread::sleep_for(sleep_time);
+    }
+    return false;
+  }
+
+  template <typename PoppingFunc>
+  bool call_on_pop_blocking(PoppingFunc&& func)
+  {
+    typename Derived::value_type elem;
+    if (pop_blocking(elem)) {
+      func(elem);
+      return true;
+    }
+    return false;
+  }
+
+private:
+  Derived* derived() { return static_cast<Derived*>(this); }
+
+  std::chrono::microseconds sleep_time;
+  std::atomic<bool>         running{true};
+};
 
 } // namespace detail
 
@@ -148,15 +175,5 @@ public:
 private:
   queue_type queue;
 };
-
-/// \brief Queue priority used to map to specific queue of the \c priority_multiqueue_task_worker. The higher the
-/// priority, the lower its integer value representation.
-enum class enqueue_priority : size_t { min = 0, max = std::numeric_limits<size_t>::max() };
-
-/// Reduce priority by \c dec amount.
-constexpr enqueue_priority operator-(enqueue_priority lhs, size_t dec)
-{
-  return static_cast<enqueue_priority>(static_cast<size_t>(lhs) - dec);
-}
 
 } // namespace srsran

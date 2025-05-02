@@ -1,0 +1,61 @@
+/*
+ *
+ * Copyright 2021-2025 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#pragma once
+
+#include <limits>
+
+namespace srsran {
+
+/// \brief Types of concurrent queues. They differ in type of synchronization mechanism and number of
+/// producers/consumers supported. Supported types are:
+/// - lockfree_spsc: lockfree single producer single consumer queue (SPSC).
+/// - lockfree_mpmc: lockfree multiple producer multiple consumer queue (MPMC).
+/// - locking_mpmc: multiple producer multiple consumer (MPMC) queue that uses a mutex for synchronization. It is the
+/// most generic type of queue, but it is also the slowest. It relies on a condition variable to wake up producers and
+/// consumers.
+/// - locking_mpsc: similar to the locking_mpmc, but it leverages batch popping on the consumer side, to reduce
+/// mutex contention.
+/// - moodycamel_lockfree_mpmc: Lock-free MPMC queue with unbounded capacity and that does not ensure elements
+/// enqueued by independent producers come out in the same order (not linearizable).
+enum class concurrent_queue_policy {
+  lockfree_spsc,
+  lockfree_mpmc,
+  locking_mpmc,
+  locking_mpsc,
+  moodycamel_lockfree_mpmc
+};
+
+/// \brief Types of barriers used for blocking pushes/pops of elements. Three types:
+/// - condition_variable: uses a condition variable to wake up producers and consumers.
+/// - sleep: spins on a sleep if the queue is full, in case of blocking push, and if the queue is empty in case of
+/// blocking pop.
+/// - non_blocking: no blocking mechanism is exposed.
+enum class concurrent_queue_wait_policy { condition_variable, sleep, non_blocking };
+
+/// \brief Parameters used to construct a concurrent queue.
+struct concurrent_queue_params {
+  /// \brief Queue policy to use for the task queue. E.g. SPSC, MPSC, MPMC, etc.
+  concurrent_queue_policy policy;
+  /// Task queue size.
+  unsigned size;
+};
+
+/// \brief Queue priority used to map to specific queue of the \c priority_multiqueue_task_worker. The higher the
+/// priority, the lower its integer value representation.
+enum class enqueue_priority : std::size_t { min = 0, max = std::numeric_limits<std::size_t>::max() };
+
+/// Reduce priority by \c dec amount.
+constexpr enqueue_priority operator-(enqueue_priority lhs, std::size_t dec)
+{
+  return static_cast<enqueue_priority>(static_cast<std::size_t>(lhs) - dec);
+}
+
+} // namespace srsran
