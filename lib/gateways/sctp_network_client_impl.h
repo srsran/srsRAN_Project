@@ -55,8 +55,8 @@ private:
                            const struct sctp_sndrcvinfo& sri,
                            const sockaddr&               src_addr,
                            socklen_t                     src_addr_len);
-  void handle_connection_close(const char* cause);
-  void handle_sctp_shutdown(const std::string& cause);
+  void handle_connection_shutdown(const char* cause);
+  void handle_connection_terminated(const std::string& cause);
 
   io_broker&     broker;
   task_executor& io_rx_executor;
