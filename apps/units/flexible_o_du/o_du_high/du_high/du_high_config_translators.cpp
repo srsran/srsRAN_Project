@@ -820,7 +820,7 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
         auto& f3_params       = std::get<pucch_f3_params>(du_pucch_cfg.f2_or_f3_or_f4_params);
         f3_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f3_params.nof_symbols.to_uint());
       } else if (std::holds_alternative<pucch_f4_params>(du_pucch_cfg.f2_or_f3_or_f4_params)) {
-        auto& f4_params       = std::get<pucch_f3_params>(du_pucch_cfg.f2_or_f3_or_f4_params);
+        auto& f4_params       = std::get<pucch_f4_params>(du_pucch_cfg.f2_or_f3_or_f4_params);
         f4_params.nof_symbols = std::min(du_pucch_cfg.max_nof_symbols.to_uint(), f4_params.nof_symbols.to_uint());
       }
       // Add extra PUSCH time-domain resources to enable PUSCH on symbols not used by the SRS.
