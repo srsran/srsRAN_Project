@@ -64,9 +64,10 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
       {2, 4}});
 
   ngap_cause_t          cause{ngap_cause_radio_network_t::multiple_pdu_session_id_instances};
-  pdu_session_metrics_t pdu_session_metrics{2, 1, {{cause, 1}}};
-  ngap_metrics          next_ngap_metrics;
-  s_nssai_t             snssai{slice_service_type{1}, slice_differentiator{}};
+  pdu_session_metrics_t pdu_session_metrics{2, 1, {}};
+  pdu_session_metrics.nof_pdu_sessions_failed_to_setup.increase(cause);
+  ngap_metrics next_ngap_metrics;
+  s_nssai_t    snssai{slice_service_type{1}, slice_differentiator{}};
   next_ngap_metrics.pdu_session_metrics.emplace(snssai, pdu_session_metrics);
   metrics_hdlr.next_metrics.ngaps.emplace_back(ngap_info{"open5gs-amf0", next_ngap_metrics});
 
@@ -102,17 +103,7 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
             1);
   ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0]
                 .metrics.pdu_session_metrics.begin()
-                ->second.nof_pdu_sessions_failed_to_setup.size(),
-            1);
-  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0]
-                .metrics.pdu_session_metrics.begin()
-                ->second.nof_pdu_sessions_failed_to_setup.begin()
-                ->first,
-            cause);
-  ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0]
-                .metrics.pdu_session_metrics.begin()
-                ->second.nof_pdu_sessions_failed_to_setup.begin()
-                ->second,
+                ->second.nof_pdu_sessions_failed_to_setup.get_count(cause),
             1);
   ASSERT_EQ(metrics_notifier.last_metrics_report->mobility.nof_handover_executions_requested, 2);
   ASSERT_EQ(metrics_notifier.last_metrics_report->mobility.nof_successful_handover_executions, 1);

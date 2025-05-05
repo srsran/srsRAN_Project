@@ -34,17 +34,10 @@ void ngap_metrics_aggregator::aggregate_successful_pdu_session_setup(s_nssai_t s
 void ngap_metrics_aggregator::aggregate_failed_pdu_session_setup(s_nssai_t s_nssai, ngap_cause_t cause)
 {
   if (aggregated_ngap_metrics.pdu_session_metrics.find(s_nssai) == aggregated_ngap_metrics.pdu_session_metrics.end()) {
-    aggregated_ngap_metrics.pdu_session_metrics.emplace(s_nssai, pdu_session_metrics_t{0, 0, {{cause, 1}}});
-  } else {
-    std::map<ngap_cause_t, unsigned>& failed_sessions =
-        aggregated_ngap_metrics.pdu_session_metrics[s_nssai].nof_pdu_sessions_failed_to_setup;
-
-    if (failed_sessions.find(cause) == failed_sessions.end()) {
-      failed_sessions.emplace(cause, 1);
-    } else {
-      ++failed_sessions[cause];
-    }
+    aggregated_ngap_metrics.pdu_session_metrics.emplace(s_nssai, pdu_session_metrics_t{0, 0, {}});
   }
+
+  aggregated_ngap_metrics.pdu_session_metrics[s_nssai].nof_pdu_sessions_failed_to_setup.increase(cause);
 }
 
 ngap_metrics ngap_metrics_aggregator::request_metrics_report() const
