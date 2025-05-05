@@ -11,14 +11,39 @@
 #include "worker_manager.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/du/du_high/du_high_executor_mapper.h"
+#include "srsran/support/executors/inline_task_executor.h"
 
 using namespace srsran;
 
 static const uint32_t task_worker_queue_size = 2048;
 
+/// Observer that preinitializes the byte buffer pool and timers resources in each created thread.
+class thread_resource_preinitializer : public unique_thread::observer
+{
+public:
+  thread_resource_preinitializer(timer_manager& timers_) : timers(timers_) {}
+
+  void on_thread_creation() override
+  {
+    // Pre-initialize thread-local resources to avoid doing it in the critical path.
+    init_byte_buffer_segment_pool_tls();
+    // Pre-initialize timer queues to avoid doing it in the critical path.
+    inline_task_executor dummy_executor;
+    auto                 dummy_timer = timers.create_unique_timer(dummy_executor);
+    dummy_timer.stop();
+  }
+  void on_thread_destruction() override {}
+
+private:
+  timer_manager& timers;
+};
+
 worker_manager::worker_manager(const worker_manager_config& worker_cfg) :
   low_prio_affinity_mng({worker_cfg.low_prio_sched_config})
 {
+  // Add preinitialization of resources to created threads.
+  unique_thread::add_observer(std::make_unique<thread_resource_preinitializer>(*worker_cfg.app_timers));
+
   // Check configuration.
   {
     unsigned ru_config_count = 0;
@@ -249,19 +274,6 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
     if (not exec_mng.add_execution_context(create_execution_context(slot_workers[cell_id]))) {
       report_fatal_error("Failed to instantiate {} execution context", slot_workers[cell_id].name);
     }
-
-    // Pre-initialize TLS to avoid doing it in the critical path.
-    task_executor* exec_to_init = exec_mng.executors().at("slot_exec#" + cell_id_str);
-    bool           result       = exec_to_init->defer([&timer, exec_to_init]() {
-      // Pre-initialize byte buffer pool to avoid doing it in the critical path.
-      init_byte_buffer_segment_pool_tls();
-      // Pre-initialize timer queues to avoid doing it in the critical path.
-      timer_factory timer_f{timer, *exec_to_init};
-      auto          t = timer_f.create_timer();
-      t.set(std::chrono::milliseconds(1), [](timer_id_t tid) {}); // run noop callback.
-      t.run();
-    });
-    report_error_if_not(result, "Unexpected failure to dispatch cell task");
   }
 
   // Instantiate DU-high executor mapper.
