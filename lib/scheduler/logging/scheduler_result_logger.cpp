@@ -357,13 +357,13 @@ auto make_info_log_entry(const sched_result& result, bool log_broadcast)
                            pgs     = make_paging_info_log_list(result.dl.paging_grants)](auto& ctx) {
     fmt::format_to(ctx.out(), "{}", fmt::join(sibs.begin(), sibs.end(), ", "));
     const char* sep = sibs.empty() ? "" : ", ";
-    fmt::format_to(ctx.out(), "{}{}", sep, fmt::join(rars.begin(), rars.end(), ", "));
+    fmt::format_to(ctx.out(), "{}{}", rars.empty() ? "" : sep, fmt::join(rars.begin(), rars.end(), ", "));
     sep = rars.empty() ? sep : ", ";
-    fmt::format_to(ctx.out(), "{}{}", sep, fmt::join(ue_msgs.begin(), ue_msgs.end(), ", "));
+    fmt::format_to(ctx.out(), "{}{}", ue_msgs.empty() ? "" : sep, fmt::join(ue_msgs.begin(), ue_msgs.end(), ", "));
     sep = ue_msgs.empty() ? sep : ", ";
-    fmt::format_to(ctx.out(), "{}{}", sep, fmt::join(puschs.begin(), puschs.end(), ", "));
+    fmt::format_to(ctx.out(), "{}{}", puschs.empty() ? "" : sep, fmt::join(puschs.begin(), puschs.end(), ", "));
     sep = puschs.empty() ? sep : ", ";
-    fmt::format_to(ctx.out(), "{}{}", sep, fmt::join(pgs.begin(), pgs.end(), ", "));
+    fmt::format_to(ctx.out(), "{}{}", pgs.empty() ? "" : sep, fmt::join(pgs.begin(), pgs.end(), ", "));
     return ctx.out();
   });
 }
