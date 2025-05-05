@@ -66,8 +66,7 @@ public:
   auto pop_blocking() noexcept
   {
     std::optional<typename Derived::value_type> ret;
-    ret.emplace();
-    if (not pop_blocking(ret.value())) {
+    if (not pop_blocking(ret.emplace())) {
       ret.reset();
     }
     return ret;

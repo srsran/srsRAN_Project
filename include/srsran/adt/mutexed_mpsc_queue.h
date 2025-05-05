@@ -104,8 +104,7 @@ public:
   std::optional<T> try_pop()
   {
     std::optional<T> ret;
-    ret.emplace();
-    if (not try_pop(ret.value())) {
+    if (not try_pop(ret.emplace())) {
       ret.reset();
     }
     return ret;
@@ -127,8 +126,7 @@ public:
   std::optional<T> pop_blocking() noexcept
   {
     std::optional<T> ret;
-    ret.emplace();
-    if (not pop_blocking(ret.value())) {
+    if (not pop_blocking(ret.emplace())) {
       ret.reset();
     }
     return ret;

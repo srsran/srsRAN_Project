@@ -38,8 +38,7 @@ public:
   std::optional<T> try_pop()
   {
     std::optional<T> result;
-    result.emplace();
-    if (not queue.try_pop(*result)) {
+    if (not queue.try_pop(result.emplace())) {
       result.reset();
     }
     return result;

@@ -34,8 +34,7 @@ public:
   [[nodiscard]] std::optional<T> try_pop()
   {
     std::optional<T> t;
-    t.emplace();
-    if (not queue.try_pop(t.value())) {
+    if (not queue.try_pop(t.emplace())) {
       t.reset();
     }
     return t;
@@ -94,8 +93,7 @@ public:
   std::optional<T> pop_blocking() noexcept
   {
     std::optional<T> ret;
-    ret.emplace();
-    if (not pop_blocking(ret.value())) {
+    if (not pop_blocking(ret.emplace())) {
       ret.reset();
     }
     return ret;
