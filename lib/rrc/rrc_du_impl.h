@@ -64,8 +64,8 @@ public:
   void remove_ue(ue_index_t ue_index) override;
 
   // rrc_du_connection_event_handler.
-  void handle_successful_rrc_setup() override { metrics_aggregator.handle_successful_rrc_setup(); }
-  void handle_successful_rrc_release() override { metrics_aggregator.handle_successful_rrc_release(); }
+  void handle_successful_rrc_setup() override { metrics_aggregator.aggregate_successful_rrc_setup(); }
+  void handle_successful_rrc_release() override { metrics_aggregator.aggregate_successful_rrc_release(); }
 
   rrc_du_cell_manager&             get_rrc_du_cell_manager() override { return *this; }
   rrc_du_ue_repository&            get_rrc_du_ue_repository() override { return *this; }

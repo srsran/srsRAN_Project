@@ -18,10 +18,10 @@ class mobility_manager_metrics_aggregator
 {
 public:
   /// \brief Aggregates the metrics for the requested handover preparation.
-  void handle_requested_handover_preparation();
+  void aggregate_requested_handover_preparation();
 
   /// \brief Aggregates the metrics for the successful handover preparation.
-  void handle_successful_handover_preparation();
+  void aggregate_successful_handover_preparation();
 
   mobility_management_metrics request_metrics_report() const;
 

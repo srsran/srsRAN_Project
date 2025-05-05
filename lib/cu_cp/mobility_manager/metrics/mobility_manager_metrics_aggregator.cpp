@@ -13,14 +13,14 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-void mobility_manager_metrics_aggregator::handle_requested_handover_preparation()
+void mobility_manager_metrics_aggregator::aggregate_requested_handover_preparation()
 {
-  aggregated_mobility_manager_metrics.nof_handover_preparations_requested++;
+  ++aggregated_mobility_manager_metrics.nof_handover_preparations_requested;
 }
 
-void mobility_manager_metrics_aggregator::handle_successful_handover_preparation()
+void mobility_manager_metrics_aggregator::aggregate_successful_handover_preparation()
 {
-  aggregated_mobility_manager_metrics.nof_successful_handover_preparations++;
+  ++aggregated_mobility_manager_metrics.nof_successful_handover_preparations;
 }
 
 mobility_management_metrics mobility_manager_metrics_aggregator::request_metrics_report() const

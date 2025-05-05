@@ -13,25 +13,25 @@
 using namespace srsran;
 using namespace srs_cu_cp;
 
-void ngap_metrics_aggregator::handle_requested_pdu_session(s_nssai_t s_nssai)
+void ngap_metrics_aggregator::aggregate_requested_pdu_session(s_nssai_t s_nssai)
 {
   if (aggregated_ngap_metrics.pdu_session_metrics.find(s_nssai) == aggregated_ngap_metrics.pdu_session_metrics.end()) {
     aggregated_ngap_metrics.pdu_session_metrics.emplace(s_nssai, pdu_session_metrics_t{1, 0, {}});
   } else {
-    aggregated_ngap_metrics.pdu_session_metrics[s_nssai].nof_pdu_sessions_requested_to_setup++;
+    ++aggregated_ngap_metrics.pdu_session_metrics[s_nssai].nof_pdu_sessions_requested_to_setup;
   }
 }
 
-void ngap_metrics_aggregator::handle_successful_pdu_session_setup(s_nssai_t s_nssai)
+void ngap_metrics_aggregator::aggregate_successful_pdu_session_setup(s_nssai_t s_nssai)
 {
   if (aggregated_ngap_metrics.pdu_session_metrics.find(s_nssai) == aggregated_ngap_metrics.pdu_session_metrics.end()) {
     aggregated_ngap_metrics.pdu_session_metrics.emplace(s_nssai, pdu_session_metrics_t{0, 1, {}});
   } else {
-    aggregated_ngap_metrics.pdu_session_metrics[s_nssai].nof_pdu_sessions_successfully_setup++;
+    ++aggregated_ngap_metrics.pdu_session_metrics[s_nssai].nof_pdu_sessions_successfully_setup;
   }
 }
 
-void ngap_metrics_aggregator::handle_failed_pdu_session_setup(s_nssai_t s_nssai, ngap_cause_t cause)
+void ngap_metrics_aggregator::aggregate_failed_pdu_session_setup(s_nssai_t s_nssai, ngap_cause_t cause)
 {
   if (aggregated_ngap_metrics.pdu_session_metrics.find(s_nssai) == aggregated_ngap_metrics.pdu_session_metrics.end()) {
     aggregated_ngap_metrics.pdu_session_metrics.emplace(s_nssai, pdu_session_metrics_t{0, 0, {{cause, 1}}});
@@ -42,7 +42,7 @@ void ngap_metrics_aggregator::handle_failed_pdu_session_setup(s_nssai_t s_nssai,
     if (failed_sessions.find(cause) == failed_sessions.end()) {
       failed_sessions.emplace(cause, 1);
     } else {
-      failed_sessions[cause]++;
+      ++failed_sessions[cause];
     }
   }
 }

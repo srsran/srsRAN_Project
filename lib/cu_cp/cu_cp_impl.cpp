@@ -586,13 +586,13 @@ cu_cp_impl::handle_ngap_handover_request(const ngap_handover_request& request)
 void cu_cp_impl::handle_transmission_of_handover_required()
 {
   // Notify mobility manager metrics handler about the requested handover preparation.
-  mobility_mng.get_metrics_handler().handle_requested_handover_preparation();
+  mobility_mng.get_metrics_handler().aggregate_requested_handover_preparation();
 }
 
 async_task<bool> cu_cp_impl::handle_new_handover_command(ue_index_t ue_index, byte_buffer command)
 {
   // Notify mobility manager metrics handler about the successful handover preparation.
-  mobility_mng.get_metrics_handler().handle_successful_handover_preparation();
+  mobility_mng.get_metrics_handler().aggregate_successful_handover_preparation();
 
   return launch_async([this,
                        ue_index,

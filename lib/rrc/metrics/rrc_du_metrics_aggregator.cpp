@@ -18,12 +18,12 @@ rrc_du_metrics_aggregator::rrc_du_metrics_aggregator()
   rrc_connection_metrics.reset();
 }
 
-void rrc_du_metrics_aggregator::handle_successful_rrc_setup()
+void rrc_du_metrics_aggregator::aggregate_successful_rrc_setup()
 {
   rrc_connection_metrics.add_rrc_connection();
 }
 
-void rrc_du_metrics_aggregator::handle_successful_rrc_release()
+void rrc_du_metrics_aggregator::aggregate_successful_rrc_release()
 {
   rrc_connection_metrics.remove_rrc_connection();
 }

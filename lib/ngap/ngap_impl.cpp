@@ -422,7 +422,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   // Notify metrics handler about requested PDU sessions.
   if (request->pdu_session_res_setup_list_cxt_req_present) {
     for (const auto& pdu_session : request->pdu_session_res_setup_list_cxt_req) {
-      metrics_handler.handle_requested_pdu_session(ngap_asn1_to_s_nssai(pdu_session.s_nssai));
+      metrics_handler.aggregate_requested_pdu_session(ngap_asn1_to_s_nssai(pdu_session.s_nssai));
     }
   }
 
@@ -513,7 +513,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
 {
   // Notify metrics handler about requested PDU sessions.
   for (const auto& pdu_session : request->pdu_session_res_setup_list_su_req) {
-    metrics_handler.handle_requested_pdu_session(ngap_asn1_to_s_nssai(pdu_session.s_nssai));
+    metrics_handler.aggregate_requested_pdu_session(ngap_asn1_to_s_nssai(pdu_session.s_nssai));
   }
 
   if (!ue_ctxt_list.contains(uint_to_ran_ue_id(request->ran_ue_ngap_id))) {
