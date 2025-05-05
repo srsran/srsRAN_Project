@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/ran/cyclic_prefix.h"
 #include "srsran/ran/phy_time_unit.h"
 #include <optional>
 
@@ -106,23 +107,67 @@ public:
     }
   }
 
-  /// \brief Sets the Error Vector Magnitude (EVM).
+  /// \brief Sets the total Error Vector Magnitude (EVM).
   ///
   /// The EVM value is ignored if it is NaN.
-  void set_evm(float evm_)
+  void set_total_evm(float evm_)
   {
     // Ignore measurement if it is NaN.
     if (std::isnan(evm_)) {
       return;
     }
 
-    evm.emplace(evm_);
+    total_evm.emplace(evm_);
   }
 
-  /// \brief Gets the EVM.
+  /// \brief Gets the total EVM.
   ///
   /// \return The measured EVM if present, otherwise \c std::nullopt.
-  std::optional<float> get_evm() const { return evm; }
+  std::optional<float> get_total_evm() const
+  {
+    // If the total EVM has value, use that one.
+    if (total_evm.has_value()) {
+      return total_evm;
+    }
+
+    // Otherwise try to combine all EVM.
+    unsigned count = 0;
+    float    sum   = 0.0f;
+    std::for_each(symbol_evm.begin(), symbol_evm.end(), [&count, &sum](std::optional<float> elem) {
+      // Skip accumulating if it does not contain a value or it is infinity or nan.
+      if (!elem.has_value() || std::isinf(elem.value()) || std::isnan(elem.value())) {
+        return;
+      }
+      sum += elem.value();
+      ++count;
+    });
+
+    if (count == 0) {
+      return std::nullopt;
+    }
+
+    return sum / static_cast<float>(count);
+  }
+
+  /// \brief Sets an OFDM symbol Error Vector Magnitude (EVM).
+  ///
+  /// The EVM value is ignored if it is NaN.
+  void set_symbol_evm(unsigned i_symbol, float evm_)
+  {
+    // Ignore measurement if it is NaN.
+    if (std::isnan(evm_)) {
+      return;
+    }
+
+    srsran_assert(i_symbol < symbol_evm.size(), "The OFDM symbol index (i.e., {}) exceeds slot duration.");
+    symbol_evm[i_symbol].emplace(evm_);
+  }
+
+  /// \brief Gets the EVM per symbol.
+  span<const std::optional<float>> get_symbol_evm() const
+  {
+    return span<const std::optional<float>>(symbol_evm.begin(), symbol_evm.end());
+  }
 
   /// Sets the time alignment measurement in PHY time units.
   void set_time_alignment(const phy_time_unit& time_alignment_) { time_alignment.emplace(time_alignment_); }
@@ -193,8 +238,10 @@ private:
   std::optional<phy_time_unit> time_alignment;
   /// Average post-equalization SINR.
   std::optional<float> sinr_post_eq_dB;
-  /// Error Vector Magnitude, obtained after QAM demodulation.
-  std::optional<float> evm;
+  /// Error Vector Magnitude (EVM), obtained after QAM demodulation.
+  std::optional<float> total_evm;
+  /// Error Vector Magnitude (EVM) per OFDM symbol, obtained after QAM demodulation.
+  std::array<std::optional<float>, MAX_NSYMB_PER_SLOT> symbol_evm;
   /// SINR obtained from EVM.
   std::optional<float> sinr_evm_dB;
   /// Average SINR in decibels, computed by the channel estimator.

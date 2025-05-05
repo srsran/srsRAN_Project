@@ -428,8 +428,8 @@ private:
       min_iterations = std::min(sch_result.data.ldpc_decoder_stats.get_min(), min_iterations);
       count_iterations += static_cast<uint64_t>(sch_result.data.ldpc_decoder_stats.get_nof_observations() *
                                                 sch_result.data.ldpc_decoder_stats.get_mean());
-      if (sch_result.csi.get_evm().has_value()) {
-        evm_stats.update(sch_result.csi.get_evm().value());
+      if (sch_result.csi.get_total_evm().has_value()) {
+        evm_stats.update(sch_result.csi.get_total_evm().value());
       }
       if (sch_result.csi.get_sinr_dB().has_value()) {
         sinr_stats.update(sch_result.csi.get_sinr_dB().value());

@@ -254,7 +254,7 @@ TEST_P(PucchProcessorFormat1Fixture, UnitTest)
     ASSERT_TRUE(this_result.csi.get_epre_dB().has_value());
     ASSERT_TRUE(this_result.csi.get_rsrp_dB().has_value());
     ASSERT_TRUE(this_result.csi.get_sinr_dB().has_value());
-    ASSERT_FALSE(this_result.csi.get_evm().has_value());
+    ASSERT_FALSE(this_result.csi.get_total_evm().has_value());
     ASSERT_FALSE(this_result.csi.get_cfo_Hz().has_value());
     ASSERT_FALSE(this_result.csi.get_time_alignment().has_value());
   }

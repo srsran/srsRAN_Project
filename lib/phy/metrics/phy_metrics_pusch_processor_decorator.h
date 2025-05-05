@@ -122,7 +122,7 @@ private:
     }
 
     float sinr_dB = sch_result.csi.get_sinr_dB().value_or(invalid_sinr_and_evm);
-    float evm     = sch_result.csi.get_evm().value_or(invalid_sinr_and_evm);
+    float evm     = sch_result.csi.get_total_evm().value_or(invalid_sinr_and_evm);
     bool  crc_ok  = sch_result.data.tb_crc_ok;
 
     metric_notifier.on_new_metric({.slot              = pdu.slot,
