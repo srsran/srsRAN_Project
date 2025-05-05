@@ -35,8 +35,8 @@ public:
 private:
   srslog::basic_logger&              logger;
   int                                socket_fd = -1;
-  ::sockaddr_ll                      socket_address;
   transmitter_metrics_collector_impl metrics_collector;
+  ::sockaddr_ll                      socket_address;
 };
 
 } // namespace ether
