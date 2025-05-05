@@ -103,6 +103,6 @@ void pdxch_processor_impl::handle_request(const shared_resource_grid& grid, cons
     late_context.slot   = request.slot;
     late_context.sector = context.sector;
     notifier->on_pdxch_request_late(late_context);
-    l1_tracer << instant_trace_event{"on_pdxch_request_late", instant_trace_event::cpu_scope::thread};
+    l1_dl_tracer << instant_trace_event{"on_pdxch_request_late", instant_trace_event::cpu_scope::thread};
   }
 }

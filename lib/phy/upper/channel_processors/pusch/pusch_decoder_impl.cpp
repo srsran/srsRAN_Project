@@ -317,7 +317,7 @@ void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
     span<bool> cb_crcs = unique_rm_buffer->get_codeblocks_crc();
 
     // Code block processing task.
-    trace_point tp = l1_tracer.now();
+    trace_point tp = l1_ul_tracer.now();
 
     // Check current CRC status.
     if (cb_crcs[cb_id]) {
@@ -354,7 +354,7 @@ void pusch_decoder_impl::fork_codeblock_task(unsigned cb_id)
       join_and_notify();
     }
 
-    l1_tracer << trace_event("cb_decode", tp);
+    l1_ul_tracer << trace_event("cb_decode", tp);
   };
 
   // Execute task asynchronously if an executor is available and the number of codeblocks is larger than one.

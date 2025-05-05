@@ -10,7 +10,6 @@
 
 #include "ofh_downlink_handler_impl.h"
 #include "helpers.h"
-#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/instrumentation/traces/ofh_traces.h"
 #include "srsran/ofh/ofh_error_notifier.h"
 #include "srsran/phy/support/resource_grid_context.h"
@@ -63,7 +62,6 @@ void downlink_handler_impl::handle_dl_data(const resource_grid_context& context,
         "Sector#{}: dropped late downlink resource grid in slot '{}'. No OFH data will be transmitted for this slot",
         sector_id,
         context.slot);
-    l1_tracer << instant_trace_event{"handle_dl_data_late", instant_trace_event::cpu_scope::thread};
     ofh_tracer << trace_event("ofh_handle_dl_late", tp);
     return;
   }

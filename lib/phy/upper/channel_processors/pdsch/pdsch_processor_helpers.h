@@ -30,7 +30,7 @@ namespace srsran {
 inline void
 pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const pdsch_processor::pdu_t& pdu)
 {
-  trace_point process_dmrs_tp = l1_tracer.now();
+  trace_point process_dmrs_tp = l1_dl_tracer.now();
 
   crb_bitmap rb_mask_bitset = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
@@ -55,7 +55,7 @@ pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const
   // Put DM-RS.
   dmrs.map(grid, dmrs_config);
 
-  l1_tracer << trace_event("process_dmrs", process_dmrs_tp);
+  l1_dl_tracer << trace_event("process_dmrs", process_dmrs_tp);
 }
 
 /// \brief Generates and maps PT-RS for the PDSCH transmission as per TS 38.211 section 7.4.1.2.
@@ -65,7 +65,7 @@ pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const
 inline void
 pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_generator, const pdsch_processor::pdu_t& pdu)
 {
-  trace_point process_ptrs_tp = l1_tracer.now();
+  trace_point process_ptrs_tp = l1_dl_tracer.now();
 
   // Extract PT-RS configuration parameters.
   const pdsch_processor::ptrs_configuration& ptrs = *pdu.ptrs;
@@ -102,7 +102,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
   // Put PT-RS.
   ptrs_generator.generate(grid, ptrs_config);
 
-  l1_tracer << trace_event("process_ptrs", process_ptrs_tp);
+  l1_dl_tracer << trace_event("process_ptrs", process_ptrs_tp);
 }
 
 /// \brief Computes the number of RE used for mapping PDSCH data.

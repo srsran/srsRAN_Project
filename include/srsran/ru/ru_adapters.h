@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/shared_resource_grid.h"
 #include "srsran/phy/upper/upper_phy_error_handler.h"
@@ -158,6 +159,7 @@ public:
     srsran_assert(handlers[context.sector], "Adapter for sector '{}' is not connected", context.sector);
 
     handlers[context.sector]->handle_late_downlink_message(context.slot);
+    l1_dl_tracer << instant_trace_event{"handle_dl_data_late", instant_trace_event::cpu_scope::thread};
   }
 
   // See interface for documentation.
@@ -167,6 +169,7 @@ public:
     srsran_assert(handlers[context.sector], "Adapter for sector '{}' is not connected", context.sector);
 
     handlers[context.sector]->handle_late_uplink_message(context.slot);
+    l1_ul_tracer << instant_trace_event{"handle_ul_request_late", instant_trace_event::cpu_scope::thread};
   }
 
   /// Maps the given upper PHY error handler and sector to this adapter.

@@ -15,11 +15,18 @@
 
 namespace srsran {
 
-/// Set to true for enabling layer 1 trace.
-#ifndef SRSRAN_L1_TRACE
-constexpr bool L1_TRACE_ENABLED = false;
+/// Set to true for enabling layer 1 downlink trace.
+#ifndef SRSRAN_L1_DL_TRACE
+constexpr bool L1_DL_TRACE_ENABLED = false;
 #else
-constexpr bool L1_TRACE_ENABLED = true;
+constexpr bool L1_DL_TRACE_ENABLED = true;
+#endif
+
+/// Set to true for enabling layer 1 uplink trace.
+#ifndef SRSRAN_L1_UL_TRACE
+constexpr bool L1_UL_TRACE_ENABLED = false;
+#else
+constexpr bool L1_UL_TRACE_ENABLED = true;
 #endif
 
 /// Set to true for enabling layer 2 trace.
@@ -28,8 +35,15 @@ constexpr bool L2_TRACE_ENABLED = false;
 #else
 constexpr bool L2_TRACE_ENABLED = true;
 #endif
-/// L1 event tracing. This tracer is used to analyze latencies in the L1 processing.
-extern file_event_tracer<L1_TRACE_ENABLED> l1_tracer;
+
+/// L1 downlink event tracing. This tracer is used to analyze latencies in the L1 downlink processing.
+extern file_event_tracer<L1_DL_TRACE_ENABLED || L1_UL_TRACE_ENABLED> l1_common_tracer;
+
+/// L1 downlink event tracing. This tracer is used to analyze latencies in the L1 downlink processing.
+extern file_event_tracer<L1_DL_TRACE_ENABLED> l1_dl_tracer;
+
+/// L1 uplink event tracing. This tracer is used to analyze latencies in the L1 uplink processing.
+extern file_event_tracer<L1_UL_TRACE_ENABLED> l1_ul_tracer;
 
 /// L2 event tracing. This tracer is used to analyze latencies in the L2 processing of slot indications.
 extern file_event_tracer<L2_TRACE_ENABLED> l2_tracer;

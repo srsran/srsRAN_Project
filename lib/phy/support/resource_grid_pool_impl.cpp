@@ -49,7 +49,7 @@ resource_grid_pool_impl::~resource_grid_pool_impl()
 shared_resource_grid resource_grid_pool_impl::allocate_resource_grid(slot_point slot)
 {
   // Trace point for grid reservation.
-  trace_point tp = l1_tracer.now();
+  trace_point tp = l1_common_tracer.now();
 
   // Select an identifier from the current request counter.
   unsigned identifier = counter;
@@ -71,7 +71,7 @@ shared_resource_grid resource_grid_pool_impl::allocate_resource_grid(slot_point 
   }
 
   // Trace the resource grid reservation.
-  l1_tracer << trace_event(grids_str_reserved[identifier].c_str(), tp);
+  l1_common_tracer << trace_event(grids_str_reserved[identifier].c_str(), tp);
 
   return {*this, ref_count, identifier};
 }
@@ -107,7 +107,7 @@ void resource_grid_pool_impl::notify_release_scope(unsigned identifier)
 
   // Create lambda function for setting the grid to zero.
   auto set_all_zero_func = [this, identifier]() {
-    trace_point tp = l1_tracer.now();
+    trace_point tp = l1_common_tracer.now();
 
     // Set grid to zero.
     grids[identifier]->set_all_zero();
@@ -115,7 +115,7 @@ void resource_grid_pool_impl::notify_release_scope(unsigned identifier)
     // Make the grid available.
     grids_scope_count[identifier] = ref_counter_available;
 
-    l1_tracer << trace_event(grids_str_zero[identifier].c_str(), tp);
+    l1_common_tracer << trace_event(grids_str_zero[identifier].c_str(), tp);
   };
 
   // Try to execute the asynchronous housekeeping task.
