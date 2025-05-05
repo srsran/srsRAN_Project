@@ -10,7 +10,7 @@
 
 #include "srsran/srslog/srslog.h"
 #include "srsran/support/executors/manual_task_worker.h"
-#include "srsran/support/executors/metrics_executor.h"
+#include "srsran/support/executors/sequential_metrics_executor.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

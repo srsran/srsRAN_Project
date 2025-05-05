@@ -10,7 +10,7 @@
 
 #include "srsran/du/du_high/du_high_executor_mapper.h"
 #include "srsran/support/executors/executor_tracer.h"
-#include "srsran/support/executors/metrics_executor.h"
+#include "srsran/support/executors/sequential_metrics_executor.h"
 #include "srsran/support/executors/strand_executor.h"
 #include "srsran/support/executors/sync_task_executor.h"
 
@@ -56,7 +56,7 @@ struct executor_decorator {
 private:
   std::vector<std::unique_ptr<task_executor>> decorators;
   file_event_tracer<true>                     tracer;
-  srslog::basic_logger&                       metrics_logger = srslog::fetch_basic_logger("DU");
+  srslog::basic_logger&                       metrics_logger = srslog::fetch_basic_logger("METRICS");
 };
 
 /// Cell executor mapper that uses dedicated serialized workers, one per cell.
@@ -137,9 +137,9 @@ public:
 private:
   using cell_strand_type = priority_task_strand<task_executor*>;
   struct strand_context {
-    std::unique_ptr<priority_task_strand<task_executor*>> strand;
-    task_executor*                                        slot_ind_exec;
-    task_executor*                                        cell_exec;
+    std::unique_ptr<cell_strand_type> strand;
+    task_executor*                    slot_ind_exec;
+    task_executor*                    cell_exec;
   };
 
   std::vector<strand_context> cell_strands;

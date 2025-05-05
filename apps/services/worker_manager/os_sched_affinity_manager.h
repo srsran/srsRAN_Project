@@ -154,7 +154,7 @@ public:
   }
 
   /// Calculate and returns the affinity mask for the given type.
-  os_sched_affinity_bitmask calcute_affinity_mask(sched_affinity_mask_types type)
+  os_sched_affinity_bitmask calcute_affinity_mask(sched_affinity_mask_types type) const
   {
     srsran_assert(type != sched_affinity_mask_types::last, "Invalid type '{}'", to_unsigned(type));
     srsran_assert(cpu_masks[to_unsigned(type)], "Invalid manager for type '{}'", to_unsigned(type));

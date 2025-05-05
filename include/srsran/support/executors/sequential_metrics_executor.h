@@ -16,14 +16,17 @@
 #include <chrono>
 
 namespace srsran {
+
+/// \brief Decorator of a task executor that tracks its performance metrics, such as latency.
+/// \remark This class should only be used for sequential executors (e.g. strands, single threads).
 template <typename ExecutorType, typename Logger>
-class metrics_executor : public task_executor
+class sequential_metrics_executor : public task_executor
 {
   using time_point = std::chrono::time_point<std::chrono::steady_clock>;
 
 public:
   template <typename U>
-  metrics_executor(std::string name_, U&& exec_, Logger& logger_, std::chrono::milliseconds period_) :
+  sequential_metrics_executor(std::string name_, U&& exec_, Logger& logger_, std::chrono::milliseconds period_) :
     name(std::move(name_)), exec(std::forward<U>(exec_)), logger(logger_), period(period_)
   {
     last_tp = std::chrono::steady_clock::now();
@@ -75,6 +78,7 @@ private:
     auto enqueue_latency = start_tp - enqueue_tp;
     auto task_latency    = end_tp - start_tp;
 
+    // Update internal metrics.
     counters.dispatch_count++;
     if (not is_exec) {
       counters.defer_count++;
@@ -89,10 +93,12 @@ private:
       counters.failed_rusg_captures++;
     }
 
-    if (end_tp - last_tp >= period) {
+    // Check if it is time for a new metric report.
+    auto telapsed_since_last_report = end_tp - last_tp;
+    if (telapsed_since_last_report >= period) {
       // Report metrics.
       logger.info("Executor metrics \"{}\": nof_executes={} nof_defers={} enqueue_avg={}usec "
-                  "enqueue_max={}usec task_avg={}usec task_max={}usec {}",
+                  "enqueue_max={}usec task_avg={}usec task_max={}usec cpu_load={:.1f}% {}",
                   name,
                   counters.dispatch_count - counters.defer_count,
                   counters.defer_count,
@@ -100,6 +106,7 @@ private:
                   duration_cast<microseconds>(counters.enqueue_max_latency).count(),
                   duration_cast<microseconds>(counters.task_sum_latency / counters.dispatch_count).count(),
                   duration_cast<microseconds>(counters.task_max_latency).count(),
+                  counters.task_sum_latency.count() * 100.0 / telapsed_since_last_report.count(),
                   counters.sum_rusg);
 
       counters = {};
@@ -116,19 +123,24 @@ private:
   std::chrono::time_point<std::chrono::steady_clock> last_tp;
 };
 
-template <typename ExecType, typename Logger>
-metrics_executor<ExecType, Logger>
-make_metrics_executor(std::string exec_name, ExecType&& exec, Logger& logger, std::chrono::milliseconds period)
+/// Returns a task executor that decorates a sequential executor to track its performance metrics
+template <typename SequentialExec, typename Logger>
+sequential_metrics_executor<SequentialExec, Logger>
+make_metrics_executor(std::string exec_name, SequentialExec&& exec, Logger& logger, std::chrono::milliseconds period)
 {
-  return metrics_executor<ExecType, Logger>(std::move(exec_name), std::forward<ExecType>(exec), logger, period);
+  return sequential_metrics_executor<SequentialExec, Logger>(
+      std::move(exec_name), std::forward<SequentialExec>(exec), logger, period);
 }
 
-template <typename ExecType, typename Logger>
-std::unique_ptr<task_executor>
-make_metrics_executor_ptr(std::string exec_name, ExecType&& exec, Logger& logger, std::chrono::milliseconds period)
+/// Returns an owning pointer to a task executor that decorates a sequential executor to track its performance metrics
+template <typename SequentialExec, typename Logger>
+std::unique_ptr<task_executor> make_metrics_executor_ptr(std::string               exec_name,
+                                                         SequentialExec&&          exec,
+                                                         Logger&                   logger,
+                                                         std::chrono::milliseconds period)
 {
-  return std::make_unique<metrics_executor<ExecType, Logger>>(
-      std::move(exec_name), std::forward<ExecType>(exec), logger, period);
+  return std::make_unique<sequential_metrics_executor<SequentialExec, Logger>>(
+      std::move(exec_name), std::forward<SequentialExec>(exec), logger, period);
 }
 
 } // namespace srsran
