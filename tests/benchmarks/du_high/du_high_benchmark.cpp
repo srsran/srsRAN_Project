@@ -45,6 +45,7 @@
 #include "srsran/mac/mac_cell_timing_context.h"
 #include "srsran/scheduler/config/scheduler_expert_config_factory.h"
 #include "srsran/support/benchmark_utils.h"
+#include "srsran/support/rtsan.h"
 #include "srsran/support/test_utils.h"
 #include "srsran/support/tracing/event_tracing.h"
 #include <pthread.h>
@@ -486,6 +487,7 @@ public:
   /// \brief Notifies the completion of all cell results for the given slot.
   void on_cell_results_completion(slot_point slot) override
   {
+    SRSRAN_RTSAN_SCOPED_DISABLER(d);
     {
       std::lock_guard<std::mutex> lock(mutex);
       slot_ended = true;
@@ -1105,7 +1107,7 @@ public:
   srslog::basic_logger&                                 test_logger = srslog::fetch_basic_logger("TEST");
   dummy_metrics_handler                                 metrics_handler;
   std::unique_ptr<test_helpers::du_high_worker_manager> workers;
-  timer_manager                                         timers;
+  timer_manager                                         timers{2048};
   null_mac_pcap                                         mac_pcap;
   null_rlc_pcap                                         rlc_pcap;
   std::unique_ptr<du_high_impl>                         du_hi;

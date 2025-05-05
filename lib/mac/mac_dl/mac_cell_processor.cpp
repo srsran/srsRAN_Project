@@ -264,7 +264,8 @@ async_task<bool> mac_cell_processor::remove_bearers(du_ue_index_t ue_index, span
 }
 
 void mac_cell_processor::handle_slot_indication_impl(slot_point               sl_tx,
-                                                     metric_clock::time_point enqueue_slot_tp) SRSRAN_RTSAN_NONBLOCKING
+                                                     metric_clock::time_point enqueue_slot_tp) noexcept
+    SRSRAN_RTSAN_NONBLOCKING
 {
   // * Start of Critical Path * //
 
