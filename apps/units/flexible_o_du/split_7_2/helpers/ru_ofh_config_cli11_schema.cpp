@@ -103,6 +103,11 @@ static void configure_cli11_ru_ofh_base_cell_args(CLI::App& app, ru_ofh_unit_bas
 
   add_option(app, "--is_prach_cp_enabled", config.is_prach_control_plane_enabled, "PRACH Control-Plane enabled flag")
       ->capture_default_str();
+  add_option(app,
+             "--enable_lf_prach_slot_autoderivation",
+             config.enable_lf_prach_slot_autoderivation,
+             "Long format PRACH slot index auto-derivation")
+      ->capture_default_str();
   add_option(app, "--ignore_ecpri_seq_id", config.ignore_ecpri_seq_id_field, "Ignore eCPRI sequence id field value")
       ->capture_default_str();
   add_option(app,
@@ -429,4 +434,11 @@ void srsran::autoderive_ru_ofh_parameters_after_parsing(CLI::App& app, ru_ofh_un
 #ifdef DPDK_FOUND
   manage_hal_optional(app, parsed_cfg.config.hal_config);
 #endif
+
+  // If the PRACH C-Plane is enabled, we don't auto-derive the slot index for long format PRACH U-Plane.
+  for (auto& ofh_cell : parsed_cfg.config.cells) {
+    if (ofh_cell.cell.is_prach_control_plane_enabled) {
+      ofh_cell.cell.enable_lf_prach_slot_autoderivation = false;
+    }
+  }
 }

@@ -78,6 +78,9 @@ struct sector_configuration {
 
   /// Enables the Control-Plane PRACH message signalling.
   bool is_prach_control_plane_enabled = false;
+  /// Enables auto derivation of the slot index where the PRACH U-Plane packets are expected (applicable only to long
+  /// format PRACH).
+  bool enable_lf_prach_slot_autoderivation = false;
   /// Ignore the start symbol value received in the PRACH U-Plane packets.
   bool ignore_prach_start_symbol = false;
   /// If set to true, the payload size encoded in a eCPRI header is ignored.

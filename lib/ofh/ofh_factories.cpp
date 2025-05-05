@@ -79,6 +79,7 @@ static transmitter_config generate_transmitter_config(const sector_configuration
   tx_config.ul_eaxc                              = sector_cfg.ul_eaxc;
   tx_config.prach_eaxc                           = sector_cfg.prach_eaxc;
   tx_config.is_prach_cp_enabled                  = sector_cfg.is_prach_control_plane_enabled;
+  tx_config.enable_lf_prach_slot_autoderivation  = sector_cfg.enable_lf_prach_slot_autoderivation;
   tx_config.mac_dst_address                      = sector_cfg.mac_dst_address;
   tx_config.mac_src_address                      = sector_cfg.mac_src_address;
   tx_config.tci_cp                               = sector_cfg.tci_cp;

@@ -69,6 +69,7 @@ uplink_request_handler_impl::uplink_request_handler_impl(const uplink_request_ha
                                                          uplink_request_handler_impl_dependencies&& dependencies) :
   logger(dependencies.logger),
   is_prach_cp_enabled(config.is_prach_cp_enabled),
+  enable_lf_prach_slot_autoderivation(config.enable_lf_prach_slot_autoderivation),
   cp(config.cp),
   tdd_config(config.tdd_config),
   prach_eaxc(config.prach_eaxc),
@@ -179,8 +180,11 @@ void uplink_request_handler_impl::handle_prach_occasion(const prach_buffer_conte
                   context.slot);
     }
   } else {
-    // Determine slot index where the PRACH U-Plane is expected.
-    slot_idx = get_long_prach_expected_slot(context);
+    // If enabled in the config determine slot index where the PRACH U-Plane is expected.
+    if (enable_lf_prach_slot_autoderivation) {
+      slot_idx = get_long_prach_expected_slot(context);
+    }
+
     // Determine PRACH start symbol.
     unsigned start_symbol = get_prach_start_symbol(context);
 

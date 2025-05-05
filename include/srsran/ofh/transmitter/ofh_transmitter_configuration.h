@@ -43,6 +43,9 @@ struct transmitter_config {
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// PRACH Contol-Plane enabled flag.
   bool is_prach_cp_enabled;
+  /// Enables auto derivation of the slot index where the PRACH U-Plane packets are expected (applicable only to long
+  /// format PRACH).
+  bool enable_lf_prach_slot_autoderivation;
   /// Destination MAC address.
   ether::mac_address mac_dst_address;
   /// Source MAC address.

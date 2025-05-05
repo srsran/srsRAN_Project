@@ -30,6 +30,9 @@ struct uplink_request_handler_impl_config {
   unsigned sector;
   /// PRACH Contol-Plane enabled flag.
   bool is_prach_cp_enabled;
+  /// Enables auto derivation of the slot index where the PRACH U-Plane packets are expected (applicable only to long
+  /// format PRACH).
+  bool enable_lf_prach_slot_autoderivation;
   /// PRACH eAxC.
   static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC> prach_eaxc;
   /// Uplink data eAxC.
@@ -86,6 +89,7 @@ public:
 private:
   srslog::basic_logger&                                   logger;
   const bool                                              is_prach_cp_enabled;
+  const bool                                              enable_lf_prach_slot_autoderivation;
   const cyclic_prefix                                     cp;
   const std::optional<tdd_ul_dl_config_common>            tdd_config;
   const static_vector<unsigned, MAX_NOF_SUPPORTED_EAXC>   prach_eaxc;
