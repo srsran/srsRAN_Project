@@ -6,6 +6,9 @@
 # the distribution.
 #
 
+# Suppress "<ciso646> is deprecated in C++17" warnings caused by gtest when compiling with gcc 15.1.
+ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wno-deprecated HAVE_NO_DEPRECATED)
+
 # Add a custom empty target that will have all vector-based tests as dependencies.
 add_custom_target(all_vector_tests)
 

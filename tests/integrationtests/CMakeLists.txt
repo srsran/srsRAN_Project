@@ -6,6 +6,9 @@
 # the distribution.
 #
 
+# Suppress "<ciso646> is deprecated in C++17" warnings caused by gtest when compiling with gcc 15.1.
+ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wno-deprecated HAVE_NO_DEPRECATED)
+
 add_subdirectory(du_high)
 add_subdirectory(du_high_cu)
 add_subdirectory(e2ap)
