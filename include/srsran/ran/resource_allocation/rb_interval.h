@@ -11,28 +11,24 @@
 #pragma once
 
 #include "srsran/adt/interval.h"
+#include "srsran/ran/resource_block.h"
 
 namespace srsran {
-
-// Tags used to differentiate RB types.
-struct crb_interval_tag {};
-struct prb_interval_tag {};
-struct vrb_interval_tag {};
 
 /// \brief Common Resource Block (CRB) interval.
 ///
 /// Describes a {min,...,max} range of CRB indices within a carrier.
-using crb_interval = interval<unsigned, false, crb_interval_tag>;
+using crb_interval = interval<unsigned, false, crb_tag>;
 
 /// \brief Physical Resource Block (PRB) bitmap.
 ///
 /// Describes a {min,...,max} range of CRB indices within a BWP.
-using prb_interval = interval<unsigned, false, prb_interval_tag>;
+using prb_interval = interval<unsigned, false, prb_tag>;
 
 /// \brief Virtual Resource Block (VRB) bitmap.
 ///
 /// Describes a {min,...,max} range of VRB indices within a VRB-to-PRB mapping.
-using vrb_interval = interval<unsigned, false, vrb_interval_tag>;
+using vrb_interval = interval<unsigned, false, vrb_tag>;
 
 /// \brief Convert CRB into PRB given the CRB assignment limits.
 /// The CRB and PRB are assumed to use the same numerology as reference.

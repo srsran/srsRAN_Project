@@ -480,7 +480,7 @@ find_available_vrbs(const ul_sched_context& sched_ctxt, const vrb_bitmap& used_v
   unsigned nof_rbs = std::min(sched_ctxt.expected_nof_rbs, max_rbs);
   nof_rbs          = sched_ctxt.nof_rb_lims.clamp(nof_rbs);
 
-  // Compute CRB allocation interval.
+  // Compute VRB allocation interval.
   vrb_interval vrbs = rb_helper::find_empty_interval_of_length(used_vrbs, nof_rbs, sched_ctxt.vrb_lims);
   if (vrbs.empty()) {
     return vrb_interval{};
@@ -495,7 +495,7 @@ find_available_vrbs(const ul_sched_context& sched_ctxt, const vrb_bitmap& used_v
     vrbs.resize(valid_nof_rbs.value());
   }
 
-  // Successful CRB interval derivation.
+  // Successful VRB interval derivation.
   return vrbs;
 }
 
@@ -510,7 +510,7 @@ vrb_interval sched_helper::compute_retx_ul_vrbs(const ul_sched_context& decision
 {
   vrb_interval vrbs = find_available_vrbs(decision_ctxt, used_vrbs, decision_ctxt.expected_nof_rbs);
   if (vrbs.length() != decision_ctxt.expected_nof_rbs) {
-    // In case of Retx, the #CRBs need to stay the same.
+    // In case of Retx, the #VRBs need to stay the same.
     return vrb_interval{};
   }
   return vrbs;
