@@ -303,24 +303,6 @@ void worker_manager::create_du_executors(const worker_manager_config::du_high_co
   cfg.metrics_period                 = du_hi.metrics_period;
 
   du_high_exec_mapper = create_du_high_executor_mapper(cfg);
-
-  // Workers for handling cell slot indications of different cells.
-  for (unsigned cell_id = 0; cell_id != du_hi.nof_cells; ++cell_id) {
-    const std::string cell_id_str = std::to_string(cell_id);
-
-    // Pre-initialize TLS to avoid doing it in the critical path.
-    task_executor& exec_to_init = du_high_exec_mapper->cell_mapper().slot_ind_executor(to_du_cell_index(cell_id));
-    bool           result       = exec_to_init.defer([&timer, &exec_to_init]() {
-      // Pre-initialize byte buffer pool to avoid doing it in the critical path.
-      init_byte_buffer_segment_pool_tls();
-      // Pre-initialize timer queues to avoid doing it in the critical path.
-      timer_factory timer_f{timer, exec_to_init};
-      auto          t = timer_f.create_timer();
-      t.set(std::chrono::milliseconds(1), [](timer_id_t tid) {}); // run noop callback.
-      t.run();
-    });
-    report_error_if_not(result, "Unexpected failure to dispatch cell task");
-  }
 }
 
 execution_config_helper::worker_pool worker_manager::create_low_prio_workers(unsigned nof_low_prio_threads,
