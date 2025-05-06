@@ -60,5 +60,25 @@ public:
 template <std::size_t Index, typename... Types>
 using get_type_from_index_t = typename get_type_from_index<Index, Types...>::type;
 
+namespace type_list_utils {
+
+template <typename... TypeLists>
+struct concat;
+
+template <typename... T>
+struct concat<type_list<T...>> {
+  using type = type_list<T...>;
+};
+
+template <typename... T1, typename... T2, typename... Rest>
+struct concat<type_list<T1...>, type_list<T2...>, Rest...> {
+  using type = typename concat<type_list<T1..., T2...>, Rest...>::type;
+};
+
+template <typename... Lists>
+using concat_t = typename concat<Lists...>::type;
+
+} // namespace type_list_utils
+
 } // namespace detail
 } // namespace srsran

@@ -13,6 +13,7 @@
 #include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/adt/mutexed_mpsc_queue.h"
 #include "srsran/adt/spsc_queue.h"
+#include "srsran/support/detail/type_list.h"
 #include "srsran/support/executors/unique_thread.h"
 #include "srsran/support/test_utils.h"
 #include <gtest/gtest.h>
@@ -26,9 +27,17 @@
 
 using namespace srsran;
 
-template <typename... Args1, typename... Args2>
-auto concat_types(::testing::Types<Args1...> /* unused */,
-                  ::testing::Types<Args2...> /* unused */) -> ::testing::Types<Args1..., Args2...>;
+/// Metafunction to convert type_list into ::testing::Types.
+template <typename T>
+struct to_gtest_types;
+
+template <typename... Args>
+struct to_gtest_types<detail::type_list<Args...>> {
+  using type = ::testing::Types<Args...>;
+};
+
+template <typename T>
+using to_gtest_type_list_t = typename to_gtest_types<T>::type;
 
 template <typename QueueType>
 class base_concurrent_queue_test
@@ -53,59 +62,60 @@ protected:
 using qpolicy = concurrent_queue_policy;
 using wpolicy = concurrent_queue_wait_policy;
 
+// Types of concurrent queues.
 using bounded_non_blocking_queue_types =
-    ::testing::Types<concurrent_queue<int, qpolicy::locking_mpmc, wpolicy::non_blocking>,
-                     concurrent_queue<moveonly_test_object, qpolicy::locking_mpmc, wpolicy::non_blocking>,
-                     concurrent_queue<int, qpolicy::lockfree_spsc, wpolicy::non_blocking>,
-                     concurrent_queue<moveonly_test_object, qpolicy::lockfree_spsc, wpolicy::non_blocking>,
-                     concurrent_queue<int, qpolicy::lockfree_mpmc, wpolicy::non_blocking>,
-                     concurrent_queue<moveonly_test_object, qpolicy::lockfree_mpmc, wpolicy::non_blocking>,
-                     concurrent_queue<int, qpolicy::locking_mpsc, wpolicy::non_blocking>,
-                     concurrent_queue<moveonly_test_object, qpolicy::locking_mpsc, wpolicy::non_blocking>>;
-
-using non_blocking_queue_types = decltype(concat_types(
-    bounded_non_blocking_queue_types{},
-    ::testing::Types<
-        concurrent_queue<int, qpolicy::moodycamel_lockfree_mpmc, wpolicy::non_blocking>,
-        concurrent_queue<moveonly_test_object, qpolicy::moodycamel_lockfree_mpmc, wpolicy::non_blocking>>{}));
+    detail::type_list<concurrent_queue<int, qpolicy::locking_mpmc, wpolicy::non_blocking>,
+                      concurrent_queue<moveonly_test_object, qpolicy::locking_mpmc, wpolicy::non_blocking>,
+                      concurrent_queue<int, qpolicy::lockfree_spsc, wpolicy::non_blocking>,
+                      concurrent_queue<moveonly_test_object, qpolicy::lockfree_spsc, wpolicy::non_blocking>,
+                      concurrent_queue<int, qpolicy::lockfree_mpmc, wpolicy::non_blocking>,
+                      concurrent_queue<moveonly_test_object, qpolicy::lockfree_mpmc, wpolicy::non_blocking>,
+                      concurrent_queue<int, qpolicy::locking_mpsc, wpolicy::non_blocking>,
+                      concurrent_queue<moveonly_test_object, qpolicy::locking_mpsc, wpolicy::non_blocking>>;
+using unbounded_non_blocking_queue_types =
+    detail::type_list<concurrent_queue<int, qpolicy::moodycamel_lockfree_mpmc, wpolicy::non_blocking>,
+                      concurrent_queue<moveonly_test_object, qpolicy::moodycamel_lockfree_mpmc, wpolicy::non_blocking>>;
+using non_blocking_queue_types =
+    detail::type_list_utils::concat_t<bounded_non_blocking_queue_types, unbounded_non_blocking_queue_types>;
 
 using bounded_blocking_queue_types =
-    ::testing::Types<concurrent_queue<int, qpolicy::locking_mpmc, wpolicy::condition_variable>,
-                     concurrent_queue<moveonly_test_object, qpolicy::locking_mpmc, wpolicy::condition_variable>,
-                     concurrent_queue<int, qpolicy::lockfree_spsc, wpolicy::sleep>,
-                     concurrent_queue<moveonly_test_object, qpolicy::lockfree_spsc, wpolicy::sleep>,
-                     concurrent_queue<int, qpolicy::lockfree_mpmc, wpolicy::sleep>,
-                     concurrent_queue<moveonly_test_object, qpolicy::lockfree_mpmc, wpolicy::sleep>,
-                     concurrent_queue<int, qpolicy::locking_mpsc, wpolicy::sleep>,
-                     concurrent_queue<moveonly_test_object, qpolicy::locking_mpsc, wpolicy::sleep>,
-                     concurrent_queue<int, qpolicy::locking_mpsc, wpolicy::condition_variable>,
-                     concurrent_queue<moveonly_test_object, qpolicy::locking_mpsc, wpolicy::condition_variable>>;
+    detail::type_list<concurrent_queue<int, qpolicy::locking_mpmc, wpolicy::condition_variable>,
+                      concurrent_queue<moveonly_test_object, qpolicy::locking_mpmc, wpolicy::condition_variable>,
+                      concurrent_queue<int, qpolicy::lockfree_spsc, wpolicy::sleep>,
+                      concurrent_queue<moveonly_test_object, qpolicy::lockfree_spsc, wpolicy::sleep>,
+                      concurrent_queue<int, qpolicy::lockfree_mpmc, wpolicy::sleep>,
+                      concurrent_queue<moveonly_test_object, qpolicy::lockfree_mpmc, wpolicy::sleep>,
+                      concurrent_queue<int, qpolicy::locking_mpsc, wpolicy::sleep>,
+                      concurrent_queue<moveonly_test_object, qpolicy::locking_mpsc, wpolicy::sleep>,
+                      concurrent_queue<int, qpolicy::locking_mpsc, wpolicy::condition_variable>,
+                      concurrent_queue<moveonly_test_object, qpolicy::locking_mpsc, wpolicy::condition_variable>>;
+using unbounded_blocking_queue_types =
+    detail::type_list<concurrent_queue<int, qpolicy::moodycamel_lockfree_mpmc, wpolicy::sleep>,
+                      concurrent_queue<moveonly_test_object, qpolicy::moodycamel_lockfree_mpmc, wpolicy::sleep>>;
+using blocking_queue_types =
+    detail::type_list_utils::concat_t<bounded_blocking_queue_types, unbounded_blocking_queue_types>;
 
-using blocking_queue_types = decltype(concat_types(
-    bounded_blocking_queue_types{},
-    ::testing::Types<concurrent_queue<int, qpolicy::moodycamel_lockfree_mpmc, wpolicy::sleep>,
-                     concurrent_queue<moveonly_test_object, qpolicy::moodycamel_lockfree_mpmc, wpolicy::sleep>>{}));
+using all_queue_types = detail::type_list_utils::concat_t<non_blocking_queue_types, blocking_queue_types>;
 
 template <typename QueueType>
 class all_concurrent_queue_test : public base_concurrent_queue_test<QueueType>, public ::testing::Test
 {};
-using all_concurrent_queue_types = decltype(concat_types(blocking_queue_types{}, non_blocking_queue_types{}));
-TYPED_TEST_SUITE(all_concurrent_queue_test, all_concurrent_queue_types);
+TYPED_TEST_SUITE(all_concurrent_queue_test, to_gtest_type_list_t<all_queue_types>);
 
 template <typename QueueType>
 class blocking_concurrent_queue_test : public base_concurrent_queue_test<QueueType>, public ::testing::Test
 {};
-TYPED_TEST_SUITE(blocking_concurrent_queue_test, blocking_queue_types);
+TYPED_TEST_SUITE(blocking_concurrent_queue_test, to_gtest_type_list_t<blocking_queue_types>);
 
 template <typename QueueType>
 class bounded_concurrent_queue_test : public base_concurrent_queue_test<QueueType>, public ::testing::Test
 {};
-TYPED_TEST_SUITE(bounded_concurrent_queue_test, bounded_non_blocking_queue_types);
+TYPED_TEST_SUITE(bounded_concurrent_queue_test, to_gtest_type_list_t<bounded_non_blocking_queue_types>);
 
 template <typename QueueType>
 class bounded_blocking_concurrent_queue_test : public base_concurrent_queue_test<QueueType>, public ::testing::Test
 {};
-TYPED_TEST_SUITE(bounded_blocking_concurrent_queue_test, bounded_blocking_queue_types);
+TYPED_TEST_SUITE(bounded_blocking_concurrent_queue_test, to_gtest_type_list_t<bounded_blocking_queue_types>);
 
 TYPED_TEST(all_concurrent_queue_test, checks_for_empty_queue)
 {
