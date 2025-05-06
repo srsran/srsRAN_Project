@@ -61,7 +61,7 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   metrics_report::cell_info cell_info{
       nr_cell_global_id_t{plmn_identity::test_value(), nr_cell_identity::create(0x22).value()}, pci_t{2}};
   establishment_cause_t connection_cause{establishment_cause_t::mt_access};
-  rrc_du_metrics        rrc_metrics{2, 4, {}, {}};
+  rrc_du_metrics        rrc_metrics{2, 4, {}, {}, 1, 2, 3};
   rrc_metrics.attempted_rrc_connection_establishments.increase(connection_cause);
   rrc_metrics.successful_rrc_connection_establishments.increase(connection_cause);
   metrics_hdlr.next_metrics.dus.emplace_back(metrics_report::du_info{int_to_gnb_du_id(0), {cell_info}, rrc_metrics});
@@ -99,6 +99,13 @@ TEST(metrics_handler_test, get_periodic_metrics_report_while_session_is_active)
   ASSERT_EQ(metrics_notifier.last_metrics_report->dus[0].rrc_metrics.successful_rrc_connection_establishments.get_count(
                 connection_cause),
             1);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->dus[0].rrc_metrics.attempted_rrc_connection_reestablishments, 1);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->dus[0]
+                .rrc_metrics.successful_rrc_connection_reestablishments_with_ue_context,
+            2);
+  ASSERT_EQ(metrics_notifier.last_metrics_report->dus[0]
+                .rrc_metrics.successful_rrc_connection_reestablishments_without_ue_context,
+            3);
   ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].amf_name, "open5gs-amf0");
   ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].metrics.pdu_session_metrics.size(), 1);
   ASSERT_EQ(metrics_notifier.last_metrics_report->ngaps[0].metrics.pdu_session_metrics.begin()->first, snssai);

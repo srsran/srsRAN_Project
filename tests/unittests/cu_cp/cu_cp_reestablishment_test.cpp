@@ -370,16 +370,33 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_does_not_exist_then_reestablishme
   // Connect UE 0x4601.
   EXPECT_TRUE(connect_new_ue(du_idx, old_du_ue_id, old_crnti));
 
+  // Check metrics for RRC connection establishment.
+  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
+            1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
+            1);
+
   // Reestablishment Request to RNTI that does not exist.
   ASSERT_FALSE(
       send_rrc_reest_request_and_wait_response(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), to_rnti(0x4603), old_pci))
       << "RRC setup should have been sent";
 
-  // UE sends RRC Setup Complete
+  // Check metrics for RRC connection re-establishment attempt.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_reestablishments, 1);
+
+  // UE sends RRC Setup Complete.
   ASSERT_TRUE(this->ue_sends_rrc_setup_complete(int_to_gnb_du_ue_f1ap_id(1), int_to_gnb_cu_ue_f1ap_id(1)));
 
-  // old UE should not be removed.
-  auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  // Check metrics for successful RRC connection re-establishment without UE context (fallback).
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
+            1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_reestablishments_without_ue_context, 1);
+
+  // Old UE should not be removed.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 2);
 }
 
@@ -392,12 +409,22 @@ TEST_F(cu_cp_reestablishment_test, when_old_ue_has_no_ngap_context_then_reestabl
       send_rrc_reest_request_and_wait_response(int_to_gnb_du_ue_f1ap_id(1), to_rnti(0x4602), old_crnti, old_pci))
       << "RRC setup should have been sent";
 
-  // old UE should not be removed at this stage.
+  // Check metrics for RRC connection re-establishment attempt.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_reestablishments, 1);
+
+  // Old UE should not be removed at this stage.
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 2) << "Old UE should not be removed yet";
 
-  // UE sends RRC Setup Complete
+  // UE sends RRC Setup Complete.
   ASSERT_TRUE(this->ue_sends_rrc_setup_complete(int_to_gnb_du_ue_f1ap_id(1), int_to_gnb_cu_ue_f1ap_id(1)));
+
+  // Check metrics for successful RRC connection re-establishment without UE context (fallback).
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
+            1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_reestablishments_without_ue_context, 1);
 
   // Given that the old UE still has no AMF-UE-ID, the CU-CP removes the UE context without sending the
   // NGAP UE Context Release Request to the AMF.
@@ -450,8 +477,13 @@ TEST_F(cu_cp_reestablishment_test,
   ASSERT_TRUE(reestablish_ue(du_idx, cu_up_idx, new_du_ue_id, new_crnti, old_crnti, old_pci))
       << "Reestablishment failed";
 
-  // old UE should not be removed at this stage.
+  // Check metrics for successful RRC connection re-establishment.
   auto report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_reestablishments, 1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
+            1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_reestablishments_with_ue_context, 1);
+  // Old UE should not be removed at this stage.
   ASSERT_EQ(report.ues.size(), 1) << "Old UE should not be removed yet";
 }
 
