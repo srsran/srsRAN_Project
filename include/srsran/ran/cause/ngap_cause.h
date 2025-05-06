@@ -16,6 +16,7 @@
 
 namespace srsran {
 
+/// The NGAP radio network cause, see TS 38.413 section 9.3.1.2.
 enum class ngap_cause_radio_network_t : uint8_t {
   unspecified = 0,
   txnrelocoverall_expiry,
@@ -76,13 +77,16 @@ enum class ngap_cause_radio_network_t : uint8_t {
   misaligned_assoc_for_multicast_unicast
 };
 
+/// The NGAP transport cause, see TS 38.413 section 9.3.1.2.
 enum class ngap_cause_transport_t : uint8_t {
   transport_res_unavailable = 0,
   unspecified,
 };
 
+/// The NGAP NAS cause, see TS 38.413 section 9.3.1.2.
 enum class cause_nas_t : uint8_t { normal_release = 0, authentication_fail, deregister, unspecified }; // only NGAP
 
+/// The NGAP misc cause, see TS 38.413 section 9.3.1.2.
 enum class ngap_cause_misc_t : uint8_t {
   ctrl_processing_overload = 0,
   not_enough_user_plane_processing_res,
@@ -92,6 +96,8 @@ enum class ngap_cause_misc_t : uint8_t {
   unspecified
 };
 
+/// The NGAP cause to indicate the reason for a particular event, see TS 38.413 section 9.3.1.2.
+/// The NGAP cause is a union of the radio network cause, transport cause, nas cause, protocol cause and misc cause.
 using ngap_cause_t =
     std::variant<ngap_cause_radio_network_t, ngap_cause_transport_t, cause_nas_t, cause_protocol_t, ngap_cause_misc_t>;
 

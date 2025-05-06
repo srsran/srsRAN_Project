@@ -15,6 +15,10 @@
 
 namespace srsran {
 
+/// The protocol cause.
+/// For E1AP see TS 38.463 section 9.3.1.2.
+/// For F1AP see TS 38.473 section 9.3.1.2.
+/// For NGAP see TS 38.413 section 9.3.1.2.
 enum class cause_protocol_t : uint8_t {
   transfer_syntax_error = 0,
   abstract_syntax_error_reject,
@@ -25,6 +29,9 @@ enum class cause_protocol_t : uint8_t {
   unspecified
 };
 
+/// The misc cause.
+/// For E1AP see TS 38.463 section 9.3.1.2.
+/// For F1AP see TS 38.473 section 9.3.1.2.
 enum class cause_misc_t : uint8_t {
   ctrl_processing_overload = 0,
   not_enough_user_plane_processing_res,
@@ -33,8 +40,8 @@ enum class cause_misc_t : uint8_t {
   unspecified
 };
 
-// Establishment cause
-
+/// Provides the establishment cause for the RRCSetupRequest in accordance with the information received from upper
+/// layers, see TS 38.331 section 6.2.2.
 enum class establishment_cause_t : uint8_t {
   emergency = 0,
   high_prio_access,
