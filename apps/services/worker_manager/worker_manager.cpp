@@ -445,19 +445,10 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
       upper_pucch_exec.push_back(exec_mng.executors().at("upper_pucch_exec#" + cell_id_str));
       upper_srs_exec.push_back(exec_mng.executors().at("upper_srs_exec#" + cell_id_str));
 
-      // Instantiate dedicated PRACH worker.
-      const std::string name_prach = "phy_prach#" + cell_id_str;
-      const std::string prach_exec = "prach_exec#" + cell_id_str;
-      create_prio_worker(name_prach,
-                         task_worker_queue_size,
-                         {{prach_exec}},
-                         affinity_mng[cell_id].calcute_affinity_mask(sched_affinity_mask_types::l1_ul),
-                         os_thread_realtime_priority::max() - 2);
-      upper_prach_exec.push_back(exec_mng.executors().at("prach_exec#" + cell_id_str));
-
       const std::string l2_exec_name       = "l2_exec#" + cell_id_str;
       const std::string l1_dl_exec_name    = "du_low_dl_exec#" + cell_id_str;
       const std::string l1_pdsch_exec_name = "du_low_pdsch_exec#" + cell_id_str;
+      const std::string prach_exec_name    = "prach_exec#" + cell_id_str;
 
       // Instantiate dedicated DL worker pool.
       const worker_pool pool{name_dl,
@@ -465,9 +456,10 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
                              {{concurrent_queue_policy::moodycamel_lockfree_mpmc, task_worker_queue_size},
                               {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
                               {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
-                             {{l2_exec_name, task_priority::max},
-                              {l1_dl_exec_name, task_priority::max - 1},
-                              {l1_pdsch_exec_name, task_priority::max - 2}},
+                             {{l1_dl_exec_name, task_priority::max - 1},
+                              {l2_exec_name, task_priority::max},
+                              {l1_pdsch_exec_name, task_priority::max - 2},
+                              {prach_exec_name, task_priority::max, {}, task_worker_queue_size}},
                              std::chrono::microseconds{50},
                              os_thread_realtime_priority::max() - 2,
                              dl_cpu_masks};
@@ -477,6 +469,7 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
       }
 
       du_low_dl_executors.push_back(exec_mng.executors().at(l1_dl_exec_name));
+      upper_prach_exec.push_back(exec_mng.executors().at(prach_exec_name));
       upper_pdsch_exec.push_back(exec_mng.executors().at(l1_pdsch_exec_name));
       l2_execs.push_back(exec_mng.executors().at(l2_exec_name));
     }
