@@ -340,7 +340,7 @@ tests:
         tdd_ul_dl_cfg:
           dl_ul_tx_period: 10
           nof_dl_slots: 6
-          nof_dl_symbols: 13
+          nof_dl_symbols: 12
           nof_ul_slots: 3
           nof_ul_symbols: 0
       expert_execution:
