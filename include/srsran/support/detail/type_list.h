@@ -13,54 +13,37 @@
 #include <type_traits>
 
 namespace srsran {
-namespace detail {
-
-template <std::size_t I, std::size_t N, typename... Types>
-struct get_type_from_index_helper;
-
-template <std::size_t I, std::size_t N, typename T, typename... Types>
-struct get_type_from_index_helper<I, N, T, Types...> {
-  using type = typename get_type_from_index_helper<I + 1, N, Types...>::type;
-};
-
-template <std::size_t I, typename T, typename... Types>
-struct get_type_from_index_helper<I, I, T, Types...> {
-  using type = T;
-};
 
 /// List of types.
 template <typename... Args>
 struct type_list {};
 
-/// Get size of type_list.
+/// Get number of Types of type_list.
 template <typename... Args>
 constexpr std::size_t type_list_size(type_list<Args...> t)
 {
   return sizeof...(Args);
 }
 
-/// Metafunction to extract type from variadic template arguments based on provided Index.
-template <std::size_t Index, class... Types>
-class get_type_from_index
-{
-  static_assert(Index < sizeof...(Types), "Index out of bounds");
+namespace type_list_helper {
 
-public:
-  using type = typename get_type_from_index_helper<0, Index, Types...>::type;
+namespace detail {
+
+// type_at_t helpers
+// TODO: Use builtin __builtin_type_pack_element if available.
+
+template <std::size_t Index, typename List>
+struct type_at;
+
+template <std::size_t Index, typename Head, typename... Tail>
+struct type_at<Index, type_list<Head, Tail...>> : type_at<Index - 1, type_list<Tail...>> {};
+
+template <typename Head, typename... Tail>
+struct type_at<0, type_list<Head, Tail...>> {
+  using type = Head;
 };
 
-/// Specialization when argument is a type_list.
-template <std::size_t Index, class... Types>
-class get_type_from_index<Index, type_list<Types...>>
-{
-public:
-  using type = typename get_type_from_index<Index, Types...>::type;
-};
-
-template <std::size_t Index, typename... Types>
-using get_type_from_index_t = typename get_type_from_index<Index, Types...>::type;
-
-namespace type_list_utils {
+// concat_t helpers
 
 template <typename... TypeLists>
 struct concat;
@@ -75,10 +58,16 @@ struct concat<type_list<T1...>, type_list<T2...>, Rest...> {
   using type = typename concat<type_list<T1..., T2...>, Rest...>::type;
 };
 
-template <typename... Lists>
-using concat_t = typename concat<Lists...>::type;
-
-} // namespace type_list_utils
-
 } // namespace detail
+
+/// Get type relative to a provided Index from a type_list.
+template <std::size_t Index, typename... Types>
+using type_at_t = typename detail::type_at<Index, Types...>::type;
+
+/// Metafunction that concatenates the types of multiple type_lists.
+template <typename... Lists>
+using concat_t = typename detail::concat<Lists...>::type;
+
+} // namespace type_list_helper
+
 } // namespace srsran
