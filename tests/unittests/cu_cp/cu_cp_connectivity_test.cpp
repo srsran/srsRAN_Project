@@ -10,6 +10,7 @@
 
 #include "cu_cp_test_environment.h"
 #include "tests/test_doubles/f1ap/f1ap_test_message_validators.h"
+#include "tests/test_doubles/rrc/rrc_test_messages.h"
 #include "tests/unittests/e1ap/common/e1ap_cu_cp_test_messages.h"
 #include "tests/unittests/f1ap/common/f1ap_cu_test_messages.h"
 #include "tests/unittests/ngap/ngap_test_messages.h"
@@ -413,6 +414,9 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
   gnb_du_ue_f1ap_id_t du_ue_f1ap_id = int_to_gnb_du_ue_f1ap_id(0);
   rnti_t              crnti         = to_rnti(0x4601);
   get_du(du_idx).push_ul_pdu(generate_init_ul_rrc_message_transfer(du_ue_f1ap_id, crnti));
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
+            1);
 
   // Verify F1AP DL RRC Message is sent with RRC Setup.
   f1ap_message f1ap_pdu;
@@ -423,6 +427,15 @@ TEST_F(cu_cp_connectivity_test, when_ng_f1_e1_are_setup_then_ues_can_attach)
   report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
   ASSERT_EQ(report.ues.size(), 1);
   ASSERT_EQ(report.ues[0].rnti, crnti);
+
+  // Send RRC Setup Complete.
+  // > Generate UL RRC Message (containing RRC Setup Complete) with PDCP SN=0.
+  get_du(du_idx).push_rrc_ul_dcch_message(du_ue_f1ap_id, srb_id_t::srb1, pack_ul_dcch_msg(create_rrc_setup_complete()));
+  report = this->get_cu_cp().get_metrics_handler().request_metrics_report();
+  ASSERT_EQ(report.dus[0].rrc_metrics.attempted_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
+            1);
+  ASSERT_EQ(report.dus[0].rrc_metrics.successful_rrc_connection_establishments.get_count(establishment_cause_t::mo_sig),
+            1);
 }
 
 TEST_F(cu_cp_connectivity_test, when_e1_is_not_setup_then_new_ues_are_rejected)
