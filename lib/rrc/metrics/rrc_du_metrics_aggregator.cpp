@@ -38,6 +38,20 @@ void rrc_du_metrics_aggregator::aggregate_successful_connection_establishment(es
   connection_establishment_metrics.successful_rrc_connection_establishments.increase(cause);
 }
 
+void rrc_du_metrics_aggregator::aggregate_attempted_connection_reestablishment()
+{
+  ++connection_reestablishment_metrics.attempted_rrc_connection_reestablishments;
+}
+
+void rrc_du_metrics_aggregator::aggregate_successful_connection_reestablishment(bool with_ue_context)
+{
+  if (with_ue_context) {
+    ++connection_reestablishment_metrics.successful_rrc_connection_reestablishments_with_ue_context;
+  } else {
+    ++connection_reestablishment_metrics.successful_rrc_connection_reestablishments_without_ue_context;
+  }
+}
+
 void rrc_du_metrics_aggregator::collect_metrics(rrc_du_metrics& metrics)
 {
   metrics.mean_nof_rrc_connections = connection_metrics.get_mean_nof_rrc_connections();
@@ -46,5 +60,11 @@ void rrc_du_metrics_aggregator::collect_metrics(rrc_du_metrics& metrics)
       connection_establishment_metrics.attempted_rrc_connection_establishments;
   metrics.successful_rrc_connection_establishments =
       connection_establishment_metrics.successful_rrc_connection_establishments;
+  metrics.attempted_rrc_connection_reestablishments =
+      connection_reestablishment_metrics.attempted_rrc_connection_reestablishments;
+  metrics.successful_rrc_connection_reestablishments_with_ue_context =
+      connection_reestablishment_metrics.successful_rrc_connection_reestablishments_with_ue_context;
+  metrics.successful_rrc_connection_reestablishments_without_ue_context =
+      connection_reestablishment_metrics.successful_rrc_connection_reestablishments_without_ue_context;
   connection_metrics.reset();
 }

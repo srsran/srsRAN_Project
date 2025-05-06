@@ -451,6 +451,15 @@ public:
   /// \brief Notify the RRC DU about a successful RRC connection establishment.
   /// \param[in] cause The establishment cause of the RRC connection.
   virtual void on_successful_rrc_connection_establishment(establishment_cause_t cause) = 0;
+
+  /// \brief Notify the RRC DU about the attempted RRC connection re-establishment.
+  virtual void on_attempted_rrc_connection_reestablishment() = 0;
+
+  /// \brief Notify the RRC DU about the successful RRC connection re-establishment.
+  virtual void on_successful_rrc_connection_reestablishment() = 0;
+
+  /// \brief Notify the RRC DU about the successful RRC connection re-establishment fallback.
+  virtual void on_successful_rrc_connection_reestablishment_fallback() = 0;
 };
 
 /// Combined entry point for the RRC UE handling.

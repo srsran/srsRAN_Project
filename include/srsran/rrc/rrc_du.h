@@ -109,6 +109,15 @@ public:
   /// \brief Add the attempted RRC connection establishment to the metrics.
   /// \param[in] cause The establishment cause of the RRC connection.
   virtual void handle_attempted_rrc_setup(establishment_cause_t cause) = 0;
+
+  /// \brief Add the attempted RRC connection re-establishment to the metrics.
+  virtual void handle_attempted_rrc_reestablishment() = 0;
+
+  /// \brief Add the successful RRC connection re-establishment to the metrics.
+  virtual void handle_successful_rrc_reestablishment() = 0;
+
+  /// \brief Add the successful RRC connection re-establishment fallback to the metrics.
+  virtual void handle_successful_rrc_reestablishment_fallback() = 0;
 };
 
 class rrc_du_metrics_collector

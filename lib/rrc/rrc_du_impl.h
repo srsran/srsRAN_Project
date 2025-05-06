@@ -43,6 +43,21 @@ public:
     metrics_handler.handle_successful_rrc_setup(cause);
   }
 
+  void on_attempted_rrc_connection_reestablishment() override
+  {
+    metrics_handler.handle_attempted_rrc_reestablishment();
+  }
+
+  void on_successful_rrc_connection_reestablishment() override
+  {
+    metrics_handler.handle_successful_rrc_reestablishment();
+  }
+
+  void on_successful_rrc_connection_reestablishment_fallback() override
+  {
+    metrics_handler.handle_successful_rrc_reestablishment_fallback();
+  }
+
 private:
   rrc_du_connection_event_handler& metrics_handler;
 };
@@ -77,6 +92,9 @@ public:
   void handle_successful_rrc_setup(std::optional<establishment_cause_t> cause) override;
   void handle_successful_rrc_release() override;
   void handle_attempted_rrc_setup(establishment_cause_t cause) override;
+  void handle_attempted_rrc_reestablishment() override;
+  void handle_successful_rrc_reestablishment() override;
+  void handle_successful_rrc_reestablishment_fallback() override;
 
   rrc_du_cell_manager&             get_rrc_du_cell_manager() override { return *this; }
   rrc_du_ue_repository&            get_rrc_du_ue_repository() override { return *this; }

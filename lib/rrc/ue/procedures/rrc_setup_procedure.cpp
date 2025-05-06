@@ -25,7 +25,8 @@ rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&               context
                                          rrc_ue_event_notifier&          metrics_notifier_,
                                          rrc_ue_ngap_notifier&           ngap_notifier_,
                                          rrc_ue_event_manager&           event_mng_,
-                                         rrc_ue_logger&                  logger_) :
+                                         rrc_ue_logger&                  logger_,
+                                         bool                            is_reestablishment_fallback_) :
   context(context_),
   du_to_cu_container(du_to_cu_container_),
   rrc_ue(rrc_ue_notifier_),
@@ -33,6 +34,7 @@ rrc_setup_procedure::rrc_setup_procedure(rrc_ue_context_t&               context
   metrics_notifier(metrics_notifier_),
   ngap_notifier(ngap_notifier_),
   event_mng(event_mng_),
+  is_reestablishment_fallback(is_reestablishment_fallback_),
   logger(logger_)
 {
 }
@@ -67,8 +69,13 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   context.state = rrc_state::connected;
 
-  // Notify metrics about successful RRC connection establishment.
-  metrics_notifier.on_successful_rrc_connection_establishment(context.connection_cause);
+  if (not is_reestablishment_fallback) {
+    // Notify metrics about successful RRC connection establishment.
+    metrics_notifier.on_successful_rrc_connection_establishment(context.connection_cause);
+  } else {
+    // Notify metrics about successful RRC connection reestablishment fallback.
+    metrics_notifier.on_successful_rrc_connection_reestablishment_fallback();
+  }
   // Notify metrics about new RRC connection.
   metrics_notifier.on_new_rrc_connection();
 
