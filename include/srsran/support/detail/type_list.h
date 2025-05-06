@@ -30,7 +30,20 @@ namespace type_list_helper {
 namespace detail {
 
 // type_at_t helpers
-// TODO: Use builtin __builtin_type_pack_element if available.
+
+#if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 14)
+
+// Note: Version that leverages builtin __type_pack_element for faster compile times.
+
+template <std::size_t I, typename TypeList>
+struct type_at;
+
+template <std::size_t I, typename... Ts>
+struct type_at<I, type_list<Ts...>> {
+  using type = __type_pack_element<I, Ts...>;
+};
+
+#else
 
 template <std::size_t Index, typename List>
 struct type_at;
@@ -42,6 +55,8 @@ template <typename Head, typename... Tail>
 struct type_at<0, type_list<Head, Tail...>> {
   using type = Head;
 };
+
+#endif
 
 // concat_t helpers
 
