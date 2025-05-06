@@ -33,13 +33,13 @@ tests:
           enable_rlc: true
           enable_ru: true
       cell_cfg:
-        pusch:
-          max_puschs_per_slot: 2
         pdsch:
           max_pdschs_per_slot: 4
         ul_common:
           max_ul_grants_per_slot: 12
           max_pucchs_per_slot: 10
+        pusch:
+          max_puschs_per_slot: 2
       expert_execution:
         threads:
           non_rt:
@@ -73,6 +73,11 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         sched_expert_cfg:
@@ -214,6 +219,11 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         pucch:
@@ -241,6 +251,11 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         pucch:
@@ -274,6 +289,11 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         pucch:
@@ -307,6 +327,11 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         pucch:
@@ -384,6 +409,11 @@ tests:
     gnb_extra_config: &1ue_mimo_config
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         nof_antennas_ul: 2
@@ -450,6 +480,11 @@ tests:
           enable_ru: true
           enable_pdcp: true
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
       expert_execution:
@@ -475,6 +510,11 @@ tests:
       metrics:
         enable_log: false
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         pucch:
