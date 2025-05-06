@@ -167,6 +167,10 @@ public:
   void on_new_rrc_connection() override {}
 
   void on_successful_rrc_release() override {}
+
+  void on_attempted_rrc_connection_establishment(establishment_cause_t cause) override {}
+
+  void on_successful_rrc_connection_establishment(establishment_cause_t cause) override {}
 };
 
 } // namespace srs_cu_cp

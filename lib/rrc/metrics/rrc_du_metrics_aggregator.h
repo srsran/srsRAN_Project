@@ -25,6 +25,11 @@ static std::chrono::milliseconds get_current_time()
   return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
 }
 
+struct rrc_connection_establishment_metrics {
+  rrc_connection_establishment_counter_with_cause attempted_rrc_connection_establishments;
+  rrc_connection_establishment_counter_with_cause successful_rrc_connection_establishments;
+};
+
 class rrc_du_metrics_aggregator : public rrc_du_metrics_collector
 {
 public:
@@ -34,6 +39,10 @@ public:
   void aggregate_successful_rrc_setup();
 
   void aggregate_successful_rrc_release();
+
+  void aggregate_attempted_connection_establishment(establishment_cause_t cause);
+
+  void aggregate_successful_connection_establishment(establishment_cause_t cause);
 
   void collect_metrics(rrc_du_metrics& metrics) override;
 
@@ -128,7 +137,8 @@ private:
     unsigned                                      current_rrc_connections = 0;
   };
 
-  rrc_connection_metrics_aggregator rrc_connection_metrics;
+  rrc_connection_metrics_aggregator    connection_metrics;
+  rrc_connection_establishment_metrics connection_establishment_metrics;
 };
 
 } // namespace srs_cu_cp

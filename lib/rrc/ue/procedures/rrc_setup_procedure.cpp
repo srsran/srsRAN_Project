@@ -67,7 +67,9 @@ void rrc_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 
   context.state = rrc_state::connected;
 
-  // Notify metrics.
+  // Notify metrics about successful RRC connection establishment.
+  metrics_notifier.on_successful_rrc_connection_establishment(context.connection_cause);
+  // Notify metrics about new RRC connection.
   metrics_notifier.on_new_rrc_connection();
 
   send_initial_ue_msg(transaction.response().msg.c1().rrc_setup_complete());
@@ -107,7 +109,7 @@ void rrc_setup_procedure::send_initial_ue_msg(const asn1::rrc_nr::rrc_setup_comp
 
   init_ue_msg.ue_index                       = context.ue_index;
   init_ue_msg.nas_pdu                        = rrc_setup_complete.ded_nas_msg.copy();
-  init_ue_msg.establishment_cause            = static_cast<establishment_cause_t>(context.connection_cause.value);
+  init_ue_msg.establishment_cause            = context.connection_cause;
   init_ue_msg.user_location_info.nr_cgi      = context.cell.cgi;
   init_ue_msg.user_location_info.tai.plmn_id = context.cell.cgi.plmn_id;
   init_ue_msg.user_location_info.tai.tac     = context.cell.tac;

@@ -33,6 +33,16 @@ public:
 
   void on_successful_rrc_release() override { metrics_handler.handle_successful_rrc_release(); }
 
+  void on_attempted_rrc_connection_establishment(establishment_cause_t cause) override
+  {
+    metrics_handler.handle_attempted_rrc_setup(cause);
+  }
+
+  void on_successful_rrc_connection_establishment(establishment_cause_t cause) override
+  {
+    metrics_handler.handle_successful_rrc_setup(cause);
+  }
+
 private:
   rrc_du_connection_event_handler& metrics_handler;
 };
@@ -64,8 +74,9 @@ public:
   void remove_ue(ue_index_t ue_index) override;
 
   // rrc_du_connection_event_handler.
-  void handle_successful_rrc_setup() override { metrics_aggregator.aggregate_successful_rrc_setup(); }
-  void handle_successful_rrc_release() override { metrics_aggregator.aggregate_successful_rrc_release(); }
+  void handle_successful_rrc_setup(std::optional<establishment_cause_t> cause) override;
+  void handle_successful_rrc_release() override;
+  void handle_attempted_rrc_setup(establishment_cause_t cause) override;
 
   rrc_du_cell_manager&             get_rrc_du_cell_manager() override { return *this; }
   rrc_du_ue_repository&            get_rrc_du_ue_repository() override { return *this; }
