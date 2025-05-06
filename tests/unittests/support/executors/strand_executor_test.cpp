@@ -15,6 +15,13 @@
 #include <gtest/gtest.h>
 #include <numeric>
 
+// Disable GCC 5's -Wsuggest-override warnings in gtest.
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wall"
+#else // __clang__
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#endif // __clang__
+
 using namespace srsran;
 
 // Test helper function that verifies that a given number of tasks are executed in order.
