@@ -2098,6 +2098,9 @@ static void derive_cell_auto_params(du_high_unit_base_cell_config& cell_cfg)
   if (not cell_cfg.band.has_value()) {
     cell_cfg.band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_f_ref_arfcn);
   }
+  if (not cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.has_value()) {
+    cell_cfg.sched_expert_cfg.policy_sched_expert_cfg.emplace(time_rr_scheduler_expert_config{});
+  }
 
   // If in TDD mode, and pattern was not set, generate a pattern DDDDDDXUUU.
   const duplex_mode dplx_mode = band_helper::get_duplex_mode(cell_cfg.band.value());
