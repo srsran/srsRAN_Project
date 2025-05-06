@@ -116,7 +116,8 @@ unsigned srsran::get_pucch_format3_max_nof_prbs(unsigned                        
 
   const unsigned nof_dmrs_symbols =
       get_pucch_format3_4_nof_dmrs_symbols(nof_symbols, intraslot_freq_hopping, additional_dmrs);
-  const unsigned mod_order = pi2_bpsk ? 1 : 2;
+  const unsigned nof_data_symbols = nof_symbols.value() - nof_dmrs_symbols;
+  const unsigned mod_order        = pi2_bpsk ? 1 : 2;
 
   // Compute the number of PRBs first without taking into account the CRC bits.
   // This is derived from the inequality (or constraint) on \f$M^{PUCCH}_{RB,min}\f$, in Section 9.2.5.2, TS 38.213. The
@@ -140,7 +141,7 @@ unsigned srsran::get_pucch_format3_max_nof_prbs(unsigned                        
 
   // Check that the number of PRBs can hold the total number of bits after rate matching.
   while (static_cast<unsigned>(std::ceil(static_cast<float>(payload_plus_crc_bits) / max_code_rate)) >
-         (nof_dmrs_symbols * NRE * nof_prbs * mod_order)) {
+         (nof_data_symbols * NRE * nof_prbs * mod_order)) {
     round_to_valid_nof_prbs(++nof_prbs);
 
     // The resulting number of PRBs is too big for PUCCH Format 3, so just return.
