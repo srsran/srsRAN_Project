@@ -127,4 +127,50 @@ struct formatter<srsran::cause_misc_t> {
   }
 };
 
+template <>
+struct formatter<srsran::establishment_cause_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsran::establishment_cause_t o, FormatContext& ctx) const
+  {
+    if (o == srsran::establishment_cause_t::emergency) {
+      return format_to(ctx.out(), "emergency");
+    }
+    if (o == srsran::establishment_cause_t::high_prio_access) {
+      return format_to(ctx.out(), "high_prio_access");
+    }
+    if (o == srsran::establishment_cause_t::mt_access) {
+      return format_to(ctx.out(), "mt_access");
+    }
+    if (o == srsran::establishment_cause_t::mo_sig) {
+      return format_to(ctx.out(), "mo_sig");
+    }
+    if (o == srsran::establishment_cause_t::mo_data) {
+      return format_to(ctx.out(), "mo_data");
+    }
+    if (o == srsran::establishment_cause_t::mo_voice_call) {
+      return format_to(ctx.out(), "mo_voice_call");
+    }
+    if (o == srsran::establishment_cause_t::mo_video_call) {
+      return format_to(ctx.out(), "mo_video_call");
+    }
+    if (o == srsran::establishment_cause_t::mo_sms) {
+      return format_to(ctx.out(), "mo_sms");
+    }
+    if (o == srsran::establishment_cause_t::mps_prio_access) {
+      return format_to(ctx.out(), "mps_prio_access");
+    }
+    if (o == srsran::establishment_cause_t::mcs_prio_access) {
+      return format_to(ctx.out(), "mcs_prio_access");
+    }
+
+    return format_to(ctx.out(), "unknown");
+  }
+};
+
 } // namespace fmt
