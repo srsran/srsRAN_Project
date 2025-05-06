@@ -481,7 +481,7 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
       // Instantiate dedicated DL worker pool.
       const worker_pool pool{name_dl,
                              nof_dl_workers,
-                             {{concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size},
+                             {{concurrent_queue_policy::moodycamel_lockfree_mpmc, task_worker_queue_size},
                               {concurrent_queue_policy::lockfree_mpmc, task_worker_queue_size}},
                              {{exec_name, task_priority::max - 1}, {l2_exec_name, task_priority::max}},
                              std::chrono::microseconds{50},
