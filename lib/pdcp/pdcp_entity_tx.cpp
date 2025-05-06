@@ -302,16 +302,16 @@ void pdcp_entity_tx::apply_reordering(pdcp_tx_buffer_info buf_info, bool is_retx
 
   // Store protected PDU in TX window.
   tx_window[buf_info.count].pdu = std::move(buf_info.buf);
-  if (buf_info.count != st.tx_trans_pending) {
+  if (buf_info.count != st.tx_trans_crypto) {
     return;
   }
 
-  // Deliver in order PDUs. Break and update TX_TRANS_PENDING when
-  for (uint32_t count = st.tx_trans_pending; count < st.tx_next && not tx_window[count].pdu.empty(); count++) {
+  // Deliver in order PDUs. Break and update TX_TRANS_CRYPTO when we find a missing PDU.
+  for (uint32_t count = st.tx_trans_crypto; count < st.tx_next && not tx_window[count].pdu.empty(); count++) {
     pdcp_tx_pdu_info pdu_info{
         .pdu = std::move(tx_window[count].pdu), .count = count, .sdu_toa = tx_window[count].sdu_info.time_of_arrival};
     write_data_pdu_to_lower_layers(std::move(pdu_info), is_retx);
-    st.tx_trans_pending = count + 1;
+    st.tx_trans_crypto = count + 1;
     // Automatically trigger delivery notifications when using test mode
     if (cfg.custom.test_mode) {
       handle_transmit_notification(SN(count));
@@ -686,7 +686,7 @@ void pdcp_entity_tx::retransmit_all_pdus()
 
   // Also rewind tx_trans_pending to tx_next_ack. Any PDUs pending
   // transmission will be dropped, as the retransmit ID will no longer match.
-  st.tx_trans_pending = st.tx_next_ack;
+  st.tx_trans_crypto = st.tx_next_ack;
   retransmit_id++;
 
   for (uint32_t count = st.tx_next_ack; count < st.tx_next; count++) {
@@ -752,7 +752,7 @@ void pdcp_entity_tx::handle_transmit_notification_impl(uint32_t notif_sn, bool i
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
-  if (notif_count >= st.tx_trans_pending) {
+  if (notif_count >= st.tx_trans_crypto) {
     logger.log_error("Invalid notification SN, notif_count is larger then pending TX'es. notif_sn={} notif_count={} {}",
                      notif_sn,
                      notif_count,
@@ -1105,6 +1105,36 @@ void pdcp_entity_tx::discard_callback()
       break;
     }
   } while (st.tx_next_ack != st.tx_next);
+}
+
+// Crypto reordering timeout
+void pdcp_entity_tx::crypto_reordering_timeout()
+{
+  if (stopped) {
+    logger.log_debug("Crypto reordering timer expired after bearer was stopped. st={}", st);
+    return;
+  }
+  logger.log_debug("Crypto reordering timer expired. st={}", st);
+
+  // Advanced the TX_TRANS_CRYPTO to the first missing PDU.
+  for (uint32_t count = st.tx_trans_crypto; count < st.tx_next; count++) {
+    if (tx_window.has_sn(count)) {
+      break;
+    }
+    st.tx_trans_crypto = count + 1;
+  }
+
+  // Deliver in order PDUs. Break and update TX_TRANS_CRYPTO when we find a missing PDU.
+  for (uint32_t count = st.tx_trans_crypto; count < st.tx_next && not tx_window[count].pdu.empty(); count++) {
+    pdcp_tx_pdu_info pdu_info{
+        .pdu = std::move(tx_window[count].pdu), .count = count, .sdu_toa = tx_window[count].sdu_info.time_of_arrival};
+    write_data_pdu_to_lower_layers(std::move(pdu_info), false);
+    st.tx_trans_crypto = count + 1;
+    // Automatically trigger delivery notifications when using test mode
+    if (cfg.custom.test_mode) {
+      handle_transmit_notification(SN(count));
+    }
+  }
 }
 
 pdcp_entity_tx::early_drop_reason pdcp_entity_tx::check_early_drop(const byte_buffer& buf)

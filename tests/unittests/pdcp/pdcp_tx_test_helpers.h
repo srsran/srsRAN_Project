@@ -231,11 +231,12 @@ public:
   pdcp_tx_test_helper_manual_crypto() : pdcp_tx_test_helper(1, crypto_worker, dl_worker) {}
 
 protected:
-  void wait_pending_crypto() { crypto_worker.run_pending_tasks(); }
-  void wait_one_crypto_task() { crypto_worker.try_run_next(); }
+  void           wait_pending_crypto() { crypto_worker.run_pending_tasks(); }
+  void           wait_one_crypto_task() { crypto_worker.try_run_next(); }
+  const uint32_t crypto_worker_qsize{4096};
 
 private:
   manual_task_worker dl_worker{64, true, true};
-  manual_task_worker crypto_worker{4096, true, true};
+  manual_task_worker crypto_worker{crypto_worker_qsize, false, true};
 };
 } // namespace srsran

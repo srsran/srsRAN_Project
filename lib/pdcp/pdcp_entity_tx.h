@@ -37,7 +37,7 @@ struct pdcp_tx_state {
   /// This state variable indicates the next COUNT value for which transmission is
   /// still pending. This is used for TX reordering when using parallel ciphering and integrity protection.
   /// NOTE: This is a custom state variable, not specified by the standard.
-  uint32_t tx_trans_pending = 0;
+  uint32_t tx_trans_crypto = 0;
   /// This state variable indicates the next COUNT value for which we will
   /// receive a transmission notification from the F1/RLC. If TX_TRANS == TX_NEXT,
   /// it means we are not currently waiting for any TX notification.
@@ -50,14 +50,14 @@ struct pdcp_tx_state {
   /// NOTE: This is a custom state variable, not specified by the standard.
   uint32_t tx_next_ack = 0;
 
-  pdcp_tx_state(uint32_t tx_next_, uint32_t tx_trans_pending_, uint32_t tx_trans_, uint32_t tx_next_ack_) :
-    tx_next(tx_next_), tx_trans_pending(tx_trans_pending_), tx_trans(tx_trans_), tx_next_ack(tx_next_ack_)
+  pdcp_tx_state(uint32_t tx_next_, uint32_t tx_trans_crypto_, uint32_t tx_trans_, uint32_t tx_next_ack_) :
+    tx_next(tx_next_), tx_trans_crypto(tx_trans_crypto_), tx_trans(tx_trans_), tx_next_ack(tx_next_ack_)
   {
   }
 
   bool operator==(const pdcp_tx_state& other) const
   {
-    return tx_next == other.tx_next && tx_trans == other.tx_trans && tx_trans_pending == other.tx_trans_pending &&
+    return tx_next == other.tx_next && tx_trans == other.tx_trans && tx_trans_crypto == other.tx_trans_crypto &&
            tx_next_ack == other.tx_next_ack;
   }
 };
@@ -188,6 +188,7 @@ private:
   pdcp_tx_upper_control_notifier& upper_cn;
   timer_factory                   ue_ctrl_timer_factory;
   unique_timer                    discard_timer;
+  unique_timer                    crypto_reordering_timer;
   unique_timer                    metrics_timer;
 
   task_executor& ue_dl_executor;
@@ -251,6 +252,11 @@ private:
   /// a discard timer, it is responsible to restart the discard timer with the correct timeout.
   void discard_callback();
 
+  /// \brief Callback ran upon crypto reordering timer expiration. This will advance the TX_TRANS_PENDING
+  /// state variable to the next not missing PDU. If an in-flight PDU arrives after advancing the window, it will be
+  /// discarded.
+  void crypto_reordering_timeout();
+
   /// \brief handle_transmit_notification_impl Common implementation for transmit and retransmit notifications
   ///
   /// \param notif_sn Notified (re)transmitted PDCP PDU sequence number.
@@ -283,7 +289,7 @@ struct formatter<srsran::pdcp_tx_state> {
     return format_to(ctx.out(),
                      "tx_next_ack={} tx_trans_pending={} tx_trans={} tx_next={}",
                      st.tx_next_ack,
-                     st.tx_trans_pending,
+                     st.tx_trans_crypto,
                      st.tx_trans,
                      st.tx_next);
   }

@@ -623,7 +623,7 @@ TEST_P(pdcp_tx_test, count_wraparound)
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
-std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
+static std::string test_param_info_to_string(const ::testing::TestParamInfo<std::tuple<pdcp_sn_size, unsigned>>& info)
 {
   fmt::memory_buffer buffer;
   fmt::format_to(std::back_inserter(buffer),

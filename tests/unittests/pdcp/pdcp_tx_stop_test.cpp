@@ -81,6 +81,23 @@ TEST_P(pdcp_tx_stop_test, stop_when_there_are_pending_pdus)
   ASSERT_TRUE(awaitable.is_set());
 }
 
+/// \brief Test correct functioning when crypto engine drops PDUs
+TEST_P(pdcp_tx_stop_test, full_crypto_engine_does_not_stall)
+{
+  init(GetParam());
+  srsran::test_delimit_logger delimiter("Normal stop test. SN_SIZE={} ", sn_size);
+
+  pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+
+  // Push SDUs to entity, but don't run crypto executor.
+  for (uint32_t count = 0; count < crypto_worker_qsize; count++) {
+    byte_buffer test_sdu1 = byte_buffer::create(sdu1).value();
+    pdcp_tx->handle_sdu(std::move(test_sdu1));
+  }
+  byte_buffer test_sdu1 = byte_buffer::create(sdu1).value();
+  pdcp_tx->handle_sdu(std::move(test_sdu1));
+}
+
 ///////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size //
 ///////////////////////////////////////////////////////////////////
