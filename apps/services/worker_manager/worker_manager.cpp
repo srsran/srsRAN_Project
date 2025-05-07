@@ -388,8 +388,6 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
     return desc;
   }
 
-  du_low_dl_executors.resize(nof_cells);
-
   // Instantiate workers for the DU-low.
   if (not rt_mode) {
     // Create a single worker, shared by the whole PHY. As it is shared for all the PHY, pick the first cell of the
@@ -406,7 +404,7 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
       upper_srs_exec.push_back(exec_mng.executors().at("phy_exec"));
       upper_prach_exec.push_back(exec_mng.executors().at("phy_exec"));
       upper_pdsch_exec.push_back(exec_mng.executors().at("phy_exec"));
-      du_low_dl_executors[cell_id].emplace_back(exec_mng.executors().at("phy_exec"));
+      du_low_dl_executors.push_back(exec_mng.executors().at("phy_exec"));
     }
 
     // Need to create dedicated DU-high L2 threads as there is only one DU-low thread.
@@ -474,9 +472,7 @@ worker_manager::create_du_crit_path_prio_executors(unsigned                     
         report_fatal_error("Failed to instantiate {} execution context", pool.name);
       }
 
-      for (unsigned w = 0; w != nof_dl_workers; ++w) {
-        du_low_dl_executors[cell_id].emplace_back(exec_mng.executors().at(exec_name));
-      }
+      du_low_dl_executors.push_back(exec_mng.executors().at(exec_name));
       upper_pdsch_exec.push_back(exec_mng.executors().at(exec_name));
       l2_execs.push_back(exec_mng.executors().at(l2_exec_name));
     }
@@ -753,13 +749,8 @@ void worker_manager::create_ru_dummy_executors()
   radio_exec = exec_mng.executors().at("ru_dummy");
 }
 
-void worker_manager::get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const
+task_executor& worker_manager::get_du_low_dl_executor(unsigned sector_id) const
 {
   srsran_assert(sector_id < du_low_dl_executors.size(), "Invalid sector configuration");
-  const auto& du_low_exec = du_low_dl_executors[sector_id];
-
-  executors.resize(du_low_exec.size());
-  for (unsigned i_exec = 0, nof_execs = du_low_exec.size(); i_exec != nof_execs; ++i_exec) {
-    executors[i_exec] = du_low_exec[i_exec];
-  }
+  return *du_low_dl_executors[sector_id];
 }

@@ -115,7 +115,7 @@ o_du_low_unit o_du_low_unit_factory::create(const o_du_low_unit_config&       pa
     if (hal_dependencies.hw_decoder_factory) {
       upper.hw_decoder_factory = hal_dependencies.hw_decoder_factory;
     }
-    dependencies.workers.get_du_low_dl_executors(upper.dl_executors, i);
+    upper.dl_executor = &dependencies.workers.get_du_low_dl_executor(i);
   }
 
   o_du_low_unit unit;

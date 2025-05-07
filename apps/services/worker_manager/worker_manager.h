@@ -65,7 +65,7 @@ struct worker_manager : public worker_manager_executor_getter {
   srs_du::du_high_executor_mapper& get_du_high_executor_mapper() { return *du_high_exec_mapper; }
 
   // Gets the DU-low downlink executors.
-  void get_du_low_dl_executors(std::vector<task_executor*>& executors, unsigned sector_id) const;
+  task_executor& get_du_low_dl_executor(unsigned sector_id) const;
 
   /// Get executor based on the name.
   task_executor* find_executor(const std::string& name) const
@@ -86,7 +86,7 @@ private:
     // TODO
   };
   std::unique_ptr<srs_du::du_high_executor_mapper> du_high_exec_mapper;
-  std::vector<std::vector<task_executor*>>         du_low_dl_executors;
+  std::vector<task_executor*>                      du_low_dl_executors;
 
   /// Manager of execution contexts and respective executors instantiated by the application.
   task_execution_manager exec_mng;
