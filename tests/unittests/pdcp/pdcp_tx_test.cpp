@@ -66,7 +66,7 @@ TEST_P(pdcp_tx_test, pdu_gen)
   auto test_pdu_gen = [this](uint32_t tx_next) {
     srsran::test_delimit_logger delimiter("TX PDU generation. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
-    pdcp_tx_state st = {tx_next, tx_next};
+    pdcp_tx_state st = {tx_next, tx_next, tx_next};
     pdcp_tx->set_state(st);
     pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
 
@@ -357,7 +357,7 @@ TEST_P(pdcp_tx_test, discard_timer_and_stop)
     ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
   };
 
-  pdcp_tx_state st = {};
+  pdcp_tx_state st = {0, 0, 0};
   if (config.sn_size == pdcp_sn_size::size12bits) {
     // test the beginning
     st = {0, 0, 0};

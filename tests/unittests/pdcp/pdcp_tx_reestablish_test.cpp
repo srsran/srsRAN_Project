@@ -26,7 +26,7 @@ TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_pdus_dropped)
   init(GetParam(), pdcp_rb_type::srb);
 
   // Set state of PDCP entiy
-  pdcp_tx_state st = {0};
+  pdcp_tx_state st = {0, 0, 0};
   pdcp_tx->set_state(st);
   pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::off);
 
@@ -42,7 +42,8 @@ TEST_P(pdcp_tx_reestablish_test, when_srb_reestablish_then_pdus_dropped)
   FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
 
   // Check the state is reset
-  FLUSH_AND_ASSERT_EQ(pdcp_tx->get_state(), pdcp_tx_state{});
+  pdcp_tx_state exp_st{0, 0, 0};
+  FLUSH_AND_ASSERT_EQ(pdcp_tx->get_state(), exp_st);
 }
 
 /// Test DRB UM reestablishment
@@ -51,7 +52,7 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_and_discard_t
   init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::um);
 
   // Set state of PDCP entiy
-  pdcp_tx_state st = {0};
+  pdcp_tx_state st = {0, 0, 0};
   pdcp_tx->set_state(st);
   pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::off);
 
@@ -66,7 +67,8 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_um_reestablish_then_pdus_and_discard_t
   FLUSH_AND_ASSERT_EQ(0, pdcp_tx->nof_pdus_in_window());
 
   // Check the state is reset
-  FLUSH_AND_ASSERT_EQ(pdcp_tx->get_state(), pdcp_tx_state{});
+  pdcp_tx_state exp_st{0, 0, 0};
+  FLUSH_AND_ASSERT_EQ(pdcp_tx->get_state(), exp_st);
 }
 
 /// Test DRB AM reestablishment
@@ -75,7 +77,7 @@ TEST_P(pdcp_tx_reestablish_test, when_drb_am_reestablish_then_pdus_retx)
   init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am);
 
   // Set state of PDCP entiy
-  pdcp_tx_state st = {0};
+  pdcp_tx_state st = {0, 0, 0};
   pdcp_tx->set_state(st);
   pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::off);
 

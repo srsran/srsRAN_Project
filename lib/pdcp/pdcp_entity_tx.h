@@ -46,6 +46,11 @@ struct pdcp_tx_state {
   /// NOTE: This is a custom state variable, not specified by the standard.
   uint32_t tx_next_ack = 0;
 
+  pdcp_tx_state(uint32_t tx_next_, uint32_t tx_trans_, uint32_t tx_next_ack_) :
+    tx_next(tx_next_), tx_trans(tx_trans_), tx_next_ack(tx_next_ack_)
+  {
+  }
+
   bool operator==(const pdcp_tx_state& other) const
   {
     return tx_next == other.tx_next && tx_trans == other.tx_trans && tx_next_ack == other.tx_next_ack;
@@ -160,7 +165,7 @@ private:
   task_executor& ue_dl_executor;
   task_executor& crypto_executor;
 
-  pdcp_tx_state st                  = {};
+  pdcp_tx_state st                  = {0, 0, 0};
   uint32_t      desired_buffer_size = 0;
 
   std::unique_ptr<security::security_engine_tx> sec_engine;
