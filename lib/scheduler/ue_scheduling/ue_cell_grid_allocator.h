@@ -62,8 +62,6 @@ struct ue_retx_ul_grant_request {
   ul_harq_process_handle h_ul;
   /// Current UL VRB occupation.
   vrb_bitmap& used_ul_vrbs;
-  /// Current UL BWP CRB limits.
-  crb_interval ul_bwp_crb_limits;
 };
 
 /// \brief Status of a UE grant allocation, and action for the scheduler policy to follow afterwards.

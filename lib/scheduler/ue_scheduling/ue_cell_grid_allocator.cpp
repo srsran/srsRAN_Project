@@ -562,9 +562,12 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_in
   const auto crbs = prb_to_crb(ss_info.ul_crb_lims, vrbs.convert_to<prb_interval>());
   if (not is_retx) {
     // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
-    bool contains_dc =
-        dc_offset_helper::is_contained(cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, crbs);
 
+    // Note: Even if at this point we can determine if the RBs intersect the DC location (via
+    // dc_offset_helper::is_contained), we take the conservative approach and assume that the DC location is always
+    // contained in the RBs. This may slightly reduce the MCS beyond what's needed to satisfy the effective code rate
+    // limits. We do this to simplify the search for available RBs during HARQ retxs.
+    const bool contains_dc = true;
     mcs_tbs_info =
         compute_ul_mcs_tbs(pusch_cfg, ue_cc.active_bwp(), grant.cfg.recommended_mcs, vrbs.length(), contains_dc);
 

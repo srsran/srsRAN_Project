@@ -760,6 +760,10 @@ unsigned intra_slice_scheduler::max_pdschs_to_alloc(const dl_ran_slice_candidate
 
 unsigned intra_slice_scheduler::max_puschs_to_alloc(const ul_ran_slice_candidate& slice)
 {
+  if (not cell_alloc.cfg.is_ul_enabled(slice.get_slot_tx())) {
+    return 0;
+  }
+
   // We cannot allocate more than the number of UEs available.
   int puschs_to_alloc = slice.get_slice_ues().size();
 
