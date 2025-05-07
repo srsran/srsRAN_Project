@@ -23,6 +23,7 @@
 #include "test_helpers.h"
 #include "srsran/gateways/sctp_network_gateway_factory.h"
 #include "srsran/support/executors/inline_task_executor.h"
+#include <chrono>
 #include <linux/sctp.h>
 #include <netinet/sctp.h>
 #include <thread>
@@ -353,9 +354,9 @@ TEST_F(sctp_network_gateway_tester, when_hostname_resolved_then_trx_succeeds)
 TEST_F(sctp_network_gateway_tester, when_rto_is_set_then_rto_changes)
 {
   // Test RTO values
-  uint32_t rto_init = 120;
-  uint32_t rto_min  = 120;
-  uint32_t rto_max  = 800;
+  std::chrono::milliseconds rto_init{120};
+  std::chrono::milliseconds rto_min{120};
+  std::chrono::milliseconds rto_max{800};
 
   sctp_network_connector_config server_config;
   server_config.if_name      = "server";
@@ -377,16 +378,16 @@ TEST_F(sctp_network_gateway_tester, when_rto_is_set_then_rto_changes)
   socklen_t    rto_sz    = sizeof(sctp_rtoinfo);
   rto_opts.srto_assoc_id = 0;
   ASSERT_EQ(getsockopt(fd, SOL_SCTP, SCTP_RTOINFO, &rto_opts, &rto_sz), 0) << strerror(errno);
-  ASSERT_EQ(rto_opts.srto_initial, rto_init);
-  ASSERT_EQ(rto_opts.srto_min, rto_min);
-  ASSERT_EQ(rto_opts.srto_max, rto_max);
+  ASSERT_EQ(rto_opts.srto_initial, rto_init.count());
+  ASSERT_EQ(rto_opts.srto_min, rto_min.count());
+  ASSERT_EQ(rto_opts.srto_max, rto_max.count());
 }
 
 TEST_F(sctp_network_gateway_tester, when_init_msg_is_set_then_init_msg_changes)
 {
   // Test RTO values
-  uint32_t init_max_attempts = 1;
-  uint32_t max_init_timeo    = 120;
+  uint32_t                  init_max_attempts = 1;
+  std::chrono::milliseconds max_init_timeo{120};
 
   sctp_network_connector_config server_config;
   server_config.if_name           = "server";
@@ -408,7 +409,59 @@ TEST_F(sctp_network_gateway_tester, when_init_msg_is_set_then_init_msg_changes)
   ASSERT_EQ(getsockopt(fd, SOL_SCTP, SCTP_INITMSG, &init_opts, &init_sz), 0);
 
   ASSERT_EQ(init_opts.sinit_max_attempts, init_max_attempts);
-  ASSERT_EQ(init_opts.sinit_max_init_timeo, max_init_timeo);
+  ASSERT_EQ(init_opts.sinit_max_init_timeo, max_init_timeo.count());
+}
+
+TEST_F(sctp_network_gateway_tester, when_assoc_is_set_then_assoc_changes)
+{
+  // Test retransmission value
+  uint32_t assoc_max_rxt = 5;
+
+  sctp_network_connector_config server_config;
+  server_config.if_name       = "server";
+  server_config.bind_address  = "127.0.0.1";
+  server_config.bind_port     = 0;
+  server_config.reuse_addr    = true;
+  server_config.assoc_max_rxt = assoc_max_rxt;
+
+  create_server(server_config);
+
+  ASSERT_TRUE(server->create_and_bind());
+  int fd = server->get_socket_fd();
+  fmt::print("{}\n", fd);
+
+  // Check used SCTP_ASSOCINFO values
+  sctp_assocparams assoc_opts = {};
+  socklen_t        assoc_sz   = sizeof(sctp_assocparams);
+  ASSERT_EQ(getsockopt(fd, SOL_SCTP, SCTP_ASSOCINFO, &assoc_opts, &assoc_sz), 0);
+
+  ASSERT_EQ(assoc_opts.sasoc_asocmaxrxt, assoc_max_rxt);
+}
+
+TEST_F(sctp_network_gateway_tester, when_paddr_is_set_then_paddr_changes)
+{
+  // Test heartbeat interval value
+  std::chrono::seconds hb_interval{5};
+
+  sctp_network_connector_config server_config;
+  server_config.if_name      = "server";
+  server_config.bind_address = "127.0.0.1";
+  server_config.bind_port    = 0;
+  server_config.reuse_addr   = true;
+  server_config.hb_interval  = hb_interval;
+
+  create_server(server_config);
+
+  ASSERT_TRUE(server->create_and_bind());
+  int fd = server->get_socket_fd();
+  fmt::print("{}\n", fd);
+
+  // Check used SCTP_PEER_ADDR_PARAMS values
+  sctp_paddrparams paddr_opts = {};
+  socklen_t        paddr_sz   = sizeof(sctp_paddrparams);
+  ASSERT_EQ(getsockopt(fd, SOL_SCTP, SCTP_PEER_ADDR_PARAMS, &paddr_opts, &paddr_sz), 0);
+
+  ASSERT_EQ(paddr_opts.spp_hbinterval, hb_interval.count());
 }
 
 TEST_F(sctp_network_gateway_tester, when_connection_loss_then_reconnect)

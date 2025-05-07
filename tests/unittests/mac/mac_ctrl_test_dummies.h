@@ -105,7 +105,11 @@ public:
   async_task<bool>
   remove_bearers(du_ue_index_t ue_index, du_cell_index_t pcell_index, span<const lcid_t> lcids_to_rem) override;
 
-  mac_cell_controller&  add_cell(const mac_cell_creation_request& cell_cfg) override { return cell_ctrl; }
+  mac_cell_controller& add_cell(const mac_cell_creation_request&     cell_cfg,
+                                const mac_cell_metric_report_config& metrics_cfg) override
+  {
+    return cell_ctrl;
+  }
   void                  remove_cell(du_cell_index_t cell_index) override {}
   mac_cell_controller&  get_cell_controller(du_cell_index_t cell_index) override { return cell_ctrl; }
   mac_cell_time_mapper& get_time_mapper(du_cell_index_t cell_index) override { return time_mapper; }
@@ -179,7 +183,7 @@ public:
   manual_event<bool>                   ue_created_ev;
   std::optional<mac_ue_create_request> last_ue_create_request;
 
-  void add_cell(const mac_cell_creation_request& msg) override {}
+  void add_cell(const mac_scheduler_cell_creation_request& msg) override {}
 
   void remove_cell(du_cell_index_t cell_index) override {}
 

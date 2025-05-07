@@ -151,14 +151,14 @@ cell_dl_harq_buffer_pool::dl_harq_buffer_storage* cell_dl_harq_buffer_pool::allo
     return nullptr;
   }
 
-  return &(*pool)[pool_elem_index-- - 1];
+  return &(*pool)[--pool_elem_index];
 }
 
 cell_dl_harq_buffer_pool::dl_harq_buffer_storage* cell_dl_harq_buffer_pool::allocate_from_cache()
 {
   // Some buffers may be still in flight after user removal.
   auto it = std::find_if(buffer_cache.rbegin(), buffer_cache.rend(), [](const dl_harq_buffer_storage* buffer) {
-    return buffer->ref_cnt.load(std::memory_order_acquire) == 0;
+    return buffer->ref_cnt.load(std::memory_order_relaxed) == 0;
   });
   if (it == buffer_cache.rend()) {
     return nullptr;

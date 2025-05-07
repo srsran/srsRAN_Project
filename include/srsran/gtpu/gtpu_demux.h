@@ -35,6 +35,7 @@ struct gtpu_demux_cfg_t {
   bool     warn_on_drop;
   bool     test_mode  = false;
   uint32_t queue_size = 8192;
+  uint32_t batch_size = 256;
 };
 
 struct gtpu_demux_pdu_ctx_t {
@@ -70,6 +71,9 @@ public:
 
   /// \brief Remove TEID from mapping.
   virtual bool remove_tunnel(gtpu_teid_t teid) = 0;
+
+  /// \brief Apply a new TEID when in test mode.
+  virtual void apply_test_teid(gtpu_teid_t teid) = 0;
 
   /// \brief Mark GTP-U demux as stopped.
   virtual void stop() = 0;

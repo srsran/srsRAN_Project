@@ -43,9 +43,9 @@ public:
   rrc_du_metrics_aggregator();
   ~rrc_du_metrics_aggregator() = default;
 
-  void handle_successful_rrc_setup();
+  void aggregate_successful_rrc_setup();
 
-  void handle_successful_rrc_release();
+  void aggregate_successful_rrc_release();
 
   void collect_metrics(rrc_du_metrics& metrics) override;
 

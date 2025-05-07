@@ -68,6 +68,11 @@ void si_message_scheduler::handle_si_message_update_indication(
   si_sched_cfg = new_si_sched_cfg;
   if (si_sched_cfg.has_value()) {
     pending_messages.resize(si_sched_cfg->si_messages.size());
+
+    // Reset window and transmission counters.
+    std::fill(pending_messages.begin(),
+              pending_messages.end(),
+              message_window_context{.window = {}, .nof_tx_in_current_window = 0, .total_nof_tx = 0});
   } else {
     pending_messages.clear();
   }
@@ -83,11 +88,11 @@ void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
     if (not pending_messages[i].window.empty()) {
       // SI message is already in the window. Check for window end.
       if (pending_messages[i].window.stop() < sl_tx) {
-        if (pending_messages[i].nof_tx == 0) {
+        if (pending_messages[i].nof_tx_in_current_window == 0) {
           logger.warning("SI message {} window ended, but no transmissions were made.", i);
         }
-        pending_messages[i].window = {};
-        pending_messages[i].nof_tx = 0;
+        pending_messages[i].window                   = {};
+        pending_messages[i].nof_tx_in_current_window = 0;
       }
       continue;
     }
@@ -122,6 +127,9 @@ void si_message_scheduler::update_si_message_windows(slot_point sl_tx)
 
     // SI window start detected.
     pending_messages[i].window = {sl_tx, sl_tx + si_sched_cfg->si_window_len_slots};
+
+    // Reset the trasnmission counter for the new window.
+    pending_messages[i].nof_tx_in_current_window = 0;
   }
 }
 
@@ -144,8 +152,9 @@ void si_message_scheduler::schedule_pending_si_messages(cell_slot_resource_alloc
     }
 
     if (allocate_si_message(i, res_grid)) {
-      si_ctxt.nof_tx++;
-      pending_messages[i].window = {};
+      // Increment the transmission counters.
+      ++si_ctxt.nof_tx_in_current_window;
+      ++si_ctxt.total_nof_tx;
     }
   }
 }
@@ -210,7 +219,8 @@ bool si_message_scheduler::allocate_si_message(unsigned si_message, cell_slot_re
       grant_info{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, si_ofdm_symbols, si_crbs});
 
   // > Delegate filling SI message grants to helper function.
-  fill_si_grant(res_grid, si_message, si_crbs, time_resource, dmrs_info, si_prbs_tbs.tbs_bytes);
+  fill_si_grant(
+      res_grid, si_message, si_crbs, time_resource, dmrs_info, si_prbs_tbs.tbs_bytes, pending_messages[si_message]);
   return true;
 }
 
@@ -219,7 +229,8 @@ void si_message_scheduler::fill_si_grant(cell_slot_resource_allocator& res_grid,
                                          crb_interval                  si_crbs_grant,
                                          uint8_t                       time_resource,
                                          const dmrs_information&       dmrs_info,
-                                         unsigned                      tbs)
+                                         unsigned                      tbs,
+                                         const message_window_context& message_context)
 {
   // System information indicator for SI message as per TS 38.212, Section 7.3.1.2.1 and Table 7.3.1.2.1-2.
 
@@ -241,7 +252,10 @@ void si_message_scheduler::fill_si_grant(cell_slot_resource_allocator& res_grid,
   si.si_indicator     = sib_information::si_indicator_type::other_si;
   si.si_msg_index     = si_message;
   si.version          = version;
-  si.nof_txs          = 0;
+  si.nof_txs          = message_context.total_nof_tx;
+
+  // Determine if the SI message has already been transmitted within this window or not.
+  si.is_repetition = (message_context.nof_tx_in_current_window != 0);
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = si.pdsch_cfg;

@@ -130,7 +130,7 @@ private:
 
     void on_finish_processing() override
     {
-      l1_tracer << instant_trace_event("pdsch_on_finish_processing", instant_trace_event::cpu_scope::thread);
+      l1_dl_tracer << instant_trace_event("pdsch_on_finish_processing", instant_trace_event::cpu_scope::thread);
 
       callback.on_task_completion();
     }

@@ -127,6 +127,7 @@ protected:
     cfg.n3_cfg.gtpu_reordering_timer     = std::chrono::milliseconds(0);
     cfg.n3_cfg.gtpu_rate_limiting_period = std::chrono::milliseconds(100);
     cfg.n3_cfg.gtpu_queue_size           = 8192;
+    cfg.n3_cfg.gtpu_batch_size           = 256;
     cfg.n3_cfg.gtpu_ignore_ue_ambr       = false;
     cfg.n3_cfg.warn_on_drop              = false;
     cfg.statistics_report_period         = std::chrono::seconds(1);

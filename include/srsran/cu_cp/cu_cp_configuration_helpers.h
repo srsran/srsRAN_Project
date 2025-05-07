@@ -261,7 +261,7 @@ inline std::map<five_qi_t, srs_cu_cp::cu_cp_qos_config> make_default_cu_cp_qos_c
     pdcp_cfg.rx.t_reordering          = pdcp_t_reordering::ms100;
 
     cfg.pdcp                     = pdcp_cfg;
-    qos_list[uint_to_five_qi(5)] = cfg;
+    qos_list[uint_to_five_qi(6)] = cfg;
   }
   {
     // 5QI = 7 e.g Voice,Video (Live Streaming)

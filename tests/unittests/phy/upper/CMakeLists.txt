@@ -35,7 +35,7 @@ target_link_libraries(channel_state_information_test srslog fmt gtest gtest_main
 add_test(channel_state_information_test channel_state_information_test)
 
 add_executable(downlink_processor_pool_test downlink_processor_pool_test.cpp)
-target_link_libraries(downlink_processor_pool_test srsran_upper_phy srslog gtest gtest_main)
+target_link_libraries(downlink_processor_pool_test srsran_ran srsran_upper_phy srslog gtest gtest_main)
 add_test(downlink_processor_pool_test downlink_processor_pool_test)
 
 add_executable(downlink_processor_test downlink_processor_test.cpp)
@@ -65,7 +65,3 @@ gtest_discover_tests(uplink_request_processor_test)
 add_executable(upper_phy_rx_symbol_handler_test upper_phy_rx_symbol_handler_test.cpp)
 target_link_libraries(upper_phy_rx_symbol_handler_test srsran_upper_phy srsran_phy_support srslog gtest gtest_main)
 gtest_discover_tests(upper_phy_rx_symbol_handler_test)
-
-add_executable(vrb_to_prb_mapper_test vrb_to_prb_mapper_test.cpp)
-target_link_libraries(vrb_to_prb_mapper_test srsran_upper_phy_support srslog)
-add_test(vrb_to_prb_mapper_test vrb_to_prb_mapper_test)

@@ -154,7 +154,7 @@ unsigned srsran::extract_layer_hop_rx_pilots(dmrs_symbol_list&                  
   // Select DM-RS pattern.
   const port_channel_estimator::layer_dmrs_pattern& pattern = cfg.dmrs_pattern[i_layer];
 
-  const bounded_bitset<MAX_RB>& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
+  const prb_bitmap& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
 
   // Extract hop PRB positions.
   unsigned i_prb_begin   = hop_rb_mask.find_lowest();
@@ -249,7 +249,7 @@ float srsran::estimate_time_alignment(const re_measurement<cf_t>&               
                                       subcarrier_spacing                                scs,
                                       time_alignment_estimator&                         ta_estimator)
 {
-  const bounded_bitset<MAX_RB>& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
+  const prb_bitmap& hop_rb_mask = (hop == 0) ? pattern.rb_mask : pattern.rb_mask2;
 
   unsigned nof_symbols = pilots_lse.size().nof_symbols;
   unsigned nof_slices  = pilots_lse.size().nof_slices;

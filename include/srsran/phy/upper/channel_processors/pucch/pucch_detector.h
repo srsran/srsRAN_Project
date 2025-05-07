@@ -28,6 +28,7 @@
 #include "srsran/phy/upper/channel_estimation.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_format1_map.h"
 #include "srsran/phy/upper/channel_processors/pucch/pucch_uci_message.h"
+#include "srsran/phy/upper/channel_state_information.h"
 #include "srsran/ran/pucch/pucch_mapping.h"
 #include "srsran/ran/slot_point.h"
 
@@ -138,6 +139,14 @@ public:
     float detection_metric;
   };
 
+  /// Pairs the detection result and CSI information of a PUCCH transmission.
+  struct pucch_detection_result_csi {
+    /// Detection result.
+    pucch_detection_result detection_result;
+    /// Channel state information.
+    channel_state_information csi;
+  };
+
   /// Default destructor.
   virtual ~pucch_detector() = default;
 
@@ -147,19 +156,6 @@ public:
   /// \return A pair containing the detected PUCCH message and the channel state information.
   virtual std::pair<pucch_uci_message, channel_state_information> detect(const resource_grid_reader&  grid,
                                                                          const format0_configuration& config) = 0;
-
-  /// \brief Detects a PUCCH Format 1 transmission.
-  ///
-  /// Reverts the operations described in TS38.211 Section 6.3.2.4. See also TS38.213 Section 9.2 for more information
-  /// about the configuration parameters and the format of the output UCI message. In particular, note that no SR bit is
-  /// transmitted if HARQ-ACK bits are and that the UE does not transmit anything (DTX) if the UCI message only consists
-  /// of a 0-valued SR bit.
-  /// \param[in]  grid      Input resource grid.
-  /// \param[in]  estimates Estimated channel.
-  /// \param[in]  config    PUCCH Format 1 configuration parameters.
-  /// \return The detected PUCCH message.
-  virtual pucch_detection_result
-  detect(const resource_grid_reader& grid, const channel_estimate& estimates, const format1_configuration& config) = 0;
 
   /// \brief Detects multiplexed PUCCH Format 1 transmissions.
   ///
@@ -173,7 +169,7 @@ public:
   ///                                \c nullopt otherwise.
   /// \return A reference to a map of results - each (initial cyclic shift, time domain OCC) pair is mapped to the
   ///         corresponding detection result, if the PUCCH is scheduled, or to \c nullopt otherwise.
-  virtual const pucch_format1_map<pucch_detection_result>&
+  virtual const pucch_format1_map<pucch_detection_result_csi>&
   detect(const resource_grid_reader&        grid,
          const format1_configuration&       config,
          const pucch_format1_map<unsigned>& mux_nof_harq_ack) = 0;

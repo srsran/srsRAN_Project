@@ -75,6 +75,12 @@ inline V dot_prod(const T& x, const U& y, V init)
 /// \remark The two input spans must have the same length.
 cf_t dot_prod(span<const cf_t> x, span<const cf_t> y);
 
+/// Dot product of two complex spans, the first span is single precision and the second brain float
+cf_t dot_prod(span<const cf_t> x, span<const cbf16_t> y);
+
+/// Dot product of two complex spans, the first span is brain float and the second single precision.
+cf_t dot_prod(span<const cbf16_t> x, span<const cf_t> y);
+
 /// \brief Estimates the average power of a complex span - linear scale.
 ///
 /// The average power of a span is defined as its squared Euclidean norm divided by the number of its elements, i.e.

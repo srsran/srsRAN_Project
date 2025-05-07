@@ -98,7 +98,7 @@ const cell_configuration* sched_config_manager::add_cell(const sched_cell_config
 
   added_cells.emplace(msg.cell_index, std::make_unique<cell_configuration>(expert_params, msg));
 
-  cell_metrics_handler* cell_metrics = metrics_handler.add_cell(*added_cells[msg.cell_index]);
+  cell_metrics_handler* cell_metrics = metrics_handler.add_cell(*added_cells[msg.cell_index], msg.metrics);
   srsran_assert(cell_metrics != nullptr, "Unable to create metrics handler");
 
   return added_cells[msg.cell_index].get();

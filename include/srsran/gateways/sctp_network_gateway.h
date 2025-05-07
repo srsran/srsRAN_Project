@@ -43,13 +43,15 @@ struct sctp_network_gateway_config : public common_network_gateway_config {
   /// Name provided to the interface node.
   std::string if_name;
   /// Payload Protocol Identifier
-  int                    ppid = 0;
-  std::optional<int32_t> rto_initial;
-  std::optional<int32_t> rto_min;
-  std::optional<int32_t> rto_max;
-  std::optional<int32_t> init_max_attempts;
-  std::optional<int32_t> max_init_timeo;
-  std::optional<bool>    nodelay;
+  int                                      ppid = 0;
+  std::optional<std::chrono::milliseconds> rto_initial;
+  std::optional<std::chrono::milliseconds> rto_min;
+  std::optional<std::chrono::milliseconds> rto_max;
+  std::optional<int32_t>                   init_max_attempts;
+  std::optional<std::chrono::milliseconds> max_init_timeo;
+  std::optional<std::chrono::seconds>      hb_interval;
+  std::optional<int32_t>                   assoc_max_rxt;
+  std::optional<bool>                      nodelay;
 };
 
 /// \brief Configuration for SCTP network client

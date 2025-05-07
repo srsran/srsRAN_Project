@@ -23,6 +23,10 @@
 #include "srsran/instrumentation/traces/du_traces.h"
 #include "srsran/adt/to_array.h"
 
-srsran::file_event_tracer<srsran::L1_TRACE_ENABLED> srsran::l1_tracer;
+srsran::file_event_tracer<srsran::L1_DL_TRACE_ENABLED> srsran::l1_common_tracer;
+
+srsran::file_event_tracer<srsran::L1_DL_TRACE_ENABLED> srsran::l1_dl_tracer;
+
+srsran::file_event_tracer<srsran::L1_UL_TRACE_ENABLED> srsran::l1_ul_tracer;
 
 srsran::file_event_tracer<srsran::L2_TRACE_ENABLED> srsran::l2_tracer;

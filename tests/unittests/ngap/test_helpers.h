@@ -320,6 +320,8 @@ public:
     });
   }
 
+  void on_transmission_of_handover_required() override { logger.info("Received a new Handover Required"); }
+
   async_task<bool> on_new_handover_command(ue_index_t ue_index, byte_buffer command) override
   {
     logger.info("Received a new Handover Command");

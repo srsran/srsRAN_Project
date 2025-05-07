@@ -58,7 +58,7 @@ protected:
     }
     if (enable_ev_sinr) {
       csi.set_sinr_dB(channel_state_information::sinr_type::evm, real_dist(rgen));
-      csi.set_evm(real_dist(rgen));
+      csi.set_total_evm(real_dist(rgen));
     }
     if (enable_rsrp) {
       csi.set_rsrp(real_dist(rgen));

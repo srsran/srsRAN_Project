@@ -22,11 +22,47 @@
 
 #pragma once
 
+#include "srsran/adt/span.h"
 #include "srsran/phy/upper/channel_state_information.h"
 #include "srsran/support/format/delimited_formatter.h"
 #include <fmt/core.h>
 
 namespace fmt {
+
+template <>
+struct formatter<std::optional<float>> {
+private:
+  formatter<float> underlying_;
+
+  template <class U>
+  FMT_CONSTEXPR static auto maybe_set_debug_format(U& u, bool set) -> decltype(u.set_debug_format(set))
+  {
+    u.set_debug_format(set);
+  }
+
+  template <class U>
+  FMT_CONSTEXPR static void maybe_set_debug_format(U&, ...)
+  {
+  }
+
+public:
+  template <typename ParseContext>
+  FMT_CONSTEXPR auto parse(ParseContext& ctx)
+  {
+    maybe_set_debug_format(underlying_, true);
+    return underlying_.parse(ctx);
+  }
+
+  template <typename FormatContext>
+  auto format(const std::optional<float>& opt, FormatContext& ctx) const -> decltype(ctx.out())
+  {
+    if (!opt) {
+      return detail::write(ctx.out(), "na");
+    }
+
+    return underlying_.format(*opt, ctx);
+  }
+};
 
 /// \brief Custom formatter for \c channel_state_information.
 template <>
@@ -67,8 +103,13 @@ struct formatter<srsran::channel_state_information> {
         helper.format_if_verbose(ctx, "sinr_evm{}={:.1f}dB", selected, *csi.sinr_evm_dB);
       }
 
-      if (csi.evm.has_value()) {
-        helper.format_if_verbose(ctx, "evm={:.2f}", *csi.evm);
+      // Print EVM per a symbol basis only if it is present.
+      auto total_evm  = csi.get_total_evm();
+      auto symbol_evm = csi.get_symbol_evm();
+      if (std::any_of(symbol_evm.begin(), symbol_evm.end(), [](auto elem) { return elem.has_value(); })) {
+        helper.format_if_verbose(ctx, "evm=[{:.2f}]", symbol_evm);
+      } else if (total_evm.has_value()) {
+        helper.format_if_verbose(ctx, "evm={:.2f}", total_evm);
       }
 
       // Extract CSI measurements. It could be some of them are not available.

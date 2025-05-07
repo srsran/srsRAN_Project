@@ -79,7 +79,7 @@ public:
     /// DM-RS position mask. Indicates the OFDM symbols carrying DM-RS within the slot.
     bounded_bitset<MAX_NSYMB_PER_SLOT> symbols_mask;
     /// Allocation RB list: the entries set to true are used for transmission.
-    bounded_bitset<MAX_RB> rb_mask;
+    prb_bitmap rb_mask;
     /// First OFDM symbol within the slot for which the channel should be estimated.
     unsigned first_symbol = 0;
     /// Number of OFDM symbols for which the channel should be estimated.

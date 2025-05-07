@@ -26,19 +26,22 @@
 #include "srsran/ran/carrier_configuration.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/pci.h"
-#include "srsran/ran/ssb_configuration.h"
+#include "srsran/ran/ssb/ssb_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/scheduler/scheduler_sys_info_handler.h"
 
 namespace srsran {
 
+/// Type that can hold multiple versions of the payload for segmented messages.
+using bcch_dl_sch_payload_type = std::vector<byte_buffer>;
+
 /// System Information signalled by the cell.
 struct mac_cell_sys_info_config {
   /// SIB1 payload.
   byte_buffer sib1;
   /// SI messages provided by the cell and which are part of the SIB1 SI-SchedConfig.
-  static_vector<byte_buffer, MAX_SI_MESSAGES> si_messages;
+  static_vector<bcch_dl_sch_payload_type, MAX_SI_MESSAGES> si_messages;
   /// SI scheduling configuration to provide to MAC scheduler.
   si_scheduling_update_request si_sched_cfg;
 };

@@ -71,7 +71,10 @@ public:
 
   void disconnect_pdu_session(pdu_session_id_t pdu_session_id);
   void disconnect_all_pdu_sessions();
+  void update_security_config(const security::sec_as_config& security_info);
 
+  void             notify_pdcp_pdu_processing_stopped();
+  void             restart_pdcp_pdu_processing();
   async_task<void> await_crypto_rx_all_pdu_sessions();
   async_task<void> await_crypto_rx_all_drbs(const std::unique_ptr<pdu_session>& pdu_session);
   async_task<void> await_crypto_drb(const std::unique_ptr<drb_context>& drb);
@@ -90,7 +93,7 @@ private:
 
   ue_index_t                                               ue_index;
   const std::map<five_qi_t, srs_cu_up::cu_up_qos_config>   qos_cfg;
-  const security::sec_as_config&                           security_info;
+  security::sec_as_config                                  security_info;
   const n3_interface_config&                               n3_config;
   cu_up_test_mode_config                                   test_mode_config;
   cu_up_ue_logger&                                         logger;

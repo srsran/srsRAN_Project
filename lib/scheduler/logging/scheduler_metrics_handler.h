@@ -25,6 +25,7 @@
 #include "scheduler_metrics_ue_configurator.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/adt/slotted_vector.h"
+#include "srsran/scheduler/scheduler_configurator.h"
 #include "srsran/scheduler/scheduler_dl_buffer_state_indication_handler.h"
 #include "srsran/scheduler/scheduler_feedback_handler.h"
 #include "srsran/scheduler/scheduler_metrics.h"
@@ -149,8 +150,8 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   const cell_configuration&       cell_cfg;
 
   // Derived values.
-  unsigned nof_slots_per_sf    = 0;
-  unsigned report_period_slots = 0;
+  const unsigned nof_slots_per_sf;
+  const unsigned report_period_slots;
 
   slot_point last_slot_tx;
   slot_point next_report_slot;
@@ -166,9 +167,9 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
 public:
   /// \brief Creates a scheduler UE metrics handler for a given cell. In case the metrics_report_period is zero,
   /// no metrics are reported.
-  explicit cell_metrics_handler(msecs                       metrics_report_period,
-                                scheduler_metrics_notifier& notifier,
-                                const cell_configuration&   cell_cfg_);
+  explicit cell_metrics_handler(
+      const cell_configuration&                                                      cell_cfg_,
+      const std::optional<sched_cell_configuration_request_message::metrics_config>& metrics_cfg);
 
   /// \brief Register creation of a UE.
   void handle_ue_creation(du_ue_index_t ue_index, rnti_t rnti, pci_t pcell_pci) override;
@@ -219,7 +220,7 @@ public:
   void push_result(slot_point sl_tx, const sched_result& slot_result, std::chrono::microseconds slot_decision_latency);
 
   /// \brief Checks whether the metrics reporting is active.
-  bool connected() const { return report_period != std::chrono::nanoseconds{0}; }
+  bool connected() const { return report_period != std::chrono::milliseconds{0}; }
 
 private:
   void handle_pucch_sinr(ue_metric_context& u, float sinr);
@@ -231,22 +232,16 @@ private:
 /// Handler of metrics for all the UEs and cells of the scheduler.
 class scheduler_metrics_handler
 {
-  using msecs = std::chrono::milliseconds;
-
 public:
-  /// \brief Creates a scheduler metrics handler. In case the metrics_report_period is zero, no metrics are reported.
-  explicit scheduler_metrics_handler(msecs metrics_report_period, scheduler_metrics_notifier& notifier);
-
-  cell_metrics_handler* add_cell(const cell_configuration& cell_cfg);
+  cell_metrics_handler*
+  add_cell(const cell_configuration&                                                      cell_cfg,
+           const std::optional<sched_cell_configuration_request_message::metrics_config>& metrics_cfg);
 
   void rem_cell(du_cell_index_t cell_index);
 
   cell_metrics_handler& at(du_cell_index_t cell_idx) { return *cells[cell_idx]; }
 
 private:
-  scheduler_metrics_notifier&     notifier;
-  const std::chrono::milliseconds report_period;
-
   slotted_array<std::unique_ptr<cell_metrics_handler>, MAX_NOF_DU_CELLS> cells;
 };
 

@@ -97,7 +97,7 @@ smoke zmq:
   variables:
     TESTBED: "" # Check before_script
     MARKERS: smoke
-    PYTEST_ARGS: -x ${EXTRA_SMOKE_ZMQ}
+    RETINA_LAUNCHER_ARGS: -x ${EXTRA_SMOKE_ZMQ}
     RETINA_PARAM_ARGS: gnb.all.pcap=True gnb.all.mac_enable=True gnb.all.rlc_enable=True gnb.all.enable_integrity_protection=True
     E2E_LOG_LEVEL: info
   before_script:
@@ -234,22 +234,20 @@ amari 8UE:
   timeout: 4h
   parallel:
     matrix:
-      - KEYWORDS:
-          [
-            "reestablishment and sequentially",
-            "handover and sequentially",
-            "attach_detach",
-          ]
+      - E2E_FILE_OR_DIR: tests/reestablishment.py
+        KEYWORDS: "sequentially"
+      - E2E_FILE_OR_DIR: tests/handover.py
+        KEYWORDS: "sequentially"
+      - E2E_FILE_OR_DIR: tests/attach_detach.py
 
 amari 8UE beta:
   extends: amari 8UE
   parallel:
     matrix:
-      - KEYWORDS:
-          [
-            "reestablishment and not sequentially",
-            "handover and not sequentially",
-          ]
+      - E2E_FILE_OR_DIR: tests/reestablishment.py
+        KEYWORDS: "not sequentially"
+      - E2E_FILE_OR_DIR: tests/handover.py
+        KEYWORDS: "not sequentially"
   when: manual
   allow_failure: true
 
@@ -260,21 +258,24 @@ amari 32UE:
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
   parallel:
     matrix:
-      - KEYWORDS:
+      - E2E_FILE_OR_DIR: tests/iperf.py
+        KEYWORDS:
           [
-            "iperf and udp and band:3",
-            "iperf and udp and not band:3",
-            "iperf and tcp and band:3",
-            "iperf and tcp and not band:3",
-            "pucch",
+            "udp and band:3",
+            "udp and not band:3",
+            "tcp and band:3",
+            "tcp and not band:3 and not precoding",
+            "tcp and not band:3 and precoding",
           ]
+      - E2E_FILE_OR_DIR: tests/pucch.py
 
 amari 32UE [ping]:
   extends: .zmq-uesim
   variables:
+    E2E_FILE_OR_DIR: tests/ping.py
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-    KEYWORDS: "ping and 32"
+    KEYWORDS: "32"
 
 amari 32UE 2x2 mimo:
   extends: .zmq-uesim
@@ -287,7 +288,8 @@ amari 64UE 2x2 mimo:
   when: manual
   allow_failure: true
   variables:
-    MARKERS: "zmq_64_ues"
+    E2E_FILE_OR_DIR: tests/iperf.py
+    MARKERS: "64"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
 
 cudu amari 8UE:
@@ -295,31 +297,30 @@ cudu amari 8UE:
   timeout: 2h
   variables:
     TESTBED: zmq_cudu
+    E2E_FILE_OR_DIR: tests/reestablishment.py
+    KEYWORDS: "sequentially"
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  parallel:
-    matrix:
-      - KEYWORDS: ["reestablishment and sequentially"]
 
 cudu amari 32UE:
   extends: .zmq
   timeout: 2h
   variables:
     TESTBED: zmq_cudu
+    E2E_FILE_OR_DIR: tests/iperf.py
+    KEYWORDS: "tcp and not band:3 and bandwidth:50 and not precoding"
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-  parallel:
-    matrix:
-      - KEYWORDS: ["iperf and tcp and not band:3 and bandwidth:50"]
 
 cudu amari 64UE:
   extends: .zmq
   timeout: 3h
   variables:
     TESTBED: zmq_cudu
+    E2E_FILE_OR_DIR: tests/ping.py
+    KEYWORDS: "64"
     MARKERS: "zmq and not smoke"
     RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
-    KEYWORDS: "ping and 64"
 
 ric:
   extends: .zmq
@@ -668,6 +669,31 @@ viavi 24h:
     - if: $CI_DESCRIPTION =~ /Weekly/
   variables:
     KEYWORDS: "24h"
+
+################################################################################
+# Amari S72
+################################################################################
+
+.s72:
+  stage: rf
+  extends: .e2e-run
+  variables:
+    GROUP: uesim
+    TESTBED: "s72_uesim"
+    E2E_LOG_LEVEL: "info"
+    RETINA_LAUNCHER_ARGS: "--retina-pod-timeout 900"
+  allow_failure: true
+  needs:
+    - job: "basic avx2 dpdk"
+      artifacts: true
+    - *retina-needs
+
+amari 2UE s72x:
+  extends: .s72
+  variables:
+    MARKERS: "s72"
+    RETINA_PARAM_ARGS: "gnb.all.pcap=True gnb.all.rlc_enable=False gnb.all.enable_integrity_protection=True"
+  timeout: 4h
 
 ################################################################################
 # Garbage collector

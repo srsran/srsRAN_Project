@@ -23,31 +23,30 @@
 #pragma once
 
 #include "rigtorp/SPSCQueue.h"
-#include "srsran/adt/concurrent_queue.h"
-#include "srsran/support/error_handling.h"
+#include "srsran/adt/detail/concurrent_queue_helper.h"
+#include "srsran/adt/detail/concurrent_queue_params.h"
 #include <chrono>
-#include <thread>
 
 namespace srsran {
-namespace detail {
 
-/// Specialization for lockfree SPSC without a blocking mechanism.
+/// Specialization for lockfree SPSC without a blocking API.
 template <typename T>
-class queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>
+class concurrent_queue<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>
 {
 public:
-  template <typename... Args>
-  explicit queue_impl(size_t qsize) : queue(qsize)
-  {
-  }
+  using value_type                                           = T;
+  constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::lockfree_spsc;
+  constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
+
+  explicit concurrent_queue(size_t qsize) : queue(qsize) {}
 
   template <typename U>
-  bool try_push(U&& elem)
+  [[nodiscard]] bool try_push(U&& elem)
   {
     return queue.try_push(std::forward<U>(elem));
   }
 
-  bool try_pop(T& elem)
+  [[nodiscard]] bool try_pop(T& elem)
   {
     T* front = queue.front();
     if (front != nullptr) {
@@ -58,13 +57,27 @@ public:
     return false;
   }
 
-  T* front() { return queue.front(); }
+  [[nodiscard]] std::optional<T> try_pop()
+  {
+    T*               front = queue.front();
+    std::optional<T> result;
+    if (front != nullptr) {
+      result = std::move(*front);
+      queue.pop();
+    }
+    return result;
+  }
 
-  size_t size() const { return queue.size(); }
+  /// \brief Provides a pointer to the front element in a non-blocking fashion.
+  ///
+  /// If the queue is empty, the call returns a nullptr.
+  [[nodiscard]] T* front() { return queue.front(); }
 
-  bool empty() const { return queue.empty(); }
+  [[nodiscard]] size_t size() const { return queue.size(); }
 
-  size_t capacity() const { return queue.capacity(); }
+  [[nodiscard]] bool empty() const { return queue.empty(); }
+
+  [[nodiscard]] size_t capacity() const { return queue.capacity(); }
 
 protected:
   ::rigtorp::SPSCQueue<T> queue;
@@ -72,32 +85,35 @@ protected:
 
 /// Specialization for lockfree SPSC using a spin sleep loop as the blocking mechanism.
 template <typename T>
-class queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>
-  : public queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>
+class concurrent_queue<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>
+  : private concurrent_queue<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>,
+    public detail::queue_sleep_crtp<
+        concurrent_queue<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::sleep>>
 {
-  using base_type = queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>;
+  using non_blocking_base_type =
+      concurrent_queue<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>;
+  using blocking_base_type = detail::queue_sleep_crtp<concurrent_queue>;
 
 public:
+  using value_type                                           = T;
+  constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::lockfree_spsc;
+  constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::sleep;
+
   template <typename... Args>
-  explicit queue_impl(size_t qsize, std::chrono::microseconds sleep_time_) :
-    queue_impl<T, concurrent_queue_policy::lockfree_spsc, concurrent_queue_wait_policy::non_blocking>(qsize),
-    sleep_time(sleep_time_)
+  explicit concurrent_queue(size_t qsize, std::chrono::microseconds sleep_time_) :
+    non_blocking_base_type(qsize), blocking_base_type(sleep_time_)
   {
   }
 
-  void request_stop() { running = false; }
-
-  template <typename U>
-  bool push_blocking(U&& elem)
-  {
-    while (running.load(std::memory_order_relaxed)) {
-      if (this->try_push(std::forward<U>(elem))) {
-        return true;
-      }
-      std::this_thread::sleep_for(sleep_time);
-    }
-    return false;
-  }
+  // Inherited methods.
+  using blocking_base_type::push_blocking;
+  using blocking_base_type::request_stop;
+  using non_blocking_base_type::capacity;
+  using non_blocking_base_type::empty;
+  using non_blocking_base_type::front;
+  using non_blocking_base_type::size;
+  using non_blocking_base_type::try_pop;
+  using non_blocking_base_type::try_push;
 
   bool pop_blocking(T& elem) noexcept
   {
@@ -115,6 +131,7 @@ public:
   {
     T* f = front_blocking();
     if (f != nullptr) {
+      // skip std::move
       func(*f);
       this->queue.pop();
       return true;
@@ -125,19 +142,15 @@ public:
 private:
   T* front_blocking()
   {
-    while (running.load(std::memory_order_relaxed)) {
-      T* front = this->queue.front();
-      if (front != nullptr) {
-        return front;
+    while (this->running.load(std::memory_order_relaxed)) {
+      T* front_val = this->queue.front();
+      if (front_val != nullptr) {
+        return front_val;
       }
-      std::this_thread::sleep_for(sleep_time);
+      std::this_thread::sleep_for(this->sleep_time);
     }
     return nullptr;
   }
-
-  std::chrono::microseconds sleep_time;
-  std::atomic<bool>         running{true};
 };
 
-} // namespace detail
 } // namespace srsran

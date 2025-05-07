@@ -137,7 +137,8 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
                                                                              unsigned                   pending_bytes,
                                                                              interval<unsigned>         nof_rb_lims)
 {
-  sch_mcs_index       mcs = ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table);
+  sch_mcs_index mcs =
+      ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table, pusch_cfg.use_transform_precoder);
   sch_mcs_description mcs_config =
       pusch_mcs_get_config(pusch_cfg.mcs_table, mcs, pusch_cfg.use_transform_precoder, pusch_cfg.tp_pi2bpsk_present);
 
@@ -181,7 +182,7 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
   // transform precoder is defined in TS 38.211 Section 6.1.3.
   // The number of PRB must be lower than or equal to current number of PRB.
   if (pusch_cfg.use_transform_precoder) {
-    nof_prbs = get_transform_precoding_nearest_lower_nof_prb_valid(nof_prbs).value_or(nof_prbs);
+    nof_prbs = transform_precoding::get_nof_prbs_lower_bound(nof_prbs).value_or(nof_prbs);
   }
 
   if (nof_prbs == 0) {
@@ -194,7 +195,6 @@ static std::optional<mcs_prbs_selection> compute_newtx_required_mcs_and_prbs(con
 static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&               u,
                                                             slot_point                    pdcch_slot,
                                                             slot_point                    pdsch_slot,
-                                                            crb_interval                  dl_bwp_crb_limits,
                                                             const dl_harq_process_handle* h_dl,
                                                             unsigned                      pending_bytes)
 {
@@ -210,8 +210,8 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
   unsigned                     slot_nof_symbols = cell_cfg.get_nof_dl_symbol_per_slot(pdsch_slot);
 
   // TODO: Support more search spaces.
-  constexpr static search_space_id ue_ded_ss = to_search_space_id(2);
-  const search_space_info&         ss        = ue_cc.cfg().search_space(ue_ded_ss);
+  constexpr static search_space_id ue_ded_ss_id = to_search_space_id(2);
+  const search_space_info&         ss           = ue_cc.cfg().search_space(ue_ded_ss_id);
 
   if (h_dl != nullptr) {
     // ReTx case.
@@ -225,9 +225,8 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
 
   // Determine RB allocation limits.
   interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pdsch_nof_rbs & ue_cell_cfg.rrm_cfg().pdsch_grant_size_limits;
-  const auto         crb_lims =
-      static_cast<crb_interval>(cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims & dl_bwp_crb_limits);
-  const auto prb_lims = crb_to_prb(dl_bwp_crb_limits, crb_lims);
+  const auto         crb_lims    = static_cast<crb_interval>(cell_cfg.expert_cfg.ue.pdsch_crb_limits & ss.dl_crb_lims);
+  const auto         prb_lims    = crb_to_prb(ss.dl_crb_lims, crb_lims);
   // TODO: support interleaving.
   const auto vrb_lims = static_cast<vrb_interval>(prb_lims);
   nof_rb_lims         = nof_rb_lims & interval<unsigned>{0, vrb_lims.length()};
@@ -301,19 +300,17 @@ static std::optional<dl_sched_context> get_dl_sched_context(const slice_ue&     
 std::optional<dl_sched_context> sched_helper::get_newtx_dl_sched_context(const slice_ue& u,
                                                                          slot_point      pdcch_slot,
                                                                          slot_point      pdsch_slot,
-                                                                         crb_interval    dl_bwp_crb_limits,
                                                                          unsigned        pending_bytes)
 {
-  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, dl_bwp_crb_limits, nullptr, pending_bytes);
+  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, nullptr, pending_bytes);
 }
 
 std::optional<dl_sched_context> sched_helper::get_retx_dl_sched_context(const slice_ue&               u,
                                                                         slot_point                    pdcch_slot,
                                                                         slot_point                    pdsch_slot,
-                                                                        crb_interval                  dl_bwp_crb_limits,
                                                                         const dl_harq_process_handle& h_dl)
 {
-  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, dl_bwp_crb_limits, &h_dl, 0);
+  return get_dl_sched_context(u, pdcch_slot, pdsch_slot, &h_dl, 0);
 }
 
 static vrb_interval
@@ -352,7 +349,6 @@ vrb_interval sched_helper::compute_retx_dl_vrbs(const dl_sched_context& decision
 static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&               u,
                                                             slot_point                    pdcch_slot,
                                                             slot_point                    pusch_slot,
-                                                            crb_interval                  ul_bwp_crb_limits,
                                                             unsigned                      uci_nof_harq_bits,
                                                             const ul_harq_process_handle* h_ul,
                                                             unsigned                      pending_bytes)
@@ -369,8 +365,8 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
   unsigned                     slot_nof_symbols = cell_cfg.get_nof_ul_symbol_per_slot(pusch_slot);
 
   // TODO: Support more search spaces.
-  constexpr static search_space_id ue_ded_ss = to_search_space_id(2);
-  const search_space_info&         ss        = ue_cc.cfg().search_space(ue_ded_ss);
+  static constexpr search_space_id ue_ded_ss_id = to_search_space_id(2);
+  const search_space_info&         ss           = ue_cc.cfg().search_space(ue_ded_ss_id);
 
   if (h_ul != nullptr) {
     // ReTx case.
@@ -384,9 +380,8 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
 
   // Determine RB allocation limits.
   interval<unsigned> nof_rb_lims = cell_cfg.expert_cfg.ue.pusch_nof_rbs & ue_cell_cfg.rrm_cfg().pusch_grant_size_limits;
-  const auto         crb_lims =
-      static_cast<crb_interval>(cell_cfg.expert_cfg.ue.pusch_crb_limits & ss.ul_crb_lims & ul_bwp_crb_limits);
-  const auto prb_lims = crb_to_prb(ul_bwp_crb_limits, crb_lims);
+  const auto         crb_lims    = static_cast<crb_interval>(cell_cfg.expert_cfg.ue.pusch_crb_limits & ss.ul_crb_lims);
+  const auto         prb_lims    = crb_to_prb(ss.ul_crb_lims, crb_lims);
   // TODO: support interleaving.
   const auto vrb_lims = static_cast<vrb_interval>(prb_lims);
   nof_rb_lims         = nof_rb_lims & interval<unsigned>{0, vrb_lims.length()};
@@ -473,21 +468,19 @@ static std::optional<ul_sched_context> get_ul_sched_context(const slice_ue&     
 std::optional<ul_sched_context> sched_helper::get_newtx_ul_sched_context(const slice_ue& u,
                                                                          slot_point      pdcch_slot,
                                                                          slot_point      pusch_slot,
-                                                                         crb_interval    ul_bwp_crb_limits,
                                                                          unsigned        uci_nof_harq_bits,
                                                                          unsigned        pending_bytes)
 {
-  return get_ul_sched_context(u, pdcch_slot, pusch_slot, ul_bwp_crb_limits, uci_nof_harq_bits, nullptr, pending_bytes);
+  return get_ul_sched_context(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, nullptr, pending_bytes);
 }
 
 std::optional<ul_sched_context> sched_helper::get_retx_ul_sched_context(const slice_ue&               u,
                                                                         slot_point                    pdcch_slot,
                                                                         slot_point                    pusch_slot,
-                                                                        crb_interval                  ul_bwp_crb_limits,
                                                                         unsigned                      uci_nof_harq_bits,
                                                                         const ul_harq_process_handle& h_ul)
 {
-  return get_ul_sched_context(u, pdcch_slot, pusch_slot, ul_bwp_crb_limits, uci_nof_harq_bits, &h_ul, 0);
+  return get_ul_sched_context(u, pdcch_slot, pusch_slot, uci_nof_harq_bits, &h_ul, 0);
 }
 
 static vrb_interval
@@ -501,6 +494,15 @@ find_available_vrbs(const ul_sched_context& sched_ctxt, const vrb_bitmap& used_v
   vrb_interval vrbs = rb_helper::find_empty_interval_of_length(used_vrbs, nof_rbs, sched_ctxt.vrb_lims);
   if (vrbs.empty()) {
     return vrb_interval{};
+  }
+
+  if (sched_ctxt.pusch_cfg.use_transform_precoder) {
+    // At this point we need to ensure a valid number of RBs is selected to be used with transform precoding.
+    auto valid_nof_rbs = transform_precoding::get_nof_prbs_lower_bound(vrbs.length());
+    if (not valid_nof_rbs.has_value()) {
+      return vrb_interval{};
+    }
+    vrbs.resize(valid_nof_rbs.value());
   }
 
   // Successful CRB interval derivation.

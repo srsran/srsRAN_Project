@@ -357,7 +357,8 @@ void scheduler_time_qos::ue_ctxt::compute_ul_prio(const slice_ue& u,
       report_fatal_error("Unsupported PDCCH DCI UL format");
   }
 
-  sch_mcs_index mcs = ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table);
+  sch_mcs_index mcs =
+      ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table, pusch_cfg.use_transform_precoder);
 
   // Calculate UL PF priority.
   // NOTE: Estimated instantaneous UL rate is calculated assuming entire BWP CRBs are allocated to UE.

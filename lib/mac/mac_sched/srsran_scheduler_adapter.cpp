@@ -56,20 +56,22 @@ srsran_scheduler_adapter::srsran_scheduler_adapter(const mac_config& params, rnt
   ctrl_exec(params.ctrl_exec),
   logger(srslog::fetch_basic_logger("MAC")),
   notifier(*this),
-  sched_impl(create_scheduler(scheduler_config{params.sched_cfg, notifier, params.sched_metric_notifier})),
+  sched_impl(create_scheduler(scheduler_config{params.sched_cfg, notifier})),
   rach_handler(*sched_impl, rnti_mng, logger)
 {
   srsran_assert(last_slot_point.is_lock_free(), "slot point is not lock free");
   srsran_assert(last_slot_tp.is_lock_free(), "slot time_point is not lock free");
 }
 
-void srsran_scheduler_adapter::add_cell(const mac_cell_creation_request& msg)
+void srsran_scheduler_adapter::add_cell(const mac_scheduler_cell_creation_request& msg)
 {
   // Setup UCI decoder for new cell.
-  cell_handlers.emplace(msg.cell_index, *this, msg.sched_req);
+  cell_handlers.emplace(msg.cell_params.cell_index, *this, msg.cell_params.sched_req);
 
   // Forward cell configuration to scheduler.
-  sched_impl->handle_cell_configuration_request(msg.sched_req);
+  auto sched_req    = msg.cell_params.sched_req;
+  sched_req.metrics = {msg.metric_report_period, msg.metric_notifier};
+  sched_impl->handle_cell_configuration_request(sched_req);
 }
 
 void srsran_scheduler_adapter::remove_cell(du_cell_index_t cell_index)

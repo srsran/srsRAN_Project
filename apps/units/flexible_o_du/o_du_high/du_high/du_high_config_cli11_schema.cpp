@@ -1779,6 +1779,9 @@ static void configure_cli11_metrics_layers_args(CLI::App& app, du_high_unit_metr
       ->capture_default_str();
   add_option(app, "--enable_rlc", metrics_params.enable_rlc, "Enable RLC metrics")->capture_default_str();
   add_option(app, "--enable_mac", metrics_params.enable_mac, "Enable MAC metrics")->capture_default_str();
+  add_option(
+      app, "--enable_executor", metrics_params.enable_executor_log_metrics, "Whether to log DU-high executor metrics")
+      ->capture_default_str();
 }
 
 static void configure_cli11_metrics_args(CLI::App& app, du_high_unit_metrics_config& metrics_params)

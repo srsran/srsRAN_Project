@@ -156,6 +156,8 @@ public:
   /// Retransmits all PDUs. Integrity protection and ciphering is re-applied.
   void retransmit_all_pdus();
 
+  enum class early_drop_reason { zero_dbs, full_rlc_queue, full_window, no_drop };
+
 private:
   pdcp_bearer_logger              logger;
   const pdcp_tx_config            cfg;
@@ -177,6 +179,9 @@ private:
 
   security::integrity_enabled integrity_enabled = security::integrity_enabled::off;
   security::ciphering_enabled ciphering_enabled = security::ciphering_enabled::off;
+
+  early_drop_reason check_early_drop(const byte_buffer& buf);
+  uint32_t          warn_on_drop_count = 0;
 
   void write_data_pdu_to_lower_layers(pdcp_tx_buf_info&& buf_info, bool is_retx);
   void write_control_pdu_to_lower_layers(byte_buffer buf);
@@ -204,9 +209,20 @@ private:
   /// \brief Get estimated size of a PDU from an SDU
   uint32_t get_pdu_size(const byte_buffer& sdu) const;
 
-  /// \breif Callback ran upon discard timer expiration. If there are still PDUs in the TX window that require
+  /// \brief Callback ran upon discard timer expiration. If there are still PDUs in the TX window that require
   /// a discard timer, it is responsible to restart the discard timer with the correct timeout.
   void discard_callback();
+
+  /// \brief handle_transmit_notification_impl Common implementation for transmit and retransmit notifications
+  ///
+  /// \param notif_sn Notified (re)transmitted PDCP PDU sequence number.
+  /// \param is_retx Flags whether this is a notification of a ReTx or not
+  void handle_transmit_notification_impl(uint32_t notif_sn, bool is_retx);
+
+  /// \brief handle_delivery_notification_impl Common implementation for deliv and deliv retransmitted notifications.
+  /// \param notif_sn Notified delivered or retransmitted delivered PDCP PDU sequence number.
+  /// \param is_retx Flags whether this is a notification of a ReTx or not
+  void handle_delivery_notification_impl(uint32_t notif_sn, bool is_retx);
 
   pdcp_tx_metrics          metrics;
   pdcp_metrics_aggregator& metrics_agg;
@@ -227,6 +243,31 @@ struct formatter<srsran::pdcp_tx_state> {
   auto format(const srsran::pdcp_tx_state& st, FormatContext& ctx) const
   {
     return format_to(ctx.out(), "tx_next_ack={} tx_trans={} tx_next={}", st.tx_next_ack, st.tx_trans, st.tx_next);
+  }
+};
+
+template <>
+struct formatter<srsran::pdcp_entity_tx::early_drop_reason> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx)
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsran::pdcp_entity_tx::early_drop_reason& drop_reason, FormatContext& ctx) const
+  {
+    switch (drop_reason) {
+      case srsran::pdcp_entity_tx::early_drop_reason::zero_dbs:
+        return format_to(ctx.out(), "desired buffer size is 0");
+      case srsran::pdcp_entity_tx::early_drop_reason::full_rlc_queue:
+        return format_to(ctx.out(), "RLC SDU queue is full");
+      case srsran::pdcp_entity_tx::early_drop_reason::full_window:
+        return format_to(ctx.out(), "PDCP TX window is full");
+      case srsran::pdcp_entity_tx::early_drop_reason::no_drop:
+        return format_to(ctx.out(), "no drop");
+    }
+    return format_to(ctx.out(), "unkown");
   }
 };
 } // namespace fmt

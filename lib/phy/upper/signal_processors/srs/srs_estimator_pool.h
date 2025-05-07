@@ -22,18 +22,29 @@
 
 #pragma once
 
-#include "mobility_manager_impl.h"
+#include "srsran/phy/upper/signal_processors/srs/srs_estimator.h"
+#include "srsran/support/memory_pool/concurrent_thread_local_object_pool.h"
 
 namespace srsran {
 
-namespace srs_cu_cp {
+/// Concurrent Sounding Reference Signal propagation channel estimator pool.
+class srs_estimator_pool : public srs_estimator
+{
+public:
+  /// Creates a pool from a list of estimators. Ownership is transferred to the pool.
+  explicit srs_estimator_pool(std::vector<std::unique_ptr<srs_estimator>> estimators_) :
+    estimators(std::move(estimators_))
+  {
+  }
 
-/// Creates an instance of a mobility manager.
-std::unique_ptr<mobility_manager> create_mobility_manager(const mobility_manager_cfg&      cfg,
-                                                          mobility_manager_cu_cp_notifier& cu_cp_notifier,
-                                                          ngap_repository&                 ngap_db,
-                                                          du_processor_repository&         du_db,
-                                                          ue_manager&                      ue_mng);
+  // See interface for documentation.
+  srs_estimator_result estimate(const resource_grid_reader& grid, const srs_estimator_configuration& config) override
+  {
+    return estimators.get().estimate(grid, config);
+  }
 
-} // namespace srs_cu_cp
+private:
+  concurrent_thread_local_object_pool<srs_estimator> estimators;
+};
+
 } // namespace srsran

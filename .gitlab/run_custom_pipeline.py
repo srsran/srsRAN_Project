@@ -77,7 +77,6 @@ def _search_job_by_name(project: Project, job_name: str, timeout: int) -> Dict[s
     for pipeline in project.pipelines.list(iterator=True, source="schedule"):
         for job in pipeline.jobs.list(iterator=True):
             if job.name == job_name:
-                print(f'🟢 Job "{job.name}" found (id: {job.id})')
                 variable_dict.update(_extract_variables_from_job(project, job.id))
                 if "TESTBED" not in variable_dict:
                     variable_dict["TESTBED"] = "none"
@@ -93,6 +92,9 @@ def _search_job_by_name(project: Project, job_name: str, timeout: int) -> Dict[s
 
 def _extract_variables_from_job(project: Project, job_id: int) -> Dict[str, str]:
     job = project.jobs.get(job_id)
+    if "driver" in job.name:
+        return {}
+    print(f'🟢 Job "{job.name}" found (id: {job.id})')
     job_log = job.trace().decode("utf-8")
 
     variable_dict = {}
@@ -100,7 +102,8 @@ def _extract_variables_from_job(project: Project, job_id: int) -> Dict[str, str]
         variable_dict.update(_extract_variables_from_job(project, needs_job_id))
     for item in re.findall(VARIABLE_REGEX, job_log):
         key, value = item
-        variable_dict[key] = value.strip()
+        if key.isupper() and "$" not in value:
+            variable_dict[key] = value.strip()
 
     return variable_dict
 
@@ -109,7 +112,7 @@ def _create_pipeline(project: Project, branch: str, variables: Dict[str, str], t
     variable_array = []
     if test and variables.get("TESTBED", "none") != "none":
         print(f"  - Requested test: {test}")
-        variables["RETINA_LAUNCHER_ARGS"] = f'"{test}" ' + variables.get("RETINA_LAUNCHER_ARGS", "")
+        variables["E2E_FILE_OR_DIR"] = test
     print("⏩ Creating pipeline with variables:")
     for key, value in variables.items():
         if value:

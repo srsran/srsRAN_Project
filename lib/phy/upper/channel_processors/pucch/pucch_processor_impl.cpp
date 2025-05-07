@@ -74,102 +74,69 @@ pucch_processor_result pucch_processor_impl::process(const resource_grid_reader&
 const pucch_format1_map<pucch_processor_result>&
 pucch_processor_impl::process(const resource_grid_reader& grid, const format1_batch_configuration& batch_config)
 {
+  const format1_common_configuration& common_config = batch_config.common_config;
+  format1_configuration               proc_config   = {.context              = {},
+                                                       .slot                 = common_config.slot,
+                                                       .bwp_size_rb          = common_config.bwp_size_rb,
+                                                       .bwp_start_rb         = common_config.bwp_start_rb,
+                                                       .cp                   = common_config.cp,
+                                                       .starting_prb         = common_config.starting_prb,
+                                                       .second_hop_prb       = common_config.second_hop_prb,
+                                                       .n_id                 = common_config.n_id,
+                                                       .nof_harq_ack         = 0,
+                                                       .ports                = common_config.ports,
+                                                       .initial_cyclic_shift = 0,
+                                                       .nof_symbols          = common_config.nof_symbols,
+                                                       .start_symbol_index   = common_config.start_symbol_index,
+                                                       .time_domain_occ      = 0};
+
+  pucch_format1_map<unsigned> mux_harq_size;
+
+  for (const auto& this_pucch : batch_config.entries) {
+    unsigned initial_cyclic_shift = this_pucch.initial_cyclic_shift;
+    unsigned time_domain_occ      = this_pucch.time_domain_occ;
+    unsigned nof_harq_ack         = this_pucch.value.nof_harq_ack;
+
+    proc_config.context              = this_pucch.value.context;
+    proc_config.initial_cyclic_shift = initial_cyclic_shift;
+    proc_config.time_domain_occ      = time_domain_occ;
+    proc_config.nof_harq_ack         = nof_harq_ack;
+
+    [[maybe_unused]] std::string msg;
+    srsran_assert(handle_validation(msg, pdu_validator->is_valid(proc_config)), "{}", msg);
+
+    mux_harq_size.insert(initial_cyclic_shift, time_domain_occ, nof_harq_ack);
+  }
+
+  // Fill the detector configuration - recall that time_domain_occ, initial_cyclic_shift and nof_harq_ack are unused
+  // since given by mux_harq_size.
+  pucch_detector::format1_configuration detector_config = {
+      .slot                 = common_config.slot,
+      .cp                   = common_config.cp,
+      .starting_prb         = common_config.starting_prb + common_config.bwp_start_rb,
+      .second_hop_prb       = transform_optional(common_config.second_hop_prb, std::plus(), common_config.bwp_start_rb),
+      .start_symbol_index   = common_config.start_symbol_index,
+      .nof_symbols          = common_config.nof_symbols,
+      .group_hopping        = pucch_group_hopping::NEITHER,
+      .ports                = common_config.ports,
+      .beta_pucch           = 1.0F,
+      .time_domain_occ      = 0,
+      .initial_cyclic_shift = 0,
+      .n_id                 = common_config.n_id,
+      .nof_harq_ack         = 0};
+
+  const pucch_format1_map<pucch_detector::pucch_detection_result_csi>& detection_results =
+      detector->detect(grid, detector_config, mux_harq_size);
+
   // Clear all results from previous processing.
   batch_results.clear();
 
-  // Iterate each of the UE dedicated configuration.
-  for (unsigned initial_cyclic_shift = pucch_constants::format1_initial_cyclic_shift_range.start();
-       initial_cyclic_shift != pucch_constants::format1_initial_cyclic_shift_range.stop();
-       ++initial_cyclic_shift) {
-    for (unsigned time_domain_occ = pucch_constants::format1_time_domain_occ_range.start();
-         time_domain_occ != pucch_constants::format1_time_domain_occ_range.stop();
-         ++time_domain_occ) {
-      // Skip if it does not contain a value associated to the cyclic shift and time-domain OCC.
-      if (!batch_config.entries.contains(initial_cyclic_shift, time_domain_occ)) {
-        continue;
-      }
-
-      const auto&           common_config = batch_config.common_config;
-      const auto&           ue_config     = batch_config.entries.get(initial_cyclic_shift, time_domain_occ);
-      format1_configuration config        = {.context              = ue_config.context,
-                                             .slot                 = common_config.slot,
-                                             .bwp_size_rb          = common_config.bwp_size_rb,
-                                             .bwp_start_rb         = common_config.bwp_start_rb,
-                                             .cp                   = common_config.cp,
-                                             .starting_prb         = common_config.starting_prb,
-                                             .second_hop_prb       = common_config.second_hop_prb,
-                                             .n_id                 = common_config.n_id,
-                                             .nof_harq_ack         = ue_config.nof_harq_ack,
-                                             .ports                = common_config.ports,
-                                             .initial_cyclic_shift = initial_cyclic_shift,
-                                             .nof_symbols          = common_config.nof_symbols,
-                                             .start_symbol_index   = common_config.start_symbol_index,
-                                             .time_domain_occ      = time_domain_occ};
-
-      [[maybe_unused]] std::string msg;
-      srsran_assert(handle_validation(msg, pdu_validator->is_valid(config)), "{}", msg);
-
-      // Prepare channel estimation.
-      dmrs_pucch_estimator::format1_configuration estimator_config;
-      estimator_config.slot               = config.slot;
-      estimator_config.cp                 = config.cp;
-      estimator_config.start_symbol_index = config.start_symbol_index;
-      estimator_config.nof_symbols        = config.nof_symbols;
-      estimator_config.starting_prb       = config.starting_prb + config.bwp_start_rb;
-      estimator_config.second_hop_prb     = transform_optional(config.second_hop_prb, std::plus(), config.bwp_start_rb);
-      estimator_config.initial_cyclic_shift = config.initial_cyclic_shift;
-      estimator_config.time_domain_occ      = config.time_domain_occ;
-      estimator_config.n_id                 = config.n_id;
-      estimator_config.ports.assign(config.ports.begin(), config.ports.end());
-
-      // Unused channel estimator parameters for this format.
-      estimator_config.group_hopping = pucch_group_hopping::NEITHER;
-
-      // Prepare channel estimate.
-      channel_estimate::channel_estimate_dimensions dims;
-      dims.nof_prb       = config.bwp_start_rb + config.bwp_size_rb;
-      dims.nof_symbols   = get_nsymb_per_slot(config.cp);
-      dims.nof_rx_ports  = config.ports.size();
-      dims.nof_tx_layers = pucch_constants::MAX_LAYERS;
-
-      estimates.resize(dims);
-
-      // Perform channel estimation.
-      channel_estimator->estimate(estimates, grid, estimator_config);
-
-      // Prepare detector configuration.
-      pucch_detector::format1_configuration detector_config;
-      detector_config.slot         = config.slot;
-      detector_config.cp           = config.cp;
-      detector_config.starting_prb = config.starting_prb + config.bwp_start_rb;
-      if (config.second_hop_prb.has_value()) {
-        detector_config.second_hop_prb.emplace(*config.second_hop_prb + config.bwp_start_rb);
-      }
-      detector_config.start_symbol_index   = config.start_symbol_index;
-      detector_config.nof_symbols          = config.nof_symbols;
-      detector_config.group_hopping        = pucch_group_hopping::NEITHER;
-      detector_config.ports                = config.ports;
-      detector_config.beta_pucch           = 1.0F;
-      detector_config.time_domain_occ      = config.time_domain_occ;
-      detector_config.initial_cyclic_shift = config.initial_cyclic_shift;
-      detector_config.n_id                 = config.n_id;
-      detector_config.nof_harq_ack         = config.nof_harq_ack;
-
-      // Actual message detection.
-      pucch_detector::pucch_detection_result detection_result = detector->detect(grid, estimates, detector_config);
-
-      // Prepare result.
-      pucch_processor_result result;
-      estimates.get_channel_state_information(result.csi);
-      result.message          = detection_result.uci_message;
-      result.detection_metric = detection_result.detection_metric;
-
-      // Time alignment measurements are unreliable for PUCCH Format 1.
-      result.csi.reset_time_alignment();
-
-      // Emplace the results for the given PUCCH Format 1.
-      batch_results.emplace(initial_cyclic_shift, time_domain_occ, result);
-    }
+  for (const auto& this_result : detection_results) {
+    batch_results.insert(this_result.initial_cyclic_shift,
+                         this_result.time_domain_occ,
+                         {.csi              = this_result.value.csi,
+                          .message          = this_result.value.detection_result.uci_message,
+                          .detection_metric = this_result.value.detection_result.detection_metric});
   }
 
   return batch_results;

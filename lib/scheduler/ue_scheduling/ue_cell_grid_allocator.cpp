@@ -21,13 +21,9 @@
  */
 
 #include "ue_cell_grid_allocator.h"
-#include "../support/csi_report_helpers.h"
 #include "../support/dci_builder.h"
-#include "../support/mcs_calculator.h"
-#include "../support/sched_result_helpers.h"
 #include "../ue_context/ue_drx_controller.h"
 #include "grant_params_selector.h"
-#include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/scheduler/result/dci_info.h"
 #include "srsran/support/error_handling.h"
 
@@ -142,7 +138,7 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_newtx_dl_grant_request& reque
 {
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
   auto sched_ctxt = sched_helper::get_newtx_dl_sched_context(
-      request.user, cell_alloc[0].slot, request.pdsch_slot, request.dl_bwp_crb_limits, request.pending_bytes);
+      request.user, cell_alloc[0].slot, request.pdsch_slot, request.pending_bytes);
   if (not sched_ctxt.has_value()) {
     // No valid parameters were found for this UE.
     return make_unexpected(dl_alloc_failure_cause::other);
@@ -389,8 +385,8 @@ expected<vrb_interval, dl_alloc_failure_cause>
 ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& request)
 {
   // Select PDCCH searchSpace and PDSCH time-domain resource config.
-  auto sched_ctxt = sched_helper::get_retx_dl_sched_context(
-      request.user, cell_alloc[0].slot, request.pdsch_slot, request.dl_bwp_crb_limits, request.h_dl);
+  auto sched_ctxt =
+      sched_helper::get_retx_dl_sched_context(request.user, cell_alloc[0].slot, request.pdsch_slot, request.h_dl);
   if (not sched_ctxt) {
     return make_unexpected(dl_alloc_failure_cause::other);
   }
@@ -409,8 +405,9 @@ ue_cell_grid_allocator::allocate_dl_grant(const ue_retx_dl_grant_request& reques
 
   // Compute the corresponding CRBs.
   // TODO: support interleaving.
-  std::pair<crb_interval, crb_interval> crbs = {prb_to_crb(request.dl_bwp_crb_limits, static_cast<prb_interval>(vrbs)),
-                                                {}};
+  static constexpr search_space_id      ue_ded_ss_id = to_search_space_id(2);
+  const auto&                           ss_info      = request.user.get_cc().cfg().search_space(ue_ded_ss_id);
+  std::pair<crb_interval, crb_interval> crbs = {prb_to_crb(ss_info.dl_crb_lims, static_cast<prb_interval>(vrbs)), {}};
 
   // Set PDSCH parameters.
   set_pdsch_params(grant.value(), vrbs, crbs);
@@ -424,12 +421,8 @@ ue_cell_grid_allocator::allocate_ul_grant(const ue_newtx_ul_grant_request& reque
       uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(request.pusch_slot, request.user.crnti());
 
   // Select PDCCH searchSpace and PUSCH time-domain resource config.
-  auto sched_ctxt = sched_helper::get_newtx_ul_sched_context(request.user,
-                                                             cell_alloc[0].slot,
-                                                             request.pusch_slot,
-                                                             request.ul_bwp_crb_limits,
-                                                             pending_uci_harq_bits,
-                                                             request.pending_bytes);
+  auto sched_ctxt = sched_helper::get_newtx_ul_sched_context(
+      request.user, cell_alloc[0].slot, request.pusch_slot, pending_uci_harq_bits, request.pending_bytes);
   if (not sched_ctxt.has_value()) {
     // No valid parameters were found for this UE.
     return make_unexpected(alloc_status::skip_ue);
@@ -452,12 +445,8 @@ expected<vrb_interval, alloc_status> ue_cell_grid_allocator::allocate_ul_grant(c
       uci_alloc.get_scheduled_pdsch_counter_in_ue_uci(request.pusch_slot, request.user.crnti());
 
   // Select PDCCH searchSpace and PUSCH time-domain resource config.
-  auto sched_ctxt = sched_helper::get_retx_ul_sched_context(request.user,
-                                                            cell_alloc[0].slot,
-                                                            request.pusch_slot,
-                                                            request.ul_bwp_crb_limits,
-                                                            pending_uci_harq_bits,
-                                                            request.h_ul);
+  auto sched_ctxt = sched_helper::get_retx_ul_sched_context(
+      request.user, cell_alloc[0].slot, request.pusch_slot, pending_uci_harq_bits, request.h_ul);
   if (not sched_ctxt) {
     return make_unexpected(alloc_status::skip_ue);
   }
@@ -475,7 +464,7 @@ expected<vrb_interval, alloc_status> ue_cell_grid_allocator::allocate_ul_grant(c
   }
 
   // Set PUSCH parameters.
-  set_pusch_params(grant.value(), vrbs, request.ul_bwp_crb_limits);
+  set_pusch_params(grant.value(), vrbs);
 
   return vrbs;
 }
@@ -552,9 +541,7 @@ ue_cell_grid_allocator::setup_ul_grant_builder(const slice_ue&                  
   return ul_grant_info{&user, params, h_ul.value(), pdcch, &msg, pending_bytes};
 }
 
-void ue_cell_grid_allocator::set_pusch_params(ul_grant_info&      grant,
-                                              const vrb_interval& vrbs,
-                                              const crb_interval& ul_bwp_crb_limits)
+void ue_cell_grid_allocator::set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs)
 {
   srsran_assert(not vrbs.empty(), "Invalid set of PUSCH VRBs");
 
@@ -583,9 +570,9 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info&      grant,
   cell_slot_resource_allocator& pusch_alloc = cell_alloc[final_k2];
 
   // Compute exact MCS and TBS for this transmission.
-  std::optional<sch_mcs_tbs> mcs_tbs_info;
+  expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> mcs_tbs_info;
   // TODO: find TS reference for -> Since, PUSCH always uses non interleaved mapping, prbs = vrbs.
-  const auto crbs = prb_to_crb(ul_bwp_crb_limits, static_cast<prb_interval>(vrbs));
+  const auto crbs = prb_to_crb(ss_info.ul_crb_lims, static_cast<prb_interval>(vrbs));
   if (not is_retx) {
     // If it's a new Tx, compute the MCS and TBS from SNR, payload size, and available RBs.
     bool contains_dc =
@@ -602,11 +589,12 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info&      grant,
       mcs_tbs_info->tbs = compute_ul_tbs_unsafe(pusch_cfg, grant.cfg.recommended_mcs, vrbs.length());
 
       logger.warning(
-          "ue={} rnti={}: Failed to allocate PUSCH. Cause: no MCS such that code rate <= 0.95 with this "
+          "ue={} rnti={}: Failed to allocate PUSCH. Cause: {} with this "
           "configuration: mcs={} vrbs={} symbols={} nof_oh={} tb-sc-field={} layers={} pi2bpsk={} "
           "harq_bits={} csi1_bits={} csi2_bits={} mcs_table_idx={} dmrs_A_pos={} is_dmrs_type2={} dmrs_add_pos_idx={}",
           fmt::underlying(u.ue_index),
           u.crnti,
+          to_string(mcs_tbs_info.error()),
           grant.cfg.recommended_mcs,
           vrbs,
           pusch_cfg.symbols,
@@ -748,7 +736,8 @@ void ue_cell_grid_allocator::set_pusch_params(ul_grant_info&      grant,
   ul_harq_alloc_context pusch_sched_ctx;
   pusch_sched_ctx.dci_cfg_type = grant.pdcch->dci.type;
   if (not is_retx) {
-    pusch_sched_ctx.olla_mcs = ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table);
+    pusch_sched_ctx.olla_mcs =
+        ue_cc.link_adaptation_controller().calculate_ul_mcs(pusch_cfg.mcs_table, pusch_cfg.use_transform_precoder);
     pusch_sched_ctx.slice_id = grant.user->ran_slice_id();
   }
 
@@ -844,11 +833,10 @@ void ue_cell_grid_allocator::dl_newtx_grant_builder::set_pdsch_params(vrb_interv
   parent = nullptr;
 }
 
-void ue_cell_grid_allocator::ul_newtx_grant_builder::set_pusch_params(const vrb_interval& alloc_vrbs,
-                                                                      const crb_interval& ul_bwp_crb_limits)
+void ue_cell_grid_allocator::ul_newtx_grant_builder::set_pusch_params(const vrb_interval& alloc_vrbs)
 {
   // Transfer the PUSCH parameters to the parent UL grant.
-  parent->set_pusch_params(parent->ul_grants[grant_index], alloc_vrbs, ul_bwp_crb_limits);
+  parent->set_pusch_params(parent->ul_grants[grant_index], alloc_vrbs);
 
   // Set PUSCH parameters and set parent as nullptr to avoid further modifications.
   parent = nullptr;

@@ -63,7 +63,6 @@ inline scheduler_expert_config make_default_scheduler_expert_config()
   cfg.ue.ta_update_measurement_ul_sinr_threshold = 0.0F;
 
   cfg.log_broadcast_messages = true;
-  cfg.metrics_report_period  = std::chrono::milliseconds{1000};
 
   return cfg;
 }

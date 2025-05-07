@@ -32,10 +32,13 @@ inline srs_cu_up::cu_up_qos_config
 make_default_cu_up_custom_cfg_item(bool warn_on_drop, timer_duration metrics_period, bool test_mode)
 {
   srs_cu_up::cu_up_qos_config cfg{};
-  cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct
+  cfg.pdcp_custom_cfg = pdcp_custom_config{}; // defaults are configured as member-initialization within the struct.
   cfg.pdcp_custom_cfg.metrics_period  = metrics_period;
   cfg.pdcp_custom_cfg.tx.warn_on_drop = warn_on_drop;
   cfg.pdcp_custom_cfg.tx.test_mode    = test_mode;
+
+  cfg.f1u_cfg = srs_cu_up::f1u_config{}; // defaults are configured as member-initialization within the struct.
+
   return cfg;
 }
 

@@ -8,7 +8,7 @@
 
 - name: amarisoft-ue
   type: ue
-  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_NTN_VERSION}_${RETINA_VERSION}
+  image: ${RETINA_REGISTRY_PREFIX}/amarisoftue:${AMARISOFT_S72_NTN_VERSION}_${RETINA_VERSION}
   labels:
     - ${ZMQ_HOSTLABEL_0}
   nof_ports: 64

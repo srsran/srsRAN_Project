@@ -24,6 +24,7 @@
 
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/du/du_cell_config.h"
+#include "srsran/mac/cell_configuration.h"
 
 namespace srsran {
 
@@ -49,8 +50,8 @@ byte_buffer pack_sib19(const sib19_info& sib19_params, std::string* js_str = nul
 
 /// \brief Pack all cell BCCH-DL-SCH messages (SIB1 + SI messages) from DU cell configuration.
 /// \param[in] du_cfg DU Cell Configuration.
-/// \return byte buffers with packed cell BCCH-DL-SCH message. First buffer is SIB1, the rest are SI messages.
-std::vector<byte_buffer> pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg);
+/// \return A list of buffers with packed cell BCCH-DL-SCH message. First buffer is SIB1, the rest are SI messages.
+std::vector<bcch_dl_sch_payload_type> pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg);
 
 } // namespace asn1_packer
 } // namespace srs_du

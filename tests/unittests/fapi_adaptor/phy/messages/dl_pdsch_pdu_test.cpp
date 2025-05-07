@@ -72,25 +72,27 @@ static rb_allocation make_freq_allocation(fapi::pdsch_trans_type         trasn_t
                                           unsigned                       rb_size)
 {
   // Make VRB-to-PRB mapping.
-  vrb_to_prb_mapper mapper;
+  vrb_to_prb::configuration vrb_to_prb_configuration;
   switch (trasn_type) {
     case fapi::pdsch_trans_type::non_interleaved_common_ss:
-      mapper = vrb_to_prb_mapper::create_non_interleaved_common_ss(coreset_start - bwp_start);
+      vrb_to_prb_configuration = vrb_to_prb::create_non_interleaved_common_ss(coreset_start - bwp_start);
       break;
     case fapi::pdsch_trans_type::non_interleaved_other:
-      mapper = vrb_to_prb_mapper::create_non_interleaved_other();
+      vrb_to_prb_configuration = vrb_to_prb::create_non_interleaved_other();
       break;
     case fapi::pdsch_trans_type::interleaved_common_type0_coreset0:
-      mapper = vrb_to_prb_mapper::create_interleaved_coreset0(coreset_start - bwp_start, initial_bwp_size);
+      vrb_to_prb_configuration = vrb_to_prb::create_interleaved_coreset0(coreset_start - bwp_start, initial_bwp_size);
       break;
     case fapi::pdsch_trans_type::interleaved_common_any_coreset0_present:
-      mapper = vrb_to_prb_mapper::create_interleaved_common(coreset_start - bwp_start, bwp_start, initial_bwp_size);
+      vrb_to_prb_configuration =
+          vrb_to_prb::create_interleaved_common_ss(coreset_start - bwp_start, bwp_start, initial_bwp_size);
       break;
     case fapi::pdsch_trans_type::interleaved_common_any_coreset0_not_present:
-      mapper = vrb_to_prb_mapper::create_interleaved_common(coreset_start - bwp_start, bwp_start, bwp_size);
+      vrb_to_prb_configuration =
+          vrb_to_prb::create_interleaved_common_ss(coreset_start - bwp_start, bwp_start, bwp_size);
       break;
     case fapi::pdsch_trans_type::interleaved_other:
-      mapper = vrb_to_prb_mapper::create_interleaved_other(
+      vrb_to_prb_configuration = vrb_to_prb::create_interleaved_other(
           bwp_start, bwp_size, vrb_prb_mapping == fapi::vrb_to_prb_mapping_type::interleaved_rb_size2 ? 2 : 4);
       break;
   }
@@ -98,7 +100,7 @@ static rb_allocation make_freq_allocation(fapi::pdsch_trans_type         trasn_t
   rb_allocation result;
   if (resource_alloc == fapi::resource_allocation_type::type_0) {
     // Unpack the VRB bitmap. LSB of byte 0 of the bitmap represents the VRB 0.
-    bounded_bitset<MAX_RB> vrb_bitmap(bwp_size);
+    vrb_bitmap vrb_bitmap(bwp_size);
     for (unsigned vrb_index = 0, vrb_index_end = bwp_size; vrb_index != vrb_index_end; ++vrb_index) {
       unsigned byte = vrb_index / 8;
       unsigned bit  = vrb_index % 8;
@@ -107,9 +109,9 @@ static rb_allocation make_freq_allocation(fapi::pdsch_trans_type         trasn_t
       }
     }
 
-    result = rb_allocation::make_type0(vrb_bitmap, mapper);
+    result = rb_allocation::make_type0(vrb_bitmap, vrb_to_prb_configuration);
   } else {
-    result = rb_allocation::make_type1(rb_start, rb_size, mapper);
+    result = rb_allocation::make_type1(rb_start, rb_size, vrb_to_prb_configuration);
   }
 
   return result;
@@ -153,7 +155,7 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
                 // Iterate possible PDSCH data to NZP-CSI-RS ratios for Profile NR. It is ignored when
                 // power_ss_profile_nr is L1_use_profile_sss.
                 for (int power_profile_nr = -8; power_profile_nr != -7; ++power_profile_nr) {
-                  for (auto trasn_type : {fapi::pdsch_trans_type::non_interleaved_other,
+                  for (auto trans_type : {fapi::pdsch_trans_type::non_interleaved_other,
                                           fapi::pdsch_trans_type::non_interleaved_common_ss,
                                           fapi::pdsch_trans_type::interleaved_other,
                                           fapi::pdsch_trans_type::interleaved_common_type0_coreset0,
@@ -220,7 +222,7 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
 
                       // :TODO: not filling CBG to retx control parameters.
 
-                      builder.set_maintenance_v3_bwp_parameters(trasn_type, coreset_start, initial_bwp_size);
+                      builder.set_maintenance_v3_bwp_parameters(trans_type, coreset_start, initial_bwp_size);
                       builder.set_maintenance_v3_codeword_parameters(ldpc_graph, tb_size_lbrm_bytes, 0, 0);
                       builder.get_tx_precoding_and_beamforming_pdu_builder().add_prg(0, {}).set_basic_parameters(51, 0);
 
@@ -266,7 +268,7 @@ TEST(fapi_to_phy_pdsch_conversion_test, valid_pdu_conversion_success)
                       ASSERT_FLOAT_EQ(ratio_pdsch_data_to_sss_dB, proc_pdu.ratio_pdsch_data_to_sss_dB);
 
                       // Frequency domain allocation.
-                      rb_allocation freq_allocation = make_freq_allocation(trasn_type,
+                      rb_allocation freq_allocation = make_freq_allocation(trans_type,
                                                                            bwp_start,
                                                                            bwp_size,
                                                                            coreset_start,

@@ -14,14 +14,14 @@ variables:
       - "viavi"
       - "none"
     value: "zmq"
+  E2E_FILE_OR_DIR:
+    description: Path to the test file or directory to run. Empty for all tests in the folder.
+    value: ""
   MARKERS:
     description: Selected pytest marker (label / tag). Tests with that mark will run.
     value: ""
   KEYWORDS:
     description: Select tests by keyword expressions. This will run tests which contain names that match the given string expression (case-insensitive), which can include Python operators that use filenames, class names and function names as variables
-    value: ""
-  PYTEST_ARGS:
-    description: Extra pytest args for the e2e suite to run
     value: ""
   RETINA_PARAM_ARGS:
     description: Extra retina args for the e2e suite to run
@@ -96,9 +96,9 @@ variables:
       # Print E2E parameters
       echo "GROUP=${GROUP}"
       echo "TESTBED=${TESTBED}"
+      echo "E2E_FILE_OR_DIR=${E2E_FILE_OR_DIR}"
       echo "MARKERS=${MARKERS}"
       echo "KEYWORDS=${KEYWORDS}"
-      echo "PYTEST_ARGS=${PYTEST_ARGS}"
       echo "RETINA_PARAM_ARGS=${RETINA_PARAM_ARGS}"
       echo "RETINA_LAUNCHER_ARGS=${RETINA_LAUNCHER_ARGS}"
       echo "E2E_LOG_LEVEL=${E2E_LOG_LEVEL}"
@@ -126,7 +126,7 @@ variables:
       export LOGNAME=ci_${GROUP}
     # Run Retina
     - |
-      E2E_CMD="retina-launcher ${RETINA_LAUNCHER_ARGS} --retina-request=${SRSRANDIR}/.gitlab/ci/e2e/${TESTBED}.yml ${PYTEST_ARGS} -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_PARAM_ARGS}"
+      E2E_CMD="retina-launcher ${E2E_FILE_OR_DIR} ${RETINA_LAUNCHER_ARGS} --retina-request=${SRSRANDIR}/.gitlab/ci/e2e/${TESTBED}.yml -k '${KEYWORDS}' -m '${MARKERS}' --register-parameter ue.all.log_level=$E2E_LOG_LEVEL gnb.all.log_level=$E2E_LOG_LEVEL ${RETINA_PARAM_ARGS}"
       echo "${E2E_CMD}"
       eval $E2E_CMD
   after_script:

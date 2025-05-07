@@ -23,6 +23,7 @@
 #include "srsran/support/executors/unique_thread.h"
 #include "fmt/std.h"
 #include <cstdio>
+#include <mutex>
 #include <pthread.h>
 #include <sys/types.h>
 
@@ -129,6 +130,54 @@ static void print_thread_priority(pthread_t t, const char* tname, std::thread::i
   fmt::print("Thread [{}:{}]: Sched policy is \"{}\". Priority is {}.\n", tname, tid, p, param.sched_priority);
 }
 
+namespace {
+
+/// List of observers of thread creation/deletion. This list may only grow in size.
+class unique_thread_observer_list
+{
+public:
+  void add(std::unique_ptr<unique_thread::observer> observer)
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    observers.emplace_back(std::move(observer));
+  }
+
+  /// Called on every thread creation.
+  void on_thread_creation()
+  {
+    // Note: we use index-based loop because list of observers may increase (never decrease) throughout the loop.
+    std::unique_lock<std::mutex> lock(mutex);
+    for (unsigned i = 0; i < observers.size(); ++i) {
+      unique_thread::observer* observer = observers[i].get();
+      lock.unlock();
+      // Call observer without holding the mutex.
+      observer->on_thread_creation();
+      lock.lock();
+    }
+  }
+
+  /// Called on every thread destruction.
+  void on_thread_destruction()
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    for (unsigned i = 0; i < observers.size(); ++i) {
+      unique_thread::observer* observer = observers[i].get();
+      lock.unlock();
+      observer->on_thread_destruction();
+      lock.lock();
+    }
+  }
+
+private:
+  std::mutex                                            mutex;
+  std::vector<std::unique_ptr<unique_thread::observer>> observers;
+};
+
+/// Global unique list of thread lifetime observers.
+unique_thread_observer_list thread_observers;
+
+} // namespace
+
 const os_sched_affinity_bitmask& os_sched_affinity_bitmask::available_cpus()
 {
   static os_sched_affinity_bitmask available_cpus_mask = []() {
@@ -190,8 +239,14 @@ std::thread unique_thread::make_thread(const std::string&               name,
     }
 #endif
 
+    // Trigger observers.
+    thread_observers.on_thread_creation();
+
     // Run task.
     callable();
+
+    // Trigger observers.
+    thread_observers.on_thread_destruction();
   });
 }
 
@@ -210,4 +265,9 @@ void srsran::print_this_thread_priority()
 void unique_thread::print_priority()
 {
   print_thread_priority(thread_handle.native_handle(), name.c_str(), thread_handle.get_id());
+}
+
+void unique_thread::add_observer(std::unique_ptr<observer> observer)
+{
+  thread_observers.add(std::move(observer));
 }

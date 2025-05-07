@@ -368,19 +368,7 @@ def test_zmq_2x2_mimo(
     )
 
 
-@mark.parametrize(
-    "direction",
-    (param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),),
-)
-@mark.parametrize(
-    "protocol",
-    (param(IPerfProto.UDP, id="udp", marks=mark.udp),),
-)
-@mark.parametrize(
-    "band, common_scs, bandwidth",
-    (param(41, 30, 50, id="band:%s-scs:%s-bandwidth:%s"),),
-)
-@mark.zmq_64_ues
+@mark.zmq
 @mark.flaky(reruns=2, only_rerun=["failed to start", "Attach timeout reached", "5GC crashed"])
 # pylint: disable=too-many-arguments,too-many-positional-arguments
 def test_zmq_64_ues(
@@ -389,11 +377,6 @@ def test_zmq_64_ues(
     ue_64: Tuple[UEStub, ...],
     fivegc: FiveGCStub,
     gnb: GNBStub,
-    band: int,
-    common_scs: int,
-    bandwidth: int,
-    protocol: IPerfProto,
-    direction: IPerfDir,
 ):
     """
     ZMQ 2x2 mimo IPerfs
@@ -405,14 +388,14 @@ def test_zmq_64_ues(
         ue_array=ue_64,
         gnb=gnb,
         fivegc=fivegc,
-        band=band,
-        common_scs=common_scs,
-        bandwidth=bandwidth,
+        band=41,
+        common_scs=30,
+        bandwidth=50,
         sample_rate=None,
         iperf_duration=SHORT_DURATION,
-        protocol=protocol,
+        protocol=IPerfProto.UDP,
         bitrate=MEDIUM_BITRATE,
-        direction=direction,
+        direction=IPerfDir.BIDIRECTIONAL,
         global_timing_advance=-1,
         time_alignment_calibration=0,
         always_download_artifacts=False,
@@ -613,6 +596,71 @@ def test_zmq(
         bitrate_threshold=0,
         ue_stop_timeout=1,
         gnb_post_cmd=("log --hex_max_size=32 cu_cp --inactivity_timer=600", ""),
+    )
+
+
+@mark.parametrize(
+    "direction",
+    (
+        param(IPerfDir.DOWNLINK, id="downlink", marks=mark.downlink),
+        param(IPerfDir.UPLINK, id="uplink", marks=mark.uplink),
+        param(IPerfDir.BIDIRECTIONAL, id="bidirectional", marks=mark.bidirectional),
+    ),
+)
+@mark.parametrize(
+    "protocol",
+    (param(IPerfProto.TCP, id="tcp", marks=mark.tcp),),
+)
+@mark.parametrize(
+    "band, common_scs, bandwidth, bitrate",
+    (
+        param(41, 30, 10, MEDIUM_BITRATE, id=ZMQ_ID),
+        param(41, 30, 20, MEDIUM_BITRATE, id=ZMQ_ID),
+        param(41, 30, 50, MEDIUM_BITRATE, id=ZMQ_ID),
+    ),
+)
+@mark.zmq
+# pylint: disable=too-many-arguments,too-many-positional-arguments
+def test_zmq_transform_precoding(
+    retina_manager: RetinaTestManager,
+    retina_data: RetinaTestData,
+    ue_32: Tuple[UEStub, ...],
+    fivegc: FiveGCStub,
+    gnb: GNBStub,
+    band: int,
+    common_scs: int,
+    bandwidth: int,
+    bitrate: int,
+    protocol: IPerfProto,
+    direction: IPerfDir,
+):
+    """
+    ZMQ IPerfs
+    """
+
+    _iperf(
+        retina_manager=retina_manager,
+        retina_data=retina_data,
+        ue_array=ue_32,
+        gnb=gnb,
+        fivegc=fivegc,
+        band=band,
+        common_scs=common_scs,
+        bandwidth=bandwidth,
+        sample_rate=None,  # default from testbed
+        iperf_duration=SHORT_DURATION,
+        bitrate=bitrate,
+        protocol=protocol,
+        direction=direction,
+        global_timing_advance=0,
+        time_alignment_calibration=0,
+        always_download_artifacts=False,
+        bitrate_threshold=0,
+        ue_stop_timeout=1,
+        gnb_post_cmd=(
+            "log --hex_max_size=32 cu_cp --inactivity_timer=600",
+            "cell_cfg pusch --enable_transform_precoding=true",
+        ),
     )
 
 

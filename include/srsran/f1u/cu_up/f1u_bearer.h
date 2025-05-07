@@ -26,10 +26,7 @@
 #include "srsran/f1u/cu_up/f1u_tx_sdu_handler.h"
 #include "srsran/ran/up_transport_layer_info.h"
 
-namespace srsran {
-namespace srs_cu_up {
-
-constexpr uint32_t f1u_dl_notif_time_ms = 10;
+namespace srsran::srs_cu_up {
 
 class f1u_bearer_disconnector;
 
@@ -58,5 +55,4 @@ public:
   virtual void disconnect_cu_bearer(const up_transport_layer_info& ul_up_tnl_info) = 0;
 };
 
-} // namespace srs_cu_up
-} // namespace srsran
+} // namespace srsran::srs_cu_up

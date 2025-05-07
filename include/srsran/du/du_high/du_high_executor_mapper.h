@@ -24,7 +24,9 @@
 
 #include "srsran/ran/du_types.h"
 #include "srsran/support/executors/task_executor.h"
+#include <chrono>
 #include <memory>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -160,6 +162,8 @@ struct du_high_executor_config {
   bool is_rt_mode_enabled = true;
   /// Whether to trace executed tasks.
   bool trace_exec_tasks = false;
+  /// Whether to collect metrics on executed tasks and at which period.
+  std::optional<std::chrono::milliseconds> metrics_period;
 };
 
 /// \brief Creates an executor mapper for the DU-high.

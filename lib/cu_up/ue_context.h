@@ -146,7 +146,15 @@ public:
   }
 
   // security management
-  void set_security_config(const security::sec_as_config& security_info) { cfg.security_info = security_info; }
+  void set_security_config(const security::sec_as_config& security_info)
+  {
+    cfg.security_info = security_info;
+    pdu_session_manager.update_security_config(security_info);
+  }
+  void notify_pdcp_pdu_processing_stopped() { pdu_session_manager.notify_pdcp_pdu_processing_stopped(); }
+  void restart_pdcp_pdu_processing() { pdu_session_manager.restart_pdcp_pdu_processing(); }
+
+  async_task<void> await_rx_crypto_tasks() { return pdu_session_manager.await_crypto_rx_all_pdu_sessions(); }
 
   // pdu_session_manager_ctrl
   pdu_session_setup_result setup_pdu_session(const e1ap_pdu_session_res_to_setup_item& session) override

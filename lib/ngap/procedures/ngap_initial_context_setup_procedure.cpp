@@ -91,12 +91,12 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
 
   // Notify metrics handler about successful PDU sessions.
   for (const auto& pdu_session : msg.pdu_session_res_setup_response_items) {
-    metrics_handler.handle_successful_pdu_session_setup(pdu_session_id_to_snssai.at(pdu_session.pdu_session_id));
+    metrics_handler.aggregate_successful_pdu_session_setup(pdu_session_id_to_snssai.at(pdu_session.pdu_session_id));
   }
   // Notify metrics handler about failed PDU sessions.
   for (const auto& pdu_session : msg.pdu_session_res_failed_to_setup_items) {
-    metrics_handler.handle_failed_pdu_session_setup(pdu_session_id_to_snssai.at(pdu_session.pdu_session_id),
-                                                    pdu_session.unsuccessful_transfer.cause);
+    metrics_handler.aggregate_failed_pdu_session_setup(pdu_session_id_to_snssai.at(pdu_session.pdu_session_id),
+                                                       pdu_session.unsuccessful_transfer.cause);
   }
 
   amf_notifier.on_new_message(ngap_msg);
@@ -120,8 +120,8 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
 
   // Notify metrics handler about failed PDU sessions.
   for (const auto& pdu_session : msg.pdu_session_res_failed_to_setup_items) {
-    metrics_handler.handle_failed_pdu_session_setup(pdu_session_id_to_snssai.at(pdu_session.pdu_session_id),
-                                                    pdu_session.unsuccessful_transfer.cause);
+    metrics_handler.aggregate_failed_pdu_session_setup(pdu_session_id_to_snssai.at(pdu_session.pdu_session_id),
+                                                       pdu_session.unsuccessful_transfer.cause);
   }
 
   logger.log_info("Sending InitialContextSetupFailure");

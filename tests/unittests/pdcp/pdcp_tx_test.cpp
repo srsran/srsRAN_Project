@@ -113,13 +113,14 @@ TEST_P(pdcp_tx_test, pdu_gen)
   }
 }
 
-/// \brief Test correct stalling of PDCP if RLC SDU queue is full
-TEST_P(pdcp_tx_test, pdu_stall)
+/// \brief Test correct stalling of PDCP if RLC SDU queue is full; then continue via delivery notification
+TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_notif)
 {
   init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_discard_timer::infinity);
 
   auto test_pdu_gen = [this](uint32_t tx_next) {
-    srsran::test_delimit_logger delimiter("TX PDU stall. SN_SIZE={} COUNT={}", sn_size, tx_next);
+    srsran::test_delimit_logger delimiter(
+        "TX PDU stall; then continue via RETX notif. SN_SIZE={} COUNT={}", sn_size, tx_next);
     // Set state of PDCP entiy
     pdcp_tx_state st = {tx_next, tx_next, tx_next};
     pdcp_tx->set_state(st);
@@ -156,11 +157,79 @@ TEST_P(pdcp_tx_test, pdu_stall)
       pdcp_tx->handle_transmit_notification(pdcp_compute_sn(tx_next + stall - 1, sn_size));
       pdcp_tx->handle_delivery_notification(pdcp_compute_sn(tx_next + stall - 1, sn_size));
 
+      // Write an SDU that should not be dropped
+      byte_buffer sdu = byte_buffer::create(sdu1).value();
+      pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Check there is a new PDU
+      ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+      test_frame.pdu_queue.pop();
+    }
+  };
+
+  if (config.sn_size == pdcp_sn_size::size12bits) {
+    test_pdu_gen(0);
+    test_pdu_gen(2048);
+    test_pdu_gen(4095);
+    test_pdu_gen(4096);
+  } else if (config.sn_size == pdcp_sn_size::size18bits) {
+    test_pdu_gen(0);
+    test_pdu_gen(131072);
+    test_pdu_gen(262144);
+  } else {
+    FAIL();
+  }
+}
+
+/// \brief Test correct stalling of PDCP if RLC SDU queue is full; then continue via delivery retransmitted notification
+TEST_P(pdcp_tx_test, pdu_stall_then_continue_via_deliv_retx_notif)
+{
+  init(GetParam(), pdcp_rb_type::drb, pdcp_rlc_mode::am, pdcp_discard_timer::infinity);
+
+  auto test_pdu_gen = [this](uint32_t tx_next) {
+    srsran::test_delimit_logger delimiter(
+        "TX PDU stall; then continue via RETX notif. SN_SIZE={} COUNT={}", sn_size, tx_next);
+    // Set state of PDCP entiy
+    pdcp_tx_state st = {tx_next, tx_next, tx_next};
+    pdcp_tx->set_state(st);
+    pdcp_tx->configure_security(sec_cfg, security::integrity_enabled::on, security::ciphering_enabled::on);
+
+    uint32_t pdu_size             = sn_size == pdcp_sn_size::size12bits ? pdu_size_snlen12 : pdu_size_snlen18;
+    uint32_t rlc_queue_size       = 16;
+    uint32_t rlc_queue_size_bytes = rlc_queue_size * pdu_size;
+    pdcp_tx->handle_desired_buffer_size_notification(rlc_queue_size_bytes);
+    uint32_t window_size = pdcp_window_size(sn_size);
+    uint32_t stall       = std::min(rlc_queue_size, window_size - 1); // nof SDUs before stalling
+
+    // Write SDU
+    for (uint32_t count = tx_next; count < tx_next + stall; ++count) {
+      byte_buffer sdu = byte_buffer::create(sdu1).value();
+      pdcp_tx->handle_sdu(std::move(sdu));
+      // Check there is a new PDU
+      ASSERT_EQ(test_frame.pdu_queue.size(), 1);
+      byte_buffer pdu = std::move(test_frame.pdu_queue.front());
+      test_frame.pdu_queue.pop();
+    }
+
+    {
       // Write an SDU that should be dropped
       byte_buffer sdu = byte_buffer::create(sdu1).value();
       pdcp_tx->handle_sdu(std::move(sdu));
 
       // Check there is no new PDU
+      ASSERT_EQ(test_frame.pdu_queue.size(), 0);
+    }
+
+    {
+      // Notify retransmission of all PDUs
+      pdcp_tx->handle_retransmit_notification(pdcp_compute_sn(tx_next + stall - 1, sn_size));
+      pdcp_tx->handle_delivery_retransmitted_notification(pdcp_compute_sn(tx_next + stall - 1, sn_size));
+
+      // Write an SDU that should not be dropped
+      byte_buffer sdu = byte_buffer::create(sdu1).value();
+      pdcp_tx->handle_sdu(std::move(sdu));
+
+      // Check there is a new PDU
       ASSERT_EQ(test_frame.pdu_queue.size(), 1);
       test_frame.pdu_queue.pop();
     }

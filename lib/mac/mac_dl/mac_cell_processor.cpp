@@ -37,16 +37,16 @@ using namespace srsran;
 /// Maximum PDSH K0 value as per TS38.331 "PDSCH-TimeDomainResourceAllocation".
 static constexpr size_t MAX_K0_DELAY = 32;
 
-mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg_req_,
-                                       mac_scheduler_cell_info_handler& sched_,
-                                       du_rnti_table&                   rnti_table,
-                                       mac_cell_result_notifier&        phy_notifier_,
-                                       task_executor&                   cell_exec_,
-                                       task_executor&                   slot_exec_,
-                                       task_executor&                   ctrl_exec_,
-                                       mac_pcap&                        pcap_,
-                                       timer_manager&                   timers_,
-                                       mac_dl_cell_metric_handler&      cell_metrics) :
+mac_cell_processor::mac_cell_processor(const mac_cell_creation_request&     cell_cfg_req_,
+                                       mac_scheduler_cell_info_handler&     sched_,
+                                       du_rnti_table&                       rnti_table,
+                                       mac_cell_result_notifier&            phy_notifier_,
+                                       task_executor&                       cell_exec_,
+                                       task_executor&                       slot_exec_,
+                                       task_executor&                       ctrl_exec_,
+                                       mac_pcap&                            pcap_,
+                                       timer_manager&                       timers_,
+                                       const mac_cell_metric_report_config& metrics_cfg) :
   logger(srslog::fetch_basic_logger("MAC")),
   cell_cfg(cell_cfg_req_),
   cell_exec(cell_exec_),
@@ -71,7 +71,7 @@ mac_cell_processor::mac_cell_processor(const mac_cell_creation_request& cell_cfg
   dlsch_assembler(ue_mng, dl_harq_buffers),
   paging_assembler(pdu_pool),
   sched(sched_),
-  metrics(cell_metrics),
+  metrics(cell_cfg.pci, cell_cfg.scs_common, metrics_cfg),
   pcap(pcap_),
   slot_time_mapper(to_numerology_value(cell_cfg_req_.scs_common))
 {
@@ -83,7 +83,9 @@ async_task<void> mac_cell_processor::start()
       cell_exec,
       ctrl_exec,
       timers,
-      [this]() {
+      launch_async([this](coro_context<async_task<void>>& ctx) {
+        CORO_BEGIN(ctx);
+
         if (state == cell_state::active) {
           // No-op.
           return;
@@ -92,11 +94,15 @@ async_task<void> mac_cell_processor::start()
         // Notify scheduler about activation.
         sched.start_cell(cell_cfg.cell_index);
 
-        // set cell as active.
+        // Initiate retrieval of metrics for this cell.
+        metrics.on_cell_activation();
+
         state = cell_state::active;
 
         logger.info("cell={}: Cell was activated", fmt::underlying(cell_cfg.cell_index));
-      },
+
+        CORO_RETURN();
+      }),
       [this]() {
         logger.warning("cell={}: Postponed cell start operation. Cause: Task queue is full",
                        fmt::underlying(cell_cfg.cell_index));
@@ -119,6 +125,9 @@ async_task<void> mac_cell_processor::stop()
 
         // Notify scheduler about activation.
         sched.stop_cell(cell_cfg.cell_index);
+
+        // Notify that cell metrics stopped being collected.
+        metrics.on_cell_deactivation();
 
         logger.info("cell={}: Cell was stopped.", fmt::underlying(cell_cfg.cell_index));
       },

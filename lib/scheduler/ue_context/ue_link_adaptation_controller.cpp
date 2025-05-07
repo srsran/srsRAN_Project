@@ -139,7 +139,8 @@ std::optional<sch_mcs_index> ue_link_adaptation_controller::calculate_dl_mcs(pds
   return mcs;
 }
 
-sch_mcs_index ue_link_adaptation_controller::calculate_ul_mcs(pusch_mcs_table mcs_table) const
+sch_mcs_index ue_link_adaptation_controller::calculate_ul_mcs(pusch_mcs_table mcs_table,
+                                                              bool            use_transform_precoder) const
 {
   if (cell_cfg.expert_cfg.ue.ul_mcs.length() == 0) {
     // Fixed MCS.
@@ -147,7 +148,7 @@ sch_mcs_index ue_link_adaptation_controller::calculate_ul_mcs(pusch_mcs_table mc
   }
 
   // Derive MCS using the combination of estimated UL SNR + outer loop link adaptation.
-  sch_mcs_index mcs = map_snr_to_mcs_ul(get_effective_snr(), mcs_table);
+  sch_mcs_index mcs = map_snr_to_mcs_ul(get_effective_snr(), mcs_table, use_transform_precoder);
   mcs               = std::min(std::max(mcs, ul_mcs_lims.start()), ul_mcs_lims.stop());
 
   return mcs;

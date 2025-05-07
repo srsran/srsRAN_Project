@@ -24,7 +24,6 @@
 #include "dummy_ric.h"
 #include "lib/e2/common/e2_impl.h"
 #include "tests/unittests/e2/common/e2_test_helpers.h"
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/e2/e2ap_configuration_helpers.h"
 #include "srsran/e2/e2sm/e2sm_manager.h"
 #include "srsran/e2/gateways/e2_connection_client.h"

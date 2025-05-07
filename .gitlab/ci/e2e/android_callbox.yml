@@ -54,6 +54,7 @@
   type: 5gc
   image: ${RETINA_REGISTRY_PREFIX}/amarisoft5gc-remote:${RETINA_VERSION}
   taints: ["purpose=retina"]
+  force_external_ip: true
   requirements:
     arch: amd64
     cpu:

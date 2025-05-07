@@ -21,8 +21,7 @@
  */
 
 #include "mac_dl_metric_handler.h"
-#include "srsran/mac/mac_metrics_notifier.h"
-#include "srsran/support/executors/execute_until_success.h"
+#include "srsran/srslog/srslog.h"
 
 using namespace srsran;
 
@@ -48,20 +47,58 @@ void mac_dl_cell_metric_handler::non_persistent_data::latency_data::save_sample(
   }
 }
 
-mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(
-    du_cell_index_t                                                        cell_index_,
-    pci_t                                                                  cell_pci_,
-    unsigned                                                               period_slots_,
-    std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report_) :
-  cell_index(cell_index_),
+mac_dl_cell_metric_handler::mac_dl_cell_metric_handler(pci_t                                cell_pci_,
+                                                       subcarrier_spacing                   scs,
+                                                       const mac_cell_metric_report_config& metrics_cfg) :
   cell_pci(cell_pci_),
-  on_new_cell_report(std::move(on_new_cell_report_)),
-  period_slots(period_slots_)
+  period_slots(metrics_cfg.report_period.count() * get_nof_slots_per_subframe(scs)),
+  notifier(metrics_cfg.notifier)
 {
+}
+
+void mac_dl_cell_metric_handler::on_cell_activation()
+{
+  if (not enabled()) {
+    return;
+  }
+  data.last_report = false;
+  cell_activated   = true;
+}
+
+void mac_dl_cell_metric_handler::on_cell_deactivation()
+{
+  if (not enabled()) {
+    return;
+  }
+  if (not cell_activated or not next_report_slot.valid()) {
+    // Activation hasn't started or hasn't completed.
+    return;
+  }
+
+  data.last_report = true;
+  cell_activated   = false;
+
+  // Report the remainder metrics.
+  send_new_report(last_sl_tx + 1);
 }
 
 void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& meas)
 {
+  last_sl_tx = meas.sl_tx;
+  if (not enabled() or not cell_activated) {
+    return;
+  }
+
+  if (not next_report_slot.valid() and cell_activated) {
+    // First slot after cell activation.
+    // We will make the \c next_report_slot aligned with the period.
+    unsigned mod_val = meas.sl_tx.to_uint() % period_slots;
+    next_report_slot = mod_val > 0 ? meas.sl_tx + period_slots - mod_val : meas.sl_tx;
+    slot_duration    = std::chrono::nanoseconds(unsigned(1e6 / meas.sl_tx.nof_slots_per_subframe()));
+    // Notify cell creation and next slot on which the report will be generated.
+    notifier->on_cell_activation(next_report_slot);
+  }
+
   // Time difference
   const auto                     stop_tp           = metric_clock::now();
   const std::chrono::nanoseconds enqueue_time_diff = meas.start_tp - meas.slot_ind_enqueue_tp;
@@ -82,6 +119,9 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
 
   // Update metrics.
   data.nof_slots++;
+  if (not data.start_slot.valid()) {
+    data.start_slot = meas.sl_tx;
+  }
   data.wall.save_sample(meas.sl_tx, time_diff);
   data.slot_enqueue.save_sample(meas.sl_tx, enqueue_time_diff);
   if (meas.dl_tti_req_tp != metric_clock::time_point{}) {
@@ -107,89 +147,41 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
   }
 
   if (meas.sl_tx >= next_report_slot) {
-    // Prepare cell report.
-    mac_dl_cell_metric_report report;
-    report.pci                                = cell_pci;
-    report.slot_duration                      = slot_duration;
-    report.nof_slots                          = data.nof_slots;
-    report.wall_clock_latency                 = data.wall.get_report(data.nof_slots);
-    report.user_time                          = data.user.get_report(data.nof_slots);
-    report.sys_time                           = data.sys.get_report(data.nof_slots);
-    report.slot_ind_handle_latency            = data.slot_enqueue.get_report(data.nof_slots);
-    report.dl_tti_req_latency                 = data.dl_tti_req.get_report(data.nof_slots);
-    report.tx_data_req_latency                = data.tx_data_req.get_report(data.nof_slots);
-    report.count_voluntary_context_switches   = data.count_vol_context_switches;
-    report.count_involuntary_context_switches = data.count_invol_context_switches;
-
-    // Reset counters.
-    data = {};
-
-    // Set next report slot.
-    next_report_slot += period_slots;
-
-    // Forward cell report.
-    on_new_cell_report(cell_index, report);
+    send_new_report(meas.sl_tx);
   }
 }
 
-mac_dl_metric_handler::mac_dl_metric_handler(std::chrono::milliseconds period_,
-                                             mac_metrics_notifier&     notifier_,
-                                             timer_manager&            timers_,
-                                             task_executor&            ctrl_exec_) :
-  period(period_), notifier(notifier_), timers(timers_), ctrl_exec(ctrl_exec_)
+void mac_dl_cell_metric_handler::send_new_report(slot_point sl_tx)
 {
-}
-
-mac_dl_cell_metric_handler&
-mac_dl_metric_handler::add_cell(du_cell_index_t cell_index, pci_t pci, subcarrier_spacing scs)
-{
-  if (not cells.contains(cell_index)) {
-    unsigned period_slots = period.count() * get_nof_slots_per_subframe(scs);
-    cells.emplace(
-        cell_index,
-        std::make_unique<cell_context>(
-            cell_index, pci, period_slots, [this](du_cell_index_t cidx, const mac_dl_cell_metric_report& rep) {
-              handle_cell_report(cidx, rep);
-            }));
-    cell_left_bitmap.fetch_add((1U << static_cast<unsigned>(cell_index)), std::memory_order_acq_rel);
+  // Prepare cell report.
+  mac_dl_cell_metric_report report;
+  report.pci           = cell_pci;
+  report.start_slot    = sl_tx - data.nof_slots;
+  report.slot_duration = slot_duration;
+  report.nof_slots     = data.nof_slots;
+  if (data.nof_slots > 0) {
+    report.wall_clock_latency      = data.wall.get_report(data.nof_slots);
+    report.user_time               = data.user.get_report(data.nof_slots);
+    report.sys_time                = data.sys.get_report(data.nof_slots);
+    report.slot_ind_handle_latency = data.slot_enqueue.get_report(data.nof_slots);
+    report.dl_tti_req_latency      = data.dl_tti_req.get_report(data.nof_slots);
+    report.tx_data_req_latency     = data.tx_data_req.get_report(data.nof_slots);
   }
-  return cells[cell_index]->handler;
-}
+  report.count_voluntary_context_switches   = data.count_vol_context_switches;
+  report.count_involuntary_context_switches = data.count_invol_context_switches;
+  report.cell_deactivated                   = data.last_report;
 
-void mac_dl_metric_handler::remove_cell(du_cell_index_t cell_index)
-{
-  // TODO
-}
+  // Set next report slot.
+  next_report_slot += period_slots;
 
-void mac_dl_metric_handler::handle_cell_report(du_cell_index_t cell_index, const mac_dl_cell_metric_report& cell_report)
-{
-  // Note: Function called from the cell execution context. Use thread-safe queue to forward result.
-  cells[cell_index]->queue.try_push(cell_report);
+  // Reset counters.
+  data = {};
 
-  unsigned cell_bit = 1U << static_cast<unsigned>(cell_index);
-  if (cell_left_bitmap.fetch_and(~cell_bit, std::memory_order_acq_rel) == cell_bit) {
-    // All cells have reported. Prepare and forward the full report.
-
-    defer_until_success(ctrl_exec, timers, [this]() { prepare_full_report(); });
+  if (not report.cell_deactivated) {
+    // Forward normal cell report.
+    notifier->on_cell_metric_report(report);
+  } else {
+    notifier->on_cell_deactivation(report);
+    next_report_slot = {};
   }
-}
-
-void mac_dl_metric_handler::prepare_full_report()
-{
-  next_report.dl.cells.resize(cells.size());
-
-  for (unsigned i = 0, e = cells.size(); i != e; ++i) {
-    auto& cell = cells[i];
-
-    if (not cell->queue.try_pop(next_report.dl.cells[i])) {
-      // Failed to pack result.
-      next_report.dl.cells[i] = {};
-    }
-  }
-
-  // Set bitmap to signal to cell executors to prepare the next cell report.
-  cell_left_bitmap.store((1U << cells.size()) - 1U, std::memory_order_release);
-
-  // Forward the full report.
-  notifier.on_new_metrics_report(next_report);
 }

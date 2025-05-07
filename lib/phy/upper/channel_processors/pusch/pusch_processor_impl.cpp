@@ -24,13 +24,13 @@
 #include "pusch_decoder_buffer_dummy.h"
 #include "pusch_processor_notifier_adaptor.h"
 #include "pusch_processor_validator_impl.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/channel_processors/pusch/formatters.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_codeword_buffer.h"
 #include "srsran/phy/upper/channel_processors/pusch/pusch_decoder_buffer.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/ran/pusch/ulsch_info.h"
 #include "srsran/ran/sch/sch_dmrs_power.h"
-#include "srsran/ran/transform_precoding/transform_precoding_helpers.h"
 #include "srsran/ran/uci/uci_formatters.h"
 #include "srsran/ran/uci/uci_part2_size_calculator.h"
 
@@ -150,7 +150,7 @@ void pusch_processor_impl::process(span<uint8_t>                    data,
   unsigned nof_rb = pdu.freq_alloc.get_nof_rb();
 
   // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
-  bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  prb_bitmap rb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb).convert_to<prb_bitmap>();
 
   // Determine if the PUSCH allocation overlaps with the position of the DC.
   bool overlap_dc = false;

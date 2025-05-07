@@ -41,12 +41,12 @@ namespace srsran {
 /// \param[in] rb_mask Indicates the active resource blocks.
 /// \note It assumes that the pseudo-random generator is initialized.
 /// \note The sequence size must be consistent with the number of active RBs and the number of DMRS per RB.
-inline void dmrs_sequence_generate(span<cf_t>                    sequence,
-                                   pseudo_random_generator&      prg,
-                                   float                         amplitude,
-                                   unsigned                      reference_point_k_rb,
-                                   unsigned                      nof_dmrs_per_rb,
-                                   const bounded_bitset<MAX_RB>& rb_mask)
+inline void dmrs_sequence_generate(span<cf_t>               sequence,
+                                   pseudo_random_generator& prg,
+                                   float                    amplitude,
+                                   unsigned                 reference_point_k_rb,
+                                   unsigned                 nof_dmrs_per_rb,
+                                   const prb_bitmap&        rb_mask)
 {
   unsigned nof_dmrs_symbols = nof_dmrs_per_rb * rb_mask.count();
   srsran_assert(sequence.size() == nof_dmrs_symbols,

@@ -1064,7 +1064,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     }
   } else {
     pusch_mcs_table     fallback_mcs_table = pusch_mcs_table::qam64;
-    sch_mcs_index       mcs                = ue_pcell.get_ul_mcs(fallback_mcs_table);
+    sch_mcs_index       mcs                = ue_pcell.get_ul_mcs(fallback_mcs_table, pusch_cfg.use_transform_precoder);
     sch_mcs_description ul_mcs_cfg =
         pusch_mcs_get_config(fallback_mcs_table, mcs, cell_cfg.use_msg3_transform_precoder(), false);
 
@@ -1089,26 +1089,24 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
       ++prbs_tbs.nof_prbs;
     }
 
-    // Checks if the grant size is correct if transform precoding is enabled.
     if (cell_cfg.use_msg3_transform_precoder()) {
-      // Obtain a valid suggestion of a valid number of PRB.
-      std::optional<unsigned> corrected_nof_prbs =
-          get_transform_precoding_nearest_higher_nof_prb_valid(prbs_tbs.nof_prbs);
+      // Obtain a higher valid suggestion for the number of PRBs (if available).
+      prbs_tbs.nof_prbs = transform_precoding::get_nof_prbs_upper_bound(prbs_tbs.nof_prbs).value_or(prbs_tbs.nof_prbs);
+    }
 
-      // If no suggestion is available, skip the slot.
-      if (!corrected_nof_prbs) {
+    ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs);
+    if (cell_cfg.use_msg3_transform_precoder()) {
+      // Checks if the grant size is correct if transform precoding is enabled.
+      auto valid_nof_rbs = transform_precoding::get_nof_prbs_lower_bound(ue_grant_crbs.length());
+      if (not valid_nof_rbs.has_value()) {
         logger.debug(
             "ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: not possible to select a valid number of PRBs",
             fmt::underlying(u.ue_index),
             u.crnti);
         return ul_srb_sched_outcome::next_slot;
       }
-
-      // Overwrite the number of PRBs with the valid number of PRB.
-      prbs_tbs.nof_prbs = corrected_nof_prbs.value();
+      ue_grant_crbs.resize(valid_nof_rbs.value());
     }
-
-    ue_grant_crbs = rb_helper::find_empty_interval_of_length(used_crbs, prbs_tbs.nof_prbs);
 
     if (ue_grant_crbs.empty()) {
       logger.debug("ue={} rnti={} PUSCH allocation for SRB1 skipped. Cause: no PRBs available",
@@ -1130,7 +1128,7 @@ ue_fallback_scheduler::schedule_ul_srb(ue&                                      
     bool contains_dc = dc_offset_helper::is_contained(
         cell_cfg.expert_cfg.ue.initial_ul_dc_offset, cell_cfg.nof_ul_prbs, ue_grant_crbs);
 
-    std::optional<sch_mcs_tbs> mcs_tbs_info =
+    expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> mcs_tbs_info =
         compute_ul_mcs_tbs(pusch_cfg, ue_pcell.active_bwp(), mcs, ue_grant_crbs.length(), contains_dc);
 
     // If there is not MCS-TBS info, it means no MCS exists such that the effective code rate is <= 0.95.

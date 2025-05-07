@@ -46,7 +46,7 @@ protected:
     report_period(period),
     cell_cfg(config_helpers::make_default_scheduler_expert_config(),
              sched_config_helper::make_default_sched_cell_configuration_request()),
-    metrics(period, metrics_notif, cell_cfg)
+    metrics(cell_cfg, sched_cell_configuration_request_message::metrics_config{period, &metrics_notif})
   {
     metrics.handle_ue_creation(test_ue_index, to_rnti(0x4601), pci_t{0});
   }

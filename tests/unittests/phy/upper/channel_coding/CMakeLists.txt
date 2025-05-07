@@ -26,10 +26,6 @@ target_link_libraries(crc_calculator_test srsran_channel_coding)
 add_test(crc_calculator_test crc_calculator_test -F generic)
 add_test(crc_calculator_test crc_calculator_test -F lut)
 
-if (HAVE_AVX2)
-    add_test(crc_calculator_test crc_calculator_test -F clmul)
-endif(HAVE_AVX2)
-
 add_subdirectory(polar)
 add_subdirectory(ldpc)
 add_subdirectory(short)

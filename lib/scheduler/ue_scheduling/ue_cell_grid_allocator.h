@@ -24,7 +24,6 @@
 
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
-#include "../slicing/ran_slice_candidate.h"
 #include "../uci_scheduling/uci_allocator.h"
 #include "grant_params_selector.h"
 #include "ue_repository.h"
@@ -40,8 +39,6 @@ struct ue_newtx_dl_grant_request {
   const slice_ue& user;
   /// Slot at which PDSCH will take place.
   slot_point pdsch_slot;
-  /// Current DL BWP CRB limits.
-  crb_interval dl_bwp_crb_limits;
   /// Pending newTx bytes to allocate.
   unsigned pending_bytes;
 };
@@ -56,8 +53,6 @@ struct ue_retx_dl_grant_request {
   dl_harq_process_handle h_dl;
   /// Current DL VRB occupation.
   vrb_bitmap& used_dl_vrbs;
-  /// Current DL BWP CRB limits.
-  crb_interval dl_bwp_crb_limits;
 };
 
 /// Request to reserve space for control channels of a UL grant.
@@ -66,8 +61,6 @@ struct ue_newtx_ul_grant_request {
   const slice_ue& user;
   /// Slot at which PUSCH will take place.
   slot_point pusch_slot;
-  /// Current UL BWP CRB limits.
-  crb_interval ul_bwp_crb_limits;
   /// Pending newTx bytes to allocate.
   unsigned pending_bytes;
 };
@@ -176,7 +169,7 @@ public:
     ~ul_newtx_grant_builder() { srsran_assert(parent == nullptr, "PUSCH parameters were not set"); }
 
     /// Sets the final VRBs for the PUSCH allocation.
-    void set_pusch_params(const vrb_interval& alloc_vrbs, const crb_interval& ul_bwp_crb_limits);
+    void set_pusch_params(const vrb_interval& alloc_vrbs);
 
     /// For a given max number of RBs and a bitmap of used VRBs, returns the recommended parameters for the PUSCH grant.
     vrb_interval recommended_vrbs(const vrb_bitmap& used_vrbs, unsigned max_nof_rbs = MAX_NOF_PRBS) const
@@ -245,7 +238,7 @@ private:
   void set_pdsch_params(dl_grant_info& grant, vrb_interval vrbs, std::pair<crb_interval, crb_interval> crbs);
 
   // Set final PUSCH parameters and allocate remaining UL grant resources.
-  void set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs, const crb_interval& ul_bwp_crb_limits);
+  void set_pusch_params(ul_grant_info& grant, const vrb_interval& vrbs);
 
   std::optional<sch_mcs_tbs> calculate_dl_mcs_tbs(cell_slot_resource_allocator&         pdsch_alloc,
                                                   const search_space_info&              ss_info,

@@ -19,8 +19,8 @@
 #
 
 set(SOURCES
-  mobility_manager_factory.cpp
   mobility_manager_impl.cpp
+  metrics/mobility_manager_metrics_aggregator.cpp
 )
 
 add_library(srsran_cu_cp_mobility_manager STATIC ${SOURCES})

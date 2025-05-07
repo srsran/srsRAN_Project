@@ -23,40 +23,49 @@
 #pragma once
 
 #include "rigtorp/MPMCQueue.h"
-#include "srsran/adt/concurrent_queue.h"
-#include "srsran/support/error_handling.h"
+#include "srsran/adt/detail/concurrent_queue_helper.h"
+#include "srsran/adt/detail/concurrent_queue_params.h"
 #include <chrono>
 #include <thread>
 
 namespace srsran {
-namespace detail {
 
 /// Specialization for lockfree MPMC without a blocking mechanism.
 template <typename T>
-class queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
+class concurrent_queue<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
 {
 public:
-  template <typename... Args>
-  explicit queue_impl(size_t qsize) : queue(qsize)
+  using value_type                                           = T;
+  constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::lockfree_mpmc;
+  constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::non_blocking;
+
+  explicit concurrent_queue(size_t qsize) : queue(qsize) {}
+
+  [[nodiscard]] bool try_push(const T& elem) { return queue.try_push(elem); }
+
+  [[nodiscard]] bool try_push(T&& elem) { return queue.try_push(std::move(elem)); }
+
+  [[nodiscard]] bool try_pop(T& elem) { return queue.try_pop(elem); }
+
+  std::optional<T> try_pop()
   {
+    std::optional<T> result;
+    if (not queue.try_pop(result.emplace())) {
+      result.reset();
+    }
+    return result;
   }
 
-  bool try_push(const T& elem) { return queue.try_push(elem); }
-
-  bool try_push(T&& elem) { return queue.try_push(std::move(elem)); }
-
-  bool try_pop(T& elem) { return queue.try_pop(elem); }
-
-  size_t size() const
+  [[nodiscard]] size_t size() const
   {
     // Note: MPMCqueue size can be negative.
     ptrdiff_t ret = queue.size();
     return static_cast<size_t>(std::max(ret, static_cast<ptrdiff_t>(0)));
   }
 
-  bool empty() const { return queue.empty(); }
+  [[nodiscard]] bool empty() const { return queue.empty(); }
 
-  size_t capacity() const { return queue.capacity(); }
+  [[nodiscard]] size_t capacity() const { return queue.capacity(); }
 
 protected:
   ::rigtorp::MPMCQueue<T> queue;
@@ -64,58 +73,34 @@ protected:
 
 /// Specialization for lockfree MPMC using a sleep as the blocking mechanism.
 template <typename T>
-class queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep>
-  : public queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>
+class concurrent_queue<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep>
+  : private concurrent_queue<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>,
+    public detail::queue_sleep_crtp<
+        concurrent_queue<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::sleep>>
 {
-  using base_type = queue_impl<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
+  using nonblocking_base_type =
+      concurrent_queue<T, concurrent_queue_policy::lockfree_mpmc, concurrent_queue_wait_policy::non_blocking>;
+  using sleep_base_type = detail::queue_sleep_crtp<concurrent_queue>;
 
 public:
-  template <typename... Args>
-  explicit queue_impl(size_t qsize, std::chrono::microseconds sleep_time_ = std::chrono::microseconds{0}) :
-    base_type(qsize), sleep_time(sleep_time_)
+  using value_type                                           = T;
+  constexpr static concurrent_queue_policy      queue_policy = concurrent_queue_policy::lockfree_mpmc;
+  constexpr static concurrent_queue_wait_policy wait_policy  = concurrent_queue_wait_policy::sleep;
+
+  explicit concurrent_queue(size_t qsize, std::chrono::microseconds sleep_time_ = std::chrono::microseconds{0}) :
+    nonblocking_base_type(qsize), sleep_base_type(sleep_time_)
   {
   }
 
-  void request_stop() { running = false; }
-
-  template <typename U>
-  bool push_blocking(U&& elem)
-  {
-    while (running.load(std::memory_order_relaxed)) {
-      if (this->try_push(std::forward<U>(elem))) {
-        return true;
-      }
-      std::this_thread::sleep_for(sleep_time);
-    }
-    return false;
-  }
-
-  bool pop_blocking(T& elem)
-  {
-    while (running.load(std::memory_order_relaxed)) {
-      if (this->try_pop(elem)) {
-        return true;
-      }
-      std::this_thread::sleep_for(sleep_time);
-    }
-    return false;
-  }
-
-  template <typename PoppingFunc>
-  bool call_on_pop_blocking(PoppingFunc&& func)
-  {
-    T elem;
-    if (pop_blocking(elem)) {
-      func(elem);
-      return true;
-    }
-    return false;
-  }
-
-private:
-  std::chrono::microseconds sleep_time;
-  std::atomic<bool>         running{true};
+  using nonblocking_base_type::capacity;
+  using nonblocking_base_type::empty;
+  using nonblocking_base_type::size;
+  using nonblocking_base_type::try_pop;
+  using nonblocking_base_type::try_push;
+  using sleep_base_type::call_on_pop_blocking;
+  using sleep_base_type::pop_blocking;
+  using sleep_base_type::push_blocking;
+  using sleep_base_type::request_stop;
 };
 
-} // namespace detail
 } // namespace srsran

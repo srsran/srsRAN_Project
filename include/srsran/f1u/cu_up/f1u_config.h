@@ -23,13 +23,17 @@
 #pragma once
 
 #include "fmt/format.h"
+#include <chrono>
 
 namespace srsran {
 namespace srs_cu_up {
 
 /// \brief Configurable parameters of the F1-U bearer in the CU-UP
 struct f1u_config {
-  bool warn_on_drop = true; ///< Log a warning instead of an info message whenever a PDU is dropped
+  bool                      warn_on_drop = true; ///< Log a warning instead of an info message whenever a PDU is dropped
+  std::chrono::milliseconds dl_t_notif_timer{10};
+  uint32_t                  queue_size = 8192;
+  uint32_t                  batch_size = 256;
 };
 
 } // namespace srs_cu_up
@@ -49,7 +53,12 @@ struct formatter<srsran::srs_cu_up::f1u_config> {
   template <typename FormatContext>
   auto format(srsran::srs_cu_up::f1u_config cfg, FormatContext& ctx) const
   {
-    return format_to(ctx.out(), "warn_on_drop={}", cfg.warn_on_drop);
+    return format_to(ctx.out(),
+                     "warn_on_drop={} dl_t_notif_timer={}ms queue_size={} batch_size={}",
+                     cfg.warn_on_drop,
+                     cfg.dl_t_notif_timer.count(),
+                     cfg.queue_size,
+                     cfg.batch_size);
   }
 };
 

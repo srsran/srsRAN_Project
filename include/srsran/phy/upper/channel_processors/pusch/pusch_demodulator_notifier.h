@@ -41,8 +41,10 @@ public:
   /// Default destructor.
   virtual ~pusch_demodulator_notifier() = default;
 
-  /// Notifies intermediate PUSCH demodulator statistics.
-  virtual void on_provisional_stats(const demodulation_stats& stats) = 0;
+  /// \brief Notifies intermediate PUSCH demodulator statistics.
+  /// \param i_symbol OFDM symbol index within the slot.
+  /// \param stats    OFDM symbol statistics.
+  virtual void on_provisional_stats(unsigned i_symbol, const demodulation_stats& stats) = 0;
 
   /// Notifies the end of PUSCH processing and the final demodulator statistics.
   virtual void on_end_stats(const demodulation_stats& stats) = 0;

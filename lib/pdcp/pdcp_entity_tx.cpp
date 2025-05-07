@@ -124,41 +124,27 @@ void pdcp_entity_tx::handle_sdu(byte_buffer buf)
   std::chrono::system_clock::time_point time_of_arrival = std::chrono::high_resolution_clock::now();
 
   if (is_drb()) {
-    if (desired_buffer_size == 0) {
-      if (not cfg.custom.warn_on_drop) {
-        logger.log_info("Dropping SDU. Desired buffer size is 0");
-      } else {
-        logger.log_warning("Dropping SDU. Desired buffer size is 0");
+    auto drop_reason = check_early_drop(buf);
+    if (drop_reason != early_drop_reason::no_drop) {
+      if (warn_on_drop_count == 0) {
+        // Log only at the start of a drop burst.
+        if (cfg.custom.warn_on_drop) {
+          logger.log_warning("Dropping SDU. Cause: {}", drop_reason);
+        } else {
+          logger.log_info("Dropping SDU. Cause: {}", drop_reason);
+        }
       }
+      warn_on_drop_count++;
       return;
     }
-    uint32_t pdu_size            = get_pdu_size(buf);
-    uint32_t updated_buffer_size = tx_window.get_pdu_bytes(integrity_enabled) + pdu_size;
-    if (updated_buffer_size > desired_buffer_size) {
-      if (not cfg.custom.warn_on_drop) {
-        logger.log_info(
-            "Dropping SDU to avoid overloading RLC queue. desired_buffer_size={} pdcp_tx_window_bytes={} {}",
-            desired_buffer_size,
-            tx_window.get_pdu_bytes(integrity_enabled),
-            st);
+    if (warn_on_drop_count != 0) {
+      if (cfg.custom.warn_on_drop) {
+        logger.log_warning("Drop burst finished. nof_sdus={}", warn_on_drop_count);
       } else {
-        logger.log_warning(
-            "Dropping SDU to avoid overloading RLC queue. desired_buffer_size={} pdcp_tx_window_bytes={} {}",
-            desired_buffer_size,
-            tx_window.get_pdu_bytes(integrity_enabled),
-            st);
+        logger.log_info("Drop burst finished. nof_sdus={}", warn_on_drop_count);
       }
-      return;
+      warn_on_drop_count = 0;
     }
-  }
-
-  if ((st.tx_next - st.tx_trans) >= (window_size - 1)) {
-    if (not cfg.custom.warn_on_drop) {
-      logger.log_info("Dropping SDU to avoid going over the TX window size. {}", st);
-    } else {
-      logger.log_warning("Dropping SDU to avoid going over the TX window size. {}", st);
-    }
-    return;
   }
 
   metrics.add_sdus(1, buf.length());
@@ -617,20 +603,32 @@ void pdcp_entity_tx::handle_transmit_notification(uint32_t notif_sn)
     return;
   }
 
-  logger.log_debug("Handling transmit notification for notif_sn={}", notif_sn);
+  handle_transmit_notification_impl(notif_sn, false);
+}
+
+void pdcp_entity_tx::handle_transmit_notification_impl(uint32_t notif_sn, bool is_retx)
+{
+  logger.log_debug("Handling transmit notification for notif_sn={} is_retx={}", notif_sn, is_retx);
   if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-    logger.log_error("Invalid transmit notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
+    logger.log_error(
+        "Invalid transmit notification for notif_sn={} exceeds sn_size={}. is_retx={}", notif_sn, cfg.sn_size, is_retx);
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
   if (notif_count < st.tx_trans) {
-    logger.log_info(
-        "Invalid notification SN, notif_count is too low. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
+    logger.log_info("Invalid notification SN, notif_count is too low. notif_sn={} notif_count={} is_retx={} {}",
+                    notif_sn,
+                    notif_count,
+                    is_retx,
+                    st);
     return;
   }
   if (notif_count >= st.tx_next) {
-    logger.log_error(
-        "Invalid notification SN, notif_count is too high. notif_sn={} notif_count={} {}", notif_sn, notif_count, st);
+    logger.log_error("Invalid notification SN, notif_count is too high. notif_sn={} notif_count={} is_retx={} {}",
+                     notif_sn,
+                     notif_count,
+                     is_retx,
+                     st);
     return;
   }
   st.tx_trans = notif_count + 1;
@@ -653,14 +651,20 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
     return;
   }
 
-  logger.log_debug("Handling delivery notification for notif_sn={}", notif_sn);
+  handle_delivery_notification_impl(notif_sn, false);
+}
+
+void pdcp_entity_tx::handle_delivery_notification_impl(uint32_t notif_sn, bool is_retx)
+{
+  logger.log_debug("Handling delivery notification for notif_sn={} is_retx={}", notif_sn, is_retx);
   if (notif_sn >= pdcp_sn_cardinality(cfg.sn_size)) {
-    logger.log_error("Invalid delivery notification for notif_sn={} exceeds sn_size={}", notif_sn, cfg.sn_size);
+    logger.log_error(
+        "Invalid delivery notification for notif_sn={} exceeds sn_size={}. is_retx={}", notif_sn, cfg.sn_size, is_retx);
     return;
   }
   uint32_t notif_count = notification_count_estimation(notif_sn);
   if (notif_count >= st.tx_next) {
-    logger.log_error("Got notification for invalid COUNT. notif_count={} {}", notif_count, st);
+    logger.log_error("Got notification for invalid COUNT. notif_count={} is_retx={} {}", notif_count, is_retx, st);
     return;
   }
 
@@ -672,7 +676,8 @@ void pdcp_entity_tx::handle_delivery_notification(uint32_t notif_sn)
   if (is_am()) {
     stop_discard_timer(notif_count);
   } else {
-    logger.log_error("Ignored unexpected PDU delivery notification in UM bearer. notif_sn={}", notif_sn);
+    logger.log_error(
+        "Ignored unexpected PDU delivery notification in UM bearer. notif_sn={} is_retx={}", notif_sn, is_retx);
   }
 }
 
@@ -692,8 +697,7 @@ void pdcp_entity_tx::handle_retransmit_notification(uint32_t notif_sn)
     return;
   }
 
-  // Nothing to do here
-  logger.log_debug("Ignored handling PDU retransmit notification for notif_sn={}", notif_sn);
+  handle_transmit_notification_impl(notif_sn, true);
 }
 
 void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_sn)
@@ -712,10 +716,7 @@ void pdcp_entity_tx::handle_delivery_retransmitted_notification(uint32_t notif_s
     return;
   }
 
-  // TODO: Here we can stop discard timers of successfully retransmitted PDUs once they can be distinguished from
-  // origianls (e.g. if they are moved into a separate container upon retransmission).
-  // For now those retransmitted PDUs will be cleaned when handling delivery notification for following originals.
-  logger.log_debug("Ignored handling PDU delivery retransmitted notification for notif_sn={}", notif_sn);
+  handle_delivery_notification_impl(notif_sn, true);
 }
 
 void pdcp_entity_tx::handle_desired_buffer_size_notification(uint32_t desired_bs)
@@ -959,4 +960,20 @@ void pdcp_entity_tx::discard_callback()
       break;
     }
   } while (st.tx_next_ack != st.tx_next);
+}
+
+pdcp_entity_tx::early_drop_reason pdcp_entity_tx::check_early_drop(const byte_buffer& buf)
+{
+  if (desired_buffer_size == 0) {
+    return early_drop_reason::zero_dbs;
+  }
+  uint32_t pdu_size            = get_pdu_size(buf);
+  uint32_t updated_buffer_size = tx_window.get_pdu_bytes(integrity_enabled) + pdu_size;
+  if (updated_buffer_size > desired_buffer_size) {
+    return early_drop_reason::full_rlc_queue;
+  }
+  if ((st.tx_next - st.tx_trans) >= (window_size - 1)) {
+    return early_drop_reason::full_window;
+  }
+  return early_drop_reason::no_drop;
 }

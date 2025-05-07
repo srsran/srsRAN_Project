@@ -43,7 +43,7 @@ elseif (ENABLE_FFTW AND FFTW3F_FOUND)
     list(APPEND SRSRAN_DFT_INCLUDE_DIRS ${FFTW3F_INCLUDE_DIRS})
     list(APPEND SRSRAN_DFT_LIBRARY_DIRS ${FFTW3F_LIBRARY_DIRS})
 else (ENABLE_MKL AND MKL_FOUND)
-    message(FATAL_ERROR "Missing FFTW library. Please install libfftw3, MKL or ARMPL.")
+    message(FATAL_ERROR "Missing DFT library. Please install FFTW, MKL or ARMPL.")
 endif (ENABLE_MKL AND MKL_FOUND)
 
 include_directories(${SRSRAN_DFT_INCLUDE_DIRS})

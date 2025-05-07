@@ -24,7 +24,7 @@
 
 #include "srsran/ran/band_helper.h"
 #include "srsran/ran/resource_block.h"
-#include "srsran/ran/ssb_properties.h"
+#include "srsran/ran/ssb/ssb_properties.h"
 
 namespace srsran {
 

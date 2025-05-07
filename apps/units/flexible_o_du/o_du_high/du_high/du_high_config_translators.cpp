@@ -545,11 +545,16 @@ std::vector<srs_du::du_cell_config> srsran::generate_du_cell_config(const du_hig
         base_cell.pusch_cfg.p0_nominal_with_grant;
     out_cell.ul_cfg_common.init_ul_bwp.pusch_cfg_common.value().msg3_delta_power = base_cell.pusch_cfg.msg3_delta_power;
 
-    // Determine the PUSCH transmission maximum number of layers. Selects the most limiting factor among the physical
-    // layer, number of antennas and configured maximum rank.
+    // Determine the PUSCH transmission maximum number of layers:
+    //  - one layer if transform precoding is enabled; or
+    //  - selects the most limiting number of layers among the physical layer capability, the number of antennas and
+    //    configured maximum rank.
     pusch_processor_phy_capabilities phy_capabilities = get_pusch_processor_phy_capabilities();
     out_cell.pusch_max_nof_layers =
-        std::min(cell.cell.nof_antennas_ul, std::min(phy_capabilities.max_nof_layers, cell.cell.pusch_cfg.max_rank));
+        cell.cell.pusch_cfg.enable_transform_precoding
+            ? 1
+            : std::min(cell.cell.nof_antennas_ul,
+                       std::min(phy_capabilities.max_nof_layers, cell.cell.pusch_cfg.max_rank));
 
     if (config.ntn_cfg.has_value()) {
       out_cell.ntn_cs_koffset = config.ntn_cfg.value().cell_specific_koffset;
@@ -1077,7 +1082,6 @@ scheduler_expert_config srsran::generate_scheduler_expert_config(const du_high_u
   // Logging and tracing.
   out_cfg.log_broadcast_messages       = config.loggers.broadcast_enabled;
   out_cfg.log_high_latency_diagnostics = config.loggers.high_latency_diagnostics_enabled;
-  out_cfg.metrics_report_period        = std::chrono::milliseconds{config.metrics.du_report_period};
 
   const error_type<std::string> error = is_scheduler_expert_config_valid(out_cfg);
   if (!error) {
@@ -1126,6 +1130,9 @@ void srsran::fill_du_high_worker_manager_config(worker_manager_config&     confi
   config.config_affinities.resize(du_hi_cfg.nof_cells);
   for (unsigned i = 0; i != du_hi_cfg.nof_cells; ++i) {
     config.config_affinities[i].push_back(unit_cfg.expert_execution_cfg.cell_affinities[i].l2_cell_cpu_cfg);
+  }
+  if (unit_cfg.metrics.layers_cfg.enable_executor_log_metrics) {
+    du_hi_cfg.metrics_period = std::chrono::milliseconds{unit_cfg.metrics.du_report_period};
   }
 
   auto& pcap_cfg = config.pcap_cfg;

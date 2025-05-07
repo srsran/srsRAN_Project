@@ -100,6 +100,22 @@ void pdcp_entity_rx::stop()
   }
 }
 
+void pdcp_entity_rx::notify_pdu_processing_stopped()
+{
+  if (not stopped) {
+    token_mngr.stop();
+    logger.log_debug("Stopped PDCP entity PDU processing");
+  }
+}
+
+void pdcp_entity_rx::restart_pdu_processing()
+{
+  if (not stopped) {
+    token_mngr.start();
+    logger.log_debug("Started PDCP entity PDU processing");
+  }
+}
+
 manual_event_flag& pdcp_entity_rx::crypto_awaitable()
 {
   return token_mngr.get_awaitable();

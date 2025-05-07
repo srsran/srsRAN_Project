@@ -41,6 +41,8 @@ cell_cfg:
     min_ue_mcs: 27
     mcs_table: qam256
     rv_sequence: 0
+  srs:
+    srs_period_ms: 40
 
 cells:
   - pci: 1

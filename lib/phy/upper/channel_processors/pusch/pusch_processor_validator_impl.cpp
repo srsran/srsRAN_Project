@@ -169,7 +169,7 @@ error_type<std::string> pusch_processor_validator_impl::is_valid(const pusch_pro
     }
 
     // Number of PRB must be valid.
-    if (!is_transform_precoding_nof_prb_valid(pdu.freq_alloc.get_nof_rb())) {
+    if (!transform_precoding::is_nof_prbs_valid(pdu.freq_alloc.get_nof_rb())) {
       return make_unexpected("Transform precoding is only possible with a valid number of PRB.");
     }
   }

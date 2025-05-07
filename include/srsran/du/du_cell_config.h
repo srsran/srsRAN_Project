@@ -29,7 +29,7 @@
 #include "srsran/ran/pci.h"
 #include "srsran/ran/sib/system_info_config.h"
 #include "srsran/ran/srs/srs_configuration.h"
-#include "srsran/ran/ssb_configuration.h"
+#include "srsran/ran/ssb/ssb_configuration.h"
 #include "srsran/ran/tac.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/scheduler/config/bwp_configuration.h"

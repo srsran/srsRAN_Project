@@ -379,14 +379,20 @@ create_ul_processor_factory(const upper_phy_config& config, upper_phy_metrics_no
       create_prach_detector_factory_sw(dft_factory, prach_gen_factory);
   report_fatal_error_if_not(prach_factory, "Invalid PRACH detector factory.");
 
-  std::shared_ptr<srs_estimator_factory> srs_factory =
-      create_srs_estimator_generic_factory(sequence_factory, ta_est_factory, config.ul_bw_rb);
-  report_fatal_error_if_not(srs_factory, "Invalid SRS estimator factory.");
-
   // Create PRACH detector pool factory if more than one thread is used.
   if (config.max_ul_thread_concurrency > 1) {
     prach_factory = create_prach_detector_pool_factory(std::move(prach_factory), config.max_ul_thread_concurrency);
     report_fatal_error_if_not(prach_factory, "Invalid PRACH detector pool factory.");
+  }
+
+  std::shared_ptr<srs_estimator_factory> srs_factory =
+      create_srs_estimator_generic_factory(sequence_factory, ta_est_factory, config.ul_bw_rb);
+  report_fatal_error_if_not(srs_factory, "Invalid SRS estimator factory.");
+
+  // Create SRS estimator pool factory if more than one thread is used.
+  if (config.max_ul_thread_concurrency > 1) {
+    srs_factory = create_srs_estimator_pool(std::move(srs_factory), config.max_ul_thread_concurrency);
+    report_fatal_error_if_not(srs_factory, "Invalid SRS estimator pool factory.");
   }
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();

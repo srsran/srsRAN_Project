@@ -613,6 +613,60 @@ void pdu_session_manager_impl::disconnect_all_pdu_sessions()
   }
 }
 
+void pdu_session_manager_impl::update_security_config(const security::sec_as_config& security_info_)
+{
+  logger.log_debug("Updating security config of all PDU sessions");
+  security_info = security_info_;
+
+  security::sec_128_as_config sec_128 = security::truncate_config(security_info);
+
+  for (const auto& [psi, pdu_session] : pdu_sessions) {
+    auto integrity_enabled =
+        pdu_session->security_ind.integrity_protection_ind == integrity_protection_indication_t::not_needed
+            ? security::integrity_enabled::off
+            : security::integrity_enabled::on;
+    auto ciphering_enabled =
+        pdu_session->security_ind.confidentiality_protection_ind == confidentiality_protection_indication_t::not_needed
+            ? security::ciphering_enabled::off
+            : security::ciphering_enabled::on;
+    for (const auto& [drb_id, drb] : pdu_session->drbs) {
+      // Configure tx security.
+      auto& pdcp_tx_ctrl = drb->pdcp->get_tx_upper_control_interface();
+      pdcp_tx_ctrl.configure_security(sec_128, integrity_enabled, ciphering_enabled);
+
+      // Configure rx security.
+      auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
+      pdcp_rx_ctrl.configure_security(sec_128, integrity_enabled, ciphering_enabled);
+    }
+  }
+}
+
+void pdu_session_manager_impl::notify_pdcp_pdu_processing_stopped()
+{
+  logger.log_debug("Awaiting all crypto tasks to finish in UE");
+
+  for (const auto& [psi, pdu_session] : pdu_sessions) {
+    for (const auto& [drb_id, drb] : pdu_session->drbs) {
+      // reestablish rx and configure rx security
+      auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
+      pdcp_rx_ctrl.notify_pdu_processing_stopped();
+    }
+  }
+}
+
+void pdu_session_manager_impl::restart_pdcp_pdu_processing()
+{
+  logger.log_debug("Restarting PDCP PDU processing");
+
+  for (const auto& [psi, pdu_session] : pdu_sessions) {
+    for (const auto& [drb_id, drb] : pdu_session->drbs) {
+      // reestablish rx and configure rx security
+      auto& pdcp_rx_ctrl = drb->pdcp->get_rx_upper_control_interface();
+      pdcp_rx_ctrl.restart_pdu_processing();
+    }
+  }
+}
+
 async_task<void> pdu_session_manager_impl::await_crypto_rx_all_pdu_sessions()
 {
   logger.log_debug("Awaiting all crypto tasks to finish in UE");

@@ -22,11 +22,10 @@
 
 #pragma once
 
-#include "srsran/adt/bounded_bitset.h"
-#include "srsran/phy/constants.h"
 #include "srsran/phy/support/precoding_configuration.h"
 #include "srsran/phy/support/resource_grid_writer.h"
 #include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/resource_allocation/rb_bitmap.h"
 #include "srsran/ran/slot_point.h"
 
 namespace srsran {
@@ -46,7 +45,7 @@ public:
     /// Reference point for PDCCH DMRS \e k in RBs.
     unsigned reference_point_k_rb;
     /// Indicates the PRB used for the PDCCH transmission. The bit at position zero corresponds to CRB0.
-    bounded_bitset<MAX_RB> rb_mask;
+    prb_bitmap rb_mask;
     /// CORESET start symbol index.
     unsigned start_symbol_index;
     /// CORESET duration in symbols.

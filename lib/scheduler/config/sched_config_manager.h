@@ -24,7 +24,6 @@
 
 #include "du_cell_group_config_pool.h"
 #include "ue_configuration.h"
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/noop_functor.h"
 #include "srsran/scheduler/config/scheduler_config.h"

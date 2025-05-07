@@ -22,21 +22,23 @@
 
 #pragma once
 
-#include "srsran/adt/concurrent_queue.h"
-#include "srsran/adt/mpmc_queue.h"
+#include "mac_dl_configurator.h"
+#include "srsran/adt/bounded_bitset.h"
 #include "srsran/adt/noop_functor.h"
 #include "srsran/adt/slotted_array.h"
+#include "srsran/adt/spsc_queue.h"
 #include "srsran/mac/mac_metrics.h"
 #include "srsran/ran/du_types.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/subcarrier_spacing.h"
+#include "srsran/srslog/logger.h"
 #include "srsran/support/tracing/resource_usage.h"
 #include <memory>
+#include <variant>
 
 namespace srsran {
 
-class mac_dl_metric_handler;
 class mac_metrics_notifier;
 class task_executor;
 class timer_manager;
@@ -49,10 +51,11 @@ class mac_dl_cell_metric_handler
 {
 public:
   struct slot_measurement {
+    slot_measurement() = default;
     slot_measurement(mac_dl_cell_metric_handler& parent_,
                      slot_point                  sl_tx_,
                      metric_clock::time_point    slot_ind_enqueue_tp_) :
-      parent(parent_.enabled() ? &parent_ : nullptr), sl_tx(sl_tx_), slot_ind_enqueue_tp(slot_ind_enqueue_tp_)
+      parent(&parent_), sl_tx(sl_tx_), slot_ind_enqueue_tp(slot_ind_enqueue_tp_)
     {
       if (enabled()) {
         start_tp   = metric_clock::now();
@@ -96,22 +99,28 @@ public:
     expected<resource_usage::snapshot, int>                     start_rusg;
   };
 
-  mac_dl_cell_metric_handler(du_cell_index_t                                                        cell_index,
-                             pci_t                                                                  cell_pci,
-                             unsigned                                                               period_slots_,
-                             std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report);
+  mac_dl_cell_metric_handler(pci_t cell_pci, subcarrier_spacing scs, const mac_cell_metric_report_config& metrics_cfg);
+
+  /// Called when the MAC cell is activated.
+  void on_cell_activation();
+
+  /// Called when the MAC cell is deactivated.
+  void on_cell_deactivation();
 
   /// Initiate new slot measurements.
   /// \param[in] sl_tx Tx slot.
   /// \param[in] slot_ind_trigger_tp Time point when the slot_indication was signalled by the lower layers.
   auto start_slot(slot_point sl_tx, metric_clock::time_point slot_ind_trigger_tp)
   {
+    if (not enabled()) {
+      return slot_measurement{};
+    }
     return slot_measurement{*this, sl_tx, slot_ind_trigger_tp};
   }
 
-  bool enabled() const { return true; }
-
 private:
+  bool enabled() const { return notifier != nullptr; }
+
   struct non_persistent_data {
     struct latency_data {
       std::chrono::nanoseconds min{std::chrono::nanoseconds::max()};
@@ -125,6 +134,7 @@ private:
     };
 
     unsigned     nof_slots = 0;
+    slot_point   start_slot;
     latency_data wall;
     latency_data user;
     latency_data sys;
@@ -133,14 +143,20 @@ private:
     latency_data tx_data_req;
     unsigned     count_vol_context_switches{0};
     unsigned     count_invol_context_switches{0};
+    /// \brief Whether the cell was marked for deactivation and this is the last report.
+    bool last_report = false;
   };
 
   void handle_slot_completion(const slot_measurement& meas);
 
-  const du_cell_index_t                                                  cell_index;
-  const pci_t                                                            cell_pci;
-  std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report;
-  const unsigned                                                         period_slots;
+  void send_new_report(slot_point sl_tx);
+
+  const pci_t               cell_pci;
+  const unsigned            period_slots;
+  mac_cell_metric_notifier* notifier;
+
+  slot_point last_sl_tx;
+  bool       cell_activated = false;
 
   // Slot at which the next report is generated.
   slot_point               next_report_slot;
@@ -148,56 +164,6 @@ private:
 
   // Metrics tracked
   non_persistent_data data;
-};
-
-class mac_dl_metric_handler
-{
-public:
-  mac_dl_metric_handler(std::chrono::milliseconds period_,
-                        mac_metrics_notifier&     notifier_,
-                        timer_manager&            timers_,
-                        task_executor&            ctrl_exec);
-
-  /// Add new cell to be managed by the metrics handler.
-  mac_dl_cell_metric_handler& add_cell(du_cell_index_t cell_index, pci_t pci, subcarrier_spacing scs);
-
-  /// Remove cell from metric handler.
-  void remove_cell(du_cell_index_t cell_index);
-
-private:
-  using report_queue_type           = concurrent_queue<mac_dl_cell_metric_report,
-                                                       concurrent_queue_policy::lockfree_mpmc,
-                                                       concurrent_queue_wait_policy::non_blocking>;
-  using cell_activation_bitmap_type = unsigned;
-  static_assert(sizeof(cell_activation_bitmap_type) * 8U <= MAX_NOF_DU_CELLS, "Invalid cell activation bitmap size");
-
-  struct cell_context {
-    report_queue_type          queue;
-    mac_dl_cell_metric_handler handler;
-
-    cell_context(du_cell_index_t                                                        cell_index,
-                 pci_t                                                                  pci,
-                 unsigned                                                               period_slots,
-                 std::function<void(du_cell_index_t, const mac_dl_cell_metric_report&)> on_new_cell_report) :
-      queue(2), handler(cell_index, pci, period_slots, std::move(on_new_cell_report))
-    {
-    }
-  };
-
-  void handle_cell_report(du_cell_index_t cell_index, const mac_dl_cell_metric_report& cell_report);
-
-  void prepare_full_report();
-
-  std::chrono::milliseconds period;
-  mac_metrics_notifier&     notifier;
-  timer_manager&            timers;
-  task_executor&            ctrl_exec;
-
-  slotted_array<std::unique_ptr<cell_context>, MAX_NOF_DU_CELLS> cells;
-
-  std::atomic<cell_activation_bitmap_type> cell_left_bitmap{0};
-
-  mac_metric_report next_report;
 };
 
 } // namespace srsran

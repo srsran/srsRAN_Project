@@ -56,11 +56,13 @@ struct cu_cp_unit_amf_config_item {
   uint16_t    port                   = 38412;
   std::string bind_addr              = "127.0.0.1";
   std::string bind_interface         = "auto";
-  int         sctp_rto_initial       = 120;
-  int         sctp_rto_min           = 120;
-  int         sctp_rto_max           = 500;
+  int         sctp_rto_initial_ms    = 120;
+  int         sctp_rto_min_ms        = 120;
+  int         sctp_rto_max_ms        = 500;
   int         sctp_init_max_attempts = 3;
-  int         sctp_max_init_timeo    = 500;
+  int         sctp_max_init_timeo_ms = 500;
+  int         sctp_hb_interval_s     = 30;
+  int         sctp_assoc_max_retx    = 10;
   bool        sctp_nodelay           = false;
 
   /// List of all tracking areas supported by the AMF.

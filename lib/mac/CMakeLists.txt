@@ -27,6 +27,7 @@ set(SOURCES mac_factory.cpp
         mac_ctrl/ue_creation_procedure.cpp
         mac_ctrl/ue_reconfiguration_procedure.cpp
         mac_ctrl/ue_delete_procedure.cpp
+        mac_ctrl/mac_metrics_aggregator.cpp
         mac_dl/sib_pdu_assembler.cpp
         mac_dl/mac_dl_processor.cpp
         mac_dl/mac_cell_time_mapper_impl.cpp

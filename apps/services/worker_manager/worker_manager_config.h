@@ -85,6 +85,8 @@ struct worker_manager_config {
     unsigned nof_cells;
     /// Real-time mode enabled flag.
     bool is_rt_mode_enabled;
+    /// Whether to log performance metrics for the DU-high executors.
+    std::optional<std::chrono::milliseconds> metrics_period;
   };
 
   // CU-UP worker configuration

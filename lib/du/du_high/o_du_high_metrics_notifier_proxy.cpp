@@ -42,10 +42,7 @@ class o_du_high_metrics_notifier_dummy : public o_du_high_metrics_notifier
 {
 public:
   // See interface for documentation.
-  void on_new_metrics(const o_du_high_metrics& metrics) override
-  {
-    report_error("Dummy O-DU high metrics notifier cannot notify metrics");
-  }
+  void on_new_metrics(const o_du_high_metrics& metrics) override {}
 };
 
 } // namespace

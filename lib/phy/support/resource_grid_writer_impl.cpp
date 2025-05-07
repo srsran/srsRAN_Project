@@ -154,7 +154,7 @@ void resource_grid_writer_impl::put(unsigned            port,
 {
   unsigned nof_symbols = symbols.size();
   srsran_assert(
-      k_init + (((nof_symbols - 1) * stride) + 1) <= get_nof_subc(),
+      k_init + ((nof_symbols - 1) * stride) < get_nof_subc(),
       "The initial subcarrier index (i.e., {}) plus the number of RE (i.e., {}) exceeds the maximum number of "
       "subcarriers (i.e., {})",
       k_init,

@@ -45,7 +45,7 @@ public:
     // Create DFT processors for each valid number of PRBs within the limit.
     transform_precoder_dft_impl::collection_dft_processors dft_processors;
     for (unsigned nof_prb = 0; nof_prb != max_nof_prb; ++nof_prb) {
-      if (is_transform_precoding_nof_prb_valid(nof_prb)) {
+      if (transform_precoding::is_nof_prbs_valid(nof_prb)) {
         // Prepare DFT size.
         dft_processor::configuration dft_config;
         dft_config.dir  = dft_processor::direction::INVERSE;

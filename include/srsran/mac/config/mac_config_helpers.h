@@ -35,7 +35,7 @@ struct du_cell_config;
 mac_cell_creation_request make_mac_cell_config(du_cell_index_t                                 cell_index,
                                                const srs_du::du_cell_config&                   du_cfg,
                                                const byte_buffer&                              sib1,
-                                               span<const byte_buffer>                         si_messages,
+                                               span<const bcch_dl_sch_payload_type>            si_messages,
                                                const sched_cell_configuration_request_message& sched_cell_cfg);
 
 /// \brief Generates default SRB MAC Logical Channel configuration for SRBs other than SRB0.

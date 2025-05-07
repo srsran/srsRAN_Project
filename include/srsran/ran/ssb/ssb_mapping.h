@@ -27,7 +27,7 @@
 #include "srsran/ran/frequency_range.h"
 #include "srsran/ran/resource_allocation/rb_interval.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/ran/ssb_properties.h"
+#include "srsran/ran/ssb/ssb_properties.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/support/math/math_utils.h"
 #include <array>

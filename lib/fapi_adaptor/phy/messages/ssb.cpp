@@ -21,6 +21,7 @@
  */
 
 #include "srsran/fapi_adaptor/phy/messages/ssb.h"
+#include "srsran/ran/ssb/pbch_mib_pack.h"
 #include "srsran/srsvec/bit.h"
 
 using namespace srsran;
@@ -33,19 +34,9 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const fapi::dl_ssb_pdu& fapi
   // Move the BCH payload to the MSB.
   uint32_t payload = fapi_pdu.bch_payload.bch_payload << 8U;
 
-  // Add the SFN.
-  payload |= ((sfn & 0xfU) << 4U);
-
-  // Add the half radio frame bit.
-  payload |= (hrf << 3U);
-
-  if (fapi_pdu.ssb_maintenance_v3.L_max == 64) {
-    // Pack the 6th, 5th and 4th bits of SS/PBCH block index.
-    payload |= ((fapi_pdu.ssb_block_index >> 3U) & 7U);
-  } else {
-    // 3rd LSB set to MSB of the SSB subcarrier offset. 2nd and 1st bits are reserved.
-    payload |= (((fapi_pdu.ssb_subcarrier_offset >> 7U) & 1U) << 2U);
-  }
+  // Pack timing parameters in the 8 LSB.
+  payload |= pbch_timing_pack(
+      sfn, hrf, fapi_pdu.ssb_block_index, fapi_pdu.ssb_subcarrier_offset, fapi_pdu.ssb_maintenance_v3.L_max);
 
   return payload;
 }
@@ -55,54 +46,24 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const fapi::dl_ssb_pdu& fapi
 static uint32_t
 generate_bch_payload(const fapi::dl_ssb_pdu& fapi_pdu, uint32_t sfn, bool hrf, subcarrier_spacing scs_common)
 {
-  const fapi::dl_ssb_phy_mib_pdu& mib     = fapi_pdu.bch_payload.phy_mib_pdu;
-  uint32_t                        payload = 0;
+  const fapi::dl_ssb_phy_mib_pdu& mib = fapi_pdu.bch_payload.phy_mib_pdu;
 
-  // CHOICE in BCCH-BCH-MessageType - 1 bit.
-  // Set to zero.
+  // Prepare message parameters.
+  pbch_mib_message msg = {.sfn               = sfn,
+                          .hrf               = hrf,
+                          .scs_common        = scs_common,
+                          .subcarrier_offset = fapi_pdu.ssb_subcarrier_offset,
+                          .dmrs_typeA_pos =
+                              fapi_pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position == fapi::dmrs_typeA_pos::pos2
+                                  ? dmrs_typeA_position::pos2
+                                  : dmrs_typeA_position::pos3,
+                          .pdcch_config_sib1     = mib.pdcch_config_sib1,
+                          .cell_barred           = mib.cell_barred,
+                          .intrafreq_reselection = mib.intrafreq_reselection,
+                          .ssb_block_index       = fapi_pdu.ssb_block_index};
 
-  // Pack MIB.
-
-  // systemFrameNumber - 6 bits MSB.
-  payload |= (((sfn >> 4U) & 0x3fU) << 25U);
-
-  // subCarrierSpacingCommon - 1 bit.
-  bool scs_flag = (scs_common == subcarrier_spacing::kHz30 || scs_common == subcarrier_spacing::kHz120);
-  payload |= (scs_flag << 24U);
-
-  // ssb-SubcarrierOffset - 4 bits.
-  payload |= ((fapi_pdu.ssb_subcarrier_offset & 0xfU) << 20U);
-
-  // dmrs-TypeA-Position - 1 bit.
-  payload |= ((static_cast<std::underlying_type_t<fapi::dmrs_typeA_pos>>(mib.dmrs_typeA_position) & 0x1U) << 19U);
-
-  // pdcch-ConfigSIB1 - 8 bits.
-  payload |= ((mib.pdcch_config_sib1 & 0xffU) << 11U);
-
-  // Barred - 1 bit.
-  payload |= ((mib.cell_barred ? 0U : 1U) << 10U);
-
-  // intraFreqReselection - 1 bit.
-  payload |= ((mib.intrafreq_reselection ? 0U : 1U) << 9U);
-
-  // Spare - 1 bit.
-  // Leave to zero.
-
-  // Add the SFN. - 4 bit LSB.
-  payload |= ((sfn & 0xfU) << 4U);
-
-  // Half radio frame bit.
-  payload |= (hrf << 3U);
-
-  if (fapi_pdu.ssb_maintenance_v3.L_max == 64) {
-    // Pack the 6th, 5th and 4th bits of SS/PBCH block index.
-    payload |= ((fapi_pdu.ssb_block_index >> 3U) & 7U);
-  } else {
-    // 3rd LSB set to MSB of the SSB subcarrier offset. 2nd and 1st bits are reserved.
-    payload |= (((fapi_pdu.ssb_subcarrier_offset >> 7U) & 1U) << 2U);
-  }
-
-  return payload;
+  // Generate payload.
+  return pbch_mib_pack(msg, fapi_pdu.ssb_maintenance_v3.L_max);
 }
 
 /// \brief Fills the contents of the BCH payload.

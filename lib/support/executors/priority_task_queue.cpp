@@ -21,6 +21,7 @@
  */
 
 #include "srsran/support/executors/detail/priority_task_queue.h"
+#include "srsran/adt/moodycamel_mpmc_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/adt/mutexed_mpsc_queue.h"
@@ -28,96 +29,129 @@
 
 using namespace srsran;
 
-template <typename QueueType>
-class detail::any_task_concurrent_queue::queue_impl final : public base_queue
+class detail::any_task_queue
 {
 public:
+  any_task_queue(size_t cap_, concurrent_queue_policy qpolicy_, concurrent_queue_wait_policy wpolicy_) :
+    cap(cap_), qpolicy(qpolicy_), wpolicy(wpolicy_)
+  {
+  }
+  virtual ~any_task_queue() = default;
+
+  size_t                       capacity() const { return cap; }
+  concurrent_queue_policy      queue_policy() const { return qpolicy; }
+  concurrent_queue_wait_policy wait_policy() const { return wpolicy; }
+
+  virtual void   request_stop()                  = 0;
+  virtual bool   push_blocking(unique_task task) = 0;
+  virtual bool   try_push(unique_task task)      = 0;
+  virtual bool   try_pop(unique_task& t)         = 0;
+  virtual size_t size() const                    = 0;
+
+private:
+  const size_t                       cap;
+  const concurrent_queue_policy      qpolicy;
+  const concurrent_queue_wait_policy wpolicy;
+};
+
+namespace {
+
+template <concurrent_queue_policy      QueuePolicy,
+          concurrent_queue_wait_policy WaitPolicy = concurrent_queue_wait_policy::non_blocking>
+class any_task_queue_impl : public detail::any_task_queue
+{
+  using base_type = detail::any_task_queue;
+
+public:
   template <typename... Args>
-  queue_impl(unsigned qsize, Args&&... other_args) : q(qsize, std::forward<Args>(other_args)...)
+  any_task_queue_impl(unsigned cap_, Args&&... args) :
+    base_type(cap_, QueuePolicy, WaitPolicy), q(cap_, std::forward<Args>(args)...)
   {
   }
 
-  void   request_stop() override { q.request_stop(); }
-  bool   push_blocking(unique_task task) override { return q.push_blocking(std::move(task)); }
+  void request_stop() override
+  {
+    if constexpr (WaitPolicy == concurrent_queue_wait_policy::condition_variable) {
+      q.request_stop();
+    }
+  }
+  bool push_blocking(unique_task task) override
+  {
+    if constexpr (WaitPolicy != concurrent_queue_wait_policy::non_blocking) {
+      return q.push_blocking(std::move(task));
+    }
+    report_fatal_error("Blocking API not supported for this type");
+    return false;
+  }
   bool   try_push(unique_task task) override { return q.try_push(std::move(task)); }
   bool   try_pop(unique_task& t) override { return q.try_pop(t); }
   size_t size() const override { return q.size(); }
 
-private:
-  QueueType q;
+protected:
+  concurrent_queue<unique_task, QueuePolicy, WaitPolicy> q;
 };
 
-template <concurrent_queue_policy      QueuePolicy,
-          concurrent_queue_wait_policy WaitPolicy = concurrent_queue_wait_policy::sleep>
-using queue_type =
-    detail::any_task_concurrent_queue::queue_impl<concurrent_queue<unique_task, QueuePolicy, WaitPolicy>>;
-
 template <typename... Args>
-void detail::any_task_concurrent_queue::emplace(const concurrent_queue_params& params, Args&&... other_params)
+std::unique_ptr<detail::any_task_queue> make_any_task_queue(const concurrent_queue_params& params)
 {
-  cap = params.size;
   switch (params.policy) {
     case concurrent_queue_policy::lockfree_mpmc:
-      q = std::make_unique<queue_type<concurrent_queue_policy::lockfree_mpmc>>(params.size,
-                                                                               std::forward<Args>(other_params)...);
-      break;
+      return std::make_unique<any_task_queue_impl<concurrent_queue_policy::lockfree_mpmc>>(params.size);
     case concurrent_queue_policy::lockfree_spsc:
-      q = std::make_unique<queue_type<concurrent_queue_policy::lockfree_spsc>>(params.size,
-                                                                               std::forward<Args>(other_params)...);
-      break;
-    case concurrent_queue_policy::locking_mpmc:
-      q = std::make_unique<
-          queue_type<concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>>(
-          params.size);
-      break;
+      return std::make_unique<any_task_queue_impl<concurrent_queue_policy::lockfree_spsc>>(params.size);
     case concurrent_queue_policy::locking_mpsc:
-      q = std::make_unique<queue_type<concurrent_queue_policy::locking_mpsc>>(params.size,
-                                                                              std::forward<Args>(other_params)...);
-      break;
+      return std::make_unique<any_task_queue_impl<concurrent_queue_policy::locking_mpsc>>(params.size);
+    case concurrent_queue_policy::locking_mpmc:
+      return std::make_unique<
+          any_task_queue_impl<concurrent_queue_policy::locking_mpmc, concurrent_queue_wait_policy::condition_variable>>(
+          params.size);
+    case concurrent_queue_policy::moodycamel_lockfree_mpmc:
+      return std::make_unique<any_task_queue_impl<concurrent_queue_policy::moodycamel_lockfree_mpmc>>(params.size);
     default:
-      report_fatal_error("Invalid queue type");
-      break;
+      report_fatal_error("Unknown concurrent_queue_policy");
   }
+  return nullptr;
 }
 
-// ---- priority_task_queue -----
+} // namespace
 
 detail::priority_task_queue::priority_task_queue(span<const concurrent_queue_params> queue_params,
                                                  std::chrono::microseconds           wait_if_empty) :
   wait_on_empty(wait_if_empty)
 {
   queues.resize(queue_params.size());
-
   for (unsigned i = 0; i != queues.size(); ++i) {
-    queues[i].emplace(queue_params[i], std::chrono::microseconds{10});
+    queues[i] = make_any_task_queue(queue_params[i]);
   }
 }
+
+detail::priority_task_queue::~priority_task_queue() {}
 
 void detail::priority_task_queue::request_stop()
 {
   running = false;
   for (auto& q : queues) {
-    q.request_stop();
+    q->request_stop();
   }
 }
 
 bool detail::priority_task_queue::push_blocking(task_priority prio, unique_task task)
 {
   const size_t idx = get_queue_idx(prio);
-  return queues[idx].push_blocking(std::move(task));
+  return queues[idx]->push_blocking(std::move(task));
 }
 
 bool detail::priority_task_queue::try_push(task_priority prio, unique_task task)
 {
   const size_t idx = get_queue_idx(prio);
-  return queues[idx].try_push(std::move(task));
+  return queues[idx]->try_push(std::move(task));
 }
 
 bool detail::priority_task_queue::try_pop(unique_task& t)
 {
   // Iterate through all priority levels, starting from the max priority, and try to pop a task from the queue.
-  for (unsigned prio_idx = 0; prio_idx != queues.size(); ++prio_idx) {
-    if (queues[prio_idx].try_pop(t)) {
+  for (unsigned prio_idx = 0, nof_queues = queues.size(); prio_idx != nof_queues; ++prio_idx) {
+    if (queues[prio_idx]->try_pop(t)) {
       return true;
     }
   }
@@ -139,7 +173,12 @@ size_t detail::priority_task_queue::size() const
 {
   size_t total_size = 0;
   for (const auto& q : queues) {
-    total_size += q.size();
+    total_size += q->size();
   }
   return total_size;
+}
+
+size_t detail::priority_task_queue::queue_capacity(task_priority prio) const
+{
+  return queues[get_queue_idx(prio)]->size();
 }

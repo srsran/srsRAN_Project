@@ -24,6 +24,7 @@
 
 #include "../mac_config_interfaces.h"
 #include "mac_config.h"
+#include "mac_metrics_aggregator.h"
 #include "mac_scheduler_configurator.h"
 #include "srsran/mac/mac_config.h"
 #include "srsran/ran/du_types.h"
@@ -96,6 +97,9 @@ private:
   mac_dl_configurator&        dl_unit;
   rnti_manager&               rnti_table;
   mac_scheduler_configurator& sched_cfg;
+
+  // Metrics aggregator.
+  mac_metrics_aggregator metrics;
 
   // UE database
   du_ue_list<mac_ue_context> ue_db;

@@ -51,7 +51,11 @@ using namespace srsran;
 // Pre-generated orthogonal cover code.
 static const pucch_orthogonal_sequence_format1 occ;
 
-static void validate_config(const pucch_detector::format1_configuration& config)
+// The number of available initial cyclic shifts is the same as the number of RE per PRB, i.e., 12.
+static constexpr unsigned NSHIFTS = pucch_constants::format1_initial_cyclic_shift_range.stop();
+
+static void validate_config(const pucch_detector::format1_configuration& config,
+                            const pucch_format1_map<unsigned>&           mux_nof_harq_ack)
 {
   srsran_assert(config.start_symbol_index <= 10,
                 "Setting {} as the first PUCCH symbol index, but only values between 0 and 10 are valid.",
@@ -67,258 +71,31 @@ static void validate_config(const pucch_detector::format1_configuration& config)
   srsran_assert(config.starting_prb <= 274,
                 "Setting {} as the PRB allocated to PUCCH, but only values between 0 and 274 are valid.",
                 config.starting_prb);
-  srsran_assert(config.time_domain_occ <= 6,
-                "Setting {} as the time-domain OCC index, but only values between 0 and 6 are valid.",
-                config.time_domain_occ);
+  srsran_assert(config.n_id <= 1023,
+                "Initializing the pseudorandom generator with {}, but only values between 0 and 1023 are valid.",
+                config.n_id);
   if (config.second_hop_prb.has_value()) {
     srsran_assert(*config.second_hop_prb <= 274,
                   "Setting {} as the PRB allocated to PUCCH after frequency hopping, but only values between 0 and 274 "
                   "are valid.",
                   *config.second_hop_prb);
-    srsran_assert(config.time_domain_occ < config.nof_symbols / 4U,
-                  "Cannot have OCCI {} with {} allocated OFDM symbols and frequency hopping enabled.",
+  }
+  unsigned symbol_occ_ratio = (config.second_hop_prb.has_value() ? 4U : 2U);
+  for (const auto& this_pucch : mux_nof_harq_ack) {
+    srsran_assert(this_pucch.initial_cyclic_shift <= 11,
+                  "Setting {} as the initial cyclic shift, but only values between 0 and 11 are valid.",
+                  this_pucch.initial_cyclic_shift);
+    srsran_assert(this_pucch.time_domain_occ <= 6,
+                  "Setting {} as the time-domain OCC index, but only values between 0 and 6 are valid.",
+                  this_pucch.time_domain_occ);
+    srsran_assert(config.time_domain_occ < config.nof_symbols / symbol_occ_ratio,
+                  "Cannot have OCCI {} with {} allocated OFDM symbols and frequency hopping {}.",
                   config.time_domain_occ,
-                  config.nof_symbols);
-  } else {
-    srsran_assert(config.time_domain_occ < config.nof_symbols / 2U,
-                  "Cannot have OCCI {} with {} allocated OFDM symbols.",
-                  config.time_domain_occ,
-                  config.nof_symbols);
-  }
-  srsran_assert(config.n_id <= 1023,
-                "Initializing the pseudorandom generator with {}, but only values between 0 and 1023 are valid.",
-                config.n_id);
-  srsran_assert(config.nof_harq_ack <= 2, "At most two ACK bits - requested {}.", config.nof_harq_ack);
-}
-
-// Given the detected symbol and the corresponding equivalent noise variance, demodulates the symbol into nof_bits bits.
-// It also returns the detection metric used to decide whether the PUCCH was transmitted or not by threshold comparison.
-static float detect_bits(span<uint8_t> out_bits, cf_t detected_symbol, float eq_noise_var)
-{
-  unsigned nof_bits          = out_bits.size();
-  float    detection_metric  = std::real(detected_symbol) + std::imag(detected_symbol);
-  unsigned bits              = (detection_metric > 0) ? 0U : 3U;
-  detection_metric           = std::abs(detection_metric);
-  float    detection_metric2 = std::real(detected_symbol) - std::imag(detected_symbol);
-  unsigned bits2             = (detection_metric2 > 0) ? 2U : 1U;
-  detection_metric2          = std::abs(detection_metric2);
-  if ((nof_bits > 1) && (detection_metric2 > detection_metric)) {
-    out_bits[0] = (bits2 & 1U);
-    out_bits[1] = ((bits2 >> 1U) & 1U);
-    return (std::norm(detected_symbol) / eq_noise_var);
-  }
-  out_bits[0] = (bits & 1U);
-  if (nof_bits > 1) {
-    out_bits[1] = ((bits >> 1U) & 1U);
-  }
-  return (std::norm(detected_symbol) / eq_noise_var);
-}
-
-pucch_detector::pucch_detection_result
-pucch_detector_format1::detect(const resource_grid_reader&                  grid,
-                               const channel_estimate&                      estimates,
-                               const pucch_detector::format1_configuration& config)
-{
-  validate_config(config);
-
-  // Total number of REs used for PUCCH data (recall that positive integer division implies taking the floor).
-  unsigned nof_res   = (config.nof_symbols / 2) * NRE;
-  unsigned nof_ports = config.ports.size();
-  time_spread_sequence.resize(nof_ports, nof_res);
-  ch_estimates.resize(nof_res, nof_ports, 1);
-  eq_time_spread_sequence.resize(nof_res);
-  eq_time_spread_noise_var.resize(nof_res);
-
-  // Compute the number of data symbols before frequency hop.
-  nof_data_symbols         = config.nof_symbols / 2;
-  nof_data_symbols_pre_hop = nof_data_symbols;
-  if (config.second_hop_prb.has_value()) {
-    nof_data_symbols_pre_hop = config.nof_symbols / 4;
-  }
-
-  alpha_indices = span<unsigned>(alpha_buffer).first(nof_data_symbols);
-
-  extract_data_and_estimates(
-      grid, estimates, config.start_symbol_index, config.starting_prb, config.second_hop_prb, config.ports);
-
-  span<float> noise_var_all_ports = span<float>(noise_var_buffer).first(nof_ports);
-  for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
-    noise_var_all_ports[i_port] = estimates.get_noise_variance(config.ports[i_port]);
-  }
-  equalizer->equalize(eq_time_spread_sequence,
-                      eq_time_spread_noise_var,
-                      time_spread_sequence,
-                      ch_estimates,
-                      noise_var_all_ports,
-                      config.beta_pucch);
-
-  marginalize_w_and_r_out(config);
-
-  // Prepare UCI message output.
-  // We don't set the SR bit here - this task is delegated to a higher-level function, based on the uci_status returned
-  // by this detector and on the used PUCCH resource.
-  // This format doesn't support CSI reports.
-  pucch_uci_message::configuration pucch_uci_message_config;
-  pucch_uci_message_config.nof_sr               = 0;
-  pucch_uci_message_config.nof_harq_ack         = config.nof_harq_ack;
-  pucch_uci_message_config.nof_csi_part1        = 0;
-  pucch_uci_message_config.nof_csi_part2        = 0;
-  pucch_detector::pucch_detection_result output = {pucch_uci_message(pucch_uci_message_config), 0};
-
-  // Select view of the payload.
-  span<uint8_t> bits = output.uci_message.get_harq_ack_bits();
-
-  // Recall that, when nof_harq_ack == 0, we still need to look for the positive SR indicator (i.e., a single, 0-valued
-  // transmitted bit).
-  static_vector<uint8_t, 1> temp_bits(1);
-  if (config.nof_harq_ack == 0) {
-    bits = temp_bits;
-  }
-
-  float detection_metric = detect_bits(bits, detected_symbol, eq_noise_var);
-
-  // Detection threshold.
-  //
-  // The detection metric, as computed by \c detect_bits, is assumed to be normally distributed with variance 1 and mean
-  // either 0 (when there is no PUCCH) or larger than 0 (when there is a PUCCH). Therefore, one can target a constant
-  // probability of false alarm of 1% by setting the detection threshold T such that Q(T) = 0.01, where the Q-function
-  // is the tail distribution function of the standard normal distribution.
-  constexpr float THRESHOLD = 4.0F;
-  bool            is_msg_ok = (detection_metric > THRESHOLD);
-  output.detection_metric   = detection_metric / THRESHOLD;
-
-  if (!is_msg_ok) {
-    output.uci_message.set_status(uci_status::invalid);
-    return output;
-  }
-
-  if (config.nof_harq_ack > 0) {
-    output.uci_message.set_status(uci_status::valid);
-    return output;
-  }
-
-  // If we are here, there should only be a positive SR bit and it should be 0, since nothing is sent for negative
-  // SR and no ACK.
-  if (bits[0] == 0U) {
-    output.uci_message.set_status(uci_status::valid);
-    return output;
-  }
-
-  output.uci_message.set_status(uci_status::unknown);
-  return output;
-}
-
-void pucch_detector_format1::extract_data_and_estimates(const resource_grid_reader&              grid,
-                                                        const channel_estimate&                  estimates,
-                                                        unsigned                                 first_symbol,
-                                                        unsigned                                 first_prb,
-                                                        std::optional<unsigned>                  second_prb,
-                                                        const static_vector<uint8_t, MAX_PORTS>& antenna_ports)
-{
-  for (uint8_t port : antenna_ports) {
-    unsigned      i_symbol       = 0;
-    unsigned      skip           = 0;
-    unsigned      symbol_index   = first_symbol + 1;
-    span<cbf16_t> sequence_slice = time_spread_sequence.get_slice(port);
-    span<cbf16_t> estimate_slice = ch_estimates.get_channel(port, 0);
-    for (; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, skip += NRE, symbol_index += 2) {
-      // Index of the first subcarrier assigned to PUCCH, before hopping.
-      unsigned      k_init         = NRE * first_prb;
-      span<cbf16_t> sequence_chunk = sequence_slice.subspan(skip, NRE);
-      grid.get(sequence_chunk, port, symbol_index, k_init);
-
-      span<const cbf16_t> tmp = estimates.get_symbol_ch_estimate(symbol_index, port);
-      srsvec::copy(estimate_slice.subspan(skip, NRE), tmp.subspan(k_init, NRE));
-    }
-
-    for (; i_symbol != nof_data_symbols; ++i_symbol, skip += NRE, symbol_index += 2) {
-      // Index of the first subcarrier assigned to PUCCH, after hopping. Note that we only enter this loop if
-      // second_prb.has_value().
-      unsigned      k_init         = NRE * *second_prb;
-      span<cbf16_t> sequence_chunk = sequence_slice.subspan(skip, NRE);
-      grid.get(sequence_chunk, port, symbol_index, k_init);
-
-      span<const cbf16_t> tmp_in  = estimates.get_symbol_ch_estimate(symbol_index, port).subspan(k_init, NRE);
-      span<cbf16_t>       tmp_out = estimate_slice.subspan(skip, NRE);
-      srsvec::copy(tmp_out, tmp_in);
-    }
+                  config.nof_symbols,
+                  (config.second_hop_prb.has_value() ? "enabled" : "disabled"));
+    srsran_assert(this_pucch.value <= 2, "At most two ACK bits - requested {}.", this_pucch.value);
   }
 }
-
-// Computest the indices of the cyclic shifts for all symbols.
-static void compute_alpha_indices(span<unsigned>       indices,
-                                  unsigned             start_symbol,
-                                  unsigned             nof_symbols,
-                                  const slot_point&    slot,
-                                  const cyclic_prefix& cp,
-                                  unsigned             n_id,
-                                  unsigned             m0,
-                                  pucch_helper&        helper)
-{
-  srsran_assert(indices.size() == nof_symbols / 2,
-                "The number of alpha indices {} does not match with the number of allocated symbols {}.",
-                indices.size(),
-                nof_symbols);
-
-  // Only every other symbol, starting from the second one, contains data.
-  for (unsigned i_symbol = 1, i_alpha = 0; i_symbol < nof_symbols; i_symbol += 2, ++i_alpha) {
-    // Compute alpha index.
-    indices[i_alpha] = helper.get_alpha_index(slot, cp, n_id, start_symbol + i_symbol, m0, 0);
-  }
-}
-
-void pucch_detector_format1::marginalize_w_and_r_out(const pucch_detector::format1_configuration& config)
-{
-  unsigned time_domain_occ = config.time_domain_occ;
-
-  srsran_assert(config.group_hopping == pucch_group_hopping::NEITHER,
-                "At the moment, only group the hopping type 'neither' is implemented, requesting {}",
-                ((config.group_hopping == pucch_group_hopping::ENABLE) ? "enable" : "disable"));
-  unsigned group_index     = config.n_id % 30;
-  unsigned sequence_number = 0;
-
-  span<const cf_t> w_star = occ.get_sequence_conj(nof_data_symbols_pre_hop, time_domain_occ);
-
-  compute_alpha_indices(alpha_indices,
-                        config.start_symbol_index,
-                        config.nof_symbols,
-                        config.slot,
-                        config.cp,
-                        config.n_id,
-                        config.initial_cyclic_shift,
-                        helper);
-
-  detected_symbol = 0;
-  unsigned offset = 0;
-  for (unsigned i_symbol = 0; i_symbol != nof_data_symbols_pre_hop; ++i_symbol, offset += NRE) {
-    span<const cf_t> seq_r = low_papr->get(group_index, sequence_number, alpha_indices[i_symbol]);
-    for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
-      detected_symbol += eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
-    }
-  }
-
-  unsigned nof_data_symbols_post_hop = nof_data_symbols - nof_data_symbols_pre_hop;
-  if (nof_data_symbols_post_hop > 0) {
-    w_star = occ.get_sequence_conj(nof_data_symbols_post_hop, time_domain_occ);
-
-    for (unsigned i_symbol = 0; i_symbol != nof_data_symbols_post_hop; ++i_symbol, offset += NRE) {
-      span<const cf_t> seq_r =
-          low_papr->get(group_index, sequence_number, alpha_indices[i_symbol + nof_data_symbols_pre_hop]);
-      for (unsigned i_elem = 0; i_elem != NRE; ++i_elem) {
-        detected_symbol += eq_time_spread_sequence[offset + i_elem] * w_star[i_symbol] * std::conj(seq_r[i_elem]);
-      }
-    }
-  }
-
-  auto n_repetitions = static_cast<float>(eq_time_spread_sequence.size());
-  detected_symbol /= n_repetitions;
-  // For the noise variance, we have to compute the sum of all variances and divide by the square of their number: same
-  // as computing the mean and dividing again buy their number.
-  eq_noise_var = srsvec::mean(eq_time_spread_noise_var) / n_repetitions;
-}
-
-// The number of available initial cyclic shifts is the same as the number of RE per PRB, i.e., 12.
-static constexpr unsigned NSHIFTS = pucch_constants::format1_initial_cyclic_shift_range.stop();
 
 /// \brief Detects the transmitted symbol.
 ///
@@ -376,23 +153,13 @@ static float detect_symbol(span<uint8_t> bits, cf_t cross_term)
   return metric_cross;
 }
 
-const pucch_format1_map<pucch_detector::pucch_detection_result>&
+const pucch_format1_map<pucch_detector::pucch_detection_result_csi>&
 pucch_detector_format1::detect(const resource_grid_reader&                  grid,
                                const pucch_detector::format1_configuration& config,
                                const pucch_format1_map<unsigned>&           mux_nof_harq_ack)
 {
   // Validate the configuration of all multiplexed transmissions.
-  pucch_detector::format1_configuration conf_tmp = config;
-
-  // for (auto this_pucch_nof_harq_ack = mux_nof_harq_ack.begin(), end_pucch_nof_harq_ack = mux_nof_harq_ack.end();
-  //      this_pucch_nof_harq_ack != end_pucch_nof_harq_ack;
-  //      ++this_pucch_nof_harq_ack) {
-  for (const auto& this_pucch_nof_harq_ack : mux_nof_harq_ack) {
-    conf_tmp.initial_cyclic_shift = this_pucch_nof_harq_ack.initial_cyclic_shift;
-    conf_tmp.time_domain_occ      = this_pucch_nof_harq_ack.time_domain_occ;
-    conf_tmp.nof_harq_ack         = this_pucch_nof_harq_ack.value;
-    validate_config(conf_tmp);
-  }
+  validate_config(config, mux_nof_harq_ack);
 
   // Set the boolean mask of OFDM symbols carrying DM-RS (every other allocated symbol starting from the first).
   dmrs_mask.reset();
@@ -402,16 +169,25 @@ pucch_detector_format1::detect(const resource_grid_reader&                  grid
     dmrs_mask.set(i_symbol);
   }
 
-  static_vector<metric_contributions, NSHIFTS * pucch_constants::format1_time_domain_occ_range.stop()> metrics_hop0(0);
-  static_vector<metric_contributions, NSHIFTS * pucch_constants::format1_time_domain_occ_range.stop()> metrics_hop1(0);
-  auto [noise_var, noise_samples] = process_hop(metrics_hop0, grid, config, mux_nof_harq_ack, /*i_hop=*/0);
+  static_vector<hop_contribution_mux, NSHIFTS * pucch_constants::format1_time_domain_occ_range.stop()> metrics_hop0(0);
+  static_vector<hop_contribution_mux, NSHIFTS * pucch_constants::format1_time_domain_occ_range.stop()> metrics_hop1(0);
+  hop_contribution_common hop0           = process_hop(metrics_hop0, grid, config, mux_nof_harq_ack, /*i_hop=*/0);
+  float                   epre           = hop0.epre_contribution;
+  unsigned                epre_samples0  = hop0.nof_epre_samples;
+  unsigned                epre_samples1  = 0;
+  float                   noise_var      = hop0.noise_var_contribution;
+  unsigned                noise_samples0 = hop0.nof_noise_samples;
+  unsigned                noise_samples1 = 0;
   if (config.second_hop_prb.has_value()) {
-    auto [noise_var1, noise_samples1] = process_hop(metrics_hop1, grid, config, mux_nof_harq_ack, /*i_hop =*/1);
-    noise_var += noise_var1;
-    noise_samples += noise_samples1;
+    hop_contribution_common hop1 = process_hop(metrics_hop1, grid, config, mux_nof_harq_ack, /*i_hop =*/1);
+    epre += hop1.epre_contribution;
+    epre_samples1 = hop1.nof_epre_samples;
+    noise_var += hop1.noise_var_contribution;
+    noise_samples1 = hop1.nof_noise_samples;
   }
 
-  noise_var /= noise_samples;
+  epre /= (epre_samples0 + epre_samples1);
+  noise_var /= (noise_samples0 + noise_samples1);
 
   // Different thresholds are needed depending on the number of antenna ports and on whether or not the intra-slot
   // frequency hopping is active.
@@ -420,16 +196,16 @@ pucch_detector_format1::detect(const resource_grid_reader&                  grid
 
   switch (nof_contributions) {
     case 1:
-      detection_threshold = 6.25F;
+      detection_threshold = 0.9F;
       break;
     case 2:
-      detection_threshold = 14.65F;
+      detection_threshold = 3.0F;
       break;
     case 4:
-      detection_threshold = 20.3F;
+      detection_threshold = 4.45F;
       break;
     case 8:
-      detection_threshold = 29.8F;
+      detection_threshold = 6.95F;
       break;
     default:
       srsran_terminate("The PUCCH detector does not support more than 4 ports, configured {}.", grid.get_nof_ports());
@@ -448,19 +224,30 @@ pucch_detector_format1::detect(const resource_grid_reader&                  grid
     unsigned occi               = (*this_pucch_nof_harq_ack).time_domain_occ;
     float    main_contribution  = this_metric_hop0.main_contribution;
     cf_t     cross_contribution = this_metric_hop0.cross_contribution;
+    float    rsrp               = this_metric_hop0.rsrp_contribution;
     if (config.second_hop_prb.has_value()) {
       main_contribution += this_metric_hop1->main_contribution;
       cross_contribution += this_metric_hop1->cross_contribution;
+      rsrp = (rsrp * noise_samples0 + this_metric_hop1->rsrp_contribution * noise_samples1) /
+             (noise_samples0 + noise_samples1);
       ++this_metric_hop1;
     }
+
+    channel_state_information csi;
+    csi.set_epre(convert_power_to_dB(epre));
+    csi.set_rsrp(convert_power_to_dB(rsrp));
+    float sinr = std::isnormal(noise_var) ? rsrp / noise_var : std::numeric_limits<float>::quiet_NaN();
+    csi.set_sinr_dB(channel_state_information::sinr_type::channel_estimator, convert_power_to_dB(sinr));
+    csi.reset_time_alignment();
 
     unsigned nof_harq_ack = (*this_pucch_nof_harq_ack).value;
     mux_results.insert(ics,
                        occi,
-                       {.uci_message = pucch_uci_message(
-                            {.nof_sr = 0, .nof_harq_ack = nof_harq_ack, .nof_csi_part1 = 0, .nof_csi_part2 = 0}),
-                        .detection_metric = std::numeric_limits<float>::quiet_NaN()});
-    pucch_detector::pucch_detection_result& this_result = mux_results.get(ics, occi);
+                       {{.uci_message = pucch_uci_message(
+                             {.nof_sr = 0U, .nof_harq_ack = nof_harq_ack, .nof_csi_part1 = 0U, .nof_csi_part2 = 0U}),
+                         .detection_metric = std::numeric_limits<float>::quiet_NaN()},
+                        csi});
+    pucch_detector::pucch_detection_result& this_result = mux_results.get(ics, occi).detection_result;
     span<uint8_t>                           bits        = this_result.uci_message.get_harq_ack_bits();
 
     // If no HARQ ACK bits were transmitted, we still need to look at the SR "bit."
@@ -523,10 +310,11 @@ combine_symbols(static_tensor<2, cf_t, NSHIFTS * MAX_PORTS>&                    
                 w.size());
 
   std::array<cf_t, NSHIFTS> scaled;
+  float                     normalizer = 1.0F / std::sqrt(static_cast<float>(n_symbols));
   for (unsigned i_port = 0; i_port != n_ports; ++i_port) {
-    srsvec::sc_prod(in.get_view({0, i_port}), w[0], out.get_view({i_port}));
+    srsvec::sc_prod(in.get_view({0, i_port}), w[0] * normalizer, out.get_view({i_port}));
     for (unsigned i_symbol = 1; i_symbol != n_symbols; ++i_symbol) {
-      srsvec::sc_prod(in.get_view({i_symbol, i_port}), w[i_symbol], scaled);
+      srsvec::sc_prod(in.get_view({i_symbol, i_port}), w[i_symbol] * normalizer, scaled);
       srsvec::add(scaled, out.get_view({i_port}), out.get_view({i_port}));
     }
   }
@@ -539,10 +327,12 @@ combine_symbols(static_tensor<2, cf_t, NSHIFTS * MAX_PORTS>&                    
 /// each OCC). The function computes the total channel energy across ports and discards those that are 10+ dB below the
 /// strongest one.
 /// \param[out] ch                     Estimated channels.
+/// \param[out] rsrp                   Estimated RSRP.
 /// \param[in]  in                     DM-RS samples after despreading in time and frequency domains (for one single OCC
 /// index).
 /// \param[in[  nof_dmrs_symbols_hop   Number of DM-RS symbols in the current hop.
 static void estimate_channels(static_tensor<2, cf_t, NSHIFTS * MAX_PORTS>&       ch,
+                              span<float>                                        rsrp,
                               const static_tensor<2, cf_t, NSHIFTS * MAX_PORTS>& in,
                               unsigned                                           nof_dmrs_symbols_hop)
 {
@@ -560,25 +350,26 @@ static void estimate_channels(static_tensor<2, cf_t, NSHIFTS * MAX_PORTS>&      
                 n_ports);
 
   // Normalize the input to take into account the spreading factor.
-  srsvec::sc_prod(in.get_data(), 1.0F / static_cast<float>(nof_dmrs_symbols_hop * NSHIFTS), ch.get_data());
+  srsvec::sc_prod(in.get_data(), 1.0F / static_cast<float>(std::sqrt(nof_dmrs_symbols_hop) * NSHIFTS), ch.get_data());
 
   // Estimate the total channel energy (across ports) for all ICSs.
-  std::array<float, NSHIFTS> total_ch_energy;
-  srsvec::modulus_square(total_ch_energy, ch.get_view({0}));
+  srsvec::modulus_square(rsrp, ch.get_view({0}));
   for (unsigned i_port = 1; i_port != n_ports; ++i_port) {
-    srsvec::modulus_square_and_add(total_ch_energy, ch.get_view({i_port}), total_ch_energy);
+    srsvec::modulus_square_and_add(rsrp, ch.get_view({i_port}), rsrp);
   }
 
   // Find the strongest ICS and neglect all ICSs that are 10+ dB below that one.
-  auto [pos, value] = srsvec::max_element(total_ch_energy);
+  auto [pos, value] = srsvec::max_element(rsrp);
   float th          = value / 10;
 
   for (unsigned i_port = 0; i_port != n_ports; ++i_port) {
     span<cf_t> path = ch.get_view({i_port});
     for (unsigned i_element = 0; i_element != NSHIFTS; ++i_element) {
-      path[i_element] = (total_ch_energy[i_element] > th) ? path[i_element] : 0;
+      path[i_element] = (rsrp[i_element] > th) ? path[i_element] : 0;
     }
   }
+
+  srsvec::sc_prod(rsrp, 1.0F / n_ports, rsrp);
 }
 
 /// Estimates the noise by looking at the difference between the received and the reconstructed signal.
@@ -643,15 +434,12 @@ void pucch_detector_format1::combine_reconstructed_contributions(
     srsvec::copy(idft_input, ch.get_view({i_port}));
     span<const cf_t> idft_output = idft->run();
 
-    static constexpr float nre_inv = 1.0F / static_cast<float>(NSHIFTS);
     for (unsigned i_symbol = 0; i_symbol != n_symbols; ++i_symbol) {
-      // Now copy (or combine) the result to each output symbol after applying the OCC (nre_inv is needed since our iDFT
-      // doesn't normalize the output).
+      // Now copy (or combine) the result to each output symbol after applying the OCC.
       if (is_first) {
-        srsvec::sc_prod(
-            idft_output, std::conj(w_star_dmrs[i_symbol]) * nre_inv, dmrs_reconstructed.get_view({i_symbol, i_port}));
+        srsvec::sc_prod(idft_output, std::conj(w_star_dmrs[i_symbol]), dmrs_reconstructed.get_view({i_symbol, i_port}));
       } else {
-        srsvec::sc_prod(idft_output, std::conj(w_star_dmrs[i_symbol]) * nre_inv, reconstructed);
+        srsvec::sc_prod(idft_output, std::conj(w_star_dmrs[i_symbol]), reconstructed);
         srsvec::add(dmrs_reconstructed.get_view({i_symbol, i_port}),
                     reconstructed,
                     dmrs_reconstructed.get_view({i_symbol, i_port}));
@@ -721,8 +509,8 @@ static void compute_contributions(span<float>                                   
   }
 }
 
-std::pair<float, unsigned> pucch_detector_format1::process_hop(
-    static_vector<metric_contributions, nof_initial_cyclic_shifts * nof_time_domain_occs>& hop_metrics,
+pucch_detector_format1::hop_contribution_common pucch_detector_format1::process_hop(
+    static_vector<hop_contribution_mux, nof_initial_cyclic_shifts * nof_time_domain_occs>& hop_metrics,
     const resource_grid_reader&                                                            grid,
     const pucch_detector::format1_configuration&                                           config,
     const pucch_format1_map<unsigned>&                                                     mux_nof_harq_ack,
@@ -763,6 +551,7 @@ std::pair<float, unsigned> pucch_detector_format1::process_hop(
 
   unsigned i_data = 0;
   unsigned i_dmrs = 0;
+  float    epre   = 0;
   for (unsigned i_symbol = start_symbol; i_symbol != last_symbol; ++i_symbol) {
     // Get the base (ICS 0) spreading sequence for the current symbol.
     unsigned alpha_index = helper.get_alpha_index(config.slot, config.cp, config.n_id, i_symbol, /*m0=*/0, /*m_cs=*/0);
@@ -774,6 +563,7 @@ std::pair<float, unsigned> pucch_detector_format1::process_hop(
       for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
         span<cf_t> dmrs_help = dmrs_lse.get_view({i_dmrs, i_port});
         grid.get(dmrs_help, i_port, i_symbol, first_subcarrier);
+        epre += srsvec::average_power(dmrs_help) * dmrs_help.size();
         srsvec::prod_conj(dmrs_help, seq_r, dmrs_help);
 
         span<cf_t> dft_input = dft->get_input();
@@ -786,6 +576,7 @@ std::pair<float, unsigned> pucch_detector_format1::process_hop(
       for (unsigned i_port = 0; i_port != nof_ports; ++i_port) {
         span<cf_t> data_help = data_lse.get_view({i_data, i_port});
         grid.get(data_help, i_port, i_symbol, first_subcarrier);
+        epre += srsvec::average_power(data_help) * data_help.size();
         srsvec::prod_conj(data_help, seq_r, data_help);
 
         span<cf_t> dft_input = dft->get_input();
@@ -832,17 +623,20 @@ std::pair<float, unsigned> pucch_detector_format1::process_hop(
     srsvec::sc_prod(main_contributions, normalizer, main_contributions);
     srsvec::sc_prod(cross_contributions, normalizer, cross_contributions);
 
+    // Estimate the channels from the DM-RS symbols.
+    static_tensor<2, cf_t, MAX_PORTS * NSHIFTS> estimated_channels({NSHIFTS, nof_ports});
+    std::array<float, NSHIFTS>                  rsrp;
+    estimate_channels(estimated_channels, rsrp, dmrs_single, nof_dmrs_symbols_hop);
+
     // Store the metrics together with the PUCCH identifiers (ICS and OCCI) to be retrieved later.
     for (; (this_pucch_nof_harq_ack != end_pucch_nof_harq_ack) && ((*this_pucch_nof_harq_ack).time_domain_occ == occi);
          ++this_pucch_nof_harq_ack) {
       unsigned ics = (*this_pucch_nof_harq_ack).initial_cyclic_shift;
-      hop_metrics.push_back(
-          {.main_contribution = main_contributions[ics], .cross_contribution = cross_contributions[ics]});
-    }
 
-    // Estimate the channels from the DM-RS symbols.
-    static_tensor<2, cf_t, MAX_PORTS * NSHIFTS> estimated_channels({NSHIFTS, nof_ports});
-    estimate_channels(estimated_channels, dmrs_single, nof_dmrs_symbols_hop);
+      hop_metrics.push_back({.main_contribution  = main_contributions[ics],
+                             .cross_contribution = cross_contributions[ics],
+                             .rsrp_contribution  = rsrp[ics]});
+    }
 
     // Rebuild the estimated noiseless received DM-RS symbols (implies frequency and time spreading).
     combine_reconstructed_contributions(dmrs_reconstructed, estimated_channels, w_star_dmrs, is_first);
@@ -857,5 +651,8 @@ std::pair<float, unsigned> pucch_detector_format1::process_hop(
   // Estimate the noise by comparing received and reconstructed signal.
   float noise_var = estimate_noise(dmrs_lse, dmrs_reconstructed);
 
-  return {noise_var, dmrs_lse.get_data().size()};
+  return {.epre_contribution      = epre,
+          .nof_epre_samples       = static_cast<unsigned>(dmrs_lse.get_data().size() + data_lse.get_data().size()),
+          .noise_var_contribution = noise_var,
+          .nof_noise_samples      = static_cast<unsigned>(dmrs_lse.get_data().size())};
 }

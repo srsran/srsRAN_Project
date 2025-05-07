@@ -34,7 +34,7 @@ f1u_local_connector::create_cu_bearer(uint32_t                              ue_i
                                       f1u_cu_up_gateway_bearer_rx_notifier& rx_notifier,
                                       task_executor&                        ul_exec)
 {
-  logger_cu.info("Created CU gateway local bearer with. ul_teid={}", ul_teid);
+  logger_cu.debug("Created CU gateway local bearer with. ul_teid={}", ul_teid);
   std::unique_lock<std::mutex> lock(map_mutex);
   srsran_assert(cu_map.find(ul_teid) == cu_map.end(),
                 "Cannot create CU gateway local bearer, UL TEID already exists. ul_teid={}",

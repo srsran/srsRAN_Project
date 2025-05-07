@@ -443,3 +443,23 @@ TEST_F(ngap_ue_context_management_procedure_test, when_ue_context_is_tranfered_a
   // Verify that RRC notifier of target UE has indeed benn called.
   ASSERT_FALSE(target_ue.rrc_ue_handler.last_nas_pdu.empty());
 }
+
+/// Test when Initial Context Setup Request with inconsistent NGAP ID pair is received,
+/// an error indication is sent.
+TEST_F(ngap_ue_context_management_procedure_test, when_ue_context_setup_has_inconsistent_id_pair_err_indication_is_sent)
+{
+  // Test preamble
+  ue_index_t ue_index1 = this->start_procedure();
+  ue_index_t ue_index2 = this->start_procedure();
+
+  auto& ue1 = test_ues.at(ue_index1);
+  auto& ue2 = test_ues.at(ue_index2);
+
+  // Inject Initial Context Setup Request with inconsistent NGAP ID pair.
+  ngap_message init_context_setup_request =
+      generate_valid_initial_context_setup_request_message(ue1.amf_ue_id.value(), ue2.ran_ue_id.value());
+  ngap->handle_message(init_context_setup_request);
+
+  ASSERT_EQ(n2_gw.last_ngap_msgs.back().pdu.init_msg().value.error_ind()->cause.radio_network(),
+            asn1::ngap::cause_radio_network_e::options::inconsistent_remote_ue_ngap_id);
+}

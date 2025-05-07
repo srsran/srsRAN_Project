@@ -302,6 +302,8 @@ srsran::srs_cu_cp::create_n2_connection_client(const n2_connection_client_config
   sctp_cfg.rto_max           = nw_mode.rto_max;
   sctp_cfg.init_max_attempts = nw_mode.init_max_attempts;
   sctp_cfg.max_init_timeo    = nw_mode.max_init_timeo;
+  sctp_cfg.hb_interval       = nw_mode.hb_interval;
+  sctp_cfg.assoc_max_rxt     = nw_mode.assoc_max_rxt;
   sctp_cfg.ppid              = NGAP_PPID;
   return std::make_unique<n2_sctp_gateway_client>(nw_mode.broker, nw_mode.io_rx_executor, sctp_cfg, params.pcap);
 }

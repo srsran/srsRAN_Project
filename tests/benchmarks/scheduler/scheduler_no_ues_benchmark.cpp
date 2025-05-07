@@ -66,8 +66,8 @@ void benchmark_sib_scheduling()
 {
   sched_cfg_dummy_notifier       cfg_notif;
   sched_dummy_metric_notifier    metric_notif;
-  std::unique_ptr<mac_scheduler> sch = create_scheduler(
-      scheduler_config{config_helpers::make_default_scheduler_expert_config(), cfg_notif, metric_notif});
+  std::unique_ptr<mac_scheduler> sch =
+      create_scheduler(scheduler_config{config_helpers::make_default_scheduler_expert_config(), cfg_notif});
 
   // Add Cell.
   scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();
@@ -91,8 +91,8 @@ void benchmark_rach_scheduling()
 {
   sched_cfg_dummy_notifier       cfg_notif;
   sched_dummy_metric_notifier    metric_notif;
-  std::unique_ptr<mac_scheduler> sch = create_scheduler(
-      scheduler_config{config_helpers::make_default_scheduler_expert_config(), cfg_notif, metric_notif});
+  std::unique_ptr<mac_scheduler> sch =
+      create_scheduler(scheduler_config{config_helpers::make_default_scheduler_expert_config(), cfg_notif});
 
   // Add Cell.
   scheduler_expert_config                  sched_cfg = config_helpers::make_default_scheduler_expert_config();

@@ -171,6 +171,18 @@ private:
 class unique_thread
 {
 public:
+  /// Observer of the creation of new threads or their destruction.
+  class observer
+  {
+  public:
+    virtual ~observer() = default;
+
+    /// Called whenever a new unique_thread is created, from within the thread context.
+    virtual void on_thread_creation() = 0;
+    /// Called whenever a new unique_thread is destroyed, from within the thread context.
+    virtual void on_thread_destruction() = 0;
+  };
+
   /// Creates a unique_thread object with no associated OS thread.
   unique_thread() = default;
 
@@ -235,6 +247,9 @@ public:
 
   /// Print to console the current thread priority.
   void print_priority();
+
+  /// Add a new observer of created/destroyed threads.
+  static void add_observer(std::unique_ptr<observer> observer);
 
 private:
   /// Starts thread with provided name and attributes.

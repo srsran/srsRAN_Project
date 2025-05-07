@@ -35,9 +35,7 @@
 namespace srsran {
 
 struct cu_up_appconfig {
-  unsigned gtpu_queue_size          = 2048;
-  unsigned gtpu_reordering_timer_ms = 0;
-  bool     warn_on_drop             = false;
+  bool warn_on_drop = false;
 };
 
 /// Metrics report configuration.

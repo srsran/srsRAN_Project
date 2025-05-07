@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "segmented_sib_list.h"
 #include "srsran/adt/byte_buffer.h"
 #include "srsran/adt/lockfree_triple_buffer.h"
 #include "srsran/mac/cell_configuration.h"
@@ -56,12 +57,15 @@ public:
 private:
   using bcch_dl_sch_buffer = std::shared_ptr<const std::vector<uint8_t>>;
 
+  /// Variant that can either hold a single BCCH payload, or multiple versions of such payload for segmented messages.
+  using bcch_payload_type = std::variant<bcch_dl_sch_buffer, segmented_sib_list<bcch_dl_sch_buffer>>;
+
   /// A snapshot of a SIB1 and SI messages within a given SI change window.
   struct si_buffer_snapshot {
-    unsigned                                                 version;
-    units::bytes                                             sib1_len;
-    bcch_dl_sch_buffer                                       sib1_buffer;
-    std::vector<std::pair<units::bytes, bcch_dl_sch_buffer>> si_msg_buffers;
+    unsigned                                                version;
+    units::bytes                                            sib1_len;
+    bcch_dl_sch_buffer                                      sib1_buffer;
+    std::vector<std::pair<units::bytes, bcch_payload_type>> si_msg_buffers;
   };
 
   void save_buffers(si_version_type si_version, const mac_cell_sys_info_config& req);

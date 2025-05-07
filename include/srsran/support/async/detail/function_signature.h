@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "srsran/support/async/detail/type_list.h"
+#include "srsran/support/detail/type_list.h"
 
 namespace srsran {
 namespace detail {

@@ -23,7 +23,6 @@
 #include "../../../lib/fapi/validators/dl_pdsch_pdu.h"
 #include "../message_builder_helpers.h"
 #include "helpers.h"
-#include "srsran/fapi/message_validators.h"
 
 using namespace srsran;
 using namespace fapi;

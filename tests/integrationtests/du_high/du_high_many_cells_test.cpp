@@ -312,8 +312,6 @@ protected:
       params.nof_cells   = nof_cells;
       auto cfg           = create_du_high_configuration(params);
       cfg.metrics.period = METRICS_PERIOD;
-      // TODO: Remove these extra parameters.
-      cfg.ran.sched_cfg.metrics_report_period = METRICS_PERIOD;
       return cfg;
     }())
   {
@@ -332,26 +330,33 @@ TEST_F(du_high_many_cells_metrics_test, when_du_metrics_are_configured_then_metr
   ASSERT_TRUE(run_rrc_setup(rnti2));
   ASSERT_TRUE(run_ue_context_setup(rnti2));
 
+  // Flush any report pushed during UE creation.
+  this->workers.flush_pending_control_tasks();
+  du_metrics.last_report.reset();
+
+  // Wait for the next report.
   const unsigned nof_test_slots =
-      METRICS_PERIOD.count() * get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common) * 1.1;
-  ASSERT_TRUE(this->run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots));
+      METRICS_PERIOD.count() * get_nof_slots_per_subframe(du_high_cfg.ran.cells[0].scs_common) + 20;
+  if (not run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots)) {
+    this->workers.flush_pending_control_tasks();
+    ASSERT_TRUE(du_metrics.last_report.has_value());
+  }
   // Metrics received.
-  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells.size(), nof_cells);
-  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[0].ue_metrics.size(), 1);
-  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[1].ue_metrics.size(), 1);
-  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[2].ue_metrics.size(), 0);
-  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[3].ue_metrics.size(), 0);
-  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[0].ue_metrics[0].rnti, rnti1);
-  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells[1].ue_metrics[0].rnti, rnti2);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells.size(), nof_cells);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[0].ue_metrics.size(), 1);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[1].ue_metrics.size(), 1);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[2].ue_metrics.size(), 0);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[3].ue_metrics.size(), 0);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[0].ue_metrics[0].rnti, rnti1);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells[1].ue_metrics[0].rnti, rnti2);
   ASSERT_EQ(du_metrics.last_report.value().mac.value().dl.cells.size(), nof_cells);
   ASSERT_EQ(du_metrics.last_report.value().f1ap.value().ues.size(), 2);
-  ASSERT_GT(du_metrics.last_report.value().f1ap.value().nof_rx_pdus, 0);
 
   // After one metric period elapses, we should receive a new report.
   du_metrics.last_report.reset();
   ASSERT_TRUE(this->run_until([this]() { return du_metrics.last_report.has_value(); }, nof_test_slots));
   // Metrics received.
-  ASSERT_EQ(du_metrics.last_report.value().scheduler.value().cells.size(), nof_cells);
+  ASSERT_EQ(du_metrics.last_report.value().mac.value().sched.cells.size(), nof_cells);
   ASSERT_EQ(du_metrics.last_report.value().mac.value().dl.cells.size(), nof_cells);
   ASSERT_EQ(du_metrics.last_report.value().f1ap.value().ues.size(), 2);
 }

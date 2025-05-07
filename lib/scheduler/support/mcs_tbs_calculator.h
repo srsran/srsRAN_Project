@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/expected.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include <optional>
 
@@ -51,6 +52,46 @@ struct sch_mcs_tbs {
 std::optional<sch_mcs_tbs>
 compute_dl_mcs_tbs(const pdsch_config_params& pdsch_params, sch_mcs_index max_mcs, unsigned nof_prbs, bool contains_dc);
 
+/// Uplink modulation code scheme calculator errors.
+enum class compute_ul_mcs_tbs_error {
+  /// No error.
+  none = 0,
+  /// The effective code rate exceeds the maximum.
+  effective_code_rate_exceeds_maximum,
+  /// The RE reserved for DC and HARQ-ACK feedback exceed the PUSCH capacity.
+  two_bit_harq_ack_and_dc_overhead,
+  /// Insufficient number of rate-matched bits for HARQ-ACK feedback.
+  insufficient_nof_rm_harq_ack,
+  /// Insufficient number of rate-matched bits for CSI-Part1 report.
+  insufficient_nof_rm_csi1,
+  /// Insufficient bandwidth for multiplexing UL-SCH and UCI.
+  invalid_ulsch_information,
+  /// Undefined.
+  undefined
+};
+
+/// Converts the uplink modulation code scheme calculator error to a string.
+inline const char* to_string(compute_ul_mcs_tbs_error error)
+{
+  switch (error) {
+    case compute_ul_mcs_tbs_error::none:
+      return "None";
+    case compute_ul_mcs_tbs_error::effective_code_rate_exceeds_maximum:
+      return "The effective code rate exceeds the maximum";
+    case compute_ul_mcs_tbs_error::two_bit_harq_ack_and_dc_overhead:
+      return "The RE reserved for DC and HARQ-ACK feedback exceed the PUSCH capacity";
+    case compute_ul_mcs_tbs_error::insufficient_nof_rm_harq_ack:
+      return "Insufficient number of rate-matched bits for HARQ-ACK feedback";
+    case compute_ul_mcs_tbs_error::insufficient_nof_rm_csi1:
+      return "Insufficient number of rate-matched bits for CSI-Part1 report";
+    case compute_ul_mcs_tbs_error::invalid_ulsch_information:
+      return "Insufficient bandwidth for multiplexing UL-SCH and UCI";
+    case compute_ul_mcs_tbs_error::undefined:
+    default:
+      return "Undefined";
+  }
+}
+
 /// \brief Computes the PUSCH MCS and TBS such that the effective code rate does not exceed 0.95.
 ///
 /// \param[in] pusch_params PUSCH parameters needed to compute the MCS and TBS.
@@ -59,13 +100,12 @@ compute_dl_mcs_tbs(const pdsch_config_params& pdsch_params, sch_mcs_index max_mc
 /// code rate is above 0.95.
 /// \param[in] nof_prbs Maximum number of PRBs available for the PUSCH transmission.
 /// \param[in] contains_dc Set to true if the transmission overlaps with the position of the DC.
-/// \return The MCS and TBS, if for these values the effective code rate does not exceed 0.95; else, it returns an empty
-/// optional object.
-std::optional<sch_mcs_tbs> compute_ul_mcs_tbs(const pusch_config_params& pusch_params,
-                                              const bwp_config&          active_bwp_cfg,
-                                              sch_mcs_index              max_mcs,
-                                              unsigned                   nof_prbs,
-                                              bool                       contains_dc);
+/// \return The MCS and TBS, if the function converges into a valid code rate, otherwise an error.
+expected<sch_mcs_tbs, compute_ul_mcs_tbs_error> compute_ul_mcs_tbs(const pusch_config_params& pusch_params,
+                                                                   const bwp_config&          active_bwp_cfg,
+                                                                   sch_mcs_index              max_mcs,
+                                                                   unsigned                   nof_prbs,
+                                                                   bool                       contains_dc);
 
 /// \brief Determines the PUSCH TBS such that the effective code rate does not exceed 0.95.
 /// \param[in] pusch_params PUSCH parameters needed to compute the TBS.

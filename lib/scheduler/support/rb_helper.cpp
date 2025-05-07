@@ -24,9 +24,10 @@
 
 using namespace srsran;
 
-template <size_t N, bool LowestInfoBitIsMSB>
-static interval<unsigned> find_next_empty_interval_impl(const bounded_bitset<N, LowestInfoBitIsMSB>& used_rb_bitmap,
-                                                        interval<unsigned>                           search_limits)
+template <size_t N, bool LowestInfoBitIsMSB, typename Tag>
+static interval<unsigned>
+find_next_empty_interval_impl(const bounded_bitset<N, LowestInfoBitIsMSB, Tag>& used_rb_bitmap,
+                              interval<unsigned>                                search_limits)
 {
   // Restrict the search to the bitmap dimensions.
   const interval<unsigned> bitset_limits = {0, used_rb_bitmap.size()};
@@ -40,11 +41,11 @@ static interval<unsigned> find_next_empty_interval_impl(const bounded_bitset<N, 
   return {};
 }
 
-template <size_t N, bool LowestInfoBitIsMSB>
+template <size_t N, bool LowestInfoBitIsMSB, typename Tag>
 static interval<unsigned>
-find_empty_interval_of_length_impl(const bounded_bitset<N, LowestInfoBitIsMSB>& used_rb_bitmap,
-                                   unsigned                                     nof_rbs,
-                                   interval<unsigned>                           search_limits)
+find_empty_interval_of_length_impl(const bounded_bitset<N, LowestInfoBitIsMSB, Tag>& used_rb_bitmap,
+                                   unsigned                                          nof_rbs,
+                                   interval<unsigned>                                search_limits)
 {
   // Restrict the search to the bitmap dimensions.
   const interval<unsigned> bitset_limits = {0, used_rb_bitmap.size()};

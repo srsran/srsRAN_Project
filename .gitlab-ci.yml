@@ -255,6 +255,62 @@ matlab weekly:
     project: softwareradiosystems/srsgnb_matlab
     branch: master
 
+generate nightly plugin:
+  stage: ci
+  image: ubuntu:24.04
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - |
+      echo """
+      include:
+        - project: softwareradiosystems/ci/tools
+          ref: \"21\"
+          file: .gitlab/ci-shared/setup/all.yml
+
+      stages:
+        - trigger
+      """ >> trigger_nightly_plugins.yml
+
+      while IFS='|' read -r PLUGIN_PATH PLUGIN_REPO PLUGIN_REF; do
+          echo """
+      ${PLUGIN_PATH} nightly:
+        stage: trigger
+        interruptible: false
+        variables:
+          ON_SCHEDULE: "true"
+          CI_DESCRIPTION: Nightly
+          NOTIFY_SLACK: "false"
+        trigger:
+          project: ${PLUGIN_REPO}
+          branch: main
+          strategy: depend
+      """ >> trigger_nightly_plugins.yml
+      done < <(grep -v '^#' "$PLUGINS_DATA_FILE")
+    - cat trigger_nightly_plugins.yml
+  artifacts:
+    paths:
+      - trigger_nightly_plugins.yml
+    expire_in: 1 day
+
+plugin nightly:
+  stage: ci
+  interruptible: false
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly Build Unit Tests Plugin/
+  inherit:
+    variables: false
+  trigger:
+    include:
+      - artifact: trigger_nightly_plugins.yml
+        job: generate nightly plugin
+    strategy: depend
+  needs:
+    - job: generate nightly plugin
+      artifacts: true
+
 ################################################################################
 ## Static
 ################################################################################

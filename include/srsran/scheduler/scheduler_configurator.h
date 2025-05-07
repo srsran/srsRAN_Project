@@ -33,7 +33,7 @@
 #include "srsran/ran/slot_pdu_capacity_constants.h"
 #include "srsran/ran/slot_point.h"
 #include "srsran/ran/sr_configuration.h"
-#include "srsran/ran/ssb_configuration.h"
+#include "srsran/ran/ssb/ssb_configuration.h"
 #include "srsran/ran/subcarrier_spacing.h"
 #include "srsran/ran/tdd/tdd_ul_dl_config.h"
 #include "srsran/ran/time_alignment_config.h"
@@ -45,6 +45,8 @@
 #include "srsran/scheduler/config/slice_rrm_policy_config.h"
 
 namespace srsran {
+
+class scheduler_metrics_notifier;
 
 /// Basic scheduler resource grid element for resource reservation.
 struct sched_grid_resource {
@@ -61,6 +63,11 @@ struct sched_grid_resource {
 /// Cell Configuration Request.
 /// \remark See O-RAN WG8, Section 9.2.3.2.1, Table 9.18.
 struct sched_cell_configuration_request_message {
+  struct metrics_config {
+    std::chrono::milliseconds   report_period{0};
+    scheduler_metrics_notifier* notifier = nullptr;
+  };
+
   du_cell_index_t       cell_index;
   du_cell_group_index_t cell_group_index;
   uint8_t               nof_beams; // (0..64)
@@ -107,6 +114,9 @@ struct sched_cell_configuration_request_message {
   unsigned ntn_cs_koffset = 0;
 
   bool cfra_enabled = false;
+
+  /// Configuration of scheduler cell metrics.
+  metrics_config metrics;
 };
 
 /// Parameters provided to the scheduler to configure the resource allocation of a specific UE.

@@ -27,14 +27,14 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/phy/constants.h"
 #include "srsran/phy/support/mask_types.h"
-#include "srsran/ran/cyclic_prefix.h"
+#include "srsran/ran/resource_allocation/rb_bitmap.h"
 
 namespace srsran {
 
 /// Describes a resource element pattern within a resource grid.
 struct re_pattern {
   /// Physical resource block mask.
-  bounded_bitset<MAX_RB> prb_mask;
+  prb_bitmap prb_mask;
   /// Resource element mask per resource block. True entries indicate the resource elements affected by the pattern.
   re_prb_mask re_mask{};
   /// Symbol mask. True entries indicate the symbols affected by the pattern.
@@ -232,8 +232,7 @@ public:
   /// \param[in] nof_symbols  Indicates the number of symbols within the slot.
   /// \param[in] prb_mask     Selection of PRB to count.
   /// \return The number of included elements.
-  unsigned
-  get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, const bounded_bitset<MAX_RB>& prb_mask) const;
+  unsigned get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, const prb_bitmap& prb_mask) const;
 
   /// \brief Excludes the described resource element pattern list in a resource grid symbol mask.
   ///

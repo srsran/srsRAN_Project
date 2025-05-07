@@ -85,9 +85,9 @@ struct test_bench {
   scheduler_ue_metrics_dummy_notifier     metrics_notif;
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
   cell_config_builder_params              builder_params;
-  scheduler_metrics_handler               metrics{std::chrono::milliseconds{0}, metrics_notif};
+  scheduler_metrics_handler               metrics;
 
-  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif, metrics_notif}, metrics};
+  sched_config_manager      cfg_mng{scheduler_config{sched_cfg, dummy_notif}, metrics};
   const cell_configuration& cell_cfg;
 
   cell_resource_allocator       res_grid{cell_cfg};
@@ -145,12 +145,15 @@ protected:
   scheduler_result_logger    result_logger{false, 0};
   std::optional<test_bench>  bench;
   duplex_mode                duplx_mode;
+  bool                       enable_pusch_transform_precoding;
   cell_config_builder_params builder_params;
   // We use this value to account for the case when the PDSCH or PUSCH is allocated several slots in advance.
   unsigned max_k_value = 0;
 
-  base_fallback_tester(duplex_mode duplx_mode_) :
-    duplx_mode(duplx_mode_), builder_params(test_builder_params(duplx_mode))
+  base_fallback_tester(duplex_mode duplx_mode_, bool enable_pusch_transform_precoding_) :
+    duplx_mode(duplx_mode_),
+    enable_pusch_transform_precoding(enable_pusch_transform_precoding_),
+    builder_params(test_builder_params(duplx_mode))
   {
   }
 
@@ -300,6 +303,10 @@ protected:
     ue_create_req.crnti              = tc_rnti;
     ue_create_req.ue_index           = ue_index;
     ue_create_req.starts_in_fallback = true;
+    if (enable_pusch_transform_precoding) {
+      ue_create_req.cfg.cells.value()[0].serv_cell_cfg.ul_config.value().init_ul_bwp.pusch_cfg.value().trans_precoder =
+          pusch_config::transform_precoder::enabled;
+    }
     return bench->add_ue(ue_create_req);
   }
 
@@ -373,7 +380,7 @@ struct fallback_sched_test_params {
 class fallback_scheduler_tester : public base_fallback_tester, public ::testing::TestWithParam<srb0_test_params>
 {
 protected:
-  fallback_scheduler_tester() : base_fallback_tester(GetParam().duplx_mode), params{GetParam()} {}
+  fallback_scheduler_tester() : base_fallback_tester(GetParam().duplx_mode, false), params{GetParam()} {}
 
   srb0_test_params params;
 };
@@ -606,7 +613,7 @@ TEST_P(fallback_scheduler_tester, sanity_check_with_random_max_mcs_and_payload_s
 class fallback_scheduler_tdd_tester : public base_fallback_tester, public ::testing::Test
 {
 protected:
-  fallback_scheduler_tdd_tester() : base_fallback_tester(srsran::duplex_mode::TDD) {}
+  fallback_scheduler_tdd_tester() : base_fallback_tester(srsran::duplex_mode::TDD, false) {}
 };
 
 TEST_F(fallback_scheduler_tdd_tester, test_allocation_in_appropriate_slots_in_tdd)
@@ -714,7 +721,7 @@ protected:
   // NOTE: Ensure that the SDU size is small enough so that there is no segmentation when tested for SRB1.
   const unsigned MAC_SRB_SDU_SIZE = 101;
 
-  fallback_scheduler_head_scheduling() : base_fallback_tester(GetParam().duplx_mode)
+  fallback_scheduler_head_scheduling() : base_fallback_tester(GetParam().duplx_mode, false)
   {
     const unsigned      k0                 = 0;
     const sch_mcs_index max_msg4_mcs_index = 8;
@@ -855,7 +862,7 @@ INSTANTIATE_TEST_SUITE_P(fallback_scheduler,
 class fallback_scheduler_retx : public base_fallback_tester, public ::testing::TestWithParam<fallback_sched_test_params>
 {
 protected:
-  fallback_scheduler_retx() : base_fallback_tester(GetParam().duplx_mode)
+  fallback_scheduler_retx() : base_fallback_tester(GetParam().duplx_mode, false)
   {
     const unsigned      k0                 = 0;
     const sch_mcs_index max_msg4_mcs_index = 8;
@@ -1035,7 +1042,7 @@ INSTANTIATE_TEST_SUITE_P(fallback_scheduler,
 class fallback_scheduler_srb1_segmentation : public base_fallback_tester, public ::testing::TestWithParam<duplex_mode>
 {
 protected:
-  fallback_scheduler_srb1_segmentation() : base_fallback_tester(GetParam())
+  fallback_scheduler_srb1_segmentation() : base_fallback_tester(GetParam(), false)
   {
     const unsigned      k0                 = 0;
     const sch_mcs_index max_msg4_mcs_index = 8;
@@ -1243,16 +1250,19 @@ INSTANTIATE_TEST_SUITE_P(fallback_scheduler,
 // Parameters to be passed to test.
 struct ul_fallback_sched_test_params {
   duplex_mode duplx_mode;
+  bool        enable_pusch_transform_precoding;
 };
 
 class ul_fallback_scheduler_tester : public base_fallback_tester,
                                      public ::testing::TestWithParam<ul_fallback_sched_test_params>
 {
 protected:
-  ul_fallback_scheduler_tester() : base_fallback_tester(GetParam().duplx_mode)
+  ul_fallback_scheduler_tester() :
+    base_fallback_tester(GetParam().duplx_mode, GetParam().enable_pusch_transform_precoding)
   {
-    setup_sched(config_helpers::make_default_scheduler_expert_config(),
-                sched_config_helper::make_default_sched_cell_configuration_request(builder_params));
+    auto msg = sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
+    msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder = enable_pusch_transform_precoding;
+    setup_sched(config_helpers::make_default_scheduler_expert_config(), msg);
   }
 
   class ue_ul_tester
@@ -1332,7 +1342,8 @@ TEST_P(ul_fallback_scheduler_tester, all_ul_ue_are_served_and_buffer_gets_emptie
     ues_testers.emplace_back(bench->cell_cfg, get_ue(to_du_ue_index(du_idx)), this);
   }
 
-  for (unsigned idx = 1; idx < MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx++) {
+  for (unsigned idx = 1, idx_end = MAX_UES * MAX_TEST_RUN_SLOTS * (1U << current_slot.numerology()); idx != idx_end;
+       ++idx) {
     run_slot();
 
     for (auto& tester : ues_testers) {
@@ -1348,19 +1359,25 @@ TEST_P(ul_fallback_scheduler_tester, all_ul_ue_are_served_and_buffer_gets_emptie
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(test_fdd_and_tdd,
-                         ul_fallback_scheduler_tester,
-                         testing::Values(ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD},
-                                         ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD}));
+INSTANTIATE_TEST_SUITE_P(
+    test_fdd_and_tdd,
+    ul_fallback_scheduler_tester,
+    testing::Values(
+        ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD, .enable_pusch_transform_precoding = false},
+        ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD, .enable_pusch_transform_precoding = false},
+        ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD, .enable_pusch_transform_precoding = true},
+        ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD, .enable_pusch_transform_precoding = true}));
 
 class ul_fallback_sched_tester_sr_indication : public base_fallback_tester,
                                                public ::testing::TestWithParam<ul_fallback_sched_test_params>
 {
 protected:
-  ul_fallback_sched_tester_sr_indication() : base_fallback_tester(GetParam().duplx_mode)
+  ul_fallback_sched_tester_sr_indication() :
+    base_fallback_tester(GetParam().duplx_mode, GetParam().enable_pusch_transform_precoding)
   {
-    setup_sched(config_helpers::make_default_scheduler_expert_config(),
-                sched_config_helper::make_default_sched_cell_configuration_request(builder_params));
+    auto msg = sched_config_helper::make_default_sched_cell_configuration_request(builder_params);
+    msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->msg3_transform_precoder = enable_pusch_transform_precoding;
+    setup_sched(config_helpers::make_default_scheduler_expert_config(), msg);
     slot_generate_srb_traffic =
         slot_point{to_numerology_value(bench->cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs),
                    test_rgen::uniform_int(20U, 40U)};
@@ -1398,15 +1415,19 @@ TEST_P(ul_fallback_sched_tester_sr_indication, when_gnb_receives_sr_ind_ue_gets_
   ASSERT_TRUE(pusch_allocated);
 }
 
-INSTANTIATE_TEST_SUITE_P(test_fdd_and_tdd,
-                         ul_fallback_sched_tester_sr_indication,
-                         testing::Values(ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD},
-                                         ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD}));
+INSTANTIATE_TEST_SUITE_P(
+    test_fdd_and_tdd,
+    ul_fallback_sched_tester_sr_indication,
+    testing::Values(
+        ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD, .enable_pusch_transform_precoding = false},
+        ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD, .enable_pusch_transform_precoding = false},
+        ul_fallback_sched_test_params{.duplx_mode = duplex_mode::FDD, .enable_pusch_transform_precoding = true},
+        ul_fallback_sched_test_params{.duplx_mode = duplex_mode::TDD, .enable_pusch_transform_precoding = true}));
 
 class fallback_sched_ue_w_out_pucch_cfg : public base_fallback_tester, public ::testing::Test
 {
 protected:
-  fallback_sched_ue_w_out_pucch_cfg() : base_fallback_tester(duplex_mode::TDD)
+  fallback_sched_ue_w_out_pucch_cfg() : base_fallback_tester(duplex_mode::TDD, false)
   {
     const unsigned      k0                 = 0;
     const sch_mcs_index max_msg4_mcs_index = 8;

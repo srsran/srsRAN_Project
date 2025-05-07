@@ -45,6 +45,11 @@ tests:
           enable_rlc: true
           enable_ru: true
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
       expert_execution:
@@ -80,6 +85,11 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         sched_expert_cfg:
@@ -221,6 +231,11 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         pucch:
@@ -248,6 +263,11 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         pucch:
@@ -281,6 +301,11 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         pucch:
@@ -314,6 +339,11 @@ tests:
     gnb_extra_config:
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         pucch:
@@ -322,7 +352,7 @@ tests:
         tdd_ul_dl_cfg:
           dl_ul_tx_period: 10
           nof_dl_slots: 6
-          nof_dl_symbols: 13
+          nof_dl_symbols: 12
           nof_ul_slots: 3
           nof_ul_symbols: 0
       expert_execution:
@@ -391,6 +421,11 @@ tests:
     gnb_extra_config: &1ue_mimo_config
       <<: *base_config
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         nof_antennas_ul: 2
@@ -425,7 +460,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
-    warning_as_errors: false
+    warning_as_errors: true
 
   - id: "32UE ideal UDP bidirectional Long 3h"
     campaign_filename: *campaign_filename
@@ -437,7 +472,7 @@ tests:
     expected_dl_bitrate: 1.2e+9
     expected_ul_bitrate: 75.0e+6
     expected_nof_kos: 10
-    warning_as_errors: false
+    warning_as_errors: true
 
   - id: "32UE ideal UDP bidirectional Long 24h"
     campaign_filename: *campaign_filename
@@ -457,6 +492,11 @@ tests:
           enable_ru: true
           enable_pdcp: true
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
       expert_execution:
@@ -467,7 +507,7 @@ tests:
     expected_dl_bitrate: 14.0e+3
     expected_ul_bitrate: 1.0e+3
     expected_nof_kos: .inf
-    warning_as_errors: false
+    warning_as_errors: true
 
   - id: "RTSAN"
     campaign_filename: *campaign_filename
@@ -482,6 +522,11 @@ tests:
       metrics:
         enable_log: false
       cell_cfg:
+        pdsch:
+          max_pdschs_per_slot: 4
+        ul_common:
+          max_ul_grants_per_slot: 12
+          max_pucchs_per_slot: 10
         pusch:
           max_puschs_per_slot: 2
         pucch:

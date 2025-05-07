@@ -84,10 +84,10 @@ public:
   void handle_metric(const app_services::metrics_set& metric) override;
 
   /// This can be called from another execution context to enable the metrics.
-  void enable() { print_metrics = true; }
+  void enable() { print_metrics.store(true, std::memory_order_relaxed); }
 
   /// This can be called from another execution context to disable the metrics.
-  void disable() { print_metrics = false; }
+  void disable() { print_metrics.store(false, std::memory_order_relaxed); }
 
   /// Prints the header in the next metric handle.
   void print_header() { handler.print_header(); }

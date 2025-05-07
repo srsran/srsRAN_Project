@@ -270,7 +270,7 @@ sctp_network_client_impl::connect_to(const std::string&                         
       [this]() { receive(); },
       [this](io_broker::error_code code) {
         std::string cause = fmt::format("IO error code={}", (int)code);
-        handle_connection_close(cause.c_str());
+        handle_connection_terminated(cause);
       });
   if (not io_sub.registered()) {
     // IO subscription failed.
@@ -313,7 +313,7 @@ void sctp_network_client_impl::receive()
   if (rx_bytes == -1) {
     if (errno != EAGAIN) {
       std::string cause = fmt::format("Error reading from SCTP socket: {}", strerror(errno));
-      handle_connection_close(cause.c_str());
+      handle_connection_terminated(cause.c_str());
     } else {
       if (!node_cfg.non_blocking_mode) {
         logger.debug("{}: Socket timeout reached", node_cfg.if_name);
@@ -330,7 +330,7 @@ void sctp_network_client_impl::receive()
   }
 }
 
-void sctp_network_client_impl::handle_connection_close(const char* cause)
+void sctp_network_client_impl::handle_connection_shutdown(const char* cause)
 {
   // Signal that the upper layer sender should stop sending new SCTP data (including the EOF, which would fail anyway).
   bool prev = shutdown_received->exchange(true);
@@ -341,8 +341,10 @@ void sctp_network_client_impl::handle_connection_close(const char* cause)
   }
 }
 
-void sctp_network_client_impl::handle_sctp_shutdown_comp()
+void sctp_network_client_impl::handle_connection_terminated(const std::string& cause)
 {
+  logger.info("{}: {}. Notifying connection drop to upper layers", node_cfg.if_name, cause);
+
   // Notify SCTP sender that there is no need to send EOF.
   shutdown_received->store(true);
 
@@ -374,7 +376,7 @@ void sctp_network_client_impl::handle_notification(span<const uint8_t>          
 {
   if (not validate_and_log_sctp_notification(payload)) {
     // Handle error.
-    handle_connection_close("The received message is invalid");
+    handle_connection_terminated("Received invalid message");
     return;
   }
 
@@ -386,13 +388,13 @@ void sctp_network_client_impl::handle_notification(span<const uint8_t>          
         case SCTP_COMM_UP:
           break;
         case SCTP_COMM_LOST:
-          handle_connection_close("Communication to the server was lost");
+          handle_connection_terminated("Communication to the server was lost");
           break;
         case SCTP_SHUTDOWN_COMP:
-          handle_sctp_shutdown_comp();
+          handle_connection_terminated("Received SCTP shutdown completed");
           break;
         case SCTP_CANT_STR_ASSOC:
-          handle_connection_close("Can't start association");
+          handle_connection_terminated("Can't start association");
           break;
         default:
           break;
@@ -400,7 +402,7 @@ void sctp_network_client_impl::handle_notification(span<const uint8_t>          
       break;
     }
     case SCTP_SHUTDOWN_EVENT: {
-      handle_connection_close("Server closed SCTP association");
+      handle_connection_shutdown("Server closed SCTP association");
       break;
     }
     default:

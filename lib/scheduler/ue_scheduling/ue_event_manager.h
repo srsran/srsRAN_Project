@@ -26,7 +26,6 @@
 #include "../slicing/inter_slice_scheduler.h"
 #include "../ue_context/ue.h"
 #include "ue_fallback_scheduler.h"
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/unique_function.h"
 #include "srsran/ran/du_types.h"

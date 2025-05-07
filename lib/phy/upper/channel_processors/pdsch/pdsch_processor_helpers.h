@@ -26,6 +26,7 @@
 #pragma once
 
 #include "srsran/instrumentation/traces/du_traces.h"
+#include "srsran/phy/upper/channel_processors/pdsch/pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsran/phy/upper/signal_processors/ptrs/ptrs_pdsch_generator.h"
 #include "srsran/ran/dmrs.h"
@@ -41,9 +42,9 @@ namespace srsran {
 inline void
 pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const pdsch_processor::pdu_t& pdu)
 {
-  trace_point process_dmrs_tp = l1_tracer.now();
+  trace_point process_dmrs_tp = l1_dl_tracer.now();
 
-  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  crb_bitmap rb_mask_bitset = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Select the DM-RS reference point.
   unsigned dmrs_reference_point_k_rb = 0;
@@ -60,13 +61,13 @@ pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const
   dmrs_config.n_scid               = pdu.n_scid;
   dmrs_config.amplitude            = convert_dB_to_amplitude(-pdu.ratio_pdsch_dmrs_to_sss_dB);
   dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
-  dmrs_config.rb_mask              = rb_mask_bitset;
+  dmrs_config.rb_mask              = rb_mask_bitset.convert_to<prb_bitmap>();
   dmrs_config.precoding            = pdu.precoding;
 
   // Put DM-RS.
   dmrs.map(grid, dmrs_config);
 
-  l1_tracer << trace_event("process_dmrs", process_dmrs_tp);
+  l1_dl_tracer << trace_event("process_dmrs", process_dmrs_tp);
 }
 
 /// \brief Generates and maps PT-RS for the PDSCH transmission as per TS 38.211 section 7.4.1.2.
@@ -76,12 +77,12 @@ pdsch_process_dmrs(resource_grid_writer& grid, dmrs_pdsch_processor& dmrs, const
 inline void
 pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_generator, const pdsch_processor::pdu_t& pdu)
 {
-  trace_point process_ptrs_tp = l1_tracer.now();
+  trace_point process_ptrs_tp = l1_dl_tracer.now();
 
   // Extract PT-RS configuration parameters.
   const pdsch_processor::ptrs_configuration& ptrs = *pdu.ptrs;
 
-  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  prb_bitmap rb_mask_bitset = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb).convert_to<prb_bitmap>();
 
   // Select the DM-RS reference point.
   unsigned ptrs_reference_point_k_rb = 0;
@@ -113,7 +114,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
   // Put PT-RS.
   ptrs_generator.generate(grid, ptrs_config);
 
-  l1_tracer << trace_event("process_ptrs", process_ptrs_tp);
+  l1_dl_tracer << trace_event("process_ptrs", process_ptrs_tp);
 }
 
 /// \brief Computes the number of RE used for mapping PDSCH data.
@@ -125,7 +126,7 @@ pdsch_process_ptrs(resource_grid_writer& grid, ptrs_pdsch_generator& ptrs_genera
 inline unsigned pdsch_compute_nof_data_re(const pdsch_processor::pdu_t& pdu)
 {
   // Get PRB mask.
-  bounded_bitset<MAX_RB> prb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+  prb_bitmap prb_mask = pdu.freq_alloc.get_crb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb).convert_to<prb_bitmap>();
 
   // Get number of PRB.
   unsigned nof_prb = prb_mask.count();

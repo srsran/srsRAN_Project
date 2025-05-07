@@ -298,20 +298,25 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
                 to_string(config.modulation));
 
   // Stats accumulators.
-  pusch_demodulator_notifier::demodulation_stats stats;
-  unsigned                                       evm_symbol_count     = 0;
-  unsigned                                       sinr_softbit_count   = 0;
-  float                                          noise_var_accumulate = 0.0;
-  float                                          evm_accumulate       = 0.0;
+  unsigned total_evm_symbol_count     = 0;
+  unsigned total_sinr_softbit_count   = 0;
+  float    total_noise_var_accumulate = 0.0;
+  float    total_evm_accumulate       = 0.0;
 
   // Process each OFDM symbol.
   for (unsigned i_symbol = config.start_symbol_index, i_symbol_end = config.start_symbol_index + config.nof_symbols;
        i_symbol != i_symbol_end;
        ++i_symbol) {
+    // Stats accumulators for the OFDM symbol.
+    unsigned symbol_evm_symbol_count     = 0;
+    unsigned symbol_sinr_softbit_count   = 0;
+    float    symbol_noise_var_accumulate = 0.0;
+    float    symbol_evm_accumulate       = 0.0;
+
     // Select RE mask for the symbol.
     re_symbol_mask_type& symbol_re_mask = config.dmrs_symb_pos.test(i_symbol) ? re_mask_dmrs : re_mask;
 
-    // Count the number of active RE in the symbol.
+    // Count the amount of active RE in the symbol.
     unsigned nof_re_symbol = symbol_re_mask.count();
 
     // Skip symbol if it does not contain data.
@@ -348,7 +353,7 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
 
     // Estimate post equalization Signal-to-Interference-plus-Noise Ratio.
     if (compute_post_eq_sinr) {
-      noise_var_accumulate += filter_infinite_and_accumulate(sinr_softbit_count, eq_noise_vars);
+      symbol_noise_var_accumulate += filter_infinite_and_accumulate(symbol_sinr_softbit_count, eq_noise_vars);
     }
 
     // Counts the number of processed RE for the OFDM symbol.
@@ -380,9 +385,9 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
 
       // Calculate EVM only if it is available.
       if (evm_calc) {
-        evm_accumulate +=
+        symbol_evm_accumulate +=
             static_cast<float>(codeword_block_size) * evm_calc->calculate(codeword, eq_re_block, config.modulation);
-        evm_symbol_count += codeword_block_size;
+        symbol_evm_symbol_count += codeword_block_size;
       }
 
       // Generate scrambling sequence.
@@ -399,21 +404,40 @@ void pusch_demodulator_impl::demodulate(pusch_codeword_buffer&      codeword_buf
       // be notified earlier than the new processed block to ensure the stats are available upon the notification of the
       // results.
       if (count_re_symbol == nof_re_symbol) {
-        if ((sinr_softbit_count != 0) && (noise_var_accumulate > 0.0)) {
-          float mean_noise_var = noise_var_accumulate / static_cast<float>(sinr_softbit_count);
+        // Prepare OFDM symbol stats and report.
+        pusch_demodulator_notifier::demodulation_stats stats;
+        if ((symbol_sinr_softbit_count != 0) && (symbol_noise_var_accumulate > 0.0)) {
+          float mean_noise_var = symbol_noise_var_accumulate / static_cast<float>(symbol_sinr_softbit_count);
           stats.sinr_dB.emplace(-convert_power_to_dB(mean_noise_var));
         } else {
           stats.sinr_dB.emplace(std::numeric_limits<float>::infinity());
         }
-        if (evm_symbol_count != 0) {
-          stats.evm.emplace(evm_accumulate / static_cast<float>(evm_symbol_count));
+        if (symbol_evm_symbol_count != 0) {
+          stats.evm.emplace(symbol_evm_accumulate / static_cast<float>(symbol_evm_symbol_count));
         }
-        notifier.on_provisional_stats(stats);
+        notifier.on_provisional_stats(i_symbol, stats);
+
+        // Prepare final stats.
+        total_evm_symbol_count += symbol_evm_symbol_count;
+        total_sinr_softbit_count += symbol_sinr_softbit_count;
+        total_noise_var_accumulate += symbol_noise_var_accumulate;
+        total_evm_accumulate += symbol_evm_accumulate;
       }
 
       // Notify a new processed block.
       codeword_buffer.on_new_block(codeword, scrambling_seq);
     }
+  }
+
+  pusch_demodulator_notifier::demodulation_stats stats;
+  if ((total_sinr_softbit_count != 0) && (total_noise_var_accumulate > 0.0)) {
+    float mean_noise_var = total_noise_var_accumulate / static_cast<float>(total_sinr_softbit_count);
+    stats.sinr_dB.emplace(-convert_power_to_dB(mean_noise_var));
+  } else {
+    stats.sinr_dB.emplace(std::numeric_limits<float>::infinity());
+  }
+  if (total_evm_symbol_count != 0) {
+    stats.evm.emplace(total_evm_accumulate / static_cast<float>(total_evm_symbol_count));
   }
 
   notifier.on_end_stats(stats);

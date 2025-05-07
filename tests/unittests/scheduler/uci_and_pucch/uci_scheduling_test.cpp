@@ -248,3 +248,47 @@ INSTANTIATE_TEST_SUITE_P(test_csi_sched_different_periods_offsets,
                                          csi_report_periodicity::slots80,
                                          csi_report_periodicity::slots160,
                                          csi_report_periodicity::slots320));
+
+/////////////  Test UCI with UE reconfiguration   /////////////
+
+class uci_scheduler_reconf_tester : public ::testing::TestWithParam<bool>
+{
+public:
+  uci_scheduler_reconf_tester() : t_bench{test_bench_params{.no_csi = GetParam()}} {}
+
+protected:
+  // Helper variables.
+  unsigned   sr_period_slots{sr_periodicity_to_slot(test_bench_params().period)};
+  unsigned   sr_offset{test_bench_params().offset};
+  test_bench t_bench;
+};
+
+TEST_P(uci_scheduler_reconf_tester, after_ue_reconf_uci_doesnt_stopped_being_scheduled)
+{
+  const unsigned NOF_SLOTS_TO_TEST = sr_period_slots * 4;
+
+  for (unsigned sl_cnt = 0; sl_cnt < NOF_SLOTS_TO_TEST; ++sl_cnt) {
+    t_bench.uci_sched.run_slot(t_bench.res_grid);
+    if ((t_bench.sl_tx - sr_offset).to_uint() % sr_period_slots == 0) {
+      ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
+    }
+    // Update the slot indicator.
+    t_bench.slot_indication(++t_bench.sl_tx);
+  }
+
+  // This is the reconfiguration of the UE; we are interested in checking that the UCI scheduler does not crash
+  // after the reconfiguration, more than the testing that the configuration has been changed.
+  t_bench.uci_sched.reconf_ue(t_bench.get_main_ue().get_pcell().cfg(), t_bench.get_main_ue().get_pcell().cfg());
+
+  // After reconfiguration, the UCI scheduler should still be able to schedule the UCI.
+  for (unsigned sl_cnt = 0; sl_cnt < NOF_SLOTS_TO_TEST; ++sl_cnt) {
+    t_bench.uci_sched.run_slot(t_bench.res_grid);
+    if ((t_bench.sl_tx - sr_offset).to_uint() % sr_period_slots == 0) {
+      ASSERT_EQ(1, t_bench.res_grid[0].result.ul.pucchs.size());
+    }
+    // Update the slot indicator.
+    t_bench.slot_indication(++t_bench.sl_tx);
+  }
+}
+
+INSTANTIATE_TEST_SUITE_P(test_with_and_without_csi, uci_scheduler_reconf_tester, testing::Values(false, true));

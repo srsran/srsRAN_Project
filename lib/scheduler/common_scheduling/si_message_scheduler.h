@@ -45,8 +45,12 @@ public:
 
 private:
   struct message_window_context {
+    /// SI message window.
     interval<slot_point> window;
-    unsigned             nof_tx = 0;
+    /// Number of SI message transmissions within the current window.
+    unsigned nof_tx_in_current_window = 0;
+    /// Total number of SI message transmissions.
+    unsigned long total_nof_tx = 0;
   };
 
   void update_si_message_windows(slot_point sl_tx);
@@ -60,7 +64,8 @@ private:
                      crb_interval                  si_crbs_grant,
                      uint8_t                       time_resource,
                      const dmrs_information&       dmrs_info,
-                     unsigned                      tbs);
+                     unsigned                      tbs,
+                     const message_window_context& message_context);
 
   // Configuration of the broadcast SI messages.
   const scheduler_si_expert_config&   expert_cfg;

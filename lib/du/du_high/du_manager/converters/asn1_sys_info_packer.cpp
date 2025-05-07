@@ -461,66 +461,174 @@ static asn1::rrc_nr::sib6_s make_asn1_rrc_cell_sib6(const sib6_info& sib6_params
 
 static std::vector<uint8_t> encode_warning_message(const std::string& warning_message, unsigned data_coding_scheme)
 {
-  // Number of bytes carried by each warning message segment. It must be set to a value below the SIB capacity.
-  static constexpr unsigned msg_segment_nof_bytes = 100;
-
   // Encode the warning message.
   std::unique_ptr<cbs_encoder> encoder                 = create_cbs_encoder();
   std::vector<uint8_t>         encoded_warning_message = encoder->encode_cb_data(warning_message, data_coding_scheme);
 
-  if (encoded_warning_message.size() > msg_segment_nof_bytes) {
-    report_error("Endoded warning message length (i.e., {}) exceeded message segment size (i.e., {}.",
-                 encoded_warning_message.size(),
-                 msg_segment_nof_bytes);
-  }
-
   return encoded_warning_message;
 }
 
-static asn1::rrc_nr::sib7_s make_asn1_rrc_cell_sib7(const sib7_info& sib7_params)
+/// Maximum number of segments (see TS38.331 Section 6.3.2. Information Element \e SIB7).
+static constexpr unsigned max_nof_sib_segments = 64U;
+
+/// Generates views of each segment of the CB-Data message.
+static static_vector<span<const uint8_t>, max_nof_sib_segments> segment_warning_message(std::vector<uint8_t>& cb_data)
 {
-  using namespace asn1::rrc_nr;
-  sib7_s sib7;
+  // Size of the first data segment. It must be set to a value below the SIB capacity.
+  static constexpr units::bytes first_segment_size{84};
+  // Size of subsequent data segments. This is used in case of multiple segments to keep the generated SIB messages
+  // equal in size (recall that the SIB carrying the first segment includes the data and coding scheme field).
+  static constexpr units::bytes other_segment_size{first_segment_size.value() + 1};
 
-  sib7.msg_id.from_number(sib7_params.message_id);
-  sib7.serial_num.from_number(sib7_params.serial_number);
+  unsigned nof_segments = cb_data.size() > first_segment_size.value()
+                              ? divide_ceil(cb_data.size() - first_segment_size.value(), other_segment_size.value()) + 1
+                              : 1;
 
-  // Encode the warning message into a single segment.
-  sib7.warning_msg_segment.from_bytes(
-      encode_warning_message(sib7_params.warning_message_segment, sib7_params.data_coding_scheme));
+  interval<unsigned, true> nof_segments_range(1, max_nof_sib_segments);
+  report_error_if_not(nof_segments_range.contains(nof_segments),
+                      "The number of required warning message segments (i.e., {}) exceeds the valid range (i.e., {}).",
+                      nof_segments,
+                      nof_segments_range);
 
-  // For now, segmentation is not supported.
-  sib7.warning_msg_segment_type.value = sib7_s::warning_msg_segment_type_opts::last_segment;
-  sib7.warning_msg_segment_num        = 0;
+  static_vector<span<const uint8_t>, max_nof_sib_segments> segment_views(nof_segments);
+  span<const uint8_t>                                      cb_data_view(cb_data);
 
-  // Data and coding scheme is present in the first message segment.
-  sib7.data_coding_scheme_present = true;
-  sib7.data_coding_scheme.from_number(sib7_params.data_coding_scheme);
+  // Add padding if required to make sure that all segments have the same length.
+  if ((nof_segments > 1) && (cb_data_view.size() - first_segment_size.value()) % other_segment_size.value() != 0) {
+    unsigned padding_len =
+        other_segment_size.value() - ((cb_data.size() - first_segment_size.value()) % other_segment_size.value());
+    cb_data.insert(cb_data.end(), padding_len, 0x00);
 
-  return sib7;
+    // Set the CB data view to include the padding.
+    cb_data_view = span<const uint8_t>(cb_data);
+  }
+
+  // Generate view for the first segment.
+  segment_views[0] = span<const uint8_t>(
+      cb_data_view.first(std::min(first_segment_size.value(), static_cast<unsigned>(cb_data_view.size()))));
+
+  if (nof_segments == 1) {
+    return segment_views;
+  }
+
+  // Advance past the first segment.
+  cb_data_view = cb_data_view.last(cb_data.size() - first_segment_size.value());
+
+  // Generate views for the remaining segments.
+  for (unsigned i_segment = 1; i_segment != nof_segments; ++i_segment) {
+    // Determine the current segment size.
+    units::bytes remaining_cb_data_size(cb_data_view.size());
+    units::bytes i_segment_size = std::min(other_segment_size, remaining_cb_data_size);
+
+    // Create view to the segment.
+    segment_views[i_segment] = span<const uint8_t>(cb_data_view.first(i_segment_size.value()));
+
+    // Advance CB-Data view.
+    cb_data_view = cb_data_view.last((remaining_cb_data_size - i_segment_size).value());
+  }
+
+  return segment_views;
 }
 
-static asn1::rrc_nr::sib8_s make_asn1_rrc_cell_sib8(const sib8_info& sib8_params)
+static std::vector<asn1::rrc_nr::sib7_s> make_asn1_rrc_cell_sib7(const sib7_info& sib7_params)
+{
+  using namespace asn1::rrc_nr;
+
+  // Encode the warning message.
+  std::vector<uint8_t> encoded_message =
+      encode_warning_message(sib7_params.warning_message_segment, sib7_params.data_coding_scheme);
+
+  // Segment the message.
+  auto message_segments = segment_warning_message(encoded_message);
+
+  unsigned                          nof_segments = message_segments.size();
+  std::vector<asn1::rrc_nr::sib7_s> sib_segments(nof_segments);
+  span<asn1::rrc_nr::sib7_s>        sib_segments_view(sib_segments);
+
+  // Fill the SIB carrying the first segment.
+  auto& sib7_first_segment = sib_segments_view[0];
+  sib7_first_segment.msg_id.from_number(sib7_params.message_id);
+  sib7_first_segment.serial_num.from_number(sib7_params.serial_number);
+  sib7_first_segment.warning_msg_segment_num        = 0;
+  sib7_first_segment.warning_msg_segment_type.value = (nof_segments > 1)
+                                                          ? sib7_s::warning_msg_segment_type_opts::not_last_segment
+                                                          : sib7_s::warning_msg_segment_type_opts::last_segment;
+  sib7_first_segment.data_coding_scheme_present     = true;
+  sib7_first_segment.data_coding_scheme.from_number(sib7_params.data_coding_scheme);
+
+  // Fill the warning message field with the first message segment.
+  sib7_first_segment.warning_msg_segment.from_bytes(message_segments[0]);
+
+  // Nothing left to do if no more segments are present.
+  if (nof_segments == 1) {
+    return sib_segments;
+  }
+
+  // Fill the remaining SIBs.
+  for (unsigned i_segment = 1; i_segment != nof_segments; ++i_segment) {
+    auto& i_sib                          = sib_segments_view[i_segment];
+    i_sib.msg_id                         = sib7_first_segment.msg_id;
+    i_sib.serial_num                     = sib7_first_segment.serial_num;
+    i_sib.data_coding_scheme_present     = false;
+    i_sib.warning_msg_segment_num        = i_segment;
+    i_sib.warning_msg_segment_type.value = (i_segment == (nof_segments - 1))
+                                               ? sib7_s::warning_msg_segment_type_opts::last_segment
+                                               : sib7_s::warning_msg_segment_type_opts::not_last_segment;
+    i_sib.warning_msg_segment.from_bytes(message_segments[i_segment]);
+  }
+
+  return sib_segments;
+}
+
+static std::vector<asn1::rrc_nr::sib8_s> make_asn1_rrc_cell_sib8(const sib8_info& sib8_params)
 {
   using namespace asn1::rrc_nr;
   sib8_s sib8;
 
-  sib8.msg_id.from_number(sib8_params.message_id);
-  sib8.serial_num.from_number(sib8_params.serial_number);
-
   // Encode the warning message into a single segment.
-  sib8.warning_msg_segment.from_bytes(
-      encode_warning_message(sib8_params.warning_message_segment, sib8_params.data_coding_scheme));
+  std::vector<uint8_t> encoded_message =
+      encode_warning_message(sib8_params.warning_message_segment, sib8_params.data_coding_scheme);
 
-  // For now, segmentation is not supported.
-  sib8.warning_msg_segment_type.value = sib8_s::warning_msg_segment_type_opts::last_segment;
-  sib8.warning_msg_segment_num        = 0;
+  // Segment the message.
+  auto message_segments = segment_warning_message(encoded_message);
 
-  // Data and coding scheme is present in the first message segment.
-  sib8.data_coding_scheme_present = true;
-  sib8.data_coding_scheme.from_number(sib8_params.data_coding_scheme);
+  unsigned                          nof_segments = message_segments.size();
+  std::vector<asn1::rrc_nr::sib8_s> sib_segments(nof_segments);
+  span<asn1::rrc_nr::sib8_s>        sib_segments_view(sib_segments);
 
-  return sib8;
+  // Fill the SIB carrying the first segment.
+  auto& sib8_first_segment = sib_segments_view[0];
+  sib8_first_segment.msg_id.from_number(sib8_params.message_id);
+  sib8_first_segment.serial_num.from_number(sib8_params.serial_number);
+  sib8_first_segment.warning_msg_segment_num        = 0;
+  sib8_first_segment.warning_msg_segment_type.value = (nof_segments > 1)
+                                                          ? sib8_s::warning_msg_segment_type_opts::not_last_segment
+                                                          : sib8_s::warning_msg_segment_type_opts::last_segment;
+  sib8_first_segment.data_coding_scheme_present     = true;
+  sib8_first_segment.data_coding_scheme.from_number(sib8_params.data_coding_scheme);
+
+  // Fill the warning message field with the first message segment.
+  sib8_first_segment.warning_msg_segment.from_bytes(message_segments[0]);
+
+  // Nothing left to do if no more segments are present.
+  if (nof_segments == 1) {
+    return sib_segments;
+  }
+
+  // Create as many SIBs as segments.
+  for (unsigned i_segment = 1; i_segment != nof_segments; ++i_segment) {
+    auto& i_sib                          = sib_segments_view[i_segment];
+    i_sib.msg_id                         = sib8_first_segment.msg_id;
+    i_sib.serial_num                     = sib8_first_segment.serial_num;
+    i_sib.data_coding_scheme_present     = false;
+    i_sib.warning_msg_segment_num        = i_segment;
+    i_sib.warning_msg_segment_type.value = (i_segment == (nof_segments - 1))
+                                               ? sib8_s::warning_msg_segment_type_opts::last_segment
+                                               : sib8_s::warning_msg_segment_type_opts::not_last_segment;
+    i_sib.warning_msg_segment.from_bytes(message_segments[i_segment]);
+  }
+
+  return sib_segments;
 }
 
 static asn1::rrc_nr::sib19_r17_s make_asn1_rrc_cell_sib19(const sib19_info& sib19_params)
@@ -664,16 +772,16 @@ byte_buffer asn1_packer::pack_sib19(const sib19_info& sib19_params, std::string*
   return buf;
 }
 
-static asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_ make_asn1_rrc_sib_item(const sib_info& sib)
+static std::vector<asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_> make_asn1_rrc_sib_item(const sib_info& sib)
 {
   using namespace asn1::rrc_nr;
 
-  sys_info_ies_s::sib_type_and_info_item_c_ ret;
+  std::vector<sys_info_ies_s::sib_type_and_info_item_c_> ret(1);
 
   switch (get_sib_info_type(sib)) {
     case sib_type::sib2: {
       const auto& cfg     = std::get<sib2_info>(sib);
-      sib2_s&     out_sib = ret.set_sib2();
+      sib2_s&     out_sib = ret.front().set_sib2();
       out_sib             = make_asn1_rrc_cell_sib2(cfg);
       if (cfg.nof_ssbs_to_average.has_value()) {
         out_sib.cell_resel_info_common.nrof_ss_blocks_to_average_present = true;
@@ -683,25 +791,56 @@ static asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_ make_asn1_rrc_sib
     }
     case sib_type::sib6: {
       const auto& cfg     = std::get<sib6_info>(sib);
-      sib6_s&     out_sib = ret.set_sib6();
+      sib6_s&     out_sib = ret.front().set_sib6();
       out_sib             = make_asn1_rrc_cell_sib6(cfg);
       break;
     }
     case sib_type::sib7: {
-      const auto& cfg     = std::get<sib7_info>(sib);
-      sib7_s&     out_sib = ret.set_sib7();
-      out_sib             = make_asn1_rrc_cell_sib7(cfg);
+      // Generate the SIB messages (one for each warning message segment).
+      const auto& cfg          = std::get<sib7_info>(sib);
+      auto        sib_msgs     = make_asn1_rrc_cell_sib7(cfg);
+      unsigned    nof_segments = sib_msgs.size();
+
+      srsran_assert(nof_segments != 0, "At least one SIB message must be generated.");
+
+      if (nof_segments == 1) {
+        sib7_s& out_sib = ret.front().set_sib7();
+        out_sib         = sib_msgs.front();
+      } else {
+        // If there are multiple segments, copy each segment to the output.
+        ret.resize(nof_segments);
+        for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
+          sib7_s& i_sib = ret[i_segment].set_sib7();
+          i_sib         = sib_msgs[i_segment];
+        }
+      }
+
       break;
     }
     case sib_type::sib8: {
-      const auto& cfg     = std::get<sib8_info>(sib);
-      sib8_s&     out_sib = ret.set_sib8();
-      out_sib             = make_asn1_rrc_cell_sib8(cfg);
+      const auto& cfg          = std::get<sib8_info>(sib);
+      auto        sib_msgs     = make_asn1_rrc_cell_sib8(cfg);
+      unsigned    nof_segments = sib_msgs.size();
+
+      srsran_assert(nof_segments != 0, "At least one SIB message must be generated.");
+
+      if (nof_segments == 1) {
+        sib8_s& out_sib = ret.front().set_sib8();
+        out_sib         = sib_msgs.front();
+      } else {
+        // If there are multiple segments, copy each segment to the output.
+        ret.resize(nof_segments);
+        for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
+          sib8_s& i_sib = ret[i_segment].set_sib8();
+          i_sib         = sib_msgs[i_segment];
+        }
+      }
+
       break;
     }
     case sib_type::sib19: {
       const auto&  cfg     = std::get<sib19_info>(sib);
-      sib19_r17_s& out_sib = ret.set_sib19_v1700();
+      sib19_r17_s& out_sib = ret.front().set_sib19_v1700();
       out_sib              = make_asn1_rrc_cell_sib19(cfg);
       break;
     }
@@ -712,19 +851,43 @@ static asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_ make_asn1_rrc_sib
   return ret;
 }
 
-std::vector<byte_buffer> asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg)
+/// Packs an SI message into a byte buffer.
+static void pack_si_message(byte_buffer& buffer, const asn1::rrc_nr::bcch_dl_sch_msg_s& msg)
 {
-  std::vector<byte_buffer> msgs;
+  // Pack into the buffer.
+  asn1::bit_ref     bref{buffer};
+  asn1::SRSASN_CODE ret = msg.pack(bref);
+
+  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SI message");
+}
+
+/// Packs an SI message from the contents of a single SIB.
+static void pack_si_message(bcch_dl_sch_payload_type&                                      buffer,
+                            const asn1::rrc_nr::sys_info_ies_s::sib_type_and_info_item_c_& sib)
+{
+  // Fill the SI message with the contents of a single SIB.
+  asn1::rrc_nr::bcch_dl_sch_msg_s msg;
+  asn1::rrc_nr::sys_info_ies_s&   si_ies = msg.msg.set_c1().set_sys_info().crit_exts.set_sys_info();
+  si_ies.sib_type_and_info.push_back(sib);
+
+  byte_buffer buf;
+  pack_si_message(buf, msg);
+
+  buffer.emplace_back(std::move(buf));
+}
+
+std::vector<bcch_dl_sch_payload_type> asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_config& du_cfg)
+{
+  std::vector<bcch_dl_sch_payload_type> msgs;
 
   // Pack SIB1.
   {
-    byte_buffer                     buf;
-    asn1::bit_ref                   bref{buf};
     asn1::rrc_nr::bcch_dl_sch_msg_s msg;
     msg.msg.set_c1().set_sib_type1() = make_asn1_rrc_cell_sib1(du_cfg);
-    asn1::SRSASN_CODE ret            = msg.pack(bref);
-    srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
-    msgs.push_back(std::move(buf));
+
+    bcch_dl_sch_payload_type packed_sib(1);
+    pack_si_message(packed_sib.front(), msg);
+    msgs.emplace_back(std::move(packed_sib));
   }
 
   // Pack SI messages.
@@ -732,23 +895,54 @@ std::vector<byte_buffer> asn1_packer::pack_all_bcch_dl_sch_msgs(const du_cell_co
     const auto& sibs = du_cfg.si_config.value().sibs;
 
     for (const auto& si_sched : du_cfg.si_config.value().si_sched_info) {
-      byte_buffer                     buf;
-      asn1::bit_ref                   bref{buf};
-      asn1::rrc_nr::bcch_dl_sch_msg_s msg;
-      asn1::rrc_nr::sys_info_ies_s&   si_ies = msg.msg.set_c1().set_sys_info().crit_exts.set_sys_info();
+      // Pack SI messages that contain multiple SIBs.
+      if (si_sched.sib_mapping_info.size() > 1) {
+        asn1::rrc_nr::bcch_dl_sch_msg_s msg;
+        asn1::rrc_nr::sys_info_ies_s&   si_ies = msg.msg.set_c1().set_sys_info().crit_exts.set_sys_info();
 
-      // Search for SIB contained in this SI message.
-      for (sib_type sib_id : si_sched.sib_mapping_info) {
-        auto it = std::find_if(
+        // Search for SIBs contained in this SI message.
+        for (sib_type sib_id : si_sched.sib_mapping_info) {
+          report_error_if_not((sib_id != sib_type::sib7) && (sib_id != sib_type::sib8),
+                              "SIB-7 and SIB-8 cannot be on an SI message containing other SIBs, as they can hold a "
+                              "segmented message.");
+          auto it = std::find_if(
+              sibs.begin(), sibs.end(), [sib_id](const sib_info& sib) { return get_sib_info_type(sib) == sib_id; });
+          srsran_assert(it != sibs.end(), "SIB{} in SIB mapping info has no defined config", (unsigned)sib_id);
+
+          // Obtain the SIB and make sure it does not hold a segmented message.
+          auto sib = make_asn1_rrc_sib_item(*it);
+          srsran_assert(sib.size() == 1, "SI messages holding multiple SIBs cannot contain segmented messages.");
+
+          si_ies.sib_type_and_info.push_back(sib.front());
+        }
+
+        // Pack SI message into a buffer.
+        bcch_dl_sch_payload_type packed_sib(1);
+        pack_si_message(packed_sib.front(), msg);
+        msgs.emplace_back(std::move(packed_sib));
+      } else {
+        // Pack SI messages that hold a single SIB.
+        sib_type sib_id = si_sched.sib_mapping_info.front();
+        auto     it     = std::find_if(
             sibs.begin(), sibs.end(), [sib_id](const sib_info& sib) { return get_sib_info_type(sib) == sib_id; });
         srsran_assert(it != sibs.end(), "SIB{} in SIB mapping info has no defined config", (unsigned)sib_id);
 
-        si_ies.sib_type_and_info.push_back(make_asn1_rrc_sib_item(*it));
-      }
+        // Buffer to hold the packed message. It may be necessary to store multiple SI messages (one for each segment).
+        bcch_dl_sch_payload_type packed_sib;
 
-      asn1::SRSASN_CODE ret = msg.pack(bref);
-      srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack other SIBs");
-      msgs.push_back(std::move(buf));
+        // Generate the SIB message. If the SIB carries a segmented message, one SIB is generated for each segment.
+        auto sib_list = make_asn1_rrc_sib_item(*it);
+        // If the SIB holds multiple segments, pack each of them in a distinct SI message.
+        if (sib_list.size() > 1) {
+          for (auto& sib : sib_list) {
+            pack_si_message(packed_sib, sib);
+          }
+        } else {
+          // Otherwise, pack the single SIB into a buffer.
+          pack_si_message(packed_sib, sib_list.front());
+        }
+        msgs.emplace_back(std::move(packed_sib));
+      }
     }
   }
 

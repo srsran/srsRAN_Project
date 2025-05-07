@@ -62,7 +62,7 @@ protected:
     params(params_),
     cell_cfg(sched_cfg, get_sched_req(dplx_mode, params)),
     ev_logger(to_du_cell_index(0), cell_cfg.pci),
-    metrics_hdlr(std::chrono::milliseconds{0}, metrics_notifier, cell_cfg)
+    metrics_hdlr(cell_cfg, std::nullopt)
   {
     mac_logger.set_level(srslog::basic_levels::debug);
     test_logger.set_level(srslog::basic_levels::info);

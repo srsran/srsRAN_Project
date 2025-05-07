@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/adt/mutexed_mpmc_queue.h"
 #include "srsran/adt/mutexed_mpsc_queue.h"
@@ -167,14 +166,14 @@ private:
 using task_worker_executor = general_task_worker_executor<>;
 
 template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
-inline general_task_worker_executor<QueuePolicy, WaitPolicy>
+general_task_worker_executor<QueuePolicy, WaitPolicy>
 make_task_executor(general_task_worker<QueuePolicy, WaitPolicy>& w)
 {
   return general_task_worker_executor<QueuePolicy, WaitPolicy>(w);
 }
 
 template <concurrent_queue_policy QueuePolicy, concurrent_queue_wait_policy WaitPolicy>
-inline std::unique_ptr<task_executor> make_task_executor_ptr(general_task_worker<QueuePolicy, WaitPolicy>& w)
+std::unique_ptr<task_executor> make_task_executor_ptr(general_task_worker<QueuePolicy, WaitPolicy>& w)
 {
   return std::make_unique<general_task_worker_executor<QueuePolicy, WaitPolicy>>(w);
 }

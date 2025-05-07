@@ -37,6 +37,9 @@ variables:
   DPDK_VERSION:
     description: must be one version supported in the specified OS
     value: ""
+  TEST_MODE:
+    description: Run tests with labels matching regular expression. "none" won't run any test at all.
+    value: "default"
 
 .build_and_unit_template:
   image: ${CR_REGISTRY_URI}/srsgnb/builder-${OS}:${DOCKER_BUILDER_VERSION}
@@ -44,6 +47,7 @@ variables:
     CMAKE_BUILD_TYPE: "" # Empty for cmake default
     ASSERT_LEVEL: "" # Empty for cmake default
     ENABLE_EXPORT: "" # Empty for cmake default
+    ENABLE_BACKWARD: "" # Empty for cmake default
     ENABLE_FFTW: "" # Empty for cmake default
     ENABLE_MKL: "False" # Empty for cmake default
     ENABLE_ARMPL: "False" # Empty for cmake default
@@ -57,9 +61,11 @@ variables:
     ENABLE_UBSAN_MIN: "" # Empty for cmake default
     ENABLE_RTSAN: "" # Empty for cmake default
     ENABLE_WERROR: "" # Empty for cmake default
+    ENABLE_PLUGINS: "" # Empty for cmake default
     FORCE_DEBUG_INFO: "" # Empty for cmake default
     MARCH: "" # Empty for cmake default
     MTUNE: "" # Empty for cmake default
+    SRS_TARGET: "" # Empty for cmake default
     # CACHE
     CCACHE_MAXSIZE: 3G
     # TEST
@@ -81,18 +87,21 @@ variables:
   before_script:
     - |
       for var in \
-        CMAKE_BUILD_TYPE ASSERT_LEVEL ENABLE_EXPORT \
+        CMAKE_BUILD_TYPE ASSERT_LEVEL ENABLE_EXPORT ENABLE_BACKWARD \
         ENABLE_FFTW ENABLE_MKL ENABLE_ARMPL \
         ENABLE_UHD ENABLE_DPDK ENABLE_ZEROMQ \
         ENABLE_ASAN ENABLE_TSAN ENABLE_GCOV \
         ENABLE_UBSAN ENABLE_UBSAN_MIN ENABLE_RTSAN \
-        ENABLE_WERROR FORCE_DEBUG_INFO \
+        ENABLE_WERROR ENABLE_PLUGINS FORCE_DEBUG_INFO \
         MARCH MTUNE \
       ; do
         if [ -n "${!var}" ]; then
           BUILD_ARGS="-D${var}=${!var} ${BUILD_ARGS}"
         fi
       done
+      if [[ $TEST_MODE = "none" ]]; then
+        BUILD_ARGS="${BUILD_ARGS} -DBUILD_TESTS=False"
+      fi
 
       BUILD_CMD="${BUILD_ARGS}"
       if [ -n "${DPDK_VERSION}" ]; then
@@ -112,11 +121,34 @@ variables:
         BUILD_CMD="-c ${COMPILER} ${BUILD_CMD}"
       fi
     - |
+      case $TEST_MODE in
+        valgrind)
+          G_DEBUG=gc-friendly G_SLICE=always-malloc
+          # Default timeout per test is 1500 (25 min)
+          export CTEST_TIMEOUT=3600
+          export CTEST_TEST_TIMEOUT=${CTEST_TIMEOUT}
+          CTEST_ARGS="-T memcheck -LE NO_MEMCHECK --timeout ${CTEST_TIMEOUT}"
+          ;;
+        default|coverage)
+          CTEST_ARGS=""
+          ;;
+        *)
+          CTEST_ARGS="-L $TEST_MODE"
+          ;;
+      esac
+    - |
+      echo "INFRASTRUCTURE_TAG=${INFRASTRUCTURE_TAG}"
+      echo "OS=${OS}"
+      echo "SRS_TARGET=${SRS_TARGET}"
+      echo "COMPILER=${COMPILER}"
+      echo "UHD_VERSION=${UHD_VERSION}"
+      echo "DPDK_VERSION=${DPDK_VERSION}"
+      echo "BUILD_ARGS=${BUILD_ARGS}"
+      echo "TEST_MODE=${TEST_MODE}"
+    - |
       build_srsran() {
-        target="$1"
-        shift
         set -x
-        builder.sh -m "-j${KUBERNETES_CPU_REQUEST} ${target}" ${BUILD_CMD} "$@" ${SRSRANDIR}
+        builder.sh -m "-j${KUBERNETES_CPU_REQUEST} ${SRS_TARGET}" ${BUILD_CMD} ${SRSRANDIR}
         { set +x; } 2>/dev/null
       }
     - |
@@ -124,6 +156,6 @@ variables:
         cd ${SRSRANDIR}/build
         echo "Using LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
         set -x
-        ctest -j${KUBERNETES_CPU_REQUEST} --schedule-random --output-on-failure --output-junit xunit.xml "$@"
+        ctest -j${KUBERNETES_CPU_REQUEST} --schedule-random --output-on-failure --output-junit xunit.xml $CTEST_ARGS
         { set +x; } 2>/dev/null
       }

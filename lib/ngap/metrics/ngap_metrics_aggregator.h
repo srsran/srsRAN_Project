@@ -31,15 +31,11 @@ namespace srsran::srs_cu_cp {
 class ngap_metrics_aggregator
 {
 public:
-  void handle_requested_pdu_session(s_nssai_t s_nssai);
+  void aggregate_requested_pdu_session(s_nssai_t s_nssai);
 
-  void handle_successful_pdu_session_setup(s_nssai_t s_nssai);
+  void aggregate_successful_pdu_session_setup(s_nssai_t s_nssai);
 
-  void handle_failed_pdu_session_setup(s_nssai_t s_nssai, ngap_cause_t cause);
-
-  void handle_requested_handover_preparation();
-
-  void handle_successful_handover_preparation();
+  void aggregate_failed_pdu_session_setup(s_nssai_t s_nssai, ngap_cause_t cause);
 
   ngap_metrics request_metrics_report() const;
 

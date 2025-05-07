@@ -43,7 +43,7 @@ class srsran_scheduler_adapter final : public mac_scheduler_adapter
 public:
   explicit srsran_scheduler_adapter(const mac_config& params, rnti_manager& rnti_mng_);
 
-  void add_cell(const mac_cell_creation_request& msg) override;
+  void add_cell(const mac_scheduler_cell_creation_request& msg) override;
 
   void remove_cell(du_cell_index_t cell_index) override;
 

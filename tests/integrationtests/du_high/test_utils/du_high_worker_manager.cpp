@@ -72,3 +72,12 @@ void du_high_worker_manager::flush_pending_dl_pdus()
     futures[i].get();
   }
 }
+
+void du_high_worker_manager::flush_pending_control_tasks()
+{
+  std::promise<void> prom;
+  std::future<void>  fut = prom.get_future();
+  bool               ret = exec_mapper->du_control_executor().defer([&prom]() { prom.set_value(); });
+  report_fatal_error_if_not(ret, "unable to dispatch task");
+  fut.wait();
+}

@@ -20,7 +20,7 @@
  *
  */
 
-#include "srsran/ran/ssb_gscn.h"
+#include "srsran/ran/ssb/ssb_gscn.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;

@@ -51,17 +51,13 @@ struct dl_sched_context {
 };
 
 /// Retrieve recommended PDCCH and PDSCH parameters for a newTx DL grant.
-std::optional<dl_sched_context> get_newtx_dl_sched_context(const slice_ue& u,
-                                                           slot_point      pdcch_slot,
-                                                           slot_point      pdsch_slot,
-                                                           crb_interval    dl_bwp_crb_limits,
-                                                           unsigned        pending_bytes);
+std::optional<dl_sched_context>
+get_newtx_dl_sched_context(const slice_ue& u, slot_point pdcch_slot, slot_point pdsch_slot, unsigned pending_bytes);
 
 /// Retrieve recommended PDCCH and PDSCH parameters for a reTx DL grant.
 std::optional<dl_sched_context> get_retx_dl_sched_context(const slice_ue&               u,
                                                           slot_point                    pdcch_slot,
                                                           slot_point                    pdsch_slot,
-                                                          crb_interval                  dl_bwp_crb_limits,
                                                           const dl_harq_process_handle& h_dl);
 
 /// Select DL VRBs to allocate for a newTx.
@@ -94,7 +90,6 @@ struct ul_sched_context {
 std::optional<ul_sched_context> get_newtx_ul_sched_context(const slice_ue& u,
                                                            slot_point      pdcch_slot,
                                                            slot_point      pusch_slot,
-                                                           crb_interval    ul_bwp_crb_limits,
                                                            unsigned        uci_nof_harq_bits,
                                                            unsigned        pending_bytes);
 
@@ -102,7 +97,6 @@ std::optional<ul_sched_context> get_newtx_ul_sched_context(const slice_ue& u,
 std::optional<ul_sched_context> get_retx_ul_sched_context(const slice_ue&               u,
                                                           slot_point                    pdcch_slot,
                                                           slot_point                    pusch_slot,
-                                                          crb_interval                  ul_bwp_crb_limits,
                                                           unsigned                      uci_nof_harq_bits,
                                                           const ul_harq_process_handle& h_ul);
 

@@ -381,12 +381,12 @@ validate_pusch_cell_unit_config(const du_high_unit_pusch_config& config, unsigne
     return false;
   }
 
-  if (config.enable_transform_precoding && !is_transform_precoding_nof_prb_valid(config.min_rb_size)) {
+  if (config.enable_transform_precoding && !transform_precoding::is_nof_prbs_valid(config.min_rb_size)) {
     fmt::print("Invalid minimum UE PUSCH RB (i.e., {}) with transform precoding. The nearest lower number of PRB is {} "
                "and the higher is {}.\n",
                config.min_rb_size,
-               get_transform_precoding_nearest_lower_nof_prb_valid(config.min_rb_size),
-               get_transform_precoding_nearest_higher_nof_prb_valid(config.min_rb_size));
+               transform_precoding::get_nof_prbs_lower_bound(config.min_rb_size),
+               transform_precoding::get_nof_prbs_upper_bound(config.min_rb_size));
     return false;
   }
 
@@ -788,6 +788,18 @@ static bool validate_tdd_ul_dl_pattern_unit_config(const tdd_ul_dl_pattern_unit_
   if (common_scs > subcarrier_spacing::kHz120) {
     fmt::print("Invalid TDD UL DL reference SCS={}kHz. Must be 15, 30 or 60 kHz for FR1 and 120 kHz for FR2.\n",
                scs_to_khz(common_scs));
+    return false;
+  }
+
+  // NOTE: 1 of the slots in the TDD pattern is the special slot.
+  if (config.nof_dl_slots + config.nof_ul_slots > config.dl_ul_period_slots - 1) {
+    fmt::print("Invalid TDD pattern: the sum of DL and UL slots is not compatible with TDD period.\n");
+    return false;
+  }
+
+  // Extended CP not currently supported: assume 14 symbols per slot; 2 symbols for DL-to-UL switching.
+  if (config.nof_dl_symbols + config.nof_ul_symbols > NOF_OFDM_SYM_PER_SLOT_NORMAL_CP - 2U) {
+    fmt::print("Invalid TDD pattern: the sum of DL and UL symbols in the special slot should not exceed 12.\n");
     return false;
   }
 

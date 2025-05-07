@@ -28,6 +28,7 @@
 #include "srsran/ran/dmrs.h"
 #include "srsran/ran/ptrs/ptrs.h"
 #include "srsran/ran/ptrs/ptrs_constants.h"
+#include "srsran/ran/resource_allocation/rb_bitmap.h"
 #include "srsran/ran/resource_block.h"
 #include "srsran/ran/rnti.h"
 
@@ -42,7 +43,7 @@ struct ptrs_pattern_configuration {
   /// DM-RS position mask. Indicates the OFDM symbols carrying DM-RS within the slot.
   bounded_bitset<MAX_NSYMB_PER_SLOT> dmrs_symbol_mask;
   /// Frequency domain allocation as RB list. The entries set to true are used for transmission.
-  bounded_bitset<MAX_NOF_PRBS> rb_mask;
+  prb_bitmap rb_mask;
   /// Time domain allocation of the transmission containing PT-RS.
   interval<uint8_t> time_allocation;
   /// Frequency domain density.

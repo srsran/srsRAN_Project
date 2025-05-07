@@ -132,7 +132,7 @@ void uci_scheduler_impl::add_ue_to_grid(const ue_cell_configuration& ue_cfg, boo
 
   // Save SR resources in the slot wheel.
   const auto& sr_resource_cfg_list = ue_cfg.init_bwp().ul_ded->pucch_cfg.value().sr_res_list;
-  for (unsigned i = 0; i != sr_resource_cfg_list.size(); ++i) {
+  for (unsigned i = 0, sz = sr_resource_cfg_list.size(); i != sz; ++i) {
     const auto& sr_res = sr_resource_cfg_list[i];
     srsran_assert(sr_res.period >= sr_periodicity::sl_1, "Minimum supported SR periodicity is 1 slot.");
 
@@ -169,7 +169,11 @@ void uci_scheduler_impl::reconf_ue(const ue_cell_configuration& new_ue_cfg, cons
     const auto& new_pucch = new_ue_cfg.init_bwp().ul_ded->pucch_cfg.value();
     const auto& old_pucch = old_ue_cfg.init_bwp().ul_ded->pucch_cfg.value();
 
-    if (new_pucch.sr_res_list == old_pucch.sr_res_list and *new_ue_cfg.csi_meas_cfg() == *old_ue_cfg.csi_meas_cfg()) {
+    const bool csi_meas_cfg_not_changed =
+        (new_ue_cfg.csi_meas_cfg() == nullptr and old_ue_cfg.csi_meas_cfg() == nullptr) or
+        (new_ue_cfg.csi_meas_cfg() != nullptr and old_ue_cfg.csi_meas_cfg() != nullptr and
+         *new_ue_cfg.csi_meas_cfg() == *old_ue_cfg.csi_meas_cfg());
+    if (new_pucch.sr_res_list == old_pucch.sr_res_list and csi_meas_cfg_not_changed) {
       // Nothing changed.
       return;
     }
@@ -186,7 +190,7 @@ void uci_scheduler_impl::rem_ue(const ue_cell_configuration& ue_cfg)
   }
 
   const auto& sr_resource_cfg_list = ue_cfg.init_bwp().ul_ded->pucch_cfg.value().sr_res_list;
-  for (unsigned i = 0; i != sr_resource_cfg_list.size(); ++i) {
+  for (unsigned i = 0, sz = sr_resource_cfg_list.size(); i != sz; ++i) {
     const auto& sr_res = sr_resource_cfg_list[i];
 
     unsigned period_slots = sr_periodicity_to_slot(sr_res.period);

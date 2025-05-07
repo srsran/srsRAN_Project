@@ -23,6 +23,7 @@
 #include "srsran/phy/upper/signal_processors/srs/srs_estimator_factory.h"
 #include "logging_srs_estimator_decorator.h"
 #include "srs_estimator_generic_impl.h"
+#include "srs_estimator_pool.h"
 #include "srs_validator_generic_impl.h"
 #include "srsran/phy/support/time_alignment_estimator/time_alignment_estimator_factories.h"
 
@@ -65,6 +66,39 @@ private:
   unsigned                                             max_nof_prb;
 };
 
+class srs_estimator_factory_pool : public srs_estimator_factory
+{
+public:
+  srs_estimator_factory_pool(std::shared_ptr<srs_estimator_factory> factory_, unsigned nof_concurrent_threads_) :
+    factory(std::move(factory_)), nof_concurrent_threads(nof_concurrent_threads_)
+  {
+    srsran_assert(factory, "Invalid factory.");
+    srsran_assert(nof_concurrent_threads != 0, "Number of threads must be larger than 0.");
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<srs_estimator> create() override
+  {
+    std::vector<std::unique_ptr<srs_estimator>> estimators(nof_concurrent_threads);
+
+    for (auto& estimator : estimators) {
+      estimator = factory->create();
+    }
+
+    return std::make_unique<srs_estimator_pool>(std::move(estimators));
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<srs_estimator_configuration_validator> create_validator() override
+  {
+    return factory->create_validator();
+  }
+
+private:
+  std::shared_ptr<srs_estimator_factory> factory;
+  unsigned                               nof_concurrent_threads;
+};
+
 } // namespace
 
 std::shared_ptr<srs_estimator_factory> srsran::create_srs_estimator_generic_factory(
@@ -74,6 +108,12 @@ std::shared_ptr<srs_estimator_factory> srsran::create_srs_estimator_generic_fact
 {
   return std::make_shared<srs_estimator_factory_generic>(
       std::move(sequence_generator_factory), std::move(ta_estimator_factory), max_nof_prb);
+}
+
+std::shared_ptr<srs_estimator_factory>
+srsran::create_srs_estimator_pool(std::shared_ptr<srs_estimator_factory> base_factory, unsigned max_nof_threads)
+{
+  return std::make_shared<srs_estimator_factory_pool>(std::move(base_factory), max_nof_threads);
 }
 
 std::unique_ptr<srs_estimator> srs_estimator_factory::create(srslog::basic_logger& logger)

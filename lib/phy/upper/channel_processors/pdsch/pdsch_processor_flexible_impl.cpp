@@ -54,12 +54,12 @@ void pdsch_processor_flexible_impl::process(resource_grid_writer&               
   initialize_new_transmission(grid_, notifier_, std::move(data_), pdu_);
 
   if (!async_proc) {
-    trace_point process_pdsch_tp = l1_tracer.now();
+    trace_point process_pdsch_tp = l1_dl_tracer.now();
 
     // Synchronous CB processing.
     sync_pdsch_cb_processing();
 
-    l1_tracer << trace_event("sync_pdsch_cb_processing", process_pdsch_tp);
+    l1_dl_tracer << trace_event("sync_pdsch_cb_processing", process_pdsch_tp);
   } else {
     // Calculate modulation scaling.
     float scaling = convert_dB_to_amplitude(-config.ratio_pdsch_data_to_sss_dB);
@@ -193,8 +193,7 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
   }
 
   // Get the PRB allocation mask.
-  const bounded_bitset<MAX_RB> prb_allocation_mask =
-      config.freq_alloc.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
+  const crb_bitmap prb_allocation_mask = config.freq_alloc.get_crb_mask(config.bwp_start_rb, config.bwp_size_rb);
 
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;
@@ -226,7 +225,7 @@ void pdsch_processor_flexible_impl::initialize_new_transmission(
   reserved.merge(dmrs_pattern);
 
   // Set PDSCH allocation pattern.
-  pdsch_pattern.prb_mask = prb_allocation_mask;
+  pdsch_pattern.prb_mask = prb_allocation_mask.convert_to<prb_bitmap>();
   pdsch_pattern.re_mask  = ~re_prb_mask();
   pdsch_pattern.symbols  = symbols;
   allocation.merge(pdsch_pattern);
@@ -296,7 +295,7 @@ void pdsch_processor_flexible_impl::fork_cb_batches()
     // Process batches of segments until all the segments are depleted.
     unsigned absolute_i_cb;
     while ((absolute_i_cb = cb_batch_counter.fetch_add(nof_cb_per_batch)) < nof_cb) {
-      trace_point process_pdsch_tp = l1_tracer.now();
+      trace_point process_pdsch_tp = l1_dl_tracer.now();
 
       // Limit batch size for the last batch.
       unsigned next_cb_batch_length = std::min(nof_cb - absolute_i_cb, nof_cb_per_batch);
@@ -308,8 +307,8 @@ void pdsch_processor_flexible_impl::fork_cb_batches()
       // Map PDSCH.
       mapper->map(*grid, grid_buffer, allocation, reserved, precoding, re_offset[absolute_i_cb]);
 
-      l1_tracer << trace_event(((absolute_i_cb + next_cb_batch_length) == nof_cb) ? "Last PDSCH CB batch" : "CB batch",
-                               process_pdsch_tp);
+      l1_dl_tracer << trace_event(
+          ((absolute_i_cb + next_cb_batch_length) == nof_cb) ? "Last PDSCH CB batch" : "CB batch", process_pdsch_tp);
     }
 
     // Decrement code block batch counter.

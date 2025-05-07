@@ -23,7 +23,6 @@
 #pragma once
 
 #include "srsran/adt/complex.h"
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/expected.h"
 #include "srsran/adt/ring_buffer.h"
 #include "srsran/adt/span.h"

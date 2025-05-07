@@ -92,10 +92,6 @@ if (USE_PHY_TESTVECTORS)
             gtest_main)
     add_test_vector(pucch_demodulator_format4_test pucch_demodulator_format4_test_data.tar.gz "")
 
-    add_executable(pucch_detector_test pucch_detector_test.cpp)
-    target_link_libraries(pucch_detector_test srsran_channel_processors srsran_channel_equalizer srslog gtest gtest_main)
-    add_test_vector(pucch_detector_test pucch_detector_test_data.tar.gz "")
-
     add_executable(pucch_processor_format0_vectortest pucch_processor_format0_vectortest.cpp)
     target_link_libraries(pucch_processor_format0_vectortest
             srsran_channel_equalizer

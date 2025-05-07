@@ -25,7 +25,7 @@
 #include "srsran/adt/static_vector.h"
 #include "srsran/ran/pci.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/ran/ssb_mapping.h"
+#include "srsran/ran/ssb/ssb_mapping.h"
 
 namespace srsran {
 

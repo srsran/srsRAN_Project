@@ -29,7 +29,10 @@ namespace srsran {
 class pusch_demodulator_notifier_spy : public pusch_demodulator_notifier
 {
 public:
-  void on_provisional_stats(const demodulation_stats& stats) override { provisional_stats_entries.emplace_back(stats); }
+  void on_provisional_stats(unsigned i_symbol, const demodulation_stats& stats) override
+  {
+    provisional_stats_entries.emplace_back(stats);
+  }
 
   void on_end_stats(const demodulation_stats& stats) override { end_stats_entries.emplace_back(stats); }
 

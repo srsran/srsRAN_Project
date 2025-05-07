@@ -25,6 +25,7 @@
 #include "srsran/phy/support/prach_buffer.h"
 #include "srsran/phy/support/prach_buffer_context.h"
 #include "srsran/phy/support/shared_resource_grid.h"
+#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/unique_rx_buffer.h"
 #include "srsran/phy/upper/upper_phy_rx_results_notifier.h"
 
@@ -147,7 +148,7 @@ void uplink_processor_impl::handle_rx_symbol(const shared_resource_grid& grid, u
 void uplink_processor_impl::process_prach(const prach_buffer& buffer, const prach_buffer_context& context_)
 {
   bool success = task_executors.prach_executor.execute([this, &buffer, context_]() {
-    trace_point tp = l1_tracer.now();
+    trace_point tp = l1_ul_tracer.now();
 
     ul_prach_results ul_results;
     ul_results.context = context_;
@@ -156,7 +157,7 @@ void uplink_processor_impl::process_prach(const prach_buffer& buffer, const prac
     // Notify the PRACH results.
     notifier.on_new_prach_results(ul_results);
 
-    l1_tracer << trace_event("process_prach", tp);
+    l1_ul_tracer << trace_event("process_prach", tp);
   });
 
   if (!success) {
@@ -220,11 +221,11 @@ void uplink_processor_impl::process_pusch(const shared_resource_grid&           
               pdu_repository.on_finish_processing_pdu();
             });
 
-        trace_point tp = l1_tracer.now();
+        trace_point tp = l1_ul_tracer.now();
 
         pusch_proc->process(data, std::move(rm_buffer2), processor_notifier, grid2.get_reader(), pdu.pdu);
 
-        l1_tracer << trace_event("process_pusch", tp);
+        l1_ul_tracer << trace_event("process_pusch", tp);
       });
 
   // Report the execution failure.
@@ -243,7 +244,7 @@ void uplink_processor_impl::process_pucch(const shared_resource_grid&           
   }
 
   bool success = task_executors.pucch_executor.execute([this, grid2 = grid.copy(), &pdu]() {
-    trace_point tp = l1_tracer.now();
+    trace_point tp = l1_ul_tracer.now();
 
     pucch_processor_result proc_result;
     // Process the PUCCH.
@@ -251,7 +252,7 @@ void uplink_processor_impl::process_pucch(const shared_resource_grid&           
       case pucch_format::FORMAT_0: {
         const auto& format0 = std::get<pucch_processor::format0_configuration>(pdu.config);
         proc_result         = pucch_proc->process(grid2.get_reader(), format0);
-        l1_tracer << trace_event("pucch0", tp);
+        l1_ul_tracer << trace_event("pucch0", tp);
       } break;
       case pucch_format::FORMAT_1:
         // Do nothing.
@@ -259,17 +260,17 @@ void uplink_processor_impl::process_pucch(const shared_resource_grid&           
       case pucch_format::FORMAT_2: {
         const auto& format2 = std::get<pucch_processor::format2_configuration>(pdu.config);
         proc_result         = pucch_proc->process(grid2.get_reader(), format2);
-        l1_tracer << trace_event("pucch2", tp);
+        l1_ul_tracer << trace_event("pucch2", tp);
       } break;
       case pucch_format::FORMAT_3: {
         const auto& format3 = std::get<pucch_processor::format3_configuration>(pdu.config);
         proc_result         = pucch_proc->process(grid2.get_reader(), format3);
-        l1_tracer << trace_event("pucch3", tp);
+        l1_ul_tracer << trace_event("pucch3", tp);
       } break;
       case pucch_format::FORMAT_4: {
         const auto& format4 = std::get<pucch_processor::format4_configuration>(pdu.config);
         proc_result         = pucch_proc->process(grid2.get_reader(), format4);
-        l1_tracer << trace_event("pucch4", tp);
+        l1_ul_tracer << trace_event("pucch4", tp);
       } break;
       default:
         srsran_assert(0, "Invalid PUCCH format={}", fmt::underlying(pdu.context.format));
@@ -302,7 +303,7 @@ void uplink_processor_impl::process_pucch_f1(const shared_resource_grid&        
   }
 
   bool success = task_executors.pucch_executor.execute([this, grid2 = grid.copy(), &collection]() {
-    trace_point tp = l1_tracer.now();
+    trace_point tp = l1_ul_tracer.now();
 
     // Process all PUCCH Format 1 in one go.
     const pucch_format1_map<pucch_processor_result>& results =
@@ -339,7 +340,7 @@ void uplink_processor_impl::process_pucch_f1(const shared_resource_grid&        
       // Notify the PUCCH results.
       notifier.on_new_pucch_results(notifier_result);
     }
-    l1_tracer << trace_event("pucch1", tp);
+    l1_ul_tracer << trace_event("pucch1", tp);
     pdu_repository.on_finish_processing_pdu();
   });
 
@@ -361,13 +362,13 @@ void uplink_processor_impl::process_srs(const shared_resource_grid&             
   }
 
   bool success = task_executors.srs_executor.execute([this, grid2 = grid.copy(), &pdu]() {
-    trace_point tp = l1_tracer.now();
+    trace_point tp = l1_ul_tracer.now();
 
     ul_srs_results result;
     result.context          = pdu.context;
     result.processor_result = srs->estimate(grid2.get_reader(), pdu.config);
 
-    l1_tracer << trace_event("process_srs", tp);
+    l1_ul_tracer << trace_event("process_srs", tp);
 
     notifier.on_new_srs_results(result);
     pdu_repository.on_finish_processing_pdu();

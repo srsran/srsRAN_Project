@@ -25,7 +25,6 @@
 #include "../config/cell_configuration.h"
 #include "../pdcch_scheduling/pdcch_resource_allocator.h"
 #include "../support/paging_helpers.h"
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/adt/mpmc_queue.h"
 #include "srsran/scheduler/config/scheduler_expert_config.h"
 #include "srsran/scheduler/result/pdsch_info.h"

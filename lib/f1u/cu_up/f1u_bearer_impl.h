@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "srsran/adt/batched_dispatch_queue.h"
 #include "srsran/f1u/cu_up/f1u_bearer.h"
 #include "srsran/f1u/cu_up/f1u_bearer_logger.h"
 #include "srsran/f1u/cu_up/f1u_config.h"
@@ -91,6 +92,9 @@ private:
   up_transport_layer_info   ul_tnl_info;
   task_executor&            dl_exec;
   task_executor&            ul_exec;
+
+  using nru_ul_batched_queue = batched_dispatch_queue<nru_ul_message>;
+  std::unique_ptr<nru_ul_batched_queue> ul_batched_queue;
 
   bool stopped = false;
 

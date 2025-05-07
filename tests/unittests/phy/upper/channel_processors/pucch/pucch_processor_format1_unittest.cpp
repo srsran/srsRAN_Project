@@ -24,12 +24,14 @@
 #include "../../signal_processors/dmrs_pucch_estimator_test_doubles.h"
 #include "../uci/uci_decoder_test_doubles.h"
 #include "pucch_detector_test_doubles.h"
+#include "srsran/phy/upper/channel_processors/pucch/pucch_processor.h"
 #include "srsran/ran/pucch/pucch_constants.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
 
 static constexpr unsigned nof_repetitions = 100;
+static constexpr unsigned nof_mux_ues     = 5;
 
 namespace {
 
@@ -110,7 +112,7 @@ protected:
     ASSERT_NE(detector_spy, nullptr);
   }
 
-  pucch_processor::format1_configuration GetConfig()
+  pucch_processor::format1_batch_configuration GetConfig()
   {
     std::mt19937                           rgen = std::mt19937(GetParam());
     pucch_processor::format1_configuration config;
@@ -121,7 +123,7 @@ protected:
     std::uniform_int_distribution<unsigned> bool_dist(0, 1);
     std::uniform_int_distribution<unsigned> starting_prb_dist(0, 274);
     std::uniform_int_distribution<unsigned> n_id_dist(0, 1023);
-    std::uniform_int_distribution<unsigned> nof_harq_ack_dist(0, 2);
+    std::uniform_int_distribution<uint16_t> nof_harq_ack_dist(0, 2);
     std::uniform_int_distribution<uint8_t>  ports_dist(0, 255);
     std::uniform_int_distribution<unsigned> initial_cyclic_shift_dist(0, 11);
     std::uniform_int_distribution<unsigned> time_domain_occ_dist(0, 6);
@@ -153,7 +155,20 @@ protected:
                                                                     get_nsymb_per_slot(config.cp) - config.nof_symbols);
     config.start_symbol_index = start_symbol_index_dist(rgen);
 
-    return config;
+    pucch_processor::format1_batch_configuration batch_config(config);
+
+    // Start from "i_ue = 1" since the first UE was configured with "config".
+    for (unsigned i_ue = 1; i_ue != nof_mux_ues; ++i_ue) {
+      unsigned ics  = initial_cyclic_shift_dist(rgen);
+      unsigned occi = time_domain_occ_dist(rgen);
+      while (batch_config.entries.contains(ics, occi)) {
+        ics  = initial_cyclic_shift_dist(rgen);
+        occi = time_domain_occ_dist(rgen);
+      }
+      batch_config.entries.insert(ics, occi, {.context = {}, .nof_harq_ack = nof_harq_ack_dist(rgen)});
+    }
+
+    return batch_config;
   }
 
   std::unique_ptr<pucch_processor>     processor;
@@ -166,71 +181,95 @@ std::shared_ptr<pucch_processor_factory>          PucchProcessorFormat1Fixture::
 std::shared_ptr<dmrs_pucch_estimator_factory_spy> PucchProcessorFormat1Fixture::dmrs_factory_spy     = nullptr;
 std::shared_ptr<pucch_detector_factory_spy>       PucchProcessorFormat1Fixture::detector_factory_spy = nullptr;
 
+pucch_processor::format1_configuration
+create_full_config(const pucch_processor::format1_common_configuration&                    common,
+                   const pucch_processor::format1_batch_configuration::ue_dedicated_entry& ue,
+                   unsigned                                                                ics,
+                   unsigned                                                                occi)
+{
+  return {
+      .context              = ue.context,
+      .slot                 = common.slot,
+      .bwp_size_rb          = common.bwp_size_rb,
+      .bwp_start_rb         = common.bwp_start_rb,
+      .cp                   = common.cp,
+      .starting_prb         = common.starting_prb,
+      .second_hop_prb       = common.second_hop_prb,
+      .n_id                 = common.n_id,
+      .nof_harq_ack         = ue.nof_harq_ack,
+      .ports                = common.ports,
+      .initial_cyclic_shift = ics,
+      .start_symbol_index   = common.start_symbol_index,
+      .time_domain_occ      = occi,
+  };
+}
+
 TEST_P(PucchProcessorFormat1Fixture, UnitTest)
 {
   // Generate random configuration with valid values.
-  pucch_processor::format1_configuration config = GetConfig();
+  pucch_processor::format1_batch_configuration batch_config = GetConfig();
+
+  for (const auto& this_entry : batch_config.entries) {
+    pucch_processor::format1_configuration config = create_full_config(
+        batch_config.common_config, this_entry.value, this_entry.initial_cyclic_shift, this_entry.time_domain_occ);
+    // Make sure configuration is valid.
+    ASSERT_TRUE(validator->is_valid(config));
+  }
 
   // Prepare resource grid.
   resource_grid_reader_spy grid;
 
-  // Make sure configuration is valid.
-  ASSERT_TRUE(validator->is_valid(config));
-
-  // Create PUCCH Format 1 batch configuration.
-  pucch_processor::format1_batch_configuration batch_config(config);
-
   // Process.
-  const auto&                  results = processor->process(grid, batch_config);
-  const pucch_processor_result result  = results.get(config.initial_cyclic_shift, config.time_domain_occ);
+  const auto& results = processor->process(grid, batch_config);
 
-  // Verify channel estimator configuration.
-  ASSERT_EQ(dmrs_spy->get_format1_entries().size(), 1);
-  const dmrs_pucch_estimator_spy::entry_format1_t& dmrs_entry = dmrs_spy->get_format1_entries().front();
-  ASSERT_EQ(dmrs_entry.config.slot, config.slot);
-  ASSERT_EQ(dmrs_entry.config.cp, config.cp);
-  ASSERT_EQ(dmrs_entry.config.group_hopping, pucch_group_hopping::NEITHER);
-  ASSERT_EQ(dmrs_entry.config.start_symbol_index, config.start_symbol_index);
-  ASSERT_EQ(dmrs_entry.config.nof_symbols, config.nof_symbols);
-  ASSERT_EQ(dmrs_entry.config.starting_prb, config.starting_prb + config.bwp_start_rb);
-  ASSERT_EQ(dmrs_entry.config.second_hop_prb.has_value(), config.second_hop_prb.has_value());
-  if (config.second_hop_prb.has_value()) {
-    ASSERT_EQ(dmrs_entry.config.second_hop_prb, config.second_hop_prb.value() + config.bwp_start_rb);
+  ASSERT_EQ(detector_spy->get_entries_format1().size(), nof_mux_ues);
+
+  for (const auto& detector_entry : detector_spy->get_entries_format1()) {
+    // Verify PUCCH detector.
+    ASSERT_EQ(detector_entry.config.slot, batch_config.common_config.slot);
+    ASSERT_EQ(detector_entry.config.cp, batch_config.common_config.cp);
+    ASSERT_EQ(detector_entry.config.starting_prb,
+              batch_config.common_config.starting_prb + batch_config.common_config.bwp_start_rb);
+    if (batch_config.common_config.second_hop_prb.has_value()) {
+      ASSERT_TRUE(detector_entry.config.second_hop_prb.has_value());
+      ASSERT_EQ(detector_entry.config.second_hop_prb.value(),
+                batch_config.common_config.second_hop_prb.value() + batch_config.common_config.bwp_start_rb);
+    } else {
+      ASSERT_FALSE(detector_entry.config.second_hop_prb.has_value());
+    }
+    ASSERT_EQ(detector_entry.config.start_symbol_index, batch_config.common_config.start_symbol_index);
+    ASSERT_EQ(detector_entry.config.nof_symbols, batch_config.common_config.nof_symbols);
+    ASSERT_EQ(detector_entry.config.group_hopping, pucch_group_hopping::NEITHER);
+    ASSERT_EQ(detector_entry.config.ports, batch_config.common_config.ports);
+    ASSERT_EQ(detector_entry.config.beta_pucch, 1.0F);
+    ASSERT_EQ(detector_entry.config.n_id, batch_config.common_config.n_id);
+
+    ASSERT_TRUE(batch_config.entries.contains(detector_entry.config.initial_cyclic_shift,
+                                              detector_entry.config.time_domain_occ));
+    const auto& config =
+        batch_config.entries.get(detector_entry.config.initial_cyclic_shift, detector_entry.config.time_domain_occ);
+    ASSERT_EQ(detector_entry.config.nof_harq_ack, config.nof_harq_ack);
+
+    // Validate UCI message.
+    ASSERT_TRUE(results.contains(detector_entry.config.initial_cyclic_shift, detector_entry.config.time_domain_occ));
+    const auto& this_result =
+        results.get(detector_entry.config.initial_cyclic_shift, detector_entry.config.time_domain_occ);
+
+    ASSERT_EQ(this_result.message.get_status(), detector_entry.msg.get_status());
+    ASSERT_EQ(this_result.message.get_full_payload().size(), config.nof_harq_ack);
+    ASSERT_EQ(this_result.message.get_harq_ack_bits().size(), config.nof_harq_ack);
+    ASSERT_EQ(this_result.message.get_harq_ack_bits(), detector_entry.msg.get_harq_ack_bits());
+    ASSERT_EQ(this_result.message.get_csi_part1_bits().size(), 0);
+    ASSERT_EQ(this_result.message.get_csi_part2_bits().size(), 0);
+
+    // Validate CSI.
+    ASSERT_TRUE(this_result.csi.get_epre_dB().has_value());
+    ASSERT_TRUE(this_result.csi.get_rsrp_dB().has_value());
+    ASSERT_TRUE(this_result.csi.get_sinr_dB().has_value());
+    ASSERT_FALSE(this_result.csi.get_total_evm().has_value());
+    ASSERT_FALSE(this_result.csi.get_cfo_Hz().has_value());
+    ASSERT_FALSE(this_result.csi.get_time_alignment().has_value());
   }
-  ASSERT_EQ(dmrs_entry.config.initial_cyclic_shift, config.initial_cyclic_shift);
-  ASSERT_EQ(dmrs_entry.config.time_domain_occ, config.time_domain_occ);
-  ASSERT_EQ(dmrs_entry.config.n_id, config.n_id);
-  ASSERT_EQ(span<const uint8_t>(dmrs_entry.config.ports), span<const uint8_t>(config.ports));
-
-  // Verify PUCCH detector.
-  ASSERT_EQ(detector_spy->get_entries_format1().size(), 1);
-  const pucch_detector_spy::entry_format1& detector_entry = detector_spy->get_entries_format1().front();
-  ASSERT_EQ(detector_entry.config.slot, config.slot);
-  ASSERT_EQ(detector_entry.config.cp, config.cp);
-  ASSERT_EQ(detector_entry.config.starting_prb, config.starting_prb + config.bwp_start_rb);
-  if (config.second_hop_prb.has_value()) {
-    ASSERT_TRUE(detector_entry.config.second_hop_prb.has_value());
-    ASSERT_EQ(detector_entry.config.second_hop_prb.value(), config.second_hop_prb.value() + config.bwp_start_rb);
-  } else {
-    ASSERT_FALSE(detector_entry.config.second_hop_prb.has_value());
-  }
-  ASSERT_EQ(detector_entry.config.start_symbol_index, config.start_symbol_index);
-  ASSERT_EQ(detector_entry.config.nof_symbols, config.nof_symbols);
-  ASSERT_EQ(detector_entry.config.group_hopping, pucch_group_hopping::NEITHER);
-  ASSERT_EQ(detector_entry.config.ports, config.ports);
-  ASSERT_EQ(detector_entry.config.beta_pucch, 1.0F);
-  ASSERT_EQ(detector_entry.config.time_domain_occ, config.time_domain_occ);
-  ASSERT_EQ(detector_entry.config.initial_cyclic_shift, config.initial_cyclic_shift);
-  ASSERT_EQ(detector_entry.config.n_id, config.n_id);
-  ASSERT_EQ(detector_entry.config.nof_harq_ack, config.nof_harq_ack);
-
-  // Validate UCI message.
-  ASSERT_EQ(result.message.get_status(), detector_entry.msg.get_status());
-  ASSERT_EQ(result.message.get_full_payload().size(), config.nof_harq_ack);
-  ASSERT_EQ(result.message.get_harq_ack_bits().size(), config.nof_harq_ack);
-  ASSERT_EQ(result.message.get_harq_ack_bits(), detector_entry.msg.get_harq_ack_bits());
-  ASSERT_EQ(result.message.get_csi_part1_bits().size(), 0);
-  ASSERT_EQ(result.message.get_csi_part2_bits().size(), 0);
 }
 
 INSTANTIATE_TEST_SUITE_P(PucchProcessorFormat1, PucchProcessorFormat1Fixture, ::testing::Range(0U, nof_repetitions));

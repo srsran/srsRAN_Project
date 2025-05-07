@@ -591,10 +591,10 @@ void timer_manager::tick()
   impl->handle_postponed_timeouts();
 
   // Advance time.
-  impl->cur_time.fetch_add(1, std::memory_order_relaxed);
+  unsigned cur_time = impl->cur_time.fetch_add(1, std::memory_order_relaxed) + 1;
 
   // Process the timer runs which expire in this tick.
-  auto& wheel_list = impl->time_wheel[impl->cur_time & WHEEL_MASK];
+  auto& wheel_list = impl->time_wheel[cur_time & WHEEL_MASK];
 
   // Iterate intrusive linked list of running timers with same wheel index.
   for (auto it = wheel_list.begin(); it != wheel_list.end();) {
@@ -604,7 +604,7 @@ void timer_manager::tick()
     ++it;
 
     // If the timer does not expire yet, continue the iteration in the same wheel bucket.
-    if (impl->cur_time != timer.backend.timeout) {
+    if (cur_time != timer.backend.timeout) {
       continue;
     }
 

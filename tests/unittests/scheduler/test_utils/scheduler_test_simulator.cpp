@@ -46,7 +46,7 @@ scheduler_test_simulator::scheduler_test_simulator(const scheduler_expert_config
   }()),
   test_logger(srslog::fetch_basic_logger("TEST", true)),
   sched_cfg(sched_cfg_),
-  sched(create_scheduler(scheduler_config{sched_cfg, notif, metric_notif})),
+  sched(create_scheduler(scheduler_config{sched_cfg, notif})),
   next_slot(test_helper::generate_random_slot_point(max_scs))
 {
   test_logger.set_level(srslog::basic_levels::debug);

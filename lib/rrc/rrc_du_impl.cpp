@@ -177,7 +177,7 @@ void rrc_du_impl::remove_ue(ue_index_t ue_index)
   rrc_ue_rrc_du_adapters.erase(ue_index);
 
   // Notify metrics.
-  metrics_aggregator.handle_successful_rrc_release();
+  metrics_aggregator.aggregate_successful_rrc_release();
 
   // Delete RRC UE.
   ue_db.erase(ue_it);

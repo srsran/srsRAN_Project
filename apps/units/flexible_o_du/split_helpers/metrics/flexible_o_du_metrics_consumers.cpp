@@ -65,10 +65,10 @@ void ru_metrics_consumer_stdout::handle_metric(const app_services::metrics_set& 
 {
   const ru_metrics& metrics = static_cast<const flexible_o_du_app_service_metrics_impl&>(metric).get_metrics().ru;
 
-  // Radio metrics always printed.
+  // Radio metrics are always printed.
   print_radio_metrics(metrics);
 
-  if (!print_metrics) {
+  if (!print_metrics.load(std::memory_order_relaxed)) {
     return;
   }
 

@@ -100,7 +100,7 @@ private:
 
     notifier->on_new_pusch_results_control(result);
 
-    l1_tracer << instant_trace_event("on_uci", instant_trace_event::cpu_scope::thread);
+    l1_ul_tracer << instant_trace_event("on_uci", instant_trace_event::cpu_scope::thread);
   }
 
   // See interface for documentation.
@@ -121,7 +121,7 @@ private:
     result.payload        = (sch.data.tb_crc_ok) ? payload : span<const uint8_t>();
     notifier_->on_new_pusch_results_data(result);
 
-    l1_tracer << instant_trace_event("on_sch", instant_trace_event::cpu_scope::thread);
+    l1_ul_tracer << instant_trace_event("on_sch", instant_trace_event::cpu_scope::thread);
 
     if (!callback.is_empty()) {
       callback();

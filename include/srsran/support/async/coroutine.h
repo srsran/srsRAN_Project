@@ -50,11 +50,12 @@ using enable_if_nonvoid = std::enable_if_t<not std::is_same<Result, void>::value
 
 /// Metafunction for deriving coroutine implementation -> Promise
 template <typename F>
-using promise_of = typename std::decay_t<get_type_from_index_t<0, decltype(callable_arguments<F>())>>::promise_type;
+using promise_of =
+    typename std::decay_t<type_list_helper::type_at_t<0, decltype(callable_arguments<F>())>>::promise_type;
 
 /// Metafunction for deriving coroutine implementation -> Future Type
 template <typename F>
-using future_of = typename std::decay_t<get_type_from_index_t<0, decltype(callable_arguments<F>())>>::future_type;
+using future_of = typename std::decay_t<type_list_helper::type_at_t<0, decltype(callable_arguments<F>())>>::future_type;
 
 /// Base class for coroutine frames
 template <typename Promise>

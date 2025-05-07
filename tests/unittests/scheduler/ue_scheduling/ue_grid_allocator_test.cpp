@@ -26,6 +26,7 @@
 #include "lib/scheduler/logging/scheduler_result_logger.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_resource_allocator_impl.h"
 #include "lib/scheduler/pucch_scheduling/pucch_allocator_impl.h"
+#include "lib/scheduler/slicing/ran_slice_instance.h"
 #include "lib/scheduler/uci_scheduling/uci_allocator_impl.h"
 #include "lib/scheduler/ue_context/ue.h"
 #include "lib/scheduler/ue_scheduling/ue_cell_grid_allocator.h"
@@ -45,14 +46,14 @@ class ue_grid_allocator_tester : public ::testing::TestWithParam<duplex_mode>
 protected:
   ue_grid_allocator_tester(
       scheduler_expert_config sched_cfg_ = config_helpers::make_default_scheduler_expert_config()) :
-    sched_cfg(sched_cfg_),
+    sched_cfg(std::move(sched_cfg_)),
     cell_cfg(*[this]() {
       cfg_builder_params.dl_f_ref_arfcn = GetParam() == duplex_mode::FDD ? 530000 : 520002;
       cfg_builder_params.scs_common =
           GetParam() == duplex_mode::FDD ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz30;
       cfg_builder_params.band           = band_helper::get_band_from_dl_arfcn(cfg_builder_params.dl_f_ref_arfcn);
       cfg_builder_params.channel_bw_mhz = bs_channel_bandwidth::MHz20;
-      auto* cfg =
+      const auto* cfg =
           cfg_mng.add_cell(sched_config_helper::make_default_sched_cell_configuration_request(cfg_builder_params));
       srsran_assert(cfg != nullptr, "Cell configuration failed");
       return cfg;
@@ -92,10 +93,12 @@ protected:
     // Prepare CRB bitmask that will be used to find available CRBs.
     const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
     // TODO: enable interleaving.
-    used_dl_vrbs = static_cast<vrb_bitmap>(
-        res_grid[0].dl_res_grid.used_prbs(init_dl_bwp.generic_params.scs,
-                                          init_dl_bwp.generic_params.crbs,
-                                          init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols));
+    used_dl_vrbs = res_grid[0]
+                       .dl_res_grid
+                       .used_prbs(init_dl_bwp.generic_params.scs,
+                                  init_dl_bwp.generic_params.crbs,
+                                  init_dl_bwp.pdsch_common.pdsch_td_alloc_list[0].symbols)
+                       .convert_to<vrb_bitmap>();
 
     on_each_slot();
 
@@ -154,8 +157,7 @@ protected:
                                std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
     const auto& init_dl_bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
-    auto        result      = alloc.allocate_dl_grant(
-        ue_newtx_dl_grant_request{user, current_slot, init_dl_bwp.generic_params.crbs, pending_bytes});
+    auto        result      = alloc.allocate_dl_grant(ue_newtx_dl_grant_request{user, current_slot, pending_bytes});
     if (not result.has_value()) {
       return;
     }
@@ -193,20 +195,21 @@ protected:
                                        std::optional<unsigned> max_nof_rbs = std::nullopt)
   {
     const auto& init_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp;
-    auto        result      = alloc.allocate_ul_grant(
-        ue_newtx_ul_grant_request{user, pusch_slot, init_ul_bwp.generic_params.crbs, pending_bytes});
+    auto        result      = alloc.allocate_ul_grant(ue_newtx_ul_grant_request{user, pusch_slot, pending_bytes});
     if (not result.has_value()) {
       return result.error();
     }
     auto& builder = result.value();
 
     // TODO: perform inverse VRB-to-PRB mapping when interleaving is enabled for this slice/BWP.
-    vrb_bitmap used_ul_vrbs = static_cast<vrb_bitmap>(
-        res_grid[pusch_slot].ul_res_grid.used_prbs(init_ul_bwp.generic_params.scs,
-                                                   init_ul_bwp.generic_params.crbs,
-                                                   init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols));
+    vrb_bitmap used_ul_vrbs = res_grid[pusch_slot]
+                                  .ul_res_grid
+                                  .used_prbs(init_ul_bwp.generic_params.scs,
+                                             init_ul_bwp.generic_params.crbs,
+                                             init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols)
+                                  .convert_to<vrb_bitmap>();
     vrb_interval vrbs = builder.recommended_vrbs(used_ul_vrbs, max_nof_rbs.value_or(MAX_NOF_PRBS));
-    builder.set_pusch_params(vrbs, init_ul_bwp.generic_params.crbs);
+    builder.set_pusch_params(vrbs);
     used_ul_vrbs.fill(vrbs.start(), vrbs.stop());
     return alloc_status::success;
   }
@@ -216,10 +219,10 @@ protected:
   sched_cfg_dummy_notifier                mac_notif;
   scheduler_ue_metrics_dummy_notifier     metrics_notif;
   scheduler_ue_metrics_dummy_configurator metrics_ue_handler;
-  scheduler_metrics_handler               metrics{std::chrono::milliseconds{0}, metrics_notif};
+  scheduler_metrics_handler               metrics;
 
   cell_config_builder_params cfg_builder_params;
-  sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif, metrics_notif}, metrics};
+  sched_config_manager       cfg_mng{scheduler_config{sched_cfg, mac_notif}, metrics};
   const cell_configuration&  cell_cfg;
 
   cell_harq_manager       cell_harqs{MAX_NOF_DU_UES,

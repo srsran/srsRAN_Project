@@ -24,15 +24,12 @@
 
 #include "srsran/adt/expected.h"
 #include "srsran/adt/static_vector.h"
-#include "srsran/phy/support/re_pattern.h"
-#include "srsran/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsran/phy/upper/dmrs_mapping.h"
 #include "srsran/phy/upper/rb_allocation.h"
-#include "srsran/phy/upper/rx_buffer.h"
 #include "srsran/ran/pusch/pusch_context.h"
+#include "srsran/ran/sch/ldpc_base_graph.h"
 #include "srsran/ran/sch/sch_mcs.h"
 #include "srsran/ran/slot_point.h"
-#include "srsran/ran/uci/uci_constants.h"
 #include "srsran/ran/uci/uci_part2_size_description.h"
 #include <variant>
 

@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "srsran/adt/concurrent_queue.h"
 #include "srsran/cu_cp/cu_cp_e1_handler.h"
 #include "srsran/e1ap/common/e1ap_message.h"
 

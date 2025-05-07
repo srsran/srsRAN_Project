@@ -22,7 +22,7 @@
 
 #include "ssb_assembler.h"
 #include "srsran/mac/mac_cell_result.h"
-#include "srsran/ran/ssb_mapping.h"
+#include "srsran/ran/ssb/ssb_mapping.h"
 #include "srsran/scheduler/result/pdsch_info.h"
 
 using namespace srsran;

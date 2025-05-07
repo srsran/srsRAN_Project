@@ -144,23 +144,30 @@ private:
     pusch_demodulator_notifier_impl(channel_state_information& csi_) : csi(csi_) {}
 
     // See interface for documentation.
-    void on_provisional_stats(const demodulation_stats& stats) override { update_csi(stats); }
-
-    // See interface for documentation.
-    void on_end_stats(const demodulation_stats& stats) override { update_csi(stats); }
-
-  private:
-    void update_csi(const demodulation_stats& stats)
+    void on_provisional_stats(unsigned i_symbol, const demodulation_stats& stats) override
     {
       if (stats.sinr_dB.has_value()) {
         csi.set_sinr_dB(channel_state_information::sinr_type::post_equalization, *stats.sinr_dB);
       }
       if (stats.evm.has_value()) {
-        csi.set_evm(*stats.evm);
+        csi.set_symbol_evm(i_symbol, *stats.evm);
         csi.set_sinr_dB(channel_state_information::sinr_type::evm, -20.0F * log10f(*stats.evm) - 3.7F);
       }
     }
 
+    // See interface for documentation.
+    void on_end_stats(const demodulation_stats& stats) override
+    {
+      if (stats.sinr_dB.has_value()) {
+        csi.set_sinr_dB(channel_state_information::sinr_type::post_equalization, *stats.sinr_dB);
+      }
+      if (stats.evm.has_value()) {
+        csi.set_total_evm(*stats.evm);
+        csi.set_sinr_dB(channel_state_information::sinr_type::evm, -20.0F * log10f(*stats.evm) - 3.7F);
+      }
+    }
+
+  private:
     channel_state_information& csi;
   };
 

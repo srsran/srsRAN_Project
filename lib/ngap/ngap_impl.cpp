@@ -380,6 +380,17 @@ void ngap_impl::handle_dl_nas_transport_message(const asn1::ngap::dl_nas_transpo
     return;
   }
 
+  // Check wether another context doesn't exist already for the same AMF UE ID with mismatched RAN UE ID.
+  if (not validate_consistent_ue_id_pair(uint_to_ran_ue_id(msg->ran_ue_ngap_id),
+                                         uint_to_amf_ue_id(msg->amf_ue_ngap_id))) {
+    send_error_indication(*tx_pdu_notifier,
+                          logger,
+                          uint_to_ran_ue_id(msg->ran_ue_ngap_id),
+                          uint_to_amf_ue_id(msg->amf_ue_ngap_id),
+                          ngap_cause_radio_network_t::inconsistent_remote_ue_ngap_id);
+    return;
+  }
+
   ngap_ue_context& ue_ctxt = ue_ctxt_list[uint_to_ran_ue_id(msg->ran_ue_ngap_id)];
 
   if (ue_ctxt.release_scheduled) {
@@ -423,7 +434,7 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
   // Notify metrics handler about requested PDU sessions.
   if (request->pdu_session_res_setup_list_cxt_req_present) {
     for (const auto& pdu_session : request->pdu_session_res_setup_list_cxt_req) {
-      metrics_handler.handle_requested_pdu_session(ngap_asn1_to_s_nssai(pdu_session.s_nssai));
+      metrics_handler.aggregate_requested_pdu_session(ngap_asn1_to_s_nssai(pdu_session.s_nssai));
     }
   }
 
@@ -432,6 +443,17 @@ void ngap_impl::handle_initial_context_setup_request(const asn1::ngap::init_cont
                    request->ran_ue_ngap_id,
                    request->amf_ue_ngap_id);
     send_error_indication(*tx_pdu_notifier, logger, {}, {}, ngap_cause_radio_network_t::unknown_local_ue_ngap_id);
+    return;
+  }
+
+  // Check wether another context doesn't exist already for the same AMF UE ID with mismatched RAN UE ID.
+  if (not validate_consistent_ue_id_pair(uint_to_ran_ue_id(request->ran_ue_ngap_id),
+                                         uint_to_amf_ue_id(request->amf_ue_ngap_id))) {
+    send_error_indication(*tx_pdu_notifier,
+                          logger,
+                          uint_to_ran_ue_id(request->ran_ue_ngap_id),
+                          uint_to_amf_ue_id(request->amf_ue_ngap_id),
+                          ngap_cause_radio_network_t::inconsistent_remote_ue_ngap_id);
     return;
   }
 
@@ -503,7 +525,7 @@ void ngap_impl::handle_pdu_session_resource_setup_request(const asn1::ngap::pdu_
 {
   // Notify metrics handler about requested PDU sessions.
   for (const auto& pdu_session : request->pdu_session_res_setup_list_su_req) {
-    metrics_handler.handle_requested_pdu_session(ngap_asn1_to_s_nssai(pdu_session.s_nssai));
+    metrics_handler.aggregate_requested_pdu_session(ngap_asn1_to_s_nssai(pdu_session.s_nssai));
   }
 
   if (!ue_ctxt_list.contains(uint_to_ran_ue_id(request->ran_ue_ngap_id))) {
@@ -1009,7 +1031,6 @@ ngap_impl::handle_handover_preparation_request(const ngap_handover_preparation_r
                                          *tx_pdu_notifier,
                                          ue->get_ngap_rrc_ue_notifier(),
                                          cu_cp_notifier,
-                                         metrics_handler,
                                          ev_mng,
                                          timer_factory{timers, ctrl_exec},
                                          ue_ctxt.logger);
@@ -1133,6 +1154,23 @@ void ngap_impl::on_request_pdu_session_timer_expired(ue_index_t ue_index)
     logger.debug("ue={}: Ignoring expired PDU session setup timer. UE context not found", ue_index);
     return;
   }
+}
+
+bool ngap_impl::validate_consistent_ue_id_pair(ran_ue_id_t ran_ue_ngap_id, amf_ue_id_t amf_ue_ngap_id)
+{
+  if (ue_ctxt_list.contains(amf_ue_ngap_id)) {
+    ngap_ue_context& ue_ctxt = ue_ctxt_list[amf_ue_ngap_id];
+    if (ue_ctxt.ue_ids.ran_ue_id != ran_ue_ngap_id) {
+      logger.warning("Inconsistency detected in UE id pair. ue={} ran_ue={} amf_ue={} rx_ran_ue={} rx_amf_ue={} ",
+                     ue_ctxt.ue_ids.ue_index,
+                     fmt::underlying(ue_ctxt.ue_ids.ran_ue_id),
+                     fmt::underlying(ue_ctxt.ue_ids.amf_ue_id),
+                     fmt::underlying(ran_ue_ngap_id),
+                     fmt::underlying(amf_ue_ngap_id));
+      return false;
+    }
+  }
+  return true;
 }
 
 static auto log_pdu_helper(srslog::basic_logger&         logger,

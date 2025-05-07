@@ -36,6 +36,7 @@ struct du_high_worker_manager {
   ~du_high_worker_manager();
   void stop();
   void flush_pending_dl_pdus();
+  void flush_pending_control_tasks();
 
   manual_task_worker        test_worker{task_worker_queue_size};
   priority_task_worker_pool worker_pool{

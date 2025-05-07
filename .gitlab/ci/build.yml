@@ -13,16 +13,6 @@ include:
   - local: .gitlab/ci-shared/build.yml
 
 variables:
-  TEST_MODE:
-    description: What tests to run. None won't run any test at all.
-    options:
-      - "default"
-      - "coverage"
-      - "tsan"
-      - "rtsan"
-      - "valgrind"
-      - "none"
-    value: "default"
   SRSRANDIR: ${CI_PROJECT_DIR}
 
 ################
@@ -62,20 +52,6 @@ variables:
     PLUGIN_INDEX_ARRAY: "0" # Space separated list of indexes of plugins to build. f.e. "0 1 2"
   script:
     - &srs_functions |
-      CMAKE_FLAGS_CMD=""
-      if [[ $TEST_MODE = "none" ]]; then
-        CMAKE_FLAGS_CMD="${CMAKE_FLAGS_CMD} -DBUILD_TESTS=False"
-      fi
-
-      echo "INFRASTRUCTURE_TAG=${INFRASTRUCTURE_TAG}"
-      echo "OS=${OS}"
-      echo "COMPILER=${COMPILER}"
-      echo "TEST_MODE=${TEST_MODE}"
-      echo "BUILD_ARGS=${CMAKE_FLAGS_CMD} ${BUILD_ARGS}"
-      echo "UHD_VERSION=${UHD_VERSION}"
-      echo "DPDK_VERSION=${DPDK_VERSION}"
-      echo "SRS_TARGET=${SRS_TARGET}"
-
       build_srsgnb() {
         target="$1"
 
@@ -85,7 +61,7 @@ variables:
           ram_reporter_pid=$!
         fi
 
-        build_srsran "${target}" ${CMAKE_FLAGS_CMD}
+        build_srsran
         if [[ -n "$OUTPUT_FINGERPRINT" ]]; then
           echo "Storing fingerprints of all executables to $OUTPUT_FINGERPRINT"
           cd build
@@ -111,25 +87,6 @@ variables:
 
       launch_tests() {
         cd ${CI_PROJECT_DIR}/build
-        case $TEST_MODE in
-          none)
-            echo "Tests skipped"
-            exit 0
-            ;;
-          tsan)
-            ctest_extra="-L tsan"
-            ;;
-          rtsan)
-            ctest_extra="-L rtsan"
-            ;;
-          valgrind)
-            G_DEBUG=gc-friendly G_SLICE=always-malloc
-            # Default timeout per test is 1500 (25 min)
-            export CTEST_TIMEOUT=3600
-            export CTEST_TEST_TIMEOUT=${CTEST_TIMEOUT}
-            ctest_extra="-T memcheck -LE NO_MEMCHECK --timeout ${CTEST_TIMEOUT}"
-            ;;
-        esac
         if [ -n "${FINGERPRINT}" ]; then
           echo "Searching for changed tests"
           CTEST_SUBSET=$(/usr/local/builder_tools/bin/python /usr/local/bin/changed_tests.py -b . -i "../${FINGERPRINT}" -d md5)
@@ -143,7 +100,7 @@ variables:
           fi
         fi
         echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
-        CTEST_CMD="ctest -j${KUBERNETES_CPU_REQUEST} ${CTEST_SUBSET_CMD} $ctest_extra --schedule-random --output-on-failure --output-junit xunit.xml"
+        CTEST_CMD="ctest -j${KUBERNETES_CPU_REQUEST} ${CTEST_SUBSET_CMD} $CTEST_ARGS --schedule-random --output-on-failure --output-junit xunit.xml"
         echo "+ ${CTEST_CMD}"
 
         status_file=$(mktemp)
@@ -228,7 +185,7 @@ variables:
             fi
         done
       fi
-    - build_srsgnb "${SRS_TARGET}"
+    - build_srsgnb
     - launch_tests
   timeout: 6h
 
@@ -789,7 +746,6 @@ smoke asan:
     CMAKE_BUILD_TYPE: Debug
     ASSERT_LEVEL: PARANOID
     ENABLE_ASAN: "True"
-    TEST_MODE: asan
     MARCH: x86-64-v3
     INFRASTRUCTURE_TAG: amd64-avx2
 
@@ -1956,6 +1912,33 @@ basic ru dummy:
     FORCE_DEBUG_INFO: "True"
     ASSERT_LEVEL: AUTO
     INFRASTRUCTURE_TAG: amd64-avx2-avx512
+  after_script:
+    - *build_after_script
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 3 days
+
+basic avx2 dpdk:
+  extends: .build_and_unit
+  rules:
+    - if: $CI_DESCRIPTION =~ /Nightly E2E Tests/
+  retry: 2
+  interruptible: false
+  variables:
+    SRS_TARGET: gnb_split_7_2
+    OS: ubuntu-24.04
+    COMPILER: gcc
+    CMAKE_BUILD_TYPE: Release
+    TEST_MODE: none
+    ENABLE_UHD: "False"
+    ENABLE_ZEROMQ: "False"
+    ENABLE_DPDK: "True"
+    DPDK_VERSION: "23.11.1_avx2"
+    MARCH: x86-64-v3
+    FORCE_DEBUG_INFO: "True"
+    ASSERT_LEVEL: AUTO
+    INFRASTRUCTURE_TAG: amd64-avx2
+    BUILD_ARGS: -DEXIT_TIMEOUT=30
   after_script:
     - *build_after_script
   artifacts:

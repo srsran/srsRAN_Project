@@ -38,7 +38,7 @@ void transform_precoder_dft_impl::deprecode_ofdm_symbol(span<cf_t> x, span<const
 
   // Calculate number of resource blocks.
   unsigned M_rb = M_sc / NRE;
-  srsran_assert(is_transform_precoding_nof_prb_valid(M_rb), "The number of PRB (i.e., {}) is not valid.", M_rb);
+  srsran_assert(transform_precoding::is_nof_prbs_valid(M_rb), "The number of PRB (i.e., {}) is not valid.", M_rb);
   srsran_assert(dft_processors.count(M_rb), "No DFT processor available for the number of PRB (i.e., {}).", M_rb);
 
   // Calculate scaling factor.

@@ -103,7 +103,7 @@ void cell_scheduler::run_slot(slot_point sl_tx)
   // > Start with clearing old allocations from the grid.
   reset_resource_grid(sl_tx);
 
-  if (SRSRAN_LIKELY(not stopped.load(std::memory_order_acquire))) {
+  if (SRSRAN_LIKELY(is_running())) {
     // Cell is active. Run the cell sub-schedulers.
 
     // > SSB scheduling.
@@ -162,10 +162,10 @@ void cell_scheduler::reset_resource_grid(slot_point sl_tx)
 
 void cell_scheduler::start()
 {
-  stopped.store(false, std::memory_order_release);
+  stopped.store(false, std::memory_order_relaxed);
 }
 
 void cell_scheduler::stop()
 {
-  stopped.store(true, std::memory_order_release);
+  stopped.store(true, std::memory_order_relaxed);
 }

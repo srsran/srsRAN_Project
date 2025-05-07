@@ -70,14 +70,14 @@ void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processo
 
   // Try to enqueue the PDU processing task.
   bool enqueued = executor.execute([this, &pdu_ref]() {
-    trace_point process_pdcch_tp = l1_tracer.now();
+    trace_point process_pdcch_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
     if (current_grid) {
       pdcch_proc->process(current_grid.get_writer(), pdu_ref);
     }
 
-    l1_tracer << trace_event("process_pdcch", process_pdcch_tp);
+    l1_dl_tracer << trace_event("process_pdcch", process_pdcch_tp);
 
     // Report task completion to FSM.
     on_task_completion();
@@ -104,13 +104,13 @@ void downlink_processor_single_executor_impl::process_pdsch(
 
   // Try to enqueue the PDU processing task.
   bool enqueued = executor.execute([this, &pdsch_args]() mutable {
-    trace_point process_pdsch_tp = l1_tracer.now();
+    trace_point process_pdsch_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
     if (current_grid) {
       pdsch_proc->process(current_grid.get_writer(), pdsch_notifier, std::move(pdsch_args.data), pdsch_args.pdu);
 
-      l1_tracer << trace_event("process_pdsch", process_pdsch_tp);
+      l1_dl_tracer << trace_event("process_pdsch", process_pdsch_tp);
     } else {
       // Inform about the dropped PDSCH.
       logger.warning(pdsch_args.pdu.slot.sfn(),
@@ -142,14 +142,14 @@ void downlink_processor_single_executor_impl::process_ssb(const ssb_processor::p
 
   // Try to enqueue the PDU processing task.
   bool enqueued = executor.execute([this, &pdu_ref]() {
-    trace_point process_ssb_tp = l1_tracer.now();
+    trace_point process_ssb_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
     if (current_grid) {
       ssb_proc->process(current_grid->get_writer(), pdu_ref);
     }
 
-    l1_tracer << trace_event("process_ssb", process_ssb_tp);
+    l1_dl_tracer << trace_event("process_ssb", process_ssb_tp);
 
     // Report task completion to FSM.
     on_task_completion();
@@ -174,14 +174,14 @@ void downlink_processor_single_executor_impl::process_nzp_csi_rs(const nzp_csi_r
 
   // Try to enqueue the PDU processing task.
   bool enqueued = executor.execute([this, &config_ref]() {
-    trace_point process_nzp_csi_rs_tp = l1_tracer.now();
+    trace_point process_nzp_csi_rs_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
     if (current_grid) {
       csi_rs_proc->map(current_grid->get_writer(), config_ref);
     }
 
-    l1_tracer << trace_event("process_nzp_csi_rs", process_nzp_csi_rs_tp);
+    l1_dl_tracer << trace_event("process_nzp_csi_rs", process_nzp_csi_rs_tp);
 
     // Report task completion to FSM.
     on_task_completion();
@@ -206,14 +206,14 @@ void downlink_processor_single_executor_impl::process_prs(const prs_generator_co
 
   // Try to enqueue the PDU processing task.
   bool enqueued = executor.execute([this, &config_ref]() {
-    trace_point process_prs_tp = l1_tracer.now();
+    trace_point process_prs_tp = l1_dl_tracer.now();
 
     // Do not execute if the grid is not available.
     if (current_grid) {
       prs_gen->generate(current_grid->get_writer(), config_ref);
     }
 
-    l1_tracer << trace_event("process_prs", process_prs_tp);
+    l1_dl_tracer << trace_event("process_prs", process_prs_tp);
 
     // Report task completion to FSM.
     on_task_completion();
@@ -249,14 +249,14 @@ downlink_processor_single_executor_impl::configure_resource_grid(const resource_
   ssb_list.clear();
   nzp_csi_rs_list.clear();
 
-  l1_tracer << instant_trace_event("configure_rg", instant_trace_event::cpu_scope::global);
+  l1_dl_tracer << instant_trace_event("configure_rg", instant_trace_event::cpu_scope::global);
 
   return unique_downlink_processor(*this);
 }
 
 void downlink_processor_single_executor_impl::finish_processing_pdus()
 {
-  l1_tracer << instant_trace_event("finish_processing_pdus", instant_trace_event::cpu_scope::thread);
+  l1_dl_tracer << instant_trace_event("finish_processing_pdus", instant_trace_event::cpu_scope::thread);
 
   // Notify that no more PDUs will be enqueued. The grid will be sent right away if the current state allows it.
   if (state.on_finish_requested()) {
@@ -266,7 +266,7 @@ void downlink_processor_single_executor_impl::finish_processing_pdus()
 
 void downlink_processor_single_executor_impl::send_resource_grid()
 {
-  l1_tracer << instant_trace_event("send_resource_grid", instant_trace_event::cpu_scope::global);
+  l1_dl_tracer << instant_trace_event("send_resource_grid", instant_trace_event::cpu_scope::global);
 
   // Send the resource grid if available.
   if (current_grid.is_valid()) {
