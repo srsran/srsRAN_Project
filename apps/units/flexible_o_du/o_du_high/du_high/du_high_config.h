@@ -366,7 +366,7 @@ struct du_high_unit_pucch_config {
   /// @{
   /// Max number of PRBs for PUCCH Format 2. Values {1,...,16}.
   unsigned f2_max_nof_rbs = 1;
-  /// \brief Maximum payload in bits that can be carried by PUCCH Format 2. Values {1,...,11}.
+  /// \brief Maximum payload in bits that can be carried by PUCCH Format 2. Values {1,...,40}.
   /// If this is set, \ref f2_max_nof_rbs is ignored.
   std::optional<unsigned> f2_max_payload_bits;
   /// Max code rate for PUCCH Format 2.
@@ -381,7 +381,7 @@ struct du_high_unit_pucch_config {
   /// @{
   /// Max number of PRBs for PUCCH Format 3. Values {1,...,16}.
   unsigned f3_max_nof_rbs = 1;
-  /// \brief Maximum payload in bits that can be carried by PUCCH Format 3. Values {1,...,11}.
+  /// \brief Maximum payload in bits that can be carried by PUCCH Format 3. Values {1,...,40}.
   /// If this is set, \ref f2_max_nof_rbs is ignored.
   std::optional<unsigned> f3_max_payload_bits;
   /// Max code rate for PUCCH Format 3.
