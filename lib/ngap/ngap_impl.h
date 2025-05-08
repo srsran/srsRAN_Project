@@ -94,12 +94,15 @@ private:
   class tx_pdu_notifier_with_logging final : public ngap_message_notifier
   {
   public:
-    tx_pdu_notifier_with_logging(ngap_impl& parent_, std::unique_ptr<ngap_message_notifier> decorated_) :
-      parent(parent_), decorated(std::move(decorated_))
-    {
-    }
+    tx_pdu_notifier_with_logging(ngap_impl& parent_) : parent(parent_) {}
 
-    void on_new_message(const ngap_message& msg) override;
+    void connect(std::unique_ptr<ngap_message_notifier> decorated_) { decorated = std::move(decorated_); }
+
+    void disconnect() { decorated.reset(); }
+
+    bool is_connected() const { return decorated != nullptr; }
+
+    [[nodiscard]] bool on_new_message(const ngap_message& msg) override;
 
   private:
     ngap_impl&                             parent;
@@ -137,6 +140,11 @@ private:
   /// \brief Notify about the reception of a Paging message.
   /// \param[in] msg The received Paging message.
   void handle_paging(const asn1::ngap::paging_s& msg);
+
+  /// \brief Send a handover failure to the AMF.
+  /// \param[in] amf_ue_id The AMF UE NGAP ID.
+  /// \param[in] cause The cause of the handover failure.
+  void send_handover_failure(uint64_t amf_ue_id, const std::string& cause);
 
   /// \brief Notify about the reception of a Handover request message.
   /// \param[in] msg The received handover request message.
@@ -199,7 +207,7 @@ private:
 
   ngap_connection_handler conn_handler;
 
-  std::unique_ptr<tx_pdu_notifier_with_logging> tx_pdu_notifier;
+  tx_pdu_notifier_with_logging tx_pdu_notifier;
 };
 
 } // namespace srs_cu_cp

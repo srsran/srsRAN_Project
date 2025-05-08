@@ -36,11 +36,13 @@ void ngap_pdu_session_resource_release_procedure::operator()(coro_context<async_
   // Handle mandatory IEs
   CORO_AWAIT_VALUE(response, cu_cp_notifier.on_new_pdu_session_resource_release_command(command));
 
-  // TODO: Handle optional IEs
+  // TODO: Handle optional IEs.
 
-  send_pdu_session_resource_release_response();
-
-  logger.log_debug("\"{}\" finalized", name());
+  if (send_pdu_session_resource_release_response()) {
+    logger.log_debug("\"{}\" finished successfully", name());
+  } else {
+    logger.log_debug("\"{}\" failed", name());
+  }
 
   CORO_RETURN();
 }
@@ -138,7 +140,7 @@ fill_asn1_pdu_session_resource_release_response(asn1::ngap::pdu_session_res_rele
   return true;
 }
 
-void ngap_pdu_session_resource_release_procedure::send_pdu_session_resource_release_response()
+bool ngap_pdu_session_resource_release_procedure::send_pdu_session_resource_release_response()
 {
   ngap_message ngap_msg = {};
   ngap_msg.pdu.set_successful_outcome().load_info_obj(ASN1_NGAP_ID_PDU_SESSION_RES_RELEASE);
@@ -149,9 +151,15 @@ void ngap_pdu_session_resource_release_procedure::send_pdu_session_resource_rele
 
   // TODO: needs more handling in the coro above?
   if (not fill_asn1_pdu_session_resource_release_response(pdu_session_res_release_resp, response)) {
-    logger.log_warning("Cannot fill ASN1 PDU Session Resource Release Response");
-    return;
+    logger.log_warning("Cannot fill ASN1 PDUSessionResourceReleaseResponse");
+    return false;
   }
 
-  amf_notifier.on_new_message(ngap_msg);
+  // Forward message to AMF.
+  if (!amf_notifier.on_new_message(ngap_msg)) {
+    logger.log_error("AMF notifier is not set. Cannot send PDUSessionResourceReleaseResponse");
+    return false;
+  }
+
+  return true;
 }

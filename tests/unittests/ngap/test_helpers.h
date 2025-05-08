@@ -35,7 +35,7 @@ public:
   void attach_handler(ngap_message_handler* handler_) { handler = handler_; }
 
   std::unique_ptr<ngap_message_notifier>
-  handle_cu_cp_connection_request(std::unique_ptr<ngap_message_notifier> cu_cp_rx_pdu_notifier) override
+  handle_cu_cp_connection_request(std::unique_ptr<ngap_rx_message_notifier> cu_cp_rx_pdu_notifier) override
   {
     class dummy_ngap_message_notifier : public ngap_message_notifier
     {
@@ -43,21 +43,26 @@ public:
       dummy_ngap_message_notifier(dummy_n2_gateway& parent_) : parent(parent_) {}
       ~dummy_ngap_message_notifier() { parent.rx_pdu_notifier.reset(); }
 
-      void on_new_message(const ngap_message& msg) override
+      [[nodiscard]] bool on_new_message(const ngap_message& msg) override
       {
         parent.logger.info("Received message");
 
         // Verify correct packing of outbound PDU.
         byte_buffer   pack_buffer;
         asn1::bit_ref bref(pack_buffer);
-        ASSERT_EQ(msg.pdu.pack(bref), asn1::SRSASN_SUCCESS);
+        if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
+          parent.logger.error("Failed to pack message");
+          return false;
+        }
 
         parent.last_ngap_msgs.push_back(msg);
 
-        if (parent.handler != nullptr) {
-          parent.logger.info("Forwarding PDU");
-          parent.handler->handle_message(msg);
+        if (parent.handler == nullptr) {
+          return false;
         }
+        parent.logger.info("Forwarding PDU");
+        parent.handler->handle_message(msg);
+        return true;
       }
 
     private:
@@ -75,7 +80,7 @@ private:
   srslog::basic_logger& logger;
   ngap_message_handler* handler = nullptr;
 
-  std::unique_ptr<ngap_message_notifier> rx_pdu_notifier;
+  std::unique_ptr<ngap_rx_message_notifier> rx_pdu_notifier;
 };
 
 /// Dummy handler storing and printing the received PDU.
@@ -83,10 +88,11 @@ class dummy_ngap_message_notifier : public ngap_message_notifier
 {
 public:
   dummy_ngap_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
-  void on_new_message(const ngap_message& msg) override
+  [[nodiscard]] bool on_new_message(const ngap_message& msg) override
   {
     last_msg = msg;
     logger.info("Transmitted a PDU of type {}", msg.pdu.type().to_string());
+    return true;
   }
   ngap_message last_msg;
 

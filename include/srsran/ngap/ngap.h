@@ -44,14 +44,16 @@ public:
   virtual void handle_connection_loss() = 0;
 };
 
-/// This interface notifies the reception of new NGAP messages over the NGAP interface.
+/// This interface notifies the transmission of new NGAP messages over the NGAP interface.
 class ngap_message_notifier
 {
 public:
   virtual ~ngap_message_notifier() = default;
 
-  /// This callback is invoked on each received NGAP message.
-  virtual void on_new_message(const ngap_message& msg) = 0;
+  /// \brief This callback is invoked on each transmitted NGAP message.
+  /// \param[in] msg The NGAP message to transmit.
+  /// \return True if the message was successfully transmitted, false otherwise.
+  [[nodiscard]] virtual bool on_new_message(const ngap_message& msg) = 0;
 };
 
 /// Handle NGAP interface management procedures as defined in TS 38.413 section 8.7.

@@ -36,8 +36,8 @@ public:
 private:
   void combine_pdu_session_resource_modify_response();
 
-  // results senders
-  void send_pdu_session_resource_modify_response();
+  // Result senders.
+  bool send_pdu_session_resource_modify_response();
 
   const cu_cp_pdu_session_resource_modify_request    request;
   const asn1::ngap::pdu_session_res_modify_request_s asn1_request;

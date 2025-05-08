@@ -69,9 +69,11 @@ void ngap_pdu_session_resource_setup_procedure::operator()(coro_context<async_ta
     logger.log_warning("Some or all PduSessionResourceSetupItems failed to setup");
   }
 
-  send_pdu_session_resource_setup_response();
-
-  logger.log_debug("\"{}\" finalized", name());
+  if (send_pdu_session_resource_setup_response()) {
+    logger.log_debug("\"{}\" finished successfully", name());
+  } else {
+    logger.log_debug("\"{}\" failed", name());
+  }
 
   CORO_RETURN();
 }
@@ -89,7 +91,7 @@ void ngap_pdu_session_resource_setup_procedure::combine_pdu_session_resource_set
   }
 }
 
-void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_response()
+bool ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_response()
 {
   ngap_message ngap_msg = {};
 
@@ -113,5 +115,11 @@ void ngap_pdu_session_resource_setup_procedure::send_pdu_session_resource_setup_
                                                        pdu_session.unsuccessful_transfer.cause);
   }
 
-  amf_notifier.on_new_message(ngap_msg);
+  // Forward message to AMF.
+  if (!amf_notifier.on_new_message(ngap_msg)) {
+    logger.log_error("AMF notifier is not set. Cannot send PDUSessionResourceSetupResponse");
+    return false;
+  }
+
+  return true;
 }

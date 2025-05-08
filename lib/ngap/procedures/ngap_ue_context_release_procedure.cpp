@@ -50,8 +50,7 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
 
   // Note: From this point the UE is removed and only the stored context can be accessed.
 
-  send_ue_context_release_complete();
-
+  if (send_ue_context_release_complete()) {
   // Send ErrorIndication if it was stored for this UE
   if (stored_error_indications.find(ue_ids.ue_index) != stored_error_indications.end()) {
     const auto& req = stored_error_indications.at(ue_ids.ue_index);
@@ -60,11 +59,14 @@ void ngap_ue_context_release_procedure::operator()(coro_context<async_task<void>
     stored_error_indications.erase(ue_ids.ue_index);
   }
 
-  logger.log_debug("\"{}\" finalized", name());
+    logger.log_debug("\"{}\" finished successfully", name());
+  } else {
+    logger.log_debug("\"{}\" failed", name());
+  }
   CORO_RETURN();
 }
 
-void ngap_ue_context_release_procedure::send_ue_context_release_complete()
+bool ngap_ue_context_release_procedure::send_ue_context_release_complete()
 {
   ngap_message ngap_msg = {};
 
@@ -77,5 +79,11 @@ void ngap_ue_context_release_procedure::send_ue_context_release_complete()
 
   fill_asn1_ue_context_release_complete(asn1_ue_context_release_complete, ue_context_release_complete);
 
-  amf_notifier.on_new_message(ngap_msg);
+  // Forward message to AMF.
+  if (!amf_notifier.on_new_message(ngap_msg)) {
+    logger.log_error("AMF notifier is not set. Cannot send UEContextReleaseComplete");
+    return false;
+  }
+
+  return true;
 }

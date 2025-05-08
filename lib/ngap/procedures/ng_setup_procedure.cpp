@@ -47,8 +47,11 @@ void ng_setup_procedure::operator()(coro_context<async_task<ngap_ng_setup_result
     // Subscribe to respective publisher to receive NG SETUP RESPONSE/FAILURE message.
     transaction_sink.subscribe_to(ev_mng.ng_setup_outcome, ng_setup_response_timeout);
 
-    // Send request to AMF.
-    amf_notifier.on_new_message(request);
+    // Forward message to AMF.
+    if (!amf_notifier.on_new_message(request)) {
+      logger.error("AMF notifier is not set. Cannot send NGSetupRequest");
+      CORO_EARLY_RETURN(ngap_ng_setup_failure{ngap_cause_misc_t::unspecified});
+    }
 
     // Await AMF response.
     CORO_AWAIT(transaction_sink);

@@ -87,7 +87,11 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_response(
                                                        pdu_session.unsuccessful_transfer.cause);
   }
 
-  amf_notifier.on_new_message(ngap_msg);
+  // Forward message to AMF.
+  if (!amf_notifier.on_new_message(ngap_msg)) {
+    logger.log_error("AMF notifier is not set. Cannot send InitialContextSetupResponse");
+    return;
+  }
 }
 
 void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
@@ -112,6 +116,9 @@ void ngap_initial_context_setup_procedure::send_initial_context_setup_failure(
                                                        pdu_session.unsuccessful_transfer.cause);
   }
 
-  logger.log_info("Sending InitialContextSetupFailure");
-  amf_notifier.on_new_message(ngap_msg);
+  // Forward message to AMF.
+  if (!amf_notifier.on_new_message(ngap_msg)) {
+    logger.log_error("AMF notifier is not set. Cannot send InitialContextSetupFailure");
+    return;
+  }
 }

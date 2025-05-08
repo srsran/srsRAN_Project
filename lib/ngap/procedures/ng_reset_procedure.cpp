@@ -33,8 +33,11 @@ void ng_reset_procedure::operator()(coro_context<async_task<void>>& ctx)
   // Subscribe to respective publisher to receive NG RESET ACKNOWLEDGE message.
   transaction_sink.subscribe_to(ev_mng.ng_reset_outcome, ng_reset_response_timeout);
 
-  // Send request to AMF.
-  amf_notifier.on_new_message(msg);
+  // Forward message to AMF.
+  if (!amf_notifier.on_new_message(msg)) {
+    logger.error("AMF notifier is not set. Cannot send NGReset");
+    CORO_EARLY_RETURN();
+  }
 
   // Await AMF response.
   CORO_AWAIT(transaction_sink);

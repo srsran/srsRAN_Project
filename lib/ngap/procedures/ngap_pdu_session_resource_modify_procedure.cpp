@@ -62,16 +62,18 @@ void ngap_pdu_session_resource_modify_procedure::operator()(coro_context<async_t
     logger.log_warning("Some or all PduSessionResourceModifyItems failed to setup");
   }
 
-  send_pdu_session_resource_modify_response();
-
-  // Request UE release in case of a failure to cleanup CU-CP
+  if (send_pdu_session_resource_modify_response()) {
+    // Request UE release in case of a failure to cleanup CU-CP.
   if (!response.pdu_session_res_failed_to_modify_list.empty()) {
     ue_context_release_request = {
         ue_ids.ue_index, {}, ngap_cause_radio_network_t::release_due_to_ngran_generated_reason};
     CORO_AWAIT(ngap_ctrl_handler.handle_ue_context_release_request(ue_context_release_request));
   }
 
-  logger.log_debug("\"{}\" finalized", name());
+    logger.log_debug("\"{}\" finished successfully", name());
+  } else {
+    logger.log_debug("\"{}\" failed", name());
+  }
 
   CORO_RETURN();
 }
@@ -122,7 +124,7 @@ static bool fill_asn1_pdu_session_res_modify_response(asn1::ngap::pdu_session_re
   return true;
 }
 
-void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modify_response()
+bool ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modify_response()
 {
   ngap_message ngap_msg = {};
 
@@ -136,8 +138,14 @@ void ngap_pdu_session_resource_modify_procedure::send_pdu_session_resource_modif
   // TODO: needs more handling in the coro above?
   if (not fill_asn1_pdu_session_res_modify_response(pdu_session_res_modify_resp, response)) {
     logger.log_warning("Unable to fill ASN1 contents of PDUSessionResourceModifyResponse", name());
-    return;
+    return false;
   }
 
-  amf_notifier.on_new_message(ngap_msg);
+  // Forward message to AMF.
+  if (!amf_notifier.on_new_message(ngap_msg)) {
+    logger.log_error("AMF notifier is not set. Cannot send PDUSessionResourceModifyResponse");
+    return false;
+  }
+
+  return true;
 }
