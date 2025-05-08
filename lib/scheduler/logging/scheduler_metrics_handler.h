@@ -11,6 +11,7 @@
 #pragma once
 
 #include "scheduler_metrics_ue_configurator.h"
+#include "srsran/adt/flat_map.h"
 #include "srsran/adt/slotted_array.h"
 #include "srsran/adt/slotted_vector.h"
 #include "srsran/scheduler/scheduler_configurator.h"
@@ -19,7 +20,6 @@
 #include "srsran/scheduler/scheduler_metrics.h"
 #include "srsran/support/math/stats.h"
 #include "srsran/support/units.h"
-#include <unordered_map>
 
 namespace srsran {
 
@@ -145,7 +145,7 @@ class cell_metrics_handler final : public sched_metrics_ue_configurator
   slot_point next_report_slot;
 
   slotted_id_vector<du_ue_index_t, ue_metric_context> ues;
-  std::unordered_map<rnti_t, du_ue_index_t>           rnti_to_ue_index_lookup;
+  flat_map<rnti_t, du_ue_index_t>                     rnti_to_ue_index_lookup;
 
   /// Metrics tracked that are reset on every report.
   non_persistent_data data;
