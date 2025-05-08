@@ -378,14 +378,6 @@ validator_result config_validators::validate_pucch_cfg(const serving_cell_config
            uci_bits_pucch_resource,
            pucch_f2_f3_f4_max_payload);
 
-    // For 1 or 2 antennas tx, 2 HARQ bits can be multiplexed with CSI within the same PUCCH resource.
-    unsigned       harq_bits_mplexed_with_csi = nof_dl_antennas > 2 ? 0U : 2U;
-    const unsigned uci_bits_harq_resource     = csi_report_size + harq_bits_mplexed_with_csi + sr_bits_mplexed_with_csi;
-    VERIFY(pucch_f2_f3_f4_max_payload >= uci_bits_harq_resource,
-           "UCI num. of bits ({}) exceeds the maximum HARQ-ACK's PUCCH Format 2/3/4 payload ({})",
-           uci_bits_harq_resource,
-           pucch_f2_f3_f4_max_payload);
-
     // TODO: handle the cases of F0+F3 and F0+F4.
     if (has_format_0 and has_format_2) {
       // With Format 0 and CSI, the second-last resource in PUCCH resource set 1 should point at the CSI resource.

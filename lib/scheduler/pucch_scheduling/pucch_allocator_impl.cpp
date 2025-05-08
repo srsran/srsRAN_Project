@@ -28,7 +28,7 @@ static unsigned get_n_id0_scrambling(const ue_cell_configuration& ue_cell_cfg, u
   // dmrs-UplinkForPUSCH-MappingTypeB.
 
   // Check \c scrambling_id0 in \c dmrs-UplinkForPUSCH-MappingTypeB, first
-  auto& pusch_cfg = *ue_cell_cfg.init_bwp().ul_ded->pusch_cfg;
+  const auto& pusch_cfg = *ue_cell_cfg.init_bwp().ul_ded->pusch_cfg;
   if (pusch_cfg.pusch_mapping_type_b_dmrs.has_value() and
       pusch_cfg.pusch_mapping_type_b_dmrs.value().trans_precoder_disabled.has_value() and
       pusch_cfg.pusch_mapping_type_b_dmrs.value().trans_precoder_disabled.value().scrambling_id0.has_value()) {
@@ -276,9 +276,8 @@ std::optional<unsigned> pucch_allocator_impl::alloc_ded_pucch_harq_ack_ue(cell_r
       resource_manager.cancel_last_ue_res_reservations(sl_ack, crnti, ue_cell_cfg);
     }
     return pucch_res_ind;
-  } else {
-    return allocate_harq_grant(pucch_slot_alloc, crnti, ue_cell_cfg);
   }
+  return allocate_harq_grant(pucch_slot_alloc, crnti, ue_cell_cfg);
 }
 
 void pucch_allocator_impl::pucch_allocate_sr_opportunity(cell_slot_resource_allocator& pucch_slot_alloc,
@@ -2034,46 +2033,48 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_grant> resources_to
       // PUCCH res set 1. NOTE: This rule is defined in Section 9.2.5.1 or 9.2.5.2 (if any CSI bits), TS 38.213.
       // NOTE: For the case of HARQ-ACK with Format >= 2, the HARQ-ACK resource has HARQ-ACK bits and optionally CSI
       // bits.
-      else {
-        srsran_assert(r_sr.format == pucch_format::FORMAT_0 or r_sr.format == pucch_format::FORMAT_1,
-                      "The two resources must have the same format");
-        // Apply F2 CSI merging rule: SR and CSI PUCCH resources will be multiplexed in the CSI PUCCH resource.
-        // A HARQ resource from PUCCH resource set idx 1 already exits. Use that one.
-        if (r_harq.harq_id.pucch_set_idx == pucch_res_set_idx::set_1) {
-          new_resource = r_harq;
-        }
-        // Get a resource from PUCCH resource set idx 1, if available, with the same PUCCH resource indicator as for
-        // the PUCCH resource from set idx 0. NOTE: This sub-case is used by the PUCCH common and dedicated
-        // allocator.
-        else if (preserve_res_indicator.has_value()) {
-          const pucch_resource* pucch_res = resource_manager.reserve_set_1_res_by_res_indicator(
-              slot_harq, crnti, preserve_res_indicator.value(), pucch_cfg);
-          resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_SET_1);
-          if (pucch_res != nullptr) {
-            return std::nullopt;
-          }
-          new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
-          new_resource.harq_id.pucch_res_ind = r_harq.harq_id.pucch_res_ind;
-          new_resource.set_res_config(*pucch_res);
-        }
-        // Get a new HARQ resource (from PUCCH resource set idx 1) from the resource manager.
-        else {
-          pucch_harq_resource_alloc_record res_alloc =
-              resource_manager.reserve_next_set_1_harq_res_available(slot_harq, crnti, pucch_cfg);
-          resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_SET_1);
-          if (res_alloc.pucch_res != nullptr) {
-            return std::nullopt;
-          }
-          new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
-          new_resource.harq_id.pucch_res_ind = res_alloc.pucch_res_indicator;
-          new_resource.set_res_config(*res_alloc.pucch_res);
-        }
-        // If any CSI bits, these are contained in the HARQ-ACK resource.
-        new_resource.bits.harq_ack_nof_bits  = r_harq.bits.harq_ack_nof_bits;
-        new_resource.bits.csi_part1_nof_bits = r_harq.bits.csi_part1_nof_bits;
-        new_resource.bits.sr_bits            = r_sr.bits.sr_bits;
-        return new_resource;
+      srsran_assert(r_sr.format == pucch_format::FORMAT_0 or r_sr.format == pucch_format::FORMAT_1,
+                    "The two resources must have the same format");
+      // Apply F2 CSI merging rule: SR and CSI PUCCH resources will be multiplexed in the CSI PUCCH resource.
+      // A HARQ resource from PUCCH resource set idx 1 already exits. Use that one.
+      if (r_harq.harq_id.pucch_set_idx == pucch_res_set_idx::set_1) {
+        new_resource = r_harq;
       }
+      // Get a resource from PUCCH resource set idx 1, if available, with the same PUCCH resource indicator as for
+      // the PUCCH resource from set idx 0. NOTE: This sub-case is used by the PUCCH common and dedicated
+      // allocator.
+      else if (preserve_res_indicator.has_value()) {
+        const pucch_resource* pucch_res = resource_manager.reserve_set_1_res_by_res_indicator(
+            slot_harq, crnti, preserve_res_indicator.value(), pucch_cfg);
+        resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_SET_1);
+        if (pucch_res != nullptr) {
+          return std::nullopt;
+        }
+        new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
+        new_resource.harq_id.pucch_res_ind = r_harq.harq_id.pucch_res_ind;
+        new_resource.set_res_config(*pucch_res);
+      }
+      // Get a new HARQ resource (from PUCCH resource set idx 1) from the resource manager.
+      else {
+        pucch_harq_resource_alloc_record res_alloc =
+            resource_manager.reserve_next_set_1_harq_res_available(slot_harq, crnti, pucch_cfg);
+        resource_manager.set_new_resource_allocation(crnti, pucch_resource_usage::HARQ_SET_1);
+        if (res_alloc.pucch_res != nullptr) {
+          return std::nullopt;
+        }
+        new_resource.harq_id.pucch_set_idx = pucch_res_set_idx::set_1;
+        new_resource.harq_id.pucch_res_ind = res_alloc.pucch_res_indicator;
+        new_resource.set_res_config(*res_alloc.pucch_res);
+      }
+      // If any CSI bits, these are contained in the HARQ-ACK resource.
+      new_resource.bits.harq_ack_nof_bits  = r_harq.bits.harq_ack_nof_bits;
+      new_resource.bits.csi_part1_nof_bits = r_harq.bits.csi_part1_nof_bits;
+      new_resource.bits.sr_bits            = r_sr.bits.sr_bits;
+      // Check if the UCI payload fits in the PUCCH resource.
+      if (new_resource.bits.get_total_bits() > pucch_cfg.get_max_payload(new_resource.format)) {
+        return std::nullopt;
+      }
+      return new_resource;
     }
 
     // SR and CSI only. In the case, the SR resource has only SR bits, and the CSI resource has only CSI bits.
@@ -2091,11 +2092,10 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_grant> resources_to
       new_resource.bits.sr_bits = r_sr.bits.sr_bits;
 
       // Check if the UCI payload fits in the PUCCH resource.
-      if (new_resource.bits.get_total_bits() <= pucch_cfg.get_max_payload(new_resource.format)) {
-        return new_resource;
-      } else {
+      if (new_resource.bits.get_total_bits() > pucch_cfg.get_max_payload(new_resource.format)) {
         return std::nullopt;
       }
+      return new_resource;
     }
 
     // HARQ and CSI only.  Apply HARQ merging rule for Format >= 2: all PUCCH resources will be multiplexed in a
@@ -2142,11 +2142,10 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_grant> resources_to
       }
 
       // Check if the UCI payload fits in the PUCCH resource.
-      if (new_resource.bits.get_total_bits() <= pucch_cfg.get_max_payload(new_resource.format)) {
-        return new_resource;
-      } else {
+      if (new_resource.bits.get_total_bits() > pucch_cfg.get_max_payload(new_resource.format)) {
         return std::nullopt;
       }
+      return new_resource;
     }
   }
 
@@ -2199,11 +2198,10 @@ pucch_allocator_impl::merge_pucch_resources(span<const pucch_grant> resources_to
     new_resource.bits.csi_part1_nof_bits = r_csi->bits.csi_part1_nof_bits;
 
     // Check if the UCI payload fits in the PUCCH resource.
-    if (new_resource.bits.get_total_bits() <= pucch_cfg.get_max_payload(new_resource.format)) {
-      return new_resource;
-    } else {
+    if (new_resource.bits.get_total_bits() > pucch_cfg.get_max_payload(new_resource.format)) {
       return std::nullopt;
     }
+    return new_resource;
   }
 
   return std::nullopt;

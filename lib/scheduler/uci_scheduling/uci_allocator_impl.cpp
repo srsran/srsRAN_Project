@@ -226,7 +226,13 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resourc
         csi_helper::is_csi_reporting_slot(*ue_cell_cfg.csi_meas_cfg(), uci_slot)) {
       // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
       // TODO: Remove this when the PUCCH allocator handle properly more than 2 HARQ-ACK bits + CSI.
-      if (get_scheduled_pdsch_counter_in_ue_uci(slot_alloc.slot, crnti) >= max_harq_bits_per_uci) {
+      const auto     csi_report_cfg  = create_csi_report_configuration(*ue_cell_cfg.csi_meas_cfg());
+      const unsigned csi_report_size = get_csi_report_pucch_size(csi_report_cfg).value();
+      const auto&    pucch_cfg       = ue_cell_cfg.init_bwp().ul_ded.value().pucch_cfg.value();
+      const unsigned nof_available_harq_bits =
+          std::min(pucch_cfg.get_max_payload(pucch_cfg.get_set_1_format()) - csi_report_size,
+                   static_cast<unsigned>(max_harq_bits_per_uci));
+      if (get_scheduled_pdsch_counter_in_ue_uci(slot_alloc.slot, crnti) >= nof_available_harq_bits) {
         continue;
       }
     }
