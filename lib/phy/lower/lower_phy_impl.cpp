@@ -13,7 +13,7 @@
 
 using namespace srsran;
 
-lower_phy_impl::lower_phy_impl(configuration& config) :
+ue_lower_phy_impl::ue_lower_phy_impl(configuration& config) :
   downlink_proc(std::move(config.downlink_proc)),
   uplink_proc(std::move(config.uplink_proc)),
   handler_adaptor(downlink_proc->get_downlink_request_handler(),
@@ -42,12 +42,12 @@ lower_phy_impl::lower_phy_impl(configuration& config) :
                        notification_adaptor.get_puxch_notifier());
 }
 
-lower_phy_cfo_controller& lower_phy_impl::get_tx_cfo_control()
+lower_phy_cfo_controller& ue_lower_phy_impl::get_tx_cfo_control()
 {
   return downlink_proc->get_cfo_handler();
 }
 
-lower_phy_cfo_controller& lower_phy_impl::get_rx_cfo_control()
+lower_phy_cfo_controller& ue_lower_phy_impl::get_rx_cfo_control()
 {
   return uplink_proc->get_cfo_handler();
 }

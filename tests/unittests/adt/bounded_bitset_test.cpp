@@ -9,6 +9,7 @@
  */
 
 #include "srsran/adt/bounded_bitset.h"
+#include "srsran/adt/interval.h"
 #include "srsran/support/test_utils.h"
 #include <bitset>
 #include <gtest/gtest.h>
@@ -962,6 +963,36 @@ TEST(BoundedBitset, for_each)
   output.resize(0);
   mask.for_each(0, 9, [&output, &values](int n) { output.emplace_back(values[n]); });
   ASSERT_EQ(output, std::vector<int>({2, 4, 6, 8}));
+}
+
+TEST(BoundedBitset, for_each_interval)
+{
+  std::vector<interval<unsigned>> intervals = {{1, 5}, {7, 9}, {15, 20}};
+
+  bounded_bitset<32> bitset(20);
+  for (interval<unsigned> interv : intervals) {
+    bitset.fill(interv.start(), interv.stop());
+  }
+
+  for_each_interval(bitset, [n = 0, &intervals](size_t start, size_t stop) mutable {
+    ASSERT_EQ(intervals[n].start(), start);
+    ASSERT_EQ(intervals[n].stop(), stop);
+    ++n;
+  });
+
+  for_each_interval(bitset, 2, 19, [n = 0U, &intervals](size_t start, size_t stop) mutable {
+    unsigned expected_start = intervals[n].start();
+    unsigned expected_stop  = intervals[n].stop();
+    if (n == 0) {
+      expected_start = 2;
+    }
+    if (n == (intervals.size() - 1U)) {
+      expected_stop = 19;
+    }
+    ASSERT_EQ(expected_start, start);
+    ASSERT_EQ(expected_stop, stop);
+    ++n;
+  });
 }
 
 TEST(bounded_bitset_test, to_packed_bits_one_byte)
