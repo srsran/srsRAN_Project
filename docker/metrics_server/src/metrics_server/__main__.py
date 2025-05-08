@@ -185,9 +185,10 @@ def _publish_data(
                         },
                         record_time_key="time",
                     )
-                elif "ru" in metric and "ofh_cells" in metric["ru"] and metric["ru"]["ofh_cells"]:
+                    logging.debug("Pushed %s", metric)
+                elif "ru" in metric and "ofh" in metric["ru"] and metric["ru"]["ofh"]:
                     timestamp = datetime.fromtimestamp(metric["timestamp"], UTC).isoformat()
-                    for cell in metric["ru"]["ofh_cells"]:
+                    for cell in metric["ru"]["ofh"]:
                         cell = cell["cell"]
                         if cell["ul"]["received_packets"]:
                             _influx_push(
@@ -204,6 +205,7 @@ def _publish_data(
                                 },
                                 record_time_key="time",
                             )
+                            logging.debug("Pushed %s", metric)
             except Exception as err:  # pylint: disable=broad-exception-caught
                 logging.exception(err)
 
