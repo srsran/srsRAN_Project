@@ -152,10 +152,9 @@ log_ru_ofh_metrics_json(srslog::log_channel& log_chan, const ofh::metrics& metri
     float ether_rx_cpu_usage = validate_fp_value(cell_metrics.rx_metrics.eth_receiver_metrics.cpu_usage_us /
                                                  (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f);
 
-    float ether_rx_throughput = validate_fp_value(
-        static_cast<float>(
-            units::bytes(cell_metrics.rx_metrics.eth_receiver_metrics.total_nof_bytes).to_bits().value()) /
-        static_cast<float>(cell_metrics.metrics_period_ms.count() * 1e3));
+    float ether_rx_throughput =
+        validate_fp_value(static_cast<float>(cell_metrics.rx_metrics.eth_receiver_metrics.total_nof_bytes * CHAR_BIT) /
+                          static_cast<float>(cell_metrics.metrics_period_ms.count() * 1e3));
 
     auto& ul_ether_rx = output.get<ofh_metrics_ul>().get<mset_ofh_metrics_ether_rx>();
     ul_ether_rx.write<metric_avg_throughput_mbps>(ether_rx_throughput);
@@ -194,8 +193,7 @@ log_ru_ofh_metrics_json(srslog::log_channel& log_chan, const ofh::metrics& metri
                                                  (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f);
 
     float ether_tx_throughput = validate_fp_value(
-        static_cast<float>(
-            units::bytes(cell_metrics.tx_metrics.eth_transmitter_metrics.total_nof_bytes).to_bits().value()) /
+        static_cast<float>(cell_metrics.tx_metrics.eth_transmitter_metrics.total_nof_bytes * CHAR_BIT) /
         static_cast<float>(cell_metrics.metrics_period_ms.count() * 1e3));
 
     auto& dl_ether_tx = output.get<ofh_metrics_dl>().get<mset_ofh_metrics_ether_tx>();
@@ -265,36 +263,30 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
                                                    const ofh::sector_metrics&                       cell_metrics,
                                                    span<const pci_t>                                pci_sector_map)
 {
-  fmt::format_to(std::back_inserter(buffer),
-                 "\nOFH sector#{} pci={} performance metrics:\n",
-                 cell_metrics.sector_id,
-                 static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]));
-
   float ether_rx_cpu_usage = cell_metrics.rx_metrics.eth_receiver_metrics.cpu_usage_us /
                              (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
   float ether_tx_cpu_usage = cell_metrics.tx_metrics.eth_transmitter_metrics.cpu_usage_us /
                              (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
   float ether_rx_throughput =
-      static_cast<float>(units::bytes(cell_metrics.rx_metrics.eth_receiver_metrics.total_nof_bytes).to_bits().value()) /
+      static_cast<float>(cell_metrics.rx_metrics.eth_receiver_metrics.total_nof_bytes * CHAR_BIT) /
       static_cast<float>(cell_metrics.metrics_period_ms.count() * 1e3);
   float ether_tx_throughput =
-      static_cast<float>(
-          units::bytes(cell_metrics.tx_metrics.eth_transmitter_metrics.total_nof_bytes).to_bits().value()) /
+      static_cast<float>(cell_metrics.tx_metrics.eth_transmitter_metrics.total_nof_bytes * CHAR_BIT) /
       static_cast<float>(cell_metrics.metrics_period_ms.count() * 1e3);
 
   fmt::format_to(std::back_inserter(buffer),
-                 "{:<20} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us, throughput={:.2f}Mbps, "
-                 "rx_bytes={}\n",
-                 "  Ethernet RX:",
+                 "{} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us, throughput={:.2f}Mbps, "
+                 "rx_bytes={}; ",
+                 "ether_rx:",
                  validate_fp_value(ether_rx_cpu_usage),
                  validate_fp_value(cell_metrics.rx_metrics.eth_receiver_metrics.max_packet_rx_latency_us),
                  validate_fp_value(cell_metrics.rx_metrics.eth_receiver_metrics.avg_packet_rx_latency_us),
                  validate_fp_value(ether_rx_throughput),
                  cell_metrics.rx_metrics.eth_receiver_metrics.total_nof_bytes);
   fmt::format_to(std::back_inserter(buffer),
-                 "{:<20} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us, throughput={:.2f}Mbps, "
-                 "tx_bytes={}\n",
-                 "  Ethernet TX:",
+                 "{} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us, throughput={:.2f}Mbps, "
+                 "tx_bytes={}; ",
+                 "ether_tx:",
                  validate_fp_value(ether_tx_cpu_usage),
                  validate_fp_value(cell_metrics.tx_metrics.eth_transmitter_metrics.max_packet_tx_latency_us),
                  validate_fp_value(cell_metrics.tx_metrics.eth_transmitter_metrics.avg_packet_tx_latency_us),
@@ -310,14 +302,14 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
       ul_data_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0;
 
   fmt::format_to(std::back_inserter(buffer),
-                 "{:<20} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us\n",
-                 "  Receiver, PRACH:",
+                 "{} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us; ",
+                 "rcv_prach:",
                  validate_fp_value(prach_unpacking_cpu_usage),
                  validate_fp_value(ul_prach_df_metrics.message_unpacking_max_latency_us),
                  validate_fp_value(ul_prach_df_metrics.message_unpacking_avg_latency_us));
   fmt::format_to(std::back_inserter(buffer),
-                 "{:<20} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us\n",
-                 "  Receiver, UL:",
+                 "{} cpu_usage={:.1f}%, max_latency={:.2f}us, avg_latency={:.2f}us; ",
+                 "rcv_ul:",
                  validate_fp_value(data_unpacking_cpu_usage),
                  validate_fp_value(ul_data_df_metrics.message_unpacking_max_latency_us),
                  validate_fp_value(ul_data_df_metrics.message_unpacking_avg_latency_us));
@@ -331,29 +323,29 @@ static void log_ru_ofh_performance_metrics_verbose(fmt::basic_memory_buffer<char
   float ul_cp_cpu_usage = ul_cp_df_metrics.cpu_usage_us / (cell_metrics.metrics_period_ms.count() * 1e3) * 100.0f;
 
   fmt::format_to(std::back_inserter(buffer),
-                 "{:<20} cpu_usage={:.1f}% dl_up_max_latency={:.2f}us, dl_up_avg_latency={:.2f}us\n",
-                 "  Transmitter DL UP:",
+                 "{} cpu_usage={:.1f}% dl_up_max_latency={:.2f}us, dl_up_avg_latency={:.2f}us; ",
+                 "tx_dl_up:",
                  validate_fp_value(dl_up_cpu_usage),
                  validate_fp_value(dl_up_df_metrics.message_packing_max_latency_us),
                  validate_fp_value(dl_up_df_metrics.message_packing_avg_latency_us));
 
   fmt::format_to(std::back_inserter(buffer),
-                 "{:<20} cpu_usage={:.1f}%, dl_cp_max_latency={:.2f}us, dl_cp_avg_latency={:.2f}us\n",
-                 "  Transmitter DL CP:",
+                 "{} cpu_usage={:.1f}%, dl_cp_max_latency={:.2f}us, dl_cp_avg_latency={:.2f}us; ",
+                 "tx_dl_cp:",
                  validate_fp_value(dl_cp_cpu_usage),
                  validate_fp_value(dl_cp_df_metrics.message_packing_max_latency_us),
                  validate_fp_value(dl_cp_df_metrics.message_packing_avg_latency_us));
 
   fmt::format_to(std::back_inserter(buffer),
-                 "{:<20} cpu_usage={:.1f}%, ul_cp_max_latency={:.2f}us, ul_cp_avg_latency={:.2f}us\n",
-                 "  Transmitter UL CP:",
+                 "{} cpu_usage={:.1f}%, ul_cp_max_latency={:.2f}us, ul_cp_avg_latency={:.2f}us; ",
+                 "tx_ul_cp:",
                  validate_fp_value(ul_cp_cpu_usage),
                  validate_fp_value(ul_cp_df_metrics.message_packing_max_latency_us),
                  validate_fp_value(ul_cp_df_metrics.message_packing_avg_latency_us));
 
   fmt::format_to(std::back_inserter(buffer),
-                 "{:<20} nof_late_dl_grids={}, nof_late_ul_req={}",
-                 "  Transmitter KPIs:",
+                 "{} nof_late_dl_grids={}, nof_late_ul_req={}",
+                 "tx_kpis:",
                  cell_metrics.tx_metrics.dl_metrics.nof_late_dl_grids,
                  cell_metrics.tx_metrics.ul_metrics.nof_late_ul_requests);
 }
@@ -370,7 +362,7 @@ static void log_ru_ofh_metrics(srslog::log_channel& log_chan,
 
     fmt::format_to(std::back_inserter(buffer),
                    "OFH sector#{} pci={} received messages stats: rx_total={} rx_early={}, "
-                   "rx_on_time={}, rx_late={};",
+                   "rx_on_time={}, rx_late={}; ",
                    cell_metrics.sector_id,
                    static_cast<unsigned>(pci_sector_map[cell_metrics.sector_id]),
                    rx_ofh_metrics.nof_early_messages + rx_ofh_metrics.nof_on_time_messages +

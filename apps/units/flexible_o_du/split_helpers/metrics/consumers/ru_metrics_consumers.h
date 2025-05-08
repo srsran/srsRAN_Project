@@ -43,7 +43,7 @@ class ru_metrics_consumer_log
 {
 public:
   ru_metrics_consumer_log(srslog::log_channel& log_chan_, span<const pci_t> pci_sector_map_) :
-    log_chan(log_chan_), verbose(false), pci_sector_map(pci_sector_map_)
+    log_chan(log_chan_), verbose(true), pci_sector_map(pci_sector_map_)
   {
     srsran_assert(log_chan.enabled(), "JSON log channel is not enabled");
   }
