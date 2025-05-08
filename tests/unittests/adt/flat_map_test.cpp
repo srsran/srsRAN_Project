@@ -207,3 +207,36 @@ TEST(flat_map_test, flat_map_insert_hint)
   ASSERT_TRUE(std::equal(expected.begin(), expected.end(), m.keys().begin(), m.keys().end()));
   ASSERT_TRUE(std::equal(expected.begin(), expected.end(), m.values().begin(), m.values().end()));
 }
+
+TEST(flat_map_test, erase_iterator)
+{
+  std::vector<int>   keys   = {1, 2, 1, 1, 4};
+  std::vector<int>   values = {1, 2, 1, 1, 4};
+  flat_map<int, int> m{keys, values};
+
+  auto it = m.erase(m.find(2));
+  ASSERT_EQ(m.size(), 2);
+  ASSERT_EQ(it->first, 4);
+  ASSERT_EQ(it->second, 4);
+}
+
+TEST(flat_map_test, erase_key)
+{
+  std::vector<int>   keys   = {1, 2, 1, 1, 4};
+  std::vector<int>   values = {1, 2, 1, 1, 4};
+  flat_map<int, int> m{keys, values};
+
+  ASSERT_EQ(m.erase(2), 1);
+  ASSERT_EQ(m.size(), 2);
+  ASSERT_EQ(m.find(2), m.end());
+
+  ASSERT_EQ(m.erase(2), 0);
+  ASSERT_EQ(m.size(), 2);
+
+  ASSERT_EQ(m.erase(1), 1);
+  ASSERT_EQ(m.size(), 1);
+  ASSERT_EQ(m.erase(4), 1);
+  ASSERT_EQ(m.size(), 0);
+  ASSERT_TRUE(m.keys().empty());
+  ASSERT_TRUE(m.values().empty());
+}

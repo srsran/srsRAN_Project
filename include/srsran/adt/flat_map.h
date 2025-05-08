@@ -380,6 +380,25 @@ public:
     return emplace_hint_impl(pos, std::move(value.first), std::move(value.second)).first;
   }
 
+  iterator erase(iterator pos_it) { return erase(static_cast<const_iterator>(pos_it)); }
+  iterator erase(const_iterator pos_it)
+  {
+    auto index  = pos_it.index;
+    auto key_it = conts.keys.erase(conts.keys.begin() + index);
+    conts.values.erase(conts.values.begin() + index);
+    return iterator{&conts, key_it};
+  }
+
+  size_type erase(const key_type& key)
+  {
+    auto it = find(key);
+    if (it == end()) {
+      return 0;
+    }
+    erase(it);
+    return 1;
+  }
+
   iterator               begin() noexcept { return iterator{&conts, conts.keys.cbegin()}; }
   const_iterator         begin() const noexcept { return {&conts, conts.keys.cbegin()}; }
   iterator               end() noexcept { return {&conts, conts.keys.cend()}; }
