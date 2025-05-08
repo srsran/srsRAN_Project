@@ -161,10 +161,14 @@ class flat_map : private detail::flat_compare<Compare>
       const reference* operator->() const noexcept { return &p; }
     };
 
-    iter_impl() = default;
+    iter_impl()                                     = default;
+    iter_impl(const iter_impl&) noexcept            = default;
+    iter_impl(iter_impl&&) noexcept                 = default;
+    iter_impl& operator=(const iter_impl&) noexcept = default;
+    iter_impl& operator=(iter_impl&&) noexcept      = default;
 
-    template <typename Iter                                                      = iter_impl<not IsConst>,
-              std::enable_if_t<not std::is_same_v<Iter, iter_impl<false>>, bool> = true>
+    template <typename Iter                                                              = iter_impl<false>,
+              std::enable_if_t<std::is_same_v<Iter, iter_impl<false>> and IsConst, bool> = true>
     iter_impl(const Iter& other) : parent(other.parent), index(other.index)
     {
     }
@@ -367,8 +371,14 @@ public:
   {
     return emplace_impl(std::move(value.first), std::move(value.second));
   }
-  iterator insert(const_iterator pos, const value_type& value) { return emplace_hint(pos, value); }
-  iterator insert(const_iterator pos, value_type&& value) { return emplace_hint(pos, std::move(value)); }
+  iterator insert(const_iterator pos, const value_type& value)
+  {
+    return emplace_hit_impl(pos, value.first, value.second);
+  }
+  iterator insert(const_iterator pos, value_type&& value)
+  {
+    return emplace_hint_impl(pos, std::move(value.first), std::move(value.second)).first;
+  }
 
   iterator               begin() noexcept { return iterator{&conts, conts.keys.cbegin()}; }
   const_iterator         begin() const noexcept { return {&conts, conts.keys.cbegin()}; }
@@ -411,13 +421,14 @@ private:
   template <typename Key2, typename... Args>
   std::pair<iterator, bool> emplace_impl(Key2&& key, Args&&... args)
   {
-    auto it = find(key);
-    if (it != end()) {
-      return {it, false};
+    auto key_it = std::lower_bound(conts.keys.begin(), conts.keys.end(), key, this->key_comp);
+    if (key_it != conts.keys.end() and not this->key_comp(key, *key_it)) {
+      return {iterator{&conts, key_it}, false};
     }
-    it = conts.keys.insert(it, std::forward<Key2>(key));
-    conts.values.emplace(conts.values.begin() + (it - conts.keys.begin()), std::forward<Args>(args)...);
-    return {iterator{this, it}, true};
+    key_it        = conts.keys.insert(key_it, std::forward<Key2>(key));
+    auto value_it = conts.values.begin() + (key_it - conts.keys.begin());
+    conts.values.emplace(value_it, std::forward<Args>(args)...);
+    return {iterator{&conts, key_it}, true};
   }
   template <typename Key2, typename... Args>
   std::pair<iterator, bool> emplace_hint_impl(const_iterator pos, Key2&& key, Args&&... args)
@@ -425,11 +436,11 @@ private:
     typename key_container_type::iterator key_it;
     int                                   r = -1;
     int                                   s = -1;
-    if ((pos == cbegin() or (r = not this->comp(key, (*pos)[-1].first))) and
-        (pos == cend() or (s = not this->comp((*pos)[0].first, key)))) {
+    if ((pos == cbegin() or (r = not this->key_comp(key, pos[-1].first))) and
+        (pos == cend() or (s = not this->key_comp(pos[0].first, key)))) {
       key_it = conts.keys.begin() + pos.index;
-      if (r == 1 and not this->comp(key_it[-1], key)) {
-        return {iterator{this, key_it}, false};
+      if (r == 1 and not this->key_comp(key_it[-1], key)) {
+        return {iterator{&conts, key_it - 1}, false};
       }
     } else {
       auto first = conts.keys.begin();
@@ -437,20 +448,20 @@ private:
       if (r == 1) {
         first += pos.index;
       } else if (r == 0) {
-        last = first + pos->index;
+        last = first + pos.index;
       }
-      key_it = std::lower_bound(first, last, key, this->comp);
+      key_it = std::lower_bound(first, last, key, this->key_comp);
     }
 
-    if (key_it != conts.keys.end() and not this->comp(key, *key_it)) {
+    if (key_it != conts.keys.end() and not this->key_comp(key, *key_it)) {
       // Key already exists.
-      return {iterator{this, key_it}, false};
+      return {iterator{&conts, key_it}, false};
     }
 
     // Emplace is successful.
     key_it = conts.keys.insert(key_it, std::forward<Key2>(key));
     conts.values.emplace(conts.values.begin() + (key_it - conts.keys.begin()), std::forward<Args>(args)...);
-    return {iterator{this, key_it}, true};
+    return {iterator{&conts, key_it}, true};
   }
 
   void sort_and_rem_duplicates()

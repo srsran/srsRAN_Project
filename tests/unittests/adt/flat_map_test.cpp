@@ -139,3 +139,71 @@ TEST(flat_map_test, flat_map_clear)
   m.clear();
   ASSERT_EQ(m.size(), 0);
 }
+
+TEST(flat_map_test, flat_map_emplace)
+{
+  std::vector<int>   keys   = {1, 2, 1, 1, 4};
+  std::vector<int>   values = {1, 2, 1, 1, 4};
+  flat_map<int, int> m{keys, values};
+
+  auto p = m.emplace(3, 3);
+  ASSERT_TRUE(p.second);
+  ASSERT_EQ(m.size(), 4);
+  ASSERT_EQ(p.first->first, 3);
+  ASSERT_EQ(p.first->second, 3);
+
+  auto p2 = m.emplace(3, 3);
+  ASSERT_FALSE(p2.second);
+  ASSERT_EQ(m.size(), 4);
+
+  std::vector<int> expected = {1, 2, 3, 4};
+  ASSERT_TRUE(std::equal(expected.begin(), expected.end(), m.keys().begin(), m.keys().end()));
+  ASSERT_TRUE(std::equal(expected.begin(), expected.end(), m.values().begin(), m.values().end()));
+}
+
+TEST(flat_map_test, flat_map_insert)
+{
+  std::vector<int>   keys   = {1, 2, 1, 1, 4};
+  std::vector<int>   values = {1, 2, 1, 1, 4};
+  flat_map<int, int> m{keys, values};
+
+  auto p = m.insert(std::make_pair(3, 3));
+  ASSERT_TRUE(p.second);
+  ASSERT_EQ(m.size(), 4);
+  ASSERT_EQ(p.first->first, 3);
+  ASSERT_EQ(p.first->second, 3);
+
+  auto p2 = m.insert(std::make_pair(3, 3));
+  ASSERT_FALSE(p2.second);
+  ASSERT_EQ(m.size(), 4);
+
+  std::vector<int> expected = {1, 2, 3, 4};
+  ASSERT_TRUE(std::equal(expected.begin(), expected.end(), m.keys().begin(), m.keys().end()));
+  ASSERT_TRUE(std::equal(expected.begin(), expected.end(), m.values().begin(), m.values().end()));
+}
+
+TEST(flat_map_test, flat_map_insert_hint)
+{
+  std::vector<int>   keys   = {1, 2, 1, 1, 4};
+  std::vector<int>   values = {1, 2, 1, 1, 4};
+  flat_map<int, int> m{keys, values};
+
+  flat_map<int, int>::iterator it = m.find(4);
+  ASSERT_TRUE(it != m.end());
+  ASSERT_EQ(it->second, 4);
+
+  auto p = m.insert(it, std::make_pair(3, 3));
+  ASSERT_EQ(m.size(), 4);
+  ASSERT_EQ(p->first, 3);
+  ASSERT_EQ(p->second, 3);
+
+  it      = m.find(4);
+  auto p2 = m.insert(it, std::make_pair(3, 3));
+  ASSERT_EQ(m.size(), 4);
+  ASSERT_EQ(p2->first, 3);
+  ASSERT_EQ(p2->second, 3);
+
+  std::vector<int> expected = {1, 2, 3, 4};
+  ASSERT_TRUE(std::equal(expected.begin(), expected.end(), m.keys().begin(), m.keys().end()));
+  ASSERT_TRUE(std::equal(expected.begin(), expected.end(), m.values().begin(), m.values().end()));
+}
