@@ -337,6 +337,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point               sl
     mac_ul_res.ul_res = &sl_res.ul;
     phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 
+    metrics_meas.on_ul_tti_req();
     l2_tracer << trace_event{"mac_ul_tti_req", ul_tti_req_tp};
   }
 

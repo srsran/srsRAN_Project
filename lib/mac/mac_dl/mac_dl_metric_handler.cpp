@@ -112,11 +112,17 @@ void mac_dl_cell_metric_handler::handle_slot_completion(const slot_measurement& 
   }
   data.wall.save_sample(meas.sl_tx, time_diff);
   data.slot_enqueue.save_sample(meas.sl_tx, enqueue_time_diff);
+  auto last_tp = meas.start_tp;
   if (meas.dl_tti_req_tp != metric_clock::time_point{}) {
-    data.dl_tti_req.save_sample(meas.sl_tx, meas.dl_tti_req_tp - meas.start_tp);
+    data.dl_tti_req.save_sample(meas.sl_tx, meas.dl_tti_req_tp - last_tp);
+    last_tp = meas.dl_tti_req_tp;
     if (meas.tx_data_req_tp != metric_clock::time_point{}) {
-      data.tx_data_req.save_sample(meas.sl_tx, meas.tx_data_req_tp - meas.dl_tti_req_tp);
+      data.tx_data_req.save_sample(meas.sl_tx, meas.tx_data_req_tp - last_tp);
+      last_tp = meas.tx_data_req_tp;
     }
+  }
+  if (meas.ul_tti_req_tp != metric_clock::time_point{}) {
+    data.ul_tti_req.save_sample(meas.sl_tx, meas.ul_tti_req_tp - last_tp);
   }
   if (rusg_diff.has_value()) {
     auto& rusg_val = rusg_diff.value();
@@ -154,6 +160,7 @@ void mac_dl_cell_metric_handler::send_new_report(slot_point sl_tx)
     report.slot_ind_handle_latency = data.slot_enqueue.get_report(data.nof_slots);
     report.dl_tti_req_latency      = data.dl_tti_req.get_report(data.nof_slots);
     report.tx_data_req_latency     = data.tx_data_req.get_report(data.nof_slots);
+    report.ul_tti_req_latency      = data.ul_tti_req.get_report(data.nof_slots);
   }
   report.count_voluntary_context_switches   = data.count_vol_context_switches;
   report.count_involuntary_context_switches = data.count_invol_context_switches;

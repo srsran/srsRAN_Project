@@ -75,6 +75,13 @@ public:
       }
     }
 
+    void on_ul_tti_req()
+    {
+      if (enabled()) {
+        ul_tti_req_tp = metric_clock::now();
+      }
+    }
+
   private:
     friend class mac_dl_cell_metric_handler;
 
@@ -84,6 +91,7 @@ public:
     metric_clock::time_point                                    start_tp;
     metric_clock::time_point                                    dl_tti_req_tp{};
     metric_clock::time_point                                    tx_data_req_tp{};
+    metric_clock::time_point                                    ul_tti_req_tp{};
     expected<resource_usage::snapshot, int>                     start_rusg;
   };
 
@@ -129,6 +137,7 @@ private:
     latency_data slot_enqueue;
     latency_data dl_tti_req;
     latency_data tx_data_req;
+    latency_data ul_tti_req;
     unsigned     count_vol_context_switches{0};
     unsigned     count_invol_context_switches{0};
     /// \brief Whether the cell was marked for deactivation and this is the last report.
