@@ -45,10 +45,6 @@ struct config_response : public base_message {
   static constexpr unsigned MAX_NUM_TLVS = 2048;
 
   error_code_id error_code;
-  uint8_t       num_invalid_unsupported_tlvs;
-  uint8_t       num_invalid_tlvs_can_conf_idle;
-  uint8_t       num_invalid_tlvs_can_conf_running;
-  uint8_t       num_missing_tlvs;
 };
 
 /// Start request message.

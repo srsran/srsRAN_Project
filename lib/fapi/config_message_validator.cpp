@@ -8,13 +8,12 @@
  *
  */
 
-#include "phy_fapi_cell_config_validator.h"
+#include "config_message_validator.h"
 
 using namespace srsran;
-using namespace fapi_adaptor;
+using namespace fapi;
 
-bool srsran::fapi_adaptor::validate_config_request_message(const fapi::config_request& msg,
-                                                           srslog::basic_logger&       logger)
+bool srsran::fapi::validate_config_request_message(const config_request& msg, srslog::basic_logger& logger)
 {
   // :TODO: implement me!
 
