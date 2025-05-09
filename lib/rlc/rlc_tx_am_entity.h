@@ -184,7 +184,7 @@ public:
   void discard_sdu(uint32_t pdcp_sn) override;
 
   // Interfaces for lower layers
-  size_t pull_pdu(span<uint8_t> rlc_pdu_buf) override;
+  size_t pull_pdu(span<uint8_t> rlc_pdu_buf) noexcept override;
 
   rlc_buffer_state get_buffer_state() override;
 
@@ -308,7 +308,7 @@ private:
 
   /// \brief Evaluates a status PDU, schedules RETX and removes ACK'ed SDUs from TX window
   /// \param status The status PDU
-  void handle_status_pdu(rlc_am_status_pdu status);
+  void handle_status_pdu(rlc_am_status_pdu status) noexcept;
 
   /// \brief Schedules RETX for NACK'ed PDUs
   ///

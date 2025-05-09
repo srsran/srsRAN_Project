@@ -15,6 +15,9 @@
 #include "srsran/support/executors/unique_thread.h"
 
 namespace srsran {
+
+class timer_manager;
+
 namespace test_helpers {
 
 class du_high_worker_manager
@@ -31,6 +34,7 @@ struct du_high_worker_config {
   unsigned             nof_cell_workers   = 1;
   bool                 use_os_thread_prio = false;
   span<const unsigned> du_cell_cores;
+  timer_manager&       timers;
 };
 
 /// Create DU-high executor mapper.

@@ -560,7 +560,7 @@ public:
     params(builder_params),
     f1u_dl_pdu_bytes_per_slot(dl_bytes_per_slot_),
     f1u_pdu_size(f1u_pdu_size_),
-    workers(test_helpers::create_multi_threaded_du_high_executor_mapper({1, true, du_cell_cores})),
+    workers(test_helpers::create_multi_threaded_du_high_executor_mapper({1, true, du_cell_cores, timers})),
     ul_bsr_bytes(ul_bsr_bytes_)
   {
     // Set slot point based on the SCS.
@@ -1106,8 +1106,8 @@ public:
 
   srslog::basic_logger&                                 test_logger = srslog::fetch_basic_logger("TEST");
   dummy_metrics_handler                                 metrics_handler;
-  std::unique_ptr<test_helpers::du_high_worker_manager> workers;
   timer_manager                                         timers{2048};
+  std::unique_ptr<test_helpers::du_high_worker_manager> workers;
   null_mac_pcap                                         mac_pcap;
   null_rlc_pcap                                         rlc_pcap;
   std::unique_ptr<du_high_impl>                         du_hi;
