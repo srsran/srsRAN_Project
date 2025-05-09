@@ -46,6 +46,7 @@ ue_fallback_scheduler::ue_fallback_scheduler(const scheduler_ue_expert_config& e
   // Pre-reserve memory to avoid allocations in RT.
   pending_dl_ues_new_tx.reserve(MAX_NOF_DU_UES);
   ongoing_ues_ack_retxs.reserve(MAX_NOF_DU_UES);
+  pending_ul_ues.reserve(MAX_NOF_DU_UES);
 
   // NOTE 1: We use a std::vector instead of a std::array because we can later on initialize the vector with the minimum
   // value of k1, passed through the expert config.
