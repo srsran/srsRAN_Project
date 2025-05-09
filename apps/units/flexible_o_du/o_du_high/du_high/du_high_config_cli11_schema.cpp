@@ -1037,9 +1037,11 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--f2_max_nof_rbs", pucch_params.f2_max_nof_rbs, "Max number of RBs for PUCCH F2 resources")
       ->capture_default_str()
       ->check(CLI::Range(1, 16));
-  add_option(
-      app, "--f2_max_payload", pucch_params.f2_max_payload_bits, "Max number payload bits for PUCCH F2 resources")
-      ->check(CLI::Range(1, 40));
+  add_option(app,
+             "--f2_max_payload",
+             pucch_params.f2_max_payload_bits,
+             "Min required payload capacity in bits for PUCCH F2 resources")
+      ->check(CLI::Range(4, 40));
   add_option_function<std::string>(
       app,
       "--f2_max_code_rate",
@@ -1054,9 +1056,11 @@ static void configure_cli11_pucch_args(CLI::App& app, du_high_unit_pucch_config&
   add_option(app, "--f3_max_nof_rbs", pucch_params.f3_max_nof_rbs, "Max number of RBs for PUCCH F3 resources")
       ->capture_default_str()
       ->check(CLI::IsMember({1, 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 16}));
-  add_option(
-      app, "--f3_max_payload", pucch_params.f3_max_payload_bits, "Max number payload bits for PUCCH F3 resources")
-      ->check(CLI::Range(1, 40));
+  add_option(app,
+             "--f3_max_payload",
+             pucch_params.f3_max_payload_bits,
+             "Min required payload capacity in bits for PUCCH F3 resources")
+      ->check(CLI::Range(4, 40));
   add_option_function<std::string>(
       app,
       "--f3_max_code_rate",
