@@ -268,6 +268,7 @@ struct test_bench_params {
   bool                   use_format_0          = false;
   pucch_format           set1_format           = pucch_format::FORMAT_2;
   bool                   no_csi                = false;
+  max_pucch_code_rate    max_c_rate            = max_pucch_code_rate::dot_25;
 };
 
 // Test bench with all that is needed for the PUCCH.

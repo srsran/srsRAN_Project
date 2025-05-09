@@ -11,6 +11,8 @@
 #include "../test_utils/scheduler_test_suite.h"
 #include "pucch_alloc_base_tester.h"
 #include "uci_test_utils.h"
+#include "srsran/ran/csi_report/csi_report_config_helpers.h"
+#include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include <gtest/gtest.h>
 
 using namespace srsran;
@@ -346,6 +348,32 @@ TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_2bits_over_sr)
   ASSERT_EQ(first_alloc->resources.prbs, second_alloc->resources.prbs);
   ASSERT_EQ(first_alloc->resources.symbols, second_alloc->resources.symbols);
   ASSERT_EQ(first_alloc->resources.second_hop_prbs, second_alloc->resources.second_hop_prbs);
+}
+
+TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_7bits_over_sr)
+{
+  add_sr_grant();
+  // Add 6 HARQ grants to reach 7 UCI bits.
+  for (unsigned n = 0; n != 6; ++n) {
+    add_harq_grant();
+  }
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  ASSERT_TRUE(test_pucch_res_indicator.has_value());
+  ASSERT_EQ(pucch_res_idx, test_pucch_res_indicator.value());
+}
+
+TEST_F(test_pucch_allocator_ded_resources, test_harq_alloc_7bits_over_sr_should_fail)
+{
+  add_sr_grant();
+  // Add 7 HARQ grants to reach 8 UCI bits.
+  for (unsigned n = 0; n != 7; ++n) {
+    add_harq_grant();
+  }
+  // The 8th HARQ grant should not be allocated, as the 8-bit max PUCCH payload has already been reached.
+  const std::optional<unsigned> test_pucch_res_indicator = t_bench.pucch_alloc.alloc_ded_pucch_harq_ack_ue(
+      t_bench.res_grid, t_bench.get_main_ue().crnti, t_bench.get_main_ue().get_pcell().cfg(), t_bench.k0, t_bench.k1);
+  ASSERT_FALSE(test_pucch_res_indicator.has_value());
 }
 
 ///////  Test HARQ-ACK allocation on ded. resources - Format 1  - Multi UEs ///////
@@ -1347,4 +1375,62 @@ TEST_F(test_pucch_allocator_ded_resources, test_for_private_fnc_retrieving_exist
   ASSERT_TRUE(find_pucch_pdu(slot_grid.result.ul.pucchs, [rnti = t_bench.get_ue(ue2_idx).crnti](const pucch_info& pdu) {
     return pdu.format() == pucch_format::FORMAT_1 and pdu.crnti == rnti and pdu.uci_bits.harq_ack_nof_bits == 2U;
   }));
+}
+
+///////   Test allocation of dedicated PUCCH resources with different code rates and max payloads   ///////
+
+class test_pucch_allocator_small_code_rate : public ::testing::Test, public pucch_allocator_base_tester
+{
+public:
+  test_pucch_allocator_small_code_rate() :
+    pucch_allocator_base_tester(test_bench_params{.max_c_rate = max_pucch_code_rate::dot_15})
+  {
+  }
+};
+
+TEST_F(test_pucch_allocator_small_code_rate, with_4_bits_payload_csi_plus_harq_mplex_not_allowed)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  add_csi_grant();
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(4, slot_grid.result.ul.pucchs.front().uci_bits.csi_part1_nof_bits);
+
+  // HARQ-ACK grant is expected NOT to be multiplexed with CSI grants.
+  add_harq_grant();
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(4, slot_grid.result.ul.pucchs.front().uci_bits.csi_part1_nof_bits);
+  ASSERT_EQ(0, slot_grid.result.ul.pucchs.front().uci_bits.harq_ack_nof_bits);
+}
+
+class test_pucch_allocator_16_bit_payload : public ::testing::Test, public pucch_allocator_base_tester
+{
+public:
+  test_pucch_allocator_16_bit_payload() :
+    pucch_allocator_base_tester(test_bench_params{.pucch_f2_f3_more_prbs = true, .cfg_for_mimo_4x4 = true})
+  {
+    srsran_assert(t_bench.get_main_ue().get_pcell().cfg().csi_meas_cfg() != nullptr,
+                  "CSI configuration needed for this test");
+    auto csi_report_cfg = create_csi_report_configuration(*t_bench.get_main_ue().get_pcell().cfg().csi_meas_cfg());
+    csi_report_size     = get_csi_report_pucch_size(csi_report_cfg).value();
+  }
+
+protected:
+  unsigned csi_report_size = 0;
+};
+
+TEST_F(test_pucch_allocator_16_bit_payload, with_16_bits_payload_csi_plus_harq_mplex_allowed_in_mimo_4x4)
+{
+  auto& slot_grid = t_bench.res_grid[t_bench.k0 + t_bench.k1];
+
+  add_csi_grant(csi_report_size);
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(11, slot_grid.result.ul.pucchs.front().uci_bits.csi_part1_nof_bits);
+
+  // HARQ-ACK grants are expected to be multiplexed with CSI grants.
+  add_harq_grant();
+  add_harq_grant();
+  ASSERT_EQ(1, slot_grid.result.ul.pucchs.size());
+  ASSERT_EQ(11, slot_grid.result.ul.pucchs.front().uci_bits.csi_part1_nof_bits);
+  ASSERT_EQ(2, slot_grid.result.ul.pucchs.front().uci_bits.harq_ack_nof_bits);
 }
