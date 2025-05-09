@@ -168,6 +168,7 @@ resolve_transmitter_dependencies(const transmitter_config&                      
 
   dependencies.logger       = &logger;
   dependencies.executor     = &tx_executor;
+  dependencies.dl_executor  = &downlink_executor;
   dependencies.err_notifier = &err_notifier;
 
   auto frame_pool = create_eth_frame_pool(tx_config, logger);

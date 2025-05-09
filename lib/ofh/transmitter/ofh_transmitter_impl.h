@@ -11,10 +11,12 @@
 #pragma once
 
 #include "ofh_downlink_handler_impl.h"
+#include "ofh_downlink_handler_task_dispatcher.h"
 #include "ofh_message_transmitter_impl.h"
 #include "ofh_transmitter_metrics_collector_impl.h"
 #include "ofh_transmitter_ota_symbol_task_dispatcher.h"
 #include "ofh_uplink_request_handler_impl.h"
+#include "ofh_uplink_request_handler_task_dispatcher.h"
 #include "srsran/ofh/transmitter/ofh_transmitter.h"
 #include "srsran/ofh/transmitter/ofh_transmitter_configuration.h"
 
@@ -29,6 +31,8 @@ struct transmitter_impl_dependencies {
   error_notifier* err_notifier = nullptr;
   /// Transmitter task executor.
   task_executor* executor = nullptr;
+  /// Downlink task executor.
+  task_executor* dl_executor = nullptr;
   /// Data flow for downlink Control-Plane.
   std::unique_ptr<data_flow_cplane_scheduling_commands> dl_df_cplane;
   /// Data flow for downlink User-Plane.
@@ -66,6 +70,8 @@ public:
 private:
   downlink_handler_impl                  dl_handler;
   uplink_request_handler_impl            ul_request_handler;
+  downlink_handler_task_dispatcher       dl_task_dispatcher;
+  uplink_request_handler_task_dispatcher ul_task_dispatcher;
   message_transmitter_impl               msg_transmitter;
   transmitter_ota_symbol_task_dispatcher ota_dispatcher;
   transmitter_metrics_collector_impl     metrics_collector;
