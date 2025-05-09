@@ -261,6 +261,9 @@ struct pucch_config {
   /// \remark For Format 0 and 1, only the max number of HARQ-ACK bits are considered.
   static_vector<unsigned, 5> format_max_payload{0, 0, 0, 0, 0};
 
+  /// Helper variable to avoid iterating over several lists to retrieve the PUCCH format.
+  pucch_format set_1_format = pucch_format::NOF_FORMATS;
+
   std::optional<pucch_power_control> pucch_pw_control;
 
   /// Returns the PUCCH resource max UCI payload for the given format.
@@ -268,12 +271,8 @@ struct pucch_config {
   unsigned get_max_payload(pucch_format format) const { return format_max_payload[pucch_format_to_uint(format)]; }
 
   /// Returns the PUCCH format of the resources from PUCCH resource set 1.
-  pucch_format get_set_1_format() const
-  {
-    // NOTE: this is a shortcut to getting the format of Resource set 2. It works as we build the resource list by
-    // placing F0/F1 before all F2/3/4. It avoids retrieving the format going through different lists.
-    return pucch_res_list.back().format;
-  }
+  /// \remark The PUCCH resource set 1 can only contain PUCCH format 2, 3 or 4.
+  pucch_format get_set_1_format() const { return set_1_format; }
 
   bool operator==(const pucch_config& rhs) const
   {

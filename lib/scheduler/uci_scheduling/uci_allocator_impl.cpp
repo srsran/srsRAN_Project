@@ -11,6 +11,7 @@
 #include "uci_allocator_impl.h"
 #include "../support/csi_report_helpers.h"
 #include "../support/pucch/pucch_default_resource.h"
+#include "../support/sr_helper.h"
 #include "srsran/ran/csi_report/csi_report_config_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pucch_helpers.h"
 #include "srsran/ran/csi_report/csi_report_on_pusch_helpers.h"
@@ -222,19 +223,28 @@ std::optional<uci_allocation> uci_allocator_impl::alloc_uci_harq_ue(cell_resourc
       continue;
     }
 
+    const bool is_sr_opportunity =
+        sr_helper::is_sr_opportunity_slot(ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value(), uci_slot);
+    const unsigned scheduled_harq_bits     = get_scheduled_pdsch_counter_in_ue_uci(slot_alloc.slot, crnti);
+    const auto&    pucch_cfg               = ue_cell_cfg.init_bwp().ul_ded.value().pucch_cfg.value();
+    unsigned       nof_available_harq_bits = 0U;
+
     if (ue_cell_cfg.csi_meas_cfg() != nullptr and
         csi_helper::is_csi_reporting_slot(*ue_cell_cfg.csi_meas_cfg(), uci_slot)) {
-      // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
       // TODO: Remove this when the PUCCH allocator handle properly more than 2 HARQ-ACK bits + CSI.
       const auto     csi_report_cfg  = create_csi_report_configuration(*ue_cell_cfg.csi_meas_cfg());
       const unsigned csi_report_size = get_csi_report_pucch_size(csi_report_cfg).value();
-      const auto&    pucch_cfg       = ue_cell_cfg.init_bwp().ul_ded.value().pucch_cfg.value();
-      const unsigned nof_available_harq_bits =
-          std::min(pucch_cfg.get_max_payload(pucch_cfg.get_set_1_format()) - csi_report_size,
-                   static_cast<unsigned>(max_harq_bits_per_uci));
-      if (get_scheduled_pdsch_counter_in_ue_uci(slot_alloc.slot, crnti) >= nof_available_harq_bits) {
-        continue;
-      }
+      // NOTE: This is only to avoid allocating more than 2 HARQ bits in PUCCH that are expected to carry CSI reporting.
+      nof_available_harq_bits = std::min(pucch_cfg.get_max_payload(pucch_cfg.get_set_1_format()) - csi_report_size -
+                                             static_cast<unsigned>(is_sr_opportunity),
+                                         static_cast<unsigned>(max_harq_bits_per_uci));
+    } else {
+      nof_available_harq_bits =
+          pucch_cfg.get_max_payload(pucch_cfg.get_set_1_format()) - static_cast<unsigned>(is_sr_opportunity);
+    }
+
+    if (scheduled_harq_bits >= nof_available_harq_bits) {
+      continue;
     }
 
     // Step 2: Try to allocate UCI HARQ ACK for UE, either on PUSCH or PUCCH.

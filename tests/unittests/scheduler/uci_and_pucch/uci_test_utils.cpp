@@ -255,6 +255,7 @@ test_bench::test_bench(const test_bench_params& params,
         get_pucch_format2_max_payload(res_f2_cfg.nof_prbs,
                                       res_f2_cfg.nof_symbols,
                                       to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
+    pucch_cfg.set_1_format = pucch_format::FORMAT_2;
     ue_req.cfg.cells->back().serv_cell_cfg.csi_meas_cfg =
         csi_helper::make_csi_meas_config(csi_helper::csi_builder_params{.nof_ports = 4});
     auto& beta_offsets = std::get<uci_on_pusch::beta_offsets_semi_static>(ue_req.cfg.cells->back()

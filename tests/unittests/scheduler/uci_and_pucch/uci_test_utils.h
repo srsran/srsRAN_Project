@@ -173,6 +173,7 @@ inline uplink_config make_test_ue_uplink_config(const config_helpers::cell_confi
   const auto& res_f2 = std::get<pucch_format_2_3_cfg>(res_basic_f2.format_params);
   pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] = get_pucch_format2_max_payload(
       res_f2.nof_prbs, res_f2.nof_symbols, to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
+  pucch_cfg.set_1_format = pucch_format::FORMAT_2;
 
   // > SRS config.
   ul_config.init_ul_bwp.srs_cfg.emplace(make_default_srs_config(params));

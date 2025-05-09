@@ -658,6 +658,7 @@ uplink_config srsran::config_helpers::make_default_ue_uplink_config(const cell_c
   const auto& res_f2 = std::get<pucch_format_2_3_cfg>(res_basic_f2.format_params);
   pucch_cfg.format_max_payload[pucch_format_to_uint(pucch_format::FORMAT_2)] = get_pucch_format2_max_payload(
       res_f2.nof_prbs, res_f2.nof_symbols, to_max_code_rate_float(pucch_cfg.format_2_common_param.value().max_c_rate));
+  pucch_cfg.set_1_format = pucch_format::FORMAT_2;
 
   // Add the PUCCH power configuration.
   auto& pucch_pw_ctrl          = pucch_cfg.pucch_pw_control.emplace();

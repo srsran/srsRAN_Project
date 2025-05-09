@@ -340,6 +340,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
         std::get<pucch_format_2_3_cfg>(res_f2_it->format_params).nof_prbs,
         std::get<pucch_format_2_3_cfg>(res_f2_it->format_params).nof_symbols,
         to_max_code_rate_float(ue_ded_pucch_cfg.format_2_common_param.value().max_c_rate));
+    ue_ded_pucch_cfg.set_1_format = pucch_format::FORMAT_2;
   } else if (std::holds_alternative<pucch_f3_params>(user_defined_pucch_cfg.f2_or_f3_or_f4_params)) {
     auto* res_f3_it = std::find_if(ue_ded_pucch_cfg.pucch_res_list.begin(),
                                    ue_ded_pucch_cfg.pucch_res_list.end(),
@@ -354,6 +355,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
                                       res_f3_it->second_hop_prb.has_value(),
                                       f3_common_params.additional_dmrs,
                                       f3_common_params.pi_2_bpsk);
+    ue_ded_pucch_cfg.set_1_format = pucch_format::FORMAT_3;
   } else {
     auto* res_f4_it = std::find_if(ue_ded_pucch_cfg.pucch_res_list.begin(),
                                    ue_ded_pucch_cfg.pucch_res_list.end(),
@@ -368,6 +370,7 @@ bool du_pucch_resource_manager::alloc_resources(cell_group_config& cell_grp_cfg)
                                       f4_common_params.additional_dmrs,
                                       f4_common_params.pi_2_bpsk,
                                       std::get<pucch_format_4_cfg>(res_f4_it->format_params).occ_length);
+    ue_ded_pucch_cfg.set_1_format = pucch_format::FORMAT_4;
   }
 
   ++cells[0].ue_idx;

@@ -1735,7 +1735,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     const pucch_resource* pucch_res_cfg = resource_manager.reserve_set_0_res_by_res_indicator(
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
-    logger.debug("rnti={}: PUCCH PDU on F0 HARQ resource updated: slot={} p_ind={} prbs={} sym={} uci_bits={}",
+    logger.debug("rnti={}: PUCCH PDU on F0 HARQ resource updated: slot={} p_ind={} prbs={} sym={} {}",
                  current_grants.rnti,
                  pucch_slot_alloc.slot,
                  current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
@@ -1757,16 +1757,15 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
     const auto& harq_format_1 = std::get<pucch_format_1>(existing_pdus.harq_pdu->format_params);
-    logger.debug(
-        "rnti={}: PUCCH PDU on F1 HARQ resource updated: slot={} p_ind={} prbs={} sym={} cs={} occ={} uci_bits={}",
-        current_grants.rnti,
-        pucch_slot_alloc.slot,
-        current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
-        existing_pdus.harq_pdu->resources.prbs,
-        existing_pdus.harq_pdu->resources.symbols,
-        harq_format_1.initial_cyclic_shift,
-        harq_format_1.time_domain_occ,
-        new_bits);
+    logger.debug("rnti={}: PUCCH PDU on F1 HARQ resource updated: slot={} p_ind={} prbs={} sym={} cs={} occ={} {}",
+                 current_grants.rnti,
+                 pucch_slot_alloc.slot,
+                 current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
+                 existing_pdus.harq_pdu->resources.prbs,
+                 existing_pdus.harq_pdu->resources.symbols,
+                 harq_format_1.initial_cyclic_shift,
+                 harq_format_1.time_domain_occ,
+                 new_bits);
     const auto& common_params = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().format_1_common_param;
     existing_pdus.update_harq_pdu_bits(
         new_bits.harq_ack_nof_bits, sr_nof_bits::no_sr, csi_bits_format_0_and_1, *pucch_res_cfg, common_params);
@@ -1774,14 +1773,16 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     current_grants.pucch_grants.harq_resource.value().bits.harq_ack_nof_bits = new_bits.harq_ack_nof_bits;
     if (existing_pdus.sr_pdu != nullptr) {
       auto& sr_format_1 = std::get<pucch_format_1>(existing_pdus.sr_pdu->format_params);
-      logger.debug("rnti={}: PUCCH PDU on SR F1 resource updated: slot={} prbs={} sym={} cs={} occ={} uci_bits={}",
-                   current_grants.rnti,
-                   pucch_slot_alloc.slot,
-                   existing_pdus.sr_pdu->resources.prbs,
-                   existing_pdus.sr_pdu->resources.symbols,
-                   sr_format_1.initial_cyclic_shift,
-                   sr_format_1.time_domain_occ,
-                   existing_pdus.sr_pdu->uci_bits);
+      logger.debug(
+          "rnti={}: PUCCH PDU on SR F1 resource updated: slot={} prbs={} sym={} cs={} occ={} uci_bits=[H={} S={}]",
+          current_grants.rnti,
+          pucch_slot_alloc.slot,
+          existing_pdus.sr_pdu->resources.prbs,
+          existing_pdus.sr_pdu->resources.symbols,
+          sr_format_1.initial_cyclic_shift,
+          sr_format_1.time_domain_occ,
+          new_bits.harq_ack_nof_bits,
+          sr_nof_bits_to_uint(current_bits.sr_bits));
       existing_pdus.update_sr_pdu_bits(current_bits.sr_bits, new_bits.harq_ack_nof_bits);
       // Update the current grants with the new UCI (HARQ) bits.
       current_grants.pucch_grants.sr_resource.value().bits.harq_ack_nof_bits = new_bits.harq_ack_nof_bits;
@@ -1801,7 +1802,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     const pucch_resource* pucch_res_cfg = resource_manager.reserve_set_1_res_by_res_indicator(
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
-    logger.debug("rnti={}: PUCCH PDU on F2 HARQ resource updated: slot={} p_ind={} prbs={} sym={} uci_bits={}",
+    logger.debug("rnti={}: PUCCH PDU on F2 HARQ resource updated: slot={} p_ind={} prbs={} sym={} {}",
                  current_grants.rnti,
                  pucch_slot_alloc.slot,
                  current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
@@ -1828,7 +1829,7 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
     const pucch_resource* pucch_res_cfg = resource_manager.reserve_set_1_res_by_res_indicator(
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
-    logger.debug("rnti={}: PUCCH PDU on F3 HARQ resource updated: slot={} p_ind={} prbs={} sym={} uci_bits={}",
+    logger.debug("rnti={}: PUCCH PDU on F3 HARQ resource updated: slot={} p_ind={} prbs={} sym={} {}",
                  current_grants.rnti,
                  pucch_slot_alloc.slot,
                  current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
@@ -1856,16 +1857,15 @@ pucch_allocator_impl::allocate_without_multiplexing(cell_slot_resource_allocator
         sl_tx, current_grants.rnti, current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind, pucch_cfg);
     srsran_assert(pucch_res_cfg != nullptr, "rnti={}: PUCCH expected resource not available", current_grants.rnti);
     const auto& format_4 = std::get<pucch_format_4>(existing_pdus.harq_pdu->format_params);
-    logger.debug(
-        "rnti={}: PUCCH PDU on F4 HARQ resource updated: slot={} p_ind={} prbs={} sym={} occ={}/{} uci_bits={}",
-        current_grants.rnti,
-        pucch_slot_alloc.slot,
-        current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
-        existing_pdus.harq_pdu->resources.prbs,
-        existing_pdus.harq_pdu->resources.symbols,
-        format_4.orthog_seq_idx,
-        fmt::underlying(format_4.n_sf_pucch_f4),
-        existing_pdus.harq_pdu->uci_bits);
+    logger.debug("rnti={}: PUCCH PDU on F4 HARQ resource updated: slot={} p_ind={} prbs={} sym={} occ={}/{} {}",
+                 current_grants.rnti,
+                 pucch_slot_alloc.slot,
+                 current_grants.pucch_grants.harq_resource.value().harq_id.pucch_res_ind,
+                 existing_pdus.harq_pdu->resources.prbs,
+                 existing_pdus.harq_pdu->resources.symbols,
+                 format_4.orthog_seq_idx,
+                 fmt::underlying(format_4.n_sf_pucch_f4),
+                 existing_pdus.harq_pdu->uci_bits);
     const auto& common_params = ue_cell_cfg.init_bwp().ul_ded->pucch_cfg.value().format_4_common_param;
     existing_pdus.update_harq_pdu_bits(new_bits.harq_ack_nof_bits,
                                        current_grants.pucch_grants.harq_resource.value().bits.sr_bits,
