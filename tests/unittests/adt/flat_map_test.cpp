@@ -22,7 +22,7 @@ TEST(flat_map_test, empty_flat_map)
   flat_map<int, int> m;
   ASSERT_EQ(m.size(), 0);
   ASSERT_TRUE(m.empty());
-  ASSERT_EQ(m.capacity(), 0);
+  ASSERT_EQ(m.max_size(), 0);
   ASSERT_EQ(m.begin(), m.end());
   ASSERT_EQ(m.cbegin(), m.cend());
   ASSERT_EQ(m.find(0), m.end());

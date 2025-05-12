@@ -8,6 +8,8 @@
  *
  */
 
+#pragma once
+
 #include "srsran/support/srsran_assert.h"
 #include <algorithm>
 #include <stdexcept>
@@ -294,7 +296,7 @@ public:
 
   size_type          size() const noexcept { return conts.keys.size(); }
   [[nodiscard]] bool empty() const noexcept { return conts.keys.empty(); }
-  size_type          capacity() const noexcept { return std::min(conts.keys.capacity(), conts.values.capacity()); }
+  size_type          max_size() const noexcept { return std::min(conts.keys.capacity(), conts.values.capacity()); }
 
   void reserve(size_type n)
   {
@@ -373,7 +375,7 @@ public:
   }
   iterator insert(const_iterator pos, const value_type& value)
   {
-    return emplace_hit_impl(pos, value.first, value.second);
+    return emplace_hint_impl(pos, value.first, value.second).first;
   }
   iterator insert(const_iterator pos, value_type&& value)
   {
