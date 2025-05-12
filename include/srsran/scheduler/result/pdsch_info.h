@@ -79,7 +79,7 @@ struct pdsch_information {
   /// Number of layers as per TS 38.211, Section 7.3.1.3. Values: {1,...,8}.
   unsigned nof_layers;
   /// Whether the PDSCH is interleaved via VRB-to-PRB mapping.
-  bool                  is_interleaved;
+  unsigned              vrb_prb_mapping;
   search_space_set_type ss_set_type;
   dci_dl_format         dci_fmt;
   /// HARQ process number as per TS38.212 Section 7.3.1.1. Values: {0,...,15}.

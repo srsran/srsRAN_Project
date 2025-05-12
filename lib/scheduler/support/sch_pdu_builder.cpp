@@ -200,14 +200,14 @@ void srsran::build_pdsch_f1_0_si_rnti(pdsch_information&                   pdsch
   pdsch.n_id       = cell_cfg.pci;
   pdsch.nof_layers = 1;
 
-  pdsch_codeword& cw   = pdsch.codewords.emplace_back();
-  cw.rv_index          = dci_cfg.redundancy_version;
-  cw.mcs_index         = dci_cfg.modulation_coding_scheme;
-  cw.mcs_table         = pdsch_mcs_table::qam64;
-  cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.tb_size_bytes     = tbs_bytes;
-  pdsch.dmrs           = dmrs_info;
-  pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
+  pdsch_codeword& cw    = pdsch.codewords.emplace_back();
+  cw.rv_index           = dci_cfg.redundancy_version;
+  cw.mcs_index          = dci_cfg.modulation_coding_scheme;
+  cw.mcs_table          = pdsch_mcs_table::qam64;
+  cw.mcs_descr          = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.tb_size_bytes      = tbs_bytes;
+  pdsch.dmrs            = dmrs_info;
+  pdsch.vrb_prb_mapping = dci_cfg.vrb_to_prb_mapping;
   pdsch.ss_set_type =
       dci_cfg.system_information_indicator == 0 ? search_space_set_type::type0 : search_space_set_type::type0A;
   pdsch.dci_fmt = dci_dl_format::f1_0;
@@ -248,15 +248,15 @@ void srsran::build_pdsch_f1_0_p_rnti(pdsch_information&                  pdsch,
   pdsch.n_id       = cell_cfg.pci;
   pdsch.nof_layers = 1;
 
-  pdsch_codeword& cw   = pdsch.codewords.emplace_back();
-  cw.mcs_index         = dci_cfg.modulation_coding_scheme;
-  cw.mcs_table         = pdsch_mcs_table::qam64;
-  cw.mcs_descr         = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
-  cw.tb_size_bytes     = tbs_bytes;
-  pdsch.dmrs           = dmrs_info;
-  pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
-  pdsch.ss_set_type    = search_space_set_type::type2;
-  pdsch.dci_fmt        = dci_dl_format::f1_0;
+  pdsch_codeword& cw    = pdsch.codewords.emplace_back();
+  cw.mcs_index          = dci_cfg.modulation_coding_scheme;
+  cw.mcs_table          = pdsch_mcs_table::qam64;
+  cw.mcs_descr          = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.tb_size_bytes      = tbs_bytes;
+  pdsch.dmrs            = dmrs_info;
+  pdsch.vrb_prb_mapping = dci_cfg.vrb_to_prb_mapping;
+  pdsch.ss_set_type     = search_space_set_type::type2;
+  pdsch.dci_fmt         = dci_dl_format::f1_0;
 
   // Populate power offsets.
   if (not cell_cfg.nzp_csi_rs_list.empty()) {
@@ -303,11 +303,11 @@ void srsran::build_pdsch_f1_0_ra_rnti(pdsch_information&                   pdsch
 
   pdsch.dmrs = dmrs_info;
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for RA-RNTI.
-  pdsch.n_id           = cell_cfg.pci;
-  pdsch.nof_layers     = 1;
-  pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
-  pdsch.ss_set_type    = search_space_set_type::type1;
-  pdsch.dci_fmt        = dci_dl_format::f1_0;
+  pdsch.n_id            = cell_cfg.pci;
+  pdsch.nof_layers      = 1;
+  pdsch.vrb_prb_mapping = dci_cfg.vrb_to_prb_mapping;
+  pdsch.ss_set_type     = search_space_set_type::type1;
+  pdsch.dci_fmt         = dci_dl_format::f1_0;
 
   // Populate power offsets.
   if (not cell_cfg.nzp_csi_rs_list.empty()) {
@@ -347,8 +347,8 @@ void srsran::build_pdsch_f1_0_tc_rnti(pdsch_information&                   pdsch
 
   pdsch.dmrs = pdsch_cfg.dmrs;
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  pdsch.n_id           = cell_cfg.pci;
-  pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
+  pdsch.n_id            = cell_cfg.pci;
+  pdsch.vrb_prb_mapping = dci_cfg.vrb_to_prb_mapping;
   // See TS38.213, 10.1. - Type1-PDCCH CSS set for CRC scrambled by a TC-RNTI on the PCell.
   pdsch.ss_set_type = search_space_set_type::type1;
   pdsch.dci_fmt     = dci_dl_format::f1_0;
@@ -393,10 +393,10 @@ void srsran::build_pdsch_f1_0_c_rnti(pdsch_information&                  pdsch,
   pdsch.bwp_cfg     = &bwp_dl.generic_params;
   pdsch.coreset_cfg = &cs_cfg;
 
-  pdsch.rbs            = vrbs;
-  pdsch.symbols        = pdsch_cfg.symbols;
-  pdsch.dmrs           = pdsch_cfg.dmrs;
-  pdsch.is_interleaved = dci_cfg.vrb_to_prb_mapping > 0;
+  pdsch.rbs             = vrbs;
+  pdsch.symbols         = pdsch_cfg.symbols;
+  pdsch.dmrs            = pdsch_cfg.dmrs;
+  pdsch.vrb_prb_mapping = dci_cfg.vrb_to_prb_mapping;
   // See TS38.213, 10.1.
   pdsch.ss_set_type =
       not ss_info.cfg->is_common_search_space() ? search_space_set_type::ue_specific : search_space_set_type::type3;
@@ -448,10 +448,10 @@ void srsran::build_pdsch_f1_1_c_rnti(pdsch_information&              pdsch,
   pdsch.bwp_cfg     = &active_bwp_cfg;
   pdsch.coreset_cfg = &cs_cfg;
 
-  pdsch.rbs            = vrbs;
-  pdsch.symbols        = pdsch_cfg.symbols;
-  pdsch.dmrs           = pdsch_cfg.dmrs;
-  pdsch.is_interleaved = dci_cfg.vrb_prb_mapping.has_value() and dci_cfg.vrb_prb_mapping.value() != 0;
+  pdsch.rbs             = vrbs;
+  pdsch.symbols         = pdsch_cfg.symbols;
+  pdsch.dmrs            = pdsch_cfg.dmrs;
+  pdsch.vrb_prb_mapping = dci_cfg.vrb_prb_mapping.has_value() ? dci_cfg.vrb_prb_mapping.value() : 0;
   // See TS38.213, 10.1.
   pdsch.ss_set_type = search_space_set_type::ue_specific;
   pdsch.dci_fmt     = dci_dl_format::f1_1;
